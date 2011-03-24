@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<!-- Uses "almost standards mode", all but some table cell sizing. -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Proof Builder Tests</title>
+
+  <script src="http://yui.yahooapis.com/3.3.0/build/yui/yui-min.js"></script>
+  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
+  <script src="proofdisplay.js"></script>
+  <script src="expr.js"></script>
+  <script src="proof.js"></script>
+  <script src="q0.js"></script>
+
+<style type="text/css">
+
+   h1 { color: black }
+   body { xbackground-color: #EEF }
+
+</style>
+  
+</head>
+<body style="margin-left: .5em; text-align: left; font-family: sans-serif">
+
+<h1>Test Results</h1>
+
+<div id=log class="yui3-skin-sam">
+</div>
+
+
+<script>
+YUI({filter: null, insertBefore: 'styles'})
+   .use('node', 'event', 'json', 'expr', 'q0', 'test', 'console', 'proof',
+        function(Y) {
+
+  // Initialize the console
+  var yconsole = new Y.Console({
+      style: 'block',
+      height: '600px',
+      width: '700px',
+      newestOnTop: false                   
+    });
+  yconsole.render('#log');
+
+  // Make "Y" available globally.
+  window.Y = Y;
+
+  function assertEqual(a, b) {
+    Y.Assert.areEqual(a, b);
+  }
+
+  // Set up some useful constants and functions.
+
+  function _var(name) {
+    return new Y.Var(name);
+  }
+  function call(fn, arg) {
+    var result = new Y.Call(fn, arg);
+    // Skip fn and the first "arg" after that.
+    for (var i = 2; i < arguments.length; i++) {
+      result = new Y.Call(result, arguments[i]);
+    }
+    return result;
+  }
+  function lambda(bound, body) {
+    return new Y.Lambda(bound, body);
+  }
+
+  var x = _var('x');
+  var f = _var('f');
+  var p = _var('p');
+  var q = _var('q');
+  var eql = _var('=');
+  var plus = _var('+');
+  var times = _var('*');
+  var greater = _var('>');
+  var implies = _var('-->');
+
+
+  // Example equation: x + x = 2 * x
+  var times2 = call(eql, call(plus, x, x), call(times, _var(2), x));
+
+  // Example WFF: x > 0 --> x + x > x
+  // Subexpression x + x:
+  var xPlusX = call(plus, x, x);
+  var bigger = call(implies, call(greater, x, _var(0)),
+                    call(greater, xPlusX, x));
+
+  var testCase = new Y.Test.Case({
+
+      testTrue: function() {
+        Y.Assert.areEqual(true, true);
+      },
+      test11: function() {
+        Y.Assert.areEqual(1, 1);
+      },
+      testTrue1: function() {
+        Y.Assert.areEqual(true, 1);
+      },
+
+      testVar: function() {
+        assertEqual('x', x.toString());
+      },
+
+      testApp: function() {
+        var app = call(f, x);
+        assertEqual(f, app.fn);
+        assertEqual(x, app.arg);
+        assertEqual('(f x)', app.toString());
+      },
+
+      testLambda: function() {
+        var abs = lambda(x, f);
+        assertEqual(x, abs.bound);
+        assertEqual(f, abs.body);
+        assertEqual('{x : f}', abs.toString());
+
+        assertEqual('{x : (f x)}', lambda(x, call(f, x)));
+      },
+
+      testFreeNames: function() {
+        var wff = lambda(x, call(f, x));
+        var map = wff.freeNames();
+        var fVar = map['f'];
+        Y.Assert.isInstanceOf(Y.Var, fVar);
+        assertEqual('f',fVar.name);
+        assertEqual(undefined, map['x']);
+      },
+
+      testSubFree: function() {
+        var v = _var('v');
+        var target = call(lambda(v, v), x);
+        // Now substitute in 'a different v':
+        var result = Y.subFree(_var('v'), x, target);
+        // We see that it replaces just the free occurrence, and renames
+        // the bound occurrence.
+        assertEqual('({v_1 : v_1} v)', result.toString());
+      },
+
+      testSame: function() {
+        var y = _var('y');
+        var e1 = call(lambda(x, call(f, x)), y);
+        var x2 = _var('x2');
+        var e2 = call(lambda(x2, call(f, x2)), y);
+        Y.Assert.isTrue(e1.same(e2));
+        var e3 = call(lambda(x2, call(f, x2)), _var('y2'));
+        Y.Assert.isFalse(e1.same(e3));
+      },
+
+      testNormalize: function() {
+        var e1 = call(lambda(x, call(f, x)), _var('y'));
+        var result = Y.normalized(e1);
+        assertEqual('({$1 : (f $1)} y)', result.toString());
+      },
+
+      testIsCall2: function() {
+        Y.Assert.isTrue(times2.isCall2('='), 'Times2 not an equation?');
+      },
+
+      testReplace: function() {
+        var y = _var('y');
+        var e1 = call(lambda(x, call(f, x)), y);
+        var to = call(f, x);
+        var result = e1.replace1(x, to);
+        Y.log(result.toString());
+        var expected = call(lambda(x, call(f, call(f, x))), y);
+        function report() {
+          return 'Expected ' + expected + '; actual was ' + result;
+        }
+        Y.Assert.isTrue(expected.matches(result), report());
+      },
+
+      testSearch: function() {
+        var found =
+          times2.search(function(expr) { return xPlusX.matches(expr); });
+        assertEqual('((+ x) x)', found.toString());
+      },
+
+      testReplaceLR: function() {
+        var withTimes = new Y.ProofStep('r', [bigger, times2]).result;
+        assertEqual('((--> ((> x) 0)) ((> ((* 2) x)) x))', withTimes.toString());
+      },
+
+      testA4: function() {
+        var y = _var('y');
+        var app = call(lambda(x, call(f, x)), y);
+        var result = Y.rules.a4(app);
+        Y.Assert.isInstanceOf(Y.Call, result);
+        assertEqual('=', result.fn.fn.name);
+        assertEqual('((= ({x : (f x)} y)) (f y))', result.toString());
+      },
+
+      testAxioms: function() {
+        var rules = Y.rules;
+        Y.log(rules.a1().toString());
+        Y.log(rules.a2().toString());
+        Y.log(rules.a3().toString());
+        Y.log(rules.a5().toString());
+      },
+
+      testR5200: function() {
+        var result = Y.rules.r5200(call(f, y));
+        assertEqual('((= (f y)) (f y))', result);
+        assertEqual('((= x) x)', Y.rules.r5200(x));
+      },
+
+      testR5201a: function() {
+        assertEqual('(q x)',
+                    Y.rules.r5201a(call(p, x),
+                                   call(eql, call(p, x), call(q, x))));
+      },
+
+      testR5201b: function() {
+        var result = Y.rules.r5201b(call(eql, p, q));
+        Y.log(result);
+      }
+
+  });
+
+
+  Y.Test.Runner.add(testCase);
+  Y.Test.Runner.run();
+  Y.Test.Runner.subscribe(Y.Test.Runner.COMPLETE_EVENT, function(event) {
+      // Y.log(Y.Test.Runner.getResults(Y.Test.Format.TAP));
+      console.log(Y.Test.Runner.getResults(Y.Test.Format.TAP));
+      document.body.style.backgroundColor = 
+        (event.results.failed == 0 && event.results.passed > 0)
+        ? '#0D0'
+        : '#F00';
+    });
+});
+
+</script>
+</body>
+</html>
