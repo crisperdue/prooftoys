@@ -706,6 +706,7 @@ var utils = {
   h: new Var('h'),
   p: new Var('p'),
   q: new Var('q'),
+  r: new Var('r'),
   T: new Var('T'),
   F: new Var('F'),
 

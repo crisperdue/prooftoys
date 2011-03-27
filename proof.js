@@ -53,6 +53,9 @@ var rules = {
    * the equation's LHS.
    */
   r: function(target, path, equation) {
+    if (typeof path == 'string') {
+      path = Y.path(path);
+    }
     if (equation.isCall2('=')) {
       function replacer(expr) {
         if (expr.matches(equation.getLeft())) {
@@ -111,16 +114,47 @@ var rules = {
   r5201a: function(a, ab) {
     var aa = rules.r5200(a);
     var b = ab.getRight();
-    var result = rules.r(a, Y.path('/'), ab);
+    var result = rules.r(a, '/', ab);
     return result;
   },
 
   r5201b: function(ab) {
     var a = ab.getLeft();
     var aa = rules.r5200(a);
-    Y.log('aa: ' + aa);
-    var ba = rules.r(aa, Y.path('/left'), ab);
+    var ba = rules.r(aa, '/left', ab);
     return ba;
+  },
+
+  r5201c: function(ab, bc) {
+    var ac = rules.r(ab, '/right', bc);
+    return ac;
+  },
+
+  r5201d: function(ab, cd) {
+    var a = ab.getLeft();
+    var b = ab.getRight();
+    var c = cd.getLeft();
+    var d = cd.getRight();
+    var ac = call(a, c);
+    var acac = rules.r5200(ac);
+    var acbc = rules.r(acac, '/right/fn', ab);
+    var acbd = rules.r(acbc, '/right/arg', cd);
+    return acbd;
+  },
+
+  r5201e: function(ab, c) {
+    var a = ab.getLeft();
+    var b = ab.getRight();
+    var ac = call(a, c);
+    var acac = rules.r5200(ac);
+    var acbc = rules.r(acac, '/right/fn', ab);
+    return acbc;
+  },
+
+  r5201f: function(bc, a) {
+    var abab = rules.r5200(call(a, bc.getLeft()));
+    var abac = rules.r(abab, '/right/arg', bc);
+    return(abac);
   }
 
 };

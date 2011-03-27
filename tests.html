@@ -199,9 +199,28 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testR5201b: function() {
         var result = Y.rules.r5201b(call('=', p, q));
-        Y.log(result);
-      }
+        assertEqual('((= q) p)', result.toString());
+      },
 
+      testR5201c: function() {
+        var result = Y.rules.r5201c(call('=', p, q), call('=', q, r));
+        assertEqual('((= p) r)', result.toString());
+      },
+
+      testR5201d: function() {
+        var result = Y.rules.r5201d(call('=', p, q), call('=', 'a', 'b'));
+        assertEqual('((= (p a)) (q b))', result.toString());
+      },
+
+      testR5201e: function() {
+        var result = Y.rules.r5201e(call('=', p, q), r);
+        assertEqual('((= (p r)) (q r))', result.toString());
+      },
+
+      testR5201f: function() {
+        var result = Y.rules.r5201f(call('=', q, r), p);
+        assertEqual('((= (p q)) (p r))', result);
+      }
   });
 
 
