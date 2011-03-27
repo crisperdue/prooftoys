@@ -48,25 +48,20 @@ ProofStep.prototype.allHypotheses = function() {
 var rules = {
 
   /**
-   * Replace the first occurrence of the left-hand side of the equation in
-   * target with the equation's right-hand side.  This is rule R'.  The
-   * "nth" argument is optional, defaulting to the first occurrence.
+   * Replace the subexpression of the target at the path with the
+   * equation's RHS.  This is rule R'.  The subexpression must match
+   * the equation's LHS.
    */
-  // TODO: Use the current r0 instead.
-  r: function(target, equation) {
+  r: function(target, path, equation) {
     if (equation.isCall2('=')) {
-      var left = equation.getLeft();
-      var right = equation.getRight();
-      var result = Y.replace(left, right, target);
-      return result;
-    } else {
-      throw new Error('Not an equation: ' + target.toString());
-    }
-  },
-
-  r0: function(target, occurrence, equation) {
-    if (equation.isCall2('=') && occurrence.matches(equation.getLeft())) {
-      return target.replace(occurrence, equation.getRight());
+      function replacer(expr) {
+        if (expr.matches(equation.getLeft())) {
+          return equation.getRight();
+        } else {
+          throw new Error('Rule R: expressions must match');
+        }
+      }
+      return target.replace(path, replacer);
     } else {
       throw new Error('Not an equation: ' + target.toString());
     }
@@ -110,13 +105,13 @@ var rules = {
 
   r5200: function(a) {
     var step1 = rules.a4(call(lambda(x, x), a));
-    return rules.r(step1, step1);
+    return rules.r(step1, Y.path('/left'), step1);
   },
 
   r5201a: function(a, ab) {
     var aa = rules.r5200(a);
     var b = ab.getRight();
-    var result = rules.r(a, ab);
+    var result = rules.r(a, Y.path('/'), ab);
     return result;
   },
 
@@ -124,7 +119,7 @@ var rules = {
     var a = ab.getLeft();
     var aa = rules.r5200(a);
     Y.log('aa: ' + aa);
-    var ba = rules.r(aa, ab);
+    var ba = rules.r(aa, Y.path('/left'), ab);
     return ba;
   }
 

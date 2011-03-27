@@ -21,10 +21,13 @@ function normalized(expr) {
 }
 
 /**
- * Find an instance of "from" in the target, and return a copy of
- * the target, with that occurrence replaced by "to".
+ * Find an instance of "from" in the target, and return a copy of the
+ * target, with that occurrence replaced by "to".  The "from"
+ * expression is a "locator copy" of this, an expression with null
+ * values for many of its parts and a "found" property at the point to
+ * be replaced.
  *
- * TODO: Remove this, replace with a "find" function/method.
+ * TODO: Remove this.
  */
 function replace(from, to, expr, skipN) {
   if (skipN) {
@@ -56,9 +59,17 @@ function replace(from, to, expr, skipN) {
 // occurrences of a variable.  Remove "same" and "rescope" as not
 // needed, and reimplement subst to be nondestructive.
 
-function Expr() {}
+/**
+ * Instantiated only for templates.  An instance of this class
+ * in a replacement template indicates the place in the larger
+ * expression where the replacement is to occur.
+ */
+function Expr() {
+  this.sort = Expr.expr;
+}
 
 // The different sorts of expressions:
+Expr.expr = 'expr';
 Expr.var = 'var';
 Expr.call = 'call';
 Expr.lambda = 'lambda';
@@ -67,13 +78,9 @@ Expr.lambda = 'lambda';
 // to avoid capturing.
 Expr.counter = 1;
 
-/**
- * Names containing "_" are reserved for use by the system.  The current
- * strategy simply uses a counter to uniqueify.
- */
-function generateName(name) {
-  return name + '_' + Expr.counter++;
-}
+Expr.prototype.toString = function() {
+  return '*';
+};
 
 /**
  * Finds and returns a Map of the free variables in this expression,
@@ -90,6 +97,13 @@ Expr.prototype.occurrence = function(expr, nth) {
     return expr.matches(from) ? expr : false;
   }
   return expr.search(likeFrom);
+};
+
+/**
+ * Returns the function in a call that has two arguments.
+ */
+Expr.prototype.getBinOp = function() {
+  return this.fn.fn;
 };
 
 /**
@@ -220,9 +234,13 @@ Expr.prototype.isCall2 = function(name) {
 
 //// Var -- variable bindings and references
 
-var Var = function(name) {
+function Var(name) {
   this.sort = Expr.var;
-  this.name = name;
+  if (typeof name == 'boolean') {
+    this.found = true;
+  } else {
+    this.name = name;
+  }
 };
 Y.extend(Var, Expr);
 
@@ -263,8 +281,15 @@ Var.prototype.rescope = function(bindings) {
   return findByName(this.name, bindings) || this;
 };
 
+Var.prototype.replace = function(path, xformer, bindings) {
+  return path.isMatch() ? xformer(this).rescope(bindings) : this;
+};
+
 Var.prototype.replace1 = function(from, to, bindings) {
-  return (this == from) ? to.rescope(bindings) : this;
+  Y.log('var ' + this);
+  return from && from.sort == 'expr'
+    ? to.rescope(bindings)
+    : this;
 };
 
 Var.prototype.matches = function(expr, bindings) {
@@ -285,8 +310,12 @@ Var.prototype.search = function(pred) {
 
 var Call = function(fn, arg) {
   this.sort = Expr.call;
-  this.fn = fn;
-  this.arg = arg;
+  if (typeof fn == 'boolean') {
+    this.found = fn;
+  } else {
+    this.fn = fn;
+    this.arg = arg;
+  }
 };
 Y.extend(Call, Expr);
 
@@ -330,11 +359,19 @@ Call.prototype.rescope = function(bindings) {
   return new Call(this.fn.rescope(bindings), this.arg.rescope(bindings));
 };
 
+Call.prototype.replace = function(path, xformer, bindings) {
+  return path.isMatch()
+    ? xformer(this).rescope(bindings)
+    : new Call(this.fn.replace(path.rest('fn'), xformer, bindings),
+               this.arg.replace(path.rest('arg'), xformer, bindings));
+};
+
 Call.prototype.replace1 = function(from, to, bindings) {
-  return (this == from)
-  ? to.rescope(bindings)
-  : new Call(this.fn.replace1(from, to, bindings),
-             this.arg.replace1(from, to, bindings));
+  Y.log('call ' + this);
+  return from && from.sort == 'expr'
+    ? to.rescope(bindings)
+    : new Call(this.fn.replace1(from && from.fn, to, bindings),
+               this.arg.replace1(from && from.arg, to, bindings));
 };
 
 Call.prototype.matches = function(expr, bindings) {
@@ -360,10 +397,14 @@ Call.prototype.search = function(pred) {
  * of the same variable in the body should already be represented
  * by the same Var.
  */
-var Lambda = function(bound, body) {
+function Lambda(bound, body) {
   this.sort = Expr.lambda;
-  this.bound = bound;
-  this.body = body;
+  if (typeof bound == 'boolean') {
+    this.found = bound;
+  } else {
+    this.bound = bound;
+    this.body = body;
+  }
 };
 Y.extend(Lambda, Expr);
 
@@ -412,12 +453,21 @@ Lambda.prototype.rescope = function(bindings) {
   return this.body.rescope(new Bindings(this.bound, null, bindings));
 };
 
+Lambda.prototype.replace = function(path, xformer, bindings) {
+  return path.isMatch()
+    ? xformer(this).rescope(bindings)
+    : new Lambda(this.bound,
+                 this.body.replace(path.rest('body'), xformer,
+                                   new Bindings(this, null, bindings)));
+};
+
 Lambda.prototype.replace1 = function(from, to, bindings) {
-  return this == from
+  Y.log('lambda ' + this.toString());
+  return from && from.sort == 'expr'
     ? to.rescope(bindings)
-  : new Lambda(this.bound,
-               this.body.replace1(from, to,
-                                 new Bindings(this, null, bindings)));
+    :  new Lambda(this.bound,
+                  this.body.replace1(from && from.body, to,
+                                     new Bindings(this, null, bindings)));
 };
 
 Lambda.prototype.matches = function(expr, bindings) {
@@ -458,6 +508,20 @@ Counter.prototype.next = function() {
 //// Internal utility functions
 
 /**
+ * Names containing "_" are reserved for use by the system.  The current
+ * strategy simply uses a counter to uniqueify.
+ */
+function generateName(name) {
+  return name + '_' + Expr.counter++;
+}
+
+
+//// Bindings
+////
+//// Variable binding contexts and bookkeeping for changing names
+//// of bound variables.
+
+/**
  * Binding (for a set of variables).  From is a Var, to is an Expr it
  * is bound to.  "More" refers to another bindings unlless it is null,
  * so this can represent a set of bindings rather than just one.  Used
@@ -471,7 +535,7 @@ function Bindings(from, to, more) {
   this.from = from;
   this.to = to;
   this.more = more;
-};
+}
 
 /**
  * Returns the replacement for the variable defined by this
@@ -483,7 +547,110 @@ function getBinding(variable, bindings) {
     : (variable == bindings.from)
     ? bindings.to
     : getBinding(variable, bindings.more);
+}
+
+
+//// Path
+////
+//// Representing parts of expressions -- or other objects!
+
+function Path(segment, rest) {
+  this.segment = segment;
+  this._rest = rest;
+}
+
+// The chain of Path objects goes on forever.
+Path.none = new Path(null, null);
+
+// This makes the chain endless.
+Path.none._rest = Path.none;
+
+// This marks the end of the path.  Past this is nothing
+// interesting.
+var _end = new Path(null, Path.none);
+
+/**
+ * Traverses into the given object by getting the property named by
+ * this Path's segment.  If the value of the property is a function,
+ * applies it as a method, e.g. 'getLeft'.
+ */
+Path.prototype.next = function(o) {
+  var steps = {
+    fn: function() { return o.fn; },
+    arg: function() { return o.arg; },
+    body: function() { return o.body; },
+    binop: function() { return o.getBinOp(); },
+    left: function() { return o.getLeft(); },
+    right: function() { return o.getRight(); }
+  };
+  return steps[this.segment]();
 };
+
+Path.prototype.isMatch = function() {
+  return this == _end;
+};
+
+Path.prototype.rest = function(direction) {
+  return this.segment == direction ? this._rest : Path.none;
+};
+
+Path.prototype.toString = function() {
+  if (this == Path.none) {
+    return '(none)';
+  } else if (this == _end) {
+    return '';
+  } else {
+    var path = this;
+    var result = '';
+    while (path != _end) {
+      var result = result + '/' + path.segment;
+      path = path._rest;
+    }
+    return result
+  }
+};
+
+/**
+ * Pseudo-constructor: returns a Path based on a "/"-separated string
+ * or an array of strings.  The parts become the segments of the path.
+ * Some segments serve as macros that expand into a list of other
+ * segments, currently 'left', 'right', and 'binop'.
+ */
+function path(arg) {
+  var segments = (typeof arg == 'string')
+    ? arg.split('/')
+    : arg;
+  // Remove the empty first element resulting from an initial "/".
+  // Even an empty string splits into an array with one element.
+  if (segments[0] == '') {
+    segments.splice(0, 1);
+  }
+  // Handle the result of splitting '/' --> ['', '']:
+  if (segments.length == 1 && segments[0] == '') {
+    segments = [];
+  }
+  var macros = {
+    left: ['fn', 'arg'],
+    right: ['arg'],
+    binop: ['fn', 'fn']
+  };
+  var result = _end;
+  while (segments.length) {
+    var piece = segments.pop();
+    var expansion = macros[piece];
+    if (expansion) {
+      for (var i = 0; i < expansion.length; i++) {
+        segments.push(expansion[i]);
+      }
+    } else {
+      result = new Path(piece, result);
+    }
+  }
+  return result;
+}
+
+
+//// Useful utilities
 
 var utils = {
 
@@ -503,6 +670,10 @@ var utils = {
   },
 
   // Shortcut functions for building expressions.
+  expr: function() {
+    return new Y.Expr();
+  },
+
   _var: function(name) {
     return new Y.Var(name);
   },
@@ -518,7 +689,7 @@ var utils = {
     var result = new Y.Call(fn, arg);
     // Skip fn and the first "arg" after that.
     for (var i = 2; i < arguments.length; i++) {
-      result = new Y.Call(result, arguments[i]);
+      result = call(result, arguments[i]);
     }
     return result;
   },
@@ -533,6 +704,8 @@ var utils = {
   f: new Var('f'),
   g: new Var('g'),
   h: new Var('h'),
+  p: new Var('p'),
+  q: new Var('q'),
   T: new Var('T'),
   F: new Var('F'),
 
@@ -553,10 +726,12 @@ Y.Expr = Expr;
 Y.Var = Var;
 Y.Call = Call;
 Y.Lambda = Lambda;
+Y.Path = Path;
 
 Y.subFree = subFree;
 Y.normalized = normalized
 Y.replace = replace;
+Y.path = path;
 
 Y.Expr.utils = utils;
 

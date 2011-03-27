@@ -52,40 +52,14 @@ YUI({filter: null, insertBefore: 'styles'})
 
   // Set up some useful constants and functions.
 
-  function _var(name) {
-    return new Y.Var(name);
-  }
-  function call(fn, arg) {
-    var result = new Y.Call(fn, arg);
-    // Skip fn and the first "arg" after that.
-    for (var i = 2; i < arguments.length; i++) {
-      result = new Y.Call(result, arguments[i]);
-    }
-    return result;
-  }
-  function lambda(bound, body) {
-    return new Y.Lambda(bound, body);
-  }
-
-  var x = _var('x');
-  var f = _var('f');
-  var p = _var('p');
-  var q = _var('q');
-  var eql = _var('=');
-  var plus = _var('+');
-  var times = _var('*');
-  var greater = _var('>');
-  var implies = _var('-->');
-
+  Y.Expr.utils.import();
 
   // Example equation: x + x = 2 * x
-  var times2 = call(eql, call(plus, x, x), call(times, _var(2), x));
+  var times2 = call('=', call('+', x, x), call('*', '2', x));
 
   // Example WFF: x > 0 --> x + x > x
-  // Subexpression x + x:
-  var xPlusX = call(plus, x, x);
-  var bigger = call(implies, call(greater, x, _var(0)),
-                    call(greater, xPlusX, x));
+  var bigger = call('-->', call('>', x, '0'),
+                    call('>', call('+', x, x), x));
 
   var testCase = new Y.Test.Case({
 
@@ -161,24 +135,36 @@ YUI({filter: null, insertBefore: 'styles'})
       testReplace: function() {
         var y = _var('y');
         var e1 = call(lambda(x, call(f, x)), y);
-        var to = call(f, x);
-        var result = e1.replace1(x, to);
-        Y.log(result.toString());
-        var expected = call(lambda(x, call(f, call(f, x))), y);
-        function report() {
-          return 'Expected ' + expected + '; actual was ' + result;
-        }
-        Y.Assert.isTrue(expected.matches(result), report());
+	var path = Y.path('/fn/body/arg');
+        var result = e1.replace(path, function(expr) { return call(f, x); });
+	assertEqual('({x : (f (f x))} y)', result.toString());
+      },
+
+      testPath: function() {
+        var p = '/a/b';
+        var path = Y.path(p);
+        assertEqual(p, path.toString());
+        assertEqual('a', path.segment);
+        assertEqual('b', path.rest('a').segment);
+        Y.assert(path.rest('a').rest('b').isMatch());
+        assertEqual('(none)', path.rest('b').toString());
+        Y.assert(Y.path('/').isMatch());
+        assertEqual('f', Y.path('fn').next(call(f, x)).toString());
+        assertEqual('x', Y.path('arg').next(call(f, x)).toString());
+        var p2 = '/left/binop';
+        assertEqual('/fn/arg/fn/fn', Y.path(p2).toString());
       },
 
       testSearch: function() {
+        xPlusX = call('+', x, x)
         var found =
           times2.search(function(expr) { return xPlusX.matches(expr); });
         assertEqual('((+ x) x)', found.toString());
       },
 
-      testReplaceLR: function() {
-        var withTimes = new Y.ProofStep('r', [bigger, times2]).result;
+      testRuleR: function() {
+        var path = Y.path('/right/left');
+        var withTimes = Y.rules.r(bigger, path, times2);
         assertEqual('((--> ((> x) 0)) ((> ((* 2) x)) x))', withTimes.toString());
       },
 
@@ -208,11 +194,11 @@ YUI({filter: null, insertBefore: 'styles'})
       testR5201a: function() {
         assertEqual('(q x)',
                     Y.rules.r5201a(call(p, x),
-                                   call(eql, call(p, x), call(q, x))));
+                                   call('=', call(p, x), call(q, x))));
       },
 
       testR5201b: function() {
-        var result = Y.rules.r5201b(call(eql, p, q));
+        var result = Y.rules.r5201b(call('=', p, q));
         Y.log(result);
       }
 
