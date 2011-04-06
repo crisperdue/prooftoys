@@ -360,10 +360,19 @@ Call.prototype.rescope = function(bindings) {
 };
 
 Call.prototype.replace = function(path, xformer, bindings) {
+  /*
   return path.isMatch()
     ? xformer(this).rescope(bindings)
     : new Call(this.fn.replace(path.rest('fn'), xformer, bindings),
                this.arg.replace(path.rest('arg'), xformer, bindings));
+  */
+  if (path.isMatch()) {
+    return xformer(this).rescope(bindings);
+  } else {
+    var fn = this.fn.replace(path.rest('fn'), xformer, bindings);
+    var arg = this.arg.replace(path.rest('arg'), xformer, bindings);
+    return new Call(fn, arg);
+  }
 };
 
 Call.prototype.replace1 = function(from, to, bindings) {
@@ -450,7 +459,8 @@ Lambda.prototype.normalized = function(counter, bindings) {
 };
 
 Lambda.prototype.rescope = function(bindings) {
-  return this.body.rescope(new Bindings(this.bound, null, bindings));
+  return lambda(this.bound,
+                this.body.rescope(new Bindings(this.bound, null, bindings)));
 };
 
 Lambda.prototype.replace = function(path, xformer, bindings) {
