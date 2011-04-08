@@ -196,14 +196,23 @@ var ruleFns = {
 
 };
 
+//// Applying an inference rule
+
 // Stack of Inferences.  At each step, applyRule starts a new list for
 // its detailed steps, and when done, pops that list, remembers those
 // as its details and pushes its own record.
 var proofStack = [];
 
-function applyRule(key, stack, assumptions, params) {
+/**
+ *
+ */
+function applyRule(key, stack, arguments) {
+  // In Java probably implement this with Callables and a method
+  // to get the arguments of each.  Each item in rules becomes
+  // a Callable.
+  //
+  // Each rule runs with a new list available for any steps within it.
   stack.push([]);
-  var arguments = params == null ? assumptions : assumptions.concat(params);
   var result = ruleFns[key].apply(null, arguments);
   var step = new Inference(key, arguments, result, stack.pop());
   stack[stack.length].push(step);
@@ -221,52 +230,127 @@ for (var key in ruleFns) {
   })(key);
 };
 
-//// Applying an inference rule
-
-function Inference(name, assumes, args, result, details) {
+/**
+ * Inference object: Immutable record of an inference step, either
+ * primitive or composite.
+ */
+function Inference(name, inputs, result, details) {
+  // Rule name
   this.name = name;
-  this.assumes = assumes;
-  this.args = args;
+  // Inputs: a list of expressions or inference steps with result
+  // expressions used by this step.  For composite inferences this
+  // should be null.
+  this.inputs = inputs;
+  // The conclusion Expr of the inference..
   this.result = result;
+  // List of component steps (Inferences), empty if not composite.
   this.details = details;
+  // Used by findAssumptions to prevent infinite loops.
+  this.marked = false;
 }
 
 /**
- * Returns a list of all hypotheses directly or indirectly used by
- * this Inference.  The same hypothesis occurs only once in the
- * result, but this does not deduplicate copies.
+ * Returns a set of all of the expressions that this inference relies
+ * on to be true in order to produce its result, indexed by repr.
  */
-Inference.prototype.allHypotheses = function() {
-  var allHyps = [];
-  function addHyps(proofStep) {
-    for (var i = 0; i < this.args.length; i++) {
-      var arg = this.args[i];
-      if (arg instanceof Inference) {
-        if (arg.name == 'assume') {
-          var assumption = arg.args[0];
-          if (Y.Array.indexOf(allHyps, assumption) < 0) {
-            allHyps.push(arg.args[0]);
-          }
-        } else {
-          addHyps(arg);
-        }
+Inference.prototype.assumptions = function() {
+  // Databases of input and output expressions of applications of
+  // primitive rules, indexed by repr.
+  var inputs  = {};
+  var outputs = {};
+  // Accumulates the inputs and outputs of this inference.
+  function accumulate(inference) {
+    // Whether rule R, an axiom, or a composite, the result
+    // is always an output.
+    outputs[inference.result.repr()] = inference.result;
+    if (this.name == 'r') {
+      var args = this.args;
+      for (var i = 0; i < args.length; i++) {
+        inputs[args[i].repr()] = args[i];
+      }
+    } else {
+      var details = this.details;
+      for (var i = 0; i < details.length; i++) {
+        accumulate(details[i]);
       }
     }
   }
-  addHyps(this, allHyps);
-  return allHyps;
+  accumulate(this);
+  for (var key in outputs) {
+    delete inputs[key];
+  }
+  return inputs;
 };
 
 
-//// Internal utility functions
+/// Proof
 
-function equateToSelf(expr) {
-  var e = call(lambda(x, x), expr);
-  var step1 = axiom4(e);
-  var lamb = step1.getLeft();
-  var step2 = replaceLeft(step1, step1);
-  return step2;
+function Proof() {
+  this.steps = [];
 }
+
+Proof.prototype.insert = function(step, index) {
+  step.index = index;
+  var steps = this.steps;
+  for (var i = index; i < steps.length; i++) {
+    steps[i].index = index;
+  }
+  steps.splice(index, 0, step);
+};
+
+
+// ProofStep
+
+function ProofStep(proof) {
+  this.proof = proof;
+  this.index = null;
+  this.tactic = null;
+  this.inference = null;
+  this.deps = [];
+}
+
+/**
+ * Sets the inference of this step.  The dependencies are a list of
+ * ProofSteps this claims to depend on.  The results of those steps
+ * should match the assumptions of the new inference, or else this
+ * method inserts new steps that make the needed assertions.
+ * Making new steps is a policy decision that could change.
+ */
+ProofStep.prototype.setInference = function(inference, dependencies) {
+  this.inference = inference;
+  // This will be a set of the dependencies, indexed by the repr of
+  // the result of each one's inference.
+  fromDeps = {};
+  for (var i = 0; i < dependencies.length; i++) {
+    var dep = dependencies[i];
+    var result = dep.inference.result;
+    fromDeps[result.repr()] = dep;
+  }
+  this.deps = [];
+  var assumptions = inference.assumptions();
+  // Connect the inputs needed by this step to other proof steps
+  for (var repr in assumptions) {
+    var assumption = assumptions[repr];
+    var provided = fromDeps[repr];
+    if (provided) {
+      this.deps.push(dep);
+    } else {
+      var step = new ProofStep(this.proof);
+      step.setInference(new Inference('assume', [], assumption), []);
+      this.proof.insert(step, this.index);
+    }
+  }
+};
+
+/**
+ * Returns a list of all inferences directly or indirectly used by
+ * the given inference step.
+ */
+function findAssumptions(inference, database) {
+}
+
+
+//// Internal utility functions
 
 function assert(condition, message) {
   if (!condition) {

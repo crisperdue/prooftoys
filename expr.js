@@ -135,6 +135,14 @@ Expr.prototype.isCall2 = function(name) {
   }
 }
 
+/**
+ * Returns a string that identifies this expression.
+ */
+Expr.prototype.repr = function() {
+  // Currently the same as toString.
+  return this.toString();
+};
+
 
 // Methods defined on expressions, but defined only in the subclasses:
 //
