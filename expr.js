@@ -256,6 +256,10 @@ Var.prototype.toString = function() {
   return this.name;
 };
 
+Var.prototype.dump = function() {
+  return this.name;
+}
+
 Var.prototype.subst = function(replacement, variable, freeNames) {
   return (variable == this) ? replacement.copy() : this;
 };
@@ -293,6 +297,10 @@ Var.prototype.replace = function(path, xformer, bindings) {
   return path.isMatch() ? xformer(this).rescope(bindings) : this;
 };
 
+Var.prototype.locate = function(path) {
+  return path.isMatch() ? this : null;
+};
+
 Var.prototype.replace1 = function(from, to, bindings) {
   Y.log('var ' + this);
   return from && from.sort == 'expr'
@@ -328,6 +336,16 @@ var Call = function(fn, arg) {
 Y.extend(Call, Expr);
 
 Call.prototype.toString = function() {
+  if (this.fn instanceof Call
+      && this.fn.fn instanceof Var
+      && this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
+    return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
+  } else {
+    return '(' + this.fn + ' ' + this.arg + ')';
+  }
+};
+
+Call.prototype.dump = function() {
   return '(' + this.fn + ' ' + this.arg + ')';
 };
 
@@ -368,18 +386,20 @@ Call.prototype.rescope = function(bindings) {
 };
 
 Call.prototype.replace = function(path, xformer, bindings) {
-  /*
-  return path.isMatch()
-    ? xformer(this).rescope(bindings)
-    : new Call(this.fn.replace(path.rest('fn'), xformer, bindings),
-               this.arg.replace(path.rest('arg'), xformer, bindings));
-  */
   if (path.isMatch()) {
     return xformer(this).rescope(bindings);
   } else {
     var fn = this.fn.replace(path.rest('fn'), xformer, bindings);
     var arg = this.arg.replace(path.rest('arg'), xformer, bindings);
     return new Call(fn, arg);
+  }
+};
+
+Call.prototype.locate = function(path) {
+  if (path.isMatch()) {
+    return this;
+  } else {
+    return this.fn.locate(path.rest('fn')) || this.arg.locate(path.rest('arg'));
   }
 };
 
@@ -426,6 +446,10 @@ function Lambda(bound, body) {
 Y.extend(Lambda, Expr);
 
 Lambda.prototype.toString = function() {
+  return '{' + this.bound + ' : ' + this.body + '}';
+};
+
+Lambda.prototype.dump = function() {
   return '{' + this.bound + ' : ' + this.body + '}';
 };
 
@@ -477,6 +501,13 @@ Lambda.prototype.replace = function(path, xformer, bindings) {
     : new Lambda(this.bound,
                  this.body.replace(path.rest('body'), xformer,
                                    new Bindings(this, null, bindings)));
+};
+
+Lambda.prototype.locate = function(path) {
+  return path.isMatch()
+    ? this
+    : this.bound.locate(path.rest('bound'))
+        || this.body.locate(path.rest('body'));
 };
 
 Lambda.prototype.replace1 = function(from, to, bindings) {
@@ -635,6 +666,9 @@ Path.prototype.toString = function() {
  * segments, currently 'left', 'right', and 'binop'.
  */
 function path(arg) {
+  if (arg instanceof Path) {
+    return arg;
+  }
   var segments = (typeof arg == 'string')
     ? arg.split('/')
     : arg;

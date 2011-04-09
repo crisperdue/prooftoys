@@ -13,14 +13,20 @@ Y.Expr.utils.import();
 var ruleFns = {
 
   /**
+   * The name "TBD" is used in Inferences to indicate that
+   * the result of the inference is to be proven.
+   */
+  TBD: function(assumption) {
+    return assumption;
+  },
+
+  /**
    * Replace the subexpression of the target at the path with the
    * equation's RHS.  This is rule R.  The subexpression must match
    * the equation's LHS.
    */
   r: function(equation, target, path) {
-    if (typeof path == 'string') {
-      path = Y.path(path);
-    }
+    path = Y.path(path);
     if (equation.isCall2('=')) {
       function replacer(expr) {
         if (expr.matches(equation.getLeft())) {
@@ -36,6 +42,16 @@ var ruleFns = {
     } else {
       throw new Error('Must be an equation: ' + equation);
     }
+  },
+
+  /**
+   * Same as Rule R, but replaces an occurrence in target of the right
+   * side of the equation with its left side.
+   */
+  rRight: function(equation, target, path) {
+    path = Y.path(path);
+    var rev = rules.r5201b(equation);
+    return rules.r(rev, target, path);
   },
 
   axiom1: function() {
@@ -78,7 +94,7 @@ var ruleFns = {
   // to itself.
   r5200: function(a) {
     var step1 = rules.axiom4(call(lambda(x, x), a));
-    return rules.r(step1, step1, Y.path('/left'));
+    return rules.r(step1, step1, '/left');
   },
 
   r5201a: function(a, ab) {
@@ -148,87 +164,73 @@ var ruleFns = {
     var a3 = rules.axiom3();
     var identity = lambda(y, y);
     var step1a = rules.r5209(a3, identity, f);
-    Y.log(step1a);
     var step1b = rules.r5209(step1a, identity, g);
-    Y.log(step1b);
     var step2a = rules.r5200(identity);
-    Y.log(step2a);
     var step2b = rules.r(step1b,step2a, '/');
-    Y.log(step2b);
     var a4 = rules.axiom4(call(lambda(y, y), x));
-    Y.log(a4);
     var step2c = rules.r(a4, step2b, '/left/body/left');
-    Y.log(step2c);
     var step2d = rules.r(a4, step2c, '/left/body/right');
-    Y.log(step2d);
     var step3 = rules.r5201e(step2d, b);
-    Y.log(step3);
     var left = rules.axiom4(step3.getLeft());
     var step4a = rules.r(left, step3, '/left');
-    Y.log(step4a);
     var right = rules.axiom4(step3.getRight());
     var step4b = rules.r(right, step4a, '/right');
-    Y.log(step4b);
     var step4c = rules.r5201b(step4b);
     return step4c;
   },
 
-  forall: function() {
-    return call('=', 'forall', lambda(f, call('=', f, lambda(x, T))));
+  forall: function(v, a) {
+    return call('=', lambda(v, a), lambda(x, T));
+  },
+
+  defForall: function() {
+    return call('=', 'forall', call('=', lambda(x, T)));
+  },
+
+  /**
+   * Beta-reduce an application of a lambda expression to an argument,
+   * with the subexpression identified by a path.
+   */
+  reduce: function(expr, path) {
+    path = Y.path(path);
+    var target = expr.locate(path);
+    assert(target, 'Path ' + path + ' not found in ' + target);
+    assert(target instanceof Y.Call && target.fn instanceof Y.Lambda);
+    var equation = rules.axiom4(target);
+    var result = rules.r(equation, expr, path);
+    return result;
   },
 
   r5211: function() {
     var step1a = rules.r5209(rules.axiom1(), lambda(y, T), f);
     var step1b = rules.r5209(step1a, lambda(y, T), g);
-    Y.log(step1b);
-    var reduce1 = rules.axiom4(step1b.getLeft().getLeft());
-    // Note: Make a "reduce" rule that beta-reduces a subexpression.
-    var reduce2 = rules.axiom4(step1b.getLeft().getRight());
-    var step2b = rules.r(reduce1, step1b, '/left/left');
-    var step2c = rules.r(reduce2, step2b, '/left/right');
-    Y.log(step2c);
-    var step3a = rules.r(rules.forall(), step2c, '/right/fn');
-    Y.log(step3a);
-    var reduce3 = rules.axiom4(step3a.getRight());
-    Y.log(reduce3.getRight());
-    // et cetera.
+    var step2a = rules.reduce(step1b, '/left/left');
+    var step2b = rules.reduce(step2a, '/left/right');
+    var step2c = rules.reduce(step2b, '/right/arg/body');
+    var step3a = rules.r5210(lambda(x, T));
+    var step3b = rules.rRight(rules.defForall(), step3a, '/right/fn');
+    var step4 = rules.rRight(step3b, step2c, '/right');
+    return step4;
+  },
+
+  /**
+   * "T" is a theorem.
+   */
+  ruleT: function() {
+    var step1 = rules.r5200(T);
+    var step2 = rules.r5210(T);
+    var step3 = rules.rRight(step2, step1, '/');
+    return step3;
+  },
+
+  r5212: function() {
+    var step1 = rules.rRight(rules.r5211(), rules.ruleT(), '/');
+    return step1;
   }
 
 };
 
-//// Applying an inference rule
-
-// Stack of Inferences.  At each step, applyRule starts a new list for
-// its detailed steps, and when done, pops that list, remembers those
-// as its details and pushes its own record.
-var proofStack = [];
-
-/**
- *
- */
-function applyRule(key, stack, arguments) {
-  // In Java probably implement this with Callables and a method
-  // to get the arguments of each.  Each item in rules becomes
-  // a Callable.
-  //
-  // Each rule runs with a new list available for any steps within it.
-  stack.push([]);
-  var result = ruleFns[key].apply(null, arguments);
-  var step = new Inference(key, arguments, result, stack.pop());
-  stack[stack.length].push(step);
-  return result;
-}
-
-// Actual rule functions to call from other code.
-var rules = {};
-
-for (var key in ruleFns) {
-  (function(k) {
-    rules[k] = function() {
-      return ruleFns[k].apply(null, arguments);
-    }
-  })(key);
-};
+//// Inferences
 
 /**
  * Inference object: Immutable record of an inference step, either
@@ -245,8 +247,56 @@ function Inference(name, inputs, result, details) {
   this.result = result;
   // List of component steps (Inferences), empty if not composite.
   this.details = details;
-  // Used by findAssumptions to prevent infinite loops.
-  this.marked = false;
+}
+
+Inference.prototype.toString = function() {
+  var result = debugString(this);
+  if (result.length <= 200) {
+    return result;
+  } else {
+    function detailer(details) {
+      result = '[';
+      for (var i = 0; i < details.length; i++) {
+        if (i > 0) {
+          result += ', ';
+        }
+        result += details[i].name;
+      }
+      return result + ']';
+    }
+    return debugString(this, {details: detailer});
+  }
+}
+
+function debugString(o, specials) {
+  var result = '{';
+  for (var key in o) {
+    if (o.hasOwnProperty(key)) {
+      result += key + ': ';
+      var value = o[key];
+      var f = specials && specials[key];
+      if (f) {
+        result += f(value);
+      } else if (typeof value == 'string')
+        result += '"' + o[key] + '"';
+      else if (value.concat) {
+        vString = o[key].toString();
+        if (vString.length > 40) {
+          result += '[\n';
+          for (var i = 0; i < value.length; i++) {
+            result += value[i] + '\n';
+          }
+          result += ']\n';
+        } else {
+          result += '[' + o[key] + ']';
+        }
+      } else {
+        result += o[key].toString();
+      }
+      result += ' ';
+    }
+  }
+  return result + '}'
 }
 
 /**
@@ -260,10 +310,12 @@ Inference.prototype.assumptions = function() {
   var outputs = {};
   // Accumulates the inputs and outputs of this inference.
   function accumulate(inference) {
-    // Whether rule R, an axiom, or a composite, the result
-    // is always an output.
-    outputs[inference.result.repr()] = inference.result;
+    // For axioms, definitions, and rule R the result is an output.
+    if (this.name.match(/^axiom|^def[A-Z]/)) {
+      outputs[inference.result.repr()] = inference.result;
+    }
     if (this.name == 'r') {
+      outputs[inference.result.repr()] = inference.result;
       var args = this.args;
       for (var i = 0; i < args.length; i++) {
         inputs[args[i].repr()] = args[i];
@@ -280,6 +332,55 @@ Inference.prototype.assumptions = function() {
     delete inputs[key];
   }
   return inputs;
+};
+
+/**
+ * Applies the rule with the given name to the arguments,
+ * pushing a record of its inference onto the given stack (array),
+ * and returning the result of the Inference, an expression.
+ * If there no such rule, returns null and has no effect.
+ */
+function applyRule(name, arguments, stack) {
+  // In Java probably implement this with Callables and a method
+  // to get the arguments of each.  Each item in rules becomes
+  // a Callable.
+  //
+  // Each rule runs with a new list available for any steps within it.
+  var rule = ruleFns[name];
+  if (rule) {
+    stack.push([]);
+    var result = ruleFns[name].apply(null, arguments);
+    var step = new Inference(name, arguments, result, stack.pop());
+    stack[stack.length - 1].push(step);
+    return result;
+  } else {
+    return null;
+  }
+}
+
+/**
+ * Makes and returns an inference by running the named rule with the
+ * given arguments.
+ */
+function makeInference(name, arguments) {
+  inferenceStack.push([]);
+  applyRule(name, arguments, inferenceStack);
+  var inf = inferenceStack.pop().pop();
+  return inf;
+}
+
+var inferenceStack = [[]];
+
+// Actual rule functions to call from other code.
+// Maybe each set of rules could have its own inference stack???
+var rules = {};
+
+for (var key in ruleFns) {
+  (function(k) {
+    rules[k] = function() {
+      return applyRule(k, arguments, inferenceStack);
+    }
+  })(key);
 };
 
 
@@ -318,6 +419,12 @@ function ProofStep(proof) {
  */
 ProofStep.prototype.setInference = function(inference, dependencies) {
   this.inference = inference;
+  if (inference.name == 'TBD') {
+    if (dependencies && dependencies.length > 0) {
+      assert(false, 'TBD inference cannot have dependencies');
+    }
+    return;
+  }
   // This will be a set of the dependencies, indexed by the repr of
   // the result of each one's inference.
   fromDeps = {};
@@ -336,18 +443,11 @@ ProofStep.prototype.setInference = function(inference, dependencies) {
       this.deps.push(dep);
     } else {
       var step = new ProofStep(this.proof);
-      step.setInference(new Inference('assume', [], assumption), []);
+      step.setInference(new Inference('TBD', [], assumption), []);
       this.proof.insert(step, this.index);
     }
   }
 };
-
-/**
- * Returns a list of all inferences directly or indirectly used by
- * the given inference step.
- */
-function findAssumptions(inference, database) {
-}
 
 
 //// Internal utility functions
@@ -364,7 +464,8 @@ function assert(condition, message) {
 
 Y.Inference = Inference;
 Y.rules = rules;
-
-
+Y.ruleFns = ruleFns;
+Y.inferenceStack = inferenceStack;
+Y.makeInference = makeInference;
 
 }, '0.1', {use: ['array-extras', 'expr']});

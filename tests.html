@@ -159,26 +159,32 @@ YUI({filter: null, insertBefore: 'styles'})
         xPlusX = call('+', x, x)
         var found =
           times2.search(function(expr) { return xPlusX.matches(expr); });
-        assertEqual('((+ x) x)', found.toString());
+        assertEqual('(x + x)', found.toString());
+      },
+
+      testLocate: function() {
+        var expr = Y.ruleFns.forall(x, call(p, x));
+        var body = expr.locate(Y.path('/left/body'));
+        assertEqual('(p x)', body.toString());
       },
 
       testRuleR: function() {
         var path = Y.path('/right/left');
-        var withTimes = Y.rules.r(times2, bigger, path);
-        assertEqual('((--> ((> x) 0)) ((> ((* 2) x)) x))', withTimes.toString());
+        var withTimes = Y.ruleFns.r(times2, bigger, path);
+        assertEqual('((x > 0) --> ((2 * x) > x))', withTimes.toString());
       },
 
       testAxiom4: function() {
         var y = _var('y');
         var app = call(lambda(x, call(f, x)), y);
-        var result = Y.rules.axiom4(app);
+        var result = Y.ruleFns.axiom4(app);
         Y.Assert.isInstanceOf(Y.Call, result);
         assertEqual('=', result.fn.fn.name);
-        assertEqual('((= ({x : (f x)} y)) (f y))', result.toString());
+        assertEqual('(({x : (f x)} y) = (f y))', result.toString());
       },
 
       testAxioms: function() {
-        var rules = Y.rules;
+        var rules = Y.ruleFns;
         Y.log(rules.axiom1().toString());
         Y.log(rules.axiom2().toString());
         Y.log(rules.axiom3().toString());
@@ -186,58 +192,74 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testR5200: function() {
-        var result = Y.rules.r5200(call(f, y));
-        assertEqual('((= (f y)) (f y))', result);
-        assertEqual('((= x) x)', Y.rules.r5200(x));
+        var result = Y.ruleFns.r5200(call(f, y));
+        assertEqual('((f y) = (f y))', result);
+        assertEqual('(x = x)', Y.ruleFns.r5200(x));
       },
 
       testR5201a: function() {
         assertEqual('(q x)',
-                    Y.rules.r5201a(call(p, x),
+                    Y.ruleFns.r5201a(call(p, x),
                                    call('=', call(p, x), call(q, x))));
       },
 
       testR5201b: function() {
-        var result = Y.rules.r5201b(call('=', p, q));
-        assertEqual('((= q) p)', result.toString());
+        var result = Y.ruleFns.r5201b(call('=', p, q));
+        assertEqual('(q = p)', result.toString());
       },
 
       testR5201c: function() {
-        var result = Y.rules.r5201c(call('=', p, q), call('=', q, r));
-        assertEqual('((= p) r)', result.toString());
+        var result = Y.ruleFns.r5201c(call('=', p, q), call('=', q, r));
+        assertEqual('(p = r)', result.toString());
       },
 
       testR5201d: function() {
-        var result = Y.rules.r5201d(call('=', p, q), call('=', 'a', 'b'));
-        assertEqual('((= (p a)) (q b))', result.toString());
+        var result = Y.ruleFns.r5201d(call('=', p, q), call('=', 'a', 'b'));
+        assertEqual('((p a) = (q b))', result.toString());
       },
 
       testR5201e: function() {
-        var result = Y.rules.r5201e(call('=', p, q), r);
-        assertEqual('((= (p r)) (q r))', result.toString());
+        var result = Y.ruleFns.r5201e(call('=', p, q), r);
+        assertEqual('((p r) = (q r))', result.toString());
       },
 
       testR5201f: function() {
-        var result = Y.rules.r5201f(call('=', q, r), p);
-        assertEqual('((= (p q)) (p r))', result);
+        var result = Y.ruleFns.r5201f(call('=', q, r), p);
+        assertEqual('((p q) = (p r))', result);
       },
 
       testR5209: function() {
         var b = new Y.Var('b');
         var c = new Y.Var('c');
-        var result = Y.rules.r5209(call('=', call(g, y), c), call(f, x), y);
-        assertEqual('((= (g (f x))) c)', result.toString());
+        var result = Y.ruleFns.r5209(call('=', call(g, y), c), call(f, x), y);
+        assertEqual('((g (f x)) = c)', result.toString());
       },
 
       testR5210: function() {
         var b = new Y.Var('b');
-        var result = Y.rules.r5210(b);
-        assertEqual('((= T) ((= b) b))', result);
-        assertEqual('((= T) ((= (f x)) (f x)))', Y.rules.r5210(call(f, x)));
+        var result = Y.ruleFns.r5210(b);
+        assertEqual('(T = (b = b))', result);
+        assertEqual('(T = ((f x) = (f x)))', Y.ruleFns.r5210(call(f, x)));
       },
 
       testR5211: function() {
-        Y.rules.r5211();
+        assertEqual('((T && T) = T)', Y.ruleFns.r5211());
+      },
+
+      testRuleT: function() {
+        assertEqual(T, Y.ruleFns.ruleT());
+      },
+
+      testR5212: function() {
+        assertEqual('(T && T)', Y.ruleFns.r5212());
+      },
+
+      testMakeInference: function() {
+        var inf = Y.makeInference('r5210', [x]);
+        Y.log(inf.toString());
+        assertEqual('r5210', inf.name);
+        assertEqual(1, inf.inputs.length);
+        assertEqual('x', inf.inputs[0].name);
       }
   });
 
