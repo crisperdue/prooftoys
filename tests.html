@@ -240,10 +240,10 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.log(step3);
       },
 
-      testR5200: function() {
-        var result = Y.ruleFns.r5200(call(f, y));
+      testEqSelf: function() {
+        var result = Y.ruleFns.eqSelf(call(f, y));
         assertEqual('((f y) = (f y))', result);
-        assertEqual('(x = x)', Y.ruleFns.r5200(x));
+        assertEqual('(x = x)', Y.ruleFns.eqSelf(x));
       },
 
       testR5201a: function() {
@@ -285,11 +285,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((g (f x)) = c)', result.toString());
       },
 
-      testR5210: function() {
+      testEqT: function() {
         var b = new Y.Var('b');
-        var result = Y.ruleFns.r5210(b);
+        var result = Y.ruleFns.eqT(b);
         assertEqual('(T = (b = b))', result);
-        assertEqual('(T = ((f x) = (f x)))', Y.ruleFns.r5210(call(f, x)));
+        assertEqual('(T = ((f x) = (f x)))', Y.ruleFns.eqT(call(f, x)));
       },
 
       testR5211: function() {
@@ -307,7 +307,10 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testR5213: function() {
-        // TODO:
+        var inf = Y.makeInference('r5213',
+                                  [call('=', p, q),
+                                   call('=', q, r)]);
+        assertEqual('((p = q) && (q = r))', inf.result);
       },
 
       testDefAnd: function() {
@@ -333,10 +336,15 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(p (f y))', inf.result);
       },
 
+      testAndT: function() {
+        var inf = Y.makeInference('andT', [p]);
+        assertEqual('((T && p) = p)', inf.result);
+      },
+
       testMakeInference: function() {
-        var inf = Y.makeInference('r5210', [x]);
+        var inf = Y.makeInference('eqT', [x]);
         Y.log(inf.toString());
-        assertEqual('r5210', inf.name);
+        assertEqual('eqT', inf.name);
         assertEqual(1, inf.inputs.length);
         assertEqual('x', inf.inputs[0].name);
       }

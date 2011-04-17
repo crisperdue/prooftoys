@@ -109,15 +109,15 @@ var ruleFns = {
   },
 
   // Takes an arbitrary expression A, concluding that it is equal
-  // to itself.
-  r5200: function(a) {
+  // to itself. (5200)
+  eqSelf: function(a) {
     var step1 = rules.axiom4(call(lambda(x, x), a));
     return rules.r(step1, step1, '/left');
   },
 
   // r5201a
   replaceWhole: function(a, ab) {
-    var aa = rules.r5200(a);
+    var aa = rules.eqSelf(a);
     var b = ab.getRight();
     var result = rules.r(ab, a, '/');
     return result;
@@ -126,7 +126,7 @@ var ruleFns = {
   // r5201b
   eqnSwap: function(ab) {
     var a = ab.getLeft();
-    var aa = rules.r5200(a);
+    var aa = rules.eqSelf(a);
     var ba = rules.r(ab, aa, '/left');
     return ba;
   },
@@ -144,7 +144,7 @@ var ruleFns = {
     var c = cd.getLeft();
     var d = cd.getRight();
     var ac = call(a, c);
-    var acac = rules.r5200(ac);
+    var acac = rules.eqSelf(ac);
     var acbc = rules.r(ab, acac, '/right/fn');
     var acbd = rules.r(cd, acbc, '/right/arg');
     return acbd;
@@ -152,14 +152,14 @@ var ruleFns = {
 
   // r5201e
   applyBoth: function(eqn, a) {
-    var step1 = rules.r5200(call(eqn.locate('/left'), a));
+    var step1 = rules.eqSelf(call(eqn.locate('/left'), a));
     var step2 = rules.r(eqn, step1, '/right/fn');
     return step2;
   },
 
   // r5201f
   applyToBoth: function(a, bc) {
-    var abab = rules.r5200(call(a, bc.getLeft()));
+    var abab = rules.eqSelf(call(a, bc.getLeft()));
     var abac = rules.r(bc, abab, '/right/arg');
     return(abac);
   },
@@ -171,7 +171,7 @@ var ruleFns = {
   r5209: function(b_c, a, v) {
     var b = b_c.getLeft();
     var c = b_c.getRight();
-    var ba_ba = rules.r5200(call(lambda(v, b), a));
+    var ba_ba = rules.eqSelf(call(lambda(v, b), a));
     var ba_ca = rules.r(b_c, ba_ba, '/right/fn/body');
     var ba_sab = rules.axiom4(call(lambda(v, b), a));
     var ca_sac = rules.axiom4(call(lambda(v, c), a));
@@ -180,14 +180,14 @@ var ruleFns = {
     return step5b;
   },
 
-  // thm: T = [B = B]
-  r5210: function(b) {
+  // thm: T = [B = B] (5210)
+  eqT: function(b) {
     var a3 = rules.r(rules.defForall(), rules.axiom3(), '/right/fn');
     var identity = lambda(y, y);
     var step1a = rules.r5209(a3, identity, f);
     var step1b = rules.r5209(step1a, identity, g);
-    var step2a = rules.r5200(identity);
-    // Eliminate the LHSof step2a:
+    var step2a = rules.eqSelf(identity);
+    // Eliminate the LHS of step2a:
     var step2b = rules.r(step1b, step2a, '/');
     var step2c = rules.reduce(step2b, '/right/body/left');
     var step2d = rules.reduce(step2c, '/right/body/right');
@@ -244,7 +244,7 @@ var ruleFns = {
     var step2a = rules.reduce(step1, '/left/left');
     var step2b = rules.reduce(step2a, '/left/right');
     var step2c = rules.reduce(step2b, '/right/arg/body');
-    var step3a = rules.r5210(lambda(x, T));
+    var step3a = rules.eqT(lambda(x, T));
     var step3b = rules.rRight(rules.defForall(), step3a, '/right/fn');
     var step4 = rules.rRight(step3b, step2c, '/right');
     return step4;
@@ -254,8 +254,8 @@ var ruleFns = {
    * "T" is a theorem.
    */
   t: function() {
-    var step1 = rules.r5200(T);
-    var step2 = rules.r5210(T);
+    var step1 = rules.eqSelf(T);
+    var step2 = rules.eqT(T);
     var step3 = rules.rRight(step2, step1, '/');
     return step3;
   },
@@ -265,8 +265,20 @@ var ruleFns = {
     return step1;
   },
 
-  r5213: function() {
-    // TODO:
+  r5213: function(a_b, c_d) {
+    assertEqn(a_b);
+    var a = a_b.locate('/left');
+    var b = a_b.locate('/right');
+    assertEqn(c_d);
+    var c = c_d.locate('/left');
+    var d = c_d.locate('/right');
+    var step1 = rules.eqT(a);
+    var step2 = rules.r(a_b, step1, '/right/right');
+    var step3 = rules.eqT(c);
+    var step4 = rules.r(c_d, step3, '/right/right');
+    var step5 = rules.r(step2, rules.r5212(), '/left');
+    var step6 = rules.r(step4, step5, '/right');
+    return step6;
   },
 
   /**
@@ -276,7 +288,8 @@ var ruleFns = {
   bindEqn: function(eqn, v) {
     assert(eqn.isBinOp() && eqn.getBinOp() == '=',
            'Not an equation: ' + eqn);
-    var step1 = rules.r5200(lambda(v, eqn.getLeft()));
+    assert(v instanceof Y.Var, 'Not a variable: ' + v);
+    var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
     var step2 = rules.r(eqn, step1, '/right/body');
     return step2;
   },
@@ -297,6 +310,23 @@ var ruleFns = {
     var step4 = rules.reduce(step3, '/right');
     var step5 = rules.r(step4, rules.t(), '/');
     return step5;
+  },
+
+  // 5216
+  andT: function(a) {
+    var step1 = rules.axiom1();
+    var step2 = rules.bindEqn(step1, g);
+    var step3 =
+      rules.applyBoth(step2, lambda(x, call('=', call('&&', T, x), x)));
+    var step4 = rules.reduce(step3, '/left');
+    var step5 = rules.reduce(step4, '/right');
+    var step6 = rules.reduce(step5, '/left/left');
+    var step7 = rules.reduce(step6, '/left/right');
+    var step8 = rules.reduce(step7, '/right/arg/body');
+    var step9 = rules.r5213(rules.r5211(), rules.r5214());
+    var step10 = rules.r(step8, step9, '/');
+    var step11 = rules.forallInst(step10, a);
+    return step11;
   }
 
 };
@@ -422,6 +452,7 @@ function applyRule(name, arguments, stack) {
   // a Callable.
   //
   // Each rule runs with a new list available for any steps within it.
+  assert(typeof name == 'string', 'Name must be a string: ' + name);
   var rule = ruleFns[name];
   if (rule) {
     stack.push([]);
@@ -534,6 +565,14 @@ function assert(condition, message) {
     Y.log(message);
     break_here();
   }
+}
+
+function assertEqn(expr) {
+  assert(expr instanceof Y.Call
+         && expr.fn instanceof Y.Call
+         && expr.fn.fn instanceof Y.Var
+         && expr.fn.fn.name == '=',
+         'Must be an equation: ' + expr);
 }
 
 
