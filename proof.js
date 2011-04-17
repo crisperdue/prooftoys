@@ -50,7 +50,7 @@ var ruleFns = {
    */
   rRight: function(equation, target, path) {
     path = Y.path(path);
-    var rev = rules.r5201b(equation);
+    var rev = rules.eqnSwap(equation);
     return rules.r(rev, target, path);
   },
 
@@ -64,11 +64,29 @@ var ruleFns = {
     return call('-->', call('=', x, y), call('=', call(h, x), call(h, y)));
   },
 
-  // (= (= f g) (= {x : (= (f x) (g x))} {x : T}))
+  // (= (= f g) (= {x : T} {x : (= (f x) (g x))}))
   axiom3: function() {
     return call('=', call('=', f, g),
-                call('=', lambda(x, call('=', call(f, x), call(g, x))),
-                     lambda(x, T)));
+                call('forall',
+                     lambda(x, call('=', call(f, x), call(g, x)))));
+  },
+
+  // TODO: remove.
+  axiom3a: function(f1, g1, a) {
+    var a3 = rules.r(rules.defForall(), rules.axiom3(), '/right/fn');
+    var step1 = rules.bindEqn(a3, f);
+    var step2 = rules.applyBoth(step1, f1);
+    var step3 = rules.reduce(step2, '/left');
+    var step4 = rules.reduce(step3, '/right');
+
+    var step5 = rules.bindEqn(step4, g);
+    var step6 = rules.applyBoth(step5, g1);
+    var step7 = rules.reduce(step6, '/left');
+    var step8 = rules.reduce(step7, '/right');
+
+    var step9 = rules.reduce(step8, '/right/right/body/left');
+    var step10 = rules.reduce(step9, '/right/right/body/right');
+    return step10;
   },
 
   /**
@@ -97,26 +115,30 @@ var ruleFns = {
     return rules.r(step1, step1, '/left');
   },
 
-  r5201a: function(a, ab) {
+  // r5201a
+  replaceWhole: function(a, ab) {
     var aa = rules.r5200(a);
     var b = ab.getRight();
     var result = rules.r(ab, a, '/');
     return result;
   },
 
-  r5201b: function(ab) {
+  // r5201b
+  eqnSwap: function(ab) {
     var a = ab.getLeft();
     var aa = rules.r5200(a);
     var ba = rules.r(ab, aa, '/left');
     return ba;
   },
 
-  r5201c: function(ab, bc) {
+  // r5201c
+  eqnChain: function(ab, bc) {
     var ac = rules.r(bc, ab, '/right');
     return ac;
   },
 
-  r5201d: function(ab, cd) {
+  // r5201d
+  applyBySides: function(ab, cd) {
     var a = ab.getLeft();
     var b = ab.getRight();
     var c = cd.getLeft();
@@ -128,16 +150,15 @@ var ruleFns = {
     return acbd;
   },
 
-  r5201e: function(ab, c) {
-    var a = ab.getLeft();
-    var b = ab.getRight();
-    var ac = call(a, c);
-    var acac = rules.r5200(ac);
-    var acbc = rules.r(ab, acac, '/right/fn');
-    return acbc;
+  // r5201e
+  applyBoth: function(eqn, a) {
+    var step1 = rules.r5200(call(eqn.locate('/left'), a));
+    var step2 = rules.r(eqn, step1, '/right/fn');
+    return step2;
   },
 
-  r5201f: function(bc, a) {
+  // r5201f
+  applyToBoth: function(a, bc) {
     var abab = rules.r5200(call(a, bc.getLeft()));
     var abac = rules.r(bc, abab, '/right/arg');
     return(abac);
@@ -161,30 +182,46 @@ var ruleFns = {
 
   // thm: T = [B = B]
   r5210: function(b) {
-    var a3 = rules.axiom3();
+    var a3 = rules.r(rules.defForall(), rules.axiom3(), '/right/fn');
     var identity = lambda(y, y);
     var step1a = rules.r5209(a3, identity, f);
     var step1b = rules.r5209(step1a, identity, g);
     var step2a = rules.r5200(identity);
-    var step2b = rules.r(step1b,step2a, '/');
-    var a4 = rules.axiom4(call(lambda(y, y), x));
-    var step2c = rules.r(a4, step2b, '/left/body/left');
-    var step2d = rules.r(a4, step2c, '/left/body/right');
-    var step3 = rules.r5201e(step2d, b);
-    var left = rules.axiom4(step3.getLeft());
-    var step4a = rules.r(left, step3, '/left');
-    var right = rules.axiom4(step3.getRight());
-    var step4b = rules.r(right, step4a, '/right');
-    var step4c = rules.r5201b(step4b);
-    return step4c;
+    // Eliminate the LHSof step2a:
+    var step2b = rules.r(step1b, step2a, '/');
+    var step2c = rules.reduce(step2b, '/right/body/left');
+    var step2d = rules.reduce(step2c, '/right/body/right');
+    var step3 = rules.applyBoth(step2d, b);
+    var step4a = rules.reduce(step3, '/left');
+    var step4b = rules.reduce(step4a, '/right');
+    return step4b;
   },
 
-  forall: function(v, a) {
-    return call('=', lambda(v, a), lambda(x, T));
+  // Convert "forall A" to "A = {x : T}"
+  forall: function(expr) {
+    assert(expr.fn instanceof Y.Var && expr.fn.name == 'forall',
+           "Must be 'forall': " + expr.fn);
+    return call('=', lambda(x, T), expr.arg);
   },
 
   defForall: function() {
     return call('=', 'forall', call('=', lambda(x, T)));
+  },
+
+  // TODO: remove
+  defAnd: function() {
+    return call('=', '&&',
+                lambda(x, lambda(y, call('=', lambda(g, call(g, T, T)),
+                                         lambda(g, call(g, x, y))))));
+  },
+
+  // Note this can be proved like 5211.
+  defAndTrue: function() {
+    return call('=', call('&&', T, p), p);
+  },
+
+  defAndFalse: function() {
+    return call('=', call('&&', F, p), F);
   },
 
   /**
@@ -195,16 +232,16 @@ var ruleFns = {
     path = Y.path(path);
     var target = expr.locate(path);
     assert(target, 'Path ' + path + ' not found in ' + target);
-    assert(target instanceof Y.Call && target.fn instanceof Y.Lambda);
+    assert(target instanceof Y.Call && target.fn instanceof Y.Lambda,
+           'Reduce needs a call to a lambda, got: ' + target);
     var equation = rules.axiom4(target);
     var result = rules.r(equation, expr, path);
     return result;
   },
 
   r5211: function() {
-    var step1a = rules.r5209(rules.axiom1(), lambda(y, T), f);
-    var step1b = rules.r5209(step1a, lambda(y, T), g);
-    var step2a = rules.reduce(step1b, '/left/left');
+    var step1 = rules.r5209(rules.axiom1(), lambda(y, T), g);
+    var step2a = rules.reduce(step1, '/left/left');
     var step2b = rules.reduce(step2a, '/left/right');
     var step2c = rules.reduce(step2b, '/right/arg/body');
     var step3a = rules.r5210(lambda(x, T));
@@ -216,7 +253,7 @@ var ruleFns = {
   /**
    * "T" is a theorem.
    */
-  ruleT: function() {
+  t: function() {
     var step1 = rules.r5200(T);
     var step2 = rules.r5210(T);
     var step3 = rules.rRight(step2, step1, '/');
@@ -224,8 +261,42 @@ var ruleFns = {
   },
 
   r5212: function() {
-    var step1 = rules.rRight(rules.r5211(), rules.ruleT(), '/');
+    var step1 = rules.rRight(rules.r5211(), rules.t(), '/');
     return step1;
+  },
+
+  r5213: function() {
+    // TODO:
+  },
+
+  /**
+   * From an equation, infers a similar equation with each
+   * side wrapped in a binding of the given variable.
+   */
+  bindEqn: function(eqn, v) {
+    assert(eqn.isBinOp() && eqn.getBinOp() == '=',
+           'Not an equation: ' + eqn);
+    var step1 = rules.r5200(lambda(v, eqn.getLeft()));
+    var step2 = rules.r(eqn, step1, '/right/body');
+    return step2;
+  },
+
+  r5214: function() {
+    var step1 = rules.r5209(rules.defAndTrue(), F, p);
+    return step1;
+  },
+
+  forallInst: function(target, expr) {
+    assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
+           "Must be 'forall': " + target.fn);
+    assert(target.arg instanceof Y.Lambda,
+           "Must be lambda expression: " + target.arg);
+    var step1 = rules.forall(target);
+    var step2 = rules.applyBoth(step1, expr);
+    var step3 = rules.reduce(step2, '/left');
+    var step4 = rules.reduce(step3, '/right');
+    var step5 = rules.r(step4, rules.t(), '/');
+    return step5;
   }
 
 };
@@ -234,7 +305,8 @@ var ruleFns = {
 
 /**
  * Inference object: Immutable record of an inference step, either
- * primitive or composite.
+ * primitive or composite.  The constructor is private; use
+ * makeInference to create inferences in client code.
  */
 function Inference(name, inputs, result, details) {
   // Rule name
@@ -269,34 +341,38 @@ Inference.prototype.toString = function() {
 }
 
 function debugString(o, specials) {
-  var result = '{';
-  for (var key in o) {
-    if (o.hasOwnProperty(key)) {
-      result += key + ': ';
-      var value = o[key];
-      var f = specials && specials[key];
-      if (f) {
-        result += f(value);
-      } else if (typeof value == 'string')
-        result += '"' + o[key] + '"';
-      else if (value.concat) {
-        vString = o[key].toString();
-        if (vString.length > 40) {
-          result += '[\n';
-          for (var i = 0; i < value.length; i++) {
-            result += value[i] + '\n';
+  if (typeof o == 'object') {
+    var result = '{';
+    for (var key in o) {
+      if (o.hasOwnProperty(key)) {
+        result += key + ': ';
+        var value = o[key];
+        var f = specials && specials[key];
+        if (f) {
+          result += f(value);
+        } else if (typeof value == 'string') {
+          result += '"' + o[key] + '"';
+        } else if (value && value.concat) {
+          vString = o[key].toString();
+          if (vString.length > 40) {
+            result += '[\n';
+            for (var i = 0; i < value.length; i++) {
+              result += value[i] + '\n';
+            }
+            result += ']\n';
+          } else {
+            result += '[' + o[key] + ']';
           }
-          result += ']\n';
         } else {
-          result += '[' + o[key] + ']';
+          result += '' + o[key];
         }
-      } else {
-        result += o[key].toString();
+        result += ' ';
       }
-      result += ' ';
     }
+    return result + '}';
+  } else {
+    return o.toString();
   }
-  return result + '}'
 }
 
 /**
@@ -363,16 +439,17 @@ function applyRule(name, arguments, stack) {
  * given arguments.
  */
 function makeInference(name, arguments) {
+  arguments = arguments || [];
   inferenceStack.push([]);
   applyRule(name, arguments, inferenceStack);
   var inf = inferenceStack.pop().pop();
   return inf;
 }
 
+// Maybe each set of rules could have its own inference stack???
 var inferenceStack = [[]];
 
 // Actual rule functions to call from other code.
-// Maybe each set of rules could have its own inference stack???
 var rules = {};
 
 for (var key in ruleFns) {
@@ -462,7 +539,6 @@ function assert(condition, message) {
 
 //// Export public names.
 
-Y.Inference = Inference;
 Y.rules = rules;
 Y.ruleFns = ruleFns;
 Y.inferenceStack = inferenceStack;

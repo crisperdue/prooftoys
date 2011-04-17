@@ -99,6 +99,10 @@ Expr.prototype.occurrence = function(expr, nth) {
   return expr.search(likeFrom);
 };
 
+Expr.prototype.isBinOp = function() {
+  return this instanceof Call && this.fn instanceof Call;
+};
+
 /**
  * Returns the function in a call that has two arguments.
  */
@@ -141,6 +145,14 @@ Expr.prototype.isCall2 = function(name) {
 Expr.prototype.repr = function() {
   // Currently the same as toString.
   return this.toString();
+};
+
+/**
+ * Public version of "locate", finding a subexpression
+ * from its path.
+ */
+Expr.prototype.locate = function(_path) {
+  return this.locate1(path(_path));
 };
 
 
@@ -297,7 +309,7 @@ Var.prototype.replace = function(path, xformer, bindings) {
   return path.isMatch() ? xformer(this).rescope(bindings) : this;
 };
 
-Var.prototype.locate = function(path) {
+Var.prototype.locate1 = function(path) {
   return path.isMatch() ? this : null;
 };
 
@@ -336,10 +348,12 @@ var Call = function(fn, arg) {
 Y.extend(Call, Expr);
 
 Call.prototype.toString = function() {
-  if (this.fn instanceof Call
-      && this.fn.fn instanceof Var
-      && this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
-    return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
+  if (this.fn instanceof Call && this.fn.fn instanceof Var) {
+    if (this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
+      return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
+    } else {
+      return '(' + this.fn.fn + ' ' + this.fn.arg + ' ' + this.arg + ')';
+    }
   } else {
     return '(' + this.fn + ' ' + this.arg + ')';
   }
@@ -395,11 +409,12 @@ Call.prototype.replace = function(path, xformer, bindings) {
   }
 };
 
-Call.prototype.locate = function(path) {
+Call.prototype.locate1 = function(path) {
   if (path.isMatch()) {
     return this;
   } else {
-    return this.fn.locate(path.rest('fn')) || this.arg.locate(path.rest('arg'));
+    return this.fn.locate1(path.rest('fn'))
+      || this.arg.locate1(path.rest('arg'));
   }
 };
 
@@ -503,11 +518,11 @@ Lambda.prototype.replace = function(path, xformer, bindings) {
                                    new Bindings(this, null, bindings)));
 };
 
-Lambda.prototype.locate = function(path) {
+Lambda.prototype.locate1 = function(path) {
   return path.isMatch()
     ? this
-    : this.bound.locate(path.rest('bound'))
-        || this.body.locate(path.rest('body'));
+    : this.bound.locate1(path.rest('bound'))
+        || this.body.locate1(path.rest('body'));
 };
 
 Lambda.prototype.replace1 = function(from, to, bindings) {

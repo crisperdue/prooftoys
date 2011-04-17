@@ -50,6 +50,15 @@ YUI({filter: null, insertBefore: 'styles'})
     Y.Assert.areEqual(a, b);
   }
 
+  // Logs the result of each top-level step of an ifnerence.
+  function logDetails(inference) {
+    var details = inference.details;
+    for (var i = 0; i < details.length; i++) {
+      var step = details[i];
+      Y.log(step.result + ' ' + step.name);
+    }
+  }
+
   // Set up some useful constants and functions.
 
   Y.Expr.utils.import();
@@ -62,6 +71,12 @@ YUI({filter: null, insertBefore: 'styles'})
                     call('>', call('+', x, x), x));
 
   var testCase = new Y.Test.Case({
+
+      name: "Proof Tests",
+
+      setUp: function() {
+        tracing = false;
+      },
 
       testTrue: function() {
         Y.Assert.areEqual(true, true);
@@ -163,8 +178,8 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testLocate: function() {
-        var expr = Y.ruleFns.forall(x, call(p, x));
-        var body = expr.locate(Y.path('/left/body'));
+        var expr = call('forall', lambda(x, call(p, x)));
+        var body = expr.locate(Y.path('/arg/body'));
         assertEqual('(p x)', body.toString());
       },
 
@@ -185,10 +200,44 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testAxioms: function() {
         var rules = Y.ruleFns;
-        Y.log(rules.axiom1().toString());
-        Y.log(rules.axiom2().toString());
-        Y.log(rules.axiom3().toString());
-        Y.log(rules.axiom5().toString());
+        assertEqual('(((g T) && (g F)) = (forall {x : (g x)}))',
+                    rules.axiom1());
+        assertEqual('((x = y) --> ((h x) = (h y)))',
+                    rules.axiom2());
+        assertEqual('((f = g) = (forall {x : ((f x) = (g x))}))',
+                    rules.axiom3());
+        assertEqual('((the (= y)) = y)',
+                    rules.axiom5());
+      },
+
+      testAndTrue: function() {
+        assertEqual('((T && p) = p)', rules.defAndTrue());
+      },
+
+      testAndFalse: function() {
+        assertEqual('((F && p) = F)', rules.defAndFalse());
+      },
+
+      testApplyBoth: function() {
+        var inf = Y.makeInference('applyBoth',
+                                  [call('=', f, g),
+                                   x]);
+        logDetails(inf);
+      },
+
+      testAxiom3a: function() {
+        var inf = Y.makeInference('axiom3a',
+                                  [lambda(x, T),
+                                   lambda(x, x),
+                                   call(p, y)]);
+        logDetails(inf);
+
+        var rules = Y.ruleFns;
+        var fa = rules.defForall();
+        
+        var step2 = rules.rRight(fa, inf.result, '/left/fn');
+        var step3 = rules.rRight(fa, step2, '/right/fn');
+        Y.log(step3);
       },
 
       testR5200: function() {
@@ -199,32 +248,33 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testR5201a: function() {
         assertEqual('(q x)',
-                    Y.ruleFns.r5201a(call(p, x),
-                                   call('=', call(p, x), call(q, x))));
+                    Y.ruleFns.replaceWhole
+                    (call(p, x), call('=', call(p, x), call(q, x))));
       },
 
       testR5201b: function() {
-        var result = Y.ruleFns.r5201b(call('=', p, q));
+        var result = Y.ruleFns.eqnSwap(call('=', p, q));
         assertEqual('(q = p)', result.toString());
       },
 
       testR5201c: function() {
-        var result = Y.ruleFns.r5201c(call('=', p, q), call('=', q, r));
+        var result = Y.ruleFns.eqnChain(call('=', p, q), call('=', q, r));
         assertEqual('(p = r)', result.toString());
       },
 
       testR5201d: function() {
-        var result = Y.ruleFns.r5201d(call('=', p, q), call('=', 'a', 'b'));
+        var result =
+          Y.ruleFns.applyBySides(call('=', p, q), call('=', 'a', 'b'));
         assertEqual('((p a) = (q b))', result.toString());
       },
 
       testR5201e: function() {
-        var result = Y.ruleFns.r5201e(call('=', p, q), r);
+        var result = Y.ruleFns.applyBoth(call('=', p, q), r);
         assertEqual('((p r) = (q r))', result.toString());
       },
 
       testR5201f: function() {
-        var result = Y.ruleFns.r5201f(call('=', q, r), p);
+        var result = Y.ruleFns.applyToBoth(p, call('=', q, r));
         assertEqual('((p q) = (p r))', result);
       },
 
@@ -243,15 +293,44 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testR5211: function() {
-        assertEqual('((T && T) = T)', Y.ruleFns.r5211());
+        var inf = Y.makeInference('r5211', []);
+        assertEqual('((T && T) = T)', inf.result);
       },
 
       testRuleT: function() {
-        assertEqual(T, Y.ruleFns.ruleT());
+        assertEqual(T, Y.ruleFns.t());
       },
 
       testR5212: function() {
-        assertEqual('(T && T)', Y.ruleFns.r5212());
+        var inf = Y.makeInference('r5212', []);
+        assertEqual('(T && T)', inf.result);
+      },
+
+      testR5213: function() {
+        // TODO:
+      },
+
+      testDefAnd: function() {
+        var inf = Y.makeInference('defAnd', []);
+        assertEqual('(&& = {x : {y : ({g : (g T T)} = {g : (g x y)})}})',
+                    inf.result);
+      },
+
+      testBindEqn: function() {
+        var inf = Y.makeInference('bindEqn', [call('=', f, g), x]);
+        assertEqual('({x : f} = {x : g})', inf.result);
+      },
+
+      testR5214: function() {
+        var inf = Y.makeInference('r5214', []);
+        assertEqual('((T && F) = F)', inf.result);
+      },
+
+      testForallInst: function() {
+        var inf = Y.makeInference('forallInst',
+                                  [call('forall', lambda(y, call(p, y))),
+                                   call(f, y)])
+        assertEqual('(p (f y))', inf.result);
       },
 
       testMakeInference: function() {
@@ -262,6 +341,20 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('x', inf.inputs[0].name);
       }
   });
+
+  var tracing = false;
+  var rules = {};
+  for (var key in Y.ruleFns) {
+    (function(k) {
+      rules[k] = function() {
+        var result = Y.ruleFns[k].apply(null, arguments);
+        if (tracing) {
+          Y.log(result);
+        }
+        return result;
+      }
+    })(key);
+  };
 
 
   Y.Test.Runner.add(testCase);
