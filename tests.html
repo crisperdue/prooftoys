@@ -225,21 +225,6 @@ YUI({filter: null, insertBefore: 'styles'})
         logDetails(inf);
       },
 
-      testAxiom3a: function() {
-        var inf = Y.makeInference('axiom3a',
-                                  [lambda(x, T),
-                                   lambda(x, x),
-                                   call(p, y)]);
-        logDetails(inf);
-
-        var rules = Y.ruleFns;
-        var fa = rules.defForall();
-        
-        var step2 = rules.rRight(fa, inf.result, '/left/fn');
-        var step3 = rules.rRight(fa, step2, '/right/fn');
-        Y.log(step3);
-      },
-
       testEqSelf: function() {
         var result = Y.ruleFns.eqSelf(call(f, y));
         assertEqual('((f y) = (f y))', result);
@@ -278,10 +263,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((p q) = (p r))', result);
       },
 
-      testR5209: function() {
+      testInstEqn: function() {
         var b = new Y.Var('b');
         var c = new Y.Var('c');
-        var result = Y.ruleFns.r5209(call('=', call(g, y), c), call(f, x), y);
+        var result =
+          Y.ruleFns.instEqn(call('=', call(g, y), c), call(f, x), y);
         assertEqual('((g (f x)) = c)', result.toString());
       },
 
@@ -313,12 +299,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((p = q) && (q = r))', inf.result);
       },
 
-      testDefAnd: function() {
-        var inf = Y.makeInference('defAnd', []);
-        assertEqual('(&& = {x : {y : ({g : (g T T)} = {g : (g x y)})}})',
-                    inf.result);
-      },
-
       testBindEqn: function() {
         var inf = Y.makeInference('bindEqn', [call('=', f, g), x]);
         assertEqual('({x : f} = {x : g})', inf.result);
@@ -336,9 +316,44 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(p (f y))', inf.result);
       },
 
+      testAndTBook: function() {
+        var inf = Y.makeInference('andTBook', [p]);
+        assertEqual('((T && p) = p)', inf.result);
+      },
+
       testAndT: function() {
         var inf = Y.makeInference('andT', [p]);
         assertEqual('((T && p) = p)', inf.result);
+      },
+
+      testR5217: function() {
+        var inf = Y.makeInference('r5217', []);
+        // logDetails(inf);
+      },
+
+      testAddTrue: function() {
+        var inf = Y.makeInference('addTrue', [p]);
+        assertEqual('(p = (p = T))', inf.result);
+      },
+
+      testToTIsA: function() {
+        var inf = Y.makeInference('toTIsA', [p]);
+        assertEqual('(T = p)', inf.result);
+      },
+
+      testFromTIsA: function() {
+        var inf = Y.makeInference('fromTIsA', [call('=', T, p)]);
+        assertEqual('p', inf.result);
+      },
+
+      testUGen: function() {
+        var inf = Y.makeInference('uGen', [call(p, y), y]);
+        assertEqual('(forall {y : (p y)})', inf.result);
+      },
+
+      testSub: function() {
+        var inf = Y.makeInference('sub', [call(p, y), call(f, x), y]);
+        assertEqual('(p (f x))', inf.result);
       },
 
       testMakeInference: function() {
