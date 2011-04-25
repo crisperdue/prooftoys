@@ -15,8 +15,16 @@
 
 <style type="text/css">
 
-   h1 { color: black }
-   body { xbackground-color: #EEF }
+  h1 { color: black }
+  body { xbackground-color: #EEF }
+  .yui3-skin-sam .yui3-console-entry-pass .yui3-console-entry-cat {
+    background-color: #0C0;
+    color: black;
+  }
+  .yui3-skin-sam .yui3-console-entry-fail .yui3-console-entry-src {
+    background-color: red;
+    color: white;
+  }
 
 </style>
   
@@ -210,12 +218,28 @@ YUI({filter: null, insertBefore: 'styles'})
                     rules.axiom5());
       },
 
-      testAndTrue: function() {
-        assertEqual('((T && p) = p)', rules.defAndTrue());
+      testTrueAnd: function() {
+        assertEqual('((&& T) = {x : x})', rules.defTrueAnd());
       },
 
-      testAndFalse: function() {
-        assertEqual('((F && p) = F)', rules.defAndFalse());
+      testFalseAnd: function() {
+        assertEqual('((&& F) = {x : F})', rules.defFalseAnd());
+      },
+
+      testTrueOr: function() {
+        assertEqual('((|| T) = {x : T})', rules.defTrueOr());
+      },
+
+      testFalseOr: function() {
+        assertEqual('((|| F) = {x : x})', rules.defFalseOr());
+      },
+
+      testTrueImplies: function() {
+        assertEqual('((--> T) = {x : x})', rules.defTrueImplies());
+      },
+
+      testFalseImplies: function() {
+        assertEqual('((--> F) = {x : T})', rules.defFalseImplies());
       },
 
       testApplyBoth: function() {
@@ -368,6 +392,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(x = x)', inf.result);
       },
 
+      testTImpliesX: function() {
+        var inf = Y.makeInference('tImpliesX');
+        assertEqual('((T --> x) = x)', inf.result);
+      },
+
       // Looking at what can be done with Andrews' definition of "and".
       // From here you can get counterexamples to the possibilities
       // that ordered pairs other than TT satisfy the definition.
@@ -409,7 +438,7 @@ YUI({filter: null, insertBefore: 'styles'})
       console.log(Y.Test.Runner.getResults(Y.Test.Format.TAP));
       document.body.style.backgroundColor = 
         (event.results.failed == 0 && event.results.passed > 0)
-        ? '#0D0'
+        ? '#0C0'
         : '#F00';
     });
 });

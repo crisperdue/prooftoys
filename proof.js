@@ -114,29 +114,28 @@ var ruleFns = {
   },
 
   // Note this can be proved like 5211.
-  defAndTrue: function() {
-    return equal(call('&&', T, p), p);
+  defTrueAnd: function() {
+    return equal(call('&&', T), identity);
   },
 
-  defAndFalse: function() {
-    return equal(call('&&', F, p), F);
+  defFalseAnd: function() {
+    return equal(call('&&', F), lambda(x, F));
   },
 
-  defOrTrue: function() {
-    return allT;
-    // TODO: here and below.
+  defTrueOr: function() {
+    return equal(call('||', T), allT);
   },
 
-  defOrFalse: function() {
-    return identity;
+  defFalseOr: function() {
+    return equal(call('||', F), identity);
   },
 
-  defImpliesTrue: function() {
-    return allT;
+  defTrueImplies: function() {
+    return equal(call('-->', T), identity);
   },
 
-  defImpliesFalse: function() {
-    return lambda(x, equal(x, F));
+  defFalseImplies: function() {
+    return equal(call('-->', F), allT);
   },
 
   // Takes an arbitrary expression A, concluding that it is equal
@@ -301,8 +300,9 @@ var ruleFns = {
   r5214: function() {
     // This uses Cris's definition of T, so different proof than
     // in the book.
-    var step1 = rules.instEqn(rules.defAndTrue(), F, p);
-    return step1;
+    var step1 = rules.applyBoth(rules.defTrueAnd(), F);
+    var step2 = rules.reduce(step1, '/right');
+    return step2;
   },
 
   // TODO: remove
@@ -339,10 +339,11 @@ var ruleFns = {
     return step8;
   },
 
-  // 5216, using defAndTrue.
+  // 5216, using defTrueAnd.
   andT: function(a) {
-    var step1 = rules.instEqn(rules.defAndTrue(), a, p);
-    return step1;
+    var step1 = rules.applyBoth(rules.defTrueAnd(), a);
+    var step2 = rules.reduce(step1, '/right');
+    return step2;
   },
 
   // Book only.  We use axiomTIsNotF instead of defining F.
@@ -433,6 +434,12 @@ var ruleFns = {
     var step7a = rules.forallInst(step6, v);
     var step7b = rules.reduce(step7a, '/');
     return step7b;
+  },
+
+  tImpliesX: function() {
+    var step1 = rules.applyBoth(rules.defTrueImplies(), x);
+    var step2 = rules.reduce(step1, '/right');
+    return step2;
   },
 
   // Experiment with Andrews' definition of "and".
