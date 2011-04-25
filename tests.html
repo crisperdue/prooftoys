@@ -309,6 +309,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T && F) = F)', inf.result);
       },
 
+      testForall: function() {
+        var inf = Y.makeInference('forall', [lambda(x, call(p, x))]);
+        logDetails(inf);
+      },
+
       testForallInst: function() {
         var inf = Y.makeInference('forallInst',
                                   [call('forall', lambda(y, call(p, y))),
@@ -326,6 +331,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T && p) = p)', inf.result);
       },
 
+      // TODO: remove
       testR5217: function() {
         var inf = Y.makeInference('r5217', []);
         // logDetails(inf);
@@ -333,7 +339,8 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testAddTrue: function() {
         var inf = Y.makeInference('addTrue', [p]);
-        assertEqual('(p = (p = T))', inf.result);
+        logDetails(inf);
+        assertEqual('((T = p) = p)', inf.result);
       },
 
       testToTIsA: function() {
@@ -355,6 +362,21 @@ YUI({filter: null, insertBefore: 'styles'})
         var inf = Y.makeInference('sub', [call(p, y), call(f, x), y]);
         assertEqual('(p (f x))', inf.result);
       },
+
+      testCases: function() {
+        var inf = Y.makeInference('cases', [x, call('=', x, x)]);
+        assertEqual('(x = x)', inf.result);
+      },
+
+      // Looking at what can be done with Andrews' definition of "and".
+      // From here you can get counterexamples to the possibilities
+      // that ordered pairs other than TT satisfy the definition.
+      testFunWithAnd: function() {
+        var inf = Y.makeInference('andTF', []);
+        // logDetails(inf);
+      },
+
+      
 
       testMakeInference: function() {
         var inf = Y.makeInference('eqT', [x]);

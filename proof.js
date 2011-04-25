@@ -6,7 +6,11 @@ YUI.add('proof', function(Y) {
 // this environment.
 Y.Expr.utils.import();
 
-//// Rules (public)
+var identity = lambda(x, x);
+
+var allT = lambda(x, T);
+
+/// Rules (public)
 
 // Map from inference rule name to a JavaScript procedure that
 // implements it.
@@ -55,20 +59,20 @@ var ruleFns = {
   },
 
   axiom1: function() {
-    return call('=', call('&&', call(g, T), call(g, F)),
-                call('forall', lambda(x, call(g, x))));
+    return equal(call('&&', call(g, T), call(g, F)),
+                 call('forall', lambda(x, call(g, x))));
   },
 
   // (--> (= x y) (= (h x) (h y)))
   axiom2: function() {
-    return call('-->', call('=', x, y), call('=', call(h, x), call(h, y)));
+    return call('-->', equal(x, y), equal(call(h, x), call(h, y)));
   },
 
   // (= (= f g) (= {x : T} {x : (= (f x) (g x))}))
   axiom3: function() {
-    return call('=', call('=', f, g),
-                call('forall',
-                     lambda(x, call('=', call(f, x), call(g, x)))));
+    return equal(equal(f, g),
+                 call('forall',
+                      lambda(x, equal(call(f, x), call(g, x)))));
   },
 
   /**
@@ -79,7 +83,7 @@ var ruleFns = {
   axiom4: function(app) {
     if (app instanceof Y.Call && app.fn instanceof Y.Lambda) {
       var lambdaExpr = app.fn;
-      return call('=', app,
+      return equal(app,
                   Y.subFree(app.arg, lambdaExpr.bound, lambdaExpr.body));
     } else {
       throw new Error('Axiom 4 needs ({X : B} A), got: ' + app.toString());
@@ -87,31 +91,52 @@ var ruleFns = {
   },
 
   axiom5: function() {
-    return call('=', call('the', call('=', y)), y);
+    return equal(call('the', equal(y)), y);
   },
 
   defForall: function() {
-    return call('=', 'forall', call('=', lambda(x, T)));
+    return equal('forall', equal(lambda(x, T)));
   },
 
   defNot: function() {
-    return call('=', 'not', call('=', F));
+    return equal('not', equal(F));
+  },
+
+  defAnd: function() {
+    return equal('&&', lambda(x, lambda(y, equal(lambda(g, call(g, T, T)),
+                                                 lambda(g, call(g, x, y))))));
   },
 
   // Added by Cris instead of definition of F in book.
-  // F = [F = T]
-  // Alt: [F = T] = F.
-  axiomFIsNotT: function() {
-    return call('not', call('=', F, T));
+  // F = [T = F]
+  axiomTIsNotF: function() {
+    return call('not', equal(T, F));
   },
 
   // Note this can be proved like 5211.
   defAndTrue: function() {
-    return call('=', call('&&', T, p), p);
+    return equal(call('&&', T, p), p);
   },
 
   defAndFalse: function() {
-    return call('=', call('&&', F, p), F);
+    return equal(call('&&', F, p), F);
+  },
+
+  defOrTrue: function() {
+    return allT;
+    // TODO: here and below.
+  },
+
+  defOrFalse: function() {
+    return identity;
+  },
+
+  defImpliesTrue: function() {
+    return allT;
+  },
+
+  defImpliesFalse: function() {
+    return lambda(x, equal(x, F));
   },
 
   // Takes an arbitrary expression A, concluding that it is equal
@@ -274,13 +299,17 @@ var ruleFns = {
   },
 
   r5214: function() {
+    // This uses Cris's definition of T, so different proof than
+    // in the book.
     var step1 = rules.instEqn(rules.defAndTrue(), F, p);
     return step1;
   },
 
-  // Convert "forall A" to "{x : T} = A"
+  // TODO: remove
+  // Asserts "forall A = {x : T} = A"
   forall: function(a) {
     return rules.r(rules.defForall(a), a, '/fn');
+    // return rules.applyBoth(rules.defForall(), a, '/fn');
   },
 
   forallInst: function(target, expr) {
@@ -300,7 +329,7 @@ var ruleFns = {
   andTBook: function(a) {
     var step1 = rules.axiom1();
     var step2 =
-      rules.instEqn(step1, lambda(x, call('=', call('&&', T, x), x)), g);
+      rules.instEqn(step1, lambda(x, equal(call('&&', T, x), x)), g);
     var step3 = rules.reduce(step2, '/left/left');
     var step4 = rules.reduce(step3, '/left/right');
     var step5 = rules.reduce(step4, '/right/arg/body');
@@ -316,14 +345,14 @@ var ruleFns = {
     return step1;
   },
 
-  // Book only.  We use axiomFIsNotT instead of defining F.
+  // Book only.  We use axiomTIsNotF instead of defining F.
   r5217: function() {
-    var step1 = rules.instEqn(rules.axiom1(), lambda(x, call('=', T, x)), g);
+    var step1 = rules.instEqn(rules.axiom1(), lambda(x, equal(T, x)), g);
     var step2 = rules.reduce(step1, '/left/left');
     var step3 = rules.reduce(step2, '/left/right');
     var step4 = rules.reduce(step3, '/right/arg/body');
     var step5 = rules.rRight(rules.eqT(T), step4, '/left/left');
-    var step6 = rules.andT(call('=', T, F));
+    var step6 = rules.andT(equal(T, F));
     var step7 = rules.r(step6, step5, '/left');
     var step8 = rules.instEqn(rules.axiom3(), lambda(x, T), f);
     var step9 = rules.reduce(step8, '/right/arg/body/left');
@@ -335,33 +364,35 @@ var ruleFns = {
   // 5218: [T = A] = A
   addTrue: function(a) {
     var step1 = rules.instEqn(rules.axiom1(),
-                              lambda(x, call('=', x, call('=', x, T))),
+                              lambda(x, equal(equal(T, x), x)),
                               g);
     var step2 = rules.reduce(step1, '/left/left');
     var step3 = rules.reduce(step2, '/left/right');
     var step4 = rules.reduce(step3, '/right/arg/body');
-    var step5 = rules.eqT(T);
-    var step6 = rules.r(rules.defNot(), rules.axiomFIsNotT(), '/fn');
+    var step5a = rules.eqT(T);
+    var step5 = rules.eqnSwap(step5a);
+    var step6a = rules.r(rules.defNot(), rules.axiomTIsNotF(), '/fn');
+    var step6 = rules.eqnSwap(step6a);
     var step7 = rules.r5213(step5, step6);
     var step8 = rules.r(step4, step7, '/');
     var step9 = rules.forallInst(step8, a);
     return step9;
   },
 
+  // 5219
   toTIsA: function(a) {
     var step1 = rules.addTrue(a);
-    var step2 = rules.r(step1, a, '/');
-    var step3 = rules.eqnSwap(step2);
-    return step3;
+    var step2 = rules.rRight(step1, a, '/');
+    return step2;
   },
 
+  // also 5219
   fromTIsA: function(t_a) {
     assertEqn(t_a);
     assert(t_a.locate('/left') == T,
            'Input should be [T = A]: ' + t_a);
     var a = t_a.locate('/right');
-    var step1 = rules.eqnSwap(t_a);
-    var step2 = rules.rRight(rules.addTrue(a), step1, '/');
+    var step2 = rules.r(rules.addTrue(a), t_a, '/');
     return step2;
   },
 
@@ -385,6 +416,46 @@ var ruleFns = {
     var step1 = rules.uGen(b, v);
     var step2 = rules.forallInst(step1, a);
     return step2;
+  },
+
+  cases: function(v, a) {
+    var step1a = rules.axiom4(call(lambda(v, a), T));
+    var step1b = rules.toTIsA(step1a.locate('/right'));
+    var step1c = rules.rRight(step1a, step1b, '/right');
+    var step2a = rules.axiom4(call(lambda(v, a), F));
+    var step2b = rules.toTIsA(step2a.locate('/right'));
+    var step2c = rules.rRight(step2a, step2b, '/right');
+    var step3 = rules.r5212();
+    var step4a = rules.r(step1c, step3, '/left');
+    var step4b = rules.r(step2c, step4a, '/right');
+    var step5 = rules.sub(rules.axiom1(), lambda(v, a), g);
+    var step6 = rules.r(step5, step4b, '/');
+    var step7a = rules.forallInst(step6, v);
+    var step7b = rules.reduce(step7a, '/');
+    return step7b;
+  },
+
+  // Experiment with Andrews' definition of "and".
+  funWithAnd: function() {
+    var fa = rules.defForall();
+    var a2 = rules.axiom2();
+    var a3 = rules.axiom3();
+    var step1 = rules.applyBoth(rules.defAnd(), T);
+    var step2a = rules.reduce(step1, '/right');
+    var step2b = rules.applyBoth(step2a, F);
+    var step2c = rules.reduce(step2b, '/right');
+    var step3 = rules.instEqn(a3, step2c.locate('/right/left'), f);
+    var step4 = rules.instEqn(step3, step2c.locate('/right/right'), g);
+    var step5 = rules.reduce(step4, '/right/arg/body/left');
+    var step6 = rules.reduce(step5, '/right/arg/body/right');
+    var step7 = rules.applyBoth(fa, step6.locate('/right/arg'));
+    var step8 = rules.instEqn(a3, step7.locate('/right/left'), f);
+    var step9 = rules.instEqn(step8, step7.locate('/right/right'), g);
+    var step10 = rules.reduce(step9, '/right/arg/body/left');
+    var step11 = rules.reduce(step10, '/right/arg/body/right');
+    var step12 = rules.addTrue(step11.locate('/right/arg/body/right'));
+    var step13 = rules.r(step12, step11, '/right/arg/body');
+    return step12;
   }
 
 };

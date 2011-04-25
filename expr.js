@@ -761,6 +761,18 @@ var utils = {
     return result;
   },
 
+  /**
+   * Builds an expression [lhs = rhs] if RHS is present,
+   * otherwise just [= lhs].
+   */
+  equal: function(lhs, rhs) {
+    if (rhs) {
+      return call('=', lhs, rhs);
+    } else {
+      return call('=', lhs);
+    }
+  },
+
   lambda: function(bound, body) {
     return new Y.Lambda(bound, body);
   },
