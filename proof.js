@@ -98,6 +98,11 @@ var ruleFns = {
     return equal('forall', equal(lambda(x, T)));
   },
 
+  // Definition of F, for book-style proofs.
+  defFFromBook: function() {
+    return equal(F, call('forall', lambda(x, x)));
+  },
+
   defNot: function() {
     return equal('not', equal(F));
   },
@@ -349,21 +354,24 @@ var ruleFns = {
   // Book only.  We use axiomTIsNotF instead of defining F.
   r5217: function() {
     var step1 = rules.instEqn(rules.axiom1(), lambda(x, equal(T, x)), g);
-    var step2 = rules.reduce(step1, '/left/left');
-    var step3 = rules.reduce(step2, '/left/right');
-    var step4 = rules.reduce(step3, '/right/arg/body');
-    var step5 = rules.rRight(rules.eqT(T), step4, '/left/left');
-    var step6 = rules.andT(equal(T, F));
-    var step7 = rules.r(step6, step5, '/left');
-    var step8 = rules.instEqn(rules.axiom3(), lambda(x, T), f);
-    var step9 = rules.reduce(step8, '/right/arg/body/left');
-    var step10 = rules.instEqn(step9, lambda(x, x), g);
-    var step11 = rules.reduce(step10, '/right/arg/body/right');
-    // TODO: finish this using something like definition of F.
+    var step2a = rules.reduce(step1, '/left/left');
+    var step2b = rules.reduce(step2a, '/left/right');
+    var step2c = rules.reduce(step2b, '/right/arg/body');
+    var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
+    var step4a = rules.andT(equal(T, F));
+    var step4b = rules.r(step4a, step3, '/left');
+    var step5a = rules.instEqn(rules.axiom3(), lambda(x, T), f);
+    var step5b = rules.instEqn(step5a, lambda(x, x), g);
+    var step6a = rules.reduce(step5b, '/right/arg/body/left');
+    var step6b = rules.reduce(step6a, '/right/arg/body/right');
+    var step6c = rules.r(rules.defForall(), rules.defFFromBook(), '/right/fn');
+    var step6d = rules.rRight(step6c, step6b, '/left');
+    var step7 = rules.rRight(step6d, step4b, '/right');
+    return step7;
   },
 
   // 5218: [T = A] = A
-  addTrue: function(a) {
+  r5218: function(a) {
     var step1 = rules.instEqn(rules.axiom1(),
                               lambda(x, equal(equal(T, x), x)),
                               g);
@@ -382,7 +390,7 @@ var ruleFns = {
 
   // 5219
   toTIsA: function(a) {
-    var step1 = rules.addTrue(a);
+    var step1 = rules.r5218(a);
     var step2 = rules.rRight(step1, a, '/');
     return step2;
   },
@@ -393,7 +401,7 @@ var ruleFns = {
     assert(t_a.locate('/left') == T,
            'Input should be [T = A]: ' + t_a);
     var a = t_a.locate('/right');
-    var step2 = rules.r(rules.addTrue(a), t_a, '/');
+    var step2 = rules.r(rules.r5218(a), t_a, '/');
     return step2;
   },
 
@@ -436,10 +444,19 @@ var ruleFns = {
     return step7b;
   },
 
-  tImpliesX: function() {
+  r5223: function() {
     var step1 = rules.applyBoth(rules.defTrueImplies(), x);
     var step2 = rules.reduce(step1, '/right');
     return step2;
+  },
+
+  modusPonens: function(a, b) {
+    var step2a = rules.toTIsA(a);
+    var step2b = rules.eqnSwap(step2a);
+    var step3 = rules.r(step2b, call('-->', a, b), '/left');
+    var step4a = rules.sub(rules.r5223(), b, x);
+    var step4b = rules.r(step4a, step3, '/');
+    return step4b;
   },
 
   // Experiment with Andrews' definition of "and".
@@ -460,9 +477,9 @@ var ruleFns = {
     var step9 = rules.instEqn(step8, step7.locate('/right/right'), g);
     var step10 = rules.reduce(step9, '/right/arg/body/left');
     var step11 = rules.reduce(step10, '/right/arg/body/right');
-    var step12 = rules.addTrue(step11.locate('/right/arg/body/right'));
+    var step12 = rules.r5218(step11.locate('/right/arg/body/right'));
     var step13 = rules.r(step12, step11, '/right/arg/body');
-    return step12;
+    return step13;
   }
 
 };
@@ -590,15 +607,12 @@ function applyRule(name, arguments, stack) {
   // Each rule runs with a new list available for any steps within it.
   assert(typeof name == 'string', 'Name must be a string: ' + name);
   var rule = ruleFns[name];
-  if (rule) {
-    stack.push([]);
-    var result = ruleFns[name].apply(null, arguments);
-    var step = new Inference(name, arguments, result, stack.pop());
-    stack[stack.length - 1].push(step);
-    return result;
-  } else {
-    return null;
-  }
+  assert(rule, 'No such rule: ' + name);
+  stack.push([]);
+  var result = ruleFns[name].apply(null, arguments);
+  var step = new Inference(name, arguments, result, stack.pop());
+  stack[stack.length - 1].push(step);
+  return result;
 }
 
 /**

@@ -355,21 +355,21 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T && p) = p)', inf.result);
       },
 
-      // TODO: remove
+      // TODO: remove 5217, which needs a definition of F?
       testR5217: function() {
         var inf = Y.makeInference('r5217', []);
-        // logDetails(inf);
+        assertEqual('((T = F) = F)', inf.result);
       },
 
-      testAddTrue: function() {
-        var inf = Y.makeInference('addTrue', [p]);
-        logDetails(inf);
+      testR5218: function() {
+        var inf = Y.makeInference('r5218', [p]);
         assertEqual('((T = p) = p)', inf.result);
       },
 
       testToTIsA: function() {
         var inf = Y.makeInference('toTIsA', [p]);
         assertEqual('(T = p)', inf.result);
+        logDetails(inf);
       },
 
       testFromTIsA: function() {
@@ -392,16 +392,21 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(x = x)', inf.result);
       },
 
-      testTImpliesX: function() {
-        var inf = Y.makeInference('tImpliesX');
+      testR5223: function() {
+        var inf = Y.makeInference('r5223');
         assertEqual('((T --> x) = x)', inf.result);
+      },
+
+      testModusPonens: function() {
+        var inf = Y.makeInference('modusPonens', [p, q]);
+        assertEqual('q', inf.result);
       },
 
       // Looking at what can be done with Andrews' definition of "and".
       // From here you can get counterexamples to the possibilities
       // that ordered pairs other than TT satisfy the definition.
       testFunWithAnd: function() {
-        var inf = Y.makeInference('andTF', []);
+        var inf = Y.makeInference('funWithAnd', []);
         // logDetails(inf);
       },
 
