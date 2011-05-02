@@ -155,6 +155,25 @@ Expr.prototype.locate = function(_path) {
   return this.locate1(path(_path));
 };
 
+/**
+ * Searches for a subexpression of this that passes the test, given as
+ * a boolean function of one argument.  Returns a path from this to
+ * the occurrence, or null if none found.  Tests this expression
+ * first, followed by the rest in top-down left-to-right order.
+ */
+Expr.prototype.pathTo = function(pred) {
+  var revPath = this.path1(pred, path('/'));
+  if (revPath == null) {
+    return null;
+  }
+  var result = path();
+  while (!revPath.isEnd()) {
+    result = new Path(revPath.segment, result);
+    revPath = revPath.tail();
+  }
+  return result;
+};
+
 
 // Methods defined on expressions, but defined only in the subclasses:
 //
@@ -250,6 +269,7 @@ Expr.prototype.locate = function(_path) {
 // subexpression that passes the test, with this expression itself
 // tested first, followed by the rest in top-down, left-to-right
 // order.
+//
 
 
 //// Var -- variable bindings and references
@@ -331,6 +351,10 @@ Var.prototype.matches = function(expr, bindings) {
 
 Var.prototype.search = function(pred) {
   return pred(this) ? this : false;
+};
+
+Var.prototype.path1 = function(pred, revPath) {
+  return pred(this) ? revPath : null;
 };
 
 
@@ -441,6 +465,13 @@ Call.prototype.search = function(pred) {
     : this.fn.search(pred) || this.arg.search(pred);
 };
 
+Call.prototype.path1 = function(pred, revPath) {
+  return pred(this)
+    ? revPath
+    : this.fn.path1(pred, new Path('fn', revPath))
+      || this.arg.path1(pred, new Path('arg', revPath));
+};
+
 
 //// Lambda -- variable bindings
 
@@ -546,6 +577,13 @@ Lambda.prototype.matches = function(expr, bindings) {
 Lambda.prototype.search = function(pred) {
   return pred(this) ? this : this.body.search(pred);
 };
+
+Lambda.prototype.path1 = function(pred, revPath) {
+  return pred(this)
+    ? this
+    : this.body.path1(pred, new Path('body', revPath));
+};
+
 
 
 //// Counter -- stateful counter for internal use
@@ -654,10 +692,22 @@ Path.prototype.isMatch = function() {
   return this == _end;
 };
 
+Path.prototype.isEnd = function() {
+  return this == _end;
+};
+
+Path.prototype.tail = function() {
+  return this._rest;
+};
+
 Path.prototype.rest = function(direction) {
   return this.segment == direction ? this._rest : Path.none;
 };
 
+/**
+ * Empty path displays as '', otherwise "/ segment"
+ * for each segment of the path.
+ */
 Path.prototype.toString = function() {
   if (this == Path.none) {
     return '(none)';
@@ -679,10 +729,15 @@ Path.prototype.toString = function() {
  * or an array of strings.  The parts become the segments of the path.
  * Some segments serve as macros that expand into a list of other
  * segments, currently 'left', 'right', and 'binop'.
+ *
+ * A null input is treated as '/'.
  */
 function path(arg) {
   if (arg instanceof Path) {
     return arg;
+  }
+  if (arg == null) {
+    arg = '/';
   }
   var segments = (typeof arg == 'string')
     ? arg.split('/')

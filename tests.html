@@ -191,6 +191,20 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(p x)', body.toString());
       },
 
+      testPathTo: function() {
+        function findX(expr) {
+          return expr == x;
+        }
+        assertEqual('', '' + x.pathTo(findX));
+        assertEqual('/fn', '' + call(x, y).pathTo(findX));
+        assertEqual('/arg', '' + call(y, x).pathTo(findX));
+        assertEqual('/body', '' + lambda(x, x).pathTo(findX));
+        assertEqual('/arg/arg/arg',
+                    '' + call(f, call(f, call(g, x))).pathTo(findX));
+      },
+
+      // PROOFS
+
       testRuleR: function() {
         var path = Y.path('/right/left');
         var withTimes = Y.ruleFns.r(times2, bigger, path);
@@ -311,9 +325,19 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual(T, Y.ruleFns.t());
       },
 
+      testEvalBool: function() {
+        var inf = Y.makeInference('evalBool', [call('not', T), '']);
+        logDetails(inf);
+      },
+
       testR5212: function() {
         var inf = Y.makeInference('r5212', []);
         assertEqual('(T && T)', inf.result);
+      },
+
+      testEqnIsTrue: function() {
+        var inf = Y.makeInference('eqnIsTrue', [call('=', p, q)]);
+        assertEqual('(T = (p = q))', inf.result);
       },
 
       testR5213: function() {
@@ -326,16 +350,6 @@ YUI({filter: null, insertBefore: 'styles'})
       testBindEqn: function() {
         var inf = Y.makeInference('bindEqn', [call('=', f, g), x]);
         assertEqual('({x : f} = {x : g})', inf.result);
-      },
-
-      testR5214: function() {
-        var inf = Y.makeInference('r5214', []);
-        assertEqual('((T && F) = F)', inf.result);
-      },
-
-      testForall: function() {
-        var inf = Y.makeInference('forall', [lambda(x, call(p, x))]);
-        logDetails(inf);
       },
 
       testForallInst: function() {
@@ -355,7 +369,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T && p) = p)', inf.result);
       },
 
-      // TODO: remove 5217, which needs a definition of F?
+      testR5217Book: function() {
+        var inf = Y.makeInference('r5217Book', []);
+        assertEqual('((T = F) = F)', inf.result);
+      },
+
       testR5217: function() {
         var inf = Y.makeInference('r5217', []);
         assertEqual('((T = F) = F)', inf.result);
@@ -397,9 +415,31 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T --> x) = x)', inf.result);
       },
 
+      testApplyBinop: function() {
+        var inf = Y.makeInference('applyBinop', ['defTrueImplies', T]);
+        assertEqual('((T --> T) = T)', inf.result);
+        var inf2 = Y.makeInference('applyBinop', ['defTrueImplies', F]);
+        assertEqual('((T --> F) = F)', inf2.result);
+      },
+
       testModusPonens: function() {
         var inf = Y.makeInference('modusPonens', [p, q]);
         assertEqual('q', inf.result);
+      },
+
+      testR5230a: function() {
+        var inf = Y.makeInference('r5230a');
+        assertEqual('((F = T) = F)', inf.result);
+      },
+
+      testR5231T: function() {
+        var inf = Y.makeInference('r5231T');
+        assertEqual('((not T) = F)', inf.result);
+      },
+
+      testR5231F: function() {
+        var inf = Y.makeInference('r5231F');
+        assertEqual('((not F) = T)', inf.result);
       },
 
       // Looking at what can be done with Andrews' definition of "and".
