@@ -443,14 +443,11 @@ var ruleFns = {
     return step7;
   },
 
+  // 5217 is the same as 5230TF.
+
   // [T = F] = F
   // Not used, though previously used in 5218.
-  r5217: function() {
-    var step1 = rules.axiomTIsNotF();
-    var step2 = rules.r(rules.defNot(), step1, '/fn');
-    var step3 = rules.eqnSwap(step2);
-    return step3;
-  },
+
 
   // 5218: [T = A] = A
   // Stepping stone to universal generalization.
@@ -560,9 +557,17 @@ var ruleFns = {
     return step3;
   },
 
+  // Prove [T = F] = F (same as 5217)
+  r5230TF: function() {
+    var step1 = rules.axiomTIsNotF();
+    var step2 = rules.r(rules.defNot(), step1, '/fn');
+    var step3 = rules.eqnSwap(step2);
+    return step3;
+  },
+
   // Prove [F = T] = F
   // TODO: Is there a more elegant proof of this?
-  r5230a: function() {
+  r5230FT: function() {
     var step1a = rules.sub(rules.axiom2(), F, x);
     var step1b = rules.sub(step1a, T, y);
     var step1c = rules.sub(step1b, lambda(x, equal(x, F)), h);
@@ -598,7 +603,7 @@ var ruleFns = {
   r5231T: function() {
     var step1 = rules.eqSelf(call('not', T));
     var step2 = rules.r(rules.defNot(), step1, '/right/fn');
-    var step3 = rules.r(rules.r5230a(), step2, '/right');
+    var step3 = rules.r(rules.r5230FT(), step2, '/right');
     return step3;
   },
 

@@ -374,11 +374,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T = F) = F)', inf.result);
       },
 
-      testR5217: function() {
-        var inf = Y.makeInference('r5217', []);
-        assertEqual('((T = F) = F)', inf.result);
-      },
-
       testR5218: function() {
         var inf = Y.makeInference('r5218', [p]);
         assertEqual('((T = p) = p)', inf.result);
@@ -427,8 +422,13 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('q', inf.result);
       },
 
-      testR5230a: function() {
-        var inf = Y.makeInference('r5230a');
+      testR5230TF: function() {
+        var inf = Y.makeInference('r5230TF');
+        assertEqual('((T = F) = F)', inf.result);
+      },
+
+      testR5230FT: function() {
+        var inf = Y.makeInference('r5230FT');
         assertEqual('((F = T) = F)', inf.result);
       },
 
