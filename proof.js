@@ -84,7 +84,7 @@ var ruleFns = {
     if (app instanceof Y.Call && app.fn instanceof Y.Lambda) {
       var lambdaExpr = app.fn;
       return equal(app,
-                  Y.subFree(app.arg, lambdaExpr.bound, lambdaExpr.body));
+                   Y.subFree(app.arg, lambdaExpr.bound, lambdaExpr.body));
     } else {
       throw new Error('Axiom 4 needs ({X : B} A), got: ' + app.toString());
     }
@@ -220,8 +220,8 @@ var ruleFns = {
 
   /**
    * Beta-reduce an application of a lambda expression to an argument,
-   * with the subexpression identified by a path.  Rule R packaged
-   * for convenience.
+   * with the subexpression identified by a path (within a theorem).
+   * Rule R packaged for convenience.
    */
   reduce: function(expr, path) {
     path = Y.path(path);
@@ -232,23 +232,6 @@ var ruleFns = {
     var equation = rules.axiom4(target);
     var result = rules.r(equation, expr, path);
     return result;
-  },
-
-  // Target is forall {x : B}, expr is A, which will replace
-  // all occurrences of x.  Uses no book-specific definitions,
-  // and relies only on 5200.
-  // This is 5215.
-  forallInst: function(target, expr) {
-    assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
-           "Must be 'forall': " + target.fn);
-    assert(target.arg instanceof Y.Lambda,
-           "Must be lambda expression: " + target.arg);
-    var step1 = rules.r(rules.defForall(), target, '/fn');
-    var step2 = rules.applyBoth(step1, expr);
-    var step3 = rules.reduce(step2, '/left');
-    var step4 = rules.reduce(step3, '/right');
-    var step5 = rules.r(step4, rules.t(), '/');
-    return step5;
   },
 
   /**
@@ -299,7 +282,7 @@ var ruleFns = {
   },
 
   /**
-   * "T" is a theorem.
+   * "T" is a theorem.  In the book, this is an instance of eqT.
    */
   t: function() {
     var step1 = rules.eqSelf(T);
@@ -308,48 +291,25 @@ var ruleFns = {
     return step3;
   },
 
-  // Reduce boolean terms in an expression to T or F
-  // where the argument(s) have T/F values.  Do this repeatedly
-  // until no subexpression can be reduced.
-  evalBool: function(a, path) {
-    var boolDefs = {
-      '&&': {T: 'defTrueAnd', F: 'defFalseAnd'},
-      '||': {T: 'defTrueOr', F: 'defFalseOr'},
-      '-->': {T: 'defTrueImplies', F: 'defFalseImplies'}
-    };
-    function isReducible(expr) {
-      return ((expr instanceof Y.Call)
-              && (expr.fn[boolDefs]
-                  || expr.fn == 'not'
-                  || (expr.fn instanceof Y.Call
-                      && expr.fn.fn instanceof Y.Lambda))
-              && (expr.arg == T || expr.arg == F));
-    }
-    var result = a;
-    while (true) {
-      var part = result.locate(path);
-      var _path = part.pathTo(isReducible);
-      if (_path == null) {
-        return result;
-      }
-      var expr = part.locate(_path);
-      var fn = expr.fn;
-      var fullPath = path + _path;
-      if (fn instanceof Y.Var) {
-        if (fn.name == 'not') {
-          result = rules.r(rules.defNot(), result, fullPath + '/fn');
-        } else {
-          var ruleName = boolDefs[expr.fn.name][expr.arg.name];
-          result = rules.r(rules[ruleName], result, fullPath);
-        }
-      } else if (fn instanceof Y.Lambda) {
-        result = rules.reduce(result, fullPath);
-      }
-    }
+  // Target is forall {x : B}, expr is A, which will replace
+  // all occurrences of x.  Uses no book-specific definitions,
+  // and relies only on rule "T" and 5200.
+  // This is 5215.
+  forallInst: function(target, expr) {
+    assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
+           "Must be 'forall': " + target.fn);
+    assert(target.arg instanceof Y.Lambda,
+           "Must be lambda expression: " + target.arg);
+    var step1 = rules.r(rules.defForall(), target, '/fn');
+    var step2 = rules.applyBoth(step1, expr);
+    var step3 = rules.reduce(step2, '/left');
+    var step4 = rules.reduce(step3, '/right');
+    var step5 = rules.r(step4, rules.t(), '/');
+    return step5;
   },
 
   // [T && T] = T.  Uses no book-specific definitions.
-  // TODO: Remove this and 5212.
+  // TODO: Consider proving this from defTrueAnd.
   // Only used in 5212 and book version of 5216.
   r5211: function() {
     var step1 = rules.instEqn(rules.axiom1(), lambda(y, T), g);
@@ -363,8 +323,7 @@ var ruleFns = {
   },
 
   // T && T.  Uses no book-specific definitions.
-  // Only used to prove the Cases rule.
-  // TODO: inline this there.
+  // Used to prove the Cases rule.
   r5212: function() {
     var step1 = rules.rRight(rules.r5211(), rules.t(), '/');
     return step1;
@@ -373,9 +332,7 @@ var ruleFns = {
   // From [A = B] deduce T = [A = B].  Use instead of 5213.
   eqnIsTrue: function(a_b) {
     assertEqn(a_b);
-    var a = a_b.locate('/left');
-    var b = a_b.locate('/right');
-    var step1 = rules.eqT(a);
+    var step1 = rules.eqT(a_b.locate('/left'));
     var step2 = rules.r(a_b, step1, '/right/right');
     return step2;
   },
@@ -383,7 +340,8 @@ var ruleFns = {
   // From theorems A = B and C = D, derives theorem
   // [A = B] = [C = D].  Uses no book-specific definitions.
   // Only used in 5218 (5216  is not used.)
-  // Use eqnIsTrue instead.
+  // Use eqnIsTrue there instead of this.
+  // TODO: remove.
   r5213: function(a_b, c_d) {
     assertEqn(a_b);
     var a = a_b.locate('/left');
@@ -545,18 +503,6 @@ var ruleFns = {
     return step4b;
   },
 
-  // Not in book.  Apply a (boolean) binary operator definition
-  // to an expression, then reduce the RHS of the result.
-  // Use this to apply definitions for "and", "or", "implies"
-  // to arguments.
-  // TODO: Modify to work with constant expressions.
-  applyBinop: function(rule, value) {
-    var step1 = rules[rule]();
-    var step2 = rules.applyBoth(step1, value);
-    var step3 = rules.reduce(step2, '/right');
-    return step3;
-  },
-
   // Prove [T = F] = F (same as 5217)
   r5230TF: function() {
     var step1 = rules.axiomTIsNotF();
@@ -600,6 +546,7 @@ var ruleFns = {
     return step8;
   },
 
+  // [not T] = F
   r5231T: function() {
     var step1 = rules.eqSelf(call('not', T));
     var step2 = rules.r(rules.defNot(), step1, '/right/fn');
@@ -607,6 +554,7 @@ var ruleFns = {
     return step3;
   },
 
+  // [not F] = T
   r5231F: function() {
     var step1 = rules.eqSelf(call('not', F));
     var step2 = rules.r(rules.defNot(), step1, '/right/fn');
@@ -614,6 +562,64 @@ var ruleFns = {
     var step4 = rules.rRight(step3, step2, '/right');
     return step4;
   },
+
+  // Helper for evalBool, not in book.  The path should refer to a
+  // subexpression of A of the form (= F).
+  // This replaces it with "not".
+  falseEqualsNot: function(a, path) {
+    return rules.rRight(rules.defNot(), a, path);
+  },
+
+  // Equates the given expression to a similar one where boolean terms
+  // are reduced.  (These are calls to =, &&, ||, -->, or "not", and
+  // lambda expressions, with an argument of T or F.)  Reduces
+  // repeatedly until no subexpression can be reduced.
+  evalBool: function(expr) {
+    var boolDefs = {
+      '&&': {T: 'defTrueAnd', F: 'defFalseAnd'},
+      '||': {T: 'defTrueOr', F: 'defFalseOr'},
+      '-->': {T: 'defTrueImplies', F: 'defFalseImplies'},
+      '=': {T: 'r5218', F: 'falseEqualsNot'},
+      not: {T: 'r5231T', F: 'r5231F'}
+    };
+    function isReducible(expr) {
+      return ((expr instanceof Y.Call)
+              && (expr.arg == T || expr.arg == F)
+              && (expr.fn instanceof Y.Lambda
+                  || (expr.fn instanceof Y.Var && boolDefs[expr.fn.name])));
+    }
+    var result = rules.eqSelf(expr);
+    while (true) {
+      var right = result.getRight();
+      var _path = right.pathTo(isReducible);
+      if (_path == null) {
+        return result;
+      }
+      var target = right.locate(_path);
+      var fn = target.fn;
+      if (fn instanceof Y.Var) {
+        var ruleName = boolDefs[fn.name][target.arg.name];
+        result = rules.r(rules[ruleName](), result, '/right' + _path);
+      } else if (fn instanceof Y.Lambda) {
+        result = rules.reduce(result, '/right' + _path);
+      } else {
+        assert(false, 'Unexpected expression: ' + target);
+      }
+    }
+  },
+
+  // Not in book.  Applies both sides of a function definition to an
+  // expression, then reduce the RHS of the result (expected to be a
+  // call to a lambda).  Not used (yet).
+  applyFunc: function(defn, value) {
+    var step1 = rules.applyBoth(defn, value);
+    var step2 = rules.reduce(step1, '/right');
+    return step2;
+  },
+
+  //
+  // OPTIONAL/UNUSED
+  // 
 
   // Experiment with Andrews' definition of "and".
   funWithAnd: function() {
@@ -765,7 +771,7 @@ function applyRule(name, arguments, stack) {
   var rule = ruleFns[name];
   assert(rule, 'No such rule: ' + name);
   stack.push([]);
-  var result = ruleFns[name].apply(null, arguments);
+  var result = rule.apply(null, arguments);
   var step = new Inference(name, arguments, result, stack.pop());
   stack[stack.length - 1].push(step);
   return result;

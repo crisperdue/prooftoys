@@ -325,11 +325,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual(T, Y.ruleFns.t());
       },
 
-      testEvalBool: function() {
-        var inf = Y.makeInference('evalBool', [call('not', T), '']);
-        logDetails(inf);
-      },
-
       testR5212: function() {
         var inf = Y.makeInference('r5212', []);
         assertEqual('(T && T)', inf.result);
@@ -410,13 +405,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T --> x) = x)', inf.result);
       },
 
-      testApplyBinop: function() {
-        var inf = Y.makeInference('applyBinop', ['defTrueImplies', T]);
-        assertEqual('((T --> T) = T)', inf.result);
-        var inf2 = Y.makeInference('applyBinop', ['defTrueImplies', F]);
-        assertEqual('((T --> F) = F)', inf2.result);
-      },
-
       testModusPonens: function() {
         var inf = Y.makeInference('modusPonens', [p, q]);
         assertEqual('q', inf.result);
@@ -442,6 +430,30 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((not F) = T)', inf.result);
       },
 
+      testEvalBool: function() {
+        var inf = Y.makeInference('evalBool', [call('not', T)]);
+        assertEqual('((not T) = F)', inf.result);
+        inf = Y.makeInference('evalBool', [call('&&', F, T)]);
+        assertEqual('((F && T) = F)', inf.result);
+        inf = Y.makeInference('evalBool', [call(p, call('||', F, T))]);
+        assertEqual('((p (F || T)) = (p T))', inf.result);
+        var taut = call('-->',
+                        call('-->', p, call('not', p)),
+                        call('not', p));
+        inf = Y.makeInference('evalBool', [taut.subst(T, p, {})]);
+        assertEqual('T', inf.result.getRight());
+        inf = Y.makeInference('evalBool', [taut.subst(F, p, {})]);
+        assertEqual('T', inf.result.getRight());
+      },
+
+      testApplyFunc: function() {
+        var defn = rules.defTrueImplies();
+        var inf = Y.makeInference('applyFunc', [defn, T]);
+        assertEqual('((T --> T) = T)', inf.result);
+        var inf2 = Y.makeInference('applyFunc', [defn, F]);
+        assertEqual('((T --> F) = F)', inf2.result);
+      },
+
       // Looking at what can be done with Andrews' definition of "and".
       // From here you can get counterexamples to the possibilities
       // that ordered pairs other than TT satisfy the definition.
@@ -449,8 +461,6 @@ YUI({filter: null, insertBefore: 'styles'})
         var inf = Y.makeInference('funWithAnd', []);
         // logDetails(inf);
       },
-
-      
 
       testMakeInference: function() {
         var inf = Y.makeInference('eqT', [x]);
