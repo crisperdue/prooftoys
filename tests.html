@@ -437,6 +437,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((F && T) = F)', inf.result);
         inf = Y.makeInference('evalBool', [call(p, call('||', F, T))]);
         assertEqual('((p (F || T)) = (p T))', inf.result);
+        // [p --> not p] --> not p
         var taut = call('-->',
                         call('-->', p, call('not', p)),
                         call('not', p));
