@@ -430,6 +430,16 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((not F) = T)', inf.result);
       },
 
+      testFalseEquals: function() {
+        var inf = Y.makeInference('falseEquals');
+        assertEqual('((= F) = not)', inf.result);
+      },
+
+      testTrueEquals: function() {
+        var inf = Y.makeInference('trueEquals');
+        assertEqual('((= T) = {x : x})', inf.result);
+      },
+
       testEvalBool: function() {
         var inf = Y.makeInference('evalBool', [call('not', T)]);
         assertEqual('((not T) = F)', inf.result);
@@ -453,6 +463,20 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T --> T) = T)', inf.result);
         var inf2 = Y.makeInference('applyFunc', [defn, F]);
         assertEqual('((T --> F) = F)', inf2.result);
+      },
+
+      testTautology: function() {
+        var wff = T;
+        var inf = Y.makeInference('tautology', [wff]);
+        assertEqual(wff.toString(), inf.result);
+        var wff = equal(x, x);
+        var inf = Y.makeInference('tautology', [wff]);
+        assertEqual(wff.toString(), inf.result);
+        var wff = call('-->',
+                       call('-->', p, call('not', p)),
+                       call('not', p));
+        var inf = Y.makeInference('tautology', [wff]);
+        assertEqual(wff.toString(), inf.result);
       },
 
       // Looking at what can be done with Andrews' definition of "and".

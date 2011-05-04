@@ -563,11 +563,25 @@ var ruleFns = {
     return step4;
   },
 
-  // Helper for evalBool, not in book.  The path should refer to a
-  // subexpression of A of the form (= F).
-  // This replaces it with "not".
-  falseEqualsNot: function(a, path) {
-    return rules.rRight(rules.defNot(), a, path);
+  // Helper for evalBool, not in book.
+  // [[= F] = not].
+  falseEquals: function() {
+    return rules.eqnSwap(rules.defNot());
+  },
+
+  // Another helper for evalBool, not in book.
+  // [[= T] = {x : x}].
+  trueEquals: function() {
+    var step1 = rules.r5218(x);
+    var step2 = rules.eqSelf(x);
+    var step3 = rules.applyToBoth(lambda(x, x), step2);
+    var step4 = rules.reduce(step3, '/left');
+    var step5 = rules.r(step4, step1, '/right');
+    var step6 = rules.uGen(step5, x);
+    var step7 = rules.sub(rules.axiom3(), equal(T), f);
+    var step8 = rules.sub(step7, lambda(x, x), g);
+    var step9 = rules.rRight(step8, step6, '');
+    return step9;
   },
 
   // Equates the given expression to a similar one where boolean terms
@@ -579,7 +593,7 @@ var ruleFns = {
       '&&': {T: 'defTrueAnd', F: 'defFalseAnd'},
       '||': {T: 'defTrueOr', F: 'defFalseOr'},
       '-->': {T: 'defTrueImplies', F: 'defFalseImplies'},
-      '=': {T: 'r5218', F: 'falseEqualsNot'},
+      '=': {T: 'trueEquals', F: 'falseEquals'},
       not: {T: 'r5231T', F: 'r5231F'}
     };
     function isReducible(expr) {
@@ -610,11 +624,34 @@ var ruleFns = {
 
   // Not in book.  Applies both sides of a function definition to an
   // expression, then reduce the RHS of the result (expected to be a
-  // call to a lambda).  Not used (yet).
-  applyFunc: function(defn, value) {
-    var step1 = rules.applyBoth(defn, value);
+  // call to a lambda).  A bit like Lisp "apply".  Not used (yet).
+  applyFunc: function(defn, expr) {
+    var step1 = rules.applyBoth(defn, expr);
     var step2 = rules.reduce(step1, '/right');
     return step2;
+  },
+
+  // Proves an inference that the wff is a tautology and
+  // returns it.  Checks that it is indeed proven to be a
+  // tautology.  5233
+  tautology: function(wff) {
+    var names = wff.freeNames();
+    var constants = {T: true, F: true, not: true, '=': true,
+                     '&&': true, '||': true, '-->': true};
+    // Not really a loop, just works with the first free (variable!)
+    // name returned.
+    for (var name in names) {
+      if (!constants[name]) {
+        var step1 = rules.tautology(Y.subFree(T, name, wff));
+        var step2 = rules.tautology(Y.subFree(F, name, wff));
+        return rules.cases(names[name], wff);
+      }
+    }
+    // There are no free variables, evaluate the expression.
+    var result = rules.evalBool(wff);
+    assert(result.isCall2('=') && result.getRight() == T,
+           'Not a tautology: ' + result.getLeft());
+    return rules.rRight(result, rules.t(), '');
   },
 
   //
