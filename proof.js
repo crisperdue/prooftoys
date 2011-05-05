@@ -105,6 +105,8 @@ var ruleFns = {
 
   // Added by Cris instead of definition of F in book.
   // not [T = F] (thus F = [T = F]).
+  // Alternatively, add (forall {x : not (x = (not x))}) below,
+  // shortening the proof of [F = [F = T]].
   axiomTIsNotF: function() {
     return call('not', equal(T, F));
   },
@@ -282,7 +284,8 @@ var ruleFns = {
   },
 
   /**
-   * "T" is a theorem.  In the book, this is an instance of eqT.
+   * "T" is a theorem.  In the book, T is defined as an instance of
+   * eqT.
    */
   t: function() {
     var step1 = rules.eqSelf(T);
@@ -653,6 +656,8 @@ var ruleFns = {
            'Not a tautology: ' + result.getLeft());
     return rules.rRight(result, rules.t(), '');
   },
+
+  
 
   //
   // OPTIONAL/UNUSED

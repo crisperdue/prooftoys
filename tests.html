@@ -472,9 +472,17 @@ YUI({filter: null, insertBefore: 'styles'})
         var wff = equal(x, x);
         var inf = Y.makeInference('tautology', [wff]);
         assertEqual(wff.toString(), inf.result);
+        // ((p --> (not p)) --> (not p))
         var wff = call('-->',
                        call('-->', p, call('not', p)),
                        call('not', p));
+        Y.log('Tautology: '+wff);
+        var inf = Y.makeInference('tautology', [wff]);
+        assertEqual(wff.toString(), inf.result);
+        // (((p && q) --> r) = (p --> (q --> r)))
+        var wff = equal(call('-->', call('&&', p, q), r),
+                        call('-->', p, call('-->', q, r)));
+        Y.log('Tautology: '+wff);
         var inf = Y.makeInference('tautology', [wff]);
         assertEqual(wff.toString(), inf.result);
       },
