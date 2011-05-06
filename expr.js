@@ -295,11 +295,7 @@ Expr.prototype.pathTo = function(pred) {
 
 function Var(name) {
   this.sort = Expr.var;
-  if (typeof name == 'boolean') {
-    this.found = true;
-  } else {
-    this.name = name;
-  }
+  this.name = name;
 };
 Y.extend(Var, Expr);
 
@@ -384,15 +380,11 @@ Var.prototype.render1 = function(node) {
 
 //// Call -- application of a function to an argument
 
-var Call = function(fn, arg) {
+function Call(fn, arg) {
   this.sort = Expr.call;
-  if (typeof fn == 'boolean') {
-    this.found = fn;
-  } else {
-    this.fn = fn;
-    this.arg = arg;
-  }
-};
+  this.fn = fn;
+  this.arg = arg;
+}
 Y.extend(Call, Expr);
 
 Call.prototype.toString = function() {
@@ -537,13 +529,9 @@ Call.prototype.render1 = function(node) {
  */
 function Lambda(bound, body) {
   this.sort = Expr.lambda;
-  if (typeof bound == 'boolean') {
-    this.found = bound;
-  } else {
-    this.bound = bound;
-    this.body = body;
-  }
-};
+  this.bound = bound;
+  this.body = body;
+}
 Y.extend(Lambda, Expr);
 
 Lambda.prototype.toString = function() {
