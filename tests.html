@@ -141,16 +141,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('({v_1 : v_1} v)', result.toString());
       },
 
-      testSame: function() {
-        var y = _var('y');
-        var e1 = call(lambda(x, call(f, x)), y);
-        var x2 = _var('x2');
-        var e2 = call(lambda(x2, call(f, x2)), y);
-        Y.Assert.isTrue(e1.same(e2));
-        var e3 = call(lambda(x2, call(f, x2)), _var('y2'));
-        Y.Assert.isFalse(e1.same(e3));
-      },
-
       testNormalize: function() {
         var e1 = call(lambda(x, call(f, x)), _var('y'));
         var result = Y.normalized(e1);

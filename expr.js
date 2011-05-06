@@ -71,7 +71,7 @@ Expr.prototype.toString = function() {
  */
 Expr.prototype.freeNames = function() {
   var byName = {};
-  this.addFreeNames(byName, null);
+  this._addFreeNames(byName, null);
   return byName;
 };
 
@@ -167,6 +167,11 @@ Expr.prototype.pathTo = function(pred) {
 
 // Methods defined on expressions, but defined only in the subclasses:
 //
+// dump()
+//
+// Converts expression to a string like toString, but without special
+// handling of functions of more than one argument or infix operators.
+// 
 //
 // subst(Expr replacement, Var variable, Map freeNames)
 // 
@@ -189,21 +194,12 @@ Expr.prototype.pathTo = function(pred) {
 // this expression.  A null value indicates zero bindings.
 //
 //
-// addFreeNames(Map result, Bindings bindings)
+// _addFreeNames(Map result, Bindings bindings)
 // 
 // Adds names of all free variables that occur in this Expr to the result
 // object, with the Var object as the value associated with each name
 // found.  Assumes that variables in the Bindings object are bound in this
 // expression's lexical context.
-//
-//
-// same(Expr e2, Bindings bindings) <== REMOVE??
-//
-// Tests whether this expression and e2 are the same except for names
-// of bound variables.  Their constants, free variables, and structure
-// must match.  If given, the bindings map from variables bound in
-// expressions containing this expression to corresponding bound
-// variables of the expression containing e2.
 //
 //
 // normalized(counter, bindings)
@@ -235,15 +231,11 @@ Expr.prototype.pathTo = function(pred) {
 //
 // matches(expr, bindings)
 //
-// Returns true iff this expression matches the structure and names of
-// the given expression.  Names free in this expression (though
-// potentially bound in enclosing expressions) must match names in the
-// given expression, and bound variables must have corresponding bound
-// variables in each, though the names may differ.  If bindings are
-// given, they connect variables bound in enclosing expressions of
-// this and enclosing expressions of the argument, and a variable in
-// this matches a variable of the argument iff the argument variable
-// is found as the "to" part of a binding for the variable in this.
+// Tests whether this expression and e2 are the same except for names
+// of bound variables.  Their constants, free variables, and structure
+// must match.  The bindings map from variables bound in expressions
+// containing this expression to corresponding bound variables of the
+// expression containing e2.
 //
 //
 // search(test)
@@ -261,6 +253,7 @@ Expr.prototype.pathTo = function(pred) {
 // node, setting the expression's "node" property to refer to the node
 // created to enclose this expression.  Should be done only once to
 // any given expression.
+
 
 //// Var -- variable bindings and references
 
@@ -288,23 +281,14 @@ Var.prototype.copy = function(bindings) {
   return getBinding(this, bindings) || this;
 };
 
-Var.prototype.addFreeNames = function(map, bindings) {
+Var.prototype._addFreeNames = function(map, bindings) {
   if (getBinding(this, bindings) == null) {
     map[this.name] = this;
   }
 };
 
-Var.prototype.same = function(e2, bindings) {
-  var result = this == e2 || getBinding(this, bindings) == e2;
-  if (!result) {
-    Y.log(this.toString() + ' != ' + e2.toString());
-  }
-  return result;
-};
-
 Var.prototype.normalized = function(counter, bindings) {
-  var bindings = getBinding(this, bindings);
-  return bindings || this;
+  return getBinding(this, bindings) || this;
 };
 
 Var.prototype.rescope = function(bindings) {
@@ -376,22 +360,9 @@ Call.prototype.copy = function(bindings) {
   return new Call(this.fn.copy(bindings), this.arg.copy(bindings));
 };
 
-Call.prototype.addFreeNames = function(map, bindings) {
-  this.fn.addFreeNames(map, bindings);
-  this.arg.addFreeNames(map, bindings);
-};
-
-Call.prototype.same = function(e2, bindings) {
-  var result;
-  if (!(e2 instanceof Call)) {
-    result = false;
-  } else {
-    result = this.fn.same(e2.fn, bindings) && this.arg.same(e2.arg, bindings);
-  }
-  if (!result) {
-    Y.log(this.toString() + ' != ' + e2.toString());
-  }
-  return result;
+Call.prototype._addFreeNames = function(map, bindings) {
+  this.fn._addFreeNames(map, bindings);
+  this.arg._addFreeNames(map, bindings);
 };
 
 Call.prototype.normalized = function(counter, bindings) {
@@ -424,8 +395,8 @@ Call.prototype.locate1 = function(path) {
 
 Call.prototype.matches = function(expr, bindings) {
   if (expr instanceof Call) {
-    return this.fn.matches(expr.fn, bindings)
-      && this.arg.matches(expr.arg, bindings);
+    return (this.fn.matches(expr.fn, bindings)
+            && this.arg.matches(expr.arg, bindings));
   } else {
     return false;
   }
@@ -516,17 +487,8 @@ Lambda.prototype.copy = function(bindings) {
   return new Lambda(newVar, this.body.copy(newBindings));
 };
 
-Lambda.prototype.addFreeNames = function(map, bindings) {
-  this.body.addFreeNames(map, new Bindings(this.bound, this.bound, bindings));
-};
-
-Lambda.prototype.same = function(e2, bindings) {
-  var newBindings = new Bindings(this.bound, e2.bound, bindings);
-  var result = (e2 instanceof Lambda) && this.body.same(e2.body, newBindings);
-  if (!result) {
-    Y.log(this.toString() + ' != ' + e2.toString());
-  }
-  return result;
+Lambda.prototype._addFreeNames = function(map, bindings) {
+  this.body._addFreeNames(map, new Bindings(this.bound, this.bound, bindings));
 };
 
 Lambda.prototype.normalized = function(counter, bindings) {
@@ -626,7 +588,7 @@ function generateName(name) {
  * so this can represent a set of bindings rather than just one.  Used
  * in copying to replace occurrences of variables with replacements.
  *
- * In addFreeNames, bindings contain variables that are bound and thus
+ * In _addFreeNames, bindings contain variables that are bound and thus
  * not free in an expression's lexical context.  In that case the
  * values of the bindings are all null.
  */
@@ -637,15 +599,15 @@ function Bindings(from, to, more) {
 }
 
 /**
- * Returns the replacement for the variable defined by this
- * Bindings, or null if none is found.
+ * Returns the replacement for the target in the given Bindings, or
+ * null if none is found.
  */
-function getBinding(variable, bindings) {
+function getBinding(target, bindings) {
   return bindings == null
     ? null
-    : (variable == bindings.from)
+    : (target == bindings.from)
     ? bindings.to
-    : getBinding(variable, bindings.more);
+    : getBinding(target, bindings.more);
 }
 
 
