@@ -67,6 +67,12 @@ YUI({filter: null, insertBefore: 'styles'})
     }
   }
 
+  // Render by appending to the document body.
+  window.apRender = function(expr) {
+    var div = new Y.Node(document.body).appendChild('<div></div>');
+    expr.render(div);
+  }
+
   // Set up some useful constants and functions.
 
   Y.Expr.utils.import();

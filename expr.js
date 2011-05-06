@@ -20,6 +20,12 @@ function normalized(expr) {
   return expr.normalized(new Counter(1), null);
 }
 
+function appendSpan(node) {
+  return node.appendChild('<span class=expr></span>');
+}
+
+var space = '&nbsp;';
+
 /**
  * Find an instance of "from" in the target, and return a copy of the
  * target, with that occurrence replaced by "to".  The "from"
@@ -155,6 +161,13 @@ Expr.prototype.locate = function(_path) {
   return this.locate1(path(_path));
 };
 
+Expr.prototype.render = function(node) {
+  if (!(node instanceof Y.Node)) {
+    node = new Y.node(node);
+  }
+  this.render1(node);
+};
+
 /**
  * Searches for a subexpression of this that passes the test, given as
  * a boolean function of one argument.  Returns a path from this to
@@ -270,7 +283,13 @@ Expr.prototype.pathTo = function(pred) {
 // tested first, followed by the rest in top-down, left-to-right
 // order.
 //
-
+//
+// render1(node)
+//
+// Render this expression at the end of the contents of the given DOM
+// node, setting the expression's "node" property to refer to the node
+// created to enclose this expression.  Should be done only once to
+// any given expression.
 
 //// Var -- variable bindings and references
 
@@ -355,6 +374,11 @@ Var.prototype.search = function(pred) {
 
 Var.prototype.path1 = function(pred, revPath) {
   return pred(this) ? revPath : null;
+};
+
+Var.prototype.render1 = function(node) {
+  node.append(this.name);
+  this.node = node;
 };
 
 
@@ -472,6 +496,37 @@ Call.prototype.path1 = function(pred, revPath) {
       || this.arg.path1(pred, new Path('arg', revPath));
 };
 
+Call.prototype.render1 = function(node) {
+  node.append('(');
+  if (this.fn instanceof Call && this.fn.fn instanceof Var) {
+    if (this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
+      // Non-alphabetic characters: use infix.
+      var fnNode = appendSpan(node);
+      this.fn.arg.render1(appendSpan(fnNode));
+      fnNode.append(space);
+      this.fn.fn.render1(appendSpan(fnNode));
+      node.append(space);
+      this.arg.render1(appendSpan(node));
+    } else {
+      // Alphabetic characters: function comes first.
+      var fnNode = appendSpan(node);
+      this.fn.fn.render1(appendSpan(fnNode));
+      fnNode.append(space);
+      this.fn.arg.render1(appendSpan(fnNode));
+      node.append(space);
+      this.arg.render1(appendSpan(node));
+    }
+  } else {
+    var opNode = appendSpan(node);
+    this.fn.render1(opNode);
+    node.append('&nbsp;');
+    var argNode = appendSpan(node);
+    this.arg.render1(argNode);
+  }
+  node.append(')');
+  this.node = node;
+};
+
 
 //// Lambda -- variable bindings
 
@@ -584,6 +639,13 @@ Lambda.prototype.path1 = function(pred, revPath) {
     : this.body.path1(pred, new Path('body', revPath));
 };
 
+Lambda.prototype.render1 = function(node) {
+  node.append('{');
+  this.bound.render1(appendSpan(node));
+  node.append('&nbsp;:&nbsp;');
+  this.body.render1(appendSpan(node));
+  node.append('}');
+};
 
 
 //// Counter -- stateful counter for internal use
@@ -870,4 +932,4 @@ Y.path = path;
 
 Y.Expr.utils = utils;
 
-}, '0.1', {use: ['array-extras']});
+}, '0.1', {use: ['node', 'array-extras']});
