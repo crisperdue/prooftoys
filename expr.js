@@ -26,36 +26,13 @@ function appendSpan(node) {
 
 var space = '&nbsp;';
 
-/**
- * Find an instance of "from" in the target, and return a copy of the
- * target, with that occurrence replaced by "to".  The "from"
- * expression is a "locator copy" of this, an expression with null
- * values for many of its parts and a "found" property at the point to
- * be replaced.
- *
- * TODO: Remove this.
- */
-function replace(from, to, expr, skipN) {
-  if (skipN) {
-    throw new Error('Unimplemented');
-  }
-  function likeFrom(x) {
-    return x.matches(from) ? x : false;
-  }
-  var subexpr = expr.search(likeFrom);
-  if (!subexpr) {
-    throw new Error('Not found!');
-  }
-  return expr.replace1(subexpr, to);
-}
-
 
 //// Expression, the base class
 //
 // In the current implementation all occurrences of the same bound
 // variable refer to the same Var object, and the implementation of
 // subst relies on this, destructively changing bound variable names
-// that may class with variables that should be free.  The "rescope"
+// that may clash with variables that should be free.  The "rescope"
 // method maintains this invariant.
 //
 // Occurrences of the same free variable however may use different Var
@@ -251,15 +228,9 @@ Expr.prototype.pathTo = function(pred) {
 // same Var object.
 //
 //
-// replace1(from, to, bindings)
+// replace(path, xformer, bindings)
 //
-// Replaces the "from" expression with "to" in this expression,
-// linking free occurrences of variables in the "to" expression with
-// occurrences in this expression so they use the same Var object.
-// The bindings object describes variable bindings of expressions
-// enclosing this one, and defaults to null for none.  The "from"
-// expression must be an actual part of this; copies of it will
-// not match.
+// Replaces ...
 //
 //
 // matches(expr, bindings)
@@ -346,13 +317,6 @@ Var.prototype.replace = function(path, xformer, bindings) {
 
 Var.prototype.locate1 = function(path) {
   return path.isMatch() ? this : null;
-};
-
-Var.prototype.replace1 = function(from, to, bindings) {
-  Y.log('var ' + this);
-  return from && from.sort == 'expr'
-    ? to.rescope(bindings)
-    : this;
 };
 
 Var.prototype.matches = function(expr, bindings) {
@@ -456,14 +420,6 @@ Call.prototype.locate1 = function(path) {
     return this.fn.locate1(path.rest('fn'))
       || this.arg.locate1(path.rest('arg'));
   }
-};
-
-Call.prototype.replace1 = function(from, to, bindings) {
-  Y.log('call ' + this);
-  return from && from.sort == 'expr'
-    ? to.rescope(bindings)
-    : new Call(this.fn.replace1(from && from.fn, to, bindings),
-               this.arg.replace1(from && from.arg, to, bindings));
 };
 
 Call.prototype.matches = function(expr, bindings) {
@@ -597,15 +553,6 @@ Lambda.prototype.locate1 = function(path) {
     ? this
     : this.bound.locate1(path.rest('bound'))
         || this.body.locate1(path.rest('body'));
-};
-
-Lambda.prototype.replace1 = function(from, to, bindings) {
-  Y.log('lambda ' + this.toString());
-  return from && from.sort == 'expr'
-    ? to.rescope(bindings)
-    :  new Lambda(this.bound,
-                  this.body.replace1(from && from.body, to,
-                                     new Bindings(this, null, bindings)));
 };
 
 Lambda.prototype.matches = function(expr, bindings) {
@@ -915,7 +862,6 @@ Y.Path = Path;
 
 Y.subFree = subFree;
 Y.normalized = normalized
-Y.replace = replace;
 Y.path = path;
 
 Y.Expr.utils = utils;
