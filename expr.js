@@ -5,11 +5,46 @@ YUI.add('expr', function(Y) {
 /**
  * Returns a new expression resulting from substitution of copies of
  * the replacement expression for all free occurrences of the given
- * variable in the target expression.
+ * name (or variable) in the target expression.  Used by Axiom 4
+ * (lambda conversion).
  */
-function subFree(replacement, variable, target) {
+function subFree(replacement, name, target) {
+  if (name instanceof Y.Var) {
+    name = name.name;
+  }
+  var cleanTarget = decapture(target, replacement);
+  return cleanTarget.subst(replacement, name);
+}
+
+/**
+ * Returns the name given if it is not in existingNames.  Otherwise
+ * returns a generated name with the same "base" as the one given, and
+ * not in existingNames.  The base is the name with any "_N" suffix
+ * removed.  The generated suffix will be the lowest-numbered one not
+ * yet in use, starting with "_1".
+ */
+function genName(name, existingNames) {
+  var base = name.replace(/_[0-9]+$/, '');
+  var candidate = name;
+  for (var i = 1; existingNames[candidate]; i++) {
+    candidate = base + '_' + i;
+  }
+  existingNames[candidate] = true;
+  return candidate;
+}
+
+/**
+ * Returns a copy of the target, renaming any bound variables in it
+ * that have the same name as a free variable of the replacement to be
+ * distinct from all variables appearing in either expression.  After
+ * decapturing, straightforward substitution is safe from capturing.
+ */
+function decapture(target, replacement) {
   var freeNames = replacement.freeNames();
-  return target.subst(replacement, variable, freeNames);
+  var allNames = {};
+  replacement._addNames(allNames);
+  target._addNames(allNames);
+  return target._decapture(freeNames, allNames, null);
 }
 
 /**
@@ -28,19 +63,6 @@ var space = '&nbsp;';
 
 
 //// Expression, the base class
-//
-// In the current implementation all occurrences of the same bound
-// variable refer to the same Var object, and the implementation of
-// subst relies on this, destructively changing bound variable names
-// that may clash with variables that should be free.  The "rescope"
-// method maintains this invariant.
-//
-// Occurrences of the same free variable however may use different Var
-// objects.
-//
-// TODO: Remove all reliance on use of the same Var for all
-// occurrences of a variable.  Remove "same" and "rescope" as not
-// needed, and reimplement subst to be nondestructive.
 
 /**
  * Instantiated only for templates.  An instance of this class
@@ -49,6 +71,8 @@ var space = '&nbsp;';
  */
 function Expr() {
   this.sort = Expr.expr;
+  // Can also have "node" property for an associated
+  // DOM node (refers to a YUI Node).
 }
 
 // The different sorts of expressions:
@@ -67,7 +91,7 @@ Expr.prototype.toString = function() {
 
 /**
  * Finds and returns a Map of the free variables in this expression,
- * from the name to the Var object of that name.
+ * from the name to "true".
  */
 Expr.prototype.freeNames = function() {
   var byName = {};
@@ -138,11 +162,17 @@ Expr.prototype.locate = function(_path) {
   return this.locate1(path(_path));
 };
 
+/**
+ * Renders this expression into the given DOM or YUI node,
+ * returning a copy of this expression annotated with references
+ * from each subexpression into the node where it is presented.
+ */
 Expr.prototype.render = function(node) {
   if (!(node instanceof Y.Node)) {
+    // Coerce from a DOM node to a YUI node.
     node = new Y.node(node);
   }
-  this.render1(node);
+  return this.copy()._render(node);
 };
 
 /**
@@ -173,33 +203,49 @@ Expr.prototype.pathTo = function(pred) {
 // handling of functions of more than one argument or infix operators.
 // 
 //
-// subst(Expr replacement, Var variable, Map freeNames)
+// subst(Expr replacement, String name)
 // 
 // Substitutes copies of the replacement expression for all (free)
-// occurrences of the given variable in this expression.  As a
-// convenience, renames bound variables in this expression to avoid
-// using any names that appear in the freeNames map, to make it clear
-// to human readers that the occurrences are not captured by any of
-// this expression's bound variables.  The current implementation
-// destructively alters names of bound variables that clash with names
-// of free variables of the replacement, but that could be avoided.
+// occurrences of the given name in this expression.  For use in
+// logic, this expression must not bind any variables in the
+// replacement, at least not at any locations where the given variable
+// is free.
+//
+// TODO: Could we decapture as part of the substitution?
 //
 //
-// copy(Bindings bindings)
+// copy()
 //
-// Makes and returns a copy of this Expr.  Copies all of its
-// subexpressions, and makes one copy of each Var object bound by
-// lambda abstraction subexpressions.  The bindings define zero or
-// more replacements to be used for references to Var objects found in
-// this expression.  A null value indicates zero bindings.
+// Makes and returns a deep copy of this Expr, not including any
+// display-related information.  A null value indicates zero bindings.
+//
+//
+// _addNames(Map result)
+//
+// Adds all names occurring in this expression to the Map, with value
+// of true for each.  Not public.
 //
 //
 // _addFreeNames(Map result, Bindings bindings)
 // 
-// Adds names of all free variables that occur in this Expr to the result
-// object, with the Var object as the value associated with each name
-// found.  Assumes that variables in the Bindings object are bound in this
-// expression's lexical context.
+// Adds names of all free variables that occur in this Expr to the
+// result object, with the Var object as the value associated with
+// each name found.  Assumes that names in the Bindings object are
+// bound in this expression's lexical context.  Helper for the
+// freeNames method (not public).
+//
+//
+// _decapture(freeNames, allNames, bindings)
+//
+// Returns a copy of this expression that has no variable bindings
+// using any of the names in the freeNames map, and does not use any
+// of the names in the allNames map in any of the new bindings.
+// Furthermore, the result does not use the same new name within any
+// scope using that name, avoiding capturing among new names.
+//
+// The bindings should map from old variable name to new variable name.
+//
+// Helper for the decapture function (not public).
 //
 //
 // normalized(counter, bindings)
@@ -215,26 +261,19 @@ Expr.prototype.pathTo = function(pred) {
 // hypotheses.
 //
 //
-// rescope(bindings)
+// replace(path, xformer)
 //
-// Recursively walks through all parts of this expression, changing
-// references to variables (Var objects) as needed to match the given
-// bindings, plus any other bindings within this expression.  The
-// result has all occurrences of all bound variables in this using the
-// same Var object.
+// Returns a copy of this expression.  If some part matches the path,
+// that part is replaced by the result of calling the xformer function
+// on it.
 //
 //
-// replace(path, xformer, bindings)
-//
-// Replaces ...
-//
-//
-// matches(expr, bindings)
+// matches(e2, bindings)
 //
 // Tests whether this expression and e2 are the same except for names
 // of bound variables.  Their constants, free variables, and structure
-// must match.  The bindings map from variables bound in expressions
-// containing this expression to corresponding bound variables of the
+// must match.  The bindings map from names of variables bound in expressions
+// containing this expression to corresponding variable names of the
 // expression containing e2.
 //
 //
@@ -244,15 +283,18 @@ Expr.prototype.pathTo = function(pred) {
 // given as a boolean function of one argument.  Returns the first
 // subexpression that passes the test, with this expression itself
 // tested first, followed by the rest in top-down, left-to-right
-// order.
+// order, or null if there is none.
 //
 //
-// render1(node)
+// _render(node)
 //
-// Render this expression at the end of the contents of the given DOM
+// Render this expression at the end of the contents of the given YUI
 // node, setting the expression's "node" property to refer to the node
 // created to enclose this expression.  Should be done only once to
-// any given expression.
+// any given expression.  Note: a YUI node represents a DOM node.
+// Helper for the render method.  (Not public)
+// 
+// TODO: Consider setting the node property to the actual DOM node.
 
 
 //// Var -- variable bindings and references
@@ -271,32 +313,35 @@ Var.prototype.dump = function() {
   return this.name;
 }
 
-Var.prototype.subst = function(replacement, variable, freeNames) {
-  return (variable == this) ? replacement.copy() : this;
+Var.prototype.subst = function(replacement, name) {
+  return (name == this.name ? replacement.copy() : this);
 };
 
-// Don't actually copy any variable reference, just return its
-// replacement in the bindings or leave it as-is.
-Var.prototype.copy = function(bindings) {
-  return getBinding(this, bindings) || this;
+Var.prototype.copy = function() {
+  return new Var(this.name);
+};
+
+Var.prototype._addNames = function(map) {
+  map[this.name] = true;
 };
 
 Var.prototype._addFreeNames = function(map, bindings) {
-  if (getBinding(this, bindings) == null) {
-    map[this.name] = this;
+  if (getBinding(this.name, bindings) == null) {
+    map[this.name] = true;
   }
 };
 
+Var.prototype._decapture = function(freeNames, allNames, bindings) {
+  var newName = getBinding(this.name, bindings) || this.name;
+  return new Var(newName);
+};
+
 Var.prototype.normalized = function(counter, bindings) {
-  return getBinding(this, bindings) || this;
+  return new Var(getBinding(this.name, bindings) || this.name);
 };
 
-Var.prototype.rescope = function(bindings) {
-  return findByName(this.name, bindings) || this;
-};
-
-Var.prototype.replace = function(path, xformer, bindings) {
-  return path.isMatch() ? xformer(this).rescope(bindings) : this;
+Var.prototype.replace = function(path, xformer) {
+  return path.isMatch() ? xformer(this) : this.copy();
 };
 
 Var.prototype.locate1 = function(path) {
@@ -305,22 +350,22 @@ Var.prototype.locate1 = function(path) {
 
 Var.prototype.matches = function(expr, bindings) {
   if (expr instanceof Var) {
-    var binding = getBinding(expr, bindings);
-    return binding ? expr == binding : this.name == expr.name;
+    var expectedName = getBinding(this.name, bindings) || this.name;
+    return expr.name == expectedName;
   } else {
     return false;
   }
 };
 
 Var.prototype.search = function(pred) {
-  return pred(this) ? this : false;
+  return pred(this) ? this : null;
 };
 
 Var.prototype.path1 = function(pred, revPath) {
   return pred(this) ? revPath : null;
 };
 
-Var.prototype.render1 = function(node) {
+Var.prototype._render = function(node) {
   node.append(this.name);
   this.node = node;
 };
@@ -351,13 +396,18 @@ Call.prototype.dump = function() {
   return '(' + this.fn + ' ' + this.arg + ')';
 };
 
-Call.prototype.subst = function(replacement, variable, freeNames) {
-  return new Call(this.fn.subst(replacement, variable, freeNames),
-                  this.arg.subst(replacement, variable, freeNames));
+Call.prototype.subst = function(replacement, name) {
+  return new Call(this.fn.subst(replacement, name),
+                  this.arg.subst(replacement, name));
 };
 
-Call.prototype.copy = function(bindings) {
-  return new Call(this.fn.copy(bindings), this.arg.copy(bindings));
+Call.prototype.copy = function() {
+  return new Call(this.fn.copy(), this.arg.copy());
+};
+
+Call.prototype._addNames = function(map) {
+  this.fn._addNames(map);
+  this.arg._addNames(map);
 };
 
 Call.prototype._addFreeNames = function(map, bindings) {
@@ -365,21 +415,22 @@ Call.prototype._addFreeNames = function(map, bindings) {
   this.arg._addFreeNames(map, bindings);
 };
 
+Call.prototype._decapture = function(freeNames, allNames, bindings) {
+  return new Call(this.fn._decapture(freeNames, allNames, bindings),
+                  this.arg._decapture(freeNames, allNames, bindings));
+};
+
 Call.prototype.normalized = function(counter, bindings) {
   return new Call(this.fn.normalized(counter, bindings),
                   this.arg.normalized(counter, bindings));
 };
 
-Call.prototype.rescope = function(bindings) {
-  return new Call(this.fn.rescope(bindings), this.arg.rescope(bindings));
-};
-
-Call.prototype.replace = function(path, xformer, bindings) {
+Call.prototype.replace = function(path, xformer) {
   if (path.isMatch()) {
-    return xformer(this).rescope(bindings);
+    return xformer(this);
   } else {
-    var fn = this.fn.replace(path.rest('fn'), xformer, bindings);
-    var arg = this.arg.replace(path.rest('arg'), xformer, bindings);
+    var fn = this.fn.replace(path.rest('fn'), xformer);
+    var arg = this.arg.replace(path.rest('arg'), xformer);
     return new Call(fn, arg);
   }
 };
@@ -415,32 +466,32 @@ Call.prototype.path1 = function(pred, revPath) {
       || this.arg.path1(pred, new Path('arg', revPath));
 };
 
-Call.prototype.render1 = function(node) {
+Call.prototype._render = function(node) {
   node.append('(');
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
     if (this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
       // Non-alphabetic characters: use infix.
       var fnNode = appendSpan(node);
-      this.fn.arg.render1(appendSpan(fnNode));
+      this.fn.arg._render(appendSpan(fnNode));
       fnNode.append(space);
-      this.fn.fn.render1(appendSpan(fnNode));
+      this.fn.fn._render(appendSpan(fnNode));
       node.append(space);
-      this.arg.render1(appendSpan(node));
+      this.arg._render(appendSpan(node));
     } else {
       // Alphabetic characters: function comes first.
       var fnNode = appendSpan(node);
-      this.fn.fn.render1(appendSpan(fnNode));
+      this.fn.fn._render(appendSpan(fnNode));
       fnNode.append(space);
-      this.fn.arg.render1(appendSpan(fnNode));
+      this.fn.arg._render(appendSpan(fnNode));
       node.append(space);
-      this.arg.render1(appendSpan(node));
+      this.arg._render(appendSpan(node));
     }
   } else {
     var opNode = appendSpan(node);
-    this.fn.render1(opNode);
+    this.fn._render(opNode);
     node.append('&nbsp;');
     var argNode = appendSpan(node);
-    this.arg.render1(argNode);
+    this.arg._render(argNode);
   }
   node.append(')');
   this.node = node;
@@ -469,45 +520,45 @@ Lambda.prototype.dump = function() {
   return '{' + this.bound + ' : ' + this.body + '}';
 };
 
-Lambda.prototype.subst = function(replacement, variable, freeNames) {
-  // Possibly change the name of the bound variable to make clear
-  // to human readers that it is not the same as any free variable
-  // of the replacement expression.
-  if (freeNames.hasOwnProperty(this.bound.name)) {
-    this.bound.name = generateName(this.bound.name);
-  }
+Lambda.prototype.subst = function(replacement, name) {
   return new Lambda(this.bound,
-                    this.body.subst(replacement, variable, freeNames));
+                    this.body.subst(replacement, name));
 };
 
-Lambda.prototype.copy = function(bindings) {
-  // A copy of a lambda expression has a new bound variable in it.
-  var newVar = new Var(this.bound.name);
-  var newBindings = new Bindings(this.bound, newVar, bindings);
-  return new Lambda(newVar, this.body.copy(newBindings));
+Lambda.prototype.copy = function() {
+  return new Lambda(this.bound.copy(), this.body.copy());
+};
+
+Lambda.prototype._addNames = function(map) {
+  map[this.bound.name] = true;
+  this.body._addNames(map);
 };
 
 Lambda.prototype._addFreeNames = function(map, bindings) {
-  this.body._addFreeNames(map, new Bindings(this.bound, this.bound, bindings));
+  var name = this.bound.name;
+  this.body._addFreeNames(map, new Bindings(name, true, bindings));
+};
+
+Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
+  var oldName = this.bound.name;
+  var newName = freeNames[oldName] ? genName(oldName, allNames) : oldName;
+  // Alternatively add a binding only when the new name is different.
+  var newBindings = new Bindings(oldName, newName, bindings);
+  return new Lambda(new Var(newName),
+                    this.body._decapture(freeNames, allNames, newBindings));
 };
 
 Lambda.prototype.normalized = function(counter, bindings) {
   var newVar = new Var('$' + counter.next());
-  var newBindings = new Bindings(this.bound, newVar, bindings);
+  var newBindings = new Bindings(this.bound.name, newVar.name, bindings);
   return new Lambda(newVar, this.body.normalized(counter, newBindings));
 };
 
-Lambda.prototype.rescope = function(bindings) {
-  return lambda(this.bound,
-                this.body.rescope(new Bindings(this.bound, null, bindings)));
-};
-
-Lambda.prototype.replace = function(path, xformer, bindings) {
+Lambda.prototype.replace = function(path, xformer) {
   return path.isMatch()
-    ? xformer(this).rescope(bindings)
-    : new Lambda(this.bound,
-                 this.body.replace(path.rest('body'), xformer,
-                                   new Bindings(this, null, bindings)));
+    ? xformer(this)
+    : new Lambda(this.bound.copy(),
+                 this.body.replace(path.rest('body'), xformer));
 };
 
 Lambda.prototype.locate1 = function(path) {
@@ -519,7 +570,7 @@ Lambda.prototype.locate1 = function(path) {
 
 Lambda.prototype.matches = function(expr, bindings) {
   if (expr instanceof Lambda) {
-    var newBindings = new Bindings(this.bound, expr.bound, bindings);
+    var newBindings = new Bindings(this.bound.name, expr.bound.name, bindings);
     return this.body.matches(expr.body, newBindings);
   } else {
     return false;
@@ -536,11 +587,11 @@ Lambda.prototype.path1 = function(pred, revPath) {
     : this.body.path1(pred, new Path('body', revPath));
 };
 
-Lambda.prototype.render1 = function(node) {
+Lambda.prototype._render = function(node) {
   node.append('{');
-  this.bound.render1(appendSpan(node));
+  this.bound._render(appendSpan(node));
   node.append('&nbsp;:&nbsp;');
-  this.body.render1(appendSpan(node));
+  this.body._render(appendSpan(node));
   node.append('}');
 };
 
@@ -824,6 +875,7 @@ Y.Path = Path;
 
 Y.subFree = subFree;
 Y.normalized = normalized
+Y.decapture = decapture;
 Y.path = path;
 
 Y.Expr.utils = utils;

@@ -125,10 +125,14 @@ YUI({filter: null, insertBefore: 'styles'})
       testFreeNames: function() {
         var wff = lambda(x, call(f, x));
         var map = wff.freeNames();
-        var fVar = map['f'];
-        Y.Assert.isInstanceOf(Y.Var, fVar);
-        assertEqual('f',fVar.name);
+        assertEqual(true, map['f']);
         assertEqual(undefined, map['x']);
+      },
+
+      testDecapture: function() {
+        var target = call(lambda(x, x), y);
+        var result = Y.decapture(target, x);
+        assertEqual('({x_1 : x_1} y)', result.toString());
       },
 
       testSubFree: function() {
@@ -318,7 +322,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testRuleT: function() {
-        assertEqual(T, Y.ruleFns.t());
+        assertEqual('T', Y.ruleFns.t().toString());
       },
 
       testR5212: function() {

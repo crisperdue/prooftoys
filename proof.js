@@ -34,7 +34,7 @@ var ruleFns = {
     if (equation.isCall2('=')) {
       function replacer(expr) {
         if (expr.matches(equation.getLeft())) {
-          return equation.getRight();
+          return equation.getRight().copy();
         } else {
           assert(false, 'Rule R: subexpression ' + expr +
                         '\n of ' + target +
@@ -440,7 +440,8 @@ var ruleFns = {
   // also 5219
   fromTIsA: function(t_a) {
     assertEqn(t_a);
-    assert(t_a.locate('/left') == T,
+    var left = t_a.locate('/left');
+    assert(left instanceof Y.Var && left.name == 'T',
            'Input should be [T = A]: ' + t_a);
     var a = t_a.locate('/right');
     var step2 = rules.r(rules.r5218(a), t_a, '/');
@@ -600,8 +601,8 @@ var ruleFns = {
       not: {T: 'r5231T', F: 'r5231F'}
     };
     function isReducible(expr) {
-      return ((expr instanceof Y.Call)
-              && (expr.arg == T || expr.arg == F)
+      return ((expr instanceof Y.Call && expr.arg instanceof Y.Var)
+              && (expr.arg.name == 'T' || expr.arg.name == 'F')
               && (expr.fn instanceof Y.Lambda
                   || (expr.fn instanceof Y.Var && boolDefs[expr.fn.name])));
     }
@@ -647,12 +648,14 @@ var ruleFns = {
       if (!constants[name]) {
         var step1 = rules.tautology(Y.subFree(T, name, wff));
         var step2 = rules.tautology(Y.subFree(F, name, wff));
-        return rules.cases(names[name], wff);
+        return rules.cases(new Y.Var(name), wff);
       }
     }
     // There are no free variables, evaluate the expression.
     var result = rules.evalBool(wff);
-    assert(result.isCall2('=') && result.getRight() == T,
+    assert(result.isCall2('=')
+           && result.getRight() instanceof Y.Var
+           && result.getRight().name == 'T',
            'Not a tautology: ' + result.getLeft());
     return rules.rRight(result, rules.t(), '');
   },
