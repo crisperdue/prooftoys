@@ -73,6 +73,8 @@ function Expr() {
   this.sort = Expr.expr;
   // Can also have "node" property for an associated
   // DOM node (refers to a YUI Node).
+  // Can have a "string" property with the result of toString.
+  // Can have a "deps" property, an array of (rendered) assumptions.
 }
 
 // The different sorts of expressions:
@@ -84,6 +86,15 @@ Expr.lambda = 'lambda';
 // This counts up to supply a unique name for bound variables renamed
 // to avoid capturing.
 Expr.counter = 1;
+
+/**
+ * Memoizing version of toString.
+ */
+Expr.prototype.asString = function() {
+  var string = this.toString();
+  this._string = string;
+  return string;
+};
 
 Expr.prototype.toString = function() {
   return '*';
@@ -172,7 +183,9 @@ Expr.prototype.render = function(node) {
     // Coerce from a DOM node to a YUI node.
     node = new Y.node(node);
   }
-  return this.copy()._render(node);
+  var result = this.copy();
+  result._render(node);
+  return result;
 };
 
 /**
@@ -381,6 +394,9 @@ function Call(fn, arg) {
 Y.extend(Call, Expr);
 
 Call.prototype.toString = function() {
+  if (this._string) {
+    return this._string;
+  }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
     if (this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
       return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
@@ -467,11 +483,13 @@ Call.prototype.path1 = function(pred, revPath) {
 };
 
 Call.prototype._render = function(node) {
+  this.node = node;
   node.append('(');
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
     if (this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
       // Non-alphabetic characters: use infix.
       var fnNode = appendSpan(node);
+      this.fn.node = fnNode;
       this.fn.arg._render(appendSpan(fnNode));
       fnNode.append(space);
       this.fn.fn._render(appendSpan(fnNode));
@@ -480,6 +498,7 @@ Call.prototype._render = function(node) {
     } else {
       // Alphabetic characters: function comes first.
       var fnNode = appendSpan(node);
+      this.fn.node = fnNode;
       this.fn.fn._render(appendSpan(fnNode));
       fnNode.append(space);
       this.fn.arg._render(appendSpan(fnNode));
@@ -494,7 +513,6 @@ Call.prototype._render = function(node) {
     this.arg._render(argNode);
   }
   node.append(')');
-  this.node = node;
 };
 
 
@@ -513,6 +531,9 @@ function Lambda(bound, body) {
 Y.extend(Lambda, Expr);
 
 Lambda.prototype.toString = function() {
+  if (this._string) {
+    return this._string;
+  }
   return '{' + this.bound + ' : ' + this.body + '}';
 };
 

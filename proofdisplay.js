@@ -16,7 +16,8 @@ YUI.add('proofdisplay', function(Y) {
   function ProofArea(id, valueTarget) {
     var node = new Y.Node(document.getElementById(id));
     this._node = node;
-    this._proof = new ProofDisplay(node.appendChild('<div class=proof></div>'), this);
+    this._proof =
+      new ProofDisplay(node.appendChild('<div class=proof></div>'), this);
     this._selectedLine = null;
     this._valueTarget = valueTarget;
     // Inserted after the DOM node of a ProofLine to provide 

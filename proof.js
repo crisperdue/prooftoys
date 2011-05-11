@@ -473,12 +473,14 @@ var ruleFns = {
   // 5222: Given a variable and WFF, deduce the WFF.  User must prove
   // theorems where T replaces v in A and where F replaces v in A.
   cases: function(v, a) {
+    var hyp1 = Y.subFree(T, v, a);
     var step1a = rules.axiom4(call(lambda(v, a), T));
-    var step1b = rules.toTIsA(step1a.locate('/right'));
-    var step1c = rules.rRight(step1a, step1b, '/right');
+    var step1b = rules.rRight(step1a, hyp1, '');
+    var step1c = rules.toTIsA(step1b);
+    var hyp2 = Y.subFree(F, v, a);
     var step2a = rules.axiom4(call(lambda(v, a), F));
-    var step2b = rules.toTIsA(step2a.locate('/right'));
-    var step2c = rules.rRight(step2a, step2b, '/right');
+    var step2b = rules.rRight(step2a, hyp2, '');
+    var step2c = rules.toTIsA(step2b);
     // TODO: prove T && T inline.
     var step3 = rules.r5212();
     var step4a = rules.r(step1c, step3, '/left');
@@ -698,13 +700,13 @@ var ruleFns = {
  * primitive or composite.  The constructor is private; use
  * makeInference to create inferences in client code.
  */
-function Inference(name, inputs, result, details) {
+function Inference(name, arguments, result, details) {
   // Rule name
   this.name = name;
-  // Inputs: a list of expressions or inference steps with result
+  // Arguments: a list of expressions or inference steps with result
   // expressions used by this step.  For composite inferences this
   // should be null.
-  this.inputs = inputs;
+  this.arguments = arguments;
   // The conclusion Expr of the inference..
   this.result = result;
   // List of component steps (Inferences), empty if not composite.
@@ -730,6 +732,10 @@ Inference.prototype.toString = function() {
   }
 }
 
+/**
+ * Returns a string showing the top-level properties
+ * of an object, and their values.
+ */
 function debugString(o, specials) {
   if (typeof o == 'object') {
     var result = '{';
@@ -766,28 +772,27 @@ function debugString(o, specials) {
 }
 
 /**
- * Returns a set of all of the expressions that this inference relies
- * on to be true in order to produce its result, indexed by repr.
+ * Returns a set of printable strings of terms this inference relies
+ * on to be true in order to produce its result.
  */
 Inference.prototype.assumptions = function() {
   // Databases of input and output expressions of applications of
-  // primitive rules, indexed by repr.
+  // primitive rules, indexed by value as string.
   var inputs  = {};
   var outputs = {};
   // Accumulates the inputs and outputs of this inference.
   function accumulate(inference) {
     // For axioms, definitions, and rule R the result is an output.
-    if (this.name.match(/^axiom|^def[A-Z]/)) {
-      outputs[inference.result.repr()] = inference.result;
+    if (inference.name.match(/^axiom|^def[A-Z]/)) {
+      outputs[inference.result.asString()] = inference.result;
     }
-    if (this.name == 'r') {
-      outputs[inference.result.repr()] = inference.result;
-      var args = this.args;
-      for (var i = 0; i < args.length; i++) {
-        inputs[args[i].repr()] = args[i];
-      }
+    if (inference.name == 'r') {
+      outputs[inference.result.toString()] = inference.result;
+      var args = inference.arguments;
+      inputs[args[0].asString()] = true;
+      inputs[args[1].asString()] = true;
     } else {
-      var details = this.details;
+      var details = inference.details;
       for (var i = 0; i < details.length; i++) {
         accumulate(details[i]);
       }
@@ -798,6 +803,97 @@ Inference.prototype.assumptions = function() {
     delete inputs[key];
   }
   return inputs;
+};
+
+function renderSteps(inference, node) {
+  if (node == null) {
+    node = new Y.Node(document.body)
+      .appendChild('<div style="margin: 1em; font-family: monospace"></div>');
+  }
+  node.appendChild('<div style="margin: .5em"><b>'
+                   + inference.name + '</div>');
+  var details = inference.details;
+  // Map to inference from its result as string.  Each result will
+  // be annotated with links into the DOM.
+  var allSteps = {};
+  for (var i = 0; i < details.length; i++) {
+    var inf = details[i];
+    var element = node.appendChild('<div class=proofStep></div>');
+    // Record the annotated expression as the inference result.
+    inf.result = inf.result.render(element);
+    // Add the name to the display.
+    element.appendChild('&nbsp;&nbsp;' + inf.name);
+    // Map to inference, from its result expression as string.
+    // Represents steps depended on by the inference.
+    inf.deps = {};
+    var assumptions = inf.assumptions();
+    // Remember dependencies between inference steps as we go.
+    for (var aString in assumptions) {
+      var step = allSteps[aString];
+      if (step) {
+        inf.deps[aString] = step;
+      } else {
+        Y.log('No prior step: ' + aString);
+      }
+    }
+    element.on('hover',
+               Y.rbind(hover, element, inf, 'in'),
+               Y.rbind(hover, element, inf, 'out'));
+    allSteps[inf.result.asString()] = inf;
+  }
+}
+
+/**
+ * Event handler for "hover" events.
+ */
+function hover(event, inference, direction) {
+  var op = direction == 'in' ? 'addClass' : 'removeClass';
+  var deps = inference.deps;
+  var handler = hoverHandlers[inference.name];
+  if (handler) {
+    handler(inference, op);
+  } else {
+    this[op]('hover');
+    for (var key in deps) {
+      deps[key].result.node[op]('dep');
+    }
+  }
+}
+
+var hoverHandlers = {
+  r: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    var eqn = deps[args[0].asString()].result;
+    var target = deps[args[1].asString()].result;
+    var path = args[2];
+    target.locate(path).node[op]('old');
+    inf.result.node[op]('hover');
+    inf.result.locate(path).node[op]('new');
+    eqn.getLeft().node[op]('old');
+    eqn.getRight().node[op]('new');
+  },
+  rRight: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    var eqn = deps[args[0].asString()].result;
+    var target = deps[args[1].asString()].result;
+    var path = args[2];
+    target.locate(path).node[op]('old');
+    inf.result.node[op]('hover');
+    inf.result.locate(path).node[op]('new');
+    eqn.getRight().node[op]('old');
+    eqn.getLeft().node[op]('new');
+  },
+  reduce: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    var target = deps[args[0].asString()].result;
+    var path = args[1];
+    target.locate(path).node[op]('old');
+    inf.result.node[op]('hover');
+    inf.result.locate(path).node[op]('new');
+  }
 };
 
 /**
@@ -890,20 +986,20 @@ ProofStep.prototype.setInference = function(inference, dependencies) {
     }
     return;
   }
-  // This will be a set of the dependencies, indexed by the repr of
-  // the result of each one's inference.
+  // This will be a set of the dependencies, indexed by the printed
+  // string of the result of each one's inference.
   fromDeps = {};
   for (var i = 0; i < dependencies.length; i++) {
     var dep = dependencies[i];
     var result = dep.inference.result;
-    fromDeps[result.repr()] = dep;
+    fromDeps[result.toString()] = dep;
   }
   this.deps = [];
   var assumptions = inference.assumptions();
   // Connect the inputs needed by this step to other proof steps
-  for (var repr in assumptions) {
-    var assumption = assumptions[repr];
-    var provided = fromDeps[repr];
+  for (var str in assumptions) {
+    var assumption = assumptions[str];
+    var provided = fromDeps[str];
     if (provided) {
       this.deps.push(dep);
     } else {
@@ -922,7 +1018,7 @@ function assert(condition, message) {
     if (typeof message == 'function') {
       message = message();
     }
-    Y.log(message);
+    console.log(message);
     break_here();
   }
 }
@@ -942,5 +1038,6 @@ Y.rules = rules;
 Y.ruleFns = ruleFns;
 Y.inferenceStack = inferenceStack;
 Y.makeInference = makeInference;
+Y.renderSteps = renderSteps;
 
 }, '0.1', {use: ['array-extras', 'expr']});
