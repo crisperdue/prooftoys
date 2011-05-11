@@ -713,6 +713,10 @@ function Inference(name, arguments, result, details) {
   this.details = details;
 }
 
+Inference.prototype.getStepNode = function() {
+  return this.result.node.get('parentNode');
+}
+
 Inference.prototype.toString = function() {
   var result = debugString(this);
   if (result.length <= 200) {
@@ -811,18 +815,21 @@ function renderSteps(inference, node) {
       .appendChild('<div style="margin: 1em; font-family: monospace"></div>');
   }
   node.appendChild('<div style="margin: .5em"><b>'
-                   + inference.name + '</div>');
+                   + inference.name + '</b></div>');
+  
   var details = inference.details;
   // Map to inference from its result as string.  Each result will
   // be annotated with links into the DOM.
   var allSteps = {};
   for (var i = 0; i < details.length; i++) {
     var inf = details[i];
-    var element = node.appendChild('<div class=proofStep></div>');
+    var stepNode = node.appendChild('<div class="proofStep"></div>');
+    // See appendSpan in expr.js.
+    var wffNode = stepNode.appendChild('<span class=expr></span>');
     // Record the annotated expression as the inference result.
-    inf.result = inf.result.render(element);
+    inf.result = inf.result.render(wffNode);
     // Add the name to the display.
-    element.appendChild('&nbsp;&nbsp;' + inf.name);
+    stepNode.appendChild('&nbsp;&nbsp;' + inf.name);
     // Map to inference, from its result expression as string.
     // Represents steps depended on by the inference.
     inf.deps = {};
@@ -836,9 +843,9 @@ function renderSteps(inference, node) {
         Y.log('No prior step: ' + aString);
       }
     }
-    element.on('hover',
-               Y.rbind(hover, element, inf, 'in'),
-               Y.rbind(hover, element, inf, 'out'));
+    stepNode.on('hover',
+                Y.rbind(hover, stepNode, inf, 'in'),
+                Y.rbind(hover, stepNode, inf, 'out'));
     allSteps[inf.result.asString()] = inf;
   }
 }
@@ -867,8 +874,9 @@ var hoverHandlers = {
     var eqn = deps[args[0].asString()].result;
     var target = deps[args[1].asString()].result;
     var path = args[2];
+    target.node[op]('hover');
     target.locate(path).node[op]('old');
-    inf.result.node[op]('hover');
+    inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
     eqn.getLeft().node[op]('old');
     eqn.getRight().node[op]('new');
@@ -879,8 +887,9 @@ var hoverHandlers = {
     var eqn = deps[args[0].asString()].result;
     var target = deps[args[1].asString()].result;
     var path = args[2];
+    target.node[op]('hover');
     target.locate(path).node[op]('old');
-    inf.result.node[op]('hover');
+    inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
     eqn.getRight().node[op]('old');
     eqn.getLeft().node[op]('new');
@@ -890,8 +899,9 @@ var hoverHandlers = {
     var args = inf.arguments;
     var target = deps[args[0].asString()].result;
     var path = args[1];
+    target.node[op]('hover');
     target.locate(path).node[op]('old');
-    inf.result.node[op]('hover');
+    inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
   }
 };
