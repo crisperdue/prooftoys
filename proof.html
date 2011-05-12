@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<!-- Uses "almost standards mode", all but some table cell sizing. -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Proof Display</title>
+
+  <script src="http://yui.yahooapis.com/3.3.0/build/yui/yui-min.js"></script>
+  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
+  <script src="expr.js"></script>
+  <script src="proof.js"></script>
+  <script src="q0.js"></script>
+
+<style type="text/css">
+
+  h1 { color: black }
+
+  body { background-color: #0B0 }
+
+/* Proof styling */
+
+.proofStep {
+    background-color: beige;
+    font-size: 90%;
+    padding: 2px;
+    margin: 4px 0px;
+}
+
+.hover, .dep {
+  background-color: white;
+ }
+
+/* Generic dependency */
+.dep-old {
+  background-color: #DDF;
+}
+
+/* Old value ("removed") */
+.reduced, .old {
+  background-color: #FCC;
+ }
+
+/* New value ("replacement") -- greenish */
+.hover2, .reduced2, .new {
+  background-color: #6F6;
+}
+
+</style>
+  
+</head>
+<body style="margin-left: .5em; text-align: left; font-family: sans-serif">
+
+<h1>Proof Display</h1>
+
+<script>
+YUI({filter: null, insertBefore: 'styles'})
+   .use('node', 'event', 'json', 'expr', 'q0', 'test', 'console',
+        'proof', 'collection', 'querystring-parse', 'json',
+        // querystring-parse requires "collection" (?!)
+   function(Y) {
+
+  // Set up some useful constants and functions.
+
+  Y.Expr.utils.import();
+
+  // Query string data.
+  var queryData;
+
+  var proofs = {
+
+    // PROOFS
+
+    r: function() {
+      var path = Y.path('/right/left');
+      return Y.makeInference('r', [xxxtimes2, bigger, path]);
+    },
+
+    defTrueAnd: {},
+
+    defFalseAnd: {},
+
+    defTrueOr: {},
+
+    defFalseOr: {},
+
+    defTrueImplies: {},
+
+    defFalseImplies: {},
+
+    applyBoth: {
+      args: [call('=', f, g), x]
+    },
+
+    eqSelf: {
+      args: [call(f, y)]
+    },
+
+    replaceWhole: {
+      args: [call(p, x), call('=', call(p, x), call(q, x))]
+    },
+
+    eqnSwap: {
+      args: [call('=', p, q)]
+    },
+
+    eqnChain: {
+      args: [call('=', p, q), call('=', q, r)]
+    },
+
+    applyBySides: {
+      args: [call('=', p, q), call('=', 'a', 'b')]
+    },
+    
+    applyBoth: {
+      args: [call('=', p, q), r]
+    },
+    
+    applyToBoth: {
+      args: [p, call('=', q, r)]
+    },
+    
+    instEqn: {
+      args: [call('=', call(g, y), z),
+             call(f, x),
+             y]
+    },
+    
+    eqT: {
+      args: [call(f, x)]
+    },
+    
+    r5211: {},
+    
+    ruleT: {},
+    
+    r5212: {},
+    
+    eqnIsTrue: {
+      args: [call('=', p, q)]
+    },
+    
+    r5213: {
+      args: [call('=', p, q),
+             call('=', q, r)]
+    },
+    
+    bindEqn: {
+      args: [call('=', f, g), x]
+    },
+    
+    forallInst: {
+      args: [call('forall', lambda(y, call(p, y))),
+             call(f, y)]
+    },
+    
+    andTBook: {
+      args: [p]
+    },
+    
+    andT: {
+      args: [p]
+    },
+    
+    r5217Book: {},
+    
+    r5218: {
+      args: [p]
+    },
+    
+    toTIsA: {
+      args: [p]
+    },
+    
+    fromTIsA: {
+      args: [call('=', T, p)]
+    },
+    
+    uGen: {
+      args: [call(p, y), y]
+    },
+    
+    sub: {
+      args: [call(p, y), call(f, x), y]
+    },
+    
+    cases: {
+      args: [z, call('=', call(p, z), z)]
+    },
+    
+    r5223: {},
+    
+    modusPonens: {
+      args: [p, q]
+    },
+    
+    r5230TF: {},
+    
+    r5230FT: {},
+    
+    r5231T: {},
+    
+    r5231F: {},
+    
+    falseEquals: {},
+    
+    trueEquals: {},
+    
+    evalBool: {
+      args: [call('-->',
+                  call('-->', F, call('not', F)),
+                  call('not', F))]
+    },
+    
+    applyFunc: {
+      args: [equal(call('-->', T), lambda(x, x)), F]
+    },
+    
+    tautology: {
+      args: [equal(call('-->', call('&&', p, q), r),
+                   call('-->', p, call('-->', q, r)))]
+    },
+    
+  };
+
+  function proofChanged() {
+    var selectorNode = Y.one('#selector');
+    var selector = Y.Node.getDOMNode(selectorNode);
+    var options = selector.options;
+    var ruleName = options[selector.selectedIndex].text;
+    if (ruleName) {
+      var ruleInfo = proofs[ruleName];
+      if (ruleInfo == undefined) {
+        alert('No rule "' + ruleName + '"');
+      }
+      var inference = Y.makeInference(ruleName, ruleInfo.args || []);
+      var proofNode = Y.one('#proofs');
+      proofNode.setContent('');
+      Y.renderSteps(inference, proofNode);
+    }
+  }
+
+  Y.on('domready', function() {
+      queryData = Y.QueryString.parse(location.search.substring(1));
+      var proofNode = Y.one('#proofs');
+      var ruleName = queryData.rule;
+      var ruleInfo = proofs[ruleName];
+      if (ruleInfo == undefined) {
+        alert('No rule "' + ruleName + '"');
+      }
+      var inference = Y.makeInference(ruleName, ruleInfo.args || []);
+      var menuNode = Y.one('#menu');
+      var selector = '<select id=selector>\n';
+      for (var name in proofs) {
+        selector += '<option>' + name + '\n';
+      }
+      selector += '</select>';
+      Y.one('#selectDiv').setContent(selector);
+      Y.one('#selector').on('change', proofChanged);
+      Y.renderSteps(inference, proofNode);
+    });
+});
+
+</script>
+<h3>Select a rule or theorem to prove</h3>
+<div id=selectDiv></div>
+<div id=proofs></div>
+<div id=query style="margin: 1em; color: white"></div>
+  </body>
+</html>
