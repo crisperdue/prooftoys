@@ -61,20 +61,15 @@
 
 <h1>Test Results</h1>
 
-<div class=hover>Generic dependency ("hover")</div>
-
-<div class=hover2>Replacement/current ("hover2")</div>
-
-<div class=reduced style="margin-bottom: 1em">Old/replaced ("reduced")</div>
-
 <div id=log class="yui3-skin-sam">
 </div>
 
 
 <script>
 YUI({filter: null, insertBefore: 'styles'})
-   .use('node', 'event', 'json', 'expr', 'q0', 'test', 'console', 'proof',
-        function(Y) {
+   .use('node', 'event', 'json', 'expr', 'q0', 'test', 'console',
+   'proof', 'querystring',
+   function(Y) {
 
   // Initialize the console
   var yconsole = new Y.Console({
@@ -107,12 +102,6 @@ YUI({filter: null, insertBefore: 'styles'})
     for (var a in assumptions) {
       Y.log('Assuming ' + a);
     }
-  }
-
-  // Render by appending to the document body.
-  window.apRender = function(expr) {
-    var div = new Y.Node(document.body).appendChild('<div></div>');
-    expr.render(div);
   }
 
   // Set up some useful constants and functions.
@@ -362,7 +351,9 @@ YUI({filter: null, insertBefore: 'styles'})
         var b = new Y.Var('b');
         var result = Y.ruleFns.eqT(b);
         assertEqual('(T = (b = b))', result);
-        assertEqual('(T = ((f x) = (f x)))', Y.ruleFns.eqT(call(f, x)));
+	var inf = Y.makeInference('eqT', [call(f, x)]);
+        assertEqual('(T = ((f x) = (f x)))', inf.result);
+	Y.renderSteps(inf);
       },
 
       testR5211: function() {
@@ -422,6 +413,7 @@ YUI({filter: null, insertBefore: 'styles'})
       testR5218: function() {
         var inf = Y.makeInference('r5218', [p]);
         assertEqual('((T = p) = p)', inf.result);
+	Y.renderSteps(inf);
       },
 
       testToTIsA: function() {

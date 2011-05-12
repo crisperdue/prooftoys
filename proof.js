@@ -900,7 +900,7 @@ var hoverHandlers = {
     var target = deps[args[0].asString()].result;
     var path = args[1];
     target.node[op]('hover');
-    target.locate(path).node[op]('old');
+    target.locate(path).node[op]('new');
     inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
   }
