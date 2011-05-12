@@ -16,7 +16,7 @@
 
   h1 { color: black }
 
-  body { background-color: #0B0 }
+  body { background-color: #6d6 }
 
 /* Proof styling */
 
@@ -52,6 +52,53 @@
 <body style="margin-left: .5em; text-align: left; font-family: sans-serif">
 
 <h1>Proof Display</h1>
+<p>
+This page can derive and display many of the theorems and examples of
+rules of inference of Chapter 5 of Peter Andrews' book,
+<a href="http://gtps.math.cmu.edu/tttp.html" target="_blank">
+An Introduction to Mathematical Logic and Type Theory: To Truth
+Through Proof</a>.  The order of theorems is essentially the same as
+in the book.  Some of the numbered theorems have been given names here
+in the hope of helping me remember which is which.
+
+<p><b>About the proofs.</b> Most of the proofs here closely follow
+proofs in the book.  I am also experimenting with definitions of
+boolean operators more directly related to truth tables, and a number
+of proofs use those definitions.  In some cases more than one version
+of the same proof is available, one following the book.
+
+<p><b>About the displays.</b> Formulas are presented here in a slightly
+different notation.  Instead of the usual use of lambda,
+we have a notation somewhat resembling the Ruby
+programming language brace notation for 
+<a href="http://en.wikipedia.org/wiki/Ruby_(programming_language)#Blocks_and_iterators"
+ target="_blank">blocks</a>/anonymous
+functions or Smalltalk blocks.  For example in place
+of <b>&lambda;x.T</b> you will see <code><b>{x : T}</b></code>.
+The displays also use symbols more like programming language
+symbols for "and" and "or", and infix where applicable.
+
+<p>When the mouse is over a line, that line and lines it uses
+are highlighted.  For Rule R and a lambda reductions ("reduce"),
+key parts of the lines also highlight themselves for quicker
+identification.
+
+<p><b>About the project.</b> The project is in an early stage,
+and is currently hosted as
+<a href="http://code.google.com/p/jlogic" target=_blank><b>jLogic</b></a>
+at Google Code.  Requests and suggestions are welcome.  Please use
+<a href="http://code.google.com/p/jlogic/issues/entry?template=Comment/suggestion"
+target="_blank">
+this template</a> for any input.
+
+<p>Thanks
+<br>Cris Perdue
+
+<p id=selectDiv style="margin: 1.5em">
+<b>Select a rule or theorem to prove:</b>
+</p>
+<div id=proofs style="margin: 1em"></div>
+<div id=query style="margin: 1em; color: white"></div>
 
 <script>
 YUI({filter: null, insertBefore: 'styles'})
@@ -71,6 +118,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
     // PROOFS
 
+/*
     r: function() {
       var path = Y.path('/right/left');
       return Y.makeInference('r', [xxxtimes2, bigger, path]);
@@ -87,7 +135,7 @@ YUI({filter: null, insertBefore: 'styles'})
     defTrueImplies: {},
 
     defFalseImplies: {},
-
+*/
     applyBoth: {
       args: [call('=', f, g), x]
     },
@@ -242,29 +290,34 @@ YUI({filter: null, insertBefore: 'styles'})
 
   Y.on('domready', function() {
       queryData = Y.QueryString.parse(location.search.substring(1));
-      var proofNode = Y.one('#proofs');
       var ruleName = queryData.rule;
-      var ruleInfo = proofs[ruleName];
-      if (ruleInfo == undefined) {
-        alert('No rule "' + ruleName + '"');
+      var inference = null;
+      if (!location.search) {
+        // Default to displaying instEqn.
+        ruleName = 'instEqn';
       }
-      var inference = Y.makeInference(ruleName, ruleInfo.args || []);
-      var menuNode = Y.one('#menu');
-      var selector = '<select id=selector>\n';
+      if (ruleName) {
+        var ruleInfo = proofs[ruleName];
+        if (ruleInfo == undefined) {
+          alert('No rule "' + ruleName + '"');
+        } else {
+          inference = Y.makeInference(ruleName, ruleInfo.args || []);
+        }
+      }
+      var selector = '<select id=selector>\n<option value="">-- choose --';
       for (var name in proofs) {
         selector += '<option>' + name + '\n';
       }
       selector += '</select>';
-      Y.one('#selectDiv').setContent(selector);
+      Y.one('#selectDiv').appendChild(selector);
       Y.one('#selector').on('change', proofChanged);
-      Y.renderSteps(inference, proofNode);
+      if (inference) {
+        var proofNode = Y.one('#proofs');
+        Y.renderSteps(inference, proofNode);
+      }
     });
 });
 
 </script>
-<h3>Select a rule or theorem to prove</h3>
-<div id=selectDiv></div>
-<div id=proofs></div>
-<div id=query style="margin: 1em; color: white"></div>
-  </body>
+</body>
 </html>

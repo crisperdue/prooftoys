@@ -413,7 +413,6 @@ YUI({filter: null, insertBefore: 'styles'})
       testR5218: function() {
         var inf = Y.makeInference('r5218', [p]);
         assertEqual('((T = p) = p)', inf.result);
-	Y.renderSteps(inf);
       },
 
       testToTIsA: function() {
@@ -432,7 +431,6 @@ YUI({filter: null, insertBefore: 'styles'})
         var inf = Y.makeInference('uGen', [call(p, y), y]);
         assertEqual('(forall {y : (p y)})', inf.result);
         logAssumptions(inf);
-        Y.renderSteps(inf);
       },
 
       testSub: function() {

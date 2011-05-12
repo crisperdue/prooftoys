@@ -17,10 +17,10 @@ var allT = lambda(x, T);
 var ruleFns = {
 
   /**
-   * The name "TBD" is used in Inferences to indicate that
-   * the result of the inference is to be proven.
+   * The name "given" is used in Inferences to indicate that
+   * the result of the inference is an assumption.
    */
-  TBD: function(assumption) {
+  given: function(assumption) {
     return assumption;
   },
 
@@ -776,8 +776,9 @@ function debugString(o, specials) {
 }
 
 /**
- * Returns a set of printable strings of terms this inference relies
- * on to be true in order to produce its result.
+ * Returns a set of wffs this inference relies on to be true in order
+ * to produce its result, as a map indexed by their string
+ * representations.
  */
 Inference.prototype.assumptions = function() {
   // Databases of input and output expressions of applications of
@@ -793,8 +794,8 @@ Inference.prototype.assumptions = function() {
     if (inference.name == 'r') {
       outputs[inference.result.toString()] = inference.result;
       var args = inference.arguments;
-      inputs[args[0].asString()] = true;
-      inputs[args[1].asString()] = true;
+      inputs[args[0].asString()] = args[0];
+      inputs[args[1].asString()] = args[1];
     } else {
       var details = inference.details;
       for (var i = 0; i < details.length; i++) {
@@ -814,13 +815,19 @@ function renderSteps(inference, node) {
     node = new Y.Node(document.body)
       .appendChild('<div style="margin: 1em; font-family: monospace"></div>');
   }
-  node.appendChild('<div style="margin: .5em"><b>'
+  node.appendChild('<div style="margin: .5em"><b>Proof of '
                    + inference.name + '</b></div>');
   
   var details = inference.details;
-  // Map to inference from its result as string.  Each result will
-  // be annotated with links into the DOM.
+  var assumptions = inference.assumptions();
+  // Map to inference from its result as string.  Each result will be
+  // annotated with links into the DOM.  Starts with the assumptions.
   var allSteps = {};
+  for (var key in assumptions) {
+    var wff = assumptions[key];
+    allSteps[key] = wff;
+    details.splice(0, 0, makeInference('given', [wff]));
+  }
   for (var i = 0; i < details.length; i++) {
     var inf = details[i];
     var stepNode = node.appendChild('<div class="proofStep"></div>');
@@ -910,7 +917,7 @@ var hoverHandlers = {
  * Applies the rule with the given name to the arguments,
  * pushing a record of its inference onto the given stack (array),
  * and returning the result of the Inference, an expression.
- * If there no such rule, returns null and has no effect.
+ * If there no such rule, throws an exception.
  */
 function applyRule(name, arguments, stack) {
   // In Java probably implement this with Callables and a method
@@ -930,7 +937,7 @@ function applyRule(name, arguments, stack) {
 
 /**
  * Makes and returns an inference by running the named rule with the
- * given arguments.
+ * given arguments, or an empty list if none are given.
  */
 function makeInference(name, arguments) {
   arguments = arguments || [];
@@ -955,7 +962,9 @@ for (var key in ruleFns) {
 };
 
 
-/// Proof
+// Proof
+
+// TODO: remove? 
 
 function Proof() {
   this.steps = [];
@@ -972,6 +981,8 @@ Proof.prototype.insert = function(step, index) {
 
 
 // ProofStep
+
+// TODO: remove?
 
 function ProofStep(proof) {
   this.proof = proof;
@@ -990,7 +1001,7 @@ function ProofStep(proof) {
  */
 ProofStep.prototype.setInference = function(inference, dependencies) {
   this.inference = inference;
-  if (inference.name == 'TBD') {
+  if (inference.name == 'given') {
     if (dependencies && dependencies.length > 0) {
       assert(false, 'TBD inference cannot have dependencies');
     }
@@ -1014,7 +1025,7 @@ ProofStep.prototype.setInference = function(inference, dependencies) {
       this.deps.push(dep);
     } else {
       var step = new ProofStep(this.proof);
-      step.setInference(new Inference('TBD', [], assumption), []);
+      step.setInference(new Inference('given', [], assumption), []);
       this.proof.insert(step, this.index);
     }
   }
