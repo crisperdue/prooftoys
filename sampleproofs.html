@@ -52,14 +52,42 @@
 <body style="margin-left: .5em; text-align: left; font-family: sans-serif">
 
 <h1>Proof Display</h1>
-<p>
-This page can derive and display many of the theorems and examples of
-rules of inference of Chapter 5 of Peter Andrews' book,
+
+<p><b>Introduction.</b>  The connection between computers and logic has
+fascinated me ever since I was a boy, and Peter Andrews' system Q0 is
+especially notable. It uses such an exceptionally small base of simple
+concepts to build sophisticated reasoning capabilities and a
+foundation suitable for mathematics in general, comparable to first
+order logic plus set theory.  Also, by taking functions as fundamental
+concepts it shows off the parallels between programming languages and
+higher-order logics.
+
+<p>As I started working on an interactive proof assistant based on
+Andrews' system, I wanted to build up higher concepts such as theorems
+and derived rules of inference from the basic building blocks rather
+than building them in with code, and this meant building his
+elementary theorems and rules from his base, or a very similar base.
+This gave me a set of theorems proven by the core proof-building
+machinery.  I wanted a more convenient way to view them, and wanted to
+start trying out ideas for supporting human readers of proofs.
+
+<p>The theorems and derived rules of inference here tend to be just
+building blocks rather than completed tools for serious proof
+development, but they demonstrate Andrews' core concepts, and how
+proofs are built from them.
+
+<p><b>About the logic.</b>  This page can derive and show derivations
+of many of the theorems and examples of rules of inference of Chapter
+5 of Peter Andrews' book,
 <a href="http://gtps.math.cmu.edu/tttp.html" target="_blank">
 An Introduction to Mathematical Logic and Type Theory: To Truth
 Through Proof</a>.  The order of theorems is essentially the same as
 in the book.  Some of the numbered theorems have been given names here
-in the hope of helping me remember which is which.
+in the hope of helping me remember which is which.  His system is
+summarized in
+<a href="http://plato.stanford.edu/entries/type-theory-church/#ForBasEqu"
+target=_blank>this article</a>
+in the online Stanford Encyclopedia of Philosophy.
 
 <p><b>About the proofs.</b> Most of the proofs here closely follow
 proofs in the book.  I am also experimenting with definitions of
@@ -68,16 +96,17 @@ of proofs use those definitions.  In some cases more than one version
 of the same proof is available, one following the book.  The sample
 proofs are all created by hand and executed by machine.
 
-<p><b>About the displays.</b> Formulas are presented here in a slightly
+<p><b>About the displays.</b> Formulas are presented here in a somewhat
 different notation.  Instead of the usual use of lambda,
 we have a notation somewhat resembling the Ruby
 programming language brace notation for 
 <a href="http://en.wikipedia.org/wiki/Ruby_(programming_language)#Blocks_and_iterators"
- target="_blank">blocks</a>/anonymous
-functions or Smalltalk blocks.  For example in place
-of <b>&lambda;x.T</b> you will see <code><b>{x : T}</b></code>.
-The displays also use symbols more like programming language
-symbols for "and" and "or", and infix where applicable.
+ target="_blank">blocks</a>/anonymous functions or Smalltalk blocks.
+For example in place of <b>&lambda;x.T</b> you will see <code><b>{x :
+T}</b></code>.  The displays also use symbols more like programming
+language symbols for "and" and "or", and infix syntax where
+applicable.  Note that even these very basic proofs use derived rules
+of inference that you can also view.
 
 <p>When the mouse is over a line, that line and lines it uses
 are highlighted.  For Rule R and a lambda reductions ("reduce"),
@@ -98,7 +127,7 @@ this template</a> for your input.
 <p id=selectDiv style="margin: 1.5em">
 <b>Select a rule or theorem to prove:</b>
 </p>
-<div id=proofs style="margin: 1em"></div>
+<div id=proofs style="margin: 1em; font-family: monospace"></div>
 <div id=query style="margin: 1em; color: white"></div>
 
 <script>
@@ -120,6 +149,7 @@ YUI({filter: null, insertBefore: 'styles'})
     // PROOFS
 
 /*
+None of these is working right now.
     r: function() {
       var path = Y.path('/right/left');
       return Y.makeInference('r', [xxxtimes2, bigger, path]);
