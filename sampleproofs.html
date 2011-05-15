@@ -74,7 +74,14 @@ start trying out ideas for supporting human readers of proofs.
 <p>The theorems and derived rules of inference here tend to be just
 building blocks rather than completed tools for serious proof
 development, but they demonstrate Andrews' core concepts, and how
-proofs are built from them.
+proofs are built from them.  Examples of some practical rules of
+inference are here though, such as universal generalization (uGen),
+universal instantiation (forallInst), and reasoning by cases (cases).
+
+<p id=selectDiv style="margin: 1.5em">
+<b>Select a rule or theorem to prove:</b>
+</p>
+<div id=proofs style="margin: 1em; font-family: monospace"></div>
 
 <p><b>About the logic.</b>  This page can derive and show derivations
 of many of the theorems and examples of rules of inference of Chapter
@@ -124,11 +131,6 @@ this template</a> for your input.
 <p>Thanks
 <br>Cris Perdue
 
-<p id=selectDiv style="margin: 1.5em">
-<b>Select a rule or theorem to prove:</b>
-</p>
-<div id=proofs style="margin: 1em; font-family: monospace"></div>
-<div id=query style="margin: 1em; color: white"></div>
 
 <script>
 YUI({filter: null, insertBefore: 'styles'})
@@ -172,7 +174,7 @@ None of these is working right now.
     },
 
     eqSelf: {
-      args: [call(f, y)]
+      args: [T]
     },
 
     replaceWhole: {
@@ -206,12 +208,12 @@ None of these is working right now.
     },
     
     eqT: {
-      args: [call(f, x)]
+      args: [p]
     },
     
     r5211: {},
     
-    ruleT: {},
+    t: {},
     
     r5212: {},
     

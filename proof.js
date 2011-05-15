@@ -181,8 +181,7 @@ var ruleFns = {
 
   // r5201b
   eqnSwap: function(ab) {
-    var a = ab.getLeft();
-    var aa = rules.eqSelf(a);
+    var aa = rules.eqSelf(ab.getLeft());
     var ba = rules.r(ab, aa, '/left');
     return ba;
   },
@@ -290,7 +289,7 @@ var ruleFns = {
   t: function() {
     var step1 = rules.eqSelf(T);
     var step2 = rules.eqT(T);
-    var step3 = rules.rRight(step2, step1, '/');
+    var step3 = rules.rRight(step2, step1, '');
     return step3;
   },
 
@@ -792,6 +791,9 @@ Inference.prototype.assumptions = function() {
       outputs[inference.result.asString()] = inference.result;
     }
     if (inference.name == 'r') {
+      if (inference.result.asString() == '(T = T)') {
+        Y.log('T = T: ' + inference);
+      }
       outputs[inference.result.toString()] = inference.result;
       var args = inference.arguments;
       inputs[args[0].asString()] = args[0];
