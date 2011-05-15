@@ -780,36 +780,37 @@ function debugString(o, specials) {
  * representations.
  */
 Inference.prototype.assumptions = function() {
-  // Databases of input and output expressions of applications of
-  // primitive rules, indexed by value as string.
-  var inputs  = {};
-  var outputs = {};
   // Accumulates the inputs and outputs of this inference.
-  function accumulate(inference) {
-    // For axioms, definitions, and rule R the result is an output.
-    if (inference.name.match(/^axiom|^def[A-Z]/)) {
+  // For axioms, definitions, and rule R the result is an output.
+  if (this.name.match(/^axiom|^def[A-Z]/)) {
+    // Axioms and definitions need no inputs.
+    return {};
+  } else if (this.name == 'r') {
+    if (this.result.asString() == '(T = T)') {
+      Y.log('T = T: ' + this);
+    }
+    var args = this.arguments;
+    var inputs = {};
+    inputs[args[0].asString()] = args[0];
+    inputs[args[1].asString()] = args[1];
+    return inputs;
+  } else {
+    var inputs = {};
+    var outputs = {};
+    var details = this.details;
+    for (var i = 0; i < details.length; i++) {
+      var inference = details[i];
       outputs[inference.result.asString()] = inference.result;
-    }
-    if (inference.name == 'r') {
-      if (inference.result.asString() == '(T = T)') {
-        Y.log('T = T: ' + inference);
-      }
-      outputs[inference.result.toString()] = inference.result;
-      var args = inference.arguments;
-      inputs[args[0].asString()] = args[0];
-      inputs[args[1].asString()] = args[1];
-    } else {
-      var details = inference.details;
-      for (var i = 0; i < details.length; i++) {
-        accumulate(details[i]);
+      var assumes = details[i].assumptions();
+      for (var key in assumes) {
+        inputs[key] = assumes[key];
       }
     }
+    for (var key in outputs) {
+      delete inputs[key];
+    }
+    return inputs;
   }
-  accumulate(this);
-  for (var key in outputs) {
-    delete inputs[key];
-  }
-  return inputs;
 };
 
 function renderSteps(inference, node) {
