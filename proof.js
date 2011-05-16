@@ -710,6 +710,7 @@ function Inference(name, arguments, result, details) {
   this.result = result;
   // List of component steps (Inferences), empty if not composite.
   this.details = details;
+  // Can have a "deps" property, an array of (rendered) assumptions.
 }
 
 Inference.prototype.getStepNode = function() {
@@ -786,9 +787,6 @@ Inference.prototype.assumptions = function() {
     // Axioms and definitions need no inputs.
     return {};
   } else if (this.name == 'r') {
-    if (this.result.asString() == '(T = T)') {
-      Y.log('T = T: ' + this);
-    }
     var args = this.arguments;
     var inputs = {};
     inputs[args[0].asString()] = args[0];
@@ -854,6 +852,7 @@ function renderSteps(inference, node) {
       }
     }
     stepNode.on('hover',
+                // Call "hover" adding extra arguments at the end.
                 Y.rbind(hover, stepNode, inf, 'in'),
                 Y.rbind(hover, stepNode, inf, 'out'));
     allSteps[inf.result.asString()] = inf;
@@ -922,7 +921,7 @@ var hoverHandlers = {
  * and returning the result of the Inference, an expression.
  * If there no such rule, throws an exception.
  */
-function applyRule(name, arguments, stack) {
+function applyRule(name, ruleArgs, stack) {
   // In Java probably implement this with Callables and a method
   // to get the arguments of each.  Each item in rules becomes
   // a Callable.
@@ -932,20 +931,29 @@ function applyRule(name, arguments, stack) {
   var rule = ruleFns[name];
   assert(rule, 'No such rule: ' + name);
   stack.push([]);
-  var result = rule.apply(null, arguments);
-  var step = new Inference(name, arguments, result, stack.pop());
+  var result = rule.apply(null, ruleArgs);
+  var step = new Inference(name, ruleArgs, result, stack.pop());
+  result.inference = step;
   stack[stack.length - 1].push(step);
   return result;
+}
+
+function infer(name, stack, etc) {
+  var ruleArgs = [];
+  for (var i = 2; i < arguments.length; i++) {
+    ruleArgs.push(arguments[i]);
+  }
+  return applyRule(name, ruleArgs, stack);
 }
 
 /**
  * Makes and returns an inference by running the named rule with the
  * given arguments, or an empty list if none are given.
  */
-function makeInference(name, arguments) {
-  arguments = arguments || [];
+function makeInference(name, ruleArgs) {
+  ruleArgs = ruleArgs || [];
   inferenceStack.push([]);
-  applyRule(name, arguments, inferenceStack);
+  applyRule(name, ruleArgs, inferenceStack);
   var inf = inferenceStack.pop().pop();
   return inf;
 }
@@ -957,11 +965,7 @@ var inferenceStack = [[]];
 var rules = {};
 
 for (var key in ruleFns) {
-  (function(k) {
-    rules[k] = function() {
-      return applyRule(k, arguments, inferenceStack);
-    }
-  })(key);
+  rules[key] = Y.bind(infer, null, key, inferenceStack);
 };
 
 

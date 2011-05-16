@@ -73,8 +73,9 @@ function Expr() {
   this.sort = Expr.expr;
   // Can also have "node" property for an associated
   // DOM node (refers to a YUI Node).
-  // Can have a "string" property with the result of toString.
-  // Can have a "deps" property, an array of (rendered) assumptions.
+  // Can have a "_string" property with the result of toString.
+  // If inferred, has an "inference" property with the inference
+  //   that produced it.
 }
 
 // The different sorts of expressions:
