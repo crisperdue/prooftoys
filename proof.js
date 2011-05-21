@@ -2,6 +2,373 @@
 
 YUI.add('proof', function(Y) {
 
+//// INFERENCES
+
+/**
+ * Inference object: Immutable record of an inference step, either
+ * primitive or composite.  The constructor is private; use
+ * makeInference to create inferences in client code.
+ */
+function Inference(name, arguments, result, details) {
+  // Rule name
+  this.name = name;
+  // Arguments: a list of expressions or inference steps with result
+  // expressions used by this step.  For composite inferences this
+  // should be null.
+  this.arguments = arguments;
+  // The conclusion Expr of the inference..
+  this.result = result;
+  // List of component steps (Inferences), empty if not composite.
+  this.details = details;
+  // Can have a "deps" property, an array of (rendered) assumptions.
+}
+
+Inference.prototype.getStepNode = function() {
+  return this.result.node.get('parentNode');
+}
+
+Inference.prototype.toString = function() {
+  var result = debugString(this);
+  if (result.length <= 200) {
+    return result;
+  } else {
+    function detailer(details) {
+      result = '[';
+      for (var i = 0; i < details.length; i++) {
+        if (i > 0) {
+          result += ', ';
+        }
+        result += details[i].name;
+      }
+      return result + ']';
+    }
+    return debugString(this, {details: detailer});
+  }
+}
+
+/**
+ * Returns a set of wffs this inference relies on to be true in order
+ * to produce its result, as a map indexed by their string
+ * representations.
+ */
+Inference.prototype.assumptions = function() {
+  // Accumulates the inputs and outputs of this inference.
+  // For axioms, definitions, and rule R the result is an output.
+  if (this.name.match(/^axiom|^def[A-Z]/)) {
+    // Axioms and definitions need no inputs.
+    return {};
+  } else if (this.name == 'r') {
+    var args = this.arguments;
+    var inputs = {};
+    inputs[args[0].asString()] = args[0];
+    inputs[args[1].asString()] = args[1];
+    return inputs;
+  } else {
+    var inputs = {};
+    var outputs = {};
+    var details = this.details;
+    for (var i = 0; i < details.length; i++) {
+      var inference = details[i];
+      outputs[inference.result.asString()] = inference.result;
+      var assumes = details[i].assumptions();
+      for (var key in assumes) {
+        inputs[key] = assumes[key];
+      }
+    }
+    for (var key in outputs) {
+      delete inputs[key];
+    }
+    return inputs;
+  }
+};
+
+/**
+ * Applies the rule with the given name to the arguments,
+ * pushing a record of its inference onto the given stack (array),
+ * and returning the result of the Inference, an expression.
+ * If there no such rule, throws an exception.
+ */
+function applyRule(name, ruleArgs, stack) {
+  // In Java probably implement this with Callables and a method
+  // to get the arguments of each.  Each item in rules becomes
+  // a Callable.
+  //
+  // Each rule runs with a new list available for any steps within it.
+  assert(typeof name == 'string', 'Name must be a string: ' + name);
+  var rule = ruleFns[name];
+  assert(rule, 'No such rule: ' + name);
+  stack.push([]);
+  var result = rule.apply(null, ruleArgs);
+  var step = new Inference(name, ruleArgs, result, stack.pop());
+  result.inference = step;
+  stack[stack.length - 1].push(step);
+  return result;
+}
+
+function infer(name, stack, etc) {
+  var ruleArgs = [];
+  for (var i = 2; i < arguments.length; i++) {
+    ruleArgs.push(arguments[i]);
+  }
+  return applyRule(name, ruleArgs, stack);
+}
+
+/**
+ * Makes and returns an inference by running the named rule with the
+ * given arguments, or an empty list if none are given.
+ */
+function makeInference(name, ruleArgs) {
+  ruleArgs = ruleArgs || [];
+  inferenceStack.push([]);
+  applyRule(name, ruleArgs, inferenceStack);
+  var inf = inferenceStack.pop().pop();
+  return inf;
+}
+
+// Maybe each set of rules could have its own inference stack???
+var inferenceStack = [[]];
+
+
+
+// RENDERING AND EVENTS
+
+function renderSteps(inference, node) {
+  if (node == null) {
+    node = new Y.Node(document.body)
+      .appendChild('<div style="margin: 1em; font-family: monospace"></div>');
+  }
+  node.appendChild('<div style="margin: .5em"><b>Proof of '
+                   + inference.name + '</b></div>');
+  
+  var details = inference.details;
+  var assumptions = inference.assumptions();
+  // Map to inference from its result as string.  Each result will be
+  // annotated with links into the DOM.  Starts with the assumptions.
+  var allSteps = {};
+  for (var key in assumptions) {
+    var wff = assumptions[key];
+    allSteps[key] = wff;
+    details.splice(0, 0, makeInference('given', [wff]));
+  }
+  for (var i = 0; i < details.length; i++) {
+    var inf = details[i];
+    var stepNode = node.appendChild('<div class="proofStep"></div>');
+    // See appendSpan in expr.js.
+    var wffNode = stepNode.appendChild('<span class=expr></span>');
+    // Record the annotated expression as the inference result.
+    inf.result = inf.result.render(wffNode);
+    // Add the name to the display.
+    stepNode.appendChild('&nbsp;&nbsp;' + inf.name);
+    // Map to inference, from its result expression as string.
+    // Represents steps depended on by the inference.
+    inf.deps = {};
+    var assumptions = inf.assumptions();
+    // Remember dependencies between inference steps as we go.
+    for (var aString in assumptions) {
+      var step = allSteps[aString];
+      if (step) {
+        inf.deps[aString] = step;
+      } else {
+        Y.log('No prior step: ' + aString);
+      }
+    }
+    stepNode.on('hover',
+                // Call "hover" adding extra arguments at the end.
+                Y.rbind(hover, stepNode, inf, 'in'),
+                Y.rbind(hover, stepNode, inf, 'out'));
+    allSteps[inf.result.asString()] = inf;
+  }
+}
+
+/**
+ * Event handler for "hover" events.
+ */
+function hover(event, inference, direction) {
+  var op = direction == 'in' ? 'addClass' : 'removeClass';
+  var deps = inference.deps;
+  var handler = hoverHandlers[inference.name];
+  if (handler) {
+    handler(inference, op);
+  } else {
+    this[op]('hover');
+    for (var key in deps) {
+      deps[key].result.node[op]('dep');
+    }
+  }
+}
+
+var hoverHandlers = {
+  r: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    var eqn = deps[args[0].asString()].result;
+    var target = deps[args[1].asString()].result;
+    var path = args[2];
+    target.node[op]('hover');
+    target.locate(path).node[op]('old');
+    inf.getStepNode()[op]('hover');
+    inf.result.locate(path).node[op]('new');
+    eqn.getLeft().node[op]('old');
+    eqn.getRight().node[op]('new');
+  },
+  rRight: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    var eqn = deps[args[0].asString()].result;
+    var target = deps[args[1].asString()].result;
+    var path = args[2];
+    target.node[op]('hover');
+    target.locate(path).node[op]('old');
+    inf.getStepNode()[op]('hover');
+    inf.result.locate(path).node[op]('new');
+    eqn.getRight().node[op]('old');
+    eqn.getLeft().node[op]('new');
+  },
+  reduce: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    var target = deps[args[0].asString()].result;
+    var path = args[1];
+    target.node[op]('hover');
+    target.locate(path).node[op]('new');
+    inf.getStepNode()[op]('hover');
+    inf.result.locate(path).node[op]('new');
+  }
+};
+
+
+//// PROOF
+
+// TODO: remove? 
+
+function Proof() {
+  this.steps = [];
+}
+
+Proof.prototype.insert = function(step, index) {
+  step.index = index;
+  var steps = this.steps;
+  for (var i = index; i < steps.length; i++) {
+    steps[i].index = index;
+  }
+  steps.splice(index, 0, step);
+};
+
+
+//// ProofStep
+
+// TODO: remove?
+
+function ProofStep(proof) {
+  this.proof = proof;
+  this.index = null;
+  this.tactic = null;
+  this.inference = null;
+  this.deps = [];
+}
+
+/**
+ * Sets the inference of this step.  The dependencies are a list of
+ * ProofSteps this claims to depend on.  The results of those steps
+ * should match the assumptions of the new inference, or else this
+ * method inserts new steps that make the needed assertions.
+ * Making new steps is a policy decision that could change.
+ */
+ProofStep.prototype.setInference = function(inference, dependencies) {
+  this.inference = inference;
+  if (inference.name == 'given') {
+    if (dependencies && dependencies.length > 0) {
+      assert(false, 'TBD inference cannot have dependencies');
+    }
+    return;
+  }
+  // This will be a set of the dependencies, indexed by the printed
+  // string of the result of each one's inference.
+  fromDeps = {};
+  for (var i = 0; i < dependencies.length; i++) {
+    var dep = dependencies[i];
+    var result = dep.inference.result;
+    fromDeps[result.toString()] = dep;
+  }
+  this.deps = [];
+  var assumptions = inference.assumptions();
+  // Connect the inputs needed by this step to other proof steps
+  for (var str in assumptions) {
+    var assumption = assumptions[str];
+    var provided = fromDeps[str];
+    if (provided) {
+      this.deps.push(dep);
+    } else {
+      var step = new ProofStep(this.proof);
+      step.setInference(new Inference('given', [], assumption), []);
+      this.proof.insert(step, this.index);
+    }
+  }
+};
+
+
+//// UTILITY FUNCTIONS
+
+function assert(condition, message) {
+  if (!condition) {
+    if (typeof message == 'function') {
+      message = message();
+    }
+    console.log(message);
+    break_here();
+  }
+}
+
+function assertEqn(expr) {
+  assert(expr instanceof Y.Call
+         && expr.fn instanceof Y.Call
+         && expr.fn.fn instanceof Y.Var
+         && expr.fn.fn.name == '=',
+         'Must be an equation: ' + expr);
+}
+
+/**
+ * Returns a string showing the top-level properties
+ * of an object, and their values.
+ */
+function debugString(o, specials) {
+  if (typeof o == 'object') {
+    var result = '{';
+    for (var key in o) {
+      if (o.hasOwnProperty(key)) {
+        result += key + ': ';
+        var value = o[key];
+        var f = specials && specials[key];
+        if (f) {
+          result += f(value);
+        } else if (typeof value == 'string') {
+          result += '"' + o[key] + '"';
+        } else if (value && value.concat) {
+          vString = o[key].toString();
+          if (vString.length > 40) {
+            result += '[\n';
+            for (var i = 0; i < value.length; i++) {
+              result += value[i] + '\n';
+            }
+            result += ']\n';
+          } else {
+            result += '[' + o[key] + ']';
+          }
+        } else {
+          result += '' + o[key];
+        }
+        result += ' ';
+      }
+    }
+    return result + '}';
+  } else {
+    return o.toString();
+  }
+}
+
+
+/// THEOREMS AND RULES
+
 // Import the generally-useful names from "expr" into
 // this environment.
 Y.Expr.utils.import();
@@ -9,8 +376,6 @@ Y.Expr.utils.import();
 var identity = lambda(x, x);
 
 var allT = lambda(x, T);
-
-/// Rules (public)
 
 // Map from inference rule name to a JavaScript procedure that
 // implements it.
@@ -692,372 +1057,12 @@ var ruleFns = {
 
 };
 
-//// Inferences
-
-/**
- * Inference object: Immutable record of an inference step, either
- * primitive or composite.  The constructor is private; use
- * makeInference to create inferences in client code.
- */
-function Inference(name, arguments, result, details) {
-  // Rule name
-  this.name = name;
-  // Arguments: a list of expressions or inference steps with result
-  // expressions used by this step.  For composite inferences this
-  // should be null.
-  this.arguments = arguments;
-  // The conclusion Expr of the inference..
-  this.result = result;
-  // List of component steps (Inferences), empty if not composite.
-  this.details = details;
-  // Can have a "deps" property, an array of (rendered) assumptions.
-}
-
-Inference.prototype.getStepNode = function() {
-  return this.result.node.get('parentNode');
-}
-
-Inference.prototype.toString = function() {
-  var result = debugString(this);
-  if (result.length <= 200) {
-    return result;
-  } else {
-    function detailer(details) {
-      result = '[';
-      for (var i = 0; i < details.length; i++) {
-        if (i > 0) {
-          result += ', ';
-        }
-        result += details[i].name;
-      }
-      return result + ']';
-    }
-    return debugString(this, {details: detailer});
-  }
-}
-
-/**
- * Returns a string showing the top-level properties
- * of an object, and their values.
- */
-function debugString(o, specials) {
-  if (typeof o == 'object') {
-    var result = '{';
-    for (var key in o) {
-      if (o.hasOwnProperty(key)) {
-        result += key + ': ';
-        var value = o[key];
-        var f = specials && specials[key];
-        if (f) {
-          result += f(value);
-        } else if (typeof value == 'string') {
-          result += '"' + o[key] + '"';
-        } else if (value && value.concat) {
-          vString = o[key].toString();
-          if (vString.length > 40) {
-            result += '[\n';
-            for (var i = 0; i < value.length; i++) {
-              result += value[i] + '\n';
-            }
-            result += ']\n';
-          } else {
-            result += '[' + o[key] + ']';
-          }
-        } else {
-          result += '' + o[key];
-        }
-        result += ' ';
-      }
-    }
-    return result + '}';
-  } else {
-    return o.toString();
-  }
-}
-
-/**
- * Returns a set of wffs this inference relies on to be true in order
- * to produce its result, as a map indexed by their string
- * representations.
- */
-Inference.prototype.assumptions = function() {
-  // Accumulates the inputs and outputs of this inference.
-  // For axioms, definitions, and rule R the result is an output.
-  if (this.name.match(/^axiom|^def[A-Z]/)) {
-    // Axioms and definitions need no inputs.
-    return {};
-  } else if (this.name == 'r') {
-    var args = this.arguments;
-    var inputs = {};
-    inputs[args[0].asString()] = args[0];
-    inputs[args[1].asString()] = args[1];
-    return inputs;
-  } else {
-    var inputs = {};
-    var outputs = {};
-    var details = this.details;
-    for (var i = 0; i < details.length; i++) {
-      var inference = details[i];
-      outputs[inference.result.asString()] = inference.result;
-      var assumes = details[i].assumptions();
-      for (var key in assumes) {
-        inputs[key] = assumes[key];
-      }
-    }
-    for (var key in outputs) {
-      delete inputs[key];
-    }
-    return inputs;
-  }
-};
-
-function renderSteps(inference, node) {
-  if (node == null) {
-    node = new Y.Node(document.body)
-      .appendChild('<div style="margin: 1em; font-family: monospace"></div>');
-  }
-  node.appendChild('<div style="margin: .5em"><b>Proof of '
-                   + inference.name + '</b></div>');
-  
-  var details = inference.details;
-  var assumptions = inference.assumptions();
-  // Map to inference from its result as string.  Each result will be
-  // annotated with links into the DOM.  Starts with the assumptions.
-  var allSteps = {};
-  for (var key in assumptions) {
-    var wff = assumptions[key];
-    allSteps[key] = wff;
-    details.splice(0, 0, makeInference('given', [wff]));
-  }
-  for (var i = 0; i < details.length; i++) {
-    var inf = details[i];
-    var stepNode = node.appendChild('<div class="proofStep"></div>');
-    // See appendSpan in expr.js.
-    var wffNode = stepNode.appendChild('<span class=expr></span>');
-    // Record the annotated expression as the inference result.
-    inf.result = inf.result.render(wffNode);
-    // Add the name to the display.
-    stepNode.appendChild('&nbsp;&nbsp;' + inf.name);
-    // Map to inference, from its result expression as string.
-    // Represents steps depended on by the inference.
-    inf.deps = {};
-    var assumptions = inf.assumptions();
-    // Remember dependencies between inference steps as we go.
-    for (var aString in assumptions) {
-      var step = allSteps[aString];
-      if (step) {
-        inf.deps[aString] = step;
-      } else {
-        Y.log('No prior step: ' + aString);
-      }
-    }
-    stepNode.on('hover',
-                // Call "hover" adding extra arguments at the end.
-                Y.rbind(hover, stepNode, inf, 'in'),
-                Y.rbind(hover, stepNode, inf, 'out'));
-    allSteps[inf.result.asString()] = inf;
-  }
-}
-
-/**
- * Event handler for "hover" events.
- */
-function hover(event, inference, direction) {
-  var op = direction == 'in' ? 'addClass' : 'removeClass';
-  var deps = inference.deps;
-  var handler = hoverHandlers[inference.name];
-  if (handler) {
-    handler(inference, op);
-  } else {
-    this[op]('hover');
-    for (var key in deps) {
-      deps[key].result.node[op]('dep');
-    }
-  }
-}
-
-var hoverHandlers = {
-  r: function(inf, op) {
-    var deps = inf.deps;
-    var args = inf.arguments;
-    var eqn = deps[args[0].asString()].result;
-    var target = deps[args[1].asString()].result;
-    var path = args[2];
-    target.node[op]('hover');
-    target.locate(path).node[op]('old');
-    inf.getStepNode()[op]('hover');
-    inf.result.locate(path).node[op]('new');
-    eqn.getLeft().node[op]('old');
-    eqn.getRight().node[op]('new');
-  },
-  rRight: function(inf, op) {
-    var deps = inf.deps;
-    var args = inf.arguments;
-    var eqn = deps[args[0].asString()].result;
-    var target = deps[args[1].asString()].result;
-    var path = args[2];
-    target.node[op]('hover');
-    target.locate(path).node[op]('old');
-    inf.getStepNode()[op]('hover');
-    inf.result.locate(path).node[op]('new');
-    eqn.getRight().node[op]('old');
-    eqn.getLeft().node[op]('new');
-  },
-  reduce: function(inf, op) {
-    var deps = inf.deps;
-    var args = inf.arguments;
-    var target = deps[args[0].asString()].result;
-    var path = args[1];
-    target.node[op]('hover');
-    target.locate(path).node[op]('new');
-    inf.getStepNode()[op]('hover');
-    inf.result.locate(path).node[op]('new');
-  }
-};
-
-/**
- * Applies the rule with the given name to the arguments,
- * pushing a record of its inference onto the given stack (array),
- * and returning the result of the Inference, an expression.
- * If there no such rule, throws an exception.
- */
-function applyRule(name, ruleArgs, stack) {
-  // In Java probably implement this with Callables and a method
-  // to get the arguments of each.  Each item in rules becomes
-  // a Callable.
-  //
-  // Each rule runs with a new list available for any steps within it.
-  assert(typeof name == 'string', 'Name must be a string: ' + name);
-  var rule = ruleFns[name];
-  assert(rule, 'No such rule: ' + name);
-  stack.push([]);
-  var result = rule.apply(null, ruleArgs);
-  var step = new Inference(name, ruleArgs, result, stack.pop());
-  result.inference = step;
-  stack[stack.length - 1].push(step);
-  return result;
-}
-
-function infer(name, stack, etc) {
-  var ruleArgs = [];
-  for (var i = 2; i < arguments.length; i++) {
-    ruleArgs.push(arguments[i]);
-  }
-  return applyRule(name, ruleArgs, stack);
-}
-
-/**
- * Makes and returns an inference by running the named rule with the
- * given arguments, or an empty list if none are given.
- */
-function makeInference(name, ruleArgs) {
-  ruleArgs = ruleArgs || [];
-  inferenceStack.push([]);
-  applyRule(name, ruleArgs, inferenceStack);
-  var inf = inferenceStack.pop().pop();
-  return inf;
-}
-
-// Maybe each set of rules could have its own inference stack???
-var inferenceStack = [[]];
-
 // Actual rule functions to call from other code.
 var rules = {};
 
 for (var key in ruleFns) {
   rules[key] = Y.bind(infer, null, key, inferenceStack);
 };
-
-
-// Proof
-
-// TODO: remove? 
-
-function Proof() {
-  this.steps = [];
-}
-
-Proof.prototype.insert = function(step, index) {
-  step.index = index;
-  var steps = this.steps;
-  for (var i = index; i < steps.length; i++) {
-    steps[i].index = index;
-  }
-  steps.splice(index, 0, step);
-};
-
-
-// ProofStep
-
-// TODO: remove?
-
-function ProofStep(proof) {
-  this.proof = proof;
-  this.index = null;
-  this.tactic = null;
-  this.inference = null;
-  this.deps = [];
-}
-
-/**
- * Sets the inference of this step.  The dependencies are a list of
- * ProofSteps this claims to depend on.  The results of those steps
- * should match the assumptions of the new inference, or else this
- * method inserts new steps that make the needed assertions.
- * Making new steps is a policy decision that could change.
- */
-ProofStep.prototype.setInference = function(inference, dependencies) {
-  this.inference = inference;
-  if (inference.name == 'given') {
-    if (dependencies && dependencies.length > 0) {
-      assert(false, 'TBD inference cannot have dependencies');
-    }
-    return;
-  }
-  // This will be a set of the dependencies, indexed by the printed
-  // string of the result of each one's inference.
-  fromDeps = {};
-  for (var i = 0; i < dependencies.length; i++) {
-    var dep = dependencies[i];
-    var result = dep.inference.result;
-    fromDeps[result.toString()] = dep;
-  }
-  this.deps = [];
-  var assumptions = inference.assumptions();
-  // Connect the inputs needed by this step to other proof steps
-  for (var str in assumptions) {
-    var assumption = assumptions[str];
-    var provided = fromDeps[str];
-    if (provided) {
-      this.deps.push(dep);
-    } else {
-      var step = new ProofStep(this.proof);
-      step.setInference(new Inference('given', [], assumption), []);
-      this.proof.insert(step, this.index);
-    }
-  }
-};
-
-
-//// Internal utility functions
-
-function assert(condition, message) {
-  if (!condition) {
-    if (typeof message == 'function') {
-      message = message();
-    }
-    console.log(message);
-    break_here();
-  }
-}
-
-function assertEqn(expr) {
-  assert(expr instanceof Y.Call
-         && expr.fn instanceof Y.Call
-         && expr.fn.fn instanceof Y.Var
-         && expr.fn.fn.name == '=',
-         'Must be an equation: ' + expr);
-}
 
 
 //// Export public names.
