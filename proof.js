@@ -2,6 +2,56 @@
 
 YUI.add('proof', function(Y) {
 
+//// PROOF
+
+// TODO: Use this instead of plain array for inference details.
+
+function Proof() {
+  // Steps in order.
+  this.steps = [];
+  // All wffs, map from inference result string to inference in the
+  // proof.  Currently an inference can occur only once.
+  this.byResult = {}
+}
+
+/**
+ * Add an inference to this proof, optionally specifying its
+ * index.  Default location is at the end.
+ */
+Proof.prototype.add = function(inference, index) {
+  if (index == null) {
+    index = this.steps.length;
+  }
+  if (byResult[inference.result]) {
+    throw new Exception('Already proved: ' + inference.result);
+  }
+  byResult[inference.result] = inference;
+  steps.splice(index, 0, inference);
+}
+
+/**
+ * Returns a set of wffs assumed by the given proof step,
+ * but not proved by any preceding step.
+ */
+Proof.prototype.unsatisfiedDeps = function(index) {
+  var result = {};
+  var inference = this.steps[index];
+  var assumptions = inference.assumptions();
+  // Connect the inputs needed by this step to other proof steps
+  for (var str in assumptions) {
+    var wff = this.byResult[str];
+    if (wff) {
+      var wffIndex = Y.Array.indexOf(this.steps, wff);
+      if (wffIndex < index) {
+        continue;
+      }
+    }
+    result[str] = assumptions[str];
+  }
+  return result;
+};
+
+
 //// INFERENCES
 
 /**
@@ -9,13 +59,13 @@ YUI.add('proof', function(Y) {
  * primitive or composite.  The constructor is private; use
  * makeInference to create inferences in client code.
  */
-function Inference(name, arguments, result, details) {
+function Inference(name, ruleArgs, result, details) {
   // Rule name
   this.name = name;
-  // Arguments: a list of expressions or inference steps with result
+  // RuleArgs: a list of expressions or inference steps with result
   // expressions used by this step.  For composite inferences this
   // should be null.
-  this.arguments = arguments;
+  this.arguments = ruleArgs;
   // The conclusion Expr of the inference..
   this.result = result;
   // List of component steps (Inferences), empty if not composite.
@@ -152,7 +202,8 @@ function renderSteps(inference, node) {
   }
   for (var i = 0; i < details.length; i++) {
     var inf = details[i];
-    var stepNode = node.appendChild('<div class="proofStep"></div>');
+    var text = '<div class="proofStep">' + (i + 1) + '. </div>';
+    var stepNode = node.appendChild(text);
     // See appendSpan in expr.js.
     var wffNode = stepNode.appendChild('<span class=expr></span>');
     // Record the annotated expression as the inference result.
@@ -233,76 +284,6 @@ var hoverHandlers = {
     target.locate(path).node[op]('new');
     inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
-  }
-};
-
-
-//// PROOF
-
-// TODO: remove? 
-
-function Proof() {
-  this.steps = [];
-}
-
-Proof.prototype.insert = function(step, index) {
-  step.index = index;
-  var steps = this.steps;
-  for (var i = index; i < steps.length; i++) {
-    steps[i].index = index;
-  }
-  steps.splice(index, 0, step);
-};
-
-
-//// ProofStep
-
-// TODO: remove?
-
-function ProofStep(proof) {
-  this.proof = proof;
-  this.index = null;
-  this.tactic = null;
-  this.inference = null;
-  this.deps = [];
-}
-
-/**
- * Sets the inference of this step.  The dependencies are a list of
- * ProofSteps this claims to depend on.  The results of those steps
- * should match the assumptions of the new inference, or else this
- * method inserts new steps that make the needed assertions.
- * Making new steps is a policy decision that could change.
- */
-ProofStep.prototype.setInference = function(inference, dependencies) {
-  this.inference = inference;
-  if (inference.name == 'given') {
-    if (dependencies && dependencies.length > 0) {
-      assert(false, 'TBD inference cannot have dependencies');
-    }
-    return;
-  }
-  // This will be a set of the dependencies, indexed by the printed
-  // string of the result of each one's inference.
-  fromDeps = {};
-  for (var i = 0; i < dependencies.length; i++) {
-    var dep = dependencies[i];
-    var result = dep.inference.result;
-    fromDeps[result.toString()] = dep;
-  }
-  this.deps = [];
-  var assumptions = inference.assumptions();
-  // Connect the inputs needed by this step to other proof steps
-  for (var str in assumptions) {
-    var assumption = assumptions[str];
-    var provided = fromDeps[str];
-    if (provided) {
-      this.deps.push(dep);
-    } else {
-      var step = new ProofStep(this.proof);
-      step.setInference(new Inference('given', [], assumption), []);
-      this.proof.insert(step, this.index);
-    }
   }
 };
 
@@ -409,7 +390,7 @@ var ruleFns = {
       var result = target.replace(path, replacer);
       return result;
     } else {
-      throw new Error('Must be an equation: ' + equation);
+      throw new Error('Rule R requires equation: ' + equation);
     }
   },
 
