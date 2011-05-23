@@ -91,7 +91,7 @@ Proof.prototype.renderSteps = function(node) {
     for (var key in inf.deps) {
       if (firstDep) {
         firstDep = false;
-        stepNode.appendChild(': ' + this.stepNumber(inf.deps[key]));
+        stepNode.appendChild('&nbsp;' + this.stepNumber(inf.deps[key]));
       } else {
         stepNode.appendChild(', ' + this.stepNumber(inf.deps[key]));
       }
