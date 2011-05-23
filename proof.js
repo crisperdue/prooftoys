@@ -52,7 +52,7 @@ Proof.prototype.unsatisfiedDeps = function(index) {
 };
 
 
-//// INFERENCES
+//// INFERENCE
 
 /**
  * Inference object: Immutable record of an inference step, either
@@ -174,9 +174,6 @@ function makeInference(name, ruleArgs) {
   var inf = inferenceStack.pop().pop();
   return inf;
 }
-
-// Maybe each set of rules could have its own inference stack???
-var inferenceStack = [[]];
 
 
 
@@ -1040,6 +1037,9 @@ var ruleFns = {
 
 // Actual rule functions to call from other code.
 var rules = {};
+
+// Maybe each set of rules could have its own inference stack???
+var inferenceStack = [[]];
 
 for (var key in ruleFns) {
   rules[key] = Y.bind(infer, null, key, inferenceStack);
