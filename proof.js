@@ -51,6 +51,59 @@ Proof.prototype.assumptions = function() {
   return inputs;
 };
 
+Proof.prototype.stepNumber = function(inference) {
+  var index = Y.Array.indexOf(this.steps, inference);
+  assert(index >= 0, 'Inference not found in proof');
+  return index + 1;
+};
+
+/**
+ * Renders the steps of the proof into the given DOM node.
+ */
+Proof.prototype.renderSteps = function(node) {
+  var steps = this.steps;
+  // Map from inference result string to inference.
+  var allSteps = {};
+  for (var i = 0; i < steps.length; i++) {
+    var inf = steps[i];
+    var text = '<div class="proofStep">' + (i + 1) + '. </div>';
+    var stepNode = node.appendChild(text);
+    // See appendSpan in expr.js.
+    var wffNode = stepNode.appendChild('<span class=expr></span>');
+    // Record the annotated expression as the inference result.
+    inf.result = inf.result.render(wffNode);
+    // Add the name to the display.
+    stepNode.appendChild('&nbsp;&nbsp;' + inf.name);
+    // Map to inference, from its result expression as string.
+    // Represents steps depended on by the inference.
+    inf.deps = {};
+    var assumptions = inf.assumptions();
+    // Remember dependencies between inference steps as we go.
+    for (var aString in assumptions) {
+      var step = allSteps[aString];
+      if (step) {
+        inf.deps[aString] = step;
+      } else {
+        Y.log('No prior step: ' + aString);
+      }
+    }
+    var firstDep = true;
+    for (var key in inf.deps) {
+      if (firstDep) {
+        firstDep = false;
+        stepNode.appendChild(': ' + this.stepNumber(inf.deps[key]));
+      } else {
+        stepNode.appendChild(', ' + this.stepNumber(inf.deps[key]));
+      }
+    }
+    stepNode.on('hover',
+                // Call "hover" adding extra arguments at the end.
+                Y.rbind(hover, stepNode, inf, 'in'),
+                Y.rbind(hover, stepNode, inf, 'out'));
+    allSteps[inf.result.asString()] = inf;
+  }
+};
+
 
 //// INFERENCE
 
@@ -70,7 +123,12 @@ function Inference(name, ruleArgs, result, proof) {
   this.result = result;
   // Proof of the result (Inferences), empty for a primitive inference.
   this.proof = proof;
-  // Can have a "deps" property, an array of (rendered) assumptions.
+  // If rendered, has a "deps" property, a map from result string
+  // to the premises of this inference, themselves inferences.
+  //
+  // TODO: Specify deps explicitly rather than computing it.
+  //   The same thing may be proved more than once, especially when using
+  //   proof procedures, so be specific about which dep is intended.
 }
 
 Inference.prototype.getStepNode = function() {
@@ -82,17 +140,21 @@ Inference.prototype.toString = function() {
   if (result.length <= 200) {
     return result;
   } else {
-    function detailer(details) {
+    function detailer(proof) {
+      if (proof == null) {
+        return '' + proof;
+      }
+      var steps = proof.steps;
       result = '[';
-      for (var i = 0; i < details.length; i++) {
+      for (var i = 0; i < steps.length; i++) {
         if (i > 0) {
           result += ', ';
         }
-        result += details[i].name;
+        result += steps[i].name;
       }
       return result + ']';
     }
-    return debugString(this, {details: detailer});
+    return debugString(this, {proof: detailer});
   }
 };
 
@@ -172,48 +234,16 @@ function renderSteps(inference, node) {
   }
   node.appendChild('<div style="margin: .5em"><b>Proof of '
                    + inference.name + '</b></div>');
-  
-  
-  var proof = inference.proof;
-  var details = proof.steps;
   var assumptions = inference.assumptions();
   // Map to inference from its result as string.  Each result will be
   // annotated with links into the DOM.  Starts with the assumptions.
-  var allSteps = {};
+  // Add the assumptions to the proof before rendering it.
   for (var key in assumptions) {
     var wff = assumptions[key];
-    allSteps[key] = wff;
-    proof.add(makeInference('given', [wff]), 0);
+    inference.proof.add(makeInference('given', [wff]), 0);
   }
-  for (var i = 0; i < details.length; i++) {
-    var inf = details[i];
-    var text = '<div class="proofStep">' + (i + 1) + '. </div>';
-    var stepNode = node.appendChild(text);
-    // See appendSpan in expr.js.
-    var wffNode = stepNode.appendChild('<span class=expr></span>');
-    // Record the annotated expression as the inference result.
-    inf.result = inf.result.render(wffNode);
-    // Add the name to the display.
-    stepNode.appendChild('&nbsp;&nbsp;' + inf.name);
-    // Map to inference, from its result expression as string.
-    // Represents steps depended on by the inference.
-    inf.deps = {};
-    var assumptions = inf.assumptions();
-    // Remember dependencies between inference steps as we go.
-    for (var aString in assumptions) {
-      var step = allSteps[aString];
-      if (step) {
-        inf.deps[aString] = step;
-      } else {
-        Y.log('No prior step: ' + aString);
-      }
-    }
-    stepNode.on('hover',
-                // Call "hover" adding extra arguments at the end.
-                Y.rbind(hover, stepNode, inf, 'in'),
-                Y.rbind(hover, stepNode, inf, 'out'));
-    allSteps[inf.result.asString()] = inf;
-  }
+  inference.proof.renderSteps(node);
+
 }
 
 /**
