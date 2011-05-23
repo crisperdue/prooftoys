@@ -9,9 +9,6 @@ YUI.add('proof', function(Y) {
 function Proof() {
   // Steps in order.
   this.steps = [];
-  // All wffs, map from inference result string to inference in the
-  // proof.  Currently an inference can occur only once.
-  this.byResult = {}
 }
 
 /**
@@ -20,35 +17,38 @@ function Proof() {
  */
 Proof.prototype.add = function(inference, index) {
   if (index == null) {
-    index = this.steps.length;
+    this.steps.push(inference);
+  } else {
+    this.steps.splice(index, 0, inference);
   }
-  if (byResult[inference.result]) {
-    throw new Exception('Already proved: ' + inference.result);
-  }
-  byResult[inference.result] = inference;
-  steps.splice(index, 0, inference);
-}
+};
 
 /**
- * Returns a set of wffs assumed by the given proof step,
- * but not proved by any preceding step.
+ * Used by makeInference.  TODO: eliminate the use and remove?
  */
-Proof.prototype.unsatisfiedDeps = function(index) {
-  var result = {};
-  var inference = this.steps[index];
-  var assumptions = inference.assumptions();
-  // Connect the inputs needed by this step to other proof steps
-  for (var str in assumptions) {
-    var wff = this.byResult[str];
-    if (wff) {
-      var wffIndex = Y.Array.indexOf(this.steps, wff);
-      if (wffIndex < index) {
-        continue;
-      }
+Proof.prototype.pop = function() {
+  return this.steps.pop();
+};
+
+/**
+ * Like Inference.assumptions, for a proof.
+ */
+Proof.prototype.assumptions = function() {
+  var inputs = {};
+  var outputs = {};
+  var steps = this.steps;
+  for (var i = 0; i < steps.length; i++) {
+    var inference = steps[i];
+    outputs[inference.result.asString()] = inference.result;
+    var assumes = steps[i].assumptions();
+    for (var key in assumes) {
+      inputs[key] = assumes[key];
     }
-    result[str] = assumptions[str];
   }
-  return result;
+  for (var key in outputs) {
+    delete inputs[key];
+  }
+  return inputs;
 };
 
 
@@ -59,7 +59,7 @@ Proof.prototype.unsatisfiedDeps = function(index) {
  * primitive or composite.  The constructor is private; use
  * makeInference to create inferences in client code.
  */
-function Inference(name, ruleArgs, result, details) {
+function Inference(name, ruleArgs, result, proof) {
   // Rule name
   this.name = name;
   // RuleArgs: a list of expressions or inference steps with result
@@ -68,14 +68,14 @@ function Inference(name, ruleArgs, result, details) {
   this.arguments = ruleArgs;
   // The conclusion Expr of the inference..
   this.result = result;
-  // List of component steps (Inferences), empty if not composite.
-  this.details = details;
+  // Proof of the result (Inferences), empty for a primitive inference.
+  this.proof = proof;
   // Can have a "deps" property, an array of (rendered) assumptions.
 }
 
 Inference.prototype.getStepNode = function() {
   return this.result.node.get('parentNode');
-}
+};
 
 Inference.prototype.toString = function() {
   var result = debugString(this);
@@ -94,7 +94,7 @@ Inference.prototype.toString = function() {
     }
     return debugString(this, {details: detailer});
   }
-}
+};
 
 /**
  * Returns a set of wffs this inference relies on to be true in order
@@ -114,21 +114,7 @@ Inference.prototype.assumptions = function() {
     inputs[args[1].asString()] = args[1];
     return inputs;
   } else {
-    var inputs = {};
-    var outputs = {};
-    var details = this.details;
-    for (var i = 0; i < details.length; i++) {
-      var inference = details[i];
-      outputs[inference.result.asString()] = inference.result;
-      var assumes = details[i].assumptions();
-      for (var key in assumes) {
-        inputs[key] = assumes[key];
-      }
-    }
-    for (var key in outputs) {
-      delete inputs[key];
-    }
-    return inputs;
+    return this.proof.assumptions();
   }
 };
 
@@ -147,11 +133,11 @@ function applyRule(name, ruleArgs, stack) {
   assert(typeof name == 'string', 'Name must be a string: ' + name);
   var rule = ruleFns[name];
   assert(rule, 'No such rule: ' + name);
-  stack.push([]);
+  stack.push(new Proof());
   var result = rule.apply(null, ruleArgs);
   var step = new Inference(name, ruleArgs, result, stack.pop());
   result.inference = step;
-  stack[stack.length - 1].push(step);
+  stack[stack.length - 1].add(step);
   return result;
 }
 
@@ -169,7 +155,7 @@ function infer(name, stack, etc) {
  */
 function makeInference(name, ruleArgs) {
   ruleArgs = ruleArgs || [];
-  inferenceStack.push([]);
+  inferenceStack.push(new Proof());
   applyRule(name, ruleArgs, inferenceStack);
   var inf = inferenceStack.pop().pop();
   return inf;
@@ -187,7 +173,9 @@ function renderSteps(inference, node) {
   node.appendChild('<div style="margin: .5em"><b>Proof of '
                    + inference.name + '</b></div>');
   
-  var details = inference.details;
+  
+  var proof = inference.proof;
+  var details = proof.steps;
   var assumptions = inference.assumptions();
   // Map to inference from its result as string.  Each result will be
   // annotated with links into the DOM.  Starts with the assumptions.
@@ -195,7 +183,7 @@ function renderSteps(inference, node) {
   for (var key in assumptions) {
     var wff = assumptions[key];
     allSteps[key] = wff;
-    details.splice(0, 0, makeInference('given', [wff]));
+    proof.add(makeInference('given', [wff]), 0);
   }
   for (var i = 0; i < details.length; i++) {
     var inf = details[i];
@@ -1039,7 +1027,7 @@ var ruleFns = {
 var rules = {};
 
 // Maybe each set of rules could have its own inference stack???
-var inferenceStack = [[]];
+var inferenceStack = [new Proof()];
 
 for (var key in ruleFns) {
   rules[key] = Y.bind(infer, null, key, inferenceStack);

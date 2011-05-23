@@ -89,7 +89,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
   // Logs the result of each top-level step of an ifnerence.
   function logDetails(inference) {
-    var details = inference.details;
+    var details = inference.proof.steps;
     for (var i = 0; i < details.length; i++) {
       var step = details[i];
       Y.log(step.result + ' ' + step.name);
