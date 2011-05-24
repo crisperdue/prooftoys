@@ -4,8 +4,6 @@ YUI.add('proof', function(Y) {
 
 //// PROOF
 
-// TODO: Use this instead of plain array for inference details.
-
 function Proof() {
   // Steps in order.
   this.steps = [];
@@ -29,6 +27,18 @@ Proof.prototype.add = function(inference, index) {
 Proof.prototype.pop = function() {
   return this.steps.pop();
 };
+
+/**
+ * Check that the proof is legal.
+ */
+Proof.prototype.check = function() {
+  var inputs = this.assumptions();
+  // Confirm that there are no assumptions required.
+  for (var key in inputs) {
+    return false;
+  }
+  return true;
+}
 
 /**
  * Like Inference.assumptions, for a proof.
@@ -223,6 +233,26 @@ function makeInference(name, ruleArgs) {
   return inf;
 }
 
+
+// THEOREMS
+
+// Private to addTheorem, getTheorem, and the initializations
+// at the bottom of this file.
+var _theoremsByName = {};
+
+function addTheorem(name, inference) {
+  assert(inference.proof.check(), 'Proof is not valid');
+  assert(!_theoremsByName[name], 'Theorem already exists');
+  _theoremsByName[name] = inference;
+}
+
+function getTheorem(name) {
+  return _theoremsByName[name];
+}
+
+function theorem(name) {
+  return getTheorem(name).result;
+}
 
 
 // RENDERING AND EVENTS
@@ -473,10 +503,11 @@ var ruleFns = {
   },
 
   /*
-  // Can replace axiomTIsNotF; generalization of it.
-  // Can we simplify this to omit the "forall"?  Specifically,
-  // can we instantiate it without using universal generalization?
-  // See 5218, which depends on this.
+  // Generalizes axiomTIsNotF.
+  // Rewrite to F = [p = [not p]], instantiate p, expand "not":
+  // 1. F = [F = [F = F]], so 2. F = [F = T] (r5230FT)
+  // 3. F = [T = [F = T]], so F = [T = F] (r5230TF) by
+  // Rule R on r5230FT and step 3.
   axiomPNeqNotP: function() {
     return call('forall', lambda(p, call('not', equal(p, call('not', p)))));
   },
@@ -689,6 +720,8 @@ var ruleFns = {
   // Used to prove the Cases rule.
   r5212: function() {
     var step1 = rules.rRight(rules.r5211(), rules.t(), '/');
+    // TODO: something like this:
+    // var step1 = rules.rRight(theorem('r5211'), theorem('t'), '/');
     return step1;
   },
 
@@ -1053,6 +1086,7 @@ var ruleFns = {
 
 };
 
+
 // Actual rule functions to call from other code.
 var rules = {};
 
@@ -1063,6 +1097,20 @@ for (var key in ruleFns) {
   rules[key] = Y.bind(infer, null, key, inferenceStack);
 };
 
+// Add the axioms as initial theorems.
+
+_theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
+                 'defTrueAnd', 'defFalseAnd', 'defTrueOr', 'defFalseOr',
+                 'defTrueImplies', 'defFalseImplies',
+                 'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
+                 'r5231T', 'r5231F', 'falseEquals', 'trueEquals'];
+for (var i = 0; i < _theoremNames.length; i++) {
+  addTheorem(_theoremNames[i], makeInference(_theoremNames[i]));
+}
+
+// For testing.
+Y.theorems = _theoremsByName;
+
 
 //// Export public names.
 
@@ -1070,6 +1118,9 @@ Y.rules = rules;
 Y.ruleFns = ruleFns;
 Y.inferenceStack = inferenceStack;
 Y.makeInference = makeInference;
+Y.addTheorem = addTheorem;
+Y.getTheorem = getTheorem;
+Y.theorem = theorem;
 Y.renderSteps = renderSteps;
 
 }, '0.1', {use: ['array-extras', 'expr']});
