@@ -610,6 +610,7 @@ Lambda.prototype.path1 = function(pred, revPath) {
 };
 
 Lambda.prototype._render = function(node) {
+  this.node = node;
   node.append('{');
   this.bound._render(appendSpan(node));
   node.append('&nbsp;|&nbsp;');

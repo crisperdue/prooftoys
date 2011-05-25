@@ -83,9 +83,11 @@ Proof.prototype.renderSteps = function(node) {
     // Record the annotated expression as the inference result.
     inf.result = inf.result.render(wffNode);
     // Add the name to the display.
-    stepNode.appendChild('&nbsp;&nbsp;' + inf.name);
+    var stepName = inf.name == 'axiom' ? inf.arguments[0] : inf.name;
+    stepNode.appendChild('&nbsp;&nbsp;' + stepName);
     // Map to inference, from its result expression as string.
     // Represents steps depended on by the inference.
+    // Attach the result as the inference "deps" property.
     inf.deps = {};
     var assumptions = inf.assumptions();
     // Remember dependencies between inference steps as we go.
@@ -97,13 +99,19 @@ Proof.prototype.renderSteps = function(node) {
         Y.log('No prior step: ' + aString);
       }
     }
-    var firstDep = true;
-    for (var key in inf.deps) {
-      if (firstDep) {
-        firstDep = false;
-        stepNode.appendChild('&nbsp;' + this.stepNumber(inf.deps[key]));
-      } else {
-        stepNode.appendChild(', ' + this.stepNumber(inf.deps[key]));
+    if (inf.name == 'axiom') {
+      // Do nothing here, see above.
+    } else if (inf.name == 'theorem') {
+      stepNode.appendChild('&nbsp;' + inf.arguments[0]);
+    } else {
+      var firstDep = true;
+      for (var key in inf.deps) {
+        if (firstDep) {
+          firstDep = false;
+          stepNode.appendChild('&nbsp;' + this.stepNumber(inf.deps[key]));
+        } else {
+          stepNode.appendChild(', ' + this.stepNumber(inf.deps[key]));
+        }
       }
     }
     stepNode.on('hover',
@@ -249,11 +257,6 @@ function addTheorem(name, inference) {
 function getTheorem(name) {
   return _theoremsByName[name];
 }
-
-function theorem(name) {
-  return getTheorem(name).result;
-}
-
 
 // RENDERING AND EVENTS
 
@@ -413,6 +416,14 @@ var ruleFns = {
    */
   given: function(assumption) {
     return assumption;
+  },
+
+  theorem: function(name) {
+    return getTheorem(name).result;
+  },
+
+  axiom: function(name) {
+    return getTheorem(name).result;
   },
 
   /**
@@ -706,7 +717,7 @@ var ruleFns = {
   // TODO: Consider proving this from defTrueAnd.
   // Only used in 5212 and book version of 5216.
   r5211: function() {
-    var step1 = rules.instEqn(rules.axiom1(), lambda(y, T), g);
+    var step1 = rules.instEqn(rules.axiom('axiom1'), lambda(y, T), g);
     var step2a = rules.reduce(step1, '/left/left');
     var step2b = rules.reduce(step2a, '/left/right');
     var step2c = rules.reduce(step2b, '/right/arg/body');
@@ -719,9 +730,10 @@ var ruleFns = {
   // T && T.  Uses no book-specific definitions.
   // Used to prove the Cases rule.
   r5212: function() {
-    var step1 = rules.rRight(rules.r5211(), rules.t(), '/');
-    // TODO: something like this:
-    // var step1 = rules.rRight(theorem('r5211'), theorem('t'), '/');
+    // var step1 = rules.rRight(rules.r5211(), rules.t(), '/');
+    var step1 = rules.rRight(rules.theorem('r5211'),
+                             rules.theorem('t'),
+                             '/');
     return step1;
   },
 
@@ -749,23 +761,23 @@ var ruleFns = {
     var step2 = rules.r(a_b, step1, '/right/right');
     var step3 = rules.eqT(c);
     var step4 = rules.r(c_d, step3, '/right/right');
-    var step5 = rules.r(step2, rules.r5212(), '/left');
+    var step5 = rules.r(step2, rules.theorem('r5212'), '/left');
     var step6 = rules.r(step4, step5, '/right');
     return step6;
   },
 
   // 5216 by the book.  Not used.
   andTBook: function(a) {
-    var step1 = rules.axiom1();
+    var step1 = rules.axiom('axiom1');
     var step2 =
       rules.instEqn(step1, lambda(x, equal(call('&&', T, x), x)), g);
     var step3 = rules.reduce(step2, '/left/left');
     var step4 = rules.reduce(step3, '/left/right');
     var step5 = rules.reduce(step4, '/right/arg/body');
-    var step6 = rules.applyBoth(rules.defTrueAnd(), F);
+    var step6 = rules.applyBoth(rules.axiom('defTrueAnd'), F);
     var step7 = rules.reduce(step6, '/right');
     // TODO: Use eqnIsTrue instead.
-    var step8 = rules.r5213(rules.r5211(), step7);
+    var step8 = rules.r5213(rules.theorem('r5211'), step7);
     var step9 = rules.r(step5, step8, '/');
     var step10 = rules.forallInst(step9, a);
     return step10;
@@ -773,25 +785,28 @@ var ruleFns = {
 
   // 5216, using defTrueAnd.  Not used.
   andT: function(a) {
-    var step1 = rules.applyBoth(rules.defTrueAnd(), a);
+    var step1 = rules.applyBoth(rules.axiom('defTrueAnd'), a);
     var step2 = rules.reduce(step1, '/right');
     return step2;
   },
 
   // Book only.  We use axiomPNeqNotP instead of defining F.
   r5217Book: function() {
-    var step1 = rules.instEqn(rules.axiom1(), lambda(x, equal(T, x)), g);
+    var step1 = rules.instEqn(rules.axiom('axiom1'),
+                              lambda(x, equal(T, x)), g);
     var step2a = rules.reduce(step1, '/left/left');
     var step2b = rules.reduce(step2a, '/left/right');
     var step2c = rules.reduce(step2b, '/right/arg/body');
     var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
     var step4a = rules.andT(equal(T, F));
     var step4b = rules.r(step4a, step3, '/left');
-    var step5a = rules.instEqn(rules.axiom3(), lambda(x, T), f);
+    var step5a = rules.instEqn(rules.axiom('axiom3'), lambda(x, T), f);
     var step5b = rules.instEqn(step5a, lambda(x, x), g);
     var step6a = rules.reduce(step5b, '/right/arg/body/left');
     var step6b = rules.reduce(step6a, '/right/arg/body/right');
-    var step6c = rules.r(rules.defForall(), rules.defFFromBook(), '/right/fn');
+    var step6c = rules.r(rules.axiom('defForall'),
+                         rules.defFFromBook(),
+                         '/right/fn');
     var step6d = rules.rRight(step6c, step6b, '/left');
     var step7 = rules.rRight(step6d, step4b, '/right');
     return step7;
@@ -806,7 +821,7 @@ var ruleFns = {
   // 5218: [T = A] = A
   // Stepping stone to universal generalization.
   r5218: function(a) {
-    var step1 = rules.instEqn(rules.axiom1(),
+    var step1 = rules.instEqn(rules.axiom('axiom1'),
                               lambda(x, equal(equal(T, x), x)),
                               g);
     var step2 = rules.reduce(step1, '/left/left');
@@ -814,7 +829,9 @@ var ruleFns = {
     var step4 = rules.reduce(step3, '/right/arg/body');
     var step5a = rules.eqT(T);
     var step5 = rules.eqnSwap(step5a);
-    var step6a = rules.r(rules.defNot(), rules.axiomTIsNotF(), '/fn');
+    var step6a = rules.r(rules.axiom('defNot'),
+                         rules.axiom('axiomTIsNotF'),
+                         '/fn');
     var step6 = rules.eqnSwap(step6a);
     // TODO: Use eqnIsTrue instead of 5213.
     var step7 = rules.r5213(step5, step6);
@@ -844,13 +861,13 @@ var ruleFns = {
   // 5220, proved here by extensionality, not using 5206.
   uGen: function(a, v) {
     var step1 = rules.bindEqn(rules.eqT(T), x);
-    var step2 = rules.instEqn(rules.axiom3(), lambda(v, T), g);
+    var step2 = rules.instEqn(rules.axiom('axiom3'), lambda(v, T), g);
     var step3 = rules.instEqn(step2, lambda(x, T), f);
     var step4 = rules.reduce(step3, '/right/arg/body/left');
     var step5 = rules.reduce(step4, '/right/arg/body/right');
-    var step6 = rules.r(rules.defForall(), step5, '/right/fn');
+    var step6 = rules.r(rules.axiom('defForall'), step5, '/right/fn');
     var step7 = rules.rRight(step6, step1, '/');
-    var step8 = rules.rRight(rules.defForall(), step7, '/fn');
+    var step8 = rules.rRight(rules.axiom('defForall'), step7, '/fn');
     var step9 = rules.toTIsA(a);
     var step10 = rules.r(step9, step8, '/arg/body');
     return step10;
@@ -875,10 +892,10 @@ var ruleFns = {
     var step2b = rules.rRight(step2a, hyp2, '');
     var step2c = rules.toTIsA(step2b);
     // TODO: prove T && T inline.
-    var step3 = rules.r5212();
+    var step3 = rules.theorem('r5212');
     var step4a = rules.r(step1c, step3, '/left');
     var step4b = rules.r(step2c, step4a, '/right');
-    var step5 = rules.sub(rules.axiom1(), lambda(v, a), g);
+    var step5 = rules.sub(rules.axiom('axiom1'), lambda(v, a), g);
     var step6 = rules.r(step5, step4b, '/');
     var step7a = rules.forallInst(step6, v);
     var step7b = rules.reduce(step7a, '/');
@@ -887,7 +904,7 @@ var ruleFns = {
 
   // [[T --> x] --> x].  Only used in Modus Ponens.
   r5223: function() {
-    var step1 = rules.applyBoth(rules.defTrueImplies(), x);
+    var step1 = rules.applyBoth(rules.axiom('defTrueImplies'), x);
     var step2 = rules.reduce(step1, '/right');
     return step2;
   },
@@ -897,15 +914,15 @@ var ruleFns = {
     var step2a = rules.toTIsA(a);
     var step2b = rules.eqnSwap(step2a);
     var step3 = rules.r(step2b, call('-->', a, b), '/left');
-    var step4a = rules.sub(rules.r5223(), b, x);
+    var step4a = rules.sub(rules.theorem('r5223'), b, x);
     var step4b = rules.r(step4a, step3, '/');
     return step4b;
   },
 
   // Prove [T = F] = F (same as 5217)
   r5230TF: function() {
-    var step1 = rules.axiomTIsNotF();
-    var step2 = rules.r(rules.defNot(), step1, '/fn');
+    var step1 = rules.axiom('axiomTIsNotF');
+    var step2 = rules.r(rules.axiom('defNot'), step1, '/fn');
     var step3 = rules.eqnSwap(step2);
     return step3;
   },
@@ -913,7 +930,7 @@ var ruleFns = {
   // Prove [F = T] = F
   // TODO: Is there a more elegant proof of this?
   r5230FT: function() {
-    var step1a = rules.sub(rules.axiom2(), F, x);
+    var step1a = rules.sub(rules.axiom('axiom2'), F, x);
     var step1b = rules.sub(step1a, T, y);
     var step1c = rules.sub(step1b, lambda(x, equal(x, F)), h);
     var step2a = rules.reduce(step1c, '/right/left');
@@ -924,16 +941,18 @@ var ruleFns = {
     var step4 = rules.toTIsA(step3c);
     // We are going to prove the cases of: (x --> F) = (x = F)
     // First with x = F.
-    var step11 = rules.defFalseImplies();
+    var step11 = rules.axiom('defFalseImplies');
     var step12 = rules.applyBoth(step11, F);
     var step13 = rules.reduce(step12, '/right');
     var step14 = rules.eqT(F);
     var step15 = rules.r(step14, step13, '/right');
     // Then with x = T.
-    var step21 = rules.defTrueImplies();
+    var step21 = rules.axiom('defTrueImplies');
     var step22 = rules.applyBoth(step21, F);
     var step23 = rules.reduce(step22, '/right');
-    var step24 = rules.r(rules.defNot(), rules.axiomTIsNotF(), '/fn');
+    var step24 = rules.r(rules.axiom('defNot'),
+                         rules.axiom('axiomTIsNotF'),
+                         '/fn');
     var step25 = rules.r(step24, step23, '/right');
     // Now use the cases rule:
     var step5 = rules.cases(x, equal(call('-->', x, F), equal(x, F)));
@@ -948,15 +967,15 @@ var ruleFns = {
   // [not T] = F
   r5231T: function() {
     var step1 = rules.eqSelf(call('not', T));
-    var step2 = rules.r(rules.defNot(), step1, '/right/fn');
-    var step3 = rules.r(rules.r5230FT(), step2, '/right');
+    var step2 = rules.r(rules.axiom('defNot'), step1, '/right/fn');
+    var step3 = rules.r(rules.theorem('r5230FT'), step2, '/right');
     return step3;
   },
 
   // [not F] = T
   r5231F: function() {
     var step1 = rules.eqSelf(call('not', F));
-    var step2 = rules.r(rules.defNot(), step1, '/right/fn');
+    var step2 = rules.r(rules.axiom('defNot'), step1, '/right/fn');
     var step3 = rules.eqT(F);
     var step4 = rules.rRight(step3, step2, '/right');
     return step4;
@@ -977,7 +996,7 @@ var ruleFns = {
     var step4 = rules.reduce(step3, '/left');
     var step5 = rules.r(step4, step1, '/right');
     var step6 = rules.uGen(step5, x);
-    var step7 = rules.sub(rules.axiom3(), equal(T), f);
+    var step7 = rules.sub(rules.axiom('axiom3'), equal(T), f);
     var step8 = rules.sub(step7, lambda(x, x), g);
     var step9 = rules.rRight(step8, step6, '');
     return step9;
@@ -1012,7 +1031,7 @@ var ruleFns = {
       var fn = target.fn;
       if (fn instanceof Y.Var) {
         var ruleName = boolDefs[fn.name][target.arg.name];
-        result = rules.r(rules[ruleName](), result, '/right' + _path);
+        result = rules.r(rules.axiom(ruleName), result, '/right' + _path);
       } else if (fn instanceof Y.Lambda) {
         result = rules.reduce(result, '/right' + _path);
       } else {
@@ -1100,6 +1119,8 @@ for (var key in ruleFns) {
 // Add the axioms as initial theorems.
 
 _theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
+                 'defForall', 'defFFromBook', 'axiomTIsNotF',
+                 /* 'axiomPNeqNotP', */ 'defNot', 'defAnd',
                  'defTrueAnd', 'defFalseAnd', 'defTrueOr', 'defFalseOr',
                  'defTrueImplies', 'defFalseImplies',
                  'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
@@ -1120,7 +1141,6 @@ Y.inferenceStack = inferenceStack;
 Y.makeInference = makeInference;
 Y.addTheorem = addTheorem;
 Y.getTheorem = getTheorem;
-Y.theorem = theorem;
 Y.renderSteps = renderSteps;
 
 }, '0.1', {use: ['array-extras', 'expr']});
