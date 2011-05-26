@@ -640,19 +640,12 @@ var ruleInfo = {
   // lambda expressions, with an argument of T or F.)  Reduces
   // repeatedly until no subexpression can be reduced.
   evalBool: function(expr) {
-    // TODO: Convert this to use the definitions databasse.
-    var boolDefs = {
-      '&&': {T: 'defTrueAnd', F: 'defFalseAnd'},
-      '||': {T: 'defTrueOr', F: 'defFalseOr'},
-      '-->': {T: 'defTrueImplies', F: 'defFalseImplies'},
-      '=': {T: 'trueEquals', F: 'falseEquals'},
-      not: {T: 'r5231T', F: 'r5231F'}
-    };
+    var boolOps = {'&&': true, '||': true, '-->': true, '=': true, not: true};
     function isReducible(expr) {
       return ((expr instanceof Y.Call && expr.arg instanceof Y.Var)
               && (expr.arg.name == 'T' || expr.arg.name == 'F')
               && (expr.fn instanceof Y.Lambda
-                  || (expr.fn instanceof Y.Var && boolDefs[expr.fn.name])));
+                  || (expr.fn instanceof Y.Var && boolOps[expr.fn.name])));
     }
     var result = rules.eqSelf(expr);
     while (true) {
@@ -664,8 +657,15 @@ var ruleInfo = {
       var target = right.locate(_path);
       var fn = target.fn;
       if (fn instanceof Y.Var) {
-        var ruleName = boolDefs[fn.name][target.arg.name];
-        result = rules.r(rules.axiom(ruleName), result, '/right' + _path);
+        var defn;
+        if (fn.name == 'not') {
+          defn = rules.theorem(target.arg == T ? 'r5231T' : 'r5231F');
+        } else if (fn.name == '=') {
+          defn = rules.theorem(target.arg == T ? 'trueEquals' : 'falseEquals');
+        } else {
+          defn = rules.definition(fn.name, target.arg.name);
+        }
+        result = rules.r(defn, result, '/right' + _path);
       } else if (fn instanceof Y.Lambda) {
         result = rules.reduce(result, '/right' + _path);
       } else {
