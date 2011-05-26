@@ -11,7 +11,7 @@
   <script src="proofdisplay.js"></script>
   <script src="expr.js"></script>
   <script src="proof.js"></script>
-  <script src="q0.js"></script>
+  <script src="theorems.js"></script>
 
 <style type="text/css">
 
@@ -39,11 +39,6 @@
   background-color: white;
  }
 
-/* Generic dependency */
-.dep-old {
-  background-color: #DDF;
-}
-
 /* Old value ("removed") */
 .reduced, .old {
   background-color: #FCC;
@@ -67,7 +62,7 @@
 
 <script>
 YUI({filter: null, insertBefore: 'styles'})
-   .use('node', 'event', 'json', 'expr', 'q0', 'test', 'console',
+   .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
    'proof', 'querystring',
    function(Y) {
 
@@ -129,6 +124,8 @@ YUI({filter: null, insertBefore: 'styles'})
         tracing = false;
       },
 
+      // Warmups, to confirm what some assertions do.
+
       testTrue: function() {
         Y.Assert.areEqual(true, true);
       },
@@ -138,6 +135,8 @@ YUI({filter: null, insertBefore: 'styles'})
       testTrue1: function() {
         Y.Assert.areEqual(true, 1);
       },
+
+      // Tests for expr.js.
 
       testVar: function() {
         assertEqual('x', x.toString());
@@ -250,48 +249,52 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testAxiom4: function() {
-        var y = _var('y');
         var app = call(lambda(x, call(f, x)), y);
-        var result = Y.ruleFns.axiom4(app);
+        var result = Y.makeInference('axiom4', [app]).result;
         Y.Assert.isInstanceOf(Y.Call, result);
         assertEqual('=', result.fn.fn.name);
-        assertEqual('(({x : (f x)} y) = (f y))', result.toString());
+        assertEqual('(({x : (f x)} y) = (f y))', result);
       },
 
       testAxioms: function() {
-        var rules = Y.ruleFns;
         assertEqual('(((g T) && (g F)) = (forall {x : (g x)}))',
-                    rules.axiom1());
+                    Y.makeInference('axiom1').result);
         assertEqual('((x = y) --> ((h x) = (h y)))',
-                    rules.axiom2());
+                    Y.makeInference('axiom2').result);
         assertEqual('((f = g) = (forall {x : ((f x) = (g x))}))',
-                    rules.axiom3());
+                    Y.makeInference('axiom3').result);
         assertEqual('((the (= y)) = y)',
-                    rules.axiom5());
+                    Y.makeInference('axiom5').result);
       },
 
       testTrueAnd: function() {
-        assertEqual('((&& T) = {x : x})', rules.defTrueAnd());
+        assertEqual('((&& T) = {x : x})',
+                    Y.makeInference('defTrueAnd').result);
       },
 
       testFalseAnd: function() {
-        assertEqual('((&& F) = {x : F})', rules.defFalseAnd());
+        assertEqual('((&& F) = {x : F})',
+                    Y.makeInference('defFalseAnd').result);
       },
 
       testTrueOr: function() {
-        assertEqual('((|| T) = {x : T})', rules.defTrueOr());
+        assertEqual('((|| T) = {x : T})',
+                    Y.makeInference('defTrueOr').result);
       },
 
       testFalseOr: function() {
-        assertEqual('((|| F) = {x : x})', rules.defFalseOr());
+        assertEqual('((|| F) = {x : x})',
+                    Y.makeInference('defFalseOr').result);
       },
 
       testTrueImplies: function() {
-        assertEqual('((--> T) = {x : x})', rules.defTrueImplies());
+        assertEqual('((--> T) = {x : x})',
+                    Y.makeInference('defTrueImplies').result);
       },
 
       testFalseImplies: function() {
-        assertEqual('((--> F) = {x : T})', rules.defFalseImplies());
+        assertEqual('((--> F) = {x : T})',
+                    Y.makeInference('defFalseImplies').result);
       },
 
       testApplyBoth: function() {
@@ -302,55 +305,55 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testEqSelf: function() {
-        var result = Y.ruleFns.eqSelf(call(f, y));
+        var result = Y.makeInference('eqSelf', [call(f, y)]).result;
         assertEqual('((f y) = (f y))', result);
-        assertEqual('(x = x)', Y.ruleFns.eqSelf(x));
+        assertEqual('(x = x)', Y.makeInference('eqSelf', [x]).result);
       },
 
       testR5201a: function() {
-        assertEqual('(q x)',
-                    Y.ruleFns.replaceWhole
-                    (call(p, x), call('=', call(p, x), call(q, x))));
+        var inf = Y.makeInference('replaceWhole',
+                                  [call(p, x),
+                                   call('=', call(p, x), call(q, x))]);
+        assertEqual('(q x)', inf.result);
       },
 
       testR5201b: function() {
-        var result = Y.ruleFns.eqnSwap(call('=', p, q));
-        assertEqual('(q = p)', result.toString());
+        var inf = Y.makeInference('eqnSwap', [call('=', p, q)]);
+        assertEqual('(q = p)', inf.result);
       },
 
       testR5201c: function() {
-        var result = Y.ruleFns.eqnChain(call('=', p, q), call('=', q, r));
-        assertEqual('(p = r)', result.toString());
+        var inf = Y.makeInference('eqnChain',
+                                  [call('=', p, q), call('=', q, r)]);
+        assertEqual('(p = r)', inf.result);
       },
 
       testR5201d: function() {
-        var result =
-          Y.ruleFns.applyBySides(call('=', p, q), call('=', 'a', 'b'));
-        assertEqual('((p a) = (q b))', result.toString());
+        var inf =
+          Y.makeInference('applyBySides',
+                          [call('=', p, q), call('=', 'a', 'b')]);
+        assertEqual('((p a) = (q b))', inf.result);
       },
 
       testR5201e: function() {
-        var result = Y.ruleFns.applyBoth(call('=', p, q), r);
-        assertEqual('((p r) = (q r))', result.toString());
+        var inf = Y.makeInference('applyBoth', [call('=', p, q), r]);
+        assertEqual('((p r) = (q r))', inf.result);
       },
 
       testR5201f: function() {
-        var result = Y.ruleFns.applyToBoth(p, call('=', q, r));
-        assertEqual('((p q) = (p r))', result);
+        var inf = Y.makeInference('applyToBoth', [p, call('=', q, r)]);
+        assertEqual('((p q) = (p r))', inf.result);
       },
 
       testInstEqn: function() {
-        var b = new Y.Var('b');
         var c = new Y.Var('c');
-        var result =
-          Y.ruleFns.instEqn(call('=', call(g, y), c), call(f, x), y);
-        assertEqual('((g (f x)) = c)', result.toString());
+        var inf =
+          Y.makeInference('instEqn', [call('=', call(g, y), c), call(f, x), y]);
+        assertEqual('((g (f x)) = c)', inf.result);
       },
 
       testEqT: function() {
-        var b = new Y.Var('b');
-        var result = Y.ruleFns.eqT(b);
-        assertEqual('(T = (b = b))', result);
+        assertEqual('(T = (b = b))', Y.makeInference('eqT', ['b']).result);
 	var inf = Y.makeInference('eqT', [call(f, x)]);
         assertEqual('(T = ((f x) = (f x)))', inf.result);
 	Y.renderSteps(inf);
@@ -362,7 +365,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testRuleT: function() {
-        assertEqual('T', Y.ruleFns.t().toString());
+        assertEqual('T', Y.makeInference('t').result);
       },
 
       testR5212: function() {
@@ -504,7 +507,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testApplyFunc: function() {
-        var defn = rules.defTrueImplies();
+        var defn = Y.makeInference('defTrueImplies').result;
         var inf = Y.makeInference('applyFunc', [defn, T]);
         assertEqual('((T --> T) = T)', inf.result);
         var inf2 = Y.makeInference('applyFunc', [defn, F]);
@@ -549,21 +552,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('x', inf.arguments[0].name);
       }
   });
-
-  var tracing = false;
-  var rules = {};
-  for (var key in Y.ruleFns) {
-    (function(k) {
-      rules[k] = function() {
-        var result = Y.ruleFns[k].apply(null, arguments);
-        if (tracing) {
-          Y.log(result);
-        }
-        return result;
-      }
-    })(key);
-  };
-
 
   Y.Test.Runner.add(testCase);
   Y.Test.Runner.run();
