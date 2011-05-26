@@ -232,6 +232,12 @@ function infer(name, stack, etc) {
 /**
  * Makes and returns an inference by running the named rule with the
  * given arguments, or an empty list if none are given.
+ *
+ * TODO: In Java build proofs directly in "rules" code, and eliminate
+ * the inferenceStack.  Each rule returns a Proof (Inference?), and
+ * each fule function makes a new Proof and adds steps to it, using
+ * a function that adds to the proof and returns the result.
+ * e.g. var step3 = myProof.addStep(ruleR( ... ));
  */
 function makeInference(name, ruleArgs) {
   ruleArgs = ruleArgs || [];
@@ -242,7 +248,7 @@ function makeInference(name, ruleArgs) {
 }
 
 
-// THEOREMS
+//// THEOREMHOOD
 
 // Private to addTheorem, getTheorem, and the initializations
 // at the bottom of this file.
@@ -258,7 +264,13 @@ function getTheorem(name) {
   return _theoremsByName[name];
 }
 
-// RENDERING AND EVENTS
+
+//// DEFINITIONS
+
+// TODO: Support simplel definition and definition by cases.
+
+
+//// RENDERING AND EVENTS
 
 function renderSteps(inference, node) {
   if (node == null) {
@@ -396,7 +408,7 @@ function debugString(o, specials) {
 }
 
 
-/// THEOREMS AND RULES
+//// THEOREMS AND RULES
 
 // Import the generally-useful names from "expr" into
 // this environment.
@@ -418,10 +430,21 @@ var ruleFns = {
     return assumption;
   },
 
+  /**
+   * Refer to a theorem by looking it up in the database rather
+   * than proving it all over again.
+   */
   theorem: function(name) {
     return getTheorem(name).result;
   },
 
+  /**
+   * Refer to an axiom in the theorems database.  Affects the
+   * display of the proof step, but otherwise the same as "theorem".
+   * Currently also used for definitions.
+   *
+   * TODO: Distinguish definitions from everything else in the API.
+   */
   axiom: function(name) {
     return getTheorem(name).result;
   },
@@ -1116,7 +1139,11 @@ for (var key in ruleFns) {
   rules[key] = Y.bind(infer, null, key, inferenceStack);
 };
 
-// Add the axioms as initial theorems.
+// Add the axioms and theorems to the "database".  This can only
+// include ones that are not "axiom schemas", i.e. not parameterized.
+// Most of these axioms really have type parameters.  Ideally axiom
+// and theorem schemas will be able to stay, but the details remain
+// to be determined.
 
 _theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
                  'defForall', 'defFFromBook', 'axiomTIsNotF',
