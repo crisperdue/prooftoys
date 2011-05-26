@@ -63,7 +63,7 @@ Proof.prototype.assumptions = function() {
 
 Proof.prototype.stepNumber = function(inference) {
   var index = Y.Array.indexOf(this.steps, inference);
-  assert(index >= 0, 'Inference not found in proof');
+  Y.assert(index >= 0, 'Inference not found in proof');
   return index + 1;
 };
 
@@ -205,9 +205,9 @@ Inference.prototype.assumptions = function() {
  * If there no such rule, throws an exception.
  */
 function applyRule(name, ruleArgs, stack) {
-  assert(typeof name == 'string', 'Name must be a string: ' + name);
+  Y.assert(typeof name == 'string', 'Name must be a string: ' + name);
   var rule = rules[name].innerFn;
-  assert(rule, 'No such rule: ' + name);
+  Y.assert(rule, 'No such rule: ' + name);
   stack.push(new Proof());
   var result = rule.apply(null, ruleArgs);
   var step = new Inference(name, ruleArgs, result, stack.pop());
@@ -242,8 +242,8 @@ function makeInference(name, ruleArgs) {
 var _theoremsByName = {};
 
 function addTheorem(name, inference) {
-  assert(inference.proof.check(), 'Proof is not valid');
-  assert(!_theoremsByName[name], 'Theorem already exists');
+  Y.assert(inference.proof.check(), 'Proof is not valid');
+  Y.assert(!_theoremsByName[name], 'Theorem already exists');
   _theoremsByName[name] = inference;
 }
 
@@ -337,24 +337,6 @@ var hoverHandlers = {
 
 //// UTILITY FUNCTIONS
 
-function assert(condition, message) {
-  if (!condition) {
-    if (typeof message == 'function') {
-      message = message();
-    }
-    console.log(message);
-    break_here();
-  }
-}
-
-function assertEqn(expr) {
-  assert(expr instanceof Y.Call
-         && expr.fn instanceof Y.Call
-         && expr.fn.fn instanceof Y.Var
-         && expr.fn.fn.name == '=',
-         'Must be an equation: ' + expr);
-}
-
 /**
  * Returns a string showing the top-level properties
  * of an object, and their values.
@@ -403,7 +385,7 @@ var inferenceStack = [new Proof()];
 var rules = {};
 
 /**
- * Take a "rule info" object and produce a "rules" object
+ * Use a "rule info" object and add its rules to the "rules" object
  * that manages the inference stack so makeInference can work
  * properly.
  */
@@ -434,8 +416,6 @@ Y.makeInference = makeInference;
 Y.addTheorem = addTheorem;
 Y.getTheorem = getTheorem;
 Y.renderSteps = renderSteps;
-Y.assert = assert;
-Y.assertEqn = assertEqn;
 Y.createRules = createRules;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;

@@ -805,6 +805,27 @@ function path(arg) {
 }
 
 
+//// UTILITY FUNCTIONS
+
+function assert(condition, message) {
+  if (!condition) {
+    if (typeof message == 'function') {
+      message = message();
+    }
+    console.log(message);
+    break_here();
+  }
+}
+
+function assertEqn(expr) {
+  assert(expr instanceof Y.Call
+         && expr.fn instanceof Y.Call
+         && expr.fn.fn instanceof Y.Var
+         && expr.fn.fn.name == '=',
+         'Must be an equation: ' + expr);
+}
+
+
 //// Useful utilities
 
 var utils = {
@@ -900,6 +921,9 @@ Y.subFree = subFree;
 Y.normalized = normalized
 Y.decapture = decapture;
 Y.path = path;
+
+Y.assert = assert;
+Y.assertEqn = assertEqn;
 
 Y.Expr.utils = utils;
 
