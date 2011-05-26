@@ -40,6 +40,15 @@ var ruleInfo = {
   },
 
   /**
+   * Refer to a definition in the definitions database.  If the
+   * definition is by cases, takes a second argument of T or F
+   * as desired.  Throws an exception if not found.
+   */
+  definition: function(name, tOrF) {
+    return Y.getDefinition(name, tOrF);
+  },
+
+  /**
    * Refer to an axiom in the theorems database.  Affects the
    * display of the proof step, but otherwise the same as "theorem".
    * Currently also used for definitions.
@@ -398,7 +407,7 @@ var ruleInfo = {
     var step3 = rules.reduce(step2, '/left/left');
     var step4 = rules.reduce(step3, '/left/right');
     var step5 = rules.reduce(step4, '/right/arg/body');
-    var step6 = rules.applyBoth(rules.axiom('defTrueAnd'), F);
+    var step6 = rules.applyBoth(rules.definition('&&', T), F);
     var step7 = rules.reduce(step6, '/right');
     // TODO: Use eqnIsTrue instead.
     var step8 = rules.r5213(rules.theorem('r5211'), step7);
@@ -409,7 +418,7 @@ var ruleInfo = {
 
   // 5216, using defTrueAnd.  Not used.
   andT: function(a) {
-    var step1 = rules.applyBoth(rules.axiom('defTrueAnd'), a);
+    var step1 = rules.applyBoth(rules.definition('&&', T), a);
     var step2 = rules.reduce(step1, '/right');
     return step2;
   },
@@ -428,7 +437,7 @@ var ruleInfo = {
     var step5b = rules.instEqn(step5a, lambda(x, x), g);
     var step6a = rules.reduce(step5b, '/right/arg/body/left');
     var step6b = rules.reduce(step6a, '/right/arg/body/right');
-    var step6c = rules.r(rules.axiom('defForall'),
+    var step6c = rules.r(rules.definition('forall'),
                          rules.defFFromBook(),
                          '/right/fn');
     var step6d = rules.rRight(step6c, step6b, '/left');
@@ -453,7 +462,7 @@ var ruleInfo = {
     var step4 = rules.reduce(step3, '/right/arg/body');
     var step5a = rules.eqT(T);
     var step5 = rules.eqnSwap(step5a);
-    var step6a = rules.r(rules.axiom('defNot'),
+    var step6a = rules.r(rules.definition('not'),
                          rules.axiom('axiomTIsNotF'),
                          '/fn');
     var step6 = rules.eqnSwap(step6a);
@@ -489,9 +498,9 @@ var ruleInfo = {
     var step3 = rules.instEqn(step2, lambda(x, T), f);
     var step4 = rules.reduce(step3, '/right/arg/body/left');
     var step5 = rules.reduce(step4, '/right/arg/body/right');
-    var step6 = rules.r(rules.axiom('defForall'), step5, '/right/fn');
+    var step6 = rules.r(rules.definition('forall'), step5, '/right/fn');
     var step7 = rules.rRight(step6, step1, '/');
-    var step8 = rules.rRight(rules.axiom('defForall'), step7, '/fn');
+    var step8 = rules.rRight(rules.definition('forall'), step7, '/fn');
     var step9 = rules.toTIsA(a);
     var step10 = rules.r(step9, step8, '/arg/body');
     return step10;
@@ -528,7 +537,7 @@ var ruleInfo = {
 
   // [[T --> x] --> x].  Only used in Modus Ponens.
   r5223: function() {
-    var step1 = rules.applyBoth(rules.axiom('defTrueImplies'), x);
+    var step1 = rules.applyBoth(rules.definition('-->', T), x);
     var step2 = rules.reduce(step1, '/right');
     return step2;
   },
@@ -546,7 +555,7 @@ var ruleInfo = {
   // Prove [T = F] = F (same as 5217)
   r5230TF: function() {
     var step1 = rules.axiom('axiomTIsNotF');
-    var step2 = rules.r(rules.axiom('defNot'), step1, '/fn');
+    var step2 = rules.r(rules.definition('not'), step1, '/fn');
     var step3 = rules.eqnSwap(step2);
     return step3;
   },
@@ -565,16 +574,16 @@ var ruleInfo = {
     var step4 = rules.toTIsA(step3c);
     // We are going to prove the cases of: (x --> F) = (x = F)
     // First with x = F.
-    var step11 = rules.axiom('defFalseImplies');
+    var step11 = rules.definition('-->', F);
     var step12 = rules.applyBoth(step11, F);
     var step13 = rules.reduce(step12, '/right');
     var step14 = rules.eqT(F);
     var step15 = rules.r(step14, step13, '/right');
     // Then with x = T.
-    var step21 = rules.axiom('defTrueImplies');
+    var step21 = rules.definition('-->', T);
     var step22 = rules.applyBoth(step21, F);
     var step23 = rules.reduce(step22, '/right');
-    var step24 = rules.r(rules.axiom('defNot'),
+    var step24 = rules.r(rules.definition('not'),
                          rules.axiom('axiomTIsNotF'),
                          '/fn');
     var step25 = rules.r(step24, step23, '/right');
@@ -591,7 +600,7 @@ var ruleInfo = {
   // [not T] = F
   r5231T: function() {
     var step1 = rules.eqSelf(call('not', T));
-    var step2 = rules.r(rules.axiom('defNot'), step1, '/right/fn');
+    var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
     var step3 = rules.r(rules.theorem('r5230FT'), step2, '/right');
     return step3;
   },
@@ -599,7 +608,7 @@ var ruleInfo = {
   // [not F] = T
   r5231F: function() {
     var step1 = rules.eqSelf(call('not', F));
-    var step2 = rules.r(rules.axiom('defNot'), step1, '/right/fn');
+    var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
     var step3 = rules.eqT(F);
     var step4 = rules.rRight(step3, step2, '/right');
     return step4;
@@ -631,6 +640,7 @@ var ruleInfo = {
   // lambda expressions, with an argument of T or F.)  Reduces
   // repeatedly until no subexpression can be reduced.
   evalBool: function(expr) {
+    // TODO: Convert this to use the definitions databasse.
     var boolDefs = {
       '&&': {T: 'defTrueAnd', F: 'defFalseAnd'},
       '||': {T: 'defTrueOr', F: 'defFalseOr'},
@@ -734,6 +744,14 @@ var ruleInfo = {
 Y.createRules(ruleInfo);
 
 var rules = Y.rules;
+
+// Put definitions into their database:
+Y.define('not', equal(F))
+Y.define('forall', equal(lambda(x, T)));
+Y.defineCases('&&', identity, lambda(x, F));
+Y.defineCases('||', allT, identity);
+Y.defineCases('-->', identity, allT);
+
 
 // Add the axioms and theorems to the "database".  This can only
 // include ones that are not "axiom schemas", i.e. not parameterized.

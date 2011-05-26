@@ -83,7 +83,7 @@ Proof.prototype.renderSteps = function(node) {
     // Record the annotated expression as the inference result.
     inf.result = inf.result.render(wffNode);
     // Add the name to the display.
-    var stepName = inf.name == 'axiom' ? inf.arguments[0] : inf.name;
+    var stepName = (inf.name == 'axiom') ? inf.arguments[0] : inf.name;
     stepNode.appendChild('&nbsp;&nbsp;' + stepName);
     // Map to inference, from its result expression as string.
     // Represents steps depended on by the inference.
@@ -101,6 +101,12 @@ Proof.prototype.renderSteps = function(node) {
     }
     if (inf.name == 'axiom') {
       // Do nothing here, see above.
+    } else if (inf.name == 'definition') {
+      var text = '&nbsp;of ';
+      if (inf.arguments.length == 2) {
+        text += inf.arguments[1] + ' ';
+      }
+      stepNode.appendChild(text + inf.arguments[0]);
     } else if (inf.name == 'theorem') {
       stepNode.appendChild('&nbsp;' + inf.arguments[0]);
     } else {
@@ -241,12 +247,22 @@ function makeInference(name, ruleArgs) {
 // at the bottom of this file.
 var _theoremsByName = {};
 
+/**
+ * Checks that the theorem is not already in the database,
+ * verifies that the inference's proof is valid, then
+ * adds it to the set of theorems, which are indexed by
+ * theorem name.
+ */
 function addTheorem(name, inference) {
-  Y.assert(inference.proof.check(), 'Proof is not valid');
   Y.assert(!_theoremsByName[name], 'Theorem already exists');
+  Y.assert(inference.proof.check(), 'Proof is not valid');
   _theoremsByName[name] = inference;
 }
 
+/**
+ * Gets an existing theorem from the theorems database, or
+ * returns null if there is none.
+ */
 function getTheorem(name) {
   return _theoremsByName[name];
 }
@@ -254,7 +270,59 @@ function getTheorem(name) {
 
 //// DEFINITIONS
 
-// TODO: Support simplel definition and definition by cases.
+// Indexed by the name defined.  Value is an expression if
+// the definition is simple.  If by cases, the value is a
+// map from 'T' and 'F' to the definition for each case.
+var definitions = {};
+
+/**
+ * Add a simple abbreviation-like definition, e.g.
+ * define('forall', equal(lambda(x, T))).
+ */
+function define(name, definition) {
+  var free = definition.freeNames();
+  Y.assert(!free[name], 'Definition is not simple: ' + name);
+  Y.assert(!definitions[name], 'Already defined: ' + name);
+  definitions[name] = equal(name, definition);
+}
+
+/**
+ * Add a simple definition with true/false cases.  A call could
+ * be something like defineCases('not', F, T).
+ */
+function defineCases(name, ifTrue, ifFalse) {
+  Y.assert(!definitions[name], 'Already defined: ' + name);
+  var freeTrue = ifTrue.freeNames();
+  Y.assert(!freeTrue[name], 'Definition by cases is not simple: ' + name);
+  var freeFalse = ifFalse.freeNames();
+  Y.assert(!freeFalse[name], 'Definition by cases is not simple: ' + name);
+  definitions[name] = {T: equal(call(name, T), ifTrue),
+                       F: equal(call(name, F), ifFalse)};
+}
+
+/**
+ * Fetch a simple or by-cases definition from the definitions
+ * database.  Throws an exception if an appropriate definition
+ * is not found.  Pass true or false to get the appropriate part
+ * of a definition by cases.
+ */
+function getDefinition(name, tOrF) {
+  var defn = definitions[name];
+  Y.assert(defn, 'Not defined: ' + name);
+  if (tOrF == null) {
+    Y.assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
+    return defn;
+  } else {
+    if (tOrF == true || tOrF == T) {
+      tOrF = 'T';
+    } else if (tOrF == false || tOrF == F) {
+      tOrF = 'F';
+    }
+    Y.assert(!(defn instanceof Y.Expr),
+             'Definition is not by cases: ' + name);
+    return defn[tOrF];
+  }
+}
 
 
 //// RENDERING AND EVENTS
@@ -275,7 +343,6 @@ function renderSteps(inference, node) {
     inference.proof.add(makeInference('given', [wff]), 0);
   }
   inference.proof.renderSteps(node);
-
 }
 
 /**
@@ -414,10 +481,17 @@ function infer(name, stack, etc) {
 Y.inferenceStack = inferenceStack;
 Y.makeInference = makeInference;
 Y.addTheorem = addTheorem;
+Y.define = define;
+Y.defineCases = defineCases;
+Y.getDefinition = getDefinition;
 Y.getTheorem = getTheorem;
 Y.renderSteps = renderSteps;
 Y.createRules = createRules;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;
+
+// For testing:
+Y.definitions = definitions;
+
 
 }, '0.1', {use: ['array-extras', 'expr']});

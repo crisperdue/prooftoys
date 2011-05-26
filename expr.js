@@ -898,6 +898,8 @@ var utils = {
   T: new Var('T'),
   F: new Var('F'),
 
+  // TODO: Do something other than importing these into
+  // the global environment.
   import: function(where) {
     where = where || window;
     // Import the useful names into the window !?
