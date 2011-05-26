@@ -313,9 +313,9 @@ function getDefinition(name, tOrF) {
     Y.assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
     return defn;
   } else {
-    if (tOrF == true || tOrF == T) {
+    if (tOrF == true || (tOrF instanceof Y.Var && tOrF.name == 'T')) {
       tOrF = 'T';
-    } else if (tOrF == false || tOrF == F) {
+    } else if (tOrF == false || (tOrF instanceof Y.Var && tOrF.name == 'F')) {
       tOrF = 'F';
     }
     Y.assert(!(defn instanceof Y.Expr),

@@ -659,9 +659,13 @@ var ruleInfo = {
       if (fn instanceof Y.Var) {
         var defn;
         if (fn.name == 'not') {
-          defn = rules.theorem(target.arg == T ? 'r5231T' : 'r5231F');
+          defn = rules.theorem(target.arg.name == 'T'
+                               ? 'r5231T'
+                               : 'r5231F');
         } else if (fn.name == '=') {
-          defn = rules.theorem(target.arg == T ? 'trueEquals' : 'falseEquals');
+          defn = rules.theorem(target.arg.name == 'T'
+                               ? 'trueEquals'
+                               : 'falseEquals');
         } else {
           defn = rules.definition(fn.name, target.arg.name);
         }
