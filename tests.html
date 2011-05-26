@@ -267,36 +267,6 @@ YUI({filter: null, insertBefore: 'styles'})
                     Y.makeInference('axiom5').result);
       },
 
-      testTrueAnd: function() {
-        assertEqual('((&& T) = {x : x})',
-                    Y.makeInference('defTrueAnd').result);
-      },
-
-      testFalseAnd: function() {
-        assertEqual('((&& F) = {x : F})',
-                    Y.makeInference('defFalseAnd').result);
-      },
-
-      testTrueOr: function() {
-        assertEqual('((|| T) = {x : T})',
-                    Y.makeInference('defTrueOr').result);
-      },
-
-      testFalseOr: function() {
-        assertEqual('((|| F) = {x : x})',
-                    Y.makeInference('defFalseOr').result);
-      },
-
-      testTrueImplies: function() {
-        assertEqual('((--> T) = {x : x})',
-                    Y.makeInference('defTrueImplies').result);
-      },
-
-      testFalseImplies: function() {
-        assertEqual('((--> F) = {x : T})',
-                    Y.makeInference('defFalseImplies').result);
-      },
-
       testApplyBoth: function() {
         var inf = Y.makeInference('applyBoth',
                                   [call('=', f, g),
@@ -507,7 +477,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testApplyFunc: function() {
-        var defn = Y.makeInference('defTrueImplies').result;
+        var defn = Y.makeInference('definition', ['-->', T]).result;
         var inf = Y.makeInference('applyFunc', [defn, T]);
         assertEqual('((T --> T) = T)', inf.result);
         var inf2 = Y.makeInference('applyFunc', [defn, F]);

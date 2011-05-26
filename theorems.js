@@ -167,34 +167,6 @@ var ruleInfo = {
                                                  lambda(g, call(g, x, y))))));
   },
 
-  // These definitions by cases need to have the RHS be
-  // a Lambda or somehow by further reducible by evalBool
-  // for evalBool to work as intended.
-
-  // Note this can be proved like 5211.
-  defTrueAnd: function() {
-    return equal(call('&&', T), identity);
-  },
-
-  defFalseAnd: function() {
-    return equal(call('&&', F), lambda(x, F));
-  },
-
-  defTrueOr: function() {
-    return equal(call('||', T), allT);
-  },
-
-  defFalseOr: function() {
-    return equal(call('||', F), identity);
-  },
-
-  defTrueImplies: function() {
-    return equal(call('-->', T), identity);
-  },
-
-  defFalseImplies: function() {
-    return equal(call('-->', F), allT);
-  },
 
   //
   // Theorems and rules of inference.
@@ -347,7 +319,7 @@ var ruleInfo = {
   },
 
   // [T && T] = T.  Uses no book-specific definitions.
-  // TODO: Consider proving this from defTrueAnd.
+  // TODO: Consider proving this from the definition of "true and".
   // Only used in 5212 and book version of 5216.
   r5211: function() {
     var step1 = rules.instEqn(rules.axiom('axiom1'), lambda(y, T), g);
@@ -399,7 +371,7 @@ var ruleInfo = {
     return step6;
   },
 
-  // 5216 by the book.  Not used.
+  // 5216 by the book.  Not used.  Currently uses one nonbook definition.
   andTBook: function(a) {
     var step1 = rules.axiom('axiom1');
     var step2 =
@@ -416,7 +388,7 @@ var ruleInfo = {
     return step10;
   },
 
-  // 5216, using defTrueAnd.  Not used.
+  // 5216, using the definition of "true and".  Not used.
   andT: function(a) {
     var step1 = rules.applyBoth(rules.definition('&&', T), a);
     var step2 = rules.reduce(step1, '/right');
@@ -766,8 +738,6 @@ Y.defineCases('-->', identity, allT);
 var theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
                     'defForall', 'defFFromBook', 'axiomTIsNotF',
                     /* 'axiomPNeqNotP', */ 'defNot', 'defAnd',
-                    'defTrueAnd', 'defFalseAnd', 'defTrueOr', 'defFalseOr',
-                    'defTrueImplies', 'defFalseImplies',
                     'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
                     'r5231T', 'r5231F', 'falseEquals', 'trueEquals'];
 
