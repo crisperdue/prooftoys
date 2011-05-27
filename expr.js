@@ -309,6 +309,15 @@ Expr.prototype.pathTo = function(pred) {
 // Helper for the render method.  (Not public)
 // 
 // TODO: Consider setting the node property to the actual DOM node.
+//
+//
+// findAll(name, action1, expr2, action2)
+//
+// Apply the action function to every subexpression in this that is
+// a free variable with the given name.  This method also does the
+// same traversal of expr2, so it must have expressions at all the
+// locations where this does.  Performs action2 on every subexpression
+//
 
 
 //// Var -- variable bindings and references
@@ -382,6 +391,13 @@ Var.prototype.path1 = function(pred, revPath) {
 Var.prototype._render = function(node) {
   node.append(this.name);
   this.node = node;
+};
+
+Var.prototype.findAll = function(name, action1, expr2, action2) {
+  if (this.name == name) {
+    action1(this);
+    action2(expr2);
+  }
 };
 
 
@@ -524,6 +540,11 @@ Call.prototype._render = function(node) {
   node.append(')');
 };
 
+Call.prototype.findAll = function(name, action1, expr2, action2) {
+  this.fn.findAll(name, action1, expr2.fn, action2);
+  this.arg.findAll(name, action1, expr2.arg, action2);
+};
+
 
 //// Lambda -- variable bindings
 
@@ -624,6 +645,12 @@ Lambda.prototype._render = function(node) {
   node.append('&nbsp;|&nbsp;');
   this.body._render(appendSpan(node));
   node.append('}');
+};
+
+Lambda.prototype.findAll = function(name, action1, expr2, action2) {
+  if (this.bound.name != name) {
+    this.body.findAll(name, action1, expr2.body, action2);
+  }
 };
 
 
@@ -949,6 +976,7 @@ Y.subFree = subFree;
 Y.normalized = normalized
 Y.decapture = decapture;
 Y.path = path;
+Y.getBinding = getBinding;
 
 Y.assert = assert;
 Y.assertEqn = assertEqn;

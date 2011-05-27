@@ -152,6 +152,7 @@ function Inference(name, ruleArgs, result, proof) {
   this.proof = proof;
   // If rendered, has a "deps" property, a map from result string
   // to the premises of this inference, themselves inferences.
+  // The values of the deps have always been rendered.
   //
   // TODO: Specify deps explicitly rather than computing it.
   //   The same thing may be proved more than once, especially when using
@@ -365,6 +366,8 @@ function hover(event, inference, direction) {
   }
 }
 
+// Arguments to the handler functions are an inference
+// and the operation is "addClass" or "removeClass".
 var hoverHandlers = {
   r: function(inf, op) {
     var deps = inf.deps;
@@ -401,6 +404,36 @@ var hoverHandlers = {
     target.locate(path).node[op]('new');
     inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
+  },
+  instEqn: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    // Input expression.
+    var input = deps[args[0].asString()].result;
+    // Name of variable being instantiated.
+    var varName = args[2].name;
+    inf.getStepNode()[op]('hover');
+    input.node[op]('hover');
+    input.findAll(varName,
+                  function(_var) { _var.node[op]('new'); },
+                  inf.result,
+                  function(expr) { expr.node[op]('new'); });
+  },
+  forallInst: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    // Input expression.
+    var input = deps[args[0].asString()].result;
+    // Name of variable being instantiated.
+    var varName = input.arg.bound.name;
+    input.arg.bound.node[op]('new');
+    inf.getStepNode()[op]('hover');
+    input.node[op]('hover');
+    input.arg.body.findAll(varName,
+                           function(_var) { _var.node[op]('new'); },
+                           inf.result,
+                           function(expr) { expr.node[op]('new'); });
+
   }
 };
 
