@@ -80,8 +80,11 @@ Proof.prototype.renderSteps = function(node) {
     var stepNode = node.appendChild(text);
     // See appendSpan in expr.js.
     var wffNode = stepNode.appendChild('<span class=expr></span>');
+
+    // Render the WFF itself.
     // Record the annotated expression as the inference result.
     inf.result = inf.result.render(wffNode);
+
     // Add the name to the display.
     var stepName = (inf.name == 'axiom') ? inf.arguments[0] : inf.name;
     stepNode.appendChild('&nbsp;&nbsp;' + stepName);

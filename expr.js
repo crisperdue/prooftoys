@@ -399,11 +399,13 @@ Call.prototype.toString = function() {
     return this._string;
   }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
-    if (this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
+    if (isInfixDesired(this.fn.fn.name)) {
       return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
     } else {
       return '(' + this.fn.fn + ' ' + this.fn.arg + ' ' + this.arg + ')';
     }
+  } else if (this.fn instanceof Var && isInfixDesired(this.fn.name)) {
+    return '(' + this.arg + ' ' + this.fn + ')';
   } else {
     return '(' + this.fn + ' ' + this.arg + ')';
   }
@@ -487,7 +489,7 @@ Call.prototype._render = function(node) {
   this.node = node;
   node.append('(');
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
-    if (this.fn.fn.name.match(/^[^A-Za-z]+$/)) {
+    if (isInfixDesired(this.fn.fn.name)) {
       // Non-alphabetic characters: use infix.
       var fnNode = appendSpan(node);
       this.fn.node = fnNode;
@@ -506,6 +508,12 @@ Call.prototype._render = function(node) {
       node.append(space);
       this.arg._render(appendSpan(node));
     }
+  } else if (this.fn instanceof Var && isInfixDesired(this.fn.name)) {
+    var argNode = appendSpan(node);
+    this.arg._render(argNode);
+    node.append('&nbsp;');
+    var opNode = appendSpan(node);
+    this.fn._render(opNode);
   } else {
     var opNode = appendSpan(node);
     this.fn._render(opNode);
@@ -807,6 +815,20 @@ function path(arg) {
 
 //// UTILITY FUNCTIONS
 
+/**
+ * This controls the policy over which function names are
+ * to be rendered as infix.
+ */
+function isInfixDesired(name) {
+  return name.match(/^[^A-Za-z]+$/);
+}
+
+/**
+ * Asserts that the condition is true, throwing an exception
+ * if it is not.  The message may be either a string or
+ * a function of no arguments that returns something that
+ * can be logged.
+ */
 function assert(condition, message) {
   if (!condition) {
     if (typeof message == 'function') {
@@ -817,6 +839,10 @@ function assert(condition, message) {
   }
 }
 
+/**
+ * Asserts that the expression is an equation (must have
+ * both left and right sides.
+ */
 function assertEqn(expr) {
   assert(expr instanceof Y.Call
          && expr.fn instanceof Y.Call
