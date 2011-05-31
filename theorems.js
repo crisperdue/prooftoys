@@ -259,18 +259,13 @@ var ruleInfo = {
   /**
    * Substitutes term "a" for variable "v" in equation b_c,
    * with the result a consequence of b_c.  (5209)
-   * TODO: Should this use bindEqn?
    */
   instEqn: function(b_c, a, v) {
-    var b = b_c.getLeft();
-    var c = b_c.getRight();
-    var ba_ba = rules.eqSelf(call(lambda(v, b), a));
-    var ba_ca = rules.r(b_c, ba_ba, '/right/fn/body');
-    var ba_sab = rules.axiom4(call(lambda(v, b), a));
-    var ca_sac = rules.axiom4(call(lambda(v, c), a));
-    var step5a = rules.r(ba_sab, ba_ca, '/left');
-    var step5b = rules.r(ca_sac, step5a, '/right');
-    return step5b;
+    var bound = rules.bindEqn(b_c, v);
+    var step2 = rules.applyBoth(bound, a);
+    var step3 = rules.reduce(step2, '/left');
+    var step4 = rules.reduce(step3, '/right');
+    return step4;
   },
 
   // thm: T = [B = B] (5210)
@@ -322,6 +317,14 @@ var ruleInfo = {
   // TODO: Consider proving this from the definition of "true and".
   // Only used in 5212 and book version of 5216.
   r5211: function() {
+    var step1 = rules.definition('&&', T);
+    var step2 = rules.applyBoth(step1, T);
+    var step3 = rules.reduce(step2, '/right');
+    return step3;
+  },
+
+  // Book version of r5211.
+  r5211Book: function() {
     var step1 = rules.instEqn(rules.axiom('axiom1'), lambda(y, T), g);
     var step2a = rules.reduce(step1, '/left/left');
     var step2b = rules.reduce(step2a, '/left/right');
@@ -335,7 +338,6 @@ var ruleInfo = {
   // T && T.  Uses no book-specific definitions.
   // Used to prove the Cases rule.
   r5212: function() {
-    // var step1 = rules.rRight(rules.r5211(), rules.t(), '/');
     var step1 = rules.rRight(rules.theorem('r5211'),
                              rules.theorem('t'),
                              '/');

@@ -16,7 +16,7 @@
 
   h1 { color: black }
 
-  body { background-color: #6d6 }
+   body { background-color: #beb }
 
 /* Proof styling */
 
@@ -41,9 +41,8 @@
   background-color: #FCC;
  }
 
-/* New value ("replacement") -- greenish */
+/* New value ("replacement") -- blue */
 .hover2, .reduced2, .new {
-  /* Green highlight: background-color: #6E6; */
   background-color: #AAF;
 }
 
@@ -187,6 +186,14 @@ YUI({filter: null, insertBefore: 'styles'})
       args: [p, call('=', q, r)]
     },
     
+    reduce: {
+      args: [equal(p, call(lambda(x, T), y)), '/right']
+    },
+
+    bindEqn: {
+      args: [call('=', f, g), x]
+    },
+    
     instEqn: {
       args: [call('=', call(g, y), z),
              call(f, x),
@@ -198,6 +205,8 @@ YUI({filter: null, insertBefore: 'styles'})
     },
     
     r5211: {},
+
+    r5211Book: {},
     
     t: {},
     
@@ -210,10 +219,6 @@ YUI({filter: null, insertBefore: 'styles'})
     r5213: {
       args: [call('=', p, q),
              call('=', q, r)]
-    },
-    
-    bindEqn: {
-      args: [call('=', f, g), x]
     },
     
     forallInst: {

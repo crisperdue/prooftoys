@@ -433,7 +433,6 @@ var hoverHandlers = {
                            function(_var) { _var.node[op]('new'); },
                            inf.result,
                            function(expr) { expr.node[op]('new'); });
-
   }
 };
 
