@@ -52,8 +52,6 @@ var ruleInfo = {
    * Refer to an axiom in the theorems database.  Affects the
    * display of the proof step, but otherwise the same as "theorem".
    * Currently also used for definitions.
-   *
-   * TODO: Distinguish definitions from everything else in the API.
    */
   axiom: function(name) {
     return Y.getTheorem(name).result;
@@ -167,6 +165,23 @@ var ruleInfo = {
                                                  lambda(g, call(g, x, y))))));
   },
 
+  axioms: function() {
+    rules.axiom('axiom1');
+    rules.axiom('axiom2');
+    rules.axiom('axiom3');
+    return rules.axiom('axiom5');
+  },
+
+  definitions: function() {
+    rules.definition('not');
+    rules.definition('forall');
+    rules.definition('&&', T);
+    rules.definition('&&', F);
+    rules.definition('||', T);
+    rules.definition('||', F);
+    rules.definition('-->', T);
+    return rules.definition('-->', F);
+  },
 
   //
   // Theorems and rules of inference.

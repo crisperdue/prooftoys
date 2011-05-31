@@ -85,9 +85,8 @@ Proof.prototype.renderSteps = function(node) {
     // Record the annotated expression as the inference result.
     inf.result = inf.result.render(wffNode);
 
-    // Add the name to the display.
-    var stepName = (inf.name == 'axiom') ? inf.arguments[0] : inf.name;
-    stepNode.appendChild('&nbsp;&nbsp;' + stepName);
+    // Add the name and other info to the display.
+    var stepInfo = (inf.name == 'axiom') ? inf.arguments[0] : inf.name;
     // Map to inference, from its result expression as string.
     // Represents steps depended on by the inference.
     // Attach the result as the inference "deps" property.
@@ -99,30 +98,46 @@ Proof.prototype.renderSteps = function(node) {
       if (step) {
         inf.deps[aString] = step;
       } else {
-        Y.log('No prior step: ' + aString);
+        throw new Error('No prior step: ' + aString);
       }
     }
     if (inf.name == 'axiom') {
       // Do nothing here, see above.
     } else if (inf.name == 'definition') {
-      var text = '&nbsp;of ';
+      var text = ' of ';
       if (inf.arguments.length == 2) {
         text += inf.arguments[1] + ' ';
       }
-      stepNode.appendChild(text + inf.arguments[0]);
+      stepInfo += text + inf.arguments[0];
     } else if (inf.name == 'theorem') {
-      stepNode.appendChild('&nbsp;' + inf.arguments[0]);
+      stepInfo += ' ' + inf.arguments[0];
     } else {
+      // It is a (derived) rule of inference.
       var firstDep = true;
       for (var key in inf.deps) {
         if (firstDep) {
           firstDep = false;
-          stepNode.appendChild('&nbsp;' + this.stepNumber(inf.deps[key]));
+          stepInfo += ' ' + this.stepNumber(inf.deps[key]);
         } else {
-          stepNode.appendChild(', ' + this.stepNumber(inf.deps[key]));
+          stepInfo += ', ' + this.stepNumber(inf.deps[key]);
         }
       }
+      var args = inf.arguments;
+      var varInfo = '';
+      for (var j = 0; j < args.length; j++) {
+        if (args[j] instanceof Y.Var) {
+          if (varInfo) {
+            varInfo += ' ';
+          }
+          varInfo += args[j].name;
+          Y.log(varInfo);
+        }
+      }
+      if (varInfo) {
+        stepInfo += ' (' + varInfo + ')';
+      }
     }
+    stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
     stepNode.on('hover',
                 // Call "hover" adding extra arguments at the end.
                 Y.rbind(hover, stepNode, inf, 'in'),
@@ -331,14 +346,31 @@ function getDefinition(name, tOrF) {
 
 //// RENDERING AND EVENTS
 
+/**
+ * Renders the proof steps of an inference and a header by appending
+ * them to a container Node, which defaults to the document body.  The
+ * first child is the header, rendered with class proofHeader.  The
+ * second is the proof display, with class proofDisplay.
+ */
 function renderSteps(inference, node) {
   if (node == null) {
-    node = new Y.Node(document.body)
-      .appendChild('<div style="margin: 1em; font-family: monospace"></div>');
+    node = new Y.Node(document.body);
   }
-  node.appendChild('<div style="margin: .5em"><b>Proof of '
-                   + inference.name + '</b></div>');
   var assumptions = inference.assumptions();
+  var pruf = 'Proof of ';
+  for (var assume in assumptions) {
+    pruf = 'Rule ';
+    break;
+  }
+  var argInfo = inference.arguments.join(', ');
+  if (argInfo) {
+    argInfo =
+      ': <span style="font-weight: normal; font-family: monospace">'
+      + argInfo + '</span>';
+  }
+  node.appendChild('<div class=proofHeader>' + pruf
+                   + inference.name + argInfo + '</div>');
+  var proofNode = node.appendChild('<div class=proofDisplay></div>');
   // Map to inference from its result as string.  Each result will be
   // annotated with links into the DOM.  Starts with the assumptions.
   // Add the assumptions to the proof before rendering it.
@@ -346,7 +378,7 @@ function renderSteps(inference, node) {
     var wff = assumptions[key];
     inference.proof.add(makeInference('given', [wff]), 0);
   }
-  inference.proof.renderSteps(node);
+  inference.proof.renderSteps(proofNode);
 }
 
 /**
@@ -426,7 +458,6 @@ var hoverHandlers = {
     var input = deps[args[0].asString()].result;
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
-    input.arg.bound.node[op]('new');
     inf.getStepNode()[op]('hover');
     input.node[op]('hover');
     input.arg.body.findAll(varName,

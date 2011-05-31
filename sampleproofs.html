@@ -5,8 +5,8 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <title>Proof Display</title>
-
-  <script src="http://yui.yahooapis.com/3.3.0/build/yui/yui-min.js"></script>
+   <!-- TODO: deploy with yui-min.js rather than yui.js -->
+  <script src="http://yui.yahooapis.com/3.3.0/build/yui/yui.js"></script>
   <link id=styles type="text/css" rel="stylesheet" href="logic.css">
   <script src="expr.js"></script>
   <script src="proof.js"></script>
@@ -17,34 +17,6 @@
   h1 { color: black }
 
    body { background-color: #beb }
-
-/* Proof styling */
-
-.proofStep {
-    background-color: beige;
-    font-size: 90%;
-    padding: 2px;
-    margin: 4px 0px;
-}
-
-.hover, .dep {
-  background-color: white;
- }
-
-/* Generic dependency */
-.dep-old {
-  background-color: #DDF;
-}
-
-/* Old value ("removed") */
-.reduced, .old {
-  background-color: #FCC;
- }
-
-/* New value ("replacement") -- blue */
-.hover2, .reduced2, .new {
-  background-color: #AAF;
-}
 
 </style>
   
@@ -83,7 +55,7 @@ universal instantiation (forallInst), and reasoning by cases (cases).
 <p id=selectDiv style="margin: 1.5em">
 <b>Select a rule or theorem to prove:</b>
 </p>
-<div id=proofs style="margin: 1em; font-family: monospace"></div>
+<div id=proofs></div>
 
 <p><b>About the logic.</b>  This page can derive and show derivations
 of many of the theorems and examples of rules of inference of Chapter
@@ -151,6 +123,12 @@ YUI({filter: null, insertBefore: 'styles'})
   var queryData;
 
   var proofs = {
+
+    // DEFINITIONS
+
+    axioms: {},
+
+    definitions: {},
 
     // PROOFS
 
