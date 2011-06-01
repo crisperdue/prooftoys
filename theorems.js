@@ -343,7 +343,7 @@ var ruleInfo = {
   // thm: T = [B = B] (5210)
   eqT: {
     action: function(b) {
-      var a3 = rules.r(rules.defForall(), rules.axiom3(), '/right/fn');
+      var a3 = rules.r(rules.defForall(), rules.axiom('axiom3'), '/right/fn');
       var identity = lambda(y, y);
       var step1a = rules.instEqn(a3, identity, f);
       var step1b = rules.instEqn(step1a, identity, g);
@@ -583,7 +583,7 @@ var ruleInfo = {
       var step2 = rules.forallInst(step1, a);
       return step2;
     },
-    comment: ('In theorem B substitute an expression for'
+    comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.')
   },
 
