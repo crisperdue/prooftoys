@@ -368,8 +368,11 @@ function renderSteps(inference, node) {
       ': <span style="font-weight: normal; font-family: monospace">'
       + argInfo + '</span>';
   }
-  node.appendChild('<div class=proofHeader>' + pruf
-                   + inference.name + argInfo + '</div>');
+  var comment = rules[inference.name].info.comment || '';
+  node.appendChild('<div class=proofHeader><b>' + pruf
+                   + inference.name + '</b>' + argInfo + '<br>'
+                   + '<i>' + comment + '</i>'
+                   + '</div>');
   var proofNode = node.appendChild('<div class=proofDisplay></div>');
   // Map to inference from its result as string.  Each result will be
   // annotated with links into the DOM.  Starts with the assumptions.
@@ -515,6 +518,9 @@ var inferenceStack = [new Proof()];
 // Map from rule name to function.  The function runs the
 // core rule code, wrapped in more code that makes potentially
 // nested inferences using makeInference.
+//
+// TODO: It is really roundabout to have both ruleInfo and rules.
+// Simplify them.
 var rules = {};
 
 /**
@@ -527,9 +533,14 @@ function createRules(ruleInfo) {
     // Each call to infer will get the key and inferenceStack
     // from here, plus whatever args were passed by the caller.
     rules[key] = Y.bind(infer, null, key, inferenceStack);
+    // Remember ALL of the info as well, redundantly.  See the "to do"
+    // above.
+    var info = ruleInfo[key];
+    rules[key].info = info;
+    var fn = (typeof info == 'function') ? info : info.action;
     // Each function in rules has its action function as
     // the value of its innerFn property.
-    rules[key].innerFn = ruleInfo[key];
+    rules[key].innerFn = fn;
   }
 }
 

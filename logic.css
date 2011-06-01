@@ -117,10 +117,10 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
 
 /* Proof displays */
 
-/* Header line for display. */
+/* Header line and comments for display. */
 .proofHeader {
     margin: .5em 1.5em;
-    font-weight: bold;
+    line-height: 150%;
 }
 
 .proofDisplay {
