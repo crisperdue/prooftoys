@@ -154,3 +154,8 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
 .proofStep .hover2, .proofStep .reduced2, .new {
   background-color: #CCF;
 }
+
+/* Reference to the current step. */
+span.referenced {
+  background-color: orange;
+}

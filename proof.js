@@ -102,9 +102,9 @@ Proof.prototype.renderSteps = function(node) {
     var stepInfo = this.computeStepInfo(inf);
     stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
     stepNode.on('hover',
-                // Call "hover" adding extra arguments at the end.
-                Y.rbind(hover, stepNode, inf, 'in'),
-                Y.rbind(hover, stepNode, inf, 'out'));
+                // Call "hover" adding these arguments after the event.
+                Y.rbind(hover, null, this, i, 'in'),
+                Y.rbind(hover, null, this, i, 'out'));
     allSteps[inf.result.asString()] = inf;
   }
 };
@@ -115,30 +115,34 @@ Proof.prototype.renderSteps = function(node) {
  */
 Proof.prototype.computeStepInfo = function(inf) {
   // Add the name and other info to the display.
-  var stepInfo = (inf.name == 'axiom') ? inf.arguments[0] : inf.name;
+  var stepInfo;
   if (inf.name == 'axiom') {
-    // Do nothing here, see above.
+    stepInfo = inf.arguments[0];
   } else if (inf.name == 'definition') {
-    var text = ' of ';
+    stepInfo = 'definition of ';
     if (inf.arguments.length == 2) {
-      text += inf.arguments[1] + ' ';
+      stepInfo += inf.arguments[1] + ' ';
     }
-    stepInfo += text + inf.arguments[0];
+    stepInfo += inf.arguments[0];
   } else if (inf.name == 'theorem') {
-    stepInfo += ' ' + inf.arguments[0];
+    stepInfo = fancyName(inf.name) + ' ' + inf.arguments[0];
   } else {
     // It is a (derived) rule of inference.
+    stepInfo = fancyName(inf.name);
     var firstDep = true;
     for (var key in inf.deps) {
       if (firstDep) {
         firstDep = false;
-        stepInfo += ' ' + this.stepNumber(inf.deps[key]);
       } else {
-        stepInfo += ', ' + this.stepNumber(inf.deps[key]);
+        stepInfo += ',';
       }
+      stepInfo += ' ' + fancyStepNumber(this.stepNumber(inf.deps[key]));
     }
     var args = inf.arguments;
     var varInfo = '';
+    // Display arguments that are variables.
+    // TODO: Just showing variables is only a heuristic.
+    //   do something better.
     for (var j = 0; j < args.length; j++) {
       if (args[j] instanceof Y.Var) {
         if (varInfo) {
@@ -153,6 +157,27 @@ Proof.prototype.computeStepInfo = function(inf) {
   }
   return stepInfo;
 };
+
+/**
+ * Renders an inference step name in a fancy way, currently
+ * with a tooltip that briefly describes it.
+ */
+function fancyName(name) {
+  var info = rules[name].info;
+  if (info && info.comment) {
+    return '<span title="' + info.comment + '">' + name + '</span>';
+  } else {
+    return name;
+  }
+}
+
+/**
+ * Renders a step number in a fancy way, currently in a SPAN
+ * with class "stepNumber".
+ */
+function fancyStepNumber(n) {
+  return '<span class=stepNumber>' + n + '</span>';
+}
 
 
 //// INFERENCE
@@ -395,14 +420,26 @@ function renderSteps(inference, node) {
 /**
  * Event handler for "hover" events.
  */
-function hover(event, inference, direction) {
+function hover(event, proof, index, direction) {
+  var inference = proof.steps[index];
+  var iString = '' + (index + 1);
   var op = direction == 'in' ? 'addClass' : 'removeClass';
   var deps = inference.deps;
   var handler = hoverHandlers[inference.name];
+  inference.getStepNode()[op]('hover');
+  
+  Y.all('span.stepNumber').each(function(node) {
+      if (direction == 'in') {
+        if (node.get('innerHTML') == iString) {
+          node.addClass('referenced');
+        }
+      } else {
+        node.removeClass('referenced');
+      }
+    });
   if (handler) {
     handler(inference, op);
   } else {
-    this[op]('hover');
     for (var key in deps) {
       deps[key].result.node[op]('dep');
     }
@@ -420,7 +457,6 @@ var hoverHandlers = {
     var path = args[2];
     target.node[op]('hover');
     target.locate(path).node[op]('old');
-    inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
     eqn.getLeft().node[op]('old');
     eqn.getRight().node[op]('new');
@@ -433,7 +469,6 @@ var hoverHandlers = {
     var path = args[2];
     target.node[op]('hover');
     target.locate(path).node[op]('old');
-    inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
     eqn.getRight().node[op]('old');
     eqn.getLeft().node[op]('new');
@@ -445,7 +480,6 @@ var hoverHandlers = {
     var path = args[1];
     target.node[op]('hover');
     target.locate(path).node[op]('new');
-    inf.getStepNode()[op]('hover');
     inf.result.locate(path).node[op]('new');
   },
   instEqn: function(inf, op) {
@@ -455,7 +489,6 @@ var hoverHandlers = {
     var input = deps[args[0].asString()].result;
     // Name of variable being instantiated.
     var varName = args[2].name;
-    inf.getStepNode()[op]('hover');
     input.node[op]('hover');
     input.findAll(varName,
                   function(_var) { _var.node[op]('new'); },
@@ -469,7 +502,6 @@ var hoverHandlers = {
     var input = deps[args[0].asString()].result;
     // Name of variable being instantiated.
     var varName = args[2].name;
-    inf.getStepNode()[op]('hover');
     input.node[op]('hover');
     input.findAll(varName,
                   function(_var) { _var.node[op]('new'); },
@@ -483,7 +515,6 @@ var hoverHandlers = {
     var input = deps[args[0].asString()].result;
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
-    inf.getStepNode()[op]('hover');
     input.node[op]('hover');
     input.arg.body.findAll(varName,
                            function(_var) { _var.node[op]('new'); },

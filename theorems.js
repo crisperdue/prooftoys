@@ -81,7 +81,7 @@ var ruleInfo = {
         throw new Error('Rule R requires equation: ' + equation);
       }
     },
-    comment: ('Replace an occurrence of an expression with something'
+    comment: ('Replaces an occurrence of an expression with something'
               + ' always equal to it.')
   },
 
@@ -95,7 +95,7 @@ var ruleInfo = {
       var rev = rules.eqnSwap(equation);
       return rules.r(rev, target, path);
     },
-    comment: ('Replace an occurrence of an expression with something'
+    comment: ('Replaces an occurrence of an expression with something'
               + ' always equal to it, but replace the right side'
               + ' of the equation with its left side.')
   },
@@ -224,7 +224,7 @@ var ruleInfo = {
       var step1 = rules.axiom4(call(lambda(x, x), a));
       return rules.r(step1, step1, '/left');
     },
-    comment: 'A thing is always equal to itself.'
+    comment: 'Derives A = A.'
   },
 
   // r5201a
@@ -336,8 +336,7 @@ var ruleInfo = {
       var step4 = rules.reduce(step3, '/right');
       return step4;
     },
-    comment: ('In an equation, instantiates the free variable'
-              + ' of your choice with an expression.')
+    comment: ('Instantiates a free variable in an equation.')
   },
 
   // thm: T = [B = B] (5210)
@@ -357,7 +356,7 @@ var ruleInfo = {
       var step4b = rules.reduce(step4a, '/right');
       return step4b;
     },
-    comment: ('Given any expression B, proves T = [B = B].')
+    comment: ('Proves T = [B = B].')
   },
 
   /**
@@ -389,7 +388,7 @@ var ruleInfo = {
       return step5;
     },
     comment: ('In a "forall", instantiates the bound variable with'
-              + 'the term of your choice.')
+              + 'a given term.')
   },
 
   // [T && T] = T.  Uses no book-specific definitions.
@@ -529,8 +528,7 @@ var ruleInfo = {
       var step9 = rules.forallInst(step8, a);
       return step9;
     },
-    comment: ('For any expression A, [T = A] = A.'
-              + ' Stepping stone to universal generalization.')
+    comment: ('For any expression A derives [T = A] = A.')
   },
 
   // 5219
