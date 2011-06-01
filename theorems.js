@@ -321,7 +321,7 @@ var ruleInfo = {
       return step2;
     },
     comment: ('Wraps each side of an equation in a function'
-              + 'using the bound variable of your choice.')
+              + ' using the bound variable of your choice.')
   },
 
   /**
@@ -573,7 +573,7 @@ var ruleInfo = {
       return step10;
     },
     comment: ('Universal Generalization, wrap a theorem A in'
-              + '(forall v A) using the variable of your choice.')
+              + ' (forall v A) using the variable of your choice.')
   },
 
   // 5221 (one variable), in B substitute A for v.
@@ -584,7 +584,7 @@ var ruleInfo = {
       return step2;
     },
     comment: ('In theorem B substitute an expression for'
-              + 'all occurrences of a free variable.')
+              + ' all occurrences of a free variable.')
   },
 
   // 5222: Given a variable and WFF, deduce the WFF.  User must prove
@@ -610,7 +610,7 @@ var ruleInfo = {
       return step7b;
     },
     comment: ('Prove a theorem by cases given two theorems that'
-              + 'show it with T and F.')
+              + ' show it with T and F.')
   },
 
   // [[T --> x] --> x].  Only used in Modus Ponens.
