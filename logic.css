@@ -147,15 +147,20 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
 
 /* Old value ("removed") */
 .proofStep .reduced, .proofStep .old {
-  background-color: #FCC;
+  background-color: #FBB;
  }
 
-/* New value ("replacement") -- blue */
+/* New value ("replacement") -- green */
 .proofStep .hover2, .proofStep .reduced2, .new {
-  background-color: #CCF;
+  background-color: #3e8;
 }
 
-/* Reference to the current step. */
+/* References to the current step. */
 span.referenced {
-  background-color: orange;
+  background-color: pink;
+}
+
+span.ruleName {
+  color: #55F;
+  cursor: pointer;
 }

@@ -82,7 +82,7 @@ var ruleInfo = {
       }
     },
     comment: ('Replaces an occurrence of an expression with something'
-              + ' always equal to it.')
+              + ' it is equal to.')
   },
 
   /**
@@ -96,8 +96,7 @@ var ruleInfo = {
       return rules.r(rev, target, path);
     },
     comment: ('Replaces an occurrence of an expression with something'
-              + ' always equal to it, but replace the right side'
-              + ' of the equation with its left side.')
+              + ' equal to it, replacing right side with left side.')
   },
 
   axiom1: {

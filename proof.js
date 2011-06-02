@@ -61,6 +61,10 @@ Proof.prototype.assumptions = function() {
   return inputs;
 };
 
+/**
+ * Returns the step number to be used for referencing a given proof
+ * step (inference).  First number is 1.
+ */
 Proof.prototype.stepNumber = function(inference) {
   var index = Y.Array.indexOf(this.steps, inference);
   Y.assert(index >= 0, 'Inference not found in proof');
@@ -68,16 +72,18 @@ Proof.prototype.stepNumber = function(inference) {
 };
 
 /**
- * Renders the steps of the proof into the given DOM node.
+ * Renders the steps of the proof into the given DOM node,
+ * first clearing the node.
  */
-Proof.prototype.renderSteps = function(node) {
+Proof.prototype.renderSteps = function(proofNode) {
+  proofNode.setContent('');
   var steps = this.steps;
   // Map from inference result string to inference.
   var allSteps = {};
   for (var i = 0; i < steps.length; i++) {
     var inf = steps[i];
     var text = '<div class="proofStep">' + (i + 1) + '. </div>';
-    var stepNode = node.appendChild(text);
+    var stepNode = proofNode.appendChild(text);
     // See appendSpan in expr.js.
     var wffNode = stepNode.appendChild('<span class=expr></span>');
 
@@ -102,12 +108,34 @@ Proof.prototype.renderSteps = function(node) {
     var stepInfo = this.computeStepInfo(inf);
     stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
     stepNode.on('hover',
-                // Call "hover" adding these arguments after the event.
-                Y.rbind(hover, null, this, i, 'in'),
-                Y.rbind(hover, null, this, i, 'out'));
+                // Call "hover", passing these arguments as well as the event.
+                Y.rbind(hover, null, this, i, 'in', proofNode),
+                Y.rbind(hover, null, this, i, 'out', proofNode));
     allSteps[inf.result.asString()] = inf;
+    // Caution: passing null to Y.on selects everything.
+    var target = stepNode.one('span.ruleName');
+    if (target) {
+      Y.on('click',
+           Y.rbind(renderSubProof, null, inf, proofNode),
+           target);
+    }
   }
 };
+
+/**
+ * Renders the given inference and a header after
+ * the given proof Node, clearing any other subproofs
+ * that currently follow the proof node.
+ */
+function renderSubProof(event, inference, proofNode) {
+  var parent = proofNode.get('parentNode');
+  var next = proofNode.get('nextSibling');
+  while (next) {
+    next.remove();
+    next = proofNode.get('nextSibling');
+  }
+  renderSteps(inference, parent);
+}
 
 /**
  * Computes and returns a string of HTML with information about
@@ -125,10 +153,10 @@ Proof.prototype.computeStepInfo = function(inf) {
     }
     stepInfo += inf.arguments[0];
   } else if (inf.name == 'theorem') {
-    stepInfo = fancyName(inf.name) + ' ' + inf.arguments[0];
+    stepInfo = fancyName(inf, this) + ' ' + inf.arguments[0];
   } else {
     // It is a (derived) rule of inference.
-    stepInfo = fancyName(inf.name);
+    stepInfo = fancyName(inf, this);
     var firstDep = true;
     for (var key in inf.deps) {
       if (firstDep) {
@@ -162,10 +190,13 @@ Proof.prototype.computeStepInfo = function(inf) {
  * Renders an inference step name in a fancy way, currently
  * with a tooltip that briefly describes it.
  */
-function fancyName(name) {
+function fancyName(inference, proof) {
+  var name = inference.name;
   var info = rules[name].info;
+  var index = proof.stepNumber(inference) - 1;
   if (info && info.comment) {
-    return '<span title="' + info.comment + '">' + name + '</span>';
+    return '<span class=ruleName index=' + index
+      + ' title="' + info.comment + '">' + name + '</span>';
   } else {
     return name;
   }
@@ -389,12 +420,7 @@ function renderSteps(inference, node) {
   if (node == null) {
     node = new Y.Node(document.body);
   }
-  var assumptions = inference.assumptions();
-  var pruf = 'Proof of ';
-  for (var assume in assumptions) {
-    pruf = 'Rule ';
-    break;
-  }
+  var pruf = inference.arguments.length ? 'Rule ' : 'Proof of ';
   var argInfo = inference.arguments.join(', ');
   if (argInfo) {
     argInfo =
@@ -410,6 +436,7 @@ function renderSteps(inference, node) {
   // Map to inference from its result as string.  Each result will be
   // annotated with links into the DOM.  Starts with the assumptions.
   // Add the assumptions to the proof before rendering it.
+  var assumptions = inference.assumptions();
   for (var key in assumptions) {
     var wff = assumptions[key];
     inference.proof.add(makeInference('given', [wff]), 0);
@@ -420,7 +447,7 @@ function renderSteps(inference, node) {
 /**
  * Event handler for "hover" events.
  */
-function hover(event, proof, index, direction) {
+function hover(event, proof, index, direction, proofNode) {
   var inference = proof.steps[index];
   var iString = '' + (index + 1);
   var op = direction == 'in' ? 'addClass' : 'removeClass';
@@ -428,7 +455,7 @@ function hover(event, proof, index, direction) {
   var handler = hoverHandlers[inference.name];
   inference.getStepNode()[op]('hover');
   
-  Y.all('span.stepNumber').each(function(node) {
+  proofNode.all('span.stepNumber').each(function(node) {
       if (direction == 'in') {
         if (node.get('innerHTML') == iString) {
           node.addClass('referenced');
