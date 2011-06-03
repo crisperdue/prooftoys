@@ -194,22 +194,29 @@ var ruleInfo = {
                                                  lambda(g, call(g, x, y))))));
   },
 
-  axioms: function() {
-    rules.axiom('axiom1');
-    rules.axiom('axiom2');
-    rules.axiom('axiom3');
-    return rules.axiom('axiom5');
+  axioms: {
+    action: function() {
+      rules.axiom('axiom1');
+      rules.axiom('axiom2');
+      rules.axiom('axiom3');
+      return rules.axiom('axiom5');
+    },
+    comment: ('Really just a list of axioms not including axiom 4,'
+              + ' which is a schema with many instances.')
   },
 
-  definitions: function() {
-    rules.definition('not');
-    rules.definition('forall');
-    rules.definition('&&', T);
-    rules.definition('&&', F);
-    rules.definition('||', T);
-    rules.definition('||', F);
-    rules.definition('-->', T);
-    return rules.definition('-->', F);
+  definitions: {
+    action: function() {
+      rules.definition('not');
+      rules.definition('forall');
+      rules.definition('&&', T);
+      rules.definition('&&', F);
+      rules.definition('||', T);
+      rules.definition('||', F);
+      rules.definition('-->', T);
+      return rules.definition('-->', F);
+    },
+    comment: ('Really just a list of definitions.')
   },
 
   //
@@ -387,7 +394,7 @@ var ruleInfo = {
       return step5;
     },
     comment: ('In a "forall", instantiates the bound variable with'
-              + 'a given term.')
+              + ' a given term.')
   },
 
   // [T && T] = T.  Uses no book-specific definitions.
@@ -554,20 +561,31 @@ var ruleInfo = {
     comment: ('From T = A derives A')
   },
 
+  // Helper for uGen
+  // Derives (forall {v : T}) given a variable v.
+  forallT: {
+    action: function(v) {
+      var step1 = rules.instEqn(rules.axiom('axiom3'), lambda(x, T), f);
+      var step2 = rules.instEqn(step1, lambda(v, T), g);
+      var step3 = rules.reduce(step2, '/right/arg/body/left');
+      var step4 = rules.reduce(step3, '/right/arg/body/right');
+      var fa = rules.definition('forall');
+      var step5 = rules.r(fa, step4, '/right/fn');
+      var step6 = rules.bindEqn(rules.eqT(T), x);
+      var step7 = rules.rRight(step5, step6, '/');
+      var step8 = rules.rRight(fa, step7, '/fn');
+      return step8;
+    },
+    comment: ('(forall {v | T}) for any variable v.')
+  },
+
   // 5220, proved here by extensionality, not using 5206.
   uGen: {
     action: function(a, v) {
-      var step1 = rules.bindEqn(rules.eqT(T), x);
-      var step2 = rules.instEqn(rules.axiom('axiom3'), lambda(v, T), g);
-      var step3 = rules.instEqn(step2, lambda(x, T), f);
-      var step4 = rules.reduce(step3, '/right/arg/body/left');
-      var step5 = rules.reduce(step4, '/right/arg/body/right');
-      var step6 = rules.r(rules.definition('forall'), step5, '/right/fn');
-      var step7 = rules.rRight(step6, step1, '/');
-      var step8 = rules.rRight(rules.definition('forall'), step7, '/fn');
-      var step9 = rules.toTIsA(a);
-      var step10 = rules.r(step9, step8, '/arg/body');
-      return step10;
+      var step1 = rules.toTIsA(a);
+      var step2 = rules.forallT(v);
+      var step3 = rules.r(step1, step2, '/arg/body');
+      return step3;
     },
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.')

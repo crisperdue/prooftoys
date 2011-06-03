@@ -862,7 +862,7 @@ function assert(condition, message) {
       message = message();
     }
     console.log(message);
-    break_here();
+    throw new Error(message);
   }
 }
 
