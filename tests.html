@@ -292,6 +292,13 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((p q) = (p r))', inf.result);
       },
 
+      testUseDefinition: function() {
+        var inf =
+          Y.makeInference('useDefinition',
+                          ['not', call('not', equal(p, equal(F, p))), '/fn']);
+        assertEqual('(F = (p = (F = p)))', inf.result);
+      },
+
       testInstEqn: function() {
         var c = new Y.Var('c');
         var inf =
@@ -411,8 +418,8 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T = F) = F)', inf.result);
       },
 
-      testR5230FT: function() {
-        var inf = Y.makeInference('r5230FT');
+      testR5230FT_alternate: function() {
+        var inf = Y.makeInference('r5230FT_alternate');
         assertEqual('((F = T) = F)', inf.result);
       },
 

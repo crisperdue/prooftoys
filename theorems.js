@@ -150,15 +150,6 @@ var ruleInfo = {
     comment: ('')
   },
 
-  defForall: function() {
-    return equal('forall', equal(lambda(x, T)));
-  },
-
-  // Definition of F, for book-style proofs.
-  defFFromBook: function() {
-    return equal(F, call('forall', lambda(x, x)));
-  },
-
   // Added by Cris instead of definition of F in book.
   // not [T = F] (thus F = [T = F]).
   // Alternatively, add (forall {x : not (x = (not x))}) below,
@@ -170,9 +161,8 @@ var ruleInfo = {
     comment: ('')
   },
 
-  /*
   // Generalizes axiomTIsNotF.
-  // Rewrite to F = [p = [not p]], instantiate p, expand "not":
+  // Rewrite to (forall p : F = [p = [not p]]), instantiate, expand "not":
   // 1. F = [F = [F = F]], so 2. F = [F = T] (r5230FT)
   // 3. F = [T = [F = T]], so F = [T = F] (r5230TF) by
   // Rule R on r5230FT and step 3.
@@ -182,7 +172,15 @@ var ruleInfo = {
     },
     comment: ('')
   },
-  */
+
+  defForall: function() {
+    return equal('forall', equal(lambda(x, T)));
+  },
+
+  // Definition of F, for book-style proofs.
+  defFFromBook: function() {
+    return equal(F, call('forall', lambda(x, x)));
+  },
 
   defNot: function() {
     return equal('not', equal(F));
@@ -199,7 +197,8 @@ var ruleInfo = {
       rules.axiom('axiom1');
       rules.axiom('axiom2');
       rules.axiom('axiom3');
-      return rules.axiom('axiom5');
+      rules.axiom('axiom5');
+      return rules.axiom('axiomPNeqNotP');
     },
     comment: ('Really just a list of axioms not including axiom 4,'
               + ' which is a schema with many instances.')
@@ -293,6 +292,15 @@ var ruleInfo = {
     comment: 'Given B = C derives (f B) = (f C)'
   },
 
+  // Use the definition of the given name at the given location
+  // in WFF A.
+  useDefinition: {
+    action: function(defName, a, path) {
+      return rules.r(rules.definition(defName), a, path);
+    },
+    comment: ('')
+  },
+
   /**
    * Beta-reduce an application of a lambda expression to an argument,
    * with the subexpression identified by a path (within a theorem).
@@ -376,25 +384,35 @@ var ruleInfo = {
     return step3;
   },
 
-  // Target is forall {x : B}, expr is A, which will replace
-  // all occurrences of x.  Uses no book-specific definitions,
-  // and relies only on rule "T" and 5200.
-  // This is 5215.
-  forallInst: {
-    action: function(target, expr) {
-      Y.assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
-               "Must be 'forall': " + target.fn);
-      Y.assert(target.arg instanceof Y.Lambda,
-               "Must be lambda expression: " + target.arg);
-      var step1 = rules.r(rules.defForall(), target, '/fn');
-      var step2 = rules.applyBoth(step1, expr);
-      var step3 = rules.reduce(step2, '/left');
-      var step4 = rules.reduce(step3, '/right');
-      var step5 = rules.r(step4, rules.t(), '/');
-      return step5;
+  // Prove [F = T] = F.  Number reflects dependencies in the book
+  // proof, but this proof needs only simple rules and axiomPNeqNotP.
+  r5230FT: {
+    action: function() {
+      var step1 = rules.axiom('axiomPNeqNotP');
+      var step2 = rules.forallInst(step1, F);
+      var step3 = rules.useDefinition('not', step2, '/fn');
+      var step4 = rules.useDefinition('not', step3, '/arg/right/fn');
+      var step5 = rules.rRight(rules.eqT(F), step4, '/right/right');
+      var step6 = rules.eqnSwap(step5);
+      return step6;
+      return rules.r5230FT_alternate();
     },
-    comment: ('In a "forall", instantiates the bound variable with'
-              + ' a given term.')
+    comment: ('[F = T] = F')
+  },
+
+  // Prove [T = F] = F.  Number reflects dependencies in the book
+  // proof, but this proof needs only simple rules and axiomPNeqNotP.
+  r5230TF: {
+    action: function() {
+      var step1 = rules.axiom('axiomPNeqNotP');
+      var step2 = rules.forallInst(step1, T);
+      var step3 = rules.useDefinition('not', step2, '/fn');
+      var step4 = rules.useDefinition('not', step3, '/arg/right/fn');
+      var step5 = rules.r(rules.r5230FT(), step4, '/right/right');
+      var step6 = rules.eqnSwap(step5);
+      return step6;
+    },
+    comment: ('[T = F] = F')
   },
 
   // [T && T] = T.  Uses no book-specific definitions.
@@ -440,7 +458,7 @@ var ruleInfo = {
   },
 
   // From theorems A = B and C = D, derives theorem
-  // [A = B] = [C = D].  Uses no book-specific definitions.
+  // [A = B] && [C = D].  Uses no book-specific definitions.
   // Only used in 5218 (5216  is not used.)
   // Use eqnIsTrue there instead of this.
   // TODO: remove.
@@ -458,6 +476,27 @@ var ruleInfo = {
     var step5 = rules.r(step2, rules.theorem('r5212'), '/left');
     var step6 = rules.r(step4, step5, '/right');
     return step6;
+  },
+
+  // Target is forall {x : B}, expr is A, which will replace
+  // all occurrences of x.  Uses no book-specific definitions,
+  // and relies only on rule "T" and 5200.
+  // This is 5215.
+  forallInst: {
+    action: function(target, expr) {
+      Y.assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
+               "Must be 'forall': " + target.fn);
+      Y.assert(target.arg instanceof Y.Lambda,
+               "Must be lambda expression: " + target.arg);
+      var step1 = rules.r(rules.definition('forall'), target, '/fn');
+      var step2 = rules.applyBoth(step1, expr);
+      var step3 = rules.reduce(step2, '/left');
+      var step4 = rules.reduce(step3, '/right');
+      var step5 = rules.r(step4, rules.t(), '/');
+      return step5;
+    },
+    comment: ('In a "forall", instantiates the bound variable with'
+              + ' a given term.')
   },
 
   // 5216 by the book.  Not used.  Currently uses one nonbook definition.
@@ -511,11 +550,13 @@ var ruleInfo = {
   // [T = F] = F
   // Not used, though previously used in 5218.
 
-
-  // 5218: [T = A] = A
-  // Stepping stone to universal generalization.
-  r5218: {
-    action: function(a) {
+  // (forall {x | ((T = x) = x)})
+  // Most of the steps are really a tautology check
+  // done with simple operations.
+  // TODO: Simplify this and/or trueEquals, so evalBool can
+  //   have minimal dependencies and perhaps be used early.
+  r5218a: {
+    action: function() {
       var step1 = rules.instEqn(rules.axiom('axiom1'),
                                 lambda(x, equal(equal(T, x), x)),
                                 g);
@@ -524,15 +565,24 @@ var ruleInfo = {
       var step4 = rules.reduce(step3, '/right/arg/body');
       var step5a = rules.eqT(T);
       var step5 = rules.eqnSwap(step5a);
-      var step6a = rules.r(rules.definition('not'),
-                           rules.axiom('axiomTIsNotF'),
-                           '/fn');
-      var step6 = rules.eqnSwap(step6a);
+      var step6 = rules.theorem('r5230TF');
+      var step6a = rules.applyBoth(rules.definition('&&', T), T);
+      var step6b = rules.reduce(step6a, '/right');
       // TODO: Use eqnIsTrue instead of 5213.
       var step7 = rules.r5213(step5, step6);
       var step8 = rules.r(step4, step7, '/');
-      var step9 = rules.forallInst(step8, a);
-      return step9;
+      return step8;
+    },
+    comment: ('')
+  },
+
+  // 5218: [T = A] = A
+  // Stepping stone to universal generalization.
+  r5218: {
+    action: function(a) {
+      var step1 = rules.r5218a();
+      var step2 = rules.forallInst(step1, a);
+      return step2;
     },
     comment: ('For any expression A derives [T = A] = A.')
   },
@@ -649,7 +699,7 @@ var ruleInfo = {
   },
 
   // Prove [T = F] = F (same as 5217)
-  r5230TF: {
+  r5230TF_alternate: {
     action: function() {
       var step1 = rules.axiom('axiomTIsNotF');
       var step2 = rules.r(rules.definition('not'), step1, '/fn');
@@ -660,8 +710,9 @@ var ruleInfo = {
   },
 
   // Prove [F = T] = F
+  // Simpler proof when axiomPNeqNotP rather than axiomTIsNotF (above).
   // TODO: Is there a more elegant proof of this?
-  r5230FT: {
+  r5230FT_alternate: {
     action: function() {
       var step1a = rules.sub(rules.axiom('axiom2'), F, x);
       var step1b = rules.sub(step1a, T, y);
@@ -778,6 +829,9 @@ var ruleInfo = {
                                  ? 'r5231T'
                                  : 'r5231F');
           } else if (fn.name == '=') {
+            // TODO: To avoid dependencies on trueEquals and
+            //   falseEquals, we could break this down into
+            //   all 4 cases.
             defn = rules.theorem(target.arg.name == 'T'
                                  ? 'trueEquals'
                                  : 'falseEquals');
@@ -864,7 +918,7 @@ var ruleInfo = {
     return step13;
   }
 
-};  // End of theorems
+};  // End of theorems and rules
 
 
 // Actual rule functions to call from other code.
@@ -889,7 +943,8 @@ Y.defineCases('-->', identity, allT);
 
 var theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
                     'defForall', 'defFFromBook', 'axiomTIsNotF',
-                    /* 'axiomPNeqNotP', */ 'defNot', 'defAnd',
+                    'axiomPNeqNotP', 'defNot', 'defAnd',
+                    // r5218a
                     'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
                     'r5231T', 'r5231F', 'falseEquals', 'trueEquals'];
 

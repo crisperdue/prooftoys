@@ -134,7 +134,11 @@ function renderSubProof(event, inference, proofNode) {
     next.remove();
     next = proofNode.get('nextSibling');
   }
-  renderSteps(inference, parent);
+  if (inference.name == 'theorem') {
+    renderSteps(getTheorem(inference.arguments[0]), parent);
+  } else {
+    renderSteps(inference, parent);
+  }
 }
 
 /**
@@ -153,7 +157,7 @@ Proof.prototype.computeStepInfo = function(inf) {
     }
     stepInfo += inf.arguments[0];
   } else if (inf.name == 'theorem') {
-    stepInfo = fancyName(inf, this) + ' ' + inf.arguments[0];
+    stepInfo = fancyName(inf, this);
   } else {
     // It is a (derived) rule of inference.
     stepInfo = fancyName(inf, this);
@@ -172,11 +176,16 @@ Proof.prototype.computeStepInfo = function(inf) {
     // TODO: Just showing variables is only a heuristic.
     //   do something better.
     for (var j = 0; j < args.length; j++) {
-      if (args[j] instanceof Y.Var) {
-        if (varInfo) {
-          varInfo += ' ';
+      if (args[j] instanceof Y.Var || typeof args[j] == 'string') {
+        var str = '' + args[j];
+        // Don't include path strings.
+        if (str[0] != '/') {
+          if (varInfo) {
+            varInfo += ', ';
+          }
+          // Cover Var and string here.
+          varInfo += str;
         }
-        varInfo += args[j].name;
       }
     }
     if (varInfo) {
@@ -192,14 +201,14 @@ Proof.prototype.computeStepInfo = function(inf) {
  */
 function fancyName(inference, proof) {
   var name = inference.name;
-  var info = rules[name].info;
-  var index = proof.stepNumber(inference) - 1;
-  if (info && info.comment) {
-    return '<span class=ruleName index=' + index
-      + ' title="' + info.comment + '">' + name + '</span>';
-  } else {
-    return name;
+  if (name == 'theorem') {
+    name = inference.arguments[0];
   }
+  var info = rules[name].info;
+  var comment = info.comment || '';
+  var index = proof.stepNumber(inference) - 1;
+  return '<span class=ruleName index=' + index
+    + ' title="' + info.comment + '">' + name + '</span>';
 }
 
 /**
@@ -327,7 +336,8 @@ function makeInference(name, ruleArgs) {
 //// THEOREMHOOD
 
 // Private to addTheorem, getTheorem, and the initializations
-// at the bottom of this file.
+// at the bottom of this file.  Maps from name to an inference
+// containing a proof of the theorem.
 var _theoremsByName = {};
 
 /**
@@ -638,10 +648,10 @@ function infer(name, stack, etc) {
 Y.inferenceStack = inferenceStack;
 Y.makeInference = makeInference;
 Y.addTheorem = addTheorem;
+Y.getTheorem = getTheorem;
 Y.define = define;
 Y.defineCases = defineCases;
 Y.getDefinition = getDefinition;
-Y.getTheorem = getTheorem;
 Y.renderSteps = renderSteps;
 Y.createRules = createRules;
 // TODO: Consider getting rid of this global variable.

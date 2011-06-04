@@ -96,6 +96,10 @@ of inference that you can also view.
 are highlighted.  For Rule R and a lambda reductions ("reduce"), key
 parts of the lines are also highlighted for quicker identification.
 
+<p>New! (2011/06/01) Click on the name of the rule of inference or theorem
+mentioned on a line and see the proof worked out in detail below
+the current proof.
+
 <p><b>About the project.</b> The project is in an early stage,
 and is currently hosted as
 <a href="http://code.google.com/p/jlogic" target=_blank><b>jLogic</b></a>
@@ -126,30 +130,39 @@ YUI({filter: null, insertBefore: 'styles'})
 
     // DEFINITIONS
 
-    axioms: {},
+    axioms: {
+      level: 1
+    },
 
-    definitions: {},
+    definitions: {
+      level: 1
+    },
 
     // PROOFS
 
     applyBoth: {
-      args: [call('=', f, g), x]
+      args: [call('=', f, g), x],
+      level: 1
     },
 
     eqSelf: {
-      args: [call(p, x)]
+      args: [call(p, x)],
+      level: 1
     },
 
     replaceWhole: {
-      args: [call(p, x), call('=', call(p, x), call(q, x))]
+      args: [call(p, x), call('=', call(p, x), call(q, x))],
+      level: 1
     },
 
     eqnSwap: {
-      args: [call('=', p, q)]
+      args: [call('=', p, q)],
+      level: 1
     },
 
     eqnChain: {
-      args: [call('=', p, q), call('=', q, r)]
+      args: [call('=', p, q), call('=', q, r)],
+      level: 1
     },
 
     applyBySides: {
@@ -157,25 +170,32 @@ YUI({filter: null, insertBefore: 'styles'})
     },
     
     applyBoth: {
-      args: [call('=', p, q), r]
+      args: [call('=', p, q), r],
+      level: 1
     },
     
     applyToBoth: {
       args: [p, call('=', q, r)]
     },
+
+    useDefinition: {
+      args: ['not', call('not', equal(p, call('not', p))), '/fn'],
+      level: 1
+    },
     
     reduce: {
-      args: [equal(p, call(lambda(x, T), y)), '/right']
+      args: [equal(p, call(lambda(x, T), y)), '/right'],
+      level: 1
     },
 
     bindEqn: {
-      args: [call('=', f, g), x]
+      args: [call('=', f, g), x],
     },
     
     instEqn: {
       args: [call('=', call(g, y), z),
              call(f, x),
-             y]
+             y],
     },
     
     eqT: {
@@ -186,7 +206,9 @@ YUI({filter: null, insertBefore: 'styles'})
 
     r5211Book: {},
     
-    t: {},
+    t: {
+      level: 1
+    },
     
     r5212: {},
     
@@ -201,7 +223,8 @@ YUI({filter: null, insertBefore: 'styles'})
     
     forallInst: {
       args: [call('forall', lambda(y, call(p, y))),
-             call(f, y)]
+             call(f, y)],
+      level: 1
     },
     
     andTBook: {
@@ -214,16 +237,20 @@ YUI({filter: null, insertBefore: 'styles'})
     
     r5217Book: {},
     
+    r5218a: {},
+
     r5218: {
       args: [p]
     },
     
     toTIsA: {
-      args: [p]
+      args: [p],
+      level: 1
     },
     
     fromTIsA: {
-      args: [call('=', T, p)]
+      args: [call('=', T, p)],
+      level: 1
     },
     
     forallT: {
@@ -231,26 +258,32 @@ YUI({filter: null, insertBefore: 'styles'})
     },
 
     uGen: {
-      args: [call(p, y), y]
+      args: [call(p, y), y],
+      level: 1
     },
     
     sub: {
-      args: [call(p, y), call(f, x), y]
+      args: [call(p, y), call(f, x), y],
+      level: 1
     },
     
     cases: {
-      args: [z, call('=', call(p, z), z)]
+      args: [z, call('=', call(p, z), z)],
+      level: 1
     },
     
     r5223: {},
     
     modusPonens: {
-      args: [p, q]
+      args: [p, q],
+      level: 1
     },
     
     r5230TF: {},
     
     r5230FT: {},
+    
+    r5230FT_alternate: {},
     
     r5231T: {},
     
@@ -263,7 +296,8 @@ YUI({filter: null, insertBefore: 'styles'})
     evalBool: {
       args: [call('-->',
                   call('-->', F, call('not', F)),
-                  call('not', F))]
+                  call('not', F))],
+      level: 1
     },
     
     applyFunc: {
@@ -272,7 +306,8 @@ YUI({filter: null, insertBefore: 'styles'})
     
     tautology: {
       args: [equal(call('-->', call('&&', p, q), r),
-                   call('-->', p, call('-->', q, r)))]
+                   call('-->', p, call('-->', q, r)))],
+      level: 1
     },
     
   };
@@ -312,7 +347,9 @@ YUI({filter: null, insertBefore: 'styles'})
       }
       var selector = '<select id=selector>\n<option value="">-- choose --';
       for (var name in proofs) {
-        selector += '<option>' + name + '\n';
+        if (proofs[name].level == 1) {
+          selector += '<option>' + name + '\n';
+        }
       }
       selector += '</select>';
       Y.one('#selectDiv').appendChild(selector);
