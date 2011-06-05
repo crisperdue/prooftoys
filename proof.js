@@ -2,224 +2,6 @@
 
 YUI.add('proof', function(Y) {
 
-//// PROOF
-
-function Proof() {
-  // Steps in order.
-  this.steps = [];
-}
-
-/**
- * Add an inference to this proof, optionally specifying its
- * index.  Default location is at the end.
- */
-Proof.prototype.add = function(inference, index) {
-  if (index == null) {
-    this.steps.push(inference);
-  } else {
-    this.steps.splice(index, 0, inference);
-  }
-};
-
-/**
- * Used by makeInference.  TODO: eliminate the use and remove?
- */
-Proof.prototype.pop = function() {
-  return this.steps.pop();
-};
-
-/**
- * Check that the proof is legal.
- */
-Proof.prototype.check = function() {
-  var inputs = this.assumptions();
-  // Confirm that there are no assumptions required.
-  for (var key in inputs) {
-    return false;
-  }
-  return true;
-}
-
-/**
- * Like Inference.assumptions, for a proof.
- */
-Proof.prototype.assumptions = function() {
-  var inputs = {};
-  var outputs = {};
-  var steps = this.steps;
-  for (var i = 0; i < steps.length; i++) {
-    var inference = steps[i];
-    outputs[inference.result.asString()] = inference.result;
-    var assumes = steps[i].assumptions();
-    for (var key in assumes) {
-      inputs[key] = assumes[key];
-    }
-  }
-  for (var key in outputs) {
-    delete inputs[key];
-  }
-  return inputs;
-};
-
-/**
- * Returns the step number to be used for referencing a given proof
- * step (inference).  First number is 1.
- */
-Proof.prototype.stepNumber = function(inference) {
-  var index = Y.Array.indexOf(this.steps, inference);
-  Y.assert(index >= 0, 'Inference not found in proof');
-  return index + 1;
-};
-
-/**
- * Renders the steps of the proof into the given DOM node,
- * first clearing the node.
- */
-Proof.prototype.renderSteps = function(proofNode) {
-  proofNode.setContent('');
-  var steps = this.steps;
-  // Map from inference result string to inference.
-  var allSteps = {};
-  for (var i = 0; i < steps.length; i++) {
-    var inf = steps[i];
-    var text = '<div class="proofStep">' + (i + 1) + '. </div>';
-    var stepNode = proofNode.appendChild(text);
-    // See appendSpan in expr.js.
-    var wffNode = stepNode.appendChild('<span class=expr></span>');
-
-    // Render the WFF and record the rendered copy as the inference
-    // result.
-    inf.result = inf.result.render(wffNode);
-
-    // Map to inference, from its result expression as string.
-    // Represents steps depended on by the inference.
-    // Attach the result as the inference "deps" property.
-    inf.deps = {};
-    var assumptions = inf.assumptions();
-    // Remember dependencies between inference steps as we go.
-    for (var aString in assumptions) {
-      var step = allSteps[aString];
-      if (step) {
-        inf.deps[aString] = step;
-      } else {
-        throw new Error('Need prior step: ' + aString);
-      }
-    }
-    var stepInfo = this.computeStepInfo(inf);
-    stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
-    stepNode.on('hover',
-                // Call "hover", passing these arguments as well as the event.
-                Y.rbind(hover, null, this, i, 'in', proofNode),
-                Y.rbind(hover, null, this, i, 'out', proofNode));
-    allSteps[inf.result.asString()] = inf;
-    // Caution: passing null to Y.on selects everything.
-    var target = stepNode.one('span.ruleName');
-    if (target) {
-      Y.on('click',
-           Y.rbind(renderSubProof, null, inf, proofNode),
-           target);
-    }
-  }
-};
-
-/**
- * Renders the given inference and a header after
- * the given proof Node, clearing any other subproofs
- * that currently follow the proof node.
- */
-function renderSubProof(event, inference, proofNode) {
-  var parent = proofNode.get('parentNode');
-  var next = proofNode.get('nextSibling');
-  while (next) {
-    next.remove();
-    next = proofNode.get('nextSibling');
-  }
-  if (inference.name == 'theorem') {
-    renderSteps(getTheorem(inference.arguments[0]), parent);
-  } else {
-    renderSteps(inference, parent);
-  }
-}
-
-/**
- * Computes and returns a string of HTML with information about
- * the given proof step.
- */
-Proof.prototype.computeStepInfo = function(inf) {
-  // Add the name and other info to the display.
-  var stepInfo;
-  if (inf.name == 'axiom') {
-    stepInfo = inf.arguments[0];
-  } else if (inf.name == 'definition') {
-    stepInfo = 'definition of ';
-    if (inf.arguments.length == 2) {
-      stepInfo += inf.arguments[1] + ' ';
-    }
-    stepInfo += inf.arguments[0];
-  } else if (inf.name == 'theorem') {
-    stepInfo = fancyName(inf, this);
-  } else {
-    // It is a (derived) rule of inference.
-    stepInfo = fancyName(inf, this);
-    var firstDep = true;
-    for (var key in inf.deps) {
-      if (firstDep) {
-        firstDep = false;
-      } else {
-        stepInfo += ',';
-      }
-      stepInfo += ' ' + fancyStepNumber(this.stepNumber(inf.deps[key]));
-    }
-    var args = inf.arguments;
-    var varInfo = '';
-    // Display arguments that are variables.
-    // TODO: Just showing variables is only a heuristic.
-    //   do something better.
-    for (var j = 0; j < args.length; j++) {
-      if (args[j] instanceof Y.Var || typeof args[j] == 'string') {
-        var str = '' + args[j];
-        // Don't include path strings.
-        if (str[0] != '/') {
-          if (varInfo) {
-            varInfo += ', ';
-          }
-          // Cover Var and string here.
-          varInfo += str;
-        }
-      }
-    }
-    if (varInfo) {
-      stepInfo += ' (' + varInfo + ')';
-    }
-  }
-  return stepInfo;
-};
-
-/**
- * Renders an inference step name in a fancy way, currently
- * with a tooltip that briefly describes it.
- */
-function fancyName(inference, proof) {
-  var name = inference.name;
-  if (name == 'theorem') {
-    name = inference.arguments[0];
-  }
-  var info = rules[name].info;
-  var comment = info.comment || '';
-  var index = proof.stepNumber(inference) - 1;
-  return '<span class=ruleName index=' + index
-    + ' title="' + info.comment + '">' + name + '</span>';
-}
-
-/**
- * Renders a step number in a fancy way, currently in a SPAN
- * with class "stepNumber".
- */
-function fancyStepNumber(n) {
-  return '<span class=stepNumber>' + n + '</span>';
-}
-
-
 //// INFERENCE
 
 /**
@@ -421,7 +203,230 @@ function getDefinition(name, tOrF) {
 }
 
 
-//// RENDERING AND EVENTS
+//// PROOFS
+
+function Proof() {
+  // Steps in order.
+  this.steps = [];
+}
+
+/**
+ * Add an inference to this proof, optionally specifying its
+ * index.  Default location is at the end.
+ */
+Proof.prototype.add = function(inference, index) {
+  if (index == null) {
+    this.steps.push(inference);
+  } else {
+    this.steps.splice(index, 0, inference);
+  }
+};
+
+/**
+ * Used by makeInference.  TODO: eliminate the use and remove?
+ */
+Proof.prototype.pop = function() {
+  return this.steps.pop();
+};
+
+/**
+ * Check that the proof is legal.
+ */
+Proof.prototype.check = function() {
+  var inputs = this.assumptions();
+  // Confirm that there are no assumptions required.
+  for (var key in inputs) {
+    return false;
+  }
+  return true;
+}
+
+
+//// RENDERING AND EVENT HANDLING
+
+/**
+ * Like Inference.assumptions, for a proof.
+ */
+Proof.prototype.assumptions = function() {
+  var inputs = {};
+  var outputs = {};
+  var steps = this.steps;
+  for (var i = 0; i < steps.length; i++) {
+    var inference = steps[i];
+    outputs[inference.result.asString()] = inference.result;
+    var assumes = steps[i].assumptions();
+    for (var key in assumes) {
+      inputs[key] = assumes[key];
+    }
+  }
+  for (var key in outputs) {
+    delete inputs[key];
+  }
+  return inputs;
+};
+
+/**
+ * Returns the step number to be used for referencing a given proof
+ * step (inference).  First number is 1.
+ */
+Proof.prototype.stepNumber = function(inference) {
+  var index = Y.Array.indexOf(this.steps, inference);
+  Y.assert(index >= 0, 'Inference not found in proof');
+  return index + 1;
+};
+
+/**
+ * Renders the steps of the proof into the given DOM node,
+ * first clearing the node.
+ */
+Proof.prototype.renderSteps = function(proofNode) {
+  proofNode.setContent('');
+  var steps = this.steps;
+  // Map from inference result string to inference.
+  var allSteps = {};
+  for (var i = 0; i < steps.length; i++) {
+    var inf = steps[i];
+    var text = '<div class="proofStep">' + (i + 1) + '. </div>';
+    var stepNode = proofNode.appendChild(text);
+    // See appendSpan in expr.js.
+    var wffNode = stepNode.appendChild('<span class=expr></span>');
+
+    // Render the WFF and record the rendered copy as the inference
+    // result.
+    inf.result = inf.result.render(wffNode);
+
+    // Map to inference, from its result expression as string.
+    // Represents steps depended on by the inference.
+    // Attach the result as the inference "deps" property.
+    inf.deps = {};
+    var assumptions = inf.assumptions();
+    // Remember dependencies between inference steps as we go.
+    for (var aString in assumptions) {
+      var step = allSteps[aString];
+      if (step) {
+        inf.deps[aString] = step;
+      } else {
+        throw new Error('Need prior step: ' + aString);
+      }
+    }
+    var stepInfo = this.computeStepInfo(inf);
+    stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
+    stepNode.on('hover',
+                // Call "hover", passing these arguments as well as the event.
+                Y.rbind(hover, null, this, i, 'in', proofNode),
+                Y.rbind(hover, null, this, i, 'out', proofNode));
+    allSteps[inf.result.asString()] = inf;
+    // Caution: passing null to Y.on selects everything.
+    var target = stepNode.one('span.ruleName');
+    if (target) {
+      Y.on('click',
+           Y.rbind(renderSubProof, null, inf, proofNode),
+           target);
+    }
+  }
+};
+
+/**
+ * Renders the given inference and a header after
+ * the given proof Node, clearing any other subproofs
+ * that currently follow the proof node.
+ */
+function renderSubProof(event, inference, proofNode) {
+  var parent = proofNode.get('parentNode');
+  var next = proofNode.get('nextSibling');
+  while (next) {
+    next.remove();
+    next = proofNode.get('nextSibling');
+  }
+  if (inference.name == 'theorem') {
+    renderSteps(getTheorem(inference.arguments[0]), parent);
+  } else {
+    renderSteps(inference, parent);
+  }
+}
+
+/**
+ * Computes and returns a string of HTML with information about
+ * the given proof step.
+ */
+Proof.prototype.computeStepInfo = function(inf) {
+  // Add the name and other info to the display.
+  var stepInfo;
+  if (inf.name == 'axiom') {
+    stepInfo = inf.arguments[0];
+  } else if (inf.name == 'definition') {
+    stepInfo = 'definition of ';
+    if (inf.arguments.length == 2) {
+      stepInfo += inf.arguments[1] + ' ';
+    }
+    stepInfo += inf.arguments[0];
+  } else if (inf.name == 'theorem') {
+    stepInfo = fancyName(inf, this);
+  } else {
+    if (inf.proof.steps.length == 0) {
+      stepInfo = inf.name;
+    } else {
+      // It is a (derived) rule of inference.
+      stepInfo = fancyName(inf, this);
+    }
+    var firstDep = true;
+    for (var key in inf.deps) {
+      if (firstDep) {
+        firstDep = false;
+      } else {
+        stepInfo += ',';
+      }
+      stepInfo += ' ' + fancyStepNumber(this.stepNumber(inf.deps[key]));
+    }
+    var args = inf.arguments;
+    var varInfo = '';
+    // Display arguments that are variables.
+    // TODO: Just showing variables is only a heuristic.
+    //   do something better.
+    for (var j = 0; j < args.length; j++) {
+      if (args[j] instanceof Y.Var || typeof args[j] == 'string') {
+        var str = '' + args[j];
+        // Don't include path strings.
+        if (str[0] != '/') {
+          if (varInfo) {
+            varInfo += ', ';
+          }
+          // Cover Var and string here.
+          varInfo += str;
+        }
+      }
+    }
+    if (varInfo) {
+      stepInfo += ' (' + varInfo + ')';
+    }
+  }
+  return stepInfo;
+};
+
+/**
+ * Renders an inference step name in a fancy way, currently
+ * with a tooltip that briefly describes it.
+ */
+function fancyName(inference, proof) {
+  var name = inference.name;
+  if (name == 'theorem') {
+    name = inference.arguments[0];
+  }
+  var info = rules[name].info;
+  var comment = info.comment || '';
+  var index = proof.stepNumber(inference) - 1;
+  return '<span class=ruleName index=' + index
+    + ' title="' + info.comment + '">' + name + '</span>';
+}
+
+/**
+ * Renders a step number in a fancy way, currently in a SPAN
+ * with class "stepNumber".
+ */
+function fancyStepNumber(n) {
+  return '<span class=stepNumber>' + n + '</span>';
+}
+
 
 /**
  * Renders the proof steps of an inference and a header by appending
@@ -605,6 +610,7 @@ function debugString(o, specials) {
   }
 }
 
+// A stack of proofs currently in progress.
 // Maybe each set of rules could have its own inference stack???
 var inferenceStack = [new Proof()];
 
