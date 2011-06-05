@@ -949,7 +949,7 @@ var theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
                     'r5231T', 'r5231F', 'falseEquals', 'trueEquals'];
 
 for (var i = 0; i < theoremNames.length; i++) {
-  Y.addTheorem(theoremNames[i], Y.makeInference(theoremNames[i]));
+  Y.addTheorem(theoremNames[i]);
 }
 
 

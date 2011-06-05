@@ -341,23 +341,26 @@ function makeInference(name, ruleArgs) {
 var _theoremsByName = {};
 
 /**
- * Checks that the theorem is not already in the database,
- * verifies that the inference's proof is valid, then
- * adds it to the set of theorems, which are indexed by
+ * Checks that the theorem is not already in the database, then adds a
+ * function to prove it to the set of theorems, which are indexed by
  * theorem name.
  */
-function addTheorem(name, inference) {
+function addTheorem(name) {
   Y.assert(!_theoremsByName[name], 'Theorem already exists');
-  Y.assert(inference.proof.check(), 'Proof is not valid');
-  _theoremsByName[name] = inference;
+  _theoremsByName[name] = true;
 }
 
 /**
- * Gets an existing theorem from the theorems database, or
- * returns null if there is none.
+ * Gets an existing theorem from the theorems database, or returns
+ * null if there is none.  Runs the proof if it has not already run.
  */
 function getTheorem(name) {
-  return _theoremsByName[name];
+  var value = _theoremsByName[name];
+  if (value == true) {
+    value = _theoremsByName[name] = makeInference(name);
+    Y.assert(value.proof.check(), 'Proof is not valid');
+  }
+  return value;
 }
 
 
