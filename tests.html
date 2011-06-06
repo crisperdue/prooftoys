@@ -328,7 +328,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testEqnIsTrue: function() {
-        var inf = Y.makeInference('eqnIsTrue', [call('=', p, q)]);
+        var inf = Y.makeInference('toTIsEquation', [call('=', p, q)]);
         assertEqual('(T = (p = q))', inf.result);
       },
 

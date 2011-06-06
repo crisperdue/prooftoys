@@ -459,7 +459,7 @@ var ruleInfo = {
   },
 
   // From [A = B] deduce T = [A = B].  Use instead of 5213.
-  eqnIsTrue: {
+  toTIsEquation: {
     action: function(a_b) {
       Y.assertEqn(a_b);
       var step1 = rules.eqT(a_b.locate('/left'));
@@ -472,7 +472,7 @@ var ruleInfo = {
   // From theorems A = B and C = D, derives theorem
   // [A = B] && [C = D].  Uses no book-specific definitions.
   // Not used (because 5216 is not used.)
-  // Use eqnIsTrue there instead of this.
+  // Use toTIsEquation there instead of this.
   r5213: function(a_b, c_d) {
     Y.assertEqn(a_b);
     var a = a_b.locate('/left');
@@ -585,9 +585,9 @@ var ruleInfo = {
       Y.assert(lexpr instanceof Y.Lambda,
                'equationCases requires anonymous function argument.');
       var caseT = Y.subFree(T, lexpr.bound, lexpr.body);
-      var stepT1 = rules.eqnIsTrue(caseT);
+      var stepT1 = rules.toTIsEquation(caseT);
       var caseF = Y.subFree(F, lexpr.bound, lexpr.body);
-      var stepF1 = rules.eqnIsTrue(caseF);
+      var stepF1 = rules.toTIsEquation(caseF);
       var step2 = rules.r(stepT1, rules.theorem('r5212'), '/left');
       var step3 = rules.r(stepF1, step2, '/right');
       var step4 = rules.instEqn(rules.axiom('axiom1'), lexpr, g);
@@ -685,6 +685,8 @@ var ruleInfo = {
 
   // 5222: Given a variable and WFF, deduce the WFF.  User must prove
   // theorems where T replaces v in A and where F replaces v in A.
+  // TODO: Make a version of this that uses equationCases, rename
+  //   this to casesBook.
   cases: {
     action: function(v, a) {
       var hyp1 = Y.subFree(T, v, a);
