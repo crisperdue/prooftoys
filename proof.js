@@ -416,7 +416,7 @@ function fancyName(inference, proof) {
   var comment = info.comment || '';
   var index = proof.stepNumber(inference) - 1;
   return '<span class=ruleName index=' + index
-    + ' title="' + info.comment + '">' + name + '</span>';
+    + ' title="' + comment + '">' + name + '</span>';
 }
 
 /**

@@ -140,19 +140,18 @@ YUI({filter: null, insertBefore: 'styles'})
 
     // PROOFS
 
-    applyBoth: {
-      args: [call('=', f, g), x],
-      level: 1
-    },
-
     eqSelf: {
       args: [call(p, x)],
       level: 1
     },
 
+    applyBoth: {
+      args: [call('=', f, g), x],
+      level: 1
+    },
+
     replaceWhole: {
       args: [call(p, x), call('=', call(p, x), call(q, x))],
-      level: 1
     },
 
     eqnSwap: {
@@ -206,9 +205,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
     r5211Book: {},
     
-    t: {
-      level: 1
-    },
+    t: {},
     
     r5212: {},
     
@@ -238,6 +235,11 @@ YUI({filter: null, insertBefore: 'styles'})
     r5217Book: {},
     
     boolFnsEqual: {
+      level: 1
+    },
+
+    equationCases: {
+      args: [lambda(z, equal(z, z))],
       level: 1
     },
 
@@ -325,7 +327,9 @@ YUI({filter: null, insertBefore: 'styles'})
       var ruleInfo = proofs[ruleName];
       if (ruleInfo == undefined) {
         alert('No rule "' + ruleName + '"');
+	return;
       }
+      document.title = 'Proof display -- ' + ruleName;
       var inference = Y.makeInference(ruleName, ruleInfo.args || []);
       var proofNode = Y.one('#proofs');
       proofNode.setContent('');

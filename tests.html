@@ -373,6 +373,12 @@ YUI({filter: null, insertBefore: 'styles'})
                     inf.result);
       },
 
+      testEquationCases: function() {
+        var inf = Y.makeInference('equationCases',
+                                  [lambda(x, equal(x, x))]);
+        assertEqual('(forall {x : (x = x)})', inf.result);
+      },
+
       testR5218: function() {
         var inf = Y.makeInference('r5218', [p]);
         assertEqual('((T = p) = p)', inf.result);

@@ -293,10 +293,21 @@ var ruleInfo = {
   },
 
   // Use the definition of the given name at the given location
-  // in WFF A.
+  // in WFF A.  If the definition is by cases the location should
+  // be a call to the named function, with T or F as the argument.
   useDefinition: {
     action: function(defName, a, path) {
-      return rules.r(rules.definition(defName), a, path);
+      var target = a.locate(path);
+      if (target instanceof Y.Var) {
+        return rules.r(rules.definition(defName), a, path);
+      } else {
+        Y.assert(target instanceof Y.Call && target.arg instanceof Y.Var,
+                 'Target of useDefinition not suitable');
+        var arg = target.arg;
+        Y.assert(arg.name == 'T' || arg.name == 'F',
+                 'Target of useDefinition not suitable');
+        return rules.r(rules.definition(target.fn.name, arg), a, path);
+      }
     },
     comment: ('')
   },
@@ -493,7 +504,7 @@ var ruleInfo = {
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.reduce(step2, '/left');
       var step4 = rules.reduce(step3, '/right');
-      var step5 = rules.r(step4, rules.t(), '/');
+      var step5 = rules.r(step4, rules.theorem('t'), '/');
       return step5;
     },
     comment: ('In a "forall", instantiates the bound variable with'
@@ -564,9 +575,32 @@ var ruleInfo = {
   },
 
   // 5217 is the same as 5230TF.
-
   // [T = F] = F
   // Not used, though previously used in 5218.
+
+  // Prove (forall {v | A = B}) given "subFree(T, v, [A = B])" and
+  // "subFree(F, v, [A = B])".
+  equationCases: {
+    action: function(lexpr) {
+      // These first two steps are not really deductions, they
+      // just generate the expressions for the cases.
+      var caseT = rules.reduce(call(lexpr, T), '');
+      var stepT1 = rules.eqnIsTrue(caseT);
+      var caseF = rules.reduce(call(lexpr, F), '');
+      var stepF1 = rules.eqnIsTrue(caseF);
+      var step2 = rules.r(stepT1, rules.theorem('r5212'), '/left');
+      var step3 = rules.r(stepF1, step2, '/right');
+      var step4 = rules.instEqn(rules.axiom('axiom1'), lexpr, g);
+      var step5 = rules.reduce(step4, '/right/arg/body');
+      var step6 = rules.reduce(step5, '/left/right');
+      var step7 = rules.reduce(step6, '/left/left');
+      var step8 = rules.r(step7, step3, '');
+      return step8;
+    },
+    comment: ('Given a function expression of the form {v | A = B},'
+              + ' infers (forall {x | A = B}) assuming A = B is proven'
+              + ' for the substitutions with v = T and v = F.')
+  },
 
   // (forall {x | ((T = x) = x)})
   // Most of the steps are really a tautology check
@@ -822,6 +856,8 @@ var ruleInfo = {
   // are reduced.  (These are calls to =, &&, ||, -->, or "not", and
   // lambda expressions, with an argument of T or F.)  Reduces
   // repeatedly until no subexpression can be reduced.
+  // TODO: Prove all the truth table facts and use them directly
+  // here.  Can we have unnamed theorems?
   evalBool: {
     action: function(expr) {
       var boolOps = {'&&': true, '||': true, '-->': true, '=': true, not: true};
@@ -846,6 +882,7 @@ var ruleInfo = {
             defn = rules.theorem(target.arg.name == 'T'
                                  ? 'r5231T'
                                  : 'r5231F');
+            result = rules.r(defn, result, '/right' + _path);
           } else if (fn.name == '=') {
             // TODO: To avoid dependencies on trueEquals and
             //   falseEquals, we could break this down into
@@ -853,10 +890,11 @@ var ruleInfo = {
             defn = rules.theorem(target.arg.name == 'T'
                                  ? 'trueEquals'
                                  : 'falseEquals');
+            result = rules.r(defn, result, '/right' + _path);
           } else {
-            defn = rules.definition(fn.name, target.arg.name);
+            // &&, ||, -->
+            result = rules.useDefinition(fn.name, result, '/right' + _path);
           }
-          result = rules.r(defn, result, '/right' + _path);
         } else if (fn instanceof Y.Lambda) {
           result = rules.reduce(result, '/right' + _path);
         } else {
