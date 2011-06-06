@@ -311,8 +311,15 @@ YUI({filter: null, insertBefore: 'styles'})
     },
     
     tautology: {
+      /* This tautology is already an equation, let's test one that is not.
       args: [equal(call('-->', call('&&', p, q), r),
                    call('-->', p, call('-->', q, r)))],
+      */
+      args: [call('-->',
+                  call('&&',
+                       call('-->', p, q),
+                       call('-->', call('not', p), q)),
+                  q)],
       level: 1
     },
     

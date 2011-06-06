@@ -375,8 +375,8 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testEquationCases: function() {
         var inf = Y.makeInference('equationCases',
-                                  [lambda(x, equal(x, x))]);
-        assertEqual('(forall {x : (x = x)})', inf.result);
+                                  [lambda(z, equal(z, z))]);
+        assertEqual('(z = z)', inf.result);
       },
 
       testR5218: function() {

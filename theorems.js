@@ -578,15 +578,17 @@ var ruleInfo = {
   // [T = F] = F
   // Not used, though previously used in 5218.
 
-  // Prove (forall {v | A = B}) given "subFree(T, v, [A = B])" and
-  // "subFree(F, v, [A = B])".
+  // Given "subFree(T, v, [A = B])" and "subFree(F, v, [A = B])",
+  // proves [A = B].  The argument is {v | [A = B]}.
   equationCases: {
     action: function(lexpr) {
       // These first two steps are not really deductions, they
       // just generate the expressions for the cases.
-      var caseT = rules.reduce(call(lexpr, T), '');
+      Y.assert(lexpr instanceof Y.Lambda,
+               'equationCases requires anonymous function argument.');
+      var caseT = Y.subFree(T, lexpr.bound, lexpr.body);
       var stepT1 = rules.eqnIsTrue(caseT);
-      var caseF = rules.reduce(call(lexpr, F), '');
+      var caseF = Y.subFree(F, lexpr.bound, lexpr.body);
       var stepF1 = rules.eqnIsTrue(caseF);
       var step2 = rules.r(stepT1, rules.theorem('r5212'), '/left');
       var step3 = rules.r(stepF1, step2, '/right');
@@ -595,7 +597,8 @@ var ruleInfo = {
       var step6 = rules.reduce(step5, '/left/right');
       var step7 = rules.reduce(step6, '/left/left');
       var step8 = rules.r(step7, step3, '');
-      return step8;
+      var step9 = rules.forallInst(step8, lexpr.bound);
+      return step9;
     },
     comment: ('Given a function expression of the form {v | A = B},'
               + ' infers (forall {x | A = B}) assuming A = B is proven'
@@ -605,8 +608,7 @@ var ruleInfo = {
   // (forall {x | ((T = x) = x)})
   // Most of the steps are really a tautology check
   // done with simple operations.
-  // TODO: Simplify this and/or trueEquals, so evalBool can
-  //   have minimal dependencies and perhaps be used early.
+  // This can support 5218.
   r5218a: {
     action: function() {
       var step1 = rules.instEqn(rules.axiom('axiom1'),
@@ -929,9 +931,21 @@ var ruleInfo = {
       // name returned.
       for (var name in names) {
         if (!constants[name]) {
-          var step1 = rules.tautology(Y.subFree(T, name, wff));
-          var step2 = rules.tautology(Y.subFree(F, name, wff));
-          return rules.cases(new Y.Var(name), wff);
+          if (wff instanceof Y.Call && wff.fn instanceof Y.Call
+              && wff.fn.fn instanceof Y.Var && wff.fn.fn.name == '=') {
+            // WFF is already an equation.
+            var step1 = rules.tautology(Y.subFree(T, name, wff));
+            var step2 = rules.tautology(Y.subFree(F, name, wff));
+            var step3 =
+              rules.equationCases(lambda(new Y.Var(name), wff));
+            return step3;
+          } else {
+            var step1 = rules.tautology(equal(T, Y.subFree(T, name, wff)));
+            var step2 = rules.tautology(equal(T, Y.subFree(F, name, wff)));
+            var step3 =
+              rules.equationCases(lambda(new Y.Var(name), equal(T, wff)));
+            return rules.fromTIsA(step3);
+          }
         }
       }
       // There are no free variables, evaluate the expression.
