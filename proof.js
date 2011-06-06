@@ -527,6 +527,15 @@ var hoverHandlers = {
     target.locate(path).node[op]('new');
     inf.result.locate(path).node[op]('new');
   },
+  useDefinition: function(inf, op) {
+    var deps = inf.deps;
+    var args = inf.arguments;
+    var target = deps[args[1].asString()].result;
+    var path = args[2];
+    target.node[op]('hover');
+    target.locate(path).node[op]('new');
+    inf.result.locate(path).node[op]('new');
+  },
   instEqn: function(inf, op) {
     var deps = inf.deps;
     var args = inf.arguments;

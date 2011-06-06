@@ -356,7 +356,8 @@ var ruleInfo = {
   // thm: T = [B = B] (5210)
   eqT: {
     action: function(b) {
-      var a3 = rules.r(rules.defForall(), rules.axiom('axiom3'), '/right/fn');
+      var a3 =
+        rules.useDefinition('forall', rules.axiom('axiom3'), '/right/fn');
       var identity = lambda(y, y);
       var step1a = rules.instEqn(a3, identity, f);
       var step1b = rules.instEqn(step1a, identity, g);
@@ -488,7 +489,7 @@ var ruleInfo = {
                "Must be 'forall': " + target.fn);
       Y.assert(target.arg instanceof Y.Lambda,
                "Must be lambda expression: " + target.arg);
-      var step1 = rules.r(rules.definition('forall'), target, '/fn');
+      var step1 = rules.useDefinition('forall', target, '/fn');
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.reduce(step2, '/left');
       var step4 = rules.reduce(step3, '/right');
@@ -537,12 +538,29 @@ var ruleInfo = {
     var step5b = rules.instEqn(step5a, lambda(x, x), g);
     var step6a = rules.reduce(step5b, '/right/arg/body/left');
     var step6b = rules.reduce(step6a, '/right/arg/body/right');
-    var step6c = rules.r(rules.definition('forall'),
-                         rules.defFFromBook(),
-                         '/right/fn');
+    var step6c = rules.useDefinition('forall',
+                                     rules.defFFromBook(),
+                                     '/right/fn');
     var step6d = rules.rRight(step6c, step6b, '/left');
     var step7 = rules.rRight(step6d, step4b, '/right');
     return step7;
+  },
+
+  // Breaks down equality of boolean functions into the T and F cases.
+  // Not in book.
+  boolFnsEqual: {
+    action: function() {
+      var expr = lambda(x, equal(call(f, x), call(g, x)));
+      var step1 = rules.instEqn(rules.axiom('axiom1'),
+                                expr, g);
+      var step2 = rules.reduce(step1, '/right/arg/body');
+      var step3 = rules.reduce(step2, '/left/left');
+      var step4 = rules.reduce(step3, '/left/right');
+      var step5 = rules.rRight(rules.axiom('axiom3'), step4, '/right');
+      var step6 = rules.eqnSwap(step5);
+      return step6;
+    },
+    comment: ('Equality of boolean functions.')
   },
 
   // 5217 is the same as 5230TF.
@@ -619,10 +637,10 @@ var ruleInfo = {
       var step2 = rules.instEqn(step1, lambda(v, T), g);
       var step3 = rules.reduce(step2, '/right/arg/body/left');
       var step4 = rules.reduce(step3, '/right/arg/body/right');
-      var fa = rules.definition('forall');
-      var step5 = rules.r(fa, step4, '/right/fn');
+      var step5 = rules.useDefinition('forall', step4, '/right/fn');
       var step6 = rules.bindEqn(rules.eqT(T), x);
       var step7 = rules.rRight(step5, step6, '/');
+      var fa = rules.definition('forall');
       var step8 = rules.rRight(fa, step7, '/fn');
       return step8;
     },
@@ -702,7 +720,7 @@ var ruleInfo = {
   r5230TF_alternate: {
     action: function() {
       var step1 = rules.axiom('axiomTIsNotF');
-      var step2 = rules.r(rules.definition('not'), step1, '/fn');
+      var step2 = rules.useDefinition('not', step1, '/fn');
       var step3 = rules.eqnSwap(step2);
       return step3;
     },
@@ -944,6 +962,7 @@ Y.defineCases('-->', identity, allT);
 var theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
                     'defForall', 'defFFromBook', 'axiomTIsNotF',
                     'axiomPNeqNotP', 'defNot', 'defAnd',
+                    'boolFnsEqual',
                     // r5218a
                     'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
                     'r5231T', 'r5231F', 'falseEquals', 'trueEquals'];
