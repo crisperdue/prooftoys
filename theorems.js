@@ -471,9 +471,8 @@ var ruleInfo = {
 
   // From theorems A = B and C = D, derives theorem
   // [A = B] && [C = D].  Uses no book-specific definitions.
-  // Only used in 5218 (5216  is not used.)
+  // Not used (because 5216 is not used.)
   // Use eqnIsTrue there instead of this.
-  // TODO: remove.
   r5213: function(a_b, c_d) {
     Y.assertEqn(a_b);
     var a = a_b.locate('/left');
@@ -521,7 +520,6 @@ var ruleInfo = {
     var step5 = rules.reduce(step4, '/right/arg/body');
     var step6 = rules.applyBoth(rules.definition('&&', T), F);
     var step7 = rules.reduce(step6, '/right');
-    // TODO: Use eqnIsTrue instead.
     var step8 = rules.r5213(rules.theorem('r5211'), step7);
     var step9 = rules.r(step5, step8, '/');
     var step10 = rules.forallInst(step9, a);
@@ -605,38 +603,16 @@ var ruleInfo = {
               + ' for the substitutions with v = T and v = F.')
   },
 
-  // (forall {x | ((T = x) = x)})
-  // Most of the steps are really a tautology check
-  // done with simple operations.
-  // This can support 5218.
-  r5218a: {
-    action: function() {
-      var step1 = rules.instEqn(rules.axiom('axiom1'),
-                                lambda(x, equal(equal(T, x), x)),
-                                g);
-      var step2 = rules.reduce(step1, '/left/left');
-      var step3 = rules.reduce(step2, '/left/right');
-      var step4 = rules.reduce(step3, '/right/arg/body');
-      var step5a = rules.eqT(T);
-      var step5 = rules.eqnSwap(step5a);
-      var step6 = rules.theorem('r5230TF');
-      var step6a = rules.applyBoth(rules.definition('&&', T), T);
-      var step6b = rules.reduce(step6a, '/right');
-      // TODO: Use eqnIsTrue instead of 5213.
-      var step7 = rules.r5213(step5, step6);
-      var step8 = rules.r(step4, step7, '/');
-      return step8;
-    },
-    comment: ('')
-  },
-
   // 5218: [T = A] = A
   // Stepping stone to universal generalization.
   r5218: {
     action: function(a) {
-      var step1 = rules.r5218a();
-      var step2 = rules.forallInst(step1, a);
-      return step2;
+      var step1 = rules.theorem('r5230TF');
+      var step2 = rules.eqT(T);
+      var step3 = rules.eqnSwap(step2);
+      var step4 = rules.equationCases(lambda(x, equal(equal(T, x), x)));
+      var step5 = rules.instEqn(step4, a, x);
+      return step5;
     },
     comment: ('For any expression A derives [T = A] = A.')
   },
@@ -680,7 +656,8 @@ var ruleInfo = {
       var step8 = rules.rRight(fa, step7, '/fn');
       return step8;
     },
-    comment: ('(forall {v | T}) for any variable v.')
+    comment: ('(forall {v | T}) for any variable v.'
+              + ' (Special case of renaming a bound variable.)')
   },
 
   // 5220, proved here by extensionality, not using 5206.
@@ -1015,7 +992,6 @@ var theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
                     'defForall', 'defFFromBook', 'axiomTIsNotF',
                     'axiomPNeqNotP', 'defNot', 'defAnd',
                     'boolFnsEqual',
-                    // r5218a
                     'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
                     'r5231T', 'r5231F', 'falseEquals', 'trueEquals'];
 
