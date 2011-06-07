@@ -396,6 +396,17 @@ var ruleInfo = {
     return step3;
   },
 
+  // From [A = B] deduce T = [A = B].
+  toTIsEquation: {
+    action: function(a_b) {
+      Y.assertEqn(a_b);
+      var step1 = rules.eqT(a_b.locate('/left'));
+      var step2 = rules.r(a_b, step1, '/right/right');
+      return step2;
+    },
+    comment: ('From [A = B] deduce T = [A = B].')
+  },
+
   // Prove [F = T] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
   r5230FT: {
@@ -456,17 +467,6 @@ var ruleInfo = {
                              rules.theorem('t'),
                              '/');
     return step1;
-  },
-
-  // From [A = B] deduce T = [A = B].  Use instead of 5213.
-  toTIsEquation: {
-    action: function(a_b) {
-      Y.assertEqn(a_b);
-      var step1 = rules.eqT(a_b.locate('/left'));
-      var step2 = rules.r(a_b, step1, '/right/right');
-      return step2;
-    },
-    comment: ('From [A = B] deduce T = [A = B].')
   },
 
   // From theorems A = B and C = D, derives theorem
