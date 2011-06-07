@@ -14,9 +14,13 @@
 
 <style type="text/css">
 
-  h1 { color: black }
+h1 { color: black }
 
-   body { background-color: #beb }
+body {
+  background-color: #beb;
+  /* Allow space for the bottom panel. */
+  margin-bottom: 4em;
+}
 
 </style>
   
@@ -365,6 +369,7 @@ YUI({filter: null, insertBefore: 'styles'})
       selector += '</select>';
       Y.one('#selectDiv').appendChild(selector);
       Y.one('#selector').on('change', proofChanged);
+      Y.addBottomPanel();
       if (inference) {
         var proofNode = Y.one('#proofs');
         Y.renderSteps(inference, proofNode);

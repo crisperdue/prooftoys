@@ -111,13 +111,6 @@ Expr.prototype.freeNames = function() {
   return byName;
 };
 
-Expr.prototype.occurrence = function(expr, nth) {
-  function likeFrom(expr) {
-    return expr.matches(from) ? expr : false;
-  }
-  return expr.search(likeFrom);
-};
-
 Expr.prototype.isBinOp = function() {
   return this instanceof Call && this.fn instanceof Call;
 };
@@ -182,7 +175,7 @@ Expr.prototype.locate = function(_path) {
 Expr.prototype.render = function(node) {
   if (!(node instanceof Y.Node)) {
     // Coerce from a DOM node to a YUI node.
-    node = new Y.node(node);
+    node = new Y.one(node);
   }
   var result = this.copy();
   result._render(node);
@@ -634,7 +627,7 @@ Lambda.prototype.search = function(pred) {
 
 Lambda.prototype.path1 = function(pred, revPath) {
   return pred(this)
-    ? this
+    ? revPath
     : this.body.path1(pred, new Path('body', revPath));
 };
 

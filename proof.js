@@ -30,6 +30,7 @@ function Inference(name, ruleArgs, result, proof) {
 }
 
 Inference.prototype.getStepNode = function() {
+  // Or alternatively, its ancestor that has the proofStep CSS class.
   return this.result.node.get('parentNode');
 };
 
@@ -278,6 +279,13 @@ Proof.prototype.stepNumber = function(inference) {
 /**
  * Renders the steps of the proof into the given DOM node,
  * first clearing the node.
+ *
+ * The rendering is structured as follows:
+ *
+ * - Each rendered expression has a "node" property that refers
+ *   to a YUI node with its rendering.
+ * - Each proofStep YUI node has a proofStep property that refers
+ *   to the Inference (proof step) it represents.
  */
 Proof.prototype.renderSteps = function(proofNode) {
   proofNode.setContent('');
@@ -286,8 +294,10 @@ Proof.prototype.renderSteps = function(proofNode) {
   var allSteps = {};
   for (var i = 0; i < steps.length; i++) {
     var inf = steps[i];
-    var text = '<div class="proofStep">' + (i + 1) + '. </div>';
+    var text = '<div class=proofStep><span class=stepNumber>'
+      + (i + 1) + '.</span> </div>';
     var stepNode = proofNode.appendChild(text);
+    stepNode.setData('proofStep', steps[i]);
     // See appendSpan in expr.js.
     var wffNode = stepNode.appendChild('<span class=expr></span>');
 
@@ -460,10 +470,56 @@ function renderSteps(inference, node) {
     inference.proof.add(makeInference('given', [wff]), 0);
   }
   inference.proof.renderSteps(proofNode);
+  Y.on('mouseover', exprHandleOver, proofNode);
+  Y.on('mouseout', exprHandleOut, proofNode);
 }
 
 /**
- * Event handler for "hover" events.
+ * Handle mouseovers on subexpressions.  The event target can
+ * be any part of a proof node.
+ */
+function exprHandleOver(event) {
+  var target = event.target;
+  function isTarget(expr) {
+    return expr.node == target;
+  }
+  target.addClass('hovered');
+  var stepNode = target.ancestor('.proofStep');
+  if (stepNode) {
+    var proofStep = stepNode.getData('proofStep');
+    var path = proofStep.result.pathTo(isTarget);
+    hoverExpr(proofStep.result, path);
+  }
+};
+
+/**
+ * Defines what to when an expr is hovered.  Highlighting of the
+ * DOM node is handled elsewhere, this is the Expr and Path part.
+ */
+function hoverExpr(wff, path) {
+  var displayNode = Y.one('#hoverPath');
+  if (displayNode) {
+    // If there is no bottom panel, do nothing.
+    var expr = wff.locate(path);
+    var pathStr = path ? path.toString() : '';
+    displayNode.setContent(pathStr);
+  }
+}
+
+/**
+ * Handle mouseouts on subexpressions.
+ */
+function exprHandleOut(event) {
+  event.target.removeClass('hovered');
+  var displayNode = Y.one('#hoverPath');
+  if (displayNode) {
+    // Do nothing if there is no bottom panel.
+    displayNode.setContent('');
+  }
+};
+
+/**
+ * Event handler for "hover" events on proof steps.
  */
 function hover(event, proof, index, direction, proofNode) {
   var inference = proof.steps[index];
@@ -580,6 +636,15 @@ var hoverHandlers = {
 
 //// UTILITY FUNCTIONS
 
+function addBottomPanel(node) {
+  node = node || new Y.Node(document.body);
+  var style = ('position: fixed; width: 100%; background-color: white; '
+               + 'bottom:0px; left: 0em; border-top: 1px solid black');
+  var html = '<div id="bottomPanel" style="' + style + '"></div>';
+  var div = node.appendChild(html);
+  div.appendChild('Path: <span id=hoverPath></span>');
+}
+
 /**
  * Returns a string showing the top-level properties
  * of an object, and their values.
@@ -672,6 +737,7 @@ Y.defineCases = defineCases;
 Y.getDefinition = getDefinition;
 Y.renderSteps = renderSteps;
 Y.createRules = createRules;
+Y.addBottomPanel = addBottomPanel;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;
 

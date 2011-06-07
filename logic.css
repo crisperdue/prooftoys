@@ -72,13 +72,13 @@ p {
 }
 
 /* Expression within a proof line. */
-.proofLine .expr {
+.proofLine .expr, .proofStep .expr {
   border-style: solid;
   border-width: 1px;
   border-color: transparent;
 }
 
-.proofLine .expr.hovered {
+.expr.hovered {
   background-color: #ffffaa;
   border-color: silver;
 }
