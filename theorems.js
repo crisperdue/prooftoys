@@ -555,23 +555,6 @@ var ruleInfo = {
     return step7;
   },
 
-  // Breaks down equality of boolean functions into the T and F cases.
-  // Not in book.
-  boolFnsEqual: {
-    action: function() {
-      var expr = lambda(x, equal(call(f, x), call(g, x)));
-      var step1 = rules.instEqn(rules.axiom('axiom1'),
-                                expr, g);
-      var step2 = rules.reduce(step1, '/right/arg/body');
-      var step3 = rules.reduce(step2, '/left/left');
-      var step4 = rules.reduce(step3, '/left/right');
-      var step5 = rules.rRight(rules.axiom('axiom3'), step4, '/right');
-      var step6 = rules.eqnSwap(step5);
-      return step6;
-    },
-    comment: ('Equality of boolean functions.')
-  },
-
   // 5217 is the same as 5230TF.
   // [T = F] = F
   // Not used, though previously used in 5218.

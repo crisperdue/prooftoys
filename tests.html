@@ -367,12 +367,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((T = F) = F)', inf.result);
       },
 
-      testBoolFnsEqual: function() {
-        var inf = Y.makeInference('boolFnsEqual');
-        assertEqual('((f = g) = (((f T) = (g T)) && ((f F) = (g F))))',
-                    inf.result);
-      },
-
       testEquationCases: function() {
         var inf = Y.makeInference('equationCases',
                                   [lambda(z, equal(z, z))]);
