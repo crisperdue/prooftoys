@@ -165,7 +165,6 @@ YUI({filter: null, insertBefore: 'styles'})
 
     eqnChain: {
       args: [call('=', p, q), call('=', q, r)],
-      level: 1
     },
 
     applyBySides: {
@@ -338,6 +337,8 @@ YUI({filter: null, insertBefore: 'styles'})
       }
       document.title = 'Proof display -- ' + ruleName;
       var inference = Y.makeInference(ruleName, ruleInfo.args || []);
+      // For debugging.
+      window.winf = inference;
       var proofNode = Y.one('#proofs');
       proofNode.setContent('');
       Y.renderSteps(inference, proofNode);
@@ -349,8 +350,8 @@ YUI({filter: null, insertBefore: 'styles'})
       var ruleName = queryData.rule;
       var inference = null;
       if (!location.search) {
-        // Default to displaying instEqn.
-        ruleName = 'instEqn';
+        // Default to displaying forallInst.
+        ruleName = 'forallInst';
       }
       if (ruleName) {
         var ruleInfo = proofs[ruleName];
@@ -363,19 +364,18 @@ YUI({filter: null, insertBefore: 'styles'})
       var selector = '<select id=selector>\n<option value="">-- choose --';
       for (var name in proofs) {
         if (proofs[name].level == 1) {
-          selector += '<option>' + name + '\n';
+          if (name == ruleName) {
+            selector += '<option selected>' + name + '\n';
+          } else {
+            selector += '<option>' + name + '\n';
+          }
         }
       }
       selector += '</select>';
       Y.one('#selectDiv').appendChild(selector);
-      Y.one('#selector').on('change', proofChanged);
       Y.addBottomPanel();
-      if (inference) {
-        var proofNode = Y.one('#proofs');
-        Y.renderSteps(inference, proofNode);
-        // For debugging.
-        window.winf = inference;
-      }
+      Y.one('#selector').on('change', proofChanged);
+      proofChanged();
     });
 
   // For debugging.

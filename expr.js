@@ -315,9 +315,16 @@ Expr.prototype.pathTo = function(pred) {
 
 //// Var -- variable bindings and references
 
-function Var(name) {
+/**
+ * Make a Var with the given name.  If a non-null position
+ * is given, use it to record the index in the input stream.
+ */
+function Var(name, position) {
   this.sort = Expr.var;
   this.name = name;
+  if (position != null) {
+    this.pos = position;
+  }
 };
 Y.extend(Var, Expr);
 
@@ -407,16 +414,23 @@ Call.prototype.toString = function() {
   if (this._string) {
     return this._string;
   }
+  function asArg(expr) {
+    if (expr instanceof Y.Var && isInfixDesired(expr.name)) {
+      return '(' + expr + ')';
+    } else {
+      return expr.toString();
+    }
+  }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
     if (isInfixDesired(this.fn.fn.name)) {
       return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
     } else {
-      return '(' + this.fn.fn + ' ' + this.fn.arg + ' ' + this.arg + ')';
+      return '(' + this.fn.fn + ' ' + asArg(this.fn.arg) + ' ' + this.arg + ')';
     }
   } else if (this.fn instanceof Var && isInfixDesired(this.fn.name)) {
     return '(' + this.arg + ' ' + this.fn + ')';
   } else {
-    return '(' + this.fn + ' ' + this.arg + ')';
+    return '(' + this.fn + ' ' + asArg(this.arg) + ')';
   }
 };
 

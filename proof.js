@@ -500,6 +500,7 @@ function hoverExpr(wff, path) {
   var displayNode = Y.one('#hoverPath');
   if (displayNode) {
     // If there is no bottom panel, do nothing.
+    // Y.log('Hover ' + (path ? path.toString() : ''));
     var expr = wff.locate(path);
     var pathStr = path ? path.toString() : '';
     displayNode.setContent(pathStr);
@@ -513,6 +514,7 @@ function exprHandleOut(event) {
   event.target.removeClass('hovered');
   var displayNode = Y.one('#hoverPath');
   if (displayNode) {
+    // Y.log('Unhover');
     // Do nothing if there is no bottom panel.
     displayNode.setContent('');
   }
@@ -634,6 +636,203 @@ var hoverHandlers = {
 };
 
 
+//// PARSING
+
+/**
+ * A token is a sequence of characters that are each alphanumeric
+ * or ":", or a sequence that is none of these and not whitespace.
+ * Returns an array of tokens in the input string, followed by
+ * an "(end)" token.
+ */
+function tokenize(str) {
+  var match;
+  var pattern = /[(){}]|[:a-zA-Z0-9]+|[^:a-zA-Z0-9(){}\s]+/g;
+  var result = [];
+  while (match = pattern.exec(str)) {
+    result.push(new Y.Var(match[0], match.index));
+  }
+  result.push(new Y.Var('(end)', str.length));
+  return result;
+}
+
+// Input will be a tree in the form of a nested array
+// of strings and arrays.  Explicit parentheses in the
+// input become arrays in the input.  This parses prefix
+// and infix operators into additional trees.
+// This parses destructively, replacing structure in the
+// input.
+//
+// Parse a subexpression of "a" starting at "pos"
+// in the context of an operator to the left with a binding
+// power of "leftPower", replacing the token at "pos"
+// with a parsed tree.
+//
+// If just one argument is given, parse the whole array
+// and return the parsed result.
+//
+// Reduces operators with greater than leftPower, replacing
+// the token at "a" with the parsed subtree.  Otherwise
+// leaves the token at "pos" unchanged.
+//
+function parse(tokens) {
+  function next() {
+    return tokens.length ? tokens.shift() : end;
+  }
+
+  function peek() {
+    return tokens[0] || end;
+  }
+
+  function expect(expected) {
+    var token = next();
+    if (token.name != expected) {
+      // Report somehow.
+      var error = new Error('Expected ' + str + ', got ' + token.name);
+      error.position = token.pos;
+      throw error;
+    }
+  }
+
+  // Keep reducing leading parts into subtrees as long as the
+  // infix operators have precedence greater than lastPower.
+  // Returns null if a terminator is the first token.
+  function parseAbove(lastPower) {
+    var left = null;
+    var right = null;
+    while (true) {
+      var token = peek();
+      var nextPower = precedence[token.name];
+      if (nextPower != null && nextPower <= lastPower) {
+        return left;
+      }
+      next();
+      var expr = null;
+      if (token.name == '(') {
+        expr = mustParseAbove(0);
+        expect(')');
+      } else if (token.name == '{') {
+        if (peek().name != ':') {
+          expect('|');
+        }
+        var body = mustParseAbove(0);
+        expr = new Y.Lambda(left, body);
+        expect('}');
+      } else if (nextPower == null) {
+        // Not an operator.
+        expr = token;
+      }
+      if (expr) {
+        // The token was not an infix operator.
+        if (left) {
+          left = new Y.Call(left, expr);
+        } else {
+          left = expr;
+        }
+      } else {
+        // Token is an infix operator of higher precedence.
+        if (left) {
+          right = parseAbove(nextPower);
+        } else {
+          left = parseAbove(nextPower);
+          right = null;
+        }
+        if (right) {
+          left = new Y.Call(new Y.Call(token, left), right);
+        } else if (left) {
+          left = new Y.Call(token, left);
+        } else {
+          left = token;
+        }
+      }
+    }
+  }
+
+  function mustParseAbove(lastPower) {
+    var result = parseAbove(lastPower);
+    if (!result) {
+      throw new Error('Empty expression at ' + peek().pos);
+    }
+    return result;
+  }
+
+  // Do the parse!
+  if (typeof tokens == 'string') {
+    tokens = tokenize(tokens);
+  }
+  // The ending token.
+  var end = tokens.pop();
+  if (tokens.length < 1) {
+    // There should be at least one real token.
+    throw new Error('No parser input');
+  }
+  return parseAbove(0);
+};
+
+/**
+ * Checks the name of the token at the location and removes
+ * it from the input if it is the same, else throws an Error
+ * with message and position of the token.
+ */
+function expect(a, pos, str) {
+  if (a[pos].name == str) {
+    a.splice(pos, 1);
+  } else {
+    // Report somehow.
+    var error = new Error('Expected ' + str + ', got ' + a[pos]);
+    error.position = a[pos].pos;
+    throw error;
+  }
+}
+
+// TODO: remove.
+// Reduce an infix expression starting at i.
+// Changes a[i] and removes the operator and operands
+// from the list of tokens.
+function reduceInfix(a, pos) {
+  var left = a[i];
+  var op = a[i + 1];
+  if (op.name == '(end)') {
+    return;
+  }
+  var right = a[i + 2];
+  if (right.name == '(end)') {
+    a[i] = new Y.Call(op, left);
+    a.splice(i + 1, 1);
+    return;
+  }
+  a[i] = new Y.Call(new Y.Call(op, left), right);
+  a.splice(i + 1, 2);
+};
+
+// Opening brackets, with the closing bracket as the value.
+var brackets = {
+  '(': ')',
+  '{': '}'
+};
+
+// Precedence table for infix operators.
+var precedence = {
+  // Closing tokens have power 0 to make infix parsing return.
+  '(end)': 0,
+  ')': 0,
+  '}': 0,
+  // Implication binds tighter than equality, as in the book.
+  '=': 11,
+  '-->': 12,
+  '||': 13,
+  '&&': 14,
+  '<': 20,
+  '=': 20,
+  '>': 20,
+  '+': 30,
+  '-': 30,
+  '*': 40,
+  '/': 40,
+  // Specials
+  '(': 1000,
+  '{': 1000
+};
+
 //// UTILITY FUNCTIONS
 
 function addBottomPanel(node) {
@@ -738,6 +937,8 @@ Y.getDefinition = getDefinition;
 Y.renderSteps = renderSteps;
 Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;
+Y.ttokenize = tokenize;
+Y.parse = parse;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;
 

@@ -439,6 +439,8 @@ YUI.add('proofdisplay', function(Y) {
   };
 
   // Lookup table for detecting prefix operators.
+  // These bind with a strength of 1000.  The value
+  // represents the number of arguments for the operator.
   var prefix = {
     ':not': 1,
     ':forall': 2,

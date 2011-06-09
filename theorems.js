@@ -491,7 +491,7 @@ var ruleInfo = {
 
   // Target is forall {x : B}, expr is A, which will replace
   // all occurrences of x.  Uses no book-specific definitions,
-  // and relies only on rule "T" and 5200.
+  // and relies only on theorem "T" and 5200.
   // This is 5215.
   forallInst: {
     action: function(target, expr) {
@@ -503,6 +503,7 @@ var ruleInfo = {
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.reduce(step2, '/left');
       var step4 = rules.reduce(step3, '/right');
+      // Don't use fromTIsA, it depends on this.
       var step5 = rules.r(step4, rules.theorem('t'), '/');
       return step5;
     },
