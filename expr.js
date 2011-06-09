@@ -854,7 +854,8 @@ function path(arg) {
  * to be rendered as infix.
  */
 function isInfixDesired(name) {
-  return name.match(/^[^A-Za-z]+$/);
+  // TODO: Coordinate with isId, etc.
+  return name.match(/^[^A-Za-z$:]+$/);
 }
 
 /**

@@ -687,61 +687,53 @@ function parse(tokens) {
     var token = next();
     if (token.name != expected) {
       // Report somehow.
-      var error = new Error('Expected ' + str + ', got ' + token.name);
+      var error = new Error('Expected ' + expected + ', got ' + token.name);
       error.position = token.pos;
       throw error;
     }
   }
 
-  // Keep reducing leading parts into subtrees as long as the
-  // infix operators have precedence greater than lastPower.
-  // Returns null if a terminator is the first token.
+  /**
+   * Keep reducing leading parts into subtrees until the next token is
+   * an infix operator with precedence not greater than lastPower.
+   * Returns null if it consumes no input.
+   */
   function parseAbove(lastPower) {
     var left = null;
-    var right = null;
     while (true) {
       var token = peek();
-      var nextPower = precedence[token.name];
+      var nextPower = getPrecedence(token);
       if (nextPower != null && nextPower <= lastPower) {
         return left;
       }
       next();
+      // If an atomic expression or unary/nullary expression is
+      // next, this will have it.
       var expr = null;
       if (token.name == '(') {
         expr = mustParseAbove(0);
         expect(')');
       } else if (token.name == '{') {
-        if (peek().name != ':') {
-          expect('|');
-        }
+        var id = next();
+        Y.assert(isId(id), 'Expected identifier, got ' + id.name);
+        expect(peek().name == ':' ? ':' : '|');
         var body = mustParseAbove(0);
-        expr = new Y.Lambda(left, body);
+        expr = new Y.Lambda(id, body);
         expect('}');
-      } else if (nextPower == null) {
-        // Not an operator.
+      } else if (!left || nextPower == null) {
+        // Treat the token as an atomic expression.
         expr = token;
       }
+      // At this point expr and left are not both null.
       if (expr) {
-        // The token was not an infix operator.
-        if (left) {
-          left = new Y.Call(left, expr);
-        } else {
-          left = expr;
-        }
+        left = left ? new Y.Call(left, expr) : expr;
       } else {
-        // Token is an infix operator of higher precedence.
-        if (left) {
-          right = parseAbove(nextPower);
-        } else {
-          left = parseAbove(nextPower);
-          right = null;
-        }
+        // Token is an infix operator of higher precedence than the last.
+        // At this point there is always an expression in "left".
+        left = new Y.Call(token, left);
+        var right = parseAbove(nextPower);
         if (right) {
-          left = new Y.Call(new Y.Call(token, left), right);
-        } else if (left) {
-          left = new Y.Call(token, left);
-        } else {
-          left = token;
+          left = new Y.Call(left, right);
         }
       }
     }
@@ -784,31 +776,27 @@ function expect(a, pos, str) {
   }
 }
 
-// TODO: remove.
-// Reduce an infix expression starting at i.
-// Changes a[i] and removes the operator and operands
-// from the list of tokens.
-function reduceInfix(a, pos) {
-  var left = a[i];
-  var op = a[i + 1];
-  if (op.name == '(end)') {
-    return;
-  }
-  var right = a[i + 2];
-  if (right.name == '(end)') {
-    a[i] = new Y.Call(op, left);
-    a.splice(i + 1, 1);
-    return;
-  }
-  a[i] = new Y.Call(new Y.Call(op, left), right);
-  a.splice(i + 1, 2);
-};
+/**
+ * Is it a legal identifier?
+ */
+function isId(token) {
+  return token instanceof Y.Var
+    && token.name.match(/^[A-Za-z:$][A-Za-z0-9:$]*$/);
+}
 
-// Opening brackets, with the closing bracket as the value.
-var brackets = {
-  '(': ')',
-  '{': '}'
-};
+/**
+ * Get a precedence value: null for symbols, defaults to
+ * 1 for unknown non-symbols, the lowest infix precedence.
+ */
+function getPrecedence(token) {
+  var name = token.name;
+  var v = precedence[name];
+  if (f) {
+    return v;
+  } else {
+    return isId(name) ? null : 1;
+  }
+}
 
 // Precedence table for infix operators.
 var precedence = {
@@ -822,8 +810,9 @@ var precedence = {
   '||': 13,
   '&&': 14,
   '<': 20,
-  '=': 20,
+  '<=': 20,
   '>': 20,
+  '>=': 20,
   '+': 30,
   '-': 30,
   '*': 40,
@@ -937,7 +926,7 @@ Y.getDefinition = getDefinition;
 Y.renderSteps = renderSteps;
 Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;
-Y.ttokenize = tokenize;
+Y.tokenize = tokenize;
 Y.parse = parse;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;

@@ -216,6 +216,36 @@ YUI({filter: null, insertBefore: 'styles'})
                     '' + call(f, call(f, call(g, x))).pathTo(findX));
       },
 
+      // PARSER
+
+      testTokenize: function() {
+        var result = Y.tokenize('a');
+        assertEqual('a,(end)', result);
+        result = Y.tokenize('(a > b)');
+        assertEqual('(,a,>,b,),(end)', result);
+        result = Y.tokenize('{x|x}');
+        assertEqual('{,x,|,x,},(end)', result);
+        result = Y.tokenize('(=>x*)');
+        assertEqual('(,=>,x,*,),(end)', result);
+      },
+
+      testParse: function() {
+        var result = Y.parse('a');
+        assertEqual('a', result.dump());
+        result = Y.parse('(xx)');
+        assertEqual('xx', result.dump());
+        result = Y.parse('f x');
+        assertEqual('(f x)', result.dump());
+        result = Y.parse('not = (F =)');
+        assertEqual('((not =) (F =))', result.dump());
+        result = Y.parse('{x|x} T');
+        assertEqual('({x : x} T)', result);
+        result = Y.parse('a + b * c');
+        assertEqual('(a + (b * c))', result);
+        result = Y.parse('a --> a && c');
+        assertEqual('(a --> (a && c))', result);
+      },
+
       // PROOFS
 
       testRuleR: function() {
