@@ -9,20 +9,64 @@
 </head>
 <body style="margin-left: .5em; text-align: left; font-family: sans-serif">
 
-<h1>About Functions</h1>
+<h3>About functions</h3>
 
-<p>Functions express dependencies.  A function expresses a dependency of
-a value on some other values.  In the real world we encounter
-situations in different places at different times and from different
-points of view.  A situation has many observable or measurable values,
-such as color, sound, direction, distance, quantity, duration,
-temperature, odor, texture, and so on.
+<p>Functions express the idea that some value is determined by some
+other values.  Real-world situations have many observable or
+measurable values, such as color, sound, direction, distance,
+quantity, duration, temperature, and so on.
 
 <p>For example, if the angle of the sun above the horizon at some
-location depends on the time of year, the time of day, that angle is
-a mathematical function of the time of year and the time of day.
+location can be determined from the time of year, the time of day,
+that angle is a mathematical function of the time of year and the time
+of day.
 
 <p>In Q<sub>0</sub> relationships are treated as functions with values
-of true or false.  If objects are in a particular relationship, the
-value of the relationship function is true.  If they are not in that
-relationship, the value is false.
+of true or false.  If values of quantities have a certain
+relationship, the value of the relationship function is true.  If they
+are not in that relationship, the value is false.
+
+<h3>About assignments</h3>
+<p>
+Assignment of values to variables is the key concept in the semantics
+of classical systems of logic including Q<sub>0</sub>.  A statement
+(boolean-valued expression) with free variables is considered true
+iff it is true for every possible assignment of values to the free
+variables.  
+<p>
+For example when working with the integers, a statement such as
+<pre>
+x &ge; 0
+</pre>
+is true iff it is true when x is 0, when x is 1, 2, etc..
+<p>
+Of course if <code>x</code> occurs more than once in a statement, all
+occurrences are assigned the same value in each assignment.  That is
+what it means for a variable to appear in multiple places in a
+formula.  If they were not to be the same, the formula would have
+variables with different names in the different places.
+
+<h3>Rule R and assignments</h3>
+<p>
+When we have an equation that is true, Rule R says we can replace any
+occurrence of its left-hand side with its right-hand side anywhere it
+appears in any formula.
+<p>
+[[Consider how assignments work out.]]
+
+<h3>Equations and assignments</h3>
+<p>
+An equation is true iff its left-hand side has the same value as its
+right-hand side in all assignments to the equation's free variables.
+
+<h3>Axiom 4 and capturing of free variables</h3>
+<p>
+All instances of Axiom 4 are equations, so the sides must have the
+same values in all assignments.
+
+[[Consider assignments to the bound variable of a function.]]
+
+[[Consider how substitution usually works fine.]]
+
+[[Show how capturing violates expectations.]]
+

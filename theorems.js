@@ -377,6 +377,8 @@ var ruleInfo = {
       var step2b = rules.r(step1b, step2a, '/');
       var step2c = rules.reduce(step2b, '/right/body/left');
       var step2d = rules.reduce(step2c, '/right/body/right');
+      // TODO: Make the steps to here a lemma.
+      // TODO: Make the following steps a simple rule of inference.
       var step3 = rules.applyBoth(step2d, b);
       var step4a = rules.reduce(step3, '/left');
       var step4b = rules.reduce(step4a, '/right');
@@ -503,7 +505,7 @@ var ruleInfo = {
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.reduce(step2, '/left');
       var step4 = rules.reduce(step3, '/right');
-      // Don't use fromTIsA, it depends on this.
+      // Do not use fromTIsA, it depends on this.
       var step5 = rules.r(step4, rules.theorem('t'), '/');
       return step5;
     },
@@ -695,22 +697,14 @@ var ruleInfo = {
               + ' show it with T and F.')
   },
 
-  // [[T --> x] --> x].  Only used in Modus Ponens.
-  r5223: function() {
-    var step1 = rules.applyBoth(rules.definition('-->', T), x);
-    var step2 = rules.reduce(step1, '/right');
-    return step2;
-  },
-
   // 5224
   modusPonens: {
     action: function(a, b) {
-      var step2a = rules.toTIsA(a);
-      var step2b = rules.eqnSwap(step2a);
-      var step3 = rules.r(step2b, call('-->', a, b), '/left');
-      var step4a = rules.sub(rules.theorem('r5223'), b, x);
-      var step4b = rules.r(step4a, step3, '/');
-      return step4b;
+      var step1 = rules.toTIsA(a);
+      var step2 = rules.rRight(step1, call('-->', a, b), '/left');
+      var step3 = rules.useDefinition('-->', step2, '/fn');
+      var step4 = rules.reduce(step3, '');
+      return step4;
     },
     comment: ('Modus Ponens.  Given A and A --> B derives B.')
   },

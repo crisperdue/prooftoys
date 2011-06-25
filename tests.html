@@ -438,11 +438,6 @@ YUI({filter: null, insertBefore: 'styles'})
         logAssumptions(inf);
       },
 
-      testR5223: function() {
-        var inf = Y.makeInference('r5223');
-        assertEqual('((T --> x) = x)', inf.result);
-      },
-
       testModusPonens: function() {
         var inf = Y.makeInference('modusPonens', [p, q]);
         assertEqual('q', inf.result);

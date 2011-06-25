@@ -28,46 +28,42 @@ body {
 
 <h1>Proof Display</h1>
 
-<p><b>Introduction.</b>  The connection between computers and logic has
-fascinated me ever since I was a boy, and Peter Andrews' system Q0 is
-especially notable. It uses such an exceptionally small base of simple
-concepts to build sophisticated reasoning capabilities and a
-foundation suitable for mathematics in general, comparable to first
-order logic plus set theory.  Also, by taking functions as fundamental
-concepts it shows off the parallels between programming languages and
-higher-order logics.
+<p><b>Introduction.</b>  Computers and logic are deeply connected.
+One famous and important connection between them is the
+lambda calculus.  Among systems of logic that use lambda calculus,
+Peter Andrews' system Q<sub>0</sub> is notable for its elegance and
+simplicity, with the power to develop most of mathematics,
+comparable to first order logic plus set theory.
 
-<p>As I started working on an interactive proof assistant based on
-Andrews' system, I wanted to build up higher concepts such as theorems
-and derived rules of inference from the basic building blocks rather
-than building them in with code, and this meant building his
-elementary theorems and rules from his base, or a very similar base.
-This gave me a set of theorems proven by the core proof-building
-machinery.  I wanted a more convenient way to view them, and wanted to
-start trying out ideas for supporting human readers of proofs.
+<p>In building an interactive proof assistant I wanted to build higher
+concepts such as theorems and derived rules of inference using the
+basic building blocks rather than wiring them in with code.  This
+resulted in a set of theorems proven by the core proof-building
+machinery.  I wanted a more convenient way to view them, and to try
+out ideas to help human beings read proofs.
 
-<p>The theorems and derived rules of inference here tend to be just
-building blocks rather than completed tools for serious proof
-development, but they demonstrate Andrews' core concepts, and how
-proofs are built from them.  Examples of some practical rules of
-inference are here though, such as universal generalization (uGen),
-universal instantiation (forallInst), and reasoning by cases (cases).
+<p>Some of the theorems and derived rules of inference you can see
+here are intermediate results, but they help to demonstrate the core
+concepts and how proofs are built from them.  Examples of some
+practical rules of inference are also here, such as universal
+generalization (uGen), universal instantiation (forallInst), and
+reasoning by cases (cases).
 
-<p>This page is supported in recent versions of Firefox and Chrome.
+<p><i>This page is supported in recent versions of Firefox and Chrome.</i>
 
 <p id=selectDiv style="margin: 1.5em">
 <b>Select a rule or theorem to prove:</b>
 </p>
 <div id=proofs></div>
 
-<p><b>About the logic.</b>  This page can derive and show derivations
-of many of the theorems and examples of rules of inference of Chapter
-5 of Peter Andrews' book,
+<p><b>About the logic.</b>  This page can derive many of the theorems
+and examples of rules of inference of Chapter 5 of Peter Andrews'
+book,
 <a href="http://gtps.math.cmu.edu/tttp.html" target="_blank">
 An Introduction to Mathematical Logic and Type Theory: To Truth
 Through Proof</a>.  The order of theorems is essentially the same as
 in the book.  Some of the numbered theorems have been given names here
-in the hope of helping me remember which is which.  His system is
+in the hope of helping me remember which is which.  His logic is
 summarized in
 <a href="http://plato.stanford.edu/entries/type-theory-church/#ForBasEqu"
 target=_blank>this article</a>
