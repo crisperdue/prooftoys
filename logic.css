@@ -78,7 +78,7 @@ p {
   border-color: transparent;
 }
 
-.expr.hovered {
+span.expr.hovered {
   background-color: #ffffaa;
   border-color: silver;
 }
@@ -156,11 +156,11 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
  * Lower priority than "new", so precedes it in the file.
  */
 .scope {
-  background-color: #eee; fubar: #cef;
+  background-color: #eee;
 }
 
 /* New value ("replacement") -- green */
-.proofStep .hover2, .proofStep .reduced2, .new {
+.new {
   background-color: #3e8;
 }
 

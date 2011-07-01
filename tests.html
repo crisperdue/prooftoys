@@ -491,14 +491,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('T', inf.result.getRight());
       },
 
-      testApplyFunc: function() {
-        var defn = Y.makeInference('definition', ['-->', T]).result;
-        var inf = Y.makeInference('applyFunc', [defn, T]);
-        assertEqual('((T --> T) = T)', inf.result);
-        var inf2 = Y.makeInference('applyFunc', [defn, F]);
-        assertEqual('((T --> F) = F)', inf2.result);
-      },
-
       testTautology: function() {
         var wff = T;
         var inf = Y.makeInference('tautology', [wff]);

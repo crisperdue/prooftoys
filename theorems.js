@@ -232,7 +232,7 @@ var ruleInfo = {
     comment: 'Derives A = A.'
   },
 
-  // r5201a
+  // r5201a, not used
   replaceWhole: function(a, ab) {
     var aa = rules.eqSelf(a);
     var b = ab.getRight();
@@ -259,7 +259,7 @@ var ruleInfo = {
     comment: 'From A = B and B = C derives A = C'
   },
 
-  // r5201d
+  // r5201d, not used
   applyBySides: function(ab, cd) {
     var a = ab.getLeft();
     var b = ab.getRight();
@@ -296,6 +296,8 @@ var ruleInfo = {
   // in WFF A.  If the definition is by cases the location should
   // be a call to the named function, with T or F as the argument.
   useDefinition: {
+    // TODO: Modify to just take a wff and path.  Probably reduce
+    // the result automatically.
     action: function(defName, a, path) {
       var target = a.locate(path);
       if (target instanceof Y.Var) {
@@ -423,7 +425,6 @@ var ruleInfo = {
       var step5 = rules.rRight(rules.eqT(F), step4, '/right/right');
       var step6 = rules.eqnSwap(step5);
       return step6;
-      return rules.r5230FT_alternate();
     },
     comment: ('[F = T] = F')
   },
@@ -444,7 +445,6 @@ var ruleInfo = {
   },
 
   // [T && T] = T.  Uses no book-specific definitions.
-  // TODO: Consider proving this from the definition of "true and".
   // Only used in 5212 and book version of 5216.
   r5211: function() {
     var step1 = rules.definition('&&', T);
@@ -632,6 +632,7 @@ var ruleInfo = {
 
   // Helper for uGen
   // Derives (forall {v : T}) given a variable v.
+  // proved here by extensionality, not using 5206.
   forallT: {
     action: function(v) {
       var step1 = rules.instEqn(rules.axiom('axiom3'), lambda(x, T), f);
@@ -649,7 +650,7 @@ var ruleInfo = {
               + ' (Special case of renaming a bound variable.)')
   },
 
-  // 5220, proved here by extensionality, not using 5206.
+  // 5220
   uGen: {
     action: function(a, v) {
       var step1 = rules.toTIsA(a);
@@ -733,17 +734,20 @@ var ruleInfo = {
       var step1c = rules.sub(step1b, lambda(x, equal(x, F)), h);
       var step2a = rules.reduce(step1c, '/right/left');
       var step2b = rules.reduce(step2a, '/right/right');
-      var step3a = rules.r(rules.eqnSwap(rules.eqT(F)), step2b, '/right/left');
-      var step3b = rules.r(rules.r5218(F), step3a, '/right/right');
-      var step3c = rules.r(rules.r5218(F), step3b, '/right');
+      var step3aa = rules.eqT(F);
+      var step3a = rules.rRight(step3aa, step2b, '/right/left');
+      var step3bb = rules.r5218(F);
+      var step3b = rules.r(step3bb, step3a, '/right/right');
+      var step3c = rules.r(step3bb, step3b, '/right');
+      // From this point most of the work is basically a proof
+      // that [A --> F] --> not A, a tautology.
       var step4 = rules.toTIsA(step3c);
       // We are going to prove the cases of: (x --> F) = (x = F)
       // First with x = F.
       var step11 = rules.definition('-->', F);
       var step12 = rules.applyBoth(step11, F);
       var step13 = rules.reduce(step12, '/right');
-      var step14 = rules.eqT(F);
-      var step15 = rules.r(step14, step13, '/right');
+      var step14 = rules.r(step3aa, step13, '/right');
       // Then with x = T.
       var step21 = rules.definition('-->', T);
       var step22 = rules.applyBoth(step21, F);
@@ -865,18 +869,6 @@ var ruleInfo = {
       }
     },
     comment: ('Evaluates a boolean expression with no free variables.')
-  },
-
-  // Not in book.  Applies both sides of a function definition to an
-  // expression, then reduce the RHS of the result (expected to be a
-  // call to a lambda).  A bit like Lisp "apply".  Not used (yet).
-  applyFunc: {
-    action: function(defn, expr) {
-      var step1 = rules.applyBoth(defn, expr);
-      var step2 = rules.reduce(step1, '/right');
-      return step2;
-    },
-    comment: ('')
   },
 
   // Proves an inference that the wff is a tautology and
