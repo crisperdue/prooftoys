@@ -321,6 +321,7 @@ Proof.prototype.renderSteps = function(proofNode) {
     }
     var stepInfo = this.computeStepInfo(inf);
     stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
+    // Set up "hover" event handling on the stepNode.
     stepNode.on('hover',
                 // Call "hover", passing these arguments as well as the event.
                 Y.rbind(hover, null, this, i, 'in', proofNode),
@@ -522,6 +523,11 @@ function exprHandleOut(event) {
 
 /**
  * Event handler for "hover" events on proof steps.
+ * Adds or removes highlighting for the step.
+ *
+ * <p>Event is the mouse event.  Proof is the containing proof,
+ * index is the step index, direction is "in" or "out", and
+ * proofNode is the DOM node of the proof.
  */
 function hover(event, proof, index, direction, proofNode) {
   var inference = proof.steps[index];
@@ -529,8 +535,12 @@ function hover(event, proof, index, direction, proofNode) {
   var op = direction == 'in' ? 'addClass' : 'removeClass';
   var deps = inference.deps;
   var handler = hoverHandlers[inference.name];
+  // Always add or remove the "hover" class to the step node
+  // as the mouse goes in or oiut.
   inference.getStepNode()[op]('hover');
   
+  // When entering a step, highlight all references to it.
+  // When leaving remove highlights from all references.
   proofNode.all('span.stepNumber').each(function(node) {
       if (direction == 'in') {
         if (node.get('innerHTML') == iString) {
@@ -541,8 +551,10 @@ function hover(event, proof, index, direction, proofNode) {
       }
     });
   if (handler) {
+    // If there is a hover handler for this type of inference, apply it.
     handler(inference, op);
   } else {
+    // If no handler apply or remove default highlighting.
     for (var key in deps) {
       deps[key].result.node[op]('dep');
     }
@@ -576,14 +588,35 @@ var hoverHandlers = {
     eqn.getRight().node[op]('old');
     eqn.getLeft().node[op]('new');
   },
+  axiom4: function(inf, op) {
+    var call = inf.result.getLeft();
+    call.arg.node[op]('new');
+    var target = call.fn.body;
+    target.node[op]('scope');
+    inf.result.getRight().node[op]('scope');
+    var varName = call.fn.bound;
+    target.findAll(varName,
+                   function(v) { v.node[op]('occur'); },
+                   inf.result.getRight(),
+                   function(expr) { expr.node[op]('new'); });
+  },
   reduce: function(inf, op) {
     var deps = inf.deps;
     var args = inf.arguments;
-    var target = deps[args[0].asString()].result;
+    var dep = deps[args[0].asString()].result;
     var path = args[1];
-    target.node[op]('hover');
-    target.locate(path).node[op]('new');
-    inf.result.locate(path).node[op]('new');
+    var call = dep.locate(path);
+    var target = call.fn.body;
+    var varName = call.fn.bound.name;
+    var result = inf.result.locate(path);
+    dep.node[op]('hover');
+    call.arg.node[op]('new');
+    target.node[op]('scope');
+    result.node[op]('scope');
+    target.findAll(varName,
+                   function(v) { v.node[op]('occur'); },
+                   result,
+                   function(expr) { expr.node[op]('new'); });
   },
   useDefinition: function(inf, op) {
     var deps = inf.deps;
@@ -591,7 +624,7 @@ var hoverHandlers = {
     var target = deps[args[1].asString()].result;
     var path = args[2];
     target.node[op]('hover');
-    target.locate(path).node[op]('new');
+    target.locate(path).node[op]('old');
     inf.result.locate(path).node[op]('new');
   },
   instEqn: function(inf, op) {
@@ -603,7 +636,7 @@ var hoverHandlers = {
     var varName = args[2].name;
     input.node[op]('hover');
     input.findAll(varName,
-                  function(_var) { _var.node[op]('new'); },
+                  function(_var) { _var.node[op]('occur'); },
                   inf.result,
                   function(expr) { expr.node[op]('new'); });
   },
@@ -629,7 +662,7 @@ var hoverHandlers = {
     var varName = input.arg.bound.name;
     input.node[op]('hover');
     input.arg.body.findAll(varName,
-                           function(_var) { _var.node[op]('new'); },
+                           function(_var) { _var.node[op]('occur'); },
                            inf.result,
                            function(expr) { expr.node[op]('new'); });
   }

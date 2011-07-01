@@ -131,13 +131,13 @@ var ruleInfo = {
    * expresses the equality of the input and its beta reduction.
    */
   axiom4: {
-    action: function(app) {
-      if (app instanceof Y.Call && app.fn instanceof Y.Lambda) {
-        var lambdaExpr = app.fn;
-        return equal(app,
-                     Y.subFree(app.arg, lambdaExpr.bound, lambdaExpr.body));
+    action: function(call) {
+      if (call instanceof Y.Call && call.fn instanceof Y.Lambda) {
+        var lambdaExpr = call.fn;
+        return equal(call,
+                     Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
       } else {
-        throw new Error('Axiom 4 needs ({X : B} A), got: ' + app.toString());
+        throw new Error('Axiom 4 needs ({X : B} A), got: ' + call.toString());
       }
     },
     comment: ('')
@@ -334,10 +334,13 @@ var ruleInfo = {
 
   /**
    * From an equation, infers a similar equation with each
-   * side wrapped in a binding of the given variable.
+   * side wrapped in a binding of the given variable or variable name.
    */
   bindEqn: {
     action: function(eqn, v) {
+      if (typeof v == 'string') {
+        v = new Y.Var(v);
+      }
       Y.assert(eqn.isBinOp() && eqn.getBinOp() == '=',
                'Not an equation: ' + eqn);
       Y.assert(v instanceof Y.Var, 'Not a variable: ' + v);
