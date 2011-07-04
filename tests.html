@@ -536,13 +536,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(p && q)', inf.result);
       },
 
-      testR5235: function() {
-        var inf = Y.makeInference('r5235', [x, p, call(q, x)]);
-        var wff =
-          '((forall {x : (p || (q x))}) --> (p || (forall {x : (q x)})))';
-        assertEqual(wff, inf.result);
-      },
-
       testTautInst: function() {
         var b = call(p, x);
         var map1 = {
@@ -552,6 +545,20 @@ YUI({filter: null, insertBefore: 'styles'})
         var inf = Y.makeInference('tautInst',
                                   [implies(p, call('||', T, q)), map1]);
         logDetails(inf);
+      },
+
+      testR5235: function() {
+        var inf = Y.makeInference('r5235', [x, p, call(q, x)]);
+        var wff =
+          '((forall {x : (p || (q x))}) --> (p || (forall {x : (q x)})))';
+        assertEqual(wff, inf.result);
+      },
+
+      testImplyForall: function() {
+        var inf = Y.makeInference('implyForall', [x, p, call(q, x)]);
+        var wff =
+          '((forall {x : (p --> (q x))}) --> (p --> (forall {x : (q x)})))';
+        assertEqual(wff, inf.result);
       },
 
       testP: function() {

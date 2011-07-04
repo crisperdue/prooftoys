@@ -974,6 +974,17 @@ var ruleInfo = {
     comment: ('Given a and b, derive a && b')
   },
 
+  // Any instance of a tautology is a theorem.  This is part
+  // of the book's Rule P.
+  tautInst: {
+    action: function(tautology, map) {
+      var step1 = rules.tautology(tautology);
+      var step2 = rules.subAll(step1, map);
+      return step2;
+    },
+    comment: ('A substitution instance of a tautology is a theorem.')
+  },
+  
   // Given a variable v that is not free in wff A, and a wff B, derive
   // ((forall {v | A || B}) --> A || (forall {v | B})).
   r5235: {
@@ -1005,15 +1016,25 @@ var ruleInfo = {
               + 'in the left argument of the "or".')
   },
 
-  tautInst: {
-    action: function(tautology, map) {
-      var step1 = rules.tautology(tautology);
-      var step2 = rules.subAll(step1, map);
-      return step2;
+  // 5237
+  implyForall: {
+    action: function(v, a, b) {
+      var step1 = rules.r5235(v, call('not', a), b);
+      var taut = equal(call('||', call('not', p), q), implies(p, q));
+      var step2 = rules.tautInst(taut, {p: a, q: b});
+      var step3 = rules.r(step2, step1, '/left/arg/body');
+      var map4 = {
+        p: a,
+        q: step1.locate('/right/right')
+      };
+      var step4 = rules.tautInst(taut, map4);
+      var step5 = rules.r(step4, step3, '/right');
+      return step5;
     },
-    comment: ('A substitution instance of a tautology is a theorem.')
+    comment: ('Move "forall" inside "implies" provided the variable '
+              + 'is not free in the first argument.')
   },
-  
+    
 
   // Rule P (5234).  Takes two theorems and a desired conclusion B as
   // input, and proves B.  The theorems must be of the form H --> A,
@@ -1032,7 +1053,7 @@ var ruleInfo = {
     },
     comment: ('Rule P, with .')
   },
-    
+
 
   //
   // OPTIONAL/UNUSED
