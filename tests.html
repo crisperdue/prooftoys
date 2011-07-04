@@ -432,6 +432,17 @@ YUI({filter: null, insertBefore: 'styles'})
         logAssumptions(inf);
       },
 
+      testSubAll: function() {
+        var map = {p: call('forall', lambda(x, call('||', T, b))),
+                   q: call('forall', lambda(x, b))
+        };
+        var inf = Y.makeInference('subAll',
+                                  [implies(p, call('||', T, q)), map]);
+        assertEqual('((forall {x : (T || b)}) --> (T || (forall {x : b})))',
+                    inf.result);
+        logAssumptions(inf);
+      },
+
       testCases: function() {
         var inf = Y.makeInference('cases', [z, call('=', call(p, z), z)]);
         assertEqual('((p z) = z)', inf.result);
@@ -512,6 +523,44 @@ YUI({filter: null, insertBefore: 'styles'})
         var inf = Y.makeInference('tautology', [wff]);
         assertEqual(wff.toString(), inf.result);
       },
+
+      testRulePTautology: function() {
+        var inf = Y.makeInference('rulePTautology', []);
+        var wff =
+          '((((h --> p) && (h --> q)) && ((p && q) --> r)) --> (h --> r))';
+        assertEqual(wff, inf.result);
+      },
+
+      testMakeConjunction: function() {
+        var inf = Y.makeInference('makeConjunction', [p, q]);
+        assertEqual('(p && q)', inf.result);
+      },
+
+      testR5235: function() {
+        var inf = Y.makeInference('r5235', [x, p, call(q, x)]);
+        var wff =
+          '((forall {x : (p || (q x))}) --> (p || (forall {x : (q x)})))';
+        assertEqual(wff, inf.result);
+      },
+
+      testTautInst: function() {
+        var b = call(p, x);
+        var map1 = {
+          p: call('forall', lambda(x, call('||', T, b))),
+          q: call('forall', lambda(x, b))
+        };
+        var inf = Y.makeInference('tautInst',
+                                  [implies(p, call('||', T, q)), map1]);
+        logDetails(inf);
+      },
+
+      testP: function() {
+        // TODO: implement.
+        // var inf = Y.makeInference('p', [etc]);
+        // logDetails(inf);
+      },
+
+      // END OF RULES AND THEOREMS
 
       // Looking at what can be done with Andrews' definition of "and".
       // From here you can get counterexamples to the possibilities

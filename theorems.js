@@ -650,9 +650,13 @@ var ruleInfo = {
               + ' (Special case of renaming a bound variable.)')
   },
 
-  // 5220
+  // 5220.  The variable may be given as a name string, which it
+  // converts internally to a variable.
   uGen: {
     action: function(a, v) {
+      if (typeof v == 'string') {
+        v = new Y.Var(v);
+      }
       var step1 = rules.toTIsA(a);
       var step2 = rules.forallT(v);
       var step3 = rules.r(step1, step2, '/arg/body');
@@ -662,7 +666,8 @@ var ruleInfo = {
               + ' (forall v A) using the variable of your choice.')
   },
 
-  // 5221 (one variable), in B substitute A for v.
+  // 5221 (one variable), in wff B substitute term A for variable v,
+  // which may also be a string, which will be converted to a variable.
   sub: {
     action: function(b, a, v) {
       var step1 = rules.uGen(b, v);
@@ -671,6 +676,39 @@ var ruleInfo = {
     },
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.')
+  },
+
+  // More like the book's 5221.  For each name in the map (a string),
+  // substitutes the expression associated with it in the map, using
+  // simultaneous substitution.
+  subAll: {
+    action: function(b, map) {
+      // Collect all the free names in B and in all of the values
+      // to be substituted.
+      var freeNames = b.freeNames();
+      for (var key in map) {
+        var moreFree = map[key].freeNames();
+        for (var k2 in moreFree) {
+          freeNames[k2] = true;
+        }
+      }
+      // First change the names of all the variables to be
+      // substituted.
+      var wff = b;
+      var map2 = {};
+      for (var name in map) {
+        var v = Y.genVar('y', freeNames);
+        wff = rules.sub(wff, v, name);
+        map2[v.name] = map[name];
+      }
+      // Then substitute for the renamed variables.
+      for (var name in map2) {
+        wff = rules.sub(wff, map2[name], name);
+      }
+      return wff;
+    },
+    comment: ('Substitute in B for each variable named in the map, '
+              + 'its value in the map')
   },
 
   // 5222: Given a variable and WFF, deduce the WFF.  User must prove
@@ -911,7 +949,90 @@ var ruleInfo = {
     comment: ('Tautology decider.')
   },
 
+  // ((((h --> p) && (h --> q)) && ((p && q) --> r)) --> (h --> r))
+  rulePTautology: {
+    action: function() {
+      var wff = implies(call('&&',
+                             call('&&', implies(h, p), implies(h, q)),
+                             implies(call('&&', p, q), r)),
+                        implies(h, r));
+      return rules.tautology(wff);
+    },
+    comment: ('The key tautology behind rule P')
+  },
+
+  // Given two statements a and b, proves a && b.
+  makeConjunction: {
+    action: function(a, b) {
+      var stepa = rules.toTIsA(a);
+      var stepb = rules.toTIsA(b);
+      var step1 = rules.theorem('r5212');
+      var step2 = rules.r(stepa, step1, '/left');
+      var step3 = rules.r(stepb, step2, '/right');
+      return step3;
+    },
+    comment: ('Given a and b, derive a && b')
+  },
+
+  // Given a variable v that is not free in wff A, and a wff B, derive
+  // ((forall {v | A || B}) --> A || (forall {v | B})).
+  r5235: {
+    action: function(v, a, b) {
+      var map1 = {
+        p: call('forall', lambda(v, call('||', T, b))),
+        q: call('forall', lambda(v, b))
+      };
+      var step1 = rules.tautInst(implies(p, call('||', T, q)), map1);
+
+      var step2 = rules.tautInst(implies(p, call('||', F, p)),
+                                 ({p: call('forall', lambda(v, b))}));
+
+      var step3 = rules.tautInst(equal(p, call('||', F, p)),
+                                 ({p: b}));
+                            
+      var step4 = rules.r(step3, step2, '/left/arg/body');
+
+      var freeNames = Y.merge(a.freeNames(), b.freeNames());
+      freeNames[v.name] = true;
+      var p0 = Y.genVar('p', freeNames);
+      var wff = implies(call('forall', lambda(v, call('||', p0, b))),
+                        call('||', p0, call('forall', lambda(v, b))));
+      var step9 = rules.cases(p0, wff);
+      var step10 = rules.sub(step9, a, p0);
+      return step10;
+    },
+    comment: ('Move "forall" inside an "or" when variable not free '
+              + 'in the left argument of the "or".')
+  },
+
+  tautInst: {
+    action: function(tautology, map) {
+      var step1 = rules.tautology(tautology);
+      var step2 = rules.subAll(step1, map);
+      return step2;
+    },
+    comment: ('A substitution instance of a tautology is a theorem.')
+  },
   
+
+  // Rule P (5234).  Takes two theorems and a desired conclusion B as
+  // input, and proves B.  The theorems must be of the form H --> A,
+  // and A1 && A2 --> B must be a tautology.
+  p: {
+    action: function(a1, a2, b) {
+      var conjunction = rules.makeConjunction(a1, a2);
+        
+      var tautology = implies(conjunction, b);
+      return rules.tautology(tautology);
+
+      // Dead code:
+      var wff2 = implies(call('&&', implies(h, p), implies(h, q)),
+                        implies(h, call('&&', p, q)));
+      return rules.tautology(wff);
+    },
+    comment: ('Rule P, with .')
+  },
+    
 
   //
   // OPTIONAL/UNUSED
@@ -968,7 +1089,8 @@ var theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
                     'axiomPNeqNotP', 'defNot', 'defAnd',
                     'boolFnsEqual',
                     'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
-                    'r5231T', 'r5231F', 'falseEquals', 'trueEquals'];
+                    'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
+                    'rulePTautology'];
 
 for (var i = 0; i < theoremNames.length; i++) {
   Y.addTheorem(theoremNames[i]);

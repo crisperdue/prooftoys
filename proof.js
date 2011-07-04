@@ -450,12 +450,22 @@ function renderSteps(inference, node) {
     node = new Y.Node(document.body);
   }
   var pruf = inference.arguments.length ? 'Rule ' : 'Proof of ';
-  var argInfo = inference.arguments.join(', ');
-  if (argInfo) {
-    argInfo =
-      ': <span style="font-weight: normal; font-family: monospace">'
-      + argInfo + '</span>';
+  // var argInfo = inference.arguments.join(', ');
+  var argInfo = '';
+  for (var i = 0; i < inference.arguments.length; i++) {
+    if (i > 0) {
+      argInfo += ', ';
+    }
+    var arg = inference.arguments[i];
+    if (typeof arg == 'string' || arg instanceof Y.Expr) {
+      argInfo += arg;
+    } else {
+      argInfo += debugString(inference.arguments[i]);
+    }
   }
+  argInfo =
+    ': <span style="font-weight: normal; font-family: monospace">'
+    + argInfo + '</span>';
   var comment = rules[inference.name].info.comment || '';
   node.appendChild('<div class=proofHeader><b>' + pruf
                    + inference.name + '</b>' + argInfo + '<br>'
@@ -883,6 +893,7 @@ function debugString(o, specials) {
         } else if (typeof value == 'string') {
           result += '"' + o[key] + '"';
         } else if (value && value.concat) {
+          // Array-like value.
           vString = o[key].toString();
           if (vString.length > 40) {
             result += '[\n';
@@ -961,6 +972,7 @@ Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;
 Y.tokenize = tokenize;
 Y.parse = parse;
+Y.debugString = debugString;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;
 

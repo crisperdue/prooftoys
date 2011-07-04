@@ -267,6 +267,14 @@ YUI({filter: null, insertBefore: 'styles'})
       level: 1
     },
     
+    subAll: {
+      args: [implies(p, call('||', T, q)),
+             ({p: call('forall', lambda(x, call('||', T, b))),
+               q: call('forall', lambda(x, b))
+             })
+            ],
+    },
+
     cases: {
       args: [z, call('=', call(p, z), z)],
       level: 1
@@ -317,6 +325,10 @@ YUI({filter: null, insertBefore: 'styles'})
       level: 1
     },
     
+    r5235: {
+      args: [x, p, call(q, x)]
+    }
+
   };
 
   function selectorChanged() {
