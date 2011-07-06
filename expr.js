@@ -6,7 +6,8 @@ YUI.add('expr', function(Y) {
  * Returns a new expression resulting from substitution of copies of
  * the replacement expression for all free occurrences of the given
  * name (or variable) in the target expression.  Used by Axiom 4
- * (lambda conversion).
+ * (lambda conversion).  Also renames bound variables in the target to
+ * prevent them from capturing variables in the replacement.
  */
 function subFree(replacement, name, target) {
   if (name instanceof Y.Var) {

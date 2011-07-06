@@ -60,7 +60,8 @@ var ruleInfo = {
   /**
    * Replace the subexpression of the target at the path with the
    * equation's RHS.  This is rule R.  The subexpression must match
-   * the equation's LHS.
+   * the equation's LHS, meaning it they are the same except possibly
+   * in names of variables bound in each.
    */
   r: {
     action: function(equation, target, path) {
@@ -332,6 +333,43 @@ var ruleInfo = {
     },
     comment: ('Substitutes an actual argument for the formal variable'
               + ' in one function call of a WFF.')
+  },
+
+  /**
+   * Change the name of a bound variable.  Replaces the lambda
+   * subexpression in expr at path with one that binds newName, which
+   * may be a string or Var.
+   */
+  changeVar: {
+    action: function(expr, path, newVar) {
+      if (typeof newVar == 'string') {
+        newVar = new Y.Var(newVar);
+      }
+      var target = expr.locate(path);
+      Y.assert(target instanceof Y.Lambda, 'Not a function: ' + target);
+      Y.assert(!expr.freeNames()[newVar.name],
+               'New bound variable ' + newVar.name + ' must not occur free.');
+      var step1 = rules.axiom4(call(target, x));
+      var changed = lambda(newVar,
+                           Y.subFree(newVar, target.bound, target.body));
+      var step2 = rules.axiom4(call(changed, x));
+      var step3 = rules.axiom('axiom3');
+      var step4 = rules.sub(step3, target, 'f');
+      var step5 = rules.r(step1, step4, '/right/arg/body/left');
+      var step6 = rules.sub(step5, changed, 'g');
+      var step7 = rules.r(step1, step6, '/right/arg/body/right');
+      var step8 = rules.eqT(x);
+      var step9 = rules.rRight(step8, step7, '/right/arg/body');
+      var step10 = rules.useDefinition('forall', step9, '/right/fn');
+      var step11 = rules.eqT(lambda(x, T));
+      var step12 = rules.rRight(step11, step10, '/right');
+      var step13 = rules.eqnSwap(step12);
+      var step14 = rules.fromTIsA(step13);
+      var step15 = rules.r(step14, expr, path);
+      return step15;
+    },
+    comment: ('Change the name of a bound variable.  The new name '
+              + 'must not occur free in the target expression.')
   },
 
   /**
@@ -866,10 +904,12 @@ var ruleInfo = {
     action: function(expr) {
       var boolOps = {'&&': true, '||': true, '-->': true, '=': true, not: true};
       function isReducible(expr) {
-        return ((expr instanceof Y.Call && expr.arg instanceof Y.Var)
-                && (expr.arg.name == 'T' || expr.arg.name == 'F')
-                && (expr.fn instanceof Y.Lambda
-                    || (expr.fn instanceof Y.Var && boolOps[expr.fn.name])));
+        return (expr instanceof Y.Call
+                && ((expr.fn instanceof Y.Var
+                     && boolOps[expr.fn.name]
+                     && expr.arg instanceof Y.Var
+                     && (expr.arg.name == 'T' || expr.arg.name == 'F'))
+                    || expr.fn instanceof Y.Lambda));
       }
       var result = rules.eqSelf(expr);
       while (true) {

@@ -369,6 +369,12 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((p = q) && (q = r))', inf.result);
       },
 
+      testChangeVar: function() {
+        var expr = equal(lambda(z, z), lambda(y, y));
+        var inf = Y.makeInference('changeVar', [expr, '/left', y]);
+        logDetails(inf);
+      },
+
       testBindEqn: function() {
         var inf = Y.makeInference('bindEqn', [call('=', f, g), x]);
         assertEqual('({x : f} = {x : g})', inf.result);

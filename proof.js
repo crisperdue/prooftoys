@@ -682,10 +682,10 @@ var hoverHandlers = {
 //// PARSING
 
 /**
- * A token is a sequence of characters that are each alphanumeric
- * or ":", or a sequence that is none of these and not whitespace.
- * Returns an array of tokens in the input string, followed by
- * an "(end)" token.
+ * A token is a sequence of characters that are each alphanumeric or
+ * ":", or a sequence containing none of these and no whitespace.
+ * Returns an array of tokens in the input string, followed by an
+ * "(end)" token, omitting whitespace.
  */
 function tokenize(str) {
   var match;
@@ -698,34 +698,32 @@ function tokenize(str) {
   return result;
 }
 
-// Input will be a tree in the form of a nested array
-// of strings and arrays.  Explicit parentheses in the
-// input become arrays in the input.  This parses prefix
-// and infix operators into additional trees.
-// This parses destructively, replacing structure in the
-// input.
-//
-// Parse a subexpression of "a" starting at "pos"
-// in the context of an operator to the left with a binding
-// power of "leftPower", replacing the token at "pos"
-// with a parsed tree.
-//
-// If just one argument is given, parse the whole array
-// and return the parsed result.
-//
-// Reduces operators with greater than leftPower, replacing
-// the token at "a" with the parsed subtree.  Otherwise
-// leaves the token at "pos" unchanged.
-//
+/**
+ * Parses a string or array of token strings into an expression
+ * (Expr).  Throws an Error if parsing fails.
+ */
 function parse(tokens) {
+
+  /**
+   * Consumes and returns the next token, or the end token if there
+   * are no more.
+   */
   function next() {
     return tokens.length ? tokens.shift() : end;
   }
 
+  /**
+   * Returns the next token without consuming it, or the end token
+   * if no tokens remain.
+   */
   function peek() {
     return tokens[0] || end;
   }
 
+  /**
+   * Consumes the next token as returned by end(), throwing an Error
+   * if it is not euqal to the one expected.
+   */
   function expect(expected) {
     var token = next();
     if (token.name != expected) {
@@ -782,6 +780,9 @@ function parse(tokens) {
     }
   }
 
+  /**
+   * Like parseAbove, but throws an Error if it consumes no input.
+   */
   function mustParseAbove(lastPower) {
     var result = parseAbove(lastPower);
     if (!result) {
@@ -791,6 +792,7 @@ function parse(tokens) {
   }
 
   // Do the parse!
+
   if (typeof tokens == 'string') {
     tokens = tokenize(tokens);
   }
