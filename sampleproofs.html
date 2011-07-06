@@ -274,8 +274,8 @@ YUI({filter: null, insertBefore: 'styles'})
     
     subAll: {
       args: [implies(p, call('||', T, q)),
-             ({p: call('forall', lambda(x, call('||', T, b))),
-               q: call('forall', lambda(x, b))
+             ({p: Y.parse('forall {x : T || b}'),
+               q: Y.parse('forall {x : b}')
              })
             ],
     },
@@ -322,11 +322,7 @@ YUI({filter: null, insertBefore: 'styles'})
       args: [equal(call('-->', call('&&', p, q), r),
                    call('-->', p, call('-->', q, r)))],
       */
-      args: [call('-->',
-                  call('&&',
-                       call('-->', p, q),
-                       call('-->', call('not', p), q)),
-                  q)],
+      args: [Y.parse('(p --> q) && (not p --> q) --> q')],
       level: 1
     },
     

@@ -93,7 +93,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
       _should: {
         ignore: {
-          testTautology: true  // More time-consuming.
+          // testTautology: true  // More time-consuming.
         }
       },
 
@@ -439,8 +439,8 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testSubAll: function() {
-        var map = {p: call('forall', lambda(x, call('||', T, b))),
-                   q: call('forall', lambda(x, b))
+        var map = {p: Y.parse('forall {x | T || b}'),
+                   q: Y.parse('forall {x | b}')
         };
         var inf = Y.makeInference('subAll',
                                   [implies(p, call('||', T, q)), map]);
@@ -496,12 +496,9 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((not T) = F)', inf.result);
         inf = Y.makeInference('evalBool', [call('&&', F, T)]);
         assertEqual('((F && T) = F)', inf.result);
-        inf = Y.makeInference('evalBool', [call(p, call('||', F, T))]);
+        inf = Y.makeInference('evalBool', [Y.parse('(p (F || T))')]);
         assertEqual('((p (F || T)) = (p T))', inf.result);
-        // [p --> not p] --> not p
-        var taut = call('-->',
-                        call('-->', p, call('not', p)),
-                        call('not', p));
+        taut = Y.parse('(p --> not p) --> not p');
         inf = Y.makeInference('evalBool', [taut.subst(T, p, {})]);
         assertEqual('T', inf.result.getRight());
         inf = Y.makeInference('evalBool', [taut.subst(F, p, {})]);
@@ -515,17 +512,12 @@ YUI({filter: null, insertBefore: 'styles'})
         var wff = equal(x, x);
         var inf = Y.makeInference('tautology', [wff]);
         assertEqual(wff.toString(), inf.result);
-        // ((p --> (not p)) --> (not p))
-        var wff = call('-->',
-                       call('-->', p, call('not', p)),
-                       call('not', p));
-        Y.log('Tautology: '+wff);
+        var wff = Y.parse('(p --> not p) --> not p');
+        Y.log('Tautology: ' + wff);
         var inf = Y.makeInference('tautology', [wff]);
         assertEqual(wff.toString(), inf.result);
-        // (((p && q) --> r) = (p --> (q --> r)))
-        var wff = equal(call('-->', call('&&', p, q), r),
-                        call('-->', p, call('-->', q, r)));
-        Y.log('Tautology: '+wff);
+        var wff = Y.parse('(p && q --> r) = (p --> (q --> r))');
+        Y.log('Tautology: ' + wff);
         var inf = Y.makeInference('tautology', [wff]);
         assertEqual(wff.toString(), inf.result);
       },
