@@ -349,27 +349,16 @@ var ruleInfo = {
       Y.assert(target instanceof Y.Lambda, 'Not a function: ' + target);
       Y.assert(!expr.freeNames()[newVar.name],
                'New bound variable ' + newVar.name + ' must not occur free.');
-      var step1 = rules.axiom4(call(target, x));
       var changed = lambda(newVar,
                            Y.subFree(newVar, target.bound, target.body));
-      var step2 = rules.axiom4(call(changed, x));
-      var step3 = rules.axiom('axiom3');
-      var step4 = rules.sub(step3, target, 'f');
-      var step5 = rules.r(step1, step4, '/right/arg/body/left');
-      var step6 = rules.sub(step5, changed, 'g');
-      var step7 = rules.r(step1, step6, '/right/arg/body/right');
-      var step8 = rules.eqT(x);
-      var step9 = rules.rRight(step8, step7, '/right/arg/body');
-      var step10 = rules.useDefinition('forall', step9, '/right/fn');
-      var step11 = rules.eqT(lambda(x, T));
-      var step12 = rules.rRight(step11, step10, '/right');
-      var step13 = rules.eqnSwap(step12);
-      var step14 = rules.fromTIsA(step13);
-      var step15 = rules.r(step14, expr, path);
-      return step15;
+      var step1 = rules.eqSelf(changed);
+      var step2 = rules.r(step1, expr, path);
+      return step2;
     },
     comment: ('Change the name of a bound variable.  The new name '
-              + 'must not occur free in the target expression.')
+              + 'must not occur free in the target expression.  '
+              + 'Uses the fact that the original expression matches '
+              + 'the one with changed bound variable.')
   },
 
   /**
