@@ -204,6 +204,26 @@ function getDefinition(name, tOrF) {
 }
 
 
+//// CONSTANTS
+
+// The built-in constants.
+var _constants = {T: true, F: true, '=': true, the: true};
+
+/**
+ * Return a true value iff the given expression is a Var
+ * and is a built-in constant or has a definition.
+ */
+function isConstant(name) {
+  if (name instanceof Y.Var) {
+    name = name.name;
+  }
+  if (!(typeof name == 'string')) {
+    return false;
+  }
+  return _constants[name] || !!definitions[name];
+}
+
+
 //// PROOFS
 
 function Proof() {
@@ -692,13 +712,18 @@ function addBottomPanel(node) {
 
 /**
  * Returns a string showing the top-level properties
- * of an object, and their values.
+ * of an object, and their values.  If "specials" is
+ * given, it should be a map from key name to a function
+ * for presenting the value of any key with that name.
  */
 function debugString(o, specials) {
   if (typeof o == 'object') {
     var result = '{';
     for (var key in o) {
       if (o.hasOwnProperty(key)) {
+        if (result.length > 1) {
+          result += ', ';
+        }
         result += key + ': ';
         var value = o[key];
         var f = specials && specials[key];
@@ -721,7 +746,6 @@ function debugString(o, specials) {
         } else {
           result += '' + o[key];
         }
-        result += ' ';
       }
     }
     return result + '}';
@@ -781,6 +805,7 @@ Y.getTheorem = getTheorem;
 Y.define = define;
 Y.defineCases = defineCases;
 Y.getDefinition = getDefinition;
+Y.isConstant = isConstant;
 Y.renderSteps = renderSteps;
 Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;

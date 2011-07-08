@@ -64,6 +64,21 @@ function normalized(expr) {
   return expr.normalized(new Counter(1), null);
 }
 
+
+/**
+ * Matches the given "schematic" expression against the other
+ * expression.  Returns a substitution (map) from names
+ * to expressions.
+ */
+function matchAsSchema(schema, expr) {
+  var substitution = {};
+  var result = schema._matchAsSchema(expr, substitution);
+  return result ? substitution : null;
+}
+
+/**
+ * Packages up the "right way" to append a SPAN to a DOM node.
+ */
 function appendSpan(node) {
   return node.appendChild('<span class=expr></span>');
 }
@@ -320,6 +335,15 @@ Expr.prototype.pathTo = function(pred) {
 // same traversal of expr2, so it must have expressions at all the
 // locations where this does.  Performs action2 on every subexpression
 //
+//
+// _matchAsSchema(expr, substitution)
+//
+// Checks that this expression matches the argument expression under
+// the given substitution, return true iff it does, and extending the
+// substitution to a new variable if appropriate.  This must not
+// contain any variable bindings, but the expression can contain
+// anything.  Compares existing bindings with the parts of the
+// expression using "matches".
 
 
 //// Var -- variable bindings and references
@@ -406,6 +430,20 @@ Var.prototype.findAll = function(name, action1, expr2, action2) {
   if (this.name == name) {
     action1(this);
     action2(expr2);
+  }
+};
+
+Var.prototype._matchAsSchema = function(expr, map) {
+  // Caution: reference to function in proof.js.
+  if (Y.isConstant(this)) {
+    return this.matches(expr);
+  }
+  var binding = map[this.name];
+  if (binding) {
+    return expr.matches(binding);
+  } else {
+    map[this.name] = expr;
+    return true;
   }
 };
 
@@ -561,6 +599,15 @@ Call.prototype.findAll = function(name, action1, expr2, action2) {
   this.arg.findAll(name, action1, expr2.arg, action2);
 };
 
+Call.prototype._matchAsSchema = function(expr, map) {
+  if (expr instanceof Call) {
+    return (this.fn._matchAsSchema(expr.fn, map)
+            && this.arg._matchAsSchema(expr.arg, map));
+  } else {
+    return false;
+  }
+};
+
 
 //// Lambda -- variable bindings
 
@@ -671,6 +718,10 @@ Lambda.prototype.findAll = function(name, action1, expr2, action2) {
   if (this.bound.name != name) {
     this.body.findAll(name, action1, expr2.body, action2);
   }
+};
+
+Lambda.prototype._matchAsSchema = function(expr, map) {
+  throw new Error('Schema expression cannot contain variable bindings.');
 };
 
 
@@ -1182,6 +1233,7 @@ Y.normalized = normalized
 Y.decapture = decapture;
 Y.path = path;
 Y.getBinding = getBinding;
+Y.matchAsSchema = matchAsSchema;
 
 Y.assert = assert;
 Y.assertEqn = assertEqn;

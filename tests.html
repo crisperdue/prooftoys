@@ -171,9 +171,9 @@ YUI({filter: null, insertBefore: 'styles'})
       testReplace: function() {
         var y = _var('y');
         var e1 = call(lambda(x, call(f, x)), y);
-	var path = Y.path('/fn/body/arg');
+        var path = Y.path('/fn/body/arg');
         var result = e1.replace(path, function(expr) { return call(f, x); });
-	assertEqual('({x : (f (f x))} y)', result.toString());
+        assertEqual('({x : (f (f x))} y)', result.toString());
       },
 
       testPath: function() {
@@ -216,6 +216,17 @@ YUI({filter: null, insertBefore: 'styles'})
                     '' + call(f, call(f, call(g, x))).pathTo(findX));
       },
 
+      testMatchAsSchema: function() {
+        var bindings = Y.matchAsSchema(p, equal(x, x));
+        assertEqual('{p: (x = x)}',
+                    Y.debugString(bindings));
+        bindings = Y.matchAsSchema(implies(p, q),
+                                   Y.parse('x < 1 --> (x = 0)'));
+        assertEqual('{p: (x < 1), q: (x = 0)}',
+                    Y.debugString(bindings));
+      },
+
+
       // PARSER
 
       testTokenize: function() {
@@ -246,7 +257,16 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(a --> (a && c))', result);
       },
 
+
       // PROOFS
+
+      // Actually "proof support" function:
+      testIsConstant: function() {
+        Y.assert(Y.isConstant('T'));
+        Y.assert(Y.isConstant(T));
+        Y.assert(Y.isConstant('-->'));
+        Y.assert(!Y.isConstant(equal(x, x)));
+      },
 
       testRuleR: function() {
         var path = Y.path('/right/left');
