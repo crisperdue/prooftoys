@@ -860,6 +860,179 @@ function path(arg) {
 }
 
 
+//// PARSING
+
+/**
+ * A token is a sequence of characters that are each alphanumeric or
+ * ":", or a sequence containing none of these and no whitespace.
+ * Returns an array of tokens in the input string, followed by an
+ * "(end)" token, omitting whitespace.
+ */
+function tokenize(str) {
+  var match;
+  var pattern = /[(){}]|[:a-zA-Z0-9]+|[^:a-zA-Z0-9(){}\s]+/g;
+  var result = [];
+  while (match = pattern.exec(str)) {
+    result.push(new Y.Var(match[0], match.index));
+  }
+  result.push(new Y.Var('(end)', str.length));
+  return result;
+}
+
+/**
+ * Parses a string or array of token strings into an expression
+ * (Expr).  Throws an Error if parsing fails.
+ */
+function parse(tokens) {
+
+  /**
+   * Consumes and returns the next token, or the end token if there
+   * are no more.
+   */
+  function next() {
+    return tokens.length ? tokens.shift() : end;
+  }
+
+  /**
+   * Returns the next token without consuming it, or the end token
+   * if no tokens remain.
+   */
+  function peek() {
+    return tokens[0] || end;
+  }
+
+  /**
+   * Consumes the next token as returned by end(), throwing an Error
+   * if it is not euqal to the one expected.
+   */
+  function expect(expected) {
+    var token = next();
+    if (token.name != expected) {
+      // Report somehow.
+      var error = new Error('Expected ' + expected + ', got ' + token.name);
+      error.position = token.pos;
+      throw error;
+    }
+  }
+
+  /**
+   * Keep reducing leading parts into subtrees until the next token is
+   * an infix operator with precedence not greater than lastPower.
+   * Returns null if it consumes no input.
+   */
+  function parseAbove(lastPower) {
+    var left = null;
+    while (true) {
+      var token = peek();
+      var nextPower = getPrecedence(token);
+      if (nextPower != null && nextPower <= lastPower) {
+        return left;
+      }
+      next();
+      // If an atomic expression or unary/nullary expression is
+      // next, this will have it.
+      var expr = null;
+      if (token.name == '(') {
+        expr = mustParseAbove(0);
+        expect(')');
+      } else if (token.name == '{') {
+        var id = next();
+        Y.assert(isId(id), 'Expected identifier, got ' + id.name);
+        expect(peek().name == ':' ? ':' : '|');
+        var body = mustParseAbove(0);
+        expr = new Y.Lambda(id, body);
+        expect('}');
+      } else if (!left || nextPower == null) {
+        // Treat the token as an atomic expression.
+        expr = token;
+      }
+      // At this point expr and left are not both null.
+      if (expr) {
+        left = left ? new Y.Call(left, expr) : expr;
+      } else {
+        // Token is an infix operator of higher precedence than the last.
+        // At this point there is always an expression in "left".
+        left = new Y.Call(token, left);
+        var right = parseAbove(nextPower);
+        if (right) {
+          left = new Y.Call(left, right);
+        }
+      }
+    }
+  }
+
+  /**
+   * Like parseAbove, but throws an Error if it consumes no input.
+   */
+  function mustParseAbove(lastPower) {
+    var result = parseAbove(lastPower);
+    if (!result) {
+      throw new Error('Empty expression at ' + peek().pos);
+    }
+    return result;
+  }
+
+  // Do the parse!
+
+  if (typeof tokens == 'string') {
+    tokens = tokenize(tokens);
+  }
+  // The ending token.
+  var end = tokens.pop();
+  if (tokens.length < 1) {
+    // There should be at least one real token.
+    throw new Error('No parser input');
+  }
+  return parseAbove(0);
+};
+
+/**
+ * Is it a legal identifier?
+ */
+function isId(token) {
+  return token instanceof Y.Var
+    && token.name.match(/^[A-Za-z:$][A-Za-z0-9:$]*$/);
+}
+
+/**
+ * Get a precedence value: null for symbols, defaults to
+ * 1 for unknown non-symbols, the lowest infix precedence.
+ */
+function getPrecedence(token) {
+  var name = token.name;
+  var v = precedence[name];
+  if (f) {
+    return v;
+  } else {
+    return isId(name) ? null : 1;
+  }
+}
+
+// Precedence table for infix operators.
+var precedence = {
+  // Closing tokens have power 0 to make infix parsing return.
+  '(end)': 0,
+  ')': 0,
+  '}': 0,
+  // Implication binds tighter than equality, as in the book.
+  '=': 11,
+  '-->': 12,
+  '||': 13,
+  '&&': 14,
+  '<': 20,
+  '<=': 20,
+  '>': 20,
+  '>=': 20,
+  '+': 30,
+  '-': 30,
+  '*': 40,
+  '/': 40,
+  // Specials
+  '(': 1000,
+  '{': 1000
+};
+
+
 //// UTILITY FUNCTIONS
 
 /**
@@ -1012,6 +1185,9 @@ Y.getBinding = getBinding;
 
 Y.assert = assert;
 Y.assertEqn = assertEqn;
+
+Y.tokenize = tokenize;
+Y.parse = parse;
 
 Y.Expr.utils = utils;
 
