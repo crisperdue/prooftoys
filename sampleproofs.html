@@ -333,6 +333,14 @@ YUI({filter: null, insertBefore: 'styles'})
     implyForall: {
       args: [x, p, call(q, x)],
       level: 1
+    },
+
+    p: {
+      // Rule P is not yet implemented.
+      args: [Y.parse('p x'),
+             Y.parse('p x --> q x'),
+             Y.parse('p x && (p x --> q x) --> q x'),
+             Y.parse('P && (P --> Q) --> Q')]
     }
 
   };

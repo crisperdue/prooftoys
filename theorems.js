@@ -1067,20 +1067,30 @@ var ruleInfo = {
 
   // Rule P (5234).  Takes two theorems and a desired conclusion B as
   // input, and proves B.  The theorems must be of the form H --> A,
-  // and A1 && A2 --> B must be a tautology.
+  // and A1 && A2 --> B must be a tautology.  Note that A1 (and/or A2)
+  // may themselves be conjunctions.
   p: {
-    action: function(a1, a2, b) {
+    action: function(a1, a2, b, tautology) {
       var conjunction = rules.makeConjunction(a1, a2);
         
-      var tautology = implies(conjunction, b);
-      return rules.tautology(tautology);
-
-      // Dead code:
-      var wff2 = implies(call('&&', implies(h, p), implies(h, q)),
-                        implies(h, call('&&', p, q)));
-      return rules.tautology(wff);
+      var tautologous = implies(conjunction, b);
+      var substitution = Y.matchTautology(tautologous, tautology);
+      rules.tautology(taut);
     },
     comment: ('Rule P, with .')
+  },
+
+  r5238a: {
+    action: function(v, a, b) {
+      var step1 = rules.axiom('axiom3');
+      var step2 = rules.changeVar(step1, '/right/arg', v);
+      var step3 = rules.subAll(step2,
+                               ({f: lambda(v, a),
+                                 g: lambda(v, b)}));
+      // TODO: Finish me.
+      return T;
+    },
+    comment: ('')
   },
 
 
