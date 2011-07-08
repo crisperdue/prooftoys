@@ -806,22 +806,6 @@ function parse(tokens) {
 };
 
 /**
- * Checks the name of the token at the location and removes
- * it from the input if it is the same, else throws an Error
- * with message and position of the token.
- */
-function expect(a, pos, str) {
-  if (a[pos].name == str) {
-    a.splice(pos, 1);
-  } else {
-    // Report somehow.
-    var error = new Error('Expected ' + str + ', got ' + a[pos]);
-    error.position = a[pos].pos;
-    throw error;
-  }
-}
-
-/**
  * Is it a legal identifier?
  */
 function isId(token) {
