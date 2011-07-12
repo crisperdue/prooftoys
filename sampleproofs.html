@@ -288,7 +288,7 @@ YUI({filter: null, insertBefore: 'styles'})
     r5223: {},
     
     modusPonens: {
-      args: [p, q],
+      args: [p, implies(p, q)],
       level: 1
     },
     
@@ -336,10 +336,9 @@ YUI({filter: null, insertBefore: 'styles'})
     },
 
     p: {
-      // Rule P is not yet implemented.
       args: [Y.parse('p x'),
              Y.parse('p x --> q x'),
-             Y.parse('p x && (p x --> q x) --> q x'),
+             Y.parse('q x'),
              Y.parse('P && (P --> Q) --> Q')]
     }
 

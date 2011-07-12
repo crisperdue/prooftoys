@@ -68,12 +68,15 @@ function normalized(expr) {
 /**
  * Matches the given "schematic" expression against the other
  * expression.  Returns a substitution (map) from names
- * to expressions.
+ * to expressions, or throws an error if there is none.
  */
 function matchAsSchema(schema, expr) {
   var substitution = {};
   var result = schema._matchAsSchema(expr, substitution);
-  return result ? substitution : null;
+  if (!result) {
+    throw new Error(expr + ' is not a substitution instance of ' + schema);
+  }
+  return substitution;
 }
 
 /**

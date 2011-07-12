@@ -476,7 +476,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testModusPonens: function() {
-        var inf = Y.makeInference('modusPonens', [p, q]);
+        var inf = Y.makeInference('modusPonens', [p, implies(p, q)]);
         assertEqual('q', inf.result);
         logAssumptions(inf);
       },
@@ -542,13 +542,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual(wff.toString(), inf.result);
       },
 
-      testRulePTautology: function() {
-        var inf = Y.makeInference('rulePTautology', []);
-        var wff =
-          '((((h --> p) && (h --> q)) && ((p && q) --> r)) --> (h --> r))';
-        assertEqual(wff, inf.result);
-      },
-
       testMakeConjunction: function() {
         var inf = Y.makeInference('makeConjunction', [p, q]);
         assertEqual('(p && q)', inf.result);
@@ -580,9 +573,11 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testP: function() {
-        // TODO: implement.
-        // var inf = Y.makeInference('p', [etc]);
-        // logDetails(inf);
+        var inf = Y.makeInference('p', [Y.parse('p x'),
+                                         Y.parse('p x --> q x'),
+                                         Y.parse('q x'),
+                                         Y.parse('P && (P --> Q) --> Q')]);
+        assertEqual('(q x)', inf.result);
       },
 
       // END OF RULES AND THEOREMS

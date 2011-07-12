@@ -767,10 +767,11 @@ var ruleInfo = {
   },
 
   // 5224
+  // Given P and P --> Q, derive Q.
   modusPonens: {
     action: function(a, b) {
       var step1 = rules.toTIsA(a);
-      var step2 = rules.rRight(step1, call('-->', a, b), '/left');
+      var step2 = rules.rRight(step1, b, '/left');
       var step3 = rules.useDefinition('-->', step2, '/fn');
       var step4 = rules.reduce(step3, '');
       return step4;
@@ -975,18 +976,6 @@ var ruleInfo = {
     comment: ('Tautology decider.')
   },
 
-  // ((((h --> p) && (h --> q)) && ((p && q) --> r)) --> (h --> r))
-  rulePTautology: {
-    action: function() {
-      var wff = implies(call('&&',
-                             call('&&', implies(h, p), implies(h, q)),
-                             implies(call('&&', p, q), r)),
-                        implies(h, r));
-      return rules.tautology(wff);
-    },
-    comment: ('The key tautology behind rule P')
-  },
-
   // Given two statements a and b, proves a && b.
   makeConjunction: {
     action: function(a, b) {
@@ -1061,20 +1050,26 @@ var ruleInfo = {
               + 'is not free in the first argument.')
   },
     
-
-  // Rule P (5234).  Takes two theorems and a desired conclusion B as
-  // input, and proves B.  The theorems must be of the form H --> A,
-  // and A1 && A2 --> B must be a tautology.  Note that A1 (and/or A2)
-  // may themselves be conjunctions.
+  // Rule P (without hypotheses).
+  // This handles two antecedents.  If there are more than two,
+  // use repeated applications.  The given tautology must match
+  // ((A1 && A2) --> B, where B is the desired conclusion.
+  // To use more than two antecedents, use this with a1 as one antecedent
+  // and combine the rest with makeConjunction.
+  // the rest.
+  //
+  // 5234
   p: {
     action: function(a1, a2, b, tautology) {
-      var conjunction = rules.makeConjunction(a1, a2);
-        
-      var tautologous = implies(conjunction, b);
-      var substitution = Y.matchTautology(tautologous, tautology);
-      rules.tautology(taut);
+      var step2 = rules.makeConjunction(a1, a2);
+      var step1 = rules.tautology(tautology);
+      var tautologous = implies(step2, b);
+      var substitution = Y.matchAsSchema(tautology, tautologous);
+      var step3 = rules.subAll(step1, substitution);
+      var step4 = rules.modusPonens(step2, step3);
+      return step4;
     },
-    comment: ('Rule P, with .')
+    comment: ('Rule P without hypotheses.')
   },
 
   r5238a: {
@@ -1147,7 +1142,7 @@ var theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
                     'boolFnsEqual',
                     'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
                     'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
-                    'rulePTautology'];
+                    'rulePTautology', 'rulePTautology2'];
 
 for (var i = 0; i < theoremNames.length; i++) {
   Y.addTheorem(theoremNames[i]);
