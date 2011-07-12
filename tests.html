@@ -580,6 +580,25 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(q x)', inf.result);
       },
 
+      testR5238a: function() {
+        var inf = Y.makeInference('r5238a',
+                                  [y, call(p, y), call(q, y)]);
+        var wff =
+          '(({y : (p y)} = {y : (q y)}) = (forall {y : ((p y) = (q y))}))';
+        assertEqual(wff, inf.result);
+      },
+
+      testR5238: function() {
+        var inf = Y.makeInference('r5238',
+                                  [['x1', 'x2'],
+                                   call(p, _var('x1')),
+                                   call(p, _var('x2'))]);
+        var wff =
+          ('(({x1 : {x2 : (p x1)}} = {x1 : {x2 : (p x2)}}) = '
+           + '(forall {x1 : (forall {x2 : ((p x1) = (p x2))})}))');
+        assertEqual(wff, inf.result);
+      },
+
       // END OF RULES AND THEOREMS
 
       // Looking at what can be done with Andrews' definition of "and".

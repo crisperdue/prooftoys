@@ -340,6 +340,14 @@ YUI({filter: null, insertBefore: 'styles'})
              Y.parse('p x --> q x'),
              Y.parse('q x'),
              Y.parse('P && (P --> Q) --> Q')]
+    },
+
+    r5238a: {
+      args: [y, call(p, y), call(q, y)]
+    },
+
+    r5238: {
+      args: [['x1', 'x2'], call(p, _var('x1')), call(p, _var('x2'))]
     }
 
   };

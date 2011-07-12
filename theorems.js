@@ -724,7 +724,10 @@ var ruleInfo = {
       var wff = b;
       var map2 = {};
       for (var name in map) {
-        var v = Y.genVar('y', freeNames);
+        // TODO: Figure out how to rename guaranteeing that this
+        // won't cause renaming of any bound variables.  We might care
+        // about the result bound variable names, e.g. 5238.
+        var v = Y.genVar('_', freeNames);
         wff = rules.sub(wff, v, name);
         map2[v.name] = map[name];
       }
@@ -1074,17 +1077,43 @@ var ruleInfo = {
 
   r5238a: {
     action: function(v, a, b) {
+      if (typeof v == 'string') {
+        v = _var(v);
+      }
       var step1 = rules.axiom('axiom3');
       var step2 = rules.changeVar(step1, '/right/arg', v);
       var step3 = rules.subAll(step2,
                                ({f: lambda(v, a),
                                  g: lambda(v, b)}));
-      // TODO: Finish me.
-      return T;
+      var step4 = rules.reduce(step3, '/right/arg/body/left');
+      var step5 = rules.reduce(step4, '/right/arg/body/right');
+      return step5;
     },
     comment: ('')
   },
 
+  r5238: {
+    action: function(vars, a, b) {
+      Y.assert(vars.concat, 'Variables must be an array');
+      if (vars.length == 0) {
+        return rules.eqSelf(equal(a, b));
+      } else if (vars.length == 1) {
+        return rules.r5238a(vars[0], a, b);
+      } else {
+        var v = vars[vars.length - 1];
+        if (typeof v == 'string') {
+          v = _var(v);
+        }
+        var step1 = rules.r5238(vars.slice(0, -1),
+                                lambda(v, a),
+                                lambda(v, b));
+        var step2 = rules.r5238a(v, a, b);
+        var step3 = rules.r(step2, step1, '/right/arg/body');
+        return step3;
+      }
+    },
+    comment: ('')
+  },
 
   //
   // OPTIONAL/UNUSED
