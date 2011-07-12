@@ -712,11 +712,11 @@ var ruleInfo = {
     action: function(b, map) {
       // Collect all the free names in B and in all of the values
       // to be substituted.
-      var freeNames = b.freeNames();
+      var allNames = b.allNames();
       for (var key in map) {
-        var moreFree = map[key].freeNames();
+        var moreFree = map[key].allNames();
         for (var k2 in moreFree) {
-          freeNames[k2] = true;
+          allNames[k2] = true;
         }
       }
       // First change the names of all the variables to be
@@ -724,10 +724,7 @@ var ruleInfo = {
       var wff = b;
       var map2 = {};
       for (var name in map) {
-        // TODO: Figure out how to rename guaranteeing that this
-        // won't cause renaming of any bound variables.  We might care
-        // about the result bound variable names, e.g. 5238.
-        var v = Y.genVar('_', freeNames);
+        var v = Y.genVar('v', allNames);
         wff = rules.sub(wff, v, name);
         map2[v.name] = map[name];
       }
@@ -1111,6 +1108,30 @@ var ruleInfo = {
         var step3 = rules.r(step2, step1, '/right/arg/body');
         return step3;
       }
+    },
+    comment: ('')
+  },
+
+  r5239: {
+    action: function(vars, equation, target, path) {
+      path = Y.path(path);
+      if (!equation.isCall2('=')) {
+        throw new Error('Expecting an equation, got: ' + equation);
+      }
+      function replacer(expr) {
+        if (expr.matches(equation.getLeft())) {
+          return equation.getRight().copy();
+        } else {
+          Y.assert(false, 'Rule R: subexpression ' + expr +
+                   '\n of ' + target +
+                   '\n must match ' + equation.getLeft());
+        }
+      }
+      var d = target.replace(path, replacer);
+      var t = Y.genVar('t');
+      var boundVars = target.boundVars(path);
+      // TODO: complete me.
+      return result;
     },
     comment: ('')
   },

@@ -138,6 +138,34 @@ Expr.prototype.freeNames = function() {
   return byName;
 };
 
+/**
+ * Finds and returns a Map of all the bound names in this expression
+ * at the location given by the path.
+ */
+Expr.prototype.boundNames = function(path) {
+  path = Y.path(path);
+  var bindings = this._boundNames(path, null);
+  if (bindings) {
+    var map = {};
+    for (var more = bindings[0]; more; more = more.more) {
+      map[more.from] = true;
+    }
+    return map;
+  } else {
+    return {};
+  }
+};
+
+/**
+ * Finds and returns a Map with all names occurring in this expression
+ * occurring as keys, with values of "true".
+ */
+Expr.prototype.allNames = function() {
+  var byName = {};
+  this._addNames(byName);
+  return byName;
+};
+
 Expr.prototype.isBinOp = function() {
   return this instanceof Call && this.fn instanceof Call;
 };
@@ -191,7 +219,7 @@ Expr.prototype.repr = function() {
  * from its path.
  */
 Expr.prototype.locate = function(_path) {
-  return this.locate1(path(_path));
+  return this._locate(path(_path));
 };
 
 /**
@@ -390,6 +418,10 @@ Var.prototype._addFreeNames = function(map, bindings) {
   }
 };
 
+Var.prototype._boundNames = function(path, bindings) {
+  return path.isMatch() ? [bindings] : false;
+};
+
 Var.prototype._decapture = function(freeNames, allNames, bindings) {
   var newName = getBinding(this.name, bindings) || this.name;
   return new Var(newName);
@@ -403,7 +435,7 @@ Var.prototype.replace = function(path, xformer) {
   return path.isMatch() ? xformer(this) : this.copy();
 };
 
-Var.prototype.locate1 = function(path) {
+Var.prototype._locate = function(path) {
   return path.isMatch() ? this : null;
 };
 
@@ -507,6 +539,15 @@ Call.prototype._addFreeNames = function(map, bindings) {
   this.arg._addFreeNames(map, bindings);
 };
 
+Call.prototype._boundNames = function(path, bindings) {
+  if (path.isMatch()) {
+    return [bindings];
+  } else {
+    return (this.fn._boundNames(path.rest('fn'), bindings)
+            || this.arg._boundNames(path.rest('arg'), bindings));
+  }
+};
+
 Call.prototype._decapture = function(freeNames, allNames, bindings) {
   return new Call(this.fn._decapture(freeNames, allNames, bindings),
                   this.arg._decapture(freeNames, allNames, bindings));
@@ -527,12 +568,12 @@ Call.prototype.replace = function(path, xformer) {
   }
 };
 
-Call.prototype.locate1 = function(path) {
+Call.prototype._locate = function(path) {
   if (path.isMatch()) {
     return this;
   } else {
-    return this.fn.locate1(path.rest('fn'))
-      || this.arg.locate1(path.rest('arg'));
+    return (this.fn._locate(path.rest('fn'))
+            || this.arg._locate(path.rest('arg')));
   }
 };
 
@@ -660,6 +701,16 @@ Lambda.prototype._addFreeNames = function(map, bindings) {
   this.body._addFreeNames(map, new Bindings(name, true, bindings));
 };
 
+Lambda.prototype._boundNames = function(path, bindings) {
+  if (path.isMatch()) {
+    return [bindings];
+  } else {
+    var newBindings = new Bindings(this.bound.name, bindings);
+    return (this.bound._boundNames(path.rest('bound'), newBindings)
+            || this.body._boundNames(path.rest('body'), newBindings));
+  }
+};
+
 Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
   var oldName = this.bound.name;
   var newName = freeNames[oldName] ? genName(oldName, allNames) : oldName;
@@ -682,11 +733,11 @@ Lambda.prototype.replace = function(path, xformer) {
                  this.body.replace(path.rest('body'), xformer));
 };
 
-Lambda.prototype.locate1 = function(path) {
+Lambda.prototype._locate = function(path) {
   return path.isMatch()
     ? this
-    : this.bound.locate1(path.rest('bound'))
-        || this.body.locate1(path.rest('body'));
+    : this.bound._locate(path.rest('bound'))
+        || this.body._locate(path.rest('body'));
 };
 
 Lambda.prototype.matches = function(expr, bindings) {
