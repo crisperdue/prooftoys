@@ -348,6 +348,11 @@ YUI({filter: null, insertBefore: 'styles'})
 
     r5238: {
       args: [['x1', 'x2'], call(p, _var('x1')), call(p, _var('x2'))]
+    },
+
+    r5239: {
+      args: [equal(p, q), lambda(p, equal(q, p)), '/body/right'],
+      level: 1
     }
 
   };

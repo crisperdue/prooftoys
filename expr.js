@@ -1177,6 +1177,16 @@ function assertEqn(expr) {
          'Must be an equation: ' + expr);
 }
 
+/**
+ * True iff the given map is empty.
+ */
+function mapIsEmpty(map) {
+  for (var key in map) {
+    return false;
+  }
+  return true;
+}
+
 
 //// Useful utilities
 
@@ -1291,6 +1301,7 @@ Y.matchAsSchema = matchAsSchema;
 
 Y.assert = assert;
 Y.assertEqn = assertEqn;
+Y.mapIsEmpty = mapIsEmpty;
 
 Y.tokenize = tokenize;
 Y.parse = parse;

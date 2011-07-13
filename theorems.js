@@ -1112,26 +1112,48 @@ var ruleInfo = {
     comment: ('')
   },
 
+  // 5239, closely following the description and names in the book.
   r5239: {
-    action: function(vars, equation, target, path) {
+    action: function(equation, target, path) {
       path = Y.path(path);
       if (!equation.isCall2('=')) {
         throw new Error('Expecting an equation, got: ' + equation);
       }
-      function replacer(expr) {
-        if (expr.matches(equation.getLeft())) {
-          return equation.getRight().copy();
-        } else {
-          Y.assert(false, 'Rule R: subexpression ' + expr +
-                   '\n of ' + target +
-                   '\n must match ' + equation.getLeft());
-        }
+      var step1 = rules.axiom('axiom2');
+      var a = equation.getLeft();
+      var b = equation.getRight();
+      var boundNames = target.boundNames(path);
+      // Is this the full set of names?
+      var t = Y.genVar('t', Y.merge(target.allNames(), equation.allNames()));
+      var texpr = t;
+      for (var name in boundNames) {
+        texpr = call(texpr, _var(name));
       }
-      var d = target.replace(path, replacer);
-      var t = Y.genVar('t');
-      var boundVars = target.boundVars(path);
-      // TODO: complete me.
-      return result;
+      var aBound = a;
+      var bBound = b;
+      var boundNameList = [];
+      for (var name in boundNames) {
+        var v = _var(name);
+        aBound = lambda(v, aBound);
+        bBound = lambda(v, bBound);
+        boundNameList.push(name);
+      }
+      var g = target.replace(path, function(expr) { return texpr; });
+      var step2 = rules.subAll(step1,
+                               ({x: aBound, y: bBound, h: lambda(t, g)}));
+      var step3 = rules.reduce(step2, '/right/left');
+      var step4 = step3;
+      for (var i = 0; i < boundNameList.length; i++) {
+        step4 = rules.reduce(step4, '/right/left/body/right');
+      }
+      var step5 = rules.reduce(step4, '/right/right');
+      var step6 = step5;
+      for (var i = 0; i < boundNameList.length; i++) {
+        step6 = rules.reduce(step6, '/right/right/body/right');
+      }
+      var step7 = rules.r5238(boundNameList, a, b);
+      var step8 = rules.r(step7, step6, '/left');
+      return step8;
     },
     comment: ('')
   },
