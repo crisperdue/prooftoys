@@ -1088,7 +1088,8 @@ function parse(tokens) {
     // There should be at least one real token.
     throw new Error('No parser input');
   }
-  return parseAbove(0);
+  var result = parseAbove(0);
+  return result;
 };
 
 /**

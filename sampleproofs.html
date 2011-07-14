@@ -353,6 +353,13 @@ YUI({filter: null, insertBefore: 'styles'})
     r5239: {
       args: [equal(p, q), lambda(p, equal(q, p)), '/body/right'],
       level: 1
+    },
+
+    hypR: {
+      args: [Y.parse('x > 0 --> (x = (abs x))'),
+             Y.parse('x > 0 --> ((x + x) > x)'), '/right'
+             ],
+      level: 1
     }
 
   };

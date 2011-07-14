@@ -1069,7 +1069,7 @@ var ruleInfo = {
       var step4 = rules.modusPonens(step2, step3);
       return step4;
     },
-    comment: ('Rule P without hypotheses.')
+    comment: ('Simplified form of Rule P without hypotheses.')
   },
 
   r5238a: {
@@ -1109,7 +1109,7 @@ var ruleInfo = {
         return step3;
       }
     },
-    comment: ('')
+    comment: ('Equal functions equate to equal expression values.')
   },
 
   // 5239, closely following the description and names in the book.
@@ -1122,6 +1122,7 @@ var ruleInfo = {
       var step1 = rules.axiom('axiom2');
       var a = equation.getLeft();
       var b = equation.getRight();
+      // Should we subtract out the ones not free in A = B?
       var boundNames = target.boundNames(path);
       // Is this the full set of names?
       var t = Y.genVar('t', Y.merge(target.allNames(), equation.allNames()));
@@ -1151,12 +1152,63 @@ var ruleInfo = {
       for (var i = 0; i < boundNameList.length; i++) {
         step6 = rules.reduce(step6, '/right/right/body/right');
       }
+      if (boundNameList.length == 0) {
+        return step6;
+      }
       var step7 = rules.r5238(boundNameList, a, b);
       var step8 = rules.r(step7, step6, '/left');
       return step8;
     },
-    comment: ('')
+    comment: ('Analog to Rule R, expressed as an implication.')
   },
+
+  // Like Rule R', based on 5240 (the Deduction Theorem).
+  // The path is relative to the right side of C (the right side
+  // of h_c).
+  // The proof here is a subset of the proof of 5240.
+  hypR: {
+    action: function(h_equation, h_c, path) {
+      var assert = Y.assert;
+      assert(h_c.isCall2('-->'), 'Not an implication: ' + h_c);
+      assert(h_equation.isCall2('-->'), 'Not an implication: ' + h_equation);
+      var h = h_c.getLeft();
+      assert(h.matches(h_equation.getLeft()), 'Differing hypotheses: ' + h);
+      var equation = h_equation.getRight();
+      assert(equation.isCall2('='), 'Expecting an equation, got: ' + equation);
+      var c = h_c.getRight();
+      var a = equation.getLeft();
+      var b = equation.getRight();
+      // Should we subtract out the ones not free in A = B?
+      var boundNames = c.boundNames(path);
+      var hypFreeNames = h.freeNames();
+      // Check ahead of time that the variables are OK.
+      // TODO: Do appropriate checking in 5235 and impliesForall as well.
+      for (var name in boundNames) {
+        if (hypFreeNames[name]) {
+          throw new Error('Variable ' + name + ' cannot be free in ' + h);
+        }
+      }
+      var step1 = h_equation;
+      for (var name in boundNames) {
+        step1 = rules.implyForall(name, h, equation);
+      }
+      var step2 = rules.r5239(equation, c, path);
+      var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
+      var step3 = rules.p(step1,
+                          step2,
+                          implies(step1.getLeft(), step2.getRight()),
+                          tautology);
+      var taut2 = Y.parse('(h --> p) && (h --> (p = q)) --> (h --> q)');
+      var step4 = rules.p(h_c,
+                          step3,
+                          implies(h, step3.getRight().getRight()),
+                          taut2);
+      return step4;
+    },
+    comment: ("Analog to the deduction theorem, replacing an equation "
+              + "that is true conditionally.")
+  },
+    
 
   //
   // OPTIONAL/UNUSED

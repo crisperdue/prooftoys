@@ -620,6 +620,14 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((p = q) --> ((r = p) = (r = q)))', inf.result);
       },
 
+      testHypR: function() {
+        var args = [Y.parse('x > 0 --> (x = (abs x))'),
+             Y.parse('x > 0 --> ((x + x) > x)'), '/right'
+             ]
+        var inf = Y.makeInference('hypR', args);
+        assertEqual('((x > 0) --> ((x + x) > (abs x)))', inf.result);
+      },
+
 
       // END OF RULES AND THEOREMS
 
