@@ -1102,7 +1102,9 @@ function isId(token) {
 
 /**
  * Get a precedence value: null for symbols, defaults to
- * 1 for unknown non-symbols, the lowest infix precedence.
+ * 5 for unknown non-symbols, the lowest infix precedence,
+ * below all infix operators except |- for derivation from
+ * hypotheses.
  */
 function getPrecedence(token) {
   var name = token.name;
@@ -1110,7 +1112,7 @@ function getPrecedence(token) {
   if (f) {
     return v;
   } else {
-    return isId(name) ? null : 1;
+    return isId(name) ? null : 5;
   }
 }
 
@@ -1120,6 +1122,7 @@ var precedence = {
   '(end)': 0,
   ')': 0,
   '}': 0,
+  '|-': 1,
   // Implication binds tighter than equality, as in the book.
   '=': 11,
   '-->': 12,

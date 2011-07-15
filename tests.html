@@ -620,11 +620,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((p = q) --> ((r = p) = (r = q)))', inf.result);
       },
 
-      testHypR: function() {
+      testRPrime: function() {
         var args = [Y.parse('x > 0 --> (x = (abs x))'),
              Y.parse('x > 0 --> ((x + x) > x)'), '/right'
              ]
-        var inf = Y.makeInference('hypR', args);
+        var inf = Y.makeInference('rPrime', args);
         assertEqual('((x > 0) --> ((x + x) > (abs x)))', inf.result);
       },
 

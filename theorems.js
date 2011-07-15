@@ -1162,13 +1162,20 @@ var ruleInfo = {
     comment: ('Analog to Rule R, expressed as an implication.')
   },
 
-  // Like Rule R', based on 5240 (the Deduction Theorem).
-  // The path is relative to the right side of C (the right side
-  // of h_c).
-  // The proof here is a subset of the proof of 5240.
-  hypR: {
+  // Like Rule R', based on 5240 (the Deduction Theorem).  The path is
+  // relative to the right side of C (the right side of h_c).  The
+  // proof here is a subset of the proof of 5240.
+  //
+  // For convenience applies rule R directly if the equation is really
+  // an equation and not an implication.
+  replace: {
     action: function(h_equation, h_c, path) {
       var assert = Y.assert;
+      if (h_equation.isCall2('=')) {
+        // Allow "replace" to be used for situations where "r"
+        // is applicable.
+        return rules.r(h_equation, h_c, path);
+      }
       assert(h_c.isCall2('-->'), 'Not an implication: ' + h_c);
       assert(h_equation.isCall2('-->'), 'Not an implication: ' + h_equation);
       var h = h_c.getLeft();
@@ -1252,7 +1259,8 @@ Y.define('forall', equal(lambda(x, T)));
 Y.defineCases('&&', identity, lambda(x, F));
 Y.defineCases('||', allT, identity);
 Y.defineCases('-->', identity, allT);
-
+// Derivation from hypotheses
+Y.define('|-', _var('-->'));
 
 // Add the axioms and theorems to the "database".  This can only
 // include ones that are not "axiom schemas", i.e. not parameterized.
