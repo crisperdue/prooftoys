@@ -13,14 +13,27 @@ var identity = lambda(x, x);
 
 var allT = lambda(x, T);
 
+// List of rules that work with hypotheses.
+//
+// This covers rules that precede the deduction theorem (5240).
+//
+// All of the equality rules (5201 parts), by R and/or Replace
+//   depending on the situation.
+// Universal instantiation (5215) - by rule R.
+// Rule T (5219) - by rule RR.
+// uGen (5220) - by rule Replace.
+// sub and subAll (5221) - uses uGen.
+// cases (5222) - uses Replace.
+// modusPonens (5224) - uses Replace.
+// tautInst (Rule P, 5234) - uses modusPonens.
+// impliesForall (5237) - uses Replace and tautInst.
+
+
 // Map from inference rule name to a JavaScript function that
 // implements it.  The functions may use a global variable
 // named "rules" that should have all of these functions in it,
 // wrapped with code that manages the inference stack for
 // Y.makeInference.
-//
-// TODO: Extend this information to include more than the name and
-// function, for example a brief caption, a schema for WFF produced.
 var ruleInfo = {
 
   /**
@@ -78,6 +91,8 @@ var ruleInfo = {
         }
         var result = target.replace(path, replacer);
         return result;
+      } else if (equation.isCall2('-->') || equation.isCall2('|-')) {
+        rules.replace(equation, target, path);
       } else {
         throw new Error('Rule R requires equation: ' + equation);
       }
@@ -1176,7 +1191,8 @@ var ruleInfo = {
         // is applicable.
         return rules.r(h_equation, h_c, path);
       }
-      assert(h_c.isCall2('-->'), 'Not an implication: ' + h_c);
+      assert(h_c.isCall2('-->') || h_c.isCall2('|-'),
+              'Not an implication: ' + h_c);
       assert(h_equation.isCall2('-->'), 'Not an implication: ' + h_equation);
       var h = h_c.getLeft();
       assert(h.matches(h_equation.getLeft()), 'Differing hypotheses: ' + h);
