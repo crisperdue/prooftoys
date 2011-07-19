@@ -35,6 +35,12 @@ p {
   padding: .2em 1em;
 }
 
+
+/*
+ * Rules for proofdisplay.js
+ */
+
+
 /* Contains an entire proof or subproof. */
 .proof {
   margin: 3px;
@@ -78,7 +84,7 @@ p {
   border-color: transparent;
 }
 
-span.expr.hovered {
+.proofLine .expr.hovered {
   background-color: #ffffaa;
   border-color: silver;
 }
@@ -115,7 +121,7 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
   visibility: visible;
 }
 
-/* Proof displays */
+/* Proof displays -- proof.js */
 
 /* Header line and comments for display. */
 .proofHeader {
@@ -123,6 +129,7 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
     line-height: 150%;
 }
 
+/* Display of the proof itself */
 .proofDisplay {
     margin: 1em;
     padding: 1px;
@@ -130,6 +137,7 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
     background-color: #beb;
 }
 
+/* The outermost element of a step */
 .proofStep {
     background-color: #F0F0DA;
     font-size: 90%;
@@ -155,21 +163,52 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
 /* Scope of operation, e.g. function body to substitute into.
  * Lower priority than "new", so precedes it in the file.
  */
-.scope {
+.proofStep .scope {
   background-color: #eee;
 }
 
 /* New value ("replacement") -- green */
-.new {
-  background-color: #3e8;
+.proofStep .new {
+  background-color: lime;
+  font-weight: bold;
 }
 
-/* References to the current step. */
-span.referenced {
-  background-color: pink;
+/* References to a step number, where it is used as an input */
+span.stepNumber.referenced {
+  border-color: #88F;
 }
 
 span.ruleName {
   color: #55F;
   cursor: pointer;
+}
+
+/* Expression in a proof step display */
+.proofStep .expr, span.stepNumber {
+  padding: 0px 1px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: transparent;
+}
+
+/* When hovering over an expression */
+.proofStep .expr.hovered {
+  background-color: #ffffaa;
+  border-color: silver;
+}
+
+/* Subexpressions of a hovered expression */
+.proofStep .expr.hovered .expr {
+  border-top-color: silver;
+  border-bottom-color: silver;
+}
+
+.proofStep .expr.selected {
+  border-color: black;
+}
+
+/* Subexpressions of a hovered expression */
+.proofStep .expr.selected .expr {
+  border-top-color: black;
+  border-bottom-color: black;
 }

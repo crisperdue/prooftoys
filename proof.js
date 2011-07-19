@@ -324,6 +324,23 @@ Proof.prototype.renderSteps = function(proofNode) {
     // Render the WFF and record the rendered copy as the inference
     // result.
     inf.result = inf.result.render(wffNode);
+    // Set up a click handler for selections within the step.
+    Y.on('click',
+         // This implements a policy of one selection per proof step.
+         // TODO: Implement such policies in the proof controller.
+         function(event) {
+           var target = event.target;
+           var selection = this.getData('selection');
+           if (selection) {
+             selection.removeClass('selected');
+           }
+           var newSelection = target == selection ? null : target;
+           if (newSelection) {
+             newSelection.addClass('selected');
+           }
+           this.setData('selection', newSelection);
+         },
+         wffNode);
 
     // Map to inference, from its result expression as string.
     // Represents steps depended on by the inference.
@@ -346,6 +363,7 @@ Proof.prototype.renderSteps = function(proofNode) {
                 // Call "hover", passing these arguments as well as the event.
                 Y.rbind(hover, null, this, i, 'in', proofNode),
                 Y.rbind(hover, null, this, i, 'out', proofNode));
+
     allSteps[inf.result.asString()] = inf;
     // Caution: passing null to Y.on selects everything.
     var target = stepNode.one('span.ruleName');
@@ -531,7 +549,6 @@ function hoverExpr(wff, path) {
   var displayNode = Y.one('#hoverPath');
   if (displayNode) {
     // If there is no bottom panel, do nothing.
-    // Y.log('Hover ' + (path ? path.toString() : ''));
     var expr = wff.locate(path);
     var pathStr = path ? path.toString() : '';
     displayNode.setContent(pathStr);
@@ -683,6 +700,7 @@ var hoverHandlers = {
                   inf.result,
                   function(expr) { expr.node[op]('new'); });
   },
+  // TODO: subAll
   forallInst: function(inf, op) {
     var deps = inf.deps;
     var args = inf.arguments;
