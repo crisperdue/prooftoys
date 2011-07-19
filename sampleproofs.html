@@ -384,7 +384,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
     var proofNode = Y.one('#proofs');
     proofNode.setContent('');
-    Y.renderSteps(inference, proofNode);
+    Y.renderInference(inference, proofNode);
     document.title = 'Proof display -- ' + ruleName;
   }
 

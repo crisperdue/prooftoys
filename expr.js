@@ -244,7 +244,7 @@ Expr.prototype.render = function(node) {
  * first, followed by the rest in top-down left-to-right order.
  */
 Expr.prototype.pathTo = function(pred) {
-  var revPath = this.path1(pred, path('/'));
+  var revPath = this._path(pred, path('/'));
   if (revPath == null) {
     return null;
   }
@@ -345,7 +345,8 @@ Expr.prototype.pathTo = function(pred) {
 // given as a boolean function of one argument.  Returns the first
 // subexpression that passes the test, with this expression itself
 // tested first, followed by the rest in top-down, left-to-right
-// order, or null if there is none.
+// order, or null if there is none.  The search does not include
+// variable bindings.  Check bindings when visiting the Lambda.
 //
 //
 // _render(node)
@@ -452,7 +453,7 @@ Var.prototype.search = function(pred) {
   return pred(this) ? this : null;
 };
 
-Var.prototype.path1 = function(pred, revPath) {
+Var.prototype._path = function(pred, revPath) {
   return pred(this) ? revPath : null;
 };
 
@@ -592,11 +593,11 @@ Call.prototype.search = function(pred) {
     : this.fn.search(pred) || this.arg.search(pred);
 };
 
-Call.prototype.path1 = function(pred, revPath) {
+Call.prototype._path = function(pred, revPath) {
   return pred(this)
     ? revPath
-    : this.fn.path1(pred, new Path('fn', revPath))
-      || this.arg.path1(pred, new Path('arg', revPath));
+    : this.fn._path(pred, new Path('fn', revPath))
+      || this.arg._path(pred, new Path('arg', revPath));
 };
 
 Call.prototype._render = function(node) {
@@ -753,10 +754,10 @@ Lambda.prototype.search = function(pred) {
   return pred(this) ? this : this.body.search(pred);
 };
 
-Lambda.prototype.path1 = function(pred, revPath) {
+Lambda.prototype._path = function(pred, revPath) {
   return pred(this)
     ? revPath
-    : this.body.path1(pred, new Path('body', revPath));
+    : this.body._path(pred, new Path('body', revPath));
 };
 
 Lambda.prototype._render = function(node) {

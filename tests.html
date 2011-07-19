@@ -368,7 +368,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(T = (b = b))', Y.makeInference('eqT', ['b']).result);
 	var inf = Y.makeInference('eqT', [call(f, x)]);
         assertEqual('(T = ((f x) = (f x)))', inf.result);
-	Y.renderSteps(inf);
+	Y.renderInference(inf);
       },
 
       testR5211: function() {
