@@ -20,6 +20,10 @@ function Inference(name, ruleArgs, result, proof) {
   this.result = result;
   // Proof of the result (Inferences), empty for a primitive inference.
   this.proof = proof;
+  // If rendered, may have a "selection" property or a "selections"
+  // property indicating any expressions in it currently selected
+  // in the UI.
+  // 
   // If rendered, has a "deps" property, a map from result string
   // to the premises of this inference, themselves inferences.
   // The values of the deps have always been rendered.
@@ -36,14 +40,6 @@ function Inference(name, ruleArgs, result, proof) {
 Inference.prototype.getStepNode = function() {
   // Or alternatively, its ancestor that has the proofStep CSS class.
   return this.result.node.get('parentNode');
-};
-
-/**
- * Returns the subexpression of the result of this inference
- * associated with the given DOM node.
- */
-Inference.prototype.findSubexpression = function(node) {
-  return this.result.search(function (expr) { return expr.node == node; });
 };
 
 Inference.prototype.toString = function() {
@@ -306,7 +302,7 @@ Proof.prototype.stepNumber = function(inference) {
 };
 
 
-//// PROOF CONTROLS
+//// PROOF CONTROL
 
 /**
  * Construct a ProofControl given a DOM node and handler function for
@@ -317,18 +313,44 @@ function ProofControl(controlNode, proof, proofNode) {
   this.node = controlNode;
   this.proof = proof;
   this.proofNode = proofNode;
-  this.selections = {};
   // Only official "proof nodes" are permitted to have this class:
   proofNode.addClass('proofDisplay');
   // TODO: Lay out the contents of the node here.
 }
 
-ProofControl.prototype.select = function(node) {
-  Y.log('select');
+ProofControl.prototype.select = function(expr) {
+  // Default constraints -- one selection per step.
+  this._selectPerStep(expr);
 };
 
-ProofControl.prototype.deselect = function(node) {
-  Y.log('deselect');
+ProofControl.prototype.deselect = function(expr) {
+  // Assumes default constraints -- one selection per step.
+  this._deselectPerStep(expr);
+};
+
+/**
+ * Selects an expr in "selection per step" mode, deselecting any other
+ * selected parts of the step.
+ */
+ProofControl.prototype._selectPerStep = function(expr) {
+  var step = Y.getProofStep(expr);
+  var selection = step.selection;
+  if (selection) {
+    selection.node.removeClass('selected');
+  }
+  expr.node.addClass('selected');
+  step.selection = expr;
+};
+
+/**
+ * Deselects an expr, assuming "selection per step" mode.
+ */
+ProofControl.prototype._deselectPerStep = function(expr) {
+  var step = Y.getProofStep(expr);
+  Y.assert(step.selection.node.hasClass('selected'),
+           'Deselecting non-selected: ' + expr);
+  step.selection.node.removeClass('selected');
+  step.selection = null;
 };
 
 
@@ -372,11 +394,9 @@ function renderSteps(controller) {
          function(event) {
            var target = event.target;
            if (target.hasClass('selected')) {
-             target.removeClass('selected');
-             controller.deselect(target);
+             controller.deselect(getExpr(target));
            } else {
-             target.addClass('selected');
-             controller.select(target);
+             controller.select(getExpr(target));
            }
          },
          wffNode);
@@ -778,21 +798,46 @@ function getStepNode(node) {
 
 /**
  * Gets the proof step (Inference) of the step that renders
- * in part into the given YUI Node.
+ * in part into the given YUI Node.  Also accepts an Expr of
+ * a rendered proof.
  */
 function getProofStep(node) {
+  if (node instanceof Y.Expr) {
+    node = node.node;
+  }
   return getStepNode(node).getData('proofStep');
 }
 
+/**
+ * Gets the YUI Node of a rendered proof given the YUI node of
+ * one of its steps or of an expression in a step.
+ */
 function getProofNode(node) {
   return node.ancestor('.proofDisplay', true);
 }
 
 /**
  * Gets the proof that renders in part into the given YUI Node.
+ * Also accepts an Expr or Inference of a rendered proof.
  */
 function getProof(node) {
+  if (node instanceof Y.Expr) {
+    node = node.node;
+  }
+  if (node instanceof Inference) {
+    node = node.getStepNode();
+  }
   return getProofNode(node).getData('proof');
+}
+
+/**
+ * Returns the expression associated with a YUI node.
+ */
+function getExpr(node) {
+  // Go up to the proof step then look through all subexpressions.
+  var step = getProofStep(node);
+  return step.result.search(function (expr) { return expr.node == node; },
+                            true);
 }
 
 
@@ -911,6 +956,7 @@ Y.getProofNode = getProofNode;
 Y.getProofStep = getProofStep;
 Y.getProofNode = getProofNode;
 Y.getProof = getProof;
+Y.getExpr = getExpr;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;
 

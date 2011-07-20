@@ -339,14 +339,14 @@ Expr.prototype.pathTo = function(pred) {
 // expression containing e2.
 //
 //
-// search(test)
+// search(test, bindings)
 //
 // Searches for a subexpression of this that passes the given test,
 // given as a boolean function of one argument.  Returns the first
 // subexpression that passes the test, with this expression itself
 // tested first, followed by the rest in top-down, left-to-right
-// order, or null if there is none.  The search does not include
-// variable bindings.  Check bindings when visiting the Lambda.
+// order, or null if there is none.  The search includes
+// variable bindings if bindings is truthy.
 //
 //
 // _render(node)
@@ -449,8 +449,9 @@ Var.prototype.matches = function(expr, bindings) {
   }
 };
 
-Var.prototype.search = function(pred) {
-  return pred(this) ? this : null;
+Var.prototype.search = function(pred, bindings) {
+  var result = pred(this) ? this : null;
+  return result;
 };
 
 Var.prototype._path = function(pred, revPath) {
@@ -587,10 +588,11 @@ Call.prototype.matches = function(expr, bindings) {
   }
 };
 
-Call.prototype.search = function(pred) {
-  return pred(this)
+Call.prototype.search = function(pred, bindings) {
+  var result = pred(this)
     ? this
-    : this.fn.search(pred) || this.arg.search(pred);
+    : this.fn.search(pred, bindings) || this.arg.search(pred, bindings);
+  return result;
 };
 
 Call.prototype._path = function(pred, revPath) {
@@ -750,8 +752,12 @@ Lambda.prototype.matches = function(expr, bindings) {
   }
 };
 
-Lambda.prototype.search = function(pred) {
-  return pred(this) ? this : this.body.search(pred);
+Lambda.prototype.search = function(pred, bindings) {
+  var result = pred(this)
+    ? this
+    : ((bindings && this.bound.search(pred, bindings))
+       || this.body.search(pred, bindings));
+  return result;
 };
 
 Lambda.prototype._path = function(pred, revPath) {
