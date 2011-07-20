@@ -306,6 +306,30 @@ Proof.prototype.stepNumber = function(inference) {
 };
 
 
+//// PROOF CONTROLS
+
+/**
+ * Construct a ProofControl given a DOM node and handler function for
+ * selection events.  Instances must also have methods "select"
+ * and "deselect".  Each takes a single DOM Node argument.
+ */
+function ProofControl(controlNode, proof, proofNode) {
+  this.node = controlNode;
+  this.proof = proof;
+  this.proofNode = proofNode;
+  this.selections = {};
+  // TODO: Lay out the contents of the node here.
+}
+
+ProofControl.prototype.select = function(node) {
+  Y.log('select');
+};
+
+ProofControl.prototype.deselect = function(node) {
+  Y.log('deselect');
+};
+
+
 //// RENDERING AND EVENT HANDLING
 
 /**
@@ -319,7 +343,9 @@ Proof.prototype.stepNumber = function(inference) {
  * - Each proofStep YUI node has a proofStep property that refers
  *   to the Inference (proof step) it represents.
  */
-function renderSteps(proof, proofNode) {
+function renderSteps(controller) {
+  var proof = controller.proof;
+  var proofNode = controller.proofNode;
   proofNode.setContent('');
   var steps = proof.steps;
   // Map from inference result string to inference.
@@ -342,15 +368,13 @@ function renderSteps(proof, proofNode) {
          // TODO: Implement such policies in the proof controller.
          function(event) {
            var target = event.target;
-           var selection = this.getData('selection');
-           if (selection) {
-             selection.removeClass('selected');
+           if (target.hasClass('selected')) {
+             target.removeClass('selected');
+             controller.deselect(target);
+           } else {
+             target.addClass('selected');
+             controller.select(target);
            }
-           var newSelection = target == selection ? null : target;
-           if (newSelection) {
-             newSelection.addClass('selected');
-           }
-           this.setData('selection', newSelection);
          },
          wffNode);
 
@@ -530,7 +554,8 @@ function renderInference(inference, node) {
     var wff = assumptions[key];
     inference.proof.add(makeInference('given', [wff]), 0);
   }
-  renderSteps(inference.proof, proofNode);
+  var controller = new ProofControl(null, inference.proof, proofNode);
+  renderSteps(controller);
   Y.on('mouseover', exprHandleOver, proofNode);
   Y.on('mouseout', exprHandleOut, proofNode);
 }
