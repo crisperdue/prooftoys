@@ -318,6 +318,8 @@ function ProofControl(controlNode, proof, proofNode) {
   this.proof = proof;
   this.proofNode = proofNode;
   this.selections = {};
+  // Only official "proof nodes" are permitted to have this class:
+  proofNode.addClass('proofDisplay');
   // TODO: Lay out the contents of the node here.
 }
 
@@ -340,13 +342,14 @@ ProofControl.prototype.deselect = function(node) {
  *
  * - Each rendered expression has a "node" property that refers
  *   to a YUI node with its rendering.
- * - Each proofStep YUI node has a proofStep property that refers
+ * - Each proofStep YUI node has a proofStep data property that refers
  *   to the Inference (proof step) it represents.
  */
 function renderSteps(controller) {
   var proof = controller.proof;
   var proofNode = controller.proofNode;
   proofNode.setContent('');
+  proofNode.setData('proof', proof);
   var steps = proof.steps;
   // Map from inference result string to inference.
   var allSteps = {};
@@ -517,7 +520,7 @@ function fancyStepNumber(n) {
  * Renders the proof steps of an inference and a header by appending
  * them to a container Node, which defaults to the document body.  The
  * first child is the header, rendered with class proofHeader.  The
- * second is the proof display, with class proofDisplay.
+ * second is the proof display.  Returns the proof display node.
  */
 function renderInference(inference, node) {
   if (node == null) {
@@ -545,7 +548,7 @@ function renderInference(inference, node) {
                    + inference.name + '</b>' + argInfo + '<br>'
                    + '<i>' + comment + '</i>'
                    + '</div>');
-  var proofNode = node.appendChild('<div class=proofDisplay></div>');
+  var proofNode = node.appendChild('<div></div>');
   // Map to inference from its result as string.  Each result will be
   // annotated with links into the DOM.  Starts with the assumptions.
   // Add the assumptions to the proof before rendering it.
@@ -558,6 +561,7 @@ function renderInference(inference, node) {
   renderSteps(controller);
   Y.on('mouseover', exprHandleOver, proofNode);
   Y.on('mouseout', exprHandleOut, proofNode);
+  return proofNode;
 }
 
 /**
@@ -754,7 +758,45 @@ var hoverHandlers = {
 };
 
 
-//// UTILITY FUNCTIONS
+//// PROOF NAVIGATION
+
+// Every Expr (expression) of a rendered proof has a "node" property
+// that references the YUI Node that has the display for that
+// expression.  From each of these nodes the YUI Node for its proof
+// step (Inference) is accessible, and from the YUI Node for a proof
+// step, the inference itself accessible.  From any of these YUI Nodes
+// the Node of the entire proof is accessible, and from it the Proof
+// object, all using the API below.
+
+/**
+ * Gets the DOM node associated with the step, given the YUI
+ * node for all or part of the expression for the step.
+ */
+function getStepNode(node) {
+  return node.ancestor('.proofStep', true);
+}
+
+/**
+ * Gets the proof step (Inference) of the step that renders
+ * in part into the given YUI Node.
+ */
+function getProofStep(node) {
+  return getStepNode(node).getData('proofStep');
+}
+
+function getProofNode(node) {
+  return node.ancestor('.proofDisplay', true);
+}
+
+/**
+ * Gets the proof that renders in part into the given YUI Node.
+ */
+function getProof(node) {
+  return getProofNode(node).getData('proof');
+}
+
+
+//// OTHER UTILITY FUNCTIONS
 
 function addBottomPanel(node) {
   node = node || new Y.Node(document.body);
@@ -865,6 +907,10 @@ Y.renderInference = renderInference;
 Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;
 Y.debugString = debugString;
+Y.getProofNode = getProofNode;
+Y.getProofStep = getProofStep;
+Y.getProofNode = getProofNode;
+Y.getProof = getProof;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;
 
