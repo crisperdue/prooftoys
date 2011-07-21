@@ -155,6 +155,10 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
   background-color: white;
  }
 
+.proofStep.selected {
+  background-color: #FF6;
+}
+
 /* Old value ("removed"), occurrence of variable to be substituted. */
 .proofStep .old, .proofStep .occur {
   color: #A0A0A0; /* Between silver and gray */

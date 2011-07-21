@@ -20,9 +20,13 @@ function Inference(name, ruleArgs, result, proof) {
   this.result = result;
   // Proof of the result (Inferences), empty for a primitive inference.
   this.proof = proof;
+  // If rendered, the YUI node (proof step node) for this step.
+  this.node = null;
   // If rendered, may have a "selection" property or a "selections"
   // property indicating any expressions in it currently selected
-  // in the UI.
+  // in the UI:
+  this.selections = [];
+  this.selection = null;
   // 
   // If rendered, has a "deps" property, a map from result string
   // to the premises of this inference, themselves inferences.
@@ -237,6 +241,10 @@ function isConstant(name) {
 function Proof() {
   // Steps in order.
   this.steps = [];
+  // A rendered proof can have a single selected step or
+  // a set (array) of selected steps.
+  this.selections = [];
+  this.selection = null;
 }
 
 /**
@@ -318,39 +326,34 @@ function ProofControl(controlNode, proof, proofNode) {
   // TODO: Lay out the contents of the node here.
 }
 
-ProofControl.prototype.select = function(expr) {
-  // Default constraints -- one selection per step.
-  this._selectPerStep(expr);
-};
-
-ProofControl.prototype.deselect = function(expr) {
-  // Assumes default constraints -- one selection per step.
-  this._deselectPerStep(expr);
-};
-
-/**
- * Selects an expr in "selection per step" mode, deselecting any other
- * selected parts of the step.
- */
-ProofControl.prototype._selectPerStep = function(expr) {
-  var step = Y.getProofStep(expr);
-  var selection = step.selection;
-  if (selection) {
-    selection.node.removeClass('selected');
+ProofControl.prototype.handleStepClick = function(step) {
+  var proof = this.proof;
+  var selection = proof.selection;
+  if (step == selection) {
+    step.node.removeClass('selected');
+    proof.selection = null;
+  } else {
+    if (selection) {
+      selection.node.removeClass('selected');
+    }
+    step.node.addClass('selected');
+    proof.selection = step;
   }
-  expr.node.addClass('selected');
-  step.selection = expr;
 };
 
-/**
- * Deselects an expr, assuming "selection per step" mode.
- */
-ProofControl.prototype._deselectPerStep = function(expr) {
-  var step = Y.getProofStep(expr);
-  Y.assert(step.selection.node.hasClass('selected'),
-           'Deselecting non-selected: ' + expr);
-  step.selection.node.removeClass('selected');
-  step.selection = null;
+ProofControl.prototype.handleExprClick = function(expr) {
+  var step = getProofStep(expr);
+  var selection = step.selection;
+  if (expr == selection) {
+    selection.node.removeClass('selected');
+    step.selection = null;
+  } else {
+    if (selection) {
+      selection.node.removeClass('selected');
+    }
+    expr.node.addClass('selected');
+    step.selection = expr;
+  }
 };
 
 
@@ -380,6 +383,7 @@ function renderSteps(controller) {
     var text = '<div class=proofStep><span class=stepNumber>'
       + (i + 1) + '.</span> </div>';
     var stepNode = proofNode.appendChild(text);
+    inf.node = stepNode;
     stepNode.setData('proofStep', steps[i]);
     // See appendSpan in expr.js.
     var wffNode = stepNode.appendChild('<span class=expr></span>');
@@ -387,20 +391,23 @@ function renderSteps(controller) {
     // Render the WFF and record the rendered copy as the inference
     // result.
     inf.result = inf.result.render(wffNode);
-    // Set up a click handler for selections within the step.
+
+    // Set up click handlers for selections within the step.
     Y.on('click',
          // This implements a policy of one selection per proof step.
          // TODO: Implement such policies in the proof controller.
          function(event) {
-           var target = event.target;
-           if (target.hasClass('selected')) {
-             controller.deselect(getExpr(target));
-           } else {
-             controller.select(getExpr(target));
-           }
+           controller.handleExprClick(getExpr(event.target));
+           // Don't bubble the event up to the proof step.
+           event.stopPropagation();
          },
          wffNode);
-
+    Y.on('click',
+         function(event) {
+           controller.handleStepClick(getProofStep(event.target));
+         },
+         stepNode);
+                
     // Map to inference, from its result expression as string.
     // Represents steps depended on by the inference.
     // Attach the result as the inference "deps" property.
