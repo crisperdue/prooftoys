@@ -133,13 +133,13 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
 .proofDisplay {
     margin: 1em;
     padding: 1px;
-    font-family: monospace;
     background-color: #beb;
 }
 
 /* The outermost element of a step */
 .proofStep {
     background-color: #F0F0DA;
+    font-family: monospace;
     font-size: 90%;
     padding: 2px;
     margin: 1px 0px;
@@ -215,4 +215,11 @@ span.ruleName {
 .proofStep .expr.selected .expr {
   border-top-color: black;
   border-bottom-color: black;
+}
+
+/* Proof step editor */
+
+/* Overrides styles for .proofDisplay. */
+.stepEditor {
+  background-color: white;
 }

@@ -323,7 +323,9 @@ function ProofControl(controlNode, proof, proofNode) {
   this.proofNode = proofNode;
   // Only official "proof nodes" are permitted to have this class:
   proofNode.addClass('proofDisplay');
-  // TODO: Lay out the contents of the node here.
+  this.editorButton = null;
+  // Currently a YUI node, should become a widget.
+  this.stepEditor = null;
 }
 
 ProofControl.prototype.handleStepClick = function(step) {
@@ -588,8 +590,52 @@ function renderInference(inference, node) {
   renderSteps(controller);
   Y.on('mouseover', exprHandleOver, proofNode);
   Y.on('mouseout', exprHandleOut, proofNode);
+  var div = node.appendChild('<div></div>');
+  var buttonHtml =
+    ('<input class=addStep type=button value="+" '
+     + 'title="Add a step to the proof">');
+  var button = div.appendChild(buttonHtml);
+  button.on('click',
+            function () {
+              if (!(controller.stepEditor && controller.stepEditor.visible)) {
+                showStepEditor(controller, controller.proof.steps.length);
+              } else {
+                controller.stepEditor.node.remove();
+                button.set('value', '+');
+                controller.stepEditor.visible = false;
+                controller.stepEditor = null;
+              }
+            });
+  controller.editorButton = button;
   return proofNode;
 }
+
+/**
+ * Displays the proof step editor at the given index in the proof,
+ * setting it as the stepEditor.  If the index is greater than the
+ * index of any proof step, appends it at the end.
+ */
+function showStepEditor(controller, position) {
+  if (!controller.stepEditor) {
+    var html =
+      ('<div class=stepEditor>Hello</div>');
+    var editorNode;
+    var steps = controller.proof.steps;
+    if (position < steps.length) {
+      var prevNode = steps[position].node;
+      editorNode = prevNode.get('parentNode').insertBefore(html, prevNode);
+    } else {
+      editorNode =
+        steps[steps.length - 1].node.get('parentNode').appendChild(html);
+    }
+    // TODO: Decide what to store in the controller.
+    editorNode.node = editorNode;
+    editorNode.visible = true;
+    controller.stepEditor = editorNode;
+    controller.editorButton.set('value', '-');
+  }
+}
+
 
 
 //// PROOF NAVIGATION
