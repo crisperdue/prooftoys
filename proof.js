@@ -591,6 +591,72 @@ function renderInference(inference, node) {
   return proofNode;
 }
 
+
+//// PROOF NAVIGATION
+
+// Every Expr (expression) of a rendered proof has a "node" property
+// that references the YUI Node that has the display for that
+// expression.  From each of these nodes the YUI Node for its proof
+// step (Inference) is accessible, and from the YUI Node for a proof
+// step, the inference itself accessible.  From any of these YUI Nodes
+// the Node of the entire proof is accessible, and from it the Proof
+// object, all using the API below.
+
+/**
+ * Gets the DOM node associated with the step, given the YUI
+ * node for all or part of the expression for the step.
+ */
+function getStepNode(node) {
+  return node.ancestor('.proofStep', true);
+}
+
+/**
+ * Gets the proof step (Inference) of the step that renders
+ * in part into the given YUI Node.  Also accepts an Expr of
+ * a rendered proof.
+ */
+function getProofStep(node) {
+  if (node instanceof Y.Expr) {
+    node = node.node;
+  }
+  return getStepNode(node).getData('proofStep');
+}
+
+/**
+ * Gets the YUI Node of a rendered proof given the YUI node of
+ * one of its steps or of an expression in a step.
+ */
+function getProofNode(node) {
+  return node.ancestor('.proofDisplay', true);
+}
+
+/**
+ * Gets the proof that renders in part into the given YUI Node.
+ * Also accepts an Expr or Inference of a rendered proof.
+ */
+function getProof(node) {
+  if (node instanceof Y.Expr) {
+    node = node.node;
+  }
+  if (node instanceof Inference) {
+    node = node.getStepNode();
+  }
+  return getProofNode(node).getData('proof');
+}
+
+/**
+ * Returns the expression associated with a YUI node.
+ */
+function getExpr(node) {
+  // Go up to the proof step then look through all subexpressions.
+  var step = getProofStep(node);
+  return step.result.search(function (expr) { return expr.node == node; },
+                            true);
+}
+
+
+//// EVENT HANDLING
+
 /**
  * Handle mouseovers on subexpressions.  The event target can
  * be any part of a proof node.
@@ -783,69 +849,6 @@ var hoverHandlers = {
                            function(expr) { expr.node[op]('new'); });
   }
 };
-
-
-//// PROOF NAVIGATION
-
-// Every Expr (expression) of a rendered proof has a "node" property
-// that references the YUI Node that has the display for that
-// expression.  From each of these nodes the YUI Node for its proof
-// step (Inference) is accessible, and from the YUI Node for a proof
-// step, the inference itself accessible.  From any of these YUI Nodes
-// the Node of the entire proof is accessible, and from it the Proof
-// object, all using the API below.
-
-/**
- * Gets the DOM node associated with the step, given the YUI
- * node for all or part of the expression for the step.
- */
-function getStepNode(node) {
-  return node.ancestor('.proofStep', true);
-}
-
-/**
- * Gets the proof step (Inference) of the step that renders
- * in part into the given YUI Node.  Also accepts an Expr of
- * a rendered proof.
- */
-function getProofStep(node) {
-  if (node instanceof Y.Expr) {
-    node = node.node;
-  }
-  return getStepNode(node).getData('proofStep');
-}
-
-/**
- * Gets the YUI Node of a rendered proof given the YUI node of
- * one of its steps or of an expression in a step.
- */
-function getProofNode(node) {
-  return node.ancestor('.proofDisplay', true);
-}
-
-/**
- * Gets the proof that renders in part into the given YUI Node.
- * Also accepts an Expr or Inference of a rendered proof.
- */
-function getProof(node) {
-  if (node instanceof Y.Expr) {
-    node = node.node;
-  }
-  if (node instanceof Inference) {
-    node = node.getStepNode();
-  }
-  return getProofNode(node).getData('proof');
-}
-
-/**
- * Returns the expression associated with a YUI node.
- */
-function getExpr(node) {
-  // Go up to the proof step then look through all subexpressions.
-  var step = getProofStep(node);
-  return step.result.search(function (expr) { return expr.node == node; },
-                            true);
-}
 
 
 //// OTHER UTILITY FUNCTIONS
