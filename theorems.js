@@ -1303,4 +1303,4 @@ for (var i = 0; i < theoremNames.length; i++) {
 Y.ruleInfo = ruleInfo;
 Y.theorems = theoremNames;
 
-}, '0.1', {use: ['array-extras', 'expr', 'proof']});
+}, '0.1', {requires: ['array-extras', 'expr', 'proof']});

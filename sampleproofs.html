@@ -7,7 +7,6 @@
   <title>Proof Display</title>
    <!-- TODO: deploy with yui-min.js rather than yui.js -->
   <script src="http://yui.yahooapis.com/3.3.0/build/yui/yui.js"></script>
-  <!-- <script src="event-custom.js"></script> -->
 
   <link id=styles type="text/css" rel="stylesheet" href="logic.css">
   <script src="expr.js"></script>
@@ -26,7 +25,8 @@ body {
 </style>
   
 </head>
-<body style="margin-left: .5em; text-align: left; font-family: sans-serif">
+<body class=yui3-skin-sam
+ style="margin-left: .5em; text-align: left; font-family: sans-serif">
 
 <h1>Proof Display</h1>
 
@@ -114,7 +114,8 @@ this template</a> for your input.
 
 
 <script>
-YUI({filter: null, insertBefore: 'styles'})
+// Remove "filter" to load minified JavaScript.
+YUI({filter: 'raw', insertBefore: 'styles'})
    .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
         'proof', 'collection', 'querystring-parse', 'json',
         // querystring-parse requires "collection" (?!)

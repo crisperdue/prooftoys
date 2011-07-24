@@ -617,17 +617,42 @@ function renderInference(inference, node) {
  */
 function showStepEditor(controller, position) {
   if (!controller.stepEditor) {
-    var html =
+    var div =
       ('<div class=stepEditor>Hello</div>');
     var editorNode;
     var steps = controller.proof.steps;
     if (position < steps.length) {
       var prevNode = steps[position].node;
-      editorNode = prevNode.get('parentNode').insertBefore(html, prevNode);
+      editorNode = prevNode.get('parentNode').insertBefore(div, prevNode);
     } else {
       editorNode =
-        steps[steps.length - 1].node.get('parentNode').appendChild(html);
+        steps[steps.length - 1].node.get('parentNode').appendChild(div);
     }
+    var input = editorNode.appendChild('<input class=ruleSelector>');
+    var config = {resultFilters: ['startsWith'],
+                  resultHighlighter: 'startsWith',
+                  source: ['friends', 'romans', 'countrymen'],
+                  inputNode: input,
+                  render: true
+    };
+    var ac = new Y.AutoComplete(config);
+    // On Enter key press select the active item. If no item is active but
+    // there is just one result make it active first.
+    ac._keysVisible[13] = function () {
+      var item = this.get('activeItem');
+      var results = this.get('results');
+      if (!item && results.length == 1) {
+        this._keyDown();
+        item = this.get('activeItem');
+      }
+      if (item) {
+        this.selectItem(item);
+      } else {
+        // Don't prevent form submission when there's no active item.
+        return false;
+      }
+    };
+
     // TODO: Decide what to store in the controller.
     editorNode.node = editorNode;
     editorNode.visible = true;
@@ -1019,5 +1044,5 @@ Y.rules = rules;
 // For testing:
 Y.definitions = definitions;
 
-
-}, '0.1', {use: ['array-extras', 'expr']});
+}, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',
+                      'autocomplete-filters', 'autocomplete-highlighters']});

@@ -1319,4 +1319,4 @@ Y.parse = parse;
 
 Y.Expr.utils = utils;
 
-}, '0.1', {use: ['node', 'array-extras']});
+}, '0.1', {requires: ['node', 'array-extras']});
