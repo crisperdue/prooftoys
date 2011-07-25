@@ -223,3 +223,14 @@ span.ruleName {
 .stepEditor {
   background-color: white;
 }
+
+.sted-hint {
+  font-style: italic;
+  font-size: 90%;
+  color: gray;
+}
+
+/* Input for rule name, wff, etc. */
+input.sted-input {
+  font-family: monospace;
+}

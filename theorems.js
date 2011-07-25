@@ -97,6 +97,7 @@ var ruleInfo = {
         throw new Error('Rule R requires equation: ' + equation);
       }
     },
+    inputs: [{secondary: 'equation'}, {primary: 'location'}],
     comment: ('Replaces an occurrence of an expression with something'
               + ' it is equal to.')
   },
@@ -111,6 +112,7 @@ var ruleInfo = {
       var rev = rules.eqnSwap(equation);
       return rules.r(rev, target, path);
     },
+    inputs: [{secondary: 'equation'}, {primary: 'location'}],
     comment: ('Replaces an occurrence of an expression with something'
               + ' equal to it, replacing right side with left side.')
   },
@@ -245,6 +247,7 @@ var ruleInfo = {
       var step1 = rules.axiom4(call(lambda(x, x), a));
       return rules.r(step1, step1, '/left');
     },
+    inputs: [{term: 'any'}],
     comment: 'Derives A = A.'
   },
 
@@ -263,6 +266,7 @@ var ruleInfo = {
       var ba = rules.r(ab, aa, '/left');
       return ba;
     },
+    inputs: [{primary: 'equation'}],
     comment: 'From A = B derives B = A'
   },
 
@@ -295,6 +299,8 @@ var ruleInfo = {
       var step2 = rules.r(eqn, step1, '/right/fn');
       return step2;
     },
+    inputs: {or: [{primary: 'equation', secondary: {term: 'any'}},
+                  ({primary: {term: 'any'}, secondary: 'equation'})]},
     comment: 'Given f = g, derive (f A) = (g A)'
   },
 
@@ -305,6 +311,8 @@ var ruleInfo = {
       var abac = rules.r(bc, abab, '/right/arg');
       return(abac);
     },
+    inputs: {or: [{primary: 'equation', secondary: {term: 'any'}},
+                  ({primary: {term: 'any'}, secondary: 'equation'})]},
     comment: 'Given B = C derives (f B) = (f C)'
   },
 
@@ -346,6 +354,7 @@ var ruleInfo = {
       var result = rules.r(equation, expr, path);
       return result;
     },
+    inputs: [{primary: 'location'}],
     comment: ('Substitutes an actual argument for the formal variable'
               + ' in one function call of a WFF.')
   },
@@ -1284,13 +1293,15 @@ Y.define('|-', _var('-->'));
 // and theorem schemas will be able to stay, but the details remain
 // to be determined.
 
-var theoremNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5',
-                    'defForall', 'defFFromBook', 'axiomTIsNotF',
-                    'axiomPNeqNotP', 'defNot', 'defAnd',
-                    'boolFnsEqual',
-                    'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
-                    'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
-                    'rulePTautology', 'rulePTautology2'];
+var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
+
+var theoremNames =
+  (axiomNames.concat(['defForall', 'defFFromBook', 'axiomTIsNotF',
+                      'defNot', 'defAnd',
+                      'boolFnsEqual',
+                      'r5211', 't', 'r5212', 'r5223', 'r5230TF', 'r5230FT',
+                      'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
+                      'rulePTautology', 'rulePTautology2']));
 
 for (var i = 0; i < theoremNames.length; i++) {
   Y.addTheorem(theoremNames[i]);
@@ -1299,8 +1310,10 @@ for (var i = 0; i < theoremNames.length; i++) {
 
 //// Export public names.
 
+Y.axiomNames = axiomNames;
+Y.theoremNames = theoremNames;
+
 // For testing.
 Y.ruleInfo = ruleInfo;
-Y.theorems = theoremNames;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'proof']});

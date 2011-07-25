@@ -328,6 +328,11 @@ function ProofControl(controlNode, proof, proofNode) {
   this.stepEditor = null;
 }
 
+/**
+ * Handler for click on a proof step.  Selects the current
+ * step, deselecting any other.  Toggles the current one if
+ * already selected.
+ */
 ProofControl.prototype.handleStepClick = function(step) {
   var proof = this.proof;
   var selection = proof.selection;
@@ -343,6 +348,12 @@ ProofControl.prototype.handleStepClick = function(step) {
   }
 };
 
+/**
+ * Handler for click on a subexpression in a step.
+ * Deselects any other selected expression in the step,
+ * toggles the current one if already selected.  Prevents
+ * event bubbling up to the step itself.
+ */
 ProofControl.prototype.handleExprClick = function(expr) {
   var step = getProofStep(expr);
   var selection = step.selection;
@@ -356,6 +367,8 @@ ProofControl.prototype.handleExprClick = function(expr) {
     expr.node.addClass('selected');
     step.selection = expr;
   }
+  // Don't bubble the event up to the proof step.
+  event.stopPropagation();
 };
 
 
@@ -400,8 +413,6 @@ function renderSteps(controller) {
          // TODO: Implement such policies in the proof controller.
          function(event) {
            controller.handleExprClick(getExpr(event.target));
-           // Don't bubble the event up to the proof step.
-           event.stopPropagation();
          },
          wffNode);
     Y.on('click',
@@ -598,7 +609,7 @@ function renderInference(inference, node) {
   button.on('click',
             function () {
               if (!(controller.stepEditor && controller.stepEditor.visible)) {
-                showStepEditor(controller, controller.proof.steps.length);
+                Y.showStepEditor(controller, controller.proof.steps.length);
               } else {
                 controller.stepEditor.node.remove();
                 button.set('value', '+');
@@ -608,57 +619,6 @@ function renderInference(inference, node) {
             });
   controller.editorButton = button;
   return proofNode;
-}
-
-/**
- * Displays the proof step editor at the given index in the proof,
- * setting it as the stepEditor.  If the index is greater than the
- * index of any proof step, appends it at the end.
- */
-function showStepEditor(controller, position) {
-  if (!controller.stepEditor) {
-    var div =
-      ('<div class=stepEditor>Hello</div>');
-    var editorNode;
-    var steps = controller.proof.steps;
-    if (position < steps.length) {
-      var prevNode = steps[position].node;
-      editorNode = prevNode.get('parentNode').insertBefore(div, prevNode);
-    } else {
-      editorNode =
-        steps[steps.length - 1].node.get('parentNode').appendChild(div);
-    }
-    var input = editorNode.appendChild('<input class=ruleSelector>');
-    var config = {resultFilters: ['startsWith'],
-                  resultHighlighter: 'startsWith',
-                  source: ['friends', 'romans', 'countrymen'],
-                  inputNode: input,
-                  render: true
-    };
-    var ac = new Y.AutoComplete(config);
-    // On Enter key press select the active item. If no item is active but
-    // there is just one result make it active first.
-    ac._keysVisible[13] = function () {
-      var item = this.get('activeItem');
-      var results = this.get('results');
-      if (!item && results.length == 1) {
-        this._keyDown();
-        item = this.get('activeItem');
-      }
-      if (item) {
-        this.selectItem(item);
-      } else {
-        // Don't prevent form submission when there's no active item.
-        return false;
-      }
-    };
-
-    // TODO: Decide what to store in the controller.
-    editorNode.node = editorNode;
-    editorNode.visible = true;
-    controller.stepEditor = editorNode;
-    controller.editorButton.set('value', '-');
-  }
 }
 
 
@@ -983,7 +943,9 @@ var inferenceStack = [new Proof()];
 
 // Map from rule name to function.  The function runs the
 // core rule code, wrapped in more code that makes potentially
-// nested inferences using makeInference.
+// nested inferences using makeInference.  Each function here
+// can have an "info" property with all the data from the ruleInfo
+// object passed to createRules.
 //
 // TODO: It is really roundabout to have both ruleInfo and rules.
 // Simplify them.
@@ -1044,5 +1006,4 @@ Y.rules = rules;
 // For testing:
 Y.definitions = definitions;
 
-}, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',
-                      'autocomplete-filters', 'autocomplete-highlighters']});
+}, '0.1', {requires: ['array-extras', 'expr', 'step-editor']});
