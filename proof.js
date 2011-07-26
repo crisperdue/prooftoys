@@ -312,6 +312,9 @@ Proof.prototype.stepNumber = function(inference) {
 
 //// PROOF CONTROL
 
+// TODO: Extend these to support steps that can take more
+// than one selection.
+
 /**
  * Construct a ProofControl given a DOM node and handler function for
  * selection events.  Instances must also have methods "select"
@@ -330,6 +333,48 @@ function ProofControl(controlNode, proof, proofNode) {
 }
 
 /**
+ * Unconditionally select the step, no other action.
+ */
+ProofControl.prototype.selectStep = function(step) {
+  step.node.addClass('selected');
+  this.proof.selection = step;
+};
+
+/**
+ * Unconditionally deselect any selected step and any
+ * selected expression in it.
+ */
+ProofControl.prototype.deselectStep = function() {
+  var step = this.proof.selection;
+  if (step) {
+    step.node.removeClass('selected');
+    this.proof.selection = null;
+    this.deselectExpr(step);
+  }
+};
+
+/**
+ * Unconditionally select the expr, no other action.
+ */
+ProofControl.prototype.selectExpr = function(expr) {
+  var step = getProofStep(expr);
+  expr.node.addClass('selected');
+  step.selection = expr;
+};
+
+/**
+ * Unconditionally deselect any selected expr in the
+ * step, no other action.
+ */
+ProofControl.prototype.deselectExpr = function(step) {
+  var expr = step.selection;
+  if (expr) {
+    expr.node.removeClass('selected');
+    step.selection = null;
+  }
+};
+
+/**
  * Handler for click on a proof step.  Selects the current
  * step, deselecting any other.  Toggles the current one if
  * already selected.
@@ -337,15 +382,12 @@ function ProofControl(controlNode, proof, proofNode) {
 ProofControl.prototype.handleStepClick = function(step) {
   var proof = this.proof;
   var selection = proof.selection;
-  if (step == selection) {
-    step.node.removeClass('selected');
-    proof.selection = null;
-  } else {
-    if (selection) {
-      selection.node.removeClass('selected');
-    }
-    step.node.addClass('selected');
-    proof.selection = step;
+  this.deselectStep();
+  if (selection) {
+    this.deselectExpr(selection);
+  }
+  if (step != selection) {
+    this.selectStep(step);
   }
 };
 
@@ -357,17 +399,18 @@ ProofControl.prototype.handleStepClick = function(step) {
  */
 ProofControl.prototype.handleExprClick = function(expr) {
   var step = getProofStep(expr);
-  var selection = step.selection;
-  if (expr == selection) {
-    selection.node.removeClass('selected');
-    step.selection = null;
-  } else {
-    if (selection) {
-      selection.node.removeClass('selected');
-    }
-    expr.node.addClass('selected');
-    step.selection = expr;
+  var selection = this.proof.selection;
+  var oldExpr = null;
+  this.deselectStep();
+  if (selection) {
+    oldExpr = selection.selection;
+    this.deselectExpr(selection);
   }
+  if (expr != oldExpr) {
+    this.selectExpr(expr);
+  }
+  // Always select the step containing the clicked expression.
+  this.selectStep(step);
   // Don't bubble the event up to the proof step.
   event.stopPropagation();
 };
