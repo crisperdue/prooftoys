@@ -312,7 +312,7 @@ Proof.prototype.stepNumber = function(inference) {
 
 //// PROOF CONTROL
 
-// TODO: Extend these to support steps that can take more
+// TODO: Extend these to support proof steps that can take more
 // than one selection.
 
 /**
@@ -516,9 +516,11 @@ function renderSteps(controller) {
     // Caution: passing null to Y.on selects everything.
     var target = stepNode.one('span.ruleName');
     if (target) {
-      Y.on('click',
-           Y.rbind(renderSubProof, null, inf, stepsNode),
-           target);
+      target.on('click', Y.rbind(function(event, inf) {
+            renderSubProof(event, inf, stepsNode);
+            // Don't give the proof step a chance to select itself.
+            event.stopPropagation();
+          }, null, inf));
     }
   }
 };
