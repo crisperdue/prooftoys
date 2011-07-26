@@ -130,10 +130,19 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
 }
 
 /* Display of the proof itself */
-.proofDisplay {
+table.proofDisplay {
     margin: 1em;
     padding: 1px;
     background-color: #beb;
+    width: 70%;
+}
+
+/*
+ * Container for all the proof steps.
+ * Notice that this turns off wrapping!
+ */
+.proofSteps {
+  white-space: nowrap;
 }
 
 /* The outermost element of a step */
@@ -230,7 +239,15 @@ span.ruleName {
   color: gray;
 }
 
+/* Text used as a hint, as in a text field */
+.hinted {
+  font-style: italic;
+  font-size: 90%;
+  color: gray;
+}
+
 /* Input for rule name, wff, etc. */
 input.sted-input {
   font-family: monospace;
+  width: 80%;
 }

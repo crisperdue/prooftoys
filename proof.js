@@ -322,10 +322,11 @@ function ProofControl(controlNode, proof, proofNode) {
   this.proof = proof;
   this.proofNode = proofNode;
   // Only official "proof nodes" are permitted to have this class:
-  proofNode.addClass('proofDisplay');
+  // Parent of the step nodes.
+  html = '<table class=proofDisplay><tr><td><div class=proofSteps></div></table>';
+  proofNode.append(html);
+  this.stepsNode = proofNode.one('.proofSteps');
   this.editorButton = null;
-  // Currently a YUI node, should become a widget.
-  this.stepEditor = null;
 }
 
 /**
@@ -387,17 +388,17 @@ ProofControl.prototype.handleExprClick = function(expr) {
  */
 function renderSteps(controller) {
   var proof = controller.proof;
-  var proofNode = controller.proofNode;
-  proofNode.setContent('');
-  proofNode.setData('proof', proof);
+  var stepsNode = controller.stepsNode;
+  stepsNode.setContent('');
+  stepsNode.setData('proof', proof);
   var steps = proof.steps;
   // Map from inference result string to inference.
   var allSteps = {};
   for (var i = 0; i < steps.length; i++) {
     var inf = steps[i];
     var text = '<div class=proofStep><span class=stepNumber>'
-      + (i + 1) + '.</span> </div>';
-    var stepNode = proofNode.appendChild(text);
+      + (i + 1) + '.</span></div>';
+    var stepNode = stepsNode.appendChild(text);
     inf.node = stepNode;
     stepNode.setData('proofStep', steps[i]);
     // See appendSpan in expr.js.
@@ -440,15 +441,15 @@ function renderSteps(controller) {
     // Set up "hover" event handling on the stepNode.
     stepNode.on('hover',
                 // Call "hover", passing these arguments as well as the event.
-                Y.rbind(hover, null, proof, i, 'in', proofNode),
-                Y.rbind(hover, null, proof, i, 'out', proofNode));
+                Y.rbind(hover, null, proof, i, 'in', stepsNode),
+                Y.rbind(hover, null, proof, i, 'out', stepsNode));
 
     allSteps[inf.result.asString()] = inf;
     // Caution: passing null to Y.on selects everything.
     var target = stepNode.one('span.ruleName');
     if (target) {
       Y.on('click',
-           Y.rbind(renderSubProof, null, inf, proofNode),
+           Y.rbind(renderSubProof, null, inf, stepsNode),
            target);
     }
   }
@@ -608,14 +609,8 @@ function renderInference(inference, node) {
   var button = div.appendChild(buttonHtml);
   button.on('click',
             function () {
-              if (!(controller.stepEditor && controller.stepEditor.visible)) {
-                Y.showStepEditor(controller, controller.proof.steps.length);
-              } else {
-                controller.stepEditor.node.remove();
-                button.set('value', '+');
-                controller.stepEditor.visible = false;
-                controller.stepEditor = null;
-              }
+              Y.showStepEditor(controller,
+                               controller.stepsNode.get('children').length);
             });
   controller.editorButton = button;
   return proofNode;
@@ -658,7 +653,7 @@ function getProofStep(node) {
  * one of its steps or of an expression in a step.
  */
 function getProofNode(node) {
-  return node.ancestor('.proofDisplay', true);
+  return node.ancestor('.proofSteps', true);
 }
 
 /**
