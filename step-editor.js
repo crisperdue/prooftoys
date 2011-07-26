@@ -30,6 +30,7 @@ function StepEditor(controller) {
   var remover = div.one('.sted-remove');
   remover.on('click', function() { controller.hideStepEditor(); });
 
+  // Public fields.
   this.node = div;
   this.completer = ac;
 }

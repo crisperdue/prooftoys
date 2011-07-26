@@ -242,9 +242,7 @@ function Proof() {
   // Steps in order.
   this.steps = [];
   // A rendered proof can have a single selected step or
-  // a set (array) of selected steps.
-  this.selections = [];
-  this.selection = null;
+  this.control = null;
 }
 
 /**
@@ -326,6 +324,10 @@ Proof.prototype.stepNumber = function(inference) {
  */
 function ProofControl(proof) {
   this.proof = proof;
+  // a set (array) of selected steps.
+  this.selections = [];
+  this.selection = null;
+
   // Only official "proof nodes" are permitted to have this class:
   // Contains the step nodes.
   html =
@@ -333,6 +335,7 @@ function ProofControl(proof) {
   this.node = Y.Node.create(html);
   this.stepsNode = this.node.one('.proofSteps');
   this.stepEditor = new Y.StepEditor(this);
+  this.editorVisible = false;
   this.editorButton = null;
   renderSteps(this);
   // Set up handling of mouseover and mouseout events.
@@ -349,11 +352,14 @@ ProofControl.prototype.showStepEditor = function(position) {
   // TODO: Handle placement of the editor at the location of
   // an existing step.
   addChild(this.stepsNode, position, this.stepEditor.node);
+  this.editorVisible = true;
 }
 
 ProofControl.prototype.hideStepEditor = function() {
   this.stepEditor.node.remove();
+  this.deselectStep();
   this.editorButton.set('disabled', false);
+  this.editorVisible = false;
 }
 
 /**
@@ -391,7 +397,7 @@ ProofControl.prototype.placeButton = function() {
  */
 ProofControl.prototype.selectStep = function(step) {
   step.node.addClass('selected');
-  this.proof.selection = step;
+  this.selection = step;
 };
 
 /**
@@ -399,10 +405,10 @@ ProofControl.prototype.selectStep = function(step) {
  * selected expression in it.
  */
 ProofControl.prototype.deselectStep = function() {
-  var step = this.proof.selection;
+  var step = this.selection;
   if (step) {
     step.node.removeClass('selected');
-    this.proof.selection = null;
+    this.selection = null;
     this.deselectExpr(step);
   }
 };
@@ -434,14 +440,15 @@ ProofControl.prototype.deselectExpr = function(step) {
  * already selected.
  */
 ProofControl.prototype.handleStepClick = function(step) {
-  var proof = this.proof;
-  var selection = proof.selection;
-  this.deselectStep();
-  if (selection) {
-    this.deselectExpr(selection);
-  }
-  if (step != selection) {
-    this.selectStep(step);
+  if (this.editorVisible) {
+    var selected = this.selection;
+    this.deselectStep();
+    if (selected) {
+      this.deselectExpr(selected);
+    }
+    if (step != selected) {
+      this.selectStep(step);
+    }
   }
 };
 
@@ -452,21 +459,23 @@ ProofControl.prototype.handleStepClick = function(step) {
  * event bubbling up to the step itself.
  */
 ProofControl.prototype.handleExprClick = function(expr) {
-  var step = getProofStep(expr);
-  var selection = this.proof.selection;
-  var oldExpr = null;
-  this.deselectStep();
-  if (selection) {
-    oldExpr = selection.selection;
-    this.deselectExpr(selection);
+  if (this.editorVisible) {
+    var step = getProofStep(expr);
+    var selection = this.selection;
+    var oldExpr = null;
+    this.deselectStep();
+    if (selection) {
+      oldExpr = selection.selection;
+      this.deselectExpr(selection);
+    }
+    if (expr != oldExpr) {
+      this.selectExpr(expr);
+    }
+    // Always select the step containing the clicked expression.
+    this.selectStep(step);
+    // Don't bubble the event up to the proof step.
+    event.stopPropagation();
   }
-  if (expr != oldExpr) {
-    this.selectExpr(expr);
-  }
-  // Always select the step containing the clicked expression.
-  this.selectStep(step);
-  // Don't bubble the event up to the proof step.
-  event.stopPropagation();
 };
 
 
