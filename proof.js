@@ -317,19 +317,44 @@ Proof.prototype.stepNumber = function(inference) {
 
 /**
  * Construct a ProofControl given a DOM node and handler function for
- * selection events.  Instances must also have methods "select"
- * and "deselect".  Each takes a single DOM Node argument.
+ * selection events.  Properties:
+ *
+ * proof: the proof
+ * node: Node containing the entire rendering of the proof.
+ * stepsNode: Node containing all of the rendered steps as children.
+ * editorButton: step insertion button, or null.
  */
-function ProofControl(controlNode, proof, proofNode) {
-  this.node = controlNode;
+function ProofControl(proof) {
   this.proof = proof;
-  this.proofNode = proofNode;
   // Only official "proof nodes" are permitted to have this class:
-  // Parent of the step nodes.
-  html = '<table class=proofDisplay><tr><td><div class=proofSteps></div></table>';
-  proofNode.append(html);
-  this.stepsNode = proofNode.one('.proofSteps');
+  // Contains the step nodes.
+  html =
+    '<table class=proofDisplay><tr><td><div class=proofSteps></div></table>';
+  this.node = Y.Node.create(html);
+  this.stepsNode = this.node.one('.proofSteps');
   this.editorButton = null;
+  renderSteps(this);
+  // Set up handling of mouseover and mouseout events.
+  Y.on('mouseover', exprHandleOver, this.node);
+  Y.on('mouseout', exprHandleOut, this.node);
+}
+
+/**
+ * Add a rendered "+" button to the control.
+ */
+ProofControl.prototype.placeButton = function() {
+  if (!this.editorButton) {
+    var html = ('<input class=addStep type=button value="+" '
+                + 'title="Add a step to the proof">');
+
+    this.editorButton =
+      this.stepsNode.get('parentNode').appendChild(html);
+    var controller = this;
+    this.editorButton.on('click', function () {
+        Y.showStepEditor(controller,
+                         controller.stepsNode.get('children').length);
+      });
+  }
 }
 
 /**
@@ -419,7 +444,7 @@ ProofControl.prototype.handleExprClick = function(expr) {
 //// RENDERING AND EVENT HANDLING
 
 /**
- * Renders the steps of the proof into the given DOM node,
+ * Renders the steps of the controller's proof into its stepsNode,
  * first clearing the node.
  *
  * The rendering is structured as follows:
@@ -504,11 +529,12 @@ function renderSteps(controller) {
  * that currently follow the proof node.
  */
 function renderSubProof(event, inference, proofNode) {
-  var parent = proofNode.get('parentNode');
-  var next = proofNode.get('nextSibling');
+  var display = proofNode.ancestor('.proofDisplay');
+  var parent = display.get('parentNode');
+  var next = display.get('nextSibling');
   while (next) {
     next.remove();
-    next = proofNode.get('nextSibling');
+    next = display.get('nextSibling');
   }
   if (inference.name == 'theorem') {
     renderInference(getTheorem(inference.arguments[0]), parent);
@@ -632,7 +658,6 @@ function renderInference(inference, node) {
                    + inference.name + '</b>' + argInfo + '<br>'
                    + '<i>' + comment + '</i>'
                    + '</div>');
-  var proofNode = node.appendChild('<div></div>');
   // Map to inference from its result as string.  Each result will be
   // annotated with links into the DOM.  Starts with the assumptions.
   // Add the assumptions to the proof before rendering it.
@@ -641,22 +666,9 @@ function renderInference(inference, node) {
     var wff = assumptions[key];
     inference.proof.add(makeInference('given', [wff]), 0);
   }
-  var controller = new ProofControl(null, inference.proof, proofNode);
-  renderSteps(controller);
-  Y.on('mouseover', exprHandleOver, proofNode);
-  Y.on('mouseout', exprHandleOut, proofNode);
-  var div = node.appendChild('<div></div>');
-  var buttonHtml =
-    ('<input class=addStep type=button value="+" '
-     + 'title="Add a step to the proof">');
-  var button = div.appendChild(buttonHtml);
-  button.on('click',
-            function () {
-              Y.showStepEditor(controller,
-                               controller.stepsNode.get('children').length);
-            });
-  controller.editorButton = button;
-  return proofNode;
+  var controller = new ProofControl(inference.proof);
+  node.append(controller.node);
+  controller.placeButton();
 }
 
 
@@ -695,7 +707,7 @@ function getProofStep(node) {
  * Gets the YUI Node of a rendered proof given the YUI node of
  * one of its steps or of an expression in a step.
  */
-function getProofNode(node) {
+function getStepsNode(node) {
   return node.ancestor('.proofSteps', true);
 }
 
@@ -710,7 +722,7 @@ function getProof(node) {
   if (node instanceof Inference) {
     node = node.getStepNode();
   }
-  return getProofNode(node).getData('proof');
+  return getStepsNode(node).getData('proof');
 }
 
 /**
@@ -771,6 +783,14 @@ function exprHandleOut(event) {
   }
 };
 
+function addClass(node, className) {
+  node.addClass(className);
+}
+
+function removeClass(node, className) {
+  node.removeClass(className);
+}
+
 /**
  * Event handler for "hover" events on proof steps.
  * Adds or removes highlighting for the step.
@@ -782,12 +802,12 @@ function exprHandleOut(event) {
 function hover(event, proof, index, direction, proofNode) {
   var inference = proof.steps[index];
   var iString = '' + (index + 1);
-  var op = direction == 'in' ? 'addClass' : 'removeClass';
+  var action = direction == 'in' ? addClass : removeClass;
   var deps = inference.deps;
   var handler = hoverHandlers[inference.name];
   // Always add or remove the "hover" class to the step node
   // as the mouse goes in or oiut.
-  inference.getStepNode()[op]('hover');
+  action(inference.getStepNode(), 'hover');
   
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
@@ -802,11 +822,11 @@ function hover(event, proof, index, direction, proofNode) {
     });
   if (handler) {
     // If there is a hover handler for this type of inference, apply it.
-    handler(inference, op);
+    handler(inference, action);
   } else {
     // If no handler apply or remove default highlighting.
     for (var key in deps) {
-      deps[key].result.node[op]('dep');
+      action(deps[key].result.node, 'dep');
     }
   }
 }
@@ -814,43 +834,43 @@ function hover(event, proof, index, direction, proofNode) {
 // Arguments to the handler functions are an inference
 // and the operation is "addClass" or "removeClass".
 var hoverHandlers = {
-  r: function(inf, op) {
+  r: function(inf, action) {
     var deps = inf.deps;
     var args = inf.arguments;
     var eqn = deps[args[0].asString()].result;
     var target = deps[args[1].asString()].result;
     var path = args[2];
-    target.node[op]('hover');
-    target.locate(path).node[op]('old');
-    inf.result.locate(path).node[op]('new');
-    eqn.getLeft().node[op]('old');
-    eqn.getRight().node[op]('new');
+    action(target.node, 'hover');
+    action(target.locate(path).node, 'old');
+    action(inf.result.locate(path).node, 'new');
+    action(eqn.getLeft().node, 'old');
+    action(eqn.getRight().node, 'new');
   },
-  rRight: function(inf, op) {
+  rRight: function(inf, action) {
     var deps = inf.deps;
     var args = inf.arguments;
     var eqn = deps[args[0].asString()].result;
     var target = deps[args[1].asString()].result;
     var path = args[2];
-    target.node[op]('hover');
-    target.locate(path).node[op]('old');
-    inf.result.locate(path).node[op]('new');
-    eqn.getRight().node[op]('old');
-    eqn.getLeft().node[op]('new');
+    action(target.node, 'hover');
+    action(target.locate(path).node, 'old');
+    action(inf.result.locate(path).node, 'new');
+    action(eqn.getRight().node, 'old');
+    action(eqn.getLeft().node, 'new');
   },
-  axiom4: function(inf, op) {
+  axiom4: function(inf, action) {
     var call = inf.result.getLeft();
-    call.arg.node[op]('new');
+    action(call.arg.node, 'new');
     var target = call.fn.body;
-    target.node[op]('scope');
-    inf.result.getRight().node[op]('scope');
+    action(target.node, 'scope');
+    action(inf.result.getRight().node, 'scope');
     var varName = call.fn.bound;
     target.findAll(varName,
-                   function(v) { v.node[op]('occur'); },
+                   function(v) { action(v.node, 'occur'); },
                    inf.result.getRight(),
-                   function(expr) { expr.node[op]('new'); });
+                   function(expr) { action(expr.node, 'new'); });
   },
-  reduce: function(inf, op) {
+  reduce: function(inf, action) {
     var deps = inf.deps;
     var args = inf.arguments;
     var dep = deps[args[0].asString()].result;
@@ -859,63 +879,63 @@ var hoverHandlers = {
     var target = call.fn.body;
     var varName = call.fn.bound.name;
     var result = inf.result.locate(path);
-    dep.node[op]('hover');
-    call.arg.node[op]('new');
-    target.node[op]('scope');
-    result.node[op]('scope');
+    action(dep.node, 'hover');
+    action(call.arg.node, 'new');
+    action(target.node, 'scope');
+    action(result.node, 'scope');
     target.findAll(varName,
-                   function(v) { v.node[op]('occur'); },
+                   function(v) { action(v.node, 'occur'); },
                    result,
-                   function(expr) { expr.node[op]('new'); });
+                   function(expr) { action(expr.node, 'new'); });
   },
-  useDefinition: function(inf, op) {
+  useDefinition: function(inf, action) {
     var deps = inf.deps;
     var args = inf.arguments;
     var target = deps[args[1].asString()].result;
     var path = args[2];
-    target.node[op]('hover');
-    target.locate(path).node[op]('old');
-    inf.result.locate(path).node[op]('new');
+    action(target.node, 'hover');
+    action(target.locate(path).node, 'old');
+    action(inf.result.locate(path).node, 'new');
   },
-  instEqn: function(inf, op) {
+  instEqn: function(inf, action) {
     var deps = inf.deps;
     var args = inf.arguments;
     // Input expression.
     var input = deps[args[0].asString()].result;
     // Name of variable being instantiated.
     var varName = args[2].name;
-    input.node[op]('hover');
+    action(input.node, 'hover');
     input.findAll(varName,
-                  function(_var) { _var.node[op]('occur'); },
+                  function(_var) { action(_var.node, 'occur'); },
                   inf.result,
-                  function(expr) { expr.node[op]('new'); });
+                  function(expr) { action(expr.node, 'new'); });
   },
-  sub: function(inf, op) {
+  sub: function(inf, action) {
     var deps = inf.deps;
     var args = inf.arguments;
     // Input expression.
     var input = deps[args[0].asString()].result;
     // Name of variable being instantiated.
     var varName = args[2].name;
-    input.node[op]('hover');
+    action(input.node, 'hover');
     input.findAll(varName,
-                  function(_var) { _var.node[op]('new'); },
+                  function(_var) { action(_var.node, 'new'); },
                   inf.result,
-                  function(expr) { expr.node[op]('new'); });
+                  function(expr) { action(expr.node, 'new'); });
   },
   // TODO: subAll
-  forallInst: function(inf, op) {
+  forallInst: function(inf, action) {
     var deps = inf.deps;
     var args = inf.arguments;
     // Input expression.
     var input = deps[args[0].asString()].result;
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
-    input.node[op]('hover');
+    action(input.node, 'hover');
     input.arg.body.findAll(varName,
-                           function(_var) { _var.node[op]('occur'); },
+                           function(_var) { action(_var.node, 'occur'); },
                            inf.result,
-                           function(expr) { expr.node[op]('new'); });
+                           function(expr) { action(expr.node, 'new'); });
   }
 };
 
@@ -1033,9 +1053,9 @@ Y.renderInference = renderInference;
 Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;
 Y.debugString = debugString;
-Y.getProofNode = getProofNode;
+Y.getStepsNode = getStepsNode;
 Y.getProofStep = getProofStep;
-Y.getProofNode = getProofNode;
+Y.getStepsNode = getStepsNode;
 Y.getProof = getProof;
 Y.getExpr = getExpr;
 // TODO: Consider getting rid of this global variable.
