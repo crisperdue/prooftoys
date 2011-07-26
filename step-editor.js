@@ -28,33 +28,10 @@ function StepEditor(controller) {
   // Make the input field into an autocompleter.
   var ac = stepEditorInput(input);
   var remover = div.one('.sted-remove');
-  remover.on('click', function() { div.remove(); });
+  remover.on('click', function() { controller.hideStepEditor(); });
 
-  this.controller = controller;
   this.node = div;
   this.completer = ac;
-}
-
-/**
- * Generic function to add a node to an element at a position.
- */
-function addChild(parent, position, node) {
-  var children = parent.get('children');
-  if (position == children.length) {
-    parent.appendChild(node);
-  } else {
-    parent.insertBefore(node, children[position]);
-  }
-}
-
-/**
- * Displays the proof step editor at the given index in the proof,
- * setting it as the stepEditor.  If the index is greater than the
- * index of any proof step, appends it at the end.
- */
-function showStepEditor(controller, position) {
-  var ed = new StepEditor(controller);
-  addChild(controller.stepsNode, position, ed.node);
 }
 
 /**
@@ -103,7 +80,7 @@ function stepEditorInput(input) {
   return ac;
 }
 
-Y.showStepEditor = showStepEditor;
+Y.StepEditor = StepEditor;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',
                       'autocomplete-filters', 'autocomplete-highlighters']});

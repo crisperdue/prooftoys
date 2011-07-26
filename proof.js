@@ -332,11 +332,40 @@ function ProofControl(proof) {
     '<table class=proofDisplay><tr><td><div class=proofSteps></div></table>';
   this.node = Y.Node.create(html);
   this.stepsNode = this.node.one('.proofSteps');
+  this.stepEditor = new Y.StepEditor(this);
   this.editorButton = null;
   renderSteps(this);
   // Set up handling of mouseover and mouseout events.
   Y.on('mouseover', exprHandleOver, this.node);
   Y.on('mouseout', exprHandleOut, this.node);
+}
+
+/**
+ * Displays the proof step editor at the given index in the proof,
+ * setting it as the stepEditor.  If the index is greater than the
+ * index of any proof step, appends it at the end.
+ */
+ProofControl.prototype.showStepEditor = function(position) {
+  // TODO: Handle placement of the editor at the location of
+  // an existing step.
+  addChild(this.stepsNode, position, this.stepEditor.node);
+}
+
+ProofControl.prototype.hideStepEditor = function() {
+  this.stepEditor.node.remove();
+  this.editorButton.set('disabled', false);
+}
+
+/**
+ * Generic function to add a node to an element at a position.
+ */
+function addChild(parent, position, node) {
+  var children = parent.get('children');
+  if (position == children.length) {
+    parent.appendChild(node);
+  } else {
+    parent.insertBefore(node, children[position]);
+  }
 }
 
 /**
@@ -351,8 +380,8 @@ ProofControl.prototype.placeButton = function() {
       this.stepsNode.get('parentNode').appendChild(html);
     var controller = this;
     this.editorButton.on('click', function () {
-        Y.showStepEditor(controller,
-                         controller.stepsNode.get('children').length);
+        controller.showStepEditor(controller.stepsNode.get('children').length);
+        this.set('disabled', true);
       });
   }
 }
@@ -509,8 +538,8 @@ function renderSteps(controller) {
     // Set up "hover" event handling on the stepNode.
     stepNode.on('hover',
                 // Call "hover", passing these arguments as well as the event.
-                Y.rbind(hover, null, proof, i, 'in', stepsNode),
-                Y.rbind(hover, null, proof, i, 'out', stepsNode));
+                Y.rbind(hoverStep, null, proof, i, 'in', stepsNode),
+                Y.rbind(hoverStep, null, proof, i, 'out', stepsNode));
 
     allSteps[inf.result.asString()] = inf;
     // Caution: passing null to Y.on selects everything.
@@ -779,7 +808,6 @@ function exprHandleOut(event) {
   event.target.removeClass('hovered');
   var displayNode = Y.one('#hoverPath');
   if (displayNode) {
-    // Y.log('Unhover');
     // Do nothing if there is no bottom panel.
     displayNode.setContent('');
   }
@@ -801,7 +829,7 @@ function removeClass(node, className) {
  * index is the step index, direction is "in" or "out", and
  * proofNode is the DOM node of the proof.
  */
-function hover(event, proof, index, direction, proofNode) {
+function hoverStep(event, proof, index, direction, proofNode) {
   var inference = proof.steps[index];
   var iString = '' + (index + 1);
   var action = direction == 'in' ? addClass : removeClass;
