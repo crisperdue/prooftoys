@@ -323,6 +323,7 @@ Proof.prototype.stepNumber = function(inference) {
  * editorButton: step insertion button, or null.
  */
 function ProofControl(proof) {
+  var controller = this;
   this.proof = proof;
   // a set (array) of selected steps.
   this.selections = [];
@@ -336,7 +337,18 @@ function ProofControl(proof) {
   this.stepsNode = this.node.one('.proofSteps');
   this.stepEditor = new Y.StepEditor(this);
   this.editorVisible = false;
-  this.editorButton = null;
+
+  var html = ('<input class=addStep type=button value="+" '
+              + 'title="Add a step to the proof">');
+  this.editorButton =
+    this.stepsNode.get('parentNode').appendChild(html);
+  this.editorButton.get('style').set('display', 'none');
+  // TODO: eventually default this to true.
+  this.editable = false;
+  this.editorButton.on('click', function () {
+      controller.showStepEditor(controller.stepsNode.get('children').length);
+      this.set('disabled', true);
+    });
   renderSteps(this);
   // Set up handling of mouseover and mouseout events.
   Y.on('mouseover', exprHandleOver, this.node);
@@ -377,19 +389,10 @@ function addChild(parent, position, node) {
 /**
  * Add a rendered "+" button to the control.
  */
-ProofControl.prototype.placeButton = function() {
-  if (!this.editorButton) {
-    var html = ('<input class=addStep type=button value="+" '
-                + 'title="Add a step to the proof">');
-
-    this.editorButton =
-      this.stepsNode.get('parentNode').appendChild(html);
-    var controller = this;
-    this.editorButton.on('click', function () {
-        controller.showStepEditor(controller.stepsNode.get('children').length);
-        this.set('disabled', true);
-      });
-  }
+ProofControl.prototype.setEditable = function(onOff) {
+  var setting = onOff ? '' : 'none';
+  this.editable = onOff;
+  this.editorButton.setStyle('display', setting);
 }
 
 /**
@@ -555,7 +558,7 @@ function renderSteps(controller) {
     var target = stepNode.one('span.ruleName');
     if (target) {
       target.on('click', Y.rbind(function(event, inf) {
-            renderSubProof(event, inf, stepsNode);
+            renderSubProof(event, inf, stepsNode, controller.editable);
             // Don't give the proof step a chance to select itself.
             event.stopPropagation();
           }, null, inf));
@@ -568,7 +571,7 @@ function renderSteps(controller) {
  * the given proof Node, clearing any other subproofs
  * that currently follow the proof node.
  */
-function renderSubProof(event, inference, proofNode) {
+function renderSubProof(event, inference, proofNode, editable) {
   var display = proofNode.ancestor('.proofDisplay');
   var parent = display.get('parentNode');
   var next = display.get('nextSibling');
@@ -577,9 +580,9 @@ function renderSubProof(event, inference, proofNode) {
     next = display.get('nextSibling');
   }
   if (inference.name == 'theorem') {
-    renderInference(getTheorem(inference.arguments[0]), parent);
+    renderInference(getTheorem(inference.arguments[0]), parent, editable);
   } else {
-    renderInference(inference, parent);
+    renderInference(inference, parent, editable);
   }
 }
 
@@ -672,7 +675,7 @@ function fancyStepNumber(n) {
  * first child is the header, rendered with class proofHeader.  The
  * second is the proof display.  Returns the proof display node.
  */
-function renderInference(inference, node) {
+function renderInference(inference, node, editable) {
   if (node == null) {
     node = new Y.Node(document.body);
   }
@@ -708,7 +711,7 @@ function renderInference(inference, node) {
   }
   var controller = new ProofControl(inference.proof);
   node.append(controller.node);
-  controller.placeButton();
+  controller.setEditable(editable);
 }
 
 

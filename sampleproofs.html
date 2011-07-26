@@ -397,13 +397,20 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
     var proofNode = Y.one('#proofs');
     proofNode.setContent('');
-    Y.renderInference(inference, proofNode);
+    Y.renderInference(inference, proofNode, editable);
     document.title = 'Proof display -- ' + ruleName;
   }
 
+  // Do we want sample proofs to be editable?
+  // Controllable through the query string.
+  var editable;
+
   Y.on('domready', function() {
       queryData = Y.QueryString.parse(location.search.substring(1));
+      // You can control which rule is displayed by including
+      // "rule=<ruleName>" in the query string.
       var ruleName = queryData.rule;
+      editable = queryData.edit != undefined;
       var inference = null;
       if (!location.search) {
         // Default to displaying forallInst.
