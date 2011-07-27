@@ -200,7 +200,6 @@ span.ruleName {
 
 /* Expression in a proof step display */
 .proofStep .expr, span.stepNumber {
-  padding: 0px 1px;
   border-style: solid;
   border-width: 1px;
   border-color: transparent;
@@ -252,4 +251,9 @@ span.ruleName {
 input.sted-input {
   font-family: monospace;
   width: 80%;
+}
+
+/* Autocompleter */
+.yui3-aclist {
+  font-size: 80%;
 }

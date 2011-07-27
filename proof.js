@@ -342,7 +342,7 @@ function ProofControl(proof) {
               + 'title="Add a step to the proof">');
   this.editorButton =
     this.stepsNode.get('parentNode').appendChild(html);
-  this.editorButton.get('style').set('display', 'none');
+  this.setEditable(false);
   // TODO: eventually default this to true.
   this.editable = false;
   this.editorButton.on('click', function () {
@@ -387,12 +387,12 @@ function addChild(parent, position, node) {
 }
 
 /**
- * Add a rendered "+" button to the control.
+ * Makes the control editable or not by showing/hiding the
+ * editor button and flagging its state.
  */
-ProofControl.prototype.setEditable = function(onOff) {
-  var setting = onOff ? '' : 'none';
-  this.editable = onOff;
-  this.editorButton.setStyle('display', setting);
+ProofControl.prototype.setEditable = function(state) {
+  this.editable = state;
+  this.editorButton.setStyle('display', state ? '' : 'none');
 }
 
 /**

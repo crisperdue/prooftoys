@@ -59,7 +59,9 @@ function stepEditorInput(input) {
                 resultHighlighter: 'startsWith',
                 source: Y.theoremNames,
                 inputNode: input,
-                render: true
+                render: true,
+                minQueryLength: 0,
+                maxResults: 25
   };
   var ac = new Y.AutoComplete(config);
   // On Enter key press select the active item. If no item is active but
