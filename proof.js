@@ -369,6 +369,7 @@ ProofControl.prototype.showStepEditor = function(position) {
 
 ProofControl.prototype.hideStepEditor = function() {
   this.stepEditor.node.remove();
+  this.stepEditor.reset();
   this.deselectStep();
   this.editorButton.set('disabled', false);
   this.editorVisible = false;

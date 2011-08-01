@@ -13,48 +13,62 @@ YUI.add('step-editor', function(Y) {
 // sted-label: Text label of the main input field.
 // sted-paste: Button for pasting the selected part of a WFF.
 // sted-hint:  Contains textual hint for use of the input field.
+//
+// Behavior of the hint message:
+// Hint is initially on, but turned off by keyboard focus.
+// Resetting the step editor turns it back on, as if the editor
+// were brand new.
 
 
+/**
+ * Fields: node, input, completer.
+ */
 function StepEditor(controller) {
+  this._hint = 'Enter WFF, axiom, or theorem by name, or select rule target';
   // Create a DIV with the step editor content.
   var div = Y.Node.create('<div class=stepEditor></div>');
   div.append('<div style="clear: both"><span style="float: right">'
              + '<input type=button value="Paste" class=sted-paste'
              + ' style="visibility: hidden">'
              + '<input class=sted-remove type=button value="x"></span>'
-             + '<span class=sted-label>Wff </span>'
+             // TODO: decide whether to have a label here.
+             // + '<span class=sted-label>Wff </span>'
              + '<input class=sted-input maxlength=200></div>');
-  var input = div.one('.sted-input');
+  this.node = div;
+  this.input = div.one('.sted-input');
   // Make the input field into an autocompleter.
-  var ac = stepEditorInput(input);
+  var ac = this.stepEditorInput();
+  this.completer = ac;
   var remover = div.one('.sted-remove');
   remover.on('click', function() { controller.hideStepEditor(); });
-
-  // Public fields.
-  this.node = div;
-  this.completer = ac;
 }
 
 /**
- * Make and return an autocompleter using the given input field (node).
+ * Puts the step eeditor back in the initial state from the
+ * user's point of view.
  */
-function stepEditorInput(input) {
-  var hint = 'Axiom, theorem, tautology, or name -- try (';
-  function maybeHint() {
-    if (input.get('value') == '') {
-      input.set('value', hint);
-      input.addClass('hinted');
-    }
-  }
-  function unHint() {
-    if (input.get('value') == hint) {
+StepEditor.prototype.reset = function() {
+  // Initially the input field displays a hint.
+  this.input.set('value', this._hint);
+  this.input.addClass('hinted');
+}
+
+/**
+ * Make and return an autocompleter that uses the input field.
+ */
+StepEditor.prototype.stepEditorInput = function() {
+  var self = this;
+  this.reset();
+  var input = this.input;
+  function focus() {
+    if (input.get('value') == self._hint) {
       input.set('value', '');
       input.removeClass('hinted');
     }
+    // Cause the autocompleter to query and display the results now.
+    ac.sendRequest(input.get('value'));
   }
-  maybeHint();
-  input.on('blur', maybeHint);
-  input.on('focus', unHint);
+  input.on('focus', focus);
   var config = {resultFilters: ['startsWith'],
                 resultHighlighter: 'startsWith',
                 source: Y.theoremNames,
@@ -81,7 +95,7 @@ function stepEditorInput(input) {
     }
   };
   return ac;
-}
+};
 
 Y.StepEditor = StepEditor;
 
