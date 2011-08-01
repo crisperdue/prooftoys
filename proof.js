@@ -27,7 +27,7 @@ function Inference(name, ruleArgs, result, proof) {
   // in the UI:
   this.selections = [];
   this.selection = null;
-  // 
+  //
   // If rendered, has a "deps" property, a map from result string
   // to the premises of this inference, themselves inferences.
   // The values of the deps have always been rendered.

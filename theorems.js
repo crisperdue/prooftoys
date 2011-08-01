@@ -445,7 +445,7 @@ var ruleInfo = {
 
   /**
    * "T" is a theorem.  In the book, T is defined as an instance of
-   * eqT.
+   * eqSelf.
    */
   t: function() {
     var step1 = rules.eqSelf(T);
@@ -618,6 +618,7 @@ var ruleInfo = {
 
   // Given "subFree(T, v, [A = B])" and "subFree(F, v, [A = B])",
   // proves [A = B].  The argument is {v | [A = B]}.
+  // TODO: pass in the two cases as arguments.
   equationCases: {
     action: function(lexpr) {
       // These first two steps are not really deductions, they
@@ -766,6 +767,7 @@ var ruleInfo = {
   // theorems where T replaces v in A and where F replaces v in A.
   // TODO: Make a version of this that uses equationCases, rename
   //   this to casesBook.
+  // TODO: pass in the two cases as arguments.
   cases: {
     action: function(v, a) {
       var hyp1 = Y.subFree(T, v, a);
@@ -1000,7 +1002,7 @@ var ruleInfo = {
     comment: ('Tautology decider.')
   },
 
-  // Given two statements a and b, proves a && b.
+  // Given two theorems a and b, proves a && b.
   makeConjunction: {
     action: function(a, b) {
       var stepa = rules.toTIsA(a);
@@ -1025,7 +1027,7 @@ var ruleInfo = {
   },
   
   // Given a variable v that is not free in wff A, and a wff B, derive
-  // ((forall {v | A || B}) --> A || (forall {v | B})).
+  // ((forall {v : A || B}) --> A || (forall {v : B})).
   r5235: {
     action: function(v, a, b) {
       var map1 = {
@@ -1096,23 +1098,7 @@ var ruleInfo = {
     comment: ('Simplified form of Rule P without hypotheses.')
   },
 
-  r5238a: {
-    action: function(v, a, b) {
-      if (typeof v == 'string') {
-        v = _var(v);
-      }
-      var step1 = rules.axiom('axiom3');
-      var step2 = rules.changeVar(step1, '/right/arg', v);
-      var step3 = rules.subAll(step2,
-                               ({f: lambda(v, a),
-                                 g: lambda(v, b)}));
-      var step4 = rules.reduce(step3, '/right/arg/body/left');
-      var step5 = rules.reduce(step4, '/right/arg/body/right');
-      return step5;
-    },
-    comment: ('')
-  },
-
+  // Relates equal functions to equality at all input data points.
   r5238: {
     action: function(vars, a, b) {
       Y.assert(vars.concat, 'Variables must be an array');
@@ -1136,7 +1122,26 @@ var ruleInfo = {
     comment: ('Equal functions equate to equal expression values.')
   },
 
+  // "Base case" of 5238, with just a single variable.
+  r5238a: {
+    action: function(v, a, b) {
+      if (typeof v == 'string') {
+        v = _var(v);
+      }
+      var step1 = rules.axiom('axiom3');
+      var step2 = rules.changeVar(step1, '/right/arg', v);
+      var step3 = rules.subAll(step2,
+                               ({f: lambda(v, a),
+                                 g: lambda(v, b)}));
+      var step4 = rules.reduce(step3, '/right/arg/body/left');
+      var step5 = rules.reduce(step4, '/right/arg/body/right');
+      return step5;
+    },
+    comment: ('')
+  },
+
   // 5239, closely following the description and names in the book.
+  // Analog to Rule R, expressed as an implication.  Theorem schema.
   r5239: {
     action: function(equation, target, path) {
       path = Y.path(path);
