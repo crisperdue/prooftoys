@@ -237,14 +237,14 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testGeneralizeTF: function() {
-        var gen = Y.parse('p T = T').generalizeTF(Y.parse('p F = F'));
-        assertEqual('((p v) = v)', gen + '');
+        var gen = Y.parse('p T = T').generalizeTF(Y.parse('p F = F'), x);
+        assertEqual('((p x) = x)', gen + '');
         try {
-          Y.parse('p T = x').generalizeTF(Y.parse('p F = F'));
+          Y.parse('p T = x').generalizeTF(Y.parse('p F = F'), x);
           Y.Assert.fail('generalizeTF should have failed');
         } catch(e) {}
         try {
-          Y.parse('p T').generalizeTF(Y.parse('p T F'));
+          Y.parse('p T').generalizeTF(Y.parse('p T F'), x);
           Y.Assert.fail('generalizeTF should have failed');
         } catch(e) {}
       },
@@ -503,8 +503,10 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testCases: function() {
-        var inf = Y.makeInference('cases', [z, call('=', call(p, z), z)]);
-        assertEqual('((p z) = z)', inf.result);
+        var inf = Y.makeInference('cases', [equal(call(p, T), T),
+                                            equal(call(p, F), F),
+                                            x]);
+        assertEqual('((p x) = x)', inf.result);
         logAssumptions(inf);
       },
 

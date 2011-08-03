@@ -294,7 +294,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     cases: {
-      args: [z, call('=', call(p, z), z)],
+      args: [equal(call(p, T), T), equal(call(p, F), F), x],
       level: 1
     },
     

@@ -769,20 +769,19 @@ var ruleInfo = {
   //   this to casesBook.
   // TODO: pass in the two cases as arguments.
   cases: {
-    action: function(v, a) {
-      var hyp1 = Y.subFree(T, v, a);
-      var step1a = rules.axiom4(call(lambda(v, a), T));
-      var step1b = rules.rRight(step1a, hyp1, '');
+    action: function(caseT, caseF, v) {
+      var gen = caseT.generalizeTF(caseF, v);
+      var step1a = rules.axiom4(call(lambda(v, gen), T));
+      var step1b = rules.rRight(step1a, caseT, '');
       var step1c = rules.toTIsA(step1b);
-      var hyp2 = Y.subFree(F, v, a);
-      var step2a = rules.axiom4(call(lambda(v, a), F));
-      var step2b = rules.rRight(step2a, hyp2, '');
+      var step2a = rules.axiom4(call(lambda(v, gen), F));
+      var step2b = rules.rRight(step2a, caseF, '');
       var step2c = rules.toTIsA(step2b);
       // TODO: prove T && T inline.
       var step3 = rules.theorem('r5212');
       var step4a = rules.r(step1c, step3, '/left');
       var step4b = rules.r(step2c, step4a, '/right');
-      var step5 = rules.sub(rules.axiom('axiom1'), lambda(v, a), g);
+      var step5 = rules.sub(rules.axiom('axiom1'), lambda(v, gen), g);
       var step6 = rules.r(step5, step4b, '/');
       var step7a = rules.forallInst(step6, v);
       var step7b = rules.reduce(step7a, '/');
@@ -849,7 +848,9 @@ var ruleInfo = {
                            '/fn');
       var step25 = rules.r(step24, step23, '/right');
       // Now use the cases rule:
-      var step5 = rules.cases(x, equal(call('-->', x, F), equal(x, F)));
+      var step5 = rules.cases(equal(call('-->', T, F), equal(T, F)),
+                              equal(call('-->', F, F), equal(F, F)),
+                              x);
       // Then instantiate [F = T] for x.
       var step6 = rules.sub(step5, equal(F, T), x);
       // And use the fact that [F = T] --> F
@@ -1047,9 +1048,11 @@ var ruleInfo = {
       var freeNames = Y.merge(a.freeNames(), b.freeNames());
       freeNames[v.name] = true;
       var p0 = Y.genVar('p', freeNames);
-      var wff = implies(call('forall', lambda(v, call('||', p0, b))),
-                        call('||', p0, call('forall', lambda(v, b))));
-      var step9 = rules.cases(p0, wff);
+      var caseT = implies(call('forall', lambda(v, call('||', T, b))),
+                          call('||', T, call('forall', lambda(v, b))));
+      var caseF = implies(call('forall', lambda(v, call('||', F, b))),
+                          call('||', F, call('forall', lambda(v, b))));
+      var step9 = rules.cases(caseT, caseF, p0);
       var step10 = rules.sub(step9, a, p0);
       return step10;
     },

@@ -257,21 +257,13 @@ Expr.prototype.pathTo = function(pred) {
   return result;
 };
 
-/**
- * Searches through this and expr2 for subexpressions in this that are
- * the constant T, and F at the same place in expr2.  Returns an
- * expression similar to this, but with newVar in those locations.
- * Throws an error unless all subexpressions have the same type in
- * expr2 as the same location in this, and variable names match in
- * locations, except the T/F case.
- */
-Expr.prototype.generalizeTF = function(expr2) {
+function newVar(exprs, name) {
   var map = {};
-  this._addNames(map);
-  expr2._addNames(map);
-  var result = this._generalizeTF(expr2, genVar('v', map));
-  return result;
-};
+  for (var i = 0; i < exprs.length; i++) {
+    exprs[i]._addNames(map);
+  }
+  return genVar(name, map);
+}
 
 
 // Methods defined on expressions, but defined only in the subclasses:
@@ -366,11 +358,15 @@ Expr.prototype.generalizeTF = function(expr2) {
 // variable bindings if bindings is truthy.
 //
 //
-// _generalizeTF(expr2, newVar)
+// generalizeTF(expr2, newVar)
 //
-// Like the public version of this method, but the new variable is an
-// argument.  To support the public version, newVar should not appear
-// anywhere in this or expr2.
+// Searches through this and expr2 for subexpressions in this that are
+// the constant T, and F at the same place in expr2.  Returns an
+// expression similar to this, but with newVar in those locations.
+// Throws an error unless this and expr2 have the same syntax tree
+// structure and variable names match everywhere except the T/F cases.
+// The newVar should not appear anywhere in this or expr2, to ensure
+// that the result will have this and expr2 as substitution instances.
 //
 // 
 // _render(node)
@@ -480,7 +476,7 @@ Var.prototype.search = function(pred, bindings) {
   return result;
 };
 
-Var.prototype._generalizeTF = function(expr2, newVar) {
+Var.prototype.generalizeTF = function(expr2, newVar) {
   if (!(expr2 instanceof Var)) {
     throw new Error('Not a variable: ' + expr2);
   }
@@ -636,12 +632,12 @@ Call.prototype.search = function(pred, bindings) {
   return result;
 };
 
-Call.prototype._generalizeTF = function(expr2, newVar) {
+Call.prototype.generalizeTF = function(expr2, newVar) {
   if (!(expr2 instanceof Call)) {
     throw new Error('Not a Call: ' + expr2);
   }
-  return new Call(this.fn._generalizeTF(expr2.fn, newVar),
-                  this.arg._generalizeTF(expr2.arg, newVar));
+  return new Call(this.fn.generalizeTF(expr2.fn, newVar),
+                  this.arg.generalizeTF(expr2.arg, newVar));
 };
 
 Call.prototype._path = function(pred, revPath) {
@@ -809,7 +805,7 @@ Lambda.prototype.search = function(pred, bindings) {
   return result;
 };
 
-Lambda.prototype._generalizeTF = function(expr2, newVar) {
+Lambda.prototype.generalizeTF = function(expr2, newVar) {
   if (!(expr2 instanceof Lambda)) {
     throw new Error('Not a variable binding: ' + expr2);
   }
@@ -818,7 +814,7 @@ Lambda.prototype._generalizeTF = function(expr2, newVar) {
                     + ', ' + expr2.bound.name);
   }
   return new Lambda(this.bound,
-                    this.body._generalizeTF(expr2.body, newVar));
+                    this.body.generalizeTF(expr2.body, newVar));
 };
 
 Lambda.prototype._path = function(pred, revPath) {
@@ -1379,6 +1375,7 @@ Y.decapture = decapture;
 Y.path = path;
 Y.getBinding = getBinding;
 Y.matchAsSchema = matchAsSchema;
+Y.newVar = newVar;
 
 Y.assert = assert;
 Y.assertEqn = assertEqn;
