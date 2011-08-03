@@ -67,8 +67,9 @@ function normalized(expr) {
 
 /**
  * Matches the given "schematic" expression against the other
- * expression.  Returns a substitution (map) from names
- * to expressions, or throws an error if there is none.
+ * expression.  Assumes that the schema contains no variable bindings.
+ * Returns a substitution (map) from names to expressions, or throws
+ * an error if there is none.
  */
 function matchAsSchema(schema, expr) {
   var substitution = {};
@@ -256,6 +257,22 @@ Expr.prototype.pathTo = function(pred) {
   return result;
 };
 
+/**
+ * Searches through this and expr2 for subexpressions in this that are
+ * the constant T, and F at the same place in expr2.  Returns an
+ * expression similar to this, but with newVar in those locations.
+ * Throws an error unless all subexpressions have the same type in
+ * expr2 as the same location in this, and variable names match in
+ * locations, except the T/F case.
+ */
+Expr.prototype.generalizeTF = function(expr2) {
+  var map = {};
+  this._addNames(map);
+  expr2._addNames(map);
+  var result = this._generalizeTF(expr2, genVar('v', map));
+  return result;
+};
+
 
 // Methods defined on expressions, but defined only in the subclasses:
 //
@@ -285,7 +302,7 @@ Expr.prototype.pathTo = function(pred) {
 // _addNames(Map result)
 //
 // Adds all names occurring in this expression to the Map, with value
-// of true for each.  Not public.
+// of true for each, both free and bound names.  Not public.
 //
 //
 // _addFreeNames(Map result, Bindings bindings)
@@ -349,6 +366,13 @@ Expr.prototype.pathTo = function(pred) {
 // variable bindings if bindings is truthy.
 //
 //
+// _generalizeTF(expr2, newVar)
+//
+// Like the public version of this method, but the new variable is an
+// argument.  To support the public version, newVar should not appear
+// anywhere in this or expr2.
+//
+// 
 // _render(node)
 //
 // Render this expression at the end of the contents of the given YUI
@@ -362,20 +386,22 @@ Expr.prototype.pathTo = function(pred) {
 //
 // findAll(name, action1, expr2, action2)
 //
-// Apply the action function to every subexpression in this that is
-// a free variable with the given name.  This method also does the
-// same traversal of expr2, so it must have expressions at all the
-// locations where this does.  Performs action2 on every subexpression
+// Apply the action function to every subexpression in this that is a
+// free variable with the given name, and action2 to the
+// subexpressions of expr2 at those same locations.  This method also
+// does the same traversal of expr2, so it must have expressions at
+// all the locations where this does.
 //
 //
 // _matchAsSchema(expr, substitution)
 //
 // Checks that this expression matches the argument expression under
-// the given substitution, return true iff it does, and extending the
-// substitution to a new variable if appropriate.  This must not
-// contain any variable bindings, but the expression can contain
-// anything.  Compares existing bindings with the parts of the
-// expression using "matches".
+// the given substitution (map from names to expressions).  Returns
+// true iff it does and extends the substitution to a new variable if
+// needed to make this and the argument match.  This must not contain
+// any variable bindings, but the expression can contain anything.
+// Compares existing bindings with the parts of the expression using
+// "matches".
 
 
 //// Var -- variable bindings and references
@@ -452,6 +478,21 @@ Var.prototype.matches = function(expr, bindings) {
 Var.prototype.search = function(pred, bindings) {
   var result = pred(this) ? this : null;
   return result;
+};
+
+Var.prototype._generalizeTF = function(expr2, newVar) {
+  if (!(expr2 instanceof Var)) {
+    throw new Error('Not a variable: ' + expr2);
+  }
+  var name1 = this.name;
+  var name2 = expr2.name;
+  if (name1 == 'T' && name2 == 'F') {
+    return newVar;
+  } else if (name1 == name2) {
+    return this;
+  } else {
+    throw new Error('Mismatched names: ' + name1 + ', ' + name2);
+  }
 };
 
 Var.prototype._path = function(pred, revPath) {
@@ -593,6 +634,14 @@ Call.prototype.search = function(pred, bindings) {
     ? this
     : this.fn.search(pred, bindings) || this.arg.search(pred, bindings);
   return result;
+};
+
+Call.prototype._generalizeTF = function(expr2, newVar) {
+  if (!(expr2 instanceof Call)) {
+    throw new Error('Not a Call: ' + expr2);
+  }
+  return new Call(this.fn._generalizeTF(expr2.fn, newVar),
+                  this.arg._generalizeTF(expr2.arg, newVar));
 };
 
 Call.prototype._path = function(pred, revPath) {
@@ -758,6 +807,18 @@ Lambda.prototype.search = function(pred, bindings) {
     : ((bindings && this.bound.search(pred, bindings))
        || this.body.search(pred, bindings));
   return result;
+};
+
+Lambda.prototype._generalizeTF = function(expr2, newVar) {
+  if (!(expr2 instanceof Lambda)) {
+    throw new Error('Not a variable binding: ' + expr2);
+  }
+  if (this.bound.name != expr2.bound.name) {
+    throw new Error('Differing bindings: ' + this.bound.name
+                    + ', ' + expr2.bound.name);
+  }
+  return new Lambda(this.bound,
+                    this.body._generalizeTF(expr2.body, newVar));
 };
 
 Lambda.prototype._path = function(pred, revPath) {
@@ -926,9 +987,10 @@ Path.prototype.toString = function() {
 
 /**
  * Pseudo-constructor: returns a Path based on a "/"-separated string
- * or an array of strings.  The parts become the segments of the path.
- * Some segments serve as macros that expand into a list of other
- * segments, currently 'left', 'right', and 'binop'.
+ * or an array of strings, or a Bindings.  The parts become the
+ * segments of the path.  Some segments serve as macros that expand
+ * into a list of other segments, currently 'left', 'right', and
+ * 'binop'.
  *
  * A null input is treated as '/'.
  */
@@ -938,6 +1000,14 @@ function path(arg) {
   }
   if (arg == null) {
     arg = '/';
+  }
+  // If a Bindings, reverse it into an array and go from there.
+  if (arg instanceof Bindings) {
+    var array = [];
+    while (bindings != null) {
+      array.unshift(bindings.from);
+    }
+    arg = array;
   }
   var segments = (typeof arg == 'string')
     ? arg.split('/')
