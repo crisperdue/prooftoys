@@ -517,7 +517,8 @@ var ruleInfo = {
   },
 
   // T && T.  Uses no book-specific definitions.
-  // Used to prove the Cases rule.
+  // Used to prove equationCases.  The "cases" rule
+  // and makeConjunction could treat this as a tautology.
   r5212: function() {
     var step1 = rules.rRight(rules.theorem('r5211'),
                              rules.theorem('t'),
@@ -777,7 +778,6 @@ var ruleInfo = {
       var step2a = rules.axiom4(call(lambda(v, gen), F));
       var step2b = rules.rRight(step2a, caseF, '');
       var step2c = rules.toTIsA(step2b);
-      // TODO: prove T && T inline.
       var step3 = rules.theorem('r5212');
       var step4a = rules.r(step1c, step3, '/left');
       var step4b = rules.r(step2c, step4a, '/right');
