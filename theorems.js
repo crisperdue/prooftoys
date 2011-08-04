@@ -764,24 +764,24 @@ var ruleInfo = {
               + 'its value in the map')
   },
 
-  // 5222: Given a variable and WFF, deduce the WFF.  User must prove
-  // theorems where T replaces v in A and where F replaces v in A.
-  // TODO: Make a version of this that uses equationCases, rename
-  //   this to casesBook.
-  // TODO: pass in the two cases as arguments.
+  // (5222) Given two theorems that are substitutions of T and
+  // F respectively into a WFF, proves the WFF.
   cases: {
     action: function(caseT, caseF, v) {
-      var gen = caseT.generalizeTF(caseF, v);
-      var step1a = rules.axiom4(call(lambda(v, gen), T));
+      // Note: The existing names should include both caseT and caseF,
+      // but the only additional name in caseF would be "F".
+      var newVar = Y.genVar('v', caseT.allNames());
+      var gen = caseT.generalizeTF(caseF, newVar);
+      var step1a = rules.axiom4(call(lambda(newVar, gen), T));
       var step1b = rules.rRight(step1a, caseT, '');
       var step1c = rules.toTIsA(step1b);
-      var step2a = rules.axiom4(call(lambda(v, gen), F));
+      var step2a = rules.axiom4(call(lambda(newVar, gen), F));
       var step2b = rules.rRight(step2a, caseF, '');
       var step2c = rules.toTIsA(step2b);
       var step3 = rules.theorem('r5212');
       var step4a = rules.r(step1c, step3, '/left');
       var step4b = rules.r(step2c, step4a, '/right');
-      var step5 = rules.sub(rules.axiom('axiom1'), lambda(v, gen), g);
+      var step5 = rules.sub(rules.axiom('axiom1'), lambda(newVar, gen), g);
       var step6 = rules.r(step5, step4b, '/');
       var step7a = rules.forallInst(step6, v);
       var step7b = rules.reduce(step7a, '/');
