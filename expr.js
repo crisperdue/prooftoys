@@ -1290,7 +1290,7 @@ var utils = {
   },
 
   _var: function(name) {
-    return new Y.Var(name);
+    return (name instanceof Var) ? name : new Y.Var(name);
   },
 
   // This calls a function with any number of arguments.

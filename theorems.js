@@ -617,27 +617,26 @@ var ruleInfo = {
   // [T = F] = F
   // Not used, though previously used in 5218.
 
-  // Given "subFree(T, v, [A = B])" and "subFree(F, v, [A = B])",
-  // proves [A = B].  The argument is {v | [A = B]}.
-  // TODO: pass in the two cases as arguments.
+  // Given two WFFs each of the form A = B that are the result
+  // of substituting T and F respectively for a variable,
+  // proves the WFF with the variable.
   equationCases: {
-    action: function(lexpr) {
-      // These first two steps are not really deductions, they
-      // just generate the expressions for the cases.
-      Y.assert(lexpr instanceof Y.Lambda,
-               'equationCases requires anonymous function argument.');
-      var caseT = Y.subFree(T, lexpr.bound, lexpr.body);
+    action: function(caseT, caseF, v) {
+      v = _var(v);
       var stepT1 = rules.toTIsEquation(caseT);
-      var caseF = Y.subFree(F, lexpr.bound, lexpr.body);
       var stepF1 = rules.toTIsEquation(caseF);
       var step2 = rules.r(stepT1, rules.theorem('r5212'), '/left');
       var step3 = rules.r(stepF1, step2, '/right');
+      // Note: If a variable is not in caseT it is also not in caseF.
+      var newVar = Y.genVar('w', caseT.allNames());
+      var gen = caseT.generalizeTF(caseF, newVar);
+      var lexpr = lambda(newVar, gen);
       var step4 = rules.instEqn(rules.axiom('axiom1'), lexpr, g);
       var step5 = rules.reduce(step4, '/right/arg/body');
       var step6 = rules.reduce(step5, '/left/right');
       var step7 = rules.reduce(step6, '/left/left');
       var step8 = rules.r(step7, step3, '');
-      var step9 = rules.forallInst(step8, lexpr.bound);
+      var step9 = rules.forallInst(step8, v);
       return step9;
     },
     comment: ('Given a function expression of the form {v | A = B},'
@@ -652,7 +651,9 @@ var ruleInfo = {
       var step1 = rules.theorem('r5230TF');
       var step2 = rules.eqT(T);
       var step3 = rules.eqnSwap(step2);
-      var step4 = rules.equationCases(lambda(x, equal(equal(T, x), x)));
+      var step4 = rules.equationCases(equal(equal(T, T), T),
+                                      equal(equal(T, F), F),
+                                      'x');
       var step5 = rules.instEqn(step4, a, x);
       return step5;
     },
@@ -765,9 +766,11 @@ var ruleInfo = {
   },
 
   // (5222) Given two theorems that are substitutions of T and
-  // F respectively into a WFF, proves the WFF.
+  // F respectively into a WFF; and a variable or variable name,
+  // proves the WFF.
   cases: {
     action: function(caseT, caseF, v) {
+      v = _var(v);
       // Note: The existing names should include both caseT and caseF,
       // but the only additional name in caseF would be "F".
       var newVar = Y.genVar('v', caseT.allNames());
@@ -981,13 +984,12 @@ var ruleInfo = {
             // WFF is already an equation.
             var step1 = rules.tautology(Y.subFree(T, name, wff));
             var step2 = rules.tautology(Y.subFree(F, name, wff));
-            var step3 = rules.equationCases(lambda(new Y.Var(name), wff));
+            var step3 = rules.equationCases(step1, step2, name);
             return step3;
           } else {
             var step1 = rules.tautology(equal(T, Y.subFree(T, name, wff)));
             var step2 = rules.tautology(equal(T, Y.subFree(F, name, wff)));
-            var step3 =
-              rules.equationCases(lambda(new Y.Var(name), equal(T, wff)));
+            var step3 = rules.equationCases(step1, step2, name);
             return rules.fromTIsA(step3);
           }
         }

@@ -458,7 +458,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testEquationCases: function() {
         var inf = Y.makeInference('equationCases',
-                                  [lambda(z, equal(z, z))]);
+                                  [equal(T, T), equal(F, F), 'z']);
         assertEqual('(z = z)', inf.result);
       },
 
