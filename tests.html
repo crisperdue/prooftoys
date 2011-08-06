@@ -601,7 +601,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testImplyForall: function() {
-        var inf = Y.makeInference('implyForall', [x, p, call(q, x)]);
+        var inf = Y.makeInference('implyForall', [x, implies(p, call(q, x))]);
         var wff =
           '((forall {x : (p --> (q x))}) --> (p --> (forall {x : (q x)})))';
         assertEqual(wff, inf.result);

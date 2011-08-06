@@ -90,9 +90,9 @@ var ruleInfo = {
           }
         }
         var result = target.replace(path, replacer);
-        return result;
+        return result.derive('r', arguments, [target, equation]);
       } else if (equation.isCall2('-->') || equation.isCall2('|-')) {
-        rules.replace(equation, target, path);
+        return rules.replace(equation, target, path);
       } else {
         throw new Error('Rule R requires equation: ' + equation);
       }
@@ -110,7 +110,8 @@ var ruleInfo = {
     action: function(equation, target, path) {
       path = Y.path(path);
       var rev = rules.eqnSwap(equation);
-      return rules.r(rev, target, path);
+      var result = rules.r(rev, target, path);
+      return result.derive('rRight', arguments, [target, equation]);
     },
     inputs: [{secondary: 'equation'}, {primary: 'location'}],
     comment: ('Replaces an occurrence of an expression with something'
@@ -119,8 +120,9 @@ var ruleInfo = {
 
   axiom1: {
     action: function() {
-      return equal(call('&&', call(g, T), call(g, F)),
-                   call('forall', lambda(x, call(g, x))));
+      var result =  equal(call('&&', call(g, T), call(g, F)),
+                          call('forall', lambda(x, call(g, x))));
+      return result.derive('axiom1');
     },
     comment: ('')
   },
@@ -128,7 +130,8 @@ var ruleInfo = {
   // (--> (= x y) (= (h x) (h y)))
   axiom2: {
     action: function() {
-      return call('-->', equal(x, y), equal(call(h, x), call(h, y)));
+      var result = call('-->', equal(x, y), equal(call(h, x), call(h, y)));
+      return result.derive('axiom2');
     },
     comment: ('')
   },
@@ -136,9 +139,10 @@ var ruleInfo = {
   // (= (= f g) (= {x : T} {x : (= (f x) (g x))}))
   axiom3: {
     action: function() {
-      return equal(equal(f, g),
-                   call('forall',
-                        lambda(x, equal(call(f, x), call(g, x)))));
+      var result = equal(equal(f, g),
+                         call('forall',
+                              lambda(x, equal(call(f, x), call(g, x)))));
+      return result.derive('axiom3');
     },
     comment: ('')
   },
@@ -152,8 +156,10 @@ var ruleInfo = {
     action: function(call) {
       if (call instanceof Y.Call && call.fn instanceof Y.Lambda) {
         var lambdaExpr = call.fn;
-        return equal(call,
-                     Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
+        var result =
+          equal(call,
+                Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
+        return result.derive('axiom4', arguments);
       } else {
         throw new Error('Axiom 4 needs ({X : B} A), got: ' + call.toString());
       }
@@ -163,7 +169,8 @@ var ruleInfo = {
 
   axiom5: {
     action: function() {
-      return equal(call('the', equal(y)), y);
+      var result = equal(call('the', equal(y)), y);
+      return result.derive('axiom5');
     },
     comment: ('')
   },
@@ -174,7 +181,8 @@ var ruleInfo = {
   // shortening the proof of [F = [F = T]].
   axiomTIsNotF: {
     action: function() {
-      return call('not', equal(T, F));
+      var result = call('not', equal(T, F));
+      return result.derive('axiomTIsNotF');
     },
     comment: ('')
   },
@@ -186,30 +194,36 @@ var ruleInfo = {
   // Rule R on r5230FT and step 3.
   axiomPNeqNotP: {
     action: function() {
-      return call('forall', lambda(p, call('not', equal(p, call('not', p)))));
+      var result =
+        call('forall', lambda(p, call('not', equal(p, call('not', p)))));
+      return result.derive('axiomPNeqNotP');
     },
     comment: ('')
   },
 
   defForall: function() {
-    return equal('forall', equal(lambda(x, T)));
+    var result = equal('forall', equal(lambda(x, T)));
+    return result.derive('defForall');
   },
 
   // Definition of F, for book-style proofs.
   defFFromBook: function() {
-    return equal(F, call('forall', lambda(x, x)));
+    return equal(F, call('forall', lambda(x, x))).derive('defFFromBook');
   },
 
   defNot: function() {
-    return equal('not', equal(F));
+    return equal('not', equal(F)).derive('defNot');
   },
 
   // Book only.
   defAnd: function() {
-    return equal('&&', lambda(x, lambda(y, equal(lambda(g, call(g, T, T)),
-                                                 lambda(g, call(g, x, y))))));
+    var result =
+      equal('&&', lambda(x, lambda(y, equal(lambda(g, call(g, T, T)),
+                                            lambda(g, call(g, x, y))))));
+    return result.derive('defAnd');
   },
 
+  // TODO: Make into a proof display though not really a proof.
   axioms: {
     action: function() {
       rules.axiom('axiom1');
@@ -222,6 +236,7 @@ var ruleInfo = {
               + ' which is a schema with many instances.')
   },
 
+  // TODO: Make into a proof display though not really a proof.
   definitions: {
     action: function() {
       rules.definition('not');
@@ -245,7 +260,8 @@ var ruleInfo = {
   eqSelf: {
     action: function(a) {
       var step1 = rules.axiom4(call(lambda(x, x), a));
-      return rules.r(step1, step1, '/left');
+      var result = rules.r(step1, step1, '/left');
+      return result.derive('eqSelf', arguments);
     },
     inputs: [{term: 'any'}],
     comment: 'Derives A = A.'
@@ -256,7 +272,7 @@ var ruleInfo = {
     var aa = rules.eqSelf(a);
     var b = ab.getRight();
     var result = rules.r(ab, a, '/');
-    return result;
+    return result.derive('replaceWhole', arguments, arguments);
   },
 
   // r5201b
@@ -264,7 +280,7 @@ var ruleInfo = {
     action: function(ab) {
       var aa = rules.eqSelf(ab.getLeft());
       var ba = rules.r(ab, aa, '/left');
-      return ba;
+      return ba.derive('eqnSwap', arguments, arguments);
     },
     inputs: [{primary: 'equation'}],
     comment: 'From A = B derives B = A'
@@ -274,22 +290,26 @@ var ruleInfo = {
   eqnChain: {
     action: function(ab, bc) {
       var ac = rules.r(bc, ab, '/right');
-      return ac;
+      var result = ac;
+      return result.derive('eqnChain', arguments, arguments);
     },
     comment: 'From A = B and B = C derives A = C'
   },
 
   // r5201d, not used
-  applyBySides: function(ab, cd) {
-    var a = ab.getLeft();
-    var b = ab.getRight();
-    var c = cd.getLeft();
-    var d = cd.getRight();
-    var ac = call(a, c);
-    var acac = rules.eqSelf(ac);
-    var acbc = rules.r(ab, acac, '/right/fn');
-    var acbd = rules.r(cd, acbc, '/right/arg');
-    return acbd;
+  applyBySides: {
+    action: function(ab, cd) {
+      var a = ab.getLeft();
+      var b = ab.getRight();
+      var c = cd.getLeft();
+      var d = cd.getRight();
+      var ac = call(a, c);
+      var acac = rules.eqSelf(ac);
+      var acbc = rules.r(ab, acac, '/right/fn');
+      var acbd = rules.r(cd, acbc, '/right/arg');
+      var result = acbd;
+      return result.derive('applyBySides', arguments, arguments);
+    }
   },
 
   // r5201e
@@ -297,7 +317,7 @@ var ruleInfo = {
     action: function(eqn, a) {
       var step1 = rules.eqSelf(call(eqn.locate('/left'), a));
       var step2 = rules.r(eqn, step1, '/right/fn');
-      return step2;
+      return step2.derive('applyBoth', arguments, [eqn]);
     },
     inputs: {or: [{primary: 'equation', secondary: {term: 'any'}},
                   ({primary: {term: 'any'}, secondary: 'equation'})]},
@@ -309,7 +329,7 @@ var ruleInfo = {
     action: function(a, bc) {
       var abab = rules.eqSelf(call(a, bc.getLeft()));
       var abac = rules.r(bc, abab, '/right/arg');
-      return(abac);
+      return abac.derive('applyToBoth', arguments, [bc]);
     },
     inputs: {or: [{primary: 'equation', secondary: {term: 'any'}},
                   ({primary: {term: 'any'}, secondary: 'equation'})]},
@@ -325,14 +345,16 @@ var ruleInfo = {
     action: function(defName, a, path) {
       var target = a.locate(path);
       if (target instanceof Y.Var) {
-        return rules.r(rules.definition(defName), a, path);
+        var result = rules.r(rules.definition(defName), a, path);
+        return result.derive('useDefinition', arguments, [a]);
       } else {
         Y.assert(target instanceof Y.Call && target.arg instanceof Y.Var,
                  'Target of useDefinition not suitable');
         var arg = target.arg;
         Y.assert(arg.name == 'T' || arg.name == 'F',
                  'Target of useDefinition not suitable');
-        return rules.r(rules.definition(target.fn.name, arg), a, path);
+        var result = rules.r(rules.definition(target.fn.name, arg), a, path);
+        return result.derive('useDefinition', arguments, [a]);
       }
     },
     comment: ('')
@@ -352,7 +374,7 @@ var ruleInfo = {
                'Reduce needs a call to a lambda, got: ' + target);
       var equation = rules.axiom4(target);
       var result = rules.r(equation, expr, path);
-      return result;
+      return result.derive('reduce', arguments, [expr]);
     },
     inputs: [{primary: 'location'}],
     comment: ('Substitutes an actual argument for the formal variable'
@@ -366,9 +388,7 @@ var ruleInfo = {
    */
   changeVar: {
     action: function(expr, path, newVar) {
-      if (typeof newVar == 'string') {
-        newVar = new Y.Var(newVar);
-      }
+      newVar = _var(newVar);
       var target = expr.locate(path);
       Y.assert(target instanceof Y.Lambda, 'Not a function: ' + target);
       Y.assert(!expr.freeNames()[newVar.name],
@@ -377,7 +397,7 @@ var ruleInfo = {
                            Y.subFree(newVar, target.bound, target.body));
       var step1 = rules.eqSelf(changed);
       var step2 = rules.r(step1, expr, path);
-      return step2;
+      return step2.derive('changeVar', arguments, [expr]);
     },
     comment: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
@@ -399,7 +419,7 @@ var ruleInfo = {
       Y.assert(v instanceof Y.Var, 'Not a variable: ' + v);
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
       var step2 = rules.r(eqn, step1, '/right/body');
-      return step2;
+      return step2.derive('bindEqn', arguments, [eqn]);
     },
     comment: ('Wraps each side of an equation in a function'
               + ' using the bound variable of your choice.')
@@ -415,12 +435,12 @@ var ruleInfo = {
       var step2 = rules.applyBoth(bound, a);
       var step3 = rules.reduce(step2, '/left');
       var step4 = rules.reduce(step3, '/right');
-      return step4;
+      return step4.derive('instEqn', arguments, [b_c]);
     },
     comment: ('Instantiates a free variable in an equation.')
   },
 
-  // thm: T = [B = B] (5210)
+  // T = [B = B] (5210)
   eqT: {
     action: function(b) {
       var a3 =
@@ -438,7 +458,7 @@ var ruleInfo = {
       var step3 = rules.applyBoth(step2d, b);
       var step4a = rules.reduce(step3, '/left');
       var step4b = rules.reduce(step4a, '/right');
-      return step4b;
+      return step4b.derive('eqT', arguments, []);
     },
     comment: ('Proves T = [B = B].')
   },
@@ -451,7 +471,7 @@ var ruleInfo = {
     var step1 = rules.eqSelf(T);
     var step2 = rules.eqT(T);
     var step3 = rules.rRight(step2, step1, '');
-    return step3;
+    return step3.derive('t');
   },
 
   // From [A = B] deduce T = [A = B].
@@ -460,7 +480,7 @@ var ruleInfo = {
       Y.assertEqn(a_b);
       var step1 = rules.eqT(a_b.locate('/left'));
       var step2 = rules.r(a_b, step1, '/right/right');
-      return step2;
+      return step2.derive('toTIsEquation', arguments, [a_b]);
     },
     comment: ('From [A = B] deduce T = [A = B].')
   },
@@ -475,7 +495,7 @@ var ruleInfo = {
       var step4 = rules.useDefinition('not', step3, '/arg/right/fn');
       var step5 = rules.rRight(rules.eqT(F), step4, '/right/right');
       var step6 = rules.eqnSwap(step5);
-      return step6;
+      return step6.derive('r5230FT');
     },
     comment: ('[F = T] = F')
   },
@@ -490,7 +510,7 @@ var ruleInfo = {
       var step4 = rules.useDefinition('not', step3, '/arg/right/fn');
       var step5 = rules.r(rules.r5230FT(), step4, '/right/right');
       var step6 = rules.eqnSwap(step5);
-      return step6;
+      return step6.derive('r5230TF');
     },
     comment: ('[T = F] = F')
   },
@@ -501,7 +521,7 @@ var ruleInfo = {
     var step1 = rules.definition('&&', T);
     var step2 = rules.applyBoth(step1, T);
     var step3 = rules.reduce(step2, '/right');
-    return step3;
+    return step3.derive('r5211');
   },
 
   // Book version of r5211.
@@ -513,7 +533,7 @@ var ruleInfo = {
     var step3a = rules.eqT(lambda(x, T));
     var step3b = rules.rRight(rules.defForall(), step3a, '/right/fn');
     var step4 = rules.rRight(step3b, step2c, '/right');
-    return step4;
+    return step4.derive('r5211Book');
   },
 
   // T && T.  Uses no book-specific definitions.
@@ -523,7 +543,7 @@ var ruleInfo = {
     var step1 = rules.rRight(rules.theorem('r5211'),
                              rules.theorem('t'),
                              '/');
-    return step1;
+    return step1.derive('r5212');
   },
 
   // From theorems A = B and C = D, derives theorem
@@ -543,7 +563,7 @@ var ruleInfo = {
     var step4 = rules.r(c_d, step3, '/right/right');
     var step5 = rules.r(step2, rules.theorem('r5212'), '/left');
     var step6 = rules.r(step4, step5, '/right');
-    return step6;
+    return step6.derive('r5213', arguments, arguments);
   },
 
   // Target is forall {x : B}, expr is A, which will replace
@@ -562,7 +582,7 @@ var ruleInfo = {
       var step4 = rules.reduce(step3, '/right');
       // Do not use fromTIsA, it depends on this.
       var step5 = rules.r(step4, rules.theorem('t'), '/');
-      return step5;
+      return step5.derive('forallInst', arguments, [target]);
     },
     comment: ('In a "forall", instantiates the bound variable with'
               + ' a given term.')
@@ -581,7 +601,7 @@ var ruleInfo = {
     var step8 = rules.r5213(rules.theorem('r5211'), step7);
     var step9 = rules.r(step5, step8, '/');
     var step10 = rules.forallInst(step9, a);
-    return step10;
+    return step10.derive('andTBook', arguments);
   },
 
   // 5216, using the definition of "true and".  Not used.
@@ -610,7 +630,7 @@ var ruleInfo = {
                                      '/right/fn');
     var step6d = rules.rRight(step6c, step6b, '/left');
     var step7 = rules.rRight(step6d, step4b, '/right');
-    return step7;
+    return step7.derive('r5217Book');
   },
 
   // 5217 is the same as 5230TF.
@@ -637,7 +657,7 @@ var ruleInfo = {
       var step7 = rules.reduce(step6, '/left/left');
       var step8 = rules.r(step7, step3, '');
       var step9 = rules.forallInst(step8, v);
-      return step9;
+      return step9.derive('equationCases', arguments, [caseT, caseF]);
     },
     comment: ('Given a function expression of the form {v | A = B},'
               + ' infers (forall {x | A = B}) assuming A = B is proven'
@@ -655,7 +675,7 @@ var ruleInfo = {
                                       equal(equal(T, F), F),
                                       'x');
       var step5 = rules.instEqn(step4, a, x);
-      return step5;
+      return step5.derive('r5218', arguments);
     },
     comment: ('For any expression A derives [T = A] = A.')
   },
@@ -665,7 +685,7 @@ var ruleInfo = {
     action: function(a) {
       var step1 = rules.r5218(a);
       var step2 = rules.rRight(step1, a, '/');
-      return step2;
+      return step2.derive('toTIsA', arguments, [a]);
     },
     comment: ('From A derives T = A')
   },
@@ -678,8 +698,8 @@ var ruleInfo = {
       Y.assert(left instanceof Y.Var && left.name == 'T',
                'Input should be [T = A]: ' + t_a);
       var a = t_a.locate('/right');
-      var step2 = rules.r(rules.r5218(a), t_a, '/');
-      return step2;
+      var result = rules.r(rules.r5218(a), t_a, '/');
+      return result.derive('fromTIsA', arguments, [t_a]);
     },
     comment: ('From T = A derives A')
   },
@@ -697,8 +717,8 @@ var ruleInfo = {
       var step6 = rules.bindEqn(rules.eqT(T), x);
       var step7 = rules.rRight(step5, step6, '/');
       var fa = rules.definition('forall');
-      var step8 = rules.rRight(fa, step7, '/fn');
-      return step8;
+      var result = rules.rRight(fa, step7, '/fn');
+      return result.derive('forallT', arguments);
     },
     comment: ('(forall {v | T}) for any variable v.'
               + ' (Special case of renaming a bound variable.)')
@@ -708,13 +728,11 @@ var ruleInfo = {
   // converts internally to a variable.
   uGen: {
     action: function(a, v) {
-      if (typeof v == 'string') {
-        v = new Y.Var(v);
-      }
+      v = _var(v);
       var step1 = rules.toTIsA(a);
       var step2 = rules.forallT(v);
       var step3 = rules.r(step1, step2, '/arg/body');
-      return step3;
+      return step3.derive('uGen', arguments, [a]);
     },
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.')
@@ -726,7 +744,7 @@ var ruleInfo = {
     action: function(b, a, v) {
       var step1 = rules.uGen(b, v);
       var step2 = rules.forallInst(step1, a);
-      return step2;
+      return step2.derive('sub', arguments, [b]);
     },
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.')
@@ -759,7 +777,7 @@ var ruleInfo = {
       for (var name in map2) {
         wff = rules.sub(wff, map2[name], name);
       }
-      return wff;
+      return wff.derive('subAll', arguments, [b]);
     },
     comment: ('Substitute in B for each variable named in the map, '
               + 'its value in the map')
@@ -788,7 +806,7 @@ var ruleInfo = {
       var step6 = rules.r(step5, step4b, '/');
       var step7a = rules.forallInst(step6, v);
       var step7b = rules.reduce(step7a, '/');
-      return step7b;
+      return step7b.derive('cases', arguments, [caseT, caseF]);
     },
     comment: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.')
@@ -802,7 +820,7 @@ var ruleInfo = {
       var step2 = rules.rRight(step1, b, '/left');
       var step3 = rules.useDefinition('-->', step2, '/fn');
       var step4 = rules.reduce(step3, '');
-      return step4;
+      return step4.derive('modusPonens', arguments, arguments);
     },
     comment: ('Modus Ponens.  Given A and A --> B derives B.')
   },
@@ -813,7 +831,7 @@ var ruleInfo = {
       var step1 = rules.axiom('axiomTIsNotF');
       var step2 = rules.useDefinition('not', step1, '/fn');
       var step3 = rules.eqnSwap(step2);
-      return step3;
+      return step3.derive('r5230TF');
     },
     comment: ('[T = F] = F')
   },
@@ -859,7 +877,7 @@ var ruleInfo = {
       // And use the fact that [F = T] --> F
       var step7 = rules.rRight(step4, step6, '/left');
       var step8 = rules.fromTIsA(step7);
-      return step8;
+      return step8.derive('r5230FT');
     },
     comment: ('[F = T] = F')
   },
@@ -870,7 +888,7 @@ var ruleInfo = {
       var step1 = rules.eqSelf(call('not', T));
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
       var step3 = rules.r(rules.theorem('r5230FT'), step2, '/right');
-      return step3;
+      return step3.derive('r5231T');
     },
     comment: ('[not T] = F')
   },
@@ -882,7 +900,7 @@ var ruleInfo = {
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
       var step3 = rules.eqT(F);
       var step4 = rules.rRight(step3, step2, '/right');
-      return step4;
+      return step4.derive('r5231F');
     },
     comment: ('[not F] = T')
   },
@@ -891,7 +909,7 @@ var ruleInfo = {
   // [[F =] = not].
   falseEquals: {
     action: function() {
-      return rules.eqnSwap(rules.defNot());
+      return rules.eqnSwap(rules.defNot()).derive('falseEquals');
     },
     comment: ('[F =] = not')
   },
@@ -909,7 +927,7 @@ var ruleInfo = {
       var step7 = rules.sub(rules.axiom('axiom3'), equal(T), f);
       var step8 = rules.sub(step7, lambda(x, x), g);
       var step9 = rules.rRight(step8, step6, '');
-      return step9;
+      return step9.derive('trueEquals', arguments);
     },
     comment: ('[T =] = {x | x}')
   },
@@ -936,7 +954,7 @@ var ruleInfo = {
         var right = result.getRight();
         var _path = right.pathTo(isReducible);
         if (_path == null) {
-          return result;
+          return result.derive('evalBool', arguments);
         }
         var target = right.locate(_path);
         var fn = target.fn;
@@ -985,12 +1003,13 @@ var ruleInfo = {
             var step1 = rules.tautology(Y.subFree(T, name, wff));
             var step2 = rules.tautology(Y.subFree(F, name, wff));
             var step3 = rules.equationCases(step1, step2, name);
-            return step3;
+            return step3.derive('tautology', arguments);
           } else {
             var step1 = rules.tautology(equal(T, Y.subFree(T, name, wff)));
             var step2 = rules.tautology(equal(T, Y.subFree(F, name, wff)));
             var step3 = rules.equationCases(step1, step2, name);
-            return rules.fromTIsA(step3);
+            var result = rules.fromTIsA(step3);
+            return result.derive('tautology', arguments)
           }
         }
       }
@@ -1000,7 +1019,8 @@ var ruleInfo = {
                && result.getRight() instanceof Y.Var
                && result.getRight().name == 'T',
                'Not a tautology: ' + result.getLeft());
-      return rules.rRight(result, rules.t(), '');
+      var result = rules.rRight(result, rules.t(), '');
+      return result.derive('tautology', arguments);
     },
     comment: ('Tautology decider.')
   },
@@ -1013,7 +1033,7 @@ var ruleInfo = {
       var step1 = rules.theorem('r5212');
       var step2 = rules.r(stepa, step1, '/left');
       var step3 = rules.r(stepb, step2, '/right');
-      return step3;
+      return step3.derive('makeConjunction', arguments, [a, b]);
     },
     comment: ('Given a and b, derive a && b')
   },
@@ -1024,7 +1044,7 @@ var ruleInfo = {
     action: function(tautology, map) {
       var step1 = rules.tautology(tautology);
       var step2 = rules.subAll(step1, map);
-      return step2;
+      return step2.derive('tautInst', arguments, [tautology]);
     },
     comment: ('A substitution instance of a tautology is a theorem.')
   },
@@ -1056,7 +1076,7 @@ var ruleInfo = {
                           call('||', F, call('forall', lambda(v, b))));
       var step9 = rules.cases(caseT, caseF, p0);
       var step10 = rules.sub(step9, a, p0);
-      return step10;
+      return step10.derive('r5235', arguments);
     },
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".')
@@ -1064,7 +1084,10 @@ var ruleInfo = {
 
   // 5237
   implyForall: {
-    action: function(v, a, b) {
+    action: function(v, a_b) {
+      Y.assert(a_b.isCall2('-->'), 'Must be an implication: ' + a_b);
+      var a = a_b.getLeft();
+      var b = a_b.getRight();
       var step1 = rules.r5235(v, call('not', a), b);
       var taut = equal(call('||', call('not', p), q), implies(p, q));
       var step2 = rules.tautInst(taut, {p: a, q: b});
@@ -1075,7 +1098,7 @@ var ruleInfo = {
       };
       var step4 = rules.tautInst(taut, map4);
       var step5 = rules.r(step4, step3, '/right');
-      return step5;
+      return step5.derive('implyForall', arguments, [a_b]);
     },
     comment: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.')
@@ -1098,7 +1121,7 @@ var ruleInfo = {
       var substitution = Y.matchAsSchema(tautology, tautologous);
       var step3 = rules.subAll(step1, substitution);
       var step4 = rules.modusPonens(step2, step3);
-      return step4;
+      return step4.derive('p', arguments, [a1, a2]);
     },
     comment: ('Simplified form of Rule P without hypotheses.')
   },
@@ -1107,10 +1130,11 @@ var ruleInfo = {
   r5238: {
     action: function(vars, a, b) {
       Y.assert(vars.concat, 'Variables must be an array');
+      var result;
       if (vars.length == 0) {
-        return rules.eqSelf(equal(a, b));
+        result = rules.eqSelf(equal(a, b));
       } else if (vars.length == 1) {
-        return rules.r5238a(vars[0], a, b);
+        result = rules.r5238a(vars[0], a, b);
       } else {
         var v = vars[vars.length - 1];
         if (typeof v == 'string') {
@@ -1121,8 +1145,9 @@ var ruleInfo = {
                                 lambda(v, b));
         var step2 = rules.r5238a(v, a, b);
         var step3 = rules.r(step2, step1, '/right/arg/body');
-        return step3;
+        result = step3;
       }
+      return result.derive('r5238', arguments);
     },
     comment: ('Equal functions equate to equal expression values.')
   },
@@ -1140,6 +1165,7 @@ var ruleInfo = {
                                  g: lambda(v, b)}));
       var step4 = rules.reduce(step3, '/right/arg/body/left');
       var step5 = rules.reduce(step4, '/right/arg/body/right');
+      // Do not "derive", leave this inline.
       return step5;
     },
     comment: ('')
@@ -1187,11 +1213,11 @@ var ruleInfo = {
         step6 = rules.reduce(step6, '/right/right/body/right');
       }
       if (boundNameList.length == 0) {
-        return step6;
+        return step6.derive('r5239', arguments);
       }
       var step7 = rules.r5238(boundNameList, a, b);
       var step8 = rules.r(step7, step6, '/left');
-      return step8;
+      return step8.derive('r5239', arguments);
     },
     comment: ('Analog to Rule R, expressed as an implication.')
   },
@@ -1208,6 +1234,7 @@ var ruleInfo = {
       if (h_equation.isCall2('=')) {
         // Allow "replace" to be used for situations where "r"
         // is applicable.
+        // Leave this line.
         return rules.r(h_equation, h_c, path);
       }
       assert(h_c.isCall2('-->') || h_c.isCall2('|-'),
@@ -1232,7 +1259,7 @@ var ruleInfo = {
       }
       var step1 = h_equation;
       for (var name in boundNames) {
-        step1 = rules.implyForall(name, h, equation);
+        step1 = rules.implyForall(name, implies(h, equation));
       }
       var step2 = rules.r5239(equation, c, path);
       var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
@@ -1245,7 +1272,7 @@ var ruleInfo = {
                           step3,
                           implies(h, step3.getRight().getRight()),
                           taut2);
-      return step4;
+      return step4.derive('replace', arguments, [h_c, h_equation]);
     },
     comment: ("Analog to the deduction theorem, replacing an equation "
               + "that is true conditionally.")
@@ -1276,7 +1303,7 @@ var ruleInfo = {
     var step11 = rules.reduce(step10, '/right/arg/body/right');
     var step12 = rules.r5218(step11.locate('/right/arg/body/right'));
     var step13 = rules.r(step12, step11, '/right/arg/body');
-    return step13;
+    return step13.derive('funWithAnd');
   }
 
 };  // End of theorems and rules

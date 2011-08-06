@@ -104,7 +104,6 @@ function applyRule(name, ruleArgs, stack) {
   stack.push(new Proof());
   var result = rule.apply(null, ruleArgs);
   var step = new Inference(name, ruleArgs, result, stack.pop());
-  result.inference = step;
   stack[stack.length - 1].add(step);
   return result;
 }
@@ -681,7 +680,6 @@ function renderInference(inference, node, editable) {
     node = new Y.Node(document.body);
   }
   var pruf = inference.arguments.length ? 'Rule ' : 'Proof of ';
-  // var argInfo = inference.arguments.join(', ');
   var argInfo = '';
   for (var i = 0; i < inference.arguments.length; i++) {
     if (i > 0) {
@@ -1000,6 +998,7 @@ function addBottomPanel(node) {
  * given, it should be a map from key name to a function
  * for presenting the value of any key with that name.
  */
+// TODO: Move this to expr.js.
 function debugString(o, specials) {
   if (typeof o == 'object') {
     var result = '{';

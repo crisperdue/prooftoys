@@ -89,6 +89,9 @@ function appendSpan(node) {
 
 var space = '&nbsp;';
 
+// Used to order execution of proof steps so they can display
+// in order of execution in an automatically-generated proof.
+var stepCounter = 1;
 
 //// Expression, the base class
 
@@ -128,6 +131,22 @@ Expr.prototype.asString = function() {
 Expr.prototype.toString = function() {
   return '*';
 };
+
+/**
+ * Make a shallow copy of this, annotating the copy with the rule
+ * name, rule arguments, and dependencies (ruleName, ruleArgs,
+ * ruleDeps).  This becomes the "details" property.  The ruleArgs
+ * and ruleDeps are both optional.
+ */
+Expr.prototype.derive = function(ruleName, ruleArgs, ruleDeps) {
+  var expr = this.dup();
+  expr.details = this;
+  expr.ruleName = ruleName;
+  expr.ruleArgs  = Y.Array(ruleArgs || []);
+  expr.ruleDeps = ruleDeps ? Y.Array(ruleDeps) : [];
+  expr.stepNumber = stepCounter++;
+  return expr;
+}
 
 /**
  * Finds and returns a Map of the free variables in this expression,
@@ -257,14 +276,6 @@ Expr.prototype.pathTo = function(pred) {
   return result;
 };
 
-function newVar(exprs, name) {
-  var map = {};
-  for (var i = 0; i < exprs.length; i++) {
-    exprs[i]._addNames(map);
-  }
-  return genVar(name, map);
-}
-
 
 // Methods defined on expressions, but defined only in the subclasses:
 //
@@ -290,6 +301,11 @@ function newVar(exprs, name) {
 // Makes and returns a deep copy of this Expr, not including any
 // display-related information.  A null value indicates zero bindings.
 //
+//
+// dup()
+//
+// Makes and returns a shallow copy of this Expr, with only the properties
+// defined by the Var, Lambda, and Call classes.
 //
 // _addNames(Map result)
 //
@@ -431,6 +447,10 @@ Var.prototype.copy = function() {
   return new Var(this.name);
 };
 
+Var.prototype.dup = function() {
+  return new Var(this.name);
+};
+
 Var.prototype._addNames = function(map) {
   map[this.name] = true;
 };
@@ -566,6 +586,10 @@ Call.prototype.subst = function(replacement, name) {
 
 Call.prototype.copy = function() {
   return new Call(this.fn.copy(), this.arg.copy());
+};
+
+Call.prototype.dup = function() {
+  return new Call(this.fn, this.arg);
 };
 
 Call.prototype._addNames = function(map) {
@@ -737,6 +761,10 @@ Lambda.prototype.subst = function(replacement, name) {
 
 Lambda.prototype.copy = function() {
   return new Lambda(this.bound.copy(), this.body.copy());
+};
+
+Lambda.prototype.dup = function() {
+  return new Lambda(this.bound, this.body);
 };
 
 Lambda.prototype._addNames = function(map) {
@@ -1375,7 +1403,6 @@ Y.decapture = decapture;
 Y.path = path;
 Y.getBinding = getBinding;
 Y.matchAsSchema = matchAsSchema;
-Y.newVar = newVar;
 
 Y.assert = assert;
 Y.assertEqn = assertEqn;
