@@ -131,7 +131,8 @@ function makeInference(name, ruleArgs) {
 
 // Private to addTheorem, getTheorem, and the initializations
 // at the bottom of this file.  Maps from name to an inference
-// containing a proof of the theorem.
+// containing a proof of the theorem, or true, indicating
+// 
 var _theoremsByName = {};
 
 /**
@@ -140,7 +141,8 @@ var _theoremsByName = {};
  * theorem name.
  */
 function addTheorem(name) {
-  Y.assert(!_theoremsByName[name], 'Theorem already exists');
+  Y.assert(!_theoremsByName[name], 'Theorem already exists: ' + name);
+  Y.assert(rules[name], 'No proof: ' + name);
   _theoremsByName[name] = true;
 }
 
@@ -152,7 +154,9 @@ function getTheorem(name) {
   var value = _theoremsByName[name];
   if (value == true) {
     value = _theoremsByName[name] = makeInference(name);
-    Y.assert(value.proof.check(), 'Proof is not valid');
+    var proof = value.proof;
+    value.result.details = proof[proof.length - 1];
+    Y.assert(proof.check(), 'Proof is not valid');
   }
   return value;
 }
@@ -170,6 +174,7 @@ var definitions = {};
  * define('forall', equal(lambda(x, T))).
  */
 function define(name, definition) {
+  // TODO: Check for indirectly-circular definitions.
   var free = definition.freeNames();
   Y.assert(!free[name], 'Definition is not simple: ' + name);
   Y.assert(!definitions[name], 'Already defined: ' + name);
@@ -192,9 +197,9 @@ function defineCases(name, ifTrue, ifFalse) {
 
 /**
  * Fetch a simple or by-cases definition from the definitions
- * database.  Throws an exception if an appropriate definition
- * is not found.  Pass true or false to get the appropriate part
- * of a definition by cases.
+ * database.  Throws an exception if an appropriate definition is not
+ * found.  Pass true or false or T or F to get the appropriate part of
+ * a definition by cases.
  */
 function getDefinition(name, tOrF) {
   var defn = definitions[name];
@@ -501,9 +506,11 @@ function renderSteps(controller) {
   stepsNode.setContent('');
   stepsNode.setData('proof', proof);
   var steps = proof.steps;
+  var newSteps = editableProof(steps[steps.length - 1].result);
   // Map from inference result string to inference.
   var allSteps = {};
   for (var i = 0; i < steps.length; i++) {
+    var cstep = newSteps[i];
     var inf = steps[i];
     var text = '<div class=proofStep><span class=stepNumber>'
       + (i + 1) + '.</span></div>';
@@ -514,7 +521,8 @@ function renderSteps(controller) {
     var wffNode = stepNode.appendChild('<span class=expr></span>');
 
     // Render the WFF and record the rendered copy as the inference
-    // result.
+    // result.  Rendering guarantees to copy every step that it
+    // renders.
     inf.result = inf.result.render(wffNode);
 
     // Set up click handlers for selections within the step.
@@ -545,7 +553,7 @@ function renderSteps(controller) {
         throw new Error('Need prior step: ' + aString);
       }
     }
-    var stepInfo = computeStepInfo(proof, inf);
+    var stepInfo = computeStepInfo(cstep);
     stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
     // Set up "hover" event handling on the stepNode.
     stepNode.on('hover',
@@ -565,6 +573,59 @@ function renderSteps(controller) {
     }
   }
 };
+
+/**
+ * Finds all the proof steps supporting the given one at its level in
+ * the proof and returns deep copies of them as an array, including
+ * the given one, ordered by their ordinals.  Dependencies in the
+ * copies refer to each other rather than the original steps.  Updates
+ * all of the step ordinals to run from 1 to the length of the result.
+ */
+function editableProof(step) {
+  var oldSteps = [];
+  // Traverses the dependency graph, recording a copy of every step
+  // and building an array of all of the original steps.
+  function graphWalk(step) {
+    if (!step.__copy) {
+      // Provides a justification of "assumption" for steps lacking a
+      // justification.
+      // TODO: remove this hack when assumptions all become explicit.
+      if (!step.ruleName) {
+        step._justify('assumption');
+        step.ordinal = .1;
+      }
+      step.__copy = step.copyStep();
+      Y.each(step.ruleDeps, function(dep) { graphWalk(dep); });
+      oldSteps.push(step);
+    }
+  }
+  graphWalk(step);
+  // Make a copy of the steps array, with a copy in place of each
+  // old step, updating each copy's dependencies to refer to
+  // appropriate new copies as well.
+  var result = [];
+  Y.each(oldSteps, function(oldStep) {
+      var copy = oldStep.__copy;
+      copy.ruleDeps =
+        Y.Array.map(oldStep.ruleDeps, function(dep) {
+            Y.assert(dep.__copy, 'No copy available: ' + Y.debugString(dep));
+            Y.assert(dep.__copy.ruleName,
+                     'No ruleName: ' + Y.debugString(dep.__copy));
+            return dep.__copy;
+          });
+      // and ruleArgs?
+      result.push(copy);
+    });
+  // Sort the result by the step ordinals.
+  result.sort(function(s1, s2) { return s1.ordinal - s2.ordinal; });
+  // Normalize the new ordinals to run from 1 to N.
+  Y.each(result, function(step, i) {
+      step.ordinal = i + 1;
+    });
+  // Clean up references to the copies.
+  Y.each(oldSteps, function(step) { delete step.__copy; });
+  return result;
+}
 
 /**
  * Renders the given inference and a header after
@@ -590,36 +651,37 @@ function renderSubProof(event, inference, proofNode, editable) {
  * Computes and returns a string of HTML with information about
  * the given proof step.
  */
-function computeStepInfo(proof, inf) {
-  // Add the name and other info to the display.
+function computeStepInfo(step) {
+  var expr = step;
   var stepInfo;
-  if (inf.name == 'axiom') {
-    stepInfo = inf.arguments[0];
-  } else if (inf.name == 'definition') {
+  if (expr.ruleName == 'definition') {
     stepInfo = 'definition of ';
-    if (inf.arguments.length == 2) {
-      stepInfo += inf.arguments[1] + ' ';
+    if (expr.ruleArgs.length == 2) {
+      stepInfo += expr.ruleArgs[1] + ' ';
     }
-    stepInfo += inf.arguments[0];
-  } else if (inf.name == 'theorem') {
-    stepInfo = fancyName(inf, proof);
+    stepInfo += expr.ruleArgs[0];
   } else {
-    if (inf.proof.steps.length == 0) {
-      stepInfo = inf.name;
-    } else {
+    if (expr.details) {
       // It is a (derived) rule of inference.
-      stepInfo = fancyName(inf, proof);
+      stepInfo = fancyName(expr);
+    } else {
+      // It is a primitive rule of inference (Rule R).
+      stepInfo = expr.ruleName;
     }
+
+    // Display dependencies on other steps.
     var firstDep = true;
-    for (var key in inf.deps) {
-      if (firstDep) {
-        firstDep = false;
-      } else {
-        stepInfo += ',';
-      }
-      stepInfo += ' ' + fancyStepNumber(proof.stepNumber(inf.deps[key]));
-    }
-    var args = inf.arguments;
+    Y.each(expr.ruleDeps, function(dep) {
+        if (firstDep) {
+          firstDep = false;
+        } else {
+          stepInfo += ',';
+        }
+        stepInfo += ' ' + fancyStepNumber(dep.ordinal);
+      });
+
+    // Display rule arguments.
+    var args = expr.ruleArgs;
     var varInfo = '';
     // Display arguments that are variables.
     // TODO: Just showing variables is only a heuristic.
@@ -648,15 +710,16 @@ function computeStepInfo(proof, inf) {
  * Renders an inference step name in a fancy way, currently
  * with a tooltip that briefly describes it.
  */
-function fancyName(inference, proof) {
-  var name = inference.name;
-  if (name == 'theorem') {
-    name = inference.arguments[0];
-  }
+function fancyName(expr) {
+  var name = expr.ruleName;
   var info = rules[name].info;
+  /*
+  if (name == 'theorem') {
+    name = expr.ruleArgs[0];
+  }
+  */
   var comment = info.comment || '';
-  var index = proof.stepNumber(inference) - 1;
-  return '<span class=ruleName index=' + index
+  return '<span class=ruleName index=' + (expr.stepNumber - 1)
     + ' title="' + comment + '">' + name + '</span>';
 }
 
@@ -706,13 +769,12 @@ function renderInference(inference, node, editable) {
   var assumptions = inference.assumptions();
   for (var key in assumptions) {
     var wff = assumptions[key];
-    inference.proof.add(makeInference('given', [wff]), 0);
+    inference.proof.add(makeInference('assumption', [wff]), 0);
   }
   var controller = new ProofControl(inference.proof);
   node.append(controller.node);
   controller.setEditable(editable);
 }
-
 
 
 //// PROOF NAVIGATION

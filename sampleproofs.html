@@ -344,7 +344,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     implyForall: {
-      args: [x, p, call(q, x)],
+      args: [x, implies(p, call(q, x))],
       level: 1
     },
 
@@ -435,6 +435,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
   // For debugging.
   window.Y = Y;
+  window.db = Y.debugString;
 });
 
 // Debugging helpers.
