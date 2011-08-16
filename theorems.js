@@ -49,7 +49,7 @@ var ruleInfo = {
    * than proving it all over again.
    */
   theorem: function(name) {
-    return Y.getTheorem(name).result.justify('theorem', [name]);
+    return Y.getTheorem(name).justify('theorem', [name]);
   },
 
   /**
@@ -75,7 +75,7 @@ var ruleInfo = {
     // consistent with their order of execution in the proof, so
     // this creates another step by calling "justify".
     // TODO: De-hackify this.
-    var result = Y.getTheorem(name).result.justify(name);
+    var result = Y.getTheorem(name).justify(name);
     // If there are details, the displayer will enable display of them,
     // but there is really no proof of the axiom.
     delete result.details;

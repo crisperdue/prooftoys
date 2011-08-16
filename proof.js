@@ -153,10 +153,7 @@ function addTheorem(name) {
 function getTheorem(name) {
   var value = _theoremsByName[name];
   if (value == true) {
-    value = _theoremsByName[name] = makeInference(name);
-    var proof = value.proof;
-    value.result.details = proof[proof.length - 1];
-    Y.assert(proof.check(), 'Proof is not valid');
+    value = _theoremsByName[name] = rules[name]();
   }
   return value;
 }
@@ -243,22 +240,24 @@ function isConstant(name) {
 //// PROOFS
 
 function Proof() {
-  // Steps in order.
+  // Steps (Exprs) in order.
   this.steps = [];
-  // A rendered proof can have a single selected step or
-  this.control = null;
 }
 
 /**
- * Add an inference to this proof, optionally specifying its
+ * Add a step to this proof, optionally specifying its
  * index.  Default location is at the end.
  */
-Proof.prototype.add = function(inference, index) {
+Proof.prototype.add = function(step, index) {
   if (index == null) {
-    this.steps.push(inference);
+    this.steps.push(step);
   } else {
-    this.steps.splice(index, 0, inference);
+    this.steps.splice(index, 0, step);
   }
+};
+
+Proof.prototype.setSteps = function(steps) {
+  this.steps = steps;
 };
 
 /**
@@ -272,44 +271,16 @@ Proof.prototype.pop = function() {
  * Check that the proof is legal.
  */
 Proof.prototype.check = function() {
-  var inputs = this.assumptions();
   // Confirm that there are no assumptions required.
-  for (var key in inputs) {
-    return false;
+  var steps = this.steps;
+  for (var i = 0; i < steps.length; i++) {
+    var step = steps[i];
+    if (step.ruleName == 'assumption') {
+      return false;
+    }
   }
   return true;
 }
-
-/**
- * Like Inference.assumptions, for a proof.
- */
-Proof.prototype.assumptions = function() {
-  var inputs = {};
-  var outputs = {};
-  var steps = this.steps;
-  for (var i = 0; i < steps.length; i++) {
-    var inference = steps[i];
-    outputs[inference.result.asString()] = inference.result;
-    var assumes = steps[i].assumptions();
-    for (var key in assumes) {
-      inputs[key] = assumes[key];
-    }
-  }
-  for (var key in outputs) {
-    delete inputs[key];
-  }
-  return inputs;
-};
-
-/**
- * Returns the step number to be used for referencing a given proof
- * step (inference).  First number is 1.
- */
-Proof.prototype.stepNumber = function(inference) {
-  var index = Y.Array.indexOf(this.steps, inference);
-  Y.assert(index >= 0, 'Inference not found in proof');
-  return index + 1;
-};
 
 
 //// PROOF CONTROL
@@ -501,29 +472,23 @@ ProofControl.prototype.handleExprClick = function(expr) {
  *   to the Inference (proof step) it represents.
  */
 function renderSteps(controller) {
-  var proof = controller.proof;
   var stepsNode = controller.stepsNode;
   stepsNode.setContent('');
-  stepsNode.setData('proof', proof);
-  var steps = proof.steps;
-  var newSteps = editableProof(steps[steps.length - 1].result);
-  // Map from inference result string to inference.
-  var allSteps = {};
+  var steps = controller.proof.steps;
   for (var i = 0; i < steps.length; i++) {
-    var cstep = newSteps[i];
-    var inf = steps[i];
+    var step = steps[i];
     var text = '<div class=proofStep><span class=stepNumber>'
       + (i + 1) + '.</span></div>';
     var stepNode = stepsNode.appendChild(text);
-    inf.node = stepNode;
-    stepNode.setData('proofStep', steps[i]);
+    stepNode.setData('proofStep', step);
+    step.stepNode = stepNode;
     // See appendSpan in expr.js.
     var wffNode = stepNode.appendChild('<span class=expr></span>');
 
     // Render the WFF and record the rendered copy as the inference
     // result.  Rendering guarantees to copy every step that it
     // renders.
-    inf.result = inf.result.render(wffNode);
+    step._render(wffNode);
 
     // Set up click handlers for selections within the step.
     Y.on('click',
@@ -539,52 +504,48 @@ function renderSteps(controller) {
          },
          stepNode);
                 
-    // Map to inference, from its result expression as string.
-    // Represents steps depended on by the inference.
-    // Attach the result as the inference "deps" property.
-    inf.deps = {};
-    var assumptions = inf.assumptions();
-    // Remember dependencies between inference steps as we go.
-    for (var aString in assumptions) {
-      var step = allSteps[aString];
-      if (step) {
-        inf.deps[aString] = step;
-      } else {
-        throw new Error('Need prior step: ' + aString);
-      }
-    }
-    var stepInfo = computeStepInfo(cstep);
+    var stepInfo = computeStepInfo(step);
     stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
     // Set up "hover" event handling on the stepNode.
     stepNode.on('hover',
                 // Call "hover", passing these arguments as well as the event.
-                Y.rbind(hoverStep, null, proof, i, 'in', stepsNode),
-                Y.rbind(hoverStep, null, proof, i, 'out', stepsNode));
+                Y.rbind(hoverStep, null, step, 'in', stepsNode),
+                Y.rbind(hoverStep, null, step, 'out', stepsNode));
 
-    allSteps[inf.result.asString()] = inf;
     // Caution: passing null to Y.on selects everything.
     var target = stepNode.one('span.ruleName');
     if (target) {
-      target.on('click', Y.rbind(function(event, inf) {
-            renderSubProof(event, inf, stepsNode, controller.editable);
+      target.on('click', Y.rbind(function(event, step) {
+            renderSubProof(event, step, stepsNode, controller.editable);
             // Don't give the proof step a chance to select itself.
             event.stopPropagation();
-          }, null, inf));
+          }, null, step));
     }
   }
 };
 
 /**
  * Finds all the proof steps supporting the given one at its level in
- * the proof and returns deep copies of them as an array, including
- * the given one, ordered by their ordinals.  Dependencies in the
- * copies refer to each other rather than the original steps.  Updates
- * all of the step ordinals to run from 1 to the length of the result.
+ * the proof and returns copies of all of them as an array, including
+ * the given one, ordered by their ordinals.  This produces a copy of
+ * the proof graph and a deep copy of every step, making the result
+ * ready for rendering.  Copies no further back in the proof than any
+ * of the given steps.
+ *
+ * It is OK for rendering code to modify the ordinals of the steps
+ * (e.g. from 1 to N), but keep in mind that some code may assume
+ * that the ordinals are consistent with the dependency ordering
+ * of proof steps.
  */
-function editableProof(step) {
+function copyProof(step, dependencies) {
+  baseDeps = Y.Array.map(dependencies, function(dep) {
+      return dep.getBase();
+    });
   var oldSteps = [];
   // Traverses the dependency graph, recording a copy of every step
-  // and building an array of all of the original steps.
+  // and building an array of all of the original steps.  In Java
+  // one might use HashMaps to associate the copies with the orginal,
+  // avoiding temporary modifications to the originals.
   function graphWalk(step) {
     if (!step.__copy) {
       // Provides a justification of "assumption" for steps lacking a
@@ -595,33 +556,48 @@ function editableProof(step) {
         step.ordinal = .1;
       }
       step.__copy = step.copyStep();
-      Y.each(step.ruleDeps, function(dep) { graphWalk(dep); });
       oldSteps.push(step);
+      for (var i = 0; i < baseDeps.length; i++) {
+        // If this step is a dependency of the original, don't walk
+        // back further.
+        if (step.getBase() == baseDeps[i]) {
+          step.__copy._justify('assumption');
+          return;
+        }
+      }
+      Y.each(step.ruleDeps, function(dep) { graphWalk(dep); });
     }
   }
   graphWalk(step);
   // Make a copy of the steps array, with a copy in place of each
-  // old step, updating each copy's dependencies to refer to
+  // old step, updating each copy's dependencies and arguments to refer to
   // appropriate new copies as well.
   var result = [];
   Y.each(oldSteps, function(oldStep) {
       var copy = oldStep.__copy;
-      copy.ruleDeps =
-        Y.Array.map(oldStep.ruleDeps, function(dep) {
-            Y.assert(dep.__copy, 'No copy available: ' + Y.debugString(dep));
-            Y.assert(dep.__copy.ruleName,
-                     'No ruleName: ' + Y.debugString(dep.__copy));
-            return dep.__copy;
-          });
-      // and ruleArgs?
+      var deps = [];
+      // The copy might have been converted to an assumption, and in
+      // that case it already has the correct empty lists of dependencies
+      // and arguments.
+      if (copy.ruleName != 'assumption') {
+        copy.ruleDeps =
+          Y.Array.map(oldStep.ruleDeps, function(dep) {
+              Y.assert(dep.__copy, 'No copy available: ' + Y.debugString(dep));
+              Y.assert(dep.__copy.ruleName,
+                       'No ruleName: ' + Y.debugString(dep.__copy));
+              return dep.__copy;
+            });
+        copy.ruleArgs =
+          Y.Array.map(oldStep.ruleArgs, function(arg) {
+              // If the arg is a step, it should have a copy,
+              // use the copy.
+              return arg.__copy || arg;
+            });
+      }
       result.push(copy);
     });
   // Sort the result by the step ordinals.
   result.sort(function(s1, s2) { return s1.ordinal - s2.ordinal; });
-  // Normalize the new ordinals to run from 1 to N.
-  Y.each(result, function(step, i) {
-      step.ordinal = i + 1;
-    });
   // Clean up references to the copies.
   Y.each(oldSteps, function(step) { delete step.__copy; });
   return result;
@@ -632,7 +608,7 @@ function editableProof(step) {
  * the given proof Node, clearing any other subproofs
  * that currently follow the proof node.
  */
-function renderSubProof(event, inference, proofNode, editable) {
+function renderSubProof(event, step, proofNode, editable) {
   var display = proofNode.ancestor('.proofDisplay');
   var parent = display.get('parentNode');
   var next = display.get('nextSibling');
@@ -640,10 +616,10 @@ function renderSubProof(event, inference, proofNode, editable) {
     next.remove();
     next = display.get('nextSibling');
   }
-  if (inference.name == 'theorem') {
-    renderInference(getTheorem(inference.arguments[0]), parent, editable);
+  if (step.ruleName == 'theorem') {
+    renderInference(getTheorem(step.ruleArgs[0]), parent, editable);
   } else {
-    renderInference(inference, parent, editable);
+    renderInference(step, parent, editable);
   }
 }
 
@@ -731,47 +707,51 @@ function fancyStepNumber(n) {
   return '<span class=stepNumber>' + n + '</span>';
 }
 
-
 /**
- * Renders the proof steps of an inference and a header by appending
+ * Renders a header and the proof steps of an inference by appending
  * them to a container Node, which defaults to the document body.  The
  * first child is the header, rendered with class proofHeader.  The
- * second is the proof display.  Returns the proof display node.
+ * second is the proof display.
+ *
+ * Inputs are a proof step, the container node, and a
+ * flag to indicate whether to make the display editable.  This renders
+ * the details of the step and a description of the step itself.
  */
-function renderInference(inference, node, editable) {
+function renderInference(step, node, editable) {
   if (node == null) {
     node = new Y.Node(document.body);
   }
-  var pruf = inference.arguments.length ? 'Rule ' : 'Proof of ';
+  var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   var argInfo = '';
-  for (var i = 0; i < inference.arguments.length; i++) {
+  for (var i = 0; i < step.ruleArgs.length; i++) {
     if (i > 0) {
       argInfo += ', ';
     }
-    var arg = inference.arguments[i];
-    if (typeof arg == 'string' || arg instanceof Y.Expr) {
+    var arg = step.ruleArgs[i];
+    if (typeof arg == 'string'
+        || arg instanceof Y.Expr
+        || arg instanceof Y.Path) {
       argInfo += arg;
     } else {
-      argInfo += debugString(inference.arguments[i]);
+      argInfo += debugString(arg);
     }
   }
   argInfo =
     ': <span style="font-weight: normal; font-family: monospace">'
     + argInfo + '</span>';
-  var comment = rules[inference.name].info.comment || '';
+  var comment = rules[step.ruleName].info.comment || '';
   node.appendChild('<div class=proofHeader><b>' + pruf
-                   + inference.name + '</b>' + argInfo + '<br>'
+                   + step.ruleName + '</b>' + argInfo + '<br>'
                    + '<i>' + comment + '</i>'
                    + '</div>');
-  // Map to inference from its result as string.  Each result will be
-  // annotated with links into the DOM.  Starts with the assumptions.
-  // Add the assumptions to the proof before rendering it.
-  var assumptions = inference.assumptions();
-  for (var key in assumptions) {
-    var wff = assumptions[key];
-    inference.proof.add(makeInference('assumption', [wff]), 0);
-  }
-  var controller = new ProofControl(inference.proof);
+  // TODO: Clean up relationships between Proof, ProofControl,
+  // and steps.  Consider merging Proof into ProofControl.
+  var steps = copyProof(step.details, step.ruleDeps);
+  // Number the steps from 1 to N.
+  Y.each(steps, function(step, i) { step.ordinal = i + 1; });
+  var proof = new Proof();
+  proof.setSteps(steps);
+  var controller = new ProofControl(proof);
   node.append(controller.node);
   controller.setEditable(editable);
 }
@@ -796,7 +776,7 @@ function getStepNode(node) {
 }
 
 /**
- * Gets the proof step (Inference) of the step that renders
+ * Gets the proof step (Expr) of the step that renders
  * in part into the given YUI Node.  Also accepts an Expr of
  * a rendered proof.
  */
@@ -835,8 +815,8 @@ function getProof(node) {
 function getExpr(node) {
   // Go up to the proof step then look through all subexpressions.
   var step = getProofStep(node);
-  return step.result.search(function (expr) { return expr.node == node; },
-                            true);
+  return step.search(function (expr) { return expr.node == node; },
+                     true);
 }
 
 
@@ -855,16 +835,16 @@ function exprHandleOver(event) {
   var stepNode = target.ancestor('.proofStep');
   if (stepNode) {
     var proofStep = stepNode.getData('proofStep');
-    var path = proofStep.result.pathTo(isTarget);
-    hoverExpr(proofStep.result, path);
+    var path = proofStep.pathTo(isTarget);
+    hoverShowPath(proofStep, path);
   }
 };
 
 /**
- * Defines what to when an expr is hovered.  Highlighting of the
- * DOM node is handled elsewhere, this is the Expr and Path part.
+ * Defines how to display the hovered path.  Highlighting of the
+ * DOM node is handled elsewhere.
  */
-function hoverExpr(wff, path) {
+function hoverShowPath(wff, path) {
   var displayNode = Y.one('#hoverPath');
   if (displayNode) {
     // If there is no bottom panel, do nothing.
@@ -902,21 +882,18 @@ function removeClass(node, className) {
  * index is the step index, direction is "in" or "out", and
  * proofNode is the DOM node of the proof.
  */
-function hoverStep(event, proof, index, direction, proofNode) {
-  var inference = proof.steps[index];
-  var iString = '' + (index + 1);
+function hoverStep(event, step, direction, proofNode) {
   var action = direction == 'in' ? addClass : removeClass;
-  var deps = inference.deps;
-  var handler = hoverHandlers[inference.name];
+  var handler = hoverHandlers[step.ruleName];
   // Always add or remove the "hover" class to the step node
   // as the mouse goes in or oiut.
-  action(inference.getStepNode(), 'hover');
+  action(getStepNode(step.node), 'hover');
   
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
   proofNode.all('span.stepNumber').each(function(node) {
       if (direction == 'in') {
-        if (node.get('innerHTML') == iString) {
+        if (node.get('innerHTML') == step.ordinal) {
           node.addClass('referenced');
         }
       } else {
@@ -925,63 +902,60 @@ function hoverStep(event, proof, index, direction, proofNode) {
     });
   if (handler) {
     // If there is a hover handler for this type of inference, apply it.
-    handler(inference, action);
+    handler(step, action);
   } else {
     // If no handler apply or remove default highlighting.
-    for (var key in deps) {
-      action(deps[key].result.node, 'dep');
-    }
+    Y.each(step.ruleDeps, function(dep) {
+        action(dep.node, 'dep');
+      });
   }
 }
 
 // Arguments to the handler functions are an inference
 // and the operation is "addClass" or "removeClass".
 var hoverHandlers = {
-  r: function(inf, action) {
-    var deps = inf.deps;
-    var args = inf.arguments;
-    var eqn = deps[args[0].asString()].result;
-    var target = deps[args[1].asString()].result;
+  r: function(step, action) {
+    var args = step.ruleArgs;
+    var eqn = args[0];
+    var target = args[1];
     var path = args[2];
     action(target.node, 'hover');
     action(target.locate(path).node, 'old');
-    action(inf.result.locate(path).node, 'new');
+    action(step.locate(path).node, 'new');
     action(eqn.getLeft().node, 'old');
     action(eqn.getRight().node, 'new');
   },
-  rRight: function(inf, action) {
-    var deps = inf.deps;
-    var args = inf.arguments;
-    var eqn = deps[args[0].asString()].result;
-    var target = deps[args[1].asString()].result;
+  rRight: function(step, action) {
+    var args = step.ruleArgs;
+    var eqn = args[0];
+    var target = args[1];
     var path = args[2];
     action(target.node, 'hover');
     action(target.locate(path).node, 'old');
-    action(inf.result.locate(path).node, 'new');
+    action(step.locate(path).node, 'new');
     action(eqn.getRight().node, 'old');
     action(eqn.getLeft().node, 'new');
   },
-  axiom4: function(inf, action) {
-    var call = inf.result.getLeft();
+  axiom4: function(step, action) {
+    var call = step.getLeft();
     action(call.arg.node, 'new');
     var target = call.fn.body;
     action(target.node, 'scope');
-    action(inf.result.getRight().node, 'scope');
+    action(step.getRight().node, 'scope');
     var varName = call.fn.bound;
     target.findAll(varName,
                    function(v) { action(v.node, 'occur'); },
-                   inf.result.getRight(),
+                   step.getRight(),
                    function(expr) { action(expr.node, 'new'); });
   },
-  reduce: function(inf, action) {
-    var deps = inf.deps;
-    var args = inf.arguments;
-    var dep = deps[args[0].asString()].result;
+  reduce: function(step, action) {
+    var args = step.ruleArgs;
+    var dep = args[0];
     var path = args[1];
     var call = dep.locate(path);
     var target = call.fn.body;
     var varName = call.fn.bound.name;
-    var result = inf.result.locate(path);
+    var result = step.locate(path);
     action(dep.node, 'hover');
     action(call.arg.node, 'new');
     action(target.node, 'scope');
@@ -991,53 +965,49 @@ var hoverHandlers = {
                    result,
                    function(expr) { action(expr.node, 'new'); });
   },
-  useDefinition: function(inf, action) {
-    var deps = inf.deps;
-    var args = inf.arguments;
-    var target = deps[args[1].asString()].result;
+  useDefinition: function(step, action) {
+    var args = step.ruleArgs;
+    var target = args[1];
     var path = args[2];
     action(target.node, 'hover');
     action(target.locate(path).node, 'old');
-    action(inf.result.locate(path).node, 'new');
+    action(step.locate(path).node, 'new');
   },
-  instEqn: function(inf, action) {
-    var deps = inf.deps;
-    var args = inf.arguments;
+  instEqn: function(step, action) {
+    var args = step.ruleArgs;
     // Input expression.
-    var input = deps[args[0].asString()].result;
+    var input = args[0];
     // Name of variable being instantiated.
-    var varName = args[2].name;
+    var varName = args[2].ruleName;
     action(input.node, 'hover');
     input.findAll(varName,
                   function(_var) { action(_var.node, 'occur'); },
-                  inf.result,
+                  step,
                   function(expr) { action(expr.node, 'new'); });
   },
-  sub: function(inf, action) {
-    var deps = inf.deps;
-    var args = inf.arguments;
+  sub: function(step, action) {
+    var args = step.ruleArgs;
     // Input expression.
-    var input = deps[args[0].asString()].result;
+    var input = args[0];
     // Name of variable being instantiated.
-    var varName = args[2].name;
+    var varName = args[2].ruleName;
     action(input.node, 'hover');
     input.findAll(varName,
                   function(_var) { action(_var.node, 'new'); },
-                  inf.result,
+                  step,
                   function(expr) { action(expr.node, 'new'); });
   },
   // TODO: subAll
-  forallInst: function(inf, action) {
-    var deps = inf.deps;
-    var args = inf.arguments;
+  forallInst: function(step, action) {
+    var args = step.ruleArgs;
     // Input expression.
-    var input = deps[args[0].asString()].result;
+    var input = args[0];
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
     action(input.node, 'hover');
     input.arg.body.findAll(varName,
                            function(_var) { action(_var.node, 'occur'); },
-                           inf.result,
+                           step,
                            function(expr) { action(expr.node, 'new'); });
   }
 };

@@ -111,8 +111,9 @@ function Expr() {
   // DOM node (refers to a YUI Node).
   // If rendered, has an "ordinal" property with its step number
   // in the rendered proof.
+  // If rendered as a proof step, has "_step" property for
+  // information about the step, an Object.
   // Can have a "_string" property with the result of asString.
-
 }
 
 // The different sorts of expressions:
@@ -156,17 +157,34 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
 };
 
 /**
- * Add justification information to an Expr.  Special for
- * use in the editableProof function, so it can use steps
- * that are really assumptions.
- * TODO: Remove the use and inline this into "justify" after
- *   making all use of assumptions explicit.
+ * Add or change justification information to an Expr.  Special for
+ * use in the copyProof function, so it can use steps that are really
+ * assumptions.
+ *
+ * TODO: Consider removing the use and inline this into "justify"
+ * after making all use of assumptions explicit.
  */
 Expr.prototype._justify = function(ruleName, ruleArgs, ruleDeps) {
   this.ruleName = ruleName;
   this.ruleArgs = Y.Array(ruleArgs || []);
   this.ruleDeps = Y.Array(ruleDeps || []);
-  this.ordinal = stepCounter++;
+  if (!this.ordinal) {
+    this.ordinal = stepCounter++;
+  }
+};
+
+/**
+ * Computes the "base instance" of a proof step.  Each level of
+ * justification has its own Expr, all equal, but each with its
+ * own justification and details.  This accesses the bottom level
+ * step.
+ */
+Expr.prototype.getBase = function() {
+  var result = this;
+  while (result.details) {
+    result = result.details;
+  }
+  return result;
 };
 
 
@@ -343,7 +361,9 @@ Expr.prototype.pathTo = function(pred) {
 // copy()
 //
 // Makes and returns a deep copy of this Expr, not including any
-// display- or justification-related information.
+// display- or justification-related information.  All parts are
+// copied, including occurrences of Vars, so rendering can add
+// distinct annotations to each occurrence.
 //
 //
 // dup()
