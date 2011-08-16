@@ -427,7 +427,7 @@ function copyProof(step, dependencies) {
       // justification.
       // TODO: remove this hack when assumptions all become explicit.
       if (!step.ruleName) {
-        step._justify('assumption');
+        step.assume();
         step.ordinal = .1;
       }
       step.__copy = step.copyStep();
@@ -436,7 +436,7 @@ function copyProof(step, dependencies) {
         // If this step is a dependency of the original, don't walk
         // back further.
         if (step.getBase() == baseDeps[i]) {
-          step.__copy._justify('assumption');
+          step.__copy.assume();
           return;
         }
       }

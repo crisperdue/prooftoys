@@ -157,6 +157,17 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
 };
 
 /**
+ * Modifies a proof step to treat it as an assumption, with
+ * rule name, args, and deps to match, and no details.
+ */
+Expr.prototype.assume = function() {
+  this.ruleName = 'assumption';
+  this.ruleArgs = [];
+  this.ruleDeps = [];
+  this.details = null;
+};
+
+/**
  * Add or change justification information to an Expr.  Special for
  * use in the copyProof function, so it can use steps that are really
  * assumptions.
@@ -920,7 +931,7 @@ Lambda.prototype._render = function(node) {
   this.node = node;
   node.append('{');
   this.bound._render(appendSpan(node));
-  node.append('&nbsp;|&nbsp;');
+  node.append('&nbsp;:&nbsp;');
   this.body._render(appendSpan(node));
   node.append('}');
 };
