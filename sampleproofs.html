@@ -385,20 +385,24 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     displayProof(ruleName);
   }
 
+  /**
+   * Runs and displays a proof of the named rule (or theorem).
+   * If there is no such rule, notifies the user that there is none.
+   */
   function displayProof(ruleName) {
     var ruleInfo = proofs[ruleName];
     if (ruleInfo == undefined) {
       alert('No rule "' + ruleName + '"');
     } else {
-      inference = Y.makeInference(ruleName, ruleInfo.args || []);
-    }
-    // For debugging.
-    window.winf = inference;
+      var result = Y.rules[ruleName].apply(null, ruleInfo.args || []);
+      // For debugging.
+      window.proved = result;
 
-    var proofNode = Y.one('#proofs');
-    proofNode.setContent('');
-    Y.renderInference(inference, proofNode, editable);
-    document.title = 'Proof display -- ' + ruleName;
+      var proofNode = Y.one('#proofs');
+      proofNode.setContent('');
+      Y.renderInference(result, proofNode, editable);
+      document.title = 'Proof display -- ' + ruleName;
+    }
   }
 
   // Do we want sample proofs to be editable?
