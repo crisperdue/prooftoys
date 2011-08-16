@@ -586,7 +586,8 @@ function fancyStepNumber(n) {
  * Renders a header and the proof steps of an inference by appending
  * them to a container Node, which defaults to the document body.  The
  * first child is the header, rendered with class proofHeader.  The
- * second is the proof display.
+ * second is the proof display.  Returns the final step of the rendered
+ * copy.
  *
  * Inputs are a proof step, the container node, and a
  * flag to indicate whether to make the display editable.  This renders
@@ -629,6 +630,7 @@ function renderInference(step, node, editable) {
   var controller = new ProofControl(proof);
   node.append(controller.node);
   controller.setEditable(editable);
+  return steps[steps.length - 1];
 }
 
 
@@ -668,20 +670,6 @@ function getProofStep(node) {
  */
 function getStepsNode(node) {
   return node.ancestor('.proofSteps', true);
-}
-
-/**
- * Gets the proof that renders in part into the given YUI Node.
- * Also accepts an Expr or Inference of a rendered proof.
- */
-function getProof(node) {
-  if (node instanceof Y.Expr) {
-    node = node.node;
-  }
-  if (node instanceof Inference) {
-    node = node.getStepNode();
-  }
-  return getStepsNode(node).getData('proof');
 }
 
 /**
@@ -993,7 +981,6 @@ Y.debugString = debugString;
 Y.getStepsNode = getStepsNode;
 Y.getProofStep = getProofStep;
 Y.getStepsNode = getStepsNode;
-Y.getProof = getProof;
 Y.getExpr = getExpr;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;

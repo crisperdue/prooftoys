@@ -61,23 +61,6 @@ YUI({filter: null, insertBefore: 'styles'})
     Y.Assert.areEqual(a, b);
   }
 
-  // Logs the result of each top-level step of an ifnerence.
-  function logDetails(inference) {
-    var details = inference.proof.steps;
-    for (var i = 0; i < details.length; i++) {
-      var step = details[i];
-      Y.log(step.result + ' ' + step.name);
-    }
-  }
-
-  // Logs the assumptions of an inference.
-  function logAssumptions(inference) {
-    var assumptions = inference.assumptions();
-    for (var a in assumptions) {
-      Y.log('Assuming ' + a);
-    }
-  }
-
   // Set up some useful constants and functions.
 
   Y.Expr.utils.import();
@@ -178,7 +161,7 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.Assert.isTrue(times2.isCall2('='), 'Times2 not an equation?');
       },
 
-      testReplace: function() {
+      testExprReplace: function() {
         var y = _var('y');
         var e1 = call(lambda(x, call(f, x)), y);
         var path = Y.path('/fn/body/arg');
@@ -292,14 +275,13 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testRuleR: function() {
         var path = Y.path('/right/left');
-        var inf = Y.makeInference('r', [times2, bigger, path]);
-        assertEqual('((x > 0) --> ((2 * x) > x))', inf.result);
-        var assumptions = inf.assumptions();
+        var result = Y.rules.r(times2, bigger, path);
+        assertEqual('((x > 0) --> ((2 * x) > x))', result);
       },
 
       testAxiom4: function() {
         var app = call(lambda(x, call(f, x)), y);
-        var result = Y.makeInference('axiom4', [app]).result;
+        var result = Y.rules.axiom4(app);
         Y.Assert.isInstanceOf(Y.Call, result);
         assertEqual('=', result.fn.fn.name);
         assertEqual('(({x : (f x)} y) = (f y))', result);
@@ -307,279 +289,239 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testAxioms: function() {
         assertEqual('(((g T) && (g F)) = (forall {x : (g x)}))',
-                    Y.makeInference('axiom1').result);
+                    Y.rules.axiom1());
         assertEqual('((x = y) --> ((h x) = (h y)))',
-                    Y.makeInference('axiom2').result);
+                    Y.rules.axiom2());
         assertEqual('((f = g) = (forall {x : ((f x) = (g x))}))',
-                    Y.makeInference('axiom3').result);
+                    Y.rules.axiom3());
         assertEqual('((the (y =)) = y)',
-                    Y.makeInference('axiom5').result);
+                    Y.rules.axiom5());
       },
 
       testApplyBoth: function() {
-        var inf = Y.makeInference('applyBoth',
-                                  [call('=', f, g),
-                                   x]);
-        logDetails(inf);
+        assertEqual('((f x) = (g x))', Y.rules.applyBoth(call('=', f, g), x));
       },
 
       testEqSelf: function() {
-        var result = Y.makeInference('eqSelf', [call(f, y)]).result;
+        var result = Y.rules.eqSelf(call(f, y));
         assertEqual('((f y) = (f y))', result);
-        assertEqual('(x = x)', Y.makeInference('eqSelf', [x]).result);
+        assertEqual('(x = x)', Y.rules.eqSelf(x));
       },
 
       testR5201a: function() {
-        var inf = Y.makeInference('replaceWhole',
-                                  [call(p, x),
-                                   call('=', call(p, x), call(q, x))]);
-        assertEqual('(q x)', inf.result);
+        var result = Y.rules.replaceWhole(call(p, x),
+                                          call('=', call(p, x), call(q, x)));
+        assertEqual('(q x)', result);
       },
 
       testR5201b: function() {
-        var inf = Y.makeInference('eqnSwap', [call('=', p, q)]);
-        assertEqual('(q = p)', inf.result);
+        var inf = Y.rules.eqnSwap(call('=', p, q));
+        assertEqual('(q = p)', inf);
       },
 
       testR5201c: function() {
-        var inf = Y.makeInference('eqnChain',
-                                  [call('=', p, q), call('=', q, r)]);
-        assertEqual('(p = r)', inf.result);
+        var inf = Y.rules.eqnChain(call('=', p, q), call('=', q, r));
+        assertEqual('(p = r)', inf);
       },
 
       testR5201d: function() {
-        var inf =
-          Y.makeInference('applyBySides',
-                          [call('=', p, q), call('=', 'a', 'b')]);
-        assertEqual('((p a) = (q b))', inf.result);
+        var inf = Y.rules.applyBySides(call('=', p, q), call('=', 'a', 'b'));
+        assertEqual('((p a) = (q b))', inf);
       },
 
       testR5201e: function() {
-        var inf = Y.makeInference('applyBoth', [call('=', p, q), r]);
-        assertEqual('((p r) = (q r))', inf.result);
+        var inf = Y.rules.applyBoth(call('=', p, q), r);
+        assertEqual('((p r) = (q r))', inf);
       },
 
       testR5201f: function() {
-        var inf = Y.makeInference('applyToBoth', [p, call('=', q, r)]);
-        assertEqual('((p q) = (p r))', inf.result);
+        var inf = Y.rules.applyToBoth(p, call('=', q, r));
+        assertEqual('((p q) = (p r))', inf);
       },
 
       testUseDefinition: function() {
         var inf =
-          Y.makeInference('useDefinition',
-                          ['not', call('not', equal(p, equal(F, p))), '/fn']);
-        assertEqual('(F = (p = (F = p)))', inf.result);
+          Y.rules.useDefinition('not', call('not', equal(p, equal(F, p))), '/fn');
+        assertEqual('(F = (p = (F = p)))', inf);
       },
 
       testInstEqn: function() {
         var c = new Y.Var('c');
-        var inf =
-          Y.makeInference('instEqn', [call('=', call(g, y), c), call(f, x), y]);
-        assertEqual('((g (f x)) = c)', inf.result);
+        var inf = Y.rules.instEqn(call('=', call(g, y), c), call(f, x), y);
+        assertEqual('((g (f x)) = c)', inf);
       },
 
       testEqT: function() {
-        assertEqual('(T = (b = b))', Y.makeInference('eqT', ['b']).result);
-	var inf = Y.makeInference('eqT', [call(f, x)]);
-        assertEqual('(T = ((f x) = (f x)))', inf.result);
-	var node = Y.renderInference(inf);
-        var proof = inf.proof;
-        var step = proof.steps[2];
-        var expr = step.result.locate('/left');
-        assertEqual('({y : y} = g)', expr);
-        Y.log('expr found');
-        assertEqual(step, Y.getProofStep(expr.node));
-        Y.log('getProofStep OK');
-        assertEqual(proof, Y.getProof(expr.node));
-        Y.log('getProof OK')
-        assertEqual(expr, Y.getExpr(expr.node));
-        Y.log('getExpr OK');
+        assertEqual('(T = (b = b))', Y.rules.eqT('b'));
+	var step = Y.rules.eqT(call(f, x));
+        assertEqual('(T = ((f x) = (f x)))', step);
+	var rendered = Y.renderInference(step);
+        assertEqual(rendered, Y.getProofStep(rendered.node));
       },
 
       testR5211: function() {
-        var inf = Y.makeInference('r5211', []);
-        assertEqual('((T && T) = T)', inf.result);
+        assertEqual('((T && T) = T)', Y.rules.r5211());
       },
 
       testRuleT: function() {
-        assertEqual('T', Y.makeInference('t').result);
+        assertEqual('T', Y.rules.t());
       },
 
       testR5212: function() {
-        var inf = Y.makeInference('r5212', []);
-        assertEqual('(T && T)', inf.result);
+        assertEqual('(T && T)', Y.rules.r5212());
       },
 
       testEqnIsTrue: function() {
-        var inf = Y.makeInference('toTIsEquation', [call('=', p, q)]);
-        assertEqual('(T = (p = q))', inf.result);
+        var inf = Y.rules.toTIsEquation(call('=', p, q));
+        assertEqual('(T = (p = q))', inf);
       },
 
       testR5213: function() {
-        var inf = Y.makeInference('r5213',
-                                  [call('=', p, q),
-                                   call('=', q, r)]);
-        assertEqual('((p = q) && (q = r))', inf.result);
+        var inf = Y.rules.r5213(call('=', p, q),
+                                call('=', q, r));
+        assertEqual('((p = q) && (q = r))', inf);
       },
 
       testChangeVar: function() {
         var expr = equal(lambda(z, z), lambda(y, y));
-        var inf = Y.makeInference('changeVar', [expr, '/left', y]);
-        logDetails(inf);
+        var result = Y.rules.changeVar(expr, '/left', x);
+        assertEqual('({x : x} = {y : y})', result);
       },
 
       testBindEqn: function() {
-        var inf = Y.makeInference('bindEqn', [call('=', f, g), x]);
-        assertEqual('({x : f} = {x : g})', inf.result);
+        var inf = Y.rules.bindEqn(call('=', f, g), x);
+        assertEqual('({x : f} = {x : g})', inf);
       },
 
       testForallInst: function() {
-        var inf = Y.makeInference('forallInst',
-                                  [call('forall', lambda(y, call(p, y))),
-                                   call(f, y)])
-        assertEqual('(p (f y))', inf.result);
-        logAssumptions(inf);
+        var inf = Y.rules.forallInst(call('forall', lambda(y, call(p, y))),
+                                   call(f, y))
+        assertEqual('(p (f y))', inf);
       },
 
       testAndTBook: function() {
-        var inf = Y.makeInference('andTBook', [p]);
-        assertEqual('((T && p) = p)', inf.result);
+        var inf = Y.rules.andTBook(p);
+        assertEqual('((T && p) = p)', inf);
       },
 
       testAndT: function() {
-        var inf = Y.makeInference('andT', [p]);
-        assertEqual('((T && p) = p)', inf.result);
+        var inf = Y.rules.andT(p);
+        assertEqual('((T && p) = p)', inf);
       },
 
       testR5217Book: function() {
-        var inf = Y.makeInference('r5217Book', []);
-        assertEqual('((T = F) = F)', inf.result);
+        assertEqual('((T = F) = F)', Y.rules.r5217Book());
       },
 
       testEquationCases: function() {
-        var inf = Y.makeInference('equationCases',
-                                  [equal(T, T), equal(F, F), 'z']);
-        assertEqual('(z = z)', inf.result);
+        var inf = Y.rules.equationCases(equal(T, T), equal(F, F), 'z');
+        assertEqual('(z = z)', inf);
       },
 
       testR5218: function() {
-        var inf = Y.makeInference('r5218', [p]);
-        assertEqual('((T = p) = p)', inf.result);
+        var inf = Y.rules.r5218(p);
+        assertEqual('((T = p) = p)', inf);
       },
 
       testToTIsA: function() {
-        var inf = Y.makeInference('toTIsA', [p]);
-        assertEqual('(T = p)', inf.result);
-        logAssumptions(inf);
+        var inf = Y.rules.toTIsA(p);
+        assertEqual('(T = p)', inf);
       },
 
       testFromTIsA: function() {
-        var inf = Y.makeInference('fromTIsA', [call('=', T, p)]);
-        assertEqual('p', inf.result);
-        logAssumptions(inf);
+        var inf = Y.rules.fromTIsA(call('=', T, p));
+        assertEqual('p', inf);
       },
 
       testUGen: function() {
-        var inf = Y.makeInference('uGen', [call(p, y), y]);
-        assertEqual('(forall {y : (p y)})', inf.result);
-        logAssumptions(inf);
+        var inf = Y.rules.uGen(call(p, y), y);
+        assertEqual('(forall {y : (p y)})', inf);
       },
 
       testSub: function() {
-        var inf = Y.makeInference('sub', [call(p, y), call(f, x), y]);
-        assertEqual('(p (f x))', inf.result);
-        logAssumptions(inf);
+        var inf = Y.rules.sub(call(p, y), call(f, x), y);
+        assertEqual('(p (f x))', inf);
       },
 
       testSubAll: function() {
         var map = {p: Y.parse('forall {x | T || b}'),
                    q: Y.parse('forall {x | b}')
         };
-        var inf = Y.makeInference('subAll',
-                                  [implies(p, call('||', T, q)), map]);
+        var inf = Y.rules.subAll(implies(p, call('||', T, q)), map);
         assertEqual('((forall {x : (T || b)}) --> (T || (forall {x : b})))',
-                    inf.result);
-        logAssumptions(inf);
+                    inf);
       },
 
       testCases: function() {
-        var inf = Y.makeInference('cases', [equal(call(p, T), T),
+        var inf = Y.rules.cases(equal(call(p, T), T),
                                             equal(call(p, F), F),
-                                            x]);
-        assertEqual('((p x) = x)', inf.result);
-        logAssumptions(inf);
+                                            x);
+        assertEqual('((p x) = x)', inf);
       },
 
       testModusPonens: function() {
-        var inf = Y.makeInference('modusPonens', [p, implies(p, q)]);
-        assertEqual('q', inf.result);
-        logAssumptions(inf);
+        var inf = Y.rules.modusPonens(p, implies(p, q));
+        assertEqual('q', inf);
       },
 
       testR5230TF: function() {
-        var inf = Y.makeInference('r5230TF');
-        assertEqual('((T = F) = F)', inf.result);
+        assertEqual('((T = F) = F)', Y.rules.r5230TF());
       },
 
       testR5230FT_alternate: function() {
-        var inf = Y.makeInference('r5230FT_alternate');
-        assertEqual('((F = T) = F)', inf.result);
+        assertEqual('((F = T) = F)', Y.rules.r5230FT_alternate());
       },
 
       testR5231T: function() {
-        var inf = Y.makeInference('r5231T');
-        assertEqual('((not T) = F)', inf.result);
+        assertEqual('((not T) = F)', Y.rules.r5231T());
       },
 
       testR5231F: function() {
-        var inf = Y.makeInference('r5231F');
-        assertEqual('((not F) = T)', inf.result);
+        assertEqual('((not F) = T)', Y.rules.r5231F());
       },
 
       testFalseEquals: function() {
-        var inf = Y.makeInference('falseEquals');
-        assertEqual('((F =) = not)', inf.result);
+        assertEqual('((F =) = not)', Y.rules.falseEquals());
       },
 
       testTrueEquals: function() {
-        var inf = Y.makeInference('trueEquals');
-        assertEqual('((T =) = {x : x})', inf.result);
+        assertEqual('((T =) = {x : x})', Y.rules.trueEquals());
       },
 
       testEvalBool: function() {
-        var inf = Y.makeInference('evalBool', [call('not', T)]);
-        assertEqual('((not T) = F)', inf.result);
-        inf = Y.makeInference('evalBool', [call('&&', F, T)]);
-        assertEqual('((F && T) = F)', inf.result);
-        inf = Y.makeInference('evalBool', [Y.parse('(p (F || T))')]);
-        assertEqual('((p (F || T)) = (p T))', inf.result);
+        var inf = Y.rules.evalBool(call('not', T));
+        assertEqual('((not T) = F)', inf);
+        inf = Y.rules.evalBool(call('&&', F, T));
+        assertEqual('((F && T) = F)', inf);
+        inf = Y.rules.evalBool(Y.parse('(p (F || T))'));
+        assertEqual('((p (F || T)) = (p T))', inf);
         taut = Y.parse('(p --> not p) --> not p');
-        inf = Y.makeInference('evalBool', [taut.subst(T, p, {})]);
-        assertEqual('T', inf.result.getRight());
-        inf = Y.makeInference('evalBool', [taut.subst(F, p, {})]);
-        assertEqual('T', inf.result.getRight());
+        inf = Y.rules.evalBool(taut.subst(T, p, {}));
+        assertEqual('T', inf.getRight());
+        inf = Y.rules.evalBool(taut.subst(F, p, {}));
+        assertEqual('T', inf.getRight());
       },
 
       testTautology: function() {
         var wff = T;
-        var inf = Y.makeInference('tautology', [wff]);
-        assertEqual(wff.toString(), inf.result);
+        var inf = Y.rules.tautology(wff);
+        assertEqual(wff.toString(), inf);
         var wff = equal(x, x);
-        var inf = Y.makeInference('tautology', [wff]);
-        assertEqual(wff.toString(), inf.result);
+        var inf = Y.rules.tautology(wff);
+        assertEqual(wff.toString(), inf);
         var wff = Y.parse('(p --> not p) --> not p');
         Y.log('Tautology: ' + wff);
-        var inf = Y.makeInference('tautology', [wff]);
-        assertEqual(wff.toString(), inf.result);
+        var inf = Y.rules.tautology(wff);
+        assertEqual(wff.toString(), inf);
         var wff = Y.parse('(p && q --> r) = (p --> (q --> r))');
         Y.log('Tautology: ' + wff);
-        var inf = Y.makeInference('tautology', [wff]);
-        assertEqual(wff.toString(), inf.result);
+        var inf = Y.rules.tautology(wff);
+        assertEqual(wff.toString(), inf);
       },
 
       testMakeConjunction: function() {
-        var inf = Y.makeInference('makeConjunction', [p, q]);
-        assertEqual('(p && q)', inf.result);
+        var inf = Y.rules.makeConjunction(p, q);
+        assertEqual('(p && q)', inf);
       },
 
       testTautInst: function() {
@@ -588,71 +530,67 @@ YUI({filter: null, insertBefore: 'styles'})
           p: call('forall', lambda(x, call('||', T, b))),
           q: call('forall', lambda(x, b))
         };
-        var inf = Y.makeInference('tautInst',
-                                  [implies(p, call('||', T, q)), map1]);
-        logDetails(inf);
+        var inf = Y.rules.tautInst(implies(p, call('||', T, q)), map1);
+        var expected =
+          '((forall {x : (T || (p x))}) --> (T || (forall {x : (p x)})))';
+        assertEqual(expected, inf);
       },
 
       testR5235: function() {
-        var inf = Y.makeInference('r5235', [x, p, call(q, x)]);
+        var inf = Y.rules.r5235(x, p, call(q, x));
         var wff =
           '((forall {x : (p || (q x))}) --> (p || (forall {x : (q x)})))';
-        assertEqual(wff, inf.result);
+        assertEqual(wff, inf);
       },
 
       testImplyForall: function() {
-        var inf = Y.makeInference('implyForall', [x, implies(p, call(q, x))]);
+        var inf = Y.rules.implyForall(x, implies(p, call(q, x)));
         var wff =
           '((forall {x : (p --> (q x))}) --> (p --> (forall {x : (q x)})))';
-        assertEqual(wff, inf.result);
+        assertEqual(wff, inf);
       },
 
       testP: function() {
-        var inf = Y.makeInference('p', [Y.parse('p x'),
+        var inf = Y.rules.p(Y.parse('p x'),
                                          Y.parse('p x --> q x'),
                                          Y.parse('q x'),
-                                         Y.parse('P && (P --> Q) --> Q')]);
-        assertEqual('(q x)', inf.result);
+                                         Y.parse('P && (P --> Q) --> Q'));
+        assertEqual('(q x)', inf);
       },
 
       testR5238a: function() {
-        var inf = Y.makeInference('r5238a',
-                                  [y, call(p, y), call(q, y)]);
+        var inf = Y.rules.r5238a(y, call(p, y), call(q, y));
         var wff =
           '(({y : (p y)} = {y : (q y)}) = (forall {y : ((p y) = (q y))}))';
-        assertEqual(wff, inf.result);
+        assertEqual(wff, inf);
       },
 
       testR5238: function() {
-        var inf = Y.makeInference('r5238',
-                                  [['x1', 'x2'],
+        var result = Y.rules.r5238(['x1', 'x2'],
                                    call(p, _var('x1')),
-                                   call(p, _var('x2'))]);
+                                   call(p, _var('x2')));
         var wff =
           ('(({x1 : {x2 : (p x1)}} = {x1 : {x2 : (p x2)}}) = '
            + '(forall {x1 : (forall {x2 : ((p x1) = (p x2))})}))');
-        assertEqual(wff, inf.result);
+        assertEqual(wff, result);
       },
 
       testR5239: function() {
-        var inf = Y.makeInference('r5239',
-                                  [equal(p, q),
+        var inf = Y.rules.r5239(equal(p, q),
                                    lambda(p, equal(q, p)),
-                                   '/body/right']);
+                                   '/body/right');
         var wff =
           '((forall {p : (p = q)}) --> ({p : (q = p)} = {p : (q = q)}))';
-        assertEqual(wff, inf.result);
-        inf = Y.makeInference('r5239',
-                              [equal(p, q), equal(r, p), '/right']);
-        assertEqual('((p = q) --> ((r = p) = (r = q)))', inf.result);
+        assertEqual(wff, inf);
+        inf = Y.rules.r5239(equal(p, q), equal(r, p), '/right');
+        assertEqual('((p = q) --> ((r = p) = (r = q)))', inf);
       },
 
       testReplace: function() {
-        var args = [Y.parse('x > 0 --> (x = (abs x))'),
-             Y.parse('x > 0 --> ((x + x) > x)'), '/right'
-             ]
-        var inf = Y.makeInference('replace', args);
-        assertEqual('((x > 0) --> ((x + x) > (abs x)))', inf.result);
+        var result = Y.rules.replace(Y.parse('x > 0 --> (x = (abs x))'),
+                                     Y.parse('x > 0 --> ((x + x) > x)'),
+                                     '/right');
+        assertEqual('((x > 0) --> ((x + x) > (abs x)))', result);
       },
 
 
@@ -662,18 +600,9 @@ YUI({filter: null, insertBefore: 'styles'})
       // From here you can get counterexamples to the possibilities
       // that ordered pairs other than TT satisfy the definition.
       testFunWithAnd: function() {
-        var inf = Y.makeInference('funWithAnd', []);
-        // logDetails(inf);
-      },
-
-      testMakeInference: function() {
-        var inf = Y.makeInference('eqT', [x]);
-        Y.log(inf.toString());
-        assertEqual('eqT', inf.name);
-        assertEqual(1, inf.arguments.length);
-        assertEqual('x', inf.arguments[0].name);
+        var result = Y.rules.funWithAnd();
       }
-  });
+    });
 
   Y.Test.Runner.add(testCase);
   Y.Test.Runner.run();

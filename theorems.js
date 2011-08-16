@@ -13,6 +13,10 @@ var identity = lambda(x, x);
 
 var allT = lambda(x, T);
 
+// Map from tautology string representation to tautology,
+// for proved tautologies.  Private to the tautology rule.
+var _tautologies = {};
+
 // List of rules that work with hypotheses.
 //
 // This covers rules that precede the deduction theorem (5240).
@@ -1002,35 +1006,45 @@ var ruleInfo = {
   // tautology.  5233
   tautology: {
     action: function(wff) {
-      var names = wff.freeNames();
-      // Not really a loop, just works with the first free (variable!)
-      // name returned.
-      for (var name in names) {
-        if (!Y.isConstant(name)) {
-          if (wff instanceof Y.Call && wff.fn instanceof Y.Call
-              && wff.fn.fn instanceof Y.Var && wff.fn.fn.name == '=') {
-            // WFF is already an equation.
-            var step1 = rules.tautology(Y.subFree(T, name, wff));
-            var step2 = rules.tautology(Y.subFree(F, name, wff));
-            var step3 = rules.equationCases(step1, step2, name);
-            return step3.justify('tautology', arguments);
-          } else {
-            var step1 = rules.tautology(equal(T, Y.subFree(T, name, wff)));
-            var step2 = rules.tautology(equal(T, Y.subFree(F, name, wff)));
-            var step3 = rules.equationCases(step1, step2, name);
-            var result = rules.fromTIsA(step3);
-            return result.justify('tautology', arguments)
+      var key = wff + '';
+      var taut = _tautologies[key];
+      if (taut) {
+        return taut;
+      } else {
+        var names = wff.freeNames();
+        // Not really a loop, just works with the first free (variable!)
+        // name returned.
+        for (var name in names) {
+          if (!Y.isConstant(name)) {
+            if (wff instanceof Y.Call && wff.fn instanceof Y.Call
+                && wff.fn.fn instanceof Y.Var && wff.fn.fn.name == '=') {
+              // WFF is already an equation.
+              var step1 = rules.tautology(Y.subFree(T, name, wff));
+              var step2 = rules.tautology(Y.subFree(F, name, wff));
+              var step3 = rules.equationCases(step1, step2, name);
+              _tautologies[key] = result;
+              return step3.justify('tautology', arguments);
+            } else {
+              var step1 = rules.tautology(equal(T, Y.subFree(T, name, wff)));
+              var step2 = rules.tautology(equal(T, Y.subFree(F, name, wff)));
+              var step3 = rules.equationCases(step1, step2, name);
+              var result = rules.fromTIsA(step3);
+              _tautologies[key] = result;
+              return result.justify('tautology', arguments)
+            }
           }
         }
+        // There are no free variables, evaluate the expression.
+        var result = rules.evalBool(wff);
+        Y.assert(result.isCall2('=')
+                 && result.getRight() instanceof Y.Var
+                 && result.getRight().name == 'T',
+                 'Not a tautology: ' + result.getLeft());
+        var conclusion = rules.rRight(result, rules.t(), '');
+        var result = conclusion.justify('tautology', arguments);
+        _tautologies[key] = result;
+        return result;
       }
-      // There are no free variables, evaluate the expression.
-      var result = rules.evalBool(wff);
-      Y.assert(result.isCall2('=')
-               && result.getRight() instanceof Y.Var
-               && result.getRight().name == 'T',
-               'Not a tautology: ' + result.getLeft());
-      var result = rules.rRight(result, rules.t(), '');
-      return result.justify('tautology', arguments);
     },
     comment: ('Tautology decider.')
   },
@@ -1360,5 +1374,6 @@ Y.theoremNames = theoremNames;
 
 // For testing.
 Y.ruleInfo = ruleInfo;
+Y._tautologies = _tautologies;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'proof']});
