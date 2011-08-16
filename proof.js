@@ -2,131 +2,6 @@
 
 YUI.add('proof', function(Y) {
 
-//// INFERENCE
-
-/**
- * Inference object: Immutable record of an inference step, either
- * primitive or composite.  The constructor is private; use
- * makeInference to create inferences in client code.
- */
-function Inference(name, ruleArgs, result, proof) {
-  // Rule name
-  this.name = name;
-  // RuleArgs: a list of expressions or inference steps with result
-  // expressions used by this step.  For composite inferences this
-  // should be null.
-  this.arguments = ruleArgs;
-  // The conclusion Expr of the inference..
-  this.result = result;
-  // Proof of the result (Inferences), empty for a primitive inference.
-  this.proof = proof;
-  // If rendered, the YUI node (proof step node) for this step.
-  this.node = null;
-  // If rendered, may have a "selection" property or a "selections"
-  // property indicating any expressions in it currently selected
-  // in the UI:
-  this.selections = [];
-  this.selection = null;
-  //
-  // If rendered, has a "deps" property, a map from result string
-  // to the premises of this inference, themselves inferences.
-  // The values of the deps have always been rendered.
-  //
-  // TODO: Specify deps explicitly rather than computing it.
-  //   The same thing may be proved more than once, especially when using
-  //   proof procedures, so be specific about which dep is intended.
-}
-
-/**
- * Returns the proof step DOM node for this Inference.  Assumes
- * the inference has been rendered.
- */
-Inference.prototype.getStepNode = function() {
-  // Or alternatively, its ancestor that has the proofStep CSS class.
-  return this.result.node.get('parentNode');
-};
-
-Inference.prototype.toString = function() {
-  var result = debugString(this);
-  if (result.length <= 200) {
-    return result;
-  } else {
-    function detailer(proof) {
-      if (proof == null) {
-        return '' + proof;
-      }
-      var steps = proof.steps;
-      result = '[';
-      for (var i = 0; i < steps.length; i++) {
-        if (i > 0) {
-          result += ', ';
-        }
-        result += steps[i].name;
-      }
-      return result + ']';
-    }
-    return debugString(this, {proof: detailer});
-  }
-};
-
-/**
- * Returns a set of wffs this inference relies on to be true in order
- * to produce its result, as a map indexed by their string
- * representations.
- */
-Inference.prototype.assumptions = function() {
-  // Accumulates the inputs and outputs of this inference.
-  // For axioms, definitions, and rule R the result is an output.
-  if (this.name.match(/^axiom|^def[A-Z]/)) {
-    // Axioms and definitions need no inputs.
-    return {};
-  } else if (this.name == 'r') {
-    var args = this.arguments;
-    var inputs = {};
-    inputs[args[0].asString()] = args[0];
-    inputs[args[1].asString()] = args[1];
-    return inputs;
-  } else {
-    return this.proof.assumptions();
-  }
-};
-
-/**
- * Applies the rule with the given name to the arguments,
- * pushing a record of its inference onto the given stack (array),
- * and returning the result of the Inference, an expression.
- * If there no such rule, throws an exception.
- */
-function applyRule(name, ruleArgs, stack) {
-  Y.assert(typeof name == 'string', 'Name must be a string: ' + name);
-  var rule = rules[name].innerFn;
-  Y.assert(rule, 'No such rule: ' + name);
-  stack.push(new Proof());
-  var result = rule.apply(null, ruleArgs);
-  var step = new Inference(name, ruleArgs, result, stack.pop());
-  stack[stack.length - 1].add(step);
-  return result;
-}
-
-/**
- * Makes and returns an inference by running the named rule with the
- * given arguments, or an empty list if none are given.
- *
- * TODO: In Java build proofs directly in "rules" code, and eliminate
- * the inferenceStack.  Each rule returns a Proof (Inference?), and
- * each fule function makes a new Proof and adds steps to it, using
- * a function that adds to the proof and returns the result.
- * e.g. var step3 = myProof.addStep(ruleR( ... ));
- */
-function makeInference(name, ruleArgs) {
-  ruleArgs = ruleArgs || [];
-  inferenceStack.push(new Proof());
-  applyRule(name, ruleArgs, inferenceStack);
-  var inf = inferenceStack.pop().pop();
-  return inf;
-}
-
-
 //// THEOREMHOOD
 
 // Private to addTheorem, getTheorem, and the initializations
@@ -1090,33 +965,21 @@ var rules = {};
  */
 function createRules(ruleInfo) {
   for (var key in ruleInfo) {
-    // Each call to infer will get the key and inferenceStack
-    // from here, plus whatever args were passed by the caller.
-    rules[key] = Y.bind(infer, null, key, inferenceStack);
     // Remember ALL of the info as well, redundantly.  See the "to do"
     // above.
     var info = ruleInfo[key];
-    rules[key].info = info;
     var fn = (typeof info == 'function') ? info : info.action;
     // Each function in rules has its action function as
     // the value of its innerFn property.
-    rules[key].innerFn = fn;
+    rules[key] = fn;
+    rules[key].info = info;
   }
-}
-
-function infer(name, stack, etc) {
-  var ruleArgs = [];
-  for (var i = 2; i < arguments.length; i++) {
-    ruleArgs.push(arguments[i]);
-  }
-  return applyRule(name, ruleArgs, stack);
 }
 
 
 //// Export public names.
 
 Y.inferenceStack = inferenceStack;
-Y.makeInference = makeInference;
 Y.addTheorem = addTheorem;
 Y.getTheorem = getTheorem;
 Y.define = define;

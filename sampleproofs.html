@@ -415,7 +415,6 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       // "rule=<ruleName>" in the query string.
       var ruleName = queryData.rule;
       editable = queryData.edit != undefined;
-      var inference = null;
       if (!location.search) {
         // Default to displaying forallInst.
         ruleName = 'forallInst';
@@ -453,41 +452,6 @@ function spaces(n) {
     result += ' ';
   }
   return result;
-}
-
-/**
- * Assumption dumper.  Finds steps of an inference that depend on
- * a wff representable as the target string.  The index and depth
- * default to 0, and get nonzero values in recursive calls, indicating
- * the zero-based step number in proof, and depth from top-level.
- * Logs occurrences of the given assumption at all proof levels,
- * with indentation per level.
- */
-function sumpDump(inf, target, index, depth) {
-  index = index || 0;
-  depth = depth || 0;
-  if (inf._assumes[target]) {
-    Y.log(spaces(depth) + index + ': ' + inf.name + ' = ' + inf.result);
-    var proof = inf.proof;
-    var steps = proof.steps;
-    for (var i = 0; i < steps.length; i++) {
-      sumpDump(steps[i], target, i, depth + 1);
-    }
-  }
-};
-
-/**
- * Finds steps in a proof that produce a result representable as
- * the target string and logs them with the index of the step(s).
- */
-function cancellations(proof, target) {
-  var steps = proof.steps;
-  for (var i = 0; i < steps.length; i++) {
-    var inf = steps[i];
-    if (inf.result.asString() == target) {
-      Y.log(i + ': ' + inf.name + ' = ' + inf.result);
-    }
-  }
 }
 
 </script>
