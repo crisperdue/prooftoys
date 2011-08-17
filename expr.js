@@ -508,8 +508,7 @@ Var.prototype.dump = function() {
 }
 
 Var.prototype.subst = function(replacement, name) {
-  // TODO: Consider not copying the replacement.
-  return (name == this.name ? replacement.copy() : this);
+  return (name == this.name ? replacement : this);
 };
 
 Var.prototype.copy = function() {
@@ -544,7 +543,7 @@ Var.prototype.normalized = function(counter, bindings) {
 };
 
 Var.prototype.replace = function(path, xformer) {
-  return path.isMatch() ? xformer(this) : this.copy();
+  return path.isMatch() ? xformer(this) : this;
 };
 
 Var.prototype._locate = function(path) {
@@ -874,7 +873,7 @@ Lambda.prototype.normalized = function(counter, bindings) {
 Lambda.prototype.replace = function(path, xformer) {
   return path.isMatch()
     ? xformer(this)
-    : new Lambda(this.bound.copy(),
+    : new Lambda(this.bound,
                  this.body.replace(path.rest('body'), xformer));
 };
 
