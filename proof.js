@@ -527,7 +527,7 @@ function computeStepInfo(step) {
         } else {
           stepInfo += ',';
         }
-        stepInfo += ' ' + fancyStepNumber(dep.ordinal);
+        stepInfo += ' ' + fancyStepNumber(dep.stepNumber);
       });
 
     // Display rule arguments.
@@ -563,14 +563,8 @@ function computeStepInfo(step) {
 function fancyName(expr) {
   var name = expr.ruleName;
   var info = rules[name].info;
-  /*
-  if (name == 'theorem') {
-    name = expr.ruleArgs[0];
-  }
-  */
   var comment = info.comment || '';
-  return '<span class=ruleName index=' + (expr.stepNumber - 1)
-    + ' title="' + comment + '">' + name + '</span>';
+  return '<span class=ruleName title="' + comment + '">' + name + '</span>';
 }
 
 /**
@@ -620,8 +614,8 @@ function renderInference(step, node, editable, millis) {
   var startRender = new Date().getTime();
   var steps = copyProof(step.details, step.ruleDeps);
   var nSteps = steps[steps.length - 1].ordinal - computeFirstOrdinal(steps);
-  // Renumber the steps from 1 to N.
-  Y.each(steps, function(step, i) { step.ordinal = i + 1; });
+  // Give the steps numbers from 1 to N.
+  Y.each(steps, function(step, i) { step.stepNumber = i + 1; });
   var proof = new Proof();
   proof.setSteps(steps);
   var controller = new ProofControl(proof);
@@ -781,7 +775,7 @@ function hoverStep(event, step, direction, proofNode) {
   // When leaving remove highlights from all references.
   proofNode.all('span.stepNumber').each(function(node) {
       if (direction == 'in') {
-        if (node.get('innerHTML') == step.ordinal) {
+        if (node.get('innerHTML') == step.stepNumber) {
           node.addClass('referenced');
         }
       } else {

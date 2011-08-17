@@ -111,8 +111,8 @@ function Expr() {
   // DOM node (refers to a YUI Node).
   // If rendered, has an "ordinal" property with its step number
   // in the rendered proof.
-  // If rendered as a proof step, has "_step" property for
-  // information about the step, an Object.
+  // If rendered as a proof step, has a stepNumber property with
+  // its rendered step number.
   // Can have a "_string" property with the result of asString.
 }
 

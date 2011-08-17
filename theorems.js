@@ -684,14 +684,22 @@ var ruleInfo = {
   // Stepping stone to universal generalization.
   r5218: {
     action: function(a) {
+      var step1 = rules.theorem('tIsXIsX');
+      var step2 = rules.instEqn(step1, a, x);
+      return step2.justify('r5218', arguments);
+    },
+    comment: ('For any expression A derives [T = A] = A.')
+  },
+
+  tIsXIsX: {
+    action: function() {
       var step1 = rules.theorem('r5230TF');
       var step2 = rules.eqT(T);
       var step3 = rules.eqnSwap(step2);
       var step4 = rules.equationCases(step3, step1, 'x');
-      var step5 = rules.instEqn(step4, a, x);
-      return step5.justify('r5218', arguments);
+      return step4.justify('tIsXIsX');
     },
-    comment: ('For any expression A derives [T = A] = A.')
+    comment: ('[T = x] = x')
   },
 
   // 5219
@@ -1360,7 +1368,7 @@ var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
 
 var theoremNames =
   (axiomNames.concat(['defForall', 'defFFromBook', 'axiomTIsNotF',
-                      'defNot', 'defAnd',
+                      'defNot', 'defAnd', 'tIsXIsX',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals']));
 
