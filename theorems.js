@@ -1022,26 +1022,28 @@ var ruleInfo = {
               var step1 = rules.tautology(Y.subFree(T, name, wff));
               var step2 = rules.tautology(Y.subFree(F, name, wff));
               var step3 = rules.equationCases(step1, step2, name);
+              var result = step3.justify('tautology', arguments);
               _tautologies[key] = result;
-              return step3.justify('tautology', arguments);
+              return result.justify('tautology', arguments);
             } else {
               var step1 = rules.tautology(equal(T, Y.subFree(T, name, wff)));
               var step2 = rules.tautology(equal(T, Y.subFree(F, name, wff)));
               var step3 = rules.equationCases(step1, step2, name);
-              var result = rules.fromTIsA(step3);
+              var step4 = rules.fromTIsA(step3);
+              var result = step4.justify('tautology', arguments);
               _tautologies[key] = result;
-              return result.justify('tautology', arguments)
+              return result;
             }
           }
         }
         // There are no free variables, evaluate the expression.
-        var result = rules.evalBool(wff);
-        Y.assert(result.isCall2('=')
-                 && result.getRight() instanceof Y.Var
-                 && result.getRight().name == 'T',
-                 'Not a tautology: ' + result.getLeft());
-        var conclusion = rules.rRight(result, rules.t(), '');
-        var result = conclusion.justify('tautology', arguments);
+        var step11 = rules.evalBool(wff);
+        Y.assert(step11.isCall2('=')
+                 && step11.getRight() instanceof Y.Var
+                 && step11.getRight().name == 'T',
+                 'Not a tautology: ' + step11.getLeft());
+        var step12 = rules.rRight(step11, rules.t(), '');
+        var result = step12.justify('tautology', arguments);
         _tautologies[key] = result;
         return result;
       }

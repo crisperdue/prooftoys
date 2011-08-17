@@ -428,7 +428,6 @@ function copyProof(step, dependencies) {
       // TODO: remove this hack when assumptions all become explicit.
       if (!step.ruleName) {
         step.assume();
-        step.ordinal = .1;
       }
       step.__copy = step.copyStep();
       oldSteps.push(step);
@@ -589,11 +588,12 @@ function fancyStepNumber(n) {
  * second is the proof display.  Returns the final step of the rendered
  * copy.
  *
- * Inputs are a proof step, the container node, and a
- * flag to indicate whether to make the display editable.  This renders
- * the details of the step and a description of the step itself.
+ * Inputs are a proof step, the container node, a flag to indicate
+ * whether to make the display editable, and an optional proof time in
+ * milliseconds.  This renders the details of the step and a
+ * description of the step itself.
  */
-function renderInference(step, node, editable) {
+function renderInference(step, node, editable, millis) {
   if (node == null) {
     node = new Y.Node(document.body);
   }
@@ -615,22 +615,47 @@ function renderInference(step, node, editable) {
   argInfo =
     ': <span style="font-weight: normal; font-family: monospace">'
     + argInfo + '</span>';
-  var comment = rules[step.ruleName].info.comment || '';
-  node.appendChild('<div class=proofHeader><b>' + pruf
-                   + step.ruleName + '</b>' + argInfo + '<br>'
-                   + '<i>' + comment + '</i>'
-                   + '</div>');
   // TODO: Clean up relationships between Proof, ProofControl,
   // and steps.  Consider merging Proof into ProofControl.
+  var startRender = new Date().getTime();
   var steps = copyProof(step.details, step.ruleDeps);
-  // Number the steps from 1 to N.
+  var nSteps = steps[steps.length - 1].ordinal - computeFirstOrdinal(steps);
+  // Renumber the steps from 1 to N.
   Y.each(steps, function(step, i) { step.ordinal = i + 1; });
   var proof = new Proof();
   proof.setSteps(steps);
   var controller = new ProofControl(proof);
+  var renderTime = Math.ceil(new Date().getTime() - startRender);
+
+  var comment = rules[step.ruleName].info.comment || '';
+  var stats = '';
+  if (millis != null) {
+    stats = '<br><i style="font-size:smaller; color:gray">Proof '
+      + Math.ceil(millis) + ' msec, rendering '
+      + renderTime + ' msec, ' + nSteps + ' steps</i>';
+  }
+  node.appendChild('<div class=proofHeader><b>' + pruf
+                   + step.ruleName + '</b>' + argInfo + '<br>'
+                   + '<i>' + comment + '</i>' + stats
+                   + '</div>');
   node.append(controller.node);
   controller.setEditable(editable);
   return steps[steps.length - 1];
+}
+
+/**
+ * Computes the lowest real ordinal of a set of steps.
+ * TODO: Eliminate this when there are no more artificial ordinals
+ * due to creating assumptions after the fact.
+ */
+function computeFirstOrdinal(steps) {
+  var lowest = 0;
+  for (var i = 0; i < steps.length; i++) {
+    var lowest = steps[i].getBase().ordinal;
+    if (lowest >= 1) {
+      return lowest;
+    }
+  }
 }
 
 

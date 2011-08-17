@@ -394,13 +394,14 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     if (ruleInfo == undefined) {
       alert('No rule "' + ruleName + '"');
     } else {
+      var startMillis = new Date().getTime();
       var result = Y.rules[ruleName].apply(null, ruleInfo.args || []);
+      var elapsed = new Date().getTime() - startMillis;
       // For debugging.
       window.proved = result;
-
       var proofNode = Y.one('#proofs');
       proofNode.setContent('');
-      Y.renderInference(result, proofNode, editable);
+      Y.renderInference(result, proofNode, editable, elapsed);
       document.title = 'Proof display -- ' + ruleName;
     }
   }
