@@ -21,9 +21,10 @@ YUI.add('step-editor', function(Y) {
 
 
 /**
- * Fields: node, input, completer.
+ * Fields: node, input, completer, controller.
  */
 function StepEditor(controller) {
+  this.controller = controller;
   this._hint = 'Enter WFF, axiom, or theorem by name, or select rule target';
   // Create a DIV with the step editor content.
   var div = Y.Node.create('<div class=stepEditor></div>');
@@ -53,6 +54,78 @@ StepEditor.prototype.reset = function() {
   this.input.addClass('hinted');
 }
 
+StepEditor.prototype.filteredRuleNames = function() {
+  var controller = this.controller;
+  var matches = [];
+  var step = controller.selection;
+  if (step) {
+    var expr = step.selection;
+    var bindingPath = expr && step.pathToBinding(function(e) {
+        return e == expr;
+      });
+    var isBinding = !!bindingPath;
+
+    /**
+     * This determines what rule(s) are able to match inputs
+     * that are selected.  If nothing is selected, only theorems
+     * (with no input parameters) match.
+     *
+     * If something is selected, all rules that can use that input as
+     * an argument are considered to match.  Each rule has a
+     * descriptor of its arguments associated with its name.  The
+     * descriptors are maps from keywords to argument number.
+     * The descriptor keyword definitions are:
+     *
+     * step: Matches any proof step.
+     * 
+     * equation: Matches a proof step that is an equation.
+     * 
+     * term: Matches any term except the binding of a variable.
+     * 
+     * site: Matches like term, but the rule expects the term's step and
+     *   path to the term as inputs.
+     *
+     * boundVar: Matches a variable binding (e.g. rule "changeVar").
+     *
+     */
+    function matchesSelection(descriptor) {
+      var require = descriptor;
+      if (expr) {
+        // An expression is selected
+        if (isBinding) {
+          return require.boundVar;
+        } else if (require.term || require.site) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        // An entire step is selected.
+        if (require.step) {
+          return true;
+        }
+        var isEquation = step.isCall2('=');
+        if (isEquation && require.equation) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    for (var name in Y.rules) {
+      var descriptor = Y.rules[name].info.inputs;
+      if (descriptor && matchesSelection(descriptor)) {
+        matches.push(name);
+      }
+    }
+    return matches;
+  } else {
+    // Nothing is selected.
+    return Y.theoremNames;
+  }
+};
+
 /**
  * Make and return an autocompleter that uses the input field.
  */
@@ -71,7 +144,7 @@ StepEditor.prototype.stepEditorInput = function() {
   input.on('focus', focus);
   var config = {resultFilters: ['startsWith'],
                 resultHighlighter: 'startsWith',
-                source: Y.theoremNames,
+                source: Y.bind(this.filteredRuleNames, this),
                 inputNode: input,
                 render: true,
                 minQueryLength: 0,

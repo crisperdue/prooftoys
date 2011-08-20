@@ -209,6 +209,17 @@ YUI({filter: null, insertBefore: 'styles'})
                     '' + call(f, call(f, call(g, x))).pathTo(findX));
       },
 
+      testPathToBinding: function() {
+        function isX(expr) {
+          return expr == x;
+        }
+        assertEqual(null, x.pathToBinding(isX));
+        assertEqual(null, call(x, y).pathToBinding(isX));
+        assertEqual('', '' + lambda(x, x).pathToBinding(isX));
+        assertEqual('/fn',
+                    '' + call(lambda(x, x), z).pathToBinding(isX));
+      },
+
       testMatchAsSchema: function() {
         var bindings = Y.matchAsSchema(p, equal(x, x));
         assertEqual('{p: (x = x)}',

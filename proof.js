@@ -250,7 +250,7 @@ ProofControl.prototype.setEditable = function(state) {
  * Unconditionally select the step, no other action.
  */
 ProofControl.prototype.selectStep = function(step) {
-  step.node.addClass('selected');
+  step.stepNode.addClass('selected');
   this.selection = step;
 };
 
@@ -261,7 +261,7 @@ ProofControl.prototype.selectStep = function(step) {
 ProofControl.prototype.deselectStep = function() {
   var step = this.selection;
   if (step) {
-    step.node.removeClass('selected');
+    step.stepNode.removeClass('selected');
     this.selection = null;
     this.deselectExpr(step);
   }

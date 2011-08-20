@@ -109,6 +109,8 @@ function Expr() {
   //
   // If rendered, has a "node" property for an associated
   // DOM node (refers to a YUI Node).
+  // If rendered as a proof step, has a stepNode property with
+  // the YUI node of the entire step.
   // If rendered, has an "ordinal" property with its step number
   // in the rendered proof.
   // If rendered as a proof step, has a stepNumber property with
@@ -328,9 +330,30 @@ Expr.prototype.render = function(node) {
  * a boolean function of one argument.  Returns a path from this to
  * the occurrence, or null if none found.  Tests this expression
  * first, followed by the rest in top-down left-to-right order.
+ * Does not search for variable bindings, use pathToBinding instead.
  */
 Expr.prototype.pathTo = function(pred) {
   var revPath = this._path(pred, path('/'));
+  if (revPath == null) {
+    return null;
+  }
+  var result = path();
+  while (!revPath.isEnd()) {
+    result = new Path(revPath.segment, result);
+    revPath = revPath.tail();
+  }
+  return result;
+};
+
+/**
+ * Searches in this for a variable binding that passes the test, given
+ * as a boolean function of one argument.  Returns a path from this to
+ * the Lambda containing the occurrence, or null if none found.  Tests
+ * this expression first, followed by the rest in top-down
+ * left-to-right order.
+ */
+Expr.prototype.pathToBinding = function(pred) {
+  var revPath = this._bindingPath(pred, path('/'));
   if (revPath == null) {
     return null;
   }
@@ -441,6 +464,20 @@ Expr.prototype.pathTo = function(pred) {
 // order, or null if there is none.  The search includes
 // variable bindings if bindings is truthy.
 //
+//
+// _path(pred, revPath)
+//
+// Searches for a subexpression of this that passes the test and
+// is NOT a variable binding.  Returns the "reverse path" to it,
+// with the last path segment first.
+// 
+//
+// _bindingPath(pred, revPath)
+//
+// Searches for a subexpression of this that passes the test and is a
+// variable binding.  Returns the "reverse path" to its containing
+// Lambda, with the last path segment first.
+// 
 //
 // generalizeTF(expr2, newVar)
 //
@@ -581,6 +618,10 @@ Var.prototype.generalizeTF = function(expr2, newVar) {
 
 Var.prototype._path = function(pred, revPath) {
   return pred(this) ? revPath : null;
+};
+
+Var.prototype._bindingPath = function(pred, revPath) {
+  return null;
 };
 
 Var.prototype._render = function(node) {
@@ -737,6 +778,11 @@ Call.prototype._path = function(pred, revPath) {
     ? revPath
     : this.fn._path(pred, new Path('fn', revPath))
       || this.arg._path(pred, new Path('arg', revPath));
+};
+
+Call.prototype._bindingPath = function(pred, revPath) {
+  return (this.fn._bindingPath(pred, new Path('fn', revPath))
+          || this.arg._bindingPath(pred, new Path('arg', revPath)));
 };
 
 Call.prototype._render = function(node) {
@@ -917,6 +963,12 @@ Lambda.prototype._path = function(pred, revPath) {
   return pred(this)
     ? revPath
     : this.body._path(pred, new Path('body', revPath));
+};
+
+Lambda.prototype._bindingPath = function(pred, revPath) {
+  return (pred(this.bound)
+          ? revPath
+          : this.body._bindingPath(pred, new Path('body', revPath)));
 };
 
 Lambda.prototype._render = function(node) {

@@ -113,7 +113,7 @@ var ruleInfo = {
         throw new Error('Rule R requires equation: ' + equation);
       }
     },
-    inputs: [{secondary: 'equation'}, {primary: 'location'}],
+    inputs: {equation: 1, site: 2},
     comment: ('Replaces an occurrence of an expression with something'
               + ' it is equal to.')
   },
@@ -129,7 +129,7 @@ var ruleInfo = {
       var result = rules.r(rev, target, path);
       return result.justify('rRight', arguments, [target, equation]);
     },
-    inputs: [{secondary: 'equation'}, {primary: 'location'}],
+    inputs: {equation: 1, site: 2},
     comment: ('Replaces an occurrence of an expression with something'
               + ' equal to it, replacing right side with left side.')
   },
@@ -279,7 +279,7 @@ var ruleInfo = {
       var result = rules.r(step1, step1, '/left');
       return result.justify('eqSelf', arguments);
     },
-    inputs: [{term: 'any'}],
+    inputs: {term: 1},
     comment: 'Derives A = A.'
   },
 
@@ -298,7 +298,7 @@ var ruleInfo = {
       var ba = rules.r(ab, aa, '/left');
       return ba.justify('eqnSwap', arguments, arguments);
     },
-    inputs: [{primary: 'equation'}],
+    inputs: {equation: 1},
     comment: 'From A = B derives B = A'
   },
 
@@ -335,8 +335,7 @@ var ruleInfo = {
       var step2 = rules.r(eqn, step1, '/right/fn');
       return step2.justify('applyBoth', arguments, [eqn]);
     },
-    inputs: {or: [{primary: 'equation', secondary: {term: 'any'}},
-                  ({primary: {term: 'any'}, secondary: 'equation'})]},
+    inputs: {equation: 1, term: 2},
     comment: 'Given f = g, derive (f A) = (g A)'
   },
 
@@ -347,8 +346,7 @@ var ruleInfo = {
       var abac = rules.r(bc, abab, '/right/arg');
       return abac.justify('applyToBoth', arguments, [bc]);
     },
-    inputs: {or: [{primary: 'equation', secondary: {term: 'any'}},
-                  ({primary: {term: 'any'}, secondary: 'equation'})]},
+    inputs: {term: 1, equation: 2},
     comment: 'Given B = C derives (f B) = (f C)'
   },
 
@@ -392,7 +390,7 @@ var ruleInfo = {
       var result = rules.r(equation, expr, path);
       return result.justify('reduce', arguments, [expr]);
     },
-    inputs: [{primary: 'location'}],
+    inputs: {site: 1},
     comment: ('Substitutes an actual argument for the formal variable'
               + ' in one function call of a WFF.')
   },
@@ -415,6 +413,7 @@ var ruleInfo = {
       var step2 = rules.r(step1, expr, path);
       return step2.justify('changeVar', arguments, [expr]);
     },
+    inputs: {boundVar: 1, name: 3},
     comment: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
