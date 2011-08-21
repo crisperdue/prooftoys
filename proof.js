@@ -384,7 +384,8 @@ function renderSteps(controller) {
     // Set up "hover" event handling on the stepNode.
     stepNode.on('hover',
                 // Call "hover", passing these arguments as well as the event.
-                Y.rbind(hoverStep, null, step, 'in', stepsNode),
+                // Second "null" is workaround for YUI 3.4 bug.
+                Y.rbind(hoverStep, null, null, step, 'in', stepsNode),
                 Y.rbind(hoverStep, null, step, 'out', stepsNode));
 
     // Caution: passing null to Y.on selects everything.
@@ -764,7 +765,10 @@ function removeClass(node, className) {
  * index is the step index, direction is "in" or "out", and
  * proofNode is the DOM node of the proof.
  */
-function hoverStep(event, step, direction, proofNode) {
+function hoverStep(event, dummy, step, direction, proofNode) {
+  if (dummy) {
+    alert('YUI 3.4 bug is fixed!');
+  }
   var action = direction == 'in' ? addClass : removeClass;
   var handler = hoverHandlers[step.ruleName];
   // Always add or remove the "hover" class to the step node
