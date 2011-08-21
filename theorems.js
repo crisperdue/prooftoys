@@ -436,6 +436,7 @@ var ruleInfo = {
       var step2 = rules.r(eqn, step1, '/right/body');
       return step2.justify('bindEqn', arguments, [eqn]);
     },
+    inputs: {equation: 1, name: 2},
     comment: ('Wraps each side of an equation in a function'
               + ' using the bound variable of your choice.')
   },
@@ -452,6 +453,7 @@ var ruleInfo = {
       var step4 = rules.reduce(step3, '/right');
       return step4.justify('instEqn', arguments, [b_c]);
     },
+    inputs: {equation: 1, term: 2, name: 3},
     comment: ('Instantiates a free variable in an equation.')
   },
 
@@ -475,6 +477,7 @@ var ruleInfo = {
       var step4b = rules.reduce(step4a, '/right');
       return step4b.justify('eqT', arguments, []);
     },
+    inputs: {term: 1},
     comment: ('Proves T = [B = B].')
   },
 
@@ -497,6 +500,7 @@ var ruleInfo = {
       var step2 = rules.r(a_b, step1, '/right/right');
       return step2.justify('toTIsEquation', arguments, [a_b]);
     },
+    inputs: {equation: 1},
     comment: ('From [A = B] deduce T = [A = B].')
   },
 
@@ -599,6 +603,11 @@ var ruleInfo = {
       var step5 = rules.r(step4, rules.theorem('t'), '/');
       return step5.justify('forallInst', arguments, [target]);
     },
+    inputs: {step: 1, term: 2, condition: {1: function(target) {
+      return (target instanceof Y.Call
+	      && target.fn instanceof Y.Var
+	      && target.fn.name == 'forall');
+    }}},
     comment: ('In a "forall", instantiates the bound variable with'
               + ' a given term.')
   },
@@ -674,6 +683,7 @@ var ruleInfo = {
       var step9 = rules.forallInst(step8, v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
+    inputs: {equation: [1, 2], name: 3},
     comment: ('Given a function expression of the form {v | A = B},'
               + ' infers (forall {x | A = B}) assuming A = B is proven'
               + ' for the substitutions with v = T and v = F.')
@@ -687,6 +697,7 @@ var ruleInfo = {
       var step2 = rules.instEqn(step1, a, x);
       return step2.justify('r5218', arguments);
     },
+    inputs: {term: 1},
     comment: ('For any expression A derives [T = A] = A.')
   },
 
@@ -708,6 +719,7 @@ var ruleInfo = {
       var step2 = rules.rRight(step1, a, '/');
       return step2.justify('toTIsA', arguments, [a]);
     },
+    inputs: {step: 1},
     comment: ('From A derives T = A')
   },
 
@@ -722,6 +734,10 @@ var ruleInfo = {
       var result = rules.r(rules.r5218(a), t_a, '/');
       return result.justify('fromTIsA', arguments, [t_a]);
     },
+    inputs: {equation: 1, condition: {1: function(eqn) {
+      var left = eqn.getLeft();
+      return (left instanceof Y.Var && left.name == 'T');
+    }}},
     comment: ('From T = A derives A')
   },
 
@@ -755,6 +771,7 @@ var ruleInfo = {
       var step3 = rules.r(step1, step2, '/arg/body');
       return step3.justify('uGen', arguments, [a]);
     },
+    inputs: {step: 1, name: 2},
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.')
   },
@@ -767,6 +784,7 @@ var ruleInfo = {
       var step2 = rules.forallInst(step1, a);
       return step2.justify('sub', arguments, [b]);
     },
+    inputs: {step: 1, term: 2, name: 3},
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.')
   },
@@ -829,6 +847,7 @@ var ruleInfo = {
       var step7b = rules.reduce(step7a, '/');
       return step7b.justify('cases', arguments, [caseT, caseF]);
     },
+    inputs: {step: [1, 2], name: 3},
     comment: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.')
   },
@@ -843,6 +862,7 @@ var ruleInfo = {
       var step4 = rules.reduce(step3, '');
       return step4.justify('modusPonens', arguments, arguments);
     },
+    inputs: {step: 1, implication: 2},
     comment: ('Modus Ponens.  Given A and A --> B derives B.')
   },
 
@@ -1055,6 +1075,7 @@ var ruleInfo = {
         return result;
       }
     },
+    inputs: {step: 1},
     comment: ('Tautology decider.')
   },
 
@@ -1068,6 +1089,7 @@ var ruleInfo = {
       var step3 = rules.r(stepb, step2, '/right');
       return step3.justify('makeConjunction', arguments, [a, b]);
     },
+    inputs: {step: [1, 2]},
     comment: ('Given a and b, derive a && b')
   },
 
@@ -1111,6 +1133,7 @@ var ruleInfo = {
       var step10 = rules.sub(step9, a, p0);
       return step10.justify('r5235', arguments);
     },
+    inputs: {term: [1, 2]},
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".')
   },
@@ -1133,6 +1156,7 @@ var ruleInfo = {
       var step5 = rules.r(step4, step3, '/right');
       return step5.justify('implyForall', arguments, [a_b]);
     },
+    inputs: {name: 1, implication: 2},
     comment: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.')
   },

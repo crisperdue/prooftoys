@@ -79,6 +79,8 @@ StepEditor.prototype.filteredRuleNames = function() {
      * step: Matches any proof step.
      * 
      * equation: Matches a proof step that is an equation.
+     *
+     * implication: Matches a proof step that is an implication.
      * 
      * term: Matches any term except the binding of a variable.
      * 
@@ -108,7 +110,12 @@ StepEditor.prototype.filteredRuleNames = function() {
         if (isEquation && require.equation) {
           return true;
         } else {
-          return false;
+	  var isImplication = step.isCall2('-->');
+	  if (isImplication && require.implication) {
+	    return true;
+	  } else {
+            return false;
+	  }
         }
       }
     }

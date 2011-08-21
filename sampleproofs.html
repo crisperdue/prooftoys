@@ -417,7 +417,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       // "rule=<ruleName>" in the query string.
       var ruleName = queryData.rule;
       editable = queryData.edit != undefined;
-      if (!location.search) {
+      if (ruleName == undefined) {
         // Default to displaying forallInst.
         ruleName = 'forallInst';
       }
