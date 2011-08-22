@@ -364,6 +364,8 @@ function renderSteps(controller) {
     // result.  Rendering guarantees to copy every step that it
     // renders.
     step._render(wffNode);
+    // Set the property here until we stop using copyProof:
+    step.original.rendering = step;
 
     // Set up click handlers for selections within the step.
     Y.on('click',
@@ -384,9 +386,8 @@ function renderSteps(controller) {
     // Set up "hover" event handling on the stepNode.
     stepNode.on('hover',
                 // Call "hover", passing these arguments as well as the event.
-                // Second "null" is workaround for YUI 3.4 bug.
-                Y.rbind(hoverStep, null, null, step, 'in', stepsNode),
-                Y.rbind(hoverStep, null, step, 'out', stepsNode));
+                Y.bind(hoverStep, null, step, 'in', stepsNode),
+                Y.bind(hoverStep, null, step, 'out', stepsNode));
 
     // Caution: passing null to Y.on selects everything.
     var target = stepNode.one('span.ruleName');
@@ -401,17 +402,48 @@ function renderSteps(controller) {
 };
 
 /**
+ * Returns an array of copies of the steps leading from the limits to
+ * the given step.  Copies of the limits are not included in the
+ * result.  Sorts the copies by ordinal of the originals.
+ * Each copy has an "original" property that refers to its original.
+ */
+function copySubproof(step, limits) {
+  var copies = [];
+  Y.each(limits, function(limit) { limit.__copied = true; });
+  // Traverses the dependency graph, recording a copy of every step
+  // and building an array of all of the original steps.  In Java
+  // one might use HashMaps to associate the copies with the original,
+  // avoiding temporary modifications to the originals.
+  function graphWalk(step) {
+    if (!step.__copied) {
+      step.__copied = true;
+      var copy = step.copy();
+      copy.original = step;
+      copies.push(copy);
+      Y.each(step.ruleDeps, function(dep) { graphWalk(dep); });
+    }
+  }
+  graphWalk(step);
+  Y.each(limits, function(limit) { delete limit.__copied; });
+  Y.each(copies, function(copy) { delete copy.original.__copied; });
+  copies.sort(function(s1, s2) {
+      return s1.original.ordinal - s2.original.ordinal;
+    });
+  return copies;
+}
+
+// TODO: implement.
+function renderSubproof(step, limits, node) {
+  
+}
+
+/**
  * Finds all the proof steps supporting the given one at its level in
  * the proof and returns copies of all of them as an array, including
  * the given one, ordered by their ordinals.  This produces a copy of
  * the proof graph and a deep copy of every step, making the result
  * ready for rendering.  Copies no further back in the proof than any
  * of the given steps.
- *
- * It is OK for rendering code to modify the ordinals of the steps
- * (e.g. from 1 to N), but keep in mind that some code may assume
- * that the ordinals are consistent with the dependency ordering
- * of proof steps.
  */
 function copyProof(step, dependencies) {
   baseDeps = Y.Array.map(dependencies, function(dep) {
@@ -450,6 +482,7 @@ function copyProof(step, dependencies) {
   var result = [];
   Y.each(oldSteps, function(oldStep) {
       var copy = oldStep.__copy;
+      copy.original = oldStep;
       var deps = [];
       // The copy might have been converted to an assumption, and in
       // that case it already has the correct empty lists of dependencies
@@ -765,12 +798,8 @@ function removeClass(node, className) {
  * index is the step index, direction is "in" or "out", and
  * proofNode is the DOM node of the proof.
  */
-function hoverStep(event, dummy, step, direction, proofNode) {
-  if (dummy) {
-    alert('YUI 3.4 bug is fixed!');
-  }
+function hoverStep(step, direction, proofNode, event) {
   var action = direction == 'in' ? addClass : removeClass;
-  var handler = hoverHandlers[step.ruleName];
   // Always add or remove the "hover" class to the step node
   // as the mouse goes in or oiut.
   action(getStepNode(step.node), 'hover');
@@ -786,6 +815,7 @@ function hoverStep(event, dummy, step, direction, proofNode) {
         node.removeClass('referenced');
       }
     });
+  var handler = hoverHandlers[step.ruleName];
   if (handler) {
     // If there is a hover handler for this type of inference, apply it.
     handler(step, action);
@@ -801,9 +831,9 @@ function hoverStep(event, dummy, step, direction, proofNode) {
 // and the operation is "addClass" or "removeClass".
 var hoverHandlers = {
   r: function(step, action) {
-    var args = step.ruleArgs;
-    var eqn = args[0];
-    var target = args[1];
+    var args = step.original.ruleArgs;
+    var eqn = args[0].rendering;
+    var target = args[1].rendering;
     var path = args[2];
     action(target.node, 'hover');
     action(target.locate(path).node, 'old');
@@ -812,9 +842,9 @@ var hoverHandlers = {
     action(eqn.getRight().node, 'new');
   },
   rRight: function(step, action) {
-    var args = step.ruleArgs;
-    var eqn = args[0];
-    var target = args[1];
+    var args = step.original.ruleArgs;
+    var eqn = args[0].rendering;
+    var target = args[1].rendering;
     var path = args[2];
     action(target.node, 'hover');
     action(target.locate(path).node, 'old');
@@ -835,8 +865,8 @@ var hoverHandlers = {
                    function(expr) { action(expr.node, 'new'); });
   },
   reduce: function(step, action) {
-    var args = step.ruleArgs;
-    var dep = args[0];
+    var args = step.original.ruleArgs;
+    var dep = args[0].rendering;
     var path = args[1];
     var call = dep.locate(path);
     var target = call.fn.body;
@@ -852,17 +882,17 @@ var hoverHandlers = {
                    function(expr) { action(expr.node, 'new'); });
   },
   useDefinition: function(step, action) {
-    var args = step.ruleArgs;
-    var target = args[1];
+    var args = step.original.ruleArgs;
+    var target = args[1].rendering;
     var path = args[2];
     action(target.node, 'hover');
     action(target.locate(path).node, 'old');
     action(step.locate(path).node, 'new');
   },
   instEqn: function(step, action) {
-    var args = step.ruleArgs;
+    var args = step.original.ruleArgs;
     // Input expression.
-    var input = args[0];
+    var input = args[0].rendering;
     // Name of variable being instantiated.
     var varName = args[2].ruleName;
     action(input.node, 'hover');
@@ -872,22 +902,22 @@ var hoverHandlers = {
                   function(expr) { action(expr.node, 'new'); });
   },
   sub: function(step, action) {
-    var args = step.ruleArgs;
-    // Input expression.
-    var input = args[0];
+    var args = step.original.ruleArgs;
+    // Input step.
+    var input = args[0].rendering;
     // Name of variable being instantiated.
-    var varName = args[2].ruleName;
+    var varName = args[2].name || args[2];
     action(input.node, 'hover');
     input.findAll(varName,
-                  function(_var) { action(_var.node, 'new'); },
+                  function(_var) { action(_var.node, 'occur'); },
                   step,
                   function(expr) { action(expr.node, 'new'); });
   },
   // TODO: subAll
   forallInst: function(step, action) {
-    var args = step.ruleArgs;
+    var args = step.original.ruleArgs;
     // Input expression.
-    var input = args[0];
+    var input = args[0].rendering;
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
     action(input.node, 'hover');
