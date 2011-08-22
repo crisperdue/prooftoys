@@ -122,15 +122,16 @@ function appendSpan(node) {
 function Expr() {
   this.sort = Expr.expr;
   // If part of a proof, has properties set by the "justify" method.
+  // If has a rendered copy, has "rendering" property.
   //
   // If rendered, has a "node" property for an associated
   // DOM node (refers to a YUI Node).
-  // If rendered as a proof step, has a stepNode property with
-  // the YUI node of the entire step.
-  // If rendered, has an "ordinal" property with its step number
-  // in the rendered proof.
-  // If rendered as a proof step, has a stepNumber property with
-  // its rendered step number.
+  //
+  // If rendered as a proof step, has:
+  //   stepNode property with the YUI node of the entire step.
+  //   ordinal property with its step number in the rendered proof.
+  //   stepNumber property with its rendered step number.
+  // 
   // Can have a "_string" property with the result of asString.
 }
 
@@ -146,6 +147,7 @@ Expr.counter = 1;
 
 /**
  * Memoizing version of toString.
+ * TODO: Consider removing this as it does not seem to be needed.
  */
 Expr.prototype.asString = function() {
   var string = this.toString();
