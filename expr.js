@@ -3,6 +3,30 @@
 YUI.add('expr', function(Y) {
 
 /**
+ * Create and return a text node containing a space.  YUI (and IE)
+ * trim whitespace if you put in text in other ways.
+ */
+function space() {
+  return document.createTextNode(' ');
+}
+
+// Used to order execution of proof steps so they can display
+// in order of execution in an automatically-generated proof.
+// This increments on every call to "justify".
+// Conceptually it could be incremented just by rule R.
+var stepCounter = 1;
+
+/**
+ * Converts text symbols to HTML for display.
+ */
+var entities = {
+  '-->': '==&gt;',   // &rArr; looks lousy in fixed-width font.
+  '>=': '&ge;',
+  '<=': '&le;',
+  '!=': '&ne;'
+};
+
+/**
  * Returns a new expression resulting from substitution of copies of
  * the replacement expression for all free occurrences of the given
  * name (or variable) in the target expression.  Used by Axiom 4
@@ -87,14 +111,6 @@ function appendSpan(node) {
   return node.appendChild('<span class=expr></span>');
 }
 
-var space = '&nbsp;';
-
-// Used to order execution of proof steps so they can display
-// in order of execution in an automatically-generated proof.
-// This increments on every call to "justify".
-// Conceptually it could be incremented just by rule R.
-var stepCounter = 1;
-
 
 //// Expression, the base class
 
@@ -166,7 +182,7 @@ var _assumptionCounter = 1;
 /**
  * Modifies a proof step to treat it as an assumption, with
  * rule name, args, and deps to match, and no details.
- * Leaves any ordinal as-is.
+ * Adds a very small ordinal if there is none already.
  */
 Expr.prototype.assume = function() {
   this.ruleName = 'assumption';
@@ -303,9 +319,9 @@ Expr.prototype.locate = function(_path) {
 };
 
 /**
- * Renders this expression into the given DOM or YUI node,
- * returning a copy of this expression annotated with references
- * from each subexpression into the node where it is presented.
+ * Renders this expression onto the end of the given DOM or YUI node,
+ * returning a copy of this expression annotated with references from
+ * each subexpression into the node where it is presented.
  */
 Expr.prototype.render = function(node) {
   if (!(node instanceof Y.Node)) {
@@ -625,7 +641,8 @@ Var.prototype._bindingPath = function(pred, revPath) {
 };
 
 Var.prototype._render = function(node) {
-  node.append(this.name);
+  var name = this.name;
+  node.append(entities[name] || name);
   this.node = node;
 };
 
@@ -794,30 +811,30 @@ Call.prototype._render = function(node) {
       var fnNode = appendSpan(node);
       this.fn.node = fnNode;
       this.fn.arg._render(appendSpan(fnNode));
-      fnNode.append(space);
+      fnNode.append(space());
       this.fn.fn._render(appendSpan(fnNode));
-      node.append(space);
+      node.append(space());
       this.arg._render(appendSpan(node));
     } else {
       // Alphabetic characters: function comes first.
       var fnNode = appendSpan(node);
       this.fn.node = fnNode;
       this.fn.fn._render(appendSpan(fnNode));
-      fnNode.append(space);
+      fnNode.append(space());
       this.fn.arg._render(appendSpan(fnNode));
-      node.append(space);
+      node.append(space());
       this.arg._render(appendSpan(node));
     }
   } else if (this.fn instanceof Var && isInfixDesired(this.fn.name)) {
     var argNode = appendSpan(node);
     this.arg._render(argNode);
-    node.append('&nbsp;');
+    node.append(space());
     var opNode = appendSpan(node);
     this.fn._render(opNode);
   } else {
     var opNode = appendSpan(node);
     this.fn._render(opNode);
-    node.append('&nbsp;');
+    node.append(space());
     var argNode = appendSpan(node);
     this.arg._render(argNode);
   }
@@ -975,7 +992,7 @@ Lambda.prototype._render = function(node) {
   this.node = node;
   node.append('{');
   this.bound._render(appendSpan(node));
-  node.append('&nbsp;:&nbsp;');
+  node.append(document.createTextNode(' : '));
   this.body._render(appendSpan(node));
   node.append('}');
 };

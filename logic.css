@@ -133,18 +133,17 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
 table.proofDisplay {
     margin: .2em 1em;
     padding: 1px;
-    width: 70%;
+    width: 90%;
 }
 
 /*
  * Container for all the proof steps.  Slightly darker background
  * than the individual steps.
- * Notice that this turns off wrapping!
  */
 .proofSteps {
   background-color: #beb;
   padding: 2px;
-  white-space: nowrap;
+  /* white-space: nowrap could go here to turn off text wrapping. */
 }
 
 /* The outermost element of a step */
