@@ -416,6 +416,9 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       // You can control which rule is displayed by including
       // "rule=<ruleName>" in the query string.
       var ruleName = queryData.rule;
+      // You can make the displays label steps with their ordinals
+      // using ordinals=1.
+      Y.showOrdinals = queryData.ordinals;
       editable = queryData.edit != undefined;
       if (ruleName == undefined) {
         // Default to displaying forallInst.

@@ -353,7 +353,7 @@ function renderSteps(controller) {
   for (var i = 0; i < steps.length; i++) {
     var step = steps[i];
     var text = '<div class=proofStep><span class=stepNumber>'
-      + (i + 1) + '.</span></div>';
+      + step.stepNumber + '.</span></div>';
     var stepNode = stepsNode.appendChild(text);
     stepNode.setData('proofStep', step);
     step.stepNode = stepNode;
@@ -649,7 +649,9 @@ function renderInference(step, node, editable, millis) {
   var steps = copyProof(step.details, step.ruleDeps);
   var nSteps = steps[steps.length - 1].ordinal - computeFirstOrdinal(steps);
   // Give the steps numbers from 1 to N.
-  Y.each(steps, function(step, i) { step.stepNumber = i + 1; });
+  Y.each(steps, function(step, i) {
+      step.stepNumber = Y.showOrdinals ? step.ordinal : i + 1;
+    });
   var proof = new Proof();
   proof.setSteps(steps);
   var controller = new ProofControl(proof);
@@ -985,10 +987,6 @@ function debugString(o, specials) {
   }
 }
 
-// A stack of proofs currently in progress.
-// Maybe each set of rules could have its own inference stack???
-var inferenceStack = [new Proof()];
-
 // Map from rule name to function.  The function runs the
 // core rule code, wrapped in more code that makes potentially
 // nested inferences using makeInference.  Each function here
@@ -1020,7 +1018,7 @@ function createRules(ruleInfo) {
 
 //// Export public names.
 
-Y.inferenceStack = inferenceStack;
+Y.showOrdinals = false;
 Y.addTheorem = addTheorem;
 Y.getTheorem = getTheorem;
 Y.define = define;

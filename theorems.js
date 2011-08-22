@@ -741,13 +741,12 @@ var ruleInfo = {
     comment: ('From T = A derives A')
   },
 
-  // Helper for uGen
-  // Derives (forall {v : T}) given a variable v.
+  // Lemma helper for forallT, a pure theorem.
   // proved here by extensionality, not using 5206.
-  forallT: {
-    action: function(v) {
+  forallVT: {
+    action: function() {
       var step1 = rules.instEqn(rules.axiom('axiom3'), lambda(x, T), f);
-      var step2 = rules.instEqn(step1, lambda(v, T), g);
+      var step2 = rules.instEqn(step1, lambda(_var('v'), T), g);
       var step3 = rules.reduce(step2, '/right/arg/body/left');
       var step4 = rules.reduce(step3, '/right/arg/body/right');
       var step5 = rules.useDefinition('forall', step4, '/right/fn');
@@ -755,10 +754,20 @@ var ruleInfo = {
       var step7 = rules.rRight(step5, step6, '/');
       var fa = rules.definition('forall');
       var result = rules.rRight(fa, step7, '/fn');
-      return result.justify('forallT', arguments);
+      return result.justify('forallVT', arguments);
     },
-    comment: ('(forall {v | T}) for any variable v.'
-              + ' (Special case of renaming a bound variable.)')
+    comment: ('(forall {v | T})')
+  },
+
+  // Helper for uGen
+  // Derives (forall {v : T}) given a variable v.
+  forallT: {
+    action: function(v) {
+      var step1 = rules.theorem('forallVT');
+      var step2 = rules.changeVar(step1, '/arg', _var(v));
+      return step2.justify('forallT', arguments);
+    },
+    comment: ('(forall {v | T})')
   },
 
   // 5220.  The variable may be given as a name string, which it
@@ -1391,7 +1400,7 @@ var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
 
 var theoremNames =
   (axiomNames.concat(['defForall', 'defFFromBook', 'axiomTIsNotF',
-                      'defNot', 'defAnd', 'tIsXIsX',
+                      'defNot', 'defAnd', 'tIsXIsX', 'forallVT',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals']));
 
