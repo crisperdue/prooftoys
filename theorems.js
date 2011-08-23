@@ -105,6 +105,13 @@ var ruleInfo = {
                      '\n must match ' + equation.getLeft());
           }
         }
+        // Auto-justify input steps.
+        if (!equation.ruleName) {
+          equation.assume()
+        }
+        if (!target.ruleName) {
+          target.assume();
+        }
         var result = target.replace(path, replacer);
         return result.justify('r', arguments, [target, equation]);
       } else if (equation.isCall2('-->') || equation.isCall2('|-')) {
@@ -284,11 +291,14 @@ var ruleInfo = {
   },
 
   // r5201a, not used
-  replaceWhole: function(a, ab) {
-    var aa = rules.eqSelf(a);
-    var b = ab.getRight();
-    var result = rules.r(ab, a, '/');
-    return result.justify('replaceWhole', arguments, arguments);
+  replaceWhole: {
+    action: function(a, ab) {
+      var aa = rules.eqSelf(a);
+      var b = ab.getRight();
+      var result = rules.r(ab, a, '/');
+      return result.justify('replaceWhole', arguments, arguments);
+    },
+    inputs: {step: 1, equation: 2},
   },
 
   // r5201b
@@ -325,7 +335,8 @@ var ruleInfo = {
       var acbd = rules.r(cd, acbc, '/right/arg');
       var result = acbd;
       return result.justify('applyBySides', arguments, arguments);
-    }
+    },
+    inputs: {equation: [1, 2]}
   },
 
   // r5201e
@@ -371,6 +382,7 @@ var ruleInfo = {
         return result.justify('useDefinition', arguments, [a]);
       }
     },
+    inputs: {step: 2},
     comment: ('')
   },
 
@@ -413,7 +425,7 @@ var ruleInfo = {
       var step2 = rules.r(step1, expr, path);
       return step2.justify('changeVar', arguments, [expr]);
     },
-    inputs: {boundVar: 1, name: 3},
+    inputs: {bindingSite: 1, name: 3},
     comment: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
@@ -827,6 +839,7 @@ var ruleInfo = {
       }
       return wff.justify('subAll', arguments, [b]);
     },
+    inputs: {step: 1},
     comment: ('Substitute in B for each variable named in the map, '
               + 'its value in the map')
   },
@@ -1340,6 +1353,7 @@ var ruleInfo = {
                           taut2);
       return step4.justify('replace', arguments, [h_c, h_equation]);
     },
+    inputs: {implication: [1, 2]},
     comment: ("Analog to the deduction theorem, replacing an equation "
               + "that is true conditionally.")
   },

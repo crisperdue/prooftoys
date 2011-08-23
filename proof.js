@@ -403,11 +403,13 @@ function renderSteps(controller) {
 
 /**
  * Returns an array of copies of the steps leading from the limits to
- * the given step.  Copies of the limits are not included in the
- * result.  Sorts the copies by ordinal of the originals.
- * Each copy has an "original" property that refers to its original.
+ * the given step.  If limits are given, copies of them are not
+ * included in the result.  Sorts the copies by ordinal of the
+ * originals.  Each copy has an "original" property that refers to its
+ * original.
  */
 function copySubproof(step, limits) {
+  limits = limits || [];
   var copies = [];
   Y.each(limits, function(limit) { limit.__copied = true; });
   // Traverses the dependency graph, recording a copy of every step
@@ -456,18 +458,13 @@ function copyProof(step, dependencies) {
   // avoiding temporary modifications to the originals.
   function graphWalk(step) {
     if (!step.__copy) {
-      // Provides a justification of "assumption" for steps lacking a
-      // justification.
-      // TODO: remove this hack when assumptions all become explicit.
-      if (!step.ruleName) {
-        step.assume();
-      }
       step.__copy = step.copyStep();
       oldSteps.push(step);
       for (var i = 0; i < baseDeps.length; i++) {
         // If this step is a dependency of the original, don't walk
         // back further.
         if (step.getBase() == baseDeps[i]) {
+          // In the copy treat the dependency as an assumption.
           step.__copy.assume();
           return;
         }

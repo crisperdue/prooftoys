@@ -84,10 +84,10 @@ StepEditor.prototype.filteredRuleNames = function() {
      * 
      * term: Matches any term except the binding of a variable.
      * 
-     * site: Matches like term, but the rule expects the term's step and
-     *   path to the term as inputs.
+     * site: Term in a step; the rule expects the term's step and path
+     *   to the term as inputs.
      *
-     * boundVar: Matches a variable binding (e.g. rule "changeVar").
+     * bindingSite: Matches a variable binding in a step (as in "changeVar").
      *
      */
     function matchesSelection(descriptor) {
@@ -95,7 +95,7 @@ StepEditor.prototype.filteredRuleNames = function() {
       if (expr) {
         // An expression is selected
         if (isBinding) {
-          return require.boundVar;
+          return require.bindingSite;
         } else if (require.term || require.site) {
           return true;
         } else {
