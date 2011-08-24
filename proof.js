@@ -554,27 +554,6 @@ function fancyStepNumber(n) {
  * description of the step itself.
  */
 function renderInference(step, node, editable, millis) {
-  if (node == null) {
-    node = new Y.Node(document.body);
-  }
-  var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
-  var argInfo = '';
-  for (var i = 0; i < step.ruleArgs.length; i++) {
-    if (i > 0) {
-      argInfo += ', ';
-    }
-    var arg = step.ruleArgs[i];
-    if (typeof arg == 'string'
-        || arg instanceof Y.Expr
-        || arg instanceof Y.Path) {
-      argInfo += arg;
-    } else {
-      argInfo += debugString(arg);
-    }
-  }
-  argInfo =
-    ': <span style="font-weight: normal; font-family: monospace">'
-    + argInfo + '</span>';
   // TODO: Clean up relationships between Proof, ProofControl,
   // and steps.  Consider merging Proof into ProofControl.
   var startRender = new Date().getTime();
@@ -596,13 +575,38 @@ function renderInference(step, node, editable, millis) {
       + Math.ceil(millis) + ' msec, rendering '
       + renderTime + ' msec, ' + nSteps + ' steps</i>';
   }
+  var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   node.appendChild('<div class=proofHeader><b>' + pruf
-                   + step.ruleName + '</b>' + argInfo + '<br>'
+                   + step.ruleName + '</b>' + computeArgInfo(step) + '<br>'
                    + '<i>' + comment + '</i>' + stats
                    + '</div>');
   node.append(controller.node);
   controller.setEditable(editable);
   return steps[steps.length - 1];
+}
+
+/**
+ * Helper for renderInference, computes arguments display string of a step.
+ */
+function computeArgInfo(step) {
+  var argInfo = '';
+  for (var i = 0; i < step.ruleArgs.length; i++) {
+    if (i > 0) {
+      argInfo += ', ';
+    }
+    var arg = step.ruleArgs[i];
+    if (typeof arg == 'string'
+        || arg instanceof Y.Expr
+        || arg instanceof Y.Path) {
+      argInfo += arg;
+    } else {
+      argInfo += debugString(arg);
+    }
+  }
+  argInfo =
+    ': <span style="font-weight: normal; font-family: monospace">'
+    + argInfo + '</span>';
+  return argInfo;
 }
 
 /**
