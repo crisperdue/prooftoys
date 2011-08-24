@@ -114,48 +114,6 @@ function isConstant(name) {
 
 //// PROOFS
 
-function Proof() {
-  // Steps (Exprs) in order.
-  this.steps = [];
-}
-
-/**
- * Add a step to this proof, optionally specifying its
- * index.  Default location is at the end.
- */
-Proof.prototype.add = function(step, index) {
-  if (index == null) {
-    this.steps.push(step);
-  } else {
-    this.steps.splice(index, 0, step);
-  }
-};
-
-Proof.prototype.setSteps = function(steps) {
-  this.steps = steps;
-};
-
-/**
- * Used by makeInference.  TODO: eliminate the use and remove?
- */
-Proof.prototype.pop = function() {
-  return this.steps.pop();
-};
-
-/**
- * Check that the proof is legal.
- */
-Proof.prototype.check = function() {
-  // Confirm that there are no assumptions required.
-  var steps = this.steps;
-  for (var i = 0; i < steps.length; i++) {
-    var step = steps[i];
-    if (step.ruleName == 'assumption') {
-      return false;
-    }
-  }
-  return true;
-}
 
 
 //// PROOF CONTROL
@@ -164,17 +122,16 @@ Proof.prototype.check = function() {
 // than one selection.
 
 /**
- * Construct a ProofControl given a DOM node and handler function for
- * selection events.  Properties:
+ * Construct a ProofControl.  Properties:
  *
- * proof: the proof
+ * proof: the proof, an array of steps (Expr objects).
  * node: Node containing the entire rendering of the proof.
  * stepsNode: Node containing all of the rendered steps as children.
  * editorButton: step insertion button, or null.
  */
-function ProofControl(proof) {
+function ProofControl() {
   var controller = this;
-  this.proof = proof;
+  this.steps = [];
   // a set (array) of selected steps.
   this.selections = [];
   this.selection = null;
@@ -199,11 +156,25 @@ function ProofControl(proof) {
       controller.showStepEditor(controller.stepsNode.get('children').length);
       this.set('disabled', true);
     });
-  renderSteps(this);
   // Set up handling of mouseover and mouseout events.
   Y.on('mouseover', exprHandleOver, this.node);
   Y.on('mouseout', exprHandleOut, this.node);
 }
+
+ProofControl.prototype.setSteps = function(steps) {
+  // Clear presentation of any old steps.
+  var stepsNode = this.stepsNode;
+  Y.Array.each(this.steps, function(step) {
+      step.original.rendering = null;
+    });
+  stepsNode.setContent('');
+  this.steps = steps;
+  for (var i = 0; i < steps.length; i++) {
+    var stepNode = renderStep(steps[i], this);
+    stepsNode.append(stepNode);
+  }
+  renderSteps(this);
+};
 
 /**
  * Displays the proof step editor at the given index in the proof,
@@ -215,7 +186,7 @@ ProofControl.prototype.showStepEditor = function(position) {
   // an existing step.
   addChild(this.stepsNode, position, this.stepEditor.node);
   this.editorVisible = true;
-}
+};
 
 ProofControl.prototype.hideStepEditor = function() {
   this.stepEditor.node.remove();
@@ -223,7 +194,7 @@ ProofControl.prototype.hideStepEditor = function() {
   this.deselectStep();
   this.editorButton.set('disabled', false);
   this.editorVisible = false;
-}
+};
 
 /**
  * Generic function to add a node to an element at a position.
@@ -333,7 +304,7 @@ ProofControl.prototype.handleExprClick = function(expr) {
 };
 
 
-//// RENDERING AND EVENT HANDLING
+// INTERNAL TO PROOFCONTROL
 
 /**
  * Renders the steps of the controller's proof into its stepsNode,
@@ -342,7 +313,7 @@ ProofControl.prototype.handleExprClick = function(expr) {
 function renderSteps(controller) {
   var stepsNode = controller.stepsNode;
   stepsNode.setContent('');
-  var steps = controller.proof.steps;
+  var steps = controller.steps;
   for (var i = 0; i < steps.length; i++) {
     var stepNode = renderStep(steps[i], controller, stepsNode);
     stepsNode.append(stepNode);
@@ -418,32 +389,27 @@ function renderStep(step, controller) {
  * originals.  Each copy has an "original" property that refers to its
  * original and step properties copied using Expr.copyStep.
  */
-function copySubproof(step, limits) {
-  limits = limits || [];
-  var copies = [];
-  Y.each(limits, function(limit) { limit.__copied = true; });
+function copyUnrendered(step) {
+  var result = [];
   // Traverses the dependency graph, recording a copy of every step
   // and building an array of all of the original steps.  In Java
   // one might use HashMaps to associate the copies with the original,
   // avoiding temporary modifications to the originals.
   function graphWalk(step) {
-    if (!step.__copied) {
-      step.__copied = true;
+    if (!step.rendering) {
       var copy = step.copyStep();
       copy.original = step;
       // TODO: Consider supporting multiple renderings of a step.
       step.rendering = copy;
-      copies.push(copy);
+      result.push(copy);
       Y.each(step.ruleDeps, function(dep) { graphWalk(dep); });
     }
   }
   graphWalk(step);
-  Y.each(limits, function(limit) { delete limit.__copied; });
-  Y.each(copies, function(copy) { delete copy.original.__copied; });
-  copies.sort(function(s1, s2) {
+  result.sort(function(s1, s2) {
       return s1.original.ordinal - s2.original.ordinal;
     });
-  return copies;
+  return result;
 }
 
 /**
@@ -456,6 +422,14 @@ function renderSubProof(event, step, proofNode, editable) {
   var parent = display.get('parentNode');
   var next = display.get('nextSibling');
   while (next) {
+    // TODO: Get rid of this hack soon.
+    // BEGIN HACK:
+    // Clear out all of the renderings of the original steps
+    // rendered in here.
+    next.all('div.proofStep').each(function(stepNode) {
+        stepNode.getData('proofStep').original.rendering = null;
+      });
+    // END HACK.
     next.remove();
     next = display.get('nextSibling');
   }
@@ -557,15 +531,14 @@ function renderInference(step, node, editable, millis) {
   // TODO: Clean up relationships between Proof, ProofControl,
   // and steps.  Consider merging Proof into ProofControl.
   var startRender = new Date().getTime();
-  var steps = copySubproof(step.details, []); // step.ruleDeps);
+  var steps = copyUnrendered(step.details);
   var nSteps = steps[steps.length - 1].ordinal - computeFirstOrdinal(steps);
   // Give the steps numbers from 1 to N.
   Y.each(steps, function(step, i) {
       step.stepNumber = Y.showOrdinals ? step.ordinal : i + 1;
     });
-  var proof = new Proof();
-  proof.setSteps(steps);
-  var controller = new ProofControl(proof);
+  var controller = new ProofControl();
+  controller.setSteps(steps);
   var renderTime = Math.ceil(new Date().getTime() - startRender);
 
   var comment = rules[step.ruleName].info.comment || '';
