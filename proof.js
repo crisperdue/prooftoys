@@ -353,7 +353,8 @@ function renderSteps(controller) {
  * Create and return a YUI node to display the step within the
  * given controller.  The step should be renderable, including
  * a stepNumber property.  This also sets up event handlers for
- * click and hover events within the step.
+ * click and hover events within the step.  The caller must
+ * insert the new node into the document.
  *
  * The rendering is structured as follows:
  *
@@ -375,9 +376,7 @@ function renderStep(step, controller) {
   var wffNode = step.render();
   stepNode.appendChild(wffNode);
 
-  // Set the property here until we stop using copyProof:
-  step.original.rendering = step;
-
+  // TODO: Consider up these handlers in an ancestor node by delegation.
   // Set up click handlers for selections within the step.
   Y.on('click',
        // This implements a policy of one selection per proof step.
@@ -417,7 +416,7 @@ function renderStep(step, controller) {
  * the given step.  If limits are given, copies of them are not
  * included in the result.  Sorts the copies by ordinal of the
  * originals.  Each copy has an "original" property that refers to its
- * original.
+ * original and step properties copied using Expr.copyStep.
  */
 function copySubproof(step, limits) {
   limits = limits || [];
@@ -430,8 +429,10 @@ function copySubproof(step, limits) {
   function graphWalk(step) {
     if (!step.__copied) {
       step.__copied = true;
-      var copy = step.copy();
+      var copy = step.copyStep();
       copy.original = step;
+      // TODO: Consider supporting multiple renderings of a step.
+      step.rendering = copy;
       copies.push(copy);
       Y.each(step.ruleDeps, function(dep) { graphWalk(dep); });
     }
@@ -443,80 +444,6 @@ function copySubproof(step, limits) {
       return s1.original.ordinal - s2.original.ordinal;
     });
   return copies;
-}
-
-// TODO: implement.
-function renderSubproof(step, limits, node) {
-  
-}
-
-/**
- * Finds all the proof steps supporting the given one at its level in
- * the proof and returns copies of all of them as an array, including
- * the given one, ordered by their ordinals.  This produces a copy of
- * the proof graph and a deep copy of every step, making the result
- * ready for rendering.  Copies no further back in the proof than any
- * of the given steps.
- */
-function copyProof(step, dependencies) {
-  baseDeps = Y.Array.map(dependencies, function(dep) {
-      return dep.getBase();
-    });
-  var oldSteps = [];
-  // Traverses the dependency graph, recording a copy of every step
-  // and building an array of all of the original steps.  In Java
-  // one might use HashMaps to associate the copies with the orginal,
-  // avoiding temporary modifications to the originals.
-  function graphWalk(step) {
-    if (!step.__copy) {
-      step.__copy = step.copyStep();
-      oldSteps.push(step);
-      for (var i = 0; i < baseDeps.length; i++) {
-        // If this step is a dependency of the original, don't walk
-        // back further.
-        if (step.getBase() == baseDeps[i]) {
-          // In the copy treat the dependency as an assumption.
-          step.__copy.assume();
-          return;
-        }
-      }
-      Y.each(step.ruleDeps, function(dep) { graphWalk(dep); });
-    }
-  }
-  graphWalk(step);
-  // Make a copy of the steps array, with a copy in place of each
-  // old step, updating each copy's dependencies and arguments to refer to
-  // appropriate new copies as well.
-  var result = [];
-  Y.each(oldSteps, function(oldStep) {
-      var copy = oldStep.__copy;
-      copy.original = oldStep;
-      var deps = [];
-      // The copy might have been converted to an assumption, and in
-      // that case it already has the correct empty lists of dependencies
-      // and arguments.
-      if (copy.ruleName != 'assumption') {
-        copy.ruleDeps =
-          Y.Array.map(oldStep.ruleDeps, function(dep) {
-              Y.assert(dep.__copy, 'No copy available: ' + Y.debugString(dep));
-              Y.assert(dep.__copy.ruleName,
-                       'No ruleName: ' + Y.debugString(dep.__copy));
-              return dep.__copy;
-            });
-        copy.ruleArgs =
-          Y.Array.map(oldStep.ruleArgs, function(arg) {
-              // If the arg is a step, it should have a copy,
-              // use the copy.
-              return arg.__copy || arg;
-            });
-      }
-      result.push(copy);
-    });
-  // Sort the result by the step ordinals.
-  result.sort(function(s1, s2) { return s1.ordinal - s2.ordinal; });
-  // Clean up references to the copies.
-  Y.each(oldSteps, function(step) { delete step.__copy; });
-  return result;
 }
 
 /**
@@ -544,36 +471,33 @@ function renderSubProof(event, step, proofNode, editable) {
  * the given proof step.
  */
 function computeStepInfo(step) {
-  var expr = step;
   var stepInfo;
-  if (expr.ruleName == 'definition') {
+  if (step.ruleName == 'definition') {
     stepInfo = 'definition of ';
-    if (expr.ruleArgs.length == 2) {
-      stepInfo += expr.ruleArgs[1] + ' ';
+    if (step.ruleArgs.length == 2) {
+      stepInfo += step.ruleArgs[1] + ' ';
     }
-    stepInfo += expr.ruleArgs[0];
+    stepInfo += step.ruleArgs[0];
   } else {
-    if (expr.details) {
+    if (step.details) {
       // It is a (derived) rule of inference.
-      stepInfo = fancyName(expr);
+      stepInfo = fancyName(step);
     } else {
       // It is a primitive rule of inference (Rule R).
-      stepInfo = expr.ruleName;
+      stepInfo = step.ruleName;
     }
 
     // Display dependencies on other steps.
     var firstDep = true;
-    Y.each(expr.ruleDeps, function(dep) {
-        if (firstDep) {
-          firstDep = false;
-        } else {
+    Y.each(step.ruleDeps, function(dep, i) {
+        if (i > 0) {
           stepInfo += ',';
         }
-        stepInfo += ' ' + fancyStepNumber(dep.stepNumber);
+        stepInfo += ' ' + fancyStepNumber(dep.rendering.stepNumber);
       });
 
     // Display rule arguments.
-    var args = expr.ruleArgs;
+    var args = step.ruleArgs;
     var varInfo = '';
     // Display arguments that are variables.
     // TODO: Just showing variables is only a heuristic.
@@ -654,7 +578,7 @@ function renderInference(step, node, editable, millis) {
   // TODO: Clean up relationships between Proof, ProofControl,
   // and steps.  Consider merging Proof into ProofControl.
   var startRender = new Date().getTime();
-  var steps = copyProof(step.details, step.ruleDeps);
+  var steps = copySubproof(step.details, []); // step.ruleDeps);
   var nSteps = steps[steps.length - 1].ordinal - computeFirstOrdinal(steps);
   // Give the steps numbers from 1 to N.
   Y.each(steps, function(step, i) {
@@ -832,7 +756,7 @@ function hoverStep(step, direction, proofNode, event) {
   } else {
     // If no handler apply or remove default highlighting.
     Y.each(step.ruleDeps, function(dep) {
-        action(dep.node, 'dep');
+        action(dep.rendering.node, 'dep');
       });
   }
 }
