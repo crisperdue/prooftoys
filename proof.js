@@ -338,6 +338,22 @@ ProofControl.prototype.handleExprClick = function(expr) {
 /**
  * Renders the steps of the controller's proof into its stepsNode,
  * first clearing the node.
+ */
+function renderSteps(controller) {
+  var stepsNode = controller.stepsNode;
+  stepsNode.setContent('');
+  var steps = controller.proof.steps;
+  for (var i = 0; i < steps.length; i++) {
+    var stepNode = renderStep(steps[i], controller, stepsNode);
+    stepsNode.append(stepNode);
+  }
+};
+
+/**
+ * Create and return a YUI node to display the step within the
+ * given controller.  The step should be renderable, including
+ * a stepNumber property.  This also sets up event handlers for
+ * click and hover events within the step.
  *
  * The rendering is structured as follows:
  *
@@ -346,59 +362,55 @@ ProofControl.prototype.handleExprClick = function(expr) {
  * - Each proofStep YUI node has a proofStep data property that refers
  *   to the Inference (proof step) it represents.
  */
-function renderSteps(controller) {
+function renderStep(step, controller) {
   var stepsNode = controller.stepsNode;
-  stepsNode.setContent('');
-  var steps = controller.proof.steps;
-  for (var i = 0; i < steps.length; i++) {
-    var step = steps[i];
-    var text = '<div class=proofStep><span class=stepNumber>'
-      + step.stepNumber + '.</span></div>';
-    var stepNode = stepsNode.appendChild(text);
-    stepNode.setData('proofStep', step);
-    step.stepNode = stepNode;
-    // Render the WFF and record the rendered copy as the inference
-    // result.  Rendering guarantees to copy every step that it
-    // renders.
-    var wffNode = step.render();
-    stepNode.appendChild(wffNode);
+  var html = '<div class=proofStep><span class=stepNumber>'
+    + step.stepNumber + '.</span></div>';
+  var stepNode = Y.Node.create(html);
+  stepNode.setData('proofStep', step);
+  step.stepNode = stepNode;
+  // Render the WFF and record the rendered copy as the inference
+  // result.  Rendering guarantees to copy every step that it
+  // renders.
+  var wffNode = step.render();
+  stepNode.appendChild(wffNode);
 
-    // Set the property here until we stop using copyProof:
-    step.original.rendering = step;
+  // Set the property here until we stop using copyProof:
+  step.original.rendering = step;
 
-    // Set up click handlers for selections within the step.
-    Y.on('click',
-         // This implements a policy of one selection per proof step.
-         // TODO: Implement such policies in the proof controller.
-         function(event) {
-           controller.handleExprClick(getExpr(event.target));
-         },
-         wffNode);
-    Y.on('click',
-         function(event) {
-           controller.handleStepClick(getProofStep(event.target));
-         },
-         stepNode);
-                
-    var stepInfo = computeStepInfo(step);
-    stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
-    // Set up "hover" event handling on the stepNode.
-    stepNode.on('hover',
-                // Call "hover", passing these arguments as well as the event.
-                Y.bind(hoverStep, null, step, 'in', stepsNode),
-                Y.bind(hoverStep, null, step, 'out', stepsNode));
+  // Set up click handlers for selections within the step.
+  Y.on('click',
+       // This implements a policy of one selection per proof step.
+       // TODO: Implement such policies in the proof controller.
+       function(event) {
+         controller.handleExprClick(getExpr(event.target));
+       },
+       wffNode);
+  Y.on('click',
+       function(event) {
+         controller.handleStepClick(getProofStep(event.target));
+       },
+       stepNode);
 
-    // Caution: passing null to Y.on selects everything.
-    var target = stepNode.one('span.ruleName');
-    if (target) {
-      target.on('click', Y.rbind(function(event, step) {
-            renderSubProof(event, step, stepsNode, controller.editable);
-            // Don't give the proof step a chance to select itself.
-            event.stopPropagation();
-          }, null, step));
-    }
+  var stepInfo = computeStepInfo(step);
+  stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
+  // Set up "hover" event handling on the stepNode.
+  stepNode.on('hover',
+              // Call "hover", passing these arguments as well as the event.
+              Y.bind(hoverStep, null, step, 'in', stepsNode),
+              Y.bind(hoverStep, null, step, 'out', stepsNode));
+
+  // Caution: passing null to Y.on selects everything.
+  var target = stepNode.one('span.ruleName');
+  if (target) {
+    target.on('click', Y.rbind(function(event, step) {
+          renderSubProof(event, step, stepsNode, controller.editable);
+          // Don't give the proof step a chance to select itself.
+          event.stopPropagation();
+        }, null, step));
   }
-};
+  return stepNode;
+}
 
 /**
  * Returns an array of copies of the steps leading from the limits to

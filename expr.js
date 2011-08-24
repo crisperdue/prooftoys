@@ -980,7 +980,7 @@ Lambda.prototype._bindingPath = function(pred, revPath) {
 };
 
 Lambda.prototype._render = function() {
-  var node = exprNode();
+  var node = this.node = exprNode();
   node.append('{');
   node.append(this.bound._render());
   node.append(textNode(' : '));
