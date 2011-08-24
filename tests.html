@@ -367,7 +367,6 @@ YUI({filter: null, insertBefore: 'styles'})
 	var step = Y.rules.eqT(call(f, x));
         assertEqual('(T = ((f x) = (f x)))', step);
 	var rendered = Y.renderInference(step, Y.one(document.body));
-        assertEqual(rendered, Y.getProofStep(rendered.node));
       },
 
       testR5211: function() {

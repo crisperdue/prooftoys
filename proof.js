@@ -124,7 +124,7 @@ function isConstant(name) {
 /**
  * Construct a ProofControl.  Properties:
  *
- * proof: the proof, an array of steps (Expr objects).
+ * steps: an array of the _rendered_ steps (Expr objects) displayed.
  * node: Node containing the entire rendering of the proof.
  * stepsNode: Node containing all of the rendered steps as children.
  * editorButton: step insertion button, or null.
@@ -162,18 +162,27 @@ function ProofControl() {
 }
 
 ProofControl.prototype.setSteps = function(steps) {
+  var rendered = Y.Array.map(steps, function(step) {
+      var copy = step.copyStep();
+      step.rendering = copy;
+      copy.original = step;
+      return copy;
+    });
+  // Give the steps numbers from 1 to N.
+  Y.each(rendered, function(step, i) {
+      step.stepNumber = Y.showOrdinals ? step.ordinal : i + 1;
+    });
   // Clear presentation of any old steps.
   var stepsNode = this.stepsNode;
   Y.Array.each(this.steps, function(step) {
       step.original.rendering = null;
     });
   stepsNode.setContent('');
-  this.steps = steps;
+  this.steps = rendered;
   for (var i = 0; i < steps.length; i++) {
-    var stepNode = renderStep(steps[i], this);
+    var stepNode = renderStep(rendered[i], this);
     stepsNode.append(stepNode);
   }
-  renderSteps(this);
 };
 
 /**
@@ -307,20 +316,6 @@ ProofControl.prototype.handleExprClick = function(expr) {
 // INTERNAL TO PROOFCONTROL
 
 /**
- * Renders the steps of the controller's proof into its stepsNode,
- * first clearing the node.
- */
-function renderSteps(controller) {
-  var stepsNode = controller.stepsNode;
-  stepsNode.setContent('');
-  var steps = controller.steps;
-  for (var i = 0; i < steps.length; i++) {
-    var stepNode = renderStep(steps[i], controller, stepsNode);
-    stepsNode.append(stepNode);
-  }
-};
-
-/**
  * Create and return a YUI node to display the step within the
  * given controller.  The step should be renderable, including
  * a stepNumber property.  This also sets up event handlers for
@@ -383,31 +378,28 @@ function renderStep(step, controller) {
 }
 
 /**
- * Returns an array of copies of the steps leading from the limits to
- * the given step.  If limits are given, copies of them are not
- * included in the result.  Sorts the copies by ordinal of the
- * originals.  Each copy has an "original" property that refers to its
- * original and step properties copied using Expr.copyStep.
+ * Returns an array of the unrendered steps leading up to and
+ * including the given step, sorted by ordinal.  Helper function
+ * internal to renderInference.  The "unrendered" aspect is helpful
+ * for rendering subproofs.
  */
-function copyUnrendered(step) {
+function unrenderedDeps(step) {
   var result = [];
   // Traverses the dependency graph, recording a copy of every step
   // and building an array of all of the original steps.  In Java
-  // one might use HashMaps to associate the copies with the original,
+  // one might use HashSets to identify already-visited steps,
   // avoiding temporary modifications to the originals.
-  function graphWalk(step) {
-    if (!step.rendering) {
-      var copy = step.copyStep();
-      copy.original = step;
-      // TODO: Consider supporting multiple renderings of a step.
-      step.rendering = copy;
-      result.push(copy);
-      Y.each(step.ruleDeps, function(dep) { graphWalk(dep); });
+  function visitWithDeps(step) {
+    if (!step.rendering && !step.__visited) {
+      result.push(step);
+      step.__visited = true;
+      Y.each(step.ruleDeps, function(dep) { visitWithDeps(dep); });
     }
   }
-  graphWalk(step);
+  visitWithDeps(step);
+  Y.Array.each(result, function(step) { delete step.__visited; });
   result.sort(function(s1, s2) {
-      return s1.original.ordinal - s2.original.ordinal;
+      return s1.ordinal - s2.ordinal;
     });
   return result;
 }
@@ -519,8 +511,7 @@ function fancyStepNumber(n) {
  * Renders a header and the proof steps of an inference by appending
  * them to a container Node, which defaults to the document body.  The
  * first child is the header, rendered with class proofHeader.  The
- * second is the proof display.  Returns the final step of the rendered
- * copy.
+ * second is the proof display.
  *
  * Inputs are a proof step, the container node, a flag to indicate
  * whether to make the display editable, and an optional proof time in
@@ -528,15 +519,9 @@ function fancyStepNumber(n) {
  * description of the step itself.
  */
 function renderInference(step, node, editable, millis) {
-  // TODO: Clean up relationships between Proof, ProofControl,
-  // and steps.  Consider merging Proof into ProofControl.
   var startRender = new Date().getTime();
-  var steps = copyUnrendered(step.details);
+  var steps = unrenderedDeps(step.details);
   var nSteps = steps[steps.length - 1].ordinal - computeFirstOrdinal(steps);
-  // Give the steps numbers from 1 to N.
-  Y.each(steps, function(step, i) {
-      step.stepNumber = Y.showOrdinals ? step.ordinal : i + 1;
-    });
   var controller = new ProofControl();
   controller.setSteps(steps);
   var renderTime = Math.ceil(new Date().getTime() - startRender);
@@ -555,7 +540,6 @@ function renderInference(step, node, editable, millis) {
                    + '</div>');
   node.append(controller.node);
   controller.setEditable(editable);
-  return steps[steps.length - 1];
 }
 
 /**
