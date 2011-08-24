@@ -2,14 +2,6 @@
 
 YUI.add('expr', function(Y) {
 
-/**
- * Create and return a text node containing a space.  YUI (and IE)
- * trim whitespace if you put in text in other ways.
- */
-function space() {
-  return document.createTextNode(' ');
-}
-
 // Used to order execution of proof steps so they can display
 // in order of execution in an automatically-generated proof.
 // This increments on every call to "justify".
@@ -109,6 +101,22 @@ function matchAsSchema(schema, expr) {
  */
 function appendSpan(node) {
   return node.appendChild('<span class=expr></span>');
+}
+
+function exprNode() {
+  return Y.Node.create('<span class=expr></span>');
+}
+
+/**
+ * Create and return a text node containing a space.  YUI (and IE)
+ * trim whitespace if you put in text in other ways.
+ */
+function space() {
+  return document.createTextNode(' ');
+}
+
+function textNode(text) {
+  return document.createTextNode(text);
 }
 
 
@@ -321,26 +329,10 @@ Expr.prototype.locate = function(_path) {
 };
 
 /**
- * Renders this expression onto the end of the given DOM or YUI node,
- * returning a copy of this expression annotated with references from
- * each subexpression into the node where it is presented.
+ * Renders this expression into a new YUI node, returning the node.
  */
-Expr.prototype.render = function(node) {
-  if (!(node instanceof Y.Node)) {
-    // Coerce from a DOM node to a YUI node.
-    node = new Y.one(node);
-  }
-  var result = this.copy();
-  if (this.ruleName) {
-    // This was inferred.  Copy the related properties.
-    result.details = this.details;
-    result.ruleName = this.ruleName;
-    result.ruleArgs = this.ruleArgs;
-    result.ruleDeps = this.ruleDeps;
-    result.ordinal = this.ordinal;
-  }
-  result._render(node);
-  return result;
+Expr.prototype.render = function() {
+  return this._render();
 };
 
 /**
@@ -508,16 +500,13 @@ Expr.prototype.pathToBinding = function(pred) {
 // that the result will have this and expr2 as substitution instances.
 //
 // 
-// _render(node)
+// _render()
 //
-// Render this expression at the end of the contents of the given YUI
-// node, setting the expression's "node" property to refer to the node
-// created to enclose this expression.  Should be done only once to
-// any given expression.  Note: a YUI node represents a DOM node.
-// Helper for the render method.  (Not public)
+// Render this expression into a new YUI node, returning the node.
+// Sets the expression's "node" property to refer to the node created
+// to enclose this expression.  Should be done only once to any given
+// expression.  Helper for the render method.  (Not public)
 // 
-// TODO: Consider setting the node property to the actual DOM node.
-//
 //
 // findAll(name, action1, expr2, action2)
 //
@@ -642,10 +631,11 @@ Var.prototype._bindingPath = function(pred, revPath) {
   return null;
 };
 
-Var.prototype._render = function(node) {
+Var.prototype._render = function() {
+  var node = this.node = exprNode();
   var name = this.name;
   node.append(entities[name] || name);
-  this.node = node;
+  return node;
 };
 
 Var.prototype.findAll = function(name, action1, expr2, action2) {
@@ -804,43 +794,42 @@ Call.prototype._bindingPath = function(pred, revPath) {
           || this.arg._bindingPath(pred, new Path('arg', revPath)));
 };
 
-Call.prototype._render = function(node) {
-  this.node = node;
+Call.prototype._render = function() {
+  var node = this.node = exprNode();
   node.append('(');
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
     if (isInfixDesired(this.fn.fn.name)) {
-      // Non-alphabetic characters: use infix.
-      var fnNode = appendSpan(node);
-      this.fn.node = fnNode;
-      this.fn.arg._render(appendSpan(fnNode));
+      // Non-alphabetic characters: use infix: "x + y"
+      var fnNode = this.fn.node = exprNode();
+      fnNode.append(this.fn.arg._render());
       fnNode.append(space());
-      this.fn.fn._render(appendSpan(fnNode));
+      fnNode.append(this.fn.fn._render());
+      node.append(fnNode);
       node.append(space());
-      this.arg._render(appendSpan(node));
+      node.append(this.arg._render());
     } else {
       // Alphabetic characters: function comes first.
-      var fnNode = appendSpan(node);
-      this.fn.node = fnNode;
-      this.fn.fn._render(appendSpan(fnNode));
+      var fnNode = this.fn.node = exprNode();
+      fnNode.append(this.fn.fn._render());
       fnNode.append(space());
-      this.fn.arg._render(appendSpan(fnNode));
+      fnNode.append(this.fn.arg._render());
+      node.append(fnNode);
       node.append(space());
-      this.arg._render(appendSpan(node));
+      node.append(this.arg._render());
     }
   } else if (this.fn instanceof Var && isInfixDesired(this.fn.name)) {
-    var argNode = appendSpan(node);
-    this.arg._render(argNode);
+    // Infix operator, but only one argument: "x +"
+    node.append(this.arg._render());
     node.append(space());
-    var opNode = appendSpan(node);
-    this.fn._render(opNode);
+    node.append(this.fn._render());
   } else {
-    var opNode = appendSpan(node);
-    this.fn._render(opNode);
+    // Normal function call: "f x"
+    node.append(this.fn._render());
     node.append(space());
-    var argNode = appendSpan(node);
-    this.arg._render(argNode);
+    node.append(this.arg._render());
   }
   node.append(')');
+  return node;
 };
 
 Call.prototype.findAll = function(name, action1, expr2, action2) {
@@ -990,13 +979,14 @@ Lambda.prototype._bindingPath = function(pred, revPath) {
           : this.body._bindingPath(pred, new Path('body', revPath)));
 };
 
-Lambda.prototype._render = function(node) {
-  this.node = node;
+Lambda.prototype._render = function() {
+  var node = exprNode();
   node.append('{');
-  this.bound._render(appendSpan(node));
-  node.append(document.createTextNode(' : '));
-  this.body._render(appendSpan(node));
+  node.append(this.bound._render());
+  node.append(textNode(' : '));
+  node.append(this.body._render());
   node.append('}');
+  return node;
 };
 
 Lambda.prototype.findAll = function(name, action1, expr2, action2) {

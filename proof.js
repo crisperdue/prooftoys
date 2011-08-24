@@ -357,13 +357,12 @@ function renderSteps(controller) {
     var stepNode = stepsNode.appendChild(text);
     stepNode.setData('proofStep', step);
     step.stepNode = stepNode;
-    // See appendSpan in expr.js.
-    var wffNode = stepNode.appendChild('<span class=expr></span>');
-
     // Render the WFF and record the rendered copy as the inference
     // result.  Rendering guarantees to copy every step that it
     // renders.
-    step._render(wffNode);
+    var wffNode = step.render();
+    stepNode.appendChild(wffNode);
+
     // Set the property here until we stop using copyProof:
     step.original.rendering = step;
 
