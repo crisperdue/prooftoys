@@ -815,29 +815,17 @@ var ruleInfo = {
   // simultaneous substitution.
   subAll: {
     action: function(b, map) {
-      // Collect all the free names in B and in all of the values
-      // to be substituted.
-      var allNames = b.allNames();
-      for (var key in map) {
-        var moreFree = map[key].allNames();
-        for (var k2 in moreFree) {
-          allNames[k2] = true;
-        }
-      }
-      // First change the names of all the variables to be
-      // substituted.
-      var wff = b;
-      var map2 = {};
+      var namesReversed = [];
+      var step = b;
       for (var name in map) {
-        var v = Y.genVar('v', allNames);
-        wff = rules.sub(wff, v, name);
-        map2[v.name] = map[name];
+	step = rules.uGen(step, name);
+	namesReversed.unshift(name);
       }
       // Then substitute for the renamed variables.
-      for (var name in map2) {
-        wff = rules.sub(wff, map2[name], name);
-      }
-      return wff.justify('subAll', arguments, [b]);
+      Y.Array.each(namesReversed, function(name) {
+        step = rules.forallInst(step, map[name]);
+      });
+      return step.justify('subAll', arguments, [b]);
     },
     inputs: {step: 1},
     comment: ('Substitute in B for each variable named in the map, '
