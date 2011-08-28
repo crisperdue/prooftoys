@@ -366,7 +366,12 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(T = (b = b))', Y.rules.eqT('b'));
 	var step = Y.rules.eqT(call(f, x));
         assertEqual('(T = ((f x) = (f x)))', step);
-	var rendered = Y.renderInference(step, Y.one(document.body));
+	var controller = Y.renderInference(step, Y.one(document.body));
+        var step2 = Y.rules.sub(step.details, y, x);
+        // Add a step and immediately remove it.  See that at least
+        // there are no exceptions.
+        controller.addStep(step2);
+        controller.removeStep(step2.rendering);
       },
 
       testR5211: function() {

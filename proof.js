@@ -114,15 +114,15 @@ function isConstant(name) {
 
 //// PROOFS
 
-
-
 //// PROOF CONTROL
 
 // TODO: Extend these to support proof steps that can take more
 // than one selection.
 
 /**
- * Construct a ProofControl.  Properties:
+ * Construct a ProofControl.  No arguments.
+ *
+ * Properties:
  *
  * steps: an array of the _rendered_ steps (Expr objects) displayed.
  * node: Node containing the entire rendering of the proof.
@@ -132,8 +132,10 @@ function isConstant(name) {
 function ProofControl() {
   var controller = this;
   this.steps = [];
-  // a set (array) of selected steps.
+  // Set (array) of selected steps.
+  // TODO: Implement this.
   this.selections = [];
+  // Single selected step when exactly one is selected, or null.
   this.selection = null;
 
   // Only official "proof nodes" are permitted to have this class:
@@ -161,6 +163,12 @@ function ProofControl() {
   Y.on('mouseout', exprHandleOut, this.node);
 }
 
+/**
+ * Sets the steps of the current proof to be the ones in the given array,
+ * which should contain only unrendered steps.  Sets their stepNumber properties
+ * to run from 1 to N and renders them.  The rendered copies become the accessible
+ * steps of the ProofControl.
+ */
 ProofControl.prototype.setSteps = function(steps) {
   var rendered = Y.Array.map(steps, function(step) {
       var copy = step.copyStep();
@@ -186,6 +194,42 @@ ProofControl.prototype.setSteps = function(steps) {
 };
 
 /**
+ * Adds the given unrendered (top-level) proof step into the control's
+ * proof, rendering it and assigning it the stepNumber for its
+ * position.
+ */
+ProofControl.prototype.addStep = function(step) {
+  var copy = step.copyStep();
+  step.rendering = copy;
+  copy.original = step;
+  copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length + 1;
+  var stepNode = renderStep(copy, this);
+  this.stepsNode.append(stepNode);
+};
+
+/**
+ * Remove from the proof display the given top-level rendered proof
+ * step and all steps that depend on it.
+ */
+ProofControl.prototype.removeStep = function(toRemove) {
+  var original = toRemove.original;
+  var steps = this.steps;
+  var dependent;
+  while (true) {
+    dependent = Y.Array.find(steps, function(step) {
+      return contains(step.original.ruleDeps, original);
+    });
+    if (!dependent) {
+      break;
+    }
+    this.removeStep(dependent);
+  }
+  toRemove.stepNode.remove();
+  delete toRemove.original.rendering;
+  this.steps.splice(Y.Array.indexOf(steps, toRemove), 1);
+};
+
+/**
  * Displays the proof step editor at the given index in the proof,
  * setting it as the stepEditor.  If the index is greater than the
  * index of any proof step, appends it at the end.
@@ -204,18 +248,6 @@ ProofControl.prototype.hideStepEditor = function() {
   this.editorButton.set('disabled', false);
   this.editorVisible = false;
 };
-
-/**
- * Generic function to add a node to an element at a position.
- */
-function addChild(parent, position, node) {
-  var children = parent.get('children');
-  if (position == children.length) {
-    parent.appendChild(node);
-  } else {
-    parent.insertBefore(node, children[position]);
-  }
-}
 
 /**
  * Makes the control editable or not by showing/hiding the
@@ -515,8 +547,10 @@ function fancyStepNumber(n) {
  *
  * Inputs are a proof step, the container node, a flag to indicate
  * whether to make the display editable, and an optional proof time in
- * milliseconds.  This renders the details of the step and a
- * description of the step itself.
+ * milliseconds (elapsed time of proof execution).  This renders the
+ * details of the step and a description of the step itself.
+ *
+ * Returns the ProofController.
  */
 function renderInference(step, node, editable, millis) {
   var startRender = new Date().getTime();
@@ -525,7 +559,6 @@ function renderInference(step, node, editable, millis) {
   var controller = new ProofControl();
   controller.setSteps(steps);
   var renderTime = Math.ceil(new Date().getTime() - startRender);
-
   var comment = rules[step.ruleName].info.comment || '';
   var stats = '';
   if (millis != null) {
@@ -540,6 +573,7 @@ function renderInference(step, node, editable, millis) {
                    + '</div>');
   node.append(controller.node);
   controller.setEditable(editable);
+  return controller;
 }
 
 /**
@@ -825,6 +859,23 @@ var hoverHandlers = {
 
 
 //// OTHER UTILITY FUNCTIONS
+
+function contains(collection, item) {
+  return Y.Array.indexOf(collection, item) >= 0;
+}
+
+/**
+ * Generic function to add a node to a YUI node at a position, with
+ * numbering that starts at 0.
+ */
+function addChild(parent, position, node) {
+  var children = parent.get('children');
+  if (position == children.length) {
+    parent.appendChild(node);
+  } else {
+    parent.insertBefore(node, children[position]);
+  }
+}
 
 function addBottomPanel(node) {
   node = node || new Y.Node(document.body);
