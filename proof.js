@@ -176,22 +176,43 @@ ProofControl.prototype.setSteps = function(steps) {
       copy.original = step;
       return copy;
     });
-  // Give the steps numbers from 1 to N.
-  Y.each(rendered, function(step, i) {
-      step.stepNumber = Y.showOrdinals ? step.ordinal : i + 1;
-    });
   // Clear presentation of any old steps.
   var stepsNode = this.stepsNode;
   Y.Array.each(this.steps, function(step) {
       step.original.rendering = null;
     });
   stepsNode.setContent('');
+  // Now render the desired steps.
   this.steps = rendered;
   for (var i = 0; i < steps.length; i++) {
     var stepNode = renderStep(rendered[i], this);
     stepsNode.append(stepNode);
   }
+  this._renumber();
 };
+
+/**
+ * Gives the steps numbers from 1 to N, or each its ordinals if
+ * showOrdinals flag is true and updates displays of them.
+ */
+ProofControl.prototype._renumber = function() {
+  // Give the steps numbers from 1 to N.
+  Y.each(this.steps, function(step, i) {
+    // Fix up the step number and its display.
+    step.stepNumber = Y.showOrdinals ? step.ordinal : i + 1;
+    step.stepNode.one('.stepNumber').setContent(step.stepNumber + '.');
+  });
+  // Fix up references made by the step.
+  Y.each(this.steps, function(step) {
+    var i = 0;
+    Y.each(step.stepNode.all('.stepReference'), function(ref) {
+      ref.setContent(step.original.ruleDeps[i].rendering.stepNumber);
+      i++;
+    });
+  });
+  // TODO: This will also need to support renumbering of any step
+  // detail displays.
+};  
 
 /**
  * Adds the given unrendered (top-level) proof step into the control's
@@ -227,6 +248,7 @@ ProofControl.prototype.removeStep = function(toRemove) {
   toRemove.stepNode.remove();
   delete toRemove.original.rendering;
   this.steps.splice(Y.Array.indexOf(steps, toRemove), 1);
+  // this._renumber();
 };
 
 /**
@@ -363,6 +385,7 @@ ProofControl.prototype.handleExprClick = function(expr) {
  */
 function renderStep(step, controller) {
   var stepsNode = controller.stepsNode;
+  // stepNumber might be undefined when called.
   var html = '<div class=proofStep><span class=stepNumber>'
     + step.stepNumber + '.</span></div>';
   var stepNode = Y.Node.create(html);
@@ -488,11 +511,12 @@ function computeStepInfo(step) {
     // Display dependencies on other steps.
     var firstDep = true;
     Y.each(step.ruleDeps, function(dep, i) {
-        if (i > 0) {
-          stepInfo += ',';
-        }
-        stepInfo += ' ' + fancyStepNumber(dep.rendering.stepNumber);
-      });
+      if (i > 0) {
+        stepInfo += ',';
+      }
+      // This gets filled in later with the referenced step number.
+      stepInfo += ' <span class=stepReference></span>';
+    });
 
     // Display rule arguments.
     var args = step.ruleArgs;
@@ -529,14 +553,6 @@ function fancyName(expr) {
   var info = rules[name].info;
   var comment = info.comment || '';
   return '<span class=ruleName title="' + comment + '">' + name + '</span>';
-}
-
-/**
- * Renders a step number in a fancy way, currently in a SPAN
- * with class "stepNumber".
- */
-function fancyStepNumber(n) {
-  return '<span class=stepNumber>' + n + '</span>';
 }
 
 /**
@@ -735,7 +751,7 @@ function hoverStep(step, direction, proofNode, event) {
   
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
-  proofNode.all('span.stepNumber').each(function(node) {
+  proofNode.all('span.stepReference').each(function(node) {
       if (direction == 'in') {
         if (node.get('innerHTML') == step.stepNumber) {
           node.addClass('referenced');
