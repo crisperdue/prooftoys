@@ -121,6 +121,7 @@ var ruleInfo = {
       }
     },
     inputs: {equation: 1, site: 2},
+    form: 'Replace left side of <input class=equation maxlength=200>',
     comment: ('Replaces an occurrence of an expression with something'
               + ' it is equal to.')
   },
@@ -137,6 +138,7 @@ var ruleInfo = {
       return result.justify('rRight', arguments, [target, equation]);
     },
     inputs: {equation: 1, site: 2},
+    form: 'Replace right side of <input class=equation maxlength=200>',
     comment: ('Replaces an occurrence of an expression with something'
               + ' equal to it, replacing right side with left side.')
   },
@@ -187,6 +189,8 @@ var ruleInfo = {
         throw new Error('Axiom 4 needs ({X : B} A), got: ' + call.toString());
       }
     },
+    inputs: {funcall: 1},
+    form: 'Call ({v : body} expr): <input class=funcall maxlength=200>',
     comment: ('')
   },
 
@@ -287,6 +291,7 @@ var ruleInfo = {
       return result.justify('eqSelf', arguments);
     },
     inputs: {term: 1},
+    form: 'Term: <input class=term>',
     comment: 'Derives A = A.'
   },
 
@@ -403,6 +408,7 @@ var ruleInfo = {
       return result.justify('reduce', arguments, [expr]);
     },
     inputs: {site: 1},
+    form: '',
     comment: ('Substitutes an actual argument for the formal variable'
               + ' in one function call of a WFF.')
   },

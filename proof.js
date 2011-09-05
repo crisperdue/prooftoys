@@ -200,19 +200,21 @@ ProofControl.prototype._renumber = function() {
   Y.each(this.steps, function(step, i) {
     // Fix up the step number and its display.
     step.stepNumber = Y.showOrdinals ? step.ordinal : i + 1;
-    step.stepNode.one('.stepNumber').setContent(step.stepNumber + '.');
-  });
-  // Fix up references made by the step.
-  Y.each(this.steps, function(step) {
-    var i = 0;
-    Y.each(step.stepNode.all('.stepReference'), function(ref) {
-      ref.setContent(step.original.ruleDeps[i].rendering.stepNumber);
-      i++;
-    });
+    renderStepNumber(step);
   });
   // TODO: This will also need to support renumbering of any step
   // detail displays.
 };  
+
+function renderStepNumber(step) {
+  step.stepNode.one('.stepNumber')
+    .setContent(document.createTextNode(step.stepNumber + '. '));
+  // Fix up references made by the step.  (These should all be prior
+  // steps.)
+  Y.each(step.stepNode.all('.stepReference'), function(ref, j) {
+    ref.setContent(step.original.ruleDeps[j].rendering.stepNumber);
+  });
+}
 
 /**
  * Adds the given unrendered (top-level) proof step into the control's
@@ -225,6 +227,7 @@ ProofControl.prototype.addStep = function(step) {
   copy.original = step;
   copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length + 1;
   var stepNode = renderStep(copy, this);
+  renderStepNumber(copy);
   this.stepsNode.append(stepNode);
 };
 
@@ -385,10 +388,13 @@ ProofControl.prototype.handleExprClick = function(expr) {
  */
 function renderStep(step, controller) {
   var stepsNode = controller.stepsNode;
-  // stepNumber might be undefined when called.
-  var html = '<div class=proofStep><span class=stepNumber>'
-    + step.stepNumber + '.</span></div>';
+  // stepNumber may be filled in later with an actual number.
+  var html = '<div class=proofStep><span class=stepNumber>. </span></div>';
   var stepNode = Y.Node.create(html);
+  var n = step.stepNumber;
+  if (n != null) {
+    stepNode.one('.stepNumber').setContent(n);
+  }
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
   // Render the WFF and record the rendered copy as the inference
@@ -424,7 +430,7 @@ function renderStep(step, controller) {
   var target = stepNode.one('span.ruleName');
   if (target) {
     target.on('click', Y.rbind(function(event, step) {
-          renderSubProof(event, step, stepsNode, controller.editable);
+          renderSubProof(event, step, stepsNode);
           // Don't give the proof step a chance to select itself.
           event.stopPropagation();
         }, null, step));
@@ -464,7 +470,7 @@ function unrenderedDeps(step) {
  * the given proof Node, clearing any other subproofs
  * that currently follow the proof node.
  */
-function renderSubProof(event, step, proofNode, editable) {
+function renderSubProof(event, step, proofNode) {
   var display = proofNode.ancestor('.proofDisplay');
   var parent = display.get('parentNode');
   var next = display.get('nextSibling');
@@ -481,9 +487,9 @@ function renderSubProof(event, step, proofNode, editable) {
     next = display.get('nextSibling');
   }
   if (step.ruleName == 'theorem') {
-    renderInference(getTheorem(step.ruleArgs[0]), parent, editable);
+    renderInference(getTheorem(step.ruleArgs[0]), parent, false);
   } else {
-    renderInference(step, parent, editable);
+    renderInference(step, parent, false);
   }
 }
 
@@ -960,13 +966,17 @@ var rules = {};
 /**
  * Use a "rule info" object and add its rules to the "rules" object
  * that manages the inference stack so makeInference can work
- * properly.
+ * properly.  If not supplied in the rule definition, the info.input
+ * is defaulted to an empty object here.
  */
 function createRules(ruleInfo) {
   for (var key in ruleInfo) {
     // Remember ALL of the info as well, redundantly.  See the "to do"
     // above.
     var info = ruleInfo[key];
+    if (!info.inputs) {
+      info.inputs = {};
+    }
     var fn = (typeof info == 'function') ? info : info.action;
     // Each function in rules has its action function as
     // the value of its innerFn property.
@@ -974,7 +984,6 @@ function createRules(ruleInfo) {
     rules[key].info = info;
   }
 }
-
 
 //// Export public names.
 

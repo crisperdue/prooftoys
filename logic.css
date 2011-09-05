@@ -35,6 +35,10 @@ p {
   padding: .2em 1em;
 }
 
+/* Not displayed */
+.hidden {
+  display: none;
+}
 
 /*
  * Rules for proofdisplay.js
