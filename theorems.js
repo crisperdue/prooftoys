@@ -121,7 +121,8 @@ var ruleInfo = {
       }
     },
     inputs: {equation: 1, site: 2},
-    form: 'Replace left side of <input class=equation maxlength=200>',
+    form: ('Replace with right side of '
+	   + '<input name=equation class=equation maxlength=200>'),
     comment: ('Replaces an occurrence of an expression with something'
               + ' it is equal to.')
   },
@@ -138,7 +139,8 @@ var ruleInfo = {
       return result.justify('rRight', arguments, [target, equation]);
     },
     inputs: {equation: 1, site: 2},
-    form: 'Replace right side of <input class=equation maxlength=200>',
+    form: ('Replace with left side of '
+	   + '<input name=equation class=equation maxlength=200>'),
     comment: ('Replaces an occurrence of an expression with something'
               + ' equal to it, replacing right side with left side.')
   },
@@ -189,8 +191,8 @@ var ruleInfo = {
         throw new Error('Axiom 4 needs ({X : B} A), got: ' + call.toString());
       }
     },
-    inputs: {funcall: 1},
-    form: 'Call ({v : body} expr): <input class=funcall maxlength=200>',
+    inputs: {term: 1},  // Specifically a Call to a Lambda.
+    form: 'Call ({v : body} expr): <input name=term class=term maxlength=200>',
     comment: ('')
   },
 
@@ -291,7 +293,7 @@ var ruleInfo = {
       return result.justify('eqSelf', arguments);
     },
     inputs: {term: 1},
-    form: 'Term: <input class=term>',
+    form: 'Term: <input name=term class=term>',
     comment: 'Derives A = A.'
   },
 
@@ -314,6 +316,7 @@ var ruleInfo = {
       return ba.justify('eqnSwap', arguments, arguments);
     },
     inputs: {equation: 1},
+    form: '',
     comment: 'From A = B derives B = A'
   },
 
@@ -352,6 +355,7 @@ var ruleInfo = {
       return step2.justify('applyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
+    form: ('Apply both sides to <input name=term class=term>'),
     comment: 'Given f = g, derive (f A) = (g A)'
   },
 
@@ -388,6 +392,7 @@ var ruleInfo = {
       }
     },
     inputs: {step: 2},
+    // form: TODO: implement.
     comment: ('')
   },
 
@@ -431,7 +436,8 @@ var ruleInfo = {
       var step2 = rules.r(step1, expr, path);
       return step2.justify('changeVar', arguments, [expr]);
     },
-    inputs: {bindingSite: 1, name: 3},
+    inputs: {bindingSite: 1, varName: 3},
+    form: ('Rename to: <input name=varName class=varName>'),
     comment: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
@@ -454,7 +460,8 @@ var ruleInfo = {
       var step2 = rules.r(eqn, step1, '/right/body');
       return step2.justify('bindEqn', arguments, [eqn]);
     },
-    inputs: {equation: 1, name: 2},
+    inputs: {equation: 1, varName: 2},
+    form: ('Bound variable name: <input name=varName class=varName>'),
     comment: ('Wraps each side of an equation in a function'
               + ' using the bound variable of your choice.')
   },
@@ -472,6 +479,8 @@ var ruleInfo = {
       return step4.justify('instEqn', arguments, [b_c]);
     },
     inputs: {equation: 1, term: 2, name: 3},
+    form: ('Instantiate <input name=name class=name> with '
+	   + '<input name=term class=term>'),
     comment: ('Instantiates a free variable in an equation.')
   },
 
@@ -496,6 +505,7 @@ var ruleInfo = {
       return step4b.justify('eqT', arguments, []);
     },
     inputs: {term: 1},
+    form: ('Term: <input name=term class=term>'),
     comment: ('Proves T = [B = B].')
   },
 
@@ -519,6 +529,7 @@ var ruleInfo = {
       return step2.justify('toTIsEquation', arguments, [a_b]);
     },
     inputs: {equation: 1},
+    form: '',
     comment: ('From [A = B] deduce T = [A = B].')
   },
 
@@ -626,6 +637,7 @@ var ruleInfo = {
 	      && target.fn instanceof Y.Var
 	      && target.fn.name == 'forall');
     }}},
+    form: ('Instantiate with term <input name=term class=term>'),
     comment: ('In a "forall", instantiates the bound variable with'
               + ' a given term.')
   },
@@ -702,6 +714,8 @@ var ruleInfo = {
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
     inputs: {equation: [1, 2], name: 3},
+    form: ('case for false is step <input name=equation2 class=equation>, '
+	   + 'use variable <input name=varName class=varName>'),
     comment: ('Given a function expression of the form {v | A = B},'
               + ' infers (forall {x | A = B}) assuming A = B is proven'
               + ' for the substitutions with v = T and v = F.')
@@ -716,6 +730,7 @@ var ruleInfo = {
       return step2.justify('r5218', arguments);
     },
     inputs: {term: 1},
+    form: ('term: <input name=term class=term>'),
     comment: ('For any expression A derives [T = A] = A.')
   },
 
@@ -738,6 +753,7 @@ var ruleInfo = {
       return step2.justify('toTIsA', arguments, [a]);
     },
     inputs: {step: 1},
+    form: '',
     comment: ('From A derives T = A')
   },
 
@@ -756,6 +772,7 @@ var ruleInfo = {
       var left = eqn.getLeft();
       return (left instanceof Y.Var && left.name == 'T');
     }}},
+    form: '',
     comment: ('From T = A derives A')
   },
 
@@ -799,6 +816,7 @@ var ruleInfo = {
       return step3.justify('uGen', arguments, [a]);
     },
     inputs: {step: 1, name: 2},
+    form: ('Generalize on variable: <input name=varName class=varName>'),
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.')
   },
@@ -812,6 +830,8 @@ var ruleInfo = {
       return step2.justify('sub', arguments, [b]);
     },
     inputs: {step: 1, term: 2, name: 3},
+    form: ('For variable <input name=name class=name> '
+	   + 'substitute <input name=term class=term>'),
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.')
   },
@@ -834,6 +854,7 @@ var ruleInfo = {
       return step.justify('subAll', arguments, [b]);
     },
     inputs: {step: 1},
+    // TODO: form: ...
     comment: ('Substitute in B for each variable named in the map, '
               + 'its value in the map')
   },
@@ -864,6 +885,8 @@ var ruleInfo = {
       return step7b.justify('cases', arguments, [caseT, caseF]);
     },
     inputs: {step: [1, 2], name: 3},
+    form: ('false case step <input name=step2 class=step>, '
+	   + 'use variable name <input name=name class=name>'),
     comment: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.')
   },
@@ -879,6 +902,7 @@ var ruleInfo = {
       return step4.justify('modusPonens', arguments, arguments);
     },
     inputs: {step: 1, implication: 2},
+    form: ('implication step <input name=implication class=implication>'),
     comment: ('Modus Ponens.  Given A and A --> B derives B.')
   },
 
@@ -1091,7 +1115,8 @@ var ruleInfo = {
         return result;
       }
     },
-    inputs: {step: 1},
+    inputs: {term: 1},
+    form: 'wff: <input name=term class=term>',
     comment: ('Tautology decider.')
   },
 
@@ -1106,6 +1131,7 @@ var ruleInfo = {
       return step3.justify('makeConjunction', arguments, [a, b]);
     },
     inputs: {step: [1, 2]},
+    form: ('conjoin with step <input name=step2 class=step>'),
     comment: ('Given a and b, derive a && b')
   },
 
@@ -1149,7 +1175,10 @@ var ruleInfo = {
       var step10 = rules.sub(step9, a, p0);
       return step10.justify('r5235', arguments);
     },
-    inputs: {term: [1, 2]},
+    inputs: {varName: 1, term: [2, 3]},
+    form: ('Variable: <input name=varName class=varName> '
+	   + 'wff without it free: <input name=term1 class=term> '
+	   + 'other wff: <input name=term2 class=term>'),
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".')
   },
@@ -1172,7 +1201,9 @@ var ruleInfo = {
       var step5 = rules.r(step4, step3, '/right');
       return step5.justify('implyForall', arguments, [a_b]);
     },
-    inputs: {name: 1, implication: 2},
+    inputs: {varName: 1, implication: 2},
+    form: ('Variable <input name=varName class=varName> '
+	   + 'implication <input name=implication class=implication>'),
     comment: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.')
   },
@@ -1196,6 +1227,7 @@ var ruleInfo = {
       var step4 = rules.modusPonens(step2, step3);
       return step4.justify('p', arguments, [a1, a2]);
     },
+    // TODO: inputs ... ?
     comment: ('Simplified form of Rule P without hypotheses.')
   },
 
@@ -1222,6 +1254,7 @@ var ruleInfo = {
       }
       return result.justify('r5238', arguments);
     },
+    // TODO: inputs: ... ?
     comment: ('Equal functions equate to equal expression values.')
   },
 
@@ -1292,6 +1325,8 @@ var ruleInfo = {
       var step8 = rules.r(step7, step6, '/left');
       return step8.justify('r5239', arguments);
     },
+    inputs: {site: 2, term: 1},  // The term is an equation
+    form: ('term (an equation): <input name=term class=term>'),
     comment: ('Analog to Rule R, expressed as an implication.')
   },
 
@@ -1347,7 +1382,7 @@ var ruleInfo = {
                           taut2);
       return step4.justify('replace', arguments, [h_c, h_equation]);
     },
-    inputs: {implication: [1, 2]},
+    // TODO: inputs: {implication: [1, 2]}, plus constraints.
     comment: ("Analog to the deduction theorem, replacing an equation "
               + "that is true conditionally.")
   },
