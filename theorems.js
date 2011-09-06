@@ -407,7 +407,7 @@ var ruleInfo = {
       var result = rules.r(equation, expr, path);
       return result.justify('reduce', arguments, [expr]);
     },
-    inputs: {site: 1},
+    inputs: {reducible: 1},
     form: '',
     comment: ('Substitutes an actual argument for the formal variable'
               + ' in one function call of a WFF.')

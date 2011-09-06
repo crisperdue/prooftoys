@@ -110,10 +110,10 @@ StepEditor.prototype.tryExecuteRule = function(rule) {
       var step = this.controller.selection;
       var expr = step && step.selection;
       if (expr) {
-	if (type == 'site' && (typeof inputs.site) == 'number') {
-	  // TODO: bindingSite ...
-	  args[inputs.site - 1] = step.original;
-	  args[inputs.site] = step.pathTo(function(e) { return e == expr; });
+	var value = inputs[type];
+	if (type in siteTypes && (typeof value) == 'number') {
+	  args[value - 1] = step.original;
+	  args[value] = step.pathTo(function(e) { return e == expr; });
 	}
       }  // TODO: No selected expression within the step.
     }
@@ -136,8 +136,8 @@ StepEditor.prototype.tryExecuteRule = function(rule) {
   }
 };
 
-// All types that can be entered in a form.  Omits site and
-// bindingSite, which are currently not supported in forms.
+// All types that can be entered in a form.  Omits site, bindingSite,
+// and reducible, which are currently not supported in forms.
 var formTypes = {
   term: true,
   funcall: true,
@@ -151,6 +151,13 @@ var stepTypes = {
   step: true,
   equation: true,
   implication: true
+};
+
+// Datatypes that refer to sites within a step
+var siteTypes = {
+  site: true,
+  bindingSite: true,
+  reducible: true
 };
 
 StepEditor.prototype.filteredRuleNames = function() {
@@ -208,7 +215,7 @@ StepEditor.prototype.offerable = function(ruleName) {
  * 
  * term: Matches any term except the binding of a variable.
  * 
- * funcall: Matches a call to anonymous function (lambda)
+ * reducible: Matches a call to anonymous function (lambda)
  *
  * site: Term in a step; the rule expects the term's step and path
  *   to the term as inputs.
@@ -228,8 +235,10 @@ function matchesSelection(step, ruleName) {
     return !!(expr && step.pathToBinding(function(e) {
       return e == expr;
     }));
-  } else if (require.site || require.funcall || require.term) {
+  } else if (require.site || require.term) {
     return !!expr;
+  } else if (require.reducible) {
+    return (expr instanceof Y.Call && expr.fn instanceof Y.Lambda);
   } else if (require.implication) {
     return step.isCall2('-->');
   } else if (require.equation) {
@@ -238,40 +247,6 @@ function matchesSelection(step, ruleName) {
     return require.step;
   }
 }
-
-/*
-  // Is the selection a binding of a variable?
-  var isBinding = !!(expr && step.pathToBinding(function(e) {
-    return e == expr;
-  }));
-  if (expr) {
-    // An expression is selected
-    if (isBinding) {
-      return require.bindingSite;
-    } else if (require.term || require.site) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    // An entire step is selected.
-    if (require.step) {
-      return true;
-    }
-    var isEquation = step.isCall2('=');
-    if (isEquation && require.equation) {
-      return true;
-    } else {
-      var isImplication = step.isCall2('-->');
-      if (isImplication && require.implication) {
-	return true;
-      } else {
-	return false;
-      }
-    }
-  }
-}
-*/
 
 /**
  * Make and return an autocompleter that uses the input field.
