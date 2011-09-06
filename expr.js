@@ -1216,7 +1216,8 @@ function tokenize(str) {
 
 /**
  * Parses a string or array of token strings into an expression
- * (Expr).  Throws an Error if parsing fails.
+ * (Expr).  Removes tokens parsed from the tokens list.  Throws an
+ * Error if parsing fails.
  */
 function parse(tokens) {
 
