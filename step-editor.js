@@ -19,6 +19,56 @@ YUI.add('step-editor', function(Y) {
 // Resetting the step editor turns it back on, as if the editor
 // were brand new.
 
+//
+// Each rule has a descriptor of its arguments
+// associated with its name.  The descriptors are maps from keywords
+// to argument number.  The descriptor keyword definitions are:
+//
+// step: Matches any proof step.
+// 
+// equation: Matches a proof step that is an equation.
+//
+// implication: Matches a proof step that is an implication.
+// 
+// term: Matches any term.
+// 
+// reducible: Matches a call to anonymous function (lambda)
+//
+// varName: Name suitable for a variable.
+//
+// site: Term in a step; the rule expects the term's step and path
+//   to the term as inputs.
+//
+// bindingSite: Matches a variable binding in a step (as in "changeVar").
+//
+
+
+// All types that can be entered in a form.  Omits site, bindingSite,
+// and reducible, which are currently not supported in forms.
+var formTypes = {
+  term: true,
+  varName: true,
+  funcall: true,
+  step: true,
+  equation: true,
+  implication: true
+};
+
+// Datatypes that refer to proof steps.
+var stepTypes = {
+  step: true,
+  equation: true,
+  implication: true
+};
+
+// Datatypes that refer to sites within a step.  None of these are
+// in formTypes.
+var siteTypes = {
+  site: true,
+  bindingSite: true,
+  reducible: true
+};
+
 
 /**
  * Fields: node, input, form, completer, controller.
@@ -50,6 +100,12 @@ function StepEditor(controller) {
       }
     }
   });
+  // Keyup events bubble to here from the inputs in the form.
+  this.form.on('keyup', function(event) {
+    if (event.keyCode == 13) {
+      self.tryExecuteRule();
+    }
+  });
   var remover = div.one('.sted-remove');
   remover.on('click', function() { controller.hideStepEditor(); });
 }
@@ -69,6 +125,7 @@ StepEditor.prototype.reset = function() {
   this.input.addClass('hinted');
   this.input.removeClass('hidden');
   this.form.setContent('');
+  this.form.rule = null;
 }
 
 /**
@@ -78,16 +135,87 @@ StepEditor.prototype.handleSelection = function(event) {
   var name = event.result.text;
   var rule = Y.rules[name];
   if (rule) {
+    this.form.rule = rule;
     var template = rule.info.form;
     if (template) {
-      // Not an empty string.  (If there is no template, the rule will
+      // Template is not empty.  (If there is no template, the rule will
       // not be "offerable" and thus not selected.)
       this.input.addClass('hidden');
       this.form.setContent(template);
+      addClassInfo(this.form);
+      if (!usesSite(rule)) {
+	this.addSelectionToForm(rule);
+      }
       return;
     } else {
-      this.tryExecuteRule(rule);
+      this.tryExecuteRule();
     }
+  }
+};
+
+/**
+ * Computes whether a rule needs a "site" type as an input.
+ */
+function usesSite(rule) {
+  var inputs = rule.info.inputs;
+  for (var type in inputs) {
+    if (type in siteTypes) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Adds class=step, class=term, etc. to each form element according
+ * to its name -- same as the name, but stripping off any numeric suffix,
+ * e.g. step2 --> step.
+ */
+function addClassInfo(form) {
+  form.all('input').each(function(node) {
+    var name = node.get('name');
+    var match = name.match(/^.+?(\d*)$/);
+    className = (match && match[1]) || name;
+    node.addClass(className);
+  });
+}
+
+/**
+ * Try to fill in a field of the form with the selection.  For
+ * steps this will be a reference to the step, and for terms it
+ * will be a textual rendering of the selected expression.
+ */
+StepEditor.prototype.addSelectionToForm = function(rule) {
+  var controller = this.controller;
+  var step = controller.selection;
+  if (step) {
+    var expr = step.selection;
+    var form = this.form;
+    var n = step.stepNumber;
+    // Search for the first input field that is compatible with the
+    // selection and fill it in with selection information.
+    form.all('input').some(function(field) {
+      var fieldType = field.get('name').match(/^(.*?)\d*$/)[1];
+      if (expr) {
+	// TODO: Don't use the selection as a term if it will be used
+	// by the rule as a site.
+	if (fieldType == 'term') {
+	  field.set('value', expr.toString());
+	  return true;
+	} else {
+	  return false;
+	}
+      } else {
+	if (fieldType == 'step'
+	    || (fieldType == 'equation' && step.isCall2('='))
+	    || (fieldType == 'implication' && step.isCall2('-->'))) {
+	  field.set('value', n);
+	  return true;
+	} else {
+	  return false;
+	}
+      }
+    });
   }
 };
 
@@ -99,25 +227,13 @@ StepEditor.prototype.handleSelection = function(event) {
  *
  * Return true on success, otherwise false.
  */
-StepEditor.prototype.tryExecuteRule = function(rule) {
+StepEditor.prototype.tryExecuteRule = function() {
+  var rule = this.form.rule;
   var inputs = rule.info.inputs;
   var args = [];
-  for (var type in inputs) {
-    if (type in formTypes) {
-      // TODO: Implement getting args from the form.
-      return false;
-    } else {
-      var step = this.controller.selection;
-      var expr = step && step.selection;
-      if (expr) {
-	var value = inputs[type];
-	if (type in siteTypes && (typeof value) == 'number') {
-	  args[value - 1] = step.original;
-	  args[value] = step.pathTo(function(e) { return e == expr; });
-	}
-      }  // TODO: No selected expression within the step.
-    }
-  }
+  this.fillWithSelectedSite(args);
+  this.fillFromForm(args);
+  Y.log('Args: ' + args.toString());
   // Check that the args are all filled in.
   for (var i = 0; i < args.length; i++) {
     if (args[i] === undefined) {
@@ -136,30 +252,100 @@ StepEditor.prototype.tryExecuteRule = function(rule) {
   }
 };
 
-// All types that can be entered in a form.  Omits site, bindingSite,
-// and reducible, which are currently not supported in forms.
-var formTypes = {
-  term: true,
-  funcall: true,
-  step: true,
-  equation: true,
-  implication: true
+/**
+ * Fill in an argument from the selection if there is a selected
+ * expression (not a selected step) and an argument that needs that
+ * type.  Reports an error to the user if preconditions are not met.
+ */
+StepEditor.prototype.fillWithSelectedSite = function(args) {
+  var rule = this.form.rule;
+  var inputs = rule.info.inputs;
+  for (var type in inputs) {
+    if (type in siteTypes) {
+      var step = this.controller.selection;
+      var expr = step && step.selection;
+      if (expr) {
+	var position = inputs[type];
+	if ((typeof position) == 'number') {
+	  args[position - 1] = step.original;
+	  args[position] = step.pathTo(function(e) { return e == expr; });
+	  // Only fill in one argument (pair) from the selection.
+	  break;
+	} else {
+	  // TODO: Someday support multiple sites per rule.
+	  this.error('Internal error: only one site supported per rule.');
+	}
+      } else {
+	this.error('Expression not selected');
+      }
+    }
+  }
+}
+
+/**
+ * Fills in the arguments array with information from the form.
+ */
+StepEditor.prototype.fillFromForm = function(args) {
+  var self = this;
+  var rule = this.form.rule;
+  this.form.all('input').each(function(node) {
+    var name = node.get('name');
+    var match = name.match(/^(.+?)(\d*)$/);
+    if (match) {
+      var type = match[1];
+      // Non-empty when referring to one of multiple args of the
+      // same type.  Then the value of the descriptor is a list.
+      var which = match[2];
+      var inputs = rule.info.inputs;
+      var argNum = which ? inputs[type][which - 1] : inputs[type];
+      args[argNum - 1] = self.parseValue(node.get('value'), type);
+    } else {
+      Y.log('Unrecognized input name: ' + name);
+    }
+  });
 };
 
-// Datatypes that refer to proof steps.
-var stepTypes = {
-  step: true,
-  equation: true,
-  implication: true
+/**
+ * Parses the string value according to its type, which can
+ * be any of the formTypes.  Returns an Expr for step or term
+ * types.  Throws an Error if it detects the input is not valid.
+ */
+StepEditor.prototype.parseValue = function(value, type) {
+  switch (type) {
+  case 'step':
+  case 'equation':
+  case 'implication':
+    if (!value.match(/\d+/)) {
+      throw new Error('Not a number: ' + value);
+    }
+    var index = Number(value) - 1;
+    if (index < 0 || index >= this.controller.steps.length) {
+      throw new Error('No such step: ' + value);
+    }
+    return this.controller.steps[Number(value) - 1].original;
+  case 'term':
+    var tokens = Y.tokenize(value);
+    // Throws an error if parsing fails:
+    var expr = Y.parse(tokens);
+    if (tokens.length) {
+      throw new Error('Extra input: "', + tokens[0] + '"');
+    }
+    return expr;
+  case 'varName':
+    // Accepts names allowable for user-created variables.
+    if (value.match('^[a-zA-Z]+$')) {
+      return value;
+    } else {
+      throw new Error('Illegal variable name: ' + value);
+    }
+  default:
+    throw new Error('Type not parseable: ' + type);
+  }
 };
 
-// Datatypes that refer to sites within a step
-var siteTypes = {
-  site: true,
-  bindingSite: true,
-  reducible: true
-};
-
+/**
+ * TODO: document
+ */
 StepEditor.prototype.filteredRuleNames = function() {
   var controller = this.controller;
   var step = controller.selection;
@@ -184,7 +370,7 @@ StepEditor.prototype.offerable = function(ruleName) {
   }
   var step = this.controller.selection;
   if (step) {
-    return matchesSelection(step, ruleName);
+    return acceptsSelection(step, ruleName);
   } else {
     var inputs = info.inputs;
     // None of the types in the descriptor are "step" types.
@@ -203,48 +389,29 @@ StepEditor.prototype.offerable = function(ruleName) {
  * step is selected.
  *
  * If something is selected, this accepts rules that can use that input
- * as an argument.  Each rule has a descriptor of its arguments
- * associated with its name.  The descriptors are maps from keywords
- * to argument number.  The descriptor keyword definitions are:
- *
- * step: Matches any proof step.
- * 
- * equation: Matches a proof step that is an equation.
- *
- * implication: Matches a proof step that is an implication.
- * 
- * term: Matches any term except the binding of a variable.
- * 
- * reducible: Matches a call to anonymous function (lambda)
- *
- * site: Term in a step; the rule expects the term's step and path
- *   to the term as inputs.
- *
- * bindingSite: Matches a variable binding in a step (as in "changeVar").
- *
+ * as an argument.
  */
-function matchesSelection(step, ruleName) {
-  var require = Y.rules[ruleName].info.inputs;
-  if (!require) {
+function acceptsSelection(step, ruleName) {
+  var accept = Y.rules[ruleName].info.inputs;
+  if (!accept) {
     // If there is no information about arguments, fail.
     return false;
   }
   // Selected expression (within a step).
   var expr = step.selection;
-  if (require.bindingSite) {
-    return !!(expr && step.pathToBinding(function(e) {
-      return e == expr;
-    }));
-  } else if (require.site || require.term) {
-    return !!expr;
-  } else if (require.reducible) {
-    return (expr instanceof Y.Call && expr.fn instanceof Y.Lambda);
-  } else if (require.implication) {
-    return step.isCall2('-->');
-  } else if (require.equation) {
-    return step.isCall2('=');
+  if (expr) {
+    return (accept.site
+	    || accept.term
+	    || (accept.bindingSite && step.pathToBinding(function(e) {
+	      return e == expr;
+	    }))
+	    || (accept.reducible
+		&& expr instanceof Y.Call
+		&& expr.fn instanceof Y.Lambda));
   } else {
-    return require.step;
+    return (accept.step
+	    || (accept.equation && step.isCall2('='))
+	    || (accept.implication && step.isCall2('-->')));
   }
 }
 
