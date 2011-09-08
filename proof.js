@@ -225,7 +225,7 @@ ProofControl.prototype.addStep = function(step) {
   var copy = step.copyStep();
   step.rendering = copy;
   copy.original = step;
-  this.steps.push(step);
+  this.steps.push(copy);
   copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length;
   var stepNode = renderStep(copy, this);
   renderStepNumber(copy);
