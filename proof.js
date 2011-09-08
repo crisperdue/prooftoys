@@ -225,7 +225,8 @@ ProofControl.prototype.addStep = function(step) {
   var copy = step.copyStep();
   step.rendering = copy;
   copy.original = step;
-  copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length + 1;
+  this.steps.push(step);
+  copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length;
   var stepNode = renderStep(copy, this);
   renderStepNumber(copy);
   this.stepsNode.append(stepNode);
@@ -251,7 +252,6 @@ ProofControl.prototype.removeStep = function(toRemove) {
   toRemove.stepNode.remove();
   delete toRemove.original.rendering;
   this.steps.splice(Y.Array.indexOf(steps, toRemove), 1);
-  // this._renumber();
 };
 
 /**
@@ -263,12 +263,12 @@ ProofControl.prototype.showStepEditor = function(position) {
   // TODO: Handle placement of the editor at the location of
   // an existing step.
   addChild(this.stepsNode, position, this.stepEditor.node);
+  this.stepEditor.reset();
   this.editorVisible = true;
 };
 
 ProofControl.prototype.hideStepEditor = function() {
   this.stepEditor.node.remove();
-  this.stepEditor.reset();
   this.deselectStep();
   this.editorButton.set('disabled', false);
   this.editorVisible = false;
