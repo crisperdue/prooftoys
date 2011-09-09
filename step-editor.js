@@ -62,7 +62,7 @@ var stepTypes = {
 };
 
 // Datatypes that refer to sites within a step.  None of these are
-// in formTypes.
+// in formTypes.  Does not include term or varName.
 var siteTypes = {
   site: true,
   bindingSite: true,
@@ -372,14 +372,14 @@ StepEditor.prototype.offerable = function(ruleName) {
   }
   var step = this.controller.selection;
   if (step) {
+    // Something is selected.  Check if the rule accepts the
+    // selection.
     return acceptsSelection(step, ruleName);
   } else {
+    // No selection, pass only rules that take no step or site.
     var inputs = info.inputs;
-    // None of the types in the descriptor are "step" types.
-    // The policy is that the user must select something to
-    // use rules that take a "step" type input.
-    return !Y.Object.some(inputs, function(type) {
-      return type in stepTypes;
+    return !Y.Object.some(inputs, function(value, type) {
+      return type in stepTypes || type in siteTypes;
     });
   }
 };
