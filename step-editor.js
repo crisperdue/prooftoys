@@ -344,7 +344,8 @@ StepEditor.prototype.parseValue = function(value, type) {
 };
 
 /**
- * TODO: document
+ * Returns a list of names of "offerable" rules, sorted
+ * alphabetically.
  */
 StepEditor.prototype.filteredRuleNames = function() {
   var controller = this.controller;
@@ -355,6 +356,7 @@ StepEditor.prototype.filteredRuleNames = function() {
       matches.push(name);
     }
   }
+  matches.sort();
   return matches;
 };
 

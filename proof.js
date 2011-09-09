@@ -405,18 +405,16 @@ function renderStep(step, controller) {
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
   // Set up click handlers for selections within the step.
-  Y.on('click',
+  wffNode.on('mousedown',
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
          controller.handleExprClick(getExpr(event.target));
-       },
-       wffNode);
-  Y.on('click',
+       });
+  stepNode.on('mousedown',
        function(event) {
          controller.handleStepClick(getProofStep(event.target));
-       },
-       stepNode);
+       });
 
   var stepInfo = computeStepInfo(step);
   stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
