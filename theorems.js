@@ -812,7 +812,7 @@ var ruleInfo = {
       var step3 = rules.r(step1, step2, '/arg/body');
       return step3.justify('uGen', arguments, [a]);
     },
-    inputs: {step: 1, name: 2},
+    inputs: {step: 1, varName: 2},
     form: ('in step <input name=step> generalize on variable <input name=varName>'),
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.')

@@ -298,7 +298,7 @@ StepEditor.prototype.fillFromForm = function(args) {
       var inputs = rule.info.inputs;
       var argNum = which ? inputs[type][which - 1] : inputs[type];
       if (!argNum) {
-	throw new Error('Internal error: no input descriptor for type' + type);
+	throw new Error('Internal error: no input descriptor for type ' + type);
       }
       args[argNum - 1] = self.parseValue(node.get('value'), type);
     } else {
