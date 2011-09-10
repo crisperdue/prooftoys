@@ -103,7 +103,7 @@ function StepEditor(controller) {
   // Keyup events bubble to here from the inputs in the form.
   this.form.on('keyup', function(event) {
     if (event.keyCode == 13) {
-      self.tryExecuteRule();
+      self.tryExecuteRule(true);
     }
   });
   var remover = div.one('.sted-remove');
@@ -126,7 +126,7 @@ StepEditor.prototype.reset = function() {
   this.input.removeClass('hidden');
   this.form.setContent('');
   this.form.rule = null;
-}
+};
 
 /**
  * Handler for autocompleter "selection" event.
@@ -146,10 +146,8 @@ StepEditor.prototype.handleSelection = function(event) {
       if (!usesSite(rule)) {
 	this.addSelectionToForm(rule);
       }
-      return;
-    } else {
-      this.tryExecuteRule();
     }
+    this.tryExecuteRule(false);
   }
 };
 
@@ -220,24 +218,25 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 };
 
 /**
- * Fill in the arguments for the rule from any selection and content
- * of the form, and execute the rule with the arguments if there is
- * enough suitable information in the form and selection.  Update the
- * proof display with the new step on success.
+ * Fill in the arguments for the rule from any selected site and
+ * content of the form, and execute the rule with the arguments if
+ * there is enough suitable information in the form and selection.
+ * Update the proof display with the new step on success.
  *
  * Return true on success, otherwise false.
  */
-StepEditor.prototype.tryExecuteRule = function() {
+StepEditor.prototype.tryExecuteRule = function(reportUndefined) {
   var rule = this.form.rule;
   var inputs = rule.info.inputs;
   var args = [];
   this.fillWithSelectedSite(args);
   this.fillFromForm(args);
-  Y.log('Args: ' + args.toString());
   // Check that the args are all filled in.
   for (var i = 0; i < args.length; i++) {
     if (args[i] === undefined) {
-      this.error('Undefined argument ' + i);
+      if (reportUndefined) {
+	this.error('Undefined argument ' + i);
+      }
       return false;
     }
   }
@@ -280,7 +279,7 @@ StepEditor.prototype.fillWithSelectedSite = function(args) {
       }
     }
   }
-}
+};
 
 /**
  * Fills in the arguments array with information from the form.
@@ -298,6 +297,9 @@ StepEditor.prototype.fillFromForm = function(args) {
       var which = match[2];
       var inputs = rule.info.inputs;
       var argNum = which ? inputs[type][which - 1] : inputs[type];
+      if (!argNum) {
+	throw new Error('Internal error: no input descriptor for type' + type);
+      }
       args[argNum - 1] = self.parseValue(node.get('value'), type);
     } else {
       Y.log('Unrecognized input name: ' + name);

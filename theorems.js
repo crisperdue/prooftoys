@@ -769,7 +769,7 @@ var ruleInfo = {
       var left = eqn.getLeft();
       return (left instanceof Y.Var && left.name == 'T');
     }}},
-    form: 'step <input name=step>',
+    form: 'step <input name=equation>',
     comment: ('From T = A derives A')
   },
 
