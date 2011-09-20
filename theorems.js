@@ -313,7 +313,7 @@ var ruleInfo = {
       return ba.justify('eqnSwap', arguments, arguments);
     },
     inputs: {equation: 1},
-    form: '',
+    form: 'Swap sides in step <input name=equation>',
     comment: 'From A = B derives B = A'
   },
 

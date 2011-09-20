@@ -127,7 +127,6 @@ function isConstant(name) {
  * steps: an array of the _rendered_ steps (Expr objects) displayed.
  * node: Node containing the entire rendering of the proof.
  * stepsNode: Node containing all of the rendered steps as children.
- * editorButton: step insertion button, or null.
  */
 function ProofControl() {
   var controller = this;
@@ -145,19 +144,11 @@ function ProofControl() {
   this.node = Y.Node.create(html);
   this.stepsNode = this.node.one('.proofSteps');
   this.stepEditor = new Y.StepEditor(this);
-  this.editorVisible = false;
+  this.node.one('td').append(this.stepEditor.node);
 
   var html = ('<input class=addStep type=button value="+" '
               + 'title="Add a step to the proof">');
-  this.editorButton =
-    this.stepsNode.get('parentNode').appendChild(html);
   this.setEditable(false);
-  // TODO: eventually default this to true.
-  this.editable = false;
-  this.editorButton.on('click', function () {
-      controller.showStepEditor(controller.stepsNode.get('children').length);
-      this.set('disabled', true);
-    });
   // Set up handling of mouseover and mouseout events.
   Y.on('mouseover', exprHandleOver, this.node);
   Y.on('mouseout', exprHandleOut, this.node);
@@ -255,32 +246,17 @@ ProofControl.prototype.removeStep = function(toRemove) {
 };
 
 /**
- * Displays the proof step editor at the given index in the proof,
- * setting it as the stepEditor.  If the index is greater than the
- * index of any proof step, appends it at the end.
- */
-ProofControl.prototype.showStepEditor = function(position) {
-  // TODO: Handle placement of the editor at the location of
-  // an existing step.
-  addChild(this.stepsNode, position, this.stepEditor.node);
-  this.stepEditor.reset();
-  this.editorVisible = true;
-};
-
-ProofControl.prototype.hideStepEditor = function() {
-  this.stepEditor.node.remove();
-  this.deselectStep();
-  this.editorButton.set('disabled', false);
-  this.editorVisible = false;
-};
-
-/**
  * Makes the control editable or not by showing/hiding the
  * editor button and flagging its state.
  */
 ProofControl.prototype.setEditable = function(state) {
   this.editable = state;
-  this.editorButton.setStyle('display', state ? '' : 'none');
+  var node = this.stepEditor.node;
+  if (state) {
+    node.show();
+  } else {
+    node.hide();
+  }
 }
 
 /**
@@ -331,7 +307,7 @@ ProofControl.prototype.deselectExpr = function(step) {
  * already selected.
  */
 ProofControl.prototype.handleStepClick = function(step) {
-  if (this.editorVisible) {
+  if (this.editable) {
     var selected = this.selection;
     this.deselectStep();
     if (selected) {

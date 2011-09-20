@@ -12,7 +12,7 @@ var stepCounter = 1;
  * Converts text symbols to HTML for display.
  */
 var entities = {
-  '-->': '==&gt;',   // &rArr; looks lousy in fixed-width font.
+  '-->': '&#8209;&#8209&gt;',   // &rArr; looks lousy in fixed-width font.
   '>=': '&ge;',
   '<=': '&le;',
   '!=': '&ne;'

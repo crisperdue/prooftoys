@@ -71,18 +71,25 @@ var siteTypes = {
 
 
 /**
- * Fields: node, input, form, completer, controller.
+ * A ProofControl can have only one StepEditor.  It appears at the end
+ * of an editable proof.
+ *
+ * TODO: Support essential step editing such as justification of an assumed
+ * step, for steps that already exist.  Also rearranging proofs.
+ *
+ * Fields: node, input, form, completer,
+ * controller.
  */
 function StepEditor(controller) {
   var self = this;
   this.controller = controller;
-  this._hint = 'Enter WFF, axiom, or theorem by name, or select rule target';
+  this._hint = 'Enter axiom or theorem name; for inference select target first';
   // Create a DIV with the step editor content.
   var div = Y.Node.create('<div class=stepEditor style="clear: both"></div>');
   div.append('<span style="float: right">'
              + '<input type=button value="Paste" class=sted-paste'
              + ' style="visibility: hidden">'
-             + '<input class=sted-remove type=button value="x"></span>');
+             + '<input class=sted-clear type=button value=x></span>');
   div.append('<input class=sted-input maxlength=200>'
 	     + '<span class=sted-form></span>');
   this.node = div;
@@ -90,6 +97,7 @@ function StepEditor(controller) {
   this.form = div.one('.sted-form');
   // Make the input field into an autocompleter.
   this.completer = this.autoCompleter();
+  this.reset();
   var inputField = this.input;
   // Selection of anything offered goes through the "selection" path.
   inputField.on('keyup', function(event) {
@@ -106,8 +114,8 @@ function StepEditor(controller) {
       self.tryExecuteRule(true);
     }
   });
-  var remover = div.one('.sted-remove');
-  remover.on('click', function() { controller.hideStepEditor(); });
+  var clearer = div.one('.sted-clear');
+  clearer.on('click', function() { self.reset(); });
 }
 
 StepEditor.prototype.error = function(message) {
@@ -124,6 +132,7 @@ StepEditor.prototype.reset = function() {
   this.input.set('value', this._hint);
   this.input.addClass('hinted');
   this.input.removeClass('hidden');
+  this.completer.hide();
   this.form.setContent('');
   this.form.rule = null;
 };
@@ -242,8 +251,8 @@ StepEditor.prototype.tryExecuteRule = function(reportUndefined) {
   }
   try {
     var result = rule.apply(null, args);
-    this.controller.hideStepEditor();
     this.controller.addStep(result);
+    this.reset();
     return true;
   } catch(error) {
     this.error(error.message);
@@ -424,7 +433,6 @@ function acceptsSelection(step, ruleName) {
  */
 StepEditor.prototype.autoCompleter = function() {
   var self = this;
-  this.reset();
   var input = this.input;
   function focus() {
     if (input.get('value') == self._hint) {
@@ -435,6 +443,12 @@ StepEditor.prototype.autoCompleter = function() {
     ac.sendRequest(input.get('value'));
   }
   input.on('focus', focus);
+  // TODO: Replace this hack with something more principled.
+  // This helps make sure that the autocompleter list disappears when
+  // the input field is no longer focused.
+  input.on('blur', function() {
+    Y.later(1000, null, function() { ac.hide(); });
+  });
   var config = {resultFilters: ['startsWith'],
                 resultHighlighter: 'startsWith',
                 source: Y.bind(this.filteredRuleNames, this),
@@ -445,7 +459,9 @@ StepEditor.prototype.autoCompleter = function() {
 		activateFirstItem: true
   };
   var ac = new Y.AutoComplete(config);
-  ac.on('select', function(e) {
+  // Do this after the event so actions such as updating the input
+  // field override the default action.
+  ac.after('select', function(e) {
     self.handleSelection(e);
   });
   return ac;
