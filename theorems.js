@@ -475,8 +475,8 @@ var ruleInfo = {
       var step4 = rules.reduce(step3, '/right');
       return step4.justify('instEqn', arguments, [b_c]);
     },
-    inputs: {equation: 1, term: 2, name: 3},
-    form: ('Instantiate <input name=name> with <input name=term> '
+    inputs: {equation: 1, term: 2, varName: 3},
+    form: ('Instantiate <input name=varName> with <input name=term> '
 	   + 'in <input name=equation>'),
     comment: ('Instantiates a free variable in an equation.')
   },
@@ -826,9 +826,9 @@ var ruleInfo = {
       var step2 = rules.forallInst(step1, a);
       return step2.justify('sub', arguments, [b]);
     },
-    inputs: {step: 1, term: 2, name: 3},
+    inputs: {step: 1, term: 2, varName: 3},
     form: ('in <input name=step> substitute <input name=term>'
-	   + 'for variable <input name=name> '),
+	   + 'for variable <input name=varName> '),
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.')
   },

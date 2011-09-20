@@ -131,7 +131,10 @@ StepEditor.prototype.reset = function() {
   // Initially the input field displays a hint.
   this.input.set('value', this._hint);
   this.input.addClass('hinted');
+  // If a form was shown, now show the name input field.
   this.input.removeClass('hidden');
+  // Make the user focus again to see the autocompleter.
+  this.input.blur();
   this.completer.hide();
   this.form.setContent('');
   this.form.rule = null;
