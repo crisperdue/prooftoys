@@ -326,7 +326,7 @@ ProofControl.prototype.handleStepClick = function(step) {
  * event bubbling up to the step itself.
  */
 ProofControl.prototype.handleExprClick = function(expr) {
-  if (this.editorVisible) {
+  if (this.editable) {
     var step = getProofStep(expr);
     var selection = this.selection;
     var oldExpr = null;
