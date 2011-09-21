@@ -395,7 +395,7 @@ StepEditor.prototype.offerable = function(ruleName) {
   if (step) {
     // Something is selected.  Check if the rule accepts the
     // selection.
-    return acceptsSelection(step, ruleName);
+    return acceptsSelection(step, ruleName, false);
   } else {
     // No selection, pass only rules that take no step or site.
     var inputs = info.inputs;
@@ -409,12 +409,13 @@ StepEditor.prototype.offerable = function(ruleName) {
  * This matches a step against the inputs descriptor of an inference
  * rule.  The step is the selected proof step, ruleName is the name of
  * the rule to match against.  Only call this if a step or part of a
- * step is selected.
+ * step is selected.  The boolean argument determines whether a term
+ * should be considered acceptable or not.
  *
  * If something is selected, this accepts rules that can use that input
  * as an argument.
  */
-function acceptsSelection(step, ruleName) {
+function acceptsSelection(step, ruleName, acceptTerm) {
   var accept = Y.rules[ruleName].info.inputs;
   if (!accept) {
     // If there is no information about arguments, fail.
@@ -424,7 +425,7 @@ function acceptsSelection(step, ruleName) {
   var expr = step.selection;
   if (expr) {
     return (accept.site
-	    || accept.term
+	    || (acceptTerm && accept.term)
 	    || (accept.bindingSite && step.pathToBinding(function(e) {
 	      return e == expr;
 	    }))
