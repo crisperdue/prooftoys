@@ -242,7 +242,12 @@ StepEditor.prototype.tryExecuteRule = function(reportUndefined) {
   var inputs = rule.info.inputs;
   var args = [];
   this.fillWithSelectedSite(args);
-  this.fillFromForm(args);
+  try {
+    this.fillFromForm(args);
+  } catch(error) {
+    // The form is not ready, fail silently.
+    return false;
+  }
   // Check that the args are all filled in.
   for (var i = 0; i < args.length; i++) {
     if (args[i] === undefined) {
@@ -300,6 +305,8 @@ StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
   var rule = this.form.rule;
   this.form.all('input').each(function(node) {
+    // The "name" attribute of the input should be the name of an input type,
+    // possibly followed by some digits indicating which input.
     var name = node.get('name');
     var match = name.match(/^(.+?)(\d*)$/);
     if (match) {
