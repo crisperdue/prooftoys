@@ -352,7 +352,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testUseDefinition: function() {
         var inf =
-          Y.rules.useDefinition('not', call('not', equal(p, equal(F, p))), '/fn');
+          Y.rules.useDefinition(call('not', equal(p, equal(F, p))), '/fn');
         assertEqual('(F = (p = (F = p)))', inf);
       },
 

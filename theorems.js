@@ -373,12 +373,10 @@ var ruleInfo = {
   // in WFF A.  If the definition is by cases the location should
   // be a call to the named function, with T or F as the argument.
   useDefinition: {
-    // TODO: Modify to just take a wff and path.  Probably reduce
-    // the result automatically.
-    action: function(defName, a, path) {
+    action: function(a, path) {
       var target = a.locate(path);
       if (target instanceof Y.Var) {
-        var result = rules.r(rules.definition(defName), a, path);
+        var result = rules.r(rules.definition(target.name), a, path);
         return result.justify('useDefinition', arguments, [a]);
       } else {
         Y.assert(target instanceof Y.Call && target.arg instanceof Y.Var,
@@ -390,8 +388,8 @@ var ruleInfo = {
         return result.justify('useDefinition', arguments, [a]);
       }
     },
-    inputs: {step: 2},
-    // form: TODO: implement.
+    inputs: {site: 1},
+    form: '',
     comment: ('')
   },
 
@@ -487,7 +485,7 @@ var ruleInfo = {
   eqT: {
     action: function(b) {
       var a3 =
-        rules.useDefinition('forall', rules.axiom('axiom3'), '/right/fn');
+        rules.useDefinition(rules.axiom('axiom3'), '/right/fn');
       var identity = lambda(y, y);
       var step1a = rules.instEqn(a3, identity, f);
       var step1b = rules.instEqn(step1a, identity, g);
@@ -538,8 +536,8 @@ var ruleInfo = {
     action: function() {
       var step1 = rules.axiom('axiomPNeqNotP');
       var step2 = rules.forallInst(step1, F);
-      var step3 = rules.useDefinition('not', step2, '/fn');
-      var step4 = rules.useDefinition('not', step3, '/arg/right/fn');
+      var step3 = rules.useDefinition(step2, '/fn');
+      var step4 = rules.useDefinition(step3, '/arg/right/fn');
       var step5 = rules.rRight(rules.eqT(F), step4, '/right/right');
       var step6 = rules.eqnSwap(step5);
       return step6.justify('r5230FT');
@@ -553,8 +551,8 @@ var ruleInfo = {
     action: function() {
       var step1 = rules.axiom('axiomPNeqNotP');
       var step2 = rules.forallInst(step1, T);
-      var step3 = rules.useDefinition('not', step2, '/fn');
-      var step4 = rules.useDefinition('not', step3, '/arg/right/fn');
+      var step3 = rules.useDefinition(step2, '/fn');
+      var step4 = rules.useDefinition(step3, '/arg/right/fn');
       var step5 = rules.r(rules.r5230FT(), step4, '/right/right');
       var step6 = rules.eqnSwap(step5);
       return step6.justify('r5230TF');
@@ -623,7 +621,7 @@ var ruleInfo = {
                "Must be 'forall': " + target.fn);
       Y.assert(target.arg instanceof Y.Lambda,
                "Must be lambda expression: " + target.arg);
-      var step1 = rules.useDefinition('forall', target, '/fn');
+      var step1 = rules.useDefinition(target, '/fn');
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.reduce(step2, '/left');
       var step4 = rules.reduce(step3, '/right');
@@ -679,8 +677,7 @@ var ruleInfo = {
     var step5b = rules.instEqn(step5a, lambda(x, x), g);
     var step6a = rules.reduce(step5b, '/right/arg/body/left');
     var step6b = rules.reduce(step6a, '/right/arg/body/right');
-    var step6c = rules.useDefinition('forall',
-                                     rules.defFFromBook(),
+    var step6c = rules.useDefinition(rules.defFFromBook(),
                                      '/right/fn');
     var step6d = rules.rRight(step6c, step6b, '/left');
     var step7 = rules.rRight(step6d, step4b, '/right');
@@ -785,7 +782,7 @@ var ruleInfo = {
       var step2 = rules.instEqn(step1, lambda(_var('v'), T), g);
       var step3 = rules.reduce(step2, '/right/arg/body/left');
       var step4 = rules.reduce(step3, '/right/arg/body/right');
-      var step5 = rules.useDefinition('forall', step4, '/right/fn');
+      var step5 = rules.useDefinition(step4, '/right/fn');
       var step6 = rules.bindEqn(rules.eqT(T), x);
       var step7 = rules.rRight(step5, step6, '/');
       var fa = rules.definition('forall');
@@ -899,7 +896,7 @@ var ruleInfo = {
     action: function(a, b) {
       var step1 = rules.toTIsA(a);
       var step2 = rules.rRight(step1, b, '/left');
-      var step3 = rules.useDefinition('-->', step2, '/fn');
+      var step3 = rules.useDefinition(step2, '/fn');
       var step4 = rules.reduce(step3, '');
       return step4.justify('modusPonens', arguments, arguments);
     },
@@ -913,7 +910,7 @@ var ruleInfo = {
   r5230TF_alternate: {
     action: function() {
       var step1 = rules.axiom('axiomTIsNotF');
-      var step2 = rules.useDefinition('not', step1, '/fn');
+      var step2 = rules.useDefinition(step1, '/fn');
       var step3 = rules.eqnSwap(step2);
       return step3.justify('r5230TF');
     },
@@ -1059,7 +1056,7 @@ var ruleInfo = {
             result = rules.r(defn, result, '/right' + _path);
           } else {
             // &&, ||, -->
-            result = rules.useDefinition(fn.name, result, '/right' + _path);
+            result = rules.useDefinition(result, '/right' + _path);
           }
         } else if (fn instanceof Y.Lambda) {
           result = rules.reduce(result, '/right' + _path);

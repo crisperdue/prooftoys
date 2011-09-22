@@ -808,8 +808,8 @@ var hoverHandlers = {
   },
   useDefinition: function(step, action) {
     var args = step.original.ruleArgs;
-    var target = args[1].rendering;
-    var path = args[2];
+    var target = args[0].rendering;
+    var path = args[1];
     action(target.node, 'hover');
     action(target.locate(path).node, 'old');
     action(step.locate(path).node, 'new');
