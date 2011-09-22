@@ -154,7 +154,6 @@ table.proofDisplay {
 .proofStep {
     background-color: #F0F0DA;
     font-family: monospace;
-    font-size: 90%;
     padding: 2px;
     margin: 1px 0px;
 }
@@ -237,17 +236,11 @@ span.ruleName {
   background-color: white;
 }
 
-.sted-hint {
-  font-style: italic;
-  font-size: 90%;
-  color: gray;
-}
-
 /* Text used as a hint, as in a text field */
 .hinted {
   font-style: italic;
   font-size: 90%;
-  color: gray;
+  color: #999;
 }
 
 /* Input for rule name, wff, etc. */

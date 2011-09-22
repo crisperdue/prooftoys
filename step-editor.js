@@ -12,7 +12,6 @@ YUI.add('step-editor', function(Y) {
 // sted-input: The main input field, has auto-completion.
 // sted-label: Text label of the main input field.
 // sted-paste: Button for pasting the selected part of a WFF.
-// sted-hint:  Contains textual hint for use of the input field.
 //
 // Behavior of the hint message:
 // Hint is initially on, but turned off by keyboard focus.
@@ -86,12 +85,9 @@ function StepEditor(controller) {
   this._hint = 'Enter axiom or theorem name; for inference select target first';
   // Create a DIV with the step editor content.
   var div = Y.Node.create('<div class=stepEditor style="clear: both"></div>');
-  div.append('<span style="float: right">'
-             + '<input type=button value="Paste" class=sted-paste'
-             + ' style="visibility: hidden">'
-             + '<input class=sted-clear type=button value=x></span>');
   div.append('<input class=sted-input maxlength=200>'
 	     + '<span class=sted-form></span>');
+  div.append('<span><input class=sted-clear type=button value=x></span>');
   this.node = div;
   this.input = div.one('.sted-input');
   this.form = div.one('.sted-form');
