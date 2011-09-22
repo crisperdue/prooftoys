@@ -70,13 +70,13 @@ function defineCases(name, ifTrue, ifFalse) {
 /**
  * Fetch a simple or by-cases definition from the definitions
  * database.  Throws an exception if an appropriate definition is not
- * found.  Pass true or false or T or F to get the appropriate part of
- * a definition by cases.
+ * found.  Pass true or false or T or F or 'T' or 'F' to get the
+ * appropriate part of a definition by cases.
  */
 function getDefinition(name, tOrF) {
   var defn = definitions[name];
   Y.assert(defn, 'Not defined: ' + name);
-  if (tOrF == null) {
+  if (!tOrF) {
     Y.assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
     return defn;
   } else {
@@ -87,7 +87,9 @@ function getDefinition(name, tOrF) {
     }
     Y.assert(!(defn instanceof Y.Expr),
              'Definition is not by cases: ' + name);
-    return defn[tOrF];
+    var defnCase = defn[tOrF];
+    Y.assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
+    return defnCase;
   }
 }
 

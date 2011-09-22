@@ -35,6 +35,10 @@ YUI.add('step-editor', function(Y) {
 //
 // varName: Name suitable for a variable.
 //
+// string: Arbitrary nonempty string.
+//
+// optString: Optional arbitrary string.
+//
 // site: Term in a step; the rule expects the term's step and path
 //   to the term as inputs.
 //
@@ -47,6 +51,7 @@ YUI.add('step-editor', function(Y) {
 var formTypes = {
   term: true,
   varName: true,
+  string: true,
   funcall: true,
   step: true,
   equation: true,
@@ -233,7 +238,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  *
  * Return true on success, otherwise false.
  */
-StepEditor.prototype.tryExecuteRule = function(reportUndefined) {
+StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   var rule = this.form.rule;
   var inputs = rule.info.inputs;
   var args = [];
@@ -242,12 +247,15 @@ StepEditor.prototype.tryExecuteRule = function(reportUndefined) {
     this.fillFromForm(args);
   } catch(error) {
     // The form is not ready, fail silently.
+    if (reportFailure) {
+      this.error(error.message);
+    }
     return false;
   }
   // Check that the args are all filled in.
   for (var i = 0; i < args.length; i++) {
     if (args[i] === undefined) {
-      if (reportUndefined) {
+      if (reportFailure) {
 	this.error('Undefined argument ' + i);
       }
       return false;
@@ -355,6 +363,14 @@ StepEditor.prototype.parseValue = function(value, type) {
     } else {
       throw new Error('Illegal variable name: ' + value);
     }
+  case 'string':
+    if (value.length) {
+      return value;
+    } else {
+      throw new Error('Empty field');
+    }
+  case 'optString':
+    return value;
   default:
     throw new Error('Type not parseable: ' + type);
   }

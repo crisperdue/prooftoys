@@ -59,10 +59,15 @@ var ruleInfo = {
    * definition is by cases, takes a second argument of T or F
    * as desired.  Throws an exception if not found.
    */
-  definition: function(name, tOrF) {
-    // The derivations are computed in advance, and have
-    // the name or name and true/false as the argument(s).
-    return Y.getDefinition(name, tOrF).justify('definition', arguments);
+  definition: {
+    action: function(name, tOrF) {
+      // The derivations are computed in advance, and have
+      // the name or name and true/false as the argument(s).
+      return Y.getDefinition(name, tOrF).justify('definition', arguments);
+    },
+    inputs: {string: 1, optString: 2},
+    form: ('Definition of <input name=string> '
+	   + 'if by cases enter T or F <input name=optString>')
   },
 
   /**
@@ -105,7 +110,7 @@ var ruleInfo = {
         }
         // Auto-justify input steps.
         if (!equation.ruleName) {
-          equation.assume()
+          equation.assume();
         }
         if (!target.ruleName) {
           target.assume();
@@ -147,7 +152,9 @@ var ruleInfo = {
                           call('forall', lambda(x, call(g, x))));
       return result.justify('axiom1');
     },
-    comment: ('')
+    inputs: {},
+    form: '',
+    comment: ('T and F are all of the booleans')
   },
 
   // (--> (= x y) (= (h x) (h y)))
@@ -156,7 +163,9 @@ var ruleInfo = {
       var result = call('-->', equal(x, y), equal(call(h, x), call(h, y)));
       return result.justify('axiom2');
     },
-    comment: ('')
+    inputs: {},
+    form: '',
+    comment: ('Functions map equal inputs to equal outputs.')
   },
 
   // (= (= f g) (= {x : T} {x : (= (f x) (g x))}))
@@ -167,7 +176,10 @@ var ruleInfo = {
                               lambda(x, equal(call(f, x), call(g, x)))));
       return result.justify('axiom3');
     },
-    comment: ('')
+    inputs: {},
+    form: '',
+    comment: ('Extensionality: functions are equal based on equal results'
+	      + ' on all inputs.')
   },
 
   /**
@@ -197,7 +209,9 @@ var ruleInfo = {
       var result = equal(call('the', equal(y)), y);
       return result.justify('axiom5');
     },
-    comment: ('')
+    inputs: {},
+    form: '',
+    comment: ('Axiom of description.')
   },
 
   // Added by Cris instead of definition of F in book.
@@ -248,22 +262,8 @@ var ruleInfo = {
     return result.justify('defAnd');
   },
 
-  // TODO: Make into a proof display though not really a proof.
-  axioms: {
-    action: function() {
-      rules.axiom('axiom1');
-      rules.axiom('axiom2');
-      rules.axiom('axiom3');
-      rules.axiom('axiom5');
-      return rules.axiom('axiomPNeqNotP');
-    },
-    comment: ('Really just a list of axioms not including axiom 4,'
-              + ' which is a schema with many instances.')
-  },
-
-  // TODO: Make into a proof display though not really a proof.
-  definitions: {
-    action: function() {
+/*
+   List of built-in definitions:
       rules.definition('not');
       rules.definition('forall');
       rules.definition('&&', T);
@@ -271,10 +271,8 @@ var ruleInfo = {
       rules.definition('||', T);
       rules.definition('||', F);
       rules.definition('-->', T);
-      return rules.definition('-->', F);
-    },
-    comment: ('Really just a list of definitions.')
-  },
+      rules.definition('-->', F);
+*/
 
   //
   // Theorems and rules of inference.
@@ -434,7 +432,7 @@ var ruleInfo = {
       return step2.justify('changeVar', arguments, [expr]);
     },
     inputs: {bindingSite: 1, varName: 3},
-    form: ('Rename to: <input name=varName>'),
+    form: ('Rename to <input name=varName>'),
     comment: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
