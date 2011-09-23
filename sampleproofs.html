@@ -190,7 +190,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     useDefinition: {
-      args: ['not', call('not', equal(p, call('not', p))), '/fn'],
+      args: [call('not', equal(p, call('not', p))), '/fn'],
       level: 1
     },
     
