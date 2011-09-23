@@ -39,12 +39,19 @@ var _tautologies = {};
 var ruleInfo = {
 
   /**
-   * The name "given" is used in Inferences to indicate that
+   * The name "assumption" is used in displays to indicate that
    * the result of the inference is an assumption.
    */
-  assumption: function(assumption) {
-    return assumption;
+  assumption: {
+    action: function(assumption) {
+      return assumption.justify('assumption', arguments);
+    },
+    inputs: {term: 1},
+    form: ('Assume <input name=term>')
   },
+
+  // TODO: consider allowing rules.assume(term) in proofs
+  //   as a synonym.
 
   /**
    * Refer to a theorem by looking it up in the database rather
