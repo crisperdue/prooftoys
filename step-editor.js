@@ -92,7 +92,8 @@ function StepEditor(controller) {
   var div = Y.Node.create('<div class=stepEditor style="clear: both"></div>');
   div.append('<input class=sted-input maxlength=200>'
 	     + '<span class=sted-form></span>');
-  div.append('<span><input class=sted-clear type=button value=x></span>');
+  div.append('<input class=sted-clear type=button value=x '
+	     + 'title="Clear the input">');
   this.node = div;
   this.input = div.one('.sted-input');
   this.form = div.one('.sted-form');

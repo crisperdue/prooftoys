@@ -963,6 +963,7 @@ function createRules(ruleInfo) {
 
 //// Export public names.
 
+Y.ProofControl = ProofControl;
 Y.showOrdinals = false;
 Y.addTheorem = addTheorem;
 Y.getTheorem = getTheorem;

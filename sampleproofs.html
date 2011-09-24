@@ -37,7 +37,7 @@ body {
 
 <h1>Prooftoys</h2>
 
-<center><i>Dedicated to promoting mathematical thinking and skills through
+<center><i>Promoting mathematical thinking and skills through
 computer-based tools.</i></center>
 
 <h2>Proof Display</h2>
@@ -68,6 +68,11 @@ reasoning by cases (cases).
 <b>Select a rule or theorem to prove:</b>
 </p>
 <div id=proofs></div>
+
+<div style="margin: 1.5em 0em .5em 1.5em">
+<b>Or interactively create your own proof below:</b>
+</div>
+<div id=proofEditor></div>
 
 <p><b>About the logic.</b>  This page can derive many of the theorems
 and examples of rules of inference of Chapter 5 of Peter Andrews'
@@ -440,6 +445,11 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       Y.one('#selectDiv').appendChild(selector);
       Y.addBottomPanel();
       Y.one('#selector').on('change', selectorChanged);
+
+      // Start an interactive proof editor for the user.
+      var controller = new Y.ProofControl();
+      controller.setEditable(true);
+      Y.one('#proofEditor').append(controller.node);
     });
 
   // For debugging.
