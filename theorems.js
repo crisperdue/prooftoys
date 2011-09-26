@@ -805,6 +805,8 @@ var ruleInfo = {
       var step2 = rules.changeVar(step1, '/arg', _var(v));
       return step2.justify('forallT', arguments);
     },
+    inputs: {varName: 1},
+    form: 'Variable to bind: <input name=varName>',
     comment: ('(forall {v | T})')
   },
 
