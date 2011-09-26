@@ -475,6 +475,7 @@ StepEditor.prototype.autoCompleter = function() {
   });
   var config = {resultFilters: ['startsWith'],
                 resultHighlighter: 'startsWith',
+		resultFormatter: resultFormatter,
                 source: Y.bind(this.filteredRuleNames, this),
                 inputNode: input,
                 render: true,
@@ -490,6 +491,20 @@ StepEditor.prototype.autoCompleter = function() {
   });
   return ac;
 };
+
+/**
+ * Used by the autocompleter to convert highlighted results into
+ * fully-formatted results with hints.  Accepts a query and result list,
+ * return a list of HTML-formatted results.
+ */
+function resultFormatter(query, results) {
+  return Y.Array.map(results, function (result) {
+    var ruleName = result.text;
+    var info = Y.rules[ruleName].info;
+    var hint = info.hint || info.comment || '';
+    return result.highlighted + ' - <i>' + hint + '</i>';
+  });	
+}
 
 /**
  * True for objects with no enumerable properties.

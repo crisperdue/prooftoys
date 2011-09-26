@@ -47,7 +47,8 @@ var ruleInfo = {
       return assumption.justify('assumption', arguments);
     },
     inputs: {term: 1},
-    form: ('Assume <input name=term>')
+    form: ('Assume <input name=term>'),
+    hint: 'enter an assumption'
   },
 
   // TODO: consider allowing rules.assume(term) in proofs
@@ -74,7 +75,8 @@ var ruleInfo = {
     },
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
-	   + 'if by cases enter T or F <input name=optString>')
+	   + 'if by cases enter T or F <input name=optString>'),
+    hint: 'access a definition'
   },
 
   /**
@@ -133,7 +135,8 @@ var ruleInfo = {
     inputs: {equation: 1, site: 2},
     form: ('Replace with right side of step <input name=equation>'),
     comment: ('Replaces an occurrence of an expression with something'
-              + ' it is equal to.')
+              + ' it is equal to.'),
+    hint: 'replace term with equal term'
   },
 
   /**
@@ -149,6 +152,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1, site: 2},
     form: ('Replace with left side of step <input name=equation>'),
+    hint: 'replace term with equal term',
     comment: ('Replaces an occurrence of an expression with something'
               + ' equal to it, replacing right side with left side.')
   },
@@ -172,7 +176,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: ('Functions map equal inputs to equal outputs.')
+    comment: ('equal inputs yield equal outputs.')
   },
 
   // (= (= f g) (= {x : T} {x : (= (f x) (g x))}))
@@ -185,6 +189,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    hint: 'extensionality',
     comment: ('Extensionality: functions are equal based on equal results'
 	      + ' on all inputs.')
   },
@@ -208,6 +213,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v : body} expr <input name=term>',
+    hint: 'apply a function to its argument',
     comment: ('')
   },
 
@@ -218,7 +224,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: ('Axiom of description.')
+    comment: ('axiom of description.')
   },
 
   // Added by Cris instead of definition of F in book.
@@ -244,6 +250,9 @@ var ruleInfo = {
         call('forall', lambda(p, call('not', equal(p, call('not', p)))));
       return result.justify('axiomPNeqNotP');
     },
+    inputs: {},
+    form: '',
+    hint: '(forall {p : not (p = not p)})',
     comment: ('')
   },
 
@@ -269,17 +278,6 @@ var ruleInfo = {
     return result.justify('defAnd');
   },
 
-/*
-   List of built-in definitions:
-      rules.definition('not');
-      rules.definition('forall');
-      rules.definition('&&', T);
-      rules.definition('&&', F);
-      rules.definition('||', T);
-      rules.definition('||', F);
-      rules.definition('-->', T);
-      rules.definition('-->', F);
-*/
 
   //
   // Theorems and rules of inference.
@@ -295,6 +293,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to prove equal to itself: <input name=term>',
+    hint: '(A = A)',
     comment: 'Derives A = A.'
   },
 
@@ -318,6 +317,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Swap sides in step <input name=equation>',
+    hint: 'from A = B to B = A',
     comment: 'From A = B derives B = A'
   },
 
@@ -358,6 +358,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Apply both sides of step <input name=equation>'
 	   + ' to term <input name=term>'),
+    hint: 'from F = G to (F A) = (G A)',
     comment: 'Given f = g, derive (f A) = (g A)'
   },
 
@@ -371,6 +372,7 @@ var ruleInfo = {
     inputs: {term: 1, equation: 2},
     form: ('Apply function <input name=term>'
 	   + ' to both sides of step <input name=equation>'),
+    hint: 'from A = B to (F A) = (F B)',
     comment: 'Given B = C derives (f B) = (f C)'
   },
 
@@ -395,6 +397,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
+    hint: 'replace name with its definition',
     comment: ('')
   },
 
@@ -416,6 +419,7 @@ var ruleInfo = {
     },
     inputs: {reducible: 1},
     form: '',
+    hint: 'apply a function to its argument',
     comment: ('Substitutes an actual argument for the formal variable'
               + ' in one function call of a WFF.')
   },
@@ -440,6 +444,7 @@ var ruleInfo = {
     },
     inputs: {bindingSite: 1, varName: 3},
     form: ('Rename to <input name=varName>'),
+    hint: 'rename bound variable',
     comment: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
@@ -464,6 +469,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1, varName: 2},
     form: ('Bind variable <input name=varName> in step <input name=equation>'),
+    hint: 'embed both sides in a variable binding',
     comment: ('Wraps each side of an equation in a function'
               + ' using the bound variable of your choice.')
   },
@@ -483,6 +489,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2, varName: 3},
     form: ('Instantiate <input name=varName> with <input name=term> '
 	   + 'in step <input name=equation>'),
+    hint: 'substitute for a variable in both sides',
     comment: ('Instantiates a free variable in an equation.')
   },
 
@@ -508,6 +515,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Term to prove equal to itself: <input name=term>'),
+    hint: '(T = (A = A))',
     comment: ('Proves T = [B = B].')
   },
 
@@ -532,6 +540,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Introduce "T = " into step <input name=equation>',
+    hint: 'from (A = B) to (T = (A = B))',
     comment: ('From [A = B] deduce T = [A = B].')
   },
 
@@ -641,6 +650,7 @@ var ruleInfo = {
     }}},
     form: ('In step <input name=step> instantiate bound var'
 	   + ' with term <input name=term>'),
+    hint: 'instantiate "forall"',
     comment: ('In a "forall", instantiates the bound variable with'
               + ' a given term.')
   },
@@ -719,6 +729,7 @@ var ruleInfo = {
     form: ('Cases: true case step <input name=equation1>'
 	   + ' false case step <input name=equation2>,'
 	   + ' use variable <input name=varName>'),
+    hint: 'proof by cases, for equations',
     comment: ('Given a function expression of the form {v | A = B},'
               + ' infers (forall {x | A = B}) assuming A = B is proven'
               + ' for the substitutions with v = T and v = F.')
@@ -734,6 +745,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Term to use in ((T = A) = A): <input name=term>'),
+    hint: 'prove ((T = A) = A)',
     comment: ('For any expression A derives [T = A] = A.')
   },
 
@@ -757,6 +769,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Introduce "T = " into step <input name=step>',
+    hint: 'from A to (T = A)',
     comment: ('From A derives T = A')
   },
 
@@ -776,6 +789,7 @@ var ruleInfo = {
       return (left instanceof Y.Var && left.name == 'T');
     }}},
     form: 'Eliminate "T = " from step <input name=equation>',
+    hint: 'from (T = A) to A',
     comment: ('From T = A derives A')
   },
 
@@ -807,7 +821,7 @@ var ruleInfo = {
     },
     inputs: {varName: 1},
     form: 'Variable to bind: <input name=varName>',
-    comment: ('(forall {v | T})')
+    comment: ('(forall {v : T})')
   },
 
   // 5220.  The variable may be given as a name string, which it
@@ -822,6 +836,7 @@ var ruleInfo = {
     },
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable <input name=varName>'),
+    hint: 'from A to (forall {x : A})',
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.')
   },
@@ -837,6 +852,7 @@ var ruleInfo = {
     inputs: {step: 1, term: 2, varName: 3},
     form: ('In step <input name=step> substitute <input name=term>'
 	   + 'for variable <input name=varName> '),
+    hint: 'substitute for free variable',
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.')
   },
@@ -893,6 +909,7 @@ var ruleInfo = {
     form: ('Cases: true case step <input name=step1>,'
 	   + ' false case <input name=step2>,'
 	   + ' use variable name <input name=name>'),
+    hint: 'proof by cases',
     comment: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.')
   },
@@ -910,6 +927,7 @@ var ruleInfo = {
     inputs: {step: 1, implication: 2},
     form: ('Modus ponens: hypothesis step <input name=step>,'
 	   + ' implication in step <input name=implication>'),
+    hint: 'modus ponens',
     comment: ('Modus Ponens.  Given A and A --> B derives B.')
   },
 
@@ -1124,6 +1142,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Enter tautology: <input name=term>',
+    hint: 'enter tautology',
     comment: ('Tautology decider.')
   },
 
@@ -1139,6 +1158,7 @@ var ruleInfo = {
     },
     inputs: {step: [1, 2]},
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
+    hint: 'from A and B to (A && B)',
     comment: ('Given a and b, derive a && b')
   },
 
