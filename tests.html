@@ -367,7 +367,7 @@ YUI({filter: null, insertBefore: 'styles'})
 	var step = Y.rules.eqT(call(f, x));
         assertEqual('(T = ((f x) = (f x)))', step);
 	var controller = Y.renderInference(step, Y.one(document.body));
-        var step2 = Y.rules.sub(step.details, y, x);
+        var step2 = Y.rules.instVar(step.details, y, x);
         // Add a step and immediately remove it.  See that at least
         // there are no exceptions.
         controller.addStep(step2);
@@ -408,8 +408,8 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('({x : f} = {x : g})', inf);
       },
 
-      testForallInst: function() {
-        var inf = Y.rules.forallInst(call('forall', lambda(y, call(p, y))),
+      testInstForall: function() {
+        var inf = Y.rules.instForall(call('forall', lambda(y, call(p, y))),
                                    call(f, y))
         assertEqual('(p (f y))', inf);
       },
@@ -448,21 +448,21 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('p', inf);
       },
 
-      testUGen: function() {
-        var inf = Y.rules.uGen(call(p, y), y);
+      testAddForall: function() {
+        var inf = Y.rules.addForall(call(p, y), y);
         assertEqual('(forall {y : (p y)})', inf);
       },
 
-      testSub: function() {
-        var inf = Y.rules.sub(call(p, y), call(f, x), y);
+      testInstVar: function() {
+        var inf = Y.rules.instVar(call(p, y), call(f, x), y);
         assertEqual('(p (f x))', inf);
       },
 
-      testSubAll: function() {
+      testInstMultiVars: function() {
         var map = {p: Y.parse('forall {x | T || b}'),
                    q: Y.parse('forall {x | b}')
         };
-        var inf = Y.rules.subAll(implies(p, call('||', T, q)), map);
+        var inf = Y.rules.instMultiVars(implies(p, call('||', T, q)), map);
         assertEqual('((forall {x : (T || b)}) --> (T || (forall {x : b})))',
                     inf);
       },

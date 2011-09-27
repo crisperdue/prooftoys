@@ -44,7 +44,7 @@ computer-based tools.</i></center>
 <h2>Proof Display</h2>
 
 <p><b>Introduction.</b>  
-Peter Andrews' Q<sub>0</sub> is an exceptionally simple and elegant
+Peter Andrews' Q<instVar>0</instVar> is an exceptionally simple and elegant
 logic that has the power to develop most of mathematics, comparable to
 first order logic plus set theory.  This page is implemented by the
 proof display component of a proof assistant for a version of this
@@ -60,7 +60,7 @@ that are part of the core library for the logic.
 here are intermediate results, but they help to demonstrate the core
 concepts and how proofs are built from them.  Examples of some
 practical rules of inference are also here, such as universal
-generalization (uGen), universal instantiation (forallInst), and
+generalization (addForall), universal instantiation (instForall), and
 reasoning by cases (cases).
 
 <p><i>This page is supported in recent versions of Firefox and Chrome.</i>
@@ -111,7 +111,7 @@ applicable.  Note that even these very basic proofs use derived rules
 of inference that you can also view.
 
 <p>When the mouse is over a line, that line and lines it uses
-are highlighted.  For Rule R and a lambda reductions ("reduce"), key
+are highlighted.  For Rule R and a lambda reductions ("apply"), key
 parts of the lines are also highlighted for quicker identification.
 
 <p>New! (2011/06/01) Click on the name of the rule of inference or theorem
@@ -190,7 +190,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       level: 1
     },
     
-    reduce: {
+    apply: {
       args: [equal(p, call(lambda(x, T), y)), '/right'],
       level: 1
     },
@@ -231,7 +231,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
              call('=', q, r)]
     },
     
-    forallInst: {
+    instForall: {
       args: [call('forall', lambda(y, call(p, y))),
              call(f, y)],
       level: 1
@@ -272,17 +272,17 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       args: [_var('v')]
     },
 
-    uGen: {
+    addForall: {
       args: [call(p, y), y],
       level: 1
     },
     
-    sub: {
+    instVar: {
       args: [call(p, y), call(f, x), y],
       level: 1
     },
     
-    subAll: {
+    instMultiVars: {
       args: [implies(p, call('||', T, q)),
              ({p: Y.parse('forall {x : T || b}'),
                q: Y.parse('forall {x : b}')
@@ -418,8 +418,8 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       Y.showOrdinals = queryData.ordinals;
       editable = queryData.edit != undefined;
       if (ruleName == undefined) {
-        // Default to displaying forallInst.
-        ruleName = 'forallInst';
+        // Default to displaying instForall.
+        ruleName = 'instForall';
       }
       displayProof(ruleName);
       var selector = '<select id=selector>\n<option value="">-- choose --';

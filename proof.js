@@ -791,7 +791,7 @@ var hoverHandlers = {
                    step.getRight(),
                    function(expr) { action(expr.node, 'new'); });
   },
-  reduce: function(step, action) {
+  apply: function(step, action) {
     var args = step.original.ruleArgs;
     var dep = args[0].rendering;
     var path = args[1];
@@ -828,7 +828,7 @@ var hoverHandlers = {
                   step,
                   function(expr) { action(expr.node, 'new'); });
   },
-  sub: function(step, action) {
+  instVar: function(step, action) {
     var args = step.original.ruleArgs;
     // Input step.
     var input = args[0].rendering;
@@ -840,8 +840,8 @@ var hoverHandlers = {
                   step,
                   function(expr) { action(expr.node, 'new'); });
   },
-  // TODO: subAll
-  forallInst: function(step, action) {
+  // TODO: instMultiVars
+  instForall: function(step, action) {
     var args = step.original.ruleArgs;
     // Input expression.
     var input = args[0].rendering;

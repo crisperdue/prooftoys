@@ -25,8 +25,8 @@ var _tautologies = {};
 //   depending on the situation.
 // Universal instantiation (5215) - by rule R.
 // Rule T (5219) - by rule RR.
-// uGen (5220) - by rule Replace.
-// sub and subAll (5221) - uses uGen.
+// addForall (5220) - by rule Replace.
+// instVar and instMultiVars (5221) - uses addForall.
 // cases (5222) - uses Replace.
 // modusPonens (5224) - uses Replace.
 // tautInst (Rule P, 5234) - uses modusPonens.
@@ -417,7 +417,7 @@ var ruleInfo = {
    * with the subexpression identified by a path (within a theorem).
    * Rule R packaged for convenience.
    */
-  reduce: {
+  apply: {
     action: function(expr, path) {
       path = Y.path(path);
       var target = expr.locate(path);
@@ -426,7 +426,7 @@ var ruleInfo = {
                'Reduce needs a call to a lambda, got: ' + target);
       var equation = rules.axiom4(target);
       var result = rules.r(equation, expr, path);
-      return result.justify('reduce', arguments, [expr]);
+      return result.justify('apply', arguments, [expr]);
     },
     inputs: {reducible: 1},
     form: '',
@@ -493,8 +493,8 @@ var ruleInfo = {
     action: function(b_c, a, v) {
       var bound = rules.bindEqn(b_c, v);
       var step2 = rules.applyBoth(bound, a);
-      var step3 = rules.reduce(step2, '/left');
-      var step4 = rules.reduce(step3, '/right');
+      var step3 = rules.apply(step2, '/left');
+      var step4 = rules.apply(step3, '/right');
       return step4.justify('instEqn', arguments, [b_c]);
     },
     inputs: {equation: 1, term: 2, varName: 3},
@@ -515,13 +515,13 @@ var ruleInfo = {
       var step2a = rules.eqSelf(identity);
       // Eliminate the LHS of step2a:
       var step2b = rules.r(step1b, step2a, '/');
-      var step2c = rules.reduce(step2b, '/right/body/left');
-      var step2d = rules.reduce(step2c, '/right/body/right');
+      var step2c = rules.apply(step2b, '/right/body/left');
+      var step2d = rules.apply(step2c, '/right/body/right');
       // TODO: Make the steps to here a lemma.
       // TODO: Make the following steps a simple rule of inference.
       var step3 = rules.applyBoth(step2d, b);
-      var step4a = rules.reduce(step3, '/left');
-      var step4b = rules.reduce(step4a, '/right');
+      var step4a = rules.apply(step3, '/left');
+      var step4b = rules.apply(step4a, '/right');
       return step4b.justify('eqT', arguments, []);
     },
     inputs: {term: 1},
@@ -560,7 +560,7 @@ var ruleInfo = {
   r5230FT: {
     action: function() {
       var step1 = rules.axiom('axiomPNeqNotP');
-      var step2 = rules.forallInst(step1, F);
+      var step2 = rules.instForall(step1, F);
       var step3 = rules.useDefinition(step2, '/fn');
       var step4 = rules.useDefinition(step3, '/arg/right/fn');
       var step5 = rules.rRight(rules.eqT(F), step4, '/right/right');
@@ -575,7 +575,7 @@ var ruleInfo = {
   r5230TF: {
     action: function() {
       var step1 = rules.axiom('axiomPNeqNotP');
-      var step2 = rules.forallInst(step1, T);
+      var step2 = rules.instForall(step1, T);
       var step3 = rules.useDefinition(step2, '/fn');
       var step4 = rules.useDefinition(step3, '/arg/right/fn');
       var step5 = rules.r(rules.r5230FT(), step4, '/right/right');
@@ -590,16 +590,16 @@ var ruleInfo = {
   r5211: function() {
     var step1 = rules.definition('&&', T);
     var step2 = rules.applyBoth(step1, T);
-    var step3 = rules.reduce(step2, '/right');
+    var step3 = rules.apply(step2, '/right');
     return step3.justify('r5211');
   },
 
   // Book version of r5211.
   r5211Book: function() {
     var step1 = rules.instEqn(rules.axiom('axiom1'), lambda(y, T), g);
-    var step2a = rules.reduce(step1, '/left/left');
-    var step2b = rules.reduce(step2a, '/left/right');
-    var step2c = rules.reduce(step2b, '/right/arg/body');
+    var step2a = rules.apply(step1, '/left/left');
+    var step2b = rules.apply(step2a, '/left/right');
+    var step2c = rules.apply(step2b, '/right/arg/body');
     var step3a = rules.eqT(lambda(x, T));
     var step3b = rules.rRight(rules.defForall(), step3a, '/right/fn');
     var step4 = rules.rRight(step3b, step2c, '/right');
@@ -640,7 +640,7 @@ var ruleInfo = {
   // all occurrences of x.  Uses no book-specific definitions,
   // and relies only on theorem "T" and 5200.
   // This is 5215.
-  forallInst: {
+  instForall: {
     action: function(target, expr) {
       Y.assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
                "Must be 'forall': " + target.fn);
@@ -648,11 +648,11 @@ var ruleInfo = {
                "Must be lambda expression: " + target.arg);
       var step1 = rules.useDefinition(target, '/fn');
       var step2 = rules.applyBoth(step1, expr);
-      var step3 = rules.reduce(step2, '/left');
-      var step4 = rules.reduce(step3, '/right');
+      var step3 = rules.apply(step2, '/left');
+      var step4 = rules.apply(step3, '/right');
       // Do not use fromTIsA, it depends on this.
       var step5 = rules.r(step4, rules.theorem('t'), '/');
-      return step5.justify('forallInst', arguments, [target]);
+      return step5.justify('instForall', arguments, [target]);
     },
     inputs: {step: 1, term: 2, condition: {1: function(target) {
       return (target instanceof Y.Call
@@ -671,21 +671,21 @@ var ruleInfo = {
     var step1 = rules.axiom('axiom1');
     var step2 =
       rules.instEqn(step1, lambda(x, equal(call('&&', T, x), x)), g);
-    var step3 = rules.reduce(step2, '/left/left');
-    var step4 = rules.reduce(step3, '/left/right');
-    var step5 = rules.reduce(step4, '/right/arg/body');
+    var step3 = rules.apply(step2, '/left/left');
+    var step4 = rules.apply(step3, '/left/right');
+    var step5 = rules.apply(step4, '/right/arg/body');
     var step6 = rules.applyBoth(rules.definition('&&', T), F);
-    var step7 = rules.reduce(step6, '/right');
+    var step7 = rules.apply(step6, '/right');
     var step8 = rules.r5213(rules.theorem('r5211'), step7);
     var step9 = rules.r(step5, step8, '/');
-    var step10 = rules.forallInst(step9, a);
+    var step10 = rules.instForall(step9, a);
     return step10.justify('andTBook', arguments);
   },
 
   // 5216, using the definition of "true and".  Not used.
   andT: function(a) {
     var step1 = rules.applyBoth(rules.definition('&&', T), a);
-    var step2 = rules.reduce(step1, '/right');
+    var step2 = rules.apply(step1, '/right');
     return step2;
   },
 
@@ -693,16 +693,16 @@ var ruleInfo = {
   r5217Book: function() {
     var step1 = rules.instEqn(rules.axiom('axiom1'),
                               lambda(x, equal(T, x)), g);
-    var step2a = rules.reduce(step1, '/left/left');
-    var step2b = rules.reduce(step2a, '/left/right');
-    var step2c = rules.reduce(step2b, '/right/arg/body');
+    var step2a = rules.apply(step1, '/left/left');
+    var step2b = rules.apply(step2a, '/left/right');
+    var step2c = rules.apply(step2b, '/right/arg/body');
     var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
     var step4a = rules.andT(equal(T, F));
     var step4b = rules.r(step4a, step3, '/left');
     var step5a = rules.instEqn(rules.axiom('axiom3'), lambda(x, T), f);
     var step5b = rules.instEqn(step5a, lambda(x, x), g);
-    var step6a = rules.reduce(step5b, '/right/arg/body/left');
-    var step6b = rules.reduce(step6a, '/right/arg/body/right');
+    var step6a = rules.apply(step5b, '/right/arg/body/left');
+    var step6b = rules.apply(step6a, '/right/arg/body/right');
     var step6c = rules.useDefinition(rules.defFFromBook(),
                                      '/right/fn');
     var step6d = rules.rRight(step6c, step6b, '/left');
@@ -729,11 +729,11 @@ var ruleInfo = {
       var gen = caseT.generalizeTF(caseF, newVar);
       var lexpr = lambda(newVar, gen);
       var step4 = rules.instEqn(rules.axiom('axiom1'), lexpr, g);
-      var step5 = rules.reduce(step4, '/right/arg/body');
-      var step6 = rules.reduce(step5, '/left/right');
-      var step7 = rules.reduce(step6, '/left/left');
+      var step5 = rules.apply(step4, '/right/arg/body');
+      var step6 = rules.apply(step5, '/left/right');
+      var step7 = rules.apply(step6, '/left/left');
       var step8 = rules.r(step7, step3, '');
-      var step9 = rules.forallInst(step8, v);
+      var step9 = rules.instForall(step8, v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
     inputs: {equation: [1, 2], name: 3},
@@ -810,8 +810,8 @@ var ruleInfo = {
     action: function() {
       var step1 = rules.instEqn(rules.axiom('axiom3'), lambda(x, T), f);
       var step2 = rules.instEqn(step1, lambda(_var('v'), T), g);
-      var step3 = rules.reduce(step2, '/right/arg/body/left');
-      var step4 = rules.reduce(step3, '/right/arg/body/right');
+      var step3 = rules.apply(step2, '/right/arg/body/left');
+      var step4 = rules.apply(step3, '/right/arg/body/right');
       var step5 = rules.useDefinition(step4, '/right/fn');
       var step6 = rules.bindEqn(rules.eqT(T), x);
       var step7 = rules.rRight(step5, step6, '/');
@@ -822,7 +822,7 @@ var ruleInfo = {
     comment: ('(forall {v | T})')
   },
 
-  // Helper for uGen
+  // Helper for addForall
   // Derives (forall {v : T}) given a variable v.
   forallT: {
     action: function(v) {
@@ -837,13 +837,13 @@ var ruleInfo = {
 
   // 5220.  The variable may be given as a name string, which it
   // converts internally to a variable.
-  uGen: {
+  addForall: {
     action: function(a, v) {
       v = _var(v);
       var step1 = rules.toTIsA(a);
       var step2 = rules.forallT(v);
       var step3 = rules.r(step1, step2, '/arg/body');
-      return step3.justify('uGen', arguments, [a]);
+      return step3.justify('addForall', arguments, [a]);
     },
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable <input name=varName>'),
@@ -854,11 +854,11 @@ var ruleInfo = {
 
   // 5221 (one variable), in wff B substitute term A for variable v,
   // which may also be a string, which will be converted to a variable.
-  sub: {
+  instVar: {
     action: function(b, a, v) {
-      var step1 = rules.uGen(b, v);
-      var step2 = rules.forallInst(step1, a);
-      return step2.justify('sub', arguments, [b]);
+      var step1 = rules.addForall(b, v);
+      var step2 = rules.instForall(step1, a);
+      return step2.justify('instVar', arguments, [b]);
     },
     inputs: {step: 1, term: 2, varName: 3},
     form: ('In step <input name=step> substitute <input name=term>'
@@ -871,19 +871,19 @@ var ruleInfo = {
   // More like the book's 5221.  For each name in the map (a string),
   // substitutes the expression associated with it in the map, using
   // simultaneous substitution.
-  subAll: {
+  instMultiVars: {
     action: function(b, map) {
       var namesReversed = [];
       var step = b;
       for (var name in map) {
-	step = rules.uGen(step, name);
+	step = rules.addForall(step, name);
 	namesReversed.unshift(name);
       }
       // Then substitute for the renamed variables.
       Y.Array.each(namesReversed, function(name) {
-        step = rules.forallInst(step, map[name]);
+        step = rules.instForall(step, map[name]);
       });
-      return step.justify('subAll', arguments, [b]);
+      return step.justify('instMultiVars', arguments, [b]);
     },
     inputs: {step: 1},
     // TODO: form: ...
@@ -910,10 +910,10 @@ var ruleInfo = {
       var step3 = rules.theorem('r5212');
       var step4a = rules.r(step1c, step3, '/left');
       var step4b = rules.r(step2c, step4a, '/right');
-      var step5 = rules.sub(rules.axiom1(), lambda(newVar, gen), g);
+      var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), g);
       var step6 = rules.r(step5, step4b, '/');
-      var step7a = rules.forallInst(step6, v);
-      var step7b = rules.reduce(step7a, '/');
+      var step7a = rules.instForall(step6, v);
+      var step7b = rules.apply(step7a, '/');
       return step7b.justify('cases', arguments, [caseT, caseF]);
     },
     inputs: {step: [1, 2], name: 3},
@@ -932,7 +932,7 @@ var ruleInfo = {
       var step1 = rules.toTIsA(a);
       var step2 = rules.rRight(step1, b, '/left');
       var step3 = rules.useDefinition(step2, '/fn');
-      var step4 = rules.reduce(step3, '');
+      var step4 = rules.apply(step3, '');
       return step4.justify('modusPonens', arguments, arguments);
     },
     inputs: {step: 1, implication: 2},
@@ -958,11 +958,11 @@ var ruleInfo = {
   // TODO: Is there a more elegant proof of this?
   r5230FT_alternate: {
     action: function() {
-      var step1a = rules.sub(rules.axiom('axiom2'), F, x);
-      var step1b = rules.sub(step1a, T, y);
-      var step1c = rules.sub(step1b, lambda(x, equal(x, F)), h);
-      var step2a = rules.reduce(step1c, '/right/left');
-      var step2b = rules.reduce(step2a, '/right/right');
+      var step1a = rules.instVar(rules.axiom('axiom2'), F, x);
+      var step1b = rules.instVar(step1a, T, y);
+      var step1c = rules.instVar(step1b, lambda(x, equal(x, F)), h);
+      var step2a = rules.apply(step1c, '/right/left');
+      var step2b = rules.apply(step2a, '/right/right');
       var step3aa = rules.eqT(F);
       var step3a = rules.rRight(step3aa, step2b, '/right/left');
       var step3bb = rules.r5218(F);
@@ -975,12 +975,12 @@ var ruleInfo = {
       // First with x = F.
       var step11 = rules.definition('-->', F);
       var step12 = rules.applyBoth(step11, F);
-      var step13 = rules.reduce(step12, '/right');
+      var step13 = rules.apply(step12, '/right');
       var step14 = rules.r(step3aa, step13, '/right');
       // Then with x = T.
       var step21 = rules.definition('-->', T);
       var step22 = rules.applyBoth(step21, F);
-      var step23 = rules.reduce(step22, '/right');
+      var step23 = rules.apply(step22, '/right');
       var step24 = rules.r(rules.definition('not'),
                            rules.axiom('axiomTIsNotF'),
                            '/fn');
@@ -990,7 +990,7 @@ var ruleInfo = {
                               equal(call('-->', F, F), equal(F, F)),
                               x);
       // Then instantiate [F = T] for x.
-      var step6 = rules.sub(step5, equal(F, T), x);
+      var step6 = rules.instVar(step5, equal(F, T), x);
       // And use the fact that [F = T] --> F
       var step7 = rules.rRight(step4, step6, '/left');
       var step8 = rules.fromTIsA(step7);
@@ -1038,11 +1038,11 @@ var ruleInfo = {
       var step1 = rules.r5218(x);
       var step2 = rules.eqSelf(x);
       var step3 = rules.applyToBoth(lambda(x, x), step2);
-      var step4 = rules.reduce(step3, '/left');
+      var step4 = rules.apply(step3, '/left');
       var step5 = rules.r(step4, step1, '/right');
-      var step6 = rules.uGen(step5, x);
-      var step7 = rules.sub(rules.axiom('axiom3'), equal(T), f);
-      var step8 = rules.sub(step7, lambda(x, x), g);
+      var step6 = rules.addForall(step5, x);
+      var step7 = rules.instVar(rules.axiom('axiom3'), equal(T), f);
+      var step8 = rules.instVar(step7, lambda(x, x), g);
       var step9 = rules.rRight(step8, step6, '');
       return step9.justify('trueEquals', arguments);
     },
@@ -1095,7 +1095,7 @@ var ruleInfo = {
             result = rules.useDefinition(result, '/right' + _path);
           }
         } else if (fn instanceof Y.Lambda) {
-          result = rules.reduce(result, '/right' + _path);
+          result = rules.apply(result, '/right' + _path);
         } else {
           Y.assert(false, 'Unexpected expression: ' + target);
         }
@@ -1178,7 +1178,7 @@ var ruleInfo = {
   tautInst: {
     action: function(tautology, map) {
       var step1 = rules.tautology(tautology);
-      var step2 = rules.subAll(step1, map);
+      var step2 = rules.instMultiVars(step1, map);
       return step2.justify('tautInst', arguments);
     },
     comment: ('A substitution instance of a tautology is a theorem.')
@@ -1193,13 +1193,10 @@ var ruleInfo = {
         q: call('forall', lambda(v, b))
       };
       var step1 = rules.tautInst(implies(p, call('||', T, q)), map1);
-
       var step2 = rules.tautInst(implies(p, call('||', F, p)),
                                  ({p: call('forall', lambda(v, b))}));
-
       var step3 = rules.tautInst(equal(p, call('||', F, p)),
                                  ({p: b}));
-                            
       var step4 = rules.r(step3, step2, '/left/arg/body');
 
       var freeNames = Y.merge(a.freeNames(), b.freeNames());
@@ -1210,7 +1207,7 @@ var ruleInfo = {
       var caseF = implies(call('forall', lambda(v, call('||', F, b))),
                           call('||', F, call('forall', lambda(v, b))));
       var step9 = rules.cases(caseT, caseF, p0);
-      var step10 = rules.sub(step9, a, p0);
+      var step10 = rules.instVar(step9, a, p0);
       return step10.justify('r5235', arguments);
     },
     inputs: {varName: 1, term: [2, 3]},
@@ -1262,7 +1259,7 @@ var ruleInfo = {
       var step1 = rules.tautology(tautology);
       var tautologous = implies(step2, b);
       var substitution = Y.matchAsSchema(tautology, tautologous);
-      var step3 = rules.subAll(step1, substitution);
+      var step3 = rules.instMultiVars(step1, substitution);
       var step4 = rules.modusPonens(step2, step3);
       return step4.justify('p', arguments, [a1, a2]);
     },
@@ -1305,11 +1302,11 @@ var ruleInfo = {
       }
       var step1 = rules.axiom('axiom3');
       var step2 = rules.changeVar(step1, '/right/arg', v);
-      var step3 = rules.subAll(step2,
+      var step3 = rules.instMultiVars(step2,
                                ({f: lambda(v, a),
                                  g: lambda(v, b)}));
-      var step4 = rules.reduce(step3, '/right/arg/body/left');
-      var step5 = rules.reduce(step4, '/right/arg/body/right');
+      var step4 = rules.apply(step3, '/right/arg/body/left');
+      var step5 = rules.apply(step4, '/right/arg/body/right');
       // Do not "derive", leave this inline.
       return step5;
     },
@@ -1345,17 +1342,18 @@ var ruleInfo = {
         boundNameList.push(name);
       }
       var g = target.replace(path, function(expr) { return texpr; });
-      var step2 = rules.subAll(step1,
-                               ({x: aBound, y: bBound, h: lambda(t, g)}));
-      var step3 = rules.reduce(step2, '/right/left');
+      var step2 =
+	rules.instMultiVars(step1,
+			    ({x: aBound, y: bBound, h: lambda(t, g)}));
+      var step3 = rules.apply(step2, '/right/left');
       var step4 = step3;
       for (var i = 0; i < boundNameList.length; i++) {
-        step4 = rules.reduce(step4, '/right/left/body/right');
+        step4 = rules.apply(step4, '/right/left/body/right');
       }
-      var step5 = rules.reduce(step4, '/right/right');
+      var step5 = rules.apply(step4, '/right/right');
       var step6 = step5;
       for (var i = 0; i < boundNameList.length; i++) {
-        step6 = rules.reduce(step6, '/right/right/body/right');
+        step6 = rules.apply(step6, '/right/right/body/right');
       }
       if (boundNameList.length == 0) {
         return step6.justify('r5239', arguments);
@@ -1443,18 +1441,18 @@ var ruleInfo = {
     var a2 = rules.axiom2();
     var a3 = rules.axiom3();
     var step1 = rules.applyBoth(rules.defAnd(), T);
-    var step2a = rules.reduce(step1, '/right');
+    var step2a = rules.apply(step1, '/right');
     var step2b = rules.applyBoth(step2a, F);
-    var step2c = rules.reduce(step2b, '/right');
+    var step2c = rules.apply(step2b, '/right');
     var step3 = rules.instEqn(a3, step2c.locate('/right/left'), f);
     var step4 = rules.instEqn(step3, step2c.locate('/right/right'), g);
-    var step5 = rules.reduce(step4, '/right/arg/body/left');
-    var step6 = rules.reduce(step5, '/right/arg/body/right');
+    var step5 = rules.apply(step4, '/right/arg/body/left');
+    var step6 = rules.apply(step5, '/right/arg/body/right');
     var step7 = rules.applyBoth(fa, step6.locate('/right/arg'));
     var step8 = rules.instEqn(a3, step7.locate('/right/left'), f);
     var step9 = rules.instEqn(step8, step7.locate('/right/right'), g);
-    var step10 = rules.reduce(step9, '/right/arg/body/left');
-    var step11 = rules.reduce(step10, '/right/arg/body/right');
+    var step10 = rules.apply(step9, '/right/arg/body/left');
+    var step11 = rules.apply(step10, '/right/arg/body/right');
     var step12 = rules.r5218(step11.locate('/right/arg/body/right'));
     var step13 = rules.r(step12, step11, '/right/arg/body');
     return step13.justify('funWithAnd');
