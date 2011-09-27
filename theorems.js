@@ -17,7 +17,7 @@ var allT = lambda(x, T);
 // for proved tautologies.  Private to the tautology rule.
 var _tautologies = {};
 
-// List of rules that work with hypotheses.
+// TODO: List of rules that should work with hypotheses.
 //
 // This covers rules that precede the deduction theorem (5240).
 //
@@ -36,6 +36,17 @@ var _tautologies = {};
 // Map from inference rule name to a JavaScript function that
 // implements it.  The functions may use a global variable
 // named "rules" that should have all of these functions in it.
+// Properties here for each name are:
+//
+// action: function implementing the inference rule.
+// inputs: map from type to argument number(s), either a single
+//   number or an array if more than one such argument.
+// form: HTML template for the rule's input form to be presented
+//   by the step editor.
+// hint: HTML text for the hint to be displayed by the autocompleter
+//   of the step editor.
+// comment: comment to become the title of mentions of the rule name
+//   in proof displays.
 var ruleInfo = {
 
   /**

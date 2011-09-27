@@ -241,7 +241,6 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   var rule = this.form.rule;
-  var inputs = rule.info.inputs;
   var args = [];
   this.fillWithSelectedSite(args);
   try {
@@ -396,8 +395,15 @@ StepEditor.prototype.filteredRuleNames = function() {
 
 /**
  * Returns true iff the rule name can be offered by autocompletion policy.
+ * Only rules with a "form" property are offerable at all.  If so --
  *
- * The given ruleName must be in Y.rules.
+ * If the proof has a current selection, the rule is offerable if
+ * acceptsSelection returns true given the selected step, rule name, and
+ * third argument of false.
+ *
+ * Otherwise only rules that take no step and no site are offerable.
+ *
+ * This assumes the given ruleName is in Y.rules.
  */
 StepEditor.prototype.offerable = function(ruleName) {
   var info = Y.rules[ruleName].info;

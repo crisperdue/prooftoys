@@ -940,10 +940,13 @@ function debugString(o, specials) {
 var rules = {};
 
 /**
- * Use a "rule info" object and add its rules to the "rules" object
- * that manages the inference stack so makeInference can work
- * properly.  If not supplied in the rule definition, the info.input
- * is defaulted to an empty object here.
+ * Given a ruleInfo object, add its information to the "rules" object.
+ * The "rules" object maps from rule name to function.  Each function
+ * has an "info" property containing all the properties present in the
+ * ruleInfo object entry for the name.  If not supplied in the rule
+ * definition, the info.input is defaulted to an empty object here.
+ * The file theorems.js has a main ruleInfo object.  See there for
+ * descriptions of used properties.
  */
 function createRules(ruleInfo) {
   for (var key in ruleInfo) {
