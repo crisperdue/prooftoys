@@ -502,7 +502,7 @@ function resultFormatter(query, results) {
     var ruleName = result.text;
     var info = Y.rules[ruleName].info;
     var hint = info.hint || info.comment || '';
-    return result.highlighted + ' - <i>' + hint + '</i>';
+    return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
   });	
 }
 
