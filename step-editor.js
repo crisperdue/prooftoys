@@ -512,16 +512,6 @@ function resultFormatter(query, results) {
   });	
 }
 
-/**
- * True for objects with no enumerable properties.
- */
-function empty(object) {
-  for (var key in object) {
-    return false;
-  }
-  return true;
-}
-
 Y.StepEditor = StepEditor;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',

@@ -274,6 +274,71 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
 
+      // UNIFICATION
+
+      testSubstType: function() {
+        assertEqual('y', Y.substType('y', 'x', 'x'));
+        assertEqual('z', Y.substType('y', 'x', 'z'));
+        assertEqual(1, Y.substType(1, 'x', 'x'));
+        var result = Y.substType(1, 'x', {
+          inType: 'x', outType: 0
+	});
+	assertEqual(1, result.inType);
+	assertEqual(0, result.outType);
+      },
+
+      testUnify: function() {
+	// Nothing results in nothing.
+        assertEqual(0, Y.Object.size(Y.unify([])));
+
+	// Super-simple unifications.
+        assertEqual(0, Y.Object.size(Y.unify(['x', 'x'])));
+        assertEqual(0, Y.Object.size(Y.unify([0, 0])));
+	var unifier = Y.unify(['x', 0]);
+	assertEqual(1, Y.Object.size(unifier));
+        assertEqual(0, unifier.x);
+
+	// Two-step unifications
+	var unifier = Y.unify(['x', 1, 'y', 'x']);
+	assertEqual(2, Y.Object.size(unifier));
+	assertEqual(1, unifier.x);
+	assertEqual(1, unifier.y);
+	
+	unifier = Y.unify(['x', 1, 'x', 'y']);
+	assertEqual(2, Y.Object.size(unifier));
+	assertEqual(1, unifier.x);
+	assertEqual(1, unifier.y);
+
+	// Composite terms
+	unifier = Y.unify([{inType: 'x', outType: 'y'},
+			   {inType: 'y', outType: 'x'}]);
+	assertEqual(1, Y.Object.size(unifier));
+	Y.log(Y.debugString(unifier));
+	if ('x' in unifier) {
+	  assertEqual('y', unifier.x);
+	} else {
+	  assertEqual('x', unifier.y);
+	}
+
+	// Expressions that do not unify.
+	try {
+	  Y.unify(['x', {inType: 'x', outType: 0}]);
+	  Y.Assert.fail('Should not unify');
+	} catch(e) {}
+	try {
+	  Y.unify([1, 0]);
+	  Y.Assert.fail('Should not unify');
+	} catch(e) {}
+      },
+
+
+      // TYPE INFERENCE
+
+      testTypeInference: function() {
+
+      },
+
+
       // PROOFS
 
       // Actually "proof support" function:

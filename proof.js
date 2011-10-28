@@ -46,11 +46,14 @@ var definitions = {};
  * define('forall', equal(lambda(x, T))).
  */
 function define(name, definition) {
-  // TODO: Check for indirectly-circular definitions.
+  // TODO: Do something reasonable about situations where an existing proof
+  // or proof fragment already uses the name to be defined.
+  Y.assert(!Y._constantTypes[name], 'Already defined: ' + name);
   var free = definition.freeNames();
-  Y.assert(!free[name], 'Definition is not simple: ' + name);
-  Y.assert(!definitions[name], 'Already defined: ' + name);
+  Y.assert(Y.mapIsEmpty(free), 'Definition has free variables: ' + name);
   definitions[name] = equal(name, definition);
+  Y._constantTypes[name] = null;
+  // TODO: use Y._constantTypes[name] = definition.findType();
 }
 
 /**
@@ -65,6 +68,7 @@ function defineCases(name, ifTrue, ifFalse) {
   Y.assert(!freeFalse[name], 'Definition by cases is not simple: ' + name);
   definitions[name] = {T: equal(call(name, T), ifTrue),
                        F: equal(call(name, F), ifFalse)};
+  Y._constantTypes[name] = null;  // TODO: implement properly.
 }
 
 /**

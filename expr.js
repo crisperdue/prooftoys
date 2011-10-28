@@ -60,9 +60,10 @@ function genVar(name, existingNames) {
 
 /**
  * Returns a copy of the target, renaming any bound variables in it
- * that have the same name as a free variable of the replacement to be
- * distinct from all variables appearing in either expression.  After
- * decapturing, straightforward substitution is safe from capturing.
+ * that have the same name as a free variable of the replacement.  It
+ * makes them distinct from all variables appearing in either
+ * expression.  After decapturing, straightforward substitution is
+ * safe from capturing.
  */
 function decapture(target, replacement) {
   var freeNames = replacement.freeNames();
@@ -190,9 +191,9 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
 var _assumptionCounter = 1;
 
 /**
- * Modifies a proof step to treat it as an assumption, with
- * rule name, args, and deps to match, and no details.
- * Adds a very small ordinal if there is none already.
+ * Modifies the trace information of a proof step to treat it as an
+ * assumption, with rule name, args, and deps to match, and no
+ * details.  Adds a very small ordinal if there is none already.
  */
 Expr.prototype.assume = function() {
   this.ruleName = 'assumption';
@@ -272,6 +273,10 @@ Expr.prototype.allNames = function() {
   return byName;
 };
 
+/**
+ * Returns whether this is a Call with a function part that is also a
+ * Call.
+ */
 Expr.prototype.isBinOp = function() {
   return this instanceof Call && this.fn instanceof Call;
 };
@@ -420,7 +425,7 @@ Expr.prototype.pathToBinding = function(pred) {
 // result object, with the Var object as the value associated with
 // each name found.  Assumes that names in the Bindings object are
 // bound in this expression's lexical context.  Helper for the
-// freeNames method (not public).
+// freeNames method (not public).  Does not add names of constants.
 //
 //
 // _decapture(freeNames, allNames, bindings)
@@ -448,6 +453,9 @@ Expr.prototype.pathToBinding = function(pred) {
 // expressions never clash with free names, such as free names in
 // hypotheses.
 //
+// Furthermore there is only one binding with any given name within
+// the normalized expression, and none of these names clashes with the
+// name of any free variable.
 //
 // replace(path, xformer)
 //
@@ -563,12 +571,20 @@ Var.prototype.dup = function() {
   return new Var(this.name);
 };
 
+/**
+ * Implemented for Vars but not Calls or Lambdas, returns true iff the
+ * Var is a constant.
+ */
+Var.prototype.isConstant = function() {
+  return this.name in constantTypes;
+};
+
 Var.prototype._addNames = function(map) {
   map[this.name] = true;
 };
 
 Var.prototype._addFreeNames = function(map, bindings) {
-  if (getBinding(this.name, bindings) == null) {
+  if (!this.isConstant() && getBinding(this.name, bindings) == null) {
     map[this.name] = true;
   }
 };
@@ -1054,15 +1070,24 @@ function Bindings(from, to, more) {
 }
 
 /**
+ * Finds and returns the binding in bindings with "from" equal
+ * to the target, or null if it finds no such binding.
+ */
+function findBinding(target, bindings) {
+  return bindings == null
+    ? null
+    : (target == bindings.from)
+    ? bindings
+    : findBinding(target, bindings.more);
+}
+
+/**
  * Returns the replacement for the target in the given Bindings, or
  * null if none is found.
  */
 function getBinding(target, bindings) {
-  return bindings == null
-    ? null
-    : (target == bindings.from)
-    ? bindings.to
-    : getBinding(target, bindings.more);
+  var found = findBinding(target, bindings);
+  return found ? found.to : null;
 }
 
 
@@ -1195,6 +1220,120 @@ function path(arg) {
 }
 
 
+//// TYPE ASSIGNMENT
+
+var $1 = '$1';
+
+// TODO: Make definitions local to a proof or context of some sort
+// rather than per-page as they are here.
+var constantTypes = {
+  T: 0,
+  F: 0,
+  '=': {outType: {outType: 0, inType: $1}, inType: $1},
+  'the': {outType: $1, inType: {outType: 0, inType: $1}}
+};
+
+function makeTypeContext() {
+  return {'%context': 1};
+}
+
+function genTypeVar(cxt) {
+  return '$' + cxt['%counter']++;
+}
+
+/**
+ * Finds and returns a substitution (map) that is equivalent to the
+ * given arguments as follows.  Consider the arguments as a set of
+ * equations term0 = term1, term2 = term3, etc..  In the result map
+ * consider each key/value pair as an equation key0 = value0, etc..
+ * Each key is a variable name.
+ *
+ * If no such substitution exists, this throws an Error.
+ */
+function unify(terms) {
+  Y.assert(terms.length % 2 == 0, 'unify: terms not paired');
+  // Is the variable named "v" in the given term?
+  function inTerm(v, term) {
+    return v == term
+      || (typeof term == 'object'
+          && (inTerm(v, term.inType) || inTerm(v, term.outType)));
+  }
+  // Is the variable named "v" in the current terms?
+  // Copy the terms array.
+  terms = terms.concat();
+  var termsDone = 0;
+  while (termsDone < terms.length) {
+    var type2 = terms.pop();
+    var type1 = terms.pop();
+    var t1 = typeof type1;
+    var t2 = typeof type2;
+    switch (t1) {
+    case 'number':
+      // The first is a simple type constant (represented as an integer).
+      if (type1 == type2) {
+        // Equal constants: consume them.
+      } else if (t2 == 'string') {
+        // a = x -- convert to x = a.
+        terms.push(type2, type1);
+      } else {
+        throw new Error('Not unifiable');
+      }
+      break;
+    case 'string':
+      // The first is a type variable (represented as a string).
+      if (type1 == type2) {
+        // x = x -- consume them.
+      } else if (inTerm(type1, type2)) {
+        // The variable occurs in the RHS term.
+        throw new Error('Not unifiable');
+      } else {
+        // Remove the type variable from the remaining terms,
+        // keeping the variable and its replacement.
+        Y.Array.each(terms, function(term, i) {
+            terms[i] = substType(type2, type1, term);
+          });
+        terms.unshift(type1, type2);
+        termsDone += 2;
+      }
+      break;
+    case 'object':
+      // First type is composite.
+      if (t2 == 'object') {
+        terms.push(type1.inType, type2.inType, type1.outType, type2.outType);
+      } else {
+        throw new Error('not unifiable');
+      }
+      break;
+    default:
+      throw new Error('Bad input: ' + type1);
+    }
+  }
+  // Copy the final terms into a map and return it.
+  var map = {};
+  for (var i = 0; i < terms.length; i += 2) {
+    map[terms[i]] = terms[i + 1];
+  }
+  return map;
+}
+
+/**
+ * Substitutes a type expression for a type variable everywhere in the 
+ * type expression given by "term".
+ */
+function substType(to, from, term) {
+  if (term == from) {
+    return to;
+  } else if (typeof term == 'object') {
+    return {
+      inType: substType(to, from, term.inType),
+      outType: substType(to, from, term.outType)
+    };
+  } else {
+    return term;
+  }
+}
+
+
 //// PARSING
 
 /**
@@ -1254,9 +1393,11 @@ function parse(tokens) {
   /**
    * Keep reducing leading parts into subtrees until the next token is
    * an infix operator with precedence not greater than lastPower.
-   * Returns null if it consumes no input.
+   * Returns null if it consumes no input.  "Above" here means
+   * numerically greater.
    */
   function parseAbove(lastPower) {
+    // This is a top-down operator precedence parser.
     var left = null;
     while (true) {
       var token = peek();
@@ -1533,6 +1674,7 @@ Y.genVar = genVar;
 Y.normalized = normalized
 Y.decapture = decapture;
 Y.path = path;
+Y.findBinding = findBinding;
 Y.getBinding = getBinding;
 Y.matchAsSchema = matchAsSchema;
 
@@ -1540,9 +1682,15 @@ Y.assert = assert;
 Y.assertEqn = assertEqn;
 Y.mapIsEmpty = mapIsEmpty;
 
+Y.substType = substType;
+Y.unify = unify;
+
 Y.tokenize = tokenize;
 Y.parse = parse;
 
 Y.Expr.utils = utils;
+
+// Available to implementation of definitions in proof.js.
+Y._constantTypes = constantTypes;
 
 }, '0.1', {requires: ['node', 'array-extras']});
