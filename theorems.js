@@ -1118,7 +1118,7 @@ var ruleInfo = {
         // Not really a loop, just works with the first free (variable!)
         // name returned.
         for (var name in names) {
-          if (!Y.isConstant(name)) {
+          if (Y.isVariable(name, null)) {
             if (wff instanceof Y.Call && wff.fn instanceof Y.Call
                 && wff.fn.fn instanceof Y.Var && wff.fn.fn.name == '=') {
               // WFF is already an equation.
@@ -1184,7 +1184,7 @@ var ruleInfo = {
     comment: ('A substitution instance of a tautology is a theorem.')
   },
   
-  // Given a variable v that is not free in wff A, and a wff B, derive
+  // Given a variable v that is not free in the given wff A, and a wff B, derive
   // ((forall {v : A || B}) --> A || (forall {v : B})).
   r5235: {
     action: function(v, a, b) {
@@ -1200,15 +1200,12 @@ var ruleInfo = {
       var step4 = rules.r(step3, step2, '/left/arg/body');
 
       var freeNames = Y.merge(a.freeNames(), b.freeNames());
+      // Treat v as a free variable also.
       freeNames[v.name] = true;
       var p0 = Y.genVar('p', freeNames);
-      var caseT = implies(call('forall', lambda(v, call('||', T, b))),
-                          call('||', T, call('forall', lambda(v, b))));
-      var caseF = implies(call('forall', lambda(v, call('||', F, b))),
-                          call('||', F, call('forall', lambda(v, b))));
-      var step9 = rules.cases(caseT, caseF, p0);
-      var step10 = rules.instVar(step9, a, p0);
-      return step10.justify('r5235', arguments);
+      var step5 = rules.cases(step1, step4, p0);
+      var step6 = rules.instVar(step5, a, p0);
+      return step6.justify('r5235', arguments);
     },
     inputs: {varName: 1, term: [2, 3]},
     form: ('Variable: <input name=varName> '

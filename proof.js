@@ -34,90 +34,6 @@ function getTheorem(name) {
 }
 
 
-//// DEFINITIONS
-
-// Indexed by the name defined.  Value is an expression if
-// the definition is simple.  If by cases, the value is a
-// map from 'T' and 'F' to the definition for each case.
-var definitions = {};
-
-/**
- * Add a simple abbreviation-like definition, e.g.
- * define('forall', equal(lambda(x, T))).
- */
-function define(name, definition) {
-  // TODO: Do something reasonable about situations where an existing proof
-  // or proof fragment already uses the name to be defined.
-  Y.assert(!Y._constantTypes[name], 'Already defined: ' + name);
-  var free = definition.freeNames();
-  Y.assert(Y.mapIsEmpty(free), 'Definition has free variables: ' + name);
-  definitions[name] = equal(name, definition);
-  Y._constantTypes[name] = null;
-  // TODO: use Y._constantTypes[name] = definition.findType();
-}
-
-/**
- * Add a simple definition with true/false cases.  A call could
- * be something like defineCases('not', F, T).
- */
-function defineCases(name, ifTrue, ifFalse) {
-  Y.assert(!definitions[name], 'Already defined: ' + name);
-  var freeTrue = ifTrue.freeNames();
-  Y.assert(!freeTrue[name], 'Definition by cases is not simple: ' + name);
-  var freeFalse = ifFalse.freeNames();
-  Y.assert(!freeFalse[name], 'Definition by cases is not simple: ' + name);
-  definitions[name] = {T: equal(call(name, T), ifTrue),
-                       F: equal(call(name, F), ifFalse)};
-  Y._constantTypes[name] = null;  // TODO: implement properly.
-}
-
-/**
- * Fetch a simple or by-cases definition from the definitions
- * database.  Throws an exception if an appropriate definition is not
- * found.  Pass true or false or T or F or 'T' or 'F' to get the
- * appropriate part of a definition by cases.
- */
-function getDefinition(name, tOrF) {
-  var defn = definitions[name];
-  Y.assert(defn, 'Not defined: ' + name);
-  if (!tOrF) {
-    Y.assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
-    return defn;
-  } else {
-    if (tOrF == true || (tOrF instanceof Y.Var && tOrF.name == 'T')) {
-      tOrF = 'T';
-    } else if (tOrF == false || (tOrF instanceof Y.Var && tOrF.name == 'F')) {
-      tOrF = 'F';
-    }
-    Y.assert(!(defn instanceof Y.Expr),
-             'Definition is not by cases: ' + name);
-    var defnCase = defn[tOrF];
-    Y.assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
-    return defnCase;
-  }
-}
-
-
-//// CONSTANTS
-
-// The built-in constants.
-var _constants = {T: true, F: true, '=': true, the: true};
-
-/**
- * Return a true value iff the given expression is a Var
- * and is a built-in constant or has a definition.
- */
-function isConstant(name) {
-  if (name instanceof Y.Var) {
-    name = name.name;
-  }
-  if (!(typeof name == 'string')) {
-    return false;
-  }
-  return _constants[name] || !!definitions[name];
-}
-
-
 //// PROOFS
 
 //// PROOF CONTROL
@@ -974,10 +890,6 @@ Y.ProofControl = ProofControl;
 Y.showOrdinals = false;
 Y.addTheorem = addTheorem;
 Y.getTheorem = getTheorem;
-Y.define = define;
-Y.defineCases = defineCases;
-Y.getDefinition = getDefinition;
-Y.isConstant = isConstant;
 Y.renderInference = renderInference;
 Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;
@@ -988,8 +900,5 @@ Y.getStepsNode = getStepsNode;
 Y.getExpr = getExpr;
 // TODO: Consider getting rid of this global variable.
 Y.rules = rules;
-
-// For testing:
-Y.definitions = definitions;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'step-editor']});

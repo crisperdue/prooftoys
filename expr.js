@@ -70,6 +70,7 @@ function decapture(target, replacement) {
   var allNames = {};
   replacement._addNames(allNames);
   target._addNames(allNames);
+  // Now allNames contains every name occurring anywhere in either expression.
   return target._decapture(freeNames, allNames, null);
 }
 
@@ -86,7 +87,11 @@ function normalized(expr) {
  * Matches the given "schematic" expression against the other
  * expression.  Assumes that the schema contains no variable bindings.
  * Returns a substitution (map) from names to expressions, or throws
- * an error if there is none.
+ * an error if there is none.  If there is such a substitution then
+ * the expr is the result of applying the returned substitution to the
+ * schema.  Tautologies for example qualify as schemas.
+ *
+ * This is a special case of unification of expressions.
  */
 function matchAsSchema(schema, expr) {
   var substitution = {};
@@ -236,7 +241,7 @@ Expr.prototype.copyStep = function() {
 };
 
 /**
- * Finds and returns a Map of the free variables in this expression,
+ * Finds and returns a Map of the free names in this expression,
  * from the name to "true".
  */
 Expr.prototype.freeNames = function() {
@@ -246,8 +251,9 @@ Expr.prototype.freeNames = function() {
 };
 
 /**
- * Finds and returns a Map of all the bound names in this expression
- * at the location given by the path.
+ * Finds and returns a set of all the names bound in this expression
+ * at the location given by the path, represented by a Map from names
+ * to true.
  */
 Expr.prototype.boundNames = function(path) {
   path = Y.path(path);
@@ -265,7 +271,7 @@ Expr.prototype.boundNames = function(path) {
 
 /**
  * Finds and returns a Map with all names occurring in this expression
- * occurring as keys, with values of "true".
+ * as the keys, with values of "true".
  */
 Expr.prototype.allNames = function() {
   var byName = {};
@@ -421,22 +427,23 @@ Expr.prototype.pathToBinding = function(pred) {
 //
 // _addFreeNames(Map result, Bindings bindings)
 // 
-// Adds names of all free variables that occur in this Expr to the
-// result object, with the Var object as the value associated with
-// each name found.  Assumes that names in the Bindings object are
-// bound in this expression's lexical context.  Helper for the
-// freeNames method (not public).  Does not add names of constants.
+// Adds all names that occur free in this Expr to the result object, with
+// the Var object as the value associated with each name found.
+// Assumes that names in the Bindings object are bound in this
+// expression's lexical context.  Helper for the freeNames method (not
+// public).  Does not add names of constants, as they will never be
+// bound anywhere.  TODO: Consider including constants too.
 //
 //
 // _decapture(freeNames, allNames, bindings)
 //
-// Returns a copy of this expression that has no variable bindings
-// using any of the names in the freeNames map, and does not use any
-// of the names in the allNames map in any of the new bindings.
-// Furthermore, the result does not use the same new name within any
-// scope using that name, avoiding capturing among new names.
+// Returns a copy of this expression with any bound variables present
+// in freeNames renamed to names not present in allNames and distinct
+// from each other.
 //
-// The bindings should map from old variable name to new variable name.
+// Assumes that the bindings map from old variable name to new
+// variable name.  TODO: Map just to a new variable, saving on object
+// creation.
 //
 // Helper for the decapture function (not public).
 //
@@ -466,11 +473,11 @@ Expr.prototype.pathToBinding = function(pred) {
 //
 // matches(e2, bindings)
 //
-// Tests whether this expression and e2 are the same except for names
-// of bound variables.  Their constants, free variables, and structure
-// must match.  The bindings map from names of variables bound in expressions
-// containing this expression to corresponding variable names of the
-// expression containing e2.
+// Tests whether all components of this expression and e2 are the same
+// except for names of bound variables.  Names of constants and free
+// variables must match in each component.  The bindings map from names
+// of variables bound in expressions containing this expression to
+// corresponding variable names of the expression containing e2.
 //
 //
 // search(test, bindings)
@@ -530,13 +537,15 @@ Expr.prototype.pathToBinding = function(pred) {
 // Checks that this expression matches the argument expression under
 // the given substitution (map from names to expressions).  Returns
 // true iff it does and extends the substitution to a new variable if
-// needed to make this and the argument match.  This must not contain
-// any variable bindings, but the expression can contain anything.
-// Compares existing bindings with the parts of the expression using
-// "matches".
+// needed to make this and the argument match.  "This" must not
+// contain any variable bindings, but the expression can contain
+// anything.  Matching here is as defined for the "matches" method.
 
 
 //// Var -- variable bindings and references
+
+//// A Var object can represent a variable (free or bound), a constant
+//// (see isConstant), or a defined name (see isDefined).
 
 /**
  * Make a Var with the given name.  If a non-null position
@@ -571,20 +580,13 @@ Var.prototype.dup = function() {
   return new Var(this.name);
 };
 
-/**
- * Implemented for Vars but not Calls or Lambdas, returns true iff the
- * Var is a constant.
- */
-Var.prototype.isConstant = function() {
-  return this.name in constantTypes;
-};
-
 Var.prototype._addNames = function(map) {
   map[this.name] = true;
 };
 
 Var.prototype._addFreeNames = function(map, bindings) {
-  if (!this.isConstant() && getBinding(this.name, bindings) == null) {
+  // TODO: Simplify, leaving out the isVariable check.
+  if (!Y.isConstant(this, bindings) && getBinding(this.name, bindings) == null) {
     map[this.name] = true;
   }
 };
@@ -662,10 +664,14 @@ Var.prototype.findAll = function(name, action1, expr2, action2) {
 };
 
 Var.prototype._matchAsSchema = function(expr, map) {
-  // Caution: reference to function in proof.js.
-  if (Y.isConstant(this)) {
+  // This method does not return true when matching a defined name with an
+  // expression that matches its definition.  It is a stricter criterion than
+  // would be treating definitions exactly as abbreviations.
+  if (Y.isConstant(this) || Y.isDefined(this)) {
+    // Expr must be a Var with the same name.
     return this.matches(expr);
   }
+  // Only a true variable can match an expression that is not identical to it.
   var binding = map[this.name];
   if (binding) {
     return expr.matches(binding);
@@ -926,6 +932,7 @@ Lambda.prototype._boundNames = function(path, bindings) {
 };
 
 Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
+  // TODO: Share Vars more for efficiency.
   var oldName = this.bound.name;
   var newName = freeNames[oldName] ? genName(oldName, allNames) : oldName;
   // Alternatively add a binding only when the new name is different.
@@ -1061,7 +1068,7 @@ function generateName(name) {
  *
  * In _addFreeNames, bindings contain variables that are bound and thus
  * not free in an expression's lexical context.  In that case the
- * values of the bindings are all null.
+ * bindings all have the value "true".
  */
 function Bindings(from, to, more) {
   this.from = from;
@@ -1220,7 +1227,10 @@ function path(arg) {
 }
 
 
-//// TYPE ASSIGNMENT
+//// CONSTANTS AND DEFINITIONS
+////
+//// The only constants currently are the built-i T, F, =, "the".
+//// Defined names are "definitions".
 
 var $1 = '$1';
 
@@ -1233,10 +1243,113 @@ var constantTypes = {
   'the': {outType: $1, inType: {outType: 0, inType: $1}}
 };
 
+// Indexed by the name defined.  Value is an expression if
+// the definition is simple.  If by cases, the value is a
+// map from 'T' and 'F' to the definition for each case.
+var definitions = {};
+
+/**
+ * Return a true value iff the given expression is a Var and is a
+ * constant.  Notice that names of constants are global.
+ */
+function isConstant(name) {
+  if (name instanceof Y.Var) {
+    name = name.name;
+  }
+  if (!(typeof name == 'string')) {
+    return false;
+  }
+  return constantTypes.hasOwnProperty(name);
+}
+
+/**
+ * Returns true iff the name has a definition and is not bound in the
+ * bindings .
+ */
+function isDefined(name, bindings) {
+  if (name instanceof Y.Var) {
+    name = name.name;
+  }
+  if (!(typeof name == 'string')) {
+    return false;
+  }
+  return definitions.hasOwnProperty(name) && !findBinding(name, bindings);
+}
+
+function isVariable(name, bindings) {
+  return !isConstant(name) && !isDefined(name, bindings);
+}
+
+/**
+ * Add a simple abbreviation-like definition, e.g.
+ * define('forall', equal(lambda(x, T))).
+ */
+function define(name, definition) {
+  // TODO: Do something reasonable about situations where an existing proof
+  // or proof fragment already uses the name to be defined.
+  Y.assert(!isDefined(name), 'Already defined: ' + name);
+  for (var n in definition.freeNames()) {
+    Y.assert(isDefined(n), 'Definition has free variables: ' + name);
+    // Assumes constants do not appear in freeNames.
+  }
+  definitions[name] = equal(name, definition);
+}
+
+/**
+ * Add a simple definition with true/false cases.  A call could
+ * be something like defineCases('not', F, T).
+ */
+function defineCases(name, ifTrue, ifFalse) {
+  Y.assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
+  for (var n in ifTrue.freeNames()) {
+    Y.assert(isDefined(n), 'Definition has free variables: ' + name);
+    // Assumes constants do not appear in freeNames.
+  }
+  for (var n in ifFalse.freeNames()) {
+    Y.assert(isDefined(n), 'Definition has free variables: ' + name);
+    // Assumes constants do not appear in freeNames.
+  }
+  definitions[name] = {T: equal(call(name, T), ifTrue),
+                       F: equal(call(name, F), ifFalse)};
+}
+
+/**
+ * Fetch a simple or by-cases definition from the definitions
+ * database.  Throws an exception if an appropriate definition is not
+ * found.  Pass true or false or T or F or 'T' or 'F' to get the
+ * appropriate part of a definition by cases.
+ */
+function getDefinition(name, tOrF) {
+  var defn = definitions[name];
+  Y.assert(defn, 'Not defined: ' + name);
+  if (!tOrF) {
+    Y.assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
+    return defn;
+  } else {
+    if (tOrF == true || (tOrF instanceof Y.Var && tOrF.name == 'T')) {
+      tOrF = 'T';
+    } else if (tOrF == false || (tOrF instanceof Y.Var && tOrF.name == 'F')) {
+      tOrF = 'F';
+    }
+    Y.assert(!(defn instanceof Y.Expr),
+             'Definition is not by cases: ' + name);
+    var defnCase = defn[tOrF];
+    Y.assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
+    return defnCase;
+  }
+}
+
+
+//// UNIFICATION AND TYPE ASSIGNMENT
+////
+//// TODO: Use type operators rather than inType/outType throughout.
+
+// TODO: remove
 function makeTypeContext() {
   return {'%context': 1};
 }
 
+// TODO: remove
 function genTypeVar(cxt) {
   return '$' + cxt['%counter']++;
 }
@@ -1253,6 +1366,7 @@ function genTypeVar(cxt) {
 function unify(terms) {
   Y.assert(terms.length % 2 == 0, 'unify: terms not paired');
   // Is the variable named "v" in the given term?
+  // This implements the "occurs check".
   function inTerm(v, term) {
     return v == term
       || (typeof term == 'object'
@@ -1333,6 +1447,116 @@ function substType(to, from, term) {
   }
 }
 
+// TODO: remove.
+/**
+ * Given a term, an array, and a map, fills in the array with pairs of
+ * terms to be unified, in the format used by "unify"; and fills in
+ * the map with associations from variable name to type expressions.
+ * Since this makes no effort to deal with duplicate variable names
+ * occurring in different scopes, normalized terms may give more
+ * useful results.
+ */
+function genTypeConstraints(term) {
+  var map = makeTypeContext();
+  var terms = [];
+  function genInfo(term) {
+    var type = term.constructor;
+    if (type == Var) {
+      term.type = term.name;
+    } else if (type == Call) {
+      var fnType = term.fn.type;
+      if (fnType.outType) {
+        if (sameTypes(fnType.inType, argType)) {
+          term.type = fnType.outType;
+        } else {
+          throw new Error('xxx');
+        }
+      } else {
+        term.type = genTypeVar(map);
+        terms.push(fnType, {inType: term.arg.type, outType: term.type});
+      }
+    } else if (type == Lambda) {
+      term.type = {inType: term.body.type, outType: term.bound.type};
+    } else {
+      throw new Error('Invalid term: ' + term);
+    }
+  }
+}
+
+
+//// HINDLEY-MILNER TYPING
+
+var _counter = 0;
+
+function TypeVariable() {
+  this.id = _counter++;
+  this.instance = null;
+  this.name = null;
+}
+
+TypeVariable.prototype.toString = function() {
+  return this.instance ? this.instance.toString() : this.name;
+}
+
+
+function TypeOperator(name, types) {
+  this.name = name;
+  this.types = types;
+}
+
+TypeOperator.prototype.toString = function() {
+  var numTypes = this.types.length;
+  return numTypes == 0
+    ? this.name
+    : numTypes == 2
+    ? '(' + [this.types[0], this.name, this.types[1]].join(' ') + ')'
+    : '(' + this.name + ' ' + this.types.join(' ') + ')';
+}
+
+function FunctionType(fromType, toType) {
+  FunctionType.superclass.constructor.call('->', [fromType, toType]);
+}
+Y.extend(FunctionType, TypeOperator);
+
+FunctionType.prototype.toString = function() {
+  return '(' + this.types[1] + ' ' + this.types[0] + ')';
+}
+
+Individual = new TypeOperator('i', []);
+Bool = new TypeOperator('o', []);
+
+function analyze(expr, env, bound) {
+  bound = bound || {};
+
+  if (expr instanceof Var) {
+    return getType(expr.name, env, bound);
+  } else if (expr instanceof Call) {
+    fnType = analyze(expr.fn, env, bound);
+    argType = analyze(expr.arg, env, bound);
+    resultType = new TypeVariable();
+    unifyTypes(new FunctionType(argType, resultType), fnType);
+    return resultType;
+  } else if (expr instanceof Lambda) {
+    argType = new TypeVariable();
+    newEnv = new Bindings(expr.bound, argType, env);
+    newBound = new Bindings(argType, null, bound);
+    resultType = analyze(expr.body, newEnv, newBound);
+    return new FunctionType(argType, resultType);
+  }
+  throw new Error('Unhandled expression: ' + expr);
+}
+
+function getType(name, env, bound) {
+  var type = getBinding(name, env);
+  if (type) {
+    return fresh(type, bound);
+  } else if (isIntegerLiteral(name)) {
+    return Individual;
+  }
+  // TODO: In Q0 do something better.
+  throw new Error('Undefined symbol: ' + name);
+}
+
 
 //// PARSING
 
@@ -1340,7 +1564,8 @@ function substType(to, from, term) {
  * A token is a sequence of characters that are each alphanumeric or
  * ":", or a sequence containing none of these and no whitespace.
  * Returns an array of tokens in the input string, followed by an
- * "(end)" token, omitting whitespace.
+ * "(end)" token, omitting whitespace.  In all cases, a parenthesis or
+ * brace is always a token by itself regardless of context.
  */
 function tokenize(str) {
   var match;
@@ -1678,6 +1903,16 @@ Y.findBinding = findBinding;
 Y.getBinding = getBinding;
 Y.matchAsSchema = matchAsSchema;
 
+Y.define = define;
+Y.defineCases = defineCases;
+Y.getDefinition = getDefinition;
+// For testing:
+Y.definitions = definitions;
+
+Y.isConstant = isConstant;
+Y.isDefined = isDefined;
+Y.isVariable = isVariable;
+
 Y.assert = assert;
 Y.assertEqn = assertEqn;
 Y.mapIsEmpty = mapIsEmpty;
@@ -1689,8 +1924,5 @@ Y.tokenize = tokenize;
 Y.parse = parse;
 
 Y.Expr.utils = utils;
-
-// Available to implementation of definitions in proof.js.
-Y._constantTypes = constantTypes;
 
 }, '0.1', {requires: ['node', 'array-extras']});

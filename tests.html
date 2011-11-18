@@ -274,6 +274,25 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
 
+      // CONSTANTS AND DEFINITIONS
+
+      // Actually "proof support" function:
+      testIsConstant: function() {
+        Y.assert(Y.isConstant('T'));
+        Y.assert(Y.isConstant(T));
+        Y.assert(!Y.isConstant('-->'));
+        Y.assert(!Y.isConstant(equal(x, x)));
+      },
+
+      testIsDefined: function() {
+        Y.assert(!Y.isDefined('T'));
+        Y.assert(!Y.isDefined(T));
+        Y.assert(Y.isDefined('-->'));
+	Y.assert(Y.isDefined('forall'));
+        Y.assert(!Y.isDefined(equal(x, x)));
+      },
+
+
       // UNIFICATION
 
       testSubstType: function() {
@@ -335,19 +354,11 @@ YUI({filter: null, insertBefore: 'styles'})
       // TYPE INFERENCE
 
       testTypeInference: function() {
-
+	// TODO: implement.
       },
 
 
       // PROOFS
-
-      // Actually "proof support" function:
-      testIsConstant: function() {
-        Y.assert(Y.isConstant('T'));
-        Y.assert(Y.isConstant(T));
-        Y.assert(Y.isConstant('-->'));
-        Y.assert(!Y.isConstant(equal(x, x)));
-      },
 
       testRuleR: function() {
         var path = Y.path('/right/left');
