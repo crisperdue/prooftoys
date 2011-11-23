@@ -135,6 +135,8 @@ function textNode(text) {
  */
 function Expr() {
   this.sort = Expr.expr;
+  // Type analysis adds a "type" property.
+  // 
   // If part of a proof, has properties set by the "justify" method.
   // If has a rendered copy, has "rendering" property.
   //
@@ -241,8 +243,8 @@ Expr.prototype.copyStep = function() {
 };
 
 /**
- * Finds and returns a Map of the free names in this expression,
- * from the name to "true".
+ * Finds and returns a Map of the free names in this expression, from
+ * the name to "true".  Includes defined names, but not constants.
  */
 Expr.prototype.freeNames = function() {
   var byName = {};
@@ -422,30 +424,30 @@ Expr.prototype.pathToBinding = function(pred) {
 // _addNames(Map result)
 //
 // Adds all names occurring in this expression to the Map, with value
-// of true for each, both free and bound names.  Not public.
+// of true for each, both free and bound names.  Private.
 //
 //
 // _addFreeNames(Map result, Bindings bindings)
 // 
-// Adds all names that occur free in this Expr to the result object, with
-// the Var object as the value associated with each name found.
+// Adds all names that occur free in this Expr to the result object,
+// with the Var object as the value associated with each name found.
 // Assumes that names in the Bindings object are bound in this
-// expression's lexical context.  Helper for the freeNames method (not
-// public).  Does not add names of constants, as they will never be
-// bound anywhere.  TODO: Consider including constants too.
+// expression's lexical context.  Private helper for the freeNames
+// method.  Does not add names of constants, as they will never be
+// bound anywhere.  TODO: Consider including constants.
 //
 //
 // _decapture(freeNames, allNames, bindings)
 //
 // Returns a copy of this expression with any bound variables present
 // in freeNames renamed to names not present in allNames and distinct
-// from each other.
+// from each other.  Assumes that the bindings define suitable
+// renamings determined by enclosing scope, mapping from old variable
+// name to new variable name.
 //
-// Assumes that the bindings map from old variable name to new
-// variable name.  TODO: Map just to a new variable, saving on object
-// creation.
+// Private helper for the decapture function.
 //
-// Helper for the decapture function (not public).
+// TODO: Map directly to a new variable, reducing object creation.
 //
 //
 // normalized(counter, bindings)
@@ -585,8 +587,7 @@ Var.prototype._addNames = function(map) {
 };
 
 Var.prototype._addFreeNames = function(map, bindings) {
-  // TODO: Simplify, leaving out the isVariable check.
-  if (!Y.isConstant(this, bindings) && getBinding(this.name, bindings) == null) {
+  if (!Y.isConstant(this) && getBinding(this.name, bindings) == null) {
     map[this.name] = true;
   }
 };
@@ -667,7 +668,7 @@ Var.prototype._matchAsSchema = function(expr, map) {
   // This method does not return true when matching a defined name with an
   // expression that matches its definition.  It is a stricter criterion than
   // would be treating definitions exactly as abbreviations.
-  if (Y.isConstant(this) || Y.isDefined(this)) {
+  if (Y.isConstant(this) || definitions[this.name]) {
     // Expr must be a Var with the same name.
     return this.matches(expr);
   }
@@ -1227,20 +1228,81 @@ function path(arg) {
 }
 
 
+//// TYPES
+
+var _counter = 1;
+
+function TypeVariable() {
+  this.id = _counter++;
+  this.instance = null;
+  this.name = '$' + this.id;
+}
+
+TypeVariable.prototype.toString = function() {
+  return this.instance ? this.instance.toString() : this.name;
+}
+
+
+function TypeOperator(name, types) {
+  this.name = name;
+  this.types = types;
+}
+
+TypeOperator.prototype.toString = function() {
+  var numTypes = this.types.length;
+  return numTypes == 0
+    ? this.name
+    : numTypes == 2
+    ? '(' + [this.types[0], this.name, this.types[1]].join(' ') + ')'
+    : '(' + this.name + ' ' + this.types.join(' ') + ')';
+}
+
+function FunctionType(fromType, toType) {
+  TypeOperator.call(this, '->', [fromType, toType]);
+}
+Y.extend(FunctionType, TypeOperator);
+
+/**
+ * A function with input "i" and output "o" displays as "(o i)".
+ */
+FunctionType.prototype.toString = function() {
+  return '(' + this.types[1] + ' ' + this.types[0] + ')';
+}
+
+var individual = new TypeOperator('i', []);
+var boolean = new TypeOperator('o', []);
+
+
 //// CONSTANTS AND DEFINITIONS
 ////
 //// The only constants currently are the built-i T, F, =, "the".
 //// Defined names are "definitions".
 
-var $1 = '$1';
+function booleanBinOpType() {
+  var v = new TypeVariable();
+  return new FunctionType(v, new FunctionType(v, boolean));
+}
+
+function theType() {
+  var v = new TypeVariable();
+  return new FunctionType(new FunctionType(v, boolean), v);
+}
 
 // TODO: Make definitions local to a proof or context of some sort
 // rather than per-page as they are here.
 var constantTypes = {
-  T: 0,
-  F: 0,
-  '=': {outType: {outType: 0, inType: $1}, inType: $1},
-  'the': {outType: $1, inType: {outType: 0, inType: $1}}
+  T: boolean,
+  F: boolean,
+  '=': booleanBinOpType(),
+  'the': theType()
+};
+
+// Types of operations defined by cases.
+// TODO: Consider if these could be inferred instead.
+var definedTypes = {
+  '&&': booleanBinOpType(),
+  '||': booleanBinOpType(),
+  '-->': booleanBinOpType()
 };
 
 // Indexed by the name defined.  Value is an expression if
@@ -1263,21 +1325,16 @@ function isConstant(name) {
 }
 
 /**
- * Returns true iff the name has a definition and is not bound in the
- * bindings .
+ * True iff name has a (global) definition.  Name can also be a Var.
  */
-function isDefined(name, bindings) {
+function isDefined(name) {
   if (name instanceof Y.Var) {
     name = name.name;
   }
   if (!(typeof name == 'string')) {
     return false;
   }
-  return definitions.hasOwnProperty(name) && !findBinding(name, bindings);
-}
-
-function isVariable(name, bindings) {
-  return !isConstant(name) && !isDefined(name, bindings);
+  return definitions.hasOwnProperty(name);
 }
 
 /**
@@ -1311,6 +1368,15 @@ function defineCases(name, ifTrue, ifFalse) {
   }
   definitions[name] = {T: equal(call(name, T), ifTrue),
                        F: equal(call(name, F), ifFalse)};
+}
+
+function isDefined(name) {
+  return definitions.hasOwnProperty(name);
+}
+
+function isDefinedByCases(name) {
+  return (definitions.hasOwnProperty(name)
+	  && !!definitions[name].T);
 }
 
 /**
@@ -1484,77 +1550,186 @@ function genTypeConstraints(term) {
 }
 
 
-//// HINDLEY-MILNER TYPING
+//// HINDLEY-MILNER TYPE INFERENCE
+////
+//// The type inference code is derived from the description and code
+//// at http://lucacardelli.name/Papers/BasicTypechecking.pdf and from
+//// Robert Smallshire's Python implementation at
+//// http://www.smallshire.org.uk/sufficientlysmall/2010/04/11/
+//// a-hindley-milner-type-inference-implementation-in-python/.
 
-var _counter = 0;
+// TODO: More and better comments throughout the type analysis code.
 
-function TypeVariable() {
-  this.id = _counter++;
-  this.instance = null;
-  this.name = null;
-}
+/**
+ * Find and return the type of an expression (Expr).  As a side effect
+ * this also records the type of every subexpression as its "type"
+ * property.
+ */
+function findType(expr) {
+  var vars = [];
+  var types = [];
+  var nonGenerics = [];
 
-TypeVariable.prototype.toString = function() {
-  return this.instance ? this.instance.toString() : this.name;
-}
-
-
-function TypeOperator(name, types) {
-  this.name = name;
-  this.types = types;
-}
-
-TypeOperator.prototype.toString = function() {
-  var numTypes = this.types.length;
-  return numTypes == 0
-    ? this.name
-    : numTypes == 2
-    ? '(' + [this.types[0], this.name, this.types[1]].join(' ') + ')'
-    : '(' + this.name + ' ' + this.types.join(' ') + ')';
-}
-
-function FunctionType(fromType, toType) {
-  FunctionType.superclass.constructor.call('->', [fromType, toType]);
-}
-Y.extend(FunctionType, TypeOperator);
-
-FunctionType.prototype.toString = function() {
-  return '(' + this.types[1] + ' ' + this.types[0] + ')';
-}
-
-Individual = new TypeOperator('i', []);
-Bool = new TypeOperator('o', []);
-
-function analyze(expr, env, bound) {
-  bound = bound || {};
-
-  if (expr instanceof Var) {
-    return getType(expr.name, env, bound);
-  } else if (expr instanceof Call) {
-    fnType = analyze(expr.fn, env, bound);
-    argType = analyze(expr.arg, env, bound);
-    resultType = new TypeVariable();
-    unifyTypes(new FunctionType(argType, resultType), fnType);
-    return resultType;
-  } else if (expr instanceof Lambda) {
-    argType = new TypeVariable();
-    newEnv = new Bindings(expr.bound, argType, env);
-    newBound = new Bindings(argType, null, bound);
-    resultType = analyze(expr.body, newEnv, newBound);
-    return new FunctionType(argType, resultType);
+  // Store the type of each expression when found.
+  function analyze1(expr) {
+    var result = analyze2(expr);
+    expr.type = result;
+    return result;
   }
-  throw new Error('Unhandled expression: ' + expr);
+
+  // This is the core of the type inference algorithm.
+  function analyze2(expr) {
+    if (expr.type) {
+      return expr.type;
+    } else if (expr instanceof Var) {
+      return getType(expr.name);
+    } else if (expr instanceof Call) {
+      var fnType = analyze1(expr.fn);
+      var argType = analyze1(expr.arg);
+      var resultType = new TypeVariable();
+      unifyTypes(new FunctionType(argType, resultType), fnType);
+      return resultType;
+    } else if (expr instanceof Lambda) {
+      var argType = new TypeVariable();
+      vars.push(expr.bound);
+      types.push(argType);
+      nonGenerics.push(argType);
+      var resultType = analyze1(expr.body);
+      return new FunctionType(argType, resultType);
+    }
+    throw new Error('Expression of unknown type: ' + expr);
+  }
+
+  function getType(name) {
+    if (isIntegerLiteral(name)) {
+      // I say integers are individuals.
+      return Individual;
+    }
+    // Is it a bound variable?
+    for (var i = vars.length - 1; i >= 0; --i) {
+      if (vars[i] == name) {
+        var type = types[i];
+        return fresh(type);
+      }
+    }
+    if (isConstant(name) || isDefined(name)) {
+      return fresh(lookupType(name));
+    } else {
+      // Free variable, not constant, not defined.
+      // Like handling of a variable binding, but throughout the remainder
+      // of the expression, and bound instances get searched first.
+      var varType = new TypeVariable();
+      vars.unshift(name);
+      types.unshift(varType);
+      nonGenerics.unshift(name);
+      return varType;
+    }
+  }
+
+  function lookupType(name) {
+    // Result is not fresh.
+    if (constantTypes[name]) {
+      return constantTypes[name];
+    } else if (isDefinedByCases(name)) {
+      return definedTypes[name];
+    } else if (isDefined(name)) {
+      return findType(getDefinition(name).getRight());
+    } else {
+      throw new Error('Cannot find type for: ' + name);
+    }
+  }
+
+  function fresh(type) {
+    // Maps TypeVariables to TypeVariables.
+    var mappings = {};
+
+    function fresh1(tp) {
+      var p = prune(tp);
+      if (p instanceof TypeVariable) {
+        if (isGeneric(p, nonGenerics)) {
+          if (!mappings.hasOwnProperty(p)) {
+            mappings[p] = new TypeVariable();
+          }
+          return mappings[p];
+        } else {
+          return p;
+        }
+      } else if (p instanceof TypeOperator) {
+        var ptypes = p.types;
+        var freshTypes = [];
+        for (var i = 0; i < ptypes.length; i++) {
+          freshTypes.push(fresh1(ptypes[i]));
+        }
+        return new TypeOperator(p.name, freshTypes);
+      } else {
+        throw new Error('Bad type: ' + p);
+      }
+    }
+
+    return fresh1(type);
+  }
+
+  function isGeneric(v) {
+    return !occursIn(v, nonGenerics);
+  }
+
+  return analyze1(expr);
 }
 
-function getType(name, env, bound) {
-  var type = getBinding(name, env);
-  if (type) {
-    return fresh(type, bound);
-  } else if (isIntegerLiteral(name)) {
-    return Individual;
+function isIntegerLiteral(name) {
+  return name.match(/^[0-9]+$/);
+}
+
+function occursIn(type, types) {
+  for (var i = 0; i < types.length; i++) {
+    if (occursInType(type, types[i])) {
+      return true;
+    }
   }
-  // TODO: In Q0 do something better.
-  throw new Error('Undefined symbol: ' + name);
+  return false;
+}
+
+function occursInType(type1, type2) {
+  var prunedType2 = prune(type2);
+  if (prunedType2 == type1) {
+    return true;
+  } else if (prunedType2 instanceof TypeOperator) {
+    return occursIn(type1, prunedType2.types);
+  }
+}
+
+function unifyTypes(t1, t2) {
+  var a = prune(t1);
+  var b = prune(t2);
+  if (a instanceof TypeVariable) {
+    if (a != b) {
+      if (occursInType(a, b)) {
+        throw new TypeError('recursive unification');
+      }
+      a.instance = b;
+    }
+  } else if (a instanceof TypeOperator && b instanceof TypeVariable) {
+    unifyTypes(b, a);
+  } else if (a instanceof TypeOperator && b instanceof TypeOperator) {
+    if (a.name != b.name || a.types.length != b.types.length) {
+      throw new TypeError('Type mismatch: ' + a + ' != ' + b);
+    }
+    for (var i = 0; i < a.types.length; i++) {
+      unifyTypes(a.types[i], b.types[i]);
+    }
+  } else {
+    throw new Error('Not unifieable');
+  }
+}
+
+function prune(type) {
+  if (type instanceof TypeVariable) {
+    if (type.instance) {
+      type.instance = prune(type.instance);
+      return type.instance;
+    }
+  }
+  return type;
 }
 
 
@@ -1911,7 +2086,6 @@ Y.definitions = definitions;
 
 Y.isConstant = isConstant;
 Y.isDefined = isDefined;
-Y.isVariable = isVariable;
 
 Y.assert = assert;
 Y.assertEqn = assertEqn;
@@ -1919,6 +2093,14 @@ Y.mapIsEmpty = mapIsEmpty;
 
 Y.substType = substType;
 Y.unify = unify;
+
+Y.TypeVariable = TypeVariable;
+Y.individual = individual;
+Y.boolean = boolean;
+Y.FunctionType = FunctionType;
+Y.findType = findType;
+// For testing:
+Y._unifyTypes = unifyTypes;
 
 Y.tokenize = tokenize;
 Y.parse = parse;

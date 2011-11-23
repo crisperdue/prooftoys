@@ -1118,7 +1118,7 @@ var ruleInfo = {
         // Not really a loop, just works with the first free (variable!)
         // name returned.
         for (var name in names) {
-          if (Y.isVariable(name, null)) {
+          if (!Y.isConstant(name) && !Y.isDefined(name)) {
             if (wff instanceof Y.Call && wff.fn instanceof Y.Call
                 && wff.fn.fn instanceof Y.Var && wff.fn.fn.name == '=') {
               // WFF is already an equation.
