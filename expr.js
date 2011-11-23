@@ -1406,150 +1406,6 @@ function getDefinition(name, tOrF) {
 }
 
 
-//// UNIFICATION AND TYPE ASSIGNMENT
-////
-//// TODO: Use type operators rather than inType/outType throughout.
-
-// TODO: remove
-function makeTypeContext() {
-  return {'%context': 1};
-}
-
-// TODO: remove
-function genTypeVar(cxt) {
-  return '$' + cxt['%counter']++;
-}
-
-/**
- * Finds and returns a substitution (map) that is equivalent to the
- * given arguments as follows.  Consider the arguments as a set of
- * equations term0 = term1, term2 = term3, etc..  In the result map
- * consider each key/value pair as an equation key0 = value0, etc..
- * Each key is a variable name.
- *
- * If no such substitution exists, this throws an Error.
- */
-function unify(terms) {
-  Y.assert(terms.length % 2 == 0, 'unify: terms not paired');
-  // Is the variable named "v" in the given term?
-  // This implements the "occurs check".
-  function inTerm(v, term) {
-    return v == term
-      || (typeof term == 'object'
-          && (inTerm(v, term.inType) || inTerm(v, term.outType)));
-  }
-  // Is the variable named "v" in the current terms?
-  // Copy the terms array.
-  terms = terms.concat();
-  var termsDone = 0;
-  while (termsDone < terms.length) {
-    var type2 = terms.pop();
-    var type1 = terms.pop();
-    var t1 = typeof type1;
-    var t2 = typeof type2;
-    switch (t1) {
-    case 'number':
-      // The first is a simple type constant (represented as an integer).
-      if (type1 == type2) {
-        // Equal constants: consume them.
-      } else if (t2 == 'string') {
-        // a = x -- convert to x = a.
-        terms.push(type2, type1);
-      } else {
-        throw new Error('Not unifiable');
-      }
-      break;
-    case 'string':
-      // The first is a type variable (represented as a string).
-      if (type1 == type2) {
-        // x = x -- consume them.
-      } else if (inTerm(type1, type2)) {
-        // The variable occurs in the RHS term.
-        throw new Error('Not unifiable');
-      } else {
-        // Remove the type variable from the remaining terms,
-        // keeping the variable and its replacement.
-        Y.Array.each(terms, function(term, i) {
-            terms[i] = substType(type2, type1, term);
-          });
-        terms.unshift(type1, type2);
-        termsDone += 2;
-      }
-      break;
-    case 'object':
-      // First type is composite.
-      if (t2 == 'object') {
-        terms.push(type1.inType, type2.inType, type1.outType, type2.outType);
-      } else {
-        throw new Error('not unifiable');
-      }
-      break;
-    default:
-      throw new Error('Bad input: ' + type1);
-    }
-  }
-  // Copy the final terms into a map and return it.
-  var map = {};
-  for (var i = 0; i < terms.length; i += 2) {
-    map[terms[i]] = terms[i + 1];
-  }
-  return map;
-}
-
-/**
- * Substitutes a type expression for a type variable everywhere in the 
- * type expression given by "term".
- */
-function substType(to, from, term) {
-  if (term == from) {
-    return to;
-  } else if (typeof term == 'object') {
-    return {
-      inType: substType(to, from, term.inType),
-      outType: substType(to, from, term.outType)
-    };
-  } else {
-    return term;
-  }
-}
-
-// TODO: remove.
-/**
- * Given a term, an array, and a map, fills in the array with pairs of
- * terms to be unified, in the format used by "unify"; and fills in
- * the map with associations from variable name to type expressions.
- * Since this makes no effort to deal with duplicate variable names
- * occurring in different scopes, normalized terms may give more
- * useful results.
- */
-function genTypeConstraints(term) {
-  var map = makeTypeContext();
-  var terms = [];
-  function genInfo(term) {
-    var type = term.constructor;
-    if (type == Var) {
-      term.type = term.name;
-    } else if (type == Call) {
-      var fnType = term.fn.type;
-      if (fnType.outType) {
-        if (sameTypes(fnType.inType, argType)) {
-          term.type = fnType.outType;
-        } else {
-          throw new Error('xxx');
-        }
-      } else {
-        term.type = genTypeVar(map);
-        terms.push(fnType, {inType: term.arg.type, outType: term.type});
-      }
-    } else if (type == Lambda) {
-      term.type = {inType: term.body.type, outType: term.bound.type};
-    } else {
-      throw new Error('Invalid term: ' + term);
-    }
-  }
-}
-
-
 //// HINDLEY-MILNER TYPE INFERENCE
 ////
 //// The type inference code is derived from the description and code
@@ -2091,16 +1947,11 @@ Y.assert = assert;
 Y.assertEqn = assertEqn;
 Y.mapIsEmpty = mapIsEmpty;
 
-Y.substType = substType;
-Y.unify = unify;
-
 Y.TypeVariable = TypeVariable;
 Y.individual = individual;
 Y.boolean = boolean;
 Y.FunctionType = FunctionType;
 Y.findType = findType;
-// For testing:
-Y._unifyTypes = unifyTypes;
 
 Y.tokenize = tokenize;
 Y.parse = parse;
