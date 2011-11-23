@@ -121,7 +121,7 @@ var ruleInfo = {
       if (equation.isCall2('=')) {
         function replacer(expr) {
           if (expr.matches(equation.getLeft())) {
-            return equation.getRight().copy();
+            return equation.getRight();
           } else {
             Y.assert(false, 'Rule R: subexpression ' + expr +
                      '\n of ' + target +

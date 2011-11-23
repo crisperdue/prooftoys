@@ -1450,7 +1450,7 @@ function findType(expr) {
       // I say integers are individuals.
       return Individual;
     }
-    // Is it a bound variable?
+    // Is it a bound or already-seen free variable?
     for (var i = vars.length - 1; i >= 0; --i) {
       if (vars[i] == name) {
         var type = types[i];
@@ -1460,13 +1460,13 @@ function findType(expr) {
     if (isConstant(name) || isDefined(name)) {
       return fresh(lookupType(name));
     } else {
-      // Free variable, not constant, not defined.
-      // Like handling of a variable binding, but throughout the remainder
-      // of the expression, and bound instances get searched first.
-      var varType = new TypeVariable();
+      // Free variable: not constant, not defined.
+      // Like handling of a variable binding, but scope is the remainder
+      // of the expression, and bound variables get searched first.
       vars.unshift(name);
-      types.unshift(varType);
       nonGenerics.unshift(name);
+      var varType = new TypeVariable();
+      types.unshift(varType);
       return varType;
     }
   }
