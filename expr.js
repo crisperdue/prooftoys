@@ -148,7 +148,6 @@ function Expr() {
   //   ordinal property with its step number in the rendered proof.
   //   stepNumber property with its rendered step number.
   // 
-  // Can have a "_string" property with the result of asString.
 }
 
 // The different sorts of expressions:
@@ -160,16 +159,6 @@ Expr.lambda = 'lambda';
 // This counts up to supply a unique name for bound variables renamed
 // to avoid capturing.
 Expr.counter = 1;
-
-/**
- * Memoizing version of toString.
- * TODO: Consider removing this as it does not seem to be needed.
- */
-Expr.prototype.asString = function() {
-  var string = this.toString();
-  this._string = string;
-  return string;
-};
 
 Expr.prototype.toString = function() {
   return '*';
