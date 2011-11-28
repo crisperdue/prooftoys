@@ -303,6 +303,11 @@ YUI({filter: null, insertBefore: 'styles'})
           Y.findType(Y.parse('f f'));
           Y.Assert.fail('Should not unify');
         } catch(e) {}
+        // The identity function, problematic for some algorithms.
+        var type = Y.findType(Y.parse('{x : x}'));
+        Y.assert(type instanceof Y.FunctionType, 'Not a FunctionType');
+        Y.assert(type.types[0] instanceof Y.TypeVariable, 'Not a TypeVariable');
+        assertEqual(type.types[0], type.types[1]);
         Y.log(Y.findType(Y.parse('({x : x} y)')));
         assertEqual('o', Y.findType(rules.axiom1()));
         assertEqual('o', Y.findType(rules.axiom2()));

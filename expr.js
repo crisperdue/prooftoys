@@ -1247,9 +1247,12 @@ TypeOperator.prototype.toString = function() {
 }
 
 function FunctionType(fromType, toType) {
-  TypeOperator.call(this, '->', [fromType, toType]);
+  // TypeOperator.call(this, '->', [fromType, toType]);
+  this.types = [fromType, toType];
 }
 Y.extend(FunctionType, TypeOperator);
+
+FunctionType.prototype.name = '->';
 
 /**
  * A function with input "i" and output "o" displays as "(o i)".
@@ -1287,7 +1290,7 @@ var constantTypes = {
 };
 
 // Types of operations defined by cases.
-// TODO: Consider if these could be inferred instead.
+// TODO: Consider inferring these instead from the definitions.
 var definedTypes = {
   '&&': booleanBinOpType(),
   '||': booleanBinOpType(),
@@ -1395,10 +1398,11 @@ function getDefinition(name, tOrF) {
 }
 
 
-//// HINDLEY-MILNER TYPE INFERENCE
+//// TYPE INFERENCE
 ////
 //// The type inference code is derived from the description and code
-//// at http://lucacardelli.name/Papers/BasicTypechecking.pdf and from
+//// for Hindley-Milner style type inference at
+//// http://lucacardelli.name/Papers/BasicTypechecking.pdf and from
 //// Robert Smallshire's Python implementation at
 //// http://www.smallshire.org.uk/sufficientlysmall/2010/04/11/
 //// a-hindley-milner-type-inference-implementation-in-python/.
@@ -1411,8 +1415,13 @@ function getDefinition(name, tOrF) {
  * property.
  */
 function findType(expr) {
+  // At each index, types[i] will be the type of vars[i].
+  // The vars are names of variables.
   var vars = [];
   var types = [];
+  // A list of TypeVariable objects that are not generic in the
+  // current scope.  Type variables in the types of bound variables
+  // get pushed and popped here.
   var nonGenerics = [];
 
   // Store the type of each expression when found.
@@ -1435,11 +1444,15 @@ function findType(expr) {
       unifyTypes(new FunctionType(argType, resultType), fnType);
       return resultType;
     } else if (expr instanceof Lambda) {
+      vars.push(expr.bound.name);
+      // TODO: Handle explicit type info on the bound variable.
       var argType = new TypeVariable();
-      vars.push(expr.bound);
       types.push(argType);
       nonGenerics.push(argType);
       var resultType = analyze1(expr.body);
+      vars.pop();
+      types.pop();
+      nonGenerics.pop();
       return new FunctionType(argType, resultType);
     }
     throw new Error('Expression of unknown type: ' + expr);
@@ -1450,10 +1463,11 @@ function findType(expr) {
       // I say integers are individuals.
       return Individual;
     }
-    // Is it a bound or already-seen free variable?
+    // Is it a bound or (already-seen) free variable?
     for (var i = vars.length - 1; i >= 0; --i) {
       if (vars[i] == name) {
         var type = types[i];
+        // Return a fresh instance of the variable's type.
         return fresh(type);
       }
     }
@@ -1471,8 +1485,54 @@ function findType(expr) {
     }
   }
 
+  /**
+   * The resulting type expression has the same structure as the
+   * input, but all occurrences of each "generic" type variable are
+   * replaced with occurrences of a "fresh" type variable distinct
+   * from all others.
+   *
+   * Note: with only top-level definitions, generic type variables are
+   * exactly those in the types of defined constants, but definitions
+   * in inner scopes can have mixed generic and non-generic type
+   * variables.
+   */
+  function fresh(type) {
+    // Maps TypeVariable names to TypeVariables.
+    var mappings = {};
+
+    function fresh1(tp) {
+      var type = dereference(tp);
+      if (type instanceof TypeVariable) {
+        var name = type.name;
+        if (isGeneric(name)) {
+          if (!mappings.hasOwnProperty(name)) {
+            mappings[name] = new TypeVariable();
+          }
+          return mappings[name];
+        } else {
+          return type;
+        }
+      } else if (type instanceof TypeOperator) {
+        var ptypes = type.types;
+        var freshTypes = [];
+        for (var i = 0; i < ptypes.length; i++) {
+          freshTypes.push(fresh1(ptypes[i]));
+        }
+        // Implementation note: this does not specialize for FunctionType.
+        return new TypeOperator(type.name, freshTypes);
+      } else {
+        throw new Error('Bad type: ' + type);
+      }
+    }
+
+    return fresh1(type);
+  }
+
+  /**
+   * Look up the type of a primitive or defined constant.  Result is
+   * not fresh.
+   */
   function lookupType(name) {
-    // Result is not fresh.
     if (constantTypes[name]) {
       return constantTypes[name];
     } else if (isDefinedByCases(name)) {
@@ -1484,38 +1544,8 @@ function findType(expr) {
     }
   }
 
-  function fresh(type) {
-    // Maps TypeVariables to TypeVariables.
-    var mappings = {};
-
-    function fresh1(tp) {
-      var p = prune(tp);
-      if (p instanceof TypeVariable) {
-        if (isGeneric(p, nonGenerics)) {
-          if (!mappings.hasOwnProperty(p)) {
-            mappings[p] = new TypeVariable();
-          }
-          return mappings[p];
-        } else {
-          return p;
-        }
-      } else if (p instanceof TypeOperator) {
-        var ptypes = p.types;
-        var freshTypes = [];
-        for (var i = 0; i < ptypes.length; i++) {
-          freshTypes.push(fresh1(ptypes[i]));
-        }
-        return new TypeOperator(p.name, freshTypes);
-      } else {
-        throw new Error('Bad type: ' + p);
-      }
-    }
-
-    return fresh1(type);
-  }
-
   function isGeneric(v) {
-    return !occursIn(v, nonGenerics);
+    return !occursInList(v, nonGenerics);
   }
 
   return analyze1(expr);
@@ -1525,7 +1555,10 @@ function isIntegerLiteral(name) {
   return name.match(/^[0-9]+$/);
 }
 
-function occursIn(type, types) {
+/**
+ * Assumes "type" is dereferenced.
+ */
+function occursInList(type, types) {
   for (var i = 0; i < types.length; i++) {
     if (occursInType(type, types[i])) {
       return true;
@@ -1534,18 +1567,22 @@ function occursIn(type, types) {
   return false;
 }
 
+/**
+ *
+ * Assumes type1 is dereferenced.
+ */
 function occursInType(type1, type2) {
-  var prunedType2 = prune(type2);
-  if (prunedType2 == type1) {
+  var type2 = dereference(type2);
+  if (type2 == type1) {
     return true;
-  } else if (prunedType2 instanceof TypeOperator) {
-    return occursIn(type1, prunedType2.types);
+  } else if (type2 instanceof TypeOperator) {
+    return occursInList(type1, type2.types);
   }
 }
 
 function unifyTypes(t1, t2) {
-  var a = prune(t1);
-  var b = prune(t2);
+  var a = dereference(t1);
+  var b = dereference(t2);
   if (a instanceof TypeVariable) {
     if (a != b) {
       if (occursInType(a, b)) {
@@ -1567,10 +1604,10 @@ function unifyTypes(t1, t2) {
   }
 }
 
-function prune(type) {
+function dereference(type) {
   if (type instanceof TypeVariable) {
     if (type.instance) {
-      type.instance = prune(type.instance);
+      type.instance = dereference(type.instance);
       return type.instance;
     }
   }
