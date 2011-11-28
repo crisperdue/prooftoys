@@ -1420,8 +1420,12 @@ function findType(expr) {
   var vars = [];
   var types = [];
   // A list of TypeVariable objects that are not generic in the
-  // current scope.  Type variables in the types of bound variables
-  // get pushed and popped here.
+  // current scope.  Type variables in the types of variables appear
+  // here when their variable is in scope.
+  //
+  // Note: Generic type variables reflect the fact that different
+  // occurrences of the same defined or primitive constant can have
+  // different types.
   var nonGenerics = [];
 
   // Store the type of each expression when found.
