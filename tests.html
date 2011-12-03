@@ -308,12 +308,14 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(type instanceof Y.FunctionType, 'Not a FunctionType');
         Y.assert(type.types[0] instanceof Y.TypeVariable, 'Not a TypeVariable');
         assertEqual(type.types[0], type.types[1]);
-        Y.log(Y.findType(Y.parse('({x : x} y)')));
         assertEqual('o', Y.findType(rules.axiom1()));
         assertEqual('o', Y.findType(rules.axiom2()));
         assertEqual('o', Y.findType(rules.axiom3()));
         assertEqual('o', Y.findType(rules.axiom4(Y.parse('({x : x} y)'))));
         assertEqual('o', Y.findType(rules.axiom5()));
+        // Examples
+        Y.log(Y.findType(Y.parse('({x : x = y} = {x : x = y})')));
+        Y.log(Y.findType(Y.parse('({x : x} p) = p')));
       },
 
 
@@ -393,7 +395,9 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testInstEqn: function() {
         var c = new Y.Var('c');
-        var inf = Y.rules.instEqn(call('=', call(g, y), c), call(f, x), y);
+        var inf = Y.rules.instEqn(Y.parse('g y = c'),
+                                  Y.parse('f x'),
+                                  'y');
         assertEqual('((g (f x)) = c)', inf);
       },
 

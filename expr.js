@@ -410,6 +410,7 @@ Expr.prototype.pathToBinding = function(pred) {
 // Makes and returns a shallow copy of this Expr, with only the properties
 // defined by the Var, Lambda, and Call classes.
 //
+//
 // _addNames(Map result)
 //
 // Adds all names occurring in this expression to the Map, with value
@@ -551,8 +552,14 @@ function Var(name, position) {
 };
 Y.extend(Var, Expr);
 
+Y.displayVarTypes = false;
+
 Var.prototype.toString = function() {
-  return this.name;
+  if (Y.displayVarTypes && this.type) {
+    return this.name + ':' + this.type;
+  } else {
+    return this.name;
+  }
 };
 
 Var.prototype.dump = function() {
@@ -1227,6 +1234,17 @@ function TypeVariable() {
   this.name = '$' + this.id;
 }
 
+TypeVariable.prototype.copy = function() {
+  var tp = dereference(this);
+  if (tp instanceof TypeVariable) {
+    return tp;
+  } else if (tp instanceof TypeOperator) {
+    return tp.copy();
+  } else {
+    throw new Error('Not a type expression: ' +tp);
+  }
+}
+
 TypeVariable.prototype.toString = function() {
   return this.instance ? this.instance.toString() : this.name;
 }
@@ -1235,6 +1253,14 @@ TypeVariable.prototype.toString = function() {
 function TypeOperator(name, types) {
   this.name = name;
   this.types = types;
+}
+
+TypeOperator.prototype.copy = function() {
+    var list = [];
+    for (var i = 0; i < this.types.length; i++) {
+      list.push(this.types[i].copy());
+    }
+    return new TypeOperator(this.name, list);
 }
 
 TypeOperator.prototype.toString = function() {
@@ -1247,19 +1273,10 @@ TypeOperator.prototype.toString = function() {
 }
 
 function FunctionType(fromType, toType) {
-  // TypeOperator.call(this, '->', [fromType, toType]);
+  TypeOperator.call(this, '->', [fromType, toType]);
   this.types = [fromType, toType];
 }
 Y.extend(FunctionType, TypeOperator);
-
-FunctionType.prototype.name = '->';
-
-/**
- * A function with input "i" and output "o" displays as "(o i)".
- */
-FunctionType.prototype.toString = function() {
-  return '(' + this.types[1] + ' ' + this.types[0] + ')';
-}
 
 var individual = new TypeOperator('i', []);
 var boolean = new TypeOperator('o', []);
@@ -1271,6 +1288,10 @@ var boolean = new TypeOperator('o', []);
 //// Defined names are "definitions".
 
 function booleanBinOpType() {
+  return new FunctionType(boolean, new FunctionType(boolean, boolean));
+}
+
+function equalityType() {
   var v = new TypeVariable();
   return new FunctionType(v, new FunctionType(v, boolean));
 }
@@ -1285,7 +1306,7 @@ function theType() {
 var constantTypes = {
   T: boolean,
   F: boolean,
-  '=': booleanBinOpType(),
+  '=': equalityType(),
   'the': theType()
 };
 
@@ -1428,15 +1449,8 @@ function findType(expr) {
   // different types.
   var nonGenerics = [];
 
-  // Store the type of each expression when found.
-  function analyze1(expr) {
-    var result = analyze2(expr);
-    expr.type = result;
-    return result;
-  }
-
   // This is the core of the type inference algorithm.
-  function analyze2(expr) {
+  function analyze1(expr) {
     if (expr.type) {
       return expr.type;
     } else if (expr instanceof Var) {
@@ -1465,7 +1479,7 @@ function findType(expr) {
   function getType(name) {
     if (isIntegerLiteral(name)) {
       // I say integers are individuals.
-      return Individual;
+      return individual;
     }
     // Is it a bound or (already-seen) free variable?
     for (var i = vars.length - 1; i >= 0; --i) {
@@ -1481,10 +1495,10 @@ function findType(expr) {
       // Free variable: not constant, not defined.
       // Like handling of a variable binding, but scope is the remainder
       // of the expression, and bound variables get searched first.
-      vars.unshift(name);
-      nonGenerics.unshift(name);
       var varType = new TypeVariable();
+      vars.unshift(name);
       types.unshift(varType);
+      nonGenerics.unshift(varType);
       return varType;
     }
   }
@@ -1977,11 +1991,18 @@ Y.assert = assert;
 Y.assertEqn = assertEqn;
 Y.mapIsEmpty = mapIsEmpty;
 
-Y.TypeVariable = TypeVariable;
-Y.individual = individual;
+// Types
+
+// Y.displayVarTypes -- a variable, declared previously.
 Y.boolean = boolean;
+Y.individual = individual;
+Y.TypeVariable = TypeVariable;
+Y.TypeOperator = TypeOperator;
 Y.FunctionType = FunctionType;
 Y.findType = findType;
+
+// For testing:
+Y._equalityType = equalityType;
 
 Y.tokenize = tokenize;
 Y.parse = parse;

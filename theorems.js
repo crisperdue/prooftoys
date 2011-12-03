@@ -32,7 +32,6 @@ var _tautologies = {};
 // tautInst (Rule P, 5234) - uses modusPonens.
 // impliesForall (5237) - uses Replace and tautInst.
 
-
 // Map from inference rule name to a JavaScript function that
 // implements it.  The functions may use a global variable
 // named "rules" that should have all of these functions in it.
@@ -86,7 +85,7 @@ var ruleInfo = {
     },
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
-	   + 'if by cases enter T or F <input name=optString>'),
+           + 'if by cases enter T or F <input name=optString>'),
     hint: 'access a definition'
   },
 
@@ -136,6 +135,13 @@ var ruleInfo = {
           target.assume();
         }
         var result = target.replace(path, replacer);
+        // This call to findType costs a lot in overall performance.
+        // TODO: Do this check only when the replacement expression
+        // contains free variables that are not in the LHS and exist
+        // in scope at the target location.  If there are none, it is
+        // (should be!)  enough for the replacing equation to be
+        // typeable, which it must already be.
+        Y.findType(result);
         return result.justify('r', arguments, [target, equation]);
       } else if (equation.isCall2('-->') || equation.isCall2('|-')) {
         return rules.replace(equation, target, path);
@@ -170,8 +176,9 @@ var ruleInfo = {
 
   axiom1: {
     action: function() {
+      // var result = Y.parse('g T && g F = forall {x : g x}');
       var result =  equal(call('&&', call(g, T), call(g, F)),
-                          call('forall', lambda(x, call(g, x))));
+			  call('forall', lambda(x, call(g, x))));
       return result.justify('axiom1');
     },
     inputs: {},
@@ -179,9 +186,9 @@ var ruleInfo = {
     comment: ('T and F are all of the booleans')
   },
 
-  // (--> (= x y) (= (h x) (h y)))
   axiom2: {
     action: function() {
+      // var result = Y.parse('(x = y) --> (h x = h y)');
       var result = call('-->', equal(x, y), equal(call(h, x), call(h, y)));
       return result.justify('axiom2');
     },
@@ -190,9 +197,9 @@ var ruleInfo = {
     comment: ('equal inputs yield equal outputs.')
   },
 
-  // (= (= f g) (= {x : T} {x : (= (f x) (g x))}))
   axiom3: {
     action: function() {
+      // var result = Y.parse('(f = g) = forall {x : f x = g x}');
       var result = equal(equal(f, g),
                          call('forall',
                               lambda(x, equal(call(f, x), call(g, x)))));
@@ -215,8 +222,9 @@ var ruleInfo = {
       if (call instanceof Y.Call && call.fn instanceof Y.Lambda) {
         var lambdaExpr = call.fn;
         var result =
-          equal(call,
-                Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
+          equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
+	// Always make sure the call has a type.  It came from elsewhere.
+	Y.findType(call);
         return result.justify('axiom4', arguments);
       } else {
         throw new Error('Axiom 4 needs ({X : B} A), got: ' + call.toString());
@@ -230,6 +238,7 @@ var ruleInfo = {
 
   axiom5: {
     action: function() {
+      // var result = Y.parse('(the (= y)) = y');
       var result = equal(call('the', equal(y)), y);
       return result.justify('axiom5');
     },
