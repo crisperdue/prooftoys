@@ -242,6 +242,21 @@ Expr.prototype.freeNames = function() {
 };
 
 /**
+ * Returns names of the free variables of the expression, but no
+ * constants or defined names.
+ */
+Expr.prototype.freeVars = function() {
+  var names = this.freeNames();
+  var result = {};
+  for (var name in names) {
+    if (!isDefined(name)) {
+      result[name] = true;
+    }
+  }
+  return result;
+}
+
+/**
  * Finds and returns a set of all the names bound in this expression
  * at the location given by the path, represented by a Map from names
  * to true.
@@ -1284,7 +1299,7 @@ var boolean = new TypeOperator('o', []);
 
 //// CONSTANTS AND DEFINITIONS
 ////
-//// The only constants currently are the built-i T, F, =, "the".
+//// The only constants currently are the built-in T, F, =, "the".
 //// Defined names are "definitions".
 
 function booleanBinOpType() {
@@ -1338,7 +1353,12 @@ function isConstant(name) {
 }
 
 /**
- * True iff name has a (global) definition.  Name can also be a Var.
+ * True iff name has a definition.  Defined names must not be bound
+ * anywhere.  Rule R could then give incorrect results when replacing
+ * terms in the scope of the binding.
+ *
+ * TODO: Implement the restriction, perhaps by reserving groups of
+ * names for use as defined names.
  */
 function isDefined(name) {
   if (name instanceof Y.Var) {
@@ -1853,16 +1873,6 @@ function assertEqn(expr) {
          'Must be an equation: ' + expr);
 }
 
-/**
- * True iff the given map is empty.
- */
-function mapIsEmpty(map) {
-  for (var key in map) {
-    return false;
-  }
-  return true;
-}
-
 
 //// Useful utilities
 
@@ -1989,7 +1999,6 @@ Y.isDefined = isDefined;
 
 Y.assert = assert;
 Y.assertEqn = assertEqn;
-Y.mapIsEmpty = mapIsEmpty;
 
 // Types
 

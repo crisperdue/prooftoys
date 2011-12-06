@@ -313,9 +313,20 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('o', Y.findType(rules.axiom3()));
         assertEqual('o', Y.findType(rules.axiom4(Y.parse('({x : x} y)'))));
         assertEqual('o', Y.findType(rules.axiom5()));
-        // Examples
-        Y.log(Y.findType(Y.parse('({x : x = y} = {x : x = y})')));
-        Y.log(Y.findType(Y.parse('({x : x} p) = p')));
+        // Successful typing of the identity function
+        assertEqual('o', Y.findType(Y.parse('({x : x} p) = p')));
+        // An example where the type check in Rule R catches improper
+        // use of types.
+        var step1 = Y.parse('p (f g) --> p g').assume();
+        // This is pathological in that p and f each appear on just
+        // one side of the equation, which means the value of the
+        // expressions containing them are not affected by their
+        // values.
+        var step2 = Y.parse('p g = g f').assume();
+        try {
+          Y.rules.r(step2, step1, '/right');
+          Y.Assert.fail('Rule R should prohibit this step');
+        } catch(e) {}
       },
 
 

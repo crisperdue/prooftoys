@@ -135,13 +135,17 @@ var ruleInfo = {
           target.assume();
         }
         var result = target.replace(path, replacer);
-        // This call to findType costs a lot in overall performance.
-        // TODO: Do this check only when the replacement expression
-        // contains free variables that are not in the LHS and exist
-        // in scope at the target location.  If there are none, it is
-        // (should be!)  enough for the replacing equation to be
-        // typeable, which it must already be.
-        Y.findType(result);
+	var lvars = equation.getLeft().freeVars();
+	// If the right side has any free vars not in the left side,
+	// the result may have constraints not met by the target, so
+	// typecheck it.
+	var rvars = equation.getRight().freeVars();
+	for (var name in rvars) {
+	  if (!(name in lvars)) {
+	    Y.findType(result);
+	    break;
+	  }
+	}
         return result.justify('r', arguments, [target, equation]);
       } else if (equation.isCall2('-->') || equation.isCall2('|-')) {
         return rules.replace(equation, target, path);
