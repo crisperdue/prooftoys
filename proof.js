@@ -289,6 +289,11 @@ function renderStep(step, controller) {
   // stepNumber may be filled in later with an actual number.
   var html = '<div class=proofStep><span class=stepNumber>. </span></div>';
   var stepNode = Y.Node.create(html);
+  // Add a turnstyle symbol after the number unless it is the main
+  // connective of the formula.
+  if (!(step.isBinOp() && step.getBinOp().pname == '|-')) {
+    stepNode.appendChild('<span>&#x22A2;</span>');
+  }
   var n = step.stepNumber;
   if (n != null) {
     stepNode.one('.stepNumber').setContent(n);
