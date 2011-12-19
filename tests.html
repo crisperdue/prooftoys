@@ -274,6 +274,17 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
 
+      // ALIASES
+
+      testAliases: function() {
+        var parse = Y.parse;
+        // Printing and parsing should be inverses.
+        assertEqual('(a |- b)', parse('a |- b'));
+        // Aliases should not affect meanings of expressions.
+        Y.assert(parse('a |- b').matches(parse('a --> b')));
+      },
+
+
       // CONSTANTS AND DEFINITIONS
 
       // Actually "proof support" function:

@@ -579,9 +579,9 @@ Y.displayVarTypes = false;
 
 Var.prototype.toString = function() {
   if (Y.displayVarTypes && this.type) {
-    return this.name + ':' + this.type;
+    return (this.pname || this.name) + ':' + this.type;
   } else {
-    return this.name;
+    return (this.pname || this.name);
   }
 };
 
