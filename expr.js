@@ -555,12 +555,20 @@ Expr.prototype.pathToBinding = function(pred) {
 //// (see isConstant), or a defined name (see isDefined).
 
 /**
- * Make a Var with the given name.  If a non-null position
- * is given, use it to record the index in the input stream.
+ * Make a Var with the given name.  If a non-null position is given,
+ * use it to record the index in the input stream.  If the given name
+ * is in the "aliases" map, the given name becomes the Var's pname,
+ * and the Var's name becomes the value of the alias.  Pnames affect
+ * only parsing and display, not the logic itself.
  */
 function Var(name, position) {
   this.sort = Expr.var;
-  this.name = name;
+  if (aliases.hasOwnProperty(name)) {
+      this.pname = name;
+      this.name = aliases[name];
+  } else {
+    this.name = name;
+  }
   if (position != null) {
     this.pos = position;
   }
@@ -1793,18 +1801,25 @@ function isId(token) {
 }
 
 /**
- * Get a precedence value: null for symbols, defaults to
- * 5 for unknown non-symbols, the lowest infix precedence,
- * below all infix operators except |- for derivation from
- * hypotheses.
+ * Is it an identifier or constant?  Currently Id or number as digits.
+ */
+function isIdOrConstant(token) {
+  return token instanceof Y.Var
+    && !!token.name.match(/^[A-Za-z0-9$]+$/);
+}
+
+/**
+ * Get a precedence value: null for symbols, defaults to 100 for
+ * unknown non-symbols, greater than the usual math operators but less
+ * than identifiers (i.e. ordinary function calls).
  */
 function getPrecedence(token) {
-  var name = token.name;
+  var name = token.pname || token.name;
   var v = precedence[name];
-  if (f) {
-    return v;
+  if (precedence.hasOwnProperty(name)) {
+    return precedence[name];
   } else {
-    return isId(name) ? null : 5;
+    return isIdOrConstant(token) ? null : 100;
   }
 }
 
@@ -1814,10 +1829,15 @@ var precedence = {
   '(end)': 0,
   ')': 0,
   '}': 0,
+  // Alias for implication.
   '|-': 1,
-  // Implication binds tighter than equality, as in the book.
-  '=': 11,
-  '-->': 12,
+  // Alias for '=', with lower precedence.
+  '==': 2,
+  // Default precedence for non-identifiers is 5.
+  '-->': 11,
+  // Unlike the book, equality binds tighter than implication.  This
+  // way makes more sense when working with numbers for example.
+  '=': 12,
   '||': 13,
   '&&': 14,
   '<': 20,
@@ -1831,6 +1851,14 @@ var precedence = {
   // Specials
   '(': 1000,
   '{': 1000
+};
+
+// Defines aliases that only affect printing and parsing.
+var aliases = {
+  // Note that limiting '==' to boolean inputs would make it more than
+  // just an alias as currently defined.
+  '==': '=',
+  '|-': '-->'
 };
 
 
