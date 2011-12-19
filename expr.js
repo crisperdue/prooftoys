@@ -586,7 +586,7 @@ Var.prototype.toString = function() {
 };
 
 Var.prototype.dump = function() {
-  return this.name;
+  return this.pname || this.name;
 }
 
 Var.prototype.subst = function(replacement, name) {
@@ -594,11 +594,11 @@ Var.prototype.subst = function(replacement, name) {
 };
 
 Var.prototype.copy = function() {
-  return new Var(this.name);
+  return new Var(this.pname || this.name);
 };
 
 Var.prototype.dup = function() {
-  return new Var(this.name);
+  return new Var(this.pname || this.name);
 };
 
 Var.prototype._addNames = function(map) {
@@ -616,7 +616,7 @@ Var.prototype._boundNames = function(path, bindings) {
 };
 
 Var.prototype._decapture = function(freeNames, allNames, bindings) {
-  var newName = getBinding(this.name, bindings) || this.name;
+  var newName = getBinding(this.name, bindings) || this.pname || this.name;
   return new Var(newName);
 };
 
@@ -671,7 +671,7 @@ Var.prototype._bindingPath = function(pred, revPath) {
 
 Var.prototype._render = function() {
   var node = this.node = exprNode();
-  var name = this.name;
+  var name = this.pname || this.name;
   node.append(entities[name] || name);
   return node;
 };
@@ -716,19 +716,19 @@ Call.prototype.toString = function() {
     return this._string;
   }
   function asArg(expr) {
-    if (expr instanceof Y.Var && isInfixDesired(expr.name)) {
+    if (expr instanceof Y.Var && isInfixDesired(expr)) {
       return '(' + expr + ')';
     } else {
       return expr.toString();
     }
   }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
-    if (isInfixDesired(this.fn.fn.name)) {
+    if (isInfixDesired(this.fn.fn)) {
       return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
     } else {
       return '(' + this.fn.fn + ' ' + asArg(this.fn.arg) + ' ' + this.arg + ')';
     }
-  } else if (this.fn instanceof Var && isInfixDesired(this.fn.name)) {
+  } else if (this.fn instanceof Var && isInfixDesired(this.fn)) {
     return '(' + this.arg + ' ' + this.fn + ')';
   } else {
     return '(' + this.fn + ' ' + asArg(this.arg) + ')';
@@ -840,7 +840,7 @@ Call.prototype._render = function() {
   var node = this.node = exprNode();
   node.append('(');
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
-    if (isInfixDesired(this.fn.fn.name)) {
+    if (isInfixDesired(this.fn.fn)) {
       // Non-alphabetic characters: use infix: "x + y"
       var fnNode = this.fn.node = exprNode();
       fnNode.append(this.fn.arg._render());
@@ -859,7 +859,7 @@ Call.prototype._render = function() {
       node.append(space());
       node.append(this.arg._render());
     }
-  } else if (this.fn instanceof Var && isInfixDesired(this.fn.name)) {
+  } else if (this.fn instanceof Var && isInfixDesired(this.fn)) {
     // Infix operator, but only one argument: "x +"
     node.append(this.arg._render());
     node.append(space());
@@ -1868,7 +1868,8 @@ var aliases = {
  * This controls the policy over which function names are
  * to be rendered as infix.
  */
-function isInfixDesired(name) {
+function isInfixDesired(vbl) {
+  var name = vbl.pname || vbl.name;
   // TODO: Coordinate with isId, etc.
   return name.match(/^[^A-Za-z$:]+$/);
 }
