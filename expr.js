@@ -347,9 +347,15 @@ Expr.prototype.locate = function(_path) {
 
 /**
  * Renders this expression into a new YUI node, returning the node.
+ * The optional boolean "omit" argument if true no parentheses are
+ * rendered if expr is a Call.
+ *
+ * TODO: Consider fleshing out the concept of display with fewer
+ * parentheses.  For now limit use of "omit" to a minimum
+ * (renderStep).
  */
-Expr.prototype.render = function() {
-  return this._render();
+Expr.prototype.render = function(omit) {
+  return this._render(omit);
 };
 
 /**
@@ -836,9 +842,11 @@ Call.prototype._bindingPath = function(pred, revPath) {
           || this.arg._bindingPath(pred, new Path('arg', revPath)));
 };
 
-Call.prototype._render = function() {
+Call.prototype._render = function(omit) {
   var node = this.node = exprNode();
-  node.append('(');
+  if (!omit) {
+    node.append('(');
+  }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
     if (isInfixDesired(this.fn.fn)) {
       // Non-alphabetic characters: use infix: "x + y"
@@ -870,7 +878,9 @@ Call.prototype._render = function() {
     node.append(space());
     node.append(this.arg._render());
   }
-  node.append(')');
+  if (!omit) {
+    node.append(')');
+  }
   return node;
 };
 

@@ -298,7 +298,7 @@ function renderStep(step, controller) {
   // Render the WFF and record the rendered copy as the inference
   // result.  Rendering guarantees to copy every step that it
   // renders.
-  var wffNode = step.render();
+  var wffNode = step.render(true);
   stepNode.appendChild(wffNode);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
