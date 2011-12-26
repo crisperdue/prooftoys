@@ -46,9 +46,20 @@ function getTheorem(name) {
  *
  * Properties:
  *
- * steps: an array of the _rendered_ steps (Expr objects) displayed.
+ * steps: an array of the _rendered_ steps displayed.
  * node: Node containing the entire rendering of the proof.
  * stepsNode: Node containing all of the rendered steps as children.
+ *
+ * A step is an Expr, either rendered or unrendered.  Unrendered steps
+ * are the top-level expressions of a proof, with properties added by
+ * Expr.justify.  Rendered steps have properties "node" (a YUI node
+ * with the step's display) and "original" referring to the unrendered
+ * proof step from which the rendered step was created.  Creation of a
+ * rendered step adds a "rendering" property to the original, so
+ * original proof steps can currently have only one rendering at a time.
+ *
+ * TODO: Consider supporting a set of renderings per unrendered proof
+ * step.
  */
 function ProofControl() {
   var controller = this;
@@ -77,29 +88,24 @@ function ProofControl() {
 }
 
 /**
- * Sets the steps of the current proof to be the ones in the given array,
- * which should contain only unrendered steps.  Sets their stepNumber properties
- * to run from 1 to N and renders them.  The rendered copies become the accessible
- * steps of the ProofControl.
+ * Sets the steps of the current proof to be the ones in the given
+ * array, which should contain only unrendered steps.  Sets their
+ * stepNumber properties to run from 1 to N and renders them.  The
+ * rendered copies become the value of the steps property of the
+ * ProofControl.
  */
 ProofControl.prototype.setSteps = function(steps) {
-  var rendered = Y.Array.map(steps, function(step) {
-      var copy = step.copyStep();
-      step.rendering = copy;
-      copy.original = step;
-      return copy;
-    });
-  // Clear presentation of any old steps.
+  // Clear rendering properties of current steps, as they will be
+  // deleted.
   var stepsNode = this.stepsNode;
   Y.Array.each(this.steps, function(step) {
-      step.original.rendering = null;
-    });
+    step.original.rendering = null;
+  });
   stepsNode.setContent('');
   // Now render the desired steps.
-  this.steps = rendered;
+  this.steps = [];
   for (var i = 0; i < steps.length; i++) {
-    var stepNode = renderStep(rendered[i], this);
-    stepsNode.append(stepNode);
+    this.addStep(steps[i]);
   }
   this._renumber();
 };
@@ -119,6 +125,11 @@ ProofControl.prototype._renumber = function() {
   // detail displays.
 };  
 
+/**
+ * Render's the step number into its element of class "stepNumber",
+ * and fixes up its elements of class "stepReference" to contain the
+ * stepNumber of the correspondindg dependency.
+ */
 function renderStepNumber(step) {
   step.stepNode.one('.stepNumber')
     .setContent(document.createTextNode(step.stepNumber + '. '));
@@ -127,6 +138,7 @@ function renderStepNumber(step) {
   Y.each(step.stepNode.all('.stepReference'), function(ref, j) {
     ref.setContent(step.original.ruleDeps[j].rendering.stepNumber);
   });
+  // TODO: Consider fixing up references to hypotheses here.
 }
 
 /**
@@ -135,6 +147,7 @@ function renderStepNumber(step) {
  * position.
  */
 ProofControl.prototype.addStep = function(step) {
+  // TODO: Move most of this logic into renderStep.
   var copy = step.copyStep();
   step.rendering = copy;
   copy.original = step;
@@ -271,16 +284,15 @@ ProofControl.prototype.handleExprClick = function(expr) {
 // INTERNAL TO PROOFCONTROL
 
 /**
- * Create and return a YUI node to display the step within the
- * given controller.  The step should be renderable, including
- * a stepNumber property.  This also sets up event handlers for
- * click and hover events within the step.  The caller must
- * insert the new node into the document.
+ * Create and return a YUI node to display the step (justified Expr)
+ * within the given controller.  The step should be renderable.  This
+ * also sets up event handlers for click and hover events within the
+ * step.  Does not insert the new node into the document.
  *
  * The rendering is structured as follows:
  *
- * - Each rendered expression has a "node" property that refers
- *   to a YUI node with its rendering.
+ * - Each rendered expression and subexpression has a "node" property
+ *   that refers to a YUI node with its rendering.
  * - Each proofStep YUI node has a proofStep data property that refers
  *   to the Inference (proof step) it represents.
  */
@@ -295,10 +307,7 @@ function renderStep(step, controller) {
   }
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
-  // Render the WFF and record the rendered copy as the inference
-  // result.  Rendering guarantees to copy every step that it
-  // renders.
-  var wffNode = step.render(true);
+  var wffNode = step.renderAsStep();
   stepNode.appendChild(wffNode);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
@@ -669,8 +678,8 @@ function hoverStep(step, direction, proofNode, event) {
   } else {
     // If no handler apply or remove default highlighting.
     Y.each(step.ruleDeps, function(dep) {
-        action(dep.rendering.node, 'dep');
-      });
+      action(dep.rendering.node, 'dep');
+    });
   }
 }
 
