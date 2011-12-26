@@ -109,6 +109,9 @@ function appendSpan(node) {
   return node.appendChild('<span class=expr></span>');
 }
 
+/**
+ * Build and return a Node of class "expr".
+ */
 function exprNode() {
   return Y.Node.create('<span class=expr></span>');
 }
@@ -358,6 +361,37 @@ Expr.prototype.render = function(omit) {
   return this._render(omit);
 };
 
+Expr.prototype.renderAsStep = function() {
+  var step = this;
+  var wffNode;
+  // Render the WFF and associate any hypotheses with this step that
+  // do not already have an associated step.
+  if (step.hasHyps()) {
+    this.node = wffNode = exprNode();
+    var n = 0;
+    step.getLeft().eachConjunct(function(expr) {
+      if (n > 0) {
+	wffNode.append(',');
+        wffNode.append(space());
+      }
+      if (expr.original.source) {
+	wffNode.append(expr.original.source.stepNumber);
+      } else {	
+	wffNode.append(expr.render(true));
+	expr.original.source = step;
+      }
+      n++;
+    });
+    wffNode.append(space());
+    wffNode.append('|-');
+    wffNode.append(space());
+    wffNode.append(step.getRight().render(true));
+  } else {
+    wffNode = step.render(true);
+  }
+  return wffNode;
+};
+
 /**
  * Searches for a subexpression of this that passes the test, given as
  * a boolean function of one argument.  Returns a path from this to
@@ -396,6 +430,30 @@ Expr.prototype.pathToBinding = function(pred) {
     revPath = revPath.tail();
   }
   return result;
+};
+
+/**
+ * If this is a conjunction, call recursively on the left conjunct and
+ * run the callback on the right conjunct.  Otherwise just run the
+ * callback on this.
+ */
+Expr.prototype.eachConjunct = function(callback) {
+  if (this.isBinOp()) {
+    var op = this.getBinOp();
+    if (op instanceof Var && op.name == '&&') {
+      this.getLeft().eachConjunct(callback);
+      callback(this.getRight());
+    }
+  } else {
+    callback(this);
+  }
+};
+
+/**
+ * Returns true iff this expression is a call to '|-' (with two operands).
+ */
+Expr.prototype.hasHyps = function() {
+  return this.isBinOp() && this.getBinOp() == '|-';
 };
 
 
@@ -1036,8 +1094,8 @@ Lambda.prototype._render = function() {
   var node = this.node = exprNode();
   node.append('{');
   node.append(this.bound._render());
-  node.append(textNode(' : '));
-  node.append(this.body._render());
+  node.append(textNode('. '));
+  node.append(this.body._render(true));
   node.append('}');
   return node;
 };
@@ -2052,6 +2110,7 @@ Y.findType = findType;
 // For testing:
 Y._equalityType = equalityType;
 
+Y.exprNode = exprNode;
 Y.tokenize = tokenize;
 Y.parse = parse;
 
