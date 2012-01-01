@@ -61,6 +61,15 @@ var ruleInfo = {
     hint: 'enter an assumption'
   },
 
+  suppose: {
+    action: function(assertion) {
+      return call('|-', assertion, assertion).justify('suppose', arguments);
+    },
+    inputs: {term: 1},
+    form: ('Suppose <input name=term>'),
+    hint: 'enter a hypothesis'
+  },
+
   // TODO: consider allowing rules.assume(term) in proofs
   //   as a synonym.
 
@@ -147,7 +156,7 @@ var ruleInfo = {
 	  }
 	}
         return result.justify('r', arguments, [target, equation]);
-      } else if (equation.isCall2('-->') || equation.isCall2('|-')) {
+      } else if (equation.isCall2('-->')) {
         return rules.replace(equation, target, path);
       } else {
         throw new Error('Rule R requires equation: ' + equation);
@@ -1398,8 +1407,8 @@ var ruleInfo = {
         // Leave this line.
         return rules.r(h_equation, h_c, path);
       }
-      assert(h_c.isCall2('-->') || h_c.isCall2('|-'),
-              'Not an implication: ' + h_c);
+      assert(h_c.isCall2('-->'),
+	     'Not an implication: ' + h_c);
       assert(h_equation.isCall2('-->'), 'Not an implication: ' + h_equation);
       var h = h_c.getLeft();
       assert(h.matches(h_equation.getLeft()), 'Differing hypotheses: ' + h);
