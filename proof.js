@@ -58,6 +58,10 @@ function getTheorem(name) {
  * rendered step adds a "rendering" property to the original, so
  * original proof steps can currently have only one rendering at a time.
  *
+ * Note that the stepNumber property of a step depends on its position
+ * in its ProofControl's steps array, so it must be a property of a
+ * _rendered_ step.
+ *
  * TODO: Consider supporting a set of renderings per unrendered proof
  * step.
  */
@@ -89,7 +93,7 @@ function ProofControl() {
 
 /**
  * Sets the steps of the current proof to be the ones in the given
- * array, which should contain only unrendered steps.  Sets their
+ * array, which should contain only renderable steps.  Sets their
  * stepNumber properties to run from 1 to N and renders them.  The
  * rendered copies become the value of the steps property of the
  * ProofControl.
@@ -111,8 +115,8 @@ ProofControl.prototype.setSteps = function(steps) {
 };
 
 /**
- * Gives the steps numbers from 1 to N, or each its ordinals if
- * showOrdinals flag is true and updates displays of them.
+ * Gives the steps numbers from 1 to N, or each its ordinal if
+ * showOrdinals flag is true.  Updates step number display of each.
  */
 ProofControl.prototype._renumber = function() {
   // Give the steps numbers from 1 to N.
@@ -142,9 +146,9 @@ function renderStepNumber(step) {
 }
 
 /**
- * Adds the given unrendered (top-level) proof step into the control's
- * proof, rendering it and assigning it the stepNumber for its
- * position.
+ * Adds the given unrendered (top-level) proof step to the end of the
+ * control's proof, rendering it and assigning it the stepNumber for
+ * its position in this ProofControl's steps (rendered steps).
  */
 ProofControl.prototype.addStep = function(step) {
   // TODO: Move most of this logic into renderStep.
@@ -298,16 +302,13 @@ ProofControl.prototype.handleExprClick = function(expr) {
  */
 function renderStep(step, controller) {
   var stepsNode = controller.stepsNode;
-  // stepNumber may be filled in later with an actual number.
   var html = '<div class=proofStep><span class=stepNumber>. </span></div>';
   var stepNode = Y.Node.create(html);
   var n = step.stepNumber;
-  if (n != null) {
-    stepNode.one('.stepNumber').setContent(n);
-  }
+  stepNode.one('.stepNumber').setContent(n);
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
-  var wffNode = step.renderAsStep();
+  var wffNode = step.render();
   stepNode.appendChild(wffNode);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
@@ -638,12 +639,20 @@ function exprHandleOut(event) {
   }
 };
 
+/**
+ * Adds the named CSS class to the node.  For use in hover handlers.
+ * Currently does nothing if node is null, which occurs in hypotheses.
+ */
 function addClass(node, className) {
-  node.addClass(className);
+  node && node.addClass(className);
 }
 
+/**
+ * Removes the named CSS class from the node.
+ * For use in hover handlers.
+ */
 function removeClass(node, className) {
-  node.removeClass(className);
+  node && node.removeClass(className);
 }
 
 /**
