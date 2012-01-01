@@ -222,7 +222,7 @@ Expr.prototype.getBase = function() {
 
 /**
  * Copies this Expr as a proof step, including the parts specific to
- * proof steps.  Does only a shallow copy of the step-related parts.
+ * proof steps.  Makes only a shallow copy of the step-related parts.
  */
 Expr.prototype.copyStep = function() {
   var expr = this.copy();
@@ -349,6 +349,14 @@ Expr.prototype.locate = function(_path) {
 };
 
 /**
+ * Returns true iff this expression is a proof step.
+ */
+Expr.prototype.isStep = function() {
+  // A property only proof steps have.
+  return !!this.ruleName;
+};
+
+/**
  * Renders this expression into a new YUI node, returning the node.
  * The optional boolean "omit" argument if true no parentheses are
  * rendered if expr is a Call.
@@ -358,36 +366,57 @@ Expr.prototype.locate = function(_path) {
  * (renderStep).
  */
 Expr.prototype.render = function(omit) {
-  return this._render(omit);
+  if (this.isStep()) {
+    return renderAsStep(this);
+  } else {
+    return this._render(omit);
+  }
 };
 
-Expr.prototype.renderAsStep = function() {
-  var step = this;
+/**
+ * Render the expression as a proof step.  If it has a main binary
+ * operator of "|-", render LHS conjuncts with commas between, and
+ * track conjuncts for reference when they appear in later steps.
+ * The step should be a renderable copy of an original proof step.
+ *
+ * Marks each LHS conjunct with the original of this step as its
+ * sourceStep if it does not already have a sourceStep.
+ */
+function renderAsStep(step) {
   var wffNode;
   // Render the WFF and associate any hypotheses with this step that
   // do not already have an associated step.
   if (step.hasHyps()) {
-    this.node = wffNode = exprNode();
+    step.node = wffNode = exprNode();
     var n = 0;
-    step.getLeft().eachConjunct(function(expr) {
+    var rhs = step.original.getRight();
+    if (!rhs.hasOwnProperty('sourceStep')) {
+      // Record the sourceStep of the RHS of the original of this step.
+      rhs.sourceStep = step.original;
+    }
+    // Walk through the conjuncts of the _original_ LHS.
+    step.original.getLeft().eachConjunct(function(conjunct) {
       if (n > 0) {
-	wffNode.append(',');
-        wffNode.append(space());
+	wffNode.append(textNode(', '));
       }
-      if (expr.original.source) {
-	wffNode.append(expr.original.source.stepNumber);
-      } else {	
-	wffNode.append(expr.render(true));
-	expr.original.source = step;
+      if (conjunct.hasOwnProperty('sourceStep')) {
+        var conjunctNode = exprNode();
+        if (conjunct.sourceStep == step) {
+          conjunctNode.append(step.stepNumber);
+        } else {
+          conjunctNode.append(conjunct.sourceStep.rendering.stepNumber);
+        }
+      } else {
+        alert('Hypothesis lacks sourceStep: ' + conjunct);
       }
+      conjunct.node = conjunctNode;
+      wffNode.append(conjunctNode);
       n++;
     });
-    wffNode.append(space());
-    wffNode.append('|-');
-    wffNode.append(space());
+    wffNode.append(textNode(' |- '));
     wffNode.append(step.getRight().render(true));
   } else {
-    wffNode = step.render(true);
+    wffNode = step._render(true);
   }
   return wffNode;
 };
@@ -438,12 +467,10 @@ Expr.prototype.pathToBinding = function(pred) {
  * callback on this.
  */
 Expr.prototype.eachConjunct = function(callback) {
-  if (this.isBinOp()) {
-    var op = this.getBinOp();
-    if (op instanceof Var && op.name == '&&') {
-      this.getLeft().eachConjunct(callback);
-      callback(this.getRight());
-    }
+  var op = this.isBinOp() && this.getBinOp();
+  if (op instanceof Var && op.name == '&&') {
+    this.getLeft().eachConjunct(callback);
+    callback(this.getRight());
   } else {
     callback(this);
   }
@@ -453,7 +480,7 @@ Expr.prototype.eachConjunct = function(callback) {
  * Returns true iff this expression is a call to '|-' (with two operands).
  */
 Expr.prototype.hasHyps = function() {
-  return this.isBinOp() && this.getBinOp() == '|-';
+  return this.isBinOp() && this.getBinOp().pname == '|-';
 };
 
 
@@ -848,10 +875,13 @@ Call.prototype.normalized = function(counter, bindings) {
 Call.prototype.replace = function(path, xformer) {
   if (path.isMatch()) {
     return xformer(this);
-  } else {
+  } else if (path.segment) {
+    // Traversing down to a subexpression of this.
     var fn = this.fn.replace(path.rest('fn'), xformer);
     var arg = this.arg.replace(path.rest('arg'), xformer);
     return new Call(fn, arg);
+  } else {
+    return this;
   }
 };
 
