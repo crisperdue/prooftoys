@@ -531,7 +531,7 @@ function computeArgInfo(step) {
 /**
  * Computes the lowest real ordinal of a set of steps.
  * TODO: Eliminate this when there are no more artificial ordinals
- * due to creating assumptions after the fact.
+ * due to creating assertions after the fact.
  */
 function computeFirstOrdinal(steps) {
   var lowest = 0;
