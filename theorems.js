@@ -49,29 +49,31 @@ var _tautologies = {};
 var ruleInfo = {
 
   /**
-   * The name "assumption" is used in displays to indicate that
-   * the result of the inference is an assumption.
+   * The name "assertion" is used in displays to indicate that
+   * the result of the inference is an assertion.
    */
-  assumption: {
+  assert: {
+    action: function(assertion) {
+      return assertion.justify('assert', arguments);
+    },
+    inputs: {term: 1},
+    form: ('Assert <input name=term>'),
+    hint: 'WFF to assert (possibly to prove later)'
+  },
+
+  assume: {
     action: function(assumption) {
-      return assumption.justify('assumption', arguments);
+      // Flag the step as one with hypotheses, and record this step as
+      // the source of the assumption.
+      var step = call('-->', assumption, assumption).justify('assume', arguments);
+      step.hasHyps = true;
+      assumption.sourceStep = step;
+      return step;
     },
     inputs: {term: 1},
     form: ('Assume <input name=term>'),
-    hint: 'enter an assumption'
+    hint: 'Hypothesis to assume'
   },
-
-  suppose: {
-    action: function(assertion) {
-      return call('|-', assertion, assertion).justify('suppose', arguments);
-    },
-    inputs: {term: 1},
-    form: ('Suppose <input name=term>'),
-    hint: 'enter a hypothesis'
-  },
-
-  // TODO: consider allowing rules.assume(term) in proofs
-  //   as a synonym.
 
   /**
    * Refer to a theorem by looking it up in the database rather
@@ -1492,8 +1494,6 @@ Y.define('forall', equal(lambda(x, T)));
 Y.defineCases('&&', identity, lambda(x, F));
 Y.defineCases('||', allT, identity);
 Y.defineCases('-->', identity, allT);
-// Derivation from hypotheses
-Y.define('|-', _var('-->'));
 
 // Add the axioms and theorems to the "database".  This can only
 // include ones that are not "axiom schemas", i.e. not parameterized.
