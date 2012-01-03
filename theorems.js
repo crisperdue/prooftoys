@@ -140,10 +140,10 @@ var ruleInfo = {
         }
         // Auto-justify input steps.
         if (!equation.ruleName) {
-          equation.assume();
+          equation.assert();
         }
         if (!target.ruleName) {
-          target.assume();
+          target.assert();
         }
         var result = target.replace(path, replacer);
 	var lvars = equation.getLeft().freeVars();
