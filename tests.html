@@ -243,6 +243,26 @@ YUI({filter: null, insertBefore: 'styles'})
         } catch(e) {}
       },
 
+      testHasArgs: function() {
+        Y.assert(Y.parse('f x').hasArgs(1));
+        Y.assert(!Y.parse('f x').hasArgs(2));
+        Y.assert(Y.parse('x + 1').hasArgs(1));
+        Y.assert(Y.parse('x + 1').hasArgs(2));
+        Y.assert(!Y.parse('x + 1').hasArgs(3));
+      },
+
+      testRepeatedCall: function() {
+        try {
+          Y.repeatedCall('&&', []);
+          Y.Assert.fail('repeatedCall should throw here');
+        } catch(e) {}
+        assertEqual('x1', Y.repeatedCall('&&', [1]));
+        assertEqual('(x3 && x5)', Y.repeatedCall('&&', [3, 5]));
+        assertEqual('((x3 && x5) && x19)',
+                    Y.repeatedCall('&&', [3, 5, 19]));
+      },
+
+
       // PARSER
 
       testTokenize: function() {
@@ -667,6 +687,10 @@ YUI({filter: null, insertBefore: 'styles'})
                                      Y.parse('x > 0 --> ((x + x) > x)'),
                                      '/right');
         assertEqual('((x > 0) --> ((x + x) > (abs x)))', result);
+      },
+
+      testExtractOperand: function() {
+        
       },
 
 

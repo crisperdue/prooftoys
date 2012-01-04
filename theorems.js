@@ -66,7 +66,7 @@ var ruleInfo = {
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
       var step = call('-->', assumption, assumption).justify('assume', arguments);
-      step.hasHyps = true;
+      step.hasHyps = 1;
       assumption.sourceStep = step;
       return step;
     },

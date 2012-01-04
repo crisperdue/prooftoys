@@ -233,7 +233,7 @@ Expr.prototype.copyStep = function() {
   // ruleDeps refers to originals of other steps.
   expr.ruleDeps = this.ruleDeps;
   expr.ordinal = this.ordinal;
-  expr.hasHyps = !!this.hasHyps;
+  expr.hasHyps = this.hasHyps;
   return expr;
 };
 
@@ -369,6 +369,7 @@ Expr.prototype.isStep = function() {
  */
 Expr.prototype.render = function(omit) {
   var step = this;
+  var nHyps = this.hasHyps || 0;
   if (this.hasHyps) {
     // Note that only top-level expressions can have hypotheses.
     var wffNode;
@@ -376,7 +377,7 @@ Expr.prototype.render = function(omit) {
     var n = 0;
     var rhs = step.original.getRight();
     // Walk through the conjuncts of the _original_ LHS.
-    step.original.getLeft().eachConjunct(function(conjunct) {
+    step.original.getLeft().eachOperand(nHyps, function(conjunct) {
       if (n > 0) {
         wffNode.append(textNode(', '));
       }
@@ -439,19 +440,29 @@ Expr.prototype.pathToBinding = function(pred) {
 };
 
 /**
- * If this is a conjunction, call recursively on the left conjunct and
- * run the callback on the right conjunct.  Otherwise just run the
- * callback on this.
+ * If this is a sequence of expressions with two operands
+ * syntactically structured as in A && B && ... && Z, call recursively
+ * on the left operand (down through N levels) and run the callback on
+ * the right operand.  Otherwise just run the callback on this.
  */
-Expr.prototype.eachConjunct = function(callback) {
-  var op = this.isBinOp() && this.getBinOp();
-  if (op instanceof Var && op.name == '&&') {
-    this.getLeft().eachConjunct(callback);
+Expr.prototype.eachOperand = function(n, callback) {
+  if (n > 1) {
+    Y.assert(this.hasArgs(2), 'Input does not have two args: ' + this);
+    this.getLeft().eachOperand(n - 1, callback);
     callback(this.getRight());
-  } else {
+  } else if (n == 1) {
     callback(this);
   }
 };
+
+/**
+ * True iff this expression is a Call with at least N arguments, where
+ * N is at least 1.  Meaning to say this and N - 1 levels of calls
+ * nested within its function part.
+ */
+Expr.prototype.hasArgs = function(n) {
+  return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
+}
 
 
 // Methods defined on expressions, but defined only in the subclasses:
@@ -616,7 +627,7 @@ Expr.prototype.eachConjunct = function(callback) {
 //// (see isConstant), or a defined name (see isDefined).
 
 /**
- * Make a Var with the given name.  If a non-null position is given,
+ * Make a Var with the given name.  If a non-null integer position is given,
  * use it to record the index in the input stream.  If the given name
  * is in the "aliases" map, the given name becomes the Var's pname,
  * and the Var's name becomes the value of the alias.  Pnames affect
@@ -1930,6 +1941,16 @@ var aliases = {
 //// UTILITY FUNCTIONS
 
 /**
+ * Returns a call with the two operands and the given op (middle
+ * argument) as the binary operator between them.  The op must be an
+ * Expr, e.g. Var.
+ */
+function infixCall(arg1, op, arg2) {
+  // TODO: Change this when redefining meaning of infix operators.
+  return new Call(new Call(op, arg1), arg2);
+}
+
+/**
  * This controls the policy over which function names are
  * to be rendered as infix.
  */
@@ -1937,6 +1958,33 @@ function isInfixDesired(vbl) {
   var name = vbl.pname || vbl.name;
   // TODO: Coordinate with isId, etc.
   return name.match(/^[^A-Za-z$:]+$/);
+}
+
+/**
+ * Generates an expression containing only variables and the given
+ * operator, where the variables are named x<indices[n]>, where n is
+ * the nth element of indices, an array of nonnegative integers.  The
+ * operator is a string or Var.  The indices must contain at least one
+ * element.
+ *
+ * Useful for rearranging expressions containing operators that are
+ * commutative and associative.
+ */
+function repeatedCall(operator, indices) {
+  var op = (typeof operator == 'string') ? new Var(operator) : operator;
+  function x(n) {
+    return new Var('x' + indices[n]);
+  }
+  Y.assert(indices.length, 'Empty indices in repeatedExpr');
+  if (indices.length == 1) {
+    return x(0);
+  } else {
+    var expr = infixCall(x(0), op, x(1));
+    for (var next = 2; next < indices.length; next++) {
+      expr = infixCall(expr, op, x(next));
+    }
+  }
+  return expr;
 }
 
 /**
@@ -2081,6 +2129,7 @@ Y.path = path;
 Y.findBinding = findBinding;
 Y.getBinding = getBinding;
 Y.matchAsSchema = matchAsSchema;
+Y.repeatedCall = repeatedCall;
 
 Y.define = define;
 Y.defineCases = defineCases;
