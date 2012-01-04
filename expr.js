@@ -168,6 +168,18 @@ Expr.prototype.toString = function() {
 };
 
 /**
+ * Returns true iff this is a call that would display in infix (a Call
+ * internally of the form ((op arg1) arg2), where op is a symbol
+ * defined to display as infix.
+ */
+Expr.prototype.isInfixCall = function(expr) {
+  return (this instanceof Call
+          && this.fn instanceof Call
+          && this.fn.fn instanceof Var
+          && isInfixDesired(this.fn.fn));
+}
+
+/**
  * Returns a shallow copy of this, annotating the copy with the rule
  * name, rule arguments, and dependencies (ruleName, ruleArgs,
  * ruleDeps).  "This" becomes the "details" property if it already has
@@ -372,25 +384,34 @@ Expr.prototype.render = function(omit) {
   var nHyps = this.hasHyps || 0;
   if (this.hasHyps) {
     // Note that only top-level expressions can have hypotheses.
-    var wffNode;
-    step.node = wffNode = exprNode();
+    var wffNode = step.node = exprNode();
     var n = 0;
-    var rhs = step.original.getRight();
-    // Walk through the conjuncts of the _original_ LHS.
-    step.original.getLeft().eachOperand(nHyps, function(conjunct) {
-      if (n > 0) {
-        wffNode.append(textNode(', '));
-      }
-      var conjunctNode = conjunct.node = exprNode();
-      if (conjunct.sourceStep == step) {
-        // This step does not yet have its rendering set.
-        conjunctNode.append(step.stepNumber);
+    // Walk through the _original_ LHS.  This code might mirror the
+    // intent a bit more closely by specifically walking down through
+    // calls to '&&' rather than all subexpressions.
+    step.original.getLeft().walkLR(renderIfHyp);
+    function renderIfHyp(expr) {
+      if (expr.hasOwnProperty('sourceStep')) {
+        // It is a hypothesis.
+        if (n > 0) {
+          wffNode.append(textNode(', '));
+        }
+        n++;
+        var source = expr.sourceStep;
+        var node = expr.node = exprNode();
+        if (source == step) {
+          // This step does not yet have its rendering set.
+          node.append(step.stepNumber);
+        } else {
+          node.append(expr.sourceStep.rendering.stepNumber);
+        }
+        wffNode.append(node);
+        // Expr is a hypotheses, do not walk its subexpressions.
+        return true;
       } else {
-        conjunctNode.append(conjunct.sourceStep.rendering.stepNumber);
+        Y.assert(expr.isCall2('&&'), 'Hypothesis without source in ' + step);
       }
-      wffNode.append(conjunctNode);
-      n++;
-    });
+    }
     wffNode.append(textNode(' |- '));
     wffNode.append(step.getRight().render(true));
     return wffNode;
@@ -482,6 +503,13 @@ Expr.prototype.hasArgs = function(n) {
 // is free.
 //
 // TODO: Could we decapture as part of the substitution?
+//
+//
+// walkLR(callback)
+//
+// Walks through subexpressions of this in left-to-right display
+// order.  If the callback value is truthy, does not walk into its
+// subexpressions.  Does not visit bound variables in Lambdas.
 //
 //
 // copy()
@@ -665,6 +693,10 @@ Var.prototype.subst = function(replacement, name) {
   return (name == this.name ? replacement : this);
 };
 
+Var.prototype.walkLR = function(callback) {
+  callback(this);
+};
+
 Var.prototype.copy = function() {
   return new Var(this.pname || this.name);
 };
@@ -814,6 +846,21 @@ Call.prototype.dump = function() {
 Call.prototype.subst = function(replacement, name) {
   return new Call(this.fn.subst(replacement, name),
                   this.arg.subst(replacement, name));
+};
+
+Call.prototype.walkLR = function(callback) {
+  if (callback(this)) {
+    return;
+  } else {
+    if (this.isInfixCall()) {
+      this.getLeft().walkLR(callback);
+      this.getBinOp().walkLR(callback);
+      this.getRight().walkLR(callback);
+    } else {
+      this.fn.walkLR(callback);
+      this.arg.walkLR(callback);
+    }
+  }
 };
 
 Call.prototype.copy = function() {
@@ -999,6 +1046,14 @@ Lambda.prototype.subst = function(replacement, name) {
                       this.body.subst(replacement, name));
   } else {
     return this;
+  }
+};
+
+Lambda.prototype.walkLR = function(callback) {
+  if (callback(this)) {
+    return;
+  } else {
+    this.body.walkLR(callback);
   }
 };
 
