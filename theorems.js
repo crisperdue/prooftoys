@@ -1451,6 +1451,42 @@ var ruleInfo = {
               + "that is true conditionally.")
   },
     
+  addStepHyps: {
+    action: function(step, hypStep) {
+      if (hypStep.hasHyps) {
+	if (step.hasHyps) {
+	  var taut = Y.parse('(h1 --> p) --> ((h1 && h2) --> p)');
+	  var subst = {
+	    h1: step.getLeft(),
+	    h2: hypStep.getLeft(),
+	    p: step.getRight()
+	  };
+	  var step1 = rules.tautInst(taut, subst);
+	  var step2 = rules.modusPonens(step, step1);
+	  var result = step2.justify('addStepHyps', arguments, [step]);
+	  result.hasHyps = true;
+	  return result;
+	} else {
+	  var subst = {
+	    p: step,
+	    h2: hypStep.getLeft()
+	  };
+	  var step1 = rules.tautInst(Y.parse('p --> (h2 --> p)'), subst);
+	  var step2 = rules.modusPonens(step, step1);
+	  var result = step2.justify('addStepHyps', arguments, [step]);
+	  result.hasHyps = true;
+	  return result;
+	}
+      } else {
+	return step.justify('addStepHyps', arguments, [step]);
+      }
+    },
+    inputs: {step: [1, 2]},
+    form: ('Add to step <input name=step1> hypotheses from step '
+	   + '<input name=step2>'),
+    hint: 'Add hypotheses to a step'
+  },
+
 
   //
   // OPTIONAL/UNUSED
