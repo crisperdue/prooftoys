@@ -308,7 +308,7 @@ function renderStep(step, controller) {
   stepNode.one('.stepNumber').setContent(n);
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
-  var wffNode = step.render();
+  var wffNode = step.render(true);
   stepNode.appendChild(wffNode);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.

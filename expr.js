@@ -965,6 +965,7 @@ Call.prototype._render = function(omit) {
     node.append('(');
   }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
+    // This is a call on a named function of two arguments.
     if (isInfixDesired(this.fn.fn)) {
       // Non-alphabetic characters: use infix: "x + y"
       var fnNode = this.fn.node = exprNode();
