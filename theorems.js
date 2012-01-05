@@ -1451,6 +1451,9 @@ var ruleInfo = {
               + "that is true conditionally.")
   },
     
+  // Add hypotheses to a step from another step.  This is key to
+  // providing two steps with the same hypotheses in preparation for
+  // applying various rules of inference.
   addStepHyps: {
     action: function(step, hypStep) {
       if (hypStep.hasHyps) {
@@ -1485,6 +1488,44 @@ var ruleInfo = {
     form: ('Add to step <input name=step1> hypotheses from step '
 	   + '<input name=step2>'),
     hint: 'Add hypotheses to a step'
+  },
+
+  // Prefix hypotheses from the second step to the first step.
+  // Often used together with addStepHyps.
+  addStepHyps2: {
+    action: function(step, hypStep) {
+      if (hypStep.hasHyps) {
+	if (step.hasHyps) {
+	  var taut = Y.parse('(h2 --> p) --> ((h1 && h2) --> p)');
+	  var subst = {
+	    h1: hypStep.getLeft(),
+	    h2: step.getLeft(),
+	    p: step.getRight()
+	  };
+	  var step1 = rules.tautInst(taut, subst);
+	  var step2 = rules.modusPonens(step, step1);
+	  var result = step2.justify('addStepHyps2', arguments, [step]);
+	  result.hasHyps = true;
+	  return result;
+	} else {
+	  var subst = {
+	    p: step,
+	    h1: hypStep.getLeft()
+	  };
+	  var step1 = rules.tautInst(Y.parse('p --> (h1 --> p)'), subst);
+	  var step2 = rules.modusPonens(step, step1);
+	  var result = step2.justify('addStepHyps2', arguments, [step]);
+	  result.hasHyps = true;
+	  return result;
+	}
+      } else {
+	return step.justify('addStepHyps2', arguments, [step]);
+      }
+    },
+    inputs: {step: [1, 2]},
+    form: ('To step <input name=step1> prefix the hypotheses of step '
+	   + '<input name=step2>'),
+    hint: 'Prefix hypotheses to a step'
   },
 
 
