@@ -400,7 +400,6 @@ Expr.prototype.isStep = function() {
  */
 Expr.prototype.render = function(omit) {
   var step = this;
-  var nHyps = this.hasHyps || 0;
   if (this.hasHyps) {
     // Note that only top-level expressions can have hypotheses.
     var wffNode = step.node = exprNode();
