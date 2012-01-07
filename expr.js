@@ -1266,21 +1266,23 @@ Path.none._rest = Path.none;
 // interesting.
 var _end = new Path(null, Path.none);
 
+// Private to the "next" method.
+var _pathSteps = {
+  fn: function(o) { return o.fn; },
+  arg: function(o) { return o.arg; },
+  body: function(o) { return o.body; },
+  binop: function(o) { return o.getBinOp(); },
+  left: function(o) { return o.getLeft(); },
+  right: function(o) { return o.getRight(); }
+};
+
 /**
  * Traverses into the given object by getting the property named by
  * this Path's segment.  If the value of the property is a function,
  * applies it as a method, e.g. 'getLeft'.
  */
 Path.prototype.next = function(o) {
-  var steps = {
-    fn: function() { return o.fn; },
-    arg: function() { return o.arg; },
-    body: function() { return o.body; },
-    binop: function() { return o.getBinOp(); },
-    left: function() { return o.getLeft(); },
-    right: function() { return o.getRight(); }
-  };
-  return steps[this.segment]();
+  return _pathSteps[this.segment](o);
 };
 
 Path.prototype.isMatch = function() {
@@ -1289,6 +1291,43 @@ Path.prototype.isMatch = function() {
 
 Path.prototype.isEnd = function() {
   return this == _end;
+};
+
+/**
+ * Does the path refer to an expression on the left side of an infix
+ * operator?  The given path must be applicable to a call to an infix
+ * operator.
+ *
+ * TODO: Change this when changing the meaning of infix.
+ */
+Path.prototype.isLeft = function() {
+  return (this.segment == 'left'
+          || (this.segment == 'fn'
+              && this._rest
+              && this._rest.segment =='arg'));
+};
+
+Path.prototype.getLeft = function() {
+  assert(this.isLeft(), 'Not a leftward path');
+  // TODO: Change this when changing the meaning of infix.
+  return this._rest._rest;
+};
+
+/**
+ * Does the path refer to an expression on the right side of an infix
+ * operator?  The given path must be applicable to a call to an infix
+ * operator.
+ *
+ * TODO: Change this when changing the meaning of infix.
+ */
+Path.prototype.isRight = function() {
+  return this.segment == 'right' || this.segment == 'arg';
+};
+
+Path.prototype.getRight = function() {
+  assert(this.isRight(), 'Not a rightward path');
+  // TODO: Change this when changing the meaning of infix.
+  return this._rest;
 };
 
 Path.prototype.tail = function() {
