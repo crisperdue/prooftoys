@@ -165,7 +165,7 @@ var ruleInfo = {
       }
     },
     inputs: {equation: 1, site: 2},
-    form: ('Replace with right side of step <input name=equation>'),
+    form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replaces an occurrence of an expression with something'
               + ' it is equal to.'),
     hint: 'replace term with equal term'
@@ -1396,31 +1396,58 @@ var ruleInfo = {
   //
   // h_equation is an equation implied by hypotheses, i.e. H --> A = B.
   // h_c is a term implied by the same hypotheses, i.e. H --> C.
-  // The path is relative to C.
+  // The path is relative to h_c.
   //
   // For convenience applies rule R directly if the equation is really
   // an equation and not an implication.
   replace: {
-    action: function(h_equation, h_c, path) {
+    action: function(h_equation_arg, h_c_arg, path) {
+      var h_c = h_c_arg;
+      var h_equation = h_equation_arg;
       var assert = Y.assert;
       if (h_equation.isCall2('=')) {
-        // Allow "replace" to be used for situations where "r"
-        // is applicable.
-        // Leave this line.
+	assert(!h_c.hasHyps || path.isRight(),
+	       'Cannot apply the Replace rule to hypotheses');
+        // Allow "replace" to be used for situations where "r" is
+        // applicable.  The case with hypotheses in h_c can be
+        // considered as rule RR (5202).
         return rules.r(h_equation, h_c, path);
       }
-      assert(h_c.isCall2('-->'),
-	     'Not an implication: ' + h_c);
-      assert(h_equation.isCall2('-->'), 'Not an implication: ' + h_equation);
-      var h = h_c.getLeft();
-      assert(h.matches(h_equation.getLeft()), 'Differing hypotheses: ' + h);
+      assert(h_equation.isCall2('-->') && h_equation.getRight().isCall2('='),
+	     'Not an equation: ' + h_equation);
+      // h_equation has the form H --> A = B
+
+      // Give the two WFFs the same hypotheses.
+      if (h_equation.hasHyps) {
+	// Avoid running the rule if it will be a no-op.
+	h_c = rules.addStepHyps(h_c, h_equation);
+      }
+      if (h_c.hasHyps) {
+	// Avoid running the rule if it will be a no-op.
+	h_equation = rules.addStepHyps2(h_equation, h_c_arg);
+      }
+
+      // h_c can be given as an implication, but without hypotheses,
+      // which is OK, but in the end it must be an implication.
+      assert(h_c.isCall2('-->'), 'Not an implication: ' + h_c);
+      // Now both WFFS are implications.  Record the hypotheses as
+      // "h".  (LHS of any implication is also OK.)
+      var h = h_equation.getLeft();
+      // Path relative to c.
+      var cpath = path.getRight();
+      if (!h_c.hasHyps) {
+	// If there are no hypotheses, we do not attempt to make the
+	// LHS of the two input steps match.
+	assert(h_c.getLeft().matches(h),
+	       'LHS mismatch in "replace" rule');
+      }
       var equation = h_equation.getRight();
-      assert(equation.isCall2('='), 'Expecting an equation, got: ' + equation);
+      // equation is A = B
       var c = h_c.getRight();
       var a = equation.getLeft();
       var b = equation.getRight();
       // Should we subtract out the ones not free in A = B?
-      var boundNames = c.boundNames(path);
+      var boundNames = c.boundNames(cpath);
       var hypFreeNames = h.freeNames();
       // Check ahead of time that the variables are OK.
       // TODO: Do appropriate checking in 5235 and impliesForall as well.
@@ -1431,9 +1458,9 @@ var ruleInfo = {
       }
       var step1 = h_equation;
       for (var name in boundNames) {
-        step1 = rules.implyForall(name, implies(h, equation));
+        step1 = rules.implyForall(name, implies(h, step1));
       }
-      var step2 = rules.r5239(equation, c, path);
+      var step2 = rules.r5239(equation, c, cpath);
       var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
       var step3 = rules.p(step1,
                           step2,
@@ -1444,16 +1471,20 @@ var ruleInfo = {
                           step3,
                           implies(h, step3.getRight().getRight()),
                           taut2);
-      return step4.justify('replace', arguments, [h_c, h_equation]);
+      // TODO: Set "hasHyps" systematically, probably in "justify".
+      step4.hasHyps = h_c_arg.hasHyps || h_equation_arg.hasHyps;
+      return step4.justify('replace', arguments, [h_equation_arg, h_c_arg]);
     },
-    // TODO: inputs: {implication: [1, 2]}, plus constraints.
+    inputs: {step: 1, site: 2}, // plus constraints.
+    form: ('Replace selection with right side of step <input name=step>'),
     comment: ("Analog to the deduction theorem, replacing an equation "
               + "that is true conditionally.")
   },
     
-  // Add hypotheses to a step from another step.  This is key to
-  // providing two steps with the same hypotheses in preparation for
-  // applying various rules of inference.
+  // Add hypotheses to the step from hypStep.  This is key to providing
+  // two steps with the same hypotheses in preparation for applying
+  // various rules of inference.  If hypStep has no hypotheses, the result
+  // is simply the given step.
   addStepHyps: {
     action: function(step, hypStep) {
       if (hypStep.hasHyps) {
@@ -1490,8 +1521,9 @@ var ruleInfo = {
     hint: 'Add hypotheses to a step'
   },
 
-  // Prefix hypotheses from the second step to the first step.
-  // Often used together with addStepHyps.
+  // Prefix hypotheses from the hypStep to the step.  Often used
+  // together with addStepHyps.  If hypStep has no hypotheses, the
+  // result is simply the given step.
   addStepHyps2: {
     action: function(step, hypStep) {
       if (hypStep.hasHyps) {
