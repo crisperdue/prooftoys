@@ -1478,8 +1478,8 @@ var ruleInfo = {
     },
     inputs: {step: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=step>'),
-    comment: ("Analog to the deduction theorem, replacing an equation "
-              + "that is true conditionally.")
+    comment: ("Replace an expression with the right side of an equation, "
+              + "handling hypotheses.")
   },
     
   // Add hypotheses to the step from hypStep.  This is key to providing
