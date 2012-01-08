@@ -433,13 +433,17 @@ Expr.prototype.render = function(omit) {
       }
     }
     renderHyps(step.original.getLeft());
-    wffNode.append(textNode(' |- '));
+    wffNode.append(textNode(' ' + turnstile + ' '));
     wffNode.append(step.getRight()._render(true));
     return wffNode;
   } else {
     return this._render(omit);
   }
 };
+
+// String containing just the turnstile math character.  See
+// http://tlt.its.psu.edu/suggestions/international/bylanguage/mathchart.html
+var turnstile = Y.Node.create('&#8870;').get('text');
 
 /**
  * Searches for a subexpression of this that passes the test, given as
