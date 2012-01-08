@@ -685,7 +685,7 @@ YUI({filter: null, insertBefore: 'styles'})
       testReplace: function() {
         var result = Y.rules.replace(Y.parse('x > 0 --> (x = (abs x))'),
                                      Y.parse('x > 0 --> ((x + x) > x)'),
-                                     '/right');
+                                     '/right/right');
         assertEqual('((x > 0) --> ((x + x) > (abs x)))', result);
       },
 

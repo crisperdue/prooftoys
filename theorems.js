@@ -1402,6 +1402,7 @@ var ruleInfo = {
   // an equation and not an implication.
   replace: {
     action: function(h_equation_arg, h_c_arg, path) {
+      path = Y.path(path);
       var h_c = h_c_arg;
       var h_equation = h_equation_arg;
       var assert = Y.assert;
