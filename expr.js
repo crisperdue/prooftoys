@@ -748,6 +748,9 @@ Var.prototype._locate = function(path) {
 };
 
 Var.prototype.matches = function(expr, bindings) {
+  if (expr == this) {
+    return true;
+  }
   if (expr instanceof Var) {
     var expectedName = getBinding(this.name, bindings) || this.name;
     return expr.name == expectedName;
@@ -923,6 +926,9 @@ Call.prototype._locate = function(path) {
 };
 
 Call.prototype.matches = function(expr, bindings) {
+  if (expr == this) {
+    return true;
+  }
   if (expr instanceof Call) {
     return (this.fn.matches(expr.fn, bindings)
             && this.arg.matches(expr.arg, bindings));
@@ -1111,6 +1117,9 @@ Lambda.prototype._locate = function(path) {
 };
 
 Lambda.prototype.matches = function(expr, bindings) {
+  if (expr == this) {
+    return true;
+  }
   if (expr instanceof Lambda) {
     var newBindings = new Bindings(this.bound.name, expr.bound.name, bindings);
     return this.body.matches(expr.body, newBindings);
