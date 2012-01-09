@@ -311,7 +311,7 @@ Expr.prototype.freeVars = function() {
     }
   }
   return result;
-}
+};
 
 /**
  * Finds and returns a set of all the names bound in this expression
@@ -529,6 +529,37 @@ Expr.prototype.hasArgs = function(n) {
   return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
 }
 
+/**
+ * Returns a map from step ordinal to hypotheses for all conjoined
+ * hypotheses in this expression.
+ */
+Expr.prototype.hypsBySource = function() {
+  // The hypotheses are the conjuncts at all level that have a
+  // sourceStep property.
+  var map = {};
+  function search(expr) {
+    if (this.sourceStep && this.sourceStep.ordinal) {
+      map[this.sourceStep.ordinal] = this;
+    } else if (this.isCall2('&&')) {
+      search(this.getLeft());
+      search(this.getRight());
+    }
+  }
+  search(this);
+  return map;
+};
+
+function getHypMapKeys(map) {
+  var result = [];
+  for (var key in map) {
+    if (map.hasOwnProperty(key)) {
+      result.push(Number(key));
+    }
+  }
+  result.sort(function(x, y) { return x - y; });
+  return result;
+}
+
 
 // Methods defined on expressions, but defined only in the subclasses:
 //
@@ -561,6 +592,12 @@ Expr.prototype.hasArgs = function(n) {
 //
 // Makes and returns a shallow copy of this Expr, with only the properties
 // defined by the Var, Lambda, and Call classes.
+//
+//
+// hasFree(name)
+// 
+// True iff the given name (string) appears free in this expression.
+// Does not match against pnames.
 //
 //
 // _addNames(Map result)
@@ -636,16 +673,17 @@ Expr.prototype.hasArgs = function(n) {
 //
 // _path(pred, revPath)
 //
-// Searches for a subexpression of this that passes the test and
-// is NOT a variable binding.  Returns the "reverse path" to it,
-// with the last path segment first.
+// Searches for a subexpression of this that passes the test and is
+// NOT a variable binding.  Returns the "reverse path" to it from
+// this, with the last path segment first, added to the given revPath.
 // 
 //
 // _bindingPath(pred, revPath)
 //
 // Searches for a subexpression of this that passes the test and is a
-// variable binding.  Returns the "reverse path" to its containing
-// Lambda, with the last path segment first.
+// variable binding.  Returns the "reverse path" from this to its
+// containing Lambda, with the last path segment first, added to the
+// given revPath.
 // 
 //
 // generalizeTF(expr2, newVar)
@@ -736,6 +774,10 @@ Var.prototype.copy = function() {
 
 Var.prototype.dup = function() {
   return new Var(this.pname || this.name);
+};
+
+Var.prototype.hasFree = function(name) {
+  return this.name == name;
 };
 
 Var.prototype._addNames = function(map) {
@@ -894,6 +936,10 @@ Call.prototype.copy = function() {
 
 Call.prototype.dup = function() {
   return new Call(this.fn, this.arg);
+};
+
+Call.prototype.hasFree = function(name) {
+  return this.fn.hasFree(name) || this.arg.hasFree(name);
 };
 
 Call.prototype._addNames = function(map) {
@@ -1087,6 +1133,10 @@ Lambda.prototype.copy = function() {
 
 Lambda.prototype.dup = function() {
   return new Lambda(this.bound, this.body);
+};
+
+Lambda.prototype.hasFree = function(name) {
+  return this.bound.name != name && this.body.hasFree(name);
 };
 
 Lambda.prototype._addNames = function(map) {
