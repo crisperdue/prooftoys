@@ -158,14 +158,12 @@ var ruleInfo = {
 	  }
 	}
         return result.justify('r', arguments, [target, equation]);
-      } else if (equation.isCall2('-->')) {
-        return rules.replace(equation, target, path);
       } else {
         throw new Error('Rule R requires equation: ' + equation);
       }
     },
-    inputs: {equation: 1, site: 2},
-    form: ('Replace selection with right side of step <input name=equation>'),
+    // inputs: {equation: 1, site: 2},
+    // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replaces an occurrence of an expression with something'
               + ' it is equal to.'),
     hint: 'replace term with equal term'
@@ -179,7 +177,7 @@ var ruleInfo = {
     action: function(equation, target, path) {
       path = Y.path(path);
       var rev = rules.eqnSwap(equation);
-      var result = rules.r(rev, target, path);
+      var result = rules.replace(rev, target, path);
       return result.justify('rRight', arguments, [target, equation]);
     },
     inputs: {equation: 1, site: 2},
@@ -337,7 +335,7 @@ var ruleInfo = {
     action: function(a, ab) {
       var aa = rules.eqSelf(a);
       var b = ab.getRight();
-      var result = rules.r(ab, a, '/');
+      var result = rules.replace(ab, a, '/');
       return result.justify('replaceWhole', arguments, arguments);
     },
     inputs: {step: 1, equation: 2},
@@ -347,7 +345,7 @@ var ruleInfo = {
   eqnSwap: {
     action: function(ab) {
       var aa = rules.eqSelf(ab.getLeft());
-      var ba = rules.r(ab, aa, '/left');
+      var ba = rules.replace(ab, aa, '/left');
       return ba.justify('eqnSwap', arguments, arguments);
     },
     inputs: {equation: 1},
@@ -359,7 +357,7 @@ var ruleInfo = {
   // r5201c
   eqnChain: {
     action: function(ab, bc) {
-      var ac = rules.r(bc, ab, '/right');
+      var ac = rules.replace(bc, ab, '/right');
       var result = ac;
       return result.justify('eqnChain', arguments, arguments);
     },
@@ -375,8 +373,8 @@ var ruleInfo = {
       var d = cd.getRight();
       var ac = call(a, c);
       var acac = rules.eqSelf(ac);
-      var acbc = rules.r(ab, acac, '/right/fn');
-      var acbd = rules.r(cd, acbc, '/right/arg');
+      var acbc = rules.replace(ab, acac, '/right/fn');
+      var acbd = rules.replace(cd, acbc, '/right/arg');
       var result = acbd;
       return result.justify('applyBySides', arguments, arguments);
     },
@@ -387,7 +385,7 @@ var ruleInfo = {
   applyBoth: {
     action: function(eqn, a) {
       var step1 = rules.eqSelf(call(eqn.locate('/left'), a));
-      var step2 = rules.r(eqn, step1, '/right/fn');
+      var step2 = rules.replace(eqn, step1, '/right/fn');
       return step2.justify('applyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
@@ -401,7 +399,7 @@ var ruleInfo = {
   applyToBoth: {
     action: function(a, bc) {
       var abab = rules.eqSelf(call(a, bc.getLeft()));
-      var abac = rules.r(bc, abab, '/right/arg');
+      var abac = rules.replace(bc, abab, '/right/arg');
       return abac.justify('applyToBoth', arguments, [bc]);
     },
     inputs: {term: 1, equation: 2},
@@ -462,7 +460,8 @@ var ruleInfo = {
   /**
    * Change the name of a bound variable.  Replaces the lambda
    * subexpression in expr at path with one that binds newName, which
-   * may be a string or Var.
+   * may be a string or Var, and uses it in place of any references to
+   * the old bound variable.
    */
   changeVar: {
     action: function(expr, path, newVar) {
@@ -499,7 +498,7 @@ var ruleInfo = {
                'Not an equation: ' + eqn);
       Y.assert(v instanceof Y.Var, 'Not a variable: ' + v);
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
-      var step2 = rules.r(eqn, step1, '/right/body');
+      var step2 = rules.replace(eqn, step1, '/right/body');
       return step2.justify('bindEqn', arguments, [eqn]);
     },
     inputs: {equation: 1, varName: 2},
@@ -570,7 +569,7 @@ var ruleInfo = {
     action: function(a_b) {
       Y.assertEqn(a_b);
       var step1 = rules.eqT(a_b.locate('/left'));
-      var step2 = rules.r(a_b, step1, '/right/right');
+      var step2 = rules.replace(a_b, step1, '/right/right');
       return step2.justify('toTIsEquation', arguments, [a_b]);
     },
     inputs: {equation: 1},
@@ -675,7 +674,7 @@ var ruleInfo = {
       var step3 = rules.apply(step2, '/left');
       var step4 = rules.apply(step3, '/right');
       // Do not use fromTIsA, it depends on this.
-      var step5 = rules.r(step4, rules.theorem('t'), '/');
+      var step5 = rules.replace(step4, rules.theorem('t'), '/');
       return step5.justify('instForall', arguments, [target]);
     },
     inputs: {step: 1, term: 2, condition: {1: function(target) {
@@ -746,8 +745,8 @@ var ruleInfo = {
       v = _var(v);
       var stepT1 = rules.toTIsEquation(caseT);
       var stepF1 = rules.toTIsEquation(caseF);
-      var step2 = rules.r(stepT1, rules.theorem('r5212'), '/left');
-      var step3 = rules.r(stepF1, step2, '/right');
+      var step2 = rules.replace(stepT1, rules.theorem('r5212'), '/left');
+      var step3 = rules.replace(stepF1, step2, '/right');
       // Note: If a variable is not in caseT it is also not in caseF.
       var newVar = Y.genVar('w', caseT.allNames());
       var gen = caseT.generalizeTF(caseF, newVar);
@@ -756,7 +755,7 @@ var ruleInfo = {
       var step5 = rules.apply(step4, '/right/arg/body');
       var step6 = rules.apply(step5, '/left/right');
       var step7 = rules.apply(step6, '/left/left');
-      var step8 = rules.r(step7, step3, '');
+      var step8 = rules.replace(step7, step3, '');
       var step9 = rules.instForall(step8, v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
@@ -816,7 +815,7 @@ var ruleInfo = {
       Y.assert(left instanceof Y.Var && left.name == 'T',
                'Input should be [T = A]: ' + t_a);
       var a = t_a.locate('/right');
-      var result = rules.r(rules.r5218(a), t_a, '/');
+      var result = rules.replace(rules.r5218(a), t_a, '/');
       return result.justify('fromTIsA', arguments, [t_a]);
     },
     inputs: {equation: 1, condition: {1: function(eqn) {
@@ -859,14 +858,16 @@ var ruleInfo = {
     comment: ('(forall {v : T})')
   },
 
-  // 5220.  The variable may be given as a name string, which it
-  // converts internally to a variable.
+  // 5220 (universal generalization).  The variable may be given as a
+  // name string, which it converts internally to a variable.
   addForall: {
     action: function(a, v) {
       v = _var(v);
+      Y.assert(!(a.hasHyps && a.getLeft().hasFree(v.name)),
+	       function() { return v.name + ' occurs free in ' + a; });
       var step1 = rules.toTIsA(a);
       var step2 = rules.forallT(v);
-      var step3 = rules.r(step1, step2, '/arg/body');
+      var step3 = rules.replace(step1, step2, '/arg/body');
       return step3.justify('addForall', arguments, [a]);
     },
     inputs: {step: 1, varName: 2},
@@ -880,6 +881,7 @@ var ruleInfo = {
   // which may also be a string, which will be converted to a variable.
   instVar: {
     action: function(b, a, v) {
+      // Note that addForall checks that v is not free in b.
       var step1 = rules.addForall(b, v);
       var step2 = rules.instForall(step1, a);
       return step2.justify('instVar', arguments, [b]);
@@ -900,6 +902,7 @@ var ruleInfo = {
       var namesReversed = [];
       var step = b;
       for (var name in map) {
+	// Note that addForall checks that the name is not free.
 	step = rules.addForall(step, name);
 	namesReversed.unshift(name);
       }
@@ -932,10 +935,10 @@ var ruleInfo = {
       var step2b = rules.rRight(step2a, caseF, '');
       var step2c = rules.toTIsA(step2b);
       var step3 = rules.theorem('r5212');
-      var step4a = rules.r(step1c, step3, '/left');
-      var step4b = rules.r(step2c, step4a, '/right');
+      var step4a = rules.replace(step1c, step3, '/left');
+      var step4b = rules.replace(step2c, step4a, '/right');
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), g);
-      var step6 = rules.r(step5, step4b, '/');
+      var step6 = rules.replace(step5, step4b, '/');
       var step7a = rules.instForall(step6, v);
       var step7b = rules.apply(step7a, '/');
       return step7b.justify('cases', arguments, [caseT, caseF]);
@@ -1187,8 +1190,8 @@ var ruleInfo = {
       var stepa = rules.toTIsA(a);
       var stepb = rules.toTIsA(b);
       var step1 = rules.theorem('r5212');
-      var step2 = rules.r(stepa, step1, '/left');
-      var step3 = rules.r(stepb, step2, '/right');
+      var step2 = rules.replace(stepa, step1, '/left');
+      var step3 = rules.replace(stepb, step2, '/right');
       return step3.justify('makeConjunction', arguments, [a, b]);
     },
     inputs: {step: [1, 2]},
@@ -1248,13 +1251,13 @@ var ruleInfo = {
       var step1 = rules.r5235(v, call('not', a), b);
       var taut = equal(call('||', call('not', p), q), implies(p, q));
       var step2 = rules.tautInst(taut, {p: a, q: b});
-      var step3 = rules.r(step2, step1, '/left/arg/body');
+      var step3 = rules.replace(step2, step1, '/left/arg/body');
       var map4 = {
         p: a,
         q: step1.locate('/right/right')
       };
       var step4 = rules.tautInst(taut, map4);
-      var step5 = rules.r(step4, step3, '/right');
+      var step5 = rules.replace(step4, step3, '/right');
       return step5.justify('implyForall', arguments, [a_b]);
     },
     inputs: {varName: 1, implication: 2},
@@ -1407,7 +1410,7 @@ var ruleInfo = {
       var h_equation = h_equation_arg;
       var assert = Y.assert;
       if (h_equation.isCall2('=')) {
-	assert(!h_c.hasHyps || path.isRight(),
+	assert(!(h_c.hasHyps && path.isLeft()),
 	       'Cannot apply the Replace rule to hypotheses');
         // Allow "replace" to be used for situations where "r" is
         // applicable.  The case with hypotheses in h_c can be
@@ -1431,7 +1434,7 @@ var ruleInfo = {
       // h_c can be given as an implication, but without hypotheses,
       // which is OK, but in the end it must be an implication.
       assert(h_c.isCall2('-->'), 'Not an implication: ' + h_c);
-      // Now both WFFS are implications.  Record the hypotheses as
+      // Now both wffs are implications.  Record the hypotheses as
       // "h".  (LHS of any implication is also OK.)
       var h = h_equation.getLeft();
       // Path relative to c.
@@ -1529,6 +1532,10 @@ var ruleInfo = {
     action: function(step, hypStep) {
       if (hypStep.hasHyps) {
 	if (step.hasHyps) {
+	  if (step.getLeft().matches(hypStep.getLeft())) {
+	    // Don't even display the request.
+	    return step;
+	  }
 	  var taut = Y.parse('(h2 --> p) --> ((h1 && h2) --> p)');
 	  var subst = {
 	    h1: hypStep.getLeft(),
@@ -1559,6 +1566,29 @@ var ruleInfo = {
     form: ('To step <input name=step1> prefix the hypotheses of step '
 	   + '<input name=step2>'),
     hint: 'Prefix hypotheses to a step'
+  },
+
+  // Simplify the hypotheses of a step, removing duplicates.
+  simplifyHyps: {
+    // Note that "replace" does not even call this if its inputs have
+    // tbe same hypotheses.
+    action: function(step) {
+      if (!step.hasHyps) {
+	// Do nothing, don't even display that simplification of
+	// hypotheses was part of the proof.
+	return step;
+      }
+      var hyps = step.getLeft();
+      if (hyps.isCall2('&&')) {
+	
+      } else {
+	// Again, don't display this as a step.
+	return step;
+      }
+    },
+    inputs: {step: 1},
+    form: ('Simplify the hypotheses of step <input name=step>'),
+    hint: 'Simplify the hypotheses'
   },
 
 
