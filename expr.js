@@ -2112,12 +2112,21 @@ var aliases = {
 //// UTILITY FUNCTIONS
 
 /**
+ * Return the Var v, or if the argument is a string, create a new Var
+ * from it.
+ */
+function varify(v) {
+  return (typeof v == 'string') ? new Var(v) : v;
+};
+
+/**
  * Returns a call with the two operands and the given op (middle
  * argument) as the binary operator between them.  The op must be an
  * Expr, e.g. Var.
  */
 function infixCall(arg1, op, arg2) {
   // TODO: Change this when redefining meaning of infix operators.
+  op = varify(op);
   return new Call(new Call(op, arg1), arg2);
 }
 
@@ -2311,6 +2320,8 @@ Y.definitions = definitions;
 Y.isConstant = isConstant;
 Y.isDefined = isDefined;
 
+Y.varify = varify;
+Y.infixCall = infixCall;
 Y.assert = assert;
 Y.assertEqn = assertEqn;
 

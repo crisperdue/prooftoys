@@ -1424,11 +1424,11 @@ var ruleInfo = {
       // Give the two WFFs the same hypotheses.
       if (h_equation.hasHyps) {
 	// Avoid running the rule if it will be a no-op.
-	h_c = rules.addStepHyps(h_c, h_equation);
+	h_c = rules.appendStepHyps(h_c, h_equation);
       }
       if (h_c.hasHyps) {
 	// Avoid running the rule if it will be a no-op.
-	h_equation = rules.addStepHyps2(h_equation, h_c_arg);
+	h_equation = rules.prependStepHyps(h_equation, h_c_arg);
       }
 
       // h_c can be given as an implication, but without hypotheses,
@@ -1489,7 +1489,7 @@ var ruleInfo = {
   // two steps with the same hypotheses in preparation for applying
   // various rules of inference.  If hypStep has no hypotheses, the result
   // is simply the given step.
-  addStepHyps: {
+  appendStepHyps: {
     action: function(step, hypStep) {
       if (hypStep.hasHyps) {
 	if (step.hasHyps) {
@@ -1501,7 +1501,7 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('addStepHyps', arguments, [step]);
+	  var result = step2.justify('appendStepHyps', arguments, [step]);
 	  result.hasHyps = true;
 	  return result;
 	} else {
@@ -1511,12 +1511,12 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(Y.parse('p --> (h2 --> p)'), subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('addStepHyps', arguments, [step]);
+	  var result = step2.justify('appendStepHyps', arguments, [step]);
 	  result.hasHyps = true;
 	  return result;
 	}
       } else {
-	return step.justify('addStepHyps', arguments, [step]);
+	return step.justify('appendStepHyps', arguments, [step]);
       }
     },
     inputs: {step: [1, 2]},
@@ -1526,14 +1526,14 @@ var ruleInfo = {
   },
 
   // Prefix hypotheses from the hypStep to the step.  Often used
-  // together with addStepHyps.  If hypStep has no hypotheses, the
+  // together with appendStepHyps.  If hypStep has no hypotheses, the
   // result is simply the given step.
-  addStepHyps2: {
+  prependStepHyps: {
     action: function(step, hypStep) {
       if (hypStep.hasHyps) {
 	if (step.hasHyps) {
 	  if (step.getLeft().matches(hypStep.getLeft())) {
-	    // Don't even display the request.
+	    // Don't display the inference step.
 	    return step;
 	  }
 	  var taut = Y.parse('(h2 --> p) --> ((h1 && h2) --> p)');
@@ -1544,7 +1544,7 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('addStepHyps2', arguments, [step]);
+	  var result = step2.justify('prependStepHyps', arguments, [step]);
 	  result.hasHyps = true;
 	  return result;
 	} else {
@@ -1554,12 +1554,12 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(Y.parse('p --> (h1 --> p)'), subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('addStepHyps2', arguments, [step]);
+	  var result = step2.justify('prependStepHyps', arguments, [step]);
 	  result.hasHyps = true;
 	  return result;
 	}
       } else {
-	return step.justify('addStepHyps2', arguments, [step]);
+	return step.justify('prependStepHyps', arguments, [step]);
       }
     },
     inputs: {step: [1, 2]},
