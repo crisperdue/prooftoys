@@ -219,8 +219,8 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 	}
       } else {
 	if (fieldType == 'step'
-	    || (fieldType == 'equation' && step.isCall2('='))
-	    || (fieldType == 'implication' && step.isCall2('-->'))) {
+	    || (fieldType == 'equation' && step.unHyp().isCall2('='))
+	    || (fieldType == 'implication' && step.unHyp().isCall2('-->'))) {
 	  field.set('value', n);
 	  return true;
 	} else {
@@ -453,8 +453,8 @@ function acceptsSelection(step, ruleName, acceptTerm) {
 		&& expr.fn instanceof Y.Lambda));
   } else {
     return (accept.step
-	    || (accept.equation && step.isCall2('='))
-	    || (accept.implication && step.isCall2('-->')));
+	    || (accept.equation && step.unHyp().isCall2('='))
+	    || (accept.implication && step.unHyp().isCall2('-->')));
   }
 }
 

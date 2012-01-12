@@ -182,6 +182,8 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('x', Y.path('arg').next(call(f, x)).toString());
         var p2 = '/left/binop';
         assertEqual('/fn/arg/fn/fn', Y.path(p2).toString());
+        var p3 = '/arg/fn';
+        assertEqual(p3 + p3, Y.path(p3).concat(p3));
       },
 
       testSearch: function() {
