@@ -343,9 +343,10 @@ var ruleInfo = {
 
   // r5201b
   eqnSwap: {
-    action: function(ab) {
+    action: function(h_ab) {
+      var ab = h_ab.unHyp();
       var aa = rules.eqSelf(ab.getLeft());
-      var ba = rules.replace(ab, aa, '/left');
+      var ba = rules.replace(h_ab, aa, '/left');
       return ba.justify('eqnSwap', arguments, arguments);
     },
     inputs: {equation: 1},
@@ -357,7 +358,7 @@ var ruleInfo = {
   // r5201c
   eqnChain: {
     action: function(ab, bc) {
-      var ac = rules.replace(bc, ab, '/right');
+      var ac = rules.replace(bc, ab, '/main/right');
       var result = ac;
       return result.justify('eqnChain', arguments, arguments);
     },
@@ -383,10 +384,11 @@ var ruleInfo = {
 
   // r5201e
   applyBoth: {
-    action: function(eqn, a) {
+    action: function(h_eqn, a) {
+      var eqn = h_eqn.unHyp();
       var step1 = rules.eqSelf(call(eqn.locate('/left'), a));
-      var step2 = rules.replace(eqn, step1, '/right/fn');
-      return step2.justify('applyBoth', arguments, [eqn]);
+      var step2 = rules.replace(h_eqn, step1, '/right/fn');
+      return step2.justify('applyBoth', arguments, [h_eqn]);
     },
     inputs: {equation: 1, term: 2},
     form: ('Apply both sides of step <input name=equation>'
@@ -397,10 +399,11 @@ var ruleInfo = {
 
   // r5201f
   applyToBoth: {
-    action: function(a, bc) {
+    action: function(a, h_bc) {
+      var bc = h_bc.unHyp();
       var abab = rules.eqSelf(call(a, bc.getLeft()));
-      var abac = rules.replace(bc, abab, '/right/arg');
-      return abac.justify('applyToBoth', arguments, [bc]);
+      var abac = rules.replace(h_bc, abab, '/right/arg');
+      return abac.justify('applyToBoth', arguments, [h_bc]);
     },
     inputs: {term: 1, equation: 2},
     form: ('Apply function <input name=term>'
@@ -490,7 +493,8 @@ var ruleInfo = {
    * side wrapped in a binding of the given variable or variable name.
    */
   bindEqn: {
-    action: function(eqn, v) {
+    action: function(h_eqn, v) {
+      var eqn = h_eqn.unHyp();
       if (typeof v == 'string') {
         v = new Y.Var(v);
       }
@@ -498,8 +502,8 @@ var ruleInfo = {
                'Not an equation: ' + eqn);
       Y.assert(v instanceof Y.Var, 'Not a variable: ' + v);
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
-      var step2 = rules.replace(eqn, step1, '/right/body');
-      return step2.justify('bindEqn', arguments, [eqn]);
+      var step2 = rules.replace(h_eqn, step1, '/right/body');
+      return step2.justify('bindEqn', arguments, [h_eqn]);
     },
     inputs: {equation: 1, varName: 2},
     form: ('Bind variable <input name=varName> in step <input name=equation>'),
@@ -1215,6 +1219,7 @@ var ruleInfo = {
   // ((forall {v : A || B}) --> A || (forall {v : B})).
   r5235: {
     action: function(v, a, b) {
+      v = Y.varify(v);
       var map1 = {
         p: call('forall', lambda(v, call('||', T, b))),
         q: call('forall', lambda(v, b))
@@ -1339,6 +1344,12 @@ var ruleInfo = {
 
   // 5239, closely following the description and names in the book.
   // Analog to Rule R, expressed as an implication.  Theorem schema.
+  //
+  // Given equation A = B, target C, and a path relative to C, returns
+  // a wff of the form "forall ... (A = B) --> (C = D), where D is
+  // obtained like the result of applying Rule R to A = B and C.  The
+  // "forall" binds free variables of A = B that are bound at the
+  // replacement location in C.
   r5239: {
     action: function(equation, target, path) {
       path = Y.path(path);
@@ -1348,8 +1359,8 @@ var ruleInfo = {
       var step1 = rules.axiom('axiom2');
       var a = equation.getLeft();
       var b = equation.getRight();
-      // Should we subtract out the ones not free in A = B?
       var boundNames = target.boundNames(path);
+      Y.removeExcept(boundNames, equation.freeNames());
       // Is this the full set of names?
       var t = Y.genVar('t', Y.merge(target.allNames(), equation.allNames()));
       var texpr = t;
@@ -1372,12 +1383,12 @@ var ruleInfo = {
       var step3 = rules.apply(step2, '/right/left');
       var step4 = step3;
       for (var i = 0; i < boundNameList.length; i++) {
-        step4 = rules.apply(step4, '/right/left/body/right');
+        step4 = rules.apply(step4, Y.path('/right/left').concat(path));
       }
       var step5 = rules.apply(step4, '/right/right');
       var step6 = step5;
       for (var i = 0; i < boundNameList.length; i++) {
-        step6 = rules.apply(step6, '/right/right/body/right');
+        step6 = rules.apply(step6, Y.path('/right/right').concat(path));
       }
       if (boundNameList.length == 0) {
         return step6.justify('r5239', arguments);
@@ -1399,15 +1410,26 @@ var ruleInfo = {
   //
   // h_equation is an equation implied by hypotheses, i.e. H --> A = B.
   // h_c is a term implied by the same hypotheses, i.e. H --> C.
-  // The path is relative to h_c.
+  // The path is relative to h_c, and may include a special initial
+  // segment 'main', which it interprets as 'right' if h_c has
+  // hypotheses, otherwise ignoring it.
   //
   // For convenience applies rule R directly if the equation is really
   // an equation and not an implication.
+  //
+  // TODO: Make this rename bound variables in C that complicate the
+  // specification and implementation of this rule.
   replace: {
     action: function(h_equation_arg, h_c_arg, path) {
       path = Y.path(path);
       var h_c = h_c_arg;
       var h_equation = h_equation_arg;
+      if (path.segment == 'main') {
+	path = path.tail();
+	if (h_c.hasHyps) {
+	  path = new Y.Path('right', path);
+	}
+      }
       var assert = Y.assert;
       if (h_equation.isCall2('=')) {
 	assert(!(h_c.hasHyps && path.isLeft()),
@@ -1422,14 +1444,8 @@ var ruleInfo = {
       // h_equation has the form H --> A = B
 
       // Give the two WFFs the same hypotheses.
-      if (h_equation.hasHyps) {
-	// Avoid running the rule if it will be a no-op.
-	h_c = rules.appendStepHyps(h_c, h_equation);
-      }
-      if (h_c.hasHyps) {
-	// Avoid running the rule if it will be a no-op.
-	h_equation = rules.prependStepHyps(h_equation, h_c_arg);
-      }
+      h_c = rules.appendStepHyps(h_c, h_equation);
+      h_equation = rules.prependStepHyps(h_equation, h_c_arg);
 
       // h_c can be given as an implication, but without hypotheses,
       // which is OK, but in the end it must be an implication.
@@ -1437,21 +1453,26 @@ var ruleInfo = {
       // Now both wffs are implications.  Record the hypotheses as
       // "h".  (LHS of any implication is also OK.)
       var h = h_equation.getLeft();
-      // Path relative to c.
-      var cpath = path.getRight();
       if (!h_c.hasHyps) {
 	// If there are no hypotheses, we do not attempt to make the
 	// LHS of the two input steps match.
 	assert(h_c.getLeft().matches(h),
 	       'LHS mismatch in "replace" rule');
       }
-      var equation = h_equation.getRight();
       // equation is A = B
+      var equation = h_equation.getRight();
       var c = h_c.getRight();
       var a = equation.getLeft();
       var b = equation.getRight();
-      // Should we subtract out the ones not free in A = B?
+      // Path relative to c.  This is one segment shorter than the
+      // input path, but is the same length if hyps were added to h_c
+      // by appendStepHyps, i.e. h_equation_arg had them but not
+      // h_c_arg.
+      var cpath = (h_equation_arg.hasHyps && !h_c_arg.hasHyps
+		   ? path
+		   : path.getRight());
       var boundNames = c.boundNames(cpath);
+      Y.removeExcept(boundNames, h_equation_arg.freeNames());
       var hypFreeNames = h.freeNames();
       // Check ahead of time that the variables are OK.
       // TODO: Do appropriate checking in 5235 and impliesForall as well.
@@ -1475,7 +1496,7 @@ var ruleInfo = {
                           step3,
                           implies(h, step3.getRight().getRight()),
                           taut2);
-      // TODO: Set "hasHyps" systematically, probably in "justify".
+      // TODO: Consider setting "hasHyps" systematically, probably in "justify".
       step4.hasHyps = h_c_arg.hasHyps || h_equation_arg.hasHyps;
       return step4.justify('replace', arguments, [h_equation_arg, h_c_arg]);
     },
@@ -1493,6 +1514,10 @@ var ruleInfo = {
     action: function(step, hypStep) {
       if (hypStep.hasHyps) {
 	if (step.hasHyps) {
+	  if (step.getLeft().matches(hypStep.getLeft())) {
+	    // Hyps are the same, so no change to the given step.
+	    return step;
+	  }
 	  var taut = Y.parse('(h1 --> p) --> ((h1 && h2) --> p)');
 	  var subst = {
 	    h1: step.getLeft(),
@@ -1516,7 +1541,8 @@ var ruleInfo = {
 	  return result;
 	}
       } else {
-	return step.justify('appendStepHyps', arguments, [step]);
+	// Don't display any new inference step.
+	return step;
       }
     },
     inputs: {step: [1, 2]},
@@ -1532,6 +1558,10 @@ var ruleInfo = {
     action: function(step, hypStep) {
       if (hypStep.hasHyps) {
 	if (step.hasHyps) {
+	  if (step.getLeft().matches(hypStep.getLeft())) {
+	    // Hyps are the same, so no change to the given step.
+	    return step;
+	  }
 	  if (step.getLeft().matches(hypStep.getLeft())) {
 	    // Don't display the inference step.
 	    return step;
@@ -1559,7 +1589,8 @@ var ruleInfo = {
 	  return result;
 	}
       } else {
-	return step.justify('prependStepHyps', arguments, [step]);
+	// Don't display this no-op inference step.
+	return step;
       }
     },
     inputs: {step: [1, 2]},
