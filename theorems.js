@@ -568,6 +568,36 @@ var ruleInfo = {
     return step3.justify('t');
   },
 
+  // Target is forall {x : B}, expr is A, which will replace
+  // all occurrences of x.  Uses no book-specific definitions,
+  // and relies only on theorem "T", 5200, and reduce.
+  // This is 5215.
+  instForall: {
+    action: function(target, expr) {
+      Y.assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
+               "Must be 'forall': " + target.fn);
+      Y.assert(target.arg instanceof Y.Lambda,
+               "Must be lambda expression: " + target.arg);
+      var step1 = rules.useDefinition(target, '/fn');
+      var step2 = rules.applyBoth(step1, expr);
+      var step3 = rules.apply(step2, '/left');
+      var step4 = rules.apply(step3, '/right');
+      // Do not use fromTIsA, it depends on this.
+      var step5 = rules.replace(step4, rules.theorem('t'), '/');
+      return step5.justify('instForall', arguments, [target]);
+    },
+    inputs: {step: 1, term: 2, condition: {1: function(target) {
+      return (target instanceof Y.Call
+	      && target.fn instanceof Y.Var
+	      && target.fn.name == 'forall');
+    }}},
+    form: ('In step <input name=step> instantiate bound var'
+	   + ' with term <input name=term>'),
+    hint: 'instantiate "forall"',
+    comment: ('In a "forall", instantiates the bound variable with'
+              + ' a given term.')
+  },
+
   // From [A = B] deduce T = [A = B].
   toTIsEquation: {
     action: function(a_b) {
@@ -661,36 +691,6 @@ var ruleInfo = {
     var step5 = rules.r(step2, rules.theorem('r5212'), '/left');
     var step6 = rules.r(step4, step5, '/right');
     return step6.justify('r5213', arguments, arguments);
-  },
-
-  // Target is forall {x : B}, expr is A, which will replace
-  // all occurrences of x.  Uses no book-specific definitions,
-  // and relies only on theorem "T" and 5200.
-  // This is 5215.
-  instForall: {
-    action: function(target, expr) {
-      Y.assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
-               "Must be 'forall': " + target.fn);
-      Y.assert(target.arg instanceof Y.Lambda,
-               "Must be lambda expression: " + target.arg);
-      var step1 = rules.useDefinition(target, '/fn');
-      var step2 = rules.applyBoth(step1, expr);
-      var step3 = rules.apply(step2, '/left');
-      var step4 = rules.apply(step3, '/right');
-      // Do not use fromTIsA, it depends on this.
-      var step5 = rules.replace(step4, rules.theorem('t'), '/');
-      return step5.justify('instForall', arguments, [target]);
-    },
-    inputs: {step: 1, term: 2, condition: {1: function(target) {
-      return (target instanceof Y.Call
-	      && target.fn instanceof Y.Var
-	      && target.fn.name == 'forall');
-    }}},
-    form: ('In step <input name=step> instantiate bound var'
-	   + ' with term <input name=term>'),
-    hint: 'instantiate "forall"',
-    comment: ('In a "forall", instantiates the bound variable with'
-              + ' a given term.')
   },
 
   // 5216 by the book.  Not used.  Currently uses one nonbook definition.
