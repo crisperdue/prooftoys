@@ -2219,6 +2219,28 @@ function assertEqn(expr) {
          'Must be an equation: ' + expr);
 }
 
+/**
+ * Removes from the first map all entries having keys enumerable in
+ * the second map
+ */
+function removeAll(map1, map2) {
+  for (var k in map2) {
+    delete map1[k];
+  }
+}
+
+/**
+ * Removes from the first map all entries that are not "own" properties
+ * of the second map.
+ */
+function removeExcept(map1, map2) {
+  for (var k in map1) {
+    if (!map2.hasOwnProperty(k)) {
+      delete map1[k];
+    }
+  }
+}
+
 
 //// Useful utilities
 
@@ -2348,6 +2370,8 @@ Y.varify = varify;
 Y.infixCall = infixCall;
 Y.assert = assert;
 Y.assertEqn = assertEqn;
+Y.removeAll = removeAll;
+Y.removeExcept = removeExcept;
 
 // Types
 
