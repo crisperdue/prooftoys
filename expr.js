@@ -225,12 +225,15 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   if (this.ruleName) {
     expr.details = this;
   }
+  /* TODO: Consider including this code if appropriate:
   if (this.hasHyps
       || (!this.hasOwnProperty('hasHyps')
           && this.isCall2('-->')
           && this.getLeft().isHypotheses())) {
     expr.hasHyps = true
   }
+  */
+  expr.hasHyps = this.hasHyps;
   expr.ruleName = ruleName;
   expr.ruleArgs = Y.Array(ruleArgs || []);
   expr.ruleDeps = Y.Array(ruleDeps || []);
@@ -369,6 +372,14 @@ Expr.prototype.getLeft = function() {
  */
 Expr.prototype.getRight = function() {
   return this.arg;
+};
+
+/**
+ * Returns the RHS of the step if it has hypotheses, otherwise the
+ * expression itself.
+ */
+Expr.prototype.unHyp = function() {
+  return this.hasHyps ? this.getLeft() : this;
 };
 
 /**
@@ -1495,6 +1506,19 @@ function path(arg) {
   }
   return result;
 }
+
+/**
+ * Create a path that contains all the segments of this path followed
+ * by all the segments of the path argument.
+ */
+Path.prototype.concat = function(p) {
+  p = path(p);
+  if (this == _end) {
+    return p;
+  } else {
+    return new Path(this.segment, this._rest.concat(p));
+  }
+};
 
 
 //// TYPES
