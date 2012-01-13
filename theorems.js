@@ -1216,10 +1216,14 @@ var ruleInfo = {
   },
   
   // Given a variable v that is not free in the given wff A, and a wff B, derive
-  // ((forall {v : A || B}) --> A || (forall {v : B})).
+  // ((forall {v : A || B}) --> A || (forall {v : B})).  Could run even if
+  // the variable is free, but would not give desired result.
   r5235: {
     action: function(v, a, b) {
       v = Y.varify(v);
+      var aFree = a.freeNames();
+      Y.assert(!aFree.hasOwnProperty(v.name),
+	       'r5235: variable ' + v + 'cannot occur free in ' + a);
       var map1 = {
         p: call('forall', lambda(v, call('||', T, b))),
         q: call('forall', lambda(v, b))
@@ -1231,7 +1235,7 @@ var ruleInfo = {
                                  ({p: b}));
       var step4 = rules.r(step3, step2, '/left/arg/body');
 
-      var freeNames = Y.merge(a.freeNames(), b.freeNames());
+      var freeNames = Y.merge(aFree, b.freeNames());
       // Treat v as a free variable also.
       freeNames[v.name] = true;
       var p0 = Y.genVar('p', freeNames);
@@ -1250,9 +1254,14 @@ var ruleInfo = {
   // 5237
   implyForall: {
     action: function(v, a_b) {
+      v = Y.varify(v);
       Y.assert(a_b.isCall2('-->'), 'Must be an implication: ' + a_b);
       var a = a_b.getLeft();
       var b = a_b.getRight();
+      var aFree = a.freeNames();
+      // Restriction to ensure the desired result.
+      Y.assert(!aFree.hasOwnProperty(v.name),
+	       'implyForall: variable ' + v + 'cannot occur free in ' + a);
       var step1 = rules.r5235(v, call('not', a), b);
       var taut = equal(call('||', call('not', p), q), implies(p, q));
       var step2 = rules.tautInst(taut, {p: a, q: b});
