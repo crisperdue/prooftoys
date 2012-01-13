@@ -1426,8 +1426,8 @@ var ruleInfo = {
   // For convenience applies rule R directly if the equation is really
   // an equation and not an implication.
   //
-  // TODO: Make this rename bound variables in C that complicate the
-  // specification and implementation of this rule.
+  // TODO: Consider renaming bound variables in C as needed so this
+  // rule can always be applied.
   replace: {
     action: function(h_equation_arg, h_c_arg, path) {
       path = Y.path(path);
@@ -1481,14 +1481,13 @@ var ruleInfo = {
 		   ? path
 		   : path.getRight());
       var boundNames = c.boundNames(cpath);
-      Y.removeExcept(boundNames, h_equation_arg.freeNames());
       var hypFreeNames = h.freeNames();
       // Check ahead of time that the variables are OK.
       // TODO: Do appropriate checking in 5235 and impliesForall as well.
       for (var name in boundNames) {
-        if (hypFreeNames[name]) {
-          throw new Error('Variable ' + name + ' cannot be free in ' + h);
-        }
+        assert(!hypFreeNames.hasOwnProperty(name), function() {
+          return 'Conflicting binding of ' + name + ' in ' + c;
+        });
       }
       var step1 = h_equation;
       for (var name in boundNames) {
