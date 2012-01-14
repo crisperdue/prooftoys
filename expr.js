@@ -129,7 +129,7 @@ function textNode(text) {
 }
 
 
-//// Expression, the base class
+//// Expr -- the base class
 
 // Note on the sourceStep property and structure sharing among proof steps.
 //
@@ -140,7 +140,7 @@ function textNode(text) {
 // need them to be present in subsequent steps as hypotheses are
 // carried down from one step to the next.
 //
-// The current solution is that al transformations on expressions that
+// The current solution is that all transformations on expressions that
 // leave a given subexpression the same return the identical
 // subexpression object they were given.  This means that all
 // operations that transform expressions must avoid copying except
@@ -193,8 +193,26 @@ Expr.lambda = 'lambda';
 // to avoid capturing.
 Expr.counter = 1;
 
+// Controls prefixing Calls and Lambdas with sourceStep info.
+// A debugging and perhaps proof development aid when turned on.
+Y.trackSourceSteps = false;
+
 Expr.prototype.toString = function() {
-  return '*';
+  if (this instanceof Var) {
+    return this._toString();
+  }
+  var prefix = '';
+  if (Y.trackSourceSteps) {
+    if (this.sourceStep) {
+      prefix = '$';
+      var stepNum =
+        this.sourceStep.rendering && this.sourceStep.rendering.stepNumber;
+      if (stepNum) {
+        prefix += stepNum;
+      }
+    }
+  }
+  return prefix + this._toString();
 };
 
 /**
@@ -225,15 +243,13 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   if (this.ruleName) {
     expr.details = this;
   }
-  /* TODO: Consider including this code if appropriate:
+  // Mark the step as having hypotheses if it is suitable.
+  // Some inference steps below the level of "replace" can bring
+  // back the LHS to being a set of hypotheses.
   if (this.hasHyps
-      || (!this.hasOwnProperty('hasHyps')
-          && this.isCall2('-->')
-          && this.getLeft().isHypotheses())) {
+      || (this.isCall2('-->') && this.getLeft().isHypotheses())) {
     expr.hasHyps = true
   }
-  */
-  expr.hasHyps = this.hasHyps;
   expr.ruleName = ruleName;
   expr.ruleArgs = Y.Array(ruleArgs || []);
   expr.ruleDeps = Y.Array(ruleDeps || []);
@@ -379,7 +395,7 @@ Expr.prototype.getRight = function() {
  * expression itself.
  */
 Expr.prototype.unHyp = function() {
-  return this.hasHyps ? this.getLeft() : this;
+  return this.hasHyps ? this.getRight() : this;
 };
 
 /**
@@ -442,7 +458,7 @@ Expr.prototype.render = function(omit) {
     // intent a bit more closely by specifically walking down through
     // calls to '&&' rather than all subexpressions.
     function renderHyps(expr) {
-      if (expr.hasOwnProperty('sourceStep')) {
+      if (expr.sourceStep) {
         var source = expr.sourceStep;
         var node = expr.node = exprNode();
         if (source == step) {
@@ -467,7 +483,7 @@ Expr.prototype.render = function(omit) {
         wffNode.append(expr._render());
       }
     }
-    renderHyps(step.original.getLeft());
+    renderHyps(step.getLeft());
     wffNode.append(textNode(' ' + _turnstile + ' '));
     wffNode.append(step.getRight()._render(true));
     return wffNode;
@@ -593,10 +609,11 @@ function getHypMapKeys(map) {
 //
 // copy()
 //
-// Makes and returns a deep copy of this Expr, not including any
-// display- or justification-related information.  All parts are
-// copied, including occurrences of Vars, so rendering can add
-// distinct annotations to each occurrence.
+// Makes and returns a deep copy of this Expr, copying all parts
+// including occurrences of Vars, so rendering can add distinct
+// annotations to each occurrence.  Currently copies only logical
+// structure and the sourceStep property (to help rendering of
+// hypotheses).
 //
 //
 // dup()
@@ -637,7 +654,11 @@ function getHypMapKeys(map) {
 //
 // Private helper for the decapture function.
 //
-// TODO: Map directly to a new variable, reducing object creation.
+// TODO: Only rename bound variables that would actually capture a
+// newly-introduced name.  This will help displays of hypotheses.
+// 
+// TODO: Map in bindings directly to a new variable, reducing object
+// creation.
 //
 //
 // normalized(counter, bindings)
@@ -763,7 +784,7 @@ Y.extend(Var, Expr);
 
 Y.displayVarTypes = false;
 
-Var.prototype.toString = function() {
+Var.prototype._toString = function() {
   if (Y.displayVarTypes && this.type) {
     return (this.pname || this.name) + ':' + this.type;
   } else {
@@ -905,7 +926,7 @@ function Call(fn, arg) {
 }
 Y.extend(Call, Expr);
 
-Call.prototype.toString = function() {
+Call.prototype._toString = function() {
   if (this._string) {
     return this._string;
   }
@@ -942,7 +963,9 @@ Call.prototype.subst = function(replacement, name) {
 };
 
 Call.prototype.copy = function() {
-  return new Call(this.fn.copy(), this.arg.copy());
+  var result = new Call(this.fn.copy(), this.arg.copy());
+  result.sourceStep = this.sourceStep;
+  return result;
 };
 
 Call.prototype.dup = function() {
@@ -990,7 +1013,7 @@ Call.prototype.replace = function(path, xformer) {
     // Traversing down to a subexpression of this.
     var fn = this.fn.replace(path.rest('fn'), xformer);
     var arg = this.arg.replace(path.rest('arg'), xformer);
-    return new Call(fn, arg);
+    return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
   } else {
     return this;
   }
@@ -1028,8 +1051,9 @@ Call.prototype.generalizeTF = function(expr2, newVar) {
   if (!(expr2 instanceof Call)) {
     throw new Error('Not a Call: ' + expr2);
   }
-  return new Call(this.fn.generalizeTF(expr2.fn, newVar),
-                  this.arg.generalizeTF(expr2.arg, newVar));
+  var fn = this.fn.generalizeTF(expr2.fn, newVar);
+  var arg = this.arg.generalizeTF(expr2.arg, newVar);
+  return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
 Call.prototype._path = function(pred, revPath) {
@@ -1046,7 +1070,19 @@ Call.prototype._bindingPath = function(pred, revPath) {
 
 Call.prototype._render = function(omit) {
   var node = this.node = exprNode();
+  var stepNum = (Y.trackSourceSteps
+                 && this.sourceStep
+                 && this.sourceStep.rendering.stepNumber);
+  omit = omit && !stepNum;
   if (!omit) {
+    if (Y.trackSourceSteps) {
+      if (this.sourceStep) {
+        node.append('$');
+      }
+      if (stepNum) {
+        node.append(stepNum);
+      }
+    }
     node.append('(');
   }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
@@ -1116,7 +1152,7 @@ function Lambda(bound, body) {
 }
 Y.extend(Lambda, Expr);
 
-Lambda.prototype.toString = function() {
+Lambda.prototype._toString = function() {
   if (this._string) {
     return this._string;
   }
@@ -1139,7 +1175,9 @@ Lambda.prototype.subst = function(replacement, name) {
 };
 
 Lambda.prototype.copy = function() {
-  return new Lambda(this.bound.copy(), this.body.copy());
+  var result = new Lambda(this.bound.copy(), this.body.copy());
+  result.sourcestep = this.sourceStep;
+  return result;
 };
 
 Lambda.prototype.dup = function() {
@@ -1174,10 +1212,12 @@ Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
   // TODO: Share Vars more for efficiency.
   var oldName = this.bound.name;
   var newName = freeNames[oldName] ? genName(oldName, allNames) : oldName;
-  // Alternatively add a binding only when the new name is different.
-  var newBindings = new Bindings(oldName, newName, bindings);
-  return new Lambda(new Var(newName),
-                    this.body._decapture(freeNames, allNames, newBindings));
+  // Add a binding only when the new name is different.
+  var newBindings = ((newName == oldName)
+                     ? bindings
+                     : new Bindings(oldName, newName, bindings));
+  var body = this.body._decapture(freeNames, allNames, newBindings);
+  return (body == this.body) ? this : new Lambda(new Var(newName), body);
 };
 
 Lambda.prototype.normalized = function(counter, bindings) {
@@ -1187,10 +1227,12 @@ Lambda.prototype.normalized = function(counter, bindings) {
 };
 
 Lambda.prototype.replace = function(path, xformer) {
-  return path.isMatch()
-    ? xformer(this)
-    : new Lambda(this.bound,
-                 this.body.replace(path.rest('body'), xformer));
+  if (path.isMatch()) {
+    return xformer(this);
+  } else {
+    var body = this.body.replace(path.rest('body'), xformer);
+    return (body == this.body) ? this : new Lambda(this.bound, body);
+  }
 };
 
 Lambda.prototype._locate = function(path) {
@@ -1228,8 +1270,8 @@ Lambda.prototype.generalizeTF = function(expr2, newVar) {
     throw new Error('Differing bindings: ' + this.bound.name
                     + ', ' + expr2.bound.name);
   }
-  return new Lambda(this.bound,
-                    this.body.generalizeTF(expr2.body, newVar));
+  var body = this.body.generalizeTF(expr2.body, newVar);
+  return (body == this.body) ? this : new Lambda(this.bound, body);
 };
 
 Lambda.prototype._path = function(pred, revPath) {
@@ -1246,6 +1288,12 @@ Lambda.prototype._bindingPath = function(pred, revPath) {
 
 Lambda.prototype._render = function() {
   var node = this.node = exprNode();
+  var stepNum = (Y.trackSourceSteps
+                 && this.sourceStep
+                 && this.sourceStep.rendering.stepNumber);
+  if (stepNum) {
+    node.append('$' + stepNum);
+  }
   node.append('{');
   node.append(this.bound._render());
   node.append(textNode('. '));
@@ -1458,11 +1506,30 @@ Path.prototype.toString = function() {
  * into a list of other segments, currently 'left', 'right', and
  * 'binop'.
  *
+ * If the optional expr is supplied, adjust any /main path according
+ * to whether the expr has hypotheses or not.
+ *
  * A null input is treated as '/'.
  */
-function path(arg) {
+function path(arg, opt_expr) {
+  var expr = opt_expr;
+  // If the initial segment of the path is 'main', and the expression
+  // is given and has hypotheses, return a path to its RHS.
+  function adjust(path) {
+    if (!expr) {
+      return path;
+    }
+    if (path.segment == 'main') {
+      path = path._rest;
+      if (expr.hasHyps) {
+        // TODO: Modify this when infix changes.
+        path = new Path('arg', path);
+      }
+    }
+    return path;
+  }
   if (arg instanceof Path) {
-    return arg;
+    return adjust(arg);
   }
   if (arg == null) {
     arg = '/';
@@ -1487,6 +1554,7 @@ function path(arg) {
   if (segments.length == 1 && segments[0] == '') {
     segments = [];
   }
+  // TODO: Intrepret these directly rather than making them macros.
   var macros = {
     left: ['fn', 'arg'],
     right: ['arg'],
@@ -1504,6 +1572,7 @@ function path(arg) {
       result = new Path(piece, result);
     }
   }
+  result = adjust(result);
   return result;
 }
 

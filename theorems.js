@@ -417,9 +417,10 @@ var ruleInfo = {
   // be a call to the named function, with T or F as the argument.
   useDefinition: {
     action: function(a, path) {
+      path = Y.path(path, a);
       var target = a.locate(path);
       if (target instanceof Y.Var) {
-        var result = rules.r(rules.definition(target.name), a, path);
+        var result = rules.replace(rules.definition(target.name), a, path);
         return result.justify('useDefinition', arguments, [a]);
       } else {
         Y.assert(target instanceof Y.Call && target.arg instanceof Y.Var,
@@ -427,7 +428,8 @@ var ruleInfo = {
         var arg = target.arg;
         Y.assert(arg.name == 'T' || arg.name == 'F',
                  'Target of useDefinition not suitable');
-        var result = rules.r(rules.definition(target.fn.name, arg), a, path);
+        var result =
+	  rules.replace(rules.definition(target.fn.name, arg), a, path);
         return result.justify('useDefinition', arguments, [a]);
       }
     },
@@ -444,13 +446,13 @@ var ruleInfo = {
    */
   apply: {
     action: function(expr, path) {
-      path = Y.path(path);
+      path = Y.path(path, expr);
       var target = expr.locate(path);
       Y.assert(target, 'Path ' + path + ' not found in ' + target);
       Y.assert(target instanceof Y.Call && target.fn instanceof Y.Lambda,
                'Reduce needs a call to a lambda, got: ' + target);
       var equation = rules.axiom4(target);
-      var result = rules.r(equation, expr, path);
+      var result = rules.replace(equation, expr, path);
       return result.justify('apply', arguments, [expr]);
     },
     inputs: {reducible: 1},
@@ -573,18 +575,19 @@ var ruleInfo = {
   // and relies only on theorem "T", 5200, and reduce.
   // This is 5215.
   instForall: {
-    action: function(target, expr) {
+    action: function(h_target, expr) {
+      var target = h_target.unHyp();
       Y.assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
                "Must be 'forall': " + target.fn);
       Y.assert(target.arg instanceof Y.Lambda,
                "Must be lambda expression: " + target.arg);
-      var step1 = rules.useDefinition(target, '/fn');
+      var step1 = rules.useDefinition(h_target, '/main/fn');
       var step2 = rules.applyBoth(step1, expr);
-      var step3 = rules.apply(step2, '/left');
-      var step4 = rules.apply(step3, '/right');
+      var step3 = rules.apply(step2, '/main/left');
+      var step4 = rules.apply(step3, '/main/right');
       // Do not use fromTIsA, it depends on this.
-      var step5 = rules.replace(step4, rules.theorem('t'), '/');
-      return step5.justify('instForall', arguments, [target]);
+      var step5 = rules.replace(step4, rules.theorem('t'), '/main');
+      return step5.justify('instForall', arguments, [h_target]);
     },
     inputs: {step: 1, term: 2, condition: {1: function(target) {
       return (target instanceof Y.Call
@@ -1430,15 +1433,9 @@ var ruleInfo = {
   // rule can always be applied.
   replace: {
     action: function(h_equation_arg, h_c_arg, path) {
-      path = Y.path(path);
+      path = Y.path(path, h_c_arg);
       var h_c = h_c_arg;
       var h_equation = h_equation_arg;
-      if (path.segment == 'main') {
-	path = path.tail();
-	if (h_c.hasHyps) {
-	  path = new Y.Path('right', path);
-	}
-      }
       var assert = Y.assert;
       if (h_equation.isCall2('=')) {
 	assert(!(h_c.hasHyps && path.isLeft()),
@@ -1446,7 +1443,11 @@ var ruleInfo = {
         // Allow "replace" to be used for situations where "r" is
         // applicable.  The case with hypotheses in h_c can be
         // considered as rule RR (5202).
-        return rules.r(h_equation, h_c, path);
+        var result = rules.r(h_equation, h_c, path);
+	if (h_c.hasHyps) {
+	  result.hasHyps = true;
+	}
+	return result;
       }
       assert(h_equation.isCall2('-->') && h_equation.getRight().isCall2('='),
 	     'Not an equation: ' + h_equation);

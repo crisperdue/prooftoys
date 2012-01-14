@@ -781,8 +781,8 @@ var hoverHandlers = {
   // TODO: instMultiVars
   instForall: function(step, action) {
     var args = step.original.ruleArgs;
-    // Input expression.
-    var input = args[0].rendering;
+    // Input expression, a top-level call to "forall".
+    var input = args[0].rendering.unHyp();
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
     action(input.node, 'hover');

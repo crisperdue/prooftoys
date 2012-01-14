@@ -65,6 +65,9 @@ YUI({filter: null, insertBefore: 'styles'})
 
   Y.Expr.utils.import();
 
+  // Do not display source step info in toString.
+  Y.trackSourceSteps = false;
+
   // Example equation: x + x = 2 * x
   var times2 = call('=', call('+', x, x), call('*', '2', x));
 
@@ -135,10 +138,32 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('{x: true}', Y.debugString(map));
       },
 
+      testSubst: function() {
+        var target = Y.parse('x = ({x : x} x)');
+        assertEqual('(y = ({x : x} y))', target.subst(y, x));
+        // Result is exactly the input where there are no occurrences.
+        Y.assert(target === target.subst(z, y));
+        Y.assert(target.locate('/right/fn')
+                 === target.subst(y, x).locate('/right/fn'));
+      },
+
+      testCopy: function() {
+        var source = '(x = x)';
+        var target = Y.parse(source);
+        // Copy is equal to original
+        assertEqual(source, target.copy());
+        Y.assert(target.matches(target.copy()));
+        // But not identical.
+        Y.assert(target !== target.copy());
+      },
+
       testDecapture: function() {
         var target = call(lambda(x, x), y);
         var result = Y.decapture(target, x);
         assertEqual('({x_1 : x_1} y)', result.toString());
+        var target = Y.parse('({x : f x} y)');
+        // Result is exactly the input when no decapturing is needed.
+        Y.assert(target === Y.decapture(target, z));
       },
 
       testSubFree: function() {
@@ -167,6 +192,9 @@ YUI({filter: null, insertBefore: 'styles'})
         var path = Y.path('/fn/body/arg');
         var result = e1.replace(path, function(expr) { return call(f, x); });
         assertEqual('({x : (f (f x))} y)', result.toString());
+        var target = Y.parse('f x = y');
+        result = target.replace(Y.path('/right'), function(expr) { return z; });
+        Y.assert(target.getLeft() === result.getLeft());
       },
 
       testPath: function() {
@@ -251,6 +279,16 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(Y.parse('x + 1').hasArgs(1));
         Y.assert(Y.parse('x + 1').hasArgs(2));
         Y.assert(!Y.parse('x + 1').hasArgs(3));
+      },
+
+      testIsHypotheses: function() {
+        var step1 = Y.rules.assume(Y.parse('p x'));
+        Y.assert(step1.getLeft().isHypotheses());
+        Y.assert(step1.getRight().isHypotheses());
+        var conj = Y.infixCall(step1.getLeft(), '&&', step1.getRight());
+        Y.assert(conj.isHypotheses());
+        var conj2 = Y.infixCall(conj, '&&', conj);
+        Y.assert(conj2.isHypotheses());
       },
 
       testRepeatedCall: function() {
