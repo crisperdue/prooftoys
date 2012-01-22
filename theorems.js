@@ -5,6 +5,11 @@ YUI.add('theorems', function(Y) {
 
 //// THEOREMS AND RULES
 
+// Use the application's "assert" rather than YUI's.
+var assert = Y.assertTrue;
+// And make assertEqn convenient too.
+var assertEqn = Y.assertEqn;
+
 // Import the generally-useful names from "expr" into
 // this environment.
 Y.Expr.utils.import();
@@ -20,17 +25,17 @@ var _tautologies = {};
 // TODO: List of rules that should work with hypotheses.
 //
 // This covers rules that precede the deduction theorem (5240).
+// Except as noted these use the "replace" rule or rRight.
 //
-// All of the equality rules (5201 parts), by R and/or Replace
-//   depending on the situation.
-// Universal instantiation (5215) - by rule R.
-// Rule T (5219) - by rule RR.
-// addForall (5220) - by rule Replace.
-// instVar and instMultiVars (5221) - uses addForall.
-// cases (5222) - uses Replace.
-// modusPonens (5224) - uses Replace.
-// tautInst (Rule P, 5234) - uses modusPonens.
-// impliesForall (5237) - uses Replace and tautInst.
+// All of the equality rules (5201 parts) (done)
+// forallInst (universal instantiation - 5215) (done)
+// Rule T (5219) (done)
+// addForall (5220) (in progress)
+// instVar and instMultiVars (5221) - uses addForall
+// cases (5222)
+// modusPonens (5224)
+// tautInst (Rule P, 5234) - uses modusPonens
+// impliesForall (5237) - uses tautInst and replace
 
 // Map from inference rule name to a JavaScript function that
 // implements it.  The functions may use a global variable
@@ -128,39 +133,37 @@ var ruleInfo = {
   r: {
     action: function(equation, target, path) {
       path = Y.path(path);
-      if (equation.isCall2('=')) {
-        function replacer(expr) {
-          if (expr.matches(equation.getLeft())) {
-            return equation.getRight();
-          } else {
-            Y.assert(false, 'Rule R: subexpression ' + expr +
-                     '\n of ' + target +
-                     '\n must match ' + equation.getLeft());
-          }
-        }
-        // Auto-justify input steps.
-        if (!equation.ruleName) {
-          equation.assert();
-        }
-        if (!target.ruleName) {
-          target.assert();
-        }
-        var result = target.replace(path, replacer);
-	var lvars = equation.getLeft().freeVars();
-	// If the right side has any free vars not in the left side,
-	// the result may have constraints not met by the target, so
-	// typecheck it.
-	var rvars = equation.getRight().freeVars();
-	for (var name in rvars) {
-	  if (!(name in lvars)) {
-	    Y.findType(result);
-	    break;
-	  }
+      assert(equation.isCall2('='),
+	     'Rule R requires equation: ' + equation);
+      function replacer(expr) {
+	if (expr.matches(equation.getLeft())) {
+	  return equation.getRight();
+	} else {
+	  assert(false, 'Rule R: subexpression ' + expr +
+		   '\n of ' + target +
+		   '\n must match ' + equation.getLeft());
 	}
-        return result.justify('r', arguments, [target, equation]);
-      } else {
-        throw new Error('Rule R requires equation: ' + equation);
       }
+      // Auto-justify input steps.
+      if (!equation.ruleName) {
+	equation.assert();
+      }
+      if (!target.ruleName) {
+	target.assert();
+      }
+      var result = target.replace(path, replacer);
+      var lvars = equation.getLeft().freeVars();
+      // If the right side has any free vars not in the left side,
+      // the result may have constraints not met by the target, so
+      // typecheck it.
+      var rvars = equation.getRight().freeVars();
+      for (var name in rvars) {
+	if (!(name in lvars)) {
+	  Y.findType(result);
+	  break;
+	}
+      }
+      return result.justify('r', arguments, [target, equation]);
     },
     // inputs: {equation: 1, site: 2},
     // form: ('Replace selection with right side of step <input name=equation>'),
@@ -170,8 +173,8 @@ var ruleInfo = {
   },
 
   /**
-   * Same as Rule R, but replaces an occurrence in target of the right
-   * side of the equation with its left side.
+   * Same as "replace", but replaces an occurrence in target of the right
+   * side of the equation with its left side.  Accepts hypotheses.
    */
   rRight: {
     action: function(equation, target, path) {
@@ -232,16 +235,14 @@ var ruleInfo = {
    */
   axiom4: {
     action: function(call) {
-      if (call instanceof Y.Call && call.fn instanceof Y.Lambda) {
-        var lambdaExpr = call.fn;
-        var result =
-          equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
-	// Always make sure the call has a type.  It came from elsewhere.
-	Y.findType(call);
-        return result.justify('axiom4', arguments);
-      } else {
-        throw new Error('Axiom 4 needs ({X : B} A), got: ' + call.toString());
-      }
+      assert(call instanceof Y.Call && call.fn instanceof Y.Lambda,
+	     'Axiom 4 needs ({X : B} A), got: ' + call.toString());
+      var lambdaExpr = call.fn;
+      var result =
+        equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
+      // Always make sure the call has a type.  It came from elsewhere.
+      Y.findType(call);
+      return result.justify('axiom4', arguments);
     },
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v : body} expr <input name=term>',
@@ -330,7 +331,7 @@ var ruleInfo = {
     comment: 'Derives A = A.'
   },
 
-  // r5201a, not used
+  // r5201a, not used.  Works with hypotheses.
   replaceWhole: {
     action: function(a, ab) {
       var aa = rules.eqSelf(a);
@@ -341,7 +342,7 @@ var ruleInfo = {
     inputs: {step: 1, equation: 2},
   },
 
-  // r5201b
+  // r5201b.  Works with hypotheses.
   eqnSwap: {
     action: function(h_ab) {
       var ab = h_ab.unHyp();
@@ -355,7 +356,7 @@ var ruleInfo = {
     comment: 'From A = B derives B = A'
   },
 
-  // r5201c
+  // r5201c.  Works with hypotheses.
   eqnChain: {
     action: function(ab, bc) {
       var ac = rules.replace(bc, ab, '/main/right');
@@ -365,7 +366,7 @@ var ruleInfo = {
     comment: 'From A = B and B = C derives A = C'
   },
 
-  // r5201d, not used
+  // r5201d, not used.  Works with hypotheses.
   applyBySides: {
     action: function(ab, cd) {
       var a = ab.getLeft();
@@ -382,7 +383,7 @@ var ruleInfo = {
     inputs: {equation: [1, 2]}
   },
 
-  // r5201e
+  // r5201e.  Works with hypotheses.
   applyBoth: {
     action: function(h_eqn, a) {
       var eqn = h_eqn.unHyp();
@@ -397,7 +398,7 @@ var ruleInfo = {
     comment: 'Given f = g, derive (f A) = (g A)'
   },
 
-  // r5201f
+  // r5201f.  Works with hypotheses.
   applyToBoth: {
     action: function(a, h_bc) {
       var bc = h_bc.unHyp();
@@ -415,6 +416,7 @@ var ruleInfo = {
   // Use the definition of the given name at the given location
   // in WFF A.  If the definition is by cases the location should
   // be a call to the named function, with T or F as the argument.
+  // Works with hypotheses.
   useDefinition: {
     action: function(a, path) {
       path = Y.path(path, a);
@@ -423,10 +425,10 @@ var ruleInfo = {
         var result = rules.replace(rules.definition(target.name), a, path);
         return result.justify('useDefinition', arguments, [a]);
       } else {
-        Y.assert(target instanceof Y.Call && target.arg instanceof Y.Var,
+        assert(target instanceof Y.Call && target.arg instanceof Y.Var,
                  'Target of useDefinition not suitable');
         var arg = target.arg;
-        Y.assert(arg.name == 'T' || arg.name == 'F',
+        assert(arg.name == 'T' || arg.name == 'F',
                  'Target of useDefinition not suitable');
         var result =
 	  rules.replace(rules.definition(target.fn.name, arg), a, path);
@@ -442,14 +444,14 @@ var ruleInfo = {
   /**
    * Beta-reduce an application of a lambda expression to an argument,
    * with the subexpression identified by a path (within a theorem).
-   * Rule R packaged for convenience.
+   * Rule Replace packaged for convenience.
    */
   apply: {
     action: function(expr, path) {
       path = Y.path(path, expr);
       var target = expr.locate(path);
-      Y.assert(target, 'Path ' + path + ' not found in ' + target);
-      Y.assert(target instanceof Y.Call && target.fn instanceof Y.Lambda,
+      assert(target, 'Path ' + path + ' not found in ' + target);
+      assert(target instanceof Y.Call && target.fn instanceof Y.Lambda,
                'Reduce needs a call to a lambda, got: ' + target);
       var equation = rules.axiom4(target);
       var result = rules.replace(equation, expr, path);
@@ -471,9 +473,10 @@ var ruleInfo = {
   changeVar: {
     action: function(expr, path, newVar) {
       newVar = _var(newVar);
+      path = Y.path(path, expr);
       var target = expr.locate(path);
-      Y.assert(target instanceof Y.Lambda, 'Not a function: ' + target);
-      Y.assert(!expr.freeNames()[newVar.name],
+      assert(target instanceof Y.Lambda, 'Not a function: ' + target);
+      assert(!expr.freeNames()[newVar.name],
                'New bound variable ' + newVar.name + ' must not occur free.');
       var changed = lambda(newVar,
                            Y.subFree(newVar, target.bound, target.body));
@@ -500,9 +503,9 @@ var ruleInfo = {
       if (typeof v == 'string') {
         v = new Y.Var(v);
       }
-      Y.assert(eqn.isBinOp() && eqn.getBinOp() == '=',
+      assert(eqn.isBinOp() && eqn.getBinOp() == '=',
                'Not an equation: ' + eqn);
-      Y.assert(v instanceof Y.Var, 'Not a variable: ' + v);
+      assert(v instanceof Y.Var, 'Not a variable: ' + v);
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
       var step2 = rules.replace(h_eqn, step1, '/right/body');
       return step2.justify('bindEqn', arguments, [h_eqn]);
@@ -517,6 +520,7 @@ var ruleInfo = {
   /**
    * Substitutes term "a" for variable "v" in equation b_c,
    * with the result a consequence of b_c.  (5209)
+   * Does not support hypotheses.
    */
   instEqn: {
     action: function(b_c, a, v) {
@@ -577,9 +581,9 @@ var ruleInfo = {
   instForall: {
     action: function(h_target, expr) {
       var target = h_target.unHyp();
-      Y.assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
+      assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
                "Must be 'forall': " + target.fn);
-      Y.assert(target.arg instanceof Y.Lambda,
+      assert(target.arg instanceof Y.Lambda,
                "Must be lambda expression: " + target.arg);
       var step1 = rules.useDefinition(h_target, '/main/fn');
       var step2 = rules.applyBoth(step1, expr);
@@ -604,7 +608,7 @@ var ruleInfo = {
   // From [A = B] deduce T = [A = B].
   toTIsEquation: {
     action: function(a_b) {
-      Y.assertEqn(a_b);
+      assertEqn(a_b);
       var step1 = rules.eqT(a_b.locate('/left'));
       var step2 = rules.replace(a_b, step1, '/right/right');
       return step2.justify('toTIsEquation', arguments, [a_b]);
@@ -681,10 +685,10 @@ var ruleInfo = {
   // Not used (because 5216 is not used.)
   // Use toTIsEquation there instead of this.
   r5213: function(a_b, c_d) {
-    Y.assertEqn(a_b);
+    assertEqn(a_b);
     var a = a_b.locate('/left');
     var b = a_b.locate('/right');
-    Y.assertEqn(c_d);
+    assertEqn(c_d);
     var c = c_d.locate('/left');
     var d = c_d.locate('/right');
     var step1 = rules.eqT(a);
@@ -747,6 +751,7 @@ var ruleInfo = {
   // Given two WFFs each of the form A = B that are the result
   // of substituting T and F respectively for a variable,
   // proves the WFF with the variable.
+  // TODO: Handle hypotheses.
   equationCases: {
     action: function(caseT, caseF, v) {
       v = _var(v);
@@ -776,6 +781,17 @@ var ruleInfo = {
               + ' for the substitutions with v = T and v = F.')
   },
 
+  tIsXIsX: {
+    action: function() {
+      var step1 = rules.theorem('r5230TF');
+      var step2 = rules.eqT(T);
+      var step3 = rules.eqnSwap(step2);
+      var step4 = rules.equationCases(step3, step1, 'x');
+      return step4.justify('tIsXIsX');
+    },
+    comment: ('[T = x] = x')
+  },
+
   // 5218: [T = A] = A
   // Stepping stone to universal generalization.
   r5218: {
@@ -790,23 +806,12 @@ var ruleInfo = {
     comment: ('For any expression A derives [T = A] = A.')
   },
 
-  tIsXIsX: {
-    action: function() {
-      var step1 = rules.theorem('r5230TF');
-      var step2 = rules.eqT(T);
-      var step3 = rules.eqnSwap(step2);
-      var step4 = rules.equationCases(step3, step1, 'x');
-      return step4.justify('tIsXIsX');
-    },
-    comment: ('[T = x] = x')
-  },
-
-  // 5219
+  // 5219.  Works with hypotheses.
   toTIsA: {
-    action: function(a) {
-      var step1 = rules.r5218(a);
-      var step2 = rules.rRight(step1, a, '/');
-      return step2.justify('toTIsA', arguments, [a]);
+    action: function(h_a) {
+      var step1 = rules.r5218(h_a.unHyp());
+      var step2 = rules.rRight(step1, h_a, '/main');
+      return step2.justify('toTIsA', arguments, [h_a]);
     },
     inputs: {step: 1},
     form: 'Introduce "T = " into step <input name=step>',
@@ -814,18 +819,20 @@ var ruleInfo = {
     comment: ('From A derives T = A')
   },
 
-  // also 5219
+  // also 5219.  Works with hypotheses.
   fromTIsA: {
-    action: function(t_a) {
-      Y.assertEqn(t_a);
+    action: function(h_t_a) {
+      var t_a = h_t_a.unHyp()
+      assertEqn(t_a);
       var left = t_a.locate('/left');
-      Y.assert(left instanceof Y.Var && left.name == 'T',
+      assert(left instanceof Y.Var && left.name == 'T',
                'Input should be [T = A]: ' + t_a);
       var a = t_a.locate('/right');
-      var result = rules.replace(rules.r5218(a), t_a, '/');
-      return result.justify('fromTIsA', arguments, [t_a]);
+      var result = rules.replace(rules.r5218(a), h_t_a, '/main');
+      return result.justify('fromTIsA', arguments, [h_t_a]);
     },
-    inputs: {equation: 1, condition: {1: function(eqn) {
+    inputs: {equation: 1, condition: {1: function(h_eqn) {
+      var eqn = h_eqn.unHyp();
       var left = eqn.getLeft();
       return (left instanceof Y.Var && left.name == 'T');
     }}},
@@ -865,17 +872,20 @@ var ruleInfo = {
     comment: ('(forall {v : T})')
   },
 
-  // 5220 (universal generalization).  The variable may be given as a
-  // name string, which it converts internally to a variable.
+  // 5220 (universal generalization).  From A deduces forall {v. A}.
+  // The variable v may be given as a string, which it converts
+  // internally to a variable.  Supports hypotheses.
   addForall: {
-    action: function(a, v) {
+    action: function(h_a, v) {
       v = _var(v);
-      Y.assert(!(a.hasHyps && a.getLeft().hasFree(v.name)),
-	       function() { return v.name + ' occurs free in ' + a; });
-      var step1 = rules.toTIsA(a);
+      assert(!(h_a.hasHyps && h_a.getLeft().hasFree(v.name)),
+	     function() {
+	       return v.name + ' occurs free in hypotheses of ' + h_a;
+	     });
+      var step1 = rules.toTIsA(h_a);
       var step2 = rules.forallT(v);
       var step3 = rules.replace(step1, step2, '/arg/body');
-      return step3.justify('addForall', arguments, [a]);
+      return step3.justify('addForall', arguments, [h_a]);
     },
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable <input name=varName>'),
@@ -886,6 +896,7 @@ var ruleInfo = {
 
   // 5221 (one variable), in wff B substitute term A for variable v,
   // which may also be a string, which will be converted to a variable.
+  // TODO: Handle hypotheses.
   instVar: {
     action: function(b, a, v) {
       // Note that addForall checks that v is not free in b.
@@ -961,6 +972,7 @@ var ruleInfo = {
 
   // 5224
   // Given P and P --> Q, derive Q.
+  // TODO: Handle hypotheses.
   modusPonens: {
     action: function(a, b) {
       var step1 = rules.toTIsA(a);
@@ -1131,7 +1143,7 @@ var ruleInfo = {
         } else if (fn instanceof Y.Lambda) {
           result = rules.apply(result, '/right' + _path);
         } else {
-          Y.assert(false, 'Unexpected expression: ' + target);
+          assert(false, 'Unexpected expression: ' + target);
         }
       }
     },
@@ -1175,7 +1187,7 @@ var ruleInfo = {
         }
         // There are no free variables, evaluate the expression.
         var step11 = rules.evalBool(wff);
-        Y.assert(step11.isCall2('=')
+        assert(step11.isCall2('=')
                  && step11.getRight() instanceof Y.Var
                  && step11.getRight().name == 'T',
                  'Not a tautology: ' + step11.getLeft());
@@ -1209,15 +1221,45 @@ var ruleInfo = {
 
   // Any instance of a tautology is a theorem.  This is part
   // of the book's Rule P.
+  //
+  // Given a tautology or tautology with arbitrary hypotheses and a
+  // substitution, derives an instantiation of the tautology.  If the
+  // input has a hypothesis, that passes through to the result.
   tautInst: {
-    action: function(tautology, map) {
+    action: function(h_tautology, map) {
+      var tautology = h_tautology.unHyp();
       var step1 = rules.tautology(tautology);
       var step2 = rules.instMultiVars(step1, map);
-      return step2.justify('tautInst', arguments);
+      if (h_tautology.hasHyps) {
+	var h = h_tautology.getLeft();
+	var step3 = rules.anyImpliesTheorem(h, step2);
+	step3.hasHyps = true;
+	return step3.justify('tautInst', arguments);
+      } else {
+	return step2.justify('tautInst', arguments);
+      }
     },
     comment: ('A substitution instance of a tautology is a theorem.')
   },
-  
+
+  // Given a theorem and an arbitrary boolean term, proves that the
+  // term implies the theorem.
+  anyImpliesTheorem: {
+    action: function(any, theorem) {
+      assert(!theorem.hasHyps, function() {
+	return 'Expecting a theorem, got: ' + theorem.getRight();
+      });
+      var step1 = rules.toTIsA(theorem);
+      var step2 = rules.tautInst(Y.parse('p --> T'), {p: any});
+      var step3 = rules.r(step1, step2, '/right');
+      return step3.justify('anyImpliesTheorem', arguments, [theorem]);
+    },
+    inputs: {term: 1, step: 2},
+    form: ('Derive that <input name=term> implies theorem <input name=step>'),
+    hint: 'From theorem B deduce A --> B',
+    comment: ('Given a theorem, derive that something implies it.')
+  },
+
   // Given a variable v that is not free in the given wff A, and a wff B, derive
   // ((forall {v : A || B}) --> A || (forall {v : B})).  Could run even if
   // the variable is free, but would not give desired result.
@@ -1225,7 +1267,7 @@ var ruleInfo = {
     action: function(v, a, b) {
       v = Y.varify(v);
       var aFree = a.freeNames();
-      Y.assert(!aFree.hasOwnProperty(v.name),
+      assert(!aFree.hasOwnProperty(v.name),
 	       'r5235: variable ' + v + 'cannot occur free in ' + a);
       var map1 = {
         p: call('forall', lambda(v, call('||', T, b))),
@@ -1254,28 +1296,39 @@ var ruleInfo = {
               + 'in the left argument of the "or".')
   },
 
-  // 5237
+  // Given an implication A --> B and a variable v, produces a theorem
+  // (A --> B) --> (A --> forall {v : B}).  (5237)
+  // TODO: Accept hypotheses.
   implyForall: {
-    action: function(v, a_b) {
+    action: function(v, h_a_b) {
+      var a_b = h_a_b.unHyp();
       v = Y.varify(v);
-      Y.assert(a_b.isCall2('-->'), 'Must be an implication: ' + a_b);
+      assert(a_b.isCall2('-->'), 'Must be an implication: ' + a_b);
       var a = a_b.getLeft();
       var b = a_b.getRight();
-      var aFree = a.freeNames();
       // Restriction to ensure the desired result.
-      Y.assert(!aFree.hasOwnProperty(v.name),
+      assert(!a.hasFreeName(v.name),
 	       'implyForall: variable ' + v + 'cannot occur free in ' + a);
       var step1 = rules.r5235(v, call('not', a), b);
-      var taut = equal(call('||', call('not', p), q), implies(p, q));
-      var step2 = rules.tautInst(taut, {p: a, q: b});
+      var h_taut = equal(call('||', call('not', p), q), implies(p, q));
+      if (h_a_b.hasHyps) {
+	var h = h_a_b.getLeft();
+	assert(!h.hasFreeName(v.name),
+		 'implyForall: variable ' + v + 'cannot occur free in ' + h);
+	h_taut = Y.infixCall(h, '-->', h_taut);
+	h_taut.hasHyps = true;
+      }
+      var step2 = rules.tautInst(h_taut, {p: a, q: b});
       var step3 = rules.replace(step2, step1, '/left/arg/body');
       var map4 = {
         p: a,
         q: step1.locate('/right/right')
       };
-      var step4 = rules.tautInst(taut, map4);
+      var step4 = rules.tautInst(h_taut, map4);
       var step5 = rules.replace(step4, step3, '/right');
-      return step5.justify('implyForall', arguments, [a_b]);
+      var step6 = rules.addForall(a_b, v);
+      var step7 = rules.modusPonens(step6, step5);
+      return step7.justify('implyForall', arguments, [a_b]);
     },
     inputs: {varName: 1, implication: 2},
     form: ('Move forall inside "implies" binding '
@@ -1285,13 +1338,10 @@ var ruleInfo = {
               + 'is not free in the first argument.')
   },
     
-  // Rule P (without hypotheses).
-  // This handles two antecedents.  If there are more than two,
-  // use repeated applications.  The given tautology must match
-  // ((A1 && A2) --> B, where B is the desired conclusion.
-  // To use more than two antecedents, use this with a1 as one antecedent
-  // and combine the rest with makeConjunction.
-  // the rest.
+  // Rule P (without hypotheses).  This handles two antecedents.  The
+  // given tautology must match ((a1 && a2) --> b.  To use more than
+  // two antecedents, use this with a1 as one antecedent and combine
+  // the rest with makeConjunction.
   //
   // 5234
   p: {
@@ -1311,7 +1361,7 @@ var ruleInfo = {
   // Relates equal functions to equality at all input data points.
   r5238: {
     action: function(vars, a, b) {
-      Y.assert(vars.concat, 'Variables must be an array');
+      assert(vars.concat, 'Variables must be an array');
       var result;
       if (vars.length == 0) {
         result = rules.eqSelf(equal(a, b));
@@ -1365,9 +1415,8 @@ var ruleInfo = {
   r5239: {
     action: function(equation, target, path) {
       path = Y.path(path);
-      if (!equation.isCall2('=')) {
-        throw new Error('Expecting an equation, got: ' + equation);
-      }
+      assert(equation.isCall2('='),
+             'Expecting an equation, got: ' + equation);
       var step1 = rules.axiom('axiom2');
       var a = equation.getLeft();
       var b = equation.getRight();
@@ -1436,7 +1485,6 @@ var ruleInfo = {
       path = Y.path(path, h_c_arg);
       var h_c = h_c_arg;
       var h_equation = h_equation_arg;
-      var assert = Y.assert;
       if (h_equation.isCall2('=')) {
 	assert(!(h_c.hasHyps && path.isLeft()),
 	       'Cannot apply the Replace rule to hypotheses');
@@ -1459,7 +1507,7 @@ var ruleInfo = {
 
       // h_c can be given as an implication, but without hypotheses,
       // which is OK, but in the end it must be an implication.
-      assert(h_c.isCall2('-->'), 'Not an implication: ' + h_c);
+      assert(h_c.isCall2('-->'), 'Not an implication: ' + h_c, h_c);
       // Now both wffs are implications.  Record the hypotheses as
       // "h".  (LHS of any implication is also OK.)
       var h = h_equation.getLeft();
@@ -1469,6 +1517,11 @@ var ruleInfo = {
 	assert(h_c.getLeft().matches(h),
 	       'LHS mismatch in "replace" rule');
       }
+
+      // From here on work with implications directly, not hypotheses.
+      delete h_equation.hasHyps;
+      delete h_c.hasHyps;
+
       // equation is A = B
       var equation = h_equation.getRight();
       var c = h_c.getRight();
@@ -1482,17 +1535,16 @@ var ruleInfo = {
 		   ? path
 		   : path.getRight());
       var boundNames = c.boundNames(cpath);
+      Y.removeExcept(boundNames, equation.freeNames());
       var hypFreeNames = h.freeNames();
-      // Check ahead of time that the variables are OK.
-      // TODO: Do appropriate checking in 5235 and impliesForall as well.
+      var step1 = h_equation;
       for (var name in boundNames) {
+	// Check the variable is not free in any hypotheses.
+	// TODO: Do appropriate checking in 5235 and impliesForall as well.
         assert(!hypFreeNames.hasOwnProperty(name), function() {
           return 'Conflicting binding of ' + name + ' in ' + c;
         });
-      }
-      var step1 = h_equation;
-      for (var name in boundNames) {
-        step1 = rules.implyForall(name, implies(h, step1));
+        var step1 = rules.implyForall(name, step1);
       }
       var step2 = rules.r5239(equation, c, cpath);
       var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
