@@ -55,7 +55,8 @@ var ruleInfo = {
 
   /**
    * The name "assertion" is used in displays to indicate that
-   * the result of the inference is an assertion.
+   * the result of the inference is an assertion.  If given a string
+   * uses the parse of the string as the assertion.
    */
   assert: {
     action: function(assertion) {
@@ -66,8 +67,16 @@ var ruleInfo = {
     hint: 'WFF to assert (possibly to prove later)'
   },
 
+  /**
+   * Suppose the given expression to be true.  This is the standard
+   * way to introduce hypotheses into proofs.  If given a string,
+   * parses it and uses the result.
+   */
   assume: {
     action: function(assumption) {
+      if (typeof assumption == 'string') {
+	assumption = Y.parse(assumption);
+      }
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
       var step = call('-->', assumption, assumption).justify('assume', arguments);
