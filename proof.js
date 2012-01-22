@@ -2,6 +2,9 @@
 
 YUI.add('proof', function(Y) {
 
+// Use the applications assert function.
+var assert = Y.assertTrue;
+
 //// THEOREMHOOD
 
 // Private to addTheorem, getTheorem, and the initializations
@@ -16,8 +19,8 @@ var _theoremsByName = {};
  * theorem name.
  */
 function addTheorem(name) {
-  Y.assert(!_theoremsByName[name], 'Theorem already exists: ' + name);
-  Y.assert(rules[name], 'No proof: ' + name);
+  assert(!_theoremsByName[name], 'Theorem already exists: ' + name);
+  assert(rules[name], 'No proof: ' + name);
   _theoremsByName[name] = true;
 }
 
@@ -348,7 +351,8 @@ function renderStep(step, controller) {
  * Returns an array of the unrendered steps leading up to and
  * including the given step, sorted by ordinal.  Helper function
  * internal to renderInference.  The "unrendered" aspect is helpful
- * for rendering subproofs.
+ * for rendering subproofs, furthermore currently a step only
+ * remembers one rendering.
  */
 function unrenderedDeps(step) {
   var result = [];
@@ -469,9 +473,9 @@ function fancyName(expr) {
 
 /**
  * Renders a header and the proof steps of an inference by appending
- * them to a container Node, which defaults to the document body.  The
- * first child is the header, rendered with class proofHeader.  The
- * second is the proof display.
+ * them to a container Node.  First appends a node containing the
+ * header, rendered with class proofHeader, then a node with the proof
+ * display.
  *
  * Inputs are a proof step, the container node, a flag to indicate
  * whether to make the display editable, and an optional proof time in
@@ -501,6 +505,17 @@ function renderInference(step, node, editable, millis) {
                    + '</div>');
   node.append(controller.node);
   controller.setEditable(editable);
+  return controller;
+}
+
+/**
+ * Render the unrendered steps up to and including the given step,
+ * returning a new ProofControl containing the rendering.
+ */
+function renderProof(step) {
+  var steps = unrenderedDeps(step);
+  var controller = new ProofControl();
+  controller.setSteps(steps);
   return controller;
 }
 
@@ -909,6 +924,7 @@ Y.showOrdinals = false;
 Y.addTheorem = addTheorem;
 Y.getTheorem = getTheorem;
 Y.renderInference = renderInference;
+Y.renderProof = renderProof;
 Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;
 Y.debugString = debugString;
