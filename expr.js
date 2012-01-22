@@ -25,12 +25,20 @@ var entities = {
  * (lambda conversion).  Also renames bound variables in the target to
  * prevent them from capturing variables in the replacement.
  */
-function subFree(replacement, name, target) {
-  if (name instanceof Y.Var) {
-    name = name.name;
+function subFree(replacement, v, target) {
+  var name = v instanceof Var ? v.name : v;
+  // Always replace with a new object so we can detect it as different
+  // from parts of the original expression, for example replacing x
+  // with (f x) in an expression containing an (f x).
+  replacement = replacement.dup();
+  if (name == this.name) {
+    // No changes required.
+    return this;
   }
-  var cleanTarget = decapture(target, replacement);
-  return cleanTarget.subst(replacement, name);
+  var allNames = {};
+  replacement._addNames(allNames);
+  target._addNames(allNames);
+  return target._subFree(replacement, name, replacement.freeNames(), allNames);
 }
 
 /**
@@ -195,7 +203,7 @@ Expr.counter = 1;
 
 // Controls prefixing Calls and Lambdas with sourceStep info.
 // A debugging and perhaps proof development aid when turned on.
-Y.trackSourceSteps = false;
+Y.trackSourceSteps = true;
 
 Expr.prototype.toString = function() {
   if (this instanceof Var) {
@@ -212,7 +220,15 @@ Expr.prototype.toString = function() {
       }
     }
   }
-  return prefix + this._toString();
+  if (Y.trackSourceSteps
+      && this.hasHyps
+      && this.isCall2('-->')
+      && isInfixDesired(this.fn.fn)) {
+    var imply = new Var('|-');
+    return prefix + '(' + this.fn.arg + ' ' + imply + ' ' + this.arg + ')';
+  } else {
+    return prefix + this._toString();
+  }
 };
 
 /**
@@ -226,6 +242,14 @@ Expr.prototype.isInfixCall = function(expr) {
           && this.fn.fn instanceof Var
           && isInfixDesired(this.fn.fn));
 };
+
+/**
+ * Returns true iff the given name appears free in this.
+ */
+Expr.prototype.hasFreeName = function(name) {
+  assert(typeof name == 'string', 'Not a name: ' + name);
+  return this.freeNames().hasOwnProperty(name);
+}
 
 /**
  * Returns a shallow copy of this, annotating the copy with the rule
@@ -246,10 +270,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   // Mark the step as having hypotheses if it is suitable.
   // Some inference steps below the level of "replace" can bring
   // back the LHS to being a set of hypotheses.
-  if (this.hasHyps
-      || (this.isCall2('-->') && this.getLeft().isHypotheses())) {
-    expr.hasHyps = true
-  }
+  expr.hasHyps = (this.hasHyps
+                  || (this.isCall2('-->') && this.getLeft().isHypotheses()));
   expr.ruleName = ruleName;
   expr.ruleArgs = Y.Array(ruleArgs || []);
   expr.ruleDeps = Y.Array(ruleDeps || []);
@@ -600,11 +622,19 @@ function getHypMapKeys(map) {
 // 
 // Substitutes copies of the replacement expression for all (free)
 // occurrences of the given name in this expression.  For use in
-// logic, this expression must not bind any variables in the
-// replacement, at least not at any locations where the given variable
-// is free.
+// logic, this expression must not bind any variables that occur free
+// in the replacement.
 //
-// TODO: Could we decapture as part of the substitution?
+//
+// _subFree(Expr replacement, String name, Map freeNames, Map allNames)
+//
+// Substitutes the replacement expression for all free occurrences of
+// name in this Expr, renaming bound variables in just the locations
+// where a binding would capture a free variable of the replacement.
+//
+// Assumes freeNames is a Set (Object) of all the names free in the
+// replacement, hat allNames contains all names occurring anywhere in
+// this and the replacement.
 //
 //
 // copy()
@@ -800,6 +830,10 @@ Var.prototype.subst = function(replacement, name) {
   return (name == this.name ? replacement : this);
 };
 
+Var.prototype._subFree = function(replacement, name, freeNames, allNames) {
+  return (name == this.name ? replacement : this);
+};
+
 Var.prototype.copy = function() {
   return new Var(this.pname || this.name);
 };
@@ -960,6 +994,12 @@ Call.prototype.subst = function(replacement, name) {
   return (fn == this.fn && arg == this.arg
           ? this
           : new Call(fn, arg));
+};
+
+Call.prototype._subFree = function(replacement, name, freeNames, allNames) {
+  var fn = this.fn._subFree(replacement, name, freeNames, allNames);
+  var arg = this.arg._subFree(replacement, name, freeNames, allNames);
+  return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
 Call.prototype.copy = function() {
@@ -1129,12 +1169,9 @@ Call.prototype.findAll = function(name, action1, expr2, action2) {
 };
 
 Call.prototype._matchAsSchema = function(expr, map) {
-  if (expr instanceof Call) {
-    return (this.fn._matchAsSchema(expr.fn, map)
-            && this.arg._matchAsSchema(expr.arg, map));
-  } else {
-    return false;
-  }
+  return (expr instanceof Call
+          && this.fn._matchAsSchema(expr.fn, map)
+          && this.arg._matchAsSchema(expr.arg, map));
 };
 
 
@@ -1173,6 +1210,68 @@ Lambda.prototype.subst = function(replacement, name) {
     return this;
   }
 };
+
+Lambda.prototype._subFree = function(replacement, name, freeNames, allNames) {
+  if (this.bound.name == name) {
+    // Binds the name; there can be no free occurrences here.
+    return this;
+  } else {
+    var newVar = genVar(name, allNames);
+    var body = this.body._subFree(replacement, name, freeNames, allNames);
+    if (body == this.body) {
+      return this;
+    } else if (freeNames.hasOwnProperty(this.bound.name)) {
+      // Consider decapturing.
+      // 
+      // Decapturing is only needed when the bound name is among the
+      // free variables of the replacement _and_ the name to be replaced
+      // occurs in this.
+      // 
+      // Note that bound.name is known to be different than the name
+      // to be replaced, see above.  So the new body has all of the
+      // original free occurrences of bound.name.  It may have some
+      // more, but they are inside occurrences of the replacement, so
+      // we can go back now and decapture after doing the substitution.
+      body = body._renameFree(this.bound.name, newVar, replacement);
+      return (body == this.body) ? this : new Lambda(newVar, body);
+    } else {
+      // Not a binding of a free variable, just return with the body
+      // already computed.
+      return new Lambda(this.bound, body);
+    }
+  }
+};
+
+// Rename all free occurrences of variables having the given name,
+// replacing each of them with variable newVar, but do not rename
+// within occurrences expressions identical to "replaced", which is
+// already a substitution result.  So this relies on the substitution
+// to _not_ copy the replacement expression.  Helper method for
+// _subFree.
+Var.prototype._renameFree = function(name, newVar, replaced) {
+  return (this == replaced
+          ? this
+          : (this.name == name ? newVar : this));
+};
+
+Call.prototype._renameFree = function(name, newVar, replaced) {
+  if (this == replaced) {
+    return this;
+  }
+  var fn = this.fn._renameFree(name, newVar, replaced);
+  var arg = this.arg._renameFree(name, newVar, replaced);
+  return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
+};
+
+Lambda.prototype._renameFree = function(name, newVar, replaced) {
+  if (this == replaced || this.bound.name == name) {
+    return this;
+  }
+  var body = this.body._renameFree(name, newVar, replaced);
+  return (body == this.body) ? this : new Lambda(this.bound, body);
+};
+
+// Etc.
 
 Lambda.prototype.copy = function() {
   var result = new Lambda(this.bound.copy(), this.body.copy());
@@ -1728,9 +1827,9 @@ function isDefined(name) {
 function define(name, definition) {
   // TODO: Do something reasonable about situations where an existing proof
   // or proof fragment already uses the name to be defined.
-  Y.assert(!isDefined(name), 'Already defined: ' + name);
+  assert(!isDefined(name), 'Already defined: ' + name);
   for (var n in definition.freeNames()) {
-    Y.assert(isDefined(n), 'Definition has free variables: ' + name);
+    assert(isDefined(n), 'Definition has free variables: ' + name);
     // Assumes constants do not appear in freeNames.
   }
   definitions[name] = equal(name, definition);
@@ -1741,13 +1840,13 @@ function define(name, definition) {
  * be something like defineCases('not', F, T).
  */
 function defineCases(name, ifTrue, ifFalse) {
-  Y.assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
+  assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
   for (var n in ifTrue.freeNames()) {
-    Y.assert(isDefined(n), 'Definition has free variables: ' + name);
+    assert(isDefined(n), 'Definition has free variables: ' + name);
     // Assumes constants do not appear in freeNames.
   }
   for (var n in ifFalse.freeNames()) {
-    Y.assert(isDefined(n), 'Definition has free variables: ' + name);
+    assert(isDefined(n), 'Definition has free variables: ' + name);
     // Assumes constants do not appear in freeNames.
   }
   definitions[name] = {T: equal(call(name, T), ifTrue),
@@ -1771,9 +1870,9 @@ function isDefinedByCases(name) {
  */
 function getDefinition(name, tOrF) {
   var defn = definitions[name];
-  Y.assert(defn, 'Not defined: ' + name);
+  assert(defn, 'Not defined: ' + name);
   if (!tOrF) {
-    Y.assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
+    assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
     return defn;
   } else {
     if (tOrF == true || (tOrF instanceof Y.Var && tOrF.name == 'T')) {
@@ -1781,10 +1880,10 @@ function getDefinition(name, tOrF) {
     } else if (tOrF == false || (tOrF instanceof Y.Var && tOrF.name == 'F')) {
       tOrF = 'F';
     }
-    Y.assert(!(defn instanceof Y.Expr),
+    assert(!(defn instanceof Y.Expr),
              'Definition is not by cases: ' + name);
     var defnCase = defn[tOrF];
-    Y.assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
+    assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
     return defnCase;
   }
 }
@@ -2085,7 +2184,7 @@ function parse(tokens) {
         expect(')');
       } else if (token.name == '{') {
         var id = next();
-        Y.assert(isId(id), 'Expected identifier, got ' + id.name);
+        assert(isId(id), 'Expected identifier, got ' + id.name);
         expect(peek().name == ':' ? ':' : '|');
         var body = mustParseAbove(0);
         expr = new Y.Lambda(id, body);
@@ -2248,7 +2347,7 @@ function repeatedCall(operator, indices) {
   function x(n) {
     return new Var('x' + indices[n]);
   }
-  Y.assert(indices.length, 'Empty indices in repeatedExpr');
+  assert(indices.length, 'Empty indices in repeatedExpr');
   if (indices.length == 1) {
     return x(0);
   } else {
@@ -2260,21 +2359,35 @@ function repeatedCall(operator, indices) {
   return expr;
 }
 
+// Accumulation of assertion failures and potentially information
+// about other errors that have occurred.
+var errors = [];
+
 /**
- * Asserts that the condition is true, throwing an exception
- * if it is not.  The message may be either a string or
- * a function of no arguments that returns something that
- * can be logged.
+ * Asserts that the condition is true, throwing an exception if it is
+ * not.  The message may be either a string or a function of no
+ * arguments that returns something that can be logged.  If the
+ * optional step is supplied it should be the most recent available
+ * completed proof step.
+ *
+ * Logs the message and step into the errors list by appending an
+ * object with properties 'message' and 'step'.
+ * 
+ * Caution: YUI already has a Y.assert function.
  */
-function assert(condition, message) {
+function assertTrue(condition, message, step) {
   if (!condition) {
     if (typeof message == 'function') {
       message = message();
     }
     console.log(message);
+    errors.push({message: message, step: step});
     throw new Error(message);
   }
 }
+
+// Use the application's assertTrue function for assertions.
+var assert = assertTrue;
 
 /**
  * Asserts that the expression is an equation (must have
@@ -2437,10 +2550,13 @@ Y.isDefined = isDefined;
 
 Y.varify = varify;
 Y.infixCall = infixCall;
-Y.assert = assert;
+Y.assertTrue = assertTrue;
 Y.assertEqn = assertEqn;
 Y.removeAll = removeAll;
 Y.removeExcept = removeExcept;
+
+// Error analysis
+Y.errors = errors;
 
 // Types
 
