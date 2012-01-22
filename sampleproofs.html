@@ -75,6 +75,8 @@ reasoning by cases (cases).
 </div>
 <div id=proofEditor></div>
 
+<div id=errorDisplay></div>
+
 <p><b>About the logic.</b>  This page can derive many of the theorems
 and examples of rules of inference of Chapter 5 of Peter Andrews'
 book,
@@ -143,6 +145,13 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   // Query string data.
   var queryData;
 
+  // Map from example name to example configuration info, each of
+  // which is also a map.  Configuration properties are:
+  //
+  // ruleName: name of the rule to run, defaults to the example name.
+  // args: array of arguments to pass to the rule.  If a function, the
+  //   function computes the arguments.
+  // level: if 1 then offer this example in the dropdown control.
   var proofs = {
 
     // PROOFS
@@ -335,12 +344,31 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       level: 1
     },
     
+    tautInst: {
+      args: [Y.parse('p --> T || q'), ({
+        p: Y.parse('forall {x : T || p x}'),
+        q: Y.parse('forall {x : p x}')
+      })],
+      level: 1
+    },
+
+
     r5235: {
       args: [x, p, call(q, x)]
     },
 
     implyForall: {
       args: [x, implies(p, call(q, x))],
+      level: 1
+    },
+
+    implyForallHyps: {
+      ruleName: 'implyForall',
+      args: function() {
+	var wff = Y.parse('y > 0 --> (p --> q x)');
+        wff.hasHyps = true;
+	return [x, wff];
+      },
       level: 1
     },
 
@@ -366,7 +394,8 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
     replace: {
       args: [Y.parse('x > 0 --> (x = (abs x))'),
-             Y.parse('x > 0 --> ((x + x) > x)'), '/right/right'
+             Y.rules.assert(Y.parse('x > 0 --> (x + x) > x')),
+	     '/right/right'
              ],
       level: 1
     }
@@ -385,19 +414,36 @@ YUI({filter: 'raw', insertBefore: 'styles'})
    * Runs and displays a proof of the named rule (or theorem).
    * If there is no such rule, notifies the user that there is none.
    */
-  function displayProof(ruleName) {
-    var ruleInfo = proofs[ruleName];
+  function displayProof(name) {
+    var ruleInfo = proofs[name];
     if (ruleInfo == undefined) {
-      alert('No rule "' + ruleName + '"');
+      alert('No example "' + name + '"');
     } else {
       var startMillis = new Date().getTime();
-      var result = Y.rules[ruleName].apply(null, ruleInfo.args || []);
+      var result;
+      var ruleName = ruleInfo.ruleName || name;
+      var args = ruleInfo.args;
+      if (typeof args == 'function') {
+	args = args();
+      }
+      try {
+	result = Y.rules[ruleName].apply(null, args || []);
+      } catch(e) {}
       var elapsed = new Date().getTime() - startMillis;
       // For debugging.
       window.proved = result;
       var proofNode = Y.one('#proofs');
       proofNode.setContent('');
-      Y.renderInference(result, proofNode, editable, elapsed);
+      if (result) {
+	Y.renderInference(result, proofNode, editable, elapsed);
+      } else if (Y.errors.length) {
+	var last = Y.errors[Y.errors.length - 1];
+	proofNode.append('<p><b>Errors: (' + Y.errors.length
+			 + ') ' + last.message + '</b></p>');
+	if (last.step) {
+	  proofNode.append(Y.renderProof(last.step).node);
+	}
+      }
       document.title = 'Proof display -- ' + ruleName;
     }
   }
@@ -435,7 +481,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       Y.addBottomPanel();
       Y.one('#selector').on('change', selectorChanged);
 
-      // Start an interactive proof editor for the user.
+      // Create an interactive proof editor for the user.
       var controller = new Y.ProofControl();
       controller.setEditable(true);
       Y.one('#proofEditor').append(controller.node);
