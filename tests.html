@@ -535,9 +535,17 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testInstForall: function() {
-        var inf = Y.rules.instForall(call('forall', lambda(y, call(p, y))),
-                                   call(f, y))
-        assertEqual('(p (f y))', inf);
+        var result = Y.rules.instForall(call('forall', lambda(y, call(p, y))),
+                                        call(f, y))
+        assertEqual('(p (f y))', result);
+
+        // Hypotheses
+        var hyps = Y.rules.assume('p y');
+        var step1 = Y.rules.assert('forall {y : p y}');
+        var step2 = Y.rules.appendStepHyps(step1, hyps);
+        var result = Y.rules.instForall(step2, call(f, y));
+        assertEqual('((p y) --> (p (f y)))', result)
+        Y.assert(result.hasHyps);
       },
 
       testAndTBook: function() {
