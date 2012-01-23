@@ -104,9 +104,9 @@ function normalized(expr) {
 function matchAsSchema(schema, expr) {
   var substitution = {};
   var result = schema._matchAsSchema(expr, substitution);
-  if (!result) {
-    throw new Error(expr + ' is not a substitution instance of ' + schema);
-  }
+  assert(result,
+         expr + ' is not a substitution instance of ' + schema,
+         schema);
   return substitution;
 }
 
@@ -649,7 +649,8 @@ function getHypMapKeys(map) {
 // dup()
 //
 // Makes and returns a shallow copy of this Expr, with only the properties
-// defined by the Var, Lambda, and Call classes.
+// defined by the Var, Lambda, and Call classes.  The result is not
+// flagged as having hypotheses.
 //
 //
 // hasFree(name)
