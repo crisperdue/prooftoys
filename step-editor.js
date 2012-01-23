@@ -120,7 +120,22 @@ function StepEditor(controller) {
   clearer.on('click', function() { self.reset(); });
 }
 
+/**
+ * Handle errors in the step editor.  Displays step information in an
+ * element named "proofErrors" if there is one.
+ */
 StepEditor.prototype.error = function(message) {
+  if (Y.errors.length) {
+    var last = Y.errors[Y.errors.length - 1];
+    var proofNode = Y.one('#proofErrors');
+    if (proofNode) {
+      proofNode.append('<p><b>Errors: (' + Y.errors.length
+		       + ') ' + last.message + '</b></p>');
+      if (last.step) {
+	proofNode.append(Y.renderProof(last.step).node);
+      }
+    }
+  }
   // TODO: implement, really, through a message area.
   alert(message);
 };
