@@ -35,7 +35,7 @@ var _tautologies = {};
 // cases (5222)
 // modusPonens (5224)
 // tautInst (Rule P, 5234) - uses modusPonens
-// impliesForall (5237) - uses tautInst and replace
+// implyForall (5237) - uses tautInst and replace
 
 // Map from inference rule name to a JavaScript function that
 // implements it.  The functions may use a global variable
@@ -90,6 +90,27 @@ var ruleInfo = {
   },
 
   /**
+   * Converts a wff with hypotheses to an implication.  If there are
+   * no hypotheses, returns its input unchanged.
+   */
+  asImplication: {
+    action: function(wff) {
+      if (!wff.hasHyps) {
+        return wff;
+      } else {
+        var step1 = wff.justify('asImplication', arguments, [wff]);
+        step1.hasHyps = false;
+        return step1;
+      }
+    },
+    inputs: {step: 1},
+    form: ('Convert hypotheses to explicit implication in step '
+           + '<input name=step>'),
+    hint: 'Convert hypotheses to an explicit implication'
+  },
+      
+
+  /**
    * Refer to a theorem by looking it up in the database rather
    * than proving it all over again.
    */
@@ -117,7 +138,6 @@ var ruleInfo = {
   /**
    * Refer to an axiom in the theorems database.  Affects the
    * display of the proof step, but otherwise the same as "theorem".
-   * Currently also used for definitions.
    */
   axiom: function(name) {
     // This rule is inline.  The axioms themselves, like theorems,
@@ -143,14 +163,14 @@ var ruleInfo = {
     action: function(equation, target, path) {
       path = Y.path(path);
       assert(equation.isCall2('='),
-	     'Rule R requires equation: ' + equation);
+	     'Rule R requires equation: ' + equation, equation);
       function replacer(expr) {
 	if (expr.matches(equation.getLeft())) {
 	  return equation.getRight();
 	} else {
 	  assert(false, 'Rule R: subexpression ' + expr +
-		   '\n of ' + target +
-		   '\n must match ' + equation.getLeft());
+                 '\n of ' + target +
+                 '\n must match ' + equation.getLeft(), target);
 	}
       }
       // Auto-justify input steps.
@@ -213,8 +233,7 @@ var ruleInfo = {
 
   axiom2: {
     action: function() {
-      // var result = Y.parse('(x = y) --> (h x = h y)');
-      var result = call('-->', equal(x, y), equal(call(h, x), call(h, y)));
+      var result = Y.parse('x = y --> h x = h y');
       return result.justify('axiom2');
     },
     inputs: {},
@@ -224,10 +243,7 @@ var ruleInfo = {
 
   axiom3: {
     action: function() {
-      // var result = Y.parse('(f = g) = forall {x : f x = g x}');
-      var result = equal(equal(f, g),
-                         call('forall',
-                              lambda(x, equal(call(f, x), call(g, x)))));
+      var result = Y.parse('(f = g) = forall {x : f x = g x}');
       return result.justify('axiom3');
     },
     inputs: {},
@@ -261,8 +277,7 @@ var ruleInfo = {
 
   axiom5: {
     action: function() {
-      // var result = Y.parse('(the (= y)) = y');
-      var result = equal(call('the', equal(y)), y);
+      var result = Y.parse('(the (= y)) = y');
       return result.justify('axiom5');
     },
     inputs: {},
@@ -435,10 +450,10 @@ var ruleInfo = {
         return result.justify('useDefinition', arguments, [a]);
       } else {
         assert(target instanceof Y.Call && target.arg instanceof Y.Var,
-                 'Target of useDefinition not suitable');
+                 'Target of useDefinition not suitable: ' + target);
         var arg = target.arg;
         assert(arg.name == 'T' || arg.name == 'F',
-                 'Target of useDefinition not suitable');
+                 'Target of useDefinition not suitable: ' + target);
         var result =
 	  rules.replace(rules.definition(target.fn.name, arg), a, path);
         return result.justify('useDefinition', arguments, [a]);
@@ -456,15 +471,15 @@ var ruleInfo = {
    * Rule Replace packaged for convenience.
    */
   apply: {
-    action: function(expr, path) {
-      path = Y.path(path, expr);
-      var target = expr.locate(path);
-      assert(target, 'Path ' + path + ' not found in ' + target);
+    action: function(step, path) {
+      path = Y.path(path, step);
+      var target = step.locate(path);
+      assert(target, 'Path ' + path + ' not found in ' + step, step);
       assert(target instanceof Y.Call && target.fn instanceof Y.Lambda,
-               'Reduce needs a call to a lambda, got: ' + target);
+             'Reduce needs a call to a lambda, got: ' + target, step);
       var equation = rules.axiom4(target);
-      var result = rules.replace(equation, expr, path);
-      return result.justify('apply', arguments, [expr]);
+      var result = rules.replace(equation, step, path);
+      return result.justify('apply', arguments, [step]);
     },
     inputs: {reducible: 1},
     form: '',
@@ -484,9 +499,10 @@ var ruleInfo = {
       newVar = _var(newVar);
       path = Y.path(path, expr);
       var target = expr.locate(path);
-      assert(target instanceof Y.Lambda, 'Not a function: ' + target);
+      assert(target instanceof Y.Lambda, 'Not a function: ' + target, expr);
       assert(!expr.freeNames()[newVar.name],
-               'New bound variable ' + newVar.name + ' must not occur free.');
+             'New bound variable ' + newVar.name + ' must not occur free.',
+             expr);
       var changed = lambda(newVar,
                            Y.subFree(newVar, target.bound, target.body));
       var step1 = rules.eqSelf(changed);
@@ -513,8 +529,9 @@ var ruleInfo = {
         v = new Y.Var(v);
       }
       assert(eqn.isBinOp() && eqn.getBinOp() == '=',
-               'Not an equation: ' + eqn);
-      assert(v instanceof Y.Var, 'Not a variable: ' + v);
+             'Not an equation: ' + eqn,
+             h_eqn);
+      assert(v instanceof Y.Var, 'Not a variable: ' + v, h_eqn);
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
       var step2 = rules.replace(h_eqn, step1, '/right/body');
       return step2.justify('bindEqn', arguments, [h_eqn]);
@@ -591,9 +608,11 @@ var ruleInfo = {
     action: function(h_target, expr) {
       var target = h_target.unHyp();
       assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
-               "Must be 'forall': " + target.fn);
+             "Must be 'forall': " + target.fn,
+             h_target);
       assert(target.arg instanceof Y.Lambda,
-               "Must be lambda expression: " + target.arg);
+             "Must be lambda expression: " + target.arg,
+             h_target);
       var step1 = rules.useDefinition(h_target, '/main/fn');
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.apply(step2, '/main/left');
@@ -760,7 +779,6 @@ var ruleInfo = {
   // Given two WFFs each of the form A = B that are the result
   // of substituting T and F respectively for a variable,
   // proves the WFF with the variable.
-  // TODO: Handle hypotheses.
   equationCases: {
     action: function(caseT, caseF, v) {
       v = _var(v);
@@ -835,7 +853,8 @@ var ruleInfo = {
       assertEqn(t_a);
       var left = t_a.locate('/left');
       assert(left instanceof Y.Var && left.name == 'T',
-               'Input should be [T = A]: ' + t_a);
+             'Input should be [T = A]: ' + t_a,
+             h_t_a);
       var a = t_a.locate('/right');
       var result = rules.replace(rules.r5218(a), h_t_a, '/main');
       return result.justify('fromTIsA', arguments, [h_t_a]);
@@ -890,7 +909,8 @@ var ruleInfo = {
       assert(!(h_a.hasHyps && h_a.getLeft().hasFree(v.name)),
 	     function() {
 	       return v.name + ' occurs free in hypotheses of ' + h_a;
-	     });
+	     },
+             h_a);
       var step1 = rules.toTIsA(h_a);
       var step2 = rules.forallT(v);
       var step3 = rules.replace(step1, step2, '/arg/body');
@@ -903,15 +923,15 @@ var ruleInfo = {
               + ' (forall v A) using the variable of your choice.')
   },
 
-  // 5221 (one variable), in wff B substitute term A for variable v,
-  // which may also be a string, which will be converted to a variable.
-  // TODO: Handle hypotheses.
+  // 5221 (one variable), in the given step substitute term A for
+  // variable v, which may also be a string, which will be converted
+  // to a variable.  Handles hypotheses.
   instVar: {
-    action: function(b, a, v) {
-      // Note that addForall checks that v is not free in b.
-      var step1 = rules.addForall(b, v);
+    action: function(step, a, v) {
+      // Note that addForall checks that v is not free in the step.
+      var step1 = rules.addForall(step, v);
       var step2 = rules.instForall(step1, a);
-      return step2.justify('instVar', arguments, [b]);
+      return step2.justify('instVar', arguments, [step]);
     },
     inputs: {step: 1, term: 2, varName: 3},
     form: ('In step <input name=step> substitute <input name=term>'
@@ -923,7 +943,7 @@ var ruleInfo = {
 
   // More like the book's 5221.  For each name in the map (a string),
   // substitutes the expression associated with it in the map, using
-  // simultaneous substitution.
+  // simultaneous substitution.  Handles hypotheses.
   instMultiVars: {
     action: function(b, map) {
       var namesReversed = [];
@@ -948,11 +968,12 @@ var ruleInfo = {
   // (5222) Given two theorems that are substitutions of T and
   // F respectively into a WFF; and a variable or variable name,
   // proves the WFF.
+  // TODO: Handle hypotheses.
   cases: {
     action: function(caseT, caseF, v) {
       v = _var(v);
-      // Note: The existing names should include both caseT and caseF,
-      // but the only additional name in caseF would be "F".
+      // Note: caseF has no variables not in caseT, so no need to
+      // calculate all of its names.
       var newVar = Y.genVar('v', caseT.allNames());
       var gen = caseT.generalizeTF(caseF, newVar);
       var step1a = rules.axiom4(call(lambda(newVar, gen), T));
@@ -1197,9 +1218,10 @@ var ruleInfo = {
         // There are no free variables, evaluate the expression.
         var step11 = rules.evalBool(wff);
         assert(step11.isCall2('=')
-                 && step11.getRight() instanceof Y.Var
-                 && step11.getRight().name == 'T',
-                 'Not a tautology: ' + step11.getLeft());
+               && step11.getRight() instanceof Y.Var
+               && step11.getRight().name == 'T',
+               'Not a tautology: ' + step11.getLeft(),
+               step11);
         var step12 = rules.rRight(step11, rules.t(), '');
         var result = step12.justify('tautology', arguments);
         _tautologies[key] = result;
@@ -1213,13 +1235,14 @@ var ruleInfo = {
   },
 
   // Given two theorems a and b, proves a && b.
+  // Handles hypotheses.
   makeConjunction: {
     action: function(a, b) {
       var stepa = rules.toTIsA(a);
       var stepb = rules.toTIsA(b);
       var step1 = rules.theorem('r5212');
       var step2 = rules.replace(stepa, step1, '/left');
-      var step3 = rules.replace(stepb, step2, '/right');
+      var step3 = rules.replace(stepb, step2, '/main/right');
       return step3.justify('makeConjunction', arguments, [a, b]);
     },
     inputs: {step: [1, 2]},
@@ -1234,6 +1257,7 @@ var ruleInfo = {
   // Given a tautology or tautology with arbitrary hypotheses and a
   // substitution, derives an instantiation of the tautology.  If the
   // input has a hypothesis, that passes through to the result.
+  // TODO: handle hypotheses.
   tautInst: {
     action: function(h_tautology, map) {
       var tautology = h_tautology.unHyp();
@@ -1256,8 +1280,9 @@ var ruleInfo = {
   anyImpliesTheorem: {
     action: function(any, theorem) {
       assert(!theorem.hasHyps, function() {
-	return 'Expecting a theorem, got: ' + theorem.getRight();
-      });
+        return 'Expecting a theorem, got: ' + theorem.getRight();
+      },
+	    theorem);
       var step1 = rules.toTIsA(theorem);
       var step2 = rules.tautInst(Y.parse('p --> T'), {p: any});
       var step3 = rules.r(step1, step2, '/right');
@@ -1277,7 +1302,7 @@ var ruleInfo = {
       v = Y.varify(v);
       var aFree = a.freeNames();
       assert(!aFree.hasOwnProperty(v.name),
-	       'r5235: variable ' + v + 'cannot occur free in ' + a);
+	     'r5235: variable ' + v + 'cannot occur free in ' + a);
       var map1 = {
         p: call('forall', lambda(v, call('||', T, b))),
         q: call('forall', lambda(v, b))
@@ -1312,18 +1337,19 @@ var ruleInfo = {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
       v = Y.varify(v);
-      assert(a_b.isCall2('-->'), 'Must be an implication: ' + a_b);
+      assert(a_b.isCall2('-->'), 'Must be an implication: ' + a_b, h_a_b);
       var a = a_b.getLeft();
       var b = a_b.getRight();
       // Restriction to ensure the desired result.
       assert(!a.hasFreeName(v.name),
-	       'implyForall: variable ' + v + 'cannot occur free in ' + a);
+	     'implyForall: variable ' + v + 'cannot occur free in ' + a, h_a_b);
       var step1 = rules.r5235(v, call('not', a), b);
       var h_taut = equal(call('||', call('not', p), q), implies(p, q));
       if (h_a_b.hasHyps) {
 	var h = h_a_b.getLeft();
 	assert(!h.hasFreeName(v.name),
-		 'implyForall: variable ' + v + 'cannot occur free in ' + h);
+	       'implyForall: variable ' + v + 'cannot occur free in ' + h,
+	       h_a_b);
 	h_taut = Y.infixCall(h, '-->', h_taut);
 	h_taut.hasHyps = true;
       }
@@ -1370,7 +1396,7 @@ var ruleInfo = {
   // Relates equal functions to equality at all input data points.
   r5238: {
     action: function(vars, a, b) {
-      assert(vars.concat, 'Variables must be an array');
+      assert(vars.concat, 'Variables must be an array: ' + vars);
       var result;
       if (vars.length == 0) {
         result = rules.eqSelf(equal(a, b));
@@ -1425,7 +1451,8 @@ var ruleInfo = {
     action: function(equation, target, path) {
       path = Y.path(path);
       assert(equation.isCall2('='),
-             'Expecting an equation, got: ' + equation);
+             'Expecting an equation, got: ' + equation,
+	     equation);
       var step1 = rules.axiom('axiom2');
       var a = equation.getLeft();
       var b = equation.getRight();
@@ -1496,7 +1523,8 @@ var ruleInfo = {
       var h_equation = h_equation_arg;
       if (h_equation.isCall2('=')) {
 	assert(!(h_c.hasHyps && path.isLeft()),
-	       'Cannot apply the Replace rule to hypotheses');
+	       'Cannot apply the Replace rule to hypotheses',
+	       h_c_arg);
         // Allow "replace" to be used for situations where "r" is
         // applicable.  The case with hypotheses in h_c can be
         // considered as rule RR (5202).
@@ -1507,7 +1535,7 @@ var ruleInfo = {
 	return result;
       }
       assert(h_equation.isCall2('-->') && h_equation.getRight().isCall2('='),
-	     'Not an equation: ' + h_equation);
+	     'Not an equation: ' + h_equation, h_equation_arg);
       // h_equation has the form H --> A = B
 
       // Give the two WFFs the same hypotheses.
@@ -1524,18 +1552,20 @@ var ruleInfo = {
 	// If there are no hypotheses, we do not attempt to make the
 	// LHS of the two input steps match.
 	assert(h_c.getLeft().matches(h),
-	       'LHS mismatch in "replace" rule');
+	       'LHS mismatch in "replace" rule',
+	       h_c_arg, h_c_arg);
       }
 
       // From here on work with implications directly, not hypotheses.
-      delete h_equation.hasHyps;
-      delete h_c.hasHyps;
+      h_equation = h_equation.dup();
+      h_c = h_c.dup();
 
       // equation is A = B
       var equation = h_equation.getRight();
       var c = h_c.getRight();
       var a = equation.getLeft();
       var b = equation.getRight();
+
       // Path relative to c.  This is one segment shorter than the
       // input path, but is the same length if hyps were added to h_c
       // by appendStepHyps, i.e. h_equation_arg had them but not
@@ -1552,7 +1582,7 @@ var ruleInfo = {
 	// TODO: Do appropriate checking in 5235 and impliesForall as well.
         assert(!hypFreeNames.hasOwnProperty(name), function() {
           return 'Conflicting binding of ' + name + ' in ' + c;
-        });
+        }, h_c_arg);
         var step1 = rules.implyForall(name, step1);
       }
       var step2 = rules.r5239(equation, c, cpath);
@@ -1581,9 +1611,10 @@ var ruleInfo = {
   // various rules of inference.  If hypStep has no hypotheses, the result
   // is simply the given step.
   appendStepHyps: {
-    action: function(step, hypStep) {
+    action: function(target, hypStep) {
       if (hypStep.hasHyps) {
-	if (step.hasHyps) {
+        var step = rules.asImplication(target);
+	if (target.hasHyps) {
 	  if (step.getLeft().matches(hypStep.getLeft())) {
 	    // Hyps are the same, so no change to the given step.
 	    return step;
@@ -1596,7 +1627,7 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('appendStepHyps', arguments, [step]);
+	  var result = step2.justify('appendStepHyps', arguments, [target]);
 	  result.hasHyps = true;
 	  return result;
 	} else {
@@ -1606,13 +1637,13 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(Y.parse('p --> (h2 --> p)'), subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('appendStepHyps', arguments, [step]);
+	  var result = step2.justify('appendStepHyps', arguments, [target]);
 	  result.hasHyps = true;
 	  return result;
 	}
       } else {
-	// Don't display any new inference step.
-	return step;
+	// Don't do anything and don't display any new proof step.
+	return target;
       }
     },
     inputs: {step: [1, 2]},
@@ -1621,13 +1652,14 @@ var ruleInfo = {
     hint: 'Add hypotheses to a step'
   },
 
-  // Prefix hypotheses from the hypStep to the step.  Often used
-  // together with appendStepHyps.  If hypStep has no hypotheses, the
-  // result is simply the given step.
+  // Prefix hypotheses from the hypStep to the target step.  Often
+  // used together with appendStepHyps.  If hypStep has no hypotheses,
+  // the result is simply the given step.
   prependStepHyps: {
-    action: function(step, hypStep) {
+    action: function(target, hypStep) {
       if (hypStep.hasHyps) {
-	if (step.hasHyps) {
+        var step = rules.asImplication(target);
+	if (target.hasHyps) {
 	  if (step.getLeft().matches(hypStep.getLeft())) {
 	    // Hyps are the same, so no change to the given step.
 	    return step;
@@ -1644,7 +1676,7 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('prependStepHyps', arguments, [step]);
+	  var result = step2.justify('prependStepHyps', arguments, [target]);
 	  result.hasHyps = true;
 	  return result;
 	} else {
@@ -1654,13 +1686,13 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(Y.parse('p --> (h1 --> p)'), subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('prependStepHyps', arguments, [step]);
+	  var result = step2.justify('prependStepHyps', arguments, [target]);
 	  result.hasHyps = true;
 	  return result;
 	}
       } else {
 	// Don't display this no-op inference step.
-	return step;
+	return target;
       }
     },
     inputs: {step: [1, 2]},

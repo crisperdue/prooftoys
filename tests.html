@@ -588,29 +588,38 @@ YUI({filter: null, insertBefore: 'styles'})
         var inf = Y.rules.addForall(call(p, y), y);
         assertEqual('(forall {y : (p y)})', inf);
 
-        // Add this back when hypotheses are handled in other rules.
-        /*
+        // Hypotheses
         var step1 = Y.rules.assume(Y.parse('x = 0'));
         var wff = Y.parse('x = 0 --> y > x');
         wff.hasHyps = true;
         wff.getLeft().sourceStep = step1;
-        assertEqual('((x = 0) --> (forall {y : y > x}))',
+        assertEqual('((x = 0) --> (forall {y : (y > x)}))',
                     Y.rules.addForall(wff, 'y'));
-        */
       },
 
       testInstVar: function() {
-        var inf = Y.rules.instVar(call(p, y), call(f, x), y);
-        assertEqual('(p (f x))', inf);
+        var result = Y.rules.instVar(call(p, y), call(f, x), y);
+        assertEqual('(p (f x))', result);
+
+        // Hypotheses
+        var step1 = Y.rules.axiom('axiom2');
+        result = Y.rules.instVar(step1, call(p, x), x);
       },
 
       testInstMultiVars: function() {
         var map = {p: Y.parse('forall {x | T || b}'),
                    q: Y.parse('forall {x | b}')
         };
-        var inf = Y.rules.instMultiVars(implies(p, call('||', T, q)), map);
+        var result = Y.rules.instMultiVars(implies(p, call('||', T, q)), map);
         assertEqual('((forall {x : (T || b)}) --> (T || (forall {x : b})))',
-                    inf);
+                    result);
+
+        // Hypotheses
+        var step = Y.rules.axiom('axiom2');
+        var map2 = {x: call(p, x),
+                    y: call(p, y)};
+        var result = Y.rules.instMultiVars(step, map2);
+        assertEqual('(((p x) = (p y)) --> ((h (p x)) = (h (p y))))', result);
       },
 
       testCases: function() {
@@ -681,8 +690,13 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testMakeConjunction: function() {
-        var inf = Y.rules.makeConjunction(p, q);
-        assertEqual('(p && q)', inf);
+        var result = Y.rules.makeConjunction(p, q);
+        assertEqual('(p && q)', result);
+
+        // With hypotheses:
+        var step1 = Y.rules.assume(p);
+        var step2 = Y.rules.assume(q);
+        Y.log(Y.rules.makeConjunction(step1, step2));
       },
 
       testTautInst: function() {
