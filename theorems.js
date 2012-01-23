@@ -22,21 +22,6 @@ var allT = lambda(x, T);
 // for proved tautologies.  Private to the tautology rule.
 var _tautologies = {};
 
-// TODO: List of rules that should work with hypotheses.
-//
-// This covers rules that precede the deduction theorem (5240).
-// Except as noted these use the "replace" rule or rRight.
-//
-// All of the equality rules (5201 parts) (done)
-// forallInst (universal instantiation - 5215) (done)
-// Rule T (5219) (done)
-// addForall (5220) (in progress)
-// instVar and instMultiVars (5221) - uses addForall
-// cases (5222)
-// modusPonens (5224)
-// tautInst (Rule P, 5234) - uses modusPonens
-// implyForall (5237) - uses tautInst and replace
-
 // Map from inference rule name to a JavaScript function that
 // implements it.  The functions may use a global variable
 // named "rules" that should have all of these functions in it.
@@ -55,12 +40,15 @@ var ruleInfo = {
 
   /**
    * The name "assertion" is used in displays to indicate that
-   * the result of the inference is an assertion.  If given a string
-   * uses the parse of the string as the assertion.
+   * the result of the inference is an assertion.  If given a string,
+   * parses it and uses the result as its input.
    */
   assert: {
     action: function(assertion) {
-      return assertion.justify('assert', arguments);
+      if (typeof assertion == 'string') {
+	assertion = Y.parse(assertion);
+      }
+      return assertion.justify('assert', [assertion]);
     },
     inputs: {term: 1},
     form: ('Assert <input name=term>'),
@@ -602,8 +590,8 @@ var ruleInfo = {
 
   // Target is forall {x : B}, expr is A, which will replace
   // all occurrences of x.  Uses no book-specific definitions,
-  // and relies only on theorem "T", 5200, and reduce.
-  // This is 5215.
+  // and relies only on theorem "T", 5200, and reduce. (5215)
+  // Handles hypotheses.
   instForall: {
     action: function(h_target, expr) {
       var target = h_target.unHyp();
@@ -1332,7 +1320,7 @@ var ruleInfo = {
 
   // Given an implication A --> B and a variable v, produces a theorem
   // (A --> B) --> (A --> forall {v : B}).  (5237)
-  // TODO: Accept hypotheses.
+  // TODO: Accept hypotheses.  Currently buggy.
   implyForall: {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
@@ -1378,7 +1366,7 @@ var ruleInfo = {
   // two antecedents, use this with a1 as one antecedent and combine
   // the rest with makeConjunction.
   //
-  // 5234
+  // (5234)  TODO: Handle hypotheses.
   p: {
     action: function(a1, a2, b, tautology) {
       var step2 = rules.makeConjunction(a1, a2);
