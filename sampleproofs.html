@@ -392,6 +392,16 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       level: 1
     },
 
+    appendStepHyps: {
+      args: [Y.rules.assume(p), Y.rules.assume(q)],
+      level: 1
+    },
+
+    prependStepHyps: {
+      args: [Y.rules.assume(p), Y.rules.assume(q)],
+      level: 1
+    },
+
     replace: {
       args: [Y.parse('x > 0 --> (x = (abs x))'),
              Y.rules.assert(Y.parse('x > 0 --> (x + x) > x')),
