@@ -445,10 +445,10 @@ Expr.prototype.repr = function() {
 
 /**
  * Public version of "locate", finding a subexpression
- * from its path.
+ * from its path.  Handles /main in the path.
  */
 Expr.prototype.locate = function(_path) {
-  return this._locate(path(_path));
+  return this._locate(path(_path, this));
 };
 
 /**

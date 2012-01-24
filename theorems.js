@@ -1001,15 +1001,14 @@ var ruleInfo = {
               + ' show it with T and F.')
   },
 
-  // 5224
-  // Given P and P --> Q, derive Q.
-  // TODO: Handle hypotheses.
+  // Given P and P --> Q, derive Q. (5224)
+  // Handles hypotheses.
   modusPonens: {
     action: function(a, b) {
       var step1 = rules.toTIsA(a);
-      var step2 = rules.rRight(step1, b, '/left');
-      var step3 = rules.useDefinition(step2, '/fn');
-      var step4 = rules.apply(step3, '');
+      var step2 = rules.rRight(step1, b, '/main/left');
+      var step3 = rules.useDefinition(step2, '/main/fn');
+      var step4 = rules.apply(step3, '/main');
       return step4.justify('modusPonens', arguments, arguments);
     },
     inputs: {step: 1, implication: 2},
@@ -1238,10 +1237,10 @@ var ruleInfo = {
   // Any instance of a tautology is a theorem.  This is part
   // of the book's Rule P.
   //
-  // Given a tautology or tautology with arbitrary hypotheses and a
-  // substitution, derives an instantiation of the tautology.  If the
-  // input has a hypothesis, that passes through to the result.
-  // TODO: handle hypotheses.
+  // Given an expression that is a tautology, possibly with
+  // hypotheses, and a substitution, derives an instantiation of the
+  // tautology using the substitution, with the same hypotheses.
+  // Handles hypotheses.
   tautInst: {
     action: function(h_tautology, map) {
       var tautology = h_tautology.unHyp();
@@ -1260,13 +1259,14 @@ var ruleInfo = {
   },
 
   // Given a theorem and an arbitrary boolean term, proves that the
-  // term implies the theorem.
+  // term implies the theorem.  Note that theorems do not have
+  // hypotheses.
   anyImpliesTheorem: {
     action: function(any, theorem) {
       assert(!theorem.hasHyps, function() {
-        return 'Expecting a theorem, got: ' + theorem.getRight();
-      },
-	    theorem);
+          return 'Expecting a theorem, got: ' + theorem.getRight();
+        },
+        theorem);
       var step1 = rules.toTIsA(theorem);
       var step2 = rules.tautInst(Y.parse('p --> T'), {p: any});
       var step3 = rules.r(step1, step2, '/right');
@@ -1281,6 +1281,7 @@ var ruleInfo = {
   // Given a variable v that is not free in the given wff A, and a wff B, derive
   // ((forall {v : A || B}) --> A || (forall {v : B})).  Could run even if
   // the variable is free, but would not give desired result.
+  // This is Axiom Schema 5 of Andrews' first-order logic F.
   r5235: {
     action: function(v, a, b) {
       v = Y.varify(v);
@@ -1314,9 +1315,11 @@ var ruleInfo = {
               + 'in the left argument of the "or".')
   },
 
-  // Given an implication A --> B and a variable v, produces a theorem
-  // (A --> B) --> (A --> forall {v : B}).  (5237)
-  // TODO: Accept hypotheses.  Currently buggy.
+  // Given a proof step H |- A --> B and a variable v, derives
+  // H |- (A --> forall {v : B}) provided that v is not free in A or H.
+  // (5237)
+  //
+  // Handles hypotheses.
   implyForall: {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
@@ -1327,27 +1330,21 @@ var ruleInfo = {
       // Restriction to ensure the desired result.
       assert(!a.hasFreeName(v.name),
 	     'implyForall: variable ' + v + 'cannot occur free in ' + a, h_a_b);
-      var step1 = rules.r5235(v, call('not', a), b);
-      var h_taut = equal(call('||', call('not', p), q), implies(p, q));
       if (h_a_b.hasHyps) {
-	var h = h_a_b.getLeft();
 	assert(!h.hasFreeName(v.name),
 	       'implyForall: variable ' + v + 'cannot occur free in ' + h,
 	       h_a_b);
-	h_taut = Y.infixCall(h, '-->', h_taut);
-	h_taut.hasHyps = true;
       }
-      var step2 = rules.tautInst(h_taut, {p: a, q: b});
-      var step3 = rules.replace(step2, step1, '/left/arg/body');
-      var map4 = {
-        p: a,
-        q: step1.locate('/right/right')
-      };
-      var step4 = rules.tautInst(h_taut, map4);
-      var step5 = rules.replace(step4, step3, '/right');
-      var step6 = rules.addForall(a_b, v);
-      var step7 = rules.modusPonens(step6, step5);
-      return step7.justify('implyForall', arguments, [a_b]);
+      var map1 = {a: a, b: b};
+      var step1 = rules.tautInst(Y.parse('(a --> b) --> not a || b'), map1);
+      var step2 = rules.modusPonens(h_a_b, step1);
+      var step3 = rules.addForall(step2, v);
+      var step4 = rules.r5235(v, call('not', a), b);
+      var step5 = rules.modusPonens(step3, step4);
+      var map6 = {a: a, b: step5.locate('/main/right')};
+      var step6 = rules.tautInst(Y.parse('not a || b --> (a --> b)'), map6);
+      var step7 = rules.modusPonens(step5, step6);
+      return step7.justify('implyForall', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},
     form: ('Move forall inside "implies" binding '
@@ -1357,24 +1354,22 @@ var ruleInfo = {
               + 'is not free in the first argument.')
   },
     
-  // Rule P (without hypotheses).  This handles two antecedents.  The
-  // given tautology must match ((a1 && a2) --> b.  To use more than
-  // two antecedents, use this with a1 as one antecedent and combine
-  // the rest with makeConjunction.
-  //
-  // (5234)  TODO: Handle hypotheses.
+  // Rule P for two antecedents.  The given tautology must have the form
+  // ((a1 && a2) --> b.  To use more than two antecedents, use this with
+  // a1 as one antecedent and combine the rest with makeConjunction.
+  // Handles hypotheses.  (5234)
   p: {
     action: function(a1, a2, b, tautology) {
-      var step2 = rules.makeConjunction(a1, a2);
       var step1 = rules.tautology(tautology);
-      var tautologous = implies(step2, b);
+      var step2 = rules.makeConjunction(a1, a2);
+      var tautologous = implies(step2.unHyp(), b);
       var substitution = Y.matchAsSchema(tautology, tautologous);
       var step3 = rules.instMultiVars(step1, substitution);
       var step4 = rules.modusPonens(step2, step3);
       return step4.justify('p', arguments, [a1, a2]);
     },
     // TODO: inputs ... ?
-    comment: ('Simplified form of Rule P without hypotheses.')
+    comment: ('Rule P with two antecedents.')
   },
 
   // Relates equal functions to equality at all input data points.

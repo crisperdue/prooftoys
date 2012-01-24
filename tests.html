@@ -645,8 +645,16 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testModusPonens: function() {
-        var inf = Y.rules.modusPonens(p, implies(p, q));
-        assertEqual('q', inf);
+        var result = Y.rules.modusPonens(p, implies(p, q));
+        assertEqual('q', result);
+
+        // Hypotheses
+        var step1 = Y.rules.assume('p --> not p');
+        // A tautology, but don't rely on the tautology rule here.
+        var step2 = Y.rules.assert('(p --> not p) --> not p');
+        result = Y.rules.modusPonens(step1, step2);
+        assertEqual('((p --> (not p)) --> (not p))', result);
+        Y.assert(result.hasHyps);
       },
 
       testR5230TF: function() {
@@ -730,6 +738,7 @@ YUI({filter: null, insertBefore: 'styles'})
         h_taut.hasHyps = true;
         var result = Y.rules.tautInst(h_taut, {p: q});
         assertEqual('((x > 0) --> (q --> q))', result);
+        Y.assert(result.hasHyps);
       },
 
       testAnyImpliesTheorem: function() {
@@ -762,6 +771,16 @@ YUI({filter: null, insertBefore: 'styles'})
                             Y.parse('q x'),
                             Y.parse('P && (P --> Q) --> Q'));
         assertEqual('(q x)', inf);
+
+        // With hypotheses:
+        var step1 = Y.rules.assert('h --> p x');
+        step1.hasHyps = true;
+        var result = Y.rules.p(step1,
+                               Y.parse('p x --> q x'),
+                               Y.parse('q x'),
+                               Y.parse('P && (P --> Q) --> Q'));
+        assertEqual('(h --> (q x))', result);
+        Y.assert(result.hasHyps);
       },
 
       testR5238a: function() {
