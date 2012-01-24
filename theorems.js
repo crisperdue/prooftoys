@@ -1354,22 +1354,21 @@ var ruleInfo = {
               + 'is not free in the first argument.')
   },
     
-  // Rule P for two antecedents.  The given tautology must have the form
-  // ((a1 && a2) --> b.  To use more than two antecedents, use this with
-  // a1 as one antecedent and combine the rest with makeConjunction.
-  // Handles hypotheses.  (5234)
+  // Rule P for a single antecedent (5234).  The given tautology must have
+  // the form (A --> B), where A matches the given input step and B
+  // has only variables that appear in A.  For tautologies with a
+  // conjunction on the LHS as shown in the book, use this with
+  // makeConjunction.  Handles hypotheses.
   p: {
-    action: function(a1, a2, b, tautology) {
+    action: function(step, tautology) {
       var step1 = rules.tautology(tautology);
-      var step2 = rules.makeConjunction(a1, a2);
-      var tautologous = implies(step2.unHyp(), b);
-      var substitution = Y.matchAsSchema(tautology, tautologous);
+      var substitution = Y.matchAsSchema(tautology.getLeft(), step.unHyp());
       var step3 = rules.instMultiVars(step1, substitution);
-      var step4 = rules.modusPonens(step2, step3);
-      return step4.justify('p', arguments, [a1, a2]);
+      var step4 = rules.modusPonens(step, step3);
+      return step4.justify('p', arguments, [step]);
     },
     // TODO: inputs ... ?
-    comment: ('Rule P with two antecedents.')
+    comment: ('Rule P with a single antecedent.')
   },
 
   // Relates equal functions to equality at all input data points.
@@ -1566,15 +1565,11 @@ var ruleInfo = {
       }
       var step2 = rules.r5239(equation, c, cpath);
       var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
-      var step3 = rules.p(step1,
-                          step2,
-                          implies(step1.getLeft(), step2.getRight()),
-                          tautology);
+      var step3a = rules.makeConjunction(step1, step2);
+      var step3 = rules.p(step3a, tautology);
       var taut2 = Y.parse('(h --> p) && (h --> (p = q)) --> (h --> q)');
-      var step4 = rules.p(h_c,
-                          step3,
-                          implies(h, step3.getRight().getRight()),
-                          taut2);
+      var step4a = rules.makeConjunction(h_c, step3);
+      var step4 = rules.p(step4a, taut2);
       // TODO: Consider setting "hasHyps" systematically, probably in "justify".
       step4.hasHyps = h_c_arg.hasHyps || h_equation_arg.hasHyps;
       return step4.justify('replace', arguments, [h_equation_arg, h_c_arg]);

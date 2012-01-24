@@ -766,18 +766,14 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testP: function() {
-        var inf = Y.rules.p(Y.parse('p x'),
-                            Y.parse('p x --> q x'),
-                            Y.parse('q x'),
+        var inf = Y.rules.p(Y.parse('p x && (p x --> q x)'),
                             Y.parse('P && (P --> Q) --> Q'));
         assertEqual('(q x)', inf);
 
         // With hypotheses:
-        var step1 = Y.rules.assert('h --> p x');
+        var step1 = Y.rules.assert('h --> (p x && (p x --> q x))');
         step1.hasHyps = true;
         var result = Y.rules.p(step1,
-                               Y.parse('p x --> q x'),
-                               Y.parse('q x'),
                                Y.parse('P && (P --> Q) --> Q'));
         assertEqual('(h --> (q x))', result);
         Y.assert(result.hasHyps);
