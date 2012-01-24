@@ -953,30 +953,43 @@ var ruleInfo = {
               + 'its value in the map')
   },
 
+  // Given two theorems a and b, proves a && b.
+  // Handles hypotheses.
+  // TODO: Move before "cases".
+  makeConjunction: {
+    action: function(a, b) {
+      var stepa = rules.toTIsA(a);
+      var stepb = rules.toTIsA(b);
+      var step1 = rules.theorem('r5212');
+      var step2 = rules.replace(stepa, step1, '/left');
+      var step3 = rules.replace(stepb, step2, '/main/right');
+      return step3.justify('makeConjunction', arguments, [a, b]);
+    },
+    inputs: {step: [1, 2]},
+    form: ('Conjoin steps <input name=step1> and <input name=step2>'),
+    hint: 'from A and B to (A && B)',
+    comment: ('Given a and b, derive a && b')
+  },
+
   // (5222) Given two theorems that are substitutions of T and
   // F respectively into a WFF; and a variable or variable name,
   // proves the WFF.
-  // TODO: Handle hypotheses.
   cases: {
     action: function(caseT, caseF, v) {
       v = _var(v);
       // Note: caseF has no variables not in caseT, so no need to
       // calculate all of its names.
       var newVar = Y.genVar('v', caseT.allNames());
-      var gen = caseT.generalizeTF(caseF, newVar);
+      var gen = caseT.unHyp().generalizeTF(caseF.unHyp(), newVar);
       var step1a = rules.axiom4(call(lambda(newVar, gen), T));
-      var step1b = rules.rRight(step1a, caseT, '');
-      var step1c = rules.toTIsA(step1b);
+      var step1b = rules.rRight(step1a, caseT, '/main');
       var step2a = rules.axiom4(call(lambda(newVar, gen), F));
-      var step2b = rules.rRight(step2a, caseF, '');
-      var step2c = rules.toTIsA(step2b);
-      var step3 = rules.theorem('r5212');
-      var step4a = rules.replace(step1c, step3, '/left');
-      var step4b = rules.replace(step2c, step4a, '/right');
+      var step2b = rules.rRight(step2a, caseF, '/main');
+      var step4 = rules.makeConjunction(step1b, step2b);
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), g);
-      var step6 = rules.replace(step5, step4b, '/');
+      var step6 = rules.replace(step5, step4, '/main');
       var step7a = rules.instForall(step6, v);
-      var step7b = rules.apply(step7a, '/');
+      var step7b = rules.apply(step7a, '/main');
       return step7b.justify('cases', arguments, [caseT, caseF]);
     },
     inputs: {step: [1, 2], name: 3},
@@ -1220,23 +1233,6 @@ var ruleInfo = {
     form: 'Enter tautology: <input name=term>',
     hint: 'enter tautology',
     comment: ('Tautology decider.')
-  },
-
-  // Given two theorems a and b, proves a && b.
-  // Handles hypotheses.
-  makeConjunction: {
-    action: function(a, b) {
-      var stepa = rules.toTIsA(a);
-      var stepb = rules.toTIsA(b);
-      var step1 = rules.theorem('r5212');
-      var step2 = rules.replace(stepa, step1, '/left');
-      var step3 = rules.replace(stepb, step2, '/main/right');
-      return step3.justify('makeConjunction', arguments, [a, b]);
-    },
-    inputs: {step: [1, 2]},
-    form: ('Conjoin steps <input name=step1> and <input name=step2>'),
-    hint: 'from A and B to (A && B)',
-    comment: ('Given a and b, derive a && b')
   },
 
   // Any instance of a tautology is a theorem.  This is part

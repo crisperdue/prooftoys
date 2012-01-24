@@ -631,10 +631,17 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testCases: function() {
-        var inf = Y.rules.cases(equal(call(p, T), T),
-                                            equal(call(p, F), F),
-                                            x);
-        assertEqual('((p x) = x)', inf);
+        var result = Y.rules.cases(equal(call(p, T), T),
+                                   equal(call(p, F), F),
+                                   x);
+        assertEqual('((p x) = x)', result);
+
+        // Hypotheses
+        var step1 = Y.rules.assume('p T');
+        var step2 = Y.rules.assume('p F')
+        result = Y.rules.cases(step1, step2, 'x');
+        assertEqual('(((p T) && (p F)) --> (p x))', result);
+        Y.assert(result.hasHyps);
       },
 
       testModusPonens: function() {
