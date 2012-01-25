@@ -357,6 +357,10 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       args: [x, p, call(q, x)]
     },
 
+    implyForallThm: {
+      args: [x, p, call(q, x)]
+    },
+
     implyForall: {
       args: [x, Y.parse('p --> q x')],
       level: 1
@@ -370,6 +374,15 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 	return [x, wff];
       },
       level: 1
+    },
+
+    implyForallBookHyps: {
+      ruleName: 'implyForallBook',
+      args: function() {
+	var wff = Y.parse('y > 0 --> (p --> q x)');
+        wff.hasHyps = true;
+	return [x, wff];
+      },
     },
 
     p: {

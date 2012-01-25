@@ -1317,10 +1317,10 @@ var ruleInfo = {
 
   // Given a proof step H |- A --> B and a variable v, derives
   // H |- (A --> forall {v : B}) provided that v is not free in A or H.
-  // (5237)
+  // (5237)  This version implemented via 5235, so much less efficient.
   //
   // Handles hypotheses.
-  implyForall: {
+  implyForallBook: {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
       v = Y.varify(v);
@@ -1344,7 +1344,65 @@ var ruleInfo = {
       var map6 = {a: a, b: step5.locate('/main/right')};
       var step6 = rules.tautInst(Y.parse('not a || b --> (a --> b)'), map6);
       var step7 = rules.modusPonens(step5, step6);
-      return step7.justify('implyForall', arguments, [h_a_b]);
+      return step7.justify('implyForallBook', arguments, [h_a_b]);
+    },
+    inputs: {varName: 1, implication: 2},
+    form: ('Move forall inside "implies" binding '
+	   + 'variable <input name=varName> '
+	   + 'implication <input name=implication>'),
+    comment: ('Move "forall" inside "implies" provided the variable '
+              + 'is not free in the first argument.')
+  },
+
+  // Given a variable v that is not free in the given wff A, and a wff B, derive
+  // ((forall {v : A --> B}) --> (A --> forall {v : B})).  Could run even if
+  // the variable is free, but would not give desired result.
+  implyForallThm: {
+    action: function(v, a, b) {
+      v = Y.varify(v);
+      var aFree = a.freeNames();
+      assert(!aFree.hasOwnProperty(v.name),
+	     'r5235: variable ' + v + 'cannot occur free in ' + a);
+      var map1 = {
+        p: call('forall', lambda(v, Y.infixCall(F, '-->', b))),
+        q: call('forall', lambda(v, b))
+      };
+      var step1 = rules.tautInst(implies(p, Y.infixCall(F, '-->', q)), map1);
+      var step2 = rules.tautInst(implies(p, Y.infixCall(T, '-->', p)),
+                                 ({p: call('forall', lambda(v, b))}));
+      var step3 = rules.tautInst(equal(p, Y.infixCall(T, '-->', p)),
+                                 ({p: b}));
+      var step4 = rules.r(step3, step2, '/left/arg/body');
+
+      var freeNames = Y.merge(aFree, b.freeNames());
+      // Treat v as a free variable also.
+      freeNames[v.name] = true;
+      var p0 = Y.genVar('p', freeNames);
+      var step5 = rules.cases(step4, step1, p0);
+      var step6 = rules.instVar(step5, a, p0);
+      return step6.justify('implyForallThm', arguments);
+    },
+    inputs: {varName: 1, term: [2, 3]},
+    form: ('Variable: <input name=varName> '
+	   + 'wff without it free: <input name=term1> '
+	   + 'other wff: <input name=term2>'),
+    comment: ('Move "forall" inside an "or" when variable not free '
+              + 'in the left argument of the "or".')
+  },
+
+  // Given a proof step H |- A --> B and a variable v, derives
+  // H |- (A --> forall {v : B}) provided that v is not free in A or H.
+  // (5237)  Implemented via implyForallThm.
+  //
+  // Handles hypotheses.
+  implyForall: {
+    action: function(v, h_a_b) {
+      v = Y.varify(v);
+      var a_b = h_a_b.unHyp();
+      var step1 = rules.addForall(h_a_b, v);
+      var step2 = rules.implyForallThm(v, a_b.getLeft(), a_b.getRight());
+      var step3 = rules.modusPonens(step1, step2);
+      return step3.justify('implyForall', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},
     form: ('Move forall inside "implies" binding '

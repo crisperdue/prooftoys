@@ -754,6 +754,13 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual(wff, inf);
       },
 
+      testImplyForallThm: function() {
+        var result = Y.rules.implyForallThm(x, p, call(q, x));
+        var wff =
+          '((forall {x : (p --> (q x))}) --> (p --> (forall {x : (q x)})))';
+        assertEqual(wff, result);
+      },
+
       testImplyForall: function() {
         var result = Y.rules.implyForall(x, Y.parse('p --> q x'));
         assertEqual('(p --> (forall {x : (q x)}))', result);
