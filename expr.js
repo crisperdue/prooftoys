@@ -279,6 +279,17 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   return expr;
 };
 
+/**
+ * Match this expr against a schema, which may be given as a string.
+ * See function matchAsSchema.
+ */
+Expr.prototype.findSubst = function(schema) {
+  if (typeof schema == 'string') {
+    schema = Y.parse(schema);
+  }
+  return matchAsSchema(schema, this);
+};
+
 var _assertionCounter = 1;
 
 /**
@@ -434,6 +445,23 @@ Expr.prototype.isCall2 = function(name) {
     return false;
   }
 }
+
+/**
+ * Throw an error if this is not a binary call to the named operator.
+ */
+Expr.prototype.assertCall2 = function(name) {
+  if (this.isCall2(name)) {
+    return;
+  }
+  var map = {
+    '-->': 'an implication',
+    '=': 'an equation',
+    '&&': 'a conjunction',
+    '||': 'a disjunction'
+  };
+  var message = ('Not ' + (map[name] || 'a call to ') + name + ': ' + this);
+  assert(false, message);
+};
 
 /**
  * Returns a string that identifies this expression.
