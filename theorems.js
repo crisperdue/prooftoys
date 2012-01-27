@@ -1182,9 +1182,14 @@ var ruleInfo = {
 
   // Proves an inference that the wff is a tautology and
   // returns it.  Checks that it is indeed proven to be a
-  // tautology.  5233
+  // tautology.  (5233)
+  //
+  // Accepts a parseable string as the wff.
   tautology: {
     action: function(wff) {
+      if (typeof wff == 'string') {
+        wff = Y.parse(wff);
+      }
       var key = wff + '';
       var taut = _tautologies[key];
       if (taut) {
@@ -1240,9 +1245,13 @@ var ruleInfo = {
   // Given an expression that is a tautology, possibly with
   // hypotheses, and a substitution, derives an instantiation of the
   // tautology using the substitution, with the same hypotheses.
+  // The tautology can be given as a parseable string.
   // Handles hypotheses.
   tautInst: {
     action: function(h_tautology, map) {
+      if (typeof h_tautology == 'string') {
+        h_tautology = Y.parse(h_tautology);
+      }
       var tautology = h_tautology.unHyp();
       var step1 = rules.tautology(tautology);
       var step2 = rules.instMultiVars(step1, map);
@@ -1733,6 +1742,125 @@ var ruleInfo = {
     hint: 'Prefix hypotheses to a step'
   },
 
+  // Takes an expression and a proved equation with neither variable
+  // bindings nor hypotheses, where the expression should match the LHS of
+  // the equation.  Derives an instance of the equation with the
+  // expression as its LHS.
+  rewriter: {
+    action: function(expr, equation) {
+      var map = expr.findSubst(equation.getLeft());
+      var result = rules.instMultiVars(equation, map);
+      return result.justify('rewriter', arguments, [equation]);
+    },
+    inputs: {term: 1, equation: 2},
+    form: ('From equation <input name=equation> derive an instance '
+           + 'with term <input name=term> as its left side.'),
+    hint: 'Generate an equation to simply an expression.'
+  },
+
+  // A chain of conjuncts (or other binary operator) is an
+  // expression that can be written a && b && ... && z.  An expression
+  // that does not have the operator at top-level is a chain of one
+  // conjunct.  A chain of two elements is of the form a && b, where a
+  // itself is a chain.
+  
+  // Derives an equation with the same LHS, but with the end of the
+  // RHS chain bubbled into place.  That chain must have at least
+  // two elements.  The "less" function returns true iff the first
+  // expression should appear before the second.
+  bubbleLeft: {
+    action: function(eqn, less) {
+      function rewrite(expr, tautology) {
+	return rules.rewriter(expr, rules.tautology(tautology));
+      }
+      // This does all the work except the justification of the subproof.
+      function bubble(eqn) {
+	var expr = eqn.getRight();
+	var a = expr.getLeft();
+	var b = expr.getRight();
+	if (a.isCall2('&&')) {
+	  var c = b;
+	  b = a.getRight();
+	  a = a.getLeft();
+	  // (a && b) && c
+	  if (less(c, b)) {
+	    var step1 = rewrite(expr, 'a && b && c = a && c && b');
+	    // Equate A && C to something with C properly placed, recursively.
+	    var step2 = bubble(rules.eqSelf(step1.locate('/right/left')));
+	    // Replace the A && C in RHS of step1 with the RHS of step2.
+	    var step3 = rules.r(step2, step1, '/right/left');
+	    return rules.r(step3, eqn, '/right');
+	  } else {
+	    // C is in place.
+	    return eqn;
+	  }
+	} else {
+	  // Base case: a && b.
+	  if (less(b, a)) {
+	    var step1 = rewrite(expr, 'a && b = b && a');
+	    return rules.r(step1, eqn, '/right');
+	  } else {
+	    // B is properly placed.
+	    return eqn;
+	  }
+	}
+      }
+      var result = bubble(eqn);
+      return result.justify('bubbleLeft', arguments, [eqn]);
+    }
+  },
+
+  // Given an equation with RHS that is a conjunction of two chains of
+  // conjunctions, derives an equation with the same LHS, but with the
+  // last expression of the first chain moved to the end of the
+  // second.  If the first chain has only one element, the result is
+  // just the new second chain.
+  mergeRight: {
+    action: function(eqn) {
+      var expr = eqn.getRight();
+      // The merge step moves the last element of the left chain to
+      // the end of the right chain.
+      expr.assertCall2('&&');
+      var mover = (expr.getLeft().isCall2('&&')
+                   ? rules.tautology('(a && b) && c = a && (c && b)')
+                   : rules.tautology('a && b = b && a'));
+      var step1 = rules.rewriter(expr, mover);
+      var result = rules.r(step1, eqn, '/right');
+      return result.justify('mergeRight', arguments);
+    }
+  },
+
+  // Given a proved equation with RHS that is a conjunction of two
+  // chains of conjunctions, derives an equation with the same LHS,
+  // but RHS is a single chain with all members of both chains
+  // appropriately ordered by the "less" function.
+  mergeConj: {
+    action: function(eqn_arg, less) {
+      var eqn = eqn_arg;
+      eqn.assertCall2('=');
+      var expr = eqn.getRight();
+      expr.assertCall2('&&');
+      // Loop at least once; the left chain may have a single element.
+      while (eqn.getRight().getLeft().isCall2('&&')) {
+	var eqn1 = rules.mergeRight(eqn);
+	var chain2 = eqn1.locate('/right/right');
+	var eqn2 = rules.eqSelf(chain2, chain2);
+	var eqn3 = rules.bubbleLeft(eqn2, less);
+	eqn = rules.r(eqn3, eqn1, '/right/right');
+      }
+      // Always simplify at least once since the RHS is assumed to be
+      // made of two chains.  The last time the first chain disappears
+      // when its sole element is moved.
+      eqn1 = rules.mergeRight(eqn);
+      chain2 = eqn1.locate('/right');
+      eqn2 = rules.eqSelf(chain2, chain2);
+      eqn3 = rules.bubbleLeft(eqn2, less);
+      eqn = rules.r(eqn3, eqn1, '/right');
+      return eqn.justify('mergeConj', arguments, [eqn_arg]);
+    },
+    hint: 'Simplify the right side by merging the two chains of conjunction'
+  },
+
   // Simplify the hypotheses of a step, removing duplicates.
   simplifyHyps: {
     // Note that "replace" does not even call this if its inputs have
@@ -1752,8 +1880,8 @@ var ruleInfo = {
       }
     },
     inputs: {step: 1},
-    form: ('Simplify the hypotheses of step <input name=step>'),
-    hint: 'Simplify the hypotheses'
+    form: ('Normalize a conjunction <input name=step>'),
+    hint: 'Normalize a conjunction of normalized conjunctions'
   },
 
 

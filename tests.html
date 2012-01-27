@@ -830,8 +830,49 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((x > 0) --> ((x + x) > (abs x)))', result);
       },
 
-      testExtractOperand: function() {
-        
+      testBubbleLeft: function() {
+        function less(a, b) {
+          return a.toString() < b.toString();
+        }
+        function bubble(string) {
+          return Y.rules.bubbleLeft(Y.rules.assert(string), less);
+        }
+        var result = bubble('l = a && b');
+        assertEqual('(l = (a && b))', result);
+        var result = bubble('l = b && a');
+        assertEqual('(l = (a && b))', result);
+
+        result = bubble('l = a && b && c');
+        assertEqual('(l = ((a && b) && c))', result);
+        result = bubble('l = a && c && b');
+        assertEqual('(l = ((a && b) && c))', result);
+        result = bubble('l = b && c && a');
+        assertEqual('(l = ((a && b) && c))', result);
+
+        result = bubble('l = b && c && d && a');
+        assertEqual('(l = (((a && b) && c) && d))', result);
+        result = bubble('l = a && c && d && b');
+        assertEqual('(l = (((a && b) && c) && d))', result);
+      },
+
+      testMergeRight: function() {
+        var result = Y.rules.mergeRight(Y.parse('l = (a && b) && (c && d)'));
+        assertEqual('(l = (a && ((c && d) && b)))', result);
+        var result = Y.rules.mergeRight(Y.parse('l = a && (b && c && d)'));
+        assertEqual('(l = (((b && c) && d) && a))', result);
+      },
+
+      testMergeConj: function() {
+        function less(a, b) {
+          return a.toString() < b.toString();
+        }
+        function merge(string) {
+          return Y.rules.mergeConj(Y.rules.assert(string), less);
+        }
+        var result = merge('l = (a && b) && (c && d)');
+        assertEqual('(l = (((a && b) && c) && d))', result);
+        var result = merge('l = a && (c && d)');
+        assertEqual('(l = ((a && c) && d))', result);
       },
 
 
