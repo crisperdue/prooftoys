@@ -82,14 +82,10 @@ var ruleInfo = {
    * no hypotheses, returns its input unchanged.
    */
   asImplication: {
-    action: function(wff) {
-      if (!wff.hasHyps) {
-        return wff;
-      } else {
-        var step1 = wff.justify('asImplication', arguments, [wff]);
-        step1.hasHyps = false;
-        return step1;
-      }
+    action: function(step) {
+      var result = step.justify('asImplication', arguments, [step]);
+      result.hasHyps = false;
+      return result;
     },
     inputs: {step: 1},
     form: ('Convert hypotheses to explicit implication in step '
@@ -1826,8 +1822,8 @@ var ruleInfo = {
                    : rules.tautology('a && b = b && a'));
       var step1 = rules.rewriter(expr, mover);
       var result = rules.r(step1, eqn, '/right');
-      return result.justify('mergeRight', arguments);
-    }
+      return result.justify('mergeRight', arguments, [eqn]);
+    },
   },
 
   // Given a proved equation with RHS that is a conjunction of two
@@ -1858,8 +1854,19 @@ var ruleInfo = {
       eqn = rules.r(eqn3, eqn1, '/right');
       return eqn.justify('mergeConj', arguments, [eqn_arg]);
     },
-    hint: 'Simplify the right side by merging the two chains of conjunction'
   },
+
+  mergeConjDemo: {
+    action: function(eqn) {
+      function less(a, b) {
+        return a.toString() < b.toString();
+      }
+      return rules.mergeConj(eqn, less);
+    },
+    inputs: {equation: 1},
+    form: ('Step with conjunctive RHS: <input name=equation>'),
+    hint: 'Simplify the right side by merging the two chains of conjunction'
+  },    
 
   // Simplify the hypotheses of a step, removing duplicates.
   simplifyHyps: {
