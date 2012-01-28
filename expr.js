@@ -280,10 +280,10 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
 };
 
 /**
- * If this is a step, return a copy with only a new ordinal.  The key
- * point is that the result gets a fresh ordinal from the stepCounter.
- * Intended for use in proof samples, to keep the ordinals of sample
- * args near all the rest.
+ * If this is a step, return a shallow copy with only a new ordinal.
+ * The key point is that the result gets a fresh ordinal from the
+ * stepCounter.  Intended for use in proof samples, to keep the
+ * ordinals of sample args near all the rest.
  *
  * TODO: Consider measuring numbers of steps differently, e.g. by
  * capturing stepCounter before and after rule execution.
