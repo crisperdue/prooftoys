@@ -458,6 +458,14 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       var args = ruleInfo.args;
       if (typeof args == 'function') {
 	args = args();
+      } else {
+        for (var i = 0; i < args.length; i++) {
+          // Give the args current stepCounter values.
+          var arg = args[i];
+          if (arg instanceof Y.Expr && arg.isStep()) {
+            args[i] = arg.freshen();
+          }
+        }
       }
       try {
 	result = Y.rules[ruleName].apply(null, args || []);
@@ -491,7 +499,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       // "rule=<ruleName>" in the query string.
       var ruleName = queryData.rule;
       // You can make the displays label steps with their ordinals
-      // using ordinals=1.
+      // using ordinals=1 in the query string.
       Y.showOrdinals = queryData.ordinals;
       editable = queryData.edit != undefined;
       if (ruleName == undefined) {
