@@ -487,7 +487,10 @@ function fancyName(expr) {
 function renderInference(step, node, editable, millis) {
   var startRender = new Date().getTime();
   var steps = unrenderedDeps(step.details);
-  var nSteps = steps[steps.length - 1].ordinal - computeFirstOrdinal(steps);
+  var nSteps =
+    (steps.length
+     ? steps[steps.length - 1].ordinal - computeFirstOrdinal(steps)
+     : 0);
   var controller = new ProofControl();
   controller.setSteps(steps);
   var renderTime = Math.ceil(new Date().getTime() - startRender);
