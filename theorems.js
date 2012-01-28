@@ -1764,6 +1764,8 @@ var ruleInfo = {
   // RHS chain bubbled into place.  That chain must have at least
   // two elements.  The "less" function returns true iff the first
   // expression should appear before the second.
+  //
+  // While bubbling left, removes duplicates.
   bubbleLeft: {
     action: function(eqn, less) {
       function rewrite(expr, tautology) {
@@ -1778,8 +1780,13 @@ var ruleInfo = {
 	  var c = b;
 	  b = a.getRight();
 	  a = a.getLeft();
-	  // (a && b) && c
-	  if (less(c, b)) {
+	  // Eqn is lhs = (a && b) && c
+	  if (b.matches(c)) {
+	    var step1 = rewrite(expr, 'a && b && b = a && b');
+	    var simpler = rules.r(step1, eqn, '/right');
+	    // Keep bubbling the rightmost to the left.
+	    return bubble(simpler);
+	  } else if (less(c, b)) {
 	    var step1 = rewrite(expr, 'a && b && c = a && c && b');
 	    // Equate A && C to something with C properly placed, recursively.
 	    var step2 = bubble(rules.eqSelf(step1.locate('/right/left')));
@@ -1791,8 +1798,11 @@ var ruleInfo = {
 	    return eqn;
 	  }
 	} else {
-	  // Base case: a && b.
-	  if (less(b, a)) {
+	  // Base case: Eqn is lhs = a && b.
+	  if (a.matches(b)) {
+	    var step1 = rewrite(expr, 'a && a = a');
+	    return rules.r(step1, eqn, '/right');
+	  } else if (less(b, a)) {
 	    var step1 = rewrite(expr, 'a && b = b && a');
 	    return rules.r(step1, eqn, '/right');
 	  } else {
@@ -1836,8 +1846,8 @@ var ruleInfo = {
       eqn.assertCall2('=');
       var expr = eqn.getRight();
       expr.assertCall2('&&');
-      // Loop at least once; the left chain may have a single element.
       while (eqn.getRight().getLeft().isCall2('&&')) {
+	// The left chain has at least 2 elements.
 	var eqn1 = rules.mergeRight(eqn);
 	var chain2 = eqn1.locate('/right/right');
 	var eqn2 = rules.eqSelf(chain2, chain2);
@@ -1845,8 +1855,8 @@ var ruleInfo = {
 	eqn = rules.r(eqn3, eqn1, '/right/right');
       }
       // Always simplify at least once since the RHS is assumed to be
-      // made of two chains.  The last time the first chain disappears
-      // when its sole element is moved.
+      // made of two chains.  This time the first chain will disappear
+      // as its one element moves to the second chain.
       eqn1 = rules.mergeRight(eqn);
       chain2 = eqn1.locate('/right');
       eqn2 = rules.eqSelf(chain2, chain2);

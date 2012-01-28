@@ -423,6 +423,15 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       level: 1
     },
 
+    bubbleLeft: {
+      args: function() {
+        function less(a, b) {
+          return a.toString() < b.toString();
+        }
+        return [Y.rules.assert('lhs = (((b && a) && d) && a)'), less];
+      },
+    },
+
     mergeConj: {
       args: function() {
         function less(a, b) {

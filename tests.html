@@ -853,6 +853,16 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(l = (((a && b) && c) && d))', result);
         result = bubble('l = a && c && d && b');
         assertEqual('(l = (((a && b) && c) && d))', result);
+
+        // With simplification.
+        var result = bubble('l = a && a');
+        assertEqual('(l = a)', result);
+        var result = bubble('l = a && b && b');
+        assertEqual('(l = (a && b))', result);
+        result = bubble('l = a && c && d && a');
+        assertEqual('(l = ((a && c) && d))', result);
+        result = bubble('l = b && a && d && a');
+        assertEqual('(l = ((a && b) && d))', result);
       },
 
       testMergeRight: function() {
@@ -873,6 +883,10 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(l = (((a && b) && c) && d))', result);
         var result = merge('l = a && (c && d)');
         assertEqual('(l = ((a && c) && d))', result);
+        var result = merge('l = (a && b && c) && (a && b && c)');
+        assertEqual('(l = ((a && b) && c))', result);
+        var result = merge('l = (b && b && a) && (a && b && c)');
+        assertEqual('(l = ((a && b) && c))', result);
       },
 
 
