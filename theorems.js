@@ -988,10 +988,10 @@ var ruleInfo = {
       var step7b = rules.apply(step7a, '/main');
       return step7b.justify('cases', arguments, [caseT, caseF]);
     },
-    inputs: {step: [1, 2], name: 3},
+    inputs: {step: [1, 2], varName: 3},
     form: ('Cases: true case step <input name=step1>,'
 	   + ' false case <input name=step2>,'
-	   + ' use variable name <input name=name>'),
+	   + ' use variable name <input name=varName>'),
     hint: 'proof by cases',
     comment: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.')
@@ -1627,11 +1627,11 @@ var ruleInfo = {
         var step1 = rules.implyForall(name, step1);
       }
       var step2 = rules.r5239(equation, c, cpath);
-      var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
       var step3a = rules.makeConjunction(step1, step2);
+      var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
       var step3 = rules.p(step3a, tautology);
-      var taut2 = Y.parse('(h --> p) && (h --> (p = q)) --> (h --> q)');
       var step4a = rules.makeConjunction(h_c, step3);
+      var taut2 = Y.parse('(h --> p) && (h --> (p = q)) --> (h --> q)');
       var step4 = rules.p(step4a, taut2);
       // TODO: Consider setting "hasHyps" systematically, probably in "justify".
       step4.hasHyps = h_c_arg.hasHyps || h_equation_arg.hasHyps;
@@ -1650,30 +1650,35 @@ var ruleInfo = {
   appendStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
-        var step = rules.asImplication(target);
 	if (target.hasHyps) {
-	  if (step.getLeft().matches(hypStep.getLeft())) {
+	  if (target.getLeft().matches(hypStep.getLeft())) {
 	    // Hyps are the same, so no change to the given step.
-	    return step;
+	    return target;
 	  }
+          target = rules.asImplication(target);
 	  var taut = Y.parse('(h1 --> p) --> ((h1 && h2) --> p)');
 	  var subst = {
-	    h1: step.getLeft(),
+	    h1: target.getLeft(),
 	    h2: hypStep.getLeft(),
-	    p: step.getRight()
+	    p: target.getRight()
 	  };
 	  var step1 = rules.tautInst(taut, subst);
-	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('appendStepHyps', arguments, [target]);
+	  var step2 = rules.modusPonens(target, step1);
+	  // Simplify (h1 && h2) --> p
+	  var step3 = rules.eqSelf(step2.locate('/left'));
+	  var step4 = rules.mergeConj(step3, Y.sourceStepLess);
+	  var step5 = rules.r(step4, step2, '/left');
+	  var result = step5.justify('appendStepHyps', arguments, [target]);
 	  result.hasHyps = true;
 	  return result;
 	} else {
+	  // The target does not have hyps.
 	  var subst = {
-	    p: step,
+	    p: target,
 	    h2: hypStep.getLeft()
 	  };
 	  var step1 = rules.tautInst(Y.parse('p --> (h2 --> p)'), subst);
-	  var step2 = rules.modusPonens(step, step1);
+	  var step2 = rules.modusPonens(target, step1);
 	  var result = step2.justify('appendStepHyps', arguments, [target]);
 	  result.hasHyps = true;
 	  return result;
@@ -1713,7 +1718,11 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('prependStepHyps', arguments, [target]);
+	  // Simplify (h1 && h2) --> p
+	  var step3 = rules.eqSelf(step2.locate('/left'));
+	  var step4 = rules.mergeConj(step3, Y.sourceStepLess);
+	  var step5 = rules.r(step4, step2, '/left');
+	  var result = step5.justify('prependStepHyps', arguments, [target]);
 	  result.hasHyps = true;
 	  return result;
 	} else {
