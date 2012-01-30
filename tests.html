@@ -286,14 +286,12 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(!Y.parse('x + 1').hasArgs(3));
       },
 
-      testIsHypotheses: function() {
-        var step1 = Y.rules.assume(Y.parse('p x'));
-        Y.assert(step1.getLeft().isHypotheses());
-        Y.assert(step1.getRight().isHypotheses());
-        var conj = Y.infixCall(step1.getLeft(), '&&', step1.getRight());
-        Y.assert(conj.isHypotheses());
-        var conj2 = Y.infixCall(conj, '&&', conj);
-        Y.assert(conj2.isHypotheses());
+      testSourceStepLess: function() {
+        var step1 = Y.rules.assume('p T');
+        var step2 = Y.rules.assume('p F');
+        // Which step came earlier?
+        Y.assert(Y.sourceStepLess(step1.getLeft(), step2.getLeft()));
+        Y.assert(!Y.sourceStepLess(step2.getLeft(), step1.getLeft()));
       },
 
       testRepeatedCall: function() {
@@ -573,7 +571,6 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testToTIsA: function() {
-        try { throw new Error('stop'); } catch(e) {}
         var inf = Y.rules.toTIsA(p);
         assertEqual('(T = p)', inf);
         // Hyps
@@ -640,6 +637,8 @@ YUI({filter: null, insertBefore: 'styles'})
         var step1 = Y.rules.assume('p T');
         var step2 = Y.rules.assume('p F')
         result = Y.rules.cases(step1, step2, 'x');
+        // TODO: In tests with hypotheses, allow order of hypotheses
+        //   to vary.
         assertEqual('(((p T) && (p F)) --> (p x))', result);
         Y.assert(result.hasHyps);
       },
@@ -719,7 +718,8 @@ YUI({filter: null, insertBefore: 'styles'})
         // With hypotheses:
         var step1 = Y.rules.assume(p);
         var step2 = Y.rules.assume(q);
-        Y.log(Y.rules.makeConjunction(step1, step2));
+        result = Y.rules.makeConjunction(step1, step2);
+        assertEqual('((p && q) --> (p && q))', result);
       },
 
       testTautInst: function() {

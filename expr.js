@@ -25,16 +25,18 @@ var entities = {
  * (lambda conversion).  Also renames bound variables in the target to
  * prevent them from capturing variables in the replacement.
  */
-function subFree(replacement, v, target) {
+function subFree(replacement_arg, v, target) {
   var name = v instanceof Var ? v.name : v;
+  if (replacement_arg instanceof Var && replacement_arg.name == name) {
+    // No changes required.
+    return target;
+  }
   // Always replace with a new object so we can detect it as different
   // from parts of the original expression, for example replacing x
-  // with (f x) in an expression containing an (f x).
-  replacement = replacement.dup();
-  if (name == this.name) {
-    // No changes required.
-    return this;
-  }
+  // with (f x) in an expression containing an (f x).  Used in
+  // avoiding capture of free variables.
+  replacement = replacement_arg.dup();
+  replacement.sourceStep = replacement_arg.sourceStep;
   var allNames = {};
   replacement._addNames(allNames);
   target._addNames(allNames);
@@ -203,7 +205,7 @@ Expr.counter = 1;
 
 // Controls prefixing Calls and Lambdas with sourceStep info.
 // A debugging and perhaps proof development aid when turned on.
-Y.trackSourceSteps = true;
+Y.trackSourceSteps = false;
 
 Expr.prototype.toString = function() {
   if (this instanceof Var) {
@@ -267,11 +269,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   if (this.ruleName) {
     expr.details = this;
   }
-  // Mark the step as having hypotheses if it is suitable.
-  // Some inference steps below the level of "replace" can bring
-  // back the LHS to being a set of hypotheses.
-  expr.hasHyps = (this.hasHyps
-                  || (this.isCall2('-->') && this.getLeft().isHypotheses()));
+  // Carry hypotheses forward.
+  expr.hasHyps = this.hasHyps;
   expr.ruleName = ruleName;
   expr.ruleArgs = Y.Array(ruleArgs || []);
   expr.ruleDeps = Y.Array(ruleDeps || []);
@@ -610,17 +609,6 @@ Expr.prototype.pathToBinding = function(pred) {
     revPath = revPath.tail();
   }
   return result;
-};
-
-/**
- * True iff this is a conjunction of expressions that are hypotheses
- * by having a sourceStep property.
- */
-Expr.prototype.isHypotheses = function() {
-  return (this.hasOwnProperty('sourceStep')
-          || (this.isCall2('&&')
-              && this.getLeft().isHypotheses()
-              && this.getRight().isHypotheses()));
 };
 
 /**
@@ -2388,6 +2376,18 @@ function isInfixDesired(vbl) {
 }
 
 /**
+ * True iff the source step of expr1 is less than the source step of
+ * expr2.  False if either lacks the sourceStep property.
+ */
+function sourceStepLess(expr1, expr2) {
+  if (expr1.sourceStep && expr2.sourceStep) {
+    return expr1.sourceStep.ordinal < expr2.sourceStep.ordinal;
+  } else {
+    return false;
+  }
+}
+
+/**
  * Generates an expression containing only variables and the given
  * operator, where the variables are named x<indices[n]>, where n is
  * the nth element of indices, an array of nonnegative integers.  The
@@ -2594,6 +2594,7 @@ Y.path = path;
 Y.findBinding = findBinding;
 Y.getBinding = getBinding;
 Y.matchAsSchema = matchAsSchema;
+Y.sourceStepLess = sourceStepLess;
 Y.repeatedCall = repeatedCall;
 
 Y.define = define;
