@@ -535,6 +535,8 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       var controller = new Y.ProofControl();
       controller.setEditable(true);
       Y.one('#proofEditor').append(controller.node);
+      // For debugging:
+      window.proofBuilder = controller;
     });
 
   // For debugging.
