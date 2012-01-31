@@ -286,6 +286,16 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(!Y.parse('x + 1').hasArgs(3));
       },
 
+      testIsHypotheses: function() {
+        var step1 = Y.rules.assume(Y.parse('p x'));
+        Y.assert(step1.getLeft().isHypotheses());
+        Y.assert(step1.getRight().isHypotheses());
+        var conj = Y.infixCall(step1.getLeft(), '&&', step1.getRight());
+        Y.assert(conj.isHypotheses());
+        var conj2 = Y.infixCall(conj, '&&', conj);
+        Y.assert(conj2.isHypotheses());
+      },
+
       testSourceStepLess: function() {
         var step1 = Y.rules.assume('p T');
         var step2 = Y.rules.assume('p F');
@@ -766,9 +776,10 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(p --> (forall {x : (q x)}))', result);
 
         // With hypotheses:
-        var wff = Y.parse('y > 0 --> (p --> q x)');
-        wff.hasHyps = true;
-        result = Y.rules.implyForall(x, wff);
+        var step1 = Y.rules.assert('y > 0 --> (p --> q x)');
+	var step2 = Y.rules.assume('y > 0');
+	var step3 = Y.rules.modusPonens(step2, step1);
+        result = Y.rules.implyForall(x, step3);
         assertEqual('((y > 0) --> (p --> (forall {x : (q x)})))', result);
       },
 
@@ -778,11 +789,12 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(q x)', inf);
 
         // With hypotheses:
-        var step1 = Y.rules.assert('h --> (p x && (p x --> q x))');
-        step1.hasHyps = true;
-        var result = Y.rules.p(step1,
+        var step1 = Y.rules.assert('h x --> (p x && (p x --> q x))');
+	var step2 = Y.rules.assume('h x');
+	var step3 = Y.rules.modusPonens(step2, step1);
+        var result = Y.rules.p(step3,
                                Y.parse('P && (P --> Q) --> Q'));
-        assertEqual('(h --> (q x))', result);
+        assertEqual('((h x) --> (q x))', result);
         Y.assert(result.hasHyps);
       },
 

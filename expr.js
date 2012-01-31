@@ -620,6 +620,17 @@ Expr.prototype.hasArgs = function(n) {
   return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
 }
 
+/**		
+ * True iff this is a conjunction of expressions that are hypotheses		
+ * by having a sourceStep property.		
+ */		
+Expr.prototype.isHypotheses = function() {
+  return (this.sourceStep
+          || (this.isCall2('&&')
+              && this.getLeft().isHypotheses()
+              && this.getRight().isHypotheses()));
+};
+
 /**
  * Returns a map from step ordinal to hypotheses for all conjoined
  * hypotheses in this expression.
@@ -878,7 +889,9 @@ Var.prototype._subFree = function(replacement, name, freeNames, allNames) {
 };
 
 Var.prototype.copy = function() {
-  return new Var(this.pname || this.name);
+  var result = new Var(this.pname || this.name);
+  result.sourceStep = this.sourceStep;
+  return result;
 };
 
 Var.prototype.dup = function() {
