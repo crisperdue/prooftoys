@@ -77,11 +77,12 @@ function ProofControl() {
   // Single selected step when exactly one is selected, or null.
   this.selection = null;
 
-  // Only official "proof nodes" are permitted to have this class:
-  // Contains the step nodes.
+  // Only official "proof nodes" are permitted to have class proofDisplay.
   html =
     '<table class=proofDisplay><tr><td><div class=proofSteps></div></table>';
   this.node = Y.Node.create(html);
+  // Potentially useful for debugging.
+  this.node.setData('proofControl', this);
   this.stepsNode = this.node.one('.proofSteps');
   this.stepEditor = new Y.StepEditor(this);
   this.node.one('td').append(this.stepEditor.node);
