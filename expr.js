@@ -279,37 +279,6 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
 };
 
 /**
- * If this is a step, return a shallow copy with only a new ordinal.
- * The key point is that the result gets a fresh ordinal from the
- * stepCounter.  Intended for use in proof samples, to keep the
- * ordinals of sample args near all the rest.
- *
- * TODO: DO NOT USE AS-IS.  This does not update the sourceStep
- * properties of its hypotheses to refer to the copy.  For now
- * use functions as the "args" property in samples, which accomplishes
- * the goal.
- *
- * TODO: Consider measuring numbers of steps differently, e.g. by
- * capturing stepCounter before and after rule execution.
- */
-Expr.prototype.freshen = function() {
-  if (this.isStep()) {
-    var expr = this.dup();
-    // Mark the step as having hypotheses if it is suitable.
-    // Some inference steps below the level of "replace" can bring
-    // back the LHS to being a set of hypotheses.
-    expr.hasHyps = this.hasHyps;
-    expr.ruleName = this.ruleName;
-    expr.ruleArgs = this.ruleArgs;
-    expr.ruleDeps = this.ruleDeps;
-    expr.ordinal = stepCounter++;
-    return expr;
-  } else {
-    return this;
-  }
-};
-
-/**
  * Match this expr against a schema, which may be given as a string.
  * See function matchAsSchema.
  */

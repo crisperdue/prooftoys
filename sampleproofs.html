@@ -494,14 +494,6 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       var args = ruleInfo.args;
       if (typeof args == 'function') {
 	args = args();
-      } else {
-        for (var i = 0; i < args.length; i++) {
-          // Give the args current stepCounter values.
-          var arg = args[i];
-          if (arg instanceof Y.Expr && arg.isStep()) {
-            args[i] = arg.freshen();
-          }
-        }
       }
       try {
 	result = Y.rules[ruleName].apply(null, args || []);
