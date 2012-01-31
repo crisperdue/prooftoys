@@ -441,6 +441,26 @@ YUI({filter: null, insertBefore: 'styles'})
                     Y.rules.axiom5());
       },
 
+      testAsHypotheses: function() {
+        var step1 = Y.assert('p = p');
+        try {
+          Y.rules.asHypotheses(step1);
+          Y.Assert.fail('Should throw');
+        } catch(e) {}
+        var step2 = Y.assert('p --> p');
+        try {
+          Y.rules.asHypotheses(step2);
+          Y.Assert.fail('Should throw');
+        } catch(e) {}
+        var step3 = Y.rules.assume('p');
+        var step4 = Y.rules.assert('p --> q');
+        var step5 = Y.rules.modusPonens(step3, step4);
+        var step6 = Y.rules.asImplication(step5);
+        var result = Y.rules.asHypotheses(step6);
+        assertEqual('(p --> q)', result);
+        Y.assert(result.hasHyps);
+      },
+
       testApplyBoth: function() {
         assertEqual('((f x) = (g x))', Y.rules.applyBoth(call('=', f, g), x));
       },

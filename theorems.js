@@ -93,6 +93,24 @@ var ruleInfo = {
     hint: 'Convert hypotheses to an explicit implication'
   },
       
+  /**
+   * From an implication with LHS consisting of a set of hypotheses,
+   * derives the equivalent step with the hypotheses.
+   */
+  asHypotheses: {
+    action: function(step) {
+      step.assertCall2('-->');
+      assert(step.getLeft().isHypotheses(),
+             'LHS must be a set of hypotheses: ' + step.getLeft());
+      var result = step.justify('asHypotheses', arguments, [step]);
+      result.hasHyps = true;
+      return result;
+    },
+    inputs: {implication: 1},
+    form: ('Convert implication to hypotheses in step '
+           + '<input name=implication>'),
+    hint: 'Convert explicit implication to statement with hypotheses'
+  },
 
   /**
    * Refer to a theorem by looking it up in the database rather
@@ -1571,7 +1589,7 @@ var ruleInfo = {
         // considered as rule RR (5202).
         var result = rules.r(h_equation, h_c, path);
 	if (h_c.hasHyps) {
-	  result.hasHyps = true;
+	  result = rules.asHypotheses(result);
 	}
 	return result;
       }
@@ -1598,8 +1616,8 @@ var ruleInfo = {
       }
 
       // From here on work with implications directly, not hypotheses.
-      h_equation = h_equation.dup();
-      h_c = h_c.dup();
+      h_equation = rules.asImplication(h_equation);
+      h_c = rules.asImplication(h_c);
 
       // equation is A = B
       var equation = h_equation.getRight();
@@ -1633,8 +1651,9 @@ var ruleInfo = {
       var step4a = rules.makeConjunction(h_c, step3);
       var taut2 = Y.parse('(h --> p) && (h --> (p = q)) --> (h --> q)');
       var step4 = rules.p(step4a, taut2);
-      // TODO: Consider setting "hasHyps" systematically, probably in "justify".
-      step4.hasHyps = h_c_arg.hasHyps || h_equation_arg.hasHyps;
+      if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
+        step4 = rules.asHypotheses(step4);
+      }
       return step4.justify('replace', arguments, [h_equation_arg, h_c_arg]);
     },
     inputs: {step: 1, site: 2}, // plus constraints.
@@ -1655,15 +1674,15 @@ var ruleInfo = {
 	    // Hyps are the same, so no change to the given step.
 	    return target;
 	  }
-          target = rules.asImplication(target);
+          var step = rules.asImplication(target);
 	  var taut = Y.parse('(h1 --> p) --> ((h1 && h2) --> p)');
 	  var subst = {
-	    h1: target.getLeft(),
+	    h1: step.getLeft(),
 	    h2: hypStep.getLeft(),
-	    p: target.getRight()
+	    p: step.getRight()
 	  };
 	  var step1 = rules.tautInst(taut, subst);
-	  var step2 = rules.modusPonens(target, step1);
+	  var step2 = rules.modusPonens(step, step1);
 	  // Simplify (h1 && h2) --> p
 	  var step3 = rules.eqSelf(step2.locate('/left'));
 	  var step4 = rules.mergeConj(step3, Y.sourceStepLess);
