@@ -299,7 +299,11 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     cases: {
-      args: [call(p, T), call(p, F), x],
+      args: function() {
+        var step1 = Y.rules.assume('p T');
+        var step2 = Y.rules.assume('p F');
+        return [step1, step2, 'x'];
+      },
       level: 1
     },
     
@@ -310,6 +314,16 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       level: 1
     },
     
+    modusPonensHyps: {
+      ruleName: 'modusPonens',
+      args: function() {
+        var step1 = Y.rules.assume('p');
+        var step2 = Y.rules.assume('p --> q');
+        return [step1, step2];
+      },
+      level: 1
+    },
+
     r5230TF: {},
     
     r5230FT: {},
@@ -369,9 +383,10 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     implyForallHyps: {
       ruleName: 'implyForall',
       args: function() {
-	var wff = Y.parse('y > 0 --> (p --> q x)');
-        wff.hasHyps = true;
-	return [x, wff];
+        var step1 = Y.rules.assume('y > 0');
+        var step2 = Y.rules.assert('y > 0 --> (p --> q x)');
+        var step3 = Y.rules.modusPonens(step1, step2);
+	return [x, step3];
       },
       level: 1
     },
@@ -406,20 +421,32 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     replace: {
-      args: [Y.parse('x > 0 --> (x = (abs x))'),
-             Y.rules.assert(Y.parse('x > 0 --> (x + x) > x')),
-	     '/right/right'
-             ],
+      args: function() {
+        var step1 = Y.rules.assume('x > 0');
+        var step2 = Y.rules.assert('x > 0 --> (x = (abs x))');
+        var step3 = Y.rules.modusPonens(step1, step2);
+        var step4 = Y.rules.assert('x > 0 --> (x + x) > x');
+        var step5 = Y.rules.modusPonens(step1, step4);
+        return [step3, step5, '/main/right'];
+      },
       level: 1
     },
 
     appendStepHyps: {
-      args: [Y.rules.assume(p), Y.rules.assume(q)],
+      args: function() {
+        var step1 = Y.rules.assume('p x');
+        var step2 = Y.rules.assume('q x');
+        return [step1, step2];
+      },
       level: 1
     },
 
     prependStepHyps: {
-      args: [Y.rules.assume(p), Y.rules.assume(q)],
+      args: function() {
+        var step1 = Y.rules.assume('p x');
+        var step2 = Y.rules.assume('q x');
+        return [step1, step2];
+      },
       level: 1
     },
 

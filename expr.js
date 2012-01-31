@@ -284,6 +284,11 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
  * stepCounter.  Intended for use in proof samples, to keep the
  * ordinals of sample args near all the rest.
  *
+ * TODO: DO NOT USE AS-IS.  This does not update the sourceStep
+ * properties of its hypotheses to refer to the copy.  For now
+ * use functions as the "args" property in samples, which accomplishes
+ * the goal.
+ *
  * TODO: Consider measuring numbers of steps differently, e.g. by
  * capturing stepCounter before and after rule execution.
  */
