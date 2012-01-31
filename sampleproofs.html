@@ -291,8 +291,8 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     
     instMultiVars: {
       args: [implies(p, call('||', T, q)),
-             ({p: Y.parse('forall {x : T || b}'),
-               q: Y.parse('forall {x : b}')
+             ({p: Y.parse('forall {x. T || b}'),
+               q: Y.parse('forall {x. b}')
              })
             ],
       level: 1
@@ -360,8 +360,8 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     
     tautInst: {
       args: [Y.parse('p --> T || q'), ({
-        p: Y.parse('forall {x : T || p x}'),
-        q: Y.parse('forall {x : p x}')
+        p: Y.parse('forall {x. T || p x}'),
+        q: Y.parse('forall {x. p x}')
       })],
       level: 1
     },

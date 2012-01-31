@@ -118,9 +118,9 @@ YUI({filter: null, insertBefore: 'styles'})
         var abs = lambda(x, f);
         assertEqual(x, abs.bound);
         assertEqual(f, abs.body);
-        assertEqual('{x : f}', abs.toString());
+        assertEqual('{x. f}', abs.toString());
 
-        assertEqual('{x : (f x)}', lambda(x, call(f, x)));
+        assertEqual('{x. (f x)}', lambda(x, call(f, x)));
       },
 
       testFreeNames: function() {
@@ -139,8 +139,8 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testSubst: function() {
-        var target = Y.parse('x = ({x : x} x)');
-        assertEqual('(y = ({x : x} y))', target.subst(y, x));
+        var target = Y.parse('x = ({x. x} x)');
+        assertEqual('(y = ({x. x} y))', target.subst(y, x));
         // Result is exactly the input where there are no occurrences.
         Y.assert(target === target.subst(z, y));
         Y.assert(target.locate('/right/fn')
@@ -160,8 +160,8 @@ YUI({filter: null, insertBefore: 'styles'})
       testDecapture: function() {
         var target = call(lambda(x, x), y);
         var result = Y.decapture(target, x);
-        assertEqual('({x_1 : x_1} y)', result.toString());
-        var target = Y.parse('({x : f x} y)');
+        assertEqual('({x_1. x_1} y)', result.toString());
+        var target = Y.parse('({x. f x} y)');
         // Result is exactly the input when no decapturing is needed.
         Y.assert(target === Y.decapture(target, z));
       },
@@ -172,19 +172,19 @@ YUI({filter: null, insertBefore: 'styles'})
         // Now substitute in 'a different v':
         var result = Y.subFree(_var('v'), x, target);
         // We see that it replaces just the free occurrence.
-        assertEqual('({v : v} v)', result.toString());
+        assertEqual('({v. v} v)', result.toString());
         // A case where decapturing is needed.
-        result = Y.subFree(y, x, Y.parse('{y : x} x'));
-        assertEqual('({x_1 : y} y)', result);
+        result = Y.subFree(y, x, Y.parse('{y. x} x'));
+        assertEqual('({x_1. y} y)', result);
         // A very similar case where it is not needed.
-        result = Y.subFree(y, x, Y.parse('{y : T} x'));
-        assertEqual('({y : T} y)', result);
+        result = Y.subFree(y, x, Y.parse('{y. T} x'));
+        assertEqual('({y. T} y)', result);
       },
 
       testNormalize: function() {
         var e1 = call(lambda(x, call(f, x)), _var('y'));
         var result = Y.normalized(e1);
-        assertEqual('({$1 : (f $1)} y)', result.toString());
+        assertEqual('({$1. (f $1)} y)', result.toString());
       },
 
       testIsCall2: function() {
@@ -196,7 +196,7 @@ YUI({filter: null, insertBefore: 'styles'})
         var e1 = call(lambda(x, call(f, x)), y);
         var path = Y.path('/fn/body/arg');
         var result = e1.replace(path, function(expr) { return call(f, x); });
-        assertEqual('({x : (f (f x))} y)', result.toString());
+        assertEqual('({x. (f (f x))} y)', result.toString());
         var target = Y.parse('f x = y');
         result = target.replace(Y.path('/right'), function(expr) { return z; });
         Y.assert(target.getLeft() === result.getLeft());
@@ -323,8 +323,8 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('a,(end)', result);
         result = Y.tokenize('(a > b)');
         assertEqual('(,a,>,b,),(end)', result);
-        result = Y.tokenize('{x|x}');
-        assertEqual('{,x,|,x,},(end)', result);
+        result = Y.tokenize('{x.x}');
+        assertEqual('{,x,.,x,},(end)', result);
         result = Y.tokenize('(=>x*)');
         assertEqual('(,=>,x,*,),(end)', result);
       },
@@ -338,8 +338,8 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(f x)', result.dump());
         result = Y.parse('not = (F =)');
         assertEqual('((not =) (F =))', result.dump());
-        result = Y.parse('{x|x} T');
-        assertEqual('({x : x} T)', result);
+        result = Y.parse('{x.x} T');
+        assertEqual('({x. x} T)', result);
         result = Y.parse('a + b * c');
         assertEqual('(a + (b * c))', result);
         result = Y.parse('a --> a && c');
@@ -388,17 +388,17 @@ YUI({filter: null, insertBefore: 'styles'})
           Y.Assert.fail('Should not unify');
         } catch(e) {}
         // The identity function, problematic for some algorithms.
-        var type = Y.findType(Y.parse('{x : x}'));
+        var type = Y.findType(Y.parse('{x. x}'));
         Y.assert(type instanceof Y.FunctionType, 'Not a FunctionType');
         Y.assert(type.types[0] instanceof Y.TypeVariable, 'Not a TypeVariable');
         assertEqual(type.types[0], type.types[1]);
         assertEqual('o', Y.findType(rules.axiom1()));
         assertEqual('o', Y.findType(rules.axiom2()));
         assertEqual('o', Y.findType(rules.axiom3()));
-        assertEqual('o', Y.findType(rules.axiom4(Y.parse('({x : x} y)'))));
+        assertEqual('o', Y.findType(rules.axiom4(Y.parse('({x. x} y)'))));
         assertEqual('o', Y.findType(rules.axiom5()));
         // Successful typing of the identity function
-        assertEqual('o', Y.findType(Y.parse('({x : x} p) = p')));
+        assertEqual('o', Y.findType(Y.parse('({x. x} p) = p')));
         // An example where the type check in Rule R catches improper
         // use of types.
         var step1 = Y.parse('p (f g) --> p g').assert();
@@ -427,15 +427,15 @@ YUI({filter: null, insertBefore: 'styles'})
         var result = Y.rules.axiom4(app);
         Y.Assert.isInstanceOf(Y.Call, result);
         assertEqual('=', result.fn.fn.name);
-        assertEqual('(({x : (f x)} y) = (f y))', result);
+        assertEqual('(({x. (f x)} y) = (f y))', result);
       },
 
       testAxioms: function() {
-        assertEqual('(((g T) && (g F)) = (forall {x : (g x)}))',
+        assertEqual('(((g T) && (g F)) = (forall {x. (g x)}))',
                     Y.rules.axiom1());
         assertEqual('((x = y) --> ((h x) = (h y)))',
                     Y.rules.axiom2());
-        assertEqual('((f = g) = (forall {x : ((f x) = (g x))}))',
+        assertEqual('((f = g) = (forall {x. ((f x) = (g x))}))',
                     Y.rules.axiom3());
         assertEqual('((the (y =)) = y)',
                     Y.rules.axiom5());
@@ -554,12 +554,12 @@ YUI({filter: null, insertBefore: 'styles'})
       testChangeVar: function() {
         var expr = equal(lambda(z, z), lambda(y, y));
         var result = Y.rules.changeVar(expr, '/left', x);
-        assertEqual('({x : x} = {y : y})', result);
+        assertEqual('({x. x} = {y. y})', result);
       },
 
       testBindEqn: function() {
         var inf = Y.rules.bindEqn(call('=', f, g), x);
-        assertEqual('({x : f} = {x : g})', inf);
+        assertEqual('({x. f} = {x. g})', inf);
       },
 
       testInstForall: function() {
@@ -569,7 +569,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
         // Hypotheses
         var hyps = Y.rules.assume('p y');
-        var step1 = Y.rules.assert('forall {y : p y}');
+        var step1 = Y.rules.assert('forall {y. p y}');
         var step2 = Y.rules.appendStepHyps(step1, hyps);
         var result = Y.rules.instForall(step2, call(f, y));
         assertEqual('((p y) --> (p (f y)))', result)
@@ -621,14 +621,14 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testAddForall: function() {
         var inf = Y.rules.addForall(call(p, y), y);
-        assertEqual('(forall {y : (p y)})', inf);
+        assertEqual('(forall {y. (p y)})', inf);
 
         // Hypotheses
         var step1 = Y.rules.assume(Y.parse('x = 0'));
         var wff = Y.parse('x = 0 --> y > x');
         wff.hasHyps = true;
         wff.getLeft().sourceStep = step1;
-        assertEqual('((x = 0) --> (forall {y : (y > x)}))',
+        assertEqual('((x = 0) --> (forall {y. (y > x)}))',
                     Y.rules.addForall(wff, 'y'));
       },
 
@@ -642,11 +642,11 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testInstMultiVars: function() {
-        var map = {p: Y.parse('forall {x | T || b}'),
-                   q: Y.parse('forall {x | b}')
+        var map = {p: Y.parse('forall {x. T || b}'),
+                   q: Y.parse('forall {x. b}')
         };
         var result = Y.rules.instMultiVars(implies(p, call('||', T, q)), map);
-        assertEqual('((forall {x : (T || b)}) --> (T || (forall {x : b})))',
+        assertEqual('((forall {x. (T || b)}) --> (T || (forall {x. b})))',
                     result);
 
         // Hypotheses
@@ -707,7 +707,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testTrueEquals: function() {
-        assertEqual('((T =) = {x : x})', Y.rules.trueEquals());
+        assertEqual('((T =) = {x. x})', Y.rules.trueEquals());
       },
 
       testEvalBool: function() {
@@ -755,12 +755,12 @@ YUI({filter: null, insertBefore: 'styles'})
       testTautInst: function() {
         var b = call(p, x);
         var map1 = {
-          p: Y.parse('forall {x : T || p x}'),
-          q: Y.parse('forall {x : p x}')
+          p: Y.parse('forall {x. T || p x}'),
+          q: Y.parse('forall {x. p x}')
         };
         var result = Y.rules.tautInst(Y.parse('p --> T || q'), map1);
         var expected =
-          '((forall {x : (T || (p x))}) --> (T || (forall {x : (p x)})))';
+          '((forall {x. (T || (p x))}) --> (T || (forall {x. (p x)})))';
         assertEqual(expected, result);
 
         // With hypotheses:
@@ -780,27 +780,27 @@ YUI({filter: null, insertBefore: 'styles'})
       testR5235: function() {
         var inf = Y.rules.r5235(x, p, call(q, x));
         var wff =
-          '((forall {x : (p || (q x))}) --> (p || (forall {x : (q x)})))';
+          '((forall {x. (p || (q x))}) --> (p || (forall {x. (q x)})))';
         assertEqual(wff, inf);
       },
 
       testImplyForallThm: function() {
         var result = Y.rules.implyForallThm(x, p, call(q, x));
         var wff =
-          '((forall {x : (p --> (q x))}) --> (p --> (forall {x : (q x)})))';
+          '((forall {x. (p --> (q x))}) --> (p --> (forall {x. (q x)})))';
         assertEqual(wff, result);
       },
 
       testImplyForall: function() {
         var result = Y.rules.implyForall(x, Y.parse('p --> q x'));
-        assertEqual('(p --> (forall {x : (q x)}))', result);
+        assertEqual('(p --> (forall {x. (q x)}))', result);
 
         // With hypotheses:
         var step1 = Y.rules.assert('y > 0 --> (p --> q x)');
 	var step2 = Y.rules.assume('y > 0');
 	var step3 = Y.rules.modusPonens(step2, step1);
         result = Y.rules.implyForall(x, step3);
-        assertEqual('((y > 0) --> (p --> (forall {x : (q x)})))', result);
+        assertEqual('((y > 0) --> (p --> (forall {x. (q x)})))', result);
       },
 
       testP: function() {
@@ -821,7 +821,7 @@ YUI({filter: null, insertBefore: 'styles'})
       testR5238a: function() {
         var inf = Y.rules.r5238a(y, call(p, y), call(q, y));
         var wff =
-          '(({y : (p y)} = {y : (q y)}) = (forall {y : ((p y) = (q y))}))';
+          '(({y. (p y)} = {y. (q y)}) = (forall {y. ((p y) = (q y))}))';
         assertEqual(wff, inf);
       },
 
@@ -830,8 +830,8 @@ YUI({filter: null, insertBefore: 'styles'})
                                    call(p, _var('x1')),
                                    call(p, _var('x2')));
         var wff =
-          ('(({x1 : {x2 : (p x1)}} = {x1 : {x2 : (p x2)}}) = '
-           + '(forall {x1 : (forall {x2 : ((p x1) = (p x2))})}))');
+          ('(({x1. {x2. (p x1)}} = {x1. {x2. (p x2)}}) = '
+           + '(forall {x1. (forall {x2. ((p x1) = (p x2))})}))');
         assertEqual(wff, result);
       },
 
@@ -840,7 +840,7 @@ YUI({filter: null, insertBefore: 'styles'})
                                 lambda(p, equal(q, p)),
                                 '/body/right');
         var expected =
-          '((forall {p : (p = q)}) --> ({p : (q = p)} = {p : (q = q)}))';
+          '((forall {p. (p = q)}) --> ({p. (q = p)} = {p. (q = q)}))';
         assertEqual(expected, inf);
 
         inf = Y.rules.r5239(equal(p, q), equal(r, p), '/right');
@@ -848,10 +848,10 @@ YUI({filter: null, insertBefore: 'styles'})
 
         // Here 'y' is bound in C and free in A = B.
         inf = Y.rules.r5239(Y.parse('(T = (y > x))'),
-                            Y.parse('{y : T}'),
+                            Y.parse('{y. T}'),
                             '/body');
         var expected =
-          '((forall {y : (T = (y > x))}) --> ({y : T} = {y : (y > x)}))';
+          '((forall {y. (T = (y > x))}) --> ({y. T} = {y. (y > x)}))';
         assertEqual(expected, inf);
       },
 

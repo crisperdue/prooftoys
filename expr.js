@@ -15,7 +15,8 @@ var entities = {
   '-->': '&#8209;&#8209&gt;',   // &rArr; looks lousy in fixed-width font.
   '>=': '&ge;',
   '<=': '&le;',
-  '!=': '&ne;'
+  '!=': '&ne;',
+  '==': '&equiv;'
 };
 
 /**
@@ -1223,11 +1224,11 @@ Lambda.prototype._toString = function() {
   if (this._string) {
     return this._string;
   }
-  return '{' + this.bound + ' : ' + this.body + '}';
+  return '{' + this.bound + '. ' + this.body + '}';
 };
 
 Lambda.prototype.dump = function() {
-  return '{' + this.bound + ' : ' + this.body + '}';
+  return '{' + this.bound + '. ' + this.body + '}';
 };
 
 Lambda.prototype.subst = function(replacement, name) {
@@ -2215,7 +2216,7 @@ function parse(tokens) {
       } else if (token.name == '{') {
         var id = next();
         assert(isId(id), 'Expected identifier, got ' + id.name);
-        expect(peek().name == ':' ? ':' : '|');
+        expect(peek().name == ':' ? ':' : '.');
         var body = mustParseAbove(0);
         expr = new Y.Lambda(id, body);
         expect('}');
@@ -2318,6 +2319,7 @@ var precedence = {
   '-': 30,
   '*': 40,
   '/': 40,
+  '**': 50,
   // Specials
   '(': 1000,
   '{': 1000
