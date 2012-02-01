@@ -2309,6 +2309,7 @@ var precedence = {
   // Unlike the book, equality binds tighter than implication.  This
   // way makes more sense when working with numbers for example.
   '=': 12,
+  '!=': 12,
   '||': 13,
   '&&': 14,
   '<': 20,
