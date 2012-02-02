@@ -26,6 +26,10 @@ h2 {
   text-align: left;
 }
 
+h2, h3 {
+  margin-bottom: .5em;
+}
+
 body {
   /* Allow space for the bottom panel. */
   margin-bottom: 4em;
@@ -34,8 +38,13 @@ body {
 a.nav {
   display: block;
   font-style: italic;
-  margin: .2em 0em;
+  margin: .3em 1.5em .3em 1em;
   text-decoration: none;
+  text-indent: -1em;
+}
+
+a.nav:before {
+  content: "⊦ ";
 }
 
 </style>
@@ -47,7 +56,7 @@ a.nav {
 <h1 style="margin-bottom: .2em">Prooftoys</h2>
 
 <div style="margin-bottom: 1em">
-<center><i>Software tools for mathematical problem-solving.</i></center>
+<center><i>Web-based tools for mathematical problem-solving.</i></center>
 </div>
 
 <table>
@@ -55,59 +64,62 @@ a.nav {
 <td style="vertical-align: top; padding-top: 7em" width=20%>
 
 <a class=nav href="http://code.google.com/p/jlogic">
- &#8870; Project site</a>
+ Project site</a>
 <a class=nav href="?">
- &#8870; Using the interactive proof builder</a>
+ Using the interactive proof builder</a>
 <a class=nav href="http://code.google.com/p/jlogic/source/checkout">
- &#8870; Source code</a>
+ Source code</a>
 <a class=nav href="http://code.google.com/p/jlogic/wiki/AboutTheLogic">
- &#8870; About the logic</a>
+ About the logic</a>
 
 <td>
 <h2>Introduction</h2>
 
 <h3>The mission</h3>
-Prooftoys is an open-source initiative that uses the Web to bring
-user-friendly and full-fledged mathematical reasoning to anyone who
-works with math.
+Prooftoys is an open-source initiative to use the Web to bring
+user-friendly full-fledged logical reasoning tools to anyone who works
+with math.
 
 <h3>The engine</h3>
 The Prooftoys inference engine
-implements <a href="http://en.wikipedia.org/wiki/Higher-order_logic">higher-order
+uses <a href="http://en.wikipedia.org/wiki/Higher-order_logic">higher-order
 logic</a>, which means it can reason about functions and predicates,
 which themselves can have functions and predicates as inputs and
-outputs.  This makes the logic as powerful as first order logic
-together with set theory.  The engine is implemented directly in your
-web browser, so it couples directly to the web-based user interface
-for greatest interactivity.
+outputs.  This gives it the power to help you develop as much of
+mathematics as you wish.  The engine runs directly in your web browser
+for best responsiveness, interactivity, and convenient access to
+servers in the Internet cloud.
 <p>
 The engine implements Peter Andrews' Q<sub>0</sub>, a simple and
-elegant version of higher-order logic with a small, tight kernel.  On
-this base it builds <a href="http://en.wikipedia.org/wiki/Natural_deduction">natural deduction</a>-style reasoning and numerous
-high-level inference rules that make it easy to build high-level
-proofs in a number of different ways.
+elegant version of higher-order logic with a small and understandable
+kernel.  On this base it
+builds <a href="http://en.wikipedia.org/wiki/Natural_deduction">natural
+deduction</a>-style reasoning and a variety high-level inference rules
+that make it easy to build high-level proofs.
 <p>
-The engine is programmable, and you can create new high-level inference
-rules without compromising the correctness of proofs.
+The engine is safely programmable, and you can create new high-level
+inference rules without compromising correctness.
 
 <h3>The user interface</h3>
+<p>
 Prooftoys has a highly interactive user interface for building proofs
 and solving mathematical problems directly through a web browser.  You
 can select steps, expressions, and locations in steps by pointing and
 clicking, and apply any predefined or extended public inference rule.
-It has intelligence about which rules can be applied in which
-situations.
-
 <p>
-Even when displaying an existing proof, the user interface lets the
-reader drill down into the details of high-level inference steps to
-follow how they were carried out, to understand a proof in more
-detail.  It also provides extra information including visual
-highlighting to show exactly how each inference rule was applied to
-its target step or steps.
+When displaying an existing proof, the user interface lets the reader
+drill down into the details of high-level inference steps to follow
+how they were carried out, to understand a proof in more detail.  It
+also provides extra information and visual highlighting to show
+exactly how each inference rule was applied to its target step or
+steps.
 
 <h2>Sample proofs</h2>
-
+<p>
+Selecting a theorem or inference rule below displays an example of
+usage of the rule or theorem.  Axioms and theorems often have
+parameters, and rules of inference have inputs that themselves must be
+proved steps.
 <p>Some of the theorems and derived rules of inference you can see
 here are intermediate results, but they help to demonstrate the core
 concepts and how proofs are built from them.  Examples of some
@@ -115,11 +127,12 @@ practical rules of inference are also here, such as universal
 generalization (addForall), universal instantiation (instForall), and
 reasoning by cases (cases).
 
-<p><i>Proof displays are supported in recent versions of Firefox and Chrome.</i>
+<p>
+<i>Proof displays are supported in recent versions of Firefox and Chrome.</i>
 
 <p id=selectDiv style="margin: 1.5em">
 <b>Select a rule or theorem to prove:</b>
-</p>
+
 <div id=proofs></div>
 
 <div style="margin: 1.5em 0em .5em 1.5em">
@@ -558,13 +571,13 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       var proofNode = Y.one('#proofs');
       proofNode.setContent('');
       if (result) {
-	Y.renderInference(result, proofNode, editable, elapsed);
+	Y.renderProof(result, proofNode, elapsed);
       } else if (Y.errors.length) {
 	var last = Y.errors[Y.errors.length - 1];
 	proofNode.append('<p><b>Errors: (' + Y.errors.length
 			 + ') ' + last.message + '</b></p>');
 	if (last.step) {
-	  proofNode.append(Y.renderProof(last.step).node);
+	  Y.renderProof(last.step, proofNode);
 	}
       }
       document.title = 'Proof display -- ' + ruleName;

@@ -486,27 +486,14 @@ function fancyName(expr) {
  * Returns the ProofController.
  */
 function renderInference(step, node, editable, millis) {
-  var startRender = new Date().getTime();
   var steps = unrenderedDeps(step.details);
-  var nSteps =
-    (steps.length
-     ? steps[steps.length - 1].ordinal - computeFirstOrdinal(steps)
-     : 0);
   var controller = new ProofControl();
   controller.setSteps(steps);
-  var renderTime = Math.ceil(new Date().getTime() - startRender);
   var comment = rules[step.ruleName].info.comment || '';
-  var stats = '';
-  if (millis != null) {
-    stats = '<br><i style="font-size:smaller; color:gray">Proof '
-      + Math.ceil(millis) + ' msec, rendering '
-      + renderTime + ' msec, ' + nSteps + ' steps</i>';
-  }
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   node.appendChild('<div class=proofHeader><b>' + pruf
                    + step.ruleName + '</b>' + computeArgInfo(step) + '<br>'
-                   + '<i>' + comment + '</i>' + stats
-                   + '</div>');
+                   + '<i>' + comment + '</i></div>');
   node.append(controller.node);
   controller.setEditable(editable);
   return controller;
@@ -514,12 +501,30 @@ function renderInference(step, node, editable, millis) {
 
 /**
  * Render the unrendered steps up to and including the given step,
- * returning a new ProofControl containing the rendering.
+ * appending the display to the given Node.  If millis are given they
+ * should be the elapsed time for executing the proof, and this
+ * appends statistics on proof execution and rendering before
+ * appending the proof itself.  Returns a new ProofControl containing
+ * the rendering.
  */
-function renderProof(step) {
+function renderProof(step, node, millis) {
+  var startRender = new Date().getTime();
   var steps = unrenderedDeps(step);
   var controller = new ProofControl();
   controller.setSteps(steps);
+  var renderTime = Math.ceil(new Date().getTime() - startRender);
+  var nSteps =
+    (steps.length
+     ? steps[steps.length - 1].ordinal - computeFirstOrdinal(steps)
+     : 0);
+  var stats = '';
+  if (millis != null) {
+    stats = '<i style="font-size:smaller; color:gray">Proof '
+      + Math.ceil(millis) + ' msec, rendering '
+      + renderTime + ' msec, ' + nSteps + ' steps</i>';
+    node.append('<div class=proofHeader>' + stats + '</div>');
+  }
+  node.append(controller.node);
   return controller;
 }
 
