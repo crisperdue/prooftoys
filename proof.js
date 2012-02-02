@@ -505,18 +505,15 @@ function renderInference(step, node, editable, millis) {
  * should be the elapsed time for executing the proof, and this
  * appends statistics on proof execution and rendering before
  * appending the proof itself.  Returns a new ProofControl containing
- * the rendering.
+ * the rendering; and nSteps then should be the number of steps
+ * counted.
  */
-function renderProof(step, node, millis) {
+function renderProof(step, node, millis, nSteps) {
   var startRender = new Date().getTime();
   var steps = unrenderedDeps(step);
   var controller = new ProofControl();
   controller.setSteps(steps);
   var renderTime = Math.ceil(new Date().getTime() - startRender);
-  var nSteps =
-    (steps.length
-     ? steps[steps.length - 1].ordinal - computeFirstOrdinal(steps)
-     : 0);
   var stats = '';
   if (millis != null) {
     stats = '<i style="font-size:smaller; color:gray">Proof '

@@ -8,6 +8,10 @@ YUI.add('expr', function(Y) {
 // Conceptually it could be incremented just by rule R.
 var stepCounter = 1;
 
+function getStepCounter() {
+  return stepCounter;
+}
+
 /**
  * Converts text symbols to HTML for display.
  */
@@ -2596,6 +2600,7 @@ Y.definitions = definitions;
 Y.isConstant = isConstant;
 Y.isDefined = isDefined;
 
+Y.getStepCounter = getStepCounter;
 Y.varify = varify;
 Y.infixCall = infixCall;
 Y.assertTrue = assertTrue;

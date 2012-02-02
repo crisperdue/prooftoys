@@ -212,6 +212,9 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   // Query string data.
   var queryData;
 
+  // For convenience.
+  var rules = Y.rules;
+
   // Map from example name to example configuration info, each of
   // which is also a map.  Configuration properties are:
   //
@@ -229,57 +232,60 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     applyBoth: {
-      args: [call('=', f, g), x],
+      args: [rules.assert(call('=', f, g), x)],
       level: 1
     },
 
     replaceWhole: {
-      args: [call(p, x), call('=', call(p, x), call(q, x))],
+      args: [rules.assert(call(p, x)),
+             rules.assert(call('=', call(p, x), call(q, x)))],
     },
 
     eqnSwap: {
-      args: [call('=', p, q)],
+      args: [rules.assert(call('=', p, q))],
       level: 1
     },
 
     eqnChain: {
-      args: [call('=', p, q), call('=', q, r)],
+      args: [rules.assert(call('=', p, q)),
+             rules.assert(call('=', q, r))],
     },
 
     applyBySides: {
-      args: [call('=', p, q), call('=', 'a', 'b')]
+      args: [rules.assert(call('=', p, q)),
+             rules.assert(call('=', 'a', 'b'))]
     },
     
     applyBoth: {
-      args: [call('=', p, q), r],
+      args: [rules.assert(call('=', p, q)), r],
       level: 1
     },
     
     applyToBoth: {
-      args: [p, call('=', q, r)]
+      args: [p, rules.assert(call('=', q, r))]
     },
 
     useDefinition: {
-      args: [call('not', equal(p, call('not', p))), '/fn'],
+      args: [rules.assert(call('not', equal(p, call('not', p)))), '/fn'],
       level: 1
     },
     
     apply: {
-      args: [equal(p, call(lambda(x, T), y)), '/right'],
+      args: [rules.assert(equal(p, call(lambda(x, T), y))), '/right'],
       level: 1
     },
 
     changeVar: {
-      args: [equal(lambda(z, z), lambda(z, z)), '/right', y],
+      args: [rules.assert(equal(lambda(z, z), lambda(z, z))), '/right', y],
       level: 1
     },
 
     bindEqn: {
-      args: [call('=', f, g), x],
+      args: [rules.assert(call('=', f, g)), x],
     },
     
     instEqn: {
-      args: [call('=', call(g, y), z),
+      args: [rules.assert(call('=', call(g, y), z)),
              call(f, x),
              y],
     },
@@ -297,16 +303,16 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     r5212: {},
     
     toTIsEquation: {
-      args: [call('=', p, q)]
+      args: [rules.assert(call('=', p, q))]
     },
     
     r5213: {
-      args: [call('=', p, q),
-             call('=', q, r)]
+      args: [rules.assert(call('=', p, q)),
+             rules.assert(call('=', q, r))]
     },
     
     instForall: {
-      args: [call('forall', lambda(y, call(p, y))),
+      args: [rules.assert(call('forall', lambda(y, call(p, y)))),
              call(f, y)],
       level: 1
     },
@@ -322,7 +328,9 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     r5217Book: {},
     
     equationCases: {
-      args: [equal(T, T), equal(F, F), 'z'],
+      args: [rules.assert(equal(T, T)),
+             rules.assert(equal(F, F)),
+             'z'],
       level: 1
     },
 
@@ -333,12 +341,12 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
     
     toTIsA: {
-      args: [p],
+      args: [rules.assert(p)],
       level: 1
     },
     
     fromTIsA: {
-      args: [call('=', T, p)],
+      args: [rules.assert(call('=', T, p))],
       level: 1
     },
     
@@ -347,17 +355,17 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     addForall: {
-      args: [call(p, y), y],
+      args: [rules.assert(call(p, y)), y],
       level: 1
     },
     
     instVar: {
-      args: [call(p, y), call(f, x), y],
+      args: [rules.assert(call(p, y)), call(f, x), y],
       level: 1
     },
     
     instMultiVars: {
-      args: [implies(p, call('||', T, q)),
+      args: [rules.assert(implies(p, call('||', T, q))),
              ({p: Y.parse('forall {x. T || b}'),
                q: Y.parse('forall {x. b}')
              })
@@ -377,7 +385,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     r5223: {},
     
     modusPonens: {
-      args: [p, implies(p, q)],
+      args: [rules.assert(p), rules.assert(implies(p, q))],
       level: 1
     },
     
@@ -412,10 +420,6 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       level: 1
     },
     
-    applyFunc: {
-      args: [equal(call('-->', T), lambda(x, x)), F]
-    },
-    
     tautology: {
       /* This tautology is already an equation, let's test one that is not.
       args: [equal(call('-->', call('&&', p, q), r),
@@ -443,7 +447,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     implyForall: {
-      args: [x, Y.parse('p --> q x')],
+      args: [x, rules.assert(Y.parse('p --> q x'))],
       level: 1
     },
 
@@ -468,9 +472,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     p: {
-      args: [Y.parse('p x'),
-             Y.parse('p x --> q x'),
-             Y.parse('q x'),
+      args: [Y.parse('p x && p x --> q x'),
              Y.parse('P && (P --> Q) --> Q')]
     },
 
@@ -562,16 +564,20 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       if (typeof args == 'function') {
 	args = args();
       }
+      var stepCounter = Y.getStepCounter();
       try {
 	result = Y.rules[ruleName].apply(null, args || []);
       } catch(e) {}
       var elapsed = new Date().getTime() - startMillis;
+      // This is actually the number of steps needed to execute the
+      // rule, not counting steps used in deriving argument steps.
+      var nSteps = Y.getStepCounter() - stepCounter;
       // For debugging.
       window.proved = result;
       var proofNode = Y.one('#proofs');
       proofNode.setContent('');
       if (result) {
-	Y.renderProof(result, proofNode, elapsed);
+	Y.renderProof(result, proofNode, elapsed, nSteps);
       } else if (Y.errors.length) {
 	var last = Y.errors[Y.errors.length - 1];
 	proofNode.append('<p><b>Errors: (' + Y.errors.length

@@ -179,6 +179,12 @@ var ruleInfo = {
       if (!equation.ruleName) {
 	equation.assert();
       }
+      /*
+       * TODO: Just check rather than inventing a step once tests
+       *   are prepared for this change.
+      assert(target.ruleName,
+             function() {return 'Rule R: unproven ' + target;});
+       */
       if (!target.ruleName) {
 	target.assert();
       }
@@ -1687,7 +1693,9 @@ var ruleInfo = {
 	  var step3 = rules.eqSelf(step2.locate('/left'));
 	  var step4 = rules.mergeConj(step3, Y.sourceStepLess);
 	  var step5 = rules.r(step4, step2, '/left');
-	  var result = step5.justify('appendStepHyps', arguments, [target]);
+          // Rendering of result needs hypStep rendered, so include it as dep.
+	  var result =
+	    step5.justify('appendStepHyps', arguments, [target, hypStep]);
 	  result.hasHyps = true;
 	  return result;
 	} else {
@@ -1698,7 +1706,9 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(Y.parse('p --> (h2 --> p)'), subst);
 	  var step2 = rules.modusPonens(target, step1);
-	  var result = step2.justify('appendStepHyps', arguments, [target]);
+          // Rendering of result needs hypStep rendered, so include it as dep.
+	  var result =
+            step2.justify('appendStepHyps', arguments, [target, hypStep]);
 	  result.hasHyps = true;
 	  return result;
 	}
@@ -1741,7 +1751,9 @@ var ruleInfo = {
 	  var step3 = rules.eqSelf(step2.locate('/left'));
 	  var step4 = rules.mergeConj(step3, Y.sourceStepLess);
 	  var step5 = rules.r(step4, step2, '/left');
-	  var result = step5.justify('prependStepHyps', arguments, [target]);
+          // Rendering of result needs hypStep rendered, so include it as dep.
+	  var result =
+            step5.justify('prependStepHyps', arguments, [target, hypStep]);
 	  result.hasHyps = true;
 	  return result;
 	} else {
@@ -1751,7 +1763,9 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(Y.parse('p --> (h1 --> p)'), subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  var result = step2.justify('prependStepHyps', arguments, [target]);
+          // Rendering of result needs hypStep rendered, so include it as dep.
+	  var result =
+            step2.justify('prependStepHyps', arguments, [target, hypStep]);
 	  result.hasHyps = true;
 	  return result;
 	}
