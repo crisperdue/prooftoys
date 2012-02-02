@@ -31,30 +31,82 @@ body {
   margin-bottom: 4em;
 }
 
+a.nav {
+  display: block;
+  font-style: italic;
+  margin: .2em 0em;
+  text-decoration: none;
+}
+
 </style>
   
 </head>
 <body class=yui3-skin-sam
- style="margin-left: .5em; text-align: left; font-family: sans-serif">
+ style="margin: 1em 4em 1em 1em; text-align: left; font-family: sans-serif">
 
-<h1>Prooftoys</h2>
+<h1 style="margin-bottom: .2em">Prooftoys</h2>
 
-<p><center><i>Software tools for mathematical problem-solving.</i></center>
+<div style="margin-bottom: 1em">
+<center><i>Software tools for mathematical problem-solving.</i></center>
+</div>
 
-<h2>Proof Display</h2>
+<table>
+<tr>
+<td style="vertical-align: top; padding-top: 7em" width=20%>
 
-<p><b>Introduction.</b>  
-Peter Andrews' Q<instVar>0</instVar> is a simple and elegant
-logic that has the power to develop most of mathematics, comparable to
-first order logic plus set theory.  This page is implemented by the
-proof display component of a proof assistant for a version of this
-logic. The displays help to show how proof steps are connected
-and can show the details behind composite steps.
+<a class=nav href="http://code.google.com/p/jlogic">
+ &#8870; Project site</a>
+<a class=nav href="?">
+ &#8870; Using the interactive proof builder</a>
+<a class=nav href="http://code.google.com/p/jlogic/source/checkout">
+ &#8870; Source code</a>
+<a class=nav href="http://code.google.com/p/jlogic/wiki/AboutTheLogic">
+ &#8870; About the logic</a>
 
-<p>In this system the higher concepts such as theorems and derived rules of
-inference are built of the basic building blocks, not wired in with
-code.  With this page you can view many of the already-proved theorems
-that are part of the core library for the logic.
+<td>
+<h2>Introduction</h2>
+
+<h3>The mission</h3>
+Prooftoys is an open-source initiative that uses the Web to bring
+user-friendly and full-fledged mathematical reasoning to anyone who
+works with math.
+
+<h3>The engine</h3>
+The Prooftoys inference engine
+implements <a href="http://en.wikipedia.org/wiki/Higher-order_logic">higher-order
+logic</a>, which means it can reason about functions and predicates,
+which themselves can have functions and predicates as inputs and
+outputs.  This makes the logic as powerful as first order logic
+together with set theory.  The engine is implemented directly in your
+web browser, so it couples directly to the web-based user interface
+for greatest interactivity.
+<p>
+The engine implements Peter Andrews' Q<sub>0</sub>, a simple and
+elegant version of higher-order logic with a small, tight kernel.  On
+this base it builds <a href="http://en.wikipedia.org/wiki/Natural_deduction">natural deduction</a>-style reasoning and numerous
+high-level inference rules that make it easy to build high-level
+proofs in a number of different ways.
+<p>
+The engine is programmable, and you can create new high-level inference
+rules without compromising the correctness of proofs.
+
+<h3>The user interface</h3>
+Prooftoys has a highly interactive user interface for building proofs
+and solving mathematical problems directly through a web browser.  You
+can select steps, expressions, and locations in steps by pointing and
+clicking, and apply any predefined or extended public inference rule.
+It has intelligence about which rules can be applied in which
+situations.
+
+<p>
+Even when displaying an existing proof, the user interface lets the
+reader drill down into the details of high-level inference steps to
+follow how they were carried out, to understand a proof in more
+detail.  It also provides extra information including visual
+highlighting to show exactly how each inference rule was applied to
+its target step or steps.
+
+<h2>Sample proofs</h2>
 
 <p>Some of the theorems and derived rules of inference you can see
 here are intermediate results, but they help to demonstrate the core
@@ -63,7 +115,7 @@ practical rules of inference are also here, such as universal
 generalization (addForall), universal instantiation (instForall), and
 reasoning by cases (cases).
 
-<p><i>This page is supported in recent versions of Firefox and Chrome.</i>
+<p><i>Proof displays are supported in recent versions of Firefox and Chrome.</i>
 
 <p id=selectDiv style="margin: 1.5em">
 <b>Select a rule or theorem to prove:</b>
@@ -129,6 +181,8 @@ this template</a> for your input.
 
 <p>Thanks
 <br>Cris Perdue
+
+</table>
 
 <script>
 // Remove "filter" to load minified JavaScript.
