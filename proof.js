@@ -543,9 +543,11 @@ function computeArgInfo(step) {
       argInfo += debugString(arg);
     }
   }
-  argInfo =
-    ': <span style="font-weight: normal; font-family: monospace">'
-    + argInfo + '</span>';
+  if (i > 0) {
+    argInfo =
+      ' <span style="font-weight: normal">with <code>'
+      + argInfo + '</code></span>';
+  }
   return argInfo;
 }
 

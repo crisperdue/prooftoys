@@ -129,7 +129,7 @@ div.proofLine:hover .lineButton, div.proofLine.selectedLine .lineButton {
 
 /* Header line and comments for display. */
 .proofHeader {
-    margin: .5em 1.5em .2em;
+    margin: 1em 1.5em .5em;
     line-height: 120%;
 }
 
