@@ -66,14 +66,19 @@ a.nav:before {
 <tr>
 <td style="vertical-align: top; padding-top: 7em" width=20%>
 
-<a class=nav href="http://code.google.com/p/jlogic">
- Project site</a>
-<a class=nav href="?">
- Using the interactive proof builder</a>
-<a class=nav href="http://code.google.com/p/jlogic/source/checkout">
- Source code</a>
+<a class=nav href="proofbuilder.html">
+ Interactive proof builder</a>
+<a class=nav href="http://code.google.com/p/jlogic/wiki/LanguageSummary">
+ Summary of the Language</a>
 <a class=nav href="http://code.google.com/p/jlogic/wiki/AboutTheLogic">
  About the logic</a>
+<a class=nav href="http://code.google.com/p/jlogic">
+ Project site</a>
+<a class=nav href="http://code.google.com/p/jlogic/source/checkout">
+ Source code</a>
+<a class=nav
+ href="http://code.google.com/p/jlogic/issues/entry?template=Comment/suggestion">
+ Comments etc.</a>
 
 <td>
 <h2>Introduction</h2>
@@ -81,7 +86,8 @@ a.nav:before {
 <h3>The mission</h3>
 Prooftoys is an open-source initiative to use the Web to bring
 user-friendly full-fledged logical reasoning tools to anyone who works
-with math.
+with math.  The current components are the engine and the user
+interface.
 
 <h3>The engine</h3>
 The Prooftoys inference engine
@@ -105,98 +111,71 @@ inference rules without compromising correctness.
 
 <h3>The user interface</h3>
 <p>
-Prooftoys has a highly interactive user interface for building proofs
-and solving mathematical problems directly through a web browser.  You
-can select steps, expressions, and locations in steps by pointing and
-clicking, and apply any predefined or extended public inference rule.
-<p>
-When displaying an existing proof, the user interface lets the reader
-drill down into the details of high-level inference steps to follow
-how they were carried out, to understand a proof in more detail.  It
-also provides extra information and visual highlighting to show
-exactly how each inference rule was applied to its target step or
-steps.
+In the web-based user interfaceyou can select steps, expressions, and
+locations in steps by pointing and clicking, and apply any predefined
+or extended public inference rule.  When reading an existing proof you
+can drill down into the details of high-level inference steps or
+theorems to see how they are proved in more detail.
 
 <h2>Sample proofs</h2>
 <p>
 Selecting a theorem or inference rule below displays an example of
 usage of the rule or theorem.  Axioms and theorems often have
-parameters, and rules of inference have inputs that themselves must be
-proved steps.
-<p>Some of the theorems and derived rules of inference you can see
-here are intermediate results, but they help to demonstrate the core
-concepts and how proofs are built from them.  Examples of some
-practical rules of inference are also here, such as universal
-generalization (addForall), universal instantiation (instForall), and
-reasoning by cases (cases).
-
+parameters.  If any of the parameters must be a proof step, then
+you have a rule of inference and not just a theorem.
+<p>
+Examples of some practical rules of inference are here, such as
+universal generalization (addForall), universal instantiation
+(instForall), and reasoning by cases (cases).  There is a tautology
+checker which can prove arbitrary tautologies, and a version of
+Professor Andrews' very own Rule P.
+<p>
+To see how a rule operates internally, click on its name in the proof
+line that uses it.
 <p>
 <i>Proof displays are supported in recent versions of Firefox and Chrome.</i>
 
 <p id=selectDiv style="margin: 1.5em 1.5em .5em">
 <b>Select a rule or theorem to prove:</b>
 
-<div id=proofs></div>
+<div id=proofs style="margin-bottom: 2em"></div>
 
-<div style="margin: 1.5em 0em .5em 1.5em">
-<b>Or interactively create your own proof below:</b>
-</div>
-<div id=proofEditor></div>
-
-<div id=proofErrors></div>
-
-<p><b>About the logic.</b>  This page can derive many of the theorems
-and examples of rules of inference of Chapter 5 of Peter Andrews'
-book,
-<a href="http://gtps.math.cmu.edu/tttp.html" target="_blank">
-An Introduction to Mathematical Logic and Type Theory: To Truth
-Through Proof</a>.  The order of theorems is essentially the same as
-in the book.  Some of the numbered theorems have been given names here
-in the hope of helping me remember which is which.  His logic is
-summarized in
-<a href="http://plato.stanford.edu/entries/type-theory-church/#ForBasEqu"
-target=_blank>this article</a>
-in the online Stanford Encyclopedia of Philosophy.
-
-<p><b>About the proofs.</b> Most of the proofs here closely follow
-proofs in the book.  I am also experimenting with definitions of
-boolean operators more directly related to truth tables, and a number
-of proofs use those definitions.  In some cases more than one version
-of the same proof is available, one following the book.  The sample
-proofs are all created by hand and executed by machine.
-
-<p><b>About the displays.</b> Formulas are presented here in a somewhat
-different notation.  Instead of the usual use of lambda,
-we have a notation somewhat resembling the Ruby
-programming language brace notation for 
+<p>
+<b>About the notation.</b> 
+Aside from variables and constants, the language has only function
+calls and function expressions, like lambda expressions in the lambda
+calculus.  The parser and printer support infix operators, which are
+"<a href="http://www.haskell.org/haskellwiki/Currying">curried</a>"
+in the internal representation into functions of a single argument.
+<p>
+Infix operators available in order of increasing precedence are:
+<ul>
+<li><code>==</code> (equivalence)
+<li><code>--></code> (implication)
+<li><code>= !=</code>
+<li><code>||</code> (or)
+<li><code>&&</code> (and)
+<li><code>&lt; &lt;= &gt; &gt;=</code> (inequalities)
+<li><code>+ -</code>
+<li><code>* /</code>
+<li><code>**</code>
+</ul>
+Ordinary function calls look like <code><b>(f x)</b></code> or
+<code><b>f x</b></code>, and have higher precedence than any infix
+operator.
+<p>
+Anonymous functions have the form <code><b>{x. p x}</b></code>, a
+notation somewhat resembling the Ruby programming language notation
+for
 <a href="http://en.wikipedia.org/wiki/Ruby_(programming_language)#Blocks_and_iterators"
  target="_blank">blocks</a>/anonymous functions or Smalltalk blocks.
-For example in place of <b>&lambda;x.p x</b> you will see <code><b>{x.
-p x}</b></code>.  This notation also resembles common notation for sets,
+This notation also resembles common notation for sets,
 and can be read that way for functions with boolean values &mdash;
 "<i>the set of x such that p of x</i>".
-The displays also use symbols more like programming
-language symbols for "and" and "or", and infix syntax where
-applicable.
-
-<p>When the mouse is over a line, that line and lines it uses
-are highlighted.  For Rule R and a lambda reductions ("apply"), key
-parts of the lines are also highlighted for quicker identification.
-
-<p>Click on the name of the rule of inference or theorem
-mentioned on a line and see the proof worked out in detail below
-the current proof.
-
-<p><b>About the project.</b> This software is under development
-and is currently hosted as
-<a href="http://code.google.com/p/jlogic" target=_blank><b>jLogic</b></a>
-at Google Code.  Requests and suggestions are welcome.  Please use
-<a href="http://code.google.com/p/jlogic/issues/entry?template=Comment/suggestion"
-target="_blank">
-this template</a> for your input.
-
-<p>Thanks
-<br>Cris Perdue
+<p>
+For more information see the
+<a href="http://code.google.com/p/jlogic/wiki/LanguageSummary">
+language summary</a> in the project Wiki.
 
 </table>
 
@@ -333,8 +312,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     equationCases: {
       args: [rules.assert(equal(T, T)),
              rules.assert(equal(F, F)),
-             'z'],
-      level: 1
+             'z']
     },
 
     r5218a: {},
@@ -344,13 +322,11 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
     
     toTIsA: {
-      args: [rules.assert(p)],
-      level: 1
+      args: [rules.assert(p)]
     },
     
     fromTIsA: {
-      args: [rules.assert(call('=', T, p))],
-      level: 1
+      args: [rules.assert(call('=', T, p))]
     },
     
     forallT: {
@@ -387,13 +363,13 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     
     r5223: {},
     
-    modusPonens: {
+    simpleModusPonens: {
+      ruleName: 'modusPonens',
       args: [rules.assert(p), rules.assert(implies(p, q))],
       level: 1
     },
     
-    modusPonensHyps: {
-      ruleName: 'modusPonens',
+    modusPonens: {
       args: function() {
         var step1 = Y.rules.assume('p');
         var step2 = Y.rules.assume('p --> q');
@@ -419,8 +395,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     evalBool: {
       args: [call('-->',
                   call('-->', F, call('not', F)),
-                  call('not', F))],
-      level: 1
+                  call('not', F))]
     },
     
     tautology: {
@@ -449,13 +424,12 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       args: [x, p, call(q, x)]
     },
 
-    implyForall: {
+    implyForallNoHyps: {
+      ruleName: 'implyForall',
       args: [x, rules.assert(Y.parse('p --> q x'))],
-      level: 1
     },
 
-    implyForallHyps: {
-      ruleName: 'implyForall',
+    implyForall: {
       args: function() {
         var step1 = Y.rules.assume('y > 0');
         var step2 = Y.rules.assert('y > 0 --> (p --> q x)');
@@ -474,9 +448,11 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       },
     },
 
-    p: {
-      args: [Y.parse('p x && p x --> q x'),
-             Y.parse('P && (P --> Q) --> Q')]
+    'Rule P': {
+      ruleName: p,
+      args: [Y.rules.assume('p x && (p x --> q x)'),
+             Y.parse('P && (P --> Q) --> Q')],
+      level: 1
     },
 
     r5238a: {
@@ -488,8 +464,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     },
 
     r5239: {
-      args: [equal(p, q), lambda(p, equal(q, p)), '/body/right'],
-      level: 1
+      args: [equal(p, q), lambda(p, equal(q, p)), '/body/right']
     },
 
     replace: {
@@ -509,8 +484,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
         var step1 = Y.rules.assume('p x');
         var step2 = Y.rules.assume('q x');
         return [step1, step2];
-      },
-      level: 1
+      }
     },
 
     prependStepHyps: {
@@ -518,8 +492,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
         var step1 = Y.rules.assume('p x');
         var step2 = Y.rules.assume('q x');
         return [step1, step2];
-      },
-      level: 1
+      }
     },
 
     bubbleLeft: {
@@ -528,7 +501,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
           return a.toString() < b.toString();
         }
         return [Y.rules.assert('lhs = (((b && a) && d) && a)'), less];
-      },
+      }
     },
 
     mergeConj: {
@@ -537,8 +510,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
           return a.toString() < b.toString();
         }
         return [Y.rules.assert('lhs = (a && b) && (c && d)'), less];
-      },
-      level: 1
+      }
     }
 
   };

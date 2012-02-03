@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<!-- Uses "almost standards mode", all but some table cell sizing. -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+  <title>ProofToys Proof Builder</title>
+
+   <!-- TODO: deploy with yui-min.js rather than yui.js -->
+  <script src="http://yui.yahooapis.com/3.4.0/build/yui/yui.js"></script>
+  <!-- For debugging add explicit reference to source file(s) here -->
+
+  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
+  <script src="expr.js"></script>
+  <script src="step-editor.js"></script>
+  <script src="proof.js"></script>
+  <script src="theorems.js"></script>
+
+<style type="text/css">
+
+h1 { color: black }
+
+h2 {
+  color: black;
+  text-align: left;
+}
+
+h2, h3 {
+  margin-bottom: .5em;
+}
+
+body {
+  /* Allow space for the bottom panel. */
+  margin-bottom: 4em;
+}
+
+a.nav {
+  display: block;
+  font-style: italic;
+  margin: .3em 1.5em .3em 1em;
+  text-decoration: none;
+  text-indent: -1em;
+}
+
+a.nav:before {
+  content: "⊦ ";
+}
+
+</style>
+
+<!-- Links by default open a new window/tab -->
+<base target=_blank>
+  
+</head>
+<body class=yui3-skin-sam
+ style="margin: 1em 4em 1em 1em; text-align: left; font-family: sans-serif">
+
+<h1 style="margin-bottom: .2em">Prooftoys</h2>
+
+<div style="margin-bottom: 1em">
+<center><i>Web-based tools for mathematical problem-solving.</i></center>
+</div>
+
+<table>
+<tr>
+<td style="vertical-align: top; padding-top: 7em" width=20%>
+
+<a class=nav href="proofbuilder.html">
+ Interactive proof builder</a>
+<a class=nav href="http://code.google.com/p/jlogic/wiki/LanguageSummary">
+ Summary of the Language</a>
+<a class=nav href="http://code.google.com/p/jlogic/wiki/AboutTheLogic">
+ About the logic</a>
+<a class=nav href="http://code.google.com/p/jlogic">
+ Project site</a>
+<a class=nav href="http://code.google.com/p/jlogic/source/checkout">
+ Source code</a>
+<a class=nav
+ href="http://code.google.com/p/jlogic/issues/entry?template=Comment/suggestion">
+ Comments etc.</a>
+
+<td>
+<h2>Interactive Proof Builder</h2>
+<p>
+The proof builder lets you interactively build proofs using all of the
+publicly-available theorems, theorem schemas, and rules of inference.
+To start, click on the text entry field.  It will pop up a menu of all
+axioms, theorems, and theorem schemas available.  You can start typing
+the name you want or select it from the list.  Clicking on the desired
+item or typing &lt;Enter&gt; when it is selected will choose it.
+<p>
+Once you have chosen the axiom or theorem to use, the system checks
+whether it takes parameters.  If so, you will be offered a small form
+to fill in.  Enter expressions in the language as needed and type
+&lt;Enter&gt; to submit the form.  The system will prove the theorem
+as needed and display it in the proof.  A common first step in solving
+a math problem is to use the <code>assume</code> theorem schema.  Type
+any expression, and it will be "assumed" for you.  The "assume"
+theorem just says that your assumption implies itself, but the rules
+of inference work well with this starting point.
+<p>
+Once there is at least one step in your proof you can choose rules of
+inference that take existing proof steps as input.  To use a rule of
+inference, <i>select a step</i> that it depends on.  If a rule of
+inference operates on a specific location in a step, you
+must <i>select the subexpression</i> to operate on.  For example
+rules <code>r</code> and <code>replace</code> require you to select
+the subexpression you want to replace.  Click again on a step to
+deselect it, to enter an axiom or theorem.
+<p>
+To start a new proof, reload the page.
+
+<div id=proofEditor></div>
+
+<div id=proofErrors></div>
+
+
+</table>
+
+<script>
+// Remove "filter" to load minified JavaScript.
+YUI({filter: 'raw', insertBefore: 'styles'})
+   .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
+        'proof', 'collection', 'querystring-parse', 'json',
+        // querystring-parse requires "collection" (?!)
+   function(Y) {
+
+  // Set up some useful constants and functions.
+
+  Y.Expr.utils.import();
+
+  // Query string data.
+  var queryData;
+
+  Y.on('domready', function() {
+      queryData = Y.QueryString.parse(location.search.substring(1));
+      // Create an interactive proof editor for the user.
+      var controller = new Y.ProofControl();
+      controller.setEditable(true);
+      Y.one('#proofEditor').append(controller.node);
+      // For debugging:
+      window.proofBuilder = controller;
+    });
+
+  // For debugging.
+  window.Y = Y;
+  window.db = Y.debugString;
+});
+
+
+</script>
+</body>
+</html>

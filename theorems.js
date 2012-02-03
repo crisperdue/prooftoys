@@ -637,7 +637,7 @@ var ruleInfo = {
     form: ('In step <input name=step> instantiate bound var'
 	   + ' with term <input name=term>'),
     hint: 'instantiate "forall"',
-    comment: ('In a "forall", instantiates the bound variable with'
+    comment: ('In a &quot;forall&quot;, instantiates the bound variable with'
               + ' a given term.')
   },
 
