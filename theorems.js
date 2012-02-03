@@ -52,7 +52,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Assert <input name=term>'),
-    hint: 'WFF to assert (possibly to prove later)'
+    hint: 'Assert as universally true',
+    comment: 'WFF to assert (possibly to prove later)'
   },
 
   /**
@@ -74,7 +75,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Assume <input name=term>'),
-    hint: 'Hypothesis to assume'
+    hint: 'assume hypothetically',
+    comment: 'Hypothesis to assume'
   },
 
   /**
@@ -90,7 +92,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
-    hint: 'Convert hypotheses to an explicit implication'
+    comment: 'Convert hypotheses to an explicit implication'
   },
       
   /**
@@ -134,7 +136,7 @@ var ruleInfo = {
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
            + 'if by cases enter T or F <input name=optString>'),
-    hint: 'access a definition'
+    comment: 'access a definition'
   },
 
   /**
@@ -204,9 +206,8 @@ var ruleInfo = {
     },
     // inputs: {equation: 1, site: 2},
     // form: ('Replace selection with right side of step <input name=equation>'),
-    comment: ('Replaces an occurrence of an expression with something'
-              + ' it is equal to.'),
-    hint: 'replace term with equal term'
+    comment: ('Replace an occurrence of a term with an equal term.'),
+    hint: 'Replace term with equal term'
   },
 
   /**
@@ -223,8 +224,8 @@ var ruleInfo = {
     inputs: {equation: 1, site: 2},
     form: ('Replace with left side of step <input name=equation>'),
     hint: 'replace term with equal term',
-    comment: ('Replaces an occurrence of an expression with something'
-              + ' equal to it, replacing right side with left side.')
+    comment: ('Replaces an occurrence of a term with an equal term,'
+              + ' replacing right side with left side.')
   },
 
   axiom1: {
@@ -246,7 +247,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: ('equal inputs yield equal outputs.')
+    comment: ('Equal inputs yield equal outputs.')
   },
 
   axiom3: {
@@ -384,7 +385,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Swap sides in step <input name=equation>',
-    hint: 'from A = B to B = A',
+    hint: 'From A = B to B = A',
     comment: 'From A = B derives B = A'
   },
 
@@ -426,7 +427,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Apply both sides of step <input name=equation>'
 	   + ' to term <input name=term>'),
-    hint: 'from F = G to (F A) = (G A)',
+    hint: 'From F = G to (F A) = (G A)',
     comment: 'Given f = g, derive (f A) = (g A)'
   },
 
@@ -968,7 +969,7 @@ var ruleInfo = {
       return step.justify('instMultiVars', arguments, [b]);
     },
     inputs: {step: 1},
-    // TODO: form: ...
+    hint: 'Substitute for multiple variables',
     comment: ('Substitute in B for each variable named in the map, '
               + 'its value in the map')
   },
@@ -1415,6 +1416,7 @@ var ruleInfo = {
     form: ('Variable: <input name=varName> '
 	   + 'wff without it free: <input name=term1> '
 	   + 'other wff: <input name=term2>'),
+    hint: 'forall {v. A --> B} --> (A --> forall {v. B}',
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".')
   },
@@ -1437,6 +1439,7 @@ var ruleInfo = {
     form: ('Move forall inside "implies" binding '
 	   + 'variable <input name=varName> '
 	   + 'implication <input name=implication>'),
+    hint: 'Move "forall" inside "implies"',
     comment: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.')
   },
