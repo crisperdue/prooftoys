@@ -49,9 +49,6 @@ a.nav:before {
 
 </style>
 
-<!-- Links by default open a new window/tab -->
-<base target=_blank>
-  
 </head>
 <body class=yui3-skin-sam
  style="margin: 1em 4em 1em 1em; text-align: left; font-family: sans-serif">
@@ -87,23 +84,22 @@ a.nav:before {
 Prooftoys is an open-source initiative to use the Web to bring
 user-friendly full-fledged logical reasoning tools to anyone who works
 with math.  The current components are the engine and the user
-interface.
+interface.  They are both under continuing development and important
+work remains to be done on both, but are ready for experimental use.
 
 <h3>The engine</h3>
-The Prooftoys inference engine
-uses <a href="http://en.wikipedia.org/wiki/Higher-order_logic">higher-order
-logic</a>, which means it can reason about functions and predicates,
-which themselves can have functions and predicates as inputs and
-outputs.  This gives it the power to help you develop as much of
-mathematics as you wish.  The engine runs directly in your web browser
-for best responsiveness, interactivity, and convenient access to
-servers in the Internet cloud.
+The Prooftoys inference engine uses <i>higher-order logic</i>, which
+means it can reason about functions and predicates, which themselves
+can have functions and predicates as inputs and outputs.  This gives
+it the power to help you develop as much of mathematics as you wish.
+The engine runs directly in your web browser for best responsiveness,
+interactivity, and convenient access to servers in the Internet cloud.
 <p>
 The engine implements Peter Andrews' Q<sub>0</sub>, a simple and
 elegant version of higher-order logic with a small and understandable
 kernel.  On this base it
-builds <a href="http://en.wikipedia.org/wiki/Natural_deduction">natural
-deduction</a>-style reasoning and a variety high-level inference rules
+builds <i href="http://en.wikipedia.org/wiki/Natural_deduction">natural
+deduction</i>-style reasoning and a variety high-level inference rules
 that make it easy to build high-level proofs.
 <p>
 The engine is safely programmable, and you can create new high-level
@@ -111,24 +107,27 @@ inference rules without compromising correctness.
 
 <h3>The user interface</h3>
 <p>
-In the web-based user interfaceyou can select steps, expressions, and
-locations in steps by pointing and clicking, and apply any predefined
-or extended public inference rule.  When reading an existing proof you
-can drill down into the details of high-level inference steps or
-theorems to see how they are proved in more detail.
+In the web-based Proof Builder user interface you can select steps,
+expressions, and locations in steps by pointing and clicking, and
+apply any predefined or extended public inference rule.  When reading
+an existing proof you can drill down into the details of high-level
+inference steps or theorems to see how they are proved in more detail.
+<p>
+Please do feel free to try out the current version of the
+<a href="proofbuilder.html">Proof Builder</a>.
 
 <h2>Sample proofs</h2>
 <p>
-Selecting a theorem or inference rule below displays an example of
-usage of the rule or theorem.  Axioms and theorems often have
-parameters.  If any of the parameters must be a proof step, then
-you have a rule of inference and not just a theorem.
+Examples of many of the currently-implemented rules of inference are
+available here.  Selecting a theorem or inference rule below displays
+an example of usage of the rule or theorem.  Axioms, theorems, and
+rules of inference often have parameters.
 <p>
-Examples of some practical rules of inference are here, such as
-universal generalization (addForall), universal instantiation
-(instForall), and reasoning by cases (cases).  There is a tautology
-checker which can prove arbitrary tautologies, and a version of
-Professor Andrews' very own Rule P.
+Some often-used practical rules of inference are universal
+generalization (addForall), universal instantiation (instForall), and
+reasoning by cases (cases).  There is a tautology checker which can
+prove arbitrary tautologies, and a version of Professor Andrews' very
+own Rule P.
 <p>
 To see how a rule operates internally, click on its name in the proof
 line that uses it.
