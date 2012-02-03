@@ -108,13 +108,42 @@ must <i>select the subexpression</i> to operate on.  For example
 rules <code>r</code> and <code>replace</code> require you to select
 the subexpression you want to replace.  Click again on a step to
 deselect it, to enter an axiom or theorem.
+
+<h3>Example: modus ponens</h3>
 <p>
-To start a new proof, reload the page.
+Let's consider a very simple example applying modus ponens to a pair of
+assumptions.  To enter an assumption click in the text entry field and
+select the "assume" rule.  Type in "p", and press &lt;Enter&gt;.  You
+will see the first line of your proof.
+<p>
+Next use the "assume" rule again, entering "p --> q" as your second
+assumption.
+<p>
+For the inference step, click on the first line of the proof display
+anywhere outside the formula itself.  The line will highlight itself
+and stay highlighted as you move the mouse away.  Now click on the
+text entry field.  Since you have selected a proof step it will offer
+a number of rules of inference rather than axioms and theorem schemas.
+Select "modusPonens" from the list, and enter "2" as the number of the
+second step to apply the rule to.  Press &lt;Enter&gt;, and you should
+see the modus ponens line added to the proof.
+<p>
+Finally to make the hypotheses explicit, you might wish to select the
+last line of the proof and choose the "asImplication" rule, which
+causes the hypotheses to be displayed explicitly as preconditions.
+<p>
+Going beyond what is displayed in the sample, you could choose the
+rule "addForall" to add universal quantifiers to the formula.  You can
+do this twice to quantify over both <code>p</code> and <code>q</code>.
+<p>
+<div id=modusPonens></div>
+<p>
+<i>Enter your new proof here:</i>
 
 <div id=proofEditor></div>
 
-<div id=proofErrors></div>
-
+<p>
+If you wish to start over working on a new proof, please reload the page.
 
 </table>
 
@@ -134,6 +163,14 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   var queryData;
 
   Y.on('domready', function() {
+      var rules = Y.rules;
+      // Modus ponens
+      var mp1 = rules.assume('p');
+      var mp2 = rules.assume('p --> q');
+      var mp3 = rules.modusPonens(mp1, mp2);
+      var mp4 = rules.asImplication(mp3);
+      Y.renderProof(mp4, Y.one('#modusPonens'));
+
       queryData = Y.QueryString.parse(location.search.substring(1));
       // Create an interactive proof editor for the user.
       var controller = new Y.ProofControl();
