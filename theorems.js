@@ -1449,16 +1449,20 @@ var ruleInfo = {
   // has only variables that appear in A.  For tautologies with a
   // conjunction on the LHS as shown in the book, use this with
   // makeConjunction.  Handles hypotheses.
+  //
+  // Accepts a string for the tautology.
   p: {
     action: function(step, tautology) {
-      var step1 = rules.tautology(tautology);
+      var tautology = rules.tautology(tautology);
       var substitution = Y.matchAsSchema(tautology.getLeft(), step.unHyp());
-      var step3 = rules.instMultiVars(step1, substitution);
-      var step4 = rules.modusPonens(step, step3);
-      return step4.justify('p', arguments, [step]);
+      var step2 = rules.instMultiVars(tautology, substitution);
+      var step3 = rules.modusPonens(step, step2);
+      return step3.justify('p', arguments, [step]);
     },
-    // TODO: inputs ... ?
-    comment: ('Rule P with a single antecedent.')
+    inputs: {step: 1, term: 2},
+    form: ('Match step <input name=step> with left side of implication '
+           + 'in tautology <input name=term>'),
+    comment: ('Match step with LHS of tautology A --> B.')
   },
 
   // Relates equal functions to equality at all input data points.
@@ -1946,6 +1950,36 @@ var ruleInfo = {
     hint: 'Normalize a conjunction of normalized conjunctions'
   },
 
+  equalitySymmetric: {
+    action: function() {
+      var step1 = rules.assume('x = y');
+      var step2 = rules.eqSelf(x);
+      var step3 = rules.replace(step1, step2, '/left');
+      var step4 = rules.asImplication(step3);
+      var subst = {x: y, y: x};
+      var step5 = rules.instMultiVars(step4, subst);
+      var step6 = rules.makeConjunction(step4, step5);
+      var step7 = rules.p(step6, '(p --> q) && (q --> p) --> (p = q)');
+      return step7.justify('equalitySymmetric', arguments);
+    },
+    inputs: {},
+    form: '',
+    comment: 'Symmetry of equality'
+  },
+
+  equalityTransitive: {
+    action: function() {
+      var step1 = rules.axiom('axiom2');
+      var step2 = rules.instVar(step1, Y.parse('{t. t = z}'), _var('h'));
+      var step3 = rules.apply(step2, '/right/left');
+      var step4 = rules.apply(step3, '/right/right');
+      var step5 = rules.p(step4, '(a --> (b = c)) --> (a && c --> b)');
+      return step5.justify('equalityTransitive', arguments);
+    },
+    inputs: {},
+    form: '',
+    comment: 'Transitivity of equality'
+  },
 
   //
   // OPTIONAL/UNUSED
