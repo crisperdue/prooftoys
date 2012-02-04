@@ -609,13 +609,6 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       Y.one('#selectDiv').appendChild(selector);
       Y.addBottomPanel();
       Y.one('#selector').on('change', selectorChanged);
-
-      // Create an interactive proof editor for the user.
-      var controller = new Y.ProofControl();
-      controller.setEditable(true);
-      Y.one('#proofEditor').append(controller.node);
-      // For debugging:
-      window.proofBuilder = controller;
     });
 
   // For debugging.
