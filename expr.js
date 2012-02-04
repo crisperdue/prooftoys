@@ -16,7 +16,9 @@ function getStepCounter() {
  * Converts text symbols to HTML for display.
  */
 var entities = {
-  '-->': '&#8209;&#8209&gt;',   // &rArr; looks lousy in fixed-width font.
+  // Do not use nonbreaking hyphens in case the end user wants to copy and
+  // paste displayed text.  Instead consider CSS hyphenation options.
+  // '-->': '&#8209;&#8209&gt;',   // &rArr; looks lousy in fixed-width font.
   '>=': '&ge;',
   '<=': '&le;',
   '!=': '&ne;',
