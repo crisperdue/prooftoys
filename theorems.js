@@ -230,7 +230,7 @@ var ruleInfo = {
 
   axiom1: {
     action: function() {
-      // var result = Y.parse('g T && g F = forall {x : g x}');
+      // var result = Y.parse('g T && g F = forall {x. g x}');
       var result =  equal(call('&&', call(g, T), call(g, F)),
 			  call('forall', lambda(x, call(g, x))));
       return result.justify('axiom1');
@@ -252,7 +252,7 @@ var ruleInfo = {
 
   axiom3: {
     action: function() {
-      var result = Y.parse('(f = g) = forall {x : f x = g x}');
+      var result = Y.parse('(f = g) = forall {x. f x = g x}');
       return result.justify('axiom3');
     },
     inputs: {},
@@ -270,7 +270,7 @@ var ruleInfo = {
   axiom4: {
     action: function(call) {
       assert(call instanceof Y.Call && call.fn instanceof Y.Lambda,
-	     'Axiom 4 needs ({X : B} A), got: ' + call.toString());
+	     'Axiom 4 needs ({v. B} A), got: ' + call.toString());
       var lambdaExpr = call.fn;
       var result =
         equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
@@ -279,7 +279,7 @@ var ruleInfo = {
       return result.justify('axiom4', arguments);
     },
     inputs: {term: 1},  // Specifically a Call to a Lambda.
-    form: 'Enter {v : body} expr <input name=term>',
+    form: 'Enter {v. body} expr <input name=term>',
     hint: 'apply a function to its argument',
     comment: ('')
   },
@@ -296,7 +296,7 @@ var ruleInfo = {
 
   // Added by Cris instead of definition of F in book.
   // not [T = F] (thus F = [T = F]).
-  // Alternatively, add (forall {x : not (x = (not x))}) below,
+  // Alternatively, add (forall {x. not (x = (not x))}) below,
   // shortening the proof of [F = [F = T]].
   axiomTIsNotF: {
     action: function() {
@@ -307,7 +307,7 @@ var ruleInfo = {
   },
 
   // Generalizes axiomTIsNotF.
-  // Rewrite to (forall p : F = [p = [not p]]), instantiate, expand "not":
+  // Rewrite to (forall {p. F = [p = [not p]]}), instantiate, expand "not":
   // 1. F = [F = [F = F]], so 2. F = [F = T] (r5230FT)
   // 3. F = [T = [F = T]], so F = [T = F] (r5230TF) by
   // Rule R on r5230FT and step 3.
@@ -319,7 +319,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    hint: '(forall {p : not (p = not p)})',
+    hint: '(forall {p. not (p = not p)})',
     comment: ('')
   },
 
@@ -609,7 +609,7 @@ var ruleInfo = {
     return step3.justify('t');
   },
 
-  // Target is forall {x : B}, expr is A, which will replace
+  // Target is forall {x. B}, expr is A, which will replace
   // all occurrences of x.  Uses no book-specific definitions,
   // and relies only on theorem "T", 5200, and reduce. (5215)
   // Handles hypotheses.
@@ -897,7 +897,7 @@ var ruleInfo = {
   },
 
   // Helper for addForall
-  // Derives (forall {v : T}) given a variable v.
+  // Derives (forall {v. T}) given a variable v.
   forallT: {
     action: function(v) {
       var step1 = rules.theorem('forallVT');
@@ -906,7 +906,7 @@ var ruleInfo = {
     },
     inputs: {varName: 1},
     form: 'Variable to bind: <input name=varName>',
-    comment: ('(forall {v : T})')
+    comment: ('(forall {v. T})')
   },
 
   // 5220 (universal generalization).  From A deduces forall {v. A}.
@@ -927,7 +927,7 @@ var ruleInfo = {
     },
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable <input name=varName>'),
-    hint: 'from A to (forall {x : A})',
+    hint: 'from A to (forall {x. A})',
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.')
   },
@@ -1129,7 +1129,7 @@ var ruleInfo = {
   },
 
   // Another helper for evalBool, not in book.
-  // [[T =] = {x : x}].
+  // [[T =] = {x. x}].
   trueEquals: {
     action: function() {
       var step1 = rules.r5218(x);
@@ -1309,7 +1309,7 @@ var ruleInfo = {
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
-  // ((forall {v : A || B}) --> A || (forall {v : B})).  Could run even if
+  // ((forall {v. A || B}) --> A || (forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
   // This is Axiom Schema 5 of Andrews' first-order logic F.
   r5235: {
@@ -1346,7 +1346,7 @@ var ruleInfo = {
   },
 
   // Given a proof step H |- A --> B and a variable v, derives
-  // H |- (A --> forall {v : B}) provided that v is not free in A or H.
+  // H |- (A --> forall {v. B}) provided that v is not free in A or H.
   // (5237)  This version implemented via 5235, so much less efficient.
   //
   // Handles hypotheses.
@@ -1385,7 +1385,7 @@ var ruleInfo = {
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
-  // ((forall {v : A --> B}) --> (A --> forall {v : B})).  Could run even if
+  // ((forall {v. A --> B}) --> (A --> forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
   implyForallThm: {
     action: function(v, a, b) {
@@ -1422,7 +1422,7 @@ var ruleInfo = {
   },
 
   // Given a proof step H |- A --> B and a variable v, derives
-  // H |- (A --> forall {v : B}) provided that v is not free in A or H.
+  // H |- (A --> forall {v. B}) provided that v is not free in A or H.
   // (5237)  Implemented via implyForallThm.
   //
   // Handles hypotheses.
