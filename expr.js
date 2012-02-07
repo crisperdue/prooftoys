@@ -1866,8 +1866,8 @@ function define(name, definition) {
   // or proof fragment already uses the name to be defined.
   assert(!isDefined(name), 'Already defined: ' + name);
   for (var n in definition.freeNames()) {
+    // Assumes constants do not appear in freeNames:
     assert(isDefined(n), 'Definition has free variables: ' + name);
-    // Assumes constants do not appear in freeNames.
   }
   definitions[name] = equal(name, definition);
 }
@@ -2142,18 +2142,26 @@ function dereference(type) {
 
 //// PARSING
 
+// Tokens pattern, private to tokenize.
+var _tokens = new RegExp(['[(){}]',
+                          '_?[:a-zA-Z][:a-zA-Z0-9]*',
+                          '[0-9]+',
+                          '[^_:a-zA-Z0-9(){}\\s]+'].join('|'),
+                         'g');
+
 /**
- * A token is a sequence of characters that are each alphanumeric or
+ * A token is a parenthesis or brace, or a sequence of characters
+ * starting with an alphabetic (possibly preceded by an underscore
+ * ("_"), followed by zero or more characters that are alphanumeric or
  * ":", or a sequence containing none of these and no whitespace.
- * Returns an array of tokens in the input string, followed by an
- * "(end)" token, omitting whitespace.  In all cases, a parenthesis or
- * brace is always a token by itself regardless of context.
+ * 
+ * This returns an array of tokens in the input string, followed by an
+ * "(end)" token, omitting whitespace.
  */
 function tokenize(str) {
   var match;
-  var pattern = /[(){}]|[:a-zA-Z0-9]+|[^:a-zA-Z0-9(){}\s]+/g;
   var result = [];
-  while (match = pattern.exec(str)) {
+  while (match = _tokens.exec(str)) {
     result.push(new Y.Var(match[0], match.index));
   }
   result.push(new Y.Var('(end)', str.length));
@@ -2222,7 +2230,7 @@ function parse(tokens) {
       } else if (token.name == '{') {
         var id = next();
         assert(isId(id), 'Expected identifier, got ' + id.name);
-        expect(peek().name == ':' ? ':' : '.');
+        expect('.');
         var body = mustParseAbove(0);
         expr = new Y.Lambda(id, body);
         expect('}');
