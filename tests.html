@@ -363,18 +363,39 @@ YUI({filter: null, insertBefore: 'styles'})
       testIsConstant: function() {
         Y.assert(Y.isConstant('T'));
         Y.assert(Y.isConstant(T));
-        Y.assert(!Y.isConstant('-->'));
+        Y.assert(Y.isConstant('-->'));
         Y.assert(!Y.isConstant(equal(x, x)));
       },
 
       testIsDefined: function() {
-        Y.assert(!Y.isDefined('T'));
-        Y.assert(!Y.isDefined(T));
+        Y.assert(Y.isDefined('T'));
+        Y.assert(Y.isDefined(T));
         Y.assert(Y.isDefined('-->'));
 	Y.assert(Y.isDefined('forall'));
-        Y.assert(!Y.isDefined(equal(x, x)));
+	Y.assert(Y.isDefined(_var('forall')));
+        try {
+          Y.isDefined(equal(x, x));
+          Y.Assert.fail('Name not a variable or string');
+        } catch(e) {}
       },
 
+
+      // TYPES
+
+      testParseType: function() {
+        function check(expected, input) {
+          assertEqual(expected, Y.parseType(input));
+        }
+        check('i', 'i');
+        check('o', 'o');
+        check('R', 'R');
+        check('t12', 't12');
+        check('(o i)', 'o i');
+        check('i', '(i)');
+        check('((o R) R)', 'o R R');
+        check('((o i) i)', '(o i i)');
+        check('(o (o i))', 'o (o i)');
+      },
 
       // TYPE INFERENCE
 
@@ -396,8 +417,31 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('o', Y.findType(rules.axiom3()));
         assertEqual('o', Y.findType(rules.axiom4(Y.parse('({x. x} y)'))));
         assertEqual('o', Y.findType(rules.axiom5()));
+        function check(expected, expr) {
+          expr = (typeof expr == 'string') ? Y.parse(expr) : expr;
+          var type = Y.findType(expr);
+          // for debugging:
+          // Y.log(expected + '/' + type);
+          assertEqual(expected, type);
+        }
+        // Note that all the "> 0" conditions below force variables to
+        // be individual variables.
+        //
+        // From two reals to boolean:
+        check('((o i) i)', '{x. {y. x > y && y > 0}}');
+        // From set to boolean:
+        check('(o (o i))', '{x. x = {y. y > 0}}');
+        // From set to individual:
+        check('(i (o i))',
+              // Max of a set having at least one positive number.
+              '{p. the {x. p x && x > 0 && forall {y. p y --> x >= y}}}');
+        // From set and individual to boolean, note how the
+        // first argument type appears last when written out.
+        //         y  x
+        check('((o i) (o i))', '{x. {y. (x = (= y)) && (y > 0)}}');
+        check('((o i) (o i))', '{x. {y. (x = (> y)) && (y > 0)}}');
         // Successful typing of the identity function
-        assertEqual('o', Y.findType(Y.parse('({x. x} p) = p')));
+        check('o', '({x. x} p) = p');
         // An example where the type check in Rule R catches improper
         // use of types.
         var step1 = Y.parse('p (f g) --> p g').assert();
@@ -804,7 +848,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testP: function() {
         var inf = Y.rules.p(Y.parse('p x && (p x --> q x)'),
-                            Y.parse('P && (P --> Q) --> Q'));
+                            Y.parse('a && (a --> b) --> b'));
         assertEqual('(q x)', inf);
 
         // With hypotheses:
@@ -812,7 +856,7 @@ YUI({filter: null, insertBefore: 'styles'})
 	var step2 = Y.rules.assume('h x');
 	var step3 = Y.rules.modusPonens(step2, step1);
         var result = Y.rules.p(step3,
-                               Y.parse('P && (P --> Q) --> Q'));
+                               Y.parse('a && (a --> b) --> b'));
         assertEqual('((h x) --> (q x))', result);
         Y.assert(result.hasHyps);
       },

@@ -347,8 +347,8 @@ Expr.prototype.copyStep = function() {
 };
 
 /**
- * Finds and returns a Map of the free names in this expression, from
- * the name to "true".  Includes defined names, but not constants.
+ * Finds and returns a Map of free names in this expression, from name
+ * to true.
  */
 Expr.prototype.freeNames = function() {
   var byName = {};
@@ -357,18 +357,18 @@ Expr.prototype.freeNames = function() {
 };
 
 /**
- * Returns names of the free variables of the expression, but no
- * constants or defined names.
+ * Finds and returns a Map of the free variable names in this
+ * expression, from the name to "true".  Uses the fact that variables
+ * are distinguished from constants by their names.
  */
 Expr.prototype.freeVars = function() {
-  var names = this.freeNames();
-  var result = {};
-  for (var name in names) {
-    if (!isDefined(name)) {
-      result[name] = true;
+  var byName = this.freeNames();
+  for (var name in byName) {
+    if (isConstant(name)) {
+      delete byName[name];
     }
   }
-  return result;
+  return byName;
 };
 
 /**
@@ -753,9 +753,11 @@ function getHypMapKeys(map) {
 //
 // Tests whether all components of this expression and e2 are the same
 // except for names of bound variables.  Names of constants and free
-// variables must match in each component.  The bindings map from names
-// of variables bound in expressions containing this expression to
-// corresponding variable names of the expression containing e2.
+// variables must match in each component.  The bindings map from
+// names of variables bound in expressions containing this expression
+// to corresponding variable names of the expression containing e2.
+// Type of this and type of e2 and all corresponding components much
+// match, as determined by instanceof.
 //
 //
 // search(test, bindings)
@@ -823,8 +825,8 @@ function getHypMapKeys(map) {
 
 //// Var -- variable bindings and references
 
-//// A Var object can represent a variable (free or bound), a constant
-//// (see isConstant), or a defined name (see isDefined).
+//// A Var object can represent a variable (free or bound) or a
+//// constant (see isConstant).
 
 /**
  * Make a Var with the given name.  If a non-null integer position is given,
@@ -973,7 +975,7 @@ Var.prototype._matchAsSchema = function(expr, map) {
   // This method does not return true when matching a defined name with an
   // expression that matches its definition.  It is a stricter criterion than
   // would be treating definitions exactly as abbreviations.
-  if (Y.isConstant(this) || definitions[this.name]) {
+  if (Y.isConstant(this)) {
     // Expr must be a Var with the same name.
     return this.matches(expr);
   }
@@ -1730,10 +1732,18 @@ Path.prototype.concat = function(p) {
 
 var _counter = 1;
 
-function TypeVariable() {
-  this.id = _counter++;
+/**
+ * Type variable constructor.  The name is optional, 't' followed by
+ * digits if not given explicitly.  Names are currently required to
+ * begin with 't' when parsed.
+ */
+function TypeVariable(name) {
   this.instance = null;
-  this.name = '$' + this.id;
+  if (name) {
+    this.name = name;
+  } else {
+    this.name = 't' + _counter++;
+  }
 }
 
 TypeVariable.prototype.copy = function() {
@@ -1743,7 +1753,7 @@ TypeVariable.prototype.copy = function() {
   } else if (tp instanceof TypeOperator) {
     return tp.copy();
   } else {
-    throw new Error('Not a type expression: ' +tp);
+    throw new Error('Not a type expression: ' + tp);
   }
 }
 
@@ -1751,10 +1761,13 @@ TypeVariable.prototype.toString = function() {
   return this.instance ? this.instance.toString() : this.name;
 }
 
-
+/**
+ * TypeOperator constructor, types is an optional array of type
+ * parameters, if not given, then an empty array.
+ */
 function TypeOperator(name, types) {
   this.name = name;
-  this.types = types;
+  this.types = types || [];
 }
 
 TypeOperator.prototype.copy = function() {
@@ -1780,8 +1793,109 @@ function FunctionType(fromType, toType) {
 }
 Y.extend(FunctionType, TypeOperator);
 
-var individual = new TypeOperator('i', []);
-var boolean = new TypeOperator('o', []);
+FunctionType.prototype.copy = function() {
+  var list = [];
+  for (var i = 0; i < this.types.length; i++) {
+    list.push(this.types[i].copy());
+  }
+  return new FunctionType(this.name, list);
+};
+
+FunctionType.prototype.toString = function() {
+  return '(' + this.types[1] + ' ' + this.types[0] + ')';
+};
+
+var individual = new TypeOperator('i');
+var boolean = new TypeOperator('o');
+
+/**
+ * Parse a type string, returning a TypeOperator (type expression).
+ * Input can only be parenthesized sequences of "i", "o", a single
+ * upper case letter, or "t" followed by digits, with space as the
+ * separater.
+ */
+function parseType(input) {
+  var pattern = /[()io]/g;
+  // Tokens -- or whitespace -- or illegal stuff.
+  var tokens = /[()]|i|o|[A-Z]|t[0-9]+|( +)|([^ ()iotA-Z]+)/g;
+  var end = {name: '(end)', index: input.length};
+  // Returns a list of tokens as objects with properties 'name' and 'index'.
+  function tokenize(term) {
+    var match;
+    var result = [];
+    while (match = tokens.exec(input)) {
+      assert(!match[2], function() {
+          return 'Bad token in ' + input + ': ' + match[2];
+        });
+      if (match[1]) {
+        // Whitespace
+        continue;
+      }
+      var t = {name: match[0], index: match.index};
+      result.push(t);
+    }
+    return result;
+  }
+  var tokens = tokenize(input);
+
+  // Get next token, or "end" if no more, advancing past it.
+  function next() {
+    return tokens.shift() || end;
+  }
+    
+  // Return the next token without advancing, or "end" if there are no
+  // more.
+  function peek() {
+    return tokens[0] || end;
+  }
+
+  // Consume type expressions until EOF or close paren, returning
+  // a type or null if no input is consumed.
+  // Do not consume a final close paren.
+  function parse() {
+    var left = null;
+    for (var token = peek(); ; token = peek()) {
+      var name = token.name;
+      if (name === ')' || name === '(end)') {
+        return left;
+      }
+      // Consume the peeked token.
+      next();
+      switch(name) {
+      case '(':
+        var type = parse();
+        var tok = next();
+        name = tok.name;
+        assert(name === ')',
+               function() {
+                 return 'Unbalanced parens in ' + input + ' at: ' + name;
+               });
+        left = left ? new FunctionType(type, left) : type;
+        break;
+      case 'i':
+        left = left ? new FunctionType(individual, left) : individual;
+        break;
+      case 'o':
+        left = left ? new FunctionType(boolean, left) : boolean;
+        break;
+      default:
+        if (name.match(/^(t[0-9]+|[A-Z])$/)) {
+          var type = new TypeVariable(name);
+          left = left ? new FunctionType(type, left) : type;
+        } else {
+          assert(false, 'Unknown token in type term: "' + name + '"');
+        }
+      }
+    }
+    // End of input:
+    return left;
+  }
+
+  var result = parse();
+  assert(result, 'Empty input in type term: ' + input);
+  // assert(peek() != end, 'Excess input in type term: ' + input);
+  return result;
+}
 
 
 //// CONSTANTS AND DEFINITIONS
@@ -1798,18 +1912,38 @@ function equalityType() {
   return new FunctionType(v, new FunctionType(v, boolean));
 }
 
+function funType() {
+  var v = new TypeVariable();
+  return new FunctionType(v, v);
+}
+
+function fun2Type() {
+  var v = new TypeVariable();
+  return new FunctionType(v, new FunctionType(v, individual));
+}
+
 function theType() {
   var v = new TypeVariable();
   return new FunctionType(new FunctionType(v, boolean), v);
 }
 
-// TODO: Make definitions local to a proof or context of some sort
-// rather than per-page as they are here.
+// Types of _primitive_ constants only here.
 var constantTypes = {
   T: boolean,
   F: boolean,
   '=': equalityType(),
-  'the': theType()
+  'the': theType(),
+  '>': equalityType(),
+  '>=': equalityType(),
+  '<': equalityType(),
+  '<=': equalityType(),
+  '!=': equalityType(),
+  '+': fun2Type(),
+  '-': fun2Type(),
+  '*': fun2Type(),
+  '/': fun2Type(),
+  '**': fun2Type(),
+  'abs': funType()
 };
 
 // Types of operations defined by cases.
@@ -1823,38 +1957,27 @@ var definedTypes = {
 // Indexed by the name defined.  Value is an expression if
 // the definition is simple.  If by cases, the value is a
 // map from 'T' and 'F' to the definition for each case.
-var definitions = {};
+//
+// Primitive constants are here, but the definitions are truthy fakes.
+var definitions = {
+  T: true,
+  F: true,
+  '=': true,
+  the: true
+};
 
 /**
- * Return a true value iff the given expression is a Var and is a
- * constant.  Notice that names of constants are global.
+ * Return a true value iff the given expression is a Var with a name
+ * suitable for a constant.  Only names with a single lower-case
+ * letter and then a sequences of digits and/or underscores; or
+ * beginning with an underscore are true variables, the rest are
+ * considered constants whether defined or not.
  */
 function isConstant(name) {
   if (name instanceof Y.Var) {
     name = name.name;
   }
-  if (!(typeof name == 'string')) {
-    return false;
-  }
-  return constantTypes.hasOwnProperty(name);
-}
-
-/**
- * True iff name has a definition.  Defined names must not be bound
- * anywhere.  Rule R could then give incorrect results when replacing
- * terms in the scope of the binding.
- *
- * TODO: Implement the restriction, perhaps by reserving groups of
- * names for use as defined names.
- */
-function isDefined(name) {
-  if (name instanceof Y.Var) {
-    name = name.name;
-  }
-  if (!(typeof name == 'string')) {
-    return false;
-  }
-  return definitions.hasOwnProperty(name);
+  return (typeof name == 'string') ? !name.match(/^[a-z][0-9_]*$|^_/) : false;
 }
 
 /**
@@ -1862,11 +1985,15 @@ function isDefined(name) {
  * define('forall', equal(lambda(x, T))).
  */
 function define(name, definition) {
-  // TODO: Do something reasonable about situations where an existing proof
-  // or proof fragment already uses the name to be defined.
-  assert(!isDefined(name), 'Already defined: ' + name);
+  assert(definition instanceof Expr,
+         'Definition must be a term: ' + definition);
+  if (isDefined(name)) {
+    assert(definition.matches(getDefinition(name)),
+           'Already defined: ' + name);
+    // Benign redefinition, do nothing.
+    return;
+  }
   for (var n in definition.freeNames()) {
-    // Assumes constants do not appear in freeNames:
     assert(isDefined(n), 'Definition has free variables: ' + name);
   }
   definitions[name] = equal(name, definition);
@@ -1880,7 +2007,6 @@ function defineCases(name, ifTrue, ifFalse) {
   assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
   for (var n in ifTrue.freeNames()) {
     assert(isDefined(n), 'Definition has free variables: ' + name);
-    // Assumes constants do not appear in freeNames.
   }
   for (var n in ifFalse.freeNames()) {
     assert(isDefined(n), 'Definition has free variables: ' + name);
@@ -1890,11 +2016,34 @@ function defineCases(name, ifTrue, ifFalse) {
                        F: equal(call(name, F), ifFalse)};
 }
 
+/**
+ * Returns whether the name (or Var) currently has a definition, OR is
+ * a primitive constant.
+ *
+ * TODO: Consider renaming such as alreadyDefined, or reverse the
+ * sense and call it isUndefined, etc..
+ */
 function isDefined(name) {
+  if (name instanceof Y.Var) {
+    name = name.name;
+  }
+  assert(typeof name == 'string', function() {
+      return 'Non-string name: ' + name;
+    });
   return definitions.hasOwnProperty(name);
 }
 
+/**
+ * Returns whether the name (or Var) currently has a definition by
+ * cases.
+ */
 function isDefinedByCases(name) {
+  if (name instanceof Y.Var) {
+    name = name.name;
+  }
+  assert(typeof name == 'string', function() {
+      return 'Non-string name: ' + name;
+    });
   return (definitions.hasOwnProperty(name)
 	  && !!definitions[name].T);
 }
@@ -1943,8 +2092,12 @@ function getDefinition(name, tOrF) {
  * property.
  */
 function findType(expr) {
-  // At each index, types[i] will be the type of vars[i].
-  // The vars are names of variables.
+  // In this code types[i] will be the type of vars[i].
+  // The vars are names of variables.  Bound variables and their types
+  // are pushed onto the lists, and on exit from a scope the
+  // information is popped off the lists.  Type lookups search from
+  // the end toward the beginning thus finding the type of the
+  // variable visible in the current scope.
   var vars = [];
   var types = [];
   // A list of TypeVariable objects that are not generic in the
@@ -1996,7 +2149,7 @@ function findType(expr) {
         return fresh(type);
       }
     }
-    if (isConstant(name) || isDefined(name)) {
+    if (isConstant(name)) {
       return fresh(lookupType(name));
     } else {
       // Free variable: not constant, not defined.
@@ -2043,8 +2196,13 @@ function findType(expr) {
         for (var i = 0; i < ptypes.length; i++) {
           freshTypes.push(fresh1(ptypes[i]));
         }
-        // Implementation note: this does not specialize for FunctionType.
-        return new TypeOperator(type.name, freshTypes);
+        if (type instanceof FunctionType) {
+          return new FunctionType(freshTypes[0], freshTypes[1]);
+        } else {
+          // Implementation note: this does not specialize by type.
+          // TODO: Make "fresh" into a method.
+          return new TypeOperator(type.name, freshTypes);
+        }
       } else {
         throw new Error('Bad type: ' + type);
       }
@@ -2058,7 +2216,7 @@ function findType(expr) {
    * not fresh.
    */
   function lookupType(name) {
-    if (constantTypes[name]) {
+    if (constantTypes.hasOwnProperty(name)) {
       return constantTypes[name];
     } else if (isDefinedByCases(name)) {
       return definedTypes[name];
@@ -2180,7 +2338,7 @@ function parse(tokens) {
    * are no more.
    */
   function next() {
-    return tokens.length ? tokens.shift() : end;
+    return tokens.shift() || end;
   }
 
   /**
@@ -2192,7 +2350,7 @@ function parse(tokens) {
   }
 
   /**
-   * Consumes the next token as returned by end(), throwing an Error
+   * Consumes the next token as returned by next(), throwing an Error
    * if it is not euqal to the one expected.
    */
   function expect(expected) {
@@ -2629,6 +2787,7 @@ Y.individual = individual;
 Y.TypeVariable = TypeVariable;
 Y.TypeOperator = TypeOperator;
 Y.FunctionType = FunctionType;
+Y.parseType = parseType;
 Y.findType = findType;
 
 // For testing:
