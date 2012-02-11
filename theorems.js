@@ -1701,7 +1701,7 @@ var ruleInfo = {
 	  var step2 = rules.modusPonens(step, step1);
 	  // Simplify (h1 && h2) --> p
 	  var step3 = rules.eqSelf(step2.locate('/left'));
-	  var step4 = rules.mergeConj(step3, Y.sourceStepLess);
+	  var step4 = rules.mergeConjunctions(step3);
 	  var step5 = rules.r(step4, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  var result =
@@ -1759,7 +1759,7 @@ var ruleInfo = {
 	  var step2 = rules.modusPonens(step, step1);
 	  // Simplify (h1 && h2) --> p
 	  var step3 = rules.eqSelf(step2.locate('/left'));
-	  var step4 = rules.mergeConj(step3, Y.sourceStepLess);
+	  var step4 = rules.mergeConjunctions(step3);
 	  var step5 = rules.r(step4, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  var result =
@@ -1803,7 +1803,7 @@ var ruleInfo = {
     inputs: {term: 1, equation: 2},
     form: ('From equation <input name=equation> derive an instance '
            + 'with term <input name=term> as its left side.'),
-    hint: 'Generate an equation to simply an expression.'
+    hint: 'Instantiate an equation so its LHS equals an expression.'
   },
 
   // A chain of conjuncts (or other binary operator) is an
@@ -1918,12 +1918,10 @@ var ruleInfo = {
     },
   },
 
-  mergeConjDemo: {
+  mergeConjunctions: {
     action: function(eqn) {
-      function less(a, b) {
-        return a.toString() < b.toString();
-      }
-      return rules.mergeConj(eqn, less);
+      var result = rules.mergeConj(eqn, Y.sourceStepLess);
+      return result.justify('mergeConjunctions', arguments, [eqn]);
     },
     inputs: {equation: 1},
     form: ('Step with conjunctive RHS: <input name=equation>'),
@@ -1983,6 +1981,98 @@ var ruleInfo = {
     form: '',
     comment: 'Transitivity of equality'
   },
+
+  //
+  // Real numbers
+  // 
+
+  axiomCommutativePlus: {
+    action: function() {
+      return Y.parse('x + y = y + x')
+	.justify('axiomCommutativePlus');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Commutativity of addition'
+  },
+
+  axiomAssociativePlus: {
+    action: function() {
+      return Y.parse('x + (y + z) = (x + y) + z')
+	.justify('axiomAssociativePlus');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Associativity of addition'
+  },
+
+  axiomCommutativeTimes: {
+    action: function() {
+      return Y.parse('x * y = y * x')
+	.justify('axiomCommutativeTimes');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Commutativity of multiplication'
+  },
+
+  axiomAssociativeTimes: {
+    action: function() {
+      return Y.parse('x * (y * z) = (x * y) * z')
+	.justify('axiomAssociativeTimes');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Associativity of multiplication'
+  },
+
+  axiomDistributivity: {
+    action: function() {
+      return Y.parse('x * (y + z) = x * y + x * z')
+	.justify('axiomDistributivity');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Distributivity of multiplication over addition'
+  },
+
+  axiomZeroPlus: {
+    action: function() {
+      return Y.parse('x + 0 = x').justify('axiomZeroPlus');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Zero is the additive identity'
+  },
+
+  axiomOneTimes: {
+    action: function() {
+      return Y.parse('x * 1 = x').justify('axiomOneTimes');
+    },
+    inputs: {},
+    form: '',
+    comment: 'One is the multiplicative identity'
+  },
+
+  axiomNeg: {
+    action: function() {
+      return Y.parse('x + neg x = 0').justify('axiomNeg');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Negation is the inverse of addition'
+  },
+
+  axiomReciprocal: {
+    action: function() {
+      return Y.parse('not (x = 0) --> x * recip x = 1')
+	.justify('axiomReciprocal');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Reciprocal is the inverse of multiplication'
+  },
+
 
   //
   // OPTIONAL/UNUSED

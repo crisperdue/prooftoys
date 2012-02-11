@@ -365,6 +365,15 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       level: 1
     },
 
+    makeConjunction: {
+      args: function() {
+        var step1 = Y.rules.assume('p T');
+        var step2 = Y.rules.assume('p F');
+        return [step1, step2];
+      },
+      level: 1
+    },
+
     cases: {
       args: function() {
         var step1 = Y.rules.assume('p T');

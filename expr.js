@@ -1943,7 +1943,9 @@ var constantTypes = {
   '*': fun2Type(),
   '/': fun2Type(),
   '**': fun2Type(),
-  'sqrt': funType(),
+  neg: funType(),
+  recip: funType(),
+  sqrt: funType(),
   // Absolute value
   abs: funType(),
   // Reciprocal
