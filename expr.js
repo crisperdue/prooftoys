@@ -1919,7 +1919,7 @@ function funType() {
 
 function fun2Type() {
   var v = new TypeVariable();
-  return new FunctionType(v, new FunctionType(v, individual));
+  return new FunctionType(v, new FunctionType(v, v));
 }
 
 function theType() {
@@ -1932,7 +1932,9 @@ var constantTypes = {
   T: boolean,
   F: boolean,
   '=': equalityType(),
-  'the': theType(),
+  the: theType(),
+  // The real numbers.
+  R: new FunctionType(individual, boolean),
   '>': equalityType(),
   '>=': equalityType(),
   '<': equalityType(),

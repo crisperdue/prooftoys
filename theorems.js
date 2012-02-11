@@ -1988,7 +1988,7 @@ var ruleInfo = {
 
   axiomCommutativePlus: {
     action: function() {
-      return Y.parse('x + y = y + x')
+      return Y.parse('R x && R y --> x + y = y + x')
 	.justify('axiomCommutativePlus');
     },
     inputs: {},
@@ -1998,7 +1998,7 @@ var ruleInfo = {
 
   axiomAssociativePlus: {
     action: function() {
-      return Y.parse('x + (y + z) = (x + y) + z')
+      return Y.parse('R x && R y && R z --> x + (y + z) = (x + y) + z')
 	.justify('axiomAssociativePlus');
     },
     inputs: {},
@@ -2008,7 +2008,7 @@ var ruleInfo = {
 
   axiomCommutativeTimes: {
     action: function() {
-      return Y.parse('x * y = y * x')
+      return Y.parse('R x && R y --> x * y = y * x')
 	.justify('axiomCommutativeTimes');
     },
     inputs: {},
@@ -2018,7 +2018,7 @@ var ruleInfo = {
 
   axiomAssociativeTimes: {
     action: function() {
-      return Y.parse('x * (y * z) = (x * y) * z')
+      return Y.parse('R x && R y && R z --> x * (y * z) = (x * y) * z')
 	.justify('axiomAssociativeTimes');
     },
     inputs: {},
@@ -2028,7 +2028,7 @@ var ruleInfo = {
 
   axiomDistributivity: {
     action: function() {
-      return Y.parse('x * (y + z) = x * y + x * z')
+      return Y.parse('R x && R y && R z --> x * (y + z) = x * y + x * z')
 	.justify('axiomDistributivity');
     },
     inputs: {},
@@ -2038,7 +2038,7 @@ var ruleInfo = {
 
   axiomZeroPlus: {
     action: function() {
-      return Y.parse('x + 0 = x').justify('axiomZeroPlus');
+      return Y.parse('R x --> x + 0 = x').justify('axiomZeroPlus');
     },
     inputs: {},
     form: '',
@@ -2047,7 +2047,7 @@ var ruleInfo = {
 
   axiomOneTimes: {
     action: function() {
-      return Y.parse('x * 1 = x').justify('axiomOneTimes');
+      return Y.parse('R x --> x * 1 = x').justify('axiomOneTimes');
     },
     inputs: {},
     form: '',
@@ -2056,7 +2056,7 @@ var ruleInfo = {
 
   axiomNeg: {
     action: function() {
-      return Y.parse('x + neg x = 0').justify('axiomNeg');
+      return Y.parse('R x --> x + neg x = 0').justify('axiomNeg');
     },
     inputs: {},
     form: '',
@@ -2065,7 +2065,7 @@ var ruleInfo = {
 
   axiomReciprocal: {
     action: function() {
-      return Y.parse('not (x = 0) --> x * recip x = 1')
+      return Y.parse('R x && not (x = 0) --> x * recip x = 1')
 	.justify('axiomReciprocal');
     },
     inputs: {},
