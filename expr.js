@@ -1943,7 +1943,23 @@ var constantTypes = {
   '*': fun2Type(),
   '/': fun2Type(),
   '**': fun2Type(),
-  'abs': funType()
+  'sqrt': funType(),
+  // Absolute value
+  abs: funType(),
+  // Reciprocal
+  recip: funType(),
+  // Trigonometry:
+  pi: individual,
+  sin: funType(),
+  cos: funType(),
+  tan: funType(),
+  arcsin: funType(),
+  arccos: funType(),
+  arctan: funType(),
+  // Exponentials
+  ee: individual,               // "e"
+  ln: funType(),
+  log10: funType()
 };
 
 // Types of operations defined by cases.
