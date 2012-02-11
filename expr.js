@@ -2344,12 +2344,18 @@ function tokenize(str) {
   return result;
 }
 
+// Map from input strings to their parsed values.  Used for
+// memoization of user inputs.
+var _parsed = {};
+
 /**
  * Parses a string or array of token strings into an expression
  * (Expr).  Removes tokens parsed from the tokens list.  Throws an
  * Error if parsing fails.
  */
-function parse(tokens) {
+function parse(input) {
+
+  var tokens = input;
 
   /**
    * Consumes and returns the next token, or the end token if there
@@ -2442,8 +2448,11 @@ function parse(tokens) {
 
   // Do the parse!
 
-  if (typeof tokens == 'string') {
-    tokens = tokenize(tokens);
+  if (typeof input == 'string') {
+    if (_parsed.hasOwnProperty(input)) {
+      return _parsed[input];
+    }
+    tokens = tokenize(input);
   }
   // The ending token.
   var end = tokens.pop();
@@ -2452,7 +2461,19 @@ function parse(tokens) {
     throw new Error('No parser input');
   }
   var result = parseAbove(0);
+  if (typeof input == 'string') {
+    _parsed[input] = result;
+  }
   return result;
+}
+
+/**
+ * Returns the number of entries in the parser lookup table.
+ */
+function nParsed() {
+  var i = 0;
+  for (var key in _parsed) { i++; }
+  return i;
 };
 
 /**
@@ -2816,5 +2837,8 @@ Y.tokenize = tokenize;
 Y.parse = parse;
 
 Y.Expr.utils = utils;
+
+// For debugging
+Y.nParsed = nParsed;
 
 }, '0.1', {requires: ['node', 'array-extras']});
