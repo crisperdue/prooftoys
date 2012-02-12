@@ -245,7 +245,7 @@ Expr.prototype.toString = function() {
  * internally of the form ((op arg1) arg2), where op is a symbol
  * defined to display as infix.
  */
-Expr.prototype.isInfixCall = function(expr) {
+Expr.prototype.isInfixCall = function() {
   return (this instanceof Call
           && this.fn instanceof Call
           && this.fn.fn instanceof Var
@@ -833,15 +833,19 @@ function getHypMapKeys(map) {
  * use it to record the index in the input stream.  If the given name
  * is in the "aliases" map, the given name becomes the Var's pname,
  * and the Var's name becomes the value of the alias.  Pnames affect
- * only parsing and display, not the logic itself.
+ * only parsing and display, not the logic itself.  If the name
+ * represents an integer, sets the "value" property to that integer.
  */
 function Var(name, position) {
   this.sort = Expr.var;
   if (aliases.hasOwnProperty(name)) {
-      this.pname = name;
-      this.name = aliases[name];
+    this.pname = name;
+    this.name = aliases[name];
   } else {
     this.name = name;
+    if (name.match(/^-?[0-9]+/)) {
+      this.value = parseInt(name);
+    }
   }
   if (position != null) {
     this.pos = position;
@@ -2001,6 +2005,32 @@ function isConstant(name) {
 }
 
 /**
+ * Check that the given value is numeric, raise an error if not,
+ * return the value if it is.
+ */
+function checkNumber(number) {
+  assert(typeof number === 'number', function() {
+      return 'Not a number: ' + number;
+    });
+  return number;
+}
+
+// JavaScript is defined to use IEEE 64-bit floating point in "round
+// to nearest" mode.  2**53 is confusable with 2**53 + 1, so this is
+// the greatest integer value we "allow".
+var MAX_INT = Math.pow(2, 53) - 1;
+
+/**
+ * Check that the given number is within the range where integer
+ * arithmetic is exact, returning it if so, raising an Error if not.
+ */
+function checkRange(number) {
+  assert(Math.abs(number) <= MAX_INT,
+         function() { return 'Number out of range: ' + number; });
+  return number;
+}
+
+/**
  * Add a simple abbreviation-like definition, e.g.
  * define('forall', equal(lambda(x, T))).
  */
@@ -2487,21 +2517,23 @@ function isId(token) {
 }
 
 /**
- * Is it an identifier or constant?  Currently Id or number as digits.
+ * Is it an identifier or constant?  Currently Id or number as digits
+ * with optional leading "-".
  */
 function isIdOrConstant(token) {
   return token instanceof Y.Var
-    && !!token.name.match(/^[A-Za-z0-9$]+$/);
+    && !!token.name.match(/^-?[A-Za-z0-9$]+$/);
 }
 
 /**
  * Get a precedence value: null for symbols, defaults to 100 for
  * unknown non-symbols, greater than the usual math operators but less
  * than identifiers (i.e. ordinary function calls).
+ *
+ * Infix operators have precedence 0 < p < 1000.
  */
 function getPrecedence(token) {
   var name = token.pname || token.name;
-  var v = precedence[name];
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
@@ -2574,8 +2606,8 @@ function infixCall(arg1, op, arg2) {
  */
 function isInfixDesired(vbl) {
   var name = vbl.pname || vbl.name;
-  // TODO: Coordinate with isId, etc.
-  return name.match(/^[^A-Za-z$:]+$/);
+  var p = getPrecedence(vbl);
+  return typeof p == 'number' && 0 < p && p < 1000;
 }
 
 /**
@@ -2807,6 +2839,8 @@ Y.getDefinition = getDefinition;
 Y.definitions = definitions;
 
 Y.isConstant = isConstant;
+Y.checkNumber = checkNumber;
+Y.checkRange = checkRange;
 Y.isDefined = isDefined;
 
 Y.getStepCounter = getStepCounter;
