@@ -343,6 +343,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(a + (b * c))', result);
         result = Y.parse('a --> a && c');
         assertEqual('(a --> (a && c))', result);
+        // Numbers
+        assertEqual(42, Y.parse('42').value);
+        var expr = Y.parse('x + 103');
+        assertEqual(103, expr.getRight().value);
+        assertEqual(undefined, expr.getLeft().value);
       },
 
 
@@ -354,6 +359,25 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(a == b)', parse('a == b'));
         // Aliases should not affect meanings of expressions.
         Y.assert(parse('a == b').matches(parse('a = b')));
+      },
+
+
+      // UTILITIES
+
+      testCheckNumber: function() {
+        assertEqual(42, Y.checkNumber(42));
+        try {
+          Y.checkNumber('42');
+          Y.Assert.fail('Should throw');
+        } catch(e) {}
+      },
+
+      testCheckRange: function() {
+        assertEqual(42, Y.checkRange(42));
+        try {
+          Y.checkRange(-Math.pow(2, 53));
+          Y.Assert.Fail('Should throw');
+        } catch(e) {}
       },
 
 
@@ -482,6 +506,30 @@ YUI({filter: null, insertBefore: 'styles'})
                     Y.rules.axiom3());
         assertEqual('((the (y =)) = y)',
                     Y.rules.axiom5());
+      },
+
+      testAxiomArithmetic: function() {
+        function check(expected, expr) {
+          if (typeof expr == 'string') {
+            expr = Y.parse(expr);
+          }
+          var result = Y.rules.axiomArithmetic(expr);
+          // Y.log(result);
+          assertEqual(expected, result);
+        }
+        var neg5 = Y.rules.axiomArithmetic(Y.parse('neg 5')).getRight();
+        check('((2 + 2) = 4)', '2 + 2');
+        check('((5 * 4) = 20)', '5 * 4');
+        check('((5 - 4) = 1)', '5 - 4');
+        check('((5 / 4) = 1)', '5 / 4');
+        check('((neg 5) = -5)', 'neg 5');
+        check('((-5 / 4) = -1)', Y.infixCall(neg5, '/', _var('4')));
+        check('((4 / -5) = 0)', Y.infixCall(_var('4'), '/', neg5));
+        check('((-5 / -5) = 1)', Y.infixCall(neg5, '/', neg5));
+        check('((5 > 4) = T)', '5 > 4');
+        check('((5 >= 4) = T)', '5 >= 4');
+        check('((5 < 4) = F)', '5 < 4');
+        check('((5 <= 4) = F)', '5 <= 4');
       },
 
       testAsHypotheses: function() {

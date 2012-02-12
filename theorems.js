@@ -2073,6 +2073,60 @@ var ruleInfo = {
     comment: 'Reciprocal is the inverse of multiplication'
   },
 
+  axiomArithmetic: {
+    action: function(term) {
+      if (term.isInfixCall()) {
+	var left = Y.checkNumber(term.getLeft().value);
+	var right = Y.checkNumber(term.getRight().value);
+	var op = term.getBinOp().name;
+	var value;
+	switch(op) {
+        case '+': value = left + right; break;
+        case '*': value = left * right; break;
+        case '-': value = left - right; break;
+        case '/':
+	  value = Math.floor(left / right);
+	  if (value < 0) {
+            value = -Math.floor(-left / right);
+          }
+          break;
+        case '>': value = left > right; break;
+        case '>=': value = left >= right; break;
+        case '<': value = left < right; break;
+        case '<=': value = left <= right; break;
+        default:
+          assert(false, 'Not an arithmetic operator: ' + op);
+	}
+        if (typeof value == 'boolean') {
+          var rhs = value ? T : F;
+        } else {
+          var value = Y.checkRange(value);
+          var rhs = new Y.Var(value.toFixed(0));
+        }
+        return Y.infixCall(term, '=', rhs)
+          .justify('axiomArithmetic', arguments);
+      } else if (term instanceof Y.Call) {
+        var arg = Y.checkNumber(term.arg.value);
+        var op = term.fn;
+        assert(op instanceof Y.Var,
+               function() { return 'Not an arithmetic operator: ' + op; });
+        if (op.name == 'neg') {
+          value = -arg;
+          var rhs = new Y.Var(value.toFixed(0));
+          return Y.infixCall(term, '=', rhs)
+            .justify('axiomArithmetic', arguments);
+        } else {
+          assert(false, 'Not an arithmetic expression: ' + term);
+        }
+      } else {
+	assert(false, 'Not an arithmetic expression: ' + term);
+      }
+    },
+    inputs: {term: 1},
+    form: '',
+    comment: 'Evaluate an expression that adds two integers'
+  },
+
 
   //
   // OPTIONAL/UNUSED
