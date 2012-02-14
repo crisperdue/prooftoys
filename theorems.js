@@ -2070,11 +2070,51 @@ var ruleInfo = {
   axiomReciprocal: {
     action: function() {
       return Y.parse('R x --> (not (x = 0) --> x * recip x = 1)')
-	.justify('axiomReciprocal');
+        .justify('axiomReciprocal');
     },
     inputs: {},
     form: '',
     comment: 'Reciprocal is the inverse of multiplication'
+  },
+
+  plusType: {
+    action: function() {
+      return Y.parse('R y --> (R x --> R (x + y))')
+	.justify('plusType');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Reals are closed under addition'
+  },
+
+  timesType: {
+    action: function() {
+      return Y.parse('R y --> (R x --> R (x * y))')
+	.justify('plusType');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Reals are closed under multiplication'
+  },
+
+  negType: {
+    action: function() {
+      return Y.parse('R x --> R (neg x)')
+	.justify('plusType');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Reals are closed under negation'
+  },
+
+  reciprocalType: {
+    action: function() {
+      return Y.parse('not (x = 0) --> (R x --> R recip x)')
+	.justify('plusType');
+    },
+    inputs: {},
+    form: '',
+    comment: 'Reals are (almost) closed under reciprocal'
   },
 
   axiomArithmetic: {
@@ -2131,6 +2171,16 @@ var ruleInfo = {
     comment: 'Evaluate an expression that adds two integers'
   },
 
+  // TODO: complete this.
+  extractHypothesis: {
+    action: function(term) {
+      
+    },
+    inputs: {term: 1},
+    form: 'Hypothesis extract: <input name=term>',
+    comment: ('From H |- A derive H |- Hk --> A '
+	      + 'where Hk is one of the hypotheses')
+  },
 
   //
   // OPTIONAL/UNUSED
