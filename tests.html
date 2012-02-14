@@ -728,6 +728,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(p (f x))', result);
 
         // Hypotheses
+        // TODO: Make this really test with hypotheses.
         var step1 = Y.rules.axiom('axiom2');
         result = Y.rules.instVar(step1, call(p, x), x);
       },
@@ -741,6 +742,7 @@ YUI({filter: null, insertBefore: 'styles'})
                     result);
 
         // Hypotheses
+        // TODO: Make this really test with hypotheses.
         var step = Y.rules.axiom('axiom2');
         var map2 = {x: call(p, x),
                     y: call(p, y)};

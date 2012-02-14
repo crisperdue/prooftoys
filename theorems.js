@@ -536,14 +536,9 @@ var ruleInfo = {
    */
   bindEqn: {
     action: function(h_eqn, v) {
+      v = Y.varify(v);
       var eqn = h_eqn.unHyp();
-      if (typeof v == 'string') {
-        v = new Y.Var(v);
-      }
-      assert(eqn.isBinOp() && eqn.getBinOp() == '=',
-             'Not an equation: ' + eqn,
-             h_eqn);
-      assert(v instanceof Y.Var, 'Not a variable: ' + v, h_eqn);
+      eqn.assertCall2('=');
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
       var step2 = rules.replace(h_eqn, step1, '/right/body');
       return step2.justify('bindEqn', arguments, [h_eqn]);
@@ -929,7 +924,8 @@ var ruleInfo = {
       return step3.justify('addForall', arguments, [h_a]);
     },
     inputs: {step: 1, varName: 2},
-    form: ('In step <input name=step> generalize on variable <input name=varName>'),
+    form: ('In step <input name=step> generalize on variable '
+           + '<input name=varName>'),
     hint: 'from A to (forall {x. A})',
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.')
@@ -959,16 +955,21 @@ var ruleInfo = {
   instMultiVars: {
     action: function(b, map) {
       var namesReversed = [];
-      var step = b;
+      var isEqn = b.unHyp().isCall2('=');
+      var step = isEqn ? b : rules.toTIsA(b);
       for (var name in map) {
-	// Note that addForall checks that the name is not free.
-	step = rules.addForall(step, name);
+        step = rules.bindEqn(step, name);
 	namesReversed.unshift(name);
       }
       // Then substitute for the renamed variables.
       Y.Array.each(namesReversed, function(name) {
-        step = rules.instForall(step, map[name]);
-      });
+          var step2 = rules.applyBoth(step, map[name]);
+          var step3 = rules.apply(step2, '/right');
+          step = rules.apply(step3, '/left');
+        });
+      if (!isEqn) {
+        step = rules.fromTIsA(step);
+      }
       return step.justify('instMultiVars', arguments, [b]);
     },
     inputs: {step: 1},
