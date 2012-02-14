@@ -249,6 +249,18 @@ input.sted-input {
   width: 80%;
 }
 
+/* Inputs for rule arguments */
+
+input.term, input.string, input.funcall {
+  font-family: monospace;
+  width: 30em;
+}
+
+input.varName, input.step, input.equation, input.implication {
+  font-family: monospace;
+  width: 4em;
+}
+
 /* Autocompleter */
 .yui3-aclist {
   font-size: 80%;
