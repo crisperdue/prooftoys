@@ -100,7 +100,7 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.Assert.areEqual(true, 1);
       },
 
-      // Tests for expr.js.
+      // Tests for subtypes of Expr
 
       testVar: function() {
         assertEqual('x', x.toString());
@@ -121,6 +121,44 @@ YUI({filter: null, insertBefore: 'styles'})
 
         assertEqual('{x. (f x)}', lambda(x, call(f, x)));
       },
+
+      // PARSER
+
+      testTokenize: function() {
+        var result = Y.tokenize('a');
+        assertEqual('a,(end)', result);
+        result = Y.tokenize('(a > b)');
+        assertEqual('(,a,>,b,),(end)', result);
+        result = Y.tokenize('{x.x}');
+        assertEqual('{,x,.,x,},(end)', result);
+        result = Y.tokenize('(=>x*)');
+        assertEqual('(,=>,x,*,),(end)', result);
+      },
+
+      testParse: function() {
+        var result = Y.parse('a');
+        assertEqual('a', result.dump());
+        result = Y.parse('(xx)');
+        assertEqual('xx', result.dump());
+        result = Y.parse('f x');
+        assertEqual('(f x)', result.dump());
+        result = Y.parse('not = (F =)');
+        assertEqual('((not =) (F =))', result.dump());
+        result = Y.parse('{x.x} T');
+        assertEqual('({x. x} T)', result);
+        result = Y.parse('a + b * c');
+        assertEqual('(a + (b * c))', result);
+        result = Y.parse('a --> a && c');
+        assertEqual('(a --> (a && c))', result);
+        // Numbers
+        assertEqual(42, Y.parse('42').value);
+        var expr = Y.parse('x + 103');
+        assertEqual(103, expr.getRight().value);
+        assertEqual(undefined, expr.getLeft().value);
+      },
+
+
+      // Operations on Exprs.
 
       testFreeNames: function() {
         var wff = lambda(x, call(f, x));
@@ -312,42 +350,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(x3 && x5)', Y.repeatedCall('&&', [3, 5]));
         assertEqual('((x3 && x5) && x19)',
                     Y.repeatedCall('&&', [3, 5, 19]));
-      },
-
-
-      // PARSER
-
-      testTokenize: function() {
-        var result = Y.tokenize('a');
-        assertEqual('a,(end)', result);
-        result = Y.tokenize('(a > b)');
-        assertEqual('(,a,>,b,),(end)', result);
-        result = Y.tokenize('{x.x}');
-        assertEqual('{,x,.,x,},(end)', result);
-        result = Y.tokenize('(=>x*)');
-        assertEqual('(,=>,x,*,),(end)', result);
-      },
-
-      testParse: function() {
-        var result = Y.parse('a');
-        assertEqual('a', result.dump());
-        result = Y.parse('(xx)');
-        assertEqual('xx', result.dump());
-        result = Y.parse('f x');
-        assertEqual('(f x)', result.dump());
-        result = Y.parse('not = (F =)');
-        assertEqual('((not =) (F =))', result.dump());
-        result = Y.parse('{x.x} T');
-        assertEqual('({x. x} T)', result);
-        result = Y.parse('a + b * c');
-        assertEqual('(a + (b * c))', result);
-        result = Y.parse('a --> a && c');
-        assertEqual('(a --> (a && c))', result);
-        // Numbers
-        assertEqual(42, Y.parse('42').value);
-        var expr = Y.parse('x + 103');
-        assertEqual(103, expr.getRight().value);
-        assertEqual(undefined, expr.getLeft().value);
       },
 
 
