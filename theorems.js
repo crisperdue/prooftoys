@@ -1986,10 +1986,13 @@ var ruleInfo = {
   //
   // Real numbers
   // 
+  // Assumptions (R x) && (R y), etc. are in the form:
+  // (A1 --> (A2 --> <equation>)) to simplify introducing them from
+  // the hypotheses.  This is equivalent to A1 && A2 --> <equation>.
 
   axiomCommutativePlus: {
     action: function() {
-      return Y.parse('R x && R y --> x + y = y + x')
+      return Y.parse('R y --> (R x --> x + y = y + x)')
 	.justify('axiomCommutativePlus');
     },
     inputs: {},
@@ -1999,7 +2002,7 @@ var ruleInfo = {
 
   axiomAssociativePlus: {
     action: function() {
-      return Y.parse('R x && R y && R z --> x + (y + z) = (x + y) + z')
+      return Y.parse('R z --> (R y --> (R x --> x + (y + z) = (x + y) + z))')
 	.justify('axiomAssociativePlus');
     },
     inputs: {},
@@ -2009,7 +2012,7 @@ var ruleInfo = {
 
   axiomCommutativeTimes: {
     action: function() {
-      return Y.parse('R x && R y --> x * y = y * x')
+      return Y.parse('R y --> (R x --> x * y = y * x)')
 	.justify('axiomCommutativeTimes');
     },
     inputs: {},
@@ -2019,7 +2022,7 @@ var ruleInfo = {
 
   axiomAssociativeTimes: {
     action: function() {
-      return Y.parse('R x && R y && R z --> x * (y * z) = (x * y) * z')
+      return Y.parse('R z --> (R y --> (R x --> x * (y * z) = (x * y) * z))')
 	.justify('axiomAssociativeTimes');
     },
     inputs: {},
@@ -2029,7 +2032,7 @@ var ruleInfo = {
 
   axiomDistributivity: {
     action: function() {
-      return Y.parse('R x && R y && R z --> x * (y + z) = x * y + x * z')
+      return Y.parse('R z --> (R y --> (R x --> x * (y + z) = x * y + x * z))')
 	.justify('axiomDistributivity');
     },
     inputs: {},
@@ -2066,7 +2069,7 @@ var ruleInfo = {
 
   axiomReciprocal: {
     action: function() {
-      return Y.parse('R x && not (x = 0) --> x * recip x = 1')
+      return Y.parse('R x --> (not (x = 0) --> x * recip x = 1)')
 	.justify('axiomReciprocal');
     },
     inputs: {},

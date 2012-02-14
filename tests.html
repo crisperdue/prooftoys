@@ -506,6 +506,16 @@ YUI({filter: null, insertBefore: 'styles'})
                     Y.rules.axiom3());
         assertEqual('((the (y =)) = y)',
                     Y.rules.axiom5());
+        // Real numbers.  Make sure parsing works.
+        Y.rules.axiomCommutativePlus();
+        Y.rules.axiomCommutativeTimes();
+        Y.rules.axiomAssociativePlus();
+        Y.rules.axiomAssociativeTimes();
+        Y.rules.axiomDistributivity();
+        Y.rules.axiomZeroPlus();
+        Y.rules.axiomOneTimes();
+        Y.rules.axiomNeg();
+        Y.rules.axiomReciprocal();
       },
 
       testAxiomArithmetic: function() {
