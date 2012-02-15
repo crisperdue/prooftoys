@@ -1956,6 +1956,10 @@ var ruleInfo = {
   // need only match one of the step's hypotheses.  Relies on the step
   // to have normalized (flattened) hypotheses.
   extractHypothesis: {
+    // TODO: Make a version that runs in much less than exponential
+    // time.  You can use the same tautology down to some depth and
+    // combine it with ones resembling (h && h1) = (h && h1 && h) to
+    // piece together larger tautologies.
     action: function(step, hyp) {
       var infix = Y.infixCall;
       assert(step.hasHyps, 'Step has no hypotheses');
