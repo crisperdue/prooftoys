@@ -323,6 +323,27 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(!Y.parse('x + 1').hasArgs(3));
       },
 
+      testHypExtractor: function() {
+        var rules = Y.rules;
+        function check(expected, step, hyp) {
+          assertEqual(expected, step.hypExtractor(hyp));
+        }
+        var h1 = rules.assume('R x');
+        var step1 = rules.modusPonens(h1, rules.axiomCommutativePlus());
+        var hyps1 = step1.getLeft();
+        check('h', hyps1, h1.getLeft());
+        var h2 = rules.assume('R y');
+        var step2 = rules.modusPonens(h2, step1);
+        var hyps2 = step2.getLeft();
+        check('(h && h1)', hyps2, h1.getLeft());
+        check('(h1 && h)', hyps2, h2.getLeft());
+        var h3 = rules.assume('p');
+        var step3 = rules.appendStepHyps(step2, h3);
+        var hyps3 = step3.getLeft();
+        check('((h && h2) && h1)', hyps3, h1.getLeft());
+        check('((h2 && h) && h1)', hyps3, h2.getLeft());
+      },
+
       testIsHypotheses: function() {
         var step1 = Y.rules.assume(Y.parse('p x'));
         Y.assert(step1.getLeft().isHypotheses());
@@ -1030,6 +1051,22 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(l = ((a && b) && c))', result);
       },
 
+      testExtractHypothesis: function() {
+        var rules = Y.rules;
+        var h1 = rules.assume('R x');
+        var h2 = rules.assume('R y');
+        var step = rules.axiomCommutativePlus();
+        var step1 = rules.modusPonens(h1, step);
+        var step2 = rules.modusPonens(h2, step1);
+        var expected =
+          '(((R x) && (R y)) --> ((R x) --> ((x + y) = (y + x))))';
+        var result = rules.extractHypothesis(step2, Y.parse('R x'));
+        assertEqual(expected, result);
+        expected =
+          '(((R x) && (R y)) --> ((R y) --> ((x + y) = (y + x))))';
+        result = rules.extractHypothesis(step2, Y.parse('R y'));
+        assertEqual(expected, result);
+      },
 
       // END OF RULES AND THEOREMS
 

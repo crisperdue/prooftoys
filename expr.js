@@ -613,19 +613,47 @@ Expr.prototype.isHypotheses = function() {
 };
 
 /**
- * Returns a map from step ordinal to hypotheses for all conjoined
- * hypotheses in this expression.
+ * In a flattened set of hypotheses h1 && h2 && ... hk, given an
+ * expression that matches one of the hypotheses in the set, builds
+ * an expression where "h" is in the position of the matched
+ * hypotheses, and the rest are labeled h1 ... h(k-1).  Helper
+ * for rules.extractHypothesis.
+ */
+Expr.prototype.hypExtractor = function(hyp) {
+  function extractor(self, depth) {
+    if (hyp.matches(self)) {
+      return new Y.Var('h');
+    } else if (self.sourceStep) {
+      return new Y.Var('h' + depth);
+    } else {
+      self.assertCall2('&&');
+      var left = extractor(self.getLeft(), depth + 1);
+      var right = extractor(self.getRight(), depth + 1);
+      // The numbering scheme assumes only one numbered variable,
+      // e.g. h1, h2 at each level -- the hyps are "flattened".
+      assert(right instanceof Var, function() {
+          return 'Internal error, not a Var: ' + right;
+        });
+      return new Y.infixCall(left, '&&', right);
+    }
+  }
+  return extractor(this, 0);
+};
+
+/**
+ * Returns a map from step ordinal to hypothesis for all conjoined
+ * hypotheses in this expression.  TODO: Test me.
  */
 Expr.prototype.hypsBySource = function() {
   // The hypotheses are the conjuncts at all level that have a
   // sourceStep property.
   var map = {};
   function search(expr) {
-    if (this.sourceStep && this.sourceStep.ordinal) {
-      map[this.sourceStep.ordinal] = this;
-    } else if (this.isCall2('&&')) {
-      search(this.getLeft());
-      search(this.getRight());
+    if (expr.sourceStep && expr.sourceStep.ordinal) {
+      map[expr.sourceStep.ordinal] = expr;
+    } else if (expr.isCall2('&&')) {
+      search(expr.getLeft());
+      search(expr.getRight());
     }
   }
   search(this);

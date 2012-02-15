@@ -1948,8 +1948,32 @@ var ruleInfo = {
       }
     },
     inputs: {step: 1},
-    form: ('Normalize a conjunction <input name=step>'),
+    // form: ('Normalize a conjunction <input name=step>'),
     hint: 'Normalize a conjunction of normalized conjunctions'
+  },
+
+  // Extract the given hypothesis from the given step.  The hypothesis
+  // need only match one of the step's hypotheses.  Relies on the step
+  // to have normalized (flattened) hypotheses.
+  extractHypothesis: {
+    action: function(step, hyp) {
+      var infix = Y.infixCall;
+      assert(step.hasHyps, 'Step has no hypotheses');
+      var lhs = step.getLeft().hypExtractor(hyp);
+      var a = Y.varify('a');
+      var taut = infix(infix(lhs, '-->', a),
+		       '-->',
+		       infix(lhs,
+			     '-->',
+			     infix(Y.varify('h'), '-->', a)));
+      var step1 = rules.asImplication(step);
+      var step2 = rules.p(step1, taut);
+      var result = rules.asHypotheses(step2);
+      return result.justify('extractHypothesis', arguments, [step]);
+    },
+    inputs: {step: 1, term: 2},
+    form: ('Extract hypothesis <input name=term> from step <input name=step>'),
+    comment: 'Find and extract a hypothesis from a step.'
   },
 
   equalitySymmetric: {
@@ -1992,7 +2016,7 @@ var ruleInfo = {
 
   axiomCommutativePlus: {
     action: function() {
-      return Y.parse('R y --> (R x --> x + y = y + x)')
+      return Y.parse('R x --> (R y --> x + y = y + x)')
 	.justify('axiomCommutativePlus');
     },
     inputs: {},
@@ -2002,7 +2026,7 @@ var ruleInfo = {
 
   axiomAssociativePlus: {
     action: function() {
-      return Y.parse('R z --> (R y --> (R x --> x + (y + z) = (x + y) + z))')
+      return Y.parse('R x --> (R y --> (R z --> x + (y + z) = (x + y) + z))')
 	.justify('axiomAssociativePlus');
     },
     inputs: {},
@@ -2012,7 +2036,7 @@ var ruleInfo = {
 
   axiomCommutativeTimes: {
     action: function() {
-      return Y.parse('R y --> (R x --> x * y = y * x)')
+      return Y.parse('R x --> (R y --> x * y = y * x)')
 	.justify('axiomCommutativeTimes');
     },
     inputs: {},
@@ -2022,7 +2046,7 @@ var ruleInfo = {
 
   axiomAssociativeTimes: {
     action: function() {
-      return Y.parse('R z --> (R y --> (R x --> x * (y * z) = (x * y) * z))')
+      return Y.parse('R x --> (R y --> (R z --> x * (y * z) = (x * y) * z))')
 	.justify('axiomAssociativeTimes');
     },
     inputs: {},
@@ -2032,7 +2056,7 @@ var ruleInfo = {
 
   axiomDistributivity: {
     action: function() {
-      return Y.parse('R z --> (R y --> (R x --> x * (y + z) = x * y + x * z))')
+      return Y.parse('R x --> (R y --> (R z --> x * (y + z) = x * y + x * z))')
 	.justify('axiomDistributivity');
     },
     inputs: {},
@@ -2079,7 +2103,7 @@ var ruleInfo = {
 
   plusType: {
     action: function() {
-      return Y.parse('R y --> (R x --> R (x + y))')
+      return Y.parse('R x --> (R y --> R (x + y))')
 	.justify('plusType');
     },
     inputs: {},
@@ -2089,7 +2113,7 @@ var ruleInfo = {
 
   timesType: {
     action: function() {
-      return Y.parse('R y --> (R x --> R (x * y))')
+      return Y.parse('R x --> (R y --> R (x * y))')
 	.justify('plusType');
     },
     inputs: {},
@@ -2171,16 +2195,6 @@ var ruleInfo = {
     comment: 'Evaluate an expression that adds two integers'
   },
 
-  // TODO: complete this.
-  extractHypothesis: {
-    action: function(term) {
-      
-    },
-    inputs: {term: 1},
-    form: 'Hypothesis extract: <input name=term>',
-    comment: ('From H |- A derive H |- Hk --> A '
-	      + 'where Hk is one of the hypotheses')
-  },
 
   //
   // OPTIONAL/UNUSED
