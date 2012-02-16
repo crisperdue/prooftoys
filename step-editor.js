@@ -73,7 +73,6 @@ var siteTypes = {
   reducible: true
 };
 
-
 /**
  * A ProofControl can have only one StepEditor.  It appears at the end
  * of an editable proof.
@@ -81,8 +80,13 @@ var siteTypes = {
  * TODO: Support essential step editing such as justification of an assumed
  * step, for steps that already exist.  Also rearranging proofs.
  *
- * Fields: node, input, form, completer,
- * controller.
+ * Fields:
+ * node: DIV with the step editor's HTML.
+ * input: INPUT field for the autocompleter.
+ * ruleName: name of currently-selected rule, or null if none.
+ * form: SPAN to hold the argument input form.
+ * completer: AutoCompleter control.
+ * controller: ProofControl.
  */
 function StepEditor(controller) {
   var self = this;
@@ -97,6 +101,7 @@ function StepEditor(controller) {
   this.node = div;
   this.input = div.one('.sted-input');
   this.form = div.one('.sted-form');
+  this.ruleName = null;
   // Make the input field into an autocompleter.
   this.completer = this.autoCompleter();
   this.reset();
@@ -105,7 +110,7 @@ function StepEditor(controller) {
   inputField.on('keyup', function(event) {
     if (event.keyCode == 13) {
       var name = inputField.get('value');
-      if (!(name in Y.rules)) {
+      if (!(Y.rules.hasOwnProperty(name))) {
 	self.error('No rule ' + name);
       }
     }
@@ -154,7 +159,7 @@ StepEditor.prototype.reset = function() {
   this.input.blur();
   this.completer.hide();
   this.form.setContent('');
-  this.form.rule = null;
+  this.ruleName = null;
 };
 
 /**
@@ -164,7 +169,7 @@ StepEditor.prototype.handleSelection = function(event) {
   var name = event.result.text;
   var rule = Y.rules[name];
   if (rule) {
-    this.form.rule = rule;
+    this.ruleName = name;
     var template = rule.info.form;
     if (template) {
       // Template is not empty.  (If there is no template, the rule will
@@ -255,7 +260,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  * Return true on success, otherwise false.
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
-  var rule = this.form.rule;
+  var rule = Y.rules[this.ruleName];
   var args = [];
   this.fillWithSelectedSite(args);
   try {
@@ -294,7 +299,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
  * type.  Reports an error to the user if preconditions are not met.
  */
 StepEditor.prototype.fillWithSelectedSite = function(args) {
-  var rule = this.form.rule;
+  var rule = Y.rules[this.ruleName];
   var inputs = rule.info.inputs;
   for (var type in inputs) {
     if (type in siteTypes) {
@@ -323,7 +328,7 @@ StepEditor.prototype.fillWithSelectedSite = function(args) {
  */
 StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
-  var rule = this.form.rule;
+  var rule = Y.rules[this.ruleName];
   this.form.all('input').each(function(node) {
     // The "name" attribute of the input should be the name of an input type,
     // possibly followed by some digits indicating which input.
