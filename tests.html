@@ -122,6 +122,14 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('{x. (f x)}', lambda(x, call(f, x)));
       },
 
+      testDump: function() {
+        assertEqual('T', T.dump());
+        assertEqual('x', x.dump());
+        assertEqual('(f x)', call(f, x).dump());
+        assertEqual('{x. (f x)}', lambda(x, call(f, x)).dump());
+        assertEqual('((= x) y)', call('=', x, y).dump());
+      },
+
       // PARSER
 
       testTokenize: function() {
@@ -143,7 +151,7 @@ YUI({filter: null, insertBefore: 'styles'})
         result = Y.parse('f x');
         assertEqual('(f x)', result.dump());
         result = Y.parse('not = (F =)');
-        assertEqual('((not =) (F =))', result.dump());
+        assertEqual('((= not) (= F))', result.dump());
         result = Y.parse('{x.x} T');
         assertEqual('({x. x} T)', result);
         result = Y.parse('a + b * c');

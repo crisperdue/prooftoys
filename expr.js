@@ -678,6 +678,8 @@ function getHypMapKeys(map) {
 //
 // Converts expression to a string like toString, but without special
 // handling of functions of more than one argument or infix operators.
+// A simple text format not dependent on styling options, usable for
+// keys in maps with Expr values.
 // 
 //
 // subst(Expr replacement, String name)
@@ -1056,7 +1058,7 @@ Call.prototype._toString = function() {
 };
 
 Call.prototype.dump = function() {
-  return '(' + this.fn + ' ' + this.arg + ')';
+  return '(' + this.fn.dump() + ' ' + this.arg.dump() + ')';
 };
 
 Call.prototype.subst = function(replacement, name) {
@@ -1268,7 +1270,7 @@ Lambda.prototype._toString = function() {
 };
 
 Lambda.prototype.dump = function() {
-  return '{' + this.bound + '. ' + this.body + '}';
+  return '{' + this.bound.dump() + '. ' + this.body.dump() + '}';
 };
 
 Lambda.prototype.subst = function(replacement, name) {
@@ -2793,6 +2795,8 @@ var utils = {
   /**
    * Builds an expression [lhs = rhs] if RHS is present,
    * otherwise just [= lhs].
+   * TODO: Order of args changes when infix changes.  Similarly for
+   * implies and other infix operators.
    */
   equal: function(lhs, rhs) {
     if (rhs) {

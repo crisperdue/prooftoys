@@ -1215,7 +1215,7 @@ var ruleInfo = {
       if (typeof wff == 'string') {
         wff = Y.parse(wff);
       }
-      var key = wff + '';
+      var key = wff.dump();
       var taut = _tautologies[key];
       if (taut) {
         return taut;
