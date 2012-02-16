@@ -715,20 +715,26 @@ function hoverStep(step, direction, proofNode, event) {
   }
 }
 
+/**
+ * Hover handler for "r" and "replace".
+ */
+function hoverReplace(step, action) {
+   var args = step.original.ruleArgs;
+   var eqn = args[0].rendering;
+   var target = args[1].rendering;
+   var path = args[2];
+   action(target.node, 'hover');
+   action(target.locate(path).node, 'old');
+   action(step.locate(path).node, 'new');
+   action(eqn.getLeft().node, 'old');
+   action(eqn.getRight().node, 'new');
+}
+
 // Arguments to the handler functions are an inference
 // and the operation is "addClass" or "removeClass".
 var hoverHandlers = {
-  r: function(step, action) {
-    var args = step.original.ruleArgs;
-    var eqn = args[0].rendering;
-    var target = args[1].rendering;
-    var path = args[2];
-    action(target.node, 'hover');
-    action(target.locate(path).node, 'old');
-    action(step.locate(path).node, 'new');
-    action(eqn.getLeft().node, 'old');
-    action(eqn.getRight().node, 'new');
-  },
+  r: hoverReplace,
+  replace: hoverReplace,
   rRight: function(step, action) {
     var args = step.original.ruleArgs;
     var eqn = args[0].rendering;
