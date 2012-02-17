@@ -439,14 +439,15 @@ Expr.prototype.unHyp = function() {
 
 /**
  * Returns true iff this expression is a call to a function
- * with the given name, with two arguments.
+ * with the given name, with two arguments.  Or if name is not given,
+ * a call to any named function.
  */
 Expr.prototype.isCall2 = function(name) {
   if (this instanceof Y.Call) {
     var left = this.fn;
     return left instanceof Y.Call
       && left.fn instanceof Y.Var
-      && left.fn.name == name;
+      && (name == null || left.fn.name == name);
   } else {
     return false;
   }
@@ -454,6 +455,7 @@ Expr.prototype.isCall2 = function(name) {
 
 /**
  * Throw an error if this is not a binary call to the named operator.
+ * If no name is given, any named function will do.
  */
 Expr.prototype.assertCall2 = function(name) {
   if (this.isCall2(name)) {
@@ -465,7 +467,12 @@ Expr.prototype.assertCall2 = function(name) {
     '&&': 'a conjunction',
     '||': 'a disjunction'
   };
-  var message = ('Not ' + (map[name] || 'a call to ') + name + ': ' + this);
+  var message;
+  if (name == null) {
+    message = 'Not a call to a a named 2-argument function';
+  } else {
+    message = ('Not ' + (map[name] || 'a call to ') + name + ': ' + this);
+  }
   assert(false, message);
 };
 
