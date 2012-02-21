@@ -352,6 +352,24 @@ YUI({filter: null, insertBefore: 'styles'})
         check('((h2 && h) && h1)', hyps3, h2.getLeft());
       },
 
+      testMergedConjunctions: function() {
+        function check(expected, input) {
+          input = typeof input == 'string' ? Y.parse(input) : input;
+          var eqn = input.mergedConjunctions();
+          var taut = Y.rules.tautology(eqn);
+          var result = Y.rules.rewrite(input, '/', taut);
+          assertEqual(expected, result);
+        }
+        check('(a && b)', 'a && b');
+        check('a', 'a && a');
+        check('(a && b)', 'a && (a && b)');
+        check('((a && b) && c)', 'a && (b && c)');
+        check('(a && b)', '(a && b) && (a && b)');
+        check('(a && b)', '(a && b) && (b && a)');
+        check('((a && b) && c)', '(a && b) && (c && b && a)');
+        check('((a && b) && c)', '(b && a) && (b && c && a)');
+      },
+
       testIsHypotheses: function() {
         var step1 = Y.rules.assume(Y.parse('p x'));
         Y.assert(step1.getLeft().isHypotheses());
@@ -368,6 +386,28 @@ YUI({filter: null, insertBefore: 'styles'})
         // Which step came earlier?
         Y.assert(Y.sourceStepLess(step1.getLeft(), step2.getLeft()));
         Y.assert(!Y.sourceStepLess(step2.getLeft(), step1.getLeft()));
+      },
+
+      testMergeConjunctions: function() {
+        var rules = Y.rules;
+        function check(expected, input) {
+          var expr = Y.parse(input);
+          var actual = rules.mergeConjunctions(expr);
+          Y.log(actual);
+        }
+        check('', 'x && y');
+        check('', 'x && y && z');
+        check('', 'x && (y && z)');
+        check('', 'p x && p y');
+
+        // With sourceSteps:
+        var h1 = rules.assert('p x');
+        h1.sourceStep = h1;
+        var h2 = rules.assert('p y');
+        h2.sourceStep = h2;
+        var conj = rules.makeConjunction(h1, h2);
+        var conj2 = rules.makeConjunction(h2, h1);
+        Y.log(rules.mergeConjunctions(Y.infixCall(conj, '&&', conj2)));
       },
 
       testRepeatedCall: function() {
@@ -1005,34 +1045,34 @@ YUI({filter: null, insertBefore: 'styles'})
           return a.toString() < b.toString();
         }
         function bubble(string) {
-          return Y.rules.bubbleLeft(Y.rules.assert(string), less);
+          return Y.rules.bubbleLeft(Y.parse(string), less);
         }
-        var result = bubble('l = a && b');
-        assertEqual('(l = (a && b))', result);
-        var result = bubble('l = b && a');
-        assertEqual('(l = (a && b))', result);
+        var result = bubble('a && b');
+        assertEqual('(a && b)', result.getRight());
+        var result = bubble('b && a');
+        assertEqual('((b && a) = (a && b))', result);
 
-        result = bubble('l = a && b && c');
-        assertEqual('(l = ((a && b) && c))', result);
-        result = bubble('l = a && c && b');
-        assertEqual('(l = ((a && b) && c))', result);
-        result = bubble('l = b && c && a');
-        assertEqual('(l = ((a && b) && c))', result);
+        result = bubble('a && b && c');
+        assertEqual('((a && b) && c)', result.getRight());
+        result = bubble('a && c && b');
+        assertEqual('((a && b) && c)', result.getRight());
+        result = bubble('b && c && a');
+        assertEqual('((a && b) && c)', result.getRight());
 
-        result = bubble('l = b && c && d && a');
-        assertEqual('(l = (((a && b) && c) && d))', result);
-        result = bubble('l = a && c && d && b');
-        assertEqual('(l = (((a && b) && c) && d))', result);
+        result = bubble('b && c && d && a');
+        assertEqual('(((a && b) && c) && d)', result.getRight());
+        result = bubble('a && c && d && b');
+        assertEqual('(((a && b) && c) && d)', result.getRight());
 
         // With simplification.
-        var result = bubble('l = a && a');
-        assertEqual('(l = a)', result);
-        var result = bubble('l = a && b && b');
-        assertEqual('(l = (a && b))', result);
-        result = bubble('l = a && c && d && a');
-        assertEqual('(l = ((a && c) && d))', result);
-        result = bubble('l = b && a && d && a');
-        assertEqual('(l = ((a && b) && d))', result);
+        var result = bubble('a && a');
+        assertEqual('a', result.getRight());
+        var result = bubble('a && b && b');
+        assertEqual('(a && b)', result.getRight());
+        result = bubble('a && c && d && a');
+        assertEqual('((a && c) && d)', result.getRight());
+        result = bubble('b && a && d && a');
+        assertEqual('((a && b) && d)', result.getRight());
       },
 
       testMergeRight: function() {
@@ -1047,16 +1087,16 @@ YUI({filter: null, insertBefore: 'styles'})
           return a.toString() < b.toString();
         }
         function merge(string) {
-          return Y.rules.mergeConj(Y.rules.assert(string), less);
+          return Y.rules.mergeConj(Y.rules.assert(string), less).getRight();
         }
-        var result = merge('l = (a && b) && (c && d)');
-        assertEqual('(l = (((a && b) && c) && d))', result);
-        var result = merge('l = a && (c && d)');
-        assertEqual('(l = ((a && c) && d))', result);
-        var result = merge('l = (a && b && c) && (a && b && c)');
-        assertEqual('(l = ((a && b) && c))', result);
-        var result = merge('l = (b && b && a) && (a && b && c)');
-        assertEqual('(l = ((a && b) && c))', result);
+        var result = merge('(a && b) && (c && d)');
+        assertEqual('(((a && b) && c) && d)', result);
+        var result = merge('a && (c && d)');
+        assertEqual('((a && c) && d)', result);
+        var result = merge('(a && b && c) && (a && b && c)');
+        assertEqual('((a && b) && c)', result);
+        var result = merge('(b && b && a) && (a && b && c)');
+        assertEqual('((a && b) && c)', result);
       },
 
       testExtractHypothesis: function() {

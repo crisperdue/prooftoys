@@ -14,13 +14,15 @@ var assertEqn = Y.assertEqn;
 // this environment.
 Y.Expr.utils.import();
 
-var identity = lambda(x, x);
-
-var allT = lambda(x, T);
-
 // Map from tautology string representation to tautology,
 // for proved tautologies.  Private to the tautology rule.
 var _tautologies = {};
+
+// All hypotheses in a map keyed by textual representation from
+// "dump".  Private to rules.assume and findHyp.
+// Representation should probably ignore names of bound variables.
+// TODO: Consider changing the rep accordingly.
+var _allHyps = {};
 
 // Map from inference rule name to a JavaScript function that
 // implements it.  The functions may use a global variable
@@ -68,9 +70,11 @@ var ruleInfo = {
       }
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
-      var step = call('-->', assumption, assumption).justify('assume', arguments);
+      var step =
+        call('-->', assumption, assumption).justify('assume', arguments);
       step.hasHyps = true;
       assumption.sourceStep = step;
+      _allHyps[assumption.dump()] = assumption;
       return step;
     },
     inputs: {term: 1},
@@ -102,8 +106,6 @@ var ruleInfo = {
   asHypotheses: {
     action: function(step) {
       step.assertCall2('-->');
-      assert(step.getLeft().isHypotheses(),
-             'LHS must be a set of hypotheses: ' + step.getLeft());
       var result = step.justify('asHypotheses', arguments, [step]);
       result.hasHyps = true;
       return result;
@@ -937,6 +939,7 @@ var ruleInfo = {
   instVar: {
     action: function(step, a, v) {
       // Note that addForall checks that v is not free in the step.
+      // TODO: Allow v free in hyps as with instMultiVars.
       var step1 = rules.addForall(step, v);
       var step2 = rules.instForall(step1, a);
       return step2.justify('instVar', arguments, [step]);
@@ -1701,8 +1704,7 @@ var ruleInfo = {
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
 	  // Simplify (h1 && h2) --> p
-	  var step3 = rules.eqSelf(step2.locate('/left'));
-	  var step4 = rules.mergeConjunctions(step3);
+	  var step4 = rules.mergeConjunctions(step2.locate('/left'));
 	  var step5 = rules.r(step4, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  var result =
@@ -1759,9 +1761,8 @@ var ruleInfo = {
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
 	  // Simplify (h1 && h2) --> p
-	  var step3 = rules.eqSelf(step2.locate('/left'));
-	  var step4 = rules.mergeConjunctions(step3);
-	  var step5 = rules.r(step4, step2, '/left');
+          var pattern = rules.mergeConjunctions(step2.getLeft());
+          var step5 = rules.rewrite(step2, '/left', pattern);
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  var result =
             step5.justify('prependStepHyps', arguments, [target, hypStep]);
@@ -1791,15 +1792,24 @@ var ruleInfo = {
     hint: 'Prefix hypotheses to a step'
   },
 
-  // Takes an expression and a proved equation with neither variable
-  // bindings nor hypotheses, where the expression should match the LHS of
-  // the equation.  Derives an instance of the equation with the
-  // expression as its LHS.
-  rewriter: {
-    action: function(expr, equation) {
-      var map = expr.findSubst(equation.getLeft());
-      var result = rules.instMultiVars(equation, map);
-      return result.justify('rewriter', arguments, [equation]);
+  // Takes a proof step, a path, and a proved equation without
+  // variable bindings.  If the part of the step at the given path
+  // matches the LHS of the equation, replaces that part of the step
+  // with the appropriate instance of the equation, otherwise return
+  // the input step.  The step and equation may have hypotheses.
+  rewrite: {
+    action: function(step, path, equation) {
+      var expr = step.locate(path);
+      var map = expr.findSubst(equation.unHyp().getLeft());
+      if (map) {
+        var step1 = rules.instMultiVars(equation, map);
+        var result = rules.replace(step1, step, path);
+        return result.justify('rewrite', arguments, [equation]);
+      } else {
+        // Do nothing and take no credit for it.  Caller can test for
+        // "not applicable" by comparing rule result with input.
+        return step;
+      }
     },
     inputs: {term: 1, equation: 2},
     form: ('From equation <input name=equation> derive an instance '
@@ -1807,44 +1817,52 @@ var ruleInfo = {
     hint: 'Instantiate an equation so its LHS equals an expression.'
   },
 
-  // A chain of conjuncts (or other binary operator) is an
+  // NOTE: A chain of conjuncts (or other binary operator) is an
   // expression that can be written a && b && ... && z.  An expression
   // that does not have the operator at top-level is a chain of one
   // conjunct.  A chain of two elements is of the form a && b, where a
   // itself is a chain.
   
-  // Derives an equation with the same LHS, but with the end of the
-  // RHS chain bubbled into place.  That chain must have at least
-  // two elements.  The "less" function returns true iff the first
-  // expression should appear before the second.
+  // Given a chain of at least two conjunctions, derives an equation
+  // with the chain as LHS and RHS similar but with the rightmost
+  // chain element bubbled into place in the RHS.  When the "less"
+  // function returns true, its first argument should appear before
+  // the second.
   //
   // While bubbling left, removes duplicates.
   bubbleLeft: {
-    action: function(eqn, less) {
-      function rewrite(expr, tautology) {
-	return rules.rewriter(expr, rules.tautology(tautology));
-      }
+    action: function(chain, less) {
       // This does all the work except the justification of the subproof.
       function bubble(eqn) {
+        // TODO: Specialize the code slightly to work with hypotheses.
 	var expr = eqn.getRight();
 	var a = expr.getLeft();
 	var b = expr.getRight();
+        // expr is a && b
 	if (a.isCall2('&&')) {
+          // expr is a && b && c
 	  var c = b;
 	  b = a.getRight();
 	  a = a.getLeft();
 	  // Eqn is lhs = (a && b) && c
 	  if (b.matches(c)) {
-	    var step1 = rewrite(expr, 'a && b && b = a && b');
-	    var simpler = rules.r(step1, eqn, '/right');
+            // RHS is a && b && b
+	    var simpler =
+              rules.rewrite(eqn, '/right',
+                            rules.tautology('a && b && b = a && b'));
 	    // Keep bubbling the rightmost to the left.
 	    return bubble(simpler);
 	  } else if (less(c, b)) {
-	    var step1 = rewrite(expr, 'a && b && c = a && c && b');
-	    // Equate A && C to something with C properly placed, recursively.
-	    var step2 = bubble(rules.eqSelf(step1.locate('/right/left')));
-	    // Replace the A && C in RHS of step1 with the RHS of step2.
+            // Replace the equation's RHS according using associativity.
+            var assoc = rules.tautology('a && b && c = a && c && b');
+            var map = expr.findSubst(assoc.getLeft());
+            var assocInstance = rules.instMultiVars(assoc, map);
+	    var step1 = rules.r(assocInstance, eqn, '/right');
+	    // Then recursively bubble the C in A && C to its proper place.
+	    var step2 = rules.bubbleLeft(step1.locate('/right/left'), less);
+	    // Replace the A && C in RHS of step1 with the result.
 	    var step3 = rules.r(step2, step1, '/right/left');
+            // and replace the RHS of the argument with the final esult.
 	    return rules.r(step3, eqn, '/right');
 	  } else {
 	    // C is in place.
@@ -1853,19 +1871,20 @@ var ruleInfo = {
 	} else {
 	  // Base case: Eqn is lhs = a && b.
 	  if (a.matches(b)) {
-	    var step1 = rewrite(expr, 'a && a = a');
-	    return rules.r(step1, eqn, '/right');
+	    return rules.rewrite(eqn, '/right',
+                                 rules.tautology('a && a = a'));
 	  } else if (less(b, a)) {
-	    var step1 = rewrite(expr, 'a && b = b && a');
-	    return rules.r(step1, eqn, '/right');
+	    return rules.rewrite(eqn, '/right',
+                                 rules.tautology('a && b = b && a'));
 	  } else {
 	    // B is properly placed.
 	    return eqn;
 	  }
 	}
       }
-      var result = bubble(eqn);
-      return result.justify('bubbleLeft', arguments, [eqn]);
+      var equation = rules.eqSelf(chain, chain);
+      var result = bubble(equation);
+      return result.justify('bubbleLeft', arguments, [equation]);
     }
   },
 
@@ -1883,8 +1902,7 @@ var ruleInfo = {
       var mover = (expr.getLeft().isCall2('&&')
                    ? rules.tautology('(a && b) && c = a && (c && b)')
                    : rules.tautology('a && b = b && a'));
-      var step1 = rules.rewriter(expr, mover);
-      var result = rules.r(step1, eqn, '/right');
+      var result = rules.rewrite(eqn, '/right', mover);
       return result.justify('mergeRight', arguments, [eqn]);
     },
   },
@@ -1894,17 +1912,14 @@ var ruleInfo = {
   // but RHS is a single chain with all members of both chains
   // appropriately ordered by the "less" function.
   mergeConj: {
-    action: function(eqn_arg, less) {
-      var eqn = eqn_arg;
-      eqn.assertCall2('=');
-      var expr = eqn.getRight();
+    action: function(expr, less) {
       expr.assertCall2('&&');
+      var eqn = rules.eqSelf(expr);
       while (eqn.getRight().getLeft().isCall2('&&')) {
 	// The left chain has at least 2 elements.
 	var eqn1 = rules.mergeRight(eqn);
 	var chain2 = eqn1.locate('/right/right');
-	var eqn2 = rules.eqSelf(chain2, chain2);
-	var eqn3 = rules.bubbleLeft(eqn2, less);
+	var eqn3 = rules.bubbleLeft(chain2, less);
 	eqn = rules.r(eqn3, eqn1, '/right/right');
       }
       // Always simplify at least once since the RHS is assumed to be
@@ -1912,17 +1927,20 @@ var ruleInfo = {
       // as its one element moves to the second chain.
       eqn1 = rules.mergeRight(eqn);
       chain2 = eqn1.locate('/right');
-      eqn2 = rules.eqSelf(chain2, chain2);
-      eqn3 = rules.bubbleLeft(eqn2, less);
+      eqn3 = rules.bubbleLeft(chain2, less);
       eqn = rules.r(eqn3, eqn1, '/right');
-      return eqn.justify('mergeConj', arguments, [eqn_arg]);
+      return eqn.justify('mergeConj', arguments);
     },
   },
 
+  // From a proved equation with right side that is the conjunction of
+  // two chains of conjunctions, derive one with same lhs but rhs a
+  // chain containing the same conjuncts ordered by sourceStep, with
+  // duplicates eliminated.
   mergeConjunctions: {
-    action: function(eqn) {
-      var result = rules.mergeConj(eqn, Y.sourceStepLess);
-      return result.justify('mergeConjunctions', arguments, [eqn]);
+    action: function(expr) {
+      var result = rules.mergeConj(expr, Y.sourceStepLess);
+      return result.justify('mergeConjunctions', arguments);
     },
     inputs: {equation: 1},
     form: ('Step with conjunctive RHS: <input name=equation>'),
@@ -2199,6 +2217,30 @@ var ruleInfo = {
     comment: 'Evaluate an expression that adds two integers'
   },
 
+  // Real number rules of inference rules
+
+  commutativity: {
+    action: function(step, path) {
+      var term = step.locate(path);
+      term.assertCall2();
+      var op = term.getBinOp().name;
+      var map = {'+': 'axiomCommutativePlus', '*': 'axiomCommutativeTimes'};
+      var ruleName = map[op];
+      assert(ruleName, 'Not commutative: ' + term);
+      
+    },
+    inputs: {site: 1},
+    form: '',
+  },
+
+  associativity: {
+    action: function(step, path) {
+
+    },
+    inputs: {site: 1},
+    form: '',
+  },
+
 
   //
   // OPTIONAL/UNUSED
@@ -2236,6 +2278,9 @@ Y.createRules(ruleInfo);
 // Set up access to the "rules" object defined in proof.js.
 var rules = Y.rules;
 
+var identity = lambda(x, x);
+var allT = lambda(x, T);
+
 // Put definitions into their database:
 Y.define('not', equal(F))
 Y.define('forall', equal(lambda(x, T)));
@@ -2261,11 +2306,22 @@ for (var i = 0; i < theoremNames.length; i++) {
   Y.addTheorem(theoremNames[i]);
 }
 
+//// Utility functions
+
+/**
+ * Find a term identical to the given one among the hypotheses
+ * created by the "assume" rule, or return null if none found.
+ * TODO: Consider whether to keep this experimental functionality.
+ */
+function findHyp(term) {
+  return _allHyps[term.dump()];
+}
 
 //// Export public names.
 
 Y.axiomNames = axiomNames;
 Y.theoremNames = theoremNames;
+Y.findHyp = findHyp;
 
 // For testing.
 Y.ruleInfo = ruleInfo;
