@@ -42,7 +42,7 @@ function subFree(replacement_arg, v, target) {
   // from parts of the original expression, for example replacing x
   // with (f x) in an expression containing an (f x).  Used in
   // avoiding capture of free variables.
-  replacement = replacement_arg.dup();
+  var replacement = replacement_arg.dup();
   replacement.sourceStep = replacement_arg.sourceStep;
   var allNames = {};
   replacement._addNames(allNames);
@@ -102,21 +102,18 @@ function normalized(expr) {
 
 /**
  * Matches the given "schematic" expression against the other
- * expression.  Assumes that the schema contains no variable bindings.
- * Returns a substitution (map) from names to expressions, or throws
- * an error if there is none.  If there is such a substitution then
- * the expr is the result of applying the returned substitution to the
- * schema.  Tautologies for example qualify as schemas.
+ * expression, returning a subsitution that yields the given
+ * expression when given the schema; or null if there is none.
+ * Assumes that the schema contains no variable bindings.  The
+ * substitution maps from names to expressions Tautologies for example
+ * qualify as schemas.
  *
  * This is a special case of unification of expressions.
  */
 function matchAsSchema(schema, expr) {
   var substitution = {};
   var result = schema._matchAsSchema(expr, substitution);
-  assert(result,
-         expr + ' is not a substitution instance of ' + schema,
-         schema);
-  return substitution;
+  return result ? substitution : null;
 }
 
 /**
@@ -296,6 +293,13 @@ Expr.prototype.findSubst = function(schema) {
   return matchAsSchema(schema, this);
 };
 
+/**
+ * Subfree function as a method on the target.
+ */
+Expr.prototype.subFree = function(replacement, vbl) {
+  return subFree(replacement, vbl, this);
+};
+
 var _assertionCounter = 1;
 
 /**
@@ -471,7 +475,7 @@ Expr.prototype.assertCall2 = function(name) {
   if (name == null) {
     message = 'Not a call to a a named 2-argument function';
   } else {
-    message = ('Not ' + (map[name] || 'a call to ') + name + ': ' + this);
+    message = ('Not ' + (map[name] || 'a call to ' + name) + ': ' + this);
   }
   assert(false, message);
 };
@@ -629,9 +633,9 @@ Expr.prototype.isHypotheses = function() {
 Expr.prototype.hypExtractor = function(hyp) {
   function extractor(self, depth) {
     if (hyp.matches(self)) {
-      return new Y.Var('h');
+      return new Var('h');
     } else if (self.sourceStep) {
-      return new Y.Var('h' + depth);
+      return new Var('h' + depth);
     } else {
       self.assertCall2('&&');
       var left = extractor(self.getLeft(), depth + 1);
@@ -667,16 +671,93 @@ Expr.prototype.hypsBySource = function() {
   return map;
 };
 
-function getHypMapKeys(map) {
-  var result = [];
-  for (var key in map) {
-    if (map.hasOwnProperty(key)) {
-      result.push(Number(key));
+/**
+ * Taking this expression as a chain of conjunctions, applies the
+ * given action function to each conjunct in the chain.  Treats the
+ * chain as hypotheses, and any element with a sourceStep stops
+ * further descent into the chain, regardless whether it is a
+ * conjunction itself.
+ */
+Expr.prototype.eachConjunct = function(action) {
+  if (this.sourceStep) {
+    action(this);
+  } else if (this.isCall2('&&')) {
+    this.getLeft().eachConjunct(action);
+    action(this.getRight());
+  } else {
+    action(this);
+  }
+};
+
+/**
+ * Given an expression that is the conjunction of two chains of
+ * conjunctions, returns an equation that is a tautology that can
+ * rewrite it to one with the conjunctions merged.
+ */
+Expr.prototype.mergedConjunctions = function() {
+  this.assertCall2('&&');
+  // Will be a list of all conjuncts in order from left to right.
+  var conjuncts = [];
+  var i = 1;
+  function add(term) {
+    conjuncts.push(term);
+    if (!term.__var) {
+      term.__var = new Var('a' + i++);
+      order = term.sourceStep && term.sourceStep.ordinal;
+      if (order) {
+        // Make a field of width 13 with leading zeroes.
+        // Give it a leading blank to make it sort before items that
+        // start with a printing character.
+        order = ' ' + ('000000000000' + order).slice(-13);
+      } else {
+        order = term.dump();
+      }
+      term.__order = order;
     }
   }
-  result.sort(function(x, y) { return x - y; });
+  this.getLeft().eachConjunct(add);
+  this.getRight().eachConjunct(add);
+
+  // Will be a sorted copy of conjuncts.
+  function compareTerms(a, b) {
+    var a1 = a.__order;
+    var b1 = b.__order;
+    return a1 < b1 ? -1 : (b1 < a1 ? 1 : 0);
+  }
+  // A sorted copy of the conjuncts:
+  var sorted = conjuncts.concat().sort(compareTerms);
+  
+  // Remove duplicates from the sorted conjuncts.
+  var i = 0;
+  while (i < sorted.length - 1) {
+    if (sorted[i].matches(sorted[i + 1])) {
+      // This makes the pattern show the same thing occurring in two
+      // places.
+      sorted[i + 1].__var = sorted[i].__var;
+      // Note that conjuncts with a sourceStep come before others,
+      // with lower ordinals first.  So remove the second matching
+      // conjunct.
+      sorted.splice(i + 1, 1);
+    } else {
+      i++;
+    }
+  }
+
+  // Build the remaining sorted terms into a chain.
+  var rhs = null;
+  Y.Array.each(sorted, function(term) {
+      rhs = rhs ? Y.infixCall(rhs, '&&', term.__var) : term.__var;
+    });
+
+  var left = this.getLeft()._asPattern();
+  var right = this.getRight()._asPattern();
+  var result = Y.infixCall(Y.infixCall(left, '&&', right), '=', rhs);
+  Y.Array.each(conjuncts, function(term) {
+      delete term.__var;
+      delete term.__order;
+    });
   return result;
-}
+};
 
 
 // Methods defined on expressions, but defined only in the subclasses:
@@ -704,7 +785,7 @@ function getHypMapKeys(map) {
 // where a binding would capture a free variable of the replacement.
 //
 // Assumes freeNames is a Set (Object) of all the names free in the
-// replacement, hat allNames contains all names occurring anywhere in
+// replacement, that allNames contains all names occurring anywhere in
 // this and the replacement.
 //
 //
@@ -858,6 +939,15 @@ function getHypMapKeys(map) {
 // needed to make this and the argument match.  "This" must not
 // contain any variable bindings, but the expression can contain
 // anything.  Matching here is as defined for the "matches" method.
+//
+//
+// _asPattern()
+//
+// Descend into this expression returning a term of similar structure
+// but with terms having __var property replaced with the value of
+// that property.  Helper for code (currently mergedConjunctions) that
+// tags subexpressions with __var property as part of creating a
+// pattern from them.
 
 
 //// Var -- variable bindings and references
@@ -1028,6 +1118,10 @@ Var.prototype._matchAsSchema = function(expr, map) {
     map[this.name] = expr;
     return true;
   }
+};
+
+Var.prototype._asPattern = function(term) {
+  return this.__var || this;
 };
 
 
@@ -1254,6 +1348,10 @@ Call.prototype._matchAsSchema = function(expr, map) {
           && this.arg._matchAsSchema(expr.arg, map));
 };
 
+Call.prototype._asPattern = function(term) {
+  return this.__var || new Call(this.fn._asPattern(), this.arg._asPattern());
+};
+
 
 //// Lambda -- variable bindings
 
@@ -1324,30 +1422,30 @@ Lambda.prototype._subFree = function(replacement, name, freeNames, allNames) {
 
 // Rename all free occurrences of variables having the given name,
 // replacing each of them with variable newVar, but do not rename
-// within occurrences expressions identical to "replaced", which is
+// within occurrences expressions identical to "replacement", which is
 // already a substitution result.  So this relies on the substitution
 // to _not_ copy the replacement expression.  Helper method for
 // _subFree.
-Var.prototype._renameFree = function(name, newVar, replaced) {
-  return (this == replaced
+Var.prototype._renameFree = function(name, newVar, replacement) {
+  return (this == replacement
           ? this
           : (this.name == name ? newVar : this));
 };
 
-Call.prototype._renameFree = function(name, newVar, replaced) {
-  if (this == replaced) {
+Call.prototype._renameFree = function(name, newVar, replacement) {
+  if (this == replacement) {
     return this;
   }
-  var fn = this.fn._renameFree(name, newVar, replaced);
-  var arg = this.arg._renameFree(name, newVar, replaced);
+  var fn = this.fn._renameFree(name, newVar, replacement);
+  var arg = this.arg._renameFree(name, newVar, replacement);
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
-Lambda.prototype._renameFree = function(name, newVar, replaced) {
-  if (this == replaced || this.bound.name == name) {
+Lambda.prototype._renameFree = function(name, newVar, replacement) {
+  if (this == replacement || this.bound.name == name) {
     return this;
   }
-  var body = this.body._renameFree(name, newVar, replaced);
+  var body = this.body._renameFree(name, newVar, replacement);
   return (body == this.body) ? this : new Lambda(this.bound, body);
 };
 
@@ -1489,6 +1587,10 @@ Lambda.prototype.findAll = function(name, action1, expr2, action2) {
 
 Lambda.prototype._matchAsSchema = function(expr, map) {
   throw new Error('Schema expression cannot contain variable bindings.');
+};
+
+Lambda.prototype._asPattern = function(term) {
+  return this.__var || new Lambda(this.bound, this.body._asPattern());
 };
 
 
