@@ -2764,13 +2764,17 @@ function isInfixDesired(vbl) {
 
 /**
  * True iff the source step of expr1 is less than the source step of
- * expr2.  False if either lacks the sourceStep property.
+ * expr2, otherwise true iff dump(expr1) is lexicographically less
+ * than dump(expr2).
+ *
+ * In use this is used in sorting of expressions, so it must bring
+ * equal expressions together so simplifications can see them.
  */
 function sourceStepLess(expr1, expr2) {
   if (expr1.sourceStep && expr2.sourceStep) {
     return expr1.sourceStep.ordinal < expr2.sourceStep.ordinal;
   } else {
-    return false;
+    return expr1.dump() < expr2.dump();
   }
 }
 
