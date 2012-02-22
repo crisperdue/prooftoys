@@ -387,13 +387,13 @@ YUI({filter: null, insertBefore: 'styles'})
         var rules = Y.rules;
         function check(expected, input) {
           var expr = typeof input == 'string' ? Y.parse(input) : input;
-          var actual = rules.mergeConjunctions(expr);
-          Y.log(actual);
+          var actual = rules.mergeConjunctions(expr).getRight();
+          assertEqual(expected, actual);
         }
-        check('', 'x && y');
-        check('', 'x && y && z');
-        check('', 'x && (y && z)');
-        check('', 'p x && p y');
+        check('(x && y)', 'y && x');
+        check('(y && z)', 'z && y && z');
+        check('((x && y) && z)', 'x && (y && z)');
+        check('((p x) && (p y))', 'p x && p y');
 
         // With sourceSteps:
         var h1 = rules.assert('p x');
@@ -401,9 +401,12 @@ YUI({filter: null, insertBefore: 'styles'})
         var h2 = rules.assert('p y');
         h2.sourceStep = h2;
         var conj = rules.makeConjunction(h1, h2);
-        var conj2 = rules.makeConjunction(h2, h1);
-        check('', Y.infixCall(conj, '&&', conj2));
-        check('', Y.infixCall(conj2, '&&', conj));
+        var h3 = rules.assert('p z');
+        h3.sourceStep = h3;
+        var conj2 = rules.makeConjunction(h2, h3);
+        check('((p x) && (p y))', Y.infixCall(conj, '&&', conj));
+        check('(((p x) && (p y)) && (p z))', Y.infixCall(conj, '&&', conj2));
+        check('(((p x) && (p y)) && (p z))', Y.infixCall(conj2, '&&', conj));
       },
 
       testRepeatedCall: function() {

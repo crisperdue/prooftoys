@@ -1907,10 +1907,7 @@ var ruleInfo = {
     },
   },
 
-  // Given a proved equation with RHS that is a conjunction of two
-  // chains of conjunctions, derives an equation with the same LHS,
-  // but RHS is a single chain with all members of both chains
-  // appropriately ordered by the "less" function.
+  // Internal rule for mergeConjunctions, with a comparator parameter.
   mergeConj: {
     action: function(expr, less) {
       expr.assertCall2('&&');
@@ -1925,26 +1922,27 @@ var ruleInfo = {
       // Always simplify at least once since the RHS is assumed to be
       // made of two chains.  This time the first chain will disappear
       // as its one element moves to the second chain.
-      eqn1 = rules.mergeRight(eqn);
-      chain2 = eqn1.locate('/right');
-      eqn3 = rules.bubbleLeft(chain2, less);
+      var eqn1 = rules.mergeRight(eqn);
+      var chain2 = eqn1.getRight();
+      var eqn3 = rules.bubbleLeft(chain2, less);
       eqn = rules.r(eqn3, eqn1, '/right');
-      return eqn.justify('mergeConj', arguments);
+      return eqn;
     },
   },
 
-  // From a proved equation with right side that is the conjunction of
-  // two chains of conjunctions, derive one with same lhs but rhs a
-  // chain containing the same conjuncts ordered by sourceStep, with
+  // From a term that is a conjunction of two normalized chains of
+  // conjunctions, derive an equation that has the input as its LHS
+  // and as its RHS has conjuncts ordered by sourceStepLess, with
   // duplicates eliminated.
   mergeConjunctions: {
     action: function(expr) {
       var result = rules.mergeConj(expr, Y.sourceStepLess);
       return result.justify('mergeConjunctions', arguments);
     },
-    inputs: {equation: 1},
-    form: ('Step with conjunctive RHS: <input name=equation>'),
-    hint: 'Simplify the right side by merging the two chains of conjunction'
+    inputs: {term: 1},
+    // Too technical to expose for most users.
+    // form: ('Chains of conjunctions to merge: <input name=term>'),
+    hint: 'Derives an equation to merge chains of input conjunctions'
   },    
 
   // Simplify the hypotheses of a step, removing duplicates.
