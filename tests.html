@@ -334,22 +334,17 @@ YUI({filter: null, insertBefore: 'styles'})
       testHypExtractor: function() {
         var rules = Y.rules;
         function check(expected, step, hyp) {
-          assertEqual(expected, step.hypExtractor(hyp));
+          hyp = typeof hyp === 'string' ? Y.parse(hyp) : hyp;
+          var actual = step.getLeft().hypExtractor(hyp);
+          assertEqual(expected, actual);
         }
-        var h1 = rules.assume('R x');
-        var step1 = rules.modusPonens(h1, rules.axiomCommutativePlus());
-        var hyps1 = step1.getLeft();
-        check('h', hyps1, h1.getLeft());
-        var h2 = rules.assume('R y');
-        var step2 = rules.modusPonens(h2, step1);
-        var hyps2 = step2.getLeft();
-        check('(h && h1)', hyps2, h1.getLeft());
-        check('(h1 && h)', hyps2, h2.getLeft());
+        var step1 = rules.axiomCommutativePlus();
+        check('(h && h1)', step1, 'R x');
+        check('(h2 && h)', step1, 'R y');
         var h3 = rules.assume('p');
-        var step3 = rules.appendStepHyps(step2, h3);
-        var hyps3 = step3.getLeft();
-        check('((h && h2) && h1)', hyps3, h1.getLeft());
-        check('((h2 && h) && h1)', hyps3, h2.getLeft());
+        var step2 = rules.prependStepHyps(step1, h3);
+        check('(h2 && h)', step2, 'p');
+        check('((h && h2) && h1)', step2, 'R x');
       },
 
       testMergedConjunctions: function() {
@@ -391,7 +386,7 @@ YUI({filter: null, insertBefore: 'styles'})
       testMergeConjunctions: function() {
         var rules = Y.rules;
         function check(expected, input) {
-          var expr = Y.parse(input);
+          var expr = typeof input == 'string' ? Y.parse(input) : input;
           var actual = rules.mergeConjunctions(expr);
           Y.log(actual);
         }
@@ -407,7 +402,8 @@ YUI({filter: null, insertBefore: 'styles'})
         h2.sourceStep = h2;
         var conj = rules.makeConjunction(h1, h2);
         var conj2 = rules.makeConjunction(h2, h1);
-        Y.log(rules.mergeConjunctions(Y.infixCall(conj, '&&', conj2)));
+        check('', Y.infixCall(conj, '&&', conj2));
+        check('', Y.infixCall(conj2, '&&', conj));
       },
 
       testRepeatedCall: function() {
@@ -1101,18 +1097,14 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testExtractHypothesis: function() {
         var rules = Y.rules;
-        var h1 = rules.assume('R x');
-        var h2 = rules.assume('R y');
         var step = rules.axiomCommutativePlus();
-        var step1 = rules.modusPonens(h1, step);
-        var step2 = rules.modusPonens(h2, step1);
         var expected =
           '(((R x) && (R y)) --> ((R x) --> ((x + y) = (y + x))))';
-        var result = rules.extractHypothesis(step2, Y.parse('R x'));
+        var result = rules.extractHypothesis(step, Y.parse('R x'));
         assertEqual(expected, result);
         expected =
           '(((R x) && (R y)) --> ((R y) --> ((x + y) = (y + x))))';
-        result = rules.extractHypothesis(step2, Y.parse('R y'));
+        result = rules.extractHypothesis(step, Y.parse('R y'));
         assertEqual(expected, result);
       },
 

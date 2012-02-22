@@ -238,6 +238,17 @@ Expr.prototype.toString = function() {
 };
 
 /**
+ * Returns a new expression like this implication, but marked as
+ * having hypotheses.  Useful in tests, perhaps other contexts also.
+ */
+Expr.prototype.asHyps = function() {
+  this.assertCall2('-->');
+  var result = this.dup();
+  result.hasHyps = true;
+  return result;
+};
+
+/**
  * Returns true iff this is a call that would display in infix (a Call
  * internally of the form ((op arg1) arg2), where op is a symbol
  * defined to display as infix.
@@ -631,24 +642,26 @@ Expr.prototype.isHypotheses = function() {
  * for rules.extractHypothesis.
  */
 Expr.prototype.hypExtractor = function(hyp) {
-  function extractor(self, depth) {
+  var h = new Var('h');
+  // Note: positions start with 1 at the right end of the chain.
+  function extractor(self, pos) {
     if (hyp.matches(self)) {
-      return new Var('h');
-    } else if (self.sourceStep) {
-      return new Var('h' + depth);
+      return h;
+    } else if (self.sourceStep || !self.isCall2('&&')) {
+      return new Var('h' + pos);
     } else {
-      self.assertCall2('&&');
-      var left = extractor(self.getLeft(), depth + 1);
-      var right = extractor(self.getRight(), depth + 1);
-      // The numbering scheme assumes only one numbered variable,
-      // e.g. h1, h2 at each level -- the hyps are "flattened".
+      // Self is a conjunction.
+      var right = extractor(self.getRight(), pos);
       assert(right instanceof Var, function() {
           return 'Internal error, not a Var: ' + right;
         });
+      var left = (right == h
+                  ? new Var('h' + (pos + 1))
+                  : extractor(self.getLeft(), pos + 1));
       return new Y.infixCall(left, '&&', right);
     }
   }
-  return extractor(this, 0);
+  return extractor(this, 1);
 };
 
 /**

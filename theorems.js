@@ -1739,6 +1739,9 @@ var ruleInfo = {
   // Prefix hypotheses from the hypStep to the target step.  Often
   // used together with appendStepHyps.  If hypStep has no hypotheses,
   // the result is simply the given step.
+  //
+  // TODO: Combine this and appendStepHyps into one rule, should be
+  //   trivial now that mergeConjunctions does so much.
   prependStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
@@ -1746,10 +1749,7 @@ var ruleInfo = {
 	if (target.hasHyps) {
 	  if (step.getLeft().matches(hypStep.getLeft())) {
 	    // Hyps are the same, so no change to the given step.
-	    return step;
-	  }
-	  if (step.getLeft().matches(hypStep.getLeft())) {
-	    // Don't display the inference step.
+            // Don't show the call to this rule.
 	    return step;
 	  }
 	  var taut = Y.parse('(h2 --> p) --> ((h1 && h2) --> p)');
@@ -2038,8 +2038,8 @@ var ruleInfo = {
 
   axiomCommutativePlus: {
     action: function() {
-      return Y.parse('R x --> (R y --> x + y = y + x)')
-	.justify('axiomCommutativePlus');
+      return Y.parse('R x && R y --> x + y = y + x')
+        .asHyps().justify('axiomCommutativePlus');
     },
     inputs: {},
     form: '',
@@ -2048,8 +2048,8 @@ var ruleInfo = {
 
   axiomAssociativePlus: {
     action: function() {
-      return Y.parse('R x --> (R y --> (R z --> x + (y + z) = (x + y) + z))')
-	.justify('axiomAssociativePlus');
+      return Y.parse('R x && R y && R z --> x + (y + z) = (x + y) + z')
+	.asHyps().justify('axiomAssociativePlus');
     },
     inputs: {},
     form: '',
@@ -2058,8 +2058,8 @@ var ruleInfo = {
 
   axiomCommutativeTimes: {
     action: function() {
-      return Y.parse('R x --> (R y --> x * y = y * x)')
-	.justify('axiomCommutativeTimes');
+      return Y.parse('R x && R y --> x * y = y * x')
+	.asHyps().justify('axiomCommutativeTimes');
     },
     inputs: {},
     form: '',
@@ -2068,8 +2068,8 @@ var ruleInfo = {
 
   axiomAssociativeTimes: {
     action: function() {
-      return Y.parse('R x --> (R y --> (R z --> x * (y * z) = (x * y) * z))')
-	.justify('axiomAssociativeTimes');
+      return Y.parse('R x && R y && R z --> x * (y * z) = (x * y) * z')
+	.asHyps().justify('axiomAssociativeTimes');
     },
     inputs: {},
     form: '',
@@ -2078,8 +2078,8 @@ var ruleInfo = {
 
   axiomDistributivity: {
     action: function() {
-      return Y.parse('R x --> (R y --> (R z --> x * (y + z) = x * y + x * z))')
-	.justify('axiomDistributivity');
+      return Y.parse('R x && R y && R z --> x * (y + z) = x * y + x * z')
+	.asHyps().justify('axiomDistributivity');
     },
     inputs: {},
     form: '',
@@ -2088,7 +2088,8 @@ var ruleInfo = {
 
   axiomZeroPlus: {
     action: function() {
-      return Y.parse('R x --> x + 0 = x').justify('axiomZeroPlus');
+      return Y.parse('R x --> x + 0 = x')
+        .asHyps().justify('axiomZeroPlus');
     },
     inputs: {},
     form: '',
@@ -2097,7 +2098,8 @@ var ruleInfo = {
 
   axiomOneTimes: {
     action: function() {
-      return Y.parse('R x --> x * 1 = x').justify('axiomOneTimes');
+      return Y.parse('R x --> x * 1 = x')
+        .asHyps().justify('axiomOneTimes');
     },
     inputs: {},
     form: '',
@@ -2106,7 +2108,8 @@ var ruleInfo = {
 
   axiomNeg: {
     action: function() {
-      return Y.parse('R x --> x + neg x = 0').justify('axiomNeg');
+      return Y.parse('R x --> x + neg x = 0')
+        .asHyps().justify('axiomNeg');
     },
     inputs: {},
     form: '',
@@ -2115,8 +2118,8 @@ var ruleInfo = {
 
   axiomReciprocal: {
     action: function() {
-      return Y.parse('R x --> (not (x = 0) --> x * recip x = 1)')
-        .justify('axiomReciprocal');
+      return Y.parse('R x && not (x = 0) --> x * recip x = 1')
+        .asHyps().justify('axiomReciprocal');
     },
     inputs: {},
     form: '',
@@ -2125,7 +2128,7 @@ var ruleInfo = {
 
   plusType: {
     action: function() {
-      return Y.parse('R x --> (R y --> R (x + y))')
+      return Y.parse('R x && R y --> R (x + y)')
 	.justify('plusType');
     },
     inputs: {},
@@ -2135,8 +2138,8 @@ var ruleInfo = {
 
   timesType: {
     action: function() {
-      return Y.parse('R x --> (R y --> R (x * y))')
-	.justify('plusType');
+      return Y.parse('R x && R y --> R (x * y)')
+	.justify('timesType');
     },
     inputs: {},
     form: '',
@@ -2146,7 +2149,7 @@ var ruleInfo = {
   negType: {
     action: function() {
       return Y.parse('R x --> R (neg x)')
-	.justify('plusType');
+	.justify('negType');
     },
     inputs: {},
     form: '',
@@ -2155,8 +2158,8 @@ var ruleInfo = {
 
   reciprocalType: {
     action: function() {
-      return Y.parse('not (x = 0) --> (R x --> R recip x)')
-	.justify('plusType');
+      return Y.parse('not (x = 0) && R x --> R recip x')
+	.justify('reciprocalType');
     },
     inputs: {},
     form: '',
@@ -2219,7 +2222,7 @@ var ruleInfo = {
 
   // Real number rules of inference rules
 
-  commutativity: {
+  commute: {
     action: function(step, path) {
       var term = step.locate(path);
       term.assertCall2();
@@ -2233,7 +2236,15 @@ var ruleInfo = {
     form: '',
   },
 
-  associativity: {
+  associateToLeft: {
+    action: function(step, path) {
+
+    },
+    inputs: {site: 1},
+    form: '',
+  },
+
+  associateToRight: {
     action: function(step, path) {
 
     },
