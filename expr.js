@@ -558,7 +558,7 @@ Expr.prototype.render = function(omit) {
           renderHyps(rhs);
         }
       } else {
-        wffNode.append(expr._render());
+        wffNode.append(expr._render(true));
       }
     }
     renderHyps(step.getLeft());
@@ -927,12 +927,15 @@ Expr.prototype.mergedConjunctions = function() {
 // that the result will have this and expr2 as substitution instances.
 //
 // 
-// _render()
+// _render(omit)
 //
 // Render this expression into a new YUI node, returning the node.
 // Sets the expression's "node" property to refer to the node created
 // to enclose this expression.  Should be done only once to any given
 // expression.  Helper for the render method.  (Not public)
+//
+// If the optional "omit" argument is true and this is a Call, omit
+// the enclosing parentheses.
 // 
 //
 // findAll(name, action1, expr2, action2)
@@ -1101,7 +1104,7 @@ Var.prototype._bindingPath = function(pred, revPath) {
   return null;
 };
 
-Var.prototype._render = function() {
+Var.prototype._render = function(omit) {
   var node = this.node = exprNode();
   var name = this.pname || this.name;
   node.append(entities[name] || name);
@@ -1576,7 +1579,7 @@ Lambda.prototype._bindingPath = function(pred, revPath) {
           : this.body._bindingPath(pred, new Path('body', revPath)));
 };
 
-Lambda.prototype._render = function() {
+Lambda.prototype._render = function(omit) {
   var node = this.node = exprNode();
   var stepNum = (Y.trackSourceSteps
                  && this.sourceStep
@@ -2732,6 +2735,16 @@ var aliases = {
 
 
 //// UTILITY FUNCTIONS
+
+/**
+ * Is the given object empty, i.e. has it any enumerable properties?
+ */
+function isEmpty(o) {
+  for (var key in o) {
+    return false;
+  }
+  return true;
+}
 
 /**
  * Return the Var v, or if the argument is a string, create a new Var
