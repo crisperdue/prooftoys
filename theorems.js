@@ -935,14 +935,15 @@ var ruleInfo = {
 
   // 5221 (one variable), in the given step substitute term A for
   // variable v, which may also be a string, which will be converted
-  // to a variable.  Handles hypotheses.
+  // to a variable.  Handles hypotheses, allowing substitution for a
+  // variable even if free in the hypotheses.
   instVar: {
     action: function(step, a, v) {
-      // Note that addForall checks that v is not free in the step.
-      // TODO: Allow v free in hyps as with instMultiVars.
-      var step1 = rules.addForall(step, v);
-      var step2 = rules.instForall(step1, a);
-      return step2.justify('instVar', arguments, [step]);
+      v = Y.varify(v);
+      var map = {};
+      map[v.name] = a;
+      var result = rules.instMultiVars(step, map);
+      return result.justify('instVar', arguments, [step]);
     },
     inputs: {step: 1, term: 2, varName: 3},
     form: ('In step <input name=step> substitute <input name=term>'
@@ -954,9 +955,12 @@ var ruleInfo = {
 
   // More like the book's 5221.  For each name in the map (a string),
   // substitutes the expression associated with it in the map, using
-  // simultaneous substitution.  Handles hypotheses.
+  // simultaneous substitution.  Handles hypotheses, allowing
+  // substitution for variables that are free in the hypotheses.
   instMultiVars: {
     action: function(b, map) {
+      var hyps = b.hasHyps;
+      var b = hyps ? rules.asImplication(b) : b;
       var namesReversed = [];
       var isEqn = b.unHyp().isCall2('=');
       var step = isEqn ? b : rules.toTIsA(b);
@@ -972,6 +976,9 @@ var ruleInfo = {
         });
       if (!isEqn) {
         step = rules.fromTIsA(step);
+      }
+      if (hyps) {
+        step = rules.asHypotheses(step);
       }
       return step.justify('instMultiVars', arguments, [b]);
     },
@@ -1451,11 +1458,12 @@ var ruleInfo = {
               + 'is not free in the first argument.')
   },
     
-  // Rule P for a single antecedent (5234).  The given tautology must have
-  // the form (A --> B), where A matches the given input step and B
-  // has only variables that appear in A.  For tautologies with a
+  // Rule P for a single antecedent (5234).  The given tautology must
+  // have the form (A --> B), where A matches the given input step and
+  // B has only variables that appear in A.  For tautologies with a
   // conjunction on the LHS as shown in the book, use this with
-  // makeConjunction.  Handles hypotheses.
+  // makeConjunction.  Handles hypotheses by applying modus ponens to
+  // the step.
   //
   // Accepts a string for the tautology.
   p: {
@@ -1611,7 +1619,8 @@ var ruleInfo = {
 	if (h_c.hasHyps) {
 	  result = rules.asHypotheses(result);
 	}
-	return result;
+	return result.justify('replace', arguments,
+                              [h_equation_arg, h_c_arg]);
       }
       assert(h_equation.isCall2('-->') && h_equation.getRight().isCall2('='),
 	     'Not an equation: ' + h_equation, h_equation_arg);
@@ -1740,8 +1749,9 @@ var ruleInfo = {
   // used together with appendStepHyps.  If hypStep has no hypotheses,
   // the result is simply the given step.
   //
-  // TODO: Combine this and appendStepHyps into one rule, should be
-  //   trivial now that mergeConjunctions does so much.
+  // TODO: Combine this and appendStepHyps into one rule.  Consider a
+  //   rule that derives (H --> step1rhs) && (H --> step2rhs) from
+  //   step1 and step2.  H will be the merger of the hypotheses.
   prependStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
@@ -2204,17 +2214,19 @@ var ruleInfo = {
         if (op.name == 'neg') {
           value = -arg;
           var rhs = new Y.Var(value.toFixed(0));
-          return Y.infixCall(term, '=', rhs)
-            .justify('axiomArithmetic', arguments);
+        } else if (op.name == 'R') {
+          var rhs = T;
         } else {
           assert(false, 'Not an arithmetic expression: ' + term);
         }
+        return Y.infixCall(term, '=', rhs)
+          .justify('axiomArithmetic', arguments);
       } else {
 	assert(false, 'Not an arithmetic expression: ' + term);
       }
     },
     inputs: {term: 1},
-    form: '',
+    form: 'Term to evaluate: <input name=term>',
     comment: 'Evaluate an expression that adds two integers'
   },
 
@@ -2226,12 +2238,14 @@ var ruleInfo = {
       term.assertCall2();
       var op = term.getBinOp().name;
       var map = {'+': 'axiomCommutativePlus', '*': 'axiomCommutativeTimes'};
-      var ruleName = map[op];
-      assert(ruleName, 'Not commutative: ' + term);
-      
+      assert(map.hasOwnProperty(op), 'Not commutative: ' + term);
+      var fact = rules[map[op]]();
+      var result = rules.rewrite(step, path, fact);
+      return result.justify('commute', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
+    comment: 'Commute an expression having a commutative operator'
   },
 
   associateToLeft: {
