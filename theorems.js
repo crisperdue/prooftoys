@@ -1821,9 +1821,8 @@ var ruleInfo = {
         return step;
       }
     },
-    inputs: {term: 1, equation: 2},
-    form: ('From equation <input name=equation> derive an instance '
-           + 'with term <input name=term> as its left side.'),
+    inputs: {site: 1, equation: 3},
+    form: ('Rewrite the site using equation <input name=equation>'),
     hint: 'Instantiate an equation so its LHS equals an expression.'
   },
 
@@ -1989,7 +1988,7 @@ var ruleInfo = {
     action: function(step, hyp) {
       var infix = Y.infixCall;
       assert(step.hasHyps, 'Step has no hypotheses');
-      var lhs = step.getLeft().hypExtractor(hyp);
+      var lhs = step.getLeft().hypLocater(hyp);
       var a = Y.varify('a');
       var taut = infix(infix(lhs, '-->', a),
 		       '-->',
@@ -2004,6 +2003,25 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: ('Extract hypothesis <input name=term> from step <input name=step>'),
     comment: 'Find and extract a hypothesis from a step.'
+  },
+
+  // Given a proof step that is an implication and a path expected to
+  // refer to an element of the LHS conjunction chain, derives a step
+  // of the form e --> (h' --> c) where e is the referenced element,
+  // h' is the proof step's hypotheses excluding occurrences of "e",
+  // and c is the impliction RHS.  Useful for simplifying hypotheses.
+  isolateCondition: {
+    action: function(step, path) {
+      assert(step.isCall2('-->') && !step.hasHyps, 'Not an implication');
+      var taut = rules.tautology(step.getLeft().hypMover(step.locate(path)));
+      var step1 = rules.rewrite(step, '/left', taut);
+      var taut2 = rules.tautology('a && b --> c == b --> (a --> c)');
+      var result = rules.rewrite(step1, '', taut2);
+      return result.justify('isolateCondition', arguments, [step]);
+    },
+    inputs: {site: 1},
+    form: '',
+    comment: 'Move conjunct of implication LHS all the way to the right'
   },
 
   equalitySymmetric: {

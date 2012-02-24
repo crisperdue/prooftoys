@@ -672,9 +672,9 @@ Expr.prototype.hypLocater = function(hyp) {
  * the same variables in order, but at most one occurrence of 'h' as
  * its last chain element.
  *
- * In other words this generates a tautology that merges
- * chain elements matching toMove, and has 'h' at the end if there is
- * a match.
+ * In other words this generates a tautology that works with
+ * rules.rewrite to merge chain elements matching toMove and put an
+ * occurrence of toMove at the right end of the chain.
  */
 Expr.prototype.hypMover = function(toMove) {
   var i = 1;

@@ -331,11 +331,11 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(!Y.parse('x + 1').hasArgs(3));
       },
 
-      testHypExtractor: function() {
+      testHypLocater: function() {
         var rules = Y.rules;
         function check(expected, step, hyp) {
           hyp = typeof hyp === 'string' ? Y.parse(hyp) : hyp;
-          var actual = step.getLeft().hypExtractor(hyp);
+          var actual = step.getLeft().hypLocater(hyp);
           assertEqual(expected, actual);
         }
         var step1 = rules.axiomCommutativePlus();
@@ -347,10 +347,30 @@ YUI({filter: null, insertBefore: 'styles'})
         check('((h && h2) && h1)', step2, 'R x');
       },
 
-      testMergedConjunctions: function() {
+      testHypMover: function() {
+        var rules = Y.rules;
+        function check(expected, step, hyp) {
+          hyp = typeof hyp === 'string' ? Y.parse(hyp) : hyp;
+          var actual = step.getLeft().hypMover(hyp);
+          assertEqual(expected, actual);
+        }
+        var step1 = rules.axiomAssociativePlus();
+        check('(((h && h2) && h3) = ((h2 && h3) && h))',
+              step1, 'R x');
+        check('(((h1 && h) && h3) = ((h1 && h3) && h))',
+              step1, 'R y');
+        var h3 = rules.assume('p');
+        var step2 = rules.prependStepHyps(step1, h3);
+        check('((((h1 && h2) && h3) && h) = (((h1 && h2) && h3) && h))',
+              step2, 'p');
+        check('((((h && h2) && h3) && h4) = (((h2 && h3) && h4) && h))',
+              step2, 'R x');
+      },
+
+      testMergedHypotheses: function() {
         function check(expected, input) {
           input = typeof input == 'string' ? Y.parse(input) : input;
-          var eqn = input.mergedConjunctions();
+          var eqn = input.mergedHypotheses();
           var taut = Y.rules.tautology(eqn);
           var result = Y.rules.rewrite(input, '/', taut);
           assertEqual(expected, result);
