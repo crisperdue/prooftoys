@@ -635,33 +635,68 @@ Expr.prototype.isHypotheses = function() {
 };
 
 /**
- * In a flattened set of hypotheses h1 && h2 && ... hk, given an
- * expression that matches one of the hypotheses in the set, builds
- * an expression where "h" is in the position of the matched
- * hypotheses, and the rest are labeled h1 ... h(k-1).  Helper
- * for rules.extractHypothesis.
+ * Treating this as a chain of hypotheses hk && h(k-1) && ... h1,
+ * given an expression that matches one of the hypotheses in the set,
+ * builds an expression where "h" is in the position of the matched
+ * hypotheses, and the rest are labeled h(k-1) ... h1.  Helper for
+ * rules.extractHypothesis.
  */
-Expr.prototype.hypExtractor = function(hyp) {
+Expr.prototype.hypLocater = function(hyp) {
   var h = new Var('h');
   // Note: positions start with 1 at the right end of the chain.
-  function extractor(self, pos) {
+  function locater(self, pos) {
     if (hyp.matches(self)) {
       return h;
     } else if (self.sourceStep || !self.isCall2('&&')) {
       return new Var('h' + pos);
     } else {
       // Self is a conjunction.
-      var right = extractor(self.getRight(), pos);
+      var right = locater(self.getRight(), pos);
       assert(right instanceof Var, function() {
           return 'Internal error, not a Var: ' + right;
         });
       var left = (right == h
                   ? new Var('h' + (pos + 1))
-                  : extractor(self.getLeft(), pos + 1));
+                  : locater(self.getLeft(), pos + 1));
       return new Y.infixCall(left, '&&', right);
     }
   }
-  return extractor(this, 1);
+  return locater(this, 1);
+};
+
+/**
+ * Treating this as a conjunctive chain of hypotheses, returns an
+ * equation with LHS and RHS both chains.  The LHS has 'h' wherever
+ * this chain has an element matching toMove, otherwise hk where k is
+ * the 1-based index of the chain element in this chain.  The RHS has
+ * the same variables in order, but at most one occurrence of 'h' as
+ * its last chain element.
+ *
+ * In other words this generates a tautology that merges
+ * chain elements matching toMove, and has 'h' at the end if there is
+ * a match.
+ */
+Expr.prototype.hypMover = function(toMove) {
+  var i = 1;
+  var lhs = null;
+  var rhs = null;
+  var found = false;
+  this.eachHyp(function(term) {
+      var h;
+      if (term.matches(toMove)) {
+        h = new Var('h');
+        found = true;
+      } else {
+        h = new Var('h' + i);
+        rhs = rhs ? Y.infixCall(rhs, '&&', h) : h;
+      }
+      lhs = lhs ? Y.infixCall(lhs, '&&', h) : h;
+      i++;
+    });
+  if (found) {
+    rhs = rhs ? Y.infixCall(rhs, '&&', new Var('h')) : new Var('h');
+  }
+  return Y.infixCall(lhs, '=', rhs);
 };
 
 /**
@@ -685,17 +720,17 @@ Expr.prototype.hypsBySource = function() {
 };
 
 /**
- * Taking this expression as a chain of conjunctions, applies the
- * given action function to each conjunct in the chain.  Treats the
- * chain as hypotheses, and any element with a sourceStep stops
- * further descent into the chain, regardless whether it is a
- * conjunction itself.
+ * Taking this expression as a chain of hypotheses, applies the given
+ * action function to each conjunct in the chain, going from left to
+ * right.  Treats the chain as hypotheses, and any element with a
+ * sourceStep stops further descent into the chain, regardless whether
+ * it is a conjunction itself.
  */
-Expr.prototype.eachConjunct = function(action) {
+Expr.prototype.eachHyp = function(action) {
   if (this.sourceStep) {
     action(this);
   } else if (this.isCall2('&&')) {
-    this.getLeft().eachConjunct(action);
+    this.getLeft().eachHyp(action);
     action(this.getRight());
   } else {
     action(this);
@@ -704,10 +739,10 @@ Expr.prototype.eachConjunct = function(action) {
 
 /**
  * Given an expression that is the conjunction of two chains of
- * conjunctions, returns an equation that is a tautology that can
+ * hypotheses, returns an equation that is a tautology that can
  * rewrite it to one with the conjunctions merged.
  */
-Expr.prototype.mergedConjunctions = function() {
+Expr.prototype.mergedHypotheses = function() {
   this.assertCall2('&&');
   // Will be a list of all conjuncts in order from left to right.
   var conjuncts = [];
@@ -728,8 +763,8 @@ Expr.prototype.mergedConjunctions = function() {
       term.__order = order;
     }
   }
-  this.getLeft().eachConjunct(add);
-  this.getRight().eachConjunct(add);
+  this.getLeft().eachHyp(add);
+  this.getRight().eachHyp(add);
 
   // Will be a sorted copy of conjuncts.
   function compareTerms(a, b) {
@@ -961,7 +996,7 @@ Expr.prototype.mergedConjunctions = function() {
 //
 // Descend into this expression returning a term of similar structure
 // but with terms having __var property replaced with the value of
-// that property.  Helper for code (currently mergedConjunctions) that
+// that property.  Helper for code (currently mergedHypotheses) that
 // tags subexpressions with __var property as part of creating a
 // pattern from them.
 
