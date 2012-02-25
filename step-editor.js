@@ -166,7 +166,7 @@ StepEditor.prototype.reset = function() {
  * Handler for autocompleter "selection" event.
  */
 StepEditor.prototype.handleSelection = function(event) {
-  var name = event.result.text;
+  var name = event.result.text.replace(/^xiom/, 'axiom');
   var rule = Y.rules[name];
   if (rule) {
     this.ruleName = name;
@@ -399,15 +399,17 @@ StepEditor.prototype.parseValue = function(value, type) {
 
 /**
  * Returns a list of names of "offerable" rules, sorted
- * alphabetically.
+ * alphabetically, but with axiom names changed to start instead with
+ * "x", i.e. "xiom".
  */
 StepEditor.prototype.filteredRuleNames = function() {
   var controller = this.controller;
   var step = controller.selection;
   var matches = [];
   for (var name in Y.rules) {
+    display = name.replace(/^axiom/, 'xiom');
     if (this.offerable(name)) {
-      matches.push(name);
+      matches.push(display);
     }
   }
   matches.sort();
@@ -526,11 +528,11 @@ StepEditor.prototype.autoCompleter = function() {
  */
 function resultFormatter(query, results) {
   return Y.Array.map(results, function (result) {
-    var ruleName = result.text;
-    var info = Y.rules[ruleName].info;
-    var hint = info.hint || info.comment || '';
-    return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
-  });	
+      var ruleName = result.text.replace(/^xiom/, 'axiom');
+      var info = Y.rules[ruleName].info;
+      var hint = info.hint || info.comment || '';
+      return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
+    });	
 }
 
 Y.StepEditor = StepEditor;
