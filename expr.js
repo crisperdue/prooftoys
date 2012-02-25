@@ -238,6 +238,14 @@ Expr.prototype.toString = function() {
 };
 
 /**
+ * This is a constant T or F.
+ */
+Expr.prototype.isBoolConst = function() {
+  return (this instanceof Var &&
+          (this.name == 'T' || this.name == 'F'));
+};
+
+/**
  * Returns a new expression like this implication, but marked as
  * having hypotheses.  Useful in tests, perhaps other contexts also.
  */
@@ -2225,6 +2233,8 @@ function checkRange(number) {
  * define('forall', equal(lambda(x, T))).
  */
 function define(name, definition) {
+  assert(isConstant(name), 'Not a constant name: ' + name);
+  definition = typeof definition == 'string' ? Y.parse(definition) : definition;
   assert(definition instanceof Expr,
          'Definition must be a term: ' + definition);
   if (isDefined(name)) {
