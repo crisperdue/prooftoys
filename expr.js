@@ -238,6 +238,13 @@ Expr.prototype.toString = function() {
 };
 
 /**
+ * True iff this is a Var named as a constant.
+ */
+Expr.prototype.isConst = function() {
+  return isConstant(this);
+};
+
+/**
  * This is a constant T or F.
  */
 Expr.prototype.isBoolConst = function() {
@@ -475,6 +482,13 @@ Expr.prototype.isCall2 = function(name) {
     return false;
   }
 }
+
+/**
+ * True iff this is a call to a lambda expression.
+ */
+Expr.prototype.isOpenCall = function() {
+  return this instanceof Call && this.fn instanceof Lambda;
+};
 
 /**
  * Throw an error if this is not a binary call to the named operator.
@@ -1080,7 +1094,7 @@ Var.prototype._addNames = function(map) {
 };
 
 Var.prototype._addFreeNames = function(map, bindings) {
-  if (!Y.isConstant(this) && getBinding(this.name, bindings) == null) {
+  if (!isConstant(this) && getBinding(this.name, bindings) == null) {
     map[this.name] = true;
   }
 };
@@ -1165,7 +1179,7 @@ Var.prototype._matchAsSchema = function(expr, map) {
   // This method does not return true when matching a defined name with an
   // expression that matches its definition.  It is a stricter criterion than
   // would be treating definitions exactly as abbreviations.
-  if (Y.isConstant(this)) {
+  if (isConstant(this)) {
     // Expr must be a Var with the same name.
     return this.matches(expr);
   }
@@ -2305,8 +2319,19 @@ function isDefinedByCases(name) {
  * appropriate part of a definition by cases.
  */
 function getDefinition(name, tOrF) {
-  var defn = definitions[name];
+  var defn = findDefinition(name, tOrF);
   assert(defn, 'Not defined: ' + name);
+  return defn;
+}
+
+/**
+ * Finds a definition or by-cases definition in the definitions
+ * database.  Returns null if there is no definition; throws an error
+ * if there is a definition, but wrong type.  If the tOrF argument is
+ * present, the definition must be by cases, otherwise simple.
+ */
+function findDefinition(name, tOrF) {
+  var defn = definitions[name];
   if (!tOrF) {
     assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
     return defn;
@@ -3050,6 +3075,7 @@ Y.repeatedCall = repeatedCall;
 
 Y.define = define;
 Y.defineCases = defineCases;
+Y.findDefinition = findDefinition;
 Y.getDefinition = getDefinition;
 // For testing:
 Y.definitions = definitions;
