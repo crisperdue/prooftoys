@@ -274,7 +274,8 @@ var ruleInfo = {
    */
   axiom4: {
     action: function(call) {
-      assert(call instanceof Y.Call && call.fn instanceof Y.Lambda,
+      call = typeof call == 'string' ? Y.parse(call) : call;
+      assert(call.isOpenCall(),
 	     'Axiom 4 needs ({v. B} A), got: ' + call.toString());
       var lambdaExpr = call.fn;
       var result =
@@ -479,27 +480,72 @@ var ruleInfo = {
     comment: ('')
   },
 
-  /**
-   * Beta-reduce an application of a lambda expression to an argument,
-   * with the subexpression identified by a path (within a theorem).
-   * Rule Replace packaged for convenience.
-   */
+  // Just applies an anonymous lambda to an argument at the
+  // specified location in a step.
+  simpleApply: {
+    action: function(step, path) {
+      // Note that axiom 4 checks validity of its argument.
+      var equation = rules.axiom4(step.locate(path));
+      var result = rules.replace(equation, step, path);
+      return result.justify('simpleApply', arguments, [step]);
+    },
+    inputs: {reducible: 1},
+    // form: '',
+    hint: 'Apply a function to its argument',
+    comment: ('Applies a lambda to its argument')
+  },
+
+  // Beta-reduces an application of a lambda expression to an argument,
+  // with the subexpression identified by a path (within a theorem).
+  // If the target expression is a call to a named function supplying
+  // one or two arguments, expands the definition and applies the
+  // expansions to the argument(s).
   apply: {
     action: function(step, path) {
       path = Y.path(path, step);
       var target = step.locate(path);
       assert(target, 'Path ' + path + ' not found in ' + step, step);
-      assert(target instanceof Y.Call && target.fn instanceof Y.Lambda,
-             'Reduce needs a call to a lambda, got: ' + target, step);
-      var equation = rules.axiom4(target);
-      var result = rules.replace(equation, step, path);
-      return result.justify('apply', arguments, [step]);
+      assert(target instanceof Y.Call);
+      var fn = target.fn;
+      if (fn instanceof Y.Lambda) {
+        var result = rules.simpleApply(step, path);
+        return result.justify('apply', arguments, [step]);
+      }
+      // Call that looks like (<const> <expr>).
+      if (fn.isConst()) {
+        var defn = Y.findDefinition(fn.name);
+        if (defn) {
+          var step1 = rules.eqSelf(target);
+          var step2 = rules.replace(defn, step1, '/right/fn');
+          var step3 = rules.replace(step2, step, path);
+          return step3.justify('apply', arguments, [step]);
+        }
+      }
+      // Call that looks like (<left> <const> <right>) or equivalently
+      // ((<const> <arg1>) <arg2>).
+      if (target.isCall2()) {
+        var call = target.fn;
+        var fn2 = call.fn;
+        if (fn2.isConst()) {
+          var defn = Y.findDefinition(fn2.name);
+          if (defn) {
+            var step1 = rules.eqSelf(call);
+            var step2 = rules.useDefinition(step1, '/right/fn');
+            var step3 = rules.simpleApply(step2, '/right');
+            var step4 = rules.eqSelf(target);
+            var step5 = rules.replace(step3, step4, '/right/fn');
+            var step6 = rules.simpleApply(step5, '/right');
+            var step7 = rules.replace(step6, step, path);
+            return step7.justify('apply', arguments, [step]);
+          }
+        }
+      }
+      assert(false, 'Term not applicable');
     },
-    inputs: {reducible: 1},
+    inputs: {site: 1},
     form: '',
-    hint: 'apply a function to its argument',
-    comment: ('Substitutes an actual argument for the formal variable'
-              + ' in one function call of a WFF.')
+    hint: 'Apply a function to its argument',
+    comment: ('Applies a function, named or not, to one or two arguments')
   },
 
   /**
@@ -817,6 +863,8 @@ var ruleInfo = {
               + ' for the substitutions with v = T and v = F.')
   },
 
+  // Note that this or 5230TF or symmetry of equality of booleans
+  // might be taken as an axiom given r5230FT_alternate.
   tIsXIsX: {
     action: function() {
       var step1 = rules.theorem('r5230TF');
@@ -1067,6 +1115,12 @@ var ruleInfo = {
   // Prove [F = T] = F
   // Simpler proof when axiomPNeqNotP rather than axiomTIsNotF (above).
   // TODO: Is there a more elegant proof of this?
+  //   Consider instantiating Axiom1 with x = (T = F) and y = F giving:
+  //   (T = F) = F --> (F = (T = F)) = (F = F).  Now (T = x) = x (this
+  //   could even be an axiom.  So we have T --> (F = (T = F)) = T;
+  //   thus (F = (T = F)) = T and finally F = (T = F) as desired.
+  //   Note that none of these steps requires use of the truth tables
+  //   for '=' on booleans.
   r5230FT_alternate: {
     action: function() {
       var step1a = rules.instVar(rules.axiom('axiom2'), F, x);
@@ -1105,7 +1159,7 @@ var ruleInfo = {
       // And use the fact that [F = T] --> F
       var step7 = rules.rRight(step4, step6, '/left');
       var step8 = rules.fromTIsA(step7);
-      return step8.justify('r5230FT');
+      return step8.justify('r5230FT_alternate');
     },
     comment: ('[F = T] = F')
   },
@@ -1212,6 +1266,8 @@ var ruleInfo = {
         }
       }
     },
+    inputs: {term: 1},
+    form: 'Boolean term to simplify: <input name=term>',
     comment: ('Evaluates a boolean expression with no free variables.')
   },
 
@@ -1300,6 +1356,71 @@ var ruleInfo = {
       }
     },
     comment: ('A substitution instance of a tautology is a theorem.')
+  },
+
+  // TODO: Complete this.
+  simplifyBool: {
+    action: function(term) {
+      if (term.findSubst('not x')) {
+        if (term.arg.isBoolConst()) {
+          var name = term.arg.name;
+          if (name == 'T') {
+            return Y.tautology('not T = F');
+          } else {
+            return Y.tautology('not F = F');
+          }
+        }
+      }
+      var simplifiers = {
+        '&&': {
+          T: {
+            T: 'T && T = T',
+            F: 'T && F = F'
+          },
+          F: {
+            T: 'F && T = F',
+            F: 'F && F = F'
+          }
+        },
+        '||': {
+            T: 'T || T = T',
+            F: 'T || F = T'
+          },
+          F: {
+            T: 'F || T = T',
+            F: 'F || F = F'
+          },
+        '-->': {
+            T: 'T --> T = T',
+            F: 'T --> F = F'
+          },
+          F: {
+            T: 'F --> T = T',
+            F: 'F --> F = T'
+          },
+        '=': {
+            T: 'T = T = T',
+            F: 'T = F = F'
+          },
+          F: {
+            T: 'F = T = F',
+            F: 'F = F = T'
+          }
+      };
+      var boolOps = {'=': true, '&&': true, '||': true, '-->': true};
+      var op = term.getBinOp().name;
+      if (term.isInfixCall() && boolOps.hasOwnProperty(op)) {
+        var left = term.getLeft();
+        var right = term.getRight();
+        if (left.isBoolConst() && right.isBoolConst()) {
+          return Y.tautology(simplifiers[op][left.name][right.name]);
+        } else if (left.isBoolConst()) {
+          return Y.tautology(leftSimplifiers[op][left.name]);
+        } else {
+          return Y.tautology(rightSimplifiers[op][right.name]);
+        }
+      }
+    }
   },
 
   // Given a theorem and an arbitrary boolean term, proves that the
@@ -2152,7 +2273,7 @@ var ruleInfo = {
     comment: 'Reciprocal is the inverse of multiplication'
   },
 
-  plusType: {
+  axiomPlusType: {
     action: function() {
       return Y.parse('R x && R y --> R (x + y)')
 	.justify('plusType');
@@ -2162,7 +2283,7 @@ var ruleInfo = {
     comment: 'Reals are closed under addition'
   },
 
-  timesType: {
+  axiomTimesType: {
     action: function() {
       return Y.parse('R x && R y --> R (x * y)')
 	.justify('timesType');
@@ -2172,7 +2293,7 @@ var ruleInfo = {
     comment: 'Reals are closed under multiplication'
   },
 
-  negType: {
+  axiomNegType: {
     action: function() {
       return Y.parse('R x --> R (neg x)')
 	.justify('negType');
@@ -2182,7 +2303,7 @@ var ruleInfo = {
     comment: 'Reals are closed under negation'
   },
 
-  reciprocalType: {
+  axiomReciprocalType: {
     action: function() {
       return Y.parse('not (x = 0) && R x --> R recip x')
 	.justify('reciprocalType');
@@ -2323,11 +2444,15 @@ var identity = lambda(x, x);
 var allT = lambda(x, T);
 
 // Put definitions into their database:
-Y.define('not', equal(F))
+Y.define('not', equal(F));
+Y.define('!=', '{x. {y. not (x = y)}}');
 Y.define('forall', equal(lambda(x, T)));
 Y.defineCases('&&', identity, lambda(x, F));
 Y.defineCases('||', allT, identity);
 Y.defineCases('-->', identity, allT);
+
+Y.define('-', '{x. {y. x + neg y}}');
+Y.define('/', '{x. {y. x * recip y}}');
 
 // Add the axioms and theorems to the "database".  This can only
 // include ones that are not "axiom schemas", i.e. not parameterized.

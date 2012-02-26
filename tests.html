@@ -606,10 +606,10 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.rules.axiomOneTimes();
         Y.rules.axiomNeg();
         Y.rules.axiomReciprocal();
-        Y.rules.plusType();
-        Y.rules.timesType();
-        Y.rules.negType();
-        Y.rules.reciprocalType();
+        Y.rules.axiomPlusType();
+        Y.rules.axiomTimesType();
+        Y.rules.axiomNegType();
+        Y.rules.axiomReciprocalType();
       },
 
       testAxiomArithmetic: function() {
@@ -695,6 +695,22 @@ YUI({filter: null, insertBefore: 'styles'})
       testR5201f: function() {
         var inf = Y.rules.applyToBoth(p, call('=', q, r));
         assertEqual('((p q) = (p r))', inf);
+      },
+
+      testApply: function() {
+        var rules = Y.rules;
+        // Apply a call to a lambda.
+        var step1 = rules.axiom4('{x. x} 2');
+        var result = rules.apply(step1, '/left');
+        assertEqual('(2 = 2)', result);
+        // Apply a call to 1-arg function:
+        var step1 = rules.tautology('(p --> not p) --> not p');
+        var result = rules.apply(step1, '/right');
+        assertEqual('((p --> (not p)) --> (F = p))', result);
+        // Apply a call to a 2-arg function:
+        var step1 = rules.assume('x != y');
+        var result = rules.apply(step1, '/right');
+        assertEqual('((x != y) --> (not (x = y)))', result);
       },
 
       testUseDefinition: function() {
