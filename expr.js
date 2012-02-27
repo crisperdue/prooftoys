@@ -1337,12 +1337,15 @@ Call.prototype._decapture = function(freeNames, allNames, bindings) {
 
 Call.prototype._addMathVars = function(bindings, set) {
   // TODO: Consider handling defined functions.
+  function isFreeVar(v) {
+    return v.isVariable() && !findBinding(v.name, bindings);
+  }
   if (this.isCall1()) {
     var op = this.fn.name;
     switch (op) {
     case 'neg':
     case 'recip':
-      if (this.arg instanceof Var) {
+      if (isFreeVar(this.arg)) {
         set[this.arg.name] = true;
       } else {
         this.arg._addMathVars(bindings, set);
@@ -1354,10 +1357,10 @@ Call.prototype._addMathVars = function(bindings, set) {
     var left = this.getLeft();
     var right = this.getRight();
     function addVars() {
-      if (left.isVariable()) {
+      if (isFreeVar(left)) {
         set[left.name] = true;
       }
-      if (right.isVariable()) {
+      if (isFreeVar(right)) {
         set[right.name] = true;
       }
     }
@@ -1380,15 +1383,17 @@ Call.prototype._addMathVars = function(bindings, set) {
       break;
     }
     var isLeftReal = left._addMathVars(bindings, set);
-    if (isLeftReal && right.isVariable()) {
+    if (isLeftReal && isFreeVar(right)) {
       set[right.name] = true;
     }
     var isRightReal = right._addMathVars(bindings, set);
-    if (isRightReal && left.isVariable()) {
+    if (isRightReal && isFreeVar(left)) {
       set[left.name] = true;
     }
     return result;
   } else {
+    this.fn._addMathVars(bindings, set);
+    this.arg._addMathVars(bindings, set);
     return false;
   }
 };
@@ -1676,7 +1681,7 @@ Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
 };
 
 Lambda.prototype._addMathVars = function(bindings, set) {
-  this.body._addMathVars(new Bindings(this.bound.name, true, bindings));
+  this.body._addMathVars(new Bindings(this.bound.name, true, bindings), set);
   return false;
 };
 
