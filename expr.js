@@ -1341,17 +1341,19 @@ Call.prototype._addMathVars = function(bindings, set) {
     return v.isVariable() && !findBinding(v.name, bindings);
   }
   if (this.isCall1()) {
+    // Function "R" does not need to mark its argument as a math variable.
     var op = this.fn.name;
+    var result = false;
     switch (op) {
     case 'neg':
     case 'recip':
       if (isFreeVar(this.arg)) {
         set[this.arg.name] = true;
-      } else {
-        this.arg._addMathVars(bindings, set);
       }
-      return true;
+      result = true;
     }
+    this.arg._addMathVars(bindings, set);
+    return result;
   } else if (this.isCall2()) {
     var op = this.getBinOp().name;
     var left = this.getLeft();
@@ -1364,7 +1366,7 @@ Call.prototype._addMathVars = function(bindings, set) {
         set[right.name] = true;
       }
     }
-    var result;
+    var result = false;
     switch (op) {
     case '+':
     case '-':
@@ -1377,9 +1379,7 @@ Call.prototype._addMathVars = function(bindings, set) {
     case '<=':
     case '>':
     case '>=':
-    case 'R':
       addVars();
-      result = false;
       break;
     }
     var isLeftReal = left._addMathVars(bindings, set);
