@@ -861,7 +861,11 @@ function addBottomPanel(node) {
 function debugString(o, specials) {
   if (typeof o == 'object') {
     var result = '{';
-    for (var key in o) {
+    var keys = [];
+    for (var key in o) { keys.push(key); }
+    keys.sort();
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
       if (o.hasOwnProperty(key)) {
         if (result.length > 1) {
           result += ', ';
