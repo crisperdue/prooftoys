@@ -2233,6 +2233,7 @@ var ruleInfo = {
     comment: 'Distributivity of multiplication over addition'
   },
 
+  // TODO: Rename to axiomPlusZero.
   axiomZeroPlus: {
     action: function() {
       return Y.parse('R x --> x + 0 = x')
@@ -2243,6 +2244,7 @@ var ruleInfo = {
     comment: 'Zero is the additive identity'
   },
 
+  // TODO: Rename to axiomTimesOne.
   axiomOneTimes: {
     action: function() {
       return Y.parse('R x --> x * 1 = x')
@@ -2251,6 +2253,16 @@ var ruleInfo = {
     inputs: {},
     form: '',
     comment: 'One is the multiplicative identity'
+  },
+
+  axiomTimesZero: {
+    action: function() {
+      return Y.parse('R x --> x * 0 = 0')
+        .asHyps().justify('axiomTimesZero');
+    },
+    inputs: {},
+    form: '',
+    comment: 'x * 0 = 0'
   },
 
   axiomNeg: {
@@ -2313,6 +2325,10 @@ var ruleInfo = {
     comment: 'Reals are (almost) closed under reciprocal'
   },
 
+  // Evaluates arithmetic expressions with operators:
+  // +, -, *, , neg, >, >=, <, <=, and the type operator "R".
+  // Checks that inputs are all numeric and that the result can be
+  // guaranteed to be an exact integer.
   axiomArithmetic: {
     action: function(term) {
       if (term.isInfixCall()) {
@@ -2324,18 +2340,12 @@ var ruleInfo = {
         case '+': value = left + right; break;
         case '*': value = left * right; break;
         case '-': value = left - right; break;
-        case '/':
-	  value = Math.floor(left / right);
-	  if (value < 0) {
-            value = -Math.floor(-left / right);
-          }
-          break;
         case '>': value = left > right; break;
         case '>=': value = left >= right; break;
         case '<': value = left < right; break;
         case '<=': value = left <= right; break;
         default:
-          assert(false, 'Not an arithmetic operator: ' + op);
+          assert(false, 'Unsupported operator: ' + op);
 	}
         if (typeof value == 'boolean') {
           var rhs = value ? T : F;
@@ -2349,7 +2359,7 @@ var ruleInfo = {
         var arg = Y.checkNumber(term.arg.value);
         var op = term.fn;
         assert(op instanceof Y.Var,
-               function() { return 'Not an arithmetic operator: ' + op; });
+               function() { return 'Unsupported operator: ' + op; });
         if (op.name == 'neg') {
           value = -arg;
           var rhs = new Y.Var(value.toFixed(0));
@@ -2366,41 +2376,25 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to evaluate: <input name=term>',
-    comment: 'Evaluate an expression that adds two integers'
+    comment: 'Evaluate an arithmetic expression'
   },
 
   // Real number rules of inference rules
 
-  commute: {
+  arithmetic: {
     action: function(step, path) {
       var term = step.locate(path);
-      term.assertCall2();
-      var op = term.getBinOp().name;
-      var map = {'+': 'axiomCommutativePlus', '*': 'axiomCommutativeTimes'};
-      assert(map.hasOwnProperty(op), 'Not commutative: ' + term);
-      var fact = rules[map[op]]();
-      var result = rules.rewrite(step, path, fact);
-      return result.justify('commute', arguments, [step]);
+      try {
+        var equation = rules.axiomArithmetic(term);
+        var result = rules.replace(equation, step, path);
+        return result.justify('arithmetic', arguments, [step]);
+      } catch(e) {
+        assert(false, 'Not an arithmetic expression: ' + term);
+      }
     },
     inputs: {site: 1},
     form: '',
-    comment: 'Commute an expression having a commutative operator'
-  },
-
-  associateToLeft: {
-    action: function(step, path) {
-
-    },
-    inputs: {site: 1},
-    form: '',
-  },
-
-  associateToRight: {
-    action: function(step, path) {
-
-    },
-    inputs: {site: 1},
-    form: '',
+    comment: 'Evaluate arithmetic expression'
   },
 
 
@@ -2433,6 +2427,117 @@ var ruleInfo = {
 
 };  // End of theorems and rules
 
+// Descriptions of rewrite rules; internal.
+var rewriters = {
+  commutePlus: {
+    axiom: 'axiomCommutativePlus'
+  },
+  commuteTimes: {
+    axiom: 'axiomCommutativeTimes'
+  },
+  associatePlusToLeft: {
+    axiom: 'axiomAssociativePlus'
+  },
+  associatePlusToRight: {
+    axiom: 'axiomAssociativePlus',
+    input: 'right'
+  },
+  associateTimesToLeft: {
+    axiom: 'axiomAssociativeTimes'
+  },
+  associateTimesToRight: {
+    axiom: 'axiomAssociativeTimes',
+    input: 'right'
+  },
+  distribute: {
+    axiom: 'axiomDistributivity'
+  },
+  undistribute: {
+    axiom: 'axiomDistributivity',
+    input: 'right'
+  },
+  plusZeroElim: {
+    axiom: 'axiomZeroPlus'
+  },
+  plusZeroBack: {
+    axiom: 'axiomZeroPlus',
+    input: 'right'
+  },
+  timesOneElim: {
+    axiom: 'axiomOneTimes'
+  },
+  timesOneBack: {
+    axiom: 'axiomOneTimes',
+    input: 'right'
+  },
+  timesZero: {
+    axiom: 'axiomTimesZero'
+  },
+  plusNegElim: {
+    axiom: 'axiomNeg'
+  },
+  timesRecipElim: {
+    axiom: 'axiomReciprocal'
+  }
+};  
+
+/**
+ * Standardized rewriting rule that uses an equational axiom.
+ */
+function rewriteWithAxiom(step, path, axiomName, ruleName) {
+  var axiom = rules[axiomName]();
+  var result = rules.rewrite(step, path, axiom);
+  return result.justify(ruleName, arguments, [step]);
+}
+
+/**
+ * Standardized rewriting rule that uses an equation axiom, using RHS
+ * as the pattern and the LHS as template for the result.
+ */
+function rewriteBackWithAxiom(step, path, axiomName, ruleName) {
+  var axiom = rules[axiomName]();
+  var back = rules.eqnSwap(axiom);
+  var result = rules.rewrite(step, path, back);
+  return result.justify(ruleName, arguments, [step]);
+}
+
+/**
+ * Adds information to the ruleInfo map based on a map of rewriting
+ * descriptors such as "rewriters".  The rewriting descriptors map has
+ * an entry for each standardized rewrite rule.  The name in the map
+ * becomes the name of the inference rule.  The "axiom" property
+ * becomes the name of the axiom to use for the rewriting.  The
+ * "input" property, either "left" or "right" indicates which side of
+ * the equational axiom is the pattern to match the target.  If
+ * omitted, the value is taken as "left".
+ */
+function genRewriters(map) {
+  for (var name in map) {
+    var info = map[name];
+    var generators = {
+      'left': rewriteWithAxiom,
+      'right': rewriteBackWithAxiom
+    };
+    var input = info.input || 'left';
+    if (input == 'right') {
+      var comment = 'Rewrite back using ' + info.axiom;
+    } else {
+      var comment = 'Rewrite using ' + info.axiom;
+    }
+    // Add this info to ruleInfo:
+    ruleInfo[name] = {
+      // Add the axiom and the rule name to all calls to the action
+      // function.
+      action: Y.rbind(generators[input], null, info.axiom, name),
+      inputs: {site: 1},
+      form: '',
+      comment: comment
+    };
+  }
+}
+
+// Add rewriting rules based on the axioms.
+genRewriters(rewriters);
 
 // Actual rule functions to call from other code.
 Y.createRules(ruleInfo);

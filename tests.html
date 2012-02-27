@@ -604,6 +604,7 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.rules.axiomDistributivity();
         Y.rules.axiomZeroPlus();
         Y.rules.axiomOneTimes();
+        Y.rules.axiomTimesZero();
         Y.rules.axiomNeg();
         Y.rules.axiomReciprocal();
         Y.rules.axiomPlusType();
@@ -625,11 +626,7 @@ YUI({filter: null, insertBefore: 'styles'})
         check('((2 + 2) = 4)', '2 + 2');
         check('((5 * 4) = 20)', '5 * 4');
         check('((5 - 4) = 1)', '5 - 4');
-        check('((5 / 4) = 1)', '5 / 4');
         check('((neg 5) = -5)', 'neg 5');
-        check('((-5 / 4) = -1)', Y.infixCall(neg5, '/', _var('4')));
-        check('((4 / -5) = 0)', Y.infixCall(_var('4'), '/', neg5));
-        check('((-5 / -5) = 1)', Y.infixCall(neg5, '/', neg5));
         check('((5 > 4) = T)', '5 > 4');
         check('((5 >= 4) = T)', '5 >= 4');
         check('((5 < 4) = F)', '5 < 4');
