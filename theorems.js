@@ -61,17 +61,29 @@ var ruleInfo = {
   /**
    * Suppose the given expression to be true.  This is the standard
    * way to introduce hypotheses into proofs.  If given a string,
-   * parses it and uses the result.
+   * parses it and uses the result.  Automatically assumes variables
+   * used as input to "math operations" are real numbers.
+   *
+   * TODO: Enable users to disable the auto real number assumptions.
    */
   assume: {
     action: function(assumption) {
       if (typeof assumption == 'string') {
 	assumption = Y.parse(assumption);
       }
+      var hyps = assumption;
+      var names = [];
+      for (var v in assumption.mathVars()) {
+        names.push(v);
+      }
+      names.sort();
+      for (var i = 0; i < names.length; i++) {
+        hyps = Y.infixCall(hyps, '&&', call('R', names[i]));
+      }
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
       var step =
-        call('-->', assumption, assumption).justify('assume', arguments);
+        call('-->', hyps, assumption).justify('assume', arguments);
       step.hasHyps = true;
       assumption.sourceStep = step;
       _allHyps[assumption.dump()] = assumption;

@@ -1029,11 +1029,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(p --> (forall {x. (q x)}))', result);
 
         // With hypotheses:
-        var step1 = Y.rules.assert('y > 0 --> (p --> q x)');
-	var step2 = Y.rules.assume('y > 0');
+        var step1 = Y.rules.assert('R y --> (p --> q x)');
+	var step2 = Y.rules.assume('R y');
 	var step3 = Y.rules.modusPonens(step2, step1);
         result = Y.rules.implyForall(x, step3);
-        assertEqual('((y > 0) --> (p --> (forall {x. (q x)})))', result);
+        assertEqual('((R y) --> (p --> (forall {x. (q x)})))', result);
       },
 
       testP: function() {
