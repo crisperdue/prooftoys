@@ -226,10 +226,32 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('({y. T} y)', result);
       },
 
-      testNormalize: function() {
+      testMathVars: function() {
+        function check(expected, input) {
+          input = typeof input == 'string' ? Y.parse(input) : input;
+          var actual = input.mathVars();
+          assertEqual(expected, Y.debugString(actual));
+        }
+        check('{}', 'x');
+        check('{x: true}', 'x + 1');
+        check('{x: true}', 'neg x + 1');
+        check('{z: true}', '1 + (recip z)');
+        check('{}', 'x = y');
+        check('{x: true, y: true}', 'x = y + 1');
+        // A more thorough implementation might include y also.
+        check('{x: true}', 'x + ({x. x = y} 1)');
+      },
+
+      testNormalized: function() {
         var e1 = call(lambda(x, call(f, x)), _var('y'));
         var result = Y.normalized(e1);
         assertEqual('({$1. (f $1)} y)', result.toString());
+      },
+
+      testIsCall1: function() {
+        assertEqual(false, times2.isCall1('='));
+        assertEqual(true, Y.parse('f x').isCall1());
+        assertEqual(true, Y.parse('f x').isCall1('f'));
       },
 
       testIsCall2: function() {

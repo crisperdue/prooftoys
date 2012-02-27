@@ -238,6 +238,13 @@ Expr.prototype.toString = function() {
 };
 
 /**
+ * True iff this is a Var named as a variable.
+ */
+Expr.prototype.isVariable = function() {
+  return this instanceof Var && isVariable(this);
+};
+
+/**
  * True iff this is a Var named as a constant.
  */
 Expr.prototype.isConst = function() {
@@ -402,6 +409,18 @@ Expr.prototype.freeVars = function() {
 };
 
 /**
+ * Finds all occurrences of free variables in this expression that are
+ * used as inputs to known math operators.  This is a convenience
+ * rather than a type analysis.  Returns them as a set (map from name
+ * to true).
+ */
+Expr.prototype.mathVars = function() {
+  var map = {}; 
+  this._addMathVars(null, map);
+  return map;
+};
+
+/**
  * Finds and returns a set of all the names bound in this expression
  * at the location given by the path, represented by a Map from names
  * to true.
@@ -465,6 +484,20 @@ Expr.prototype.getRight = function() {
  */
 Expr.prototype.unHyp = function() {
   return this.hasHyps ? this.getRight() : this;
+};
+
+/**
+ * Returns true iff this expression is a call to a function with the
+ * given name, with one argument.  Or if name is not given, a call to
+ * any named function.
+ */
+Expr.prototype.isCall1 = function(name) {
+  if (this instanceof Y.Call) {
+    return (this.fn instanceof Y.Var &&
+            (name == null || this.fn.name == name));
+  } else {
+    return false;
+  }
 };
 
 /**
@@ -830,6 +863,8 @@ Expr.prototype.mergedHypotheses = function() {
 };
 
 
+// Expr
+//
 // Methods defined on expressions, but defined only in the subclasses:
 //
 // dump()
@@ -913,6 +948,14 @@ Expr.prototype.mergedHypotheses = function() {
 // TODO: Map in bindings directly to a new variable, reducing object
 // creation.
 //
+//
+// _addMathVars(bindings, set)
+//
+// Helper for Expr.mathVars.  Traverses this expression, adding to the
+// set names of all free variables that are arguments to math
+// operators or an argument to "=" or "!=" that have an expression
+// with a math operator as the other argument.
+// 
 //
 // normalized(counter, bindings)
 //
@@ -1109,6 +1152,10 @@ Var.prototype._decapture = function(freeNames, allNames, bindings) {
   return newName ? new Var(newName) : this;
 };
 
+Var.prototype._addMathVars = function(bindings, set) {
+  return false;
+};
+
 Var.prototype.normalized = function(counter, bindings) {
   return new Var(getBinding(this.name, bindings) || this.name);
 };
@@ -1286,6 +1333,64 @@ Call.prototype._decapture = function(freeNames, allNames, bindings) {
   var fn = this.fn._decapture(freeNames, allNames, bindings);
   var arg = this.arg._decapture(freeNames, allNames, bindings);
   return (fn == this.fn && arg == this.arg ? this : new Call(fn, arg));
+};
+
+Call.prototype._addMathVars = function(bindings, set) {
+  // TODO: Consider handling defined functions.
+  if (this.isCall1()) {
+    var op = this.fn.name;
+    switch (op) {
+    case 'neg':
+    case 'recip':
+      if (this.arg instanceof Var) {
+        set[this.arg.name] = true;
+      } else {
+        this.arg._addMathVars(bindings, set);
+      }
+      return true;
+    }
+  } else if (this.isCall2()) {
+    var op = this.getBinOp().name;
+    var left = this.getLeft();
+    var right = this.getRight();
+    function addVars() {
+      if (left.isVariable()) {
+        set[left.name] = true;
+      }
+      if (right.isVariable()) {
+        set[right.name] = true;
+      }
+    }
+    var result;
+    switch (op) {
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+      addVars();
+      result = true;
+      break;
+    case '<':
+    case '<=':
+    case '>':
+    case '>=':
+    case 'R':
+      addVars();
+      result = false;
+      break;
+    }
+    var isLeftReal = left._addMathVars(bindings, set);
+    if (isLeftReal && right.isVariable()) {
+      set[right.name] = true;
+    }
+    var isRightReal = right._addMathVars(bindings, set);
+    if (isRightReal && left.isVariable()) {
+      set[left.name] = true;
+    }
+    return result;
+  } else {
+    return false;
+  }
 };
 
 Call.prototype.normalized = function(counter, bindings) {
@@ -1568,6 +1673,11 @@ Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
                      : new Bindings(oldName, newName, bindings));
   var body = this.body._decapture(freeNames, allNames, newBindings);
   return (body == this.body) ? this : new Lambda(new Var(newName), body);
+};
+
+Lambda.prototype._addMathVars = function(bindings, set) {
+  this.body._addMathVars(new Bindings(this.bound.name, true, bindings));
+  return false;
 };
 
 Lambda.prototype.normalized = function(counter, bindings) {
@@ -2116,8 +2226,8 @@ function parseType(input) {
 
 //// CONSTANTS AND DEFINITIONS
 ////
-//// The only constants currently are the built-in T, F, =, "the".
-//// Defined names are "definitions".
+//// The only primitive constants currently are the built-in T, F, =,
+//// "the", but others may be defined.
 
 function booleanBinOpType() {
   return new FunctionType(boolean, new FunctionType(boolean, boolean));
@@ -2589,7 +2699,9 @@ var _tokens = new RegExp(['[(){}]',
  * ":", or a sequence containing none of these and no whitespace.
  * 
  * This returns an array of tokens in the input string, followed by an
- * "(end)" token, omitting whitespace.
+ * "(end)" token, omitting whitespace.  All tokens are Var objects
+ * with the text of the token as its name and its index in the input
+ * as its "pos" property.
  */
 function tokenize(str) {
   var match;
@@ -2668,7 +2780,7 @@ function parse(input) {
         expect(')');
       } else if (token.name == '{') {
         var id = next();
-        assert(isId(id), 'Expected identifier, got ' + id.name);
+        assert(isVariable(id), 'Expected identifier, got ' + id.name);
         expect('.');
         var body = mustParseAbove(0);
         expr = new Y.Lambda(id, body);
@@ -2734,18 +2846,18 @@ function nParsed() {
 };
 
 /**
- * Is it a legal identifier?
+ * Is it a legal variable name?  Accepts a string or Var.
  */
-function isId(token) {
-  return token instanceof Y.Var
-    && token.name.match(/^[A-Za-z:$][A-Za-z0-9:$]*$/);
+function isVariable(name) {
+  name = name instanceof Y.Var ? name.name : name;
+  return name.match(/^[_A-Za-z:$][A-Za-z0-9:$]*$/);
 }
 
 /**
  * Is it an identifier or constant?  Currently Id or number as digits
  * with optional leading "-".
  */
-function isIdOrConstant(token) {
+function isIdOrLiteral(token) {
   return token instanceof Y.Var
     && !!token.name.match(/^-?[A-Za-z0-9$]+$/);
 }
@@ -2762,7 +2874,7 @@ function getPrecedence(token) {
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
-    return isIdOrConstant(token) ? null : 100;
+    return isIdOrLiteral(token) ? null : 100;
   }
 }
 
