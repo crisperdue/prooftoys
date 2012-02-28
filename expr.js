@@ -42,6 +42,9 @@ function subFree(replacement_arg, v, target) {
   // from parts of the original expression, for example replacing x
   // with (f x) in an expression containing an (f x).  Used in
   // avoiding capture of free variables.
+  //
+  // TODO: Instead of duplicating this bit of structure, note
+  // replacement sites and 
   var replacement = replacement_arg.dup();
   var allNames = {};
   replacement._addNames(allNames);
@@ -1598,8 +1601,10 @@ Lambda.prototype._subFree = function(replacement, name, freeNames, allNames) {
       // Note that bound.name is known to be different than the name
       // to be replaced, see above.  So the new body has all of the
       // original free occurrences of bound.name.  It may have some
-      // more, but they are inside occurrences of the replacement, so
-      // we can go back now and decapture after doing the substitution.
+      // more, but they are inside occurrences of the replacement and
+      // we can detect occurrences of the replacement, so we can go
+      // back now and decapture after doing the substitution, renaming
+      // except inside the replacement.
       body = body._renameFree(this.bound.name, newVar, replacement);
       return (body == this.body) ? this : new Lambda(newVar, body);
     } else {
@@ -2396,7 +2401,7 @@ function checkRange(number) {
 
 /**
  * Add a simple abbreviation-like definition, e.g.
- * define('forall', equal(lambda(x, T))).
+ * define('forall', equal(lambda(x, T))).  Returns the equation.
  */
 function define(name, definition) {
   assert(isConstant(name), 'Not a constant name: ' + name);
@@ -2412,7 +2417,7 @@ function define(name, definition) {
   for (var n in definition.freeNames()) {
     assert(isDefined(n), 'Definition has free variables: ' + name);
   }
-  definitions[name] = equal(name, definition);
+  return definitions[name] = equal(name, definition);
 }
 
 /**
