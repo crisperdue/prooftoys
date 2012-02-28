@@ -2157,6 +2157,8 @@ var ruleInfo = {
     comment: 'Move conjunct of implication LHS all the way to the right'
   },
 
+  // From the section "Equality and descriptions"
+
   equalitySymmetric: {
     action: function() {
       var step1 = rules.assume('x = y');
@@ -2246,10 +2248,10 @@ var ruleInfo = {
   },
 
   // TODO: Rename to axiomPlusZero.
-  axiomZeroPlus: {
+  axiomPlusZero: {
     action: function() {
       return Y.parse('R x --> x + 0 = x')
-        .asHyps().justify('axiomZeroPlus');
+        .asHyps().justify('axiomPlusZero');
     },
     inputs: {},
     form: '',
@@ -2257,10 +2259,10 @@ var ruleInfo = {
   },
 
   // TODO: Rename to axiomTimesOne.
-  axiomOneTimes: {
+  axiomTimesOne: {
     action: function() {
       return Y.parse('R x --> x * 1 = x')
-        .asHyps().justify('axiomOneTimes');
+        .asHyps().justify('axiomTimesOne');
     },
     inputs: {},
     form: '',
@@ -2469,17 +2471,17 @@ var rewriters = {
     input: 'right'
   },
   plusZeroElim: {
-    axiom: 'axiomZeroPlus'
+    axiom: 'axiomPlusZero'
   },
   plusZeroBack: {
-    axiom: 'axiomZeroPlus',
+    axiom: 'axiomPlusZero',
     input: 'right'
   },
   timesOneElim: {
-    axiom: 'axiomOneTimes'
+    axiom: 'axiomTimesOne'
   },
   timesOneBack: {
-    axiom: 'axiomOneTimes',
+    axiom: 'axiomTimesOne',
     input: 'right'
   },
   timesZero: {
