@@ -58,6 +58,15 @@ var ruleInfo = {
     comment: 'WFF to assert (possibly to prove later)'
   },
 
+  define: {
+    action: function(name, definition) {
+      return Y.define(name, definition).justify('define', arguments);
+    },
+    inputs: {varName: 1, term: 2},
+    form: ('Define name <input name=varName> as <input name=term>'),
+    comment: 'Simple definition'
+  },
+
   /**
    * Suppose the given expression to be true.  This is the standard
    * way to introduce hypotheses into proofs.  If given a string,
@@ -253,9 +262,7 @@ var ruleInfo = {
 
   axiom1: {
     action: function() {
-      // var result = Y.parse('g T && g F = forall {x. g x}');
-      var result =  equal(call('&&', call(g, T), call(g, F)),
-			  call('forall', lambda(x, call(g, x))));
+      var result = rules.assert('g T && g F = forall {x. g x}');
       return result.justify('axiom1');
     },
     inputs: {},
@@ -265,7 +272,7 @@ var ruleInfo = {
 
   axiom2: {
     action: function() {
-      var result = Y.parse('x = y --> h x = h y');
+      var result = rules.assert('x = y --> h x = h y');
       return result.justify('axiom2');
     },
     inputs: {},
@@ -275,7 +282,7 @@ var ruleInfo = {
 
   axiom3: {
     action: function() {
-      var result = Y.parse('(f = g) = forall {x. f x = g x}');
+      var result = rules.assert('(f = g) = forall {x. f x = g x}');
       return result.justify('axiom3');
     },
     inputs: {},
@@ -300,7 +307,7 @@ var ruleInfo = {
         equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
       // Always make sure the call has a type.  It came from elsewhere.
       Y.findType(call);
-      return result.justify('axiom4', arguments);
+      return rules.assert(result).justify('axiom4', arguments);
     },
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
@@ -310,7 +317,7 @@ var ruleInfo = {
 
   axiom5: {
     action: function() {
-      var result = Y.parse('(the (= y)) = y');
+      var result = rules.assert('(the (= y)) = y');
       return result.justify('axiom5');
     },
     inputs: {},
@@ -337,8 +344,7 @@ var ruleInfo = {
   // Rule R on r5230FT and step 3.
   axiomPNeqNotP: {
     action: function() {
-      var result =
-        call('forall', lambda(p, call('not', equal(p, call('not', p)))));
+      var result = rules.assert('forall {p. not (p = not p)}');
       return result.justify('axiomPNeqNotP');
     },
     inputs: {},
@@ -347,18 +353,9 @@ var ruleInfo = {
     comment: ('')
   },
 
-  defForall: function() {
-    var result = equal('forall', equal(lambda(x, T)));
-    return result.justify('defForall');
-  },
-
   // Definition of F, for book-style proofs.
   defFFromBook: function() {
     return equal(F, call('forall', lambda(x, x))).justify('defFFromBook');
-  },
-
-  defNot: function() {
-    return equal('not', equal(F)).justify('defNot');
   },
 
   // Book only.
@@ -766,7 +763,7 @@ var ruleInfo = {
     var step2b = rules.apply(step2a, '/left/right');
     var step2c = rules.apply(step2b, '/right/arg/body');
     var step3a = rules.eqT(lambda(x, T));
-    var step3b = rules.rRight(rules.defForall(), step3a, '/right/fn');
+    var step3b = rules.rRight(rules.definition('forall'), step3a, '/right/fn');
     var step4 = rules.rRight(step3b, step2c, '/right');
     return step4.justify('r5211Book');
   },
@@ -1209,7 +1206,7 @@ var ruleInfo = {
   // [[F =] = not].
   falseEquals: {
     action: function() {
-      return rules.eqnSwap(rules.defNot()).justify('falseEquals');
+      return rules.eqnSwap(rules.definition('not')).justify('falseEquals');
     },
     comment: ('[F =] = not')
   },
@@ -2205,7 +2202,7 @@ var ruleInfo = {
 
   axiomCommutativePlus: {
     action: function() {
-      return Y.parse('R x && R y --> x + y = y + x')
+      return rules.assert('R x && R y --> x + y = y + x')
         .asHyps().justify('axiomCommutativePlus');
     },
     inputs: {},
@@ -2215,7 +2212,7 @@ var ruleInfo = {
 
   axiomAssociativePlus: {
     action: function() {
-      return Y.parse('R x && R y && R z --> x + (y + z) = (x + y) + z')
+      return rules.assert('R x && R y && R z --> x + (y + z) = (x + y) + z')
 	.asHyps().justify('axiomAssociativePlus');
     },
     inputs: {},
@@ -2225,7 +2222,7 @@ var ruleInfo = {
 
   axiomCommutativeTimes: {
     action: function() {
-      return Y.parse('R x && R y --> x * y = y * x')
+      return rules.assert('R x && R y --> x * y = y * x')
 	.asHyps().justify('axiomCommutativeTimes');
     },
     inputs: {},
@@ -2235,7 +2232,7 @@ var ruleInfo = {
 
   axiomAssociativeTimes: {
     action: function() {
-      return Y.parse('R x && R y && R z --> x * (y * z) = (x * y) * z')
+      return rules.assert('R x && R y && R z --> x * (y * z) = (x * y) * z')
 	.asHyps().justify('axiomAssociativeTimes');
     },
     inputs: {},
@@ -2245,7 +2242,7 @@ var ruleInfo = {
 
   axiomDistributivity: {
     action: function() {
-      return Y.parse('R x && R y && R z --> x * (y + z) = x * y + x * z')
+      return rules.assert('R x && R y && R z --> x * (y + z) = x * y + x * z')
 	.asHyps().justify('axiomDistributivity');
     },
     inputs: {},
@@ -2255,7 +2252,7 @@ var ruleInfo = {
 
   axiomPlusZero: {
     action: function() {
-      return Y.parse('R x --> x + 0 = x')
+      return rules.assert('R x --> x + 0 = x')
         .asHyps().justify('axiomPlusZero');
     },
     inputs: {},
@@ -2265,7 +2262,7 @@ var ruleInfo = {
 
   axiomTimesOne: {
     action: function() {
-      return Y.parse('R x --> x * 1 = x')
+      return rules.assert('R x --> x * 1 = x')
         .asHyps().justify('axiomTimesOne');
     },
     inputs: {},
@@ -2275,7 +2272,7 @@ var ruleInfo = {
 
   axiomTimesZero: {
     action: function() {
-      return Y.parse('R x --> x * 0 = 0')
+      return rules.assert('R x --> x * 0 = 0')
         .asHyps().justify('axiomTimesZero');
     },
     inputs: {},
@@ -2285,7 +2282,7 @@ var ruleInfo = {
 
   axiomNeg: {
     action: function() {
-      return Y.parse('R x --> x + neg x = 0')
+      return rules.assert('R x --> x + neg x = 0')
         .asHyps().justify('axiomNeg');
     },
     inputs: {},
@@ -2295,7 +2292,7 @@ var ruleInfo = {
 
   axiomReciprocal: {
     action: function() {
-      return Y.parse('R x && not (x = 0) --> x * recip x = 1')
+      return rules.assert('R x && not (x = 0) --> x * recip x = 1')
         .asHyps().justify('axiomReciprocal');
     },
     inputs: {},
@@ -2305,7 +2302,7 @@ var ruleInfo = {
 
   axiomPlusType: {
     action: function() {
-      return Y.parse('R x && R y --> R (x + y)')
+      return rules.assert('R x && R y --> R (x + y)')
 	.justify('plusType');
     },
     inputs: {},
@@ -2315,7 +2312,7 @@ var ruleInfo = {
 
   axiomTimesType: {
     action: function() {
-      return Y.parse('R x && R y --> R (x * y)')
+      return rules.assert('R x && R y --> R (x * y)')
 	.justify('timesType');
     },
     inputs: {},
@@ -2325,7 +2322,7 @@ var ruleInfo = {
 
   axiomNegType: {
     action: function() {
-      return Y.parse('R x --> R (neg x)')
+      return rules.assert('R x --> R (neg x)')
 	.justify('negType');
     },
     inputs: {},
@@ -2335,7 +2332,7 @@ var ruleInfo = {
 
   axiomReciprocalType: {
     action: function() {
-      return Y.parse('not (x = 0) && R x --> R recip x')
+      return rules.assert('not (x = 0) && R x --> R recip x')
 	.justify('reciprocalType');
     },
     inputs: {},
@@ -2371,7 +2368,7 @@ var ruleInfo = {
           var value = Y.checkRange(value);
           var rhs = new Y.Var(value.toFixed(0));
         }
-        return Y.infixCall(term, '=', rhs)
+        return rules.assert(Y.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else if (term instanceof Y.Call) {
         var arg = Y.checkNumber(term.arg.value);
@@ -2386,7 +2383,7 @@ var ruleInfo = {
         } else {
           assert(false, 'Not an arithmetic expression: ' + term);
         }
-        return Y.infixCall(term, '=', rhs)
+        return rules.assert(Y.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else {
 	assert(false, 'Not an arithmetic expression: ' + term);
@@ -2422,7 +2419,7 @@ var ruleInfo = {
 
   // Experiment with Andrews' definition of "and".
   funWithAnd: function() {
-    var fa = rules.defForall();
+    var fa = rules.definition('forall');
     var a2 = rules.axiom2();
     var a3 = rules.axiom3();
     var step1 = rules.applyBoth(rules.defAnd(), T);
@@ -2586,8 +2583,8 @@ Y.define('/', '{x. {y. x * recip y}}');
 var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
 
 var theoremNames =
-  (axiomNames.concat(['defForall', 'defFFromBook', 'axiomTIsNotF',
-                      'defNot', 'defAnd', 'tIsXIsX', 'forallVT',
+  (axiomNames.concat(['defFFromBook', 'axiomTIsNotF',
+                      'defAnd', 'tIsXIsX', 'forallVT',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals']));
 
