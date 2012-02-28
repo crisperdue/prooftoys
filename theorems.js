@@ -64,30 +64,36 @@ var ruleInfo = {
    * parses it and uses the result.  Automatically assumes variables
    * used as input to "math operations" are real numbers.
    *
-   * TODO: Enable users to disable the auto real number assumptions.
+   * TODO: Enable users to disable the automatic real number assumptions.
    */
   assume: {
     action: function(assumption) {
       if (typeof assumption == 'string') {
 	assumption = Y.parse(assumption);
       }
-      var hyps = assumption;
       var names = [];
       for (var v in assumption.mathVars()) {
         names.push(v);
       }
+      // Order the names for nice presentation.
       names.sort();
+      var step = rules.tautInst('a --> a', {a: assumption});
+      // TODO: Fix tautInst to not copy.
+      assumption = step.getLeft();
+      var taut = rules.tautology('(h --> a) --> (h && b --> a)');
       for (var i = 0; i < names.length; i++) {
-        hyps = Y.infixCall(hyps, '&&', call('R', names[i]));
+        var step1 = rules.tautInst(taut, {h: step.getLeft(),
+                                          a: step.getRight(),
+                                          b: call('R', names[i])});
+        step = rules.modusPonens(step, step1);
       }
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
-      var step =
-        call('-->', hyps, assumption).justify('assume', arguments);
-      step.hasHyps = true;
-      assumption.sourceStep = step;
+      var result = step.justify('assume', arguments);
+      result.hasHyps = true;
+      assumption.sourceStep = result;
       _allHyps[assumption.dump()] = assumption;
-      return step;
+      return result;
     },
     inputs: {term: 1},
     form: ('Assume <input name=term>'),
@@ -2247,7 +2253,6 @@ var ruleInfo = {
     comment: 'Distributivity of multiplication over addition'
   },
 
-  // TODO: Rename to axiomPlusZero.
   axiomPlusZero: {
     action: function() {
       return Y.parse('R x --> x + 0 = x')
@@ -2258,7 +2263,6 @@ var ruleInfo = {
     comment: 'Zero is the additive identity'
   },
 
-  // TODO: Rename to axiomTimesOne.
   axiomTimesOne: {
     action: function() {
       return Y.parse('R x --> x * 1 = x')
