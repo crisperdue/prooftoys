@@ -43,11 +43,18 @@ function subFree(replacement_arg, v, target) {
   // with (f x) in an expression containing an (f x).  Used in
   // avoiding capture of free variables.
   var replacement = replacement_arg.dup();
-  replacement.sourceStep = replacement_arg.sourceStep;
   var allNames = {};
   replacement._addNames(allNames);
   target._addNames(allNames);
-  return target._subFree(replacement, name, replacement.freeNames(), allNames);
+  var result =
+    target._subFree(replacement, name, replacement.freeNames(), allNames);
+  // Now put back the original structure wherever it has been replaced.
+  if (result == replacement) {
+    return replacement_arg;
+  } else {
+    result._smashAll(replacement, replacement_arg);
+    return result;
+  }
 }
 
 /**
@@ -900,7 +907,7 @@ Expr.prototype.mergedHypotheses = function() {
 // including occurrences of Vars, so rendering can add distinct
 // annotations to each occurrence.  Currently copies only logical
 // structure and the sourceStep property (to help rendering of
-// hypotheses).
+// hypotheses).  Intended only for use in rendering.
 //
 //
 // dup()
@@ -1603,35 +1610,6 @@ Lambda.prototype._subFree = function(replacement, name, freeNames, allNames) {
   }
 };
 
-// Rename all free occurrences of variables having the given name,
-// replacing each of them with variable newVar, but do not rename
-// within occurrences expressions identical to "replacement", which is
-// already a substitution result.  So this relies on the substitution
-// to _not_ copy the replacement expression.  Helper method for
-// _subFree.
-Var.prototype._renameFree = function(name, newVar, replacement) {
-  return (this == replacement
-          ? this
-          : (this.name == name ? newVar : this));
-};
-
-Call.prototype._renameFree = function(name, newVar, replacement) {
-  if (this == replacement) {
-    return this;
-  }
-  var fn = this.fn._renameFree(name, newVar, replacement);
-  var arg = this.arg._renameFree(name, newVar, replacement);
-  return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
-};
-
-Lambda.prototype._renameFree = function(name, newVar, replacement) {
-  if (this == replacement || this.bound.name == name) {
-    return this;
-  }
-  var body = this.body._renameFree(name, newVar, replacement);
-  return (body == this.body) ? this : new Lambda(this.bound, body);
-};
-
 // Etc.
 
 Lambda.prototype.copy = function() {
@@ -1779,6 +1757,65 @@ Lambda.prototype._matchAsSchema = function(expr, map) {
 
 Lambda.prototype._asPattern = function(term) {
   return this.__var || new Lambda(this.bound, this.body._asPattern());
+};
+
+// Private methods grouped by name.
+
+// Traverse this, replacing occurrences of target with replacement.
+// (As used they are duplicates anyway.)
+//
+// Private to subFree.
+Var.prototype._smashAll = function(target, replacement) {
+};
+
+Call.prototype._smashAll = function(target, replacement) {
+  if (this.fn == target) {
+    this.fn = replacement;
+  } else {
+    this.fn._smashAll(target, replacement);
+  }
+  if (this.arg == target) {
+    this.arg = replacement;
+  } else {
+    this.arg._smashAll(target, replacement);
+  }
+};
+
+Lambda.prototype._smashAll = function(target, replacement) {
+  if (this.body == target) {
+    this.body = replacement;
+  } else {
+    this.body._smashAll(target, replacement);
+  }
+};
+
+// Rename all free occurrences of variables having the given name,
+// replacing each of them with variable newVar, but do not rename
+// within occurrences expressions identical to "replacement", which is
+// already a substitution result.  So this relies on the substitution
+// to _not_ copy the replacement expression.  Helper method for
+// _subFree.
+Var.prototype._renameFree = function(name, newVar, replacement) {
+  return (this == replacement
+          ? this
+          : (this.name == name ? newVar : this));
+};
+
+Call.prototype._renameFree = function(name, newVar, replacement) {
+  if (this == replacement) {
+    return this;
+  }
+  var fn = this.fn._renameFree(name, newVar, replacement);
+  var arg = this.arg._renameFree(name, newVar, replacement);
+  return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
+};
+
+Lambda.prototype._renameFree = function(name, newVar, replacement) {
+  if (this == replacement || this.bound.name == name) {
+    return this;
+  }
+  var body = this.body._renameFree(name, newVar, replacement);
+  return (body == this.body) ? this : new Lambda(this.bound, body);
 };
 
 
