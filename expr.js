@@ -2,6 +2,105 @@
 
 YUI.add('expr', function(Y) {
 
+
+//// GENERAL UTILITIES
+
+// Set
+
+function Set(stringifier) {
+  this.map = {};
+  this.stringifier = stringifier || String;
+}
+
+Set.prototype.add = function(value) {
+  this.map[this.stringifier(value)] = value;
+};
+
+Set.prototype.has = function(value) {
+  return this.map.hasOwnProperty(this.stringifier(value));
+};
+
+Set.prototype.remove = function(value) {
+  delete this.map[this.stringifier(value)];
+};
+
+Set.prototype.each = function(action) {
+  Y.each(this.map, action);
+};
+
+Set.prototype.size = function() {
+  var counter = 0;
+  this.each(function () { counter++; });
+  return counter;
+};
+
+Set.prototype.isEmpty = function() {
+  for (var key in this.map) {
+    return false;
+  }
+  return true;
+};
+
+
+// Map
+
+function Map(stringifier) {
+  this.map = {};
+  this.stringifier = stringifier || String;
+}
+
+Map.prototype.set = function(key, value) {
+  this.map[this.stringifier(key)] = value;
+};
+
+Map.prototype.has = function(key) {
+  return this.map.hasOwnProperty(this.stringifier(key));
+};
+
+Map.prototype.get = function(key) {
+  var map = this.map;
+  var k = this.stringifier(key);
+  return map.hasOwnProperty(k) ? map[k] : undefined;
+};
+
+Map.prototype.remove = function(key) {
+  delete this.map[this.stringifier(key)];
+};
+
+Map.prototype.each = function(action) {
+  Y.each(this.map, action);
+};
+
+Map.prototype.size = function() {
+  var counter = 0;
+  this.each(function () { counter++; });
+  return counter;
+};
+
+Map.prototype.isEmpty = function() {
+  for (var key in this.map) {
+    return false;
+  }
+  return true;
+};
+
+//// TermSet and TermMap
+
+function identifyTerm(term) {
+  return term.dump();
+};
+
+function TermSet() {
+  TermSet.superclass.constructor.call(this, identifyTerm);
+}  
+Y.extend(TermSet, Set);
+
+function TermMap() {
+  TermMap.superclass.constructor.call(this, identifyTerm);
+}
+Y.extend(TermMap, Map);
+
+
 // Used to order execution of proof steps so they can display
 // in order of execution in an automatically-generated proof.
 // This increments on every call to "justify".
@@ -259,6 +358,13 @@ Expr.prototype.isVariable = function() {
  */
 Expr.prototype.isConst = function() {
   return isConstant(this);
+};
+
+/**
+ * Is this a numeric literal?
+ */
+Expr.prototype.isNumeral = function() {
+  return this instanceof Var && typeof this.value == 'number';
 };
 
 /**
@@ -2485,9 +2591,11 @@ function getDefinition(name, tOrF) {
  * Finds a definition or by-cases definition in the definitions
  * database.  Returns null if there is no definition; throws an error
  * if there is a definition, but wrong type.  If the tOrF argument is
- * present, the definition must be by cases, otherwise simple.
+ * present, the definition must be by cases, otherwise simple.  Also
+ * accepts a Var.
  */
 function findDefinition(name, tOrF) {
+  name = name instanceof Var ? name.name : name;
   var defn = definitions[name];
   if (!tOrF) {
     assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
@@ -3112,7 +3220,7 @@ function removeExcept(map1, map2) {
 }
 
 
-//// Useful utilities
+//// Convenience utilities
 
 var utils = {
 
@@ -3214,6 +3322,11 @@ var utils = {
 
 
 //// Export public names.
+
+Y.Set = Set;
+Y.Map = Map;
+Y.TermSet = TermSet;
+Y.TermMap = TermMap;
 
 Y.Expr = Expr;
 Y.Var = Var;

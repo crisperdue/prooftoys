@@ -56,9 +56,13 @@ YUI({filter: null, insertBefore: 'styles'})
   // Make "Y" available globally.
   window.Y = Y;
 
+  // Assertion utilities:
+
   function assertEqual(a, b) {
     Y.Assert.areEqual(a, b);
   }
+
+  var assert = Y.assert;
 
   // Set up some useful constants and functions.
 
@@ -98,6 +102,87 @@ YUI({filter: null, insertBefore: 'styles'})
       },
       testTrue1: function() {
         Y.Assert.areEqual(true, 1);
+      },
+
+      // Sets, TermSets
+
+      testSet: function() {
+        var set = new Y.Set();
+        assert(set.isEmpty());
+        assertEqual(0, set.size());
+        set.add('one');
+        set.add(2);
+        set.add('three');
+        assert(set.has('one'));
+        assert(set.has('2'));
+        assert(set.has(2));
+        assert(set.has('three'));
+        var items = [];
+        set.each(function(value) { items.push(value); });
+        assertEqual(3, items.length);
+        assertEqual(3, set.size());
+        assert(items.indexOf('three') >= 0);
+        set.remove(2);
+        assert(!set.has('2'));
+      },
+
+      TestTermSet: function() {
+        var set = new TermSet();
+        var term = call(f, x);
+        set.add(term);
+        assert(set.has(term));
+        assert(!set.has(call(f, y)));
+        var items = [];
+        set.each(function(value) { items.push(value); });
+        assertEqual(1, items.length);
+        assertEqual(term, items[0]);
+        set.remove(term);
+        assertEqual(0, set.size());
+        assert(!set.has(term));
+        assert(set.isEmpty());
+      },
+
+      // Maps, TermMaps
+
+      testMap: function() {
+        var map = new Y.Map();
+        var term = call(f, x);
+        assert(map.isEmpty());
+        assertEqual(0, map.size());
+        assert(!map.has('toString'));
+        map.set('foo', term);
+        assert(map.has('foo'));
+        assertEqual(term, map.get('foo'));
+        assertEqual(1, map.size());
+        var o = {a: 1};
+        map.set('bar', o);
+        assertEqual(o, map.get('bar'));
+        assertEqual(2, map.size());
+        map.remove('foo');
+        assertEqual(1, map.size());
+        map.remove('asdf');
+        assertEqual(1, map.size());
+        map.each(function(value, key) {
+            assertEqual(o, value);
+            assertEqual('bar', key);
+          });
+      },
+
+      testTermMap: function() {
+        var map = new Y.TermMap();
+        var term = Y.infixCall(x, '=', x);
+        var t2 = call(f, y);
+        map.set(term, t2);
+        assert(map.has(term));
+        assertEqual(t2, map.get(term));
+        map.each(function(value, key) {
+            assertEqual(t2, value);
+            assertEqual(term.dump(), key);
+            assert(term.toString() != key);
+          });
+        map.remove(term);
+        assertEqual(0, map.size());
+        assert(map.isEmpty());
       },
 
       // Tests for subtypes of Expr
