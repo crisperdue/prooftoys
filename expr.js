@@ -44,9 +44,15 @@ Set.prototype.isEmpty = function() {
 
 // Map
 
-function Map(stringifier) {
+/**
+ * Arguments are a function to convert a key object to an identifying
+ * string, and a default value when getting a key that is not in the
+ * map.  The default default is the undefined value.
+ */
+function Map(stringifier, dfault) {
   this.map = {};
   this.stringifier = stringifier || String;
+  this.dfault = dfault;
 }
 
 Map.prototype.set = function(key, value) {
@@ -60,7 +66,7 @@ Map.prototype.has = function(key) {
 Map.prototype.get = function(key) {
   var map = this.map;
   var k = this.stringifier(key);
-  return map.hasOwnProperty(k) ? map[k] : undefined;
+  return map.hasOwnProperty(k) ? map[k] : this.dfault;
 };
 
 Map.prototype.remove = function(key) {
@@ -97,9 +103,20 @@ Y.extend(TermSet, Set);
 
 function TermMap() {
   TermMap.superclass.constructor.call(this, identifyTerm);
+  this.counter = 1;
 }
 Y.extend(TermMap, Map);
 
+/**
+ * Ensure the term is in this map.  If not already present, assign it
+ * a new variable as its value.
+ */
+TermMap.prototype.addTerm = function(term) {
+  if (!this.has(term)) {
+    this.set(term, new Y.Var('_a' + this.counter++));
+  }
+  return this.get(term);
+};
 
 // Used to order execution of proof steps so they can display
 // in order of execution in an automatically-generated proof.
@@ -214,8 +231,8 @@ function normalized(expr) {
  * expression, returning a subsitution that yields the given
  * expression when given the schema; or null if there is none.
  * Assumes that the schema contains no variable bindings.  The
- * substitution maps from names to expressions Tautologies for example
- * qualify as schemas.
+ * substitution maps from names to expressions.  Tautologies for
+ * example qualify as schemas.
  *
  * This is a special case of unification of expressions.
  */
@@ -751,8 +768,13 @@ var _turnstile = Y.Node.create('&#8870;').get('text');
  * the occurrence, or null if none found.  Tests this expression
  * first, followed by the rest in top-down left-to-right order.
  * Does not search for variable bindings, use pathToBinding instead.
+ * Alternatively accepts a term to be matched.
  */
 Expr.prototype.pathTo = function(pred) {
+  if (pred instanceof Expr) {
+    var target = pred;
+    pred = function(term) { return target.matches(term); };
+  }
   var revPath = this._path(pred, path('/'));
   if (revPath == null) {
     return null;
@@ -771,8 +793,13 @@ Expr.prototype.pathTo = function(pred) {
  * the Lambda containing the occurrence, or null if none found.  Tests
  * this expression first, followed by the rest in top-down
  * left-to-right order.
+ * Alternatively accepts a term to be matched.
  */
 Expr.prototype.pathToBinding = function(pred) {
+  if (pred instanceof Expr) {
+    var target = pred;
+    pred = function(term) { return target.matches(term); };
+  }
   var revPath = this._bindingPath(pred, path('/'));
   if (revPath == null) {
     return null;
@@ -3005,7 +3032,7 @@ function nParsed() {
  */
 function isVariable(name) {
   name = name instanceof Y.Var ? name.name : name;
-  return name.match(/^[_A-Za-z:$][A-Za-z0-9:$]*$/);
+  return name.match(/^[_A-Za-z:$][_A-Za-z0-9:$]*$/);
 }
 
 /**
