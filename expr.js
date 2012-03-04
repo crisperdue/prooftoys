@@ -12,33 +12,70 @@ function Set(stringifier) {
   this.stringifier = stringifier || String;
 }
 
+/**
+ * Add an element.
+ */
 Set.prototype.add = function(value) {
   this.map[this.stringifier(value)] = value;
 };
 
+/**
+ * Does the set contain the element (one with the same key)?
+ */
 Set.prototype.has = function(value) {
   return this.map.hasOwnProperty(this.stringifier(value));
 };
 
+/**
+ * Remove the element.
+ */
 Set.prototype.remove = function(value) {
   delete this.map[this.stringifier(value)];
 };
 
-Set.prototype.each = function(action) {
-  Y.each(this.map, action);
+/**
+ * Call the given function for each element of the set, passing the
+ * set element as its argument.  Use the optional thisObj as "this"
+ * for the calls, or "undefined" if it is not given.  If the function
+ * returns any value other than "undefined" that value becomes the
+ * return value of this method, and iteration ends.
+ */
+Set.prototype.each = function(fn, thisObj) {
+  var map = this.map
+  for (var key in map) {
+    var result = fn.call(thisObj, map[key], key);
+    if (result !== undefined) {
+      return result;
+    }
+  }
 };
 
+/**
+ * Count of distinct elements.
+ */
 Set.prototype.size = function() {
   var counter = 0;
   this.each(function () { counter++; });
   return counter;
 };
 
+/**
+ * Is the set empty?
+ */
 Set.prototype.isEmpty = function() {
   for (var key in this.map) {
     return false;
   }
   return true;
+};
+
+/**
+ * Returns an element of the set or undefined if the set is empty.
+ */
+Set.prototype.choose = function() {
+  for (var key in this.map) {
+    return this.map[key];
+  }
 };
 
 
@@ -55,40 +92,69 @@ function Map(stringifier, dfault) {
   this.dfault = dfault;
 }
 
+/**
+ * Set the value of a map element.
+ */
 Map.prototype.set = function(key, value) {
   this.map[this.stringifier(key)] = value;
 };
 
+/**
+ * Does it have an element with matching key?
+ */
 Map.prototype.has = function(key) {
   return this.map.hasOwnProperty(this.stringifier(key));
 };
 
+/**
+ * Gets the value at a key or undefined if no such element.
+ */
 Map.prototype.get = function(key) {
   var map = this.map;
   var k = this.stringifier(key);
   return map.hasOwnProperty(k) ? map[k] : this.dfault;
 };
 
+/**
+ * Remove any element with matching key.
+ */
 Map.prototype.remove = function(key) {
   delete this.map[this.stringifier(key)];
 };
 
-Map.prototype.each = function(action) {
-  Y.each(this.map, action);
+/**
+ * Iterate over the map, allowing early return.  The fn receives a
+ * value and (string) key.
+ */
+Map.prototype.each = function(fn, thisObj) {
+  var map = this.map
+  for (var key in map) {
+    var result = fn.call(thisObj, map[key], key);
+    if (result !== undefined) {
+      return result;
+    }
+  }
 };
 
+/**
+ * Number of distinct keys in the map.
+ */
 Map.prototype.size = function() {
   var counter = 0;
   this.each(function () { counter++; });
   return counter;
 };
 
+/**
+ * Is it empty?
+ */
 Map.prototype.isEmpty = function() {
   for (var key in this.map) {
     return false;
   }
   return true;
 };
+
 
 //// TermSet and TermMap
 
@@ -2492,6 +2558,16 @@ var definitions = {
   the: true
 };
 
+
+/**
+ * Is it a legal variable name?  Accepts a string or Var.
+ */
+function isVariable(name) {
+  name = name instanceof Y.Var ? name.name : name;
+  // TODO: Reconcile this with isConstant!!
+  return name.match(/^[_A-Za-z:$][_A-Za-z0-9:$]*$/);
+}
+
 /**
  * Return a true value iff the given expression is a Var with a name
  * suitable for a constant.  Only names with a single lower-case
@@ -3026,14 +3102,6 @@ function nParsed() {
   for (var key in _parsed) { i++; }
   return i;
 };
-
-/**
- * Is it a legal variable name?  Accepts a string or Var.
- */
-function isVariable(name) {
-  name = name instanceof Y.Var ? name.name : name;
-  return name.match(/^[_A-Za-z:$][_A-Za-z0-9:$]*$/);
-}
 
 /**
  * Is it an identifier or constant?  Currently Id or number as digits
