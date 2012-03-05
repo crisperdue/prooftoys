@@ -167,22 +167,34 @@ function TermSet() {
 }  
 Y.extend(TermSet, Set);
 
+/**
+ * A Map from terms to variables.  Use TermMap.addTerm to set up
+ * values, never TermMap.set.  The "subst" field maintains a
+ * corresponding substitution from names to terms.
+ */
 function TermMap() {
   TermMap.superclass.constructor.call(this, identifyTerm);
   this.counter = 1;
+  this.subst = {};
 }
 Y.extend(TermMap, Map);
 
 /**
  * Ensure the term is in this map.  If not already present, assign it
- * a new variable as its value.
+ * a new variable as its value.  In all cases return the map value.
+ * Maintains the "subst" field as well.
  */
 TermMap.prototype.addTerm = function(term) {
   if (!this.has(term)) {
-    this.set(term, new Y.Var('_a' + this.counter++));
+    var name = 'a' + this.counter++
+    this.set(term, new Y.Var(name));
+    this.subst[name] = term;
   }
   return this.get(term);
 };
+
+
+// Utilities
 
 // Used to order execution of proof steps so they can display
 // in order of execution in an automatically-generated proof.
@@ -902,8 +914,8 @@ Expr.prototype.isHypotheses = function() {
  * Treating this as a chain of hypotheses hk && h(k-1) && ... h1,
  * given an expression that matches one of the hypotheses in the set,
  * builds an expression where "h" is in the position of the matched
- * hypotheses, and the rest are labeled h(k-1) ... h1.  Helper for
- * rules.extractHypothesis.
+ * hypotheses, and the rest are labeled hk ... h1 according to their
+ * position from the right.  Helper for rules.extractHypothesis.
  */
 Expr.prototype.hypLocater = function(hyp) {
   var h = new Var('h');
@@ -3215,11 +3227,39 @@ function isInfixDesired(vbl) {
  * In use this is used in sorting of expressions, so it must bring
  * equal expressions together so simplifications can see them.
  */
-function sourceStepLess(expr1, expr2) {
-  if (expr1.sourceStep && expr2.sourceStep) {
-    return expr1.sourceStep.ordinal < expr2.sourceStep.ordinal;
+function sourceStepLess(e1, e2) {
+  if (e1.sourceStep) {
+    if (e2.sourceStep) {
+      return e1.sourceStep.ordinal < e2.sourceStep.ordinal;
+    } else {
+      return true;
+    }
+  } else if (e2.sourceStep) {
+    return false;
   } else {
-    return expr1.dump() < expr2.dump();
+    // Neither has a source step.
+    return e1.dump() < e2.dump();
+  }
+}
+
+/**
+ * Comparator for Array.sort corresponding to sourceStepLess.
+ */
+function sourceStepComparator(e1, e2) {
+  if (e1.sourceStep) {
+    if (e2.sourceStep) {
+      return e1.sourceStep.ordinal - e2.sourceStep.ordinal;
+    } else {
+      return -1;
+    }
+  } else if (e2.sourceStep) {
+    return 1;
+  } else {
+    var s1 = e1.dump();
+    var s2 = e2.dump();
+    return (s1 === s2
+            ? 0
+            : (s1 < s2 ? -1 : 1));
   }
 }
 
@@ -3438,6 +3478,7 @@ Y.findBinding = findBinding;
 Y.getBinding = getBinding;
 Y.matchAsSchema = matchAsSchema;
 Y.sourceStepLess = sourceStepLess;
+Y.sourceStepComparator = sourceStepComparator;
 Y.repeatedCall = repeatedCall;
 
 Y.define = define;
