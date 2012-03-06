@@ -4,7 +4,7 @@
 <html>
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <title>Proof Builder Tests</title>
+  <title>Prooftoys Tests</title>
 
   <script src="http://yui.yahooapis.com/3.4.0/build/yui/yui-min.js"></script>
   <link id=styles type="text/css" rel="stylesheet" href="logic.css">
@@ -56,6 +56,9 @@ YUI({filter: null, insertBefore: 'styles'})
   // Make "Y" available globally.
   window.Y = Y;
 
+  // Make rules available throughout.
+  var rules = Y.rules;
+
   // Assertion utilities:
 
   function assertEqual(a, b) {
@@ -63,6 +66,27 @@ YUI({filter: null, insertBefore: 'styles'})
   }
 
   var assert = Y.assert;
+
+  /**
+   * Check effect of a rewriter.  Null expected value means expected
+   * null result.  Empty expected string means just log the result for
+   * debugging.
+   */
+  function checkRewriter(expected, input, rule) {
+    var input = typeof input == 'string' ? Y.parse(input) : input;
+    var equation = rule(input);
+    if (expected == null) {
+      assertEqual(null, equation);
+    } else {
+      assert(equation);
+      var actual = equation.getRight();
+      if (expected) {
+        assertEqual(expected, actual);
+      } else {
+        Y.log(actual);
+      }
+    }
+  }
 
   // Set up some useful constants and functions.
 
@@ -108,8 +132,11 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testSet: function() {
         var set = new Y.Set();
+        // isEmpty
         assert(set.isEmpty());
+        // size
         assertEqual(0, set.size());
+        // add and has
         set.add('one');
         set.add(2);
         set.add('three');
@@ -117,13 +144,23 @@ YUI({filter: null, insertBefore: 'styles'})
         assert(set.has('2'));
         assert(set.has(2));
         assert(set.has('three'));
-        var items = [];
-        set.each(function(value) { items.push(value); });
-        assertEqual(3, items.length);
+        // size
         assertEqual(3, set.size());
-        assert(items.indexOf('three') >= 0);
-        set.remove(2);
-        assert(!set.has('2'));
+        // choose
+        assert(set.has(set.choose()));
+        // remove
+        set.remove('three');
+        assert(!set.has('three'));
+        // each
+        var items = [];
+        var found = set.each(function(value) {
+            items.push(value);
+            if (value == 2) {
+              return value;
+            }
+          });
+        assertEqual(2, found);
+        assert(items.indexOf(2) >= 0);
       },
 
       TestTermSet: function() {
@@ -168,21 +205,45 @@ YUI({filter: null, insertBefore: 'styles'})
           });
       },
 
+      testMap0: function() {
+        var map = new Y.Map(String, 0);
+        assert(map.isEmpty());
+        assert(!map.has('foo'));
+        assertEqual(0, map.get('foo'));
+      },
+
       testTermMap: function() {
         var map = new Y.TermMap();
         var term = Y.infixCall(x, '=', x);
         var t2 = call(f, y);
+        // set
         map.set(term, t2);
         assert(map.has(term));
+        // get
         assertEqual(t2, map.get(term));
-        map.each(function(value, key) {
+        // each
+        var result = map.each(function(value, key) {
             assertEqual(t2, value);
             assertEqual(term.dump(), key);
             assert(term.toString() != key);
+            return true;
           });
+        assertEqual(true, result);
+        // remove
         map.remove(term);
         assertEqual(0, map.size());
         assert(map.isEmpty());
+      },
+
+      testAddTerm: function() {
+        var map = new Y.TermMap();
+        var term = Y.infixCall(x, '=', x);
+        var v = map.addTerm(term);
+        assertEqual('a1', v);
+        assertEqual('a1', map.addTerm(Y.infixCall(x, '=', x)));
+        assertEqual('a2', map.addTerm(call(p, x)));
+        assert(map.has(call(p, x)));
+        assertEqual('a2', map.get(call(p, x)));
       },
 
       // Tests for subtypes of Expr
@@ -451,8 +512,8 @@ YUI({filter: null, insertBefore: 'styles'})
         check('(h2 && h)', step1, 'R y');
         var h3 = rules.assume('p');
         var step2 = rules.prependStepHyps(step1, h3);
-        check('(h2 && h)', step2, 'p');
-        check('((h && h2) && h1)', step2, 'R x');
+        check('((h && h2) && h1)', step2, 'p');
+        check('((h3 && h) && h1)', step2, 'R x');
       },
 
       testHypMover: function() {
@@ -469,9 +530,9 @@ YUI({filter: null, insertBefore: 'styles'})
               step1, 'R y');
         var h3 = rules.assume('p');
         var step2 = rules.prependStepHyps(step1, h3);
-        check('((((h1 && h2) && h3) && h) = (((h1 && h2) && h3) && h))',
-              step2, 'p');
         check('((((h && h2) && h3) && h4) = (((h2 && h3) && h4) && h))',
+              step2, 'p');
+        check('((((h1 && h) && h3) && h4) = (((h1 && h3) && h4) && h))',
               step2, 'R x');
       },
 
@@ -509,6 +570,20 @@ YUI({filter: null, insertBefore: 'styles'})
         // Which step came earlier?
         Y.assert(Y.sourceStepLess(step1.getLeft(), step2.getLeft()));
         Y.assert(!Y.sourceStepLess(step2.getLeft(), step1.getLeft()));
+      },
+
+      testSourceStepComparator: function() {
+        var compare = Y.sourceStepComparator;
+        var step1 = Y.rules.assume('p T');
+        var l1 = step1.getLeft();
+        var step2 = Y.rules.assume('p F');
+        var l2 = step2.getLeft();
+        // Which step came earlier?
+        assert(compare(l1, l2) < 0);
+        assertEqual(0, compare(l1, l1));
+        assert(compare(l2, l1) > 0);
+        assert(compare(x, l2) > 0);
+        assert(compare(l2, x) < 0);
       },
 
       testMergeConjunctions: function() {
@@ -800,6 +875,14 @@ YUI({filter: null, insertBefore: 'styles'})
       testR5201f: function() {
         var inf = Y.rules.applyToBoth(p, call('=', q, r));
         assertEqual('((p q) = (p r))', inf);
+      },
+
+      testApplier: function() {
+        var rule = rules.applier;
+        checkRewriter('3', '{x. x} 3', rule);
+        checkRewriter(null, '(f 3)', rule);
+        checkRewriter('(x + (neg y))', 'x - y', rule);
+        checkRewriter('(F = a)', 'not a', rule);
       },
 
       testApply: function() {
@@ -1252,6 +1335,63 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual(expected, result);
       },
 
+      testIsolateCondition: function() {
+        // TODO: implement me.
+      },
+
+      testConjunctionDeduper: function() {
+        // TODO: implement me.
+        var rule = rules.conjunctionDeduper;
+        checkRewriter(null, '(R x) && (R y)', rule);
+        checkRewriter('(R x)', '(R x) && (R x)', rule);
+        checkRewriter('(R x)', 'R x && T', rule);
+        checkRewriter('((R x) && (R y))', 'R x && R y && R x', rule);
+        checkRewriter('((R x) && (R y))',
+                      '(R x) && (R y) && T && R y && R x', rule);
+      },
+
+      testDedupeHyps: function() {
+        // TODO: Test me.
+      },
+
+      testSimplifyNumericTypes: function() {
+        // TODO: test.
+      },
+
+      testBuildHypSchema: function() {
+        var rules = Y.rules;
+        var bs = Y._buildHypSchema;
+        var map = new Y.TermMap();
+        var schema = bs(rules.axiomAssociativePlus().getLeft(), map);
+        assertEqual('((a1 && a2) && a3)', schema);
+        assertEqual('a3', map.get(Y.parse('R z')));
+      },
+
+      testEliminateBinaryOpTypes: function() {
+        // TODO: implement me.
+      },
+
+      testSimplifyBinaryOpType: function() {
+        var sop = Y._simplifyBinaryOpType;
+        function check(expected, goal) {
+          goal = (typeof goal == 'string') ? Y.parse(goal) : goal;
+          var thm = sop(goal);
+          assert(thm.isCall2('-->'));
+          assert(thm.getRight().matches(goal));
+          if (expected) {
+            assertEqual(expected, thm.getLeft());
+          } else {
+            Y.log(thm.getLeft());
+          }
+        }
+        check('((R x) && (R y))', 'R (x + y)');
+        check('(((R x) && (R y)) && (R z))', 'R (x + y + z)');
+        check('(((R 2) && (R x)) && (R y))', 'R (x + 2 * y)');
+        check('((R (neg y)) && (R x))', 'R (x + neg y)');
+        check('((((R 2) && (R x)) && (R y)) && (R z))', 'R (x * y * z + 2 * y)');
+      },
+
+
       // END OF RULES AND THEOREMS
 
       // Looking at what can be done with Andrews' definition of "and".
@@ -1267,10 +1407,9 @@ YUI({filter: null, insertBefore: 'styles'})
   Y.Test.Runner.subscribe(Y.Test.Runner.COMPLETE_EVENT, function(event) {
       // Y.log(Y.Test.Runner.getResults(Y.Test.Format.TAP));
       console.log(Y.Test.Runner.getResults(Y.Test.Format.TAP));
-      document.body.style.backgroundColor = 
-        (event.results.failed == 0 && event.results.passed > 0)
-        ? '#0C0'
-        : '#F00';
+      var passed = event.results.failed == 0 && event.results.passed > 0;
+      document.body.style.backgroundColor = passed ? '#0C0' : '#F00';
+      document.title += passed ? ' Passed' : ' Failed';
     });
 });
 

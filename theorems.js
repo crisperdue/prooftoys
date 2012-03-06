@@ -207,6 +207,7 @@ var ruleInfo = {
 	}
       }
       // Auto-justify input steps.
+      // TODO: Limit this to a "test mode".
       if (!equation.ruleName) {
 	equation.assert();
       }
@@ -234,7 +235,9 @@ var ruleInfo = {
 	  break;
 	}
       }
-      return result.justify('r', arguments, [target, equation]);
+      var justified = result.justify('r', arguments, [target, equation]);
+      var result = target.hasHyps ? justified.asHyps() : justified;
+      return result;
     },
     // inputs: {equation: 1, site: 2},
     // form: ('Replace selection with right side of step <input name=equation>'),
@@ -510,36 +513,31 @@ var ruleInfo = {
     comment: ('Applies a lambda to its argument')
   },
 
-  // Beta-reduces an application of a lambda expression to an argument,
-  // with the subexpression identified by a path (within a theorem).
-  // If the target expression is a call to a named function supplying
-  // one or two arguments, expands the definition and applies the
-  // expansions to the argument(s).
-  apply: {
-    action: function(step, path) {
-      path = Y.path(path, step);
-      var target = step.locate(path);
-      assert(target, 'Path ' + path + ' not found in ' + step, step);
-      assert(target instanceof Y.Call);
-      var fn = target.fn;
+  // Derives a rewriter for a call that reduces a call to a lambda, or
+  // expands the definition of a one- or two-argument function and
+  // reduces resulting lambdas.  If none of these apply to the call,
+  // returns null.
+  applier: {
+    action: function(expr) {
+      assert(expr instanceof Y.Call);
+      var fn = expr.fn;
       if (fn instanceof Y.Lambda) {
-        var result = rules.simpleApply(step, path);
-        return result.justify('apply', arguments, [step]);
+        var result = rules.axiom4(expr);
+        return result.justify('applier', arguments);
       }
-      // Call that looks like (<const> <expr>).
+      // Call that looks like (<constant> <expr>).
       if (fn.isConst()) {
         var defn = Y.findDefinition(fn.name);
         if (defn) {
-          var step1 = rules.eqSelf(target);
+          var step1 = rules.eqSelf(expr);
           var step2 = rules.replace(defn, step1, '/right/fn');
-          var step3 = rules.replace(step2, step, path);
-          return step3.justify('apply', arguments, [step]);
+          return step2.justify('applier', arguments);
         }
       }
-      // Call that looks like (<left> <const> <right>) or equivalently
-      // ((<const> <arg1>) <arg2>).
-      if (target.isCall2()) {
-        var call = target.fn;
+      // Call that looks like (<left> <constant> <right>) or
+      // equivalently ((<constant> <arg1>) <arg2>).
+      if (expr.isCall2()) {
+        var call = expr.fn;
         var fn2 = call.fn;
         if (fn2.isConst()) {
           var defn = Y.findDefinition(fn2.name);
@@ -547,15 +545,34 @@ var ruleInfo = {
             var step1 = rules.eqSelf(call);
             var step2 = rules.useDefinition(step1, '/right/fn');
             var step3 = rules.simpleApply(step2, '/right');
-            var step4 = rules.eqSelf(target);
+            var step4 = rules.eqSelf(expr);
             var step5 = rules.replace(step3, step4, '/right/fn');
             var step6 = rules.simpleApply(step5, '/right');
-            var step7 = rules.replace(step6, step, path);
-            return step7.justify('apply', arguments, [step]);
+            return step6.justify('applier', arguments);
           }
         }
       }
-      assert(false, 'Term not applicable');
+      return null;
+    },
+    inputs: {term: 1},
+    comment: 'Equate to call with definition expanded and lambdas reduced'
+  },
+    
+
+  // "Reduces" a call identified by a path within a theorem. If the
+  // call is an application of a lambda expression to an argument,
+  // beta-reduces it.  If the target expression is a call to a named
+  // function supplying one or two arguments, expands the definition
+  // and applies the expansions to the argument(s).
+  apply: {
+    action: function(step, path) {
+      path = Y.path(path, step);
+      var target = step.locate(path);
+      assert(target, 'Path ' + path + ' not found in ' + step, step);
+      var equation = rules.applier(target);
+      assert(equation, function() { return 'Cannot apply at ' + target; });
+      var result = rules.replace(equation, step, path);
+      return result.justify('apply', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
@@ -1745,16 +1762,10 @@ var ruleInfo = {
       var h_c = h_c_arg;
       var h_equation = h_equation_arg;
       if (h_equation.isCall2('=')) {
-	assert(!(h_c.hasHyps && path.isLeft()),
-	       'Cannot apply the Replace rule to hypotheses',
-	       h_c_arg);
         // Allow "replace" to be used for situations where "r" is
         // applicable.  The case with hypotheses in h_c can be
         // considered as rule RR (5202).
         var result = rules.r(h_equation, h_c, path);
-	if (h_c.hasHyps) {
-	  result = rules.asHypotheses(result);
-	}
 	return result.justify('replace', arguments,
                               [h_equation_arg, h_c_arg]);
       }
@@ -1947,15 +1958,10 @@ var ruleInfo = {
     action: function(step, path, equation) {
       var expr = step.locate(path);
       var map = expr.findSubst(equation.unHyp().getLeft());
-      if (map) {
-        var step1 = rules.instMultiVars(equation, map);
-        var result = rules.replace(step1, step, path);
-        return result.justify('rewrite', arguments, [equation]);
-      } else {
-        // Do nothing and take no credit for it.  Caller can test for
-        // "not applicable" by comparing rule result with input.
-        return step;
-      }
+      assert(map, 'Cannot rewrite using ' + equation);
+      var step1 = rules.instMultiVars(equation, map);
+      var result = rules.replace(step1, step, path);
+      return result.justify('rewrite', arguments, [equation]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using equation <input name=equation>'),
@@ -2160,6 +2166,110 @@ var ruleInfo = {
     comment: 'Move conjunct of implication LHS all the way to the right'
   },
 
+  // Treats conj as a chain of conjunctions.  Equates it with a
+  // deduplicated version, or returns null if there are no exact
+  // duplicate terms.
+  conjunctionDeduper: {
+    action: function(conj, comparator) {
+      var map = new Y.TermMap();
+      // A variable (or T) for each conjunct, in order of occurrence.
+      var allTerms = [];
+      conj.eachHyp(function(term) {
+        if (term.matches(T)) {
+          // Keep occurrences of T as-is in the inputs, and no output.
+          allTerms.push(T);
+        } else {
+          allTerms.push(map.addTerm(term));
+        }
+      });
+      if (map.size() == allTerms.length) {
+        return null;
+      }
+      var keepTermsInfo = [];
+      var subst = map.subst;
+      for (var name in subst) {
+        keepTermsInfo.push({term: subst[name], name: name});
+      }
+      if (comparator) {
+        function compare(a, b) { return comparator(a.term, b.term); }
+        keepTermsInfo.sort(compare);
+      }
+      var keepTerms = [];
+      Y.each(keepTermsInfo, function(info) {
+          keepTerms.push(new Y.Var(info.name));
+        });
+      // A variable for each hypothesis to keep, in order.
+      function buildConj(list) {
+        var result = null;
+        for (var i = 0; i < list.length; i++) {
+          var term = list[i];
+          result = result ? Y.infixCall(result, '&&', term) : term;
+        }
+        return result || T;
+      }
+      var rewriter =
+        Y.infixCall(buildConj(allTerms), '=', buildConj(keepTerms));
+      var result = rules.instMultiVars(rules.tautology(rewriter), map.subst);
+      return result.justify('conjunctionDeduper', arguments);
+    }
+  },
+
+  // Derives a step with hypotheses deduplicated, including removal of
+  // occurrences of T.  Works with hypotheses and with plain
+  // implications.
+  dedupeHyps: {
+    action: function(step) {
+      step.assertCall2('-->');
+      var deduper =
+        rules.conjunctionDeduper(step.getLeft(), Y.sourceStepComparator);
+      var result = (deduper
+                    ? rules.replace(deduper, step, '/left')
+                    : step);
+      return result.justify('dedupeHyps', arguments, [step]);
+    },
+    inputs: {step: 1},
+    form: 'Step to simplify: <input name=step>',
+    comment: 'Remove redundant hypotheses'
+  },
+
+  // Apply type expression rewriter rules (equations) to type
+  // expressions of the form (R <term>).  Deduplicate and put them in
+  // the usual order.
+  //
+  // TODO: Also remove type expressions with binary operators, such as
+  // (R (<term> + <term>)).  See "eliminateBinaryOpTypes" below.
+  simplifyNumericTypes: {
+    action: function(step_arg) {
+      var step = step_arg;
+      step.assertCall2('-->');
+      var hyps = new Y.TermSet();
+      step.getLeft().eachHyp(function (hyp) {
+        hyps.add(hyp);
+      });
+      hyps.each(function(hyp) {
+        var rule = findTypeRewriter(hyp);
+        if (rule) {
+          var path;
+          // Loop: there may be more than occurrence of hyp.
+          while (path = step.pathTo(hyp)) {
+            step = rules.rewrite(step, path, rule);
+          }
+        }
+      });
+      // TODO: After rewriting, further rewrite any new hyps also.
+      var step2 = step;
+      if (step2 != step_arg) {
+        // Deduplicate and remove T's after simplifying.
+        step2 = rules.dedupeHyps(step);
+      }
+      return step2.justify('simplifyNumericTypes', arguments, [step_arg]);
+    },
+    inputs: {step: 1},
+    form: 'Step to simplify: <input name=step>',
+    comment: 'Remove redundant type hypotheses in a step'
+  },
+
+
   // From the section "Equality and descriptions"
 
   equalitySymmetric: {
@@ -2300,20 +2410,22 @@ var ruleInfo = {
     comment: 'Reciprocal is the inverse of multiplication'
   },
 
+  // Note: not structured as a rewrite rule.
   axiomPlusType: {
     action: function() {
       return rules.assert('R x && R y --> R (x + y)')
-	.justify('plusType');
+	.justify('axiomPlusType');
     },
     inputs: {},
     form: '',
     comment: 'Reals are closed under addition'
   },
 
+  // Note: not structured as a rewrite rule.
   axiomTimesType: {
     action: function() {
       return rules.assert('R x && R y --> R (x * y)')
-	.justify('timesType');
+	.justify('axiomTimesType');
     },
     inputs: {},
     form: '',
@@ -2322,8 +2434,8 @@ var ruleInfo = {
 
   axiomNegType: {
     action: function() {
-      return rules.assert('R x --> R (neg x)')
-	.justify('negType');
+      return rules.assert('R (neg x) == R x')
+	.justify('axiomNegType');
     },
     inputs: {},
     form: '',
@@ -2332,8 +2444,8 @@ var ruleInfo = {
 
   axiomReciprocalType: {
     action: function() {
-      return rules.assert('not (x = 0) && R x --> R recip x')
-	.justify('reciprocalType');
+      return rules.assert('R (recip x) == not (x = 0) && R x')
+	.justify('axiomReciprocalType');
     },
     inputs: {},
     form: '',
@@ -2355,6 +2467,15 @@ var ruleInfo = {
         case '+': value = left + right; break;
         case '*': value = left * right; break;
         case '-': value = left - right; break;
+        case '/':
+          assert(right !== 0, 'Cannot divide by zero');
+          value = left / right;
+          // abs(value) <= abs(left) since abs(right) >= 1 so the
+          // magnitude is not a problem.  The fractional part of a
+          // result must have denominator no greater than MAX_INT,
+          // so it should be distinguishable from an integer.
+          assert(value === Math.floor(value), 'Inexact division');
+          break;
         case '>': value = left > right; break;
         case '>=': value = left >= right; break;
         case '<': value = left < right; break;
@@ -2401,7 +2522,7 @@ var ruleInfo = {
       var term = step.locate(path);
       try {
         var equation = rules.axiomArithmetic(term);
-        var result = rules.replace(equation, step, path);
+        var result = rules.r(equation, step, path);
         return result.justify('arithmetic', arguments, [step]);
       } catch(e) {
         assert(false, 'Not an arithmetic expression: ' + term);
@@ -2442,7 +2563,146 @@ var ruleInfo = {
 
 };  // End of theorems and rules
 
-// Descriptions of rewrite rules; internal.
+
+//// RULE IMPLEMENTATIONS
+
+/**
+ * Attempts to eliminate expressions of the form (R (x <op> y)) or
+ * equivalently (R ((fn x) y) from the hypotheses of the step (or LHS
+ * of an implication step without hypotheses).
+ *
+ * TODO: Test and debug me.
+ */
+function eliminateBinaryOpTypes(step) {
+  step.assertCall2('-->');
+  var hyps = step.getLeft();
+  // A TermMap for all terms for building all the schemas.
+  var termMap = new Y.TermMap();
+  // All the original hypotheses.
+  var originalHyps = new Y.TermSet();
+  hyps.eachHyp(function(hyp) {
+      originalHyps.add(hyp);
+      termMap.addTerm(hyp);
+    });
+  // A schema variable for the step conclusion.
+  // Stays the same throughout the simplification process.
+  var stepRhsSchema = termMap.addTerm(step.getRight());
+  originalHyps.each(function(hyp) {
+      var implication = simplifyBinaryOpType(hyp);
+      if (implication) {
+        var conditionsOk = true;
+        implication.getLeft().eachHyp(function(hyp) {
+            if (!termMap.has(hyp)) { conditionsOk = false; }
+          });
+        if (conditionsOk) {
+          // This hyp can be simplified away!
+          var stepLhsSchema = buildHypSchema(hyps, termMap);
+          var stepSchema = Y.infixCall(stepLhsSchema, '-->', stepRhsSchema);
+          // Schema for the implication that enables removal of the
+          // binary operator type condition, like a schema such as this:
+          // ((R x) && (R y) --> (R (x + y))).
+          var implLhsSchema = buildHypSchema(implication.getLeft(), termMap);
+          var implSchema = Y.infixCall(implLhsSchema,
+                                       '-->',
+                                       termMap.addTerm(implication.getRight()));
+          var fullLhsSchema = Y.infixCall(stepSchema, '&&', implSchema);
+          var removedHyps = new Y.TermSet();
+          removedHyps.add(hyp);
+          var newHypsSchema = buildHypSchema(step.getLeft(), termMap, removedHyps);
+          var fullRhsSchema = Y.infixCall(newHypsSchema, '-->', stepRhsSchema);
+          var fullSchema = Y.infixCall(fullLhsSchema, '-->', fullRhsSchema);
+          console.log(fullSchema);
+          var conjunction = rules.makeConjunction(step, implication);
+          // Finally do the simplification!
+          var step = rules.p(conjunction, fullSchema);
+          hyps = step.getLeft();
+        }
+      }
+    });
+  return step;
+}
+
+/**
+ * Build a schema for a conjunction of hypotheses, ensuring all are in
+ * the TermMap, with optional exclusions, a TermSet.  The schema is of
+ * the form a1 && ... && an, where the "a"s are variables for the
+ * terms for each hyp in hyps.  Helper for eliminateBinaryOpTypes.
+ */
+function buildHypSchema(hyps, map, exclusions) {
+  var schema = null;
+  hyps.eachHyp(function(hyp) {
+      if (!exclusions || !exclusions.has(hyp)) {
+        var v = map.addTerm(hyp);
+        schema = schema ? Y.infixCall(schema, '&&', v) : v;
+      }
+    });
+  return schema;
+}
+
+/**
+ * Finds and returns type expression rewrite rule that has the term as
+ * a substitution instance, or instantiates rules.arithmetic to match
+ * it.  Returns null if nothing found.
+ * 
+ * Internal to simplifyNumericTypes.
+ */
+function findTypeRewriter(term) {
+  if (term.isCall1('R')) {
+    if (term.arg.isNumeral()) {
+      return rules.axiomArithmetic(term);
+    } else if (term.arg.isCall1('neg')) {
+      return rules.axiomNegType();
+    } else if (term.arg.isCall1('recip')) {
+      return rules.axiomReciprocalType();
+    }
+  }
+  return null;
+}
+
+/**
+ * Generates and returns a proof of R x1 && ... R xn --> goal, where
+ * x1 ... xn are not calls to binary operators + or * and goal is of
+ * the form (R <term>).
+ *  
+ * Internal to eliminateBinaryOpTypes..
+ */
+function simplifyBinaryOpType(goal) {
+  assert(goal.isCall1('R'));
+  var goalTerm = goal.arg;
+  var schema;
+  if (goalTerm.isCall2('+')) {
+    schema = rules.axiomPlusType();
+  } else if (goalTerm.isCall2('*')) {
+    schema = rules.axiomTimesType();
+  }
+  if (schema) {
+    // The schemas are of the form A && B --> goal.
+    var subst = goal.findSubst(schema.getRight());
+    assert(subst, 'Internal error simplifying ' + goal);
+    var step1 = rules.instMultiVars(schema, subst);
+    var left = step1.getLeft().getLeft();
+    var right = step1.getLeft().getRight();
+    var leftStep = simplifyBinaryOpType(left);
+    var rightStep = simplifyBinaryOpType(right);
+    var step2 = (leftStep
+                 ? rules.p(Y.infixCall(leftStep, '&&', step1),
+                           '(p --> a) && (a && b --> c) --> (p && b --> c)')
+                 : step1);
+    var step3 = (rightStep
+                 ? rules.p(Y.infixCall(rightStep, '&&', step2),
+                           '(p --> b) && (a && b --> c) --> (a && p --> c)')
+                 : step2);
+    var step4 = rules.replace(rules.mergeConjunctions(step3.getLeft()),
+                              step3, '/left');
+    var step5 = rules.dedupeHyps(step4);
+    return step5;
+  } else {
+    return null;
+  }
+}
+
+// Descriptions of rewrite rules; internal.  Each of these generates
+// an actual inference rule.
 var rewriters = {
   commutePlus: {
     axiom: 'axiomCommutativePlus'
@@ -2612,5 +2872,7 @@ Y.findHyp = findHyp;
 // For testing.
 Y.ruleInfo = ruleInfo;
 Y._tautologies = _tautologies;
+Y._buildHypSchema = buildHypSchema;
+Y._simplifyBinaryOpType = simplifyBinaryOpType;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'proof']});
