@@ -530,12 +530,17 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
  * Match this expr against a schema, which may be given as a string.
  * See function matchAsSchema.
  */
-Expr.prototype.findSubst = function(schema) {
+Expr.prototype.matchSchema = function(schema) {
   if (typeof schema == 'string') {
     schema = Y.parse(schema);
   }
   return matchAsSchema(schema, this);
 };
+
+/**
+ * Alternate name for Expr.matchSchema.
+ */
+Expr.prototype.findSubst = Expr.prototype.matchSchema;
 
 /**
  * Subfree function as a method on the target.
@@ -732,6 +737,18 @@ Expr.prototype.isCall2 = function(name) {
  */
 Expr.prototype.isOpenCall = function() {
   return this instanceof Call && this.fn instanceof Lambda;
+};
+
+/**
+ * Throw an error with message if this is not a call to the named
+ * function.  If no name is given, any named function will do.
+ */
+Expr.prototype.assertCall1 = function(name) {
+  assert(this.isCall1(name), function() {
+      return (name === undefined
+              ? 'Not a 1-argument call: ' + this
+              : 'Not a 1-argument call to ' + name + ': ' + this);
+    });
 };
 
 /**
