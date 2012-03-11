@@ -470,13 +470,20 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testMatchAsSchema: function() {
-        var bindings = Y.matchAsSchema(p, equal(x, x));
-        assertEqual('{p: (x = x)}',
-                    Y.debugString(bindings));
-        bindings = Y.matchAsSchema(implies(p, q),
-                                   Y.parse('x < 1 --> (x = 0)'));
-        assertEqual('{p: (x < 1), q: (x = 0)}',
-                    Y.debugString(bindings));
+        function check(expected, schema, term) {
+          term = typeof term == 'string' ? Y.parse(term) : term;
+          schema = typeof schema == 'string' ? Y.parse(schema) : schema;
+          var subst = Y.matchAsSchema(schema, term);
+          if (expected) {
+            assertEqual(expected, Y.debugString(subst));
+          } else {
+            Y.log(Y.debugString(subst));
+          }
+        }
+        check('{p: (x = x)}', p, equal(x, x));
+        check('{p: (x < 1), q: (x = 0)}',
+              implies(p, q), Y.parse('x < 1 --> (x = 0)'));
+        check('{a: 3, b: 2}', 'a + b', '3 + 2');
       },
 
       testGeneralizeTF: function() {
@@ -1219,6 +1226,16 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(result.hasHyps);
       },
 
+      testBackwardChain: function() {
+        // TODO: Implement me.
+      },
+
+      testSubgoal: function() {
+        var input = Y.parse('R (x + (y + 2))');
+        var theorem = rules.axiomTimesType();
+        Y.log(rules.subgoal(input, theorem));
+      },
+
       testR5238a: function() {
         var inf = Y.rules.r5238a(y, call(p, y), call(q, y));
         var wff =
@@ -1340,7 +1357,6 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testConjunctionDeduper: function() {
-        // TODO: implement me.
         var rule = rules.conjunctionDeduper;
         checkRewriter(null, '(R x) && (R y)', rule);
         checkRewriter('(R x)', '(R x) && (R x)', rule);
@@ -1351,12 +1367,70 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testDedupeHyps: function() {
-        // TODO: Test me.
+        // TODO: Implement.
+      },
+
+      testEqualConjunctions: function() {
+        var input = Y.parse('R x && T = T && R x');
+        var proved = rules.equalConjunctions(input);
+        assert(proved.matches(input));
+        input = Y.parse('R x = R x && R x');
+        proved = rules.equalConjunctions(input);
+        assert(proved.matches(input));
+        input = Y.parse('R x && R x && R (x + y) = R (x + y) && R x');
+      },
+
+      testRepeatedlyRewrite: function() {
+        var input = rules.assert('R (neg (neg (x + y)))');
+        var result = rules.rewrite(input, '',
+                                   rules.findTypeRewriter(input));
+        assertEqual('(R (neg (x + y)))', result);
+        // Also tests rules.findTypeRewriter.
+        var equation = rules.repeatedlyRewrite(input,
+                                               rules.findTypeRewriter);
+        assertEqual('(R (x + y))', equation.getRight());
+      },
+
+      testArithmetic: function() {
+        var input = rules.assume('x = 2 + 2');
+        var result = rules.arithmetic(input, '/right/right');
+        assertEqual('(x = 4)', result.getRight());
       },
 
       testSimplifyNumericTypes: function() {
-        // TODO: test.
+        function checkRule(expected, step, rule, path) {
+          var result = rule(step);
+          if (expected == null) {
+            assertEqual(null, result);
+          } else {
+            assert(result);
+            var actual = path ? result.locate(path) : result;
+            if (expected) {
+              assertEqual(expected, actual);
+            } else {
+              Y.log('Act: ' + actual);
+            }
+          }
+        }
+        function check(expected, step) {
+          checkRule(expected, step, rules.simplifyNumericTypes, '/left');
+        }
+        var neg = rules.commutePlus(rules.axiomNeg(), '/right/left');
+        check('(R x)', neg);
+        var step1 = rules.assume('x + y + z = 3');
+        check('((((((x + y) + z) = 3) && (R x)) && (R y)) && (R z))', step1);
+        var step2 = rules.commutePlus(step1, '/right/left');
+        check('((((((x + y) + z) = 3) && (R x)) && (R y)) && (R z))', step2);
       },
+
+      testJustifyNumericType: function() {
+        var input = Y.parse('R x && R y --> R (x + y)');
+        assert(rules.justifyNumericType(input).matches(input));
+        input = Y.parse('R x && R y && R z --> R (x + y)');
+        assert(rules.justifyNumericType(input).matches(input));
+      },
+
+      // Utility functions for proofs.
 
       testBuildHypSchema: function() {
         var rules = Y.rules;
@@ -1367,12 +1441,8 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('a3', map.get(Y.parse('R z')));
       },
 
-      testEliminateBinaryOpTypes: function() {
-        // TODO: implement me.
-      },
-
       testSimplifyBinaryOpType: function() {
-        var sop = Y._simplifyBinaryOpType;
+        var sop = Y._simplifyBinOpType;
         function check(expected, goal) {
           goal = (typeof goal == 'string') ? Y.parse(goal) : goal;
           var thm = sop(goal);

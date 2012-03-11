@@ -1619,18 +1619,63 @@ var ruleInfo = {
   // the step.
   //
   // Accepts a string for the tautology.
-  p: {
+  forwardChain: {
     action: function(step, tautology) {
       var tautology = rules.tautology(tautology);
       var substitution = Y.matchAsSchema(tautology.getLeft(), step.unHyp());
       var step2 = rules.instMultiVars(tautology, substitution);
       var step3 = rules.modusPonens(step, step2);
-      return step3.justify('p', arguments, [step]);
+      return step3.justify('forwardChain', arguments, [step]);
     },
     inputs: {step: 1, term: 2},
     form: ('Match step <input name=step> with left side of implication '
            + 'in tautology <input name=term>'),
     comment: ('Match step with LHS of tautology A --> B.')
+  },
+
+  // Andrews calls his enhanced version of forward chaining "Rule P".
+  // TODO: Consider renaming all occurrences of this to
+  // "forwardChain".
+  p: {
+    action: function(step, tautology) {
+      return (rules.forwardChain(step, tautology)
+              .justify('p', arguments, [step]));
+    },
+    inputs: {step: 1, term: 2},
+    form: ('Match step <input name=step> with left side of implication '
+           + 'in tautology <input name=term>'),
+    comment: ('Match step with LHS of tautology A --> B.')
+  },
+
+  // Proves the goal by matching it with the conclusion of the given
+  // theorem and then applying the given inference rule to prove the
+  // premise of the instantiated theorem.  The theorem must be an
+  // implication.
+  //
+  // TODO: Test me.
+  backwardChain: {
+    action: function(goal, theorem, rule) {
+      theorem.assertCall2('-->');
+      var subst = goal.matchSchema(theorem.getRight());
+      var premise = rule(theorem.getLeft());
+      var result = rules.modusPonens(premise,
+                                     rules.instMultiVars(theorem, subst));
+      var result = rules.instMultiVars(theorem, subst);
+      return result.justify('backwardChain', arguments);
+    }
+  },
+
+  // Finds a "subgoal" statement that implies the goal via the given
+  // theorem, which must be a schema of the form a --> b.
+  // Instantiates the theorem by matching the goal against the theorem
+  // RHS, returning the instantiated theorem.
+  subgoal: {
+    action: function(goal, theorem) {
+      theorem.assertCall2('-->');
+      var subst = goal.matchSchema(theorem.getRight());
+      var result = rules.instMultiVars(theorem, subst);
+      return result.justify('subgoal', arguments);
+    }
   },
 
   // Relates equal functions to equality at all input data points.
@@ -1958,7 +2003,9 @@ var ruleInfo = {
     action: function(step, path, equation) {
       var expr = step.locate(path);
       var map = expr.findSubst(equation.unHyp().getLeft());
-      assert(map, 'Cannot rewrite using ' + equation);
+      assert(map, function() {
+          return 'Cannot rewrite\n' + step + '\nusing ' + equation;
+        });
       var step1 = rules.instMultiVars(equation, map);
       var result = rules.replace(step1, step, path);
       return result.justify('rewrite', arguments, [equation]);
@@ -2217,6 +2264,8 @@ var ruleInfo = {
   // Derives a step with hypotheses deduplicated, including removal of
   // occurrences of T.  Works with hypotheses and with plain
   // implications.
+  //
+  // TODO: Convert into a rewriter.
   dedupeHyps: {
     action: function(step) {
       step.assertCall2('-->');
@@ -2232,43 +2281,36 @@ var ruleInfo = {
     comment: 'Remove redundant hypotheses'
   },
 
-  // Apply type expression rewriter rules (equations) to type
-  // expressions of the form (R <term>).  Deduplicate and put them in
-  // the usual order.
-  //
-  // TODO: Also remove type expressions with binary operators, such as
-  // (R (<term> + <term>)).  See "eliminateBinaryOpTypes" below.
-  simplifyNumericTypes: {
-    action: function(step_arg) {
-      var step = step_arg;
-      step.assertCall2('-->');
-      var hyps = new Y.TermSet();
-      step.getLeft().eachHyp(function (hyp) {
-        hyps.add(hyp);
-      });
-      hyps.each(function(hyp) {
-        var rule = findTypeRewriter(hyp);
-        if (rule) {
-          var path;
-          // Loop: there may be more than occurrence of hyp.
-          while (path = step.pathTo(hyp)) {
-            step = rules.rewrite(step, path, rule);
-          }
-        }
-      });
-      // TODO: After rewriting, further rewrite any new hyps also.
-      var step2 = step;
-      if (step2 != step_arg) {
-        // Deduplicate and remove T's after simplifying.
-        step2 = rules.dedupeHyps(step);
-      }
-      return step2.justify('simplifyNumericTypes', arguments, [step_arg]);
+   // Prove an equation asserting that two chains of conjunctions are
+   // equal by showing that their schemas are a tautology.
+  equalConjunctions: {
+    action: function(equation) {
+      var termMap = new Y.TermMap();
+      var lhs = buildHypSchema(equation.getLeft(), termMap);
+      var rhs = buildHypSchema(equation.getRight(), termMap);
+      var taut = rules.tautology(Y.infixCall(lhs, '=', rhs));
+      return rules.tautInst(taut, termMap.subst);
     },
-    inputs: {step: 1},
-    form: 'Step to simplify: <input name=step>',
-    comment: 'Remove redundant type hypotheses in a step'
+    inputs: {equation: 1},
+    form: 'Equation of conjunctions: <input name=equation>',
+    comment: 'Prove equality of two chains of conjunctions'
   },
 
+
+  // As long as "finder" finds an inference rule to apply to the term,
+  // keep calling it and applying the rewrite rule it returns.  The
+  // result is an equation with the term as LHS and last result as
+  // RHS.
+  repeatedlyRewrite: {
+    action: function(term, finder) {
+      var equation = rules.eqSelf(term);
+      var rewriter;
+      while (rewriter = finder(equation.getRight())) {
+        equation = rules.rewrite(equation, '/right', rewriter);
+      }
+      return equation;
+    }
+  },
 
   // From the section "Equality and descriptions"
 
@@ -2515,8 +2557,13 @@ var ruleInfo = {
     comment: 'Evaluate an arithmetic expression'
   },
 
-  // Real number rules of inference rules
+  //
+  // Inference rules for real numbers
+  //
 
+  // Convert a simple arithmetic expression to its value.
+  //
+  // TODO: Consider converting to a rewriter.
   arithmetic: {
     action: function(step, path) {
       var term = step.locate(path);
@@ -2531,6 +2578,125 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     comment: 'Evaluate arithmetic expression'
+  },
+
+  // Managing numeric type hypotheses
+
+  // Apply type expression rewriter rules (equations) to type
+  // expressions of the form (R <term>) in the LHS of the given proved
+  // implication.  Deduplicate and put them in the usual order.
+  //
+  // TODO: Change this to work directly with a conjunction.
+  //
+  simplifyNumericTypes: {
+    action: function(step_arg) {
+      var infix = Y.infixCall;
+      var step = step_arg;
+      step.assertCall2('-->');
+      step = rules.dedupeHyps(step);
+      var hypSet = new Y.TermSet();
+      var allHyps = step.getLeft();
+      allHyps.eachHyp(function (hyp) {
+          hypSet.add(hyp);
+        });
+      hypSet.each(function(hyp) {
+          if (hyp.isCall1('R')) {
+            var rule = rules.findTypeRewriter(hyp);
+            if (rule) {
+              var path = step.pathTo(hyp);
+              step = rules.rewrite(step, path, rule);
+            }
+            var numeric = hyp.arg;
+            if (numeric.isCall2('+') || numeric.isCall2('*')) {
+              var target = new Y.TermSet();
+              target.add(hyp);
+              var hyps = hypsExcept(allHyps, target);
+              var goal = infix(hyps, '-->', hyp);
+              try {
+                goal = rules.justifyNumericType(goal);
+              } catch(e) { Y.log("Numeric sort not simplified: " + goal); }
+              var subsumption = '(a --> b) --> (a && b = a)';
+              var equation = rules.forwardChain(goal, subsumption);
+              // ab (a && b) is just a rearrangement of allHyps.
+              var ab = equation.getLeft();
+              // Prove it.
+              var step1 = rules.equalConjunctions(infix(allHyps, '=', ab));
+              // Finally get rid of unneeded hypothesis "b":
+              var step2 = rules.r(equation, step1, '/right');
+              // Replace the hypotheses of the step.
+              step = rules.replace(step2, step, '/left');
+              allHyps = step.getLeft();
+            }
+          }
+        });
+      var result = rules.dedupeHyps(step);
+      return result.justify('simplifyNumericTypes', arguments, [step_arg]);
+    },
+    inputs: {step: 1},
+    form: 'Step to simplify: <input name=step>',
+    comment: 'Remove redundant type hypotheses in a step'
+  },
+
+  // Prove a goal statement of the form "hyps --> R (l <binop> r)" in
+  // preparation for removing the term on the RHS from the full set of
+  // hypotheses of some proof step.
+  justifyNumericType: {
+    action: function(goal) {
+      var infix = Y.infixCall;
+      var target = goal.getRight();
+      var subst = goal.matchSchema('h --> (R e)');
+      var expr = subst.e;
+      var result;
+      if (expr.isCall2()) {
+        var op = expr.getBinOp();
+        var hyps = subst.h;
+        var theorems = {'+': rules.axiomPlusType(), '*': rules.axiomTimesType()};
+        assert(subst && op instanceof Y.Var && theorems.hasOwnProperty(op.name));
+        var theorem = theorems[op.name];
+        var implication = rules.subgoal(target, theorem);
+        var subst2 = implication.matchSchema('h1 && h2 --> p');
+        // Solve the two simplified problems:
+        var thm1 = rules.justifyNumericType(infix(hyps, '-->', subst2.h1));
+        var thm2 = rules.justifyNumericType(infix(hyps, '-->', subst2.h2));
+        // Show that the conjunction of the simpler numeric type terms
+        // is a consequence of the hypotheses.
+        var conj = rules.makeConjunction(thm1, thm2);
+        var taut = '(h --> a) && (h --> b) --> (h --> a && b)';
+        var step1 = rules.forwardChain(conj, taut);
+        var step2 = rules.makeConjunction(step1, theorem);
+        var result =
+          rules.forwardChain(step2, '(h --> a) && (a --> b) --> (h --> b)');
+      } else {
+        var map = new Y.TermMap();
+        var lhs = buildHypSchema(goal.getLeft(), map);
+        var rhs = buildHypSchema(target, map);
+        var taut = infix(lhs, '-->', rhs);
+        result = rules.tautInst(taut, map.subst);
+      }
+      return result.justify('justifyNumericType', arguments);
+    }
+  },
+
+  // Finds and returns type expression rewrite rule that can rewrite
+  // the term to eliminate a call to "neg" or "recip" or a numeric
+  // literal, e.g. (R (neg <term>) = (R <term>)).  Returns null if it
+  // finds no suitable rewriter.
+  findTypeRewriter: {
+    action: function(term) {
+      if (term.isCall1('R')) {
+        if (term.arg.isNumeral()) {
+          return rules.axiomArithmetic(term);
+        } else if (term.arg.isCall1('neg')) {
+          return rules.axiomNegType();
+        } else if (term.arg.isCall1('recip')) {
+          return rules.axiomReciprocalType();
+        }
+      }
+      return null;
+    },
+    inputs: {term: 1},
+    form: 'Term to rewrite: <input name=term>',
+    comment: 'Find rewriter to simplify type expression with neg or recip.'
   },
 
 
@@ -2571,7 +2737,7 @@ var ruleInfo = {
  * equivalently (R ((fn x) y) from the hypotheses of the step (or LHS
  * of an implication step without hypotheses).
  *
- * TODO: Test and debug me.
+ * TODO: Remove me.
  */
 function eliminateBinaryOpTypes(step) {
   step.assertCall2('-->');
@@ -2588,76 +2754,30 @@ function eliminateBinaryOpTypes(step) {
   // Stays the same throughout the simplification process.
   var stepRhsSchema = termMap.addTerm(step.getRight());
   originalHyps.each(function(hyp) {
-      var implication = simplifyBinaryOpType(hyp);
-      if (implication) {
-        var conditionsOk = true;
-        implication.getLeft().eachHyp(function(hyp) {
-            if (!termMap.has(hyp)) { conditionsOk = false; }
-          });
-        if (conditionsOk) {
-          // This hyp can be simplified away!
-          var stepLhsSchema = buildHypSchema(hyps, termMap);
-          var stepSchema = Y.infixCall(stepLhsSchema, '-->', stepRhsSchema);
-          // Schema for the implication that enables removal of the
-          // binary operator type condition, like a schema such as this:
-          // ((R x) && (R y) --> (R (x + y))).
-          var implLhsSchema = buildHypSchema(implication.getLeft(), termMap);
-          var implSchema = Y.infixCall(implLhsSchema,
-                                       '-->',
-                                       termMap.addTerm(implication.getRight()));
-          var fullLhsSchema = Y.infixCall(stepSchema, '&&', implSchema);
-          var removedHyps = new Y.TermSet();
-          removedHyps.add(hyp);
-          var newHypsSchema = buildHypSchema(step.getLeft(), termMap, removedHyps);
-          var fullRhsSchema = Y.infixCall(newHypsSchema, '-->', stepRhsSchema);
-          var fullSchema = Y.infixCall(fullLhsSchema, '-->', fullRhsSchema);
-          console.log(fullSchema);
-          var conjunction = rules.makeConjunction(step, implication);
-          // Finally do the simplification!
-          var step = rules.p(conjunction, fullSchema);
-          hyps = step.getLeft();
-        }
-      }
+      // This term with the binary operator can be simplified away!
+      var stepLhsSchema = buildHypSchema(conj, termMap);
+      var stepSchema = Y.infixCall(stepLhsSchema, '-->', stepRhsSchema);
+      // Schema for the implication that enables removal of the
+      // binary operator type condition, like a schema such as this:
+      // ((R x) && (R y) --> (R (x + y))).
+      var implLhsSchema = buildHypSchema(implication.getLeft(), termMap);
+      var implSchema = Y.infixCall(implLhsSchema,
+                                   '-->',
+                                   termMap.addTerm(implication.getRight()));
+      var fullLhsSchema = Y.infixCall(stepSchema, '&&', implSchema);
+      var removedHyps = new Y.TermSet();
+      removedHyps.add(term);
+      var newHypsSchema = buildHypSchema(step.getLeft(), termMap, removedHyps);
+      var fullRhsSchema = Y.infixCall(newHypsSchema, '-->', stepRhsSchema);
+      var fullSchema = Y.infixCall(fullLhsSchema, '-->', fullRhsSchema);
+      var conjunction = rules.makeConjunction(step, implication);
+      // Finally do the simplification!
+      var step = rules.p(conjunction, fullSchema);
+      hyps = step.getLeft();
     });
   return step;
 }
 
-/**
- * Build a schema for a conjunction of hypotheses, ensuring all are in
- * the TermMap, with optional exclusions, a TermSet.  The schema is of
- * the form a1 && ... && an, where the "a"s are variables for the
- * terms for each hyp in hyps.  Helper for eliminateBinaryOpTypes.
- */
-function buildHypSchema(hyps, map, exclusions) {
-  var schema = null;
-  hyps.eachHyp(function(hyp) {
-      if (!exclusions || !exclusions.has(hyp)) {
-        var v = map.addTerm(hyp);
-        schema = schema ? Y.infixCall(schema, '&&', v) : v;
-      }
-    });
-  return schema;
-}
-
-/**
- * Finds and returns type expression rewrite rule that has the term as
- * a substitution instance, or instantiates rules.arithmetic to match
- * it.  Returns null if nothing found.
- * 
- * Internal to simplifyNumericTypes.
- */
-function findTypeRewriter(term) {
-  if (term.isCall1('R')) {
-    if (term.arg.isNumeral()) {
-      return rules.axiomArithmetic(term);
-    } else if (term.arg.isCall1('neg')) {
-      return rules.axiomNegType();
-    } else if (term.arg.isCall1('recip')) {
-      return rules.axiomReciprocalType();
-    }
-  }
-  return null;
-}
 
 /**
  * Generates and returns a proof of R x1 && ... R xn --> goal, where
@@ -2665,8 +2785,10 @@ function findTypeRewriter(term) {
  * the form (R <term>).
  *  
  * Internal to eliminateBinaryOpTypes..
+ *
+ * TODO: Remove me.
  */
-function simplifyBinaryOpType(goal) {
+function simplifyBinOpType(goal) {
   assert(goal.isCall1('R'));
   var goalTerm = goal.arg;
   var schema;
@@ -2682,8 +2804,8 @@ function simplifyBinaryOpType(goal) {
     var step1 = rules.instMultiVars(schema, subst);
     var left = step1.getLeft().getLeft();
     var right = step1.getLeft().getRight();
-    var leftStep = simplifyBinaryOpType(left);
-    var rightStep = simplifyBinaryOpType(right);
+    var leftStep = simplifyBinOpType(left);
+    var rightStep = simplifyBinOpType(right);
     var step2 = (leftStep
                  ? rules.p(Y.infixCall(leftStep, '&&', step1),
                            '(p --> a) && (a && b --> c) --> (p && b --> c)')
@@ -2852,7 +2974,40 @@ for (var i = 0; i < theoremNames.length; i++) {
   Y.addTheorem(theoremNames[i]);
 }
 
-//// Utility functions
+
+//// UTILITY FUNCTIONS
+
+/**
+ * Build a schema for a conjunction of hypotheses, ensuring all are in
+ * the TermMap, with optional exclusions, a TermSet.  The schema is of
+ * the form a1 && ... && an, where the "a"s are variables for the
+ * terms for each hyp in hyps.  Helper for eliminateBinaryOpTypes.
+ */
+function buildHypSchema(hyps, map, exclusions) {
+  var schema = null;
+  hyps.eachHyp(function(hyp) {
+      var v = map.addTerm(hyp);
+      if (!exclusions || !exclusions.has(hyp)) {
+        schema = schema ? Y.infixCall(schema, '&&', v) : v;
+      }
+    });
+  return schema;
+}
+
+/**
+ * Returns the given conjunction of hypotheses except any appearing in
+ * the exclusions TermSet.  If there are no such hypotheses, returns
+ * T.
+ */
+function hypsExcept(hyps, exclusions) {
+  var result = null;
+  hyps.eachHyp(function(hyp) {
+      if (!exclusions.has(hyp)) {
+        result = result ? Y.infixCall(result, '&&', hyp) : hyp;
+      }
+    });
+  return result;
+}
 
 /**
  * Find a term identical to the given one among the hypotheses
@@ -2873,6 +3028,6 @@ Y.findHyp = findHyp;
 Y.ruleInfo = ruleInfo;
 Y._tautologies = _tautologies;
 Y._buildHypSchema = buildHypSchema;
-Y._simplifyBinaryOpType = simplifyBinaryOpType;
+Y._simplifyBinOpType = simplifyBinOpType;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'proof']});
