@@ -1441,27 +1441,6 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('a3', map.get(Y.parse('R z')));
       },
 
-      testSimplifyBinaryOpType: function() {
-        var sop = Y._simplifyBinOpType;
-        function check(expected, goal) {
-          goal = (typeof goal == 'string') ? Y.parse(goal) : goal;
-          var thm = sop(goal);
-          assert(thm.isCall2('-->'));
-          assert(thm.getRight().matches(goal));
-          if (expected) {
-            assertEqual(expected, thm.getLeft());
-          } else {
-            Y.log(thm.getLeft());
-          }
-        }
-        check('((R x) && (R y))', 'R (x + y)');
-        check('(((R x) && (R y)) && (R z))', 'R (x + y + z)');
-        check('(((R 2) && (R x)) && (R y))', 'R (x + 2 * y)');
-        check('((R (neg y)) && (R x))', 'R (x + neg y)');
-        check('((((R 2) && (R x)) && (R y)) && (R z))', 'R (x * y * z + 2 * y)');
-      },
-
-
       // END OF RULES AND THEOREMS
 
       // Looking at what can be done with Andrews' definition of "and".

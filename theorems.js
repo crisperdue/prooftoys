@@ -2729,100 +2729,6 @@ var ruleInfo = {
 
 };  // End of theorems and rules
 
-
-//// RULE IMPLEMENTATIONS
-
-/**
- * Attempts to eliminate expressions of the form (R (x <op> y)) or
- * equivalently (R ((fn x) y) from the hypotheses of the step (or LHS
- * of an implication step without hypotheses).
- *
- * TODO: Remove me.
- */
-function eliminateBinaryOpTypes(step) {
-  step.assertCall2('-->');
-  var hyps = step.getLeft();
-  // A TermMap for all terms for building all the schemas.
-  var termMap = new Y.TermMap();
-  // All the original hypotheses.
-  var originalHyps = new Y.TermSet();
-  hyps.eachHyp(function(hyp) {
-      originalHyps.add(hyp);
-      termMap.addTerm(hyp);
-    });
-  // A schema variable for the step conclusion.
-  // Stays the same throughout the simplification process.
-  var stepRhsSchema = termMap.addTerm(step.getRight());
-  originalHyps.each(function(hyp) {
-      // This term with the binary operator can be simplified away!
-      var stepLhsSchema = buildHypSchema(conj, termMap);
-      var stepSchema = Y.infixCall(stepLhsSchema, '-->', stepRhsSchema);
-      // Schema for the implication that enables removal of the
-      // binary operator type condition, like a schema such as this:
-      // ((R x) && (R y) --> (R (x + y))).
-      var implLhsSchema = buildHypSchema(implication.getLeft(), termMap);
-      var implSchema = Y.infixCall(implLhsSchema,
-                                   '-->',
-                                   termMap.addTerm(implication.getRight()));
-      var fullLhsSchema = Y.infixCall(stepSchema, '&&', implSchema);
-      var removedHyps = new Y.TermSet();
-      removedHyps.add(term);
-      var newHypsSchema = buildHypSchema(step.getLeft(), termMap, removedHyps);
-      var fullRhsSchema = Y.infixCall(newHypsSchema, '-->', stepRhsSchema);
-      var fullSchema = Y.infixCall(fullLhsSchema, '-->', fullRhsSchema);
-      var conjunction = rules.makeConjunction(step, implication);
-      // Finally do the simplification!
-      var step = rules.p(conjunction, fullSchema);
-      hyps = step.getLeft();
-    });
-  return step;
-}
-
-
-/**
- * Generates and returns a proof of R x1 && ... R xn --> goal, where
- * x1 ... xn are not calls to binary operators + or * and goal is of
- * the form (R <term>).
- *  
- * Internal to eliminateBinaryOpTypes..
- *
- * TODO: Remove me.
- */
-function simplifyBinOpType(goal) {
-  assert(goal.isCall1('R'));
-  var goalTerm = goal.arg;
-  var schema;
-  if (goalTerm.isCall2('+')) {
-    schema = rules.axiomPlusType();
-  } else if (goalTerm.isCall2('*')) {
-    schema = rules.axiomTimesType();
-  }
-  if (schema) {
-    // The schemas are of the form A && B --> goal.
-    var subst = goal.findSubst(schema.getRight());
-    assert(subst, 'Internal error simplifying ' + goal);
-    var step1 = rules.instMultiVars(schema, subst);
-    var left = step1.getLeft().getLeft();
-    var right = step1.getLeft().getRight();
-    var leftStep = simplifyBinOpType(left);
-    var rightStep = simplifyBinOpType(right);
-    var step2 = (leftStep
-                 ? rules.p(Y.infixCall(leftStep, '&&', step1),
-                           '(p --> a) && (a && b --> c) --> (p && b --> c)')
-                 : step1);
-    var step3 = (rightStep
-                 ? rules.p(Y.infixCall(rightStep, '&&', step2),
-                           '(p --> b) && (a && b --> c) --> (a && p --> c)')
-                 : step2);
-    var step4 = rules.replace(rules.mergeConjunctions(step3.getLeft()),
-                              step3, '/left');
-    var step5 = rules.dedupeHyps(step4);
-    return step5;
-  } else {
-    return null;
-  }
-}
-
 // Descriptions of rewrite rules; internal.  Each of these generates
 // an actual inference rule.
 var rewriters = {
@@ -3028,6 +2934,5 @@ Y.findHyp = findHyp;
 Y.ruleInfo = ruleInfo;
 Y._tautologies = _tautologies;
 Y._buildHypSchema = buildHypSchema;
-Y._simplifyBinOpType = simplifyBinOpType;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'proof']});
