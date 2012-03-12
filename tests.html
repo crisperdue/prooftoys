@@ -1381,14 +1381,11 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testRepeatedlyRewrite: function() {
-        var input = rules.assert('R (neg (neg (x + y)))');
-        var result = rules.rewrite(input, '',
-                                   rules.findTypeRewriter(input));
-        assertEqual('(R (neg (x + y)))', result);
-        // Also tests rules.findTypeRewriter.
-        var equation = rules.repeatedlyRewrite(input,
-                                               rules.findTypeRewriter);
-        assertEqual('(R (x + y))', equation.getRight());
+        var input = rules.assume('R (neg (neg (x + y)))');
+        var finder = rules.findTypeRewriter;
+        var result = rules.repeatedlyRewrite(input, '/right',
+                                             rules.findTypeRewriter);
+        assertEqual('(R (x + y))', result.getRight());
       },
 
       testArithmetic: function() {
@@ -1417,6 +1414,8 @@ YUI({filter: null, insertBefore: 'styles'})
         }
         var neg = rules.commutePlus(rules.axiomNeg(), '/right/left');
         check('(R x)', neg);
+        var neg2 = rules.assume('R (neg (neg x))');
+        check('', neg2);
         var step1 = rules.assume('x + y + z = 3');
         check('((((((x + y) + z) = 3) && (R x)) && (R y)) && (R z))', step1);
         var step2 = rules.commutePlus(step1, '/right/left');

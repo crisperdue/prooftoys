@@ -2299,16 +2299,17 @@ var ruleInfo = {
 
   // As long as "finder" finds an inference rule to apply to the term,
   // keep calling it and applying the rewrite rule it returns.  The
-  // result is an equation with the term as LHS and last result as
-  // RHS.
+  // result is the step with the final replacement term, never null.
   repeatedlyRewrite: {
-    action: function(term, finder) {
+    action: function(step, path, finder) {
+      var term = step.locate(path);
       var equation = rules.eqSelf(term);
       var rewriter;
       while (rewriter = finder(equation.getRight())) {
         equation = rules.rewrite(equation, '/right', rewriter);
       }
-      return equation;
+      var result = rules.replace(equation, step, path);
+      return result;
     }
   },
 
@@ -2602,11 +2603,9 @@ var ruleInfo = {
         });
       hypSet.each(function(hyp) {
           if (hyp.isCall1('R')) {
-            var rule = rules.findTypeRewriter(hyp);
-            if (rule) {
-              var path = step.pathTo(hyp);
-              step = rules.rewrite(step, path, rule);
-            }
+            var finder = rules.findTypeRewriter;
+            var path = step.pathTo(hyp);
+            step = rules.repeatedlyRewrite(step, path, rules.findTypeRewriter);
             var numeric = hyp.arg;
             if (numeric.isCall2('+') || numeric.isCall2('*')) {
               var target = new Y.TermSet();
@@ -2616,8 +2615,8 @@ var ruleInfo = {
               try {
                 goal = rules.justifyNumericType(goal);
               } catch(e) { Y.log("Numeric sort not simplified: " + goal); }
-              var subsumption = '(a --> b) --> (a && b = a)';
-              var equation = rules.forwardChain(goal, subsumption);
+              var subsumption = rules.tautology('(a --> b) == (a && b = a)');
+              var equation = rules.rewrite(goal, '', subsumption);
               // ab (a && b) is just a rearrangement of allHyps.
               var ab = equation.getLeft();
               // Prove it.
