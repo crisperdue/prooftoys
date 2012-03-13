@@ -1405,6 +1405,7 @@ YUI({filter: null, insertBefore: 'styles'})
             if (expected) {
               assertEqual(expected, actual);
             } else {
+              Y.log('In: ' + step.getLeft());
               Y.log('Act: ' + actual);
             }
           }
@@ -1415,11 +1416,12 @@ YUI({filter: null, insertBefore: 'styles'})
         var neg = rules.commutePlus(rules.axiomNeg(), '/right/left');
         check('(R x)', neg);
         var neg2 = rules.assume('R (neg (neg x))');
-        check('', neg2);
-        var step1 = rules.assume('x + y + z = 3');
-        check('((((((x + y) + z) = 3) && (R x)) && (R y)) && (R z))', step1);
+        var step1 = rules.assume('x + y + z + 3 = 3');
+        check('(((((((x + y) + z) + 3) = 3) && (R x)) && (R y)) && (R z))',
+              step1);
         var step2 = rules.commutePlus(step1, '/right/left');
-        check('((((((x + y) + z) = 3) && (R x)) && (R y)) && (R z))', step2);
+        check('(((((((x + y) + z) + 3) = 3) && (R x)) && (R y)) && (R z))',
+              step2);
       },
 
       testJustifyNumericType: function() {

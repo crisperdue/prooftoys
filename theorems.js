@@ -1121,8 +1121,11 @@ var ruleInfo = {
   modusPonens: {
     action: function(a, b) {
       var step1 = rules.toTIsA(a);
+      // Replace the "a" in "b" with T.
       var step2 = rules.rRight(step1, b, '/main/left');
+      // Use the definition of -->.
       var step3 = rules.useDefinition(step2, '/main/fn');
+      // From T --> x derive x.
       var step4 = rules.apply(step3, '/main');
       return step4.justify('modusPonens', arguments, arguments);
     },
@@ -1634,8 +1637,10 @@ var ruleInfo = {
   },
 
   // Andrews calls his enhanced version of forward chaining "Rule P".
-  // TODO: Consider renaming all occurrences of this to
-  // "forwardChain".
+  // (In this implementation it is more straightforward to use
+  // makeConjunction as needed, followed by forwardChain.)
+  // 
+  // TODO: Consider renaming all uses of this to "forwardChain".
   p: {
     action: function(step, tautology) {
       return (rules.forwardChain(step, tautology)
@@ -1662,6 +1667,16 @@ var ruleInfo = {
                                      rules.instMultiVars(theorem, subst));
       var result = rules.instMultiVars(theorem, subst);
       return result.justify('backwardChain', arguments);
+    }
+  },
+
+  // Instantiates the schema so that the part at the given path is
+  // identical to the given term.
+  instantiate: {
+    action: function(schema, path, term) {
+      var subst = term.matchSchema(schema.locate(path));
+      var result = rules.instMultiVars(schema, subst);
+      return result.justify('instantiate', arguments, [schema]);
     }
   },
 
@@ -2612,20 +2627,22 @@ var ruleInfo = {
               target.add(hyp);
               var hyps = hypsExcept(allHyps, target);
               var goal = infix(hyps, '-->', hyp);
-              try {
-                goal = rules.justifyNumericType(goal);
-              } catch(e) { Y.log("Numeric sort not simplified: " + goal); }
-              var subsumption = rules.tautology('(a --> b) == (a && b = a)');
-              var equation = rules.rewrite(goal, '', subsumption);
-              // ab (a && b) is just a rearrangement of allHyps.
-              var ab = equation.getLeft();
-              // Prove it.
-              var step1 = rules.equalConjunctions(infix(allHyps, '=', ab));
-              // Finally get rid of unneeded hypothesis "b":
-              var step2 = rules.r(equation, step1, '/right');
-              // Replace the hypotheses of the step.
-              step = rules.replace(step2, step, '/left');
-              allHyps = step.getLeft();
+              var goal = rules.justifyNumericType(goal);
+              if (goal) {
+                var subsumption = rules.tautology('(a --> b) == (a && b = a)');
+                var equation = rules.rewrite(goal, '', subsumption);
+                // ab (a && b) is just a rearrangement of allHyps.
+                var ab = equation.getLeft();
+                // Prove it.
+                var step1 = rules.equalConjunctions(infix(allHyps, '=', ab));
+                // Finally get rid of unneeded hypothesis "b":
+                var step2 = rules.r(equation, step1, '/right');
+                // Replace the hypotheses of the step.
+                step = rules.replace(step2, step, '/left');
+                allHyps = step.getLeft();
+              } else {
+                Y.log("Numeric type not simplified: " + hyp);
+              }
             }
           }
         });
@@ -2643,7 +2660,6 @@ var ruleInfo = {
   justifyNumericType: {
     action: function(goal) {
       var infix = Y.infixCall;
-      var target = goal.getRight();
       var subst = goal.matchSchema('h --> (R e)');
       var expr = subst.e;
       var result;
@@ -2653,7 +2669,7 @@ var ruleInfo = {
         var theorems = {'+': rules.axiomPlusType(), '*': rules.axiomTimesType()};
         assert(subst && op instanceof Y.Var && theorems.hasOwnProperty(op.name));
         var theorem = theorems[op.name];
-        var implication = rules.subgoal(target, theorem);
+        var implication = rules.subgoal(goal.getRight(), theorem);
         var subst2 = implication.matchSchema('h1 && h2 --> p');
         // Solve the two simplified problems:
         var thm1 = rules.justifyNumericType(infix(hyps, '-->', subst2.h1));
@@ -2663,15 +2679,20 @@ var ruleInfo = {
         var conj = rules.makeConjunction(thm1, thm2);
         var taut = '(h --> a) && (h --> b) --> (h --> a && b)';
         var step1 = rules.forwardChain(conj, taut);
-        var step2 = rules.makeConjunction(step1, theorem);
+        var instance = rules.instantiate(theorem, '/left', step1.getRight());
+        var step2 = rules.makeConjunction(step1, instance);
         var result =
           rules.forwardChain(step2, '(h --> a) && (a --> b) --> (h --> b)');
       } else {
         var map = new Y.TermMap();
         var lhs = buildHypSchema(goal.getLeft(), map);
-        var rhs = buildHypSchema(target, map);
+        var rhs = buildHypSchema(goal.getRight(), map);
         var taut = infix(lhs, '-->', rhs);
-        result = rules.tautInst(taut, map.subst);
+        try {
+          result = rules.tautInst(taut, map.subst);
+        } catch(e) {
+          return null;
+        }
       }
       return result.justify('justifyNumericType', arguments);
     }
