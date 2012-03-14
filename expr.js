@@ -197,28 +197,23 @@ TermMap.prototype.addTerm = function(term) {
 // Utilities
 
 /**
- * Is it a legal variable name?  Accepts only a string.
+ * Is the given string a legal variable name?  Only names with a
+ * single lower-case letter and then a sequences of digits and/or
+ * underscores, or beginning with an underscore are variables, the
+ * rest are considered constants whether defined or not.
  */
 function isVariable(name) {
   assert(typeof name == 'string', function() {
     return 'isVariable - name must be a string: ' + name;
   });
-  // TODO: Reconcile this with isConstant!!
-  return name.match(/^[_A-Za-z:$][_A-Za-z0-9:$]*$/);
+  return name.match(/^[a-z][0-9_]*$|^_/);
 }
 
 /**
- * Return a true value iff the given expression is a Var with a name
- * suitable for a constant.  Only names with a single lower-case
- * letter and then a sequences of digits and/or underscores; or
- * beginning with an underscore are true variables, the rest are
- * considered constants whether defined or not.
+ * Any (legal) name that is not a variable is considered a constant.
  */
 function isConstant(name) {
-  if (name instanceof Y.Var) {
-    name = name.name;
-  }
-  return (typeof name == 'string') ? !name.match(/^[a-z][0-9_]*$|^_/) : false;
+  return !isVariable(name);
 }
 
 // Used to order execution of proof steps so they can display
@@ -477,7 +472,7 @@ Expr.prototype.isVariable = function() {
  * True iff this is a Var named as a constant.
  */
 Expr.prototype.isConst = function() {
-  return isConstant(this);
+  return this instanceof Var && isConstant(this.name);
 };
 
 /**
@@ -1400,7 +1395,7 @@ Var.prototype._addNames = function(map) {
 };
 
 Var.prototype._addFreeNames = function(map, bindings) {
-  if (!this.isConst() && getBinding(this.name, bindings) == null) {
+  if (this.isVariable() && getBinding(this.name, bindings) == null) {
     map[this.name] = true;
   }
 };
@@ -3504,6 +3499,7 @@ Y.getDefinition = getDefinition;
 Y.definitions = definitions;
 
 Y.isConstant = isConstant;
+Y.isVariable = isVariable;
 Y.checkNumber = checkNumber;
 Y.checkRange = checkRange;
 Y.isDefined = isDefined;

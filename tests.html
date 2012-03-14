@@ -666,9 +666,10 @@ YUI({filter: null, insertBefore: 'styles'})
       // Actually "proof support" function:
       testIsConstant: function() {
         Y.assert(Y.isConstant('T'));
-        Y.assert(Y.isConstant(T));
+        Y.assert(T.isConst());
         Y.assert(Y.isConstant('-->'));
-        Y.assert(!Y.isConstant(equal(x, x)));
+        Y.assert(Y.isConstant('neg'));
+        Y.assert(!equal(x, x).isConst());
       },
 
       testIsDefined: function() {
