@@ -1324,7 +1324,7 @@ function Var(name, position) {
     this.name = aliases[name];
   } else {
     this.name = name;
-    if (name.match(/^-?[0-9]+/)) {
+    if (isIntegerLiteral(name)) {
       this.value = parseInt(name);
     }
   }
@@ -1375,7 +1375,7 @@ Var.prototype._addNames = function(map) {
 };
 
 Var.prototype._addFreeNames = function(map, bindings) {
-  if (!isConstant(this) && getBinding(this.name, bindings) == null) {
+  if (!this.isConst() && getBinding(this.name, bindings) == null) {
     map[this.name] = true;
   }
 };
@@ -1464,7 +1464,7 @@ Var.prototype._matchAsSchema = function(expr, map) {
   // This method does not return true when matching a defined name with an
   // expression that matches its definition.  It is a stricter criterion than
   // would be treating definitions exactly as abbreviations.
-  if (isConstant(this)) {
+  if (this.isConst()) {
     // Expr must be a Var with the same name.
     return this.matches(expr);
   }
@@ -2663,6 +2663,7 @@ function define(name, definition) {
  * be something like defineCases('not', F, T).
  */
 function defineCases(name, ifTrue, ifFalse) {
+  assert(isConstant(name), 'Not a constant name: ' + name);
   assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
   for (var n in ifTrue.freeNames()) {
     assert(isDefined(n), 'Definition has free variables: ' + name);
@@ -2676,11 +2677,7 @@ function defineCases(name, ifTrue, ifFalse) {
 }
 
 /**
- * Returns whether the name (or Var) currently has a definition, OR is
- * a primitive constant.
- *
- * TODO: Consider renaming such as alreadyDefined, or reverse the
- * sense and call it isUndefined, etc..
+ * Returns whether the name (or Var) currently has a definition.
  */
 function isDefined(name) {
   if (name instanceof Y.Var) {
@@ -2907,7 +2904,7 @@ function findType(expr) {
 }
 
 function isIntegerLiteral(name) {
-  return name.match(/^[0-9]+$/);
+  return name.match(/^-?[0-9]+$/);
 }
 
 /**
@@ -2973,9 +2970,9 @@ function dereference(type) {
 //// PARSING
 
 // Tokens pattern, private to tokenize.
-var _tokens = new RegExp(['[(){}]',
+  var _tokens = new RegExp(['[(){}[]', '\\]',
                           '_?[:a-zA-Z][:a-zA-Z0-9]*',
-                          '[0-9]+',
+                          '-?[0-9]+',
                           '[^_:a-zA-Z0-9(){}\\s]+'].join('|'),
                          'g');
 
