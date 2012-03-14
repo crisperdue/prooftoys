@@ -5,7 +5,7 @@ YUI.add('expr', function(Y) {
 
 //// GENERAL UTILITIES
 
-// Set
+// SET
 
 function Set(stringifier) {
   this.map = {};
@@ -79,7 +79,7 @@ Set.prototype.choose = function() {
 };
 
 
-// Map
+// MAP
 
 /**
  * Arguments are a function to convert a key object to an identifying
@@ -195,6 +195,31 @@ TermMap.prototype.addTerm = function(term) {
 
 
 // Utilities
+
+/**
+ * Is it a legal variable name?  Accepts only a string.
+ */
+function isVariable(name) {
+  assert(typeof name == 'string', function() {
+    return 'isVariable - name must be a string: ' + name;
+  });
+  // TODO: Reconcile this with isConstant!!
+  return name.match(/^[_A-Za-z:$][_A-Za-z0-9:$]*$/);
+}
+
+/**
+ * Return a true value iff the given expression is a Var with a name
+ * suitable for a constant.  Only names with a single lower-case
+ * letter and then a sequences of digits and/or underscores; or
+ * beginning with an underscore are true variables, the rest are
+ * considered constants whether defined or not.
+ */
+function isConstant(name) {
+  if (name instanceof Y.Var) {
+    name = name.name;
+  }
+  return (typeof name == 'string') ? !name.match(/^[a-z][0-9_]*$|^_/) : false;
+}
 
 // Used to order execution of proof steps so they can display
 // in order of execution in an automatically-generated proof.
@@ -445,7 +470,7 @@ Expr.prototype.toString = function() {
  * True iff this is a Var named as a variable.
  */
 Expr.prototype.isVariable = function() {
-  return this instanceof Var && isVariable(this);
+  return this instanceof Var && isVariable(this.name);
 };
 
 /**
@@ -2587,30 +2612,6 @@ var definitions = {
   the: true
 };
 
-
-/**
- * Is it a legal variable name?  Accepts a string or Var.
- */
-function isVariable(name) {
-  name = name instanceof Y.Var ? name.name : name;
-  // TODO: Reconcile this with isConstant!!
-  return name.match(/^[_A-Za-z:$][_A-Za-z0-9:$]*$/);
-}
-
-/**
- * Return a true value iff the given expression is a Var with a name
- * suitable for a constant.  Only names with a single lower-case
- * letter and then a sequences of digits and/or underscores; or
- * beginning with an underscore are true variables, the rest are
- * considered constants whether defined or not.
- */
-function isConstant(name) {
-  if (name instanceof Y.Var) {
-    name = name.name;
-  }
-  return (typeof name == 'string') ? !name.match(/^[a-z][0-9_]*$|^_/) : false;
-}
-
 /**
  * Check that the given value is numeric, raise an error if not,
  * return the value if it is.
@@ -3064,7 +3065,7 @@ function parse(input) {
         expect(')');
       } else if (token.name == '{') {
         var id = next();
-        assert(isVariable(id), 'Expected identifier, got ' + id.name);
+        assert(id.isVariable(), 'Expected identifier, got ' + id.name);
         expect('.');
         var body = mustParseAbove(0);
         expr = new Y.Lambda(id, body);
