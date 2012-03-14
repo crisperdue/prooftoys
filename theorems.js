@@ -2776,25 +2776,25 @@ var rewriters = {
   distribute: {
     axiom: 'axiomDistributivity'
   },
-  undistribute: {
+  group: {
     axiom: 'axiomDistributivity',
     input: 'right'
   },
   plusZeroElim: {
     axiom: 'axiomPlusZero'
   },
-  plusZeroBack: {
+  plusZeroIntro: {
     axiom: 'axiomPlusZero',
     input: 'right'
   },
   timesOneElim: {
     axiom: 'axiomTimesOne'
   },
-  timesOneBack: {
+  timesOneIntro: {
     axiom: 'axiomTimesOne',
     input: 'right'
   },
-  timesZero: {
+  timesZeroElim: {
     axiom: 'axiomTimesZero'
   },
   plusNegElim: {
