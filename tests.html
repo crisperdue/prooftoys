@@ -852,6 +852,14 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((f x) = (g x))', Y.rules.applyBoth(call('=', f, g), x));
       },
 
+      testApplyToBoth: function() {
+        var inf = Y.rules.applyToBoth(p, call('=', q, r));
+        assertEqual('((p q) = (p r))', inf);
+        var step = Y.rules.assume('x = y + 1');
+        var result = Y.rules.applyToBoth(Y.parse('{x. x - 1}'), step);
+        assertEqual('((x - 1) = ((y + 1) - 1))', result.getRight());
+      },
+
       testEqSelf: function() {
         var result = Y.rules.eqSelf(call(f, y));
         assertEqual('((f y) = (f y))', result);
@@ -882,11 +890,6 @@ YUI({filter: null, insertBefore: 'styles'})
       testR5201e: function() {
         var inf = Y.rules.applyBoth(call('=', p, q), r);
         assertEqual('((p r) = (q r))', inf);
-      },
-
-      testR5201f: function() {
-        var inf = Y.rules.applyToBoth(p, call('=', q, r));
-        assertEqual('((p q) = (p r))', inf);
       },
 
       testApplier: function() {

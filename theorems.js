@@ -459,7 +459,12 @@ var ruleInfo = {
       var bc = h_bc.unHyp();
       var abab = rules.eqSelf(call(a, bc.getLeft()));
       var abac = rules.replace(h_bc, abab, '/right/arg');
-      return abac.justify('applyToBoth', arguments, [h_bc]);
+      var result = abac;
+      if (a instanceof Y.Lambda) {
+        var step2 = rules.apply(abac, '/main/left');
+        var result = rules.apply(step2, '/main/right');
+      }
+      return result.justify('applyToBoth', arguments, [h_bc]);
     },
     inputs: {term: 1, equation: 2},
     form: ('Apply function <input name=term>'
@@ -1234,17 +1239,16 @@ var ruleInfo = {
   trueEquals: {
     action: function() {
       var step1 = rules.r5218(x);
-      var step2 = rules.eqSelf(x);
-      var step3 = rules.applyToBoth(lambda(x, x), step2);
-      var step4 = rules.apply(step3, '/left');
-      var step5 = rules.r(step4, step1, '/right');
-      var step6 = rules.addForall(step5, x);
-      var step7 = rules.instVar(rules.axiom('axiom3'), equal(T), f);
-      var step8 = rules.instVar(step7, lambda(x, x), g);
-      var step9 = rules.rRight(step8, step6, '');
-      return step9.justify('trueEquals', arguments);
+      var step2 = rules.eqSelf(Y.parse('{x. x} x'));
+      var step3 = rules.apply(step2, '/left');
+      var step4 = rules.r(step3, step1, '/right');
+      var step5 = rules.addForall(step4, x);
+      var step6 = rules.instVar(rules.axiom('axiom3'), equal(T), f);
+      var step7 = rules.instVar(step6, lambda(x, x), g);
+      var step8 = rules.rRight(step7, step5, '');
+      return step8.justify('trueEquals', arguments);
     },
-    comment: ('[T =] = {x | x}')
+    comment: ('[T =] = {x. x}')
   },
 
   // Equates the given expression to a similar one where boolean terms
