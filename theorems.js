@@ -2451,7 +2451,7 @@ var ruleInfo = {
 
   axiomReciprocal: {
     action: function() {
-      return rules.assert('R x && not (x = 0) --> x * recip x = 1')
+      return rules.assert('R x && x != 0 --> x * recip x = 1')
         .asHyps().justify('axiomReciprocal');
     },
     inputs: {},
@@ -2493,7 +2493,7 @@ var ruleInfo = {
 
   axiomReciprocalType: {
     action: function() {
-      return rules.assert('R (recip x) == not (x = 0) && R x')
+      return rules.assert('R (recip x) == R x && x != 0')
 	.justify('axiomReciprocalType');
     },
     inputs: {},
