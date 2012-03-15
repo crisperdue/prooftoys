@@ -468,7 +468,7 @@ function computeStepInfo(step) {
 function fancyName(expr) {
   var name = expr.ruleName;
   var info = rules[name].info;
-  var comment = info.comment || '';
+  var comment = Y.Escape.html(info.comment || '');
   return '<span class=ruleName title="' + comment + '">' + name + '</span>';
 }
 

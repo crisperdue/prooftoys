@@ -2966,7 +2966,7 @@ function dereference(type) {
 //// PARSING
 
 // Tokens pattern, private to tokenize.
-  var _tokens = new RegExp(['[(){}[]', '\\]',
+  var _tokens = new RegExp(['[(){}\\[\\]]',
                           '_?[:a-zA-Z][:a-zA-Z0-9]*',
                           '-?[0-9]+',
                           '[^_:a-zA-Z0-9(){}\\s]+'].join('|'),
@@ -3467,6 +3467,8 @@ var utils = {
 
 
 //// Export public names.
+
+Y.textNode = textNode;
 
 Y.Set = Set;
 Y.Map = Map;
