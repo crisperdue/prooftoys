@@ -783,7 +783,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testAxioms: function() {
-        assertEqual('(((g T) && (g F)) = (forall {x. (g x)}))',
+        assertEqual('(((g T) && (g F)) == (forall {x. (g x)}))',
                     Y.rules.axiom1());
         assertEqual('((x = y) --> ((h x) = (h y)))',
                     Y.rules.axiom2());
@@ -1321,10 +1321,10 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testMergeRight: function() {
-        var result = Y.rules.mergeRight(Y.parse('l = (a && b) && (c && d)'));
-        assertEqual('(l = (a && ((c && d) && b)))', result);
-        var result = Y.rules.mergeRight(Y.parse('l = a && (b && c && d)'));
-        assertEqual('(l = (((b && c) && d) && a))', result);
+        var result = Y.rules.mergeRight(Y.parse('l == (a && b) && (c && d)'));
+        assertEqual('(l == (a && ((c && d) && b)))', result);
+        var result = Y.rules.mergeRight(Y.parse('l == a && (b && c && d)'));
+        assertEqual('(l == (((b && c) && d) && a))', result);
       },
 
       testMergeConj: function() {
@@ -1376,13 +1376,15 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testEqualConjunctions: function() {
-        var input = Y.parse('R x && T = T && R x');
+        var input = Y.parse('R x && T == T && R x');
         var proved = rules.equalConjunctions(input);
         assert(proved.matches(input));
-        input = Y.parse('R x = R x && R x');
+        input = Y.parse('R x == R x && R x');
         proved = rules.equalConjunctions(input);
         assert(proved.matches(input));
-        input = Y.parse('R x && R x && R (x + y) = R (x + y) && R x');
+        input = Y.parse('R x && R x && R (x + y) == R (x + y) && R x');
+        proved = rules.equalConjunctions(input);
+        assert(proved.matches(input));
       },
 
       testRepeatedlyRewrite: function() {

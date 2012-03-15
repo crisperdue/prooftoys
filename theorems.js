@@ -263,7 +263,7 @@ var ruleInfo = {
 
   axiom1: {
     action: function() {
-      var result = rules.assert('g T && g F = forall {x. g x}');
+      var result = rules.assert('g T && g F == forall {x. g x}');
       return result.justify('axiom1');
     },
     inputs: {},
@@ -1407,37 +1407,37 @@ var ruleInfo = {
       var simplifiers = {
         '&&': {
           T: {
-            T: 'T && T = T',
-            F: 'T && F = F'
+            T: 'T && T == T',
+            F: 'T && F == F'
           },
           F: {
-            T: 'F && T = F',
-            F: 'F && F = F'
+            T: 'F && T == F',
+            F: 'F && F == F'
           }
         },
         '||': {
-            T: 'T || T = T',
-            F: 'T || F = T'
+            T: 'T || T == T',
+            F: 'T || F == T'
           },
           F: {
-            T: 'F || T = T',
-            F: 'F || F = F'
+            T: 'F || T == T',
+            F: 'F || F == F'
           },
         '-->': {
-            T: 'T --> T = T',
-            F: 'T --> F = F'
+            T: 'T --> T == T',
+            F: 'T --> F == F'
           },
           F: {
-            T: 'F --> T = T',
-            F: 'F --> F = T'
+            T: 'F --> T == T',
+            F: 'F --> F == T'
           },
         '=': {
-            T: 'T = T = T',
-            F: 'T = F = F'
+            T: 'T = T == T',
+            F: 'T = F == F'
           },
           F: {
-            T: 'F = T = F',
-            F: 'F = F = T'
+            T: 'F = T == F',
+            F: 'F = F == T'
           }
       };
       var boolOps = {'=': true, '&&': true, '||': true, '-->': true};
@@ -2053,12 +2053,12 @@ var ruleInfo = {
             // RHS is a && b && b
 	    var simpler =
               rules.rewrite(eqn, '/right',
-                            rules.tautology('a && b && b = a && b'));
+                            rules.tautology('a && b && b == a && b'));
 	    // Keep bubbling the rightmost to the left.
 	    return bubble(simpler);
 	  } else if (less(c, b)) {
             // Replace the equation's RHS according using associativity.
-            var assoc = rules.tautology('a && b && c = a && c && b');
+            var assoc = rules.tautology('a && b && c == a && c && b');
             var map = expr.findSubst(assoc.getLeft());
             var assocInstance = rules.instMultiVars(assoc, map);
 	    var step1 = rules.r(assocInstance, eqn, '/right');
@@ -2076,10 +2076,10 @@ var ruleInfo = {
 	  // Base case: Eqn is lhs = a && b.
 	  if (a.matches(b)) {
 	    return rules.rewrite(eqn, '/right',
-                                 rules.tautology('a && a = a'));
+                                 rules.tautology('a && a == a'));
 	  } else if (less(b, a)) {
 	    return rules.rewrite(eqn, '/right',
-                                 rules.tautology('a && b = b && a'));
+                                 rules.tautology('a && b == b && a'));
 	  } else {
 	    // B is properly placed.
 	    return eqn;
@@ -2104,8 +2104,8 @@ var ruleInfo = {
       // the end of the right chain.
       expr.assertCall2('&&');
       var mover = (expr.getLeft().isCall2('&&')
-                   ? rules.tautology('(a && b) && c = a && (c && b)')
-                   : rules.tautology('a && b = b && a'));
+                   ? rules.tautology('(a && b) && c == a && (c && b)')
+                   : rules.tautology('a && b == b && a'));
       var result = rules.rewrite(eqn, '/right', mover);
       return result.justify('mergeRight', arguments, [eqn]);
     },
@@ -2620,7 +2620,7 @@ var ruleInfo = {
               var goal = infix(hyps, '-->', hyp);
               var goal = rules.justifyNumericType(goal);
               if (goal) {
-                var subsumption = rules.tautology('(a --> b) == (a && b = a)');
+                var subsumption = rules.tautology('(a --> b) == (a && b == a)');
                 var equation = rules.rewrite(goal, '', subsumption);
                 // ab (a && b) is just a rearrangement of allHyps.
                 var ab = equation.getLeft();
