@@ -3160,12 +3160,12 @@ var precedence = {
   '==': 2,
   // Default precedence for non-identifiers is 5.
   '-->': 11,
-  // Unlike the book, equality binds tighter than implication.  This
-  // way makes more sense when working with numbers for example.
-  '=': 12,
-  '!=': 12,
   '||': 13,
   '&&': 14,
+  // Unlike the book, equality binds tighter than implication.  This
+  // way makes more sense when working with numbers for example.
+  '=': 19,
+  '!=': 19,
   '<': 20,
   '<=': 20,
   '>': 20,
