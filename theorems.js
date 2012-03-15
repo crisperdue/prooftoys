@@ -1878,16 +1878,16 @@ var ruleInfo = {
         var step1 = rules.implyForall(name, step1);
       }
       var step2 = rules.r5239(equation, c, cpath);
-      var step3a = rules.makeConjunction(step1, step2);
+      var step3 = rules.makeConjunction(step1, step2);
       var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
-      var step3 = rules.p(step3a, tautology);
-      var step4a = rules.makeConjunction(h_c, step3);
+      var step4 = rules.p(step3, tautology);
+      var step5 = rules.makeConjunction(h_c, step4);
       var taut2 = Y.parse('(h --> p) && (h --> (p = q)) --> (h --> q)');
-      var step4 = rules.p(step4a, taut2);
+      var result = rules.p(step5, taut2);
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
-        step4 = rules.asHypotheses(step4);
+        result = rules.asHypotheses(result);
       }
-      return step4.justify('replace', arguments, [h_equation_arg, h_c_arg]);
+      return result.justify('replace', arguments, [h_equation_arg, h_c_arg]);
     },
     inputs: {step: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=step>'),
