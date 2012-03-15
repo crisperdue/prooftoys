@@ -1813,9 +1813,6 @@ var ruleInfo = {
   //
   // For convenience applies rule R directly if the equation is really
   // an equation and not an implication.
-  //
-  // TODO: Consider renaming bound variables in C as needed so this
-  // rule can always be applied.
   replace: {
     action: function(h_equation_arg, h_c_arg, path) {
       path = Y.path(path, h_c_arg);
@@ -2806,6 +2803,44 @@ var rewriters = {
 };  
 
 /**
+ * Adds information to the ruleInfo map based on a map of rewriting
+ * descriptors such as "rewriters".  The rewriting descriptors map has
+ * an entry for each standardized rewrite rule.  The name in the map
+ * becomes the name of the inference rule.  The "axiom" property
+ * becomes the name of the axiom to use for the rewriting.  The
+ * "input" property, either "left" or "right" indicates which side of
+ * the equational axiom is the pattern to match the target.  If
+ * omitted, the value is taken as "left".  The "comment" property if
+ * given becomes the rule's comment.
+ */
+function genRewriters(map) {
+  for (var name in map) {
+    var info = map[name];
+    var generators = {
+      'left': rewriteWithAxiom,
+      'right': rewriteBackWithAxiom
+    };
+    var input = info.input || 'left';
+    if (info.comment) {
+      var comment = info.comment;
+    } else if (input == 'right') {
+      var comment = 'Rewrite back using ' + info.axiom;
+    } else {
+      var comment = 'Rewrite using ' + info.axiom;
+    }
+    // Add this info to ruleInfo:
+    ruleInfo[name] = {
+      // Add the axiom and the rule name to all calls to the action
+      // function.
+      action: Y.rbind(generators[input], null, info.axiom, name),
+      inputs: {site: 1},
+      form: '',
+      comment: comment
+    };
+  }
+}
+
+/**
  * Standardized rewriting rule that uses an equational axiom.
  */
 function rewriteWithAxiom(step, path, axiomName, ruleName) {
@@ -2823,41 +2858,6 @@ function rewriteBackWithAxiom(step, path, axiomName, ruleName) {
   var back = rules.eqnSwap(axiom);
   var result = rules.rewrite(step, path, back);
   return result.justify(ruleName, arguments, [step]);
-}
-
-/**
- * Adds information to the ruleInfo map based on a map of rewriting
- * descriptors such as "rewriters".  The rewriting descriptors map has
- * an entry for each standardized rewrite rule.  The name in the map
- * becomes the name of the inference rule.  The "axiom" property
- * becomes the name of the axiom to use for the rewriting.  The
- * "input" property, either "left" or "right" indicates which side of
- * the equational axiom is the pattern to match the target.  If
- * omitted, the value is taken as "left".
- */
-function genRewriters(map) {
-  for (var name in map) {
-    var info = map[name];
-    var generators = {
-      'left': rewriteWithAxiom,
-      'right': rewriteBackWithAxiom
-    };
-    var input = info.input || 'left';
-    if (input == 'right') {
-      var comment = 'Rewrite back using ' + info.axiom;
-    } else {
-      var comment = 'Rewrite using ' + info.axiom;
-    }
-    // Add this info to ruleInfo:
-    ruleInfo[name] = {
-      // Add the axiom and the rule name to all calls to the action
-      // function.
-      action: Y.rbind(generators[input], null, info.axiom, name),
-      inputs: {site: 1},
-      form: '',
-      comment: comment
-    };
-  }
 }
 
 // Add rewriting rules based on the axioms.
