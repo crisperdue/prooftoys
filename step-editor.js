@@ -530,7 +530,7 @@ function resultFormatter(query, results) {
   return Y.Array.map(results, function (result) {
       var ruleName = result.text.replace(/^xiom/, 'axiom');
       var info = Y.rules[ruleName].info;
-      var hint = info.hint || info.comment || '';
+      var hint = Y.Escape.html(info.hint || info.comment || '');
       return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
     });	
 }

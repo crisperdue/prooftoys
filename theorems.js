@@ -209,15 +209,13 @@ var ruleInfo = {
       // Auto-justify input steps.
       // TODO: Limit this to a "test mode".
       if (!equation.ruleName) {
+        assert(Y.autoAssert,
+               function() { return 'Rule R unproven equation: ' + equation; });
 	equation.assert();
       }
-      /*
-       * TODO: Just check rather than inventing a step once tests
-       *   are prepared for this change.
-      assert(target.ruleName,
-             function() {return 'Rule R: unproven ' + target;});
-       */
       if (!target.ruleName) {
+        assert(Y.autoAssert,
+               function() { return 'Rule R unproven target: ' + target; });
 	target.assert();
       }
       var result = target.replace(path, replacer);
@@ -1834,18 +1832,14 @@ var ruleInfo = {
       h_c = rules.appendStepHyps(h_c, h_equation);
       h_equation = rules.prependStepHyps(h_equation, h_c_arg);
 
-      // h_c can be given as an implication, but without hypotheses,
-      // which is OK, but in the end it must be an implication.
-      assert(h_c.isCall2('-->'), 'Not an implication: ' + h_c, h_c);
-      // Now both wffs are implications.  Record the hypotheses as
-      // "h".  (LHS of any implication is also OK.)
+      // Now both wffs are implications with the same LHS.  Call it "h".
       var h = h_equation.getLeft();
       if (!h_c.hasHyps) {
-	// If there are no hypotheses, we do not attempt to make the
+	// If there are no hypotheses, we did not attempt to make the
 	// LHS of the two input steps match.
 	assert(h_c.getLeft().matches(h),
 	       'LHS mismatch in "replace" rule',
-	       h_c_arg, h_c_arg);
+	       h_c_arg);
       }
 
       // From here on work with implications directly, not hypotheses.
@@ -2321,7 +2315,7 @@ var ruleInfo = {
         equation = rules.rewrite(equation, '/right', rewriter);
       }
       var result = rules.replace(equation, step, path);
-      return result;
+      return result.justify('repeatedlyRewrite', arguments, [step]);
     }
   },
 
@@ -2658,13 +2652,20 @@ var ruleInfo = {
     action: function(goal) {
       var infix = Y.infixCall;
       var subst = goal.matchSchema('h --> (R e)');
+      assert(subst, 'Bad input to justifyNumericType: ' + goal);
+      var hyps = subst.h;
       var expr = subst.e;
+      var map = new Y.TermMap();
+      var schema = buildHypSchema(hyps, map);
       var result;
-      if (expr.isCall2()) {
+      if (map.has(goal.getRight())) {
+        var taut =
+          rules.tautology(infix(schema, '-->', map.get(goal.getRight())));
+        result = rules.instantiate(taut, '', goal);
+      } else if (expr.isCall2()) {
         var op = expr.getBinOp();
-        var hyps = subst.h;
         var theorems = {'+': rules.axiomPlusType(), '*': rules.axiomTimesType()};
-        assert(subst && op instanceof Y.Var && theorems.hasOwnProperty(op.name));
+        assert(subst && op instanceof Y.Var && theorems[op.name]);
         var theorem = theorems[op.name];
         var implication = rules.subgoal(goal.getRight(), theorem);
         var subst2 = implication.matchSchema('h1 && h2 --> p');
@@ -2678,8 +2679,16 @@ var ruleInfo = {
         var step1 = rules.forwardChain(conj, taut);
         var instance = rules.instantiate(theorem, '/left', step1.getRight());
         var step2 = rules.makeConjunction(step1, instance);
-        var result =
+        result =
           rules.forwardChain(step2, '(h --> a) && (a --> b) --> (h --> b)');
+      } else if (expr.isCall1()) {
+        var op = expr.fn;
+        var subgoal = infix(hyps, '-->', call('R', expr.arg));
+        var step1 = rules.justifyNumericType(subgoal);
+        // TODO: Handle side conditions as in typing "recip".
+        var rewriter = rules.findTypeRewriter(goal.getRight());
+        rewriter = rules.eqnSwap(rewriter);
+        result = rules.rewrite(step1, '/right', rewriter);
       } else {
         var map = new Y.TermMap();
         var lhs = buildHypSchema(goal.getLeft(), map);
@@ -2692,7 +2701,10 @@ var ruleInfo = {
         }
       }
       return result.justify('justifyNumericType', arguments);
-    }
+    },
+    inputs: {term: 1},
+    form: 'Goal wff: <input name=term>',
+    comment: 'Derive H --> R (<left> <binop> <right>).'
   },
 
   // Finds and returns type expression rewrite rule that can rewrite
@@ -2701,16 +2713,21 @@ var ruleInfo = {
   // finds no suitable rewriter.
   findTypeRewriter: {
     action: function(term) {
+      var result = null;
       if (term.isCall1('R')) {
         if (term.arg.isNumeral()) {
-          return rules.axiomArithmetic(term);
+          result = rules.axiomArithmetic(term);
         } else if (term.arg.isCall1('neg')) {
-          return rules.axiomNegType();
+          result = rules.axiomNegType();
         } else if (term.arg.isCall1('recip')) {
-          return rules.axiomReciprocalType();
+          result = rules.axiomReciprocalType();
         }
       }
-      return null;
+      if (result) {
+        return result.justify('findTypeRewriter', arguments);
+      } else {
+        return null;
+      }
     },
     inputs: {term: 1},
     form: 'Term to rewrite: <input name=term>',
@@ -2946,6 +2963,9 @@ function findHyp(term) {
 }
 
 //// Export public names.
+
+// A variable, export right here:
+Y.autoAssert = false;
 
 Y.axiomNames = axiomNames;
 Y.theoremNames = theoremNames;

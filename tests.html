@@ -67,6 +67,10 @@ YUI({filter: null, insertBefore: 'styles'})
 
   var assert = Y.assert;
 
+  // For testing convenience automatically assert steps from wffs.
+  // TODO: Remove the need for this.
+  Y.autoAssert = true;
+
   /**
    * Check effect of a rewriter.  Null expected value means expected
    * null result.  Empty expected string means just log the result for
