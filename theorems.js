@@ -2505,7 +2505,7 @@ var ruleInfo = {
 
   axiomNegType: {
     action: function() {
-      return rules.assert('R (neg x) == R x')
+      return rules.assert('R x == R (neg x)')
 	.justify('axiomNegType');
     },
     inputs: {},
@@ -2515,7 +2515,7 @@ var ruleInfo = {
 
   axiomReciprocalType: {
     action: function() {
-      return rules.assert('R (recip x) == R x && x != 0')
+      return rules.assert('R x && x != 0 == R (recip x)')
 	.justify('axiomReciprocalType');
     },
     inputs: {},
@@ -2643,7 +2643,6 @@ var ruleInfo = {
         });
       hypSet.each(function(hyp) {
           if (hyp.isCall1('R')) {
-            var finder = rules.findTypeRewriter;
             var path = step.pathTo(hyp);
             step = rules.repeatedlyRewrite(step, path, rules.findTypeRewriter);
             var numeric = hyp.arg;
@@ -2715,14 +2714,25 @@ var ruleInfo = {
         var step2 = rules.makeConjunction(step1, instance);
         result =
           rules.forwardChain(step2, '(h --> a) && (a --> b) --> (h --> b)');
-      } else if (expr.isCall1()) {
-        var op = expr.fn;
+      } else if (expr.isCall1('neg')) {
         var subgoal = infix(hyps, '-->', call('R', expr.arg));
         var step1 = rules.justifyNumericType(subgoal);
-        // TODO: Handle side conditions as in typing "recip".
-        var rewriter = rules.findTypeRewriter(goal.getRight());
-        rewriter = rules.eqnSwap(rewriter);
+        var rewriter = rules.axiomNegType();
         result = rules.rewrite(step1, '/right', rewriter);
+      } else if (expr.isCall1('recip')) {
+        var subgoal1 = infix(hyps, '-->', call('R', expr.arg));
+        var step1 = rules.justifyNumericType(subgoal1);
+        var term = infix(expr.arg, '!=', new Y.Var('0'));
+        // TODO: Consider adding the hypothesis to the proved result
+        //   if needed.
+        assert(map.has(term), 'Step needs hypothesis: ' + term);
+        var subgoal2 = infix(hyps, '-->', term);
+        var taut2 = rules.tautology(infix(schema, '-->', map.get(term)));
+        var step2 = rules.instantiate(taut2, '', subgoal2);
+        var conj = rules.makeConjunction(step1, step2);
+        var taut = rules.tautology('(h --> a) && (h --> b) --> (h --> a && b)');
+        var step3 = rules.forwardChain(conj, taut);
+        var result = rules.rewrite(step3, '/right', rules.axiomReciprocalType());
       } else {
         var map = new Y.TermMap();
         var lhs = buildHypSchema(goal.getLeft(), map);
@@ -2745,6 +2755,8 @@ var ruleInfo = {
   // the term to eliminate a call to "neg" or "recip" or a numeric
   // literal, e.g. (R (neg <term>) = (R <term>)).  Returns null if it
   // finds no suitable rewriter.
+  //
+  // TODO: Remove me.
   findTypeRewriter: {
     action: function(term) {
       var result = null;
@@ -2752,9 +2764,11 @@ var ruleInfo = {
         if (term.arg.isNumeral()) {
           result = rules.axiomArithmetic(term);
         } else if (term.arg.isCall1('neg')) {
-          result = rules.axiomNegType();
+          var step1 = rules.axiomNegType();
+          result = rules.eqnSwap(step1);
         } else if (term.arg.isCall1('recip')) {
-          result = rules.axiomReciprocalType();
+          var step1 = rules.axiomReciprocalType();
+          result = rules.eqnSwap(step1);
         }
       }
       if (result) {
