@@ -2592,18 +2592,30 @@ var ruleInfo = {
   //
 
   // Convert a simple arithmetic expression to its value.
-  //
-  // TODO: Consider converting to a rewriter.
   arithmetic: {
     action: function(step, path) {
       var term = step.locate(path);
-      try {
-        var equation = rules.axiomArithmetic(term);
-        var result = rules.r(equation, step, path);
-        return result.justify('arithmetic', arguments, [step]);
-      } catch(e) {
-        assert(false, 'Not an arithmetic expression: ' + term);
+      if (term.isCall2('!=') &&
+          term.getLeft().isNumeral() &&
+          term.getRight().isNumeral()) {
+        var step1 = rules.eqSelf(term);
+        var step2 = rules.apply(step1, '/right');
+        var step3 = rules.arithmetic(step2, '/right/arg');
+        // Derive "<n> != 0 == T"
+        var step4 = rules.evalBool(step3.getRight());
+        // RHS of step4 becomes "T".
+        var step5 = rules.r(step4, step3, '/right');
+        // Replace the original expression.
+        var result = rules.r(step5, step, path);
+      } else {
+        try {
+          var equation = rules.axiomArithmetic(term);
+          var result = rules.r(equation, step, path);
+        } catch(e) {
+          assert(false, 'Not an arithmetic expression: ' + term);
+        }
       }
+      return result.justify('arithmetic', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',

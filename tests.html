@@ -1413,6 +1413,11 @@ YUI({filter: null, insertBefore: 'styles'})
         var input = rules.assume('x = 2 + 2');
         var result = rules.arithmetic(input, '/right/right');
         assertEqual('(x = 4)', result.getRight());
+        input = rules.axiomReciprocal();
+        var step1 = rules.instVar(input, '2', x);
+        // Apply arithmetic to the "2 != 0" part of the instantiated axiom.
+        var result = rules.arithmetic(step1, '/left/right');
+        assertEqual('T', result.locate('/left/right'));
       },
 
       testSimplifyNumericTypes: function() {
