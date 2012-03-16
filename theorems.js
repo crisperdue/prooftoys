@@ -1029,8 +1029,26 @@ var ruleInfo = {
       return result.justify('instVar', arguments, [step]);
     },
     inputs: {step: 1, term: 2, varName: 3},
-    form: ('In step <input name=step> substitute <input name=term>'
-	   + 'for variable <input name=varName> '),
+    form: ('In step <input name=step>, for variable <input name=varName> '
+           + 'substitute <input name=term>'),
+    hint: 'substitute for free variable',
+    comment: ('In a theorem substitute an expression for'
+              + ' all occurrences of a free variable.')
+  },
+
+  // Same functionality as instVar, but with a site (step+path) and a
+  // term as the arguments.
+  instantiateVar: {
+    action: function(step, path, term) {
+      v = step.locate(path);
+      assert(v instanceof Y.Var, 'Not a variable: ' + v);
+      var map = {};
+      map[v.name] = term;
+      var result = rules.instMultiVars(step, map);
+      return result.justify('instantiateVar', arguments, [step]);
+    },
+    inputs: {site: 1, term: 3},
+    form: ('Substitute <input name=term> for the selected variable.'),
     hint: 'substitute for free variable',
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.')

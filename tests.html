@@ -1056,6 +1056,17 @@ YUI({filter: null, insertBefore: 'styles'})
         result = Y.rules.instVar(step1, call(p, x), x);
       },
 
+      testInstiateVar: function() {
+        var result =
+          Y.rules.instantiateVar(call(p, y), '/right', call(f, x));
+        assertEqual('(p (f x))', result);
+
+        // Hypotheses
+        // TODO: Make this really test with hypotheses.
+        var step1 = Y.rules.axiom('axiom2');
+        result = Y.rules.instVar(step1, call(p, x), x);
+      },
+
       testInstMultiVars: function() {
         var map = {p: Y.parse('forall {x. T || b}'),
                    q: Y.parse('forall {x. b}')
