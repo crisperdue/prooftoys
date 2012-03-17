@@ -2712,7 +2712,12 @@ var ruleInfo = {
       var map = new Y.TermMap();
       var schema = buildHypSchema(hyps, map);
       var result;
-      if (map.has(goal.getRight())) {
+      if (expr.isNumeral()) {
+        var step1 = rules.axiomArithmetic(goal.getRight());
+        var step2 = rules.eqnSwap(step1);
+        var step3 = rules.fromTIsA(step2);
+        result = rules.anyImpliesTheorem(hyps, step3);
+      } else if (map.has(goal.getRight())) {
         var taut =
           rules.tautology(infix(schema, '-->', map.get(goal.getRight())));
         result = rules.instantiate(taut, '', goal);
