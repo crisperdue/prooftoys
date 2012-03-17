@@ -2748,13 +2748,28 @@ var ruleInfo = {
       } else if (expr.isCall1('recip')) {
         var subgoal1 = infix(hyps, '-->', call('R', expr.arg));
         var step1 = rules.justifyNumericType(subgoal1);
+        // Justify this term as a consequence of either arithmetic or
+        // the hypotheses:
         var term = infix(expr.arg, '!=', new Y.Var('0'));
-        // TODO: Consider adding the hypothesis to the proved result
-        //   if needed.
-        assert(map.has(term), 'Step needs hypothesis: ' + term);
-        var subgoal2 = infix(hyps, '-->', term);
-        var taut2 = rules.tautology(infix(schema, '-->', map.get(term)));
-        var step2 = rules.instantiate(taut2, '', subgoal2);
+        var arith;
+        try {
+          var arithEqn = rules.eqSelf(term);
+          arith = rules.arithmetic(arithEqn, '/left');
+        } catch(e) {
+          // The term is not true by arithmetic, is it a hypothesis?
+          //
+          // TODO: Consider adding the hypothesis to the proved result
+          //   if needed.
+          assert(map.has(term), 'Step needs hypothesis: ' + term);
+          var subgoal2 = infix(hyps, '-->', term);
+          var taut2 = rules.tautology(infix(schema, '-->', map.get(term)));
+          var step2 = rules.instantiate(taut2, '', subgoal2);
+        }
+        if (arith) {
+          var step1b = rules.fromTIsA(arith);
+          var step2 = rules.anyImpliesTheorem(hyps, step1b);
+        }
+        // h --> term is now proved.
         var conj = rules.makeConjunction(step1, step2);
         var taut = rules.tautology('(h --> a) && (h --> b) --> (h --> a && b)');
         var step3 = rules.forwardChain(conj, taut);
@@ -2936,7 +2951,8 @@ function genRewriters(map) {
  */
 function rewriteWithAxiom(step, path, axiomName, ruleName) {
   var axiom = rules[axiomName]();
-  var result = rules.rewrite(step, path, axiom);
+  var step1 = rules.rewrite(step, path, axiom);
+  var result = rules.simplifyNumericTypes(step1);
   return result.justify(ruleName, arguments, [step]);
 }
 
@@ -2947,7 +2963,8 @@ function rewriteWithAxiom(step, path, axiomName, ruleName) {
 function rewriteBackWithAxiom(step, path, axiomName, ruleName) {
   var axiom = rules[axiomName]();
   var back = rules.eqnSwap(axiom);
-  var result = rules.rewrite(step, path, back);
+  var step1 = rules.rewrite(step, path, back);
+  var result = rules.simplifyNumericTypes(step1);
   return result.justify(ruleName, arguments, [step]);
 }
 
