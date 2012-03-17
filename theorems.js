@@ -2687,47 +2687,12 @@ var ruleInfo = {
   // TODO: Change this to work directly with a conjunction.
   //
   simplifyNumericTypes: {
-    action: function(step_arg) {
+    action: function(step) {
       var infix = Y.infixCall;
-      var step = step_arg;
       step.assertCall2('-->');
-      step = rules.dedupeHyps(step);
-      var hypSet = new Y.TermSet();
-      var allHyps = step.getLeft();
-      allHyps.eachHyp(function (hyp) {
-          hypSet.add(hyp);
-        });
-      hypSet.each(function(hyp) {
-          if (hyp.isCall1('R')) {
-            var path = step.pathTo(hyp);
-            step = rules.repeatedlyRewrite(step, path, rules.findTypeRewriter);
-            var numeric = hyp.arg;
-            if (numeric.isCall2('+') || numeric.isCall2('*')) {
-              var target = new Y.TermSet();
-              target.add(hyp);
-              var hyps = hypsExcept(allHyps, target);
-              var goal = infix(hyps, '-->', hyp);
-              var goal = rules.justifyNumericType(goal);
-              if (goal) {
-                var subsumption = rules.tautology('(a --> b) == (a && b == a)');
-                var equation = rules.rewrite(goal, '', subsumption);
-                // ab (a && b) is just a rearrangement of allHyps.
-                var ab = equation.getLeft();
-                // Prove it.
-                var step1 = rules.equalConjunctions(infix(allHyps, '=', ab));
-                // Finally get rid of unneeded hypothesis "b":
-                var step2 = rules.r(equation, step1, '/right');
-                // Replace the hypotheses of the step.
-                step = rules.replace(step2, step, '/left');
-                allHyps = step.getLeft();
-              } else {
-                Y.log("Numeric type not simplified: " + hyp);
-              }
-            }
-          }
-        });
-      var result = rules.dedupeHyps(step);
-      return result.justify('simplifyNumericTypes', arguments, [step_arg]);
+      var equation = rules.numericTypesSimplifier(step.getLeft());
+      var result = rules.r(equation, step, '/left');
+      return result.justify('simplifyNumericTypes', arguments, [step]);
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
