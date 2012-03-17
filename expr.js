@@ -162,8 +162,11 @@ function identifyTerm(term) {
   return term.dump();
 };
 
-function TermSet() {
+function TermSet(term) {
   TermSet.superclass.constructor.call(this, identifyTerm);
+  if (term) {
+    this.add(term);
+  }
 }  
 Y.extend(TermSet, Set);
 

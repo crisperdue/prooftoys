@@ -2626,6 +2626,62 @@ var ruleInfo = {
 
   // Apply type expression rewriter rules (equations) to type
   // expressions of the form (R <term>) in the LHS of the given proved
+  // implication.  
+  //
+  numericTypesSimplifier: {
+    action: function(allHyps) {
+      var infix = Y.infixCall;
+      var simplifier = rules.eqSelf(allHyps);
+      var deduper =
+        rules.conjunctionDeduper(allHyps, Y.sourceStepComparator);
+      if (deduper) {
+        simplifier = rules.replace(deduper, simplifier, '/right');
+      }
+      // Now RHS of simplifier has no duplicate terms.
+      var hypSet = new Y.TermSet();
+      simplifier.getRight().eachHyp(function (hyp) { hypSet.add(hyp); });
+      hypSet.each(function(hyp) {
+        if (hyp.isCall1('R') && !(hyp.arg.isVariable())) {
+          var hyps = simplifier.getRight();
+          if (hyp.arg.isNumeral()) {
+            var equation = rules.axiomArithmetic(hyp);
+            var path = Y.path('/right' + hyps.pathTo(hyp));
+            simplifier = rules.replace(equation, simplifier, path);
+          } else {
+            var otherHyps = hypsExcept(hyps, new Y.TermSet(hyp));
+            var goal = infix(otherHyps, '-->', hyp);
+            // Proved that hyp is a consequence of the others.
+            var proved = rules.justifyNumericType(goal);
+            if (proved) {
+              var taut = rules.tautology('(a --> b) == (a && b == a)');
+              // otherHyps && hyp == otherHyps:
+              var subsumption = rules.rewrite(proved, '', taut);
+              var ab = subsumption.getLeft();
+              // hyps = otherHyps && hyp:
+              var step1 = rules.equalConjunctions(infix(hyps, '=', ab));
+              // So hyps = otherHyps:
+              var step2 = rules.r(subsumption, step1, '/right');
+              // So now allHyps = otherHyps:
+              simplifier = rules.replace(step2, simplifier, '/right');
+            }
+          }
+        }
+      });
+      // Remove occurrences of T.
+      deduper =
+        rules.conjunctionDeduper(simplifier.getRight(), Y.sourceStepComparator);
+      if (deduper) {
+        simplifier = rules.replace(deduper, simplifier, '/right');
+      }
+      return simplifier.justify('numericTypesSimplifier', arguments, [allHyps]);
+    },
+    inputs: {term: 1},
+    form: 'Conjunction to simplify: <input name=term>',
+    comment: 'Remove redundant type hypotheses in a conjunction'
+  },
+
+  // Apply type expression rewriter rules (equations) to type
+  // expressions of the form (R <term>) in the LHS of the given proved
   // implication.  Deduplicate and put them in the usual order.
   //
   // TODO: Change this to work directly with a conjunction.

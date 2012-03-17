@@ -181,6 +181,11 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual(0, set.size());
         assert(!set.has(term));
         assert(set.isEmpty());
+
+        // Constructor with a term argument:
+        term = Y.parse('p x');
+        set = new TermSet(term);
+        assert(set.has(term));
       },
 
       // Maps, TermMaps
@@ -1417,6 +1422,20 @@ YUI({filter: null, insertBefore: 'styles'})
         // Apply arithmetic to the "2 != 0" part of the instantiated axiom.
         var result = rules.arithmetic(step1, '/left/right');
         assertEqual('T', result.locate('/left/right'));
+      },
+
+      testNumericTypesSimplifier: function() {
+        function check(expected, input) {
+          checkRewriter(expected, input, rules.numericTypesSimplifier);
+        }
+        check('(p x)', 'p x');
+        check('(p x)', 'p x && p x');
+        check('((R x) && (R y))', 'R x && R y');
+        check('(R x)', 'R x && R 2');
+        check('(R x)', 'R x && R (neg x)');
+        check('((R x) && (x != 0))', 'R x && x != 0 && R (recip x)');
+        check('((R x) && (R y))', 'R x && R y && R (x + y)');
+        check('((R x) && (R y))', 'R x && R y && R (neg (neg x + neg y))');
       },
 
       testSimplifyNumericTypes: function() {
