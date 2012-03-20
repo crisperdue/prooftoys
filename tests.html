@@ -834,16 +834,12 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testAsHypotheses: function() {
-        var step1 = Y.assert('p = p');
+        var step1 = Y.rules.assert('p = p');
         try {
           Y.rules.asHypotheses(step1);
           Y.Assert.fail('Should throw');
         } catch(e) {}
-        var step2 = Y.assert('p --> p');
-        try {
-          Y.rules.asHypotheses(step2);
-          Y.Assert.fail('Should throw');
-        } catch(e) {}
+        var step2 = Y.rules.assert('p --> p');
         var step3 = Y.rules.assume('p');
         var step4 = Y.rules.assert('p --> q');
         var step5 = Y.rules.modusPonens(step3, step4);
@@ -1160,16 +1156,25 @@ YUI({filter: null, insertBefore: 'styles'})
         var wff = T;
         var inf = Y.rules.tautology(wff);
         assertEqual(wff.toString(), inf);
+
         var wff = equal(x, x);
         var inf = Y.rules.tautology(wff);
         assertEqual(wff.toString(), inf);
+
         var wff = Y.parse('(p --> not p) --> not p');
-        Y.log('Tautology: ' + wff);
         var inf = Y.rules.tautology(wff);
         assertEqual(wff.toString(), inf);
+
         var wff = Y.parse('(p && q --> r) = (p --> (q --> r))');
-        Y.log('Tautology: ' + wff);
+        var proved = Y.rules.tautology(wff);
+        assertEqual(wff.toString(), proved);
+
+        var proved = Y.rules.tautology(wff);
+        console.profile('Tautology');
+        var wff = Y.parse('a1 && a2 && a3 && a4 && a5 == ' +
+                          'a1 && a2 && a4 && a5 && a3');
         var inf = Y.rules.tautology(wff);
+        console.profileEnd();
         assertEqual(wff.toString(), inf);
       },
 

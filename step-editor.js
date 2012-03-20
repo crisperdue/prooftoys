@@ -281,16 +281,24 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
       return false;
     }
   }
+  var value = false;
   try {
+    if (Y.profileName) {
+      // Collect CPU profiling information.
+      console.profile(Y.profileName);
+    }
     var result = rule.apply(null, args);
     this.controller.addStep(result);
     this.controller.deselectStep();
     this.reset();
-    return true;
+    value = true;
   } catch(error) {
     this.error(error.message);
-    return false;
   }
+  if (Y.profileName) {
+    console.profileEnd();
+  }
+  return value;
 };
 
 /**
@@ -534,6 +542,9 @@ function resultFormatter(query, results) {
       return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
     });	
 }
+
+// Global variable, name to use for CPU profiles, or falsy to disable:
+Y.profileName = '';
 
 Y.StepEditor = StepEditor;
 

@@ -588,6 +588,7 @@ Expr.prototype.assert = function() {
     this.ordinal = _assertionCounter / 1e9;
     _assertionCounter++;
   }
+  return this;
 };
 
 /**
