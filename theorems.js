@@ -195,8 +195,9 @@ var ruleInfo = {
   r: {
     action: function(equation, target, path) {
       path = Y.path(path);
-      assert(equation.isCall2('='),
-	     'Rule R requires equation: ' + equation, equation);
+      assert(equation.isCall2('='), function() {
+	return 'Rule R requires equation: ' + equation;
+      }, equation);
       function replacer(expr) {
 	if (expr.matches(equation.getLeft())) {
 	  return equation.getRight();
@@ -301,8 +302,9 @@ var ruleInfo = {
   axiom4: {
     action: function(call) {
       call = typeof call == 'string' ? Y.parse(call) : call;
-      assert(call.isOpenCall(),
-	     'Axiom 4 needs ({v. B} A), got: ' + call.toString());
+      assert(call.isOpenCall(), function() {
+	return 'Axiom 4 needs ({v. B} A), got: ' + call.toString();
+      });
       var lambdaExpr = call.fn;
       var result =
         equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
@@ -571,7 +573,9 @@ var ruleInfo = {
     action: function(step, path) {
       path = Y.path(path, step);
       var target = step.locate(path);
-      assert(target, 'Path ' + path + ' not found in ' + step, step);
+      assert(target, function() {
+        return 'Path ' + path + ' not found in ' + step;
+      }, step);
       var equation = rules.applier(target);
       assert(equation, function() { return 'Cannot apply at ' + target; });
       var result = rules.replace(equation, step, path);

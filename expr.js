@@ -458,7 +458,8 @@ Expr.prototype.toString = function() {
       && this.isCall2('-->')
       && isInfixDesired(this.fn.fn)) {
     var imply = new Var('|-');
-    return prefix + '(' + this.fn.arg + ' ' + imply + ' ' + this.arg + ')';
+    return (prefix + '(' + this.fn.arg._toString() + ' ' + imply + ' '
+            + this.arg._toString() + ')');
   } else {
     return prefix + this._toString();
   }
