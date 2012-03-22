@@ -2966,6 +2966,8 @@ function rewriteWithAxiom(step, path, axiomName, ruleName) {
   var axiom = rules[axiomName]();
   var step1 = rules.rewrite(step, path, axiom);
   var result = rules.simplifyNumericTypes(step1);
+  // Justify the step with the given ruleName.  This is appropriate
+  // since genRewriters attaches it as "rules.ruleName".
   return result.justify(ruleName, arguments, [step]);
 }
 

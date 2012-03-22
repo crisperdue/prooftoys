@@ -401,28 +401,7 @@ function computeStepInfo(step) {
       stepInfo += ' <span class=stepReference></span>';
     });
 
-    // Display rule arguments.
-    var args = step.ruleArgs;
-    var varInfo = '';
-    // Display arguments that are variables.
-    // TODO: Just showing variables is only a heuristic.
-    //   do something better.
-    for (var j = 0; j < args.length; j++) {
-      if (args[j] instanceof Y.Var || typeof args[j] == 'string') {
-        var str = '' + args[j];
-        // Don't include path strings.
-        if (str[0] != '/') {
-          if (varInfo) {
-            varInfo += ', ';
-          }
-          // Cover Var and string here.
-          varInfo += str;
-        }
-      }
-    }
-    if (varInfo) {
-      stepInfo += ' (' + varInfo + ')';
-    }
+    // TODO: Consider showing some of the arguments.
   }
   return stepInfo;
 }
