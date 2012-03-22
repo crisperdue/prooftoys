@@ -22,19 +22,6 @@
 /* CSS here */
 </style>
 
-<script type="text/javascript">
-  // Google analytics
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-28801147-2']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-</script>
-
 </head>
 <body class=yui3-skin-sam
  style="margin: 1em 4em 1em 1em; text-align: left; font-family: sans-serif">
@@ -151,10 +138,13 @@ language summary</a> in the project Wiki.
 </table>
 
 <script>
+// Insert boilerplate.
+Toy.insertNav();
+
 // Remove "filter" to load minified JavaScript.
 YUI({filter: 'raw', insertBefore: 'styles'})
    .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
-        'proof', 'collection', 'querystring-parse', 'json', 'boilerplate',
+        'proof', 'collection', 'querystring-parse', 'json',
         // querystring-parse requires "collection" (?!)
    function(Y) {
 
