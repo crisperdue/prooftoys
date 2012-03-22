@@ -2727,6 +2727,7 @@ function getDefinition(name, tOrF) {
 function findDefinition(name, tOrF) {
   name = name instanceof Var ? name.name : name;
   var defn = definitions[name];
+  assert(defn, function() { return 'Not defined: ' + name; });
   if (!tOrF) {
     assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
     return defn;

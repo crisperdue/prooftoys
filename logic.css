@@ -166,6 +166,8 @@ table.proofDisplay {
     color: gray;
 }
 
+/* Highlighting of parts of proof steps */
+
 .proofStep .hover, .proofStep .dep, .proofStep.hover {
   background-color: white;
  }
