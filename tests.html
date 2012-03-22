@@ -1171,8 +1171,8 @@ YUI({filter: null, insertBefore: 'styles'})
 
         var proved = Y.rules.tautology(wff);
         console.profile('Tautology');
-        var wff = Y.parse('a1 && a2 && a3 && a4 && a5 == ' +
-                          'a1 && a2 && a4 && a5 && a3');
+        var wff = Y.parse('a1 && a2 && a3 && a4 && a5 && a6 == ' +
+                          'a1 && a2 && a4 && a5 && a6 && a3');
         var inf = Y.rules.tautology(wff);
         console.profileEnd();
         assertEqual(wff.toString(), inf);
