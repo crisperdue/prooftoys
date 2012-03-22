@@ -657,9 +657,8 @@ var ruleInfo = {
     comment: ('Instantiates a free variable in an equation.')
   },
 
-  // T = [B = B] (5210)
-  eqT: {
-    action: function(b) {
+  eqTLemma: {
+    action: function() {
       var a3 =
         rules.useDefinition(rules.axiom('axiom3'), '/right/fn');
       var identity = lambda(y, y);
@@ -670,12 +669,18 @@ var ruleInfo = {
       var step2b = rules.r(step1b, step2a, '/');
       var step2c = rules.apply(step2b, '/right/body/left');
       var step2d = rules.apply(step2c, '/right/body/right');
-      // TODO: Make the steps to here a lemma.
-      // TODO: Make the following steps a simple rule of inference.
-      var step3 = rules.applyBoth(step2d, b);
-      var step4a = rules.apply(step3, '/left');
-      var step4b = rules.apply(step4a, '/right');
-      return step4b.justify('eqT', arguments, []);
+      return step2d.justify('eqTLemma', arguments);
+    }
+  },
+
+  // T = [B = B] (5210)
+  eqT: {
+    action: function(b) {
+      var lemma = rules.theorem('eqTLemma');
+      var step1 = rules.applyBoth(lemma, b);
+      var step2 = rules.apply(step1, '/left');
+      var step3 = rules.apply(step2, '/right');
+      return step3.justify('eqT', arguments, []);
     },
     inputs: {term: 1},
     form: ('Term to prove equal to itself: <input name=term>'),
@@ -904,6 +909,7 @@ var ruleInfo = {
 
   // Note that this or 5230TF or symmetry of equality of booleans
   // might be taken as an axiom given r5230FT_alternate.
+  // TODO: Make this an axiom in preference to axiomPNeqNotP.
   tIsXIsX: {
     action: function() {
       var step1 = rules.theorem('r5230TF');
@@ -1175,9 +1181,9 @@ var ruleInfo = {
   // Prove [F = T] = F
   // Simpler proof when axiomPNeqNotP rather than axiomTIsNotF (above).
   // TODO: Is there a more elegant proof of this?
-  //   Consider instantiating Axiom1 with x = (T = F) and y = F giving:
+  //   Consider instantiating Axiom2 with x = (T = F) and y = F giving:
   //   (T = F) = F --> (F = (T = F)) = (F = F).  Now (T = x) = x (this
-  //   could even be an axiom.  So we have T --> (F = (T = F)) = T;
+  //   could even be an axiom).  So we have T --> (F = (T = F)) = T;
   //   thus (F = (T = F)) = T and finally F = (T = F) as desired.
   //   Note that none of these steps requires use of the truth tables
   //   for '=' on booleans.
@@ -3005,7 +3011,7 @@ var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
 
 var theoremNames =
   (axiomNames.concat(['defFFromBook', 'axiomTIsNotF',
-                      'defAnd', 'tIsXIsX', 'forallVT',
+                      'defAnd', 'tIsXIsX', 'forallVT', 'eqTLemma',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals']));
 
