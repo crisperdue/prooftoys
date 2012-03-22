@@ -709,17 +709,22 @@ var hoverHandlers = {
     var dep = args[0].rendering;
     var path = args[1];
     var call = dep.locate(path);
-    var target = call.fn.body;
-    var varName = call.fn.bound.name;
     var result = step.locate(path);
-    action(dep.node, 'hover');
-    action(call.arg.node, 'new');
-    action(target.node, 'scope');
-    action(result.node, 'scope');
-    target.findAll(varName,
-                   function(v) { action(v.node, 'occur'); },
-                   result,
-                   function(expr) { action(expr.node, 'new'); });
+    if (call.fn instanceof Y.Lambda) {
+      var target = call.fn.body;
+      var varName = call.fn.bound.name;
+      action(dep.node, 'hover');
+      action(call.arg.node, 'new');
+      action(target.node, 'scope');
+      action(result.node, 'scope');
+      target.findAll(varName,
+                     function(v) { action(v.node, 'occur'); },
+                     result,
+                     function(expr) { action(expr.node, 'new'); });
+    } else {
+      action(call.node, 'dep');
+      action(result.node, 'scope');
+    }
   },
   useDefinition: function(step, action) {
     var args = step.original.ruleArgs;
