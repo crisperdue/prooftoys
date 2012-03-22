@@ -1441,6 +1441,7 @@ YUI({filter: null, insertBefore: 'styles'})
         check('((R x) && (x != 0))', 'R x && x != 0 && R (recip x)');
         check('((R x) && (R y))', 'R x && R y && R (x + y)');
         check('((R x) && (R y))', 'R x && R y && R (neg (neg x + neg y))');
+        check('(R x)', 'R x && (2 != 0)');
       },
 
       testSimplifyNumericTypes: function() {

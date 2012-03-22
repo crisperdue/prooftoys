@@ -2305,8 +2305,6 @@ var ruleInfo = {
   // Derives a step with hypotheses deduplicated, including removal of
   // occurrences of T.  Works with hypotheses and with plain
   // implications.
-  //
-  // TODO: Convert into a rewriter.
   dedupeHyps: {
     action: function(step) {
       step.assertCall2('-->');
@@ -2640,8 +2638,7 @@ var ruleInfo = {
 
   // Apply type expression rewriter rules (equations) to type
   // expressions of the form (R <term>) in the LHS of the given proved
-  // implication.  
-  //
+  // implication.  Also does special-case removal of hyps like 2 != 0.
   numericTypesSimplifier: {
     action: function(allHyps) {
       var infix = Y.infixCall;
@@ -2655,8 +2652,8 @@ var ruleInfo = {
       var hypSet = new Y.TermSet();
       simplifier.getRight().eachHyp(function (hyp) { hypSet.add(hyp); });
       hypSet.each(function(hyp) {
+        var hyps = simplifier.getRight();
         if (hyp.isCall1('R') && !(hyp.arg.isVariable())) {
-          var hyps = simplifier.getRight();
           if (hyp.arg.isNumeral()) {
             var equation = rules.axiomArithmetic(hyp);
             var path = Y.path('/right' + hyps.pathTo(hyp));
@@ -2679,6 +2676,14 @@ var ruleInfo = {
               simplifier = rules.replace(step2, simplifier, '/right');
             }
           }
+        } else if (hyp.isCall2('!=') &&
+                   hyp.getLeft().isNumeral() &&
+                   hyp.getRight().isNumeral()) {
+          // Special case, also simplifies hyps like "2 != 0".
+          var eqn = rules.eqSelf(hyp);
+          var eqn2 = rules.arithmetic(eqn, '/right');
+          var path = Y.path('/right' + hyps.pathTo(hyp));
+          simplifier = rules.r(eqn2, simplifier, path);
         }
       });
       // Remove occurrences of T.
@@ -2697,9 +2702,6 @@ var ruleInfo = {
   // Apply type expression rewriter rules (equations) to type
   // expressions of the form (R <term>) in the LHS of the given proved
   // implication.  Deduplicate and put them in the usual order.
-  //
-  // TODO: Change this to work directly with a conjunction.
-  //
   simplifyNumericTypes: {
     action: function(step) {
       var infix = Y.infixCall;
