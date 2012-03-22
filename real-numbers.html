@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+  Uses "almost standards mode", standard except for some table cell sizing.
+  -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+  <title>ProofToys - numbers</title>
+
+   <!-- TODO: deploy with yui-min.js rather than yui.js -->
+  <script src="http://yui.yahooapis.com/3.4.0/build/yui/yui.js"></script>
+  <!-- For debugging add explicit reference to source file(s) here -->
+
+  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
+  <script src="boilerplate.js"></script>
+  <script src="expr.js"></script>
+  <script src="step-editor.js"></script>
+  <script src="proof.js"></script>
+  <script src="theorems.js"></script>
+
+<style type="text/css">
+/* CSS here */
+</style>
+
+</head>
+<body class=yui3-skin-sam>
+
+<h1>Prooftoys</h1>
+
+<div id=slogans>
+Interactive tools for mathematical problem-solving.<br>
+Making math quicker, easier, and correct.
+</div>
+
+<table>
+<tr>
+<td id=leftNav>
+<!-- Boilerplate HTML goes here -->
+<td>
+<h2>Working with real numbers</h2>
+<p>
+At Prooftoys currently has primitive support for working with real
+numbers using addition, subtraction, multiplication, and division.  In
+fact the axioms refer only to addition, multiplication, negation
+(<code>neg</code>), and reciprocal (<code>recip</code>).  These axioms
+are displayed below in proof form.  The predicate <code>R</code>
+means that its argument is a real number.  There are also
+axioms stating that the result of the basic operations on real numbers
+give real numbers as a result, except for taking the reciprocal of zero.
+<p>
+<div id=proofEditor></div>
+<p>
+In addition to these there is an axiom for actually doing arithmetic
+on numbers.  Prooftoys supports (integer) real number constants in the
+usual syntax, e.g. <code>(x - 2)</code>.  Just be sure when subtracting
+a numeric constant as in the example, leave a space between the
+<code>-</code> and the number, otherwise the parser will the
+<code>-</code> as part of the number <code>-2</code> and
+<code>x</code> as a function applied to <code>-2</code>.
+<p>
+In the axioms, the turnstile symbol <code>&#x22A2;</code> means that
+the items to its left are hypotheses and the expression on the right
+is proved with the hypotheses assumed.  In the prooftoys logic, the
+turnstile has exactly the same meaning as the implication symbol
+<code>--></code>, though some rules of inference distinguish between
+inputs with hypotheses and those without them.
+<p>
+Finally there is an axiom schema <code>axiomArithmetic</code> for
+evaluating basic arithmetic expressions.  It works with the operations
+<code>+, -, *, /, neg, =, !=, >, >=, <, <=</code>, and the predicate
+<code>R</code> when given numeric literals as arguments.  (When
+dividing, it accepts only inputs that give exact integer results.)
+<p>  
+[[Rules of inference]]
+<p>
+[[Definitions]]
+
+</table>
+<script>
+// Insert boilerplate.
+Toy.insertNav();
+
+// Remove "filter" to load minified JavaScript.
+YUI({filter: 'raw', insertBefore: 'styles'})
+   .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
+        'proof', 'collection', 'querystring-parse', 'json',
+        // querystring-parse requires "collection" (?!)
+   function(Y) {
+
+  // Set up some useful constants and functions.
+
+  Y.Expr.utils.import();
+
+  // Query string data.
+  var queryData;
+
+  function newProofBuilder() {
+    // Create an interactive proof editor for the user.
+    var controller = new Y.ProofControl();
+    Y.one('#proofEditor').append(controller.node);
+    return controller;
+  };
+
+  Y.on('domready', function() {
+      var rules = Y.rules;
+      var controller = newProofBuilder();
+      // Modus ponens
+      var a1 = rules.axiomCommutativePlus();
+      var a2 = rules.axiomAssociativePlus();
+      var a3 = rules.axiomCommutativeTimes();
+      var a4 = rules.axiomAssociativeTimes();
+      var a5 = rules.axiomDistributivity();
+      var a6 = rules.axiomPlusZero();
+      var a7 = rules.axiomTimesOne();
+      var a8 = rules.axiomTimesZero();
+      var a9 = rules.axiomNeg();
+      var a10 = rules.axiomReciprocal();
+      controller.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10]);
+      window.proofBuilder = controller;
+    });
+
+  // For debugging.
+  window.Y = Y;
+  window.db = Y.debugString;
+});
+</script>
+</body>
+</html>
