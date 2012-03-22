@@ -2,42 +2,8 @@
 
 YUI.add('proof', function(Y) {
 
-// Use the applications assert function.
+// Use the application's assert function.
 var assert = Y.assertTrue;
-
-//// THEOREMHOOD
-
-// Private to addTheorem, getTheorem, and the initializations
-// at the bottom of this file.  Maps from name to an inference
-// containing a proof of the theorem, or true, indicating
-// 
-var _theoremsByName = {};
-
-/**
- * Checks that the theorem is not already in the database, then adds a
- * function to prove it to the set of theorems, which are indexed by
- * theorem name.
- */
-function addTheorem(name) {
-  assert(!_theoremsByName[name], 'Theorem already exists: ' + name);
-  assert(rules[name], 'No proof: ' + name);
-  _theoremsByName[name] = true;
-}
-
-/**
- * Gets an existing theorem from the theorems database, or returns
- * null if there is none.  Runs the proof if it has not already run.
- */
-function getTheorem(name) {
-  var value = _theoremsByName[name];
-  if (value == true) {
-    value = _theoremsByName[name] = rules[name]();
-  }
-  return value;
-}
-
-
-//// PROOFS
 
 //// PROOF CONTROL
 
@@ -939,8 +905,6 @@ function createRules(ruleInfo) {
 
 Y.ProofControl = ProofControl;
 Y.showOrdinals = false;
-Y.addTheorem = addTheorem;
-Y.getTheorem = getTheorem;
 Y.renderInference = renderInference;
 Y.renderProof = renderProof;
 Y.createRules = createRules;
