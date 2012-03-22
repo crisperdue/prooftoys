@@ -160,7 +160,7 @@ var ruleInfo = {
     action: function(name, tOrF) {
       // The derivations are computed in advance, and have
       // the name or name and true/false as the argument(s).
-      return Y.getDefinition(name, tOrF).justify('definition', arguments);
+      return Y.getDefinition(name, tOrF).justify('definition', [name, tOrF]);
     },
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
@@ -207,8 +207,7 @@ var ruleInfo = {
                  '\n must match ' + equation.getLeft(), target);
 	}
       }
-      // Auto-justify input steps.
-      // TODO: Limit this to a "test mode".
+      // Auto-justify input steps if requested by the current configuration.
       if (!equation.ruleName) {
         assert(Y.autoAssert,
                function() { return 'Rule R unproven equation: ' + equation; });
@@ -234,7 +233,8 @@ var ruleInfo = {
 	  break;
 	}
       }
-      var justified = result.justify('r', arguments, [target, equation]);
+      var justified = result.justify('r', [equation, target, path],
+                                     [target, equation]);
       var result = target.hasHyps ? justified.asHyps() : justified;
       return result;
     },
@@ -310,7 +310,7 @@ var ruleInfo = {
         equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
       // Always make sure the call has a type.  It came from elsewhere.
       Y.findType(call);
-      return rules.assert(result).justify('axiom4', arguments);
+      return rules.assert(result).justify('axiom4', [call]);
     },
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
@@ -481,11 +481,12 @@ var ruleInfo = {
   // Works with hypotheses.
   useDefinition: {
     action: function(a, path) {
+      var args = [a, path];
       path = Y.path(path, a);
       var target = a.locate(path);
       if (target instanceof Y.Var) {
         var result = rules.replace(rules.definition(target.name), a, path);
-        return result.justify('useDefinition', arguments, [a]);
+        return result.justify('useDefinition', args, [a]);
       } else {
         assert(target instanceof Y.Call && target.arg instanceof Y.Var,
                  'Target of useDefinition not suitable: ' + target);
@@ -494,7 +495,7 @@ var ruleInfo = {
                  'Target of useDefinition not suitable: ' + target);
         var result =
 	  rules.replace(rules.definition(target.fn.name, arg), a, path);
-        return result.justify('useDefinition', arguments, [a]);
+        return result.justify('useDefinition', args, [a]);
       }
     },
     inputs: {site: 1},
@@ -524,11 +525,12 @@ var ruleInfo = {
   // returns null.
   applier: {
     action: function(expr) {
+      var args = [expr];
       assert(expr instanceof Y.Call);
       var fn = expr.fn;
       if (fn instanceof Y.Lambda) {
         var result = rules.axiom4(expr);
-        return result.justify('applier', arguments);
+        return result.justify('applier', args);
       }
       // Call that looks like (<constant> <expr>).
       if (fn.isConst()) {
@@ -536,7 +538,7 @@ var ruleInfo = {
         if (defn) {
           var step1 = rules.eqSelf(expr);
           var step2 = rules.replace(defn, step1, '/right/fn');
-          return step2.justify('applier', arguments);
+          return step2.justify('applier', args);
         }
       }
       // Call that looks like (<left> <constant> <right>) or
@@ -553,7 +555,7 @@ var ruleInfo = {
             var step4 = rules.eqSelf(expr);
             var step5 = rules.replace(step3, step4, '/right/fn');
             var step6 = rules.simpleApply(step5, '/right');
-            return step6.justify('applier', arguments);
+            return step6.justify('applier', args);
           }
         }
       }
@@ -579,7 +581,7 @@ var ruleInfo = {
       var equation = rules.applier(target);
       assert(equation, function() { return 'Cannot apply at ' + target; });
       var result = rules.replace(equation, step, path);
-      return result.justify('apply', arguments, [step]);
+      return result.justify('apply', [step, path], [step]);
     },
     inputs: {site: 1},
     form: '',
@@ -1845,6 +1847,7 @@ var ruleInfo = {
   // an equation and not an implication.
   replace: {
     action: function(h_equation_arg, h_c_arg, path) {
+      var args = [h_equation_arg, h_c_arg, path];
       path = Y.path(path, h_c_arg);
       var h_c = h_c_arg;
       var h_equation = h_equation_arg;
@@ -1853,7 +1856,7 @@ var ruleInfo = {
         // applicable.  The case with hypotheses in h_c can be
         // considered as rule RR (5202).
         var result = rules.r(h_equation, h_c, path);
-	return result.justify('replace', arguments,
+	return result.justify('replace', args,
                               [h_equation_arg, h_c_arg]);
       }
       assert(h_equation.isCall2('-->') && h_equation.getRight().isCall2('='),
@@ -1913,7 +1916,7 @@ var ruleInfo = {
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
         result = rules.asHypotheses(result);
       }
-      return result.justify('replace', arguments, [h_equation_arg, h_c_arg]);
+      return result.justify('replace', args, [h_equation_arg, h_c_arg]);
     },
     inputs: {step: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=step>'),
