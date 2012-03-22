@@ -233,10 +233,10 @@ var ruleInfo = {
 	  break;
 	}
       }
+      var result = target.hasHyps ? result.asHyps() : result;
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation]);
-      var result = target.hasHyps ? justified.asHyps() : justified;
-      return result;
+      return justified;
     },
     // inputs: {equation: 1, site: 2},
     // form: ('Replace selection with right side of step <input name=equation>'),
@@ -2608,6 +2608,7 @@ var ruleInfo = {
   arithmetic: {
     action: function(step, path) {
       var term = step.locate(path);
+      var result;
       if (term.isCall2('!=') &&
           term.getLeft().isNumeral() &&
           term.getRight().isNumeral()) {
@@ -2619,11 +2620,11 @@ var ruleInfo = {
         // RHS of step4 becomes "T".
         var step5 = rules.r(step4, step3, '/right');
         // Replace the original expression.
-        var result = rules.r(step5, step, path);
+        result = rules.r(step5, step, path);
       } else {
         try {
           var equation = rules.axiomArithmetic(term);
-          var result = rules.r(equation, step, path);
+          result = rules.r(equation, step, path);
         } catch(e) {
           assert(false, 'Not an arithmetic expression: ' + term);
         }
