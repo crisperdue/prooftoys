@@ -364,7 +364,7 @@ function renderSubProof(event, step, proofNode) {
     next = display.get('nextSibling');
   }
   if (step.ruleName == 'theorem') {
-    renderInference(getTheorem(step.ruleArgs[0]), parent, false);
+    renderInference(Y.getTheorem(step.ruleArgs[0]), parent, false);
   } else {
     renderInference(step, parent, false);
   }
@@ -407,8 +407,9 @@ function computeStepInfo(step) {
 }
 
 /**
- * Renders an inference step name in a fancy way, currently
- * with a tooltip that briefly describes it.
+ * Renders an inference step name in a fancy way, currently with class
+ * ruleName and a tooltip that briefly describes it.  (Displays much
+ * like a hyperlink.)
  */
 function fancyName(expr) {
   var name = expr.ruleName;
