@@ -3,7 +3,6 @@
 h1 {
   font-size: 2em;
   font-weight: bold;
-  color: #777777;
   margin: 1em 0px .4em;
   text-align: center;
 }
@@ -11,13 +10,32 @@ h1 {
 h2 {
   font-size: 1.5em;
   font-weight: bold;
-  color: #777777;
   margin: .4em 0px 1em;
-  text-align: center;
+}
+
+h2, h3 {
+  margin-bottom: .5em;
+}
+
+body {
+  /* Allow space for the bottom panel. */
+  margin-bottom: 4em;
 }
 
 p {
   margin: 1em 0px;
+}
+
+a.nav {
+  display: block;
+  font-style: italic;
+  margin: .3em 1.5em .3em 1em;
+  text-decoration: none;
+  text-indent: -1em;
+}
+
+a.nav:before {
+  content: "⊦ ";
 }
 
 /* Text in a shaded box */

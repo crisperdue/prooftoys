@@ -1,4 +1,4 @@
-// Copyright 2011 Crispin Perdue.  All rights reserved.
+// Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
 YUI.add('proof', function(Y) {
 
