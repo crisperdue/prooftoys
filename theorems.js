@@ -2535,7 +2535,7 @@ var ruleInfo = {
   },
 
   // Evaluates arithmetic expressions with operators:
-  // +, -, *, , neg, =, >, >=, <, <=, and the type operator "R".
+  // +, -, *, /, neg, =, >, >=, <, <=, and the type operator "R".
   // Checks that inputs are all numeric and that the result can be
   // guaranteed to be an exact integer.
   axiomArithmetic: {

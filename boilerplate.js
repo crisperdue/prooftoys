@@ -4,10 +4,12 @@ var Toy = Toy || {};
 
 // Boilerplate text for the left navigation area.
 Toy.navText = [
-  '<a class=nav href="proofbuilder.html">',
-  'Interactive proof builder</a>',
   '<a class=nav href="http://code.google.com/p/jlogic/wiki/LanguageSummary">',
   'Summary of the Language</a>',
+  '<a class=nav href="proofbuilder.html">',
+  'Interactive proof builder</a>',
+  '<a class=nav href="real-numbers.html">',
+  'Working with real numbers',
   '<a class=nav href="http://code.google.com/p/jlogic/wiki/AboutTheLogic">',
   'About the logic</a>',
   '<a class=nav href="http://code.google.com/p/jlogic">',

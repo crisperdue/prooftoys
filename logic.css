@@ -3,7 +3,7 @@
 h1 {
   font-size: 2em;
   font-weight: bold;
-  margin: 1em 0px .4em;
+  margin: 1em 0px .2em;
   text-align: center;
 }
 
@@ -18,15 +18,46 @@ h2, h3 {
 }
 
 body {
-  /* Allow space for the bottom panel. */
-  margin-bottom: 4em;
+  margin: 1em 3em 1em 1em;
+  text-align: left;
+  font-family: sans-serif
 }
 
 p {
   margin: 1em 0px;
 }
 
-a.nav {
+/* Source code (tty) style */
+code {
+  color: #060;
+  white-space: nowrap;
+  font-size: 120%;
+}
+
+/* Text wrapping */
+.nowrap {
+  white-space: nowrap;
+}
+
+.wrap {
+  white-space: wrap;
+}
+
+/* Just below the main heading */
+div#slogans {
+  margin-bottom: 1em;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Contains the left navigation */
+td#leftNav {
+  vertical-align: top;
+  padding-top: 7em;
+  width: 20%;
+}
+
+td#leftNav a {
   display: block;
   font-style: italic;
   margin: .3em 1.5em .3em 1em;
@@ -34,7 +65,7 @@ a.nav {
   text-indent: -1em;
 }
 
-a.nav:before {
+td#leftNav a:before {
   content: "⊦ ";
 }
 
