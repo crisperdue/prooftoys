@@ -14,6 +14,7 @@
   <!-- For debugging add explicit reference to source file(s) here -->
 
   <link id=styles type="text/css" rel="stylesheet" href="logic.css">
+  <script src="boilerplate.js"></script>
   <script src="expr.js"></script>
   <script src="step-editor.js"></script>
   <script src="proof.js"></script>
@@ -49,24 +50,8 @@
 
 <table>
 <tr>
-<td style="vertical-align: top; padding-top: 7em" width=20%>
-
-<a class=nav href="./">
- Prooftoys home</a>
-<a class=nav href="proofbuilder.html">
- Interactive proof builder</a>
-<a class=nav href="http://code.google.com/p/jlogic/wiki/LanguageSummary">
- Summary of the Language</a>
-<a class=nav href="http://code.google.com/p/jlogic/wiki/AboutTheLogic">
- About the logic</a>
-<a class=nav href="http://code.google.com/p/jlogic">
- Project site</a>
-<a class=nav href="http://code.google.com/p/jlogic/source/checkout">
- Source code</a>
-<a class=nav
- href="http://code.google.com/p/jlogic/issues/entry?template=Comment/suggestion">
- Comments etc.</a>
-
+<td id=leftNav style="vertical-align: top; padding-top: 7em" width=20%>
+<!-- Boilerplate HTML goes here -->
 <td>
 <h2>Proof Builder</h2>
 
@@ -157,7 +142,7 @@ If you wish to start over and work on a new proof, press
 // Remove "filter" to load minified JavaScript.
 YUI({filter: 'raw', insertBefore: 'styles'})
    .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
-        'proof', 'collection', 'querystring-parse', 'json',
+        'proof', 'collection', 'querystring-parse', 'json', 'boilerplate',
         // querystring-parse requires "collection" (?!)
    function(Y) {
 
