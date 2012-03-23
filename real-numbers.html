@@ -42,13 +42,17 @@ Making math quicker, easier, and correct.
 <h2>Working with real numbers</h2>
 <p>
 At Prooftoys currently has primitive support for working with real
-numbers using addition, subtraction, multiplication, and division.  In
-fact the axioms refer only to addition, multiplication, negation
-(<code>neg</code>), and reciprocal (<code>recip</code>).  These axioms
-are displayed below in proof form.  The predicate <code>R</code>
-means that its argument is a real number.  There are also
-axioms stating that the result of the basic operations on real numbers
-give real numbers as a result, except for taking the reciprocal of zero.
+numbers using addition, subtraction, multiplication, and division,
+with axioms and basic rules of inference.
+<p>
+<b>Axioms.</b>
+In fact the axioms refer only to addition, multiplication, negation
+(<code>neg</code>), and reciprocal (<code>recip</code>).  The
+predicate <code>R</code> means that its argument is a real number.
+<p>
+In addition there are axioms stating that the result of the basic
+operations on real numbers give real numbers as a result (except for
+the reciprocal of zero), though they are not shown here.
 <p>
 <div id=proofEditor></div>
 <p>
@@ -62,7 +66,7 @@ a numeric constant as in the example, leave a space between the
 <p>
 In the axioms, the turnstile symbol <code>&#x22A2;</code> means that
 the items to its left are hypotheses and the expression on the right
-is proved with the hypotheses assumed.  In the prooftoys logic, the
+is proved with the hypotheses assumed.  In the Prooftoys logic, the
 turnstile has exactly the same meaning as the implication symbol
 <code>--></code>, though some rules of inference distinguish between
 inputs with hypotheses and those without them.
@@ -95,7 +99,12 @@ There are also rules related to 1, 0, negation and reciprocal:
 <code>plusNegElim</code>, <code>timesRecipElim</code>, and
 <code>timesZeroElim</code>.
 <p>
-[[Definitions]]
+<b>Subtraction and division.</b>
+The operator <code>-</code> and <code>/</code> are defined, but there
+are no rules of inference for them, so it is more convenient to expand
+their definitions where they occur.  You can expand the definitions by
+selecting an expression that uses them, such as <code>(y - 2)</code> or
+<code>(x / z)</code> and request the <code>apply</code> rule.
 
 </table>
 <script>
