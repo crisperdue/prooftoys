@@ -79,7 +79,21 @@ proof step.  They are under the letter <code>x</code> to reduce
 clutter in the initial display of available theorems and rules of
 inference.
 <p>  
-[[Rules of inference]]
+<b>Rules of inference.</b> Based on the axioms are a set of simple
+rules of inference for real numbers.  You can select an expression in
+a proof step and apply one of these to it, associating <code>+</code>
+or <code>*</code> to the left or to the right, commuting the
+arguments, applying the distributive law or using it in reverse to
+group common factors (<code>associatePlusToLeft</code>,
+<code>associatePlusToRight</code>, <code>associateTimesToLeft</code>,
+<code>associateTimesToRight</code>, <code>distribute</code>, and
+<code>group</code>).
+<p>
+There are also rules related to 1, 0, negation and reciprocal:
+<code>plusZeroElim</code>, <code>plusZeroIntro</code>,
+<code>timesOneElim</code>, <code>timesOneIntro</code>,
+<code>plusNegElim</code>, <code>timesRecipElim</code>, and
+<code>timesZeroElim</code>.
 <p>
 [[Definitions]]
 
