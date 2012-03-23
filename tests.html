@@ -686,9 +686,9 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testIsDefined: function() {
-        Y.assert(Y.isDefined('T'));
-        Y.assert(Y.isDefined(T));
-        Y.assert(Y.isDefined('-->'));
+        Y.assert(!Y.isDefined('T'));
+        Y.assert(!Y.isDefined(T));
+        Y.assert(!Y.isDefined('-->'));
 	Y.assert(Y.isDefined('forall'));
 	Y.assert(Y.isDefined(_var('forall')));
         try {

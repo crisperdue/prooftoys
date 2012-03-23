@@ -2605,6 +2605,7 @@ var definedTypes = {
 // map from 'T' and 'F' to the definition for each case.
 //
 // Primitive constants are here, but the definitions are truthy fakes.
+// This prevents them from being defined later.
 var definitions = {
   T: true,
   F: true,
@@ -2653,8 +2654,8 @@ function define(name, definition) {
     // Benign redefinition, do nothing.
     return;
   }
-  for (var n in definition.freeNames()) {
-    assert(isDefined(n), 'Definition has free variables: ' + name);
+  for (var n in definition.freeVars()) {
+    assert(false, 'Definition has free variables: ' + name);
   }
   return definitions[name] = equal(name, definition);
 }
@@ -2666,11 +2667,11 @@ function define(name, definition) {
 function defineCases(name, ifTrue, ifFalse) {
   assert(isConstant(name), 'Not a constant name: ' + name);
   assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
-  for (var n in ifTrue.freeNames()) {
-    assert(isDefined(n), 'Definition has free variables: ' + name);
+  for (var n in ifTrue.freeVars()) {
+    assert(false, 'Definition has free variables: ' + name);
   }
-  for (var n in ifFalse.freeNames()) {
-    assert(isDefined(n), 'Definition has free variables: ' + name);
+  for (var n in ifFalse.freeVars()) {
+    assert(false, 'Definition has free variables: ' + name);
     // Assumes constants do not appear in freeNames.
   }
   definitions[name] = {T: equal(call(name, T), ifTrue),
@@ -2678,7 +2679,8 @@ function defineCases(name, ifTrue, ifFalse) {
 }
 
 /**
- * Returns whether the name (or Var) currently has a definition.
+ * Returns whether the name (or Var) currently has a simple
+ * definition.
  */
 function isDefined(name) {
   if (name instanceof Y.Var) {
@@ -2687,7 +2689,7 @@ function isDefined(name) {
   assert(typeof name == 'string', function() {
       return 'Non-string name: ' + name;
     });
-  return definitions.hasOwnProperty(name);
+  return definitions[name] instanceof Expr;
 }
 
 /**
@@ -2710,6 +2712,8 @@ function isDefinedByCases(name) {
  * database.  Throws an exception if an appropriate definition is not
  * found.  Pass true or false or T or F or 'T' or 'F' to get the
  * appropriate part of a definition by cases.
+ *
+ * TODO: See findDefinition for more information on this.
  */
 function getDefinition(name, tOrF) {
   var defn = findDefinition(name, tOrF);
@@ -2723,6 +2727,10 @@ function getDefinition(name, tOrF) {
  * if there is a definition, but wrong type.  If the tOrF argument is
  * present, the definition must be by cases, otherwise simple.  Also
  * accepts a Var.
+ *
+ * TODO: Somehow avoid the unsafeness of this; consider eliminating
+ * this and moving getDefinition functionality into rules.definition.
+ * Problem is that the result is not officially justified.
  */
 function findDefinition(name, tOrF) {
   name = name instanceof Var ? name.name : name;

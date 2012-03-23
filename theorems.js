@@ -158,8 +158,8 @@ var ruleInfo = {
    */
   definition: {
     action: function(name, tOrF) {
-      // The derivations are computed in advance, and have
-      // the name or name and true/false as the argument(s).
+      // The derivations are computed in advance, and have the name or
+      // name and true/false as the argument(s).
       return Y.getDefinition(name, tOrF).justify('definition', [name, tOrF]);
     },
     inputs: {string: 1, optString: 2},
@@ -537,7 +537,7 @@ var ruleInfo = {
         var defn = Y.findDefinition(fn.name);
         if (defn) {
           var step1 = rules.eqSelf(expr);
-          var step2 = rules.replace(defn, step1, '/right/fn');
+          var step2 = rules.useDefinition(step1, '/right/fn');
           return step2.justify('applier', args);
         }
       }
@@ -3002,6 +3002,7 @@ var allT = lambda(x, T);
 Y.define('not', equal(F));
 Y.define('!=', '{x. {y. not (x = y)}}');
 Y.define('forall', equal(lambda(x, T)));
+Y.define('exists', '{x. F} !=');
 Y.defineCases('&&', identity, lambda(x, F));
 Y.defineCases('||', allT, identity);
 Y.defineCases('-->', identity, allT);
