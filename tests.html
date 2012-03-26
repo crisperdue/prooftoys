@@ -116,7 +116,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
       _should: {
         ignore: {
-          // testTautology: true  // More time-consuming.
+          testTautologyAndProfile: true  // More time-consuming.
         }
       },
 
@@ -1172,11 +1172,13 @@ YUI({filter: null, insertBefore: 'styles'})
         var wff = Y.parse('(p && q --> r) = (p --> (q --> r))');
         var proved = Y.rules.tautology(wff);
         assertEqual(wff.toString(), proved);
-
         var proved = Y.rules.tautology(wff);
-        console.profile('Tautology');
+      },
+
+      testTautologyAndProfile: function() {
         var wff = Y.parse('a1 && a2 && a3 && a4 && a5 && a6 == ' +
                           'a1 && a2 && a4 && a5 && a6 && a3');
+        console.profile('Tautology');
         var inf = Y.rules.tautology(wff);
         console.profileEnd();
         assertEqual(wff.toString(), inf);
@@ -1449,8 +1451,14 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testSimplifyNumericTypes: function() {
+        var profile;
         function checkRule(expected, step, rule, path) {
+          if (profile) {
+            console.profile(profile);
+            profile = null;
+          }
           var result = rule(step);
+          console.profileEnd();
           if (expected == null) {
             assertEqual(null, result);
           } else {
@@ -1469,11 +1477,13 @@ YUI({filter: null, insertBefore: 'styles'})
         }
         var neg = rules.commutePlus(rules.axiomNeg(), '/right/left');
         check('(R x)', neg);
-        var neg2 = rules.assume('R (neg (neg x))');
+
         var step1 = rules.assume('x + y + z + 3 = 3');
         check('(((((((x + y) + z) + 3) = 3) && (R x)) && (R y)) && (R z))',
               step1);
+
         var step2 = rules.commutePlus(step1, '/right/left');
+        profile = 'Simplify Numerics';
         check('(((((((x + y) + z) + 3) = 3) && (R x)) && (R y)) && (R z))',
               step2);
       },

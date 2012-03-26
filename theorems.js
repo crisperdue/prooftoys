@@ -2049,7 +2049,7 @@ var ruleInfo = {
         });
       var step1 = rules.instMultiVars(equation, map);
       var result = rules.replace(step1, step, path);
-      return result.justify('rewrite', arguments, [equation]);
+      return result.justify('rewrite', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using equation <input name=equation>'),
@@ -2692,7 +2692,7 @@ var ruleInfo = {
       if (deduper) {
         simplifier = rules.replace(deduper, simplifier, '/right');
       }
-      return simplifier.justify('numericTypesSimplifier', arguments, [allHyps]);
+      return simplifier.justify('numericTypesSimplifier', arguments);
     },
     inputs: {term: 1},
     form: 'Conjunction to simplify: <input name=term>',
