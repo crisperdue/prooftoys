@@ -2642,23 +2642,45 @@ var ruleInfo = {
   numericTypesSimplifier: {
     action: function(allHyps) {
       var infix = Y.infixCall;
-      var simplifier = rules.eqSelf(allHyps);
       var deduper =
         rules.conjunctionDeduper(allHyps, Y.sourceStepComparator);
+      var simplifier = rules.eqSelf(allHyps);
       if (deduper) {
         simplifier = rules.replace(deduper, simplifier, '/right');
       }
       // Now RHS of simplifier has no duplicate terms.
       var hypSet = new Y.TermSet();
       simplifier.getRight().eachHyp(function (hyp) { hypSet.add(hyp); });
+      // Convert (R <n>) to T and (<n> != <m>) to T or F.
       hypSet.each(function(hyp) {
         var hyps = simplifier.getRight();
-        if (hyp.isCall1('R') && !(hyp.arg.isVariable())) {
-          if (hyp.arg.isNumeral()) {
-            var equation = rules.axiomArithmetic(hyp);
-            var path = Y.path('/right' + hyps.pathTo(hyp));
-            simplifier = rules.replace(equation, simplifier, path);
-          } else {
+        if (hyp.isCall1('R') && (hyp.arg.isNumeral())) {
+          var equation = rules.axiomArithmetic(hyp);
+          var path = Y.path('/right' + hyps.pathTo(hyp));
+          simplifier = rules.replace(equation, simplifier, path);
+        } else if (hyp.isCall2('!=') &&
+                   hyp.getLeft().isNumeral() &&
+                   hyp.getRight().isNumeral()) {
+          // Special case, also simplifies hyps like "2 != 0".
+          var eqn = rules.eqSelf(hyp);
+          var eqn2 = rules.arithmetic(eqn, '/right');
+          var path = Y.path('/right' + hyps.pathTo(hyp));
+          simplifier = rules.r(eqn2, simplifier, path);
+        }
+      });
+      // Remove occurrences of T.
+      deduper =
+        rules.conjunctionDeduper(simplifier.getRight(), Y.sourceStepComparator);
+      if (deduper) {
+        simplifier = rules.replace(deduper, simplifier, '/right');
+      }
+      // Prove types of complex expressions by breaking them down and
+      // proving the parts..
+      hypSet = new Y.TermSet();
+      simplifier.getRight().eachHyp(function(hyp) { hypSet.add(hyp); });
+      hypSet.each(function(hyp) {
+          var hyps = simplifier.getRight();
+          if (hyp.isCall1('R') && hyp.arg instanceof Y.Call) {
             var otherHyps = hypsExcept(hyps, new Y.TermSet(hyp));
             var goal = infix(otherHyps, '-->', hyp);
             // Proved that hyp is a consequence of the others.
@@ -2676,22 +2698,7 @@ var ruleInfo = {
               simplifier = rules.replace(step2, simplifier, '/right');
             }
           }
-        } else if (hyp.isCall2('!=') &&
-                   hyp.getLeft().isNumeral() &&
-                   hyp.getRight().isNumeral()) {
-          // Special case, also simplifies hyps like "2 != 0".
-          var eqn = rules.eqSelf(hyp);
-          var eqn2 = rules.arithmetic(eqn, '/right');
-          var path = Y.path('/right' + hyps.pathTo(hyp));
-          simplifier = rules.r(eqn2, simplifier, path);
-        }
-      });
-      // Remove occurrences of T.
-      deduper =
-        rules.conjunctionDeduper(simplifier.getRight(), Y.sourceStepComparator);
-      if (deduper) {
-        simplifier = rules.replace(deduper, simplifier, '/right');
-      }
+        });
       return simplifier.justify('numericTypesSimplifier', arguments);
     },
     inputs: {term: 1},
@@ -2720,6 +2727,10 @@ var ruleInfo = {
   // hypotheses of some proof step.
   justifyNumericType: {
     action: function(goal) {
+      // TODO: Break down the proof using only the required conjuncts
+      //   to prove the RHS, then prove that the full set of conjuncts
+      //   implies the required ones.  Create a new
+      //   rules.conjunctsImplyConjunct to make this fast.
       var infix = Y.infixCall;
       var subst = goal.matchSchema('h --> (R e)');
       assert(subst, 'Bad input to justifyNumericType: ' + goal);

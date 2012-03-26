@@ -1479,11 +1479,10 @@ YUI({filter: null, insertBefore: 'styles'})
         check('(R x)', neg);
 
         var step1 = rules.assume('x + y + z + 3 = 3');
-        check('(((((((x + y) + z) + 3) = 3) && (R x)) && (R y)) && (R z))',
-              step1);
-
-        var step2 = rules.commutePlus(step1, '/right/left');
-        profile = 'Simplify Numerics';
+        var axiom = rules.axiomCommutativePlus();
+        var step2 = rules.rewrite(step1, '/main/left', axiom);
+        // To profile:
+        // profile = 'Simplify Numerics';
         check('(((((((x + y) + z) + 3) = 3) && (R x)) && (R y)) && (R z))',
               step2);
       },
