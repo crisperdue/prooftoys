@@ -413,7 +413,7 @@ function computeStepInfo(step) {
  */
 function fancyName(expr) {
   var name = expr.ruleName;
-  var info = rules[name].info;
+  var info = Y.rules[name].info;
   var comment = Y.Escape.html(info.comment || '');
   return '<span class=ruleName title="' + comment + '">' + name + '</span>';
 }
@@ -435,7 +435,7 @@ function renderInference(step, node, editable, millis) {
   var steps = unrenderedDeps(step.details);
   var controller = new ProofControl();
   controller.setSteps(steps);
-  var comment = rules[step.ruleName].info.comment || '';
+  var comment = Y.rules[step.ruleName].info.comment || '';
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   node.appendChild('<div class=proofHeader><b>' + pruf
                    + step.ruleName + '</b>' + computeArgInfo(step) + '<br>'
@@ -486,7 +486,7 @@ function computeArgInfo(step) {
         || arg instanceof Y.Path) {
       argInfo += arg;
     } else {
-      argInfo += debugString(arg);
+      argInfo += Y.debugString(arg);
     }
   }
   if (i > 0) {
@@ -802,104 +802,17 @@ function addBottomPanel(node) {
   div.appendChild('Path: <span id=hoverPath></span>');
 }
 
-/**
- * Returns a string showing the top-level properties
- * of an object, and their values.  If "specials" is
- * given, it should be a map from key name to a function
- * for presenting the value of any key with that name.
- */
-// TODO: Move this to expr.js.
-function debugString(o, specials) {
-  if (typeof o == 'object') {
-    var result = '{';
-    var keys = [];
-    for (var key in o) { keys.push(key); }
-    keys.sort();
-    for (var i = 0; i < keys.length; i++) {
-      var key = keys[i];
-      if (o.hasOwnProperty(key)) {
-        if (result.length > 1) {
-          result += ', ';
-        }
-        result += key + ': ';
-        var value = o[key];
-        var f = specials && specials[key];
-        if (f) {
-          result += f(value);
-        } else if (typeof value == 'string') {
-          result += '"' + o[key] + '"';
-        } else if (value && value.concat) {
-          // Array-like value.
-          vString = o[key].toString();
-          if (vString.length > 40) {
-            result += '[\n';
-            for (var i = 0; i < value.length; i++) {
-              result += value[i] + '\n';
-            }
-            result += ']\n';
-          } else {
-            result += '[' + o[key] + ']';
-          }
-        } else {
-          result += '' + o[key];
-        }
-      }
-    }
-    return result + '}';
-  } else {
-    return o.toString();
-  }
-}
-
-// Map from rule name to function.  The function runs the
-// core rule code, wrapped in more code that makes potentially
-// nested inferences using makeInference.  Each function here
-// can have an "info" property with all the data from the ruleInfo
-// object passed to createRules.
-//
-// TODO: It is really roundabout to have both ruleInfo and rules.
-// Simplify them.
-var rules = {};
-
-/**
- * Given a ruleInfo object, add its information to the "rules" object.
- * The "rules" object maps from rule name to function.  Each function
- * has an "info" property containing all the properties present in the
- * ruleInfo object entry for the name.  If not supplied in the rule
- * definition, the info.input is defaulted to an empty object here.
- * The file theorems.js has a main ruleInfo object.  See there for
- * descriptions of used properties.
- */
-function createRules(ruleInfo) {
-  for (var key in ruleInfo) {
-    // Remember ALL of the info as well, redundantly.  See the "to do"
-    // above.
-    var info = ruleInfo[key];
-    if (!info.inputs) {
-      info.inputs = {};
-    }
-    var fn = (typeof info == 'function') ? info : info.action;
-    // Each function in rules has its action function as
-    // the value of its innerFn property.
-    rules[key] = fn;
-    rules[key].info = info;
-  }
-}
-
 //// Export public names.
 
 Y.ProofControl = ProofControl;
 Y.showOrdinals = false;
 Y.renderInference = renderInference;
 Y.renderProof = renderProof;
-Y.createRules = createRules;
 Y.addBottomPanel = addBottomPanel;
-Y.debugString = debugString;
 Y.getStepsNode = getStepsNode;
 Y.getProofStep = getProofStep;
 Y.getStepsNode = getStepsNode;
 Y.getExpr = getExpr;
 // TODO: Consider getting rid of this global variable.
-Y.rules = rules;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'step-editor']});

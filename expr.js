@@ -3378,6 +3378,55 @@ function removeExcept(map1, map2) {
   }
 }
 
+/**
+ * Returns a string showing the top-level properties
+ * of an object, and their values.  If "specials" is
+ * given, it should be a map from key name to a function
+ * for presenting the value of any key with that name.
+ */
+// TODO: Move this to expr.js.
+function debugString(o, specials) {
+  if (typeof o == 'object') {
+    var result = '{';
+    var keys = [];
+    for (var key in o) { keys.push(key); }
+    keys.sort();
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (o.hasOwnProperty(key)) {
+        if (result.length > 1) {
+          result += ', ';
+        }
+        result += key + ': ';
+        var value = o[key];
+        var f = specials && specials[key];
+        if (f) {
+          result += f(value);
+        } else if (typeof value == 'string') {
+          result += '"' + o[key] + '"';
+        } else if (value && value.concat) {
+          // Array-like value.
+          vString = o[key].toString();
+          if (vString.length > 40) {
+            result += '[\n';
+            for (var i = 0; i < value.length; i++) {
+              result += value[i] + '\n';
+            }
+            result += ']\n';
+          } else {
+            result += '[' + o[key] + ']';
+          }
+        } else {
+          result += '' + o[key];
+        }
+      }
+    }
+    return result + '}';
+  } else {
+    return o.toString();
+  }
+}
+
 
 //// Convenience utilities
 
@@ -3527,6 +3576,8 @@ Y.assertTrue = assertTrue;
 Y.assertEqn = assertEqn;
 Y.removeAll = removeAll;
 Y.removeExcept = removeExcept;
+
+Y.debugString = debugString;
 
 // Error analysis
 Y.errors = errors;

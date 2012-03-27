@@ -3054,11 +3054,43 @@ function rewriteBackWithAxiom(step, path, axiomName, ruleName) {
 // Add rewriting rules based on the axioms.
 genRewriters(rewriters);
 
-// Actual rule functions to call from other code.
-Y.createRules(ruleInfo);
+// Map from rule name to function.  The function runs the
+// core rule code, wrapped in more code that makes potentially
+// nested inferences using makeInference.  Each function here
+// can have an "info" property with all the data from the ruleInfo
+// object passed to createRules.
+//
+// TODO: It is really roundabout to have both ruleInfo and rules.
+// Simplify them.
+var rules = {};
 
-// Set up access to the "rules" object defined in proof.js.
-var rules = Y.rules;
+/**
+ * Given a ruleInfo object, add its information to the "rules" object.
+ * The "rules" object maps from rule name to function.  Each function
+ * has an "info" property containing all the properties present in the
+ * ruleInfo object entry for the name.  If not supplied in the rule
+ * definition, the info.input is defaulted to an empty object here.
+ * The file theorems.js has a main ruleInfo object.  See there for
+ * descriptions of used properties.
+ */
+function createRules(ruleInfo) {
+  for (var key in ruleInfo) {
+    // Remember ALL of the info as well, redundantly.  See the "to do"
+    // above.
+    var info = ruleInfo[key];
+    if (!info.inputs) {
+      info.inputs = {};
+    }
+    var fn = (typeof info == 'function') ? info : info.action;
+    // Each function in rules has its action function as
+    // the value of its innerFn property.
+    rules[key] = fn;
+    rules[key].info = info;
+  }
+}
+
+// Actual rule functions to call from other code.
+createRules(ruleInfo);
 
 var identity = lambda(x, x);
 var allT = lambda(x, T);
@@ -3170,7 +3202,9 @@ function findHyp(term) {
 
 //// Export public names.
 
-// A variable, export right here:
+Y.rules = rules;
+
+// A settable variable, export right here:
 Y.autoAssert = false;
 
 Y.axiomNames = axiomNames;
