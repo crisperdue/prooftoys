@@ -489,18 +489,20 @@ function computeArgInfo(step) {
       argInfo += ', ';
     }
     var arg = step.ruleArgs[i];
+    var argText;
     if (typeof arg == 'string'
         || arg instanceof Y.Expr
         || arg instanceof Y.Path) {
-      argInfo += arg;
+      argText = arg;
     } else {
-      argInfo += Y.debugString(arg);
+      argText = Y.debugString(arg);
     }
+    argInfo += '<code>' + argText + '</code>';
   }
   if (i > 0) {
     argInfo =
-      ' <span style="font-weight: normal">with <code>'
-      + argInfo + '</code></span>';
+      ' <span style="font-weight: normal">with '
+      + argInfo + '</span>';
   }
   return argInfo;
 }
