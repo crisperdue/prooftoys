@@ -1401,6 +1401,25 @@ YUI({filter: null, insertBefore: 'styles'})
                       '(R x) && (R y) && T && R y && R x', rule);
       },
 
+      testConjunctsImplyConjunct: function() {
+        var rule = rules.conjunctsImplyConjunct;
+        function check(conjuncts, conjunct) {
+          conjuncts =
+            typeof conjuncts == 'string' ? Y.parse(conjuncts) : conjuncts;
+          conjunct =
+            typeof conjunct == 'string' ? Y.parse(conjunct) : conjunct;
+          // Y.log(rule(conjuncts, conjunct));
+          var result = rule(conjuncts, conjunct);
+          assertEqual(Y.infixCall(conjuncts, '-->', conjunct) + '',
+                      result);
+        }
+        check('a', 'a');
+        check('a && b', 'b');
+        check('a && b', 'a');
+        check('a && b && c', 'b');
+        check('(R x) && (R y)', '(R x)');
+      },
+
       testDedupeHyps: function() {
         // TODO: Implement.
       },

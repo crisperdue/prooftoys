@@ -2254,6 +2254,56 @@ var ruleInfo = {
     comment: 'Move conjunct of implication LHS all the way to the right'
   },
 
+  // Proves that the given chain of conjuncts imply the specific
+  // conjunct "c", which must match one of them.
+  conjunctsImplyConjunct: {
+    action: function(conjuncts, c) {
+      var infix = Y.infixCall;
+      var tautFX = rules.tautology('F && x == F');
+      // Prove that "hyps = F", where hyps is a chain of conjuncts.
+      // One conjunct must be "F".
+      function falsify(hyps) {
+        if (hyps.isCall2('&&')) {
+          if (hyps.getRight().matches(F)) {
+            return rules.tautInst('p && F == F', {p: hyps.getLeft()});
+          } else {
+            var left = hyps.getLeft();
+            var falsy = falsify(left);
+            var eqn = rules.eqSelf(hyps);
+            var step1 = rules.replace(falsy, eqn, '/right/left');
+            return rules.rewrite(step1, '/right', tautFX)
+          }
+        } else if (hyps.matches(F)) {
+          return rules.eqSelf(F);
+        }
+        assert(false, 'Bad input to falsify!');
+      }
+      var map = new Y.TermMap();
+      conjuncts.eachHyp(function (h) { map.addTerm(h); });
+      assert(map.has(c), function() {
+          return 'Must be one of the conjuncts: ' + c;
+        });
+      var cVar = map.get(c);
+      // Make a schema for the desired theorem.
+      var goalSchema = infix(buildHypSchema(conjuncts, map), '-->', cVar);
+      // Make a version of the theorem with T for "c".
+      var trueGoal = goalSchema.subFree(T, cVar);
+      // This is a simple tautology:
+      var trueCase = rules.tautInst('p --> T', {p: trueGoal.getLeft()});
+      // Make a version of the theorem with F for "c".
+      var falseGoal = goalSchema.subFree(F, cVar);
+      // Prove that its LHS is equal to F.
+      var step1 = falsify(falseGoal.getLeft());
+      // This means the LHS implies F, which is the desired F case.
+      var falseCase = rules.forwardChain(step1, 'p = F --> (p --> F)');
+      // Complete proof of the desired schema:
+      var step2 = rules.cases(trueCase, falseCase, cVar);
+      // Instantiate back to get the desired instance:
+      var result = rules.instMultiVars(step2, map.subst);
+      return result.justify('conjunctsImplyConjunct', arguments);
+    }
+  },
+
   // Treats conj as a chain of conjunctions.  Equates it with a
   // deduplicated version, or returns null if there are no exact
   // duplicate terms.
@@ -2684,6 +2734,10 @@ var ruleInfo = {
             var otherHyps = hypsExcept(hyps, new Y.TermSet(hyp));
             var goal = infix(otherHyps, '-->', hyp);
             // Proved that hyp is a consequence of the others.
+            // TODO: Prove the hyp from just the relevant set hypotheses,
+            //   then use rules.conjunctsImplyConjunct and
+            //   rules.makeConjunction to prove those hyps from the
+            //   full set of hyps.
             var proved = rules.justifyNumericType(goal);
             if (proved) {
               var taut = rules.tautology('(a --> b) == (a && b == a)');
