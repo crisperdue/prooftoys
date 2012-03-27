@@ -133,25 +133,33 @@ ProofControl.prototype.addStep = function(step) {
 };
 
 /**
+ * Finds a step belonging to this ProofControl that has the original
+ * of the given step as one of its dependents; or null if none found.
+ */
+ProofControl.prototype.findDependent = function(target) {
+  var original = target.original;
+  for (var i = 0; i < this.steps.length; i++) {
+    var step = this.steps[i];
+    if (step.ruleDeps.indexOf(original) >= 0) {
+      return step;
+    }
+  }
+  return null;
+};
+
+/**
  * Remove from the proof display the given top-level rendered proof
- * step and all steps that depend on it.
+ * step and all other steps of the display that depend on it directly
+ * or indirectly.
  */
 ProofControl.prototype.removeStep = function(toRemove) {
-  var original = toRemove.original;
-  var steps = this.steps;
   var dependent;
-  while (true) {
-    dependent = Y.Array.find(steps, function(step) {
-      return contains(step.original.ruleDeps, original);
-    });
-    if (!dependent) {
-      break;
-    }
+  while (dependent = this.findDependent(toRemove)) {
     this.removeStep(dependent);
   }
   toRemove.stepNode.remove();
   delete toRemove.original.rendering;
-  this.steps.splice(Y.Array.indexOf(steps, toRemove), 1);
+  this.steps.splice(this.steps.indexOf(toRemove), 1);
 };
 
 /**
@@ -776,8 +784,8 @@ var hoverHandlers = {
 
 //// OTHER UTILITY FUNCTIONS
 
-function contains(collection, item) {
-  return Y.Array.indexOf(collection, item) >= 0;
+function contains(array, item) {
+  return Y.Array.indexOf(array, item) >= 0;
 }
 
 /**
