@@ -4,6 +4,8 @@ var Toy = Toy || {};
 
 // Boilerplate text for the left navigation area.
 Toy.navText = [
+  '<a class=nav href="index.html">',
+  'Home page</a>',
   '<a class=nav href="http://code.google.com/p/jlogic/wiki/LanguageSummary">',
   'Summary of the Language</a>',
   '<a class=nav href="proofbuilder.html">',
@@ -18,7 +20,7 @@ Toy.navText = [
   'Source code</a>',
   '<a class=nav',
   'href="http://code.google.com/p/jlogic/issues/entry?template=Comment/suggestion">',
-  'Comments etc.</a>',
+  'Feedback</a>',
 ].join('\n');
 
 Toy.insertNav = function() {
