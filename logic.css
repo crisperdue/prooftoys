@@ -181,21 +181,10 @@ span.ruleName {
   border-color: silver;
 }
 
-/* Subexpressions of a hovered expression */
-.proofStep .expr.hovered .expr {
-  border-top-color: silver;
-  border-bottom-color: silver;
-}
-
 .proofStep .expr.selected {
   border-color: black;
 }
 
-/* Subexpressions of a hovered expression */
-.proofStep .expr.selected .expr {
-  border-top-color: black;
-  border-bottom-color: black;
-}
 
 /* Proof step editor */
 

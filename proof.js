@@ -645,7 +645,7 @@ function removeClass(node, className) {
 function hoverStep(step, direction, proofNode, event) {
   var action = direction == 'in' ? addClass : removeClass;
   // Always add or remove the "hover" class to the step node
-  // as the mouse goes in or oiut.
+  // as the mouse goes in or out.
   action(getStepNode(step.node), 'hover');
   
   // When entering a step, highlight all references to it.
