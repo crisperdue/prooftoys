@@ -41,42 +41,47 @@ Making math quicker, easier, and correct.
 <td>
 <h2>Working with real numbers</h2>
 <p>
-At Prooftoys currently has primitive support for working with real
+Prooftoys currently has primitive support for working with real
 numbers using addition, subtraction, multiplication, and division,
 with axioms and basic rules of inference.
 <p>
 <b>Axioms.</b>
-In fact the axioms refer only to addition, multiplication, negation
-(<code>neg</code>), and reciprocal (<code>recip</code>).  The
-predicate <code>R</code> means that its argument is a real number.
+The axioms refer only to addition, multiplication, negation
+(<code>neg</code>), and reciprocal (<code>recip</code>).  Subtraction
+and division are defined in terms of negation and reciprocal.
 <p>
 In addition there are axioms stating that the result of the basic
 operations on real numbers give real numbers as a result (except for
-the reciprocal of zero), though they are not shown here.
+the reciprocal of zero), though they are not shown here.  The
+predicate <code>R</code> means that its argument is a real number.
+<p>
+Note that in the axioms, the turnstile symbol <code>&#x22A2;</code>
+means that the items to its left are hypotheses and the expression on
+the right is proved with the hypotheses assumed.  In the Prooftoys
+logic, the turnstile has exactly the same meaning as the implication
+symbol <code>--></code>, though some rules of inference operate
+somewhat differently when there are hypotheses, focusing on the part
+of the formula after the turnstile symbol.
 <p>
 <div id=proofEditor></div>
 <p>
-In addition to these there is an axiom for actually doing arithmetic
-on numbers.  Prooftoys supports (integer) real number constants in the
-usual syntax, e.g. <code>(x - 2)</code>.  Just be sure when subtracting
-a numeric constant as in the example, leave a space between the
+<b>Doing arithmetic.</b>
+The <code>axiomArithmetic</code> axiom schema evaluates basic
+arithmetic expressions with numeric arguments.  It works with the
+operations <code>+, -, *, /, neg, =, !=, >, >=, <, <=</code>, and the
+predicate <code>R</code> when given numeric literals as arguments.
+(When dividing, it accepts only inputs that give exact integer
+results.)
+<p>
+<b>Numeric constants.</b>
+Prooftoys supports (integer) real number constants in the usual
+syntax, e.g. <code>(x - 2)</code>.  Be sure when subtracting a numeric
+constant as in the example to leave a space between the
 <code>-</code> and the number, otherwise the parser will the
 <code>-</code> as part of the number <code>-2</code> and
 <code>x</code> as a function applied to <code>-2</code>.
 <p>
-In the axioms, the turnstile symbol <code>&#x22A2;</code> means that
-the items to its left are hypotheses and the expression on the right
-is proved with the hypotheses assumed.  In the Prooftoys logic, the
-turnstile has exactly the same meaning as the implication symbol
-<code>--></code>, though some rules of inference distinguish between
-inputs with hypotheses and those without them.
-<p>
-Finally there is an axiom schema <code>axiomArithmetic</code> for
-evaluating basic arithmetic expressions.  It works with the operations
-<code>+, -, *, /, neg, =, !=, >, >=, <, <=</code>, and the predicate
-<code>R</code> when given numeric literals as arguments.  (When
-dividing, it accepts only inputs that give exact integer results.)
-<p>
+<b>With the proof builder.</b>
 In the interactive proof builder, find axioms by pressing the
 <code>x</code> key on your keyboard without selecting any existing
 proof step.  They are under the letter <code>x</code> to reduce
