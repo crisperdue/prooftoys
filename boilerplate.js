@@ -30,6 +30,16 @@ Toy.insertNav = function() {
   }
 };
 
+Toy.insertSlogans = function() {
+  var slogans = ['toward tools and a community for connecting<br>' +
+                 'people and mathematical reasoning'].join('\n');
+  var elt = document.getElementById('slogans');
+  if (elt) {
+    elt.innerHTML = slogans;
+  }
+};
+
+
 // Google analytics
 
 var _gaq = _gaq || [];
