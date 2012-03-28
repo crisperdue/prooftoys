@@ -352,6 +352,14 @@ YUI({filter: null, insertBefore: 'styles'})
         assert(!v.isString());
       },
 
+      testUnparseString: function() {
+        var ups = Y._unparseString;
+        assertEqual('"asdf"', ups('asdf'));
+        assertEqual('"\\\\asdf"', ups('\\asdf'));
+        assertEqual('"asdf\\""', ups('asdf"'));
+        assertEqual('"asdf\\n"', ups('asdf\n'));
+      },
+
       testFreeNames: function() {
         var wff = lambda(x, call(f, x));
         var map = wff.freeNames();

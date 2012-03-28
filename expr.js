@@ -3155,9 +3155,23 @@ function nParsed() {
   return i;
 };
 
+/**
+ * Extracts and returns the actual string content
+ * from the external representation of a string.
+ */
 function parseStringContent(name) {
   var content = name.substring(1, name.length - 1);
   return content.replace(/\\(.)/g, '$1');
+}
+
+/**
+ * Creates and returns a parseable external representation for a
+ * string.
+ */
+function unparseString(content) {
+  var s1 = content.replace(/["\\]/g, '\\$&');  // For emacs: "]);
+  var s2 = s1.replace(/\n/g, '\\n');
+  return '"' + s2 + '"';
 }
 
 /**
@@ -3617,6 +3631,7 @@ Y.findType = findType;
 // For testing:
 Y._equalityType = equalityType;
 Y._parseStringContent = parseStringContent;
+Y._unparseString = unparseString;
 
 Y.exprNode = exprNode;
 Y.tokenize = tokenize;
