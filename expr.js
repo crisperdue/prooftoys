@@ -2257,19 +2257,19 @@ Path.prototype.rest = function(direction) {
  * for each segment of the path.
  */
 Path.prototype.toString = function() {
+  var content = '';
   if (this == Path.none) {
-    return '(none)';
+    content = '(none)';
   } else if (this == _end) {
-    return '';
+    content = '';
   } else {
     var path = this;
-    var result = '';
     while (path != _end) {
-      var result = result + '/' + path.segment;
+      content = content + '/' + path.segment;
       path = path._rest;
     }
-    return result
   }
+  return content;
 };
 
 /**
@@ -3406,7 +3406,6 @@ function removeExcept(map1, map2) {
  * given, it should be a map from key name to a function
  * for presenting the value of any key with that name.
  */
-// TODO: Move this to expr.js.
 function debugString(o, specials) {
   if (typeof o == 'object') {
     var result = '{';
