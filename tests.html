@@ -300,6 +300,9 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('{,x,.,x,},(end)', result);
         result = Y.tokenize('(=>x*)');
         assertEqual('(,=>,x,*,),(end)', result);
+        result = Y.tokenize('f "as\\"df" 2');
+        assertEqual('f,"as\\"df",2,(end)', result);
+        assertEqual('as"df', result[1].value);
       },
 
       testParse: function() {
@@ -322,10 +325,32 @@ YUI({filter: null, insertBefore: 'styles'})
         var expr = Y.parse('x + 103');
         assertEqual(103, expr.getRight().value);
         assertEqual(undefined, expr.getLeft().value);
+        // Strings
+        var expr = Y.parse('f "asdf"')
+        assertEqual('"asdf"', expr.getRight().name);
+        var expr = Y.parse('f "as\\"df"');
+        assertEqual('"as\\"df"', expr.getRight().name);
+        assertEqual(8, expr.getRight().name.length);
       },
 
 
       // Operations on Exprs.
+
+      testIsNumeral: function() {
+        var v = new Y.Var('-3');
+        assert(v.isNumeral());
+        v = new Y.Var('a1');
+        assert(!v.isNumeral());
+      },
+
+      testIsString: function() {
+        var v = new Y.Var('"asdf"');
+        assert(v.isString());
+        v = new Y.Var('a');
+        assert(!v.isString());
+        v = new Y.Var('-3');
+        assert(!v.isString());
+      },
 
       testFreeNames: function() {
         var wff = lambda(x, call(f, x));

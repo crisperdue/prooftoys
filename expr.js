@@ -487,6 +487,13 @@ Expr.prototype.isNumeral = function() {
 };
 
 /**
+ * Is this a string literal?
+ */
+Expr.prototype.isString = function() {
+  return this instanceof Var && typeof this.value == 'string';
+};
+
+/**
  * This is a constant T or F.
  */
 Expr.prototype.isBoolConst = function() {
@@ -1351,6 +1358,8 @@ function Var(name, position) {
     this.name = name;
     if (isIntegerLiteral(name)) {
       this.value = parseInt(name);
+    } else if (name.charAt(0) === '"') {
+      this.value = parseStringContent(name);
     }
   }
   if (position != null) {
@@ -2981,10 +2990,17 @@ function dereference(type) {
 
 // Tokens pattern, private to tokenize.
   var _tokens = new RegExp(['[(){}\\[\\]]',
-                          '_?[:a-zA-Z][:a-zA-Z0-9]*',
-                          '-?[0-9]+',
-                          '[^_:a-zA-Z0-9(){}\\s]+'].join('|'),
-                         'g');
+                            // Identifiers: variables and named constants
+                            '_?[:a-zA-Z][:a-zA-Z0-9]*',
+                            // Numeric constants
+                            '-?[0-9]+',
+                            // Strings
+                            '"(?:\\\\.|[^"])*"',
+                            // Other operators (constants)
+                            // TODO: Narrow this to graphic nonalphabetic
+                            //   characters.
+                            '[^_:a-zA-Z0-9(){}\\s]+'].join('|'),
+                           'g');
 
 /**
  * A token is a parenthesis or brace, or a sequence of characters
@@ -3139,13 +3155,19 @@ function nParsed() {
   return i;
 };
 
+function parseStringContent(name) {
+  var content = name.substring(1, name.length - 1);
+  return content.replace(/\\(.)/g, '$1');
+}
+
 /**
  * Is it an identifier or constant?  Currently Id or number as digits
- * with optional leading "-".
+ * with optional leading "-", or string.  As opposed to being an
+ * operator.  For precedence in parsing.
  */
 function isIdOrLiteral(token) {
-  return token instanceof Y.Var
-    && !!token.name.match(/^-?[A-Za-z0-9$]+$/);
+  return (token instanceof Y.Var &&
+          !!token.name.match(/^"|^-?[A-Za-z0-9$]+$/));
 }
 
 /**
@@ -3595,6 +3617,7 @@ Y.findType = findType;
 
 // For testing:
 Y._equalityType = equalityType;
+Y._parseStringContent = parseStringContent;
 
 Y.exprNode = exprNode;
 Y.tokenize = tokenize;
