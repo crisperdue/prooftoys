@@ -384,6 +384,14 @@ StepEditor.prototype.parseValue = function(value, type) {
     if (tokens.length) {
       throw new Error('Extra input: "', + tokens[0] + '"');
     }
+    var binOps = {'+': true, '-': true, '*': true, '/': true};
+    // TODO: Change all infix parsing so the following hack
+    //   becomes superfluous.
+    // The following is just a hack so you can type "- 3" as
+    // input to e.g. rules.applyToBoth with the usual meaning.
+    if (expr.isCall1() && expr.fn.name in binOps) {
+      expr = lambda(x, Y.infixCall(x, expr.fn, expr.arg));
+    }
     return expr;
   case 'varName':
     // Accepts names allowable for user-created variables.
