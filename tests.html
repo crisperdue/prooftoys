@@ -944,7 +944,7 @@ YUI({filter: null, insertBefore: 'styles'})
         // Add a step and immediately remove it.  See that at least
         // there are no exceptions.
         controller.addStep(step2);
-        controller.removeStep(step2.rendering);
+        controller.removeStepAndFollowing(step2.rendering);
       },
 
       testR5211: function() {

@@ -118,10 +118,23 @@ table.proofDisplay {
 
 /* The outermost element of a step */
 .proofStep {
+    clear: both;
     background-color: #F0F0DA;
     font-family: monospace;
     padding: 2px;
     margin: 1px 0px;
+}
+
+/* Step deleter control, only visible when the step is hovered. */
+.proofStep .deleteStep {
+  visibility: hidden;
+  float: right;
+  /* Floating right pushes the button down; this helps. */
+  height: 60%;
+}
+
+.proofStep.hover .deleteStep {
+  visibility: visible;
 }
 
 .proofStep .stepInfo {
@@ -132,7 +145,7 @@ table.proofDisplay {
 
 /* Highlighting of parts of proof steps */
 
-.proofStep .hover, .proofStep .dep, .proofStep.hover {
+.proofStep.hover, .proofStep .dep {
   background-color: white;
  }
 

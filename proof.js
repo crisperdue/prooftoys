@@ -148,18 +148,50 @@ ProofControl.prototype.findDependent = function(target) {
 };
 
 /**
- * Remove from the proof display the given top-level rendered proof
- * step and all other steps of the display that depend on it directly
- * or indirectly.
+ * Unconditionally remove the rendered step from this controller,
+ * deselecting it if selected.  Does not update other steps in
+ * any way.
  */
-ProofControl.prototype.removeStep = function(toRemove) {
-  var dependent;
-  while (dependent = this.findDependent(toRemove)) {
-    this.removeStep(dependent);
+ProofControl.prototype._removeStep = function(toRemove) {
+  if (this.selection == toRemove) {
+    this.deselectStep();
   }
   toRemove.stepNode.remove();
   delete toRemove.original.rendering;
   this.steps.splice(this.steps.indexOf(toRemove), 1);
+};
+
+/**
+ * Remove from the proof display the given top-level rendered proof
+ * step and all other steps of the display that depend on it directly
+ * or indirectly.
+ *
+ * TODO: Complete this by updating remaining steps appropriately
+ *   and clearing subproofs.
+ */
+ProofControl.prototype.removeStepAndDeps = function(toRemove) {
+  var dependent;
+  while (dependent = this.findDependent(toRemove)) {
+    this.removeStepAndDeps(dependent);
+  }
+  this._removeStep(toRemove);
+};
+
+/**
+ * Remove from the proof display the given top-level rendered proof
+ * step and all other steps of the display that come after it.
+ *
+ * TODO: Clear subproofs, see renderSubProof. 
+ */
+ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
+  var index = this.steps.indexOf(toRemove);
+  var steps = this.steps;
+  // Remember the current length.
+  var length = steps.length;
+  for (var i = index; i < length; i++) {
+    // Don't change the index - each iteration deletes a step.
+    this._removeStep(steps[index]);
+  }
 };
 
 /**
@@ -280,14 +312,23 @@ ProofControl.prototype.handleExprClick = function(expr) {
  */
 function renderStep(step, controller) {
   var stepsNode = controller.stepsNode;
-  var html = '<div class=proofStep><span class=stepNumber>. </span></div>';
+  var deleter = (controller.editable
+                 ? ('<input type=button class=deleteStep value="x"' +
+                    ' title="Delete step">')
+                 : '');
+  var html = ('<div class=proofStep>' +
+              deleter +
+              '<span class=stepNumber>. </span>' +
+              '<span class=wff></span>' +
+              '<span class=stepInfo></span>' +
+              '</div>');
   var stepNode = Y.Node.create(html);
   var n = step.stepNumber;
   stepNode.one('.stepNumber').setContent(n);
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
   var wffNode = step.render(true);
-  stepNode.appendChild(wffNode);
+  stepNode.one('.wff').setContent(wffNode);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
   // Set up click handlers for selections within the step.
@@ -302,22 +343,44 @@ function renderStep(step, controller) {
          controller.handleStepClick(getProofStep(event.target));
        });
 
-  var stepInfo = computeStepInfo(step);
-  stepNode.appendChild('<span class=stepInfo>' + stepInfo + '</span>');
+  stepNode.one('.stepInfo').setContent(computeStepInfo(step));
   // Set up "hover" event handling on the stepNode.
   stepNode.on('hover',
               // Call "hover", passing these arguments as well as the event.
               Y.bind(hoverStep, null, step, 'in', stepsNode),
               Y.bind(hoverStep, null, step, 'out', stepsNode));
 
+  var deleter = stepNode.one('.deleteStep');
+  if (deleter) {
+    deleter.on('mousedown', function(event) {
+        // Don't give the proof step a chance to select itself.
+        event.stopPropagation();
+      });
+    deleter.on('click', function(event) {
+        // Don't give the proof step a chance to select itself.
+        event.stopPropagation();
+        var msg = 'Delete step ' + step.stepNumber + ' and all following?';
+        // Note that step numbers start at 1.
+        var ok = (step.stepNumber >= controller.steps.length
+                  || window.confirm(msg));
+        if (ok) {
+          controller.removeStepAndFollowing(step);
+        }
+      });
+  }
+               
   // Caution: passing null to Y.on selects everything.
   var target = stepNode.one('span.ruleName');
   if (target) {
-    target.on('click', Y.rbind(function(event, step) {
-          renderSubProof(event, step, stepsNode);
+    target.on('mousedown', function(event) {
           // Don't give the proof step a chance to select itself.
           event.stopPropagation();
-        }, null, step));
+      });
+    target.on('click', function(event) {
+          // Don't give the proof step a chance to select itself.
+          event.stopPropagation();
+          renderSubProof(event, step, stepsNode);
+      });
   }
   return stepNode;
 }
