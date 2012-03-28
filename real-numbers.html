@@ -62,7 +62,7 @@ symbol <code>--></code>, though some rules of inference operate
 somewhat differently when there are hypotheses, focusing on the part
 of the formula after the turnstile symbol.
 <p>
-<div id=proofEditor></div>
+<div id=axiomList></div>
 <p>
 <b>Doing arithmetic.</b>
 The <code>axiomArithmetic</code> axiom schema evaluates basic
@@ -110,6 +110,12 @@ their definitions where they occur.  You can expand the definitions by
 selecting an expression that uses them, such as <code>(y - 2)</code> or
 <code>(x / z)</code> and request the <code>apply</code> rule.
 
+<h3>Example</h3>
+<p>
+This example solves a pair of simple simultaneous equations using the
+current Prooftoys axioms and rules of inference.
+<div id=sampleProof></div>
+
 </table>
 <script>
 // Insert boilerplate.
@@ -133,14 +139,15 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   function newProofBuilder() {
     // Create an interactive proof editor for the user.
     var controller = new Y.ProofControl();
-    Y.one('#proofEditor').append(controller.node);
     return controller;
   };
 
   Y.on('domready', function() {
       var rules = Y.rules;
-      var controller = newProofBuilder();
-      // Modus ponens
+      var axiomList = new Y.ProofControl();
+      Y.one('#axiomList').append(axiomList.node);
+      window.axiomList = axiomList;
+      // Numeric axioms:
       var a1 = rules.axiomCommutativePlus();
       var a2 = rules.axiomAssociativePlus();
       var a3 = rules.axiomCommutativeTimes();
@@ -151,8 +158,27 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       var a8 = rules.axiomTimesZero();
       var a9 = rules.axiomNeg();
       var a10 = rules.axiomReciprocal();
-      controller.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10]);
-      window.proofBuilder = controller;
+      axiomList.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10]);
+
+      var sample = new Y.ProofControl();
+      window.sampleProof = sample;
+      Y.one('#sampleProof').append(sample.node);
+      var a1 = rules.assume('x = y * 2');
+      var a2 = rules.assume('x + y = 6');
+      var a3 = rules.replace(a1, a2, '/main/left/left');
+      var a4 = rules.timesOneIntro(a3, '/main/left/right');
+      var a5 = rules.group(a4, '/main/left');
+      var a6 = rules.arithmetic(a5, '/right/left/right');
+      var a7 = rules.applyToBoth(Y.parse('{x. x / 3}'), a6);
+      var a8 = rules.arithmetic(a7, '/right/right');
+      var a9 = rules.apply(a8, '/right/left');
+      var a10 = rules.associateTimesToRight(a9, '/right/left');
+      var a11 = rules.timesRecipElim(a10, '/right/left/right');
+      var a12 = rules.timesOneElim(a11, '/right/left');
+      var a13 = rules.replace(a12, a1, '/right/right/left');
+      var a14 = rules.arithmetic(a13, '/right/right');
+      sample.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12,
+                       a13, a14]);
     });
 
   // For debugging.
