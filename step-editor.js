@@ -290,6 +290,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
     var result = rule.apply(null, args);
     this.controller.addStep(result);
     this.controller.deselectStep();
+    this.controller.saveState();
     this.reset();
     value = true;
   } catch(error) {
