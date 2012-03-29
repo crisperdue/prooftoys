@@ -3403,6 +3403,23 @@ function repeatedCall(operator, indices) {
   return expr;
 }
 
+/**
+ * Call the given function passing no arguments.  Report any errors to
+ * the user and to the console, then rethrow.
+ */
+function withErrorReporting(fn) {
+  try {
+    return fn();
+  } catch(err) {
+    var message = 'Error: ' + err.message;
+    if (window.console) {
+      window.console.log(message);
+    }
+    window.alert(message);
+    throw err;
+  }
+}
+
 // Accumulation of assertion failures and potentially information
 // about other errors that have occurred.
 var errors = [];
@@ -3424,7 +3441,9 @@ function assertTrue(condition, message, step) {
     if (typeof message == 'function') {
       message = message();
     }
-    console.log(message);
+    if (window.console) {
+      window.console.log(message);
+    }
     errors.push({message: message, step: step});
     throw new Error(message);
   }
@@ -3564,7 +3583,7 @@ function encodeSteps(steps) {
   for (var i = 0; i < steps.length; i++) {
     delete steps[i].__index;
   }
-  reps.push(')');
+  reps.push(')\n');
   return reps.join('\n');
 }
 
@@ -3767,6 +3786,7 @@ Y.isDefined = isDefined;
 Y.getStepCounter = getStepCounter;
 Y.varify = varify;
 Y.infixCall = infixCall;
+Y.withErrorReporting = withErrorReporting;
 Y.assertTrue = assertTrue;
 Y.assertEqn = assertEqn;
 Y.removeAll = removeAll;
