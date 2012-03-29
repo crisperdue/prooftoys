@@ -336,6 +336,22 @@ YUI({filter: null, insertBefore: 'styles'})
 
       // Operations on Exprs.
 
+      testNth: function() {
+        var term = Y.parse('(f x (p y))');
+        assertEqual('f', term.nth(0));
+        assertEqual('x', term.nth(1));
+        assertEqual('(p y)', term.nth(2));
+      },
+
+      testAsArray: function() {
+        var term = Y.parse('(f x (p y))');
+        var array = term.asArray();
+        assertEqual(3, array.length);
+        assertEqual('f', array[0]);
+        assertEqual('x', array[1]);
+        assertEqual('(p y)', array[2]);
+      },
+
       testIsNumeral: function() {
         var v = new Y.Var('-3');
         assert(v.isNumeral());
@@ -358,6 +374,17 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('"\\\\asdf"', ups('\\asdf'));
         assertEqual('"asdf\\""', ups('asdf"'));
         assertEqual('"asdf\\n"', ups('asdf\n'));
+      },
+
+      testProofSaver: function() {
+        var step1 = rules.assume('x = y + 3');
+        var step2 = rules.assume('x + y = 5');
+        var step3 = rules.replace(step1, step2, Y.path('/main/left/left'));
+        var step4 = rules.instVar(step3, 'y', new Y.Var('5'));
+        var saved = Y.proofSaver([step1, step2, step3, step4]);
+        Y.log(saved);
+        var xx = Y.parse(saved);
+        Y.log(xx);
       },
 
       testFreeNames: function() {

@@ -726,6 +726,12 @@ Expr.prototype.getRight = function() {
   return this.arg;
 };
 
+Expr.prototype.nth = function(n) {
+  var result = this._nth(n);
+  assert(result instanceof Expr, 'Expr length > ' + n);
+  return result;
+};
+
 /**
  * Returns the RHS of the step if it has hypotheses, otherwise the
  * expression itself.
@@ -1186,6 +1192,13 @@ Expr.prototype.mergedHypotheses = function() {
 // Does not match against pnames.
 //
 //
+// asArray()
+//
+// Converts an expression to an array with the function first,
+// followed by arguments.  If it is just a variable, returns
+// an array containing just that.
+//
+//
 // _addNames(Map result)
 //
 // Adds all names occurring in this expression to the Map, with value
@@ -1404,6 +1417,10 @@ Var.prototype.hasFree = function(name) {
   return this.name == name;
 };
 
+Var.prototype.asArray = function() {
+  return [this];
+};
+
 Var.prototype._addNames = function(map) {
   map[this.name] = true;
 };
@@ -1580,6 +1597,12 @@ Call.prototype.dup = function() {
 
 Call.prototype.hasFree = function(name) {
   return this.fn.hasFree(name) || this.arg.hasFree(name);
+};
+
+Call.prototype.asArray = function() {
+  var result = this.fn.asArray();
+  result.push(this.arg);
+  return result;
 };
 
 Call.prototype._addNames = function(map) {
@@ -1893,6 +1916,10 @@ Lambda.prototype.hasFree = function(name) {
   return this.bound.name != name && this.body.hasFree(name);
 };
 
+Lambda.prototype.asArray = function() {
+  return [this];
+};
+
 Lambda.prototype._addNames = function(map) {
   map[this.bound.name] = true;
   this.body._addNames(map);
@@ -2027,6 +2054,29 @@ Lambda.prototype._asPattern = function(term) {
 };
 
 // Private methods grouped by name.
+
+/**
+ * Returns the term found inside here, or if not found, the first
+ * index not seen.
+ */
+Var.prototype._nth = function(n) {
+  return n == 0 ? this : 1;
+};
+
+Call.prototype._nth = function(n) {
+  var here = this.fn._nth(n);
+  if (here instanceof Expr) {
+    return here;
+  } else if (n == here) {
+    return this.arg;
+  } else {
+    return here + 1;
+  }
+};
+
+Lambda.prototype._nth = function(n) {
+  assert(false, 'Nth not relevant in lambdas');
+};
 
 // Traverse this, replacing occurrences of target with replacement.
 // (As used they are duplicates anyway.)
@@ -3462,6 +3512,57 @@ function debugString(o, specials) {
   }
 }
 
+/**
+ * Compute and return a string representing the given proof steps.
+ * Treating expressions with "multiple arguments" as lists, the format
+ * is a list of proof steps, each represented as a list having first,
+ * the step's number, then the rule name followed by all of the arguments.
+ *
+ * Each rule argument is represented as a list or string.  If a list, the
+ * first element is "t" for a term (followed by the term itself),
+ * "path" for a path (followed by the path as a string), or "s" for
+ * a reference to another step (followed by the number of the referenced
+ * step).
+ */
+function proofSaver(steps) {
+  function rep(step) {
+    var index = step.__index;
+    var result = [];
+    result.push(index);
+    result.push(step.ruleName);
+    var args = step.ruleArgs;
+    for (var i = 0; i < args.length; i++) {
+      var arg = args[i];
+      if (arg instanceof Y.Path) {
+        result.push('(path "' + arg + '")');
+      } else if (typeof arg === 'string') {
+        result.push(unparseString(arg));
+      } else if (arg instanceof Y.Expr) {
+        if (arg.__index) {
+          result.push('(s ' + arg.__index + ')');
+        } else {
+          result.push('(t ' + arg + ')');
+        }
+      } else {
+        result.push(arg.toString());
+      }
+    }
+    return '(' + result.join(' ') + ')';
+  }
+
+  var reps = ['('];
+  for (var i = 0; i < steps.length; i++) {
+    var step = steps[i];
+    step.__index = i + 1;
+    reps.push(rep(step));
+  }
+  for (var i = 0; i < steps.length; i++) {
+    delete steps[i].__index;
+  }
+  reps.push(')');
+  return reps.join('\n');
+}
+
 
 //// Convenience utilities
 
@@ -3612,6 +3713,7 @@ Y.assertEqn = assertEqn;
 Y.removeAll = removeAll;
 Y.removeExcept = removeExcept;
 
+Y.proofSaver = proofSaver;
 Y.debugString = debugString;
 
 // Error analysis
