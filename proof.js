@@ -43,6 +43,10 @@ function ProofControl() {
   // Single selected step when exactly one is selected, or null.
   this.selection = null;
 
+  // ID of element to use for saving/restoring proof state,
+  // settable, normally as part of initial setup of the control.
+  this.textAreaId = 'proofState';
+
   // Only official "proof nodes" are permitted to have class proofDisplay.
   html =
     '<table class=proofDisplay><tr><td><div class=proofSteps></div></table>';
@@ -68,7 +72,7 @@ function ProofControl() {
  * rendered copies become the value of the steps property of the
  * ProofControl.
  */
-ProofControl.prototype.setSteps = function(steps) {
+ProofControl.prototype.setSteps = function(steps, record) {
   // Clear rendering properties of current steps, as they will be
   // deleted.
   var stepsNode = this.stepsNode;
@@ -82,6 +86,9 @@ ProofControl.prototype.setSteps = function(steps) {
     this.addStep(steps[i]);
   }
   this._renumber();
+  if (arguments < 2 || record) {
+    this.recordSteps();
+  }
 };
 
 /**
@@ -207,6 +214,45 @@ ProofControl.prototype.setEditable = function(state) {
     node.hide();
   }
 }
+
+
+// SAVING AND RESTORING STATE
+
+/**
+ * In case there is a textarea with the proof control's configured ID
+ * on the page, save the proof state to it.
+ */
+ProofControl.prototype.saveState = function() {
+  var node = Y.one('textarea#' + this.textAreaId);
+  if (!node) {
+    return;
+  }
+  node.set('value', Y.encodeSteps(this.steps));
+};
+
+/**
+ * In case there is a textarea with the proof control's configured ID
+ * on the page, restore the proof state from it.
+ */
+ProofControl.prototype.restoreState = function() {
+  var node = Y.one('textarea#' + this.textAreaId);
+  if (!node) {
+    return;
+  }
+  var steps;
+  try {
+    var value = node.get('value');
+    assert(value, 'No proof state recorded');
+    steps = Y.decodeSteps(value);
+  } catch(err) {
+    window.alert('Failed to parse proof state: ' + err.message);
+    throw err;
+  }
+  this.setSteps(steps);
+};
+
+
+// STEP SELECTION
 
 /**
  * Unconditionally select the step, no other action.
@@ -365,6 +411,7 @@ function renderStep(step, controller) {
                   || window.confirm(msg));
         if (ok) {
           controller.removeStepAndFollowing(step);
+          controller.saveState();
         }
       });
   }
