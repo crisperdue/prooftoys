@@ -728,7 +728,9 @@ Expr.prototype.getRight = function() {
 
 Expr.prototype.nth = function(n) {
   var result = this._nth(n);
-  assert(result instanceof Expr, 'Expr length > ' + n);
+  assert(result instanceof Expr, function() {
+      return 'Expr ' + result + ' has no position ' + n;
+    });
   return result;
 };
 
@@ -3232,6 +3234,7 @@ function unparseString(content) {
 function isIdOrLiteral(token) {
   return (token instanceof Y.Var &&
           !!token.name.match(/^"|^-?[A-Za-z0-9$]+$/));
+  // ") - for Emacs.
 }
 
 /**
@@ -3515,16 +3518,17 @@ function debugString(o, specials) {
 /**
  * Compute and return a string representing the given proof steps.
  * Treating expressions with "multiple arguments" as lists, the format
- * is a list of proof steps, each represented as a list having first,
- * the step's number, then the rule name followed by all of the arguments.
+ * is an expression starting with "steps", followed list of proof
+ * steps, each represented as a list having first, the step's index,
+ * then the rule name followed by all of the arguments.
  *
- * Each rule argument is represented as a list or string.  If a list, the
- * first element is "t" for a term (followed by the term itself),
- * "path" for a path (followed by the path as a string), or "s" for
- * a reference to another step (followed by the number of the referenced
+ * Each rule argument is represented as a list or string.  If a list,
+ * the first element is "t" for a term (followed by the term itself),
+ * "path" for a path (followed by the path as a string), or "s" for a
+ * reference to another step (followed by the index of the referenced
  * step).
  */
-function proofSaver(steps) {
+function encodeSteps(steps) {
   function rep(step) {
     var index = step.__index;
     var result = [];
@@ -3550,9 +3554,10 @@ function proofSaver(steps) {
     return '(' + result.join(' ') + ')';
   }
 
-  var reps = ['('];
+  var reps = ['(steps'];
   for (var i = 0; i < steps.length; i++) {
     var step = steps[i];
+    // Indexes are 1-based.
     step.__index = i + 1;
     reps.push(rep(step));
   }
@@ -3563,6 +3568,60 @@ function proofSaver(steps) {
   return reps.join('\n');
 }
 
+/**
+ * From the given input expression or string to be parsed,
+ * computes and returns an array of steps.
+ */
+function decodeSteps(input) {
+  input = typeof input == 'string' ? parse(input) : input;
+  var descriptions = input.asArray();
+  var outSteps = [];
+  Y.each(descriptions, function(stepTerm, i) {
+      if (i == 0) {
+        // Like a "continue" ...
+        return;
+      }
+      var stepInfo = stepTerm.asArray();
+      assert(stepInfo.shift().value == i, function() {
+          return 'Mismatched step number in: ' + stepInfo;
+        });
+      var ruleName = stepInfo.shift();
+      // The remainder of the array is arguments to the rule.
+      var args = [];
+      Y.each(stepInfo, function(info) {
+          args.push(decodeArg(info, outSteps));
+        });
+      outSteps.push(Y.rules[ruleName].apply(Y.rules, args));
+    });
+  return outSteps;
+}
+
+/**
+ * Decodes an array of argument info expressions into a new array of
+ * arguments for a rule.  See the description of encodeSteps above.
+ */
+function decodeArg(info, steps) {
+  if (info.isString()) {
+    return (info.value);
+  } else {
+    var key = info.nth(0).name;
+    var value = info.nth(1);
+    switch(key) {
+      case 's':
+        // Step indexes are 1-based.
+        return (steps[value.value - 1]);
+        break;
+      case 't':
+        return (value);
+        break;
+      case 'path':
+        return (Y.path(value.value));
+        break;
+      default:
+        assert(false, 'Unknown encoding key: ' + key);
+      }
+  }
+}
 
 //// Convenience utilities
 
@@ -3713,7 +3772,8 @@ Y.assertEqn = assertEqn;
 Y.removeAll = removeAll;
 Y.removeExcept = removeExcept;
 
-Y.proofSaver = proofSaver;
+Y.encodeSteps = encodeSteps;
+Y.decodeSteps = decodeSteps;
 Y.debugString = debugString;
 
 // Error analysis
@@ -3734,6 +3794,7 @@ Y.findType = findType;
 Y._equalityType = equalityType;
 Y._parseStringContent = parseStringContent;
 Y._unparseString = unparseString;
+Y._decodeArg = decodeArg;
 
 Y.exprNode = exprNode;
 Y.tokenize = tokenize;

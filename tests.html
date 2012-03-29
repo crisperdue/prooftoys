@@ -341,6 +341,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('f', term.nth(0));
         assertEqual('x', term.nth(1));
         assertEqual('(p y)', term.nth(2));
+        assertEqual('x', x.nth(0));
       },
 
       testAsArray: function() {
@@ -376,15 +377,42 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('"asdf\\n"', ups('asdf\n'));
       },
 
-      testProofSaver: function() {
+      testEncodeSteps: function() {
         var step1 = rules.assume('x = y + 3');
         var step2 = rules.assume('x + y = 5');
         var step3 = rules.replace(step1, step2, Y.path('/main/left/left'));
         var step4 = rules.instVar(step3, 'y', new Y.Var('5'));
-        var saved = Y.proofSaver([step1, step2, step3, step4]);
-        Y.log(saved);
-        var xx = Y.parse(saved);
-        Y.log(xx);
+        var saved = Y.encodeSteps([step1, step2, step3, step4]);
+        var parsed = Y.parse(saved);
+        var a = parsed.asArray();
+        assertEqual(5, a.length);
+        assertEqual('steps', a[0]);
+        // Note that testDecodeSteps effectively tests more of this.
+      },
+
+      testDecodeArg: function() {
+        function check(expected, input) {
+          input = typeof input == 'string' ? Y.parse(input) : input;
+          var actual = Y._decodeArg(input, steps);
+          assertEqual(expected, actual);
+        }
+        var steps = [Y.rules.assert('x = y + 1')];
+        check('foo', '"foo"');
+        check('/arg', '(path "/right")');
+        check('(x = (y + 1))', '(s 1)');
+        check('(p (f x))', '(t (p (f x)))');
+      },
+
+      testDecodeSteps: function() {
+        var step1 = rules.assume('x = y + 3');
+        var step2 = rules.assume('x + y = 5');
+        var step3 = rules.replace(step1, step2, Y.path('/main/left/left'));
+        var step4 = rules.instVar(step3, 'y', new Y.Var('5'));
+        var saved = Y.encodeSteps([step1, step2, step3, step4]);
+        var steps = Y.decodeSteps(saved);
+        Y.log(steps);
+        assertEqual(4, steps.length);
+        assertEqual('(((y + 3) + y) = y)', steps[3].getRight());
       },
 
       testFreeNames: function() {
