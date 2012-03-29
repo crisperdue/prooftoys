@@ -3535,11 +3535,12 @@ function debugString(o, specials) {
 }
 
 /**
- * Compute and return a string representing the given proof steps.
- * Treating expressions with "multiple arguments" as lists, the format
- * is an expression starting with "steps", followed list of proof
- * steps, each represented as a list having first, the step's index,
- * then the rule name followed by all of the arguments.
+ * Compute and return a string representing the given proof steps,
+ * which may be either rendered or originals.  Treating expressions
+ * with "multiple arguments" as lists, the format is an expression
+ * starting with "steps", followed list of proof steps, each
+ * represented as a list having first, the step's index, then the rule
+ * name followed by all of the arguments.
  *
  * Each rule argument is represented as a list or string.  If a list,
  * the first element is "t" for a term (followed by the term itself),
@@ -3547,7 +3548,7 @@ function debugString(o, specials) {
  * reference to another step (followed by the index of the referenced
  * step).
  */
-function encodeSteps(steps) {
+function encodeSteps(steps_arg) {
   function rep(step) {
     var index = step.__index;
     var result = [];
@@ -3573,6 +3574,11 @@ function encodeSteps(steps) {
     return '(' + result.join(' ') + ')';
   }
 
+  // Use the original steps throughout, so the ruleArgs refer
+  // to the actual steps.
+  var steps = Y.Array.map(steps_arg, function(step) {
+      return step.original || step;
+    });
   var reps = ['(steps'];
   for (var i = 0; i < steps.length; i++) {
     var step = steps[i];
