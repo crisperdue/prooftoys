@@ -81,7 +81,7 @@ deselect it, to enter an axiom or theorem.
 
 <h3>Building a proof using modus ponens</h3>
 <p>
-Let's consider a very simple example applying modus ponens to a pair of
+Let us consider a very simple example applying modus ponens to a pair of
 assumptions.  Here is a display of the proof you are going to build.
 <p>
 <div id=modusPonens></div>
@@ -111,15 +111,34 @@ causes the hypotheses to be displayed explicitly as preconditions.
 Going beyond what is displayed in the sample, you could choose the
 rule "addForall" to add universal quantifiers to the formula.  You can
 do this twice to quantify over both <code>p</code> and <code>q</code>.
+<p style="margin: 0em">
+<b>Proof editor</b>
 <p>
-<i>Enter your new proof here:</i>
+You can
+<input type=button value="Save or restore from text ..."
+ onclick="Y.one('#proofStateDisplay').toggleClass('hidden')"><br>
+To start over and work on a new proof, press
+<input id=clearProof type=button value="Clear">
 
 <div id=proofEditor></div>
 
-<p style="margin-bottom: 30em">
-If you wish to start over and work on a new proof, press
-<input type=button value="Clear"
- onclick="Y.newProofBuilder()">
+<div id=proofStateDisplay class=hidden
+ style="padding: 1em; border: 2px solid #aaf">
+<p style="margin: 0em">
+<b>Proof state</b>
+<p>
+The text area below contains the current state of the proof in textual
+form.  You can save the state of your work by copying this text into a
+document of your choice.  To restore the state at some time in the
+future, paste it back then press "Restore proof".
+<p>     
+<input id=loadProofState type=button value="Restore proof">
+<input id=hideProofState type=button value="Close"><br>
+<textarea id=proofState rows=20
+ style="width: 95%; margin: 1em 0em"></textarea>
+</div>
+<p style="margin-bottom: 25em">
+&nbsp;
 
 </table>
 
@@ -130,45 +149,72 @@ Toy.insertSlogans();
 
 // Remove "filter" to load minified JavaScript.
 YUI({filter: 'raw', insertBefore: 'styles'})
-   .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
+  .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
         'proof', 'collection', 'querystring-parse', 'json',
         // querystring-parse requires "collection" (?!)
    function(Y) {
 
-  // Set up some useful constants and functions.
+  // For debugging (and inline event handlers).
+  window.Y = Y;
 
+  // Set up some useful constants and functions.
   Y.Expr.utils.import();
 
   // Query string data.
   var queryData;
 
-  Y.newProofBuilder = function() {
-    Y.one('#proofEditor').setContent('');
-    // Create an interactive proof editor for the user.
-    var controller = new Y.ProofControl();
-    controller.setEditable(true);
-    Y.one('#proofEditor').append(controller.node);
-    // For debugging:
-    window.proofBuilder = controller;
-  };
+  // Proof editor node
+  var proofEditorNode = Y.one('#proofEditor');
+  proofEditorNode.setContent('');
 
-  Y.on('domready', function() {
-      var rules = Y.rules;
-      // Modus ponens
-      var mp1 = rules.assume('p');
-      var mp2 = rules.assume('p --> q');
-      var mp3 = rules.modusPonens(mp1, mp2);
-      var mp4 = rules.asImplication(mp3);
-      Y.renderProof(mp4, Y.one('#modusPonens'));
-      // And a fresh proof builder.
-      Y.newProofBuilder();
+  // The page ProofControl.
+  var proofControl = new Y.ProofControl();
+  proofControl.setEditable(true);
+  proofEditorNode.append(proofControl.node);
+  // For debugging:
+  window.proofBuilder = proofControl;
+  
+  Y.one('#clearProof').on('click', function() {
+      proofControl.setSteps([]);
     });
 
-  // For debugging.
-  window.Y = Y;
-  window.db = Y.debugString;
-});
+  // Proof display DIV
+  //
+  // TODO: All of this UI for managing the textual proof
+  //   state should become part of editable ProofControls.
+  var proofStateDiv = Y.one('#proofStateDisplay');
 
+  // Text area
+  var proofStateText = Y.one('#proofState');
+  // Handler for loading proof state from the text area:
+  function loadProofState() {
+    Y.withErrorReporting(function() {
+        var text = proofStateText.get('value');
+        if (text.length > 3) {
+          // If the text is empty, don't bother.  This is important on
+          // page (re)load, below.
+          var steps = Y.decodeSteps(text);
+          proofControl.setSteps(steps, false);
+        }
+      });
+  }
+  Y.one('#loadProofState').on('click', loadProofState);
+  // Closing the display:
+  Y.one('#hideProofState').on('click', function() {
+      proofStateDiv.addClass('hidden');
+    });
+
+  var rules = Y.rules;
+  // Modus ponens
+  var mp1 = rules.assume('p');
+  var mp2 = rules.assume('p --> q');
+  var mp3 = rules.modusPonens(mp1, mp2);
+  var mp4 = rules.asImplication(mp3);
+  Y.renderProof(mp4, Y.one('#modusPonens'));
+
+  // Restore any textual proof state:
+  loadProofState();
+});
 
 </script>
 </body>
