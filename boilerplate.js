@@ -1,5 +1,16 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
+// TODO: deploy with yui-min.js rather than yui.js
+var yuiPath =
+  ('<script src="http://yui.yahooapis.com/3.4.1/build/yui/yui.js">' +
+   '</script>\n');
+// For debugging add explicit reference to source file(s) here
+document.write(yuiPath);
+document.write('<script src="expr.js"></script>\n');
+document.write('<script src="step-editor.js"></script>\n');
+document.write('<script src="proof.js"></script>\n');
+document.write('<script src="theorems.js"></script>\n');
+
 var Toy = Toy || {};
 
 // Boilerplate text for the left navigation area.
