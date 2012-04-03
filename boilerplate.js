@@ -1,9 +1,12 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
+var Y_site = 'http://yui.yahooapis.com/';
+// You can override the "site path" something like this:
+// var Y_site = 'http://localhost/~cris/yui/';
+
 // TODO: deploy with yui-min.js rather than yui.js
 var yuiPath =
-  ('<script src="http://yui.yahooapis.com/3.4.1/build/yui/yui.js">' +
-   '</script>\n');
+  ('<script src="' + Y_site + '3.4.1/build/yui/yui.js"></script>\n');
 // For debugging add explicit reference to source file(s) here
 document.write(yuiPath);
 document.write('<script src="expr.js"></script>\n');
@@ -51,7 +54,8 @@ Toy.insertSlogans = function() {
 };
 
 
-// Google analytics
+// Google analytics; the account is specific to Prooftoys.org.
+// TODO: Consider running this code only when the site is prooftoys.org.
 
 var _gaq = _gaq || [];
 _gaq.push(['_setAccount', 'UA-28801147-2']);
