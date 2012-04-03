@@ -3819,7 +3819,7 @@ Y.findType = findType;
 // For testing:
 Y._equalityType = equalityType;
 Y._parseStringContent = parseStringContent;
-Y._unparseString = unparseString;
+Y.unparseString = unparseString;
 Y._decodeArg = decodeArg;
 
 Y.exprNode = exprNode;
