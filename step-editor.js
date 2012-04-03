@@ -45,6 +45,25 @@ YUI.add('step-editor', function(Y) {
 // bindingSite: Matches a variable binding in a step (as in "changeVar").
 //
 
+/**
+ * Applies the action to each integer index and "form type" of each of
+ * the arguments described by a rules "inputs" descriptor.  Indexes
+ * passed to the action are zero-based, not 1-based as in the
+ * descriptors.  Currently does not include indexes of paths not
+ * explicitly described.
+ */
+function eachArgType(ruleName, action) {
+  var inputs = Y.rules[ruleName].info.inputs;
+  Y.each(inputs, function(where, type) {
+    if (typeof where == 'number') {
+      action(where - 1, type);
+    } else {
+      Y.each(where, function(position) {
+        action(position - 1, type);
+      });
+    }
+  });
+}
 
 // All types that can be entered in a form.  Omits site, bindingSite,
 // and reducible, which are currently not supported in forms.
@@ -556,6 +575,7 @@ function resultFormatter(query, results) {
 Y.profileName = '';
 
 Y.StepEditor = StepEditor;
+Y.eachArgType = eachArgType;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',
                       'autocomplete-filters', 'autocomplete-highlighters']});
