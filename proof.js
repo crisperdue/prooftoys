@@ -510,10 +510,10 @@ function computeStepInfo(step) {
   var stepInfo;
   if (step.ruleName == 'definition') {
     stepInfo = 'definition of ';
-    if (step.ruleArgs.length == 2) {
-      stepInfo += step.ruleArgs[1] + ' ';
-    }
     stepInfo += step.ruleArgs[0];
+    if (step.ruleArgs.length == 2) {
+      stepInfo += ' ' + step.ruleArgs[1];
+    }
   } else {
     if (step.details) {
       // It is a (derived) rule of inference.

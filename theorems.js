@@ -160,7 +160,8 @@ var ruleInfo = {
     action: function(name, tOrF) {
       // The derivations are computed in advance, and have the name or
       // name and true/false as the argument(s).
-      return Y.getDefinition(name, tOrF).justify('definition', [name, tOrF]);
+      var args = arguments.length == 1 ? [name] : [name, tOrF];
+      return Y.getDefinition(name, tOrF).justify('definition', args);
     },
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
@@ -899,7 +900,7 @@ var ruleInfo = {
       var step9 = rules.instForall(step8, v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
-    inputs: {equation: [1, 2], name: 3},
+    inputs: {equation: [1, 2], varName: 3},
     form: ('Cases: true case step <input name=equation1>'
 	   + ' false case step <input name=equation2>,'
 	   + ' use variable <input name=varName>'),
