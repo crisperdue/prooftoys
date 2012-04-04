@@ -48,11 +48,13 @@ function ProofControl() {
   this.textAreaId = 'proofState';
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
-  html =
-    '<table class=proofDisplay><tr><td><div class=proofSteps></div></table>';
+  html = ('<table class=proofDisplay><tr><td>' +
+          '<div class=stepsParent><div class=proofSteps></div></div>' +
+          '</table>');
   this.node = Y.Node.create(html);
   // Potentially useful for debugging.
   this.node.setData('proofControl', this);
+  this.stepsParent = this.node.one('.stepsParent');
   this.stepsNode = this.node.one('.proofSteps');
   this.stepEditor = new Y.StepEditor(this);
   this.node.one('td').append(this.stepEditor.node);
@@ -60,6 +62,16 @@ function ProofControl() {
   var html = ('<input class=addStep type=button value="+" '
               + 'title="Add a step to the proof">');
   this.setEditable(false);
+
+  // Create an overlay to display step details when hovered.
+  this.hoverOverlay = new Y.Overlay({
+      width: '80%',
+      bodyContent: 'Sample overlay content',
+      zIndex:2
+  });
+  this.hoverOverlay.render(this.stepsParent);
+  this.hoverOverlay.hide();
+
   // Set up handling of mouseover and mouseout events.
   Y.on('mouseover', exprHandleOver, this.node);
   Y.on('mouseout', exprHandleOut, this.node);
@@ -132,6 +144,8 @@ ProofControl.prototype.addStep = function(step) {
   var copy = step.copyStep();
   step.rendering = copy;
   copy.original = step;
+  // ??
+  copy.controller = this;
   this.steps.push(copy);
   copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length;
   var stepNode = renderStep(copy, this);
@@ -519,7 +533,15 @@ function computeStepInfo(step) {
       stepInfo += ' <span class=stepReference></span>';
     });
 
-    // TODO: Consider showing some of the arguments.
+    var exclusions = ['assume', 'assert', 'axiom4', 'eqSelf', 'applier',
+                      'mergeConjunctions'];
+    if (exclusions.indexOf(step.ruleName) < 0) {
+      var argDetails = computeExtraArgInfo(step);
+      // TODO: Consider showing some of the arguments.
+      if (argDetails) {
+        stepInfo += ('<span class=argDetails> with ' + argDetails + '</span');
+      }
+    }
   }
   return stepInfo;
 }
@@ -618,6 +640,41 @@ function computeArgInfo(step) {
 }
 
 /**
+ * Computes HTML for arguments that are not steps or paths.  Returns a
+ * comma-separated string, with each argument enclosed in <code></code>.
+ * To enable more specific styling enclose the result in an element
+ * with a suitable class.
+ */
+function computeExtraArgInfo(step) {
+  var args = step.ruleArgs;
+  var info = [];
+  counter = 0;
+  Y.eachArgType(step.ruleName, function(index, type) {
+      var text;
+      switch(type) {
+      case 'term':
+      case 'varName':
+        text = args[index].toString();
+        break;
+      case 'string':
+        text = Y.unparseString(args[index - 1]);
+        break;
+      default:
+        // End the iteration.
+        return;
+      }
+      info.push('<code>' + text + '</code>');
+    });
+  Y.each(step.ruleArgs, function(arg) {
+      if (arg.constructor.prototype == Object.prototype) {
+        // It is a plain object, show as a map.
+        info.push('<code>' + Y.debugString(arg) + '</code>');
+      }
+    });
+  return info.join(', ');
+}
+
+/**
  * Computes the lowest real ordinal of a set of steps.
  * TODO: Eliminate this when there are no more artificial ordinals
  * due to creating assertions after the fact.
@@ -670,6 +727,16 @@ function getProofStep(node) {
 function getStepsNode(node) {
   return node.ancestor('.proofSteps', true);
 }
+
+/**
+ * Gets the ProofControl of a node or rendered term or step.
+ */
+function getProofControl(expr) {
+  var node = expr instanceof Y.Expr ? expr.node : expr;
+  var ancestor = node.ancestor('.proofDisplay');
+  return ancestor.getData('proofControl');
+}
+
 
 /**
  * Returns the expression associated with a YUI node.
@@ -753,11 +820,25 @@ function removeClass(node, className) {
  * proofNode is the DOM node of the proof.
  */
 function hoverStep(step, direction, proofNode, event) {
+  var align = Y.WidgetPositionAlign;
   var action = direction == 'in' ? addClass : removeClass;
   // Always add or remove the "hover" class to the step node
   // as the mouse goes in or out.
-  action(getStepNode(step.node), 'hover');
+  var stepNode = getStepNode(step.node);
+  action(stepNode, 'hover');
   
+  var overlay = getProofControl(step).hoverOverlay;
+  if (Y.useHoverOverlays) {
+    if (direction == 'in') {
+      overlay.set('align', {
+          node: stepNode, points: [align.TR, align.BR]});
+      overlay.set('bodyContent', computeExtraArgInfo(step));
+      overlay.show();
+    } else {
+      overlay.hide();
+    }
+  }
+
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
   proofNode.all('span.stepReference').each(function(node) {
@@ -923,6 +1004,10 @@ function addBottomPanel(node) {
 }
 
 //// Export public names.
+
+// Global configuration variable for displaying extra information per
+// step when hovered.
+Y.useHoverOverlays = false;
 
 Y.ProofControl = ProofControl;
 Y.showOrdinals = false;

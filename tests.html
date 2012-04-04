@@ -365,7 +365,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testUnparseString: function() {
-        var ups = Y._unparseString;
+        var ups = Y.unparseString;
         assertEqual('"asdf"', ups('asdf'));
         assertEqual('"\\\\asdf"', ups('\\asdf'));
         assertEqual('"asdf\\""', ups('asdf"'));
@@ -855,6 +855,20 @@ YUI({filter: null, insertBefore: 'styles'})
           Y.rules.r(step2, step1, '/right');
           Y.Assert.fail('Rule R should prohibit this step');
         } catch(e) {}
+      },
+
+
+      // RULE DESCRIPTIONS
+
+      testEachArgType: function() {
+        var each = Y.eachArgType;
+        info = [];
+        each('implyForallThm', function(index, type) {
+            info[index] = type;
+          });
+        assertEqual(info[0], 'varName');
+        assertEqual(info[1], 'term');
+        assertEqual(info[2], 'term');
       },
 
 

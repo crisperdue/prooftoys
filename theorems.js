@@ -3069,7 +3069,7 @@ var rules = {};
  * The "rules" object maps from rule name to function.  Each function
  * has an "info" property containing all the properties present in the
  * ruleInfo object entry for the name.  If not supplied in the rule
- * definition, the info.input is defaulted to an empty object here.
+ * definition, the info.inputs is defaulted to an empty object here.
  * The file theorems.js has a main ruleInfo object.  See there for
  * descriptions of used properties.
  */
