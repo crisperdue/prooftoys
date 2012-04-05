@@ -701,10 +701,11 @@ function computeFirstOrdinal(steps) {
 // object, all using the API below.
 
 /**
- * Gets the DOM node associated with the step, given the YUI
- * node for all or part of the expression for the step.
+ * Gets the DOM node associated with the step, given a rendered Expr
+ * within the step or the YUI node within it.
  */
-function getStepNode(node) {
+function getStepNode(expr) {
+  var node = expr instanceof Y.Expr ? expr.node : expr;
   return node.ancestor('.proofStep', true);
 }
 
@@ -714,9 +715,6 @@ function getStepNode(node) {
  * a rendered proof.
  */
 function getProofStep(node) {
-  if (node instanceof Y.Expr) {
-    node = node.node;
-  }
   return getStepNode(node).getData('proofStep');
 }
 
@@ -851,15 +849,14 @@ function hoverStep(step, direction, proofNode, event) {
       }
     });
   var handler = hoverHandlers[step.ruleName];
+  // If no handler apply or remove default highlighting.
+  Y.each(step.ruleDeps, function(dep) {
+      action(getStepNode(dep.rendering), 'dep');
+    });
   if (handler) {
     // If there is a hover handler for this type of inference, apply it.
     handler(step, action);
     // TODO: Let the default "dep" management below apply in all cases.
-  } else {
-    // If no handler apply or remove default highlighting.
-    Y.each(step.ruleDeps, function(dep) {
-      action(dep.rendering.node, 'dep');
-    });
   }
 }
 
@@ -871,7 +868,6 @@ function hoverReplace(step, action) {
    var eqn = args[0].rendering.unHyp();
    var target = args[1].rendering;
    var path = args[2];
-   action(target.node, 'dep');
    action(target.locate(path).node, 'old');
    action(step.locate(path).node, 'new');
    action(eqn.getLeft().node, 'old');
@@ -888,7 +884,6 @@ var hoverHandlers = {
     var eqn = args[0].rendering;
     var target = args[1].rendering;
     var path = args[2];
-    action(target.node, 'dep');
     action(target.locate(path).node, 'old');
     action(step.locate(path).node, 'new');
     action(eqn.getRight().node, 'old');
@@ -915,7 +910,6 @@ var hoverHandlers = {
     if (call.fn instanceof Y.Lambda) {
       var target = call.fn.body;
       var varName = call.fn.bound.name;
-      action(dep.node, 'dep');
       action(call.arg.node, 'new');
       action(target.node, 'scope');
       action(result.node, 'scope');
@@ -924,7 +918,7 @@ var hoverHandlers = {
                      result,
                      function(expr) { action(expr.node, 'new'); });
     } else {
-      action(call.node, 'dep');
+      action(call.node, 'occur');
       action(result.node, 'scope');
     }
   },
@@ -1016,7 +1010,7 @@ Y.showOrdinals = false;
 Y.renderInference = renderInference;
 Y.renderProof = renderProof;
 Y.addBottomPanel = addBottomPanel;
-Y.getStepsNode = getStepsNode;
+Y.getStepNode = getStepNode;
 Y.getProofStep = getProofStep;
 Y.getStepsNode = getStepsNode;
 Y.getExpr = getExpr;

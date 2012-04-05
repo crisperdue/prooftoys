@@ -169,7 +169,7 @@ table.proofDisplay {
 
 /* Highlighting of parts of proof steps */
 
-.proofStep.hover, .proofStep .dep {
+.proofStep.hover, .proofStep.dep .stepNumber {
   background-color: white;
  }
 
