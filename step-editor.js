@@ -128,7 +128,7 @@ function StepEditor(controller) {
   // Selection of anything offered goes through the "selection" path.
   inputField.on('keyup', function(event) {
     if (event.keyCode == 13) {
-      var name = inputField.get('value');
+      var name = inputField.get('value').replace(/^xiom/, 'axiom');
       if (!(Y.rules.hasOwnProperty(name))) {
 	self.error('No rule ' + name);
       }
