@@ -854,6 +854,7 @@ function hoverStep(step, direction, proofNode, event) {
   if (handler) {
     // If there is a hover handler for this type of inference, apply it.
     handler(step, action);
+    // TODO: Let the default "dep" management below apply in all cases.
   } else {
     // If no handler apply or remove default highlighting.
     Y.each(step.ruleDeps, function(dep) {
@@ -867,10 +868,10 @@ function hoverStep(step, direction, proofNode, event) {
  */
 function hoverReplace(step, action) {
    var args = step.original.ruleArgs;
-   var eqn = args[0].rendering;
+   var eqn = args[0].rendering.unHyp();
    var target = args[1].rendering;
    var path = args[2];
-   action(target.node, 'hover');
+   action(target.node, 'dep');
    action(target.locate(path).node, 'old');
    action(step.locate(path).node, 'new');
    action(eqn.getLeft().node, 'old');
@@ -887,7 +888,7 @@ var hoverHandlers = {
     var eqn = args[0].rendering;
     var target = args[1].rendering;
     var path = args[2];
-    action(target.node, 'hover');
+    action(target.node, 'dep');
     action(target.locate(path).node, 'old');
     action(step.locate(path).node, 'new');
     action(eqn.getRight().node, 'old');
@@ -914,7 +915,7 @@ var hoverHandlers = {
     if (call.fn instanceof Y.Lambda) {
       var target = call.fn.body;
       var varName = call.fn.bound.name;
-      action(dep.node, 'hover');
+      action(dep.node, 'dep');
       action(call.arg.node, 'new');
       action(target.node, 'scope');
       action(result.node, 'scope');
@@ -931,21 +932,21 @@ var hoverHandlers = {
     var args = step.original.ruleArgs;
     var target = args[0].rendering;
     var path = args[1];
-    action(target.node, 'hover');
+    action(target.node, 'dep');
     action(target.locate(path).node, 'old');
     action(step.locate(path).node, 'new');
   },
   instEqn: function(step, action) {
     var args = step.original.ruleArgs;
-    // Input expression.
-    var input = args[0].rendering;
+    // Input equation.
+    var eqn = args[0].rendering;
     // Name of variable being instantiated.
     var varName = args[2].ruleName;
-    action(input.node, 'hover');
-    input.findAll(varName,
-                  function(_var) { action(_var.node, 'occur'); },
-                  step,
-                  function(expr) { action(expr.node, 'new'); });
+    action(eqn.node, 'dep');
+    eqn.findAll(varName,
+                function(_var) { action(_var.node, 'occur'); },
+                step,
+                function(expr) { action(expr.node, 'new'); });
   },
   instVar: function(step, action) {
     var args = step.original.ruleArgs;
@@ -953,7 +954,7 @@ var hoverHandlers = {
     var input = args[0].rendering;
     // Name of variable being instantiated.
     var varName = args[2].name || args[2];
-    action(input.node, 'hover');
+    action(input.node, 'dep');
     input.findAll(varName,
                   function(_var) { action(_var.node, 'occur'); },
                   step,
@@ -962,15 +963,16 @@ var hoverHandlers = {
   // TODO: instMultiVars
   instForall: function(step, action) {
     var args = step.original.ruleArgs;
-    // Input expression, a top-level call to "forall".
-    var input = args[0].rendering.unHyp();
+    // Input step, a top-level call to "forall".
+    var input = args[0].rendering;
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
-    action(input.node, 'hover');
-    input.arg.body.findAll(varName,
-                           function(_var) { action(_var.node, 'occur'); },
-                           step,
-                           function(expr) { action(expr.node, 'new'); });
+    action(input.node, 'dep');
+    var body = input.unHyp().arg.body;
+    body.findAll(varName,
+                 function(_var) { action(_var.node, 'occur'); },
+                 step,
+                 function(expr) { action(expr.node, 'new'); });
   }
 };
 
