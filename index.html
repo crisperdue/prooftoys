@@ -95,6 +95,7 @@ calculus.  The parser and printer support infix operators, which are
 "<a href="http://www.haskell.org/haskellwiki/Currying">curried</a>"
 in the internal representation into functions of a single argument.
 <p>
+<b>infix operators.</b>
 Infix operators available in order of increasing precedence are:
 <ul>
 <li><code>==</code> (equality)
@@ -106,11 +107,34 @@ Infix operators available in order of increasing precedence are:
 <li><code>+ -</code>
 <li><code>* /</code>
 </ul>
+<p>
+<b><code>&#x22A2;</code> and hypotheses.</b>
+The turnstile symbol <code>&#x22A2;</code>
+means that the items to its left are hypotheses and the expression on
+the right is proved with the hypotheses assumed.  In the Prooftoys
+logic, the turnstile has exactly the same meaning as the implication
+symbol <code>--></code>, though some rules of inference operate
+somewhat differently when there are hypotheses, focusing on the part
+of the formula after the turnstile symbol.
+<p>
+The comma-separated expressions before a turnstile are the hypotheses
+for the line.  The expressions are really a conjunction, and if you
+see an integer <code>n</code> (e.g. <code>1</code> or
+<code>22</code>) there, it is an abbreviation for "the term assumed in
+line <code>n</code>.  The abbreviations help keep the proof lines from
+sprawling all over the place.
+<p>
+<b>function calls.</b>
 Ordinary function calls look like <code><b>(f x)</b></code> or
 <code><b>f x</b></code>, and have higher precedence than any infix
 operator.
 <p>
-Anonymous functions have the form <code><b>{x. p x}</b></code>, a
+<b>not.</b>
+Boolean negation is represented by <code>not</code>, and is called
+like any other ordinary function.
+<p>
+<b>anonymous functions.</b>
+These have the form <code><b>{x. p x}</b></code>, a
 notation somewhat resembling the Ruby programming language notation
 for
 <a href="http://en.wikipedia.org/wiki/Ruby_(programming_language)#Blocks_and_iterators"
@@ -119,7 +143,8 @@ This notation also resembles common notation for sets,
 and can be read that way for functions with boolean values &mdash;
 "<i>the set of x such that p of x</i>".
 <p>
-For more information see the
+<b>For more information.</b>
+See the
 <a href="http://code.google.com/p/jlogic/wiki/LanguageSummary">
 language summary</a> in the project Wiki.
 
