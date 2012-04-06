@@ -53,9 +53,9 @@ function ProofControl() {
   this.textAreaId = 'proofState';
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
-  html = ('<table class=proofDisplay><tr><td>' +
-          '<div class=stepsParent><div class=proofSteps></div></div>' +
-          '</table>');
+  var html = ('<table class=proofDisplay><tr><td>' +
+              '<div class=stepsParent><div class=proofSteps></div></div>' +
+              '</table>');
   this.node = Y.Node.create(html);
   this.node.setData('proofControl', this);
   var stepsParent = this.node.one('.stepsParent');
@@ -63,8 +63,6 @@ function ProofControl() {
   this.stepEditor = new Y.StepEditor(this);
   this.node.one('td').append(this.stepEditor.node);
 
-  var html = ('<input class=addStep type=button value="+" '
-              + 'title="Add a step to the proof">');
   this.setEditable(false);
 
   // Create an overlay to display step details when hovered.
