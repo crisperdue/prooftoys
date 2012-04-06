@@ -16,7 +16,12 @@ var assert = Y.assertTrue;
  * Properties:
  *
  * steps: an array of the _rendered_ steps displayed.
- * node: Node containing the entire rendering of the proof.
+ *
+ * node: Node containing the entire rendering of the proof.  This has
+ * CSS class proofDisplay and the ProofControl as the value of its
+ * getData('proofControl').  Only ProofControl nodes should have the
+ * proofDisplay class.
+ *
  * stepsNode: Node containing all of the rendered steps as children.
  *
  * A step is an Expr, either rendered or unrendered.  Unrendered steps
@@ -43,8 +48,8 @@ function ProofControl() {
   // Single selected step when exactly one is selected, or null.
   this.selection = null;
 
-  // ID of element to use for saving/restoring proof state,
-  // settable, normally as part of initial setup of the control.
+  // ID of element to use for saving/restoring proof state.
+  // TODO: Make the textarea part of the ProofControl.
   this.textAreaId = 'proofState';
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
@@ -144,8 +149,6 @@ ProofControl.prototype.addStep = function(step) {
   var copy = step.copyStep();
   step.rendering = copy;
   copy.original = step;
-  // ??
-  copy.controller = this;
   this.steps.push(copy);
   copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length;
   var stepNode = renderStep(copy, this);
@@ -202,7 +205,7 @@ ProofControl.prototype.removeStepAndDeps = function(toRemove) {
  * Remove from the proof display the given top-level rendered proof
  * step and all other steps of the display that come after it.
  *
- * TODO: Clear subproofs, see renderSubProof. 
+ * TODO: Clear subproofs, see renderSubproof. 
  */
 ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
   var index = this.steps.indexOf(toRemove);
@@ -358,17 +361,19 @@ ProofControl.prototype.handleExprClick = function(expr) {
 // INTERNAL TO PROOFCONTROL
 
 /**
- * Create and return a YUI node to display the step (justified Expr)
- * within the given controller.  The step should be renderable.  This
- * also sets up event handlers for click and hover events within the
- * step.  Does not insert the new node into the document.
+ * Create and return a YUI node to display the renderable step within
+ * the given controller.  This also sets up event handlers for click
+ * and hover events within the step.  Does not insert the new node
+ * into the document.
  *
  * The rendering is structured as follows:
  *
  * - Each rendered expression and subexpression has a "node" property
  *   that refers to a YUI node with its rendering.
- * - Each proofStep YUI node has a proofStep data property that refers
- *   to the Inference (proof step) it represents.
+ * - The given step's YUI node has CSS class 'proofStep' and a
+ *   'proofStep' data property that refers to the step.  Code
+ *   elsewhere may assume that only node's that render a proof step
+ *   have the proofStep CSS class.
  */
 function renderStep(step, controller) {
   var stepsNode = controller.stepsNode;
@@ -440,7 +445,7 @@ function renderStep(step, controller) {
     target.on('click', function(event) {
           // Don't give the proof step a chance to select itself.
           event.stopPropagation();
-          renderSubProof(event, step, stepsNode);
+          renderSubproof(step);
       });
   }
   return stepNode;
@@ -475,12 +480,31 @@ function unrenderedDeps(step) {
 }
 
 /**
- * Renders the given inference and a header after
- * the given proof Node, clearing any other subproofs
- * that currently follow the proof node.
+ * Renders details of the given proof step and appends the rendering's
+ * Node to the parent Node of the proofDisplay containing the step.
  */
-function renderSubProof(event, step, proofNode) {
-  var display = proofNode.ancestor('.proofDisplay');
+function renderSubproof(step) {
+  clearFollowingSubproofs(step);
+  var display = step.node.ancestor('.proofDisplay');
+  var parent = display.get('parentNode');
+  var node;
+  if (step.ruleName == 'theorem') {
+    node = renderInference(Y.getTheorem(step.ruleArgs[0]));
+  } else {
+    node = renderInference(step);
+  }
+  parent.append(node);
+}
+
+/**
+ * Clear any subproofs following the one containing the given rendered
+ * step.
+ *
+ * TODO: Remove the assumption that displays of subproofs are arranged
+ *   sequentially in the document, and remove this function.
+ */
+function clearFollowingSubproofs(step) {
+  var display = step.node.ancestor('.proofDisplay');
   var parent = display.get('parentNode');
   var next = display.get('nextSibling');
   while (next) {
@@ -494,11 +518,6 @@ function renderSubProof(event, step, proofNode) {
     // END HACK.
     next.remove();
     next = display.get('nextSibling');
-  }
-  if (step.ruleName == 'theorem') {
-    renderInference(Y.getTheorem(step.ruleArgs[0]), parent, false);
-  } else {
-    renderInference(step, parent, false);
   }
 }
 
@@ -559,30 +578,26 @@ function fancyName(expr) {
 }
 
 /**
- * Renders a header and the proof steps of an inference by appending
- * them to a container Node.  First appends a node containing the
- * header, rendered with class proofHeader, then a node with the proof
- * display.
+ * Given a rendered proof step, renders a header and the proof steps
+ * of its as-yet-unrendered details. within a container DIV with CSS
+ * class inferenceDisplay.  Sets the subproofDisplay property of the
+ * step to refer to the new Node.
  *
- * Inputs are a proof step, the container node, a flag to indicate
- * whether to make the display editable, and an optional proof time in
- * milliseconds (elapsed time of proof execution).  This renders the
- * details of the step and a description of the step itself.
- *
- * Returns the ProofController.
+ * Returns the new container DIV.
  */
-function renderInference(step, node, editable, millis) {
+function renderInference(step) {
   var steps = unrenderedDeps(step.details);
   var controller = new ProofControl();
   controller.setSteps(steps);
   var comment = Y.rules[step.ruleName].info.comment || '';
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
-  node.appendChild('<div class=proofHeader><b>' + pruf
-                   + step.ruleName + '</b>' + computeArgInfo(step) + '<br>'
-                   + '<i>' + comment + '</i></div>');
+  node = Y.Node.create('<div class=inferenceDisplay></div>');
+  node.append('<div class=proofHeader><b>' + pruf
+              + step.ruleName + '</b>' + computeArgInfo(step) + '<br>'
+              + '<i>' + comment + '</i></div>');
   node.append(controller.node);
-  controller.setEditable(editable);
-  return controller;
+  step.subproofDisplay = node;
+  return node;
 }
 
 /**
