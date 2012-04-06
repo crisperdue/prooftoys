@@ -22,7 +22,7 @@ var assert = Y.assertTrue;
  * getData('proofControl').  Only ProofControl nodes should have the
  * proofDisplay class.
  *
- * stepsNode: Node containing all of the rendered steps as children.
+ * Other properties should be considered private.
  *
  * A step is an Expr, either rendered or unrendered.  Unrendered steps
  * are the top-level expressions of a proof, with properties added by
@@ -57,9 +57,8 @@ function ProofControl() {
           '<div class=stepsParent><div class=proofSteps></div></div>' +
           '</table>');
   this.node = Y.Node.create(html);
-  // Potentially useful for debugging.
   this.node.setData('proofControl', this);
-  this.stepsParent = this.node.one('.stepsParent');
+  var stepsParent = this.node.one('.stepsParent');
   this.stepsNode = this.node.one('.proofSteps');
   this.stepEditor = new Y.StepEditor(this);
   this.node.one('td').append(this.stepEditor.node);
@@ -74,7 +73,7 @@ function ProofControl() {
       bodyContent: 'Sample overlay content',
       zIndex:2
   });
-  this.hoverOverlay.render(this.stepsParent);
+  this.hoverOverlay.render(stepsParent);
   this.hoverOverlay.hide();
 
   // Set up handling of mouseover and mouseout events.
@@ -480,44 +479,46 @@ function unrenderedDeps(step) {
 }
 
 /**
- * Renders details of the given proof step and appends the rendering's
- * Node to the parent Node of the proofDisplay containing the step.
+ * Renders details of the given rendered proof step.
  */
 function renderSubproof(step) {
-  clearFollowingSubproofs(step);
-  var display = step.node.ancestor('.proofDisplay');
-  var parent = display.get('parentNode');
-  var node;
-  if (step.ruleName == 'theorem') {
-    node = renderInference(Y.getTheorem(step.ruleArgs[0]));
+  if (step.subproofControl) {
+    clearSubproof(step);
   } else {
-    node = renderInference(step);
+    var controller = getProofControl(step);
+    Y.each(controller.steps, clearSubproof);
+    var proof = step.node.ancestor('.proofDisplay');
+    var display = proof.ancestor('.inferenceDisplay') || proof;
+    // TODO: Flag the parent as "proofContainer" and simply search for that.
+    var parent = display.get('parentNode');
+    var node;
+    if (step.ruleName == 'theorem') {
+      node = renderInference(Y.getTheorem(step.ruleArgs[0]));
+    } else {
+      node = renderInference(step);
+    }
+    step.subproofControl = node.getData('proofControl');
+    // Actually, append it to the top node of the proof + subproofs.
+    parent.append(node);
   }
-  parent.append(node);
 }
 
 /**
- * Clear any subproofs following the one containing the given rendered
- * step.
- *
- * TODO: Remove the assumption that displays of subproofs are arranged
- *   sequentially in the document, and remove this function.
+ * Clear any subproof of this step and any subproofs of its steps
+ * recursively.
  */
-function clearFollowingSubproofs(step) {
-  var display = step.node.ancestor('.proofDisplay');
-  var parent = display.get('parentNode');
-  var next = display.get('nextSibling');
-  while (next) {
-    // TODO: Get rid of this hack soon.
-    // BEGIN HACK:
-    // Clear out all of the renderings of the original steps
-    // rendered in here.
-    next.all('div.proofStep').each(function(stepNode) {
-        stepNode.getData('proofStep').original.rendering = null;
+function clearSubproof(step) {
+  var controller = step.subproofControl;
+  delete step.subproofControl;
+  if (controller) {
+    Y.each(controller.steps, function(step) {
+        // Record that the rendering is gone.
+        step.original.rendering = null;
+        // Clear any rendered subproof for the step.
+        clearSubproof(step);
       });
-    // END HACK.
-    next.remove();
-    next = display.get('nextSibling');
+    var container = controller.node.ancestor('.inferenceDisplay');
+    container.remove();
   }
 }
 
@@ -580,8 +581,8 @@ function fancyName(expr) {
 /**
  * Given a rendered proof step, renders a header and the proof steps
  * of its as-yet-unrendered details. within a container DIV with CSS
- * class inferenceDisplay.  Sets the subproofDisplay property of the
- * step to refer to the new Node.
+ * class inferenceDisplay.  Sets the 'proofControl' data property of
+ * the node to refer to the new ProofControl.
  *
  * Returns the new container DIV.
  */
@@ -596,18 +597,21 @@ function renderInference(step) {
               + step.ruleName + '</b>' + computeArgInfo(step) + '<br>'
               + '<i>' + comment + '</i></div>');
   node.append(controller.node);
-  step.subproofDisplay = node;
+  node.setData('proofControl', controller);
   return node;
 }
 
 /**
- * Render the unrendered steps up to and including the given step,
- * appending the display to the given Node.  If millis are given they
- * should be the elapsed time for executing the proof, and this
- * appends statistics on proof execution and rendering before
- * appending the proof itself.  Returns a new ProofControl containing
- * the rendering; and nSteps then should be the number of steps
- * counted.
+ * Renders a proof of steps that derive a given step.  Renders the
+ * unrendered steps up to and including the given step, appending the
+ * display to the given Node.  Returns a new ProofControl containing
+ * the rendering.
+ *
+ * If millis are given they should be the elapsed time for executing
+ * the proof, and this appends statistics on proof execution and
+ * rendering before appending the proof itself.  In this case nSteps
+ * then should also be given, with the number of steps counted during
+ * execution of the proof.
  */
 function renderProof(step, node, millis, nSteps) {
   var startRender = new Date().getTime();
@@ -742,7 +746,8 @@ function getStepsNode(node) {
 }
 
 /**
- * Gets the ProofControl of a node or rendered term or step.
+ * Gets the ProofControl of a rendered term or step, or the node of
+ * one.
  */
 function getProofControl(expr) {
   var node = expr instanceof Y.Expr ? expr.node : expr;
