@@ -123,11 +123,7 @@ ProofEditor.prototype.restoreState = function() {
  *
  * A step is an Expr, either rendered or unrendered.  Unrendered steps
  * are the top-level expressions of a proof, with properties added by
- * Expr.justify.  Rendered steps have properties "node" (a YUI node
- * with the step's display) and "original" referring to the unrendered
- * proof step from which the rendered step was created.  Creation of a
- * rendered step adds a "rendering" property to the original, so
- * original proof steps can currently have only one rendering at a time.
+ * Expr.justify.
  *
  * Note that the stepNumber property of a step depends on its position
  * in its ProofControl's steps array, so it must be a property of a
@@ -435,6 +431,18 @@ ProofControl.prototype.handleExprClick = function(expr) {
  *
  * - Each rendered expression and subexpression has a "node" property
  *   that refers to a YUI node with its rendering.
+ *
+ * - A rendered step has an "original" property referring to the
+ *   unrendered proof step from which it was created.
+ *
+ * - When a rendered step has a subproof display open, it has a
+ *   "subproofControl" property referring to the subproof's
+ *   ProofControl.
+ *
+ * - Creation of a rendered step adds a "rendering" property to the
+ *   original, so original proof steps can currently have only one
+ *   rendering at a time.
+ *
  * - The given step's YUI node has CSS class 'proofStep' and a
  *   'proofStep' data property that refers to the step.  Code
  *   elsewhere may assume that only node's that render a proof step
