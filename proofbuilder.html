@@ -143,28 +143,22 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   // For debugging (and inline event handlers).
   window.Y = Y;
 
-  // Set up some useful constants and functions.
-  Y.Expr.utils.import();
-
-  // Query string data.
-  var queryData;
-
   // Proof editor node
   var editor = new Y.ProofEditor();
   window.proofEditor = editor;
   editor.mainControl.setEditable(true);
   Y.one('#proofEditor').setContent(editor.containerNode);
 
+  // Set up some useful constants and functions.
+  Y.Expr.utils.import();
   var rules = Y.rules;
+
   // Modus ponens
   var mp1 = rules.assume('p');
   var mp2 = rules.assume('p --> q');
   var mp3 = rules.modusPonens(mp1, mp2);
   var mp4 = rules.asImplication(mp3);
   Y.renderProof(mp4, Y.one('#modusPonens'));
-
-  // Restore any textual proof state:
-  loadProofState();
 });
 
 </script>
