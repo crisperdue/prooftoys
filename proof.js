@@ -278,6 +278,7 @@ ProofControl.prototype._removeStep = function(toRemove) {
   if (this.selection == toRemove) {
     this.deselectStep();
   }
+  // TODO: Consider updating "dep" highlighting here if this is "hovered".
   toRemove.stepNode.remove();
   delete toRemove.original.rendering;
   this.steps.splice(this.steps.indexOf(toRemove), 1);
@@ -489,11 +490,18 @@ function renderStep(step, controller) {
         // Don't give the proof step a chance to select itself.
         event.stopPropagation();
         var msg = 'Delete step ' + step.stepNumber + ' and all following?';
-        // Note that step numbers start at 1.
-        var ok = (step.stepNumber >= controller.steps.length
-                  || window.confirm(msg));
-        if (ok) {
+        // Is it the last step or the user says OK?
+        if (controller.steps.indexOf(step) >= controller.steps.length - 1 ||
+            window.confirm(msg)) {
           controller.removeStepAndFollowing(step);
+          // Unmark all steps as dependencies.  They might be dependencies
+          // of a deleted step.  Moving the mouse will get highlighting
+          // started again.
+          // TODO: Consider whether this action should be part of
+          //   ProofControl._removeStep.
+          Y.each(controller.steps, function(step) {
+              getStepNode(step).removeClass('dep');
+            });
           controller.proofChanged();
         }
       });
