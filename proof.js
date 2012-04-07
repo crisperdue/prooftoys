@@ -5,6 +5,103 @@ YUI.add('proof', function(Y) {
 // Use the application's assert function.
 var assert = Y.assertTrue;
 
+
+//// PROOF EDITOR
+
+// TODO: Consider how to refactor ProofEditor, ProofControl, and
+//   StepEditor for cleaner code.  Should ProofEditor subclass from
+//   ProofControl?
+
+/**
+ * Construct a proof displayer/editor, which is a composite made from
+ * a ProofControl.  User interaction may also create additional
+ * subproof ProofControl objects within this.
+ */
+function ProofEditor() {
+  var self = this;
+  this.mainControl = new ProofControl();
+  var stateDisplayHtml =
+    '<div class="proofStateDisplay hidden"\n' +
+    ' style="padding: 1em; border: 2px solid #aaf">\n' +
+    '<p style="margin: 0em">\n' +
+    '<b>Proof state</b>\n' +
+    '<p>\n' +
+    'The text area below contains the current state of the proof in textual\n' +
+    'form.  You can save the state of your work by copying this text into a\n' +
+    'document of your choice.  To restore the state at some time in the\n' +
+    'future, paste it back then press "Restore proof".\n' +
+    '<p>\n' +
+    '<input class=loadProofState type=button value="Restore proof">\n' +
+    '<input class=hideProofState type=button value="Close"><br>\n' +
+    '<textarea class=proofStateArea rows=20></textarea>\n' +
+    '</div>\n';
+  this.stateDisplay = Y.Node.create(stateDisplayHtml);
+  this.stateArea = this.stateDisplay.one('.proofStateArea');
+  this.containerNode = Y.Node.create('<div class=proofContainer></div>');
+  this.containerNode
+    .append(this.mainControl.node)
+    .append(this.stateDisplay);
+
+  // Toggling the proof state display visibility with a button.
+  // 
+  // TODO: Consider creating the step editor from the proof editor
+  //   rather than ProofControls for cleaner structure, less redundant
+  //   step editors.
+  this.mainControl.stepEditor.saveRestore.on('click', function() {
+      self.stateDisplay.toggleClass('hidden');
+    });
+
+  // Make the ProofControl save state when the proof changes.
+  this.mainControl.proofChanged = function() { self.saveState(); };
+
+  // Handler for loading proof state from the text area:
+  function loadProofState() {
+    Y.withErrorReporting(function() {
+        var text = self.stateArea.get('value');
+        if (text.length > 3) {
+          // If the text is empty, don't bother.  This is important on
+          // page (re)load, below.
+          var steps = Y.decodeSteps(text);
+          self.mainControl.setSteps(steps);
+        }
+      });
+  }
+  this.stateDisplay.one('.loadProofState').on('click', loadProofState);
+
+  // Closing the state display:
+  this.stateDisplay.one('.hideProofState').on('click', function() {
+      self.stateDisplay.addClass('hidden');
+    });
+
+  Y.on('domready', function() { loadProofState(); });
+}
+
+/**
+ * In case there is a textarea with the proof control's configured ID
+ * on the page, save the proof state to it.
+ */
+ProofEditor.prototype.saveState = function() {
+  this.stateArea.set('value', Y.encodeSteps(this.mainControl.steps));
+};
+
+/**
+ * In case there is a textarea with the proof control's configured ID
+ * on the page, restore the proof state from it.
+ */
+ProofEditor.prototype.restoreState = function() {
+  var steps;
+  try {
+    var value = this.stateArea.get('value');
+    assert(value, 'No proof state recorded');
+    steps = Y.decodeSteps(value);
+  } catch(err) {
+    window.alert('Failed to parse proof state: ' + err.message);
+    throw err;
+  }
+  this.mainControl.setSteps(steps);
+};
+
+
 //// PROOF CONTROL
 
 // TODO: Extend these to support proof steps that can take more
@@ -80,13 +177,19 @@ function ProofControl() {
 }
 
 /**
+ * By default do nothing when the proof changes, but instances may
+ * provide their own actions.
+ */
+ProofControl.prototype.proofChanged = function() {};
+
+/**
  * Sets the steps of the current proof to be the ones in the given
  * array, which should contain only renderable steps.  Sets their
  * stepNumber properties to run from 1 to N and renders them.  The
  * rendered copies become the value of the steps property of the
  * ProofControl.
  */
-ProofControl.prototype.setSteps = function(steps, record) {
+ProofControl.prototype.setSteps = function(steps) {
   // Clear rendering properties of current steps, as they will be
   // deleted.
   var stepsNode = this.stepsNode;
@@ -100,9 +203,6 @@ ProofControl.prototype.setSteps = function(steps, record) {
     this.addStep(steps[i]);
   }
   this._renumber();
-  if (arguments < 2 || record) {
-    this.recordSteps();
-  }
 };
 
 /**
@@ -151,6 +251,7 @@ ProofControl.prototype.addStep = function(step) {
   var stepNode = renderStep(copy, this);
   renderStepNumber(copy);
   this.stepsNode.append(stepNode);
+  this.proofChanged();
 };
 
 /**
@@ -196,6 +297,7 @@ ProofControl.prototype.removeStepAndDeps = function(toRemove) {
     this.removeStepAndDeps(dependent);
   }
   this._removeStep(toRemove);
+  this.proofChanged();
 };
 
 /**
@@ -229,41 +331,6 @@ ProofControl.prototype.setEditable = function(state) {
   }
 }
 
-
-// SAVING AND RESTORING STATE
-
-/**
- * In case there is a textarea with the proof control's configured ID
- * on the page, save the proof state to it.
- */
-ProofControl.prototype.saveState = function() {
-  var node = Y.one('textarea#' + this.textAreaId);
-  if (!node) {
-    return;
-  }
-  node.set('value', Y.encodeSteps(this.steps));
-};
-
-/**
- * In case there is a textarea with the proof control's configured ID
- * on the page, restore the proof state from it.
- */
-ProofControl.prototype.restoreState = function() {
-  var node = Y.one('textarea#' + this.textAreaId);
-  if (!node) {
-    return;
-  }
-  var steps;
-  try {
-    var value = node.get('value');
-    assert(value, 'No proof state recorded');
-    steps = Y.decodeSteps(value);
-  } catch(err) {
-    window.alert('Failed to parse proof state: ' + err.message);
-    throw err;
-  }
-  this.setSteps(steps);
-};
 
 
 // STEP SELECTION
@@ -427,7 +494,7 @@ function renderStep(step, controller) {
                   || window.confirm(msg));
         if (ok) {
           controller.removeStepAndFollowing(step);
-          controller.saveState();
+          controller.proofChanged();
         }
       });
   }
@@ -1023,6 +1090,7 @@ function addBottomPanel(node) {
 // step when hovered.
 Y.useHoverOverlays = false;
 
+Y.ProofEditor = ProofEditor;
 Y.ProofControl = ProofControl;
 Y.showOrdinals = false;
 Y.renderInference = renderInference;

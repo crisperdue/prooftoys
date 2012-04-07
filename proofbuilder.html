@@ -104,12 +104,6 @@ do this twice to quantify over both <code>p</code> and <code>q</code>.
 <p style="margin: 0em">
 <b>Proof editor</b>
 <p>
-You can
-<input type=button value="Save or restore from text ..."
- onclick="Y.one('#proofStateDisplay').toggleClass('hidden')"><br>
-To start over and work on a new proof, press
-<input id=clearProof type=button value="Clear">
-
 <div id=proofEditor></div>
 
 <div id=proofStateDisplay class=hidden
@@ -156,45 +150,10 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   var queryData;
 
   // Proof editor node
-  var proofEditorNode = Y.one('#proofEditor');
-  proofEditorNode.setContent('');
-
-  // The page ProofControl.
-  var proofControl = new Y.ProofControl();
-  proofControl.setEditable(true);
-  proofEditorNode.append(proofControl.node);
-  // For debugging:
-  window.proofBuilder = proofControl;
-  
-  Y.one('#clearProof').on('click', function() {
-      proofControl.setSteps([]);
-    });
-
-  // Proof display DIV
-  //
-  // TODO: All of this UI for managing the textual proof
-  //   state should become part of editable ProofControls.
-  var proofStateDiv = Y.one('#proofStateDisplay');
-
-  // Text area
-  var proofStateText = Y.one('#proofState');
-  // Handler for loading proof state from the text area:
-  function loadProofState() {
-    Y.withErrorReporting(function() {
-        var text = proofStateText.get('value');
-        if (text.length > 3) {
-          // If the text is empty, don't bother.  This is important on
-          // page (re)load, below.
-          var steps = Y.decodeSteps(text);
-          proofControl.setSteps(steps, false);
-        }
-      });
-  }
-  Y.one('#loadProofState').on('click', loadProofState);
-  // Closing the display:
-  Y.one('#hideProofState').on('click', function() {
-      proofStateDiv.addClass('hidden');
-    });
+  var editor = new Y.ProofEditor();
+  window.proofEditor = editor;
+  editor.mainControl.setEditable(true);
+  Y.one('#proofEditor').setContent(editor.containerNode);
 
   var rules = Y.rules;
   // Modus ponens

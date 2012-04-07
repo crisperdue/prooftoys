@@ -259,3 +259,15 @@ input.varName, input.step, input.equation, input.implication {
 .yui3-aclist {
   font-size: 80%;
 }
+
+/* Proof state display */
+
+.proofStateDisplay {
+    padding: 1em;
+    border: 2px solid #aaf;
+}
+
+textarea.proofState {
+    width: 95%;
+    margin: 1em 0em;
+}

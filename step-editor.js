@@ -117,9 +117,12 @@ function StepEditor(controller) {
 	     + '<span class=sted-form></span>');
   div.append('<input class=sted-clear type=button value=x '
 	     + 'title="Clear the input">');
+  div.append('<input class=sted-save-restore type=button value=Save/restore '
+             + 'title="Save or restore proof state">');
   this.node = div;
   this.input = div.one('.sted-input');
   this.form = div.one('.sted-form');
+  this.saveRestore = div.one('.sted-save-restore');
   this.ruleName = null;
   // Make the input field into an autocompleter.
   this.completer = this.autoCompleter();
@@ -309,7 +312,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
     var result = rule.apply(null, args);
     this.controller.addStep(result);
     this.controller.deselectStep();
-    this.controller.saveState();
+    this.controller.proofChanged();
     this.reset();
     value = true;
   } catch(error) {
