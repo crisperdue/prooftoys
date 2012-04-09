@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+  Uses "almost standards mode", standard except for some table cell sizing.
+  -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Prooftoys - tutorial</title>
+  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
+  <script src="boilerplate.js"></script>
+
+<style type="text/css">
+/* CSS here */
+</style>
+
+</head>
+<body class=yui3-skin-sam>
+
+<h1>Prooftoys tutorial</h1>
+
+<div id=slogans>
+<!-- slogans here -->
+</div>
+
+<table>
+<tr>
+<td id=leftNav>
+<!-- Boilerplate HTML goes here -->
+<td>
+<h2>Introduction</h2>
+<p>
+<b>About the notation.</b> 
+Aside from variables and constants, the language has only function
+calls and function expressions, like lambda expressions in the lambda
+calculus.  The parser and printer support infix operators, which are
+"<a href="http://www.haskell.org/haskellwiki/Currying">curried</a>"
+in the internal representation into functions of a single argument.
+<p>
+<b>infix operators.</b>
+Infix operators available in order of increasing precedence are:
+<ul>
+<li><code>==</code> (equality)
+<li><code>--></code> (implication)
+<li><code>||</code> (or)
+<li><code>&&</code> (and)
+<li><code>= != &lt; &lt;= &gt; &gt;=</code> (relational operators
+    with equality again)
+<li><code>+ -</code>
+<li><code>* /</code>
+</ul>
+<p>
+<b><code>&#x22A2;</code> and hypotheses.</b>
+The turnstile symbol <code>&#x22A2;</code>
+means that the items to its left are hypotheses and the expression on
+the right is proved with the hypotheses assumed.  In the Prooftoys
+logic, the turnstile has exactly the same meaning as the implication
+symbol <code>--></code>, though some rules of inference operate
+somewhat differently when there are hypotheses, focusing on the part
+of the formula after the turnstile symbol.
+<p>
+The comma-separated expressions before a turnstile are the hypotheses
+for the line.  The expressions are really a conjunction, and if you
+see an integer <code>n</code> (e.g. <code>1</code> or
+<code>22</code>) there, it is an abbreviation for "the term assumed in
+line <code>n</code>.  The abbreviations help keep the proof lines from
+sprawling all over the place.
+<p>
+<b>function calls.</b>
+Ordinary function calls look like <code><b>(f x)</b></code> or
+<code><b>f x</b></code>, and have higher precedence than any infix
+operator.
+<p>
+<b>not.</b>
+Boolean negation is represented by <code>not</code>, and is called
+like any other ordinary function.
+<p>
+<b>anonymous functions.</b>
+These have the form <code><b>{x. p x}</b></code>, a
+notation somewhat resembling the Ruby programming language notation
+for
+<a href="http://en.wikipedia.org/wiki/Ruby_(programming_language)#Blocks_and_iterators"
+ target="_blank">blocks</a>/anonymous functions or Smalltalk blocks.
+This notation also resembles common notation for sets,
+and can be read that way for functions with boolean values &mdash;
+"<i>the set of x such that p of x</i>".
+<p>
+<b>For more information.</b>
+See the
+<a href="http://code.google.com/p/jlogic/wiki/LanguageSummary">
+language summary</a> in the project Wiki.
+
+<h2>Sample proofs</h2>
+<p>
+Examples of many of the currently-implemented rules of inference are
+available here.  Selecting a theorem or inference rule below displays
+an example of usage of the rule or theorem.  Axioms, theorems, and
+rules of inference often have parameters.
+<p>
+Some often-used practical rules of inference are universal
+generalization (addForall), universal instantiation (instForall), and
+reasoning by cases (cases).  There is a tautology checker which can
+prove arbitrary tautologies, and a version of Professor Andrews' very
+own Rule P.
+<p>
+To see how a rule operates internally, click on its name in the proof
+line that uses it.
+<p>
+Note: <i>Proof displays are supported in recent versions of Firefox and Chrome.</i>
+
+<p style="margin: 1.5em 1.5em .5em">
+<b>Select a rule or theorem to prove:</b><span id=selectHolder></span>
+
+<div id=proofDisplay style="margin-bottom: 2em"></div>
+
+<h2>Proof Builder</h2>
+
+<h3>About the Interactive Proof Builder</h3>
+<p>
+The proof builder lets you interactively build proofs using all of the
+publicly-available theorems and rules of inference.  It can make
+working with proofs easier, apply rules of inference correctly,
+show what inference rules do and how they work.
+
+<h3>Using the Proof Builder</h3>
+<p>
+To start, click on the text entry field.  It will pop up a menu of all
+axioms, theorems, and theorem schemas available.  You can start typing
+the name you want or select it from the list.  Clicking on the desired
+item or typing &lt;Enter&gt; when it is selected will choose it.
+<p>
+Once you have chosen the axiom or theorem to use, the system checks
+whether it takes parameters.  If so, you will be offered a small form
+to fill in.  Enter expressions in the language as needed and type
+&lt;Enter&gt; to submit the form.  The system will prove the theorem
+as needed and display it in the proof.  A common first step in solving
+a math problem is to use the <code>assume</code> theorem schema.  Type
+any expression, and it will be "assumed" for you.  The "assume"
+theorem just says that your assumption implies itself, but the rules
+of inference work well with this starting point.
+<p>
+Once there is at least one step in your proof you can choose rules of
+inference that take existing proof steps as input.  To use a rule of
+inference, <i>select a step</i> that it depends on.  If a rule of
+inference operates on a specific location in a step, you
+must <i>select the subexpression</i> to operate on.  For example
+rules <code>r</code> and <code>replace</code> require you to select
+the subexpression you want to replace.  Click again on a step to
+deselect it, to enter an axiom or theorem.
+
+<h3>Building a proof using modus ponens</h3>
+<p>
+Let us consider a very simple example applying modus ponens to a pair of
+assumptions.  Here is a display of the proof you are going to build.
+<p>
+<div id=modusPonens></div>
+<p>
+In the Proof Builder area below, you can create the same proof.
+To enter an assumption click in the text entry field and
+select the "assume" rule.  Type in "p", and press &lt;Enter&gt;.  You
+will see the first line of your proof.
+<p>
+Next use the "assume" rule again, typing in "p --> q" as your second
+assumption.
+<p>
+For the inference step, click on the first line of the proof display
+anywhere outside the formula itself.  The line will highlight itself
+and stay highlighted as you move the mouse away.  Now click on the
+text entry field.  Since you have selected a proof step it will offer
+a number of rules of inference rather than axioms and theorem schemas.
+When you select "modusPonens" from the list, a small form will appear
+with "1" as the "hypothesis step".  Enter "2" as the number of the
+implication step to apply the rule to, and press &lt;Enter&gt;.  You
+should see the modus ponens line added to the proof.
+<p>
+Finally to make the hypotheses explicit, you might wish to select the
+last line of the proof and choose the "asImplication" rule, which
+causes the hypotheses to be displayed explicitly as preconditions.
+<p>
+Going beyond what is displayed in the sample, you could choose the
+rule "addForall" to add universal quantifiers to the formula.  You can
+do this twice to quantify over both <code>p</code> and <code>q</code>.
+<p style="margin: 0em">
+<b>Proof builder</b>
+<p>
+<div id=proofEditor></div>
+<p style="margin-bottom: 20em">
+&nbsp;
+
+</table>
+
+<!-- END OF HTML -->
+
+<script src=sample-proofs.js></script>
+<script>
+// For emacs: '
+
+// Insert boilerplate.
+Toy.insertNav();
+Toy.insertSlogans();
+
+/* Remove "filter" to load minified JavaScript. */
+YUI({filter: 'raw', insertBefore: 'styles'})
+  .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
+       'proof', 'collection', 'querystring-parse', 'json', 'overlay',
+        // querystring-parse requires "collection" (?!)
+        'sample-proofs',
+   function(Y) {
+
+  // For debugging (and inline event handlers).
+  window.Y = Y;
+
+  // Set up some useful constants and functions.
+  Y.Expr.utils.import();
+  var rules = Y.rules;
+
+  // Modus ponens
+  var mp1 = rules.assume('p');
+  var mp2 = rules.assume('p --> q');
+  var mp3 = rules.modusPonens(mp1, mp2);
+  var mp4 = rules.asImplication(mp3);
+  Y.renderProof(mp4, Y.one('#modusPonens'));
+
+  Y.setUpSampleProofs('#selectHolder', '#proofDisplay', false);
+
+  // Full proof editor
+  var editor = new Y.ProofEditor();
+  window.proofEditor = editor;
+  editor.mainControl.setEditable(true);
+  Y.one('#proofEditor').setContent(editor.containerNode);
+
+});
+
+</script>
+</body>
+</html>
