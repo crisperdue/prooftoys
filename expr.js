@@ -3043,7 +3043,7 @@ function dereference(type) {
 // Tokens pattern, private to tokenize.
   var _tokens = new RegExp(['[(){}\\[\\]]',
                             // Identifiers: variables and named constants
-                            '_?[:a-zA-Z][:a-zA-Z0-9]*',
+                            '[_.]?[a-zA-Z][a-zA-Z_0-9]*',
                             // Numeric constants
                             '-?[0-9]+',
                             // Strings

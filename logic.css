@@ -65,6 +65,7 @@ td#leftNav a {
   text-indent: -1em;
 }
 
+/* Left nav items */
 td#leftNav a:before {
   content: "⊦ ";
 }

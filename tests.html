@@ -291,7 +291,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('a,(end)', result);
         result = Y.tokenize('(a > b)');
         assertEqual('(,a,>,b,),(end)', result);
-        result = Y.tokenize('{x.x}');
+        result = Y.tokenize('{x. x}');
         assertEqual('{,x,.,x,},(end)', result);
         result = Y.tokenize('(=>x*)');
         assertEqual('(,=>,x,*,),(end)', result);
@@ -309,7 +309,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('(f x)', result.dump());
         result = Y.parse('not = (F =)');
         assertEqual('((= not) (= F))', result.dump());
-        result = Y.parse('{x.x} T');
+        result = Y.parse('{x. x} T');
         assertEqual('({x. x} T)', result);
         result = Y.parse('a + b * c');
         assertEqual('(a + (b * c))', result);
