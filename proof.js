@@ -300,8 +300,6 @@ ProofControl.prototype.removeStepAndDeps = function(toRemove) {
 /**
  * Remove from the proof display the given top-level rendered proof
  * step and all other steps of the display that come after it.
- *
- * TODO: Clear subproofs, see renderSubproof. 
  */
 ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
   var index = this.steps.indexOf(toRemove);
@@ -310,6 +308,7 @@ ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
   var length = steps.length;
   for (var i = index; i < length; i++) {
     // Don't change the index - each iteration deletes a step.
+    clearSubproof(steps[index]);
     this._removeStep(steps[index]);
   }
 };
@@ -525,7 +524,11 @@ function renderStep(step, controller) {
     target.on('click', function(event) {
           // Don't give the proof step a chance to select itself.
           event.stopPropagation();
-          renderSubproof(step);
+          if (step.subproofControl) {
+            clearSubproof(step);
+          } else {
+            renderSubproof(step);
+          }
       });
   }
   return stepNode;
@@ -560,33 +563,31 @@ function unrenderedDeps(step) {
 }
 
 /**
- * Renders details of the given rendered proof step.
+ * Renders details of the given rendered proof step and set the
+ * subproofControl property of the step to the ProofControl for the
+ * subproof.
  */
 function renderSubproof(step) {
-  if (step.subproofControl) {
-    clearSubproof(step);
+  var controller = getProofControl(step);
+  Y.each(controller.steps, clearSubproof);
+  var proof = step.node.ancestor('.proofDisplay');
+  var display = proof.ancestor('.inferenceDisplay') || proof;
+  // TODO: Flag the parent as "proofContainer" and simply search for that.
+  var parent = display.get('parentNode');
+  var node;
+  if (step.ruleName == 'theorem') {
+    node = renderInference(Y.getTheorem(step.ruleArgs[0]));
   } else {
-    var controller = getProofControl(step);
-    Y.each(controller.steps, clearSubproof);
-    var proof = step.node.ancestor('.proofDisplay');
-    var display = proof.ancestor('.inferenceDisplay') || proof;
-    // TODO: Flag the parent as "proofContainer" and simply search for that.
-    var parent = display.get('parentNode');
-    var node;
-    if (step.ruleName == 'theorem') {
-      node = renderInference(Y.getTheorem(step.ruleArgs[0]));
-    } else {
-      node = renderInference(step);
-    }
-    step.subproofControl = node.getData('proofControl');
-    // Actually, append it to the top node of the proof + subproofs.
-    parent.append(node);
+    node = renderInference(step);
   }
+  step.subproofControl = node.getData('proofControl');
+  // Actually, append it to the top node of the proof + subproofs.
+  parent.append(node);
 }
 
 /**
  * Clear any subproof of this step and any subproofs of its steps
- * recursively.
+ * recursively.  Remove the subproofControl property from the step.
  */
 function clearSubproof(step) {
   var controller = step.subproofControl;
