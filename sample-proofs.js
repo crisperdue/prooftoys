@@ -12,11 +12,16 @@ YUI.add('sample-proofs', function(Y) {
   // Query string data.
   var queryData = Y.QueryString.parse(location.search.substring(1));
 
+  // Node of dropdown control.
+  var selector;
+
+  // Container node to hold the proof display.
+  var proofNode;
+
   function selectorChanged() {
-    var selectorNode = Y.one('#selector');
-    var selector = Y.Node.getDOMNode(selectorNode);
-    var options = selector.options;
-    var ruleName = options[selector.selectedIndex].text;
+    var selectorElt = Y.Node.getDOMNode(selector);
+    var options = selectorElt.options;
+    var ruleName = options[selectorElt.selectedIndex].text;
     displayProof(ruleName);
   }
 
@@ -24,7 +29,7 @@ YUI.add('sample-proofs', function(Y) {
    * Runs and displays a proof of the named rule (or theorem).
    * If there is no such rule, notifies the user that there is none.
    */
-  function displayProof(name, proofNode) {
+  function displayProof(name) {
     var ruleInfo = sampleProofs[name];
     if (ruleInfo == undefined) {
       alert('No example "' + name + '"');
@@ -65,7 +70,7 @@ YUI.add('sample-proofs', function(Y) {
     // Controllable through the query string.
     editable = !!editable;
 
-    var proofNode = Y.one(displayId);
+    proofNode = Y.one(displayId);
 
     // You can control which rule is displayed by including
     // "rule=<ruleName>" in the query string.
@@ -78,7 +83,7 @@ YUI.add('sample-proofs', function(Y) {
       // Default to displaying instForall.
       ruleName = 'instForall';
     }
-    displayProof(ruleName, proofNode);
+    displayProof(ruleName);
     var selectorHtml = '<select id=selector>\n<option value="">-- choose --';
     for (var name in sampleProofs) {
       if (sampleProofs[name].level == 1) {
@@ -90,7 +95,7 @@ YUI.add('sample-proofs', function(Y) {
       }
     }
     selectorHtml += '</select>';
-    var selector = Y.Node.create(selectorHtml);
+    selector = Y.Node.create(selectorHtml);
     Y.one(selectorId).setContent(selector);
     selector.on('change', selectorChanged);
   }
@@ -208,9 +213,9 @@ YUI.add('sample-proofs', function(Y) {
     r5217Book: {},
     
     equationCases: {
-      args: [rules.assert(equal(T, T)),
-             rules.assert(equal(F, F)),
-             'z']
+      args: [rules.assert('T = p T'),
+             rules.assert('T = p F'),
+             'x']
     },
 
     r5218a: {},
