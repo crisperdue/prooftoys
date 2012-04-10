@@ -940,9 +940,9 @@ var ruleInfo = {
 	   + ' false case step <input name=equation2>,'
 	   + ' use variable <input name=varName>'),
     hint: 'proof by cases, for equations',
-    comment: ('Given a function expression of the form {v | A = B},'
-              + ' infers (forall {x | A = B}) assuming A = B is proven'
-              + ' for the substitutions with v = T and v = F.')
+    comment: ('Given two proved equations C and D obtainable by substitution' +
+              ' for a free variable of an equation A = B; C by substituting' +
+              ' T, and D by substituting F, proves A = B.')
   },
 
   // Note that this or 5230TF or symmetry of equality of booleans
@@ -1156,7 +1156,7 @@ var ruleInfo = {
 
   // (5222) Given two theorems that are substitutions of T and
   // F respectively into a WFF; and a variable or variable name,
-  // proves the WFF.
+  // proves the WFF.  Works with hypotheses.
   cases: {
     action: function(caseT, caseF, v) {
       v = _var(v);
@@ -1183,26 +1183,6 @@ var ruleInfo = {
     comment: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.')
   },
-
-  /* TODO: replace the implementation of cases with something like this:
-It will be much faster!
-(steps
-(1 assume (t (p T)))
-(2 assume (t (p F)))
-(3 toTIsA (s 1))
-(4 toTIsA (s 2))
-(5 tautology (t (T && T)))
-(6 replace (s 3) (s 5) (path "/fn/arg"))
-(7 replace (s 4) (s 6) (path "/arg/arg"))
-(8 axiom1)
-(9 instEqn (s 8) (t {x. (p x)}) "g")
-(10 apply (s 9) (path "/arg/arg/body"))
-(11 apply (s 10) (path "/fn/arg/arg"))
-(12 apply (s 11) (path "/fn/arg/fn/arg"))
-(13 replace (s 12) (s 7) (path "/arg"))
-(14 instForall (s 13) (t x))
-)
-  */
 
   // Given P and P --> Q, derive Q. (5224)
   // Handles hypotheses.
