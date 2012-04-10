@@ -1216,6 +1216,10 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(result.hasHyps);
       },
 
+      testTIsXIsX: function() {
+        assertEqual('((T = x) = x)', rules.tIsXIsX());
+      },
+
       testR5230TF: function() {
         assertEqual('((T = F) = F)', Y.rules.r5230TF());
       },
