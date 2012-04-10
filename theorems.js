@@ -329,18 +329,6 @@ var ruleInfo = {
     comment: ('axiom of description.')
   },
 
-  // Added by Cris instead of definition of F in book.
-  // not [T = F] (thus F = [T = F]).
-  // Alternatively, add (forall {x. not (x = (not x))}) below,
-  // shortening the proof of [F = [F = T]].
-  axiomTIsNotF: {
-    action: function() {
-      var result = call('not', equal(T, F));
-      return result.justify('axiomTIsNotF');
-    },
-    comment: ('')
-  },
-
   // Generalizes axiomTIsNotF.
   // Rewrite to (forall {p. F = [p = [not p]]}), instantiate, expand "not":
   // 1. F = [F = [F = F]], so 2. F = [F = T] (r5230FT)
@@ -751,6 +739,8 @@ var ruleInfo = {
 
   // Prove [F = T] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
+  //
+  // (Or r5230TF, see the alternate proof further below.)
   r5230FT: {
     action: function() {
       var step1 = rules.axiom('axiomPNeqNotP');
@@ -777,6 +767,51 @@ var ruleInfo = {
       return step6.justify('r5230TF');
     },
     comment: ('[T = F] = F')
+  },
+
+  // Prove [F = T] = F from r5230TF.
+  //
+  // Note that the proof of r5230TF depends on r5230FT; but if
+  // something like r5230TF were an axiom, then this would make sense.
+  //  
+  // TODO: Is there a more elegant proof of this?
+  r5230FT_alternate: {
+    action: function() {
+      var step1a = rules.instVar(rules.axiom('axiom2'), F, x);
+      var step1b = rules.instVar(step1a, T, y);
+      var step1c = rules.instVar(step1b, lambda(x, equal(x, F)), h);
+      var step2a = rules.apply(step1c, '/right/left');
+      var step2b = rules.apply(step2a, '/right/right');
+      var step3aa = rules.eqT(F);
+      var step3a = rules.rRight(step3aa, step2b, '/right/left');
+      var step3bb = rules.r5218(F);
+      var step3b = rules.r(step3bb, step3a, '/right/right');
+      var step3c = rules.r(step3bb, step3b, '/right');
+      // From this point most of the work is basically a proof
+      // that [A --> F] --> not A, a tautology.
+      var step4 = rules.toTIsA(step3c);
+      // We are going to prove the cases of: (x --> F) = (x = F)
+      // First with x = F.
+      var step11 = rules.definition('-->', F);
+      var step12 = rules.applyBoth(step11, F);
+      var step13 = rules.apply(step12, '/right');
+      var step14 = rules.r(step3aa, step13, '/right');
+      // Then with x = T.
+      var step21 = rules.definition('-->', T);
+      var step22 = rules.applyBoth(step21, F);
+      var step23 = rules.apply(step22, '/right');
+      var step24 = rules.r5230TF();
+      var step25 = rules.rRight(step24, step23, '/right');
+      // Now use the cases rule:
+      var step5 = rules.equationCases(step25, step14, x);
+      // Then instantiate [F = T] for x.
+      var step6 = rules.instVar(step5, equal(F, T), x);
+      // And use the fact that [F = T] --> F
+      var step7 = rules.rRight(step4, step6, '/left');
+      var step8 = rules.fromTIsA(step7);
+      return step8.justify('r5230FT_alternate');
+    },
+    comment: ('[F = T] = F')
   },
 
   // [T && T] = T.  Uses no book-specific definitions.
@@ -912,7 +947,6 @@ var ruleInfo = {
 
   // Note that this or 5230TF or symmetry of equality of booleans
   // might be taken as an axiom given r5230FT_alternate.
-  // TODO: Make this an axiom in preference to axiomPNeqNotP.
   tIsXIsX: {
     action: function() {
       var step1 = rules.theorem('r5230TF');
@@ -1150,6 +1184,26 @@ var ruleInfo = {
               + ' show it with T and F.')
   },
 
+  /* TODO: replace the implementation of cases with something like this:
+It will be much faster!
+(steps
+(1 assume (t (p T)))
+(2 assume (t (p F)))
+(3 toTIsA (s 1))
+(4 toTIsA (s 2))
+(5 tautology (t (T && T)))
+(6 replace (s 3) (s 5) (path "/fn/arg"))
+(7 replace (s 4) (s 6) (path "/arg/arg"))
+(8 axiom1)
+(9 instEqn (s 8) (t {x. (p x)}) "g")
+(10 apply (s 9) (path "/arg/arg/body"))
+(11 apply (s 10) (path "/fn/arg/arg"))
+(12 apply (s 11) (path "/fn/arg/fn/arg"))
+(13 replace (s 12) (s 7) (path "/arg"))
+(14 instForall (s 13) (t x))
+)
+  */
+
   // Given P and P --> Q, derive Q. (5224)
   // Handles hypotheses.
   modusPonens: {
@@ -1168,69 +1222,6 @@ var ruleInfo = {
 	   + ' implication in step <input name=implication>'),
     hint: 'modus ponens',
     comment: ('Modus Ponens.  Given A and A --> B derives B.')
-  },
-
-  // Prove [T = F] = F (same as 5217)
-  r5230TF_alternate: {
-    action: function() {
-      var step1 = rules.axiom('axiomTIsNotF');
-      var step2 = rules.useDefinition(step1, '/fn');
-      var step3 = rules.eqnSwap(step2);
-      return step3.justify('r5230TF');
-    },
-    comment: ('[T = F] = F')
-  },
-
-  // Prove [F = T] = F
-  // Simpler proof when axiomPNeqNotP rather than axiomTIsNotF (above).
-  // TODO: Is there a more elegant proof of this?
-  //   Consider instantiating Axiom2 with x = (T = F) and y = F giving:
-  //   (T = F) = F --> (F = (T = F)) = (F = F).  Now (T = x) = x (this
-  //   could even be an axiom).  So we have T --> (F = (T = F)) = T;
-  //   thus (F = (T = F)) = T and finally F = (T = F) as desired.
-  //   Note that none of these steps requires use of the truth tables
-  //   for '=' on booleans.
-  r5230FT_alternate: {
-    action: function() {
-      var step1a = rules.instVar(rules.axiom('axiom2'), F, x);
-      var step1b = rules.instVar(step1a, T, y);
-      var step1c = rules.instVar(step1b, lambda(x, equal(x, F)), h);
-      var step2a = rules.apply(step1c, '/right/left');
-      var step2b = rules.apply(step2a, '/right/right');
-      var step3aa = rules.eqT(F);
-      var step3a = rules.rRight(step3aa, step2b, '/right/left');
-      var step3bb = rules.r5218(F);
-      var step3b = rules.r(step3bb, step3a, '/right/right');
-      var step3c = rules.r(step3bb, step3b, '/right');
-      // From this point most of the work is basically a proof
-      // that [A --> F] --> not A, a tautology.
-      var step4 = rules.toTIsA(step3c);
-      // We are going to prove the cases of: (x --> F) = (x = F)
-      // First with x = F.
-      var step11 = rules.definition('-->', F);
-      var step12 = rules.applyBoth(step11, F);
-      var step13 = rules.apply(step12, '/right');
-      var step14 = rules.r(step3aa, step13, '/right');
-      // Then with x = T.
-      var step21 = rules.definition('-->', T);
-      var step22 = rules.applyBoth(step21, F);
-      var step23 = rules.apply(step22, '/right');
-      var step24 = rules.r(rules.definition('not'),
-                           rules.axiom('axiomTIsNotF'),
-                           '/fn');
-      var step25 = rules.r(step24, step23, '/right');
-      // Now use the cases rule:
-      var step5 = rules.cases(equal(call('-->', T, F), equal(T, F)),
-                              equal(call('-->', F, F), equal(F, F)),
-                              x);
-      // Then instantiate [F = T] for x.
-      var step6 = rules.instVar(step5, equal(F, T), x);
-      // And use the fact that [F = T] --> F
-      var step7 = rules.rRight(step4, step6, '/left');
-      var step8 = rules.fromTIsA(step7);
-      return step8.justify('r5230FT_alternate');
-    },
-    comment: ('[F = T] = F')
   },
 
   // [not T] = F
@@ -3148,7 +3139,7 @@ function getTheorem(name) {
 var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
 
 var theoremNames =
-  (axiomNames.concat(['defFFromBook', 'axiomTIsNotF',
+  (axiomNames.concat(['defFFromBook',
                       'defAnd', 'tIsXIsX', 'forallVT', 'eqTLemma',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals']));
