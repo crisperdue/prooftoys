@@ -36,8 +36,8 @@ var _allHyps = {};
 //   by the step editor.
 // hint: HTML text for the hint to be displayed by the autocompleter
 //   of the step editor.
-// comment: comment to become the title of mentions of the rule name
-//   in proof displays.
+// comment: plain text comment to become the title of mentions of the rule
+//   name in proof displays and the description in subproof displays.
 var ruleInfo = {
 
   /**
@@ -719,7 +719,7 @@ var ruleInfo = {
     form: ('In step <input name=step> instantiate bound var'
 	   + ' with term <input name=term>'),
     hint: 'instantiate "forall"',
-    comment: ('In a &quot;forall&quot;, instantiates the bound variable with'
+    comment: ('In a "forall", instantiates the bound variable with'
               + ' a given term.')
   },
 
@@ -3026,14 +3026,7 @@ function rewriteBackWithAxiom(step, path, axiomName, ruleName) {
 // Add rewriting rules based on the axioms.
 genRewriters(rewriters);
 
-// Map from rule name to function.  The function runs the
-// core rule code, wrapped in more code that makes potentially
-// nested inferences using makeInference.  Each function here
-// can have an "info" property with all the data from the ruleInfo
-// object passed to createRules.
-//
-// TODO: It is really roundabout to have both ruleInfo and rules.
-// Simplify them.
+// Map from rule name to function.  See creatRules, below.
 var rules = {};
 
 /**
@@ -3042,8 +3035,6 @@ var rules = {};
  * has an "info" property containing all the properties present in the
  * ruleInfo object entry for the name.  If not supplied in the rule
  * definition, the info.inputs is defaulted to an empty object here.
- * The file theorems.js has a main ruleInfo object.  See there for
- * descriptions of used properties.
  */
 function createRules(ruleInfo) {
   for (var key in ruleInfo) {

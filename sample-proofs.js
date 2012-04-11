@@ -197,8 +197,10 @@ YUI.add('sample-proofs', function(Y) {
     },
     
     instForall: {
-      args: [rules.assert(call('forall', lambda(y, call(p, y)))),
-             call(f, y)],
+      args: function() {
+        var step1 = rules.assume('forall {y. p y}');
+        return [step1, call(f, y)];
+      },
       level: 1
     },
     

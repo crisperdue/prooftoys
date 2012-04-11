@@ -672,7 +672,7 @@ function renderInference(step) {
   var steps = unrenderedDeps(step.details);
   var controller = new ProofControl();
   controller.setSteps(steps);
-  var comment = Y.rules[step.ruleName].info.comment || '';
+  var comment = Y.Escape.html(Y.rules[step.ruleName].info.comment || '');
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   node = Y.Node.create('<div class=inferenceDisplay></div>');
   node.append('<div class=proofHeader><b>' + pruf
