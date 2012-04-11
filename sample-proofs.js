@@ -199,7 +199,7 @@ YUI.add('sample-proofs', function(Y) {
     instForall: {
       args: function() {
         var step1 = rules.assume('forall {y. p y}');
-        return [step1, call(f, y)];
+        return [step1, call(f, x)];
       },
       level: 1
     },
