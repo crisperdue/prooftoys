@@ -49,6 +49,9 @@ versions of Firefox and Chrome.</i>
 
 </table>
 
+<!-- Storage for state to preserve across page unloads -->
+<textarea id=ToyStore rows=20 cols=80 class=hidden></textarea>
+
 <!-- END OF HTML -->
 
 <script>
@@ -69,7 +72,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   // Proof editor node
   var editor = new Y.ProofEditor();
   window.proofEditor = editor;
-  editor.mainControl.setEditable(true);
+  editor.setEditable(true);
   Y.one('#proofEditor').setContent(editor.containerNode);
 
 });

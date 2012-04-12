@@ -6,11 +6,75 @@ YUI.add('proof', function(Y) {
 var assert = Y.assertTrue;
 
 
+//// APPLICATION DATA STORAGE
+
+var proofToyState = {
+
+  // Global data to store in the hidden field named ToyStore.
+  // Created with an object/slot to hold all ProofEditor data.
+  data: {proofEditors: {}},
+
+  // Global form element to store proofToyData.
+  _toyStore: null,
+
+  // Callbacks to run when the global data becomes ready.
+  _dataReadyHandlers: [],
+
+  /**
+   * Registers a "data ready" callback.
+   */
+  onDataReady: function(fn) {
+    this._dataReadyHandlers.push(fn);
+  },
+
+  /**
+   * Save proofToyData into the document's data store so it will persist
+   * across page load/unload.  Silently do nothing if there is no store
+   * element.  Called automatically immediately after all dataReady
+   * handlers have fired during page loading.
+   *
+   * TODO: Consider deferring this action using a Refresher, to reduce
+   * redundant work.
+   */
+  store: function() {
+    if (this._toyStore) {
+      this._toyStore.set('value', Y.JSON.stringify(this.data, null, 1));
+    }
+  },
+
+  /**
+   * Load all application data from the per-page store; runs just once
+   * on page load.  If there is data, run all dataReady handlers, then
+   * store the global data back into the toyStore.
+   */
+  _load: function() {
+    node = Y.one('#ToyStore');
+    this._toyStore = node;
+    if (node) {
+      var text = node.get('value');
+      if (text) {
+        // Non-empty text.
+        this.data = Y.JSON.parse(text);
+      }
+      Y.each(this._dataReadyHandlers, function(fn) { fn(); });
+      this.store();
+    } else {
+      console.log('No #ToyStore element.');
+    }
+  }
+}
+// This should be insensitive to when this script loads.
+Y.on('domready', proofToyState._load, proofToyState);
+
+
 //// PROOF EDITOR
 
 // TODO: Consider how to refactor ProofEditor, ProofControl, and
 //   StepEditor for cleaner code.  Should ProofEditor subclass from
 //   ProofControl?
+
+// Each instance has a numeric ID.
+var nextProofEditorId = 1;
 
 /**
  * Construct a proof displayer/editor, which is a composite made from
@@ -19,7 +83,12 @@ var assert = Y.assertTrue;
  */
 function ProofEditor() {
   var self = this;
-  this.mainControl = new ProofControl();
+  // Set the ID.
+  this.proofEditorId = nextProofEditorId++;
+  // Data of this ProofEditor to remember across page load/unload,
+  // representable in JSON.
+  this.data = {};
+  this._mainControl = new ProofControl();
   var stateDisplayHtml =
     '<div class="proofStateDisplay hidden"\n' +
     ' style="padding: 1em; border: 2px solid #aaf">\n' +
@@ -31,7 +100,7 @@ function ProofEditor() {
     'document of your choice.  To restore the state at some time in the\n' +
     'future, paste it back then press "Restore proof".\n' +
     '<p>\n' +
-    '<input class=loadProofState type=button value="Restore proof">\n' +
+    '<input class=restoreProof type=button value="Restore proof">\n' +
     '<input class=hideProofState type=button value="Close"><br>\n' +
     '<textarea class=proofStateArea rows=20></textarea>\n' +
     '</div>\n';
@@ -39,67 +108,85 @@ function ProofEditor() {
   this.stateArea = this.stateDisplay.one('.proofStateArea');
   this.containerNode = Y.Node.create('<div class=proofContainer></div>');
   this.containerNode
-    .append(this.mainControl.node)
+    .append(this._mainControl.node)
     .append(this.stateDisplay);
+
+  // If the proof has changed, save its state.
+  this._refresher = new Y.Refresher(function() {
+      self.saveState();
+    });
+  // Make the ProofControl save state when the proof changes.
+  this._mainControl.proofChanged = function() {
+    self._refresher.activate();
+  };
 
   // Toggling the proof state display visibility with a button.
   // 
   // TODO: Consider creating the step editor from the proof editor
   //   rather than ProofControls for cleaner structure, less redundant
   //   step editors.
-  this.mainControl.stepEditor.saveRestore.on('click', function() {
+  this._mainControl.stepEditor.saveRestore.on('click', function() {
       self.stateDisplay.toggleClass('hidden');
     });
 
-  // Make the ProofControl save state when the proof changes.
-  this.mainControl.proofChanged = function() { self.saveState(); };
-
-  // Handler for loading proof state from the text area:
-  function loadProofState() {
+  // Handler for the "restore proof" button.  Restores proof state from
+  // the text area and saves global state.
+  function restoreProof() {
     Y.withErrorReporting(function() {
-        var text = self.stateArea.get('value');
-        if (text.length > 3) {
-          // If the text is empty, don't bother.  This is important on
-          // page (re)load, below.
-          var steps = Y.decodeSteps(text);
-          self.mainControl.setSteps(steps);
-        }
+        self.restoreState();
+        proofToyState.store();
       });
   }
-  this.stateDisplay.one('.loadProofState').on('click', loadProofState);
+  this.stateDisplay.one('.restoreProof').on('click', restoreProof);
 
   // Closing the state display:
   this.stateDisplay.one('.hideProofState').on('click', function() {
       self.stateDisplay.addClass('hidden');
     });
 
-  Y.on('domready', function() { loadProofState(); });
+  // Sets this ProofEditor's "data" property to the global data
+  // associated with its proofEditorId.  Updates the state of the
+  // proof itself, and saves the state into the text area.
+  //
+  // If the global data has no information about this, just links the
+  // existing value into the global data.
+  function loadData() {
+    var data = proofToyState.data.proofEditors[self.proofEditorId];
+    if (data) {
+      self.data = data;
+      self._mainControl.setSteps(Y.decodeSteps(data.proofState));
+    } else {
+      proofToyState.data.proofEditors[self.proofEditorId] = self.data;
+    }
+  }
+  proofToyState.onDataReady(Y.bind(Y.withErrorReporting, null, loadData));
 }
 
 /**
- * In case there is a textarea with the proof control's configured ID
- * on the page, save the proof state to it.
+ * Save the proof state to the the proof's text area and the
+ * document's data store.  Normally use the proofChanged method rather
+ * than calling this directly, avoiding redundant work.
  */
 ProofEditor.prototype.saveState = function() {
-  this.stateArea.set('value', Y.encodeSteps(this.mainControl.steps));
+  var text = Y.encodeSteps(this._mainControl.steps)
+  this.stateArea.set('value', text);
+  this.data.proofState = text;
+  proofToyState.store();
 };
 
 /**
- * In case there is a textarea with the proof control's configured ID
- * on the page, restore the proof state from it.
+ * Attempts to restore the proof state from the proof's text area.
  */
 ProofEditor.prototype.restoreState = function() {
-  var steps;
-  try {
-    var value = this.stateArea.get('value');
-    assert(value, 'No proof state recorded');
-    steps = Y.decodeSteps(value);
-  } catch(err) {
-    window.alert('Failed to parse proof state: ' + err.message);
-    throw err;
-  }
-  this.mainControl.setSteps(steps);
+  var value = this.stateArea.get('value');
+  assert(value, 'No proof state recorded');
+  var steps = Y.decodeSteps(value);
+  this._mainControl.setSteps(steps);
 };
+
+ProofEditor.prototype.setEditable = function(value) {
+  this._mainControl.setEditable(value);
+}
 
 
 //// PROOF CONTROL
@@ -311,6 +398,7 @@ ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
     clearSubproof(steps[index]);
     this._removeStep(steps[index]);
   }
+  this.proofChanged();
 };
 
 /**
@@ -1103,10 +1191,7 @@ function addBottomPanel(node) {
 
 //// Export public names.
 
-// Global configuration variable for displaying extra information per
-// step when hovered.
-Y.useHoverOverlays = false;
-
+Y.proofToyState = proofToyState;
 Y.ProofEditor = ProofEditor;
 Y.ProofControl = ProofControl;
 Y.showOrdinals = false;
@@ -1117,6 +1202,9 @@ Y.getStepNode = getStepNode;
 Y.getProofStep = getProofStep;
 Y.getStepsNode = getStepsNode;
 Y.getExpr = getExpr;
-// TODO: Consider getting rid of this global variable.
+
+// Global configuration variable for displaying extra information per
+// step when hovered.
+Y.useHoverOverlays = false;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'step-editor']});

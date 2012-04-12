@@ -193,6 +193,9 @@ do this twice to quantify over both <code>p</code> and <code>q</code>.
 
 </table>
 
+<!-- Storage for state to preserve across page unloads -->
+<textarea id=ToyStore rows=20 cols=80 class=hidden></textarea>
+
 <!-- END OF HTML -->
 
 <script src=sample-proofs.js></script>
@@ -229,8 +232,9 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
   // Full proof editor
   var editor = new Y.ProofEditor();
+  Y.editor = editor;  // debugging
   window.proofEditor = editor;
-  editor.mainControl.setEditable(true);
+  editor.setEditable(true);
   Y.one('#proofEditor').setContent(editor.containerNode);
 
 });
