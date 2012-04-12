@@ -3291,6 +3291,38 @@ var aliases = {
 };
 
 
+//// Refresher class
+
+/**
+ * Creates an object that will run the given function, if activated,
+ * the next time the event system becomes idle.  When the function
+ * runs, the Refresher becomes ready for another activation.
+ */
+function Refresher(fn) {
+  this.fn = fn;
+  this._timer = null;
+}
+
+/**
+ * Activates this Refresher to run the next time the event system
+ * becomes idle.
+ *
+ * Commonly used to receive notifications that an object has changed
+ * or needs to change.
+ */
+Refresher.prototype.activate = function() {
+  var self = this;
+  var fn = this.fn;
+  function action() {
+    self._timer = null;
+    fn();
+  }
+  if (this._timer == null) {
+    this._timer = setTimeout(action, 0);
+  }
+};
+
+
 //// UTILITY FUNCTIONS
 
 /**
@@ -3801,6 +3833,8 @@ Y.removeExcept = removeExcept;
 Y.encodeSteps = encodeSteps;
 Y.decodeSteps = decodeSteps;
 Y.debugString = debugString;
+
+Y.Refresher = Refresher;
 
 // Error analysis
 Y.errors = errors;
