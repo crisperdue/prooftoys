@@ -32,6 +32,8 @@ Toy.navText = [
   'Working with real numbers',
   '<a class=nav href="http://code.google.com/p/jlogic">',
   'Project site</a>',
+  '<a class=nav href="https://groups.google.com/d/forum/prooftoys">',
+  'Discussion forum</a>',
   '<a class=nav href="http://code.google.com/p/jlogic/source/checkout">',
   'Source code</a>',
   '<a class=nav',

@@ -154,7 +154,9 @@ function ProofEditor() {
     var data = proofToyState.data.proofEditors[self.proofEditorId];
     if (data) {
       self.data = data;
-      self._mainControl.setSteps(Y.decodeSteps(data.proofState));
+      if (data.proofState) {
+        self._mainControl.setSteps(Y.decodeSteps(data.proofState));
+      }
     } else {
       proofToyState.data.proofEditors[self.proofEditorId] = self.data;
     }
