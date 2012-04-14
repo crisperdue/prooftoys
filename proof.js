@@ -766,7 +766,8 @@ function renderInference(step) {
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   node = Y.Node.create('<div class=inferenceDisplay></div>');
   node.append('<div class=proofHeader><b>' + pruf
-              + step.ruleName + '</b>' + computeArgInfo(step) + '<br>'
+              + step.ruleName + '</b>'
+              + computeHeaderArgInfo(step) + '<br>'
               + '<i>' + comment + '</i></div>');
   node.append(controller.node);
   node.setData('proofControl', controller);
@@ -803,22 +804,29 @@ function renderProof(step, node, millis, nSteps) {
 }
 
 /**
- * Helper for renderInference, computes arguments display string of a step.
+ * Helper for renderInference, computes arguments display string for
+ * the header display of a subproof.
+ *
+ * TODO: Re-think and rewrite this, probably using Y.eachArgType.
+ *   Indicate sites in steps in some user-friendly way.
  */
-function computeArgInfo(step) {
+function computeHeaderArgInfo(step) {
   var argInfo = '';
   for (var i = 0; i < step.ruleArgs.length; i++) {
-    if (i > 0) {
-      argInfo += ', ';
-    }
     var arg = step.ruleArgs[i];
     var argText;
-    if (typeof arg == 'string'
-        || arg instanceof Y.Expr
-        || arg instanceof Y.Path) {
+    if (arg instanceof Y.Expr) {
+      argText = arg.toString();
+    } else if (typeof arg == 'string' && arg[0] != '/') {
       argText = arg;
+    } else if (typeof arg == 'string' || arg instanceof Y.Path) {
+      // Ignore paths and strings that look like paths.
+      continue;
     } else {
       argText = Y.debugString(arg);
+    }
+    if (argInfo) {
+      argInfo += ', ';
     }
     argInfo += '<code>' + argText + '</code>';
   }
@@ -1149,15 +1157,15 @@ var hoverHandlers = {
   // TODO: instMultiVars
   instForall: function(step, action) {
     var args = step.original.ruleArgs;
-    // Input step, a top-level call to "forall".
-    var input = args[0].rendering;
+    // The top-level call to "forall".
+    var input = args[0].rendering.unHyp();
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
     action(input.node, 'dep');
-    var body = input.unHyp().arg.body;
+    var body = input.arg.body;
     body.findAll(varName,
                  function(_var) { action(_var.node, 'occur'); },
-                 step,
+                 step.unHyp(),
                  function(expr) { action(expr.node, 'new'); });
   }
 };
