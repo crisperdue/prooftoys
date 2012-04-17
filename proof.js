@@ -165,6 +165,21 @@ function ProofEditor() {
 }
 
 /**
+ * Add a step to the proof.
+ */
+ProofEditor.prototype.addStep = function(step) {
+  this._mainControl.addStep(step);
+};
+
+/**
+ * Set the steps.
+ */
+ProofEditor.prototype.setSteps = function(steps) {
+  var rendered = Y.Array.map(steps, function(step) { return step.copyStep(); });
+  this._mainControl.setSteps(rendered);
+};
+
+/**
  * Save the proof state to the the proof's text area and the
  * document's data store.  Normally use the proofChanged method rather
  * than calling this directly, avoiding redundant work.
