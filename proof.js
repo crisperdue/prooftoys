@@ -172,7 +172,14 @@ ProofEditor.prototype.addStep = function(step) {
 };
 
 /**
- * Set the steps.
+ * Gets the state of the proof, in string form.
+ */
+ProofEditor.prototype.getStateString = function() {
+  return Y.encodeSteps(this._mainControl.steps)
+}
+
+/**
+ * Sets the steps to the given array of non-renderable steps.
  */
 ProofEditor.prototype.setSteps = function(steps) {
   var rendered = Y.Array.map(steps, function(step) { return step.copyStep(); });
