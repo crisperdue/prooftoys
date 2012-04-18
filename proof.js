@@ -176,7 +176,16 @@ ProofEditor.prototype.addStep = function(step) {
  */
 ProofEditor.prototype.getStateString = function() {
   return Y.encodeSteps(this._mainControl.steps)
-}
+};
+
+/**
+ * Sets the state of the proof from a string as returned by
+ * getStateString.
+ */
+ProofEditor.prototype.setStateFromString = function(encoded) {
+  var steps = Y.decodeSteps(encoded);
+  this._mainControl.setSteps(steps);
+};
 
 /**
  * Sets the steps to the given array of non-renderable steps.
@@ -192,7 +201,7 @@ ProofEditor.prototype.setSteps = function(steps) {
  * than calling this directly, avoiding redundant work.
  */
 ProofEditor.prototype.saveState = function() {
-  var text = Y.encodeSteps(this._mainControl.steps)
+  var text = this.getStateString();
   this.stateArea.set('value', text);
   this.data.proofState = text;
   proofToyState.store();
@@ -202,10 +211,9 @@ ProofEditor.prototype.saveState = function() {
  * Attempts to restore the proof state from the proof's text area.
  */
 ProofEditor.prototype.restoreState = function() {
-  var value = this.stateArea.get('value');
-  assert(value, 'No proof state recorded');
-  var steps = Y.decodeSteps(value);
-  this._mainControl.setSteps(steps);
+  var string = this.stateArea.get('value');
+  assert(string, 'No proof state recorded');
+  this.setStateFromString(string);
 };
 
 ProofEditor.prototype.setEditable = function(value) {
