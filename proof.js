@@ -303,6 +303,9 @@ ProofControl.prototype.proofChanged = function() {};
  * stepNumber properties to run from 1 to N and renders them.  The
  * rendered copies become the value of the steps property of the
  * ProofControl.
+ *
+ * TODO: Make a sensible policy for accepting renderable versus
+ * nonrenderable steps.
  */
 ProofControl.prototype.setSteps = function(steps) {
   // Clear rendering properties of current steps, as they will be
