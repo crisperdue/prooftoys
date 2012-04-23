@@ -239,6 +239,10 @@ function addClassInfo(form) {
  * Try to fill in a field of the form with the selection.  For
  * steps this will be a reference to the step, and for terms it
  * will be a textual rendering of the selected expression.
+ *
+ * TODO: Modify spec and implementation to just add step references
+ * but not selected expressions to the form.  Selected expressions are
+ * sites, which do not appear in forms.
  */
 StepEditor.prototype.addSelectionToForm = function(rule) {
   var controller = this.controller;
