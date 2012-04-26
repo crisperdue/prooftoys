@@ -1631,6 +1631,16 @@ YUI({filter: null, insertBefore: 'styles'})
         assert(rules.justifyNumericType(input).matches(input));
       },
 
+      testConsider: function() {
+        function check(expected, input) {
+          input = typeof input == 'string' ? Y.parse(input) : input;
+          var actual = rules.consider(input);
+          assertEqual(expected, actual + '');
+        }
+        check('(x = x)', 'x');
+        check('(((R x) && (R y)) --> ((x + y) = (x + y)))', 'x + y');
+      },
+
       // Utility functions for proofs.
 
       testBuildHypSchema: function() {

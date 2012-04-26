@@ -80,21 +80,16 @@ var ruleInfo = {
       if (typeof assumption == 'string') {
 	assumption = Y.parse(assumption);
       }
-      var names = [];
-      for (var v in assumption.mathVars()) {
-        names.push(v);
-      }
-      // Order the names for nice presentation.
-      names.sort();
-      var step = rules.tautInst('a --> a', {a: assumption});
+      var types = assumption.mathVarConditions();
       // TODO: Fix tautInst to not copy.
-      assumption = step.getLeft();
-      var taut = rules.tautology('(h --> a) --> (h && b --> a)');
-      for (var i = 0; i < names.length; i++) {
-        var step1 = rules.tautInst(taut, {h: step.getLeft(),
-                                          a: step.getRight(),
-                                          b: call('R', names[i])});
-        step = rules.modusPonens(step, step1);
+      if (types) {
+        var step1 = rules.tautInst('h && a --> a', {
+            a: assumption,
+            h: types
+          });
+        var step = rules.dedupeHyps(step1);
+      } else {
+        var step = rules.tautInst('a --> a', {a: assumption});
       }
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
@@ -2278,7 +2273,9 @@ var ruleInfo = {
 
   // Treats conj as a chain of conjunctions.  Equates it with a
   // deduplicated version, or returns null if there are no exact
-  // duplicate terms.
+  // duplicate terms.  If a comparator function is supplied, it
+  // defines an ordering of the deduplicated terms by return true when
+  // its first argument is less than its second.
   conjunctionDeduper: {
     action: function(conj, comparator) {
       var map = new Y.TermMap();
@@ -2324,9 +2321,9 @@ var ruleInfo = {
     }
   },
 
-  // Derives a step with hypotheses deduplicated, including removal of
-  // occurrences of T.  Works with hypotheses and with plain
-  // implications.
+  // Derives a step with hypotheses deduplicated and ordered as by
+  // sourceStepComparator, including removal of occurrences of T.
+  // Works with hypotheses and with plain implications.
   dedupeHyps: {
     action: function(step) {
       step.assertCall2('-->');
@@ -2874,6 +2871,26 @@ var ruleInfo = {
     inputs: {term: 1},
     form: 'Term to rewrite: <input name=term>',
     comment: 'Find rewriter to simplify type expression with neg or recip.'
+  },
+
+  // Consider a term that we may wish to rewrite.  If the term has no
+  // arithmetic operators, this is the same as eqSelf, but it
+  // automatically assumes variables input to math operators are of
+  // type R (real).
+  consider: {
+    action: function(term) {
+      var step = rules.eqSelf(term);
+      var conditions = term.mathVarConditions();
+      if (conditions) {
+        step = rules.anyImpliesTheorem(conditions, step);
+        step = rules.asHypotheses(step);
+      }
+      return step.justify('consider', arguments);
+    },
+    inputs: {term: 1},
+    form: 'Term to consider: <input name=term>',
+    comment: ('Term to consider for conversion to some other form. ' +
+              'For a math expression result looks like H |- <term> = <term>')
   },
 
 
