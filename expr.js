@@ -669,6 +669,33 @@ Expr.prototype.mathVars = function() {
 };
 
 /**
+ * Returns a conjunction of conditions that each of the mathVars of
+ * this expression is of type R (real), or null if the set of mathVars
+ * is empty.
+ *
+ * If the optional expr is present, uses that as an initial conjunct
+ * to add to.
+ */
+Expr.prototype.mathVarConditions = function(expr) {
+  var infix = Y.infixCall;
+  var real = new Var('R');
+  // Order the names for nice presentation.
+  var names = [];
+  for (var v in this.mathVars()) {
+    names.push(v);
+  }
+  names.sort();
+  Y.each(names, function(name) {
+      if (expr) {
+        expr = infix(expr, '&&', call(real, name));
+      } else {
+        expr = call(real, name);
+      }
+    });
+  return expr;
+};
+
+/**
  * Finds and returns a set of all the names bound in this expression
  * at the location given by the path, represented by a Map from names
  * to true.
@@ -3389,6 +3416,8 @@ function sourceStepLess(e1, e2) {
 
 /**
  * Comparator for Array.sort corresponding to sourceStepLess.
+ * Expressions from assumptions (steps) come before others, and others
+ * sort lexicographically using "dump".
  */
 function sourceStepComparator(e1, e2) {
   if (e1.sourceStep) {
