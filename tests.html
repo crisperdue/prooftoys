@@ -485,6 +485,18 @@ YUI({filter: null, insertBefore: 'styles'})
         check('{x: true}', 'x + ({z. z = y} 1)');
       },
 
+      testMathVarConditions: function() {
+        function check(expected, input) {
+          input = typeof input == 'string' ? Y.parse(input) : input;
+          var actual = input.mathVarConditions();
+          assertEqual(expected, actual + '');
+        }
+        check('undefined', 'x');
+        check('(R x)', 'x + x');
+        check('((R x) && (R y))', 'y + x * y');
+        check('(((R x) && (R y)) && (R z))', 'z * y * x');
+      },
+
       testNormalized: function() {
         var e1 = call(lambda(x, call(f, x)), _var('y'));
         var result = Y.normalized(e1);
