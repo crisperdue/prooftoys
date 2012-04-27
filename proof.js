@@ -551,6 +551,10 @@ ProofControl.prototype.handleExprClick = function(expr) {
 //// PROOF and STEP RENDERING
 ////
 
+// String containing just the turnstile math character.  See
+// http://tlt.its.psu.edu/suggestions/international/bylanguage/mathchart.html
+var _turnstile = Y.Node.create('&#8870;').get('text');
+
 /**
  * Create and return a YUI node to display the renderable step within
  * the given controller.  This also sets up event handlers for click
@@ -595,7 +599,7 @@ function renderStep(step, controller) {
   stepNode.one('.stepNumber').setContent(n);
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
-  var wffNode = step.renderAsStep(true);
+  var wffNode = renderAsStep(step, true);
   stepNode.one('.wff').setContent(wffNode);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
@@ -679,52 +683,77 @@ function renderStep(step, controller) {
  * hypotheses that come from within the current subproof versus those
  * that come from outside.
  */
-Expr.prototype.renderAsStep = function(omit) {
-  var step = this;
-  if (this.hasHyps) {
-    // Note that only top-level expressions can have hypotheses.
-    var wffNode = step.node = exprNode();
-    // Walk through the _original_ LHS.  This code might mirror the
-    // intent a bit more closely by specifically walking down through
-    // calls to '&&' rather than all subexpressions.
-    function renderHyps(expr) {
-      if (expr.sourceStep) {
-        var source = expr.sourceStep;
-        var node = expr.node = exprNode();
-        if (source == step) {
-          // This step does not yet have its rendering set.
-          node.append(step.stepNumber);
-        } else {
-          node.append(expr.sourceStep.rendering.stepNumber);
-        }
-        wffNode.append(node);
-      } else if (expr.isCall2('&&')) {
-        renderHyps(expr.getLeft());
-        wffNode.append(textNode(', '));
-        var rhs = expr.getRight();
-        if (rhs.isCall2('&&')) {
-          wffNode.append(textNode('('));
-          renderHyps(rhs);
-          wffNode.append(textNode(')'));
-        } else {
-          renderHyps(rhs);
-        }
-      } else {
-        wffNode.append(expr._render(true));
-      }
-    }
-    renderHyps(step.getLeft());
+function renderAsStep(step, omit) {
+  if (step.hasHyps) {
+    var wffNode = step.node = renderHyps(step.getLeft());
     wffNode.append(textNode(' ' + _turnstile + ' '));
     wffNode.append(step.getRight()._render(true));
     return wffNode;
   } else {
-    return this._render(omit);
+    return step._render(omit);
   }
 };
 
-// String containing just the turnstile math character.  See
-// http://tlt.its.psu.edu/suggestions/international/bylanguage/mathchart.html
-var _turnstile = Y.Node.create('&#8870;').get('text');
+/**
+ * Walk through the expression as a set of hypotheses.  This code
+ * might recurs both left and right, which may help displaying
+ * hypotheses that are in the process of being rearranged.
+ */
+function renderHyps(expr) {
+  var mainNode = exprNode();
+  if (Y.suppressRealTypeDisplays) {
+    expr = omittingReals(expr);
+  }
+  if (!expr) {
+    return mainNode;
+  }
+  function render(expr) {
+    if (expr.sourceStep) {
+      var node = expr.node = exprNode();
+      // Note that this requires the unrendered proof step to be already
+      // linked to a rendering with proper stepNumber:
+      node.append(expr.sourceStep.rendering.stepNumber);
+      mainNode.append(node);
+    } else if (expr.isCall2('&&')) {
+      render(expr.getLeft());
+      mainNode.append(textNode(', '));
+      var rhs = expr.getRight();
+      if (rhs.isCall2('&&')) {
+        mainNode.append(textNode('('));
+        render(rhs);
+        mainNode.append(textNode(')'));
+      } else {
+        render(rhs);
+      }
+    } else {
+      mainNode.append(expr._render(true));
+    }
+  }
+  render(expr);
+  return mainNode;
+}
+
+/**
+ * Returns a conjunction of a subset of the given hyps (a chain of
+ * conjuncts or null).  If the set is empty returns null.
+ * Note that this does not copy any conjuncts in the chain.
+ */
+function omittingReals(hyps) {
+  if (!hyps) {
+    return null;
+  }
+  var result = null;
+  hyps.eachHyp(function(hyp) {
+      if (!hyp.isCall1('R') || !hyp.arg.isVariable()) {
+        if (result) {
+          result = Y.infixCall(result, '&&', hyp);
+        } else {
+          result = hyp;
+        }
+      }
+    });
+  return result;
+}
 
 /**
  * Build and return a Node of class "expr".
@@ -847,7 +876,6 @@ Lambda.prototype._render = function(omit) {
   node.append('}');
   return node;
 };
-
 
 /**
  * Returns an array of the unrendered steps leading up to and
@@ -1441,5 +1469,8 @@ Y.getExpr = getExpr;
 // Global configuration variable for displaying extra information per
 // step when hovered.
 Y.useHoverOverlays = false;
+
+// Global parameter to suppress displaying hypotheses such as "(R x)".
+Y.suppressRealTypeDisplays = true;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'step-editor']});
