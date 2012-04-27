@@ -5,6 +5,12 @@ YUI.add('proof', function(Y) {
 // Use the application's assert function.
 var assert = Y.assertTrue;
 
+// Make the main classes available without "Y.":
+var Expr = Y.Expr;
+var Var = Y.Var;
+var Call = Y.Call;
+var Lambda = Y.Lambda;
+
 
 //// APPLICATION DATA STORAGE
 
@@ -541,7 +547,9 @@ ProofControl.prototype.handleExprClick = function(expr) {
 };
 
 
-// INTERNAL TO PROOFCONTROL
+////
+//// PROOF and STEP RENDERING
+////
 
 /**
  * Create and return a YUI node to display the renderable step within
@@ -656,6 +664,197 @@ function renderStep(step, controller) {
   }
   return stepNode;
 }
+
+// NOTE that some methods on Expr and its subclasses appear here.
+
+/**
+ * Renders this (renderable copy of an original) expression into a new
+ * YUI node, returning the node.  The optional boolean "omit" argument
+ * if true no parentheses are rendered if expr is a Call.
+ *
+ * TODO: Consider fleshing out the concept of display with fewer
+ * parentheses.
+ *
+ * TODO: When displaying hypotheses, somehow properly distinguish
+ * hypotheses that come from within the current subproof versus those
+ * that come from outside.
+ */
+Expr.prototype.render = function(omit) {
+  var step = this;
+  if (this.hasHyps) {
+    // Note that only top-level expressions can have hypotheses.
+    var wffNode = step.node = exprNode();
+    // Walk through the _original_ LHS.  This code might mirror the
+    // intent a bit more closely by specifically walking down through
+    // calls to '&&' rather than all subexpressions.
+    function renderHyps(expr) {
+      if (expr.sourceStep) {
+        var source = expr.sourceStep;
+        var node = expr.node = exprNode();
+        if (source == step) {
+          // This step does not yet have its rendering set.
+          node.append(step.stepNumber);
+        } else {
+          node.append(expr.sourceStep.rendering.stepNumber);
+        }
+        wffNode.append(node);
+      } else if (expr.isCall2('&&')) {
+        renderHyps(expr.getLeft());
+        wffNode.append(textNode(', '));
+        var rhs = expr.getRight();
+        if (rhs.isCall2('&&')) {
+          wffNode.append(textNode('('));
+          renderHyps(rhs);
+          wffNode.append(textNode(')'));
+        } else {
+          renderHyps(rhs);
+        }
+      } else {
+        wffNode.append(expr._render(true));
+      }
+    }
+    renderHyps(step.getLeft());
+    wffNode.append(textNode(' ' + _turnstile + ' '));
+    wffNode.append(step.getRight()._render(true));
+    return wffNode;
+  } else {
+    return this._render(omit);
+  }
+};
+
+// String containing just the turnstile math character.  See
+// http://tlt.its.psu.edu/suggestions/international/bylanguage/mathchart.html
+var _turnstile = Y.Node.create('&#8870;').get('text');
+
+/**
+ * Packages up the "right way" to append a SPAN to a DOM node.
+ */
+function appendSpan(node) {
+  return node.appendChild('<span class=expr></span>');
+}
+
+/**
+ * Build and return a Node of class "expr".
+ */
+function exprNode() {
+  return Y.Node.create('<span class=expr></span>');
+}
+
+/**
+ * Converts text symbols to HTML for display.
+ */
+var entities = {
+  // Do not use nonbreaking hyphens in case the end user wants to copy and
+  // paste displayed text.  Instead consider CSS hyphenation options.
+  // '-->': '&#8209;&#8209&gt;',   // &rArr; looks lousy in fixed-width font.
+  '>=': '&ge;',
+  '<=': '&le;',
+  '!=': '&ne;',
+  '==': '&equiv;'
+};
+
+/**
+ * Create and return a text node containing a space.  YUI (and IE)
+ * trim whitespace if you put in text in other ways.
+ */
+function space() {
+  return document.createTextNode(' ');
+}
+
+function textNode(text) {
+  return document.createTextNode(text);
+}
+
+// _render(omit)
+//
+// Render this expression into a new YUI node, returning the node.
+// Sets the expression's "node" property to refer to the node created
+// to enclose this expression.  Should be done only once to any given
+// expression.  Helper for the render method.  (Not public)
+//
+// If the optional "omit" argument is true and this is a Call, omit
+// the enclosing parentheses.
+// 
+//
+
+Var.prototype._render = function(omit) {
+  var node = this.node = exprNode();
+  var name = this.pname || this.name;
+  node.append(entities[name] || name);
+  return node;
+};
+
+Call.prototype._render = function(omit) {
+  var node = this.node = exprNode();
+  var stepNum = (Y.trackSourceSteps
+                 && this.sourceStep
+                 && this.sourceStep.rendering.stepNumber);
+  omit = omit && !stepNum;
+  if (!omit) {
+    if (Y.trackSourceSteps) {
+      if (this.sourceStep) {
+        node.append('$');
+      }
+      if (stepNum) {
+        node.append(stepNum);
+      }
+    }
+    node.append('(');
+  }
+  if (this.fn instanceof Call && this.fn.fn instanceof Var) {
+    // This is a call on a named function of two arguments.
+    if (Y.isInfixDesired(this.fn.fn)) {
+      // Non-alphabetic characters: use infix: "x + y"
+      var fnNode = this.fn.node = exprNode();
+      fnNode.append(this.fn.arg._render());
+      fnNode.append(space());
+      fnNode.append(this.fn.fn._render());
+      node.append(fnNode);
+      node.append(space());
+      node.append(this.arg._render());
+    } else {
+      // Alphabetic characters: function comes first.
+      var fnNode = this.fn.node = exprNode();
+      fnNode.append(this.fn.fn._render());
+      fnNode.append(space());
+      fnNode.append(this.fn.arg._render());
+      node.append(fnNode);
+      node.append(space());
+      node.append(this.arg._render());
+    }
+  } else if (this.fn instanceof Var && Y.isInfixDesired(this.fn)) {
+    // Infix operator, but only one argument: "x +"
+    node.append(this.arg._render());
+    node.append(space());
+    node.append(this.fn._render());
+  } else {
+    // Normal function call: "f x"
+    node.append(this.fn._render());
+    node.append(space());
+    node.append(this.arg._render());
+  }
+  if (!omit) {
+    node.append(')');
+  }
+  return node;
+};
+
+Lambda.prototype._render = function(omit) {
+  var node = this.node = exprNode();
+  var stepNum = (Y.trackSourceSteps
+                 && this.sourceStep
+                 && this.sourceStep.rendering.stepNumber);
+  if (stepNum) {
+    node.append('$' + stepNum);
+  }
+  node.append('{');
+  node.append(this.bound._render());
+  node.append(textNode('. '));
+  node.append(this.body._render(true));
+  node.append('}');
+  return node;
+};
+
 
 /**
  * Returns an array of the unrendered steps leading up to and
