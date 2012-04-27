@@ -1301,14 +1301,8 @@ function Var(name, position) {
 };
 Y.extend(Var, Expr);
 
-Y.displayVarTypes = false;
-
 Var.prototype._toString = function() {
-  if (Y.displayVarTypes && this.type) {
-    return (this.pname || this.name) + ':' + this.type;
-  } else {
-    return (this.pname || this.name);
-  }
+  return (this.pname || this.name);
 };
 
 Var.prototype.dump = function() {
@@ -2691,9 +2685,7 @@ function findType(expr) {
 
   // This is the core of the type inference algorithm.
   function analyze1(expr) {
-    if (expr.type) {
-      return expr.type;
-    } else if (expr instanceof Var) {
+    if (expr instanceof Var) {
       return getType(expr.name);
     } else if (expr instanceof Call) {
       var fnType = analyze1(expr.fn);
@@ -3682,7 +3674,6 @@ Y.errors = errors;
 
 // Types
 
-// Y.displayVarTypes -- a variable, declared previously.
 Y.boolean = boolean;
 Y.individual = individual;
 Y.TypeVariable = TypeVariable;
