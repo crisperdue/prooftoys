@@ -372,6 +372,20 @@ var ruleInfo = {
     comment: 'Derives A = A.'
   },
 
+  
+  // The two forms of "=" are interchangeable (other than precedence).
+  eqIsEquiv: {
+    action: function() {
+      var step1 = rules.eqSelf(new Y.Var('='));
+      var step2 = rules.eqSelf(new Y.Var('=='));
+      var result = rules.r(step2, step1, '/right');
+      return result.justify('eqIsEquiv', []);
+    },
+    form: '',
+    comment: '"Equiv" and "equal mean the same thing."'
+  },
+      
+
   // r5201a, not used.  Works with hypotheses.
   replaceWhole: {
     action: function(a, ab) {
