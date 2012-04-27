@@ -595,7 +595,7 @@ function renderStep(step, controller) {
   stepNode.one('.stepNumber').setContent(n);
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
-  var wffNode = step.render(true);
+  var wffNode = step.renderAsStep(true);
   stepNode.one('.wff').setContent(wffNode);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
@@ -679,7 +679,7 @@ function renderStep(step, controller) {
  * hypotheses that come from within the current subproof versus those
  * that come from outside.
  */
-Expr.prototype.render = function(omit) {
+Expr.prototype.renderAsStep = function(omit) {
   var step = this;
   if (this.hasHyps) {
     // Note that only top-level expressions can have hypotheses.
@@ -725,13 +725,6 @@ Expr.prototype.render = function(omit) {
 // String containing just the turnstile math character.  See
 // http://tlt.its.psu.edu/suggestions/international/bylanguage/mathchart.html
 var _turnstile = Y.Node.create('&#8870;').get('text');
-
-/**
- * Packages up the "right way" to append a SPAN to a DOM node.
- */
-function appendSpan(node) {
-  return node.appendChild('<span class=expr></span>');
-}
 
 /**
  * Build and return a Node of class "expr".
