@@ -2889,8 +2889,24 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to consider: <input name=term>',
-    comment: ('Term to consider for conversion to some other form. ' +
-              'For a math expression result looks like H |- <term> = <term>')
+    comment: ('Term to consider for transformation')
+  },
+
+  // Identical to "consider", but uses a selected term.
+  considerPart: {
+    action: function(step_arg, path) {
+      var term = step_arg.locate(path);
+      var step = rules.eqSelf(term);
+      var conditions = term.mathVarConditions();
+      if (conditions) {
+        step = rules.anyImpliesTheorem(conditions, step);
+        step = rules.asHypotheses(step);
+      }
+      return step.justify('considerPart', arguments);
+    },
+    inputs: {site: 1},
+    form: '',
+    comment: ('Consider a subexpression for transformation')
   },
 
 
