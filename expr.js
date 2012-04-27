@@ -920,7 +920,7 @@ Expr.prototype.hypLocater = function(hyp) {
       var left = (right == h
                   ? new Var('h' + (pos + 1))
                   : locater(self.getLeft(), pos + 1));
-      return new Y.infixCall(left, '&&', right);
+      return Y.infixCall(left, '&&', right);
     }
   }
   return locater(this, 1);
