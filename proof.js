@@ -557,7 +557,10 @@ var _turnstile = Y.Node.create('&#8870;').get('text');
 
 /**
  * Create and return a YUI node to display the renderable step within
- * the given controller.  This also sets up event handlers for click
+ * the given controller.  Assumes that the renderable step already
+ * inserted into the controller's steps array.
+ *
+ * This also sets up event handlers for click
  * and hover events within the step.  Does not insert the new node
  * into the document.
  *
@@ -599,7 +602,9 @@ function renderStep(step, controller) {
   stepNode.one('.stepNumber').setContent(n);
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
-  var wffNode = renderAsStep(step, true);
+  var elide = wantLeftElision(step, controller);
+  step.hasLeftElision = elide;
+  var wffNode = renderAsStep(step);
   stepNode.one('.wff').setContent(wffNode);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
@@ -672,9 +677,27 @@ function renderStep(step, controller) {
 // NOTE that some methods on Expr and its subclasses appear here.
 
 /**
+ * Returns true iff policy is to elide the LHS of the given step
+ * within the given ProofControl, assumed to contain it.
+ */
+function wantLeftElision(step, controller) {
+  if (step.ruleName == 'display' || step.ruleName == 'asImplication') {
+    return false;
+  }
+  var index = controller.steps.indexOf(step);
+  var prev = index > 0 ? controller.steps[index - 1] : null;
+  return (prev &&
+          (prev.hasLeftElision || prev.ruleName == 'consider') &&
+          // "Matches" is OK, maybe better to define and use "identical".
+          // They are copies so not ==.
+          step.unHyp().getLeft().matches(prev.unHyp().getLeft()));
+}
+
+
+/**
  * Renders this (renderable copy of an original) expression into a new
- * YUI node, returning the node.  The optional boolean "omit" argument
- * if true no parentheses are rendered if expr is a Call.
+ * YUI node, returning the node.  Omits surrounding parens if the step
+ * is a Call.
  *
  * TODO: Consider fleshing out the concept of display with fewer
  * parentheses.
@@ -683,16 +706,44 @@ function renderStep(step, controller) {
  * hypotheses that come from within the current subproof versus those
  * that come from outside.
  */
-function renderAsStep(step, omit) {
+function renderAsStep(step) {
   if (step.hasHyps) {
     var wffNode = step.node = renderHyps(step.getLeft());
     wffNode.append(textNode(' ' + _turnstile + ' '));
-    wffNode.append(step.getRight()._render(true));
+    wffNode.append(renderMain(step));
     return wffNode;
   } else {
-    return step._render(omit);
+    return renderMain(step);
   }
 };
+
+/**
+ * Renders the "main" part of a renderable step, meaning everything
+ * but the hypotheses.  Currently gives special treatment to equations
+ * starting with rules.consider and immediately following steps.
+ * Returns a new YUI node that renders it.
+ */
+function renderMain(step) {
+  var main = step.unHyp();
+  if (main.isCall2('=')) {
+    if (step.ruleName == 'consider') {
+      var node = main.node = exprNode();
+      node.append(main.getRight()._render(true));
+      node.append(textNode(' = ... '));
+    } else {
+      if (step.hasLeftElision) {
+        var node = main.node = exprNode();
+        node.append(textNode(' ... = '));
+        node.append(main.getRight()._render(true));
+      } else {
+        var node = main._render(true);
+      }
+    }
+    return node;
+  } else {
+    return main._render(true);
+  }
+}
 
 /**
  * Walk through the expression as a set of hypotheses.  This code
@@ -735,8 +786,10 @@ function renderHyps(expr) {
 
 /**
  * Returns a conjunction of a subset of the given hyps (a chain of
- * conjuncts or null).  If the set is empty returns null.
- * Note that this does not copy any conjuncts in the chain.
+ * conjuncts or null).  If the set is empty returns null.  Note that
+ * this does not copy any conjuncts in the chain.  The subset omits
+ * any that declare a variable to be a real number using the "R"
+ * predicate.
  */
 function omittingReals(hyps) {
   if (!hyps) {
@@ -978,8 +1031,8 @@ function computeStepInfo(step) {
       stepInfo += ' <span class=stepReference></span>';
     });
 
-    var exclusions = ['assume', 'assert', 'axiom4', 'eqSelf', 'applier',
-                      'mergeConjunctions'];
+    var exclusions = ['assume', 'assert', 'axiom4', 'consider', 'eqSelf',
+                      'applier', 'mergeConjunctions'];
     if (exclusions.indexOf(step.ruleName) < 0) {
       var argDetails = computeExtraArgInfo(step);
       // TODO: Consider showing some of the arguments.
