@@ -730,11 +730,11 @@ function renderMain(step) {
       var node = main.node = exprNode();
       node.append(main.getRight()._render(true));
       node.append(textNode(' = '));
-      node.append('<span class=elipsis>... </span>');
+      node.append('<span class=ellipsis>&hellip;</span>');
     } else {
       if (step.hasLeftElision) {
         var node = main.node = exprNode();
-        node.append('<span class=elipsis>... </span>');
+        node.append('<span class=ellipsis>&hellip;</span>');
         node.append(textNode(' = '));
         node.append(main.getRight()._render(true));
       } else {
