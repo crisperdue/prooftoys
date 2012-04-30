@@ -43,6 +43,10 @@ code {
   white-space: wrap;
 }
 
+.elipsis {
+  color: gray;;
+}
+
 /* Just below the main heading */
 div#slogans {
   margin-bottom: 1em;

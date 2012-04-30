@@ -729,11 +729,13 @@ function renderMain(step) {
     if (step.ruleName == 'consider') {
       var node = main.node = exprNode();
       node.append(main.getRight()._render(true));
-      node.append(textNode(' = ... '));
+      node.append(textNode(' = '));
+      node.append('<span class=elipsis>... </span>');
     } else {
       if (step.hasLeftElision) {
         var node = main.node = exprNode();
-        node.append(textNode(' ... = '));
+        node.append('<span class=elipsis>... </span>');
+        node.append(textNode(' = '));
         node.append(main.getRight()._render(true));
       } else {
         var node = main._render(true);
