@@ -122,6 +122,19 @@ var ruleInfo = {
   },
       
   /**
+   * A no-op step that breaks the cycle of displaying with elision.
+   */
+  display: {
+    action: function(step) {
+      return step.justify('display', arguments, [step]);
+    },
+    inputs: {step: 1},
+    form: ('Does nothing, but result will display in full. '
+           + '<input name=step>'),
+    comment: 'No-op, but result will be fully displayed'
+  },
+      
+  /**
    * From an implication with LHS consisting of a set of hypotheses,
    * derives the equivalent step with the hypotheses.
    */
