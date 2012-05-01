@@ -1034,7 +1034,7 @@ function computeStepInfo(step) {
     });
 
     var exclusions = ['assume', 'assert', 'axiom4', 'consider', 'eqSelf',
-                      'applier', 'mergeConjunctions'];
+                      'applier', 'tautology', 'mergeConjunctions'];
     if (exclusions.indexOf(step.ruleName) < 0) {
       var argDetails = computeExtraArgInfo(step);
       // TODO: Consider showing some of the arguments.
