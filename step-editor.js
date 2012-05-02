@@ -128,14 +128,23 @@ function StepEditor(controller) {
   this.ruleName = null;
   // Make the input field into an autocompleter.
   this.completer = this.autoCompleter();
-  // Force a query and display after page layout is complete.
-  window.setTimeout(function() { self.reset(); }, 0);
-  // Keyup events bubble to here from the inputs in the form.
-  this.form.on('keyup', function(event) {
+  // Keyboard events bubble to here from the inputs in the form.
+  // Use "keydown" because "keyup" would catch the "up" event from
+  // the Enter key in the autocompleter field.
+  this.form.on('keydown', function(event) {
     if (event.keyCode == 13) {
       self.tryExecuteRule(true);
     }
   });
+  this.input.on('focus', function() {
+      if (self.input.get('value') == '') {
+        // Query on "initial" focus, working around autocomplete
+        // behavior that only queries on keystrokes.
+        self.completer.sendRequest('');
+      }
+    });
+  // Force a query and display after page layout is complete.
+  this.focus();
   var clearer = div.one('.sted-clear');
   clearer.on('click', function() { self.reset(); });
 }
@@ -167,16 +176,21 @@ StepEditor.prototype.error = function(message) {
 StepEditor.prototype.reset = function() {
   var self = this;
   this.input.set('value', '');
-  window.setTimeout(function() { self.input.focus(); }, 0);
-  // If a form was shown, now show the name input field.
   this.input.removeClass('hidden');
-  // Un-hide the completer hidden via workaround.
-  this.completer.get('boundingBox').removeClass('hidden');
   this.form.setContent('');
   // Send an empty request to make sure the completer is laid out wide
   // enough to accommodate the widest lines.
   this.completer.sendRequest('');
   this.ruleName = null;
+};
+
+/**
+ * Focus in the input field after opportunity for everything to be
+ * linked into the DOM and/or un-hidden.
+ */
+StepEditor.prototype.focus = function() {
+  var self = this;
+  window.setTimeout(function() { self.input.focus(); }, 0);
 };
 
 /**
@@ -193,8 +207,6 @@ StepEditor.prototype.handleSelection = function(event) {
       // Template is not empty.  (If there is no template, the rule will
       // not be "offerable" and thus not selected.)
       this.input.addClass('hidden');
-      // Hide the completer even though it is "always shown".
-      this.completer.get('boundingBox').addClass('hidden');
       this.form.setContent(template);
       addClassInfo(this.form);
       if (!usesSite(rule)) {
@@ -294,7 +306,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
     this.fillFromForm(args);
   } catch(error) {
     // The form is not ready, fail.
-    if (reportFailure && error.message != 'No parser input') {
+    if (reportFailure) {
       this.error(error.message);
     }
     return false;
@@ -319,6 +331,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
     this.controller.deselectStep();
     this.controller.proofChanged();
     this.reset();
+    this.focus();
     value = true;
   } catch(error) {
     this.error(error.message);
@@ -540,7 +553,6 @@ StepEditor.prototype.autoCompleter = function() {
                 render: true,
                 minQueryLength: 0,
 		activateFirstItem: true,
-                alwaysShowList: true
   };
   var ac = new Y.AutoCompleteList(config);
   // Do this after the event so actions such as updating the input

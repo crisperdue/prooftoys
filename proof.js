@@ -134,9 +134,10 @@ function ProofEditor() {
   // Update the step editor query results when the selection may
   // have changed.
   this._mainControl.selectionChanged = function() {
-    // This forces full display of the appropriate inference rules for
+    // Forces full display of the appropriate inference rules for
     // the new selection.
     this.stepEditor.reset();
+    this.stepEditor.focus();
   };
 
   // Toggling the proof state display visibility with a button.
