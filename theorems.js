@@ -38,6 +38,8 @@ var _allHyps = {};
 //   of the step editor.
 // comment: plain text comment to become the title of mentions of the rule
 //   name in proof displays and the description in subproof displays.
+// description: word or phrase to display for the rule name.
+
 var ruleInfo = {
 
   /**
@@ -2905,6 +2907,7 @@ var ruleInfo = {
   // automatically assumes variables input to math operators are of
   // type R (real).
   consider: {
+    description: 'expression to consider',
     action: function(term) {
       var step = rules.eqSelf(term);
       var conditions = term.mathVarConditions();
@@ -2970,23 +2973,29 @@ var ruleInfo = {
 // an actual inference rule.
 var rewriters = {
   commutePlus: {
-    axiom: 'axiomCommutativePlus'
+    axiom: 'axiomCommutativePlus',
+    description: 'commutative addition'
   },
   commuteTimes: {
-    axiom: 'axiomCommutativeTimes'
+    axiom: 'axiomCommutativeTimes',
+    description: 'commutative multiplication'
   },
   associatePlusToLeft: {
-    axiom: 'axiomAssociativePlus'
+    axiom: 'axiomAssociativePlus',
+    description: 'associative addition'
   },
   associatePlusToRight: {
     axiom: 'axiomAssociativePlus',
+    description: 'associative addition',
     input: 'right'
   },
   associateTimesToLeft: {
-    axiom: 'axiomAssociativeTimes'
+    axiom: 'axiomAssociativeTimes',
+    description: 'associative multiplication'
   },
   associateTimesToRight: {
     axiom: 'axiomAssociativeTimes',
+    description: 'associative multiplication',
     input: 'right'
   },
   distribute: {
@@ -2997,27 +3006,34 @@ var rewriters = {
     input: 'right'
   },
   plusZeroElim: {
-    axiom: 'axiomPlusZero'
+    axiom: 'axiomPlusZero',
+    description: '[x + 0 = x]'
   },
   plusZeroIntro: {
     axiom: 'axiomPlusZero',
+    description: '[x = x + 0]',
     input: 'right'
   },
   timesOneElim: {
-    axiom: 'axiomTimesOne'
+    axiom: 'axiomTimesOne',
+    description: '[x * 1 = x]'
   },
   timesOneIntro: {
     axiom: 'axiomTimesOne',
+    description: '[x = x * 1]',
     input: 'right'
   },
   timesZeroElim: {
-    axiom: 'axiomTimesZero'
+    axiom: 'axiomTimesZero',
+    description: '[x * 0 = 0]'
   },
   plusNegElim: {
-    axiom: 'axiomNeg'
+    axiom: 'axiomNeg',
+    description: '[x + neg x = 0]'
   },
   timesRecipElim: {
-    axiom: 'axiomReciprocal'
+    axiom: 'axiomReciprocal',
+    description: '[x * recip x = 1]'
   }
 };  
 
@@ -3054,6 +3070,7 @@ function genRewriters(map) {
       action: Y.rbind(generators[input], null, info.axiom, name),
       inputs: {site: 1},
       form: '',
+      description: info.description || name,
       comment: comment
     };
   }

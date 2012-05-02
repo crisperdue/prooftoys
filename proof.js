@@ -11,7 +11,6 @@ var Var = Y.Var;
 var Call = Y.Call;
 var Lambda = Y.Lambda;
 
-
 //// APPLICATION DATA STORAGE
 
 var proofToyState = {
@@ -680,7 +679,7 @@ function renderStep(step, controller) {
                
   // Caution: passing null to Y.on selects everything.
   var target = stepNode.one('span.ruleName');
-  if (target) {
+  if (target && Y.modes.subproofs) {
     target.on('mousedown', function(event) {
           // Don't give the proof step a chance to select itself.
           event.stopPropagation();
@@ -1078,8 +1077,14 @@ function computeStepInfo(step) {
 function fancyName(expr) {
   var name = expr.ruleName;
   var info = Y.rules[name].info;
+  var description = info.description || name;
   var comment = Y.Escape.html(info.comment || '');
-  return '<span class=ruleName title="' + comment + '">' + name + '</span>';
+  if (Y.modes.subproofs) {
+    return ('<span class=ruleName title="' + comment + '">'
+            + description + '</span>');
+  } else {
+    return description;
+  }
 }
 
 /**
@@ -1551,5 +1556,11 @@ Y.useHoverOverlays = false;
 
 // Global parameter to suppress displaying hypotheses such as "(R x)".
 Y.suppressRealTypeDisplays = true;
+
+// Override these properties on the page to get custom modes of
+// display and/or operation.
+Y.modes = {
+  subproofs: true
+};
 
 }, '0.1', {requires: ['array-extras', 'expr', 'step-editor']});
