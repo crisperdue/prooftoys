@@ -233,6 +233,8 @@ span.ruleName {
 /* Overrides styles for .proofDisplay. */
 .stepEditor {
   background-color: white;
+  /* Leave space for the autocompleter */
+  margin-bottom: 18em;
 }
 
 /* Text used as a hint, as in a text field */
@@ -264,6 +266,15 @@ input.varName, input.step, input.equation, input.implication {
 .yui3-aclist {
   font-size: 80%;
 }
+
+.yui3-aclist-content {
+  /* YUI autocompleter display.  This goes in the margin below the step
+    editor, which is 18 em high, but the font here is smaller.  */
+  max-height: 20em;
+  overflow: auto;
+}
+
+
 
 /* Proof state display */
 

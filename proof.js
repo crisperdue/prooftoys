@@ -123,7 +123,20 @@ function ProofEditor() {
     });
   // Make the ProofControl save state when the proof changes.
   this._mainControl.proofChanged = function() {
+    // Changing the proof may change selections (without registering a
+    // click on a step).  It also moves the location of the step
+    // editor on the page, and both are handled appropriately by a
+    // reset.
     self._refresher.activate();
+    // "this" is the ProofControl.
+    this.stepEditor.reset();
+  };
+  // Update the step editor query results when the selection may
+  // have changed.
+  this._mainControl.selectionChanged = function() {
+    // This forces full display of the appropriate inference rules for
+    // the new selection.
+    this.stepEditor.reset();
   };
 
   // Toggling the proof state display visibility with a button.
@@ -302,6 +315,12 @@ function ProofControl() {
  * provide their own actions.
  */
 ProofControl.prototype.proofChanged = function() {};
+
+/**
+ * Like proofChanged, default is a no-op but instances may override
+ * this.
+ */
+ProofControl.prototype.selectionChanged = function() {};
 
 /**
  * Sets the steps of the current proof to be the ones in the given
@@ -517,6 +536,8 @@ ProofControl.prototype.handleStepClick = function(step) {
     if (step != selected) {
       this.selectStep(step);
     }
+    // Communicate that the selection _may_ have changed.
+    this.selectionChanged();
   }
 };
 
@@ -543,6 +564,8 @@ ProofControl.prototype.handleExprClick = function(expr) {
     this.selectStep(step);
     // Don't bubble the event up to the proof step.
     event.stopPropagation();
+    // Communicate that the selection _may_ have changed.
+    this.selectionChanged();
   }
 };
 

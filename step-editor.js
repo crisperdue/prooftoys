@@ -113,7 +113,8 @@ function StepEditor(controller) {
   this._hint = 'Enter axiom or theorem name; for inference select target first';
   // Create a DIV with the step editor content.
   var div = Y.Node.create('<div class=stepEditor style="clear: both"></div>');
-  div.append('<input class=sted-input maxlength=200>'
+  div.append('<input class=sted-input maxlength=200 title="'
+             + this._hint + '">'
 	     + '<span class=sted-form></span>');
   div.append('<input class=sted-clear type=button value=x '
 	     + 'title="Clear the input">');
@@ -127,17 +128,8 @@ function StepEditor(controller) {
   this.ruleName = null;
   // Make the input field into an autocompleter.
   this.completer = this.autoCompleter();
-  this.reset();
-  var inputField = this.input;
-  // Selection of anything offered goes through the "selection" path.
-  inputField.on('keyup', function(event) {
-    if (event.keyCode == 13) {
-      var name = inputField.get('value').replace(/^xiom/, 'axiom');
-      if (!(Y.rules.hasOwnProperty(name))) {
-	self.error('No rule ' + name);
-      }
-    }
-  });
+  // Force a query and display after page layout is complete.
+  window.setTimeout(function() { self.reset(); }, 0);
   // Keyup events bubble to here from the inputs in the form.
   this.form.on('keyup', function(event) {
     if (event.keyCode == 13) {
@@ -173,20 +165,23 @@ StepEditor.prototype.error = function(message) {
  * user's point of view.
  */
 StepEditor.prototype.reset = function() {
-  // Initially the input field displays a hint.
-  this.input.set('value', this._hint);
-  this.input.addClass('hinted');
+  var self = this;
+  this.input.set('value', '');
+  window.setTimeout(function() { self.input.focus(); }, 0);
   // If a form was shown, now show the name input field.
   this.input.removeClass('hidden');
-  // Make the user focus again to see the autocompleter.
-  this.input.blur();
-  this.completer.hide();
+  // Un-hide the completer hidden via workaround.
+  this.completer.get('boundingBox').removeClass('hidden');
   this.form.setContent('');
+  // Send an empty request to make sure the completer is laid out wide
+  // enough to accommodate the widest lines.
+  this.completer.sendRequest('');
   this.ruleName = null;
 };
 
 /**
- * Handler for autocompleter "selection" event.
+ * Handler for autocompleter "selection" event that triggers the
+ * action for that item.
  */
 StepEditor.prototype.handleSelection = function(event) {
   var name = event.result.text.replace(/^xiom/, 'axiom');
@@ -198,11 +193,15 @@ StepEditor.prototype.handleSelection = function(event) {
       // Template is not empty.  (If there is no template, the rule will
       // not be "offerable" and thus not selected.)
       this.input.addClass('hidden');
+      // Hide the completer even though it is "always shown".
+      this.completer.get('boundingBox').addClass('hidden');
       this.form.setContent(template);
       addClassInfo(this.form);
       if (!usesSite(rule)) {
 	this.addSelectionToForm(rule);
       }
+      var input = this.form.one('input');
+      input.focus();
     }
     this.tryExecuteRule(false);
   }
@@ -287,14 +286,15 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  * Return true on success, otherwise false.
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
+  // TODO: Get it together on failure reporting here.
   var rule = Y.rules[this.ruleName];
   var args = [];
   this.fillWithSelectedSite(args);
   try {
     this.fillFromForm(args);
   } catch(error) {
-    // The form is not ready, fail silently.
-    if (reportFailure) {
+    // The form is not ready, fail.
+    if (reportFailure && error.message != 'No parser input') {
       this.error(error.message);
     }
     return false;
@@ -531,21 +531,7 @@ function acceptsSelection(step, ruleName, acceptTerm) {
 StepEditor.prototype.autoCompleter = function() {
   var self = this;
   var input = this.input;
-  function focus() {
-    if (input.get('value') == self._hint) {
-      input.set('value', '');
-      input.removeClass('hinted');
-    }
-    // Cause the autocompleter to query and display the results now.
-    ac.sendRequest(input.get('value'));
-  }
-  input.on('focus', focus);
-  // TODO: Replace this hack with something more principled.
-  // This helps make sure that the autocompleter list disappears when
-  // the input field is no longer focused.
-  input.on('blur', function() {
-    Y.later(1000, null, function() { ac.hide(); });
-  });
+  var align = Y.WidgetPositionAlign;
   var config = {resultFilters: ['startsWith'],
                 resultHighlighter: 'startsWith',
 		resultFormatter: resultFormatter,
@@ -553,14 +539,14 @@ StepEditor.prototype.autoCompleter = function() {
                 inputNode: input,
                 render: true,
                 minQueryLength: 0,
-                maxResults: 25,
-		activateFirstItem: true
+		activateFirstItem: true,
+                alwaysShowList: true
   };
-  var ac = new Y.AutoComplete(config);
+  var ac = new Y.AutoCompleteList(config);
   // Do this after the event so actions such as updating the input
   // field override the default action.
   ac.after('select', function(e) {
-    self.handleSelection(e);
+     self.handleSelection(e);
   });
   return ac;
 };
