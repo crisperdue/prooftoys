@@ -632,13 +632,14 @@ function renderStep(step, controller) {
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
   // Set up click handlers for selections within the step.
-  wffNode.on('mousedown',
+  wffNode.on(TOUCHDOWN,
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
          controller.handleExprClick(getExpr(event.target));
+         event.preventDefault();
        });
-  stepNode.on('mousedown',
+  stepNode.on(TOUCHDOWN,
        function(event) {
          controller.handleStepClick(getProofStep(event.target));
        });
@@ -1557,10 +1558,17 @@ Y.useHoverOverlays = false;
 // Global parameter to suppress displaying hypotheses such as "(R x)".
 Y.suppressRealTypeDisplays = true;
 
+// Detect if the device has a touch screen, e.g. a tablet.
+// Mobile jQuery 1.1 does this same test.
+Y.hasTouchEvents = 'ontouchend' in document;
+
+// Name of event when the user touches the screen or presses the mouse.
+var TOUCHDOWN = Y.hasTouchEvents ? 'touchstart' : 'mousedown';
+
 // Override these properties on the page to get custom modes of
 // display and/or operation.
 Y.modes = {
   subproofs: true
 };
 
-}, '0.1', {requires: ['array-extras', 'expr', 'step-editor']});
+}, '0.1', {requires: ['array-extras', 'expr', 'step-editor', 'event-touch']});

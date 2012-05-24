@@ -123,6 +123,10 @@ table.proofDisplay {
 .proofSteps {
   background-color: #beb;
   padding: 2px;
+  /*
+     The touch screen tap highlighting is confusing, so prevent it.
+  */
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
   /* white-space: nowrap could go here to turn off text wrapping. */
 }
 
@@ -133,6 +137,11 @@ table.proofDisplay {
     font-family: monospace;
     padding: 2px;
     margin: 1px 0px;
+    /* If needed to avoid undesired text selection:
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    */
 }
 
 /* Step deleter control, only visible when the step is hovered. */
