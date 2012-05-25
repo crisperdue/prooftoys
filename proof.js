@@ -542,12 +542,12 @@ ProofControl.prototype.handleStepClick = function(step) {
 };
 
 /**
- * Handler for click on a subexpression in a step.
+ * Handles selection of an expression in a step.
  * Deselects any other selected expression in the step,
  * toggles the current one if already selected.  Prevents
  * event bubbling up to the step itself.
  */
-ProofControl.prototype.handleExprClick = function(expr) {
+ProofControl.prototype.handleExprSelection = function(expr) {
   if (this.editable) {
     var step = getProofStep(expr);
     var selection = this.selection;
@@ -636,7 +636,7 @@ function renderStep(step, controller) {
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
-         controller.handleExprClick(getExpr(event.target));
+         controller.handleExprSelection(getEffectiveSelection(event.target));
          event.preventDefault();
        });
   stepNode.on(TOUCHDOWN,
@@ -697,6 +697,42 @@ function renderStep(step, controller) {
   }
   return stepNode;
 }
+
+/**
+ * If not in simplified selections mode, just get the Expr for the
+ * target node.
+ *
+ * If selections are simplified, do not select the name of a function
+ * in a function call (including the operator of a call to a binary
+ * operator), nor the "Curried part" of an infix call.
+ *
+ * Argument is the target node of a selection event.
+ */
+function getEffectiveSelection(node) {
+  // TODO: Consider applying this concept to hovers also.
+  if (Y.simplifiedSelections) {
+    // This could be optimized for speed:
+    var expr = getExpr(node);
+    var nodeParent1 = node.ancestor('.expr');
+    var parent1 = getExpr(nodeParent1);
+    var parent2 = getExpr(nodeParent1.ancestor('.expr'));
+    if (expr instanceof Y.Var && Y.isInfixDesired(expr) && parent2.isCall2()) {
+      // Node is for a binary operator called as binop.
+      return parent2;
+    } else if (parent1.isCall1() && expr == parent1.fn) {
+      // Node is for function name in call with 1 arg.
+      return parent1;
+    } else if (parent1.isCall2() && expr == parent1.fn) {
+      // Node is for "half" of a binop call.
+      return parent1;
+    } else {
+      return expr;
+    }
+  } else {
+    return getExpr(node);
+  }
+}
+
 
 // NOTE that some methods on Expr and its subclasses appear here.
 
@@ -1561,6 +1597,10 @@ Y.suppressRealTypeDisplays = true;
 // Detect if the device has a touch screen, e.g. a tablet.
 // Mobile jQuery 1.1 does this same test.
 Y.hasTouchEvents = 'ontouchend' in document;
+
+// Global parameter to suppress GUI selection of function names
+// and the "Curried part" of an infix call.
+Y.simplifiedSelections = Y.hasTouchEvents;
 
 // Name of event when the user touches the screen or presses the mouse.
 var TOUCHDOWN = Y.hasTouchEvents ? 'touchstart' : 'mousedown';
