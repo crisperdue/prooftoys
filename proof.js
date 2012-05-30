@@ -1598,6 +1598,9 @@ Y.suppressRealTypeDisplays = true;
 // Mobile jQuery 1.1 does this same test.
 Y.hasTouchEvents = 'ontouchend' in document;
 
+// Control whether to use an Autocompleter vs. plain SELECT element.
+Y.useAutocompleter = false; // !Y.hasTouchEvents;
+
 // Global parameter to suppress GUI selection of function names
 // and the "Curried part" of an infix call.
 Y.simplifiedSelections = Y.hasTouchEvents;
