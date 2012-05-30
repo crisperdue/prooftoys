@@ -616,13 +616,11 @@ RuleSelector.prototype.focus = function() {
 function BasicRuleSelector(source, selectionHandler) {
   this.source = source;
   var elt = document.createElement('select');
-  elt.add(new Option('-- Choose rule --', ''));
-  Y.each(source(), function(name) {
-      elt.add(new Option(name + ' - (hint)', name));
-    });
-  var self = this;
+  // Note temporary dummy display text:
+  elt.add(new Option('--', ''));
   var node = this.node = new Y.Node(elt);
-  this.ruleName = '';
+  this.reset();
+  var self = this;
   node.on('change', function() {
       var elt = node.getDOMNode();
       self.ruleName = elt.options[elt.selectedIndex].value;
@@ -638,10 +636,19 @@ BasicRuleSelector.prototype.reset = function() {
   var elt = this.node.getDOMNode();
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
+  // This should behave very much like the resultFormatter function:
   Y.each(this.source(), function(name) {
-      elt.add(new Option(name + ' - (hint)', name));
+      var ruleName = name.replace(/^xiom/, 'axiom');
+      var info = Y.rules[ruleName].info;
+      var hint = info.hint || info.comment || '';
+      elt.add(new Option(name + ' - ' + hint, ruleName));
     });
+  var header = elt.options[0];
+  elt.options[0].text = ((elt.options.length == 1)
+                         ? '-- Select step or expression --'
+                         : '-- Choose rule or select step/expression --');
   this.node.set('selectedIndex', 0);
+  this.ruleName = '';
 };
 
 /**

@@ -34,7 +34,7 @@ var _allHyps = {};
 //   number or an array if more than one such argument.
 // form: HTML template for the rule's input form to be presented
 //   by the step editor.
-// hint: HTML text for the hint to be displayed by the autocompleter
+// hint: plain text for the hint to be displayed by the autocompleter
 //   of the step editor.
 // comment: plain text comment to become the title of mentions of the rule
 //   name in proof displays and the description in subproof displays.

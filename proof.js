@@ -1599,7 +1599,7 @@ Y.suppressRealTypeDisplays = true;
 Y.hasTouchEvents = 'ontouchend' in document;
 
 // Control whether to use an Autocompleter vs. plain SELECT element.
-Y.useAutocompleter = false; // !Y.hasTouchEvents;
+Y.useAutocompleter = !Y.hasTouchEvents;
 
 // Global parameter to suppress GUI selection of function names
 // and the "Curried part" of an infix call.
