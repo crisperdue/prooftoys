@@ -106,25 +106,43 @@ var siteTypes = {
 function StepEditor(controller) {
   var self = this;
   this.controller = controller;
-  this._hint = 'Enter axiom or theorem name; for inference select target first';
+
   // Create a DIV with the step editor content.
   var div = Y.Node.create('<div class=stepEditor style="clear: both"></div>');
-  div.append('<input class=sted-input maxlength=200 title="'
-             + this._hint + '">'
-	     + '<span class=sted-form></span>');
-  div.append('<input class=sted-clear type=button value=x '
-	     + 'title="Clear the input">');
-  div.append('<input class=sted-save-restore type=button '
-             + 'value="Save/restore ..." '
-             + 'title="Save or restore proof state">');
+  var selector = Y.Node.create('<span></span>');
+  div.append(selector);
+  this.form = Y.Node.create('<span class=sted-form></span>');
+  div.append(this.form);
+  var clearer = Y.Node.create('<input class=sted-clear type=button value=x '
+	                      + 'title="Clear the input">');
+  div.append(clearer);
+  var sr = ('<input class=sted-save-restore type=button '
+            + 'value="Save/restore ..." '
+            + 'title="Save or restore proof state">');
+  this.saveRestore = Y.Node.create(sr);
+  div.append(this.saveRestore);
   this.node = div;
-  this.form = div.one('.sted-form');
-  this.saveRestore = div.one('.sted-save-restore');
-  var input = div.one('.sted-input');
-  this.ruleSelector =
-    new RuleSelector(input,
-                     Y.bind('filteredRuleNames', this),
-                     Y.bind('handleSelection', this));
+
+  // Install a rule selector
+  if (Y.useAutocompleter) {
+    var hint =
+      'Enter axiom or theorem name; for inference select target first';
+    var html = '<input class=sted-input maxlength=200 title="' + hint + '">';
+    var input = Y.Node.create(html);
+    selector.append(input);
+    this.ruleSelector =
+      new RuleSelector(input,
+                       Y.bind('filteredRuleNames', this),
+                       Y.bind('handleSelection', this));
+  } else {
+    var widget = new BasicRuleSelector(Y.bind('filteredRuleNames', this),
+                                       Y.bind('handleSelection', this));
+    this.ruleSelector = widget;
+    selector.append(widget.node);
+  }
+  
+  // Install event handlers.
+  clearer.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
   // Use "keydown" because "keyup" would catch the "up" event from
   // the Enter key in the autocompleter field.
@@ -133,8 +151,6 @@ function StepEditor(controller) {
       self.tryExecuteRule(true);
     }
   });
-  var clearer = div.one('.sted-clear');
-  clearer.on('click', function() { self.reset(); });
 }
 
 /**
@@ -594,6 +610,51 @@ RuleSelector.prototype.focus = function() {
   window.setTimeout(function() { self._input.focus(); }, 0);
 };
 
+
+//// BASICRULESELECTOR
+
+function BasicRuleSelector(source, selectionHandler) {
+  this.source = source;
+  var elt = document.createElement('select');
+  elt.add(new Option('-- Choose rule --', ''));
+  Y.each(source(), function(name) {
+      elt.add(new Option(name + ' - (hint)', name));
+    });
+  var self = this;
+  var node = this.node = new Y.Node(elt);
+  this.ruleName = '';
+  node.on('change', function() {
+      var elt = node.getDOMNode();
+      self.ruleName = elt.options[elt.selectedIndex].value;
+      selectionHandler();
+    });
+}
+
+/**
+ * Return the RuleSelector to a "fresh" state, with no rule selected,
+ * options matching the current selection(s).
+ */
+BasicRuleSelector.prototype.reset = function() {
+  var elt = this.node.getDOMNode();
+  // Delete all rule options, leave just the "choose rule" option.
+  elt.options.length = 1;
+  Y.each(this.source(), function(name) {
+      elt.add(new Option(name + ' - (hint)', name));
+    });
+  this.node.set('selectedIndex', 0);
+};
+
+/**
+ * Take keyboard focus if the underlying widget can do so.
+ * This is a harmless no-op on known touchscreen devices.
+ */
+BasicRuleSelector.prototype.focus = function() {
+  var node = this.node;
+  window.setTimeout(function() { node.focus(); }, 0);
+};
+
+
+//// INITIALIZATION
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Y.profileName = '';
