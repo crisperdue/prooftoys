@@ -1602,8 +1602,11 @@ Y.hasTouchEvents = 'ontouchend' in document;
 // and the "Curried part" of an infix call.
 Y.simplifiedSelections = Y.hasTouchEvents;
 
-// Name of event when the user touches the screen or presses the mouse.
-var TOUCHDOWN = Y.hasTouchEvents ? 'touchstart' : 'mousedown';
+// Name of event when the user touches the screen or clicks the mouse.
+// Note: when using 'mousedown' as the TOUCHDOWN event Chrome has been
+// observed to unfocus the keyboard on the subsequent mouseup event,
+// an unwanted effect.
+var TOUCHDOWN = Y.hasTouchEvents ? 'touchstart' : 'click';
 
 // Override these properties on the page to get custom modes of
 // display and/or operation.

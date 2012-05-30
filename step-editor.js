@@ -15,8 +15,6 @@ YUI.add('step-editor', function(Y) {
 //
 // Behavior of the hint message:
 // Hint is initially on, but turned off by keyboard focus.
-// Resetting the step editor turns it back on, as if the editor
-// were brand new.
 
 //
 // Each rule has a descriptor of its arguments
@@ -101,10 +99,8 @@ var siteTypes = {
  *
  * Fields:
  * node: DIV with the step editor's HTML.
- * input: INPUT field for the autocompleter.
- * ruleName: name of currently-selected rule, or null if none.
  * form: SPAN to hold the argument input form.
- * completer: AutoCompleter control.
+ * ruleSelector: rule selector control.
  * controller: ProofControl.
  */
 function StepEditor(controller) {
@@ -122,12 +118,13 @@ function StepEditor(controller) {
              + 'value="Save/restore ..." '
              + 'title="Save or restore proof state">');
   this.node = div;
-  this.input = div.one('.sted-input');
   this.form = div.one('.sted-form');
   this.saveRestore = div.one('.sted-save-restore');
-  this.ruleName = null;
-  // Make the input field into an autocompleter.
-  this.completer = this.autoCompleter();
+  var input = div.one('.sted-input');
+  this.ruleSelector =
+    new RuleSelector(input,
+                     Y.bind('filteredRuleNames', this),
+                     Y.bind('handleSelection', this));
   // Keyboard events bubble to here from the inputs in the form.
   // Use "keydown" because "keyup" would catch the "up" event from
   // the Enter key in the autocompleter field.
@@ -136,15 +133,6 @@ function StepEditor(controller) {
       self.tryExecuteRule(true);
     }
   });
-  this.input.on('focus', function() {
-      if (self.input.get('value') == '') {
-        // Query on "initial" focus, working around autocomplete
-        // behavior that only queries on keystrokes.
-        self.completer.sendRequest('');
-      }
-    });
-  // Force a query and display after page layout is complete.
-  this.focus();
   var clearer = div.one('.sted-clear');
   clearer.on('click', function() { self.reset(); });
 }
@@ -170,48 +158,39 @@ StepEditor.prototype.error = function(message) {
 };
 
 /**
- * Puts the step editor back in the initial state from the
- * user's point of view.
+ * Puts the step editor back in the initial state from the user's
+ * point of view: visible with empty input, no rule-specific form.
  */
 StepEditor.prototype.reset = function() {
-  var self = this;
-  this.input.set('value', '');
-  this.input.removeClass('hidden');
+  this.ruleSelector.reset();
+  this.ruleSelector.node.removeClass('hidden');
   this.form.setContent('');
-  // Send an empty request to make sure the completer is laid out wide
-  // enough to accommodate the widest lines.
-  this.completer.sendRequest('');
-  this.ruleName = null;
 };
 
 /**
- * Focus in the input field after opportunity for everything to be
- * linked into the DOM and/or un-hidden.
+ * Attempt to take keyboard focus.
  */
 StepEditor.prototype.focus = function() {
-  var self = this;
-  window.setTimeout(function() { self.input.focus(); }, 0);
+  this.ruleSelector.focus();
 };
 
 /**
- * Handler for autocompleter "selection" event that triggers the
- * action for that item.
+ * Handler for ruleSelector selection of a rule name.
  */
-StepEditor.prototype.handleSelection = function(event) {
-  var name = event.result.text.replace(/^xiom/, 'axiom');
-  var rule = Y.rules[name];
+StepEditor.prototype.handleSelection = function() {
+  var rule = Y.rules[this.ruleSelector.ruleName];
   if (rule) {
-    this.ruleName = name;
     var template = rule.info.form;
     if (template) {
-      // Template is not empty.  (If there is no template, the rule will
-      // not be "offerable" and thus not selected.)
-      this.input.addClass('hidden');
+      // Template is not empty.  (If there is no template at all, the
+      // rule will not be "offerable" and thus not selected.)
+      this.ruleSelector.node.addClass('hidden');
       this.form.setContent(template);
       addClassInfo(this.form);
       if (!usesSite(rule)) {
 	this.addSelectionToForm(rule);
       }
+      // Focus the first INPUT element of the form.
       var input = this.form.one('input');
       input.focus();
     }
@@ -299,7 +278,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // TODO: Get it together on failure reporting here.
-  var rule = Y.rules[this.ruleName];
+  var rule = Y.rules[this.ruleSelector.ruleName];
   var args = [];
   this.fillWithSelectedSite(args);
   try {
@@ -348,7 +327,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
  * type.  Reports an error to the user if preconditions are not met.
  */
 StepEditor.prototype.fillWithSelectedSite = function(args) {
-  var rule = Y.rules[this.ruleName];
+  var rule = Y.rules[this.ruleSelector.ruleName];
   var inputs = rule.info.inputs;
   for (var type in inputs) {
     if (type in siteTypes) {
@@ -377,7 +356,7 @@ StepEditor.prototype.fillWithSelectedSite = function(args) {
  */
 StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
-  var rule = Y.rules[this.ruleName];
+  var rule = Y.rules[this.ruleSelector.ruleName];
   this.form.all('input').each(function(node) {
     // The "name" attribute of the input should be the name of an input type,
     // possibly followed by some digits indicating which input.
@@ -538,30 +517,49 @@ function acceptsSelection(step, ruleName, acceptTerm) {
   }
 }
 
+
+//// RULESELECTOR
+
 /**
- * Make and return an autocompleter that uses the input field.
+ * Constructor.  Arguments are input, an input field; source, a
+ * function that returns autocompleter results; and selectionHandler,
+ * a function of no arguments to call when there is a new selection.
+ *
+ * Public properties:
+ *   node: the DOM node of the rendering.
+ *   ruleName: name of currently selected rule.
  */
-StepEditor.prototype.autoCompleter = function() {
+function RuleSelector(input, source, selectionHandler) {
   var self = this;
-  var input = this.input;
+  this._input = input;
+  this.node = input;
+  this.ruleName = '';
   var align = Y.WidgetPositionAlign;
   var config = {resultFilters: ['startsWith'],
                 resultHighlighter: 'startsWith',
 		resultFormatter: resultFormatter,
-                source: Y.bind(this.filteredRuleNames, this),
+                source: source,
                 inputNode: input,
                 render: true,
                 minQueryLength: 0,
 		activateFirstItem: true,
   };
   var ac = new Y.AutoCompleteList(config);
-  // Do this after the event so actions such as updating the input
-  // field override the default action.
-  ac.after('select', function(e) {
-     self.handleSelection(e);
-  });
-  return ac;
-};
+  this._completer = ac;
+  // Do this after the event so handler actions such as updating the
+  // input field override the default action.
+  ac.after('select', function(event) {
+      self.ruleName = event.result.text.replace(/^xiom/, 'axiom');
+      selectionHandler();
+    });
+  input.on('focus', function() {
+      if (input.get('value') == '') {
+        // Query on "initial" focus, working around autocomplete
+        // behavior that only queries on keystrokes.
+        ac.sendRequest('');
+      }
+    });
+}
 
 /**
  * Used by the autocompleter to convert highlighted results into
@@ -576,6 +574,26 @@ function resultFormatter(query, results) {
       return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
     });	
 }
+
+/**
+ * Return the RuleSelector to a "fresh" state, with no text in the
+ * input field and no choices filtered out.
+ */
+RuleSelector.prototype.reset = function() {
+  this._input.set('value', '');
+  // Send an empty request to make sure the completer is laid out wide
+  // enough to accommodate the widest lines.
+  this._completer.sendRequest('');
+}
+
+/**
+ * Take keyboard focus if the underlying widget can do so.
+ */
+RuleSelector.prototype.focus = function() {
+  var self = this;
+  window.setTimeout(function() { self._input.focus(); }, 0);
+};
+
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Y.profileName = '';
