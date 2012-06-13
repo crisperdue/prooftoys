@@ -1,0 +1,237 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Canvas Test</title>
+<script>
+
+var cx = 105, cy = 105;
+var r = 100;
+var aRadius = 30;
+var bRadius = 150;
+
+var labels = [];
+
+function initCxt(cxt) {
+  if (typeof cxt == 'string') {
+    cxt = document.getElementById(cxt).getContext('2d');
+  }
+  cxt.fillStyle = 'rgba(60, 60, 255, .25)';
+  // Alternative solid fill style:
+  // cxt.fillStyle = 'rgb(210, 210, 255)';
+  cxt.textAlign = 'center';
+  cxt.textBaseline = 'middle';
+  cxt.lineWidth = 1;
+  cxt.lineJoin = 'round';
+  cxt.font = 'bold 12pt sans-serif';
+  return cxt;
+}
+
+function withinCircle (cxt, fn) {
+  cxt.save();
+  cxt.beginPath();
+  circle(cxt, cx, cy, r);
+  cxt.clip();
+  cxt.beginPath();
+
+  fn(cxt);
+  // Apply all of the labels.
+  labels.forEach(function(fn) { fn(cxt); });
+  labels = [];
+
+  cxt.restore();
+  cxt.save();
+
+  // Make the bounding circle.
+  cxt.beginPath();
+  cxt.lineWidth = 2;
+  cxt.strokeStyle = 'black';
+  circle(cxt, cx, cy, r, true);
+  cxt.stroke();
+
+  cxt.restore();
+  cxt.beginPath();
+}
+
+function circle(cxt, x, y, radius, counter) {
+  cxt.arc(x, y, radius, 0, 2 * Math.PI, counter);
+  cxt.closePath();
+}
+
+function fillCircle(cxt, x, y, radius) {
+  circle(cxt, x, y, radius);
+  cxt.fill();
+  cxt.beginPath();
+}
+
+/**
+ * Traverse the boundaries of the canvas counterclockwise.
+ * Assumes the coordinate system has not been transformed.
+ * Use this to fill outside a shape.
+ */
+function outside(cxt) {
+  var canvas = cxt.canvas;
+  var w = canvas.width;
+  var h = canvas.height;
+  cxt.moveTo(0, 0);
+  cxt.lineTo(0, h);
+  cxt.lineTo(h, w);
+  cxt.lineTo(w, 0);
+  cxt.closePath();
+}
+
+function drawAll(cxt) {
+  withinCircle(cxt, function() {
+      outside(cxt);
+      cxt.fill();
+      cxt.beginPath();
+    });
+}
+
+function drawCircle(cxt, info) {
+  cxt.save();
+  if (info.outside) {
+    outside(cxt);
+  }
+  cxt.fillStyle = info.fillStyle || cxt.fillStyle;
+  fillCircle(cxt, info.x, info.y, info.radius);
+  cxt.restore();
+  labels.push(function() { labelCircle(cxt, info); });
+}
+
+function labelCircle(cxt, info) {
+  cxt.save();
+  cxt.fillStyle = 'black';
+  cxt.fillText(info.label, info.labelX, info.y);
+
+  cxt.beginPath();
+  circle(cxt, info.x, info.y, info.radius);
+  cxt.strokeStyle = 'gray';
+  cxt.lineWidth = 1;
+  cxt.stroke();
+  cxt.beginPath();
+
+  cxt.restore();
+}
+
+/**
+ * Merges the properties of any number of objects, with later argument
+ * properties overriding earlier ones, returning a new object with the
+ * merged properties.
+ */
+function merge() {
+  var result = {};
+  for (var i = 0; i < arguments.length; i++) {
+    var arg = arguments[i];
+    for (var key in arg) { result[key] = arg[key]; }
+  }
+  return result;
+}
+
+////
+//// Page-specific code
+////
+
+var circleA = {x: 105, y: 105, radius: 30, label: 'A', labelX: 105};
+var circleB = {x: 205, y: 105, radius: 150, label: 'B', labelX: 175};
+var circleC = {x: 5, y: 105, radius: 150, label: 'C', labelX: 35};
+
+function draw() {
+  var cxtA = initCxt('canvasA');
+  withinCircle(cxtA, function() {
+      drawCircle(cxtA, circleA);
+    });
+
+  var cxtB = initCxt('canvasB');
+  withinCircle(cxtB, function() {
+      drawCircle(cxtB, circleB);
+    });
+
+  var cxtC = initCxt('canvasC');
+  withinCircle(cxtC, function() {
+      drawCircle(cxtC, circleC);
+    });
+
+
+  var cxtOr = initCxt('canvasOr');
+  window.cxtOr = cxtOr;
+  drawOr(cxtOr);
+
+  var cxtOrBC = initCxt('canvasOrBC');
+  withinCircle(cxtOrBC, function() {
+      drawCircle(cxtOrBC, circleB);
+      drawCircle(cxtOrBC, circleC);
+    });
+
+  var cxtAnd = initCxt('canvasAnd');
+  window.cxtAnd = cxtAnd;
+  drawAnd(cxtAnd);
+
+  var cxtAndBC = initCxt('canvasAndBC');
+  withinCircle(cxtAndBC, function() {
+      drawAll(cxtAndBC);
+      var props = {outside: true, fillStyle: 'white'};
+      drawCircle(cxtAndBC, merge(circleB, props));
+      drawCircle(cxtAndBC, merge(circleC, props));
+    });
+
+  var cxtAll = initCxt('canvasAll');
+  withinCircle(cxtAll, function() {
+      drawAll(cxtAll);
+    });
+
+  var cxtImplies = initCxt('canvasImplies');
+  window.cxtImplies = cxtImplies;
+  drawImplies(cxtImplies);
+}
+
+function drawOr(cxt) {
+  withinCircle(cxt, function() {
+      drawCircle(cxt, circleA);
+      drawCircle(cxt, circleB);
+    });
+}
+
+function drawAnd(cxt) {
+  withinCircle(cxt, function() {
+      drawAll(cxt);
+      var props = {outside: true, fillStyle: 'white'};
+      drawCircle(cxt, merge(circleA, props));
+      drawCircle(cxt, merge(circleB, props));
+    });
+}
+
+function drawImplies(cxt) {
+  withinCircle(cxt, function() {
+      drawCircle(cxt, merge(circleA, {outside: true}));
+      drawCircle(cxt, circleB);
+    });
+}
+
+window.onload = draw;
+
+</script>
+</head>
+
+<body>
+<h1>Boolean functions</h1>
+
+
+<h3>The sets</h3>
+<canvas id=canvasA width=210 height=210></canvas>
+<canvas id=canvasB width=210 height=210></canvas>
+<canvas id=canvasC width=210 height=210></canvas>
+
+<h3>Or</h3>
+<canvas id=canvasOr width=210 height=210></canvas>
+<canvas id=canvasOrBC width=210 height=210></canvas>
+
+<h3>And</h3>
+<canvas id=canvasAnd width=210 height=210></canvas>
+<canvas id=canvasAndBC width=210 height=210></canvas>
+<canvas id=canvasAll width=210 height=210></canvas>
+
+<h3>Implies</h3>
+<canvas id=canvasImplies width=210 height=210></canvas>
+
+</body>
+</html>
