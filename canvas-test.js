@@ -27,20 +27,12 @@ function initCxt(canvas) {
   return cxt;
 }
 
-function pattern(element) {
-  return function(cxt) { return cxt.createPattern(element, 'repeat'); };
-}
-
-////
-//// Page-specific code
-////
-
-var circleA = function() {
+var shadeSilver = function() {
   var canvas = document.createElement('canvas');
   canvas.width = 10;
   canvas.height = 10;
   var cxt = initCxt(canvas);
-  cxt.strokeStyle = 'green';
+  cxt.strokeStyle = 'silver';
   cxt.lineWidth = 1.4;
   cxt.lineCap = 'square';
   cxt.moveTo(0, 5);
@@ -49,13 +41,10 @@ var circleA = function() {
   cxt.moveTo(5, 10);
   cxt.lineTo(10, 5);
   cxt.stroke();
-  return {
-    x: 105, y: 105, radius: 30, fillStyle: {image: canvas},
-    label: 'A', labelX: 105
-  };
+  return canvas;
 }();
 
-var circleB = function() {
+var shadeBlue = function() {
   var canvas = document.createElement('canvas');
   canvas.width = 10;
   canvas.height = 10;
@@ -66,14 +55,10 @@ var circleB = function() {
   cxt.moveTo(0, 5);
   cxt.lineTo(10, 5);
   cxt.stroke();
-  return {
-    x: 205, y: 105, radius: 150, fillStyle: {image: canvas},
-    label: 'B', labelX: 175
-  };
+  return canvas;
 }();
 
-
-var circleC = function() {
+var shadeYellow = function() {
   var canvas = document.createElement('canvas');
   canvas.width = 10;
   canvas.height = 10;
@@ -87,12 +72,23 @@ var circleC = function() {
   cxt.moveTo(5, 0);
   cxt.lineTo(10, 5);
   cxt.stroke();
-  return {
-    x: 5, y: 105, radius: 150, fillStyle: {image: canvas},
-    label: 'C', labelX: 35
-  };
-}();  
+  return canvas;
+}();
 
+var circleA = {
+  x: 105, y: 105, radius: 30, fillStyle: {image: shadeSilver},
+  label: 'A', labelX: 105
+};
+
+var circleB = {
+  x: 205, y: 105, radius: 150, fillStyle: {image: shadeBlue},
+  label: 'B', labelX: 175
+};
+
+var circleC = {
+  x: 5, y: 105, radius: 150, fillStyle: {image: shadeYellow},
+  label: 'C', labelX: 35
+};
 
 function draw() {
 
@@ -111,6 +107,20 @@ function draw() {
       drawCircle(cxtC, circleC);
     });
 
+  var cxtNotA = initCxt('canvasNotA');
+  withinCircle(cxtNotA, function() {
+      drawCircle(cxtNotA, merge(circleA, {outside: true}));
+    });
+
+  var cxtNotB = initCxt('canvasNotB');
+  withinCircle(cxtNotB, function() {
+      drawCircle(cxtNotB, merge(circleB, {outside: true}));
+    });
+
+  var cxtNotC = initCxt('canvasNotC');
+  withinCircle(cxtNotC, function() {
+      drawCircle(cxtNotC, merge(circleC, {outside: true}));
+    });
 
   var cxtOr = initCxt('canvasOr');
   window.cxtOr = cxtOr;
@@ -121,8 +131,8 @@ function draw() {
 
   var cxtOrBC = initCxt('canvasOrBC');
   withinCircle(cxtOrBC, function() {
-      drawCircle(cxtOrBC, circleB);
       drawCircle(cxtOrBC, circleC);
+      drawCircle(cxtOrBC, circleB);
     });
 
   var cxtAnd = initCxt('canvasAnd');
@@ -130,14 +140,19 @@ function draw() {
   drawAnd(cxtAnd, circleA, circleB);
 
   var cxtAndBC = initCxt('canvasAndBC');
-  drawAnd(cxtAndBC, circleB, circleC);
+  drawAnd(cxtAndBC, circleC, circleB);
 
   var cxtAll = initCxt('canvasAll');
   drawAll(cxtAll);
+  cxtAll.fillStyle = 'black';
+  cxtAll.fillText('all', 105, 105);
 
   var cxtImplies = initCxt('canvasImplies');
   window.cxtImplies = cxtImplies;
-  drawImplies(cxtImplies);
+  withinCircle(cxtImplies, function() {
+      drawCircle(cxtImplies, merge(circleA, {outside: true}));
+      drawCircle(cxtImplies, circleB);
+    });
 }
 
 function drawAll(cxt) {
@@ -163,10 +178,6 @@ function drawAnd(cxt, circle1, circle2) {
 }
 
 function drawImplies(cxt) {
-  withinCircle(cxt, function() {
-      drawCircle(cxt, merge(circleA, {outside: true}));
-      drawCircle(cxt, circleB);
-    });
 }
 
 window.onload = draw;

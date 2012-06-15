@@ -2,8 +2,11 @@
 <html>
 <head>
 <title>Canvas Test</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<link id=styles type="text/css" rel="stylesheet" href="logic.css">
 <script src="canvas.js"></script>
 <script src="canvas-test.js"></script>
+<script src="boilerplate.js"></script>
 
 <style type="text/css">
 
@@ -12,29 +15,104 @@
 }
 
 </style>
-
 </head>
 
 <body>
 <h1>Boolean functions</h1>
 
 
-<h3>The sets</h3>
+<div id=slogans>
+<!-- slogans here -->
+</div>
+
+<table>
+<tr>
+<td id=leftNav>
+<!-- Boilerplate text goes here -->
+<td>
+
+<h2>Background</h2>
+
+Functions, explain!<br>
+Truth function / predicate / property, also explain?
+
+<h2>Introduction</h2>
+Let's look at an example mathematical world through some pictures.
+
+This world is shown as a circle.  The world has some things in it,
+each of those things appearing at a particular spot in the picture.
+
+It has some sets of things, in particular set A, set B, and set C.
+Each of these sets is shown as a circle, or part of a circle within
+the circle for the world, shaded with a particular color and pattern.
+Each set is labeled with its name.
+
+Each of these sets contains the things inside its shaded circle or
+part circle, but not the things outside in the white area.
+
+Instead of saying a thing is in set A, we can say that the predicate A
+is true of the thing, or we can say it has property A.  These are just
+different ways of describing the same situation.
+
+In our version of mathematical notation we are going to write
+<code>A x</code> or <code>(A x)</code>. to mean that A is true for x.
+
+<p>
 <canvas id=canvasA width=210 height=210></canvas>
 <canvas id=canvasB width=210 height=210></canvas>
 <canvas id=canvasC width=210 height=210></canvas>
 
-<h3>Or</h3>
-<canvas id=canvasOr width=210 height=210></canvas>
-<canvas id=canvasOrBC width=210 height=210></canvas>
+<h2>Negation -- "not"</h2>
 
-<h3>And</h3>
+We may want to talk about the things that are not in a set, one where
+the predicate is not true.
+<p>
+In the next set of pictures the shaded areas represent the set of
+things not in one of our sets.  The first one shows the set of things
+not in set A.  The second one shows things not in set B, and the third
+shows things not in set C.
+<p>
+If the predicate A is not true for a thing x, in our notation we write
+<code>not (A x)</code> or <code>(not (A x))</code>.  Of course we can
+also read this as saying that x is not in set A.
+<p>
+We commonly call a statement like <code>(not (A x))</code> the negation of
+a statement <code>(A x)</code>.  The negated statement is true of all
+the things where the original statement <code>(A x)</code> is false.
+<p>
+The shaded areas in the next pictures show the things where
+<code>(not (A x))</code> is true, where <code>(not (B x))</code> is
+true, and finally where <code>(not (C x))</code> is true.
+<p>
+<canvas id=canvasNotA width=210 height=210></canvas>
+<canvas id=canvasNotB width=210 height=210></canvas>
+<canvas id=canvasNotC width=210 height=210></canvas>
+
+<h2>Disjunction -- "or"</h2>
+
+Suppose you thinking what to have for lunch, and decide it must either
+be tasty or cheap.  
+<p>
+<canvas id=canvasOrBC width=210 height=210></canvas>
+<canvas id=canvasOr width=210 height=210></canvas>
+
+<h2>And</h2>
 <canvas id=canvasAnd width=210 height=210></canvas>
 <canvas id=canvasAndBC width=210 height=210></canvas>
 <canvas id=canvasAll width=210 height=210></canvas>
 
-<h3>Implies</h3>
+<h2>Implies</h2>
 <canvas id=canvasImplies width=210 height=210></canvas>
 
+
+</table>
+
+<script>
+
+// Insert boilerplate.
+Toy.insertNav();
+Toy.insertSlogans();
+
+</script>
 </body>
 </html>
