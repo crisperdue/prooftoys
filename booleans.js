@@ -152,8 +152,8 @@ function draw() {
 
   var cxtOrDE2 = initCxt('canvasOrDE2');
   withinCircle(cxtOrDE2, function() {
-      drawCircle(cxtOrDE2, circleD2);
-      drawCircle(cxtOrDE2, circleE2);
+      drawCircle(cxtOrDE2, circleD);
+      drawCircle(cxtOrDE2, merge(circleE, {fillStyle: {image: shadeYellow}}));
     });
 
   var cxtAnd = initCxt('canvasAnd');
@@ -171,12 +171,14 @@ function draw() {
   cxtAll.fillStyle = 'black';
   cxtAll.fillText('all', 105, 105);
 
+  /*
   var cxtImplies = initCxt('canvasImplies');
   window.cxtImplies = cxtImplies;
   withinCircle(cxtImplies, function() {
       drawCircle(cxtImplies, merge(circleA, {outside: true}));
       drawCircle(cxtImplies, circleB);
     });
+  */
 }
 
 function drawAll(cxt) {
