@@ -14,6 +14,20 @@
   display: none;
 }
 
+td#body {
+  width: 750px;
+}
+
+div#bodyDiv {
+  margin-left: 1em;
+}
+
+h2 {
+  margin-top: 2em;
+  margin-left: -.5em;
+  color: #666;
+}
+
 </style>
 </head>
 
@@ -29,7 +43,8 @@
 <tr>
 <td id=leftNav>
 <!-- Boilerplate text goes here -->
-<td>
+<td id=body>
+<div id=bodyDiv>
 
 <h2>Background</h2>
 
@@ -37,23 +52,22 @@ Functions, explain!<br>
 Truth function / predicate / property, also explain?
 
 <h2>Introduction</h2>
+<p>
 Let's look at an example mathematical world through some pictures.
-
 This world is shown as a circle.  The world has some things in it,
 each of those things appearing at a particular spot in the picture.
-
+<p>
 It has some sets of things, in particular set A, set B, and set C.
 Each of these sets is shown as a circle, or part of a circle within
 the circle for the world, shaded with a particular color and pattern.
 Each set is labeled with its name.
-
 Each of these sets contains the things inside its shaded circle or
 part circle, but not the things outside in the white area.
-
+<p>
 Instead of saying a thing is in set A, we can say that the predicate A
 is true of the thing, or we can say it has property A.  These are just
 different ways of describing the same situation.
-
+<p>
 In our version of mathematical notation we are going to write
 <code>A x</code> or <code>(A x)</code>. to mean that A is true for x.
 
@@ -80,7 +94,7 @@ We commonly call a statement like <code>(not (A x))</code> the negation of
 a statement <code>(A x)</code>.  The negated statement is true of all
 the things where the original statement <code>(A x)</code> is false.
 <p>
-The shaded areas in the next pictures show the things where
+The lime green areas in the next pictures show where
 <code>(not (A x))</code> is true, where <code>(not (B x))</code> is
 true, and finally where <code>(not (C x))</code> is true.
 <p>
@@ -90,21 +104,45 @@ true, and finally where <code>(not (C x))</code> is true.
 
 <h2>Disjunction -- "or"</h2>
 
-Suppose you thinking what to have for lunch, and decide it must either
-be tasty or cheap.  
+Suppose you are considering what to have for lunch, and decide it must
+either be delicious or easy.  In the first picture let circle D
+represent things that are delicious and circle E represent things that
+are easy.  The combined area then represents things that are delicious
+or easy.  We can write that a thing x is "delicious or easy"
+as <code>((D x) or (E x))</code>.  Everything in the parts of the
+picture that are shaded satisfy this statement.
 <p>
-<canvas id=canvasOrBC width=210 height=210></canvas>
-<canvas id=canvasOr width=210 height=210></canvas>
+<canvas id=canvasOrDE width=210 height=210></canvas>
+<canvas id=canvasOrDE2 class=hidden width=210 height=210></canvas>
 
-<h2>And</h2>
-<canvas id=canvasAnd width=210 height=210></canvas>
-<canvas id=canvasAndBC width=210 height=210></canvas>
-<canvas id=canvasAll width=210 height=210></canvas>
+<h2>Conjunction -- "and"</h2>
 
-<h2>Implies</h2>
+Suppose you are feeling more picky about your lunch, and decide you
+want something that is both delicious and easy.  Only things in
+both of the circles fit this description.  This is the small shaded
+area.  We write it as
+<code>((D x) and (E x))</code>.
+<p>
+<canvas id=canvasAndDE width=210 height=210></canvas>
+<canvas class=hidden id=canvasAnd width=210 height=210></canvas>
+<canvas class=hidden id=canvasAll width=210 height=210></canvas>
+<p>
+What if there is nothing that is both easy and delicious?  A picture
+for that situation could like this:
+<canvas id=canvasAndDE2 width=210 height=210></canvas>
+<p>
+The picture has no shaded area because region D and region do not
+overlap.  And if that really is your requirement, in this scenario
+there is no lunch for you!
+
+<!--
+<h2>Implication -- "implies"</h2>
+
 <canvas id=canvasImplies width=210 height=210></canvas>
+ -->
 
-
+</div> <!-- #bodyDiv -->
+</td> <!-- #body -->
 </table>
 
 <script>

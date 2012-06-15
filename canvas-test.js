@@ -16,6 +16,11 @@ function initCxt(canvas) {
   if (typeof canvas == 'string') {
     canvas = document.getElementById(canvas);
   }
+  if (!canvas) {
+    var error = 'initCxt: No canvas';
+    console.log(error);
+    throw new Error(error);
+  }
   var cxt = canvas.getContext('2d');
   // Light blue:
   cxt.fillStyle = 'rgb(210, 210, 255)';
@@ -90,6 +95,20 @@ var circleC = {
   label: 'C', labelX: 35
 };
 
+var circleD = {
+  x: 80, y: 105, radius: 38, fillStyle: {image: shadeYellow},
+  label: 'D', labelX: 65
+};
+
+var circleD2 = merge(circleD, {x: 65});
+
+var circleE = {
+  x: 130, y: 105, radius: 38, fillStyle: {image: shadeBlue},
+  label: 'E', labelX: 145
+};
+
+var circleE2 = merge(circleE, {x: 145});
+
 function draw() {
 
   var cxtA = initCxt('canvasA');
@@ -109,38 +128,43 @@ function draw() {
 
   var cxtNotA = initCxt('canvasNotA');
   withinCircle(cxtNotA, function() {
-      drawCircle(cxtNotA, merge(circleA, {outside: true}));
+      drawCircle(cxtNotA, circleA);
+      drawCircle(cxtNotA, merge(circleA, {outside: true, fillStyle: 'lime'}));
     });
 
   var cxtNotB = initCxt('canvasNotB');
   withinCircle(cxtNotB, function() {
-      drawCircle(cxtNotB, merge(circleB, {outside: true}));
+      drawCircle(cxtNotB, circleB);
+      drawCircle(cxtNotB, merge(circleB, {outside: true, fillStyle: 'lime'}));
     });
 
   var cxtNotC = initCxt('canvasNotC');
   withinCircle(cxtNotC, function() {
-      drawCircle(cxtNotC, merge(circleC, {outside: true}));
+      drawCircle(cxtNotC, circleC);
+      drawCircle(cxtNotC, merge(circleC, {outside: true, fillStyle: 'lime'}));
     });
 
-  var cxtOr = initCxt('canvasOr');
-  window.cxtOr = cxtOr;
-  withinCircle(cxtOr, function() {
-      drawCircle(cxtOr, circleA);
-      drawCircle(cxtOr, circleB);
+  var cxtOrDE = initCxt('canvasOrDE');
+  withinCircle(cxtOrDE, function() {
+      drawCircle(cxtOrDE, circleD);
+      drawCircle(cxtOrDE, circleE);
     });
 
-  var cxtOrBC = initCxt('canvasOrBC');
-  withinCircle(cxtOrBC, function() {
-      drawCircle(cxtOrBC, circleC);
-      drawCircle(cxtOrBC, circleB);
+  var cxtOrDE2 = initCxt('canvasOrDE2');
+  withinCircle(cxtOrDE2, function() {
+      drawCircle(cxtOrDE2, circleD2);
+      drawCircle(cxtOrDE2, circleE2);
     });
 
   var cxtAnd = initCxt('canvasAnd');
   window.cxtAnd = cxtAnd;
   drawAnd(cxtAnd, circleA, circleB);
 
-  var cxtAndBC = initCxt('canvasAndBC');
-  drawAnd(cxtAndBC, circleC, circleB);
+  var cxtAndDE = initCxt('canvasAndDE');
+  drawAnd(cxtAndDE, circleD, circleE);
+
+  var cxtAndDE2 = initCxt('canvasAndDE2');
+  drawAnd(cxtAndDE2, circleD2, circleE2);
 
   var cxtAll = initCxt('canvasAll');
   drawAll(cxtAll);
