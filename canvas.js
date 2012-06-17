@@ -39,25 +39,6 @@ function withinCircle (cxt, fn) {
 }
 
 /**
- * Adds a circle to the current path, centered at x, y, with the given
- * radius, and counterclockwise iff the "counter" argument is true;
- * then closes the path.  Does not render anything.
- */
-function circle(cxt, x, y, radius, counter) {
-  cxt.arc(x, y, radius, 0, 2 * Math.PI, counter);
-  cxt.closePath();
-}
-
-/**
- * Fills a circle using the given rendering context.
- */
-function fillCircle(cxt, x, y, radius) {
-  circle(cxt, x, y, radius);
-  cxt.fill();
-  cxt.beginPath();
-}
-
-/**
  * Renders a circle using the x, y, and radius properties of the given
  * "info" object and the given rendering context.  Iff info.outside is
  * truthy renders the outside of the circle rather than the inside.
@@ -74,6 +55,25 @@ function drawCircle(cxt, info) {
   fillCircle(cxt, info.x, info.y, info.radius);
   cxt.restore();
   labels.push(function() { labelCircle(cxt, info); });
+}
+
+/**
+ * Fills a circle using the given rendering context.
+ */
+function fillCircle(cxt, x, y, radius) {
+  circle(cxt, x, y, radius);
+  cxt.fill();
+  cxt.beginPath();
+}
+
+/**
+ * Adds a circle to the current path, centered at x, y, with the given
+ * radius, and counterclockwise iff the "counter" argument is true;
+ * then closes the path.  Does not render anything.
+ */
+function circle(cxt, x, y, radius, counter) {
+  cxt.arc(x, y, radius, 0, 2 * Math.PI, counter);
+  cxt.closePath();
 }
 
 /**
