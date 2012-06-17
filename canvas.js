@@ -2,6 +2,16 @@
 //
 // Utilities for working with Canvases.
 
+/**
+ * Calls the function passing it the context cxt in an environment
+ * with the circle centered at point cx, cy and radius "r" as the
+ * clipping region, then performs the actions specified by the labels
+ * array, passing each of its elements the context as an argument and
+ * clearing the array.
+ *
+ * After all of this restores the original rendering context and draws
+ * the perimeter of the clipping region.
+ */
 function withinCircle (cxt, fn) {
   cxt.save();
   cxt.beginPath();
@@ -28,11 +38,19 @@ function withinCircle (cxt, fn) {
   cxt.beginPath();
 }
 
+/**
+ * Adds a circle to the current path, centered at x, y, with the given
+ * radius, and counterclockwise iff the "counter" argument is true;
+ * then closes the path.  Does not render anything.
+ */
 function circle(cxt, x, y, radius, counter) {
   cxt.arc(x, y, radius, 0, 2 * Math.PI, counter);
   cxt.closePath();
 }
 
+/**
+ * Fills a circle using the given rendering context.
+ */
 function fillCircle(cxt, x, y, radius) {
   circle(cxt, x, y, radius);
   cxt.fill();
@@ -40,7 +58,26 @@ function fillCircle(cxt, x, y, radius) {
 }
 
 /**
- * Traverse the boundaries of the canvas counterclockwise.
+ * Renders a circle using the x, y, and radius properties of the given
+ * "info" object and the given rendering context.  Iff info.outside is
+ * truthy renders the outside of the circle rather than the inside.
+ *
+ * Restores the graphics context to its state before the call, and
+ * adds a request to run "labelCircle" to the global labels list.
+ */
+function drawCircle(cxt, info) {
+  cxt.save();
+  if (info.outside) {
+    outside(cxt);
+  }
+  mergeFillStyle(cxt, info);
+  fillCircle(cxt, info.x, info.y, info.radius);
+  cxt.restore();
+  labels.push(function() { labelCircle(cxt, info); });
+}
+
+/**
+ * Traverses the boundaries of the canvas counterclockwise.
  * Assumes the coordinate system has not been transformed.
  * Use this to fill outside a shape.
  */
@@ -55,19 +92,13 @@ function outside(cxt) {
   cxt.closePath();
 }
 
-
-function drawCircle(cxt, info) {
-  cxt.save();
-  if (info.outside) {
-    outside(cxt);
-  }
-  mergeFillStyle(cxt, info);
-  // cxt.fillStyle = info.fillStyle || cxt.fillStyle;
-  fillCircle(cxt, info.x, info.y, info.radius);
-  cxt.restore();
-  labels.push(function() { labelCircle(cxt, info); });
-}
-
+/**
+ * Renders label information for the circle described by "info", using
+ * the given graphics context.  Saves and restores the context around
+ * the rendering.  Currently strokes the circle's border and writes
+ * the text of info.label in black at X coordinate info.labelX and Y
+ * coordinate info.y.
+ */
 function labelCircle(cxt, info) {
   if (info.labelX != null) {
     cxt.save();
