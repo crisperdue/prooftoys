@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Canvas Test</title>
+<title>Logic through Pictures</title>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <link id=styles type="text/css" rel="stylesheet" href="logic.css">
 <script src="canvas.js"></script>
@@ -12,6 +12,10 @@
 
 .hidden {
   display: none;
+}
+
+.smaller {
+  font-size: smaller;
 }
 
 td#body {
@@ -32,12 +36,9 @@ h2 {
 </head>
 
 <body>
-<h1>Boolean functions</h1>
-
-
-<div id=slogans>
-<!-- slogans here -->
-</div>
+<h1>Logic through Pictures<br>
+  <span class=smaller>Truth functions</span>
+</h1>
 
 <table>
 <tr>
@@ -47,7 +48,7 @@ h2 {
 <div id=bodyDiv>
 
 <h2>Introduction</h2>
-<p>
+
 Let's look at an example mathematical world through some pictures.
 This world is shown as a circle.  The world has some things in it,
 each of those things appearing at a particular spot in the picture.
@@ -60,8 +61,9 @@ Each of these sets contains the things inside its shaded circle or
 part circle, but not the things outside in the white area.
 <p>
 Instead of saying a thing is in set A, we can say that the predicate A
-is true of the thing, or we can say it has property A.  These are just
-different ways of describing the same situation.
+is true of the thing, we can say it has property A, or the proposition
+A is true of it.  These are just different ways of describing the same
+situation.
 <p>
 In our version of mathematical notation we are going to write
 <code>(A x)</code> to mean that A is true for x (or x is in A).
@@ -97,8 +99,69 @@ true, and finally where <code>(not (C x))</code> is true.
 <canvas id=canvasNotB width=210 height=210></canvas>
 <canvas id=canvasNotC width=210 height=210></canvas>
 
-<h2>Disjunction -- "or"</h2>
+<h2>Functions and truth values</h2>
 
+<h4>Functions</h4>
+<p>
+In mathematics a function named <code>f</code> is often defined
+with a statement like this:
+
+<blockquote>
+<code>f(x) = x + 1</code>
+</blockquote>
+In our notation:
+<blockquote>
+<code>(f x) = x + 1</code><br>
+</blockquote>
+
+So:
+<blockquote>
+<code>
+(f 0) = 1<br>
+(f 1) = 2<br>
+(f 2) = 3
+</code>
+</blockquote>
+
+and so on.  The function produces a value given an input value.  A
+function can have more than one input.  The addition function
+(<code>+</code>) for example takes two numbers as input and gives a
+number as its result, as in <code>3 + 5 = 8</code>.
+
+<h4>True and false as values</h4>
+<p>
+In the examples so far there are mathematical statements such
+as <code>(A x)</code> and <code>(not (A x))</code>.  In
+these, <code>A</code>, <code>f</code>, and <code>not</code> represent
+functions.  The function <code>f</code> produces an integer given an
+integer.
+<p>
+In mathematical logic there are also values <code>true</code>
+and <code>false</code>, known as <i>truth values</i>.  The
+function <code>A</code> produces a value of <code>true</code>
+or <code>false</code>.  The input of the function <code>not</code> is
+a truth value and its result is also a truth value.  These are often
+referred to as boolean values in honor of
+<a href="http://en.wikipedia.org/wiki/George_Boole">George Boole</a>,
+a pioneer in the development of these concepts.
+<p>
+Since there are only two truth values we can describe the
+function <code>not</code> with a table that shows its value for the
+possible inputs.
+<p>
+<table class=truthTable>
+ <tr>
+  <th>X<th>not X
+ <tr>
+  <td>true<td>false
+ <tr>
+  <td>false<td>true
+</table>
+<p>
+So <code>(not false) = true</code> and <code>(not true) = false</code>.
+
+<h2>Disjunction -- "or"</h2>
+<p>
 Suppose you are considering what to have for lunch, and decide it must
 either be delicious or easy.  In the first picture let circle D
 represent things that are delicious and circle E represent things that
@@ -113,6 +176,21 @@ instead of separate shadings for D and E.
 <p>
 <canvas id=canvasOrDE width=210 height=210></canvas>
 <canvas id=canvasOrDE2 width=210 height=210></canvas>
+<p>
+The truth table for <code>A or B</code> is:
+<p>
+<table class=truthTable>
+ <tr>
+  <th>A<th>B<th>A or B
+ <tr>
+  <td>false<td>false<td>false
+ <tr>
+  <td>false<td>true<td>true
+ <tr>
+  <td>true<td>false<td>true
+ <tr>
+  <td>true<td>true<td>true
+</table>
 
 <h2>Conjunction -- "and"</h2>
 
@@ -126,13 +204,30 @@ area.  We write it as
 <canvas class=hidden id=canvasAnd width=210 height=210></canvas>
 <canvas class=hidden id=canvasAll width=210 height=210></canvas>
 <p>
+The truth table for <code>A and B</code> is:
+<p>
+<table class=truthTable>
+ <tr>
+  <th>A<th>B<th>A and B
+ <tr>
+  <td>false<td>false<td>false
+ <tr>
+  <td>false<td>true<td>false
+ <tr>
+  <td>true<td>false<td>false
+ <tr>
+  <td>true<td>true<td>true
+</table>
+<p>
 What if there is nothing that is both easy and delicious?  A picture
 for that situation could like this:
+<p>
 <canvas id=canvasAndDE2 width=210 height=210></canvas>
 <p>
 The picture has no shaded area because region D and region do not
-overlap.  If that really is your requirement, in this scenario
-there is no lunch for you!
+overlap; there is no part of the picture where D and E are both true.
+If that really is your requirement, in this scenario there is no
+possible lunch for you!
 
 <!--
 <h2>Implication -- "implies"</h2>

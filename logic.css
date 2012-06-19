@@ -17,6 +17,14 @@ h2, h3 {
   margin-bottom: .5em;
 }
 
+h4 {
+  display: run-in;
+}
+
+h4:after {
+  content: '. ';
+}
+
 body {
   margin: 1em 3em 1em 1em;
   text-align: left;
@@ -25,6 +33,11 @@ body {
 
 p {
   margin: 1em 0px;
+}
+
+table {
+  border-collapse: separate;
+  empty-cells: show;
 }
 
 /* Source code (tty) style */
@@ -44,7 +57,22 @@ code {
 }
 
 .ellipsis {
-  color: gray;;
+  color: gray;
+}
+
+table.truthTable {
+  background-color: silver;
+  border-spacing: 2px;
+}
+
+table.truthTable td, table.truthTable th {
+  background-color: white;
+  border: 2px solid white;
+  border-width: 2px 5px;
+}
+
+table.truthTable td:first-child {
+  xfont-weight: bold;
 }
 
 /* Just below the main heading */
