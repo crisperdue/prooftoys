@@ -93,6 +93,72 @@ function outside(cxt) {
 }
 
 /**
+ * Renders the given rendering info in the given graphics context,
+ * clipped by zero or more shapes (clipping regions).  The "shape"
+ * argument is optional, and multiple shape arguments may be given,
+ * and is passed to the function "render" along with the graphics
+ * context.
+ *
+ * The rendering info is an object with shape information and normally
+ * some combination of fill information, stroke information, and label
+ * information.
+ *
+ * This function restores the original graphics context in all cases
+ * before exiting.  Arguments are a graphics context, a rendering
+ * information object, and zero or more shapes, whose intersection
+ * will be used to clip the rendering.  The shapes are given as
+ * functions, each computing a path.
+ */
+function withClipping(cxt, info) {
+  cxt.save();
+  try {
+    for (var i = 2; i < arguments.length; i++) {
+      var fn = arguments[i];
+      fn(cxt);
+      cxt.clip();
+    }
+    render(cxt, info);
+  } finally {
+    cxt.restore();
+  }
+}
+
+/**
+ * 
+ */
+function render(cxt, info) {
+  var fn = info.shape;
+  if (typeof fn !== 'function') {
+    throw new Error('Not a valid shape: ' + fn);
+  }
+  cxt.beginPath();
+  if (info.label) {
+    labels.push(info);
+  }
+  fn(cxt, info);
+  var fill = info.render in {fill: true, fillStroke: true};
+  var stroke = info.render in {stroke: true, fillStroke: true};
+  if (fill || stroke) {
+    cxt.save();
+    try {
+      for (var key in cxt) {
+        if (key in info) {
+          cxt[key] = info[key];
+        }
+      }
+      if (fill) {
+        cxt.fill();
+      }
+      if (stroke) {
+        cxt.stroke();
+      }
+    } finally {
+      cxt.restore();
+    }
+  }
+}
+
+/**
  * Renders label information for the circle described by "info", using
  * the given graphics context.  Saves and restores the context around
  * the rendering.  Currently strokes the circle's border and writes
