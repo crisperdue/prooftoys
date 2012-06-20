@@ -2,6 +2,8 @@
 //
 // Utilities for working with Canvases.
 
+var labels = [];
+
 /**
  * Calls the function passing it the context cxt in an environment
  * with the circle centered at point cx, cy and radius "r" as the
@@ -51,7 +53,7 @@ function drawCircle(cxt, info) {
   if (info.outside) {
     outside(cxt);
   }
-  mergeFillStyle(cxt, info);
+  mergeStyle(cxt, info);
   fillCircle(cxt, info.x, info.y, info.radius);
   cxt.restore();
   labels.push(function() { labelCircle(cxt, info); });
@@ -204,8 +206,32 @@ function merge() {
  * can be either an element or an element ID, and sets the context's
  * fillStyle to a pattern with repetition style given as the
  * fillStyle's "repeat" property, which defaults to "repeat".
+ *
+ * Style properties:
+ *
+ * translate: pair of numbers indicating X, Y the origin will be
+ * translated to.
+ *
+ * scale: number or pair of numbers to scale X and Y independently,
+ * applies after translation.
+ *
+ * rotate: angle to rotate by in radians.
+ * 
+ *
  */
-function mergeFillStyle(cxt, style) {
+function mergeStyle(cxt, style) {
+  // Pick up various properties from the style.
+  for (var key in cxt) {
+    var exclude = ['fillStyle', 'strokeStyle', 'canvas'];
+    if (exclude.indexOf(key) < 0) {
+      var value = cxt[key];
+      if (typeof value !== 'function' && key in style) {
+        cxt[key] = style[key];
+      }
+    }
+  }
+
+  // Fill style
   var fill = style.fillStyle;
   if (fill != null) {
     if (typeof fill === 'string') {
@@ -217,8 +243,49 @@ function mergeFillStyle(cxt, style) {
           image = document.getElementById(image);
         }
         var pattern = cxt.createPattern(image, fill.repeat || 'repeat');
-        cxt.fillStyle  = pattern;
+        cxt.fillStyle = pattern;
       }
     }
+  }
+
+  // Stroke style
+  var stroke = style.strokeStyle;
+  if (stroke != null) {
+    if (typeof stroke === 'string') {
+      cxt.strokeStyle = stroke;
+    } else {
+      var image = stroke.image;
+      if (image) {
+        if (typeof image === 'string') {
+          image = document.getElementById(image);
+        }
+        var pattern = cxt.createPattern(image, stroke.repeat || 'repeat');
+        cxt.strokeStyle = pattern;
+      }
+    }
+  }
+
+  // Translation
+  var translate = style.translate;
+  if (translate) {
+    translateX = translate[0];
+    translateY = translate[1];
+    cxt.translate(translateX, translateY);
+  }
+  
+  // Scaling
+  var scale = style.scale;
+  var scaleX = scale;
+  var scaleY = scale;
+  if (scale && scale.length == 2) {
+    scaleX = scale[0];
+    scaleY = scale[1];
+  }
+  cxt.scale(scaleX, scaleY);
+  
+  // Rotation
+  var rotation = style.rotate || style.rotateDegress * Math.PI / 180;
+  if (typeof rotation === 'number') {
+    cxt.rotate(rotation);
   }
 }

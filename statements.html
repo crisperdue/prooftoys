@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Logic through Pictures</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<link id=styles type="text/css" rel="stylesheet" href="logic.css">
+<script src="canvas.js"></script>
+<script src="statements.js"></script>
+<script src="boilerplate.js"></script>
+
+<style type="text/css">
+
+.hidden {
+  display: none;
+}
+
+.smaller {
+  font-size: smaller;
+}
+
+td#body {
+  width: 750px;
+}
+
+div#bodyDiv {
+  margin-left: 1em;
+}
+
+h2 {
+  margin-top: 2em;
+  margin-left: -.5em;
+  color: #666;
+}
+
+</style>
+</head>
+
+<body>
+<h1>Logic through Pictures</h1>
+
+<table>
+<tr>
+<td id=leftNav>
+<!-- Boilerplate text goes here -->
+<td id=body>
+<div id=bodyDiv>
+
+<h2>True statements</h2>
+<p>
+Mathematics is especially interested in statements that are true,
+particularly statements that are true by mathematical reasoning, in
+other words theorems.
+<p>
+As an example let's consider the statement that every number is either
+less than 100 or greater than 10.  We could state this as
+<code>x &lt; 100 or x &gt; 10</code>.  A picture of the statement
+might look like this:
+<p>
+<canvas id=canvasOrAll width=210 height=210>
+<p>
+This picture shows everything in the world (all numbers) in one or
+both of the groups, and shows that some numbers are in both groups.
+<p>
+A more conventional and more informative picture might show a number
+line and the values that satisfy both of the conditions, like this:
+<p>
+<canvas id=canvasArrow width=310 height=100>
+<p>
+In any case the statement <code>x &lt; 100 or x &gt; 10</code>
+is true regardless of the value of <code>x</code>.  In mathematics a
+statement like this that is true regardless of the values assigned to
+its variables is considered a true statement.
+
+<h2>Implication -- "implies"</h2>
+<p>
+Let's look at another typical kind of statement often seen in
+mathematics, the sort like "all men are mortal".  In our notation we
+can write <code>(man x) implies (mortal x)</code>.  We might also
+express this as "if x is a man then x is mortal".
+
+<p>
+<canvas id=canvasImplies width=210 height=210></canvas>
+
+</div> <!-- #bodyDiv -->
+</td> <!-- #body -->
+</table>
+
+<script>
+
+// Insert boilerplate.
+Toy.insertNav();
+Toy.insertSlogans();
+
+</script>
+</body>
+</html>

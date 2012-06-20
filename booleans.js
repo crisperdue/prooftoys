@@ -1,6 +1,6 @@
 // Copyright 2012 Crispin Perdue.  All rights reserved.
 //
-// Code for canvas-test.html
+// Code for booleans.html
 
 var cx = 105, cy = 105;
 var r = 100;
@@ -9,8 +9,6 @@ var bRadius = 150;
 var blue25 = 'hsla(240, 100%, 50%, 1)';
 var green25 = 'hsla(120, 100%, 30%, 1)';
 var red25 = 'hsla(10, 100%, 50%, 1)';
-
-var labels = [];
 
 function initCxt(canvas) {
   if (typeof canvas == 'string') {
@@ -170,15 +168,6 @@ function draw() {
   drawAll(cxtAll);
   cxtAll.fillStyle = 'black';
   cxtAll.fillText('all', 105, 105);
-
-  /*
-  var cxtImplies = initCxt('canvasImplies');
-  window.cxtImplies = cxtImplies;
-  withinCircle(cxtImplies, function() {
-      drawCircle(cxtImplies, merge(circleA, {outside: true}));
-      drawCircle(cxtImplies, circleB);
-    });
-  */
 }
 
 function drawAll(cxt) {
@@ -192,18 +181,15 @@ function drawAll(cxt) {
 function drawAnd(cxt, circle1, circle2) {
   withinCircle(cxt, function() {
       cxt.save();
-      mergeFillStyle(cxt, circle1);
+      mergeStyle(cxt, circle1);
       drawAll(cxt);
-      mergeFillStyle(cxt, circle2);
+      mergeStyle(cxt, circle2);
       drawAll(cxt);
       cxt.restore();
       var props = {outside: true, fillStyle: 'white'};
       drawCircle(cxt, merge(circle1, props));
       drawCircle(cxt, merge(circle2, props));
     });
-}
-
-function drawImplies(cxt) {
 }
 
 window.onload = draw;
