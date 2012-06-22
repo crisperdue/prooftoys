@@ -193,11 +193,10 @@ function draw() {
       drawCircle(c, merge(circleB, styleC));
     });
 
-  // Venn diagram of a false implication.
+  // Venn diagram of a false implication, coloring in just the
+  // area where the implication is false.
   c = initCxt('canvasNotImplies');
-  
   withinCircle(c, function() {
-      c.canvas.scrollIntoView();
       var styleA =
         merge(circleA, {x: 85, label: 'birds', fillStyle: '#fff'});
       drawCircle(c, styleA);
@@ -207,6 +206,35 @@ function draw() {
       drawCircle(c, styleC);
       withClipping(c, {shape: canvas, fillStyle: 'red', render: 'fill'},
         styleC, styleA);
+    });
+
+  // Picture where bird --> wings, with normal shading.
+  c = initCxt('birdWingsTrue');
+  c.canvas.scrollIntoView();
+  withinCircle(c, function() {
+      var styleA =
+        {outside: true, label: 'birds', fillStyle: {image: shadeYellow}};
+      drawCircle(c, merge(circleA, styleA));
+      var styleC =
+        merge(circleB,
+              {label: 'wings', labelX: 170,
+               fillStyle: {image: shadeSilver}});
+      drawCircle(c, styleC);
+    });
+
+  // Picture where bird --> wings is not true everywhere, with normal shading.
+  c = initCxt('birdWingsFalse');
+  c.canvas.scrollIntoView();
+  withinCircle(c, function() {
+      var styleA =
+        {outside: true, x: 77, label: 'birds', labelX: 83,
+         fillStyle: {image: shadeYellow}};
+      drawCircle(c, merge(circleA, styleA));
+      var styleC =
+        merge(circleB,
+              {shape: outCircle, label: 'wings', labelX: 160,
+               fillStyle: {image: shadeSilver}});
+      drawCircle(c, styleC);
     });
 }
 

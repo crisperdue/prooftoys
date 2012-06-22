@@ -116,16 +116,16 @@ It is clear right away which part of the picture makes the statement
 not always true -- the part of the "birds" circle outside the "wings"
 area.
 <p>
-Anything in the picture that is not a man does not affect the truth of
-the statement.  It does not matter whether a plant or a bacterium can
-live forever, we need only consider all men.  As long is there is no
-man who is not mortal, the statement is true.  <i>If every part of the
-picture is either in the "mortals" circle or not in the "men" circle,
-the statement is true.</i>  Here is a truth table for the reltionship:
+Anything in the picture that is not a bird does not affect the truth
+of the statement.  If something is not a bird, it does not affect
+whether this statement about birds is true.  <i>If every part of the
+picture is either in the "wings" circle or not in the "birds" circle,
+the statement is true.</i>  Here is a truth table for the
+relationship:
 <p>
 <table class=truthTable>
  <tr>
-  <th>bird<th>wings<th>bird --> wings
+  <th>A<th>B<th>A --> B
  <tr>
   <td>false<td>false<td>true
  <tr>
@@ -136,16 +136,25 @@ the statement is true.</i>  Here is a truth table for the reltionship:
   <td>true<td>true<td>true
 </table>
 <p>
-Here is the same picture as before, but with shading to show how the
-statement <code>man --> mortal</code> is true everywhere in the
-picture:
+Here are two picture as before, but with shading to show the areas
+where the statement <code>bird x --&gt; wings x</code> is true.
+First one where it is true everywhere:
 <p>
-<canvas width=210 height=210></canvas>
+<canvas id=birdWingsTrue width=210 height=210></canvas>
 <p>
-And here is an example where the statement is not true everywhere:
+And now one where the statement is not true everywhere:
 <p>
-<canvas width=210 height=210></canvas>
-
+<canvas id=birdWingsFalse width=210 height=210></canvas>
+<p>
+The birds without wings are represented by the small white area with
+no shading.
+<p>
+So we have found that it is possible to define a
+function <code>implies</code> (alternatively <code>--&gt;</code>) that
+enables us to make statements that say one thing implies another.  It
+works like <code>and</code> and <code>or</code>, taking two boolean
+values as inputs and producing a boolean (<code>true</code>
+or <code>false</code>) result.
 
 </div> <!-- #bodyDiv -->
 </td> <!-- #body -->
