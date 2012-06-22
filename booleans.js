@@ -52,7 +52,7 @@ var shadeBlue = function() {
   canvas.width = 10;
   canvas.height = 10;
   var cxt = initCxt(canvas);
-  cxt.strokeStyle = 'rgb(180, 180, 255)';
+  cxt.strokeStyle = 'rgb(200, 200, 255)';
   cxt.lineWidth = 1.4;
   cxt.lineCap = 'square';
   cxt.moveTo(0, 5);
@@ -101,7 +101,7 @@ var circleD = {
 var circleD2 = merge(circleD, {x: 65});
 
 var circleE = {
-  x: 130, y: 105, radius: 38, fillStyle: {image: shadeBlue},
+  x: 130, y: 105, radius: 38, fillStyle: {image: shadeSilver},
   label: 'E', labelX: 145
 };
 
@@ -150,8 +150,8 @@ function draw() {
 
   var cxtOrDE2 = initCxt('canvasOrDE2');
   withinCircle(cxtOrDE2, function() {
-      drawCircle(cxtOrDE2, circleD);
-      drawCircle(cxtOrDE2, merge(circleE, {fillStyle: {image: shadeYellow}}));
+      drawCircle(cxtOrDE2, merge(circleD, {fillStyle: {image: shadeBlue}}));
+      drawCircle(cxtOrDE2, merge(circleE, {fillStyle: {image: shadeBlue}}));
     });
 
   var cxtAnd = initCxt('canvasAnd');
@@ -159,7 +159,9 @@ function draw() {
   drawAnd(cxtAnd, circleA, circleB);
 
   var cxtAndDE = initCxt('canvasAndDE');
-  drawAnd(cxtAndDE, circleD, circleE);
+  drawAnd(cxtAndDE,
+	  merge(circleD, {fillStyle: {image: shadeBlue}}),
+	  merge(circleE, {fillStyle: {image: shadeBlue}}));
 
   var cxtAndDE2 = initCxt('canvasAndDE2');
   drawAnd(cxtAndDE2, circleD2, circleE2);

@@ -30,7 +30,7 @@ var shadeBlue = function() {
   canvas.width = 10;
   canvas.height = 10;
   var cxt = initCxt(canvas);
-  cxt.strokeStyle = 'rgb(180, 180, 255)';
+  cxt.strokeStyle = 'rgb(200, 200, 255)';
   cxt.lineWidth = 1.4;
   cxt.lineCap = 'square';
   cxt.moveTo(0, 5);
@@ -177,10 +177,12 @@ function draw() {
 
   c = initCxt('canvasAnd');
   withinCircle(c, function() {
-      var style1 = {x: cx, y: cy, radius: r, fillStyle: {image: shadeSilver}};
-      drawCircle(c, style1);
-      var overrides = {fillStyle: {image: shadeYellow}, label: 'A and B'};
-      var style2 = merge(style1, overrides);
+      // var style1 = {x: cx, y: cy, radius: r, fillStyle: {image: shadeSilver}};
+      // drawCircle(c, style1);
+      var overrides = {fillStyle: {image: shadeBlue}, label: 'A and B'};
+      var style2 =
+        {x: cx, y: cy, radius: r, label: 'A and B',
+         fillStyle: {image: shadeBlue}};
       drawCircle(c, style2);
     });
 
@@ -210,7 +212,6 @@ function draw() {
 
   // Picture where bird --> wings, with normal shading.
   c = initCxt('birdWingsTrue');
-  c.canvas.scrollIntoView();
   withinCircle(c, function() {
       var styleA =
         {outside: true, label: 'birds', fillStyle: {image: shadeYellow}};
@@ -224,7 +225,6 @@ function draw() {
 
   // Picture where bird --> wings is not true everywhere, with normal shading.
   c = initCxt('birdWingsFalse');
-  c.canvas.scrollIntoView();
   withinCircle(c, function() {
       var styleA =
         {outside: true, x: 77, label: 'birds', labelX: 83,
