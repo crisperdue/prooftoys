@@ -17,13 +17,20 @@ var labels = [];
 function withinCircle (cxt, fn) {
   cxt.save();
   cxt.beginPath();
-  circle(cxt, cx, cy, r);
+  makeCircle(cxt, cx, cy, r);
   cxt.clip();
   cxt.beginPath();
 
   fn(cxt);
   // Apply all of the labels.
-  labels.forEach(function(fn) { fn(cxt); });
+  for (var i = 0; i < labels.length; i++) {
+    var fn = labels[i];
+    if (typeof fn === 'function') {
+      fn(cxt);
+    } else {
+      render(cxt, fn, 'label');
+    }
+  }
   labels = [];
 
   cxt.restore();
@@ -33,7 +40,7 @@ function withinCircle (cxt, fn) {
   cxt.beginPath();
   cxt.lineWidth = 2;
   cxt.strokeStyle = 'black';
-  circle(cxt, cx, cy, r, true);
+  makeCircle(cxt, cx, cy, r, true);
   cxt.stroke();
 
   cxt.restore();
@@ -63,7 +70,7 @@ function drawCircle(cxt, info) {
  * Fills a circle using the given rendering context.
  */
 function fillCircle(cxt, x, y, radius) {
-  circle(cxt, x, y, radius);
+  makeCircle(cxt, x, y, radius);
   cxt.fill();
   cxt.beginPath();
 }
@@ -73,8 +80,35 @@ function fillCircle(cxt, x, y, radius) {
  * radius, and counterclockwise iff the "counter" argument is true;
  * then closes the path.  Does not render anything.
  */
-function circle(cxt, x, y, radius, counter) {
+function makeCircle(cxt, x, y, radius, counter) {
   cxt.arc(x, y, radius, 0, 2 * Math.PI, counter);
+  cxt.closePath();
+}
+
+/**
+ * Makes a circle from style info.
+ */
+function circle(cxt, info) {
+  makeCircle(cxt, info.x, info.y, info.radius, info.counter);
+}
+
+function outCircle(cxt, info) {
+  circle(cxt, info);
+  outside(cxt);
+}
+
+/**
+ * If using the default transform this makes a path enclosing the
+ * entire canvas, clockwise.
+ */
+function canvas(cxt, info) {
+  var canvas = cxt.canvas;
+  var w = canvas.width;
+  var h = canvas.height;
+  cxt.moveTo(0, 0);
+  cxt.lineTo(0, w);
+  cxt.lineTo(h, w);
+  cxt.lineTo(h, 0);
   cxt.closePath();
 }
 
@@ -111,12 +145,13 @@ function outside(cxt) {
  * will be used to clip the rendering.  The shapes are given as
  * functions, each computing a path.
  */
-function withClipping(cxt, info) {
+function withClipping(cxt, info, clipping_) {
   cxt.save();
   try {
     for (var i = 2; i < arguments.length; i++) {
-      var fn = arguments[i];
-      fn(cxt);
+      var style = arguments[i];
+      cxt.beginPath();
+      style.shape(cxt, style);
       cxt.clip();
     }
     render(cxt, info);
@@ -126,23 +161,41 @@ function withClipping(cxt, info) {
 }
 
 /**
- * 
+ * Builds a path for the graphics object described by "info", and
+ * renders it if it has a "render" property.
+ *
+ * Supported values for the "render" property are "fill", "stroke",
+ * and "fillStroke".  If the value is "fillStroke" this fills and then
+ * strokes according to the styles specified by the info.
+ *
+ * This always starts a fresh path, and if it renders it starts a new
+ * path after rendering.
+ *
+ * Stroking is currently only done in the label phase and filling only
+ * in the drawing phase.
+ *
+ * TODO: Be more flexible about strategies for stroking, and support
+ * filling just the outside of the given shape.
  */
-function render(cxt, info) {
+function render(cxt, info, phase) {
   var fn = info.shape;
   if (typeof fn !== 'function') {
     throw new Error('Not a valid shape: ' + fn);
   }
-  cxt.beginPath();
-  if (info.label) {
+  if (phase !== 'label') {
     labels.push(info);
   }
+  cxt.beginPath();
   fn(cxt, info);
-  var fill = info.render in {fill: true, fillStroke: true};
-  var stroke = info.render in {stroke: true, fillStroke: true};
+  var fill =
+    phase !== 'label' && info.render in {fill: true, fillStroke: true};
+  var stroke =
+    phase === 'label' && info.render in {stroke: true, fillStroke: true};
   if (fill || stroke) {
+    // Render.
     cxt.save();
     try {
+      // Merge styles into the graphics context.
       for (var key in cxt) {
         if (key in info) {
           cxt[key] = info[key];
@@ -156,6 +209,7 @@ function render(cxt, info) {
       }
     } finally {
       cxt.restore();
+      cxt.beginPath();
     }
   }
 }
@@ -164,17 +218,20 @@ function render(cxt, info) {
  * Renders label information for the circle described by "info", using
  * the given graphics context.  Saves and restores the context around
  * the rendering.  Currently strokes the circle's border and writes
- * the text of info.label in black at X coordinate info.labelX and Y
- * coordinate info.y.
+ * the text of info.label in black at X coordinate info.labelX if
+ * given, otherwise info.x; and Y coordinate info.y.
  */
 function labelCircle(cxt, info) {
-  if (info.labelX != null) {
+  if (info.label) {
+    var labelX = 'labelX' in info ? info.labelX : info.x;
     cxt.save();
+    cxt.textAlign = 'center';
+    cxt.textBaseline = 'middle';
     cxt.fillStyle = 'black';
-    cxt.fillText(info.label, info.labelX, info.y);
+    cxt.fillText(info.label, labelX, info.y);
 
     cxt.beginPath();
-    circle(cxt, info.x, info.y, info.radius);
+    makeCircle(cxt, info.x, info.y, info.radius);
     cxt.strokeStyle = 'gray';
     cxt.lineWidth = 1;
     cxt.stroke();
@@ -229,6 +286,15 @@ function mergeStyle(cxt, style) {
         cxt[key] = style[key];
       }
     }
+  }
+
+  // Canvas width and height.  Note that setting these resets all
+  // other context properties to their defaults.
+  if ('width' in style) {
+    cxt.canvas.width = style.width;
+  }
+  if ('height' in style) {
+    cxt.canvas.height = style.height;
   }
 
   // Fill style

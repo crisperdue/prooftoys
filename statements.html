@@ -32,6 +32,10 @@ h2 {
   color: #666;
 }
 
+h3 {
+  margin-left: -.5em;
+}
+
 </style>
 </head>
 
@@ -50,6 +54,8 @@ h2 {
 Mathematics is especially interested in statements that are true,
 particularly statements that are true by mathematical reasoning, in
 other words theorems.
+
+<h3>Disjunctions -- "or"</h3>
 <p>
 As an example let's consider the statement that every number is either
 less than 100 or greater than 10.  We could state this as
@@ -71,15 +77,75 @@ is true regardless of the value of <code>x</code>.  In mathematics a
 statement like this that is true regardless of the values assigned to
 its variables is considered a true statement.
 
-<h2>Implication -- "implies"</h2>
+<h3>Conjunctions -- "and"</h3>
 <p>
-Let's look at another typical kind of statement often seen in
-mathematics, the sort like "all men are mortal".  In our notation we
-can write <code>(man x) implies (mortal x)</code>.  We might also
-express this as "if x is a man then x is mortal".
+To be true, both parts of a statement with "and" must also be true.
+Any part not in one of the areas will not be in both.  Here is a
+picture illustrating a statement <code>A and B</code> that is true,
+where A and B are both true statements.
+<p>
+<canvas id=canvasAnd width=210 height=210></canvas>
 
+
+<h3>Implication -- "implies"</h3>
+<p>
+Let's look at another typical kind of statement that has a logical
+meaning, such as "all birds have wings".  We might also express
+this as "if x is a bird then x has wings".  In our notation we can
+write <code>(bird x) implies (wings x)</code> or alternatively
+<code>bird x --> wings x</code>.
+<p>
+The picture below illustrates a scenario where the statement is true.
+The area representing all things with wings entirely encloses the area
+that represents all birds.  (In this picture there are also some
+things with wings that are not birds, such as bats in the real world.)
 <p>
 <canvas id=canvasImplies width=210 height=210></canvas>
+<p>
+Any picture of this kind where one area encloses another (or occupies
+the same area) illustrates a true statement of this kind.  But is
+there a system for shading pictures like this so they are completely
+shaded exactly when the statement is true?  It turns out there is.
+<p>
+Let's consider a picture where the statement is <i>not</i> always
+true, like this:
+<p>
+<canvas id=canvasNotImplies width=210 height=210></canvas>
+<p>
+It is clear right away which part of the picture makes the statement
+not always true -- the part of the "birds" circle outside the "wings"
+area.
+<p>
+Anything in the picture that is not a man does not affect the truth of
+the statement.  It does not matter whether a plant or a bacterium can
+live forever, we need only consider all men.  As long is there is no
+man who is not mortal, the statement is true.  <i>If every part of the
+picture is either in the "mortals" circle or not in the "men" circle,
+the statement is true.</i>  Here is a truth table for the reltionship:
+<p>
+<table class=truthTable>
+ <tr>
+  <th>bird<th>wings<th>bird --> wings
+ <tr>
+  <td>false<td>false<td>true
+ <tr>
+  <td>false<td>true<td>true
+ <tr>
+  <td>true<td>false<td><b>false</b>
+ <tr>
+  <td>true<td>true<td>true
+</table>
+<p>
+Here is the same picture as before, but with shading to show how the
+statement <code>man --> mortal</code> is true everywhere in the
+picture:
+<p>
+<canvas width=210 height=210></canvas>
+<p>
+And here is an example where the statement is not true everywhere:
+<p>
+<canvas width=210 height=210></canvas>
+
 
 </div> <!-- #bodyDiv -->
 </td> <!-- #body -->

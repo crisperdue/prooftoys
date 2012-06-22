@@ -6,9 +6,6 @@ var cx = 105, cy = 105;
 var r = 100;
 var aRadius = 30;
 var bRadius = 150;
-var blue25 = 'hsla(240, 100%, 50%, 1)';
-var green25 = 'hsla(120, 100%, 30%, 1)';
-var red25 = 'hsla(10, 100%, 50%, 1)';
 
 
 var shadeSilver = function() {
@@ -64,16 +61,19 @@ var shadeYellow = function() {
 }();
 
 var circleA = {
+  shape: circle,
   x: 105, y: 105, radius: 30, fillStyle: {image: shadeYellow},
-  label: 'A', labelX: 105
+  label: 'A'
 };
 
 var circleB = {
+  shape: circle,
   x: 225, y: 105, radius: 160, fillStyle: {image: shadeBlue},
   label: 'B', labelX: 175
 };
 
 var circleC = {
+  shape: circle,
   x: -15, y: 105, radius: 160, fillStyle: {image: shadeSilver},
   label: 'C', labelX: 35
 };
@@ -167,21 +167,46 @@ function draw() {
   // First picture: x > 10 or x < 100.
   var c = initCxt('canvasOrAll');
   withinCircle(c, function() {
+      drawCircle(c, merge(circleC, {label: 'x < 100', labelX: 55}));
       drawCircle(c, merge(circleB, {
 	  label: 'x > 10', labelX: 155, fillStyle: {image: shadeYellow}}));
-      drawCircle(c, merge(circleC, {label: 'x < 100', labelX: 55}));
     });
 
-  // Second picture.
+  // Arrows.
   twoArrowsAndNumberLine();
+
+  c = initCxt('canvasAnd');
+  withinCircle(c, function() {
+      var style1 = {x: cx, y: cy, radius: r, fillStyle: {image: shadeSilver}};
+      drawCircle(c, style1);
+      var overrides = {fillStyle: {image: shadeYellow}, label: 'A and B'};
+      var style2 = merge(style1, overrides);
+      drawCircle(c, style2);
+    });
 
   // Venn diagram of an implication.
   c = initCxt('canvasImplies');
   withinCircle(c, function() {
-      var styleA = {label: 'men', fillStyle: '#fff'};
+      var styleA = {label: 'birds', fillStyle: '#fff'};
       drawCircle(c, merge(circleA, styleA));
-      var styleC = {label: 'mortals', labelX: 170, fillStyle: '#fff'};
+      var styleC = {label: 'wings', labelX: 170, fillStyle: '#fff'};
       drawCircle(c, merge(circleB, styleC));
+    });
+
+  // Venn diagram of a false implication.
+  c = initCxt('canvasNotImplies');
+  
+  withinCircle(c, function() {
+      c.canvas.scrollIntoView();
+      var styleA =
+        merge(circleA, {x: 85, label: 'birds', fillStyle: '#fff'});
+      drawCircle(c, styleA);
+      var styleC =
+        merge(circleB,
+              {shape: outCircle, label: 'wings', labelX: 160, fillStyle: '#fff'});
+      drawCircle(c, styleC);
+      withClipping(c, {shape: canvas, fillStyle: 'red', render: 'fill'},
+        styleC, styleA);
     });
 }
 
