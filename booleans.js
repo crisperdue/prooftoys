@@ -34,6 +34,9 @@ var circleE = {
 var circleE2 = merge(circleE, {x: 145});
 
 function draw() {
+  forEach(document.querySelectorAll('td.truthy'), function(elt) {
+        elt.style.backgroundImage = 'url(' + shadeBlue.toDataURL() + ')';
+      });
 
   var cxtA = initCxt('canvasA');
   withinCircle(cxtA, function() {

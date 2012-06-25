@@ -88,6 +88,10 @@ function twoArrowsAndNumberLine() {
 }
 
 function draw() {
+  forEach(document.querySelectorAll('td.truthy'), function(elt) {
+        elt.style.backgroundImage = 'url(' + shadeYellow.toDataURL() + ')';
+      });
+
   // First picture: x > 10 or x < 100.
   var c = initCxt('canvasOrAll');
   withinCircle(c, function() {

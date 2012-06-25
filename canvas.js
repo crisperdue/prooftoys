@@ -5,6 +5,19 @@
 var labels = [];
 
 /**
+ * Call the function with each of the elements of the array-like
+ * argument in turn.
+ */
+function forEach(arrayLike, fn) {
+  Array.prototype.forEach.call(arrayLike, fn);
+}
+
+function setBackgroundCanvas(element, canvas) {
+  element.style.backgroundColor = '#eee';
+  element.style.backgroundImage = 'url(' + canvas.toDataURL() + ')';
+}
+
+/**
  * Calls the function passing it the context cxt in an environment
  * with the circle centered at point cx, cy and radius "r" as the
  * clipping region, then performs the actions specified by the labels

@@ -67,12 +67,19 @@ table.truthTable {
 
 table.truthTable td, table.truthTable th {
   background-color: white;
-  border: 2px solid white;
-  border-width: 2px 5px;
+  padding: 2px;
 }
 
-table.truthTable td:first-child {
-  xfont-weight: bold;
+table.truthTable .truthy {
+  background-color: #eee;
+}
+
+table.truthTable td.truthy:after {
+  content: "true";
+}
+
+table.truthTable td.falsy:after {
+  content: "false";
 }
 
 /* Just below the main heading */
