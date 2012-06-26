@@ -8,7 +8,8 @@ var degree = Math.PI / 180;
 // Context lineWidth to indicate rendering should not stroke.
 var noStroke = 1e-9;
 
-var labels = [];
+// Merge this style to prevent filling of regions.
+var noFillStyle = {noFill: true};
 
 /**
  * Call the function with each of the elements of the array-like
@@ -53,9 +54,7 @@ function withClipping(cxt, info, clipPaths_) {
 /**
  * Calls the function passing it the context cxt in an environment
  * with the circle centered at point cx, cy and radius "r" as the
- * clipping region, then performs the actions specified by the labels
- * array, passing each of its elements the context as an argument and
- * clearing the array.
+ * clipping region.
  *
  * After all of this restores the original rendering context and draws
  * the perimeter of the clipping region.
@@ -68,17 +67,6 @@ function withinCircle (cxt, fn) {
   cxt.beginPath();
 
   fn(cxt);
-  // Apply all of the labels.
-  for (var i = 0; i < labels.length; i++) {
-    var fn = labels[i];
-    if (typeof fn === 'function') {
-      fn(cxt);
-    } else {
-      render(cxt, fn, 'label');
-    }
-  }
-  labels = [];
-
   cxt.restore();
   cxt.save();
 
