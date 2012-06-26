@@ -16,12 +16,6 @@ var wings = {
   label: 'wings', labelX: 170,
 };
 
-var circleC = {
-  shape: circle,
-  x: -15, y: 105, radius: 160, fillStyle: {image: shadeYellow},
-  labelX: 35
-};
-
 /**
  * Draw a right arrow of unit length and width specified by
  * info.width, which defaults to .1, along the X axis from the origin.
@@ -103,9 +97,14 @@ function draw() {
       });
 
   // First picture: x > 10 or x < 100.
+  var circle1 = {
+    shape: circle,
+    x: -15, y: 105, radius: 160, fillStyle: {image: shadeYellow},
+    label: 'x < 100', labelX: 55
+  };
   var c = initCxt('canvasOrAll');
   withinCircle(c, function() {
-      render(c, merge(circleC, {label: 'x < 100', labelX: 55}));
+      render(c, circle1);
       render(c, merge(wings, {label: 'x > 10', labelX: 155}));
     });
 
