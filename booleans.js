@@ -84,10 +84,6 @@ function draw() {
       render(cxtOrDE2, merge(circleE, {fillStyle: {image: shadeBlue}}));
     });
 
-  var cxtAnd = initCxt('canvasAnd');
-  window.cxtAnd = cxtAnd;
-  drawAnd(cxtAnd, circleA, circleB);
-
   var cxtAndDE = initCxt('canvasAndDE');
   drawAnd(cxtAndDE,
 	  merge(circleD, {fillStyle: {image: shadeBlue}}),
@@ -95,32 +91,14 @@ function draw() {
 
   var cxtAndDE2 = initCxt('canvasAndDE2');
   drawAnd(cxtAndDE2, circleD2, circleE2);
-
-  var cxtAll = initCxt('canvasAll');
-  drawAll(cxtAll);
-  cxtAll.fillStyle = 'black';
-  cxtAll.fillText('all', 105, 105);
-}
-
-function drawAll(cxt) {
-  withinCircle(cxt, function() {
-      outside(cxt);
-      cxt.fill();
-      cxt.beginPath();
-    });
 }
 
 function drawAnd(cxt, circle1, circle2) {
   withinCircle(cxt, function() {
-      cxt.save();
-      mergeStyle(cxt, circle1);
-      drawAll(cxt);
-      mergeStyle(cxt, circle2);
-      drawAll(cxt);
-      cxt.restore();
-      var props = {outside: true, fillStyle: 'white'};
-      render(cxt, merge(circle1, props));
-      render(cxt, merge(circle2, props));
+      var noFill = {noFill: true};
+      render(cxt, merge(circle1, noFill));
+      render(cxt, merge(circle2, noFill));
+      withClipping(cxt, circle1, circle2);
     });
 }
 

@@ -80,6 +80,19 @@ function initCxt(canvas) {
   return cxt;
 }
 
+/**
+ * Draws the intersection of circle1 and circle2 using the fill style
+ * of circle1.
+ */
+function drawAnd(cxt, circle1, circle2) {
+  withinCircle(cxt, function() {
+      var noFill = {noFill: true};
+      render(cxt, merge(circle1, noFill));
+      render(cxt, merge(circle2, noFill));
+      withClipping(cxt, circle1, circle2);
+    });
+}
+
 var blueShading = {fillStyle: {image: shadeBlue}};
 
 var silverShading = {fillStyle: {image: shadeSilver}};
