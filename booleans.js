@@ -53,22 +53,23 @@ function draw() {
       drawCircle(cxtC, circleC);
     });
 
+  var outsideBlue = {outside: true, fillStyle: {image: shadeBlue}};
   var cxtNotA = initCxt('canvasNotA');
   withinCircle(cxtNotA, function() {
-      drawCircle(cxtNotA, circleA);
-      drawCircle(cxtNotA, merge(circleA, {outside: true, fillStyle: 'lime'}));
+      drawCircle(cxtNotA, merge(circleA, {fillStyle: '#eee'}));
+      drawCircle(cxtNotA, merge(circleA, outsideBlue));
     });
 
   var cxtNotB = initCxt('canvasNotB');
   withinCircle(cxtNotB, function() {
-      drawCircle(cxtNotB, circleB);
-      drawCircle(cxtNotB, merge(circleB, {outside: true, fillStyle: 'lime'}));
+      drawCircle(cxtNotB, merge(circleB, {fillStyle: '#eee'}));
+      drawCircle(cxtNotB, merge(circleB, outsideBlue));
     });
 
   var cxtNotC = initCxt('canvasNotC');
   withinCircle(cxtNotC, function() {
-      drawCircle(cxtNotC, circleC);
-      drawCircle(cxtNotC, merge(circleC, {outside: true, fillStyle: 'lime'}));
+      drawCircle(cxtNotC, merge(circleC, {fillStyle: '#eee'}));
+      drawCircle(cxtNotC, merge(circleC, outsideBlue));
     });
 
   var cxtOrDE = initCxt('canvasOrDE');

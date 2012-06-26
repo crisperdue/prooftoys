@@ -60,6 +60,8 @@ code {
   color: gray;
 }
 
+/* Truth tables _not_ for binary operators */
+
 table.truthTable {
   background-color: silver;
   border-spacing: 2px;
@@ -70,7 +72,7 @@ table.truthTable td, table.truthTable th {
   padding: 2px;
 }
 
-table.truthTable .truthy {
+table.truthTable .falsy {
   background-color: #eee;
 }
 
@@ -79,6 +81,41 @@ table.truthTable td.truthy:after {
 }
 
 table.truthTable td.falsy:after {
+  content: "false";
+}
+
+
+/**
+ * Truth tables for binary operators
+ *
+ * 
+ */
+
+table.binaryTruthTable {
+  border-collapse: collapse;
+  xborder: 2px solid silver;
+}
+
+table.binaryTruthTable td.truthy, table.binaryTruthTable td.falsy {
+  padding: 2px 10px;
+  border: 2px solid silver;
+}
+
+table.binaryTruthTable td.falsy {
+  background-color: #eee;
+}
+
+table.binaryTruthTable th {
+  font-weight: normal;
+  text-align: center;
+  padding: 2px 10px;
+}
+
+table.binaryTruthTable td.truthy:after {
+  content: "true";
+}
+
+table.binaryTruthTable td.falsy:after {
   content: "false";
 }
 

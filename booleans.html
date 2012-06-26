@@ -91,7 +91,7 @@ We commonly call a statement like <code>(not (A x))</code> the negation of
 a statement <code>(A x)</code>.  The negated statement is true of all
 the things where the original statement <code>(A x)</code> is false.
 <p>
-So the solid colored areas in the next pictures show where
+So the blue shaded areas in the next pictures show where
 <code>(not (A x))</code> is true, where <code>(not (B x))</code> is
 true, and finally where <code>(not (C x))</code> is true.
 <p>
@@ -147,15 +147,19 @@ a pioneer in the development of these concepts.
 <p>
 Since there are only two truth values we can describe the
 function <code>not</code> with a table that shows its value for the
-possible inputs.
+possible inputs.  The table entries where the value is false are
+shaded in gray, and the entries where the value is true are shaded
+with blue lines to match the pictures and highlight the differences
+visually.
 <p>
-<table class=truthTable>
+<table class=binaryTruthTable>
  <tr>
-  <th>X<th>not X
+  <th><th><th><b>not X</b>
  <tr>
-  <td class=truthy><td class=falsy>
+  <th rowspan=2><b>X</b>
+  <th>false<td class=truthy>
  <tr>
-  <td class=falsy><td id=truthy class=truthy>
+  <th>true<td class=falsy>
 </table>
 <p>
 So <code>(not false) = true</code> and <code>(not true) = false</code>.
@@ -177,20 +181,20 @@ instead of separate shadings for D and E.
 <canvas id=canvasOrDE width=210 height=210></canvas>
 <canvas id=canvasOrDE2 width=210 height=210></canvas>
 <p>
-The truth table for <code>D or E</code> is:
+The truth tables for binary operators are organized with a row for
+each value of the first input and a column for each value of the
+second argument.  The truth table for <code>D or E</code> is:
 <p>
-<table class=truthTable>
+<table class=binaryTruthTable>
  <tr>
-  <th>D<th>E<th>D or E
- <tr>
-  <td class=falsy><td class=falsy><td class=falsy>
- <tr>
-  <td class=falsy><td class=truthy><td class=truthy>
- <tr>
-  <td class=truthy><td class=falsy><td class=truthy>
- <tr>
-  <td class=truthy><td class=truthy><td class=truthy>
+  <th colspan=2 rowspan=2 style="text-align: center"><!-- <b>or</b> -->
+  <th colspan=2 style="text-align: center"><b>E</b>
+ <tr><th>false<th>true
+ <tr><th rowspan=2><b>D</b><th>false<td class=falsy><td class=truthy>
+ <tr>               <th>true<td class=truthy><td class=truthy>
 </table>
+<p>
+So for example <code>(false or true) = true</code>.
 
 <h2>Conjunction -- "and"</h2>
 
@@ -206,17 +210,13 @@ area.  We write it as
 <p>
 The truth table for <code>D and E</code> is:
 <p>
-<table class=truthTable>
+<table class=binaryTruthTable>
  <tr>
-  <th>D<th>E<th>D and E
- <tr>
-  <td class=falsy><td class=falsy><td class=falsy>
- <tr>
-  <td class=falsy><td class=truthy><td class=falsy>
- <tr>
-  <td class=truthy><td class=falsy><td class=falsy>
- <tr>
-  <td class=truthy><td class=truthy><td class=truthy>
+  <th colspan=2 rowspan=2 style="text-align: center"><!-- <b>and</b> -->
+  <th colspan=2 style="text-align: center"><b>E</b>
+ <tr><th>false<th>true
+ <tr><th rowspan=2><b>D</b><th>false<td class=falsy><td class=falsy>
+ <tr>               <th>true<td class=falsy><td class=truthy>
 </table>
 <p>
 What if there is nothing that is both easy and delicious?  A picture
