@@ -80,3 +80,26 @@ function initCxt(canvas) {
   return cxt;
 }
 
+var blueShading = {fillStyle: {image: shadeBlue}};
+
+var silverShading = {fillStyle: {image: shadeSilver}};
+
+var yellowShading = {fillStyle: {image: shadeYellow}};
+
+
+// Circle geometry:
+
+// Small and centered.
+var circleCenter = {shape: circle, x: 105, y: 105, radius: 30};
+
+// Large and on the left.
+var circleLeft = {shape: circle, x: 5, y: 105, radius: 150};
+
+// Large and on the right.
+var circleRight = {shape: circle, x: 205, y: 105, radius: 150};
+
+// Smallish, overlaps circleRightish.
+var circleLeftish = {shape: circle, x: 80, y: 105, radius: 38};
+
+// Smallish, overlaps circleLeftish.
+var circleRightish = {shape: circle, x: 130, y: 105, radius: 38};

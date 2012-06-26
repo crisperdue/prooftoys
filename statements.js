@@ -48,6 +48,9 @@ function arrow(c, info) {
   }
 }
 
+/**
+ * Draws the picture suggested by the name.
+ */
 function twoArrowsAndNumberLine() {
   // Picture with two arrows and a number line:
   var c = initCxt('canvasArrow');
@@ -95,8 +98,8 @@ function draw() {
   // First picture: x > 10 or x < 100.
   var c = initCxt('canvasOrAll');
   withinCircle(c, function() {
-      drawCircle(c, merge(circleC, {label: 'x < 100', labelX: 55}));
-      drawCircle(c, merge(circleB, {
+      render(c, merge(circleC, {label: 'x < 100', labelX: 55}));
+      render(c, merge(circleB, {
 	  label: 'x > 10', labelX: 155, fillStyle: {image: shadeYellow}}));
     });
 
@@ -105,37 +108,40 @@ function draw() {
 
   c = initCxt('canvasAnd');
   withinCircle(c, function() {
-      // var style1 = {x: cx, y: cy, radius: r, fillStyle: {image: shadeSilver}};
-      // drawCircle(c, style1);
       var overrides = {fillStyle: {image: shadeBlue}, label: 'A and B'};
       var style2 =
-        {x: cx, y: cy, radius: r, label: 'A and B',
+        {shape: circle, x: cx, y: cy, radius: r, label: 'A and B',
          fillStyle: {image: shadeBlue}};
-      drawCircle(c, style2);
+      render(c, style2);
     });
 
   // Venn diagram of an implication.
   c = initCxt('canvasImplies');
   withinCircle(c, function() {
-      var styleA = {label: 'birds', fillStyle: '#fff'};
-      drawCircle(c, merge(circleA, styleA));
-      var styleC = {label: 'wings', labelX: 170, fillStyle: '#fff'};
-      drawCircle(c, merge(circleB, styleC));
+      var styleA = {label: 'birds', noFill: true};
+      render(c, merge(circleA, styleA));
+      var styleC = {label: 'wings', labelX: 170, noFill: true};
+      render(c, merge(circleB, styleC));
     });
 
   // Venn diagram of a false implication, coloring in just the
   // area where the implication is false.
   c = initCxt('canvasNotImplies');
+  c.canvas.scrollIntoView();
   withinCircle(c, function() {
-      var styleA =
-        merge(circleA, {x: 85, label: 'birds', fillStyle: '#fff'});
-      drawCircle(c, styleA);
       var styleC =
         merge(circleB,
-              {shape: outCircle, label: 'wings', labelX: 160, fillStyle: '#fff'});
-      drawCircle(c, styleC);
-      withClipping(c, {shape: canvas, fillStyle: 'red', render: 'fill'},
-        styleC, styleA);
+              {shape: circle,
+               label: 'wings', labelX: 160,
+               noFill: true,
+               xfillStyle: '#fff'});
+      render(c, styleC);
+      var styleA =
+        merge(circleA, {x: 85, label: 'birds', fillStyle: '#fff'});
+      render(c, styleA);
+      withClipping(c, {shape: canvas, fillStyle: 'orange'},
+                   merge(styleC, {outside: true}),
+                   styleA);
     });
 
   // Picture where bird --> wings, with normal shading.
@@ -143,12 +149,12 @@ function draw() {
   withinCircle(c, function() {
       var styleA =
         {outside: true, label: 'birds', fillStyle: {image: shadeYellow}};
-      drawCircle(c, merge(circleA, styleA));
+      render(c, merge(circleA, styleA));
       var styleC =
         merge(circleB,
               {label: 'wings', labelX: 170,
                fillStyle: {image: shadeSilver}});
-      drawCircle(c, styleC);
+      render(c, styleC);
     });
 
   // Picture where bird --> wings is not true everywhere, with normal shading.
@@ -157,12 +163,12 @@ function draw() {
       var styleA =
         {outside: true, x: 77, label: 'birds', labelX: 83,
          fillStyle: {image: shadeYellow}};
-      drawCircle(c, merge(circleA, styleA));
+      render(c, merge(circleA, styleA));
       var styleC =
         merge(circleB,
-              {shape: outCircle, label: 'wings', labelX: 160,
+              {shape: circle, label: 'wings', labelX: 160,
                fillStyle: {image: shadeSilver}});
-      drawCircle(c, styleC);
+      render(c, styleC);
     });
 }
 

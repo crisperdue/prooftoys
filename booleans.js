@@ -2,86 +2,86 @@
 //
 // Code for booleans.html
 //
-// Requires logic-pix.js and canvas.js.
+// Requires canvas.js and logic-pix.js.
 
-var circleA = {
-  x: 105, y: 105, radius: 30, fillStyle: {image: shadeSilver},
-  label: 'A', labelX: 105
-};
+var circleA = merge(circleCenter,
+                    silverShading,
+                    {render: 'fillStroke', label: 'A', labelX: 105});
 
-var circleB = {
-  x: 205, y: 105, radius: 150, fillStyle: {image: shadeBlue},
-  label: 'B', labelX: 175
-};
+var circleB = merge(circleRight,
+                    blueShading,
+                    {label: 'B', labelX: 125});
 
-var circleC = {
-  x: 5, y: 105, radius: 150, fillStyle: {image: shadeYellow},
-  label: 'C', labelX: 35
-};
+var circleC = merge(circleLeft,
+                    yellowShading,
+                    {label: 'C', labelX: 85});
 
-var circleD = {
-  x: 80, y: 105, radius: 38, fillStyle: {image: shadeYellow},
-  label: 'D', labelX: 65
-};
+var circleD = merge(circleLeftish,
+                    yellowShading,
+                    {label: 'D', labelX: 65});
 
+var circleE = merge(circleRightish,
+                    silverShading,
+                    {label: 'E', labelX: 145});
+
+// These are like D and E, but don't overlap:
 var circleD2 = merge(circleD, {x: 65});
-
-var circleE = {
-  x: 130, y: 105, radius: 38, fillStyle: {image: shadeSilver},
-  label: 'E', labelX: 145
-};
 
 var circleE2 = merge(circleE, {x: 145});
 
 function draw() {
+  // Add shading to all table cells that are "truthy".
   forEach(document.querySelectorAll('td.truthy'), function(elt) {
         elt.style.backgroundImage = 'url(' + shadeBlue.toDataURL() + ')';
       });
 
   var cxtA = initCxt('canvasA');
+  window.cxt = cxtA;
   withinCircle(cxtA, function() {
-      drawCircle(cxtA, circleA);
+      render(cxtA, circleA);
     });
 
   var cxtB = initCxt('canvasB');
   withinCircle(cxtB, function() {
-      drawCircle(cxtB, circleB);
+      render(cxtB, circleB);
     });
 
   var cxtC = initCxt('canvasC');
   withinCircle(cxtC, function() {
-      drawCircle(cxtC, circleC);
+      render(cxtC, circleC);
     });
 
+  // Outside of shape shaded with blue lines.
   var outsideBlue = {outside: true, fillStyle: {image: shadeBlue}};
+
   var cxtNotA = initCxt('canvasNotA');
   withinCircle(cxtNotA, function() {
-      drawCircle(cxtNotA, merge(circleA, {fillStyle: '#eee'}));
-      drawCircle(cxtNotA, merge(circleA, outsideBlue));
+      render(cxtNotA, merge(circleA, {fillStyle: '#eee'}));
+      render(cxtNotA, merge(circleA, outsideBlue));
     });
 
   var cxtNotB = initCxt('canvasNotB');
   withinCircle(cxtNotB, function() {
-      drawCircle(cxtNotB, merge(circleB, {fillStyle: '#eee'}));
-      drawCircle(cxtNotB, merge(circleB, outsideBlue));
+      render(cxtNotB, merge(circleB, {fillStyle: '#eee'}));
+      render(cxtNotB, merge(circleB, outsideBlue));
     });
 
   var cxtNotC = initCxt('canvasNotC');
   withinCircle(cxtNotC, function() {
-      drawCircle(cxtNotC, merge(circleC, {fillStyle: '#eee'}));
-      drawCircle(cxtNotC, merge(circleC, outsideBlue));
+      render(cxtNotC, merge(circleC, {fillStyle: '#eee'}));
+      render(cxtNotC, merge(circleC, outsideBlue));
     });
 
   var cxtOrDE = initCxt('canvasOrDE');
   withinCircle(cxtOrDE, function() {
-      drawCircle(cxtOrDE, circleD);
-      drawCircle(cxtOrDE, circleE);
+      render(cxtOrDE, circleD);
+      render(cxtOrDE, circleE);
     });
 
   var cxtOrDE2 = initCxt('canvasOrDE2');
   withinCircle(cxtOrDE2, function() {
-      drawCircle(cxtOrDE2, merge(circleD, {fillStyle: {image: shadeBlue}}));
-      drawCircle(cxtOrDE2, merge(circleE, {fillStyle: {image: shadeBlue}}));
+      render(cxtOrDE2, merge(circleD, {fillStyle: {image: shadeBlue}}));
+      render(cxtOrDE2, merge(circleE, {fillStyle: {image: shadeBlue}}));
     });
 
   var cxtAnd = initCxt('canvasAnd');
@@ -119,8 +119,8 @@ function drawAnd(cxt, circle1, circle2) {
       drawAll(cxt);
       cxt.restore();
       var props = {outside: true, fillStyle: 'white'};
-      drawCircle(cxt, merge(circle1, props));
-      drawCircle(cxt, merge(circle2, props));
+      render(cxt, merge(circle1, props));
+      render(cxt, merge(circle2, props));
     });
 }
 

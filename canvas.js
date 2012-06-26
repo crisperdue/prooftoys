@@ -2,6 +2,12 @@
 //
 // Utilities for working with Canvases.
 
+// Number of degrees per radian.
+var degree = Math.PI / 180;
+
+// Context lineWidth to indicate rendering should not stroke.
+var noStroke = 1e-9;
+
 var labels = [];
 
 /**
@@ -12,9 +18,36 @@ function forEach(arrayLike, fn) {
   Array.prototype.forEach.call(arrayLike, fn);
 }
 
-function setBackgroundCanvas(element, canvas) {
-  element.style.backgroundColor = '#eee';
-  element.style.backgroundImage = 'url(' + canvas.toDataURL() + ')';
+/**
+ * Renders the given rendering info in the given graphics context,
+ * clipped by zero or more shapes (clipping regions).  The "shape"
+ * argument is optional, and multiple shape arguments may be given,
+ * and is passed to the function "render" along with the graphics
+ * context.
+ *
+ * The rendering info is an object with shape information and normally
+ * some combination of fill information, stroke information, and label
+ * information.
+ *
+ * This function restores the original graphics context in all cases
+ * before exiting.  Arguments are a graphics context, a rendering
+ * information object, and zero or more shapes, whose intersection
+ * will be used to clip the rendering.  The shapes are given as
+ * functions, each computing a path.
+ */
+function withClipping(cxt, info, clipPaths_) {
+  cxt.save();
+  try {
+    for (var i = 2; i < arguments.length; i++) {
+      var style = arguments[i];
+      cxt.beginPath();
+      style.shape(cxt, style);
+      cxt.clip();
+    }
+    render(cxt, info);
+  } finally {
+    cxt.restore();
+  }
 }
 
 /**
@@ -61,31 +94,13 @@ function withinCircle (cxt, fn) {
 }
 
 /**
- * Renders a circle using the x, y, and radius properties of the given
- * "info" object and the given rendering context.  Iff info.outside is
- * truthy renders the outside of the circle rather than the inside.
- *
- * Restores the graphics context to its state before the call, and
- * adds a request to run "labelCircle" to the global labels list.
+ * Adds a circle path (or the outside of one) from style info.
  */
-function drawCircle(cxt, info) {
-  cxt.save();
+function circle(cxt, info) {
   if (info.outside) {
     outside(cxt);
   }
-  mergeStyle(cxt, info);
-  fillCircle(cxt, info.x, info.y, info.radius);
-  cxt.restore();
-  labels.push(function() { labelCircle(cxt, info); });
-}
-
-/**
- * Fills a circle using the given rendering context.
- */
-function fillCircle(cxt, x, y, radius) {
-  makeCircle(cxt, x, y, radius);
-  cxt.fill();
-  cxt.beginPath();
+  makeCircle(cxt, info.x, info.y, info.radius, info.counter);
 }
 
 /**
@@ -94,20 +109,11 @@ function fillCircle(cxt, x, y, radius) {
  * then closes the path.  Does not render anything.
  */
 function makeCircle(cxt, x, y, radius, counter) {
+  // The "arc" method behaves as if it starts with a lineTo, so start
+  // by moving to the start point of the arc.
+  cxt.moveTo(x + radius, y);
   cxt.arc(x, y, radius, 0, 2 * Math.PI, counter);
   cxt.closePath();
-}
-
-/**
- * Makes a circle from style info.
- */
-function circle(cxt, info) {
-  makeCircle(cxt, info.x, info.y, info.radius, info.counter);
-}
-
-function outCircle(cxt, info) {
-  circle(cxt, info);
-  outside(cxt);
 }
 
 /**
@@ -142,38 +148,6 @@ function outside(cxt) {
 }
 
 /**
- * Renders the given rendering info in the given graphics context,
- * clipped by zero or more shapes (clipping regions).  The "shape"
- * argument is optional, and multiple shape arguments may be given,
- * and is passed to the function "render" along with the graphics
- * context.
- *
- * The rendering info is an object with shape information and normally
- * some combination of fill information, stroke information, and label
- * information.
- *
- * This function restores the original graphics context in all cases
- * before exiting.  Arguments are a graphics context, a rendering
- * information object, and zero or more shapes, whose intersection
- * will be used to clip the rendering.  The shapes are given as
- * functions, each computing a path.
- */
-function withClipping(cxt, info, clipping_) {
-  cxt.save();
-  try {
-    for (var i = 2; i < arguments.length; i++) {
-      var style = arguments[i];
-      cxt.beginPath();
-      style.shape(cxt, style);
-      cxt.clip();
-    }
-    render(cxt, info);
-  } finally {
-    cxt.restore();
-  }
-}
-
-/**
  * Builds a path for the graphics object described by "info", and
  * renders it if it has a "render" property.
  *
@@ -184,36 +158,26 @@ function withClipping(cxt, info, clipping_) {
  * This always starts a fresh path, and if it renders it starts a new
  * path after rendering.
  *
- * Stroking is currently only done in the label phase and filling only
- * in the drawing phase.
+ * Filling and stroking are currently only done in the drawing phase.
  *
  * TODO: Be more flexible about strategies for stroking, and support
  * filling just the outside of the given shape.
  */
-function render(cxt, info, phase) {
+function render(cxt, info) {
   var fn = info.shape;
   if (typeof fn !== 'function') {
     throw new Error('Not a valid shape: ' + fn);
   }
-  if (phase !== 'label') {
-    labels.push(info);
-  }
   cxt.beginPath();
   fn(cxt, info);
-  var fill =
-    phase !== 'label' && info.render in {fill: true, fillStroke: true};
-  var stroke =
-    phase === 'label' && info.render in {stroke: true, fillStroke: true};
+  var fill = !info.noFill;
+  var stroke = cxt.lineWidth > noStroke;  
   if (fill || stroke) {
     // Render.
     cxt.save();
     try {
       // Merge styles into the graphics context.
-      for (var key in cxt) {
-        if (key in info) {
-          cxt[key] = info[key];
-        }
-      }
+      mergeStyle(cxt, info);
       if (fill) {
         cxt.fill();
       }
@@ -224,6 +188,10 @@ function render(cxt, info, phase) {
       cxt.restore();
       cxt.beginPath();
     }
+  }
+  // TODO: Make each shape do its own labeling.
+  if (fn === circle) {
+    labelCircle(cxt, info);
   }
 }
 
@@ -285,9 +253,7 @@ function merge() {
  * scale: number or pair of numbers to scale X and Y independently,
  * applies after translation.
  *
- * rotate: angle to rotate by in radians.
- * 
- *
+ * rotate: angle to rotate by, in radians.
  */
 function mergeStyle(cxt, style) {
   // Pick up various properties from the style.
@@ -363,8 +329,5 @@ function mergeStyle(cxt, style) {
   cxt.scale(scaleX, scaleY);
   
   // Rotation
-  var rotation = style.rotate || style.rotateDegress * Math.PI / 180;
-  if (typeof rotation === 'number') {
-    cxt.rotate(rotation);
-  }
+  cxt.rotate(style.rotate);
 }
