@@ -4,24 +4,31 @@
 //
 // Requires logic-pix.js and canvas.js.
 
-var circleA = {
+var birds = {
   shape: circle,
   x: 105, y: 105, radius: 30, fillStyle: {image: shadeYellow},
-  label: 'A'
+  label: 'birds'
 };
 
-var circleB = {
+var wings = {
   shape: circle,
-  x: 225, y: 105, radius: 160, fillStyle: {image: shadeBlue},
-  label: 'B', labelX: 175
+  x: 225, y: 105, radius: 160, fillStyle: {image: shadeSilver},
+  label: 'wings', labelX: 170,
 };
 
 var circleC = {
   shape: circle,
-  x: -15, y: 105, radius: 160, fillStyle: {image: shadeSilver},
-  label: 'C', labelX: 35
+  x: -15, y: 105, radius: 160, fillStyle: {image: shadeYellow},
+  labelX: 35
 };
 
+/**
+ * Draw a right arrow of unit length and width specified by
+ * info.width, which defaults to .1, along the X axis from the origin.
+ *
+ * TODO: Parameterize at least by length, so the arrowhead does not
+ * get stretched by scaling.
+ */
 function arrow(c, info) {
   c.save();
   mergeStyle(c, info);
@@ -99,8 +106,7 @@ function draw() {
   var c = initCxt('canvasOrAll');
   withinCircle(c, function() {
       render(c, merge(circleC, {label: 'x < 100', labelX: 55}));
-      render(c, merge(circleB, {
-	  label: 'x > 10', labelX: 155, fillStyle: {image: shadeYellow}}));
+      render(c, merge(wings, {label: 'x > 10', labelX: 155}));
     });
 
   // Arrows.
@@ -118,10 +124,8 @@ function draw() {
   // Venn diagram of an implication.
   c = initCxt('canvasImplies');
   withinCircle(c, function() {
-      var styleA = {label: 'birds', noFill: true};
-      render(c, merge(circleA, styleA));
-      var styleC = {label: 'wings', labelX: 170, noFill: true};
-      render(c, merge(circleB, styleC));
+      render(c, merge(birds, noFillStyle));
+      render(c, merge(wings, noFillStyle));
     });
 
   // Venn diagram of a false implication, coloring in just the
@@ -129,46 +133,26 @@ function draw() {
   c = initCxt('canvasNotImplies');
   c.canvas.scrollIntoView();
   withinCircle(c, function() {
-      var styleC =
-        merge(circleB,
-              {shape: circle,
-               label: 'wings', labelX: 160,
-               noFill: true,
-               xfillStyle: '#fff'});
-      render(c, styleC);
-      var styleA =
-        merge(circleA, {x: 85, label: 'birds', fillStyle: '#fff'});
-      render(c, styleA);
+      render(c, merge(wings, noFillStyle, {labelX: 160}));
+      var birds2 = merge(birds, {x: 85, noFill: true});
+      render(c, birds2);
       withClipping(c, {shape: canvas, fillStyle: 'orange'},
-                   merge(styleC, {outside: true}),
-                   styleA);
+                   merge(wings, {outside: true}),
+                   birds2);
     });
 
   // Picture where bird --> wings, with normal shading.
   c = initCxt('birdWingsTrue');
   withinCircle(c, function() {
-      var styleA =
-        {outside: true, label: 'birds', fillStyle: {image: shadeYellow}};
-      render(c, merge(circleA, styleA));
-      var styleC =
-        merge(circleB,
-              {label: 'wings', labelX: 170,
-               fillStyle: {image: shadeSilver}});
-      render(c, styleC);
+      render(c, merge(birds, {outside: true}));
+      render(c, wings);
     });
 
   // Picture where bird --> wings is not true everywhere, with normal shading.
   c = initCxt('birdWingsFalse');
   withinCircle(c, function() {
-      var styleA =
-        {outside: true, x: 77, label: 'birds', labelX: 83,
-         fillStyle: {image: shadeYellow}};
-      render(c, merge(circleA, styleA));
-      var styleC =
-        merge(circleB,
-              {shape: circle, label: 'wings', labelX: 160,
-               fillStyle: {image: shadeSilver}});
-      render(c, styleC);
+      render(c, merge(birds, {outside: true, x: 77, labelX: 83}));
+      render(c, merge(wings, {labelX: 160}));
     });
 }
 
