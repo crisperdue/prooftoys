@@ -12,7 +12,7 @@ var birds = {
 
 var wings = {
   shape: circle,
-  x: 225, y: 105, radius: 160, fillStyle: {image: shadeSilver},
+  x: 225, y: 105, radius: 160, fillStyle: {image: shadeGreen},
   label: 'wings', labelX: 170,
 };
 
@@ -65,7 +65,7 @@ function twoArrowsAndNumberLine() {
   };
   arrow(c, style1);
   var style2 = {
-    fillStyle: {image: shadeSilver},
+    fillStyle: {image: shadeGreen},
     translate: [originX + 100, originY - 27], scale: [-200, 100],
     lineWidth: 1,
     strokeStyle: 'silver'

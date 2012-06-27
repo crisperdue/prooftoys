@@ -5,23 +5,23 @@
 // Requires canvas.js and logic-pix.js.
 
 var circleA = merge(circleCenter,
-                    silverShading,
-                    {render: 'fillStroke', label: 'A', labelX: 105});
+                    greenShading,
+                    {render: 'fillStroke', label: 'green', labelX: 105});
 
 var circleB = merge(circleRight,
                     blueShading,
-                    {label: 'B', labelX: 125});
+                    {label: 'blue', labelX: 125});
 
 var circleC = merge(circleLeft,
                     yellowShading,
-                    {label: 'C', labelX: 85});
+                    {label: 'yellow', labelX: 85});
 
 var circleD = merge(circleLeftish,
                     yellowShading,
                     {label: 'D', labelX: 65});
 
 var circleE = merge(circleRightish,
-                    silverShading,
+                    greenShading,
                     {label: 'E', labelX: 145});
 
 // These are like D and E, but don't overlap:
@@ -51,25 +51,25 @@ function drawBooleans() {
       render(cxtC, circleC);
     });
 
-  // Outside of shape shaded with blue lines.
-  var outsideBlue = {outside: true, fillStyle: {image: shadeBlue}};
+  // Outside of shape shaded with orange lines.
+  var outsideOrange = {outside: true, fillStyle: {image: shadeOrange}};
 
   var cxtNotA = initCxt('canvasNotA');
   withinCircle(cxtNotA, function() {
       render(cxtNotA, merge(circleA, {fillStyle: '#eee'}));
-      render(cxtNotA, merge(circleA, outsideBlue));
+      render(cxtNotA, merge(circleA, outsideOrange));
     });
 
   var cxtNotB = initCxt('canvasNotB');
   withinCircle(cxtNotB, function() {
       render(cxtNotB, merge(circleB, {fillStyle: '#eee'}));
-      render(cxtNotB, merge(circleB, outsideBlue));
+      render(cxtNotB, merge(circleB, outsideOrange));
     });
 
   var cxtNotC = initCxt('canvasNotC');
   withinCircle(cxtNotC, function() {
       render(cxtNotC, merge(circleC, {fillStyle: '#eee'}));
-      render(cxtNotC, merge(circleC, outsideBlue));
+      render(cxtNotC, merge(circleC, outsideOrange));
     });
 
   var cxtOrDE = initCxt('canvasOrDE');

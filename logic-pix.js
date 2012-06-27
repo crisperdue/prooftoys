@@ -2,18 +2,19 @@
 //
 // Building blocks for logic pictures.
 
+// Center of the world circle.
 var cx = 105, cy = 105;
+
+// Radius of the world circle.
 var r = 100;
-var aRadius = 30;
-var bRadius = 150;
 
-
-var shadeSilver = function() {
+// Small canvas for making green shading.
+var shadeGreen = function() {
   var canvas = document.createElement('canvas');
   canvas.width = 10;
   canvas.height = 10;
   var cxt = canvas.getContext('2d');
-  cxt.strokeStyle = 'silver';
+  cxt.strokeStyle = '#9d9';
   cxt.lineWidth = 1.4;
   cxt.lineCap = 'square';
   cxt.moveTo(0, 5);
@@ -60,6 +61,24 @@ var shadeYellow = function() {
   return canvas;
 }();
 
+var shadeOrange = function() {
+  var canvas = document.createElement('canvas');
+  canvas.width = 10;
+  canvas.height = 10;
+  var cxt = canvas.getContext('2d');
+  cxt.strokeStyle = 'orange';
+  cxt.lineWidth = 1.4;
+  cxt.lineCap = 'square';
+  cxt.moveTo(0, 5);
+  cxt.lineTo(10, 5);
+  cxt.stroke();
+  return canvas;
+}();
+
+/**
+ * Given a canvas or canvas element ID, makes and returns a
+ * graphics context with default values.
+ */
 function initCxt(canvas) {
   if (typeof canvas == 'string') {
     canvas = document.getElementById(canvas);
@@ -71,10 +90,10 @@ function initCxt(canvas) {
   }
   var cxt = canvas.getContext('2d');
   // Light blue:
-  cxt.fillStyle = 'rgb(210, 210, 255)';
+  // cxt.fillStyle = 'rgb(210, 210, 255)';
   cxt.textAlign = 'center';
   cxt.textBaseline = 'middle';
-  cxt.lineWidth = 1;
+  // cxt.lineWidth = 1;
   cxt.lineJoin = 'round';
   cxt.font = 'bold 12pt sans-serif';
   return cxt;
@@ -93,11 +112,15 @@ function drawAnd(cxt, circle1, circle2) {
     });
 }
 
+// Fill styles for the shadings:
+
 var blueShading = {fillStyle: {image: shadeBlue}};
 
-var silverShading = {fillStyle: {image: shadeSilver}};
+var greenShading = {fillStyle: {image: shadeGreen}};
 
 var yellowShading = {fillStyle: {image: shadeYellow}};
+
+var orangeShading = {fillStyle: {image: shadeOrange}};
 
 
 // Circle geometry:
