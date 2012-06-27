@@ -7,6 +7,7 @@
 <script src="canvas.js"></script>
 <script src="logic-pix.js"></script>
 <script src="booleans.js"></script>
+<script src="statements.js"></script>
 <script src="boilerplate.js"></script>
 
 <style type="text/css">
@@ -31,6 +32,10 @@ h2 {
   margin-top: 2em;
   margin-left: -.5em;
   color: #666;
+}
+
+h3 {
+  margin-left: -.5em;
 }
 
 </style>
@@ -227,11 +232,127 @@ overlap; there is no part of the picture where D and E are both true.
 If that really is your requirement, in this scenario there is no
 possible lunch for you!
 
-<!--
-<h2>Implication -- "implies"</h2>
+<h2>True statements</h2>
+<p>
+Mathematics is especially interested in statements that are true,
+particularly statements that are true by mathematical reasoning, in
+other words theorems.
 
+<h3>Disjunctions -- "or"</h3>
+<p>
+As an example let's consider the statement that every number is either
+less than 100 or greater than 10.  We could state this as
+<code>x &lt; 100 or x &gt; 10</code>.  In the picture for this
+statement all shaded areas represent cases where the statement is
+true.
+<p>
+<canvas id=canvasOrAll width=210 height=210>
+<p>
+This picture shows everything in the world (all numbers) in one or
+both of the groups, and shows that some numbers are in both groups.
+<p>
+A more conventional and more informative picture might show a number
+line and the values having both of the properties, like this:
+<p>
+<canvas id=canvasArrow width=310 height=100>
+<p>
+The statement <code>x &lt; 100 or x &gt; 10</code> is true regardless
+of the value of <code>x</code>.  In mathematics, if the truth of a
+statement does not depend on the values of variables in it, it
+is considered simply a true or valid statement.
+
+<h3>Conjunctions -- "and"</h3>
+<p>
+To be true, both parts of a statement with "and" must also be true.
+Any part not in one of the areas will not be in both.  Here is a
+picture illustrating a statement <code>A and B</code> that is true,
+where A and B are both true statements.
+<p>
+<canvas id=canvasAnd width=210 height=210></canvas>
+
+
+<h3>Implication -- "implies"</h3>
+<p>
+Let's look at another typical kind of statement that has a logical
+meaning, such as "all birds have wings".  We might also express
+this as "if x is a bird then x has wings".  In our notation we can
+write <code>(bird x) implies (wings x)</code> or alternatively
+<code>bird x --> wings x</code>.
+<p>
+The picture below illustrates a scenario where the statement is true.
+The area representing all things with wings entirely encloses the area
+that represents all birds.  (In this picture there are also some
+things with wings that are not birds, such as bats in the real world.)
+<p>
 <canvas id=canvasImplies width=210 height=210></canvas>
- -->
+<p>
+Any picture of this kind where one area encloses another (or occupies
+the same area) illustrates a true statement of this kind.  But is
+there a system for shading pictures like this so they are completely
+shaded exactly when the statement is true?  It turns out there is.
+<p>
+Let's consider a picture where the statement is <i>not</i> always
+true, like this:
+<p>
+<canvas id=canvasNotImplies width=210 height=210></canvas>
+<p>
+It is clear right away which part of the picture makes the statement
+not always true -- the part of the "birds" circle outside the "wings"
+area.
+<p>
+Anything in the picture that is not a bird does not affect the truth
+of the statement.  If something is not a bird, it does not affect
+whether this statement about birds is true.  <i>If every part of the
+picture is either in the "wings" circle or not in the "birds" circle,
+the statement is true.</i>  Here is a truth table for the
+relationship:
+<p>
+<table class=binaryTruthTable>
+ <tr>
+  <th colspan=2 rowspan=2 style="text-align: center">
+  <th colspan=2 style="text-align: center"><b>wings</b>
+ <tr><th>false<th>true
+ <tr><th rowspan=2><b>bird</b><th>false<td class=truthy><td class=truthy>
+ <tr>               <th>true<td class=falsy><td class=truthy>
+</table>
+<p>
+Here are two picture as before, but with shading to show the areas
+where the statement <code>bird x --&gt; wings x</code> is true.
+First one where it is true everywhere:
+<p>
+<canvas id=birdWingsTrue width=210 height=210></canvas>
+<p>
+And now one where the statement is not true everywhere:
+<p>
+<canvas id=birdWingsFalse width=210 height=210></canvas>
+<p>
+The birds without wings are represented by the small white area with
+no shading.
+<p>
+So we have found that it is possible to define a
+function <code>implies</code> (alternatively <code>--&gt;</code>) that
+enables us to make statements that say one thing implies another.  It
+works like <code>and</code> and <code>or</code>, taking two boolean
+values as inputs and producing a boolean (<code>true</code>
+or <code>false</code>) result.
+
+<h4>Vacuous statements</h4>
+<p>
+Some peculiar situations lead to results that may seem a bit strange.
+What if we say that all birds larger than elephants can fly in outer
+space?  If there are no birds larger than elephants in our world, in
+mathematics this is considered a true statement!  The reason it is
+considered true is that indeed there are <i>no examples that break
+the rule</i>, that is no birds that are larger than elephants and
+cannot fly in outer space!
+<p>
+In situations where there is nothing with a property <code>A</code>,
+it is true to say that <code>A</code> implies anything at all, no
+matter how silly or impossible.  Mathematicians recognize that this is
+a strange situation and refer to such as statements as <i>vacuously
+true</i>, meaning true but useless because there can never be a
+counterexample and it doesn't matter what the conclusion of the
+statement is.
 
 </div> <!-- #bodyDiv -->
 </td> <!-- #body -->
@@ -242,6 +363,8 @@ possible lunch for you!
 // Insert boilerplate.
 Toy.insertNav();
 Toy.insertSlogans();
+
+window.onload = function() { drawBooleans(); drawStatements(); }
 
 </script>
 </body>

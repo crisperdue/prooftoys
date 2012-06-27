@@ -29,7 +29,7 @@ var circleD2 = merge(circleD, {x: 65});
 
 var circleE2 = merge(circleE, {x: 145});
 
-function draw() {
+function drawBooleans() {
   // Add shading to all table cells that are "truthy".
   forEach(document.querySelectorAll('td.truthy'), function(elt) {
         elt.style.backgroundImage = 'url(' + shadeBlue.toDataURL() + ')';
@@ -102,4 +102,3 @@ function drawAnd(cxt, circle1, circle2) {
     });
 }
 
-window.onload = draw;

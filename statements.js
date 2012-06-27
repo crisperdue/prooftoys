@@ -91,7 +91,7 @@ function twoArrowsAndNumberLine() {
   c.fillText('100', originX + 100, originY + 5);
 }
 
-function draw() {
+function drawStatements() {
   forEach(document.querySelectorAll('td.truthy'), function(elt) {
         elt.style.backgroundImage = 'url(' + shadeBlue.toDataURL() + ')';
       });
@@ -154,5 +154,3 @@ function draw() {
       render(c, merge(wings, {labelX: 160}));
     });
 }
-
-window.onload = draw;
