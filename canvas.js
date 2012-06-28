@@ -353,3 +353,15 @@ function arrow(c, info) {
   }
 }
 
+/**
+ * Returns the untransformed canvas coordinates of the given event.
+ * Value is an Object with properties "x" and "y".
+ * 
+ * Technique from "JavaScript: The Definitive Guide", 6th edition.
+ */
+function eventPoint(canvas, event) {
+  var rect = canvas.getBoundingClientRect();
+  var x = (event.clientX - rect.left) * (canvas.width / rect.width);
+  var y = (event.clientY - rect.top) * (canvas.height / rect.height);
+  return {x: x, y: y};
+}

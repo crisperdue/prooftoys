@@ -42,8 +42,10 @@ h3 {
 </head>
 
 <body>
-<h1>Logic through Pictures</h1>
+<h1>Basic Logic through Pictures</h1>
+<div id=slogans>
 
+</div>
 <table>
 <tr>
 <td id=leftNav>
@@ -68,17 +70,21 @@ h3 {
  <li><a href='#implication'>Implication -- "implies"</a>
 </ul>
 
-<h2><a name=introduction></a>Introduction</h2>
+<h2>Introduction <a name=introduction></a></h2>
 
 <h4>Background</h4>
 <p>
-Though the system described here is modern, it supports the kinds of
-reasoning used by the ancient Greek mathematicians and philosophers,
-so it is known by mathematicians as a form of <i>classical</i> logic.
-In the last 100 years or so other varieties of logic have been
-created, but classical logic is by far the best known and widely used
-kind in textbooks and by working mathematicians.  It is also
-considered <i>functional</i> in that it treats functions as a
+This page is about the fundamental building blocks of
+<a href="http://en.wikipedia.org/wiki/Classical_logic" target=_blank>
+classical logic</a> -- <i>true</i>, <i>false</i>,
+<i>and</i>, <i>or</i>, <i>not</i>, and one statement implying another.
+<p>
+Though the system described here is modern in style, it supports the
+kinds of reasoning used by the ancient Greek mathematicians and
+philosophers.  In the last 100 years or so other varieties of logic
+have been created, but classical logic is by far the best known and
+widely used kind in textbooks and by working mathematicians.  This
+particular logic is also <i>functional</i>, having functions as a
 fundamental concept.
 
 <h4>About the pictures</h4>
@@ -108,16 +114,16 @@ ways of describing the same situation.
 <canvas id=canvasB width=210 height=210></canvas>
 <canvas id=canvasC width=210 height=210></canvas>
 
-<h2><a name=functions></a>Functions and truth values</h2>
+<h2>Functions and truth values <a name=functions></a></h2>
 
 <h4>Functions</h4>
 <p>
 In mathematics a function named <code>f</code> is often defined
 with a statement like this:
-
 <blockquote>
 <code>f(x) = x + 1</code>
 </blockquote>
+
 In our notation:
 <blockquote>
 <code>(f x) = x + 1</code><br>
@@ -143,7 +149,8 @@ function <code>f</code> takes a number as input and produces a number.
 In mathematical logic there are values <code>true</code>
 and <code>false</code>, known as <i>truth values</i>.  These are often
 referred to as boolean values in honor of
-<a href="http://en.wikipedia.org/wiki/George_Boole">George Boole</a>,
+<a href="http://en.wikipedia.org/wiki/George_Boole" target=_blank>
+George Boole</a>,
 a pioneer in the development of these ideas.
 <p>
 When we write something like <code>(green x)</code>, 
@@ -157,7 +164,7 @@ on whether its input is blue or not.
 <i>In other words, predicates are functions that produce values that
 are <code>true</code> or <code>false</code>.</i>
 
-<h2><a name=negation></a>Negation -- "not"</h2>
+<h2>Negation -- "not" <a name=negation></a></h2>
 <p>
 Negation provides a way to talk about items that do not have a certain
 property, ones that are not in a certain set, or where the value of a
@@ -219,7 +226,7 @@ So the colored areas in these pictures show where
 <code>(not (green x))</code> is true, where <code>(not (blue x))</code> is
 true, and finally where <code>(not (yellow x))</code> is true.
 
-<h2><a name=disjunction></a>Disjunction -- "or"</h2>
+<h2>Disjunction -- "or" <a name=disjunction></a></h2>
 <p>
 Suppose you are considering what to have for lunch, and decide it must
 either be delicious or easy.  In the first picture let circle D
@@ -258,7 +265,7 @@ the function is in the row for the value of the first input and the
 column for the value of the second input.  So for example <code>(false
 or true) = true</code>.
 
-<h2><a name=conjunction></a>Conjunction -- "and"</h2>
+<h2>Conjunction -- "and" <a name=conjunction></a></h2>
 <p>
 Suppose you are feeling more picky about your lunch, and decide you
 want something that is both delicious and easy.  Only things in
@@ -296,14 +303,17 @@ The function defined by the truth table for <code>and</code> is the
 same in any picture.  It determines whether two statements are both
 true in any situation.
 
-<h2><a name=statements></a>Statements that are always true</h2>
+<h2>Statements that are always true <a name=statements></a></h2>
+
 <p>
 Mathematics is especially interested in statements that are true, by
 mathematical reasoning, in other words theorems.  If a mathematical
 statement has variables in it, the statement is a true one if it is
-true regardless of the values of the variables.
+true regardless of the values of the variables.  To emphasize that is
+true for all possible values of the variables, these sorts of
+statements are sometimes described as <i>universally</i> true,
 
-<h3><a name=trueDisjunctions></a>Disjunctions</h3>
+<h3>Disjunctions <a name=trueDisjunctions></a></h3>
 <p>
 As an example let's consider the statement that every number is either
 less than 100 or greater than 10.  We could state this as
@@ -326,7 +336,7 @@ of the value of <code>x</code>.  In mathematics, if the truth of a
 statement does not depend on the values of variables in it, it
 is considered simply a true or valid statement.
 
-<h3><a name=trueConjunctions></a>Conjunctions</h3>
+<h3>Conjunctions <a name=trueConjunctions></a></h3>
 <p>
 To be true, both parts of a statement with "and" must also be true.
 Any part not in one of the areas will not be in both.  Here is a
@@ -336,7 +346,7 @@ where A and B are both true statements.
 <canvas id=canvasAnd width=210 height=210></canvas>
 
 
-<h3><a name=trueConditionals></a>Conditionals, "all A are B"</h3>
+<h3>Conditionals, "all A are B" <a name=trueConditionals></a></h3>
 <p>
 Let's look at another typical kind of statement that has a logical
 meaning, such as "all birds have wings".  We might also express
@@ -372,12 +382,14 @@ whether this statement about birds is true.  If every part of the
 picture is either in the "wings" circle or <b>not</b> in the "birds"
 circle, the statement is true.
 
-<h2><a name=implication></a>Implication -- "implies"</h2>
+<h2>Implication -- "implies" <a name=implication></a></h2>
 <p>
-With this background we can see how to define one more function that
-takes two truth values as inputs and produces true or false as its
-value.  This function makes it simple to express ideas like "all birds
-have wings" mathematically!  Here is its truth table:
+Returning now from universally true statements to functions with truth
+values as inputs and outputs, we can now see how to define one more
+key function. The function takes two truth values as inputs and
+produces true or false as its value, and enables us to express
+statements like "all birds have wings" mathematically!  Here is its
+truth table:
 <p>
 <table class=binaryTruthTable>
  <tr>
@@ -388,56 +400,46 @@ have wings" mathematically!  Here is its truth table:
  <tr>               <th>true<td class=falsy><td class=truthy>
 </table>
 <p>
-We call the function <code>implies</code>
-(alternatively <code>--&gt;</code>), and it enables us to make
-statements that say one thing implies another.
-<p>
-Here are two picture as before, but with shading to show the areas
-where the expression <code>(bird x) --&gt; (wings x)</code>
-has <code>true</code> as its value.  First one where it is true
-everywhere:
+We call the function <code>implies</code> (alternatively
+"<code>--&gt;</code>"), and it enables us to make statements that say
+one thing implies another.  Here are two picture as before, but with
+shading to show the areas where the expression <code>(bird x) --&gt;
+(wings x)</code> has <code>true</code> as its value.  First one where
+it is true everywhere:
 <p>
 <canvas id=birdWingsTrue width=210 height=210></canvas>
 <p>
 In this scenario all birds do indeed have wings so the function is
-behaving as intended.  And now one where the statement is not true
-everywhere:
+behaving as intended.  And now a picture where the statement is not
+true everywhere:
 <p>
 <canvas id=birdWingsFalse width=210 height=210></canvas>
 <p>
 The birds without wings are represented by the small white area with
 no shading.  This is exactly the area where the value of the
-<code>implies</code> function is false.  In this scenario the
-statement that all birds have wings is false, so the function
-is indeed behaving as intended.
+<code>implies</code> function is false.  In this picture not all
+birds have wings, so the function is indeed behaving as intended.
 
 <h4>Vacuous statements</h4>
 <p>
-Some peculiar situations lead to results that may seem a bit strange.
-What if we say that all birds larger than elephants can fly in outer
-space?  If there are no birds larger than elephants in our world, in
-mathematics this is considered a true statement!  It is considered
-true is that indeed there are <i>no examples that break the rule</i>,
-that is no birds that are larger than elephants and cannot fly in
-outer space!  And in fact the <code>implies</code> function has the
-value <code>true</code> everywhere.  The truth table entries in the
-row where the first input is <code>false</code> both have the
-value <code>true</code>, so if the there are no birds larger than
-elephants, all of them can fly in outer space!
+Some peculiar situations can lead to peculiar conclusions.  What if we
+say that all birds larger than elephants can fly to the moon?  If
+there are no birds larger than elephants in our world, our logic takes
+this to be a true statement.  Consider that in fact there are <i>no
+examples that break the rule</i>, that is no birds that are larger
+than elephants and cannot fly to the moon!  The truth table entries in
+the row where the first input is <code>false</code> both have the
+value <code>true</code>, so the <code>implies</code> function has the
+value <code>true</code> everywhere.  If the there are no birds larger
+than elephants, all of them can fly to the moon!
 <p>
-In situations where there is nothing with a property <code>A</code>,
-it is true to say that <code>A</code> implies anything at all, no
-matter how silly or impossible.  Mathematicians recognize that this is
-a strange situation and refer to such as statements as <i>vacuously
-true</i>, meaning true but useless because there can never be a
-counterexample and it doesn't matter what the conclusion of the
-statement is.
-<p>
-In fact things that do not exist can have contradictory properties.
-For example (assuming all birds have wings) all wingless birds are
-blue, and furthermore all wingless birds are green.  This is possible
-only because these statements are vacuous -- they apply to no
-situation.
+Mathematicians recognize that this is a strange situation and refer to
+such as statements as <i>vacuously true</i>, meaning true but useless
+because their conditions never apply.  In fact things that do not
+exist can have contradictory properties.  For example (assuming all
+birds have wings) all wingless birds are blue, and furthermore all
+wingless birds are green.  This is possible only because these
+statements are vacuous.
 
 </div> <!-- #bodyDiv -->
 </td> <!-- #body -->
