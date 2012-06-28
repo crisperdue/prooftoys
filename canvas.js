@@ -319,3 +319,37 @@ function mergeStyle(cxt, style) {
   // Rotation
   cxt.rotate(style.rotate);
 }
+
+/**
+ * Draw a right arrow of unit length and width specified by
+ * info.width, which defaults to .1, along the X axis from the origin.
+ *
+ * TODO: Parameterize at least by length, so the arrowhead does not
+ * get stretched by scaling.
+ */
+function arrow(c, info) {
+  c.save();
+  mergeStyle(c, info);
+  try {
+    var width = info.width || .1;
+    var width2 = width / 2;
+    c.moveTo(0, -width2);
+    c.lineTo(.9, -width2);
+    c.lineTo(.9, -width);
+    c.lineTo(1, 0);
+    c.lineTo(.9, width);
+    c.lineTo(.9, width2);
+    c.lineTo(0, width2);
+    c.closePath();
+    // Reset the transform to the default before filling
+    // and stroking so the widths and patterns are in the
+    // usual coordinate system.
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.fill();
+    c.stroke();
+  } finally {
+    c.restore();
+    c.beginPath();
+  }
+}
+
