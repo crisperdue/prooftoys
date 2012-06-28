@@ -65,6 +65,7 @@ code {
 table.truthTable {
   background-color: silver;
   border-spacing: 2px;
+  margin-bottom: 1.5em;
 }
 
 table.truthTable td, table.truthTable th {
@@ -87,13 +88,11 @@ table.truthTable td.falsy:after {
 
 /**
  * Truth tables for binary operators
- *
- * 
  */
 
 table.binaryTruthTable {
   border-collapse: collapse;
-  xborder: 2px solid silver;
+  margin-bottom: 1.5em;
 }
 
 table.binaryTruthTable td.truthy, table.binaryTruthTable td.falsy {

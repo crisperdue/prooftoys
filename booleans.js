@@ -4,17 +4,23 @@
 //
 // Requires canvas.js and logic-pix.js.
 
-var circleA = merge(circleCenter,
-                    greenShading,
-                    {render: 'fillStroke', label: 'green', labelX: 105});
+var greenCircle = merge(circleCenter,
+                        {render: 'fillStroke',
+                         fillStyle: '#aea',
+                         label: 'green',
+                         labelX: 105});
 
-var circleB = merge(circleRight,
-                    blueShading,
-                    {label: 'blue', labelX: 125});
+var blueCircle = merge(circleRight,
+                       {render: 'fillStroke',
+                        fillStyle: '#ddf',
+                        label: 'blue',
+                        labelX: 125});
 
-var circleC = merge(circleLeft,
-                    yellowShading,
-                    {label: 'yellow', labelX: 85});
+var yellowCircle = merge(circleLeft,
+                         {render: 'fillStroke',
+                          fillStyle: '#ff8',
+                          label: 'yellow',
+                          labelX: 85});
 
 var circleD = merge(circleLeftish,
                     yellowShading,
@@ -38,17 +44,17 @@ function drawBooleans() {
   var cxtA = initCxt('canvasA');
   window.cxt = cxtA;
   withinCircle(cxtA, function() {
-      render(cxtA, circleA);
+      render(cxtA, greenCircle);
     });
 
   var cxtB = initCxt('canvasB');
   withinCircle(cxtB, function() {
-      render(cxtB, circleB);
+      render(cxtB, blueCircle);
     });
 
   var cxtC = initCxt('canvasC');
   withinCircle(cxtC, function() {
-      render(cxtC, circleC);
+      render(cxtC, yellowCircle);
     });
 
   // Outside of shape shaded with orange lines.
@@ -56,20 +62,20 @@ function drawBooleans() {
 
   var cxtNotA = initCxt('canvasNotA');
   withinCircle(cxtNotA, function() {
-      render(cxtNotA, merge(circleA, {fillStyle: '#eee'}));
-      render(cxtNotA, merge(circleA, outsideOrange));
+      render(cxtNotA, merge(greenCircle, {fillStyle: '#eee'}));
+      render(cxtNotA, merge(greenCircle, outsideOrange));
     });
 
   var cxtNotB = initCxt('canvasNotB');
   withinCircle(cxtNotB, function() {
-      render(cxtNotB, merge(circleB, {fillStyle: '#eee'}));
-      render(cxtNotB, merge(circleB, outsideOrange));
+      render(cxtNotB, merge(blueCircle, {fillStyle: '#eee'}));
+      render(cxtNotB, merge(blueCircle, outsideOrange));
     });
 
   var cxtNotC = initCxt('canvasNotC');
   withinCircle(cxtNotC, function() {
-      render(cxtNotC, merge(circleC, {fillStyle: '#eee'}));
-      render(cxtNotC, merge(circleC, outsideOrange));
+      render(cxtNotC, merge(yellowCircle, {fillStyle: '#eee'}));
+      render(cxtNotC, merge(yellowCircle, outsideOrange));
     });
 
   var cxtOrDE = initCxt('canvasOrDE');
