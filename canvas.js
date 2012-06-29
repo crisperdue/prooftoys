@@ -91,6 +91,26 @@ function circle(cxt, info) {
   makeCircle(cxt, info.x, info.y, info.radius, info.counter);
 }
 
+function square(x) {
+  return x * x;
+}
+
+/**
+ * Determines whether the given point is within the shape defined by
+ * the given info, returning a boolean value.  Currently only defined
+ * for circles.  Throws an error if the given shape is not supported.
+ */
+function isInside(cxt, point, info) {
+  if (info.shape == circle) {
+    // Distance of the point from the center of the circle.
+    var distance =
+      Math.sqrt(square(point.x - info.x) + square(point.y - info.y));
+    return distance < info.radius;
+  } else {
+    throw new Error('Shape not supported: ' + info.shape);
+  }
+}
+
 /**
  * Adds a circle to the current path, centered at x, y, with the given
  * radius, and counterclockwise iff the "counter" argument is true;
