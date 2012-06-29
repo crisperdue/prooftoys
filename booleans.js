@@ -4,6 +4,20 @@
 //
 // Requires canvas.js and logic-pix.js.
 
+// Suppress loading of YUI in booleans.html.
+window.noYUI = true;
+
+/**
+ * Missing jQuery utility function.
+ */
+function setClass(j, className, value) {
+  if (value) {
+    j.addClass(className);
+  } else {
+    j.removeClass(className);
+  }
+}
+
 var greenCircle = merge(circleCenter,
                         {render: 'fillStroke',
                          fillStyle: '#aea',
@@ -87,7 +101,36 @@ function drawBooleans() {
       render(cxtNotC, merge(yellowCircle, outsideOrange));
     });
 
+  var byId = function(id) { return document.getElementById(id); };
+  var dSpan = byId('inD');
+  var eSpan = byId('inE');
+  var spanOr = byId('inDOrE');
+  var spanAnd = byId('inDAndE');
   var cxtOrDE = initCxt('canvasOrDE');
+  cxtOrDE.canvas.onmousemove = function(event) {
+    var d = isInside(cxt, eventPoint(cxtOrDE.canvas, event), circleD);
+    var e = isInside(cxt, eventPoint(cxtOrDE.canvas, event), circleE);
+    var value = d || e;
+    var table = $('table.disjunction1');
+    table.find('td').each(function() {
+        var y = this.getAttribute('y');
+        // Y value is OK if it matches or there is none.
+        var yMatch = y == null || y == '' + e;
+        setClass($(this),
+                 'cellHighlight',
+                 yMatch && this.getAttribute('x') == '' + d);
+      });
+    table.find('th').each(function() {
+        setClass($(this), 'thHighlight',
+                 (this.hasAttribute('x')
+                  ? this.getAttribute('x') == '' + d
+                  : this.getAttribute('y') == '' + e));
+      });
+  };
+  cxtOrDE.canvas.onmouseout = function(event) {
+    $('table.disjunction1 td, table.disjunction1 th')
+      .removeClass('cellHighlight thHighlight');
+  };
   withinCircle(cxtOrDE, function() {
       render(cxtOrDE, circleD);
       render(cxtOrDE, circleE);
@@ -201,7 +244,6 @@ function drawStatements() {
   // Venn diagram of a false implication, coloring in just the
   // area where the implication is false.
   c = initCxt('canvasNotImplies');
-  c.canvas.scrollIntoView();
   withinCircle(c, function() {
       render(c, merge(wings, noFillStyle, {labelX: 160}));
       var birds2 = merge(birds, {x: 85, noFill: true});
@@ -225,3 +267,4 @@ function drawStatements() {
       render(c, merge(wings, {labelX: 160}));
     });
 }
+

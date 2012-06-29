@@ -6,8 +6,10 @@
 <link id=styles type="text/css" rel="stylesheet" href="logic.css">
 <script src="canvas.js"></script>
 <script src="logic-pix.js"></script>
+<!-- booleans.js suppresses loading of YUI -->
 <script src="booleans.js"></script>
 <script src="boilerplate.js"></script>
+<script src="jquery-1.7.2.js"></script>
 
 <style type="text/css">
 
@@ -175,11 +177,9 @@ The next group of pictures illustrate negation.  The first picture in
 this group goes with the first picture in the original group, and
 similarly for the second and third pictures.  Here the solid gray
 areas represent the parts of the pictures in the first group that are
-green, or blue, or yellow.  The area with the orange stripes in the
-first picture of this group represents areas that are not green in the
-first picture of the original group.  In the second one it represents
-areas not blue in the second original, and in the third picture areas
-that are not yellow in the third original.
+green, or blue, or yellow.  The areas with the orange stripes in these
+pictures represent areas that are not colored in the picture in the
+first group above.
 <p>
 <canvas id=canvasNotA width=210 height=210></canvas>
 <canvas id=canvasNotB width=210 height=210></canvas>
@@ -243,24 +243,30 @@ instead of separate shadings for D and E.
 <canvas id=canvasOrDE width=210 height=210></canvas>
 <canvas id=canvasOrDE2 width=210 height=210></canvas>
 <p>
-Each point this is in the yellow area or the green area of the first
-picture is in the blue area of the second picture.  Once again we can
-invent a function that describes this situation, and will call it
+All areas of the first picture that are shaded yellow or green are
+shaded blue in the second picture .  Once again we can invent a
+function that describes this situation, and will call it
 <code>or</code>.  This is called a <i>binary function</i> because it
-has two inputs.  The inputs are truth values and the result is also a
-truth value.
+has two inputs.  The inputs are true of false and so is the result.
 <p>
-<table class=binaryTruthTable>
+<table class="binaryTruthTable disjunction1">
  <tr>
-  <th colspan=2 rowspan=2 style="text-align: center"><!-- <b>or</b> -->
+  <th colspan=2 rowspan=2 style="text-align: center">
   <th colspan=2 style="text-align: center"><b>E</b>
- <tr><th>false<th>true
- <tr><th rowspan=2><b>D</b><th>false<td class=falsy><td class=truthy>
- <tr>               <th>true<td class=truthy><td class=truthy>
+ <tr><th y=false>false<th y=true>true
+ <tr>
+  <th rowspan=2><b>D</b>
+  <th x=false>false
+  <td class=falsy x=false y=false>
+  <td class=truthy x=false y=true>
+ <tr>
+  <th x=true>true
+  <td class=truthy x=true y=false>
+  <td class=truthy x=true y=true>
 </table>
 <p>
 This truth table is organized with a row for each value of the first
-input and a column for each value of the second inpu.  The value of
+input and a column for each value of the second input.  The value of
 the function is in the row for the value of the first input and the
 column for the value of the second input.  So for example <code>(false
 or true) = true</code>.

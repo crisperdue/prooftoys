@@ -60,31 +60,19 @@ code {
   color: gray;
 }
 
-/* Truth tables _not_ for binary operators */
-
-table.truthTable {
-  background-color: silver;
-  border-spacing: 2px;
-  margin-bottom: 1.5em;
+/* This needs to take precedency over highlighting of "falsy" cells. */
+table.binaryTruthTable td.cellHighlight, .cellHighlight {
+  background-color: #ff8;
+  xfont-style: italic;
+  text-decoration: underline;
 }
 
-table.truthTable td, table.truthTable th {
-  background-color: white;
-  padding: 2px;
+.thHighlight {
+  text-decoration: underline;
+  xbackground-color: #ff8;
+  xfont-weight: bold;
+  xfont-style: italic;
 }
-
-table.truthTable .falsy {
-  background-color: #eee;
-}
-
-table.truthTable td.truthy:after {
-  content: "true";
-}
-
-table.truthTable td.falsy:after {
-  content: "false";
-}
-
 
 /**
  * Truth tables for binary operators
@@ -100,7 +88,8 @@ table.binaryTruthTable td.truthy, table.binaryTruthTable td.falsy {
   border: 2px solid silver;
 }
 
-table.binaryTruthTable td.falsy {
+/* This needs to be less specific than a rule for class cellHighlight. */
+td.falsy {
   background-color: #eee;
 }
 
@@ -117,6 +106,7 @@ table.binaryTruthTable td.truthy:after {
 table.binaryTruthTable td.falsy:after {
   content: "false";
 }
+
 
 /* Just below the main heading */
 div#slogans {
