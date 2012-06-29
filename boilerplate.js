@@ -8,11 +8,13 @@ var Y_site = 'http://yui.yahooapis.com/';
 var yuiPath =
   ('<script src="' + Y_site + '3.5.1/build/yui/yui.js"></script>\n');
 // For debugging add explicit reference to source file(s) here
-document.write(yuiPath);
-document.write('<script src="expr.js"></script>\n');
-document.write('<script src="step-editor.js"></script>\n');
-document.write('<script src="proof.js"></script>\n');
-document.write('<script src="theorems.js"></script>\n');
+if (!window.noYUI) {
+  document.write(yuiPath);
+  document.write('<script src="expr.js"></script>\n');
+  document.write('<script src="step-editor.js"></script>\n');
+  document.write('<script src="proof.js"></script>\n');
+  document.write('<script src="theorems.js"></script>\n');
+}
 
 var Toy = Toy || {};
 
