@@ -18,6 +18,29 @@ function setClass(j, className, value) {
   }
 }
 
+/**
+ * Given a TABLE element of a truth table and boolean values for one
+ * or two inputs, highlights the matching truth table cell plus its
+ * row and column header cells by setting up cellHighlight and
+ * thHighlight classes on the TD elements.
+ */
+function highlightCurrentCell(table, xCircle, yCircle) {
+  table.find('td').each(function() {
+      var yCell = this.getAttribute('y');
+      // Y value is OK if it matches or there is none.
+      var yMatch = yCell == null || yCell == '' + yCircle;
+      setClass($(this),
+               'cellHighlight',
+               yMatch && this.getAttribute('x') == '' + xCircle);
+    });
+  table.find('th').each(function() {
+      setClass($(this), 'thHighlight',
+               (this.hasAttribute('x')
+                ? this.getAttribute('x') == '' + xCircle
+                : this.getAttribute('y') == '' + yCircle));
+    });
+}
+
 var greenCircle = merge(circleCenter,
                         {render: 'fillStroke',
                          fillStyle: '#aea',
@@ -110,22 +133,8 @@ function drawBooleans() {
   cxtOrDE.canvas.onmousemove = function(event) {
     var d = isInside(cxt, eventPoint(cxtOrDE.canvas, event), circleD);
     var e = isInside(cxt, eventPoint(cxtOrDE.canvas, event), circleE);
-    var value = d || e;
     var table = $('table.disjunction1');
-    table.find('td').each(function() {
-        var y = this.getAttribute('y');
-        // Y value is OK if it matches or there is none.
-        var yMatch = y == null || y == '' + e;
-        setClass($(this),
-                 'cellHighlight',
-                 yMatch && this.getAttribute('x') == '' + d);
-      });
-    table.find('th').each(function() {
-        setClass($(this), 'thHighlight',
-                 (this.hasAttribute('x')
-                  ? this.getAttribute('x') == '' + d
-                  : this.getAttribute('y') == '' + e));
-      });
+    highlightCurrentCell(table, d, e, d || e);
   };
   cxtOrDE.canvas.onmouseout = function(event) {
     $('table.disjunction1 td, table.disjunction1 th')
