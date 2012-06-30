@@ -76,7 +76,6 @@ table.binaryTruthTable td.truthy, table.binaryTruthTable td.falsy {
 
 /* This needs to be less specific than a rule for class cellHighlight. */
 td.falsy {
-  xbackground-color: #eee;
 }
 
 table.binaryTruthTable th {
@@ -85,18 +84,13 @@ table.binaryTruthTable th {
   padding: 2px 10px;
 }
 
-/* This needs to take precedency over highlighting of "falsy" cells. */
+/* This needs to take precedency over backgrounds for "falsy" cells. */
 table.binaryTruthTable td.cellHighlight, .cellHighlight {
-  background-color: #ff8;
-  xfont-style: italic;
-  text-decoration: underline;
+  background-color: #fcc;
 }
 
 .thHighlight {
-  text-decoration: underline;
-  background-color: #ff8;
-  xfont-weight: bold;
-  xfont-style: italic;
+  background-color: #fcc;
 }
 
 table.binaryTruthTable td.truthy:after {
