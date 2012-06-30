@@ -22,6 +22,8 @@ var Toy = Toy || {};
 Toy.navText = [
   '<a class=nav href="index.html">',
   'Home page</a>',
+  '<a class=nav href="booleans.html">',
+  'Basic Logic through pictures</a>',
   '<a class=nav href="tutorial.html">',
   'Proof builder tutorial</a>',
   '<a class=nav href="real-numbers.html">',
