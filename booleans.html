@@ -192,14 +192,18 @@ takes <code>true</code> or <code>false</code> as its input and
 produces a value of <code>true</code> or <code>false</code>.  We can
 define the behavior of this function with a table, like this:
 <p>
-<table class=binaryTruthTable>
+<table class=binaryTruthTable id=negationTable>
  <tr>
-  <th><th><th><b>not X</b>
+  <th>
+   <th>
+   <th><b>not X</b>
  <tr>
   <th rowspan=2><b>X</b>
-  <th>false<td class=truthy>
+  <th>false
+  <td x=false class=truthy>
  <tr>
-  <th>true<td class=falsy>
+  <th>true
+  <td x=true class=falsy>
 </table>
 <p>
 To use the table, look up the row labeled with the value of the input
@@ -249,20 +253,21 @@ function that describes this situation, and will call it
 <code>or</code>.  This is called a <i>binary function</i> because it
 has two inputs.  The inputs are true of false and so is the result.
 <p>
-<table class="binaryTruthTable disjunction1">
+<table class=binaryTruthTable id=disjunctionTable>
  <tr>
-  <th colspan=2 rowspan=2 style="text-align: center">
+  <th colspan=2 rowspan=2>
   <th colspan=2 style="text-align: center"><b>E</b>
- <tr><th y=false>false<th y=true>true
+ <tr>
+  <th y=false>false<th y=true>true
  <tr>
   <th rowspan=2><b>D</b>
   <th x=false>false
-  <td class=falsy x=false y=false>
-  <td class=truthy x=false y=true>
+  <td x=false y=false class=falsy>
+  <td x=false y=true class=truthy>
  <tr>
   <th x=true>true
-  <td class=truthy x=true y=false>
-  <td class=truthy x=true y=true>
+  <td x=true y=false class=truthy>
+  <td x=true y=true class=truthy>
 </table>
 <p>
 This truth table is organized with a row for each value of the first
@@ -286,13 +291,21 @@ Once again, at each point "x" in the picture,
 is true and <code>(E x)</code> is also true.  So we can invent a
 function <code>and</code> and define it with a truth table:
 <p>
-<table class=binaryTruthTable>
+<table class=binaryTruthTable id=conjunctionTable>
  <tr>
-  <th colspan=2 rowspan=2 style="text-align: center"><!-- <b>and</b> -->
+  <th colspan=2 rowspan=2>
   <th colspan=2 style="text-align: center"><b>E</b>
- <tr><th>false<th>true
- <tr><th rowspan=2><b>D</b><th>false<td class=falsy><td class=falsy>
- <tr>               <th>true<td class=falsy><td class=truthy>
+ <tr>
+  <th y=false>false<th y=true>true
+ <tr>
+  <th rowspan=2><b>D</b>
+  <th x=false>false
+  <td x=false y=false class=falsy>
+  <td x=false y=true class=falsy>
+ <tr>
+  <th x=true>true
+  <td x=true y=false class=falsy>
+  <td x=true y=true class=truthy>
 </table>
 <p>
 What if there is nothing that is both easy and delicious?  A picture
@@ -394,17 +407,7 @@ Returning now from universally true statements to functions with truth
 values as inputs and outputs, we can now see how to define one more
 key function. The function takes two truth values as inputs and
 produces true or false as its value, and enables us to express
-statements like "all birds have wings" mathematically!  Here is its
-truth table:
-<p>
-<table class=binaryTruthTable>
- <tr>
-  <th colspan=2 rowspan=2 style="text-align: center">
-  <th colspan=2 style="text-align: center"><b>wings</b>
- <tr><th>false<th>true
- <tr><th rowspan=2><b>bird</b><th>false<td class=truthy><td class=truthy>
- <tr>               <th>true<td class=falsy><td class=truthy>
-</table>
+statements like "all birds have wings" mathematically!
 <p>
 We call the function <code>implies</code> (alternatively
 "<code>--&gt;</code>"), and it enables us to make statements that say
@@ -414,6 +417,26 @@ shading to show the areas where the expression <code>(bird x) --&gt;
 it is true everywhere:
 <p>
 <canvas id=birdWingsTrue width=210 height=210></canvas>
+<p>
+Its truth table being:
+<p>
+<table class=binaryTruthTable id=implicationTable>
+ <tr>
+  <th colspan=2 rowspan=2>
+  <th colspan=2 style="text-align: center"><b>wings</b>
+ <tr>
+  <th y=false>false
+  <th y=true>true
+ <tr>
+  <th rowspan=2><b>bird</b>
+  <th x=false>false
+  <td x=false y=false class=truthy>
+  <td x=false y=true class=truthy>
+ <tr>
+  <th x=true>true
+  <td x=true y=false class=falsy>
+  <td x=true y=true class=truthy>
+</table>
 <p>
 In this scenario all birds do indeed have wings so the function is
 behaving as intended.  And now a picture where the statement is not
