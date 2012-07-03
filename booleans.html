@@ -60,16 +60,16 @@ h3 {
 <ul>
  <li><a href='#introduction'>Introduction</a>
  <li><a href='#functions'>Functions and truth values</a>
- <li><a href='#negation'>Negation -- "not"</a>
- <li><a href='#disjunction'>Disjunction -- "or"</a>
- <li><a href='#conjunction'>Conjunction -- "and"</a>
+ <li><a href='#negation'>Negation function: "not"</a>
+ <li><a href='#disjunction'>Disjunction function: "or"</a>
+ <li><a href='#conjunction'>Conjunction function: "and"</a>
  <li><a href='#statements'>Statements that are always true</a>
   <ul>
    <li><a href='#trueDisjunctions'>Disjunctions</a>
    <li><a href='#trueConjunctions'>Conjunctions</a>
    <li><a href='#trueConditionals'>Conditionals, "all A are B"</a>
   </ul>
- <li><a href='#implication'>Implication -- "implies"</a>
+ <li><a href='#implication'>Implication function: "implies"</a>
 </ul>
 
 <h2>Introduction <a name=introduction></a></h2>
@@ -169,8 +169,8 @@ function <code>f</code> takes a number as input and produces a number.
 
 <h4>True and false as values</h4>
 <p>
-In mathematical logic there are values <code>true</code>
-and <code>false</code>, known as <i>truth values</i>.  These are often
+In our logic there are values <code>true</code> and
+<code>false</code>, known as <i>truth values</i>.  These are often
 referred to as boolean values in honor of
 <a href="http://en.wikipedia.org/wiki/George_Boole" target=_blank>
 George Boole</a>,
@@ -190,7 +190,7 @@ are <code>true</code> or <code>false</code>.</i>
 Our introduction to basic logic focuses on mathematical functions that
 have truth values as their inputs and a truth value as their result.
 
-<h2>Negation -- "not" <a name=negation></a></h2>
+<h2>Negation function: "not" <a name=negation></a></h2>
 <p>
 The simplest of these functions is called <code>not</code>, also known
 as negation.  Negation provides a way to talk about items that do not
@@ -198,24 +198,23 @@ have a certain property, ones that are not in a certain set, or where
 the value of a predicate is <code>false</code>.  In our logic, these
 are all just different ways of expressing the same idea.
 <p>
-The next group of pictures illustrate negation.  The first picture in
-this group goes with the first picture in the original group, and
-similarly for the second and third pictures.  Here the solid gray
-areas represent the parts of the pictures in the first group that are
-green, or blue, or yellow.  The areas with the orange stripes in these
-pictures represent areas that are not colored in the picture in the
-first group above.
+The next group of pictures illustrate negation.  The parts of the
+pictures in the first group that were green, or blue, or yellow are
+white in this group.  The areas that were white in the first group of
+pictures are marked here with stripes, indicating that in the original
+picture they had the property of being
+<i>not</i> green, <i>not</i> blue, or <i>not</i> yellow.
 <p>
 <canvas id=canvasNotA width=210 height=210></canvas>
 <canvas id=canvasNotB width=210 height=210></canvas>
 <canvas id=canvasNotC width=210 height=210></canvas>
 <p>
-Putting it another way, each point in each of these pictures is in a
-colored area if the point is <i>not</i> in a colored area in the
-original picture.  So we can treat <code>not</code> as a function that
-takes <code>true</code> or <code>false</code> as its input and
-produces a value of <code>true</code> or <code>false</code>.  We can
-define the behavior of this function with a table, like this:
+So every point that was colored (true) in the first set of pictures is
+white (false) here and each point that was white (false) in the first
+set is shaded (true) here.  we can treat <code>not</code> as a
+function that takes <code>true</code> or <code>false</code> as its
+input and produces a value of <code>true</code> or <code>false</code>.
+This behavior can be defined with a table, like this:
 <p>
 <table class=binaryTruthTable id=negationTable>
  <tr>
@@ -224,46 +223,44 @@ define the behavior of this function with a table, like this:
    <th><b>not X</b>
  <tr>
   <th rowspan=2><b>X</b>
-  <th>false
+  <th x=false>false
   <td x=false class=truthy>
  <tr>
-  <th>true
+  <th x=true>true
   <td x=true class=falsy>
 </table>
 <p>
 To use the table, look up the row labeled with the value of the input
-"X".  The value of the function is in that row under "not X".
-So <code>(not false) = true</code> and <code>(not true) =
-false</code>.
+"X".  The value of the function is in that row under "not X".  So
+<code>(not false) = true</code> and <code>(not true) = false</code>.
+Moving the mouse over one of these pictures or touching it on a touch
+screen will cause the truth table entries to highlight.
 <p>
-The table entries where the value is false are shaded in gray, and the
+This kind of table that shows the truth value produced by true or
+false inputs to a function is called a <i>truth table</i>.  The
 entries where the value is true are shaded with blue lines to
-highlight the differences visually.  This kind of table that shows the
-truth value produced by true or false inputs to a function is called
-a <i>truth table</i>.  We will use this color scheme in other truth
-tables as well.
+highlight the difference between true and false.  We will use this
+color scheme in other truth tables as well.
 <p>
-In our notation we write <code>not (A x)</code> or <code>(not (A
-x))</code>.  Of course we can also read this as saying that the
-predicate A is not true for x, or that x is not in the set A.  In
-mathematics a statement like <code>(not (A x))</code> is commonly
-called the negation of a statement <code>(A x)</code>.  The negated
-statement is true of all the things where the original
-statement <code>(A x)</code> is false.
-<p>
-So the colored areas in these pictures show where
-<code>(not (green x))</code> is true, where <code>(not (blue x))</code> is
-true, and finally where <code>(not (yellow x))</code> is true.
+In our notation we write the property of not being blue as <code>not
+(blue x)</code> or <code>(not (blue x))</code>.  Of course we can also
+read this as saying that the predicate blue is not true for x, or that
+x is not in the set of things that are blue.  In mathematics a
+statement like <code>(not (A x))</code> is commonly called the
+negation of a statement <code>(A x)</code>.  The negated statement is
+true of all the things where the original statement <code>(A x)</code>
+is false.
 
-<h2>Disjunction -- "or" <a name=disjunction></a></h2>
+<h2>Disjunction function: "or" <a name=disjunction></a></h2>
 <p>
-Suppose you are considering what to have for lunch, and decide it must
-either be delicious or easy.  In the first picture let circle D
-represent things that are delicious and circle E represent things that
-are easy.  The combined area then represents things that are delicious
-or easy.  We can write that a thing x is "delicious or easy"
-as <code>((D x) or (E x))</code>.  Everything in the parts of the
-picture that are shaded satisfy this statement.
+As an example of our next function, suppose you are thinking what to
+have for lunch, and decide it must either be delicious or easy.  In
+the first picture let circle D represent things that are delicious and
+circle E represent things that are easy.  The combined area then
+represents things that are delicious or easy.  We can write that a
+thing x is "delicious or easy" as <code>((D x) or (E x))</code>.
+Everything in the parts of the picture that are shaded have this
+property.
 <p>
 The shaded part of the second picture also represents things that are
 delicious or easy, this time using the same shading for all of them
@@ -273,10 +270,12 @@ instead of separate shadings for D and E.
 <canvas id=canvasOrDE2 width=210 height=210></canvas>
 <p>
 All areas of the first picture that are shaded yellow or green are
-shaded blue in the second picture .  Once again we can invent a
-function that describes this situation, and will call it
-<code>or</code>.  This is called a <i>binary function</i> because it
-has two inputs.  The inputs are true of false and so is the result.
+shaded blue in the second picture.  Once again we can use a function
+to model this relationship, and will call it <code>or</code>.  This
+function has two inputs.  Each input value is <i>boolean</i> (true or
+false) and so is the result.  Again, hover the mouse over either of
+the pictures to highlight the appropriate parts of the truth table
+for the function <code>or</code>.
 <p>
 <table class=binaryTruthTable id=disjunctionTable>
  <tr>
@@ -301,20 +300,19 @@ the function is in the row for the value of the first input and the
 column for the value of the second input.  So for example <code>(false
 or true) = true</code>.
 
-<h2>Conjunction -- "and" <a name=conjunction></a></h2>
+<h2>Conjunction function: "and" <a name=conjunction></a></h2>
 <p>
-Suppose you are feeling more picky about your lunch, and decide you
-want something that is both delicious and easy.  Only things in
-both of the circles fit this description.  This is the small shaded
-area.  We write it as
-<code>((D x) and (E x))</code>.
+Suppose you are feeling more picky about your lunch, and decide it
+must be both delicious and easy.  Only things in both of the circles
+fit this description -- the small shaded area in the next picture.  We
+write this property as <code>((D x) and (E x))</code>.
 <p>
 <canvas id=canvasAndDE width=210 height=210></canvas>
 <p>
 Once again, at each point "x" in the picture,
 <code>(D x) and (E x)</code> is true exactly when <code>(D x)</code>
-is true and <code>(E x)</code> is also true.  So we can invent a
-function <code>and</code> and define it with a truth table:
+is true and <code>(E x)</code> is also true.  So we can define a
+function <code>and</code> with this truth table:
 <p>
 <table class=binaryTruthTable id=conjunctionTable>
  <tr>
@@ -391,7 +389,6 @@ where A and B are both true statements.
 <p>
 <canvas id=canvasAnd width=210 height=210></canvas>
 
-
 <h3>Conditionals, "all A are B" <a name=trueConditionals></a></h3>
 <p>
 Let's look at another typical kind of statement that has a logical
@@ -401,10 +398,10 @@ write <code>(bird x) implies (wings x)</code> or alternatively
 <code>bird x --> wings x</code>.
 <p>
 The picture below illustrates a scenario where the statement is true.
-The area representing all things with wings entirely encloses the area
+The area representing all things with wings contains the entire area
 that represents all birds.  There are also areas of the picture to
 represent things with wings that are not birds, such as bats in the
-real world.
+real world, and flying insects.
 <p>
 <canvas id=canvasImplies width=210 height=210></canvas>
 <p>
@@ -428,16 +425,17 @@ whether this statement about birds is true.  If every part of the
 picture is either in the "wings" circle or <b>not</b> in the "birds"
 circle, the statement is true.
 
-<h2>Implication -- "implies" <a name=implication></a></h2>
+<h2>Implication function: "implies" <a name=implication></a></h2>
 <p>
-Returning now from universally true statements to functions with truth
-values as inputs and outputs, we can now see how to define one more
-key function. The function takes two truth values as inputs and
-produces true or false as its value, and enables us to express
-statements like "all birds have wings" mathematically!
+Returning now to functions with truth values as inputs and outputs, we
+can now see how to define one more key function.  This function
+enables us to express statements like "all birds have wings"
+mathematically.  It takes two truth values as inputs and produces true
+or false as its value.  The previous example and pictures above apply
+here once again.
 <p>
 We call the function <code>implies</code> (alternatively
-"<code>--&gt;</code>"), and it enables us to make statements that say
+<code>--&gt;</code>), and it enables us to make statements that say
 one thing implies another.  Here are two picture as before, but with
 shading to show the areas where the expression <code>(bird x) --&gt;
 (wings x)</code> has <code>true</code> as its value.  First one where
@@ -476,26 +474,31 @@ no shading.  This is exactly the area where the value of the
 <code>implies</code> function is false.  In this picture not all
 birds have wings, so the function is indeed behaving as intended.
 
-<h4>Vacuous statements</h4>
+<h4>About vacuous statements</h4>
 <p>
-Some peculiar situations can lead to peculiar conclusions.  What if we
-say that all birds larger than elephants can fly to the moon?  If
-there are no birds larger than elephants in our world, our logic takes
-this to be a true statement.  Consider that in fact there are <i>no
-examples that break the rule</i>, that is no birds that are larger
-than elephants and cannot fly to the moon!  The truth table entries in
-the row where the first input is <code>false</code> both have the
-value <code>true</code>, so the <code>implies</code> function has the
-value <code>true</code> everywhere.  If the there are no birds larger
-than elephants, all of them can fly to the moon!
+Special situations can lead classical logic to peculiar conclusions.
+Can all birds larger than elephants fly to the moon?  In ordinary life
+most of us would not say something like this because we know there are
+no birds larger than elephants.  But nothing in our logic prohibits
+such a statement, and if there are no birds larger than elephants in
+our world, our logic takes this to be a true statement.
+<p>
+How can this be?  Consider that there are <i>no examples that break
+the rule</i>, that is no birds that are larger than elephants and
+cannot fly to the moon!  The truth table entries in the row where the
+first input is <code>false</code> both have the value
+<code>true</code>, so the <code>implies</code> function has the value
+<code>true</code> everywhere.  If the there are no birds larger than
+elephants, all of them can fly to the moon!
 <p>
 Mathematicians recognize that this is a strange situation and refer to
 such as statements as <i>vacuously true</i>, meaning true but useless
-because their conditions never apply.  In fact things that do not
-exist can have contradictory properties.  For example (assuming all
-birds have wings) all wingless birds are blue, and furthermore all
-wingless birds are green.  This is possible only because these
-statements are vacuous.
+because their conditions never apply.  In standard logic things that
+do not exist can have <i>any</i> property, even contradictory
+properties.  Taking our example a couple of steps further, all birds
+larger than elephants are blue, and all birds larger than elephants
+are also green.  This is possible only because these statements are
+vacuous.
 
 </div> <!-- #bodyDiv -->
 </td> <!-- #body -->

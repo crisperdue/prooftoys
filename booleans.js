@@ -128,7 +128,7 @@ function drawBooleans() {
 
   var cxtNotA = initCxt('canvasNotA');
   withinCircle(cxtNotA, function() {
-      render(cxtNotA, merge(greenCircle, {fillStyle: '#eee'}));
+      render(cxtNotA, merge(greenCircle, {fillStyle: 'white'}));
       render(cxtNotA, merge(greenCircle, outsideOrange));
     });
   var table = $('#negationTable');
@@ -136,14 +136,14 @@ function drawBooleans() {
 
   var cxtNotB = initCxt('canvasNotB');
   withinCircle(cxtNotB, function() {
-      render(cxtNotB, merge(blueCircle, {fillStyle: '#eee'}));
+      render(cxtNotB, merge(blueCircle, {fillStyle: 'white'}));
       render(cxtNotB, merge(blueCircle, outsideOrange));
     });
   installCircleHighlighting(table, cxtNotB.canvas, blueCircle);
 
   var cxtNotC = initCxt('canvasNotC');
   withinCircle(cxtNotC, function() {
-      render(cxtNotC, merge(yellowCircle, {fillStyle: '#eee'}));
+      render(cxtNotC, merge(yellowCircle, {fillStyle: 'white'}));
       render(cxtNotC, merge(yellowCircle, outsideOrange));
     });
   installCircleHighlighting(table, cxtNotC.canvas, yellowCircle);
@@ -181,6 +181,8 @@ var birds = {
   x: 105, y: 105, radius: 30, fillStyle: {image: shadeYellow},
   label: 'birds'
 };
+
+var birds2 = merge(birds, {x: 77, labelX: 83}); // {x: 85, noFill: true});
 
 var wings = {
   shape: circle,
@@ -269,10 +271,10 @@ function drawStatements() {
   // Venn diagram of a false implication, coloring in just the
   // area where the implication is false.
   c = initCxt('canvasNotImplies');
-  var birds2 = merge(birds, {x: 85, noFill: true});
+  // var birds2 = merge(birds, {x: 85, noFill: true});
   withinCircle(c, function() {
       render(c, merge(wings, noFillStyle, {labelX: 160}));
-      render(c, birds2);
+      render(c, merge(birds2, noFillStyle));
       withClipping(c, {shape: canvas, fillStyle: 'orange'},
                    merge(wings, {outside: true}),
                    birds2);
@@ -290,7 +292,7 @@ function drawStatements() {
   // Picture where bird --> wings is not true everywhere, with normal shading.
   c = initCxt('birdWingsFalse');
   withinCircle(c, function() {
-      render(c, merge(birds, {outside: true, x: 77, labelX: 83}));
+      render(c, merge(birds2, {outside: true}));
       render(c, merge(wings, {labelX: 160}));
     });
   installCircleHighlighting($('#implicationTable'),
