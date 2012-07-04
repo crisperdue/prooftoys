@@ -167,11 +167,20 @@ So:
 </code>
 </blockquote>
 
-and so on.  A function produces a value given an input value.  A
-function can have more than one input.  The addition function
-(<code>+</code>) for example takes two numbers as input and gives a
-number as its result, as in <code>3 + 5 = 8</code>.  The
-function <code>f</code> takes a number as input and produces a number.
+and so on.  A function produces a result value given an input value or
+values.  The addition function (<code>+</code>) for example takes two
+numbers as input and gives a number as its result, as in <code>3 + 5 =
+8</code>.  The function <code>f</code> above takes a number as input
+and produces a number as its result.  The value of a function can
+depend only on its inputs, nothing else.  And given the same inputs on
+different occasions any mathematical function must have the same
+result each time.
+<p>
+A function can have the same result regardless of the input, for
+example the function defined by <code>(f x) = 1</code>.  A function of
+this sort is a <i>constant function</i> because its result does not
+vary with different inputs.  But no function can give different
+results given the same inputs twice.
 
 <h4>True and false as values</h4>
 <p>
@@ -351,7 +360,7 @@ If that really is your requirement, in this scenario there is no
 possible lunch for you!
 
 <a name=equality></a>
-<h2>Equality function: &equiv;</h2>
+<h2>Equality function: =</h2>
 <p>
 A simple yet important property of truth values is equality.  In this
 case we will give the truth table immediately:
@@ -376,7 +385,8 @@ case we will give the truth table immediately:
 It shows that <code>true</code> is equal to <code>true</code>, false
 is equal to <code>false</code>, and neither one is equal to the other,
 all as you would expect.  For boolean values this is sometimes known
-as <i>equivalence</i>.
+as <i>equivalence</i>, and is sometimes written as
+"<code>&equiv;</code>" rather than "<code>=</code>".
 
 <a name=statements></a>
 <h2>Statements that are always true</h2>
