@@ -63,6 +63,7 @@ h3 {
  <li><a href='#negation'>Negation function: "not"</a>
  <li><a href='#disjunction'>Disjunction function: "or"</a>
  <li><a href='#conjunction'>Conjunction function: "and"</a>
+ <li><a href='#equality'>Equality function: <code>&equiv;</code></a>
  <li><a href='#statements'>Statements that are always true</a>
   <ul>
    <li><a href='#trueDisjunctions'>Disjunctions</a>
@@ -72,7 +73,8 @@ h3 {
  <li><a href='#implication'>Implication function: "implies"</a>
 </ul>
 
-<h2>Introduction <a name=introduction></a></h2>
+<a name=introduction></a>
+<h2>Introduction</h2>
 
 <h4>About the subject</h4>
 <p>
@@ -135,7 +137,8 @@ screen will cause the relevant table entries to highlight themselves.
 <canvas id=canvasB width=210 height=210></canvas>
 <canvas id=canvasC width=210 height=210></canvas>
 
-<h2>Functions and truth values <a name=functions></a></h2>
+<a name=functions></a>
+<h2>Functions and truth values</h2>
 
 <h4>Functions</h4>
 <p>
@@ -188,7 +191,8 @@ are <code>true</code> or <code>false</code>.</i>
 Our introduction to basic logic focuses on mathematical functions that
 have truth values as their inputs and a truth value as their result.
 
-<h2>Negation function: "not" <a name=negation></a></h2>
+<a name=negation></a>
+<h2>Negation function: "not"</h2>
 <p>
 The simplest of these functions is called <code>not</code>, also known
 as negation.  Negation provides a way to talk about items that do not
@@ -249,7 +253,8 @@ negation of a statement <code>(A x)</code>.  The negated statement is
 true of all the things where the original statement <code>(A x)</code>
 is false.
 
-<h2>Disjunction function: "or" <a name=disjunction></a></h2>
+<a name=disjunction></a>
+<h2>Disjunction function: "or"</h2>
 <p>
 As an example of our next function, suppose you are thinking what to
 have for lunch, and decide it must either be delicious or easy.  In
@@ -298,7 +303,8 @@ the function is in the row for the value of the first input and the
 column for the value of the second input.  So for example <code>(false
 or true) = true</code>.
 
-<h2>Conjunction function: "and" <a name=conjunction></a></h2>
+<a name=conjunction></a>
+<h2>Conjunction function: "and"</h2>
 <p>
 Suppose you are feeling more picky about your lunch, and decide it
 must be both delicious and easy.  Only things in both of the circles
@@ -339,7 +345,36 @@ overlap; there is no part of the picture where D and E are both true.
 If that really is your requirement, in this scenario there is no
 possible lunch for you!
 
-<h2>Statements that are always true <a name=statements></a></h2>
+<a name=equality></a>
+<h2>Equality function: &equiv;</h2>
+<p>
+A simple yet important property of truth values is equality.  In this
+case we will give the truth table immediately:
+<p>
+<table class=binaryTruthTable>
+ <tr>
+  <th colspan=2 rowspan=2>
+  <th colspan=2>
+ <tr>
+  <th y=false>false<th y=true>true
+ <tr>
+  <th rowspan=2>
+  <th x=false>false
+  <td x=false y=false class=truthy>
+  <td x=false y=true class=falsy>
+ <tr>
+  <th x=true>true
+  <td x=true y=false class=falsy>
+  <td x=true y=true class=truthy>
+</table>
+<p>
+It shows that <code>true</code> is equal to <code>true</code>, false
+is equal to <code>false</code>, and neither one is equal to the other,
+all as you would expect.  For boolean values this is sometimes known
+as <i>equivalence</i>.
+
+<a name=statements></a>
+<h2>Statements that are always true</h2>
 <p>
 We will return soon to describe one more function that takes truth
 values as inputs, but it is probably easier to understand its
@@ -355,7 +390,8 @@ true regardless of the values of the variables.  To emphasize that is
 true for all possible values of the variables, these sorts of
 statements are sometimes described as <i>universally</i> true,
 
-<h3>Disjunctions <a name=trueDisjunctions></a></h3>
+<a name=trueDisjunctions></a>
+<h3>Disjunctions</h3>
 <p>
 As an example let's consider the statement that every number is either
 less than 100 or greater than 10.  We could state this as
@@ -378,7 +414,8 @@ of the value of <code>x</code>.  In mathematics, if the truth of a
 statement does not depend on the values of variables in it, it
 is considered simply a true or valid statement.
 
-<h3>Conjunctions <a name=trueConjunctions></a></h3>
+<a name=trueConjunctions></a>
+<h3>Conjunctions</h3>
 <p>
 To be true, both parts of a statement with "and" must also be true.
 Any part not in one of the areas will not be in both.  Here is a
@@ -387,7 +424,8 @@ where A and B are both true statements.
 <p>
 <canvas id=canvasAnd width=210 height=210></canvas>
 
-<h3>Conditionals, "all A are B" <a name=trueConditionals></a></h3>
+<a name=trueConditionals></a>
+<h3>Conditionals, "all A are B"</h3>
 <p>
 Let's look at another typical kind of statement that has a logical
 meaning, such as "all birds have wings".  We might also express
@@ -423,7 +461,8 @@ whether this statement about birds is true.  If every part of the
 picture is either in the "wings" circle or <b>not</b> in the "birds"
 circle, the statement is true.
 
-<h2>Implication function: "implies" <a name=implication></a></h2>
+<a name=implication></a>
+<h2>Implication function: "implies"</h2>
 <p>
 Returning now to functions with truth values as inputs and outputs, we
 can now see how to define one more key function.  This function
