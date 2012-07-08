@@ -71,12 +71,13 @@ symbol <code>--></code>, though some rules of inference operate
 somewhat differently when there are hypotheses, focusing on the part
 of the formula after the turnstile symbol.
 <p>
-The comma-separated expressions before a turnstile are the hypotheses
-for the line.  The expressions are really a conjunction, and if you
-see an integer <code>n</code> (e.g. <code>1</code> or
-<code>22</code>) there, it is an abbreviation for "the term assumed in
-line <code>n</code>.  The abbreviations help keep the proof lines from
-sprawling all over the place.
+The hypotheses are written as before the turnstile, as a list
+separated by commas.  They are really a conjunction so you can imagine
+replacing each comma with <code>&amp;&amp;</code>.  If a hypothesis is
+written as just an integer (e.g. <code>1</code> or <code>22</code>)
+there, it is an abbreviation for "the term assumed in line
+<code>n</code>.  The abbreviations help keep the proof lines from
+sprawling all over the page.
 <p>
 <b>function calls.</b>
 Ordinary function calls look like <code><b>(f x)</b></code> or
@@ -96,6 +97,22 @@ for
 This notation also resembles common notation for sets,
 and can be read that way for functions with boolean values &mdash;
 "<i>the set of x such that p of x</i>".
+
+<h2>Inference in Prooftoys</h2>
+<p>
+Prooftoys supports the usual forms of classical inference and has a
+number of common rules predefined (though not yet inference with
+existential quantifiers).
+<p>
+Its one fundamental rule of inference is the Q<sub>0</sub> Rule R that
+allows replacement of any occurrence of a term by a term that is equal
+to it.  The Prooftoys "replace" rule is the same as the Q<sub>0</sub>
+derived Rule R', which does the same sort of replacement when the
+equation is conditional.  In other words it allows <code>C</code> to
+be replaced by <code>D</code> if <code>H --> C = D</code> or in the
+notation for hypotheses, <code>H1, H2, ..., Hn --> C = D</code>.  This
+rule is immediately useful for example in solving high school-level
+algebra problems.
 
 <h2>Viewing and exploring proofs</h2>
 <p>

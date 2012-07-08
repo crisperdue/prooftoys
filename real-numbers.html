@@ -43,12 +43,12 @@ In addition there are axioms stating that the result of the basic
 operations on real numbers give real numbers as a result (except for
 the reciprocal of zero), though they are not shown here.
 <p>
+<div id=axiomList></div>
+<p>
 <b>Predicate <code>R.</code></b>
 The predicate <code>R</code> means that its argument is a real number.
 The axioms only hold for variables that have real values, but these
 conditions are hidden in the default proof displays.
-<p>
-<div id=axiomList></div>
 <p>
 <b>Doing arithmetic.</b>
 The <code>axiomArithmetic</code> axiom schema evaluates basic
@@ -72,6 +72,13 @@ In the interactive proof builder, find axioms by pressing the
 proof step.  They are under the letter <code>x</code> to reduce
 clutter in the initial display of available theorems and rules of
 inference.
+<p>
+<b>Subtraction and division.</b>
+The operator <code>-</code> and <code>/</code> are defined, but there
+are no rules of inference for them, so it is more convenient to expand
+their definitions where they occur.  You can expand the definitions by
+selecting an expression that uses them, such as <code>(y - 2)</code> or
+<code>(x / z)</code> and request the <code>apply</code> rule.
 <p>  
 <b>Rules of inference.</b> Based on the axioms are a set of simple
 rules of inference for real numbers.  You can select an expression in
@@ -89,17 +96,34 @@ There are also rules related to 1, 0, negation and reciprocal:
 <code>plusNegElim</code>, <code>timesRecipElim</code>, and
 <code>timesZeroElim</code>.
 <p>
-<b>Subtraction and division.</b>
-The operator <code>-</code> and <code>/</code> are defined, but there
-are no rules of inference for them, so it is more convenient to expand
-their definitions where they occur.  You can expand the definitions by
-selecting an expression that uses them, such as <code>(y - 2)</code> or
-<code>(x / z)</code> and request the <code>apply</code> rule.
+Some of the steps in the example use the Prooftoys "replace" rule.
+With this rule one or more occurrences of an expression can be
+replaced by one that is equal to it.  If the equation is conditional
+(has hypotheses), the resulting statement must satisfy all of its
+conditions, so it may be necessary to add them to any existing
+hypotheses.
 
 <h3>Worked example</h3>
 <p>
 This example solves a pair of simple simultaneous equations using the
 current Prooftoys axioms and rules of inference.
+<p>
+Notes: In lines with hypotheses, like
+<blockquote>
+<code>n. 1, 2 &#x22a2; x = 4</code>
+</blockquote>
+the number 1 is an abbreviation for the assumption introduced on line
+1, and the number 2 is an abbreviation for the assumption introduced
+on line 2.  So if line 1 assumes <code>x = y * 2</code> and line 2
+assumes <code>x + y = 6</code>, the whole line amounts to:
+<blockquote>
+<code>n. (x = y * 2) && (x + y = 6) --&gt; x = 4</code>
+</blockquote>
+<p>
+For additional background it may be helpful to read
+<a href="booleans.html">Basic logic through pictures</a>
+and the <a href="tutorial.html">Tutorial</a> page.
+
 <div id=sampleProof></div>
 
 </table>
