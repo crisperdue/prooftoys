@@ -75,8 +75,9 @@ h3 {
    <li><a href="#trueConditionals">Conditionals, "all A are B"</a>
   </ul>
  <li><a href="#implication">Implication function: "implies"</a>
+ <li><a href="#combinations">Combining logical functions</a>
  <li><a href="#tautologies">Tautologies</a>
- <li><a href="#substitution">Tautologies</a>
+ <!-- <li><a href="#substitution">Substitution</a> -->
 </ul>
 
 <a name=introduction></a>
@@ -214,6 +215,8 @@ are <code>true</code> or <code>false</code>.</i>
 <p>
 Our introduction to basic logic focuses on mathematical functions that
 have truth values as their inputs and a truth value as their result.
+These can be referred to as <i>truth functions</i> or <i>logical
+functions</i>.
 
 <a name=negation></a>
 <h2>Negation function: "not"</h2>
@@ -307,11 +310,11 @@ for the function <code>or</code>.
 <table class=binaryTruthTable id=disjunctionTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><b>E</b>
+  <th colspan=2 style="text-align: center"><b>(E x)</b>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><b>D</b>
+  <th rowspan=2><b>(D x)</b>
   <th x=false>false
   <td x=false y=false class=falsy>
   <td x=false y=true class=truthy>
@@ -345,11 +348,11 @@ function <code>and</code> with this truth table:
 <table class=binaryTruthTable id=conjunctionTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><b>E</b>
+  <th colspan=2 style="text-align: center"><b>(E x)</b>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><b>D</b>
+  <th rowspan=2><b>(D x)</b>
   <th x=false>false
   <td x=false y=false class=falsy>
   <td x=false y=true class=falsy>
@@ -364,10 +367,10 @@ for that situation could like this:
 <p>
 <canvas id=canvasAndDE2 width=210 height=210></canvas>
 <p>
-The picture has no shaded area because region D and region do not
-overlap; there is no part of the picture where D and E are both true.
-If that really is your requirement, in this scenario there is no
-possible lunch for you!
+The picture has no shaded area because region D and region E do not
+overlap; there is no part of the picture where <code>(D x)</code> and
+<code>(E x)</code> are both true.  If that really is your
+requirement, in this scenario there is no possible lunch for you!
 
 <a name=equality></a>
 <h2>Equality function: "="</h2>
@@ -402,18 +405,19 @@ rather than "<code>=</code>".
 <h2>Statements that are always true</h2>
 <p>
 We will return soon to describe one more function that takes truth
-values as inputs, but it is probably easier to understand its
-importance after some introduction to the idea of mathematical
-functions that have the value <code>true</code> for all possible
-inputs.  These express in mathematics the idea of a statement that is
-always true.
+values as inputs, but it may be easier to understand its importance
+after some introduction to the idea of mathematical functions that
+have the value <code>true</code> for all possible inputs, in other
+words for all things in the universe.  These sorts of functions
+are mathematically true statements.
 <p>
 Mathematics is especially interested in statements that are true by
 mathematical reasoning -- in other words theorems.  If a mathematical
 statement has variables in it, the statement is a true one if it is
 true regardless of the values of the variables.  To emphasize that is
 true for all possible values of the variables, these sorts of
-statements are sometimes described as <i>universally</i> true,
+statements are sometimes described as <i>universally</i> true.  We
+will sometimes refer to them as "true everywhere".
 
 <a name=trueDisjunctions></a>
 <h3>Disjunctions</h3>
@@ -562,15 +566,143 @@ larger than elephants are blue, and all birds larger than elephants
 are also green.  This is possible only because these statements are
 vacuous.
 
+<a name=combinations></a>
+<h2>Combining logical functions</h2>
+<p>
+The logical functions can be combined into complex expressions.  In
+the lunch example, where D is an abbreviation for "delicious" and E is
+an abbreviation for "easy", the expression <code>(not ((D x) and (E
+x)))</code> refers to things that are <i>not</i> easy and delicious.
+<p>
+<canvas id=DnandE width=210 height=210>
+<p>
+The value of this function at each point depends on the values of
+<code>(D x)</code> and <code>(E x)</code> at the same point, and its
+truth table can be computed by first looking up the value in the truth
+table for <code>and</code>, then looking up the value of the result in
+the table for <code>not</code>.
+<p>
+<table class=binaryTruthTable id=nandTable>
+ <tr>
+  <th colspan=2 rowspan=2>
+  <th colspan=2 style="text-align: center"><b>(E x)</b>
+ <tr>
+  <th y=false>false<th y=true>true
+ <tr>
+  <th rowspan=2><b>(D x)</b>
+  <th x=false>false
+  <td x=false y=false class=truthy>
+  <td x=false y=true class=truthy>
+ <tr>
+  <th x=true>true
+  <td x=true y=false class=truthy>
+  <td x=true y=true class=falsy>
+</table>
+<p>
+The expression <code>(not (D x) and not (E x))</code> refers to things
+that are neither delicious nor easy; unfortunate for the eater, but
+fortunate for things that do not wish to be eaten.
+<p>
+<canvas id=DnorE width=210 height=210>
+<p>
+Once again we can build each entry in this truth table by looking up
+the values of the subexpressions, first negating each input, then
+looking up the results in the table for <code>and</code>.  Logical
+expressions combine the same way arithmetic expressions do, but the
+calculation is even easier because you only have to look up the
+results of each part in a table.
+<p>
+<table class=binaryTruthTable id=norTable>
+ <tr>
+  <th colspan=2 rowspan=2>
+  <th colspan=2 style="text-align: center"><b>(E x)</b>
+ <tr>
+  <th y=false>false<th y=true>true
+ <tr>
+  <th rowspan=2><b>(D x)</b>
+  <th x=false>false
+  <td x=false y=false class=truthy>
+  <td x=false y=true class=falsy>
+ <tr>
+  <th x=true>true
+  <td x=true y=false class=falsy>
+  <td x=true y=true class=falsy>
+</table>
+
+
 <a name=tautologies></a>
 <h2>Tautologies</h2>
 <p>
-TO DO.
+Some statements are not just true everywhere, they are true everywhere
+in every possible picture.  Consider the statement <code>(blue x) or
+(not (blue x))</code>, "either x is blue or x is not blue".  It does
+not matter how many things are blue, or which things are blue.  It
+doesn't even matter if any things at all are blue.  If we make a
+picture with one area for blue things and the rest for things that are
+not blue, every part of the picture will be in one of these two parts,
+either inside the "blue" area or not inside it.
+<p>
+This is an application of a <i>tautology</i>. Tautologies are true
+regardless of the truth of their parts.  Statements of this sort occur
+constantly in normal mathematical reasoning, sometimes explicitly and
+even more often implicitly behind the scenes.
+<p>
+If a statement is a tautology, this can be verified just by building
+its truth table.  If all of the entries are <code>true</code>, it is a
+tautology.  The statement <code>(blue x) or (not (blue x))</code> is
+indeed a tautology, and its truth table has the value
+<code>true</code> in all its entries:
+<p>
+<table class=binaryTruthTable id=tautology1>
+ <tr>
+  <th>
+   <th>
+   <th>(blue x) or (not (blue x))
+ <tr>
+  <th rowspan=2><b>(blue x)</b>
+  <th x=false>false
+  <td x=false class=truthy>
+ <tr>
+  <th x=true>true
+  <td x=true class=truthy>
+</table>
+<p>
+The inputs to some of the truth tables are labeled with expressions
+such as <code>(D x)</code>, <code>(E x)</code>, or <code>(blue
+x)</code>.  It doesn't matter whether an input is given by a variable
+or some expression.  All that matters is that different expressions
+are handled as different inputs.  If an expression (such as <code>(blue
+x)</code>) appears more than once in the full expression (such as
+<code>(blue x) or (not (blue x))</code>, all of its occurrences will
+have the same value when given the same value for <code>x</code>.  It
+is not possible for one occurrence to have the value <code>true</code>
+and another one the value <code>false</code>.  They count as one
+input.
+<p>
+Tautologies properly are expressions with just variables and logical
+functions in them.  This is the simplest way to write down the
+principle of a tautology, and more complex <i>instances</i> of
+tautologies can be built from them by substitution.
+<p>
+A few examples of commonly-seen tautologies are:
+<ul>
+ <li><code>a --&gt; a</code>
+ <li><code>(a and a) = a</code>
+ <li><code>(a --&gt; b) --&gt; ((not b) --&gt; (not a))</code>
+ <li><code>(not (a or b)) = ((not a) and (not b))</code>
+</ul>
+<p>
+Assigning all combinations of <code>true</code> and <code>false</code>
+to the variables in these expressions and checking that the value of
+the expression is true will verify that these all really are
+tautologies.
 
+<!--
 <a name=substitutions></a>
 <h2>Substitutions</h2>
 <p>
 TO DO.
+ -->
 
 </div> <!-- #bodyDiv -->
 </td> <!-- #body -->
@@ -582,7 +714,11 @@ TO DO.
 Toy.insertNav();
 Toy.insertSlogans();
 
-window.onload = function() { drawBooleans(); drawStatements(); }
+window.onload = function() {
+  drawBooleans();
+  drawStatements();
+  drawCombinations();
+}
 
 </script>
 </body>

@@ -299,3 +299,20 @@ function drawStatements() {
                             c.canvas, birds2, wings);
 }
 
+function drawCombinations() {
+  var c = initCxt('DnandE');
+  withinCircle(c, function() {
+      render(c, merge(circleD, {outside: true, fillStyle: {image: shadeBlue}}));
+      render(c, merge(circleE, {outside: true, fillStyle: {image: shadeBlue}}));
+    });
+  installCircleHighlighting($('#nandTable'),
+                            c.canvas, circleD, circleE);
+  c = initCxt('DnorE');
+  withinCircle(c, function() {
+      drawAnd(c,
+              merge(circleD, {outside: true}, blueShading),
+              merge(circleE, {outside: true}, blueShading));
+    });
+  installCircleHighlighting($('#norTable'),
+                            c.canvas, circleD, circleE);
+}
