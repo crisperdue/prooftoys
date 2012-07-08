@@ -77,7 +77,7 @@ h3 {
  <li><a href="#implication">Implication function: "implies"</a>
  <li><a href="#combinations">Combining logical functions</a>
  <li><a href="#tautologies">Tautologies</a>
- <!-- <li><a href="#substitution">Substitution</a> -->
+ <li><a href="#substitution">Substitution</a>
 </ul>
 
 <a name=introduction></a>
@@ -113,10 +113,12 @@ that are true about everything in a mathematical world and even reason
 that if one statement is true, some different statement must also be
 true.
 <p>
-The part of logic here is enough to make precise virtually all of
-the reasoning needed by students of high school algebra and
+The logic concepts described here are enough to make precise virtually
+all of the reasoning needed by students of high school algebra and
 trigonometry up to limits and calculus, which need statements of the
-form "for all x there exists a y such that ... ".
+form "for all x there exists a y such that ... ".  With suitable rules
+of inference and axioms for logic and numbers you have a system that
+can be used to solve a great many math problems at this level.
 
 <a name=aboutPictures></a>
 <h3>About the pictures</h3>
@@ -684,11 +686,11 @@ functions in them.  This is the simplest way to write down the
 principle of a tautology, and more complex <i>instances</i> of
 tautologies can be built from them by substitution.
 <p>
-A few examples of commonly-seen tautologies are:
+Just a few examples of commonly-encountered tautologies are:
 <ul>
  <li><code>a --&gt; a</code>
  <li><code>(a and a) = a</code>
- <li><code>(a --&gt; b) --&gt; ((not b) --&gt; (not a))</code>
+ <li><code>(a --&gt; b) = ((not b) --&gt; (not a))</code>
  <li><code>(not (a or b)) = ((not a) and (not b))</code>
 </ul>
 <p>
@@ -697,12 +699,39 @@ to the variables in these expressions and checking that the value of
 the expression is true will verify that these all really are
 tautologies.
 
-<!--
 <a name=substitutions></a>
 <h2>Substitutions</h2>
 <p>
-TO DO.
- -->
+A true statement containing a boolean variable is true if the
+variable's value is true and also if the variable's value is false If
+the variable appears more than once in the statement, we know the
+statement will be true as long as each occurrence is assigned the same
+value.  Since an expression with the same inputs always gives the same
+result, substituting an expression <i>for every occurrence</i> of a
+variable in a true statement gives another true statement.
+<p>
+Put another way, in a true statement, a variable appearing multiple
+times means, "any value is fine as long as it is the same in each
+place".  An expression in place of the variable satisfies that
+requirement, so a substitution also results in a true statement.
+<p>
+The simple tautology <code>a --&gt; a</code> is a true statement,
+since <code>true --&gt; true</code> and <code>false --&gt;
+false</code>.  A statement like <code>(shining sun) --&gt;
+(shining sun)</code> is also true whether the sun is actually shining
+or not.  The substituted expression itself can have variables, as in
+<code>x &lt; y --> x &lt; y</code>.  No matter what values
+<code>x</code> and <code>y</code> have, the value of <code>x &lt;
+y</code> is going to be the same in both spots, so the whole statement
+is still true.
+<p>
+In any mathematical expression, substituting an expression for all
+instances of a variable gives an <i>instance</i> of the original
+expression, so substituting one or more expressions for variables in a
+tautology gives an instance of the tautology.
+<p>
+Substitution for any kind of variable is one of the fundamental
+operations in mathematical proofs and problem solving.
 
 </div> <!-- #bodyDiv -->
 </td> <!-- #body -->
