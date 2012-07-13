@@ -768,8 +768,17 @@ function wantLeftElision(step, controller) {
  */
 function renderAsStep(step) {
   if (step.hasHyps) {
-    var wffNode = step.node = renderHyps(step.getLeft());
-    wffNode.append(textNode(' ' + _turnstile + ' '));
+    var hyps = step.getLeft();
+    if (Y.suppressRealTypeDisplays) {
+      hyps = omittingReals(hyps);
+    }
+    if (hyps) {
+      var wffNode = step.node = renderHyps(step.getLeft());
+      wffNode.append(textNode(' ' + _turnstile + ' '));
+    } else {
+      // Must we make the wffNode if there are hyps, but none visible?
+      var wffNode = exprNode();
+    }
     wffNode.append(renderMain(step));
     return wffNode;
   } else {
@@ -808,17 +817,13 @@ function renderMain(step) {
 }
 
 /**
- * Walk through the expression as a set of hypotheses.  This code
- * might recurs both left and right, which may help displaying
- * hypotheses that are in the process of being rearranged.
+ * Walk through the expression as a set of hypotheses, rendering into
+ * a new Expr node..
  */
 function renderHyps(expr) {
   var mainNode = exprNode();
   if (Y.suppressRealTypeDisplays) {
     expr = omittingReals(expr);
-  }
-  if (!expr) {
-    return mainNode;
   }
   function render(expr) {
     if (expr.sourceStep) {
@@ -842,7 +847,9 @@ function renderHyps(expr) {
       mainNode.append(expr._render(true));
     }
   }
-  render(expr);
+  if (expr) {
+    render(expr);
+  }
   return mainNode;
 }
 
