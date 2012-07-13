@@ -2041,7 +2041,7 @@ var ruleInfo = {
       var expr = step.locate(path);
       var map = expr.findSubst(equation.unHyp().getLeft());
       assert(map, function() {
-          return 'Cannot rewrite\n' + step + '\nusing ' + equation;
+          return 'Sorry, rule does not match';
         });
       var step1 = rules.instMultiVars(equation, map);
       var result = rules.replace(step1, step, path);
