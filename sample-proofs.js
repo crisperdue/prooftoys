@@ -44,7 +44,9 @@ YUI.add('sample-proofs', function(Y) {
       var stepCounter = Y.getStepCounter();
       try {
         result = Y.rules[ruleName].apply(null, args || []);
-      } catch(e) {}
+      } catch(e) {
+        console && console.log('Error in sample proof: ' + e);
+      }
       var elapsed = new Date().getTime() - startMillis;
       // This is actually the number of steps needed to execute the
       // rule, not counting steps used in deriving argument steps.
@@ -187,6 +189,8 @@ YUI.add('sample-proofs', function(Y) {
     
     r5212: {},
     
+    r5212Book: {},
+    
     toTIsEquation: {
       args: [rules.assert(call('=', p, q))]
     },
@@ -196,6 +200,8 @@ YUI.add('sample-proofs', function(Y) {
              rules.assert(call('=', q, r))]
     },
     
+    r5214: {},
+
     instForall: {
       args: function() {
         var step1 = rules.assume('forall {y. p y}');
@@ -291,6 +297,10 @@ YUI.add('sample-proofs', function(Y) {
       },
       level: 1
     },
+
+    r5225: {},
+
+    r5227: {},
 
     r5230TF: {},
     

@@ -653,9 +653,9 @@ var ruleInfo = {
   },
 
   /**
-   * Substitutes term "a" for variable "v" in equation b_c,
-   * with the result a consequence of b_c.  (5209)
-   * Does not support hypotheses.
+   * Substitutes term "a" for variable or name "v" in equation b_c,
+   * with the result a consequence of b_c.  (5209) Does not support
+   * hypotheses.
    */
   instEqn: {
     action: function(b_c, a, v) {
@@ -778,6 +778,14 @@ var ruleInfo = {
     comment: ('[F = T] = F')
   },
 
+  r5230FTBook: {
+    action: function() {
+      var step1 = rules.axiom('axiom2');
+      // TODO: Finish me.
+      return result.justify('r5230FTBook');
+    }
+  },
+
   // Prove [T = F] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
   r5230TF: {
@@ -869,10 +877,17 @@ var ruleInfo = {
     return step1.justify('r5212');
   },
 
-  // From theorems A = B and C = D, derives theorem
-  // [A = B] && [C = D].  Uses no book-specific definitions.
-  // Not used (because 5216 is not used.)
-  // Use toTIsEquation there instead of this.
+  r5212Book: {
+    action: function() {
+      var step1 = rules.r5211Book();
+      var step2 = rules.theorem('t');
+      var step3 = rules.rRight(step1, step2, '');
+      return step3.justify('r5212Book');
+    }
+  },
+
+  // Bookish: From theorems A = B and C = D, derives theorem
+  // [A = B] && [C = D].  Used in andTBook.
   r5213: function(a_b, c_d) {
     assertEqn(a_b);
     var a = a_b.locate('/left');
@@ -889,7 +904,22 @@ var ruleInfo = {
     return step6.justify('r5213', arguments, arguments);
   },
 
-  // 5216 by the book.  Not used.  Currently uses one nonbook definition.
+
+  // Bookish: T && F = F
+  r5214: {
+    action: function() {
+      var step1 = rules.axiom('axiom1');
+      var step2 = rules.instVar(step1, Y.parse('{x. x}'), 'g');
+      var step3 = rules.apply(step2, '/right/arg/body');
+      var step4 = rules.apply(step3, '/left/right');
+      var step5 = rules.apply(step4, '/left/left');
+      var step6 = rules.defFFromBook();
+      var step7 = rules.rRight(step6, step5, '/right');
+      return step7.justify('r5214');
+    }
+  },
+
+  // 5216 by the book.
   andTBook: function(a) {
     var step1 = rules.axiom('axiom1');
     var step2 =
@@ -897,8 +927,7 @@ var ruleInfo = {
     var step3 = rules.apply(step2, '/left/left');
     var step4 = rules.apply(step3, '/left/right');
     var step5 = rules.apply(step4, '/right/arg/body');
-    var step6 = rules.applyBoth(rules.definition('&&', T), F);
-    var step7 = rules.apply(step6, '/right');
+    var step7 = rules.r5214();
     var step8 = rules.r5213(rules.theorem('r5211'), step7);
     var step9 = rules.r(step5, step8, '/');
     var step10 = rules.instForall(step9, a);
@@ -973,7 +1002,7 @@ var ruleInfo = {
   // might be taken as an axiom given r5230FT_alternate.
   tIsXIsX: {
     action: function() {
-      var step1 = rules.theorem('r5230TF');
+      var step1 = rules.theorem('r5217Book');
       var step2 = rules.eqT(T);
       var step3 = rules.eqnSwap(step2);
       var step4 = rules.equationCases(step3, step1, 'x');
@@ -1226,6 +1255,35 @@ var ruleInfo = {
 	   + ' implication in step <input name=implication>'),
     hint: 'modus ponens',
     comment: ('Modus Ponens.  Given A and A --> B derives B.')
+  },
+
+  // (forall f) --> f x
+  r5225: {
+    action: function() {
+      var step1 = rules.axiom('axiom2');
+      var map = {h: Y.parse('{g. g x}'),
+                 x: Y.parse('{x. T}'),
+                 y: f};
+      var step2 = rules.instMultiVars(step1, map);
+      var step3 = rules.rRight(rules.definition('forall'), step2, '/left/fn');
+      var step4 = rules.apply(step3, '/right/left');
+      var step5 = rules.apply(step4, '/right/left');
+      var step6 = rules.apply(step5, '/right/right');
+      var step7 = rules.r(rules.r5218(Y.parse('f x')), step6, '/right');
+      return step7.justify('r5225');
+    }
+  },
+
+  // F --> x; bookish
+  r5227: {
+    action: function() {
+      var step1 = rules.theorem('r5225');
+      var step2 = rules.instVar(step1, Y.parse('{x. x}'), 'f');
+      var step3 = rules.defFFromBook();
+      var step4 = rules.rRight(step3, step2, '/left');
+      var step5 = rules.apply(step4, '/right');
+      return step5.justify('r5227');
+    }
   },
 
   // [not T] = F
@@ -3187,7 +3245,7 @@ function getTheorem(name) {
 var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
 
 var theoremNames =
-  (axiomNames.concat(['defFFromBook',
+  (axiomNames.concat(['defFFromBook', 'r5217Book', 'r5225',
                       'defAnd', 'tIsXIsX', 'forallVT', 'eqTLemma',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals']));
