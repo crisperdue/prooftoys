@@ -368,6 +368,10 @@ var ruleInfo = {
     return result.justify('defAnd');
   },
 
+  // Book only.
+  defImplies: function() {
+    return equal('-->', Y.parse('{x. {y. x == x && y}}')).justify('defImplies');
+  },
 
   //
   // Theorems and rules of inference.
@@ -778,11 +782,30 @@ var ruleInfo = {
     comment: ('[F = T] = F')
   },
 
+  // Bookish: (F = T) = F
   r5230FTBook: {
     action: function() {
       var step1 = rules.axiom('axiom2');
-      // TODO: Finish me.
-      return result.justify('r5230FTBook');
+      var map = {h: Y.parse('{x. x = F}'),
+                 x: F,
+                 y: T};
+      var step2 = rules.instMultiVars(step1, map);
+      var step3 = rules.apply(step2, '/right/right');
+      var step4 = rules.apply(step3, '/right/left');
+      var step5 = rules.r5218(F);
+      var step6 = rules.r(step5, step4, '/right/right');
+      var step7 = rules.eqT(F);
+      var step8 = rules.rRight(step7, step6, '/right/left');
+      var step9 = rules.r(step5, step8, '/right');
+      var step10 = rules.defImplies();
+      var step11 = rules.r(step10, step9, '/binop');
+      var step12 = rules.apply(step11, '/fn');
+      var step13 = rules.apply(step12, '');
+      // TODO: Infer by cases from 5229 (rules about '&&').
+      var step14 = rules.tautology('x && F == F');
+      var step15 = rules.instVar(step14, Y.parse('F = T'), 'x')
+      var step16 = rules.r(step15, step13, '/right');
+      return step16.justify('r5230FTBook');
     }
   },
 

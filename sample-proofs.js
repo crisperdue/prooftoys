@@ -306,6 +306,8 @@ YUI.add('sample-proofs', function(Y) {
     
     r5230FT: {},
     
+    r5230FTBook: {},
+
     r5230FT_alternate: {},
     
     r5231T: {},
