@@ -63,6 +63,8 @@ Toy.insertSlogans = function() {
 // TODO: Consider running this code only when the site is prooftoys.org.
 
 var _gaq = _gaq || [];
+var pluginUrl = '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
+_gaq.push(['_require', 'inpage_linkid', pluginUrl]);
 _gaq.push(['_setAccount', 'UA-28801147-2']);
 _gaq.push(['_trackPageview']);
 
