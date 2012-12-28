@@ -45,10 +45,21 @@ the reciprocal of zero), though they are not shown here.
 <p>
 <div id=axiomList></div>
 <p>
-<b>Predicate <code>R.</code></b>
-The predicate <code>R</code> means that its argument is a real number.
-The axioms only hold for variables that have real values, but these
-conditions are hidden in the default proof displays.
+The first axiom, commutativity of addition
+(<code>axiomCommutativePlus</code>), shown as
+<code>x + y = y + x</code>, means "for all <i>real numbers</i>
+<code>x</code> and <code>y</code>, <code>x + y = y + x</code>.
+Since Prooftoys can work with other kinds of values, the full
+statements of the axioms say explicitly that they are only guaranteed
+for real numbers.  In this case the full statement is:
+<code>(R x) && (R y) --> x + y = y + x</code>.
+<p>
+<code>(R x)</code> means that <code>x</code> is a real number.
+The conditions about real numbers are not normally shown in the
+Prooftoys displays, to help reduce visual clutter.  The symbols
+<code>&&</code> and <code>--></code> are symbols for the mathematical
+"and" and "implies" relationships, explained further in the
+<a href="booleans.html">Logic through Pictures</a> page.
 <p>
 <b>Doing arithmetic.</b>
 The <code>axiomArithmetic</code> axiom schema evaluates basic
