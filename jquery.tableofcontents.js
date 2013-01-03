@@ -43,8 +43,6 @@
       // Increment the counter in every case.
       anchor_counter++;
     });
-
-    console.log(toc_text);
     // Add the TOC.
     $(this).append('<ul>' + toc_text + '</ul>');
     return $(this);
