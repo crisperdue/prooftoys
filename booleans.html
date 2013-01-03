@@ -10,6 +10,7 @@
 <script src="booleans.js"></script>
 <script src="boilerplate.js"></script>
 <script src="jquery-1.7.2.js"></script>
+<script src="jquery.tableofcontents.js"></script>
 
 <style type="text/css">
 
@@ -44,7 +45,7 @@ h3 {
 </head>
 
 <body>
-<h1>Basic Logic through Pictures</h1>
+<h1 class=notoc>Basic Logic through Pictures</h1>
 <div id=slogans>
 
 </div>
@@ -55,37 +56,10 @@ h3 {
 <td id=body>
 <div id=bodyDiv>
 
-<h2>Contents</h2>
-<p>
-<ul>
- <li><a href="#introduction">Introduction</a>
-  <ul>
-   <li><a href="#aboutLogic">About classical logic</a>
-   <li><a href="#summary">Summary for the impatient</a>
-   <li><a href="#aboutPictures">About the pictures</a>
-  </ul>
- <li><a href="#functions">Functions and truth values</a>
- <li><a href="#negation">Not true: "not"</a>
- <li><a href="#disjunction">At least one true: "or" (<code>||</code>)</a>
- <li><a href="#conjunction">Both true: "and" (<code>&&</code>)</a>
- <li><a href="#equality">Equality: "="</a>
- <li><a href="#statements">Statements that are always true</a>
-  <ul>
-   <li><a href="#trueDisjunctions">Statements with "or" (<code>||</code>)</a>
-   <li><a href="#trueConjunctions">Statements with "and" (<code>&&</code>)</a>
-   <li><a href="#trueConditionals">Statements like "all A are B"</a>
-  </ul>
- <li><a href="#implication">Implication: "implies" (<code>--></code>)</a>
- <li><a href="#combinations">Combining logical functions</a>
- <li><a href="#tautologies">Tautologies</a>
- <li><a href="#substitution">Substitution</a>
-</ul>
+<h2 class=notoc>Contents</h2>
+<div id=TOC></div>
 
-<a name=introduction></a>
-<h2>Introduction</h2>
-
-<a name=aboutLogic></a>
-<h3>About classical logic</h3>
+<h2 id=introduction>Introduction</h2>
 <p>
 This page is about fundamental building blocks of
 <a href="http://en.wikipedia.org/wiki/Classical_logic" target=_blank>
@@ -108,16 +82,15 @@ Numbers can have properties such as being even, odd, positive, or
 prime.  In classical logic, a thing either has a particular property
 or it does not, and there is no middle ground.
 <p>
-Our logic expresses precisely concepts such as <i>not</i> having a
-property, having both of two properties, or having at least one of two
-properties.  It also lets us express statements that are true about
-everything in a mathematical world and even reason that if one
+Our logic expresses precisely concepts such as having at least one of
+two properties, having both of two properties, or <i>not</i> having a
+property at all.  It also lets us express statements that are true
+about everything in a mathematical world and to conclude that if one
 statement is true, some different statement must also be true.
 <p>
 The logic concepts described here are enough to make precise virtually
 all of the reasoning needed by students of high school algebra and
-trigonometry up to limits and calculus, which need statements of the
-form "for all x there exists a y such that ... ".  Adding suitable
+trigonometry (though calculus needs a bit more).  Adding suitable
 rules of inference and axioms for logic and numbers gives a precise
 system that can be used to solve a great many math problems at this
 level.
@@ -125,16 +98,13 @@ level.
 This is also the kind of logic used in the Prooftoys automated proof
 assistant, and the use of truth tables here is in the same spirit as
 the reasoning about boolean functions and tautologies in Prooftoys.
-In Prooftoys the logical function <code>and</code> has the name
-<code>&amp;&amp;</code>, and <code>or</code> has the name <code>||</code>.
 
-<a name=summary></a>
-<h3>Summary for the impatient</h3>
+<h3 id=summary>Summary for the impatient</h3>
 <p>
 The basic logical terms <code>and</code>, <code>or</code>,
-<code>not</code>, and <code>implies</code> (<code>--&gt;</code>) can
-all be defined as functions from boolean values to boolean values, and
-truth tables capture their essence as functions.
+<code>not</code>, and <code>implies</code> (<code>&rArr;</code>) can
+all be expressed as functions from boolean values to boolean values,
+and truth tables capture their essence as functions.
 <p>
 Implication in particular is more familiar in statements that also
 include predicates, such as "all multiples of 10 are multiples of 5",
@@ -144,20 +114,19 @@ demonstrate how all of this works.
 In classical mathematical logic, a statement is considered true if it
 is true in all possible cases.  Imagine assigning all possible
 combinations of values to the variables in the statement and checking
-the truth of the statement in each of those cases.  The whole
-statement is considered true if it is true in every case.
+the truth of the statement in each of these cases.  The statement is
+considered true if it is true in every case.
 <p>
 Tautologies are true statements involving only boolean values and
-boolean functions.  Substitution instances of tautologies are basic
-building blocks of mathematical reasoning, and substitution is a
-the fundamental idea in math.
+boolean functions.  Substitution is a fundamental idea in math, and
+substitution instances of tautologies are basic building blocks of
+mathematical reasoning.
 <p>
 If you are satisfied with this summary and don't like looking at
 pictures about abstract mathematics you might prefer to skip reading
 the rest of the page.
 
-<a name=aboutPictures></a>
-<h3>About the pictures</h3>
+<h3 id=aboutPictures>About the pictures</h3>
 <p>
 In the pictures a mathematical world is shown as a circle.  The world
 has various things in it, each of those things having a particular
@@ -192,8 +161,7 @@ screen will cause the relevant table entries to highlight themselves.
 <canvas id=canvasB width=210 height=210></canvas>
 <canvas id=canvasC width=210 height=210></canvas>
 
-<a name=functions></a>
-<h2>Functions and truth values</h2>
+<h2 id=functions>Functions and truth values</h2>
 
 <h4>Functions</h4>
 <p>
@@ -203,7 +171,7 @@ with a statement like this:
 <code>f(x) = x + 1</code>
 </blockquote>
 
-In our notation:
+In our notation we write:
 <blockquote>
 <code>(f x) = x + 1</code><br>
 </blockquote>
@@ -257,8 +225,7 @@ have truth values as their inputs and a truth value as their result.
 These can be referred to as <i>truth functions</i> or <i>logical
 functions</i>.
 
-<a name=negation></a>
-<h2>Not true: "not"</h2>
+<h2 id=negation>Not true - "not"</h2>
 <p>
 The simplest of these functions is called <code>not</code>, also known
 as negation.  Negation provides a way to talk about things that do not
@@ -319,15 +286,14 @@ negation of a statement <code>(A x)</code>.  The negated statement is
 true of all the things where the original statement <code>(A x)</code>
 is false.
 
-<a name=disjunction></a>
-<h2>At least one true: "or" (<code>||</code>)</h2>
+<h2 id=disjunction>At least one true - "or" (<code>||</code>)</h2>
 <p>
 As an example of our next function, suppose you are thinking what to
 have for lunch, and decide it must either be delicious or easy.  In
 the first picture let circle D represent things that are delicious and
 circle E represent things that are easy.  The combined area then
 represents things that are delicious or easy.  We can write that a
-thing x is "delicious or easy" as <code>((D x) or (E x))</code>.
+thing x is "delicious or easy" as <code>(D x) || (E x)</code>.
 Everything in the parts of the picture that are shaded have this
 property.
 <p>
@@ -340,11 +306,11 @@ instead of separate shadings for D and E.
 <p>
 All areas of the first picture that are shaded yellow or green are
 shaded blue in the second picture.  Once again we can use a function
-to model this relationship, and will call it <code>or</code>.  This
-function has two inputs.  Each input value is <i>boolean</i> (true or
-false) and so is the result.  Again, hover the mouse over either of
-the pictures to highlight the appropriate parts of the truth table
-for the function <code>or</code>.
+to model this relationship.  This function has two inputs.  Each input
+value is <i>boolean</i> (true or false) and so is the result.  Again,
+hover the mouse over either of the pictures to highlight the
+appropriate parts of the truth table for the function named
+<code>or</code> (<code>||</code>).
 <p>
 <table class=binaryTruthTable id=disjunctionTable>
  <tr>
@@ -367,23 +333,21 @@ This truth table is organized with a row for each value of the first
 input and a column for each value of the second input.  The value of
 the function is in the row for the value of the first input and the
 column for the value of the second input.  So for example <code>(false
-or true) = true</code>.
+|| true) = true</code>.
 
-<a name=conjunction></a>
-<h2>Both must be true: "and", (<code>&&</code>)"</h2>
+<h2 id=conjunction>Both true - "and", (<code>&&</code>)</h2>
 <p>
 Suppose you are feeling more picky about your lunch, and decide it
 must be both delicious and easy.  Only things in both of the circles
-fit this description -- the small shaded area in the next picture.  We
-can write this as <code>((D x) and (E x))</code>.  In Prooftoys we
-write <code>((D x) && (E x))</code>.
+fit this description -- the small shaded area in the next picture.  In
+Prooftoys we write <code>((D x) && (E x))</code>.
 <p>
 <canvas id=canvasAndDE width=210 height=210></canvas>
 <p>
 Once again, at each point "x" in the picture,
-<code>(D x) and (E x)</code> is true exactly when <code>(D x)</code>
-is true and <code>(E x)</code> is also true.  So we can define a
-function <code>and</code> with this truth table:
+<code>((D x) && (E x))</code> is true exactly when <code>(D x)</code>
+is true and <code>(E x)</code> is also true.  We can define a
+function with this truth table:
 <p>
 <table class=binaryTruthTable id=conjunctionTable>
  <tr>
@@ -412,8 +376,7 @@ overlap; there is no part of the picture where <code>(D x)</code> and
 <code>(E x)</code> are both true.  If that really is your
 requirement, in this scenario there is no possible lunch for you!
 
-<a name=equality></a>
-<h2>Equality: "="</h2>
+<h2 id=equality>Equality: "="</h2>
 <p>
 A simple yet important property of truth values is equality.  In this
 case we will give the truth table immediately:
@@ -437,12 +400,10 @@ case we will give the truth table immediately:
 <p>
 It shows that <code>true</code> is equal to <code>true</code>, false
 is equal to <code>false</code>, and neither one is equal to the other,
-all as you would expect.  For boolean values this is sometimes known
-as <i>equivalence</i>, and may be written as "<code>&equiv;</code>"
-rather than "<code>=</code>".
+all as you would expect.  For boolean values it is sometimes written
+as <code>&#x21d4;</code> or <code>&equiv;</code>.
 
-<a name=statements></a>
-<h2>Statements that are always true</h2>
+<h2 id=statements>Statements that are always true</h2>
 <p>
 We will return soon to describe one more function that takes truth
 values as inputs, but it may be easier to understand its importance
@@ -459,12 +420,11 @@ true for all possible values of the variables, these sorts of
 statements are sometimes described as <i>universally</i> true.  We
 will sometimes refer to them as "true everywhere".
 
-<a name=trueDisjunctions></a>
-<h3>Statements with "or"</h3>
+<h3 id=trueDisjunctions>Statements with "or"</h3>
 <p>
 As an example let's consider the statement that every number is either
 less than 100 or greater than 10.  We could state this as
-<code>x &lt; 100 or x &gt; 10</code>.  In the picture for this
+<code>x &lt; 100 || x &gt; 10</code>.  In the picture for this
 statement all shaded areas represent cases where the statement is
 true.
 <p>
@@ -478,29 +438,27 @@ line and the values having both of the properties, like this:
 <p>
 <canvas id=canvasArrow width=310 height=100>
 <p>
-The statement <code>x &lt; 100 or x &gt; 10</code> is true regardless
+The statement <code>x &lt; 100 || x &gt; 10</code> is true regardless
 of the value of <code>x</code>.  In mathematics, if the truth of a
 statement does not depend on the values of variables in it, it
 is considered simply a true or valid statement.
 
-<a name=trueConjunctions></a>
-<h3>Statements with "and"</h3>
+<h3 id=trueConjunctions>Statements with "and"</h3>
 <p>
 For a statement with "and" to be true, both of its parts must be true.
 In the statement's picture, both statements must be true at every spot
 in the picutre.  Here is a picture illustrating a statement <code>A
-and B</code> that is true, where A and B are both true statements.
+&& B</code> that is true, where A and B are both true statements.
 <p>
 <canvas id=canvasAnd width=210 height=210></canvas>
 
-<a name=trueConditionals></a>
-<h3>Statements like "all A are B"</h3>
+<h3 id=trueConditionals>Statements like "all A are B"</h3>
 <p>
 Let's look at another typical kind of statement that has a logical
 meaning, such as "all birds have wings".  We might also express
 this as "if x is a bird then x has wings".  In our notation we can
 write <code>(bird x) implies (wings x)</code> or alternatively
-<code>bird x --> wings x</code>.
+<code>bird x &rArr; wings x</code>.
 <p>
 The picture below illustrates a scenario where the statement is true.
 The area representing all things with wings contains the entire area
@@ -530,8 +488,7 @@ whether this statement about birds is true.  If every part of the
 picture is either in the "wings" circle or <b>not</b> in the "birds"
 circle, the statement is true.
 
-<a name=implication></a>
-<h2>Implication: "implies" (<code>--></code>)</h2>
+<h2 id=implication>Implication: "implies" (<code>&rArr;</code>)</h2>
 <p>
 Returning to functions with truth values as inputs and outputs, we
 can see how to define one more key function.  This function enables us
@@ -540,9 +497,9 @@ takes two truth values as inputs and produces true or false as its
 value.  The previous example and pictures above apply here once again.
 <p>
 We call the function <code>implies</code> (alternatively
-<code>--&gt;</code>), and it enables us to make statements that say
+<code>&rArr;</code>), and it enables us to make statements that say
 one thing implies another.  Here are two picture as before, but with
-shading to show the areas where the expression <code>(bird x) --&gt;
+shading to show the areas where the expression <code>(bird x) &rArr;
 (wings x)</code> has <code>true</code> as its value.  First one where
 it is true everywhere:
 <p>
@@ -605,12 +562,11 @@ larger than elephants are blue, and all birds larger than elephants
 are also green.  This is possible only because these statements are
 vacuous.
 
-<a name=combinations></a>
-<h2>Combining logical functions</h2>
+<h2 id=combinations>Combining logical functions</h2>
 <p>
 The logical functions can be combined into complex expressions.  In
 the lunch example, where D is an abbreviation for "delicious" and E is
-an abbreviation for "easy", the expression <code>(not ((D x) and (E
+an abbreviation for "easy", the expression <code>(not ((D x) && (E
 x)))</code> refers to things that are <i>not</i> easy and delicious.
 <p>
 <canvas id=DnandE width=210 height=210>
@@ -638,7 +594,7 @@ the table for <code>not</code>.
   <td x=true y=true class=falsy>
 </table>
 <p>
-The expression <code>(not (D x) and not (E x))</code> refers to things
+The expression <code>(not (D x) && not (E x))</code> refers to things
 that are neither delicious nor easy; unfortunate for the eater, but
 fortunate for things that do not wish to be eaten.
 <p>
@@ -669,11 +625,10 @@ results of each part in a table.
 </table>
 
 
-<a name=tautologies></a>
-<h2>Tautologies</h2>
+<h2 id=tautologies>Tautologies</h2>
 <p>
 Some statements are not just true everywhere, they are true everywhere
-in every possible picture.  Consider the statement <code>(blue x) or
+in every possible picture.  Consider the statement <code>(blue x) ||
 (not (blue x))</code>, "either x is blue or x is not blue".  It does
 not matter how many things are blue, or which things are blue.  It
 doesn't even matter if any things at all are blue.  If we make a
@@ -688,7 +643,7 @@ even more often implicitly behind the scenes.
 <p>
 If a statement is a tautology, this can be verified just by building
 its truth table.  If all of the entries are <code>true</code>, it is a
-tautology.  The statement <code>(blue x) or (not (blue x))</code> is
+tautology.  The statement <code>(blue x) || (not (blue x))</code> is
 indeed a tautology, and its truth table has the value
 <code>true</code> in all its entries:
 <p>
@@ -696,7 +651,7 @@ indeed a tautology, and its truth table has the value
  <tr>
   <th>
    <th>
-   <th>(blue x) or (not (blue x))
+   <th>(blue x) || (not (blue x))
  <tr>
   <th rowspan=2><b>(blue x)</b>
   <th x=false>false
@@ -712,7 +667,7 @@ x)</code>.  It doesn't matter whether an input is given by a variable
 or some expression.  All that matters is that different expressions
 are handled as different inputs.  If an expression (such as <code>(blue
 x)</code>) appears more than once in the full expression (such as
-<code>(blue x) or (not (blue x))</code>, all of its occurrences will
+<code>(blue x) || (not (blue x))</code>, all of its occurrences will
 have the same value when given the same value for <code>x</code>.  It
 is not possible for one occurrence to have the value <code>true</code>
 and another one the value <code>false</code>.  They count as one
@@ -725,10 +680,10 @@ tautologies can be built from them by substitution.
 <p>
 Just a few examples of commonly-encountered tautologies are:
 <ul>
- <li><code>a --&gt; a</code>
- <li><code>(a and a) = a</code>
- <li><code>(a --&gt; b) = ((not b) --&gt; (not a))</code>
- <li><code>(not (a or b)) = ((not a) and (not b))</code>
+ <li><code>a &rArr; a</code>
+ <li><code>(a && a) = a</code>
+ <li><code>(a &rArr; b) &#x21d4; ((not b) &rArr; (not a))</code>
+ <li><code>(not (a || b)) = ((not a) && (not b))</code>
 </ul>
 <p>
 Assigning all combinations of <code>true</code> and <code>false</code>
@@ -736,8 +691,7 @@ to the variables in these expressions and checking that the value of
 the expression is true will verify that these all really are
 tautologies.
 
-<a name=substitution></a>
-<h2>Substitution</h2>
+<h2 id=substitution>Substitution</h2>
 <p>
 A true statement containing a boolean variable is true if the
 variable's value is true and also if the variable's value is false If
@@ -752,12 +706,12 @@ times means, "any value is fine as long as it is the same in each
 place".  An expression in place of the variable satisfies that
 requirement, so a substitution also results in a true statement.
 <p>
-The simple tautology <code>a --&gt; a</code> is a true statement,
-since <code>true --&gt; true</code> and <code>false --&gt;
-false</code>.  A statement like <code>(shining sun) --&gt;
+The simple tautology <code>a &rArr; a</code> is a true statement,
+since <code>true &rArr; true</code> and <code>false &rArr;
+false</code>.  A statement like <code>(shining sun) &rArr;
 (shining sun)</code> is also true whether the sun is actually shining
 or not.  The substituted expression itself can have variables, as in
-<code>x &lt; y --> x &lt; y</code>.  No matter what values
+<code>x &lt; y &rArr; x &lt; y</code>.  No matter what values
 <code>x</code> and <code>y</code> have, the value of <code>x &lt;
 y</code> is going to be the same in both spots, so the whole statement
 is still true.
@@ -782,6 +736,7 @@ Toy.insertNav();
 Toy.insertSlogans();
 
 window.onload = function() {
+  $('#TOC').tableofcontents({exclude: $('.notoc')});
   drawBooleans();
   drawStatements();
   drawCombinations();
