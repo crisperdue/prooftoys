@@ -101,8 +101,8 @@ the reasoning about boolean functions and tautologies in Prooftoys.
 
 <h3 id=summary>Summary for the impatient</h3>
 <p>
-The basic logical terms <code>and</code>, <code>or</code>,
-<code>not</code>, and <code>implies</code> (<code>&rArr;</code>) can
+The basic logical concepts of <code>and</code>, <code>or</code>,
+<code>not</code>, and <code>implies</code> can
 all be expressed as functions from boolean values to boolean values,
 and truth tables capture their essence as functions.
 <p>
@@ -225,7 +225,7 @@ have truth values as their inputs and a truth value as their result.
 These can be referred to as <i>truth functions</i> or <i>logical
 functions</i>.
 
-<h2 id=negation>Not true - "not"</h2>
+<h2 id=negation>Untrue: "not"</h2>
 <p>
 The simplest of these functions is called <code>not</code>, also known
 as negation.  Negation provides a way to talk about things that do not
@@ -249,15 +249,13 @@ white (false) here and each point that was white (false) in the first
 set is shaded (true) here.  we can treat <code>not</code> as a
 function that takes <code>true</code> or <code>false</code> as its
 input and produces a value of <code>true</code> or <code>false</code>.
-This behavior can be defined with a table, like this:
+This behavior can be defined with a table.  You can look up the value
+of <code>not x</code> by going to the row labeled with the value of
+<code>x</code>, either <code>true</code> or <code>false</code>.
 <p>
 <table class=binaryTruthTable id=negationTable>
  <tr>
-  <th>
-   <th>
-   <th><b>not X</b>
- <tr>
-  <th rowspan=2><b>X</b>
+  <th rowspan=2><code>x</code>
   <th x=false>false
   <td x=false class=truthy>
  <tr>
@@ -286,14 +284,14 @@ negation of a statement <code>(A x)</code>.  The negated statement is
 true of all the things where the original statement <code>(A x)</code>
 is false.
 
-<h2 id=disjunction>At least one true - "or" (<code>||</code>)</h2>
+<h2 id=disjunction>At least one true: "or" (<code>|</code>)</h2>
 <p>
 As an example of our next function, suppose you are thinking what to
 have for lunch, and decide it must either be delicious or easy.  In
 the first picture let circle D represent things that are delicious and
 circle E represent things that are easy.  The combined area then
 represents things that are delicious or easy.  We can write that a
-thing x is "delicious or easy" as <code>(D x) || (E x)</code>.
+thing x is "delicious or easy" as <code>(D x) | (E x)</code>.
 Everything in the parts of the picture that are shaded have this
 property.
 <p>
@@ -310,16 +308,16 @@ to model this relationship.  This function has two inputs.  Each input
 value is <i>boolean</i> (true or false) and so is the result.  Again,
 hover the mouse over either of the pictures to highlight the
 appropriate parts of the truth table for the function named
-<code>or</code> (<code>||</code>).
+<code>or</code> (<code>|</code>).
 <p>
 <table class=binaryTruthTable id=disjunctionTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><b>(E x)</b>
+  <th colspan=2 style="text-align: center"><code>(E x)</code>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><b>(D x)</b>
+  <th rowspan=2><code>(D x)</code>
   <th x=false>false
   <td x=false y=false class=falsy>
   <td x=false y=true class=truthy>
@@ -333,30 +331,30 @@ This truth table is organized with a row for each value of the first
 input and a column for each value of the second input.  The value of
 the function is in the row for the value of the first input and the
 column for the value of the second input.  So for example <code>(false
-|| true) = true</code>.
+| true) = true</code>.
 
-<h2 id=conjunction>Both true - "and", (<code>&&</code>)</h2>
+<h2 id=conjunction>Both true: "and" (<code>&</code>)</h2>
 <p>
 Suppose you are feeling more picky about your lunch, and decide it
 must be both delicious and easy.  Only things in both of the circles
 fit this description -- the small shaded area in the next picture.  In
-Prooftoys we write <code>((D x) && (E x))</code>.
+Prooftoys we write <code>((D x) & (E x))</code>.
 <p>
 <canvas id=canvasAndDE width=210 height=210></canvas>
 <p>
 Once again, at each point "x" in the picture,
-<code>((D x) && (E x))</code> is true exactly when <code>(D x)</code>
+<code>((D x) & (E x))</code> is true exactly when <code>(D x)</code>
 is true and <code>(E x)</code> is also true.  We can define a
 function with this truth table:
 <p>
 <table class=binaryTruthTable id=conjunctionTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><b>(E x)</b>
+  <th colspan=2 style="text-align: center"><code>(E x)</code>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><b>(D x)</b>
+  <th rowspan=2><code>(D x)</code>
   <th x=false>false
   <td x=false y=false class=falsy>
   <td x=false y=true class=falsy>
@@ -376,7 +374,7 @@ overlap; there is no part of the picture where <code>(D x)</code> and
 <code>(E x)</code> are both true.  If that really is your
 requirement, in this scenario there is no possible lunch for you!
 
-<h2 id=equality>Equality: "="</h2>
+<h2 id=equality>Equality (=, &equiv;, &#x21d4;)</h2>
 <p>
 A simple yet important property of truth values is equality.  In this
 case we will give the truth table immediately:
@@ -424,7 +422,7 @@ will sometimes refer to them as "true everywhere".
 <p>
 As an example let's consider the statement that every number is either
 less than 100 or greater than 10.  We could state this as
-<code>x &lt; 100 || x &gt; 10</code>.  In the picture for this
+<code>x &lt; 100 | x &gt; 10</code>.  In the picture for this
 statement all shaded areas represent cases where the statement is
 true.
 <p>
@@ -438,7 +436,7 @@ line and the values having both of the properties, like this:
 <p>
 <canvas id=canvasArrow width=310 height=100>
 <p>
-The statement <code>x &lt; 100 || x &gt; 10</code> is true regardless
+The statement <code>x &lt; 100 | x &gt; 10</code> is true regardless
 of the value of <code>x</code>.  In mathematics, if the truth of a
 statement does not depend on the values of variables in it, it
 is considered simply a true or valid statement.
@@ -448,7 +446,7 @@ is considered simply a true or valid statement.
 For a statement with "and" to be true, both of its parts must be true.
 In the statement's picture, both statements must be true at every spot
 in the picutre.  Here is a picture illustrating a statement <code>A
-&& B</code> that is true, where A and B are both true statements.
+& B</code> that is true, where A and B are both true statements.
 <p>
 <canvas id=canvasAnd width=210 height=210></canvas>
 
@@ -566,7 +564,7 @@ vacuous.
 <p>
 The logical functions can be combined into complex expressions.  In
 the lunch example, where D is an abbreviation for "delicious" and E is
-an abbreviation for "easy", the expression <code>(not ((D x) && (E
+an abbreviation for "easy", the expression <code>(not ((D x) & (E
 x)))</code> refers to things that are <i>not</i> easy and delicious.
 <p>
 <canvas id=DnandE width=210 height=210>
@@ -580,11 +578,11 @@ the table for <code>not</code>.
 <table class=binaryTruthTable id=nandTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><b>(E x)</b>
+  <th colspan=2 style="text-align: center"><code>(E x)</code>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><b>(D x)</b>
+  <th rowspan=2><code>(D x)</code>
   <th x=false>false
   <td x=false y=false class=truthy>
   <td x=false y=true class=truthy>
@@ -594,7 +592,7 @@ the table for <code>not</code>.
   <td x=true y=true class=falsy>
 </table>
 <p>
-The expression <code>(not (D x) && not (E x))</code> refers to things
+The expression <code>(not (D x) & not (E x))</code> refers to things
 that are neither delicious nor easy; unfortunate for the eater, but
 fortunate for things that do not wish to be eaten.
 <p>
@@ -610,11 +608,11 @@ results of each part in a table.
 <table class=binaryTruthTable id=norTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><b>(E x)</b>
+  <th colspan=2 style="text-align: center"><code>(E x)</code>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><b>(D x)</b>
+  <th rowspan=2><code>(D x)</code>
   <th x=false>false
   <td x=false y=false class=truthy>
   <td x=false y=true class=falsy>
@@ -628,7 +626,7 @@ results of each part in a table.
 <h2 id=tautologies>Tautologies</h2>
 <p>
 Some statements are not just true everywhere, they are true everywhere
-in every possible picture.  Consider the statement <code>(blue x) ||
+in every possible picture.  Consider the statement <code>(blue x) |
 (not (blue x))</code>, "either x is blue or x is not blue".  It does
 not matter how many things are blue, or which things are blue.  It
 doesn't even matter if any things at all are blue.  If we make a
@@ -643,17 +641,15 @@ even more often implicitly behind the scenes.
 <p>
 If a statement is a tautology, this can be verified just by building
 its truth table.  If all of the entries are <code>true</code>, it is a
-tautology.  The statement <code>(blue x) || (not (blue x))</code> is
+tautology.  The statement <code>(blue x) | (not (blue x))</code> is
 indeed a tautology, and its truth table has the value
-<code>true</code> in all its entries:
+<code>true</code> everywhere.  Although the expression is complex
+this table has only two entries because it has only one variable,
+which is either <code>true</code> or <code>false</code>.
 <p>
 <table class=binaryTruthTable id=tautology1>
  <tr>
-  <th>
-   <th>
-   <th>(blue x) || (not (blue x))
- <tr>
-  <th rowspan=2><b>(blue x)</b>
+  <th rowspan=2><code>(blue x)</code>
   <th x=false>false
   <td x=false class=truthy>
  <tr>
@@ -667,7 +663,7 @@ x)</code>.  It doesn't matter whether an input is given by a variable
 or some expression.  All that matters is that different expressions
 are handled as different inputs.  If an expression (such as <code>(blue
 x)</code>) appears more than once in the full expression (such as
-<code>(blue x) || (not (blue x))</code>, all of its occurrences will
+<code>(blue x) | (not (blue x))</code>, all of its occurrences will
 have the same value when given the same value for <code>x</code>.  It
 is not possible for one occurrence to have the value <code>true</code>
 and another one the value <code>false</code>.  They count as one
@@ -681,9 +677,9 @@ tautologies can be built from them by substitution.
 Just a few examples of commonly-encountered tautologies are:
 <ul>
  <li><code>a &rArr; a</code>
- <li><code>(a && a) = a</code>
+ <li><code>(a & a) = a</code>
  <li><code>(a &rArr; b) &#x21d4; ((not b) &rArr; (not a))</code>
- <li><code>(not (a || b)) = ((not a) && (not b))</code>
+ <li><code>(not (a | b)) = ((not a) & (not b))</code>
 </ul>
 <p>
 Assigning all combinations of <code>true</code> and <code>false</code>
