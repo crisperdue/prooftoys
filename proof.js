@@ -890,11 +890,11 @@ function exprNode() {
 var entities = {
   // Do not use nonbreaking hyphens in case the end user wants to copy and
   // paste displayed text.  Instead consider CSS hyphenation options.
-  // '-->': '&#8209;&#8209&gt;',   // &rArr; looks lousy in fixed-width font.
   '>=': '&ge;',
   '<=': '&le;',
   '!=': '&ne;',
-  '==': '&equiv;'
+  '==': '&#x21d4;',  // Bidirectional double arrow
+  '-->': '&rArr;'   // Rightward double arrow
 };
 
 /**
