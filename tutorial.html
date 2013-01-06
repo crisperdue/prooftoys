@@ -53,7 +53,7 @@ in the internal representation into functions of a single argument.
 Infix operators available in order of increasing precedence are:
 <ul>
 <li><code>==</code> (equality, displays as "<code>&#x21d4;</code>")
-<li><code>--></code> (implication, displays as "<code>&rArr;</code>")
+<li><code>==></code> (implication, displays as "<code>&rArr;</code>")
 <li><code>||</code> (or)
 <li><code>&&</code> (and)
 <li><code>= != &lt; &lt;= &gt; &gt;=</code> (relational operators
@@ -67,7 +67,7 @@ The turnstile symbol <code>&#x22A2;</code>
 means that the items to its left are hypotheses and the expression on
 the right is proved with the hypotheses assumed.  In the Prooftoys
 logic, the turnstile has exactly the same meaning as the implication
-symbol <code>--></code>, though some rules of inference operate
+symbol <code>==></code>, though some rules of inference operate
 somewhat differently when there are hypotheses, focusing on the part
 of the formula after the turnstile symbol.
 <p>
@@ -109,8 +109,8 @@ allows replacement of any occurrence of a term by a term that is equal
 to it.  The Prooftoys "replace" rule is the same as the Q<sub>0</sub>
 derived Rule R', which does the same sort of replacement when the
 equation is conditional.  In other words it allows <code>C</code> to
-be replaced by <code>D</code> if <code>H --> C = D</code> or in the
-notation for hypotheses, <code>H1, H2, ..., Hn --> C = D</code>.  This
+be replaced by <code>D</code> if <code>H ==> C = D</code> or in the
+notation for hypotheses, <code>H1, H2, ..., Hn ==> C = D</code>.  This
 rule is immediately useful for example in solving high school-level
 algebra problems.
 
@@ -202,7 +202,7 @@ To enter an assumption click in the text entry field and
 select the "assume" rule.  Type in "p", and press &lt;Enter&gt;.  You
 will see the first line of your proof.
 <p>
-Next use the "assume" rule again, typing in "p --> q" as your second
+Next use the "assume" rule again, typing in "p ==> q" as your second
 assumption.
 <p>
 For the inference step, click on the first line of the proof display
@@ -288,7 +288,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
   // Modus ponens
   var mp1 = rules.assume('p');
-  var mp2 = rules.assume('p --> q');
+  var mp2 = rules.assume('p ==> q');
   var mp3 = rules.modusPonens(mp1, mp2);
   var mp4 = rules.asImplication(mp3);
   Y.renderProof(mp4, Y.one('#modusPonens'));

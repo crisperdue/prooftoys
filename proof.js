@@ -894,7 +894,7 @@ var entities = {
   '<=': '&le;',
   '!=': '&ne;',
   '==': '&#x21d4;',  // Bidirectional double arrow
-  '-->': '&rArr;'   // Rightward double arrow
+  '==>': '&rArr;'   // Rightward double arrow
 };
 
 /**

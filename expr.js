@@ -416,7 +416,7 @@ Expr.prototype.toString = function() {
   }
   if (Y.trackSourceSteps
       && this.hasHyps
-      && this.isCall2('-->')
+      && this.isCall2('==>')
       && isInfixDesired(this.fn.fn)) {
     var imply = new Var('|-');
     return (prefix + '(' + this.fn.arg._toString() + ' ' + imply + ' '
@@ -467,7 +467,7 @@ Expr.prototype.isBoolConst = function() {
  * having hypotheses.  Useful in tests, perhaps other contexts also.
  */
 Expr.prototype.asHyps = function() {
-  this.assertCall2('-->');
+  this.assertCall2('==>');
   var result = this.dup();
   result.hasHyps = true;
   return result;
@@ -788,7 +788,7 @@ Expr.prototype.assertCall2 = function(name) {
     return;
   }
   var map = {
-    '-->': 'an implication',
+    '==>': 'an implication',
     '=': 'an equation',
     '&&': 'a conjunction',
     '||': 'a disjunction'
@@ -2209,7 +2209,7 @@ function path(arg, opt_expr) {
   if (segments[0] == '') {
     segments.splice(0, 1);
   }
-  // Handle the result of splitting '/' --> ['', '']:
+  // Handle the result of splitting '/' ==> ['', '']:
   if (segments.length == 1 && segments[0] == '') {
     segments = [];
   }
@@ -2492,7 +2492,7 @@ var constantTypes = {
 var definedTypes = {
   '&&': booleanBinOpType(),
   '||': booleanBinOpType(),
-  '-->': booleanBinOpType()
+  '==>': booleanBinOpType()
 };
 
 // Indexed by the name defined.  Value is an expression if
@@ -3094,7 +3094,7 @@ var precedence = {
   // Alias for '=', with lower precedence.
   '==': 2,
   // Default precedence for non-identifiers is 5.
-  '-->': 11,
+  '==>': 11,
   '||': 13,
   '&&': 14,
   // Unlike the book, equality binds tighter than implication.  This
@@ -3577,10 +3577,10 @@ var utils = {
   },
 
   /**
-   * Builds an expression [lhs --> rhs].
+   * Builds an expression [lhs ==> rhs].
    */
   implies: function(lhs, rhs) {
-    return call('-->', lhs, rhs);
+    return call('==>', lhs, rhs);
   },
 
   lambda: function(bound, body) {

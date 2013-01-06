@@ -292,7 +292,7 @@ YUI.add('sample-proofs', function(Y) {
     modusPonens: {
       args: function() {
         var step1 = Y.rules.assume('p');
-        var step2 = Y.rules.assume('p --> q');
+        var step2 = Y.rules.assume('p ==> q');
         return [step1, step2];
       },
       level: 1
@@ -319,22 +319,22 @@ YUI.add('sample-proofs', function(Y) {
     trueEquals: {},
     
     evalBool: {
-      args: [call('-->',
-                  call('-->', F, call('not', F)),
+      args: [call('==>',
+                  call('==>', F, call('not', F)),
                   call('not', F))]
     },
     
     tautology: {
       /* This tautology is already an equation, let's test one that is not.
-      args: [equal(call('-->', call('&&', p, q), r),
-                   call('-->', p, call('-->', q, r)))],
+      args: [equal(call('==>', call('&&', p, q), r),
+                   call('==>', p, call('==>', q, r)))],
       */
-      args: [Y.parse('(p --> q) && (not p --> q) --> q')],
+      args: [Y.parse('(p ==> q) && (not p ==> q) ==> q')],
       level: 1
     },
     
     tautInst: {
-      args: [Y.parse('p --> T || q'), ({
+      args: [Y.parse('p ==> T || q'), ({
         p: Y.parse('forall {x. T || p x}'),
         q: Y.parse('forall {x. p x}')
       })],
@@ -352,13 +352,13 @@ YUI.add('sample-proofs', function(Y) {
 
     implyForallNoHyps: {
       ruleName: 'implyForall',
-      args: [x, rules.assert(Y.parse('p --> q x'))],
+      args: [x, rules.assert(Y.parse('p ==> q x'))],
     },
 
     implyForall: {
       args: function() {
         var step1 = Y.rules.assume('y > 0');
-        var step2 = Y.rules.assert('y > 0 --> (p --> q x)');
+        var step2 = Y.rules.assert('y > 0 ==> (p ==> q x)');
         var step3 = Y.rules.modusPonens(step1, step2);
 	return [x, step3];
       },
@@ -368,7 +368,7 @@ YUI.add('sample-proofs', function(Y) {
     implyForallBookHyps: {
       ruleName: 'implyForallBook',
       args: function() {
-	var wff = Y.parse('y > 0 --> (p --> q x)');
+	var wff = Y.parse('y > 0 ==> (p ==> q x)');
         wff.hasHyps = true;
 	return [x, wff];
       },
@@ -376,8 +376,8 @@ YUI.add('sample-proofs', function(Y) {
 
     'Rule P': {
       ruleName: p,
-      args: [Y.rules.assume('p x && (p x --> q x)'),
-             Y.parse('a && (a --> b) --> b')],
+      args: [Y.rules.assume('p x && (p x ==> q x)'),
+             Y.parse('a && (a ==> b) ==> b')],
       level: 1
     },
 
@@ -396,9 +396,9 @@ YUI.add('sample-proofs', function(Y) {
     replace: {
       args: function() {
         var step1 = Y.rules.assume('x > 0');
-        var step2 = Y.rules.assert('x > 0 --> (x = (abs x))');
+        var step2 = Y.rules.assert('x > 0 ==> (x = (abs x))');
         var step3 = Y.rules.modusPonens(step1, step2);
-        var step4 = Y.rules.assert('x > 0 --> (x + x) > x');
+        var step4 = Y.rules.assert('x > 0 ==> (x + x) > x');
         var step5 = Y.rules.modusPonens(step1, step4);
         return [step3, step5, '/main/right'];
       },

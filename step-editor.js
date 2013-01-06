@@ -230,7 +230,7 @@ function usesSite(rule) {
 /**
  * Adds class=step, class=term, etc. to each form element according
  * to its name -- same as the name, but stripping off any numeric suffix,
- * e.g. step2 --> step.
+ * e.g. step2 ==> step.
  */
 function addClassInfo(form) {
   form.all('input').each(function(node) {
@@ -273,7 +273,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
       } else {
 	if (fieldType == 'step'
 	    || (fieldType == 'equation' && step.unHyp().isCall2('='))
-	    || (fieldType == 'implication' && step.unHyp().isCall2('-->'))) {
+	    || (fieldType == 'implication' && step.unHyp().isCall2('==>'))) {
 	  field.set('value', n);
 	  return true;
 	} else {
@@ -529,7 +529,7 @@ function acceptsSelection(step, ruleName, acceptTerm) {
   } else {
     return (accept.step
 	    || (accept.equation && step.unHyp().isCall2('='))
-	    || (accept.implication && step.unHyp().isCall2('-->')));
+	    || (accept.implication && step.unHyp().isCall2('==>')));
   }
 }
 

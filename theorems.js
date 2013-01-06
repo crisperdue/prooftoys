@@ -85,13 +85,13 @@ var ruleInfo = {
       var types = assumption.mathVarConditions();
       // TODO: Fix tautInst to not copy.
       if (types) {
-        var step1 = rules.tautInst('h && a --> a', {
+        var step1 = rules.tautInst('h && a ==> a', {
             a: assumption,
             h: types
           });
         var step = rules.dedupeHyps(step1);
       } else {
-        var step = rules.tautInst('a --> a', {a: assumption});
+        var step = rules.tautInst('a ==> a', {a: assumption});
       }
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
@@ -142,7 +142,7 @@ var ruleInfo = {
    */
   asHypotheses: {
     action: function(step) {
-      step.assertCall2('-->');
+      step.assertCall2('==>');
       var result = step.justify('asHypotheses', arguments, [step]);
       result.hasHyps = true;
       return result;
@@ -285,7 +285,7 @@ var ruleInfo = {
 
   axiom2: {
     action: function() {
-      var result = rules.assert('x = y --> h x = h y');
+      var result = rules.assert('x = y ==> h x = h y');
       return result.justify('axiom2');
     },
     inputs: {},
@@ -370,7 +370,7 @@ var ruleInfo = {
 
   // Book only.
   defImplies: function() {
-    return equal('-->', Y.parse('{x. {y. x == x && y}}')).justify('defImplies');
+    return equal('==>', Y.parse('{x. {y. x == x && y}}')).justify('defImplies');
   },
 
   //
@@ -843,16 +843,16 @@ var ruleInfo = {
       var step3b = rules.r(step3bb, step3a, '/right/right');
       var step3c = rules.r(step3bb, step3b, '/right');
       // From this point most of the work is basically a proof
-      // that [A --> F] --> not A, a tautology.
+      // that [A ==> F] ==> not A, a tautology.
       var step4 = rules.toTIsA(step3c);
-      // We are going to prove the cases of: (x --> F) = (x = F)
+      // We are going to prove the cases of: (x ==> F) = (x = F)
       // First with x = F.
-      var step11 = rules.definition('-->', F);
+      var step11 = rules.definition('==>', F);
       var step12 = rules.applyBoth(step11, F);
       var step13 = rules.apply(step12, '/right');
       var step14 = rules.r(step3aa, step13, '/right');
       // Then with x = T.
-      var step21 = rules.definition('-->', T);
+      var step21 = rules.definition('==>', T);
       var step22 = rules.applyBoth(step21, F);
       var step23 = rules.apply(step22, '/right');
       var step24 = rules.r5230TF();
@@ -861,7 +861,7 @@ var ruleInfo = {
       var step5 = rules.equationCases(step25, step14, x);
       // Then instantiate [F = T] for x.
       var step6 = rules.instVar(step5, equal(F, T), x);
-      // And use the fact that [F = T] --> F
+      // And use the fact that [F = T] ==> F
       var step7 = rules.rRight(step4, step6, '/left');
       var step8 = rules.fromTIsA(step7);
       return step8.justify('r5230FT_alternate');
@@ -1260,16 +1260,16 @@ var ruleInfo = {
               + ' show it with T and F.')
   },
 
-  // Given P and P --> Q, derive Q. (5224)
+  // Given P and P ==> Q, derive Q. (5224)
   // Handles hypotheses.
   modusPonens: {
     action: function(a, b) {
       var step1 = rules.toTIsA(a);
       // Replace the "a" in "b" with T.
       var step2 = rules.rRight(step1, b, '/main/left');
-      // Use the definition of -->.
+      // Use the definition of ==>.
       var step3 = rules.useDefinition(step2, '/main/fn');
-      // From T --> x derive x.
+      // From T ==> x derive x.
       var step4 = rules.apply(step3, '/main');
       return step4.justify('modusPonens', arguments, arguments);
     },
@@ -1277,10 +1277,10 @@ var ruleInfo = {
     form: ('Modus ponens: hypothesis step <input name=step>,'
 	   + ' implication in step <input name=implication>'),
     hint: 'modus ponens',
-    comment: ('Modus Ponens.  Given A and A --> B derives B.')
+    comment: ('Modus Ponens.  Given A and A ==> B derives B.')
   },
 
-  // (forall f) --> f x
+  // (forall f) ==> f x
   r5225: {
     action: function() {
       var step1 = rules.axiom('axiom2');
@@ -1297,7 +1297,7 @@ var ruleInfo = {
     }
   },
 
-  // F --> x; bookish
+  // F ==> x; bookish
   r5227: {
     action: function() {
       var step1 = rules.theorem('r5225');
@@ -1359,14 +1359,14 @@ var ruleInfo = {
   },
 
   // Equates the given expression to a similar one where boolean terms
-  // are reduced.  (These are calls to =, &&, ||, -->, or "not", and
+  // are reduced.  (These are calls to =, &&, ||, ==>, or "not", and
   // lambda expressions, with an argument of T or F.)  Reduces
   // repeatedly until no subexpression can be reduced.
   // TODO: Prove all the truth table facts and use them directly
   // here.  Can we have unnamed theorems?
   evalBool: {
     action: function(expr) {
-      var boolOps = {'&&': true, '||': true, '-->': true, '=': true, not: true};
+      var boolOps = {'&&': true, '||': true, '==>': true, '=': true, not: true};
       function isReducible(expr) {
         return (expr instanceof Y.Call
                 && ((expr.fn instanceof Y.Var
@@ -1534,13 +1534,13 @@ var ruleInfo = {
             T: 'F || T == T',
             F: 'F || F == F'
           },
-        '-->': {
-            T: 'T --> T == T',
-            F: 'T --> F == F'
+        '==>': {
+            T: 'T ==> T == T',
+            F: 'T ==> F == F'
           },
           F: {
-            T: 'F --> T == T',
-            F: 'F --> F == T'
+            T: 'F ==> T == T',
+            F: 'F ==> F == T'
           },
         '=': {
             T: 'T = T == T',
@@ -1551,7 +1551,7 @@ var ruleInfo = {
             F: 'F = F == T'
           }
       };
-      var boolOps = {'=': true, '&&': true, '||': true, '-->': true};
+      var boolOps = {'=': true, '&&': true, '||': true, '==>': true};
       var op = term.getBinOp().name;
       if (term.isInfixCall() && boolOps.hasOwnProperty(op)) {
         var left = term.getLeft();
@@ -1577,18 +1577,18 @@ var ruleInfo = {
         },
         theorem);
       var step1 = rules.toTIsA(theorem);
-      var step2 = rules.tautInst(Y.parse('p --> T'), {p: any});
+      var step2 = rules.tautInst(Y.parse('p ==> T'), {p: any});
       var step3 = rules.r(step1, step2, '/right');
       return step3.justify('anyImpliesTheorem', arguments, [theorem]);
     },
     inputs: {term: 1, step: 2},
     form: ('Derive that <input name=term> implies theorem <input name=step>'),
-    hint: 'From theorem B deduce A --> B',
+    hint: 'From theorem B deduce A ==> B',
     comment: ('Given a theorem, derive that something implies it.')
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
-  // ((forall {v. A || B}) --> A || (forall {v. B})).  Could run even if
+  // ((forall {v. A || B}) ==> A || (forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
   // This is Axiom Schema 5 of Andrews' first-order logic F.
   r5235: {
@@ -1624,8 +1624,8 @@ var ruleInfo = {
               + 'in the left argument of the "or".')
   },
 
-  // Given a proof step H |- A --> B and a variable v, derives
-  // H |- (A --> forall {v. B}) provided that v is not free in A or H.
+  // Given a proof step H |- A ==> B and a variable v, derives
+  // H |- (A ==> forall {v. B}) provided that v is not free in A or H.
   // (5237)  This version implemented via 5235, so much less efficient.
   //
   // Handles hypotheses.
@@ -1633,7 +1633,7 @@ var ruleInfo = {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
       v = Y.varify(v);
-      assert(a_b.isCall2('-->'), 'Must be an implication: ' + a_b, h_a_b);
+      assert(a_b.isCall2('==>'), 'Must be an implication: ' + a_b, h_a_b);
       var a = a_b.getLeft();
       var b = a_b.getRight();
       // Restriction to ensure the desired result.
@@ -1645,13 +1645,13 @@ var ruleInfo = {
 	       h_a_b);
       }
       var map1 = {a: a, b: b};
-      var step1 = rules.tautInst(Y.parse('(a --> b) --> not a || b'), map1);
+      var step1 = rules.tautInst(Y.parse('(a ==> b) ==> not a || b'), map1);
       var step2 = rules.modusPonens(h_a_b, step1);
       var step3 = rules.addForall(step2, v);
       var step4 = rules.r5235(v, call('not', a), b);
       var step5 = rules.modusPonens(step3, step4);
       var map6 = {a: a, b: step5.locate('/main/right')};
-      var step6 = rules.tautInst(Y.parse('not a || b --> (a --> b)'), map6);
+      var step6 = rules.tautInst(Y.parse('not a || b ==> (a ==> b)'), map6);
       var step7 = rules.modusPonens(step5, step6);
       return step7.justify('implyForallBook', arguments, [h_a_b]);
     },
@@ -1664,7 +1664,7 @@ var ruleInfo = {
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
-  // ((forall {v. A --> B}) --> (A --> forall {v. B})).  Could run even if
+  // ((forall {v. A ==> B}) ==> (A ==> forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
   implyForallThm: {
     action: function(v, a, b) {
@@ -1673,13 +1673,13 @@ var ruleInfo = {
       assert(!aFree.hasOwnProperty(v.name),
 	     'r5235: variable ' + v + 'cannot occur free in ' + a);
       var map1 = {
-        p: call('forall', lambda(v, Y.infixCall(F, '-->', b))),
+        p: call('forall', lambda(v, Y.infixCall(F, '==>', b))),
         q: call('forall', lambda(v, b))
       };
-      var step1 = rules.tautInst(implies(p, Y.infixCall(F, '-->', q)), map1);
-      var step2 = rules.tautInst(implies(p, Y.infixCall(T, '-->', p)),
+      var step1 = rules.tautInst(implies(p, Y.infixCall(F, '==>', q)), map1);
+      var step2 = rules.tautInst(implies(p, Y.infixCall(T, '==>', p)),
                                  ({p: call('forall', lambda(v, b))}));
-      var step3 = rules.tautInst(equal(p, Y.infixCall(T, '-->', p)),
+      var step3 = rules.tautInst(equal(p, Y.infixCall(T, '==>', p)),
                                  ({p: b}));
       var step4 = rules.r(step3, step2, '/left/arg/body');
 
@@ -1695,13 +1695,13 @@ var ruleInfo = {
     form: ('Variable: <input name=varName> '
 	   + 'wff without it free: <input name=term1> '
 	   + 'other wff: <input name=term2>'),
-    hint: 'forall {v. A --> B} --> (A --> forall {v. B}',
+    hint: 'forall {v. A ==> B} ==> (A ==> forall {v. B}',
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".')
   },
 
-  // Given a proof step H |- A --> B and a variable v, derives
-  // H |- (A --> forall {v. B}) provided that v is not free in A or H.
+  // Given a proof step H |- A ==> B and a variable v, derives
+  // H |- (A ==> forall {v. B}) provided that v is not free in A or H.
   // (5237)  Implemented via implyForallThm.
   //
   // Handles hypotheses.
@@ -1724,7 +1724,7 @@ var ruleInfo = {
   },
     
   // Rule P for a single antecedent (5234).  The given tautology must
-  // have the form (A --> B), where A matches the given input step and
+  // have the form (A ==> B), where A matches the given input step and
   // B has only variables that appear in A.  For tautologies with a
   // conjunction on the LHS as shown in the book, use this with
   // makeConjunction.  Handles hypotheses by applying modus ponens to
@@ -1742,7 +1742,7 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: ('Match step <input name=step> with left side of implication '
            + 'in tautology <input name=term>'),
-    comment: ('Match step with LHS of tautology A --> B.')
+    comment: ('Match step with LHS of tautology A ==> B.')
   },
 
   // Andrews calls his enhanced version of forward chaining "Rule P".
@@ -1758,7 +1758,7 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: ('Match step <input name=step> with left side of implication '
            + 'in tautology <input name=term>'),
-    comment: ('Match step with LHS of tautology A --> B.')
+    comment: ('Match step with LHS of tautology A ==> B.')
   },
 
   // Proves the goal by matching it with the conclusion of the given
@@ -1769,7 +1769,7 @@ var ruleInfo = {
   // TODO: Test me.
   backwardChain: {
     action: function(goal, theorem, rule) {
-      theorem.assertCall2('-->');
+      theorem.assertCall2('==>');
       var subst = goal.matchSchema(theorem.getRight());
       var premise = rule(theorem.getLeft());
       var result = rules.modusPonens(premise,
@@ -1790,12 +1790,12 @@ var ruleInfo = {
   },
 
   // Finds a "subgoal" statement that implies the goal via the given
-  // theorem, which must be a schema of the form a --> b.
+  // theorem, which must be a schema of the form a ==> b.
   // Instantiates the theorem by matching the goal against the theorem
   // RHS, returning the instantiated theorem.
   subgoal: {
     action: function(goal, theorem) {
-      theorem.assertCall2('-->');
+      theorem.assertCall2('==>');
       var subst = goal.matchSchema(theorem.getRight());
       var result = rules.instMultiVars(theorem, subst);
       return result.justify('subgoal', arguments);
@@ -1852,7 +1852,7 @@ var ruleInfo = {
   // Analog to Rule R, expressed as an implication.  Theorem schema.
   //
   // Given equation A = B, target C, and a path relative to C, returns
-  // a wff of the form "forall ... (A = B) --> (C = D), where D is
+  // a wff of the form "forall ... (A = B) ==> (C = D), where D is
   // obtained like the result of applying Rule R to A = B and C.  The
   // "forall" binds free variables of A = B that are bound at the
   // replacement location in C.
@@ -1914,8 +1914,8 @@ var ruleInfo = {
   // Like Rule R', based on 5240 (the Deduction Theorem).  The
   // proof here is a subset of the proof of 5240.
   //
-  // h_equation is an equation implied by hypotheses, i.e. H --> A = B.
-  // h_c is a term implied by the same hypotheses, i.e. H --> C.
+  // h_equation is an equation implied by hypotheses, i.e. H ==> A = B.
+  // h_c is a term implied by the same hypotheses, i.e. H ==> C.
   // The path is relative to h_c, and may include a special initial
   // segment 'main', which it interprets as 'right' if h_c has
   // hypotheses, otherwise ignoring it.
@@ -1936,9 +1936,9 @@ var ruleInfo = {
 	return result.justify('replace', args,
                               [h_equation_arg, h_c_arg]);
       }
-      assert(h_equation.isCall2('-->') && h_equation.getRight().isCall2('='),
+      assert(h_equation.isCall2('==>') && h_equation.getRight().isCall2('='),
 	     'Not an equation: ' + h_equation, h_equation_arg);
-      // h_equation has the form H --> A = B
+      // h_equation has the form H ==> A = B
 
       // Give the two WFFs the same hypotheses.
       h_c = rules.appendStepHyps(h_c, h_equation);
@@ -1985,10 +1985,10 @@ var ruleInfo = {
       }
       var step2 = rules.r5239(equation, c, cpath);
       var step3 = rules.makeConjunction(step1, step2);
-      var tautology = Y.parse('(p --> q) && (q --> r) --> (p --> r)');
+      var tautology = Y.parse('(p ==> q) && (q ==> r) ==> (p ==> r)');
       var step4 = rules.p(step3, tautology);
       var step5 = rules.makeConjunction(h_c, step4);
-      var taut2 = Y.parse('(h --> p) && (h --> (p = q)) --> (h --> q)');
+      var taut2 = Y.parse('(h ==> p) && (h ==> (p = q)) ==> (h ==> q)');
       var result = rules.p(step5, taut2);
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
         result = rules.asHypotheses(result);
@@ -2014,7 +2014,7 @@ var ruleInfo = {
 	    return target;
 	  }
           var step = rules.asImplication(target);
-	  var taut = Y.parse('(h1 --> p) --> ((h1 && h2) --> p)');
+	  var taut = Y.parse('(h1 ==> p) ==> ((h1 && h2) ==> p)');
 	  var subst = {
 	    h1: step.getLeft(),
 	    h2: hypStep.getLeft(),
@@ -2022,7 +2022,7 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  // Simplify (h1 && h2) --> p
+	  // Simplify (h1 && h2) ==> p
 	  var step4 = rules.mergeConjunctions(step2.locate('/left'));
 	  var step5 = rules.r(step4, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
@@ -2036,7 +2036,7 @@ var ruleInfo = {
 	    p: target,
 	    h2: hypStep.getLeft()
 	  };
-	  var step1 = rules.tautInst(Y.parse('p --> (h2 --> p)'), subst);
+	  var step1 = rules.tautInst(Y.parse('p ==> (h2 ==> p)'), subst);
 	  var step2 = rules.modusPonens(target, step1);
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  var result =
@@ -2060,7 +2060,7 @@ var ruleInfo = {
   // the result is simply the given step.
   //
   // TODO: Combine this and appendStepHyps into one rule.  Consider a
-  //   rule that derives (H --> step1rhs) && (H --> step2rhs) from
+  //   rule that derives (H ==> step1rhs) && (H ==> step2rhs) from
   //   step1 and step2.  H will be the merger of the hypotheses.
   prependStepHyps: {
     action: function(target, hypStep) {
@@ -2072,7 +2072,7 @@ var ruleInfo = {
             // Don't show the call to this rule.
 	    return step;
 	  }
-	  var taut = Y.parse('(h2 --> p) --> ((h1 && h2) --> p)');
+	  var taut = Y.parse('(h2 ==> p) ==> ((h1 && h2) ==> p)');
 	  var subst = {
 	    h1: hypStep.getLeft(),
 	    h2: step.getLeft(),
@@ -2080,7 +2080,7 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  // Simplify (h1 && h2) --> p
+	  // Simplify (h1 && h2) ==> p
           var pattern = rules.mergeConjunctions(step2.getLeft());
           var step5 = rules.rewrite(step2, '/left', pattern);
           // Rendering of result needs hypStep rendered, so include it as dep.
@@ -2093,7 +2093,7 @@ var ruleInfo = {
 	    p: step,
 	    h1: hypStep.getLeft()
 	  };
-	  var step1 = rules.tautInst(Y.parse('p --> (h1 --> p)'), subst);
+	  var step1 = rules.tautInst(Y.parse('p ==> (h1 ==> p)'), subst);
 	  var step2 = rules.modusPonens(step, step1);
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  var result =
@@ -2297,11 +2297,11 @@ var ruleInfo = {
       assert(step.hasHyps, 'Step has no hypotheses');
       var lhs = step.getLeft().hypLocater(hyp);
       var a = Y.varify('a');
-      var taut = infix(infix(lhs, '-->', a),
-		       '-->',
+      var taut = infix(infix(lhs, '==>', a),
+		       '==>',
 		       infix(lhs,
-			     '-->',
-			     infix(Y.varify('h'), '-->', a)));
+			     '==>',
+			     infix(Y.varify('h'), '==>', a)));
       var step1 = rules.asImplication(step);
       var step2 = rules.p(step1, taut);
       var result = rules.asHypotheses(step2);
@@ -2314,15 +2314,15 @@ var ruleInfo = {
 
   // Given a proof step that is an implication and a path expected to
   // refer to an element of the LHS conjunction chain, derives a step
-  // of the form e --> (h' --> c) where e is the referenced element,
+  // of the form e ==> (h' ==> c) where e is the referenced element,
   // h' is the proof step's hypotheses excluding occurrences of "e",
   // and c is the impliction RHS.  Useful for simplifying hypotheses.
   isolateCondition: {
     action: function(step, path) {
-      assert(step.isCall2('-->') && !step.hasHyps, 'Not an implication');
+      assert(step.isCall2('==>') && !step.hasHyps, 'Not an implication');
       var taut = rules.tautology(step.getLeft().hypMover(step.locate(path)));
       var step1 = rules.rewrite(step, '/left', taut);
-      var taut2 = rules.tautology('a && b --> c == b --> (a --> c)');
+      var taut2 = rules.tautology('a && b ==> c == b ==> (a ==> c)');
       var result = rules.rewrite(step1, '', taut2);
       return result.justify('isolateCondition', arguments, [step]);
     },
@@ -2362,17 +2362,17 @@ var ruleInfo = {
         });
       var cVar = map.get(c);
       // Make a schema for the desired theorem.
-      var goalSchema = infix(buildHypSchema(conjuncts, map), '-->', cVar);
+      var goalSchema = infix(buildHypSchema(conjuncts, map), '==>', cVar);
       // Make a version of the theorem with T for "c".
       var trueGoal = goalSchema.subFree(T, cVar);
       // This is a simple tautology:
-      var trueCase = rules.tautInst('p --> T', {p: trueGoal.getLeft()});
+      var trueCase = rules.tautInst('p ==> T', {p: trueGoal.getLeft()});
       // Make a version of the theorem with F for "c".
       var falseGoal = goalSchema.subFree(F, cVar);
       // Prove that its LHS is equal to F.
       var step1 = falsify(falseGoal.getLeft());
       // This means the LHS implies F, which is the desired F case.
-      var falseCase = rules.forwardChain(step1, 'p = F --> (p --> F)');
+      var falseCase = rules.forwardChain(step1, 'p = F ==> (p ==> F)');
       // Complete proof of the desired schema:
       var step2 = rules.cases(trueCase, falseCase, cVar);
       // Instantiate back to get the desired instance:
@@ -2436,7 +2436,7 @@ var ruleInfo = {
   // Works with hypotheses and with plain implications.
   dedupeHyps: {
     action: function(step) {
-      step.assertCall2('-->');
+      step.assertCall2('==>');
       var deduper =
         rules.conjunctionDeduper(step.getLeft(), Y.sourceStepComparator);
       var result = (deduper
@@ -2492,7 +2492,7 @@ var ruleInfo = {
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step4, subst);
       var step6 = rules.makeConjunction(step4, step5);
-      var step7 = rules.p(step6, '(p --> q) && (q --> p) --> (p = q)');
+      var step7 = rules.p(step6, '(p ==> q) && (q ==> p) ==> (p = q)');
       return step7.justify('equalitySymmetric', arguments);
     },
     inputs: {},
@@ -2506,7 +2506,7 @@ var ruleInfo = {
       var step2 = rules.instVar(step1, Y.parse('{t. t = z}'), _var('h'));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = rules.apply(step3, '/right/right');
-      var step5 = rules.p(step4, '(a --> (b = c)) --> (a && c --> b)');
+      var step5 = rules.p(step4, '(a ==> (b = c)) ==> (a && c ==> b)');
       return step5.justify('equalityTransitive', arguments);
     },
     inputs: {},
@@ -2518,12 +2518,12 @@ var ruleInfo = {
   // Real numbers
   // 
   // Assumptions (R x) && (R y), etc. are in the form:
-  // (A1 --> (A2 --> <equation>)) to simplify introducing them from
-  // the hypotheses.  This is equivalent to A1 && A2 --> <equation>.
+  // (A1 ==> (A2 ==> <equation>)) to simplify introducing them from
+  // the hypotheses.  This is equivalent to A1 && A2 ==> <equation>.
 
   axiomCommutativePlus: {
     action: function() {
-      return rules.assert('R x && R y --> x + y = y + x')
+      return rules.assert('R x && R y ==> x + y = y + x')
         .asHyps().justify('axiomCommutativePlus');
     },
     inputs: {},
@@ -2533,7 +2533,7 @@ var ruleInfo = {
 
   axiomAssociativePlus: {
     action: function() {
-      return rules.assert('R x && R y && R z --> x + (y + z) = (x + y) + z')
+      return rules.assert('R x && R y && R z ==> x + (y + z) = (x + y) + z')
 	.asHyps().justify('axiomAssociativePlus');
     },
     inputs: {},
@@ -2543,7 +2543,7 @@ var ruleInfo = {
 
   axiomCommutativeTimes: {
     action: function() {
-      return rules.assert('R x && R y --> x * y = y * x')
+      return rules.assert('R x && R y ==> x * y = y * x')
 	.asHyps().justify('axiomCommutativeTimes');
     },
     inputs: {},
@@ -2553,7 +2553,7 @@ var ruleInfo = {
 
   axiomAssociativeTimes: {
     action: function() {
-      return rules.assert('R x && R y && R z --> x * (y * z) = (x * y) * z')
+      return rules.assert('R x && R y && R z ==> x * (y * z) = (x * y) * z')
 	.asHyps().justify('axiomAssociativeTimes');
     },
     inputs: {},
@@ -2563,7 +2563,7 @@ var ruleInfo = {
 
   axiomDistributivity: {
     action: function() {
-      return rules.assert('R x && R y && R z --> x * (y + z) = x * y + x * z')
+      return rules.assert('R x && R y && R z ==> x * (y + z) = x * y + x * z')
 	.asHyps().justify('axiomDistributivity');
     },
     inputs: {},
@@ -2573,7 +2573,7 @@ var ruleInfo = {
 
   axiomPlusZero: {
     action: function() {
-      return rules.assert('R x --> x + 0 = x')
+      return rules.assert('R x ==> x + 0 = x')
         .asHyps().justify('axiomPlusZero');
     },
     inputs: {},
@@ -2583,7 +2583,7 @@ var ruleInfo = {
 
   axiomTimesOne: {
     action: function() {
-      return rules.assert('R x --> x * 1 = x')
+      return rules.assert('R x ==> x * 1 = x')
         .asHyps().justify('axiomTimesOne');
     },
     inputs: {},
@@ -2593,7 +2593,7 @@ var ruleInfo = {
 
   axiomTimesZero: {
     action: function() {
-      return rules.assert('R x --> x * 0 = 0')
+      return rules.assert('R x ==> x * 0 = 0')
         .asHyps().justify('axiomTimesZero');
     },
     inputs: {},
@@ -2603,7 +2603,7 @@ var ruleInfo = {
 
   axiomNeg: {
     action: function() {
-      return rules.assert('R x --> x + neg x = 0')
+      return rules.assert('R x ==> x + neg x = 0')
         .asHyps().justify('axiomNeg');
     },
     inputs: {},
@@ -2613,7 +2613,7 @@ var ruleInfo = {
 
   axiomReciprocal: {
     action: function() {
-      return rules.assert('R x && x != 0 --> x * recip x = 1')
+      return rules.assert('R x && x != 0 ==> x * recip x = 1')
         .asHyps().justify('axiomReciprocal');
     },
     inputs: {},
@@ -2624,7 +2624,7 @@ var ruleInfo = {
   // Note: not structured as a rewrite rule.
   axiomPlusType: {
     action: function() {
-      return rules.assert('R x && R y --> R (x + y)')
+      return rules.assert('R x && R y ==> R (x + y)')
 	.justify('axiomPlusType');
     },
     inputs: {},
@@ -2635,7 +2635,7 @@ var ruleInfo = {
   // Note: not structured as a rewrite rule.
   axiomTimesType: {
     action: function() {
-      return rules.assert('R x && R y --> R (x * y)')
+      return rules.assert('R x && R y ==> R (x * y)')
 	.justify('axiomTimesType');
     },
     inputs: {},
@@ -2811,7 +2811,7 @@ var ruleInfo = {
           var hyps = simplifier.getRight();
           if (hyp.isCall1('R') && hyp.arg instanceof Y.Call) {
             var otherHyps = hypsExcept(hyps, new Y.TermSet(hyp));
-            var goal = infix(otherHyps, '-->', hyp);
+            var goal = infix(otherHyps, '==>', hyp);
             // Proved that hyp is a consequence of the others.
             // TODO: Prove the hyp from just the relevant set hypotheses,
             //   then use rules.conjunctsImplyConjunct and
@@ -2819,7 +2819,7 @@ var ruleInfo = {
             //   full set of hyps.
             var proved = rules.justifyNumericType(goal);
             if (proved) {
-              var taut = rules.tautology('(a --> b) == (a && b == a)');
+              var taut = rules.tautology('(a ==> b) == (a && b == a)');
               // otherHyps && hyp == otherHyps:
               var subsumption = rules.rewrite(proved, '', taut);
               var ab = subsumption.getLeft();
@@ -2845,7 +2845,7 @@ var ruleInfo = {
   simplifyNumericTypes: {
     action: function(step) {
       var infix = Y.infixCall;
-      step.assertCall2('-->');
+      step.assertCall2('==>');
       var equation = rules.numericTypesSimplifier(step.getLeft());
       var result = rules.r(equation, step, '/left');
       return result.justify('simplifyNumericTypes', arguments, [step]);
@@ -2855,7 +2855,7 @@ var ruleInfo = {
     comment: 'Remove redundant type hypotheses in a step'
   },
 
-  // Prove a goal statement of the form "hyps --> R (l <binop> r)" in
+  // Prove a goal statement of the form "hyps ==> R (l <binop> r)" in
   // preparation for removing the term on the RHS from the full set of
   // hypotheses of some proof step.
   justifyNumericType: {
@@ -2865,7 +2865,7 @@ var ruleInfo = {
       //   implies the required ones.  Create a new
       //   rules.conjunctsImplyConjunct to make this fast.
       var infix = Y.infixCall;
-      var subst = goal.matchSchema('h --> (R e)');
+      var subst = goal.matchSchema('h ==> (R e)');
       assert(subst, 'Bad input to justifyNumericType: ' + goal);
       var hyps = subst.h;
       var expr = subst.e;
@@ -2879,7 +2879,7 @@ var ruleInfo = {
         result = rules.anyImpliesTheorem(hyps, step3);
       } else if (map.has(goal.getRight())) {
         var taut =
-          rules.tautology(infix(schema, '-->', map.get(goal.getRight())));
+          rules.tautology(infix(schema, '==>', map.get(goal.getRight())));
         result = rules.instantiate(taut, '', goal);
       } else if (expr.isCall2()) {
         var op = expr.getBinOp();
@@ -2887,26 +2887,26 @@ var ruleInfo = {
         assert(subst && op instanceof Y.Var && theorems[op.name]);
         var theorem = theorems[op.name];
         var implication = rules.subgoal(goal.getRight(), theorem);
-        var subst2 = implication.matchSchema('h1 && h2 --> p');
+        var subst2 = implication.matchSchema('h1 && h2 ==> p');
         // Solve the two simplified problems:
-        var thm1 = rules.justifyNumericType(infix(hyps, '-->', subst2.h1));
-        var thm2 = rules.justifyNumericType(infix(hyps, '-->', subst2.h2));
+        var thm1 = rules.justifyNumericType(infix(hyps, '==>', subst2.h1));
+        var thm2 = rules.justifyNumericType(infix(hyps, '==>', subst2.h2));
         // Show that the conjunction of the simpler numeric type terms
         // is a consequence of the hypotheses.
         var conj = rules.makeConjunction(thm1, thm2);
-        var taut = '(h --> a) && (h --> b) --> (h --> a && b)';
+        var taut = '(h ==> a) && (h ==> b) ==> (h ==> a && b)';
         var step1 = rules.forwardChain(conj, taut);
         var instance = rules.instantiate(theorem, '/left', step1.getRight());
         var step2 = rules.makeConjunction(step1, instance);
         result =
-          rules.forwardChain(step2, '(h --> a) && (a --> b) --> (h --> b)');
+          rules.forwardChain(step2, '(h ==> a) && (a ==> b) ==> (h ==> b)');
       } else if (expr.isCall1('neg')) {
-        var subgoal = infix(hyps, '-->', call('R', expr.arg));
+        var subgoal = infix(hyps, '==>', call('R', expr.arg));
         var step1 = rules.justifyNumericType(subgoal);
         var rewriter = rules.axiomNegType();
         result = rules.rewrite(step1, '/right', rewriter);
       } else if (expr.isCall1('recip')) {
-        var subgoal1 = infix(hyps, '-->', call('R', expr.arg));
+        var subgoal1 = infix(hyps, '==>', call('R', expr.arg));
         var step1 = rules.justifyNumericType(subgoal1);
         // Justify this term as a consequence of either arithmetic or
         // the hypotheses:
@@ -2921,24 +2921,24 @@ var ruleInfo = {
           // TODO: Consider adding the hypothesis to the proved result
           //   if needed.
           assert(map.has(term), 'Step needs hypothesis: ' + term);
-          var subgoal2 = infix(hyps, '-->', term);
-          var taut2 = rules.tautology(infix(schema, '-->', map.get(term)));
+          var subgoal2 = infix(hyps, '==>', term);
+          var taut2 = rules.tautology(infix(schema, '==>', map.get(term)));
           var step2 = rules.instantiate(taut2, '', subgoal2);
         }
         if (arith) {
           var step1b = rules.fromTIsA(arith);
           var step2 = rules.anyImpliesTheorem(hyps, step1b);
         }
-        // h --> term is now proved.
+        // h ==> term is now proved.
         var conj = rules.makeConjunction(step1, step2);
-        var taut = rules.tautology('(h --> a) && (h --> b) --> (h --> a && b)');
+        var taut = rules.tautology('(h ==> a) && (h ==> b) ==> (h ==> a && b)');
         var step3 = rules.forwardChain(conj, taut);
         var result = rules.rewrite(step3, '/right', rules.axiomReciprocalType());
       } else {
         var map = new Y.TermMap();
         var lhs = buildHypSchema(goal.getLeft(), map);
         var rhs = buildHypSchema(goal.getRight(), map);
-        var taut = infix(lhs, '-->', rhs);
+        var taut = infix(lhs, '==>', rhs);
         try {
           result = rules.tautInst(taut, map.subst);
         } catch(e) {
@@ -2949,7 +2949,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Goal wff: <input name=term>',
-    comment: 'Derive H --> R (<left> <binop> <right>).'
+    comment: 'Derive H ==> R (<left> <binop> <right>).'
   },
 
   // Finds and returns type expression rewrite rule that can rewrite
@@ -3223,7 +3223,7 @@ Y.define('forall', equal(lambda(x, T)));
 Y.define('exists', '{x. F} !=');
 Y.defineCases('&&', identity, lambda(x, F));
 Y.defineCases('||', allT, identity);
-Y.defineCases('-->', identity, allT);
+Y.defineCases('==>', identity, allT);
 
 Y.define('-', '{x. {y. x + neg y}}');
 Y.define('/', '{x. {y. x * recip y}}');
