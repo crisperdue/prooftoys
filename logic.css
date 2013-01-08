@@ -262,7 +262,6 @@ table.proofDisplay {
 /* New value ("replacement") -- green */
 .proofStep .new {
   background-color: lime;
-  font-weight: bold;
 }
 
 /* References to a step number, where it is used as an input */
