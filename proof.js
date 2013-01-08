@@ -887,15 +887,30 @@ function exprNode() {
 /**
  * Converts text symbols to HTML for display.
  */
-var entities = {
-  // Do not use nonbreaking hyphens in case the end user wants to copy and
-  // paste displayed text.  Instead consider CSS hyphenation options.
+var specialMarkup = {
+  '*': '&sdot;',
+  // Division slash, may look nice with super- and subscripts:
+  // '/': '&#x2215;',
   '>=': '&ge;',
   '<=': '&le;',
   '!=': '&ne;',
   '==': '&#x21d4;',  // Bidirectional double arrow
-  '==>': '&rArr;'   // Rightward double arrow
+  '==>': '&rArr;',   // Rightward double arrow
+  'T': '<span class=trueFalse>T</span>',
+  'F': '<span class=trueFalse>F</span>',
+  'forall': '&forall;',
+  'exists': '&exist;'
 };
+
+/**
+ * Computes a string of HTML for displaying the given name, a string.
+ * Current policy is to use any value in specialMarkup, otherwise
+ * italicize it if it begins with an alphabetic or underscore.
+ */
+function htmlForName(name) {
+  var ent = specialMarkup[name];
+  return ent || name.replace(/([a-zA-Z_].*$)/, '<i>$1</i>');;
+}
 
 /**
  * Create and return a text node containing a space.  YUI (and IE)
@@ -924,7 +939,7 @@ function textNode(text) {
 Var.prototype._render = function(omit) {
   var node = this.node = exprNode();
   var name = this.pname || this.name;
-  node.append(entities[name] || name);
+  node.append(htmlForName(name));
   return node;
 };
 
@@ -1335,11 +1350,11 @@ function getExpr(node) {
  * be any part of a proof node.
  */
 function exprHandleOver(event) {
-  var target = event.target;
+  var target = event.target.ancestor('.expr', true) || event.target;
+  target.addClass('hovered');
   function isTarget(expr) {
     return expr.node == target;
   }
-  target.addClass('hovered');
   var stepNode = target.ancestor('.proofStep');
   if (stepNode) {
     var proofStep = stepNode.getData('proofStep');
@@ -1366,7 +1381,8 @@ function hoverShowPath(wff, path) {
  * Handle mouseouts on subexpressions.
  */
 function exprHandleOut(event) {
-  event.target.removeClass('hovered');
+  var target = event.target.ancestor('.expr', true) || event.target;
+  target.removeClass('hovered');
   var displayNode = Y.one('#hoverPath');
   if (displayNode) {
     // Do nothing if there is no bottom panel.
