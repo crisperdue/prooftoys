@@ -395,10 +395,10 @@ YUI.add('sample-proofs', function(Y) {
 
     replace: {
       args: function() {
-        var step1 = Y.rules.assume('x > 0');
-        var step2 = Y.rules.assert('x > 0 ==> (x = (abs x))');
+        var step1 = Y.rules.assume('x >= 0');
+        var step2 = Y.rules.assert('x >= 0 ==> (x = (abs x))');
         var step3 = Y.rules.modusPonens(step1, step2);
-        var step4 = Y.rules.assert('x > 0 ==> (x + x) > x');
+        var step4 = Y.rules.assert('x >= 0 ==> (x + x) >= x');
         var step5 = Y.rules.modusPonens(step1, step4);
         return [step3, step5, '/main/right'];
       },
