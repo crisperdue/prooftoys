@@ -189,7 +189,7 @@ table.proofDisplay {
 .proofStep {
     clear: both;
     background-color: #F0F0DA;
-    font-family: monospace;
+    font-family: STIXGeneral;
     padding: 2px;
     margin: 1px 0px;
     /* If needed to avoid undesired text selection:
@@ -211,14 +211,15 @@ table.proofDisplay {
   visibility: visible;
 }
 
+/* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
     margin-left: 1em;
-    font-style: italic;
+    font-family: sans-serif;
+    font-size: 90%;
     color: gray;
 }
 
 .proofStep .argDetails, .proofStep .argDetails code {
-    font-size: 90%;
     color: #999;
 }
 
@@ -274,6 +275,10 @@ span.ruleName {
   cursor: pointer;
 }
 
+span.stepReference {
+  font-style: italic;
+}
+
 /* Expression in a proof step display, and step numbers */
 .proofStep .expr, span.stepNumber, span.stepReference {
   border-style: solid;
@@ -289,6 +294,12 @@ span.ruleName {
 
 .proofStep .expr.selected {
   border-color: black;
+}
+
+/* Styling for constants T and F, sans-serif roman. */
+.proofStep .expr .trueFalse {
+  font-family: sans-serif;
+  font-size: 90%;
 }
 
 
