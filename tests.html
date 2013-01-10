@@ -386,12 +386,12 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testDecodeArg: function() {
+        var steps = [Y.rules.assert('x = y + 1')];
         function check(expected, input) {
           input = typeof input == 'string' ? Y.parse(input) : input;
           var actual = Y._decodeArg(input, steps);
           assertEqual(expected, actual);
         }
-        var steps = [Y.rules.assert('x = y + 1')];
         check('foo', '"foo"');
         check('/arg', '(path "/right")');
         check('(x = (y + 1))', '(s 1)');
