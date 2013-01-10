@@ -47,6 +47,10 @@ code {
   font-size: 110%;
 }
 
+.italic {
+  font-style: italic;
+}
+
 /* Text wrapping */
 .nowrap {
   white-space: nowrap;

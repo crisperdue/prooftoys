@@ -576,7 +576,7 @@ ProofControl.prototype.handleExprSelection = function(expr) {
 
 // String containing just the turnstile math character.  See
 // http://tlt.its.psu.edu/suggestions/international/bylanguage/mathchart.html
-var _turnstile = Y.Node.create('&#8870;').get('text');
+var _turnstile = '\u22a6';
 
 /**
  * Create and return a YUI node to display the renderable step within
@@ -885,31 +885,17 @@ function exprNode() {
 }
 
 /**
- * Converts text symbols to HTML for display.
+ * Returns an array CSS class names to add to an Expr node for a
+ * variable having the specified name.
  */
-var specialMarkup = {
-  '*': '&sdot;',
-  // Division slash, may look nice with super- and subscripts:
-  // '/': '&#x2215;',
-  '>=': '&ge;',
-  '<=': '&le;',
-  '!=': '&ne;',
-  '==': '&#x21d4;',  // Bidirectional double arrow
-  '==>': '&rArr;',   // Rightward double arrow
-  'T': '<span class=trueFalse>T</span>',
-  'F': '<span class=trueFalse>F</span>',
-  'forall': '&forall;',
-  'exists': '&exist;'
-};
-
-/**
- * Computes a string of HTML for displaying the given name, a string.
- * Current policy is to use any value in specialMarkup, otherwise
- * italicize it if it begins with an alphabetic or underscore.
- */
-function htmlForName(name) {
-  var ent = specialMarkup[name];
-  return ent || name.replace(/([a-zA-Z_].*$)/, '<i>$1</i>');;
+function specialClasses(name) {
+  if (name.match(/^([a-zA-Z_].*$)/)) {
+    return ['italic'];
+  }
+  if (name === 'T' || name === 'F') {
+    return ['trueFalse'];
+  }
+  return [];
 }
 
 /**
@@ -938,8 +924,9 @@ function textNode(text) {
 
 Var.prototype._render = function(omit) {
   var node = this.node = exprNode();
-  var name = this.pname || this.name;
-  node.append(htmlForName(name));
+  var name = this.toUnicode();
+  specialClasses(name).forEach(function(cl) { node.addClass(cl); });
+  node.set('text', name);
   return node;
 };
 
@@ -986,6 +973,15 @@ Call.prototype._render = function(omit) {
     node.append(this.arg._render());
     node.append(space());
     node.append(this.fn._render());
+  } else if (this.fn instanceof Var && !this.fn.displaysIdentifier()) {
+    // Function call with non-identifier operator.
+    // Display the function adjacent to its argument, but precede both
+    // with a non-breaking space to the left to help the user select
+    // this expression, and to set them off from preceding infix operator
+    // or other text.
+    node.append(document.createTextNode('\u00a0'));
+    node.append(this.fn._render());
+    node.append(this.arg._render());
   } else {
     // Normal function call: "f x"
     node.append(this.fn._render());
