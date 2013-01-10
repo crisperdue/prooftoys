@@ -199,6 +199,11 @@ TermMap.prototype.addTerm = function(term) {
 
 // Utilities
 
+// String that matches identifiers, used in both tokenizing and
+// determining categories of names for display.
+// Inital "$" is supported for system-generated names.
+var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
+
 /**
  * Is the given string a legal variable name?  Only names with a
  * single lower-case letter and then a sequences of digits and/or
@@ -399,6 +404,10 @@ Expr.counter = 1;
 // A debugging and perhaps proof development aid when turned on.
 Y.trackSourceSteps = false;
 
+// Controls generation of Unicode vs. ASCII strings, internal
+// to Expr.toString and Expr.toUnicode.
+var toUnicode = false;
+
 Expr.prototype.toString = function() {
   if (this instanceof Var) {
     return this._toString();
@@ -427,6 +436,20 @@ Expr.prototype.toString = function() {
 };
 
 /**
+ * Converts this Expr to a Unicode string.  The display is currently
+ * just the same as the non-Unicode display except that names (or
+ * pnames) that have Unicode counterparts are presented as Unicode.
+ */
+Expr.prototype.toUnicode = function() {
+  toUnicode = true;
+  try {
+    return this.toString();
+  } finally {
+    toUnicode = false;
+  }
+}
+
+/**
  * True iff this is a Var named as a variable.
  */
 Expr.prototype.isVariable = function() {
@@ -438,6 +461,20 @@ Expr.prototype.isVariable = function() {
  */
 Expr.prototype.isConst = function() {
   return this instanceof Var && isConstant(this.name);
+};
+
+// Names matching this regex are identifiers.
+// The trailing "$" ensures that the entire name is matched.
+var identifierRegex = new RegExp(identifierPattern + '$');
+
+/**
+ * True iff this is a Var that displays as an identifier.  This is
+ * based on Unicode display, which may be a non-identifier in cases such
+ * as "forall" and "exists", even when the internal name is an identifier.
+ */
+Expr.prototype.displaysIdentifier = function() {
+  return (this instanceof Var &&
+          this.toUnicode().match(identifierRegex));
 };
 
 /**
@@ -714,6 +751,14 @@ Expr.prototype.getRight = function() {
   return this.arg;
 };
 
+/**
+ * Returns the nth "element" of this expression.  Recurs top down
+ * through function parts of calls until finding a Var, which is
+ * consider element 0.  The arg part of that call is element 1,
+ * and the arg goes up by 1 for each level.  The effect is that a
+ * call written as (f a b c) gives the Var "f" as element 0, "a"
+ * as element 1, "b" as element 2, and "c" as element 3.
+ */
 Expr.prototype.nth = function(n) {
   var result = this._nth(n);
   assert(result instanceof Expr, function() {
@@ -1280,7 +1325,8 @@ Expr.prototype.mergedHypotheses = function() {
  * is in the "aliases" map, the given name becomes the Var's pname,
  * and the Var's name becomes the value of the alias.  Pnames affect
  * only parsing and display, not the logic itself.  If the name
- * represents an integer, sets the "value" property to that integer.
+ * represents an integer, sets the "value" property to that integer, or
+ * if it represents a string, sets the "value" property to the string.
  */
 function Var(name, position) {
   this.sort = Expr.var;
@@ -1301,8 +1347,23 @@ function Var(name, position) {
 };
 Y.extend(Var, Expr);
 
+/**
+ * If not producing Unicode, returns this Var's pname.  If producing
+ * Unicode, and if the pname has a Unicode counterpart, returns that
+ * counterpart, otherwise just the pname.
+ */
 Var.prototype._toString = function() {
-  return (this.pname || this.name);
+  var name = this.pname || this.name;
+  var uname = toUnicode && unicodeNames[name];
+  return uname || name;
+};
+
+/**
+ * Optimization of the toUnicode method when called directly on a Var.
+ */
+Var.prototype.toUnicode = function() {
+  var name = this.pname || this.name;
+  return unicodeNames[name] || name;
 };
 
 Var.prototype.dump = function() {
@@ -2872,19 +2933,31 @@ function dereference(type) {
 
 //// PARSING
 
+// Notes on internal representation of Vars created by parsing
+//
+// The equal sign can be input as either "=" or "==".  The parser
+// retains the form in which it was entered as its pname, and printing
+// displays it accordingly as well, though inference rules look only at
+// the standard name ("=").
+//
+// Some common Vars are commonly displayed with non-ASCII characters.
+// These also have ASCII input syntax, which is the form the parser
+// expects.  The internal form retains the input syntax, but the Unicode-
+// oriented displays both text and HTML show them as Unicode.
+
 // Tokens pattern, private to tokenize.
-  var _tokens = new RegExp(['[(){}\\[\\]]',
-                            // Identifiers: variables and named constants
-                            '[_.]?[a-zA-Z][a-zA-Z_0-9]*',
-                            // Numeric constants
-                            '-?[0-9]+',
-                            // Strings
-                            '"(?:\\\\.|[^"])*"',
-                            // Other operators (constants)
-                            // TODO: Narrow this to graphic nonalphabetic
-                            //   characters.
-                            '[^_:a-zA-Z0-9(){}\\s]+'].join('|'),
-                           'g');
+var _tokens = new RegExp(['[(){}\\[\\]]',
+                           // Identifiers: variables and named constants
+                           identifierPattern,
+                           // Numeric constants
+                           '-?[0-9]+',
+                           // Strings
+                           '"(?:\\\\.|[^"])*"',
+                           // Other operators (constants)
+                           // TODO: Narrow this to graphic nonalphabetic
+                           //   characters.
+                           '[^_:a-zA-Z0-9(){}\\s]+'].join('|'),
+                         'g');
 
 /**
  * A token is a parenthesis or brace, or a sequence of characters
@@ -3059,18 +3132,7 @@ function unparseString(content) {
 }
 
 /**
- * Is it an identifier or constant?  Currently Id or number as digits
- * with optional leading "-", or string.  As opposed to being an
- * operator.  For precedence in parsing.
- */
-function isIdOrLiteral(token) {
-  return (token instanceof Y.Var &&
-          !!token.name.match(/^"|^-?[A-Za-z0-9$]+$/));
-  // ") - for Emacs.
-}
-
-/**
- * Get a precedence value: null for symbols, defaults to 100 for
+ * Get a precedence value: null for identifiers, defaults to 100 for
  * unknown non-symbols, greater than the usual math operators but less
  * than identifiers (i.e. ordinary function calls).
  *
@@ -3081,7 +3143,10 @@ function getPrecedence(token) {
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
-    return isIdOrLiteral(token) ? null : 100;
+    return (token.value == null && !name.match(identifierRegex)
+            // It's written as an operator, give it the default precedence.
+            ? 100
+            : null);
   }
 }
 
@@ -3115,7 +3180,20 @@ var precedence = {
   '{': 1000
 };
 
-// Defines aliases that only affect printing and parsing.
+// Translations of names, applied during conversion to Unicode.
+// (When generating HTML and/or Unicode text.)
+var unicodeNames = {
+  '==': '\u21d4',     // Two-headed horizontal double arrow.
+  '==>': '\u21d2',     // &rArr;
+  '!=': '\u2260',
+  '<=': '\u2264',
+  '>=': '\u2265',
+  '*': '\u22c5',      // &sdot;
+  'forall': '\u2200',
+  'exists': '\u2203'
+};
+
+// Defines aliases that affect both printing and parsing.
 var aliases = {
   // Note that limiting '==' to boolean inputs would make it more than
   // just an alias as currently defined.
@@ -3488,8 +3566,9 @@ function decodeSteps(input) {
 }
 
 /**
- * Decodes an array of argument info expressions into a new array of
- * arguments for a rule.  See the description of encodeSteps above.
+ * Decodes an argument info Expr into an argument for a rule.
+ * Argument info Exprs have one of the forms: (s <n>) for a step
+ * number; (t <expr>) for a term; or (path <string>) for a path.
  */
 function decodeArg(info, steps) {
   if (info.isString()) {
