@@ -932,6 +932,15 @@ Var.prototype._render = function(omit) {
 
 Call.prototype._render = function(omit) {
   var node = this.node = exprNode();
+  // Only parenthesize uses of quantifiers in case of step tracking.
+  // TODO: Remove this special case and omit parens around all ordinary
+  // function calls that appear as args to infix operators.  Presumably
+  // this code is correct for (not (forall ... )) because "forall"
+  // displays as a unary operator.
+  if (this.fn instanceof Var &&
+      (this.fn.name == 'forall' || this.fn.name == 'exists')) {
+    omit = true;
+  }
   var stepNum = (Y.trackSourceSteps
                  && this.sourceStep
                  && this.sourceStep.rendering.stepNumber);
