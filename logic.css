@@ -47,6 +47,11 @@ code {
   font-size: 110%;
 }
 
+.math {
+  font-family: STIXGeneral, Times, serif;
+  font-size: 90%;
+}
+
 .italic {
   font-style: italic;
 }
