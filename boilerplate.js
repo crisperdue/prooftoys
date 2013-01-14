@@ -73,3 +73,48 @@ _gaq.push(['_trackPageview']);
   ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
+
+//
+// Generating math symbols and italicizing alphabetic characters for math.
+//
+
+/**
+ * Converts the given text into HTML with ASCII math symbols replaced
+ * with HTML entities for math, and with alphanumeric names in italics.
+ */
+Toy.mathMarkup = function(text) {
+  // Substitutions for "forall" and "exists" consume a trailing blank,
+  // helping to push them up next to following text.
+  var rex =
+    /==>|==|>=|<=|[*]|\bforall( |\b)|\bexists( |\b)|[_a-zA-Z][_a-zA-Z0-9]*/g;
+  return text.replace(rex, function(s) {
+    switch(s) {
+    case '==>': return '&rArr;';
+    case '==': return '&equiv;';
+    case '>=': return '&ge;';
+    case '<=': return '&le;';
+    case '*': return '&sdot;';
+    case 'forall': return '&forall;';
+    case 'forall ': return '&forall;';
+    case 'exists': return '&exist;';
+    case 'exists ': return '&exist;';
+    default: return '<i>' + s + '</i>';
+    }
+  });
+}
+
+/**
+ * Converts all <S> element contents into math-oriented HTML.
+ * Ignores all HTML markup within each element, though HTML
+ * entities are OK, and passed through.
+ */
+Toy.mathifyAll = function() {
+  elts = document.querySelectorAll('s');
+  var len = elts.length;
+  for (var i = 0; i < len; i++) {
+    var e = elts[i];
+    var text = e.textContent;
+    var content = Toy.mathMarkup(text);
+    e.innerHTML = content;
+  }
+};

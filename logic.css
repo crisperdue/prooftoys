@@ -47,6 +47,15 @@ code {
   font-size: 110%;
 }
 
+/* Math-oriented text to be transformed (Substituted) with Toy.mathifyAll. */
+s {
+  color: #860;
+  white-space: nowrap;
+  text-decoration: none;
+  font-family: STIXGeneral, Times, serif;
+  font-size: 93%;
+}  
+
 .math {
   font-family: STIXGeneral, Times, serif;
   font-size: 90%;
