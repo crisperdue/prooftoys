@@ -36,7 +36,7 @@ with axioms and basic rules of inference.
 <p>
 <b>Axioms.</b>
 The axioms refer only to addition, multiplication, negation
-(<code>neg</code>), and reciprocal (<code>recip</code>).  Subtraction
+(<s>neg</s>), and reciprocal (<s>recip</s>).  Subtraction
 and division are defined in terms of negation and reciprocal.
 <p>
 In addition there are axioms stating that the result of the basic
@@ -47,17 +47,17 @@ the reciprocal of zero), though they are not shown here.
 <p>
 The first axiom, commutativity of addition
 (<code>axiomCommutativePlus</code>), shown as
-<code>x + y = y + x</code>, means "for all <i>real numbers</i>
-<code>x</code> and <code>y</code>, <code>x + y = y + x</code>.
+<s>x + y = y + x</s>, means "for all <i>real numbers</i>
+<s>x</s> and <s>y</s>, <s>x + y = y + x</s>.
 Since Prooftoys can work with other kinds of values, the full
 statements of the axioms say explicitly that they are only guaranteed
 for real numbers.  In this case the full statement is:
-<code>(R x) && (R y) ==> x + y = y + x</code>.
+<s>(R x) && (R y) ==> x + y = y + x</s>.
 <p>
-<code>(R x)</code> means that <code>x</code> is a real number.
+<s>(R x)</s> means that <s>x</s> is a real number.
 The conditions about real numbers are not normally shown in the
 Prooftoys displays, to help reduce visual clutter.  The symbols
-<code>&&</code> and <code>==></code> are symbols for the mathematical
+<s>&&</s> and <s>$rArr;</s> are symbols for the mathematical
 "and" and "implies" relationships, explained further in the
 <a href="booleans.html">Logic through Pictures</a> page.
 <p>
@@ -88,8 +88,8 @@ inference.
 The operator <code>-</code> and <code>/</code> are defined, but there
 are no rules of inference for them, so it is more convenient to expand
 their definitions where they occur.  You can expand the definitions by
-selecting an expression that uses them, such as <code>(y - 2)</code> or
-<code>(x / z)</code> and request the <code>apply</code> rule.
+selecting an expression that uses them, such as <s>(y - 2)</s> or
+<s>(x / z)</s> and request the <code>apply</code> rule.
 <p>  
 <b>Rules of inference.</b> Based on the axioms are a set of simple
 rules of inference for real numbers.  You can select an expression in
@@ -121,14 +121,14 @@ current Prooftoys axioms and rules of inference.
 <p>
 Notes: In lines with hypotheses, like
 <blockquote>
-<code>n. 1, 2 &#x22a2; x = 4</code>
+<s>n. 1, 2 &#x22a2; x = 4</s>
 </blockquote>
 the number 1 is an abbreviation for the assumption introduced on line
 1, and the number 2 is an abbreviation for the assumption introduced
-on line 2.  So if line 1 assumes <code>x = y * 2</code> and line 2
-assumes <code>x + y = 6</code>, the whole line amounts to:
+on line 2.  So if line 1 assumes <s>x = y * 2</s> and line 2
+assumes <s>x + y = 6</s>, the whole line amounts to:
 <blockquote>
-<code>n. (x = y * 2) && (x + y = 6) --&gt; x = 4</code>
+<s>n. (x = y * 2) && (x + y = 6) ==> x = 4</s>
 </blockquote>
 <p>
 For additional background it may be helpful to read
@@ -148,6 +148,7 @@ and the <a href="tutorial.html">Tutorial</a> page.
 // Insert boilerplate.
 Toy.insertNav();
 Toy.insertSlogans();
+Toy.mathifyAll();
 
 // Remove "filter" to load minified JavaScript.
 YUI({filter: 'raw', insertBefore: 'styles'})
