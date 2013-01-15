@@ -255,8 +255,8 @@ YUI.add('sample-proofs', function(Y) {
     },
     
     instMultiVars: {
-      args: [rules.assert(implies(p, call('||', T, q))),
-             ({p: Y.parse('forall {x. T || b}'),
+      args: [rules.assert(implies(p, call('|', T, q))),
+             ({p: Y.parse('forall {x. T | b}'),
                q: Y.parse('forall {x. b}')
              })
             ],
@@ -326,16 +326,16 @@ YUI.add('sample-proofs', function(Y) {
     
     tautology: {
       /* This tautology is already an equation, let's test one that is not.
-      args: [equal(call('==>', call('&&', p, q), r),
+      args: [equal(call('==>', call('&', p, q), r),
                    call('==>', p, call('==>', q, r)))],
       */
-      args: [Y.parse('(p ==> q) && (not p ==> q) ==> q')],
+      args: [Y.parse('(p ==> q) & (not p ==> q) ==> q')],
       level: 1
     },
     
     tautInst: {
-      args: [Y.parse('p ==> T || q'), ({
-        p: Y.parse('forall {x. T || p x}'),
+      args: [Y.parse('p ==> T | q'), ({
+        p: Y.parse('forall {x. T | p x}'),
         q: Y.parse('forall {x. p x}')
       })],
       level: 1
@@ -376,8 +376,8 @@ YUI.add('sample-proofs', function(Y) {
 
     'Rule P': {
       ruleName: p,
-      args: [Y.rules.assume('p x && (p x ==> q x)'),
-             Y.parse('a && (a ==> b) ==> b')],
+      args: [Y.rules.assume('p x & (p x ==> q x)'),
+             Y.parse('a & (a ==> b) ==> b')],
       level: 1
     },
 
@@ -426,7 +426,7 @@ YUI.add('sample-proofs', function(Y) {
         function less(a, b) {
           return a.toString() < b.toString();
         }
-        return [Y.rules.assert('lhs = (((b && a) && d) && a)'), less];
+        return [Y.rules.assert('lhs = (((b & a) & d) & a)'), less];
       }
     },
 
@@ -436,7 +436,7 @@ YUI.add('sample-proofs', function(Y) {
         function less(a, b) {
           return a.toString() < b.toString();
         }
-        return [Y.rules.assert('lhs = (a && b) && (c && d)'), less];
+        return [Y.rules.assert('lhs = (a & b) & (c & d)'), less];
       }
     }
 

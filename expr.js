@@ -685,7 +685,7 @@ Expr.prototype.mathVarConditions = function(expr) {
   names.sort();
   Y.each(names, function(name) {
       if (expr) {
-        expr = infix(expr, '&&', call(real, name));
+        expr = infix(expr, '&', call(real, name));
       } else {
         expr = call(real, name);
       }
@@ -835,8 +835,8 @@ Expr.prototype.assertCall2 = function(name) {
   var map = {
     '==>': 'an implication',
     '=': 'an equation',
-    '&&': 'a conjunction',
-    '||': 'a disjunction'
+    '&': 'a conjunction',
+    '|': 'a disjunction'
   };
   var message;
   if (name == null) {
@@ -936,7 +936,7 @@ Expr.prototype.hasArgs = function(n) {
  */		
 Expr.prototype.isHypotheses = function() {
   return (this.sourceStep
-          || (this.isCall2('&&')
+          || (this.isCall2('&')
               && this.getLeft().isHypotheses()
               && this.getRight().isHypotheses()));
 };
@@ -954,7 +954,7 @@ Expr.prototype.hypLocater = function(hyp) {
   function locater(self, pos) {
     if (hyp.matches(self)) {
       return h;
-    } else if (self.sourceStep || !self.isCall2('&&')) {
+    } else if (self.sourceStep || !self.isCall2('&')) {
       return new Var('h' + pos);
     } else {
       // Self is a conjunction.
@@ -965,7 +965,7 @@ Expr.prototype.hypLocater = function(hyp) {
       var left = (right == h
                   ? new Var('h' + (pos + 1))
                   : locater(self.getLeft(), pos + 1));
-      return Y.infixCall(left, '&&', right);
+      return Y.infixCall(left, '&', right);
     }
   }
   return locater(this, 1);
@@ -995,13 +995,13 @@ Expr.prototype.hypMover = function(toMove) {
         found = true;
       } else {
         h = new Var('h' + i);
-        rhs = rhs ? Y.infixCall(rhs, '&&', h) : h;
+        rhs = rhs ? Y.infixCall(rhs, '&', h) : h;
       }
-      lhs = lhs ? Y.infixCall(lhs, '&&', h) : h;
+      lhs = lhs ? Y.infixCall(lhs, '&', h) : h;
       i++;
     });
   if (found) {
-    rhs = rhs ? Y.infixCall(rhs, '&&', new Var('h')) : new Var('h');
+    rhs = rhs ? Y.infixCall(rhs, '&', new Var('h')) : new Var('h');
   }
   return Y.infixCall(lhs, '=', rhs);
 };
@@ -1017,7 +1017,7 @@ Expr.prototype.hypsBySource = function() {
   function search(expr) {
     if (expr.sourceStep && expr.sourceStep.ordinal) {
       map[expr.sourceStep.ordinal] = expr;
-    } else if (expr.isCall2('&&')) {
+    } else if (expr.isCall2('&')) {
       search(expr.getLeft());
       search(expr.getRight());
     }
@@ -1036,7 +1036,7 @@ Expr.prototype.hypsBySource = function() {
 Expr.prototype.eachHyp = function(action) {
   if (this.sourceStep) {
     action(this);
-  } else if (this.isCall2('&&')) {
+  } else if (this.isCall2('&')) {
     this.getLeft().eachHyp(action);
     action(this.getRight());
   } else {
@@ -1050,7 +1050,7 @@ Expr.prototype.eachHyp = function(action) {
  * rewrite it to one with the conjunctions merged.
  */
 Expr.prototype.mergedHypotheses = function() {
-  this.assertCall2('&&');
+  this.assertCall2('&');
   // Will be a list of all conjuncts in order from left to right.
   var conjuncts = [];
   var i = 1;
@@ -1101,12 +1101,12 @@ Expr.prototype.mergedHypotheses = function() {
   // Build the remaining sorted terms into a chain.
   var rhs = null;
   Y.Array.each(sorted, function(term) {
-      rhs = rhs ? Y.infixCall(rhs, '&&', term.__var) : term.__var;
+      rhs = rhs ? Y.infixCall(rhs, '&', term.__var) : term.__var;
     });
 
   var left = this.getLeft()._asPattern();
   var right = this.getRight()._asPattern();
-  var result = Y.infixCall(Y.infixCall(left, '&&', right), '=', rhs);
+  var result = Y.infixCall(Y.infixCall(left, '&', right), '=', rhs);
   Y.Array.each(conjuncts, function(term) {
       delete term.__var;
       delete term.__order;
@@ -2551,8 +2551,8 @@ var constantTypes = {
 // Types of operations defined by cases.
 // TODO: Consider inferring these instead from the definitions.
 var definedTypes = {
-  '&&': booleanBinOpType(),
-  '||': booleanBinOpType(),
+  '&': booleanBinOpType(),
+  '|': booleanBinOpType(),
   '==>': booleanBinOpType()
 };
 
@@ -3160,8 +3160,8 @@ var precedence = {
   '==': 2,
   // Default precedence for non-identifiers is 5.
   '==>': 11,
-  '||': 13,
-  '&&': 14,
+  '|': 13,
+  '&': 14,
   // Unlike the book, equality binds tighter than implication.  This
   // way makes more sense when working with numbers for example.
   '=': 20,

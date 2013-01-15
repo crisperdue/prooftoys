@@ -832,11 +832,11 @@ function renderHyps(expr) {
       // linked to a rendering with proper stepNumber:
       node.append(expr.sourceStep.rendering.stepNumber);
       mainNode.append(node);
-    } else if (expr.isCall2('&&')) {
+    } else if (expr.isCall2('&')) {
       render(expr.getLeft());
       mainNode.append(textNode(', '));
       var rhs = expr.getRight();
-      if (rhs.isCall2('&&')) {
+      if (rhs.isCall2('&')) {
         mainNode.append(textNode('('));
         render(rhs);
         mainNode.append(textNode(')'));
@@ -868,7 +868,7 @@ function omittingReals(hyps) {
   hyps.eachHyp(function(hyp) {
       if (!hyp.isCall1('R') || !hyp.arg.isVariable()) {
         if (result) {
-          result = Y.infixCall(result, '&&', hyp);
+          result = Y.infixCall(result, '&', hyp);
         } else {
           result = hyp;
         }
