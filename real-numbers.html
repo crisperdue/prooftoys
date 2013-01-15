@@ -52,19 +52,20 @@ The first axiom, commutativity of addition
 Since Prooftoys can work with other kinds of values, the full
 statements of the axioms say explicitly that they are only guaranteed
 for real numbers.  In this case the full statement is:
-<s>(R x) && (R y) ==> x + y = y + x</s>.
+<s>R x && R y ==> x + y = y + x</s>, or with parentheses to clarify
+grouping, <s>((R x) && (R y)) ==> (x + y = y + x)</s>.
 <p>
-<s>(R x)</s> means that <s>x</s> is a real number.
+<s>R x</s> means "<s>x</s> is a real number".
 The conditions about real numbers are not normally shown in the
 Prooftoys displays, to help reduce visual clutter.  The symbols
-<s>&&</s> and <s>$rArr;</s> are symbols for the mathematical
+<s>&&</s> and <s>==></s> represent the mathematical
 "and" and "implies" relationships, explained further in the
 <a href="booleans.html">Logic through Pictures</a> page.
 <p>
 <b>Doing arithmetic.</b>
 The <code>axiomArithmetic</code> axiom schema evaluates basic
 arithmetic expressions with numeric arguments.  It works with the
-operations <code>+, -, *, /, neg, =, !=, >, >=, <, <=</code>, and the
+operations <s>+, -, *, /, neg, =, !=, >, >=, &lt;, &le;</s>, and the
 predicate <code>R</code> when given numeric literals as arguments.
 (When dividing, it accepts only inputs that give exact integer
 results.)
@@ -85,11 +86,11 @@ clutter in the initial display of available theorems and rules of
 inference.
 <p>
 <b>Subtraction and division.</b>
-The operator <code>-</code> and <code>/</code> are defined, but there
+The operators <code>-</code> and <code>/</code> are defined, but there
 are no rules of inference for them, so it is more convenient to expand
 their definitions where they occur.  You can expand the definitions by
 selecting an expression that uses them, such as <s>(y - 2)</s> or
-<s>(x / z)</s> and request the <code>apply</code> rule.
+<s>(x / z)</s> and requesting the <code>apply</code> rule.
 <p>  
 <b>Rules of inference.</b> Based on the axioms are a set of simple
 rules of inference for real numbers.  You can select an expression in
@@ -121,14 +122,14 @@ current Prooftoys axioms and rules of inference.
 <p>
 Notes: In lines with hypotheses, like
 <blockquote>
-<s>n. 1, 2 &#x22a2; x = 4</s>
+<s>14. 1, 2 &#x22a2; x = 4</s>
 </blockquote>
 the number 1 is an abbreviation for the assumption introduced on line
 1, and the number 2 is an abbreviation for the assumption introduced
 on line 2.  So if line 1 assumes <s>x = y * 2</s> and line 2
 assumes <s>x + y = 6</s>, the whole line amounts to:
 <blockquote>
-<s>n. (x = y * 2) && (x + y = 6) ==> x = 4</s>
+<s>14. (x = y * 2) && (x + y = 6) ==> x = 4</s>
 </blockquote>
 <p>
 For additional background it may be helpful to read
