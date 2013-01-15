@@ -528,7 +528,7 @@ Expr.prototype.isInfixCall = function() {
 Expr.prototype.hasFreeName = function(name) {
   assert(typeof name == 'string', 'Not a name: ' + name);
   return this.freeNames().hasOwnProperty(name);
-}
+};
 
 /**
  * Returns a shallow copy of this, annotating the copy with the rule
