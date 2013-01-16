@@ -2,6 +2,9 @@
 
 YUI.add('step-editor', function(Y) {
 
+// Make application assertions available through "assert".
+var assert = Y.assertTrue;
+
 //// PROOF STEP EDITOR
 
 // CSS class names beginning with "sted-" are reserved to
@@ -83,12 +86,48 @@ var stepTypes = {
 };
 
 // Datatypes that refer to sites within a step.  None of these are
-// in formTypes.  Does not include term or varName.
+// in formTypes.
 var siteTypes = {
   site: true,
   bindingSite: true,
   reducible: true
 };
+
+/**
+ * Given a step, rendered or not, uses its rule information to return
+ * a list of paths used in it to refer to subexpressions of inputs.
+ */
+function stepPaths(step) {
+  assert(step.isStep(), 'Not a step: ' + step);
+  var results = [];
+  var args = step.ruleArgs;
+  eachArgType(step.ruleName, function(position, type) {
+      if (siteTypes.hasOwnProperty(type)) {
+        results.push(step.ruleArgs[position + 1]);
+      }
+    });
+  return results;
+}
+
+/**
+ * Given a step, rendered or not, uses its rule information to return a list
+ * of subexpressions of renderings of source steps that provided the input
+ * sites for this step.  Their nodes will contain the rendering of the sites.
+ */
+function stepSites(step) {
+  assert(step.isStep(), 'Not a step: ' + step);
+  var results = [];
+  var args = step.ruleArgs;
+  eachArgType(step.ruleName, function(position, type) {
+    if (siteTypes.hasOwnProperty(type)) {
+      var source = step.ruleArgs[position];
+      if (source.rendering) {
+        results.push(source.rendering.locate(step.ruleArgs[position + 1]));
+      }
+    }
+  });
+  return results;
+}
 
 /**
  * A ProofControl can have only one StepEditor.  It appears at the end
@@ -667,6 +706,8 @@ BasicRuleSelector.prototype.focus = function() {
 Y.profileName = '';
 
 Y.StepEditor = StepEditor;
+Y.stepPaths = stepPaths;
+Y.stepSites = stepSites;
 Y.eachArgType = eachArgType;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',
