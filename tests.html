@@ -1105,6 +1105,11 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.assert(result.hasHyps);
       },
 
+      testR5214: function() {
+        var inf = Y.rules.r5214();
+        assertEqual('((T & F) = F)', inf);
+      },
+
       testAndTBook: function() {
         var inf = Y.rules.andTBook(p);
         assertEqual('((T & p) = p)', inf);

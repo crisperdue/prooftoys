@@ -803,7 +803,7 @@ var ruleInfo = {
       var step13 = rules.apply(step12, '');
       // TODO: Infer by cases from 5229 (rules about '&').
       var step14 = rules.tautology('x & F == F');
-      var step15 = rules.instVar(step14, Y.parse('F = T'), 'x')
+      var step15 = rules.instEqn(step14, Y.parse('F = T'), 'x')
       var step16 = rules.r(step15, step13, '/right');
       return step16.justify('r5230FTBook');
     }
@@ -832,6 +832,11 @@ var ruleInfo = {
   // TODO: Is there a more elegant proof of this?
   r5230FT_alternate: {
     action: function() {
+      // Note: this uses instVar on facts of the form A ==> B,
+      // which is only supported by instVar by using fromTIsA and toTisA.
+      // It is applied to steps that have no hypotheses, but still
+      // instVar uses toTIsA (and fromTIsA).
+      // TODO: Confirm that this is all correct.
       var step1a = rules.instVar(rules.axiom('axiom2'), F, x);
       var step1b = rules.instVar(step1a, T, y);
       var step1c = rules.instVar(step1b, lambda(x, equal(x, F)), h);
@@ -860,7 +865,7 @@ var ruleInfo = {
       // Now use the cases rule:
       var step5 = rules.equationCases(step25, step14, x);
       // Then instantiate [F = T] for x.
-      var step6 = rules.instVar(step5, equal(F, T), x);
+      var step6 = rules.instEqn(step5, equal(F, T), x);
       // And use the fact that [F = T] ==> F
       var step7 = rules.rRight(step4, step6, '/left');
       var step8 = rules.fromTIsA(step7);
@@ -932,7 +937,7 @@ var ruleInfo = {
   r5214: {
     action: function() {
       var step1 = rules.axiom('axiom1');
-      var step2 = rules.instVar(step1, Y.parse('{x. x}'), 'g');
+      var step2 = rules.instEqn(step1, Y.parse('{x. x}'), 'g');
       var step3 = rules.apply(step2, '/right/arg/body');
       var step4 = rules.apply(step3, '/left/right');
       var step5 = rules.apply(step4, '/left/left');
