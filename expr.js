@@ -364,7 +364,7 @@ function Expr() {
   // Type analysis adds a "type" property.
   // 
   // If part of a proof, has properties set by the "justify" method.
-  // If has a rendered copy, has "rendering" property.
+  // If it has a rendered copy, has "rendering" property.
   //
   // If rendered, has a "node" property for an associated
   // DOM node (refers to a YUI Node).
@@ -867,7 +867,7 @@ Expr.prototype.locate = function(_path) {
  * Returns true iff this expression is a proof step.
  */
 Expr.prototype.isStep = function() {
-  // A property only proof steps have.
+  // A property only proof steps have.  Could also use "ordinal", etc..
   return !!this.ruleName;
 };
 
@@ -3349,6 +3349,16 @@ function repeatedCall(operator, indices) {
 }
 
 /**
+ * Logs an error; the message if that is truthy, otherwise
+ * the argument itself.
+ */
+function logError(err) {
+  if (window.console) {
+    window.console.log('Error: ' + (err.message || err));
+  }
+}
+
+/**
  * Call the given function passing no arguments.  Report any errors to
  * the user and to the console, then rethrow.
  */
@@ -3356,11 +3366,8 @@ function withErrorReporting(fn) {
   try {
     return fn();
   } catch(err) {
-    var message = 'Error: ' + err.message;
-    if (window.console) {
-      window.console.log(message);
-    }
-    window.alert(message);
+    logError(err);
+    window.alert(err.message);
     throw err;
   }
 }
@@ -3386,9 +3393,7 @@ function assertTrue(condition, message, step) {
     if (typeof message == 'function') {
       message = message();
     }
-    if (window.console) {
-      window.console.log(message);
-    }
+    logError(message);
     errors.push({message: message, step: step});
     throw new Error(message);
   }
@@ -3771,6 +3776,7 @@ Y._decodeArg = decodeArg;
 Y.tokenize = tokenize;
 Y.parse = parse;
 
+Y.logError = logError;
 Y.Expr.utils = utils;
 
 // For debugging
