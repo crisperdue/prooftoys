@@ -240,10 +240,6 @@ YUI.add('sample-proofs', function(Y) {
       args: [rules.assert(call('=', T, p))]
     },
     
-    forallT: {
-      args: [_var('v')]
-    },
-
     addForall: {
       args: [rules.assert(call(p, y)), y],
       level: 1

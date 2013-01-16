@@ -1084,35 +1084,15 @@ var ruleInfo = {
     comment: ('From T = A derives A')
   },
 
-  // Lemma helper for forallT, a pure theorem.
-  // proved here by extensionality, not using 5206.
-  forallVT: {
+  // Lemma helper for addForall, a pure theorem.
+  forallXT: {
     action: function() {
-      var step1 = rules.instEqn(rules.axiom('axiom3'), lambda(x, T), f);
-      var step2 = rules.instEqn(step1, lambda(_var('v'), T), g);
-      var step3 = rules.apply(step2, '/right/arg/body/left');
-      var step4 = rules.apply(step3, '/right/arg/body/right');
-      var step5 = rules.useDefinition(step4, '/right/fn');
-      var step6 = rules.bindEqn(rules.eqT(T), x);
-      var step7 = rules.rRight(step5, step6, '/');
+      var step1 = rules.eqSelf(Y.parse('{x. T}'));
       var fa = rules.definition('forall');
-      var result = rules.rRight(fa, step7, '/fn');
-      return result.justify('forallVT', arguments);
+      var result = rules.rRight(fa, step1, '/fn');
+      return result.justify('forallXT', arguments);
     },
-    comment: ('(forall {v | T})')
-  },
-
-  // Helper for addForall
-  // Derives (forall {v. T}) given a variable v.
-  forallT: {
-    action: function(v) {
-      var step1 = rules.theorem('forallVT');
-      var step2 = rules.changeVar(step1, '/arg', _var(v));
-      return step2.justify('forallT', arguments);
-    },
-    inputs: {varName: 1},
-    form: 'Variable to bind: <input name=varName>',
-    comment: ('(forall {v. T})')
+    comment: ('(forall {x. T})')
   },
 
   // 5220 (universal generalization).  From A deduces forall {v. A}.
@@ -1127,9 +1107,10 @@ var ruleInfo = {
 	     },
              h_a);
       var step1 = rules.toTIsA(h_a);
-      var step2 = rules.forallT(v);
-      var step3 = rules.replace(step1, step2, '/arg/body');
-      return step3.justify('addForall', arguments, [h_a]);
+      var step2 = rules.theorem('forallXT');
+      var step3 = rules.changeVar(step2, '/arg', v);
+      var step4 = rules.replace(step1, step3, '/arg/body');
+      return step4.justify('addForall', arguments, [h_a]);
     },
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable '
@@ -3269,7 +3250,7 @@ var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
 
 var theoremNames =
   (axiomNames.concat(['defFFromBook', 'r5217Book', 'r5225',
-                      'defAnd', 'tIsXIsX', 'forallVT', 'eqTLemma',
+                      'defAnd', 'tIsXIsX', 'forallXT', 'eqTLemma',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals']));
 
