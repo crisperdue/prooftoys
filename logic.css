@@ -261,6 +261,13 @@ table.proofDisplay {
   background-color: white;
  }
 
+/* The "site" class requests display of the expr as a
+   "site" input of a proof step.
+ */
+.proofStep .expr.site {
+  background-color: white;
+}
+
 .proofStep.selected {
   background-color: #FF6;
 }

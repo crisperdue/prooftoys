@@ -777,7 +777,7 @@ function renderAsStep(step) {
       wffNode.append(textNode(' ' + _turnstile + ' '));
     } else {
       // Must we make the wffNode if there are hyps, but none visible?
-      var wffNode = exprNode();
+      var wffNode = step.node = exprNode();
     }
     wffNode.append(renderMain(step));
     return wffNode;
@@ -1425,8 +1425,24 @@ function hoverStep(step, direction, proofNode, event) {
   // Always add or remove the "hover" class to the step node
   // as the mouse goes in or out.
   var stepNode = getStepNode(step.node);
-  action(stepNode, 'hover');
-  
+  action(stepNode, 'dep');
+
+  var selections = Y.stepSites(step);
+  // Highlight the input sites (subexpressions) of the step while hovered.
+  selections.forEach(function(expr) {
+    action(expr.node, 'site');
+  });
+
+  // Show the corresponding subexpressions of this step if possible.
+  // Note: this is likely to require overrides in some rules.
+  Y.stepPaths(step).forEach(function(path) {
+    try {
+      action(step.locate(path).node, 'site');
+    } catch(err) {
+      Y.logError(err);
+    }
+  });
+
   var overlay = getProofControl(step).hoverOverlay;
   if (Y.useHoverOverlays) {
     if (direction == 'in') {
