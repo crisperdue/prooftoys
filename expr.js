@@ -942,7 +942,7 @@ Expr.prototype.isHypotheses = function() {
 };
 
 /**
- * Treating this as a chain of hypotheses hk && h(k-1) && ... h1,
+ * Treating this as a chain of hypotheses hk & h(k-1) & ... h1,
  * given an expression that matches one of the hypotheses in the set,
  * builds an expression where "h" is in the position of the matched
  * hypotheses, and the rest are labeled hk ... h1 according to their

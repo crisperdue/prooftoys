@@ -869,7 +869,7 @@ var ruleInfo = {
     comment: ('[F = T] = F')
   },
 
-  // [T && T] = T.  Uses no book-specific definitions.
+  // [T & T] = T.  Uses no book-specific definitions.
   // Only used in 5212 and book version of 5216.
   r5211: function() {
     var step1 = rules.definition('&', T);
@@ -890,7 +890,7 @@ var ruleInfo = {
     return step4.justify('r5211Book');
   },
 
-  // T && T.  Uses no book-specific definitions.
+  // T & T.  Uses no book-specific definitions.
   // Used to prove equationCases.  The "cases" rule
   // and makeConjunction could treat this as a tautology.
   r5212: function() {
@@ -910,7 +910,7 @@ var ruleInfo = {
   },
 
   // Bookish: From theorems A = B and C = D, derives theorem
-  // [A = B] && [C = D].  Used in andTBook.
+  // [A = B] & [C = D].  Used in andTBook.
   r5213: function(a_b, c_d) {
     assertEqn(a_b);
     var a = a_b.locate('/left');
@@ -928,7 +928,7 @@ var ruleInfo = {
   },
 
 
-  // Bookish: T && F = F
+  // Bookish: T & F = F
   r5214: {
     action: function() {
       var step1 = rules.axiom('axiom1');
@@ -1212,7 +1212,7 @@ var ruleInfo = {
               + 'its value in the map')
   },
 
-  // Given two theorems a and b, proves a && b.
+  // Given two theorems a and b, proves a & b.
   // Handles hypotheses.
   // TODO: Move before "cases".
   makeConjunction: {
@@ -1359,7 +1359,7 @@ var ruleInfo = {
   },
 
   // Equates the given expression to a similar one where boolean terms
-  // are reduced.  (These are calls to =, &&, ||, ==>, or "not", and
+  // are reduced.  (These are calls to =, &, |, ==>, or "not", and
   // lambda expressions, with an argument of T or F.)  Reduces
   // repeatedly until no subexpression can be reduced.
   // TODO: Prove all the truth table facts and use them directly
@@ -1400,7 +1400,7 @@ var ruleInfo = {
                                  : 'falseEquals');
             result = rules.r(defn, result, '/right' + _path);
           } else {
-            // &&, ||, -->
+            // &, |, ==>
             result = rules.useDefinition(result, '/right' + _path);
           }
         } else if (fn instanceof Y.Lambda) {
@@ -1588,7 +1588,7 @@ var ruleInfo = {
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
-  // ((forall {v. A || B}) ==> A || (forall {v. B})).  Could run even if
+  // ((forall {v. A | B}) ==> A | (forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
   // This is Axiom Schema 5 of Andrews' first-order logic F.
   r5235: {
@@ -2022,7 +2022,7 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  // Simplify (h1 && h2) ==> p
+	  // Simplify (h1 & h2) ==> p
 	  var step4 = rules.mergeConjunctions(step2.locate('/left'));
 	  var step5 = rules.r(step4, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
@@ -2060,7 +2060,7 @@ var ruleInfo = {
   // the result is simply the given step.
   //
   // TODO: Combine this and appendStepHyps into one rule.  Consider a
-  //   rule that derives (H ==> step1rhs) && (H ==> step2rhs) from
+  //   rule that derives (H ==> step1rhs) & (H ==> step2rhs) from
   //   step1 and step2.  H will be the merger of the hypotheses.
   prependStepHyps: {
     action: function(target, hypStep) {
@@ -2080,7 +2080,7 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  // Simplify (h1 && h2) ==> p
+	  // Simplify (h1 & h2) ==> p
           var pattern = rules.mergeConjunctions(step2.getLeft());
           var step5 = rules.rewrite(step2, '/left', pattern);
           // Rendering of result needs hypStep rendered, so include it as dep.
@@ -2134,9 +2134,9 @@ var ruleInfo = {
   },
 
   // NOTE: A chain of conjuncts (or other binary operator) is an
-  // expression that can be written a && b && ... && z.  An expression
+  // expression that can be written a & b & ... & z.  An expression
   // that does not have the operator at top-level is a chain of one
-  // conjunct.  A chain of two elements is of the form a && b, where a
+  // conjunct.  A chain of two elements is of the form a & b, where a
   // itself is a chain.
   
   // Given a chain of at least two conjunctions, derives an equation
@@ -2154,15 +2154,15 @@ var ruleInfo = {
 	var expr = eqn.getRight();
 	var a = expr.getLeft();
 	var b = expr.getRight();
-        // expr is a && b
+        // expr is a & b
 	if (a.isCall2('&')) {
-          // expr is a && b && c
+          // expr is a & b & c
 	  var c = b;
 	  b = a.getRight();
 	  a = a.getLeft();
-	  // Eqn is lhs = (a && b) && c
+	  // Eqn is lhs = (a & b) & c
 	  if (b.matches(c)) {
-            // RHS is a && b && b
+            // RHS is a & b & b
 	    var simpler =
               rules.rewrite(eqn, '/right',
                             rules.tautology('a & b & b == a & b'));
@@ -2174,9 +2174,9 @@ var ruleInfo = {
             var map = expr.findSubst(assoc.getLeft());
             var assocInstance = rules.instMultiVars(assoc, map);
 	    var step1 = rules.r(assocInstance, eqn, '/right');
-	    // Then recursively bubble the C in A && C to its proper place.
+	    // Then recursively bubble the C in A & C to its proper place.
 	    var step2 = rules.bubbleLeft(step1.locate('/right/left'), less);
-	    // Replace the A && C in RHS of step1 with the result.
+	    // Replace the A & C in RHS of step1 with the result.
 	    var step3 = rules.r(step2, step1, '/right/left');
             // and replace the RHS of the argument with the final esult.
 	    return rules.r(step3, eqn, '/right');
@@ -2185,7 +2185,7 @@ var ruleInfo = {
 	    return eqn;
 	  }
 	} else {
-	  // Base case: Eqn is lhs = a && b.
+	  // Base case: Eqn is lhs = a & b.
 	  if (a.matches(b)) {
 	    return rules.rewrite(eqn, '/right',
                                  rules.tautology('a & a == a'));
@@ -2290,7 +2290,7 @@ var ruleInfo = {
   extractHypothesis: {
     // TODO: Make a version that runs in much less than exponential
     // time.  You can use the same tautology down to some depth and
-    // combine it with ones resembling (h && h1) = (h && h1 && h) to
+    // combine it with ones resembling (h & h1) = (h & h1 & h) to
     // piece together larger tautologies.
     action: function(step, hyp) {
       var infix = Y.infixCall;
@@ -2517,9 +2517,9 @@ var ruleInfo = {
   //
   // Real numbers
   // 
-  // Assumptions (R x) && (R y), etc. are in the form:
+  // Assumptions (R x) & (R y), etc. are in the form:
   // (A1 ==> (A2 ==> <equation>)) to simplify introducing them from
-  // the hypotheses.  This is equivalent to A1 && A2 ==> <equation>.
+  // the hypotheses.  This is equivalent to A1 & A2 ==> <equation>.
 
   axiomCommutativePlus: {
     action: function() {
@@ -2820,10 +2820,10 @@ var ruleInfo = {
             var proved = rules.justifyNumericType(goal);
             if (proved) {
               var taut = rules.tautology('(a ==> b) == (a & b == a)');
-              // otherHyps && hyp == otherHyps:
+              // otherHyps & hyp == otherHyps:
               var subsumption = rules.rewrite(proved, '', taut);
               var ab = subsumption.getLeft();
-              // hyps = otherHyps && hyp:
+              // hyps = otherHyps & hyp:
               var step1 = rules.equalConjunctions(infix(hyps, '=', ab));
               // So hyps = otherHyps:
               var step2 = rules.r(subsumption, step1, '/right');
