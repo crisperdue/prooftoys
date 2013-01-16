@@ -3041,35 +3041,37 @@ var ruleInfo = {
 var rewriters = {
   commutePlus: {
     axiom: 'axiomCommutativePlus',
-    description: 'commutative addition'
+    description: '[x + y = y + x]'
   },
   commuteTimes: {
     axiom: 'axiomCommutativeTimes',
-    description: 'commutative multiplication'
+    description: '[x * y = y * x]'
   },
   associatePlusToLeft: {
     axiom: 'axiomAssociativePlus',
-    description: 'associative addition'
+    description: '[x + (y + z) = (x + y) + z]'
   },
   associatePlusToRight: {
     axiom: 'axiomAssociativePlus',
-    description: 'associative addition',
+    description: '[(x + y) + z = x + (y + z)]',
     input: 'right'
   },
   associateTimesToLeft: {
     axiom: 'axiomAssociativeTimes',
-    description: 'associative multiplication'
+    description: '[x * (y * z) = (x * y) * z]'
   },
   associateTimesToRight: {
     axiom: 'axiomAssociativeTimes',
-    description: 'associative multiplication',
+    description: '[(x * y) * z = x * (y * z)]',
     input: 'right'
   },
   distribute: {
-    axiom: 'axiomDistributivity'
+    axiom: 'axiomDistributivity',
+    description: '[x * (y + z) = (x * y) + (x * z)]'
   },
   group: {
     axiom: 'axiomDistributivity',
+    description: '[(x * y) + (x * z) = x * (y + z)]',
     input: 'right'
   },
   plusZeroElim: {
