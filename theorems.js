@@ -38,7 +38,7 @@ var _allHyps = {};
 //   of the step editor.
 // comment: plain text comment to become the title of mentions of the rule
 //   name in proof displays and the description in subproof displays.
-// description: word or phrase to display for the rule name.
+// description: HTML word or phrase to display for the rule name.
 
 var ruleInfo = {
 
@@ -3041,68 +3041,68 @@ var ruleInfo = {
 var rewriters = {
   commutePlus: {
     axiom: 'axiomCommutativePlus',
-    description: '[x + y = y + x]'
+    description: Toy.mathMarkup('[x + y = y + x]')
   },
   commuteTimes: {
     axiom: 'axiomCommutativeTimes',
-    description: '[x * y = y * x]'
+    description: Toy.mathMarkup('[x * y = y * x]')
   },
   associatePlusToLeft: {
     axiom: 'axiomAssociativePlus',
-    description: '[x + (y + z) = (x + y) + z]'
+    description: Toy.mathMarkup('[x + (y + z) = (x + y) + z]')
   },
   associatePlusToRight: {
     axiom: 'axiomAssociativePlus',
-    description: '[(x + y) + z = x + (y + z)]',
+    description: Toy.mathMarkup('[(x + y) + z = x + (y + z)]'),
     input: 'right'
   },
   associateTimesToLeft: {
     axiom: 'axiomAssociativeTimes',
-    description: '[x * (y * z) = (x * y) * z]'
+    description: Toy.mathMarkup('[x * (y * z) = (x * y) * z]')
   },
   associateTimesToRight: {
     axiom: 'axiomAssociativeTimes',
-    description: '[(x * y) * z = x * (y * z)]',
+    description: Toy.mathMarkup('[(x * y) * z = x * (y * z)]'),
     input: 'right'
   },
   distribute: {
     axiom: 'axiomDistributivity',
-    description: '[x * (y + z) = (x * y) + (x * z)]'
+    description: Toy.mathMarkup('[x * (y + z) = (x * y) + (x * z)]')
   },
   group: {
     axiom: 'axiomDistributivity',
-    description: '[(x * y) + (x * z) = x * (y + z)]',
+    description: Toy.mathMarkup('[(x * y) + (x * z) = x * (y + z)]'),
     input: 'right'
   },
   plusZeroElim: {
     axiom: 'axiomPlusZero',
-    description: '[x + 0 = x]'
+    description: Toy.mathMarkup('[x + 0 = x]')
   },
   plusZeroIntro: {
     axiom: 'axiomPlusZero',
-    description: '[x = x + 0]',
+    description: Toy.mathMarkup('[x = x + 0]'),
     input: 'right'
   },
   timesOneElim: {
     axiom: 'axiomTimesOne',
-    description: '[x * 1 = x]'
+    description: Toy.mathMarkup('[x * 1 = x]')
   },
   timesOneIntro: {
     axiom: 'axiomTimesOne',
-    description: '[x = x * 1]',
+    description: Toy.mathMarkup('[x = x * 1]'),
     input: 'right'
   },
   timesZeroElim: {
     axiom: 'axiomTimesZero',
-    description: '[x * 0 = 0]'
+    description: Toy.mathMarkup('[x * 0 = 0]')
   },
   plusNegElim: {
     axiom: 'axiomNeg',
-    description: '[x + neg x = 0]'
+    description: Toy.mathMarkup('[x + neg x = 0]')
   },
   timesRecipElim: {
     axiom: 'axiomReciprocal',
-    description: '[x * recip x = 1]'
+    description: Toy.mathMarkup('[x * recip x = 1]')
   }
 };  
 
