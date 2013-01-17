@@ -312,6 +312,14 @@ span.ruleName .math {
   border-color: transparent;
 }
 
+span.assumptions {
+  font-family: sans-serif;
+  /* like stepInfo */
+  color: gray;
+  font-size: 90%;
+  margin-right: .4em;
+}
+
 /* When hovering over an expression */
 .proofStep .expr.hovered {
   background-color: #ffffaa;

@@ -774,7 +774,6 @@ function renderAsStep(step) {
     }
     if (hyps) {
       var wffNode = step.node = renderHyps(step.getLeft());
-      wffNode.append(textNode(' ' + _turnstile + ' '));
     } else {
       // Must we make the wffNode if there are hyps, but none visible?
       var wffNode = step.node = exprNode();
@@ -821,7 +820,8 @@ function renderMain(step) {
  * a new Expr node..
  */
 function renderHyps(expr) {
-  var mainNode = exprNode();
+  var topNode = exprNode();
+  var hypsNode;
   if (Y.suppressRealTypeDisplays) {
     expr = omittingReals(expr);
   }
@@ -831,26 +831,29 @@ function renderHyps(expr) {
       // Note that this requires the unrendered proof step to be already
       // linked to a rendering with proper stepNumber:
       node.append(expr.sourceStep.rendering.stepNumber);
-      mainNode.append(node);
+      hypsNode.append(node);
     } else if (expr.isCall2('&')) {
       render(expr.getLeft());
-      mainNode.append(textNode(', '));
+      hypsNode.append(textNode(', '));
       var rhs = expr.getRight();
       if (rhs.isCall2('&')) {
-        mainNode.append(textNode('('));
+        hypsNode.append(textNode('('));
         render(rhs);
-        mainNode.append(textNode(')'));
+        hypsNode.append(textNode(')'));
       } else {
         render(rhs);
       }
     } else {
-      mainNode.append(expr._render(true));
+      hypsNode.append(expr._render(true));
     }
   }
   if (expr) {
+    hypsNode = Y.Node.create('<span class=assumptions></span>');
     render(expr);
+    hypsNode.append(':');
+    topNode.append(hypsNode);
   }
-  return mainNode;
+  return topNode;
 }
 
 /**
