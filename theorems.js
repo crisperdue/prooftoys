@@ -3036,73 +3036,78 @@ var ruleInfo = {
 
 };  // End of theorems and rules
 
+// Math markup in the position of a rule name.
+function mathMarkup(text) {
+  return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
+}
+
 // Descriptions of rewrite rules; internal.  Each of these generates
 // an actual inference rule.
 var rewriters = {
   commutePlus: {
     axiom: 'axiomCommutativePlus',
-    description: Toy.mathMarkup('[x + y = y + x]')
+    description: mathMarkup('x + y = y + x')
   },
   commuteTimes: {
     axiom: 'axiomCommutativeTimes',
-    description: Toy.mathMarkup('[x * y = y * x]')
+    description: mathMarkup('x * y = y * x')
   },
   associatePlusToLeft: {
     axiom: 'axiomAssociativePlus',
-    description: Toy.mathMarkup('[x + (y + z) = (x + y) + z]')
+    description: mathMarkup('x + (y + z) = (x + y) + z')
   },
   associatePlusToRight: {
     axiom: 'axiomAssociativePlus',
-    description: Toy.mathMarkup('[(x + y) + z = x + (y + z)]'),
+    description: mathMarkup('(x + y) + z = x + (y + z)'),
     input: 'right'
   },
   associateTimesToLeft: {
     axiom: 'axiomAssociativeTimes',
-    description: Toy.mathMarkup('[x * (y * z) = (x * y) * z]')
+    description: mathMarkup('x * (y * z) = (x * y) * z')
   },
   associateTimesToRight: {
     axiom: 'axiomAssociativeTimes',
-    description: Toy.mathMarkup('[(x * y) * z = x * (y * z)]'),
+    description: mathMarkup('(x * y) * z = x * (y * z)'),
     input: 'right'
   },
   distribute: {
     axiom: 'axiomDistributivity',
-    description: Toy.mathMarkup('[x * (y + z) = (x * y) + (x * z)]')
+    description: mathMarkup('x * (y + z) = (x * y) + (x * z)')
   },
   group: {
     axiom: 'axiomDistributivity',
-    description: Toy.mathMarkup('[(x * y) + (x * z) = x * (y + z)]'),
+    description: mathMarkup('(x * y) + (x * z) = x * (y + z)'),
     input: 'right'
   },
   plusZeroElim: {
     axiom: 'axiomPlusZero',
-    description: Toy.mathMarkup('[x + 0 = x]')
+    description: mathMarkup('x + 0 = x')
   },
   plusZeroIntro: {
     axiom: 'axiomPlusZero',
-    description: Toy.mathMarkup('[x = x + 0]'),
+    description: mathMarkup('x = x + 0'),
     input: 'right'
   },
   timesOneElim: {
     axiom: 'axiomTimesOne',
-    description: Toy.mathMarkup('[x * 1 = x]')
+    description: mathMarkup('x * 1 = x')
   },
   timesOneIntro: {
     axiom: 'axiomTimesOne',
-    description: Toy.mathMarkup('[x = x * 1]'),
+    description: mathMarkup('x = x * 1'),
     input: 'right'
   },
   timesZeroElim: {
     axiom: 'axiomTimesZero',
-    description: Toy.mathMarkup('[x * 0 = 0]')
+    description: mathMarkup('x * 0 = 0')
   },
   plusNegElim: {
     axiom: 'axiomNeg',
-    description: Toy.mathMarkup('[x + neg x = 0]')
+    description: mathMarkup('x + neg x = 0')
   },
   timesRecipElim: {
     axiom: 'axiomReciprocal',
-    description: Toy.mathMarkup('[x * recip x = 1]')
+    description: mathMarkup('x * recip x = 1')
   }
 };  
 

@@ -207,7 +207,7 @@ table.proofDisplay {
 .proofStep {
     clear: both;
     background-color: #F0F0DA;
-    font-family: STIXGeneral;
+    font-family: STIXGeneral, times, serif;
     padding: 2px;
     margin: 1px 0px;
     /* If needed to avoid undesired text selection:
@@ -294,13 +294,15 @@ span.stepReference.referenced {
   border-color: #88F;
 }
 
+/* Rule name (or fact used for rewriting) */
 span.ruleName {
   color: #55F;
   cursor: pointer;
 }
 
-span.stepReference {
-  font-style: italic;
+span.ruleName .math {
+  font-family: STIXGeneral, times, serif;
+  font-size: 100%;
 }
 
 /* Expression in a proof step display, and step numbers */
