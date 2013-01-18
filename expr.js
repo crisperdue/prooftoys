@@ -3190,6 +3190,7 @@ var unicodeNames = {
   '>=': '\u2265',
   '*': '\u22c5',      // &sdot;
   '-': '\u2212',      // &minus;
+  '/': '\u2215',      // division slash
   'forall': '\u2200',
   'exists': '\u2203'
 };
