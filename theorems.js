@@ -600,6 +600,7 @@ var ruleInfo = {
       var result = rules.replace(equation, step, path);
       return result.justify('apply', [step, path], [step]);
     },
+    isRewriter: true,
     inputs: {site: 1},
     form: '',
     hint: 'Apply a function to its argument',
@@ -2744,6 +2745,7 @@ var ruleInfo = {
       }
       return result.justify('arithmetic', arguments, [step]);
     },
+    isRewriter: true,
     inputs: {site: 1},
     form: '',
     comment: 'Evaluate arithmetic expression'
@@ -3139,6 +3141,8 @@ function genRewriters(map) {
     }
     // Add this info to ruleInfo:
     ruleInfo[name] = {
+      // Highlight sites in inputs as usual for rewrite rules.
+      isRewriter: true,
       // Add the axiom and the rule name to all calls to the action
       // function.
       action: Y.rbind(generators[input], null, info.axiom, name),
