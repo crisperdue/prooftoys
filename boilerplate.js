@@ -86,7 +86,7 @@ Toy.mathMarkup = function(text) {
   // Substitutions for "forall" and "exists" consume a trailing blank,
   // helping to push them up next to following text.
   var rex =
-    /==>|==|!=|>=|<=|-|[*]|\bforall( |\b)|\bexists( |\b)|[_a-zA-Z][_a-zA-Z0-9]*/g;
+    /==>|==|!=|>=|<=|-|[*]|[/]|\bforall( |\b)|\bexists( |\b)|[_a-zA-Z][_a-zA-Z0-9]*/g;
   return text.replace(rex, function(s) {
     switch(s) {
     case '==>': return '&rArr;';
@@ -96,6 +96,7 @@ Toy.mathMarkup = function(text) {
     case '<=': return '&le;';
     case '-': return '&minus;';
     case '*': return '&sdot;';
+    case '/': return '&#x2215;';          // Division slash
     case 'forall': return '&forall;';
     case 'forall ': return '&forall;';
     case 'exists': return '&exist;';
