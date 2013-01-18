@@ -260,7 +260,7 @@ ProofEditor.prototype.setEditable = function(value) {
  * Other properties should be considered private.
  *
  * A step is an Expr, either rendered or unrendered.  Unrendered steps
- * are the top-level expressions of a proof, with properties added by
+ * are the top-level sentences of a proof, with properties added by
  * Expr.justify.
  *
  * Note that the stepNumber property of a step depends on its position
@@ -648,8 +648,8 @@ function renderStep(step, controller) {
   // Set up "hover" event handling on the stepNode.
   stepNode.on('hover',
               // Call "hover", passing these arguments as well as the event.
-              Y.bind(hoverStep, null, step, 'in', stepsNode),
-              Y.bind(hoverStep, null, step, 'out', stepsNode));
+              Y.bind(hoverStep, null, step, 'in'),
+              Y.bind(hoverStep, null, step, 'out'));
 
   var deleter = stepNode.one('.deleteStep');
   if (deleter) {
@@ -664,15 +664,10 @@ function renderStep(step, controller) {
         // Is it the last step or the user says OK?
         if (controller.steps.indexOf(step) >= controller.steps.length - 1 ||
             window.confirm(msg)) {
+          // Fix up all highlighting by pretending the mouse moved out.
+          // Deleting the node will not trigger the mouse out event.
+          hoverStep(step, 'out');
           controller.removeStepAndFollowing(step);
-          // Unmark all steps as dependencies.  They might be dependencies
-          // of a deleted step.  Moving the mouse will get highlighting
-          // started again.
-          // TODO: Consider whether this action should be part of
-          //   ProofControl._removeStep.
-          Y.each(controller.steps, function(step) {
-              getStepNode(step).removeClass('dep');
-            });
           controller.proofChanged();
         }
       });
@@ -1051,17 +1046,13 @@ function unrenderedDeps(step) {
 }
 
 /**
- * Renders details of the given rendered proof step and set the
+ * Renders details of the given rendered proof step and sets the
  * subproofControl property of the step to the ProofControl for the
  * subproof.
  */
 function renderSubproof(step) {
   var controller = getProofControl(step);
   Y.each(controller.steps, clearSubproof);
-  var proof = step.node.ancestor('.proofDisplay');
-  var display = proof.ancestor('.inferenceDisplay') || proof;
-  // TODO: Flag the parent as "proofContainer" and simply search for that.
-  var parent = display.get('parentNode');
   var node;
   if (step.ruleName == 'theorem') {
     node = renderInference(Y.getTheorem(step.ruleArgs[0]));
@@ -1069,8 +1060,9 @@ function renderSubproof(step) {
     node = renderInference(step);
   }
   step.subproofControl = node.getData('proofControl');
-  // Actually, append it to the top node of the proof + subproofs.
-  parent.append(node);
+  // Append it to the top node of the proof + subproofs.
+  var container = getTopProofContainer(step);
+  container.append(node);
 }
 
 /**
@@ -1156,7 +1148,7 @@ function fancyName(expr) {
 
 /**
  * Given a rendered proof step, renders a header and the proof steps
- * of its as-yet-unrendered details. within a container DIV with CSS
+ * of its as-yet-unrendered details within a container DIV with CSS
  * class inferenceDisplay.  Sets the 'proofControl' data property of
  * the node to refer to the new ProofControl.
  *
@@ -1330,6 +1322,20 @@ function getStepsNode(node) {
 }
 
 /**
+ * Get the parent node containing the top-level proof and subproofs
+ * where this rendered expr can be found.  That parent node is currently
+ * not part of a ProofControl, but by convention should contain only
+ * the top-level proof and its subproofs.
+ */
+function getTopProofContainer(expr) {
+  var proof = expr.node.ancestor('.proofDisplay');
+  var display = proof.ancestor('.inferenceDisplay') || proof;
+  // TODO: Flag the parent as "proofContainer" and simply search for that.
+  var parent = display.get('parentNode');
+  return parent;
+}
+
+/**
  * Gets the ProofControl of a rendered term or step, or the node of
  * one.
  */
@@ -1416,22 +1422,64 @@ function removeClass(node, className) {
 
 /**
  * Event handler for "hover" events on proof steps.
- * Adds or removes highlighting for the step.
- *
- * <p>Event is the mouse event.  Proof is the containing proof,
- * index is the step index, direction is "in" or "out", and
- * proofNode is the DOM node of the proof.
+ * Adds or removes highlighting for the step based on the direction.
  */
-function hoverStep(step, direction, proofNode, event) {
-  var align = Y.WidgetPositionAlign;
+function hoverStep(step, direction) {
   var action = direction == 'in' ? addClass : removeClass;
+
   // Always add or remove the "hover" class to the step node
   // as the mouse goes in or out.
   var stepNode = getStepNode(step.node);
-  action(stepNode, 'dep');
+  action(stepNode, 'hover');
 
+  doHoverOverlay(step, direction);
+
+  // When entering a step, highlight all references to it.
+  // When leaving remove highlights from all references.
+  var container = getTopProofContainer(step);
+  container.all('span.stepReference').each(function(node) {
+    if (direction == 'in') {
+      if (node.get('innerHTML') == step.stepNumber) {
+        node.addClass('referenced');
+      }
+    } else {
+      node.removeClass('referenced');
+    }
+  });
+
+  // Rule-specific hover actions, or default.
+  var handler = getHoverHandler(step);
+  if (handler) {
+    // If there is a hover handler for this type of inference, apply it.
+    handler(step, action);
+  } else {
+    // If no handler apply or remove default highlighting.
+    Y.each(step.ruleDeps, function(dep) {
+      action(getStepNode(dep.rendering), 'dep');
+    });
+  }
+}
+
+/**
+ * Returns a hover handler function for the step if any, or null.
+ */
+function getHoverHandler(step) {
+  var handler = hoverHandlers[step.ruleName];
+  if (handler) {
+    return handler;
+  } else if (Y.rules[step.ruleName].info.isRewriter) {
+    return hoverAsRewriter;
+  } else {
+    return null;
+  }
+}
+
+/**
+ * Highlights input sites as usual for rewrite rules.
+ */
+function hoverAsRewriter(step, action) {
   var selections = Y.stepSites(step);
-  // Highlight the input sites (subexpressions) of the step while hovered.
+  // Highlight the input sites expressions for the step while hovered.
   selections.forEach(function(expr) {
     action(expr.node, 'site');
   });
@@ -1445,39 +1493,23 @@ function hoverStep(step, direction, proofNode, event) {
       Y.logError(err);
     }
   });
+}
 
-  var overlay = getProofControl(step).hoverOverlay;
+/**
+ * If enabled, build and show a "hover overlay" on hover, hide on exit.
+ */
+function doHoverOverlay(step, direction) {
   if (Y.useHoverOverlays) {
+    var align = Y.WidgetPositionAlign;
+    var overlay = getProofControl(step).hoverOverlay;
     if (direction == 'in') {
       overlay.set('align', {
-          node: stepNode, points: [align.TR, align.BR]});
+          node: getStepNode(step.node), points: [align.TR, align.BR]});
       overlay.set('bodyContent', computeExtraArgInfo(step));
       overlay.show();
     } else {
       overlay.hide();
     }
-  }
-
-  // When entering a step, highlight all references to it.
-  // When leaving remove highlights from all references.
-  proofNode.all('span.stepReference').each(function(node) {
-      if (direction == 'in') {
-        if (node.get('innerHTML') == step.stepNumber) {
-          node.addClass('referenced');
-        }
-      } else {
-        node.removeClass('referenced');
-      }
-    });
-  var handler = hoverHandlers[step.ruleName];
-  // If no handler apply or remove default highlighting.
-  Y.each(step.ruleDeps, function(dep) {
-      action(getStepNode(dep.rendering), 'dep');
-    });
-  if (handler) {
-    // If there is a hover handler for this type of inference, apply it.
-    handler(step, action);
-    // TODO: Let the default "dep" management below apply in all cases.
   }
 }
 
@@ -1485,14 +1517,10 @@ function hoverStep(step, direction, proofNode, event) {
  * Hover handler for "r" and "replace".
  */
 function hoverReplace(step, action) {
-   var args = step.original.ruleArgs;
-   var eqn = args[0].rendering.unHyp();
-   var target = args[1].rendering;
-   var path = args[2];
-   action(target.locate(path).node, 'old');
-   action(step.locate(path).node, 'new');
-   action(eqn.getLeft().node, 'old');
-   action(eqn.getRight().node, 'new');
+  hoverAsRewriter(step, action);
+  var args = step.original.ruleArgs;
+  var eqnStep = args[0].rendering;
+  action(getStepNode(eqnStep), 'dep');
 }
 
 // Arguments to the handler functions are an inference
@@ -1500,16 +1528,7 @@ function hoverReplace(step, action) {
 var hoverHandlers = {
   r: hoverReplace,
   replace: hoverReplace,
-  rRight: function(step, action) {
-    var args = step.original.ruleArgs;
-    var eqn = args[0].rendering;
-    var target = args[1].rendering;
-    var path = args[2];
-    action(target.locate(path).node, 'old');
-    action(step.locate(path).node, 'new');
-    action(eqn.getRight().node, 'old');
-    action(eqn.getLeft().node, 'new');
-  },
+  rRight: hoverReplace,
   axiom4: function(step, action) {
     var call = step.getLeft();
     action(call.arg.node, 'new');
@@ -1522,35 +1541,7 @@ var hoverHandlers = {
                    step.getRight(),
                    function(expr) { action(expr.node, 'new'); });
   },
-  apply: function(step, action) {
-    var args = step.original.ruleArgs;
-    var dep = args[0].rendering;
-    var path = args[1];
-    var call = dep.locate(path);
-    var result = step.locate(path);
-    if (call.fn instanceof Y.Lambda) {
-      var target = call.fn.body;
-      var varName = call.fn.bound.name;
-      action(call.arg.node, 'new');
-      action(target.node, 'scope');
-      action(result.node, 'scope');
-      target.findAll(varName,
-                     function(v) { action(v.node, 'occur'); },
-                     result,
-                     function(expr) { action(expr.node, 'new'); });
-    } else {
-      action(call.node, 'occur');
-      action(result.node, 'scope');
-    }
-  },
-  useDefinition: function(step, action) {
-    var args = step.original.ruleArgs;
-    var target = args[0].rendering;
-    var path = args[1];
-    action(target.node, 'dep');
-    action(target.locate(path).node, 'old');
-    action(step.locate(path).node, 'new');
-  },
+  useDefinition: hoverReplace,
   instEqn: function(step, action) {
     var args = step.original.ruleArgs;
     // Input equation.
