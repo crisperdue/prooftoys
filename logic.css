@@ -257,7 +257,7 @@ table.proofDisplay {
 
 /* Highlighting of parts of proof steps */
 
-.proofStep.hover, .proofStep.dep .stepNumber {
+.proofStep.dep .stepNumber {
   background-color: white;
  }
 
