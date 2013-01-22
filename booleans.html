@@ -101,8 +101,8 @@ the reasoning about boolean functions and tautologies in Prooftoys.
 
 <h3 id=summary>Summary for the impatient</h3>
 <p>
-The basic logical concepts of <code>and</code>, <code>or</code>,
-<code>not</code>, and <code>implies</code> can
+The basic logical concepts of <em>and</em>, <em>or</em>,
+<em>not</em>, and <em>implies</em> can
 all be expressed as functions from boolean values to boolean values,
 and truth tables capture their essence as functions.
 <p>
@@ -137,8 +137,9 @@ or has the property of being blue, often says it is a member of the
 set of points that are blue.  In mathematics, properties are also
 often referred to as <i>predicates</i>.  These are all just different
 ways of describing the same situation.  (Note: a predicate can also
-express a relationship between two or more things, as in <code>x &lt;
-y</code>, where <code>&lt;</code> is a predicate.)
+express a relationship between two or more things, as in
+<s>x &lt; y</s>.  In this case <s>&lt;</s>
+is a predicate.)
 <p>
 Sets of things with some common property are shown as a circle, part
 of a circle, or other region of this world, shaded with a particular
@@ -149,8 +150,8 @@ generally colored.  Areas where a statement is <i>not true</i> are
 usually white or gray.
 <p>
 In our version of mathematical notation we are going to write
-<code>(green x)</code> to mean that x is green, <code>(blue x)</code>
-to mean that x is blue, and so on.
+<s>(green x)</s> to mean that x is green,
+<s>(blue x)</s> to mean that x is blue, and so on.
 <p>
 Some of the pictures are near tables that define key functions.
 Moving the mouse over one of these pictures or touching it on a touch
@@ -165,60 +166,62 @@ screen will cause the relevant table entries to highlight themselves.
 
 <h4>Functions</h4>
 <p>
-In mathematics a function named <code>f</code> is often defined
+In mathematics a function named <s>f</s> is often defined
 with a statement like this:
 <blockquote>
-<code>f(x) = x + 1</code>
+<s>f(x) = x + 1</s>
 </blockquote>
 
 In our notation we write:
 <blockquote>
-<code>(f x) = x + 1</code><br>
+<s>(f x) = x + 1</s><br>
+</blockquote>
+or omit the parentheses around the function call, like this:
+<blockquote>
+<s>f x = x + 1</s><br>
 </blockquote>
 
 So:
 <blockquote>
-<code>
-(f 0) = 1<br>
-(f 1) = 2<br>
-(f 2) = 3
-</code>
+<s>
+f 0 = 1<br>
+f 1 = 2<br>
+f 2 = 3
+</s>
 </blockquote>
-
 and so on.  A function produces a result value given an input value or
-values.  The addition function (<code>+</code>) for example takes two
-numbers as input and gives a number as its result, as in <code>3 + 5 =
-8</code>.  The function <code>f</code> above takes a number as input
-and produces a number as its result.  The value of a function can
-depend only on its inputs, nothing else.  And given the same inputs on
-different occasions any mathematical function must have the same
-result each time.
+values.  The addition function (<s>+</s>) for example
+takes two numbers as input and gives a number as its result, as in
+<s>3 + 5 = 8</s>.  The function <s>f</s> above takes a
+number as input and produces a number as its result.  The value of a
+function can depend only on its inputs, nothing else.  And given the
+same inputs on different occasions any mathematical function must have
+the same result each time.
 <p>
 A function can have the same result regardless of the input, for
-example the function defined by <code>(f x) = 1</code>.  A function of
+example the function defined by <s>(f x) = 1</s>.  A function of
 this sort is a <i>constant function</i> because its result does not
 vary with different inputs.  But no function can give different
 results given the same inputs twice.
 
 <h4>True and false as values</h4>
 <p>
-In our logic there are values <code>true</code> and
-<code>false</code>, known as <i>truth values</i>.  These are often
+In our logic there are values <s>true</s> and
+<s>false</s>, known as <i>truth values</i>.  These are often
 referred to as boolean values in honor of
 <a href="http://en.wikipedia.org/wiki/George_Boole" target=_blank>
 George Boole</a>,
 a pioneer in the development of these ideas.
-<p>
-When we write something like <code>(green x)</code>, 
-<code>(blue x)</code>, or <code>(yellow x)</code>, the words
-<code>green</code>, <code>blue</code>, and <code>yellow</code>
-represent functions that produce a value of <code>true</code>
-or <code>false</code>.  The function <code>blue</code> for example
-produces a value of <code>true</code> or <code>false</code> depending
+<p> When we write something like <s>(green x)</s>, 
+<s>(blue x)</s>, or <s>(yellow x)</s>, the words
+<s>green</s>, <s>blue</s>, and <s>yellow</s>
+represent functions that produce a value of <s>true</s>
+or <s>false</s>.  The function <s>blue</s> for example
+produces a value of <s>true</s> or <s>false</s> depending
 on whether its input is blue or not.
 <p>
 <i>In other words, predicates are functions that produce values that
-are <code>true</code> or <code>false</code>.</i>
+are <s>true</s> or <s>false</s>.</i>
 <p>
 Our introduction to basic logic focuses on mathematical functions that
 have truth values as their inputs and a truth value as their result.
@@ -227,10 +230,10 @@ functions</i>.
 
 <h2 id=negation>Untrue: "not"</h2>
 <p>
-The simplest of these functions is called <code>not</code>, also known
+The simplest of these functions is called <s>not</s>, also known
 as negation.  Negation provides a way to talk about things that do not
 have a certain property, ones that are not in a certain set, or where
-the value of a predicate is <code>false</code>.  In our logic, these
+the value of a predicate is <s>false</s>.  In our logic, these
 are all just different ways of expressing the same idea.
 <p>
 The next group of pictures illustrate negation.  The parts of the
@@ -246,16 +249,16 @@ picture they had the property of being
 <p>
 So every point that was colored (true) in the first set of pictures is
 white (false) here and each point that was white (false) in the first
-set is shaded (true) here.  we can treat <code>not</code> as a
-function that takes <code>true</code> or <code>false</code> as its
-input and produces a value of <code>true</code> or <code>false</code>.
+set is shaded (true) here.  we can treat <s>not</s> as a
+function that takes <s>true</s> or <s>false</s> as its
+input and produces a value of <s>true</s> or <s>false</s>.
 This behavior can be defined with a table.  You can look up the value
-of <code>not x</code> by going to the row labeled with the value of
-<code>x</code>, either <code>true</code> or <code>false</code>.
+of <s>not x</s> by going to the row labeled with the value of
+<s>x</s>, either <s>true</s> or <s>false</s>.
 <p>
 <table class=binaryTruthTable id=negationTable>
  <tr>
-  <th rowspan=2><code>x</code>
+  <th rowspan=2><s>x</s>
   <th x=false>false
   <td x=false class=truthy>
  <tr>
@@ -265,7 +268,7 @@ of <code>not x</code> by going to the row labeled with the value of
 <p>
 To use the table, look up the row labeled with the value of the input
 "X".  The value of the function is in that row under "not X".  So
-<code>(not false) = true</code> and <code>(not true) = false</code>.
+<s>(not false) = true</s> and <s>(not true) = false</s>.
 Moving the mouse over one of these pictures or touching it on a touch
 screen will cause the truth table entries to highlight.
 <p>
@@ -275,26 +278,26 @@ entries where the value is true are shaded with blue lines to
 highlight the difference between true and false.  We will use this
 color scheme in other truth tables as well.
 <p>
-In our notation we write the property of not being blue as <code>not
-(blue x)</code> or <code>(not (blue x))</code>.  Of course we can also
-read this as saying that the predicate blue is not true for x, or that
-x is not in the set of things that are blue.  In mathematics a
-statement like <code>(not (A x))</code> is commonly called the
-negation of a statement <code>(A x)</code>.  The negated statement is
-true of all the things where the original statement <code>(A x)</code>
-is false.
+In our notation we write the property of not being blue as
+<s>not (blue x)</s> or <s>(not (blue x))</s>.
+Of course we can also read this as saying that the predicate blue is
+not true for x, or that x is not in the set of things that are blue.
+In mathematics a statement like <s>(not (A x))</s> is
+commonly called the negation of a statement
+<s>(A x)</s>.  The negated statement is true of
+all the things where theoriginal statement <s>(A x)</s> is false.
 <p>
-Other notations for negation include "<code>&not;</code>" and
-"<code>&tilde;</code>" (tilde).
+Other notations for negation include "<s>&not;</s>" and
+"<s>&tilde;</s>" (tilde).
 
-<h2 id=disjunction>At least one true: "or" (<code>|</code>)</h2>
+<h2 id=disjunction>At least one true: "or" (<s>|</s>)</h2>
 <p>
 As an example of our next function, suppose you are thinking what to
 have for lunch, and decide it must either be delicious or easy.  In
 the first picture let circle D represent things that are delicious and
 circle E represent things that are easy.  The combined area then
 represents things that are delicious or easy.  We can write that a
-thing x is "delicious or easy" as <code>(D x) | (E x)</code>.
+thing x is "delicious or easy" as <s>(D x) | (E x)</s>.
 Everything in the parts of the picture that are shaded have this
 property.
 <p>
@@ -311,16 +314,16 @@ to model this relationship.  This function has two inputs.  Each input
 value is <i>boolean</i> (true or false) and so is the result.  Again,
 hover the mouse over either of the pictures to highlight the
 appropriate parts of the truth table for the function named
-<code>or</code> (<code>|</code>).
+<s>or</s> (<s>|</s>).
 <p>
 <table class=binaryTruthTable id=disjunctionTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><code>(E x)</code>
+  <th colspan=2 style="text-align: center"><s>(E x)</s>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><code>(D x)</code>
+  <th rowspan=2><s>(D x)</s>
   <th x=false>false
   <td x=false y=false class=falsy>
   <td x=false y=true class=truthy>
@@ -333,34 +336,34 @@ appropriate parts of the truth table for the function named
 This truth table is organized with a row for each value of the first
 input and a column for each value of the second input.  The value of
 the function is in the row for the value of the first input and the
-column for the value of the second input.  So for example <code>(false
-| true) = true</code>.
+column for the value of the second input.  So for example
+<s>(false | true) = true</s>.
 <p>
-A common notation for disjunction is "<code>&or;</code>", for example
-<code>p &or; q</code>.
+A common notation for disjunction is "<s>&or;</s>", for example
+<s>p &or; q</s>.
 
-<h2 id=conjunction>Both true: "and" (<code>&</code>)</h2>
+<h2 id=conjunction>Both true: "and" (<s>&</s>)</h2>
 <p>
 Suppose you are feeling more picky about your lunch, and decide it
 must be both delicious and easy.  Only things in both of the circles
 fit this description -- the small shaded area in the next picture.  In
-Prooftoys we write <code>((D x) & (E x))</code>.
+Prooftoys we write <s>((D x) & (E x))</s>.
 <p>
 <canvas id=canvasAndDE width=210 height=210></canvas>
 <p>
 Once again, at each point "x" in the picture,
-<code>((D x) & (E x))</code> is true exactly when <code>(D x)</code>
-is true and <code>(E x)</code> is also true.  We can define a
+<s>((D x) & (E x))</s> is true exactly when <s>(D x)</s>
+is true and <s>(E x)</s> is also true.  We can define a
 function with this truth table:
 <p>
 <table class=binaryTruthTable id=conjunctionTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><code>(E x)</code>
+  <th colspan=2 style="text-align: center"><s>(E x)</s>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><code>(D x)</code>
+  <th rowspan=2><s>(D x)</s>
   <th x=false>false
   <td x=false y=false class=falsy>
   <td x=false y=true class=falsy>
@@ -376,12 +379,12 @@ for that situation could like this:
 <canvas id=canvasAndDE2 width=210 height=210></canvas>
 <p>
 The picture has no shaded area because region D and region E do not
-overlap; there is no part of the picture where <code>(D x)</code> and
-<code>(E x)</code> are both true.  If that really is your
+overlap; there is no part of the picture where <s>(D x)</s> and
+<s>(E x)</s> are both true.  If that really is your
 requirement, in this scenario there is no possible lunch for you!
 <p>
-A common notation for conjunction is "<code>&and;</code>", for example
-<code>p &and; q</code>.
+A common notation for conjunction is "<s>&and;</s>", for example
+<s>p &and; q</s>.
 
 <h2 id=equality>Equality: (=, &#x21d4;)</h2>
 <p>
@@ -405,17 +408,17 @@ case we will give the truth table immediately:
   <td x=true y=true class=truthy>
 </table>
 <p>
-It shows that <code>true</code> is equal to <code>true</code>, false
-is equal to <code>false</code>, and neither one is equal to the other,
+It shows that <s>true</s> is equal to <s>true</s>, false
+is equal to <s>false</s>, and neither one is equal to the other,
 all as you would expect.  For boolean values it is sometimes written
-as <code>&#x21d4;</code> or <code>&equiv;</code>.
+as <s>&#x21d4;</s> or <s>&equiv;</s>.
 
 <h2 id=statements>Statements that are always true</h2>
 <p>
 We will return soon to describe one more function that takes truth
 values as inputs, but it may be easier to understand its importance
 after some introduction to the idea of mathematical functions that
-have the value <code>true</code> for all possible inputs, in other
+have the value <s>true</s> for all possible inputs, in other
 words for all things in the universe.  These sorts of functions
 are mathematically true statements.
 <p>
@@ -431,7 +434,7 @@ will sometimes refer to them as "true everywhere".
 <p>
 As an example let's consider the statement that every number is either
 less than 100 or greater than 10.  We could state this as
-<code>x &lt; 100 | x &gt; 10</code>.  In the picture for this
+<s>x &lt; 100 | x &gt; 10</s>.  In the picture for this
 statement all shaded areas represent cases where the statement is
 true.
 <p>
@@ -445,8 +448,8 @@ line and the values having both of the properties, like this:
 <p>
 <canvas id=canvasArrow width=310 height=100>
 <p>
-The statement <code>x &lt; 100 | x &gt; 10</code> is true regardless
-of the value of <code>x</code>.  In mathematics, if the truth of a
+The statement <s>x &lt; 100 | x &gt; 10</s> is true regardless
+of the value of <s>x</s>.  In mathematics, if the truth of a
 statement does not depend on the values of variables in it, it
 is considered simply a true or valid statement.
 
@@ -454,18 +457,19 @@ is considered simply a true or valid statement.
 <p>
 For a statement with "and" to be true, both of its parts must be true.
 In the statement's picture, both statements must be true at every spot
-in the picutre.  Here is a picture illustrating a statement <code>A
-& B</code> that is true, where A and B are both true statements.
+in the picutre.  Here is a picture illustrating a statement
+<s>A & B</s> that is true, where A and B are both
+true statements.
 <p>
 <canvas id=canvasAnd width=210 height=210></canvas>
 
 <h3 id=trueConditionals>Statements like "all A are B"</h3>
 <p>
 Let's look at another typical kind of statement that has a logical
-meaning, such as "all birds have wings".  We might also express
-this as "if x is a bird then x has wings".  In our notation we can
-write <code>(bird x) implies (wings x)</code> or alternatively
-<code>bird x &rArr; wings x</code>.
+meaning, such as "all birds have wings".  We might also express this
+as "if x is a bird then x has wings".  In our notation we can write
+<s>(bird x) implies (wings x)</s> or alternatively
+<s>bird x &rArr; wings x</s>.
 <p>
 The picture below illustrates a scenario where the statement is true.
 The area representing all things with wings contains the entire area
@@ -495,7 +499,7 @@ whether this statement about birds is true.  If every part of the
 picture is either in the "wings" circle or <b>not</b> in the "birds"
 circle, the statement is true.
 
-<h2 id=implication>Implication: "implies" (<code>&rArr;</code>)</h2>
+<h2 id=implication>Implication: "implies" (<s>&rArr;</s>)</h2>
 <p>
 Returning to functions with truth values as inputs and outputs, we
 can see how to define one more key function.  This function enables us
@@ -503,11 +507,12 @@ to express statements like "all birds have wings" mathematically.  It
 takes two truth values as inputs and produces true or false as its
 value.  The previous example and pictures above apply here once again.
 <p>
-We call the function <code>implies</code> (alternatively
-<code>&rArr;</code>), and it enables us to make statements that say
+We call the function <s>implies</s> (alternatively
+<s>&rArr;</s>), and it enables us to make statements that say
 one thing implies another.  Here are two picture as before, but with
-shading to show the areas where the expression <code>(bird x) &rArr;
-(wings x)</code> has <code>true</code> as its value.  First one where
+shading to show the areas where the expression
+<s>(bird x) &rArr; (wings x)</s> has
+<s>true</s> as its value.  First one where
 it is true everywhere:
 <p>
 <canvas id=birdWingsTrue width=210 height=210></canvas>
@@ -540,7 +545,7 @@ true everywhere:
 <p>
 The birds without wings are represented by the small white area with
 no shading.  This is exactly the area where the value of the
-<code>implies</code> function is false.  In this picture not all
+<s>implies</s> function is false.  In this picture not all
 birds have wings, so the function is indeed behaving as intended.
 
 <h4>About vacuous statements</h4>
@@ -555,9 +560,9 @@ our world, our logic takes this to be a true statement.
 How can this be?  Consider that there are <i>no examples that break
 the rule</i>, that is no birds that are larger than elephants and
 cannot fly to the moon!  The truth table entries in the row where the
-first input is <code>false</code> both have the value
-<code>true</code>, so the <code>implies</code> function has the value
-<code>true</code> everywhere.  If the there are no birds larger than
+first input is <s>false</s> both have the value
+<s>true</s>, so the <s>implies</s> function has the value
+<s>true</s> everywhere.  If the there are no birds larger than
 elephants, all of them can fly to the moon!
 <p>
 Mathematicians recognize that this is a strange situation and refer to
@@ -573,25 +578,26 @@ vacuous.
 <p>
 The logical functions can be combined into complex expressions.  In
 the lunch example, where D is an abbreviation for "delicious" and E is
-an abbreviation for "easy", the expression <code>(not ((D x) & (E
-x)))</code> refers to things that are <i>not</i> easy and delicious.
+an abbreviation for "easy", the expression
+<s>(not ((D x) & (E x)))</s> refers to things that are
+<i>not</i> easy and delicious.
 <p>
 <canvas id=DnandE width=210 height=210>
 <p>
 The value of this function at each point depends on the values of
-<code>(D x)</code> and <code>(E x)</code> at the same point, and its
+<s>(D x)</s> and <s>(E x)</s> at the same point, and its
 truth table can be computed by first looking up the value in the truth
-table for <code>and</code>, then looking up the value of the result in
-the table for <code>not</code>.
+table for <s>and</s>, then looking up the value of the result in
+the table for <s>not</s>.
 <p>
 <table class=binaryTruthTable id=nandTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><code>(E x)</code>
+  <th colspan=2 style="text-align: center"><s>(E x)</s>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><code>(D x)</code>
+  <th rowspan=2><s>(D x)</s>
   <th x=false>false
   <td x=false y=false class=truthy>
   <td x=false y=true class=truthy>
@@ -601,7 +607,7 @@ the table for <code>not</code>.
   <td x=true y=true class=falsy>
 </table>
 <p>
-The expression <code>(not (D x) & not (E x))</code> refers to things
+The expression <s>(not (D x) & not (E x))</s> refers to things
 that are neither delicious nor easy; unfortunate for the eater, but
 fortunate for things that do not wish to be eaten.
 <p>
@@ -609,7 +615,7 @@ fortunate for things that do not wish to be eaten.
 <p>
 Once again we can build each entry in this truth table by looking up
 the values of the subexpressions, first negating each input, then
-looking up the results in the table for <code>and</code>.  Logical
+looking up the results in the table for <s>and</s>.  Logical
 expressions combine the same way arithmetic expressions do, but the
 calculation is even easier because you only have to look up the
 results of each part in a table.
@@ -617,11 +623,11 @@ results of each part in a table.
 <table class=binaryTruthTable id=norTable>
  <tr>
   <th colspan=2 rowspan=2>
-  <th colspan=2 style="text-align: center"><code>(E x)</code>
+  <th colspan=2 style="text-align: center"><s>(E x)</s>
  <tr>
   <th y=false>false<th y=true>true
  <tr>
-  <th rowspan=2><code>(D x)</code>
+  <th rowspan=2><s>(D x)</s>
   <th x=false>false
   <td x=false y=false class=truthy>
   <td x=false y=true class=falsy>
@@ -635,13 +641,13 @@ results of each part in a table.
 <h2 id=tautologies>Tautologies</h2>
 <p>
 Some statements are not just true everywhere, they are true everywhere
-in every possible picture.  Consider the statement <code>(blue x) |
-(not (blue x))</code>, "either x is blue or x is not blue".  It does
-not matter how many things are blue, or which things are blue.  It
-doesn't even matter if any things at all are blue.  If we make a
-picture with one area for blue things and the rest for things that are
-not blue, every part of the picture will be in one of these two parts,
-either inside the "blue" area or not inside it.
+in every possible picture.  Consider the statement
+<s>(blue x) | (not (blue x))</s>, "either x is blue or x
+is not blue".  It does not matter how many things are blue, or which
+things are blue.  It doesn't even matter if any things at all are
+blue.  If we make a picture with one area for blue things and the rest
+for things that are not blue, every part of the picture will be in one
+of these two parts, either inside the "blue" area or not inside it.
 <p>
 This is an application of a <i>tautology</i>. Tautologies are true
 regardless of the truth of their parts.  Statements of this sort occur
@@ -649,16 +655,16 @@ constantly in normal mathematical reasoning, sometimes explicitly and
 even more often implicitly behind the scenes.
 <p>
 If a statement is a tautology, this can be verified just by building
-its truth table.  If all of the entries are <code>true</code>, it is a
-tautology.  The statement <code>(blue x) | (not (blue x))</code> is
+its truth table.  If all of the entries are <s>true</s>, it is a
+tautology.  The statement <s>(blue x) | (not (blue x))</s> is
 indeed a tautology, and its truth table has the value
-<code>true</code> everywhere.  Although the expression is complex
+<s>true</s> everywhere.  Although the expression is complex
 this table has only two entries because it has only one variable,
-which is either <code>true</code> or <code>false</code>.
+which is either <s>true</s> or <s>false</s>.
 <p>
 <table class=binaryTruthTable id=tautology1>
  <tr>
-  <th rowspan=2><code>(blue x)</code>
+  <th rowspan=2><s>(blue x)</s>
   <th x=false>false
   <td x=false class=truthy>
  <tr>
@@ -667,16 +673,17 @@ which is either <code>true</code> or <code>false</code>.
 </table>
 <p>
 The inputs to some of the truth tables are labeled with expressions
-such as <code>(D x)</code>, <code>(E x)</code>, or <code>(blue
-x)</code>.  It doesn't matter whether an input is given by a variable
-or some expression.  All that matters is that different expressions
-are handled as different inputs.  If an expression (such as <code>(blue
-x)</code>) appears more than once in the full expression (such as
-<code>(blue x) | (not (blue x))</code>, all of its occurrences will
-have the same value when given the same value for <code>x</code>.  It
-is not possible for one occurrence to have the value <code>true</code>
-and another one the value <code>false</code>.  They count as one
-input.
+such as <s>(D x)</s>, <s>(E x)</s>, or
+<s>(blue x)</s>.  It doesn't matter whether an input
+is given by a variable or some expression.  All that matters is that
+different expressions are handled as different inputs.  If an
+expression (such as
+<s>(blue x)</s>) appears more than once in the full expression
+(such as <s>(blue x) | (not (blue x))</s>, all of its
+occurrences will have the same value when given the same value for
+<s>x</s>.  It is not possible for one occurrence to
+have the value <s>true</s> and another one the value
+<s>false</s>.  They count as one input.
 <p>
 Tautologies properly are expressions with just variables and logical
 functions in them.  This is the simplest way to write down the
@@ -685,13 +692,13 @@ tautologies can be built from them by substitution.
 <p>
 Just a few examples of commonly-encountered tautologies are:
 <ul>
- <li><code>a &rArr; a</code>
- <li><code>(a & a) = a</code>
- <li><code>(a &rArr; b) &#x21d4; ((not b) &rArr; (not a))</code>
- <li><code>(not (a | b)) = ((not a) & (not b))</code>
+ <li><s>a &rArr; a</s>
+ <li><s>(a & a) = a</s>
+ <li><s>(a &rArr; b) &#x21d4; ((not b) &rArr; (not a))</s>
+ <li><s>(not (a | b)) = ((not a) & (not b))</s>
 </ul>
 <p>
-Assigning all combinations of <code>true</code> and <code>false</code>
+Assigning all combinations of <s>true</s> and <s>false</s>
 to the variables in these expressions and checking that the value of
 the expression is true will verify that these all really are
 tautologies.
@@ -711,14 +718,15 @@ times means, "any value is fine as long as it is the same in each
 place".  An expression in place of the variable satisfies that
 requirement, so a substitution also results in a true statement.
 <p>
-The simple tautology <code>a &rArr; a</code> is a true statement,
-since <code>true &rArr; true</code> and <code>false &rArr;
-false</code>.  A statement like <code>(shining sun) &rArr;
-(shining sun)</code> is also true whether the sun is actually shining
-or not.  The substituted expression itself can have variables, as in
-<code>x &lt; y &rArr; x &lt; y</code>.  No matter what values
-<code>x</code> and <code>y</code> have, the value of <code>x &lt;
-y</code> is going to be the same in both spots, so the whole statement
+The simple tautology <s>a &rArr; a</s> is a true statement,
+since <s>true &rArr; true</s> and
+<s>false &rArr; false</s>.  A statement like
+<s>(shining sun) &rArr; (shining sun)</s> is also
+true whether the sun is actually shining or not.  The substituted
+expression itself can have variables, as in
+<s>x &lt; y &rArr; x &lt; y</s>.  No matter what values
+<s>x</s> and <s>y</s> have, the value
+of <s>x &lt; y</s> is going to be the same in both spots, so the whole statement
 is still true.
 <p>
 In any mathematical expression, substituting an expression for all
@@ -739,6 +747,7 @@ solving.
 // Insert boilerplate.
 Toy.insertNav();
 Toy.insertSlogans();
+Toy.mathifyAll();
 
 window.onload = function() {
   $('#TOC').tableofcontents({exclude: $('.notoc')});
