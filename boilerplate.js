@@ -86,7 +86,7 @@ Toy.mathMarkup = function(text) {
   // Substitutions for "forall" and "exists" consume a trailing blank,
   // helping to push them up next to following text.
   var rex =
-    /==>|==|!=|>=|<=|-|[*]|[/]|\bforall( |\b)|\bexists( |\b)|[_a-zA-Z][_a-zA-Z0-9]*/g;
+    /==>|==|!=|>=|<=|-|[*]|[/]|<[/]?[a-zA-Z][^>]*>|\bforall( |\b)|\bexists( |\b)|[_a-zA-Z][_a-zA-Z0-9]*/g;
   return text.replace(rex, function(s) {
     switch(s) {
     case '==>': return '&rArr;';
@@ -101,7 +101,12 @@ Toy.mathMarkup = function(text) {
     case 'forall ': return '&forall;';
     case 'exists': return '&exist;';
     case 'exists ': return '&exist;';
-    default: return '<i>' + s + '</i>';
+    default:
+      if (s.charAt(0) === '<') {
+        return s;
+      } else {
+        return '<i>' + s + '</i>';
+      }
     }
   });
 }
@@ -116,7 +121,7 @@ Toy.mathifyAll = function() {
   var len = elts.length;
   for (var i = 0; i < len; i++) {
     var e = elts[i];
-    var text = e.textContent;
+    var text = e.innerHTML;
     var content = Toy.mathMarkup(text);
     e.innerHTML = content;
   }
