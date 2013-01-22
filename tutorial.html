@@ -63,6 +63,11 @@ These display as <span class=math>= &ne; &lt; &le; &gt; &ge;</span> respectively
 <li><code>* /</code>
 </ul>
 <p>
+<b>function calls.</b>
+Ordinary function calls look like <code><b>(f x)</b></code> or
+<code><b>f x</b></code>, and have higher precedence than any infix
+operator.
+<p>
 <b>forall and exists.</b>
 These are entered as <code>forall</code> and <code>exists</code>, and
 display as the usual mathematical symbols
@@ -74,28 +79,6 @@ is entered as <code>forall {x. P x}</code> or
 <span class=math>&forall;{<i>x</i>. <i>P</i> <i>x</i>}</span> or
 <span class=math>&forall;{<i>x</i>. (<i>P</i> <i>x</i>)}</span>.
 
-<p>
-<b><code>&#x22A2;</code> and hypotheses.</b>
-The turnstile symbol <code>&#x22A2;</code> means that the items to its
-left are hypotheses and the expression on the right is proved with the
-hypotheses assumed.  In the Prooftoys logic, the turnstile has exactly
-the same meaning as the implication symbol &rArr;
-though some rules of inference operate somewhat differently when there
-are hypotheses, focusing on the part of the formula after the
-turnstile symbol.
-<p>
-The hypotheses are written as before the turnstile, as a list
-separated by commas.  They are really a conjunction so you can imagine
-replacing each comma with <code>&amp;&amp;</code>.  If a hypothesis is
-written as just an integer (e.g. <code>1</code> or <code>22</code>)
-there, it is an abbreviation for "the term assumed in line
-<code>n</code>.  The abbreviations help keep the proof lines from
-sprawling all over the page.
-<p>
-<b>function calls.</b>
-Ordinary function calls look like <code><b>(f x)</b></code> or
-<code><b>f x</b></code>, and have higher precedence than any infix
-operator.
 <p>
 <b>not.</b>
 Boolean negation is represented by <code>not</code>, and is called
@@ -174,8 +157,36 @@ Note: <i>Proof displays are supported in recent versions of Firefox and Chrome.<
  Unable to display content. Adobe Flash is required.
 </object>
 
-<h2 style="margin-top: 2em">Using the proof builder</h2>
+<p>
+<b>Assumptions.</b>
+Most math problems start with assumptions, and whethere the
+assumptions are stated explicitly or not, the assumptions are often
+required to properly justify many of the steps in a problem
+solution.
+<p>
+The Prooftoys language has a shorthand notation that allows solution
+steps to refer to assumptions in a way that is neat and compact.
+For example if an assumption is made in line 1 of a proof, later
+steps can refer to that assumption using the number 1, something
+like this:
+<blockquote>
+1. <s>x / 4 = y</s> (assumption)<br>
+2. <s>1: x = 4 * y</s><br>
+3. <s>y = 5</s> (assumption)<br>
+4. <s>1, 3: x = 20</s>
+</blockquote>
+Here Line 2 refers to the assumption on line 1, and
+line 4 refers to the assumptions on lines 1 and 3.
+Line 2 is a shorthand for:
+<blockquote>
+2. <s>x / 4 = y ==> x = 4 * y</s>
+</blockquote>
+and line 4 similarly is just a shorthand for:
+<blockquote>
+4. <s>x / 4 = y & y = 5 ==> x = 20</s>
+</blockquote>
 
+<h2>Using the proof builder</h2>
 <p>
 The proof builder lets you interactively build proofs using all of the
 publicly-available theorems and rules of inference.  It can make
@@ -286,6 +297,7 @@ do this twice to quantify over both <code>p</code> and <code>q</code>.
 // Insert boilerplate.
 Toy.insertNav();
 Toy.insertSlogans();
+Toy.mathifyAll();
 
 /* Remove "filter" to load minified JavaScript. */
 YUI({filter: 'raw', insertBefore: 'styles'})
