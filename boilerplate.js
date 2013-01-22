@@ -122,6 +122,18 @@ Toy.mathifyAll = function() {
   for (var i = 0; i < len; i++) {
     var e = elts[i];
     var text = e.innerHTML;
+    var pat = /&amp;|&gt;|&lt;/g;
+    // In case the text is actually HTML, replace enough character
+    // entities with their characters so Toy.mathMarkup can work on them.
+    text = text.replace(pat, function(s) {
+      switch(s) {
+      case '&amp;': return '&';
+      case '&gt;': return '>';
+      case '&lt;': return '<';
+      default:
+        throw new Error('Unexpected text: ' + s);
+      }
+    });
     var content = Toy.mathMarkup(text);
     e.innerHTML = content;
   }
