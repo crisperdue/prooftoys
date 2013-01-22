@@ -86,11 +86,11 @@ Toy.mathMarkup = function(text) {
   // Substitutions for "forall" and "exists" consume a trailing blank,
   // helping to push them up next to following text.
   var rex =
-    /==>|==|!=|>=|<=|-|[*]|[/]|<[/]?[a-zA-Z][^>]*>|\bforall( |\b)|\bexists( |\b)|[_a-zA-Z][_a-zA-Z0-9]*/g;
+    /==>|==|!=|>=|<=|-|[*]|[/]|<[/]?[a-zA-Z][^>]*>|\bforall( |\b)|\bexists( |\b)|[_a-z][_a-z0-9]*/g;
   return text.replace(rex, function(s) {
     switch(s) {
     case '==>': return '&rArr;';
-    case '==': return '&equiv;';
+    case '==': return '&#x21d4;';
     case '!=': return '&ne;';
     case '>=': return '&ge;';
     case '<=': return '&le;';
