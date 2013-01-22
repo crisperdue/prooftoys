@@ -105,9 +105,7 @@ to it.  The Prooftoys <s>replace</s> rule is the same
 as the Q<sub>0</sub> derived Rule R', which does the same sort of
 replacement when the equation is conditional.  In other words it
 allows <s>C</s> to be replaced by <s>D</s> if
-<s>H ==> (C = D)</s>
-or in the notation for assumptions,
-<s>H<sub>1</sub>, ..., H<sub>n</sub>: C = D</s>.
+<s>H ==> (C = D)</s>.
 It turns out that equations in basic textbook algebra problems
 have this form when written out in full, which makes this rule
 especially useful.  See the section
@@ -183,7 +181,7 @@ Line 2 is a shorthand for:
 </blockquote>
 and line 4 similarly is just a shorthand for:
 <blockquote>
-4. <s>x / 4 = y & y = 5 ==> x = 20</s>
+4. <s>(x / 4 = y & y = 5) ==> x = 20</s>
 </blockquote>
 
 <h2>Using the proof builder</h2>
@@ -196,17 +194,17 @@ show what inference rules do and how they work.
 To start, click on the text entry field.  It will pop up a menu of all
 axioms, theorems, and theorem schemas available.  You can start typing
 the name you want or select it from the list.  Clicking on the desired
-item or typing &lt;Enter&gt; when it is selected will choose it.
+item or typing <code>&lt;Enter&gt;</code> when it is selected will choose it.
 <p>
 Once you have chosen the axiom or theorem to use, the system checks
 whether it takes parameters.  If so, you will be offered a small form
 to fill in.  Enter expressions in the language as needed and type
-&lt;Enter&gt; to submit the form.  The system will prove the theorem
-as needed and display it in the proof.  A common first step in solving
-a math problem is to use the <s>assume</s> theorem schema.  Type
-any expression, and it will be "assumed" for you.  The "assume"
-theorem just says that your assumption implies itself, but the rules
-of inference work well with this starting point.
+<code>&lt;Enter&gt;</code> to submit the form.  The system will prove
+the theorem as needed and display it in the proof.  A common first
+step in solving a math problem is to use the <s>assume</s> theorem
+schema.  Type any expression, and it will be "assumed" for you.  The
+<s>assume</s> theorem just says that your assumption implies itself, but
+the rules of inference work well with this starting point.
 <p>
 Once there is at least one step in your proof you can choose rules of
 inference that take existing proof steps as input.  To use a rule of
