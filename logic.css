@@ -56,6 +56,8 @@ s {
 }  
 
 .math {
+  color: #860;
+  white-space: nowrap;
   font-family: STIXGeneral, Times, serif;
 }
 
