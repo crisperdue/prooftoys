@@ -106,7 +106,7 @@ as the Q<sub>0</sub> derived Rule R', which does the same sort of
 replacement when the equation is conditional.  In other words it
 allows <s>C</s> to be replaced by <s>D</s> if
 <s>H ==> (C = D)</s>.
-It turns out that equations in basic textbook algebra problems
+It turns out that most equations in basic textbook algebra problems
 have this form when written out in full, which makes this rule
 especially useful.  See the section
 <a href="real-numbers.html">Working with Real Numbers</a>.
@@ -203,8 +203,8 @@ to fill in.  Enter expressions in the language as needed and type
 the theorem as needed and display it in the proof.  A common first
 step in solving a math problem is to use the <s>assume</s> theorem
 schema.  Type any expression, and it will be "assumed" for you.  The
-<s>assume</s> theorem just says that your assumption implies itself, but
-the rules of inference work well with this starting point.
+new theorem just says that your assumption implies itself, which is
+obvious but works well with the rules of inference.
 <p>
 Once there is at least one step in your proof you can choose rules of
 inference that take existing proof steps as input.  To use a rule of
@@ -224,10 +224,10 @@ assumptions.  Here is a display of the proof you are going to build.
 <p>
 In the Proof Builder area below, you can create the same proof.
 To enter an assumption click in the text entry field and
-select the <code>assume</code> rule.  Type in <code>p</code>, and press
+select the <s>assume</s> rule.  Type in <code>p</code>, and press
 <code>&lt;Enter&gt;</code>.  You will see the first line of your proof.
 <p>
-Next use the <code>assume</code> rule again, typing in
+Next use the <s>assume</s> rule again, typing in
 <code>p ==> q</code> as your second assumption.
 <p>
 For the inference step, click on the first line of the proof display
@@ -235,19 +235,19 @@ anywhere outside the formula itself.  The line will highlight itself
 and stay highlighted as you move the mouse away.  Now click on the
 text entry field.  Since you have selected a proof step it will offer
 a number of rules of inference rather than axioms and theorem schemas.
-When you select <code>modusPonens</code> from the list, a small form
+When you select <s>modusPonens</s> from the list, a small form
 will appear with "1" as the hypothesis step.  Enter <code>2</code> as
 the number of the implication step to apply the rule to, and press
 <code>&lt;Enter&gt;</code>.  You
 should see the modus ponens line added to the proof.
 <p>
 Finally to make the hypotheses explicit, you might wish to select the
-last line of the proof and choose the <code>asImplication</code> rule,
+last line of the proof and choose the <s>asImplication</s> rule,
 which causes the hypotheses to be displayed explicitly as
 preconditions.
 <p>
 Going beyond what is displayed in the sample, you could choose the
-rule <code>addForall</code> to add universal quantifiers to the
+rule <s>addForall</s> to add universal quantifiers to the
 formula.  You can do this twice to quantify over both <s>p</s> and
 <s>q</s>.
 <p>

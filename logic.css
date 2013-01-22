@@ -296,6 +296,7 @@ span.stepReference.referenced {
 
 /* Rule name (or fact used for rewriting) */
 span.ruleName {
+  font-family: STIXGeneral, times, serif;
   color: #55F;
   cursor: pointer;
 }
