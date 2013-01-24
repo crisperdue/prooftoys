@@ -321,7 +321,10 @@ var ruleInfo = {
         equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
       // Always make sure the call has a type.  It came from elsewhere.
       Y.findType(call);
-      return rules.assert(result).justify('axiom4', [call]);
+      var result = rules.assert(result).justify('axiom4', [call]);
+      // There are no real details in this case.
+      delete result.details;
+      return result;
     },
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
