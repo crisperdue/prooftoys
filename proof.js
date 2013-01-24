@@ -674,7 +674,8 @@ function renderStep(step, controller) {
   }
                
   // Caution: passing null to Y.on selects everything.
-  var target = stepNode.one('span.ruleName');
+  // Clicking on a ruleName "link" shows the subproof.
+  var target = stepNode.one('span.ruleName[class~="link"]');
   if (target && Y.modes.subproofs) {
     target.on('mousedown', function(event) {
           // Don't give the proof step a chance to select itself.
@@ -1091,19 +1092,14 @@ function clearSubproof(step) {
 function computeStepInfo(step) {
   var stepInfo;
   if (step.ruleName == 'definition') {
-    stepInfo = 'definition of ';
+    stepInfo = 'definition of <span class=math><i>';
     stepInfo += step.ruleArgs[0];
     if (step.ruleArgs.length == 2) {
       stepInfo += ' ' + step.ruleArgs[1];
     }
+    stepInfo += '</i></span>';
   } else {
-    if (step.details) {
-      // It is a (derived) rule of inference.
-      stepInfo = fancyName(step);
-    } else {
-      // It is a primitive rule of inference (Rule R).
-      stepInfo = step.ruleName;
-    }
+    stepInfo = fancyName(step);
 
     // Display dependencies on other steps.
     var firstDep = true;
@@ -1115,11 +1111,12 @@ function computeStepInfo(step) {
       stepInfo += ' <span class=stepReference></span>';
     });
 
+    // Do not display argument info for these:
     var exclusions = ['assume', 'assert', 'axiom4', 'consider', 'eqSelf',
-                      'applier', 'tautology', 'mergeConjunctions'];
+                      'applier', 'tautology', 'mergeConjunctions',
+                      'tautInst'];
     if (exclusions.indexOf(step.ruleName) < 0) {
       var argDetails = computeExtraArgInfo(step);
-      // TODO: Consider showing some of the arguments.
       if (argDetails) {
         stepInfo += ('<span class=argDetails> with ' + argDetails + '</span');
       }
@@ -1129,17 +1126,16 @@ function computeStepInfo(step) {
 }
 
 /**
- * Renders an inference step name in a fancy way, currently with class
- * ruleName and a tooltip that briefly describes it.  (Displays much
- * like a hyperlink.)
+ * Returns HTML for a proof step name.
  */
-function fancyName(expr) {
-  var name = expr.ruleName;
+function fancyName(step) {
+  var name = step.ruleName;
   var info = Y.rules[name].info;
   var description = info.description || name;
   var comment = Y.Escape.html(info.comment || '');
+  var classes = step.details ? 'ruleName link' : 'ruleName';
   if (Y.modes.subproofs) {
-    return ('<span class=ruleName title="' + comment + '">'
+    return ('<span class="' + classes + '" title="' + comment + '">'
             + description + '</span>');
   } else {
     return description;

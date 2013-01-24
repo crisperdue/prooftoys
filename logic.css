@@ -41,7 +41,17 @@ p {
   line-height: 1.4;
 }
 
-/* Prevent these from making the overall line smaller. */
+.italic {
+  font-style: italic;
+}
+
+/* Makes an element display like a hyperlink. */
+.link {
+  color: #55F;
+  cursor: pointer;
+}
+
+/* Prevents these from making the overall line less tall. */
 sub, super {
   line-height: 0px;
 }
@@ -58,24 +68,6 @@ code {
   font-size: 110%;
 }
 
-/* Math-oriented text to be transformed (Substituted) with Toy.mathifyAll. */
-s {
-  color: #860;
-  white-space: nowrap;
-  text-decoration: none;
-  font-family: STIXGeneral, Times, serif;
-}  
-
-.math {
-  color: #860;
-  white-space: nowrap;
-  font-family: STIXGeneral, Times, serif;
-}
-
-.italic {
-  font-style: italic;
-}
-
 /* Text wrapping */
 .nowrap {
   white-space: nowrap;
@@ -84,6 +76,21 @@ s {
 .wrap {
   white-space: wrap;
 }
+
+/* Math-oriented text */
+.math, s {
+  font-family: STIXGeneral, Times, serif;
+  /* Variable and constant names should be explicitly italicized
+     within math text. */
+  font-style: normal;
+  white-space: nowrap;
+}
+
+/* Math-oriented text to be transformed (Substituted) with Toy.mathifyAll. */
+s {
+  text-decoration: none;
+  color: #860;
+}  
 
 .ellipsis {
   color: gray;
@@ -205,7 +212,7 @@ table.proofDisplay {
  * than the individual steps.
  */
 .proofSteps {
-  background-color: #beb;
+  background-color: #bdb;
   padding: 2px;
   /*
      The touch screen tap highlighting is confusing, so prevent it.
@@ -217,7 +224,7 @@ table.proofDisplay {
 /* The outermost element of a step */
 .proofStep {
     clear: both;
-    background-color: #F0F0DA;
+    background-color: #eee;
     font-family: STIXGeneral, times, serif;
     padding: 2px;
     margin: 1px 0px;
@@ -243,13 +250,7 @@ table.proofDisplay {
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
     margin-left: 1em;
-    font-family: sans-serif;
-    font-size: 90%;
-    color: gray;
-}
-
-.proofStep .argDetails, .proofStep .argDetails code {
-    color: #999;
+    color: #777;
 }
 
 /* Overlay Look/Feel (details of hovered step) */
@@ -307,14 +308,7 @@ span.stepReference.referenced {
 
 /* Rule name (or fact used for rewriting) */
 span.ruleName {
-  font-family: STIXGeneral, times, serif;
-  color: #55F;
-  cursor: pointer;
-}
-
-span.ruleName .math {
-  font-family: STIXGeneral, times, serif;
-  font-size: 100%;
+  font-style: italic;
 }
 
 /* Expression in a proof step display, and step numbers */
@@ -325,10 +319,8 @@ span.ruleName .math {
 }
 
 span.assumptions {
-  font-family: sans-serif;
   /* like stepInfo */
-  color: gray;
-  font-size: 90%;
+  color: #777;
   margin-right: .4em;
 }
 
