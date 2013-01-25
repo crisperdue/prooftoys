@@ -212,7 +212,7 @@ table.proofDisplay {
  * than the individual steps.
  */
 .proofSteps {
-  background-color: #bdb;
+  background-color: #aca;
   padding: 2px;
   /*
      The touch screen tap highlighting is confusing, so prevent it.
@@ -224,7 +224,7 @@ table.proofDisplay {
 /* The outermost element of a step */
 .proofStep {
     clear: both;
-    background-color: #eee;
+    background-color: white;
     font-family: STIXGeneral, times, serif;
     padding: 2px;
     margin: 1px 0px;
@@ -277,7 +277,7 @@ table.proofDisplay {
    "site" input of a proof step.
  */
 .proofStep .expr.site {
-  background-color: white;
+  background-color: lime;
 }
 
 .proofStep.selected {
@@ -326,8 +326,7 @@ span.assumptions {
 
 /* When hovering over an expression */
 .proofStep .expr.hovered {
-  background-color: #ffffaa;
-  border-color: silver;
+  border-color: gray;
 }
 
 .proofStep .expr.selected {
