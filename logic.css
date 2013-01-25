@@ -329,7 +329,7 @@ span.assumptions {
 
 /* When hovering over an expression */
 .proofStep .expr.hovered {
-  border-color: gray;
+  border-color: black;
 }
 
 .proofStep .expr.selected {
