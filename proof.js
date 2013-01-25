@@ -645,11 +645,30 @@ function renderStep(step, controller) {
        });
 
   stepNode.one('.stepInfo').setContent(computeStepInfo(step));
+
+  // "Hover" events can come in slightly out of order as we track both
+  // an inner and outer element.  Straighten this out by maintaining
+  // a count of net in/out events and considering the mouse "in" when
+  // the net is exactly 1.
+  var netHovers = 0;
+  function hover(diff, event) {
+    var previous = netHovers == 1;
+    netHovers += diff;
+    var current = netHovers == 1;
+    if (current != previous) {
+      hoverStep(step, current == 1 ? 'in' : 'out', event);
+    }
+  }    
   // Set up "hover" event handling on the stepNode.
   stepNode.on('hover',
-              // Call "hover", passing these arguments as well as the event.
-              Y.bind(hoverStep, null, step, 'in'),
-              Y.bind(hoverStep, null, step, 'out'));
+              // Call hoverStep, passing these arguments as well as the event.
+              Y.bind(hover, null, 1),
+              Y.bind(hover, null, -1));
+  // We count the wffNode as outside for this purpose.
+  wffNode.on('hover',
+              // Call hoverStep, passing these arguments as well as the event.
+              Y.bind(hover, null, -1),
+              Y.bind(hover, null, 1));
 
   var deleter = stepNode.one('.deleteStep');
   if (deleter) {
@@ -1420,7 +1439,7 @@ function removeClass(node, className) {
  * Event handler for "hover" events on proof steps.
  * Adds or removes highlighting for the step based on the direction.
  */
-function hoverStep(step, direction) {
+function hoverStep(step, direction, event) {
   var action = direction == 'in' ? addClass : removeClass;
 
   // Always add or remove the "hover" class to the step node
