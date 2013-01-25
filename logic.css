@@ -226,8 +226,11 @@ table.proofDisplay {
     clear: both;
     background-color: white;
     font-family: STIXGeneral, times, serif;
-    padding: 2px;
-    margin: 1px 0px;
+    /* Padding causes the proofStep to have screen space
+       outside its children, which causes flashing as
+       the mouse enters and leaves those areas.
+       */
+    margin: 2px 0px;
     /* If needed to avoid undesired text selection:
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -270,7 +273,7 @@ table.proofDisplay {
 /* Highlighting of parts of proof steps */
 
 .proofStep.dep .stepNumber {
-  background-color: white;
+  background-color: lime;
  }
 
 /* The "site" class requests display of the expr as a
