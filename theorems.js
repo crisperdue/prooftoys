@@ -104,7 +104,8 @@ var ruleInfo = {
     inputs: {term: 1},
     form: ('Assume <input name=term>'),
     hint: 'assume hypothetically',
-    comment: 'Hypothesis to assume'
+    comment: 'Hypothesis to assume',
+    description: 'assumption'
   },
 
   /**
@@ -120,7 +121,8 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
-    comment: 'Convert hypotheses to an explicit implication'
+    comment: 'Convert assumptions to an explicit implication',
+    description: 'make assumptions explicit'
   },
       
   /**
@@ -133,7 +135,8 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
-    comment: 'No-op, but result will be fully displayed'
+    comment: 'No-op, but result will be fully displayed',
+    description: 'display full result'
   },
       
   /**
@@ -150,7 +153,8 @@ var ruleInfo = {
     inputs: {implication: 1},
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
-    hint: 'Convert explicit implication to statement with hypotheses'
+    hint: 'Convert explicit implication to statement with assumptions',
+    description: 'display as assumptions'
   },
 
   /**
@@ -176,7 +180,8 @@ var ruleInfo = {
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
            + 'if by cases enter T or F <input name=optString>'),
-    comment: 'access a definition'
+    comment: 'access a definition',
+    description: 'show definition'
   },
 
   /**
@@ -252,7 +257,8 @@ var ruleInfo = {
     // inputs: {equation: 1, site: 2},
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
-    hint: 'Replace term with equal term'
+    hint: 'Replace term with equal term',
+    description: 'replace equal value'
   },
 
   /**
@@ -270,7 +276,8 @@ var ruleInfo = {
     form: ('Replace with left side of step <input name=equation>'),
     hint: 'replace term with equal term',
     comment: ('Replaces an occurrence of a term with an equal term,'
-              + ' replacing right side with left side.')
+              + ' replacing right side with left side.'),
+    description: 'replace equal value'
   },
 
   axiom1: {
@@ -290,7 +297,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: ('Equal inputs yield equal outputs.')
+    comment: ('equal inputs yield equal outputs.')
   },
 
   axiom3: {
@@ -301,8 +308,9 @@ var ruleInfo = {
     inputs: {},
     form: '',
     hint: 'extensionality',
-    comment: ('Extensionality: functions are equal based on equal results'
-	      + ' on all inputs.')
+    comment: ('extensionality: functions are equal based on equal results'
+	      + ' on all inputs.'),
+    description: 'equality of functions'
   },
 
   /**
@@ -329,7 +337,8 @@ var ruleInfo = {
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
     hint: 'apply a function to its argument',
-    comment: ('')
+    comment: (''),
+    description: 'substitute for bound variable'
   },
 
   axiom5: {
@@ -339,7 +348,8 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: ('axiom of description.')
+    comment: ('axiom of description'),
+    description: 'axiom of description'
   },
 
   // Generalizes axiomTIsNotF.
@@ -391,7 +401,8 @@ var ruleInfo = {
     inputs: {term: 1},
     form: 'Term to prove equal to itself: <input name=term>',
     hint: '(A = A)',
-    comment: 'Derives A = A.'
+    comment: 'Derives A = A.',
+    description: 'term equals itself'
   },
 
   
@@ -404,7 +415,7 @@ var ruleInfo = {
       return result.justify('eqIsEquiv', []);
     },
     form: '',
-    comment: '"Equiv" and "equal mean the same thing."'
+    comment: '\u21d4 and = are the same'
   },
       
 
@@ -430,7 +441,7 @@ var ruleInfo = {
     inputs: {equation: 1},
     form: 'Swap sides in step <input name=equation>',
     hint: 'From A = B to B = A',
-    comment: 'From A = B derives B = A'
+    comment: 'from A = B deduce B = A'
   },
 
   // r5201c.  Works with hypotheses.
@@ -440,7 +451,7 @@ var ruleInfo = {
       var result = ac;
       return result.justify('eqnChain', arguments, arguments);
     },
-    comment: 'From A = B and B = C derives A = C'
+    comment: 'from A = B and B = C deduce A = C'
   },
 
   // r5201d, not used.  Works with hypotheses.
@@ -472,7 +483,7 @@ var ruleInfo = {
     form: ('Apply both sides of step <input name=equation>'
 	   + ' to term <input name=term>'),
     hint: 'From F = G to (F A) = (G A)',
-    comment: 'Given f = g, derive (f A) = (g A)'
+    comment: 'given f = g, deduce (f A) = (g A)'
   },
 
   // r5201f.  Works with hypotheses.
@@ -492,7 +503,7 @@ var ruleInfo = {
     form: ('Apply function <input name=term>'
 	   + ' to both sides of step <input name=equation>'),
     hint: 'from A = B to (F A) = (F B)',
-    comment: 'Given B = C derives (f B) = (f C)'
+    comment: 'given B = C deduce (f B) = (f C)'
   },
 
   // Use the definition of the given name at the given location
@@ -521,7 +532,8 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     hint: 'replace name with its definition',
-    comment: ('')
+    comment: (''),
+    description: 'use definition'
   },
 
   // Just applies an anonymous lambda to an argument at the
@@ -534,9 +546,11 @@ var ruleInfo = {
       return result.justify('simpleApply', arguments, [step]);
     },
     inputs: {reducible: 1},
+    isRewriter: true,
     // form: '',
     hint: 'Apply a function to its argument',
-    comment: ('Applies a lambda to its argument')
+    comment: ('Applies a lambda to its argument'),
+    description: 'substitute for bound variable'
   },
 
   // Derives a rewriter for a call that reduces a call to a lambda, or
@@ -607,7 +621,8 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     hint: 'Apply a function to its argument',
-    comment: ('Applies a function, named or not, to one or two arguments')
+    comment: ('Applies a function, named or not, to one or two arguments'),
+    description: 'apply definition'
   },
 
   /**
@@ -637,7 +652,8 @@ var ruleInfo = {
     comment: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
-              + 'the one with changed bound variable.')
+              + 'the one with changed bound variable.'),
+    description: 'rename bound variable'
   },
 
   /**
@@ -1988,7 +2004,8 @@ var ruleInfo = {
     inputs: {step: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=step>'),
     comment: ("Replace an expression with the right side of an equation, "
-              + "handling hypotheses.")
+              + "handling hypotheses."),
+    description: 'replace equal value'
   },
     
   // Add hypotheses to the step from hypStep.  This is key to providing
@@ -2518,7 +2535,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Commutativity of addition'
+    description: 'commutativity'
   },
 
   axiomAssociativePlus: {
@@ -2528,7 +2545,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Associativity of addition'
+    description: 'associativity'
   },
 
   axiomCommutativeTimes: {
@@ -2538,7 +2555,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Commutativity of multiplication'
+    description: 'commutativity'
   },
 
   axiomAssociativeTimes: {
@@ -2548,7 +2565,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Associativity of multiplication'
+    description: 'associativity'
   },
 
   axiomDistributivity: {
@@ -2558,7 +2575,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Distributivity of multiplication over addition'
+    description: 'distributivity'
   },
 
   axiomPlusZero: {
@@ -2568,7 +2585,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Zero is the additive identity'
+    description: 'additive identity'
   },
 
   axiomTimesOne: {
@@ -2578,7 +2595,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'One is the multiplicative identity'
+    description: 'multiplicative identity'
   },
 
   axiomTimesZero: {
@@ -2588,7 +2605,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'x * 0 = 0'
+    description: 'multiplication by 0'
   },
 
   axiomNeg: {
@@ -2598,7 +2615,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Negation is the inverse of addition'
+    description: 'definition of neg'
   },
 
   axiomReciprocal: {
@@ -2608,7 +2625,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Reciprocal is the inverse of multiplication'
+    description: 'definition of recip'
   },
 
   // Note: not structured as a rewrite rule.
@@ -2619,7 +2636,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Reals are closed under addition'
+    description: 'sum of real numbers is real'
   },
 
   // Note: not structured as a rewrite rule.
@@ -2630,7 +2647,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Reals are closed under multiplication'
+    description: 'product of real numbers is real'
   },
 
   axiomNegType: {
@@ -2640,7 +2657,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Reals are closed under negation'
+    description: 'negation of real number is real'
   },
 
   axiomReciprocalType: {
@@ -2650,7 +2667,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'Reals are (almost) closed under reciprocal'
+    description: 'reciprocal of real number'
   },
 
   // Evaluates arithmetic expressions with operators:
@@ -2714,7 +2731,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to evaluate: <input name=term>',
-    comment: 'Evaluate an arithmetic expression'
+    comment: 'Evaluate an arithmetic expression',
+    description: 'axiom of arithmetic'
   },
 
   //
@@ -3137,10 +3155,11 @@ function genRewriters(map) {
     var input = info.input || 'left';
     if (info.comment) {
       var comment = info.comment;
-    } else if (input == 'right') {
-      var comment = 'Rewrite back using ' + info.axiom;
     } else {
-      var comment = 'Rewrite using ' + info.axiom;
+      // Remember ruleInfo is still not processed into Y.rules.
+      var fact = info.axiom;
+      var desc = ruleInfo[info.axiom].description || info.axiom;
+      var comment = 'Rewrite using ' + desc;
     }
     // Add this info to ruleInfo:
     ruleInfo[name] = {
