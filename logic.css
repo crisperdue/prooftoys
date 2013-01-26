@@ -212,8 +212,6 @@ table.proofDisplay {
  * than the individual steps.
  */
 .proofSteps {
-  background-color: #aca;
-  padding: 2px;
   /*
      The touch screen tap highlighting is confusing, so prevent it.
   */
@@ -230,7 +228,6 @@ table.proofDisplay {
        outside its children, which causes flashing as
        the mouse enters and leaves those areas.
        */
-    margin: 2px 0px;
     /* If needed to avoid undesired text selection:
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -252,7 +249,7 @@ table.proofDisplay {
 
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
-    margin-left: 1em;
+    margin-left: .6em;
     color: #777;
 }
 
@@ -329,7 +326,7 @@ span.assumptions {
 
 /* When hovering over an expression */
 .proofStep .expr.hovered {
-  border-color: black;
+  border-color: gray;
 }
 
 .proofStep .expr.selected {
