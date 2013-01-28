@@ -142,4 +142,4 @@ Toy.mathifyAll = function() {
 // Make ".toString()" accessible as ".str" for debugger interaction.
 Object.defineProperty(Object.prototype,
                       'str',
-                      {get: function() return this.toString(); });
+                      {get: function() { return this.toString(); }});
