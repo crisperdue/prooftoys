@@ -190,10 +190,17 @@ Y.extend(TermMap, Map);
 TermMap.prototype.addTerm = function(term) {
   if (!this.has(term)) {
     var name = 'a' + this.counter++
-    this.set(term, new Y.Var(name));
+    this._set(term, new Y.Var(name));
     this.subst[name] = term;
   }
   return this.get(term);
+};
+
+// Make TermMap.set private.
+TermMap.prototype._set = Map.prototype.set;
+
+TermMap.prototype.set = function(term, name) {
+  throw new Error('Unsupported: TermMap.set', term, name);
 };
 
 

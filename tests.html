@@ -224,8 +224,8 @@ YUI({filter: null, insertBefore: 'styles'})
         var map = new Y.TermMap();
         var term = Y.infixCall(x, '=', x);
         var t2 = call(f, y);
-        // set
-        map.set(term, t2);
+        // has
+        map._set(term, t2);
         assert(map.has(term));
         // get
         assertEqual(t2, map.get(term));
