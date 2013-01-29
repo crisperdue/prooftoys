@@ -1573,6 +1573,16 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('T', result.locate('/left/right'));
       },
 
+      testSubtractionType: function() {
+        assertEqual('(((R x) & (R y)) ==> (R (x - y)))',
+                    rules.subtractionType());
+      },
+
+      testDivisionType: function() {
+        assertEqual('(((R x) & ((R y) & (y != 0))) ==> (R (x / y)))',
+                    rules.divisionType());
+      },
+
       testNumericTypesSimplifier: function() {
         function check(expected, input) {
           checkRewriter(expected, input, rules.numericTypesSimplifier);
@@ -1634,6 +1644,19 @@ YUI({filter: null, insertBefore: 'styles'})
         assert(rules.justifyNumericType(input).matches(input));
         input = Y.parse('R x & x != 0 ==> R (recip x)');
         assert(rules.justifyNumericType(input).matches(input));
+      },
+
+      testOperateOnBoth: function() {
+        var eqn = rules.eqSelf(x);
+        var five = Y.parse('5');
+        assertEqual('((x + 5) = (x + 5))',
+                    rules.addToBoth(eqn, five));
+        assertEqual('((x - 5) = (x - 5))',
+                    rules.subtractFromBoth(eqn, five));
+        assertEqual('((x * 5) = (x * 5))',
+                    rules.multiplyBoth(eqn, five));
+        assertEqual('((x / 5) = (x / 5))',
+                    rules.divideBoth(eqn, five));
       },
 
       testConsider: function() {

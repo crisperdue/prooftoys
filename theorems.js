@@ -195,7 +195,10 @@ var ruleInfo = {
     // consistent with their order of execution in the proof, so
     // this creates another step by calling "justify".
     // TODO: De-hackify this.
-    var result = Y.getTheorem(name).justify(name);
+    assert(name.substring(0, 5) == 'axiom', 'Not an axiom: ' + name);
+    var thm = Y.getTheorem(name);
+    assert(thm, 'No axiom ' + name);
+    var result = thm.justify(name);
     // If there are details, the displayer will enable display of them,
     // but there is really no proof of the axiom.
     delete result.details;
@@ -2735,6 +2738,40 @@ var ruleInfo = {
     description: 'axiom of arithmetic'
   },
 
+  subtractionType: {
+    action: function() {
+      var step1 = rules.axiom('axiomPlusType');
+      var step2 = rules.instVar(step1, Y.parse('neg y'), 'y');
+      var step3 = rules.axiom('axiomNegType');
+      var step4 = rules.instVar(step3, y, x);
+      var step5 = rules.rRight(step4, step2, '/left/right');
+      var step6 = rules.eqSelf(Y.parse('x - y'));
+      var step7 = rules.apply(step6, '/left');
+      var step8 = rules.replace(step7, step5, '/main/right/arg')
+      return step8.justify('subtractionType');
+    },
+    form: '',
+    comment: 'difference of real numbers is real',
+    description: 'difference of real numbers is real'
+  },
+
+  divisionType: {
+    action: function() {
+      var step1 = rules.axiom('axiomTimesType');
+      var step2 = rules.instVar(step1, Y.parse('recip y'), 'y');
+      var step3 = rules.axiom('axiomReciprocalType');
+      var step4 = rules.instVar(step3, y, x);
+      var step5 = rules.rRight(step4, step2, '/left/right');
+      var step6 = rules.eqSelf(Y.parse('x / y'));
+      var step7 = rules.apply(step6, '/left');
+      var step8 = rules.replace(step7, step5, '/main/right/arg')
+      return step8.justify('divisionType');
+    },
+    form: '',
+    comment: 'quotient of real numbers is real',
+    description: 'quotient of real numbers is real'
+  },
+
   //
   // Inference rules for real numbers
   //
@@ -2826,19 +2863,23 @@ var ruleInfo = {
             //   then use rules.conjunctsImplyConjunct and
             //   rules.makeConjunction to prove those hyps from the
             //   full set of hyps.
-            var proved = rules.justifyNumericType(goal);
-            if (proved) {
-              var taut = rules.tautology('(a ==> b) == (a & b == a)');
-              // otherHyps & hyp == otherHyps:
-              var subsumption = rules.rewrite(proved, '', taut);
-              var ab = subsumption.getLeft();
-              // hyps = otherHyps & hyp:
-              var step1 = rules.equalConjunctions(infix(hyps, '=', ab));
-              // So hyps = otherHyps:
-              var step2 = rules.r(subsumption, step1, '/right');
-              // So now allHyps = otherHyps:
-              simplifier = rules.replace(step2, simplifier, '/right');
+            try {
+              var proved = rules.justifyNumericType(goal);
+            } catch(e) {
+              var msg = 'numericTypesSimplifier: unable to prove ' +
+                goal.toString();
+              throw new Error(msg, goal);
             }
+            var taut = rules.tautology('(a ==> b) == (a & b == a)');
+            // otherHyps & hyp == otherHyps:
+            var subsumption = rules.rewrite(proved, '', taut);
+            var ab = subsumption.getLeft();
+            // hyps = otherHyps & hyp:
+            var step1 = rules.equalConjunctions(infix(hyps, '=', ab));
+            // So hyps = otherHyps:
+            var step2 = rules.r(subsumption, step1, '/right');
+            // So now allHyps = otherHyps:
+            simplifier = rules.replace(step2, simplifier, '/right');
           }
         });
       return simplifier.justify('numericTypesSimplifier', arguments);
@@ -2866,7 +2907,7 @@ var ruleInfo = {
 
   // Prove a goal statement of the form "hyps ==> R (l <binop> r)" in
   // preparation for removing the term on the RHS from the full set of
-  // hypotheses of some proof step.
+  // hypotheses of some proof step.  Can throw an exception.
   justifyNumericType: {
     action: function(goal) {
       // TODO: Break down the proof using only the required conjuncts
@@ -2876,26 +2917,31 @@ var ruleInfo = {
       var infix = Y.infixCall;
       var subst = goal.matchSchema('h ==> (R e)');
       assert(subst, 'Bad input to justifyNumericType: ' + goal);
+      var target = goal.getRight();
       var hyps = subst.h;
       var expr = subst.e;
       var map = new Y.TermMap();
       var schema = buildHypSchema(hyps, map);
       var result;
+      // Prove the various forms of targets.
       if (expr.isNumeral()) {
         var step1 = rules.axiomArithmetic(goal.getRight());
         var step2 = rules.eqnSwap(step1);
         var step3 = rules.fromTIsA(step2);
         result = rules.anyImpliesTheorem(hyps, step3);
-      } else if (map.has(goal.getRight())) {
+      } else if (map.has(target)) {
         var taut =
-          rules.tautology(infix(schema, '==>', map.get(goal.getRight())));
+          rules.tautology(infix(schema, '==>', map.get(target)));
         result = rules.instantiate(taut, '', goal);
       } else if (expr.isCall2()) {
         var op = expr.getBinOp();
-        var theorems = {'+': rules.axiomPlusType(), '*': rules.axiomTimesType()};
+        var theorems = {
+          '+': rules.axiomPlusType(), '*': rules.axiomTimesType(),
+          '-': rules.subtractionType(), '/': rules.divisionType()
+        };
         assert(subst && op instanceof Y.Var && theorems[op.name]);
         var theorem = theorems[op.name];
-        var implication = rules.subgoal(goal.getRight(), theorem);
+        var implication = rules.subgoal(target, theorem);
         var subst2 = implication.matchSchema('h1 & h2 ==> p');
         // Solve the two simplified problems:
         var thm1 = rules.justifyNumericType(infix(hyps, '==>', subst2.h1));
@@ -2944,15 +2990,11 @@ var ruleInfo = {
         var step3 = rules.forwardChain(conj, taut);
         var result = rules.rewrite(step3, '/right', rules.axiomReciprocalType());
       } else {
-        var map = new Y.TermMap();
-        var lhs = buildHypSchema(goal.getLeft(), map);
-        var rhs = buildHypSchema(goal.getRight(), map);
-        var taut = infix(lhs, '==>', rhs);
-        try {
-          result = rules.tautInst(taut, map.subst);
-        } catch(e) {
-          return null;
-        }
+        // See if maybe the entire goal is an instance of a tautology.
+        var rhs = buildHypSchema(target, map);
+        var taut = infix(hyps, '==>', rhs);
+        // This may throw an exception.
+        return rules.tautInst(taut, map.subst);
       }
       return result.justify('justifyNumericType', arguments);
     },
@@ -3029,6 +3071,57 @@ var ruleInfo = {
     comment: ('Consider a subexpression for transformation')
   },
 
+  addToBoth: {
+    action: function(eqn, term) {
+      var fn = lambda(x, Y.infixCall(x, '+', term));
+      var result = rules.applyToBoth(fn, eqn);
+      return result.justify('addToBoth', arguments, [eqn]);
+    },
+    inputs: {equation: 1, term: 2},
+    form: ('Add <input name=term> to both sides of ' +
+           'step <input name=equation>'),
+    comment: ('Add the same amount to both sides of the equation'),
+    description: 'add to both sides'
+  },
+
+  subtractFromBoth: {
+    action: function(eqn, term) {
+      var fn = lambda(x, Y.infixCall(x, '-', term));
+      var result = rules.applyToBoth(fn, eqn);
+      return result.justify('subtractFromBoth', arguments, [eqn]);
+    },
+    inputs: {equation: 1, term: 2},
+    form: ('Subtract <input name=term> from both sides of ' +
+           'step <input name=equation>'),
+    comment: ('Subtract the same amount from both sides of the equation'),
+    description: 'subtract from both sides'
+  },
+
+  multiplyBoth: {
+    action: function(eqn, term) {
+      var fn = lambda(x, Y.infixCall(x, '*', term));
+      var result = rules.applyToBoth(fn, eqn);
+      return result.justify('multiplyBoth', arguments, [eqn]);
+    },
+    inputs: {equation: 1, term: 2},
+    form: ('Multiply both sides of step <input name=equation>' +
+           ' by <input name=term>'),
+    comment: ('Multiply both sides of the equation by the same amount'),
+    description: 'multiply both sides'
+  },
+
+  divideBoth: {
+    action: function(eqn, term) {
+      var fn = lambda(x, Y.infixCall(x, '/', term));
+      var result = rules.applyToBoth(fn, eqn);
+      return result.justify('divideBoth', arguments, [eqn]);
+    },
+    inputs: {equation: 1, term: 2},
+    form: ('Divide both sides of step <input name=equation>' +
+           ' by <input name=term>'),
+    comment: ('Divide both sides of the equation by the same amount'),
+    description: 'divide both sides'
+  },
 
   //
   // OPTIONAL/UNUSED
@@ -3284,13 +3377,20 @@ function getTheorem(name) {
 // and theorem schemas will be able to stay, but the details remain
 // to be determined.
 
-var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP'];
+var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP',
+                  'axiomCommutativePlus', 'axiomAssociativePlus',
+                  'axiomCommutativeTimes', 'axiomAssociativeTimes',
+                  'axiomDistributivity', 'axiomPlusZero', 'axiomTimesOne',
+                  'axiomTimesZero', 'axiomNeg', 'axiomReciprocal',
+                  'axiomPlusType', 'axiomTimesType',
+                  'axiomNegType', 'axiomReciprocalType'];
 
 var theoremNames =
   (axiomNames.concat(['defFFromBook', 'r5217Book', 'r5225',
                       'defAnd', 'tIsXIsX', 'forallXT', 'eqTLemma',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
-                      'r5231T', 'r5231F', 'falseEquals', 'trueEquals']));
+                      'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
+                      'subtractionType', 'divisionType']));
 
 for (var i = 0; i < theoremNames.length; i++) {
   addTheorem(theoremNames[i]);
