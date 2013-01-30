@@ -366,15 +366,16 @@ ProofControl.prototype._renumber = function() {
 /**
  * Render's the step number into its element of class "stepNumber",
  * and fixes up its elements of class "stepReference" to contain the
- * stepNumber of the correspondindg dependency.
+ * stepNumber of the corresponding dependency.
  */
 function renderStepNumber(step) {
   step.stepNode.one('.stepNumber')
     .setContent(document.createTextNode(step.stepNumber + '. '));
   // Fix up references made by the step.  (These should all be prior
   // steps.)
+  var deps = getRenderedDeps(step);
   Y.each(step.stepNode.all('.stepReference'), function(ref, j) {
-    ref.setContent(step.original.ruleDeps[j].rendering.stepNumber);
+    ref.setContent(deps[j].rendering.stepNumber);
   });
   // TODO: Consider fixing up references to hypotheses here.
 }
@@ -1119,17 +1120,7 @@ function computeStepInfo(step) {
     stepInfo += '</i></span>';
   } else {
     stepInfo = fancyName(step);
-
-    // Display dependencies on other steps.
-    var firstDep = true;
-    Y.each(step.ruleDeps, function(dep, i) {
-      if (i > 0) {
-        stepInfo += ',';
-      }
-      // This gets filled in later with the referenced step number.
-      stepInfo += ' <span class=stepReference></span>';
-    });
-
+    stepInfo += computeStepRefs(step);
     // Do not display argument info for these:
     var exclusions = ['assume', 'assert', 'axiom4', 'consider', 'eqSelf',
                       'applier', 'tautology', 'mergeConjunctions',
@@ -1142,6 +1133,52 @@ function computeStepInfo(step) {
     }
   }
   return stepInfo;
+}
+
+/**
+ * Returns an array of the dependencies to render for the given step.
+ */
+function getRenderedDeps(step) {
+  if (step.ruleDeps.length > 1) {
+    return step.ruleDeps;
+  }
+  var result = [];
+  var node = getStepNode(step);
+  step.ruleDeps.forEach(function(dep) {
+      var depNext = getStepNode(dep.rendering).get('nextElementSibling');
+      // TODO: Insert the new step's node early, then check precisely
+      // that the given step's node is next after the dep.
+      if (depNext && depNext != node) {
+        result.push(dep);
+      }
+    });
+  return result;
+}
+
+/**
+ * Compute and return HTML for references to steps depended on
+ * by the given rendered step.
+ */
+function computeStepRefs(step) {
+  // TODO: Display each dep according to its argument type
+  // using Y.rules[step.ruleName].info.inputs.
+  var html = '';
+  // Display dependencies on other steps.
+  var depsToRender = getRenderedDeps(step);
+  var depCount = depsToRender.length;
+  if (depCount == 1) {
+    html += ' using step';
+  } else if (depCount > 1) {
+    html += ' using steps';
+  }
+  Y.each(depsToRender, function(dep, i) {
+    if (i > 0) {
+      html += ',';
+    }
+    // This gets filled in later with the referenced step number.
+    html += ' <span class=stepReference></span>';
+  });
+  return html;
 }
 
 /**
