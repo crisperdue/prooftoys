@@ -464,6 +464,13 @@ Expr.prototype.isVariable = function() {
 };
 
 /**
+ * True iff this is a var with the given name.
+ */
+Expr.prototype.hasName = function(name) {
+  return this instanceof Var && this.name === name;
+};
+
+/**
  * True iff this is a Var named as a constant.
  */
 Expr.prototype.isConst = function() {
@@ -1039,15 +1046,19 @@ Expr.prototype.hypsBySource = function() {
  * right.  Treats the chain as hypotheses, and any element with a
  * sourceStep stops further descent into the chain, regardless whether
  * it is a conjunction itself.
+ *
+ * If the action returns a truthy value given any hyp, that value
+ * immediately becomes the value of the call.  Otherwise returns
+ * the value of the last call to the action.
  */
 Expr.prototype.eachHyp = function(action) {
   if (this.sourceStep) {
-    action(this);
+    return action(this);
   } else if (this.isCall2('&')) {
-    this.getLeft().eachHyp(action);
-    action(this.getRight());
+    return (this.getLeft().eachHyp(action) ||
+            action(this.getRight()));
   } else {
-    action(this);
+    return action(this);
   }
 };
 
@@ -3638,8 +3649,8 @@ var utils = {
   },
 
   // This calls a function with any number of arguments.
-  // TODO: Eliminate in favor of infixCall.  This will be problematic
-  // for some infix operators.
+  // TODO: Eliminate use fo binops in favor of infixCall.  This will
+  // be problematic for some infix operators.
   call: function(fn, arg) {
     if ((typeof fn) == 'string') {
       fn = new Y.Var(fn);
