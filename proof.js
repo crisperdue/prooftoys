@@ -1301,7 +1301,7 @@ function computeExtraArgInfo(step) {
       switch(type) {
       case 'term':
       case 'varName':
-        text = args[index].toString();
+        text = args[index].toUnicode();
         break;
       case 'string':
         text = Y.unparseString(args[index - 1]);
@@ -1310,7 +1310,7 @@ function computeExtraArgInfo(step) {
         // End the iteration.
         return;
       }
-      info.push('<code>' + text + '</code>');
+      info.push('<s>' + text + '</s>');
     });
   Y.each(step.ruleArgs, function(arg) {
       if (arg.constructor.prototype == Object.prototype) {
