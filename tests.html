@@ -1636,6 +1636,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testJustifyNumericType: function() {
+        Y.autoAssert = false;
         var input = Y.parse('R x & R y ==> R (x + y)');
         assert(rules.justifyNumericType(input).matches(input));
         input = Y.parse('R x & R y & R z ==> R (x + y)');
@@ -1644,6 +1645,9 @@ YUI({filter: null, insertBefore: 'styles'})
         assert(rules.justifyNumericType(input).matches(input));
         input = Y.parse('R x & x != 0 ==> R (recip x)');
         assert(rules.justifyNumericType(input).matches(input));
+        input = Y.parse('x = 5 ==> R x');
+        assertEqual('(((x = 5) & (R x)) ==> (R x))',
+                    rules.justifyNumericType(input));
       },
 
       testOperateOnBoth: function() {

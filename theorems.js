@@ -2905,7 +2905,7 @@ var ruleInfo = {
     comment: 'Remove redundant type hypotheses in a step'
   },
 
-  // Prove a goal statement of the form "hyps ==> R (l <binop> r)" in
+  // Prove a goal statement of the form "hyps ==> (R <term>)" in
   // preparation for removing the term on the RHS from the full set of
   // hypotheses of some proof step.  Can throw an exception.
   justifyNumericType: {
@@ -2930,9 +2930,12 @@ var ruleInfo = {
         var step3 = rules.fromTIsA(step2);
         result = rules.anyImpliesTheorem(hyps, step3);
       } else if (map.has(target)) {
-        var taut =
-          rules.tautology(infix(schema, '==>', map.get(target)));
+        var taut = rules.tautology(infix(schema, '==>', map.get(target)));
         result = rules.instantiate(taut, '', goal);
+      } else if (expr.isVariable()) {
+        // Need to prove (R x), but there is no hypothesis (R x).
+        // Just add it to the hypotheses.
+        result = rules.tautInst('h & a ==> a', {h: hyps, a: target});
       } else if (expr.isCall2()) {
         var op = expr.getBinOp();
         var theorems = {
