@@ -1686,6 +1686,19 @@ YUI({filter: null, insertBefore: 'styles'})
 
       // END OF RULES AND THEOREMS
 
+      // Text generation
+
+      testFormattedStepInfo: function() {
+        var rules = Y.rules;
+        var step1 = rules.assume('x = x');
+        var step2 = rules.divideBoth(step1, Y.parse('3'));
+        var result = Y._formattedStepInfo(step2);
+        var expect = ('<span class="ruleName link" title="Divide both ' +
+                      'sides of the equation by the same amount">' +
+                      'divide by</span> 3');
+        assertEqual(expect, result);
+      },
+
       // Looking at what can be done with Andrews' definition of "and".
       // From here you can get counterexamples to the possibilities
       // that ordered pairs other than TT satisfy the definition.

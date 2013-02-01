@@ -645,7 +645,7 @@ function renderStep(step, controller) {
          controller.handleStepClick(getProofStep(event.target));
        });
 
-  stepNode.one('.stepInfo').setContent(computeStepInfo(step));
+  stepNode.one('.stepInfo').setContent(formattedStepInfo(step));
 
   // "Hover" events can come in slightly out of order as we track both
   // an inner and outer element.  Straighten this out by maintaining
@@ -1182,12 +1182,13 @@ function computeStepRefs(step) {
 }
 
 /**
- * Returns HTML for a proof step name.
+ * Returns HTML for a proof step name.  If given, the asName
+ * argument serves as description of the name.
  */
-function fancyName(step) {
+function fancyName(step, asName) {
   var name = step.ruleName;
   var info = Y.rules[name].info;
-  var description = info.description || name;
+  var description = asName || info.description || name;
   var comment = Y.Escape.html(info.comment || '');
   var classes = step.details ? 'ruleName link' : 'ruleName';
   if (Y.modes.subproofs) {
@@ -1195,6 +1196,48 @@ function fancyName(step) {
             + description + '</span>');
   } else {
     return description;
+  }
+}
+
+function formattedStepInfo(step) {
+  var ruleName = step.ruleName;
+  var info = Y.rules[ruleName].info;
+  /**
+   * Computes replacement text for rule description markup.
+   */
+  function display(markup) {
+    // Markup is enclosed in {...}.
+    var tag = markup.slice(1, -1);
+    switch (tag) {
+    case 'term':
+    case 'terms':
+      var info = Y.rules[ruleName].info;
+      var places = info.inputs && info.inputs.term;
+      if (typeof places === 'number') {
+        places = [places];
+      }
+      var terms = [];
+      places.forEach(function(place) {
+          var arg = step.ruleArgs[place - 1];
+          terms.push(arg.toUnicode());
+        });
+      return terms.join(', ');
+    default:
+      return '?';
+    }
+  }
+
+  var desc = info.description;
+  var first = desc ? desc.search(/ ?[{].*?[}]/) : -1;
+  if (first >= 0) {
+    // The description has formatting directives.
+    var namePart = desc.slice(0, first);
+    var rest = desc.slice(first);
+    var argsPart = rest.replace(/[{].*?[}]/g, display);
+    return fancyName(step, namePart) + argsPart;
+  } else {
+    // No directives, use default formatting.
+    return computeStepInfo(step);
   }
 }
 
@@ -1663,6 +1706,7 @@ function addBottomPanel(node) {
   div.appendChild('Path: <span id=hoverPath></span>');
 }
 
+
 //// Export public names.
 
 Y.proofToyState = proofToyState;
@@ -1676,6 +1720,9 @@ Y.getStepNode = getStepNode;
 Y.getProofStep = getProofStep;
 Y.getStepsNode = getStepsNode;
 Y.getExpr = getExpr;
+
+// For testing:
+Y._formattedStepInfo = formattedStepInfo;
 
 // Global configuration variable for displaying extra information per
 // step when hovered.

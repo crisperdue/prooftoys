@@ -625,7 +625,7 @@ var ruleInfo = {
     form: '',
     hint: 'Apply a function to its argument',
     comment: ('Applies a function, named or not, to one or two arguments'),
-    description: 'apply definition'
+    description: 'replace use of function'
   },
 
   /**
@@ -3084,7 +3084,7 @@ var ruleInfo = {
     form: ('Add <input name=term> to both sides of ' +
            'step <input name=equation>'),
     comment: ('Add the same amount to both sides of the equation'),
-    description: 'add to both sides'
+    description: 'add {term}'
   },
 
   subtractFromBoth: {
@@ -3097,7 +3097,7 @@ var ruleInfo = {
     form: ('Subtract <input name=term> from both sides of ' +
            'step <input name=equation>'),
     comment: ('Subtract the same amount from both sides of the equation'),
-    description: 'subtract from both sides'
+    description: 'subtract {term}'
   },
 
   multiplyBoth: {
@@ -3110,7 +3110,7 @@ var ruleInfo = {
     form: ('Multiply both sides of step <input name=equation>' +
            ' by <input name=term>'),
     comment: ('Multiply both sides of the equation by the same amount'),
-    description: 'multiply both sides'
+    description: 'multiply by {term}'
   },
 
   divideBoth: {
@@ -3123,7 +3123,7 @@ var ruleInfo = {
     form: ('Divide both sides of step <input name=equation>' +
            ' by <input name=term>'),
     comment: ('Divide both sides of the equation by the same amount'),
-    description: 'divide both sides'
+    description: 'divide by {term}'
   },
 
   //
