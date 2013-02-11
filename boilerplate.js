@@ -15,7 +15,7 @@ if (!window.noYUI) {
   document.write(yuiPath);
   document.write('<script src="expr.js"></script>\n');
   document.write('<script src="step-editor.js"></script>\n');
-  document.write('<script src="proof.js"></script>\n');
+  document.write('<script src="proof.jsc"></script>\n');
   document.write('<script src="theorems.js"></script>\n');
 }
 

@@ -93,7 +93,7 @@ function ProofEditor() {
   // Data of this ProofEditor to remember across page load/unload,
   // representable in JSON.
   this.data = {};
-  this._mainControl = new ProofControl();
+  @mainControl = new ProofControl();
   var stateDisplayHtml =
     '<div class="proofStateDisplay hidden"\n' +
     ' style="padding: 1em; border: 2px solid #aaf">\n' +
@@ -113,7 +113,7 @@ function ProofEditor() {
   this.stateArea = this.stateDisplay.one('.proofStateArea');
   this.containerNode = Y.Node.create('<div class=proofContainer></div>');
   this.containerNode
-    .append(this._mainControl.node)
+    .append(@mainControl.node)
     .append(this.stateDisplay);
 
   // If the proof has changed, save its state.
@@ -121,7 +121,7 @@ function ProofEditor() {
       self.saveState();
     });
   // Make the ProofControl save state when the proof changes.
-  this._mainControl.proofChanged = function() {
+  @mainControl.proofChanged = function() {
     // Changing the proof may change selections (without registering a
     // click on a step).  It also moves the location of the step
     // editor on the page, and both are handled appropriately by a
@@ -132,7 +132,7 @@ function ProofEditor() {
   };
   // Update the step editor query results when the selection may
   // have changed.
-  this._mainControl.selectionChanged = function() {
+  @mainControl.selectionChanged = function() {
     // Forces full display of the appropriate inference rules for
     // the new selection.
     this.stepEditor.reset();
@@ -144,7 +144,7 @@ function ProofEditor() {
   // TODO: Consider creating the step editor from the proof editor
   //   rather than ProofControls for cleaner structure, less redundant
   //   step editors.
-  this._mainControl.stepEditor.saveRestore.on('click', function() {
+  @mainControl.stepEditor.saveRestore.on('click', function() {
       self.stateDisplay.toggleClass('hidden');
     });
 
@@ -174,7 +174,7 @@ function ProofEditor() {
     if (data) {
       self.data = data;
       if (data.proofState) {
-        self._mainControl.setSteps(Y.decodeSteps(data.proofState));
+        @mainControl.setSteps(Y.decodeSteps(data.proofState));
       }
     } else {
       proofToyState.data.proofEditors[self.proofEditorId] = self.data;
@@ -187,14 +187,14 @@ function ProofEditor() {
  * Add a step to the proof.
  */
 ProofEditor.prototype.addStep = function(step) {
-  this._mainControl.addStep(step);
+  this.__mainControl.addStep(step);
 };
 
 /**
  * Gets the state of the proof, in string form.
  */
 ProofEditor.prototype.getStateString = function() {
-  return Y.encodeSteps(this._mainControl.steps)
+  return Y.encodeSteps(this.__mainControl.steps)
 };
 
 /**
@@ -203,7 +203,7 @@ ProofEditor.prototype.getStateString = function() {
  */
 ProofEditor.prototype.setStateFromString = function(encoded) {
   var steps = Y.decodeSteps(encoded);
-  this._mainControl.setSteps(steps);
+  this.__mainControl.setSteps(steps);
 };
 
 /**
@@ -211,7 +211,7 @@ ProofEditor.prototype.setStateFromString = function(encoded) {
  */
 ProofEditor.prototype.setSteps = function(steps) {
   var rendered = Y.Array.map(steps, function(step) { return step.copyStep(); });
-  this._mainControl.setSteps(rendered);
+  this.__mainControl.setSteps(rendered);
 };
 
 /**
@@ -236,7 +236,7 @@ ProofEditor.prototype.restoreState = function() {
 };
 
 ProofEditor.prototype.setEditable = function(value) {
-  this._mainControl.setEditable(value);
+  this.__mainControl.setEditable(value);
 }
 
 
