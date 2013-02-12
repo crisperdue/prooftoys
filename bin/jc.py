@@ -12,9 +12,10 @@ import time
 
 # Pattern to match preprocessor directives, or doc comments
 # that should not be searched for directives.
-atPattern = re.compile('''/[*][*].*?[*]/|  # doc comment
-                          @[a-zA-Z_0-9]+|  # @identifier
-                          @[(]([a-zA-Z0-9$_,\s]*)[)]\s*[{]   # method
+atPattern = re.compile('''/[*][*].*?[*]/ |  # doc comment
+                          @[a-zA-Z_0-9]+ |  # @identifier
+                          @[(]([a-zA-Z0-9$_,\s]*)[)]\s*[{] |  # method (grp 1)
+                          @[{]([a-zA-Z0-9$_,\s]*)[.]\s*       # fn (grp 2)
                        ''',
                        re.DOTALL | re.VERBOSE)
 
@@ -24,9 +25,14 @@ def compile(jr, jsc):
   def replace(match):
     m = match.group(0)
     if m.startswith('/**'):
+      # doc comment
       return m
     elif m.startswith('@('):
+      # method
       return ('function(' + match.group(1) + ') { var self = this; ')
+    elif m.startswith('@{'):
+      # function with immediate return expression
+      return ('function(' + match.group(2) + ') { return ')
     else:
       return 'self.__' + m[1:]
   with open(jr) as input:
