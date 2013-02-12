@@ -210,7 +210,7 @@ ProofEditor.prototype.setStateFromString = @(encoded) {
  * Sets the steps to the given array of non-renderable steps.
  */
 ProofEditor.prototype.setSteps = @(steps) {
-  var rendered = Y.Array.map(steps, function(step) { return step.copyStep(); });
+  var rendered = steps.map(@{step. step.copyStep()});
   @mainControl.setSteps(rendered);
 };
 
