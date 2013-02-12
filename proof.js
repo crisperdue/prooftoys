@@ -186,32 +186,32 @@ function ProofEditor() {
 /**
  * Add a step to the proof.
  */
-ProofEditor.prototype.addStep = function(step) {
-  this.__mainControl.addStep(step);
+ProofEditor.prototype.addStep = @(step) {
+  @mainControl.addStep(step);
 };
 
 /**
  * Gets the state of the proof, in string form.
  */
-ProofEditor.prototype.getStateString = function() {
-  return Y.encodeSteps(this.__mainControl.steps)
+ProofEditor.prototype.getStateString = @() {
+  return Y.encodeSteps(@mainControl.steps)
 };
 
 /**
  * Sets the state of the proof from a string as returned by
  * getStateString.
  */
-ProofEditor.prototype.setStateFromString = function(encoded) {
+ProofEditor.prototype.setStateFromString = @(encoded) {
   var steps = Y.decodeSteps(encoded);
-  this.__mainControl.setSteps(steps);
+  @mainControl.setSteps(steps);
 };
 
 /**
  * Sets the steps to the given array of non-renderable steps.
  */
-ProofEditor.prototype.setSteps = function(steps) {
+ProofEditor.prototype.setSteps = @(steps) {
   var rendered = Y.Array.map(steps, function(step) { return step.copyStep(); });
-  this.__mainControl.setSteps(rendered);
+  @mainControl.setSteps(rendered);
 };
 
 /**
@@ -235,8 +235,8 @@ ProofEditor.prototype.restoreState = function() {
   this.setStateFromString(string);
 };
 
-ProofEditor.prototype.setEditable = function(value) {
-  this.__mainControl.setEditable(value);
+ProofEditor.prototype.setEditable = @(value) {
+  @mainControl.setEditable(value);
 }
 
 

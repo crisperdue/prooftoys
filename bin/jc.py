@@ -9,7 +9,10 @@ import re
 import sys
 import time
 
-atPattern = re.compile('''/[*][*].*?[*]/|@[a-zA-Z_0-9]+''',
+atPattern = re.compile('''/[*][*].*?[*]/|  # doc comment
+                          @[a-zA-Z_0-9]+|  # @identifier
+                          @[(]([a-zA-Z0-9$_,\s]*)[)]\s*[{]   # method
+                       ''',
                        re.DOTALL | re.VERBOSE)
 
 def compile(jr, jsc):
@@ -18,6 +21,8 @@ def compile(jr, jsc):
     m = match.group(0)
     if m.startswith('/**'):
       return m
+    elif m.startswith('@('):
+      return ('function(' + match.group(1) + ') { var self = this; ')
     else:
       return 'self.__' + m[1:]
   with open(jr) as input:
