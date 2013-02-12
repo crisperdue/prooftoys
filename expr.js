@@ -5,6 +5,27 @@ YUI.add('expr', function(Y) {
 
 //// GENERAL UTILITIES
 
+// CLASSES
+
+/**
+ * Configure the given object with the given property descriptors.
+ * This is like Object.defineProperties, except key values that are
+ * not specifically of type Object are treated as plain values,
+ * not made writable, enumerable, or configurable.
+ */
+function configure(object, properties) {
+  var define = Object.defineProperty;
+  for (key in properties) {
+    var value = properties[key];
+    if (typeof value === 'object' && value.constructor === Object) {
+      define(object, key, value);
+    } else {
+      define(object, key, {value: value});
+    }
+  }
+  return object;
+}
+
 // SET
 
 function Set(stringifier) {
@@ -3721,6 +3742,7 @@ var utils = {
 
 //// Export public names.
 
+Y.configure = configure;
 Y.Set = Set;
 Y.Map = Map;
 Y.TermSet = TermSet;

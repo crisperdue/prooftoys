@@ -131,6 +131,31 @@ YUI({filter: null, insertBefore: 'styles'})
         Y.Assert.areEqual(true, 1);
       },
 
+      // configure
+
+      testConfigure: function() {
+        var o = Y.configure({}, {
+            add: function(x) { this[x] = true; },
+            list: [1, 2, 3],
+            zero: 0,
+            count: {value: 1, writable: true}
+          });
+        assert(typeof o.add === 'function');
+        assert(o.list.constructor === Array);
+        assert(typeof o.zero === 'number');
+        assert(typeof o.count === 'number');
+        try {
+          o.add = 3;
+          Y.assert.fail('Should fail');
+        } catch(e){}
+        try {
+          o.zero = 3;
+          Y.assert.fail('Should fail');
+        } catch(e){}
+        o.count = 3;
+        assert(o.count === 3);
+      },
+
       // Sets, TermSets
 
       testSet: function() {
