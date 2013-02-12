@@ -10,12 +10,15 @@ import re
 import sys
 import time
 
+# Pattern to match preprocessor directives, or doc comments
+# that should not be searched for directives.
 atPattern = re.compile('''/[*][*].*?[*]/|  # doc comment
                           @[a-zA-Z_0-9]+|  # @identifier
                           @[(]([a-zA-Z0-9$_,\s]*)[)]\s*[{]   # method
                        ''',
                        re.DOTALL | re.VERBOSE)
 
+# Compiles a file with possible directives into plain JavaScript.
 def compile(jr, jsc):
   sys.stdout.write('compiling {0}\n'.format(jr))
   def replace(match):
@@ -30,6 +33,8 @@ def compile(jr, jsc):
     with open(jsc, 'w') as output:
       output.write(atPattern.sub(replace, input.read()))
   
+# Gets the modification time of the named file, or return 0
+# if the file cannot be found.
 def getmtime(fname):
   tm = 0.0
   try:
