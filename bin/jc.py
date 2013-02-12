@@ -2,6 +2,7 @@
 
 # Preprocessor for nicer OOP notation in JavaScript.
 
+import argparse
 import glob
 import os
 import os.path
@@ -37,14 +38,20 @@ def getmtime(fname):
     return 0.0
 
 def main():
-  names = set(sys.argv[1:])
-  mtimes = {}
-  for js in names:
-    basename, _ = os.path.splitext(js)
-    jsc = basename + '.jsc'
-    jstime = getmtime(js)
-    jsctime = getmtime(jsc)
-    if jsctime < jstime:
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--monitor', action='store_true')
+  parser.add_argument('files', nargs='+')
+  args = parser.parse_args()
+  names = args.files
+  if args.monitor:
+    sys.stderr.write('Unimplemented\n')
+    sys.exit(1)
+  else:
+    for js in names:
+      basename, _ = os.path.splitext(js)
+      jsc = basename + '.jsc'
+      jstime = getmtime(js)
+      jsctime = getmtime(jsc)
       # Compile the .js file
       compile(js, jsc)
 
