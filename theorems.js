@@ -2,6 +2,11 @@
 
 YUI.add('theorems', function(Y) {
 
+// Math markup in the position of a rule name.
+function mathMarkup(text) {
+  return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
+}
+
 
 //// THEOREMS AND RULES
 
@@ -405,7 +410,7 @@ var ruleInfo = {
     form: 'Term to prove equal to itself: <input name=term>',
     hint: '(A = A)',
     comment: 'Derives A = A.',
-    description: 'term equals itself'
+    description: mathMarkup('a = a')
   },
 
   
@@ -727,7 +732,8 @@ var ruleInfo = {
     inputs: {term: 1},
     form: ('Term to prove equal to itself: <input name=term>'),
     hint: '(T = (A = A))',
-    comment: ('Proves T = [B = B].')
+    comment: ('Proves T = [A = A].'),
+    description: mathMarkup('T = (a = a)')
   },
 
   /**
@@ -3155,78 +3161,73 @@ var ruleInfo = {
 
 };  // End of theorems and rules
 
-// Math markup in the position of a rule name.
-function mathMarkup(text) {
-  return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
-}
-
 // Descriptions of rewrite rules; internal.  Each of these generates
 // an actual inference rule.
 var rewriters = {
   commutePlus: {
     axiom: 'axiomCommutativePlus',
-    description: mathMarkup('x + y = y + x')
+    description: mathMarkup('a + b = b + a')
   },
   commuteTimes: {
     axiom: 'axiomCommutativeTimes',
-    description: mathMarkup('x * y = y * x')
+    description: mathMarkup('a * b = b * a')
   },
   associatePlusToLeft: {
     axiom: 'axiomAssociativePlus',
-    description: mathMarkup('x + (y + z) = (x + y) + z')
+    description: mathMarkup('a + (b + c) = (a + b) + c')
   },
   associatePlusToRight: {
     axiom: 'axiomAssociativePlus',
-    description: mathMarkup('(x + y) + z = x + (y + z)'),
+    description: mathMarkup('(a + b) + c = a + (b + c)'),
     input: 'right'
   },
   associateTimesToLeft: {
     axiom: 'axiomAssociativeTimes',
-    description: mathMarkup('x * (y * z) = (x * y) * z')
+    description: mathMarkup('a * (b * c) = (a * b) * c')
   },
   associateTimesToRight: {
     axiom: 'axiomAssociativeTimes',
-    description: mathMarkup('(x * y) * z = x * (y * z)'),
+    description: mathMarkup('(a * b) * c = a * (b * c)'),
     input: 'right'
   },
   distribute: {
     axiom: 'axiomDistributivity',
-    description: mathMarkup('x * (y + z) = (x * y) + (x * z)')
+    description: mathMarkup('a * (b + c) = (a * b) + (a * c)')
   },
   group: {
     axiom: 'axiomDistributivity',
-    description: mathMarkup('(x * y) + (x * z) = x * (y + z)'),
+    description: mathMarkup('(a * b) + (a * c) = a * (b + c)'),
     input: 'right'
   },
   plusZeroElim: {
     axiom: 'axiomPlusZero',
-    description: mathMarkup('x + 0 = x')
+    description: mathMarkup('a + 0 = a')
   },
   plusZeroIntro: {
     axiom: 'axiomPlusZero',
-    description: mathMarkup('x = x + 0'),
+    description: mathMarkup('a = a + 0'),
     input: 'right'
   },
   timesOneElim: {
     axiom: 'axiomTimesOne',
-    description: mathMarkup('x * 1 = x')
+    description: mathMarkup('a * 1 = a')
   },
   timesOneIntro: {
     axiom: 'axiomTimesOne',
-    description: mathMarkup('x = x * 1'),
+    description: mathMarkup('a = a * 1'),
     input: 'right'
   },
   timesZeroElim: {
     axiom: 'axiomTimesZero',
-    description: mathMarkup('x * 0 = 0')
+    description: mathMarkup('a * 0 = 0')
   },
   plusNegElim: {
     axiom: 'axiomNeg',
-    description: mathMarkup('x + neg x = 0')
+    description: mathMarkup('a + neg a = 0')
   },
   timesRecipElim: {
     axiom: 'axiomReciprocal',
-    description: mathMarkup('x * recip x = 1')
+    description: mathMarkup('a * recip a = 1')
   }
 };  
 
