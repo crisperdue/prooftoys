@@ -1200,33 +1200,9 @@ function fancyName(step, asName) {
 }
 
 function formattedStepInfo(step) {
+  function display(markup) { return describeStep(step, markup); };
   var ruleName = step.ruleName;
   var info = Y.rules[ruleName].info;
-  /**
-   * Computes replacement text for rule description markup.
-   */
-  function display(markup) {
-    // Markup is enclosed in {...}.
-    var tag = markup.slice(1, -1);
-    switch (tag) {
-    case 'term':
-    case 'terms':
-      var info = Y.rules[ruleName].info;
-      var places = info.inputs && info.inputs.term;
-      if (typeof places === 'number') {
-        places = [places];
-      }
-      var terms = [];
-      places.forEach(function(place) {
-          var arg = step.ruleArgs[place - 1];
-          terms.push(arg.toUnicode());
-        });
-      return terms.join(', ');
-    default:
-      return '?';
-    }
-  }
-
   var desc = info.description;
   var first = desc ? desc.search(/ ?[{].*?[}]/) : -1;
   if (first >= 0) {
@@ -1238,6 +1214,28 @@ function formattedStepInfo(step) {
   } else {
     // No directives, use default formatting.
     return computeStepInfo(step);
+  }
+}
+
+/**
+ * Computes replacement text for rule description markup.
+ */
+function describeStep(step, markup) {
+  switch (markup) {
+  case '{term}':
+  case '{terms}':
+    var info = Y.rules[step.ruleName].info;
+    var places = info.inputs && info.inputs.term;
+    // Convert number to array.
+    if (typeof places === 'number') {
+      places = [places];
+    }
+    var terms = places.map(function(place) {
+        return step.ruleArgs[place - 1].toUnicode();
+      });
+    return terms.join(', ');
+  default:
+    return '?';
   }
 }
 
