@@ -1254,6 +1254,16 @@ function expandMarkup(step, markup) {
         return step.ruleArgs[place - 1].toUnicode();
       });
     return terms.join(', ');
+  case '{var}':
+    var info = Y.rules[step.ruleName].info;
+    var place = (info.inputs &&
+                 (info.inputs.varName[0] || info.inputs.varName));
+    return Toy.mathMarkup(step.ruleArgs[place - 1].toString());
+  case '{site}':
+    var info = Y.rules[step.ruleName].info;
+    var place = (info.inputs &&
+                 (info.inputs.site[0] || info.inputs.site));
+    return Toy.mathMarkup(step.ruleArgs[place - 1].toString());
   default:
     return '?';
   }
@@ -1685,7 +1695,7 @@ var hoverHandlers = {
     var eqn = args[0].rendering;
     // Name of variable being instantiated.
     var varName = args[2].ruleName;
-    action(eqn.node, 'dep');
+    action(getStepNode(eqn), 'dep');
     eqn.findAll(varName,
                 function(_var) { action(_var.node, 'occur'); },
                 step,
@@ -1697,7 +1707,7 @@ var hoverHandlers = {
     var input = args[0].rendering;
     // Name of variable being instantiated.
     var varName = args[2].name || args[2];
-    action(input.node, 'dep');
+    action(getStepNode(input), 'dep');
     input.findAll(varName,
                   function(_var) { action(_var.node, 'occur'); },
                   step,
@@ -1710,7 +1720,7 @@ var hoverHandlers = {
     var input = args[0].rendering.unHyp();
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
-    action(input.node, 'dep');
+    action(getStepNode(input), 'dep');
     var body = input.arg.body;
     body.findAll(varName,
                  function(_var) { action(_var.node, 'occur'); },
