@@ -1109,7 +1109,7 @@ function clearSubproof(step) {
  * Computes and returns a string of HTML with information about
  * the given proof step.
  */
-function computeStepInfo(step) {
+function formatDefaultStepInfo(step) {
   var stepInfo;
   if (step.ruleName == 'definition') {
     stepInfo = 'definition of <span class=math><i>';
@@ -1199,28 +1199,48 @@ function fancyName(step, asName) {
   }
 }
 
+/**
+ * Returns HTML text describing the step, displayed after
+ * the formula on each proof line.
+ */
 function formattedStepInfo(step) {
-  function display(markup) { return describeStep(step, markup); };
+  function display(markup) { return expandMarkup(step, markup); };
   var ruleName = step.ruleName;
   var info = Y.rules[ruleName].info;
   var desc = info.description;
-  var first = desc ? desc.search(/ ?[{].*?[}]/) : -1;
-  if (first >= 0) {
+  if (!desc) {
+    // No description, use default formatting.
+    return formatDefaultStepInfo(step);
+  }    
+  var newStyle = false;
+  // description is the name of a step formatter function that
+  // should return a description.
+  if (desc[0] === '=') {
+    newStyle = true;
+    var fn = stepFormatters[desc.slice(1)];
+    assert(fn, 'No step formatter "' + desc.slice(1) + '"');
+    desc = fn(step);
+  }
+  var formatStart = desc.search(/ ?[{].*?[}]/);
+  if (formatStart >= 0) {
     // The description has formatting directives.
-    var namePart = desc.slice(0, first);
-    var rest = desc.slice(first);
+    var namePart = desc.slice(0, formatStart);
+    var rest = desc.slice(formatStart);
     var argsPart = rest.replace(/[{].*?[}]/g, display);
     return fancyName(step, namePart) + argsPart;
+  } else if (newStyle) {
+    // Treat as new-style formatting, but no args part.
+    return fancyName(step, desc);
   } else {
-    // No directives, use default formatting.
-    return computeStepInfo(step);
+    // No directives and no formatter function, use default formatting.
+    return formatDefaultStepInfo(step);
   }
 }
 
 /**
  * Computes replacement text for rule description markup.
  */
-function describeStep(step, markup) {
+function expandMarkup(step, markup) {
   switch (markup) {
   case '{term}':
   case '{terms}':
@@ -1238,6 +1258,30 @@ function describeStep(step, markup) {
     return '?';
   }
 }
+
+/**
+ * Formatting functions for steps.  The function should return
+ * a description.
+ */
+var stepFormatters = {
+  describeApply: function(step) {
+    var step0 = step.ruleArgs[0];
+    var path = step.ruleArgs[1];
+    var target = step0.locate(path);
+    if (target instanceof Y.Call) {
+      var fn = target.fn;
+      if (fn instanceof Y.Lambda) {
+        return 'substitute for ' + target.fn.bound.name;
+      } else if (target.isCall2()) {
+        return 'apply "' + target.getBinOp().toString() + '"';
+      } else {
+        return 'apply "' + fn.toString() + '"';
+      }
+    } else {
+      return 'apply: not a Call';
+    }
+  }
+};
 
 /**
  * Given a rendered proof step, renders a header and the proof steps
