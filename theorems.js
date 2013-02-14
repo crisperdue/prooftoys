@@ -3,6 +3,7 @@
 YUI.add('theorems', function(Y) {
 
 // Math markup in the position of a rule name.
+// For local use only.
 function mathMarkup(text) {
   return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
 }
@@ -449,7 +450,8 @@ var ruleInfo = {
     inputs: {equation: 1},
     form: 'Swap sides in step <input name=equation>',
     hint: 'From A = B to B = A',
-    comment: 'from A = B deduce B = A'
+    comment: 'from A = B deduce B = A',
+    description: 'from a = b to b = a'
   },
 
   // r5201c.  Works with hypotheses.
@@ -701,7 +703,8 @@ var ruleInfo = {
     form: ('Instantiate <input name=varName> with <input name=term> '
 	   + 'in step <input name=equation>'),
     hint: 'substitute for a variable in both sides',
-    comment: ('Instantiates a free variable in an equation.')
+    comment: ('Instantiates a free variable in an equation.'),
+    description: 'substitute for {var}'
   },
 
   eqTLemma: {
@@ -1092,7 +1095,8 @@ var ruleInfo = {
     inputs: {step: 1},
     form: 'Introduce "T = " into step <input name=step>',
     hint: 'from A to (T = A)',
-    comment: ('From A derives T = A')
+    comment: ('From A derives T = A'),
+    description: mathMarkup('a = (T = a)')
   },
 
   // also 5219.  Works with hypotheses.
@@ -1115,7 +1119,8 @@ var ruleInfo = {
     }}},
     form: 'Eliminate "T = " from step <input name=equation>',
     hint: 'from (T = A) to A',
-    comment: ('From T = A derives A')
+    comment: ('From T = A derives A'),
+    description: mathMarkup('(T = a) = a')
   },
 
   // Lemma helper for addForall, a pure theorem.
@@ -1171,7 +1176,8 @@ var ruleInfo = {
            + 'substitute <input name=term>'),
     hint: 'substitute for free variable',
     comment: ('In a theorem substitute an expression for'
-              + ' all occurrences of a free variable.')
+              + ' all occurrences of a free variable.'),
+    description: 'substitute for {var}'
   },
 
   // Same functionality as instVar, but with a site (step+path) and a
@@ -1189,7 +1195,8 @@ var ruleInfo = {
     form: ('Substitute <input name=term> for the selected variable.'),
     hint: 'substitute for free variable',
     comment: ('In a theorem substitute an expression for'
-              + ' all occurrences of a free variable.')
+              + ' all occurrences of a free variable.'),
+    description: 'substitute for {site}'
   },
 
   // More like the book's 5221.  For each name in the map (a string),
