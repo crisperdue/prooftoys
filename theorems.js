@@ -630,7 +630,7 @@ var ruleInfo = {
     form: '',
     hint: 'Apply a function to its argument',
     comment: ('Applies a function, named or not, to one or two arguments'),
-    description: 'replace use of function'
+    description: '=describeApply'
   },
 
   /**
@@ -3312,16 +3312,14 @@ var rules = {};
  */
 function createRules(ruleInfo) {
   for (var key in ruleInfo) {
-    // Remember ALL of the info as well, redundantly.  See the "to do"
-    // above.
     var info = ruleInfo[key];
     if (!info.inputs) {
       info.inputs = {};
     }
     var fn = (typeof info == 'function') ? info : info.action;
-    // Each function in rules has its action function as
-    // the value of its innerFn property.
+    // Associate the action function with the key,
     rules[key] = fn;
+    // and metadata as the function's "info" property.
     rules[key].info = info;
   }
 }
