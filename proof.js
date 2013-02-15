@@ -1263,7 +1263,9 @@ function expandMarkup(step, markup) {
     var info = Y.rules[step.ruleName].info;
     var place = (info.inputs &&
                  (info.inputs.site[0] || info.inputs.site));
-    return Toy.mathMarkup(step.ruleArgs[place - 1].toString());
+    var siteStep = step.ruleArgs[place - 1];
+    var term = siteStep.locate(step.ruleArgs[place]);
+    return Toy.mathMarkup(term.toUnicode());
   default:
     return '?';
   }
@@ -1283,9 +1285,9 @@ var stepFormatters = {
       if (fn instanceof Y.Lambda) {
         return 'substitute for ' + target.fn.bound.name;
       } else if (target.isCall2()) {
-        return 'apply "' + target.getBinOp().toString() + '"';
+        return 'apply definition of ' + target.getBinOp().toString();
       } else {
-        return 'apply "' + fn.toString() + '"';
+        return 'apply definition of ' + fn.toString();
       }
     } else {
       return 'apply: not a Call';
