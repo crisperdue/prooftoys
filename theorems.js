@@ -267,7 +267,7 @@ var ruleInfo = {
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
     hint: 'Replace term with equal term',
-    description: 'replace equal value'
+    description: 'replace'
   },
 
   /**
@@ -286,7 +286,7 @@ var ruleInfo = {
     hint: 'replace term with equal term',
     comment: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
-    description: 'replace equal value'
+    description: 'replace'
   },
 
   axiom1: {
@@ -346,8 +346,7 @@ var ruleInfo = {
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
     hint: 'apply a function to its argument',
-    comment: (''),
-    description: 'substitute for bound variable'
+    comment: ('')
   },
 
   axiom5: {
@@ -493,7 +492,8 @@ var ruleInfo = {
     form: ('Apply both sides of step <input name=equation>'
 	   + ' to term <input name=term>'),
     hint: 'From F = G to (F A) = (G A)',
-    comment: 'given f = g, deduce (f A) = (g A)'
+    comment: 'given f = g, deduce (f A) = (g A)',
+    description: 'from f = g to (f a) = (g a)'
   },
 
   // r5201f.  Works with hypotheses.
@@ -513,7 +513,8 @@ var ruleInfo = {
     form: ('Apply function <input name=term>'
 	   + ' to both sides of step <input name=equation>'),
     hint: 'from A = B to (F A) = (F B)',
-    comment: 'given B = C deduce (f B) = (f C)'
+    comment: 'given B = C deduce (f B) = (f C)',
+    description: 'from a = b to (f a) = (f b)'
   },
 
   // Use the definition of the given name at the given location
@@ -543,7 +544,7 @@ var ruleInfo = {
     form: '',
     hint: 'replace name with its definition',
     comment: (''),
-    description: 'use definition'
+    description: 'definition of {site}'
   },
 
   // Just applies an anonymous lambda to an argument at the
@@ -560,7 +561,7 @@ var ruleInfo = {
     // form: '',
     hint: 'Apply a function to its argument',
     comment: ('Applies a lambda to its argument'),
-    description: 'substitute for bound variable'
+    description: 'substitute'
   },
 
   // Derives a rewriter for a call that reduces a call to a lambda, or
@@ -683,7 +684,8 @@ var ruleInfo = {
     form: ('Bind variable <input name=varName> in step <input name=equation>'),
     hint: 'embed both sides in a variable binding',
     comment: ('Wraps each side of an equation in a function'
-              + ' using the bound variable of your choice.')
+              + ' using the bound variable of your choice.'),
+    description: 'from a = b to {v. a} = {v. b}'
   },
 
   /**
@@ -780,7 +782,8 @@ var ruleInfo = {
 	   + ' with term <input name=term>'),
     hint: 'instantiate "forall"',
     comment: ('In a "forall", instantiates the bound variable with'
-              + ' a given term.')
+              + ' a given term.'),
+    description: 'substitute'
   },
 
   // From [A = B] deduce T = [A = B].
@@ -794,7 +797,8 @@ var ruleInfo = {
     inputs: {equation: 1},
     form: 'Introduce "T = " into step <input name=equation>',
     hint: 'from (A = B) to (T = (A = B))',
-    comment: ('From [A = B] deduce T = [A = B].')
+    comment: ('From [A = B] deduce T = [A = B].'),
+    description: 'from a = b to T = (a = b)'
   },
 
   // Prove [F = T] = F.  Number reflects dependencies in the book
@@ -1082,7 +1086,8 @@ var ruleInfo = {
     inputs: {term: 1},
     form: ('Term to use in ((T = A) = A): <input name=term>'),
     hint: 'prove ((T = A) = A)',
-    comment: ('For any expression A derives [T = A] = A.')
+    comment: ('For any expression A derives [T = A] = A.'),
+    description: '(T = a) = a'
   },
 
   // 5219.  Works with hypotheses.
@@ -1156,7 +1161,8 @@ var ruleInfo = {
            + '<input name=varName>'),
     hint: 'from A to (forall {x. A})',
     comment: ('Universal Generalization, wrap a theorem A in'
-              + ' (forall v A) using the variable of your choice.')
+              + ' (forall v A) using the variable of your choice.'),
+    description: 'from A to (\u2200 {x. A})',
   },
 
   // 5221 (one variable), in the given step substitute term A for
@@ -1231,7 +1237,8 @@ var ruleInfo = {
     inputs: {step: 1},
     hint: 'Substitute for multiple variables',
     comment: ('Substitute in B for each variable named in the map, '
-              + 'its value in the map')
+              + 'its value in the map'),
+    description: '=describeMultiVars'
   },
 
   // Given two theorems a and b, proves a & b.
@@ -1249,7 +1256,8 @@ var ruleInfo = {
     inputs: {step: [1, 2]},
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
     hint: 'from A and B to (A & B)',
-    comment: ('Given a and b, derive a & b')
+    comment: ('Given a and b, derive a & b'),
+    description: 'from a and b to (a & b)'
   },
 
   // (5222) Given two theorems that are substitutions of T and
@@ -1279,7 +1287,8 @@ var ruleInfo = {
 	   + ' use variable name <input name=varName>'),
     hint: 'proof by cases',
     comment: ('Prove a theorem by cases given two theorems that'
-              + ' show it with T and F.')
+              + ' show it with T and F.'),
+    description: 'cases: true whether {var} is true or false'
   },
 
   // Given P and P ==> Q, derive Q. (5224)
@@ -1299,7 +1308,8 @@ var ruleInfo = {
     form: ('Modus ponens: hypothesis step <input name=step>,'
 	   + ' implication in step <input name=implication>'),
     hint: 'modus ponens',
-    comment: ('Modus Ponens.  Given A and A ==> B derives B.')
+    comment: ('Modus Ponens.  Given A and A ==> B derives B.'),
+    description: 'from p and p &rArr; q to q'
   },
 
   // (forall f) ==> f x
@@ -1434,7 +1444,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Boolean term to simplify: <input name=term>',
-    comment: ('Evaluates a boolean expression with no free variables.')
+    comment: ('Evaluates a boolean expression with no free variables.'),
+    description: 'calculate boolean value'
   },
 
   // Proves an inference that the wff is a tautology and
@@ -1493,7 +1504,8 @@ var ruleInfo = {
     inputs: {term: 1},
     form: 'Enter tautology: <input name=term>',
     hint: 'enter tautology',
-    comment: ('Tautology decider.')
+    comment: ('Tautology decider.'),
+    description: 'tautology'
   },
 
   // Any instance of a tautology is a theorem.  This is part
@@ -1521,7 +1533,8 @@ var ruleInfo = {
 	return step2.justify('tautInst', arguments);
       }
     },
-    comment: ('A substitution instance of a tautology is a theorem.')
+    comment: ('A substitution instance of a tautology is a theorem.'),
+    description: '=describeTautInst'
   },
 
   // TODO: Complete this.
@@ -1606,13 +1619,18 @@ var ruleInfo = {
     inputs: {term: 1, step: 2},
     form: ('Derive that <input name=term> implies theorem <input name=step>'),
     hint: 'From theorem B deduce A ==> B',
-    comment: ('Given a theorem, derive that something implies it.')
+    comment: ('Given a theorem, derive that something implies it.'),
+    description: 'anything implies a theorem'
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
   // ((forall {v. A | B}) ==> A | (forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
   // This is Axiom Schema 5 of Andrews' first-order logic F.
+  //
+  // TODO: Prove a theorem schema for removing quantification over terms
+  // that do not depend on the bound variable.  Something like:
+  // {v. f A B} c = f A ({v. B} c) where v is not free in f or a.
   r5235: {
     action: function(v, a, b) {
       v = Y.varify(v);
@@ -1643,7 +1661,8 @@ var ruleInfo = {
 	   + 'wff without it free: <input name=term1> '
 	   + 'other wff: <input name=term2>'),
     comment: ('Move "forall" inside an "or" when variable not free '
-              + 'in the left argument of the "or".')
+              + 'in the left argument of the "or".'),
+    description: 'move forall'
   },
 
   // Given a proof step H |- A ==> B and a variable v, derives
@@ -1682,7 +1701,8 @@ var ruleInfo = {
 	   + 'variable <input name=varName> '
 	   + 'implication <input name=implication>'),
     comment: ('Move "forall" inside "implies" provided the variable '
-              + 'is not free in the first argument.')
+              + 'is not free in the first argument.'),
+    description: 'move forall'
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
@@ -1719,7 +1739,8 @@ var ruleInfo = {
 	   + 'other wff: <input name=term2>'),
     hint: 'forall {v. A ==> B} ==> (A ==> forall {v. B}',
     comment: ('Move "forall" inside an "or" when variable not free '
-              + 'in the left argument of the "or".')
+              + 'in the left argument of the "or".'),
+    description: 'move forall'
   },
 
   // Given a proof step H |- A ==> B and a variable v, derives
@@ -1742,13 +1763,14 @@ var ruleInfo = {
 	   + 'implication <input name=implication>'),
     hint: 'Move "forall" inside "implies"',
     comment: ('Move "forall" inside "implies" provided the variable '
-              + 'is not free in the first argument.')
+              + 'is not free in the first argument.'),
+    description: 'move forall'
   },
     
   // Rule P for a single antecedent (5234).  The given tautology must
   // have the form (A ==> B), where A matches the given input step and
-  // B has only variables that appear in A.  For tautologies with a
-  // conjunction on the LHS as shown in the book, use this with
+  // all free variables of B are also free in A.  For tautologies with
+  // a conjunction on the LHS as shown in the book, use this with
   // makeConjunction.  Handles hypotheses by applying modus ponens to
   // the step.
   //
@@ -1764,7 +1786,8 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: ('Match step <input name=step> with left side of implication '
            + 'in tautology <input name=term>'),
-    comment: ('Match step with LHS of tautology A ==> B.')
+    comment: ('Match step with LHS of tautology A ==> B.'),
+    description: 'forward chain'
   },
 
   // Andrews calls his enhanced version of forward chaining "Rule P".
@@ -2021,7 +2044,7 @@ var ruleInfo = {
     form: ('Replace selection with right side of step <input name=step>'),
     comment: ("Replace an expression with the right side of an equation, "
               + "handling hypotheses."),
-    description: 'replace equal value'
+    description: 'replace'
   },
     
   // Add hypotheses to the step from hypStep.  This is key to providing
@@ -2135,8 +2158,8 @@ var ruleInfo = {
     hint: 'Prefix hypotheses to a step'
   },
 
-  // Takes a proof step, a path, and a proved equation without
-  // variable bindings.  If the part of the step at the given path
+  // Takes a proof step, a path, and a proved equation.
+  // If the part of the step at the given path
   // matches the LHS of the equation, replaces that part of the step
   // with the appropriate instance of the equation, otherwise return
   // the input step.  The step and equation may have hypotheses.
@@ -3084,7 +3107,8 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    comment: ('Consider a subexpression for transformation')
+    comment: ('Consider a subexpression for transformation'),
+    description: 'consider'
   },
 
   addToBoth: {
