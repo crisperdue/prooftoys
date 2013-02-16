@@ -349,6 +349,16 @@ span.assumptions {
   margin-bottom: 18em;
 }
 
+/* Make inputs a bit larger than regular text */
+.stepEditor input {
+  font-family: STIXGeneral, times;
+  font-size: 100%;
+}
+
+.stepEditor select {
+  font-size: 120%;
+}
+
 /* Text used as a hint, as in a text field */
 .hinted {
   font-style: italic;
@@ -358,19 +368,19 @@ span.assumptions {
 
 /* Input for rule name, wff, etc. */
 input.sted-input {
-  font-family: monospace;
+  font-family: inherit;
   width: 80%;
 }
 
 /* Inputs for rule arguments */
 
-input.term, input.string, input.funcall {
-  font-family: monospace;
+/* input.string is currently just used for defined names */
+input.term, input.string {
+  font-style: italic;
   width: 30em;
 }
 
 input.varName, input.step, input.equation, input.implication {
-  font-family: monospace;
   width: 4em;
 }
 
