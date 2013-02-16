@@ -86,7 +86,8 @@ YUI.add('sample-proofs', function(Y) {
       ruleName = 'instForall';
     }
     displayProof(ruleName);
-    var selectorHtml = '<select id=selector>\n<option value="">-- choose --';
+    var selectorHtml =
+      '<select class=sampleSelector>\n<option value="">-- choose --';
     for (var name in sampleProofs) {
       if (sampleProofs[name].level == 1) {
         if (name == ruleName) {
