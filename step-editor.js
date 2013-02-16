@@ -72,7 +72,6 @@ var formTypes = {
   term: true,
   varName: true,
   string: true,
-  funcall: true,
   step: true,
   equation: true,
   implication: true
