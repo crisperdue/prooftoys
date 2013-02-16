@@ -1276,6 +1276,7 @@ function expandMarkup(step, markup) {
  * a description.
  */
 var stepFormatters = {
+  // TODO: Treat "apply" as a rewrite using arbitrary definitions.
   describeApply: function(step) {
     var step0 = step.ruleArgs[0];
     var path = step.ruleArgs[1];
@@ -1292,6 +1293,27 @@ var stepFormatters = {
     } else {
       return 'apply: not a Call';
     }
+  },
+  describeMultiVars: function(step) {
+    var map = step.ruleArgs[1];
+    var keys = [];
+    for (key in map) {
+      keys.push(key);
+    }
+    return 'substitute for ' + keys.join(', ');
+  },
+  describeTautInst: function(step) {
+    var taut = step.ruleArgs[0];
+    if (typeof taut === 'string') {
+      taut = Y.parse(taut);
+    }
+    return 'tautology ' + Toy.mathMarkup(taut.toUnicode());
+  },
+  describeReplace: function(step) {
+    var eqn = step.ruleArgs[0];
+    var target = step.ruleArgs[1];
+    var path = step.ruleArgs[2];
+    return 'replace ' + target.locate(path);
   }
 };
 

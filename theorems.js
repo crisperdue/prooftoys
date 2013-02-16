@@ -2044,7 +2044,7 @@ var ruleInfo = {
     form: ('Replace selection with right side of step <input name=step>'),
     comment: ("Replace an expression with the right side of an equation, "
               + "handling hypotheses."),
-    description: 'replace'
+    description: '=describeReplace'
   },
     
   // Add hypotheses to the step from hypStep.  This is key to providing
