@@ -366,7 +366,7 @@ span.assumptions {
   color: #999;
 }
 
-/* Input for rule name, wff, etc. */
+/* Input for rule name */
 input.sted-input {
   font-family: inherit;
   width: 80%;
