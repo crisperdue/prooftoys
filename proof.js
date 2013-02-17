@@ -1276,6 +1276,12 @@ function expandMarkup(step, markup) {
  * a description.
  */
 var stepFormatters = {
+  changeVar: function(step) {
+    var step0 = step.ruleArgs[0];
+    var path = step.ruleArgs[1];
+    var target = step0.locate(path);
+    return 'rename ' + target.bound;
+  },
   // TODO: Treat "apply" as a rewrite using arbitrary definitions.
   describeApply: function(step) {
     var step0 = step.ruleArgs[0];
