@@ -556,11 +556,10 @@ function acceptsSelection(step, ruleName, acceptTerm) {
   // Selected expression (within a step).
   var expr = step.selection;
   if (expr) {
+    // TODO: prevent selection of bound variables as terms.
     return (accept.site
 	    || (acceptTerm && accept.term)
-	    || (accept.bindingSite && step.pathToBinding(function(e) {
-	      return e == expr;
-	    }))
+	    || (accept.bindingSite && expr instanceof Y.Lambda)
 	    || (accept.reducible
 		&& expr instanceof Y.Call
 		&& expr.fn instanceof Y.Lambda));
@@ -572,7 +571,7 @@ function acceptsSelection(step, ruleName, acceptTerm) {
 }
 
 
-//// RULESELECTOR
+//// RULE SELECTOR
 
 /**
  * Constructor.  Arguments are input, an input field; source, a
