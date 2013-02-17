@@ -643,19 +643,19 @@ var ruleInfo = {
    * the old bound variable.
    */
   changeVar: {
-    action: function(expr, path, newVar) {
+    action: function(step, path, newVar) {
       newVar = _var(newVar);
-      path = Y.path(path, expr);
-      var target = expr.locate(path);
-      assert(target instanceof Y.Lambda, 'Not a function: ' + target, expr);
-      assert(!expr.freeNames()[newVar.name],
+      path = Y.path(path, step);
+      var target = step.locate(path);
+      assert(target instanceof Y.Lambda, 'Not a function: ' + target, step);
+      assert(!step.freeNames()[newVar.name],
              'New bound variable ' + newVar.name + ' must not occur free.',
-             expr);
+             step);
       var changed = lambda(newVar,
                            Y.subFree(newVar, target.bound, target.body));
       var step1 = rules.eqSelf(changed);
-      var step2 = rules.r(step1, expr, path);
-      return step2.justify('changeVar', arguments, [expr]);
+      var step2 = rules.r(step1, step, path);
+      return step2.justify('changeVar', arguments, [step]);
     },
     inputs: {bindingSite: 1, varName: 3},
     form: ('Rename to <input name=varName>'),
@@ -664,7 +664,7 @@ var ruleInfo = {
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
               + 'the one with changed bound variable.'),
-    description: 'rename bound variable'
+    description: '=changeVar'
   },
 
   /**
@@ -1162,7 +1162,7 @@ var ruleInfo = {
     hint: 'from A to (forall {x. A})',
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.'),
-    description: 'from A to (\u2200 {x. A})',
+    description: 'add \u2200',
   },
 
   // 5221 (one variable), in the given step substitute term A for
