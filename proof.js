@@ -1121,16 +1121,6 @@ function formatDefaultStepInfo(step) {
   } else {
     stepInfo = fancyName(step);
     stepInfo += computeStepRefs(step);
-    // Do not display argument info for these:
-    var exclusions = ['assume', 'assert', 'axiom4', 'consider', 'eqSelf',
-                      'applier', 'tautology', 'mergeConjunctions',
-                      'tautInst'];
-    if (exclusions.indexOf(step.ruleName) < 0) {
-      var argDetails = computeExtraArgInfo(step);
-      if (argDetails) {
-        stepInfo += ('<span class=argDetails> with ' + argDetails + '</span');
-      }
-    }
   }
   return stepInfo;
 }
@@ -1216,24 +1206,13 @@ function formattedStepInfo(step) {
   // description is the name of a step formatter function that
   // should return a description.
   if (desc[0] === '=') {
-    newStyle = true;
     var fn = stepFormatters[desc.slice(1)];
     assert(fn, 'No step formatter "' + desc.slice(1) + '"');
-    desc = fn(step);
-  }
-  var formatStart = desc.search(/ ?[{].*?[}]/);
-  if (formatStart >= 0) {
-    // The description has formatting directives.
-    var namePart = desc.slice(0, formatStart);
-    var rest = desc.slice(formatStart);
-    var argsPart = rest.replace(/[{].*?[}]/g, display);
-    return fancyName(step, namePart) + argsPart;
-  } else if (newStyle) {
-    // Treat as new-style formatting, but no args part.
-    return fancyName(step, desc);
+    return fancyName(step, fn(step));
   } else {
-    // No directives and no formatter function, use default formatting.
-    return formatDefaultStepInfo(step);
+    // The description has formatting directives.
+    var html = desc.replace(/[{].*?[}]/g, display);
+    return fancyName(step, html);
   }
 }
 
@@ -1281,6 +1260,12 @@ var stepFormatters = {
     var path = step.ruleArgs[1];
     var target = step0.locate(path);
     return 'rename ' + target.bound;
+  },
+  instForall: function(step) {
+    var step0 = step.ruleArgs[0];
+    // Get the bound variable of the arg to forall.
+    var bound = step0.locate('/main/arg/bound');
+    return 'substitute for ' + bound.name;
   },
   // TODO: Treat "apply" as a rewrite using arbitrary definitions.
   describeApply: function(step) {
@@ -1409,41 +1394,6 @@ function computeHeaderArgInfo(step) {
       + argInfo + '</span>';
   }
   return argInfo;
-}
-
-/**
- * Computes HTML for arguments that are not steps or paths.  Returns a
- * comma-separated string, with each argument enclosed in <code></code>.
- * To enable more specific styling enclose the result in an element
- * with a suitable class.
- */
-function computeExtraArgInfo(step) {
-  var args = step.ruleArgs;
-  var info = [];
-  counter = 0;
-  Y.eachArgType(step.ruleName, function(index, type) {
-      var text;
-      switch(type) {
-      case 'term':
-      case 'varName':
-        text = args[index].toUnicode();
-        break;
-      case 'string':
-        text = Y.unparseString(args[index - 1]);
-        break;
-      default:
-        // End the iteration.
-        return;
-      }
-      info.push('<s>' + text + '</s>');
-    });
-  Y.each(step.ruleArgs, function(arg) {
-      if (arg.constructor.prototype == Object.prototype) {
-        // It is a plain object, show as a map.
-        info.push('<code>' + Y.debugString(arg) + '</code>');
-      }
-    });
-  return info.join(', ');
 }
 
 /**
@@ -1676,13 +1626,14 @@ function hoverAsRewriter(step, action) {
  * If enabled, build and show a "hover overlay" on hover, hide on exit.
  */
 function doHoverOverlay(step, direction) {
+  // NB: Hover overlays currently have no information in them,
+  // but might be helpful in the future.
   if (Y.useHoverOverlays) {
     var align = Y.WidgetPositionAlign;
     var overlay = getProofControl(step).hoverOverlay;
     if (direction == 'in') {
       overlay.set('align', {
           node: getStepNode(step.node), points: [align.TR, align.BR]});
-      overlay.set('bodyContent', computeExtraArgInfo(step));
       overlay.show();
     } else {
       overlay.hide();

@@ -783,7 +783,7 @@ var ruleInfo = {
     hint: 'instantiate "forall"',
     comment: ('In a "forall", instantiates the bound variable with'
               + ' a given term.'),
-    description: 'substitute'
+    description: '=instForall'
   },
 
   // From [A = B] deduce T = [A = B].
