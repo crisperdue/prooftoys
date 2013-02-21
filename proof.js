@@ -1201,7 +1201,7 @@ function formattedStepInfo(step) {
   if (!desc) {
     // No description, use default formatting.
     return formatDefaultStepInfo(step);
-  }    
+  }
   var newStyle = false;
   // description is the name of a step formatter function that
   // should return a description.

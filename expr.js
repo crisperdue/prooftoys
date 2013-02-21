@@ -936,8 +936,8 @@ Expr.prototype.pathTo = function(pred) {
  * as a boolean function of one argument.  Returns a path from this to
  * the Lambda containing the occurrence, or null if none found.  Tests
  * this expression first, followed by the rest in top-down
- * left-to-right order.
- * Alternatively accepts a term to be matched.
+ * left-to-right order.  Alternatively accepts a term to be matched
+ * against bound variables in this.
  */
 Expr.prototype.pathToBinding = function(pred) {
   if (pred instanceof Expr) {
@@ -1308,10 +1308,10 @@ Expr.prototype.mergedHypotheses = function() {
 //
 // _bindingPath(pred, revPath)
 //
-// Searches for a subexpression of this that passes the test and is a
-// variable binding.  Returns the "reverse path" from this to its
-// containing Lambda, with the last path segment first, added to the
-// given revPath.
+// Searches for a subexpression of this that passes the test and is
+// the bound variable of a Lambda.  Returns the "reverse path" from
+// this to the Lambda, with the last path segment first, followed by
+// the given revPath.
 // 
 //
 // generalizeTF(expr2, newVar)
