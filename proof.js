@@ -2,6 +2,10 @@
 
 YUI.add('proof', function(Y) {
 
+function $$(x) {
+  return jQuery(x._nodes || x._node);
+}
+
 // Use the application's assert function.
 var assert = Y.assertTrue;
 
@@ -389,6 +393,8 @@ ProofControl.prototype.addStep = function(step) {
   // TODO: Move most of this logic into renderStep.
   var copy = step.copyStep();
   step.rendering = copy;
+  copy.rendering = copy;
+  step.original = step;
   copy.original = step;
   this.steps.push(copy);
   copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length;
@@ -1120,13 +1126,13 @@ function formatDefaultStepInfo(step) {
     stepInfo += '</i></span>';
   } else {
     stepInfo = fancyName(step);
-    stepInfo += computeStepRefs(step);
+    stepInfo += formatStepRefs(step);
   }
   return stepInfo;
 }
 
 /**
- * Returns an array of the dependencies to render for the given step.
+ * Returns an array of the dependencies to show for the given step.
  */
 function getRenderedDeps(step) {
   if (step.ruleDeps.length > 1) {
@@ -1136,8 +1142,9 @@ function getRenderedDeps(step) {
   var node = getStepNode(step);
   step.ruleDeps.forEach(function(dep) {
       var depNext = getStepNode(dep.rendering).get('nextElementSibling');
-      // TODO: Insert the new step's node early, then check precisely
-      // that the given step's node is next after the dep.
+      // In current implementation depNext is never the step's node, because
+      // the node has not yet been inserted.
+      // TODO: Insert the step's node early, and only do the != test here.
       if (depNext && depNext != node) {
         result.push(dep);
       }
@@ -1146,28 +1153,47 @@ function getRenderedDeps(step) {
 }
 
 /**
- * Compute and return HTML for references to steps depended on
- * by the given rendered step.
+ * True iff step1 and step2 are rendered adjacent to each other,
+ * with step1 first.  As a sop to current practice, allow step1
+ * to have no next step, and step2 not linked into the DOM.
  */
-function computeStepRefs(step) {
-  // TODO: Display each dep according to its argument type
-  // using Y.rules[step.ruleName].info.inputs.
+function adjacentSteps(step1, step2) {
+  var j1 = $$(getStepNode(step1.rendering));
+  var j2 = $$(getStepNode(step2.rendering));
+  // TODO: Link in new steps before rendering, and eliminate this
+  // special test.
+  // Is j2 linked into the DOM?
+  var p2 = j2.parents('body');
+  return (p2.length == 0 && j1.next().length == 0) || j1.next().is(j2);
+}
+
+/**
+ * Generate HTML to render a list of steps used by the given step
+ * according to display policy.  Currently this is to show "site"
+ * dependencies as "in" and others as "using", but only when not
+ * immediately preceding the given step.
+ */
+function formatStepRefs(step) {
+  var siteRefs = [];
+  var stepRefs = [];
+  var args = step.ruleArgs;
+  Y.eachArgType(step.ruleName, function(where, type) {
+      var arg = args[where];
+      if (type in Y.siteTypes && !adjacentSteps(arg, step)) {
+          siteRefs.push(arg);
+      } else if (type in Y.stepTypes && !adjacentSteps(arg, step)) {
+        stepRefs.push(arg);
+      }
+    });
   var html = '';
-  // Display dependencies on other steps.
-  var depsToRender = getRenderedDeps(step);
-  var depCount = depsToRender.length;
-  if (depCount == 1) {
-    html += ' using step';
-  } else if (depCount > 1) {
-    html += ' using steps';
+  if (siteRefs.length) {
+    html += siteRefs.length > 1 ? ' in steps ' : ' in step ';
+    html += siteRefs.map(@{s. s.rendering.stepNumber}).join(', ');
   }
-  Y.each(depsToRender, function(dep, i) {
-    if (i > 0) {
-      html += ',';
-    }
-    // This gets filled in later with the referenced step number.
-    html += ' <span class=stepReference></span>';
-  });
+  if (stepRefs.length) {
+    html += stepRefs.length > 1 ? ' using steps' : ' using step ';
+    html += stepRefs.map(@{s. s.rendering.stepNumber}).join(', ');
+  }
   return html;
 }
 
@@ -1208,11 +1234,11 @@ function formattedStepInfo(step) {
   if (desc[0] === '=') {
     var fn = stepFormatters[desc.slice(1)];
     assert(fn, 'No step formatter "' + desc.slice(1) + '"');
-    return fancyName(step, fn(step));
+    return fancyName(step, fn(step)) + formatStepRefs(step);
   } else {
     // The description has formatting directives.
     var html = desc.replace(/[{].*?[}]/g, display);
-    return fancyName(step, html);
+    return fancyName(step, html) + formatStepRefs(step);
   }
 }
 
@@ -1246,7 +1272,8 @@ function expandMarkup(step, markup) {
     var term = siteStep.locate(step.ruleArgs[place]);
     return Toy.mathMarkup(term.toUnicode());
   default:
-    return '?';
+    // Allow lambdas to pass through, e.g. {x. T}.
+    return markup;
   }
 }
 
