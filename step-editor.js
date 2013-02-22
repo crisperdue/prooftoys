@@ -703,6 +703,9 @@ BasicRuleSelector.prototype.focus = function() {
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Y.profileName = '';
 
+Y.stepTypes = stepTypes;
+Y.siteTypes = siteTypes;
+
 Y.StepEditor = StepEditor;
 Y.stepPaths = stepPaths;
 Y.stepSites = stepSites;
