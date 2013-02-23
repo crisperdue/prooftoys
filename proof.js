@@ -1163,7 +1163,7 @@ function adjacentSteps(step1, step2) {
   // TODO: Link in new steps before rendering, and eliminate this
   // special test.
   // Is j2 linked into the DOM?
-  var p2 = j2.parents('body');
+  var p2 = j2.closest('body');
   return (p2.length == 0 && j1.next().length == 0) || j1.next().is(j2);
 }
 
