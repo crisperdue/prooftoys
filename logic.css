@@ -345,8 +345,6 @@ span.assumptions {
 /* Overrides styles for .proofDisplay. */
 .stepEditor {
   background-color: white;
-  /* Leave space for the autocompleter */
-  margin-bottom: 18em;
 }
 
 /* Make inputs a bit larger than regular text */
