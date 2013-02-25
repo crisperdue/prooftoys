@@ -178,6 +178,8 @@ YUI.add('sample-proofs', function(Y) {
              y],
     },
     
+    xAlwaysX: {},
+
     eqT: {
       args: [p]
     },

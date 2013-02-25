@@ -710,29 +710,31 @@ var ruleInfo = {
     description: 'substitute for {var}'
   },
 
-  eqTLemma: {
+  /**
+   * forall {x. x = x}
+   * Helper lemma for eqT.
+   */
+  xAlwaysX: {
     action: function() {
-      var a3 =
-        rules.useDefinition(rules.axiom('axiom3'), '/right/fn');
-      var identity = lambda(y, y);
-      var step1a = rules.instEqn(a3, identity, f);
-      var step1b = rules.instEqn(step1a, identity, g);
-      var step2a = rules.eqSelf(identity);
-      // Eliminate the LHS of step2a:
-      var step2b = rules.r(step1b, step2a, '/');
-      var step2c = rules.apply(step2b, '/right/body/left');
-      var step2d = rules.apply(step2c, '/right/body/right');
-      return step2d.justify('eqTLemma', arguments);
+      var a3 = rules.axiom('axiom3');
+      var step1 = rules.instEqn(a3, f, g);
+      var step2 = rules.instEqn(step1, lambda(y, y), f)
+      var step3 = rules.apply(step2, '/right/arg/body/right');
+      var step4 = rules.apply(step3, '/right/arg/body/left');
+      var step5 = rules.eqSelf(lambda(y, y));
+      var step6 = rules.replace(step4, step5, '');
+      return step6.justify('xAlwaysX', arguments);
     }
   },
 
   // T = [B = B] (5210)
   eqT: {
     action: function(b) {
-      var lemma = rules.theorem('eqTLemma');
-      var step1 = rules.applyBoth(lemma, b);
-      var step2 = rules.apply(step1, '/left');
-      var step3 = rules.apply(step2, '/right');
+      var lemma = rules.theorem('xAlwaysX');
+      var step0 = rules.useDefinition(lemma, '/fn')
+      var step1 = rules.applyBoth(step0, b);
+      var step2 = rules.apply(step1, '/right');
+      var step3 = rules.apply(step2, '/left');
       return step3.justify('eqT', arguments, []);
     },
     inputs: {term: 1},
@@ -770,7 +772,9 @@ var ruleInfo = {
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.apply(step2, '/main/left');
       var step4 = rules.apply(step3, '/main/right');
-      // Do not use fromTIsA, it depends on this.
+      // Rule fromTIsA depends on instForall via tIsXIsX and
+      // equationCases, though this next step is a simplified fromTIsA
+      // without hypotheses.
       var step5 = rules.replace(step4, rules.theorem('t'), '/main');
       return step5.justify('instForall', arguments, [h_target]);
     },
@@ -3427,7 +3431,7 @@ var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP',
 
 var theoremNames =
   (axiomNames.concat(['defFFromBook', 'r5217Book', 'r5225',
-                      'defAnd', 'tIsXIsX', 'forallXT', 'eqTLemma',
+                      'defAnd', 'tIsXIsX', 'forallXT', 'xAlwaysX',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
                       'subtractionType', 'divisionType']));
