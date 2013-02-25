@@ -1112,26 +1112,6 @@ function clearSubproof(step) {
 }
 
 /**
- * Computes and returns a string of HTML with information about
- * the given proof step.
- */
-function formatDefaultStepInfo(step) {
-  var stepInfo;
-  if (step.ruleName == 'definition') {
-    stepInfo = 'definition of <span class=math><i>';
-    stepInfo += step.ruleArgs[0];
-    if (step.ruleArgs.length == 2) {
-      stepInfo += ' ' + step.ruleArgs[1];
-    }
-    stepInfo += '</i></span>';
-  } else {
-    stepInfo = fancyName(step);
-    stepInfo += formatStepRefs(step);
-  }
-  return stepInfo;
-}
-
-/**
  * Returns an array of the dependencies to show for the given step.
  */
 function getRenderedDeps(step) {
@@ -1177,10 +1157,13 @@ function formatStepRefs(step) {
   var siteRefs = [];
   var stepRefs = [];
   var args = step.ruleArgs;
+  var info = Y.rules[step.ruleName].info;
+  // No custom step deps displays?
+  var showSteps = !info.description.match(/[{]step[0-9]*[}]/);
   Y.eachArgType(step.ruleName, function(where, type) {
       var arg = args[where];
       if (type in Y.siteTypes && !adjacentSteps(arg, step)) {
-          siteRefs.push(arg);
+        siteRefs.push(arg);
       } else if (type in Y.stepTypes && !adjacentSteps(arg, step)) {
         stepRefs.push(arg);
       }
@@ -1190,7 +1173,7 @@ function formatStepRefs(step) {
     html += siteRefs.length > 1 ? ' in steps ' : ' in step ';
     html += siteRefs.map(@{s. s.rendering.stepNumber}).join(', ');
   }
-  if (stepRefs.length) {
+  if (showSteps && stepRefs.length) {
     html += stepRefs.length > 1 ? ' using steps' : ' using step ';
     html += stepRefs.map(@{s. s.rendering.stepNumber}).join(', ');
   }
@@ -1224,10 +1207,7 @@ function formattedStepInfo(step) {
   var ruleName = step.ruleName;
   var info = Y.rules[ruleName].info;
   var desc = info.description;
-  if (!desc) {
-    // No description, use default formatting.
-    return formatDefaultStepInfo(step);
-  }
+  assert(desc, 'No description for ' + ruleName);
   var newStyle = false;
   // description is the name of a step formatter function that
   // should return a description.
@@ -1246,10 +1226,19 @@ function formattedStepInfo(step) {
  * Computes replacement text for rule description markup.
  */
 function expandMarkup(step, markup) {
+  var info = Y.rules[step.ruleName].info;
   switch (markup) {
+  case '{step}':
+  case '{step1}':
+    var steps = info.inputs && info.inputs.step;
+    // Convert number to array.
+    return (typeof steps === 'number') ? steps : steps[0];
+  case '{step2}':
+    var steps = info.inputs && info.inputs.step;
+    // Convert number to array.
+    return (steps && steps[1]) || '?';
   case '{term}':
   case '{terms}':
-    var info = Y.rules[step.ruleName].info;
     var places = info.inputs && info.inputs.term;
     // Convert number to array.
     if (typeof places === 'number') {
@@ -1260,17 +1249,18 @@ function expandMarkup(step, markup) {
       });
     return terms.join(', ');
   case '{var}':
-    var info = Y.rules[step.ruleName].info;
     var place = (info.inputs &&
                  (info.inputs.varName[0] || info.inputs.varName));
     return Toy.mathMarkup(step.ruleArgs[place - 1].toString());
   case '{site}':
-    var info = Y.rules[step.ruleName].info;
     var place = (info.inputs &&
                  (info.inputs.site[0] || info.inputs.site));
     var siteStep = step.ruleArgs[place - 1];
     var term = siteStep.locate(step.ruleArgs[place]);
     return Toy.mathMarkup(term.toUnicode());
+  case '{}':
+    // Indicates new-style description, no output.
+    return '';
   default:
     // Allow lambdas to pass through, e.g. {x. T}.
     return markup;
@@ -1279,9 +1269,16 @@ function expandMarkup(step, markup) {
 
 /**
  * Formatting functions for steps.  The function should return
- * a description.
+ * an HTML description string.
  */
 var stepFormatters = {
+  definition: function(step) {
+    var result = 'definition of ' + step.ruleArgs[0];
+    if (step.ruleArgs.length == 2) {
+      result += ' ' + step.ruleArgs[1];
+    }
+    return result;
+  },
   changeVar: function(step) {
     var step0 = step.ruleArgs[0];
     var path = step.ruleArgs[1];

@@ -128,6 +128,7 @@ var ruleInfo = {
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
     comment: 'Convert assumptions to an explicit implication',
+    // TODO: special description ("in step N")
     description: 'make assumptions explicit'
   },
       
@@ -187,7 +188,7 @@ var ruleInfo = {
     form: ('Definition of <input name=string> '
            + 'if by cases enter T or F <input name=optString>'),
     comment: 'access a definition',
-    description: 'show definition'
+    description: '=definition'
   },
 
   /**
@@ -1257,6 +1258,7 @@ var ruleInfo = {
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
     hint: 'from A and B to (A & B)',
     comment: ('Given a and b, derive a & b'),
+    // TODO: special description
     description: 'from a and b to (a & b)'
   },
 
@@ -1288,7 +1290,7 @@ var ruleInfo = {
     hint: 'proof by cases',
     comment: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.'),
-    description: 'cases: true whether {var} is true or false'
+    description: 'cases: {var} true in step {step1}, false in step {step2}'
   },
 
   // Given P and P ==> Q, derive Q. (5224)
@@ -1505,7 +1507,7 @@ var ruleInfo = {
     form: 'Enter tautology: <input name=term>',
     hint: 'enter tautology',
     comment: ('Tautology decider.'),
-    description: 'tautology'
+    description: 'tautology {}'
   },
 
   // Any instance of a tautology is a theorem.  This is part
@@ -1804,6 +1806,7 @@ var ruleInfo = {
     form: ('Match step <input name=step> with left side of implication '
            + 'in tautology <input name=term>'),
     comment: ('Match step with LHS of tautology A ==> B.')
+    // TODO: special description.
   },
 
   // Proves the goal by matching it with the conclusion of the given
@@ -3346,6 +3349,10 @@ function createRules(ruleInfo) {
     var info = ruleInfo[key];
     if (!info.inputs) {
       info.inputs = {};
+    }
+    // The default description is just the rule name
+    if (!('description' in info)) {
+      info.description = key;
     }
     var fn = (typeof info == 'function') ? info : info.action;
     // Associate the action function with the key,
