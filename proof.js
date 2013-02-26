@@ -1153,7 +1153,7 @@ function adjacentSteps(step1, step2) {
  * dependencies as "in" and others as "using", but only when not
  * immediately preceding the given step.
  */
-function formatStepRefs(step) {
+function formattedStepRefs(step) {
   var siteRefs = [];
   var stepRefs = [];
   var args = step.ruleArgs;
@@ -1181,21 +1181,28 @@ function formatStepRefs(step) {
 }
 
 /**
- * Returns HTML for a proof step name.  If given, the asName
- * argument serves as description of the name.
+ * Returns an HTML description of a proof step.  If given, the second
+ * argument serves as a description, which is further formatted
+ * here.
  */
-function fancyName(step, asName) {
-  var name = step.ruleName;
-  var info = Y.rules[name].info;
-  var description = asName || info.description || name;
-  var comment = Y.Escape.html(info.comment || '');
-  var classes = step.details ? 'ruleName link' : 'ruleName';
-  if (Y.modes.subproofs) {
-    return ('<span class="' + classes + '" title="' + comment + '">'
-            + description + '</span>');
-  } else {
-    return description;
+function formattedDescription(step) {
+  var info = Y.rules[step.ruleName].info;
+  var description = info.description;
+  if (description[0] === '=') {
+    // Expand the description with the named function.
+    var fn = stepFormatters[description.slice(1)];
+    assert(fn, 'No step formatter "' + desc.slice(1) + '"');
+    description = fn(step);
   }
+  // Expand any markup within the description.
+  description = description.replace(/[{].*?[}]/g,
+                                    @{markup. expandMarkup(step, markup)});
+  var comment = Y.Escape.html(info.comment || '');
+  var classes = (step.details && Y.modes.subproofs
+                 ? 'ruleName link'
+                 : 'ruleName');
+  return ('<span class="' + classes + '" title="' + comment + '">'
+          + description + '</span>');
 }
 
 /**
@@ -1203,23 +1210,7 @@ function fancyName(step, asName) {
  * the formula on each proof line.
  */
 function formattedStepInfo(step) {
-  function display(markup) { return expandMarkup(step, markup); };
-  var ruleName = step.ruleName;
-  var info = Y.rules[ruleName].info;
-  var desc = info.description;
-  assert(desc, 'No description for ' + ruleName);
-  var newStyle = false;
-  // description is the name of a step formatter function that
-  // should return a description.
-  if (desc[0] === '=') {
-    var fn = stepFormatters[desc.slice(1)];
-    assert(fn, 'No step formatter "' + desc.slice(1) + '"');
-    return fancyName(step, fn(step)) + formatStepRefs(step);
-  } else {
-    // The description has formatting directives.
-    var html = desc.replace(/[{].*?[}]/g, display);
-    return fancyName(step, html) + formatStepRefs(step);
-  }
+  return formattedDescription(step, html) + formattedStepRefs(step);
 }
 
 /**
