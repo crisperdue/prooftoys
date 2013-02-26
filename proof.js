@@ -1183,7 +1183,8 @@ function formattedStepRefs(step) {
 /**
  * Returns an HTML description of a proof step.  If given, the second
  * argument serves as a description, which is further formatted
- * here.
+ * here.  Paired braces are expanded using expandMarkup.  Any text
+ * after a ";;" pair is formatted as arguments to the rule.
  */
 function formattedDescription(step) {
   var info = Y.rules[step.ruleName].info;
@@ -1194,15 +1195,24 @@ function formattedDescription(step) {
     assert(fn, @{. 'No step formatter "' + description.slice(1) + '"'});
     description = fn(step);
   }
+  var d1 = description;
+  var d2 = '';
+  var match = d1.match(/(.*?);;(.*)$/);
+  if (match) {
+    d1 = match[1];
+    d2 = match[2];
+  }
   // Expand any markup within the description.
-  description = description.replace(/[{].*?[}]/g,
-                                    @{markup. expandMarkup(step, markup)});
+  d1 = d1.replace(/[{].*?[}]/g,
+                  @{markup. expandMarkup(step, markup)});
+  d2 = d2.replace(/[{].*?[}]/g,
+                  @{markup. expandMarkup(step, markup)});
   var comment = Y.Escape.html(info.comment || '');
   var classes = (step.details && Y.modes.subproofs
                  ? 'ruleName link'
                  : 'ruleName');
   return ('<span class="' + classes + '" title="' + comment + '">'
-          + description + '</span>');
+          + d1 + '</span>' + d2);
 }
 
 /**
@@ -1236,7 +1246,7 @@ function expandMarkup(step, markup) {
       places = [places];
     }
     var terms = places.map(function(place) {
-        return step.ruleArgs[place - 1].toUnicode();
+        return Toy.mathMarkup(step.ruleArgs[place - 1].toUnicode());
       });
     return terms.join(', ');
   case '{var}':

@@ -1261,7 +1261,7 @@ var ruleInfo = {
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
     hint: 'from A and B to (A & B)',
     comment: ('Given a and b, derive a & b'),
-    description: 'a & b from steps {step1}, {step2}'
+    description: 'a & b;; from steps {step1}, {step2}'
   },
 
   // (5222) Given two theorems that are substitutions of T and
@@ -1313,7 +1313,7 @@ var ruleInfo = {
 	   + ' implication in step <input name=implication>'),
     hint: 'modus ponens',
     comment: ('Modus Ponens.  Given A and A ==> B derives B.'),
-    description: 'from p and p &rArr; q to q'
+    description: 'from p, p &rArr; q to q'
   },
 
   // (forall f) ==> f x
@@ -1795,7 +1795,7 @@ var ruleInfo = {
     form: ('Match step <input name=step> with left side of implication '
            + 'in tautology <input name=term>'),
     comment: ('Match step with LHS of tautology A ==> B.'),
-    description: 'forward chain using {term}'
+    description: 'forward chain;; using {term}'
   },
 
   // Proves the goal by matching it with the conclusion of the given
