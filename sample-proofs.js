@@ -374,7 +374,7 @@ YUI.add('sample-proofs', function(Y) {
     },
 
     'Rule P': {
-      ruleName: p,
+      ruleName: 'forwardChain',
       args: [Y.rules.assume('p x & (p x ==> q x)'),
              Y.parse('a & (a ==> b) ==> b')],
       level: 1
