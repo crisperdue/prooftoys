@@ -1191,7 +1191,7 @@ function formattedDescription(step) {
   if (description[0] === '=') {
     // Expand the description with the named function.
     var fn = stepFormatters[description.slice(1)];
-    assert(fn, 'No step formatter "' + desc.slice(1) + '"');
+    assert(fn, @{. 'No step formatter "' + description.slice(1) + '"'});
     description = fn(step);
   }
   // Expand any markup within the description.
@@ -1210,7 +1210,7 @@ function formattedDescription(step) {
  * the formula on each proof line.
  */
 function formattedStepInfo(step) {
-  return formattedDescription(step, html) + formattedStepRefs(step);
+  return formattedDescription(step) + formattedStepRefs(step);
 }
 
 /**
