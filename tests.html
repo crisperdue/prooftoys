@@ -1390,17 +1390,16 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('((R y) ==> (p ==> (forall {x. (q x)})))', result);
       },
 
-      testP: function() {
-        var inf = Y.rules.p(Y.parse('p x & (p x ==> q x)'),
-                            Y.parse('a & (a ==> b) ==> b'));
-        assertEqual('(q x)', inf);
+      testForwardChain: function() {
+        var step1 = Y.rules.assume('p x & (p x ==> q x)');
+        var inf = Y.rules.forwardChain(step1, 'a & (a ==> b) ==> b');
+        assertEqual('(q x)', inf.unHyp());
 
-        // With hypotheses:
         var step1 = Y.rules.assert('h x ==> (p x & (p x ==> q x))');
 	var step2 = Y.rules.assume('h x');
 	var step3 = Y.rules.modusPonens(step2, step1);
-        var result = Y.rules.p(step3,
-                               Y.parse('a & (a ==> b) ==> b'));
+        var result = Y.rules.forwardChain(step3,
+                                          'a & (a ==> b) ==> b');
         assertEqual('((h x) ==> (q x))', result);
         Y.assert(result.hasHyps);
       },

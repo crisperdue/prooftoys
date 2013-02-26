@@ -1781,6 +1781,10 @@ var ruleInfo = {
   // the step.
   //
   // Accepts a string for the tautology.
+  //
+  // Andrews calls his enhanced version of forward chaining "Rule P".
+  // (In this implementation it is more straightforward to use
+  // makeConjunction as needed, followed by forwardChain.)
   forwardChain: {
     action: function(step, tautology) {
       var tautology = rules.tautology(tautology);
@@ -1793,24 +1797,7 @@ var ruleInfo = {
     form: ('Match step <input name=step> with left side of implication '
            + 'in tautology <input name=term>'),
     comment: ('Match step with LHS of tautology A ==> B.'),
-    description: 'forward chain'
-  },
-
-  // Andrews calls his enhanced version of forward chaining "Rule P".
-  // (In this implementation it is more straightforward to use
-  // makeConjunction as needed, followed by forwardChain.)
-  // 
-  // TODO: Consider renaming all uses of this to "forwardChain".
-  p: {
-    action: function(step, tautology) {
-      return (rules.forwardChain(step, tautology)
-              .justify('p', arguments, [step]));
-    },
-    inputs: {step: 1, term: 2},
-    form: ('Match step <input name=step> with left side of implication '
-           + 'in tautology <input name=term>'),
-    comment: ('Match step with LHS of tautology A ==> B.')
-    // TODO: special description.
+    description: 'forward chain using {term}'
   },
 
   // Proves the goal by matching it with the conclusion of the given
@@ -2038,10 +2025,10 @@ var ruleInfo = {
       var step2 = rules.r5239(equation, c, cpath);
       var step3 = rules.makeConjunction(step1, step2);
       var tautology = Y.parse('(p ==> q) & (q ==> r) ==> (p ==> r)');
-      var step4 = rules.p(step3, tautology);
+      var step4 = rules.forwardChain(step3, tautology);
       var step5 = rules.makeConjunction(h_c, step4);
       var taut2 = Y.parse('(h ==> p) & (h ==> (p = q)) ==> (h ==> q)');
-      var result = rules.p(step5, taut2);
+      var result = rules.forwardChain(step5, taut2);
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
         result = rules.asHypotheses(result);
       }
@@ -2356,7 +2343,7 @@ var ruleInfo = {
 			     '==>',
 			     infix(Y.varify('h'), '==>', a)));
       var step1 = rules.asImplication(step);
-      var step2 = rules.p(step1, taut);
+      var step2 = rules.forwardChain(step1, taut);
       var result = rules.asHypotheses(step2);
       return result.justify('extractHypothesis', arguments, [step]);
     },
@@ -2545,7 +2532,7 @@ var ruleInfo = {
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step4, subst);
       var step6 = rules.makeConjunction(step4, step5);
-      var step7 = rules.p(step6, '(p ==> q) & (q ==> p) ==> (p = q)');
+      var step7 = rules.forwardChain(step6, '(p ==> q) & (q ==> p) ==> (p = q)');
       return step7.justify('equalitySymmetric', arguments);
     },
     inputs: {},
@@ -2559,7 +2546,8 @@ var ruleInfo = {
       var step2 = rules.instVar(step1, Y.parse('{t. t = z}'), _var('h'));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = rules.apply(step3, '/right/right');
-      var step5 = rules.p(step4, '(a ==> (b = c)) ==> (a & c ==> b)');
+      var step5 = rules.forwardChain(step4,
+                                     '(a ==> (b = c)) ==> (a & c ==> b)');
       return step5.justify('equalityTransitive', arguments);
     },
     inputs: {},
