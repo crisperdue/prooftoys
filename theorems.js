@@ -927,9 +927,9 @@ var ruleInfo = {
   // Book version of r5211.
   r5211Book: function() {
     var step1 = rules.instEqn(rules.axiom('axiom1'), lambda(y, T), g);
-    var step2a = rules.apply(step1, '/left/left');
+    var step2a = rules.apply(step1, '/right/arg/body');
     var step2b = rules.apply(step2a, '/left/right');
-    var step2c = rules.apply(step2b, '/right/arg/body');
+    var step2c = rules.apply(step2b, '/left/left');
     var step3a = rules.eqT(lambda(x, T));
     var step3b = rules.rRight(rules.definition('forall'), step3a, '/right/fn');
     var step4 = rules.rRight(step3b, step2c, '/right');
