@@ -128,8 +128,7 @@ var ruleInfo = {
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
     comment: 'Convert assumptions to an explicit implication',
-    // TODO: special description ("in step N")
-    description: 'make assumptions explicit'
+    description: 'explicit assumptions'
   },
       
   /**
@@ -264,11 +263,12 @@ var ruleInfo = {
                                      [target, equation]);
       return justified;
     },
-    // inputs: {equation: 1, site: 2},
+    inputs: {equation: 1, site: 2},
+    // Currently not offered in forms; use "replace".
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
     hint: 'Replace term with equal term',
-    description: 'replace'
+    description: '=describeReplace'
   },
 
   /**
@@ -1248,7 +1248,6 @@ var ruleInfo = {
 
   // Given two theorems a and b, proves a & b.
   // Handles hypotheses.
-  // TODO: Move before "cases".
   makeConjunction: {
     action: function(a, b) {
       var stepa = rules.toTIsA(a);
@@ -1262,8 +1261,7 @@ var ruleInfo = {
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
     hint: 'from A and B to (A & B)',
     comment: ('Given a and b, derive a & b'),
-    // TODO: special description
-    description: 'from a and b to (a & b)'
+    description: 'a & b from steps {step1}, {step2}'
   },
 
   // (5222) Given two theorems that are substitutions of T and
