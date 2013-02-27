@@ -8,6 +8,7 @@ YUI.add('sample-proofs', function(Y) {
 
   // For convenience.
   var rules = Y.rules;
+  var infixCall = Y.infixCall;
   var call = Y.call;
   var equal = Y.equal;
   var implies = Y.implies;

@@ -1231,16 +1231,21 @@ function expandMarkup(step, markup) {
   switch (markup) {
   case '{step}':
   case '{step1}':
-    var steps = info.inputs && info.inputs.step;
+    var steps = info.inputs.step;
     // Convert number to array.
-    return (typeof steps === 'number') ? steps : steps[0];
+    var place = (typeof steps === 'number') ? steps : steps[0];
+    return step.ruleArgs[place - 1].rendering.stepNumber;
   case '{step2}':
-    var steps = info.inputs && info.inputs.step;
+    var steps = info.inputs.step;
     // Convert number to array.
-    return (steps && steps[1]) || '?';
+    var place = (steps && steps[1]);
+    if (place == null) {
+      return '?';
+    }
+    return step.ruleArgs[place - 1].rendering.stepNumber;
   case '{term}':
   case '{terms}':
-    var places = info.inputs && info.inputs.term;
+    var places = info.inputs.term;
     // Convert number to array.
     if (typeof places === 'number') {
       places = [places];
