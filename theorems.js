@@ -1627,7 +1627,7 @@ var ruleInfo = {
         },
         theorem);
       var step1 = rules.toTIsA(theorem);
-      var step2 = rules.tautInst(Y.parse('p ==> T'), {p: any});
+      var step2 = rules.tautInst('p ==> T', {p: any});
       var step3 = rules.r(step1, step2, '/right');
       return step3.justify('anyImpliesTheorem', arguments, [theorem]);
     },
@@ -1656,10 +1656,10 @@ var ruleInfo = {
         p: call('forall', lambda(v, call('|', T, b))),
         q: call('forall', lambda(v, b))
       };
-      var step1 = rules.tautInst(implies(p, call('|', T, q)), map1);
-      var step2 = rules.tautInst(implies(p, call('|', F, p)),
+      var step1 = rules.tautInst('p ==> T | q', map1);
+      var step2 = rules.tautInst('p ==> F | p',
                                  ({p: call('forall', lambda(v, b))}));
-      var step3 = rules.tautInst(equal(p, call('|', F, p)),
+      var step3 = rules.tautInst('p == F | p',
                                  ({p: b}));
       var step4 = rules.r(step3, step2, '/left/arg/body');
 
@@ -1701,13 +1701,13 @@ var ruleInfo = {
 	       h_a_b);
       }
       var map1 = {a: a, b: b};
-      var step1 = rules.tautInst(Y.parse('(a ==> b) ==> not a | b'), map1);
+      var step1 = rules.tautInst('(a ==> b) ==> not a | b', map1);
       var step2 = rules.modusPonens(h_a_b, step1);
       var step3 = rules.addForall(step2, v);
       var step4 = rules.r5235(v, call('not', a), b);
       var step5 = rules.modusPonens(step3, step4);
       var map6 = {a: a, b: step5.locate('/main/right')};
-      var step6 = rules.tautInst(Y.parse('not a | b ==> (a ==> b)'), map6);
+      var step6 = rules.tautInst('not a | b ==> (a ==> b)', map6);
       var step7 = rules.modusPonens(step5, step6);
       return step7.justify('implyForallBook', arguments, [h_a_b]);
     },
@@ -1733,10 +1733,10 @@ var ruleInfo = {
         p: call('forall', lambda(v, Y.infixCall(F, '==>', b))),
         q: call('forall', lambda(v, b))
       };
-      var step1 = rules.tautInst(implies(p, Y.infixCall(F, '==>', q)), map1);
-      var step2 = rules.tautInst(implies(p, Y.infixCall(T, '==>', p)),
+      var step1 = rules.tautInst('p ==> (F ==> q)', map1);
+      var step2 = rules.tautInst('p ==> (T ==> p)',
                                  ({p: call('forall', lambda(v, b))}));
-      var step3 = rules.tautInst(equal(p, Y.infixCall(T, '==>', p)),
+      var step3 = rules.tautInst('p == (T ==> p)',
                                  ({p: b}));
       var step4 = rules.r(step3, step2, '/left/arg/body');
 
@@ -2080,7 +2080,7 @@ var ruleInfo = {
 	    p: target,
 	    h2: hypStep.getLeft()
 	  };
-	  var step1 = rules.tautInst(Y.parse('p ==> (h2 ==> p)'), subst);
+	  var step1 = rules.tautInst('p ==> (h2 ==> p)', subst);
 	  var step2 = rules.modusPonens(target, step1);
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  var result =
@@ -2137,7 +2137,7 @@ var ruleInfo = {
 	    p: step,
 	    h1: hypStep.getLeft()
 	  };
-	  var step1 = rules.tautInst(Y.parse('p ==> (h1 ==> p)'), subst);
+	  var step1 = rules.tautInst('p ==> (h1 ==> p)', subst);
 	  var step2 = rules.modusPonens(step, step1);
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  var result =

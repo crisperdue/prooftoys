@@ -4,8 +4,6 @@ YUI.add('sample-proofs', function(Y) {
 
   // Set up some useful constants and functions.
 
-  Y.Expr.vars.import();
-
   // For convenience.
   var rules = Y.rules;
   var infixCall = Y.infixCall;
@@ -13,6 +11,22 @@ YUI.add('sample-proofs', function(Y) {
   var equal = Y.equal;
   var implies = Y.implies;
   var lambda = Y.lambda;
+
+  var Var = Y.Var;
+  var a = new Var('a');
+  var b = new Var('b');
+  var c = new Var('c');
+  var x = new Var('x');
+  var y = new Var('y');
+  var z = new Var('z');
+  var f = new Var('f');
+  var g = new Var('g');
+  var h = new Var('h');
+  var p = new Var('p');
+  var q = new Var('q');
+  var r = new Var('r');
+  var T = new Var('T');
+  var F = new Var('F');
 
   // Query string data.
   var queryData = Y.QueryString.parse(location.search.substring(1));

@@ -3703,35 +3703,6 @@ function decodeArg(info, steps) {
   }
 }
 
-// Prefab variables to drop in to samples and tests.
-// TODO: define these inline in those files.
-var vars = {
-
-  a: new Var('a'),
-  b: new Var('b'),
-  c: new Var('c'),
-  x: new Var('x'),
-  y: new Var('y'),
-  z: new Var('z'),
-  f: new Var('f'),
-  g: new Var('g'),
-  h: new Var('h'),
-  p: new Var('p'),
-  q: new Var('q'),
-  r: new Var('r'),
-  T: new Var('T'),
-  F: new Var('F'),
-
-  import: function(where) {
-    where = where || window;
-    // Import the useful names into the window !?
-    for (var x in vars) {
-      where[x] = vars[x];
-    }
-  }
-
-};
-
 
 //// Export public names.
 
@@ -3817,8 +3788,6 @@ Y.tokenize = tokenize;
 Y.parse = parse;
 
 Y.logError = logError;
-
-Y.Expr.vars = vars;
 
 // For debugging
 Y.nParsed = nParsed;

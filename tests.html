@@ -63,6 +63,22 @@ YUI({filter: null, insertBefore: 'styles'})
   var implies = Y.implies;
   var lambda = Y.lambda;
 
+  var Var = Y.Var;
+  var a = new Var('a');
+  var b = new Var('b');
+  var c = new Var('c');
+  var x = new Var('x');
+  var y = new Var('y');
+  var z = new Var('z');
+  var f = new Var('f');
+  var g = new Var('g');
+  var h = new Var('h');
+  var p = new Var('p');
+  var q = new Var('q');
+  var r = new Var('r');
+  var T = new Var('T');
+  var F = new Var('F');
+
   // Assertion utilities:
 
   function assertEqual(a, b) {
@@ -97,8 +113,6 @@ YUI({filter: null, insertBefore: 'styles'})
   }
 
   // Set up some useful constants and functions.
-
-  Y.Expr.vars.import();
 
   // Do not display source step info in toString.
   Y.trackSourceSteps = false;
