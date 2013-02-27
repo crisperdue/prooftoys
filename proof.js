@@ -1218,7 +1218,8 @@ function formattedDescription(step) {
                   @{markup. expandMarkup(step, markup)});
   d2 = d2.replace(/[{].*?[}]/g,
                   @{markup. expandMarkup(step, markup)});
-  var comment = Y.Escape.html(info.comment || '');
+  var comment = (Y.Escape.html(info.comment || '') +
+                 ' (&quot;' + step.ruleName + '&quot;)');
   var classes = (step.details && Y.modes.subproofs
                  ? 'ruleName link'
                  : 'ruleName');
