@@ -13,8 +13,10 @@ function mathMarkup(text) {
 
 // Use the application's "assert" rather than YUI's.
 var assert = Y.assertTrue;
-// And make assertEqn convenient too.
+
+// And make other useful names available here.
 var assertEqn = Y.assertEqn;
+var varify = Y.varify;
 
 // Import the generally-useful names from "expr" into
 // this environment.
@@ -645,7 +647,7 @@ var ruleInfo = {
    */
   changeVar: {
     action: function(step, path, newVar) {
-      newVar = _var(newVar);
+      newVar = varify(newVar);
       path = Y.path(path, step);
       var target = step.locate(path);
       assert(target instanceof Y.Lambda, 'Not a function: ' + target, step);
@@ -1040,7 +1042,7 @@ var ruleInfo = {
   // proves the WFF with the variable.
   equationCases: {
     action: function(caseT, caseF, v) {
-      v = _var(v);
+      v = varify(v);
       var stepT1 = rules.toTIsEquation(caseT);
       var stepF1 = rules.toTIsEquation(caseF);
       var step2 = rules.replace(stepT1, rules.theorem('r5212'), '/left');
@@ -1149,7 +1151,7 @@ var ruleInfo = {
   // internally to a variable.  Supports hypotheses.
   addForall: {
     action: function(h_a, v) {
-      v = _var(v);
+      v = varify(v);
       assert(!(h_a.hasHyps && h_a.getLeft().hasFree(v.name)),
 	     function() {
 	       return v.name + ' occurs free in hypotheses of ' + h_a;
@@ -1269,7 +1271,7 @@ var ruleInfo = {
   // proves the WFF.  Works with hypotheses.
   cases: {
     action: function(caseT, caseF, v) {
-      v = _var(v);
+      v = varify(v);
       // Note: caseF has no variables not in caseT, so no need to
       // calculate all of its names.
       var newVar = Y.genVar('v', caseT.allNames());
@@ -1849,10 +1851,7 @@ var ruleInfo = {
       } else if (vars.length == 1) {
         result = rules.r5238a(vars[0], a, b);
       } else {
-        var v = vars[vars.length - 1];
-        if (typeof v == 'string') {
-          v = _var(v);
-        }
+        var v = varify(vars[vars.length - 1]);
         var step1 = rules.r5238(vars.slice(0, -1),
                                 lambda(v, a),
                                 lambda(v, b));
@@ -1869,9 +1868,7 @@ var ruleInfo = {
   // "Base case" of 5238, with just a single variable.
   r5238a: {
     action: function(v, a, b) {
-      if (typeof v == 'string') {
-        v = _var(v);
-      }
+      v = varify(v);
       var step1 = rules.axiom('axiom3');
       var step2 = rules.changeVar(step1, '/right/arg', v);
       var step3 = rules.instMultiVars(step2,
@@ -1908,13 +1905,13 @@ var ruleInfo = {
       var t = Y.genVar('t', Y.merge(target.allNames(), equation.allNames()));
       var texpr = t;
       for (var name in boundNames) {
-        texpr = call(texpr, _var(name));
+        texpr = call(texpr, varify(name));
       }
       var aBound = a;
       var bBound = b;
       var boundNameList = [];
       for (var name in boundNames) {
-        var v = _var(name);
+        var v = varify(name);
         aBound = lambda(v, aBound);
         bBound = lambda(v, bBound);
         boundNameList.push(name);
@@ -2541,7 +2538,7 @@ var ruleInfo = {
   equalityTransitive: {
     action: function() {
       var step1 = rules.axiom('axiom2');
-      var step2 = rules.instVar(step1, Y.parse('{t. t = z}'), _var('h'));
+      var step2 = rules.instVar(step1, Y.parse('{t. t = z}'), varify('h'));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = rules.apply(step3, '/right/right');
       var step5 = rules.forwardChain(step4,

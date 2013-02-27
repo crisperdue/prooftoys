@@ -434,7 +434,7 @@ Y.trackSourceSteps = false;
 
 // Controls generation of Unicode vs. ASCII strings, internal
 // to Expr.toString and Expr.toUnicode.
-var toUnicode = false;
+var useUnicode = false;
 
 Expr.prototype.toString = function() {
   if (this instanceof Var) {
@@ -469,11 +469,11 @@ Expr.prototype.toString = function() {
  * pnames) that have Unicode counterparts are presented as Unicode.
  */
 Expr.prototype.toUnicode = function() {
-  toUnicode = true;
+  useUnicode = true;
   try {
     return this.toString();
   } finally {
-    toUnicode = false;
+    useUnicode = false;
   }
 }
 
@@ -1366,6 +1366,8 @@ Expr.prototype.mergedHypotheses = function() {
  * only parsing and display, not the logic itself.  If the name
  * represents an integer, sets the "value" property to that integer, or
  * if it represents a string, sets the "value" property to the string.
+ *
+ * TODO: Check syntax of the name. 
  */
 function Var(name, position) {
   this.sort = Expr.var;
@@ -1393,7 +1395,7 @@ Y.extend(Var, Expr);
  */
 Var.prototype._toString = function() {
   var name = this.pname || this.name;
-  var uname = toUnicode && unicodeNames[name];
+  var uname = useUnicode && unicodeNames[name];
   return uname || name;
 };
 
@@ -3287,11 +3289,25 @@ function isEmpty(o) {
 }
 
 /**
+ * Converts an Expr or plain string to Unicode.
+ */
+function toUnicode(o) {
+  if (typeof o === 'string') {
+    return unicodeNames[o] || o;
+  } else {
+    return o.toUnicode();
+  }
+} 
+
+/**
  * Return the Var v, or if the argument is a string, create a new Var
- * from it.
+ * from it.  Literal constants are not allowed.
  */
 function varify(v) {
-  return (typeof v == 'string') ? new Var(v) : v;
+  var v = (typeof v == 'string') ? new Var(v) : v;
+  assert(!v.hasOwnProperty('value'),
+         function() { return 'Not a variable: ' + v; });
+  return v;
 };
 
 /**
@@ -3643,32 +3659,6 @@ function decodeArg(info, steps) {
 
 var utils = {
 
-  /**
-   * Finds the first Var in the bindings having the given
-   * name, and returns that, or null if it finds none.
-   * Uses only the "from" part of each binding.
-   */
-  findByName: function(name, bindings) {
-    if (bindings == null) {
-      return null;
-    } else if (name == bindings.from.name) {
-      return bindings.from;
-    } else {
-      return findByName(name, bindings.more);
-    }
-  },
-
-  // Shortcut functions for building expressions.
-  expr: function() {
-    return new Y.Expr();
-  },
-
-  // Converts a variable name into a new Var instance with
-  // that name.  If "name" is already a Var returns it.
-  _var: function(name) {
-    return (name instanceof Var) ? name : new Y.Var(name);
-  },
-
   // This calls a function with any number of arguments.
   // TODO: Eliminate use fo binops in favor of infixCall.  This will
   // be problematic for some infix operators.
@@ -3743,6 +3733,7 @@ var utils = {
 //// Export public names.
 
 Y.configure = configure;
+
 Y.Set = Set;
 Y.Map = Map;
 Y.TermSet = TermSet;
@@ -3773,6 +3764,8 @@ Y.getDefinition = getDefinition;
 // For testing:
 Y.definitions = definitions;
 
+Y.varify = varify;
+Y.toUnicode = toUnicode;
 Y.isConstant = isConstant;
 Y.isVariable = isVariable;
 Y.checkNumber = checkNumber;
@@ -3781,7 +3774,6 @@ Y.isDefined = isDefined;
 Y.isInfixDesired = isInfixDesired;
 
 Y.getStepCounter = getStepCounter;
-Y.varify = varify;
 Y.infixCall = infixCall;
 Y.withErrorReporting = withErrorReporting;
 Y.assertTrue = assertTrue;
@@ -3818,6 +3810,9 @@ Y.tokenize = tokenize;
 Y.parse = parse;
 
 Y.logError = logError;
+
+// Import all the utils into Y.
+utils.import(Y);
 Y.Expr.utils = utils;
 
 // For debugging

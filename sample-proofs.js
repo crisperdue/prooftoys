@@ -385,7 +385,7 @@ YUI.add('sample-proofs', function(Y) {
     },
 
     r5238: {
-      args: [['x1', 'x2'], call(p, _var('x1')), call(p, _var('x2'))]
+      args: [['x1', 'x2'], Y.parse('p x1'), Y.parse('p x2')]
     },
 
     r5239: {

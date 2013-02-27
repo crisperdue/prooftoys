@@ -1246,16 +1246,14 @@ function expandMarkup(step, markup) {
       places = [places];
     }
     var terms = places.map(function(place) {
-        return Toy.mathMarkup(step.ruleArgs[place - 1].toUnicode());
+        return Toy.mathMarkup(Y.toUnicode(step.ruleArgs[place - 1]));
       });
     return terms.join(', ');
   case '{var}':
-    var place = (info.inputs &&
-                 (info.inputs.varName[0] || info.inputs.varName));
-    return Toy.mathMarkup(step.ruleArgs[place - 1].toString());
+    var place = info.inputs.varName[0] || info.inputs.varName;
+    return Toy.mathMarkup(Y.toUnicode(step.ruleArgs[place - 1]));
   case '{site}':
-    var place = (info.inputs &&
-                 (info.inputs.site[0] || info.inputs.site));
+    var place = info.inputs.site[0] || info.inputs.site;
     var siteStep = step.ruleArgs[place - 1];
     var term = siteStep.locate(step.ruleArgs[place]);
     return Toy.mathMarkup(term.toUnicode());
@@ -1274,7 +1272,7 @@ function expandMarkup(step, markup) {
  */
 var stepFormatters = {
   definition: function(step) {
-    var result = 'definition of ' + step.ruleArgs[0];
+    var result = 'definition of ' + Y.toUnicode(step.ruleArgs[0]);
     if (step.ruleArgs.length == 2) {
       result += ' ' + step.ruleArgs[1];
     }
@@ -1329,7 +1327,7 @@ var stepFormatters = {
     var eqn = step.ruleArgs[0];
     var target = step.ruleArgs[1];
     var path = step.ruleArgs[2];
-    return 'replace ' + target.locate(path);
+    return 'replace ' + target.locate(path).toUnicode();
   }
 };
 
