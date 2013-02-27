@@ -17,10 +17,19 @@ var assert = Y.assertTrue;
 // And make other useful names available here.
 var assertEqn = Y.assertEqn;
 var varify = Y.varify;
+var call = Y.call;
+var equal = Y.equal;
+var implies = Y.implies;
+var lambda = Y.lambda;
 
-// Import the generally-useful names from "expr" into
-// this environment.
-Y.Expr.utils.import();
+// Include all variables that appear in axioms, plus T and F.
+var T = varify('T');
+var F = varify('F');
+var f = varify('f');
+var g = varify('g');
+var h = varify('h');
+var x = varify('x');
+var y = varify('y');
 
 // Map from tautology string representation to tautology,
 // for proved tautologies.  Private to the tautology rule.

@@ -8,6 +8,10 @@ YUI.add('sample-proofs', function(Y) {
 
   // For convenience.
   var rules = Y.rules;
+  var call = Y.call;
+  var equal = Y.equal;
+  var implies = Y.implies;
+  var lambda = Y.lambda;
 
   // Query string data.
   var queryData = Y.QueryString.parse(location.search.substring(1));

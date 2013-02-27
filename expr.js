@@ -2671,8 +2671,8 @@ function defineCases(name, ifTrue, ifFalse) {
     assert(false, 'Definition has free variables: ' + name);
     // Assumes constants do not appear in freeNames.
   }
-  definitions[name] = {T: equal(call(name, T), ifTrue),
-                       F: equal(call(name, F), ifFalse)};
+  definitions[name] = {T: equal(call(name, 'T'), ifTrue),
+                       F: equal(call(name, 'F'), ifFalse)};
 }
 
 /**
@@ -3322,6 +3322,54 @@ function infixCall(arg1, op, arg2) {
 }
 
 /**
+ * Calls a function, passing one or more arguments.
+ */
+// TODO: Eliminate use fo binops in favor of infixCall.  This will
+// be problematic for some infix operators.
+function call(fn, arg) {
+  if ((typeof fn) == 'string') {
+    fn = new Y.Var(fn);
+  }
+  if ((typeof arg) == 'string') {
+    arg = new Y.Var(arg);
+  }
+  var result = new Y.Call(fn, arg);
+  // Skip fn and the first "arg" after that.
+  for (var i = 2; i < arguments.length; i++) {
+    result = call(result, arguments[i]);
+  }
+  return result;
+}
+
+/**
+ * Builds an expression [lhs = rhs] if RHS is present,
+ * otherwise just [= lhs].
+ * TODO: Order of args changes when infix changes.  Similarly for
+ * implies and other infix operators.
+ */
+function equal(lhs, rhs) {
+  if (rhs) {
+    return call('=', lhs, rhs);
+  } else {
+    return call('=', lhs);
+  }
+}
+
+/**
+ * Builds an expression [lhs ==> rhs].
+ */
+function implies(lhs, rhs) {
+  return call('==>', lhs, rhs);
+}
+
+/**
+ * Builds a Lambda.
+ */
+function lambda(bound, body) {
+  return new Y.Lambda(bound, body);
+}
+
+/**
  * This controls the policy over which function names are
  * to be rendered as infix.
  */
@@ -3659,49 +3707,6 @@ function decodeArg(info, steps) {
 
 var utils = {
 
-  // This calls a function with any number of arguments.
-  // TODO: Eliminate use fo binops in favor of infixCall.  This will
-  // be problematic for some infix operators.
-  call: function(fn, arg) {
-    if ((typeof fn) == 'string') {
-      fn = new Y.Var(fn);
-    }
-    if ((typeof arg) == 'string') {
-      arg = new Y.Var(arg);
-    }
-    var result = new Y.Call(fn, arg);
-    // Skip fn and the first "arg" after that.
-    for (var i = 2; i < arguments.length; i++) {
-      result = call(result, arguments[i]);
-    }
-    return result;
-  },
-
-  /**
-   * Builds an expression [lhs = rhs] if RHS is present,
-   * otherwise just [= lhs].
-   * TODO: Order of args changes when infix changes.  Similarly for
-   * implies and other infix operators.
-   */
-  equal: function(lhs, rhs) {
-    if (rhs) {
-      return call('=', lhs, rhs);
-    } else {
-      return call('=', lhs);
-    }
-  },
-
-  /**
-   * Builds an expression [lhs ==> rhs].
-   */
-  implies: function(lhs, rhs) {
-    return call('==>', lhs, rhs);
-  },
-
-  lambda: function(bound, body) {
-    return new Y.Lambda(bound, body);
-  },
-
   a: new Var('a'),
   b: new Var('b'),
   c: new Var('c'),
@@ -3775,6 +3780,10 @@ Y.isInfixDesired = isInfixDesired;
 
 Y.getStepCounter = getStepCounter;
 Y.infixCall = infixCall;
+Y.call = call;
+Y.equal = equal;
+Y.implies = implies;
+Y.lambda = lambda;
 Y.withErrorReporting = withErrorReporting;
 Y.assertTrue = assertTrue;
 Y.assertEqn = assertEqn;
@@ -3811,8 +3820,6 @@ Y.parse = parse;
 
 Y.logError = logError;
 
-// Import all the utils into Y.
-utils.import(Y);
 Y.Expr.utils = utils;
 
 // For debugging
