@@ -250,7 +250,10 @@ ProofEditor.prototype.setEditable = @(value) {
 // than one selection.
 
 /**
- * Construct a ProofControl.  No arguments.
+ * Construct a ProofControl.
+ *
+ * Optional single argument, a map, currently only interprets
+ * 'stepPrefix' to initialize the stepPrefix property.
  *
  * Properties:
  *
@@ -260,6 +263,9 @@ ProofEditor.prototype.setEditable = @(value) {
  * CSS class proofDisplay and the ProofControl as the value of its
  * getData('proofControl').  Only ProofControl nodes should have the
  * proofDisplay class.
+ *
+ * stepPrefix: string prefixed to each step number, defaults to
+ * an empty string.  Set only during initialization.
  *
  * Other properties should be considered private.
  *
@@ -274,7 +280,8 @@ ProofEditor.prototype.setEditable = @(value) {
  * TODO: Consider supporting a set of renderings per unrendered proof
  * step.
  */
-function ProofControl() {
+function ProofControl(properties) {
+  properties = properties || {};
   var controller = this;
   this.steps = [];
   // Set (array) of selected steps.
@@ -282,6 +289,8 @@ function ProofControl() {
   this.selections = [];
   // Single selected step when exactly one is selected, or null.
   this.selection = null;
+  // Prefix string for each step.
+  this.stepPrefix = properties.stepPrefix || '';
 
   // ID of element to use for saving/restoring proof state.
   // TODO: Make the textarea part of the ProofControl.
@@ -357,10 +366,13 @@ ProofControl.prototype.setSteps = function(steps) {
  * showOrdinals flag is true.  Updates step number display of each.
  */
 ProofControl.prototype._renumber = function() {
+  var self = this;
   // Give the steps numbers from 1 to N.
   Y.each(this.steps, function(step, i) {
     // Fix up the step number and its display.
-    step.stepNumber = Y.showOrdinals ? step.ordinal : i + 1;
+    step.stepNumber = (Y.showOrdinals
+                       ? step.ordinal
+                       : self.stepPrefix + (i + 1));
     renderStepNumber(step);
   });
   // TODO: This will also need to support renumbering of any step
@@ -374,7 +386,7 @@ ProofControl.prototype._renumber = function() {
  */
 function renderStepNumber(step) {
   step.stepNode.one('.stepNumber')
-    .setContent(document.createTextNode(step.stepNumber + '. '));
+    .setContent(document.createTextNode('(' + step.stepNumber + ') '));
   // Fix up references made by the step.  (These should all be prior
   // steps.)
   var deps = getRenderedDeps(step);
@@ -397,7 +409,9 @@ ProofControl.prototype.addStep = function(step) {
   step.original = step;
   copy.original = step;
   this.steps.push(copy);
-  copy.stepNumber = Y.showOrdinals ? step.ordinal : this.steps.length;
+  copy.stepNumber = (Y.showOrdinals
+                     ? step.ordinal
+                     : this.stepPrefix + this.steps.length);
   var stepNode = renderStep(copy, this);
   renderStepNumber(copy);
   this.stepsNode.append(stepNode);
@@ -587,7 +601,7 @@ var _turnstile = '\u22a6';
 
 /**
  * Create and return a YUI node to display the renderable step within
- * the given controller.  Assumes that the renderable step already
+ * the given controller.  Assumes that the renderable step is already
  * inserted into the controller's steps array.
  *
  * This also sets up event handlers for click
@@ -623,13 +637,11 @@ function renderStep(step, controller) {
                  : '');
   var html = ('<div class=proofStep>' +
               deleter +
-              '<span class=stepNumber>. </span>' +
+              '<span class=stepNumber></span>' +
               '<span class=wff></span>' +
               '<span class=stepInfo></span>' +
               '</div>');
   var stepNode = Y.Node.create(html);
-  var n = step.stepNumber;
-  stepNode.one('.stepNumber').setContent(n);
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
   var elide = wantLeftElision(step, controller);
@@ -1174,7 +1186,7 @@ function formattedStepRefs(step) {
     html += siteRefs.map(@{s. s.rendering.stepNumber}).join(', ');
   }
   if (showSteps && stepRefs.length) {
-    html += stepRefs.length > 1 ? ' using steps' : ' using step ';
+    html += stepRefs.length > 1 ? ' using steps ' : ' using step ';
     html += stepRefs.map(@{s. s.rendering.stepNumber}).join(', ');
   }
   return html;
@@ -1346,7 +1358,7 @@ var stepFormatters = {
  */
 function renderInference(step) {
   var steps = unrenderedDeps(step.details);
-  var controller = new ProofControl();
+  var controller = new ProofControl({stepPrefix: step.stepNumber + '.'});
   controller.setSteps(steps);
   var comment = Y.Escape.html(Y.rules[step.ruleName].info.comment || '');
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
