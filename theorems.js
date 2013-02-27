@@ -2573,6 +2573,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'commutativity of addition',
     description: 'commutativity'
   },
 
@@ -2583,6 +2584,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'associativity of addition',
     description: 'associativity'
   },
 
@@ -2593,6 +2595,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'commutativity of multiplication',
     description: 'commutativity'
   },
 
@@ -2603,6 +2606,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'associativity of multiplication',
     description: 'associativity'
   },
 
@@ -2613,6 +2617,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'distributive law',
     description: 'distributivity'
   },
 
@@ -2623,6 +2628,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'x + 0 = x',
     description: 'additive identity'
   },
 
@@ -2633,6 +2639,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'x * 1 = x',
     description: 'multiplicative identity'
   },
 
@@ -2643,6 +2650,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'x * 0 = 0',
     description: 'multiplication by 0'
   },
 
@@ -2653,6 +2661,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'x + neg x = 0',
     description: 'definition of neg'
   },
 
@@ -2663,6 +2672,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'x * recip x = 1 if x is not 0',
     description: 'definition of recip'
   },
 
@@ -2674,6 +2684,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'sum of real numbers is real',
     description: 'sum of real numbers is real'
   },
 
@@ -2685,6 +2696,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'product of real numbers is real',
     description: 'product of real numbers is real'
   },
 
@@ -2695,6 +2707,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'negation of real number is real',
     description: 'negation of real number is real'
   },
 
@@ -2705,6 +2718,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    comment: 'reciprocal of nonzero real number is real',
     description: 'reciprocal of real number'
   },
 
