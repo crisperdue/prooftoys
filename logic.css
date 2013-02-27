@@ -253,6 +253,11 @@ table.proofDisplay {
     color: #777;
 }
 
+.proofStep .stepNumber {
+  /* Like stepInfo */
+  color: #777;
+}
+
 /* Overlay Look/Feel (details of hovered step) */
 .yui3-overlay-content {
     padding: 1px 3px;

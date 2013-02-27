@@ -385,8 +385,7 @@ ProofControl.prototype._renumber = function() {
  * stepNumber of the corresponding dependency.
  */
 function renderStepNumber(step) {
-  step.stepNode.one('.stepNumber')
-    .setContent(document.createTextNode('(' + step.stepNumber + ') '));
+  step.stepNode.one('.stepNumber').setContent(step.stepNumber);
   // Fix up references made by the step.  (These should all be prior
   // steps.)
   var deps = getRenderedDeps(step);
@@ -637,7 +636,7 @@ function renderStep(step, controller) {
                  : '');
   var html = ('<div class=proofStep>' +
               deleter +
-              '<span class=stepNumber></span>' +
+              '(<span class=stepNumber></span>) ' +
               '<span class=wff></span>' +
               '<span class=stepInfo></span>' +
               '</div>');
