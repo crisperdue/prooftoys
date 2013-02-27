@@ -274,7 +274,7 @@ table.proofDisplay {
 
 /* Highlighting of parts of proof steps */
 
-.proofStep.dep .stepNumber {
+.proofStep.dep .stepNumArea {
   background-color: lime;
  }
 

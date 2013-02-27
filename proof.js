@@ -636,7 +636,7 @@ function renderStep(step, controller) {
                  : '');
   var html = ('<div class=proofStep>' +
               deleter +
-              '(<span class=stepNumber></span>) ' +
+              '<span class=stepNumArea>(<span class=stepNumber></span>)</span> ' +
               '<span class=wff></span>' +
               '<span class=stepInfo></span>' +
               '</div>');
