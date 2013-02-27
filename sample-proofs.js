@@ -4,7 +4,7 @@ YUI.add('sample-proofs', function(Y) {
 
   // Set up some useful constants and functions.
 
-  Y.Expr.utils.import();
+  Y.Expr.vars.import();
 
   // For convenience.
   var rules = Y.rules;

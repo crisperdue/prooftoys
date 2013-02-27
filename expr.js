@@ -3703,9 +3703,9 @@ function decodeArg(info, steps) {
   }
 }
 
-//// Convenience utilities
-
-var utils = {
+// Prefab variables to drop in to samples and tests.
+// TODO: define these inline in those files.
+var vars = {
 
   a: new Var('a'),
   b: new Var('b'),
@@ -3722,13 +3722,11 @@ var utils = {
   T: new Var('T'),
   F: new Var('F'),
 
-  // TODO: Do something other than importing these into
-  // the global environment.
   import: function(where) {
     where = where || window;
     // Import the useful names into the window !?
-    for (var x in utils) {
-      where[x] = utils[x];
+    for (var x in vars) {
+      where[x] = vars[x];
     }
   }
 
@@ -3820,7 +3818,7 @@ Y.parse = parse;
 
 Y.logError = logError;
 
-Y.Expr.utils = utils;
+Y.Expr.vars = vars;
 
 // For debugging
 Y.nParsed = nParsed;
