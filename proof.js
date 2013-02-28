@@ -1796,7 +1796,7 @@ Toy.getStepsNode = getStepsNode;
 Toy.getExpr = getExpr;
 
 // For testing:
-Y._formattedStepInfo = formattedStepInfo;
+Toy._formattedStepInfo = formattedStepInfo;
 
 // Global configuration variable for displaying extra information per
 // step when hovered.

@@ -3789,10 +3789,10 @@ Toy.parseType = parseType;
 Toy.findType = findType;
 
 // For testing:
-Y._equalityType = equalityType;
-Y._parseStringContent = parseStringContent;
+Toy._equalityType = equalityType;
+Toy._parseStringContent = parseStringContent;
 Toy.unparseString = unparseString;
-Y._decodeArg = decodeArg;
+Toy._decodeArg = decodeArg;
 
 Toy.tokenize = tokenize;
 Toy.parse = parse;

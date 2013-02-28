@@ -432,7 +432,7 @@ YUI({filter: null, insertBefore: 'styles'})
         var steps = [Toy.rules.assert('x = y + 1')];
         function check(expected, input) {
           input = typeof input == 'string' ? Toy.parse(input) : input;
-          var actual = Y._decodeArg(input, steps);
+          var actual = Toy._decodeArg(input, steps);
           assertEqual(expected, actual);
         }
         check('foo', '"foo"');
@@ -1718,7 +1718,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testBuildHypSchema: function() {
         var rules = Toy.rules;
-        var bs = Y._buildHypSchema;
+        var bs = Toy._buildHypSchema;
         var map = new Toy.TermMap();
         var schema = bs(rules.axiomAssociativePlus().getLeft(), map);
         assertEqual('((a1 & a2) & a3)', schema);

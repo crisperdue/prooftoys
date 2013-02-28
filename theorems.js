@@ -3517,7 +3517,7 @@ Toy.findHyp = findHyp;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
-Y._tautologies = _tautologies;
-Y._buildHypSchema = buildHypSchema;
+Toy._tautologies = _tautologies;
+Toy._buildHypSchema = buildHypSchema;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'proof']});
