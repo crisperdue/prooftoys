@@ -213,7 +213,7 @@ Y.extend(TermMap, Map);
 TermMap.prototype.addTerm = function(term) {
   if (!this.has(term)) {
     var name = 'a' + this.counter++
-    this._set(term, new Y.Var(name));
+    this._set(term, new Toy.Var(name));
     this.subst[name] = term;
   }
   return this.get(term);
@@ -432,7 +432,7 @@ Expr.counter = 1;
 
 // Controls prefixing Calls and Lambdas with sourceStep info.
 // A debugging and perhaps proof development aid when turned on.
-Y.trackSourceSteps = false;
+Toy.trackSourceSteps = false;
 
 // Controls generation of Unicode vs. ASCII strings, internal
 // to Expr.toString and Expr.toUnicode.
@@ -443,7 +443,7 @@ Expr.prototype.toString = function() {
     return this._toString();
   }
   var prefix = '';
-  if (Y.trackSourceSteps) {
+  if (Toy.trackSourceSteps) {
     if (this.sourceStep) {
       prefix = '$';
       var stepNum =
@@ -453,7 +453,7 @@ Expr.prototype.toString = function() {
       }
     }
   }
-  if (Y.trackSourceSteps
+  if (Toy.trackSourceSteps
       && this.hasHyps
       && this.isCall2('==>')
       && isInfixDesired(this.fn.fn)) {
@@ -606,7 +606,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
  */
 Expr.prototype.matchSchema = function(schema) {
   if (typeof schema == 'string') {
-    schema = Y.parse(schema);
+    schema = Toy.parse(schema);
   }
   return matchAsSchema(schema, this);
 };
@@ -720,7 +720,7 @@ Expr.prototype.mathVars = function() {
  * to add to.
  */
 Expr.prototype.mathVarConditions = function(expr) {
-  var infix = Y.infixCall;
+  var infix = Toy.infixCall;
   var real = new Var('R');
   // Order the names for nice presentation.
   var names = [];
@@ -744,7 +744,7 @@ Expr.prototype.mathVarConditions = function(expr) {
  * to true.
  */
 Expr.prototype.boundNames = function(path) {
-  path = Y.path(path);
+  path = Toy.path(path);
   var bindings = this._boundNames(path, null);
   if (bindings) {
     var map = {};
@@ -826,8 +826,8 @@ Expr.prototype.unHyp = function() {
  * any named function.
  */
 Expr.prototype.isCall1 = function(name) {
-  if (this instanceof Y.Call) {
-    return (this.fn instanceof Y.Var &&
+  if (this instanceof Toy.Call) {
+    return (this.fn instanceof Toy.Var &&
             (name == null || this.fn.name == name));
   } else {
     return false;
@@ -840,10 +840,10 @@ Expr.prototype.isCall1 = function(name) {
  * a call to any named function.
  */
 Expr.prototype.isCall2 = function(name) {
-  if (this instanceof Y.Call) {
+  if (this instanceof Toy.Call) {
     var left = this.fn;
-    return left instanceof Y.Call
-      && left.fn instanceof Y.Var
+    return left instanceof Toy.Call
+      && left.fn instanceof Toy.Var
       && (name == null || left.fn.name == name);
   } else {
     return false;
@@ -1010,7 +1010,7 @@ Expr.prototype.hypLocater = function(hyp) {
       var left = (right == h
                   ? new Var('h' + (pos + 1))
                   : locater(self.getLeft(), pos + 1));
-      return Y.infixCall(left, '&', right);
+      return Toy.infixCall(left, '&', right);
     }
   }
   return locater(this, 1);
@@ -1040,15 +1040,15 @@ Expr.prototype.hypMover = function(toMove) {
         found = true;
       } else {
         h = new Var('h' + i);
-        rhs = rhs ? Y.infixCall(rhs, '&', h) : h;
+        rhs = rhs ? Toy.infixCall(rhs, '&', h) : h;
       }
-      lhs = lhs ? Y.infixCall(lhs, '&', h) : h;
+      lhs = lhs ? Toy.infixCall(lhs, '&', h) : h;
       i++;
     });
   if (found) {
-    rhs = rhs ? Y.infixCall(rhs, '&', new Var('h')) : new Var('h');
+    rhs = rhs ? Toy.infixCall(rhs, '&', new Var('h')) : new Var('h');
   }
-  return Y.infixCall(lhs, '=', rhs);
+  return Toy.infixCall(lhs, '=', rhs);
 };
 
 /**
@@ -1150,12 +1150,12 @@ Expr.prototype.mergedHypotheses = function() {
   // Build the remaining sorted terms into a chain.
   var rhs = null;
   sorted.forEach(function(term) {
-      rhs = rhs ? Y.infixCall(rhs, '&', term.__var) : term.__var;
+      rhs = rhs ? Toy.infixCall(rhs, '&', term.__var) : term.__var;
     });
 
   var left = this.getLeft()._asPattern();
   var right = this.getRight()._asPattern();
-  var result = Y.infixCall(Y.infixCall(left, '&', right), '=', rhs);
+  var result = Toy.infixCall(Toy.infixCall(left, '&', right), '=', rhs);
   conjuncts.forEach(function(term) {
       delete term.__var;
       delete term.__order;
@@ -1567,7 +1567,7 @@ Call.prototype._toString = function() {
     return this._string;
   }
   function asArg(expr) {
-    if (expr instanceof Y.Var && isInfixDesired(expr)) {
+    if (expr instanceof Toy.Var && isInfixDesired(expr)) {
       return '(' + expr + ')';
     } else {
       return expr.toString();
@@ -2652,7 +2652,7 @@ function checkRange(number) {
  */
 function define(name, definition) {
   assert(isConstant(name), 'Not a constant name: ' + name);
-  definition = typeof definition == 'string' ? Y.parse(definition) : definition;
+  definition = typeof definition == 'string' ? Toy.parse(definition) : definition;
   assert(definition instanceof Expr,
          'Definition must be a term: ' + definition);
   if (isDefined(name)) {
@@ -2690,7 +2690,7 @@ function defineCases(name, ifTrue, ifFalse) {
  * definition.
  */
 function isDefined(name) {
-  if (name instanceof Y.Var) {
+  if (name instanceof Toy.Var) {
     name = name.name;
   }
   assert(typeof name == 'string', function() {
@@ -2704,7 +2704,7 @@ function isDefined(name) {
  * cases.
  */
 function isDefinedByCases(name) {
-  if (name instanceof Y.Var) {
+  if (name instanceof Toy.Var) {
     name = name.name;
   }
   assert(typeof name == 'string', function() {
@@ -2744,15 +2744,15 @@ function findDefinition(name, tOrF) {
   var defn = definitions[name];
   assert(defn, function() { return 'Not defined: ' + name; });
   if (!tOrF) {
-    assert(defn instanceof Y.Expr, 'Definition is not simple: ' + name);
+    assert(defn instanceof Toy.Expr, 'Definition is not simple: ' + name);
     return defn;
   } else {
-    if (tOrF == true || (tOrF instanceof Y.Var && tOrF.name == 'T')) {
+    if (tOrF == true || (tOrF instanceof Toy.Var && tOrF.name == 'T')) {
       tOrF = 'T';
-    } else if (tOrF == false || (tOrF instanceof Y.Var && tOrF.name == 'F')) {
+    } else if (tOrF == false || (tOrF instanceof Toy.Var && tOrF.name == 'F')) {
       tOrF = 'F';
     }
-    assert(!(defn instanceof Y.Expr),
+    assert(!(defn instanceof Toy.Expr),
              'Definition is not by cases: ' + name);
     var defnCase = defn[tOrF];
     assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
@@ -3025,9 +3025,9 @@ function tokenize(str) {
   var match;
   var result = [];
   while (match = _tokens.exec(str)) {
-    result.push(new Y.Var(match[0], match.index));
+    result.push(new Toy.Var(match[0], match.index));
   }
-  result.push(new Y.Var('(end)', str.length));
+  result.push(new Toy.Var('(end)', str.length));
   return result;
 }
 
@@ -3101,7 +3101,7 @@ function parse(input) {
         assert(id.isVariable(), 'Expected identifier, got ' + id.name);
         expect('.');
         var body = mustParseAbove(0);
-        expr = new Y.Lambda(id, body);
+        expr = new Toy.Lambda(id, body);
         expect('}');
       } else if (!left || nextPower == null) {
         // Treat the token as an atomic expression.
@@ -3109,14 +3109,14 @@ function parse(input) {
       }
       // At this point expr and left are not both null.
       if (expr) {
-        left = left ? new Y.Call(left, expr) : expr;
+        left = left ? new Toy.Call(left, expr) : expr;
       } else {
         // Token is an infix operator of higher precedence than the last.
         // At this point there is always an expression in "left".
-        left = new Y.Call(token, left);
+        left = new Toy.Call(token, left);
         var right = parseAbove(nextPower);
         if (right) {
-          left = new Y.Call(left, right);
+          left = new Toy.Call(left, right);
         }
       }
     }
@@ -3338,12 +3338,12 @@ function infixCall(arg1, op, arg2) {
 // be problematic for some infix operators.
 function call(fn, arg) {
   if ((typeof fn) == 'string') {
-    fn = new Y.Var(fn);
+    fn = new Toy.Var(fn);
   }
   if ((typeof arg) == 'string') {
-    arg = new Y.Var(arg);
+    arg = new Toy.Var(arg);
   }
-  var result = new Y.Call(fn, arg);
+  var result = new Toy.Call(fn, arg);
   // Skip fn and the first "arg" after that.
   for (var i = 2; i < arguments.length; i++) {
     result = call(result, arguments[i]);
@@ -3376,7 +3376,7 @@ function implies(lhs, rhs) {
  * Builds a Lambda.
  */
 function lambda(bound, body) {
-  return new Y.Lambda(bound, body);
+  return new Toy.Lambda(bound, body);
 }
 
 /**
@@ -3521,9 +3521,9 @@ var assert = assertTrue;
  * both left and right sides.
  */
 function assertEqn(expr) {
-  assert(expr instanceof Y.Call
-         && expr.fn instanceof Y.Call
-         && expr.fn.fn instanceof Y.Var
+  assert(expr instanceof Toy.Call
+         && expr.fn instanceof Toy.Call
+         && expr.fn.fn instanceof Toy.Var
          && expr.fn.fn.name == '=',
          'Must be an equation: ' + expr);
 }
@@ -3621,11 +3621,11 @@ function encodeSteps(steps_arg) {
     var args = step.ruleArgs;
     for (var i = 0; i < args.length; i++) {
       var arg = args[i];
-      if (arg instanceof Y.Path) {
+      if (arg instanceof Toy.Path) {
         result.push('(path "' + arg + '")');
       } else if (typeof arg === 'string') {
         result.push(unparseString(arg));
-      } else if (arg instanceof Y.Expr) {
+      } else if (arg instanceof Toy.Expr) {
         if (arg.__index) {
           result.push('(s ' + arg.__index + ')');
         } else {
@@ -3680,7 +3680,7 @@ function decodeSteps(input) {
       Y.each(stepInfo, function(info) {
           args.push(decodeArg(info, outSteps));
         });
-      outSteps.push(Y.rules[ruleName].apply(Y.rules, args));
+      outSteps.push(Toy.rules[ruleName].apply(Toy.rules, args));
     });
   return outSteps;
 }
@@ -3705,7 +3705,7 @@ function decodeArg(info, steps) {
         return (value);
         break;
       case 'path':
-        return (Y.path(value.value));
+        return (Toy.path(value.value));
         break;
       default:
         assert(false, 'Unknown encoding key: ' + key);
@@ -3716,90 +3716,90 @@ function decodeArg(info, steps) {
 
 //// Export public names.
 
-Y.configure = configure;
+Toy.configure = configure;
 
-Y.Set = Set;
-Y.Map = Map;
-Y.TermSet = TermSet;
-Y.TermMap = TermMap;
+Toy.Set = Set;
+Toy.Map = Map;
+Toy.TermSet = TermSet;
+Toy.TermMap = TermMap;
 
-Y.Expr = Expr;
-Y.Var = Var;
-Y.Call = Call;
-Y.Lambda = Lambda;
-Y.Path = Path;
+Toy.Expr = Expr;
+Toy.Var = Var;
+Toy.Call = Call;
+Toy.Lambda = Lambda;
+Toy.Path = Path;
 
-Y.subFree = subFree;
-Y.genVar = genVar;
-Y.normalized = normalized
-Y.decapture = decapture;
-Y.path = path;
-Y.findBinding = findBinding;
-Y.getBinding = getBinding;
-Y.matchAsSchema = matchAsSchema;
-Y.sourceStepLess = sourceStepLess;
-Y.sourceStepComparator = sourceStepComparator;
-Y.repeatedCall = repeatedCall;
+Toy.subFree = subFree;
+Toy.genVar = genVar;
+Toy.normalized = normalized
+Toy.decapture = decapture;
+Toy.path = path;
+Toy.findBinding = findBinding;
+Toy.getBinding = getBinding;
+Toy.matchAsSchema = matchAsSchema;
+Toy.sourceStepLess = sourceStepLess;
+Toy.sourceStepComparator = sourceStepComparator;
+Toy.repeatedCall = repeatedCall;
 
-Y.define = define;
-Y.defineCases = defineCases;
-Y.findDefinition = findDefinition;
-Y.getDefinition = getDefinition;
+Toy.define = define;
+Toy.defineCases = defineCases;
+Toy.findDefinition = findDefinition;
+Toy.getDefinition = getDefinition;
 // For testing:
-Y.definitions = definitions;
+Toy.definitions = definitions;
 
-Y.varify = varify;
-Y.toUnicode = toUnicode;
-Y.isConstant = isConstant;
-Y.isVariable = isVariable;
-Y.checkNumber = checkNumber;
-Y.checkRange = checkRange;
-Y.isDefined = isDefined;
-Y.isInfixDesired = isInfixDesired;
+Toy.varify = varify;
+Toy.toUnicode = toUnicode;
+Toy.isConstant = isConstant;
+Toy.isVariable = isVariable;
+Toy.checkNumber = checkNumber;
+Toy.checkRange = checkRange;
+Toy.isDefined = isDefined;
+Toy.isInfixDesired = isInfixDesired;
 
-Y.getStepCounter = getStepCounter;
-Y.infixCall = infixCall;
-Y.call = call;
-Y.equal = equal;
-Y.implies = implies;
-Y.lambda = lambda;
-Y.withErrorReporting = withErrorReporting;
-Y.assertTrue = assertTrue;
-Y.assertEqn = assertEqn;
-Y.removeAll = removeAll;
-Y.removeExcept = removeExcept;
+Toy.getStepCounter = getStepCounter;
+Toy.infixCall = infixCall;
+Toy.call = call;
+Toy.equal = equal;
+Toy.implies = implies;
+Toy.lambda = lambda;
+Toy.withErrorReporting = withErrorReporting;
+Toy.assertTrue = assertTrue;
+Toy.assertEqn = assertEqn;
+Toy.removeAll = removeAll;
+Toy.removeExcept = removeExcept;
 
-Y.encodeSteps = encodeSteps;
-Y.decodeSteps = decodeSteps;
-Y.debugString = debugString;
+Toy.encodeSteps = encodeSteps;
+Toy.decodeSteps = decodeSteps;
+Toy.debugString = debugString;
 
-Y.Refresher = Refresher;
+Toy.Refresher = Refresher;
 
 // Error analysis
-Y.errors = errors;
+Toy.errors = errors;
 
 // Types
 
-Y.boolean = boolean;
-Y.individual = individual;
-Y.TypeVariable = TypeVariable;
-Y.TypeOperator = TypeOperator;
-Y.FunctionType = FunctionType;
-Y.parseType = parseType;
-Y.findType = findType;
+Toy.boolean = boolean;
+Toy.individual = individual;
+Toy.TypeVariable = TypeVariable;
+Toy.TypeOperator = TypeOperator;
+Toy.FunctionType = FunctionType;
+Toy.parseType = parseType;
+Toy.findType = findType;
 
 // For testing:
 Y._equalityType = equalityType;
 Y._parseStringContent = parseStringContent;
-Y.unparseString = unparseString;
+Toy.unparseString = unparseString;
 Y._decodeArg = decodeArg;
 
-Y.tokenize = tokenize;
-Y.parse = parse;
+Toy.tokenize = tokenize;
+Toy.parse = parse;
 
-Y.logError = logError;
+Toy.logError = logError;
 
 // For debugging
-Y.nParsed = nParsed;
+Toy.nParsed = nParsed;
 
 }, '0.1', {requires: ['node', 'array-extras']});

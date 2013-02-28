@@ -5,14 +5,14 @@ YUI.add('sample-proofs', function(Y) {
   // Set up some useful constants and functions.
 
   // For convenience.
-  var rules = Y.rules;
-  var infixCall = Y.infixCall;
-  var call = Y.call;
-  var equal = Y.equal;
-  var implies = Y.implies;
-  var lambda = Y.lambda;
+  var rules = Toy.rules;
+  var infixCall = Toy.infixCall;
+  var call = Toy.call;
+  var equal = Toy.equal;
+  var implies = Toy.implies;
+  var lambda = Toy.lambda;
 
-  var Var = Y.Var;
+  var Var = Toy.Var;
   var a = new Var('a');
   var b = new Var('b');
   var c = new Var('c');
@@ -60,27 +60,27 @@ YUI.add('sample-proofs', function(Y) {
       if (typeof args == 'function') {
         args = args();
       }
-      var stepCounter = Y.getStepCounter();
+      var stepCounter = Toy.getStepCounter();
       try {
-        result = Y.rules[ruleName].apply(null, args || []);
+        result = Toy.rules[ruleName].apply(null, args || []);
       } catch(e) {
         console && console.log('Error in sample proof: ' + e);
       }
       var elapsed = new Date().getTime() - startMillis;
       // This is actually the number of steps needed to execute the
       // rule, not counting steps used in deriving argument steps.
-      var nSteps = Y.getStepCounter() - stepCounter;
+      var nSteps = Toy.getStepCounter() - stepCounter;
       // For debugging.
       window.proved = result;
       proofNode.setContent('');
       if (result) {
-        Y.renderProof(result, proofNode, elapsed, nSteps);
-      } else if (Y.errors.length) {
-        var last = Y.errors[Y.errors.length - 1];
-        proofNode.append('<p><b>Errors: (' + Y.errors.length
+        Toy.renderProof(result, proofNode, elapsed, nSteps);
+      } else if (Toy.errors.length) {
+        var last = Toy.errors[Toy.errors.length - 1];
+        proofNode.append('<p><b>Errors: (' + Toy.errors.length
                          + ') ' + last.message + '</b></p>');
         if (last.step) {
-          Y.renderProof(last.step, proofNode);
+          Toy.renderProof(last.step, proofNode);
         }
       }
     }
@@ -98,7 +98,7 @@ YUI.add('sample-proofs', function(Y) {
     var ruleName = queryData.rule;
     // You can make the displays label steps with their ordinals
     // using ordinals=1 in the query string.
-    Y.showOrdinals = queryData.ordinals;
+    Toy.showOrdinals = queryData.ordinals;
     editable = queryData.edit != undefined;
     if (ruleName == undefined) {
       // Default to displaying instForall.
@@ -274,8 +274,8 @@ YUI.add('sample-proofs', function(Y) {
     
     instMultiVars: {
       args: [rules.assert(implies(p, call('|', T, q))),
-             ({p: Y.parse('forall {x. T | b}'),
-               q: Y.parse('forall {x. b}')
+             ({p: Toy.parse('forall {x. T | b}'),
+               q: Toy.parse('forall {x. b}')
              })
             ],
       level: 1
@@ -283,8 +283,8 @@ YUI.add('sample-proofs', function(Y) {
 
     makeConjunction: {
       args: function() {
-        var step1 = Y.rules.assume('p T');
-        var step2 = Y.rules.assume('p F');
+        var step1 = Toy.rules.assume('p T');
+        var step2 = Toy.rules.assume('p F');
         return [step1, step2];
       },
       level: 1
@@ -292,8 +292,8 @@ YUI.add('sample-proofs', function(Y) {
 
     cases: {
       args: function() {
-        var step1 = Y.rules.assume('p T');
-        var step2 = Y.rules.assume('p F');
+        var step1 = Toy.rules.assume('p T');
+        var step2 = Toy.rules.assume('p F');
         return [step1, step2, 'x'];
       },
       level: 1
@@ -309,8 +309,8 @@ YUI.add('sample-proofs', function(Y) {
     
     modusPonens: {
       args: function() {
-        var step1 = Y.rules.assume('p');
-        var step2 = Y.rules.assume('p ==> q');
+        var step1 = Toy.rules.assume('p');
+        var step2 = Toy.rules.assume('p ==> q');
         return [step1, step2];
       },
       level: 1
@@ -347,14 +347,14 @@ YUI.add('sample-proofs', function(Y) {
       args: [equal(call('==>', call('&', p, q), r),
                    call('==>', p, call('==>', q, r)))],
       */
-      args: [Y.parse('(p ==> q) & (not p ==> q) ==> q')],
+      args: [Toy.parse('(p ==> q) & (not p ==> q) ==> q')],
       level: 1
     },
     
     tautInst: {
-      args: [Y.parse('p ==> T | q'), ({
-        p: Y.parse('forall {x. T | p x}'),
-        q: Y.parse('forall {x. p x}')
+      args: [Toy.parse('p ==> T | q'), ({
+        p: Toy.parse('forall {x. T | p x}'),
+        q: Toy.parse('forall {x. p x}')
       })],
       level: 1
     },
@@ -370,14 +370,14 @@ YUI.add('sample-proofs', function(Y) {
 
     implyForallNoHyps: {
       ruleName: 'implyForall',
-      args: [x, rules.assert(Y.parse('p ==> q x'))],
+      args: [x, rules.assert(Toy.parse('p ==> q x'))],
     },
 
     implyForall: {
       args: function() {
-        var step1 = Y.rules.assume('y > 0');
-        var step2 = Y.rules.assert('y > 0 ==> (p ==> q x)');
-        var step3 = Y.rules.modusPonens(step1, step2);
+        var step1 = Toy.rules.assume('y > 0');
+        var step2 = Toy.rules.assert('y > 0 ==> (p ==> q x)');
+        var step3 = Toy.rules.modusPonens(step1, step2);
 	return [x, step3];
       },
       level: 1
@@ -386,7 +386,7 @@ YUI.add('sample-proofs', function(Y) {
     implyForallBookHyps: {
       ruleName: 'implyForallBook',
       args: function() {
-	var wff = Y.parse('y > 0 ==> (p ==> q x)');
+	var wff = Toy.parse('y > 0 ==> (p ==> q x)');
         wff.hasHyps = true;
 	return [x, wff];
       },
@@ -394,8 +394,8 @@ YUI.add('sample-proofs', function(Y) {
 
     'Rule P': {
       ruleName: 'forwardChain',
-      args: [Y.rules.assume('p x & (p x ==> q x)'),
-             Y.parse('a & (a ==> b) ==> b')],
+      args: [Toy.rules.assume('p x & (p x ==> q x)'),
+             Toy.parse('a & (a ==> b) ==> b')],
       level: 1
     },
 
@@ -404,7 +404,7 @@ YUI.add('sample-proofs', function(Y) {
     },
 
     r5238: {
-      args: [['x1', 'x2'], Y.parse('p x1'), Y.parse('p x2')]
+      args: [['x1', 'x2'], Toy.parse('p x1'), Toy.parse('p x2')]
     },
 
     r5239: {
@@ -413,11 +413,11 @@ YUI.add('sample-proofs', function(Y) {
 
     replace: {
       args: function() {
-        var step1 = Y.rules.assume('x >= 0');
-        var step2 = Y.rules.assert('x >= 0 ==> (x = (abs x))');
-        var step3 = Y.rules.modusPonens(step1, step2);
-        var step4 = Y.rules.assert('x >= 0 ==> (x + x) >= x');
-        var step5 = Y.rules.modusPonens(step1, step4);
+        var step1 = Toy.rules.assume('x >= 0');
+        var step2 = Toy.rules.assert('x >= 0 ==> (x = (abs x))');
+        var step3 = Toy.rules.modusPonens(step1, step2);
+        var step4 = Toy.rules.assert('x >= 0 ==> (x + x) >= x');
+        var step5 = Toy.rules.modusPonens(step1, step4);
         return [step3, step5, '/main/right'];
       },
       level: 1
@@ -425,16 +425,16 @@ YUI.add('sample-proofs', function(Y) {
 
     appendStepHyps: {
       args: function() {
-        var step1 = Y.rules.assume('p x');
-        var step2 = Y.rules.assume('q x');
+        var step1 = Toy.rules.assume('p x');
+        var step2 = Toy.rules.assume('q x');
         return [step1, step2];
       }
     },
 
     prependStepHyps: {
       args: function() {
-        var step1 = Y.rules.assume('p x');
-        var step2 = Y.rules.assume('q x');
+        var step1 = Toy.rules.assume('p x');
+        var step2 = Toy.rules.assume('q x');
         return [step1, step2];
       }
     },
@@ -444,7 +444,7 @@ YUI.add('sample-proofs', function(Y) {
         function less(a, b) {
           return a.toString() < b.toString();
         }
-        return [Y.rules.assert('lhs = (((b & a) & d) & a)'), less];
+        return [Toy.rules.assert('lhs = (((b & a) & d) & a)'), less];
       }
     },
 
@@ -454,12 +454,12 @@ YUI.add('sample-proofs', function(Y) {
         function less(a, b) {
           return a.toString() < b.toString();
         }
-        return [Y.rules.assert('lhs = (a & b) & (c & d)'), less];
+        return [Toy.rules.assert('lhs = (a & b) & (c & d)'), less];
       }
     }
 
   };
 
-Y.setUpSampleProofs = setUpSampleProofs;
+Toy.setUpSampleProofs = setUpSampleProofs;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'proof']});

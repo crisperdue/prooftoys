@@ -318,19 +318,19 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   window.Y = Y;
 
   // Set up some useful constants and functions.
-  var rules = Y.rules;
+  var rules = Toy.rules;
 
   // Modus ponens
   var mp1 = rules.assume('p');
   var mp2 = rules.assume('p ==> q');
   var mp3 = rules.modusPonens(mp1, mp2);
   var mp4 = rules.asImplication(mp3);
-  Y.renderProof(mp4, Y.one('#modusPonens'));
+  Toy.renderProof(mp4, Y.one('#modusPonens'));
 
-  Y.setUpSampleProofs('#selectHolder', '#proofDisplay', false);
+  Toy.setUpSampleProofs('#selectHolder', '#proofDisplay', false);
 
   // Full proof editor
-  var editor = new Y.ProofEditor();
+  var editor = new Toy.ProofEditor();
   Y.editor = editor;  // debugging
   window.proofEditor = editor;
   editor.setEditable(true);

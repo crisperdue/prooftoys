@@ -167,13 +167,13 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
   function newProofBuilder() {
     // Create an interactive proof editor for the user.
-    var controller = new Y.ProofControl();
+    var controller = new Toy.ProofControl();
     return controller;
   };
 
   Y.on('domready', function() {
-      var rules = Y.rules;
-      var axiomList = new Y.ProofControl();
+      var rules = Toy.rules;
+      var axiomList = new Toy.ProofControl();
       Y.one('#axiomList').append(axiomList.node);
       window.axiomList = axiomList;
       // Numeric axioms:
@@ -189,7 +189,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       var a10 = rules.axiomReciprocal();
       axiomList.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10]);
 
-      var sample = new Y.ProofControl();
+      var sample = new Toy.ProofControl();
       window.sampleProof = sample;
       Y.one('#sampleProof').append(sample.node);
       var a1 = rules.assume('x = y * 2');
@@ -198,7 +198,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       var a4 = rules.timesOneIntro(a3, '/main/left/right');
       var a5 = rules.group(a4, '/main/left');
       var a6 = rules.arithmetic(a5, '/right/left/right');
-      var a7 = rules.divideBoth(a6, Y.parse('3'));
+      var a7 = rules.divideBoth(a6, Toy.parse('3'));
       var a8 = rules.arithmetic(a7, '/right/right');
       var a9 = rules.apply(a8, '/right/left');
       var a10 = rules.associateTimesToRight(a9, '/right/left');
@@ -212,7 +212,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
   // For debugging.
   window.Y = Y;
-  window.db = Y.debugString;
+  window.db = Toy.debugString;
 });
 </script>
 </body>

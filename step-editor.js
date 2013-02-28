@@ -3,7 +3,7 @@
 YUI.add('step-editor', function(Y) {
 
 // Make application assertions available through "assert".
-var assert = Y.assertTrue;
+var assert = Toy.assertTrue;
 
 //// PROOF STEP EDITOR
 
@@ -54,7 +54,7 @@ var assert = Y.assertTrue;
  * explicitly described.
  */
 function eachArgType(ruleName, action) {
-  var inputs = Y.rules[ruleName].info.inputs;
+  var inputs = Toy.rules[ruleName].info.inputs;
   Y.each(inputs, function(where, type) {
     if (typeof where == 'number') {
       action(where - 1, type);
@@ -162,7 +162,7 @@ function StepEditor(controller) {
   this.node = div;
 
   // Install a rule selector
-  if (Y.useAutocompleter) {
+  if (Toy.useAutocompleter) {
     var hint =
       'Enter axiom or theorem name; for inference select target first';
     var html = '<input class=sted-input maxlength=200 title="' + hint + '">';
@@ -196,14 +196,14 @@ function StepEditor(controller) {
  * element named "proofErrors" if there is one.
  */
 StepEditor.prototype.error = function(message) {
-  if (Y.errors.length) {
-    var last = Y.errors[Y.errors.length - 1];
+  if (Toy.errors.length) {
+    var last = Toy.errors[Toy.errors.length - 1];
     var proofNode = Y.one('#proofErrors');
     if (proofNode) {
-      proofNode.append('<p><b>Errors: (' + Y.errors.length
+      proofNode.append('<p><b>Errors: (' + Toy.errors.length
 		       + ') ' + last.message + '</b></p>');
       if (last.step) {
-	proofNode.append(Y.renderProof(last.step).node);
+	proofNode.append(Toy.renderProof(last.step).node);
       }
     }
   }
@@ -232,7 +232,7 @@ StepEditor.prototype.focus = function() {
  * Handler for ruleSelector selection of a rule name.
  */
 StepEditor.prototype.handleSelection = function() {
-  var rule = Y.rules[this.ruleSelector.ruleName];
+  var rule = Toy.rules[this.ruleSelector.ruleName];
   if (rule) {
     var template = rule.info.form;
     if (template) {
@@ -332,7 +332,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // TODO: Get it together on failure reporting here.
-  var rule = Y.rules[this.ruleSelector.ruleName];
+  var rule = Toy.rules[this.ruleSelector.ruleName];
   var args = [];
   this.fillWithSelectedSite(args);
   try {
@@ -355,9 +355,9 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   }
   var value = false;
   try {
-    if (Y.profileName) {
+    if (Toy.profileName) {
       // Collect CPU profiling information.
-      console.profile(Y.profileName);
+      console.profile(Toy.profileName);
     }
     var result = rule.apply(null, args);
     this.controller.addStep(result);
@@ -369,7 +369,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   } catch(error) {
     this.error(error.message);
   }
-  if (Y.profileName) {
+  if (Toy.profileName) {
     console.profileEnd();
   }
   return value;
@@ -381,7 +381,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
  * type.  Reports an error to the user if preconditions are not met.
  */
 StepEditor.prototype.fillWithSelectedSite = function(args) {
-  var rule = Y.rules[this.ruleSelector.ruleName];
+  var rule = Toy.rules[this.ruleSelector.ruleName];
   var inputs = rule.info.inputs;
   for (var type in inputs) {
     if (type in siteTypes) {
@@ -410,7 +410,7 @@ StepEditor.prototype.fillWithSelectedSite = function(args) {
  */
 StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
-  var rule = Y.rules[this.ruleSelector.ruleName];
+  var rule = Toy.rules[this.ruleSelector.ruleName];
   this.form.all('input').each(function(node) {
     // The "name" attribute of the input should be the name of an input type,
     // possibly followed by some digits indicating which input.
@@ -452,9 +452,9 @@ StepEditor.prototype.parseValue = function(value, type) {
     }
     return this.controller.steps[Number(value) - 1].original;
   case 'term':
-    var tokens = Y.tokenize(value);
+    var tokens = Toy.tokenize(value);
     // Throws an error if parsing fails:
-    var expr = Y.parse(tokens);
+    var expr = Toy.parse(tokens);
     if (tokens.length) {
       throw new Error('Extra input: "', + tokens[0] + '"');
     }
@@ -464,7 +464,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     // The following is just a hack so you can type "- 3" as
     // input to e.g. rules.applyToBoth with the usual meaning.
     if (expr.isCall1() && expr.fn.name in binOps) {
-      expr = lambda(x, Y.infixCall(x, expr.fn, expr.arg));
+      expr = lambda(x, Toy.infixCall(x, expr.fn, expr.arg));
     }
     return expr;
   case 'varName':
@@ -496,7 +496,7 @@ StepEditor.prototype.filteredRuleNames = function() {
   var controller = this.controller;
   var step = controller.selection;
   var matches = [];
-  for (var name in Y.rules) {
+  for (var name in Toy.rules) {
     display = name.replace(/^axiom/, 'xiom');
     if (this.offerable(name)) {
       matches.push(display);
@@ -516,10 +516,10 @@ StepEditor.prototype.filteredRuleNames = function() {
  *
  * Otherwise only rules that take no step and no site are offerable.
  *
- * This assumes the given ruleName is in Y.rules.
+ * This assumes the given ruleName is in Toy.rules.
  */
 StepEditor.prototype.offerable = function(ruleName) {
-  var info = Y.rules[ruleName].info;
+  var info = Toy.rules[ruleName].info;
   if (!('form' in info)) {
     return false;
   }
@@ -548,7 +548,7 @@ StepEditor.prototype.offerable = function(ruleName) {
  * as an argument.
  */
 function acceptsSelection(step, ruleName, acceptTerm) {
-  var info = Y.rules[ruleName].info;
+  var info = Toy.rules[ruleName].info;
   var accept = info.inputs;
   if (!accept) {
     // If there is no information about arguments, fail.
@@ -564,7 +564,7 @@ function acceptsSelection(step, ruleName, acceptTerm) {
              function() {
                return 'Rule ' + ruleName + ' must use exactly 1 site.';
              });
-      var thm = Y.getTheorem(info.template);
+      var thm = Toy.getTheorem(info.template);
       var template = info.templateSide == 'right'
         ? thm.unHyp().getRight()
         : thm.unHyp().getLeft();
@@ -573,10 +573,10 @@ function acceptsSelection(step, ruleName, acceptTerm) {
       // TODO: prevent selection of bound variables as terms.
       return (accept.site
               || (acceptTerm && accept.term)
-              || (accept.bindingSite && expr instanceof Y.Lambda)
+              || (accept.bindingSite && expr instanceof Toy.Lambda)
               || (accept.reducible
-                  && expr instanceof Y.Call
-                  && expr.fn instanceof Y.Lambda));
+                  && expr instanceof Toy.Call
+                  && expr.fn instanceof Toy.Lambda));
     }
   } else {
     return (accept.step
@@ -637,7 +637,7 @@ function RuleSelector(input, source, selectionHandler) {
 function resultFormatter(query, results) {
   return results.map(function (result) {
       var ruleName = result.text.replace(/^xiom/, 'axiom');
-      var info = Y.rules[ruleName].info;
+      var info = Toy.rules[ruleName].info;
       var hint = Y.Escape.html(info.hint || info.comment || '');
       return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
     });	
@@ -691,7 +691,7 @@ BasicRuleSelector.prototype.reset = function() {
   // This should behave very much like the resultFormatter function:
   Y.each(this.source(), function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var info = Y.rules[ruleName].info;
+      var info = Toy.rules[ruleName].info;
       var hint = info.hint || info.comment || '';
       elt.add(new Option(name + ' - ' + hint, ruleName));
     });
@@ -716,15 +716,15 @@ BasicRuleSelector.prototype.focus = function() {
 //// INITIALIZATION
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
-Y.profileName = '';
+Toy.profileName = '';
 
-Y.stepTypes = stepTypes;
-Y.siteTypes = siteTypes;
+Toy.stepTypes = stepTypes;
+Toy.siteTypes = siteTypes;
 
-Y.StepEditor = StepEditor;
-Y.stepPaths = stepPaths;
-Y.stepSites = stepSites;
-Y.eachArgType = eachArgType;
+Toy.StepEditor = StepEditor;
+Toy.stepPaths = stepPaths;
+Toy.stepSites = stepSites;
+Toy.eachArgType = eachArgType;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',
                       'autocomplete-filters', 'autocomplete-highlighters']});

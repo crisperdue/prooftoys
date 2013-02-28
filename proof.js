@@ -7,13 +7,13 @@ function $$(x) {
 }
 
 // Use the application's assert function.
-var assert = Y.assertTrue;
+var assert = Toy.assertTrue;
 
 // Make the main classes available without "Y.":
-var Expr = Y.Expr;
-var Var = Y.Var;
-var Call = Y.Call;
-var Lambda = Y.Lambda;
+var Expr = Toy.Expr;
+var Var = Toy.Var;
+var Call = Toy.Call;
+var Lambda = Toy.Lambda;
 
 //// APPLICATION DATA STORAGE
 
@@ -121,7 +121,7 @@ function ProofEditor() {
     .append(this.stateDisplay);
 
   // If the proof has changed, save its state.
-  this._refresher = new Y.Refresher(function() {
+  this._refresher = new Toy.Refresher(function() {
       self.saveState();
     });
   // Make the ProofControl save state when the proof changes.
@@ -155,7 +155,7 @@ function ProofEditor() {
   // Handler for the "restore proof" button.  Restores proof state from
   // the text area and saves global state.
   function restoreProof() {
-    Y.withErrorReporting(function() {
+    Toy.withErrorReporting(function() {
         self.restoreState();
         proofToyState.store();
       });
@@ -178,13 +178,13 @@ function ProofEditor() {
     if (data) {
       self.data = data;
       if (data.proofState) {
-        @mainControl.setSteps(Y.decodeSteps(data.proofState));
+        @mainControl.setSteps(Toy.decodeSteps(data.proofState));
       }
     } else {
       proofToyState.data.proofEditors[self.proofEditorId] = self.data;
     }
   }
-  proofToyState.onDataReady(Y.bind(Y.withErrorReporting, null, loadData));
+  proofToyState.onDataReady(Y.bind(Toy.withErrorReporting, null, loadData));
 }
 
 /**
@@ -198,7 +198,7 @@ ProofEditor.prototype.addStep = @(step) {
  * Gets the state of the proof, in string form.
  */
 ProofEditor.prototype.getStateString = @() {
-  return Y.encodeSteps(@mainControl.steps)
+  return Toy.encodeSteps(@mainControl.steps)
 };
 
 /**
@@ -206,7 +206,7 @@ ProofEditor.prototype.getStateString = @() {
  * getStateString.
  */
 ProofEditor.prototype.setStateFromString = @(encoded) {
-  var steps = Y.decodeSteps(encoded);
+  var steps = Toy.decodeSteps(encoded);
   @mainControl.setSteps(steps);
 };
 
@@ -304,7 +304,7 @@ function ProofControl(properties) {
   this.node.setData('proofControl', this);
   var stepsParent = this.node.one('.stepsParent');
   this.stepsNode = this.node.one('.proofSteps');
-  this.stepEditor = new Y.StepEditor(this);
+  this.stepEditor = new Toy.StepEditor(this);
   this.node.one('td').append(this.stepEditor.node);
 
   this.setEditable(false);
@@ -370,7 +370,7 @@ ProofControl.prototype._renumber = function() {
   // Give the steps numbers from 1 to N.
   Y.each(this.steps, function(step, i) {
     // Fix up the step number and its display.
-    step.stepNumber = (Y.showOrdinals
+    step.stepNumber = (Toy.showOrdinals
                        ? step.ordinal
                        : self.stepPrefix + (i + 1));
     renderStepNumber(step);
@@ -408,7 +408,7 @@ ProofControl.prototype.addStep = function(step) {
   step.original = step;
   copy.original = step;
   this.steps.push(copy);
-  copy.stepNumber = (Y.showOrdinals
+  copy.stepNumber = (Toy.showOrdinals
                      ? step.ordinal
                      : this.stepPrefix + this.steps.length);
   var stepNode = renderStep(copy, this);
@@ -714,7 +714,7 @@ function renderStep(step, controller) {
   // Caution: passing null to Y.on selects everything.
   // Clicking on a ruleName "link" shows the subproof.
   var target = stepNode.one('span.ruleName[class~="link"]');
-  if (target && Y.modes.subproofs) {
+  if (target && Toy.modes.subproofs) {
     target.on('mousedown', function(event) {
           // Don't give the proof step a chance to select itself.
           event.stopPropagation();
@@ -744,13 +744,13 @@ function renderStep(step, controller) {
  */
 function getEffectiveSelection(node) {
   // TODO: Consider applying this concept to hovers also.
-  if (Y.simplifiedSelections) {
+  if (Toy.simplifiedSelections) {
     // This could be optimized for speed:
     var expr = getExpr(node);
     var nodeParent1 = node.ancestor('.expr');
     var parent1 = getExpr(nodeParent1);
     var parent2 = getExpr(nodeParent1.ancestor('.expr'));
-    if (expr instanceof Y.Var && Y.isInfixDesired(expr) && parent2.isCall2()) {
+    if (expr instanceof Toy.Var && Toy.isInfixDesired(expr) && parent2.isCall2()) {
       // Node is for a binary operator called as binop.
       return parent2;
     } else if (parent1.isCall1() && expr == parent1.fn) {
@@ -803,7 +803,7 @@ function wantLeftElision(step, controller) {
 function renderAsStep(step) {
   if (step.hasHyps) {
     var hyps = step.getLeft();
-    if (Y.suppressRealTypeDisplays) {
+    if (Toy.suppressRealTypeDisplays) {
       hyps = omittingReals(hyps);
     }
     if (hyps) {
@@ -856,7 +856,7 @@ function renderMain(step) {
 function renderHyps(expr) {
   var topNode = exprNode();
   var hypsNode;
-  if (Y.suppressRealTypeDisplays) {
+  if (Toy.suppressRealTypeDisplays) {
     expr = omittingReals(expr);
   }
   function render(expr) {
@@ -905,7 +905,7 @@ function omittingReals(hyps) {
   hyps.eachHyp(function(hyp) {
       if (!hyp.isCall1('R') || !hyp.arg.isVariable()) {
         if (result) {
-          result = Y.infixCall(result, '&', hyp);
+          result = Toy.infixCall(result, '&', hyp);
         } else {
           result = hyp;
         }
@@ -978,12 +978,12 @@ Call.prototype._render = function(omit) {
       (this.fn.name == 'forall' || this.fn.name == 'exists')) {
     omit = true;
   }
-  var stepNum = (Y.trackSourceSteps
+  var stepNum = (Toy.trackSourceSteps
                  && this.sourceStep
                  && this.sourceStep.rendering.stepNumber);
   omit = omit && !stepNum;
   if (!omit) {
-    if (Y.trackSourceSteps) {
+    if (Toy.trackSourceSteps) {
       if (this.sourceStep) {
         node.append('$');
       }
@@ -995,7 +995,7 @@ Call.prototype._render = function(omit) {
   }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
     // This is a call on a named function of two arguments.
-    if (Y.isInfixDesired(this.fn.fn)) {
+    if (Toy.isInfixDesired(this.fn.fn)) {
       // Non-alphabetic characters: use infix: "x + y"
       var fnNode = this.fn.node = exprNode();
       fnNode.append(this.fn.arg._render());
@@ -1014,7 +1014,7 @@ Call.prototype._render = function(omit) {
       node.append(space());
       node.append(this.arg._render());
     }
-  } else if (this.fn instanceof Var && Y.isInfixDesired(this.fn)) {
+  } else if (this.fn instanceof Var && Toy.isInfixDesired(this.fn)) {
     // Infix operator, but only one argument: "x +"
     node.append(this.arg._render());
     node.append(space());
@@ -1042,7 +1042,7 @@ Call.prototype._render = function(omit) {
 
 Lambda.prototype._render = function(omit) {
   var node = this.node = exprNode();
-  var stepNum = (Y.trackSourceSteps
+  var stepNum = (Toy.trackSourceSteps
                  && this.sourceStep
                  && this.sourceStep.rendering.stepNumber);
   if (stepNum) {
@@ -1094,7 +1094,7 @@ function renderSubproof(step) {
   Y.each(controller.steps, clearSubproof);
   var node;
   if (step.ruleName == 'theorem') {
-    node = renderInference(Y.getTheorem(step.ruleArgs[0]));
+    node = renderInference(Toy.getTheorem(step.ruleArgs[0]));
   } else {
     node = renderInference(step);
   }
@@ -1169,14 +1169,14 @@ function formattedStepRefs(step) {
   var siteRefs = [];
   var stepRefs = [];
   var args = step.ruleArgs;
-  var info = Y.rules[step.ruleName].info;
+  var info = Toy.rules[step.ruleName].info;
   // No custom step deps displays?
   var showSteps = !info.description.match(/[{]step[0-9]*[}]/);
-  Y.eachArgType(step.ruleName, function(where, type) {
+  Toy.eachArgType(step.ruleName, function(where, type) {
       var arg = args[where];
-      if (type in Y.siteTypes && !adjacentSteps(arg, step)) {
+      if (type in Toy.siteTypes && !adjacentSteps(arg, step)) {
         siteRefs.push(arg);
-      } else if (type in Y.stepTypes && !adjacentSteps(arg, step)) {
+      } else if (type in Toy.stepTypes && !adjacentSteps(arg, step)) {
         stepRefs.push(arg);
       }
     });
@@ -1199,7 +1199,7 @@ function formattedStepRefs(step) {
  * after a ";;" pair is formatted as arguments to the rule.
  */
 function formattedDescription(step) {
-  var info = Y.rules[step.ruleName].info;
+  var info = Toy.rules[step.ruleName].info;
   var description = info.description;
   if (description[0] === '=') {
     // Expand the description with the named function.
@@ -1221,7 +1221,7 @@ function formattedDescription(step) {
                   @{markup. expandMarkup(step, markup)});
   var comment = (Y.Escape.html(info.comment || '') +
                  ' (&quot;' + step.ruleName + '&quot;)');
-  var classes = (step.details && Y.modes.subproofs
+  var classes = (step.details && Toy.modes.subproofs
                  ? 'ruleName link'
                  : 'ruleName');
   return ('<span class="' + classes + '" title="' + comment + '">'
@@ -1240,7 +1240,7 @@ function formattedStepInfo(step) {
  * Computes replacement text for rule description markup.
  */
 function expandMarkup(step, markup) {
-  var info = Y.rules[step.ruleName].info;
+  var info = Toy.rules[step.ruleName].info;
   switch (markup) {
   case '{step}':
   case '{step1}':
@@ -1264,12 +1264,12 @@ function expandMarkup(step, markup) {
       places = [places];
     }
     var terms = places.map(function(place) {
-        return Toy.mathMarkup(Y.toUnicode(step.ruleArgs[place - 1]));
+        return Toy.mathMarkup(Toy.toUnicode(step.ruleArgs[place - 1]));
       });
     return terms.join(', ');
   case '{var}':
     var place = info.inputs.varName[0] || info.inputs.varName;
-    return Toy.mathMarkup(Y.toUnicode(step.ruleArgs[place - 1]));
+    return Toy.mathMarkup(Toy.toUnicode(step.ruleArgs[place - 1]));
   case '{site}':
     var place = info.inputs.site[0] || info.inputs.site;
     var siteStep = step.ruleArgs[place - 1];
@@ -1290,7 +1290,7 @@ function expandMarkup(step, markup) {
  */
 var stepFormatters = {
   definition: function(step) {
-    var result = 'definition of ' + Y.toUnicode(step.ruleArgs[0]);
+    var result = 'definition of ' + Toy.toUnicode(step.ruleArgs[0]);
     if (step.ruleArgs.length == 2) {
       result += ' ' + step.ruleArgs[1];
     }
@@ -1313,9 +1313,9 @@ var stepFormatters = {
     var step0 = step.ruleArgs[0];
     var path = step.ruleArgs[1];
     var target = step0.locate(path);
-    if (target instanceof Y.Call) {
+    if (target instanceof Toy.Call) {
       var fn = target.fn;
-      if (fn instanceof Y.Lambda) {
+      if (fn instanceof Toy.Lambda) {
         return 'substitute for ' + target.fn.bound.name;
       } else if (target.isCall2()) {
         return 'apply definition of ' + target.getBinOp().toString();
@@ -1337,7 +1337,7 @@ var stepFormatters = {
   describeTautInst: function(step) {
     var taut = step.ruleArgs[0];
     if (typeof taut === 'string') {
-      taut = Y.parse(taut);
+      taut = Toy.parse(taut);
     }
     return 'tautology ' + Toy.mathMarkup(taut.toUnicode());
   },
@@ -1361,7 +1361,7 @@ function renderInference(step) {
   var steps = unrenderedDeps(step.details);
   var controller = new ProofControl({stepPrefix: step.stepNumber + '.'});
   controller.setSteps(steps);
-  var comment = Y.Escape.html(Y.rules[step.ruleName].info.comment || '');
+  var comment = Y.Escape.html(Toy.rules[step.ruleName].info.comment || '');
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   node = Y.Node.create('<div class=inferenceDisplay></div>');
   node.append('<div class=proofHeader><b>' + pruf
@@ -1406,7 +1406,7 @@ function renderProof(step, node, millis, nSteps) {
  * Helper for renderInference, computes arguments display string for
  * the header display of a subproof.
  *
- * TODO: Re-think and rewrite this, probably using Y.eachArgType.
+ * TODO: Re-think and rewrite this, probably using Toy.eachArgType.
  *   Indicate sites in steps in some user-friendly way.
  */
 function computeHeaderArgInfo(step) {
@@ -1414,15 +1414,15 @@ function computeHeaderArgInfo(step) {
   for (var i = 0; i < step.ruleArgs.length; i++) {
     var arg = step.ruleArgs[i];
     var argText;
-    if (arg instanceof Y.Expr) {
+    if (arg instanceof Toy.Expr) {
       argText = arg.toString();
     } else if (typeof arg == 'string' && arg[0] != '/') {
       argText = arg;
-    } else if (typeof arg == 'string' || arg instanceof Y.Path) {
+    } else if (typeof arg == 'string' || arg instanceof Toy.Path) {
       // Ignore paths and strings that look like paths.
       continue;
     } else {
-      argText = Y.debugString(arg);
+      argText = Toy.debugString(arg);
     }
     if (argInfo) {
       argInfo += ', ';
@@ -1468,7 +1468,7 @@ function computeFirstOrdinal(steps) {
  * within the step or the YUI node within it.
  */
 function getStepNode(expr) {
-  var node = expr instanceof Y.Expr ? expr.node : expr;
+  var node = expr instanceof Toy.Expr ? expr.node : expr;
   return node.ancestor('.proofStep', true);
 }
 
@@ -1508,7 +1508,7 @@ function getTopProofContainer(expr) {
  * one.
  */
 function getProofControl(expr) {
-  var node = expr instanceof Y.Expr ? expr.node : expr;
+  var node = expr instanceof Toy.Expr ? expr.node : expr;
   var ancestor = node.ancestor('.proofDisplay');
   return ancestor.getData('proofControl');
 }
@@ -1635,7 +1635,7 @@ function getHoverHandler(step) {
   var handler = hoverHandlers[step.ruleName];
   if (handler) {
     return handler;
-  } else if (Y.rules[step.ruleName].info.isRewriter) {
+  } else if (Toy.rules[step.ruleName].info.isRewriter) {
     return hoverAsRewriter;
   } else {
     return null;
@@ -1646,7 +1646,7 @@ function getHoverHandler(step) {
  * Highlights input sites as usual for rewrite rules.
  */
 function hoverAsRewriter(step, action) {
-  var selections = Y.stepSites(step);
+  var selections = Toy.stepSites(step);
   // Highlight the input sites expressions for the step while hovered.
   selections.forEach(function(expr) {
     action(expr.node, 'site');
@@ -1654,11 +1654,11 @@ function hoverAsRewriter(step, action) {
 
   // Show the corresponding subexpressions of this step if possible.
   // Note: this is likely to require overrides in some rules.
-  Y.stepPaths(step).forEach(function(path) {
+  Toy.stepPaths(step).forEach(function(path) {
     try {
       action(step.locate(path).node, 'site');
     } catch(err) {
-      Y.logError(err);
+      Toy.logError(err);
     }
   });
 }
@@ -1669,7 +1669,7 @@ function hoverAsRewriter(step, action) {
 function doHoverOverlay(step, direction) {
   // NB: Hover overlays currently have no information in them,
   // but might be helpful in the future.
-  if (Y.useHoverOverlays) {
+  if (Toy.useHoverOverlays) {
     var align = Y.WidgetPositionAlign;
     var overlay = getProofControl(step).hoverOverlay;
     if (direction == 'in') {
@@ -1783,48 +1783,48 @@ function addBottomPanel(node) {
 
 //// Export public names.
 
-Y.proofToyState = proofToyState;
-Y.ProofEditor = ProofEditor;
-Y.ProofControl = ProofControl;
-Y.showOrdinals = false;
-Y.renderInference = renderInference;
-Y.renderProof = renderProof;
-Y.addBottomPanel = addBottomPanel;
-Y.getStepNode = getStepNode;
-Y.getProofStep = getProofStep;
-Y.getStepsNode = getStepsNode;
-Y.getExpr = getExpr;
+Toy.proofToyState = proofToyState;
+Toy.ProofEditor = ProofEditor;
+Toy.ProofControl = ProofControl;
+Toy.showOrdinals = false;
+Toy.renderInference = renderInference;
+Toy.renderProof = renderProof;
+Toy.addBottomPanel = addBottomPanel;
+Toy.getStepNode = getStepNode;
+Toy.getProofStep = getProofStep;
+Toy.getStepsNode = getStepsNode;
+Toy.getExpr = getExpr;
 
 // For testing:
 Y._formattedStepInfo = formattedStepInfo;
 
 // Global configuration variable for displaying extra information per
 // step when hovered.
-Y.useHoverOverlays = false;
+Toy.useHoverOverlays = false;
 
 // Global parameter to suppress displaying hypotheses such as "(R x)".
-Y.suppressRealTypeDisplays = true;
+Toy.suppressRealTypeDisplays = true;
 
 // Detect if the device has a touch screen, e.g. a tablet.
 // Mobile jQuery 1.1 does this same test.
-Y.hasTouchEvents = 'ontouchend' in document;
+Toy.hasTouchEvents = 'ontouchend' in document;
 
 // Control whether to use an Autocompleter vs. plain SELECT element.
-Y.useAutocompleter = !Y.hasTouchEvents;
+Toy.useAutocompleter = !Toy.hasTouchEvents;
 
 // Global parameter to suppress GUI selection of function names
 // and the "Curried part" of an infix call.
-Y.simplifiedSelections = Y.hasTouchEvents;
+Toy.simplifiedSelections = Toy.hasTouchEvents;
 
 // Name of event when the user touches the screen or clicks the mouse.
 // Note: when using 'mousedown' as the TOUCHDOWN event Chrome has been
 // observed to unfocus the keyboard on the subsequent mouseup event,
 // an unwanted effect.
-var TOUCHDOWN = Y.hasTouchEvents ? 'touchstart' : 'click';
+var TOUCHDOWN = Toy.hasTouchEvents ? 'touchstart' : 'click';
 
 // Override these properties on the page to get custom modes of
 // display and/or operation.
-Y.modes = {
+Toy.modes = {
   subproofs: true
 };
 

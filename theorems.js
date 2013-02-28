@@ -12,15 +12,15 @@ function mathMarkup(text) {
 //// THEOREMS AND RULES
 
 // Use the application's "assert" rather than YUI's.
-var assert = Y.assertTrue;
+var assert = Toy.assertTrue;
 
 // And make other useful names available here.
-var assertEqn = Y.assertEqn;
-var varify = Y.varify;
-var call = Y.call;
-var equal = Y.equal;
-var implies = Y.implies;
-var lambda = Y.lambda;
+var assertEqn = Toy.assertEqn;
+var varify = Toy.varify;
+var call = Toy.call;
+var equal = Toy.equal;
+var implies = Toy.implies;
+var lambda = Toy.lambda;
 
 // Include all variables that appear in axioms, plus T and F.
 var T = varify('T');
@@ -77,7 +77,7 @@ var ruleInfo = {
   assert: {
     action: function(assertion) {
       if (typeof assertion == 'string') {
-	assertion = Y.parse(assertion);
+	assertion = Toy.parse(assertion);
       }
       return assertion.justify('assert', [assertion]);
     },
@@ -89,7 +89,7 @@ var ruleInfo = {
 
   define: {
     action: function(name, definition) {
-      return Y.define(name, definition).justify('define', arguments);
+      return Toy.define(name, definition).justify('define', arguments);
     },
     inputs: {varName: 1, term: 2},
     form: ('Define name <input name=varName> as <input name=term>'),
@@ -107,7 +107,7 @@ var ruleInfo = {
   assume: {
     action: function(assumption) {
       if (typeof assumption == 'string') {
-	assumption = Y.parse(assumption);
+	assumption = Toy.parse(assumption);
       }
       var types = assumption.mathVarConditions();
       // TODO: Fix tautInst to not copy.
@@ -189,7 +189,7 @@ var ruleInfo = {
    * than proving it all over again.
    */
   theorem: function(name) {
-    return Y.getTheorem(name).justify('theorem', [name]);
+    return Toy.getTheorem(name).justify('theorem', [name]);
   },
 
   /**
@@ -202,7 +202,7 @@ var ruleInfo = {
       // The derivations are computed in advance, and have the name or
       // name and true/false as the argument(s).
       var args = arguments.length == 1 ? [name] : [name, tOrF];
-      return Y.getDefinition(name, tOrF).justify('definition', args);
+      return Toy.getDefinition(name, tOrF).justify('definition', args);
     },
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
@@ -223,7 +223,7 @@ var ruleInfo = {
     // this creates another step by calling "justify".
     // TODO: De-hackify this.
     assert(name.substring(0, 5) == 'axiom', 'Not an axiom: ' + name);
-    var thm = Y.getTheorem(name);
+    var thm = Toy.getTheorem(name);
     assert(thm, 'No axiom ' + name);
     var result = thm.justify(name);
     // If there are details, the displayer will enable display of them,
@@ -240,7 +240,7 @@ var ruleInfo = {
    */
   r: {
     action: function(equation, target, path) {
-      path = Y.path(path);
+      path = Toy.path(path);
       assert(equation.isCall2('='), function() {
 	return 'Rule R requires equation: ' + equation;
       }, equation);
@@ -255,12 +255,12 @@ var ruleInfo = {
       }
       // Auto-justify input steps if requested by the current configuration.
       if (!equation.ruleName) {
-        assert(Y.autoAssert,
+        assert(Toy.autoAssert,
                function() { return 'Rule R unproven equation: ' + equation; });
 	equation.assert();
       }
       if (!target.ruleName) {
-        assert(Y.autoAssert,
+        assert(Toy.autoAssert,
                function() { return 'Rule R unproven target: ' + target; });
 	target.assert();
       }
@@ -275,7 +275,7 @@ var ruleInfo = {
       var rvars = equation.getRight().freeNames();
       for (var name in rvars) {
 	if (!(name in lvars)) {
-	  Y.findType(result);
+	  Toy.findType(result);
 	  break;
 	}
       }
@@ -298,7 +298,7 @@ var ruleInfo = {
    */
   rRight: {
     action: function(equation, target, path) {
-      path = Y.path(path);
+      path = Toy.path(path);
       var rev = rules.eqnSwap(equation);
       var result = rules.replace(rev, target, path);
       return result.justify('rRight', arguments, [target, equation]);
@@ -351,15 +351,15 @@ var ruleInfo = {
    */
   axiom4: {
     action: function(call) {
-      call = typeof call == 'string' ? Y.parse(call) : call;
+      call = typeof call == 'string' ? Toy.parse(call) : call;
       assert(call.isOpenCall(), function() {
 	return 'Axiom 4 needs ({v. B} A), got: ' + call.toString();
       });
       var lambdaExpr = call.fn;
       var result =
-        equal(call, Y.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
+        equal(call, Toy.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
       // Always make sure the call has a type.  It came from elsewhere.
-      Y.findType(call);
+      Toy.findType(call);
       var result = rules.assert(result).justify('axiom4', [call]);
       // There are no real details in this case.
       delete result.details;
@@ -413,7 +413,7 @@ var ruleInfo = {
 
   // Book only.
   defImplies: function() {
-    return equal('==>', Y.parse('{x. {y. x == x & y}}')).justify('defImplies');
+    return equal('==>', Toy.parse('{x. {y. x == x & y}}')).justify('defImplies');
   },
 
   //
@@ -439,8 +439,8 @@ var ruleInfo = {
   // The two forms of "=" are interchangeable (other than precedence).
   eqIsEquiv: {
     action: function() {
-      var step1 = rules.eqSelf(new Y.Var('='));
-      var step2 = rules.eqSelf(new Y.Var('=='));
+      var step1 = rules.eqSelf(new Toy.Var('='));
+      var step2 = rules.eqSelf(new Toy.Var('=='));
       var result = rules.r(step2, step1, '/right');
       return result.justify('eqIsEquiv', []);
     },
@@ -525,7 +525,7 @@ var ruleInfo = {
       var abab = rules.eqSelf(call(a, bc.getLeft()));
       var abac = rules.replace(h_bc, abab, '/right/arg');
       var result = abac;
-      if (a instanceof Y.Lambda) {
+      if (a instanceof Toy.Lambda) {
         var step2 = rules.apply(abac, '/main/left');
         var result = rules.apply(step2, '/main/right');
       }
@@ -546,13 +546,13 @@ var ruleInfo = {
   useDefinition: {
     action: function(a, path) {
       var args = [a, path];
-      path = Y.path(path, a);
+      path = Toy.path(path, a);
       var target = a.locate(path);
-      if (target instanceof Y.Var) {
+      if (target instanceof Toy.Var) {
         var result = rules.replace(rules.definition(target.name), a, path);
         return result.justify('useDefinition', args, [a]);
       } else {
-        assert(target instanceof Y.Call && target.arg instanceof Y.Var,
+        assert(target instanceof Toy.Call && target.arg instanceof Toy.Var,
                  'Target of useDefinition not suitable: ' + target);
         var arg = target.arg;
         assert(arg.name == 'T' || arg.name == 'F',
@@ -593,15 +593,15 @@ var ruleInfo = {
   applier: {
     action: function(expr) {
       var args = [expr];
-      assert(expr instanceof Y.Call);
+      assert(expr instanceof Toy.Call);
       var fn = expr.fn;
-      if (fn instanceof Y.Lambda) {
+      if (fn instanceof Toy.Lambda) {
         var result = rules.axiom4(expr);
         return result.justify('applier', args);
       }
       // Call that looks like (<constant> <expr>).
       if (fn.isConst()) {
-        var defn = Y.findDefinition(fn.name);
+        var defn = Toy.findDefinition(fn.name);
         if (defn) {
           var step1 = rules.eqSelf(expr);
           var step2 = rules.useDefinition(step1, '/right/fn');
@@ -614,7 +614,7 @@ var ruleInfo = {
         var call = expr.fn;
         var fn2 = call.fn;
         if (fn2.isConst()) {
-          var defn = Y.findDefinition(fn2.name);
+          var defn = Toy.findDefinition(fn2.name);
           if (defn) {
             var step1 = rules.eqSelf(call);
             var step2 = rules.useDefinition(step1, '/right/fn');
@@ -640,7 +640,7 @@ var ruleInfo = {
   // and applies the expansions to the argument(s).
   apply: {
     action: function(step, path) {
-      path = Y.path(path, step);
+      path = Toy.path(path, step);
       var target = step.locate(path);
       assert(target, function() {
         return 'Path ' + path + ' not found in ' + step;
@@ -667,14 +667,14 @@ var ruleInfo = {
   changeVar: {
     action: function(step, path, newVar) {
       newVar = varify(newVar);
-      path = Y.path(path, step);
+      path = Toy.path(path, step);
       var target = step.locate(path);
-      assert(target instanceof Y.Lambda, 'Not a function: ' + target, step);
+      assert(target instanceof Toy.Lambda, 'Not a function: ' + target, step);
       assert(!step.freeNames()[newVar.name],
              'New bound variable ' + newVar.name + ' must not occur free.',
              step);
       var changed = lambda(newVar,
-                           Y.subFree(newVar, target.bound, target.body));
+                           Toy.subFree(newVar, target.bound, target.body));
       var step1 = rules.eqSelf(changed);
       var step2 = rules.r(step1, step, path);
       return step2.justify('changeVar', arguments, [step]);
@@ -695,7 +695,7 @@ var ruleInfo = {
    */
   bindEqn: {
     action: function(h_eqn, v) {
-      v = Y.varify(v);
+      v = Toy.varify(v);
       var eqn = h_eqn.unHyp();
       eqn.assertCall2('=');
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
@@ -783,10 +783,10 @@ var ruleInfo = {
   instForall: {
     action: function(h_target, expr) {
       var target = h_target.unHyp();
-      assert(target.fn instanceof Y.Var && target.fn.name == 'forall',
+      assert(target.fn instanceof Toy.Var && target.fn.name == 'forall',
              "Must be 'forall': " + target.fn,
              h_target);
-      assert(target.arg instanceof Y.Lambda,
+      assert(target.arg instanceof Toy.Lambda,
              "Must be lambda expression: " + target.arg,
              h_target);
       var step1 = rules.useDefinition(h_target, '/main/fn');
@@ -800,8 +800,8 @@ var ruleInfo = {
       return step5.justify('instForall', arguments, [h_target]);
     },
     inputs: {step: 1, term: 2, condition: {1: function(target) {
-      return (target instanceof Y.Call
-	      && target.fn instanceof Y.Var
+      return (target instanceof Toy.Call
+	      && target.fn instanceof Toy.Var
 	      && target.fn.name == 'forall');
     }}},
     form: ('In step <input name=step> instantiate bound var'
@@ -848,7 +848,7 @@ var ruleInfo = {
   r5230FTBook: {
     action: function() {
       var step1 = rules.axiom('axiom2');
-      var map = {h: Y.parse('{x. x = F}'),
+      var map = {h: Toy.parse('{x. x = F}'),
                  x: F,
                  y: T};
       var step2 = rules.instMultiVars(step1, map);
@@ -865,7 +865,7 @@ var ruleInfo = {
       var step13 = rules.apply(step12, '');
       // TODO: Infer by cases from 5229 (rules about '&').
       var step14 = rules.tautology('x & F == F');
-      var step15 = rules.instEqn(step14, Y.parse('F = T'), 'x')
+      var step15 = rules.instEqn(step14, Toy.parse('F = T'), 'x')
       var step16 = rules.r(step15, step13, '/right');
       return step16.justify('r5230FTBook');
     }
@@ -999,7 +999,7 @@ var ruleInfo = {
   r5214: {
     action: function() {
       var step1 = rules.axiom('axiom1');
-      var step2 = rules.instEqn(step1, Y.parse('{x. x}'), 'g');
+      var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
       var step3 = rules.apply(step2, '/right/arg/body');
       var step4 = rules.apply(step3, '/left/right');
       var step5 = rules.apply(step4, '/left/left');
@@ -1067,7 +1067,7 @@ var ruleInfo = {
       var step2 = rules.replace(stepT1, rules.theorem('r5212'), '/left');
       var step3 = rules.replace(stepF1, step2, '/right');
       // Note: If a variable is not in caseT it is also not in caseF.
-      var newVar = Y.genVar('w', caseT.allNames());
+      var newVar = Toy.genVar('w', caseT.allNames());
       var gen = caseT.generalizeTF(caseF, newVar);
       var lexpr = lambda(newVar, gen);
       var step4 = rules.instEqn(rules.axiom('axiom1'), lexpr, g);
@@ -1136,7 +1136,7 @@ var ruleInfo = {
       var t_a = h_t_a.unHyp()
       assertEqn(t_a);
       var left = t_a.locate('/left');
-      assert(left instanceof Y.Var && left.name == 'T',
+      assert(left instanceof Toy.Var && left.name == 'T',
              'Input should be [T = A]: ' + t_a,
              h_t_a);
       var a = t_a.locate('/right');
@@ -1146,7 +1146,7 @@ var ruleInfo = {
     inputs: {equation: 1, condition: {1: function(h_eqn) {
       var eqn = h_eqn.unHyp();
       var left = eqn.getLeft();
-      return (left instanceof Y.Var && left.name == 'T');
+      return (left instanceof Toy.Var && left.name == 'T');
     }}},
     form: 'Eliminate "T = " from step <input name=equation>',
     hint: 'from (T = A) to A',
@@ -1157,7 +1157,7 @@ var ruleInfo = {
   // Lemma helper for addForall, a pure theorem.
   forallXT: {
     action: function() {
-      var step1 = rules.eqSelf(Y.parse('{x. T}'));
+      var step1 = rules.eqSelf(Toy.parse('{x. T}'));
       var fa = rules.definition('forall');
       var result = rules.rRight(fa, step1, '/fn');
       return result.justify('forallXT', arguments);
@@ -1197,7 +1197,7 @@ var ruleInfo = {
   // variable even if free in the hypotheses.
   instVar: {
     action: function(step, a, v) {
-      v = Y.varify(v);
+      v = Toy.varify(v);
       var map = {};
       map[v.name] = a;
       var result = rules.instMultiVars(step, map);
@@ -1217,7 +1217,7 @@ var ruleInfo = {
   instantiateVar: {
     action: function(step, path, term) {
       v = step.locate(path);
-      assert(v instanceof Y.Var, 'Not a variable: ' + v);
+      assert(v instanceof Toy.Var, 'Not a variable: ' + v);
       var map = {};
       map[v.name] = term;
       var result = rules.instMultiVars(step, map);
@@ -1293,7 +1293,7 @@ var ruleInfo = {
       v = varify(v);
       // Note: caseF has no variables not in caseT, so no need to
       // calculate all of its names.
-      var newVar = Y.genVar('v', caseT.allNames());
+      var newVar = Toy.genVar('v', caseT.allNames());
       var gen = caseT.unHyp().generalizeTF(caseF.unHyp(), newVar);
       var step1a = rules.axiom4(call(lambda(newVar, gen), T));
       var step1b = rules.rRight(step1a, caseT, '/main');
@@ -1341,15 +1341,15 @@ var ruleInfo = {
   r5225: {
     action: function() {
       var step1 = rules.axiom('axiom2');
-      var map = {h: Y.parse('{g. g x}'),
-                 x: Y.parse('{x. T}'),
+      var map = {h: Toy.parse('{g. g x}'),
+                 x: Toy.parse('{x. T}'),
                  y: f};
       var step2 = rules.instMultiVars(step1, map);
       var step3 = rules.rRight(rules.definition('forall'), step2, '/left/fn');
       var step4 = rules.apply(step3, '/right/left');
       var step5 = rules.apply(step4, '/right/left');
       var step6 = rules.apply(step5, '/right/right');
-      var step7 = rules.r(rules.r5218(Y.parse('f x')), step6, '/right');
+      var step7 = rules.r(rules.r5218(Toy.parse('f x')), step6, '/right');
       return step7.justify('r5225');
     }
   },
@@ -1358,7 +1358,7 @@ var ruleInfo = {
   r5227: {
     action: function() {
       var step1 = rules.theorem('r5225');
-      var step2 = rules.instVar(step1, Y.parse('{x. x}'), 'f');
+      var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'f');
       var step3 = rules.defFFromBook();
       var step4 = rules.rRight(step3, step2, '/left');
       var step5 = rules.apply(step4, '/right');
@@ -1403,7 +1403,7 @@ var ruleInfo = {
   trueEquals: {
     action: function() {
       var step1 = rules.r5218(x);
-      var step2 = rules.eqSelf(Y.parse('{x. x} x'));
+      var step2 = rules.eqSelf(Toy.parse('{x. x} x'));
       var step3 = rules.apply(step2, '/left');
       var step4 = rules.r(step3, step1, '/right');
       var step5 = rules.addForall(step4, x);
@@ -1425,12 +1425,12 @@ var ruleInfo = {
     action: function(expr) {
       var boolOps = {'&': true, '|': true, '==>': true, '=': true, not: true};
       function isReducible(expr) {
-        return (expr instanceof Y.Call
-                && ((expr.fn instanceof Y.Var
+        return (expr instanceof Toy.Call
+                && ((expr.fn instanceof Toy.Var
                      && boolOps[expr.fn.name]
-                     && expr.arg instanceof Y.Var
+                     && expr.arg instanceof Toy.Var
                      && (expr.arg.name == 'T' || expr.arg.name == 'F'))
-                    || expr.fn instanceof Y.Lambda));
+                    || expr.fn instanceof Toy.Lambda));
       }
       var result = rules.eqSelf(expr);
       while (true) {
@@ -1441,7 +1441,7 @@ var ruleInfo = {
         }
         var target = right.locate(_path);
         var fn = target.fn;
-        if (fn instanceof Y.Var) {
+        if (fn instanceof Toy.Var) {
           var defn;
           if (fn.name == 'not') {
             defn = rules.theorem(target.arg.name == 'T'
@@ -1460,7 +1460,7 @@ var ruleInfo = {
             // &, |, ==>
             result = rules.useDefinition(result, '/right' + _path);
           }
-        } else if (fn instanceof Y.Lambda) {
+        } else if (fn instanceof Toy.Lambda) {
           result = rules.apply(result, '/right' + _path);
         } else {
           assert(false, 'Unexpected expression: ' + target);
@@ -1481,7 +1481,7 @@ var ruleInfo = {
   tautology: {
     action: function(wff) {
       if (typeof wff == 'string') {
-        wff = Y.parse(wff);
+        wff = Toy.parse(wff);
       }
       var key = wff.dump();
       var taut = _tautologies[key];
@@ -1492,19 +1492,19 @@ var ruleInfo = {
         // Not really a loop, just works with the first free (variable!)
         // name returned.
         for (var name in names) {
-          if (Y.isVariable(name)) {
-            if (wff instanceof Y.Call && wff.fn instanceof Y.Call
-                && wff.fn.fn instanceof Y.Var && wff.fn.fn.name == '=') {
+          if (Toy.isVariable(name)) {
+            if (wff instanceof Toy.Call && wff.fn instanceof Toy.Call
+                && wff.fn.fn instanceof Toy.Var && wff.fn.fn.name == '=') {
               // WFF is already an equation.
-              var step1 = rules.tautology(Y.subFree(T, name, wff));
-              var step2 = rules.tautology(Y.subFree(F, name, wff));
+              var step1 = rules.tautology(Toy.subFree(T, name, wff));
+              var step2 = rules.tautology(Toy.subFree(F, name, wff));
               var step3 = rules.equationCases(step1, step2, name);
               var result = step3.justify('tautology', arguments);
               _tautologies[key] = result;
               return result.justify('tautology', arguments);
             } else {
-              var step1 = rules.tautology(equal(T, Y.subFree(T, name, wff)));
-              var step2 = rules.tautology(equal(T, Y.subFree(F, name, wff)));
+              var step1 = rules.tautology(equal(T, Toy.subFree(T, name, wff)));
+              var step2 = rules.tautology(equal(T, Toy.subFree(F, name, wff)));
               var step3 = rules.equationCases(step1, step2, name);
               var step4 = rules.fromTIsA(step3);
               var result = step4.justify('tautology', arguments);
@@ -1516,7 +1516,7 @@ var ruleInfo = {
         // There are no free variables, evaluate the expression.
         var step11 = rules.evalBool(wff);
         assert(step11.isCall2('=')
-               && step11.getRight() instanceof Y.Var
+               && step11.getRight() instanceof Toy.Var
                && step11.getRight().name == 'T',
                'Not a tautology: ' + step11.getLeft(),
                step11);
@@ -1544,7 +1544,7 @@ var ruleInfo = {
   tautInst: {
     action: function(h_tautology, map) {
       if (typeof h_tautology == 'string') {
-        h_tautology = Y.parse(h_tautology);
+        h_tautology = Toy.parse(h_tautology);
       }
       var tautology = h_tautology.unHyp();
       var step1 = rules.tautology(tautology);
@@ -1658,7 +1658,7 @@ var ruleInfo = {
   // {v. f A B} c = f A ({v. B} c) where v is not free in f or a.
   r5235: {
     action: function(v, a, b) {
-      v = Y.varify(v);
+      v = Toy.varify(v);
       var aFree = a.freeNames();
       assert(!aFree.hasOwnProperty(v.name),
 	     'r5235: variable ' + v + 'cannot occur free in ' + a);
@@ -1676,7 +1676,7 @@ var ruleInfo = {
       var freeNames = Y.merge(aFree, b.freeNames());
       // Treat v as a free variable also.
       freeNames[v.name] = true;
-      var p0 = Y.genVar('p', freeNames);
+      var p0 = Toy.genVar('p', freeNames);
       var step5 = rules.cases(step1, step4, p0);
       var step6 = rules.instVar(step5, a, p0);
       return step6.justify('r5235', arguments);
@@ -1698,7 +1698,7 @@ var ruleInfo = {
   implyForallBook: {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
-      v = Y.varify(v);
+      v = Toy.varify(v);
       assert(a_b.isCall2('==>'), 'Must be an implication: ' + a_b, h_a_b);
       var a = a_b.getLeft();
       var b = a_b.getRight();
@@ -1735,12 +1735,12 @@ var ruleInfo = {
   // the variable is free, but would not give desired result.
   implyForallThm: {
     action: function(v, a, b) {
-      v = Y.varify(v);
+      v = Toy.varify(v);
       var aFree = a.freeNames();
       assert(!aFree.hasOwnProperty(v.name),
 	     'r5235: variable ' + v + 'cannot occur free in ' + a);
       var map1 = {
-        p: call('forall', lambda(v, Y.infixCall(F, '==>', b))),
+        p: call('forall', lambda(v, Toy.infixCall(F, '==>', b))),
         q: call('forall', lambda(v, b))
       };
       var step1 = rules.tautInst('p ==> (F ==> q)', map1);
@@ -1753,7 +1753,7 @@ var ruleInfo = {
       var freeNames = Y.merge(aFree, b.freeNames());
       // Treat v as a free variable also.
       freeNames[v.name] = true;
-      var p0 = Y.genVar('p', freeNames);
+      var p0 = Toy.genVar('p', freeNames);
       var step5 = rules.cases(step4, step1, p0);
       var step6 = rules.instVar(step5, a, p0);
       return step6.justify('implyForallThm', arguments);
@@ -1775,7 +1775,7 @@ var ruleInfo = {
   // Handles hypotheses.
   implyForall: {
     action: function(v, h_a_b) {
-      v = Y.varify(v);
+      v = Toy.varify(v);
       var a_b = h_a_b.unHyp();
       var step1 = rules.addForall(h_a_b, v);
       var step2 = rules.implyForallThm(v, a_b.getLeft(), a_b.getRight());
@@ -1807,7 +1807,7 @@ var ruleInfo = {
   forwardChain: {
     action: function(step, tautology) {
       var tautology = rules.tautology(tautology);
-      var substitution = Y.matchAsSchema(tautology.getLeft(), step.unHyp());
+      var substitution = Toy.matchAsSchema(tautology.getLeft(), step.unHyp());
       var step2 = rules.instMultiVars(tautology, substitution);
       var step3 = rules.modusPonens(step, step2);
       return step3.justify('forwardChain', arguments, [step]);
@@ -1911,7 +1911,7 @@ var ruleInfo = {
   // replacement location in C.
   r5239: {
     action: function(equation, target, path) {
-      path = Y.path(path);
+      path = Toy.path(path);
       assert(equation.isCall2('='),
              'Expecting an equation, got: ' + equation,
 	     equation);
@@ -1919,9 +1919,9 @@ var ruleInfo = {
       var a = equation.getLeft();
       var b = equation.getRight();
       var boundNames = target.boundNames(path);
-      Y.removeExcept(boundNames, equation.freeNames());
+      Toy.removeExcept(boundNames, equation.freeNames());
       // Is this the full set of names?
-      var t = Y.genVar('t', Y.merge(target.allNames(), equation.allNames()));
+      var t = Toy.genVar('t', Y.merge(target.allNames(), equation.allNames()));
       var texpr = t;
       for (var name in boundNames) {
         texpr = call(texpr, varify(name));
@@ -1942,12 +1942,12 @@ var ruleInfo = {
       var step3 = rules.apply(step2, '/right/left');
       var step4 = step3;
       for (var i = 0; i < boundNameList.length; i++) {
-        step4 = rules.apply(step4, Y.path('/right/left').concat(path));
+        step4 = rules.apply(step4, Toy.path('/right/left').concat(path));
       }
       var step5 = rules.apply(step4, '/right/right');
       var step6 = step5;
       for (var i = 0; i < boundNameList.length; i++) {
-        step6 = rules.apply(step6, Y.path('/right/right').concat(path));
+        step6 = rules.apply(step6, Toy.path('/right/right').concat(path));
       }
       if (boundNameList.length == 0) {
         return step6.justify('r5239', arguments);
@@ -1978,7 +1978,7 @@ var ruleInfo = {
   replace: {
     action: function(h_equation_arg, h_c_arg, path) {
       var args = [h_equation_arg, h_c_arg, path];
-      path = Y.path(path, h_c_arg);
+      path = Toy.path(path, h_c_arg);
       var h_c = h_c_arg;
       var h_equation = h_equation_arg;
       if (h_equation.isCall2('=')) {
@@ -2025,7 +2025,7 @@ var ruleInfo = {
 		   ? path
 		   : path.getRight());
       var boundNames = c.boundNames(cpath);
-      Y.removeExcept(boundNames, equation.freeNames());
+      Toy.removeExcept(boundNames, equation.freeNames());
       var hypFreeNames = h.freeNames();
       var step1 = h_equation;
       for (var name in boundNames) {
@@ -2038,10 +2038,10 @@ var ruleInfo = {
       }
       var step2 = rules.r5239(equation, c, cpath);
       var step3 = rules.makeConjunction(step1, step2);
-      var tautology = Y.parse('(p ==> q) & (q ==> r) ==> (p ==> r)');
+      var tautology = Toy.parse('(p ==> q) & (q ==> r) ==> (p ==> r)');
       var step4 = rules.forwardChain(step3, tautology);
       var step5 = rules.makeConjunction(h_c, step4);
-      var taut2 = Y.parse('(h ==> p) & (h ==> (p = q)) ==> (h ==> q)');
+      var taut2 = Toy.parse('(h ==> p) & (h ==> (p = q)) ==> (h ==> q)');
       var result = rules.forwardChain(step5, taut2);
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
         result = rules.asHypotheses(result);
@@ -2068,7 +2068,7 @@ var ruleInfo = {
 	    return target;
 	  }
           var step = rules.asImplication(target);
-	  var taut = Y.parse('(h1 ==> p) ==> ((h1 & h2) ==> p)');
+	  var taut = Toy.parse('(h1 ==> p) ==> ((h1 & h2) ==> p)');
 	  var subst = {
 	    h1: step.getLeft(),
 	    h2: hypStep.getLeft(),
@@ -2126,7 +2126,7 @@ var ruleInfo = {
             // Don't show the call to this rule.
 	    return step;
 	  }
-	  var taut = Y.parse('(h2 ==> p) ==> ((h1 & h2) ==> p)');
+	  var taut = Toy.parse('(h2 ==> p) ==> ((h1 & h2) ==> p)');
 	  var subst = {
 	    h1: hypStep.getLeft(),
 	    h2: step.getLeft(),
@@ -2306,7 +2306,7 @@ var ruleInfo = {
   // duplicates eliminated.
   mergeConjunctions: {
     action: function(expr) {
-      var result = rules.mergeConj(expr, Y.sourceStepLess);
+      var result = rules.mergeConj(expr, Toy.sourceStepLess);
       return result.justify('mergeConjunctions', arguments);
     },
     inputs: {term: 1},
@@ -2347,15 +2347,15 @@ var ruleInfo = {
     // combine it with ones resembling (h & h1) = (h & h1 & h) to
     // piece together larger tautologies.
     action: function(step, hyp) {
-      var infix = Y.infixCall;
+      var infix = Toy.infixCall;
       assert(step.hasHyps, 'Step has no hypotheses');
       var lhs = step.getLeft().hypLocater(hyp);
-      var a = Y.varify('a');
+      var a = Toy.varify('a');
       var taut = infix(infix(lhs, '==>', a),
 		       '==>',
 		       infix(lhs,
 			     '==>',
-			     infix(Y.varify('h'), '==>', a)));
+			     infix(Toy.varify('h'), '==>', a)));
       var step1 = rules.asImplication(step);
       var step2 = rules.forwardChain(step1, taut);
       var result = rules.asHypotheses(step2);
@@ -2389,7 +2389,7 @@ var ruleInfo = {
   // conjunct "c", which must match one of them.
   conjunctsImplyConjunct: {
     action: function(conjuncts, c) {
-      var infix = Y.infixCall;
+      var infix = Toy.infixCall;
       var tautFX = rules.tautology('F & x == F');
       // Prove that "hyps = F", where hyps is a chain of conjuncts.
       // One conjunct must be "F".
@@ -2409,7 +2409,7 @@ var ruleInfo = {
         }
         assert(false, 'Bad input to falsify!');
       }
-      var map = new Y.TermMap();
+      var map = new Toy.TermMap();
       conjuncts.eachHyp(function (h) { map.addTerm(h); });
       assert(map.has(c), function() {
           return 'Must be one of the conjuncts: ' + c;
@@ -2442,7 +2442,7 @@ var ruleInfo = {
   // its first argument is less than its second.
   conjunctionDeduper: {
     action: function(conj, comparator) {
-      var map = new Y.TermMap();
+      var map = new Toy.TermMap();
       // A variable (or T) for each conjunct, in order of occurrence.
       var allTerms = [];
       conj.eachHyp(function(term) {
@@ -2467,19 +2467,19 @@ var ruleInfo = {
       }
       var keepTerms = [];
       Y.each(keepTermsInfo, function(info) {
-          keepTerms.push(new Y.Var(info.name));
+          keepTerms.push(new Toy.Var(info.name));
         });
       // A variable for each hypothesis to keep, in order.
       function buildConj(list) {
         var result = null;
         for (var i = 0; i < list.length; i++) {
           var term = list[i];
-          result = result ? Y.infixCall(result, '&', term) : term;
+          result = result ? Toy.infixCall(result, '&', term) : term;
         }
         return result || T;
       }
       var rewriter =
-        Y.infixCall(buildConj(allTerms), '=', buildConj(keepTerms));
+        Toy.infixCall(buildConj(allTerms), '=', buildConj(keepTerms));
       var result = rules.instMultiVars(rules.tautology(rewriter), map.subst);
       return result.justify('conjunctionDeduper', arguments);
     }
@@ -2492,7 +2492,7 @@ var ruleInfo = {
     action: function(step) {
       step.assertCall2('==>');
       var deduper =
-        rules.conjunctionDeduper(step.getLeft(), Y.sourceStepComparator);
+        rules.conjunctionDeduper(step.getLeft(), Toy.sourceStepComparator);
       var result = (deduper
                     ? rules.replace(deduper, step, '/left')
                     : step);
@@ -2507,10 +2507,10 @@ var ruleInfo = {
    // equal by showing that their schemas are a tautology.
   equalConjunctions: {
     action: function(equation) {
-      var termMap = new Y.TermMap();
+      var termMap = new Toy.TermMap();
       var lhs = buildHypSchema(equation.getLeft(), termMap);
       var rhs = buildHypSchema(equation.getRight(), termMap);
-      var taut = rules.tautology(Y.infixCall(lhs, '=', rhs));
+      var taut = rules.tautology(Toy.infixCall(lhs, '=', rhs));
       return rules.tautInst(taut, termMap.subst);
     },
     inputs: {equation: 1},
@@ -2557,7 +2557,7 @@ var ruleInfo = {
   equalityTransitive: {
     action: function() {
       var step1 = rules.axiom('axiom2');
-      var step2 = rules.instVar(step1, Y.parse('{t. t = z}'), varify('h'));
+      var step2 = rules.instVar(step1, Toy.parse('{t. t = z}'), varify('h'));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = rules.apply(step3, '/right/right');
       var step5 = rules.forwardChain(step4,
@@ -2739,8 +2739,8 @@ var ruleInfo = {
   axiomArithmetic: {
     action: function(term) {
       if (term.isInfixCall()) {
-	var left = Y.checkNumber(term.getLeft().value);
-	var right = Y.checkNumber(term.getRight().value);
+	var left = Toy.checkNumber(term.getLeft().value);
+	var right = Toy.checkNumber(term.getRight().value);
 	var op = term.getBinOp().name;
 	var value;
 	switch(op) {
@@ -2767,25 +2767,25 @@ var ruleInfo = {
         if (typeof value == 'boolean') {
           var rhs = value ? T : F;
         } else {
-          var value = Y.checkRange(value);
-          var rhs = new Y.Var(value.toFixed(0));
+          var value = Toy.checkRange(value);
+          var rhs = new Toy.Var(value.toFixed(0));
         }
-        return rules.assert(Y.infixCall(term, '=', rhs))
+        return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
-      } else if (term instanceof Y.Call) {
-        var arg = Y.checkNumber(term.arg.value);
+      } else if (term instanceof Toy.Call) {
+        var arg = Toy.checkNumber(term.arg.value);
         var op = term.fn;
-        assert(op instanceof Y.Var,
+        assert(op instanceof Toy.Var,
                function() { return 'Unsupported operator: ' + op; });
         if (op.name == 'neg') {
           value = -arg;
-          var rhs = new Y.Var(value.toFixed(0));
+          var rhs = new Toy.Var(value.toFixed(0));
         } else if (op.name == 'R') {
           var rhs = T;
         } else {
           assert(false, 'Not an arithmetic expression: ' + term);
         }
-        return rules.assert(Y.infixCall(term, '=', rhs))
+        return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else {
 	assert(false, 'Not an arithmetic expression: ' + term);
@@ -2800,11 +2800,11 @@ var ruleInfo = {
   subtractionType: {
     action: function() {
       var step1 = rules.axiom('axiomPlusType');
-      var step2 = rules.instVar(step1, Y.parse('neg y'), 'y');
+      var step2 = rules.instVar(step1, Toy.parse('neg y'), 'y');
       var step3 = rules.axiom('axiomNegType');
       var step4 = rules.instVar(step3, y, x);
       var step5 = rules.rRight(step4, step2, '/left/right');
-      var step6 = rules.eqSelf(Y.parse('x - y'));
+      var step6 = rules.eqSelf(Toy.parse('x - y'));
       var step7 = rules.apply(step6, '/left');
       var step8 = rules.replace(step7, step5, '/main/right/arg')
       return step8.justify('subtractionType');
@@ -2817,11 +2817,11 @@ var ruleInfo = {
   divisionType: {
     action: function() {
       var step1 = rules.axiom('axiomTimesType');
-      var step2 = rules.instVar(step1, Y.parse('recip y'), 'y');
+      var step2 = rules.instVar(step1, Toy.parse('recip y'), 'y');
       var step3 = rules.axiom('axiomReciprocalType');
       var step4 = rules.instVar(step3, y, x);
       var step5 = rules.rRight(step4, step2, '/left/right');
-      var step6 = rules.eqSelf(Y.parse('x / y'));
+      var step6 = rules.eqSelf(Toy.parse('x / y'));
       var step7 = rules.apply(step6, '/left');
       var step8 = rules.replace(step7, step5, '/main/right/arg')
       return step8.justify('divisionType');
@@ -2875,22 +2875,22 @@ var ruleInfo = {
   // implication.  Also does special-case removal of hyps like 2 != 0.
   numericTypesSimplifier: {
     action: function(allHyps) {
-      var infix = Y.infixCall;
+      var infix = Toy.infixCall;
       var deduper =
-        rules.conjunctionDeduper(allHyps, Y.sourceStepComparator);
+        rules.conjunctionDeduper(allHyps, Toy.sourceStepComparator);
       var simplifier = rules.eqSelf(allHyps);
       if (deduper) {
         simplifier = rules.replace(deduper, simplifier, '/right');
       }
       // Now RHS of simplifier has no duplicate terms.
-      var hypSet = new Y.TermSet();
+      var hypSet = new Toy.TermSet();
       simplifier.getRight().eachHyp(function (hyp) { hypSet.add(hyp); });
       // Convert (R <n>) to T and (<n> != <m>) to T or F.
       hypSet.each(function(hyp) {
         var hyps = simplifier.getRight();
         if (hyp.isCall1('R') && (hyp.arg.isNumeral())) {
           var equation = rules.axiomArithmetic(hyp);
-          var path = Y.path('/right' + hyps.pathTo(hyp));
+          var path = Toy.path('/right' + hyps.pathTo(hyp));
           simplifier = rules.replace(equation, simplifier, path);
         } else if (hyp.isCall2('!=') &&
                    hyp.getLeft().isNumeral() &&
@@ -2898,24 +2898,24 @@ var ruleInfo = {
           // Special case, also simplifies hyps like "2 != 0".
           var eqn = rules.eqSelf(hyp);
           var eqn2 = rules.arithmetic(eqn, '/right');
-          var path = Y.path('/right' + hyps.pathTo(hyp));
+          var path = Toy.path('/right' + hyps.pathTo(hyp));
           simplifier = rules.r(eqn2, simplifier, path);
         }
       });
       // Remove occurrences of T.
       deduper =
-        rules.conjunctionDeduper(simplifier.getRight(), Y.sourceStepComparator);
+        rules.conjunctionDeduper(simplifier.getRight(), Toy.sourceStepComparator);
       if (deduper) {
         simplifier = rules.replace(deduper, simplifier, '/right');
       }
       // Prove types of complex expressions by breaking them down and
       // proving the parts..
-      hypSet = new Y.TermSet();
+      hypSet = new Toy.TermSet();
       simplifier.getRight().eachHyp(function(hyp) { hypSet.add(hyp); });
       hypSet.each(function(hyp) {
           var hyps = simplifier.getRight();
-          if (hyp.isCall1('R') && hyp.arg instanceof Y.Call) {
-            var otherHyps = hypsExcept(hyps, new Y.TermSet(hyp));
+          if (hyp.isCall1('R') && hyp.arg instanceof Toy.Call) {
+            var otherHyps = hypsExcept(hyps, new Toy.TermSet(hyp));
             var goal = infix(otherHyps, '==>', hyp);
             // Proved that hyp is a consequence of the others.
             // TODO: Prove the hyp from just the relevant set hypotheses,
@@ -2953,7 +2953,7 @@ var ruleInfo = {
   // implication.  Deduplicate and put them in the usual order.
   simplifyNumericTypes: {
     action: function(step) {
-      var infix = Y.infixCall;
+      var infix = Toy.infixCall;
       step.assertCall2('==>');
       var equation = rules.numericTypesSimplifier(step.getLeft());
       var result = rules.r(equation, step, '/left');
@@ -2973,13 +2973,13 @@ var ruleInfo = {
       //   to prove the RHS, then prove that the full set of conjuncts
       //   implies the required ones.  Create a new
       //   rules.conjunctsImplyConjunct to make this fast.
-      var infix = Y.infixCall;
+      var infix = Toy.infixCall;
       var subst = goal.matchSchema('h ==> (R e)');
       assert(subst, 'Bad input to justifyNumericType: ' + goal);
       var target = goal.getRight();
       var hyps = subst.h;
       var expr = subst.e;
-      var map = new Y.TermMap();
+      var map = new Toy.TermMap();
       var schema = buildHypSchema(hyps, map);
       var result;
       // Prove the various forms of targets.
@@ -3001,7 +3001,7 @@ var ruleInfo = {
           '+': rules.axiomPlusType(), '*': rules.axiomTimesType(),
           '-': rules.subtractionType(), '/': rules.divisionType()
         };
-        assert(subst && op instanceof Y.Var && theorems[op.name]);
+        assert(subst && op instanceof Toy.Var && theorems[op.name]);
         var theorem = theorems[op.name];
         var implication = rules.subgoal(target, theorem);
         var subst2 = implication.matchSchema('h1 & h2 ==> p');
@@ -3027,7 +3027,7 @@ var ruleInfo = {
         var step1 = rules.justifyNumericType(subgoal1);
         // Justify this term as a consequence of either arithmetic or
         // the hypotheses:
-        var term = infix(expr.arg, '!=', new Y.Var('0'));
+        var term = infix(expr.arg, '!=', new Toy.Var('0'));
         var arith;
         try {
           var arithEqn = rules.eqSelf(term);
@@ -3136,7 +3136,7 @@ var ruleInfo = {
 
   addToBoth: {
     action: function(eqn, term) {
-      var fn = lambda(x, Y.infixCall(x, '+', term));
+      var fn = lambda(x, Toy.infixCall(x, '+', term));
       var result = rules.applyToBoth(fn, eqn);
       return result.justify('addToBoth', arguments, [eqn]);
     },
@@ -3149,7 +3149,7 @@ var ruleInfo = {
 
   subtractFromBoth: {
     action: function(eqn, term) {
-      var fn = lambda(x, Y.infixCall(x, '-', term));
+      var fn = lambda(x, Toy.infixCall(x, '-', term));
       var result = rules.applyToBoth(fn, eqn);
       return result.justify('subtractFromBoth', arguments, [eqn]);
     },
@@ -3162,7 +3162,7 @@ var ruleInfo = {
 
   multiplyBoth: {
     action: function(eqn, term) {
-      var fn = lambda(x, Y.infixCall(x, '*', term));
+      var fn = lambda(x, Toy.infixCall(x, '*', term));
       var result = rules.applyToBoth(fn, eqn);
       return result.justify('multiplyBoth', arguments, [eqn]);
     },
@@ -3175,7 +3175,7 @@ var ruleInfo = {
 
   divideBoth: {
     action: function(eqn, term) {
-      var fn = lambda(x, Y.infixCall(x, '/', term));
+      var fn = lambda(x, Toy.infixCall(x, '/', term));
       var result = rules.applyToBoth(fn, eqn);
       return result.justify('divideBoth', arguments, [eqn]);
     },
@@ -3307,7 +3307,7 @@ function genRewriters(map) {
     if (info.comment) {
       var comment = info.comment;
     } else {
-      // Remember ruleInfo is still not processed into Y.rules.
+      // Remember ruleInfo is still not processed into Toy.rules.
       var fact = info.axiom;
       var desc = ruleInfo[info.axiom].description || info.axiom;
       var comment = 'Rewrite using ' + desc;
@@ -3391,16 +3391,16 @@ var identity = lambda(x, x);
 var allT = lambda(x, T);
 
 // Put definitions into their database:
-Y.define('not', equal(F));
-Y.define('!=', '{x. {y. not (x = y)}}');
-Y.define('forall', equal(lambda(x, T)));
-Y.define('exists', '{x. F} !=');
-Y.defineCases('&', identity, lambda(x, F));
-Y.defineCases('|', allT, identity);
-Y.defineCases('==>', identity, allT);
+Toy.define('not', equal(F));
+Toy.define('!=', '{x. {y. not (x = y)}}');
+Toy.define('forall', equal(lambda(x, T)));
+Toy.define('exists', '{x. F} !=');
+Toy.defineCases('&', identity, lambda(x, F));
+Toy.defineCases('|', allT, identity);
+Toy.defineCases('==>', identity, allT);
 
-Y.define('-', '{x. {y. x + neg y}}');
-Y.define('/', '{x. {y. x * recip y}}');
+Toy.define('-', '{x. {y. x + neg y}}');
+Toy.define('/', '{x. {y. x * recip y}}');
 
 //// THEOREMHOOD
 
@@ -3472,7 +3472,7 @@ function buildHypSchema(hyps, map, exclusions) {
   hyps.eachHyp(function(hyp) {
       var v = map.addTerm(hyp);
       if (!exclusions || !exclusions.has(hyp)) {
-        schema = schema ? Y.infixCall(schema, '&', v) : v;
+        schema = schema ? Toy.infixCall(schema, '&', v) : v;
       }
     });
   return schema;
@@ -3487,7 +3487,7 @@ function hypsExcept(hyps, exclusions) {
   var result = null;
   hyps.eachHyp(function(hyp) {
       if (!exclusions.has(hyp)) {
-        result = result ? Y.infixCall(result, '&', hyp) : hyp;
+        result = result ? Toy.infixCall(result, '&', hyp) : hyp;
       }
     });
   return result;
@@ -3504,19 +3504,19 @@ function findHyp(term) {
 
 //// Export public names.
 
-Y.rules = rules;
+Toy.rules = rules;
 
 // A settable variable, export right here:
-Y.autoAssert = false;
+Toy.autoAssert = false;
 
-Y.axiomNames = axiomNames;
-Y.theoremNames = theoremNames;
-Y.addTheorem = addTheorem;
-Y.getTheorem = getTheorem;
-Y.findHyp = findHyp;
+Toy.axiomNames = axiomNames;
+Toy.theoremNames = theoremNames;
+Toy.addTheorem = addTheorem;
+Toy.getTheorem = getTheorem;
+Toy.findHyp = findHyp;
 
 // For testing.
-Y.ruleInfo = ruleInfo;
+Toy.ruleInfo = ruleInfo;
 Y._tautologies = _tautologies;
 Y._buildHypSchema = buildHypSchema;
 
