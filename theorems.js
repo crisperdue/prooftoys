@@ -1673,7 +1673,7 @@ var ruleInfo = {
                                  ({p: b}));
       var step4 = rules.r(step3, step2, '/left/arg/body');
 
-      var freeNames = Y.merge(aFree, b.freeNames());
+      var freeNames = $.extend({}, aFree, b.freeNames());
       // Treat v as a free variable also.
       freeNames[v.name] = true;
       var p0 = Toy.genVar('p', freeNames);
@@ -1750,7 +1750,7 @@ var ruleInfo = {
                                  ({p: b}));
       var step4 = rules.r(step3, step2, '/left/arg/body');
 
-      var freeNames = Y.merge(aFree, b.freeNames());
+      var freeNames = $.extend({}, aFree, b.freeNames());
       // Treat v as a free variable also.
       freeNames[v.name] = true;
       var p0 = Toy.genVar('p', freeNames);
@@ -1921,7 +1921,8 @@ var ruleInfo = {
       var boundNames = target.boundNames(path);
       Toy.removeExcept(boundNames, equation.freeNames());
       // Is this the full set of names?
-      var t = Toy.genVar('t', Y.merge(target.allNames(), equation.allNames()));
+      var t =
+        Toy.genVar('t', $.extend({}, target.allNames(), equation.allNames()));
       var texpr = t;
       for (var name in boundNames) {
         texpr = call(texpr, varify(name));
@@ -3316,9 +3317,13 @@ function genRewriters(map) {
     ruleInfo[name] = {
       // Highlight sites in inputs as usual for rewrite rules.
       isRewriter: true,
-      // Add the axiom and the rule name to all calls to the action
-      // function.
-      action: Y.rbind(generators[input], null, info.axiom, name),
+      action: (function(axiomName, ruleName, generator) {
+        // Capture the current info.axiom and name.  In JS
+        // calling a new function is the way to do it.
+        return function(step, path) {
+          return generator(step, path, axiomName, ruleName);
+        }
+        })(info.axiom, name, generators[input]),
       inputs: {site: 1},
       template: info.axiom,
       templateSide: input,
