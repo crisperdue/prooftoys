@@ -728,7 +728,7 @@ Expr.prototype.mathVarConditions = function(expr) {
     names.push(v);
   }
   names.sort();
-  Y.each(names, function(name) {
+  names.forEach(function(name) {
       if (expr) {
         expr = infix(expr, '&', call(real, name));
       } else {
@@ -3665,7 +3665,7 @@ function decodeSteps(input) {
   input = typeof input == 'string' ? parse(input) : input;
   var descriptions = input.asArray();
   var outSteps = [];
-  Y.each(descriptions, function(stepTerm, i) {
+  descriptions.forEach(function(stepTerm, i) {
       if (i == 0) {
         // Like a "continue" ...
         return;
@@ -3677,7 +3677,7 @@ function decodeSteps(input) {
       var ruleName = stepInfo.shift();
       // The remainder of the array is arguments to the rule.
       var args = [];
-      Y.each(stepInfo, function(info) {
+      stepInfo.forEach(function(info) {
           args.push(decodeArg(info, outSteps));
         });
       outSteps.push(Toy.rules[ruleName].apply(Toy.rules, args));

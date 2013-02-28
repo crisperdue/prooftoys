@@ -55,15 +55,20 @@ var assert = Toy.assertTrue;
  */
 function eachArgType(ruleName, action) {
   var inputs = Toy.rules[ruleName].info.inputs;
-  Y.each(inputs, function(where, type) {
+  for (var type in inputs) {
+    if (type === 'condition') {
+      // Value is not a position or position list.
+      continue;
+    }
+    var where = inputs[type];
     if (typeof where == 'number') {
       action(where - 1, type);
     } else {
-      Y.each(where, function(position) {
+      where.forEach(function(position) {
         action(position - 1, type);
       });
     }
-  });
+  }
 }
 
 // All types that can be entered in a form.  Omits site, bindingSite,
@@ -170,11 +175,11 @@ function StepEditor(controller) {
     selector.append(input);
     this.ruleSelector =
       new RuleSelector(input,
-                       Y.bind('filteredRuleNames', this),
-                       Y.bind('handleSelection', this));
+                       $.proxy(this, 'filteredRuleNames'),
+                       $.proxy(this, 'handleSelection'));
   } else {
-    var widget = new BasicRuleSelector(Y.bind('filteredRuleNames', this),
-                                       Y.bind('handleSelection', this));
+    var widget = new BasicRuleSelector($.proxy(this, 'filteredRuleNames'),
+                                       $.proxy(this, 'handleSelection'));
     this.ruleSelector = widget;
     selector.append(widget.node);
   }
@@ -689,7 +694,7 @@ BasicRuleSelector.prototype.reset = function() {
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
   // This should behave very much like the resultFormatter function:
-  Y.each(this.source(), function(name) {
+  this.source().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       var info = Toy.rules[ruleName].info;
       var hint = info.hint || info.comment || '';

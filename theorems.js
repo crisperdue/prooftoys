@@ -2466,7 +2466,7 @@ var ruleInfo = {
         keepTermsInfo.sort(compare);
       }
       var keepTerms = [];
-      Y.each(keepTermsInfo, function(info) {
+      keepTermsInfo.forEach(function(info) {
           keepTerms.push(new Toy.Var(info.name));
         });
       // A variable for each hypothesis to keep, in order.

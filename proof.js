@@ -65,7 +65,7 @@ var proofToyState = {
         // Non-empty text.
         this.data = Y.JSON.parse(text);
       }
-      Y.each(this._dataReadyHandlers, function(fn) { fn(); });
+      this._dataReadyHandlers.forEach(function(fn) { fn(); });
       this.store();
     } else {
       console.log('No #ToyStore element.');
@@ -184,7 +184,7 @@ function ProofEditor() {
       proofToyState.data.proofEditors[self.proofEditorId] = self.data;
     }
   }
-  proofToyState.onDataReady(Y.bind(Toy.withErrorReporting, null, loadData));
+  proofToyState.onDataReady(Toy.withErrorReporting.bind(null, loadData));
 }
 
 /**
@@ -368,7 +368,7 @@ ProofControl.prototype.setSteps = function(steps) {
 ProofControl.prototype._renumber = function() {
   var self = this;
   // Give the steps numbers from 1 to N.
-  Y.each(this.steps, function(step, i) {
+  this.steps.forEach(function(step, i) {
     // Fix up the step number and its display.
     step.stepNumber = (Toy.showOrdinals
                        ? step.ordinal
@@ -681,13 +681,13 @@ function renderStep(step, controller) {
   // Set up "hover" event handling on the stepNode.
   stepNode.on('hover',
               // Call hoverStep, passing these arguments as well as the event.
-              Y.bind(hover, null, 1),
-              Y.bind(hover, null, -1));
+              hover.bind(null, 1),
+              hover.bind(null, -1));
   // We count the wffNode as outside for this purpose.
   wffNode.on('hover',
-              // Call hoverStep, passing these arguments as well as the event.
-              Y.bind(hover, null, -1),
-              Y.bind(hover, null, 1));
+             // Call hoverStep, passing these arguments as well as the event.
+             hover.bind(null, -1),
+             hover.bind(null, 1));
 
   var deleter = stepNode.one('.deleteStep');
   if (deleter) {
@@ -1073,7 +1073,7 @@ function unrenderedDeps(step) {
     if (!step.rendering && !step.__visited) {
       result.push(step);
       step.__visited = true;
-      Y.each(step.ruleDeps, function(dep) { visitWithDeps(dep); });
+      step.ruleDeps.forEach(function(dep) { visitWithDeps(dep); });
     }
   }
   visitWithDeps(step);
@@ -1091,7 +1091,7 @@ function unrenderedDeps(step) {
  */
 function renderSubproof(step) {
   var controller = getProofControl(step);
-  Y.each(controller.steps, clearSubproof);
+  controller.steps.forEach(clearSubproof);
   var node;
   if (step.ruleName == 'theorem') {
     node = renderInference(Toy.getTheorem(step.ruleArgs[0]));
@@ -1112,7 +1112,7 @@ function clearSubproof(step) {
   var controller = step.subproofControl;
   delete step.subproofControl;
   if (controller) {
-    Y.each(controller.steps, function(step) {
+    controller.steps.forEach(function(step) {
         // Record that the rendering is gone.
         step.original.rendering = null;
         // Clear any rendered subproof for the step.
@@ -1622,7 +1622,7 @@ function hoverStep(step, direction, event) {
     handler(step, action);
   } else {
     // If no handler apply or remove default highlighting.
-    Y.each(step.ruleDeps, function(dep) {
+    step.ruleDeps.forEach(function(dep) {
       action(getStepNode(dep.rendering), 'dep');
     });
   }
