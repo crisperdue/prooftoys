@@ -16,7 +16,7 @@ var yuiPath =
 // For debugging add explicit reference to source file(s) here
 
 // Include jQuery in all cases.
-document.write('<script src="jquery-1.7.2.js"></script>\n');
+document.write('<script src="js/jquery-1.9.1.js"></script>\n');
 if (!window.noYUI) {
   document.write(yuiPath);
   document.write('<script src="expr.js"></script>\n');
