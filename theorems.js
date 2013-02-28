@@ -1569,9 +1569,9 @@ var ruleInfo = {
         if (term.arg.isBoolConst()) {
           var name = term.arg.name;
           if (name == 'T') {
-            return Y.tautology('not T = F');
+            return rules.tautology('not T = F');
           } else {
-            return Y.tautology('not F = F');
+            return rules.tautology('not F = F');
           }
         }
       }
@@ -1617,11 +1617,11 @@ var ruleInfo = {
         var left = term.getLeft();
         var right = term.getRight();
         if (left.isBoolConst() && right.isBoolConst()) {
-          return Y.tautology(simplifiers[op][left.name][right.name]);
+          return rules.tautology(simplifiers[op][left.name][right.name]);
         } else if (left.isBoolConst()) {
-          return Y.tautology(leftSimplifiers[op][left.name]);
+          return rules.tautology(leftSimplifiers[op][left.name]);
         } else {
-          return Y.tautology(rightSimplifiers[op][right.name]);
+          return rules.tautology(rightSimplifiers[op][right.name]);
         }
       }
     }
