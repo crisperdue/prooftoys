@@ -8,17 +8,6 @@
 window.noYUI = true;
 
 /**
- * Missing jQuery utility function.
- */
-function setClass(j, className, value) {
-  if (value) {
-    j.addClass(className);
-  } else {
-    j.removeClass(className);
-  }
-}
-
-/**
  * Install event handlers to highlight cells in the jquery table
  * element based on mouse position in the canvas relative to the
  * circles.
@@ -49,15 +38,14 @@ function highlightCurrentCell(table, xCircle, yCircle) {
       var yCell = this.getAttribute('y');
       // Y value is OK if it matches or there is none.
       var yMatch = yCell == null || yCell == '' + yCircle;
-      setClass(jQuery(this),
-               'cellHighlight',
-               yMatch && this.getAttribute('x') == '' + xCircle);
+      $(this).toggleClass('cellHighlight',
+                          yMatch && this.getAttribute('x') === '' + xCircle);
     });
   table.find('th').each(function() {
-      setClass(jQuery(this), 'thHighlight',
-               (this.hasAttribute('x')
-                ? this.getAttribute('x') == '' + xCircle
-                : this.getAttribute('y') == '' + yCircle));
+      $(this).toggleClass('thHighlight',
+                          (this.hasAttribute('x')
+                           ? this.getAttribute('x') === '' + xCircle
+                           : this.getAttribute('y') === '' + yCircle));
     });
 }
 
