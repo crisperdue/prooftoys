@@ -635,7 +635,7 @@ function RuleSelector(input, source, selectionHandler) {
  * return a list of HTML-formatted results.
  */
 function resultFormatter(query, results) {
-  return Y.Array.map(results, function (result) {
+  return results.map(function (result) {
       var ruleName = result.text.replace(/^xiom/, 'axiom');
       var info = Y.rules[ruleName].info;
       var hint = Y.Escape.html(info.hint || info.comment || '');

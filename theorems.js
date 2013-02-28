@@ -1247,7 +1247,7 @@ var ruleInfo = {
 	namesReversed.unshift(name);
       }
       // Then substitute for the renamed variables.
-      Y.Array.each(namesReversed, function(name) {
+      namesReversed.forEach(function(name) {
           var step2 = rules.applyBoth(step, map[name]);
           var step3 = rules.apply(step2, '/right');
           step = rules.apply(step3, '/left');

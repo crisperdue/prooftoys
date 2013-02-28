@@ -349,7 +349,7 @@ ProofControl.prototype.setSteps = function(steps) {
   // Clear rendering properties of current steps, as they will be
   // deleted.
   var stepsNode = this.stepsNode;
-  Y.Array.each(this.steps, function(step) {
+  this.steps.forEach(function(step) {
     step.original.rendering = null;
   });
   stepsNode.setContent('');
@@ -1077,7 +1077,7 @@ function unrenderedDeps(step) {
     }
   }
   visitWithDeps(step);
-  Y.Array.each(result, function(step) { delete step.__visited; });
+  result.forEach(function(step) { delete step.__visited; });
   result.sort(function(s1, s2) {
       return s1.ordinal - s2.ordinal;
     });
@@ -1755,7 +1755,7 @@ var hoverHandlers = {
 //// OTHER UTILITY FUNCTIONS
 
 function contains(array, item) {
-  return Y.Array.indexOf(array, item) >= 0;
+  return array.indexOf(item) >= 0;
 }
 
 /**

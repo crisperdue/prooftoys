@@ -1149,14 +1149,14 @@ Expr.prototype.mergedHypotheses = function() {
 
   // Build the remaining sorted terms into a chain.
   var rhs = null;
-  Y.Array.each(sorted, function(term) {
+  sorted.forEach(function(term) {
       rhs = rhs ? Y.infixCall(rhs, '&', term.__var) : term.__var;
     });
 
   var left = this.getLeft()._asPattern();
   var right = this.getRight()._asPattern();
   var result = Y.infixCall(Y.infixCall(left, '&', right), '=', rhs);
-  Y.Array.each(conjuncts, function(term) {
+  conjuncts.forEach(function(term) {
       delete term.__var;
       delete term.__order;
     });
@@ -3640,7 +3640,7 @@ function encodeSteps(steps_arg) {
 
   // Use the original steps throughout, so the ruleArgs refer
   // to the actual steps.
-  var steps = Y.Array.map(steps_arg, function(step) {
+  var steps = steps_arg.map(function(step) {
       return step.original || step;
     });
   var reps = ['(steps'];
