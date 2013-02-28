@@ -460,6 +460,6 @@ YUI.add('sample-proofs', function(Y) {
 
   };
 
-  Y.setUpSampleProofs = setUpSampleProofs;
+Y.setUpSampleProofs = setUpSampleProofs;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'proof']});
