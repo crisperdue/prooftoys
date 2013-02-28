@@ -579,6 +579,14 @@ Expr.prototype.hasFreeName = function(name) {
  * this already has a hasHyps property.
  */
 Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
+  var slice = Array.prototype.slice;
+  function asArray(a) {
+    if (a instanceof Array) {
+      return a;
+    } else {
+      return slice.call(a, 0);
+    }
+  }
   var expr = this.dup();
   if (this.ruleName) {
     expr.details = this;
@@ -586,8 +594,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   // Carry hypotheses forward.
   expr.hasHyps = this.hasHyps;
   expr.ruleName = ruleName;
-  expr.ruleArgs = Y.Array(ruleArgs || []);
-  expr.ruleDeps = Y.Array(ruleDeps || []);
+  expr.ruleArgs = asArray(ruleArgs || []);
+  expr.ruleDeps = asArray(ruleDeps || []);
   expr.ordinal = stepCounter++;
   return expr;
 };
