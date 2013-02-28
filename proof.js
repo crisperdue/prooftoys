@@ -634,12 +634,13 @@ function renderStep(step, controller) {
                  ? ('<input type=button class=deleteStep value="x"' +
                     ' title="Delete step">')
                  : '');
-  var html = ('<div class=proofStep>' +
-              deleter +
-              '<span class=stepNumArea>(<span class=stepNumber></span>)</span> ' +
-              '<span class=wff></span>' +
-              '<span class=stepInfo></span>' +
-              '</div>');
+  var html =
+    '<div class=proofStep>' +
+    deleter +
+    '<span class=stepNumArea>(<span class=stepNumber></span>)</span> ' +
+    '<span class=wff></span>' +
+    '<span class=stepInfo></span>' +
+    '</div>';
   var stepNode = Y.Node.create(html);
   stepNode.setData('proofStep', step);
   step.stepNode = stepNode;
