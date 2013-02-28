@@ -548,7 +548,8 @@ StepEditor.prototype.offerable = function(ruleName) {
  * as an argument.
  */
 function acceptsSelection(step, ruleName, acceptTerm) {
-  var accept = Y.rules[ruleName].info.inputs;
+  var info = Y.rules[ruleName].info;
+  var accept = info.inputs;
   if (!accept) {
     // If there is no information about arguments, fail.
     return false;
@@ -556,13 +557,27 @@ function acceptsSelection(step, ruleName, acceptTerm) {
   // Selected expression (within a step).
   var expr = step.selection;
   if (expr) {
-    // TODO: prevent selection of bound variables as terms.
-    return (accept.site
-	    || (acceptTerm && accept.term)
-	    || (accept.bindingSite && expr instanceof Y.Lambda)
-	    || (accept.reducible
-		&& expr instanceof Y.Call
-		&& expr.fn instanceof Y.Lambda));
+    if (info.template) {
+      // The rule has a "rewriting template", given as the name
+      // of the fact to use in rewriting.
+      assert(typeof accept.site === 'number',
+             function() {
+               return 'Rule ' + ruleName + ' must use exactly 1 site.';
+             });
+      var thm = Y.getTheorem(info.template);
+      var template = info.templateSide == 'right'
+        ? thm.unHyp().getRight()
+        : thm.unHyp().getLeft();
+      return !!expr.findSubst(template);
+    } else {
+      // TODO: prevent selection of bound variables as terms.
+      return (accept.site
+              || (acceptTerm && accept.term)
+              || (accept.bindingSite && expr instanceof Y.Lambda)
+              || (accept.reducible
+                  && expr instanceof Y.Call
+                  && expr.fn instanceof Y.Lambda));
+    }
   } else {
     return (accept.step
 	    || (accept.equation && step.unHyp().isCall2('='))

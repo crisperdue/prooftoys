@@ -56,6 +56,16 @@ var _allHyps = {};
 // comment: plain text comment to become the title of mentions of the rule
 //   name in proof displays and the description in subproof displays.
 // description: HTML word or phrase to display for the rule name.
+// isRewriter: true to highlight on hover like a rewrite rule.
+//   TODO: Consider removing this as unnecessary.
+// template: if present, normally the equation used for the
+//   rule, as for rewriters.  The equation may have conditions.
+//   When working forward the left side of the main equation must
+//   match the site to be operated on.
+// templateSide: may be 'right' to indicate that the rule uses
+//   the converse equality (rewrites matching the right side of the
+//   equation rather than the left side).
+//
 
 var ruleInfo = {
 
@@ -3310,6 +3320,8 @@ function genRewriters(map) {
       // function.
       action: Y.rbind(generators[input], null, info.axiom, name),
       inputs: {site: 1},
+      template: info.axiom,
+      templateSide: input,
       form: '',
       description: info.description || name,
       comment: comment
