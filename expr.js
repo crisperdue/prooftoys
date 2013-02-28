@@ -1,7 +1,9 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
-YUI.add('expr', function(Y) {
+// Initialize the app namespace.
+var Toy = Toy || {};
 
+YUI.add('expr', function(Y) {
 
 //// GENERAL UTILITIES
 

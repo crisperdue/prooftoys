@@ -1,5 +1,11 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
+// TODO: Deploy the app in a single file under flag control.
+// Normally initialize the flag from the page URL, so references
+// to localhost use separate sources for easy debugging.
+// Load all scripts from js/ subdirectory and preprocess scripts
+// into there.
+
 var Y_site = 'http://yui.yahooapis.com/';
 // You can override the "site path" something like this:
 // var Y_site = 'http://localhost/~cris/yui/';
