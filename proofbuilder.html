@@ -72,7 +72,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   var editor = new Toy.ProofEditor();
   window.proofEditor = editor;
   editor.setEditable(true);
-  Y.one('#proofEditor').setContent(editor.containerNode);
+  $('#proofEditor').append($$(editor.containerNode));
 
 });
 

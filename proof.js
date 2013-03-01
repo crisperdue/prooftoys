@@ -1,10 +1,25 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
-YUI.add('proof', function(Y) {
-
+/**
+ * Compatibility hack, global function that converts a YUI Node or
+ * NodeList to a jQuery object, and jQuery objects pass through
+ * unchanged.  When there are no more YUI things, calls to this
+ * can be removed.
+ */
 function $$(x) {
-  return jQuery(x._nodes || x._node);
+  if (x instanceof jQuery) {
+    return x;
+  } else {
+    var data = x._nodes || x._node;
+    if (data) {
+      return jQuery(data);
+    } else {
+      throw new Error('Cannot unYUI ' + x);
+    }
+  }
 }
+
+YUI.add('proof', function(Y) {
 
 // Use the application's assert function.
 var assert = Toy.assertTrue;
