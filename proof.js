@@ -1400,7 +1400,8 @@ function renderInference(step) {
  * then should also be given, with the number of steps counted during
  * execution of the proof.
  */
-function renderProof(step, node, millis, nSteps) {
+function renderProof(step, where, millis, nSteps) {
+  jNode = $$(where);
   var startRender = new Date().getTime();
   var steps = unrenderedDeps(step);
   var controller = new ProofControl();
@@ -1411,9 +1412,9 @@ function renderProof(step, node, millis, nSteps) {
     stats = '<i style="font-size:smaller; color:gray">Proof '
       + Math.ceil(millis) + ' msec, rendering '
       + renderTime + ' msec, ' + nSteps + ' steps</i>';
-    node.append('<div class=proofHeader>' + stats + '</div>');
+    jNode.append('<div class=proofHeader>' + stats + '</div>');
   }
-  node.append(controller.node);
+  jNode.append($$(controller.node));
   return controller;
 }
 

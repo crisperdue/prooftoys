@@ -140,7 +140,7 @@ Note: <i>Proof displays are supported in recent versions of Firefox and Chrome.<
 <b>Select a rule or theorem to prove:</b><span id=selectHolder></span>
 
 <div id=proofDisplay style="margin-bottom: 1em"></div>
-<a href="javascript:void Y.one('#proof-display-video').toggleClass('hidden')">
+<a href="javascript:void jQuery('#proof-display-video').toggleClass('hidden')">
  Demo screencast
 </a>
 
@@ -257,7 +257,7 @@ rule <s>addForall</s> to add universal quantifiers to the
 formula.  You can do this twice to quantify over both <s>p</s> and
 <s>q</s>.
 <p>
-<a href="javascript:void Y.one('#proofbuilder-video').toggleClass('hidden')">
+<a href="javascript:void jQuery('#proofbuilder-video').toggleClass('hidden')">
  Proof Builder demo screencast
 </a>
 <p>
@@ -325,16 +325,15 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   var mp2 = rules.assume('p ==> q');
   var mp3 = rules.modusPonens(mp1, mp2);
   var mp4 = rules.asImplication(mp3);
-  Toy.renderProof(mp4, Y.one('#modusPonens'));
+  Toy.renderProof(mp4, $('#modusPonens'));
 
   Toy.setUpSampleProofs('#selectHolder', '#proofDisplay', false);
 
   // Full proof editor
   var editor = new Toy.ProofEditor();
-  Y.editor = editor;  // debugging
-  window.proofEditor = editor;
+  window.proofEditor = editor;  // debugging
   editor.setEditable(true);
-  Y.one('#proofEditor').setContent(editor.containerNode);
+  $('#proofEditor').append($$(editor.containerNode));
 
 });
 
