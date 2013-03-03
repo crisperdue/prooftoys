@@ -581,7 +581,7 @@ var ruleInfo = {
     inputs: {reducible: 1},
     isRewriter: true,
     // form: '',
-    hint: 'Apply a function to its argument',
+    hint: 'apply a function to its argument',
     comment: ('Applies a lambda to its argument'),
     description: 'substitute'
   },
@@ -653,7 +653,7 @@ var ruleInfo = {
     isRewriter: true,
     inputs: {site: 1},
     form: '',
-    hint: 'Apply a function to its argument',
+    hint: 'apply a function to its argument',
     comment: ('Applies a function, named or not, to one or two arguments'),
     description: '=describeApply'
   },
@@ -681,7 +681,7 @@ var ruleInfo = {
     },
     inputs: {bindingSite: 1, varName: 3},
     form: ('Rename to <input name=varName>'),
-    hint: 'rename bound variable',
+    hint: 'rename a bound variable',
     comment: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
@@ -1206,7 +1206,7 @@ var ruleInfo = {
     inputs: {step: 1, term: 2, varName: 3},
     form: ('In step <input name=step>, for variable <input name=varName> '
            + 'substitute <input name=term>'),
-    hint: 'substitute for free variable',
+    hint: 'substitute for a free variable',
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
     description: 'substitute for {var}'
@@ -1225,7 +1225,7 @@ var ruleInfo = {
     },
     inputs: {site: 1, term: 3},
     form: ('Substitute <input name=term> for the selected variable.'),
-    hint: 'substitute for free variable',
+    hint: 'substitute for a free variable',
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
     description: 'substitute for {site}'
@@ -1261,7 +1261,7 @@ var ruleInfo = {
       return step.justify('instMultiVars', arguments, [b]);
     },
     inputs: {step: 1},
-    hint: 'Substitute for multiple variables',
+    hint: 'substitute for multiple variables',
     comment: ('Substitute in B for each variable named in the map, '
               + 'its value in the map'),
     description: '=describeMultiVars'
@@ -1558,7 +1558,7 @@ var ruleInfo = {
 	return step2.justify('tautInst', arguments);
       }
     },
-    comment: ('A substitution instance of a tautology is a theorem.'),
+    comment: ('substitution instances of a tautology are theorem'),
     description: '=describeTautInst'
   },
 
@@ -1815,7 +1815,7 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: ('Match step <input name=step> with left side of implication '
            + 'in tautology <input name=term>'),
-    comment: ('Match step with LHS of tautology A ==> B.'),
+    comment: ('match step with tautology like A ==> B'),
     description: 'forward chain;; using {term}'
   },
 
@@ -2051,8 +2051,7 @@ var ruleInfo = {
     },
     inputs: {step: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=step>'),
-    comment: ("Replace an expression with the right side of an equation, "
-              + "handling hypotheses."),
+    comment: 'replace an expression with an equal one',
     description: '=describeReplace'
   },
     

@@ -40,7 +40,7 @@ YUI.add('sample-proofs', function(Y) {
   function selectorChanged() {
     var selectorElt = Y.Node.getDOMNode(selector);
     var options = selectorElt.options;
-    var ruleName = options[selectorElt.selectedIndex].text;
+    var ruleName = options[selectorElt.selectedIndex].value;
     displayProof(ruleName);
   }
 
@@ -95,25 +95,27 @@ YUI.add('sample-proofs', function(Y) {
 
     // You can control which rule is displayed by including
     // "rule=<ruleName>" in the query string.
-    var ruleName = queryData.rule;
+    var queryRuleName = queryData.rule;
     // You can make the displays label steps with their ordinals
     // using ordinals=1 in the query string.
     Toy.showOrdinals = queryData.ordinals;
     editable = queryData.edit != undefined;
-    if (ruleName == undefined) {
+    if (queryRuleName == undefined) {
       // Default to displaying instForall.
-      ruleName = 'instForall';
+      queryRuleName = 'instForall';
     }
-    displayProof(ruleName);
+    displayProof(queryRuleName);
     var selectorHtml =
       '<select class=sampleSelector>\n<option value="">-- choose --';
     for (var name in sampleProofs) {
-      if (sampleProofs[name].level == 1) {
-        if (name == ruleName) {
-          selectorHtml += '<option selected>' + name + '\n';
-        } else {
-          selectorHtml += '<option>' + name + '\n';
-        }
+      if (name == queryRuleName || sampleProofs[name].level == 1) {
+        var selected = (name == queryRuleName ? ' selected' : '');
+        var sampleInfo = sampleProofs[name];
+        var ruleName = sampleInfo.ruleName || name;
+        var info = Toy.rules[ruleName].info;
+        var display = info.hint || info.comment || name;
+        selectorHtml +=
+          '<option value="' + name + '"' + selected + '>' + display + '\n';
       }
     }
     selectorHtml += '</select>';
