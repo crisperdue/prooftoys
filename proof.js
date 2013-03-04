@@ -1253,25 +1253,34 @@ function formattedStepInfo(step) {
 /**
  * Computes replacement text for rule description markup.  Appearances
  * of {step}, {step1}, {step2} expand to the step number of the step
- * argument.
+ * argument.  Also supports {equation}, {implication}.
  *
  * Appearances of {term*} display as the term; {var} as the variable
  * name, {site} as the term at the site.  Unknown markup passes
  * through, e.g. lambdas -- {x. f x}.
  */
 function expandMarkup(step, markup) {
+  function stepNumber(steps, index) {
+    if (steps === undefined) {
+      return '?';
+    }
+    var place = (typeof steps === 'number' && index === 0
+                 ? steps
+                 : steps[index]);
+    // If the index is out of range return '?'.
+    return place ? step.ruleArgs[place - 1].rendering.stepNumber : '?';
+  }
   var info = Toy.rules[step.ruleName].info;
   switch (markup) {
   case '{step}':
   case '{step1}':
-    var steps = info.inputs.step;
-    var place = steps[0] || steps;
-    return step.ruleArgs[place - 1].rendering.stepNumber;
+    return stepNumber(info.inputs.step, 0);
   case '{step2}':
-    var steps = info.inputs.step;
-    return steps[1] || '?';
-    var place = steps[1];
-    return place ? step.ruleArgs[place - 1].rendering.stepNumber : '?';
+    return stepNumber(info.inputs.step, 1);
+  case '{equation}':
+    return stepNumber(info.inputs.equation, 0);
+  case '{implication}':
+    return stepNumber(info.inputs.implication, 0);
   case '{term}':
   case '{terms}':
     var places = info.inputs.term;
