@@ -1409,14 +1409,14 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testForwardChain: function() {
         var step1 = Toy.rules.assume('p x & (p x ==> q x)');
-        var inf = Toy.rules.forwardChain(step1, 'a & (a ==> b) ==> b');
+        var taut = rules.tautology('a & (a ==> b) ==> b');
+        var inf = Toy.rules.forwardChain(step1, taut);
         assertEqual('(q x)', inf.unHyp());
 
         var step1 = Toy.rules.assert('h x ==> (p x & (p x ==> q x))');
 	var step2 = Toy.rules.assume('h x');
 	var step3 = Toy.rules.modusPonens(step2, step1);
-        var result = Toy.rules.forwardChain(step3,
-                                          'a & (a ==> b) ==> b');
+        var result = Toy.rules.forwardChain(step3, taut);
         assertEqual('((h x) ==> (q x))', result);
         Y.assert(result.hasHyps);
       },

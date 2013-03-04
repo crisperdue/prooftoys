@@ -394,10 +394,12 @@ YUI.add('sample-proofs', function(Y) {
       },
     },
 
-    'Rule P': {
-      ruleName: 'forwardChain',
-      args: [Toy.rules.assume('p x & (p x ==> q x)'),
-             Toy.parse('a & (a ==> b) ==> b')],
+    forwardChain: {
+      args: function() {
+        var step1 = Toy.rules.assume('p x & (p x ==> q x)');
+        var step2 = Toy.rules.tautology('a & (a ==> b) ==> b');
+        return [step1, step2];
+      },
       level: 1
     },
 

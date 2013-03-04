@@ -289,7 +289,7 @@ var ruleInfo = {
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
     hint: 'Replace term with equal term',
-    description: '=describeReplace'
+    description: '=replace'
   },
 
   /**
@@ -655,7 +655,7 @@ var ruleInfo = {
     form: '',
     hint: 'apply a function to its argument',
     comment: ('Applies a function, named or not, to one or two arguments'),
-    description: '=describeApply'
+    description: '=apply'
   },
 
   /**
@@ -1264,7 +1264,7 @@ var ruleInfo = {
     hint: 'substitute for multiple variables',
     comment: ('Substitute in B for each variable named in the map, '
               + 'its value in the map'),
-    description: '=describeMultiVars'
+    description: '=instMultiVars'
   },
 
   // Given two theorems a and b, proves a & b.
@@ -1558,8 +1558,8 @@ var ruleInfo = {
 	return step2.justify('tautInst', arguments);
       }
     },
-    comment: ('substitution instances of a tautology are theorem'),
-    description: '=describeTautInst'
+    comment: ('substitute into tautology'),
+    description: '=tautInst'
   },
 
   // TODO: Complete this.
@@ -1792,7 +1792,7 @@ var ruleInfo = {
     description: 'move forall'
   },
     
-  // Rule P for a single antecedent (5234).  The given tautology must
+  // Rule P/Q for a single antecedent (5234).  The schema step must
   // have the form (A ==> B), where A matches the given input step and
   // all free variables of B are also free in A.  For tautologies with
   // a conjunction on the LHS as shown in the book, use this with
@@ -1805,18 +1805,17 @@ var ruleInfo = {
   // (In this implementation it is more straightforward to use
   // makeConjunction as needed, followed by forwardChain.)
   forwardChain: {
-    action: function(step, tautology) {
-      var tautology = rules.tautology(tautology);
-      var substitution = Toy.matchAsSchema(tautology.getLeft(), step.unHyp());
-      var step2 = rules.instMultiVars(tautology, substitution);
+    action: function(step, schema) {
+      var substitution = Toy.matchAsSchema(schema.getLeft(), step.unHyp());
+      var step2 = rules.instMultiVars(schema, substitution);
       var step3 = rules.modusPonens(step, step2);
-      return step3.justify('forwardChain', arguments, [step]);
+      return step3.justify('forwardChain', arguments, [step, schema]);
     },
-    inputs: {step: 1, term: 2},
-    form: ('Match step <input name=step> with left side of implication '
-           + 'in tautology <input name=term>'),
-    comment: ('match step with tautology like A ==> B'),
-    description: 'forward chain;; using {term}'
+    inputs: {step: [1, 2]},
+    form: ('Match step <input name=step1> with left side of implication '
+           + 'in schema <input name=step2>'),
+    comment: ('match with A in A ==> B'),
+    description: 'consequence;; of step {step1} using step {step2}'
   },
 
   // Proves the goal by matching it with the conclusion of the given
@@ -2039,10 +2038,10 @@ var ruleInfo = {
       }
       var step2 = rules.r5239(equation, c, cpath);
       var step3 = rules.makeConjunction(step1, step2);
-      var tautology = Toy.parse('(p ==> q) & (q ==> r) ==> (p ==> r)');
+      var tautology = rules.tautology('(p ==> q) & (q ==> r) ==> (p ==> r)');
       var step4 = rules.forwardChain(step3, tautology);
       var step5 = rules.makeConjunction(h_c, step4);
-      var taut2 = Toy.parse('(h ==> p) & (h ==> (p = q)) ==> (h ==> q)');
+      var taut2 = rules.tautology('(h ==> p) & (h ==> (p = q)) ==> (h ==> q)');
       var result = rules.forwardChain(step5, taut2);
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
         result = rules.asHypotheses(result);
@@ -2052,7 +2051,7 @@ var ruleInfo = {
     inputs: {step: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=step>'),
     comment: 'replace an expression with an equal one',
-    description: '=describeReplace'
+    description: '=replace'
   },
     
   // Add hypotheses to the step from hypStep.  This is key to providing
@@ -2357,7 +2356,7 @@ var ruleInfo = {
 			     '==>',
 			     infix(Toy.varify('h'), '==>', a)));
       var step1 = rules.asImplication(step);
-      var step2 = rules.forwardChain(step1, taut);
+      var step2 = rules.forwardChain(step1, rules.tautology(taut));
       var result = rules.asHypotheses(step2);
       return result.justify('extractHypothesis', arguments, [step]);
     },
@@ -2426,7 +2425,8 @@ var ruleInfo = {
       // Prove that its LHS is equal to F.
       var step1 = falsify(falseGoal.getLeft());
       // This means the LHS implies F, which is the desired F case.
-      var falseCase = rules.forwardChain(step1, 'p = F ==> (p ==> F)');
+      var taut = rules.tautology('p = F ==> (p ==> F)');
+      var falseCase = rules.forwardChain(step1, taut);
       // Complete proof of the desired schema:
       var step2 = rules.cases(trueCase, falseCase, cVar);
       // Instantiate back to get the desired instance:
@@ -2546,7 +2546,8 @@ var ruleInfo = {
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step4, subst);
       var step6 = rules.makeConjunction(step4, step5);
-      var step7 = rules.forwardChain(step6, '(p ==> q) & (q ==> p) ==> (p = q)');
+      var taut = rules.tautology('(p ==> q) & (q ==> p) ==> (p = q)');
+      var step7 = rules.forwardChain(step6, taut);
       return step7.justify('equalitySymmetric', arguments);
     },
     inputs: {},
@@ -2560,8 +2561,8 @@ var ruleInfo = {
       var step2 = rules.instVar(step1, Toy.parse('{t. t = z}'), varify('h'));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = rules.apply(step3, '/right/right');
-      var step5 = rules.forwardChain(step4,
-                                     '(a ==> (b = c)) ==> (a & c ==> b)');
+      var taut = rules.tautology('(a ==> (b = c)) ==> (a & c ==> b)');
+      var step5 = rules.forwardChain(step4, taut);
       return step5.justify('equalityTransitive', arguments);
     },
     inputs: {},
@@ -3011,12 +3012,12 @@ var ruleInfo = {
         // Show that the conjunction of the simpler numeric type terms
         // is a consequence of the hypotheses.
         var conj = rules.makeConjunction(thm1, thm2);
-        var taut = '(h ==> a) & (h ==> b) ==> (h ==> a & b)';
+        var taut = rules.tautology('(h ==> a) & (h ==> b) ==> (h ==> a & b)');
         var step1 = rules.forwardChain(conj, taut);
         var instance = rules.instantiate(theorem, '/left', step1.getRight());
         var step2 = rules.makeConjunction(step1, instance);
-        result =
-          rules.forwardChain(step2, '(h ==> a) & (a ==> b) ==> (h ==> b)');
+        var taut2 = rules.tautology('(h ==> a) & (a ==> b) ==> (h ==> b)');
+        result = rules.forwardChain(step2, taut2);
       } else if (expr.isCall1('neg')) {
         var subgoal = infix(hyps, '==>', call('R', expr.arg));
         var step1 = rules.justifyNumericType(subgoal);

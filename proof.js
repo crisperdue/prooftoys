@@ -1180,13 +1180,12 @@ function adjacentSteps(step1, step2) {
  * dependencies as "in" and others as "using", but only when not
  * immediately preceding the given step.
  */
-function formattedStepRefs(step) {
+function formattedStepRefs(step, description) {
   var siteRefs = [];
   var stepRefs = [];
   var args = step.ruleArgs;
-  var info = Toy.rules[step.ruleName].info;
   // No custom step deps displays?
-  var showSteps = !info.description.match(/[{]step[0-9]*[}]/);
+  var showSteps = !description.match(/[{]step[0-9]*[}]/);
   Toy.eachArgType(step.ruleName, function(where, type) {
       var arg = args[where];
       if (type in Toy.siteTypes && !adjacentSteps(arg, step)) {
@@ -1207,13 +1206,20 @@ function formattedStepRefs(step) {
   return html;
 }
 
+
 /**
- * Returns an HTML description of a proof step.  If given, the second
- * argument serves as a description, which is further formatted
- * here.  Paired braces are expanded using expandMarkup.  Any text
- * after a ";;" pair is formatted as arguments to the rule.
+ * Returns HTML text describing the step, displayed after the formula
+ * on each proof line.  This is an HTML description of a proof step
+ * followed by references to other steps this one depends on.  This
+ * finds the description in the rule's 'description' property as a
+ * template.  Expands paired braces using expandMarkup.  Any text
+ * after a ";;" pair is formatted as arguments to the rule.  
+ *
+ * Automatically formats site-type dependencies as "in step ... ".
+ * If there is no markup that refers to steps, formats other step
+ * dependencies as "using step(s) ... ".
  */
-function formattedDescription(step) {
+function formattedStepInfo(step) {
   var info = Toy.rules[step.ruleName].info;
   var description = info.description;
   if (description[0] === '=') {
@@ -1239,20 +1245,19 @@ function formattedDescription(step) {
   var classes = (step.details && Toy.modes.subproofs
                  ? 'ruleName link'
                  : 'ruleName');
-  return ('<span class="' + classes + '" title="' + comment + '">'
-          + d1 + '</span>' + d2);
+  var result =  ('<span class="' + classes + '" title="' + comment + '">'
+                 + d1 + '</span>' + d2);
+  return result + formattedStepRefs(step, description);
 }
 
 /**
- * Returns HTML text describing the step, displayed after
- * the formula on each proof line.
- */
-function formattedStepInfo(step) {
-  return formattedDescription(step) + formattedStepRefs(step);
-}
-
-/**
- * Computes replacement text for rule description markup.
+ * Computes replacement text for rule description markup.  Appearances
+ * of {step}, {step1}, {step2} expand to the step number of the step
+ * argument.
+ *
+ * Appearances of {term*} display as the term; {var} as the variable
+ * name, {site} as the term at the site.  Unknown markup passes
+ * through, e.g. lambdas -- {x. f x}.
  */
 function expandMarkup(step, markup) {
   var info = Toy.rules[step.ruleName].info;
@@ -1260,17 +1265,13 @@ function expandMarkup(step, markup) {
   case '{step}':
   case '{step1}':
     var steps = info.inputs.step;
-    // Convert number to array.
-    var place = (typeof steps === 'number') ? steps : steps[0];
+    var place = steps[0] || steps;
     return step.ruleArgs[place - 1].rendering.stepNumber;
   case '{step2}':
     var steps = info.inputs.step;
-    // Convert number to array.
-    var place = (steps && steps[1]);
-    if (place == null) {
-      return '?';
-    }
-    return step.ruleArgs[place - 1].rendering.stepNumber;
+    return steps[1] || '?';
+    var place = steps[1];
+    return place ? step.ruleArgs[place - 1].rendering.stepNumber : '?';
   case '{term}':
   case '{terms}':
     var places = info.inputs.term;
@@ -1290,9 +1291,6 @@ function expandMarkup(step, markup) {
     var siteStep = step.ruleArgs[place - 1];
     var term = siteStep.locate(step.ruleArgs[place]);
     return Toy.mathMarkup(term.toUnicode());
-  case '{}':
-    // Indicates new-style description, no output.
-    return '';
   default:
     // Allow lambdas to pass through, e.g. {x. T}.
     return markup;
@@ -1324,7 +1322,7 @@ var stepFormatters = {
     return 'substitute for ' + bound.name;
   },
   // TODO: Treat "apply" as a rewrite using arbitrary definitions.
-  describeApply: function(step) {
+  apply: function(step) {
     var step0 = step.ruleArgs[0];
     var path = step.ruleArgs[1];
     var target = step0.locate(path);
@@ -1341,22 +1339,22 @@ var stepFormatters = {
       return 'apply: not a Call';
     }
   },
-  describeMultiVars: function(step) {
+  instMultiVars: function(step) {
     var map = step.ruleArgs[1];
     var keys = [];
     for (key in map) {
       keys.push(key);
     }
-    return 'substitute for ' + keys.join(', ');
+    return 'substitute for ' + keys.join(', ') + ';; in step {step}';
   },
-  describeTautInst: function(step) {
+  tautInst: function(step) {
     var taut = step.ruleArgs[0];
     if (typeof taut === 'string') {
       taut = Toy.parse(taut);
     }
     return 'tautology ' + Toy.mathMarkup(taut.toUnicode());
   },
-  describeReplace: function(step) {
+  replace: function(step) {
     var eqn = step.ruleArgs[0];
     var target = step.ruleArgs[1];
     var path = step.ruleArgs[2];
