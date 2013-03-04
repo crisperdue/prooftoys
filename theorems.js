@@ -1300,7 +1300,8 @@ var ruleInfo = {
       var step2a = rules.axiom4(call(lambda(newVar, gen), F));
       var step2b = rules.rRight(step2a, caseF, '/main');
       var step4 = rules.makeConjunction(step1b, step2b);
-      var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), g);
+      var step5 = rules.instVar(rules.axiom('axiom1'),
+                                lambda(newVar, gen), g);
       var step6 = rules.replace(step5, step4, '/main');
       var step7a = rules.instForall(step6, v);
       var step7b = rules.apply(step7a, '/main');
