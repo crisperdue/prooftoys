@@ -1175,39 +1175,6 @@ function adjacentSteps(step1, step2) {
 }
 
 /**
- * Generate HTML to render a list of steps used by the given step
- * according to display policy.  Currently this is to show "site"
- * dependencies as "in" and others as "using", but only when not
- * immediately preceding the given step.
- */
-function formattedStepRefs(step, description) {
-  var siteRefs = [];
-  var stepRefs = [];
-  var args = step.ruleArgs;
-  // No custom step deps displays?
-  var showSteps = !description.match(/[{]step[0-9]*[}]/);
-  Toy.eachArgType(step.ruleName, function(where, type) {
-      var arg = args[where];
-      if (type in Toy.siteTypes && !adjacentSteps(arg, step)) {
-        siteRefs.push(arg);
-      } else if (type in Toy.stepTypes && !adjacentSteps(arg, step)) {
-        stepRefs.push(arg);
-      }
-    });
-  var html = '';
-  if (siteRefs.length) {
-    html += siteRefs.length > 1 ? ' in steps ' : ' in step ';
-    html += siteRefs.map(@{s. s.rendering.stepNumber}).join(', ');
-  }
-  if (showSteps && stepRefs.length) {
-    html += stepRefs.length > 1 ? ' using steps ' : ' using step ';
-    html += stepRefs.map(@{s. s.rendering.stepNumber}).join(', ');
-  }
-  return html;
-}
-
-
-/**
  * Returns HTML text describing the step, displayed after the formula
  * on each proof line.  This is an HTML description of a proof step
  * followed by references to other steps this one depends on.  This
@@ -1222,18 +1189,25 @@ function formattedStepRefs(step, description) {
 function formattedStepInfo(step) {
   var info = Toy.rules[step.ruleName].info;
   var description = info.description;
+  var useDefault = true;
   if (description[0] === '=') {
+    useDefault = false;
     // Expand the description with the named function.
     var fn = stepFormatters[description.slice(1)];
     assert(fn, @{. 'No step formatter "' + description.slice(1) + '"'});
     description = fn(step);
   }
+  // Use default step refs only if there are no formatting directives;
+  // no original "=", no ";;", and no braces.
+  if (description.match(/\{|;;/)) {
+    useDefault = false;
+  }
   var d1 = description;
   var d2 = '';
-  var match = d1.match(/(.*?);;(.*)$/);
-  if (match) {
-    d1 = match[1];
-    d2 = match[2];
+  var parts = d1.match(/(.*?);;(.*)$/);
+  if (parts) {
+    d1 = parts[1];
+    d2 = parts[2];
   }
   // Expand any markup within the description.
   d1 = d1.replace(/[{].*?[}]/g,
@@ -1247,7 +1221,7 @@ function formattedStepInfo(step) {
                  : 'ruleName');
   var result =  ('<span class="' + classes + '" title="' + comment + '">'
                  + d1 + '</span>' + d2);
-  return result + formattedStepRefs(step, description);
+  return result + (useDefault ? defaultStepRefs(step, description) : '');
 }
 
 /**
@@ -1260,29 +1234,52 @@ function formattedStepInfo(step) {
  * through, e.g. lambdas -- {x. f x}.
  */
 function expandMarkup(step, markup) {
-  function stepNumber(steps, index) {
-    if (steps === undefined) {
+  // Given an array of places, as stored in the value of an "inputs"
+  // property of a rule, and an index into them, returns a step number
+  // or phrase ending in a step number, for the nth element.  Also
+  // accepts a number for places in place of a 1-element array.
+  function stepNumber(places, index) {
+    if (places === undefined) {
       return '?';
     }
-    var place = (typeof steps === 'number' && index === 0
-                 ? steps
-                 : steps[index]);
-    // If the index is out of range return '?'.
-    return place ? step.ruleArgs[place - 1].rendering.stepNumber : '?';
+    var place = (typeof places === 'number' && index === 0
+                 ? places
+                 : places[index]);
+    if (place) {
+      var stepArg = step.ruleArgs[place - 1];
+      if (markupRest && adjacentSteps(stepArg, step)) {
+        return '';
+      } else {
+        return markupRest + ' ' + stepArg.rendering.stepNumber;
+      }
+    } else {
+      // If the index is out of range return '?'.
+      return '?';
+    }
   }
   var info = Toy.rules[step.ruleName].info;
-  switch (markup) {
-  case '{step}':
-  case '{step1}':
+  var matches = markup.match(/^\{([a-zA-Z0-9]+)(.*)\}$/);
+  if (!matches || (matches[2].length && matches[2][0] !== ' ')) {
+    // Not really markup: no match, or the "rest" is nonempty yet
+    // does not start with a space.
+    return markup;
+  }
+  var markupName = matches[1];
+  var markupRest = matches[2];
+  switch (markupName) {
+  case 'step':
+  case 'step1':
     return stepNumber(info.inputs.step, 0);
-  case '{step2}':
+  case 'step2':
     return stepNumber(info.inputs.step, 1);
-  case '{equation}':
+  case 'equation':
     return stepNumber(info.inputs.equation, 0);
-  case '{implication}':
+  case 'implication':
     return stepNumber(info.inputs.implication, 0);
-  case '{term}':
-  case '{terms}':
+  case 'siteStep':
+    return stepNumber(info.inputs.site, 0);
+  case 'term':
+  case 'terms':
     var places = info.inputs.term;
     // Convert number to array.
     if (typeof places === 'number') {
@@ -1292,10 +1289,10 @@ function expandMarkup(step, markup) {
         return Toy.mathMarkup(Toy.toUnicode(step.ruleArgs[place - 1]));
       });
     return terms.join(', ');
-  case '{var}':
+  case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;
     return Toy.mathMarkup(Toy.toUnicode(step.ruleArgs[place - 1]));
-  case '{site}':
+  case 'site':
     var place = info.inputs.site[0] || info.inputs.site;
     var siteStep = step.ruleArgs[place - 1];
     var term = siteStep.locate(step.ruleArgs[place]);
@@ -1305,6 +1302,37 @@ function expandMarkup(step, markup) {
     return markup;
   }
 }
+
+/**
+ * Generate HTML to render a list of steps used by the given step
+ * according to display policy.  Currently this is to show "site"
+ * dependencies as "in" and others as "using", but only when not
+ * immediately preceding the given step.
+ */
+function defaultStepRefs(step, description) {
+  var siteRefs = [];
+  var stepRefs = [];
+  var args = step.ruleArgs;
+  Toy.eachArgType(step.ruleName, function(where, type) {
+      var arg = args[where];
+      if (type in Toy.siteTypes && !adjacentSteps(arg, step)) {
+        siteRefs.push(arg);
+      } else if (type in Toy.stepTypes && !adjacentSteps(arg, step)) {
+        stepRefs.push(arg);
+      }
+    });
+  var html = '';
+  if (siteRefs.length) {
+    html += siteRefs.length > 1 ? ' in steps ' : ' in step ';
+    html += siteRefs.map(@{s. s.rendering.stepNumber}).join(', ');
+  }
+  if (stepRefs.length) {
+    html += stepRefs.length > 1 ? ' using steps ' : ' using step ';
+    html += stepRefs.map(@{s. s.rendering.stepNumber}).join(', ');
+  }
+  return html;
+}
+
 
 /**
  * Formatting functions for steps.  The function should return
@@ -1362,12 +1390,6 @@ var stepFormatters = {
       taut = Toy.parse(taut);
     }
     return 'tautology ' + Toy.mathMarkup(taut.toUnicode());
-  },
-  replace: function(step) {
-    var eqn = step.ruleArgs[0];
-    var target = step.ruleArgs[1];
-    var path = step.ruleArgs[2];
-    return 'replace ' + target.locate(path).toUnicode();
   }
 };
 

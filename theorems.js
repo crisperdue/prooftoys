@@ -289,7 +289,7 @@ var ruleInfo = {
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
     hint: 'Replace term with equal term',
-    description: '=replace'
+    description: 'replace {site};; {siteStep in step} {equation using step}'
   },
 
   /**
@@ -308,7 +308,7 @@ var ruleInfo = {
     hint: 'replace term with equal term',
     comment: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
-    description: 'replace'
+    description: 'replace {site};; {siteStep in step} {equation using step}'
   },
 
   axiom1: {
@@ -1282,7 +1282,7 @@ var ruleInfo = {
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
     hint: 'from A and B to (A & B)',
     comment: ('Given a and b, derive a & b'),
-    description: 'a & b;; from steps {step1}, {step2}'
+    description: 'a & b;; using steps {step1}, {step2}'
   },
 
   // (5222) Given two theorems that are substitutions of T and
@@ -1531,7 +1531,7 @@ var ruleInfo = {
     form: 'Enter tautology: <input name=term>',
     hint: 'enter tautology',
     comment: ('Tautology decider.'),
-    description: 'tautology {}'
+    description: 'tautology'
   },
 
   // Any instance of a tautology is a theorem.  This is part
@@ -2049,10 +2049,10 @@ var ruleInfo = {
       }
       return result.justify('replace', args, [h_equation_arg, h_c_arg]);
     },
-    inputs: {step: 1, site: 2}, // plus constraints.
+    inputs: {equation: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=step>'),
     comment: 'replace an expression with an equal one',
-    description: '=replace'
+    description: 'replace {site};; {siteStep in step} {equation using step}'
   },
     
   // Add hypotheses to the step from hypStep.  This is key to providing
