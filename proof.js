@@ -1356,7 +1356,15 @@ var stepFormatters = {
     var step0 = step.ruleArgs[0];
     // Get the bound variable of the arg to forall.
     var bound = step0.locate('/main/arg/bound');
-    return 'substitute for ' + bound.name;
+    return 'substitute for ' + bound;
+  },
+  simpleApply: function(step) {
+    var step0 = step.ruleArgs[0];
+    var path = step.ruleArgs[1];
+    var target = step0.locate(path);
+    assert(target instanceof Toy.Call);
+    assert(target.fn instanceof Toy.Lambda);
+    return 'substitute for ' + target.fn.bound.name;
   },
   // TODO: Treat "apply" as a rewrite using arbitrary definitions.
   apply: function(step) {

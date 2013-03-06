@@ -84,6 +84,7 @@ var ruleInfo = {
     inputs: {term: 1},
     form: ('Assert <input name=term>'),
     hint: 'Assert as universally true',
+    description: 'assert',
     comment: 'WFF to assert (possibly to prove later)'
   },
 
@@ -93,6 +94,7 @@ var ruleInfo = {
     },
     inputs: {varName: 1, term: 2},
     form: ('Define name <input name=varName> as <input name=term>'),
+    description: 'define {var}',
     comment: 'Simple definition'
   },
 
@@ -149,7 +151,7 @@ var ruleInfo = {
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
     comment: 'Convert assumptions to an explicit implication',
-    description: 'explicit assumptions'
+    description: 'display assumptions {step in step}'
   },
       
   /**
@@ -163,7 +165,7 @@ var ruleInfo = {
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
     comment: 'No-op, but result will be fully displayed',
-    description: 'display full result'
+    description: 'step details {step of step}'
   },
       
   /**
@@ -181,7 +183,7 @@ var ruleInfo = {
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
     hint: 'Convert explicit implication to statement with assumptions',
-    description: 'display as assumptions'
+    description: 'abbreviate assumptions {implication in step}'
   },
 
   /**
@@ -189,6 +191,8 @@ var ruleInfo = {
    * than proving it all over again.
    */
   theorem: function(name) {
+    // See the "axiom" rule for explanation of the
+    // re-justification on each lookup.
     return Toy.getTheorem(name).justify('theorem', [name]);
   },
 
@@ -318,7 +322,8 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: ('T and F are all of the booleans')
+    description: 'T and F are all the booleans',
+    comment: ('T and F are all the booleans')
   },
 
   axiom2: {
@@ -328,6 +333,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    description: 'axiom of function application',
     comment: ('equal inputs yield equal outputs.')
   },
 
@@ -341,7 +347,7 @@ var ruleInfo = {
     hint: 'extensionality',
     comment: ('extensionality: functions are equal based on equal results'
 	      + ' on all inputs.'),
-    description: 'equality of functions'
+    description: 'axiom of equal functions'
   },
 
   /**
@@ -368,6 +374,7 @@ var ruleInfo = {
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
     hint: 'apply a function to its argument',
+    description: 'axiom of substitution',
     comment: ('')
   },
 
@@ -395,6 +402,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     hint: '(forall {p. not (p = not p)})',
+    description: 'boolean axiom',
     comment: ('')
   },
 
@@ -482,6 +490,7 @@ var ruleInfo = {
       var result = ac;
       return result.justify('eqnChain', arguments, arguments);
     },
+    description: 'from a = b and b = c to a = c',
     comment: 'from A = B and B = C deduce A = C'
   },
 
@@ -583,7 +592,7 @@ var ruleInfo = {
     // form: '',
     hint: 'apply a function to its argument',
     comment: ('Applies a lambda to its argument'),
-    description: 'substitute'
+    description: '=simpleApply'
   },
 
   // Derives a rewriter for a call that reduces a call to a lambda, or
@@ -629,6 +638,7 @@ var ruleInfo = {
       return null;
     },
     inputs: {term: 1},
+    description: 'apply function in {term}',
     comment: 'Equate to call with definition expanded and lambdas reduced'
   },
     
@@ -1097,8 +1107,7 @@ var ruleInfo = {
       var step3 = rules.eqnSwap(step2);
       var step4 = rules.equationCases(step3, step1, 'x');
       return step4.justify('tIsXIsX');
-    },
-    comment: ('[T = x] = x')
+    }
   },
 
   // 5218: [T = A] = A
@@ -1161,8 +1170,7 @@ var ruleInfo = {
       var fa = rules.definition('forall');
       var result = rules.rRight(fa, step1, '/fn');
       return result.justify('forallXT', arguments);
-    },
-    comment: ('(forall {x. T})')
+    }
   },
 
   // 5220 (universal generalization).  From A deduces forall {v. A}.
@@ -1185,7 +1193,7 @@ var ruleInfo = {
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable '
            + '<input name=varName>'),
-    hint: 'from A to (forall {x. A})',
+    hint: 'add "forall"',
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.'),
     description: 'add \u2200',
@@ -1386,8 +1394,7 @@ var ruleInfo = {
       var step3 = rules.eqT(F);
       var step4 = rules.rRight(step3, step2, '/right');
       return step4.justify('r5231F');
-    },
-    comment: ('[not F] = T')
+    }
   },
 
   // Helper for evalBool, not in book.
@@ -1395,8 +1402,7 @@ var ruleInfo = {
   falseEquals: {
     action: function() {
       return rules.eqnSwap(rules.definition('not')).justify('falseEquals');
-    },
-    comment: ('[F =] = not')
+    }
   },
 
   // Another helper for evalBool, not in book.
@@ -1412,8 +1418,7 @@ var ruleInfo = {
       var step7 = rules.instVar(step6, lambda(x, x), g);
       var step8 = rules.rRight(step7, step5, '');
       return step8.justify('trueEquals', arguments);
-    },
-    comment: ('[T =] = {x. x}')
+    }
   },
 
   // Equates the given expression to a similar one where boolean terms
@@ -1502,7 +1507,7 @@ var ruleInfo = {
               var step3 = rules.equationCases(step1, step2, name);
               var result = step3.justify('tautology', arguments);
               _tautologies[key] = result;
-              return result.justify('tautology', arguments);
+              return result;
             } else {
               var step1 = rules.tautology(equal(T, Toy.subFree(T, name, wff)));
               var step2 = rules.tautology(equal(T, Toy.subFree(F, name, wff)));
@@ -1521,7 +1526,7 @@ var ruleInfo = {
                && step11.getRight().name == 'T',
                'Not a tautology: ' + step11.getLeft(),
                step11);
-        var step12 = rules.rRight(step11, rules.t(), '');
+        var step12 = rules.rRight(step11, rules.theorem('t'), '');
         var result = step12.justify('tautology', arguments);
         _tautologies[key] = result;
         return result;
@@ -1646,7 +1651,7 @@ var ruleInfo = {
     form: ('Derive that <input name=term> implies theorem <input name=step>'),
     hint: 'From theorem B deduce A ==> B',
     comment: ('Given a theorem, derive that something implies it.'),
-    description: 'anything implies a theorem'
+    description: Toy.mathMarkup('a ==> T')
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
@@ -2106,7 +2111,7 @@ var ruleInfo = {
     inputs: {step: [1, 2]},
     form: ('Add to step <input name=step1> hypotheses from step '
 	   + '<input name=step2>'),
-    hint: 'Add hypotheses to a step'
+    hint: 'append hypotheses to step {step1} from step {step2}'
   },
 
   // Prefix hypotheses from the hypStep to the target step.  Often
@@ -2163,7 +2168,7 @@ var ruleInfo = {
     inputs: {step: [1, 2]},
     form: ('To step <input name=step1> prefix the hypotheses of step '
 	   + '<input name=step2>'),
-    hint: 'Prefix hypotheses to a step'
+    hint: 'prepend hypotheses from step {step2} to {step1}'
   },
 
   // Takes a proof step, a path, and a proved equation.
@@ -2184,7 +2189,8 @@ var ruleInfo = {
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using equation <input name=equation>'),
-    hint: 'Instantiate an equation so its LHS equals an expression.'
+    hint: 'Instantiate an equation so its LHS equals an expression.',
+    description: 'rewrite {site} {siteStep in step} {equation using step}'
   },
 
   // NOTE: A chain of conjuncts (or other binary operator) is an
@@ -2312,10 +2318,12 @@ var ruleInfo = {
     inputs: {term: 1},
     // Too technical to expose for most users.
     // form: ('Chains of conjunctions to merge: <input name=term>'),
-    hint: 'Derives an equation to merge chains of input conjunctions'
+    hint: 'Derives an equation to merge chains of input conjunctions',
+    description: 'merge conjunctions in {term}'
   },    
 
   // Simplify the hypotheses of a step, removing duplicates.
+  // Incomplete, unused.
   simplifyHyps: {
     // Note that "replace" does not even call this if its inputs have
     // tbe same hypotheses.
@@ -2362,7 +2370,9 @@ var ruleInfo = {
       return result.justify('extractHypothesis', arguments, [step]);
     },
     inputs: {step: 1, term: 2},
-    form: ('Extract hypothesis <input name=term> from step <input name=step>'),
+    form: ('Make assumption <input name=term> explicit '
+           + 'in step <input name=step>'),
+    description: 'make assumption {term} explicit {step in step}',
     comment: 'Find and extract a hypothesis from a step.'
   },
 
@@ -3432,11 +3442,20 @@ function addTheorem(name) {
  * null if there is none.  Runs the proof if it has not already run.
  */
 function getTheorem(name) {
-  var value = _theoremsByName[name];
-  if (value == true) {
-    value = _theoremsByName[name] = rules[name]();
+  var result = _theoremsByName[name];
+  if (result == true) {
+    result = _theoremsByName[name] = rules[name]();
+    /* TODO: find a way to use this code here.  See explanation
+       in the "axiom" rule.
+    if (axiomNames.indexOf(name) >= 0) {
+      result = thm.justify(name);
+      // If there are details, the displayer will enable display of them,
+      // but there is really no proof of the axiom.
+      delete result.details;
+    }
+    */
   }
-  return value;
+  return result;
 }
 
 // Add the axioms and theorems to the "database".  This can only
