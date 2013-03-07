@@ -151,7 +151,7 @@ var ruleInfo = {
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
     comment: 'Convert assumptions to an explicit implication',
-    description: 'show assumptions;; {of step step}'
+    description: ';;show assumptions {of step step}'
   },
       
   /**
@@ -165,7 +165,7 @@ var ruleInfo = {
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
     comment: 'No-op, but result will be fully displayed',
-    description: 'show fully;; {step step}'
+    description: ';;show fully {step step}'
   },
       
   /**
@@ -183,7 +183,7 @@ var ruleInfo = {
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
     hint: 'Convert explicit implication to statement with assumptions',
-    description: 'abbreviate assumptions;; {of step implication}'
+    description: ';;abbreviate assumptions {of step implication}'
   },
 
   /**
@@ -2109,9 +2109,10 @@ var ruleInfo = {
       }
     },
     inputs: {step: [1, 2]},
+    hint: 'combine hypotheses',
     form: ('Add to step <input name=step1> hypotheses from step '
 	   + '<input name=step2>'),
-    hint: 'append hypotheses to step {step1} from step {step2}'
+    description: 'add step {step2} assumptions {to step step1}'
   },
 
   // Prefix hypotheses from the hypStep to the target step.  Often
@@ -2166,9 +2167,10 @@ var ruleInfo = {
       }
     },
     inputs: {step: [1, 2]},
+    hint: 'combine hypotheses',
     form: ('To step <input name=step1> prefix the hypotheses of step '
 	   + '<input name=step2>'),
-    hint: 'prepend hypotheses from step {step2} to {step1}'
+    description: 'add step {step2} assumptions {to step step1}'
   },
 
   // Takes a proof step, a path, and a proved equation.
