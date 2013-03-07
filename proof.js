@@ -1250,7 +1250,7 @@ function expandMarkup(step, markup) {
       if (markupRest && adjacentSteps(stepArg, step)) {
         return '';
       } else {
-        return markupRest + ' ' + stepArg.rendering.stepNumber;
+        return markupRest + stepArg.rendering.stepNumber;
       }
     } else {
       // If the index is out of range return '?'.
@@ -1258,14 +1258,13 @@ function expandMarkup(step, markup) {
     }
   }
   var info = Toy.rules[step.ruleName].info;
-  var matches = markup.match(/^\{([a-zA-Z0-9]+)(.*)\}$/);
-  if (!matches || (matches[2].length && matches[2][0] !== ' ')) {
-    // Not really markup: no match, or the "rest" is nonempty yet
-    // does not start with a space.
+  if (markup.match(/^\{[a-z][_0-9]*[.]/)) {
+    // It looks like a lambda, not markup!
     return markup;
   }
-  var markupName = matches[1];
-  var markupRest = matches[2];
+  var matches = markup.match(/^\{(.*? ?)([a-zA-Z0-9]+)\}$/);
+  var markupRest = matches[1];
+  var markupName = matches[2];
   switch (markupName) {
   case 'step':
   case 'step1':

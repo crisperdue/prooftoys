@@ -151,7 +151,7 @@ var ruleInfo = {
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
     comment: 'Convert assumptions to an explicit implication',
-    description: 'display assumptions {step in step}'
+    description: 'show assumptions;; {of step step}'
   },
       
   /**
@@ -165,7 +165,7 @@ var ruleInfo = {
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
     comment: 'No-op, but result will be fully displayed',
-    description: 'step details {step of step}'
+    description: 'show fully;; {step step}'
   },
       
   /**
@@ -183,7 +183,7 @@ var ruleInfo = {
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
     hint: 'Convert explicit implication to statement with assumptions',
-    description: 'abbreviate assumptions {implication in step}'
+    description: 'abbreviate assumptions;; {of step implication}'
   },
 
   /**
@@ -293,7 +293,7 @@ var ruleInfo = {
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
     hint: 'Replace term with equal term',
-    description: 'replace {site};; {siteStep in step} {equation using step}'
+    description: 'replace {site};; {in step siteStep} {using step equation}'
   },
 
   /**
@@ -312,7 +312,7 @@ var ruleInfo = {
     hint: 'replace term with equal term',
     comment: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
-    description: 'replace {site};; {siteStep in step} {equation using step}'
+    description: 'replace {site};; {in step siteStep} {using step equation}'
   },
 
   axiom1: {
@@ -2057,7 +2057,7 @@ var ruleInfo = {
     inputs: {equation: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=step>'),
     comment: 'replace an expression with an equal one',
-    description: 'replace {site};; {siteStep in step} {equation using step}'
+    description: 'replace {site};; {in step siteStep} {using step equation}'
   },
     
   // Add hypotheses to the step from hypStep.  This is key to providing
@@ -2190,7 +2190,7 @@ var ruleInfo = {
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using equation <input name=equation>'),
     hint: 'Instantiate an equation so its LHS equals an expression.',
-    description: 'rewrite {site} {siteStep in step} {equation using step}'
+    description: 'rewrite {site};; {in step siteStep} {using step equation}'
   },
 
   // NOTE: A chain of conjuncts (or other binary operator) is an
@@ -2372,7 +2372,7 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: ('Make assumption <input name=term> explicit '
            + 'in step <input name=step>'),
-    description: 'make assumption {term} explicit {step in step}',
+    description: 'make assumption {term} explicit;; {step in step}',
     comment: 'Find and extract a hypothesis from a step.'
   },
 
@@ -3156,7 +3156,7 @@ var ruleInfo = {
     form: ('Add <input name=term> to both sides of ' +
            'step <input name=equation>'),
     comment: ('Add the same amount to both sides of the equation'),
-    description: 'add {term}'
+    description: 'add {term};; {in step equation}'
   },
 
   subtractFromBoth: {
@@ -3169,7 +3169,7 @@ var ruleInfo = {
     form: ('Subtract <input name=term> from both sides of ' +
            'step <input name=equation>'),
     comment: ('Subtract the same amount from both sides of the equation'),
-    description: 'subtract {term}'
+    description: 'subtract {term};; {in step equation}'
   },
 
   multiplyBoth: {
@@ -3182,7 +3182,7 @@ var ruleInfo = {
     form: ('Multiply both sides of step <input name=equation>' +
            ' by <input name=term>'),
     comment: ('Multiply both sides of the equation by the same amount'),
-    description: 'multiply by {term}'
+    description: 'multiply by {term};; {in step equation}'
   },
 
   divideBoth: {
@@ -3195,7 +3195,7 @@ var ruleInfo = {
     form: ('Divide both sides of step <input name=equation>' +
            ' by <input name=term>'),
     comment: ('Divide both sides of the equation by the same amount'),
-    description: 'divide by {term}'
+    description: 'divide by {term};; {in step equation}'
   },
 
   //
