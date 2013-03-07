@@ -140,6 +140,12 @@ YUI.add('sample-proofs', function(Y) {
       level: 1
     },
 
+    // TODO: Use this in other examples.
+    bindEqn: {
+      args: [rules.assert(call('=', f, g)), x],
+      level: 1
+    },
+    
     applyBoth: {
       args: [rules.assert(call('=', f, g), x)],
       level: 1
@@ -151,7 +157,7 @@ YUI.add('sample-proofs', function(Y) {
     },
 
     eqnSwap: {
-      args: [rules.assert(call('=', p, q))],
+      args: [rules.axiom4(Toy.parse('{x. x} (p = q)'))],
       level: 1
     },
 
@@ -189,10 +195,6 @@ YUI.add('sample-proofs', function(Y) {
       level: 1
     },
 
-    bindEqn: {
-      args: [rules.assert(call('=', f, g)), x],
-    },
-    
     instEqn: {
       args: [rules.assert(call('=', call(g, y), z)),
              call(f, x),

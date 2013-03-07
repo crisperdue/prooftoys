@@ -714,10 +714,10 @@ var ruleInfo = {
     },
     inputs: {equation: 1, varName: 2},
     form: ('Bind variable <input name=varName> in step <input name=equation>'),
-    hint: 'embed both sides in a variable binding',
-    comment: ('Wraps each side of an equation in a function'
-              + ' using the bound variable of your choice.'),
-    description: 'from a = b to {v. a} = {v. b}'
+    hint: 'from A = B to {v. A} = {v. B}',
+    comment: ('Makes each side of an equation into a function'
+              + ' of the variable you choose.'),
+    description: 'from A = B to {v. A} = {v. B}'
   },
 
   /**
