@@ -1401,16 +1401,19 @@ var stepFormatters = {
 };
 
 /**
- * Given a rendered proof step, renders a header and the proof steps
+ * Given a proof step, renders a header and the proof steps
  * of its as-yet-unrendered details within a container DIV with CSS
  * class inferenceDisplay.  Sets the 'proofControl' data property of
- * the node to refer to the new ProofControl.
+ * the node to refer to the new ProofControl.  If the step is
+ * rendered, the details are rendered with step numbers relative to
+ * its step number.
  *
  * Returns the new container DIV.
  */
 function renderInference(step) {
   var steps = unrenderedDeps(step.details);
-  var controller = new ProofControl({stepPrefix: step.stepNumber + '.'});
+  var prefix = step.stepNumber ? step.stepNumber + '.' : '';
+  var controller = new ProofControl({stepPrefix: prefix});
   controller.setSteps(steps);
   var comment = Y.Escape.html(Toy.rules[step.ruleName].info.comment || '');
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
