@@ -3718,6 +3718,8 @@ function decodeArg(info, steps) {
 
 Toy.configure = configure;
 
+Toy.isEmpty = isEmpty;
+
 Toy.Set = Set;
 Toy.Map = Map;
 Toy.TermSet = TermSet;
