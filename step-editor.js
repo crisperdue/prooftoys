@@ -152,18 +152,22 @@ function StepEditor(controller) {
 
   // Create a DIV with the step editor content.
   var div = Y.Node.create('<div class=stepEditor style="clear: both"></div>');
+  // Button to clear rule input, visible when a form is active.
+  var clearHtml =
+    '<input class=sted-clear type=button value=x title="Clear the input">';
+  this.clearer = Y.Node.create(clearHtml);
+  this.clearer.addClass('invisible');
+  div.append(this.clearer);
   var selector = Y.Node.create('<span></span>');
   div.append(selector);
   this.form = Y.Node.create('<span class=sted-form></span>');
   div.append(this.form);
-  var clearer = Y.Node.create('<input class=sted-clear type=button value=x '
-	                      + 'title="Clear the input">');
-  div.append(clearer);
   var sr = ('<input class=sted-save-restore type=button '
             + 'value="Save/restore ..." '
             + 'title="Save or restore proof state">');
   this.saveRestore = Y.Node.create(sr);
   div.append(this.saveRestore);
+  // TODO: add more content here: div.append('<div>Hello World</div>');
   this.node = div;
 
   // Install a rule selector
@@ -185,7 +189,7 @@ function StepEditor(controller) {
   }
   
   // Install event handlers.
-  clearer.on('click', function() { self.reset(); });
+  this.clearer.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
   // Use "keydown" because "keyup" would catch the "up" event from
   // the Enter key in the autocompleter field.
@@ -223,6 +227,7 @@ StepEditor.prototype.error = function(message) {
 StepEditor.prototype.reset = function() {
   this.ruleSelector.reset();
   this.ruleSelector.node.removeClass('hidden');
+  this.clearer.addClass('invisible');
   this.form.setContent('');
 };
 
@@ -244,6 +249,7 @@ StepEditor.prototype.handleSelection = function() {
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
       this.ruleSelector.node.addClass('hidden');
+      this.clearer.removeClass('invisible');
       this.form.setContent(template);
       addClassInfo(this.form);
       if (!usesSite(rule)) {
@@ -610,7 +616,10 @@ function RuleSelector(input, source, selectionHandler) {
   var align = Y.WidgetPositionAlign;
   var config = {resultFilters: ['startsWith'],
                 resultHighlighter: 'startsWith',
-		resultFormatter: resultFormatter,
+		resultFormatter: function(query, results) {
+      var result = resultFormatter(query, results);
+      return result;
+    },
                 source: source,
                 inputNode: input,
                 render: true,
@@ -644,7 +653,22 @@ function resultFormatter(query, results) {
       var ruleName = result.text.replace(/^xiom/, 'axiom');
       var info = Toy.rules[ruleName].info;
       var hint = Y.Escape.html(info.hint || info.comment || '');
-      return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
+      if (Toy.isEmpty(info.inputs)) {
+        // It is an axiom or theorem.
+        // Axiom or theorem hints are treated as HTML, unlike all others!
+        if (info.hint) {
+          return info.hint;
+        }
+        var thm = Toy.getTheorem(ruleName);
+        var thmHtml = Toy.mathMarkup(thm.unHyp().toUnicode());
+        if (ruleName.substring(0, 5) === 'axiom') {
+          return 'axiom ' + thmHtml;
+        } else {
+          return 'theorem ' + thmHtml;
+        }
+      } else {
+        return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
+      }
     });	
 }
 

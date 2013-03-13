@@ -185,6 +185,11 @@ td#leftNav a:before {
   display: none;
 }
 
+/* Invisibly fills space */
+.invisible {
+  visibility: hidden;
+}
+
 /* Proof displays -- proof.js */
 
 /* Header line and comments for display. */
@@ -238,8 +243,6 @@ table.proofDisplay {
 /* Step deleter control, only visible when the step is hovered. */
 .proofStep .deleteStep {
   visibility: hidden;
-  float: right;
-  /* Floating right pushes the button down; this helps. */
   height: 60%;
 }
 
@@ -374,6 +377,12 @@ input.sted-input {
   font-family: inherit;
   font-size: 100%;
   width: 80%;
+}
+
+/* Button to clear the current editor input form */
+input.sted-clear {
+  /* Lines it up better with the adjacent text */
+  vertical-align: text-bottom;
 }
 
 /* Inputs for rule arguments */

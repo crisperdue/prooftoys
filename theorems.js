@@ -317,12 +317,12 @@ var ruleInfo = {
 
   axiom1: {
     action: function() {
-      var result = rules.assert('g T & g F == forall {x. g x}');
+      var result = rules.assert('g T & g F == forall {a. g a}');
       return result.justify('axiom1');
     },
     inputs: {},
     form: '',
-    description: 'T and F are all the booleans',
+    description: 'axiom of T & F',
     comment: ('T and F are all the booleans')
   },
 
@@ -334,7 +334,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'axiom of function application',
-    comment: ('equal inputs yield equal outputs.')
+    comment: ('functions map equal values to equal values')
   },
 
   axiom3: {
@@ -344,7 +344,6 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    hint: 'extensionality',
     comment: ('extensionality: functions are equal based on equal results'
 	      + ' on all inputs.'),
     description: 'axiom of equal functions'
@@ -401,7 +400,6 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    hint: '(forall {p. not (p = not p)})',
     description: 'boolean axiom',
     comment: ('')
   },
@@ -2055,7 +2053,7 @@ var ruleInfo = {
       return result.justify('replace', args, [h_equation_arg, h_c_arg]);
     },
     inputs: {equation: 1, site: 2}, // plus constraints.
-    form: ('Replace selection with right side of step <input name=step>'),
+    form: ('Replace selection with right side of step <input name=equation>'),
     comment: 'replace an expression with an equal one',
     description: 'replace {site};; {in step siteStep} {using step equation}'
   },
@@ -2565,6 +2563,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    description: 'symmetry of "="',
     comment: 'Symmetry of equality'
   },
 
@@ -2580,6 +2579,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    description: 'transitivity of "="',
     comment: 'Transitivity of equality'
   },
 
@@ -2598,7 +2598,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     comment: 'commutativity of addition',
-    description: 'commutativity'
+    description: 'commutativity of addition'
   },
 
   axiomAssociativePlus: {
@@ -2609,7 +2609,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     comment: 'associativity of addition',
-    description: 'associativity'
+    description: 'associativity of addition'
   },
 
   axiomCommutativeTimes: {
@@ -2631,7 +2631,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     comment: 'associativity of multiplication',
-    description: 'associativity'
+    description: 'associativity of multiplication'
   },
 
   axiomDistributivity: {
@@ -2642,7 +2642,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     comment: 'distributive law',
-    description: 'distributivity'
+    description: 'distributive law'
   },
 
   axiomPlusZero: {
@@ -2686,7 +2686,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     comment: 'x + neg x = 0',
-    description: 'definition of neg'
+    description: 'definition of negation'
   },
 
   axiomReciprocal: {
@@ -2708,6 +2708,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    hint: 'axiom ' + Toy.parse('R (x + y)').toUnicode(),
     comment: 'sum of real numbers is real',
     description: 'sum of real numbers is real'
   },
@@ -2720,6 +2721,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    hint: 'axiom ' + Toy.parse('R (x * y)').toUnicode(),
     comment: 'product of real numbers is real',
     description: 'product of real numbers is real'
   },
@@ -2731,6 +2733,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
+    hint: 'axiom ' + Toy.parse('R (neg x)').toUnicode(),
     comment: 'negation of real number is real',
     description: 'negation of real number is real'
   },
@@ -2741,6 +2744,7 @@ var ruleInfo = {
 	.justify('axiomReciprocalType');
     },
     inputs: {},
+    hint: 'axiom ' + Toy.parse('x != 0 == R (recip x)').toUnicode(),
     form: '',
     comment: 'reciprocal of nonzero real number is real',
     description: 'reciprocal of real number'
@@ -2824,6 +2828,7 @@ var ruleInfo = {
       return step8.justify('subtractionType');
     },
     form: '',
+    hint: 'theorem ' + Toy.parse('R (x - y)').toUnicode(),
     comment: 'difference of real numbers is real',
     description: 'difference of real numbers is real'
   },
@@ -2841,6 +2846,7 @@ var ruleInfo = {
       return step8.justify('divisionType');
     },
     form: '',
+    hint: 'theorem ' + Toy.parse('R (x / y)').toUnicode(),
     comment: 'quotient of real numbers is real',
     description: 'quotient of real numbers is real'
   },
@@ -3479,7 +3485,8 @@ var theoremNames =
                       'defAnd', 'tIsXIsX', 'forallXT', 'xAlwaysX',
                       'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
-                      'subtractionType', 'divisionType']));
+                      'subtractionType', 'divisionType', 'eqIsEquiv',
+                      'equalitySymmetric', 'equalityTransitive']));
 
 for (var i = 0; i < theoremNames.length; i++) {
   addTheorem(theoremNames[i]);
