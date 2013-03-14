@@ -2,12 +2,6 @@
 
 YUI.add('theorems', function(Y) {
 
-// Math markup in the position of a rule name.
-// For local use only.
-function mathMarkup(text) {
-  return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
-}
-
 
 //// THEOREMS AND RULES
 
@@ -55,6 +49,7 @@ var _allHyps = {};
 //   of the step editor.
 // comment: plain text comment to become the title of mentions of the rule
 //   name in proof displays and the description in subproof displays.
+// formula: Unicode textual representation of the theorem, if present.
 // description: HTML word or phrase to display for the rule name.
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
@@ -438,7 +433,7 @@ var ruleInfo = {
     form: 'Term to prove equal to itself: <input name=term>',
     hint: '(A = A)',
     comment: 'Derives A = A.',
-    description: mathMarkup('a = a')
+    formula: 'a = a'
   },
 
   
@@ -770,7 +765,7 @@ var ruleInfo = {
     form: ('Term to prove equal to itself: <input name=term>'),
     hint: '(T = (A = A))',
     comment: ('Proves T = [A = A].'),
-    description: mathMarkup('T = (a = a)')
+    formula: 'T = (a = a)'
   },
 
   /**
@@ -1134,7 +1129,7 @@ var ruleInfo = {
     form: 'Introduce "T = " into step <input name=step>',
     hint: 'from A to (T = A)',
     comment: ('From A derives T = A'),
-    description: mathMarkup('a = (T = a)')
+    formula: 'a = (T = a)'
   },
 
   // also 5219.  Works with hypotheses.
@@ -1158,7 +1153,7 @@ var ruleInfo = {
     form: 'Eliminate "T = " from step <input name=equation>',
     hint: 'from (T = A) to A',
     comment: ('From T = A derives A'),
-    description: mathMarkup('(T = a) = a')
+    formula: '(T = a) = a'
   },
 
   // Lemma helper for addForall, a pure theorem.
@@ -1649,7 +1644,7 @@ var ruleInfo = {
     form: ('Derive that <input name=term> implies theorem <input name=step>'),
     hint: 'From theorem B deduce A ==> B',
     comment: ('Given a theorem, derive that something implies it.'),
-    description: Toy.mathMarkup('a ==> T')
+    formula: 'a ==> T'
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
@@ -3235,73 +3230,75 @@ var ruleInfo = {
 
 };  // End of theorems and rules
 
+var unicodify = Toy.unicodify;
+
 // Descriptions of rewrite rules; internal.  Each of these generates
 // an actual inference rule.
 var rewriters = {
   commutePlus: {
     axiom: 'axiomCommutativePlus',
-    description: mathMarkup('a + b = b + a')
+    formula: 'a + b = b + a'
   },
   commuteTimes: {
     axiom: 'axiomCommutativeTimes',
-    description: mathMarkup('a * b = b * a')
+    formula: 'a * b = b * a'
   },
   associatePlusToLeft: {
     axiom: 'axiomAssociativePlus',
-    description: mathMarkup('a + (b + c) = (a + b) + c')
+    formula: 'a + (b + c) = (a + b) + c'
   },
   associatePlusToRight: {
     axiom: 'axiomAssociativePlus',
-    description: mathMarkup('(a + b) + c = a + (b + c)'),
+    formula: '(a + b) + c = a + (b + c)',
     input: 'right'
   },
   associateTimesToLeft: {
     axiom: 'axiomAssociativeTimes',
-    description: mathMarkup('a * (b * c) = (a * b) * c')
+    formula: 'a * (b * c) = (a * b) * c'
   },
   associateTimesToRight: {
     axiom: 'axiomAssociativeTimes',
-    description: mathMarkup('(a * b) * c = a * (b * c)'),
+    formula: '(a * b) * c = a * (b * c)',
     input: 'right'
   },
   distribute: {
     axiom: 'axiomDistributivity',
-    description: mathMarkup('a * (b + c) = (a * b) + (a * c)')
+    formula: 'a * (b + c) = (a * b) + (a * c)'
   },
   group: {
     axiom: 'axiomDistributivity',
-    description: mathMarkup('(a * b) + (a * c) = a * (b + c)'),
+    formula: '(a * b) + (a * c) = a * (b + c)',
     input: 'right'
   },
   plusZeroElim: {
     axiom: 'axiomPlusZero',
-    description: mathMarkup('a + 0 = a')
+    formula: 'a + 0 = a'
   },
   plusZeroIntro: {
     axiom: 'axiomPlusZero',
-    description: mathMarkup('a = a + 0'),
+    formula: 'a = a + 0',
     input: 'right'
   },
   timesOneElim: {
     axiom: 'axiomTimesOne',
-    description: mathMarkup('a * 1 = a')
+    formula: 'a * 1 = a'
   },
   timesOneIntro: {
     axiom: 'axiomTimesOne',
-    description: mathMarkup('a = a * 1'),
+    formula: 'a = a * 1',
     input: 'right'
   },
   timesZeroElim: {
     axiom: 'axiomTimesZero',
-    description: mathMarkup('a * 0 = 0')
+    formula: 'a * 0 = 0'
   },
   plusNegElim: {
     axiom: 'axiomNeg',
-    description: mathMarkup('a + neg a = 0')
+    formula: 'a + neg a = 0'
   },
   timesRecipElim: {
     axiom: 'axiomReciprocal',
-    description: mathMarkup('a * recip a = 1')
+    formula: 'a * recip a = 1'
   }
 };  
 
@@ -3337,19 +3334,21 @@ function genRewriters(map) {
       // Highlight sites in inputs as usual for rewrite rules.
       isRewriter: true,
       action: (function(axiomName, ruleName, generator) {
-        // Capture the current info.axiom and name.  In JS
-        // calling a new function is the way to do it.
-        return function(step, path) {
-          return generator(step, path, axiomName, ruleName);
-        }
+          // Capture the current info.axiom and name.  In JS
+          // calling a new function is the way to do it.
+          return function(step, path) {
+            return generator(step, path, axiomName, ruleName);
+          }
         })(info.axiom, name, generators[input]),
       inputs: {site: 1},
       template: info.axiom,
       templateSide: input,
       form: '',
-      description: info.description || name,
       comment: comment
     };
+    if ('formula' in info) {
+      ruleInfo[name].formula = info.formula;
+    }
   }
 }
 
@@ -3383,6 +3382,12 @@ genRewriters(rewriters);
 // Map from rule name to function.  See creatRules, below.
 var rules = {};
 
+// Math markup in the position of a rule name.
+// Helper for createRules.
+function formulaAsDescription(text) {
+  return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
+}
+
 /**
  * Given a ruleInfo object, add its information to the "rules" object.
  * The "rules" object maps from rule name to function.  Each function
@@ -3396,9 +3401,13 @@ function createRules(ruleInfo) {
     if (!info.inputs) {
       info.inputs = {};
     }
-    // The default description is just the rule name
+    // Default the description to the marked up formula or the ruleName.
     if (!('description' in info)) {
-      info.description = key;
+      if ('formula' in info) {
+        info.description = formulaAsDescription(info.formula);
+      } else {
+        info.description = key;
+      }
     }
     var fn = (typeof info == 'function') ? info : info.action;
     // Associate the action function with the key,
