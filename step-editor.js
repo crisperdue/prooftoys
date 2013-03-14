@@ -504,8 +504,6 @@ StepEditor.prototype.parseValue = function(value, type) {
  * "x", i.e. "xiom".
  */
 StepEditor.prototype.filteredRuleNames = function() {
-  var controller = this.controller;
-  var step = controller.selection;
   var matches = [];
   for (var name in Toy.rules) {
     display = name.replace(/^axiom/, 'xiom');
@@ -647,7 +645,8 @@ function RuleSelector(input, source, selectionHandler) {
 /**
  * Used by the autocompleter to convert one highlighted result into
  * a fully-formatted result with hints.  Accepts a query and result object,
- * return an HTML-formatted result.
+ * return an HTML-formatted result.  The optional boolean useHtml
+ * controls generation of HTML vs. Unicode text.
  */
 function resultFormatter(query, result, useHtml) {
   var ruleName = result.text.replace(/^xiom/, 'axiom');
@@ -658,6 +657,9 @@ function resultFormatter(query, result, useHtml) {
     if (info.hint) {
       return info.hint;
     }
+    if (info.formula) {
+      return Toy.unicodify(info.formula);
+    }
     var thm = Toy.getTheorem(ruleName);
     var thmText = thm.unHyp().toUnicode();
     if (ruleName.substring(0, 5) === 'axiom') {
@@ -665,6 +667,8 @@ function resultFormatter(query, result, useHtml) {
     } else {
       return 'theorem ' + thmText;
     }
+  } else if (info.formula) {
+    return 'use ' + Toy.unicodify(info.formula);
   } else {
     var hint = info.hint || info.comment || '';
     if (useHtml) {
