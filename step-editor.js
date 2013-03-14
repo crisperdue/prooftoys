@@ -182,7 +182,7 @@ function StepEditor(controller) {
                        $.proxy(this, 'filteredRuleNames'),
                        $.proxy(this, 'handleSelection'));
   } else {
-    var widget = new BasicRuleSelector($.proxy(this, 'filteredRuleNames'),
+    var widget = new BasicRuleSelector($.proxy(this, 'offerableRuleNames'),
                                        $.proxy(this, 'handleSelection'));
     this.ruleSelector = widget;
     selector.append(widget.node);
@@ -516,6 +516,20 @@ StepEditor.prototype.filteredRuleNames = function() {
 };
 
 /**
+ * Returns a list of names of rules that are "offerable".
+ */
+StepEditor.prototype.offerableRuleNames = function() {
+  var matches = [];
+  for (var name in Toy.rules) {
+    if (this.offerable(name)) {
+      matches.push(name);
+    }
+  }
+  matches.sort();
+  return matches;
+};
+
+/**
  * Returns true iff the rule name can be offered by autocompletion policy.
  * Only rules with a "form" property are offerable at all.  If so --
  *
@@ -702,15 +716,34 @@ RuleSelector.prototype.focus = function() {
 //// BASICRULESELECTOR
 
 function BasicRuleSelector(source, selectionHandler) {
-  this.source = source;
-  var elt = document.createElement('select');
-  // Note temporary dummy display text:
-  elt.add(new Option('--', ''));
-  var node = this.node = new Y.Node(elt);
-  this.reset();
   var self = this;
-  node.on('change', function() {
-      var elt = node.getDOMNode();
+  this.source = source;
+  this.ruleName = '';
+
+  // Rule chooser:
+  var ruleChooser = $('<select/>');
+  // The first option tells the user to select something,
+  // message determined later.
+  ruleChooser.append($('<option/>',
+                       {text: '-- Apply a rule --', value: ''}));
+
+  /* TODO:
+  var thmChooser = $('<select/>');
+  thmChooser.append($('<option/>',
+                      {text: '-- Select an axiom or theorem --', value: ''}));
+
+  var proverChooser = $('<select/>');
+  proverChooser.append($('<option/>',
+                         {text: '-- Prove a simple theorem --',
+                             value: ''}));
+  */
+
+  this.node = new Y.Node(ruleChooser[0]);
+
+  this.reset();
+
+  ruleChooser.change(function() {
+      var elt = ruleChooser[0];
       self.ruleName = elt.options[elt.selectedIndex].value;
       selectionHandler();
     });
