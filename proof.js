@@ -1865,7 +1865,9 @@ Toy.suppressRealTypeDisplays = true;
 Toy.hasTouchEvents = 'ontouchend' in document;
 
 // Control whether to use an Autocompleter vs. plain SELECT element.
-Toy.useAutocompleter = !Toy.hasTouchEvents;
+// To turn on use of the AutoCompleter, remove "false &".  This
+// leaves it off in any case for touch screen systems.
+Toy.useAutocompleter = false && !Toy.hasTouchEvents;
 
 // Global parameter to suppress GUI selection of function names
 // and the "Curried part" of an infix call.
