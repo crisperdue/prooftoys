@@ -88,8 +88,8 @@ _gaq.push(['_trackPageview']);
 //
 
 /**
- * Converts the given text into HTML with ASCII math symbols replaced
- * with HTML entities for math, and with alphanumeric names in italics.
+ * Replaces ASCII math symbols in the given HTML text with HTML
+ * entities for math, and with alphanumeric names in italics.
  */
 Toy.mathMarkup = function(text) {
   // Substitutions for "forall" and "exists" consume a trailing blank,

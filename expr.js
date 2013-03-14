@@ -3235,16 +3235,24 @@ var precedence = {
 // (When generating HTML and/or Unicode text.)
 var unicodeNames = {
   '==': '\u21d4',     // Two-headed horizontal double arrow.
-  '==>': '\u21d2',     // &rArr;
-  '!=': '\u2260',
-  '<=': '\u2264',
-  '>=': '\u2265',
+  '==>': '\u21d2',    // &rArr;
+  '!=': '\u2260',     // &ne;
+  '<=': '\u2264',     // &le;
+  '>=': '\u2265',     // &ge;
   '*': '\u22c5',      // &sdot;
   '-': '\u2212',      // &minus;
   '/': '\u2215',      // division slash
   'forall': '\u2200',
   'exists': '\u2203'
 };
+
+function unicodify(text) {
+  var pattern =
+    /==>|==|!=|<=|>=|\*|-|\/|\bforall\b|\bexists\b/g;
+  return text.replace(pattern, function(symbol) {
+      return unicodeNames[symbol];
+    });
+}
 
 // Defines aliases that affect both printing and parsing.
 var aliases = {
@@ -3299,7 +3307,7 @@ function isEmpty(o) {
 }
 
 /**
- * Converts an Expr or plain string to Unicode.
+ * Converts an Expr or plain token string to Unicode.
  */
 function toUnicode(o) {
   if (typeof o === 'string') {
@@ -3751,7 +3759,6 @@ Toy.getDefinition = getDefinition;
 Toy.definitions = definitions;
 
 Toy.varify = varify;
-Toy.toUnicode = toUnicode;
 Toy.isConstant = isConstant;
 Toy.isVariable = isVariable;
 Toy.checkNumber = checkNumber;
@@ -3773,6 +3780,9 @@ Toy.removeExcept = removeExcept;
 
 Toy.encodeSteps = encodeSteps;
 Toy.decodeSteps = decodeSteps;
+
+Toy.toUnicode = toUnicode;
+Toy.unicodify = unicodify;
 Toy.debugString = debugString;
 
 Toy.Refresher = Refresher;
