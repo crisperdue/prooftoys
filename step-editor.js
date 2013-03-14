@@ -617,8 +617,9 @@ function RuleSelector(input, source, selectionHandler) {
   var config = {resultFilters: ['startsWith'],
                 resultHighlighter: 'startsWith',
 		resultFormatter: function(query, results) {
-      var result = resultFormatter(query, results);
-      return result;
+      return results.map(function (result) {
+          return resultFormatter(query, result, true);
+        });
     },
                 source: source,
                 inputNode: input,
@@ -644,32 +645,34 @@ function RuleSelector(input, source, selectionHandler) {
 }
 
 /**
- * Used by the autocompleter to convert highlighted results into
- * fully-formatted results with hints.  Accepts a query and result list,
- * return a list of HTML-formatted results.
+ * Used by the autocompleter to convert one highlighted result into
+ * a fully-formatted result with hints.  Accepts a query and result object,
+ * return an HTML-formatted result.
  */
-function resultFormatter(query, results) {
-  return results.map(function (result) {
-      var ruleName = result.text.replace(/^xiom/, 'axiom');
-      var info = Toy.rules[ruleName].info;
-      var hint = Y.Escape.html(info.hint || info.comment || '');
-      if (Toy.isEmpty(info.inputs)) {
-        // It is an axiom or theorem.
-        // Axiom or theorem hints are treated as HTML, unlike all others!
-        if (info.hint) {
-          return info.hint;
-        }
-        var thm = Toy.getTheorem(ruleName);
-        var thmHtml = Toy.mathMarkup(thm.unHyp().toUnicode());
-        if (ruleName.substring(0, 5) === 'axiom') {
-          return 'axiom ' + thmHtml;
-        } else {
-          return 'theorem ' + thmHtml;
-        }
-      } else {
-        return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
-      }
-    });	
+function resultFormatter(query, result, useHtml) {
+  var ruleName = result.text.replace(/^xiom/, 'axiom');
+  var info = Toy.rules[ruleName].info;
+  if (Toy.isEmpty(info.inputs)) {
+    // It is an axiom or theorem with no inputs.
+    // Axiom or theorem hints are treated as HTML, unlike all others!
+    if (info.hint) {
+      return info.hint;
+    }
+    var thm = Toy.getTheorem(ruleName);
+    var thmText = thm.unHyp().toUnicode();
+    if (ruleName.substring(0, 5) === 'axiom') {
+      return 'axiom ' + thmText;
+    } else {
+      return 'theorem ' + thmText;
+    }
+  } else {
+    var hint = info.hint || info.comment || '';
+    if (useHtml) {
+      return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
+    } else {
+      return result.text + ' - ' + hint;
+    }
+  }
 }
 
 /**
@@ -720,9 +723,8 @@ BasicRuleSelector.prototype.reset = function() {
   // This should behave very much like the resultFormatter function:
   this.source().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var info = Toy.rules[ruleName].info;
-      var hint = info.hint || info.comment || '';
-      elt.add(new Option(name + ' - ' + hint, ruleName));
+      var text = resultFormatter(null, {text: name}, false);
+      elt.add(new Option(text, ruleName));
     });
   var header = elt.options[0];
   elt.options[0].text = ((elt.options.length == 1)
