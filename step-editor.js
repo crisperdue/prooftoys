@@ -715,10 +715,12 @@ RuleSelector.prototype.focus = function() {
 
 //// BASICRULESELECTOR
 
-function BasicRuleSelector(source, selectionHandler) {
+function BasicRuleSelector(source, selectionHandler, options) {
   var self = this;
   this.source = source;
   this.ruleName = '';
+
+  this.offerAxioms = options && options.axioms;
 
   // Rule chooser:
   var ruleChooser = $('<select/>');
@@ -754,14 +756,17 @@ function BasicRuleSelector(source, selectionHandler) {
  * options matching the current selection(s).
  */
 BasicRuleSelector.prototype.reset = function() {
+  var self = this;
   var elt = this.node.getDOMNode();
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
   // This should behave very much like the resultFormatter function:
   this.source().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var text = resultFormatter(null, {text: name}, false);
-      elt.add(new Option(text, ruleName));
+      if (self.offerAxioms || ruleName.slice(0, 5) != 'axiom') {
+        var text = resultFormatter(null, {text: name}, false);
+        elt.add(new Option(text, ruleName));
+      }
     });
   var header = elt.options[0];
   elt.options[0].text = ((elt.options.length == 1)
