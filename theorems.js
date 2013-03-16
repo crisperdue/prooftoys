@@ -146,7 +146,8 @@ var ruleInfo = {
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
     comment: 'Convert assumptions to an explicit implication',
-    description: ';;show assumptions {of step step}'
+    description: ';;show assumptions {of step step}',
+    labels: 'display'
   },
       
   /**
@@ -160,7 +161,8 @@ var ruleInfo = {
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
     comment: 'No-op, but result will be fully displayed',
-    description: ';;show fully {step step}'
+    description: ';;show fully {step step}',
+    labels: 'display'
   },
       
   /**
@@ -178,7 +180,8 @@ var ruleInfo = {
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
     hint: 'Convert explicit implication to statement with assumptions',
-    description: ';;abbreviate assumptions {of step implication}'
+    description: ';;abbreviate assumptions {of step implication}',
+    labels: 'display'
   },
 
   /**
@@ -433,7 +436,8 @@ var ruleInfo = {
     form: 'Term to prove equal to itself: <input name=term>',
     hint: '(A = A)',
     comment: 'Derives A = A.',
-    formula: 'a = a'
+    formula: 'a = a',
+    labels: 'primitive'
   },
 
   
@@ -446,7 +450,8 @@ var ruleInfo = {
       return result.justify('eqIsEquiv', []);
     },
     form: '',
-    comment: '\u21d4 and = are the same'
+    comment: '\u21d4 and = are the same',
+    labels: 'uncommon'
   },
       
 
@@ -473,7 +478,8 @@ var ruleInfo = {
     form: 'Swap sides in step <input name=equation>',
     hint: 'From A = B to B = A',
     comment: 'from A = B deduce B = A',
-    description: 'from a = b to b = a'
+    description: 'from a = b to b = a',
+    labels: 'primitive'
   },
 
   // r5201c.  Works with hypotheses.
@@ -517,7 +523,7 @@ var ruleInfo = {
 	   + ' to term <input name=term>'),
     hint: 'From F = G to (F A) = (G A)',
     comment: 'given f = g, deduce (f A) = (g A)',
-    description: 'from f = g to (f a) = (g a)'
+    description: 'f = g to (f a) = (g a)',
   },
 
   // r5201f.  Works with hypotheses.
@@ -585,7 +591,8 @@ var ruleInfo = {
     // form: '',
     hint: 'apply a function to its argument',
     comment: ('Applies a lambda to its argument'),
-    description: '=simpleApply'
+    description: '=simpleApply',
+    labels: 'uncommon'
   },
 
   // Derives a rewriter for a call that reduces a call to a lambda, or
@@ -710,7 +717,8 @@ var ruleInfo = {
     hint: 'from A = B to {v. A} = {v. B}',
     comment: ('Makes each side of an equation into a function'
               + ' of the variable you choose.'),
-    description: 'from A = B to {v. A} = {v. B}'
+    description: 'from A = B to {v. A} = {v. B}',
+    labels: 'primitive'
   },
 
   /**
@@ -731,7 +739,8 @@ var ruleInfo = {
 	   + 'in step <input name=equation>'),
     hint: 'substitute for a variable in both sides',
     comment: ('Instantiates a free variable in an equation.'),
-    description: 'substitute for {var}'
+    description: 'substitute for {var}',
+    labels: 'primitive'
   },
 
   /**
@@ -765,7 +774,8 @@ var ruleInfo = {
     form: ('Term to prove equal to itself: <input name=term>'),
     hint: '(T = (A = A))',
     comment: ('Proves T = [A = A].'),
-    formula: 'T = (a = a)'
+    formula: 'T = (a = a)',
+    labels: 'primitive'
   },
 
   /**
@@ -827,7 +837,8 @@ var ruleInfo = {
     form: 'Introduce "T = " into step <input name=equation>',
     hint: 'from (A = B) to (T = (A = B))',
     comment: ('From [A = B] deduce T = [A = B].'),
-    description: 'from a = b to T = (a = b)'
+    description: 'from a = b to T = (a = b)',
+    labels: 'primitive'
   },
 
   // Prove [F = T] = F.  Number reflects dependencies in the book
@@ -1088,7 +1099,8 @@ var ruleInfo = {
     hint: 'proof by cases, for equations',
     comment: ('Given two proved equations C and D obtainable by substitution' +
               ' for a free variable of an equation A = B; C by substituting' +
-              ' T, and D by substituting F, proves A = B.')
+              ' T, and D by substituting F, proves A = B.'),
+    labels: 'primitive'
   },
 
   // Note that this or 5230TF or symmetry of equality of booleans
@@ -1129,7 +1141,8 @@ var ruleInfo = {
     form: 'Introduce "T = " into step <input name=step>',
     hint: 'from A to (T = A)',
     comment: ('From A derives T = A'),
-    formula: 'a = (T = a)'
+    formula: 'a = (T = a)',
+    labels: 'primitive'
   },
 
   // also 5219.  Works with hypotheses.
@@ -1153,7 +1166,8 @@ var ruleInfo = {
     form: 'Eliminate "T = " from step <input name=equation>',
     hint: 'from (T = A) to A',
     comment: ('From T = A derives A'),
-    formula: '(T = a) = a'
+    formula: '(T = a) = a',
+    labels: 'primitive'
   },
 
   // Lemma helper for addForall, a pure theorem.
@@ -1336,7 +1350,8 @@ var ruleInfo = {
 	   + ' implication in step <input name=implication>'),
     hint: 'modus ponens',
     comment: ('Modus Ponens.  Given A and A ==> B derives B.'),
-    description: 'from p, p &rArr; q to q'
+    description: 'from p, p &rArr; q to q',
+    labels: 'primitive'
   },
 
   // (forall f) ==> f x
@@ -1644,7 +1659,8 @@ var ruleInfo = {
     form: ('Derive that <input name=term> implies theorem <input name=step>'),
     hint: 'From theorem B deduce A ==> B',
     comment: ('Given a theorem, derive that something implies it.'),
-    formula: 'a ==> T'
+    formula: 'a ==> T',
+    labels: 'uncommon'
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
@@ -1721,9 +1737,11 @@ var ruleInfo = {
       return step7.justify('implyForallBook', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},
+    /* Do not offer at this time, use implyForall instead.
     form: ('Move forall inside "implies" binding '
 	   + 'variable <input name=varName> '
 	   + 'implication <input name=implication>'),
+    */
     comment: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.'),
     description: 'move forall'
@@ -1764,7 +1782,8 @@ var ruleInfo = {
     hint: 'forall {v. A ==> B} ==> (A ==> forall {v. B}',
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
-    description: 'move forall'
+    description: 'move forall',
+    labels: 'uncommon'
   },
 
   // Given a proof step H |- A ==> B and a variable v, derives
@@ -2105,7 +2124,8 @@ var ruleInfo = {
     hint: 'combine hypotheses',
     form: ('Add to step <input name=step1> hypotheses from step '
 	   + '<input name=step2>'),
-    description: 'add step {step2} assumptions {to step step1}'
+    description: 'add step {step2} assumptions {to step step1}',
+    labels: 'uncommon'
   },
 
   // Prefix hypotheses from the hypStep to the target step.  Often
@@ -2163,7 +2183,8 @@ var ruleInfo = {
     hint: 'combine hypotheses',
     form: ('To step <input name=step1> prefix the hypotheses of step '
 	   + '<input name=step2>'),
-    description: 'add step {step2} assumptions {to step step1}'
+    description: 'add step {step2} assumptions {to step step1}',
+    labels: 'uncommon'
   },
 
   // Takes a proof step, a path, and a proved equation.
@@ -2185,7 +2206,8 @@ var ruleInfo = {
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using equation <input name=equation>'),
     hint: 'Instantiate an equation so its LHS equals an expression.',
-    description: 'rewrite {site};; {in step siteStep} {using step equation}'
+    description: 'rewrite {site};; {in step siteStep} {using step equation}',
+    labels: 'advanced'
   },
 
   // NOTE: A chain of conjuncts (or other binary operator) is an
@@ -2387,7 +2409,8 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    comment: 'Move conjunct of implication LHS all the way to the right'
+    comment: 'Move conjunct of implication LHS all the way to the right',
+    labels: 'uncommon'
   },
 
   // Proves that the given chain of conjuncts imply the specific
@@ -2506,7 +2529,8 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
-    comment: 'Remove redundant hypotheses'
+    comment: 'Remove redundant hypotheses',
+    labels: 'uncommon'
   },
 
    // Prove an equation asserting that two chains of conjunctions are
@@ -2521,7 +2545,8 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Equation of conjunctions: <input name=equation>',
-    comment: 'Prove equality of two chains of conjunctions'
+    comment: 'Prove equality of two chains of conjunctions',
+    labels: 'uncommon'
   },
 
 
@@ -2825,7 +2850,8 @@ var ruleInfo = {
     form: '',
     hint: 'theorem ' + Toy.parse('R (x - y)').toUnicode(),
     comment: 'difference of real numbers is real',
-    description: 'difference of real numbers is real'
+    description: 'difference of real numbers is real',
+    labels: 'uncommon'
   },
 
   divisionType: {
@@ -2843,7 +2869,8 @@ var ruleInfo = {
     form: '',
     hint: 'theorem ' + Toy.parse('R (x / y)').toUnicode(),
     comment: 'quotient of real numbers is real',
-    description: 'quotient of real numbers is real'
+    description: 'quotient of real numbers is real',
+    labels: 'uncommon'
   },
 
   //
@@ -2960,7 +2987,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Conjunction to simplify: <input name=term>',
-    comment: 'Remove redundant type hypotheses in a conjunction'
+    comment: 'Remove redundant type hypotheses in a conjunction',
+    labels: 'uncommon'
   },
 
   // Apply type expression rewriter rules (equations) to type
@@ -2976,7 +3004,8 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
-    comment: 'Remove redundant type hypotheses in a step'
+    comment: 'Remove redundant type hypotheses in a step',
+    labels: 'uncommon'
   },
 
   // Prove a goal statement of the form "hyps ==> (R <term>)" in
@@ -3077,7 +3106,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Goal wff: <input name=term>',
-    comment: 'Derive H ==> R (<left> <binop> <right>).'
+    comment: 'Derive H ==> R (<left> <binop> <right>).',
+    labels: 'uncommon'
   },
 
   // Finds and returns type expression rewrite rule that can rewrite
@@ -3108,7 +3138,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to rewrite: <input name=term>',
-    comment: 'Find rewriter to simplify type expression with neg or recip.'
+    comment: 'Find rewriter to simplify type expression with neg or recip.',
+    labels: 'uncommon'
   },
 
   // Consider a term that we may wish to rewrite.  If the term has no
@@ -3128,7 +3159,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to consider: <input name=term>',
-    comment: ('Term to consider for transformation')
+    comment: ('Term to consider for transformation'),
+    labels: 'display'
   },
 
   // Identical to "consider", but uses a selected term.
@@ -3146,7 +3178,8 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     comment: ('Consider a subexpression for transformation'),
-    description: 'consider'
+    description: 'consider',
+    labels: 'display'
   },
 
   addToBoth: {
@@ -3398,8 +3431,22 @@ function formulaAsDescription(text) {
 function createRules(ruleInfo) {
   for (var key in ruleInfo) {
     var info = ruleInfo[key];
+    // Give every info "inputs".
     if (!info.inputs) {
       info.inputs = {};
+    }
+    // Preprocess labels.  Split, and if there are no explicit labels,
+    // give the rule a label of "basic".
+    var labels = info.labels;
+    info.labels = {};
+    if (typeof labels === 'string') {
+      labels.split(/\s+/)
+        .forEach(function(label) { info.labels[label] = true; });
+    }
+    if (info.form !== undefined && Toy.isEmpty(info.labels)) {
+      // Anything conceivably offerable (with a form), default to
+      // "basic" if no other labels.
+      info.labels.basic = true;
     }
     // Default the description to the marked up formula or the ruleName.
     if (!('description' in info)) {
