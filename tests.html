@@ -943,7 +943,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testAxioms: function() {
-        assertEqual('(((g T) & (g F)) == (forall {x. (g x)}))',
+        assertEqual('(((g T) & (g F)) == (forall {a. (g a)}))',
                     Toy.rules.axiom1());
         assertEqual('((x = y) ==> ((h x) = (h y)))',
                     Toy.rules.axiom2());
