@@ -147,28 +147,38 @@ function stepSites(step) {
  * controller: ProofControl.
  */
 function StepEditor(controller) {
+  // Make this available to all inner functions.
   var self = this;
-  this.controller = controller;
+
+  self.controller = controller;
 
   // Create a DIV with the step editor content.
   var div = Y.Node.create('<div class=stepEditor style="clear: both"></div>');
   // Button to clear rule input, visible when a form is active.
   var clearHtml =
     '<input class=sted-clear type=button value=x title="Clear the input">';
-  this.clearer = Y.Node.create(clearHtml);
-  this.clearer.addClass('invisible');
-  div.append(this.clearer);
-  var selector = Y.Node.create('<span></span>');
+  self.clearer = Y.Node.create(clearHtml);
+  self.clearer.addClass('invisible');
+  div.append(self.clearer);
+
+  // Selector holds rule selector and related controls, shown
+  // and hidden as a group.
+  var selector = Y.Node.create('<span class=ruleSelector></span>');
   div.append(selector);
-  this.form = Y.Node.create('<span class=sted-form></span>');
-  div.append(this.form);
+  self.selector = selector;
+
+  self.form = Y.Node.create('<span class=sted-form></span>');
+  div.append(self.form);
+
+  var noform = Y.Node.create('<div style="margin-left: 1.5em"/>');
+  div.append(noform);
   var sr = ('<input class=sted-save-restore type=button '
-            + 'value="Save/restore ..." '
+            + 'value="Save/restore proof ..." '
             + 'title="Save or restore proof state">');
-  this.saveRestore = Y.Node.create(sr);
-  div.append(this.saveRestore);
+  self.saveRestore = Y.Node.create(sr);
+  noform.append(self.saveRestore);
   // TODO: add more content here: div.append('<div>Hello World</div>');
-  this.node = div;
+  self.node = div;
 
   // Install a rule selector
   if (Toy.useAutocompleter) {
@@ -177,23 +187,33 @@ function StepEditor(controller) {
     var html = '<input class=sted-input maxlength=200 title="' + hint + '">';
     var input = Y.Node.create(html);
     selector.append(input);
-    this.ruleSelector =
+    self.ruleSelector =
       new RuleSelector(input,
-                       $.proxy(this, 'filteredRuleNames'),
-                       $.proxy(this, 'handleSelection'));
+                       $.proxy(self, 'filteredRuleNames'),
+                       $.proxy(self, 'handleSelection'));
   } else {
-    var widget = new BasicRuleSelector($.proxy(this, 'offerableRuleNames'),
-                                       $.proxy(this, 'handleSelection'));
-    this.ruleSelector = widget;
+    // Append the actual rule selector.
+    var widget = new BasicRuleSelector($.proxy(self, 'offerableRuleNames'),
+                                       $.proxy(self, 'handleSelection'));
+    self.ruleSelector = widget;
     selector.append(widget.node);
+
+    // Append checkbox to control "all rules"
+    selector.append('<label><input type=checkbox>show all&nbsp;</label>');
+    // Step editor has state controlling whether to show all rules.
+    self.showAll = false;
+    selector.one('input').on('click', function(event) {
+        self.showAll = this.get('checked');
+        self.reset();
+      });
   }
   
   // Install event handlers.
-  this.clearer.on('click', function() { self.reset(); });
+  self.clearer.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
   // Use "keydown" because "keyup" would catch the "up" event from
   // the Enter key in the autocompleter field.
-  this.form.on('keydown', function(event) {
+  self.form.on('keydown', function(event) {
     if (event.keyCode == 13) {
       self.tryExecuteRule(true);
     }
@@ -226,7 +246,7 @@ StepEditor.prototype.error = function(message) {
  */
 StepEditor.prototype.reset = function() {
   this.ruleSelector.reset();
-  this.ruleSelector.node.removeClass('hidden');
+  this.selector.removeClass('hidden');
   this.clearer.addClass('invisible');
   this.form.setContent('');
 };
@@ -248,7 +268,7 @@ StepEditor.prototype.handleSelection = function() {
     if (template) {
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
-      this.ruleSelector.node.addClass('hidden');
+      this.selector.addClass('hidden');
       this.clearer.removeClass('invisible');
       this.form.setContent(template);
       addClassInfo(this.form);
@@ -516,12 +536,13 @@ StepEditor.prototype.filteredRuleNames = function() {
 };
 
 /**
- * Returns a list of names of rules that are "offerable".
+ * Returns a list of names of rules that are "offerable" in the
+ * sense of "offerable" returning true and offerOk returning true.
  */
 StepEditor.prototype.offerableRuleNames = function() {
   var matches = [];
   for (var name in Toy.rules) {
-    if (this.offerable(name)) {
+    if (this.offerable(name) && this.offerOk(name)) {
       matches.push(name);
     }
   }
@@ -530,7 +551,20 @@ StepEditor.prototype.offerableRuleNames = function() {
 };
 
 /**
- * Returns true iff the rule name can be offered by autocompletion policy.
+ * Rulename-based rule offering policy function.  Returns a truthy value
+ * iff current policy is to show the rule.
+ */
+StepEditor.prototype.offerOk = function(name) {
+  if (this.showAll) {
+    return true;
+  } else {
+    var labels = Toy.rules[name].info.labels;
+    return labels.basic;
+  }
+}
+
+/**
+ * Returns true iff the rule name can be offered by the UI.
  * Only rules with a "form" property are offerable at all.  If so --
  *
  * If the proof has a current selection, the rule is offerable if
@@ -630,7 +664,7 @@ function RuleSelector(input, source, selectionHandler) {
                 resultHighlighter: 'startsWith',
 		resultFormatter: function(query, results) {
       return results.map(function (result) {
-          return resultFormatter(query, result, true);
+          return ruleMenuFormatter(query, result, true);
         });
     },
                 source: source,
@@ -657,12 +691,13 @@ function RuleSelector(input, source, selectionHandler) {
 }
 
 /**
- * Used by the autocompleter to convert one highlighted result into
- * a fully-formatted result with hints.  Accepts a query and result object,
- * return an HTML-formatted result.  The optional boolean useHtml
- * controls generation of HTML vs. Unicode text.
+ * Used by the rule menu creator to convert one query result into a
+ * fully-formatted menu entry with hints.  Accepts a query and result
+ * object, returns a possibly HTML-formatted result.  The optional
+ * boolean useHtml controls generation of HTML vs. non-HTML Unicode
+ * text.
  */
-function resultFormatter(query, result, useHtml) {
+function ruleMenuFormatter(query, result, useHtml) {
   var ruleName = result.text.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (Toy.isEmpty(info.inputs)) {
@@ -686,9 +721,9 @@ function resultFormatter(query, result, useHtml) {
   } else {
     var hint = info.hint || info.comment || '';
     if (useHtml) {
-      return result.highlighted + '<i style="color: gray"> - ' + hint + '</i>';
+      return '<i style="color: gray">' + hint + '</i>';
     } else {
-      return result.text + ' - ' + hint;
+      return hint;
     }
   }
 }
@@ -760,11 +795,10 @@ BasicRuleSelector.prototype.reset = function() {
   var elt = this.node.getDOMNode();
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
-  // This should behave very much like the resultFormatter function:
   this.source().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       if (self.offerAxioms || ruleName.slice(0, 5) != 'axiom') {
-        var text = resultFormatter(null, {text: name}, false);
+        var text = ruleMenuFormatter(null, {text: name}, false);
         elt.add(new Option(text, ruleName));
       }
     });
