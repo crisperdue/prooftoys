@@ -90,6 +90,7 @@ var ruleInfo = {
     },
     inputs: {varName: 1, term: 2},
     form: ('Define name <input name=varName> as <input name=term>'),
+    labels: 'uncommon',
     description: 'define {var}',
     comment: 'create a simple definition'
   },
@@ -146,7 +147,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
-    comment: 'Convert assumptions to an explicit implication',
+    comment: 'convert assumptions to an explicit implication',
     description: ';;show assumptions {of step step}',
     labels: 'display'
   },
@@ -161,7 +162,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
-    comment: 'No-op, but result will be fully displayed',
+    comment: 'fully display a step',
     description: ';;show fully {step step}',
     labels: 'display'
   },
@@ -180,7 +181,7 @@ var ruleInfo = {
     inputs: {implication: 1},
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
-    hint: 'Convert explicit implication to statement with assumptions',
+    hint: 'convert explicit implication to statement with assumptions',
     description: ';;abbreviate assumptions {of step implication}',
     labels: 'display'
   },
@@ -210,7 +211,7 @@ var ruleInfo = {
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
            + 'if by cases enter T or F <input name=optString>'),
-    comment: 'access a definition',
+    comment: 'look up a definition',
     description: '=definition'
   },
 
@@ -291,26 +292,7 @@ var ruleInfo = {
     // Currently not offered in forms; use "replace".
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
-    hint: 'Replace term with equal term',
-    description: 'replace {site};; {in step siteStep} {using step equation}'
-  },
-
-  /**
-   * Same as "replace", but replaces an occurrence in target of the right
-   * side of the equation with its left side.  Accepts hypotheses.
-   */
-  rRight: {
-    action: function(equation, target, path) {
-      path = Toy.path(path);
-      var rev = rules.eqnSwap(equation);
-      var result = rules.replace(rev, target, path);
-      return result.justify('rRight', arguments, [target, equation]);
-    },
-    inputs: {equation: 1, site: 2},
-    form: ('Replace with left side of step <input name=equation>'),
     hint: 'replace term with equal term',
-    comment: ('Replaces an occurrence of a term with an equal term,'
-              + ' replacing right side with left side.'),
     description: 'replace {site};; {in step siteStep} {using step equation}'
   },
 
@@ -333,7 +315,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'axiom of function application',
-    comment: ('functions map equal values to equal values')
+    comment: ('functions take equal values to equal values')
   },
 
   axiom3: {
@@ -435,9 +417,9 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to prove equal to itself: <input name=term>',
-    hint: '(A = A)',
+    hint: 'A = A',
     comment: 'Derives A = A.',
-    formula: 'a = a',
+    formula: 'A = A',
     labels: 'primitive'
   },
 
@@ -477,7 +459,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Swap sides in step <input name=equation>',
-    hint: 'From A = B to B = A',
+    hint: '[A = B] to B = A',
     comment: 'from A = B deduce B = A',
     description: 'from a = b to b = a',
     labels: 'primitive'
@@ -490,7 +472,8 @@ var ruleInfo = {
       var result = ac;
       return result.justify('eqnChain', arguments, arguments);
     },
-    description: 'from a = b and b = c to a = c',
+    description: 'from A = B and B = C to A = C',
+    hint: '[A = B], [B = C] to [A = C]',
     comment: 'from A = B and B = C deduce A = C'
   },
 
@@ -522,7 +505,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Apply both sides of step <input name=equation>'
 	   + ' to term <input name=term>'),
-    hint: 'From F = G to (F A) = (G A)',
+    hint: '[f = g] to [f A = g A]',
     comment: 'given f = g, deduce (f A) = (g A)',
     description: 'f = g to (f a) = (g a)',
   },
@@ -543,7 +526,7 @@ var ruleInfo = {
     inputs: {term: 1, equation: 2},
     form: ('Apply function <input name=term>'
 	   + ' to both sides of step <input name=equation>'),
-    hint: 'from A = B to (F A) = (F B)',
+    hint: '[A = B] to [F A = F B]',
     comment: 'given B = C deduce (f B) = (f C)',
     description: 'from a = b to (f a) = (f b)'
   },
@@ -640,6 +623,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     description: 'apply function in {term}',
+    hint: 'apply the function',
     comment: 'Equate to call with definition expanded and lambdas reduced'
   },
     
@@ -715,7 +699,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1, varName: 2},
     form: ('Bind variable <input name=varName> in step <input name=equation>'),
-    hint: 'from A = B to {v. A} = {v. B}',
+    hint: '[A = B] to [{v. A} = {v. B}]',
     comment: ('Makes each side of an equation into a function'
               + ' of the variable you choose.'),
     description: 'from A = B to {v. A} = {v. B}',
@@ -738,7 +722,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2, varName: 3},
     form: ('Instantiate <input name=varName> with <input name=term> '
 	   + 'in step <input name=equation>'),
-    hint: 'substitute for a variable in both sides',
+    hint: 'substitute for a variable in equation',
     comment: ('Instantiates a free variable in an equation.'),
     description: 'substitute for {var}',
     labels: 'primitive'
@@ -773,7 +757,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Term to prove equal to itself: <input name=term>'),
-    hint: '(T = (A = A))',
+    hint: 'T = (A = A)',
     comment: ('Proves T = [A = A].'),
     formula: 'T = (a = a)',
     labels: 'primitive'
@@ -836,7 +820,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Introduce "T = " into step <input name=equation>',
-    hint: 'from (A = B) to (T = (A = B))',
+    hint: '[A = B] to [T = (A = B)]',
     comment: ('From [A = B] deduce T = [A = B].'),
     description: 'from a = b to T = (a = b)',
     labels: 'primitive'
@@ -1126,7 +1110,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Term to use in ((T = A) = A): <input name=term>'),
-    hint: 'prove ((T = A) = A)',
+    hint: '[(T = A) = A]',
+    labels: 'uncommon',
     comment: ('For any expression A derives [T = A] = A.'),
     description: '(T = a) = a'
   },
@@ -1140,7 +1125,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Introduce "T = " into step <input name=step>',
-    hint: 'from A to (T = A)',
+    hint: '[A] to [T = A]',
     comment: ('From A derives T = A'),
     formula: 'a = (T = a)',
     labels: 'primitive'
@@ -1165,7 +1150,7 @@ var ruleInfo = {
       return (left instanceof Toy.Var && left.name == 'T');
     }}},
     form: 'Eliminate "T = " from step <input name=equation>',
-    hint: 'from (T = A) to A',
+    hint: '[T = A] to A',
     comment: ('From T = A derives A'),
     formula: '(T = a) = a',
     labels: 'primitive'
@@ -1296,7 +1281,7 @@ var ruleInfo = {
     },
     inputs: {step: [1, 2]},
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
-    hint: 'from A and B to (A & B)',
+    hint: '[A], [B] to [A & B]',
     comment: ('Given a and b, derive a & b'),
     description: 'a & b;; using steps {step1}, {step2}'
   },
@@ -1484,7 +1469,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Boolean term to simplify: <input name=term>',
-    comment: ('evaluate a boolean expression'),
+    labels: 'uncommon',
+    comment: ('simplify a boolean term'),
     description: 'calculate boolean value'
   },
 
@@ -1543,7 +1529,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Enter tautology: <input name=term>',
-    hint: 'enter tautology',
+    hint: 'prove a tautology',
     comment: ('Tautology decider.'),
     description: 'tautology'
   },
@@ -1834,7 +1820,7 @@ var ruleInfo = {
     inputs: {step: [1, 2]},
     form: ('Match step <input name=step1> with left side of implication '
            + 'in schema <input name=step2>'),
-    comment: ('match with A in A ==> B'),
+    comment: ('match with A in ' + Toy.unicodify('A ==> B')),
     description: 'consequence;; of step {step1} using step {step2}'
   },
 
@@ -2070,10 +2056,29 @@ var ruleInfo = {
     },
     inputs: {equation: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=equation>'),
-    comment: 'replace an expression with an equal one',
+    comment: 'replace term with equal term',
     description: 'replace {site};; {in step siteStep} {using step equation}'
   },
     
+  /**
+   * Same as "replace", but replaces an occurrence in target of the right
+   * side of the equation with its left side.  Accepts hypotheses.
+   */
+  rRight: {
+    action: function(equation, target, path) {
+      path = Toy.path(path);
+      var rev = rules.eqnSwap(equation);
+      var result = rules.replace(rev, target, path);
+      return result.justify('rRight', arguments, [target, equation]);
+    },
+    inputs: {equation: 1, site: 2},
+    form: ('Replace with left side of step <input name=equation>'),
+    hint: 'replace term with equal term like A = x',
+    comment: ('Replaces an occurrence of a term with an equal term,'
+              + ' replacing right side with left side.'),
+    description: 'replace {site};; {in step siteStep} {using step equation}'
+  },
+
   // Add hypotheses to the step from hypStep.  This is key to providing
   // two steps with the same hypotheses in preparation for applying
   // various rules of inference.  If hypStep has no hypotheses, the result
@@ -2392,7 +2397,7 @@ var ruleInfo = {
     form: ('Make assumption <input name=term> explicit '
            + 'in step <input name=step>'),
     description: 'make assumption {term} explicit;; {step in step}',
-    comment: 'Find and extract a hypothesis from a step.'
+    comment: 'extract an assumption'
   },
 
   // Given a proof step that is an implication and a path expected to
@@ -2411,7 +2416,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    comment: 'Move conjunct of implication LHS all the way to the right',
+    comment: 'move conjunct of implication LHS to the right end',
     labels: 'uncommon'
   },
 
@@ -2531,7 +2536,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
-    comment: 'Remove redundant hypotheses',
+    comment: 'remove redundant hypotheses',
     labels: 'uncommon'
   },
 
@@ -2547,7 +2552,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Equation of conjunctions: <input name=equation>',
-    comment: 'Prove equality of two chains of conjunctions',
+    comment: 'prove equality of two chains of conjunctions',
     labels: 'uncommon'
   },
 
@@ -2585,8 +2590,8 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    description: 'symmetry of "="',
-    comment: 'Symmetry of equality'
+    description: 'symmetry of equality',
+    comment: 'symmetry of equality'
   },
 
   equalityTransitive: {
@@ -2601,8 +2606,8 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    description: 'transitivity of "="',
-    comment: 'Transitivity of equality'
+    description: 'transitivity of equality',
+    comment: 'transitivity of equality'
   },
 
   //
@@ -2833,7 +2838,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to evaluate: <input name=term>',
-    comment: 'Evaluate an arithmetic expression',
+    comment: 'arithmetic expression evaluation',
     description: 'axiom of arithmetic'
   },
 
@@ -2909,7 +2914,7 @@ var ruleInfo = {
     isRewriter: true,
     inputs: {site: 1},
     form: '',
-    comment: 'evaluate arithmetic expression'
+    comment: 'arithmetic'
   },
 
   // Managing numeric type hypotheses
@@ -2989,7 +2994,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Conjunction to simplify: <input name=term>',
-    comment: 'Remove redundant type hypotheses in a conjunction',
+    comment: 'remove redundant type hypotheses',
     labels: 'uncommon'
   },
 
@@ -3006,7 +3011,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
-    comment: 'Remove redundant type hypotheses in a step',
+    comment: 'remove redundant type hypotheses in a step',
     labels: 'uncommon'
   },
 
@@ -3108,7 +3113,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Goal wff: <input name=term>',
-    comment: 'Derive H ==> R (<left> <binop> <right>).',
+    comment: 'prove H ==> R (<left> <binop> <right>).',
     labels: 'uncommon'
   },
 
@@ -3140,7 +3145,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to rewrite: <input name=term>',
-    comment: 'Find rewriter to simplify type expression with neg or recip.',
+    comment: 'find rewriter to simplify type expression with neg or recip.',
     labels: 'uncommon'
   },
 
@@ -3161,7 +3166,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to consider: <input name=term>',
-    comment: ('Term to consider for transformation'),
+    comment: ('consider a term to transform'),
     labels: 'display'
   },
 
@@ -3179,8 +3184,8 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    comment: ('Consider a subexpression for transformation'),
-    description: 'consider',
+    comment: ('consider the selected term'),
+    description: 'consider term for transformation',
     labels: 'display'
   },
 
@@ -3193,7 +3198,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Add <input name=term> to both sides of ' +
            'step <input name=equation>'),
-    comment: ('Add the same amount to both sides of the equation'),
+    comment: ('add to both sides'),
     description: 'add {term};; {in step equation}'
   },
 
@@ -3206,7 +3211,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Subtract <input name=term> from both sides of ' +
            'step <input name=equation>'),
-    comment: ('Subtract the same amount from both sides of the equation'),
+    comment: ('subtract from both sides'),
     description: 'subtract {term};; {in step equation}'
   },
 
@@ -3219,7 +3224,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Multiply both sides of step <input name=equation>' +
            ' by <input name=term>'),
-    comment: ('Multiply both sides of the equation by the same amount'),
+    comment: ('multiply both sides'),
     description: 'multiply by {term};; {in step equation}'
   },
 
@@ -3232,7 +3237,7 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Divide both sides of step <input name=equation>' +
            ' by <input name=term>'),
-    comment: ('Divide both sides of the equation by the same amount'),
+    comment: ('divide both sides'),
     description: 'divide by {term};; {in step equation}'
   },
 
