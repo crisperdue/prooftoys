@@ -78,7 +78,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Assert <input name=term>'),
-    hint: 'Assert as universally true',
+    hint: 'assert a new axiom',
+    labels: 'advanced',
     description: 'assert',
     comment: 'WFF to assert (possibly to prove later)'
   },
@@ -90,7 +91,7 @@ var ruleInfo = {
     inputs: {varName: 1, term: 2},
     form: ('Define name <input name=varName> as <input name=term>'),
     description: 'define {var}',
-    comment: 'Simple definition'
+    comment: 'create a simple definition'
   },
 
   /**
@@ -1483,7 +1484,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Boolean term to simplify: <input name=term>',
-    comment: ('Evaluates a boolean expression with no free variables.'),
+    comment: ('evaluate a boolean expression'),
     description: 'calculate boolean value'
   },
 
@@ -1700,6 +1701,7 @@ var ruleInfo = {
     form: ('Variable: <input name=varName> '
 	   + 'wff without it free: <input name=term1> '
 	   + 'other wff: <input name=term2>'),
+    labels: 'uncommon',
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
     description: 'move forall'
@@ -2907,7 +2909,7 @@ var ruleInfo = {
     isRewriter: true,
     inputs: {site: 1},
     form: '',
-    comment: 'Evaluate arithmetic expression'
+    comment: 'evaluate arithmetic expression'
   },
 
   // Managing numeric type hypotheses
