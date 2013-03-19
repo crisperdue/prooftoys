@@ -204,6 +204,7 @@ function StepEditor(controller) {
     self.showAll = false;
     selector.one('input').on('click', function(event) {
         self.showAll = this.get('checked');
+        self.ruleSelector.offerAxioms = !self.ruleSelector.offerAxioms;
         self.reset();
       });
   }
@@ -717,7 +718,7 @@ function ruleMenuFormatter(query, result, useHtml) {
       return 'theorem ' + thmText;
     }
   } else if (info.formula) {
-    return 'use ' + Toy.unicodify(info.formula);
+    return Toy.unicodify(info.formula);
   } else {
     var hint = info.hint || info.comment || '';
     if (useHtml) {
@@ -755,6 +756,7 @@ function BasicRuleSelector(source, selectionHandler, options) {
   this.source = source;
   this.ruleName = '';
 
+  // TODO: put this state in the step editor.
   this.offerAxioms = options && options.axioms;
 
   // Rule chooser:
@@ -795,12 +797,20 @@ BasicRuleSelector.prototype.reset = function() {
   var elt = this.node.getDOMNode();
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
+  // Map from rule display text to rule name.
+  var byText = {};
+  var texts = [];
   this.source().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       if (self.offerAxioms || ruleName.slice(0, 5) != 'axiom') {
-        var text = ruleMenuFormatter(null, {text: name}, false);
-        elt.add(new Option(text, ruleName));
+        var text = ruleMenuFormatter(null, {text: ruleName}, false);
+        texts.push(text);
+        byText[text] = ruleName;
       }
+    });
+  texts.sort(function(a, b) { return a.localeCompare(b); });
+  texts.forEach(function(text) {
+      elt.add(new Option(text, byText[text]));
     });
   var header = elt.options[0];
   elt.options[0].text = ((elt.options.length == 1)
