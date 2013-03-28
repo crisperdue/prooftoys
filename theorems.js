@@ -78,7 +78,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Assert <input name=term>'),
-    hint: 'assert a new axiom',
+    hint: 'assert without proof',
     labels: 'advanced',
     description: 'assert',
     comment: 'WFF to assert (possibly to prove later)'
@@ -3166,8 +3166,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to consider: <input name=term>',
+    hint: 'consider a term to transform',
     comment: ('consider a term to transform'),
-    labels: 'display'
   },
 
   // Identical to "consider", but uses a selected term.
