@@ -941,7 +941,7 @@ function exprNode() {
  * variable having the specified name.
  */
 function specialClasses(name) {
-  if (name.match(/^([a-zA-Z_].*$)/)) {
+  if (Toy.isVariable(name)) {
     return ['italic'];
   }
   if (name === 'T' || name === 'F') {
