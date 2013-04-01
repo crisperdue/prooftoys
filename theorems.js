@@ -3562,7 +3562,7 @@ for (var i = 0; i < theoremNames.length; i++) {
  * Build a schema for a conjunction of hypotheses, ensuring all are in
  * the TermMap, with optional exclusions, a TermSet.  The schema is of
  * the form a1 && ... && an, where the "a"s are variables for the
- * terms for each hyp in hyps.  Helper for eliminateBinaryOpTypes.
+ * terms for each hyp in hyps.
  */
 function buildHypSchema(hyps, map, exclusions) {
   var schema = null;

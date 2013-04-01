@@ -385,9 +385,8 @@ function matchAsSchema(schema, expr) {
 // sourceStep property.)
 
 /**
- * Instantiated only for templates.  An instance of this class
- * in a replacement template indicates the place in the larger
- * expression where the replacement is to occur.
+ * Superclass for terms of all kinds: Var, Call, Lambda.
+ * See internal comments for details.
  */
 function Expr() {
   this.sort = Expr.expr;
