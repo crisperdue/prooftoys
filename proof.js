@@ -772,7 +772,8 @@ function getEffectiveSelection(node) {
     var nodeParent1 = node.ancestor('.expr');
     var parent1 = getExpr(nodeParent1);
     var parent2 = getExpr(nodeParent1.ancestor('.expr'));
-    if (expr instanceof Toy.Var && Toy.isInfixDesired(expr) && parent2.isCall2()) {
+    if (expr instanceof Toy.Var &&
+        Toy.isInfixDesired(expr) && parent2.isCall2()) {
       // Node is for a binary operator called as binop.
       return parent2;
     } else if (parent1.isCall1() && expr == parent1.fn) {
