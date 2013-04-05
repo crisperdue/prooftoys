@@ -199,7 +199,8 @@ function StepEditor(controller) {
     selector.append(widget.node);
 
     // Append checkbox to control "all rules"
-    selector.append('<label><input type=checkbox>show all&nbsp;</label>');
+    selector.append('<label class=sted-show-all>' +
+                    '<input type=checkbox>show all&nbsp;</label>');
     // Step editor has state controlling whether to show all rules.
     self.showAll = false;
     selector.one('input').on('click', function(event) {
@@ -220,6 +221,20 @@ function StepEditor(controller) {
     }
   });
 }
+
+$.extend(StepEditor.prototype, {
+
+  showSaveRestore: function(value) {
+    $$(this.saveRestore).toggle(value);
+  },
+
+  displayShowAll: function(value) {
+    $('label.sted-show-all', $$(this.selector)).toggle(value);
+  }
+
+});
+
+
 
 /**
  * Handle errors in the step editor.  Displays step information in an

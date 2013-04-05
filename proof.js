@@ -256,8 +256,15 @@ ProofEditor.prototype.restoreState = function() {
 
 ProofEditor.prototype.setEditable = @(value) {
   @mainControl.setEditable(value);
-}
+};
 
+ProofEditor.prototype.showSaveRestore = @(value) {
+  @mainControl.stepEditor.showSaveRestore(value);
+};
+
+ProofEditor.prototype.displayShowAll = @(value) {
+  @mainControl.stepEditor.displayShowAll(value);
+};
 
 //// PROOF CONTROL
 
