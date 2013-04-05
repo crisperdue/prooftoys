@@ -18,20 +18,21 @@
 </head>
 <body class=yui3-skin-sam>
 
-<center><h2 style="margin-top: 5em">Rearranging expressions</h2></center>
+<center><h2 style="margin-top: 5em">Rearranging Expressions</h2></center>
 
 <table style="width: 80%; margin-left: 5em">
 <tr>
 <td id=xxleftNav>
 <!-- Boilerplate HTML COULD go here -->
 
-<td class="content shadow" style="vertical-align: top">
-<div style="margin-left: 2em; min-height: 30em">
-<h3>Problem 1</h3>
+<td style="vertical-align: top">
+<div class="content shadowTwo" style="padding: .5em 2em; min-height: 30em">
+<h3>learn by doing</h3>
 <p style="margin: 0em">
 Put the expression below into the form <s>(a * x) + b</s>
 <div id=proofEditor></div>
 </div>
+
 </td>
 </table>
 
@@ -39,6 +40,7 @@ Put the expression below into the form <s>(a * x) + b</s>
 <textarea id=ToyStore rows=20 cols=80 class=hidden></textarea>
 <!-- Force some white space to accommodate the autocompleter menu. -->
 <div style="height: 20em"></div>
+
 
 <!-- END OF HTML -->
 
@@ -63,6 +65,8 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   $('#proofEditor').append($$(editor.containerNode));
   window.proofEditor = editor;
   editor.setEditable(true);
+  editor.showSaveRestore(false);
+  editor.displayShowAll(false);
   // Override default settings.
   Toy.modes.subproofs = false;
 
