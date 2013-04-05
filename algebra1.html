@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+  Uses "almost standards mode", standard except for some table cell sizing.
+  -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Prooftoys - simple algebra</title>
+  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
+  <link type="text/css" rel="stylesheet" href="oli-style.css">
+  <script src="boilerplate.js"></script>
+
+<style type="text/css">
+/* CSS here */
+</style>
+
+</head>
+<body class=yui3-skin-sam>
+
+<center><h2 style="margin-top: 5em">Rearranging expressions</h2></center>
+
+<table style="width: 80%; margin-left: 5em">
+<tr>
+<td id=xxleftNav>
+<!-- Boilerplate HTML COULD go here -->
+
+<td class="content shadow" style="vertical-align: top">
+<div style="margin-left: 2em; min-height: 30em">
+<h3>Problem 1</h3>
+<p style="margin: 0em">
+Put the expression below into the form <s>(a * x) + b</s>
+<div id=proofEditor></div>
+</div>
+</td>
+</table>
+
+<!-- Storage for state to preserve across page unloads -->
+<textarea id=ToyStore rows=20 cols=80 class=hidden></textarea>
+<!-- Force some white space to accommodate the autocompleter menu. -->
+<div style="height: 20em"></div>
+
+<!-- END OF HTML -->
+
+<script>
+// Insert boilerplate.
+Toy.insertNav();
+Toy.insertSlogans();
+Toy.mathifyAll();
+
+// Remove "filter" to load minified JavaScript.
+YUI({filter: 'raw', insertBefore: 'styles'})
+  .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
+       'proof', 'collection', 'querystring-parse', 'json', 'overlay',
+        // querystring-parse requires "collection" (?!)
+   function(Y) {
+
+  // For debugging (and inline event handlers).
+  window.Toy = Toy;
+
+  // Proof editor node
+  var editor = new Toy.ProofEditor();
+  $('#proofEditor').append($$(editor.containerNode));
+  window.proofEditor = editor;
+  editor.setEditable(true);
+  // Override default settings.
+  Toy.modes.subproofs = false;
+
+  function random(min, max) {
+    var range = max - min + 1;
+    var r = Math.floor(range * Math.random()) + min;
+    return r;
+  }
+
+  // Prevent all but the directly relevant rules from being offered
+  // by autocompletion.
+  Y.each(Toy.rules, function(value, key) {
+      if (!key.match(/^(assoc|commut|arithmetic$|distrib|group$|display$)/)) {
+        info = value.info;
+        value.info.saveForm = value.info.form;
+        delete value.info.form;
+      }
+    });
+
+  // Create an initial proof step:
+  var c1 = random(2, 10);
+  var c2 = random(2, 10);
+  var term0 = Toy.parse('c1 * (c2 + x)');
+  var term1 = term0.subFree(new Toy.Var(c1 + ''), 'c1');
+  var term = term1.subFree(new Toy.Var(c2 + ''), 'c2');
+  var step = Toy.rules.consider(term);
+  editor.addStep(step);
+  // $$(step.stepNode)
+
+  function checkAnswer() {
+    var steps = editor._mainControl.steps;
+    var answer = steps[steps.length - 1];
+    window.answer = answer;
+    window.schema = Y.parse('h --> v = ((a * x) + b)');
+    var map = Y.matchAsSchema(window.schema, answer);
+    window.map = map;
+    console.log(Y.debugString(map));
+
+    // Test the result.
+
+    // Schema must match.
+    if (!map) { return false; }
+
+    var aOk = map.a instanceof Y.Var && map.a.value == c1;
+    if (!aOk) { return 'Coefficient a is not ' + c1; }
+
+    var xOk = map.x instanceof Y.Var && map.x.name == 'x';
+    if (!xOk) { return 'First term does not have form a * x' ; }
+
+    var bOk = map.b instanceof Y.Var && map.b.value == c1 * c2;
+    if (!bOk) { return 'Term b is not ' + (c1 * c2); }
+
+    return true;
+  };
+
+});
+
+</script>
+</body>
+</html>
