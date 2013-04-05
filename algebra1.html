@@ -73,6 +73,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   editor.showSaveRestore(false);
   editor.displayShowAll(false);
   // Override default settings.
+  Toy.simplifiedSelections = true;
   Toy.modes.subproofs = false;
 
   function random(min, max) {
@@ -99,7 +100,6 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   var term = term1.subFree(new Toy.Var(c2 + ''), 'c2');
   var step = Toy.rules.consider(term);
   editor.addStep(step);
-  // $$(step.stepNode)
 
   function checkAnswer() {
     var steps = editor.__mainControl.steps;
