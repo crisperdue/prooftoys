@@ -809,13 +809,13 @@ function BasicRuleSelector(source, selectionHandler, options) {
  */
 BasicRuleSelector.prototype.reset = function() {
   var self = this;
-  var elt = this.node.getDOMNode();
+  var elt = self.node.getDOMNode();
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
   // Map from rule display text to rule name.
   var byText = {};
   var texts = [];
-  this.source().forEach(function(name) {
+  self.source().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       if (self.offerAxioms || ruleName.slice(0, 5) != 'axiom') {
         var text = ruleMenuFormatter(null, {text: ruleName}, false);
@@ -829,10 +829,10 @@ BasicRuleSelector.prototype.reset = function() {
     });
   var header = elt.options[0];
   elt.options[0].text = ((elt.options.length == 1)
-                         ? '-- Select step or expression --'
-                         : '-- Choose rule or select step/expression --');
-  this.node.set('selectedIndex', 0);
-  this.ruleName = '';
+                         ? '-- First select a term or step above --'
+                         : '-- Choose a rule to apply --');
+  self.node.set('selectedIndex', 0);
+  self.ruleName = '';
 };
 
 /**
