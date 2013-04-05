@@ -31,6 +31,12 @@
 <p style="margin: 0em">
 Put the expression below into the form <s>(a * x) + b</s>
 <div id=proofEditor></div>
+<p>
+<input class=checkAnswer type=button value="Check Answer">
+<input type=button value="New Problem"
+    onclick="location.reload()">
+<p>
+<span id=errorDisplay style="color: red"></span>
 </div>
 
 </td>
@@ -38,9 +44,6 @@ Put the expression below into the form <s>(a * x) + b</s>
 
 <!-- Storage for state to preserve across page unloads -->
 <textarea id=ToyStore rows=20 cols=80 class=hidden></textarea>
-<!-- Force some white space to accommodate the autocompleter menu. -->
-<div style="height: 20em"></div>
-
 
 <!-- END OF HTML -->
 
@@ -97,30 +100,49 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   // $$(step.stepNode)
 
   function checkAnswer() {
-    var steps = editor._mainControl.steps;
+    var steps = editor.__mainControl.steps;
     var answer = steps[steps.length - 1];
     window.answer = answer;
-    window.schema = Y.parse('h --> v = ((a * x) + b)');
-    var map = Y.matchAsSchema(window.schema, answer);
+    window.schema = Toy.parse('h ==> v = ((a * x) + b)');
+    var map = Toy.matchAsSchema(window.schema, answer);
     window.map = map;
-    console.log(Y.debugString(map));
+    console.log(Toy.debugString(map));
 
     // Test the result.
 
     // Schema must match.
     if (!map) { return false; }
 
-    var aOk = map.a instanceof Y.Var && map.a.value == c1;
+    var aOk = map.a instanceof Toy.Var && map.a.value == c1;
     if (!aOk) { return 'Coefficient a is not ' + c1; }
 
-    var xOk = map.x instanceof Y.Var && map.x.name == 'x';
+    var xOk = map.x instanceof Toy.Var && map.x.name == 'x';
     if (!xOk) { return 'First term does not have form a * x' ; }
 
-    var bOk = map.b instanceof Y.Var && map.b.value == c1 * c2;
+    var bOk = map.b instanceof Toy.Var && map.b.value == c1 * c2;
     if (!bOk) { return 'Term b is not ' + (c1 * c2); }
 
     return true;
   };
+
+  var errorNode = $('#errorDisplay');
+
+  $('.checkAnswer').click(function(event) {
+      event.stopPropagation();
+      var status = checkAnswer();
+      var message = status;
+      if (typeof message !== 'string') {
+        message = message
+          ? 'Answer is Correct!'
+          : 'Incorrect answer, please try again';
+      }
+      errorNode.html(message);
+      errorNode.css('color', status === true ? 'green' : 'red');
+    });
+
+  $('body').mousedown(function(event) {
+      errorNode.html('');
+    });
 
 });
 
