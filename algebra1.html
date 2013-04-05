@@ -16,11 +16,11 @@
 </style>
 
 </head>
-<body class=yui3-skin-sam>
+<body style="font-size: larger" class=yui3-skin-sam>
 
 <center><h2 style="margin-top: 5em">Rearranging Expressions</h2></center>
 
-<table style="width: 80%; margin-left: 5em">
+<table style="width: 80%; margin-left: 50px">
 <tr>
 <td id=xxleftNav>
 <!-- Boilerplate HTML COULD go here -->
@@ -32,9 +32,11 @@
 Put the expression below into the form <s>(a * x) + b</s>
 <div id=proofEditor></div>
 <p>
-<input class=checkAnswer type=button value="Check Answer">
+<input class=checkAnswer type=button value="Check Answer"
+     style="font-size: larger">
 <input type=button value="New Problem"
-    onclick="location.reload()">
+    onclick="location.reload()"
+     style="font-size: larger">
 <p>
 <span id=errorDisplay style="color: red"></span>
 </div>
@@ -134,7 +136,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
       if (typeof message !== 'string') {
         message = message
           ? 'Answer is Correct!'
-          : 'Incorrect answer, please try again';
+          : 'Incorrect, please try again';
       }
       errorNode.html(message);
       errorNode.css('color', status === true ? 'green' : 'red');
