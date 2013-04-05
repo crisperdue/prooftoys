@@ -755,37 +755,22 @@ function renderStep(step, controller) {
 }
 
 /**
- * If not in simplified selections mode, just get the Expr for the
- * target node.
- *
- * If selections are simplified, do not select the name of a function
- * in a function call (including the operator of a call to a binary
- * operator), nor the "Curried part" of an infix call.
- *
+ * Searches up the DOM tree for a hovered expr or fullExpr node,
+ * depending on the selection mdoe, that is hovered.  Returns the expr
+ * for that node.
+ * 
  * Argument is the target node of a selection event.
  */
 function getEffectiveSelection(node) {
-  // TODO: Consider applying this concept to hovers also.
-  if (Toy.simplifiedSelections) {
-    // This could be optimized for speed:
-    var expr = getExpr(node);
-    var nodeParent1 = node.ancestor('.expr');
-    var parent1 = getExpr(nodeParent1);
-    var parent2 = getExpr(nodeParent1.ancestor('.expr'));
-    if (expr instanceof Toy.Var &&
-        Toy.isInfixDesired(expr) && parent2.isCall2()) {
-      // Node is for a binary operator called as binop.
-      return parent2;
-    } else if (parent1.isCall1() && expr == parent1.fn) {
-      // Node is for function name in call with 1 arg.
-      return parent1;
-    } else if (parent1.isCall2() && expr == parent1.fn) {
-      // Node is for "half" of a binop call.
-      return parent1;
-    } else {
-      return expr;
-    }
+  var selector = (Toy.simplifiedSelections
+                  ? '.fullExpr.hovered' :
+                  '.expr.hovered');
+  // Include the node itself in the search.
+  var selected = node.ancestor(selector, true);
+  if (selected) {
+    return getExpr(selected);
   } else {
+    Toy.logError('No selectable node found');
     return getExpr(node);
   }
 }
@@ -836,6 +821,7 @@ function renderAsStep(step) {
       var wffNode = step.node = exprNode();
     }
     wffNode.append(renderMain(step));
+    markAsFullExpr(wffNode);
     return wffNode;
   } else {
     return renderMain(step);
@@ -970,6 +956,15 @@ function textNode(text) {
   return document.createTextNode(text);
 }
 
+/**
+ * Marks the given node as a "full expr", selectable in the
+ * simplified selections mode, and highlighted on hover in
+ * that mode.
+ */
+function markAsFullExpr(node) {
+  node.addClass('fullExpr');
+}
+
 // _render(omit)
 //
 // Render this expression into a new YUI node, returning the node.
@@ -984,6 +979,9 @@ function textNode(text) {
 
 Var.prototype._render = function(omit) {
   var node = this.node = exprNode();
+  if (Toy.isVariable(this.name)) {
+    markAsFullExpr(node);
+  }
   var name = this.toUnicode();
   specialClasses(name).forEach(function(cl) { node.addClass(cl); });
   node.set('text', name);
@@ -1037,6 +1035,7 @@ Call.prototype._render = function(omit) {
       node.append(space());
       node.append(this.arg._render());
     }
+    markAsFullExpr(node);
   } else if (this.fn instanceof Var && Toy.isInfixDesired(this.fn)) {
     // Infix operator, but only one argument: "x +"
     node.append(this.arg._render());
@@ -1051,11 +1050,13 @@ Call.prototype._render = function(omit) {
     node.append(document.createTextNode('\u00a0'));
     node.append(this.fn._render());
     node.append(this.arg._render());
+    markAsFullExpr(node);
   } else {
     // Normal function call: "f x"
     node.append(this.fn._render());
     node.append(space());
     node.append(this.arg._render());
+    markAsFullExpr(node);
   }
   if (!omit) {
     node.append(')');
@@ -1065,6 +1066,7 @@ Call.prototype._render = function(omit) {
 
 Lambda.prototype._render = function(omit) {
   var node = this.node = exprNode();
+  markAsFullExpr(node);
   var stepNum = (Toy.trackSourceSteps
                  && this.sourceStep
                  && this.sourceStep.rendering.stepNumber);
@@ -1074,7 +1076,9 @@ Lambda.prototype._render = function(omit) {
   node.append('{');
   node.append(this.bound._render());
   node.append(textNode('. '));
-  node.append(this.body._render(true));
+  var bodyNode = this.body._render(true);
+  markAsFullExpr(bodyNode);
+  node.append(bodyNode);
   node.append('}');
   return node;
 };
@@ -1595,7 +1599,8 @@ function getExpr(node) {
  * be any part of a proof node.
  */
 function exprHandleOver(event) {
-  var target = event.target.ancestor('.expr', true) || event.target;
+  var className = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
+  var target = event.target.ancestor(className, true) || event.target;
   target.addClass('hovered');
   function isTarget(expr) {
     return expr.node == target;
@@ -1626,7 +1631,8 @@ function hoverShowPath(wff, path) {
  * Handle mouseouts on subexpressions.
  */
 function exprHandleOut(event) {
-  var target = event.target.ancestor('.expr', true) || event.target;
+  var className = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
+  var target = event.target.ancestor(className, true) || event.target;
   target.removeClass('hovered');
   var displayNode = Y.one('#hoverPath');
   if (displayNode) {
