@@ -567,6 +567,16 @@ Expr.prototype.hasFreeName = function(name) {
 };
 
 /**
+ * Returns a new Var with a name that does not occur free
+ * in this expression.  If a name is given, uses that name
+ * as the starting point for the name of the new variable.
+ */
+Expr.prototype.freshVar = function(name) {
+  name = name || 'x';
+  return genVar(name, this.freeNames());
+};
+
+/**
  * Returns a shallow copy of this, annotating the copy with the rule
  * name, rule arguments, hasHyps flag, and dependencies (ruleName,
  * ruleArgs, ruleDeps).  "This" becomes the "details" property if it

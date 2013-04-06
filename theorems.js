@@ -3191,6 +3191,7 @@ var ruleInfo = {
 
   addToBoth: {
     action: function(eqn, term) {
+      var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '+', term));
       var result = rules.applyToBoth(fn, eqn);
       return result.justify('addToBoth', arguments, [eqn]);
@@ -3204,6 +3205,7 @@ var ruleInfo = {
 
   subtractFromBoth: {
     action: function(eqn, term) {
+      var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '-', term));
       var result = rules.applyToBoth(fn, eqn);
       return result.justify('subtractFromBoth', arguments, [eqn]);
@@ -3217,6 +3219,7 @@ var ruleInfo = {
 
   multiplyBoth: {
     action: function(eqn, term) {
+      var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '*', term));
       var result = rules.applyToBoth(fn, eqn);
       return result.justify('multiplyBoth', arguments, [eqn]);
@@ -3230,6 +3233,7 @@ var ruleInfo = {
 
   divideBoth: {
     action: function(eqn, term) {
+      var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '/', term));
       var result = rules.applyToBoth(fn, eqn);
       return result.justify('divideBoth', arguments, [eqn]);

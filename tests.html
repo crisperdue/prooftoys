@@ -1693,15 +1693,15 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testOperateOnBoth: function() {
         var eqn = rules.eqSelf(x);
-        var five = Toy.parse('5');
-        assertEqual('((x + 5) = (x + 5))',
-                    rules.addToBoth(eqn, five));
-        assertEqual('((x - 5) = (x - 5))',
-                    rules.subtractFromBoth(eqn, five));
-        assertEqual('((x * 5) = (x * 5))',
-                    rules.multiplyBoth(eqn, five));
-        assertEqual('((x / 5) = (x / 5))',
-                    rules.divideBoth(eqn, five));
+        var x5 = Toy.parse('x + 5');
+        assertEqual('((x + (x + 5)) = (x + (x + 5)))',
+                    rules.addToBoth(eqn, x5));
+        assertEqual('((x - (x + 5)) = (x - (x + 5)))',
+                    rules.subtractFromBoth(eqn, x5));
+        assertEqual('((x * (x + 5)) = (x * (x + 5)))',
+                    rules.multiplyBoth(eqn, x5));
+        assertEqual('((x / (x + 5)) = (x / (x + 5)))',
+                    rules.divideBoth(eqn, x5));
       },
 
       testConsider: function() {
