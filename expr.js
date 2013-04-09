@@ -7,8 +7,6 @@ YUI.add('expr', function(Y) {
 
 //// GENERAL UTILITIES
 
-// CLASSES
-
 /**
  * Configure the given object with the given property descriptors.
  * This is like Object.defineProperties, except key values that are
@@ -27,6 +25,15 @@ function configure(object, properties) {
   }
   return object;
 }
+
+// Configure YUI Nodes with a property that returns a jQuery object
+// for their DOM element.  An aid to conversion from YUI to jQuery.
+configure(Y.Node.prototype, {
+    $$: {get: function() { return $$(this); }}
+  });
+
+
+//// CLASSES ////
 
 // SET
 
