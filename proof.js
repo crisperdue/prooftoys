@@ -163,7 +163,7 @@ function ProofEditor() {
   // TODO: Consider creating the step editor from the proof editor
   //   rather than ProofControls for cleaner structure, less redundant
   //   step editors.
-  @mainControl.stepEditor.saveRestore.on('click', function() {
+  @mainControl.stepEditor.saveRestore.$$.on('click', function() {
       self.stateDisplay.toggleClass('hidden');
     });
 
@@ -175,10 +175,10 @@ function ProofEditor() {
         proofToyState.store();
       });
   }
-  this.stateDisplay.one('.restoreProof').on('click', restoreProof);
+  this.stateDisplay.one('.restoreProof').$$.on('click', restoreProof);
 
   // Closing the state display:
-  this.stateDisplay.one('.hideProofState').on('click', function() {
+  this.stateDisplay.one('.hideProofState').$$.on('click', function() {
       self.stateDisplay.addClass('hidden');
     });
 
@@ -341,8 +341,8 @@ function ProofControl(properties) {
   this.hoverOverlay.hide();
 
   // Set up handling of mouseover and mouseout events.
-  Y.on('mouseover', exprHandleOver, this.node);
-  Y.on('mouseout', exprHandleOut, this.node);
+  this.node.$$.on('mouseover', exprHandleOver);
+  this.node.$$.on('mouseout', exprHandleOut);
 }
 
 /**
@@ -673,16 +673,16 @@ function renderStep(step, controller) {
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
   // Set up click handlers for selections within the step.
-  wffNode.on(TOUCHDOWN,
+  wffNode.$$.on(TOUCHDOWN,
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
          controller.handleExprSelection(getEffectiveSelection(event.target));
          event.preventDefault();
        });
-  stepNode.on(TOUCHDOWN,
+  stepNode.$$.on(TOUCHDOWN,
        function(event) {
-         controller.handleStepClick(getProofStep(event.target));
+         controller.handleStepClick(getProofStep(Y.one(event.target)));
        });
 
   stepNode.one('.stepInfo').setContent(formattedStepInfo(step));
@@ -701,23 +701,25 @@ function renderStep(step, controller) {
     }
   }    
   // Set up "hover" event handling on the stepNode.
-  stepNode.on('hover',
-              // Call hoverStep, passing these arguments as well as the event.
-              hover.bind(null, 1),
-              hover.bind(null, -1));
+  stepNode.$$
+    .hover(
+           // Call hoverStep, passing these arguments as well as the event.
+           hover.bind(null, 1),
+           hover.bind(null, -1));
   // We count the wffNode as outside for this purpose.
-  wffNode.on('hover',
-             // Call hoverStep, passing these arguments as well as the event.
-             hover.bind(null, -1),
-             hover.bind(null, 1));
+  wffNode.$$
+    .hover(
+           // Call hoverStep, passing these arguments as well as the event.
+           hover.bind(null, -1),
+           hover.bind(null, 1));
 
   var deleter = stepNode.one('.deleteStep');
   if (deleter) {
-    deleter.on('mousedown', function(event) {
+    deleter.$$.on('mousedown', function(event) {
         // Don't give the proof step a chance to select itself.
         event.stopPropagation();
       });
-    deleter.on('click', function(event) {
+    deleter.$$.on('click', function(event) {
         // Don't give the proof step a chance to select itself.
         event.stopPropagation();
         var msg = 'Delete step ' + step.stepNumber + ' and all following?';
@@ -733,15 +735,15 @@ function renderStep(step, controller) {
       });
   }
                
-  // Caution: passing null to Y.on selects everything.
-  // Clicking on a ruleName "link" shows the subproof.
+  // Clicking on a ruleName "link" shows the subproof when subproofs
+  // are enabled.
   var target = stepNode.one('span.ruleName[class~="link"]');
   if (target && Toy.modes.subproofs) {
-    target.on('mousedown', function(event) {
+    target.$$.on('mousedown', function(event) {
           // Don't give the proof step a chance to select itself.
           event.stopPropagation();
       });
-    target.on('click', function(event) {
+    target.$$.on('click', function(event) {
           // Don't give the proof step a chance to select itself.
           event.stopPropagation();
           if (step.subproofControl) {
@@ -766,9 +768,9 @@ function getEffectiveSelection(node) {
                   ? '.fullExpr.hovered' :
                   '.expr.hovered');
   // Include the node itself in the search.
-  var selected = node.ancestor(selector, true);
+  var selected = $(node).closest(selector)[0];
   if (selected) {
-    return getExpr(selected);
+    return getExpr(Y.one(selected));
   } else {
     Toy.logError('No selectable node found');
     return getExpr(node);
@@ -1599,15 +1601,16 @@ function getExpr(node) {
  * be any part of a proof node.
  */
 function exprHandleOver(event) {
-  var className = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
-  var target = event.target.ancestor(className, true) || event.target;
-  target.addClass('hovered');
+  var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
+  var target = $(event.target);
+  var exprNode = target.closest(selector) || target;
+  exprNode.addClass('hovered');
   function isTarget(expr) {
     return expr.node == target;
   }
-  var stepNode = target.ancestor('.proofStep');
-  if (stepNode) {
-    var proofStep = stepNode.getData('proofStep');
+  var stepElt = exprNode.closest('.proofStep')[0];
+  if (stepElt) {
+    var proofStep = Y.one(stepElt).getData('proofStep');
     var path = proofStep.pathTo(isTarget);
     hoverShowPath(proofStep, path);
   }
@@ -1631,8 +1634,8 @@ function hoverShowPath(wff, path) {
  * Handle mouseouts on subexpressions.
  */
 function exprHandleOut(event) {
-  var className = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
-  var target = event.target.ancestor(className, true) || event.target;
+  var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
+  var target = $(event.target).closest(selector) || $(event.target);
   target.removeClass('hovered');
   var displayNode = Y.one('#hoverPath');
   if (displayNode) {
