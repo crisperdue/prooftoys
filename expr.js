@@ -26,6 +26,18 @@ function configure(object, properties) {
   return object;
 }
 
+/**
+ * Returns an object with no prototype, having the own properties
+ * of the input object as its properties.
+ */
+function ownProperties(object) {
+  var result = Object.create(null);
+  Object.getOwnPropertyNames(object).forEach(function(name) {
+      result[name] = object[name];
+    });
+  return result;
+}
+
 // Configure YUI Nodes with a property that returns a jQuery object
 // for their DOM element.  An aid to conversion from YUI to jQuery.
 configure(Y.Node.prototype, {
@@ -3741,7 +3753,7 @@ function decodeArg(info, steps) {
 //// Export public names.
 
 Toy.configure = configure;
-
+Toy.ownProperties = ownProperties;
 Toy.isEmpty = isEmpty;
 
 Toy.Set = Set;
