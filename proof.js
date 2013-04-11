@@ -30,6 +30,68 @@ var Var = Toy.Var;
 var Call = Toy.Call;
 var Lambda = Toy.Lambda;
 
+/**
+ * Applies the action to each integer index and "input type" of each of
+ * the arguments described by a rules "inputs" descriptor.  Indexes
+ * passed to the action are zero-based, not 1-based as in the
+ * descriptors.  Currently does not include indexes of paths not
+ * explicitly described.
+ */
+function eachArgType(ruleName, action) {
+  var inputs = Toy.rules[ruleName].info.inputs;
+  for (var type in inputs) {
+    if (type === 'condition') {
+      // Value is not a position or position list.
+      continue;
+    }
+    var where = inputs[type];
+    if (typeof where == 'number') {
+      action(where - 1, type);
+    } else {
+      where.forEach(function(position) {
+        action(position - 1, type);
+      });
+    }
+  }
+}
+
+/**
+ * Given a step, rendered or not, uses its rule information to return
+ * a list of paths used in its rule.
+ */
+function stepPaths(step) {
+  assert(step.isStep(), 'Not a step: ' + step);
+  var results = [];
+  var args = step.ruleArgs;
+  eachArgType(step.ruleName, function(position, type) {
+      if (Toy.siteTypes.hasOwnProperty(type)) {
+        results.push(step.ruleArgs[position + 1]);
+      }
+    });
+  return results;
+}
+
+/**
+ * Given a step, rendered or not, uses its rule information to return a list
+ * of subexpressions of renderings of source steps that provided the input
+ * sites for this step.  Their nodes will contain the rendering of the sites.
+ */
+function stepSites(step) {
+  assert(step.isStep(), 'Not a step: ' + step);
+  var results = [];
+  var args = step.ruleArgs;
+  eachArgType(step.ruleName, function(position, type) {
+    if (Toy.siteTypes.hasOwnProperty(type)) {
+      var source = step.ruleArgs[position];
+      if (source.rendering) {
+        results.push(source.rendering.locate(step.ruleArgs[position + 1]));
+      }
+    }
+  });
+  return results;
+}
+
+
 //// APPLICATION DATA STORAGE
 
 var proofToyState = {
@@ -521,7 +583,6 @@ ProofControl.prototype.setEditable = function(state) {
     node.hide();
   }
 }
-
 
 
 // STEP SELECTION
@@ -1859,6 +1920,10 @@ function addBottomPanel(node) {
 
 
 //// Export public names.
+
+Toy.eachArgType = eachArgType;
+Toy.stepPaths = stepPaths;
+Toy.stepSites = stepSites;
 
 Toy.proofToyState = proofToyState;
 Toy.ProofEditor = ProofEditor;

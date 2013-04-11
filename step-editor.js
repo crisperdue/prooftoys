@@ -10,7 +10,7 @@ var assert = Toy.assertTrue;
 // CSS class names beginning with "sted-" are reserved to
 // the step editor.  Access to nodes through their class
 // should always work in the context of the step editor's node.
-// Classes are:
+// The CSS classes are:
 //
 // sted-input: The main input field, has auto-completion.
 // sted-label: Text label of the main input field.
@@ -46,31 +46,6 @@ var assert = Toy.assertTrue;
 // bindingSite: Matches a variable binding in a step (as in "changeVar").
 //
 
-/**
- * Applies the action to each integer index and "form type" of each of
- * the arguments described by a rules "inputs" descriptor.  Indexes
- * passed to the action are zero-based, not 1-based as in the
- * descriptors.  Currently does not include indexes of paths not
- * explicitly described.
- */
-function eachArgType(ruleName, action) {
-  var inputs = Toy.rules[ruleName].info.inputs;
-  for (var type in inputs) {
-    if (type === 'condition') {
-      // Value is not a position or position list.
-      continue;
-    }
-    var where = inputs[type];
-    if (typeof where == 'number') {
-      action(where - 1, type);
-    } else {
-      where.forEach(function(position) {
-        action(position - 1, type);
-      });
-    }
-  }
-}
-
 // All types that can be entered in a form.  Omits site, bindingSite,
 // and reducible, which are currently not supported in forms.
 var formTypes = {
@@ -96,42 +71,6 @@ var siteTypes = {
   bindingSite: true,
   reducible: true
 };
-
-/**
- * Given a step, rendered or not, uses its rule information to return
- * a list of paths used in it to refer to subexpressions of inputs.
- */
-function stepPaths(step) {
-  assert(step.isStep(), 'Not a step: ' + step);
-  var results = [];
-  var args = step.ruleArgs;
-  eachArgType(step.ruleName, function(position, type) {
-      if (siteTypes.hasOwnProperty(type)) {
-        results.push(step.ruleArgs[position + 1]);
-      }
-    });
-  return results;
-}
-
-/**
- * Given a step, rendered or not, uses its rule information to return a list
- * of subexpressions of renderings of source steps that provided the input
- * sites for this step.  Their nodes will contain the rendering of the sites.
- */
-function stepSites(step) {
-  assert(step.isStep(), 'Not a step: ' + step);
-  var results = [];
-  var args = step.ruleArgs;
-  eachArgType(step.ruleName, function(position, type) {
-    if (siteTypes.hasOwnProperty(type)) {
-      var source = step.ruleArgs[position];
-      if (source.rendering) {
-        results.push(source.rendering.locate(step.ruleArgs[position + 1]));
-      }
-    }
-  });
-  return results;
-}
 
 /**
  * A ProofControl can have only one StepEditor.  It appears at the end
@@ -854,9 +793,6 @@ Toy.stepTypes = stepTypes;
 Toy.siteTypes = siteTypes;
 
 Toy.StepEditor = StepEditor;
-Toy.stepPaths = stepPaths;
-Toy.stepSites = stepSites;
-Toy.eachArgType = eachArgType;
 
 }, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',
                       'autocomplete-filters', 'autocomplete-highlighters']});
