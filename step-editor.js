@@ -203,19 +203,19 @@ function StepEditor(controller) {
                     '<input type=checkbox>show all&nbsp;</label>');
     // Step editor has state controlling whether to show all rules.
     self.showAll = false;
-    selector.one('input').on('click', function(event) {
-        self.showAll = this.get('checked');
+    selector.$$.find('input').on('click', function(event) {
+        self.showAll = this.checked;
         self.ruleSelector.offerAxioms = !self.ruleSelector.offerAxioms;
         self.reset();
       });
   }
   
   // Install event handlers.
-  self.clearer.on('click', function() { self.reset(); });
+  self.clearer.$$.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
   // Use "keydown" because "keyup" would catch the "up" event from
   // the Enter key in the autocompleter field.
-  self.form.on('keydown', function(event) {
+  self.form.$$.on('keydown', function(event) {
     if (event.keyCode == 13) {
       self.tryExecuteRule(true);
     }
@@ -697,7 +697,7 @@ function RuleSelector(input, source, selectionHandler) {
       self.ruleName = event.result.text.replace(/^xiom/, 'axiom');
       selectionHandler();
     });
-  input.on('focus', function() {
+  input.$$.on('focus', function() {
       if (input.get('value') == '') {
         // Query on "initial" focus, working around autocomplete
         // behavior that only queries on keystrokes.

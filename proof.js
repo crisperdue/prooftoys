@@ -87,8 +87,13 @@ var proofToyState = {
     }
   }
 }
-// This should be insensitive to when this script loads.
-Y.on('domready', proofToyState._load, proofToyState);
+
+// When the page is completely loaded, load the app state.
+$(window).load($.proxy(proofToyState, '_load'));
+
+// Try using this version when YUI is removed.
+// When the DOM is ready load the proof state.
+// $($.proxy(proofToyState, '_load'));
 
 
 //// PROOF EDITOR
