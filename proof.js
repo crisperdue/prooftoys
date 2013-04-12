@@ -24,7 +24,7 @@ YUI.add('proof', function(Y) {
 // Use the application's assert function.
 var assert = Toy.assertTrue;
 
-// Make the main classes available without "Y.":
+// Make the main classes available without "Toy."
 var Expr = Toy.Expr;
 var Var = Toy.Var;
 var Call = Toy.Call;
@@ -124,7 +124,7 @@ var proofToyState = {
    */
   store: function() {
     if (this._toyStore) {
-      this._toyStore.set('value', Y.JSON.stringify(this.data, null, 1));
+      this._toyStore.value = JSON.stringify(this.data, null, 1);
     }
   },
 
@@ -134,13 +134,13 @@ var proofToyState = {
    * store the global data back into the toyStore.
    */
   _load: function() {
-    node = Y.one('#ToyStore');
-    this._toyStore = node;
-    if (node) {
-      var text = node.get('value');
+    storage = $('#ToyStore')[0];
+    this._toyStore = storage;
+    if (storage) {
+      var text = storage.value;
       if (text) {
         // Non-empty text.
-        this.data = Y.JSON.parse(text);
+        this.data = JSON.parse(text);
       }
       this._dataReadyHandlers.forEach(function(fn) { fn(); });
       this.store();
@@ -195,17 +195,18 @@ function ProofEditor() {
     '<input class=hideProofState type=button value="Close"><br>\n' +
     '<textarea class=proofStateArea rows=20></textarea>\n' +
     '</div>\n';
-  this.stateDisplay = Y.Node.create(stateDisplayHtml);
-  this.stateArea = this.stateDisplay.one('.proofStateArea');
-  this.containerNode = Y.Node.create('<div class=proofContainer></div>');
+  this._stateDisplay = $(stateDisplayHtml);
+  this._stateArea = this._stateDisplay.find('.proofStateArea')[0];
+  this.containerNode = $('<div class=proofContainer></div>');
   this.containerNode
     .append(@mainControl.node)
-    .append(this.stateDisplay);
+    .append(this._stateDisplay);
 
   // If the proof has changed, save its state.
   this._refresher = new Toy.Refresher(function() {
       self.saveState();
     });
+
   // Make the ProofControl save state when the proof changes.
   @mainControl.proofChanged = function() {
     // Changing the proof may change selections (without registering a
@@ -231,7 +232,7 @@ function ProofEditor() {
   //   rather than ProofControls for cleaner structure, less redundant
   //   step editors.
   @mainControl.stepEditor.saveRestore.on('click', function() {
-      self.stateDisplay.toggleClass('hidden');
+      self._stateDisplay.toggleClass('hidden');
     });
 
   // Handler for the "restore proof" button.  Restores proof state from
@@ -242,11 +243,11 @@ function ProofEditor() {
         proofToyState.store();
       });
   }
-  this.stateDisplay.one('.restoreProof').$$.on('click', restoreProof);
+  this._stateDisplay.find('.restoreProof').on('click', restoreProof);
 
   // Closing the state display:
-  this.stateDisplay.one('.hideProofState').$$.on('click', function() {
-      self.stateDisplay.addClass('hidden');
+  this._stateDisplay.find('.hideProofState').on('click', function() {
+      self._stateDisplay.addClass('hidden');
     });
 
   // Sets this ProofEditor's "data" property to the global data
@@ -307,7 +308,7 @@ ProofEditor.prototype.setSteps = @(steps) {
  */
 ProofEditor.prototype.saveState = function() {
   var text = this.getStateString();
-  this.stateArea.set('value', text);
+  this._stateArea.value = text;
   this.data.proofState = text;
   proofToyState.store();
 };
@@ -316,7 +317,7 @@ ProofEditor.prototype.saveState = function() {
  * Attempts to restore the proof state from the proof's text area.
  */
 ProofEditor.prototype.restoreState = function() {
-  var string = this.stateArea.get('value');
+  var string = this._stateArea.value;
   assert(string, 'No proof state recorded');
   this.setStateFromString(string);
 };
