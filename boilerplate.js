@@ -148,6 +148,22 @@ Toy.mathifyAll = function() {
   }
 };
 
+// This will contain a map of query string parameter names
+// to their values.  Does not handle repeated parameters.
+Toy.queryParams = {};
+(function () {
+  function decode(s) {
+    return decodeURIComponent(s.replace(/\+/g, " "));
+  }
+  var query = window.location.search.substring(1);
+  var match;
+  // Must use a variable to avoid reinitializing.
+  var pattern = /([^&=]+)=?([^&]*)/g;
+  while (match = pattern.exec(query)) {
+    Toy.queryParams[decode(match[1])] = decode(match[2]);
+  }
+})();
+
 // Make ".toString()" accessible as ".str" for debugger interaction.
 Object.defineProperty(Object.prototype,
                       'str',
