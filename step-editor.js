@@ -80,10 +80,10 @@ var siteTypes = {
  * step, for steps that already exist.  Also rearranging proofs.
  *
  * Fields:
- * node: DIV with the step editor's HTML.
- * form: SPAN to hold the argument input form.
- * ruleSelector: rule selector control.
- * controller: ProofControl.
+ * jq: DIV with the step editor's HTML.
+ * form: jQuery SPAN to hold the argument input form.
+ * saveRestore: jQuery button to control the save/restore area.
+ * controller: ProofControl to edit
  */
 function StepEditor(controller) {
   // Make this available to all inner functions.
@@ -92,57 +92,50 @@ function StepEditor(controller) {
   self.controller = controller;
 
   // Create a DIV with the step editor content.
-  var div = Y.Node.create('<div class=stepEditor style="clear: both"></div>');
+  var div = $('<div class=stepEditor style="clear: both"></div>');
   // Button to clear rule input, visible when a form is active.
-  var clearHtml =
-    '<input class=sted-clear type=button value=x title="Clear the input">';
-  self.clearer = Y.Node.create(clearHtml);
+  self.clearer =
+    $('<input class=sted-clear type=button value=x title="Clear the input">');
   self.clearer.addClass('invisible');
   div.append(self.clearer);
 
   // Selector holds rule selector and related controls, shown
   // and hidden as a group.
-  var selector = Y.Node.create('<span class=ruleSelector></span>');
-  div.append(selector);
-  self.selector = selector;
+  var selectorSpan = $('<span class=ruleSelector></span>');
+  div.append(selectorSpan);
+  self._selectorSpan = selectorSpan;
 
-  self.form = Y.Node.create('<span class=sted-form></span>');
+  self.form = $('<span class=sted-form></span>');
   div.append(self.form);
 
-  var noform = Y.Node.create('<div style="margin-left: 1.5em"/>');
+  // TODO: Make this appear and disappear with the rule selector,
+  // or move it somewhere else.
+  var noform = $('<div style="margin-left: 1.5em"/>');
   div.append(noform);
-  var sr = ('<input class=sted-save-restore type=button '
-            + 'value="Save/restore proof ..." '
-            + 'title="Save or restore proof state">');
-  self.saveRestore = Y.Node.create(sr);
+  self.saveRestore =
+    $('<input class=sted-save-restore type=button '
+      + 'value="Save/restore proof ..." '
+      + 'title="Save or restore proof state">')
   noform.append(self.saveRestore);
   // TODO: add more content here: div.append('<div>Hello World</div>');
-  self.node = div;
+  self.jq = div;
 
   // Install a rule selector
   if (Toy.useAutocompleter) {
-    var hint =
-      'Enter axiom or theorem name; for inference select target first';
-    var html = '<input class=sted-input maxlength=200 title="' + hint + '">';
-    var input = Y.Node.create(html);
-    selector.append(input);
-    self.ruleSelector =
-      new RuleSelector(input,
-                       $.proxy(self, 'filteredRuleNames'),
-                       $.proxy(self, 'handleSelection'));
+    throw new Error('Autocompleter no longer supported');
   } else {
     // Append the actual rule selector.
     var widget = new BasicRuleSelector($.proxy(self, 'offerableRuleNames'),
                                        $.proxy(self, 'handleSelection'));
     self.ruleSelector = widget;
-    selector.append(widget.node);
+    selectorSpan.append(widget.jq);
 
     // Append checkbox to control "all rules"
-    selector.append('<label class=sted-show-all>' +
-                    '<input type=checkbox>show all&nbsp;</label>');
+    selectorSpan.append('<label class=sted-show-all>' +
+                        '<input type=checkbox>show all&nbsp;</label>');
     // Step editor has state controlling whether to show all rules.
     self.showAll = false;
-    selector.$$.find('input').on('click', function(event) {
+    selectorSpan.find('input:checkbox').on('click', function(event) {
         self.showAll = this.checked;
         self.ruleSelector.offerAxioms = !self.ruleSelector.offerAxioms;
         self.reset();
@@ -150,12 +143,11 @@ function StepEditor(controller) {
   }
   
   // Install event handlers.
-  self.clearer.$$.on('click', function() { self.reset(); });
+  self.clearer.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
-  // Use "keydown" because "keyup" would catch the "up" event from
-  // the Enter key in the autocompleter field.
-  self.form.$$.on('keydown', function(event) {
+  self.form.on('keydown', function(event) {
     if (event.keyCode == 13) {
+      // <enter> key was hit
       self.tryExecuteRule(true);
     }
   });
@@ -164,11 +156,11 @@ function StepEditor(controller) {
 $.extend(StepEditor.prototype, {
 
   showSaveRestore: function(value) {
-    $$(this.saveRestore).toggle(value);
+    this.saveRestore.toggle(value);
   },
 
   displayShowAll: function(value) {
-    $('label.sted-show-all', $$(this.selector)).toggle(value);
+    this._selectorSpan.find('label.sted-show-all').toggle(value);
   }
 
 });
@@ -182,12 +174,12 @@ $.extend(StepEditor.prototype, {
 StepEditor.prototype.error = function(message) {
   if (Toy.errors.length) {
     var last = Toy.errors[Toy.errors.length - 1];
-    var proofNode = Y.one('#proofErrors');
-    if (proofNode) {
-      proofNode.append('<p><b>Errors: (' + Toy.errors.length
+    var proofJQ = $('#proofErrors');
+    if (proofJQ.length) {
+      proofJQ.append('<p><b>Errors: (' + Toy.errors.length
 		       + ') ' + last.message + '</b></p>');
       if (last.step) {
-	proofNode.append(Toy.renderProof(last.step).node);
+        Toy.renderProof(last.step, proofJQ);
       }
     }
   }
@@ -201,9 +193,9 @@ StepEditor.prototype.error = function(message) {
  */
 StepEditor.prototype.reset = function() {
   this.ruleSelector.reset();
-  this.selector.removeClass('hidden');
+  this._selectorSpan.removeClass('hidden');
   this.clearer.addClass('invisible');
-  this.form.setContent('');
+  this.form.html('');
 };
 
 /**
@@ -223,16 +215,20 @@ StepEditor.prototype.handleSelection = function() {
     if (template) {
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
-      this.selector.addClass('hidden');
+      this._selectorSpan.addClass('hidden');
       this.clearer.removeClass('invisible');
-      this.form.setContent(template);
+      this.form.html(template);
       addClassInfo(this.form);
       if (!usesSite(rule)) {
 	this.addSelectionToForm(rule);
       }
-      // Focus the first INPUT element of the form.
-      var input = this.form.one('input');
-      input.focus();
+      // Focus the first empty text field of the form.
+      this.form.find('input:text').each(function() {
+          if (!this.value) {
+            this.focus();
+            return false;
+          }
+        });
     }
     this.tryExecuteRule(false);
   }
@@ -257,12 +253,11 @@ function usesSite(rule) {
  * e.g. step2 ==> step.
  */
 function addClassInfo(form) {
-  form.all('input').each(function(node) {
-    var name = node.get('name');
-    var match = name.match(/^.+?(\d*)$/);
-    className = (match && match[1]) || name;
-    node.addClass(className);
-  });
+  form.find('input').each(function() {
+      // Note: the pattern matches any string.
+      var className = this.name.match(/^(.*?)\d*$/)[1];
+      $(this).addClass(className);
+    });
 }
 
 /**
@@ -283,24 +278,23 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
     var n = step.stepNumber;
     // Search for the first input field that is compatible with the
     // selection and fill it in with selection information.
-    form.all('input').some(function(field) {
-      var fieldType = field.get('name').match(/^(.*?)\d*$/)[1];
+    form.find('input').each(function() {
+      var fieldType = this.name.match(/^(.*?)\d*$/)[1];
       if (expr) {
 	// TODO: Don't use the selection as a term if it will be used
 	// by the rule as a site.
 	if (fieldType == 'term') {
-	  field.set('value', expr.toString());
-	  return true;
-	} else {
+          // TODO: Use printing that is guaranteed reversible.
+	  this.value = expr.toString();
+          // Stop iteration.
 	  return false;
 	}
       } else {
 	if (fieldType == 'step'
 	    || (fieldType == 'equation' && step.unHyp().isCall2('='))
 	    || (fieldType == 'implication' && step.unHyp().isCall2('==>'))) {
-	  field.set('value', n);
-	  return true;
-	} else {
+	  this.value = n;
+          // Stop iteration.
 	  return false;
 	}
       }
@@ -397,10 +391,10 @@ StepEditor.prototype.fillWithSelectedSite = function(args) {
 StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
   var rule = Toy.rules[this.ruleSelector.ruleName];
-  this.form.all('input').each(function(node) {
+  $(this.form).find('input').each(function() {
     // The "name" attribute of the input should be the name of an input type,
     // possibly followed by some digits indicating which input.
-    var name = node.get('name');
+    var name = this.name;
     var match = name.match(/^(.+?)(\d*)$/);
     if (match) {
       var type = match[1];
@@ -412,9 +406,9 @@ StepEditor.prototype.fillFromForm = function(args) {
       if (!argNum) {
 	throw new Error('Internal error: no input descriptor for type ' + type);
       }
-      args[argNum - 1] = self.parseValue(node.get('value'), type);
+      args[argNum - 1] = self.parseValue(this.value, type);
     } else {
-      Y.log('Unrecognized input name: ' + name);
+      Toy.logError('Unrecognized input name: ' + name);
     }
   });
 };
@@ -541,11 +535,14 @@ StepEditor.prototype.offerable = function(ruleName) {
     // selection.
     return acceptsSelection(step, ruleName, false);
   } else {
-    // No selection, pass only rules that take no step or site.
-    var inputs = info.inputs;
-    return !Y.Object.some(inputs, function(value, type) {
-      return type in stepTypes || type in siteTypes;
-    });
+    // No selection, the rule must take no step or site.
+    for (type in info.inputs) {
+      // Use "in", the type will not be an object method name.
+      if (type in stepTypes || type in siteTypes) {
+        return false;
+      }
+    }
+    return true;
   }
 };
 
@@ -598,53 +595,6 @@ function acceptsSelection(step, ruleName, acceptTerm) {
 }
 
 
-//// RULE SELECTOR
-
-/**
- * Constructor.  Arguments are input, an input field; source, a
- * function that returns autocompleter results; and selectionHandler,
- * a function of no arguments to call when there is a new selection.
- *
- * Public properties:
- *   node: the DOM node of the rendering.
- *   ruleName: name of currently selected rule.
- */
-function RuleSelector(input, source, selectionHandler) {
-  var self = this;
-  this._input = input;
-  this.node = input;
-  this.ruleName = '';
-  var align = Y.WidgetPositionAlign;
-  var config = {resultFilters: ['startsWith'],
-                resultHighlighter: 'startsWith',
-		resultFormatter: function(query, results) {
-      return results.map(function (result) {
-          return ruleMenuFormatter(query, result, true);
-        });
-    },
-                source: source,
-                inputNode: input,
-                render: true,
-                minQueryLength: 0,
-		activateFirstItem: true,
-  };
-  var ac = new Y.AutoCompleteList(config);
-  this._completer = ac;
-  // Do this after the event so handler actions such as updating the
-  // input field override the default action.
-  ac.after('select', function(event) {
-      self.ruleName = event.result.text.replace(/^xiom/, 'axiom');
-      selectionHandler();
-    });
-  input.$$.on('focus', function() {
-      if (input.get('value') == '') {
-        // Query on "initial" focus, working around autocomplete
-        // behavior that only queries on keystrokes.
-        ac.sendRequest('');
-      }
-    });
-}
-
 /**
  * Used by the rule menu creator to convert one query result into a
  * fully-formatted menu entry with hints.  Accepts a query and result
@@ -683,25 +633,6 @@ function ruleMenuFormatter(query, result, useHtml) {
   }
 }
 
-/**
- * Return the RuleSelector to a "fresh" state, with no text in the
- * input field and no choices filtered out.
- */
-RuleSelector.prototype.reset = function() {
-  this._input.set('value', '');
-  // Send an empty request to make sure the completer is laid out wide
-  // enough to accommodate the widest lines.
-  this._completer.sendRequest('');
-}
-
-/**
- * Take keyboard focus if the underlying widget can do so.
- */
-RuleSelector.prototype.focus = function() {
-  var self = this;
-  window.setTimeout(function() { self._input.focus(); }, 0);
-};
-
 
 //// BASICRULESELECTOR
 
@@ -731,7 +662,7 @@ function BasicRuleSelector(source, selectionHandler, options) {
                              value: ''}));
   */
 
-  this.node = new Y.Node(ruleChooser[0]);
+  this.jq = ruleChooser;
 
   this.reset();
 
@@ -748,7 +679,7 @@ function BasicRuleSelector(source, selectionHandler, options) {
  */
 BasicRuleSelector.prototype.reset = function() {
   var self = this;
-  var elt = self.node.getDOMNode();
+  var elt = self.jq[0];
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
   // Map from rule display text to rule name.
@@ -770,7 +701,7 @@ BasicRuleSelector.prototype.reset = function() {
   elt.options[0].text = ((elt.options.length == 1)
                          ? '-- First select a term or step above --'
                          : '-- Choose a rule to apply --');
-  self.node.set('selectedIndex', 0);
+  elt.selectedIndex = 0;
   self.ruleName = '';
 };
 
@@ -779,8 +710,8 @@ BasicRuleSelector.prototype.reset = function() {
  * This is a harmless no-op on known touchscreen devices.
  */
 BasicRuleSelector.prototype.focus = function() {
-  var node = this.node;
-  window.setTimeout(function() { node.focus(); }, 0);
+  var jq = this.jq;
+  window.setTimeout(function() { jq.focus(); }, 0);
 };
 
 

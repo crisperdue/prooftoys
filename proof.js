@@ -230,7 +230,7 @@ function ProofEditor() {
   // TODO: Consider creating the step editor from the proof editor
   //   rather than ProofControls for cleaner structure, less redundant
   //   step editors.
-  @mainControl.stepEditor.saveRestore.$$.on('click', function() {
+  @mainControl.stepEditor.saveRestore.on('click', function() {
       self.stateDisplay.toggleClass('hidden');
     });
 
@@ -394,7 +394,7 @@ function ProofControl(properties) {
   var stepsParent = this.node.one('.stepsParent');
   this.stepsNode = this.node.one('.proofSteps');
   this.stepEditor = new Toy.StepEditor(this);
-  this.node.one('td').append(this.stepEditor.node);
+  this.node.one('td').append(this.stepEditor.jq);
 
   this.setEditable(false);
 
@@ -576,12 +576,7 @@ ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
  */
 ProofControl.prototype.setEditable = function(state) {
   this.editable = state;
-  var node = this.stepEditor.node;
-  if (state) {
-    node.show();
-  } else {
-    node.hide();
-  }
+  this.stepEditor.jq.toggle(state);
 }
 
 
@@ -1520,7 +1515,7 @@ function renderInference(step) {
  * execution of the proof.
  */
 function renderProof(step, where, millis, nSteps) {
-  jNode = $$(where);
+  where = $$(where);
   var startRender = new Date().getTime();
   var steps = unrenderedDeps(step);
   var controller = new ProofControl();
@@ -1531,9 +1526,9 @@ function renderProof(step, where, millis, nSteps) {
     stats = '<i style="font-size:smaller; color:gray">Proof '
       + Math.ceil(millis) + ' msec, rendering '
       + renderTime + ' msec, ' + nSteps + ' steps</i>';
-    jNode.append('<div class=proofHeader>' + stats + '</div>');
+    where.append('<div class=proofHeader>' + stats + '</div>');
   }
-  jNode.append($$(controller.node));
+  where.append($$(controller.node));
   return controller;
 }
 
