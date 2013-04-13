@@ -171,10 +171,10 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     return controller;
   };
 
-  Y.on('domready', function() {
+  $(window).on('load', function() {
       var rules = Toy.rules;
       var axiomList = new Toy.ProofControl();
-      Y.one('#axiomList').append(axiomList.node);
+      $('#axiomList').append(axiomList.node);
       window.axiomList = axiomList;
       // Numeric axioms:
       var a1 = rules.axiomCommutativePlus();
@@ -191,7 +191,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
       var sample = new Toy.ProofControl();
       window.sampleProof = sample;
-      Y.one('#sampleProof').append(sample.node);
+      $('#sampleProof').append(sample.node);
       var a1 = rules.assume('x = y * 2');
       var a2 = rules.assume('x + y = 6');
       var a3 = rules.replace(a1, a2, '/main/left/left');
@@ -211,7 +211,6 @@ YUI({filter: 'raw', insertBefore: 'styles'})
     });
 
   // For debugging.
-  window.Y = Y;
   window.db = Toy.debugString;
 });
 </script>
