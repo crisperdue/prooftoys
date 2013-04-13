@@ -28,9 +28,6 @@ YUI.add('sample-proofs', function(Y) {
   var T = new Var('T');
   var F = new Var('F');
 
-  // Query string data.
-  var queryData = Y.QueryString.parse(location.search.substring(1));
-
   // Node of dropdown control.
   var selector;
 
@@ -38,9 +35,8 @@ YUI.add('sample-proofs', function(Y) {
   var proofNode;
 
   function selectorChanged() {
-    var selectorElt = Y.Node.getDOMNode(selector);
-    var options = selectorElt.options;
-    var ruleName = options[selectorElt.selectedIndex].value;
+    var options = selector.options;
+    var ruleName = options[selector.selectedIndex].value;
     displayProof(ruleName);
   }
 
@@ -72,15 +68,15 @@ YUI.add('sample-proofs', function(Y) {
       var nSteps = Toy.getStepCounter() - stepCounter;
       // For debugging.
       window.proved = result;
-      proofNode.setContent('');
+      $(proofNode).html('');
       if (result) {
-        Toy.renderProof(result, proofNode._node, elapsed, nSteps);
+        Toy.renderProof(result, proofNode, elapsed, nSteps);
       } else if (Toy.errors.length) {
         var last = Toy.errors[Toy.errors.length - 1];
-        proofNode.append('<p><b>Errors: (' + Toy.errors.length
-                         + ') ' + last.message + '</b></p>');
+        $(proofNode).append('<p><b>Errors: (' + Toy.errors.length
+                            + ') ' + last.message + '</b></p>');
         if (last.step) {
-          Toy.renderProof(last.step, proofNode._node);
+          Toy.renderProof(last.step, proofNode);
         }
       }
     }
@@ -91,15 +87,15 @@ YUI.add('sample-proofs', function(Y) {
     // Controllable through the query string.
     editable = !!editable;
 
-    proofNode = Y.one(displayId);
+    proofNode = $(displayId)[0];
 
     // You can control which rule is displayed by including
     // "rule=<ruleName>" in the query string.
-    var queryRuleName = queryData.rule;
+    var queryRuleName = Toy.queryParams.rule;
     // You can make the displays label steps with their ordinals
     // using ordinals=1 in the query string.
-    Toy.showOrdinals = queryData.ordinals;
-    editable = queryData.edit != undefined;
+    Toy.showOrdinals = Toy.queryParams.ordinals;
+    editable = Toy.queryParams.edit != undefined;
     if (queryRuleName == undefined) {
       // Default to displaying instForall.
       queryRuleName = 'instForall';
@@ -119,9 +115,10 @@ YUI.add('sample-proofs', function(Y) {
       }
     }
     selectorHtml += '</select>';
-    selector = Y.Node.create(selectorHtml);
-    Y.one(selectorId).setContent(selector);
-    selector.on('change', selectorChanged);
+    selector = $(selectorHtml)[0];
+    $(selectorId).empty();
+    $(selectorId).append(selector);
+    $(selector).on('change', selectorChanged);
   }
 
   // Map from example name to example configuration info, each of
