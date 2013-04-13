@@ -164,6 +164,25 @@ Toy.queryParams = {};
   }
 })();
 
+var _HTML_MAP = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '/': '&#x2F;',
+        '`': '&#x60;'
+};
+
+/**
+ * Escapes text to guarantee it is not interpreted as containing
+ * HTML markup.
+ */
+Toy.escapeHtml = function(str) {
+  return str.replace(/[&<>"'\/`]/g,
+                     function(match) { return _HTML_MAP[match]; });
+};
+
 // Make ".toString()" accessible as ".str" for debugger interaction.
 Object.defineProperty(Object.prototype,
                       'str',
