@@ -74,13 +74,13 @@ YUI.add('sample-proofs', function(Y) {
       window.proved = result;
       proofNode.setContent('');
       if (result) {
-        Toy.renderProof(result, proofNode, elapsed, nSteps);
+        Toy.renderProof(result, proofNode._node, elapsed, nSteps);
       } else if (Toy.errors.length) {
         var last = Toy.errors[Toy.errors.length - 1];
         proofNode.append('<p><b>Errors: (' + Toy.errors.length
                          + ') ' + last.message + '</b></p>');
         if (last.step) {
-          Toy.renderProof(last.step, proofNode);
+          Toy.renderProof(last.step, proofNode._node);
         }
       }
     }

@@ -19,6 +19,23 @@ function $$(x) {
   }
 }
 
+/**
+ * Version of the jQuery $ function that type checks its input.
+ */
+function $(x) {
+  if (arguments.length > 1) {
+    return jQuery.apply(null, arguments);
+  } else if (typeof x === 'string' ||
+             x.nodeType ||
+             x === window ||
+             x instanceof jQuery) {
+    return jQuery(x);
+  } else {
+    throw new Error('Not a DOM node: ' + x);
+  }
+}
+jQuery.extend($, jQuery);
+
 YUI.add('proof', function(Y) {
 
 // Use the application's assert function.
@@ -29,6 +46,22 @@ var Expr = Toy.Expr;
 var Var = Toy.Var;
 var Call = Toy.Call;
 var Lambda = Toy.Lambda;
+
+/**
+ * Converts a singleton jQuery object to its DOM node,
+ * checking carefully that it is a jQuery singleton.
+ */
+function dom(jq) {
+  if (jq instanceof jQuery) {
+    if (jq.length === 1) {
+      return jq[0];
+    } else {
+      throw new Error('Not a jQuery object: ' + jq);
+    }
+  } else {
+    throw new Error('Length not 1: ' + jq);
+  }
+}
 
 /**
  * Applies the action to each integer index and "input type" of each of
@@ -134,7 +167,7 @@ var proofToyState = {
    * store the global data back into the toyStore.
    */
   _load: function() {
-    storage = $('#ToyStore')[0];
+    storage = dom($('#ToyStore'));
     this._toyStore = storage;
     if (storage) {
       var text = storage.value;
@@ -196,7 +229,7 @@ function ProofEditor() {
     '<textarea class=proofStateArea rows=20></textarea>\n' +
     '</div>\n';
   this._stateDisplay = $(stateDisplayHtml);
-  this._stateArea = this._stateDisplay.find('.proofStateArea')[0];
+  this._stateArea = dom(this._stateDisplay.find('.proofStateArea'));
   this.containerNode = $('<div class=proofContainer></div>');
   this.containerNode
     .append(@mainControl.node)
@@ -351,7 +384,7 @@ ProofEditor.prototype.displayShowAll = @(value) {
  *
  * node: Node containing the entire rendering of the proof.  This has
  * CSS class proofDisplay and the ProofControl as the value of its
- * getData('proofControl').  Only ProofControl nodes should have the
+ * data('proofControl').  Only ProofControl nodes should have the
  * proofDisplay class.
  *
  * stepPrefix: string prefixed to each step number, defaults to
@@ -387,18 +420,20 @@ function ProofControl(properties) {
   this.textAreaId = 'proofState';
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
-  var html = ('<table class=proofDisplay><tr><td>' +
-              '<div class=stepsParent><div class=proofSteps></div></div>' +
-              '</table>');
-  this.node = Y.Node.create(html);
-  this.node.setData('proofControl', this);
-  var stepsParent = this.node.one('.stepsParent');
-  this.stepsNode = this.node.one('.proofSteps');
+  var jq = $('<table class=proofDisplay><tr><td>' +
+             '<div class=stepsParent><div class=proofSteps></div></div>' +
+             '</table>');
+  this.node = dom(jq);
+  jq.data('proofControl', this);
+  var stepsParent = jq.find('.stepsParent');
+  this._stepsJQ = jq.find('.proofSteps');
   this.stepEditor = new Toy.StepEditor(this);
-  this.node.one('td').append(this.stepEditor.jq);
+  jq.find('td').append(this.stepEditor.jq);
 
   this.setEditable(false);
 
+  /* Omit this unused code until a jQuery counterpart to
+     Y.Overlay is found.
   // Create an overlay to display step details when hovered.
   this.hoverOverlay = new Y.Overlay({
       width: '80%',
@@ -407,10 +442,11 @@ function ProofControl(properties) {
   });
   this.hoverOverlay.render(stepsParent);
   this.hoverOverlay.hide();
+  */
 
   // Set up handling of mouseover and mouseout events.
-  this.node.$$.on('mouseover', exprHandleOver);
-  this.node.$$.on('mouseout', exprHandleOut);
+  jq.on('mouseover', exprHandleOver);
+  jq.on('mouseout', exprHandleOut);
 }
 
 /**
@@ -438,11 +474,11 @@ ProofControl.prototype.selectionChanged = function() {};
 ProofControl.prototype.setSteps = function(steps) {
   // Clear rendering properties of current steps, as they will be
   // deleted.
-  var stepsNode = this.stepsNode;
+  var stepsJQ = this._stepsJQ;
   this.steps.forEach(function(step) {
     step.original.rendering = null;
   });
-  stepsNode.setContent('');
+  stepsJQ.html('');
   // Now render the desired steps.
   this.steps = [];
   for (var i = 0; i < steps.length; i++) {
@@ -475,13 +511,13 @@ ProofControl.prototype._renumber = function() {
  * stepNumber of the corresponding dependency.
  */
 function renderStepNumber(step) {
-  step.stepNode.one('.stepNumber').setContent(step.stepNumber);
+  $(step.stepNode).find('.stepNumber').text(step.stepNumber);
   // Fix up references made by the step.  (These should all be prior
   // steps.)
   var deps = getRenderedDeps(step);
-  Y.each(step.stepNode.all('.stepReference'), function(ref, j) {
-    ref.setContent(deps[j].rendering.stepNumber);
-  });
+  $(step.stepNode).find('.stepReference').each(function(index) {
+      $(this).text(deps[index].rendering.stepNumber);
+    });
   // TODO: Consider fixing up references to hypotheses here.
 }
 
@@ -503,7 +539,7 @@ ProofControl.prototype.addStep = function(step) {
                      : this.stepPrefix + this.steps.length);
   var stepNode = renderStep(copy, this);
   renderStepNumber(copy);
-  this.stepsNode.append(stepNode);
+  this._stepsJQ.append(stepNode);
   this.proofChanged();
 };
 
@@ -532,7 +568,7 @@ ProofControl.prototype._removeStep = function(toRemove) {
     this.deselectStep();
   }
   // TODO: Consider updating "dep" highlighting here if this is "hovered".
-  toRemove.stepNode.remove();
+  $(toRemove.stepNode).remove();
   delete toRemove.original.rendering;
   this.steps.splice(this.steps.indexOf(toRemove), 1);
 };
@@ -587,7 +623,7 @@ ProofControl.prototype.setEditable = function(state) {
  * Unconditionally select the step, no other action.
  */
 ProofControl.prototype.selectStep = function(step) {
-  step.stepNode.addClass('selected');
+  $(step.stepNode).addClass('selected');
   this.selection = step;
 };
 
@@ -598,7 +634,7 @@ ProofControl.prototype.selectStep = function(step) {
 ProofControl.prototype.deselectStep = function() {
   var step = this.selection;
   if (step) {
-    step.stepNode.removeClass('selected');
+    $(step.stepNode).removeClass('selected');
     this.selection = null;
     this.deselectExpr(step);
   }
@@ -609,7 +645,7 @@ ProofControl.prototype.deselectStep = function() {
  */
 ProofControl.prototype.selectExpr = function(expr) {
   var step = getProofStep(expr);
-  expr.node.addClass('selected');
+  $(expr.node).addClass('selected');
   step.selection = expr;
 };
 
@@ -620,7 +656,7 @@ ProofControl.prototype.selectExpr = function(expr) {
 ProofControl.prototype.deselectExpr = function(step) {
   var expr = step.selection;
   if (expr) {
-    expr.node.removeClass('selected');
+    $(expr.node).removeClass('selected');
     step.selection = null;
   }
 };
@@ -683,7 +719,7 @@ ProofControl.prototype.handleExprSelection = function(expr) {
 var _turnstile = '\u22a6';
 
 /**
- * Create and return a YUI node to display the renderable step within
+ * Create and return a DOM node to display the renderable step within
  * the given controller.  Assumes that the renderable step is already
  * inserted into the controller's steps array.
  *
@@ -694,7 +730,7 @@ var _turnstile = '\u22a6';
  * The rendering is structured as follows:
  *
  * - Each rendered expression and subexpression has a "node" property
- *   that refers to a YUI node with its rendering.
+ *   that refers to a DOM node with its rendering.
  *
  * - A rendered step has an "original" property referring to the
  *   unrendered proof step from which it was created.
@@ -713,41 +749,39 @@ var _turnstile = '\u22a6';
  *   have the proofStep CSS class.
  */
 function renderStep(step, controller) {
-  var stepsNode = controller.stepsNode;
-  var deleter = (controller.editable
+  var delHtml = (controller.editable
                  ? ('<input type=button class=deleteStep value="x"' +
                     ' title="Delete step">')
                  : '');
-  var html =
-    '<div class=proofStep>' +
-    deleter +
-    '<span class=stepNumArea>(<span class=stepNumber></span>)</span> ' +
-    '<span class=wff></span>' +
-    '<span class=stepInfo></span>' +
-    '</div>';
-  var stepNode = Y.Node.create(html);
-  stepNode.setData('proofStep', step);
-  step.stepNode = stepNode;
+  var stepJQ =
+    $('<div class=proofStep>' +
+      delHtml +
+      '<span class=stepNumArea>(<span class=stepNumber></span>)</span> ' +
+      '<span class=wff></span>' +
+      '<span class=stepInfo></span>' +
+      '</div>');
+  stepJQ.data('proofStep', step);
+  step.stepNode = dom(stepJQ);
   var elide = wantLeftElision(step, controller);
   step.hasLeftElision = elide;
-  var wffNode = renderAsStep(step);
-  stepNode.one('.wff').setContent(wffNode);
+  var wffJQ = $(renderAsStep(step));
+  stepJQ.find('.wff').empty().append(wffJQ);
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
   // Set up click handlers for selections within the step.
-  wffNode.$$.on(TOUCHDOWN,
+  wffJQ.on(TOUCHDOWN,
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
          controller.handleExprSelection(getEffectiveSelection(event.target));
          event.preventDefault();
        });
-  stepNode.$$.on(TOUCHDOWN,
+  stepJQ.on(TOUCHDOWN,
        function(event) {
-         controller.handleStepClick(getProofStep(Y.one(event.target)));
+         controller.handleStepClick(getProofStep(event.target));
        });
 
-  stepNode.one('.stepInfo').setContent(formattedStepInfo(step));
+  stepJQ.find('.stepInfo').html(formattedStepInfo(step));
 
   // "Hover" events can come in slightly out of order as we track both
   // an inner and outer element.  Straighten this out by maintaining
@@ -763,25 +797,25 @@ function renderStep(step, controller) {
     }
   }    
   // Set up "hover" event handling on the stepNode.
-  stepNode.$$
+  stepJQ
     .hover(
            // Call hoverStep, passing these arguments as well as the event.
            hover.bind(null, 1),
            hover.bind(null, -1));
-  // We count the wffNode as outside for this purpose.
-  wffNode.$$
+  // We count the wffJQ as outside for this purpose.
+  wffJQ
     .hover(
            // Call hoverStep, passing these arguments as well as the event.
            hover.bind(null, -1),
            hover.bind(null, 1));
 
-  var deleter = stepNode.one('.deleteStep');
+  var deleter = stepJQ.find('.deleteStep');
   if (deleter) {
-    deleter.$$.on('mousedown', function(event) {
+    deleter.on('mousedown', function(event) {
         // Don't give the proof step a chance to select itself.
         event.stopPropagation();
       });
-    deleter.$$.on('click', function(event) {
+    deleter.on('click', function(event) {
         // Don't give the proof step a chance to select itself.
         event.stopPropagation();
         var msg = 'Delete step ' + step.stepNumber + ' and all following?';
@@ -799,23 +833,23 @@ function renderStep(step, controller) {
                
   // Clicking on a ruleName "link" shows the subproof when subproofs
   // are enabled.
-  var target = stepNode.one('span.ruleName[class~="link"]');
-  if (target && Toy.modes.subproofs) {
-    target.$$.on('mousedown', function(event) {
-          // Don't give the proof step a chance to select itself.
-          event.stopPropagation();
+  var target = stepJQ.find('span.ruleName[class~="link"]');
+  if (target.length && Toy.modes.subproofs) {
+    target.on('mousedown', function(event) {
+        // Don't give the proof step a chance to select itself.
+        event.stopPropagation();
       });
-    target.$$.on('click', function(event) {
-          // Don't give the proof step a chance to select itself.
-          event.stopPropagation();
-          if (step.subproofControl) {
-            clearSubproof(step);
-          } else {
-            renderSubproof(step);
-          }
+    target.on('click', function(event) {
+        // Don't give the proof step a chance to select itself.
+        event.stopPropagation();
+        if (step.subproofControl) {
+          clearSubproof(step);
+        } else {
+          renderSubproof(step);
+        }
       });
   }
-  return stepNode;
+  return dom(stepJQ);
 }
 
 /**
@@ -830,9 +864,9 @@ function getEffectiveSelection(node) {
                   ? '.fullExpr.hovered' :
                   '.expr.hovered');
   // Include the node itself in the search.
-  var selected = $(node).closest(selector)[0];
+  var selected = dom($(node).closest(selector));
   if (selected) {
-    return getExpr(Y.one(selected));
+    return getExpr(selected);
   } else {
     Toy.logError('No selectable node found');
     return getExpr(node);
@@ -862,7 +896,7 @@ function wantLeftElision(step, controller) {
 
 /**
  * Renders this (renderable copy of an original) expression into a new
- * YUI node, returning the node.  Omits surrounding parens if the step
+ * DOM node, returning the node.  Omits surrounding parens if the step
  * is a Call.
  *
  * TODO: Consider fleshing out the concept of display with fewer
@@ -879,14 +913,16 @@ function renderAsStep(step) {
       hyps = omittingReals(hyps);
     }
     if (hyps) {
-      var wffNode = step.node = renderHyps(step.getLeft());
+      step.node = renderHyps(step.getLeft());
+      var wffJq = $(step.node);
     } else {
-      // Must we make the wffNode if there are hyps, but none visible?
-      var wffNode = step.node = exprNode();
+      // Must we make the wffJq if there are hyps, but none visible?
+      var wffJq = exprJq();
+      step.node = dom(wffJq);
     }
-    wffNode.append(renderMain(step));
-    markAsFullExpr(wffNode);
-    return wffNode;
+    wffJq.append(renderMain(step));
+    markAsFullExpr(wffJq);
+    return dom(wffJq);
   } else {
     return renderMain(step);
   }
@@ -896,49 +932,52 @@ function renderAsStep(step) {
  * Renders the "main" part of a renderable step, meaning everything
  * but the hypotheses.  Currently gives special treatment to equations
  * starting with rules.consider and immediately following steps.
- * Returns a new YUI node that renders it.
+ * Returns a new DOM node that renders it.
  */
 function renderMain(step) {
   var main = step.unHyp();
   if (main.isCall2('=')) {
     if (step.ruleName == 'consider') {
-      var node = main.node = exprNode();
-      node.append(main.getRight()._render(true));
-      node.append(textNode(' = '));
-      node.append('<span class=ellipsis>&hellip;</span>');
+      var jq = exprJq();
+      main.node = dom(jq);
+      jq.append(main.getRight()._render(true));
+      jq.append(textNode(' = '));
+      jq.append('<span class=ellipsis>&hellip;</span>');
     } else {
       if (step.hasLeftElision) {
-        var node = main.node = exprNode();
-        node.append('<span class=ellipsis>&hellip;</span>');
-        node.append(textNode(' = '));
-        node.append(main.getRight()._render(true));
+        var jq = exprJq();
+        main.node = dom(jq);
+        jq.append('<span class=ellipsis>&hellip;</span>');
+        jq.append(textNode(' = '));
+        jq.append(main.getRight()._render(true));
       } else {
-        var node = main._render(true);
+        var jq = main._render(true);
       }
     }
-    return node;
+    return dom(jq);
   } else {
-    return main._render(true);
+    return dom(main._render(true));
   }
 }
 
 /**
  * Walk through the expression as a set of hypotheses, rendering into
- * a new Expr node..
+ * a new Expr DOM node, returning the node.
  */
 function renderHyps(expr) {
-  var topNode = exprNode();
+  var topJq = exprJq();
   var hypsNode;
   if (Toy.suppressRealTypeDisplays) {
     expr = omittingReals(expr);
   }
   function render(expr) {
     if (expr.sourceStep) {
-      var node = expr.node = exprNode();
+      var jq = exprJq();
+      expr.node = dom(jq);
       // Note that this requires the unrendered proof step to be already
       // linked to a rendering with proper stepNumber:
-      node.append(expr.sourceStep.rendering.stepNumber);
-      hypsNode.append(node);
+      jq.append(expr.sourceStep.rendering.stepNumber);
+      hypsNode.append(jq);
     } else if (expr.isCall2('&')) {
       render(expr.getLeft());
       hypsNode.append(textNode(', '));
@@ -955,12 +994,12 @@ function renderHyps(expr) {
     }
   }
   if (expr) {
-    hypsNode = Y.Node.create('<span class=assumptions></span>');
+    hypsNode = $('<span class=assumptions></span>');
     render(expr);
     hypsNode.append(':');
-    topNode.append(hypsNode);
+    topJq.append(hypsNode);
   }
-  return topNode;
+  return dom(topJq);
 }
 
 /**
@@ -988,10 +1027,10 @@ function omittingReals(hyps) {
 }
 
 /**
- * Build and return a Node of class "expr".
+ * Build and return a jQuery of class "expr".
  */
-function exprNode() {
-  return Y.Node.create('<span class=expr></span>');
+function exprJq() {
+  return $('<span class=expr></span>');
 }
 
 /**
@@ -1021,20 +1060,21 @@ function textNode(text) {
 }
 
 /**
- * Marks the given node as a "full expr", selectable in the
+ * Marks the given JQ as a "full expr", selectable in the
  * simplified selections mode, and highlighted on hover in
  * that mode.
  */
-function markAsFullExpr(node) {
-  node.addClass('fullExpr');
+function markAsFullExpr(jq) {
+  jq.addClass('fullExpr');
 }
 
 // _render(omit)
 //
-// Render this expression into a new YUI node, returning the node.
-// Sets the expression's "node" property to refer to the node created
-// to enclose this expression.  Should be done only once to any given
-// expression.  Helper for the render method.  (Not public)
+// Render this expression into a new DOM node, returning a jQuery
+// object for the node.  Sets the expression's "node" property to
+// refer to the DOM node created to enclose this expression.  Should
+// be done only once to any given expression.  Helper for the render
+// method.  (Not public)
 //
 // If the optional "omit" argument is true and this is a Call, omit
 // the enclosing parentheses.
@@ -1042,18 +1082,20 @@ function markAsFullExpr(node) {
 //
 
 Var.prototype._render = function(omit) {
-  var node = this.node = exprNode();
+  var jq = exprJq();
+  this.node = dom(jq);
   if (Toy.isVariable(this.name)) {
-    markAsFullExpr(node);
+    markAsFullExpr(jq);
   }
   var name = this.toUnicode();
-  specialClasses(name).forEach(function(cl) { node.addClass(cl); });
-  node.set('text', name);
-  return node;
+  specialClasses(name).forEach(function(cl) { jq.addClass(cl); });
+  jq.text(name);
+  return jq;
 };
 
 Call.prototype._render = function(omit) {
-  var node = this.node = exprNode();
+  var jq = exprJq();
+  this.node = dom(jq);
   // Only parenthesize uses of quantifiers in case of step tracking.
   // TODO: Remove this special case and omit parens around all ordinary
   // function calls that appear as args to infix operators.  Presumably
@@ -1070,81 +1112,84 @@ Call.prototype._render = function(omit) {
   if (!omit) {
     if (Toy.trackSourceSteps) {
       if (this.sourceStep) {
-        node.append('$');
+        jq.append('$');
       }
       if (stepNum) {
-        node.append(stepNum);
+        jq.append(stepNum);
       }
     }
-    node.append('(');
+    jq.append('(');
   }
   if (this.fn instanceof Call && this.fn.fn instanceof Var) {
     // This is a call on a named function of two arguments.
     if (Toy.isInfixDesired(this.fn.fn)) {
       // Non-alphabetic characters: use infix: "x + y"
-      var fnNode = this.fn.node = exprNode();
-      fnNode.append(this.fn.arg._render());
-      fnNode.append(space());
-      fnNode.append(this.fn.fn._render());
-      node.append(fnNode);
-      node.append(space());
-      node.append(this.arg._render());
+      var fnJq = exprJq();
+      this.fn.node = dom(fnJq);
+      fnJq.append(this.fn.arg._render());
+      fnJq.append(space());
+      fnJq.append(this.fn.fn._render());
+      jq.append(fnJq);
+      jq.append(space());
+      jq.append(this.arg._render());
     } else {
       // Alphabetic characters: function comes first.
-      var fnNode = this.fn.node = exprNode();
-      fnNode.append(this.fn.fn._render());
-      fnNode.append(space());
-      fnNode.append(this.fn.arg._render());
-      node.append(fnNode);
-      node.append(space());
-      node.append(this.arg._render());
+      var fnJq = exprJq();
+      this.fn.node = dom(fnJq);
+      fnJq.append(this.fn.fn._render());
+      fnJq.append(space());
+      fnJq.append(this.fn.arg._render());
+      jq.append(fnJq);
+      jq.append(space());
+      jq.append(this.arg._render());
     }
-    markAsFullExpr(node);
+    markAsFullExpr(jq);
   } else if (this.fn instanceof Var && Toy.isInfixDesired(this.fn)) {
     // Infix operator, but only one argument: "x +"
-    node.append(this.arg._render());
-    node.append(space());
-    node.append(this.fn._render());
+    jq.append(this.arg._render());
+    jq.append(space());
+    jq.append(this.fn._render());
   } else if (this.fn instanceof Var && !this.fn.displaysIdentifier()) {
     // Function call with non-identifier operator.
     // Display the function adjacent to its argument, but precede both
     // with a non-breaking space to the left to help the user select
     // this expression, and to set them off from preceding infix operator
     // or other text.
-    node.append(document.createTextNode('\u00a0'));
-    node.append(this.fn._render());
-    node.append(this.arg._render());
-    markAsFullExpr(node);
+    jq.append(document.createTextNode('\u00a0'));
+    jq.append(this.fn._render());
+    jq.append(this.arg._render());
+    markAsFullExpr(jq);
   } else {
     // Normal function call: "f x"
-    node.append(this.fn._render());
-    node.append(space());
-    node.append(this.arg._render());
-    markAsFullExpr(node);
+    jq.append(this.fn._render());
+    jq.append(space());
+    jq.append(this.arg._render());
+    markAsFullExpr(jq);
   }
   if (!omit) {
-    node.append(')');
+    jq.append(')');
   }
-  return node;
+  return jq;
 };
 
 Lambda.prototype._render = function(omit) {
-  var node = this.node = exprNode();
-  markAsFullExpr(node);
+  var jq = exprJq();
+  this.node = dom(jq);
+  markAsFullExpr(jq);
   var stepNum = (Toy.trackSourceSteps
                  && this.sourceStep
                  && this.sourceStep.rendering.stepNumber);
   if (stepNum) {
-    node.append('$' + stepNum);
+    jq.append('$' + stepNum);
   }
-  node.append('{');
-  node.append(this.bound._render());
-  node.append(textNode('. '));
-  var bodyNode = this.body._render(true);
-  markAsFullExpr(bodyNode);
-  node.append(bodyNode);
-  node.append('}');
-  return node;
+  jq.append('{');
+  jq.append(this.bound._render());
+  jq.append(textNode('. '));
+  var bodyJq = this.body._render(true);
+  markAsFullExpr(bodyJq);
+  jq.append(bodyJq);
+  jq.append('}');
+  return jq;
 };
 
 /**
@@ -1183,16 +1228,16 @@ function unrenderedDeps(step) {
 function renderSubproof(step) {
   var controller = getProofControl(step);
   controller.steps.forEach(clearSubproof);
-  var node;
+  var jq;
   if (step.ruleName == 'theorem') {
-    node = renderInference(Toy.getTheorem(step.ruleArgs[0]));
+    jq = renderInference(Toy.getTheorem(step.ruleArgs[0]));
   } else {
-    node = renderInference(step);
+    jq = renderInference(step);
   }
-  step.subproofControl = node.getData('proofControl');
+  step.subproofControl = jq.data('proofControl');
   // Append it to the top node of the proof + subproofs.
   var container = getTopProofContainer(step);
-  container.append(node);
+  container.append(jq);
 }
 
 /**
@@ -1209,7 +1254,7 @@ function clearSubproof(step) {
         // Clear any rendered subproof for the step.
         clearSubproof(step);
       });
-    var container = controller.node.ancestor('.inferenceDisplay');
+    var container = $(controller.node).closest('.inferenceDisplay');
     container.remove();
   }
 }
@@ -1224,10 +1269,9 @@ function getRenderedDeps(step) {
   var result = [];
   var node = getStepNode(step);
   step.ruleDeps.forEach(function(dep) {
-      var depNext = getStepNode(dep.rendering).get('nextElementSibling');
-      // In current implementation depNext is never the step's node, because
-      // the node has not yet been inserted.
-      // TODO: Insert the step's node early, and only do the != test here.
+      var depNext = getStepNode(dep.rendering).nextElementSibling;
+      // In the future we may insert the step's node early,
+      // so we do the != test here.
       if (depNext && depNext != node) {
         result.push(dep);
       }
@@ -1241,8 +1285,8 @@ function getRenderedDeps(step) {
  * to have no next step, and step2 not linked into the DOM.
  */
 function adjacentSteps(step1, step2) {
-  var j1 = $$(getStepNode(step1.rendering));
-  var j2 = $$(getStepNode(step2.rendering));
+  var j1 = $(getStepNode(step1.rendering));
+  var j2 = $(getStepNode(step2.rendering));
   // TODO: Link in new steps before rendering, and eliminate this
   // special test.
   // Is j2 linked into the DOM?
@@ -1290,7 +1334,7 @@ function formattedStepInfo(step) {
                   @{markup. expandMarkup(step, markup)});
   d2 = d2.replace(/[{].*?[}]/g,
                   @{markup. expandMarkup(step, markup)});
-  var comment = (Y.Escape.html(info.comment || '') +
+  var comment = (Toy.escapeHtml(info.comment || '') +
                  ' (&quot;' + step.ruleName + '&quot;)');
   var classes = (step.details && Toy.modes.subproofs
                  ? 'ruleName link'
@@ -1484,23 +1528,23 @@ var stepFormatters = {
  * rendered, the details are rendered with step numbers relative to
  * its step number.
  *
- * Returns the new container DIV.
+ * Returns the new container jQuery DIV.
  */
 function renderInference(step) {
   var steps = unrenderedDeps(step.details);
   var prefix = step.stepNumber ? step.stepNumber + '.' : '';
   var controller = new ProofControl({stepPrefix: prefix});
   controller.setSteps(steps);
-  var comment = Y.Escape.html(Toy.rules[step.ruleName].info.comment || '');
+  var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
-  node = Y.Node.create('<div class=inferenceDisplay></div>');
-  node.append('<div class=proofHeader><b>' + pruf
+  jq = $('<div class=inferenceDisplay></div>');
+  jq.append('<div class=proofHeader><b>' + pruf
               + step.ruleName + '</b>'
               + computeHeaderArgInfo(step) + '<br>'
               + '<i>' + comment + '</i></div>');
-  node.append(controller.node);
-  node.setData('proofControl', controller);
-  return node;
+  jq.append(controller.node);
+  jq.data('proofControl', controller);
+  return jq;
 }
 
 /**
@@ -1516,7 +1560,7 @@ function renderInference(step) {
  * execution of the proof.
  */
 function renderProof(step, where, millis, nSteps) {
-  where = $$(where);
+  where = $(where);
   var startRender = new Date().getTime();
   var steps = unrenderedDeps(step);
   var controller = new ProofControl();
@@ -1529,7 +1573,7 @@ function renderProof(step, where, millis, nSteps) {
       + renderTime + ' msec, ' + nSteps + ' steps</i>';
     where.append('<div class=proofHeader>' + stats + '</div>');
   }
-  where.append($$(controller.node));
+  where.append($(controller.node));
   return controller;
 }
 
@@ -1596,41 +1640,44 @@ function computeFirstOrdinal(steps) {
 
 /**
  * Gets the DOM node associated with the step, given a rendered Expr
- * within the step or the YUI node within it.
+ * within the step or its DOM node.
  */
 function getStepNode(expr) {
-  var node = expr instanceof Toy.Expr ? expr.node : expr;
-  return node.ancestor('.proofStep', true);
+  var node = $(expr instanceof Toy.Expr ? expr.node : expr);
+  return dom(node.closest('.proofStep'));
 }
 
 /**
  * Gets the proof step (Expr) of the step that renders
- * in part into the given YUI Node.  Also accepts an Expr of
+ * in part into the given DOM Node.  Also accepts an Expr of
  * a rendered proof.
  */
 function getProofStep(node) {
-  return getStepNode(node).getData('proofStep');
+  return $(getStepNode(node)).data('proofStep');
 }
 
 /**
- * Gets the YUI Node of a rendered proof given the YUI node of
+ * Gets the DOM object of a rendered proof given the YUI node of
  * one of its steps or of an expression in a step.
  */
 function getStepsNode(node) {
-  return node.ancestor('.proofSteps', true);
+  return dom($(node).closest('.proofSteps'));
 }
 
 /**
- * Get the parent node containing the top-level proof and subproofs
- * where this rendered expr can be found.  That parent node is currently
- * not part of a ProofControl, but by convention should contain only
- * the top-level proof and its subproofs.
+ * Get a jQuery for the parent node containing the top-level proof and
+ * subproofs where this rendered expr can be found.  That parent node
+ * is currently not part of a ProofControl, but by convention should
+ * contain only the top-level proof and its subproofs.
  */
 function getTopProofContainer(expr) {
-  var proof = expr.node.ancestor('.proofDisplay');
-  var display = proof.ancestor('.inferenceDisplay') || proof;
+  var proofJq = $(expr.node).closest('.proofDisplay');
+  var display = proofJq.closest('.inferenceDisplay');
+  if (display.length === 0) {
+    display = proofJq;
+  }
   // TODO: Flag the parent as "proofContainer" and simply search for that.
-  var parent = display.get('parentNode');
+  var parent = display.parent();
   return parent;
 }
 
@@ -1640,13 +1687,13 @@ function getTopProofContainer(expr) {
  */
 function getProofControl(expr) {
   var node = expr instanceof Toy.Expr ? expr.node : expr;
-  var ancestor = node.ancestor('.proofDisplay');
-  return ancestor.getData('proofControl');
+  var ancestor = $(node).closest('.proofDisplay');
+  return ancestor.data('proofControl');
 }
 
 
 /**
- * Returns the expression associated with a YUI node.
+ * Returns the expression associated with a DOM node.
  */
 function getExpr(node) {
   // Go up to the proof step then look through all subexpressions.
@@ -1665,14 +1712,15 @@ function getExpr(node) {
 function exprHandleOver(event) {
   var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
   var target = $(event.target);
-  var exprNode = target.closest(selector) || target;
-  exprNode.addClass('hovered');
+  var exprJq = target.closest(selector);
+  // Could be no elements in exprJq.
+  exprJq.addClass('hovered');
   function isTarget(expr) {
-    return expr.node == target;
+    return expr.node == event.target;
   }
-  var stepElt = exprNode.closest('.proofStep')[0];
-  if (stepElt) {
-    var proofStep = Y.one(stepElt).getData('proofStep');
+  var stepJq = exprJq.closest('.proofStep');
+  if (stepJq.length) {
+    var proofStep = stepJq.data('proofStep');
     var path = proofStep.pathTo(isTarget);
     hoverShowPath(proofStep, path);
   }
@@ -1683,12 +1731,12 @@ function exprHandleOver(event) {
  * DOM node is handled elsewhere.
  */
 function hoverShowPath(wff, path) {
-  var displayNode = Y.one('#hoverPath');
-  if (displayNode) {
+  var displayJq = $('#hoverPath');
+  if (displayJq.length) {
     // If there is no bottom panel, do nothing.
     var expr = wff.locate(path);
     var pathStr = path ? path.toString() : '';
-    displayNode.setContent(pathStr);
+    displayJq.html(pathStr);
   }
 }
 
@@ -1699,27 +1747,28 @@ function exprHandleOut(event) {
   var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
   var target = $(event.target).closest(selector) || $(event.target);
   target.removeClass('hovered');
-  var displayNode = Y.one('#hoverPath');
-  if (displayNode) {
+  var displayJq = $('#hoverPath');
+  if (displayJq) {
     // Do nothing if there is no bottom panel.
-    displayNode.setContent('');
+    displayJq.html('');
   }
 };
 
 /**
- * Adds the named CSS class to the node.  For use in hover handlers.
- * Currently does nothing if node is null, which occurs in hypotheses.
+ * Adds the named CSS class to the DOM node.  For use in hover
+ * handlers.  Currently does nothing if node is null, which occurs in
+ * hypotheses.
  */
 function addClass(node, className) {
-  node && node.addClass(className);
+  node && $(node).addClass(className);
 }
 
 /**
- * Removes the named CSS class from the node.
+ * Removes the named CSS class from the DOM node.
  * For use in hover handlers.
  */
 function removeClass(node, className) {
-  node && node.removeClass(className);
+  node && $(node).removeClass(className);
 }
 
 /**
@@ -1739,13 +1788,13 @@ function hoverStep(step, direction, event) {
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
   var container = getTopProofContainer(step);
-  container.all('span.stepReference').each(function(node) {
+  container.find('span.stepReference').each(function() {
     if (direction == 'in') {
-      if (node.get('innerHTML') == step.stepNumber) {
-        node.addClass('referenced');
+      if (this.innerHTML == step.stepNumber) {
+        $(this).addClass('referenced');
       }
     } else {
-      node.removeClass('referenced');
+      $(this).removeClass('referenced');
     }
   });
 
@@ -1804,6 +1853,8 @@ function doHoverOverlay(step, direction) {
   // NB: Hover overlays currently have no information in them,
   // but might be helpful in the future.
   if (Toy.useHoverOverlays) {
+    /* Comment out unused functionality until jQuery counterpart
+     * to YUI Overlay is found.
     var align = Y.WidgetPositionAlign;
     var overlay = getProofControl(step).hoverOverlay;
     if (direction == 'in') {
@@ -1813,6 +1864,7 @@ function doHoverOverlay(step, direction) {
     } else {
       overlay.hide();
     }
+    */
   }
 }
 
@@ -1892,31 +1944,19 @@ function contains(array, item) {
   return array.indexOf(item) >= 0;
 }
 
-/**
- * Generic function to add a node to a YUI node at a position, with
- * numbering that starts at 0.
- */
-function addChild(parent, position, node) {
-  var children = parent.get('children');
-  if (position == children.length) {
-    parent.appendChild(node);
-  } else {
-    parent.insertBefore(node, children[position]);
-  }
-}
-
-function addBottomPanel(node) {
-  node = node || new Y.Node(document.body);
+function addBottomPanel(jq) {
+  jq = jq || $(document.body);
   var style = ('position: fixed; width: 100%; background-color: white; '
                + 'bottom:0px; left: 0em; border-top: 1px solid black');
-  var html = '<div id="bottomPanel" style="' + style + '"></div>';
-  var div = node.appendChild(html);
-  div.appendChild('Path: <span id=hoverPath></span>');
+  var div = $('<div id="bottomPanel" style="' + style + '"></div>');
+  div.append('Path: <span id=hoverPath></span>');
+  jq.append(div);
 }
 
 
 //// Export public names.
 
+Toy.dom = dom;
 Toy.eachArgType = eachArgType;
 Toy.stepPaths = stepPaths;
 Toy.stepSites = stepSites;
