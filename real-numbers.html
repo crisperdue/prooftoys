@@ -154,11 +154,6 @@ Toy.insertSlogans();
 Toy.mathifyAll();
 
 // Remove "filter" to load minified JavaScript.
-YUI({filter: 'raw', insertBefore: 'styles'})
-   .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
-        'proof', 'collection', 'querystring-parse', 'json', 'overlay',
-        // querystring-parse requires "collection" (?!)
-   function(Y) {
 
   // Set up some useful constants and functions.
 
@@ -212,7 +207,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
   // For debugging.
   window.db = Toy.debugString;
-});
+
 </script>
 </body>
 </html>

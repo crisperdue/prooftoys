@@ -17,8 +17,10 @@ var yuiPath =
 
 // Include jQuery in all cases.
 document.write('<script src="js/jquery-1.9.1.js"></script>\n');
-if (!window.noYUI) {
+if (window.YUI) {
   document.write(yuiPath);
+}
+if (!window.noProofScripts) {
   document.write('<script src="expr.js"></script>\n');
   document.write('<script src="step-editor.js"></script>\n');
   document.write('<script src="proof.jsc"></script>\n');
@@ -179,8 +181,23 @@ var _HTML_MAP = {
  * HTML markup.
  */
 Toy.escapeHtml = function(str) {
-  return str.replace(/[&<>"'\/`]/g,
+  return str.replace(/[&<>"'\/`]/g,  // help the emacs parser: "]
                      function(match) { return _HTML_MAP[match]; });
+};
+
+/**
+ * The arguments are a child class constructor and parent class
+ * constructor; both should be functions.  Makes the child a
+ * subclass of the parent, making the parent's prototype be
+ * the prototype for the child's prototype and instances of the
+ * child be instances of the parent class.
+ */
+Toy.extends = function(child, parent) {
+  if (typeof child === 'function' && typeof parent === 'function') {
+    child.prototype = Object.create(parent.prototype);
+  } else {
+    throw new Error('Toy.extends requires functions as arguments.');
+  }
 };
 
 // Make ".toString()" accessible as ".str" for debugger interaction.

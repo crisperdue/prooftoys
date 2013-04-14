@@ -3,7 +3,7 @@
 // Initialize the app namespace.
 var Toy = Toy || {};
 
-YUI.add('expr', function(Y) {
+(function() {
 
 //// GENERAL UTILITIES
 
@@ -37,12 +37,6 @@ function ownProperties(object) {
     });
   return result;
 }
-
-// Configure YUI Nodes with a property that returns a jQuery object
-// for their DOM element.  An aid to conversion from YUI to jQuery.
-configure(Y.Node.prototype, {
-    $$: {get: function() { return $$(this); }}
-  });
 
 
 //// CLASSES ////
@@ -205,12 +199,12 @@ function identifyTerm(term) {
 };
 
 function TermSet(term) {
-  TermSet.superclass.constructor.call(this, identifyTerm);
+  Set.call(this, identifyTerm);
   if (term) {
     this.add(term);
   }
 }  
-Y.extend(TermSet, Set);
+Toy.extends(TermSet, Set);
 
 /**
  * A Map from terms to variables.  Use TermMap.addTerm to set up
@@ -218,11 +212,11 @@ Y.extend(TermSet, Set);
  * corresponding substitution from names to terms.
  */
 function TermMap() {
-  TermMap.superclass.constructor.call(this, identifyTerm);
+  Map.call(this, identifyTerm);
   this.counter = 1;
   this.subst = {};
 }
-Y.extend(TermMap, Map);
+Toy.extends(TermMap, Map);
 
 /**
  * Ensure the term is in this map.  If not already present, assign it
@@ -1424,7 +1418,7 @@ function Var(name, position) {
     this.pos = position;
   }
 };
-Y.extend(Var, Expr);
+Toy.extends(Var, Expr);
 
 /**
  * If not producing Unicode, returns this Var's pname.  If producing
@@ -1588,7 +1582,7 @@ function Call(fn, arg) {
   this.fn = fn;
   this.arg = arg;
 }
-Y.extend(Call, Expr);
+Toy.extends(Call, Expr);
 
 Call.prototype._toString = function() {
   if (this._string) {
@@ -1835,7 +1829,7 @@ function Lambda(bound, body) {
   this.bound = bound;
   this.body = body;
 }
-Y.extend(Lambda, Expr);
+Toy.extends(Lambda, Expr);
 
 Lambda.prototype._toString = function() {
   if (this._string) {
@@ -2452,7 +2446,7 @@ function FunctionType(fromType, toType) {
   TypeOperator.call(this, '->', [fromType, toType]);
   this.types = [fromType, toType];
 }
-Y.extend(FunctionType, TypeOperator);
+Toy.extends(FunctionType, TypeOperator);
 
 FunctionType.prototype.copy = function() {
   var list = [];
@@ -3842,4 +3836,4 @@ Toy.logError = logError;
 // For debugging
 Toy.nParsed = nParsed;
 
-}, '0.1', {requires: ['node', 'array-extras']});
+})();

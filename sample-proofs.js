@@ -1,7 +1,6 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
-YUI.add('sample-proofs', function(Y) {
-
+(function() {
   // Set up some useful constants and functions.
 
   // For convenience.
@@ -465,4 +464,4 @@ YUI.add('sample-proofs', function(Y) {
 
 Toy.setUpSampleProofs = setUpSampleProofs;
 
-}, '0.1', {requires: ['array-extras', 'expr', 'proof']});
+})();

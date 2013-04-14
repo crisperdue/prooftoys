@@ -306,17 +306,8 @@ Toy.insertNav();
 Toy.insertSlogans();
 Toy.mathifyAll();
 
-/* Remove "filter" to load minified JavaScript. */
-YUI({filter: 'raw', insertBefore: 'styles'})
-  .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
-       'proof', 'collection', 'querystring-parse', 'json', 'overlay',
-        // querystring-parse requires "collection" (?!)
-        'sample-proofs',
-   function(Y) {
-
-  // For debugging (and inline event handlers).
-  window.Y = Y;
-
+// On DOM ready:
+jQuery(function() {
   // Set up some useful constants and functions.
   var rules = Toy.rules;
 

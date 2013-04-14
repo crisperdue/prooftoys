@@ -4,9 +4,6 @@
 //
 // Requires canvas.js and logic-pix.js.
 
-// Suppress loading of YUI in booleans.html.
-window.noYUI = true;
-
 /**
  * Install event handlers to highlight cells in the jquery table
  * element based on mouse position in the canvas relative to the

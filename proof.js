@@ -36,7 +36,7 @@ function $(x) {
 }
 jQuery.extend($, jQuery);
 
-YUI.add('proof', function(Y) {
+(function() {
 
 // Use the application's assert function.
 var assert = Toy.assertTrue;
@@ -167,7 +167,7 @@ var proofToyState = {
    * store the global data back into the toyStore.
    */
   _load: function() {
-    storage = dom($('#ToyStore'));
+    storage = $('#ToyStore')[0];
     this._toyStore = storage;
     if (storage) {
       var text = storage.value;
@@ -2008,4 +2008,4 @@ Toy.modes = {
   subproofs: true
 };
 
-}, '0.1', {requires: ['array-extras', 'expr', 'step-editor', 'event-touch']});
+})();

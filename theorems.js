@@ -1,7 +1,6 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
-YUI.add('theorems', function(Y) {
-
+(function() {
 
 //// THEOREMS AND RULES
 
@@ -3621,4 +3620,4 @@ Toy.ruleInfo = ruleInfo;
 Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
 
-}, '0.1', {requires: ['array-extras', 'expr', 'proof']});
+})();

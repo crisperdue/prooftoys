@@ -55,19 +55,13 @@ Toy.insertNav();
 Toy.insertSlogans();
 Toy.mathifyAll();
 
-// Remove "filter" to load minified JavaScript.
-YUI({filter: 'raw', insertBefore: 'styles'})
-  .use('node', 'event', 'json', 'expr', 'theorems', 'test', 'console',
-       'proof', 'collection', 'querystring-parse', 'json', 'overlay',
-        // querystring-parse requires "collection" (?!)
-   function(Y) {
-
+jQuery(function() {
   // For debugging (and inline event handlers).
   window.Toy = Toy;
 
   // Proof editor node
   var editor = new Toy.ProofEditor();
-  $('#proofEditor').append($$(editor.containerNode));
+  $('#proofEditor').append(editor.containerNode);
   window.proofEditor = editor;
   editor.setEditable(true);
   editor.showSaveRestore(false);
@@ -84,13 +78,15 @@ YUI({filter: 'raw', insertBefore: 'styles'})
 
   // Prevent all but the directly relevant rules from being offered
   // by autocompletion.
-  Y.each(Toy.rules, function(value, key) {
-      if (!key.match(/^(assoc|commut|arithmetic$|distrib|group$|display$)/)) {
-        info = value.info;
-        value.info.saveForm = value.info.form;
-        delete value.info.form;
-      }
-    });
+  var rules = Toy.rules;
+  for (var key in rules) {
+    var value = rules[key];
+    if (!key.match(/^(assoc|commut|arithmetic$|distrib|group$|display$)/)) {
+      info = value.info;
+      value.info.saveForm = value.info.form;
+      delete value.info.form;
+    }
+  };
 
   // Create an initial proof step:
   var c1 = random(2, 10);
@@ -98,7 +94,7 @@ YUI({filter: 'raw', insertBefore: 'styles'})
   var term0 = Toy.parse('c1 * (c2 + x)');
   var term1 = term0.subFree(new Toy.Var(c1 + ''), 'c1');
   var term = term1.subFree(new Toy.Var(c2 + ''), 'c2');
-  var step = Toy.rules.consider(term);
+  var step = rules.consider(term);
   editor.addStep(step);
 
   function checkAnswer() {

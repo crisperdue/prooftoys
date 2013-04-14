@@ -1,6 +1,6 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
-YUI.add('step-editor', function(Y) {
+(function() {
 
 // Make application assertions available through "assert".
 var assert = Toy.assertTrue;
@@ -725,5 +725,4 @@ Toy.siteTypes = siteTypes;
 
 Toy.StepEditor = StepEditor;
 
-}, '0.1', {requires: ['array-extras', 'expr', 'autocomplete',
-                      'autocomplete-filters', 'autocomplete-highlighters']});
+})();
