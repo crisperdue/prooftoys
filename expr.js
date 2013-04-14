@@ -409,10 +409,10 @@ function Expr() {
   // If it has a rendered copy, has "rendering" property.
   //
   // If rendered, has a "node" property for an associated
-  // DOM node (refers to a YUI Node).
+  // DOM node.
   //
   // If rendered as a proof step, has:
-  //   stepNode property with the YUI node of the entire step.
+  //   stepNode property with the DOM node of the entire step.
   //   ordinal property with its step number in the rendered proof.
   //   stepNumber property with its rendered step number.
   //
@@ -3529,8 +3529,6 @@ var errors = [];
  *
  * Logs the message and step into the errors list by appending an
  * object with properties 'message' and 'step'.
- * 
- * Caution: YUI already has a Y.assert function.
  */
 function assertTrue(condition, message, step) {
   if (!condition) {

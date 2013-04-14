@@ -1,31 +1,13 @@
 // Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
 
 /**
- * Compatibility hack, global function that converts a YUI Node or
- * NodeList to a jQuery object, and jQuery objects pass through
- * unchanged.  When there are no more YUI things, calls to this
- * can be removed.
- */
-function $$(x) {
-  if (x instanceof jQuery) {
-    return x;
-  } else {
-    var data = x._nodes || x._node;
-    if (data) {
-      return jQuery(data);
-    } else {
-      throw new Error('Cannot unYUI ' + x);
-    }
-  }
-}
-
-/**
  * Version of the jQuery $ function that type checks its input.
  */
 function $(x) {
   if (arguments.length > 1) {
     return jQuery.apply(null, arguments);
   } else if (typeof x === 'string' ||
+             typeof x === 'function' ||
              x.nodeType ||
              x === window ||
              x instanceof jQuery) {
@@ -183,12 +165,8 @@ var proofToyState = {
   }
 }
 
-// When the page is completely loaded, load the app state.
-$(window).load($.proxy(proofToyState, '_load'));
-
-// Try using this version when YUI is removed.
 // When the DOM is ready load the proof state.
-// $($.proxy(proofToyState, '_load'));
+$($.proxy(proofToyState, '_load'));
 
 
 //// PROOF EDITOR
@@ -743,7 +721,7 @@ var _turnstile = '\u22a6';
  *   original, so original proof steps can currently have only one
  *   rendering at a time.
  *
- * - The given step's YUI node has CSS class 'proofStep' and a
+ * - The given step's node has CSS class 'proofStep' and a
  *   'proofStep' data property that refers to the step.  Code
  *   elsewhere may assume that only node's that render a proof step
  *   have the proofStep CSS class.
@@ -1048,8 +1026,7 @@ function specialClasses(name) {
 }
 
 /**
- * Create and return a text node containing a space.  YUI (and IE)
- * trim whitespace if you put in text in other ways.
+ * Create and return a text node containing a space.
  */
 function space() {
   return document.createTextNode(' ');
@@ -1631,11 +1608,11 @@ function computeFirstOrdinal(steps) {
 //// PROOF NAVIGATION
 
 // Every Expr (expression) of a rendered proof has a "node" property
-// that references the YUI Node that has the display for that
-// expression.  From each of these nodes the YUI Node for its proof
-// step (Inference) is accessible, and from the YUI Node for a proof
-// step, the inference itself accessible.  From any of these YUI Nodes
-// the Node of the entire proof is accessible, and from it the Proof
+// that references the node that has the display for that
+// expression.  From each of these nodes the node for its proof
+// step (Inference) is accessible, and from the node for a proof
+// step, the inference itself accessible.  From any of these nodes
+// the node of the entire proof is accessible, and from it the Proof
 // object, all using the API below.
 
 /**
@@ -1657,7 +1634,7 @@ function getProofStep(node) {
 }
 
 /**
- * Gets the DOM object of a rendered proof given the YUI node of
+ * Gets the DOM node of a rendered proof given the node of
  * one of its steps or of an expression in a step.
  */
 function getStepsNode(node) {

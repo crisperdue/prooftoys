@@ -4,7 +4,6 @@
 
 //// THEOREMS AND RULES
 
-// Use the application's "assert" rather than YUI's.
 var assert = Toy.assertTrue;
 
 // And make other useful names available here.
