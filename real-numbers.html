@@ -153,60 +153,48 @@ Toy.insertNav();
 Toy.insertSlogans();
 Toy.mathifyAll();
 
-// Remove "filter" to load minified JavaScript.
+// On DOM ready:
+jQuery(function() {
+    var rules = Toy.rules;
+    var axiomList = new Toy.ProofControl();
+    $('#axiomList').append(axiomList.node);
+    window.axiomList = axiomList;
+    // Numeric axioms:
+    var a1 = rules.axiomCommutativePlus();
+    var a2 = rules.axiomAssociativePlus();
+    var a3 = rules.axiomCommutativeTimes();
+    var a4 = rules.axiomAssociativeTimes();
+    var a5 = rules.axiomDistributivity();
+    var a6 = rules.axiomPlusZero();
+    var a7 = rules.axiomTimesOne();
+    var a8 = rules.axiomTimesZero();
+    var a9 = rules.axiomNeg();
+    var a10 = rules.axiomReciprocal();
+    axiomList.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10]);
 
-  // Set up some useful constants and functions.
+    var sample = new Toy.ProofControl();
+    window.sampleProof = sample;
+    $('#sampleProof').append(sample.node);
+    var a1 = rules.assume('x = y * 2');
+    var a2 = rules.assume('x + y = 6');
+    var a3 = rules.replace(a1, a2, '/main/left/left');
+    var a4 = rules.timesOneIntro(a3, '/main/left/right');
+    var a5 = rules.group(a4, '/main/left');
+    var a6 = rules.arithmetic(a5, '/right/left/right');
+    var a7 = rules.divideBoth(a6, Toy.parse('3'));
+    var a8 = rules.arithmetic(a7, '/right/right');
+    var a9 = rules.apply(a8, '/right/left');
+    var a10 = rules.associateTimesToRight(a9, '/right/left');
+    var a11 = rules.timesRecipElim(a10, '/right/left/right');
+    var a12 = rules.timesOneElim(a11, '/right/left');
+    var a13 = rules.replace(a12, a1, '/right/right/left');
+    var a14 = rules.arithmetic(a13, '/right/right');
+    sample.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12,
+                     a13, a14]);
+});
 
-  // Query string data.
-  var queryData;
-
-  function newProofBuilder() {
-    // Create an interactive proof editor for the user.
-    var controller = new Toy.ProofControl();
-    return controller;
-  };
-
-  $(window).on('load', function() {
-      var rules = Toy.rules;
-      var axiomList = new Toy.ProofControl();
-      $('#axiomList').append(axiomList.node);
-      window.axiomList = axiomList;
-      // Numeric axioms:
-      var a1 = rules.axiomCommutativePlus();
-      var a2 = rules.axiomAssociativePlus();
-      var a3 = rules.axiomCommutativeTimes();
-      var a4 = rules.axiomAssociativeTimes();
-      var a5 = rules.axiomDistributivity();
-      var a6 = rules.axiomPlusZero();
-      var a7 = rules.axiomTimesOne();
-      var a8 = rules.axiomTimesZero();
-      var a9 = rules.axiomNeg();
-      var a10 = rules.axiomReciprocal();
-      axiomList.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10]);
-
-      var sample = new Toy.ProofControl();
-      window.sampleProof = sample;
-      $('#sampleProof').append(sample.node);
-      var a1 = rules.assume('x = y * 2');
-      var a2 = rules.assume('x + y = 6');
-      var a3 = rules.replace(a1, a2, '/main/left/left');
-      var a4 = rules.timesOneIntro(a3, '/main/left/right');
-      var a5 = rules.group(a4, '/main/left');
-      var a6 = rules.arithmetic(a5, '/right/left/right');
-      var a7 = rules.divideBoth(a6, Toy.parse('3'));
-      var a8 = rules.arithmetic(a7, '/right/right');
-      var a9 = rules.apply(a8, '/right/left');
-      var a10 = rules.associateTimesToRight(a9, '/right/left');
-      var a11 = rules.timesRecipElim(a10, '/right/left/right');
-      var a12 = rules.timesOneElim(a11, '/right/left');
-      var a13 = rules.replace(a12, a1, '/right/right/left');
-      var a14 = rules.arithmetic(a13, '/right/right');
-      sample.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12,
-                       a13, a14]);
-    });
-
-  // For debugging.
-  window.db = Toy.debugString;
+// For debugging.
+window.db = Toy.debugString;
 
 </script>
 </body>
