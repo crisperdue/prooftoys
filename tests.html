@@ -214,8 +214,8 @@ YUI({filter: null, insertBefore: 'styles'})
         assert(items.indexOf(2) >= 0);
       },
 
-      TestTermSet: function() {
-        var set = new TermSet();
+      testTermSet: function() {
+        var set = new Toy.TermSet();
         var term = call(f, x);
         set.add(term);
         assert(set.has(term));
@@ -231,7 +231,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
         // Constructor with a term argument:
         term = Toy.parse('p x');
-        set = new TermSet(term);
+        set = new Toy.TermSet(term);
         assert(set.has(term));
       },
 
