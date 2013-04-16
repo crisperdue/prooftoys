@@ -8,56 +8,21 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <title>Prooftoys Tests</title>
-  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
-  <script>
-  // TODO: Move all loading of YUI here from boilerplate.js.
-  window.YUI = true;
-  </script>
+  <link id=styles type="text/css" rel="stylesheet" href="lib/qunit-1.11.0.css">
   <script src="boilerplate.js"></script>
+  <script src="lib/qunit-1.11.0.js"></script>
 
 <style type="text/css">
-
-  body { xbackground-color: #EEF }
-
-  .yui3-skin-sam .yui3-console-entry-pass .yui3-console-entry-cat {
-    background-color: #0C0;
-    color: black;
-  }
-
-  .yui3-skin-sam .yui3-console-entry-fail .yui3-console-entry-src {
-    background-color: red;
-    color: white;
-  }
 
 </style>
   
 </head>
-<body class=yui3-skin-sam
-  style="margin-left: .5em; text-align: left; font-family: sans-serif">
+<body>
 
-<h1>Test Results</h1>
-
-<div id=log class="yui3-skin-sam">
-</div>
-
+<div id="qunit"></div>
+<div id="qunit-fixture"></div>
 
 <script>
-YUI({filter: null, insertBefore: 'styles'})
-   .use('node', 'event', 'json', 'test', 'console',
-        'querystring', 'overlay',
-   function(Y) {
-
-  // Initialize the console
-  var yconsole = new Y.Console({
-      style: 'block',
-      height: '600px',
-      width: '700px',
-      newestOnTop: false                   
-    });
-  yconsole.render('#log');
-
-  // Make "Y" available globally.
-  window.Y = Y;
 
   // Make some names visible throughout
   var rules = Toy.rules;
@@ -86,10 +51,13 @@ YUI({filter: null, insertBefore: 'styles'})
   // Assertion utilities:
 
   function assertEqual(a, b) {
-    Y.Assert.areEqual(a, b);
+    if (typeof a === 'string' && b instanceof Toy.Expr) {
+      b = b.toString();
+    }
+    return deepEqual(b, a);
   }
 
-  var assert = Y.assert;
+  var assert = ok;
 
   // For testing convenience automatically assert steps from wffs.
   // TODO: Remove the need for this.
@@ -111,7 +79,7 @@ YUI({filter: null, insertBefore: 'styles'})
       if (expected) {
         assertEqual(expected, actual);
       } else {
-        Y.log(actual);
+        console.log(actual);
       }
     }
   }
@@ -128,30 +96,15 @@ YUI({filter: null, insertBefore: 'styles'})
   var bigger = call('==>', call('>', x, '0'),
                     call('>', call('+', x, x), x));
 
-  var testCase = new Y.Test.Case({
-
-      name: "Proof Tests",
-
-      _should: {
-        ignore: {
-          testTautologyAndProfile: true  // More time-consuming.
-        }
-      },
-
-      setUp: function() {
-        tracing = false;
-      },
+  var testCase = {
 
       // Warmups, to confirm what some assertions do.
 
       testTrue: function() {
-        Y.Assert.areEqual(true, true);
+        assertEqual(true, true);
       },
       test11: function() {
-        Y.Assert.areEqual(1, 1);
-      },
-      testTrue1: function() {
-        Y.Assert.areEqual(true, 1);
+        assertEqual(1, 1);
       },
 
       // configure
@@ -336,15 +289,15 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testTokenize: function() {
         var result = Toy.tokenize('a');
-        assertEqual('a,(end)', result);
+        assertEqual('a,(end)', result.toString());
         result = Toy.tokenize('(a > b)');
-        assertEqual('(,a,>,b,),(end)', result);
+        assertEqual('(,a,>,b,),(end)', result.toString());
         result = Toy.tokenize('{x. x}');
-        assertEqual('{,x,.,x,},(end)', result);
+        assertEqual('{,x,.,x,},(end)', result.toString());
         result = Toy.tokenize('(=>x*)');
-        assertEqual('(,=>,x,*,),(end)', result);
+        assertEqual('(,=>,x,*,),(end)', result.toString());
         result = Toy.tokenize('f "as\\"df" 2');
-        assertEqual('f,"as\\"df",2,(end)', result);
+        assertEqual('f,"as\\"df",2,(end)', result.toString());
         assertEqual('as"df', result[1].value);
       },
 
@@ -437,7 +390,7 @@ YUI({filter: null, insertBefore: 'styles'})
         function check(expected, input) {
           input = typeof input == 'string' ? Toy.parse(input) : input;
           var actual = Toy._decodeArg(input, steps);
-          assertEqual(expected, actual);
+          assertEqual(expected, actual.toString());
         }
         check('foo', '"foo"');
         check('/arg', '(path "/right")');
@@ -451,7 +404,7 @@ YUI({filter: null, insertBefore: 'styles'})
         var step3 = rules.replace(step1, step2, Toy.path('/main/left/left'));
         var saved = Toy.encodeSteps([step1, step2, step3]);
         var steps = Toy.decodeSteps(saved);
-        Y.log(steps);
+        console.log(steps);
         assertEqual(3, steps.length);
         assertEqual('(((y + 3) + y) = 5)', steps[2].unHyp());
       },
@@ -475,8 +428,8 @@ YUI({filter: null, insertBefore: 'styles'})
         var target = Toy.parse('x = ({x. x} x)');
         assertEqual('(y = ({x. x} y))', target.subst(y, x));
         // Result is exactly the input where there are no occurrences.
-        Y.assert(target === target.subst(z, y));
-        Y.assert(target.locate('/right/fn')
+        assert(target === target.subst(z, y));
+        assert(target.locate('/right/fn')
                  === target.subst(y, x).locate('/right/fn'));
       },
 
@@ -485,9 +438,9 @@ YUI({filter: null, insertBefore: 'styles'})
         var target = Toy.parse(source);
         // Copy is equal to original
         assertEqual(source, target.copy());
-        Y.assert(target.matches(target.copy()));
+        assert(target.matches(target.copy()));
         // But not identical.
-        Y.assert(target !== target.copy());
+        assert(target !== target.copy());
       },
 
       testDecapture: function() {
@@ -496,7 +449,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('({x_1. x_1} y)', result.toString());
         var target = Toy.parse('({x. f x} y)');
         // Result is exactly the input when no decapturing is needed.
-        Y.assert(target === Toy.decapture(target, z));
+        assert(target === Toy.decapture(target, z));
       },
 
       testSubFree: function() {
@@ -556,7 +509,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testIsCall2: function() {
-        Y.Assert.isTrue(times2.isCall2('='), 'Times2 not an equation?');
+        assert(times2.isCall2('='), 'Times2 not an equation?');
       },
 
       testExprReplace: function() {
@@ -567,7 +520,7 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual('({x. (f (f x))} y)', result.toString());
         var target = Toy.parse('f x = y');
         result = target.replace(Toy.path('/right'), function(expr) { return z; });
-        Y.assert(target.getLeft() === result.getLeft());
+        assert(target.getLeft() === result.getLeft());
       },
 
       testPath: function() {
@@ -576,15 +529,15 @@ YUI({filter: null, insertBefore: 'styles'})
         assertEqual(p, path.toString());
         assertEqual('a', path.segment);
         assertEqual('b', path.rest('a').segment);
-        Y.assert(path.rest('a').rest('b').isMatch());
+        assert(path.rest('a').rest('b').isMatch());
         assertEqual('(none)', path.rest('b').toString());
-        Y.assert(Toy.path('/').isMatch());
+        assert(Toy.path('/').isMatch());
         assertEqual('f', Toy.path('fn').next(call(f, x)).toString());
         assertEqual('x', Toy.path('arg').next(call(f, x)).toString());
         var p2 = '/left/binop';
         assertEqual('/fn/arg/fn/fn', Toy.path(p2).toString());
         var p3 = '/arg/fn';
-        assertEqual(p3 + p3, Toy.path(p3).concat(p3));
+        assertEqual(p3 + p3, Toy.path(p3).concat(p3).toString());
       },
 
       testSearch: function() {
@@ -654,11 +607,11 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testHasArgs: function() {
-        Y.assert(Toy.parse('f x').hasArgs(1));
-        Y.assert(!Toy.parse('f x').hasArgs(2));
-        Y.assert(Toy.parse('x + 1').hasArgs(1));
-        Y.assert(Toy.parse('x + 1').hasArgs(2));
-        Y.assert(!Toy.parse('x + 1').hasArgs(3));
+        assert(Toy.parse('f x').hasArgs(1));
+        assert(!Toy.parse('f x').hasArgs(2));
+        assert(Toy.parse('x + 1').hasArgs(1));
+        assert(Toy.parse('x + 1').hasArgs(2));
+        assert(!Toy.parse('x + 1').hasArgs(3));
       },
 
       testHypLocater: function() {
@@ -717,20 +670,20 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testIsHypotheses: function() {
         var step1 = Toy.rules.assume(Toy.parse('p x'));
-        Y.assert(step1.getLeft().isHypotheses());
-        Y.assert(step1.getRight().isHypotheses());
+        assert(step1.getLeft().isHypotheses());
+        assert(step1.getRight().isHypotheses());
         var conj = Toy.infixCall(step1.getLeft(), '&', step1.getRight());
-        Y.assert(conj.isHypotheses());
+        assert(conj.isHypotheses());
         var conj2 = Toy.infixCall(conj, '&', conj);
-        Y.assert(conj2.isHypotheses());
+        assert(conj2.isHypotheses());
       },
 
       testSourceStepLess: function() {
         var step1 = Toy.rules.assume('p T');
         var step2 = Toy.rules.assume('p F');
         // Which step came earlier?
-        Y.assert(Toy.sourceStepLess(step1.getLeft(), step2.getLeft()));
-        Y.assert(!Toy.sourceStepLess(step2.getLeft(), step1.getLeft()));
+        assert(Toy.sourceStepLess(step1.getLeft(), step2.getLeft()));
+        assert(!Toy.sourceStepLess(step2.getLeft(), step1.getLeft()));
       },
 
       testSourceStepComparator: function() {
@@ -792,7 +745,7 @@ YUI({filter: null, insertBefore: 'styles'})
         // Printing and parsing should be inverses.
         assertEqual('(a == b)', parse('a == b'));
         // Aliases should not affect meanings of expressions.
-        Y.assert(parse('a == b').matches(parse('a = b')));
+        assert(parse('a == b').matches(parse('a = b')));
       },
 
 
@@ -819,19 +772,19 @@ YUI({filter: null, insertBefore: 'styles'})
 
       // Actually "proof support" function:
       testIsConstant: function() {
-        Y.assert(Toy.isConstant('T'));
-        Y.assert(T.isConst());
-        Y.assert(Toy.isConstant('==>'));
-        Y.assert(Toy.isConstant('neg'));
-        Y.assert(!equal(x, x).isConst());
+        assert(Toy.isConstant('T'));
+        assert(T.isConst());
+        assert(Toy.isConstant('==>'));
+        assert(Toy.isConstant('neg'));
+        assert(!equal(x, x).isConst());
       },
 
       testIsDefined: function() {
-        Y.assert(!Toy.isDefined('T'));
-        Y.assert(!Toy.isDefined(T));
-        Y.assert(!Toy.isDefined('==>'));
-	Y.assert(Toy.isDefined('forall'));
-	Y.assert(Toy.isDefined(varify('forall')));
+        assert(!Toy.isDefined('T'));
+        assert(!Toy.isDefined(T));
+        assert(!Toy.isDefined('==>'));
+	assert(Toy.isDefined('forall'));
+	assert(Toy.isDefined(varify('forall')));
         try {
           Toy.isDefined(equal(x, x));
           Y.Assert.fail('Name not a variable or string');
@@ -843,7 +796,7 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testParseType: function() {
         function check(expected, input) {
-          assertEqual(expected, Toy.parseType(input));
+          assertEqual(expected, Toy.parseType(input).toString());
         }
         check('i', 'i');
         check('o', 'o');
@@ -860,28 +813,27 @@ YUI({filter: null, insertBefore: 'styles'})
 
       testFindType: function() {
         var rules = Toy.rules;
-        assertEqual('o', Toy.findType(T));
-        assertEqual('o', Toy.findType(Toy.parse('x = x')));
-        try {
+        assertEqual('o', Toy.findType(T).toString());
+        assertEqual('o', Toy.findType(Toy.parse('x = x')).toString());
+        throws(function() {
           Toy.findType(Toy.parse('f f'));
-          Y.Assert.fail('Should not unify');
-        } catch(e) {}
+          });
         // The identity function, problematic for some algorithms.
         var type = Toy.findType(Toy.parse('{x. x}'));
-        Y.assert(type instanceof Toy.FunctionType, 'Not a FunctionType');
-        Y.assert(type.types[0] instanceof Toy.TypeVariable, 'Not a TypeVariable');
+        assert(type instanceof Toy.FunctionType, 'Not a FunctionType');
+        assert(type.types[0] instanceof Toy.TypeVariable, 'Not a TypeVariable');
         assertEqual(type.types[0], type.types[1]);
-        assertEqual('o', Toy.findType(rules.axiom1()));
-        assertEqual('o', Toy.findType(rules.axiom2()));
-        assertEqual('o', Toy.findType(rules.axiom3()));
-        assertEqual('o', Toy.findType(rules.axiom4(Toy.parse('({x. x} y)'))));
-        assertEqual('o', Toy.findType(rules.axiom5()));
+        assertEqual('o', Toy.findType(rules.axiom1()).toString());
+        assertEqual('o', Toy.findType(rules.axiom2()).toString());
+        assertEqual('o', Toy.findType(rules.axiom3()).toString());
+        assertEqual('o', Toy.findType(rules.axiom4(Toy.parse('({x. x} y)'))).toString());
+        assertEqual('o', Toy.findType(rules.axiom5()).toString());
         function check(expected, expr) {
           expr = (typeof expr == 'string') ? Toy.parse(expr) : expr;
           var type = Toy.findType(expr);
           // for debugging:
           // Y.log(expected + '/' + type);
-          assertEqual(expected, type);
+          assertEqual(expected, type.toString());
         }
         // Note that all the "> 0" conditions below force variables to
         // be individual variables.
@@ -941,7 +893,7 @@ YUI({filter: null, insertBefore: 'styles'})
       testAxiom4: function() {
         var app = call(lambda(x, call(f, x)), y);
         var result = Toy.rules.axiom4(app);
-        Y.Assert.isInstanceOf(Toy.Call, result);
+        assert(result instanceof Toy.Call);
         assertEqual('=', result.fn.fn.name);
         assertEqual('(({x. (f x)} y) = (f y))', result);
       },
@@ -1005,7 +957,7 @@ YUI({filter: null, insertBefore: 'styles'})
         var step6 = Toy.rules.asImplication(step5);
         var result = Toy.rules.asHypotheses(step6);
         assertEqual('(p ==> q)', result);
-        Y.assert(result.hasHyps);
+        assert(result.hasHyps);
       },
 
       testApplyBoth: function() {
@@ -1148,7 +1100,7 @@ YUI({filter: null, insertBefore: 'styles'})
         var step2 = Toy.rules.appendStepHyps(step1, hyps);
         var result = Toy.rules.instForall(step2, call(f, y));
         assertEqual('((p y) ==> (p (f y)))', result)
-        Y.assert(result.hasHyps);
+        assert(result.hasHyps);
       },
 
       testR5214: function() {
@@ -1263,7 +1215,7 @@ YUI({filter: null, insertBefore: 'styles'})
         // TODO: In tests with hypotheses, allow order of hypotheses
         //   to vary.
         assertEqual('(((p T) & (p F)) ==> (p x))', result);
-        Y.assert(result.hasHyps);
+        assert(result.hasHyps);
       },
 
       testModusPonens: function() {
@@ -1276,7 +1228,7 @@ YUI({filter: null, insertBefore: 'styles'})
         var step2 = Toy.rules.assert('(p ==> not p) ==> not p');
         result = Toy.rules.modusPonens(step1, step2);
         assertEqual('((p ==> (not p)) ==> (not p))', result);
-        Y.assert(result.hasHyps);
+        assert(result.hasHyps);
       },
 
       testTIsXIsX: function() {
@@ -1376,7 +1328,7 @@ YUI({filter: null, insertBefore: 'styles'})
         h_taut.hasHyps = true;
         var result = Toy.rules.tautInst(h_taut, {p: q});
         assertEqual('((x > 0) ==> (q ==> q))', result);
-        Y.assert(result.hasHyps);
+        assert(result.hasHyps);
       },
 
       testAnyImpliesTheorem: function() {
@@ -1422,17 +1374,19 @@ YUI({filter: null, insertBefore: 'styles'})
 	var step3 = Toy.rules.modusPonens(step2, step1);
         var result = Toy.rules.forwardChain(step3, taut);
         assertEqual('((h x) ==> (q x))', result);
-        Y.assert(result.hasHyps);
+        assert(result.hasHyps);
       },
 
       testBackwardChain: function() {
+        expect(0);
         // TODO: Implement me.
       },
 
       testSubgoal: function() {
+        expect(0);
         var input = Toy.parse('R (x + (y + 2))');
         var theorem = rules.axiomTimesType();
-        Y.log(rules.subgoal(input, theorem));
+        console.log(rules.subgoal(input, theorem));
       },
 
       testR5238a: function() {
@@ -1552,6 +1506,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testIsolateCondition: function() {
+        expect(0);
         // TODO: implement me.
       },
 
@@ -1585,6 +1540,7 @@ YUI({filter: null, insertBefore: 'styles'})
       },
 
       testDedupeHyps: function() {
+        expect(0);
         // TODO: Implement.
       },
 
@@ -1735,20 +1691,19 @@ YUI({filter: null, insertBefore: 'styles'})
       // From here you can get counterexamples to the possibilities
       // that ordered pairs other than TT satisfy the definition.
       testFunWithAnd: function() {
+        expect(0);
         var result = Toy.rules.funWithAnd();
       }
-    });
+  };
 
-  Y.Test.Runner.add(testCase);
-  Y.Test.Runner.run();
-  Y.Test.Runner.subscribe(Y.Test.Runner.COMPLETE_EVENT, function(event) {
-      // Y.log(Y.Test.Runner.getResults(Y.Test.Format.TAP));
-      console.log(Y.Test.Runner.getResults(Y.Test.Format.TAP));
-      var passed = event.results.failed == 0 && event.results.passed > 0;
-      document.body.style.backgroundColor = passed ? '#0C0' : '#F00';
-      document.title += passed ? ' Passed' : ' Failed';
-    });
-});
+for (var name in testCase) {
+  var fn = testCase[name];
+  if (typeof fn === 'function') {
+    test(name, fn);
+  } else {
+    console.log(name + ': not a function');
+  }
+}
 
 </script>
 </body>
