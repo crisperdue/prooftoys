@@ -3,3 +3,7 @@ syntax: glob
 
 *.jsc
 *.orig
+
+syntax: regexp
+
+^jsc/
