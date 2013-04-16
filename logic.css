@@ -261,19 +261,6 @@ table.proofDisplay {
   color: #777;
 }
 
-/* Overlay Look/Feel (details of hovered step) */
-.yui3-overlay-content {
-    padding: 1px 3px;
-    border: 1px solid silver;
-    border-top-width: 0px;
-    color: gray;
-    background-color: white;
-    font-size: 80%;
-}
-
-.yui3-overlay-hidden {
-    display: none;
-}
 
 /* Highlighting of parts of proof steps */
 
@@ -396,19 +383,6 @@ input.term, input.string {
 input.varName, input.step, input.equation, input.implication {
   width: 4em;
 }
-
-/* Autocompleter */
-.yui3-aclist {
-  font-size: 80%;
-}
-
-.yui3-aclist-content {
-  /* YUI autocompleter display.  This goes in the margin below the step
-    editor, which is 18 em high, but the font here is smaller.  */
-  max-height: 20em;
-  overflow: auto;
-}
-
 
 
 /* Proof state display */

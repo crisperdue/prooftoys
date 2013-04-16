@@ -6,20 +6,9 @@
 // Load all scripts from js/ subdirectory and preprocess scripts
 // into there.
 
-var Y_site = 'http://yui.yahooapis.com/';
-// You can override the "site path" something like this:
-// var Y_site = 'http://localhost/~cris/yui/';
-
-// TODO: deploy with yui-min.js rather than yui.js
-var yuiPath =
-  ('<script src="' + Y_site + '3.5.1/build/yui/yui.js"></script>\n');
-// For debugging add explicit reference to source file(s) here
-
 // Include jQuery in all cases.
 document.write('<script src="lib/jquery-1.9.1.js"></script>\n');
-if (window.YUI) {
-  document.write(yuiPath);
-}
+
 if (!window.noProofScripts) {
   document.write('<script src="expr.js"></script>\n');
   document.write('<script src="step-editor.js"></script>\n');
