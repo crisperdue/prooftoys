@@ -145,11 +145,11 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
-    comment: 'convert assumptions to an explicit implication',
+    comment: 'show assumptions',
     description: ';;show assumptions {of step step}',
-    labels: 'display'
+    labels: 'basic'
   },
-      
+
   /**
    * A no-op step that breaks the cycle of displaying with elision.
    */
@@ -1818,7 +1818,7 @@ var ruleInfo = {
     inputs: {step: [1, 2]},
     form: ('Match step <input name=step1> with left side of implication '
            + 'in schema <input name=step2>'),
-    comment: ('match with A in ' + Toy.unicodify('A ==> B')),
+    comment: ('[A], [A ==> B] to B'),
     description: 'consequence;; of step {step1} using step {step2}'
   },
 
