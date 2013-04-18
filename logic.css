@@ -78,19 +78,14 @@ code {
 }
 
 /* Math-oriented text */
-.math, s {
+span.math, s {
   font-family: STIXGeneral, Times, serif;
   /* Variable and constant names should be explicitly italicized
      within math text. */
   font-style: normal;
   white-space: nowrap;
-}
-
-/* Math-oriented text to be transformed (Substituted) with Toy.mathifyAll. */
-s {
-  text-decoration: none;
   color: #860;
-}  
+}
 
 .ellipsis {
   color: gray;

@@ -90,7 +90,7 @@ Toy.mathMarkup = function(text) {
   return text.replace(rex, function(s) {
     switch(s) {
     case '==>': return '&rArr;';
-    case '==': return '&#x21d4;';
+    case '==': return '&#x21d4;';	// Bidirectional implication
     case '!=': return '&ne;';
     case '>=': return '&ge;';
     case '<=': return '&le;';
@@ -104,8 +104,12 @@ Toy.mathMarkup = function(text) {
     default:
       if (s.charAt(0) === '<') {
         return s;
-      } else {
+      } else if (s.match(/^[_a-z][_0-9]*$/)) {
+        // Variable name, not a constant, see Toy.isVariable in expr.js.
         return '<i>' + s + '</i>';
+      } else {
+        // It is a constant name, not a variable name, see
+        return s;
       }
     }
   });
@@ -114,29 +118,14 @@ Toy.mathMarkup = function(text) {
 /**
  * Converts all <S> element contents into math-oriented HTML.
  * Ignores all HTML markup within each element, though HTML
- * entities are OK, and passed through.
+ * entities are OK.
  */
 Toy.mathifyAll = function() {
-  elts = document.querySelectorAll('s');
-  var len = elts.length;
-  for (var i = 0; i < len; i++) {
-    var e = elts[i];
-    var text = e.innerHTML;
-    var pat = /&amp;|&gt;|&lt;/g;
-    // In case the text is actually HTML, replace enough character
-    // entities with their characters so Toy.mathMarkup can work on them.
-    text = text.replace(pat, function(s) {
-      switch(s) {
-      case '&amp;': return '&';
-      case '&gt;': return '>';
-      case '&lt;': return '<';
-      default:
-        throw new Error('Unexpected text: ' + s);
-      }
-    });
-    var content = Toy.mathMarkup(text);
-    e.innerHTML = content;
-  }
+  jQuery('s').replaceWith(function() {
+    return '<span class=math>' +
+      Toy.mathMarkup($(this).text()) +
+      '</span>';
+  });
 };
 
 // This will contain a map of query string parameter names
