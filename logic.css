@@ -224,6 +224,10 @@ table.proofDisplay {
     clear: both;
     background-color: white;
     font-family: STIXGeneral, times, serif;
+    /* Each proofStep has a 1px border, which is gray when
+       the step is selected in the UI or hovered.
+       */
+    border: 1px solid transparent;
     /* Padding causes the proofStep to have screen space
        outside its children, which causes flashing as
        the mouse enters and leaves those areas.
@@ -233,6 +237,10 @@ table.proofDisplay {
     -moz-user-select: none;
     user-select: none;
     */
+}
+
+.proofStep.hover {
+  border: 1px solid gray;
 }
 
 /* Step deleter control, only visible when the step is hovered. */
@@ -272,6 +280,7 @@ table.proofDisplay {
 
 .proofStep.selected {
   background-color: #FF6;
+  border: 1px solid gray;
 }
 
 /* Old value ("removed"), occurrence of variable to be substituted. */
