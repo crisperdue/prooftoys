@@ -24,7 +24,7 @@ Toy.navText = [
   'Home page</a>',
   '<a class=nav href="booleans.html">',
   'Basic logic through pictures</a>',
-  '<a class=nav href="tutorial.html">',
+  '<a class=nav href="introduction.html">',
   'Introduction</a>',
   '<a class=nav href="real-numbers.html">',
   'Working with real numbers',
