@@ -598,7 +598,8 @@ ProofControl.prototype.setEditable = function(state) {
 // STEP SELECTION
 
 /**
- * Unconditionally select the step, no other action.
+ * Unconditionally flag the renderable step as selected within this
+ * ProofControl and in the UI, no other action.
  */
 ProofControl.prototype.selectStep = function(step) {
   $(step.stepNode).addClass('selected');
@@ -606,8 +607,8 @@ ProofControl.prototype.selectStep = function(step) {
 };
 
 /**
- * Unconditionally deselect any selected step and any
- * selected expression in it.
+ * Unconditionally deselect any selected step and any selected
+ * expression in it, in both the ProofControl and the UI.
  */
 ProofControl.prototype.deselectStep = function() {
   var step = this.selection;
@@ -619,7 +620,8 @@ ProofControl.prototype.deselectStep = function() {
 };
 
 /**
- * Unconditionally select the expr, no other action.
+ * Unconditionally select the expr in this ProofControl and in the UI,
+ * no other action.
  */
 ProofControl.prototype.selectExpr = function(expr) {
   var step = getProofStep(expr);
@@ -678,8 +680,9 @@ ProofControl.prototype.handleExprSelection = function(expr) {
     if (expr != oldExpr) {
       this.selectExpr(expr);
     }
-    // Always select the step containing the clicked expression.
-    this.selectStep(step);
+    // Flag the step as the ProofControl's current selection, but do
+    // not flag it at the UI level.
+    this.selection = step;
     // Don't bubble the event up to the proof step.
     event.stopPropagation();
     // Communicate that the selection _may_ have changed.
@@ -781,11 +784,10 @@ function renderStep(step, controller) {
            hover.bind(null, 1),
            hover.bind(null, -1));
   // We count the wffJQ as outside for this purpose.
-  wffJQ
-    .hover(
-           // Call hoverStep, passing these arguments as well as the event.
-           hover.bind(null, -1),
-           hover.bind(null, 1));
+  wffJQ.hover(hover.bind(null, -1), hover.bind(null, 1));
+  // If there is a "ruleName link" element, count it as outside also.
+  stepJQ.find('.ruleName.link')
+    .hover(hover.bind(null, -1), hover.bind(null, 1));
 
   var deleter = stepJQ.find('.deleteStep');
   if (deleter) {
