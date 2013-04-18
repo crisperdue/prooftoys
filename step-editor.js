@@ -628,7 +628,7 @@ function ruleMenuFormatter(query, result, useHtml) {
     if (useHtml) {
       return '<i style="color: gray">' + hint + '</i>';
     } else {
-      return hint;
+      return Toy.unicodify(hint);
     }
   }
 }
