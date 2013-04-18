@@ -47,14 +47,11 @@ For more complete information see the
 <a href="http://code.google.com/p/prooftoys/wiki/LanguageSummary">
 language documentation</a> in the project Wiki.
 <p>
-<b>About the notation.</b> 
 Aside from variables and constants, the language has only function
-calls and function expressions, like lambda expressions in the lambda
-calculus.  The parser and printer support infix operators, which are
-"<a href="http://www.haskell.org/haskellwiki/Currying">curried</a>"
-in the internal representation into functions of a single argument.
+calls and function expressions.  The parser and printer support infix
+operators, which are represented internally as function calls.
 <p>
-<b>infix operators.</b>
+<b>Infix operators.</b>
 Infix operators available in order of increasing precedence are:
 <ul>
 <li><code>==</code> (equivalence, displays as "<s>==</s>")
@@ -68,15 +65,24 @@ These display as <s>= != &lt; &le; &gt; &ge;</s> respectively.
 <li><code>* /</code>
 </ul>
 <p>
-<b>function calls.</b>
-Ordinary function calls look like <s>(f x)</s> or
-<s>f x</s>, and have higher precedence than any infix
-operator.  So an expression such as <s>sin x / 2</s> has the same
-meaning as <s>(sin x) / 2</s> <b>not</b> <s>sin (x / 2)</s>.
+<b>Negation ("not").</b>
+Negation is represented by <s>not</s>, and acts like any other
+function.  So "x is not red" might be expressed in Prooftoys
+as <s>not (red x)</s>.  Like the Prooftoys functions for "and", "or",
+its input is a true/false value and so is the value of its result.
 <p>
-<b>forall and exists.</b>
-These are entered as <code>forall</code> and <code>exists</code>, and
-display as the usual mathematical symbols
+<b>Function calls.</b>
+Ordinary function calls look like <s>(f x)</s> or
+<s>f x</s>.  An expression such as <s>sin x / 2</s> has the same
+meaning as <s>(sin x) / 2</s>, <b>not</b> <s>sin(x / 2)</s>.  We say
+that function calls have higher precedence than infix operators, just
+as multiplication has higher precedence than addition, so that
+when some parentheses are omitted in an expression such as
+<s>x + 2 * y</s>, it has the same meaning as <s>x + (2 * y)</s>.
+<p>
+<b>Forall and exists.</b>
+These quantifiers are entered as <code>forall</code> and
+<code>exists</code>, and display as the usual mathematical symbols
 <span class=math>&forall;</span> and <span class=math>&exist;</span>.
 In Prooftoys the typical math notation
 <span class=math>&forall;<i>x</i> <i>P</i>(<i>x</i>)</span>
@@ -85,19 +91,19 @@ is entered as <code>forall {x. P x}</code> or
 <s>forall {x. P x}</s> or <s>forall {x. (P x)}</s>.
 
 <p>
-<b>not.</b>
-Boolean negation is represented by <s>not</s>, and is called
-like any other ordinary function.
+<b>Function expressions.</b>
+These have the form <s>{x. P x}</s>.  In an example like this one,
+assuming <s>P</s> returns a true/false value, the notation can be read
+like the common notation for sets, "<i>the set of x such that P of
+x</i>".  In fact the <s>P x</s> part can be any expression, and the
+whole thing can always be read as "<i>the function of <s>x</s> whose
+value is <s>P x</s></i>".
 <p>
-<b>anonymous functions.</b>
-These have the form <s>{x. p x}</s>, a
-notation somewhat resembling the Ruby programming language notation
-for
-<a href="http://en.wikipedia.org/wiki/Ruby_(programming_language)#Blocks_and_iterators"
- target="_blank">blocks</a>/anonymous functions or Smalltalk blocks.
-This notation also resembles common notation for sets,
-and can be read that way for functions with boolean values &mdash;
-"<i>the set of x such that p of x</i>".
+The most common use of function expressions is with the quantifiers
+<code>forall</code> (<s>forall</s>) and <code>exists</code>
+(<s>exists</s>) as in the examples above, although usually in these
+cases our attention focuses on the quantifier itself and not on the
+the function expression.
 
 <h2>Inference in Prooftoys</h2>
 <p>
@@ -237,25 +243,24 @@ Next use the rule <s>assume hypothetically</s> again, typing in
 <code>p ==> q</code> as your second assumption.
 <p>
 For the inference step, click on the step number "1" at the <i>very
-beginning</i>in the first line of the proof display.  The line will
-highlight itself (in yellow) and stay highlighted as you move the
-mouse away.  Now click on the dropdown list control to select a rule
-of inference to use.  When you select <s>[A], [A==>B] to [B]</s> from
-the list, a small form will appear with "1" as the hypothesis step.
-Enter <code>2</code> as the number of the implication step to apply
-the rule to, and press
-<code>&lt;Enter&gt;</code>.  You
-should see the conclusion <s>q</s> added to the proof.
+beginning</i> in the first line of the proof display.  The whole line
+will highlight itself (in yellow) and stay highlighted as you move the
+mouse away.  Now use the dropdown list control to select a rule of
+inference to use.  When you select <s>[A], [A==>B] to [B]</s> from the
+list, a small form will appear with "1" as the hypothesis step.  Enter
+<code>2</code> as the number of the implication step to apply the rule
+to.  Press <code>&lt;Enter&gt;</code>.  You should see the conclusion
+<s>q</s> added to the proof.
 <p>
 Finally to make the hypotheses explicit, you might wish to select the
-last line of the proof and choose the rule <s>show assumptions</s> rule,
-which causes the hypotheses to be displayed explicitly as
-preconditions.
+last line of the proof and choose the rule <s>show assumptions</s>
+rule, which causes the hypotheses to be displayed explicitly as
+preconditions.  Again, select the entire step by clicking on the step
+number.
 <p>
-Going beyond what is displayed in the sample, you could choose the
-rule <s>addForall</s> to add universal quantifiers to the
-formula.  You can do this twice to quantify over both <s>p</s> and
-<s>q</s>.
+Going beyond what is displayed in the sample, you could choose
+<s>add forall</s> to add universal quantifiers to the formula.
+Do this twice to quantify over both <s>p</s> and <s>q</s>.
 <p>
 <a href="javascript:void jQuery('#proofbuilder-video').toggleClass('hidden')">
  Proof Builder demo screencast
