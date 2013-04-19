@@ -591,6 +591,7 @@ ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
  */
 ProofControl.prototype.setEditable = function(state) {
   this.editable = state;
+  $(this.node).toggleClass('editable', !!state);
   this.stepEditor.jq.toggle(state);
 }
 

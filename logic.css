@@ -239,7 +239,7 @@ table.proofDisplay {
     */
 }
 
-.proofStep.hover {
+.proofDisplay.editable .proofStep.hover {
   border: 1px solid gray;
 }
 
