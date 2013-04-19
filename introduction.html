@@ -252,6 +252,14 @@ list, a small form will appear with "1" as the hypothesis step.  Enter
 to.  Press <code>&lt;Enter&gt;</code>.  You should see the conclusion
 <s>q</s> added to the proof.
 <p>
+Note that in this rule <s>[A]</s>, <s>[A==>B]</s>, and <s>[B]</s> are
+patterns.  The rule needs two steps as its inputs, which must match
+the patterns <s>[A]</s> and <s>[A==>B]</s>.  <s>A</s> can be any
+expression, but it must be the same in both of the input steps.  The
+result of the inference will be the expression that matches with
+<s>B</s> in the second input step.  The brackets just indicate the
+boundaries of each of the patterns.
+<p>
 Finally to make the hypotheses explicit, you might wish to select the
 last line of the proof and choose the rule <s>show assumptions</s>
 rule, which causes the hypotheses to be displayed explicitly as
