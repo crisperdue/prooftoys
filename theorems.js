@@ -51,8 +51,8 @@ var _allHyps = {};
 // description: HTML word or phrase to display for the rule name.
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
-// template: if present, normally the equation used for the
-//   rule, as for rewriters.  The equation may have conditions.
+// template: if present, normally the equation or implication used for
+//   the rule, as for rewriters.  The equation may have conditions.
 //   When working forward the left side of the main equation must
 //   match the site to be operated on.
 // templateSide: may be 'right' to indicate that the rule uses
@@ -3272,7 +3272,61 @@ var ruleInfo = {
 
 };  // End of theorems and rules
 
-var unicodify = Toy.unicodify;
+// Map from rule name to function used in all proofs.
+// Generated from ruleInfo by creatRules, below.
+var rules = {};
+
+// Math markup in the position of a rule name.
+// Helper for createRules.
+function formulaAsDescription(text) {
+  return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
+}
+
+/**
+ * Given a ruleInfo object, add its information to the "rules" object.
+ * The "rules" object maps from rule name to function.  Each function
+ * has an "info" property containing all the properties present in the
+ * ruleInfo object entry for the name.  If not supplied in the rule
+ * definition, the info.inputs is defaulted to an empty object here.
+ */
+function createRules(ruleInfo) {
+  for (var key in ruleInfo) {
+    var info = ruleInfo[key];
+    // Give every info "inputs".
+    if (!info.inputs) {
+      info.inputs = {};
+    }
+    // Preprocess labels.  Split, and if there are no explicit labels,
+    // give the rule a label of "basic".
+    var labels = info.labels;
+    info.labels = {};
+    if (typeof labels === 'string') {
+      labels.split(/\s+/)
+        .forEach(function(label) { info.labels[label] = true; });
+    }
+    if (info.form !== undefined && Toy.isEmpty(info.labels)) {
+      // Anything conceivably offerable (with a form), default to
+      // "basic" if no other labels.
+      info.labels.basic = true;
+    }
+    // Default the description to the marked up formula or the ruleName.
+    if (!('description' in info)) {
+      if ('formula' in info) {
+        info.description = formulaAsDescription(info.formula);
+      } else {
+        info.description = key;
+      }
+    }
+    var fn = (typeof info == 'function') ? info : info.action;
+    // Associate the action function with the key,
+    rules[key] = fn;
+    // and metadata as the function's "info" property.
+    rules[key].info = info;
+  }
+}
+
+// Actual rule functions to call from other code.
+createRules(ruleInfo);
 
 // Descriptions of rewrite rules; internal.  Each of these generates
 // an actual inference rule.
@@ -3366,7 +3420,7 @@ function genRewriters(map) {
     if (info.comment) {
       var comment = info.comment;
     } else {
-      // Remember ruleInfo is still not processed into Toy.rules.
+      // Note: ruleInfo is still not processed into Toy.rules.
       var fact = info.axiom;
       var desc = ruleInfo[info.axiom].description || info.axiom;
       var comment = 'Rewrite using ' + desc;
@@ -3395,8 +3449,12 @@ function genRewriters(map) {
 }
 
 /**
- * Standardized rewriting rule that uses an equational axiom.
- */
+ * Standardized rewriting rule that uses an equational axiom
+ * or theorem.
+ *
+function rewriteWithFact(step, path, fact, ruleName) {
+  var step1 = rules.rewrite(step, path, fact);
+*/
 function rewriteWithAxiom(step, path, axiomName, ruleName) {
   var axiom = rules[axiomName]();
   var step1 = rules.rewrite(step, path, axiom);
@@ -3420,61 +3478,6 @@ function rewriteBackWithAxiom(step, path, axiomName, ruleName) {
 
 // Add rewriting rules based on the axioms.
 genRewriters(rewriters);
-
-// Map from rule name to function.  See creatRules, below.
-var rules = {};
-
-// Math markup in the position of a rule name.
-// Helper for createRules.
-function formulaAsDescription(text) {
-  return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
-}
-
-/**
- * Given a ruleInfo object, add its information to the "rules" object.
- * The "rules" object maps from rule name to function.  Each function
- * has an "info" property containing all the properties present in the
- * ruleInfo object entry for the name.  If not supplied in the rule
- * definition, the info.inputs is defaulted to an empty object here.
- */
-function createRules(ruleInfo) {
-  for (var key in ruleInfo) {
-    var info = ruleInfo[key];
-    // Give every info "inputs".
-    if (!info.inputs) {
-      info.inputs = {};
-    }
-    // Preprocess labels.  Split, and if there are no explicit labels,
-    // give the rule a label of "basic".
-    var labels = info.labels;
-    info.labels = {};
-    if (typeof labels === 'string') {
-      labels.split(/\s+/)
-        .forEach(function(label) { info.labels[label] = true; });
-    }
-    if (info.form !== undefined && Toy.isEmpty(info.labels)) {
-      // Anything conceivably offerable (with a form), default to
-      // "basic" if no other labels.
-      info.labels.basic = true;
-    }
-    // Default the description to the marked up formula or the ruleName.
-    if (!('description' in info)) {
-      if ('formula' in info) {
-        info.description = formulaAsDescription(info.formula);
-      } else {
-        info.description = key;
-      }
-    }
-    var fn = (typeof info == 'function') ? info : info.action;
-    // Associate the action function with the key,
-    rules[key] = fn;
-    // and metadata as the function's "info" property.
-    rules[key].info = info;
-  }
-}
-
-// Actual rule functions to call from other code.
-createRules(ruleInfo);
 
 var identity = lambda(x, x);
 var allT = lambda(x, T);
@@ -3553,6 +3556,7 @@ var theoremNames =
                       'subtractionType', 'divisionType', 'eqIsEquiv',
                       'equalitySymmetric', 'equalityTransitive']));
 
+// Add all the named theorems to their database.
 for (var i = 0; i < theoremNames.length; i++) {
   addTheorem(theoremNames[i]);
 }
