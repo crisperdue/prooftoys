@@ -1177,7 +1177,8 @@ Lambda.prototype._render = function(omit) {
  * including the given step, sorted by ordinal.  Helper function
  * internal to renderInference.  The "unrendered" aspect is helpful
  * for rendering subproofs, furthermore currently a step only
- * remembers one rendering.
+ * remembers one rendering, and removal of the rendering from the
+ * display deletes the association with the underlying step.
  */
 function unrenderedDeps(step) {
   var result = [];
