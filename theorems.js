@@ -6,13 +6,18 @@
 
 var assert = Toy.assertTrue;
 
-// And make other useful names available here.
+//  Make some useful names available here.
 var assertEqn = Toy.assertEqn;
 var varify = Toy.varify;
 var call = Toy.call;
 var equal = Toy.equal;
 var implies = Toy.implies;
 var lambda = Toy.lambda;
+
+var Expr = Toy.Expr;
+var Var = Toy.Var;
+var Call = Toy.Call;
+var Lambda = Toy.lambda;
 
 // Include all variables that appear in axioms, plus T and F.
 var T = varify('T');
@@ -47,7 +52,8 @@ var _allHyps = {};
 //   of the step editor.
 // comment: plain text comment to become the title of mentions of the rule
 //   name in proof displays and the description in subproof displays.
-// formula: Unicode textual representation of the theorem, if present.
+// formula: Textual representation of the theorem, if present.  May be
+//   converted to HTML using mathMarkup as description of a rule.
 // description: HTML word or phrase to display for the rule name.
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
@@ -3270,14 +3276,14 @@ var ruleInfo = {
     return step13.justify('funWithAnd');
   }
 
-};  // End of theorems and rules
+};  // End of ruleInfo.
 
 // Map from rule name to function used in all proofs.
 // Generated from ruleInfo by creatRules, below.
 var rules = {};
 
 // Math markup in the position of a rule name.
-// Helper for createRules.
+// Helper for addRules.
 function formulaAsDescription(text) {
   return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
 }
@@ -3289,7 +3295,7 @@ function formulaAsDescription(text) {
  * ruleInfo object entry for the name.  If not supplied in the rule
  * definition, the info.inputs is defaulted to an empty object here.
  */
-function createRules(ruleInfo) {
+function addRules(ruleInfo) {
   for (var key in ruleInfo) {
     var info = ruleInfo[key];
     // Give every info "inputs".
@@ -3326,158 +3332,147 @@ function createRules(ruleInfo) {
 }
 
 // Actual rule functions to call from other code.
-createRules(ruleInfo);
+addRules(ruleInfo);
 
-// Descriptions of rewrite rules; internal.  Each of these generates
+// Descriptions of rewrite rules (internal).  Each of these generates
 // an actual inference rule.
 var rewriters = {
   commutePlus: {
-    axiom: 'axiomCommutativePlus',
+    fact: 'axiomCommutativePlus',
     formula: 'a + b = b + a'
   },
   commuteTimes: {
-    axiom: 'axiomCommutativeTimes',
+    fact: 'axiomCommutativeTimes',
     formula: 'a * b = b * a'
   },
   associatePlusToLeft: {
-    axiom: 'axiomAssociativePlus',
+    fact: 'axiomAssociativePlus',
     formula: 'a + (b + c) = (a + b) + c'
   },
   associatePlusToRight: {
-    axiom: 'axiomAssociativePlus',
+    fact: 'axiomAssociativePlus',
     formula: '(a + b) + c = a + (b + c)',
     input: 'right'
   },
   associateTimesToLeft: {
-    axiom: 'axiomAssociativeTimes',
+    fact: 'axiomAssociativeTimes',
     formula: 'a * (b * c) = (a * b) * c'
   },
   associateTimesToRight: {
-    axiom: 'axiomAssociativeTimes',
+    fact: 'axiomAssociativeTimes',
     formula: '(a * b) * c = a * (b * c)',
     input: 'right'
   },
   distribute: {
-    axiom: 'axiomDistributivity',
+    fact: 'axiomDistributivity',
     formula: 'a * (b + c) = (a * b) + (a * c)'
   },
   group: {
-    axiom: 'axiomDistributivity',
+    fact: 'axiomDistributivity',
     formula: '(a * b) + (a * c) = a * (b + c)',
     input: 'right'
   },
   plusZeroElim: {
-    axiom: 'axiomPlusZero',
+    fact: 'axiomPlusZero',
     formula: 'a + 0 = a'
   },
   plusZeroIntro: {
-    axiom: 'axiomPlusZero',
+    fact: 'axiomPlusZero',
     formula: 'a = a + 0',
     input: 'right'
   },
   timesOneElim: {
-    axiom: 'axiomTimesOne',
+    fact: 'axiomTimesOne',
     formula: 'a * 1 = a'
   },
   timesOneIntro: {
-    axiom: 'axiomTimesOne',
+    fact: 'axiomTimesOne',
     formula: 'a = a * 1',
     input: 'right'
   },
   timesZeroElim: {
-    axiom: 'axiomTimesZero',
+    fact: 'axiomTimesZero',
     formula: 'a * 0 = 0'
   },
   plusNegElim: {
-    axiom: 'axiomNeg',
+    fact: 'axiomNeg',
     formula: 'a + neg a = 0'
   },
   timesRecipElim: {
-    axiom: 'axiomReciprocal',
+    fact: 'axiomReciprocal',
     formula: 'a * recip a = 1'
   }
 };  
 
 /**
- * Adds information to the ruleInfo map based on a map of rewriting
- * descriptors such as "rewriters".  The rewriting descriptors map has
- * an entry for each standardized rewrite rule.  The name in the map
- * becomes the name of the inference rule.  The "axiom" property
- * becomes the name of the axiom to use for the rewriting.  The
+ * Adds inference rules based on a map of rewriting descriptors.  The
+ * map has an entry for each rewrite rule.  The key in each map entry
+ * becomes the name of the inference rule.  The "fact" property must
+ * be the name of the axiom or theorem to use for the rewriting.  The
  * "input" property, either "left" or "right" indicates which side of
- * the equational axiom is the pattern to match the target.  If
- * omitted, the value is taken as "left".  The "comment" property if
- * given becomes the rule's comment.
+ * the equational axiom is the pattern to match the target, defaulting
+ * to "left".  The "comment" property if given becomes the rule's
+ * comment, and any "formula" property becomes the rule's "formula".
+ * The generated rewriters do simplification of numeric types
+ * after applying the fact.
  */
-function genRewriters(map) {
+function addRewriters(map) {
+  var ruleInfo = {};
   for (var name in map) {
     var info = map[name];
-    var generators = {
-      'left': rewriteWithAxiom,
-      'right': rewriteBackWithAxiom
-    };
-    var input = info.input || 'left';
-    if (info.comment) {
-      var comment = info.comment;
-    } else {
-      // Note: ruleInfo is still not processed into Toy.rules.
-      var fact = info.axiom;
-      var desc = ruleInfo[info.axiom].description || info.axiom;
-      var comment = 'Rewrite using ' + desc;
+    // Default comment for the rule.
+    var comment = 'Rewrite using ' + rules[info.fact].info.description;
+    if (typeof info.fact === 'string') {
+      var fact = rules.theorem(info.fact);
+      if (info.input === 'right') {
+        fact = rules.eqnSwap(fact);
+      }
+    } else if (info.fact instanceof Expr) {
+      var eqn = info.fact;
+      assert(eqn.unHyp().isCall2('='));
+      var fact;
+      if (info.input === 'right') {
+        // Curious application of a rule to a non-theorem.
+        eqn = rules.eqnSwap(eqn);
+        fact = fules.eqnSwap(lookupFact(eqn));
+      } else {
+        fact = lookupFact(eqn);
+      }
     }
     // Add this info to ruleInfo:
-    ruleInfo[name] = {
-      // Highlight sites in inputs as usual for rewrite rules.
-      isRewriter: true,
-      action: (function(axiomName, ruleName, generator) {
-          // Capture the current info.axiom and name.  In JS
-          // calling a new function is the way to do it.
-          return function(step, path) {
-            return generator(step, path, axiomName, ruleName);
-          }
-        })(info.axiom, name, generators[input]),
-      inputs: {site: 1},
-      template: info.axiom,
-      templateSide: input,
-      form: '',
-      comment: comment
-    };
-    if ('formula' in info) {
-      ruleInfo[name].formula = info.formula;
-    }
+    ruleInfo[name] = $.extend({
+        // Highlight sites in inputs as usual for rewrite rules.
+        isRewriter: true,
+        action: function(fact, ruleName, step, path) {
+          var step1 = rules.rewrite(step, path, fact);
+          var result = rules.simplifyNumericTypes(step1);
+          // Justify the step with the given ruleName.  This is appropriate
+          // since addRewriters attaches it as "rules.ruleName".
+          // Omit the fact as a dependency, because it (presumably)
+          // was derived in some other proof, not this one.
+          result = result.justify(ruleName, [step, path], [step]);
+          return result;
+        }.bind(null, fact, name),
+        inputs: {site: 1},
+        template: fact,
+        formula: fact.toString(),
+        form: '',
+        comment: comment
+      }, info);
   }
+  addRules(ruleInfo);
 }
 
 /**
- * Standardized rewriting rule that uses an equational axiom
- * or theorem.
- *
-function rewriteWithFact(step, path, fact, ruleName) {
-  var step1 = rules.rewrite(step, path, fact);
-*/
-function rewriteWithAxiom(step, path, axiomName, ruleName) {
-  var axiom = rules[axiomName]();
-  var step1 = rules.rewrite(step, path, axiom);
-  var result = rules.simplifyNumericTypes(step1);
-  // Justify the step with the given ruleName.  This is appropriate
-  // since genRewriters attaches it as "rules.ruleName".
-  return result.justify(ruleName, arguments, [step]);
-}
-
-/**
- * Standardized rewriting rule that uses an equation axiom, using RHS
- * as the pattern and the LHS as template for the result.
+ * Generic rewriting rule that uses an equational axiom 
+ * or theorem.  Simplifies numeric types after applying
+ * the fact.
  */
-function rewriteBackWithAxiom(step, path, axiomName, ruleName) {
-  var axiom = rules[axiomName]();
-  var back = rules.eqnSwap(axiom);
-  var step1 = rules.rewrite(step, path, back);
+function rewriteNumeric(step, path, fact) {
+  var step1 = rules.rewrite(step, path, fact);
   var result = rules.simplifyNumericTypes(step1);
-  return result.justify(ruleName, arguments, [step]);
+  return result.justify('rewriteWithFact', [step, path], [step]);
 }
-
-// Add rewriting rules based on the axioms.
-genRewriters(rewriters);
 
 var identity = lambda(x, x);
 var allT = lambda(x, T);
@@ -3494,7 +3489,11 @@ Toy.defineCases('==>', identity, allT);
 Toy.define('-', '{x. {y. x + neg y}}');
 Toy.define('/', '{x. {y. x * recip y}}');
 
-//// THEOREMHOOD
+//// THEOREMS
+
+function lookupFact(expr) {
+  
+}
 
 // Private to addTheorem, getTheorem, and the initializations
 // at the bottom of this file.  Maps from name to an inference
@@ -3555,11 +3554,6 @@ var theoremNames =
                       'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
                       'subtractionType', 'divisionType', 'eqIsEquiv',
                       'equalitySymmetric', 'equalityTransitive']));
-
-// Add all the named theorems to their database.
-for (var i = 0; i < theoremNames.length; i++) {
-  addTheorem(theoremNames[i]);
-}
 
 
 //// UTILITY FUNCTIONS
@@ -3622,5 +3616,15 @@ Toy.findHyp = findHyp;
 Toy.ruleInfo = ruleInfo;
 Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
+
+//// INITIALIZATION CODE
+
+// Add all the named theorems to their database.
+for (var i = 0; i < theoremNames.length; i++) {
+  addTheorem(theoremNames[i]);
+}
+
+// Add rewriting rules based on the axioms.
+addRewriters(rewriters);
 
 })();
