@@ -402,9 +402,10 @@ function matchAsSchema(schema, expr) {
  * See internal comments for details.
  */
 function Expr() {
-  this.sort = Expr.expr;
-  // Type analysis adds a "type" property.
-  // 
+  // Extensible set of remembered information, especially useful
+  // since the result is conceptually immutable.
+  // Duplicated in subclass constructors for speed.
+  this.memos = {};
   // If part of a proof, has properties set by the "justify" method.
   // If it has a rendered copy, has "rendering" property.
   //
@@ -431,12 +432,6 @@ function Expr() {
   // TODO: Reimplement so hypothesis display is controlled in a
   // rendered step rather than a proof step.
 }
-
-// The different sorts of expressions:
-Expr.expr = 'expr';
-Expr.var = 'var';
-Expr.call = 'call';
-Expr.lambda = 'lambda';
 
 // This counts up to supply a unique name for bound variables renamed
 // to avoid capturing.
@@ -598,7 +593,8 @@ Expr.prototype.freshVar = function(name) {
  * ruleDeps arrays are both optional, and empty if not given.
  *
  * Calculates and records a hasHyps property for the result unless
- * this already has a hasHyps property.
+ * this already has a hasHyps property.  This is the factory method
+ * that creates proof steps.
  */
 Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   var slice = Array.prototype.slice;
@@ -1402,7 +1398,8 @@ Expr.prototype.mergedHypotheses = function() {
  * TODO: Check syntax of the name. 
  */
 function Var(name, position) {
-  this.sort = Expr.var;
+  // Expr.call(this);
+  this.memos = {};
   if (aliases.hasOwnProperty(name)) {
     this.pname = name;
     this.name = aliases[name];
@@ -1578,7 +1575,8 @@ Var.prototype._asPattern = function(term) {
 //// Call -- application of a function to an argument
 
 function Call(fn, arg) {
-  this.sort = Expr.call;
+  // Expr.call(this);
+  this.memos = {};
   this.fn = fn;
   this.arg = arg;
 }
@@ -1825,7 +1823,8 @@ Call.prototype._asPattern = function(term) {
  * by the same Var.
  */
 function Lambda(bound, body) {
-  this.sort = Expr.lambda;
+  // Expr.call(this);
+  this.memos = {};
   this.bound = bound;
   this.body = body;
 }
@@ -2795,9 +2794,7 @@ function findDefinition(name, tOrF) {
 // TODO: More and better comments throughout the type analysis code.
 
 /**
- * Find and return the type of an expression (Expr).  As a side effect
- * this also records the type of every subexpression as its "type"
- * property.
+ * Find and return the type of an expression (Expr).
  */
 function findType(expr) {
   // In this code types[i] will be the type of vars[i].
