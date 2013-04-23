@@ -611,11 +611,14 @@ function ruleMenuFormatter(query, result, useHtml) {
     if (info.hint) {
       return info.hint;
     }
+    var thmText;
     if (info.formula) {
-      return Toy.unicodify(info.formula);
+      thmText = Toy.unicodify(info.formula);
+    } else {
+      var thm = Toy.getTheorem(ruleName);
+      thmText = thm.unHyp().toUnicode();
+      thmText = thmText.replace(/^\((.*)\)$/, '$1');
     }
-    var thm = Toy.getTheorem(ruleName);
-    var thmText = thm.unHyp().toUnicode();
     if (ruleName.substring(0, 5) === 'axiom') {
       return 'axiom ' + thmText;
     } else {
