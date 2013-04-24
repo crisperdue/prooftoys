@@ -801,6 +801,37 @@ var testCase = {
     } catch(e) {}
   },
 
+  testAlreadyProved: function() {
+    var rules = Toy.rules;
+    assert(Toy._alreadyProved('axiomCommutativePlus'));
+    Toy.addRule('tt', function() { return rules.eqSelf('T'); });
+    Toy.addTheorem('tt');
+    assert(!Toy._alreadyProved('tt'));
+    rules.theorem('tt');
+    assert(Toy._alreadyProved('tt'));
+    // This one is a rule, but not a theorem.
+    throws(function() { Toy._alreadyProved('replace'); });
+  },
+
+  testGetStatement: function() {
+    assert(Toy.parse('g T & g F == forall {a. (g a)}')
+           .matches(Toy._getStatement('axiom1')));
+    var str = 'forall {x. x = x}';
+    var wff = Toy.parse(str);
+    assertEqual(wff, Toy._getStatement(str));
+    assertEqual(wff, Toy._getStatement(wff));
+    Toy.addRule('ttt', function() { return rules.eqSelf('T'); });
+    Toy.addTheorem('ttt');
+    assert(Toy.parse('T = T').matches(Toy._getStatement('ttt')));
+  },
+
+  testFacts: function() {
+    var rules = Toy.rules;
+    var fact = rules.tIsXIsX();
+    console.log(fact);
+    Toy.addFact(fact);
+    assertEqual(fact, Toy.getFact(fact));
+  },
 
   // TYPES
 

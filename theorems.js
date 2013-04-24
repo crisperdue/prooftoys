@@ -54,14 +54,17 @@ var _allHyps = {};
 //   name in proof displays and the description in subproof displays.
 // formula: Textual representation of the theorem, if present.  May be
 //   converted to HTML using mathMarkup as description of a rule.
+// result: For theorems with no parameters only; this is the statement
+//   of the theorem.  If given as text in ruleInfo, converted into an
+//   expression in "rules".
 // description: HTML word or phrase to display for the rule name.
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
-// template: if present, normally the equation or implication used for
+// using: if present, normally the equation or implication used for
 //   the rule, as for rewriters.  The equation may have conditions.
 //   When working forward the left side of the main equation must
 //   match the site to be operated on.
-// templateSide: may be 'right' to indicate that the rule uses
+// inputSide: may be 'right' to indicate that the rule uses
 //   the converse equality (rewrites matching the right side of the
 //   equation rather than the left side).
 //
@@ -224,12 +227,11 @@ var ruleInfo = {
    * display of the proof step, but otherwise the same as "theorem".
    */
   axiom: function(name) {
-    // This rule is inline.  The axioms themselves, like theorems,
-    // have justifications.
-    // For inline rules we still want to use an ordinal
-    // consistent with their order of execution in the proof, so
-    // this creates another step by calling "justify".
-    // TODO: De-hackify this.
+    // This rule is inline.
+    // It uses an already-proved fact, but calls "justify"
+    // to ensure that the resulting step has a new ordinal
+    // so the reference is displayed in the order this was
+    // called.
     assert(name.substring(0, 5) == 'axiom', 'Not an axiom: ' + name);
     var thm = Toy.getTheorem(name);
     assert(thm, 'No axiom ' + name);
@@ -2221,6 +2223,21 @@ var ruleInfo = {
     labels: 'advanced'
   },
 
+  // Variant of "rewrite" that simplifies numeric types after applying
+  // the fact.
+  rewriteNumeric: {
+    action: function(step, path, equation) {
+      var step1 = rules.rewrite(step, path, equation);
+      var result = rules.simplifyNumericTypes(step1);
+      return result.justify('rewriteNumeric', [step, path], [step]);
+    },
+    inputs: {site: 1, equation: 3},
+    form: ('Rewrite the site using equation <input name=equation>'),
+    hint: 'Instantiate an equation so its LHS equals an expression.',
+    description: 'rewrite {site};; {in step siteStep} {using step equation}',
+    labels: 'advanced'
+  },
+
   // NOTE: A chain of conjuncts (or other binary operator) is an
   // expression that can be written a & b & ... & z.  An expression
   // that does not have the operator at top-level is a chain of one
@@ -2859,7 +2876,7 @@ var ruleInfo = {
       return step8.justify('subtractionType');
     },
     form: '',
-    hint: 'theorem ' + Toy.parse('R (x - y)').toUnicode(),
+    formula: 'R (x - y)',
     comment: 'difference of real numbers is real',
     description: 'difference of real numbers is real',
     labels: 'uncommon'
@@ -2878,7 +2895,7 @@ var ruleInfo = {
       return step8.justify('divisionType');
     },
     form: '',
-    hint: 'theorem ' + Toy.parse('R (x / y)').toUnicode(),
+    formula: 'R (x / y)',
     comment: 'quotient of real numbers is real',
     description: 'quotient of real numbers is real',
     labels: 'uncommon'
@@ -2957,7 +2974,8 @@ var ruleInfo = {
       });
       // Remove occurrences of T.
       deduper =
-        rules.conjunctionDeduper(simplifier.getRight(), Toy.sourceStepComparator);
+        rules.conjunctionDeduper(simplifier.getRight(),
+                                 Toy.sourceStepComparator);
       if (deduper) {
         simplifier = rules.replace(deduper, simplifier, '/right');
       }
@@ -3008,10 +3026,20 @@ var ruleInfo = {
   simplifyNumericTypes: {
     action: function(step) {
       var infix = Toy.infixCall;
-      step.assertCall2('==>');
-      var equation = rules.numericTypesSimplifier(step.getLeft());
-      var result = rules.r(equation, step, '/left');
-      return result.justify('simplifyNumericTypes', arguments, [step]);
+      if (step.isCall2('==>')) {
+        var conditions = step.getLeft();
+        if (conditions.memos.numericTypesSimplified) {
+          return step;
+        } else {
+          var equation = rules.numericTypesSimplifier(conditions);
+          var result = rules.r(equation, step, '/left');
+          result.getLeft().memos.numericTypesSimplified = true;
+          return result.justify('simplifyNumericTypes', arguments, [step]);
+        }
+      } else {
+        // Do nothing; in this case the rule is inline.
+        return step;
+      }
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
@@ -3279,7 +3307,7 @@ var ruleInfo = {
 };  // End of ruleInfo.
 
 // Map from rule name to function used in all proofs.
-// Generated from ruleInfo by creatRules, below.
+// Generated from ruleInfo by addRules, below.
 var rules = {};
 
 // Math markup in the position of a rule name.
@@ -3297,38 +3325,51 @@ function formulaAsDescription(text) {
  */
 function addRules(ruleInfo) {
   for (var key in ruleInfo) {
-    var info = ruleInfo[key];
-    // Give every info "inputs".
-    if (!info.inputs) {
-      info.inputs = {};
-    }
-    // Preprocess labels.  Split, and if there are no explicit labels,
-    // give the rule a label of "basic".
-    var labels = info.labels;
-    info.labels = {};
-    if (typeof labels === 'string') {
-      labels.split(/\s+/)
-        .forEach(function(label) { info.labels[label] = true; });
-    }
-    if (info.form !== undefined && Toy.isEmpty(info.labels)) {
-      // Anything conceivably offerable (with a form), default to
-      // "basic" if no other labels.
-      info.labels.basic = true;
-    }
-    // Default the description to the marked up formula or the ruleName.
-    if (!('description' in info)) {
-      if ('formula' in info) {
-        info.description = formulaAsDescription(info.formula);
-      } else {
-        info.description = key;
-      }
-    }
-    var fn = (typeof info == 'function') ? info : info.action;
-    // Associate the action function with the key,
-    rules[key] = fn;
-    // and metadata as the function's "info" property.
-    rules[key].info = info;
+    addRule(key, ruleInfo[key]);
   }
+}
+
+function addRule(key, info) {
+  // Give every info "inputs".
+  if (!info.inputs) {
+    info.inputs = {};
+  }
+  // Preprocess labels.  Split, and if there are no explicit labels,
+  // give the rule a label of "basic".
+  var labels = info.labels;
+  info.labels = {};
+  if (typeof labels === 'string') {
+    labels.split(/\s+/)
+      .forEach(function(label) { info.labels[label] = true; });
+  }
+  if (info.form !== undefined && Toy.isEmpty(info.labels)) {
+    // Anything conceivably offerable (with a form), default to
+    // "basic" if no other labels.
+    info.labels.basic = true;
+  }
+  // If the rule has an explicit statement (it should be a theorem),
+  // coerce it to an Expr if given as a string.
+  if (typeof info.statement === 'string') {
+    info.statement = Toy.parse(info.statement);
+  }
+  // Default the description to the marked up formula or the ruleName.
+  if (!('description' in info)) {
+    if (info.formula) {
+      info.description = formulaAsDescription(info.formula.toString());
+    } else {
+      info.description = key;
+    }
+  }
+  var fn = (typeof info == 'function') ? info : info.action;
+  // Associate the action function with the key,
+  rules[key] = fn;
+  // and metadata as the function's "info" property.
+  rules[key].info = info;
+
+  // TODO: Add this line, making addTheorem and company internal to
+  // this function:
+  // Function length of 0 means no positional arguments.
+  // if (fn.length === 0) { addTheorem(key); }
 }
 
 // Actual rule functions to call from other code.
@@ -3338,140 +3379,127 @@ addRules(ruleInfo);
 // an actual inference rule.
 var rewriters = {
   commutePlus: {
-    fact: 'axiomCommutativePlus',
+    usesFact: 'axiomCommutativePlus',
     formula: 'a + b = b + a'
   },
   commuteTimes: {
-    fact: 'axiomCommutativeTimes',
+    usesFact: 'axiomCommutativeTimes',
     formula: 'a * b = b * a'
   },
   associatePlusToLeft: {
-    fact: 'axiomAssociativePlus',
+    usesFact: 'axiomAssociativePlus',
     formula: 'a + (b + c) = (a + b) + c'
   },
   associatePlusToRight: {
-    fact: 'axiomAssociativePlus',
+    usesFact: 'axiomAssociativePlus',
     formula: '(a + b) + c = a + (b + c)',
-    input: 'right'
+    inputSide: 'right'
   },
   associateTimesToLeft: {
-    fact: 'axiomAssociativeTimes',
+    usesFact: 'axiomAssociativeTimes',
     formula: 'a * (b * c) = (a * b) * c'
   },
   associateTimesToRight: {
-    fact: 'axiomAssociativeTimes',
+    usesFact: 'axiomAssociativeTimes',
     formula: '(a * b) * c = a * (b * c)',
-    input: 'right'
+    inputSide: 'right'
   },
   distribute: {
-    fact: 'axiomDistributivity',
+    usesFact: 'axiomDistributivity',
     formula: 'a * (b + c) = (a * b) + (a * c)'
   },
   group: {
-    fact: 'axiomDistributivity',
+    usesFact: 'axiomDistributivity',
     formula: '(a * b) + (a * c) = a * (b + c)',
-    input: 'right'
+    inputSide: 'right'
   },
   plusZeroElim: {
-    fact: 'axiomPlusZero',
+    usesFact: 'axiomPlusZero',
     formula: 'a + 0 = a'
   },
   plusZeroIntro: {
-    fact: 'axiomPlusZero',
+    usesFact: 'axiomPlusZero',
     formula: 'a = a + 0',
-    input: 'right'
+    inputSide: 'right'
   },
   timesOneElim: {
-    fact: 'axiomTimesOne',
+    usesFact: 'axiomTimesOne',
     formula: 'a * 1 = a'
   },
   timesOneIntro: {
-    fact: 'axiomTimesOne',
+    usesFact: 'axiomTimesOne',
     formula: 'a = a * 1',
-    input: 'right'
+    inputSide: 'right'
   },
   timesZeroElim: {
-    fact: 'axiomTimesZero',
+    usesFact: 'axiomTimesZero',
     formula: 'a * 0 = 0'
   },
   plusNegElim: {
-    fact: 'axiomNeg',
+    usesFact: 'axiomNeg',
     formula: 'a + neg a = 0'
   },
   timesRecipElim: {
-    fact: 'axiomReciprocal',
+    usesFact: 'axiomReciprocal',
     formula: 'a * recip a = 1'
   }
 };  
 
 /**
- * Adds inference rules based on a map of rewriting descriptors.  The
- * map has an entry for each rewrite rule.  The key in each map entry
- * becomes the name of the inference rule.  The "fact" property must
- * be the name of the axiom or theorem to use for the rewriting.  The
- * "input" property, either "left" or "right" indicates which side of
- * the equational axiom is the pattern to match the target, defaulting
- * to "left".  The "comment" property if given becomes the rule's
- * comment, and any "formula" property becomes the rule's "formula".
- * The generated rewriters do simplification of numeric types
- * after applying the fact.
+ * Adds a set of rewriting rules given as name/info pairs in a map,
+ * using addRewriter to add each one.
  */
 function addRewriters(map) {
   var ruleInfo = {};
   for (var name in map) {
-    var info = map[name];
-    // Default comment for the rule.
-    var comment = 'Rewrite using ' + rules[info.fact].info.description;
-    if (typeof info.fact === 'string') {
-      var fact = rules.theorem(info.fact);
-      if (info.input === 'right') {
-        fact = rules.eqnSwap(fact);
-      }
-    } else if (info.fact instanceof Expr) {
-      var eqn = info.fact;
-      assert(eqn.unHyp().isCall2('='));
-      var fact;
-      if (info.input === 'right') {
-        // Curious application of a rule to a non-theorem.
-        eqn = rules.eqnSwap(eqn);
-        fact = fules.eqnSwap(lookupFact(eqn));
-      } else {
-        fact = lookupFact(eqn);
-      }
-    }
-    // Add this info to ruleInfo:
-    ruleInfo[name] = $.extend({
-        // Highlight sites in inputs as usual for rewrite rules.
-        isRewriter: true,
-        action: function(fact, ruleName, step, path) {
-          var step1 = rules.rewrite(step, path, fact);
-          var result = rules.simplifyNumericTypes(step1);
-          // Justify the step with the given ruleName.  This is appropriate
-          // since addRewriters attaches it as "rules.ruleName".
-          // Omit the fact as a dependency, because it (presumably)
-          // was derived in some other proof, not this one.
-          result = result.justify(ruleName, [step, path], [step]);
-          return result;
-        }.bind(null, fact, name),
-        inputs: {site: 1},
-        template: fact,
-        formula: fact.toString(),
-        form: '',
-        comment: comment
-      }, info);
+    addRewriter(name, map[name]);
   }
-  addRules(ruleInfo);
 }
 
 /**
- * Generic rewriting rule that uses an equational axiom 
- * or theorem.  Simplifies numeric types after applying
- * the fact.
+ * Adds an inference rule based on the given key-value descriptor
+ * "info".  In the descriptor the "usesFact" property must be an axiom or
+ * theorem to use for the rewriting, or the name of one.  The "inputSide"
+ * property, either "left" or "right" indicates which side of the
+ * equational axiom is the pattern to match the target, defaulting to
+ * "left".  The "comment" property if given becomes the rule's
+ * comment.  The generated rewriter simplifies numeric types after
+ * applying the fact.
  */
-function rewriteNumeric(step, path, fact) {
-  var step1 = rules.rewrite(step, path, fact);
-  var result = rules.simplifyNumericTypes(step1);
-  return result.justify('rewriteWithFact', [step, path], [step]);
+function addRewriter(ruleName, info) {
+  // We must find the rewrite rule's equation before ever trying
+  // to apply it, for example to determine its menu entry and
+  // to determine whether to offer the rewrite in a menu.
+  var equation = getStatement(info.usesFact);
+  equation.unHyp().assertCall2('=');
+  var inputSide = info.inputSide || 'left';
+  function action(step, path) {
+    var fact = getFact(info.usesFact);
+    if (inputSide === 'right') {
+      fact = rules.eqnSwap(fact);
+    }
+    var step1 = rules.rewrite(step, path, fact);
+    var result = rules.simplifyNumericTypes(step1);
+    // Justify the step with the given ruleName.  This is appropriate
+    // since addRewriters attaches it as "rules.ruleName".
+    // Omit the fact as a dependency, because it (presumably)
+    // was derived in some other proof, not this one.
+    result = result.justify(ruleName, [step, path], [step]);
+    return result;
+  }
+  var defaultInfo = {
+    // Highlight sites in inputs as usual for rewrite rules.
+    isRewriter: true,
+    action: action,
+    inputs: {site: 1},
+    using: equation,
+    inputSide: inputSide,
+    description: ('rewrite using ' +
+                  Toy.mathMarkup(equation.unHyp().toString())),
+    form: '',
+    comment: 'Rewrite using ' + equation.toUnicode()
+  };
+  addRule(ruleName, $.extend(defaultInfo, info));
 }
 
 var identity = lambda(x, x);
@@ -3491,14 +3519,67 @@ Toy.define('/', '{x. {y. x * recip y}}');
 
 //// THEOREMS
 
-function lookupFact(expr) {
-  
+// Private to addFact and getFact.
+// Maps from dump of fact to either the proved fact,
+// or to a function to prove it.
+var _factsMap = {};
+
+/**
+ * Adds to the facts database a formula and optionally a function to
+ * prove it on demand.  The formula may be given as a string to parse.
+ * If the given formula is not the result of a proof, the prover
+ * argument is required.
+ */
+function addFact(expr, prover) {
+  if (typeof expr === 'string') {
+    expr = Toy.parse(expr);
+  }
+  var key = expr.dump();
+  if (expr.ruleName) {
+    _factsMap[key] = expr;
+  } else if (prover) {
+    assert(typeof prover === 'function',
+           'Not a function: ' + prover);
+    _factsMap[key] = prover;
+  } else {
+    throw new Error('No proof for ' + expr);
+  }
+}
+
+/**
+ * Given a named axiom or theorem, returns its proved result.
+ * Looks up the expression in the facts database if it is not already
+ * a proved statement.  If it has a proof procedure that has not yet
+ * been run, runs it, checks that the result matches and remembers
+ * the matching result.  The argument can be anything acceptable to
+ * getStatement.  Throws an exception in case of failure.
+ */
+function getFact(fact) {
+  var expr = getStatement(fact);
+  if (expr.ruleName) {
+    // Proved!
+    return expr;
+  }
+  var key = expr.dump();
+  var factoid = _factsMap[key];
+  if (typeof factoid === 'function') {
+    var fact = factoid();
+    assert(fact.matches(expr), function() {
+        return ('Expected proof of ' + expr_arg +
+                ', instead got ' + fact.dump());
+      });
+    _factsMap[key] = fact;
+    return fact;
+  } else {
+    // The factoid is already proved.
+    return factoid;
+  }
 }
 
 // Private to addTheorem, getTheorem, and the initializations
 // at the bottom of this file.  Maps from name to an inference
 // containing a proof of the theorem, or true, indicating
-// 
+// that the the theorem's proof procedure has not run.
 var _theoremsByName = {};
 
 /**
@@ -3531,6 +3612,58 @@ function getTheorem(name) {
     */
   }
   return result;
+}
+
+/**
+ * Returns true iff the named theorem has already been proved.
+ */
+function alreadyProved(name) {
+  assert(_theoremsByName[name],
+         function() { return 'Not a theorem: ' + name; });
+  if (isAxiom(name)) {
+    return true;
+  } else {
+    return _theoremsByName[name] instanceof Expr;
+  }
+}
+
+/**
+ * Gets the statement of a "fact".  If it is a theorem name,
+ * returns an asserted statement of the theorem if any, or
+ * the result of proving the theorem.  If not a theorem name,
+ * it should parse to a WFF, which this returns.  Otherwise it
+ * should be an Expr, which this returns.
+ */
+function getStatement(fact) {
+  if (typeof fact === 'string') {
+    if (Toy.isIdentifier(fact)) {
+      // It's the name of a theorem.
+      var statement = rules[fact].statement;
+      if (statement) {
+        // Work with an asserted statement of the theorem if there
+        // is one.
+        return statement;
+      }
+      if (!alreadyProved(fact)) {
+        console.log('Proving in getStatement: ' + fact);
+      }
+      return rules.theorem(fact);
+    } else {
+      // Otherwise it should be a expression in string form.
+      return Toy.parse(fact);
+    }
+  } else if (fact instanceof Expr) {
+    return fact;
+  } else {
+    throw new Error('Bad input to getStatement');
+  }
+}
+
+/**
+ * True iff the name is the name of an axiom.
+ */
+function isAxiom(name) {
+  return name.substring(0, 5) === 'axiom';
 }
 
 // Add the axioms and theorems to the "database".  This can only
@@ -3608,6 +3741,9 @@ Toy.autoAssert = false;
 
 Toy.axiomNames = axiomNames;
 Toy.theoremNames = theoremNames;
+Toy.addRule = addRule;
+Toy.addFact = addFact;
+Toy.getFact = getFact;
 Toy.addTheorem = addTheorem;
 Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
@@ -3616,6 +3752,8 @@ Toy.findHyp = findHyp;
 Toy.ruleInfo = ruleInfo;
 Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
+Toy._alreadyProved = alreadyProved;
+Toy._getStatement = getStatement;
 
 //// INITIALIZATION CODE
 

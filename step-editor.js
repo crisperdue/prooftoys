@@ -566,17 +566,16 @@ function acceptsSelection(step, ruleName, acceptTerm) {
   // Selected expression (within a step).
   var expr = step.selection;
   if (expr) {
-    if (info.template) {
+    if (info.isRewriter && info.using) {
       // The rule has a "rewriting template", given as the name
       // of the fact to use in rewriting.
       assert(typeof accept.site === 'number',
              function() {
                return 'Rule ' + ruleName + ' must use exactly 1 site.';
              });
-      var thm = Toy.getTheorem(info.template);
-      var template = info.templateSide == 'right'
-        ? thm.unHyp().getRight()
-        : thm.unHyp().getLeft();
+        var template = info.inputSide == 'right'
+        ? info.using.unHyp().getRight()
+        : info.using.unHyp().getLeft();
       return !!expr.findSubst(template);
     } else {
       // TODO: prevent selection of bound variables as terms.
