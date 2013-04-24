@@ -367,6 +367,14 @@ var testCase = {
     assert(!v.isString());
   },
 
+  testIsIdentifer: function() {
+    var ident = Toy.isIdentifier;
+    assert(ident('asdf'));
+    assert(ident('axiomCommutativePlus'));
+    assert(!ident('a+b'));
+    assert(!ident('(a)'));
+  },
+
   testUnparseString: function() {
     var ups = Toy.unparseString;
     assertEqual('"asdf"', ups('asdf'));

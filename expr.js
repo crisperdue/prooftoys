@@ -242,11 +242,6 @@ TermMap.prototype.set = function(term, name) {
 
 // Utilities
 
-// String that matches identifiers, used in both tokenizing and
-// determining categories of names for display.
-// Inital "$" is supported for system-generated names.
-var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
-
 /**
  * Is the given string a legal variable name?  Only names with a
  * single lower-case letter and then a sequences of digits and/or
@@ -507,9 +502,22 @@ Expr.prototype.isConst = function() {
   return this instanceof Var && isConstant(this.name);
 };
 
+// String that matches identifiers, used in both tokenizing and
+// determining categories of names for display.
+// Initial "$" is supported for system-generated names.
+var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
+
 // Names matching this regex are identifiers.
 // The trailing "$" ensures that the entire name is matched.
-var identifierRegex = new RegExp(identifierPattern + '$');
+var identifierRegex = new RegExp('^' + identifierPattern + '$');
+
+/**
+ * True iff the given string is an identifier (named variable or
+ * constant).
+ */
+function isIdentifier(str) {
+  return !!str.match(identifierRegex);
+}
 
 /**
  * True iff this is a Var that displays as an identifier.  This is
@@ -3778,6 +3786,7 @@ Toy.definitions = definitions;
 Toy.varify = varify;
 Toy.isConstant = isConstant;
 Toy.isVariable = isVariable;
+Toy.isIdentifier = isIdentifier;
 Toy.checkNumber = checkNumber;
 Toy.checkRange = checkRange;
 Toy.isDefined = isDefined;
