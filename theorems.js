@@ -3380,68 +3380,53 @@ addRules(ruleInfo);
 var rewriters = {
   commutePlus: {
     usesFact: 'axiomCommutativePlus',
-    formula: 'a + b = b + a'
   },
   commuteTimes: {
     usesFact: 'axiomCommutativeTimes',
-    formula: 'a * b = b * a'
   },
   associatePlusToLeft: {
     usesFact: 'axiomAssociativePlus',
-    formula: 'a + (b + c) = (a + b) + c'
   },
   associatePlusToRight: {
     usesFact: 'axiomAssociativePlus',
-    formula: '(a + b) + c = a + (b + c)',
     inputSide: 'right'
   },
   associateTimesToLeft: {
     usesFact: 'axiomAssociativeTimes',
-    formula: 'a * (b * c) = (a * b) * c'
   },
   associateTimesToRight: {
     usesFact: 'axiomAssociativeTimes',
-    formula: '(a * b) * c = a * (b * c)',
     inputSide: 'right'
   },
   distribute: {
     usesFact: 'axiomDistributivity',
-    formula: 'a * (b + c) = (a * b) + (a * c)'
   },
   group: {
     usesFact: 'axiomDistributivity',
-    formula: '(a * b) + (a * c) = a * (b + c)',
     inputSide: 'right'
   },
   plusZeroElim: {
     usesFact: 'axiomPlusZero',
-    formula: 'a + 0 = a'
   },
   plusZeroIntro: {
     usesFact: 'axiomPlusZero',
-    formula: 'a = a + 0',
     inputSide: 'right'
   },
   timesOneElim: {
     usesFact: 'axiomTimesOne',
-    formula: 'a * 1 = a'
   },
   timesOneIntro: {
     usesFact: 'axiomTimesOne',
-    formula: 'a = a * 1',
     inputSide: 'right'
   },
   timesZeroElim: {
     usesFact: 'axiomTimesZero',
-    formula: 'a * 0 = 0'
   },
   plusNegElim: {
     usesFact: 'axiomNeg',
-    formula: 'a + neg a = 0'
   },
   timesRecipElim: {
     usesFact: 'axiomReciprocal',
-    formula: 'a * recip a = 1'
   }
 };  
 
@@ -3470,8 +3455,8 @@ function addRewriter(ruleName, info) {
   // We must find the rewrite rule's equation before ever trying
   // to apply it, for example to determine its menu entry and
   // to determine whether to offer the rewrite in a menu.
-  var equation = getStatement(info.usesFact);
-  equation.unHyp().assertCall2('=');
+  var fact = getStatement(info.usesFact);
+  fact.unHyp().assertCall2('=');
   var inputSide = info.inputSide || 'left';
   function action(step, path) {
     var fact = getFact(info.usesFact);
@@ -3487,6 +3472,13 @@ function addRewriter(ruleName, info) {
     result = result.justify(ruleName, [step, path], [step]);
     return result;
   }
+  var eqn = fact.unHyp();
+  // Equation for the rewrite, without assumptions.
+  var equation =
+    inputSide === 'left'
+    ? Toy.infixCall(eqn.getLeft(), '=', eqn.getRight())
+    : Toy.infixCall(eqn.getRight(), '=', eqn.getLeft());
+  var eqnText = equation.unHyp().toString().slice(1, -1);
   var defaultInfo = {
     // Highlight sites in inputs as usual for rewrite rules.
     isRewriter: true,
@@ -3494,8 +3486,8 @@ function addRewriter(ruleName, info) {
     inputs: {site: 1},
     using: equation,
     inputSide: inputSide,
-    description: ('rewrite using ' +
-                  Toy.mathMarkup(equation.unHyp().toString())),
+    hint: 'use ' + Toy.unicodify(eqnText),
+    description: 'rewrite using ' + Toy.mathMarkup(eqnText),
     form: '',
     comment: 'Rewrite using ' + equation.toUnicode()
   };

@@ -573,10 +573,7 @@ function acceptsSelection(step, ruleName, acceptTerm) {
              function() {
                return 'Rule ' + ruleName + ' must use exactly 1 site.';
              });
-        var template = info.inputSide == 'right'
-        ? info.using.unHyp().getRight()
-        : info.using.unHyp().getLeft();
-      return !!expr.findSubst(template);
+      return !!expr.findSubst(info.using.unHyp().getLeft());
     } else {
       // TODO: prevent selection of bound variables as terms.
       return (accept.site
