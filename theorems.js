@@ -417,6 +417,7 @@ var ruleInfo = {
   // to itself. (5200)
   eqSelf: {
     action: function(a) {
+      a = Toy.termify(a);
       var step1 = rules.axiom4(call(lambda(x, x), a));
       var result = rules.r(step1, step1, '/left');
       return result.justify('eqSelf', arguments);
@@ -3188,6 +3189,7 @@ var ruleInfo = {
   consider: {
     description: 'expression to consider',
     action: function(term) {
+      term = Toy.termify(term);
       var step = rules.eqSelf(term);
       var conditions = term.mathVarConditions();
       if (conditions) {
@@ -3275,6 +3277,14 @@ var ruleInfo = {
            ' by <input name=term>'),
     comment: ('divide both sides'),
     description: 'divide by {term};; {in step equation}'
+  },
+
+  // Converts the result of some inference steps into a "fact"
+  // in which the steps are details in the proof of the result.
+  fact: {
+    action: function(result) {
+      return result.justify('fact');
+    }
   },
 
   //
@@ -3375,6 +3385,30 @@ function addRule(key, info) {
 // Actual rule functions to call from other code.
 addRules(ruleInfo);
 
+
+//// FACTS
+
+var facts = {
+  'a * x + x = (a + 1) * x': function() {
+    var step1 = rules.consider('a * x + x');
+    var step2 = rules.timesOneIntro(step1, '/main/right/right');
+    var step3 = rules.commuteTimes(step2, '/main/right/left');
+    var step4 = rules.group(step3, '/main/right');
+    var step5 = rules.commuteTimes(step4, '/main/right');
+    return step5;
+  },
+};
+
+/**
+ * Treat each key/value pair in the map as an expression and
+ * a function to prove it.  Add each as a "fact".
+ */
+function addFacts(map) {
+  for (key in map) {
+    addFact(key, map[key]);
+  }
+}
+
 // Descriptions of rewrite rules (internal).  Each of these generates
 // an actual inference rule.
 var rewriters = {
@@ -3404,6 +3438,9 @@ var rewriters = {
   group: {
     usesFact: 'axiomDistributivity',
     inputSide: 'right'
+  },
+  group1: {
+    usesFact: 'a * x + x = (a + 1) * x'
   },
   plusZeroElim: {
     usesFact: 'axiomPlusZero',
@@ -3523,9 +3560,7 @@ var _factsMap = {};
  * argument is required.
  */
 function addFact(expr, prover) {
-  if (typeof expr === 'string') {
-    expr = Toy.parse(expr);
-  }
+  expr = Toy.termify(expr);
   var key = expr.dump();
   if (expr.ruleName) {
     _factsMap[key] = expr;
@@ -3556,15 +3591,17 @@ function getFact(fact) {
   var factoid = _factsMap[key];
   if (typeof factoid === 'function') {
     var fact = factoid();
-    assert(fact.matches(expr), function() {
-        return ('Expected proof of ' + expr_arg +
+    assert(fact.unHyp().matches(expr), function() {
+        return ('Expected proof of ' + expr +
                 ', instead got ' + fact.dump());
       });
+    // Package up the proof.
     _factsMap[key] = fact;
-    return fact;
+    return rules.fact(fact);
   } else {
-    // The factoid is already proved.
-    return factoid;
+    // The factoid is already proved.  Call rules.fact on
+    // access to give this instance of the fact an ordinal.
+    return rules.fact(factoid);
   }
 }
 
@@ -3753,6 +3790,8 @@ Toy._getStatement = getStatement;
 for (var i = 0; i < theoremNames.length; i++) {
   addTheorem(theoremNames[i]);
 }
+
+addFacts(facts);
 
 // Add rewriting rules based on the axioms.
 addRewriters(rewriters);
