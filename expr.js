@@ -3356,6 +3356,14 @@ function varify(v) {
 };
 
 /**
+ * Coerce the given Expr or string to an Expr by parsing it
+ * if not an Expr.
+ */
+function termify(x) {
+  return (x instanceof Expr) ? x : Toy.parse(x);
+}
+
+/**
  * Returns a call with the two operands and the given op (middle
  * argument) as the binary operator between them.  The op must be an
  * Expr, e.g. Var.
@@ -3784,6 +3792,7 @@ Toy.getDefinition = getDefinition;
 Toy.definitions = definitions;
 
 Toy.varify = varify;
+Toy.termify = termify;
 Toy.isConstant = isConstant;
 Toy.isVariable = isVariable;
 Toy.isIdentifier = isIdentifier;
