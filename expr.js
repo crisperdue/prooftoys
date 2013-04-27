@@ -883,6 +883,36 @@ Expr.prototype.isOpenCall = function() {
   return this instanceof Call && this.fn instanceof Lambda;
 };
 
+$.extend(Expr.prototype, {
+
+  /**
+   * Is it an equation, possibly with assumptions?
+   */
+  isEquation: function() {
+    return (this.isCall2('=') ||
+            (this.isCall2('==>') && this.getRight().isCall2('=')));
+  },
+
+  /**
+   * Gets the left side of an equation, possibly with assumptions.
+   */
+  eqnLeft: function() {
+    var eqn = this.isCall2('==>') ? this.getRight() : this;
+    eqn.assertCall2('=');
+    return eqn.getLeft();
+  },
+  
+  /**
+   * Gets the right side of an equation, possibly with assumptions.
+   */
+  eqnRight: function() {
+    var eqn = this.isCall2('==>') ? this.getRight() : this;
+    eqn.assertCall2('=');
+    return eqn.getRight();
+  }
+
+});
+
 /**
  * Throw an error with message if this is not a call to the named
  * function.  If no name is given, any named function will do.
