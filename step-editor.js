@@ -125,8 +125,7 @@ function StepEditor(controller) {
     throw new Error('Autocompleter no longer supported');
   } else {
     // Append the actual rule selector.
-    var widget = new BasicRuleSelector($.proxy(self, 'offerableRuleNames'),
-                                       $.proxy(self, 'handleSelection'));
+    var widget = new BasicRuleSelector(self, $.proxy(self, 'handleSelection'));
     self.ruleSelector = widget;
     selectorSpan.append(widget.jq);
 
@@ -209,7 +208,8 @@ StepEditor.prototype.focus = function() {
  * Handler for ruleSelector selection of a rule name.
  */
 StepEditor.prototype.handleSelection = function() {
-  var rule = Toy.rules[this.ruleSelector.ruleName];
+  var value = this.ruleSelector.ruleName;
+  var rule = Toy.rules[value];
   if (rule) {
     var template = rule.info.form;
     if (template) {
@@ -231,6 +231,16 @@ StepEditor.prototype.handleSelection = function() {
         });
     }
     this.tryExecuteRule(false);
+  } else if (value.slice(0, 5) === 'fact ') {
+    var siteStep = this.controller.selection;
+    if (!siteStep || !siteStep.selection) {
+      this.error('No selected site');
+      return false;
+    }
+    return this.tryRule(Toy.rules.rewriteWithFact,
+                        [siteStep.original,
+                         siteStep.pathTo(siteStep.selection),
+                         value.slice(5)]);
   }
 };
 
@@ -313,7 +323,9 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // TODO: Get it together on failure reporting here.
   var rule = Toy.rules[this.ruleSelector.ruleName];
-  var args = [];
+  // Initialize the args array length to be the number of its
+  // named arguments.
+  var args = new Array(rule.length);
   this.fillWithSelectedSite(args);
   try {
     this.fillFromForm(args);
@@ -324,6 +336,9 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
     }
     return false;
   }
+  if (args.length != rule.length) {
+    Toy.logError('Rule received unnamed arguments: ' + rule);
+  }
   // Check that the args are all filled in.
   for (var i = 0; i < args.length; i++) {
     if (args[i] === undefined) {
@@ -333,6 +348,14 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
       return false;
     }
   }
+  return this.tryRule(rule, args);
+};
+
+/**
+ * Try to run the given rule (function) with the given
+ * rule arguments.  Catches and reports any errors.
+ */
+StepEditor.prototype.tryRule = function(rule, args) {
   var value = false;
   try {
     if (Toy.profileName) {
@@ -392,20 +415,23 @@ StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
   var rule = Toy.rules[this.ruleSelector.ruleName];
   $(this.form).find('input').each(function() {
-    // The "name" attribute of the input should be the name of an input type,
-    // possibly followed by some digits indicating which input.
+    // The "name" attribute of the input element should be the name of
+    // an input type, possibly followed by some digits indicating
+    // which rule argument it will supply.
     var name = this.name;
     var match = name.match(/^(.+?)(\d*)$/);
     if (match) {
       var type = match[1];
-      // Non-empty when referring to one of multiple args of the
-      // same type.  Then the value of the descriptor is a list.
+      // Non-empty when referring to one of multiple args of the same
+      // type.  Then the value of the entry in rule.info.inputs is a
+      // list.
       var which = match[2];
       var inputs = rule.info.inputs;
       var argNum = which ? inputs[type][which - 1] : inputs[type];
       if (!argNum) {
 	throw new Error('Internal error: no input descriptor for type ' + type);
       }
+      // Fill in the actual argument.
       args[argNum - 1] = self.parseValue(this.value, type);
     } else {
       Toy.logError('Unrecognized input name: ' + name);
@@ -546,6 +572,29 @@ StepEditor.prototype.offerable = function(ruleName) {
   }
 };
 
+$.extend(StepEditor.prototype, {
+
+  offerableFacts: function() {
+    var facts = [];
+    var step = this.controller.selection;
+    if (step) {
+      var expr = step.selection;
+      if (expr) {
+        Toy.eachFact(function(fact) {
+          var goal = fact.goal;
+          if (goal.isEquation()) {
+            var lhs = goal.eqnLeft();
+            if (expr.matchSchema(lhs)) {
+              facts.push(fact);
+            }
+          }
+        });
+      }
+    }
+    return facts;
+  }
+});
+
 /**
  * This matches a step against the inputs descriptor of an inference
  * rule.  The step is the selected proof step, ruleName is the name of
@@ -635,13 +684,13 @@ function ruleMenuFormatter(query, result, useHtml) {
 
 //// BASICRULESELECTOR
 
-function BasicRuleSelector(source, selectionHandler, options) {
+function BasicRuleSelector(stepEditor, selectionHandler, options) {
   var self = this;
-  this.source = source;
-  this.ruleName = '';
+  self.stepEditor = stepEditor;
+  self.ruleName = '';
 
   // TODO: put this state in the step editor.
-  this.offerAxioms = options && options.axioms;
+  self.offerAxioms = options && options.axioms;
 
   // Rule chooser:
   var ruleChooser = $('<select/>');
@@ -674,7 +723,7 @@ function BasicRuleSelector(source, selectionHandler, options) {
 
 /**
  * Return the RuleSelector to a "fresh" state, with no rule selected,
- * options matching the current selection(s).
+ * offered items compatible the currently-selected step or term.
  */
 BasicRuleSelector.prototype.reset = function() {
   var self = this;
@@ -684,7 +733,7 @@ BasicRuleSelector.prototype.reset = function() {
   // Map from rule display text to rule name.
   var byText = {};
   var texts = [];
-  self.source().forEach(function(name) {
+  self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       if (self.offerAxioms || ruleName.slice(0, 5) != 'axiom') {
         var text = ruleMenuFormatter(null, {text: ruleName}, false);
@@ -692,6 +741,20 @@ BasicRuleSelector.prototype.reset = function() {
         byText[text] = ruleName;
       }
     });
+  self.stepEditor.offerableFacts().forEach(function(fact) {
+    var expr = Toy.getStatement(fact);
+    var id = expr.dump();
+    if (expr.isEquation() && expr.isCall2('==>')) {
+      expr = expr.getRight();
+    }
+    var text = expr.toUnicode();
+    if (text[0] === '(') {
+      text = text.slice(1, -1);
+    }
+    text = 'fact ' + text;
+    texts.push(text);
+    byText[text] = 'fact ' + id;
+  });
   texts.sort(function(a, b) { return a.localeCompare(b); });
   texts.forEach(function(text) {
       elt.add(new Option(text, byText[text]));
