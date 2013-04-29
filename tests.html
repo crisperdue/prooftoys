@@ -815,22 +815,21 @@ var testCase = {
 
   testGetStatement: function() {
     assert(Toy.parse('g T & g F == forall {a. (g a)}')
-           .matches(Toy._getStatement('axiom1')));
+           .matches(Toy.getStatement('axiom1')));
     var str = 'forall {x. x = x}';
     var wff = Toy.parse(str);
-    assertEqual(wff, Toy._getStatement(str));
-    assertEqual(wff, Toy._getStatement(wff));
+    assertEqual(wff, Toy.getStatement(str));
+    assertEqual(wff, Toy.getStatement(wff));
     Toy.addRule('ttt', function() { return rules.eqSelf('T'); });
     Toy.addTheorem('ttt');
-    assert(Toy.parse('T = T').matches(Toy._getStatement('ttt')));
+    assert(Toy.parse('T = T').matches(Toy.getStatement('ttt')));
   },
 
   testFacts: function() {
     var rules = Toy.rules;
-    var fact = rules.tIsXIsX();
-    console.log(fact);
-    Toy.addFact(fact);
-    assertEqual(fact, Toy.getFact(fact));
+    var result = rules.tIsXIsX();
+    Toy.addFact(result);
+    assert(result.matches(Toy.getResult(result)));
   },
 
   // TYPES
