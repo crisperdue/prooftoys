@@ -2224,6 +2224,34 @@ var ruleInfo = {
     labels: 'advanced'
   },
 
+  // Rewrite a term using an equational fact.  The difference from
+  // "rewrite" is that this does not display the fact as a separate
+  // step and does not accept it in the form, so is suited for
+  // indirect use with well-known facts.
+  rewriteWithFact: {
+    action: function(step, path, fact_arg) {
+      // Can throw; tryRule will report any problem.
+      var fact = Toy.getResult(fact_arg);
+      var expr = step.locate(path);
+      var map = expr.findSubst(fact.unHyp().getLeft());
+      assert(map, function() {
+          return 'Sorry, rule does not match';
+        });
+      var step1 = rules.instMultiVars(fact, map);
+      var step2 = rules.replace(step1, step, path);
+      var result = rules.simplifyNumericTypes(step2);
+      // Does not include the fact as a dependency, so it will not
+      // display as a separate step.
+      return result.justify('rewriteWithFact',
+                            [step, path, getStatement(fact)],
+                            [step]);
+    },
+    // TODO: Consider giving this a form.  Entry for facts would
+    // probably need to allow omission of type info.
+    inputs: {site: 1, term: 3},
+    description: 'rewrite {site};; {in step siteStep} using {term}',
+  },
+
   // Variant of "rewrite" that simplifies numeric types after applying
   // the fact.
   rewriteNumeric: {
@@ -3357,7 +3385,7 @@ function addRule(key, info) {
     // "basic" if no other labels.
     info.labels.basic = true;
   }
-  // If the rule has an explicit statement (it should be a theorem),
+  // If the rule has an explicit statement (it should be provably true),
   // coerce it to an Expr if given as a string.
   if (typeof info.statement === 'string') {
     info.statement = Toy.parse(info.statement);
@@ -3389,7 +3417,7 @@ addRules(ruleInfo);
 //// FACTS
 
 var facts = {
-  'a * x + x = (a + 1) * x': function() {
+  'R a & R x ==> a * x + x = (a + 1) * x': function() {
     var step1 = rules.consider('a * x + x');
     var step2 = rules.timesOneIntro(step1, '/main/right/right');
     var step3 = rules.commuteTimes(step2, '/main/right/left');
@@ -3440,7 +3468,7 @@ var rewriters = {
     inputSide: 'right'
   },
   group1: {
-    usesFact: 'a * x + x = (a + 1) * x'
+    usesFact: 'R a & R x ==> a * x + x = (a + 1) * x'
   },
   plusZeroElim: {
     usesFact: 'axiomPlusZero',
@@ -3496,7 +3524,7 @@ function addRewriter(ruleName, info) {
   fact.unHyp().assertCall2('=');
   var inputSide = info.inputSide || 'left';
   function action(step, path) {
-    var fact = getFact(info.usesFact);
+    var fact = getResult(info.usesFact);
     if (inputSide === 'right') {
       fact = rules.eqnSwap(fact);
     }
@@ -3548,29 +3576,41 @@ Toy.define('/', '{x. {y. x * recip y}}');
 
 //// THEOREMS
 
-// Private to addFact and getFact.
-// Maps from dump of fact to either the proved fact,
-// or to a function to prove it.
+// Private to addFact and getResult.  Maps from a string "dump" of
+// a fact to either the proved fact, or to a function to prove it.
 var _factsMap = {};
+
+// A "fact" is a function of no arguments that can prove a statement.
+// It will have a "statement" property that is a term matching the intended
+// result and an "unparsed" property that is a string that parses to
+// the goal.
 
 /**
  * Adds to the facts database a formula and optionally a function to
- * prove it on demand.  The formula may be given as a string to parse.
+ * prove it on demand.  The formula may be given as an object
+ * acceptable to getStatement, normally a string or Expr.
  * If the given formula is not the result of a proof, the prover
- * argument is required.
+ * argument is required.  Treats any input that is an implication
+ * as a statement with assumptions.
  */
-function addFact(expr, prover) {
-  expr = Toy.termify(expr);
+function addFact(expr_arg, prover) {
+  expr = getStatement(expr_arg);
   var key = expr.dump();
   if (expr.ruleName) {
-    _factsMap[key] = expr;
-  } else if (prover) {
-    assert(typeof prover === 'function',
-           'Not a function: ' + prover);
-    _factsMap[key] = prover;
-  } else {
-    throw new Error('No proof for ' + expr);
+    // It is already proved.
+    assert(!prover, function() { return 'Redundant prover for ' + expr_arg; });
+    prover = function() { return expr; }
+    prover._provedResult = expr;
   }
+  assert(typeof prover === 'function',
+         'Not a function: ' + prover);
+  prover.goal = expr;
+  prover.unparsed =
+    (typeof expr_arg === 'string'
+     ? expr_arg
+     : expr.toString());
+  _factsMap[key] = prover;
+  return prover;
 }
 
 /**
@@ -3581,7 +3621,7 @@ function addFact(expr, prover) {
  * the matching result.  The argument can be anything acceptable to
  * getStatement.  Throws an exception in case of failure.
  */
-function getFact(fact) {
+function getResult(fact) {
   var expr = getStatement(fact);
   if (expr.ruleName) {
     // Proved!
@@ -3589,19 +3629,29 @@ function getFact(fact) {
   }
   var key = expr.dump();
   var factoid = _factsMap[key];
-  if (typeof factoid === 'function') {
-    var fact = factoid();
-    assert(fact.unHyp().matches(expr), function() {
+  assert(factoid, function() { return 'No such fact: ' + expr; });
+  var result = factoid._provedResult;
+  if (result) {
+    return result;
+  } else {
+    result = factoid();
+    // TODO: Eliminate the unHyp here.
+    assert(result.matches(expr), function() {
         return ('Expected proof of ' + expr +
                 ', instead got ' + fact.dump());
       });
-    // Package up the proof.
-    _factsMap[key] = fact;
-    return rules.fact(fact);
-  } else {
-    // The factoid is already proved.  Call rules.fact on
-    // access to give this instance of the fact an ordinal.
-    return rules.fact(factoid);
+    factoid._provedResult = result;
+    return result;
+  }
+}
+
+/**
+ * Call the given function for each of the registered facts,
+ * passing it the fact.
+ */
+function eachFact(fn) {
+  for (var key in _factsMap) {
+    fn(_factsMap[key]);
   }
 }
 
@@ -3657,17 +3707,19 @@ function alreadyProved(name) {
 }
 
 /**
- * Gets the statement of a "fact".  If it is a theorem name,
- * returns an asserted statement of the theorem if any, or
- * the result of proving the theorem.  If not a theorem name,
- * it should parse to a WFF, which this returns.  Otherwise it
- * should be an Expr, which this returns.
+ * Returns a formula that is the statement of a "fact".  The fact can
+ * be a theorem name, a fact object, an Expr or a parseable string.
+ * It simply returns an Expr.  Given a theorem name or fact object,
+ * accesses any known statement of it, or proves it if there is no
+ * statement.  Parses a string, and if the result is an implication
+ * with an equation as the consequence, treats the antecedent
+ * as an assumption.
  */
 function getStatement(fact) {
   if (typeof fact === 'string') {
     if (Toy.isIdentifier(fact)) {
       // It's the name of a theorem.
-      var statement = rules[fact].statement;
+      var statement = rules[fact].info.statement;
       if (statement) {
         // Work with an asserted statement of the theorem if there
         // is one.
@@ -3679,10 +3731,17 @@ function getStatement(fact) {
       return rules.theorem(fact);
     } else {
       // Otherwise it should be a expression in string form.
-      return Toy.parse(fact);
+      var result = Toy.parse(fact);
+      if (result.isCall2('==>') &&
+          result.getRight().isCall2('=')) {
+        result.hasHyps = true;
+      }
+      return result;
     }
   } else if (fact instanceof Expr) {
     return fact;
+  } else if (typeof fact === 'function') {
+    return fact.goal;
   } else {
     throw new Error('Bad input to getStatement');
   }
@@ -3772,7 +3831,8 @@ Toy.axiomNames = axiomNames;
 Toy.theoremNames = theoremNames;
 Toy.addRule = addRule;
 Toy.addFact = addFact;
-Toy.getFact = getFact;
+Toy.getResult = getResult;
+Toy.eachFact = eachFact;
 Toy.addTheorem = addTheorem;
 Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
@@ -3782,7 +3842,7 @@ Toy.ruleInfo = ruleInfo;
 Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
-Toy._getStatement = getStatement;
+Toy.getStatement = getStatement;
 
 //// INITIALIZATION CODE
 
