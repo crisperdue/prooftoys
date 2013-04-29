@@ -941,7 +941,7 @@ Expr.prototype.assertCall2 = function(name) {
   };
   var message;
   if (name == null) {
-    message = 'Not a call to a a named 2-argument function';
+    message = 'Not a call to a named 2-argument function';
   } else {
     message = ('Not ' + (map[name] || 'a call to ' + name) + ': ' + this);
   }
@@ -978,12 +978,12 @@ Expr.prototype.isStep = function() {
  * the occurrence, or null if none found.  Tests this expression
  * first, followed by the rest in top-down left-to-right order.
  * Does not search for variable bindings, use pathToBinding instead.
- * Alternatively accepts a term to be matched.
+ * Alternatively accepts a term to be found.
  */
 Expr.prototype.pathTo = function(pred) {
   if (pred instanceof Expr) {
     var target = pred;
-    pred = function(term) { return target.matches(term); };
+    pred = function(term) { return target == term; };
   }
   var revPath = this._path(pred, path('/'));
   if (revPath == null) {
