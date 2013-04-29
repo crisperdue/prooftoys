@@ -1326,9 +1326,9 @@ function formattedStepInfo(step) {
 }
 
 /**
- * Computes replacement text for rule description markup.  Appearances
- * of {step}, {step1}, {step2} expand to the step number of the step
- * argument.  Also supports {equation}, {implication}.
+ * Computes replacement text for rule description markup.  Occurrences
+ * of {step}, {step1}, {step2}, {equation}, {implication}, and
+ * {siteStep} expand to the step number of the step argument.
  *
  * Appearances of {term*} display as the term; {var} as the variable
  * name, {site} as the term at the site.  Unknown markup passes
@@ -1363,6 +1363,8 @@ function expandMarkup(step, markup) {
     // It looks like a lambda, not markup!
     return markup;
   }
+  // Does it look like {<word>} or {<text> <word>}, where <text> may
+  // contain whitespace?
   var matches = markup.match(/^\{(.*? ?)([a-zA-Z0-9]+)\}$/);
   var markupRest = matches[1];
   var markupName = matches[2];
@@ -1398,7 +1400,7 @@ function expandMarkup(step, markup) {
     var term = siteStep.locate(step.ruleArgs[place]);
     return Toy.mathMarkup(term.toUnicode());
   default:
-    // Allow lambdas to pass through, e.g. {x. T}.
+    // Pass it through unchanged.
     return markup;
   }
 }
