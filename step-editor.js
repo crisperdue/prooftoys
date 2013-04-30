@@ -751,7 +751,7 @@ BasicRuleSelector.prototype.reset = function() {
     if (text[0] === '(') {
       text = text.slice(1, -1);
     }
-    text = 'fact ' + text;
+    text = 'use ' + text;
     texts.push(text);
     byText[text] = 'fact ' + id;
   });
