@@ -2228,6 +2228,9 @@ var ruleInfo = {
   // "rewrite" is that this does not display the fact as a separate
   // step and does not accept it in the form, so is suited for
   // indirect use with well-known facts.
+  //
+  // TODO: Combine both sorts of rewrite rules into one, so a rewrite
+  // works well in code and UI with any form of fact or proof step.
   rewriteWithFact: {
     action: function(step, path, fact_arg) {
       // Can throw; tryRule will report any problem.
@@ -3417,14 +3420,53 @@ addRules(ruleInfo);
 //// FACTS
 
 var facts = {
-  'R a & R x ==> a * x + x = (a + 1) * x': function() {
+  axiomCommutativePlus: null,
+  axiomCommutativeTimes: null,
+  axiomAssociativePlus: null,
+  axiomAssociativeTimes: null,
+  axiomDistributivity: null,
+  axiomPlusZero: null,
+  axiomTimesOne: null,
+  axiomTimesZero: null,
+  axiomNeg: null,
+  axiomReciprocal: null,
+  'a * x + x = (a + 1) * x': function() {
     var step1 = rules.consider('a * x + x');
-    var step2 = rules.timesOneIntro(step1, '/main/right/right');
-    var step3 = rules.commuteTimes(step2, '/main/right/left');
-    var step4 = rules.group(step3, '/main/right');
-    var step5 = rules.commuteTimes(step4, '/main/right');
+    var step2 = rules.rewriteWithFact(step1, '/main/right/right',
+                                    'R x ==> x = x * 1');
+    var step3 = rules.rewriteWithFact(step2, '/main/right/left',
+                                      'axiomCommutativeTimes');
+    var step4 = rules.rewriteWithFact(step3, '/main/right',
+                            'R x & R y & R z ==> x * y + x * z = x * (y + z)');
+    var step5 = rules.rewriteWithFact(step4, '/main/right',
+                                      'axiomCommutativeTimes');
     return step5;
   },
+  '(x + y) + z = x + (y + z)': function() {
+    var step1 = rules.axiom('axiomAssociativePlus');
+    var step2 = rules.eqnSwap(step1);
+    return step2;
+  },
+  '(x * y) * z = x * (y * z)': function() {
+    var step1 = rules.axiom('axiomAssociativeTimes');
+    var step2 = rules.eqnSwap(step1);
+    return step2;
+  },
+  'x * y + x * z = x * (y + z)': function() {
+    var step1 = rules.axiom('axiomDistributivity');
+    var step2 = rules.eqnSwap(step1);
+    return step2;
+  },
+  'x = x + 0': function() {
+    var step1 = rules.axiom('axiomPlusZero');
+    var step2 = rules.eqnSwap(step1);
+    return step2;
+  },
+  'x = x * 1': function() {
+    var step1 = rules.axiom('axiomTimesOne');
+    var step2 = rules.eqnSwap(step1);
+    return step2;
+  }
 };
 
 /**
@@ -3440,59 +3482,8 @@ function addFacts(map) {
 // Descriptions of rewrite rules (internal).  Each of these generates
 // an actual inference rule.
 var rewriters = {
-  commutePlus: {
-    usesFact: 'axiomCommutativePlus',
-  },
-  commuteTimes: {
-    usesFact: 'axiomCommutativeTimes',
-  },
-  associatePlusToLeft: {
-    usesFact: 'axiomAssociativePlus',
-  },
-  associatePlusToRight: {
-    usesFact: 'axiomAssociativePlus',
-    inputSide: 'right'
-  },
-  associateTimesToLeft: {
-    usesFact: 'axiomAssociativeTimes',
-  },
-  associateTimesToRight: {
-    usesFact: 'axiomAssociativeTimes',
-    inputSide: 'right'
-  },
-  distribute: {
-    usesFact: 'axiomDistributivity',
-  },
-  group: {
-    usesFact: 'axiomDistributivity',
-    inputSide: 'right'
-  },
-  group1: {
-    usesFact: 'R a & R x ==> a * x + x = (a + 1) * x'
-  },
-  plusZeroElim: {
-    usesFact: 'axiomPlusZero',
-  },
-  plusZeroIntro: {
-    usesFact: 'axiomPlusZero',
-    inputSide: 'right'
-  },
-  timesOneElim: {
-    usesFact: 'axiomTimesOne',
-  },
-  timesOneIntro: {
-    usesFact: 'axiomTimesOne',
-    inputSide: 'right'
-  },
-  timesZeroElim: {
-    usesFact: 'axiomTimesZero',
-  },
-  plusNegElim: {
-    usesFact: 'axiomNeg',
-  },
-  timesRecipElim: {
-    usesFact: 'axiomReciprocal',
-  }
+  // Named rewriters are currently redundant with rewriters based
+  // on facts, so this list is empty.
 };  
 
 /**
@@ -3638,7 +3629,7 @@ function getResult(fact) {
     // TODO: Eliminate the unHyp here.
     assert(result.matches(expr), function() {
         return ('Expected proof of ' + expr +
-                ', instead got ' + fact.dump());
+                ', instead got ' + result.dump());
       });
     factoid._provedResult = result;
     return result;
@@ -3713,7 +3704,8 @@ function alreadyProved(name) {
  * accesses any known statement of it, or proves it if there is no
  * statement.  Parses a string, and if the result is an implication
  * with an equation as the consequence, treats the antecedent
- * as an assumption.
+ * as an assumption.  Automatically adds assumptions that inputs
+ * to math operators are real numbers.
  */
 function getStatement(fact) {
   if (typeof fact === 'string') {
@@ -3731,7 +3723,7 @@ function getStatement(fact) {
       return rules.theorem(fact);
     } else {
       // Otherwise it should be a expression in string form.
-      var result = Toy.parse(fact);
+      var result = Toy.mathParse(fact);
       if (result.isCall2('==>') &&
           result.getRight().isCall2('=')) {
         result.hasHyps = true;

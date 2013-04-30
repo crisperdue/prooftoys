@@ -232,6 +232,8 @@ StepEditor.prototype.handleSelection = function() {
     }
     this.tryExecuteRule(false);
   } else if (value.slice(0, 5) === 'fact ') {
+    // Values "fact etc" indicate use of rewriteWithFact, and
+    // the desired fact is indicated by the rest of the selection.
     var siteStep = this.controller.selection;
     if (!siteStep || !siteStep.selection) {
       this.error('No selected site');

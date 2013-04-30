@@ -1675,7 +1675,8 @@ var testCase = {
     function check(expected, step) {
       checkRule(expected, step, rules.simplifyNumericTypes, '/left');
     }
-    var neg = rules.commutePlus(rules.axiomNeg(), '/right/left');
+    var neg = rules.rewriteWithFact(rules.axiomNeg(), '/right/left',
+                                    'x + y = y + x');
     check('(R x)', neg);
 
     var step1 = rules.assume('x + y + z + 3 = 3');
