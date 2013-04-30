@@ -331,6 +331,17 @@ var testCase = {
     assertEqual(8, expr.getRight().name.length);
   },
 
+  testMathParse: function() {
+    var p = Toy.mathParse;
+    assertEqual('a', p('a'));
+    assertEqual('(x = y)', p('x = y'));
+    assertEqual('(((R x) & (R y)) ==> ((x + y) = (y + x)))',
+                p('x + y = y + x'));
+    assertEqual('(((R x) & (R y)) ==> ((x + y) = (y + x)))',
+                p('R x & R y ==> x + y = y + x'));
+    assertEqual('((R x) ==> ((x + y) = (y + x)))',
+                p('R x ==> x + y = y + x'));
+  },
 
   // Operations on Exprs.
 

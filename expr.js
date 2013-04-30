@@ -914,8 +914,9 @@ $.extend(Expr.prototype, {
 });
 
 /**
- * Throw an error with message if this is not a call to the named
- * function.  If no name is given, any named function will do.
+ * Throw an error with message if this is not a call to a function
+ * with the given name.  If no name is given, any named function will
+ * do.
  */
 Expr.prototype.assertCall1 = function(name) {
   assert(this.isCall1(name), function() {
@@ -3240,6 +3241,36 @@ function unparseString(content) {
 }
 
 /**
+ * Parse the given string.  If it contains any apparent math variables
+ * (as by calling Expr.mathVars), and is not already a conditional
+ * with real number conditions on variables, adds assumptions that all
+ * of those "math variables" are real numbers.
+ */
+function mathParse(str) {
+  var expr = parse(str);
+  var assume = expr.mathVarConditions();
+  if (assume) {
+    var explicit = false;
+    if (expr.isCall2('==>')) {
+      expr.getLeft().eachHyp(function (hyp) {
+          if (hyp.isCall1('R') && hyp.arg instanceof Var) {
+            explicit = true;
+          }
+        });
+    }
+    if (explicit) {
+      return expr;
+    } else {
+      var result = infixCall(assume, '==>', expr);
+      result.hasHyps = true;
+      return result;
+    }
+  } else {
+    return expr;
+  }
+}
+
+/**
  * Get a precedence value: null for identifiers, defaults to 100 for
  * unknown non-symbols, greater than the usual math operators but less
  * than identifiers (i.e. ordinary function calls).
@@ -3873,6 +3904,7 @@ Toy._decodeArg = decodeArg;
 
 Toy.tokenize = tokenize;
 Toy.parse = parse;
+Toy.mathParse = mathParse;
 
 Toy.logError = logError;
 
