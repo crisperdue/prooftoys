@@ -180,7 +180,8 @@ jQuery(function() {
     var a3 = rules.replace(a1, a2, '/main/left/left');
     var a4 = rules.rewriteWithFact(a3, '/main/left/right',
                                    'x = x * 1');
-    var a5 = rules.group(a4, '/main/left');
+    var a5 = rules.rewriteWithFact(a4, '/main/left',
+                                   'x * y + x * z = x * (y + z)');
     var a6 = rules.arithmetic(a5, '/right/left/right');
     var a7 = rules.divideBoth(a6, Toy.parse('3'));
     var a8 = rules.arithmetic(a7, '/right/right');
