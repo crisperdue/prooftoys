@@ -3496,10 +3496,7 @@ function isInfixDesired(vbl) {
 /**
  * True iff the source step of expr1 is less than the source step of
  * expr2, otherwise true iff dump(expr1) is lexicographically less
- * than dump(expr2).
- *
- * In use this is used in sorting of expressions, so it must bring
- * equal expressions together so simplifications can see them.
+ * than dump(expr2).  Useful for ordering deduplicated hypotheses.
  */
 function sourceStepLess(e1, e2) {
   if (e1.sourceStep) {
@@ -3513,6 +3510,29 @@ function sourceStepLess(e1, e2) {
   } else {
     // Neither has a source step.
     return e1.dump() < e2.dump();
+  }
+}
+
+/**
+ * True iff dump(expr1) is lexicographically less than dump(expr2),
+ * otherwise true iff the source step of expr1 is less than the source
+ * step of expr2.  Expressions with no source step compare greater
+ * than expressions with a source step.
+ *
+ * In use this is used in sorting of expressions, so it must bring
+ * equal expressions together so simplifications can see them.
+ */
+function hypIsLess(e1, e2) {
+  if (e1.dump() < e2.dump()) {
+    return true;
+  } else if (e1.sourceStep) {
+    if (e2.sourceStep) {
+      return e1.sourceStep.ordinal < e2.sourceStep.ordinal;
+    } else {
+      return true;
+    }
+  } else if (e2.sourceStep) {
+    return false;
   }
 }
 
@@ -3842,6 +3862,7 @@ Toy.findBinding = findBinding;
 Toy.getBinding = getBinding;
 Toy.matchAsSchema = matchAsSchema;
 Toy.sourceStepLess = sourceStepLess;
+Toy.hypIsLess = hypIsLess;
 Toy.sourceStepComparator = sourceStepComparator;
 Toy.repeatedCall = repeatedCall;
 
