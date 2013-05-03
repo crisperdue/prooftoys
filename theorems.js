@@ -469,7 +469,7 @@ var ruleInfo = {
     hint: '[A = B] to B = A',
     comment: 'from A = B deduce B = A',
     description: 'from a = b to b = a',
-    labels: 'primitive'
+    labels: 'basic'
   },
 
   // r5201c.  Works with hypotheses.
@@ -1199,7 +1199,7 @@ var ruleInfo = {
     description: 'add \u2200',
   },
 
-  // 5221 (one variable), in the given step substitute term A for
+  // 5221 (one variable), in the given step substitute term A for free
   // variable v, which may also be a string, which will be converted
   // to a variable.  Handles hypotheses, allowing substitution for a
   // variable even if free in the hypotheses.
@@ -1633,6 +1633,30 @@ var ruleInfo = {
         }
       }
     }
+  },
+
+  // Adds an assumption to the given step.  Works with or without
+  // hypotheses.
+  addAssumption: {
+    action: function(step, expr) {
+      if (step.hasHyps) {
+        var step0 = rules.asImplication(step);
+        var taut = rules.tautology('(p ==> q) ==> (p & a ==> q)');
+        var map = {p: step.getLeft(), q: step.getRight(), a: expr};
+        var step1 = rules.tautInst(taut, map);
+        var step2 = rules.modusPonens(step0, step1);
+      } else {
+        var taut = rules.tautology('p ==> (a ==> p)');
+        var map = {p: step, a: expr};
+        var step1 = rules.tautInst(taut, map);
+        var step2 = rules.modusPonens(step, step1);
+      }
+      return step2.asHyps().justify('addAssumption', arguments, [step]);
+    },
+    inputs: {step: 1, term: 2},
+    form: ('Add assumption <input name=term> in step <input name=step>'),
+    hint: 'add assumption',
+    description: 'add assumption {term};; {in step step}'
   },
 
   // Given a theorem and an arbitrary boolean term, proves that the
@@ -2315,8 +2339,8 @@ var ruleInfo = {
 	    var step2 = rules.bubbleLeft(step1.locate('/right/left'), less);
 	    // Replace the A & C in RHS of step1 with the result.
 	    var step3 = rules.r(step2, step1, '/right/left');
-            // and replace the RHS of the argument with the final esult.
-	    return rules.r(step3, eqn, '/right');
+            // and replace the RHS of the argument with the final result.
+	    return step3;
 	  } else {
 	    // C is in place.
 	    return eqn;
@@ -2389,6 +2413,7 @@ var ruleInfo = {
   // duplicates eliminated.
   mergeConjunctions: {
     action: function(expr) {
+      // TODO: Consider whether this line needs to use Toy.hypIsless.
       var result = rules.mergeConj(expr, Toy.sourceStepLess);
       return result.justify('mergeConjunctions', arguments);
     },
@@ -2449,7 +2474,7 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: ('Make assumption <input name=term> explicit '
            + 'in step <input name=step>'),
-    description: 'make assumption {term} explicit;; {step in step}',
+    description: 'make assumption {term} explicit;; {in step step}',
     comment: 'extract an assumption'
   },
 
@@ -3076,6 +3101,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
     comment: 'remove redundant type hypotheses in a step',
+    hint: 'simplify numeric types',
     labels: 'uncommon'
   },
 
@@ -3310,10 +3336,11 @@ var ruleInfo = {
     description: 'divide by {term};; {in step equation}'
   },
 
-  // Converts the result of some inference steps into a "fact"
-  // in which the steps are details in the proof of the result.
+  // Looks up the statement using getResult (which ensures its result
+  // is proved). Returns that result, justified as a "fact".
   fact: {
-    action: function(result) {
+    action: function(statement) {
+      var result = getResult(statement);
       return result.justify('fact');
     }
   },
@@ -3433,7 +3460,7 @@ var facts = {
   'a * x + x = (a + 1) * x': function() {
     var step1 = rules.consider('a * x + x');
     var step2 = rules.rewriteWithFact(step1, '/main/right/right',
-                                    'R x ==> x = x * 1');
+                                      'x = 1 * x');
     var step3 = rules.rewriteWithFact(step2, '/main/right/left',
                                       'axiomCommutativeTimes');
     var step4 = rules.rewriteWithFact(step3, '/main/right',
@@ -3443,9 +3470,17 @@ var facts = {
     return step5;
   },
   '(x + y) + z = x + (y + z)': function() {
-    var step1 = rules.axiom('axiomAssociativePlus');
-    var step2 = rules.eqnSwap(step1);
-    return step2;
+    return rules.eqnSwap(rules.axiom('axiomAssociativePlus'));
+  },
+  'x + y + z = x + z + y': function() {
+    var step1 = rules.consider('x + y + z');
+    var step2 = rules.rewriteWithFact(step1, '/main/right',
+                                      'x + y + z = x + (y + z)');
+    var step3 = rules.rewriteWithFact(step2, '/main/right/right',
+                                      'x + y = y + x');
+    var step4 = rules.rewriteWithFact(step3, '/main/right',
+                                      'x + (y + z) = x + y + z');
+    return step4;
   },
   '(x * y) * z = x * (y * z)': function() {
     var step1 = rules.axiom('axiomAssociativeTimes');
@@ -3457,15 +3492,115 @@ var facts = {
     var step2 = rules.eqnSwap(step1);
     return step2;
   },
+  // Plus zero
   'x = x + 0': function() {
     var step1 = rules.axiom('axiomPlusZero');
     var step2 = rules.eqnSwap(step1);
     return step2;
   },
+  /* Omit from UI: somewhat redundant
+  'x = 0 + x': function() {
+    var step1 = rules.axiom('axiomPlusZero');
+    var step2 = rules.eqnSwap(step1);
+    var step3 = rules.rewriteWithFact(step2, '/main/right',
+                                      'x + y = y + x');
+    return step3;
+  },
+  */
+  '0 + x = x': function() {
+    var step1 = rules.axiom('axiomPlusZero');
+    var step2 = rules.rewriteWithFact(step1, '/main/left',
+                                      'x + y = y + x');
+    return step2;
+  },
+  // Times one
   'x = x * 1': function() {
     var step1 = rules.axiom('axiomTimesOne');
     var step2 = rules.eqnSwap(step1);
     return step2;
+  },
+  'x = 1 * x': function() {
+    var step1 = rules.axiom('axiomTimesOne');
+    var step2 = rules.eqnSwap(step1);
+    var step3 = rules.rewriteWithFact(step2, '/main/right',
+                                      'x * y = y * x');
+    return step3;
+  },
+  '1 * x = x': function() {
+    var step1 = rules.axiom('axiomTimesOne');
+    var step2 = rules.rewriteWithFact(step1, '/main/left',
+                                      'x * y = y * x');
+    return step2;
+  },
+  'x - y = x + neg y': function() {
+    var step1 = rules.consider('x - y');
+    var step2 = rules.apply(step1, '/main/right');
+    return step2;
+  },
+  'x + neg y = x - y': function() {
+    return rules.eqnSwap(rules.fact('x - y = x + neg y'));
+  },
+  'x + (y - z) = x + y - z': function() {
+    var step1 = rules.consider('x + (y - z)');
+    var step2 = rules.rewriteWithFact(step1, '/main/right/right',
+                                      'x - y = x + neg y');
+    return step1;
+  },
+  'neg x + x = 0': function() {
+    return rules.eqnSwap(rules.axiom('axiomNeg'));
+  },
+  'neg (neg x) = x': function() {
+    var step1 = rules.axiom('axiomNeg');
+    var step2 = rules.addToBoth(step1, Toy.parse('neg (neg x)'));
+    var step3 = rules.rewriteWithFact(step2, '/main/right',
+                                      '0 + x = x');
+    var step4 = rules.rewriteWithFact(step3, '/main/left',
+                                      'x + y + z = x + (y + z)');
+    var step5 = rules.instVar(step1, Toy.parse('neg x'), 'x');
+    var step6 = rules.replace(step5, step4, '/main/left/right');
+    var step7 = rules.rewriteWithFact(step6, '/main/left',
+                                      'x + 0 = x');
+    var step8 = rules.eqnSwap(step7);
+    return step8;
+  },
+  'neg (x + y) = neg x + neg y': function() {
+    var step1 = rules.axiom('axiomNeg');
+    var step2 = rules.instVar(step1, Toy.parse('x + y'), 'x');
+    var step3 = rules.rewriteWithFact(step2, '/right/left',
+                                      'x + y + z = x + z + y');
+    var step4 = rules.addToBoth(step3, Toy.parse('neg y'));
+    var step5 = rules.rewriteWithFact(step4, '/right/left',
+                                      'x + y + z = x + (y + z)');
+    var step6 = rules.rewriteWithFact(step5, '/right/left/right',
+                                      'x + neg x = 0');
+    var step7 = rules.rewriteWithFact(step6, '/right/right',
+                                      '0 + x = x');
+    var step8 = rules.rewriteWithFact(step7, '/right/left',
+                                      'x + 0 = x');
+    var step9 = rules.addToBoth(step8, Toy.parse('neg x'));
+    var step10 = rules.rewriteWithFact(step9, '/right/left/left',
+                                       'x + y = y + x');
+    var step11 = rules.rewriteWithFact(step10, '/right/left',
+                                       'x + y + z = x + (y + z)');
+    var step12 = rules.rewriteWithFact(step11, '/right/left/right',
+                                       'x + neg x = 0');
+    var step13 = rules.rewriteWithFact(step12, '/right/left',
+                                       'x + 0 = x');
+    var step14 = rules.rewriteWithFact(step13, '/right/right',
+                                       'x + y = y + x');
+    return step14;
+  },
+  'x - (y + z) = x - y - z': function() {
+    var step1 = rules.consider('x - (y + z)');
+    var step2 = rules.rewriteWithFact(step1, '/main/right/right',
+                                      'x - y = x + neg y');
+    var step3 = rules.rewriteWithFact(step2, '/main/right/right/right',
+                                      'neg (x + y) = neg x + neg y');
+    var step4 = rules.rewriteWithFact(step3, '/main/right/', etcetera);
+  },  
+  // Somewhat useful fact to stick at the end of the list.
+  'not F': function() {
+    return rules.tautology('not F');
   }
 };
 
@@ -3605,12 +3740,11 @@ function addFact(expr_arg, prover) {
 }
 
 /**
- * Given a named axiom or theorem, returns its proved result.
- * Looks up the expression in the facts database if it is not already
- * a proved statement.  If it has a proof procedure that has not yet
- * been run, runs it, checks that the result matches and remembers
- * the matching result.  The argument can be anything acceptable to
- * getStatement.  Throws an exception in case of failure.
+ * Looks up an axiom, theorem, or fact, returning the proved result.
+ * Given a named axiom or theorem, returns it.  Given something
+ * acceptable to getStatement, returns a proved version of it, or the
+ * thing itself if already proved.  Throws an exception in case of
+ * failure.
  */
 function getResult(fact) {
   var expr = getStatement(fact);
@@ -3629,8 +3763,8 @@ function getResult(fact) {
     // TODO: Eliminate the unHyp here.
     assert(result.matches(expr), function() {
         return ('Expected proof of ' + expr +
-                ', instead got ' + result.dump());
-      });
+                ', instead got ' + result.toString());
+      }, result);
     factoid._provedResult = result;
     return result;
   }
