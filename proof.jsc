@@ -775,7 +775,7 @@ function renderStep(step, controller) {
     netHovers += diff;
     var current = netHovers == 1;
     if (current != previous) {
-      hoverStep(step, current == 1 ? 'in' : 'out', event);
+      hoverStep(step, netHovers == 1 ? 'in' : 'out', event);
     }
   }    
   // Set up "hover" event handling on the stepNode.

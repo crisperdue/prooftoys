@@ -2276,7 +2276,8 @@ var ruleInfo = {
     // TODO: Consider giving this a form.  Entry for facts would
     // probably need to allow omission of type info.
     inputs: {site: 1, term: 3},
-    description: 'rewrite {site};; {in step siteStep} using {shortFact}',
+    isRewriter: true,
+    description: '{in step siteStep} use;; {shortFact}'
   },
 
   // Variant of "rewrite" that simplifies numeric types after applying
