@@ -86,29 +86,70 @@ Toy.mathMarkup = function(text) {
   // Substitutions for "forall" and "exists" consume a trailing blank,
   // helping to push them up next to following text.
   var rex =
-    /==>|==|!=|>=|<=|-|[*]|[/]|<[/]?[a-zA-Z][^>]*>|\bforall( |\b)|\bexists( |\b)|[_a-z][_a-z0-9]*/g;
+    /[-!<=>*/&|]+|[_^].|\bforall( |\b)|\bexists( |\b)|[a-zA-Z]+[0-9]*/g;
   return text.replace(rex, function(s) {
-    switch(s) {
-    case '==>': return '&rArr;';
-    case '==': return '&#x21d4;';	// Bidirectional implication
-    case '!=': return '&ne;';
-    case '>=': return '&ge;';
-    case '<=': return '&le;';
-    case '-': return '&minus;';
-    case '*': return '&sdot;';
-    case '/': return '&#x2215;';          // Division slash
-    case 'forall': return '&forall;';
-    case 'forall ': return '&forall;';
-    case 'exists': return '&exist;';
-    case 'exists ': return '&exist;';
-    default:
-      if (s.charAt(0) === '<') {
-        return s;
-      } else if (s.match(/^[_a-z][_0-9]*$/)) {
-        // Variable name, not a constant, see Toy.isVariable in expr.js.
-        return '<i>' + s + '</i>';
-      } else {
-        // It is a constant name, not a variable name, see
+    if (s.match(/^\^[a-z]/)) {
+      return '<sup><i>' + s[1] + '</i></sup>';
+    } else if (s[0] === '^') {
+      return '<sup>' + s.slice(1) + '</sup>';
+    } else if (s.match(/^_[a-z]/)) {
+      return '<sub><i>' + s[1] + '</i></sub>';
+    } else if (s[0] === '_') {
+      return '<sub>' + s.slice(1) + '</sub>';
+    } else if (s.match(/^[a-z][0-9]*$/)) {
+      // Variable name, not a constant, see Toy.isVariable in expr.js.
+      return '<i>' + s + '</i>';
+    } else {
+      // It is a constant name.
+      switch(s) {
+      case '==>': return '&rArr;';
+      case '==': return '&#x21d4;';	// Bidirectional implication
+      case '!=': return '&ne;';
+      case '>=': return '&ge;';
+      case '<=': return '&le;';
+      case '-': return '&minus;';
+      case '*': return '&sdot;';
+      case '/': return '&#x2215;';          // Division slash
+      case 'forall': return '&forall;';
+      case 'forall ': return '&forall;';
+      case 'exists': return '&exist;';
+      case 'exists ': return '&exist;';
+      case '&&':
+      case 'and':
+        return '&and;';
+      case '||':
+      case 'or':
+        return '&or;';
+      case 'not':
+        return '&not;';
+      case 'in':
+        return '&in;';
+      case 'inter':
+        return '&#x2229;';
+      case 'union':
+        return '&#x222A;';
+      case 'Inter':
+        return '&#x22C2;';
+      case 'Union':
+        return '&#x22C3;';
+      case 'CC':
+        return '&#x2102;';
+      case 'NN':
+        return '&#x2115;';
+      case 'QQ':
+        return '&#x211A;';
+      case 'RR':
+        return '&#x211D;';
+      case 'ZZ':
+        return '&#x2124;';
+      case 'epsilon':
+        // "Lunate epsilon", e.g. for epsilon/delta proofs.
+        return '&#x03F5;';
+      case 'infinity':
+        return '&infin;';
+      case 'QED':
+        return '<span style="color: black">&#x220E;</span>';
+      default:
         return s;
       }
     }
