@@ -8,6 +8,7 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <title>Prooftoys Tests</title>
+  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
   <link id=styles type="text/css" rel="stylesheet" href="lib/qunit-1.11.0.css">
   <script src="boilerplate.js"></script>
   <script src="lib/qunit-1.11.0.js"></script>
@@ -21,6 +22,8 @@
 
 <div id="qunit"></div>
 <div id="qunit-fixture"></div>
+
+<div id=proofErrors></div>
 
 <script>
 
@@ -57,10 +60,11 @@ function assertEqual(a, b) {
   return deepEqual(b, a);
 }
 
+// Make "assert" a synonym for QUnit's ok function.
 var assert = ok;
 
 // For testing convenience automatically assert steps from wffs.
-// TODO: Remove the need for this.
+// TODO: Eliminate the need for this.
 Toy.autoAssert = true;
 
 /**
@@ -515,6 +519,15 @@ var testCase = {
     check('(R x)', 'x + x');
     check('((R x) & (R y))', 'y + x * y');
     check('(((R x) & (R y)) & (R z))', 'z * y * x');
+  },
+
+  testConcat: function() {
+    var result = Toy.parse('h').concat(Toy.parse('a'), '&');
+    assertEqual('(h & a)', result);
+    var result = Toy.parse('h1 & h2').concat(Toy.parse('a'), '&');
+    assertEqual('((h1 & h2) & a)', result);
+    var result = Toy.parse('h1 & h2').concat(Toy.parse('a & b'), '&');
+    assertEqual('(((h1 & h2) & a) & b)', result);
   },
 
   testNormalized: function() {
@@ -1726,6 +1739,7 @@ var testCase = {
     check('(((R x) & (R y)) ==> ((x + y) = (x + y)))', 'x + y');
   },
 
+
   // Utility functions for proofs.
 
   testBuildHypSchema: function() {
@@ -1749,6 +1763,8 @@ var testCase = {
 
 };
 
+//// RUN TESTS
+
 for (var name in testCase) {
   var fn = testCase[name];
   if (typeof fn === 'function') {
@@ -1757,6 +1773,30 @@ for (var name in testCase) {
     console.log(name + ': not a function');
   }
 }
+Toy.eachFact(function(fact) {
+    var str = Toy.getStatement(fact).toString();
+    console.log("Testing " + str);
+    if (typeof fact === 'function') {
+      test(str, function() {
+          assert(Toy.getResult(fact).ruleName);
+        });
+    } else {
+      console.log('Not testable: ' + str);
+    }
+  });
+
+// Display errors when done.
+QUnit.done(function() {
+    var errorNodes = $('#proofErrors');
+    Toy.errors.forEach(function(info) {
+        if (info.step) {
+          var display = $('<p><b>Error:</b> <span></span></p>');
+          display.find('span').text(info.message);
+          errorNodes.append(display);
+          Toy.renderProof(info.step, errorNodes);
+        }
+      });
+  });
 
 </script>
 </body>
