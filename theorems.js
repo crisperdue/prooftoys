@@ -1833,10 +1833,8 @@ var ruleInfo = {
   // have the form (A ==> B), where A matches the given input step and
   // all free variables of B are also free in A.  For tautologies with
   // a conjunction on the LHS as shown in the book, use this with
-  // makeConjunction.  Handles hypotheses by applying modus ponens to
-  // the step.
-  //
-  // Accepts a string for the tautology.
+  // makeConjunction.  The step may have hypotheses, which are not
+  // matched against the schema.
   //
   // Andrews calls his enhanced version of forward chaining "Rule P".
   // (In this implementation it is more straightforward to use
@@ -1844,6 +1842,10 @@ var ruleInfo = {
   forwardChain: {
     action: function(step, schema) {
       var substitution = Toy.matchAsSchema(schema.getLeft(), step.unHyp());
+      assert(substitution, function() {
+          return (step.unHyp().toString() +
+                  ' does not match LHS of schema\n' + schema);
+        }, step);
       var step2 = rules.instMultiVars(schema, substitution);
       var step3 = rules.modusPonens(step, step2);
       return step3.justify('forwardChain', arguments, [step, schema]);
@@ -2262,8 +2264,11 @@ var ruleInfo = {
       var expr = step.locate(path);
       var map = expr.findSubst(fact.unHyp().getLeft());
       assert(map, function() {
-          return 'Sorry, rule does not match';
-        });
+          return ('Sorry, term\n' +
+                  expr.toString() +
+                  '\n does not match LHS of\n' +
+                  fact.unHyp().toString());
+        }, step);
       var step1 = rules.instMultiVars(fact, map);
       var step2 = rules.replace(step1, step, path);
       var result = rules.simplifyNumericTypes(step2);
@@ -3052,10 +3057,11 @@ var ruleInfo = {
             //   rules.makeConjunction to prove those hyps from the
             //   full set of hyps.
             try {
-              var proved = rules.justifyNumericType(goal);
+              var proved =
+                rules.asImplication(rules.justifyNumericType(goal));
             } catch(e) {
               var msg = 'numericTypesSimplifier: unable to prove ' +
-                goal.toString();
+                goal.toString() + ':\n' + e.message;
               throw new Error(msg, goal);
             }
             var taut = rules.tautology('(a ==> b) == (a & b == a)');
@@ -3106,9 +3112,12 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Prove a goal statement of the form "hyps ==> (R <term>)" in
-  // preparation for removing the term on the RHS from the full set of
-  // hypotheses of some proof step.  Can throw an exception.
+  /**
+   * Proves a goal statement of the form "conjuncts ==> (R <term>)".
+   * Useful as preparation for removing the term on the RHS from the
+   * full set of hypotheses of some proof step.  Throws an exception
+   * if it fails to find a proof.
+   */
   justifyNumericType: {
     action: function(goal) {
       // TODO: Break down the proof using only the required conjuncts
@@ -3166,7 +3175,8 @@ var ruleInfo = {
         result = rules.rewrite(step1, '/right', rewriter);
       } else if (expr.isCall1('recip')) {
         var subgoal1 = infix(hyps, '==>', call('R', expr.arg));
-        var step1 = rules.justifyNumericType(subgoal1);
+        var step1 =
+          rules.asHypotheses(rules.justifyNumericType(subgoal1));
         // Justify this term as a consequence of either arithmetic or
         // the hypotheses:
         var term = infix(expr.arg, '!=', new Toy.Var('0'));
@@ -3179,10 +3189,13 @@ var ruleInfo = {
           //
           // TODO: Consider adding the hypothesis to the proved result
           //   if needed.
-          assert(map.has(term), 'Step needs hypothesis: ' + term);
+          assert(map.has(term), function() {
+              return 'Step needs hypothesis: ' + term;
+            });
           var subgoal2 = infix(hyps, '==>', term);
           var taut2 = rules.tautology(infix(schema, '==>', map.get(term)));
-          var step2 = rules.instantiate(taut2, '', subgoal2);
+          var step2 =
+            rules.asHypotheses(rules.instantiate(taut2, '', subgoal2));
         }
         if (arith) {
           var step1b = rules.fromTIsA(arith);
@@ -3190,9 +3203,7 @@ var ruleInfo = {
         }
         // h ==> term is now proved.
         var conj = rules.makeConjunction(step1, step2);
-        var taut = rules.tautology('(h ==> a) & (h ==> b) ==> (h ==> a & b)');
-        var step3 = rules.forwardChain(conj, taut);
-        var result = rules.rewrite(step3, '/right', rules.axiomReciprocalType());
+        var result = rules.rewrite(conj, '/right', rules.axiomReciprocalType());
       } else {
         // See if maybe the entire goal is an instance of a tautology.
         var rhs = buildHypSchema(target, map);
@@ -3458,41 +3469,58 @@ var facts = {
   axiomTimesZero: null,
   axiomNeg: null,
   axiomReciprocal: null,
-  'a * x + x = (a + 1) * x': function() {
-    var step1 = rules.consider('a * x + x');
-    var step2 = rules.rewriteWithFact(step1, '/main/right/right',
-                                      'x = 1 * x');
-    var step3 = rules.rewriteWithFact(step2, '/main/right/left',
-                                      'axiomCommutativeTimes');
-    var step4 = rules.rewriteWithFact(step3, '/main/right',
-                            'R x & R y & R z ==> x * y + x * z = x * (y + z)');
-    var step5 = rules.rewriteWithFact(step4, '/main/right',
-                                      'axiomCommutativeTimes');
-    return step5;
-  },
-  '(x + y) + z = x + (y + z)': function() {
+
+  // Addition
+  'x + y + z = x + (y + z)': function() {
     return rules.eqnSwap(rules.axiom('axiomAssociativePlus'));
   },
   'x + y + z = x + z + y': function() {
-    var step1 = rules.consider('x + y + z');
-    var step2 = rules.rewriteWithFact(step1, '/main/right',
-                                      'x + y + z = x + (y + z)');
-    var step3 = rules.rewriteWithFact(step2, '/main/right/right',
-                                      'x + y = y + x');
-    var step4 = rules.rewriteWithFact(step3, '/main/right',
-                                      'x + (y + z) = x + y + z');
-    return step4;
+    var step = rules.consider('x + y + z')
+    .rewrite('/main/right', 'x + y + z = x + (y + z)')
+    .rewrite('/main/right/right', 'x + y = y + x')
+    .rewrite('/main/right', 'x + (y + z) = x + y + z');
+    return step;
   },
-  '(x * y) * z = x * (y * z)': function() {
+
+  // Multiplication
+  'x * y * z = x * (y * z)': function() {
     var step1 = rules.axiom('axiomAssociativeTimes');
     var step2 = rules.eqnSwap(step1);
     return step2;
+  },
+  'x * y * z = x * z * y': function() {
+    var step = rules.consider('x * y * z')
+    .rewrite('/main/right', 'x * y * z = x * (y * z)')
+    .rewrite('/main/right/right', 'x * y = y * x')
+    .rewrite('/main/right', 'x * (y * z) = x * y * z');
+    return step;
+  },
+
+  // Distributivity
+  '(a + b) * x = a * x + b * x': function() {
+    var step = rules.consider('(a + b) * x')
+    .rewrite('/main/right', 'x * y = y * x')
+    .rewrite('/main/right', 'axiomDistributivity')
+    .rewrite('/main/right/right', 'x * y = y * x')
+    .rewrite('/main/right/left', 'x * y = y * x');
+    return step;
+  },
+  'a * x + b * x = (a + b) * x': function() {
+    var step = rules.eqnSwap(getResult('(a + b) * x = a * x + b * x'));
+    return step;
   },
   'x * y + x * z = x * (y + z)': function() {
     var step1 = rules.axiom('axiomDistributivity');
     var step2 = rules.eqnSwap(step1);
     return step2;
   },
+  'a * x + x = (a + 1) * x': function() {
+    var step = rules.consider('a * x + x')
+    .rewrite('/main/right/right', 'x = 1 * x')
+    .rewrite('/main/right', 'a * x + b * x = (a + b) * x');
+    return step;
+  },
+
   // Plus zero
   'x = x + 0': function() {
     var step1 = rules.axiom('axiomPlusZero');
@@ -3533,6 +3561,13 @@ var facts = {
                                       'x * y = y * x');
     return step2;
   },
+  // Zero times
+  '0 * x = 0': function() {
+    return rules.axiom('axiomTimesZero')
+    .rewrite('/main/left', 'x * y = y * x');
+  },
+
+  // Negation rules
   'x - y = x + neg y': function() {
     var step1 = rules.consider('x - y');
     var step2 = rules.apply(step1, '/main/right');
@@ -3541,14 +3576,9 @@ var facts = {
   'x + neg y = x - y': function() {
     return rules.eqnSwap(rules.fact('x - y = x + neg y'));
   },
-  'x + (y - z) = x + y - z': function() {
-    var step1 = rules.consider('x + (y - z)');
-    var step2 = rules.rewriteWithFact(step1, '/main/right/right',
-                                      'x - y = x + neg y');
-    return step1;
-  },
   'neg x + x = 0': function() {
-    return rules.eqnSwap(rules.axiom('axiomNeg'));
+    return rules.axiom('axiomNeg')
+    .rewrite('/main/left', 'x + y = y + x');
   },
   'neg (neg x) = x': function() {
     var step1 = rules.axiom('axiomNeg');
@@ -3591,14 +3621,157 @@ var facts = {
                                        'x + y = y + x');
     return step14;
   },
+  // Subtraction rules
+  'x + y - z = x - z + y': function() {
+    var step = rules.consider('x + y - z')
+    .rewrite('/main/right', 'x - y = x + neg y')
+    .rewrite('/main/right', 'x + y + z = x + z + y')
+    .rewrite('/main/right/left', 'x + neg y = x - y');
+    return step;
+  },
+  'x - y + z = x + z - y': function() {
+    var rewrite = 'rewriteWithFact';
+    var step = rules.consider('x - y + z')
+    .apply(rewrite, '/main/right/left', 'x - y = x + neg y')
+    .apply(rewrite, '/main/right', 'x + y + z = x + z + y')
+    .apply(rewrite, '/main/right', 'x + neg y = x - y');
+    return step;
+  },
   'x - (y + z) = x - y - z': function() {
-    var step1 = rules.consider('x - (y + z)');
-    var step2 = rules.rewriteWithFact(step1, '/main/right/right',
-                                      'x - y = x + neg y');
-    var step3 = rules.rewriteWithFact(step2, '/main/right/right/right',
-                                      'neg (x + y) = neg x + neg y');
-    var step4 = rules.rewriteWithFact(step3, '/main/right/', etcetera);
+    var rewrite = 'rewriteWithFact';
+    var step = rules.consider('x - (y + z)')
+    .apply(rewrite, '/main/right', 'x - y = x + neg y')
+    .apply(rewrite, '/main/right/right',
+           'neg (x + y) = neg x + neg y')
+    .apply(rewrite, '/main/right', 'x + (y + z) = x + y + z')
+    .apply(rewrite, '/main/right', 'x + neg y = x - y')
+    .apply(rewrite, '/main/right/left', 'x + neg y = x - y');
+    return step;
   },  
+  'x + (y - z) = x + y - z': function() {
+    var rewrite = 'rewriteWithFact';
+    var step = rules.consider('x + (y - z)')
+    .apply(rewrite, '/main/right/right', 'x - y = x + neg y')
+    .apply(rewrite, '/main/right', 'x + (y + z) = x + y + z')
+    .apply(rewrite, '/main/right', 'x + neg y = x - y');
+    return step;
+  },
+
+  // Recip rules
+  'x != 0 ==> recip x * x = 1': function() {
+    return rules.axiom('axiomReciprocal')
+    .rewrite('/main/left', 'x * y = y * x');
+  },
+  'x != 0 ==> recip x != 0': function() {
+    // Step0 is not (recip x = 0) == recip x != 0.
+    var step0 = rules.consider('recip x != 0')
+    .apply('apply', '/main/right')
+    .apply('eqnSwap');
+    var step2 = rules.assume('recip x = 0')
+    .apply('multiplyBoth', Toy.parse('x'))
+    .rewrite('/main/right', '0 * x = 0')
+    .rewrite('/main/left', 'x != 0 ==> recip x * x = 1')
+    .apply('arithmetic', '/right')
+    // 1 = 0 == F
+    .apply('asImplication')
+    // TODO: Make this step less fragile.
+    .apply('forwardChain',
+           rules.tautology('a & b & c ==> F ==> (b & c ==> not a)'))
+    .apply('asHypotheses')
+    .rewrite('/right', step0);
+    return step2;
+  },
+  'x / y = x * recip y': function() {
+    var step1 = rules.consider('x / y');
+    var step2 = rules.apply(step1, '/main/right');
+    return step2;
+  },
+  'x * recip y = x / y': function() {
+    return rules.eqnSwap(rules.fact('x / y = x * recip y'));
+  },
+  /*
+   * Reciprocal and division rules, not yet working.  They
+   * need more support for proving types of reciprocals are real
+   * and for determining that expressions cannot be zero.
+  'x != 0 ==> recip (recip x) = x': function() {
+    var step1 = rules.axiom('axiomReciprocal');
+    var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip x)'));
+    var step3 = rules.rewriteWithFact(step2, '/main/right',
+                                      '1 * x = x');
+    var step4 = rules.rewriteWithFact(step3, '/main/left',
+                                      'x * y * z = x * (y * z)');
+    var step5 = rules.instVar(step1, Toy.parse('recip x'), 'x');
+    var step6 = rules.replace(step5, step4, '/main/left/right');
+    var step7 = rules.rewriteWithFact(step6, '/main/left',
+                                      'x * 1 = x');
+    var step8 = rules.eqnSwap(step7);
+    return step8;
+  },
+  'x != 0 ==> recip (x * y) = recip x * recip y': function() {
+    var step1 = rules.axiom('axiomReciprocal');
+    var step2 = rules.instVar(step1, Toy.parse('x * y'), 'x');
+    var step3 = rules.rewriteWithFact(step2, '/right/left',
+                                      'x * y * z = x * z * y');
+    var step4 = rules.addToBoth(step3, Toy.parse('recip y'));
+    var step5 = rules.rewriteWithFact(step4, '/right/left',
+                                      'x * y * z = x * (y * z)');
+    var step6 = rules.rewriteWithFact(step5, '/right/left/right',
+                                      'x * recip x = 1');
+    var step7 = rules.rewriteWithFact(step6, '/right/right',
+                                      '1 * x = x');
+    var step8 = rules.rewriteWithFact(step7, '/right/left',
+                                      'x * 1 = x');
+    var step9 = rules.addToBoth(step8, Toy.parse('recip x'));
+    var step10 = rules.rewriteWithFact(step9, '/right/left/left',
+                                       'x * y = y * x');
+    var step11 = rules.rewriteWithFact(step10, '/right/left',
+                                       'x * y * z = x * (y * z)');
+    var step12 = rules.rewriteWithFact(step11, '/right/left/right',
+                                       'x * recip x = 1');
+    var step13 = rules.rewriteWithFact(step12, '/right/left',
+                                       'x * 1 = x');
+    var step14 = rules.rewriteWithFact(step13, '/right/right',
+                                       'x * y = y * x');
+    return step14;
+  },
+  // Division rules
+  'z != 0 ==> x * y / z = x / z * y': function() {
+    var rewrite = 'rewriteWithFact';
+    var step = rules.consider('x * y / z')
+    .apply(rewrite, '/main/right', 'x / y = x * recip y')
+    .apply(rewrite, '/main/right', 'x * y * z = x * z * y')
+    .apply(rewrite, '/main/right/left', 'x * neg y = x / y');
+    return step;
+  },
+  'y != 0 ==> x / y * z = x * z / y': function() {
+    var rewrite = 'rewriteWithFact';
+    var step = rules.consider('x / y * z')
+    .apply(rewrite, '/main/right/left', 'x / y = x * recip y')
+    .apply(rewrite, '/main/right', 'x * y * z = x * z * y')
+    .apply(rewrite, '/main/right', 'x * recip y = x / y');
+    return step;
+  },
+  'y != 0 & z != 0 ==> x / (y * z) = x / y / z': function() {
+    var rewrite = 'rewriteWithFact';
+    var step = rules.consider('x / (y * z)')
+    .apply(rewrite, '/main/right', 'x / y = x * recip y')
+    .apply(rewrite, '/main/right/right',
+           'recip (x * y) = recip x * recip y')
+    .apply(rewrite, '/main/right', 'x * (y * z) = x * y * z')
+    .apply(rewrite, '/main/right', 'x * recip y = x / y')
+    .apply(rewrite, '/main/right/left', 'x * recip y = x / y');
+    return step;
+  },  
+  'z != 0 ==> x * (y / z) = x * y / z': function() {
+    var rewrite = 'rewriteWithFact';
+    var step = rules.consider('x * (y / z)')
+    .apply(rewrite, '/main/right/right', 'x / y = x * recip y')
+    .apply(rewrite, '/main/right', 'x * (y * z) = x * y * z')
+    .apply(rewrite, '/main/right', 'x * recip y = x / y');
+    return step;
+  },
+  */
+
   // Somewhat useful fact to stick at the end of the list.
   'not F': function() {
     return rules.tautology('not F');
@@ -3763,7 +3936,7 @@ function getResult(fact) {
     result = factoid();
     // TODO: Eliminate the unHyp here.
     assert(result.matches(expr), function() {
-        return ('Expected proof of ' + expr +
+        return ('Expected proof of ' + expr.toString() +
                 ', instead got ' + result.toString());
       }, result);
     factoid._provedResult = result;
