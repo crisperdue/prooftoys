@@ -593,6 +593,23 @@ Expr.prototype.freshVar = function(name) {
 };
 
 /**
+ * Returns a new expression that "concatenates" this expression with
+ * zero or more expressions joined by the named operator.  A null
+ * value indicates zero expressions, otherwise the expressions have
+ * the form (((e1 op e2) op e3) ... ).
+ */
+Expr.prototype.concat = function(expr, op) {
+  if (!expr) {
+    return this;
+  }
+  var result = this;
+  for (var e = expr; e.isCall2(op); e = e.getRight()) {
+    result = infixCall(result, op, e.getLeft());
+  }
+  return infixCall(result, op, e);
+};
+
+/**
  * Returns a shallow copy of this, annotating the copy with the rule
  * name, rule arguments, hasHyps flag, and dependencies (ruleName,
  * ruleArgs, ruleDeps).  "This" becomes the "details" property if it
@@ -614,17 +631,44 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
     }
   }
   var expr = this.dup();
+  // Record the original Expr as details.
   if (this.ruleName) {
     expr.details = this;
   }
-  // Carry hypotheses forward.
-  expr.hasHyps = this.hasHyps;
+  // Give the new Expr the specified ruleName.
   expr.ruleName = ruleName;
+  // Enable its use in a chain of rules.  (This also may help
+  // catch attempts to make inference from unproven Exprs.
+  expr.apply = applyRule;
+  expr.rewrite = applyRewrite;
+  // Give this step its own new ordinal.
+  expr.ordinal = stepCounter++;
+  // Carry other information forward.
+  expr.hasHyps = this.hasHyps;
   expr.ruleArgs = asArray(ruleArgs || []);
   expr.ruleDeps = asArray(ruleDeps || []);
-  expr.ordinal = stepCounter++;
   return expr;
 };
+
+/**
+ * Applies the named rule to this Expr and any other given arguments
+ * as if by a call to Toy.rules[name](args).  Private to Expr.justify.
+ */
+function applyRule(name, arg1) {
+  // var rules = Toy.rules;
+  // var args = Array.prototype.slice.call(arguments, 1);
+  var nm = name;
+  arguments[0] = this;
+  return Toy.rules[nm].apply(Toy.rules, arguments);
+}
+
+/**
+ * Applies rules.rewriteWithFact to this Expr passing in a path and
+ * fact to use.  Private to Expr.justify.
+ */
+function applyRewrite(path, fact) {
+  return Toy.rules.rewriteWithFact(this, path, fact);
+}
 
 /**
  * Match this expr against a schema, which may be given as a string.
@@ -3254,12 +3298,20 @@ function mathParse(str) {
     if (expr.isCall2('==>')) {
       expr.getLeft().eachHyp(function (hyp) {
           if (hyp.isCall1('R') && hyp.arg instanceof Var) {
+            // The expression has at least one explicit real
+            // number condition.
             explicit = true;
           }
         });
     }
     if (explicit) {
       return expr;
+    } else if (expr.isCall2('==>')) {
+      // Any type assumptions follow the LHS.
+      var result = infixCall(expr.getLeft().concat(assume, '&'),
+                             '==>',
+                             expr.getRight());
+      return result;
     } else {
       var result = infixCall(assume, '==>', expr);
       result.hasHyps = true;
@@ -3697,7 +3749,7 @@ function debugString(o, specials) {
           result += f(value);
         } else if (typeof value == 'string') {
           result += '"' + o[key] + '"';
-        } else if (value && value.concat) {
+        } else if ($.isArray(value)) {
           // Array-like value.
           vString = o[key].toString();
           if (vString.length > 40) {
