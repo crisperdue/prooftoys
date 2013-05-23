@@ -195,6 +195,7 @@ Map.prototype.isEmpty = function() {
 //// TermSet and TermMap
 
 function identifyTerm(term) {
+  // TODO: Make this function memoize dumps.
   return term.dump();
 };
 
@@ -682,7 +683,7 @@ Expr.prototype.matchSchema = function(schema) {
 };
 
 /**
- * Alternate name for Expr.matchSchema.
+ * Alternate name for Expr.matchSchema.  The argument is the schema.
  */
 Expr.prototype.findSubst = Expr.prototype.matchSchema;
 

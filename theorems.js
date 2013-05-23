@@ -1841,7 +1841,7 @@ var ruleInfo = {
   // makeConjunction as needed, followed by forwardChain.)
   forwardChain: {
     action: function(step, schema) {
-      var substitution = Toy.matchAsSchema(schema.getLeft(), step.unHyp());
+      var substitution = Toy.matchAsSchema(schema.unHyp().getLeft(), step.unHyp());
       assert(substitution, function() {
           return (step.unHyp().toString() +
                   ' does not match LHS of schema\n' + schema);
@@ -1888,13 +1888,18 @@ var ruleInfo = {
   // Finds a "subgoal" statement that implies the goal via the given
   // theorem, which must be a schema of the form a ==> b.
   // Instantiates the theorem by matching the goal against the theorem
-  // RHS, returning the instantiated theorem.
+  // RHS, returning the instantiated theorem.  Returns null if the
+  // theorem does not match the goal.
   subgoal: {
     action: function(goal, theorem) {
       theorem.assertCall2('==>');
       var subst = goal.matchSchema(theorem.getRight());
-      var result = rules.instMultiVars(theorem, subst);
-      return result.justify('subgoal', arguments);
+      if (subst) {
+        var result = rules.instMultiVars(theorem, subst);
+        return result.justify('subgoal', arguments);
+      } else {
+        return null;
+      }
     }
   },
 
@@ -2237,8 +2242,9 @@ var ruleInfo = {
       var expr = step.locate(path);
       var map = expr.findSubst(equation.unHyp().getLeft());
       assert(map, function() {
-          return 'Sorry, rule does not match';
-        });
+          return (step.unHyp().toString() +
+                  ' must be an instance of LHS of equation\n' + equation);
+        }, step);
       var step1 = rules.instMultiVars(equation, map);
       var result = rules.replace(step1, step, path);
       return result.justify('rewrite', arguments, [step, equation]);
@@ -2271,7 +2277,7 @@ var ruleInfo = {
         }, step);
       var step1 = rules.instMultiVars(fact, map);
       var step2 = rules.replace(step1, step, path);
-      var result = rules.simplifyNumericTypes(step2);
+      var result = rules.simplifyAssumptions(step2);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
       return result.justify('rewriteWithFact',
@@ -2290,7 +2296,7 @@ var ruleInfo = {
   rewriteNumeric: {
     action: function(step, path, equation) {
       var step1 = rules.rewrite(step, path, equation);
-      var result = rules.simplifyNumericTypes(step1);
+      var result = rules.simplifyAssumptions(step1);
       return result.justify('rewriteNumeric', [step, path], [step]);
     },
     inputs: {site: 1, equation: 3},
@@ -2811,6 +2817,17 @@ var ruleInfo = {
     description: 'definition of recip'
   },
 
+  // TODO: Prove this as a consequnce of completeness.
+  factNonzeroProduct: {
+    action: function() {
+      return rules.assert('R x & R y & x != 0 & y != 0 ==> x * y != 0')
+        .asHyps().justify('factZeroProduct');
+    }
+  },
+
+  // All of the type axioms are true in actual type theory, but
+  // in type theory the reciprocal is always a real number.
+
   // Note: not structured as a rewrite rule.
   axiomPlusType: {
     action: function() {
@@ -3084,6 +3101,27 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
+  simplifyAssumptions: {
+    action: function(step) {
+      var simpler = step;
+      /* TODO: Make this real.
+      if (step.hasHyps) {
+        step.getLeft().eachHyp(function(hyp) {
+            var next = rules.subgoal(rules.theorem('factNonzeroProduct'));
+            simpler = rules.replaceHyp(hypPath, next);
+          });
+      }
+      */
+      return rules.simplifyNumericTypes(simpler)
+      .justify('simplifyAssumption', arguments, [step]);
+    },
+    inputs: {step: 1},
+    form: 'Step to simplify: <input name=step>',
+    comment: 'remove redundant assumptions in a step',
+    hint: 'simplify numeric types',
+    labels: 'uncommon'
+  },
+
   // Apply type expression rewriter rules (equations) to type
   // expressions of the form (R <term>) in the LHS of the given proved
   // implication.  Deduplicate and put them in the usual order.
@@ -3199,7 +3237,7 @@ var ruleInfo = {
         }
         if (arith) {
           var step1b = rules.fromTIsA(arith);
-          var step2 = rules.anyImpliesTheorem(hyps, step1b);
+          var step2 = rules.anyImpliesTheorem(hyps, step1b).apply('asHypotheses');
         }
         // h ==> term is now proved.
         var conj = rules.makeConjunction(step1, step2);
@@ -3815,6 +3853,8 @@ function addRewriters(map) {
  * "left".  The "comment" property if given becomes the rule's
  * comment.  The generated rewriter simplifies numeric types after
  * applying the fact.
+ *
+ * TODO: Remove this and code that uses it.
  */
 function addRewriter(ruleName, info) {
   // We must find the rewrite rule's equation before ever trying
@@ -3829,7 +3869,7 @@ function addRewriter(ruleName, info) {
       fact = rules.eqnSwap(fact);
     }
     var step1 = rules.rewrite(step, path, fact);
-    var result = rules.simplifyNumericTypes(step1);
+    var result = rules.simplifyAssumptions(step1);
     // Justify the step with the given ruleName.  This is appropriate
     // since addRewriters attaches it as "rules.ruleName".
     // Omit the fact as a dependency, because it (presumably)
