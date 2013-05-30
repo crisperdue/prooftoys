@@ -38,6 +38,26 @@ function ownProperties(object) {
   return result;
 }
 
+/**
+ * Calls the given function on each element of the array, passing it
+ * the element, the index, and the array.  If on any iteration the
+ * function returns any value other than undefined, immediately
+ * returns that value, otherwise the value is undefined.  Remembers
+ * the array length at the start and uses that value throughout.
+ */
+function each(array, fn) {
+  var len = array.length;
+  assert(typeof len === 'number', function() {
+      return 'Not an array: ' + array;
+    });
+  for (var i = 0; i < len; i++) {
+    var result = fn(array[i], i, array);
+    if (result !== undefined) {
+      return result;
+    }
+  }
+}
+
 
 //// CLASSES ////
 
@@ -642,6 +662,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   // catch attempts to make inference from unproven Exprs.
   expr.apply = applyRule;
   expr.rewrite = applyRewrite;
+  expr.replace = applyReplace;
   // Give this step its own new ordinal.
   expr.ordinal = stepCounter++;
   // Carry other information forward.
@@ -669,6 +690,14 @@ function applyRule(name, arg1) {
  */
 function applyRewrite(path, fact) {
   return Toy.rules.rewriteWithFact(this, path, fact);
+}
+
+/**
+ * Applies rules.replace to this Expr passing in a path and
+ * equation to use.  Private to Expr.justify.
+ */
+function applyReplace(path, eqn) {
+  return Toy.rules.replace(eqn, this, path);
 }
 
 /**
@@ -1196,6 +1225,26 @@ Expr.prototype.eachHyp = function(action) {
 };
 
 /**
+ * Transforms an expression that is a chain of conjuncts by applying
+ * the xform function to each of its conjuncts.  To match eachHyp,
+ * Descends into left-hand arguments except any that have a sourceStep
+ * property. but does not descend into right-hand arguments of '&'.
+ *
+ * TODO: Use or remove.
+ */
+Expr.prototype.transformConjuncts = function(xform) {
+  if (this.sourceStep) {
+    return xform(this);
+  } else if (this.isCall2('&')) {
+    return Toy.infixCall(this.getLeft().transformConjuncts(xform),
+                         '&',
+                         xform(this.getRight()));
+  } else {
+    return xform(this);
+  }
+};
+
+/**
  * Given an expression that is the conjunction of two chains of
  * hypotheses, returns an equation that is a tautology that can
  * rewrite it to one with the conjunctions merged.
@@ -1383,7 +1432,7 @@ Expr.prototype.mergedHypotheses = function() {
 // the normalized expression, and none of these names clashes with the
 // name of any free variable.
 //
-// replace(path, xformer)
+// replaceAt(path, xformer)
 //
 // Returns a copy of this expression.  If some part matches the path,
 // that part is replaced by the result of calling the xformer function
@@ -1578,7 +1627,7 @@ Var.prototype.normalized = function(counter, bindings) {
   return new Var(getBinding(this.name, bindings) || this.name);
 };
 
-Var.prototype.replace = function(path, xformer) {
+Var.prototype.replaceAt = function(path, xformer) {
   return path.isMatch() ? xformer(this) : this;
 };
 
@@ -1821,13 +1870,13 @@ Call.prototype.normalized = function(counter, bindings) {
                   this.arg.normalized(counter, bindings));
 };
 
-Call.prototype.replace = function(path, xformer) {
+Call.prototype.replaceAt = function(path, xformer) {
   if (path.isMatch()) {
     return xformer(this);
   } else if (path.segment) {
     // Traversing down to a subexpression of this.
-    var fn = this.fn.replace(path.rest('fn'), xformer);
-    var arg = this.arg.replace(path.rest('arg'), xformer);
+    var fn = this.fn.replaceAt(path.rest('fn'), xformer);
+    var arg = this.arg.replaceAt(path.rest('arg'), xformer);
     return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
   } else {
     return this;
@@ -2032,11 +2081,11 @@ Lambda.prototype.normalized = function(counter, bindings) {
   return new Lambda(newVar, this.body.normalized(counter, newBindings));
 };
 
-Lambda.prototype.replace = function(path, xformer) {
+Lambda.prototype.replaceAt = function(path, xformer) {
   if (path.isMatch()) {
     return xformer(this);
   } else {
-    var body = this.body.replace(path.rest('body'), xformer);
+    var body = this.body.replaceAt(path.rest('body'), xformer);
     return (body == this.body) ? this : new Lambda(this.bound, body);
   }
 };
@@ -3894,6 +3943,7 @@ function decodeArg(info, steps) {
 Toy.configure = configure;
 Toy.ownProperties = ownProperties;
 Toy.isEmpty = isEmpty;
+Toy.each = each;
 
 Toy.Set = Set;
 Toy.Map = Map;

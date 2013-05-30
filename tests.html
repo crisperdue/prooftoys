@@ -100,8 +100,9 @@ var times2 = call('=', call('+', x, x), call('*', '2', x));
 var bigger = call('==>', call('>', x, '0'),
                   call('>', call('+', x, x), x));
 
-// This is a bit different than standard QUnit style, but the content is the same
-// The code block just below interprets all of these as qUnit tests.
+// This is a bit different than standard QUnit style, but the content
+// is the same The code block just below interprets all of these as
+// qUnit tests.
 var testCase = {
 
   // Warmups, to confirm what some assertions do.
@@ -546,14 +547,25 @@ var testCase = {
     assert(times2.isCall2('='), 'Times2 not an equation?');
   },
 
-  testExprReplace: function() {
+  testTransformConjuncts: function() {
+    function xform(expr) {
+      return (expr.matchSchema('a | not a')) ? T : expr;
+    }
+    assertEqual('((a & b) & c)',
+                Toy.parse('a & b & c').transformConjuncts(xform));
+    assertEqual('(((T & T) & z) & w)',
+                Toy.parse('(x | not x) & (y | not y) & z & w')
+                  .transformConjuncts(xform));
+  },
+
+  testReplaceAt: function() {
     var y = varify('y');
     var e1 = call(lambda(x, call(f, x)), y);
     var path = Toy.path('/fn/body/arg');
-    var result = e1.replace(path, function(expr) { return call(f, x); });
+    var result = e1.replaceAt(path, function(expr) { return call(f, x); });
     assertEqual('({x. (f (f x))} y)', result.toString());
     var target = Toy.parse('f x = y');
-    result = target.replace(Toy.path('/right'), function(expr) { return z; });
+    result = target.replaceAt(Toy.path('/right'), function(expr) { return z; });
     assert(target.getLeft() === result.getLeft());
   },
 
@@ -1042,6 +1054,12 @@ var testCase = {
     assertEqual('(x = x)', Toy.rules.eqSelf(x));
   },
 
+  testEquivSelf: function() {
+    var result = rules.equivSelf(call(p, y));
+    assertEqual('((p y) == (p y))', result);
+    assertEqual('(F == F)', Toy.rules.equivSelf(F));
+  },
+
   testR5201a: function() {
     var result = Toy.rules.replaceWhole(call(p, x),
                                       call('=', call(p, x), call(q, x)));
@@ -1497,6 +1515,77 @@ var testCase = {
     assertEqual('((x > 0) ==> ((x + x) > (abs x)))', result);
   },
 
+  testDeepTermReplacer: function() {
+    // Leverages the code for testConjunctsReplacer.
+    // 
+    // First a no-op transformation.
+    var taut = rules.tautology('a | not a == T');
+    assertEqual('(((a & b) & c) = ((a & b) & c))',
+                rules.deepTermReplacer(Toy.parse('a & b & c'),
+                                       [taut]));
+    // A simple transformation
+    var expected =
+      '(((((x | (not x)) & (y | (not y))) & z) & w) = (((T & T) & z) & w))';
+    var term = Toy.parse('(x | not x) & (y | not y) & z & w');
+    assertEqual(expected,
+                rules.deepTermReplacer(term,
+                                       [taut]));
+    // Transformation, with transform of the results of
+    // transforming the subexpressions.
+    expected =
+      '(((((x | (not x)) & (y | (not y))) & z) & w) = ((T & z) & w))';
+    var taut2 = rules.tautology('T & T == T');
+    assertEqual(expected,
+                rules.deepTermReplacer(term,
+                                       [taut, taut2]));
+    var expected =
+      '(((R x) & (R y)) ==> (((x * y) != 0) = ((x != 0) & (y != 0))))'
+    assertEqual(expected,
+                rules.deepTermReplacer(Toy.parse('x * y != 0'),
+                                       [rules.factNonzeroProduct()]));
+  },
+
+  testRewriteInDepth: function() {
+    expect(0);
+    // TODO: implement me.
+  },
+
+  testConjunctsReplacer: function() {
+    // First a no-op transformation.
+    var taut = rules.tautology('a | not a == T');
+    assertEqual('(((a & b) & c) = ((a & b) & c))',
+                rules.conjunctsReplacer(Toy.parse('a & b & c'),
+                                        [taut]));
+    // A simple transformation
+    var expected =
+      '(((((x | (not x)) & (y | (not y))) & z) & w) = (((T & T) & z) & w))';
+    var term = Toy.parse('(x | not x) & (y | not y) & z & w');
+    assertEqual(expected,
+                rules.conjunctsReplacer(term,
+                                        [taut]));
+    // Transformation, with transform of the results of
+    // transforming the subexpressions.
+    expected =
+      '(((((x | (not x)) & (y | (not y))) & z) & w) = ((T & z) & w))';
+    var taut2 = rules.tautology('T & T == T');
+    assertEqual(expected,
+                rules.conjunctsReplacer(term,
+                                        [taut, taut2]));
+    var expected =
+      '(((R x) & (R y)) ==> (((x * y) != 0) = ((x != 0) & (y != 0))))'
+    assertEqual(expected,
+                rules.conjunctsReplacer(Toy.parse('x * y != 0'),
+                                        [rules.factNonzeroProduct()]));
+  },
+
+  testSimplifyAssumptions: function() {
+    var step1 = rules.assume('x * y != 0');
+    var step2 = rules.simplifyAssumptions(step1);
+    var expected =
+      '(((((x != 0) & (y != 0)) & (R x)) & (R y)) ==> ((x * y) != 0))';
+    assertEqual(expected, step2);
+  },
+
   testBubbleLeft: function() {
     function less(a, b) {
       return a.toString() < b.toString();
@@ -1569,9 +1658,16 @@ var testCase = {
     assertEqual(expected, result);
   },
 
-  testIsolateCondition: function() {
-    expect(0);
-    // TODO: implement me.
+  testIsolateHypAt: function() {
+    var step = rules.axiom('axiomCommutativePlus');
+    var actual = rules.isolateHypAt(step, '/left/left');
+    assertEqual('((R y) ==> ((R x) ==> ((x + y) = (y + x))))', actual);
+  },
+
+  testIsolateHyp: function() {
+    var step = rules.axiom('axiomCommutativePlus');
+    var actual = rules.isolateHyp(step, 'R x');
+    assertEqual('((R y) ==> ((R x) ==> ((x + y) = (y + x))))', actual);
   },
 
   testConjunctionDeduper: function() {
