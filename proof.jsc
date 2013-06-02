@@ -1988,7 +1988,7 @@ Toy.useAutocompleter = false && !Toy.hasTouchEvents;
 
 // Global parameter to suppress GUI selection of function names
 // and the "Curried part" of an infix call.
-Toy.simplifiedSelections = Toy.hasTouchEvents;
+Toy.simplifiedSelections = true; // Alternatively: Toy.hasTouchEvents;
 
 // Name of event when the user touches the screen or clicks the mouse.
 // Note: when using 'mousedown' as the TOUCHDOWN event Chrome has been
