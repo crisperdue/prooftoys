@@ -372,7 +372,9 @@ StepEditor.prototype.tryRule = function(rule, args) {
     this.focus();
     value = true;
   } catch(error) {
-    this.reset();
+    if (!(error instanceof Toy.TypeCheckError)) {
+      this.reset();
+    }
     this.error(error.message);
   }
   if (Toy.profileName) {

@@ -61,6 +61,17 @@ function each(array, fn) {
 
 //// CLASSES ////
 
+/**
+ * Specialized error for use when type checking/inference fails.
+ */
+function TypeCheckError(msg) {
+  // Do not call Error because that behaves specially,
+  // just fill in a "message" property.
+  this.message = msg;
+}
+Toy.extends(TypeCheckError, Error);
+
+
 // SET
 
 function Set(stringifier) {
@@ -2969,7 +2980,7 @@ function findType(expr) {
       nonGenerics.pop();
       return new FunctionType(argType, resultType);
     }
-    throw new Error('Expression of unknown type: ' + expr);
+    throw new TypeCheckError('Expression of unknown type: ' + expr);
   }
 
   function getType(name) {
@@ -3040,7 +3051,7 @@ function findType(expr) {
           return new TypeOperator(type.name, freshTypes);
         }
       } else {
-        throw new Error('Bad type: ' + type);
+        throw new TypeCheckError('Bad type: ' + type);
       }
     }
 
@@ -3059,7 +3070,7 @@ function findType(expr) {
     } else if (isDefined(name)) {
       return findType(getDefinition(name).getRight());
     } else {
-      throw new Error('Cannot find type for: ' + name);
+      throw new TypeCheckError('Cannot find type for: ' + name);
     }
   }
 
@@ -3105,7 +3116,7 @@ function unifyTypes(t1, t2) {
   if (a instanceof TypeVariable) {
     if (a != b) {
       if (occursInType(a, b)) {
-        throw new TypeError('recursive unification');
+        throw new TypeCheckError('recursive unification');
       }
       a.instance = b;
     }
@@ -3113,13 +3124,13 @@ function unifyTypes(t1, t2) {
     unifyTypes(b, a);
   } else if (a instanceof TypeOperator && b instanceof TypeOperator) {
     if (a.name != b.name || a.types.length != b.types.length) {
-      throw new TypeError('Type mismatch: ' + a + ' != ' + b);
+      throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
     }
     for (var i = 0; i < a.types.length; i++) {
       unifyTypes(a.types[i], b.types[i]);
     }
   } else {
-    throw new Error('Not unifieable');
+    throw new TypeCheckError('Not unifiable');
   }
 }
 
@@ -3945,6 +3956,7 @@ Toy.ownProperties = ownProperties;
 Toy.isEmpty = isEmpty;
 Toy.each = each;
 
+Toy.TypeCheckError = TypeCheckError;
 Toy.Set = Set;
 Toy.Map = Map;
 Toy.TermSet = TermSet;
