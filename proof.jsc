@@ -279,6 +279,9 @@ function ProofEditor() {
     }
   }
   proofToyState.onDataReady(Toy.withErrorReporting.bind(null, loadData));
+
+  this.containerNode.on('click', @{event. event.stopPropagation();});  
+  $(document).on('click', @{event. @mainControl.deselectStep()});
 }
 
 /**
