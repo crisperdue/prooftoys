@@ -3188,7 +3188,7 @@ var ruleInfo = {
         var stepLeft = rules.conjunctsReplacer(term.getLeft(), facts);
         var stepRight = rules.conjunctsReplacer(term.getRight(), facts);
         step1 = step.replace('/right/left', stepLeft)
-          .replace('/right/right', stepRight);
+          .replace('/main/right/right', stepRight);
       } else {
         step1 = step;
       }
@@ -3203,7 +3203,7 @@ var ruleInfo = {
   },
 
   // Simplifies the assumptions of a step by applying selected facts
-  // to conjuncts that match.  Returns a 
+  // to conjuncts that match.
   simplifyAssumptions: {
     action: function(step) {
       var simpler = step;
