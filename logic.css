@@ -239,8 +239,13 @@ table.proofDisplay {
     */
 }
 
-.proofDisplay.editable .proofStep.hover {
-  border: 1px solid gray;
+/* Color is overridden by hovering on the step or selecting it. */
+.stepNumArea {
+  border: 1px solid transparent;
+}
+
+.proofDisplay.editable .proofStep.hover .stepNumArea {
+  border: 1px solid #aaa;
 }
 
 /* Step deleter control, only visible when the step is hovered. */
@@ -278,9 +283,9 @@ table.proofDisplay {
   background-color: lime;
 }
 
-.proofStep.selected {
-  background-color: #FF6;
-  border: 1px solid gray;
+/* Must be specific enough to override the silver/gray border. */
+.proofDisplay.editable .proofStep.selected .stepNumArea {
+  border: 1px solid black;
 }
 
 /* Old value ("removed"), occurrence of variable to be substituted. */
@@ -325,7 +330,7 @@ span.assumptions {
 
 /* When hovering over an expression */
 .proofStep .fullExpr.hovered, .proofStep .expr.hovered {
-  border-color: gray;
+  border-color: #aaa;
 }
 
 .proofStep .expr.selected {
