@@ -208,10 +208,22 @@ function ProofEditor() {
     '</div>\n';
   this._stateDisplay = $(stateDisplayHtml);
   this._stateArea = dom(this._stateDisplay.find('.proofStateArea'));
+  // Toggling the proof state display visibility with a button.
+  // 
+  var saveRestore =
+    $('<input type=button '
+      + 'value="Save/restore proof ..." '
+      + 'title="Save or restore proof state">');
+  saveRestore.on('click', function() {
+      self._stateDisplay.toggleClass('hidden');
+    });
+  @saver = $('<div/>');
+  @saver.append(saveRestore);
   this.containerNode = $('<div class=proofContainer></div>');
   this.containerNode
-    .append(@mainControl.node)
-    .append(this._stateDisplay);
+    .append(@saver)
+    .append(this._stateDisplay)
+    .append(@mainControl.node);
 
   // If the proof has changed, save its state.
   this._refresher = new Toy.Refresher(function() {
@@ -237,14 +249,9 @@ function ProofEditor() {
     this.stepEditor.focus();
   };
 
-  // Toggling the proof state display visibility with a button.
-  // 
   // TODO: Consider creating the step editor from the proof editor
   //   rather than ProofControls for cleaner structure, less redundant
   //   step editors.
-  @mainControl.stepEditor.saveRestore.on('click', function() {
-      self._stateDisplay.toggleClass('hidden');
-    });
 
   // Handler for the "restore proof" button.  Restores proof state from
   // the text area and saves global state.
@@ -341,7 +348,7 @@ ProofEditor.prototype.setEditable = @(value) {
 };
 
 ProofEditor.prototype.showSaveRestore = @(value) {
-  @mainControl.stepEditor.showSaveRestore(value);
+  @saver.toggle(value);
 };
 
 ProofEditor.prototype.displayShowAll = @(value) {

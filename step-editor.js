@@ -82,7 +82,6 @@ var siteTypes = {
  * Fields:
  * jq: DIV with the step editor's HTML.
  * form: jQuery SPAN to hold the argument input form.
- * saveRestore: jQuery button to control the save/restore area.
  * controller: ProofControl to edit
  */
 function StepEditor(controller) {
@@ -107,16 +106,6 @@ function StepEditor(controller) {
 
   self.form = $('<span class=sted-form></span>');
   div.append(self.form);
-
-  // TODO: Make this appear and disappear with the rule selector,
-  // or move it somewhere else.
-  var noform = $('<div style="margin-left: 1.5em"/>');
-  div.append(noform);
-  self.saveRestore =
-    $('<input class=sted-save-restore type=button '
-      + 'value="Save/restore proof ..." '
-      + 'title="Save or restore proof state">')
-  noform.append(self.saveRestore);
   // TODO: add more content here: div.append('<div>Hello World</div>');
   self.jq = div;
 
@@ -153,10 +142,6 @@ function StepEditor(controller) {
 }
 
 $.extend(StepEditor.prototype, {
-
-  showSaveRestore: function(value) {
-    this.saveRestore.toggle(value);
-  },
 
   displayShowAll: function(value) {
     this._selectorSpan.find('label.sted-show-all').toggle(value);
