@@ -660,11 +660,9 @@ ProofControl.prototype.deselectExpr = function(step) {
 ProofControl.prototype.handleStepClick = function(step) {
   if (this.editable) {
     var selected = this.selection;
+    var expr = selected ? selected.selection : null;
     this.deselectStep();
-    if (selected) {
-      this.deselectExpr(selected);
-    }
-    if (step != selected) {
+    if (!(step == selected && !expr)) {
       this.selectStep(step);
     }
     // Communicate that the selection _may_ have changed.
@@ -682,12 +680,8 @@ ProofControl.prototype.handleExprSelection = function(expr) {
   if (this.editable) {
     var step = getProofStep(expr);
     var selection = this.selection;
-    var oldExpr = null;
+    var oldExpr = selection ? selection.selection : null;
     this.deselectStep();
-    if (selection) {
-      oldExpr = selection.selection;
-      this.deselectExpr(selection);
-    }
     if (expr != oldExpr) {
       this.selectExpr(expr);
     }

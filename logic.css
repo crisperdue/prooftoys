@@ -330,7 +330,7 @@ span.assumptions {
 
 /* When hovering over an expression */
 .proofStep .fullExpr.hovered, .proofStep .expr.hovered {
-  border-color: #aaa;
+  border-color: #aaf;
 }
 
 .proofStep .expr.selected {
