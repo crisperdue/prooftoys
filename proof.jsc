@@ -926,14 +926,14 @@ function renderMain(step) {
       var jq = exprJq();
       main.node = dom(jq);
       jq.append(main.getRight()._render(true));
-      jq.append(textNode(' = '));
+      jq.append(' = ');
       jq.append('<span class=ellipsis>&hellip;</span>');
     } else {
       if (step.hasLeftElision) {
         var jq = exprJq();
         main.node = dom(jq);
         jq.append('<span class=ellipsis>&hellip;</span>');
-        jq.append(textNode(' = '));
+        jq.append(' = ');
         jq.append(main.getRight()._render(true));
       } else {
         var jq = main._render(true);
@@ -965,12 +965,12 @@ function renderHyps(expr) {
       hypsNode.append(jq);
     } else if (expr.isCall2('&')) {
       render(expr.getLeft());
-      hypsNode.append(textNode(', '));
+      hypsNode.append(', ');
       var rhs = expr.getRight();
       if (rhs.isCall2('&')) {
-        hypsNode.append(textNode('('));
+        hypsNode.append('(');
         render(rhs);
-        hypsNode.append(textNode(')'));
+        hypsNode.append(')');
       } else {
         render(rhs);
       }
@@ -1139,7 +1139,7 @@ Call.prototype._render = function(omit) {
     // with a non-breaking space to the left to help the user select
     // this expression, and to set them off from preceding infix operator
     // or other text.
-    jq.append(document.createTextNode('\u00a0'));
+    jq.append('\u00a0');
     jq.append(this.fn._render());
     jq.append(this.arg._render());
     markAsFullExpr(jq);
@@ -1168,7 +1168,7 @@ Lambda.prototype._render = function(omit) {
   }
   jq.append('{');
   jq.append(this.bound._render());
-  jq.append(textNode('. '));
+  jq.append('. ');
   var bodyJq = this.body._render(true);
   markAsFullExpr(bodyJq);
   jq.append(bodyJq);
