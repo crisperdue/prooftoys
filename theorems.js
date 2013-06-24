@@ -19,14 +19,17 @@ var Var = Toy.Var;
 var Call = Toy.Call;
 var Lambda = Toy.lambda;
 
-// Include all variables that appear in axioms, plus T and F.
-var T = varify('T');
-var F = varify('F');
+// Include all variables that appear in axioms, plus common constants.
 var f = varify('f');
 var g = varify('g');
 var h = varify('h');
 var x = varify('x');
 var y = varify('y');
+
+var T = varify('T');
+var F = varify('F');
+var zero = Toy.parse('0');
+var one = Toy.parse('1');
 
 // Map from tautology string representation to tautology,
 // for proved tautologies.  Private to the tautology rule.
@@ -2267,8 +2270,9 @@ var ruleInfo = {
       return result.justify('rewrite', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
-    form: ('Rewrite the site using equation <input name=equation>'),
-    hint: 'Instantiate an equation so its LHS equals an expression.',
+    // In the UI use rewriteNumeric instead.
+    // form: ('Rewrite the site using equation <input name=equation>'),
+    hint: 'rewrite using an equation',
     description: 'rewrite {site};; {in step siteStep} {using step equation}',
     labels: 'advanced'
   },
@@ -2314,13 +2318,13 @@ var ruleInfo = {
     action: function(step, path, equation) {
       var step1 = rules.rewrite(step, path, equation);
       var result = rules.simplifyAssumptions(step1);
-      return result.justify('rewriteNumeric', [step, path], [step]);
+      return result.justify('rewriteNumeric', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using equation <input name=equation>'),
-    hint: 'Instantiate an equation so its LHS equals an expression.',
+    hint: 'match with an equation LHS',
     description: 'rewrite {site};; {in step siteStep} {using step equation}',
-    labels: 'advanced'
+    labels: 'basic'
   },
 
   // NOTE: A chain of conjuncts (or other binary operator) is an
@@ -3203,7 +3207,7 @@ var ruleInfo = {
   },
 
   // Simplifies the assumptions of a step by applying selected facts
-  // to conjuncts that match.
+  // to conjuncts that match, including numeric simplifications.
   simplifyAssumptions: {
     action: function(step) {
       var simpler = step;
@@ -3493,7 +3497,8 @@ var ruleInfo = {
     action: function(eqn, term) {
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '/', term));
-      var result = rules.applyToBoth(fn, eqn);
+      var result = rules.applyToBoth(fn, eqn)
+        .apply('addAssumption', Toy.infixCall(term, '!=', zero));
       return result.justify('divideBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
