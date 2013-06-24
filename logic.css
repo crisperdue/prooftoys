@@ -323,9 +323,13 @@ span.ruleName {
 }
 
 span.assumptions {
-  /* like stepInfo */
-  color: #777;
+  color: #999;
   margin-right: .4em;
+}
+
+/* Step reference in assumptions */
+span.stepRef {
+  font-weight: bold;
 }
 
 /* When hovering over an expression */

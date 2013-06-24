@@ -744,7 +744,7 @@ function renderStep(step, controller) {
   var stepJQ =
     $('<div class=proofStep>' +
       delHtml +
-      '<span class=stepNumArea>(<span class=stepNumber></span>)</span> ' +
+      '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
       '<span class=wff></span>' +
       '<span class=stepInfo></span>' +
       '</div>');
