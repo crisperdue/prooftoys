@@ -216,6 +216,7 @@ function ProofEditor() {
       + 'title="Save or restore proof state">');
   saveRestore.on('click', function() {
       self._stateDisplay.toggleClass('hidden');
+      dom($(self._stateDisplay).find('textarea')).select();
     });
   @saver = $('<div/>');
   @saver.append(saveRestore);
@@ -259,6 +260,7 @@ function ProofEditor() {
     Toy.withErrorReporting(function() {
         self.restoreState();
         proofToyState.store();
+        self._stateDisplay.toggleClass('hidden', true);
       });
   }
   this._stateDisplay.find('.restoreProof').on('click', restoreProof);
@@ -959,9 +961,11 @@ function renderHyps(expr) {
     if (expr.sourceStep) {
       var jq = exprJq();
       expr.node = dom(jq);
+      var span = $('<span class=stepRef/>');
       // Note that this requires the unrendered proof step to be already
       // linked to a rendering with proper stepNumber:
-      jq.append(expr.sourceStep.rendering.stepNumber);
+      span.append(expr.sourceStep.rendering.stepNumber);
+      jq.append(span);
       hypsNode.append(jq);
     } else if (expr.isCall2('&')) {
       render(expr.getLeft());
