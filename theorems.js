@@ -2252,11 +2252,10 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Takes a proof step, a path, and a proved equation.
-  // If the part of the step at the given path
-  // matches the LHS of the equation, replaces that part of the step
-  // with the appropriate instance of the equation, otherwise return
-  // the input step.  The step and equation may have hypotheses.
+  // Takes a proof step, a path, and a proved equation.  The part of
+  // the step at the given path must match the LHS of the equation.
+  // Replaces that part of the step with the appropriate instance of
+  // the equation.  The step and equation may have hypotheses.
   rewrite: {
     action: function(step, path, equation) {
       var expr = step.locate(path);
@@ -2279,11 +2278,14 @@ var ruleInfo = {
 
   // Rewrite a term using an equational fact.  The difference from
   // "rewrite" is that this does not display the fact as a separate
-  // step and does not accept it in the form, so is suited for
+  // step and does not accept a step in the form, so is suited for
   // indirect use with well-known facts.
   //
   // TODO: Combine both sorts of rewrite rules into one, so a rewrite
   // works well in code and UI with any form of fact or proof step.
+  //
+  // TODO: Implement something like "tryRewrite" that rewrites, but
+  // returns its input step in case the rewrite throws an exception.
   rewriteWithFact: {
     action: function(step, path, fact_arg) {
       // Can throw; tryRule will report any problem.
@@ -3177,11 +3179,11 @@ var ruleInfo = {
   },
 
   // Proves an equation that can replace the given boolean term.
-  // Applies the given List of equational facts recursively,
-  // descending into the arguments of conjunctions (a & b), applying
-  // rewrites bottom-up, applying the first fact that succeeds to each
-  // subexpression.  Returns an equation with the term on the LHS and
-  // the replacement on the right.
+  // Applies itself recursively to the given List of equational facts,
+  // descending into the arguments of conjunctions (a & b), bottom-up,
+  // applying the first fact (if any) that succeeds to each subexpression.
+  // Returns an equation with the term on the LHS and the replacement
+  // on the right.
   //
   // TODO: Extend to take a conversion function in place of the facts.
   conjunctsReplacer: {
@@ -3200,8 +3202,11 @@ var ruleInfo = {
           try {
             return step1.rewrite('/right', fact);
           } catch(e) {}
-        });
-      result = result || step1;
+        }) || step1;
+      try {
+        result = result.rewrite('/main/right',
+                                rules.tautology('a & (b & c) == a & b & c'));
+      } catch(e) {}
       return result.justify('conjunctsReplacer', arguments);
     }
   },
@@ -3498,7 +3503,8 @@ var ruleInfo = {
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '/', term));
       var result = rules.applyToBoth(fn, eqn)
-        .apply('addAssumption', Toy.infixCall(term, '!=', zero));
+        .apply('addAssumption', Toy.infixCall(term, '!=', zero))
+        .apply('simplifyAssumptions');
       return result.justify('divideBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
