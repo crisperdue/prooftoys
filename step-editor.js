@@ -150,25 +150,27 @@ $.extend(StepEditor.prototype, {
 });
 
 
-
 /**
  * Handle errors in the step editor.  Displays step information in an
  * element named "proofErrors" if there is one.
  */
 StepEditor.prototype.error = function(message) {
-  if (Toy.errors.length) {
-    var last = Toy.errors[Toy.errors.length - 1];
-    var proofJQ = $('#proofErrors');
-    if (proofJQ.length) {
-      proofJQ.append('<p><b>Errors: (' + Toy.errors.length
-		       + ') ' + last.message + '</b></p>');
-      if (last.step) {
-        Toy.renderProof(last.step, proofJQ);
-      }
-    }
-  }
   // TODO: implement, really, through a message area.
   alert(message);
+};
+
+/**
+ * Help the user debug the given error object if it has a "step"
+ * property.  Display the proof behind that step.
+ */
+StepEditor.prototype.debug = function(error) {
+  if (error.step) {
+    var proofJQ = $('#proofErrors');
+    if (proofJQ.length) {
+      proofJQ.html('<p><b>Error: ' + error.message + '</b></p>');
+      Toy.renderProof(error.step, proofJQ);
+    }
+  }
 };
 
 /**
@@ -349,18 +351,22 @@ StepEditor.prototype.tryRule = function(rule, args) {
       // Collect CPU profiling information.
       console.profile(Toy.profileName);
     }
+    // This line should be the source of any thrown errors:
     var result = rule.apply(null, args);
     this.controller.addStep(result);
     this.controller.deselectStep();
     this.controller.proofChanged();
+    // Clear any proof errors field.
+    $('#proofErrors').html('');
     this.reset();
     this.focus();
     value = true;
   } catch(error) {
     if (!(error instanceof Toy.TypeCheckError)) {
+      // Leave the text field as-is in case of a type-check error.
       this.reset();
     }
-    this.error(error.message);
+    this.debug(error);
   }
   if (Toy.profileName) {
     console.profileEnd();

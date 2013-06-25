@@ -3744,7 +3744,9 @@ function assertTrue(condition, message, step) {
     }
     logError(message);
     errors.push({message: message, step: step});
-    throw new Error(message);
+    var e = new Error(message);
+    e.step = step;
+    throw e;
   }
 }
 
