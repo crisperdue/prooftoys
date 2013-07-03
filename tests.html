@@ -1881,7 +1881,13 @@ Toy.eachFact(function(fact) {
     }
   });
 
-// Display errors when done.
+// Possibly display errors when done.  Not clear this helps any,
+// as these generally only represent internal failures caught
+// by the rules themselves.
+//
+// TODO: Find a way to show error information just for tests that
+// fail.
+/*
 QUnit.done(function() {
     var errorNodes = $('#proofErrors');
     Toy.errors.forEach(function(info) {
@@ -1893,6 +1899,7 @@ QUnit.done(function() {
         }
       });
   });
+*/
 
 </script>
 </body>
