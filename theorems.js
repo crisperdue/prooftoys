@@ -2053,9 +2053,28 @@ var ruleInfo = {
 	return result.justify('replace', args,
                               [h_equation_arg, h_c_arg]);
       }
+      // h_equation must have the form H ==> A = B
       assert(h_equation.isCall2('==>') && h_equation.getRight().isCall2('='),
 	     'Not an equation: ' + h_equation, h_equation_arg);
-      // h_equation has the form H ==> A = B
+
+      if (h_c.hasHyps && path.isLeft()) {
+        // We are replacing an assumption with something equal
+        // that may add its own assumptions.
+        var step1 = rules.asImplication(h_c)
+          .replace(path, h_equation)
+          .apply('asImplication');
+        // Use the tautology to conjoin all of the assumptions.
+        // Note that forward chaining would ignore the "a" part if
+        // step1 had hypotheses.
+        var taut = rules.tautology('a ==> (b ==> c) ==> (a & b ==> c)');
+        var step2 = rules.forwardChain(step1, taut);
+        var step3 = rules.mergeConjunctions(step2.getLeft());
+        var result = rules.r(step3, step2, '/left')
+          .apply('asHypotheses');
+        
+        return result.justify('replace', args,
+                              [h_equation_arg, h_c_arg]);
+      }
 
       // Give the two WFFs the same hypotheses.
       h_c = rules.appendStepHyps(h_c, h_equation);
@@ -3217,25 +3236,15 @@ var ruleInfo = {
     action: function(step) {
       var simpler = step;
       if (step.hasHyps) {
+        // This equates the assumptions with simplified assumptions.
+        // It may have for example type assumptions.
         var eqn =
           rules.conjunctsReplacer(step.getLeft(),
                                   [rules.theorem('factNonzeroProduct')]);
         if (eqn.hasHyps &&
+            // Skip this work if the equation is a no-op of the form A = A.
             !eqn.locate('/main/left').matches(eqn.locate('/main/right'))) {
-          // The following code replaces the step's assumptions with
-          // the simplified ones.  This code manages assumptions "by
-          // hand" because "replace" does not currently operate on the
-          // assumptions part of a statement.
-          var taut = rules.tautology('a ==> (b ==> c) ==> (a & b ==> c)');
-          var step1 = rules.asImplication(step)
-            .replace('/left', eqn)
-            .apply('asImplication');
-          // Note that forward chaining would ignore the "a" part if
-          // step1 had hypotheses.
-          var step2 = rules.forwardChain(step1, taut);
-          var step3 = rules.mergeConjunctions(step2.getLeft());
-          var simpler = rules.r(step3, step2, '/left')
-            .apply('asHypotheses');
+          var simpler = rules.replace(eqn, step, '/left');
         }
       }
       return rules.simplifyNumericTypes(simpler)

@@ -1457,7 +1457,7 @@ Expr.prototype.mergedHypotheses = function() {
 // variables must match in each component.  The bindings map from
 // names of variables bound in expressions containing this expression
 // to corresponding variable names of the expression containing e2.
-// Type of this and type of e2 and all corresponding components much
+// Type of this and type of e2 and all corresponding components must
 // match, as determined by instanceof.
 //
 //
