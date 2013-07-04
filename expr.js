@@ -1581,7 +1581,7 @@ Var.prototype.toUnicode = function() {
 };
 
 Var.prototype.dump = function() {
-  return this.pname || this.name;
+  return this.name;
 }
 
 Var.prototype.subst = function(replacement, name) {

@@ -570,6 +570,11 @@ StepEditor.prototype.offerable = function(ruleName) {
 
 $.extend(StepEditor.prototype, {
 
+  /**
+   * Returns a list of fact objects that are offerable in the UI,
+   * currently all that are equational (equation, possibly with
+   * conditions).
+   */
   offerableFacts: function() {
     var facts = [];
     var step = this.controller.selection;

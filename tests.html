@@ -1550,32 +1550,32 @@ var testCase = {
     // TODO: implement me.
   },
 
-  testConjunctsReplacer: function() {
+  testConjunctsSimplifier: function() {
     // First a no-op transformation.
     var taut = rules.tautology('a | not a == T');
     assertEqual('(((a & b) & c) = ((a & b) & c))',
-                rules.conjunctsReplacer(Toy.parse('a & b & c'),
-                                        [taut]));
+                rules.conjunctsSimplifier(Toy.parse('a & b & c'),
+                                          [taut]));
     // A simple transformation
     var expected =
       '(((((x | (not x)) & (y | (not y))) & z) & w) = (((T & T) & z) & w))';
     var term = Toy.parse('(x | not x) & (y | not y) & z & w');
     assertEqual(expected,
-                rules.conjunctsReplacer(term,
-                                        [taut]));
+                rules.conjunctsSimplifier(term,
+                                          [taut]));
     // Transformation, with transform of the results of
     // transforming the subexpressions.
     expected =
       '(((((x | (not x)) & (y | (not y))) & z) & w) = ((T & z) & w))';
     var taut2 = rules.tautology('T & T == T');
     assertEqual(expected,
-                rules.conjunctsReplacer(term,
-                                        [taut, taut2]));
+                rules.conjunctsSimplifier(term,
+                                          [taut, taut2]));
     var expected =
       '(((R x) & (R y)) ==> (((x * y) != 0) = ((x != 0) & (y != 0))))'
     assertEqual(expected,
-                rules.conjunctsReplacer(Toy.parse('x * y != 0'),
-                                        [rules.factNonzeroProduct()]));
+                rules.conjunctsSimplifier(Toy.parse('x * y != 0'),
+                                          [rules.factNonzeroProduct()]));
   },
 
   testSimplifyAssumptions: function() {
