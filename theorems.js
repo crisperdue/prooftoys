@@ -2733,7 +2733,7 @@ var ruleInfo = {
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step4, subst);
       var step6 = rules.makeConjunction(step4, step5);
-      var taut = rules.tautology('(p ==> q) & (q ==> p) ==> (p = q)');
+      var taut = rules.tautology('(p ==> q) & (q ==> p) ==> (p == q)');
       var step7 = rules.forwardChain(step6, taut);
       return step7.justify('equalitySymmetric', arguments);
     },
@@ -3205,13 +3205,13 @@ var ruleInfo = {
   // on the right.
   //
   // TODO: Extend to take a conversion function in place of the facts.
-  conjunctsReplacer: {
+  conjunctsSimplifier: {
     action: function(term, facts) {
       var step = rules.eqSelf(term);
       var step1;
       if (term.isCall2('&')) {
-        var stepLeft = rules.conjunctsReplacer(term.getLeft(), facts);
-        var stepRight = rules.conjunctsReplacer(term.getRight(), facts);
+        var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
+        var stepRight = rules.conjunctsSimplifier(term.getRight(), facts);
         step1 = step.replace('/right/left', stepLeft)
           .replace('/main/right/right', stepRight);
       } else {
@@ -3226,7 +3226,7 @@ var ruleInfo = {
         result = result.rewrite('/main/right',
                                 rules.tautology('a & (b & c) == a & b & c'));
       } catch(e) {}
-      return result.justify('conjunctsReplacer', arguments);
+      return result.justify('conjunctsSimplifier', arguments);
     }
   },
 
@@ -3239,8 +3239,8 @@ var ruleInfo = {
         // This equates the assumptions with simplified assumptions.
         // It may have for example type assumptions.
         var eqn =
-          rules.conjunctsReplacer(step.getLeft(),
-                                  [rules.theorem('factNonzeroProduct')]);
+          rules.conjunctsSimplifier(step.getLeft(),
+                                    [rules.theorem('factNonzeroProduct')]);
         if (eqn.hasHyps &&
             // Skip this work if the equation is a no-op of the form A = A.
             !eqn.locate('/main/left').matches(eqn.locate('/main/right'))) {
@@ -3645,6 +3645,7 @@ var facts = {
   axiomNeg: null,
   axiomReciprocal: null,
   factNonzeroProduct: null,
+  equalitySymmetric: null,
 
   // Addition
   'x + y + z = x + (y + z)': function() {
@@ -4054,8 +4055,9 @@ Toy.define('/', '{x. {y. x * recip y}}');
 
 //// THEOREMS
 
-// Private to addFact and getResult.  Maps from a string "dump" of
-// a fact to either the proved fact, or to a function to prove it.
+// Private to addFact, getResult, and eachFact.  Maps from a string
+// "dump" of a fact to either the proved fact, or to a function to
+// prove it.
 var _factsMap = {};
 
 // A "fact" is a function of no arguments that can prove a statement.
@@ -4123,8 +4125,9 @@ function getResult(fact) {
 }
 
 /**
- * Call the given function for each of the registered facts,
- * passing it the fact.
+ * Call the given function for each of the registered facts, passing
+ * it the fact, a function that can return some proved fact with a
+ * "goal" property, an Expr stating the result.
  */
 function eachFact(fn) {
   for (var key in _factsMap) {
