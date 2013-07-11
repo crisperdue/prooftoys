@@ -30,6 +30,8 @@ var T = varify('T');
 var F = varify('F');
 var zero = Toy.parse('0');
 var one = Toy.parse('1');
+var identity = lambda(x, x);
+var allT = lambda(x, T);
 
 // Map from tautology string representation to tautology,
 // for proved tautologies.  Private to the tautology rule.
@@ -3397,7 +3399,7 @@ var ruleInfo = {
   // literal, e.g. (R (neg <term>) = (R <term>)).  Returns null if it
   // finds no suitable rewriter.
   //
-  // TODO: Remove me.
+  // TODO: Remove me.  (Used by testRepeatedlyRewrite,)
   findTypeRewriter: {
     action: function(term) {
       var result = null;
@@ -4037,9 +4039,6 @@ function addRewriter(ruleName, info) {
   };
   addRule(ruleName, $.extend(defaultInfo, info));
 }
-
-var identity = lambda(x, x);
-var allT = lambda(x, T);
 
 // Put definitions into their database:
 Toy.define('not', equal(F));
