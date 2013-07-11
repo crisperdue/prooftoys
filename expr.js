@@ -3538,25 +3538,12 @@ function termify(x) {
 }
 
 /**
- * Returns a call with the two operands and the given op (middle
- * argument) as the binary operator between them.  The op must be an
- * Expr, e.g. Var.
- */
-function infixCall(arg1, op, arg2) {
-  // TODO: Change this when redefining meaning of infix operators.
-  op = varify(op);
-  return new Call(new Call(op, arg1), arg2);
-}
-
-/**
  * Calls a function, passing one or more arguments.
  */
 // TODO: Eliminate use fo binops in favor of infixCall.  This will
 // be problematic for some infix operators.
 function call(fn, arg) {
-  if ((typeof fn) == 'string') {
-    fn = new Toy.Var(fn);
-  }
+  fn = varify(fn);
   if ((typeof arg) == 'string') {
     arg = new Toy.Var(arg);
   }
@@ -3566,6 +3553,17 @@ function call(fn, arg) {
     result = call(result, arguments[i]);
   }
   return result;
+}
+
+/**
+ * Returns a call with the two operands and the given op (middle
+ * argument) as the binary operator between them.  The op must be an
+ * Expr or string name of a variable or constant.
+ */
+function infixCall(arg1, op, arg2) {
+  // TODO: Change this when redefining meaning of infix operators.
+  op = varify(op);
+  return new Call(new Call(op, arg1), arg2);
 }
 
 /**
