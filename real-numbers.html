@@ -175,27 +175,28 @@ jQuery(function() {
     var sample = new Toy.ProofControl();
     window.sampleProof = sample;
     $('#sampleProof').append(sample.node);
-    var a1 = rules.assume('x = y * 2');
-    var a2 = rules.assume('x + y = 6');
-    var a3 = rules.replace(a1, a2, '/main/left/left');
-    var a4 = rules.rewriteWithFact(a3, '/main/left/right',
-                                   'x = x * 1');
-    var a5 = rules.rewriteWithFact(a4, '/main/left',
-                                   'x * y + x * z = x * (y + z)');
-    var a6 = rules.arithmetic(a5, '/right/left/right');
-    var a7 = rules.divideBoth(a6, Toy.parse('3'));
-    var a8 = rules.arithmetic(a7, '/right/right');
-    var a9 = rules.apply(a8, '/right/left');
-    var a10 = rules.rewriteWithFact(a9, '/right/left',
-                                    'x * y * z = x * (y * z)');
-    var a11 = rules.rewriteWithFact(a10, '/right/left/right',
-                                    'axiomReciprocal');
-    var a12 = rules.rewriteWithFact(a11, '/right/left',
-                                    'axiomTimesOne');
-    var a13 = rules.replace(a12, a1, '/right/right/left');
-    var a14 = rules.arithmetic(a13, '/right/right');
-    sample.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12,
-                     a13, a14]);
+    var step1 = rules.assume('x = y * 2');
+    var step2 = rules.assume('x + y = 6');
+    var step3 = rules.replace(step1, step2, '/main/left/left');
+    var step4 = rules.rewriteWithFact(step3, '/main/left/right',
+                                      'x = x * 1');
+    var step5 = rules.rewriteWithFact(step4, '/main/left',
+                                      'x * y + x * z = x * (y + z)');
+    var step6 = rules.arithmetic(step5, '/right/left/right');
+    var step7 = rules.divideBoth(step6, Toy.parse('3'));
+    var step8 = rules.arithmetic(step7, '/right/right');
+    var step9 = rules.apply(step8, '/right/left');
+    var step10 = rules.rewriteWithFact(step9, '/right/left',
+                                       'x * y * z = x * (y * z)');
+    var step11 = rules.rewriteWithFact(step10, '/right/left/right',
+                                       'axiomReciprocal');
+    var step12 = rules.rewriteWithFact(step11, '/right/left',
+                                       'axiomTimesOne');
+    var step13 = rules.replace(step12, step1, '/right/right/left');
+    var step14 = rules.arithmetic(step13, '/right/right');
+    sample.setSteps([step1, step2, step3, step4, step5, step6,
+                     step7, step8, step9, step10, step11, step12,
+                     step13, step14]);
 });
 
 // For debugging.
