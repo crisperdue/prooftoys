@@ -232,16 +232,15 @@ var ruleInfo = {
    * display of the proof step, but otherwise the same as "theorem".
    */
   axiom: function(name) {
-    // This rule is inline.
     // It uses an already-proved fact, but calls "justify"
     // to ensure that the resulting step has a new ordinal
     // so the reference is displayed in the order this was
-    // called.
+    // called.  So each call to "axiom" generates its own proof line.
     assert(name.substring(0, 5) == 'axiom', 'Not an axiom: ' + name);
     var thm = Toy.getTheorem(name);
     assert(thm, 'No axiom ' + name);
     var result = thm.justify(name);
-    // If there are details, the displayer will enable display of them,
+    // If details were kept, the displayer would enable display of them,
     // but there is really no proof of the axiom.
     delete result.details;
     return result;
@@ -1265,10 +1264,10 @@ var ruleInfo = {
   instMultiVars: {
     action: function(b, map) {
       var hyps = b.hasHyps;
-      var b = hyps ? rules.asImplication(b) : b;
+      var step0 = hyps ? rules.asImplication(b) : b;
       var namesReversed = [];
-      var isEqn = b.unHyp().isCall2('=');
-      var step = isEqn ? b : rules.toTIsA(b);
+      var isEqn = step0.isCall2('=');
+      var step = isEqn ? step0 : rules.toTIsA(step0);
       for (var name in map) {
         step = rules.bindEqn(step, name);
 	namesReversed.unshift(name);
@@ -1676,6 +1675,21 @@ var ruleInfo = {
     form: ('Add assumption <input name=term> in step <input name=step>'),
     hint: 'add assumption',
     description: 'add assumption {term};; {in step step}'
+  },
+
+  // Replaces an instance of a fact with T at any given site, matching
+  // the fact as a schema.  The statement may have assumptions.
+  //
+  // TODO: Consider storing a "fact = T" result for some or all facts
+  //   to avoid the overhead of calling this rather than
+  //   rewriteWithFact directly.
+  replaceWithT: {
+    action: function(step, path, fact) {
+      var step1 = Toy.getResult(fact);
+      var step2 = rules.toTIsA(step1).apply('eqnSwap');
+      var result = rules.rewriteWithFact(step, path, step2);
+      return result.justify('replaceWithT', arguments, [step, fact]);
+    }
   },
 
   // Given a theorem and an arbitrary boolean term, proves that the
@@ -4074,7 +4088,6 @@ var _factsMap = {};
  */
 function addFact(expr_arg, prover) {
   expr = getStatement(expr_arg);
-  var key = expr.dump();
   if (expr.ruleName) {
     // It is already proved.
     assert(!prover, function() { return 'Redundant prover for ' + expr_arg; });
@@ -4088,6 +4101,12 @@ function addFact(expr_arg, prover) {
     (typeof expr_arg === 'string'
      ? expr_arg
      : expr.toString());
+  if (typeof expr_arg === 'string') {
+    // For possible future display.  This can get passed along
+    // as a memo on the proved fact.
+    prover.factString = expr_arg;
+  }
+  var key = expr.dump();
   _factsMap[key] = prover;
   return prover;
 }
@@ -4098,6 +4117,10 @@ function addFact(expr_arg, prover) {
  * acceptable to getStatement, returns a proved version of it, or the
  * thing itself if already proved.  Throws an exception in case of
  * failure.
+ *
+ * Note that this is inline if the fact is given as a proved Expr.
+ *
+ * TODO: Make this into an inference rule. 
  */
 function getResult(fact) {
   var expr = getStatement(fact);
@@ -4106,21 +4129,22 @@ function getResult(fact) {
     return expr;
   }
   var key = expr.dump();
-  var factoid = _factsMap[key];
-  assert(factoid, function() { return 'No such fact: ' + expr; });
-  var result = factoid._provedResult;
-  if (result) {
-    return result;
-  } else {
-    result = factoid();
-    // TODO: Eliminate the unHyp here.
+  var prover = _factsMap[key];
+  assert(prover, function() { return 'No such fact: ' + expr; });
+  var result = prover._provedResult;
+  if (!result) {
+    result = prover();
     assert(result.matches(expr), function() {
         return ('Expected proof of ' + expr.toString() +
                 ', instead got ' + result.toString());
       }, result);
-    factoid._provedResult = result;
-    return result;
+    prover._provedResult = result;
   }
+  var value = result.justify('fact');
+  if (prover.factString) {
+    value.memos.factString = prover.factString;
+  }
+  return value;
 }
 
 /**
@@ -4198,7 +4222,7 @@ function alreadyProved(name) {
 function getStatement(fact) {
   if (typeof fact === 'string') {
     if (Toy.isIdentifier(fact)) {
-      // It's the name of a theorem.
+      // It's the name of an axiom or theorem.
       var statement = rules[fact].info.statement;
       if (statement) {
         // Work with an asserted statement of the theorem if there
@@ -4208,7 +4232,7 @@ function getStatement(fact) {
       if (!alreadyProved(fact)) {
         console.log('Proving in getStatement: ' + fact);
       }
-      return rules.theorem(fact);
+      return isAxiom(fact) ? rules.axiom(fact) : rules.theorem(fact);
     } else {
       // Otherwise it should be a expression in string form.
       var result = Toy.mathParse(fact);

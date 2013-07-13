@@ -1537,8 +1537,10 @@ function renderInference(step) {
   var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   jq = $('<div class=inferenceDisplay></div>');
+  var factString = step.original.memos.factString || '';
   jq.append('<div class=proofHeader><b>' + pruf
-              + step.ruleName + '</b>'
+              + step.ruleName + '</b> '
+              + Toy.mathMarkup(factString)
               + computeHeaderArgInfo(step) + '<br>'
               + '<i>' + comment + '</i></div>');
   jq.append(controller.node);

@@ -432,6 +432,9 @@ function Expr() {
   // Extensible set of remembered information, especially useful
   // since the result is conceptually immutable.
   // Duplicated in subclass constructors for speed.
+  //
+  // TODO: Rendered copies really should share memos with the originals
+  // but they don't.
   this.memos = {};
   // If part of a proof, has properties set by the "justify" method.
   // If it has a rendered copy, has "rendering" property.
