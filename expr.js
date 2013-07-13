@@ -3740,7 +3740,6 @@ function assertTrue(condition, message, step) {
     if (typeof message == 'function') {
       message = message();
     }
-    logError(message);
     errors.push({message: message, step: step});
     var e = new Error(message);
     e.step = step;
