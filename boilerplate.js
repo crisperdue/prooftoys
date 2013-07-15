@@ -62,17 +62,23 @@ Toy.insertSlogans = function() {
 // Google analytics; the account is specific to Prooftoys.org.
 // TODO: Consider running this code only when the site is prooftoys.org.
 
-var _gaq = _gaq || [];
-var pluginUrl = '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
-_gaq.push(['_require', 'inpage_linkid', pluginUrl]);
-_gaq.push(['_setAccount', 'UA-28801147-2']);
-_gaq.push(['_trackPageview']);
+if (!location.pathname.match(/\/tests.html$/)) {
+  var _gaq = _gaq || [];
+  var pluginUrl = '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
+  _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
+  _gaq.push(['_setAccount', 'UA-28801147-2']);
+  _gaq.push(['_trackPageview']);
 
-(function() {
-  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript';
+    ga.async = true;
+    ga.src = ('https:' == document.location.protocol
+              ? 'https://ssl'
+              : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(ga, s);
+  })();
+}
 
 //
 // Generating math symbols and italicizing alphabetic characters for math.
