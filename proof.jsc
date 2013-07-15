@@ -452,11 +452,9 @@ ProofControl.prototype.proofChanged = function() {};
 ProofControl.prototype.selectionChanged = function() {};
 
 /**
- * Sets the steps of the current proof to be the ones in the given
- * array, which should contain only renderable steps.  Sets their
- * stepNumber properties to run from 1 to N and renders them.  The
- * rendered copies become the value of the steps property of the
- * ProofControl.
+ * Sets the steps of this proof control to be renderings of the ones
+ * in the given array of renderable or nonrenderable steps, with
+ * stepNumber properties running from 1 to N.
  *
  * TODO: Make a sensible policy for accepting renderable versus
  * nonrenderable steps.
@@ -512,9 +510,9 @@ function renderStepNumber(step) {
 }
 
 /**
- * Adds the given unrendered (top-level) proof step to the end of the
- * control's proof, rendering it and assigning it the stepNumber for
- * its position in this ProofControl's steps (rendered steps).
+ * Adds a rendering of the given proof step of either type to the end
+ * of the control's proof, assigning it the stepNumber for its
+ * position.
  */
 ProofControl.prototype.addStep = function(step) {
   // TODO: Move most of this logic into renderStep.
@@ -1181,12 +1179,11 @@ Lambda.prototype._render = function(omit) {
 };
 
 /**
- * Returns an array of the unrendered steps leading up to and
- * including the given step, sorted by ordinal.  Helper function
- * internal to renderInference.  The "unrendered" aspect is helpful
- * for rendering subproofs, furthermore currently a step only
- * remembers one rendering, and removal of the rendering from the
- * display deletes the association with the underlying step.
+ * Returns an array of the renderable steps leading up to and
+ * including the given step, sorted by ordinal.  The "unrendered"
+ * aspect is helpful for rendering subproofs, furthermore currently a
+ * step only remembers one rendering, and removal of the rendering
+ * from the display deletes the association with the underlying step.
  */
 function unrenderedDeps(step) {
   var result = [];
