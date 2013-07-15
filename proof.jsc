@@ -1534,10 +1534,13 @@ function renderInference(step) {
   var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   jq = $('<div class=inferenceDisplay></div>');
-  var factString = step.original.memos.factString || '';
+  var factString = Toy.mathMarkup(step.original.memos.factString || '');
+  var factHtml = (factString
+                  ? '<span class=math>' + factString + '</span>'
+                  : '');
   jq.append('<div class=proofHeader><b>' + pruf
               + step.ruleName + '</b> '
-              + Toy.mathMarkup(factString)
+              + factHtml
               + computeHeaderArgInfo(step) + '<br>'
               + '<i>' + comment + '</i></div>');
   jq.append(controller.node);
