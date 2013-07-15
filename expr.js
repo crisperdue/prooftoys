@@ -225,6 +225,10 @@ Map.prototype.isEmpty = function() {
 
 //// TermSet and TermMap
 
+/**
+ * TermSet and TermMap identify terms by their "dump"
+ * as a string.
+ */
 function identifyTerm(term) {
   // TODO: Make this function memoize dumps.
   return term.dump();
@@ -1174,9 +1178,9 @@ Expr.prototype.hypLocater = function(hyp) {
  * the same variables in order, but at most one occurrence of 'h' as
  * its last chain element.
  *
- * In other words this generates a tautology that works with
- * rules.rewrite to merge chain elements matching toMove and put an
- * occurrence of toMove at the right end of the chain.
+ * In other words this generates a equation tautology that works with
+ * rules.rewrite to deduplicate matching chain elements and put a
+ * single occurrence of the given term at the right end of the chain.
  */
 Expr.prototype.hypMover = function(toMove) {
   var i = 1;
@@ -1465,8 +1469,6 @@ Expr.prototype.mergedHypotheses = function() {
 // variables must match in each component.  The bindings map from
 // names of variables bound in expressions containing this expression
 // to corresponding variable names of the expression containing e2.
-// Type of this and type of e2 and all corresponding components must
-// match, as determined by instanceof.
 //
 //
 // search(test, bindings)

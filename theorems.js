@@ -249,8 +249,8 @@ var ruleInfo = {
   /**
    * Replace the subexpression of the target at the path with the
    * equation's RHS.  This is rule R.  The subexpression must match
-   * the equation's LHS, meaning it they are the same except possibly
-   * in names of variables bound in each.
+   * the equation's LHS, meaning they are the same except possibly
+   * in names of vound variables.
    */
   r: {
     action: function(equation, target, path) {
@@ -258,6 +258,17 @@ var ruleInfo = {
       assert(equation.isCall2('='), function() {
 	return 'Rule R requires equation: ' + equation;
       }, equation);
+      if (equation.getLeft() === equation.getRight()) {
+        // The equation LHS must "match" the site, but can differ in
+        // bound variables, so the replacement could be a no-op if
+        // these are not identical too.  (This is a cheap but not
+        // complete check for a no-op.)
+        if (target.locate(path) === equation.getLeft()) {
+          // Quick return if the replacement is a no-op.
+          return target.justify('r', [equation, target, path],
+                                [target, equation]);
+        }
+      }
       function replacer(expr) {
 	if (expr.matches(equation.getLeft())) {
 	  return equation.getRight();
@@ -2050,6 +2061,10 @@ var ruleInfo = {
   // segment 'main', which it interprets as 'right' if h_c has
   // hypotheses, otherwise ignoring it.
   //
+  // Note: When generating a no-op equation, it is desirable to make
+  // the LHS and RHS be the same object (and same as the target),
+  // because rule R will recognize the no-op.
+  //
   // For convenience applies rule R directly if the equation is really
   // an equation and not an implication.
   //
@@ -2552,8 +2567,8 @@ var ruleInfo = {
     comment: 'extract an assumption'
   },
 
-  // Given a proof step that is an implication and a path expected to
-  // refer to an element of the LHS conjunction chain, derives a step
+  // Given a proof step that is an implication and a path that
+  // refers to an element of the LHS conjunction chain, derives a step
   // of the form h' ==> (e ==> c) where e is the referenced element,
   // h' is the proof step's hypotheses excluding occurrences of "e",
   // and c is the implication RHS.  Useful for simplifying hypotheses.
@@ -2568,7 +2583,7 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Like islateHypAt, taking its hypotheses as a term to be matched.
+  // Like isolateHypAt, taking its hypotheses as a term to be matched.
   isolateHyp: {
     action: function(step, hyp_arg) {
       var hyp = Toy.termify(hyp_arg);
@@ -2639,8 +2654,8 @@ var ruleInfo = {
   // Treats conj as a chain of conjunctions.  Equates it with a
   // deduplicated version, or returns null if there are no exact
   // duplicate terms.  If a comparator function is supplied, it
-  // defines an ordering of the deduplicated terms by return true when
-  // its first argument is less than its second.
+  // defines an ordering of the deduplicated terms by returning true
+  // when its first argument is less than its second.
   conjunctionDeduper: {
     action: function(conj, comparator) {
       var map = new Toy.TermMap();
