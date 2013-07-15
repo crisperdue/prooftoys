@@ -1798,7 +1798,6 @@ var testCase = {
   },
 
   testJustifyNumericType: function() {
-    Toy.autoAssert = false;
     var input = Toy.parse('R x & R y ==> R (x + y)');
     assert(rules.justifyNumericType(input).matches(input));
     input = Toy.parse('R x & R y & R z ==> R (x + y)');
