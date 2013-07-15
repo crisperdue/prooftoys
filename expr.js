@@ -655,6 +655,9 @@ Expr.prototype.concat = function(expr, op) {
  * Calculates and records a hasHyps property for the result unless
  * this already has a hasHyps property.  This is the factory method
  * that creates proof steps.
+ *
+ * TODO: Consider making proof steps distinct from Exprs.  That might
+ * simplify and/or clarify some code.
  */
 Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   var slice = Array.prototype.slice;
@@ -672,6 +675,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   }
   // Give the new Expr the specified ruleName.
   expr.ruleName = ruleName;
+  // Make the step be its own original, for uniform access to an original.
+  expr.original = expr;
   // Enable its use in a chain of rules.  (This also may help
   // catch attempts to make inference from unproven Exprs.
   expr.apply = applyRule;
