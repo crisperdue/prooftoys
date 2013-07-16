@@ -1032,7 +1032,7 @@ Expr.prototype.assertCall2 = function(name) {
     return;
   }
   var map = {
-    '==>': 'an implication',
+    '==>': 'a conditional',
     '=': 'an equation',
     '&': 'a conjunction',
     '|': 'a disjunction'

@@ -12,6 +12,7 @@
   <link id=styles type="text/css" rel="stylesheet" href="lib/qunit-1.11.0.css">
   <script src="boilerplate.js"></script>
   <script src="lib/qunit-1.11.0.js"></script>
+  <!-- script src="tests.js"></script -->
 
 <style type="text/css">
 
@@ -1671,8 +1672,10 @@ var testCase = {
   },
 
   testConjunctionDeduper: function() {
-    var rule = rules.conjunctionDeduper;
-    checkRewriter(null, '(R x) & (R y)', rule);
+    function rule(term) {
+      return rules.conjunctionDeduper(term, Toy.sourceStepComparator);
+    }
+    checkRewriter('((R x) & (R y))', '(R y) & (R x)', rule);
     checkRewriter('(R x)', '(R x) & (R x)', rule);
     checkRewriter('(R x)', 'R x & T', rule);
     checkRewriter('((R x) & (R y))', 'R x & R y & R x', rule);
@@ -1753,7 +1756,7 @@ var testCase = {
     check('((R x) & (R y))', 'R x & R y');
     check('(R x)', 'R x & R 2');
     check('(R x)', 'R x & R (neg x)');
-    check('((R x) & (x != 0))', 'R x & x != 0 & R (recip x)');
+    check('((x != 0) & (R x))', 'R x & x != 0 & R (recip x)');
     check('((R x) & (R y))', 'R x & R y & R (x + y)');
     check('((R x) & (R y))', 'R x & R y & R (neg (neg x + neg y))');
     check('(R x)', 'R x & (2 != 0)');
@@ -1872,7 +1875,7 @@ for (var name in testCase) {
 }
 Toy.eachFact(function(fact) {
     var str = Toy.getStatement(fact).toString();
-    console.log("Testing " + str);
+    console.log('Testing ' + str);
     if (typeof fact === 'function') {
       test(str, function() {
           assert(Toy.getResult(fact).ruleName);

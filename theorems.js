@@ -1885,7 +1885,8 @@ var ruleInfo = {
   // makeConjunction as needed, followed by forwardChain.)
   forwardChain: {
     action: function(step, schema) {
-      var substitution = Toy.matchAsSchema(schema.unHyp().getLeft(), step.unHyp());
+      var substitution =
+        Toy.matchAsSchema(schema.unHyp().getLeft(), step.unHyp());
       assert(substitution, function() {
           return (step.unHyp().toString() +
                   ' does not match LHS of schema\n' + schema);
@@ -1903,8 +1904,8 @@ var ruleInfo = {
 
   // Proves the goal by matching it with the conclusion of the given
   // theorem and then applying the given inference rule to prove the
-  // premise of the instantiated theorem.  The theorem must be an
-  // implication.
+  // premise of the instantiated theorem.  The theorem must be a
+  // conditional or biconditional.
   //
   // TODO: Test me.
   backwardChain: {
@@ -2652,8 +2653,7 @@ var ruleInfo = {
   },
 
   // Treats conj as a chain of conjunctions.  Equates it with a
-  // deduplicated version, or returns null if there are no exact
-  // duplicate terms.  If a comparator function is supplied, it
+  // deduplicated version.  If a comparator function is supplied, it
   // defines an ordering of the deduplicated terms by returning true
   // when its first argument is less than its second.
   conjunctionDeduper: {
@@ -2669,9 +2669,11 @@ var ruleInfo = {
           allTerms.push(map.addTerm(term));
         }
       });
+      /*
       if (map.size() == allTerms.length) {
         return null;
       }
+      */
       var keepTermsInfo = [];
       var subst = map.subst;
       for (var name in subst) {
@@ -2695,7 +2697,7 @@ var ruleInfo = {
         return result || T;
       }
       var rewriter =
-        Toy.infixCall(buildConj(allTerms), '=', buildConj(keepTerms));
+        Toy.infixCall(buildConj(allTerms), '==', buildConj(keepTerms));
       var result = rules.instMultiVars(rules.tautology(rewriter), map.subst);
       return result.justify('conjunctionDeduper', arguments);
     }
