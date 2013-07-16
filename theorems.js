@@ -2669,11 +2669,6 @@ var ruleInfo = {
           allTerms.push(map.addTerm(term));
         }
       });
-      /*
-      if (map.size() == allTerms.length) {
-        return null;
-      }
-      */
       var keepTermsInfo = [];
       var subst = map.subst;
       for (var name in subst) {
@@ -2711,9 +2706,7 @@ var ruleInfo = {
       step.assertCall2('==>');
       var deduper =
         rules.conjunctionDeduper(step.getLeft(), Toy.sourceStepComparator);
-      var result = (deduper
-                    ? rules.replace(deduper, step, '/left')
-                    : step);
+      var result = rules.replace(deduper, step, '/left');
       return result.justify('dedupeHyps', arguments, [step]);
     },
     inputs: {step: 1},
@@ -3120,10 +3113,7 @@ var ruleInfo = {
       var infix = Toy.infixCall;
       var deduper =
         rules.conjunctionDeduper(allHyps, Toy.sourceStepComparator);
-      var simplifier = rules.eqSelf(allHyps);
-      if (deduper) {
-        simplifier = rules.replace(deduper, simplifier, '/right');
-      }
+      simplifier = rules.replace(deduper, rules.eqSelf(allHyps), '/right');
       // Now RHS of simplifier has no duplicate terms.
       var hypSet = new Toy.TermSet();
       simplifier.getRight().eachHyp(function (hyp) { hypSet.add(hyp); });
@@ -3148,9 +3138,7 @@ var ruleInfo = {
       deduper =
         rules.conjunctionDeduper(simplifier.getRight(),
                                  Toy.sourceStepComparator);
-      if (deduper) {
-        simplifier = rules.replace(deduper, simplifier, '/right');
-      }
+      simplifier = rules.replace(deduper, simplifier, '/right');
       // Prove types of complex expressions by breaking them down and
       // proving the parts..
       hypSet = new Toy.TermSet();
