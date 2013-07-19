@@ -3315,7 +3315,13 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // TODO: Comment me.
+  // Given a step that is a conditional, proves a version with the
+  // assumptions simplified.  Reduces assumptions about "R" type of
+  // expressions with arithmetic operators to assumptions about "R"
+  // type of variables; removes assumptions that specific numerals are
+  // real or nonzero; simplifies assumptions about products being
+  // nonzero into assertions that both operands are real; removes
+  // duplicate terms and occurrences of T.
   simplifyNumericConditions: {
     action: function(step) {
       if (!step.isCall2('==>')) {
