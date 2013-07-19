@@ -115,6 +115,21 @@ var testCase = {
     assertEqual(1, 1);
   },
 
+  // Utilities
+
+  testMemo: function() {
+    var a = [];
+    function f() {
+      a.push(3);
+      return 13;
+    }
+    var memo = Toy.memo(f);
+    assertEqual(13, memo());
+    assertEqual(1, a.length);
+    assertEqual(13, memo());
+    assertEqual(1, a.length);
+  },
+
   // configure
 
   testConfigure: function() {
@@ -349,6 +364,7 @@ var testCase = {
                 p('R x ==> x + y = y + x'));
   },
 
+
   // Operations on Exprs.
 
   testNth: function() {
@@ -571,6 +587,8 @@ var testCase = {
   },
 
   testPath: function() {
+    var Path = Toy.Path;
+
     var p = '/a/b';
     var path = Toy.path(p);
     assertEqual(p, path.toString());
@@ -585,6 +603,19 @@ var testCase = {
     assertEqual('/fn/arg/fn/fn', Toy.path(p2).toString());
     var p3 = '/arg/fn';
     assertEqual(p3 + p3, Toy.path(p3).concat(p3).toString());
+
+    assertEqual('/fn', new Path('fn').toString());
+    assertEqual('/left', new Path('left').toString());
+    assertEqual('/right', new Path('right').toString());
+
+    var parse = Toy.parse;
+    var e = parse('(a + b) + c');
+    var path = new Path('left', new Path('left'));
+    assertEqual('/left/left', path.toString());
+    assertEqual('a', e.locate(path));
+
+    var right2 = new Path('right', new Path('right'));
+    assertEqual(null, e.locate(right2));
   },
 
   testSearch: function() {
@@ -1798,6 +1829,30 @@ var testCase = {
     // profile = 'Simplify Numerics';
     check('(((((((x + y) + z) + 3) = 3) & (R x)) & (R y)) & (R z))',
           step2);
+  },
+
+  testSimplifyNumericConditions: function() {
+    var asm = rules.assume('a');
+    function simplify(term) {
+      return (rules.instVar(asm, Toy.termify(term), 'a')
+              .apply('simplifyNumericConditions').getLeft());
+    }
+    assertEqual('(R x)', simplify('R x'));
+    assertEqual('T', simplify('R 2'));
+    assertEqual('((R x) & (R y))', simplify('R (x + y)'));
+    assertEqual('((R x) & (R y))', simplify('R (x * y)'));
+    assertEqual('((R x) & (R y))', simplify('R (x - y)'));
+    assertEqual('(((R x) & (R y)) & (R z))',
+                simplify('R (x - (z * y))'));
+    assertEqual('(((y != 0) & (R x)) & (R y))', simplify('R (x / y)'));
+    assertEqual('(R x)', simplify('R (neg x))'));
+    assertEqual('((x != 0) & (R x))', simplify('R (recip x))'));
+    assertEqual('T', simplify('2 = 2'));
+    assertEqual('T', simplify('2 != 0'));
+    assertEqual('((((x != 0) & (y != 0)) & (R x)) & (R y))',
+                simplify('R (recip (x * y))'));
+
+    // TODO: Tests for removal of conditions such as (2 != 0).
   },
 
   testJustifyNumericType: function() {

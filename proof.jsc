@@ -1525,6 +1525,11 @@ var stepFormatters = {
  * its step number.
  *
  * Returns the new container jQuery DIV.
+ *
+ * TODO: Consider starting each subproof with a shallow-copied
+ *   step that marks its beginning and links to its original.
+ *   The idea is to separate the concept of subproof from
+ *   rendering.  Rule wrapper code might do this automatically.
  */
 function renderInference(step) {
   var steps = unrenderedDeps(step.details);

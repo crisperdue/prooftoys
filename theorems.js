@@ -19,6 +19,8 @@ var Var = Toy.Var;
 var Call = Toy.Call;
 var Lambda = Toy.lambda;
 
+var memo = Toy.memo;
+
 // Include all variables that appear in axioms, plus common constants.
 var f = varify('f');
 var g = varify('g');
@@ -1128,6 +1130,7 @@ var ruleInfo = {
   // might be taken as an axiom given r5230FT_alternate.
   tIsXIsX: {
     action: function() {
+      // TODO: Switch back to r5230TF whenever desired.
       var step1 = rules.theorem('r5217Book');
       var step2 = rules.eqT(T);
       var step3 = rules.eqnSwap(step2);
@@ -1691,9 +1694,7 @@ var ruleInfo = {
   // Replaces an instance of a fact with T at any given site, matching
   // the fact as a schema.  The statement may have assumptions.
   //
-  // TODO: Consider storing a "fact = T" result for some or all facts
-  //   to avoid the overhead of calling this rather than
-  //   rewriteWithFact directly.
+  // TODO: Unused; remove me.
   replaceWithT: {
     action: function(step, path, fact) {
       var step1 = Toy.getResult(fact);
@@ -1922,9 +1923,15 @@ var ruleInfo = {
 
   // Instantiates the schema so that the part at the given path is
   // identical to the given term.
+  //
+  // TODO: Change "subgoal" to "expandRight"; create similar "expandLeft".
   instantiate: {
     action: function(schema, path, term) {
-      var subst = term.matchSchema(schema.locate(path));
+      var expr = schema.locate(path);
+      var subst = term.matchSchema(expr);
+      assert(subst, function() {
+          return 'Schema ' + expr + ' should match ' + term;
+        });
       var result = rules.instMultiVars(schema, subst);
       return result.justify('instantiate', arguments, [schema]);
     }
@@ -2188,10 +2195,10 @@ var ruleInfo = {
     description: 'replace {site};; {in step siteStep} {using step equation}'
   },
 
-  // Add hypotheses to the step from hypStep.  This is key to providing
-  // two steps with the same hypotheses in preparation for applying
-  // various rules of inference.  If hypStep has no hypotheses, the result
-  // is simply the given step.
+  // Add hypotheses to the target step from hypStep.  This is key to
+  // providing two steps with the same hypotheses in preparation for
+  // applying various rules of inference.  If hypStep has no
+  // hypotheses, the result is simply the target step.
   appendStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
@@ -2246,7 +2253,7 @@ var ruleInfo = {
 
   // Prefix hypotheses from the hypStep to the target step.  Often
   // used together with appendStepHyps.  If hypStep has no hypotheses,
-  // the result is simply the given step.
+  // the result is simply the target step.
   //
   // TODO: Combine this and appendStepHyps into one rule.  Consider a
   //   rule that derives (H ==> step1rhs) & (H ==> step2rhs) from
@@ -2330,7 +2337,8 @@ var ruleInfo = {
   // Rewrite a term using an equational fact.  The difference from
   // "rewrite" is that this does not display the fact as a separate
   // step and does not accept a step in the form, so is suited for
-  // indirect use with well-known facts.
+  // indirect use with well-known facts.  This simplifies assumptions
+  // like rewriteNumeric.
   //
   // TODO: Combine both sorts of rewrite rules into one, so a rewrite
   // works well in code and UI with any form of fact or proof step.
@@ -2964,7 +2972,7 @@ var ruleInfo = {
   },
 
   // Evaluates arithmetic expressions with operators:
-  // +, -, *, /, neg, =, >, >=, <, <=, and the type operator "R".
+  // +, -, *, /, neg, =, !=, >, >=, <, <=, and the type operator "R".
   // Checks that inputs are all numeric and that the result can be
   // guaranteed to be an exact integer.
   axiomArithmetic: {
@@ -2987,7 +2995,8 @@ var ruleInfo = {
           // so it should be distinguishable from an integer.
           assert(value === Math.floor(value), 'Inexact division');
           break;
-        case '=': value = left == right; break;
+        case '=': value = left === right; break;
+        case '!=': value = left !== right; break;
         case '>': value = left > right; break;
         case '>=': value = left >= right; break;
         case '<': value = left < right; break;
@@ -3306,6 +3315,121 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
+  // TODO: Comment me.
+  simplifyNumericConditions: {
+    action: function(step) {
+      if (!step.isCall2('==>')) {
+        // Shortcut inline return.
+        return step;
+      }
+      function proveIsT(stmt) {
+        return memo(function() {
+            return stmt.apply('asHypotheses').apply('toTIsA').apply('eqnSwap');
+          });
+      }
+      // Each fact must have the form h ==> (R <expr>) = <expr2>
+      // with h as hypotheses, or just (R <expr>) = <expr2>.
+      var numeraler = function(expr) {
+        // We can't memoize this one because a different fact is needed
+        // for each different numeral.
+        assert(expr.isCall1('R'));
+        return rules.axiomArithmetic(call('R', expr.arg));
+      };
+      var adder = proveIsT(rules.axiom('axiomPlusType'));
+      var multiplier = proveIsT(rules.axiom('axiomTimesType'));
+      var subtracter = proveIsT(rules.subtractionType());
+      var divider = proveIsT(rules.divisionType());
+      var negger = memo(function() {
+          return rules.axiom('axiomNegType').apply('eqnSwap');
+        });
+      var reciper = memo(function() {
+          var step = rules.axiom('axiomReciprocalType');
+          var schema = rules.tautology('(a & b == c) ==> (b ==> (c == a))');
+          var step2 = rules.forwardChain(step, schema);
+          var result = rules.asHypotheses(step2);
+          console.log('Reciprocal: ' + result);
+          return result;
+        });
+      var binOps = {'+': adder, '*': multiplier,
+                    '-': subtracter, '/': divider};
+      binOps = Toy.ownProperties(binOps);
+      var unOps = {neg: negger, recip: reciper};
+      unOps = Toy.ownProperties(unOps);
+      // Returns the appropriate memoized rule for this type
+      // expression or else a falsy value.
+      function getArithOp(expr) {
+        // TODO: Handle numeral arguments to R here,
+        //   and direct calls of != with numerals.
+        if (expr.isCall1('R')) {
+          var arg = expr.arg;
+          return (arg.isNumeral()
+                  ? numeraler
+                  : arg.isBinOp()
+                  ?  binOps[arg.getBinOp()]
+                  : arg.isCall1()
+                  ? unOps[arg.fn]
+                  : null);
+        } else {
+          // If it's an arithmetic expression simplifiable by the
+          // axiom of arithmetic, return a function that returns
+          // the appropriate statement.
+          try {
+            var result = rules.axiomArithmetic(expr);
+            return function() { return result; };
+          } catch(e) {}
+          if (expr.matchSchema('x * y != 0')) {
+            // Simplify statements about nonzero products.
+            return memo(function() { return rules.factNonzeroProduct(); });
+          }
+        }
+        return null;
+      }
+      // Finds a reverse path to a conjunct in the given term that
+      // passes the test, or returns null.
+      function findConjunct(term, test) {
+        var Path = Toy.Path;
+        function find(term, revPath) {
+          if (test(term)) {
+            return revPath;
+          } else if (term.isCall2('&')) {
+            return find(term.getLeft(), new Path('left', revPath))
+              || find(term.getRight(), new Path('right', revPath));
+          } else {
+            return null;
+          }
+        }
+        return Toy.reversePath(find(term, Toy.path('')));
+      }
+      function simplifyHyps(stepArg) {
+        if (!stepArg.isCall2('==>')) {
+          return stepArg;
+        }
+        var step = stepArg;
+        while (true) {
+          var hyps = step.getLeft();
+          var hypsPath = findConjunct(hyps, getArithOp);
+          if (!hypsPath) {
+            return step;
+          }
+          var path = new Toy.Path('left', hypsPath);
+          var expr = step.locate(path);
+          var fact = getArithOp(expr)(expr);
+          var simpleFact =
+            simplifyHyps(rules.instantiate(fact, '/main/left', expr));
+          step = rules.replace(simpleFact, step, path);
+        }
+      }
+      return (simplifyHyps(step)
+              .apply('dedupeHyps')
+              .justify('simplifyNumericConditions', arguments, [step]));
+    },
+    inputs: {step: 1},
+    form: 'Step to simplify: <input name=step>',
+    comment: 'simplify assumptions in a step',
+    hint: 'simplify assumptions',
+    labels: 'uncommon'
+  },
+
   /**
    * Proves a goal statement of the form "conjuncts ==> (R <term>)".
    * Useful as preparation for removing the term on the RHS from the
@@ -3545,11 +3669,13 @@ var ruleInfo = {
   },
 
   // Looks up the statement using getResult (which ensures its result
-  // is proved). Returns that result, justified as a "fact".
+  // is proved). Returns that result, justified as a "fact".  This is
+  // the way to refer to a fact in a proof, displaying it on its own
+  // proof line.
   fact: {
     action: function(statement) {
       var result = getResult(statement);
-      return result.justify('fact');
+      return result.justify('fact', arguments);
     }
   },
 
