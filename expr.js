@@ -58,6 +58,19 @@ function each(array, fn) {
   }
 }
 
+/**
+ * Returns a function that access the value resulting from a call to
+ * fn.  On its first call the returned "memo function" calls fn and
+ * remembers the value.  Subsequent calls return the remembered value.
+ */
+function memo(fn) {
+  var value;
+  var done = false;
+  return function() {
+    return done ? value : (done = true, value = fn());
+  }
+}
+
 
 //// CLASSES ////
 
@@ -1083,16 +1096,7 @@ Expr.prototype.pathTo = function(pred) {
     var target = pred;
     pred = function(term) { return target == term; };
   }
-  var revPath = this._path(pred, path('/'));
-  if (revPath == null) {
-    return null;
-  }
-  var result = path();
-  while (!revPath.isEnd()) {
-    result = new Path(revPath.segment, result);
-    revPath = revPath.tail();
-  }
-  return result;
+  return reversePath(this._path(pred, path('/')));
 };
 
 /**
@@ -1109,15 +1113,7 @@ Expr.prototype.pathToBinding = function(pred) {
     pred = function(term) { return target.matches(term); };
   }
   var revPath = this._bindingPath(pred, path('/'));
-  if (revPath == null) {
-    return null;
-  }
-  var result = path();
-  while (!revPath.isEnd()) {
-    result = new Path(revPath.segment, result);
-    revPath = revPath.tail();
-  }
-  return result;
+  return reversePath(revPath);
 };
 
 /**
@@ -1894,13 +1890,26 @@ Call.prototype.normalized = function(counter, bindings) {
 Call.prototype.replaceAt = function(path, xformer) {
   if (path.isMatch()) {
     return xformer(this);
-  } else if (path.segment) {
-    // Traversing down to a subexpression of this.
-    var fn = this.fn.replaceAt(path.rest('fn'), xformer);
-    var arg = this.arg.replaceAt(path.rest('arg'), xformer);
-    return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
   } else {
-    return this;
+    var segment = path.segment;
+    if (this.fn instanceof Call) {
+      if (segment === 'left') {
+        return infixCall(this.getLeft().replaceAt(path._rest, xformer),
+                         this.getBinOp(),
+                         this.getRight());
+      } else if (segment === 'right') {
+        return infixCall(this.getLeft(),
+                         this.getBinOp(),
+                         this.getRight().replaceAt(path._rest, xformer));
+      }
+    }
+    if (segment === 'fn') {
+      return new Call(this.fn.replaceAt(path._rest, xformer), this.arg);
+    } else if (segment === 'arg') {
+      return new Call(this.fn, this.arg.replaceAt(path._rest, xformer));
+    }
+    throw new Error('Path segment ' + segment +
+                    ' does not match Call: ' + this);
   }
 };
 
@@ -1908,8 +1917,21 @@ Call.prototype._locate = function(path) {
   if (path.isMatch()) {
     return this;
   } else {
-    return (this.fn._locate(path.rest('fn'))
-            || this.arg._locate(path.rest('arg')));
+    var segment = path.segment;
+    if (this.fn instanceof Call) {
+      if (segment === 'left') {
+        return this.getLeft()._locate(path._rest);
+      } else if (segment === 'right') {
+        return this.getRight()._locate(path._rest);
+      }
+    }
+    if (segment === 'fn') {
+      return this.fn._locate(path._rest);
+    } else if (segment === 'arg') {
+      return this.arg._locate(path._rest);
+    }
+    throw new Error('Path segment ' + segment +
+                    ' does not match Call: ' + this);
   }
 };
 
@@ -2340,7 +2362,7 @@ function getBinding(target, bindings) {
 
 function Path(segment, rest) {
   this.segment = segment;
-  this._rest = rest;
+  this._rest = rest || _end;;
 }
 
 // The chain of Path objects goes on forever.
@@ -2422,7 +2444,7 @@ Path.prototype.tail = function() {
 };
 
 Path.prototype.rest = function(direction) {
-  return this.segment == direction ? this._rest : Path.none;
+  return this.segment === direction ? this._rest : Path.none;
 };
 
 /**
@@ -2500,7 +2522,7 @@ function path(arg, opt_expr) {
   if (segments.length == 1 && segments[0] == '') {
     segments = [];
   }
-  // TODO: Intrepret these directly rather than making them macros.
+  // TODO: Try omitting conversion of these as macros.
   var macros = {
     left: ['fn', 'arg'],
     right: ['arg'],
@@ -2534,6 +2556,23 @@ Path.prototype.concat = function(p) {
     return new Path(this.segment, this._rest.concat(p));
   }
 };
+
+/**
+ * Returns a new Path whose segments are the reverse of the segments
+ * in the given path.  If the argument is null (empty path), returns
+ * null.
+ */
+function reversePath(revPath) {
+  if (revPath == null) {
+    return null;
+  }
+  var result = path();
+  while (!revPath.isEnd()) {
+    result = new Path(revPath.segment, result);
+    revPath = revPath.tail();
+  }
+  return result;
+}
 
 
 //// TYPES
@@ -3960,6 +3999,7 @@ function decodeArg(info, steps) {
 
 //// Export public names.
 
+Toy.memo = memo;
 Toy.configure = configure;
 Toy.ownProperties = ownProperties;
 Toy.isEmpty = isEmpty;
@@ -3976,6 +4016,7 @@ Toy.Var = Var;
 Toy.Call = Call;
 Toy.Lambda = Lambda;
 Toy.Path = Path;
+Toy.reversePath = reversePath;
 
 Toy.subFree = subFree;
 Toy.genVar = genVar;
