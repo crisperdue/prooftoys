@@ -3296,7 +3296,7 @@ var ruleInfo = {
       }
       return (simplifyHyps(step)
               .apply('dedupeHyps')
-              .justify('simplifyAssumptions2', arguments, [step]));
+              .justify('simplifyAssumptions', arguments, [step]));
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
