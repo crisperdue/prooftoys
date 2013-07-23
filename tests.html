@@ -1775,59 +1775,6 @@ var testCase = {
                 rules.divisionType());
   },
 
-  testNumericTypesSimplifier: function() {
-    function check(expected, input) {
-      checkRewriter(expected, input, rules.numericTypesSimplifier);
-    }
-    check('(p x)', 'p x');
-    check('(p x)', 'p x & p x');
-    check('((R x) & (R y))', 'R x & R y');
-    check('(R x)', 'R x & R 2');
-    check('(R x)', 'R x & R (neg x)');
-    check('((x != 0) & (R x))', 'R x & x != 0 & R (recip x)');
-    check('((R x) & (R y))', 'R x & R y & R (x + y)');
-    check('((R x) & (R y))', 'R x & R y & R (neg (neg x + neg y))');
-    check('(R x)', 'R x & (2 != 0)');
-  },
-
-  testSimplifyNumericTypes: function() {
-    var profile;
-    function checkRule(expected, step, rule, path) {
-      if (profile) {
-        console.profile(profile);
-        profile = null;
-      }
-      var result = rule(step);
-      console.profileEnd();
-      if (expected == null) {
-        assertEqual(null, result);
-      } else {
-        assert(result);
-        var actual = path ? result.locate(path) : result;
-        if (expected) {
-          assertEqual(expected, actual);
-        } else {
-          Y.log('In: ' + step.getLeft());
-          Y.log('Act: ' + actual);
-        }
-      }
-    }
-    function check(expected, step) {
-      checkRule(expected, step, rules.simplifyNumericTypes, '/left');
-    }
-    var neg = rules.rewriteWithFact(rules.axiomNeg(), '/right/left',
-                                    'x + y = y + x');
-    check('(R x)', neg);
-
-    var step1 = rules.assume('x + y + z + 3 = 3');
-    var axiom = rules.axiomCommutativePlus();
-    var step2 = rules.rewrite(step1, '/main/left', axiom);
-    // To profile:
-    // profile = 'Simplify Numerics';
-    check('(((((((x + y) + z) + 3) = 3) & (R x)) & (R y)) & (R z))',
-          step2);
-  },
-
   testSimplifyAssumptions: function() {
     var asm = rules.assume('a');
     function simplify(term) {
@@ -1852,22 +1799,6 @@ var testCase = {
                 simplify('R (recip (x * y))'));
 
     // TODO: Tests for removal of conditions such as (2 != 0).
-  },
-
-  testJustifyNumericType: function() {
-    var input = Toy.parse('R x & R y ==> R (x + y)');
-    assert(rules.justifyNumericType(input).matches(input));
-    input = Toy.parse('R x & R y & R z ==> R (x + y)');
-    assert(rules.justifyNumericType(input).matches(input));
-    input = Toy.parse('R x ==> R (neg x)');
-    assert(rules.justifyNumericType(input).matches(input));
-    input = Toy.parse('R x & x != 0 ==> R (recip x)');
-    assert(rules.justifyNumericType(input).matches(input));
-    input = Toy.parse('x = 5 ==> R x');
-    assertEqual('(((x = 5) & (R x)) ==> (R x))',
-                rules.justifyNumericType(input));
-    input = Toy.parse('R x ==> R (recip x)');
-    assertEqual('', rules.justifyNumericType(input));
   },
 
   testOperateOnBoth: function() {
