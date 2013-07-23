@@ -3262,7 +3262,7 @@ var ruleInfo = {
 
   // Simplifies the assumptions of a step by applying selected facts
   // to conjuncts that match, including numeric simplifications.
-  simplifyAssumptions: {
+  simplifyAssumptions2: {
     action: function(step) {
       var simpler = step;
       if (step.hasHyps) {
@@ -3322,7 +3322,7 @@ var ruleInfo = {
   // real or nonzero; simplifies assumptions about products being
   // nonzero into assertions that both operands are real; removes
   // duplicate terms and occurrences of T.
-  simplifyNumericConditions: {
+  simplifyAssumptions: {
     action: function(step) {
       if (!step.isCall2('==>')) {
         // Shortcut inline return.
@@ -3427,7 +3427,7 @@ var ruleInfo = {
       }
       return (simplifyHyps(step)
               .apply('dedupeHyps')
-              .justify('simplifyNumericConditions', arguments, [step]));
+              .justify('simplifyAssumptions2', arguments, [step]));
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',

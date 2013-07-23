@@ -1392,9 +1392,14 @@ var testCase = {
     var inf = Toy.rules.tautology(wff);
     assertEqual(wff.toString(), inf);
 
-    var wff = equal(x, x);
-    var inf = Toy.rules.tautology(wff);
-    assertEqual(wff.toString(), inf);
+    var inf = Toy.rules.tautology('x = x');
+    assertEqual('(x = x)', inf);
+
+    // TODO: Find a good way to make examples like this work even
+    //   though lookup may correctly find a tautology 'x = x' rather
+    //   than 'x == x'.
+    // var inf = Toy.rules.tautology('x == x');
+    // assertEqual('(x == x)', inf);
 
     var wff = Toy.parse('(p ==> not p) ==> not p');
     var inf = Toy.rules.tautology(wff);
@@ -1610,14 +1615,6 @@ var testCase = {
                                           [rules.factNonzeroProduct()]));
   },
 
-  testSimplifyAssumptions: function() {
-    var step1 = rules.assume('x * y != 0');
-    var step2 = rules.simplifyAssumptions(step1);
-    var expected =
-      '(((((x != 0) & (y != 0)) & (R x)) & (R y)) ==> ((x * y) != 0))';
-    assertEqual(expected, step2);
-  },
-
   testBubbleLeft: function() {
     function less(a, b) {
       return a.toString() < b.toString();
@@ -1831,11 +1828,11 @@ var testCase = {
           step2);
   },
 
-  testSimplifyNumericConditions: function() {
+  testSimplifyAssumptions: function() {
     var asm = rules.assume('a');
     function simplify(term) {
       return (rules.instVar(asm, Toy.termify(term), 'a')
-              .apply('simplifyNumericConditions').getLeft());
+              .apply('simplifyAssumptions').getLeft());
     }
     assertEqual('(R x)', simplify('R x'));
     assertEqual('T', simplify('R 2'));
@@ -1849,6 +1846,8 @@ var testCase = {
     assertEqual('((x != 0) & (R x))', simplify('R (recip x))'));
     assertEqual('T', simplify('2 = 2'));
     assertEqual('T', simplify('2 != 0'));
+    assertEqual('((((x != 0) & (y != 0)) & (R x)) & (R y))',
+                simplify('x * y != 0'));
     assertEqual('((((x != 0) & (y != 0)) & (R x)) & (R y))',
                 simplify('R (recip (x * y))'));
 
