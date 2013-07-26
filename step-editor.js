@@ -31,7 +31,7 @@ var assert = Toy.assertTrue;
 // implication: Matches a proof step that is an implication.
 // 
 // term: Matches any term.
-// 
+//
 // reducible: Matches a call to anonymous function (lambda)
 //
 // varName: Name suitable for a variable.
@@ -160,16 +160,19 @@ StepEditor.prototype.error = function(message) {
 };
 
 /**
- * Help the user debug the given error object if it has a "step"
- * property.  Display the proof behind that step.
+ * Report the error.  If there is a #proofErrors node on the page
+ * report it there and help the user debug in case it has a "step"
+ * property; otherwise just alert.
  */
-StepEditor.prototype.debug = function(error) {
-  if (error.step) {
-    var proofJQ = $('#proofErrors');
-    if (proofJQ.length) {
-      proofJQ.html('<p><b>Error: ' + error.message + '</b></p>');
+StepEditor.prototype.report = function(error) {
+  var proofJQ = $('#proofErrors');
+  if (proofJQ.length) {
+    proofJQ.html('<p><b>Error: ' + error.message + '</b></p>');
+    if (error.step) {
       Toy.renderProof(error.step, proofJQ);
     }
+  } else {
+    window.alert('Error: ' + error.message);
   }
 };
 
@@ -249,13 +252,15 @@ function usesSite(rule) {
 /**
  * Adds class=step, class=term, etc. to each form element according
  * to its name -- same as the name, but stripping off any numeric suffix,
- * e.g. step2 ==> step.
+ * e.g. step2 ==> step.  Also prevents autocompletion, basically because
+ * some sites add autosuggest entries to fields named "term".
  */
 function addClassInfo(form) {
   form.find('input').each(function() {
       // Note: the pattern matches any string.
       var className = this.name.match(/^(.*?)\d*$/)[1];
       $(this).addClass(className);
+      $(this).attr('autocomplete', 'off');
     });
 }
 
@@ -366,7 +371,7 @@ StepEditor.prototype.tryRule = function(rule, args) {
       // Leave the text field as-is in case of a type-check error.
       this.reset();
     }
-    this.debug(error);
+    this.report(error);
   }
   if (Toy.profileName) {
     console.profileEnd();
