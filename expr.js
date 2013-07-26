@@ -933,6 +933,18 @@ Expr.prototype.getRight = function() {
 };
 
 /**
+ * Gets the "main part" of a statement.  If the statement
+ * is a conditional gets its conclusion, otherwise the statement
+ * itself.
+ *
+ * TODO: Hopefully rework the system so this gets used in place
+ *   of hasHyps and unHyp.
+ */
+Expr.prototype.getMain = function() {
+  return this.isCall2('==>') ? this.getRight() : this;
+};
+
+/**
  * Returns the nth "element" of this expression.  Recurs top down
  * through function parts of calls until finding a Var, which is
  * consider element 0.  The arg part of that call is element 1,
