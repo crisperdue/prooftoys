@@ -1070,7 +1070,8 @@ function markAsFullExpr(jq) {
 Var.prototype._render = function(omit) {
   var jq = exprJq();
   this.node = dom(jq);
-  if (Toy.isVariable(this.name)) {
+  if (this.isVariable() || this.value !== undefined) {
+    // Variable or literal constant is selectable, not named constants
     markAsFullExpr(jq);
   }
   var name = this.toUnicode();
@@ -1335,15 +1336,17 @@ function formattedStepInfo(step) {
  * of {step}, {step1}, {step2}, {equation}, {implication}, and
  * {siteStep} expand to the step number of the step argument.
  *
- * Appearances of {term*} display as the term; {var} as the variable
- * name, {site} as the term at the site.  Unknown markup passes
- * through, e.g. lambdas -- {x. f x}.
+ * Appearances of {term} display as the term; {var} as the variable
+ * name, {site} as the term at the site; {terms} displays as a
+ * comma-separated list of all term inputs.
+ * Unknown markup passes through, e.g. lambdas -- {x. f x}.
  */
 function expandMarkup(step, markup) {
   // Given an array of places, as stored in the value of an "inputs"
-  // property of a rule, and an index into them, returns a step number
-  // or phrase ending in a step number, for the nth element.  Also
-  // accepts a number for places in place of a 1-element array.
+  // property of a rule (e.g. rule.inputs.step), and an index into
+  // them, returns a step number or phrase ending in a step number,
+  // for the nth element.  Also accepts a plain number as if it were a
+  // 1-element array.
   function stepNumber(places, index) {
     if (places === undefined) {
       return '?';
@@ -1393,13 +1396,17 @@ function expandMarkup(step, markup) {
       places = [places];
     }
     var terms = places.map(function(place) {
-        return Toy.mathMarkup(Toy.toUnicode(step.ruleArgs[place - 1]));
+        var term = Toy.termify(step.ruleArgs[place - 1]);
+        return Toy.mathMarkup(Toy.toUnicode(term));
       });
     return terms.join(', ');
   case 'shortFact':
     var place = info.inputs.term[0] || info.inputs.term;
-    var fact = step.ruleArgs[place - 1].unHyp();
-    var text = fact.toString();
+    var term = Toy.termify(step.ruleArgs[place - 1]);
+    if (term.isCall2('==>')) {
+      term = term.getRight();
+    }
+    var text = term.toString();
     if (text[0] === '(') {
       text = text.slice(1, -1);
     }
@@ -1539,10 +1546,12 @@ function renderInference(step) {
   var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
   var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
   jq = $('<div class=inferenceDisplay></div>');
-  var factString = Toy.mathMarkup(step.original.memos.factString || '');
-  var factHtml = (factString
-                  ? '<span class=math>' + factString + '</span>'
-                  : '');
+  var factHtml = '';
+  if (step.ruleName === 'fact') {
+    factHtml = ('<span class=math>' +
+                Toy.mathMarkup(step.getMain().toUnicode()) +
+                '</span>');
+  }
   jq.append('<div class=proofHeader><b>' + pruf
               + step.ruleName + '</b> '
               + factHtml
