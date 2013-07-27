@@ -460,7 +460,8 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Given A, proves A == A.  This is intended for use only in 
+  // Given A, proves A == A.  This is intended for use only when
+  // A is boolean.
   equivSelf: {
     action: function(a) {
       var step1 = rules.eqSelf(a);
@@ -1691,19 +1692,6 @@ var ruleInfo = {
     description: 'add assumption {term};; {in step step}'
   },
 
-  // Replaces an instance of a fact with T at any given site, matching
-  // the fact as a schema.  The statement may have assumptions.
-  //
-  // TODO: Unused; remove me.
-  replaceWithT: {
-    action: function(step, path, fact) {
-      var step1 = Toy.getResult(fact);
-      var step2 = rules.toTIsA(step1).apply('eqnSwap');
-      var result = rules.rewriteWithFact(step, path, step2);
-      return result.justify('replaceWithT', arguments, [step, fact]);
-    }
-  },
-
   // Given a theorem and an arbitrary boolean term, proves that the
   // term implies the theorem.  Note that theorems do not have
   // hypotheses.
@@ -2334,21 +2322,16 @@ var ruleInfo = {
     labels: 'advanced'
   },
 
-  // Rewrite a term using an equational fact.  The difference from
-  // "rewrite" is that this does not display the fact as a separate
-  // step and does not accept a step in the form, so is suited for
-  // indirect use with well-known facts.  This simplifies assumptions
-  // like rewriteNumeric.
+  // Rewrite a term using an equational fact, taking a statement of
+  // the desired fact as an argument term (string or Expr).
+  // indirect use with well-known facts.  This simplifies assumptions.
   //
   // TODO: Combine both sorts of rewrite rules into one, so a rewrite
   // works well in code and UI with any form of fact or proof step.
-  //
-  // TODO: Implement something like "tryRewrite" that rewrites, but
-  // returns its input step in case the rewrite throws an exception.
   rewriteWithFact: {
-    action: function(step, path, fact_arg) {
+    action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
-      var fact = Toy.getResult(fact_arg);
+      var fact = rules.fact(statement);
       var expr = step.locate(path);
       var map = expr.findSubst(fact.unHyp().getLeft());
       assert(map, function() {
@@ -2362,13 +2345,11 @@ var ruleInfo = {
       var result = rules.simplifyAssumptions(step2);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
-      return result.justify('rewriteWithFact',
-                            [step, path, getStatement(fact)],
-                            [step]);
+      return result.justify('rewriteWithFact', arguments, [step]);
     },
-    // TODO: Consider giving this a form.  Entry for facts would
-    // probably need to allow omission of type info.
     inputs: {site: 1, term: 3},
+    form: ('Rewrite the selection using fact <input name=term>'),
+    hint: 'rewrite using a fact',
     isRewriter: true,
     description: '{in step siteStep} use;; {shortFact}'
   },
@@ -2549,7 +2530,7 @@ var ruleInfo = {
   // derives h1 ... hn ==> (h ==> A).
   //
   // TODO: Consider removing this. 
-  extractHypothesis: {
+  extractHypothesis2: {
     // TODO: Make a version that runs in much less than exponential
     // time.  You can use the same tautology down to some depth and
     // combine it with ones resembling (h & h1) = (h & h1 & h) to
@@ -2567,13 +2548,14 @@ var ruleInfo = {
       var step1 = rules.asImplication(step);
       var step2 = rules.forwardChain(step1, rules.tautology(taut));
       var result = rules.asHypotheses(step2);
-      return result.justify('extractHypothesis', arguments, [step]);
+      return result.justify('extractHypothesis2', arguments, [step]);
     },
     inputs: {step: 1, term: 2},
     form: ('Make assumption <input name=term> explicit '
            + 'in step <input name=step>'),
     description: 'make assumption {term} explicit;; {in step step}',
-    comment: 'extract an assumption'
+    labels: 'deprecated',
+    comment: 'copy an assumption to the consequent'
   },
 
   // Given a proof step that is an implication and a path that
@@ -2593,6 +2575,8 @@ var ruleInfo = {
   },
 
   // Like isolateHypAt, taking its hypotheses as a term to be matched.
+  // Useful for isolating (extracting) implicit assumptions such as
+  // variable types.
   isolateHyp: {
     action: function(step, hyp_arg) {
       var hyp = Toy.termify(hyp_arg);
@@ -2601,12 +2585,11 @@ var ruleInfo = {
       var step1 = rules.rewrite(step, '/left', taut);
       var taut2 = rules.tautology('a & b ==> c == a ==> (b ==> c)');
       var result = rules.rewrite(step1, '', taut2);
-      return result.justify('isolateHypAt', arguments, [step]);
+      return result.justify('isolateHyp', arguments, [step]);
     },
-    inputs: {implication: 1, term: 2},
-    form: '',
-    comment: 'move conjunct of implication LHS to the RHS',
-    labels: 'uncommon'
+    inputs: {step: 1, term: 2},
+    form: 'extract assumption <input name=term> from step <input name=step>',
+    comment: 'extract an assumption'
   },
 
   // Proves that the given chain of conjuncts imply the specific
@@ -3436,15 +3419,25 @@ var ruleInfo = {
     description: 'divide by {term};; {in step equation}'
   },
 
-  // Looks up the statement using getResult (which ensures its result
-  // is proved). Returns that result, justified as a "fact".  This is
-  // the way to refer to a fact in a proof, displaying it on its own
-  // proof line.
+  // Looks up the statement string, proving it if needed. Returns that
+  // result, justified as a "fact".  This is the way to refer to a
+  // fact in a proof, displaying it on its own proof line.
+  // Currently inline if it is a no-op.
   fact: {
     action: function(statement) {
-      var result = getResult(statement);
-      return result.justify('fact', arguments);
-    }
+      if (statement.ruleName) {
+        // It is an already proved statement.
+        return statement;
+      } else {
+        // Strings and unproved terms have no ruleName.
+        return getResult(statement).justify('fact');
+      }
+    },
+    inputs: {term: 1},
+    form: ('Look up fact <input name=term>'),
+    hint: 'look up a fact',
+    comment: (''),
+    description: 'fact'
   },
 
   //
@@ -3517,8 +3510,8 @@ function addRule(key, info) {
     // "basic" if no other labels.
     info.labels.basic = true;
   }
-  // If the rule has an explicit statement (it should be provably true),
-  // coerce it to an Expr if given as a string.
+  // If the rule (theorem) has an explicit statement (it should be
+  // provably true), coerce it to an Expr if given as a string.
   if (typeof info.statement === 'string') {
     info.statement = Toy.parse(info.statement);
   }
@@ -3598,7 +3591,8 @@ var facts = {
     return step;
   },
   'a * x + b * x = (a + b) * x': function() {
-    var step = rules.eqnSwap(getResult('(a + b) * x = a * x + b * x'));
+    var step = rules.fact('(a + b) * x = a * x + b * x')
+    .apply('eqnSwap');
     return step;
   },
   'x * y + x * z = x * (y + z)': function() {
@@ -3713,6 +3707,7 @@ var facts = {
                                        'x + y = y + x');
     return step14;
   },
+
   // Subtraction rules
   'x + y - z = x - z + y': function() {
     var step = rules.consider('x + y - z')
@@ -3754,6 +3749,11 @@ var facts = {
     return rules.axiom('axiomReciprocal')
     .rewrite('/main/left', 'x * y = y * x');
   },
+  /* TODO: finish me.
+  'recip x != 0': function() {
+    var step1 = rules.axiom('axiomReciprocal');
+  },
+  */
   'x != 0 ==> recip x != 0': function() {
     // Step0 is not (recip x = 0) == recip x != 0.
     var step0 = rules.consider('recip x != 0')
@@ -3781,10 +3781,10 @@ var facts = {
   'x * recip y = x / y': function() {
     return rules.eqnSwap(rules.fact('x / y = x * recip y'));
   },
+
+  // Reciprocal and division rules:
+
   /*
-   * Reciprocal and division rules, not yet working.  They
-   * need more support for proving types of reciprocals are real
-   * and for determining that expressions cannot be zero.
   'x != 0 ==> recip (recip x) = x': function() {
     var step1 = rules.axiom('axiomReciprocal');
     var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip x)'));
@@ -4001,11 +4001,10 @@ function addFact(expr_arg, prover) {
      ? expr_arg
      : expr.toString());
   if (typeof expr_arg === 'string') {
-    // For possible future display.  This can get passed along
-    // as a memo on the proved fact.
+    // For possible future display.
     prover.factString = expr_arg;
   }
-  var key = expr.dump();
+  var key = expr.getMain().dump();
   _factsMap[key] = prover;
   return prover;
 }
@@ -4016,10 +4015,6 @@ function addFact(expr_arg, prover) {
  * acceptable to getStatement, returns a proved version of it, or the
  * thing itself if already proved.  Throws an exception in case of
  * failure.
- *
- * Note that this is inline if the fact is given as a proved Expr.
- *
- * TODO: Make this into an inference rule. 
  */
 function getResult(fact) {
   var expr = getStatement(fact);
@@ -4027,23 +4022,21 @@ function getResult(fact) {
     // Proved!
     return expr;
   }
-  var key = expr.dump();
+  var kexpr = expr.isCall2('==>') ? expr.getRight() : expr;
+  var key = kexpr.dump();
   var prover = _factsMap[key];
   assert(prover, function() { return 'No such fact: ' + expr; });
   var result = prover._provedResult;
   if (!result) {
     result = prover();
-    assert(result.matches(expr), function() {
+    var main = result.getMain();
+    assert(result.matches(expr) || main.matches(expr), function() {
         return ('Expected proof of ' + expr.toString() +
                 ', instead got ' + result.toString());
       }, result);
     prover._provedResult = result;
   }
-  var value = result.justify('fact');
-  if (prover.factString) {
-    value.memos.factString = prover.factString;
-  }
-  return value;
+  return result;
 }
 
 /**

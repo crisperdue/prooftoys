@@ -1674,16 +1674,16 @@ var testCase = {
     assertEqual('((a & b) & c)', result);
   },
 
-  testExtractHypothesis: function() {
+  testExtractHypothesis2: function() {
     var rules = Toy.rules;
     var step = rules.axiomCommutativePlus();
     var expected =
       '(((R x) & (R y)) ==> ((R x) ==> ((x + y) = (y + x))))';
-    var result = rules.extractHypothesis(step, Toy.parse('R x'));
+    var result = rules.extractHypothesis2(step, Toy.parse('R x'));
     assertEqual(expected, result);
     expected =
       '(((R x) & (R y)) ==> ((R y) ==> ((x + y) = (y + x))))';
-    result = rules.extractHypothesis(step, Toy.parse('R y'));
+    result = rules.extractHypothesis2(step, Toy.parse('R y'));
     assertEqual(expected, result);
   },
 
