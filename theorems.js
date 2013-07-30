@@ -2369,6 +2369,26 @@ var ruleInfo = {
     labels: 'basic'
   },
 
+  // Remove "T = " and "= T", evaluate boolean expression, do arithmetic.
+  // Inline, throws if no simplification found.
+  simplifySiteOnce: {
+    action: function(step, path) {
+      var facts = ['(T = x) = x', '(x = T) = x'];
+      return Toy.each(facts, function(fact) {
+          try {
+            return rules.rewriteWithFact(step, path, fact);
+          } catch(e) { }
+        });
+      try {
+        return rules.arithmetic(step, path);
+      } catch(e) { }
+      throw new Error('No simplification found');
+    },
+    inputs: {site: 1},
+    form: (''),
+    hint: 'simplify the selected term'
+  },
+
   // NOTE: A chain of conjuncts (or other binary operator) is an
   // expression that can be written a & b & ... & z.  An expression
   // that does not have the operator at top-level is a chain of one
@@ -2570,7 +2590,8 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    comment: 'move conjunct of implication LHS to the RHS',
+    hint: 'move to conclusions',
+    comment: 'move assumption to the conclusions',
     labels: 'uncommon'
   },
 
@@ -2590,6 +2611,20 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: 'extract assumption <input name=term> from step <input name=step>',
     comment: 'extract an assumption'
+  },
+
+  // Simplifies hyps ==> (a ==> b) to hyps & a ==> b. 
+  useAsHyp: {
+    action: function(step) {
+      var taut = rules.tautology('a ==> (b ==> c) == a & b ==> c');
+      var result = rules.rewriteWithFact(step, '', taut);
+      return result.justify('useAsHyp', arguments, step);
+    },
+    inputs: {step: 1},
+    form: 'step <input name=step>',
+    hint: '[H ==> (A ==> B)] to [H & A ==> B]',
+    labels: 'uncommon',
+    description: 'absorb antecedent into the assumptions'
   },
 
   // Proves that the given chain of conjuncts imply the specific
@@ -3062,7 +3097,7 @@ var ruleInfo = {
   // Inference rules for real numbers
   //
 
-  // Convert a simple arithmetic expression to its value.
+  // Rewrites a simple arithmetic expression to its value.
   arithmetic: {
     action: function(step, path) {
       var term = step.locate(path);
@@ -3423,15 +3458,32 @@ var ruleInfo = {
   // result, justified as a "fact".  This is the way to refer to a
   // fact in a proof, displaying it on its own proof line.
   // Currently inline if it is a no-op.
+  // Also proves statements of tautologies and simple arithmetic facts.
+  // Removes any " = T" from boolean-valued arithmetic facts.
   fact: {
     action: function(statement) {
       if (statement.ruleName) {
         // It is an already proved statement.
         return statement;
-      } else {
-        // Strings and unproved terms have no ruleName.
-        return getResult(statement).justify('fact');
       }
+      var stmt = getStatement(statement);
+      try {
+        // Strings and unproved terms have no ruleName.
+        return getResult(stmt).justify('fact');
+      } catch(err) {}
+      try {
+        var result = rules.axiomArithmetic(stmt);
+        if (result.matchSchema('x = T')) {
+          result = rules.rewriteWithFact(result, '', '(x = T) = x');
+          return result.justify('fact', arguments);
+        }
+        return result;
+      } catch(err) {}
+      try {
+        // Inline for tautologies.
+        return rules.tautology(statement);
+      } catch(err) {}
+      throw new Error('No such fact: ' + statement);
     },
     inputs: {term: 1},
     form: ('Look up fact <input name=term>'),
@@ -3542,6 +3594,8 @@ addRules(ruleInfo);
 //// FACTS
 
 var facts = {
+  tIsXIsX: null,
+
   axiomCommutativePlus: null,
   axiomCommutativeTimes: null,
   axiomAssociativePlus: null,
@@ -3554,6 +3608,12 @@ var facts = {
   axiomReciprocal: null,
   factNonzeroProduct: null,
   equalitySymmetric: null,
+
+  // Logic
+  '(x = T) = x': function() {
+    return rules.theorem('tIsXIsX')
+    .rewrite('/left', 'equalitySymmetric');
+  },
 
   // Addition
   'x + y + z = x + (y + z)': function() {
@@ -3744,34 +3804,20 @@ var facts = {
     return step;
   },
 
-  // Recip rules
+  // Reciprocal rules
+
   'x != 0 ==> recip x * x = 1': function() {
     return rules.axiom('axiomReciprocal')
     .rewrite('/main/left', 'x * y = y * x');
   },
-  /* TODO: finish me.
-  'recip x != 0': function() {
-    var step1 = rules.axiom('axiomReciprocal');
-  },
-  */
   'x != 0 ==> recip x != 0': function() {
-    // Step0 is not (recip x = 0) == recip x != 0.
-    var step0 = rules.consider('recip x != 0')
-    .apply('apply', '/main/right')
-    .apply('eqnSwap');
-    var step2 = rules.assume('recip x = 0')
-    .apply('multiplyBoth', Toy.parse('x'))
-    .rewrite('/main/right', '0 * x = 0')
-    .rewrite('/main/left', 'x != 0 ==> recip x * x = 1')
-    .apply('arithmetic', '/right')
-    // 1 = 0 == F
-    .apply('asImplication')
-    // TODO: Make this step less fragile.
-    .apply('forwardChain',
-           rules.tautology('a & b & c ==> F ==> (b & c ==> not a)'))
-    .apply('asHypotheses')
-    .rewrite('/right', step0);
-    return step2;
+    var step1 = rules.axiom('axiomReciprocal');
+    var step2 = rules.fact('1 != 0');
+    var step3 = rules.rRight(step1, step2, '/left')
+    .rewrite('/main', 'x * y != 0 == x != 0 & y != 0');
+    var step4 = rules.tautology('a & b ==> b');
+    var step5 = rules.forwardChain(step3, step4);
+    return step5;
   },
   'x / y = x * recip y': function() {
     var step1 = rules.consider('x / y');
@@ -3782,9 +3828,6 @@ var facts = {
     return rules.eqnSwap(rules.fact('x / y = x * recip y'));
   },
 
-  // Reciprocal and division rules:
-
-  /*
   'x != 0 ==> recip (recip x) = x': function() {
     var step1 = rules.axiom('axiomReciprocal');
     var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip x)'));
@@ -3799,6 +3842,9 @@ var facts = {
     var step8 = rules.eqnSwap(step7);
     return step8;
   },
+
+  /*
+  // TODO: Get these working.
   'x != 0 ==> recip (x * y) = recip x * recip y': function() {
     var step1 = rules.axiom('axiomReciprocal');
     var step2 = rules.instVar(step1, Toy.parse('x * y'), 'x');
@@ -3826,6 +3872,7 @@ var facts = {
                                        'x * y = y * x');
     return step14;
   },
+
   // Division rules
   'z != 0 ==> x * y / z = x / z * y': function() {
     var rewrite = 'rewriteWithFact';
