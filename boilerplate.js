@@ -169,7 +169,7 @@ Toy.mathMarkup = function(text) {
  */
 Toy.mathifyAll = function() {
   jQuery('s').replaceWith(function() {
-    return '<span class=math>' +
+    return '<span class="mathColor">' +
       Toy.mathMarkup($(this).text()) +
       '</span>';
   });
