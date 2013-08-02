@@ -1,4 +1,4 @@
-// Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
+// Copyright 2011, 2012, 2013 Crispin Perdue.  All rights reserved.
 
 /**
  * Version of the jQuery $ function that type checks its input.
@@ -111,31 +111,24 @@ function stepSites(step) {
 
 var proofToyState = {
 
-  // Global data to store in the hidden field named ToyStore.
-  // Created with an object/slot to hold all ProofEditor data.
+  // Global data to store in the hidden field named ToyStore.  Created
+  // with an object/slot to hold all data for all ProofEditor objects
+  // on the page.  Completely overwritten by the _load method.
+  // The point of proofToyState is to manage this data.
   data: {proofEditors: {}},
+
+  // Indicates whether the data slot has been filled in yet.
+  loaded: false,
 
   // Global form element to store proofToyData.
   _toyStore: null,
 
-  // Callbacks to run when the global data becomes ready.
-  _dataReadyHandlers: [],
-
-  /**
-   * Registers a "data ready" callback.
-   */
-  onDataReady: function(fn) {
-    this._dataReadyHandlers.push(fn);
-  },
+  // Storing the state of all proof editors into the hidden textarea.
 
   /**
    * Save proofToyData into the document's data store so it will persist
    * across page load/unload.  Silently do nothing if there is no store
-   * element.  Called automatically immediately after all dataReady
-   * handlers have fired during page loading.
-   *
-   * TODO: Consider deferring this action using a Refresher, to reduce
-   * redundant work.
+   * element.
    */
   store: function() {
     if (this._toyStore) {
@@ -144,29 +137,25 @@ var proofToyState = {
   },
 
   /**
-   * Load all application data from the per-page store; runs just once
-   * on page load.  If there is data, run all dataReady handlers, then
-   * store the global data back into the toyStore.
+   * Load all application data from the per-page store; runs just once.
    */
-  _load: function() {
-    storage = $('#ToyStore')[0];
-    this._toyStore = storage;
+  init: function() {
+    if (this.loaded) {
+      return;
+    }
+    this.loaded = true;
+    var storage = this._toyStore = $('#ToyStore')[0];
     if (storage) {
       var text = storage.value;
       if (text) {
         // Non-empty text.
         this.data = JSON.parse(text);
       }
-      this._dataReadyHandlers.forEach(function(fn) { fn(); });
-      this.store();
     } else {
       console.log('No #ToyStore element.');
     }
   }
 }
-
-// When the DOM is ready load the proof state.
-$($.proxy(proofToyState, '_load'));
 
 
 //// PROOF EDITOR
@@ -226,7 +215,7 @@ function ProofEditor() {
     .append(this._stateDisplay)
     .append(@mainControl.node);
 
-  // If the proof has changed, save its state.
+  // If the proof has changed, save its state soon.
   this._refresher = new Toy.Refresher(function() {
       self.saveState();
     });
@@ -241,13 +230,13 @@ function ProofEditor() {
     // "this" is the ProofControl.
     this.stepEditor.reset();
   };
+
   // Update the step editor query results when the selection may
   // have changed.
   @mainControl.selectionChanged = function() {
     // Forces full display of the appropriate inference rules for
     // the new selection.
     this.stepEditor.reset();
-    this.stepEditor.focus();
   };
 
   // TODO: Consider creating the step editor from the proof editor
@@ -270,13 +259,14 @@ function ProofEditor() {
       self._stateDisplay.addClass('hidden');
     });
 
-  // Sets this ProofEditor's "data" property to the global data
-  // associated with its proofEditorId.  Updates the state of the
-  // proof itself, and saves the state into the text area.
+  // Aliases this ProofEditor's "data" property to the global data
+  // associated with its proofEditorId in proofToyState.  Updates the
+  // state of the proof itself if there is any global data.
   //
   // If the global data has no information about this, just links the
   // existing value into the global data.
   function loadData() {
+    proofToyState.init();
     var data = proofToyState.data.proofEditors[self.proofEditorId];
     if (data) {
       self.data = data;
@@ -287,10 +277,18 @@ function ProofEditor() {
       proofToyState.data.proofEditors[self.proofEditorId] = self.data;
     }
   }
-  proofToyState.onDataReady(Toy.withErrorReporting.bind(null, loadData));
+  // Soon load remembered proof state, but complete the constructor
+  // and any following initializations.
+  Toy.soonDo(@{. Toy.withErrorReporting(loadData)});
 
   this.containerNode.on('click', @{event. event.stopPropagation();});  
-  $(document).on('click', @{event. @mainControl.deselectStep()});
+  // Clicks in arbitrary areas of the document remove any selection.
+  $(document).on('click', function(event) {
+      @mainControl.deselectStep();
+      @mainControl.selectionChanged();
+      // And clear any proof errors field.
+      $('#proofErrors').html('');
+   });
 }
 
 /**
@@ -1544,19 +1542,20 @@ function renderInference(step) {
   var controller = new ProofControl({stepPrefix: prefix});
   controller.setSteps(steps);
   var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
-  var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
-  jq = $('<div class=inferenceDisplay></div>');
-  var factHtml = '';
+  var jq = $('<div class=inferenceDisplay></div>');
   if (step.ruleName === 'fact') {
-    factHtml = ('<span class=math>' +
-                Toy.mathMarkup(step.getMain().toUnicode()) +
-                '</span>');
-  }
-  jq.append('<div class=proofHeader><b>' + pruf
+    jq.append('<div class=proofHeader><b>Proof of <span class=math>'
+              + Toy.mathMarkup(step.toUnicode())
+              + '</span></b><br>'
+              + '<i>' + comment + '</i></div>');
+
+  } else {
+    var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
+    jq.append('<div class=proofHeader><b>' + pruf
               + step.ruleName + '</b> '
-              + factHtml
               + computeHeaderArgInfo(step) + '<br>'
               + '<i>' + comment + '</i></div>');
+  }
   jq.append(controller.node);
   jq.data('proofControl', controller);
   return jq;
@@ -1600,24 +1599,31 @@ function renderProof(step, where, millis, nSteps) {
  *   Indicate sites in steps in some user-friendly way.
  */
 function computeHeaderArgInfo(step) {
+  function mathSpan(text) {
+    return '<span class=math>' + Toy.mathMarkup(text) + '</span>';
+  }
   var argInfo = '';
   for (var i = 0; i < step.ruleArgs.length; i++) {
     var arg = step.ruleArgs[i];
     var argText;
     if (arg instanceof Toy.Expr) {
-      argText = arg.toString();
+      argText = mathSpan(arg.toUnicode());
+    } else if (typeof arg == 'string' && arg.match(/^(\(|T$|F$)/)) {
+      // Is 'T' or 'F' or '(.*'
+      argText = mathSpan(arg);
     } else if (typeof arg == 'string' && arg[0] != '/') {
       argText = arg;
     } else if (typeof arg == 'string' || arg instanceof Toy.Path) {
       // Ignore paths and strings that look like paths.
       continue;
     } else {
-      argText = Toy.debugString(arg);
+      // E.g. mappings/objects
+      argText = '<code>' + Toy.debugString(arg) + '</code>';
     }
     if (argInfo) {
       argInfo += ', ';
     }
-    argInfo += '<code>' + argText + '</code>';
+    argInfo += argText;
   }
   if (i > 0) {
     argInfo =
