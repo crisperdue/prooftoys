@@ -161,9 +161,8 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
-    comment: 'show assumptions',
-    description: ';;show assumptions {of step step}',
-    labels: 'basic'
+    comment: 'convert to conditional',
+    description: ';;convert to conditional {in step step}',
   },
 
   /**
@@ -176,8 +175,8 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
-    comment: 'fully display a step',
-    description: ';;show fully {step step}',
+    comment: 'show both sides of equation',
+    description: ';;show both sides of equation {in step step}',
     labels: 'display'
   },
       
@@ -195,9 +194,8 @@ var ruleInfo = {
     inputs: {implication: 1},
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
-    hint: 'convert explicit implication to statement with assumptions',
-    description: ';;abbreviate assumptions {of step implication}',
-    labels: 'display'
+    hint: 'convert to assumptions',
+    description: 'convert to assumptions;; {in step implication}',
   },
 
   /**
@@ -1168,6 +1166,7 @@ var ruleInfo = {
     hint: '[A] to [T = A]',
     comment: ('From A derives T = A'),
     formula: 'a = (T = a)',
+    description: 'a = (T = a);; {in step step}',
     labels: 'primitive'
   },
 
@@ -1269,7 +1268,7 @@ var ruleInfo = {
     hint: 'substitute for a free variable',
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
-    description: 'substitute for {site}'
+    description: 'substitute for {site};; {in step siteStep}'
   },
 
   // More like the book's 5221.  For each name in the map (a string),
@@ -2925,7 +2924,18 @@ var ruleInfo = {
     inputs: {},
     form: '',
     comment: 'x * recip x = 1 if x is not 0',
-    description: 'definition of recip'
+    description: 'recip is inverse to multiplication'
+  },
+
+  axiomReciprocal2: {
+    action: function() {
+      return rules.assert('R (recip x) & recip x != 0 == R x & x != 0')
+        .justify('axiomReciprocal2');
+    },
+    inputs: {},
+    form: '',
+    comment: 'nonzero reciprocals',
+    description: 'reciprocals are nonzero'
   },
 
   // TODO: Prove this as a consequnce of completeness.
@@ -2977,6 +2987,7 @@ var ruleInfo = {
     description: 'negation of real number is real'
   },
 
+  // TODO: Replace me.
   axiomReciprocalType: {
     action: function() {
       return rules.assert('R x & x != 0 == R (recip x)')
@@ -3469,8 +3480,9 @@ var ruleInfo = {
       var stmt = getStatement(statement);
       try {
         // Strings and unproved terms have no ruleName.
-        return getResult(stmt).justify('fact');
+        return getResult(stmt).justify('fact', arguments);
       } catch(err) {}
+      // Next try arithmetic facts.
       try {
         var result = rules.axiomArithmetic(stmt);
         if (result.matchSchema('x = T')) {
@@ -3479,6 +3491,7 @@ var ruleInfo = {
         }
         return result;
       } catch(err) {}
+      // Try tautologies.
       try {
         // Inline for tautologies.
         return rules.tautology(statement);
@@ -3827,7 +3840,6 @@ var facts = {
   'x * recip y = x / y': function() {
     return rules.eqnSwap(rules.fact('x / y = x * recip y'));
   },
-
   'x != 0 ==> recip (recip x) = x': function() {
     var step1 = rules.axiom('axiomReciprocal');
     var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip x)'));
@@ -3841,6 +3853,16 @@ var facts = {
                                       'x * 1 = x');
     var step8 = rules.eqnSwap(step7);
     return step8;
+  },
+  '@R (recip x) & recip x != 0 ==> R x & x != 0': function() {
+    var taut = rules.tautology('(a == b) ==> (a ==> b)');
+    var fact = rules.axiom('axiomReciprocal2');
+    return rules.forwardChain(fact, taut);
+  },
+  '@R x & x != 0 ==> R (recip x) & recip x != 0': function() {
+    var taut = rules.tautology('(a == b) ==> (b ==> a)');
+    var fact = rules.axiom('axiomReciprocal2');
+    return rules.forwardChain(fact, taut);
   },
 
   /*
@@ -4202,12 +4224,16 @@ function isAxiom(name) {
 // Most of these axioms really have type parameters.  Ideally axiom
 // and theorem schemas will be able to stay, but the details remain
 // to be determined.
+//
+// TODO: Determine axioms and theorems as rules with no parameters;
+//   treat them all as facts; remove these hand-generated lists.
 
 var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP',
                   'axiomCommutativePlus', 'axiomAssociativePlus',
                   'axiomCommutativeTimes', 'axiomAssociativeTimes',
                   'axiomDistributivity', 'axiomPlusZero', 'axiomTimesOne',
                   'axiomTimesZero', 'axiomNeg', 'axiomReciprocal',
+                  'axiomReciprocal2',
                   'axiomPlusType', 'axiomTimesType',
                   'axiomNegType', 'axiomReciprocalType'];
 
@@ -4267,6 +4293,8 @@ function findHyp(term) {
 //// Export public names.
 
 Toy.rules = rules;
+Toy.facts = facts;
+Toy._factsMap = _factsMap;
 
 // A settable variable, export right here:
 Toy.autoAssert = false;
