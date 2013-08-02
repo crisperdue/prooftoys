@@ -3524,7 +3524,7 @@ var aliases = {
 };
 
 
-//// Refresher class
+//// Refresher class and deferred actions
 
 /**
  * Creates an object that will run the given function, if activated,
@@ -3534,6 +3534,7 @@ var aliases = {
 function Refresher(fn) {
   this.fn = fn;
   this._timer = null;
+  this.active = false;
 }
 
 /**
@@ -3548,12 +3549,21 @@ Refresher.prototype.activate = function() {
   var fn = this.fn;
   function action() {
     self._timer = null;
+    self.active = false;
     fn();
   }
-  if (this._timer == null) {
-    this._timer = setTimeout(action, 0);
+  if (this._timer === null) {
+    this.active = true;
+    this._timer = soonDo(action);
   }
 };
+
+/**
+ * Do the action as soon as the event handling system becomes idle.
+ */
+function soonDo(action) {
+  return window.setTimeout(action, 0);
+}
 
 
 //// UTILITY FUNCTIONS
@@ -4080,6 +4090,7 @@ Toy.unicodify = unicodify;
 Toy.debugString = debugString;
 
 Toy.Refresher = Refresher;
+Toy.soonDo = soonDo;
 
 // Error analysis
 Toy.errors = errors;
