@@ -3411,8 +3411,13 @@ function unparseString(content) {
  * (as by calling Expr.mathVars), and is not already a conditional
  * with real number conditions on variables, adds assumptions that all
  * of those "math variables" are real numbers.
+ *
+ * If string begins with "@", simply parses the rest.
  */
 function mathParse(str) {
+  if (str[0] === '@') {
+    return parse(str.slice(1));
+  }
   var expr = parse(str);
   var assume = expr.mathVarConditions();
   if (assume) {
