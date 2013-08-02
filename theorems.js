@@ -1261,7 +1261,8 @@ var ruleInfo = {
       var map = {};
       map[v.name] = term;
       var result = rules.instMultiVars(step, map);
-      return result.justify('instantiateVar', arguments, [step]);
+      var simpler = rules.simplifyAssumptions(result);
+      return simpler.justify('instantiateVar', arguments, [step]);
     },
     inputs: {site: 1, term: 3},
     form: ('Substitute <input name=term> for the selected variable.'),
@@ -3226,13 +3227,16 @@ var ruleInfo = {
         // Shortcut inline return.
         return step;
       }
+      // From a conditional a ==> b, prove a ==> (b == T).
+      // Returns a memoized function that yields the proved result.
       function proveIsT(stmt) {
         return memo(function() {
             return stmt.apply('asHypotheses').apply('toTIsA').apply('eqnSwap');
           });
       }
-      // Each fact must have the form h ==> (R <expr>) = <expr2>
-      // with h as hypotheses, or just (R <expr>) = <expr2>.
+      //
+      // All of these facts are returnable from getArithOp, below.
+      //
       var numeraler = function(expr) {
         // We can't memoize this one because a different fact is needed
         // for each different numeral.
@@ -3246,12 +3250,12 @@ var ruleInfo = {
       var negger = memo(function() {
           return rules.axiom('axiomNegType').apply('eqnSwap');
         });
+      // x != 0 ==> (R (recip x) == R x)
       var reciper = memo(function() {
           var step = rules.axiom('axiomReciprocalType');
           var schema = rules.tautology('(a & b == c) ==> (b ==> (c == a))');
           var step2 = rules.forwardChain(step, schema);
           var result = rules.asHypotheses(step2);
-          console.log('Reciprocal: ' + result);
           return result;
         });
       var binOps = {'+': adder, '*': multiplier,
@@ -3259,8 +3263,11 @@ var ruleInfo = {
       binOps = Toy.ownProperties(binOps);
       var unOps = {neg: negger, recip: reciper};
       unOps = Toy.ownProperties(unOps);
-      // Returns the appropriate memoized rule for this type
-      // expression or else a falsy value.
+      //
+      // Returns the appropriate memoized rule/fact for this type
+      // expression or else a falsy value.  Each fact must have the
+      // form h ==> (R <expr>) = <expr2> with h as hypotheses, or just
+      // (R <expr>) = <expr2>.
       function getArithOp(expr) {
         // TODO: Handle numeral arguments to R here,
         //   and direct calls of != with numerals.
@@ -3285,10 +3292,14 @@ var ruleInfo = {
             // Simplify statements about nonzero products.
             return memo(function() { return rules.factNonzeroProduct(); });
           }
+          if (expr.matchSchema('recip x != 0')) {
+            // Simplify statements about nonzero reciprocals.
+            return proveIsT(rules.fact('@R x & x != 0 ==> recip x != 0'));
+          }
         }
         return null;
       }
-      // Finds a reverse path to a conjunct in the given term that
+      // Finds and returns a path to a conjunct in the given term that
       // passes the test, or returns null.
       function findConjunct(term, test) {
         var Path = Toy.Path;
@@ -3309,6 +3320,8 @@ var ruleInfo = {
           return stepArg;
         }
         var step = stepArg;
+        // Repeatedly replace assumptions that match some rule
+        // from getArithOp until there is none.
         while (true) {
           var hyps = step.getLeft();
           var hypsPath = findConjunct(hyps, getArithOp);
@@ -3479,7 +3492,6 @@ var ruleInfo = {
       }
       var stmt = getStatement(statement);
       try {
-        // Strings and unproved terms have no ruleName.
         return getResult(stmt).justify('fact', arguments);
       } catch(err) {}
       // Next try arithmetic facts.
@@ -3862,6 +3874,11 @@ var facts = {
   '@R x & x != 0 ==> R (recip x) & recip x != 0': function() {
     var taut = rules.tautology('(a == b) ==> (b ==> a)');
     var fact = rules.axiom('axiomReciprocal2');
+    return rules.forwardChain(fact, taut);
+  },
+  '@R x & x != 0 ==> recip x != 0': function() {
+    var taut = rules.tautology('(a ==> b & c) ==> (a ==> c)');
+    var fact = rules.fact('@R x & x != 0 ==> R (recip x) & recip x != 0');
     return rules.forwardChain(fact, taut);
   },
 
