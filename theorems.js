@@ -3493,7 +3493,12 @@ var ruleInfo = {
       var stmt = getStatement(statement);
       try {
         return getResult(stmt).justify('fact', arguments);
-      } catch(err) {}
+      } catch(err) {
+        if (err.isProofError) {
+          // Proof failed -- abort.
+          throw err;
+        }
+      }
       // Next try arithmetic facts.
       try {
         var result = rules.axiomArithmetic(stmt);
@@ -3793,7 +3798,8 @@ var facts = {
     return step14;
   },
 
-  // Subtraction rules
+  // Subtraction facts
+
   'x + y - z = x - z + y': function() {
     var step = rules.consider('x + y - z')
     .rewrite('/main/right', 'x - y = x + neg y')
@@ -3882,14 +3888,13 @@ var facts = {
     return rules.forwardChain(fact, taut);
   },
 
-  /*
   // TODO: Get these working.
-  'x != 0 ==> recip (x * y) = recip x * recip y': function() {
+  'x != 0 & y != 0 ==> recip (x * y) = recip x * recip y': function() {
     var step1 = rules.axiom('axiomReciprocal');
     var step2 = rules.instVar(step1, Toy.parse('x * y'), 'x');
     var step3 = rules.rewriteWithFact(step2, '/right/left',
                                       'x * y * z = x * z * y');
-    var step4 = rules.addToBoth(step3, Toy.parse('recip y'));
+    var step4 = rules.multiplyBoth(step3, Toy.parse('recip y'));
     var step5 = rules.rewriteWithFact(step4, '/right/left',
                                       'x * y * z = x * (y * z)');
     var step6 = rules.rewriteWithFact(step5, '/right/left/right',
@@ -3898,7 +3903,7 @@ var facts = {
                                       '1 * x = x');
     var step8 = rules.rewriteWithFact(step7, '/right/left',
                                       'x * 1 = x');
-    var step9 = rules.addToBoth(step8, Toy.parse('recip x'));
+    var step9 = rules.multiplyBoth(step8, Toy.parse('recip x'));
     var step10 = rules.rewriteWithFact(step9, '/right/left/left',
                                        'x * y = y * x');
     var step11 = rules.rewriteWithFact(step10, '/right/left',
@@ -3913,12 +3918,13 @@ var facts = {
   },
 
   // Division rules
+
   'z != 0 ==> x * y / z = x / z * y': function() {
     var rewrite = 'rewriteWithFact';
     var step = rules.consider('x * y / z')
     .apply(rewrite, '/main/right', 'x / y = x * recip y')
     .apply(rewrite, '/main/right', 'x * y * z = x * z * y')
-    .apply(rewrite, '/main/right/left', 'x * neg y = x / y');
+    .apply(rewrite, '/main/right/left', 'x * recip y = x / y');
     return step;
   },
   'y != 0 ==> x / y * z = x * z / y': function() {
@@ -3948,7 +3954,6 @@ var facts = {
     .apply(rewrite, '/main/right', 'x * recip y = x / y');
     return step;
   },
-  */
 
   // Somewhat useful fact to stick at the end of the list.
   'not F': function() {
@@ -4114,7 +4119,13 @@ function getResult(fact) {
   assert(prover, function() { return 'No such fact: ' + expr; });
   var result = prover._provedResult;
   if (!result) {
-    result = prover();
+    try {
+      result = prover();
+    } catch(err) {
+      // Flag it as an error in proof execution.
+      err.isProofError = true;
+      throw err;
+    }
     var main = result.getMain();
     assert(result.matches(expr) || main.matches(expr), function() {
         return ('Expected proof of ' + expr.toString() +
