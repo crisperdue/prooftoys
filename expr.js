@@ -654,11 +654,12 @@ Expr.prototype.concat = function(expr, op) {
   if (!expr) {
     return this;
   }
-  var result = this;
-  for (var e = expr; e.isCall2(op); e = e.getRight()) {
-    result = infixCall(result, op, e.getLeft());
+  if (expr.isCall2(op)) {
+    return infixCall(this.concat(expr.getLeft(), op),
+                     op, expr.getRight());
+  } else {
+    return infixCall(this, op, expr);
   }
-  return infixCall(result, op, e);
 };
 
 /**
