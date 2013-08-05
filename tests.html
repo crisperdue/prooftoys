@@ -546,6 +546,9 @@ var testCase = {
     assertEqual('((h1 & h2) & a)', result);
     var result = Toy.parse('h1 & h2').concat(Toy.parse('a & b'), '&');
     assertEqual('(((h1 & h2) & a) & b)', result);
+    assertEqual('(((a & (R x)) & (R y)) & (R z))',
+                (Toy.parse('a')
+                 .concat(Toy.parse('R x & R y & R z'), '&')));
   },
 
   testNormalized: function() {
