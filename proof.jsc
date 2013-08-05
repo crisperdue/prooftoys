@@ -476,6 +476,11 @@ ProofControl.prototype.setSteps = function(steps) {
 /**
  * Gives the steps numbers from 1 to N, or each its ordinal if
  * showOrdinals flag is true.  Updates step number display of each.
+ *
+ * TODO: Consider eliminating this in a redesign of rendering.
+ *   Probably simpler to re-render steps rather than renumbering them,
+ *   since more than the numbering may change, e.g. steps become
+ *   adjacent after a deletion.
  */
 ProofControl.prototype._renumber = function() {
   var self = this;
@@ -492,19 +497,10 @@ ProofControl.prototype._renumber = function() {
 };  
 
 /**
- * Render's the step number into its element of class "stepNumber",
- * and fixes up its elements of class "stepReference" to contain the
- * stepNumber of the corresponding dependency.
+ * Render's the step number into its element of class "stepNumber".
  */
 function renderStepNumber(step) {
   $(step.stepNode).find('.stepNumber').text(step.stepNumber);
-  // Fix up references made by the step.  (These should all be prior
-  // steps.)
-  var deps = getRenderedDeps(step);
-  $(step.stepNode).find('.stepReference').each(function(index) {
-      $(this).text(deps[index].rendering.stepNumber);
-    });
-  // TODO: Consider fixing up references to hypotheses here.
 }
 
 /**
@@ -1357,7 +1353,8 @@ function expandMarkup(step, markup) {
       if (markupRest && adjacentSteps(stepArg, step)) {
         return '';
       } else {
-        return markupRest + stepArg.rendering.stepNumber;
+        return markupRest + '<span class=stepReference>' +
+          stepArg.rendering.stepNumber + '</span>';
       }
     } else {
       // If the index is out of range return '?'.
@@ -1510,7 +1507,7 @@ var stepFormatters = {
     for (key in map) {
       keys.push(key);
     }
-    return 'substitute for ' + keys.join(', ') + ';; in step {step}';
+    return 'substitute for ' + keys.join(', ') + ';; {in step step}';
   },
   tautInst: function(step) {
     var taut = step.ruleArgs[0];
@@ -1993,6 +1990,9 @@ Toy.getStepNode = getStepNode;
 Toy.getProofStep = getProofStep;
 Toy.getStepsNode = getStepsNode;
 Toy.getExpr = getExpr;
+
+// For debugging
+Toy._adjacentSteps = adjacentSteps;
 
 // For testing:
 Toy._formattedStepInfo = formattedStepInfo;
