@@ -557,23 +557,6 @@ ProofControl.prototype._removeStep = function(toRemove) {
 
 /**
  * Remove from the proof display the given top-level rendered proof
- * step and all other steps of the display that depend on it directly
- * or indirectly.
- *
- * TODO: Complete this by updating remaining steps appropriately
- *   and clearing subproofs.
- */
-ProofControl.prototype.removeStepAndDeps = function(toRemove) {
-  var dependent;
-  while (dependent = this.findDependent(toRemove)) {
-    this.removeStepAndDeps(dependent);
-  }
-  this._removeStep(toRemove);
-  this.proofChanged();
-};
-
-/**
- * Remove from the proof display the given top-level rendered proof
  * step and all other steps of the display that come after it.
  */
 ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
