@@ -546,12 +546,12 @@ ProofControl.prototype.findDependent = function(target) {
  * any way.
  */
 ProofControl.prototype.removeStep = function(toRemove) {
-  if (this.selection == toRemove) {
+  if (this.selection === toRemove) {
     this.deselectStep();
   }
   // Remove highlighting by pretending the mouse moved out.
   // Deleting the node will not trigger the mouse out event.
-  hoverStep(step, 'out');
+  hoverStep(toRemove, 'out');
   $(toRemove.stepNode).remove();
   delete toRemove.original.rendering;
   this.steps.splice(this.steps.indexOf(toRemove), 1);
@@ -564,12 +564,12 @@ ProofControl.prototype.removeStep = function(toRemove) {
 ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
   var index = this.steps.indexOf(toRemove);
   var steps = this.steps;
-  // Remember the current length.
-  var length = steps.length;
-  for (var i = index; i < length; i++) {
+  // Remove the last remaining step in each iteration so there is
+  // never a step that references a deleted or non-rendered step.
+  for (var i = steps.length - 1; i >= index; --i) {
     // Don't change the index - each iteration deletes a step.
-    clearSubproof(steps[index]);
-    this.removeStep(steps[index]);
+    clearSubproof(steps[i]);
+    this.removeStep(steps[i]);
   }
   this.proofChanged();
 };
