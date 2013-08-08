@@ -206,6 +206,11 @@ table.proofDisplay {
     width: 100%;
 }
 
+/* Display of a subproof */
+.inferenceDisplay {
+  margin-left: 1em;
+}
+
 .stepsParent {
   /* Position the step details overlay relative to this. */
   position: relative;

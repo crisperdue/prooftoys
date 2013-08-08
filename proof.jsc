@@ -1214,9 +1214,7 @@ function renderSubproof(step) {
     jq = renderInference(step);
   }
   step.subproofControl = jq.data('proofControl');
-  // Append it to the top node of the proof + subproofs.
-  var container = getTopProofContainer(step);
-  container.append(jq);
+  $(step.stepNode).append(jq);
 }
 
 /**
