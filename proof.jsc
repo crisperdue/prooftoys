@@ -734,8 +734,7 @@ var _turnstile = '\u22a6';
  */
 function renderStep(step, controller) {
   var delHtml = (controller.editable
-                 ? ('<input type=button class=deleteStep value="X"' +
-                    ' title="Delete step">')
+                 ? '<button class=deleteStep title="Delete step">X</button>'
                  : '');
   var stepJQ =
     $('<div class=proofStep>' +
