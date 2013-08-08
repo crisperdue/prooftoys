@@ -260,6 +260,13 @@ table.proofDisplay {
 
 .proofStep.hover .deleteStep {
   visibility: visible;
+  color: red;
+  font-weight: bold;
+}
+
+.proofStep.hover.hasUsers .deleteStep {
+  visibility: visible;
+  color: silver;
 }
 
 /* Rule name and information about rule arguments. */

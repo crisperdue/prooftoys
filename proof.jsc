@@ -451,7 +451,7 @@ ProofControl.prototype.selectionChanged = function() {};
 
 /**
  * Sets the steps of this proof control to be renderings of the ones
- * in the given array of renderable or nonrenderable steps, with
+ * in the given array of nonrenderable steps, with
  * stepNumber properties running from 1 to N.
  *
  * TODO: Make a sensible policy for accepting renderable versus
@@ -504,7 +504,7 @@ function renderStepNumber(step) {
 }
 
 /**
- * Adds a rendering of the given proof step of either type to the end
+ * Adds a rendering of the given "real" proof step to the end
  * of the control's proof, assigning it the stepNumber for its
  * position.
  */
@@ -515,6 +515,7 @@ ProofControl.prototype.addStep = function(step) {
   copy.rendering = copy;
   step.original = step;
   copy.original = step;
+  step.ruleDeps.forEach(@{s. void s.rendering.addUser();});
   this.steps.push(copy);
   copy.stepNumber = (Toy.showOrdinals
                      ? step.ordinal
@@ -558,6 +559,7 @@ ProofControl.prototype.removeLastStep = function() {
   hoverStep(step, 'out');
   $(step.stepNode).remove();
   delete step.original.rendering;
+  step.ruleDeps.forEach(@{s. s.rendering.removeUser();});
   steps.length = index;
 };
 
@@ -577,6 +579,21 @@ ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
 };
 
 /**
+ * Remove just the given rendered step from this proof.
+ * The step must not have any rendered steps that depend on it.
+ */
+ProofControl.prototype.removeStep = function(step) {
+  assert(step.users == 0,
+         'Cannot remove used step ' + step);
+  // Works by removing from here down, then re-inserting.
+  var self = this;
+  var index = self.steps.indexOf(step);
+  var followers = self.steps.slice(index + 1);
+  self.removeStepAndFollowing(step);
+  followers.forEach(@{s. self.addStep(s.original)});
+};
+
+/**
  * Makes the control editable or not by showing/hiding the
  * editor button and flagging its state.
  */
@@ -584,7 +601,7 @@ ProofControl.prototype.setEditable = function(state) {
   this.editable = state;
   $(this.node).toggleClass('editable', !!state);
   this.stepEditor.jq.toggle(state);
-}
+};
 
 
 // STEP SELECTION
@@ -717,7 +734,7 @@ var _turnstile = '\u22a6';
  */
 function renderStep(step, controller) {
   var delHtml = (controller.editable
-                 ? ('<input type=button class=deleteStep value="x"' +
+                 ? ('<input type=button class=deleteStep value="X"' +
                     ' title="Delete step">')
                  : '');
   var stepJQ =
@@ -784,11 +801,9 @@ function renderStep(step, controller) {
     deleter.on('click', function(event) {
         // Don't give the proof step a chance to select itself.
         event.stopPropagation();
-        var msg = 'Delete step ' + step.stepNumber + ' and all following?';
-        // Is it the last step or the user says OK?
-        if (controller.steps.indexOf(step) >= controller.steps.length - 1 ||
-            window.confirm(msg)) {
-          controller.removeStepAndFollowing(step);
+        if (step.users == 0) {
+          // If the step has users the button is effectively disabled.
+          controller.removeStep(step);
           controller.proofChanged();
         }
       });
