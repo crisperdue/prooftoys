@@ -762,6 +762,10 @@ Expr.prototype.subFree = function(replacement, vbl) {
 
 var _assertionCounter = 1;
 
+////
+//// Methods that properly belong to Exprs that are proof steps
+////
+
 /**
  * Modifies the trace information of a proof step to treat it as an
  * assertion, with rule name, args, and deps to match, and no
@@ -800,6 +804,7 @@ Expr.prototype.getBase = function() {
  */
 Expr.prototype.copyStep = function() {
   var expr = this.copy();
+  expr.users = 0;
   expr.details = this.details;
   expr.ruleName = this.ruleName;
   // Some elements of ruleArgs may refer to originals of other steps.
@@ -810,6 +815,27 @@ Expr.prototype.copyStep = function() {
   expr.hasHyps = this.hasHyps;
   return expr;
 };
+
+
+Expr.prototype.addUser = function() {
+  this.users++;
+  $(this.stepNode).addClass('hasUsers');
+  // It would be nice to do this, but in Chrome hover events
+  // don't work right with this code.
+  // $(this.stepNode).find('.deleteStep').prop('disabled', true);
+};
+
+Expr.prototype.removeUser = function() {
+  this.users--;
+  if (this.users <= 0) {
+    $(this.stepNode).removeClass('hasUsers');
+    // It would be nice to do this, but in Chrome hover events
+    // don't work right with this code.
+    // $(this.stepNode).find('.deleteStep').prop('disabled', false);
+  }
+};
+
+//// End of methods for proof steps
 
 /**
  * Finds and returns a Map of free names in this expression, from name
@@ -2078,7 +2104,7 @@ Lambda.prototype._subFree = function(replacement, name, freeNames, allNames) {
 
 Lambda.prototype.copy = function() {
   var result = new Lambda(this.bound.copy(), this.body.copy());
-  result.sourcestep = this.sourceStep;
+  result.sourceStep = this.sourceStep;
   return result;
 };
 
