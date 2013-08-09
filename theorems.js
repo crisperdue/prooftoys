@@ -496,9 +496,9 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Swap sides in step <input name=equation>',
-    hint: '[A = B] to B = A',
-    comment: 'from A = B deduce B = A',
-    description: 'from a = b to b = a',
+    hint: '[a = b] to [b = a]',
+    comment: 'from a = b deduce b = a',
+    description: '[a = b] to [b = a]',
     labels: 'basic'
   },
 
@@ -509,9 +509,9 @@ var ruleInfo = {
       var result = ac;
       return result.justify('eqnChain', arguments, arguments);
     },
-    description: 'from A = B and B = C to A = C',
-    hint: '[A = B], [B = C] to [A = C]',
-    comment: 'from A = B and B = C deduce A = C'
+    description: '[a = b] and [b = c] to [a = c]',
+    hint: '[a = b] and [b = c] to [a = c]',
+    comment: 'from a = b and b = c deduce a = c'
   },
 
   // r5201d, not used.  Works with hypotheses.
@@ -542,9 +542,9 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Apply both sides of step <input name=equation>'
 	   + ' to term <input name=term>'),
-    hint: '[f = g] to [f A = g A]',
-    comment: 'given f = g, deduce (f A) = (g A)',
-    description: 'f = g to (f a) = (g a)',
+    hint: '[f = g] to [f x = g x]',
+    comment: 'given f = g, deduce (f x) = (g x)',
+    description: '[f = g] to [f x = g x]',
   },
 
   // r5201f.  Works with hypotheses.
@@ -563,8 +563,8 @@ var ruleInfo = {
     inputs: {term: 1, equation: 2},
     form: ('Apply function <input name=term>'
 	   + ' to both sides of step <input name=equation>'),
-    hint: '[A = B] to [F A = F B]',
-    comment: 'given B = C deduce (f B) = (f C)',
+    hint: '[a = b] to [f a = f b]',
+    comment: 'given a = b deduce (f a) = (f b)',
     description: 'from a = b to (f a) = (f b)'
   },
 
@@ -736,10 +736,10 @@ var ruleInfo = {
     },
     inputs: {equation: 1, varName: 2},
     form: ('Bind variable <input name=varName> in step <input name=equation>'),
-    hint: '[A = B] to [{v. A} = {v. B}]',
+    hint: '[a = b] to [{v. a} = {v. b}]',
     comment: ('Makes each side of an equation into a function'
               + ' of the variable you choose.'),
-    description: 'from A = B to {v. A} = {v. B}',
+    description: '[a = b] to [{v. a} = {v. b}]',
     labels: 'primitive'
   },
 
@@ -794,8 +794,8 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Term to prove equal to itself: <input name=term>'),
-    hint: 'T = (A = A)',
-    comment: ('Proves T = [A = A].'),
+    hint: 'T = (a = a)',
+    comment: ('Proves T = [a = a].'),
     formula: 'T = (a = a)',
     labels: 'primitive'
   },
@@ -857,8 +857,8 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Introduce "T = " into step <input name=equation>',
-    hint: '[A = B] to [T = (A = B)]',
-    comment: ('From [A = B] deduce T = [A = B].'),
+    hint: '[a = b] to [T = (a = b)]',
+    comment: ('From [a = b] deduce T = [a = b].'),
     description: 'from a = b to T = (a = b)',
     labels: 'primitive'
   },
@@ -1148,9 +1148,9 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Term to use in ((T = A) = A): <input name=term>'),
-    hint: '[(T = A) = A]',
+    hint: '[(T = a) = a]',
     labels: 'uncommon',
-    comment: ('For any expression A derives [T = A] = A.'),
+    comment: ('For any expression derives [T = a] = a.'),
     description: '(T = a) = a'
   },
 
@@ -1163,10 +1163,9 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Introduce "T = " into step <input name=step>',
-    hint: '[A] to [T = A]',
+    hint: '[a] to [T = a]',
     comment: ('From A derives T = A'),
-    formula: 'a = (T = a)',
-    description: 'a = (T = a);; {in step step}',
+    description: '[a] to [T = a];; {in step step}',
     labels: 'primitive'
   },
 
@@ -1189,9 +1188,9 @@ var ruleInfo = {
       return (left instanceof Toy.Var && left.name == 'T');
     }}},
     form: 'Eliminate "T = " from step <input name=equation>',
-    hint: '[T = A] to A',
+    description: '[T = a] to [a]',
+    hint: '[T = a] to [a]',
     comment: ('From T = A derives A'),
-    formula: '(T = a) = a',
     labels: 'primitive'
   },
 
@@ -1265,7 +1264,7 @@ var ruleInfo = {
       return simpler.justify('instantiateVar', arguments, [step]);
     },
     inputs: {site: 1, term: 3},
-    form: ('Substitute <input name=term> for the selected variable.'),
+    form: ('Substitute <input name=term> for the variable.'),
     hint: 'substitute for a free variable',
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
@@ -1321,9 +1320,9 @@ var ruleInfo = {
     },
     inputs: {step: [1, 2]},
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
-    hint: '[A], [B] to [A & B]',
+    hint: '[p] and [q] to [p & q]',
     comment: ('Given a and b, derive a & b'),
-    description: 'a & b;; using steps {step1}, {step2}'
+    description: 'p & q;; using steps {step1}, {step2}'
   },
 
   // (5222) Given two theorems that are substitutions of T and
@@ -1376,7 +1375,7 @@ var ruleInfo = {
 	   + ' implication in step <input name=implication>'),
     hint: 'modus ponens',
     comment: ('Modus Ponens.  Given A and A ==> B derives B.'),
-    description: 'from p, p &rArr; q to q',
+    description: '[p] and [p &rArr; q] to q',
     labels: 'primitive'
   },
 
@@ -1708,9 +1707,9 @@ var ruleInfo = {
     },
     inputs: {term: 1, step: 2},
     form: ('Derive that <input name=term> implies theorem <input name=step>'),
-    hint: 'From theorem B deduce A ==> B',
+    hint: '[q] to [p ==> q]',
     comment: ('Given a theorem, derive that something implies it.'),
-    formula: 'a ==> T',
+    formula: 'T ==> q',
     labels: 'uncommon'
   },
 
@@ -2622,7 +2621,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'step <input name=step>',
-    hint: '[H ==> (A ==> B)] to [H & A ==> B]',
+    hint: Toy.mathMarkup('[h ==> (p ==> q)] to [h & p ==> q]'),
     labels: 'uncommon',
     description: 'absorb antecedent into the assumptions'
   },
