@@ -318,8 +318,7 @@ ProofEditor.prototype.setStateFromString = @(encoded) {
  * Sets the steps to the given array of non-renderable steps.
  */
 ProofEditor.prototype.setSteps = @(steps) {
-  var rendered = steps.map(@{step. step.copyStep()});
-  @mainControl.setSteps(rendered);
+  @mainControl.setSteps(steps);
 };
 
 /**
@@ -520,9 +519,8 @@ ProofControl.prototype.addStep = function(step) {
   copy.stepNumber = (Toy.showOrdinals
                      ? step.ordinal
                      : this.stepPrefix + this.steps.length);
-  var stepNode = renderStep(copy, this);
+  var stepParent = this.renderStep(copy);
   renderStepNumber(copy);
-  this._stepsJQ.append(stepNode);
   this.proofChanged();
 };
 
@@ -732,17 +730,23 @@ var _turnstile = '\u22a6';
  *   elsewhere may assume that only node's that render a proof step
  *   have the proofStep CSS class.
  */
-function renderStep(step, controller) {
+ProofControl.prototype.renderStep = function(step) {
+  var controller = this;
   var delHtml = (controller.editable
                  ? '<button class=deleteStep title="Delete step">X</button>'
                  : '');
-  var stepJQ =
-    $('<div class=proofStep>' +
+  var stepParent =
+    $('<div class=stepAndSubproofs><div class=proofStep>' +
       delHtml +
       '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
       '<span class=wff></span>' +
       '<span class=stepInfo></span>' +
-      '</div>');
+      '</div></div>');
+  controller._stepsJQ.append(stepParent);
+  var stepJQ = stepParent.find('.proofStep');
+  if (controller.editable) {
+    stepParent.addClass('withDeleter');
+  }
   stepJQ.data('proofStep', step);
   step.stepNode = dom(stepJQ);
   var elide = wantLeftElision(step, controller);
@@ -826,7 +830,7 @@ function renderStep(step, controller) {
         }
       });
   }
-  return dom(stepJQ);
+  return dom(stepParent);
 }
 
 /**
@@ -1206,7 +1210,6 @@ function unrenderedDeps(step) {
  */
 function renderSubproof(step) {
   var controller = getProofControl(step);
-  controller.steps.forEach(clearSubproof);
   var jq;
   if (step.ruleName == 'theorem') {
     jq = renderInference(Toy.getTheorem(step.ruleArgs[0]));
@@ -1214,7 +1217,12 @@ function renderSubproof(step) {
     jq = renderInference(step);
   }
   step.subproofControl = jq.data('proofControl');
-  $(step.stepNode).append(jq);
+  var proofQ = $(controller.node);
+  var oldHeight = proofQ.height();
+  $(step.stepNode).closest('.stepAndSubproofs').prepend(jq);
+  // Scroll the window to try to keep the step from jumping
+  // around visually.
+  window.scrollBy(0, proofQ.height() - oldHeight);
 }
 
 /**
@@ -1229,46 +1237,32 @@ function clearSubproof(step) {
         // Record that the rendering is gone.
         step.original.rendering = null;
         // Clear any rendered subproof for the step.
+        // Also might scroll; could this become a problem?
         clearSubproof(step);
       });
+    var proofQ = $(getProofControl(step).node);
+    var oldHeight = proofQ.height();
     var container = $(controller.node).closest('.inferenceDisplay');
     container.remove();
+    window.scrollBy(0, proofQ.height() - oldHeight);
   }
-}
-
-/**
- * Returns an array of the dependencies to show for the given step.
- */
-function getRenderedDeps(step) {
-  if (step.ruleDeps.length > 1) {
-    return step.ruleDeps;
-  }
-  var result = [];
-  var node = getStepNode(step);
-  step.ruleDeps.forEach(function(dep) {
-      var depNext = getStepNode(dep.rendering).nextElementSibling;
-      // In the future we may insert the step's node early,
-      // so we do the != test here.
-      if (depNext && depNext != node) {
-        result.push(dep);
-      }
-    });
-  return result;
 }
 
 /**
  * True iff step1 and step2 are rendered adjacent to each other,
- * with step1 first.  As a sop to current practice, allow step1
- * to have no next step, and step2 not linked into the DOM.
+ * with step1 first.
  */
 function adjacentSteps(step1, step2) {
-  var j1 = $(getStepNode(step1.rendering));
-  var j2 = $(getStepNode(step2.rendering));
-  // TODO: Link in new steps before rendering, and eliminate this
-  // special test.
-  // Is j2 linked into the DOM?
-  var p2 = j2.closest('body');
-  return (p2.length == 0 && j1.next().length == 0) || j1.next().is(j2);
+  step1 = step1.rendering;
+  step2 = step2.rendering;
+  var controller = getProofControl(step1);
+  var controller2 = getProofControl(step2);
+  if (controller2 !== controller) {
+    return false;
+  }
+  var index1 = controller.steps.indexOf(step1);
+  var index2 = controller.steps.indexOf(step2);
+  return index2 == index1 + 1;
 }
 
 /**
@@ -1531,24 +1525,34 @@ var stepFormatters = {
  */
 function renderInference(step) {
   var steps = unrenderedDeps(step.details);
-  var prefix = step.stepNumber ? step.stepNumber + '.' : '';
+  var prefix = '';
+  var stepNum = step.stepNumber;
+  if (stepNum !== '') {
+    var match = stepNum.match(/(.*?)([0-9]+)$/);
+    if (match) {
+      prefix = match[1] + (match[2] - 1) + '.';
+    }
+  }
   var controller = new ProofControl({stepPrefix: prefix});
   controller.setSteps(steps);
   var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
   var jq = $('<div class=inferenceDisplay></div>');
   if (step.ruleName === 'fact') {
-    jq.append('<div class=proofHeader><b>Proof of <span class=math>'
-              + Toy.mathMarkup(step.toUnicode())
-              + '</span></b><br>'
-              + '<i>' + comment + '</i></div>');
-
+    var header = $('<div class=proofHeader><b>Proof of <span class=math>'
+                   + Toy.mathMarkup(step.toUnicode())
+                   + '</span></b><br>'
+                   + '<i>' + comment + '</i> '
+                   + '<a href="javascript:;">[<i>hide</i>]</a></div>');
   } else {
     var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
-    jq.append('<div class=proofHeader><b>' + pruf
-              + step.ruleName + '</b> '
-              + computeHeaderArgInfo(step) + '<br>'
-              + '<i>' + comment + '</i></div>');
+     var header = $('<div class=proofHeader><b>' + pruf
+                    + step.ruleName + '</b> '
+                    + computeHeaderArgInfo(step) + '<br>'
+                    + '<i>' + comment + '</i> '
+                    + '<a href="javascript:;"><i>[hide]</i></a></div>');
   }
+  header.find('a').on('click', function() { clearSubproof(step); });
+  jq.append(header);
   jq.append(controller.node);
   jq.data('proofControl', controller);
   return jq;

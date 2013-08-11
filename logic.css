@@ -193,7 +193,7 @@ td#leftNav a:before {
 
 /* Header line and comments for display. */
 .proofHeader {
-    margin: 1em 1.5em .5em;
+    margin: 1em 0em .5em;
     line-height: 120%;
 }
 
@@ -209,6 +209,13 @@ table.proofDisplay {
 /* Display of a subproof */
 .inferenceDisplay {
   margin-left: 1em;
+}
+
+/* The first level of subproof needs extra indent in the case
+ * where there is a "deleter" button on the left.
+ */
+.stepAndSubproofs.withDeleter > .inferenceDisplay {
+  margin-left: 3em;
 }
 
 .stepsParent {
