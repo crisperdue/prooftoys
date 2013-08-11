@@ -246,22 +246,22 @@ For the inference step, click on the step number "1" at the <i>very
 beginning</i> in the first line of the proof display.  The whole line
 will highlight itself (in yellow) and stay highlighted as you move the
 mouse away.  Now use the dropdown list control to select a rule of
-inference to use.  When you select <s>[A], [A==>B] to [B]</s> from the
+inference to use.  When you select <s>[p] and [p ==> q] to [q]</s> from the
 list, a small form will appear with "1" as the hypothesis step.  Enter
 <code>2</code> as the number of the implication step to apply the rule
 to.  Press <code>&lt;Enter&gt;</code>.  You should see the conclusion
 <s>q</s> added to the proof.
 <p>
-Note that in this rule <s>[A]</s>, <s>[A==>B]</s>, and <s>[B]</s> are
+Note that in this rule <s>[p]</s>, <s>[p ==> q]</s>, and <s>[q]</s> are
 patterns.  The rule needs two steps as its inputs, which must match
-the patterns <s>[A]</s> and <s>[A==>B]</s>.  <s>A</s> can be any
+the patterns <s>[p]</s> and <s>[p ==> q]</s>.  <s>p</s> can be any
 expression, but it must be the same in both of the input steps.  The
 result of the inference will be the expression that matches with
-<s>B</s> in the second input step.  The brackets just indicate the
+<s>q</s> in the second input step.  The brackets just indicate the
 boundaries of each of the patterns.
 <p>
-Finally to make the hypotheses explicit, you might wish to select the
-last line of the proof and choose the rule <s>show assumptions</s>
+To make the assumptions explicit, you might wish to select the
+last line of the proof and choose the <s>assumptions explicit</s>
 rule, which causes the hypotheses to be displayed explicitly as
 preconditions.  Again, select the entire step by clicking on the step
 number.

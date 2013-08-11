@@ -161,8 +161,8 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
-    comment: 'convert to conditional',
-    description: ';;convert to conditional {in step step}',
+    comment: 'assumptions explicit',
+    description: ';;explicit assumptions {in step step}',
   },
 
   /**
@@ -194,8 +194,8 @@ var ruleInfo = {
     inputs: {implication: 1},
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
-    hint: 'convert to assumptions',
-    description: 'convert to assumptions;; {in step implication}',
+    hint: 'assumptions implicit',
+    description: 'assumptions implicit;; {in step implication}',
   },
 
   /**
@@ -1886,7 +1886,7 @@ var ruleInfo = {
     inputs: {step: [1, 2]},
     form: ('Match step <input name=step1> with left side of implication '
            + 'in schema <input name=step2>'),
-    comment: ('[A], [A ==> B] to B'),
+    comment: ('[p] and [p ==> q] to q'),
     description: 'consequence;; of step {step1} using step {step2}'
   },
 
