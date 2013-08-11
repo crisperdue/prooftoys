@@ -1164,7 +1164,7 @@ var testCase = {
     var step = Toy.rules.eqT(call(f, x));
     assertEqual('(T = ((f x) = (f x)))', step);
     var controller =
-      Toy.renderInference(step, $(document.body)).data('proofControl');
+      Toy.renderInference(step).data('proofControl');
     var step2 = Toy.rules.instVar(step.details, y, x);
     // Add a step and immediately remove it.  See that at least
     // there are no exceptions.

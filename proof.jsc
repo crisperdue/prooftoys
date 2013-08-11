@@ -731,8 +731,8 @@ var _turnstile = '\u22a6';
  *   have the proofStep CSS class.
  */
 ProofControl.prototype.renderStep = function(step) {
-  var controller = this;
-  var delHtml = (controller.editable
+  var self = this;
+  var delHtml = (self.editable
                  ? '<button class=deleteStep title="Delete step">X</button>'
                  : '');
   var stepParent =
@@ -742,14 +742,14 @@ ProofControl.prototype.renderStep = function(step) {
       '<span class=wff></span>' +
       '<span class=stepInfo></span>' +
       '</div></div>');
-  controller._stepsJQ.append(stepParent);
+  self._stepsJQ.append(stepParent);
   var stepJQ = stepParent.find('.proofStep');
-  if (controller.editable) {
+  if (self.editable) {
     stepParent.addClass('withDeleter');
   }
   stepJQ.data('proofStep', step);
   step.stepNode = dom(stepJQ);
-  var elide = wantLeftElision(step, controller);
+  var elide = wantLeftElision(step, self);
   step.hasLeftElision = elide;
   var wffJQ = $(renderAsStep(step));
   stepJQ.find('.wff').empty().append(wffJQ);
@@ -760,12 +760,12 @@ ProofControl.prototype.renderStep = function(step) {
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
-         controller.handleExprSelection(getEffectiveSelection(event.target));
+         self.handleExprSelection(getEffectiveSelection(event.target));
          event.preventDefault();
        });
   stepJQ.on(TOUCHDOWN,
        function(event) {
-         controller.handleStepClick(getProofStep(event.target));
+         self.handleStepClick(getProofStep(event.target));
        });
 
   stepJQ.find('.stepInfo').html(formattedStepInfo(step));
@@ -806,8 +806,8 @@ ProofControl.prototype.renderStep = function(step) {
         event.stopPropagation();
         if (step.users == 0) {
           // If the step has users the button is effectively disabled.
-          controller.removeStep(step);
-          controller.proofChanged();
+          self.removeStep(step);
+          self.proofChanged();
         }
       });
   }
@@ -831,7 +831,7 @@ ProofControl.prototype.renderStep = function(step) {
       });
   }
   return dom(stepParent);
-}
+};
 
 /**
  * Searches up the DOM tree for a hovered expr or fullExpr node,
@@ -1514,7 +1514,7 @@ var stepFormatters = {
  * class inferenceDisplay.  Sets the 'proofControl' data property of
  * the node to refer to the new ProofControl.  If the step is
  * rendered, the details are rendered with step numbers relative to
- * its step number.
+ * its own step number.
  *
  * Returns the new container jQuery DIV.
  *
@@ -1527,7 +1527,8 @@ function renderInference(step) {
   var steps = unrenderedDeps(step.details);
   var prefix = '';
   var stepNum = step.stepNumber;
-  if (stepNum !== '') {
+  if (stepNum) {
+    // The stepNum could be a nonempty string, or undefined.
     var match = stepNum.match(/(.*?)([0-9]+)$/);
     if (match) {
       prefix = match[1] + (match[2] - 1) + '.';
