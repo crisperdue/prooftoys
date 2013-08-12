@@ -255,6 +255,20 @@ table.proofDisplay {
     */
 }
 
+/* Display of element that can hide a subproof */
+.subproofHider {
+  font-family: sans-serif;
+  font-style: italic;
+  color: blue;
+  cursor: pointer;
+  visibility: hidden;
+}
+
+/* If in a step with open subproof display or in a subproof, show it. */
+.proofStep.hasSubproof .subproofHider, .proofHeader .subproofHider {
+  visibility: visible;
+}
+
 /* Color is overridden by hovering on the step or selecting it. */
 .stepNumArea {
   border: 1px solid transparent;

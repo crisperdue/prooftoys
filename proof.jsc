@@ -753,6 +753,9 @@ ProofControl.prototype.renderStep = function(step) {
   step.hasLeftElision = elide;
   var wffJQ = $(renderAsStep(step));
   stepJQ.find('.wff').empty().append(wffJQ);
+  stepJQ.find('.stepInfo').html(formattedStepInfo(step));
+
+  // Event handling:
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
   // Set up click handlers for selections within the step.
@@ -767,9 +770,6 @@ ProofControl.prototype.renderStep = function(step) {
        function(event) {
          self.handleStepClick(getProofStep(event.target));
        });
-
-  stepJQ.find('.stepInfo').html(formattedStepInfo(step));
-
   // "Hover" events can come in slightly out of order as we track both
   // an inner and outer element.  Straighten this out by maintaining
   // a count of net in/out events and considering the mouse "in" when
@@ -1216,34 +1216,70 @@ function renderSubproof(step) {
   } else {
     jq = renderInference(step);
   }
+  $(getStepNode(step)).addClass('hasSubproof');
   step.subproofControl = jq.data('proofControl');
-  var proofQ = $(controller.node);
-  var oldHeight = proofQ.height();
+
+  // Animate display of the subproof.  While sliding in the display,
+  // also smoothly scroll the window to keep the given step at the
+  // same place in the window.
+  var oldTop = $(window).scrollTop();
+  var oldHeight = document.height;
   $(step.stepNode).closest('.stepAndSubproofs').prepend(jq);
-  // Scroll the window to try to keep the step from jumping
-  // around visually.
-  window.scrollBy(0, proofQ.height() - oldHeight);
+  var growth = document.height - oldHeight;
+  jq.toggle(false);
+  // Do the actual animations after computing the net change
+  // in document height.
+  jq.show({duration: 200});
+  // Really this line animates the window scrollTop, but this
+  // is the magic formula that does it across browsers.
+  $('html, body').animate({scrollTop: oldTop + growth}, 200);
 }
 
 /**
  * Clear any subproof of this step and any subproofs of its steps
  * recursively.  Remove the subproofControl property from the step.
+ *
+ * The second argument is for internal use only.
  */
-function clearSubproof(step) {
+function clearSubproof(step, internal) {
+  // TODO: Consider ways to clean up this whole function.
   var controller = step.subproofControl;
-  delete step.subproofControl;
   if (controller) {
+    delete step.subproofControl;
     controller.steps.forEach(function(step) {
         // Record that the rendering is gone.
         step.original.rendering = null;
         // Clear any rendered subproof for the step.
-        // Also might scroll; could this become a problem?
-        clearSubproof(step);
+        // Avoid scrolling any inner subproofs.
+        clearSubproof(step, true);
       });
+    var container = $(controller.node).closest('.inferenceDisplay');
+    if (!internal) {
+      // Compute the net change in document height.
+      var oldTop = $(window).scrollTop();
+      var oldHeight = document.height;
+      container.toggle(false);
+      var growth = document.height - oldHeight;
+      container.toggle(true);
+      // Do the actual animations, similar to the ones in renderSubproof.
+      container.hide(
+                     {duration: 200,
+                      complete: function() {
+                         $(getStepNode(step)).removeClass('hasSubproof');
+                       }});
+      $('html, body').animate({scrollTop: oldTop + growth}, 200);
+    }
+    // Remove after the animations are done.  This applies
+    // to inner containers too.
+    // TODO: Make this happen precisely when both animations are done.
+    window.setTimeout(function() { container.remove(); }, 300);
+    return;
+
     var proofQ = $(getProofControl(step).node);
     var oldHeight = proofQ.height();
     var container = $(controller.node).closest('.inferenceDisplay');
     container.remove();
+    $(getStepNode(step)).removeClass('hasSubproof');
     window.scrollBy(0, proofQ.height() - oldHeight);
   }
 }
@@ -1310,8 +1346,12 @@ function formattedStepInfo(step) {
   var classes = (step.details && Toy.modes.subproofs
                  ? 'ruleName link'
                  : 'ruleName');
-  var result =  ('<span class="' + classes + '" title="' + comment + '">'
-                 + d1 + '</span>' + d2);
+  var description =
+    ('<span class="' + classes + '" title="' + comment + '">'
+     + d1 + '</span>' + d2);
+  var result =
+    description +
+    ' <span class="ruleName link subproofHider">&#x25b4;</span>';
   return result + (useDefault ? defaultStepRefs(step, description) : '');
 }
 
@@ -1529,6 +1569,8 @@ function renderInference(step) {
   var stepNum = step.stepNumber;
   if (stepNum) {
     // The stepNum could be a nonempty string, or undefined.
+    // This looks like the only part affected by the step being
+    // renderable (or not).
     var match = stepNum.match(/(.*?)([0-9]+)$/);
     if (match) {
       prefix = match[1] + (match[2] - 1) + '.';
@@ -1537,26 +1579,27 @@ function renderInference(step) {
   var controller = new ProofControl({stepPrefix: prefix});
   controller.setSteps(steps);
   var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
-  var jq = $('<div class=inferenceDisplay></div>');
+  var subproofQ = $('<div class=inferenceDisplay></div>');
   if (step.ruleName === 'fact') {
     var header = $('<div class=proofHeader><b>Proof of <span class=math>'
                    + Toy.mathMarkup(step.toUnicode())
                    + '</span></b><br>'
-                   + '<i>' + comment + '</i> '
-                   + '<a href="javascript:;">[<i>hide</i>]</a></div>');
+                   + '<i>' + comment + '</i>'
+                   + ' <span class=subproofHider>hide &#x25be;</span></div>');
   } else {
     var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
      var header = $('<div class=proofHeader><b>' + pruf
                     + step.ruleName + '</b> '
                     + computeHeaderArgInfo(step) + '<br>'
-                    + '<i>' + comment + '</i> '
-                    + '<a href="javascript:;"><i>[hide]</i></a></div>');
+                    + '<i>' + comment + '</i>'
+                   + ' <span class=subproofHider>hide &#x25be;</span></div>');
   }
-  header.find('a').on('click', function() { clearSubproof(step); });
-  jq.append(header);
-  jq.append(controller.node);
-  jq.data('proofControl', controller);
-  return jq;
+  header.find('.subproofHider')
+    .on('click', function() { clearSubproof(step); });
+  subproofQ.append(header);
+  subproofQ.append(controller.node);
+  subproofQ.data('proofControl', controller);
+  return subproofQ;
 }
 
 /**
@@ -1825,7 +1868,9 @@ function hoverStep(step, direction, event) {
   } else {
     // If no handler apply or remove default highlighting.
     step.ruleDeps.forEach(function(dep) {
-      action(getStepNode(dep.rendering), 'dep');
+      if (dep.rendering) {
+        action(getStepNode(dep.rendering), 'dep');
+      }
     });
   }
 }
