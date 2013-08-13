@@ -280,7 +280,12 @@ table.proofDisplay {
 }
 
 .proofDisplay.editable .proofStep.hover .stepNumArea {
-  border: 1px solid #aaa;
+  border: 1px solid #aaf;
+}
+
+/* But no hover in a subproof display */
+.proofDisplay.editable .inferenceDisplay .proofStep.hover .stepNumArea {
+  border: 1px solid transparent;
 }
 
 /* Step deleter control, only visible when the step is hovered. */
@@ -385,10 +390,17 @@ span.stepRef {
   font-weight: bold;
 }
 
-/* When hovering over an expression */
-.proofStep .fullExpr.hovered, .proofStep .expr.hovered {
+/* When hovering over an expression in an editable proof */
+.proofDisplay.editable .proofStep .fullExpr.hovered,
+.proofDisplay.editable .proofStep .expr.hovered {
   border-color: #aaf;
 }
+
+/* No hover highlights for subproofs. */
+.inferenceDisplay .proofStep .fullExpr,
+.inferencedisplay .proofStep .expr {
+  border-color: transparent;
+{
 
 .proofStep .expr.selected {
   border-color: black;
