@@ -1266,21 +1266,11 @@ function clearSubproof(step, internal) {
                      {duration: 200,
                       complete: function() {
                          $(getStepNode(step)).removeClass('hasSubproof');
+                         // Remove after hiding.
+                         container.remove();
                        }});
       $('html, body').animate({scrollTop: oldTop + growth}, 200);
     }
-    // Remove after the animations are done.  This applies
-    // to inner containers too.
-    // TODO: Make this happen precisely when both animations are done.
-    window.setTimeout(function() { container.remove(); }, 300);
-    return;
-
-    var proofQ = $(getProofControl(step).node);
-    var oldHeight = proofQ.height();
-    var container = $(controller.node).closest('.inferenceDisplay');
-    container.remove();
-    $(getStepNode(step)).removeClass('hasSubproof');
-    window.scrollBy(0, proofQ.height() - oldHeight);
   }
 }
 
