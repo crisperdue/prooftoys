@@ -744,7 +744,8 @@ ProofControl.prototype.renderStep = function(step) {
   var self = this;
   var delHtml = (self.editable
                  ? '<button class=deleteStep title="Delete step">X</button>'
-                 : '');
+                 // Heavy lower right-shadowed white rightwards arrow
+                 : '<span class=noDeleter>\u27ad</span>'); 
   var stepQ =
     $('<div class=proofStep>' +
       delHtml +

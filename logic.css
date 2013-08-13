@@ -300,6 +300,16 @@ table.proofDisplay {
   font-weight: bold;
 }
 
+/* The noDeleter contains an indicator that the step is hovered. */
+.proofStep .noDeleter {
+  visibility: hidden;
+}
+
+.proofStep.hover .noDeleter {
+  color: #aaa;
+  visibility: visible;
+} 
+
 .proofStep.hover.hasUsers .deleteStep {
   visibility: visible;
   color: silver;
