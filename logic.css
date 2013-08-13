@@ -274,17 +274,18 @@ table.proofDisplay {
   visibility: visible;
 }
 
-/* Color is overridden by hovering on the step or selecting it. */
+/* Hovering or selecting this will override the border color. */
 .stepNumArea {
   border: 1px solid transparent;
 }
 
-.proofDisplay.editable .proofStep.hover .stepNumArea {
+/* Hovering the area highlights the border. */
+.proofDisplay.editable .stepNumArea.hover {
   border: 1px solid #aaf;
 }
 
 /* But no hover in a subproof display */
-.proofDisplay.editable .inferenceDisplay .proofStep.hover .stepNumArea {
+.proofDisplay.editable .inferenceDisplay .stepNumArea.hover {
   border: 1px solid transparent;
 }
 
@@ -310,6 +311,7 @@ table.proofDisplay {
   visibility: visible;
 } 
 
+/* The step has other steps that depend on it. */
 .proofStep.hover.hasUsers .deleteStep {
   visibility: visible;
   color: silver;
@@ -401,18 +403,21 @@ span.stepRef {
 }
 
 /* When hovering over an expression in an editable proof */
-.proofDisplay.editable .proofStep .fullExpr.hovered,
 .proofDisplay.editable .proofStep .expr.hovered {
   border-color: #aaf;
 }
 
-/* No hover highlights for subproofs. */
-.inferenceDisplay .proofStep .fullExpr,
-.inferencedisplay .proofStep .expr {
+/* No hover highlights for subproofs.
+ * The second form is specific to override the "hovered" case.
+ */
+.inferenceDisplay .proofStep .expr,
+.proofDisplay.editable .inferenceDisplay .proofStep .expr {
   border-color: transparent;
-{
+}
 
-.proofStep .expr.selected {
+/* Highlight selected expressions; a bit over-specific
+   to take precedence over the hover highlight. */
+.proofDisplay.editable .proofStep .expr.selected {
   border-color: black;
 }
 

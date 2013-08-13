@@ -761,29 +761,26 @@ ProofControl.prototype.renderStep = function(step) {
   step.stepNode = dom(stepQ);
   var elide = wantLeftElision(step, self);
   step.hasLeftElision = elide;
-  var wffJQ = $(renderAsStep(step));
-  stepQ.find('.wff').empty().append(wffJQ);
+  stepQ.find('.wff').empty().append(renderAsStep(step));
   stepQ.find('.stepInfo').html(formattedStepInfo(step));
 
   // Event handling:
 
   // TODO: Consider up these handlers in an ancestor node by delegation.
-  // Set up click handlers for selections within the step.
-  wffJQ.on(TOUCHDOWN,
+  // TODO: Don't even set up some expr hover handlers if not editable.
+  stepQ.find('.wff').on(TOUCHDOWN,
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
          self.handleExprSelection(getEffectiveSelection(event.target));
          event.preventDefault();
        });
-  stepQ.on(TOUCHDOWN,
-       function(event) {
-         self.handleStepClick(getProofStep(event.target));
-       });
-  // "Hover" events can come in slightly out of order as we track both
-  // an inner and outer element.  Straighten this out by maintaining
-  // a count of net in/out events and considering the mouse "in" when
-  // the net is exactly 1.
+  stepQ.find('.stepNumArea').hover(@{. void $(this).toggleClass('hover'); });
+  stepQ.find('.stepNumArea').on(TOUCHDOWN, function(event) {
+      self.handleStepClick(getProofStep(event.target));
+    });
+
+  // Consider the mouse "in" when the net is exactly 1.
   var netHovers = 0;
   function hover(diff, event) {
     var previous = netHovers == 1;
@@ -794,16 +791,8 @@ ProofControl.prototype.renderStep = function(step) {
     }
   }    
   // Set up "hover" event handling on the stepNode.
-  stepQ
-    .hover(
-           // Call hoverStep, passing these arguments as well as the event.
-           hover.bind(null, 1),
-           hover.bind(null, -1));
-  // We count the wffJQ as outside for this purpose.
-  wffJQ.hover(hover.bind(null, -1), hover.bind(null, 1));
-  // If there is a "ruleName link" element, count it as outside also.
-  stepQ.find('.ruleName.link')
-    .hover(hover.bind(null, -1), hover.bind(null, 1));
+  // Call hover, passing these arguments as well as the event.
+  stepQ.hover(hover.bind(null, 1), hover.bind(null, -1));
 
   var deleter = stepQ.find('.deleteStep');
   if (deleter) {
