@@ -7,7 +7,7 @@
 // into there.
 
 // Include jQuery in all cases.
-document.write('<script src="lib/jquery-1.9.1.js"></script>\n');
+document.write('<script src="lib/jquery-1.10.2.js"></script>\n');
 
 if (!window.noProofScripts) {
   document.write('<script src="expr.js"></script>\n');
