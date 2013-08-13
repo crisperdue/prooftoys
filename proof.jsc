@@ -361,7 +361,7 @@ ProofEditor.prototype.displayShowAll = @(value) {
 
 // DOM representation notes:
 //
-// <div class=stepsParent>
+// <div class=stepsParent>  (TODO: remove this obsolete level of DIV)
 //   <div class=proofSteps>  (getStepsNode)
 //     // Proof steps and possible subproofs between them
 //     <div class=proofStep> (getStepNode)
@@ -529,7 +529,7 @@ ProofControl.prototype.addStep = function(step) {
   copy.stepNumber = (Toy.showOrdinals
                      ? step.ordinal
                      : this.stepPrefix + this.steps.length);
-  var stepParent = this.renderStep(copy);
+  this.renderStep(copy);
   renderStepNumber(copy);
   this.proofChanged();
 };
@@ -745,25 +745,24 @@ ProofControl.prototype.renderStep = function(step) {
   var delHtml = (self.editable
                  ? '<button class=deleteStep title="Delete step">X</button>'
                  : '');
-  var stepParent =
+  var stepQ =
     $('<div class=proofStep>' +
       delHtml +
       '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
       '<span class=wff></span>' +
       '<span class=stepInfo></span>' +
       '</div>');
-  self._stepsJQ.append(stepParent);
-  var stepJQ = stepParent.find('.proofStep');
+  self._stepsJQ.append(stepQ);
   if (self.editable) {
-    stepParent.addClass('withDeleter');
+    stepQ.addClass('withDeleter');
   }
-  stepJQ.data('proofStep', step);
-  step.stepNode = dom(stepJQ);
+  stepQ.data('proofStep', step);
+  step.stepNode = dom(stepQ);
   var elide = wantLeftElision(step, self);
   step.hasLeftElision = elide;
   var wffJQ = $(renderAsStep(step));
-  stepJQ.find('.wff').empty().append(wffJQ);
-  stepJQ.find('.stepInfo').html(formattedStepInfo(step));
+  stepQ.find('.wff').empty().append(wffJQ);
+  stepQ.find('.stepInfo').html(formattedStepInfo(step));
 
   // Event handling:
 
@@ -776,7 +775,7 @@ ProofControl.prototype.renderStep = function(step) {
          self.handleExprSelection(getEffectiveSelection(event.target));
          event.preventDefault();
        });
-  stepJQ.on(TOUCHDOWN,
+  stepQ.on(TOUCHDOWN,
        function(event) {
          self.handleStepClick(getProofStep(event.target));
        });
@@ -794,7 +793,7 @@ ProofControl.prototype.renderStep = function(step) {
     }
   }    
   // Set up "hover" event handling on the stepNode.
-  stepJQ
+  stepQ
     .hover(
            // Call hoverStep, passing these arguments as well as the event.
            hover.bind(null, 1),
@@ -802,10 +801,10 @@ ProofControl.prototype.renderStep = function(step) {
   // We count the wffJQ as outside for this purpose.
   wffJQ.hover(hover.bind(null, -1), hover.bind(null, 1));
   // If there is a "ruleName link" element, count it as outside also.
-  stepJQ.find('.ruleName.link')
+  stepQ.find('.ruleName.link')
     .hover(hover.bind(null, -1), hover.bind(null, 1));
 
-  var deleter = stepJQ.find('.deleteStep');
+  var deleter = stepQ.find('.deleteStep');
   if (deleter) {
     deleter.on('mousedown', function(event) {
         // Don't give the proof step a chance to select itself.
@@ -824,7 +823,7 @@ ProofControl.prototype.renderStep = function(step) {
                
   // Clicking on a ruleName "link" shows the subproof when subproofs
   // are enabled.
-  var target = stepJQ.find('span.ruleName[class~="link"]');
+  var target = stepQ.find('span.ruleName[class~="link"]');
   if (target.length && Toy.modes.subproofs) {
     target.on('mousedown', function(event) {
         // Don't give the proof step a chance to select itself.
@@ -840,7 +839,7 @@ ProofControl.prototype.renderStep = function(step) {
         }
       });
   }
-  return dom(stepParent);
+  return dom(stepQ);
 };
 
 /**

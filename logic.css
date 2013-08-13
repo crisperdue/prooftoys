@@ -206,16 +206,21 @@ table.proofDisplay {
     width: 100%;
 }
 
-/* Display of a subproof */
-.inferenceDisplay {
+/* Indent most subproofs. */
+.proofDisplay .inferenceDisplay {
   margin-left: 1em;
 }
 
 /* The first level of subproof needs extra indent in the case
  * where there is a "deleter" button on the left.
  */
-.stepAndSubproofs.withDeleter > .inferenceDisplay {
+.proofDisplay.editable .inferenceDisplay {
   margin-left: 3em;
+}
+
+/* Nested subproofs get the usual indent. */
+.proofDisplay .inferenceDisplay .inferenceDisplay {
+  margin-left: 1em;
 }
 
 .stepsParent {
