@@ -359,6 +359,15 @@ ProofEditor.prototype.displayShowAll = @(value) {
 // TODO: Extend these to support proof steps that can take more
 // than one selection.
 
+// DOM representation notes:
+//
+// <div class=stepsParent>
+//   <div class=proofSteps>  (getStepsNode)
+//     // Proof steps and possible subproofs between them
+//     <div class=proofStep> (getStepNode)
+//     // or
+//     <div class=inferenceDisplay>
+
 /**
  * Construct a ProofControl.
  *
@@ -461,8 +470,9 @@ ProofControl.prototype.setSteps = function(steps) {
   // deleted.
   var stepsJQ = this._stepsJQ;
   this.steps.forEach(function(step) {
-    step.original.rendering = null;
-  });
+      clearSubproof(step, true);
+      step.original.rendering = null;
+    });
   stepsJQ.html('');
   // Now render the desired steps.
   this.steps = [];
@@ -736,12 +746,12 @@ ProofControl.prototype.renderStep = function(step) {
                  ? '<button class=deleteStep title="Delete step">X</button>'
                  : '');
   var stepParent =
-    $('<div class=stepAndSubproofs><div class=proofStep>' +
+    $('<div class=proofStep>' +
       delHtml +
       '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
       '<span class=wff></span>' +
       '<span class=stepInfo></span>' +
-      '</div></div>');
+      '</div>');
   self._stepsJQ.append(stepParent);
   var stepJQ = stepParent.find('.proofStep');
   if (self.editable) {
@@ -1224,9 +1234,9 @@ function renderSubproof(step) {
   // same place in the window.
   var oldTop = $(window).scrollTop();
   var oldHeight = document.height;
-  $(step.stepNode).closest('.stepAndSubproofs').prepend(jq);
+  jq.insertBefore(step.stepNode);
   var growth = document.height - oldHeight;
-  jq.toggle(false);
+  jq.hide();
   // Do the actual animations after computing the net change
   // in document height.
   jq.show({duration: 200});
@@ -1239,7 +1249,7 @@ function renderSubproof(step) {
  * Clear any subproof of this step and any subproofs of its steps
  * recursively.  Remove the subproofControl property from the step.
  *
- * The second argument is for internal use only.
+ * The second argument is true when no UI action is desired.
  */
 function clearSubproof(step, internal) {
   // TODO: Consider ways to clean up this whole function.
