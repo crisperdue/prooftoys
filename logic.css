@@ -144,24 +144,46 @@ div#slogans {
   font-style: italic;
 }
 
+/*
+ * About the layout of Prooftoys pages and the use of SPAN tags
+ *
+ * Prooftoys is now using inline-block layout rather than the earlier
+ * table-based layout.  IE7 and earlier only support the inline-block
+ * style on tags with native inline layout, so #leftNav and #content
+ * are SPAN tags.
+ *
+ * Table-based layout caused problems with unwanted early text
+ * wrapping of deeply nested and indented expressions, so it had to
+ * go.  Also, the current approach allows content to overflow the end
+ * of line, which turns out to be a pretty good tradeoff over
+ * everything trying to squeeze itself into the table width.
+ */
+
 /* Contains the left navigation */
-td#leftNav {
+span#leftNav {
   vertical-align: top;
   padding-top: 7em;
-  width: 15em;
+  display: inline-block;
+  width: 20%;
 }
 
-td#leftNav a {
+#leftNav a {
   display: block;
   font-style: italic;
-  margin: .3em 1.5em .3em 1em;
+  margin: .3em 1em .3em 1em;
   text-decoration: none;
   text-indent: -1em;
 }
 
 /* Left nav items */
-td#leftNav a:before {
+#leftNav a:before {
   content: "⊦ ";
+}
+
+/* Entire main content of the page goes here */
+#content {
+  display: inline-block;
+  width: 79%;
 }
 
 /* Text in a shaded box */
@@ -195,15 +217,6 @@ td#leftNav a:before {
 .proofHeader {
     margin: 1em 0em .5em;
     line-height: 120%;
-}
-
-/* Display of the proof itself */
-table.proofDisplay {
-    margin: .2em 0em;
-    padding: 1px;
-    /* Right margin does not affect the right edge, use padding. */
-    padding-right: 2em;
-    width: 100%;
 }
 
 /* Indent most subproofs. */
@@ -242,22 +255,28 @@ table.proofDisplay {
 
 /* The outermost element of a step */
 .proofStep {
-    clear: both;
     background-color: white;
     font-family: STIXGeneral, times, serif;
     /* Each proofStep has a 1px border, which is gray when
        the step is selected in the UI or hovered.
        */
     border: 1px solid transparent;
-    /* Padding causes the proofStep to have screen space
-       outside its children, which causes flashing as
-       the mouse enters and leaves those areas.
-       */
+    /* Indent continuation lines, but not the first one. */
+    margin-left: 2em;
+    /* Careful, this will be inherited by children. */
+    text-indent: -2em;
     /* If needed to avoid undesired text selection:
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
     */
+}
+
+/* Use the inline-block *class* as needed to avoid contaminating inner
+   inline-block elements with the text-indent above. */
+.proofStep .inline-block {
+  display: inline-block;
+  text-indent: 0em;
 }
 
 /* Display of element that can hide a subproof */
@@ -319,7 +338,7 @@ table.proofDisplay {
 
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
-    margin-left: .6em;
+    white-space: nowrap;
     color: #777;
 }
 
