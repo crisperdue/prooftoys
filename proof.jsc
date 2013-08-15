@@ -751,7 +751,7 @@ ProofControl.prototype.renderStep = function(step) {
       delHtml +
       '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
       '<span class=wff></span>' +
-      ' <span class=stepInfo></span>' +
+      '<span class=stepInfo></span>' +
       '</div>');
   self._stepsJQ.append(stepQ);
   if (self.editable) {
@@ -1335,12 +1335,11 @@ function formattedStepInfo(step) {
   var classes = (step.details && Toy.modes.subproofs
                  ? 'ruleName link'
                  : 'ruleName');
-  var description =
-    ('<span class="' + classes + '" title="' + comment + '">'
-     + d1 + '</span>' + d2);
+  // black up-pointing small triangle
+  var hider = '<span class="subproofHider">\u25b4</span>';
   var result =
-    description +
-    ' <span class="ruleName link subproofHider">&#x25b4;</span>';
+    ('<span class="' + classes + '" title="' + comment + '">'
+     + hider + ' ' + d1 + ' ' + hider + '</span>' + d2);
   return result + (useDefault ? defaultStepRefs(step, description) : '');
 }
 
