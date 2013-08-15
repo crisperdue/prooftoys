@@ -422,16 +422,8 @@ span.stepRef {
 }
 
 /* When hovering over an expression in an editable proof */
-.proofDisplay.editable .proofStep .expr.hovered {
+.expr.hovered {
   border-color: #aaf;
-}
-
-/* No hover highlights for subproofs.
- * The second form is specific to override the "hovered" case.
- */
-.inferenceDisplay .proofStep .expr,
-.proofDisplay.editable .inferenceDisplay .proofStep .expr {
-  border-color: transparent;
 }
 
 /* Highlight selected expressions; a bit over-specific

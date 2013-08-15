@@ -427,10 +427,6 @@ function ProofControl(properties) {
   jq.append(this.stepEditor.jq);
 
   this.setEditable(false);
-
-  // Set up handling of mouseover and mouseout events.
-  jq.on('mouseover', exprHandleOver);
-  jq.on('mouseout', exprHandleOut);
 }
 
 /**
@@ -591,12 +587,24 @@ ProofControl.prototype.removeStep = function(step) {
 
 /**
  * Makes the control editable or not by showing/hiding the
- * editor button and flagging its state.
+ * editor button and flagging its state.  Also updates event
+ * handling accordingly.
  */
 ProofControl.prototype.setEditable = function(state) {
   this.editable = state;
-  $(this.node).toggleClass('editable', !!state);
+  var nodeQ = $(this.node);
+  nodeQ.toggleClass('editable', !!state);
   this.stepEditor.jq.toggle(state);
+
+  // Control handling of expression mouseover and mouseout events.
+  var action = this.editable ? 'on' : 'off';
+  nodeQ[action]('mouseover', exprHandleOver);
+  nodeQ[action]('mouseout', exprHandleOut);
+  // If not actually handling "hover" events, prevent occurrences here
+  // from being handled by an ancestor.
+  var ignore = this.editable ? 'off' : 'on';
+  nodeQ[ignore]('mouseover', false);
+  nodeQ[ignore]('mouseout', false);
 };
 
 
