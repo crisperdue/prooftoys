@@ -428,18 +428,6 @@ function ProofControl(properties) {
 
   this.setEditable(false);
 
-  /* Omit this unused code until a jQuery counterpart to
-     Y.Overlay is found.
-  // Create an overlay to display step details when hovered.
-  this.hoverOverlay = new Y.Overlay({
-      width: '80%',
-      bodyContent: 'Sample overlay content',
-      zIndex:2
-  });
-  this.hoverOverlay.render(stepsParent);
-  this.hoverOverlay.hide();
-  */
-
   // Set up handling of mouseover and mouseout events.
   jq.on('mouseover', exprHandleOver);
   jq.on('mouseout', exprHandleOut);
@@ -1834,8 +1822,6 @@ function hoverStep(step, direction, event) {
   var stepNode = getStepNode(step.node);
   action(stepNode, 'hover');
 
-  doHoverOverlay(step, direction);
-
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
   var container = getTopProofContainer(step);
@@ -1897,28 +1883,6 @@ function hoverAsRewriter(step, action) {
       Toy.logError(err);
     }
   });
-}
-
-/**
- * If enabled, build and show a "hover overlay" on hover, hide on exit.
- */
-function doHoverOverlay(step, direction) {
-  // NB: Hover overlays currently have no information in them,
-  // but might be helpful in the future.
-  if (Toy.useHoverOverlays) {
-    /* Comment out unused functionality until jQuery counterpart
-     * to YUI Overlay is found.
-    var align = Y.WidgetPositionAlign;
-    var overlay = getProofControl(step).hoverOverlay;
-    if (direction == 'in') {
-      overlay.set('align', {
-          node: getStepNode(step.node), points: [align.TR, align.BR]});
-      overlay.show();
-    } else {
-      overlay.hide();
-    }
-    */
-  }
 }
 
 /**
@@ -2031,10 +1995,6 @@ Toy._adjacentSteps = adjacentSteps;
 
 // For testing:
 Toy._formattedStepInfo = formattedStepInfo;
-
-// Global configuration variable for displaying extra information per
-// step when hovered.
-Toy.useHoverOverlays = false;
 
 // Global parameter to suppress displaying hypotheses such as "(R x)".
 Toy.suppressRealTypeDisplays = true;

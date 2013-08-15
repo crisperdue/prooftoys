@@ -237,7 +237,7 @@ span#leftNav {
 }
 
 .stepsParent {
-  /* Position the step details overlay relative to this. */
+  /* Can support absolute positioning of children; currently unused. */
   position: relative;
 }
 
