@@ -751,7 +751,8 @@ ProofControl.prototype.renderStep = function(step) {
       delHtml +
       '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
       '<span class=wff></span>' +
-      '<span class=stepInfo></span>' +
+      // Leave a space so the line can break here.
+      ' <span class=stepInfo></span>' +
       '</div>');
   self._stepsJQ.append(stepQ);
   if (self.editable) {

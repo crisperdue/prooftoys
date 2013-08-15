@@ -339,6 +339,8 @@ span#leftNav {
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
     white-space: nowrap;
+    /* Push it up closer to the ruleName */
+    margin-left: -.2em;
     color: #777;
 }
 
