@@ -416,15 +416,15 @@ function ProofControl(properties) {
   this.textAreaId = 'proofState';
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
-  var jq = $('<table class=proofDisplay><tr><td>' +
+  var jq = $('<div class=proofDisplay>' +
              '<div class=stepsParent><div class=proofSteps></div></div>' +
-             '</table>');
+             '</div>');
   this.node = dom(jq);
   jq.data('proofControl', this);
   var stepsParent = jq.find('.stepsParent');
   this._stepsJQ = jq.find('.proofSteps');
   this.stepEditor = new Toy.StepEditor(this);
-  jq.find('td').append(this.stepEditor.jq);
+  jq.append(this.stepEditor.jq);
 
   this.setEditable(false);
 
@@ -751,7 +751,7 @@ ProofControl.prototype.renderStep = function(step) {
       delHtml +
       '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
       '<span class=wff></span>' +
-      '<span class=stepInfo></span>' +
+      ' <span class=stepInfo></span>' +
       '</div>');
   self._stepsJQ.append(stepQ);
   if (self.editable) {
