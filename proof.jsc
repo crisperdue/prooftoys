@@ -793,23 +793,18 @@ ProofControl.prototype.renderStep = function(step) {
       }
     });
                
-  // Clicking on a ruleName "link" shows the subproof when subproofs
+  // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
   // are enabled.
-  var target = stepQ.find('span.ruleName[class~="link"]');
-  if (target.length && Toy.modes.subproofs) {
-    target.on('mousedown', function(event) {
-        // Don't give the proof step a chance to select itself.
-        event.stopPropagation();
-      });
-    target.on('click', function(event) {
-        // Don't give the proof step a chance to select itself.
-        event.stopPropagation();
-        if (step.subproofControl) {
-          clearSubproof(step);
-        } else {
-          renderSubproof(step);
-        }
-      });
+  if (Toy.modes.subproofs) {
+    stepQ.find('span.ruleName[class~="link"]')
+      .on({click: function(event) {
+            if (step.subproofControl) {
+              clearSubproof(step);
+            } else {
+              renderSubproof(step);
+            }
+          }
+        });
   }
   return dom(stepQ);
 };
