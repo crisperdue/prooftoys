@@ -300,24 +300,24 @@ span#leftNav {
 
 /* Hovering the area highlights the border. */
 .proofDisplay.editable .stepNumArea.hover {
-  border: 1px solid #aaf;
+  border-color: #aaf;
 }
 
 /* But no hover in a subproof display */
 .proofDisplay.editable .inferenceDisplay .stepNumArea.hover {
-  border: 1px solid transparent;
+  border-color: transparent;
 }
 
 /* Step deleter control, only visible when the step is hovered. */
 .proofStep .deleteStep {
+  font-weight: bold;
+  height: 70%;
   visibility: hidden;
-  height: 60%;
 }
 
 .proofStep.hover .deleteStep {
   visibility: visible;
   color: red;
-  font-weight: bold;
 }
 
 /* The noDeleter contains an indicator that the step is hovered. */
