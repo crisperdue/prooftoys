@@ -311,7 +311,7 @@ span#leftNav {
 /* Step deleter control, only visible when the step is hovered. */
 .proofStep .deleteStep {
   font-weight: bold;
-  height: 70%;
+  padding: .2em .4em;
   visibility: hidden;
 }
 
