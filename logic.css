@@ -393,7 +393,8 @@ span.ruleName {
   font-style: italic;
 }
 
-/* To prevent clicks in rapid succession from highlighting text. */
+/* To prevent clicks in rapid succession from highlighting text
+   or activating a double click action. */
 span.ruleName.link {
   /* Including browser-specific versions */
   -webkit-touch-callout: none;
@@ -410,12 +411,6 @@ span.ruleName.link {
   border-width: 1px;
   border-color: transparent;
 }
-
-/** Half-vast workaround for Chrome rendering bug:
-.wff > .expr {
-  border-left-width: 2px;
-}
-*/
 
 span.assumptions {
   color: #999;
