@@ -411,6 +411,12 @@ span.ruleName.link {
   border-color: transparent;
 }
 
+/** Half-vast workaround for Chrome rendering bug:
+.wff > .expr {
+  border-left-width: 2px;
+}
+*/
+
 span.assumptions {
   color: #999;
   margin-right: .4em;

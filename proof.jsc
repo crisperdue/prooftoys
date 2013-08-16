@@ -777,36 +777,21 @@ ProofControl.prototype.renderStep = function(step) {
       self.handleStepClick(getProofStep(event.target));
     });
 
-  // Consider the mouse "in" when the net is exactly 1.
-  var netHovers = 0;
-  function hover(diff, event) {
-    var previous = netHovers == 1;
-    netHovers += diff;
-    var current = netHovers == 1;
-    if (current != previous) {
-      hoverStep(step, netHovers == 1 ? 'in' : 'out', event);
-    }
-  }    
   // Set up "hover" event handling on the stepNode.
   // Call hover, passing these arguments as well as the event.
-  stepQ.hover(hover.bind(null, 1), hover.bind(null, -1));
+  stepQ.hover(function(event) {
+    hoverStep(step, event.type === 'mouseenter' ? 'in' : 'out');
+  });
 
-  var deleter = stepQ.find('.deleteStep');
-  if (deleter) {
-    deleter.on('mousedown', function(event) {
-        // Don't give the proof step a chance to select itself.
-        event.stopPropagation();
-      });
-    deleter.on('click', function(event) {
-        // Don't give the proof step a chance to select itself.
-        event.stopPropagation();
-        if (step.users == 0) {
-          // If the step has users the button is effectively disabled.
-          self.removeStep(step);
-          self.proofChanged();
-        }
-      });
-  }
+  // Deleter events
+  // If there is no deleter, this sets nothing up.
+  stepQ.find('.deleteStep').on('click', function(event) {
+      if (step.users == 0) {
+        // If the step has users the button is effectively disabled.
+        self.removeStep(step);
+        self.proofChanged();
+      }
+    });
                
   // Clicking on a ruleName "link" shows the subproof when subproofs
   // are enabled.
