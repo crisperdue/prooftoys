@@ -690,8 +690,6 @@ ProofControl.prototype.handleExprSelection = function(expr) {
     // Flag the step as the ProofControl's current selection, but do
     // not flag it at the UI level.
     this.selection = step;
-    // Don't bubble the event up to the proof step.
-    event.stopPropagation();
     // Communicate that the selection _may_ have changed.
     this.selectionChanged();
   }
@@ -763,19 +761,25 @@ ProofControl.prototype.renderStep = function(step) {
 
   // Event handling:
 
-  // TODO: Consider up these handlers in an ancestor node by delegation.
-  // TODO: Don't even set up some expr hover handlers if not editable.
-  stepQ.find('.wff').on(TOUCHDOWN,
+  // Expr hovering is already handled by delegation in
+  // ProofControl.setEditable.
+  //
+  // TODO: Consider using delegation more extensively.
+  var exprSelector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
+  stepQ.on(TOUCHDOWN, exprSelector,
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
-         self.handleExprSelection(getEffectiveSelection(event.target));
-         event.preventDefault();
+         self.handleExprSelection(getExpr(this));
+         // stopImmediatePropagation does not seem to be required here.
+         event.stopPropagation();
        });
-  stepQ.find('.stepNumArea').hover(@{. void $(this).toggleClass('hover'); });
-  stepQ.find('.stepNumArea').on(TOUCHDOWN, function(event) {
-      self.handleStepClick(getProofStep(event.target));
-    });
+  // Same as handling "hover":
+  stepQ.on('mouseenter mouseleave', '.stepNumArea',
+           @{. void $(this).toggleClass('hover'); });
+  stepQ.on(TOUCHDOWN, '.stepNumArea', function(event) {
+    self.handleStepClick(step);
+  });
 
   // Set up "hover" event handling on the stepNode.
   // Call hover, passing these arguments as well as the event.
@@ -785,53 +789,28 @@ ProofControl.prototype.renderStep = function(step) {
 
   // Deleter events
   // If there is no deleter, this sets nothing up.
-  stepQ.find('.deleteStep').on('click', function(event) {
-      if (step.users == 0) {
-        // If the step has users the button is effectively disabled.
-        self.removeStep(step);
-        self.proofChanged();
-      }
-    });
+  stepQ.on('click', '.deleteStep', function(event) {
+    if (step.users == 0) {
+      // If the step has users the button is effectively disabled.
+      self.removeStep(step);
+      self.proofChanged();
+    }
+  });
                
   // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
   // are enabled.
   if (Toy.modes.subproofs) {
-    stepQ.find('span.ruleName[class~="link"]')
-      .on({click: function(event) {
-            if (step.subproofControl) {
-              clearSubproof(step);
-            } else {
-              renderSubproof(step);
-            }
-          }
-        });
+    stepQ.on('click', 'span.ruleName.link', function(event) {
+      if (step.subproofControl) {
+        clearSubproof(step);
+      } else {
+        renderSubproof(step);
+      }
+    });
   }
   return dom(stepQ);
 };
 
-/**
- * Searches up the DOM tree for a hovered expr or fullExpr node,
- * depending on the selection mdoe, that is hovered.  Returns the expr
- * for that node.
- * 
- * Argument is the target node of a selection event.
- */
-function getEffectiveSelection(node) {
-  var selector = (Toy.simplifiedSelections
-                  ? '.fullExpr.hovered' :
-                  '.expr.hovered');
-  // Include the node itself in the search.
-  var selected = dom($(node).closest(selector));
-  if (selected) {
-    return getExpr(selected);
-  } else {
-    Toy.logError('No selectable node found');
-    return getExpr(node);
-  }
-}
-
-
-// NOTE that some methods on Expr and its subclasses appear here.
 
 /**
  * Returns true iff policy is to elide the LHS of the given step
@@ -1025,6 +1004,8 @@ function textNode(text) {
 function markAsFullExpr(jq) {
   jq.addClass('fullExpr');
 }
+
+// NOTE that some methods on Expr and its subclasses appear here.
 
 // _render(omit)
 //
@@ -1754,20 +1735,6 @@ function exprHandleOver(event) {
 };
 
 /**
- * Defines how to display the hovered path.  Highlighting of the
- * DOM node is handled elsewhere.
- */
-function hoverShowPath(wff, path) {
-  var displayJq = $('#hoverPath');
-  if (displayJq.length) {
-    // If there is no bottom panel, do nothing.
-    var expr = wff.locate(path);
-    var pathStr = path ? path.toString() : '';
-    displayJq.html(pathStr);
-  }
-}
-
-/**
  * Handle mouseouts on subexpressions.
  */
 function exprHandleOut(event) {
@@ -1796,6 +1763,20 @@ function addClass(node, className) {
  */
 function removeClass(node, className) {
   node && $(node).removeClass(className);
+}
+
+/**
+ * Defines how to display the hovered path.  Highlighting of the
+ * DOM node is handled elsewhere.
+ */
+function hoverShowPath(wff, path) {
+  var displayJq = $('#hoverPath');
+  if (displayJq.length) {
+    // If there is no bottom panel, do nothing.
+    var expr = wff.locate(path);
+    var pathStr = path ? path.toString() : '';
+    displayJq.html(pathStr);
+  }
 }
 
 /**
