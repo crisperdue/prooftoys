@@ -3420,7 +3420,8 @@ var ruleInfo = {
   },
 
   addToBoth: {
-    action: function(eqn, term) {
+    action: function(eqn, term_arg) {
+      var term = Toy.termify(term_arg);
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '+', term));
       var result = rules.applyToBoth(fn, eqn);
@@ -3434,7 +3435,8 @@ var ruleInfo = {
   },
 
   subtractFromBoth: {
-    action: function(eqn, term) {
+    action: function(eqn, term_arg) {
+      var term = Toy.termify(term_arg);
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '-', term));
       var result = rules.applyToBoth(fn, eqn);
@@ -3833,6 +3835,11 @@ var facts = {
     .apply(rewrite, '/main/right', 'x + neg y = x - y');
     return step;
   },
+  'x - x = 0': function() {
+    return (rules.eqSelf('x - x')
+            .apply('apply', '/right')
+            .rewrite('/main/right', 'x + neg x = 0'));
+  },
 
   // Reciprocal rules
 
@@ -3957,6 +3964,28 @@ var facts = {
   // Somewhat useful fact to stick at the end of the list.
   'not F': function() {
     return rules.tautology('not F');
+  },
+
+  // MOVING EXPRESSIONS AROUND
+
+  'x = y == x - y = 0': function() {
+    var step = rules.assume('x = y')
+    .apply('subtractFromBoth', 'y')
+    .rewrite('/main/right', 'x - x = 0')
+    .apply('isolateHyp', 'x = y')
+    .apply('asHypotheses');
+    var converse = rules.assume('x - y = 0')
+    .rewrite('/main/left', 'x - y = x + neg y')
+    .apply('addToBoth', 'y')
+    .rewrite('/main/right', '0 + x = x')
+    .rewrite('/main/left', 'x + y + z = x + (y + z)')
+    .rewrite('/main/left/right', 'neg x + x = 0')
+    .rewrite('/main/left', 'x + 0 = x')
+    .apply('isolateHyp', 'x - y = 0')
+    .apply('asHypotheses');
+    var conj = rules.makeConjunction(step, converse);
+    var taut = rules.tautology('(a ==> b) & (b ==> a) == (a == b)');
+    return rules.rewrite(conj, '/main', taut);
   }
 };
 
