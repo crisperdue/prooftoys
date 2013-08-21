@@ -281,14 +281,16 @@ function ProofEditor() {
   // and any following initializations.
   Toy.soonDo(@{. Toy.withErrorReporting(loadData)});
 
-  this.containerNode.on('click', @{event. event.stopPropagation();});  
   // Clicks in arbitrary areas of the document remove any selection.
+  // And clear any proof errors field.
   $(document).on('click', function(event) {
+    if ($(event.target).closest('.proofDisplay').length == 0) {
+      // Not in a ProofControl's area.
       @mainControl.deselectStep();
       @mainControl.selectionChanged();
-      // And clear any proof errors field.
       $('#proofErrors').html('');
-   });
+    }
+  });
 }
 
 /**
@@ -771,6 +773,7 @@ ProofControl.prototype.renderStep = function(step) {
        // TODO: Implement such policies in the proof controller.
        function(event) {
          self.handleExprSelection(getExpr(this));
+         // Select only the innermost Expr.
          // stopImmediatePropagation does not seem to be required here.
          event.stopPropagation();
        });

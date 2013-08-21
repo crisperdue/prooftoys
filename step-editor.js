@@ -156,7 +156,7 @@ $.extend(StepEditor.prototype, {
  */
 StepEditor.prototype.error = function(message) {
   // TODO: implement, really, through a message area.
-  alert(message);
+  window.alert(message);
 };
 
 /**
@@ -346,37 +346,34 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
 };
 
 /**
- * Try to run the given rule (function) with the given
- * rule arguments.  Catches and reports any errors.
+ * Try to run the given rule (function) with the given rule arguments.
+ * Catches and reports any errors.  Returns true if the rule
+ * succeeded, false if it catches an error.
  */
 StepEditor.prototype.tryRule = function(rule, args) {
-  var value = false;
+  var result = null;
   try {
     if (Toy.profileName) {
       // Collect CPU profiling information.
       console.profile(Toy.profileName);
     }
-    // This line should be the source of any thrown errors:
-    var result = rule.apply(null, args);
-    this.controller.addStep(result);
-    this.controller.deselectStep();
-    this.controller.proofChanged();
-    // Clear any proof errors field.
-    $('#proofErrors').html('');
-    this.reset();
-    this.focus();
-    value = true;
+    result = rule.apply(null, args);
   } catch(error) {
-    if (!(error instanceof Toy.TypeCheckError)) {
-      // Leave the text field as-is in case of a type-check error.
-      this.reset();
-    }
     this.report(error);
+    return false;
+  } finally {
+    if (Toy.profileName) {
+      console.profileEnd();
+    }
   }
-  if (Toy.profileName) {
-    console.profileEnd();
-  }
-  return value;
+  this.controller.addStep(result);
+  this.controller.deselectStep();
+  this.controller.proofChanged();
+  // Clear any proof errors field.
+  $('#proofErrors').html('');
+  this.reset();
+  this.focus();
+  return true;
 };
 
 /**
