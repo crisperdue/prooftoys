@@ -1236,6 +1236,7 @@ var ruleInfo = {
   // variable even if free in the hypotheses.
   instVar: {
     action: function(step, a, v) {
+      a = Toy.termify(a);
       v = Toy.varify(v);
       var map = {};
       map[v.name] = a;
@@ -3968,24 +3969,28 @@ var facts = {
 
   // MOVING EXPRESSIONS AROUND
 
-  'x = y == x - y = 0': function() {
-    var step = rules.assume('x = y')
-    .apply('subtractFromBoth', 'y')
-    .rewrite('/main/right', 'x - x = 0')
-    .apply('isolateHyp', 'x = y')
-    .apply('asHypotheses');
-    var converse = rules.assume('x - y = 0')
-    .rewrite('/main/left', 'x - y = x + neg y')
+  'x = neg y == x + y = 0': function() {
+    var step = rules.assume('x = neg y')
     .apply('addToBoth', 'y')
+    .rewrite('/main/right', 'neg x + x = 0')
+    .apply('isolateHyp', 'x = neg y');
+    var converse = rules.assume('x + y = 0')
+    .apply('addToBoth', 'neg y')
     .rewrite('/main/right', '0 + x = x')
     .rewrite('/main/left', 'x + y + z = x + (y + z)')
-    .rewrite('/main/left/right', 'neg x + x = 0')
+    .rewrite('/main/left/right', 'x + neg x = 0')
     .rewrite('/main/left', 'x + 0 = x')
-    .apply('isolateHyp', 'x - y = 0')
-    .apply('asHypotheses');
+    .apply('isolateHyp', 'x + y = 0');
     var conj = rules.makeConjunction(step, converse);
     var taut = rules.tautology('(a ==> b) & (b ==> a) == (a == b)');
     return rules.rewrite(conj, '/main', taut);
+
+  },
+  'x = y == x - y = 0': function() {
+    return rules.fact('x = neg y == x + y = 0')
+    .apply('instVar', 'neg y', 'y')
+    .rewrite('/main/left/right', 'neg (neg x) = x')
+    .rewrite('/main/right/left', 'x + neg y = x - y');
   }
 };
 
