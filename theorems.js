@@ -3626,61 +3626,52 @@ addRules(ruleInfo);
 //// FACTS
 
 var facts = {
-  tIsXIsX: null,
+  // Logic
+  '(T = a) = a': function() {
+    return rules.theorem('tIsXIsX');
+  },
+  '(a = T) = a': function() {
+    return rules.theorem('tIsXIsX')
+    .rewrite('/left', 'equalitySymmetric');
+  },
 
-  axiomCommutativePlus: null,
+  // Axioms
+
   'a + b = b + a': function() {
     return rules.axiom('axiomCommutativePlus');
   },
-  axiomCommutativeTimes: null,
   'a * b = b * a': function() {
     return rules.axiom('axiomCommutativeTimes');
   },
-  axiomAssociativePlus: null,
   'a + (b + c) = a + b + c': function() {
     return rules.axiom('axiomAssociativePlus');
   },
-  axiomAssociativeTimes: null,
   'a * (b * c) = a * b * c': function() {
     return rules.axiom('axiomAssociativeTimes');
   },
-  axiomDistributivity: null,
   'a * (b + c) = a * b + a * c': function() {
     return rules.axiom('axiomDistributivity');
   },
-  axiomPlusZero: null,
   'a + 0 = a': function() {
     return rules.axiom('axiomPlusZero');
   },
-  axiomTimesOne: null,
   'a * 1 = a': function() {
     return rules.axiom('axiomTimesOne');
   },
-  axiomTimesZero: null,
   'a * 0 = 0': function() {
     return rules.axiom('axiomTimesZero');
   },
-  axiomNeg: null,
   'a + neg a = 0': function() {
     return rules.axiom('axiomNeg');
   },
-  axiomReciprocal: null,
   'a * recip a = 1': function() {
     return rules.axiom('axiomReciprocal');
   },
-  factNonzeroProduct: null,
   'a * b != 0 == a != 0 & b != 0': function() {
     return rules.factNonzeroProduct();
   },
-  equalitySymmetric: null,
   'a = b == b = a': function() {
     return rules.equalitySymmetric();
-  },
-
-  // Logic
-  '(x = T) = x': function() {
-    return rules.theorem('tIsXIsX')
-    .rewrite('/left', 'equalitySymmetric');
   },
 
   // Addition
