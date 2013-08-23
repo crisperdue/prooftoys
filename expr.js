@@ -1940,6 +1940,14 @@ Call.prototype.replaceAt = function(path, xformer) {
         return infixCall(this.getLeft(),
                          this.getBinOp(),
                          this.getRight().replaceAt(path._rest, xformer));
+      } else if (segment === 'main') {
+        if (this.isCall2('==>')) {
+          return infixCall(this.getLeft(),
+                         this.getBinOp(),
+                         this.getRight().replaceAt(path._rest, xformer));
+        } else {
+          return this;
+        }
       }
     }
     if (segment === 'fn') {
