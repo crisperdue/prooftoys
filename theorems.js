@@ -1894,7 +1894,7 @@ var ruleInfo = {
   // Proves the goal by matching it with the conclusion of the given
   // theorem and then applying the given inference rule to prove the
   // premise of the instantiated theorem.  The theorem must be a
-  // conditional or biconditional.
+  // conditional.
   //
   // TODO: Test me.
   backwardChain: {
@@ -3294,7 +3294,7 @@ var ruleInfo = {
           }
           if (expr.matchSchema('recip x != 0')) {
             // Simplify statements about nonzero reciprocals.
-            return proveIsT(rules.fact('@R x & x != 0 ==> recip x != 0'));
+            return proveIsT(rules.fact('@R a & a != 0 ==> recip a != 0'));
           }
         }
         return null;
@@ -3629,17 +3629,53 @@ var facts = {
   tIsXIsX: null,
 
   axiomCommutativePlus: null,
+  'a + b = b + a': function() {
+    return rules.axiom('axiomCommutativePlus');
+  },
   axiomCommutativeTimes: null,
+  'a * b = b * a': function() {
+    return rules.axiom('axiomCommutativeTimes');
+  },
   axiomAssociativePlus: null,
+  'a + (b + c) = a + b + c': function() {
+    return rules.axiom('axiomAssociativePlus');
+  },
   axiomAssociativeTimes: null,
+  'a * (b * c) = a * b * c': function() {
+    return rules.axiom('axiomAssociativeTimes');
+  },
   axiomDistributivity: null,
+  'a * (b + c) = a * b + a * c': function() {
+    return rules.axiom('axiomDistributivity');
+  },
   axiomPlusZero: null,
+  'a + 0 = a': function() {
+    return rules.axiom('axiomPlusZero');
+  },
   axiomTimesOne: null,
+  'a * 1 = a': function() {
+    return rules.axiom('axiomTimesOne');
+  },
   axiomTimesZero: null,
+  'a * 0 = 0': function() {
+    return rules.axiom('axiomTimesZero');
+  },
   axiomNeg: null,
+  'a + neg a = 0': function() {
+    return rules.axiom('axiomNeg');
+  },
   axiomReciprocal: null,
+  'a * recip a = 1': function() {
+    return rules.axiom('axiomReciprocal');
+  },
   factNonzeroProduct: null,
+  'a * b != 0 == a != 0 & b != 0': function() {
+    return rules.factNonzeroProduct();
+  },
   equalitySymmetric: null,
+  'a = b == b = a': function() {
+    return rules.equalitySymmetric();
+  },
 
   // Logic
   '(x = T) = x': function() {
@@ -3648,317 +3684,319 @@ var facts = {
   },
 
   // Addition
-  'x + y + z = x + (y + z)': function() {
+  'a + b + c = a + (b + c)': function() {
     return rules.eqnSwap(rules.axiom('axiomAssociativePlus'));
   },
-  'x + y + z = x + z + y': function() {
-    var step = rules.consider('x + y + z')
-    .rewrite('/main/right', 'x + y + z = x + (y + z)')
-    .rewrite('/main/right/right', 'x + y = y + x')
-    .rewrite('/main/right', 'x + (y + z) = x + y + z');
+  'a + b + c = a + c + b': function() {
+    var step = rules.consider('a + b + c')
+    .rewrite('/main/right', 'a + b + c = a + (b + c)')
+    .rewrite('/main/right/right', 'a + b = b + a')
+    .rewrite('/main/right', 'a + (b + c) = a + b + c');
     return step;
   },
 
   // Multiplication
-  'x * y * z = x * (y * z)': function() {
+  'a * b * c = a * (b * c)': function() {
     var step1 = rules.axiom('axiomAssociativeTimes');
     var step2 = rules.eqnSwap(step1);
     return step2;
   },
-  'x * y * z = x * z * y': function() {
-    var step = rules.consider('x * y * z')
-    .rewrite('/main/right', 'x * y * z = x * (y * z)')
-    .rewrite('/main/right/right', 'x * y = y * x')
-    .rewrite('/main/right', 'x * (y * z) = x * y * z');
+  'a * b * c = a * c * b': function() {
+    var step = rules.consider('a * b * c')
+    .rewrite('/main/right', 'a * b * c = a * (b * c)')
+    .rewrite('/main/right/right', 'a * b = b * a')
+    .rewrite('/main/right', 'a * (b * c) = a * b * c');
     return step;
   },
 
   // Distributivity
-  '(a + b) * x = a * x + b * x': function() {
-    var step = rules.consider('(a + b) * x')
-    .rewrite('/main/right', 'x * y = y * x')
-    .rewrite('/main/right', 'axiomDistributivity')
-    .rewrite('/main/right/right', 'x * y = y * x')
-    .rewrite('/main/right/left', 'x * y = y * x');
+  '(a + b) * c = a * c + b * c': function() {
+    var step = rules.consider('(a + b) * c')
+    .rewrite('/main/right', 'a * b = b * a')
+    .rewrite('/main/right', 'a * (b + c) = a * b + a * c')
+    .rewrite('/main/right/right', 'a * b = b * a')
+    .rewrite('/main/right/left', 'a * b = b * a');
     return step;
   },
-  'a * x + b * x = (a + b) * x': function() {
-    var step = rules.fact('(a + b) * x = a * x + b * x')
+  'a * c + b * c = (a + b) * c': function() {
+    var step = rules.fact('(a + b) * c = a * c + b * c')
     .apply('eqnSwap');
     return step;
   },
-  'x * y + x * z = x * (y + z)': function() {
+  'a * b + a * c = a * (b + c)': function() {
     var step1 = rules.axiom('axiomDistributivity');
     var step2 = rules.eqnSwap(step1);
     return step2;
   },
-  'a * x + x = (a + 1) * x': function() {
-    var step = rules.consider('a * x + x')
-    .rewrite('/main/right/right', 'x = 1 * x')
-    .rewrite('/main/right', 'a * x + b * x = (a + b) * x');
+  'a * b + b = (a + 1) * b': function() {
+    var step = rules.consider('a * b + b')
+    .rewrite('/main/right/right', 'a = 1 * a')
+    .rewrite('/main/right', 'a * c + b * c = (a + b) * c');
     return step;
   },
 
   // Plus zero
-  'x = x + 0': function() {
+  'a = a + 0': function() {
     var step1 = rules.axiom('axiomPlusZero');
     var step2 = rules.eqnSwap(step1);
     return step2;
   },
   /* Omit from UI: somewhat redundant
-  'x = 0 + x': function() {
+  'a = 0 + a': function() {
     var step1 = rules.axiom('axiomPlusZero');
     var step2 = rules.eqnSwap(step1);
     var step3 = rules.rewriteWithFact(step2, '/main/right',
-                                      'x + y = y + x');
+                                      'a + b = b + a');
     return step3;
   },
   */
-  '0 + x = x': function() {
+  '0 + a = a': function() {
     var step1 = rules.axiom('axiomPlusZero');
     var step2 = rules.rewriteWithFact(step1, '/main/left',
-                                      'x + y = y + x');
+                                      'a + b = b + a');
     return step2;
   },
   // Times one
-  'x = x * 1': function() {
+  'a = a * 1': function() {
     var step1 = rules.axiom('axiomTimesOne');
     var step2 = rules.eqnSwap(step1);
     return step2;
   },
-  'x = 1 * x': function() {
+  'a = 1 * a': function() {
     var step1 = rules.axiom('axiomTimesOne');
     var step2 = rules.eqnSwap(step1);
     var step3 = rules.rewriteWithFact(step2, '/main/right',
-                                      'x * y = y * x');
+                                      'a * b = b * a');
     return step3;
   },
-  '1 * x = x': function() {
+  '1 * a = a': function() {
     var step1 = rules.axiom('axiomTimesOne');
     var step2 = rules.rewriteWithFact(step1, '/main/left',
-                                      'x * y = y * x');
+                                      'a * b = b * a');
     return step2;
   },
   // Zero times
-  '0 * x = 0': function() {
+  '0 * a = 0': function() {
     return rules.axiom('axiomTimesZero')
-    .rewrite('/main/left', 'x * y = y * x');
+    .rewrite('/main/left', 'a * b = b * a');
   },
 
   // Negation rules
-  'x - y = x + neg y': function() {
-    var step1 = rules.consider('x - y');
+  'a - b = a + neg b': function() {
+    var step1 = rules.consider('a - b');
     var step2 = rules.apply(step1, '/main/right');
     return step2;
   },
-  'x + neg y = x - y': function() {
-    return rules.eqnSwap(rules.fact('x - y = x + neg y'));
+  'a + neg b = a - b': function() {
+    return rules.eqnSwap(rules.fact('a - b = a + neg b'));
   },
-  'neg x + x = 0': function() {
+  'neg a + a = 0': function() {
     return rules.axiom('axiomNeg')
-    .rewrite('/main/left', 'x + y = y + x');
+    .rewrite('/main/left', 'a + b = b + a');
   },
-  'neg (neg x) = x': function() {
-    var step1 = rules.axiom('axiomNeg');
-    var step2 = rules.addToBoth(step1, Toy.parse('neg (neg x)'));
+  'neg (neg a) = a': function() {
+    var step1 = rules.fact('a + neg a = 0');
+    var step2 = rules.addToBoth(step1, Toy.parse('neg (neg a)'));
     var step3 = rules.rewriteWithFact(step2, '/main/right',
-                                      '0 + x = x');
+                                      '0 + a = a');
     var step4 = rules.rewriteWithFact(step3, '/main/left',
-                                      'x + y + z = x + (y + z)');
-    var step5 = rules.instVar(step1, Toy.parse('neg x'), 'x');
+                                      'a + b + c = a + (b + c)');
+    var step5 = rules.instVar(step1, Toy.parse('neg a'), 'a');
     var step6 = rules.replace(step5, step4, '/main/left/right');
     var step7 = rules.rewriteWithFact(step6, '/main/left',
-                                      'x + 0 = x');
+                                      'a + 0 = a');
     var step8 = rules.eqnSwap(step7);
     return step8;
   },
-  'neg (x + y) = neg x + neg y': function() {
-    var step1 = rules.axiom('axiomNeg');
-    var step2 = rules.instVar(step1, Toy.parse('x + y'), 'x');
+  'neg (a + b) = neg a + neg b': function() {
+    var step1 = rules.fact('a + neg a = 0');
+    var step2 = rules.instVar(step1, Toy.parse('a + b'), 'a');
     var step3 = rules.rewriteWithFact(step2, '/right/left',
-                                      'x + y + z = x + z + y');
-    var step4 = rules.addToBoth(step3, Toy.parse('neg y'));
+                                      'a + b + c = a + c + b');
+    var step4 = rules.addToBoth(step3, Toy.parse('neg b'));
     var step5 = rules.rewriteWithFact(step4, '/right/left',
-                                      'x + y + z = x + (y + z)');
+                                      'a + b + c = a + (b + c)');
     var step6 = rules.rewriteWithFact(step5, '/right/left/right',
-                                      'x + neg x = 0');
+                                      'a + neg a = 0');
     var step7 = rules.rewriteWithFact(step6, '/right/right',
-                                      '0 + x = x');
+                                      '0 + a = a');
     var step8 = rules.rewriteWithFact(step7, '/right/left',
-                                      'x + 0 = x');
-    var step9 = rules.addToBoth(step8, Toy.parse('neg x'));
+                                      'a + 0 = a');
+    var step9 = rules.addToBoth(step8, Toy.parse('neg a'));
     var step10 = rules.rewriteWithFact(step9, '/right/left/left',
-                                       'x + y = y + x');
+                                       'a + b = b + a');
     var step11 = rules.rewriteWithFact(step10, '/right/left',
-                                       'x + y + z = x + (y + z)');
+                                       'a + b + c = a + (b + c)');
     var step12 = rules.rewriteWithFact(step11, '/right/left/right',
-                                       'x + neg x = 0');
+                                       'a + neg a = 0');
     var step13 = rules.rewriteWithFact(step12, '/right/left',
-                                       'x + 0 = x');
+                                       'a + 0 = a');
     var step14 = rules.rewriteWithFact(step13, '/right/right',
-                                       'x + y = y + x');
+                                       'a + b = b + a');
     return step14;
   },
 
   // Subtraction facts
 
-  'x + y - z = x - z + y': function() {
-    var step = rules.consider('x + y - z')
-    .rewrite('/main/right', 'x - y = x + neg y')
-    .rewrite('/main/right', 'x + y + z = x + z + y')
-    .rewrite('/main/right/left', 'x + neg y = x - y');
+  'a + b - c = a - c + b': function() {
+    var step = rules.consider('a + b - c')
+    .rewrite('/main/right', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a + b + c = a + c + b')
+    .rewrite('/main/right/left', 'a + neg b = a - b');
     return step;
   },
-  'x - y + z = x + z - y': function() {
+  'a - b + c = a + c - b': function() {
     var rewrite = 'rewriteWithFact';
-    var step = rules.consider('x - y + z')
-    .apply(rewrite, '/main/right/left', 'x - y = x + neg y')
-    .apply(rewrite, '/main/right', 'x + y + z = x + z + y')
-    .apply(rewrite, '/main/right', 'x + neg y = x - y');
+    var step = rules.consider('a - b + c')
+    .apply(rewrite, '/main/right/left', 'a - b = a + neg b')
+    .apply(rewrite, '/main/right', 'a + b + c = a + c + b')
+    .apply(rewrite, '/main/right', 'a + neg b = a - b');
     return step;
   },
-  'x - (y + z) = x - y - z': function() {
+  'a - (b + c) = a - b - c': function() {
     var rewrite = 'rewriteWithFact';
-    var step = rules.consider('x - (y + z)')
-    .apply(rewrite, '/main/right', 'x - y = x + neg y')
+    var step = rules.consider('a - (b + c)')
+    .apply(rewrite, '/main/right', 'a - b = a + neg b')
     .apply(rewrite, '/main/right/right',
-           'neg (x + y) = neg x + neg y')
-    .apply(rewrite, '/main/right', 'x + (y + z) = x + y + z')
-    .apply(rewrite, '/main/right', 'x + neg y = x - y')
-    .apply(rewrite, '/main/right/left', 'x + neg y = x - y');
+           'neg (a + b) = neg a + neg b')
+    .apply(rewrite, '/main/right', 'a + (b + c) = a + b + c')
+    .apply(rewrite, '/main/right', 'a + neg b = a - b')
+    .apply(rewrite, '/main/right/left', 'a + neg b = a - b');
     return step;
   },  
-  'x + (y - z) = x + y - z': function() {
+  'a + (b - c) = a + b - c': function() {
     var rewrite = 'rewriteWithFact';
-    var step = rules.consider('x + (y - z)')
-    .apply(rewrite, '/main/right/right', 'x - y = x + neg y')
-    .apply(rewrite, '/main/right', 'x + (y + z) = x + y + z')
-    .apply(rewrite, '/main/right', 'x + neg y = x - y');
+    var step = rules.consider('a + (b - c)')
+    .apply(rewrite, '/main/right/right', 'a - b = a + neg b')
+    .apply(rewrite, '/main/right', 'a + (b + c) = a + b + c')
+    .apply(rewrite, '/main/right', 'a + neg b = a - b');
     return step;
   },
-  'x - x = 0': function() {
-    return (rules.eqSelf('x - x')
+  'a - a = 0': function() {
+    return (rules.eqSelf('a - a')
             .apply('apply', '/right')
-            .rewrite('/main/right', 'x + neg x = 0'));
+            .rewrite('/main/right', 'a + neg a = 0'));
   },
 
   // Reciprocal rules
 
-  'x != 0 ==> recip x * x = 1': function() {
+  'a != 0 ==> recip a * a = 1': function() {
     return rules.axiom('axiomReciprocal')
-    .rewrite('/main/left', 'x * y = y * x');
+    .rewrite('/main/left', 'a * b = b * a');
   },
-  'x != 0 ==> recip x != 0': function() {
+  'a != 0 ==> recip a != 0': function() {
     var step1 = rules.axiom('axiomReciprocal');
     var step2 = rules.fact('1 != 0');
     var step3 = rules.rRight(step1, step2, '/left')
-    .rewrite('/main', 'x * y != 0 == x != 0 & y != 0');
+    .rewrite('/main', 'a * b != 0 == a != 0 & b != 0');
     var step4 = rules.tautology('a & b ==> b');
     var step5 = rules.forwardChain(step3, step4);
     return step5;
   },
-  'x / y = x * recip y': function() {
-    var step1 = rules.consider('x / y');
+  'a / b = a * recip b': function() {
+    var step1 = rules.consider('a / b');
     var step2 = rules.apply(step1, '/main/right');
     return step2;
   },
-  'x * recip y = x / y': function() {
-    return rules.eqnSwap(rules.fact('x / y = x * recip y'));
+  'a * recip b = a / b': function() {
+    return rules.eqnSwap(rules.fact('a / b = a * recip b'));
   },
-  'x != 0 ==> recip (recip x) = x': function() {
-    var step1 = rules.axiom('axiomReciprocal');
-    var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip x)'));
+  'a != 0 ==> recip (recip a) = a': function() {
+    var step1 = rules.fact('a * recip a = 1');
+    var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip a)'));
     var step3 = rules.rewriteWithFact(step2, '/main/right',
-                                      '1 * x = x');
+                                      '1 * a = a');
     var step4 = rules.rewriteWithFact(step3, '/main/left',
-                                      'x * y * z = x * (y * z)');
-    var step5 = rules.instVar(step1, Toy.parse('recip x'), 'x');
+                                      'a * b * c = a * (b * c)');
+    var step5 = rules.instVar(step1, Toy.parse('recip a'), 'a');
     var step6 = rules.replace(step5, step4, '/main/left/right');
     var step7 = rules.rewriteWithFact(step6, '/main/left',
-                                      'x * 1 = x');
+                                      'a * 1 = a');
     var step8 = rules.eqnSwap(step7);
     return step8;
   },
-  '@R (recip x) & recip x != 0 ==> R x & x != 0': function() {
+  '@R (recip a) & recip a != 0 ==> R a & a != 0': function() {
     var taut = rules.tautology('(a == b) ==> (a ==> b)');
     var fact = rules.axiom('axiomReciprocal2');
     return rules.forwardChain(fact, taut);
   },
-  '@R x & x != 0 ==> R (recip x) & recip x != 0': function() {
+  '@R a & a != 0 ==> R (recip a) & recip a != 0': function() {
     var taut = rules.tautology('(a == b) ==> (b ==> a)');
     var fact = rules.axiom('axiomReciprocal2');
     return rules.forwardChain(fact, taut);
   },
-  '@R x & x != 0 ==> recip x != 0': function() {
+  /* Proved above from axiomReciprocal.
+  '@R a & a != 0 ==> recip a != 0': function() {
     var taut = rules.tautology('(a ==> b & c) ==> (a ==> c)');
-    var fact = rules.fact('@R x & x != 0 ==> R (recip x) & recip x != 0');
+    var fact = rules.fact('@R a & a != 0 ==> R (recip a) & recip a != 0');
     return rules.forwardChain(fact, taut);
   },
+  */
 
   // TODO: Get these working.
-  'x != 0 & y != 0 ==> recip (x * y) = recip x * recip y': function() {
-    var step1 = rules.axiom('axiomReciprocal');
-    var step2 = rules.instVar(step1, Toy.parse('x * y'), 'x');
+  'a != 0 & b != 0 ==> recip (a * b) = recip a * recip b': function() {
+    var step1 = rules.fact('a * recip a = 1');
+    var step2 = rules.instVar(step1, Toy.parse('a * b'), 'a');
     var step3 = rules.rewriteWithFact(step2, '/right/left',
-                                      'x * y * z = x * z * y');
-    var step4 = rules.multiplyBoth(step3, Toy.parse('recip y'));
+                                      'a * b * c = a * c * b');
+    var step4 = rules.multiplyBoth(step3, Toy.parse('recip b'));
     var step5 = rules.rewriteWithFact(step4, '/right/left',
-                                      'x * y * z = x * (y * z)');
+                                      'a * b * c = a * (b * c)');
     var step6 = rules.rewriteWithFact(step5, '/right/left/right',
-                                      'x * recip x = 1');
+                                      'a * recip a = 1');
     var step7 = rules.rewriteWithFact(step6, '/right/right',
-                                      '1 * x = x');
+                                      '1 * a = a');
     var step8 = rules.rewriteWithFact(step7, '/right/left',
-                                      'x * 1 = x');
-    var step9 = rules.multiplyBoth(step8, Toy.parse('recip x'));
+                                      'a * 1 = a');
+    var step9 = rules.multiplyBoth(step8, Toy.parse('recip a'));
     var step10 = rules.rewriteWithFact(step9, '/right/left/left',
-                                       'x * y = y * x');
+                                       'a * b = b * a');
     var step11 = rules.rewriteWithFact(step10, '/right/left',
-                                       'x * y * z = x * (y * z)');
+                                       'a * b * c = a * (b * c)');
     var step12 = rules.rewriteWithFact(step11, '/right/left/right',
-                                       'x * recip x = 1');
+                                       'a * recip a = 1');
     var step13 = rules.rewriteWithFact(step12, '/right/left',
-                                       'x * 1 = x');
+                                       'a * 1 = a');
     var step14 = rules.rewriteWithFact(step13, '/right/right',
-                                       'x * y = y * x');
+                                       'a * b = b * a');
     return step14;
   },
 
   // Division rules
 
-  'z != 0 ==> x * y / z = x / z * y': function() {
+  'c != 0 ==> a * b / c = a / c * b': function() {
     var rewrite = 'rewriteWithFact';
-    var step = rules.consider('x * y / z')
-    .apply(rewrite, '/main/right', 'x / y = x * recip y')
-    .apply(rewrite, '/main/right', 'x * y * z = x * z * y')
-    .apply(rewrite, '/main/right/left', 'x * recip y = x / y');
+    var step = rules.consider('a * b / c')
+    .apply(rewrite, '/main/right', 'a / b = a * recip b')
+    .apply(rewrite, '/main/right', 'a * b * c = a * c * b')
+    .apply(rewrite, '/main/right/left', 'a * recip b = a / b');
     return step;
   },
-  'y != 0 ==> x / y * z = x * z / y': function() {
+  'b != 0 ==> a / b * c = a * c / b': function() {
     var rewrite = 'rewriteWithFact';
-    var step = rules.consider('x / y * z')
-    .apply(rewrite, '/main/right/left', 'x / y = x * recip y')
-    .apply(rewrite, '/main/right', 'x * y * z = x * z * y')
-    .apply(rewrite, '/main/right', 'x * recip y = x / y');
+    var step = rules.consider('a / b * c')
+    .apply(rewrite, '/main/right/left', 'a / b = a * recip b')
+    .apply(rewrite, '/main/right', 'a * b * c = a * c * b')
+    .apply(rewrite, '/main/right', 'a * recip b = a / b');
     return step;
   },
-  'y != 0 & z != 0 ==> x / (y * z) = x / y / z': function() {
+  'b != 0 & c != 0 ==> a / (b * c) = a / b / c': function() {
     var rewrite = 'rewriteWithFact';
-    var step = rules.consider('x / (y * z)')
-    .apply(rewrite, '/main/right', 'x / y = x * recip y')
+    var step = rules.consider('a / (b * c)')
+    .apply(rewrite, '/main/right', 'a / b = a * recip b')
     .apply(rewrite, '/main/right/right',
-           'recip (x * y) = recip x * recip y')
-    .apply(rewrite, '/main/right', 'x * (y * z) = x * y * z')
-    .apply(rewrite, '/main/right', 'x * recip y = x / y')
-    .apply(rewrite, '/main/right/left', 'x * recip y = x / y');
+           'recip (a * b) = recip a * recip b')
+    .apply(rewrite, '/main/right', 'a * (b * c) = a * b * c')
+    .apply(rewrite, '/main/right', 'a * recip b = a / b')
+    .apply(rewrite, '/main/right/left', 'a * recip b = a / b');
     return step;
   },  
-  'z != 0 ==> x * (y / z) = x * y / z': function() {
+  'c != 0 ==> a * (b / c) = a * b / c': function() {
     var rewrite = 'rewriteWithFact';
-    var step = rules.consider('x * (y / z)')
-    .apply(rewrite, '/main/right/right', 'x / y = x * recip y')
-    .apply(rewrite, '/main/right', 'x * (y * z) = x * y * z')
-    .apply(rewrite, '/main/right', 'x * recip y = x / y');
+    var step = rules.consider('a * (b / c)')
+    .apply(rewrite, '/main/right/right', 'a / b = a * recip b')
+    .apply(rewrite, '/main/right', 'a * (b * c) = a * b * c')
+    .apply(rewrite, '/main/right', 'a * recip b = a / b');
     return step;
   },
 
@@ -3969,28 +4007,28 @@ var facts = {
 
   // MOVING EXPRESSIONS AROUND
 
-  'x = neg y == x + y = 0': function() {
-    var step = rules.assume('x = neg y')
-    .apply('addToBoth', 'y')
-    .rewrite('/main/right', 'neg x + x = 0')
-    .apply('isolateHyp', 'x = neg y');
-    var converse = rules.assume('x + y = 0')
-    .apply('addToBoth', 'neg y')
-    .rewrite('/main/right', '0 + x = x')
-    .rewrite('/main/left', 'x + y + z = x + (y + z)')
-    .rewrite('/main/left/right', 'x + neg x = 0')
-    .rewrite('/main/left', 'x + 0 = x')
-    .apply('isolateHyp', 'x + y = 0');
+  'a = neg b == a + b = 0': function() {
+    var step = rules.assume('a = neg b')
+    .apply('addToBoth', 'b')
+    .rewrite('/main/right', 'neg a + a = 0')
+    .apply('isolateHyp', 'a = neg b');
+    var converse = rules.assume('a + b = 0')
+    .apply('addToBoth', 'neg b')
+    .rewrite('/main/right', '0 + a = a')
+    .rewrite('/main/left', 'a + b + c = a + (b + c)')
+    .rewrite('/main/left/right', 'a + neg a = 0')
+    .rewrite('/main/left', 'a + 0 = a')
+    .apply('isolateHyp', 'a + b = 0');
     var conj = rules.makeConjunction(step, converse);
     var taut = rules.tautology('(a ==> b) & (b ==> a) == (a == b)');
     return rules.rewrite(conj, '/main', taut);
 
   },
-  'x = y == x - y = 0': function() {
-    return rules.fact('x = neg y == x + y = 0')
-    .apply('instVar', 'neg y', 'y')
-    .rewrite('/main/left/right', 'neg (neg x) = x')
-    .rewrite('/main/right/left', 'x + neg y = x - y');
+  'a = b == a - b = 0': function() {
+    return rules.fact('a = neg b == a + b = 0')
+    .apply('instVar', 'neg b', 'b')
+    .rewrite('/main/left/right', 'neg (neg a) = a')
+    .rewrite('/main/right/left', 'a + neg b = a - b');
   }
 };
 
@@ -4137,8 +4175,9 @@ function addFact(expr_arg, prover) {
  * Looks up an axiom, theorem, or fact, returning the proved result.
  * Given a named axiom or theorem, returns it.  Given something
  * acceptable to getStatement, returns a proved version of it, or the
- * thing itself if already proved.  Throws an exception in case of
- * failure.
+ * thing itself if already proved.  Automatically does alpha
+ * conversion if necessary to use the desired variable names.  Throws
+ * an exception in case of failure.
  */
 function getResult(fact) {
   var expr = getStatement(fact);
@@ -4151,6 +4190,9 @@ function getResult(fact) {
   var prover = _factsMap[key];
   assert(prover, function() { return 'No such fact: ' + expr; });
   var result = prover._provedResult;
+  if (result) {
+    return result;
+  }
   if (!result) {
     try {
       result = prover();
@@ -4159,14 +4201,18 @@ function getResult(fact) {
       err.isProofError = true;
       throw err;
     }
-    var main = result.getMain();
-    assert(result.matches(expr) || main.matches(expr), function() {
+    var subst = expr.matchSchema(result);
+    if (!subst) {
+      subst = expr.getMain().matchSchema(result.getMain());
+    }
+    assert(subst, function() {
         return ('Expected proof of ' + expr.toString() +
                 ', instead got ' + result.toString());
       }, result);
-    prover._provedResult = result;
+    var result2 = rules.instMultiVars(result, subst);
+    prover._provedResult = result2;
   }
-  return result;
+  return result2;
 }
 
 /**
