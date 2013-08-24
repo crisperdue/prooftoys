@@ -436,7 +436,7 @@ var testCase = {
       assertEqual(expected, actual.toString());
     }
     check('foo', '"foo"');
-    check('/arg', '(path "/right")');
+    check('/right', '(path "/right")');
     check('(x = (y + 1))', '(s 1)');
     check('(p (f x))', '(t (p (f x)))');
   },
@@ -603,7 +603,7 @@ var testCase = {
     assertEqual('f', Toy.path('fn').next(call(f, x)).toString());
     assertEqual('x', Toy.path('arg').next(call(f, x)).toString());
     var p2 = '/left/binop';
-    assertEqual('/fn/arg/fn/fn', Toy.path(p2).toString());
+    assertEqual('/left/binop', Toy.path(p2).toString());
     var p3 = '/arg/fn';
     assertEqual(p3 + p3, Toy.path(p3).concat(p3).toString());
 
@@ -1293,7 +1293,7 @@ var testCase = {
 
   testInstiateVar: function() {
     var result =
-      Toy.rules.instantiateVar(call(p, y), '/right', call(f, x));
+      Toy.rules.instantiateVar(call(p, y), '/arg', call(f, x));
     assertEqual('(p (f x))', result);
 
     // Hypotheses
@@ -1529,15 +1529,15 @@ var testCase = {
   },
 
   testR5239: function() {
-    var inf = Toy.rules.r5239(equal(p, q),
-                            lambda(p, equal(q, p)),
-                            '/body/right');
+    var inf = Toy.rules.r5239(equal(p, q), equal(r, p), '/right');
+    assertEqual('((p = q) ==> ((r = p) = (r = q)))', inf);
+
+    inf = Toy.rules.r5239(equal(p, q),
+                          lambda(p, equal(q, p)),
+                          '/body/right');
     var expected =
       '((forall {p. (p = q)}) ==> ({p. (q = p)} = {p. (q = q)}))';
     assertEqual(expected, inf);
-
-    inf = Toy.rules.r5239(equal(p, q), equal(r, p), '/right');
-    assertEqual('((p = q) ==> ((r = p) = (r = q)))', inf);
 
     // Here 'y' is bound in C and free in A = B.
     inf = Toy.rules.r5239(Toy.parse('(T = (y > x))'),

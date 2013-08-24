@@ -1847,8 +1847,30 @@ Call.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
     return [bindings];
   } else {
-    return (this.fn._boundNames(path.rest('fn'), bindings)
-            || this.arg._boundNames(path.rest('arg'), bindings));
+    var segment = path.segment;
+    var rest = path._rest;
+    if (this.fn instanceof Call) {
+      if (segment === 'left') {
+        return this.getLeft()._boundNames(rest, bindings);
+      } else if (segment === 'binop') {
+        return this.getBinOp()._boundNames(rest, bindings);
+      } else if (segment === 'right') {
+        return this.getRight()._boundNames(rest, bindings);
+      } else if (segment === 'main') {
+        if (this.isCall2('==>')) {
+          return this.getRight()._boundNames(rest, bindings);
+        } else {
+          return this._boundNames(rest, bindings);
+        }
+      }
+    }
+    if (segment === 'fn') {
+      return this.fn._boundNames(rest, bindings);
+    } else if (segment === 'arg') {
+      return this.arg._boundNames(rest, bindings);
+    }
+    throw new Error('Path segment "' + segment +
+                    '" does not match Call: ' + this);
   }
 };
 
@@ -1936,6 +1958,10 @@ Call.prototype.replaceAt = function(path, xformer) {
         return infixCall(this.getLeft().replaceAt(path._rest, xformer),
                          this.getBinOp(),
                          this.getRight());
+      } else if (segment === 'binop') {
+        return infixCall(this.getLeft(),
+                         this.getBinOp().replaceAt(path._rest, xformer),
+                         this.getRight());
       } else if (segment === 'right') {
         return infixCall(this.getLeft(),
                          this.getBinOp(),
@@ -1968,6 +1994,8 @@ Call.prototype._locate = function(path) {
     if (this.fn instanceof Call) {
       if (segment === 'left') {
         return this.getLeft()._locate(path._rest);
+      } else if (segment === 'main') {
+        return this.getBinOp()._locate(path._rest);
       } else if (segment === 'right') {
         return this.getRight()._locate(path._rest);
       }
@@ -1977,8 +2005,8 @@ Call.prototype._locate = function(path) {
     } else if (segment === 'arg') {
       return this.arg._locate(path._rest);
     }
-    throw new Error('Path segment ' + segment +
-                    ' does not match Call: ' + this);
+    throw new Error('Path segment "' + segment +
+                    '" does not match Call: ' + this);
   }
 };
 
@@ -2570,11 +2598,7 @@ function path(arg, opt_expr) {
     segments = [];
   }
   // TODO: Try omitting conversion of these as macros.
-  var macros = {
-    left: ['fn', 'arg'],
-    right: ['arg'],
-    binop: ['fn', 'fn']
-  };
+  var macros = {};
   var result = _end;
   while (segments.length) {
     var piece = segments.pop();
