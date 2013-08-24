@@ -1856,12 +1856,6 @@ Call.prototype._boundNames = function(path, bindings) {
         return this.getBinOp()._boundNames(rest, bindings);
       } else if (segment === 'right') {
         return this.getRight()._boundNames(rest, bindings);
-      } else if (segment === 'main') {
-        if (this.isCall2('==>')) {
-          return this.getRight()._boundNames(rest, bindings);
-        } else {
-          return this._boundNames(rest, bindings);
-        }
       }
     }
     if (segment === 'fn') {
@@ -1966,14 +1960,6 @@ Call.prototype.replaceAt = function(path, xformer) {
         return infixCall(this.getLeft(),
                          this.getBinOp(),
                          this.getRight().replaceAt(path._rest, xformer));
-      } else if (segment === 'main') {
-        if (this.isCall2('==>')) {
-          return infixCall(this.getLeft(),
-                         this.getBinOp(),
-                         this.getRight().replaceAt(path._rest, xformer));
-        } else {
-          return this;
-        }
       }
     }
     if (segment === 'fn') {
@@ -1991,19 +1977,20 @@ Call.prototype._locate = function(path) {
     return this;
   } else {
     var segment = path.segment;
+    var rest = path._rest;
     if (this.fn instanceof Call) {
       if (segment === 'left') {
-        return this.getLeft()._locate(path._rest);
-      } else if (segment === 'main') {
-        return this.getBinOp()._locate(path._rest);
+        return this.getLeft()._locate(rest);
+      } else if (segment === 'binop') {
+        return this.getBinOp()._locate(rest);
       } else if (segment === 'right') {
-        return this.getRight()._locate(path._rest);
+        return this.getRight()._locate(rest);
       }
     }
     if (segment === 'fn') {
-      return this.fn._locate(path._rest);
+      return this.fn._locate(rest);
     } else if (segment === 'arg') {
-      return this.arg._locate(path._rest);
+      return this.arg._locate(rest);
     }
     throw new Error('Path segment "' + segment +
                     '" does not match Call: ' + this);
@@ -2556,21 +2543,19 @@ Path.prototype.toString = function() {
  */
 function path(arg, opt_expr) {
   var expr = opt_expr;
+
   // If the initial segment of the path is 'main', and the expression
   // is given and has hypotheses, return a path to its RHS.
   function adjust(path) {
-    if (!expr) {
-      return path;
-    }
-    if (path.segment == 'main') {
+    if (expr && path.segment == 'main') {
       path = path._rest;
       if (expr.hasHyps) {
-        // TODO: Modify this when infix changes.
-        path = new Path('arg', path);
+        path = new Path('right', path);
       }
     }
     return path;
   }
+
   if (arg instanceof Path) {
     return adjust(arg);
   }
@@ -2597,22 +2582,12 @@ function path(arg, opt_expr) {
   if (segments.length == 1 && segments[0] == '') {
     segments = [];
   }
-  // TODO: Try omitting conversion of these as macros.
-  var macros = {};
   var result = _end;
   while (segments.length) {
     var piece = segments.pop();
-    var expansion = macros[piece];
-    if (expansion) {
-      for (var i = 0; i < expansion.length; i++) {
-        segments.push(expansion[i]);
-      }
-    } else {
-      result = new Path(piece, result);
-    }
+    result = new Path(piece, result);
   }
-  result = adjust(result);
-  return result;
+  return adjust(result);
 }
 
 /**
