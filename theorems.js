@@ -254,7 +254,7 @@ var ruleInfo = {
    */
   r: {
     action: function(equation, target, path) {
-      path = Toy.path(path);
+      path = Toy.path(path, target);
       assert(equation.isCall2('='), function() {
 	return 'Rule R requires equation: ' + equation;
       }, equation);
@@ -548,17 +548,18 @@ var ruleInfo = {
   },
 
   // r5201f.  Works with hypotheses.
+  // If f is a lambda expression, also applies it to both sides.
   applyToBoth: {
-    action: function(a, h_bc) {
-      var bc = h_bc.unHyp();
-      var abab = rules.eqSelf(call(a, bc.getLeft()));
-      var abac = rules.replace(h_bc, abab, '/right/arg');
-      var result = abac;
-      if (a instanceof Toy.Lambda) {
-        var step2 = rules.apply(abac, '/main/left');
+    action: function(f, h_ab) {
+      var ab = h_ab.unHyp();
+      var fafa = rules.eqSelf(call(f, ab.getLeft()));
+      var fafb = rules.replace(h_ab, fafa, '/right/arg');
+      var result = fafb;
+      if (f instanceof Toy.Lambda) {
+        var step2 = rules.apply(fafb, '/main/left');
         var result = rules.apply(step2, '/main/right');
       }
-      return result.justify('applyToBoth', arguments, [h_bc]);
+      return result.justify('applyToBoth', arguments, [h_ab]);
     },
     inputs: {term: 1, equation: 2},
     form: ('Apply function <input name=term>'
@@ -3725,6 +3726,12 @@ var facts = {
     .rewrite('/main/right', 'a * c + b * c = (a + b) * c');
     return step;
   },
+  'a + a = 2 * a': function() {
+    return rules.consider('a + a')
+    .rewrite('/main/right/left', 'a = 1 * a')
+    .rewrite('/main/right', 'a * b + b = (a + 1) * b')
+    .apply('arithmetic', '/main/right/left');
+  },
 
   // Plus zero
   'a = a + 0': function() {
@@ -3829,6 +3836,7 @@ var facts = {
 
   // Subtraction facts
 
+  // Moving terms to the left
   'a + b - c = a - c + b': function() {
     var step = rules.consider('a + b - c')
     .rewrite('/main/right', 'a - b = a + neg b')
@@ -3843,6 +3851,16 @@ var facts = {
     .apply(rewrite, '/main/right', 'a + b + c = a + c + b')
     .apply(rewrite, '/main/right', 'a + neg b = a - b');
     return step;
+  },
+
+  // Regrouping
+  'neg (a - b) = b - a': function() {
+    return rules.consider('neg (a - b)')
+    .rewrite('/main/right/arg', 'a - b = a + neg b')
+    .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
+    .rewrite('/main/right/right', 'neg (neg a) = a')
+    .rewrite('/main/right', 'a + b = b + a')
+    .rewrite('/main/right', 'a + neg b = a - b');
   },
   'a - (b + c) = a - b - c': function() {
     var rewrite = 'rewriteWithFact';
@@ -3863,6 +3881,20 @@ var facts = {
     .apply(rewrite, '/main/right', 'a + neg b = a - b');
     return step;
   },
+  'a - (b - c) = a + (c - b)': function() {
+    return rules.consider('a - (b - c)')
+    .rewrite('/main/right', 'a - b = a + neg b')
+    .rewrite('/main/right/right', 'neg (a - b) = b - a');
+  },
+  'a - (b - c) = a + c - b': function() {
+    return rules.consider('a - (b - c)')
+    .rewrite('/main/right', 'a - (b - c) = a + (c - b)')
+    .rewrite('/main/right/right', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a + (b + c) = a + b + c')
+    .rewrite('/main/right', 'a + neg b = a - b');
+  },
+
+  // Simplification
   'a - a = 0': function() {
     return (rules.eqSelf('a - a')
             .apply('apply', '/right')
