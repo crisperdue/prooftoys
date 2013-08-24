@@ -1135,7 +1135,19 @@ Expr.prototype.pathTo = function(pred) {
     var target = pred;
     pred = function(term) { return target == term; };
   }
-  return reversePath(this._path(pred, path('/')));
+  return reversePath(this._path(pred, path('')));
+};
+
+/**
+ * Like Expr.pathTo, but for infix calls produces a path with /left,
+ * /right, or /binop rather than combinations of /fn and /arg.
+ */
+Expr.prototype.prettyPathTo = function(pred) {
+  if (pred instanceof Expr) {
+    var target = pred;
+    pred = function(term) { return target == term; };
+  }
+  return this._prettyPath(pred, path(''));
 };
 
 /**
@@ -1522,6 +1534,11 @@ Expr.prototype.mergedHypotheses = function() {
 // NOT a variable binding.  Returns the "reverse path" to it from
 // this, with the last path segment first, added to the given revPath.
 // 
+// _prettyPath(pred, revPath)
+//
+// Like _path, but for infix expressions produces /left, /right, etc.
+// rather than combinations of /fn and /arg; and returns a forward
+// path.
 //
 // _bindingPath(pred, revPath)
 //
@@ -1724,6 +1741,10 @@ Var.prototype.generalizeTF = function(expr2, newVar) {
 };
 
 Var.prototype._path = function(pred, revPath) {
+  return pred(this) ? revPath : null;
+};
+
+Var.prototype._prettyPath = function(pred, revPath) {
   return pred(this) ? revPath : null;
 };
 
@@ -2032,6 +2053,38 @@ Call.prototype._path = function(pred, revPath) {
       || this.arg._path(pred, new Path('arg', revPath));
 };
 
+Call.prototype._prettyPath = function(pred, revPath) {
+  var p;
+  if (pred(this)) {
+    return revPath;
+  } else if (this.isInfixCall()) {
+    p = this.getLeft()._prettyPath(pred, revPath);
+    if (p) {
+      return new Path('left', p);
+    }
+    p = this.getBinOp()._prettyPath(pred, revPath)
+    if (p) {
+      return new Path('binop', p);
+    }
+    p = this.getRight()._prettyPath(pred, revPath);
+    if (p) {
+      return new Path('right', p);
+    } else {
+      return null;
+    }
+  } else {
+    p = this.fn._prettyPath(pred, revPath);
+    if (p) {
+      return new Path('fn', p);
+    }
+    p = this.arg._prettyPath(pred, revPath);
+    if (p) {
+      return new Path('arg', p);
+    }
+    return null;
+  }
+};
+
 Call.prototype._bindingPath = function(pred, revPath) {
   return (this.fn._bindingPath(pred, new Path('fn', revPath))
           || this.arg._bindingPath(pred, new Path('arg', revPath)));
@@ -2238,6 +2291,12 @@ Lambda.prototype._path = function(pred, revPath) {
   return pred(this)
     ? revPath
     : this.body._path(pred, new Path('body', revPath));
+};
+
+Lambda.prototype._prettyPath = function(pred, revPath) {
+  return pred(this)
+    ? revPath
+    : this.body._prettyPath(pred, new Path('body', revPath));
 };
 
 Lambda.prototype._bindingPath = function(pred, revPath) {

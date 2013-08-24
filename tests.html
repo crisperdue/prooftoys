@@ -646,6 +646,28 @@ var testCase = {
                 '' + call(f, call(f, call(g, x))).pathTo(findX));
   },
 
+  testPrettyPathTo: function() {
+    function finder(target) {
+      target = Toy.termify(target);
+      return function(expr) {
+        return expr.matches(target);
+      }
+    }
+    var pred = finder('x');
+    function findPath(term, target) {
+      return Toy.termify(term).prettyPathTo(finder(target)).toString();
+    }
+    assertEqual('/left', findPath('x = y', 'x'));
+    assertEqual('/right', findPath('x = y', 'y'));
+    assertEqual('/binop', findPath('x = y', '='));
+    assertEqual('/right', findPath('T == (T ==> T)', 'T ==> T'));
+    assertEqual('/left/right', findPath('(x + y) + z', 'y'));
+    assertEqual('/arg', findPath('not p', 'p'));
+    assertEqual('/fn', findPath('not p', 'not'))
+    assertEqual('/right/arg', findPath('q ==> not p', 'p'));
+    assertEqual('/arg/arg', findPath('not (not (not p))', 'not p'));
+  },
+
   testPathToBinding: function() {
     function isX(expr) {
       return expr == x;
