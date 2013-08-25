@@ -231,7 +231,7 @@ StepEditor.prototype.handleSelection = function() {
     }
     return this.tryRule(Toy.rules.rewriteWithFact,
                         [siteStep.original,
-                         siteStep.pathTo(siteStep.selection),
+                         siteStep.prettyPathTo(siteStep.selection),
                          value.slice(5)]);
   }
 };
@@ -392,7 +392,7 @@ StepEditor.prototype.fillWithSelectedSite = function(args) {
 	var position = inputs[type];
 	if ((typeof position) == 'number') {
 	  args[position - 1] = step.original;
-	  args[position] = step.pathTo(function(e) { return e == expr; });
+	  args[position] = step.prettyPathTo(expr);
 	  // Only fill in one argument (pair) from the selection.
 	  break;
 	} else {
@@ -734,33 +734,36 @@ BasicRuleSelector.prototype.reset = function() {
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
   // Map from rule display text to rule name.
-  var byText = {};
-  var texts = [];
+  var byDisplay = {};
+  var displayTexts = [];
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       if (self.offerAxioms || ruleName.slice(0, 5) != 'axiom') {
         var text = ruleMenuFormatter(null, {text: ruleName}, false);
-        texts.push(text);
-        byText[text] = ruleName;
+        displayTexts.push(text);
+        byDisplay[text] = ruleName;
       }
     });
   self.stepEditor.offerableFacts().forEach(function(fact) {
     var expr = Toy.getStatement(fact);
-    var id = expr.dump();
+    var text = expr.toString();
     if (expr.isEquation() && expr.isCall2('==>')) {
       expr = expr.getRight();
     }
-    var text = expr.toUnicode();
-    if (text[0] === '(') {
-      text = text.slice(1, -1);
+    var display = expr.toUnicode();
+    if (display[0] === '(') {
+      display = display.slice(1, -1);
     }
-    text = 'use ' + text;
-    texts.push(text);
-    byText[text] = 'fact ' + id;
+    display = 'use ' + display;
+    displayTexts.push(display);
+    // Value of the option; format of "fact <fact text>"
+    // indicates that the text defines a fact to use in
+    // rewriteWithFact.
+    byDisplay[display] = 'fact ' + text;
   });
-  texts.sort(function(a, b) { return a.localeCompare(b); });
-  texts.forEach(function(text) {
-      elt.add(new Option(text, byText[text]));
+  displayTexts.sort(function(a, b) { return a.localeCompare(b); });
+  displayTexts.forEach(function(display) {
+      elt.add(new Option(display, byDisplay[display]));
     });
   var header = elt.options[0];
   elt.options[0].text = ((elt.options.length == 1)
