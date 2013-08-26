@@ -4156,6 +4156,9 @@ function addFact(expr_arg, prover) {
  * matching that statement, returning the proved result.
  * Automatically does alpha conversion if necessary to use the desired
  * variable names.  Throws an exception in case of failure.
+ *
+ * Checks that the "main" part of the result matches the "main" part
+ * of the statement of the fact.
  */
 function getResult(fact) {
   var expr = getStatement(fact);
@@ -4196,12 +4199,15 @@ function getResult(fact) {
 /**
  * Returns a formula that is the statement of a "fact".  The fact can
  * be a theorem name, a fact object, an Expr or a parseable string.
- * It simply returns an Expr.  Given a theorem name or fact object,
- * accesses any known statement of it, or proves it if there is no
- * statement.  Parses a string, and if the result is an implication
- * with an equation as the consequence, treats the antecedent
- * as an assumption.  Automatically adds assumptions that inputs
- * to math operators are real numbers.
+ * Given a theorem name or fact object, accesses any known statement
+ * of it, or proves it if there is no statement.  Parses a string, and
+ * if the result is an implication with an equation as the
+ * consequence, treats the antecedent as assumptions.  Automatically
+ * adds assumptions that inputs to math operators are real numbers.
+ *
+ * Returns an Expr.  If the fact is given as a string, note that the
+ * result is the result of Toy.mathParse applied to it, with any
+ * antecedent flagged as hypotheses.
  */
 function getStatement(fact) {
   if (typeof fact === 'string') {
