@@ -4152,12 +4152,10 @@ function addFact(expr_arg, prover) {
 }
 
 /**
- * Looks up an axiom, theorem, or fact, returning the proved result.
- * Given a named axiom or theorem, returns it.  Given something
- * acceptable to getStatement, returns a proved version of it, or the
- * thing itself if already proved.  Automatically does alpha
- * conversion if necessary to use the desired variable names.  Throws
- * an exception in case of failure.
+ * Accepts any argument acceptable to getStatement.  Looks up a fact
+ * matching that statement, returning the proved result.
+ * Automatically does alpha conversion if necessary to use the desired
+ * variable names.  Throws an exception in case of failure.
  */
 function getResult(fact) {
   var expr = getStatement(fact);
@@ -4165,8 +4163,8 @@ function getResult(fact) {
     // Proved!
     return expr;
   }
-  var kexpr = expr.isCall2('==>') ? expr.getRight() : expr;
-  var key = kexpr.dump();
+  // Same encoding as in addFact.
+  var key = expr.getMain().dump();
   var prover = _factsMap[key];
   assert(prover, function() { return 'No such fact: ' + expr; });
   var result = prover._provedResult;
@@ -4193,6 +4191,48 @@ function getResult(fact) {
     prover._provedResult = result2;
   }
   return result2;
+}
+
+/**
+ * Returns a formula that is the statement of a "fact".  The fact can
+ * be a theorem name, a fact object, an Expr or a parseable string.
+ * It simply returns an Expr.  Given a theorem name or fact object,
+ * accesses any known statement of it, or proves it if there is no
+ * statement.  Parses a string, and if the result is an implication
+ * with an equation as the consequence, treats the antecedent
+ * as an assumption.  Automatically adds assumptions that inputs
+ * to math operators are real numbers.
+ */
+function getStatement(fact) {
+  if (typeof fact === 'string') {
+    if (Toy.isIdentifier(fact)) {
+      // It's the name of an axiom or theorem.
+      var statement = rules[fact].info.statement;
+      if (statement) {
+        // Work with an asserted statement of the theorem if there
+        // is one.
+        return statement;
+      }
+      if (!alreadyProved(fact)) {
+        console.log('Proving in getStatement: ' + fact);
+      }
+      return isAxiom(fact) ? rules.axiom(fact) : rules.theorem(fact);
+    } else {
+      // Otherwise it should be a expression in string form.
+      var result = Toy.mathParse(fact);
+      if (result.isCall2('==>') &&
+          result.getRight().isCall2('=')) {
+        result.hasHyps = true;
+      }
+      return result;
+    }
+  } else if (fact instanceof Expr) {
+    return fact;
+  } else if (typeof fact === 'function') {
+    return fact.goal;
+  } else {
+    throw new Error('Bad input to getStatement');
+  }
 }
 
 /**
@@ -4254,48 +4294,6 @@ function alreadyProved(name) {
     return true;
   } else {
     return _theoremsByName[name] instanceof Expr;
-  }
-}
-
-/**
- * Returns a formula that is the statement of a "fact".  The fact can
- * be a theorem name, a fact object, an Expr or a parseable string.
- * It simply returns an Expr.  Given a theorem name or fact object,
- * accesses any known statement of it, or proves it if there is no
- * statement.  Parses a string, and if the result is an implication
- * with an equation as the consequence, treats the antecedent
- * as an assumption.  Automatically adds assumptions that inputs
- * to math operators are real numbers.
- */
-function getStatement(fact) {
-  if (typeof fact === 'string') {
-    if (Toy.isIdentifier(fact)) {
-      // It's the name of an axiom or theorem.
-      var statement = rules[fact].info.statement;
-      if (statement) {
-        // Work with an asserted statement of the theorem if there
-        // is one.
-        return statement;
-      }
-      if (!alreadyProved(fact)) {
-        console.log('Proving in getStatement: ' + fact);
-      }
-      return isAxiom(fact) ? rules.axiom(fact) : rules.theorem(fact);
-    } else {
-      // Otherwise it should be a expression in string form.
-      var result = Toy.mathParse(fact);
-      if (result.isCall2('==>') &&
-          result.getRight().isCall2('=')) {
-        result.hasHyps = true;
-      }
-      return result;
-    }
-  } else if (fact instanceof Expr) {
-    return fact;
-  } else if (typeof fact === 'function') {
-    return fact.goal;
-  } else {
-    throw new Error('Bad input to getStatement');
   }
 }
 
