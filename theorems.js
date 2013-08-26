@@ -3847,9 +3847,9 @@ var facts = {
   'a - b + c = a + c - b': function() {
     var rewrite = 'rewriteWithFact';
     var step = rules.consider('a - b + c')
-    .apply(rewrite, '/main/right/left', 'a - b = a + neg b')
-    .apply(rewrite, '/main/right', 'a + b + c = a + c + b')
-    .apply(rewrite, '/main/right', 'a + neg b = a - b');
+    .rewrite('/main/right/left', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a + b + c = a + c + b')
+    .rewrite('/main/right', 'a + neg b = a - b');
     return step;
   },
   'a - (b - c) = a + (c - b)': function() {
@@ -3892,20 +3892,20 @@ var facts = {
   'a - (b + c) = a - b - c': function() {
     var rewrite = 'rewriteWithFact';
     var step = rules.consider('a - (b + c)')
-    .apply(rewrite, '/main/right', 'a - b = a + neg b')
-    .apply(rewrite, '/main/right/right',
+    .rewrite('/main/right', 'a - b = a + neg b')
+    .rewrite('/main/right/right',
            'neg (a + b) = neg a + neg b')
-    .apply(rewrite, '/main/right', 'a + (b + c) = a + b + c')
-    .apply(rewrite, '/main/right', 'a + neg b = a - b')
-    .apply(rewrite, '/main/right/left', 'a + neg b = a - b');
+    .rewrite('/main/right', 'a + (b + c) = a + b + c')
+    .rewrite('/main/right', 'a + neg b = a - b')
+    .rewrite('/main/right/left', 'a + neg b = a - b');
     return step;
   },  
   'a + (b - c) = a + b - c': function() {
     var rewrite = 'rewriteWithFact';
     var step = rules.consider('a + (b - c)')
-    .apply(rewrite, '/main/right/right', 'a - b = a + neg b')
-    .apply(rewrite, '/main/right', 'a + (b + c) = a + b + c')
-    .apply(rewrite, '/main/right', 'a + neg b = a - b');
+    .rewrite('/main/right/right', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a + (b + c) = a + b + c')
+    .rewrite('/main/right', 'a + neg b = a - b');
     return step;
   },
   'a - (b - c) = a - b + c': function() {
@@ -3948,6 +3948,11 @@ var facts = {
   'a * recip b = a / b': function() {
     return rules.eqnSwap(rules.fact('a / b = a * recip b'));
   },
+  'recip a = 1 / a': function() {
+    return rules.consider('recip s')
+    .rewrite('/main/right', 'a = 1 * a')
+    .rewrite('/main/right', 'a * recip b = a / b');
+  },
   'a != 0 ==> recip (recip a) = a': function() {
     var step1 = rules.fact('a * recip a = 1');
     var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip a)'));
@@ -3980,7 +3985,6 @@ var facts = {
   },
   */
 
-  // TODO: Get these working.
   'a != 0 & b != 0 ==> recip (a * b) = recip a * recip b': function() {
     var step1 = rules.fact('a * recip a = 1');
     var step2 = rules.instVar(step1, Toy.parse('a * b'), 'a');
@@ -4014,36 +4018,36 @@ var facts = {
   'c != 0 ==> a * b / c = a / c * b': function() {
     var rewrite = 'rewriteWithFact';
     var step = rules.consider('a * b / c')
-    .apply(rewrite, '/main/right', 'a / b = a * recip b')
-    .apply(rewrite, '/main/right', 'a * b * c = a * c * b')
-    .apply(rewrite, '/main/right/left', 'a * recip b = a / b');
+    .rewrite('/main/right', 'a / b = a * recip b')
+    .rewrite('/main/right', 'a * b * c = a * c * b')
+    .rewrite('/main/right/left', 'a * recip b = a / b');
     return step;
   },
   'b != 0 ==> a / b * c = a * c / b': function() {
     var rewrite = 'rewriteWithFact';
     var step = rules.consider('a / b * c')
-    .apply(rewrite, '/main/right/left', 'a / b = a * recip b')
-    .apply(rewrite, '/main/right', 'a * b * c = a * c * b')
-    .apply(rewrite, '/main/right', 'a * recip b = a / b');
+    .rewrite('/main/right/left', 'a / b = a * recip b')
+    .rewrite('/main/right', 'a * b * c = a * c * b')
+    .rewrite('/main/right', 'a * recip b = a / b');
     return step;
   },
   'b != 0 & c != 0 ==> a / (b * c) = a / b / c': function() {
     var rewrite = 'rewriteWithFact';
     var step = rules.consider('a / (b * c)')
-    .apply(rewrite, '/main/right', 'a / b = a * recip b')
-    .apply(rewrite, '/main/right/right',
+    .rewrite('/main/right', 'a / b = a * recip b')
+    .rewrite('/main/right/right',
            'recip (a * b) = recip a * recip b')
-    .apply(rewrite, '/main/right', 'a * (b * c) = a * b * c')
-    .apply(rewrite, '/main/right', 'a * recip b = a / b')
-    .apply(rewrite, '/main/right/left', 'a * recip b = a / b');
+    .rewrite('/main/right', 'a * (b * c) = a * b * c')
+    .rewrite('/main/right', 'a * recip b = a / b')
+    .rewrite('/main/right/left', 'a * recip b = a / b');
     return step;
   },  
   'c != 0 ==> a * (b / c) = a * b / c': function() {
     var rewrite = 'rewriteWithFact';
     var step = rules.consider('a * (b / c)')
-    .apply(rewrite, '/main/right/right', 'a / b = a * recip b')
-    .apply(rewrite, '/main/right', 'a * (b * c) = a * b * c')
-    .apply(rewrite, '/main/right', 'a * recip b = a / b');
+    .rewrite('/main/right/right', 'a / b = a * recip b')
+    .rewrite('/main/right', 'a * (b * c) = a * b * c')
+    .rewrite('/main/right', 'a * recip b = a / b');
     return step;
   },
 
