@@ -1,5 +1,7 @@
-// Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
+// Copyright 2011, 2012, 2013 Crispin Perdue.  All rights reserved.
 
+// Set everything up immediately on load, avoiding changes to
+// the global environment except through namespace "Toy".
 (function() {
 
 // Make application assertions available through "assert".
