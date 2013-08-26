@@ -4093,79 +4093,6 @@ function addFacts(map) {
   }
 }
 
-// Descriptions of rewrite rules (internal).  Each of these generates
-// an actual inference rule.
-var rewriters = {
-  // Named rewriters are currently redundant with rewriters based
-  // on facts, so this list is empty.
-};  
-
-/**
- * Adds a set of rewriting rules given as name/info pairs in a map,
- * using addRewriter to add each one.
- */
-function addRewriters(map) {
-  var ruleInfo = {};
-  for (var name in map) {
-    addRewriter(name, map[name]);
-  }
-}
-
-/**
- * Adds an inference rule based on the given key-value descriptor
- * "info".  In the descriptor the "usesFact" property must be an axiom or
- * theorem to use for the rewriting, or the name of one.  The "inputSide"
- * property, either "left" or "right" indicates which side of the
- * equational axiom is the pattern to match the target, defaulting to
- * "left".  The "comment" property if given becomes the rule's
- * comment.  The generated rewriter simplifies numeric types after
- * applying the fact.
- *
- * TODO: Remove this and code that uses it.
- */
-function addRewriter(ruleName, info) {
-  // We must find the rewrite rule's equation before ever trying
-  // to apply it, for example to determine its menu entry and
-  // to determine whether to offer the rewrite in a menu.
-  var fact = getStatement(info.usesFact);
-  fact.unHyp().assertCall2('=');
-  var inputSide = info.inputSide || 'left';
-  function action(step, path) {
-    var fact = getResult(info.usesFact);
-    if (inputSide === 'right') {
-      fact = rules.eqnSwap(fact);
-    }
-    var step1 = rules.rewrite(step, path, fact);
-    var result = rules.simplifyAssumptions(step1);
-    // Justify the step with the given ruleName.  This is appropriate
-    // since addRewriters attaches it as "rules.ruleName".
-    // Omit the fact as a dependency, because it (presumably)
-    // was derived in some other proof, not this one.
-    result = result.justify(ruleName, [step, path], [step]);
-    return result;
-  }
-  var eqn = fact.unHyp();
-  // Equation for the rewrite, without assumptions.
-  var equation =
-    inputSide === 'left'
-    ? Toy.infixCall(eqn.getLeft(), '=', eqn.getRight())
-    : Toy.infixCall(eqn.getRight(), '=', eqn.getLeft());
-  var eqnText = equation.unHyp().toString().slice(1, -1);
-  var defaultInfo = {
-    // Highlight sites in inputs as usual for rewrite rules.
-    isRewriter: true,
-    action: action,
-    inputs: {site: 1},
-    using: equation,
-    inputSide: inputSide,
-    hint: 'use ' + Toy.unicodify(eqnText),
-    description: 'rewrite using ' + Toy.mathMarkup(eqnText),
-    form: '',
-    comment: 'Rewrite using ' + equation.toUnicode()
-  };
-  addRule(ruleName, $.extend(defaultInfo, info));
-}
-
 // Put definitions into their database:
 Toy.define('not', equal(F));
 Toy.define('!=', '{x. {y. not (x = y)}}');
@@ -4482,8 +4409,5 @@ for (var i = 0; i < theoremNames.length; i++) {
 }
 
 addFacts(facts);
-
-// Add rewriting rules based on the axioms.
-addRewriters(rewriters);
 
 })();
