@@ -3852,6 +3852,18 @@ var facts = {
     .apply(rewrite, '/main/right', 'a + neg b = a - b');
     return step;
   },
+  'a - (b - c) = a + (c - b)': function() {
+    return rules.consider('a - (b - c)')
+    .rewrite('/main/right', 'a - b = a + neg b')
+    .rewrite('/main/right/right', 'neg (a - b) = b - a');
+  },
+  'a - (b - c) = a + c - b': function() {
+    return rules.consider('a - (b - c)')
+    .rewrite('/main/right', 'a - (b - c) = a + (c - b)')
+    .rewrite('/main/right/right', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a + (b + c) = a + b + c')
+    .rewrite('/main/right', 'a + neg b = a - b');
+  },
 
   // Regrouping
   'neg (a - b) = b - a': function() {
@@ -3861,6 +3873,21 @@ var facts = {
     .rewrite('/main/right/right', 'neg (neg a) = a')
     .rewrite('/main/right', 'a + b = b + a')
     .rewrite('/main/right', 'a + neg b = a - b');
+  },
+  'neg (a - b) = neg a + b': function() {
+    return rules.consider('neg (a - b)')
+    .rewrite('/main/right/arg', 'a - b = a + neg b')
+    .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
+    .rewrite('/main/right/right', 'neg (neg a) = a');
+  },
+
+  // Four cases: each operation can be + or -, and initial association
+  // can be to the left or right.
+  'a + b - c = a + (b - c)': function() {
+    return rules.consider('a + b - c')
+    .rewrite('/main/right', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a + b + c = a + (b + c)')
+    .rewrite('/main/right/right', 'a + neg b = a - b');
   },
   'a - (b + c) = a - b - c': function() {
     var rewrite = 'rewriteWithFact';
@@ -3881,17 +3908,14 @@ var facts = {
     .apply(rewrite, '/main/right', 'a + neg b = a - b');
     return step;
   },
-  'a - (b - c) = a + (c - b)': function() {
+  'a - (b - c) = a - b + c': function() {
     return rules.consider('a - (b - c)')
-    .rewrite('/main/right', 'a - b = a + neg b')
-    .rewrite('/main/right/right', 'neg (a - b) = b - a');
-  },
-  'a - (b - c) = a + c - b': function() {
-    return rules.consider('a - (b - c)')
-    .rewrite('/main/right', 'a - (b - c) = a + (c - b)')
     .rewrite('/main/right/right', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a - b = a + neg b')
+    .rewrite('/main/right/right', 'neg (a + b) = neg a + neg b')
+    .rewrite('/main/right/right/right', 'neg (neg a) = a')
     .rewrite('/main/right', 'a + (b + c) = a + b + c')
-    .rewrite('/main/right', 'a + neg b = a - b');
+    .rewrite('/main/right/left', 'a + neg b = a - b');
   },
 
   // Simplification
