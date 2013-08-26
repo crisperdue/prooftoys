@@ -199,19 +199,22 @@ function ProofEditor() {
   this._stateArea = dom(this._stateDisplay.find('.proofStateArea'));
   // Toggling the proof state display visibility with a button.
   // 
+  @proofButtons = $('<div/>');
   var saveRestore =
     $('<input type=button '
       + 'value="Save/restore proof ..." '
       + 'title="Save or restore proof state">');
+  @proofButtons.append(saveRestore);
   saveRestore.on('click', function() {
       self._stateDisplay.toggleClass('hidden');
       dom($(self._stateDisplay).find('textarea')).select();
     });
-  @saver = $('<div/>');
-  @saver.append(saveRestore);
+  var clearProof = $('<input type=button value="Clear proof">');
+  @proofButtons.append(clearProof);
+  clearProof.on('click', function() {@mainControl.setSteps([]); });
   this.containerNode = $('<div class=proofContainer></div>');
   this.containerNode
-    .append(@saver)
+    .append(@proofButtons)
     .append(this._stateDisplay)
     .append(@mainControl.node);
 
@@ -348,8 +351,8 @@ ProofEditor.prototype.setEditable = @(value) {
   @mainControl.setEditable(value);
 };
 
-ProofEditor.prototype.showSaveRestore = @(value) {
-  @saver.toggle(value);
+ProofEditor.prototype.showProofButtons = @(value) {
+  @proofButtons.toggle(value);
 };
 
 ProofEditor.prototype.displayShowAll = @(value) {
