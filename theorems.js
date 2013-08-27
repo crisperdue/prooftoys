@@ -2384,7 +2384,7 @@ var ruleInfo = {
       var results = [];
       step.getMain().visitCalls(function(term, pth) {
           try {
-            info.push({thm: rules.axiomArithmetic(term), path: pth});
+            results.push({thm: rules.axiomArithmetic(term), path: pth});
           } catch(e) {}
         });
       if (results.length) {
