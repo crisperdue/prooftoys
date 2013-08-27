@@ -1461,15 +1461,6 @@ var testCase = {
     var proved = Toy.rules.tautology(wff);
   },
 
-  testTautologyAndProfile: function() {
-    var wff = Toy.parse('a1 & a2 & a3 & a4 & a5 & a6 == ' +
-                      'a1 & a2 & a4 & a5 & a6 & a3');
-    console.profile('Tautology');
-    var inf = Toy.rules.tautology(wff);
-    console.profileEnd();
-    assertEqual(wff.toString(), inf);
-  },
-
   testMakeConjunction: function() {
     var result = Toy.rules.makeConjunction(p, q);
     assertEqual('(p & q)', result);

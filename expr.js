@@ -1386,6 +1386,29 @@ Expr.prototype.mergedHypotheses = function() {
   return result;
 };
 
+/**
+ * Finds and returns schemas and locations where they match in this
+ * term.  Returns an array of objects with properties as follows:
+ * schema: matching schema as an Expr;
+ * path: reverse path to match location;
+ * subst: mapping/substitution that establishes the match.
+ */
+Expr.prototype.findSchemaMatches = function(schemas_arg) {
+  var schemas = map(Toy.termify, schemas_arg);
+  var results = [];
+  function checkMatches(term, pth) {
+    schemas.forEach(function(s) {
+        var subst = term.matchSchema(s);
+        if (subst) {
+          schemas.push({schema: s, path: pth, subst: subst});
+        }
+      });
+  }
+  this.visitCalls(checkMatches);
+  return results;
+};
+
+
 // Expr
 //
 // Methods defined on expressions, but defined only in the subclasses:
