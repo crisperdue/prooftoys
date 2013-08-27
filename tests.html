@@ -696,6 +696,31 @@ var testCase = {
     check('{a: 3, b: 2}', 'a + b', '3 + 2');
   },
 
+  testVisitCalls: function() {
+    var names = [];
+    var paths = [];
+    var terms = [];
+    function foo(term, pth) {
+      if (term.fn instanceof Toy.Var) {
+        names.push(term.fn.pname || term.fn.name);
+        paths.push(Toy.reversePath(pth).toString());
+      }
+      if (term.matchSchema('a + b')) {
+        terms.push(term);
+      }
+    }
+    Toy.parse('2 * x + neg y = 12 == T').visitCalls(foo);
+    assertEqual(["==", "=", "+", "*", "neg"], names);
+    assertEqual(["/fn",
+                 "/fn/arg/fn",
+                 "/fn/arg/fn/arg/fn",
+                 "/fn/arg/fn/arg/fn/arg/fn",
+                 "/fn/arg/fn/arg/arg"],
+                paths);
+    assertEqual(1, terms.length);
+    assertEqual('((2 * x) + (neg y))', terms[0].toString());
+  },
+
   testGeneralizeTF: function() {
     var gen = Toy.parse('p T = T').generalizeTF(Toy.parse('p F = F'), x);
     assertEqual('((p x) = x)', gen + '');

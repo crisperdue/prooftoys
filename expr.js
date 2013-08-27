@@ -1386,7 +1386,6 @@ Expr.prototype.mergedHypotheses = function() {
   return result;
 };
 
-
 // Expr
 //
 // Methods defined on expressions, but defined only in the subclasses:
@@ -1587,6 +1586,14 @@ Expr.prototype.mergedHypotheses = function() {
 // that property.  Helper for code (currently mergedHypotheses) that
 // tags subexpressions with __var property as part of creating a
 // pattern from them.
+//
+//
+// visitCalls(fn, path)
+//
+// Tree walks though this Expr and all Calls it contains, recursively,
+// calling the function at each and passing a reverse path from here
+// to that point.  Does not descend into non-Calls.
+//
 
 
 //// Var -- variable bindings and references
@@ -1782,6 +1789,8 @@ Var.prototype._matchAsSchema = function(expr, map) {
 Var.prototype._asPattern = function(term) {
   return this.__var || this;
 };
+
+Var.prototype.visitCalls = function(fn, path) {};
 
 
 //// Call -- application of a function to an argument
@@ -2107,6 +2116,15 @@ Call.prototype._asPattern = function(term) {
   return this.__var || new Call(this.fn._asPattern(), this.arg._asPattern());
 };
 
+Call.prototype.visitCalls = function(fn, path) {
+  if (!path) {
+    path = Toy.path();
+  }
+  fn(this, path);
+  this.fn.visitCalls(fn, new Path('fn', path));
+  this.arg.visitCalls(fn, new Path('arg', path));
+};
+
 
 //// Lambda -- variable bindings
 
@@ -2320,6 +2338,8 @@ Lambda.prototype._matchAsSchema = function(expr, map) {
 Lambda.prototype._asPattern = function(term) {
   return this.__var || new Lambda(this.bound, this.body._asPattern());
 };
+
+Lambda.prototype.visitCalls = function(fn, path) {};
 
 // Private methods grouped by name.
 
@@ -2600,7 +2620,7 @@ Path.prototype.toString = function() {
  * If the optional expr is supplied, adjust any /main path according
  * to whether the expr has hypotheses or not.
  *
- * A null input is treated as '/'.
+ * A null input indicates an empty path.
  */
 function path(arg, opt_expr) {
   var expr = opt_expr;
@@ -2621,7 +2641,7 @@ function path(arg, opt_expr) {
     return adjust(arg);
   }
   if (arg == null) {
-    arg = '/';
+    arg = '';
   }
   // If a Bindings, reverse it into an array and go from there.
   if (arg instanceof Bindings) {
