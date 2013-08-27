@@ -703,7 +703,7 @@ var testCase = {
     function foo(term, pth) {
       if (term.fn instanceof Toy.Var) {
         names.push(term.fn.pname || term.fn.name);
-        paths.push(Toy.reversePath(pth).toString());
+        paths.push(pth.reverse().toString());
       }
       if (term.matchSchema('a + b')) {
         terms.push(term);

@@ -370,12 +370,20 @@ StepEditor.prototype.tryRule = function(rule, args) {
   }
   this.controller.addStep(result);
   this.controller.deselectStep();
-  this.controller.proofChanged();
   // Clear any proof errors field.
   $('#proofErrors').html('');
   this.reset();
   this.focus();
-  return true;
+
+  while (true) {
+    var simpler = Toy.rules.simplifyMath1(result);
+    if (simpler == result) {
+      this.controller.proofChanged();
+      return true;
+    }
+    this.controller.addStep(simpler);
+    result = simpler;
+  }
 };
 
 /**
