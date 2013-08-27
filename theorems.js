@@ -2411,7 +2411,11 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
-    hint: 'simplify math once'
+    hint: 'simplify math once',
+    // This rule is invoked automatically after each user-requested
+    // step; plus it is "inline" and the display (dependencies)
+    // can look peculiar.
+    labels: 'uncommon'
   },
 
   // Remove "T = " and "= T", evaluate boolean expression, do arithmetic.
