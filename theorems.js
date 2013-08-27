@@ -2372,6 +2372,48 @@ var ruleInfo = {
     labels: 'basic'
   },
 
+  // Simplifies the main part of the given step using the axiom of
+  // arithmetic and selected simplifying facts.  Displays its steps
+  // inline.  Not strictly suitable for use in the UI because it
+  // may return the step as-is, which leads to display anomalies.
+  //
+  // TODO: Avoid display anomalies in cases such as this.
+  // 
+  simplifyMath1: {
+    action: function(step) {
+      var results = [];
+      step.getMain().visitCalls(function(term, pth) {
+          try {
+            info.push({thm: rules.axiomArithmetic(term), path: pth});
+          } catch(e) {}
+        });
+      if (results.length) {
+        var result = results[0];
+        var fullPath = Toy.path('/main').concat(result.path.reverse());
+        return rules.arithmetic(step, fullPath);
+      }
+      var facts = ['a - a = 0',
+                   'a + 0 = a',
+                   '0 + a = a',
+                   'a * 1 = a',
+                   '1 * a = a',
+                   'neg (neg a) = a',
+                   '0 * a = 0',
+                   'a * 0 = 0'
+                   ];
+      results = step.getMain().findLhsMatches(facts);
+      if (results.length) {
+        var result = results[0];
+        var fullPath = Toy.path('/main').concat(result.path);
+        return rules.rewriteWithFact(step, fullPath, result.stmt);
+      }
+      return step;
+    },
+    inputs: {step: 1},
+    form: ('Simplify step <input name=step>'),
+    hint: 'simplify math once'
+  },
+
   // Remove "T = " and "= T", evaluate boolean expression, do arithmetic.
   // Inline, throws if no simplification found.
   simplifySiteOnce: {
@@ -3316,7 +3358,8 @@ var ruleInfo = {
             return null;
           }
         }
-        return Toy.reversePath(find(term, Toy.path('')));
+        var rpath = find(term, Toy.path(''));
+        return rpath ? rpath.reverse() : null;
       }
       function simplifyHyps(stepArg) {
         if (!stepArg.isCall2('==>')) {

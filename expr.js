@@ -1137,7 +1137,8 @@ Expr.prototype.pathTo = function(pred) {
     var target = pred;
     pred = function(term) { return target == term; };
   }
-  return reversePath(this._path(pred, path('')));
+  var rpath = this._path(pred, path(''));
+  return rpath ? rpath.reverse() : null;
 };
 
 /**
@@ -1166,7 +1167,7 @@ Expr.prototype.pathToBinding = function(pred) {
     pred = function(term) { return target.matches(term); };
   }
   var revPath = this._bindingPath(pred, path('/'));
-  return reversePath(revPath);
+  return revPath ? revPath.reverse() : null;
 };
 
 /**
@@ -1393,16 +1394,17 @@ Expr.prototype.mergedHypotheses = function() {
  * path: reverse path to match location;
  * subst: mapping/substitution that establishes the match.
  */
-Expr.prototype.findSchemaMatches = function(schemas_arg) {
-  var schemas = map(Toy.termify, schemas_arg);
+Expr.prototype.findLhsMatches = function(facts) {
+  var statements = facts.map(Toy.getStatement);
   var results = [];
   function checkMatches(term, pth) {
-    schemas.forEach(function(s) {
-        var subst = term.matchSchema(s);
-        if (subst) {
-          schemas.push({schema: s, path: pth, subst: subst});
-        }
-      });
+    for (var i = 0; i < statements.length; i++) {
+      var stmt = statements[i];
+      var subst = term.matchSchema(stmt.getMain().getLeft());
+      if (subst) {
+        results.push({stmt: stmt, term: term, path: pth.reverse()});
+      }
+    }
   }
   this.visitCalls(checkMatches);
   return results;
@@ -2709,8 +2711,7 @@ Path.prototype.concat = function(p) {
 
 /**
  * Returns a new Path whose segments are the reverse of the segments
- * in the given path.  If the argument is null (empty path), returns
- * null.
+ * in the given path.
  */
 function reversePath(revPath) {
   if (revPath == null) {
@@ -2723,6 +2724,20 @@ function reversePath(revPath) {
   }
   return result;
 }
+
+/**
+ * Returns a new Path whose segments are the reverse of the segments
+ * in the given path.
+ */
+Path.prototype.reverse = function() {
+  var revPath = this;
+  var result = path();
+  while (!revPath.isEnd()) {
+    result = new Path(revPath.segment, result);
+    revPath = revPath.tail();
+  }
+  return result;
+};
 
 
 //// TYPES
@@ -4181,7 +4196,6 @@ Toy.Var = Var;
 Toy.Call = Call;
 Toy.Lambda = Lambda;
 Toy.Path = Path;
-Toy.reversePath = reversePath;
 
 Toy.subFree = subFree;
 Toy.genVar = genVar;
