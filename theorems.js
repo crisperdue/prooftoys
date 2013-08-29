@@ -3966,18 +3966,22 @@ var facts = {
 
   // Moving terms to the left
   'a + b - c = a - c + b': function() {
-    var step = rules.consider('a + b - c')
+    return rules.consider('a + b - c')
     .rewrite('/main/right', 'a - b = a + neg b')
     .rewrite('/main/right', 'a + b + c = a + c + b')
     .rewrite('/main/right/left', 'a + neg b = a - b');
-    return step;
   },
   'a - b + c = a + c - b': function() {
-    var step = rules.consider('a - b + c')
+    return rules.consider('a - b + c')
     .rewrite('/main/right/left', 'a - b = a + neg b')
     .rewrite('/main/right', 'a + b + c = a + c + b')
     .rewrite('/main/right', 'a + neg b = a - b');
-    return step;
+  },
+  'a - b + c = a + (c - b)': function() {
+    return rules.fact('a - b + c = a + c - b')
+    .rewrite('/main/right', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a + b + c = a + (b + c)')
+    .rewrite('/main/right/right', 'a + neg b = a - b');
   },
   'a - (b - c) = a + (c - b)': function() {
     return rules.consider('a - (b - c)')
