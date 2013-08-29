@@ -3782,6 +3782,43 @@ var facts = {
     .apply('arithmetic', '/main/right/left');
   },
 
+  // Distributivity with subtraction
+
+  'a * (b - c) = a * b - a * c': function() {
+    return rules.consider('a * (b - c)')
+    .rewrite('/main/right/right', 'a - b = a + neg b')
+    .rewrite('/main/right', 'a * (b + c) = a * b + a * c')
+    .rewrite('/main/right/right', 'a * neg b = neg (a * b)')
+    .rewrite('/main/right', 'a + neg b = a - b');
+  },
+  '(a - b) * c = a * c - b * c': function() {
+    var step = rules.consider('(a - b) * c')
+    .rewrite('/main/right', 'a * b = b * a')
+    .rewrite('/main/right', 'a * (b - c) = a * b - a * c')
+    .rewrite('/main/right/right', 'a * b = b * a')
+    .rewrite('/main/right/left', 'a * b = b * a');
+    return step;
+  },
+  'a * c - b * c = (a - b) * c': function() {
+    var step = rules.fact('(a - b) * c = a * c - b * c')
+    .apply('eqnSwap');
+    return step;
+  },
+  'a * b - a * c = a * (b - c)': function() {
+    return rules.fact('a * (b - c) = a * b - a * c')
+    .apply('eqnSwap');
+  },
+  'a * b - b = (a - 1) * b': function() {
+    return rules.consider('a * b - b')
+    .rewrite('/main/right/right', 'a = 1 * a')
+    .rewrite('/main/right', 'a * c - b * c = (a - b) * c');
+  },
+  'b - a * b = (1 - a) * b': function() {
+    return rules.consider('b - a * b')
+    .rewrite('/main/right/left', 'a = 1 * a')
+    .rewrite('/main/right', 'a * c - b * c = (a - b) * c');
+  },
+
   // Plus zero
   'a = a + 0': function() {
     var step1 = rules.axiom('axiomPlusZero');
@@ -3910,6 +3947,18 @@ var facts = {
     .rewrite('/main/right', 'neg a = -1 * a')
     .rewrite('/main/right', 'a * (b * c) = (a * b) * c')
     .rewrite('/main/right/left', '-1 * a = neg a');
+  },
+  'a * neg b = neg (a * b)': function() {
+    return rules.consider('a * neg b')
+    .rewrite('/main/right/right', 'neg a = -1 * a')
+    .rewrite('/main/right', 'a * (b * c) = a * b * c')
+    .rewrite('/main/right/left', 'a * b = b * a')
+    .rewrite('/main/right', 'a * b * c = a * (b * c)')
+    .rewrite('/main/right', '-1 * a = neg a');
+  },
+  'neg (a * b) = a * neg b': function() {
+    return rules.fact('a * neg b = neg (a * b)')
+    .apply('eqnSwap');
   },
 
 
@@ -4202,6 +4251,9 @@ var _factsMap = {};
  * If the given formula is not the result of a proof, the prover
  * argument is required.  Treats any input that is an implication
  * as a statement with assumptions.
+ *
+ * TODO: Add the converse when adding a fact, provided the fact
+ *   is not its own converse (or perhaps the converse already added).
  */
 function addFact(expr_arg, prover) {
   expr = getStatement(expr_arg);
