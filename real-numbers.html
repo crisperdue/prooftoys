@@ -179,15 +179,15 @@ jQuery(function() {
     var step2 = rules.assume('x + y = 6');
     var step3 = rules.replace(step1, step2, '/main/left/left');
     var step4 = rules.rewriteWithFact(step3, '/main/left/right',
-                                      'x = x * 1');
+                                      'a = a * 1');
     var step5 = rules.rewriteWithFact(step4, '/main/left',
-                                      'x * y + x * z = x * (y + z)');
+                                      'a * b + a * c = a * (b + c)');
     var step6 = rules.arithmetic(step5, '/right/left/right');
     var step7 = rules.divideBoth(step6, Toy.parse('3'));
     var step8 = rules.arithmetic(step7, '/right/right');
     var step9 = rules.apply(step8, '/right/left');
     var step10 = rules.rewriteWithFact(step9, '/right/left',
-                                       'x * y * z = x * (y * z)');
+                                       'a * b * c = a * (b * c)');
     var step11 = rules.rewriteWithFact(step10, '/right/left/right',
                                        'axiomReciprocal');
     var step12 = rules.rewriteWithFact(step11, '/right/left',
