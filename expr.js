@@ -678,6 +678,13 @@ Expr.prototype.concat = function(expr, op) {
  * simplify and/or clarify some code.
  */
 Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
+  var ruleDeps = jQuery.makeArray(ruleDeps || []);
+  for (var i = 0; i < ruleDeps.length; i++) {
+    if (ruleDeps[i] == this) {
+      // If the step returns an input step, just return that.
+      return ruleDeps[i];
+    }
+  }
   var expr = this.dup();
   // Record the original Expr as details.
   if (this.ruleName) {
@@ -697,7 +704,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   // Carry other information forward.
   expr.hasHyps = this.hasHyps;
   expr.ruleArgs = jQuery.makeArray(ruleArgs || []);
-  expr.ruleDeps = jQuery.makeArray(ruleDeps || []);
+  expr.ruleDeps = ruleDeps;
   return expr;
 };
 

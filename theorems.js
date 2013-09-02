@@ -156,7 +156,9 @@ var ruleInfo = {
   asHypotheses: {
     action: function(step) {
       step.assertCall2('==>');
-      var result = step.justify('asHypotheses', arguments, [step]);
+      // Use dup to prevent "justify" from getting input identical
+      // to "step".
+      var result = step.dup().justify('asHypotheses', arguments, [step]);
       result.hasHyps = true;
       return result;
     },
@@ -173,7 +175,9 @@ var ruleInfo = {
    */
   asImplication: {
     action: function(step) {
-      var result = step.justify('asImplication', arguments, [step]);
+      // Use dup to prevent "justify" from getting input identical
+      // to "step".
+      var result = step.dup().justify('asImplication', arguments, [step]);
       result.hasHyps = false;
       return result;
     },
