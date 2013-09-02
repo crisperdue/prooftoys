@@ -610,10 +610,8 @@ Expr.prototype.isBoolConst = function() {
  * having hypotheses.  Useful in tests, perhaps other contexts also.
  */
 Expr.prototype.asHyps = function() {
-  this.assertCall2('==>');
-  var result = this.dup();
-  result.hasHyps = true;
-  return result;
+  // Note: requires theorems.js to run.
+  return Toy.rules.asHypotheses(this);
 };
 
 /**

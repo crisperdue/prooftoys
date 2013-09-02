@@ -137,8 +137,7 @@ var ruleInfo = {
       }
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
-      var result = step.justify('assume', arguments);
-      result.hasHyps = true;
+      var result = step.asHyps().justify('assume', arguments);
       assumption.sourceStep = result;
       _allHyps[assumption.dump()] = assumption;
       return result;
@@ -148,6 +147,24 @@ var ruleInfo = {
     hint: 'assume hypothetically',
     comment: 'Hypothesis to assume',
     description: 'assumption'
+  },
+
+  /**
+   * From an implication with LHS consisting of a set of hypotheses,
+   * derives the equivalent step with the hypotheses.
+   */
+  asHypotheses: {
+    action: function(step) {
+      step.assertCall2('==>');
+      var result = step.justify('asHypotheses', arguments, [step]);
+      result.hasHyps = true;
+      return result;
+    },
+    inputs: {implication: 1},
+    form: ('Convert implication to hypotheses in step '
+           + '<input name=implication>'),
+    hint: 'assumptions implicit',
+    description: 'assumptions implicit;; {in step implication}',
   },
 
   /**
@@ -182,24 +199,6 @@ var ruleInfo = {
     labels: 'display'
   },
       
-  /**
-   * From an implication with LHS consisting of a set of hypotheses,
-   * derives the equivalent step with the hypotheses.
-   */
-  asHypotheses: {
-    action: function(step) {
-      step.assertCall2('==>');
-      var result = step.justify('asHypotheses', arguments, [step]);
-      result.hasHyps = true;
-      return result;
-    },
-    inputs: {implication: 1},
-    form: ('Convert implication to hypotheses in step '
-           + '<input name=implication>'),
-    hint: 'assumptions implicit',
-    description: 'assumptions implicit;; {in step implication}',
-  },
-
   /**
    * Refer to a theorem by looking it up in the database rather
    * than proving it all over again.
@@ -1596,8 +1595,7 @@ var ruleInfo = {
       if (h_tautology.hasHyps) {
 	var h = h_tautology.getLeft();
 	var step3 = rules.anyImpliesTheorem(h, step2);
-	step3.hasHyps = true;
-	return step3.justify('tautInst', arguments);
+	return step3.asHyps().justify('tautInst', arguments);
       } else {
 	return step2.justify('tautInst', arguments);
       }
@@ -2211,10 +2209,8 @@ var ruleInfo = {
 	  var step4 = rules.mergeConjunctions(step2.locate('/left'));
 	  var step5 = rules.r(step4, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
-	  var result =
-	    step5.justify('appendStepHyps', arguments, [target, hypStep]);
-	  result.hasHyps = true;
-	  return result;
+	  return (step5.asHyps()
+                  .justify('appendStepHyps', arguments, [target, hypStep]));
 	} else {
 	  // The target does not have hyps.
 	  var subst = {
@@ -2224,10 +2220,8 @@ var ruleInfo = {
 	  var step1 = rules.tautInst('p ==> (h2 ==> p)', subst);
 	  var step2 = rules.modusPonens(target, step1);
           // Rendering of result needs hypStep rendered, so include it as dep.
-	  var result =
-            step2.justify('appendStepHyps', arguments, [target, hypStep]);
-	  result.hasHyps = true;
-	  return result;
+          return (step2.asHyps()
+                  .justify('appendStepHyps', arguments, [target, hypStep]));
 	}
       } else {
 	// Don't do anything and don't display any new proof step.
@@ -2271,10 +2265,8 @@ var ruleInfo = {
           var pattern = rules.mergeConjunctions(step2.getLeft());
           var step5 = rules.rewrite(step2, '/left', pattern);
           // Rendering of result needs hypStep rendered, so include it as dep.
-	  var result =
-            step5.justify('prependStepHyps', arguments, [target, hypStep]);
-	  result.hasHyps = true;
-	  return result;
+          return (step5.asHyps()
+                  .justify('prependStepHyps', arguments, [target, hypStep]));
 	} else {
 	  var subst = {
 	    p: step,
@@ -2283,10 +2275,8 @@ var ruleInfo = {
 	  var step1 = rules.tautInst('p ==> (h1 ==> p)', subst);
 	  var step2 = rules.modusPonens(step, step1);
           // Rendering of result needs hypStep rendered, so include it as dep.
-	  var result =
-            step2.justify('prependStepHyps', arguments, [target, hypStep]);
-	  result.hasHyps = true;
-	  return result;
+          return (step2.asHyps()
+                  .justify('prependStepHyps', arguments, [target, hypStep]));
 	}
       } else {
 	// Don't display this no-op inference step.
@@ -4358,8 +4348,8 @@ function getStatement(fact) {
     } else {
       // Otherwise it should be a expression in string form.
       var result = Toy.mathParse(fact);
-      if (result.isCall2('==>') &&
-          result.getRight().isCall2('=')) {
+      if (result.isCall2('==>') && result.getRight().isCall2('=')) {
+        // Has assumptions, though not a theorem.
         result.hasHyps = true;
       }
       return result;
