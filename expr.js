@@ -678,14 +678,6 @@ Expr.prototype.concat = function(expr, op) {
  * simplify and/or clarify some code.
  */
 Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
-  var slice = Array.prototype.slice;
-  function asArray(a) {
-    if (a instanceof Array) {
-      return a;
-    } else {
-      return slice.call(a, 0);
-    }
-  }
   var expr = this.dup();
   // Record the original Expr as details.
   if (this.ruleName) {
@@ -704,8 +696,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   expr.ordinal = stepCounter++;
   // Carry other information forward.
   expr.hasHyps = this.hasHyps;
-  expr.ruleArgs = asArray(ruleArgs || []);
-  expr.ruleDeps = asArray(ruleDeps || []);
+  expr.ruleArgs = jQuery.makeArray(ruleArgs || []);
+  expr.ruleDeps = jQuery.makeArray(ruleDeps || []);
   return expr;
 };
 
