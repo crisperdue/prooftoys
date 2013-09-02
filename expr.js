@@ -694,11 +694,6 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   expr.ruleName = ruleName;
   // Make the step be its own original, for uniform access to an original.
   expr.original = expr;
-  // Enable its use in a chain of rules.  (This also may help
-  // catch attempts to make inference from unproven Exprs.
-  expr.apply = applyRule;
-  expr.rewrite = applyRewrite;
-  expr.replace = applyReplace;
   // Give this step its own new ordinal.
   expr.ordinal = stepCounter++;
   // Carry other information forward.
@@ -708,33 +703,33 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   return expr;
 };
 
-/**
- * Applies the named rule to this Expr and any other given arguments
- * as if by a call to Toy.rules[name](args).  Private to Expr.justify.
- */
-function applyRule(name, arg1) {
-  // var rules = Toy.rules;
-  // var args = Array.prototype.slice.call(arguments, 1);
-  var nm = name;
-  arguments[0] = this;
-  return Toy.rules[nm].apply(Toy.rules, arguments);
-}
+$.extend(Expr.prototype, {
+    /**
+     * Applies the named rule to this Expr and any other given arguments
+     * as if by a call to Toy.rules[name](args).  Private to Expr.justify.
+     */
+    apply: function(name, arg1) {
+      var nm = name;
+      arguments[0] = this;
+      return Toy.rules[nm].apply(Toy.rules, arguments);
+    },
 
-/**
- * Applies rules.rewriteWithFact to this Expr passing in a path and
- * fact to use.  Private to Expr.justify.
- */
-function applyRewrite(path, fact) {
-  return Toy.rules.rewriteWithFact(this, path, fact);
-}
+    /**
+     * Applies rules.rewriteWithFact to this Expr passing in a path and
+     * fact to use.  Private to Expr.justify.
+     */
+    rewrite: function(path, fact) {
+      return Toy.rules.rewriteWithFact(this, path, fact);
+    },
 
-/**
- * Applies rules.replace to this Expr passing in a path and
- * equation to use.  Private to Expr.justify.
- */
-function applyReplace(path, eqn) {
-  return Toy.rules.replace(eqn, this, path);
-}
+    /**
+     * Applies rules.replace to this Expr passing in a path and
+     * equation to use.  Private to Expr.justify.
+     */
+    replace: function(path, eqn) {
+      return Toy.rules.replace(eqn, this, path);
+    }
+  });
 
 /**
  * Match this expr against a schema, which may be given as a string.
