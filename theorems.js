@@ -2371,8 +2371,12 @@ var ruleInfo = {
   // inline.  Not strictly suitable for use in the UI because it
   // may return the step as-is, which leads to display anomalies.
   //
-  // TODO: Avoid display anomalies in cases such as this.
-  // 
+  // TODO: Display of results from inline rules are a problem in
+  //   general unless they generate exactly one top-level step in the
+  //   end.  Avoid display anomalies in cases such as this.
+  //
+  // TODO: Only simplify visible parts of steps.
+  //
   simplifyMath1: {
     action: function(step) {
       var result;
@@ -2385,6 +2389,7 @@ var ruleInfo = {
         var fullPath = Toy.path('/main').concat(result.path.reverse());
         return rules.arithmetic(step, fullPath);
       }
+      var assocStmt = getStatement('a * (b * c) = a * b * c');
       var facts = ['a - a = 0',
                    'a + 0 = a',
                    '0 + a = a',
@@ -2394,12 +2399,15 @@ var ruleInfo = {
                    '0 * a = 0',
                    'a * 0 = 0'
                    ];
-      var result = step.getMain().findLhsMatch(facts);
-      if (result) {
-        var fullPath = Toy.path('/main').concat(result.path);
-        return rules.rewriteWithFact(step, fullPath, result.stmt);
+      var info = step.getMain().findLhsMatch(facts);
+      if (!info ||
+          (info.stmt.matches(assocStmt) &&
+           (!info.subst.a.isNumeral() ||
+            !info.subst.b.isNumeral()))) {
+        return step;
       }
-      return step;
+      var fullPath = Toy.path('/main').concat(info.path);
+      return rules.rewriteWithFact(step, fullPath, info.stmt);
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
@@ -2411,13 +2419,13 @@ var ruleInfo = {
   },
 
   // Repeatedly applies simplifyMath1 to do trivial simplifications.
-  removeSimpleMath: {
+  doAllArithmetic: {
     action: function(step) {
       var next = step;
       while (true) {
         var simpler = rules.simplifyMath1(next);
         if (simpler === next) {
-          return next.justify('removeSimpleMath', arguments, [step]);
+          return next.justify('doAllArithmetic', arguments, [step]);
         }
         next = simpler;
       }
@@ -2429,9 +2437,45 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
+  // Move all negations in past additions and multiplications;
+  // eliminate double negations.
+  //
+  // TODO: Only simplify visible parts of steps.
+  simplifyNegations: {
+    action: function(step) {
+      var facts = ['neg (a + b) = neg a + neg b',
+                   'neg (neg a) = a',
+                   'neg (a * b) = neg a * neg b',
+                  ].map(getStatement.bind(undefined));
+      var next = step;
+      while (true) {
+        var info = next.getMain().findLhsMatch(facts);
+        if (!info) {
+          break;
+        }
+        var subst = info.subst;
+        if (info.stmt.matches(getStatement('neg (a * b) = neg a * neg b')) &&
+            (!subst.a.isNumeral() ||
+             !subst.b.isNumeral())) {
+          continue;
+        }
+        var fullPath = Toy.path('/main').concat(info.path);
+        next = rules.rewriteWithFact(next, fullPath, info.stmt);
+      }
+      return next.justify('simplifyNegations', arguments, [step]);
+    },
+    inputs: {step: 1},
+    form: ('Simplify negations in <input name=step>'),
+    hint: 'simplify negations',
+    description: 'simplify negations',
+    // Normally automatic or semi-automatic.
+    labels: 'uncommon'
+  },
+
   // Remove occurrences of subtraction by adding the negative.
-  // Also removes "simple math".
-  // TODO: also simplify negations.
+  // Also does arithmetic everywhere and simplifies negations.
+  //
+  // TODO: Only simplify visible parts of steps.
   removeSubtraction: {
     action: function(step) {
       var facts = ['a - b = a + neg b'];
@@ -2439,12 +2483,14 @@ var ruleInfo = {
       while (true) {
         var info = next.getMain().findLhsMatch(facts);
         if (!info) {
-          var result = rules.removeSimpleMath(next);
-          return result.justify('removeSubtraction', arguments, [step]);
+          break;
         }
         var fullPath = Toy.path('/main').concat(info.path);
         next = rules.rewriteWithFact(next, fullPath, info.stmt);
       }
+      var arithDone = rules.doAllArithmetic(next);
+      var negDone = rules.simplifyNegations(arithDone);
+      return negDone.justify('removeSubtraction', arguments, [step]);
     },
     inputs: {step: 1},
     form: ('Convert - to + in step <input name=step>'),
