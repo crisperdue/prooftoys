@@ -77,6 +77,36 @@ function memo(fn) {
 //// CLASSES ////
 
 /**
+ * Throw one of these to return an arbitrary value
+ * from a recursive function.
+ */
+function Result(value) {
+  this.value = value;
+}
+
+/**
+ * Call the given function of no arguments.  If it throws a Result
+ * object, return its "value".  Rethrow anything else, and return the
+ * function value if it does not throw.
+ */
+function catchResult(fn) {
+  try {
+    return fn();
+  } catch(e) {
+    if (e instanceof Result) {
+      return e.value;
+    } else {
+      throw e;
+    }
+  }
+}
+
+function ErrorInfo(message, info) {
+  this.message = message;
+  this.info = info;
+}
+
+/**
  * Specialized error for use when type checking/inference fails.
  */
 function TypeCheckError(msg) {
@@ -698,6 +728,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   expr.ordinal = stepCounter++;
   // Carry other information forward.
   expr.hasHyps = this.hasHyps;
+  expr.hasLeftElision = this.hasLeftElision;
   expr.ruleArgs = jQuery.makeArray(ruleArgs || []);
   expr.ruleDeps = ruleDeps;
   return expr;
@@ -1385,6 +1416,7 @@ Expr.prototype.mergedHypotheses = function() {
  * schema: matching schema as an Expr;
  * path: reverse path to match location;
  * subst: mapping/substitution that establishes the match.
+ * (Note: currently unused.)
  */
 Expr.prototype.findLhsMatches = function(facts) {
   var statements = facts.map(Toy.getStatement);
@@ -1400,6 +1432,23 @@ Expr.prototype.findLhsMatches = function(facts) {
   }
   this.visitCalls(checkMatches);
   return results;
+};
+
+Expr.prototype.findLhsMatch = function(facts) {
+  var statements = facts.map(Toy.getStatement);
+  function checkMatches(term, pth) {
+    for (var i = 0; i < statements.length; i++) {
+      var stmt = statements[i];
+      var subst = term.matchSchema(stmt.getMain().getLeft());
+      if (subst) {
+        throw new Result({stmt: stmt, term: term, path: pth.reverse()});
+      }
+    }
+  }
+  var self = this;
+  return catchResult(function() {
+      self.visitCalls(checkMatches);
+    });
 };
 
 
@@ -1609,7 +1658,8 @@ Expr.prototype.findLhsMatches = function(facts) {
 //
 // Tree walks though this Expr and all Calls it contains, recursively,
 // calling the function at each and passing a reverse path from here
-// to that point.  Does not descend into non-Calls.
+// to that point.  Does not descend into non-Calls.  Returns the
+// undefined value.
 //
 
 
@@ -4177,6 +4227,8 @@ Toy.ownProperties = ownProperties;
 Toy.isEmpty = isEmpty;
 Toy.each = each;
 
+Toy.Result = Result;
+Toy.Error = ErrorInfo;
 Toy.TypeCheckError = TypeCheckError;
 Toy.Set = Set;
 Toy.Map = Map;
