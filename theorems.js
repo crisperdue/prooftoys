@@ -2375,14 +2375,13 @@ var ruleInfo = {
   // 
   simplifyMath1: {
     action: function(step) {
-      var results = [];
+      var result;
       step.getMain().visitCalls(function(term, pth) {
           try {
-            results.push({thm: rules.axiomArithmetic(term), path: pth});
+            result = {thm: rules.axiomArithmetic(term), path: pth};
           } catch(e) {}
         });
-      if (results.length) {
-        var result = results[0];
+      if (result) {
         var fullPath = Toy.path('/main').concat(result.path.reverse());
         return rules.arithmetic(step, fullPath);
       }
@@ -2395,9 +2394,8 @@ var ruleInfo = {
                    '0 * a = 0',
                    'a * 0 = 0'
                    ];
-      results = step.getMain().findLhsMatches(facts);
-      if (results.length) {
-        var result = results[0];
+      var result = step.getMain().findLhsMatch(facts);
+      if (result) {
         var fullPath = Toy.path('/main').concat(result.path);
         return rules.rewriteWithFact(step, fullPath, result.stmt);
       }
@@ -2410,6 +2408,48 @@ var ruleInfo = {
     // step; plus it is "inline" and the display (dependencies)
     // can look peculiar.
     labels: 'uncommon'
+  },
+
+  // Repeatedly applies simplifyMath1 to do trivial simplifications.
+  removeSimpleMath: {
+    action: function(step) {
+      var next = step;
+      while (true) {
+        var simpler = rules.simplifyMath1(next);
+        if (simpler === next) {
+          return next.justify('removeSimpleMath', arguments, [step]);
+        }
+        next = simpler;
+      }
+    },
+    inputs: {step: 1},
+    form: ('Simplify step <input name=step>'),
+    hint: 'do arithmetic',
+    // Normally automatic or semi-automatic.
+    labels: 'uncommon'
+  },
+
+  // Remove occurrences of subtraction by adding the negative.
+  // Also removes "simple math".
+  // TODO: also simplify negations.
+  removeSubtraction: {
+    action: function(step) {
+      var facts = ['a - b = a + neg b'];
+      var next = step;
+      while (true) {
+        var info = next.getMain().findLhsMatch(facts);
+        if (!info) {
+          var result = rules.removeSimpleMath(next);
+          return result.justify('removeSubtraction', arguments, [step]);
+        }
+        var fullPath = Toy.path('/main').concat(info.path);
+        next = rules.rewriteWithFact(next, fullPath, info.stmt);
+      }
+    },
+    inputs: {step: 1},
+    form: ('Convert - to + in step <input name=step>'),
+    hint: 'algebra: convert - to +',
+    description: 'convert - to +'
   },
 
   // Remove "T = " and "= T", evaluate boolean expression, do arithmetic.
