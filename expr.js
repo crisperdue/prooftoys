@@ -1426,7 +1426,11 @@ Expr.prototype.findLhsMatches = function(facts) {
       var stmt = statements[i];
       var subst = term.matchSchema(stmt.getMain().getLeft());
       if (subst) {
-        results.push({stmt: stmt, term: term, path: pth.reverse()});
+        results.push({stmt: stmt,
+              term: term,
+              path: pth.reverse(),
+              subst: subst
+              });
       }
     }
   }
@@ -1441,7 +1445,10 @@ Expr.prototype.findLhsMatch = function(facts) {
       var stmt = statements[i];
       var subst = term.matchSchema(stmt.getMain().getLeft());
       if (subst) {
-        throw new Result({stmt: stmt, term: term, path: pth.reverse()});
+        throw new Result({stmt: stmt,
+              term: term,
+              path: pth.reverse(),
+              subst: subst});
       }
     }
   }
