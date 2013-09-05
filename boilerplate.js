@@ -160,7 +160,16 @@ Toy.mathMarkup = function(text) {
       }
     }
   });
-}
+};
+
+/**
+ * Convert the text to text using mathMarkup.  Implemented
+ * by building DOM elements and getting their text, so probably
+ * not the fastest thing in the world.
+ */
+Toy.mathText = function(text) {
+  return jQuery('<span>' + Toy.mathMarkup(text) + '</span>').text();
+};
 
 /**
  * Converts all <S> element contents into math-oriented HTML.
