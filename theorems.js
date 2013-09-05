@@ -2396,14 +2396,13 @@ var ruleInfo = {
                    'a * 1 = a',
                    '1 * a = a',
                    'neg (neg a) = a',
+                   {stmt: 'a * (b * c) = a * b * c',
+                    where: 'subst.a.isNumeral() && subst.b.isNumeral()'},
                    '0 * a = 0',
                    'a * 0 = 0'
                    ];
       var info = step.getMain().findLhsMatch(facts);
-      if (!info ||
-          (info.stmt.matches(assocStmt) &&
-           (!info.subst.a.isNumeral() ||
-            !info.subst.b.isNumeral()))) {
+      if (!info) {
         return step;
       }
       var fullPath = Toy.path('/main').concat(info.path);
@@ -2445,19 +2444,13 @@ var ruleInfo = {
     action: function(step) {
       var facts = ['neg (a + b) = neg a + neg b',
                    'neg (neg a) = a',
-                   'neg (a * b) = neg a * neg b',
+                   'neg (a * b) = neg a * b',
                   ].map(getStatement.bind(undefined));
       var next = step;
       while (true) {
         var info = next.getMain().findLhsMatch(facts);
         if (!info) {
           break;
-        }
-        var subst = info.subst;
-        if (info.stmt.matches(getStatement('neg (a * b) = neg a * neg b')) &&
-            (!subst.a.isNumeral() ||
-             !subst.b.isNumeral())) {
-          continue;
         }
         var fullPath = Toy.path('/main').concat(info.path);
         next = rules.rewriteWithFact(next, fullPath, info.stmt);
@@ -2751,7 +2744,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'step <input name=step>',
-    hint: Toy.mathMarkup('[h ==> (p ==> q)] to [h & p ==> q]'),
+    hint: Toy.mathText('[h ==> (p ==> q)] to [h & p ==> q]'),
     labels: 'uncommon',
     description: 'absorb antecedent into the assumptions'
   },
