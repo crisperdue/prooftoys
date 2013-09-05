@@ -1438,17 +1438,37 @@ Expr.prototype.findLhsMatches = function(facts) {
   return results;
 };
 
+/**
+ * Finds a single LHS match with one of the given facts.  The fact
+ * left sides must be schemas, given as an array.  The array contains
+ * strings or plain objects with "stmt" property that is a string for
+ * the fact and optional "where" property with a string to eval.
+ * Matching only succeeds if "where" evaluates as truthy.  The
+ * variable "subst" is available in the expression.
+ */
 Expr.prototype.findLhsMatch = function(facts) {
-  var statements = facts.map(Toy.getStatement);
   function checkMatches(term, pth) {
-    for (var i = 0; i < statements.length; i++) {
-      var stmt = statements[i];
+    for (var i = 0; i < facts.length; i++) {
+      var info = facts[i];
+      var stmt = info;
+      var where;
+      if (info.stmt) {
+        stmt = info.stmt;
+        where = info.where;
+      }
+      stmt = Toy.getStatement(stmt);
       var subst = term.matchSchema(stmt.getMain().getLeft());
       if (subst) {
-        throw new Result({stmt: stmt,
-              term: term,
-              path: pth.reverse(),
-              subst: subst});
+        var pass = true;
+        if (where && typeof where === 'string') {
+          pass = eval(where);
+        }
+        if (pass) {
+          throw new Result({stmt: stmt,
+                term: term,
+                path: pth.reverse(),
+                subst: subst});
+        }
       }
     }
   }
