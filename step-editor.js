@@ -542,7 +542,7 @@ StepEditor.prototype.offerOk = function(name) {
     return true;
   } else {
     var labels = Toy.rules[name].info.labels;
-    return labels.basic;
+    return labels.basic || labels.display || labels.algebra;
   }
 }
 

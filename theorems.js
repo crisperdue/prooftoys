@@ -146,7 +146,8 @@ var ruleInfo = {
     form: ('Assume <input name=term>'),
     hint: 'assume hypothetically',
     comment: 'Hypothesis to assume',
-    description: 'assumption'
+    description: 'assumption',
+    labels: 'algebra basic'
   },
 
   /**
@@ -186,6 +187,7 @@ var ruleInfo = {
            + '<input name=step>'),
     comment: 'assumptions explicit',
     description: ';;explicit assumptions {in step step}',
+    labels: 'algebra basic'
   },
 
   /**
@@ -198,9 +200,9 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
-    comment: 'show both sides of equation',
-    description: ';;show both sides of equation {in step step}',
-    labels: 'display'
+    comment: 'show full equation',
+    description: 'show full equation;; {in step step}',
+    labels: 'display basic'
   },
       
   /**
@@ -447,7 +449,7 @@ var ruleInfo = {
     hint: 'A = A',
     comment: 'Derives A = A.',
     formula: 'A = A',
-    labels: 'primitive'
+    labels: 'primitive basic algebra'
   },
 
   // The two forms of "=" are interchangeable (other than precedence).
@@ -504,7 +506,7 @@ var ruleInfo = {
     hint: '[a = b] to [b = a]',
     comment: 'from a = b deduce b = a',
     description: '[a = b] to [b = a]',
-    labels: 'basic'
+    labels: 'basic algebra'
   },
 
   // r5201c.  Works with hypotheses.
@@ -1275,7 +1277,8 @@ var ruleInfo = {
     hint: 'substitute for a free variable',
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
-    description: 'substitute for {site};; {in step siteStep}'
+    description: 'substitute for {site};; {in step siteStep}',
+    labels: 'algebra basic'
   },
 
   // More like the book's 5221.  For each name in the map (a string),
@@ -2320,8 +2323,9 @@ var ruleInfo = {
   },
 
   // Rewrite a term using an equational fact, taking a statement of
-  // the desired fact as an argument term (string or Expr).
-  // indirect use with well-known facts.  This simplifies assumptions.
+  // the desired fact as an argument term (string or Expr).  indirect
+  // use with well-known facts.  This simplifies assumptions including
+  // numeric type assumptions after rewriting.
   //
   // TODO: Combine both sorts of rewrite rules into one, so a rewrite
   // works well in code and UI with any form of fact or proof step.
@@ -2472,7 +2476,8 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert - to + in step <input name=step>'),
     hint: 'algebra: convert - to +',
-    description: 'convert - to +'
+    description: 'convert - to +',
+    labels: 'algebra'
   },
 
   algebraTidy: {
@@ -2490,7 +2495,8 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Tidy expressions in step <input name=step>'),
     hint: 'algebra: tidy expressions',
-    description: 'tidy algebra'
+    description: 'tidy algebra',
+    labels: 'algebra'
   },
 
   regroup: {
@@ -2514,11 +2520,12 @@ var ruleInfo = {
     inputs: {step: 1},
     form: 'Regroup terms in step <input name=step>',
     hint: 'algebra: regroup terms',
-    description: 'regroup terms'
+    description: 'regroup terms',
+    labels: 'algebra'
   },
 
   /* TODO: Choose a way to get varName into the "where" clauses,
-     then finish this.
+   *   then finish this.
   regroupBy: {
     action: function(step, path, varName) {
       var facts = [{stmt: 'a + b = b + a',
@@ -2959,7 +2966,8 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'symmetry of equality',
-    comment: 'symmetry of equality'
+    comment: 'symmetry of equality',
+    labels: 'algebra basic'
   },
 
   equalityTransitive: {
@@ -2975,7 +2983,8 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'transitivity of equality',
-    comment: 'transitivity of equality'
+    comment: 'transitivity of equality',
+    labels: 'algebra basic'
   },
 
   //
@@ -3567,6 +3576,7 @@ var ruleInfo = {
     form: 'Term to consider: <input name=term>',
     hint: 'consider a term to transform',
     comment: ('consider a term to transform'),
+    labels: 'algebra basic'
   },
 
   // Identical to "consider", but uses a selected term.
@@ -3689,7 +3699,8 @@ var ruleInfo = {
     form: ('Look up fact <input name=term>'),
     hint: 'look up a fact',
     comment: (''),
-    description: 'fact'
+    description: 'fact',
+    labels: 'algebra basic'
   },
 
   //
