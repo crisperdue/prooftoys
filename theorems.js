@@ -2446,16 +2446,8 @@ var ruleInfo = {
                    'neg (neg a) = a',
                    'neg (a * b) = neg a * b',
                   ].map(getStatement.bind(undefined));
-      var next = step;
-      while (true) {
-        var info = next.getMain().findLhsMatch(facts);
-        if (!info) {
-          break;
-        }
-        var fullPath = Toy.path('/main').concat(info.path);
-        next = rules.rewriteWithFact(next, fullPath, info.stmt);
-      }
-      return next.justify('simplifyNegations', arguments, [step]);
+      var result = applyFacts(step, facts);
+      return result.justify('simplifyNegations', arguments, [step]);
     },
     inputs: {step: 1},
     form: ('Simplify negations in <input name=step>'),
@@ -2472,16 +2464,8 @@ var ruleInfo = {
   removeSubtraction: {
     action: function(step) {
       var facts = ['a - b = a + neg b'];
-      var next = step;
-      while (true) {
-        var info = next.getMain().findLhsMatch(facts);
-        if (!info) {
-          break;
-        }
-        var fullPath = Toy.path('/main').concat(info.path);
-        next = rules.rewriteWithFact(next, fullPath, info.stmt);
-      }
-      var arithDone = rules.doAllArithmetic(next);
+      var converted = applyFacts(step, facts)
+      var arithDone = rules.doAllArithmetic(converted);
       var negDone = rules.simplifyNegations(arithDone);
       return negDone.justify('removeSubtraction', arguments, [step]);
     },
@@ -2490,6 +2474,69 @@ var ruleInfo = {
     hint: 'algebra: convert - to +',
     description: 'convert - to +'
   },
+
+  algebraTidy: {
+    action: function(step) {
+      var facts = ['a * (b * c) = a * b * c',
+                   'a + (b + c) = a + b + c',
+                   {stmt: 'a + b + c = a + (c + b)',
+                    where: 'subst.b.isNumeral() && !subst.c.isNumeral()'},
+                   {stmt: 'a * b = b * a',
+                    where: 'subst.b.isNumeral() && !subst.a.isNumeral()'},
+                   {stmt: 'a * b * c = a * (c * b)',
+                    where: 'subst.c.isNumeral() && !subst.b.isNumeral()'}
+                  ];
+      var result = applyFacts(step, facts);
+      return result.justify('algebraTidy', arguments, [step]);
+    },
+    inputs: {step: 1},
+    form: ('Tidy expressions in step <input name=step>'),
+    hint: 'algebra: tidy expressions',
+    description: 'tidy algebra'
+  },
+
+  regroup: {
+    action: function(step) {
+      var facts1 = [{stmt: 'a + b = b + a',
+                    where: 'subst.a.isNumeral() && !subst.b.isNumeral()'},
+                   {stmt: 'a + b + c = a + c + b',
+                    where: 'subst.b.isNumeral() && !subst.c.isNumeral()'}
+                  ];
+      var step1 = applyFacts(step, facts1);
+      var facts2 = [{stmt: 'a + b + c = a + (b + c)',
+                     where: 'subst.b.isNumeral()'}
+                   ];
+      var step2 = applyFacts(step1, facts2);
+      var facts3 = [{stmt: 'a * c + b * c = (a + b) * c',
+                     where: 'subst.b.isNumeral()'}
+                   ];
+      var step3 = applyFacts(step2, facts3);
+      return step3.justify('regroup', arguments, [step]);
+    },
+    inputs: {step: 1},
+    form: 'Regroup terms in step <input name=step>',
+    hint: 'algebra: regroup terms',
+    description: 'regroup terms'
+  },
+
+  /* TODO: Choose a way to get varName into the "where" clauses,
+     then finish this.
+  regroupBy: {
+    action: function(step, path, varName) {
+      var facts = [{stmt: 'a + b = b + a',
+                    where: 'subst.a.isNumeral() && !subst.b.isNumeral()'},
+                   {stmt: 'a + b + c = a + c + b',
+                    where: 'subst.b.isNumeral() && !subst.c.isNumeral()'}
+                  ];
+      var result = applyFacts(step, facts);
+      return result.justify('regroup', arguments, [step]);
+    },
+    inputs: {site: 1, varName: 3},
+    form: 'Group terms with variable <input name=varName>',
+    hint: 'algebra: group terms',
+    description: 'group terms with {varName}'
+  },
+  */
 
   // Remove "T = " and "= T", evaluate boolean expression, do arithmetic.
   // Inline, throws if no simplification found.
@@ -3808,6 +3855,11 @@ var facts = {
     .rewrite('/main/right', 'a + (b + c) = a + b + c');
     return step;
   },
+  'a + b + c = a + (c + b)': function() {
+    return rules.consider('a + b + c')
+    .rewrite('/main/right', 'a + b + c = a + c + b')
+    .rewrite('/main/right', 'a + b + c = a + (b + c)');
+  },
 
   // Multiplication
   'a * b * c = a * (b * c)': function() {
@@ -4444,6 +4496,20 @@ function getStatement(fact) {
   } else {
     throw new Error('Bad input to getStatement');
   }
+}
+
+/**
+ * Apply the list of fact rewrites to the step until none of them
+ * any longer is applicable, and return the result.
+ */
+function applyFacts(step, facts) {
+  var info;
+  var next = step;
+  while (info = next.getMain().findLhsMatch(facts)) {
+    var fullPath = Toy.path('/main').concat(info.path);
+    next = rules.rewriteWithFact(next, fullPath, info.stmt);
+  }
+  return next;
 }
 
 /**
