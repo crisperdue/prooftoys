@@ -2479,8 +2479,6 @@ var ruleInfo = {
     action: function(step) {
       var facts = ['a * (b * c) = a * b * c',
                    'a + (b + c) = a + b + c',
-                   {stmt: 'a + b + c = a + (c + b)',
-                    where: 'subst.b.isNumeral() && !subst.c.isNumeral()'},
                    {stmt: 'a * b = b * a',
                     where: 'subst.b.isNumeral() && !subst.a.isNumeral()'},
                    {stmt: 'a * b * c = a * (c * b)',
