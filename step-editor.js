@@ -655,17 +655,14 @@ function acceptsSelection(step, ruleName, acceptTerm) {
 
 /**
  * Used by the rule menu creator to convert one query result into a
- * fully-formatted menu entry with hints.  Accepts a query and result
- * object, returns a possibly HTML-formatted result.  The optional
- * boolean useHtml controls generation of HTML vs. non-HTML Unicode
- * text.
+ * fully-formatted menu entry.  Accepts a query and result object and
+ * returns text.  (Ignores the query.)
  */
-function ruleMenuFormatter(query, result, useHtml) {
+function ruleMenuFormatter(query, result) {
   var ruleName = result.text.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (Toy.isEmpty(info.inputs)) {
     // It is an axiom or theorem with no inputs.
-    // Axiom or theorem hints are treated as HTML, unlike all others!
     if (info.hint) {
       return info.hint;
     }
@@ -682,15 +679,9 @@ function ruleMenuFormatter(query, result, useHtml) {
     } else {
       return 'theorem ' + thmText;
     }
-  } else if (info.formula) {
-    return Toy.unicodify(info.formula);
   } else {
-    var hint = info.hint || info.comment || '';
-    if (useHtml) {
-      return '<i style="color: gray">' + hint + '</i>';
-    } else {
-      return Toy.unicodify(hint);
-    }
+    // If there are inputs uses hint or other fallback.
+    return Toy.unicodify(info.hint || info.formula || info.comment || '');
   }
 }
 

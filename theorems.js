@@ -61,8 +61,6 @@ var _allHyps = {};
 //   of the step editor.
 // comment: plain text comment to become the title of mentions of the rule
 //   name in proof displays and the description in subproof displays.
-// formula: Textual representation of the theorem, if present.  May be
-//   converted to HTML using mathMarkup as description of a rule.
 // result: For theorems with no parameters only; this is the statement
 //   of the theorem.  If given as text in ruleInfo, converted into an
 //   expression in "rules".
@@ -77,6 +75,11 @@ var _allHyps = {};
 //   the converse equality (rewrites matching the right side of the
 //   equation rather than the left side).
 //
+
+// Conventions for menu items (using "hint:")
+// Step templates are in square brackets, such as [T = A].
+// Rules (including axiom 4) that take a term as input use A, B to
+//   show where the term goes, not enclosed in square brackets.
 
 var ruleInfo = {
 
@@ -448,8 +451,8 @@ var ruleInfo = {
     form: 'Term to prove equal to itself: <input name=term>',
     hint: 'A = A',
     comment: 'Derives A = A.',
-    formula: 'A = A',
-    labels: 'primitive basic algebra'
+    description: 'A = A',
+    labels: 'primitive'
   },
 
   // The two forms of "=" are interchangeable (other than precedence).
@@ -478,7 +481,7 @@ var ruleInfo = {
     form: 'Term to prove equal to itself: <input name=term>',
     hint: 'A \u21d4 A',
     comment: 'Derives A \u21d4 A.',
-    formula: 'A \u21d4 A',
+    description: 'A \u21d4 A',
     labels: 'primitive'
   },
 
@@ -802,9 +805,9 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Term to prove equal to itself: <input name=term>'),
-    hint: 'T = (a = a)',
-    comment: ('Proves T = [a = a].'),
-    formula: 'T = (a = a)',
+    hint: '(T = (A = A))',
+    comment: ('Proves T = [A = A].'),
+    description: 'T = (A = A)',
     labels: 'primitive'
   },
 
@@ -1156,10 +1159,10 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: ('Term to use in ((T = A) = A): <input name=term>'),
-    hint: '[(T = a) = a]',
+    hint: '(T = A) = A',
     labels: 'uncommon',
-    comment: ('For any expression derives [T = a] = a.'),
-    description: '(T = a) = a'
+    comment: ('For any expression derives (T = A) = A.'),
+    description: '(T = A) = A'
   },
 
   // 5219.  Works with hypotheses.
@@ -1718,7 +1721,6 @@ var ruleInfo = {
     form: ('Derive that <input name=term> implies theorem <input name=step>'),
     hint: '[q] to [p ==> q]',
     comment: ('Given a theorem, derive that something implies it.'),
-    formula: 'T ==> q',
     labels: 'uncommon'
   },
 
@@ -3256,7 +3258,7 @@ var ruleInfo = {
       return step8.justify('subtractionType');
     },
     form: '',
-    formula: 'R (x - y)',
+    hint: 'theorem R (x - y)',
     comment: 'difference of real numbers is real',
     description: 'difference of real numbers is real',
     labels: 'uncommon'
@@ -3275,7 +3277,7 @@ var ruleInfo = {
       return step8.justify('divisionType');
     },
     form: '',
-    formula: 'R (x / y)',
+    hint: 'theorem R (x / y)',
     comment: 'quotient of real numbers is real',
     description: 'quotient of real numbers is real',
     labels: 'uncommon'
