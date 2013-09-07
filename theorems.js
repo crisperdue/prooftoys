@@ -4528,15 +4528,52 @@ Toy.define('/', '{x. {y. x * recip y}}');
 
 //// THEOREMS
 
+function Fact(goal, prover) {
+  if (goal.ruleName) {
+    // It is already proved.
+    assert(!prover, function() { return 'Redundant prover for ' + expr_arg; });
+    prover = function() { return goal; }
+    result = goal;
+  }
+  assert(typeof prover === 'function', 'Not a function: ' + prover);
+  this.goal = goal;
+  this._prover = Toy.memo(prover);
+}
+
+$.extend(Fact.prototype, {
+
+    // Get the proved result of the fact.
+    result: function() {
+      try {
+        var result = this._prover();
+      } catch(err) {
+        // Flag it as an error in proof execution.
+        err.isProofError = true;
+        throw err;
+      }
+
+      // If there is a substitution into the result that yields
+      // the goal, do it.
+      var goal = this.goal;
+      var subst = goal.matchSchema(result);
+      if (!subst) {
+        subst = goal.getMain().matchSchema(result.getMain());
+      }
+      assert(subst, function() {
+          return ('Expected proof of ' + goal.toString() +
+                  ', instead got ' + result.toString());
+        }, result);
+      var result2 = rules.instMultiVars(result, subst);
+      return result2;
+    }
+
+  });
+      
+
 // Private to addFact, getResult, and eachFact.  Maps from a string
 // "dump" of a fact to either the proved fact, or to a function to
 // prove it.
 var _factsMap = {};
-
-// A "fact" is a function of no arguments that can prove a statement.
-// It will have a "statement" property that is a term matching the intended
-// result and an "unparsed" property that is a string that parses to
-// the goal.
 
 /**
  * Adds to the facts database a formula and optionally a function to
@@ -4550,27 +4587,10 @@ var _factsMap = {};
  *   is not its own converse (or perhaps the converse already added).
  */
 function addFact(expr_arg, prover) {
-  expr = getStatement(expr_arg);
-  if (expr.ruleName) {
-    // It is already proved.
-    assert(!prover, function() { return 'Redundant prover for ' + expr_arg; });
-    prover = function() { return expr; }
-    prover._provedResult = expr;
-  }
-  assert(typeof prover === 'function',
-         'Not a function: ' + prover);
-  prover.goal = expr;
-  prover.unparsed =
-    (typeof expr_arg === 'string'
-     ? expr_arg
-     : expr.toString());
-  if (typeof expr_arg === 'string') {
-    // For possible future display.
-    prover.factString = expr_arg;
-  }
-  var key = expr.getMain().dump();
-  _factsMap[key] = prover;
-  return prover;
+  var goal = getStatement(expr_arg);
+  var fact = new Fact(goal, prover);
+  _factsMap[goal.getMain().dump()] = fact;
+  return fact;
 }
 
 /**
@@ -4582,40 +4602,29 @@ function addFact(expr_arg, prover) {
  * Checks that the "main" part of the result matches the "main" part
  * of the statement of the fact.
  */
-function getResult(fact) {
-  var expr = getStatement(fact);
-  if (expr.ruleName) {
+function getResult(stmt) {
+  var goal = getStatement(stmt);
+  if (goal.ruleName) {
     // Proved!
-    return expr;
+    return goal;
   }
   // Same encoding as in addFact.
-  var key = expr.getMain().dump();
-  var prover = _factsMap[key];
-  assert(prover, function() { return 'No such fact: ' + expr; });
-  var result = prover._provedResult;
-  if (result) {
-    return result;
+  var fact = _factsMap[goal.getMain().dump()];
+  assert(fact, function() { return 'No such fact: ' + goal; });
+  return fact.result();
+
+  /* TODO: Consider deleting this.
+  var subst = goal.matchSchema(result);
+  if (!subst) {
+    subst = goal.getMain().matchSchema(result.getMain());
   }
-  if (!result) {
-    try {
-      result = prover();
-    } catch(err) {
-      // Flag it as an error in proof execution.
-      err.isProofError = true;
-      throw err;
-    }
-    var subst = expr.matchSchema(result);
-    if (!subst) {
-      subst = expr.getMain().matchSchema(result.getMain());
-    }
-    assert(subst, function() {
-        return ('Expected proof of ' + expr.toString() +
-                ', instead got ' + result.toString());
-      }, result);
-    var result2 = rules.instMultiVars(result, subst);
-    prover._provedResult = result2;
-  }
+  assert(subst, function() {
+      return ('Expected proof of ' + goal.toString() +
+              ', instead got ' + result.toString());
+    }, result);
+  var result2 = rules.instMultiVars(result, subst);
   return result2;
+  */
 }
 
 /**
@@ -4656,7 +4665,7 @@ function getStatement(fact) {
     }
   } else if (fact instanceof Expr) {
     return fact;
-  } else if (typeof fact === 'function') {
+  } else if (fact instanceof Fact) {
     return fact.goal;
   } else {
     throw new Error('Bad input to getStatement');

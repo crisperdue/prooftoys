@@ -1902,13 +1902,9 @@ for (var name in testCase) {
 Toy.eachFact(function(fact) {
     var str = Toy.getStatement(fact).toString();
     console.log('Testing ' + str);
-    if (typeof fact === 'function') {
       test(str, function() {
-          assert(Toy.getResult(fact).ruleName);
+          assert(fact.result().ruleName);
         });
-    } else {
-      console.log('Not testable: ' + str);
-    }
   });
 
 // Possibly display errors when done.  Not clear this helps any,
