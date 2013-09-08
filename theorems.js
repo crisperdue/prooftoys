@@ -3806,91 +3806,100 @@ addRules(ruleInfo);
 
 //// FACTS
 
-var facts = [
+// The fact information is organized with the synopsis as
+// a map key to take advantage of debug printing of the functions
+// in the Chrome debugger.
+
+var logicFacts = {
   // Logic
-  {synopsis: '(T = a) = a',
-   action: function() {
+  '(T = a) = a': {
+    action: function() {
       return rules.theorem('tIsXIsX');
     }
   },
-  {synopsis: '(a = T) = a',
-   action: function() {
+  '(a = T) = a': {
+    action: function() {
       return rules.theorem('tIsXIsX')
       .rewrite('/left', 'equalitySymmetric');
     }
-  },
+  }
+
+};
+
+// These are algebra facts.
+var algebraFacts = {
 
   // Axioms
 
-  {synopsis: 'a + b = b + a',
-   action: function() {
+  'a + b = b + a': {
+    action: function() {
       return rules.axiom('axiomCommutativePlus');
     }
   },
-  {synopsis: 'a * b = b * a',
-   action: function() {
+  'a * b = b * a': {
+    action: function() {
       return rules.axiom('axiomCommutativeTimes');
     }
   },
-  {synopsis: 'a + (b + c) = a + b + c',
-   action: function() {
+  'a + (b + c) = a + b + c': {
+    action: function() {
       return rules.axiom('axiomAssociativePlus');
     }
   },
-  {synopsis: 'a * (b * c) = a * b * c',
-   action: function() {
+  'a * (b * c) = a * b * c': {
+    action: function() {
       return rules.axiom('axiomAssociativeTimes');
     }
   },
-  {synopsis: 'a * (b + c) = a * b + a * c',
-   action: function() {
+  'a * (b + c) = a * b + a * c': {
+    action: function() {
       return rules.axiom('axiomDistributivity');
     }
   },
-  {synopsis: 'a + 0 = a',
-   action: function() {
+  'a + 0 = a': {
+    action: function() {
       return rules.axiom('axiomPlusZero');
     }
   },
-  {synopsis: 'a * 1 = a',
-   action: function() {
+  'a * 1 = a': {
+    action: function() {
       return rules.axiom('axiomTimesOne');
     }
   },
-  {synopsis: 'a * 0 = 0',
-   action: function() {
+  'a * 0 = 0': {
+    action: function() {
       return rules.axiom('axiomTimesZero');
     }
   },
-  {synopsis: 'a + neg a = 0',
-   action: function() {
+  'a + neg a = 0': {
+    action: function() {
       return rules.axiom('axiomNeg');
     }
   },
-  {synopsis: 'a * recip a = 1',
-   action: function() {
+  'a * recip a = 1': {
+    action: function() {
       return rules.axiom('axiomReciprocal');
     }
   },
-  {synopsis: 'a * b != 0 == a != 0 & b != 0',
-   action: function() {
+  'a * b != 0 == a != 0 & b != 0': {
+    action: function() {
       return rules.factNonzeroProduct();
     }
   },
-  {synopsis: 'a = b == b = a',
-   action: function() {
+  'a = b == b = a': {
+    action: function() {
       return rules.equalitySymmetric();
     }
   },
 
   // Addition
-  {synopsis: 'a + b + c = a + (b + c)',
-   action: function() {
+  'a + b + c = a + (b + c)': {
+    action: function() {
       return rules.eqnSwap(rules.axiom('axiomAssociativePlus'));
     }
   },
-  {synopsis: 'a + b + c = a + c + b',
-   action: function() {
+  'a + b + c = a + c + b': {
+    action: function() {
       var step = rules.consider('a + b + c')
       .rewrite('/main/right', 'a + b + c = a + (b + c)')
       .rewrite('/main/right/right', 'a + b = b + a')
@@ -3898,8 +3907,8 @@ var facts = [
       return step;
     }
   },
-  {synopsis: 'a + b + c = a + (c + b)',
-   action: function() {
+  'a + b + c = a + (c + b)': {
+    action: function() {
       return rules.consider('a + b + c')
       .rewrite('/main/right', 'a + b + c = a + c + b')
       .rewrite('/main/right', 'a + b + c = a + (b + c)');
@@ -3907,15 +3916,15 @@ var facts = [
   },
 
   // Multiplication
-  {synopsis: 'a * b * c = a * (b * c)',
-   action: function() {
+  'a * b * c = a * (b * c)': {
+    action: function() {
       var step1 = rules.axiom('axiomAssociativeTimes');
       var step2 = rules.eqnSwap(step1);
       return step2;
     }
   },
-  {synopsis: 'a * b * c = a * c * b',
-   action: function() {
+  'a * b * c = a * c * b': {
+    action: function() {
       var step = rules.consider('a * b * c')
       .rewrite('/main/right', 'a * b * c = a * (b * c)')
       .rewrite('/main/right/right', 'a * b = b * a')
@@ -3925,8 +3934,8 @@ var facts = [
   },
 
   // Distributivity
-  {synopsis: '(a + b) * c = a * c + b * c',
-   action: function() {
+  '(a + b) * c = a * c + b * c': {
+    action: function() {
       var step = rules.consider('(a + b) * c')
       .rewrite('/main/right', 'a * b = b * a')
       .rewrite('/main/right', 'a * (b + c) = a * b + a * c')
@@ -3935,30 +3944,30 @@ var facts = [
       return step;
     }
   },
-  {synopsis: 'a * c + b * c = (a + b) * c',
-   action: function() {
+  'a * c + b * c = (a + b) * c': {
+    action: function() {
       var step = rules.fact('(a + b) * c = a * c + b * c')
       .apply('eqnSwap');
       return step;
     }
   },
-  {synopsis: 'a * b + a * c = a * (b + c)',
-   action: function() {
+  'a * b + a * c = a * (b + c)': {
+    action: function() {
       var step1 = rules.axiom('axiomDistributivity');
       var step2 = rules.eqnSwap(step1);
       return step2;
     }
   },
-  {synopsis: 'a * b + b = (a + 1) * b',
-   action: function() {
+  'a * b + b = (a + 1) * b': {
+    action: function() {
       var step = rules.consider('a * b + b')
       .rewrite('/main/right/right', 'a = 1 * a')
       .rewrite('/main/right', 'a * c + b * c = (a + b) * c');
       return step;
     }
   },
-  {synopsis: 'a + a = 2 * a',
-   action: function() {
+  'a + a = 2 * a': {
+    action: function() {
       return rules.consider('a + a')
       .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right', 'a * b + b = (a + 1) * b')
@@ -3968,8 +3977,8 @@ var facts = [
 
   // Distributivity with subtraction
 
-  {synopsis: 'a * (b - c) = a * b - a * c',
-   action: function() {
+  'a * (b - c) = a * b - a * c': {
+    action: function() {
       return rules.consider('a * (b - c)')
       .rewrite('/main/right/right', 'a - b = a + neg b')
       .rewrite('/main/right', 'a * (b + c) = a * b + a * c')
@@ -3977,8 +3986,8 @@ var facts = [
       .rewrite('/main/right', 'a + neg b = a - b');
     }
   },
-  {synopsis: '(a - b) * c = a * c - b * c',
-   action: function() {
+  '(a - b) * c = a * c - b * c': {
+    action: function() {
       var step = rules.consider('(a - b) * c')
       .rewrite('/main/right', 'a * b = b * a')
       .rewrite('/main/right', 'a * (b - c) = a * b - a * c')
@@ -3987,28 +3996,28 @@ var facts = [
       return step;
     }
   },
-  {synopsis: 'a * c - b * c = (a - b) * c',
-   action: function() {
+  'a * c - b * c = (a - b) * c': {
+    action: function() {
       var step = rules.fact('(a - b) * c = a * c - b * c')
       .apply('eqnSwap');
       return step;
     }
   },
-  {synopsis: 'a * b - a * c = a * (b - c)',
-   action: function() {
+  'a * b - a * c = a * (b - c)': {
+    action: function() {
       return rules.fact('a * (b - c) = a * b - a * c')
       .apply('eqnSwap');
     }
   },
-  {synopsis: 'a * b - b = (a - 1) * b',
-   action: function() {
+  'a * b - b = (a - 1) * b': {
+    action: function() {
       return rules.consider('a * b - b')
       .rewrite('/main/right/right', 'a = 1 * a')
       .rewrite('/main/right', 'a * c - b * c = (a - b) * c');
     }
   },
-  {synopsis: 'b - a * b = (1 - a) * b',
-   action: function() {
+  'b - a * b = (1 - a) * b': {
+    action: function() {
       return rules.consider('b - a * b')
       .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right', 'a * c - b * c = (a - b) * c');
@@ -4016,15 +4025,15 @@ var facts = [
   },
 
   // Plus zero
-  {synopsis: 'a = a + 0',
-   action: function() {
+  'a = a + 0': {
+    action: function() {
       var step1 = rules.axiom('axiomPlusZero');
       var step2 = rules.eqnSwap(step1);
       return step2;
     }
   },
   /* Omit from UI: somewhat redundant
-     {synopsis: 'a = 0 + a',
+     'a = 0 + a': {
      action: function() {
      var step1 = rules.axiom('axiomPlusZero');
      var step2 = rules.eqnSwap(step1);
@@ -4034,8 +4043,8 @@ var facts = [
      }
      },
   */
-  {synopsis: '0 + a = a',
-   action: function() {
+  '0 + a = a': {
+    action: function() {
       var step1 = rules.axiom('axiomPlusZero');
       var step2 = rules.rewriteWithFact(step1, '/main/left',
                                         'a + b = b + a');
@@ -4043,15 +4052,15 @@ var facts = [
     }
   },
   // Times one
-  {synopsis: 'a = a * 1',
-   action: function() {
+  'a = a * 1': {
+    action: function() {
       var step1 = rules.axiom('axiomTimesOne');
       var step2 = rules.eqnSwap(step1);
       return step2;
     }
   },
-  {synopsis: 'a = 1 * a',
-   action: function() {
+  'a = 1 * a': {
+    action: function() {
       var step1 = rules.axiom('axiomTimesOne');
       var step2 = rules.eqnSwap(step1);
       var step3 = rules.rewriteWithFact(step2, '/main/right',
@@ -4059,8 +4068,8 @@ var facts = [
       return step3;
     }
   },
-  {synopsis: '1 * a = a',
-   action: function() {
+  '1 * a = a': {
+    action: function() {
       var step1 = rules.axiom('axiomTimesOne');
       var step2 = rules.rewriteWithFact(step1, '/main/left',
                                         'a * b = b * a');
@@ -4069,34 +4078,34 @@ var facts = [
   },
 
   // Zero times
-  {synopsis: '0 * a = 0',
-   action: function() {
+  '0 * a = 0': {
+    action: function() {
       return rules.axiom('axiomTimesZero')
       .rewrite('/main/left', 'a * b = b * a');
     }
   },
 
   // Negation rules
-  {synopsis: 'a - b = a + neg b',
-   action: function() {
+  'a - b = a + neg b': {
+    action: function() {
       var step1 = rules.consider('a - b');
       var step2 = rules.apply(step1, '/main/right');
       return step2;
     }
   },
-  {synopsis: 'a + neg b = a - b',
-   action: function() {
+  'a + neg b = a - b': {
+    action: function() {
       return rules.eqnSwap(rules.fact('a - b = a + neg b'));
     }
   },
-  {synopsis: 'neg a + a = 0',
-   action: function() {
+  'neg a + a = 0': {
+    action: function() {
       return rules.axiom('axiomNeg')
       .rewrite('/main/left', 'a + b = b + a');
     }
   },
-  {synopsis: 'neg (neg a) = a',
-   action: function() {
+  'neg (neg a) = a': {
+    action: function() {
       var step1 = rules.fact('a + neg a = 0');
       var step2 = rules.addToBoth(step1, Toy.parse('neg (neg a)'));
       var step3 = rules.rewriteWithFact(step2, '/main/right',
@@ -4111,8 +4120,8 @@ var facts = [
       return step8;
     }
   },
-  {synopsis: 'neg (a + b) = neg a + neg b',
-   action: function() {
+  'neg (a + b) = neg a + neg b': {
+    action: function() {
       var step1 = rules.fact('a + neg a = 0');
       var step2 = rules.instVar(step1, Toy.parse('a + b'), 'a');
       var step3 = rules.rewriteWithFact(step2, '/right/left',
@@ -4140,8 +4149,8 @@ var facts = [
       return step14;
     }
   },
-  {synopsis: 'neg a = -1 * a',
-   action: function() {
+  'neg a = -1 * a': {
+    action: function() {
       // 0 = -1 * a + a
       var minusOne = rules.fact('0 * a = 0')
       .replace('/main/left/left',
@@ -4161,22 +4170,22 @@ var facts = [
       .rewrite('/main/left', 'a + 0 = a');
     }
   },
-  {synopsis: '-1 * a = neg a',
-   action: function() {
+  '-1 * a = neg a': {
+    action: function() {
       return rules.fact('neg a = -1 * a')
       .apply('eqnSwap');
     }
   },
-  {synopsis: 'neg (a * b) = neg a * b',
-   action: function() {
+  'neg (a * b) = neg a * b': {
+    action: function() {
       return rules.consider('neg (a * b)')
       .rewrite('/main/right', 'neg a = -1 * a')
       .rewrite('/main/right', 'a * (b * c) = (a * b) * c')
       .rewrite('/main/right/left', '-1 * a = neg a');
     }
   },
-  {synopsis: 'a * neg b = neg (a * b)',
-   action: function() {
+  'a * neg b = neg (a * b)': {
+    action: function() {
       return rules.consider('a * neg b')
       .rewrite('/main/right/right', 'neg a = -1 * a')
       .rewrite('/main/right', 'a * (b * c) = a * b * c')
@@ -4185,8 +4194,8 @@ var facts = [
       .rewrite('/main/right', '-1 * a = neg a');
     }
   },
-  {synopsis: 'neg (a * b) = a * neg b',
-   action: function() {
+  'neg (a * b) = a * neg b': {
+    action: function() {
       return rules.fact('a * neg b = neg (a * b)')
       .apply('eqnSwap');
     }
@@ -4196,39 +4205,39 @@ var facts = [
   // Subtraction facts
 
   // Moving terms to the left
-  {synopsis: 'a + b - c = a - c + b',
-   action: function() {
+  'a + b - c = a - c + b': {
+    action: function() {
       return rules.consider('a + b - c')
       .rewrite('/main/right', 'a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + c + b')
       .rewrite('/main/right/left', 'a + neg b = a - b');
     }
   },
-  {synopsis: 'a - b + c = a + c - b',
-   action: function() {
+  'a - b + c = a + c - b': {
+    action: function() {
       return rules.consider('a - b + c')
       .rewrite('/main/right/left', 'a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + c + b')
       .rewrite('/main/right', 'a + neg b = a - b');
     }
   },
-  {synopsis: 'a - b + c = a + (c - b)',
-   action: function() {
+  'a - b + c = a + (c - b)': {
+    action: function() {
       return rules.fact('a - b + c = a + c - b')
       .rewrite('/main/right', 'a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + (b + c)')
       .rewrite('/main/right/right', 'a + neg b = a - b');
     }
   },
-  {synopsis: 'a - (b - c) = a + (c - b)',
-   action: function() {
+  'a - (b - c) = a + (c - b)': {
+    action: function() {
       return rules.consider('a - (b - c)')
       .rewrite('/main/right', 'a - b = a + neg b')
       .rewrite('/main/right/right', 'neg (a - b) = b - a');
     }
   },
-  {synopsis: 'a - (b - c) = a + c - b',
-   action: function() {
+  'a - (b - c) = a + c - b': {
+    action: function() {
       return rules.consider('a - (b - c)')
       .rewrite('/main/right', 'a - (b - c) = a + (c - b)')
       .rewrite('/main/right/right', 'a - b = a + neg b')
@@ -4238,8 +4247,8 @@ var facts = [
   },
 
   // Regrouping
-  {synopsis: 'neg (a - b) = b - a',
-   action: function() {
+  'neg (a - b) = b - a': {
+    action: function() {
       return rules.consider('neg (a - b)')
       .rewrite('/main/right/arg', 'a - b = a + neg b')
       .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
@@ -4248,8 +4257,8 @@ var facts = [
       .rewrite('/main/right', 'a + neg b = a - b');
     }
   },
-  {synopsis: 'neg (a - b) = neg a + b',
-   action: function() {
+  'neg (a - b) = neg a + b': {
+    action: function() {
       return rules.consider('neg (a - b)')
       .rewrite('/main/right/arg', 'a - b = a + neg b')
       .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
@@ -4259,16 +4268,16 @@ var facts = [
 
   // Four cases: each operation can be + or -, and initial association
   // can be to the left or right.
-  {synopsis: 'a + b - c = a + (b - c)',
-   action: function() {
+  'a + b - c = a + (b - c)': {
+    action: function() {
       return rules.consider('a + b - c')
       .rewrite('/main/right', 'a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + (b + c)')
       .rewrite('/main/right/right', 'a + neg b = a - b');
     }
   },
-  {synopsis: 'a - (b + c) = a - b - c',
-   action: function() {
+  'a - (b + c) = a - b - c': {
+    action: function() {
       var step = rules.consider('a - (b + c)')
       .rewrite('/main/right', 'a - b = a + neg b')
       .rewrite('/main/right/right',
@@ -4279,16 +4288,16 @@ var facts = [
       return step;
     }
   },  
-  {synopsis: 'a - b - c = a - c - b',
-   action: function() {
+  'a - b - c = a - c - b': {
+    action: function() {
       return rules.consider('a - b - c')
       .rewrite('/main/right/left', 'a - b = a + neg b')
       .rewrite('/main/right', 'a + b - c = a - c + b')
       .rewrite('/main/right', 'a + neg b = a - b');
     }
   },
-  {synopsis: 'a + (b - c) = a + b - c',
-   action: function() {
+  'a + (b - c) = a + b - c': {
+    action: function() {
       var step = rules.consider('a + (b - c)')
       .rewrite('/main/right/right', 'a - b = a + neg b')
       .rewrite('/main/right', 'a + (b + c) = a + b + c')
@@ -4296,8 +4305,8 @@ var facts = [
       return step;
     }
   },
-  {synopsis: 'a - (b - c) = a - b + c',
-   action: function() {
+  'a - (b - c) = a - b + c': {
+    action: function() {
       return rules.consider('a - (b - c)')
       .rewrite('/main/right/right', 'a - b = a + neg b')
       .rewrite('/main/right', 'a - b = a + neg b')
@@ -4309,8 +4318,8 @@ var facts = [
   },
 
   // Simplification
-  {synopsis: 'a - a = 0',
-   action: function() {
+  'a - a = 0': {
+    action: function() {
       return (rules.eqSelf('a - a')
               .apply('apply', '/right')
               .rewrite('/main/right', 'a + neg a = 0'));
@@ -4319,14 +4328,14 @@ var facts = [
 
   // Reciprocal rules
 
-  {synopsis: 'a != 0 ==> recip a * a = 1',
-   action: function() {
+  'a != 0 ==> recip a * a = 1': {
+    action: function() {
       return rules.axiom('axiomReciprocal')
       .rewrite('/main/left', 'a * b = b * a');
     }
   },
-  {synopsis: 'a != 0 ==> recip a != 0',
-   action: function() {
+  'a != 0 ==> recip a != 0': {
+    action: function() {
       var step1 = rules.axiom('axiomReciprocal');
       var step2 = rules.fact('1 != 0');
       var step3 = rules.rRight(step1, step2, '/left')
@@ -4336,27 +4345,27 @@ var facts = [
       return step5;
     }
   },
-  {synopsis: 'a / b = a * recip b',
-   action: function() {
+  'a / b = a * recip b': {
+    action: function() {
       var step1 = rules.consider('a / b');
       var step2 = rules.apply(step1, '/main/right');
       return step2;
     }
   },
-  {synopsis: 'a * recip b = a / b',
-   action: function() {
+  'a * recip b = a / b': {
+    action: function() {
       return rules.eqnSwap(rules.fact('a / b = a * recip b'));
     }
   },
-  {synopsis: 'recip a = 1 / a',
-   action: function() {
+  'recip a = 1 / a': {
+    action: function() {
       return rules.consider('recip s')
       .rewrite('/main/right', 'a = 1 * a')
       .rewrite('/main/right', 'a * recip b = a / b');
     }
   },
-  {synopsis: 'a != 0 ==> recip (recip a) = a',
-   action: function() {
+  'a != 0 ==> recip (recip a) = a': {
+    action: function() {
       var step1 = rules.fact('a * recip a = 1');
       var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip a)'));
       var step3 = rules.rewriteWithFact(step2, '/main/right',
@@ -4371,23 +4380,23 @@ var facts = [
       return step8;
     }
   },
-  {synopsis: '@R (recip a) & recip a != 0 ==> R a & a != 0',
-   action: function() {
+  '@R (recip a) & recip a != 0 ==> R a & a != 0': {
+    action: function() {
       var taut = rules.tautology('(a == b) ==> (a ==> b)');
       var fact = rules.axiom('axiomReciprocal2');
       return rules.forwardChain(fact, taut);
     }
   },
-  {synopsis: '@R a & a != 0 ==> R (recip a) & recip a != 0',
-   action: function() {
+  '@R a & a != 0 ==> R (recip a) & recip a != 0': {
+    action: function() {
       var taut = rules.tautology('(a == b) ==> (b ==> a)');
       var fact = rules.axiom('axiomReciprocal2');
       return rules.forwardChain(fact, taut);
     }
   },
   /* Proved above from axiomReciprocal.
-  {synopsis: '@R a & a != 0 ==> recip a != 0',
-   action: function() {
+  '@R a & a != 0 ==> recip a != 0': {
+    action: function() {
     var taut = rules.tautology('(a ==> b & c) ==> (a ==> c)');
     var fact = rules.fact('@R a & a != 0 ==> R (recip a) & recip a != 0');
     return rules.forwardChain(fact, taut);
@@ -4395,8 +4404,8 @@ var facts = [
   },
   */
 
-  {synopsis: 'a != 0 & b != 0 ==> recip (a * b) = recip a * recip b',
-   action: function() {
+  'a != 0 & b != 0 ==> recip (a * b) = recip a * recip b': {
+    action: function() {
       var step1 = rules.fact('a * recip a = 1');
       var step2 = rules.instVar(step1, Toy.parse('a * b'), 'a');
       var step3 = rules.rewriteWithFact(step2, '/right/left',
@@ -4427,8 +4436,8 @@ var facts = [
 
   // Division rules
 
-  {synopsis: 'c != 0 ==> a * b / c = a / c * b',
-   action: function() {
+  'c != 0 ==> a * b / c = a / c * b': {
+    action: function() {
       var step = rules.consider('a * b / c')
       .rewrite('/main/right', 'a / b = a * recip b')
       .rewrite('/main/right', 'a * b * c = a * c * b')
@@ -4436,8 +4445,8 @@ var facts = [
       return step;
     }
   },
-  {synopsis: 'b != 0 ==> a / b * c = a * c / b',
-   action: function() {
+  'b != 0 ==> a / b * c = a * c / b': {
+    action: function() {
       var step = rules.consider('a / b * c')
       .rewrite('/main/right/left', 'a / b = a * recip b')
       .rewrite('/main/right', 'a * b * c = a * c * b')
@@ -4445,8 +4454,8 @@ var facts = [
       return step;
     }
   },
-  {synopsis: 'b != 0 & c != 0 ==> a / (b * c) = a / b / c',
-   action: function() {
+  'b != 0 & c != 0 ==> a / (b * c) = a / b / c': {
+    action: function() {
       var step = rules.consider('a / (b * c)')
       .rewrite('/main/right', 'a / b = a * recip b')
       .rewrite('/main/right/right',
@@ -4457,8 +4466,8 @@ var facts = [
       return step;
     }
   },  
-  {synopsis: 'c != 0 ==> a * (b / c) = a * b / c',
-   action: function() {
+  'c != 0 ==> a * (b / c) = a * b / c': {
+    action: function() {
       var step = rules.consider('a * (b / c)')
       .rewrite('/main/right/right', 'a / b = a * recip b')
       .rewrite('/main/right', 'a * (b * c) = a * b * c')
@@ -4468,16 +4477,16 @@ var facts = [
   },
 
   // Somewhat useful fact to stick at the end of the list.
-  {synopsis: 'not F',
-   action: function() {
+  'not F': {
+    action: function() {
       return rules.tautology('not F');
     }
   },
 
   // MOVING EXPRESSIONS AROUND
 
-  {synopsis: 'a = neg b == a + b = 0',
-   action: function() {
+  'a = neg b == a + b = 0': {
+    action: function() {
       var step = rules.assume('a = neg b')
       .apply('addToBoth', 'b')
       .rewrite('/main/right', 'neg a + a = 0')
@@ -4495,24 +4504,23 @@ var facts = [
 
     }
   },
-  {synopsis: 'a = b == a - b = 0',
-   action: function() {
+  'a = b == a - b = 0': {
+    action: function() {
       return rules.fact('a = neg b == a + b = 0')
       .apply('instVar', 'neg b', 'b')
       .rewrite('/main/left/right', 'neg (neg a) = a')
       .rewrite('/main/right/left', 'a + neg b = a - b');
     }
   }
-];
+};
 
 /**
  * Treat each key/value pair in the map as an expression and
  * a function to prove it.  Add each as a "fact".
  */
-function addFacts(list) {
-  for (var i = 0; i < list.length; i++) {
-    var info = list[i];
-    addFact(info.synopsis, info.action);
+function addFactsMap(map) {
+  for (synopsis in map) {
+    addFact(synopsis, map[synopsis].action);
   }
 }
 
@@ -4831,7 +4839,8 @@ function findHyp(term) {
 //// Export public names.
 
 Toy.rules = rules;
-Toy.facts = facts;
+Toy.logicFacts = logicFacts;
+Toy.algebraFacts = algebraFacts;
 Toy._factsMap = _factsMap;
 
 // A settable variable, export right here:
@@ -4861,6 +4870,7 @@ for (var i = 0; i < theoremNames.length; i++) {
   addTheorem(theoremNames[i]);
 }
 
-addFacts(facts);
+addFactsMap(logicFacts);
+addFactsMap(algebraFacts);
 
 })();
