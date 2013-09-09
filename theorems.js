@@ -2940,23 +2940,7 @@ var ruleInfo = {
   },
 
 
-  // As long as "finder" finds an inference rule to apply to the term,
-  // keep calling it and applying the rewrite rule it returns.  The
-  // result is the step with the final replacement term, never null.
-  repeatedlyRewrite: {
-    action: function(step, path, finder) {
-      var term = step.locate(path);
-      var equation = rules.eqSelf(term);
-      var rewriter;
-      while (rewriter = finder(equation.getRight())) {
-        equation = rules.rewrite(equation, '/right', rewriter);
-      }
-      var result = rules.replace(equation, step, path);
-      return result.justify('repeatedlyRewrite', arguments, [step]);
-    }
-  },
-
-  // From the section "Equality and descriptions"
+  // From the section "Equality and descriptions" in the book.
 
   equalitySymmetric: {
     action: function() {
@@ -3531,38 +3515,6 @@ var ruleInfo = {
     form: 'Step to simplify: <input name=step>',
     comment: 'simplify assumptions in a step',
     hint: 'simplify assumptions',
-    labels: 'uncommon'
-  },
-
-  // Finds and returns type expression rewrite rule that can rewrite
-  // the term to eliminate a call to "neg" or "recip" or a numeric
-  // literal, e.g. (R (neg <term>) = (R <term>)).  Returns null if it
-  // finds no suitable rewriter.
-  //
-  // TODO: Remove me.  (Used by testRepeatedlyRewrite,)
-  findTypeRewriter: {
-    action: function(term) {
-      var result = null;
-      if (term.isCall1('R')) {
-        if (term.arg.isNumeral()) {
-          result = rules.axiomArithmetic(term);
-        } else if (term.arg.isCall1('neg')) {
-          var step1 = rules.axiomNegType();
-          result = rules.eqnSwap(step1);
-        } else if (term.arg.isCall1('recip')) {
-          var step1 = rules.axiomReciprocalType();
-          result = rules.eqnSwap(step1);
-        }
-      }
-      if (result) {
-        return result.justify('findTypeRewriter', arguments);
-      } else {
-        return null;
-      }
-    },
-    inputs: {term: 1},
-    form: 'Term to rewrite: <input name=term>',
-    comment: 'find rewriter to simplify type expression with neg or recip.',
     labels: 'uncommon'
   },
 

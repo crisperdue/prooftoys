@@ -1788,13 +1788,6 @@ var testCase = {
     assert(proved.matches(input));
   },
 
-  testRepeatedlyRewrite: function() {
-    var input = rules.assume('R (neg (neg (x + y)))');
-    var result = rules.repeatedlyRewrite(input, '/right',
-                                         rules.findTypeRewriter);
-    assertEqual('(R (x + y))', result.getRight());
-  },
-
   testArithmetic: function() {
     var input = rules.assume('x = 2 + 2');
     var result = rules.arithmetic(input, '/right/right');
