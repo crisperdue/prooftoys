@@ -357,10 +357,6 @@ ProofEditor.prototype.showProofButtons = @(value) {
   @proofButtons.toggle(value);
 };
 
-ProofEditor.prototype.displayShowAll = @(value) {
-  @mainControl.stepEditor.displayShowAll(value);
-};
-
 //// PROOF CONTROL
 
 // TODO: Extend these to support proof steps that can take more

@@ -115,19 +115,25 @@ function StepEditor(controller) {
   if (Toy.useAutocompleter) {
     throw new Error('Autocompleter no longer supported');
   } else {
+    self.showRules = 'algebra';
+
     // Append the actual rule selector.
     var widget = new BasicRuleSelector(self, $.proxy(self, 'handleSelection'));
     self.ruleSelector = widget;
     selectorSpan.append(widget.jq);
 
     // Append checkbox to control "all rules"
-    selectorSpan.append('<label class=sted-show-all>' +
-                        '<input type=checkbox>show all&nbsp;</label>');
+    var selHtml = (' <span>show options for</span> ' +
+                   '<select class=rulesToShow>' +
+                   '<option value=algebra>algebra' +
+                   '<option value=general>general reasoning' +
+                   '<option value=all>all available' +
+                   '</select>');
+    selectorSpan.append(selHtml);
+
     // Step editor has state controlling whether to show all rules.
-    self.showAll = false;
-    selectorSpan.find('input:checkbox').on('click', function(event) {
-        self.showAll = this.checked;
-        self.ruleSelector.offerAxioms = !self.ruleSelector.offerAxioms;
+    selectorSpan.find('.rulesToShow').on('change', function(event) {
+        self.showRules = this.value;
         self.reset();
       });
   }
@@ -142,15 +148,6 @@ function StepEditor(controller) {
     }
   });
 }
-
-$.extend(StepEditor.prototype, {
-
-  displayShowAll: function(value) {
-    this._selectorSpan.find('label.sted-show-all').toggle(value);
-  }
-
-});
-
 
 /**
  * Handle errors in the step editor.  Displays step information in an
@@ -534,17 +531,22 @@ StepEditor.prototype.offerableRuleNames = function() {
 };
 
 /**
- * Rulename-based rule offering policy function.  Returns a truthy value
+ * Policy-based rule offering policy function.  Returns a truthy value
  * iff current policy is to show the rule.
  */
 StepEditor.prototype.offerOk = function(name) {
-  if (this.showAll) {
+  var labels = Toy.rules[name].info.labels;
+  switch (this.showRules) {
+  case 'all':
     return true;
-  } else {
-    var labels = Toy.rules[name].info.labels;
+  case 'algebra':
+    return labels.algebra || labels.display;
+  case 'general':
     return labels.basic || labels.display || labels.algebra;
+  default:
+    throw new Error('Bad rule policy value');
   }
-}
+};
 
 /**
  * Returns true iff the rule name can be offered by the UI.
@@ -693,26 +695,12 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
   self.stepEditor = stepEditor;
   self.ruleName = '';
 
-  // TODO: put this state in the step editor.
-  self.offerAxioms = options && options.axioms;
-
   // Rule chooser:
   var ruleChooser = $('<select/>');
   // The first option tells the user to select something,
   // message determined later.
   ruleChooser.append($('<option/>',
                        {text: '-- Apply a rule --', value: ''}));
-
-  /* TODO:
-  var thmChooser = $('<select/>');
-  thmChooser.append($('<option/>',
-                      {text: '-- Select an axiom or theorem --', value: ''}));
-
-  var proverChooser = $('<select/>');
-  proverChooser.append($('<option/>',
-                         {text: '-- Prove a simple theorem --',
-                             value: ''}));
-  */
 
   this.jq = ruleChooser;
 
@@ -739,11 +727,9 @@ BasicRuleSelector.prototype.reset = function() {
   var displayTexts = [];
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      if (self.offerAxioms || ruleName.slice(0, 5) != 'axiom') {
-        var text = ruleMenuFormatter(null, {text: ruleName}, false);
-        displayTexts.push(text);
-        byDisplay[text] = ruleName;
-      }
+      var text = ruleMenuFormatter(null, {text: ruleName}, false);
+      displayTexts.push(text);
+      byDisplay[text] = ruleName;
     });
   self.stepEditor.offerableFacts().forEach(function(fact) {
     var expr = Toy.getStatement(fact);
