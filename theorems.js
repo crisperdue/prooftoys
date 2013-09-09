@@ -1758,9 +1758,11 @@ var ruleInfo = {
       return step6.justify('r5235', arguments);
     },
     inputs: {varName: 1, term: [2, 3]},
+    /* Do not show, hard to use and seldom helpful.
     form: ('Variable: <input name=varName> '
 	   + 'wff without it free: <input name=term1> '
 	   + 'other wff: <input name=term2>'),
+    */
     labels: 'uncommon',
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
@@ -2171,7 +2173,8 @@ var ruleInfo = {
     inputs: {equation: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=equation>'),
     comment: 'replace term with equal term',
-    description: 'replace {site};; {in step siteStep} {using step equation}'
+    description: 'replace {site};; {in step siteStep} {using step equation}',
+    labels: 'algebra basic'
   },
     
   /**
@@ -2190,7 +2193,8 @@ var ruleInfo = {
     hint: 'replace term with equal term like A = x',
     comment: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
-    description: 'replace {site};; {in step siteStep} {using step equation}'
+    description: 'replace {site};; {in step siteStep} {using step equation}',
+    labels: 'algebra basic'
   },
 
   // Add hypotheses to the target step from hypStep.  This is key to
@@ -2404,6 +2408,8 @@ var ruleInfo = {
                    'neg (neg a) = a',
                    {stmt: 'a * (b * c) = a * b * c',
                     where: 'subst.a.isNumeral() && subst.b.isNumeral()'},
+                   {stmt: 'a * b / c = a / b * c',
+                    where: 'subst.a.isNumeral() && subst.c.isNumeral()'},
                    '0 * a = 0',
                    'a * 0 = 0'
                    ];
@@ -3242,7 +3248,8 @@ var ruleInfo = {
     inputs: {term: 1},
     form: 'Term to evaluate: <input name=term>',
     comment: 'arithmetic expression evaluation',
-    description: 'axiom of arithmetic'
+    description: 'axiom of arithmetic',
+    labels: 'algebra basic'
   },
 
   subtractionType: {
@@ -3317,7 +3324,8 @@ var ruleInfo = {
     isRewriter: true,
     inputs: {site: 1},
     form: '',
-    comment: 'arithmetic'
+    comment: 'arithmetic',
+    labels: 'algebra'
   },
 
   // Managing numeric type hypotheses
@@ -3611,8 +3619,10 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Add <input name=term> to both sides of ' +
            'step <input name=equation>'),
+    hint: 'algebra: add to both sides',
     comment: ('add to both sides'),
-    description: 'add {term};; {in step equation}'
+    description: 'add {term};; {in step equation}',
+    labels: 'algebra'
   },
 
   subtractFromBoth: {
@@ -3626,8 +3636,10 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Subtract <input name=term> from both sides of ' +
            'step <input name=equation>'),
+    hint: 'algebra: subtract from both sides',
     comment: ('subtract from both sides'),
-    description: 'subtract {term};; {in step equation}'
+    description: 'subtract {term};; {in step equation}',
+    labels: 'algebra'
   },
 
   multiplyBoth: {
@@ -3640,8 +3652,10 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Multiply both sides of step <input name=equation>' +
            ' by <input name=term>'),
+    hint: 'algebra: multiply both sides',
     comment: ('multiply both sides'),
-    description: 'multiply by {term};; {in step equation}'
+    description: 'multiply by {term};; {in step equation}',
+    labels: 'algebra'
   },
 
   divideBoth: {
@@ -3656,8 +3670,10 @@ var ruleInfo = {
     inputs: {equation: 1, term: 2},
     form: ('Divide both sides of step <input name=equation>' +
            ' by <input name=term>'),
+    hint: 'algebra: divide both sides',
     comment: ('divide both sides'),
-    description: 'divide by {term};; {in step equation}'
+    description: 'divide by {term};; {in step equation}',
+    labels: 'algebra'
   },
 
   // Looks up the statement string, proving it if needed. Returns that
@@ -3762,19 +3778,6 @@ function addRule(key, info) {
   if (!info.inputs) {
     info.inputs = {};
   }
-  // Preprocess labels.  Split, and if there are no explicit labels,
-  // give the rule a label of "basic".
-  var labels = info.labels;
-  info.labels = {};
-  if (typeof labels === 'string') {
-    labels.split(/\s+/)
-      .forEach(function(label) { info.labels[label] = true; });
-  }
-  if (info.form !== undefined && Toy.isEmpty(info.labels)) {
-    // Anything conceivably offerable (with a form), default to
-    // "basic" if no other labels.
-    info.labels.basic = true;
-  }
   // If the rule (theorem) has an explicit statement (it should be
   // provably true), coerce it to an Expr if given as a string.
   if (typeof info.statement === 'string') {
@@ -3791,6 +3794,24 @@ function addRule(key, info) {
   var fn = (typeof info == 'function') ? info : info.action;
   // Associate the action function with the key,
   rules[key] = fn;
+
+  // Preprocess labels.  Split, and if there are no explicit labels,
+  // give the rule a label of "basic".
+  var labels = info.labels;
+  info.labels = {};
+  if (typeof labels === 'string') {
+    labels.split(/\s+/)
+      .forEach(function(label) { info.labels[label] = true; });
+  }
+  if (fn.length === 0 && key.slice(0, 5) === 'axiom') {
+    info.labels.axiom = true;
+  }
+  if (info.form !== undefined && Toy.isEmpty(info.labels)) {
+    // Anything conceivably offerable (with a form), default to
+    // "basic" if no other labels.
+    info.labels.basic = true;
+  }
+
   // and metadata as the function's "info" property.
   rules[key].info = info;
 
@@ -3962,6 +3983,14 @@ var algebraFacts = {
     action: function() {
       var step = rules.consider('a * b + b')
       .rewrite('/main/right/right', 'a = 1 * a')
+      .rewrite('/main/right', 'a * c + b * c = (a + b) * c');
+      return step;
+    }
+  },
+  'b + a * b = (1 + a) * b': {
+    action: function() {
+      var step = rules.consider('b + a * b')
+      .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right', 'a * c + b * c = (a + b) * c');
       return step;
     }
