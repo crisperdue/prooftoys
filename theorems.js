@@ -3231,7 +3231,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to evaluate: <input name=term>',
-    comment: 'arithmetic expression evaluation',
+    comment: 'evaluate arithmetic expression',
     description: 'axiom of arithmetic',
     labels: 'algebra basic'
   },
