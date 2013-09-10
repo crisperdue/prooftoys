@@ -372,10 +372,18 @@ StepEditor.prototype.tryRule = function(rule, args) {
       console.profileEnd();
     }
   }
-  this.controller.addStep(result);
-  this.controller.deselectStep();
-  // Clear any proof errors field.
-  $('#proofErrors').html('');
+  if (result.rendering) {
+    // If there is already a rendering, Expr.justify must have found
+    // that the "new" step was identical to one of its dependencies,
+    // so don't try to add it.  The implementation only currently
+    // supports one render per step anyway.
+    this.report('Nothing to do');
+  } else {
+    this.controller.addStep(result);
+    this.controller.deselectStep();
+    // Clear any proof errors field.
+    $('#proofErrors').html('');
+  }
   this.reset();
   this.focus();
 
