@@ -506,7 +506,9 @@ function renderStepNumber(step) {
  */
 ProofControl.prototype.addStep = function(step) {
   // TODO: Move most of this logic into renderStep.
-  var copy = step.copyStep();
+  var copy = step.copyStep(true);
+  copy.users = 0;
+  copy.ordinal = step.ordinal;
   step.rendering = copy;
   copy.rendering = copy;
   step.original = step;

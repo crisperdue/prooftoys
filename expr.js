@@ -825,18 +825,18 @@ Expr.prototype.getBase = function() {
 
 /**
  * Copies this Expr as a proof step, including the parts specific to
- * proof steps.  Makes only a shallow copy of the step-related parts.
+ * proof steps.  Makes only a shallow copy of the step-related parts,
+ * also a shallow copy of the wff unless the optional argument is
+ * true.  Does not copy any information related to rendering.
  */
-Expr.prototype.copyStep = function() {
-  var expr = this.copy();
-  expr.users = 0;
+Expr.prototype.copyStep = function(deeply) {
+  var expr = deeply ? this.copy() : this.dup();
   expr.details = this.details;
   expr.ruleName = this.ruleName;
   // Some elements of ruleArgs may refer to originals of other steps.
   expr.ruleArgs = this.ruleArgs;
   // ruleDeps refers to originals of other steps.
   expr.ruleDeps = this.ruleDeps;
-  expr.ordinal = this.ordinal;
   expr.hasHyps = this.hasHyps;
   return expr;
 };
