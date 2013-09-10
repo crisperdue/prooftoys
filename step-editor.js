@@ -166,9 +166,16 @@ StepEditor.prototype.error = function(message) {
 StepEditor.prototype.report = function(error) {
   var proofJQ = $('#proofErrors');
   if (proofJQ.length) {
-    proofJQ.html('<p><b>Error: ' + error.message + '</b></p>');
-    if (error.step) {
-      Toy.renderProof(error.step, proofJQ);
+    // Clicking _anywhere_ will actually clear the message.
+    proofJQ.html('<button>X</button>');
+    if (error instanceof Error) {
+      proofJQ.append('<b>Error: ' + error.message + '</b>');
+      if (error.step) {
+        Toy.renderProof(error.step, proofJQ);
+      }
+    } else {
+      // It should be a string.
+      proofJQ.append('<b>' + error + '</b>');
     }
   } else {
     window.alert('Error: ' + error.message);

@@ -442,6 +442,10 @@ span.stepRef {
 
 /* Proof step editor */
 
+#proofErrors {
+  margin-top: 1em;
+}
+
 /* Overrides styles for .proofDisplay. */
 .stepEditor {
   background-color: white;
