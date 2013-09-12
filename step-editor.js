@@ -7,6 +7,7 @@
 // Make application assertions available through "assert".
 var assert = Toy.assertTrue;
 
+
 //// PROOF STEP EDITOR
 
 // CSS class names beginning with "sted-" are reserved to
@@ -490,6 +491,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     // The following is just a hack so you can type "- 3" as
     // input to e.g. rules.applyToBoth with the usual meaning.
     if (expr.isCall1() && expr.fn.name in binOps) {
+      var x = Toy.parse('x');
       expr = lambda(x, Toy.infixCall(x, expr.fn, expr.arg));
     }
     return expr;
