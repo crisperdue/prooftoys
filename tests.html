@@ -331,8 +331,9 @@ var testCase = {
     assertEqual('xx', result.dump());
     result = Toy.parse('f x');
     assertEqual('(f x)', result.dump());
-    result = Toy.parse('not = (F =)');
+    result = Toy.parse('(not) = (F =)');
     assertEqual('((= not) (= F))', result.dump());
+    assertEqual('((neg (neg a)) = a)', Toy.parse('neg neg a = a'));
     result = Toy.parse('{x. x} T');
     assertEqual('({x. x} T)', result);
     result = Toy.parse('a + b * c');
@@ -659,11 +660,11 @@ var testCase = {
     }
     assertEqual('/left', findPath('x = y', 'x'));
     assertEqual('/right', findPath('x = y', 'y'));
-    assertEqual('/binop', findPath('x = y', '='));
+    assertEqual('/binop', findPath('x = y', '(=)'));
     assertEqual('/right', findPath('T == (T ==> T)', 'T ==> T'));
     assertEqual('/left/right', findPath('(x + y) + z', 'y'));
     assertEqual('/arg', findPath('not p', 'p'));
-    assertEqual('/fn', findPath('not p', 'not'))
+    assertEqual('/fn', findPath('not p', '(not)'))
     assertEqual('/right/arg', findPath('q ==> not p', 'p'));
     assertEqual('/arg/arg', findPath('not (not (not p))', 'not p'));
   },
@@ -1007,8 +1008,8 @@ var testCase = {
     // From set and individual to boolean, note how the
     // first argument type appears last when written out.
     //         y  x
-    check('((o i) (o i))', '{x. {y. (x = (= y)) & (y > 0)}}');
-    check('((o i) (o i))', '{x. {y. (x = (> y)) & (y > 0)}}');
+    check('((o i) (o i))', '{x. {y. (x = ((=) y)) & (y > 0)}}');
+    check('((o i) (o i))', '{x. {y. (x = ((>) y)) & (y > 0)}}');
     // Successful typing of the identity function
     check('o', '({x. x} p) = p');
     // An example where the type check in Rule R catches improper

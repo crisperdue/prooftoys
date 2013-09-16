@@ -391,7 +391,7 @@ var ruleInfo = {
 
   axiom5: {
     action: function() {
-      var result = rules.assert('(the (= y)) = y');
+      var result = rules.assert('(the ((=) y)) = y');
       return result.justify('axiom5');
     },
     inputs: {},
@@ -4509,7 +4509,7 @@ function addFactsMap(map) {
 Toy.define('not', equal(F));
 Toy.define('!=', '{x. {y. not (x = y)}}');
 Toy.define('forall', equal(lambda(x, T)));
-Toy.define('exists', '{x. F} !=');
+Toy.define('exists', '(!=) {x. F}');
 Toy.defineCases('&', identity, lambda(x, F));
 Toy.defineCases('|', allT, identity);
 Toy.defineCases('==>', identity, allT);

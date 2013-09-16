@@ -124,11 +124,21 @@ function Set(stringifier) {
   this.stringifier = stringifier || String;
 }
 
+var emptySet = Object.freeze(new Set());
+
 /**
  * Add an element.
  */
 Set.prototype.add = function(value) {
   this.map[this.stringifier(value)] = value;
+};
+
+/**
+ * Add all the values in the array to this Set.
+ */
+Set.prototype.addAll = function(array) {
+  var self = this;
+  array.forEach(function(value) { self.add(value); });
 };
 
 /**
@@ -565,6 +575,17 @@ Expr.prototype.toUnicode = function() {
   }
 }
 
+// Categorization of Vars:
+//
+// Identifiers
+//   Variables (start with a single lowercase ASCII letter)
+//   Consts (such as sin, cos, forall, exists)
+// Literals (numeric, string, etc)
+// OpSyntax (+, -, etc)
+
+// All "opSyntax" Vars are operators, plus some designated
+// identifers, currently "forall" and "exists".
+
 /**
  * True iff this is a Var named as a variable.
  */
@@ -594,6 +615,11 @@ var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
 // Names matching this regex are identifiers.
 // The trailing "$" ensures that the entire name is matched.
 var identifierRegex = new RegExp('^' + identifierPattern + '$');
+
+// True iff the expression is a literal constant.
+Expr.prototype.isLiteral = function() {
+  return this instanceof Var && this.value !== undefined;
+}
 
 /**
  * True iff the given string is an identifier (named variable or
@@ -3521,50 +3547,99 @@ function parse(input) {
   }
 
   /**
+   * Add this to the power of the next token to break
+   * ties with right associativity.
+   *
+   * TODO: Support right-associative binary operators here.
+   *
+   */
+  function rightBoost(power) {
+    return (power === unaryPower) ? 1 : 0;
+  }
+
+  /**
+   * True iff the given precedence indicates a binary operator.
+   */
+  function isBinaryPower(power) {
+    return 0 < power && power < namePower;
+  }
+
+  /**
    * Keep reducing leading parts into subtrees until the next token is
-   * an infix operator with precedence not greater than lastPower.
-   * Returns null if it consumes no input.  "Above" here means
-   * numerically greater.
+   * an infix operator with precedence not greater than lastPower (or
+   * equal with right precedence), returning the parse tree built from
+   * everything up to that operator and leaving it in the tokens list.
+   * Returns null if it consumes no input.  ("Above" here means
+   * numerically greater.)  This is a top-down operator precedence
+   * parser.
+   *
+   * This function is responsible for parsing a subexpression that was
+   * preceded by an infix operator or opening "bracket".
+   *
+   * The lastPower will be 0 or 1 if there is no left context, or some
+   * binary operator precedence, or unaryPower - 1 in case the next
+   * operand is for a unary operator.
    */
   function parseAbove(lastPower) {
-    // This is a top-down operator precedence parser.
+    // A "left" expression is context for continued parsing.  It will
+    // either be the function part of a function call or the left
+    // operand of a binary operator, or null if neither of these
+    // is present.
     var left = null;
     while (true) {
       var token = peek();
+      var name = token.name;
       var nextPower = getPrecedence(token);
-      if (nextPower != null && nextPower <= lastPower) {
+      if (nextPower + rightBoost(nextPower) <= lastPower) {
+        // Return the parse tree from the prior tokens.
         return left;
       }
+      // Consume the token.
       next();
-      // If an atomic expression or unary/nullary expression is
-      // next, this will have it.
       var expr = null;
-      if (token.name == '(') {
-        expr = mustParseAbove(0);
+      // If an atomic expression or unary/nullary expression is
+      // next, expr will get its parse: the right or only side
+      // of this operator or function.
+      if (name === '(') {
+        // The 1 indicates that the parser just saw "(".
+        expr = mustParseAbove(1);
         expect(')');
-      } else if (token.name == '{') {
+      } else if (name === '{') {
         var id = next();
         assert(id.isVariable(), 'Expected identifier, got ' + id.name);
         expect('.');
         var body = mustParseAbove(0);
-        expr = new Toy.Lambda(id, body);
+        expr = new Lambda(id, body);
         expect('}');
-      } else if (!left || nextPower == null) {
-        // Treat the token as an atomic expression.
+      } else if (nextPower === namePower) {
+        // Even if lastPower indicates an operator take the token as
+        // the next expression, e.g. x + f y, where lastPower comes
+        // from "+" and "f" is the current token.
         expr = token;
-      }
-      // At this point expr and left are not both null.
-      if (expr) {
-        left = left ? new Toy.Call(left, expr) : expr;
-      } else {
-        // Token is an infix operator of higher precedence than the last.
-        // At this point there is always an expression in "left".
-        left = new Toy.Call(token, left);
+      } else if (!left && lastPower === 1 && peek().name === ')') {
+        // Accept a unary or binary operator as an expression
+        // if directly enclosed in parentheses.
+        expr = token;
+      } else if (left && isBinaryPower(nextPower)) {
         var right = parseAbove(nextPower);
-        if (right) {
-          left = new Toy.Call(left, right);
-        }
+        left = right
+          ? infixCall(left, token, right)
+          : new Call(token, left);
+        // Binops are a special case that does not set expr
+        // and use it as an argument to "left".
+        continue;
+      } else if (nextPower === unaryPower) {
+        // Build a parse with the parse tree for all unary
+        // and nullary operators upcoming.
+        expr = new Call(token, parseUnaryArg());
+      } else if (name === '-') {
+        // Treat '-' here as unary "neg".
+        expr = new Call(new Var('neg'),  parseUnaryArg());
+      } else {
+        throw new Error('Unexpected token "' + token.name +
+                        '" at ' + token.pos);
       }
+      left = left ? new Call(left, expr) : expr;
     }
   }
 
@@ -3577,6 +3652,28 @@ function parse(input) {
       throw new Error('Empty expression at ' + peek().pos);
     }
     return result;
+  }
+
+  /**
+   * Parses the argument of a unary operator, throwing an error
+   * if the upcoming tokens are not suitable.  Returns an Expr.
+   */
+  function parseUnaryArg() {
+    var token = peek();
+    var power = getPrecedence(token);
+    if (power < unaryPower) {
+      next();
+      return token;
+    } else if (power === unaryPower || token.name === '-') {
+      next();
+      return new Call(token, parseUnaryArg());
+    } else if (power > unaryPower) {
+      // An opening bracket of some kind.
+      return mustParseAbove(power - 1);
+    } else {
+      throw new Error('Unexpected token "' + token.name +
+                      '" at ' + token.pos);
+    }
   }
 
   // Do the parse!
@@ -3672,23 +3769,29 @@ function mathParse(str) {
 }
 
 /**
- * Get a precedence value: null for identifiers, defaults to 100 for
- * unknown non-symbols, greater than the usual math operators but less
- * than identifiers (i.e. ordinary function calls).
+ * Get a precedence value: 100 for identifiers, defaults to same as
+ * multiplication for unknown non-symbols.
  *
- * Infix operators have precedence 0 < p < 1000.
+ * TODO: Include context in the computation, specifically prefix
+ *   versus infix context.
  */
 function getPrecedence(token) {
   var name = token.pname || token.name;
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
-    return (token.value == null && !name.match(identifierRegex)
+    return (token.value == null && !isIdentifier(name)
             // It's written as an operator, give it the default precedence.
-            ? 100
-            : null);
+            ? 40
+            : 100);
   }
 }
+
+// Unary operators should all be the same.
+var unaryPower = 200;
+
+// Alphanumeric names have this power unless specified otherwise.
+var namePower = 100;
 
 // Precedence table for infix operators.
 var precedence = {
@@ -3696,12 +3799,14 @@ var precedence = {
   '(end)': 0,
   ')': 0,
   '}': 0,
+  // Value of 1 is reserved in parseAbove and mustParseAbove to indicate
+  // that the preceding token was "(".
+  // 
   // Alias for '=', with lower precedence.
   '==': 2,
-  // Default precedence for non-identifiers is 5.
   '==>': 11,
   '|': 13,
-  '&': 14,
+  '&': 15,
   // Unlike the book, equality binds tighter than implication.  This
   // way makes more sense when working with numbers for example.
   '=': 20,
@@ -3715,6 +3820,10 @@ var precedence = {
   '*': 40,
   '/': 40,
   '**': 50,
+  forall: unaryPower,
+  exists: unaryPower,
+  not: unaryPower,
+  neg: unaryPower,
   // Specials
   '(': 1000,
   '{': 1000
@@ -3897,9 +4006,16 @@ function lambda(bound, body) {
  * to be rendered as infix.
  */
 function isInfixDesired(vbl) {
-  var name = vbl.pname || vbl.name;
   var p = getPrecedence(vbl);
-  return typeof p == 'number' && 0 < p && p < 1000;
+  return 0 < p && p < 100;
+}
+
+/**
+ * True iff the given Var is a unary operator.  Method that applies
+ * only to Vars.
+ */
+Var.prototype.isUnary = function() {
+  return getPrecedence(this) === 300;
 }
 
 /**
@@ -4253,6 +4369,7 @@ Toy.configure = configure;
 Toy.ownProperties = ownProperties;
 Toy.isEmpty = isEmpty;
 Toy.each = each;
+Toy.emptySet = emptySet;
 
 Toy.Result = Result;
 Toy.Error = ErrorInfo;
@@ -4339,6 +4456,9 @@ Toy._parseStringContent = parseStringContent;
 Toy.unparseString = unparseString;
 Toy._decodeArg = decodeArg;
 
+Toy.unaryPower = unaryPower;
+Toy.namePower = namePower;
+Toy.getPrecedence = getPrecedence;
 Toy.tokenize = tokenize;
 Toy.parse = parse;
 Toy.mathParse = mathParse;
