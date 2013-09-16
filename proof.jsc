@@ -430,6 +430,7 @@ function ProofControl(properties) {
   jq.append(this.stepEditor.jq);
 
   this.setEditable(false);
+  this.setHoverHighlighting(Toy.highlightAllHovers);
 }
 
 /**
@@ -591,25 +592,35 @@ ProofControl.prototype.removeStep = function(step) {
 };
 
 /**
+ * Turn highlighting of expressions on or off by adding or removing
+ * handlers for their events.
+ */
+ProofControl.prototype.setHoverHighlighting = function(state) {
+  var action = state ? 'on' : 'off';
+  var $node = $(this.node);
+  $node[action]('mouseover', exprHandleOver);
+  $node[action]('mouseout', exprHandleOut);
+  // If not actually handling "hover" events, prevent occurrences here
+  // from being handled by an ancestor.
+  var ignore = state ? 'off' : 'on';
+  $node[ignore]('mouseover', false);
+  $node[ignore]('mouseout', false);
+};
+
+/**
  * Makes the control editable or not by showing/hiding the
  * editor button and flagging its state.  Also updates event
- * handling accordingly.
+ * handling accordingly.  Can turn on hoverHighling, but never
+ * turns it off.
  */
 ProofControl.prototype.setEditable = function(state) {
   this.editable = state;
+  if (state) {
+    this.setHoverHighlighting(state);
+  }
   var nodeQ = $(this.node);
   nodeQ.toggleClass('editable', !!state);
   this.stepEditor.jq.toggle(state);
-
-  // Control handling of expression mouseover and mouseout events.
-  var action = this.editable ? 'on' : 'off';
-  nodeQ[action]('mouseover', exprHandleOver);
-  nodeQ[action]('mouseout', exprHandleOut);
-  // If not actually handling "hover" events, prevent occurrences here
-  // from being handled by an ancestor.
-  var ignore = this.editable ? 'off' : 'on';
-  nodeQ[ignore]('mouseover', false);
-  nodeQ[ignore]('mouseout', false);
 };
 
 
@@ -1970,6 +1981,9 @@ Toy._adjacentSteps = adjacentSteps;
 
 // For testing:
 Toy._formattedStepInfo = formattedStepInfo;
+
+// Global parameter to enable hover highlighting everywhere.
+Toy.highlightAllHovers = true;
 
 // Global parameter to suppress displaying hypotheses such as "(R x)".
 Toy.suppressRealTypeDisplays = true;
