@@ -252,7 +252,7 @@ var ruleInfo = {
     var result = thm.justify(name);
     // If details were kept, the displayer would enable display of them,
     // but there is really no proof of the axiom.
-    delete result.details;
+    result.details = null;
     return result;
   },
 
@@ -317,6 +317,7 @@ var ruleInfo = {
       var result = target.hasHyps ? result.asHyps() : result;
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation]);
+      justified.details = null;
       return justified;
     },
     inputs: {equation: 1, site: 2},
