@@ -153,6 +153,14 @@ var ruleInfo = {
     labels: 'algebra basic'
   },
 
+  copy: {
+    action: function(step) {
+      return step.dup().justify('copy', arguments, [step]);
+    },
+    inputs: {step: 1},
+    description: 'copy;; {of step step}'
+  },
+
   /**
    * From an implication with LHS consisting of a set of hypotheses,
    * derives the equivalent step with the hypotheses.
