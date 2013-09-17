@@ -135,10 +135,12 @@ Set.prototype.add = function(value) {
 
 /**
  * Add all the values in the array to this Set.
+ * Return this set.
  */
 Set.prototype.addAll = function(array) {
   var self = this;
   array.forEach(function(value) { self.add(value); });
+  return self;
 };
 
 /**
