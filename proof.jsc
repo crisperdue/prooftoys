@@ -893,7 +893,7 @@ function renderMain(step) {
     if (step.ruleName == 'consider') {
       var jq = exprJq();
       main.node = dom(jq);
-      jq.append(main.getRight()._render(true));
+      jq.append(main.getRight()._render(0));
       jq.append(' = ');
       jq.append('<span class=ellipsis>&hellip;</span>');
     } else {
@@ -902,14 +902,14 @@ function renderMain(step) {
         main.node = dom(jq);
         jq.append('<span class=ellipsis>&hellip;</span>');
         jq.append(' = ');
-        jq.append(main.getRight()._render(true));
+        jq.append(main.getRight()._render(0));
       } else {
-        var jq = main._render(true);
+        var jq = main._render(0);
       }
     }
     return dom(jq);
   } else {
-    return dom(main._render(true));
+    return dom(main._render(0));
   }
 }
 
@@ -945,7 +945,7 @@ function renderHyps(expr) {
         render(rhs);
       }
     } else {
-      hypsNode.append(expr._render(true));
+      hypsNode.append(expr._render(0));
     }
   }
   if (expr) {
@@ -1024,7 +1024,7 @@ function markAsFullExpr(jq) {
 
 // NOTE that some methods on Expr and its subclasses appear here.
 
-// _render(omit)
+// _render(minPower)
 //
 // Render this expression into a new DOM node, returning a jQuery
 // object for the node.  Sets the expression's "node" property to
@@ -1032,15 +1032,14 @@ function markAsFullExpr(jq) {
 // be done only once to any given expression.  Helper for the render
 // method.  (Not public)
 //
-// If the optional "omit" argument is true and this is a Call, omit
-// the enclosing parentheses.
-// 
+// Omits parentheses around an expression that uses an operator
+// if the operator's precedence is at least minPower.
 //
 
-Var.prototype._render = function(omit) {
+Var.prototype._render = function(minPower) {
   var jq = exprJq();
   this.node = dom(jq);
-  if (this.isVariable() || this.value !== undefined) {
+  if (this.isVariable() || this.isLiteral()) {
     // Variable or literal constant is selectable, not named constants
     markAsFullExpr(jq);
   }
@@ -1050,86 +1049,118 @@ Var.prototype._render = function(omit) {
   return jq;
 };
 
-Call.prototype._render = function(omit) {
+// Private to effectivePower.
+var useParens = {
+  '|': new Toy.Set().addAll(['&']),
+  '==>': new Toy.Set().addAll(['==>', '=']),
+  '==': new Toy.Set().addAll(['==>'])
+};
+
+/**
+ * Computes the effective precedence of the given binary operator Var
+ * when applied to the given inner binary operator Var.  The result
+ * will be either its normal precedence or one more than the
+ * precedence of innerOp if innerOp is listed for the operator in the
+ * useParens table.
+ *
+ * The effect is to force parentheses around an expressions with the
+ * inner operator if it is an argument of an argument with the outer
+ * operator.
+ */
+function effectivePower(outer, inner) {
+  var specialOps = useParens[outer.name] || Toy.emptySet;
+  return (specialOps.has(inner.name)
+          ? Toy.getPrecedence(inner) + 1
+          : Toy.getPrecedence(outer));
+}
+
+// minPower is the precedence required to do without parentheses.
+Call.prototype._render = function(minPower) {
+  var self = this;
   var jq = exprJq();
   this.node = dom(jq);
-  // Only parenthesize uses of quantifiers in case of step tracking.
-  // TODO: Remove this special case and omit parens around all ordinary
-  // function calls that appear as args to infix operators.  Presumably
-  // this code is correct for (not (forall ... )) because "forall"
-  // displays as a unary operator.
-  if (this.fn instanceof Var &&
-      (this.fn.name == 'forall' || this.fn.name == 'exists')) {
-    omit = true;
-  }
+
+  // Step number (string) in case rendering is tracking source steps
+  // and this term has a sourceStep.
   var stepNum = (Toy.trackSourceSteps
                  && this.sourceStep
                  && this.sourceStep.rendering.stepNumber);
-  omit = omit && !stepNum;
-  if (!omit) {
-    if (Toy.trackSourceSteps) {
-      if (this.sourceStep) {
-        jq.append('$');
-      }
-      if (stepNum) {
-        jq.append(stepNum);
-      }
-    }
+  if (stepNum) {
+    jq.append('$', stepNum);
+  }
+  var parens = stepNum;
+  if (!parens) {
+    var prec = Toy.getPrecedence;
+    var myPower = self.isCall1()
+      ? prec(self.fn)
+      : (self.isCall2() ? prec(self.getBinOp()) : Toy.namePower - 1);
+    parens = minPower > myPower;
+  }
+
+  if (parens) {
     jq.append('(');
   }
-  if (this.fn instanceof Call && this.fn.fn instanceof Var) {
+  if (this.isCall2()) {
+    var op = this.getBinOp();
+    // Assumes this.isCall2().
+    function thisPower(subExpr) {
+      var result = subExpr.isCall2()
+        ? effectivePower(op, subExpr.getBinOp())
+        : Toy.getPrecedence(op);
+      return result;
+    }
     // This is a call on a named function of two arguments.
-    if (Toy.isInfixDesired(this.fn.fn)) {
-      // Non-alphabetic characters: use infix: "x + y"
-      var fnJq = exprJq();
+    if (Toy.isInfixDesired(op)) {
+      // Render as infix, e.g. "x + y"
+      var left = this.getLeft();
+      var fnJq = exprJq().append(left._render(thisPower(left)), ' ',
+                                 op._render(0));
       this.fn.node = dom(fnJq);
-      fnJq.append(this.fn.arg._render());
-      fnJq.append(space());
-      fnJq.append(this.fn.fn._render());
-      jq.append(fnJq);
-      jq.append(space());
-      jq.append(this.arg._render());
+      var right = this.getRight();
+      jq.append(fnJq, ' ', right._render(thisPower(right) + 1));
     } else {
-      // Alphabetic characters: function comes first.
+      // Anything else render like "f x y".
       var fnJq = exprJq();
       this.fn.node = dom(fnJq);
-      fnJq.append(this.fn.fn._render());
+      // We could render the function part with less parens by
+      // reducing the required power by 1 here, but then we might want
+      // to reorganize the code for rendering ordinary function calls.
+      fnJq.append(this.fn.fn._render(Toy.namePower + 1));
       fnJq.append(space());
-      fnJq.append(this.fn.arg._render());
+      fnJq.append(this.fn.arg._render(Toy.namePower + 1));
       jq.append(fnJq);
       jq.append(space());
-      jq.append(this.arg._render());
+      jq.append(this.arg._render(Toy.namePower + 1));
     }
     markAsFullExpr(jq);
   } else if (this.fn instanceof Var && Toy.isInfixDesired(this.fn)) {
-    // Infix operator, but only one argument: "x +"
-    jq.append(this.arg._render());
-    jq.append(space());
-    jq.append(this.fn._render());
+    // Infix operator, but only one argument: render like "(+) x"
+    // Parenthesize both function and argument if they are calls.
+    jq.append('(', this.fn._render(0), ') ',
+              this.arg._render(Toy.namePower + 1));
+    markAsFullExpr(jq);
   } else if (this.fn instanceof Var && !this.fn.displaysIdentifier()) {
     // Function call with non-identifier operator.
     // Display the function adjacent to its argument, but precede both
     // with a non-breaking space to the left to help the user select
     // this expression, and to set them off from preceding infix operator
     // or other text.
-    jq.append('\u00a0');
-    jq.append(this.fn._render());
-    jq.append(this.arg._render());
+    jq.append('\u00a0', this.fn._render(0),
+              this.arg._render(Toy.unaryPower));
     markAsFullExpr(jq);
   } else {
-    // Normal function call: "f x"
-    jq.append(this.fn._render());
-    jq.append(space());
-    jq.append(this.arg._render());
+    // Normal function call: "f x" or " ... x".
+    jq.append(this.fn._render(Toy.namePower + 1), ' ',
+              this.arg._render(Toy.unaryPower));
     markAsFullExpr(jq);
   }
-  if (!omit) {
+  if (parens) {
     jq.append(')');
   }
   return jq;
 };
 
-Lambda.prototype._render = function(omit) {
+Lambda.prototype._render = function(minPower) {
   var jq = exprJq();
   this.node = dom(jq);
   markAsFullExpr(jq);
@@ -1140,9 +1171,9 @@ Lambda.prototype._render = function(omit) {
     jq.append('$' + stepNum);
   }
   jq.append('{');
-  jq.append(this.bound._render());
+  jq.append(this.bound._render(0));
   jq.append('. ');
-  var bodyJq = this.body._render(true);
+  var bodyJq = this.body._render(0);
   markAsFullExpr(bodyJq);
   jq.append(bodyJq);
   jq.append('}');
@@ -1978,6 +2009,7 @@ Toy.getExpr = getExpr;
 
 // For debugging
 Toy._adjacentSteps = adjacentSteps;
+Toy._effectivePower = effectivePower;
 
 // For testing:
 Toy._formattedStepInfo = formattedStepInfo;
