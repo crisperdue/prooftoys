@@ -2409,7 +2409,7 @@ var ruleInfo = {
                    'neg (neg a) = a',
                    {stmt: 'a * (b * c) = a * b * c',
                     where: 'subst.a.isNumeral() && subst.b.isNumeral()'},
-                   {stmt: 'a * b / c = a / b * c',
+                   {stmt: 'a * b / c = a / c * b',
                     where: 'subst.a.isNumeral() && subst.c.isNumeral()'},
                    '0 * a = 0',
                    'a * 0 = 0'
@@ -2511,20 +2511,22 @@ var ruleInfo = {
   regroup: {
     action: function(step) {
       var facts1 = [{stmt: 'a + b = b + a',
-                    where: 'subst.a.isNumeral() && !subst.b.isNumeral()'},
-                   {stmt: 'a + b + c = a + c + b',
-                    where: 'subst.b.isNumeral() && !subst.c.isNumeral()'}
+                     where: 'subst.a.isNumeral() && !subst.b.isNumeral()'},
+                    {stmt: 'a + b + c = a + c + b',
+                     where: 'subst.b.isNumeral() && !subst.c.isNumeral()'},
+                    {stmt: 'a + (b + c) = a + b + c'}
                   ];
       var step1 = applyFacts(step, facts1);
-      var facts2 = [{stmt: 'a + b + c = a + (b + c)',
-                     where: 'subst.b.isNumeral()'}
+      var facts2 = [{stmt: 'a * c + b * c = (a + b) * c',
+                     where: 'subst.a.isNumeral() && subst.b.isNumeral()'},
+                    {stmt: 'b + a * b = (1 + a) * b',
+                     where: 'subst.a.isNumeral()'},
+                    {stmt: 'a * b + b = (a + 1) * b',
+                     where: 'subst.b.isNumeral()'},
+                    {stmt: 'a + a = 2 * a'}
                    ];
       var step2 = applyFacts(step1, facts2);
-      var facts3 = [{stmt: 'a * c + b * c = (a + b) * c',
-                     where: 'subst.b.isNumeral()'}
-                   ];
-      var step3 = applyFacts(step2, facts3);
-      return step3.justify('regroup', arguments, [step]);
+      return step2.justify('regroup', arguments, [step]);
     },
     inputs: {step: 1},
     form: 'Regroup terms in step <input name=step>',
