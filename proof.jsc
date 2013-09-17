@@ -1120,17 +1120,14 @@ Call.prototype._render = function(minPower) {
       jq.append(fnJq, ' ', right._render(thisPower(right) + 1));
     } else {
       // Anything else render like "f x y".
-      var fnJq = exprJq();
-      this.fn.node = dom(fnJq);
       // We could render the function part with less parens by
       // reducing the required power by 1 here, but then we might want
       // to reorganize the code for rendering ordinary function calls.
-      fnJq.append(this.fn.fn._render(Toy.namePower + 1));
-      fnJq.append(space());
-      fnJq.append(this.fn.arg._render(Toy.namePower + 1));
-      jq.append(fnJq);
-      jq.append(space());
-      jq.append(this.arg._render(Toy.namePower + 1));
+      var fnJq = exprJq()
+        .append(this.fn.fn._render(Toy.namePower + 1), ' ',
+                this.fn.arg._render(Toy.namePower + 1));
+      this.fn.node = dom(fnJq);
+      jq.append(fnJq, ' ', this.arg._render(Toy.namePower + 1));
     }
     markAsFullExpr(jq);
   } else if (this.fn instanceof Var && Toy.isInfixDesired(this.fn)) {
