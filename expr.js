@@ -85,6 +85,21 @@ function Result(value) {
 }
 
 /**
+ * Call the given function with up to 4 arguments, returning
+ * the undefined value if the function throws, else the value
+ * returned from the function call.
+ */
+function normalReturn(fn, arg1, arg2, arg3, arg4) {
+  var result;
+  try {
+    result = fn.call(undefined, arg1, arg2, arg3, arg4);
+  } catch(e) {
+    return;
+  }
+  return result;
+}
+
+/**
  * Call the given function of no arguments.  If it throws a Result
  * object, return its "value".  Rethrow anything else, and return the
  * function value if it does not throw.
@@ -756,7 +771,6 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   expr.ordinal = stepCounter++;
   // Carry other information forward.
   expr.hasHyps = this.hasHyps;
-  expr.hasLeftElision = this.hasLeftElision;
   expr.ruleArgs = jQuery.makeArray(ruleArgs || []);
   expr.ruleDeps = ruleDeps;
   return expr;
@@ -4374,6 +4388,8 @@ Toy.each = each;
 Toy.emptySet = emptySet;
 
 Toy.Result = Result;
+Toy.catchResult = catchResult;
+Toy.normalReturn = normalReturn;
 Toy.Error = ErrorInfo;
 Toy.TypeCheckError = TypeCheckError;
 Toy.Set = Set;

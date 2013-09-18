@@ -509,6 +509,7 @@ ProofControl.prototype.addStep = function(step) {
   // TODO: Move most of this logic into renderStep.
   var copy = step.copyStep(true);
   copy.users = 0;
+  copy.hasLeftElision = false;
   copy.ordinal = step.ordinal;
   step.rendering = copy;
   copy.rendering = copy;
@@ -749,6 +750,10 @@ var _turnstile = '\u22a6';
  *   'proofStep' data property that refers to the step.  Code
  *   elsewhere may assume that only node's that render a proof step
  *   have the proofStep CSS class.
+ *
+ * - Rendered steps have properties "stepNumber", a string identifying
+ *   the step number to display; and "hasLeftElision", a boolean true
+ *   to request omitting display of the LHS of an equation.
  */
 ProofControl.prototype.renderStep = function(step) {
   var self = this;
