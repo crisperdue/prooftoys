@@ -353,9 +353,10 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
 };
 
 /**
- * Try to run the given rule (function) with the given rule arguments.
+ * Tries to run the given rule (function) with the given rule arguments.
  * Catches and reports any errors.  Returns true if the rule
- * succeeded, false if it catches an error.
+ * succeeded, false if it catches an error.  Reports there was nothing
+ * to do if the rule returns its input or a null value.
  */
 StepEditor.prototype.tryRule = function(rule, args) {
   var result = null;
@@ -373,7 +374,7 @@ StepEditor.prototype.tryRule = function(rule, args) {
       console.profileEnd();
     }
   }
-  if (result.rendering) {
+  if (!result || result.rendering) {
     // If there is already a rendering, Expr.justify must have found
     // that the "new" step was identical to one of its dependencies,
     // so don't try to add it.  The implementation only currently
@@ -387,16 +388,8 @@ StepEditor.prototype.tryRule = function(rule, args) {
   }
   this.reset();
   this.focus();
-
-  while (true) {
-    var simpler = Toy.rules.simplifyMath1(result);
-    if (simpler == result) {
-      this.controller.proofChanged();
-      return true;
-    }
-    this.controller.addStep(simpler);
-    result = simpler;
-  }
+  this.controller.proofChanged();
+  return true;
 };
 
 /**
