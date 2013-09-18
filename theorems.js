@@ -2386,29 +2386,23 @@ var ruleInfo = {
   },
 
   // Simplifies the main part of the given step using the axiom of
-  // arithmetic and selected simplifying facts.  Displays its steps
-  // inline.  Not strictly suitable for use in the UI because it
-  // may return the step as-is, which leads to display anomalies.
+  // arithmetic and selected simplifying facts.  Returns its result
+  // inline, just the input step if there is nothing to do.
   //
-  // TODO: Display of results from inline rules are a problem in
-  //   general unless they generate exactly one top-level step in the
-  //   end.  Avoid display anomalies in cases such as this.
-  //
-  // TODO: Only simplify visible parts of steps.
-  //
-  simplifyMath1: {
-    action: function(step) {
-      var result;
-      step.getMain().visitCalls(function(term, pth) {
-          try {
-            result = {thm: rules.axiomArithmetic(term), path: pth};
-          } catch(e) {}
+  // From the UI use a rule that calls this one.
+  _simplifyMath1: {
+    action: function(step, _path) {
+      var next = step;
+      var foundPath = Toy.catchResult(function() {
+        next.locate(_path).visitCalls(function(term, p) {
+            if (Toy.normalReturn(rules.axiomArithmetic, term)) {
+              throw new Toy.Result(p);
+            }
+          });
         });
-      if (result) {
-        var fullPath = Toy.path('/main').concat(result.path.reverse());
-        return rules.arithmetic(step, fullPath);
+      if (foundPath) {
+        return rules.arithmetic(next, _path.concat(foundPath.reverse()));
       }
-      var assocStmt = getStatement('a * (b * c) = a * b * c');
       var facts = ['a - a = 0',
                    'a + 0 = a',
                    '0 + a = a',
@@ -2422,28 +2416,22 @@ var ruleInfo = {
                    '0 * a = 0',
                    'a * 0 = 0'
                    ];
-      var info = step.getMain().findLhsMatch(facts);
-      if (!info) {
-        return step;
-      }
-      var fullPath = Toy.path('/main').concat(info.path);
-      return rules.rewriteWithFact(step, fullPath, info.stmt);
-    },
-    inputs: {step: 1},
-    form: ('Simplify step <input name=step>'),
-    hint: 'simplify math once',
-    // This rule is invoked automatically after each user-requested
-    // step; plus it is "inline" and the display (dependencies)
-    // can look peculiar.
-    labels: 'uncommon'
+      var info = step.locate(_path).findLhsMatch(facts);
+      return (info
+              ? rules.rewriteWithFact(step,
+                                      _path.concat(info.path),
+                                      info.stmt)
+              : step);
+    }
   },
 
   // Repeatedly applies simplifyMath1 to do trivial simplifications.
   doAllArithmetic: {
     action: function(step) {
+      var visPath = pathToVisiblePart(step);
       var next = step;
       while (true) {
-        var simpler = rules.simplifyMath1(next);
+        var simpler = rules._simplifyMath1(next, visPath);
         if (simpler === next) {
           return next.justify('doAllArithmetic', arguments, [step]);
         }
@@ -2452,9 +2440,9 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
-    hint: 'do arithmetic',
-    // Normally automatic or semi-automatic.
-    labels: 'uncommon'
+    hint: 'algebra: arithmetic and simplify',
+    description: 'arithmetic and basic simplification',
+    labels: 'algebra',
   },
 
   // Move all negations in past additions and multiplications;
@@ -2518,23 +2506,33 @@ var ruleInfo = {
 
   regroup: {
     action: function(step) {
+      // Linearize terms.
+      var step0 = applyFacts(step, [{stmt: 'a + (b + c) = a + b + c'}]);
+
+      // Move terms that are numerals to the back of the bus.
       var facts1 = [{stmt: 'a + b = b + a',
                      where: 'subst.a.isNumeral() && !subst.b.isNumeral()'},
                     {stmt: 'a + b + c = a + c + b',
-                     where: 'subst.b.isNumeral() && !subst.c.isNumeral()'},
-                    {stmt: 'a + (b + c) = a + b + c'}
-                  ];
-      var step1 = applyFacts(step, facts1);
-      var facts2 = [{stmt: 'a * c + b * c = (a + b) * c',
-                     where: 'subst.a.isNumeral() && subst.b.isNumeral()'},
+                     where: 'subst.b.isNumeral() && !subst.c.isNumeral()'}
+                   ];
+      var step1 = applyFacts(step0, facts1);
+
+      // Group numerals together.
+      var facts2 = [{stmt: 'a + b + c = a + (b + c)',
+                     where: 'subst.b.isNumeral()'}
+                   ];
+      var step2 = applyFacts(step1, facts2);
+      
+      // Group terms with common right factor together.
+      var facts3 = [{stmt: 'a * c + b * c = (a + b) * c'},
                     {stmt: 'b + a * b = (1 + a) * b',
                      where: 'subst.a.isNumeral()'},
                     {stmt: 'a * b + b = (a + 1) * b',
                      where: 'subst.b.isNumeral()'},
                     {stmt: 'a + a = 2 * a'}
                    ];
-      var step2 = applyFacts(step1, facts2);
-      return step2.justify('regroup', arguments, [step]);
+      var step3 = applyFacts(step2, facts3);
+      return step3.justify('regroup', arguments, [step]);
     },
     inputs: {step: 1},
     form: 'Regroup terms in step <input name=step>',
@@ -4149,7 +4147,7 @@ var algebraFacts = {
                rules.axiomArithmetic(Toy.parse('-1 + 1'))
                .apply('eqnSwap'))
       .rewrite('/main/left', '(a + b) * c = a * c + b * c')
-      .apply('simplifyMath1')
+      .apply('_simplifyMath1', '/main/left')
       .apply('eqnSwap');
       return rules.fact('neg a + a = 0')
       .replace('/main/right', minusOne)
@@ -4675,14 +4673,28 @@ function getStatement(fact) {
 }
 
 /**
+ * For a rendered step, returns a path to the equation RHS if the rule
+ * was "consider" or the step hasLeftElision; else the main part if
+ * there are hypotheses; else the whole wff.
+ */
+function pathToVisiblePart(step) {
+  return Toy.path(step.rendering &&
+                  (step.ruleName === 'consider' ||
+                   step.rendering.hasLeftElision)
+                  ? '/main/right'
+                  : (step.hasHyps ? '/main' : ''));
+}
+
+/**
  * Apply the list of fact rewrites to the step until none of them
  * any longer is applicable, and return the result.
  */
 function applyFacts(step, facts) {
   var info;
   var next = step;
-  while (info = next.getMain().findLhsMatch(facts)) {
-    var fullPath = Toy.path('/main').concat(info.path);
+  var path = pathToVisiblePart(step);
+  while (info = next.locate(path).findLhsMatch(facts)) {
+    var fullPath = path.concat(info.path);
     next = rules.rewriteWithFact(next, fullPath, info.stmt);
   }
   return next;
