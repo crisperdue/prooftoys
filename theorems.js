@@ -2468,8 +2468,6 @@ var ruleInfo = {
 
   // Remove occurrences of subtraction by adding the negative.
   // Also does arithmetic everywhere and simplifies negations.
-  //
-  // TODO: Only simplify visible parts of steps.
   removeSubtraction: {
     action: function(step) {
       var facts = ['a - b = a + neg b'];
