@@ -2481,7 +2481,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert - to + in step <input name=step>'),
     hint: 'algebra: convert - to +',
-    description: 'convert - to +',
+    description: 'convert subtraction to addition',
     labels: 'algebra'
   },
 
