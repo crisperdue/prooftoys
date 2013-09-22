@@ -1453,53 +1453,40 @@ Expr.prototype.mergedHypotheses = function() {
 };
 
 /**
- * Finds and returns schemas and locations where they match in this
- * term.  Returns an array of objects with properties as follows:
- * schema: matching schema as an Expr;
- * path: reverse path to match location;
- * subst: mapping/substitution that establishes the match.
- * (Note: currently unused.)
- */
-Expr.prototype.findLhsMatches = function(facts) {
-  var statements = facts.map(Toy.getStatement);
-  var results = [];
-  function checkMatches(term, pth) {
-    for (var i = 0; i < statements.length; i++) {
-      var stmt = statements[i];
-      var subst = term.matchSchema(stmt.getMain().getLeft());
-      if (subst) {
-        results.push({stmt: stmt,
-              term: term,
-              path: pth.reverse(),
-              subst: subst
-              });
-      }
-    }
-  }
-  this.visitCalls(checkMatches);
-  return results;
-};
-
-/**
  * Finds a single LHS match with one of the given facts.  The fact
  * left sides must be schemas, given as an array.  The array contains
- * strings or plain objects with "stmt" property that is a string for
- * the fact and optional "where" property with a string to eval.
+ * strings representing facts or plain objects with more detailed
+ * information.
+ *
+ * Each info has either a "stmt" property that is a string for the
+ * fact or a "term" property representing the term to be matched. In
+ * either case there can be a "where" property with a string to eval.
  * Matching only succeeds if "where" evaluates as truthy.  The
  * variable "subst" is available in the expression.
  */
-Expr.prototype.findLhsMatch = function(facts) {
+Expr.prototype.findMatch = function(facts) {
   function checkMatches(term, pth) {
     for (var i = 0; i < facts.length; i++) {
       var info = facts[i];
-      var stmt = info;
+      var stmt;
       var where;
-      if (info.stmt) {
+      var schema;
+      if (info.constructor == Object) {
         stmt = info.stmt;
+        schema = info.term;
         where = info.where;
+      } else {
+        // The entire info is a "statement" acceptable to getStatement.
+        stmt = info;
       }
-      stmt = Toy.getStatement(stmt);
-      var subst = term.matchSchema(stmt.getMain().getLeft());
+      if (stmt) {
+        schema = Toy.getStatement(stmt).getMain().getLeft();
+      } else {
+        schema = termify(info.term);
+        assert(schema instanceof Expr,
+               function() { return 'Not an Expr: ' + term; })
+      }
+      var subst = term.matchSchema(schema);
       if (subst) {
         var pass = true;
         if (where && typeof where === 'string') {

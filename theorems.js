@@ -2408,7 +2408,6 @@ var ruleInfo = {
                    '0 + a = a',
                    'a * 1 = a',
                    '1 * a = a',
-                   'neg (neg a) = a',
                    {stmt: 'a * (b * c) = a * b * c',
                     where: 'subst.a.isNumeral() && subst.b.isNumeral()'},
                    {stmt: 'a * b / c = a / c * b',
@@ -2416,7 +2415,7 @@ var ruleInfo = {
                    '0 * a = 0',
                    'a * 0 = 0'
                    ];
-      var info = step.locate(_path).findLhsMatch(facts);
+      var info = step.locate(_path).findMatch(facts);
       return (info
               ? rules.rewriteWithFact(step,
                                       _path.concat(info.path),
@@ -2447,23 +2446,29 @@ var ruleInfo = {
 
   // Move all negations in past additions and multiplications;
   // eliminate double negations.
-  //
-  // TODO: Only simplify visible parts of steps.
   simplifyNegations: {
     action: function(step) {
       var facts = ['neg (a + b) = neg a + neg b',
                    'neg (neg a) = a',
-                   'neg (a * b) = neg a * b',
-                  ].map(getStatement.bind(undefined));
-      var result = applyFacts(step, facts);
-      return result.justify('simplifyNegations', arguments, [step]);
+                   'neg (a * b) = neg a * b'
+                  ];
+      var simpler = applyFacts(step, facts);
+      var path1 = pathToVisiblePart(step);
+      var schemas = [{term: 'neg a', where: 'subst.a.isNumeral()'}];
+      while (true) {
+        var info = simpler.locate(path1).findMatch(schemas);
+        if (!info) {
+          break;
+        }
+        simpler = rules.arithmetic(simpler, path1.concat(info.path));
+      }
+      return simpler.justify('simplifyNegations', arguments, [step]);
     },
     inputs: {step: 1},
     form: ('Simplify negations in <input name=step>'),
-    hint: 'simplify negations',
+    hint: 'algebra: simplify negations',
     description: 'simplify negations',
-    // Normally automatic or semi-automatic.
-    labels: 'uncommon'
+    labels: 'algebra'
   },
 
   // Remove occurrences of subtraction by adding the negative.
@@ -2473,8 +2478,7 @@ var ruleInfo = {
       var facts = ['a - b = a + neg b'];
       var converted = applyFacts(step, facts)
       var arithDone = rules.doAllArithmetic(converted);
-      var negDone = rules.simplifyNegations(arithDone);
-      return negDone.justify('removeSubtraction', arguments, [step]);
+      return arithDone.justify('removeSubtraction', arguments, [step]);
     },
     inputs: {step: 1},
     form: ('Convert - to + in step <input name=step>'),
@@ -4691,7 +4695,7 @@ function applyFacts(step, facts) {
   var info;
   var next = step;
   var path = pathToVisiblePart(step);
-  while (info = next.locate(path).findLhsMatch(facts)) {
+  while (info = next.locate(path).findMatch(facts)) {
     var fullPath = path.concat(info.path);
     next = rules.rewriteWithFact(next, fullPath, info.stmt);
   }
