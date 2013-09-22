@@ -1147,8 +1147,15 @@ Call.prototype._render = function(minPower) {
     // with a non-breaking space to the left to help the user select
     // this expression, and to set them off from preceding infix operator
     // or other text.
-    jq.append('\u00a0', this.fn._render(0),
-              this.arg._render(Toy.unaryPower));
+    if (this.fn.name === 'neg' && this.arg.isNumeral()) {
+      // Render e.g. neg 7 as -(7) to distinguish from a negative
+      // number.
+      jq.append(this.fn._render(0),
+                '(', this.arg._render(Toy.unaryPower), ')');
+    } else {
+      jq.append('\u00a0', this.fn._render(0),
+                this.arg._render(Toy.unaryPower));
+    }
     markAsFullExpr(jq);
   } else {
     // Normal function call: "f x" or " ... x".
