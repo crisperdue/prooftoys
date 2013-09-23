@@ -41,6 +41,11 @@ Toy.navText = [
   '<a class=nav',
   'href="http://code.google.com/p/prooftoys/issues/entry?template=Comment/suggestion">',
   'Feedback</a>',
+  '<br>',
+  'Algebra problems<br>',
+  '<a href="examples/simplify.html">Simplification</a>',
+  '<a href="examples/equations.html">Solving equations</a>',
+  '</ul>'
 ].join('\n');
 
 Toy.insertNav = function() {

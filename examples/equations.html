@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<!-- Uses "almost standards mode", all but some table cell sizing. -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Prooftoys - solve equations</title>
+  <base href="..">
+  <link id=styles type="text/css" rel="stylesheet" href="logic.css">
+  <script src="boilerplate.js"></script>
+
+<style type="text/css">
+/* Page-specific CSS here */
+</style>
+
+</head>
+<body>
+
+<h1>Prooftoys</h1>
+
+<div id=slogans>
+<!-- slogans here -->
+</div>
+
+<span id=leftNav>
+<!-- Boilerplate text goes here -->
+</span>
+
+<span id=content>
+<h2>Solving equations</h2>
+<p>
+[[Discussion of the problems here]].
+<p>
+<ol id=problemList>
+</ol>
+
+<h3>Problem work area</h3>
+<p>
+<div id=proof></div>
+
+</span> <!-- content -->
+
+<!-- Storage for state to preserve across page unloads -->
+<textarea id=ToyStore rows=20 cols=80 class=hidden></textarea>
+<!-- Force some white space to accommodate the autocompleter menu. -->
+<div style="height: 20em"></div>
+
+<script>
+
+// Insert boilerplate.
+Toy.insertNav();
+Toy.insertSlogans();
+
+// On DOM ready:
+$(function() {
+    var rules = Toy.rules;
+    var $problemList = $('#problemList');
+    var editor = new Toy.ProofEditor();
+    window.proofEditor = editor;
+    editor.setEditable(true);
+    $('#proof').append(editor.containerNode);
+
+    // List of lists of assumptions.
+    var problems = [
+      ['4 * (2 * x - 3) + 7 = 3 * x + 5'],
+      ['x + y = 7', 'x = y + 3']
+    ];
+
+    // Set up handlers for the problems.
+    for (var i = 0; i < problems.length; i++) {
+      var assumptions = problems[i];
+      var markup = $('<span class=mathColor>');
+      for (var j = 0; j < assumptions.length; j++) {
+        var assumption = assumptions[j];
+        var terminator = assumptions.length === 1 ? ' ' : '<br>';
+        markup.append(Toy.mathMarkup(assumption), terminator);
+      }
+      var button = $('<button>Try</button>');
+      $problemList.append($('<li>').append(markup, button));
+
+      // Set up event handlers.
+
+      function handler(event) {
+        var assumptions = event.data.assumptions;
+        editor.proofControl.setSteps([]);
+        for (var j = 0; j < assumptions.length; j++) {
+          editor.addStep(rules.assume(assumptions[j]));
+        }
+      };
+      button.on('click', {assumptions: assumptions}, handler);
+    }
+  });
+
+</script>
+</body>
+</html>
