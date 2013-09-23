@@ -85,13 +85,15 @@ var siteTypes = {
  * Fields:
  * jq: DIV with the step editor's HTML.
  * form: jQuery SPAN to hold the argument input form.
- * controller: ProofControl to edit
+ * proofControl: ProofControl to edit
+ * controller: ProofEditor containing this StepEditor.
  */
 function StepEditor(controller) {
   // Make this available to all inner functions.
   var self = this;
 
   self.controller = controller;
+  self.proofControl = controller.proofControl;
 
   // Create a DIV with the step editor content.
   var div = $('<div class=stepEditor style="clear: both"></div>');
@@ -231,7 +233,7 @@ StepEditor.prototype.handleSelection = function() {
   } else if (value.slice(0, 5) === 'fact ') {
     // Values "fact etc" indicate use of rewriteWithFact, and
     // the desired fact is indicated by the rest of the selection.
-    var siteStep = this.controller.selection;
+    var siteStep = this.proofControl.selection;
     if (!siteStep || !siteStep.selection) {
       this.error('No selected site');
       return false;
@@ -281,8 +283,8 @@ function addClassInfo(form) {
  * sites, which do not appear in forms.
  */
 StepEditor.prototype.addSelectionToForm = function(rule) {
-  var controller = this.controller;
-  var step = controller.selection;
+  var proofControl = this.proofControl;
+  var step = proofControl.selection;
   if (step) {
     var expr = step.selection;
     var form = this.form;
@@ -381,14 +383,14 @@ StepEditor.prototype.tryRule = function(rule, args) {
     // supports one render per step anyway.
     this.report('Nothing to do');
   } else {
-    this.controller.addStep(result);
-    this.controller.deselectStep();
+    this.proofControl.addStep(result);
+    this.proofControl.deselectStep();
     // Clear any proof errors field.
     $('#proofErrors').html('');
   }
   this.reset();
   this.focus();
-  this.controller.proofChanged();
+  this.proofControl.proofChanged();
   return true;
 };
 
@@ -402,7 +404,7 @@ StepEditor.prototype.fillWithSelectedSite = function(args) {
   var inputs = rule.info.inputs;
   for (var type in inputs) {
     if (type in siteTypes) {
-      var step = this.controller.selection;
+      var step = this.proofControl.selection;
       var expr = step && step.selection;
       if (expr) {
 	var position = inputs[type];
@@ -467,10 +469,10 @@ StepEditor.prototype.parseValue = function(value, type) {
       throw new Error('Not a number: ' + value);
     }
     var index = Number(value) - 1;
-    if (index < 0 || index >= this.controller.steps.length) {
+    if (index < 0 || index >= this.proofControl.steps.length) {
       throw new Error('No such step: ' + value);
     }
-    return this.controller.steps[Number(value) - 1].original;
+    return this.proofControl.steps[Number(value) - 1].original;
   case 'term':
     var tokens = Toy.tokenize(value);
     // Throws an error if parsing fails:
@@ -575,7 +577,7 @@ StepEditor.prototype.offerable = function(ruleName) {
   if (!('form' in info)) {
     return false;
   }
-  var step = this.controller.selection;
+  var step = this.proofControl.selection;
   if (step) {
     // Something is selected.  Check if the rule accepts the
     // selection.
@@ -601,7 +603,7 @@ $.extend(StepEditor.prototype, {
    */
   offerableFacts: function() {
     var facts = [];
-    var step = this.controller.selection;
+    var step = this.proofControl.selection;
     if (step) {
       var expr = step.selection;
       if (expr) {

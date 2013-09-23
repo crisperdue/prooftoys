@@ -173,6 +173,10 @@ var nextProofEditorId = 1;
  * Construct a proof displayer/editor, which is a composite made from
  * a ProofControl.  User interaction may also create additional
  * subproof ProofControl objects within this.
+ *
+ * Public properties:
+ *
+ * proofControl: ProofControl for the proof being edited.
  */
 function ProofEditor() {
   var self = this;
@@ -182,6 +186,7 @@ function ProofEditor() {
   // representable in JSON.
   this.data = {};
   @mainControl = new ProofControl();
+  this.proofControl = @mainControl;
   var stateDisplayHtml =
     '<div class="proofStateDisplay hidden"\n' +
     ' style="padding: 1em; border: 2px solid #aaf">\n' +
@@ -215,10 +220,12 @@ function ProofEditor() {
   @proofButtons.append(clearProof);
   clearProof.on('click', function() {@mainControl.setSteps([]); });
   this.containerNode = $('<div class=proofContainer></div>');
+  this.stepEditor = new Toy.StepEditor(this);
   this.containerNode
     .append(@proofButtons)
     .append(this._stateDisplay)
-    .append(@mainControl.node);
+    .append(@mainControl.node)
+    .append(this.stepEditor.jq);
 
   // If the proof has changed, save its state soon.
   this._refresher = new Toy.Refresher(function() {
@@ -233,7 +240,7 @@ function ProofEditor() {
     // reset.
     self._refresher.activate();
     // "this" is the ProofControl.
-    this.stepEditor.reset();
+    self.stepEditor.reset();
   };
 
   // Update the step editor query results when the selection may
@@ -241,7 +248,7 @@ function ProofEditor() {
   @mainControl.selectionChanged = function() {
     // Forces full display of the appropriate inference rules for
     // the new selection.
-    this.stepEditor.reset();
+    self.stepEditor.reset();
   };
 
   // TODO: Consider creating the step editor from the proof editor
@@ -351,6 +358,7 @@ ProofEditor.prototype.restoreState = function() {
 
 ProofEditor.prototype.setEditable = @(value) {
   @mainControl.setEditable(value);
+  this.stepEditor.jq.toggle(value);
 };
 
 ProofEditor.prototype.showProofButtons = @(value) {
@@ -426,8 +434,6 @@ function ProofControl(properties) {
   jq.data('proofControl', this);
   var stepsParent = jq.find('.stepsParent');
   this._stepsJQ = jq.find('.proofSteps');
-  this.stepEditor = new Toy.StepEditor(this);
-  jq.append(this.stepEditor.jq);
 
   this.setEditable(false);
   this.setHoverHighlighting(Toy.highlightAllHovers);
@@ -621,7 +627,6 @@ ProofControl.prototype.setEditable = function(state) {
   }
   var nodeQ = $(this.node);
   nodeQ.toggleClass('editable', !!state);
-  this.stepEditor.jq.toggle(state);
 };
 
 
