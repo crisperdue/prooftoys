@@ -78,7 +78,7 @@ code {
 }
 
 /* Math-oriented text */
-span.math, span.mathColor, s {
+.math, .mathColor, s {
   font-family: STIXGeneral, Times, serif;
   /* Variable and constant names should be explicitly italicized
      within math text. */
@@ -87,7 +87,7 @@ span.math, span.mathColor, s {
 }
 
 /* Math text in documents */
-span.mathColor, s {
+.mathColor, s {
   color: #860;
 }
 
