@@ -24,7 +24,6 @@
 <div id="qunit"></div>
 <div id="qunit-fixture"></div>
 
-<div id=proofErrors></div>
 
 <script>
 
@@ -1900,26 +1899,6 @@ Toy.eachFact(function(fact) {
           assert(fact.result().ruleName);
         });
   });
-
-// Possibly display errors when done.  Not clear this helps any,
-// as these generally only represent internal failures caught
-// by the rules themselves.
-//
-// TODO: Find a way to show error information just for tests that
-// fail.
-/*
-QUnit.done(function() {
-    var errorNodes = $('#proofErrors');
-    Toy.errors.forEach(function(info) {
-        if (info.step) {
-          var display = $('<p><b>Error:</b> <span></span></p>');
-          display.find('span').text(info.message);
-          errorNodes.append(display);
-          Toy.renderProof(info.step, errorNodes);
-        }
-      });
-  });
-*/
 
 </script>
 </body>

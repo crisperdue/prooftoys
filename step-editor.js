@@ -162,26 +162,22 @@ StepEditor.prototype.error = function(message) {
 };
 
 /**
- * Report the error.  If there is a #proofErrors node on the page
- * report it there and help the user debug in case it has a "step"
- * property; otherwise just alert.
+ * Report the error through the DOM and help the user debug in case it
+ * has a "step" property.
  */
 StepEditor.prototype.report = function(error) {
-  var proofJQ = $('#proofErrors');
-  if (proofJQ.length) {
-    // Clicking _anywhere_ will actually clear the message.
-    proofJQ.html('<button>X</button>');
-    if (error instanceof Error) {
-      proofJQ.append('<b>Error: ' + error.message + '</b>');
-      if (error.step) {
-        Toy.renderProof(error.step, proofJQ);
-      }
-    } else {
-      // It should be a string.
-      proofJQ.append('<b>' + error + '</b>');
+  var proofJQ = this.controller.$proofErrors;
+  assert(proofJQ.length, 'proofJQ?');
+  // Clicking _anywhere_ will actually clear the message.
+  proofJQ.html('<button>X</button>');
+  if (error instanceof Error) {
+    proofJQ.append('<b>Error: ' + error.message + '</b>');
+    if (error.step) {
+      Toy.renderProof(error.step, proofJQ);
     }
   } else {
-    window.alert('Error: ' + error.message);
+    // It should be a string.
+    proofJQ.append('<b>' + error + '</b>');
   }
 };
 
@@ -385,8 +381,8 @@ StepEditor.prototype.tryRule = function(rule, args) {
   } else {
     this.proofControl.addStep(result);
     this.proofControl.deselectStep();
-    // Clear any proof errors field.
-    $('#proofErrors').html('');
+    // Clear the proof errors field.
+    this.controller.$proofErrors.html('');
   }
   this.reset();
   this.focus();

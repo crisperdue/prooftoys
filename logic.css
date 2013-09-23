@@ -442,7 +442,7 @@ span.stepRef {
 
 /* Proof step editor */
 
-#proofErrors {
+.proofErrors {
   margin-top: 1em;
 }
 
