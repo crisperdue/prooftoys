@@ -29,7 +29,16 @@
 <span id=content>
 <h2>Solving equations</h2>
 <p>
-[[Discussion of the problems here]].
+<b>Suggestions.</b>  If the equation has just one
+variable, one good way to start the solution is to move all terms
+containing the variable to the same side of the equation, then
+simplify that side and move terms with just numbers to the other side.
+</p>
+If there are multiple variables, first get one of the equations into
+the form <s>v = ... </s>, then replace any occurrences of it with the
+expression it is known to be equal to -- the right side of this
+equation.  When the equation only has one variable, solve it as an
+equation with a single variable.
 <p>
 <ol id=problemList>
 </ol>
@@ -50,6 +59,7 @@
 // Insert boilerplate.
 Toy.insertNav();
 Toy.insertSlogans();
+Toy.mathifyAll();
 
 // On DOM ready:
 $(function() {
@@ -63,6 +73,7 @@ $(function() {
     // List of lists of assumptions.
     var problems = [
       ['4 * (2 * x - 3) + 7 = 3 * x + 5'],
+      ['8 * (2 - t) = -5 * t'],
       ['x + y = 7', 'x = y + 3']
     ];
 
