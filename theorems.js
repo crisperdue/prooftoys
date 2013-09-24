@@ -246,22 +246,16 @@ var ruleInfo = {
   },
 
   /**
-   * Refer to an axiom in the theorems database.  Affects the
-   * display of the proof step, but otherwise the same as "theorem".
+   * Refers to an axiom (one that takes no arguments).  Obsolete.
    */
   axiom: function(name) {
-    // It uses an already-proved fact, but calls "justify"
-    // to ensure that the resulting step has a new ordinal
-    // so the reference is displayed in the order this was
-    // called.  So each call to "axiom" generates its own proof line.
-    assert(name.substring(0, 5) == 'axiom', 'Not an axiom: ' + name);
-    var thm = Toy.getTheorem(name);
-    assert(thm, 'No axiom ' + name);
-    var result = thm.justify(name);
-    // If details were kept, the displayer would enable display of them,
-    // but there is really no proof of the axiom.
-    result.details = null;
-    return result;
+    // TODO: Remove this; just use the axioms directly as rules.
+    //   These days they run efficiently.
+    //
+    // The "length" is the number of declared arguments.
+    assert(name.substring(0, 5) == 'axiom' && rules[name].length == 0,
+           function() { return 'Not an axiom: ' + name; });
+    return rules[name]();
   },
 
   /**
@@ -386,10 +380,7 @@ var ruleInfo = {
         equal(call, Toy.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
       // Always make sure the call has a type.  It came from elsewhere.
       Toy.findType(call);
-      var result = rules.assert(result).justify('axiom4', [call]);
-      // There are no real details in this case.
-      delete result.details;
-      return result;
+      return rules.assert(result).justify('axiom4', [call]);
     },
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
