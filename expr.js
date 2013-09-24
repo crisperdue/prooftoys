@@ -1468,24 +1468,12 @@ Expr.prototype.findMatch = function(facts) {
   function checkMatches(term, pth) {
     for (var i = 0; i < facts.length; i++) {
       var info = facts[i];
-      var stmt;
-      var where;
-      var schema;
-      if (info.constructor == Object) {
-        stmt = info.stmt;
-        schema = info.term;
-        where = info.where;
-      } else {
-        // The entire info is a "statement" acceptable to getStatement.
-        stmt = info;
-      }
-      if (stmt) {
-        schema = Toy.getStatement(stmt).getMain().getLeft();
-      } else {
-        schema = termify(info.term);
-        assert(schema instanceof Expr,
-               function() { return 'Not an Expr: ' + term; })
-      }
+      var infoIsObject = info.constructor == Object;
+      var stmt = infoIsObject ? info.stmt : info;
+      var where = infoIsObject ? info.where : null;
+      var schema = (infoIsObject && info.term
+                    ? termify(info.term)
+                    : Toy.getStatement(stmt).getMain().getLeft());
       var subst = term.matchSchema(schema);
       if (subst) {
         var pass = true;
