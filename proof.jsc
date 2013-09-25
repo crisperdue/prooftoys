@@ -847,6 +847,11 @@ ProofControl.prototype.renderStep = function(step) {
 /**
  * Returns true iff policy is to elide the LHS of the given step
  * within the given ProofControl, assumed to contain it.
+ *
+ * TODO: Consider marking the actual proof steps with an elision flag
+ *   much as they are marked with hasHyps.  Some rules may become
+ *   sensitive to this flag, and it would provide one way for steps
+ *   in subproofs to inherit the property.
  */
 function wantLeftElision(step, controller) {
   if (step.ruleName == 'display' || step.ruleName == 'asImplication') {
