@@ -4103,35 +4103,6 @@ var algebraFacts = {
       return step8;
     }
   },
-  'neg (a + b) = neg a + neg b': {
-    action: function() {
-      var step1 = rules.fact('a + neg a = 0');
-      var step2 = rules.instVar(step1, Toy.parse('a + b'), 'a');
-      var step3 = rules.rewriteWithFact(step2, '/right/left',
-                                        'a + b + c = a + c + b');
-      var step4 = rules.addToBoth(step3, Toy.parse('neg b'));
-      var step5 = rules.rewriteWithFact(step4, '/right/left',
-                                        'a + b + c = a + (b + c)');
-      var step6 = rules.rewriteWithFact(step5, '/right/left/right',
-                                        'a + neg a = 0');
-      var step7 = rules.rewriteWithFact(step6, '/right/right',
-                                        '0 + a = a');
-      var step8 = rules.rewriteWithFact(step7, '/right/left',
-                                        'a + 0 = a');
-      var step9 = rules.addToBoth(step8, Toy.parse('neg a'));
-      var step10 = rules.rewriteWithFact(step9, '/right/left/left',
-                                         'a + b = b + a');
-      var step11 = rules.rewriteWithFact(step10, '/right/left',
-                                         'a + b + c = a + (b + c)');
-      var step12 = rules.rewriteWithFact(step11, '/right/left/right',
-                                         'a + neg a = 0');
-      var step13 = rules.rewriteWithFact(step12, '/right/left',
-                                         'a + 0 = a');
-      var step14 = rules.rewriteWithFact(step13, '/right/right',
-                                         'a + b = b + a');
-      return step14;
-    }
-  },
   'neg a = -1 * a': {
     action: function() {
       // 0 = -1 * a + a
@@ -4183,6 +4154,53 @@ var algebraFacts = {
       .apply('eqnSwap');
     }
   },
+  'neg (a + b) = neg a + neg b': {
+    action: function() {
+      var step1 = rules.fact('a + neg a = 0');
+      var step2 = rules.instVar(step1, Toy.parse('a + b'), 'a');
+      var step3 = rules.rewriteWithFact(step2, '/right/left',
+                                        'a + b + c = a + c + b');
+      var step4 = rules.addToBoth(step3, Toy.parse('neg b'));
+      var step5 = rules.rewriteWithFact(step4, '/right/left',
+                                        'a + b + c = a + (b + c)');
+      var step6 = rules.rewriteWithFact(step5, '/right/left/right',
+                                        'a + neg a = 0');
+      var step7 = rules.rewriteWithFact(step6, '/right/right',
+                                        '0 + a = a');
+      var step8 = rules.rewriteWithFact(step7, '/right/left',
+                                        'a + 0 = a');
+      var step9 = rules.addToBoth(step8, Toy.parse('neg a'));
+      var step10 = rules.rewriteWithFact(step9, '/right/left/left',
+                                         'a + b = b + a');
+      var step11 = rules.rewriteWithFact(step10, '/right/left',
+                                         'a + b + c = a + (b + c)');
+      var step12 = rules.rewriteWithFact(step11, '/right/left/right',
+                                         'a + neg a = 0');
+      var step13 = rules.rewriteWithFact(step12, '/right/left',
+                                         'a + 0 = a');
+      var step14 = rules.rewriteWithFact(step13, '/right/right',
+                                         'a + b = b + a');
+      return step14;
+    }
+  },
+  'neg (a - b) = b - a': {
+    action: function() {
+      return rules.consider('neg (a - b)')
+      .rewrite('/main/right/arg', 'a - b = a + neg b')
+      .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
+      .rewrite('/main/right/right', 'neg (neg a) = a')
+      .rewrite('/main/right', 'a + b = b + a')
+      .rewrite('/main/right', 'a + neg b = a - b');
+    }
+  },
+  'neg (a - b) = neg a + b': {
+    action: function() {
+      return rules.consider('neg (a - b)')
+      .rewrite('/main/right/arg', 'a - b = a + neg b')
+      .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
+      .rewrite('/main/right/right', 'neg (neg a) = a');
+    }
+  },
 
 
   // Subtraction facts
@@ -4226,26 +4244,6 @@ var algebraFacts = {
       .rewrite('/main/right/right', 'a - b = a + neg b')
       .rewrite('/main/right', 'a + (b + c) = a + b + c')
       .rewrite('/main/right', 'a + neg b = a - b');
-    }
-  },
-
-  // Regrouping
-  'neg (a - b) = b - a': {
-    action: function() {
-      return rules.consider('neg (a - b)')
-      .rewrite('/main/right/arg', 'a - b = a + neg b')
-      .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
-      .rewrite('/main/right/right', 'neg (neg a) = a')
-      .rewrite('/main/right', 'a + b = b + a')
-      .rewrite('/main/right', 'a + neg b = a - b');
-    }
-  },
-  'neg (a - b) = neg a + b': {
-    action: function() {
-      return rules.consider('neg (a - b)')
-      .rewrite('/main/right/arg', 'a - b = a + neg b')
-      .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
-      .rewrite('/main/right/right', 'neg (neg a) = a');
     }
   },
 
