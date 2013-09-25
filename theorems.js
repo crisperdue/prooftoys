@@ -150,7 +150,7 @@ var ruleInfo = {
     hint: 'assume hypothetically',
     comment: 'Hypothesis to assume',
     description: 'assumption',
-    labels: 'algebra basic'
+    labels: 'basic'
   },
 
   copy: {
@@ -3540,7 +3540,7 @@ var ruleInfo = {
     form: 'Term to consider: <input name=term>',
     hint: 'consider a term to transform',
     comment: ('consider a term to transform'),
-    labels: 'algebra basic'
+    labels: 'basic'
   },
 
   // Identical to "consider", but uses a selected term.
