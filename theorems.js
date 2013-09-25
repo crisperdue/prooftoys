@@ -2401,10 +2401,9 @@ var ruleInfo = {
                    '0 + a = a',
                    'a * 1 = a',
                    '1 * a = a',
-                   {stmt: 'a * (b * c) = a * b * c',
-                    where: 'subst.a.isNumeral() && subst.b.isNumeral()'},
+                   {stmt: 'a * (b * c) = a * b * c'},
                    {stmt: 'a * b / c = a / c * b',
-                    where: 'subst.a.isNumeral() && subst.c.isNumeral()'},
+                    where: '!subst.a.hasVars() && !subst.c.hasVars()'},
                    '0 * a = 0',
                    'a * 0 = 0'
                    ];
@@ -2470,8 +2469,8 @@ var ruleInfo = {
     action: function(step) {
       var facts = ['a - b = a + neg b'];
       var converted = applyFacts(step, facts)
-      var arithDone = rules.doAllArithmetic(converted);
-      return arithDone.justify('removeSubtraction', arguments, [step]);
+      var simplified = rules.simplifyNegations(converted);
+      return simplified.justify('removeSubtraction', arguments, [step]);
     },
     inputs: {step: 1},
     form: ('Convert - to + in step <input name=step>'),
@@ -2485,9 +2484,9 @@ var ruleInfo = {
       var facts = ['a * (b * c) = a * b * c',
                    'a + (b + c) = a + b + c',
                    {stmt: 'a * b = b * a',
-                    where: 'subst.b.isNumeral() && !subst.a.isNumeral()'},
+                    where: '!subst.b.hasVars() && subst.a.hasVars()'},
                    {stmt: 'a * b * c = a * (c * b)',
-                    where: 'subst.c.isNumeral() && !subst.b.isNumeral()'}
+                    where: '!subst.c.hasVars() && subst.b.hasVars()'}
                   ];
       var result = applyFacts(step, facts);
       return result.justify('algebraTidy', arguments, [step]);
@@ -2506,24 +2505,22 @@ var ruleInfo = {
 
       // Move terms that are numerals to the back of the bus.
       var facts1 = [{stmt: 'a + b = b + a',
-                     where: 'subst.a.isNumeral() && !subst.b.isNumeral()'},
+                     where: '!subst.a.hasVars() && subst.b.hasVars()'},
                     {stmt: 'a + b + c = a + c + b',
-                     where: 'subst.b.isNumeral() && !subst.c.isNumeral()'}
+                     where: '!subst.b.hasVars() && subst.c.hasVars()'}
                    ];
       var step1 = applyFacts(step0, facts1);
 
       // Group numerals together.
       var facts2 = [{stmt: 'a + b + c = a + (b + c)',
-                     where: 'subst.b.isNumeral()'}
+                     where: '!subst.b.hasVars()'}
                    ];
       var step2 = applyFacts(step1, facts2);
       
       // Group terms with common right factor together.
       var facts3 = [{stmt: 'a * c + b * c = (a + b) * c'},
-                    {stmt: 'b + a * b = (1 + a) * b',
-                     where: 'subst.a.isNumeral()'},
-                    {stmt: 'a * b + b = (a + 1) * b',
-                     where: 'subst.b.isNumeral()'},
+                    {stmt: 'b + a * b = (1 + a) * b'},
+                    {stmt: 'a * b + b = (a + 1) * b'},
                     {stmt: 'a + a = 2 * a'}
                    ];
       var step3 = applyFacts(step2, facts3);

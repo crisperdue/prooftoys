@@ -679,6 +679,14 @@ Expr.prototype.isBoolConst = function() {
 };
 
 /**
+ * Does this Expr have any variable(s)?
+ */
+Expr.prototype.hasVars = function() {
+  var map = this.freeVars();
+  return !isEmpty(map);
+};
+
+/**
  * Returns a new expression like this implication, but marked as
  * having hypotheses.  Useful in tests, perhaps other contexts also.
  */
