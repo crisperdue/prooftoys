@@ -294,17 +294,19 @@ span#leftNav {
 }
 
 /* Hovering or selecting this will override the border color. */
-.stepNumArea {
+.stepNumArea, .stepAndNum {
   border: 1px solid transparent;
 }
 
-/* Hovering the area highlights the border. */
-.proofDisplay.editable .stepNumArea.hover {
+/* Hovering the step number highlights the step and number,
+ * indicating that the entire step can be selected.
+ */
+.proofDisplay.editable .proofStep .stepAndNum.hover {
   border-color: #aaf;
 }
 
 /* But no hover in a subproof display */
-.proofDisplay.editable .inferenceDisplay .stepNumArea.hover {
+.proofDisplay.editable .inferenceDisplay .stepAndNumber.hover {
   border-color: transparent;
 }
 
@@ -362,7 +364,7 @@ span#leftNav {
 }
 
 /* Must be specific enough to override the silver/gray border. */
-.proofDisplay.editable .proofStep.selected .stepNumArea {
+.proofDisplay.editable .proofStep.selected .stepAndNum {
   border: 1px solid black;
 }
 

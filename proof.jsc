@@ -773,8 +773,10 @@ ProofControl.prototype.renderStep = function(step) {
   var $step =
     $('<div class=proofStep>' +
       delHtml +
+      '<span class=stepAndNum>' +
       '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
       '<span class=wff></span>' +
+      '</span>' +
       // Allow a word break here.
       '<wbr><span class=stepInfo></span>' +
       '</div>');
@@ -805,15 +807,14 @@ ProofControl.prototype.renderStep = function(step) {
          // stopImmediatePropagation does not seem to be required here.
          event.stopPropagation();
        });
-  // Same as handling "hover":
+  // Hovering the stepNumArea flags the step and number as "hover".
   $step.on('mouseenter mouseleave', '.stepNumArea',
-           @{. void $(this).toggleClass('hover'); });
+           @{. void $(this).closest('.stepAndNum').toggleClass('hover'); });
   $step.on(TOUCHDOWN, '.stepNumArea', function(event) {
     self.handleStepClick(step);
   });
 
   // Set up "hover" event handling on the stepNode.
-  // Call hover, passing these arguments as well as the event.
   $step.hover(function(event) {
     hoverStep(step, event.type === 'mouseenter' ? 'in' : 'out');
   });
@@ -1852,7 +1853,8 @@ function hoverShowPath(wff, path) {
 
 /**
  * Event handler for "hover" events on proof steps.
- * Adds or removes highlighting for the step based on the direction.
+ * Shows decorations such as the deleter, and highlights
+ * references to the step.
  */
 function hoverStep(step, direction, event) {
   var action = direction == 'in' ? addClass : removeClass;
