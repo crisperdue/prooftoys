@@ -2431,7 +2431,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
-    hint: 'algebra: arithmetic and simplify',
+    hint: 'algebra: do arithmetic and simplify',
     description: 'arithmetic and basic simplification',
     labels: 'algebra',
   },
@@ -2479,22 +2479,23 @@ var ruleInfo = {
     labels: 'algebra'
   },
 
-  algebraTidy: {
+  cleanUpTerms: {
     action: function(step) {
       var facts = ['a * (b * c) = a * b * c',
-                   'a + (b + c) = a + b + c',
                    {stmt: 'a * b = b * a',
                     where: '!subst.b.hasVars() && subst.a.hasVars()'},
                    {stmt: 'a * b * c = a * (c * b)',
-                    where: '!subst.c.hasVars() && subst.b.hasVars()'}
+                    where: '!subst.c.hasVars() && subst.b.hasVars()'},
+                   {stmt: 'a * b / c = a / c * b',
+                    where: '!subst.a.hasVars() && !subst.c.hasVars()'}
                   ];
       var result = applyFacts(step, facts);
-      return result.justify('algebraTidy', arguments, [step]);
+      return result.justify('cleanUpTerms', arguments, [step]);
     },
     inputs: {step: 1},
-    form: ('Tidy expressions in step <input name=step>'),
-    hint: 'algebra: tidy expressions',
-    description: 'tidy algebra',
+    form: ('Clean up the terms in step <input name=step>'),
+    hint: 'algebra: clean up terms',
+    description: 'clean up each term',
     labels: 'algebra'
   },
 
