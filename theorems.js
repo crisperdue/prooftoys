@@ -2518,13 +2518,15 @@ var ruleInfo = {
                    ];
       var step2 = applyFacts(step1, facts2);
       
+      var step2a = rules.cleanUpTerms(step2);
+
       // Group terms with common right factor together.
       var facts3 = [{stmt: 'a * c + b * c = (a + b) * c'},
                     {stmt: 'b + a * b = (1 + a) * b'},
                     {stmt: 'a * b + b = (a + 1) * b'},
                     {stmt: 'a + a = 2 * a'}
                    ];
-      var step3 = applyFacts(step2, facts3);
+      var step3 = applyFacts(step2a, facts3);
       return step3.justify('regroup', arguments, [step]);
     },
     inputs: {step: 1},
