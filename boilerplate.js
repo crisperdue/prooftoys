@@ -56,7 +56,7 @@ Toy.insertNav = function() {
 };
 
 Toy.insertSlogans = function() {
-  var slogans = ['"mathematical thinking for simple minds"'].join('\n');
+  var slogans = ['"math tools for simple minds"'].join('\n');
   var elt = document.getElementById('slogans');
   if (elt) {
     elt.innerHTML = slogans;
