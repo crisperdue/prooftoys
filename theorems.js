@@ -2444,7 +2444,7 @@ var ruleInfo = {
                    'neg (neg a) = a',
                    'neg (a * b) = neg a * b'
                   ];
-      var simpler = applyFacts(step, facts);
+      var simpler = applyToVisible(step, facts);
       var path1 = pathToVisiblePart(step);
       var schemas = [{term: 'neg a', where: 'subst.a.isNumeral()'}];
       while (true) {
@@ -2468,7 +2468,7 @@ var ruleInfo = {
   removeSubtraction: {
     action: function(step) {
       var facts = ['a - b = a + neg b'];
-      var converted = applyFacts(step, facts)
+      var converted = applyToVisible(step, facts)
       var simplified = rules.simplifyNegations(converted);
       return simplified.justify('removeSubtraction', arguments, [step]);
     },
@@ -2489,7 +2489,7 @@ var ruleInfo = {
                    {stmt: 'a * b / c = a / c * b',
                     where: '!subst.a.hasVars() && !subst.c.hasVars()'}
                   ];
-      var result = applyFacts(step, facts);
+      var result = applyToVisible(step, facts);
       return result.justify('cleanUpTerms', arguments, [step]);
     },
     inputs: {step: 1},
@@ -2502,7 +2502,7 @@ var ruleInfo = {
   regroup: {
     action: function(step) {
       // Linearize terms.
-      var step0 = applyFacts(step, [{stmt: 'a + (b + c) = a + b + c'}]);
+      var step0 = applyToVisible(step, [{stmt: 'a + (b + c) = a + b + c'}]);
 
       // Move terms that are numerals to the back of the bus.
       var facts1 = [{stmt: 'a + b = b + a',
@@ -2510,13 +2510,13 @@ var ruleInfo = {
                     {stmt: 'a + b + c = a + c + b',
                      where: '!subst.b.hasVars() && subst.c.hasVars()'}
                    ];
-      var step1 = applyFacts(step0, facts1);
+      var step1 = applyToVisible(step0, facts1);
 
       // Group numerals together.
       var facts2 = [{stmt: 'a + b + c = a + (b + c)',
                      where: '!subst.b.hasVars()'}
                    ];
-      var step2 = applyFacts(step1, facts2);
+      var step2 = applyToVisible(step1, facts2);
       
       var step2a = rules.cleanUpTerms(step2);
 
@@ -2526,7 +2526,7 @@ var ruleInfo = {
                     {stmt: 'a * b + b = (a + 1) * b'},
                     {stmt: 'a + a = 2 * a'}
                    ];
-      var step3 = applyFacts(step2a, facts3);
+      var step3 = applyToVisible(step2a, facts3);
       return step3.justify('regroup', arguments, [step]);
     },
     inputs: {step: 1},
@@ -2545,7 +2545,7 @@ var ruleInfo = {
                    {stmt: 'a + b + c = a + c + b',
                     where: 'subst.b.isNumeral() && !subst.c.isNumeral()'}
                   ];
-      var result = applyFacts(step, facts);
+      var result = applyToVisible(step, facts);
       return result.justify('regroup', arguments, [step]);
     },
     inputs: {site: 1, varName: 3},
@@ -4666,6 +4666,21 @@ function getStatement(fact) {
 }
 
 /**
+ * Apply the list of facts as rewrites to the given part of the step
+ * until none of them any longer is applicable, returning the result.
+ */
+function applyFacts(step, path_arg, facts) {
+  var info;
+  var next = step;
+  var path = Toy.path(path_arg);
+  while (info = next.locate(path).findMatch(facts)) {
+    var fullPath = path.concat(info.path);
+    next = rules.rewriteWithFact(next, fullPath, info.stmt);
+  }
+  return next;
+}
+
+/**
  * For a rendered step, returns a path to the equation RHS if the rule
  * was "consider" or the step hasLeftElision; else the main part if
  * there are hypotheses; else the whole wff.
@@ -4679,18 +4694,11 @@ function pathToVisiblePart(step) {
 }
 
 /**
- * Apply the list of fact rewrites to the step until none of them
- * any longer is applicable, and return the result.
+ * Apply the list of fact rewrites to the visible part of the step
+ * until none of them any longer is applicable, returning the result.
  */
-function applyFacts(step, facts) {
-  var info;
-  var next = step;
-  var path = pathToVisiblePart(step);
-  while (info = next.locate(path).findMatch(facts)) {
-    var fullPath = path.concat(info.path);
-    next = rules.rewriteWithFact(next, fullPath, info.stmt);
-  }
-  return next;
+function applyToVisible(step, facts) {
+  return applyFacts(step, pathToVisiblePart(step), facts);
 }
 
 /**
