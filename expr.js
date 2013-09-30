@@ -2620,8 +2620,17 @@ function getBinding(target, bindings) {
 
 //// Path
 ////
-//// Representing parts of expressions -- or other objects!
+//// Representing parts of expressions.
 
+// TODO: Consider defining distinct subclases for forward and reverse
+//   paths.
+
+/**
+ * Construct a Path from a segment string (fn, arg, bound, body, left,
+ * right, or binop) and an optional Path, which defaults to an empty
+ * path.  Thus if "rest" is null the result is a path with a single
+ * segment.
+ */
 function Path(segment, rest) {
   this.segment = segment;
   this._rest = rest || _end;;
