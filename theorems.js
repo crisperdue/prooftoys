@@ -2405,7 +2405,10 @@ var ruleInfo = {
                    {stmt: 'a * b / c = a / c * b',
                     where: '!subst.a.hasVars() && !subst.c.hasVars()'},
                    '0 * a = 0',
-                   'a * 0 = 0'
+                   'a * 0 = 0',
+                   'a + b - b = a',
+                   'a - b + b = a',
+                   'a + neg b + b = a',
                    ];
       var info = step.locate(_path).findMatch(facts);
       return (info
@@ -2431,7 +2434,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
-    hint: 'algebra: do arithmetic and simplify',
+    hint: 'algebra: basic simplification and arithmetic',
     description: 'arithmetic and basic simplification',
     labels: 'algebra',
   },
@@ -2535,6 +2538,58 @@ var ruleInfo = {
     description: 'regroup terms',
     labels: 'algebra'
   },
+
+  /** TODO: Decide whether to keep or remove this rule.
+  removeRightTerm: {
+    action: function(step, path) {
+      // This rule assumes that the step has the form
+      // H ==> lhs = rhs
+      //
+      var term = step.locate(path);
+      assert(!step.rendering.hasLeftElision,
+             'Not supported: would modify hidden equation left side');
+      var xp = path.expand().toString();
+      // Path to outer term of the form (A + <term>)
+      var outPath;
+      if (xp === '/arg/fn/arg/arg') {
+        // Path is /main/left/right.
+        var op = step.locate('/main/left/binop');
+        assert(op.name === '+' || op.name === '-',
+               'Operator needs to be + or -');
+        outPath = Toy.path('/main/left');
+      } else if (xp === '/arg/arg/arg') {
+        // Path is /main/right/right.
+        var op = step.locate('/main/right/binop');
+        assert(op.name === '+' || op.name === '-',
+               'Operator needs to be + or -');
+        outPath = Toy.path('/main/right');
+      } else {
+        assert(false, function() {
+            return ('Term needs to be on the right outside parentheses: '
+                    + term);
+          });
+      }
+      if (op.name === '+') {
+        var result = rules.subtractFromBoth(step, term)
+        .rewrite(outPath, 'a + b - c = a + (b - c)')
+        .rewrite(outPath.concat('/right'), 'a - a = 0')
+        .rewrite(outPath, 'a + 0 = a');
+        return result.justify('removeRightTerm', arguments, [step]);
+      } else {
+        var result = rules.addToBoth(step, term)
+        .rewrite(outPath, 'a - b + c = a + (c - b)')
+        .rewrite(outPath.concat('/right'), 'a - a = 0')
+        .rewrite(outPath, 'a + 0 = a');
+        return result.justify('removeRightTerm', arguments, [step]);
+      }
+    },
+    inputs: {site: 1},
+    form: '',
+    hint: 'move term to the other side',
+    description: 'move term to the other side',
+    labels: 'algebra'
+  },
+  */
 
   /* TODO: Choose a way to get varName into the "where" clauses,
    *   then finish this.
@@ -3632,6 +3687,58 @@ var ruleInfo = {
     labels: 'algebra'
   },
 
+  addThisToBoth: {
+    action: function(step, path) {
+      var term = step.locate(path);
+      return (rules.addToBoth(step, term)
+              .justify('addThisToBoth', arguments, [step]));
+    },
+    inputs: {site: 1},
+    form: '',
+    hint: 'algebra: add this to both sides',
+    description: 'add {site};; {in step siteStep}',
+    labels: 'algebra'
+  },    
+
+  subtractThisFromBoth: {
+    action: function(step, path) {
+      var term = step.locate(path);
+      return (rules.subtractFromBoth(step, term)
+              .justify('subtractThisFromBoth', arguments, [step]));
+    },
+    inputs: {site: 1},
+    form: '',
+    hint: 'algebra: subtract this from both sides',
+    description: 'subtract {site};; {in step siteStep}',
+    labels: 'algebra'
+  },    
+
+  multiplyBothByThis: {
+    action: function(step, path) {
+      var term = step.locate(path);
+      return (rules.multiplyBoth(step, term)
+              .justify('multiplyBothByThis', arguments, [step]));
+    },
+    inputs: {site: 1},
+    form: '',
+    hint: 'algebra: multiply both sides by this',
+    description: 'multiply by {site};; {in step siteStep}',
+    labels: 'algebra'
+  },    
+
+  divideBothByThis: {
+    action: function(step, path) {
+      var term = step.locate(path);
+      return (rules.divideBoth(step, term)
+              .justify('divideBothByThis', arguments, [step]));
+    },
+    inputs: {site: 1},
+    form: '',
+    hint: 'algebra: divide both sides by this',
+    description: 'divide by {site};; {in step siteStep}',
+    labels: 'algebra'
+  },    
+
   // Looks up the statement string, proving it if needed. Returns that
   // result, justified as a "fact".  This is the way to refer to a
   // fact in a proof, displaying it on its own proof line.
@@ -4306,6 +4413,23 @@ var algebraFacts = {
       return (rules.eqSelf('a - a')
               .apply('apply', '/right')
               .rewrite('/main/right', 'a + neg a = 0'));
+    }
+  },
+
+  'a + b - b = a': {
+    action: function() {
+      return (rules.consider('a + b - b')
+              .rewrite('/main/right', 'a + b - c = a + (b - c)')
+              .rewrite('/main/right/right', 'a - a = 0')
+              .rewrite('/main/right', 'a + 0 = a'));
+    }
+  },
+
+  'a - b + b = a': {
+    action: function() {
+      return (rules.consider('a - b + b')
+              .rewrite('/main/right', 'a - b + c = a + c - b')
+              .rewrite('/main/right', 'a + b - b = a'));
     }
   },
 
