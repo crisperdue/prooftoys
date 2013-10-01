@@ -1471,8 +1471,17 @@ Expr.prototype.mergedHypotheses = function() {
  * either case there can be a "where" property with a string to eval.
  * Matching only succeeds if "where" evaluates as truthy.  The
  * variable "subst" is available in the expression.
+ *
+ * The optional "info" argument becomes available in "where"
+ * clauses in all given facts.
  */
-Expr.prototype.findMatch = function(facts) {
+Expr.prototype.findMatch = function(facts, info) {
+  function doEval(str, subst) {
+    // Suppress acccess to the enclosing "facts" variable.
+    // OK for str to refer to "info".
+    var facts;
+    return eval(str);
+  }
   function checkMatches(term, pth) {
     for (var i = 0; i < facts.length; i++) {
       var info = facts[i];
@@ -1486,7 +1495,7 @@ Expr.prototype.findMatch = function(facts) {
       if (subst) {
         var pass = true;
         if (where && typeof where === 'string') {
-          pass = eval(where);
+          pass = doEval(where, subst);
         }
         if (pass) {
           throw new Result({stmt: stmt,
