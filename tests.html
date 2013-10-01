@@ -679,6 +679,33 @@ var testCase = {
                 '' + call(lambda(x, x), z).pathToBinding(isX));
   },
 
+  testPathExpand: function() {
+    var wff = Toy.parse('x + y + z = w');
+    var xPath = '/left/left/left';
+    var x = wff.locate(xPath);
+    assertEqual('x', x.name);
+    var pp = wff.prettyPathTo(x);
+    assertEqual(xPath, pp.toString());
+    var p = wff.pathTo(x);
+    assertEqual(p.toString(), pp.expand().toString());
+
+    var yPath = '/left/left/right';
+    var y = wff.locate(yPath);
+    assertEqual('y', y.name);
+    var pp = wff.prettyPathTo(y);
+    assertEqual(yPath, pp.toString());
+    var p = wff.pathTo(y);
+    assertEqual(p.toString(), pp.expand().toString());
+
+    var eqPath = '/binop';
+    var eq = wff.locate(eqPath);
+    assertEqual('=', eq.name);
+    var pp = wff.prettyPathTo(eq);
+    assertEqual(eqPath, pp.toString());
+    var p = wff.pathTo(eq);
+    assertEqual(p.toString(), pp.expand().toString());
+  },
+
   testMatchAsSchema: function() {
     function check(expected, schema, term) {
       term = typeof term == 'string' ? Toy.parse(term) : term;

@@ -2813,20 +2813,28 @@ Path.prototype.concat = function(p) {
 };
 
 /**
- * Returns a new Path whose segments are the reverse of the segments
- * in the given path.
+ * For a forward path, expands left, right, and binop segments into
+ * their primitive fn and arg components.
  */
-function reversePath(revPath) {
-  if (revPath == null) {
-    return null;
+Path.prototype.expand = function() {
+  function xpand(segment, tail) {
+    var xrest = tail.isEnd() ? tail : xpand(tail.segment, tail._rest);
+    switch (segment) {
+    case 'left':
+      return new Path('fn', new Path('arg', xrest));
+    case 'right':
+      return new Path('arg', xrest);
+    case 'binop':
+      return new Path('fn', new Path('fn', xrest));
+    default:
+      return new Path(segment, xrest);
+    }
   }
-  var result = path();
-  while (!revPath.isEnd()) {
-    result = new Path(revPath.segment, result);
-    revPath = revPath.tail();
-  }
-  return result;
-}
+  assert(this !== Path.none, 'Illegal "none" Path');
+  return (this.isEnd()
+          ? this
+          : xpand(this.segment, this._rest));
+};
 
 /**
  * Returns a new Path whose segments are the reverse of the segments
