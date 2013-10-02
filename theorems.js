@@ -2444,7 +2444,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
     hint: 'algebra: simplify',
-    description: 'basic simplification',
+    description: 'basic simplification;; {in step step}',
     labels: 'algebra',
   },
 
