@@ -2402,6 +2402,8 @@ var ruleInfo = {
                    'a * 1 = a',
                    '1 * a = a',
                    {stmt: 'a * (b * c) = a * b * c'},
+                   {stmt: 'a * b * c = a * c * b',
+                    where: '!subst.a.hasVars() && !subst.c.hasVars()'},
                    {stmt: 'a * b / c = a / c * b',
                     where: '!subst.a.hasVars() && !subst.c.hasVars()'},
                    {stmt: 'a + b + c = a + (b + c)',
@@ -2511,7 +2513,7 @@ var ruleInfo = {
     labels: 'algebra'
   },
 
-  regroup: {
+  regroupAdditions: {
     action: function(step) {
       // Linearize terms.
       var step0 = applyToVisible(step, [{stmt: 'a + (b + c) = a + b + c'}]);
@@ -2539,7 +2541,26 @@ var ruleInfo = {
                     {stmt: 'a + a = 2 * a'}
                    ];
       var step3 = applyToVisible(step2a, facts3);
-      return step3.justify('regroup', arguments, [step]);
+      return step3.justify('regroupAdditions', arguments, [step]);
+    },
+    inputs: {step: 1},
+    form: 'Regroup additive terms in step <input name=step>',
+    hint: 'algebra: regroup additive terms',
+    description: 'regroup additive terms',
+    labels: '?'
+  },
+
+  /**
+   * Regroup both addition and subtraction.
+   *
+   * TODO: make something like this that doesn't remove all
+   *   subtraction.
+   */
+  regroup: {
+    action: function(step) {
+      return rules.removeSubtraction(step)
+      .apply('regroupAdditions')
+      .justify('regroup', arguments, [step]);
     },
     inputs: {step: 1},
     form: 'Regroup terms in step <input name=step>',
