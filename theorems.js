@@ -1262,7 +1262,7 @@ var ruleInfo = {
     hint: 'substitute for a free variable',
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
-    description: 'substitute for {var}'
+    description: 'substitute for {var};; {in step step}'
   },
 
   // Same functionality as instVar, but with a site (step+path) and a
@@ -2417,6 +2417,7 @@ var ruleInfo = {
                    'a + b - b = a',
                    'a - b + b = a',
                    'a + neg b + b = a',
+                   'a + b + neg b = a'
                    ];
       var info = step.locate(_path).findMatch(facts);
       return (info
@@ -2442,8 +2443,8 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
-    hint: 'algebra: basic simplification and arithmetic',
-    description: 'arithmetic and basic simplification',
+    hint: 'algebra: simplify',
+    description: 'basic simplification',
     labels: 'algebra',
   },
 
@@ -4206,20 +4207,33 @@ var algebraFacts = {
   },
   'neg (neg a) = a': {
     action: function() {
-      var step1 = rules.fact('a + neg a = 0');
-      var step2 = rules.addToBoth(step1, Toy.parse('neg (neg a)'));
-      var step3 = rules.rewriteWithFact(step2, '/main/right',
-                                        '0 + a = a');
-      var step4 = rules.rewriteWithFact(step3, '/main/left',
-                                        'a + b + c = a + (b + c)');
-      var step5 = rules.instVar(step1, Toy.parse('neg a'), 'a');
-      var step6 = rules.replace(step5, step4, '/main/left/right');
-      var step7 = rules.rewriteWithFact(step6, '/main/left',
-                                        'a + 0 = a');
-      var step8 = rules.eqnSwap(step7);
-      return step8;
+      return rules.fact('neg a + a = 0')
+      .apply('instVar', 'neg a', 'a')
+      .apply('addToBoth', Toy.parse('a'))
+      .rewrite('/main/left', 'a + b + c = a + (b + c)')
+      .rewrite('/main/left/right', 'neg a + a = 0')
+      .rewrite('/main/left', 'a + 0 = a')
+      .rewrite('/main/right', '0 + a = a');
     }
   },
+  'a + neg b + b = a': {
+    action: function() {
+      return rules.consider('a + neg b + b')
+      .rewrite('/main/right', 'a + b + c = a + (b + c)')
+      .rewrite('/main/right/right', 'neg a + a = 0')
+      .rewrite('/main/right', 'a + 0 = a');
+    }
+  },
+  'a + b + neg b = a': {
+    action: function() {
+      return rules.consider('a + b + neg b')
+      .rewrite('/main/right', 'a + b + c = a + (b + c)')
+      .rewrite('/main/right/right', 'a + neg a = 0')
+      .rewrite('/main/right', 'a + 0 = a');
+    }
+  },
+
+  // Negation with multiplication
   'neg a = -1 * a': {
     action: function() {
       // 0 = -1 * a + a
