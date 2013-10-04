@@ -2418,7 +2418,7 @@ var ruleInfo = {
                    'a + neg b + b = a',
                    'a + b + neg b = a'
                    ];
-      var info = step.locate(_path).findMatch(facts);
+      var info = findMatchingCall(step.locate(_path), facts);
       return (info
               ? rules.rewriteWithFact(step,
                                       _path.concat(info.path),
@@ -2459,7 +2459,7 @@ var ruleInfo = {
       var path1 = pathToVisiblePart(step);
       var schemas = [{term: 'neg a', where: 'subst.a.isNumeral()'}];
       while (true) {
-        var info = simpler.locate(path1).findMatch(schemas);
+        var info = findMatchingCall(simpler.locate(path1), schemas);
         if (!info) {
           break;
         }
@@ -4446,6 +4446,12 @@ var algebraFacts = {
       .rewrite('/main/right/left', 'a + neg b = a - b');
     }
   },
+  'a - b + c = a - (b - c)': {
+    action: function() {
+      return rules.fact('a - (b - c) = a - b + c')
+      .apply('eqnSwap');
+    }
+  },
 
   // Simplification
   'a - a = 0': {
@@ -4830,6 +4836,70 @@ function getStatement(fact) {
 }
 
 /**
+ * Finds a single LHS match with one of the given facts.  The fact
+ * left sides must be schemas, given as an array.  The array contains
+ * strings representing facts or plain objects with more detailed
+ * information.
+ *
+ * Each info has either a "stmt" property that is a string for the
+ * fact or a "term" property representing the term to be matched. In
+ * either case there can be a "where" property with a string to eval.
+ * Matching only succeeds if "where" evaluates as truthy.  The
+ * variable "subst" is available in the expression.
+ *
+ * The optional "info" argument becomes available in "where"
+ * clauses in all given facts.
+ */
+findMatchingCall = function(term, facts, info) {
+  return term.searchCalls(matchFinder.bind(null, facts, info));
+};
+
+/**
+ * Searches the given facts list for one that matches the term.  If it
+ * finds one, returns info about it in the format returned by
+ * findMatchingCall.
+ *
+ * Each fact is either something acceptable as an argument to
+ * getStatement, or a plain object with properties as follows:
+ *
+ * stmt: value acceptable to getStatement.
+ * where: string to evaluate, with "subst" and the "info" argument to
+ *   matchFinder available for use in the string.
+ * term: term within the fact to match; by default the equation LHS.
+ */
+function matchFinder(facts, info, term, pth) {
+  function doEval(str, subst) {
+    // Suppress acccess to the enclosing "facts" and "pth" variables.
+    // OK for str to refer to "info".
+    var facts, pth;
+    return eval(str);
+  }
+  for (var i = 0; i < facts.length; i++) {
+    var factInfo = facts[i];
+    var infoIsObject = factInfo.constructor == Object;
+    var stmt = infoIsObject ? factInfo.stmt : factInfo;
+    var where = infoIsObject ? factInfo.where : null;
+    var schema = (infoIsObject && factInfo.term
+                  ? Toy.termify(factInfo.term)
+                  : Toy.getStatement(stmt).getMain().getLeft());
+    var subst = term.matchSchema(schema);
+    if (subst) {
+      var pass = true;
+      if (where && typeof where === 'string') {
+        pass = doEval(where, subst);
+      }
+      if (pass) {
+        return {stmt: stmt,
+                term: term,
+                path: pth.reverse(),
+                subst: subst};
+      }
+    }
+  }
+  // If no match found the value will be falsy.
+};
+
+/**
  * Apply the list of facts as rewrites to the given part of the step
  * until none of them any longer is applicable, returning the result.
  */
@@ -4837,7 +4907,7 @@ function applyFacts(step, path_arg, facts) {
   var info;
   var next = step;
   var path = Toy.path(path_arg);
-  while (info = next.locate(path).findMatch(facts)) {
+  while (info = findMatchingCall(next.locate(path), facts)) {
     var fullPath = path.concat(info.path);
     next = rules.rewriteWithFact(next, fullPath, info.stmt);
   }
