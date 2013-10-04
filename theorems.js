@@ -2386,13 +2386,10 @@ var ruleInfo = {
   _simplifyMath1: {
     action: function(step, _path) {
       var next = step;
-      var foundPath = Toy.catchResult(function() {
-        next.locate(_path).visitCalls(function(term, p) {
-            if (Toy.normalReturn(rules.axiomArithmetic, term)) {
-              throw new Toy.Result(p);
-            }
+      var foundPath = 
+        next.locate(_path).searchCalls(function(term, p) {
+            return (Toy.normalReturn(rules.axiomArithmetic, term) && p);
           });
-        });
       if (foundPath) {
         return rules.arithmetic(next, _path.concat(foundPath.reverse()));
       }

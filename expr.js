@@ -1474,42 +1474,56 @@ Expr.prototype.mergedHypotheses = function() {
  *
  * The optional "info" argument becomes available in "where"
  * clauses in all given facts.
+ *
+ * TODO: Move findMatch and company into theorems.js.
  */
 Expr.prototype.findMatch = function(facts, info) {
+  return this.searchCalls(matchFinder.bind(null, facts, info));
+};
+
+/**
+ * Searches the given facts list for one that matches the term.  If it
+ * finds one, returns info about it in the format returned by
+ * Expr.findMatch.
+ *
+ * Each fact is either something acceptable as an argument to
+ * getStatement, or a plain object with properties as follows:
+ *
+ * stmt: value acceptable to getStatement.
+ * where: string to evaluate, with "subst" and the "info" argument to
+ *   matchFinder available for use in the string.
+ * term: term within the fact to match; by default the equation LHS.
+ */
+function matchFinder(facts, info, term, pth) {
   function doEval(str, subst) {
-    // Suppress acccess to the enclosing "facts" variable.
+    // Suppress acccess to the enclosing "facts" and "pth" variables.
     // OK for str to refer to "info".
-    var facts;
+    var facts, pth;
     return eval(str);
   }
-  function checkMatches(term, pth) {
-    for (var i = 0; i < facts.length; i++) {
-      var info = facts[i];
-      var infoIsObject = info.constructor == Object;
-      var stmt = infoIsObject ? info.stmt : info;
-      var where = infoIsObject ? info.where : null;
-      var schema = (infoIsObject && info.term
-                    ? termify(info.term)
-                    : Toy.getStatement(stmt).getMain().getLeft());
-      var subst = term.matchSchema(schema);
-      if (subst) {
-        var pass = true;
-        if (where && typeof where === 'string') {
-          pass = doEval(where, subst);
-        }
-        if (pass) {
-          throw new Result({stmt: stmt,
+  for (var i = 0; i < facts.length; i++) {
+    var factInfo = facts[i];
+    var infoIsObject = factInfo.constructor == Object;
+    var stmt = infoIsObject ? factInfo.stmt : factInfo;
+    var where = infoIsObject ? factInfo.where : null;
+    var schema = (infoIsObject && factInfo.term
+                  ? termify(factInfo.term)
+                  : Toy.getStatement(stmt).getMain().getLeft());
+    var subst = term.matchSchema(schema);
+    if (subst) {
+      var pass = true;
+      if (where && typeof where === 'string') {
+        pass = doEval(where, subst);
+      }
+      if (pass) {
+        return {stmt: stmt,
                 term: term,
                 path: pth.reverse(),
-                subst: subst});
-        }
+                subst: subst};
       }
     }
   }
-  var self = this;
-  return catchResult(function() {
-      self.visitCalls(checkMatches);
-    });
+  // If no match found the value will be falsy.
 };
 
 
@@ -1715,12 +1729,13 @@ Expr.prototype.findMatch = function(facts, info) {
 // pattern from them.
 //
 //
-// visitCalls(fn, path)
+// searchCalls(fn, path)
 //
 // Tree walks though this Expr and all Calls it contains, recursively,
-// calling the function at each and passing a reverse path from here
-// to that point.  Does not descend into non-Calls.  Returns the
-// undefined value.
+// calling the function at each Call and passing a reverse path from
+// here to that point until the function returns a truthy value.  Does
+// not descend into non-Calls.  Returns the first truthy value found
+// at any level.
 //
 
 
@@ -1918,7 +1933,7 @@ Var.prototype._asPattern = function(term) {
   return this.__var || this;
 };
 
-Var.prototype.visitCalls = function(fn, path) {};
+Var.prototype.searchCalls = function(fn, path) {};
 
 
 //// Call -- application of a function to an argument
@@ -2244,13 +2259,15 @@ Call.prototype._asPattern = function(term) {
   return this.__var || new Call(this.fn._asPattern(), this.arg._asPattern());
 };
 
-Call.prototype.visitCalls = function(fn, path) {
+Call.prototype.searchCalls = function(fn, path) {
   if (!path) {
     path = Toy.path();
   }
-  fn(this, path);
-  this.fn.visitCalls(fn, new Path('fn', path));
-  this.arg.visitCalls(fn, new Path('arg', path));
+  return (fn(this, path) ||
+          // Try the arg first to help substitutions apply toward the
+          // right sides of formulas.
+          this.arg.searchCalls(fn, new Path('arg', path)) ||
+          this.fn.searchCalls(fn, new Path('fn', path)));
 };
 
 
@@ -2467,7 +2484,7 @@ Lambda.prototype._asPattern = function(term) {
   return this.__var || new Lambda(this.bound, this.body._asPattern());
 };
 
-Lambda.prototype.visitCalls = function(fn, path) {};
+Lambda.prototype.searchCalls = function(fn, path) {};
 
 // Private methods grouped by name.
 
