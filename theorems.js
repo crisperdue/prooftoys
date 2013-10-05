@@ -4910,22 +4910,35 @@ function matchFinder(facts, info, term, pth) {
 /**
  * Apply the list of facts as rewrites to the given part of the step
  * until none of them any longer is applicable, returning the result.
+ * Returns its input step if no matches are found.
  */
-function applyFacts(step, path_arg, facts) {
-  var rhs = Toy.path('/main/right');
+function applyFactsAtPath(step, facts, path_arg) {
   var info;
   var path = Toy.path(path_arg);
-  var next0 = rules.eqSelf(step.locate(path));
-  var next = (step.hasHyps
-              ? (rules.anyImpliesTheorem(step.getLeft(), next0)
+  var eqn0 = rules.eqSelf(step.locate(path));
+  var eqn1 = (step.hasHyps
+              ? (rules.anyImpliesTheorem(step.getLeft(), eqn0)
                  .apply('asHypotheses'))
-              : next0);
-  while (info = findMatchingCall(next.locate(rhs), facts)) {
+              : eqn0);
+  var eqn = applyFactsToRhs(eqn1, facts);
+  return (eqn == eqn1 ? step : rules.replace(eqn, step, path));
+}
+
+/**
+ * Apply the list of facts as rewrites to the RHS of the given step,
+ * which must be an equation.  Repeats until none of them is
+ * applicable, returning the result.  Returns its input step if no
+ * matches are found.
+ */
+function applyFactsToRhs(step, facts) {
+  var rhs = Toy.path('/main/right');
+  var info;
+  var eqn = step;
+  while (info = findMatchingCall(eqn.locate(rhs), facts)) {
     var fullPath = rhs.concat(info.path);
-    next = rules.rewriteWithFact(next, fullPath, info.stmt);
+    eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
   }
-  // 
-  return rules.replace(next, step, path);
+  return eqn;
 }
 
 /**
@@ -4946,7 +4959,7 @@ function pathToVisiblePart(step) {
  * until none of them any longer is applicable, returning the result.
  */
 function applyToVisible(step, facts) {
-  return applyFacts(step, pathToVisiblePart(step), facts);
+  return applyFactsAtPath(step, facts, pathToVisiblePart(step));
 }
 
 /**
