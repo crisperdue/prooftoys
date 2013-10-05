@@ -2095,8 +2095,9 @@ var ruleInfo = {
                               [h_equation_arg, h_c_arg]);
       }
       // h_equation must have the form H ==> A = B
-      assert(h_equation.isCall2('==>') && h_equation.getRight().isCall2('='),
-	     'Not an equation: ' + h_equation, h_equation_arg);
+      assert(h_equation.isEquation(), function() {
+          return 'Not an equation: ' + h_equation;
+        }, h_equation_arg);
 
       if (h_c.hasHyps && path.isLeft()) {
         // We are replacing an assumption with something equal
@@ -4836,28 +4837,25 @@ function getStatement(fact) {
 }
 
 /**
- * Finds a single LHS match with one of the given facts.  The fact
- * left sides must be schemas, given as an array.  The array contains
- * strings representing facts or plain objects with more detailed
- * information.
+ * Finds a single LHS match with one of the given facts.
+ * Returns the value of the successful call to matchFinder,
+ * or undefined if no call succeeded.
  *
- * Each info has either a "stmt" property that is a string for the
- * fact or a "term" property representing the term to be matched. In
- * either case there can be a "where" property with a string to eval.
- * Matching only succeeds if "where" evaluates as truthy.  The
- * variable "subst" is available in the expression.
+ * The facts are an array of values as specified as the facts
+ * argument to matchFinder.
  *
  * The optional "info" argument becomes available in "where"
  * clauses in all given facts.
  */
-findMatchingCall = function(term, facts, info) {
+function findMatchingCall(term, facts, info) {
   return term.searchCalls(matchFinder.bind(null, facts, info));
-};
+}
 
 /**
  * Searches the given facts list for one that matches the term.  If it
  * finds one, returns info about it in the format returned by
- * findMatchingCall.
+ * findMatchingCall.  The path argument should be a reverse path
+ * to the term relative to the proof step where the term appears.
  *
  * Each fact is either something acceptable as an argument to
  * getStatement, or a plain object with properties as follows:
@@ -4866,6 +4864,16 @@ findMatchingCall = function(term, facts, info) {
  * where: string to evaluate, with "subst" and the "info" argument to
  *   matchFinder available for use in the string.
  * term: term within the fact to match; by default the equation LHS.
+ *
+ * The value returned is undefined or else a plain object with
+ * properties:
+ * 
+ * stmt: statement of the matching fact (undefined if not matching a
+ *   fact).
+ * term: term passed to matchFinder.
+ * path: forward version of the path argument.
+ * subst: substitution that makes the given term match the fact.
+ *
  */
 function matchFinder(facts, info, term, pth) {
   function doEval(str, subst) {
@@ -4904,14 +4912,20 @@ function matchFinder(facts, info, term, pth) {
  * until none of them any longer is applicable, returning the result.
  */
 function applyFacts(step, path_arg, facts) {
+  var rhs = Toy.path('/main/right');
   var info;
-  var next = step;
   var path = Toy.path(path_arg);
-  while (info = findMatchingCall(next.locate(path), facts)) {
-    var fullPath = path.concat(info.path);
+  var next0 = rules.eqSelf(step.locate(path));
+  var next = (step.hasHyps
+              ? (rules.anyImpliesTheorem(step.getLeft(), next0)
+                 .apply('asHypotheses'))
+              : next0);
+  while (info = findMatchingCall(next.locate(rhs), facts)) {
+    var fullPath = rhs.concat(info.path);
     next = rules.rewriteWithFact(next, fullPath, info.stmt);
   }
-  return next;
+  // 
+  return rules.replace(next, step, path);
 }
 
 /**

@@ -1098,7 +1098,7 @@ Expr.prototype.isCall2 = function(name) {
   } else {
     return false;
   }
-}
+};
 
 /**
  * True iff this is a call to a lambda expression.
