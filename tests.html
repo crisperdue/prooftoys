@@ -723,7 +723,7 @@ var testCase = {
     check('{a: 3, b: 2}', 'a + b', '3 + 2');
   },
 
-  testVisitCalls: function() {
+  testSearchCalls: function() {
     var names = [];
     var paths = [];
     var terms = [];
@@ -736,13 +736,14 @@ var testCase = {
         terms.push(term);
       }
     }
-    Toy.parse('2 * x + neg y = 12 == T').visitCalls(foo);
-    assertEqual(["==", "=", "+", "*", "neg"], names);
+    Toy.parse('2 * x + neg y = 12 == T').searchCalls(foo);
+    assertEqual(["==", "=", "neg", "+", "*"], names);
     assertEqual(["/fn",
                  "/fn/arg/fn",
+                 "/fn/arg/fn/arg/arg",
                  "/fn/arg/fn/arg/fn",
-                 "/fn/arg/fn/arg/fn/arg/fn",
-                 "/fn/arg/fn/arg/arg"],
+                 "/fn/arg/fn/arg/fn/arg/fn"
+                 ],
                 paths);
     assertEqual(1, terms.length);
     assertEqual('((2 * x) + (neg y))', terms[0].toString());
