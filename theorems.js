@@ -3628,17 +3628,16 @@ var ruleInfo = {
     labels: 'basic'
   },
 
-  // Identical to "consider", but uses a selected term.
+  // Similar to "consider", but uses a selected term.
+  // The new step inherits hypotheses from the input step.
   considerPart: {
-    action: function(step_arg, path) {
-      var term = step_arg.locate(path);
-      var step = rules.eqSelf(term);
-      var conditions = term.mathVarConditions();
-      if (conditions) {
-        step = rules.anyImpliesTheorem(conditions, step);
-        step = rules.asHypotheses(step);
-      }
-      return step.justify('considerPart', arguments);
+    action: function(step, path) {
+      var eqn = rules.eqSelf(step.locate(path));
+      var result = (step.hasHyps
+                    ? (rules.anyImpliesTheorem(step.getLeft(), eqn)
+                       .apply('asHypotheses'))
+                    : eqn);
+      return result.justify('considerPart', arguments);
     },
     inputs: {site: 1},
     form: '',
@@ -4934,15 +4933,10 @@ function pathToVisiblePart(step) {
  * Returns its input step if no matches are found.
  */
 function applyFactsAtPath(step, facts, path_arg) {
-  var info;
   var path = Toy.path(path_arg);
-  var eqn0 = rules.eqSelf(step.locate(path));
-  var eqn1 = (step.hasHyps
-              ? (rules.anyImpliesTheorem(step.getLeft(), eqn0)
-                 .apply('asHypotheses'))
-              : eqn0);
-  var eqn = applyFactsToRhs(eqn1, facts);
-  return (eqn == eqn1 ? step : rules.replace(eqn, step, path));
+  var eqn1 = rules.considerPart(step.locate(path));
+  var eqn2 = applyFactsToRhs(eqn1, facts);
+  return (eqn2 == eqn1 ? step : rules.replace(eqn2, step, path));
 }
 
 /**
