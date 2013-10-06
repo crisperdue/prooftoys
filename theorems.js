@@ -4908,6 +4908,27 @@ function matchFinder(facts, info, term, pth) {
 };
 
 /**
+ * Apply the list of fact rewrites to the visible part of the step
+ * until none of them any longer is applicable, returning the result.
+ */
+function applyToVisible(step, facts) {
+  return applyFactsAtPath(step, facts, pathToVisiblePart(step));
+}
+
+/**
+ * For a rendered step, returns a path to the equation RHS if the rule
+ * was "consider" or the step hasLeftElision; else the main part if
+ * there are hypotheses; else the whole wff.
+ */
+function pathToVisiblePart(step) {
+  return Toy.path(step.rendering &&
+                  (step.ruleName === 'consider' ||
+                   step.rendering.hasLeftElision)
+                  ? '/main/right'
+                  : (step.hasHyps ? '/main' : ''));
+}
+
+/**
  * Apply the list of facts as rewrites to the given part of the step
  * until none of them any longer is applicable, returning the result.
  * Returns its input step if no matches are found.
@@ -4939,27 +4960,6 @@ function applyFactsToRhs(step, facts) {
     eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
   }
   return eqn;
-}
-
-/**
- * For a rendered step, returns a path to the equation RHS if the rule
- * was "consider" or the step hasLeftElision; else the main part if
- * there are hypotheses; else the whole wff.
- */
-function pathToVisiblePart(step) {
-  return Toy.path(step.rendering &&
-                  (step.ruleName === 'consider' ||
-                   step.rendering.hasLeftElision)
-                  ? '/main/right'
-                  : (step.hasHyps ? '/main' : ''));
-}
-
-/**
- * Apply the list of fact rewrites to the visible part of the step
- * until none of them any longer is applicable, returning the result.
- */
-function applyToVisible(step, facts) {
-  return applyFactsAtPath(step, facts, pathToVisiblePart(step));
 }
 
 /**
