@@ -2475,8 +2475,8 @@ var ruleInfo = {
     labels: 'algebra'
   },
 
-  // Remove occurrences of subtraction by adding the negative.
-  // Also does arithmetic everywhere and simplifies negations.
+  // Remove occurrences of subtraction by adding the negative,
+  // and simplifies negations.
   removeSubtraction: {
     action: function(step) {
       var facts = ['a - b = a + neg b'];
@@ -2513,33 +2513,45 @@ var ruleInfo = {
 
   regroupAdditions: {
     action: function(step) {
-      // Linearize terms.
-      var step0 = applyToVisible(step, [{stmt: 'a + (b + c) = a + b + c'}]);
+      function convert(eqn) {
+        // Linearize terms.
+        var eqn0 = applyFactsToRhs(eqn, [{stmt: 'a + (b + c) = a + b + c'}]);
 
-      // Move terms that are numerals to the back of the bus.
-      var facts1 = [{stmt: 'a + b = b + a',
-                     where: '!subst.a.hasVars() && subst.b.hasVars()'},
-                    {stmt: 'a + b + c = a + c + b',
-                     where: '!subst.b.hasVars() && subst.c.hasVars()'}
-                   ];
-      var step1 = applyToVisible(step0, facts1);
+        // Move terms that are numerals to the back of the bus.
+        var facts1 = [{stmt: 'a + b = b + a',
+                       where: '!subst.a.hasVars() && subst.b.hasVars()'},
+                      {stmt: 'a + b + c = a + c + b',
+                       where: '!subst.b.hasVars() && subst.c.hasVars()'}
+                     ];
+        var eqn1 = applyFactsToRhs(eqn0, facts1);
 
-      // Group numerals together.
-      var facts2 = [{stmt: 'a + b + c = a + (b + c)',
-                     where: '!subst.b.hasVars()'}
-                   ];
-      var step2 = applyToVisible(step1, facts2);
-      
-      var step2a = rules.cleanUpTerms(step2);
+        // Group numerals together.
+        var facts2 = [{stmt: 'a + b + c = a + (b + c)',
+                       where: '!subst.b.hasVars()'}
+                     ];
+        var eqn2 = applyFactsToRhs(eqn1, facts2);
 
-      // Group terms with common right factor together.
-      var facts3 = [{stmt: 'a * c + b * c = (a + b) * c'},
-                    {stmt: 'b + a * b = (1 + a) * b'},
-                    {stmt: 'a * b + b = (a + 1) * b'},
-                    {stmt: 'a + a = 2 * a'}
-                   ];
-      var step3 = applyToVisible(step2a, facts3);
-      return step3.justify('regroupAdditions', arguments, [step]);
+        // These come from rules.cleanupTerms.
+        var cleanFacts = ['a * (b * c) = a * b * c',
+                          {stmt: 'a * b = b * a',
+                           where: '!subst.b.hasVars() && subst.a.hasVars()'},
+                          {stmt: 'a * b * c = a * (c * b)',
+                           where: '!subst.c.hasVars() && subst.b.hasVars()'},
+                          {stmt: 'a * b / c = a / c * b',
+                           where: '!subst.a.hasVars() && !subst.c.hasVars()'}
+                         ];
+        var eqn2a = applyFactsToRhs(eqn2, cleanFacts);
+
+        // Group terms with common right factor together.
+        var facts3 = [{stmt: 'a * c + b * c = (a + b) * c'},
+                      {stmt: 'b + a * b = (1 + a) * b'},
+                      {stmt: 'a * b + b = (a + 1) * b'},
+                      {stmt: 'a + a = 2 * a'}
+                     ];
+        return applyFactsToRhs(eqn2a, facts3);
+      }
+      var result = convertAndReplace(step, pathToVisiblePart(step), convert);
+      return result.justify('regroupAdditions', arguments, [step]);
     },
     inputs: {step: 1},
     form: 'Regroup additive terms in step <input name=step>',
@@ -4954,6 +4966,19 @@ function applyFactsToRhs(step, facts) {
     eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
   }
   return eqn;
+}
+
+/**
+ * Apply the function to the subexpression of step at path.
+ * The result must be an equation that equates the original
+ * subexpression to something else.  This replaces the
+ * subexpression using the equation.
+ */ 
+function convertAndReplace(step, path, fn) {
+  var eqn1 = rules.considerPart(step, path);
+  var eqn2 = fn(eqn1);
+  return rules.replace(eqn2, step, path)
+    .justify('convertAndReplace', arguments, step);
 }
 
 /**
