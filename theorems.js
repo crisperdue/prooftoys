@@ -2431,7 +2431,7 @@ var ruleInfo = {
   // Repeatedly applies simplifyMath1 to do trivial simplifications.
   doAllArithmetic: {
     action: function(step) {
-      var visPath = pathToVisiblePart(step);
+      var visPath = step.pathToVisiblePart();
       var next = step;
       while (true) {
         var simpler = rules._simplifyMath1(next, visPath);
@@ -2457,7 +2457,7 @@ var ruleInfo = {
                    'neg (a * b) = neg a * b'
                   ];
       var simpler = applyToVisible(step, facts);
-      var path1 = pathToVisiblePart(step);
+      var path1 = step.pathToVisiblePart();
       var schemas = [{term: 'neg a', where: 'subst.a.isNumeral()'}];
       while (true) {
         var info = findMatchingCall(simpler.locate(path1), schemas);
@@ -2550,7 +2550,7 @@ var ruleInfo = {
                      ];
         return applyFactsToRhs(eqn2a, facts3);
       }
-      var result = convertAndReplace(step, pathToVisiblePart(step), convert);
+      var result = convertAndReplace(step, step.pathToVisiblePart(), convert);
       return result.justify('regroupAdditions', arguments, [step]);
     },
     inputs: {step: 1},
@@ -4923,20 +4923,7 @@ function matchFinder(facts, info, term, pth) {
  * until none of them any longer is applicable, returning the result.
  */
 function applyToVisible(step, facts) {
-  return applyFactsAtPath(step, facts, pathToVisiblePart(step));
-}
-
-/**
- * For a rendered step, returns a path to the equation RHS if the rule
- * was "consider" or the step hasLeftElision; else the main part if
- * there are hypotheses; else the whole wff.
- */
-function pathToVisiblePart(step) {
-  return Toy.path(step.rendering &&
-                  (step.ruleName === 'consider' ||
-                   step.rendering.hasLeftElision)
-                  ? '/main/right'
-                  : (step.hasHyps ? '/main' : ''));
+  return applyFactsAtPath(step, facts, step.pathToVisiblePart());
 }
 
 /**

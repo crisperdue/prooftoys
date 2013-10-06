@@ -835,6 +835,19 @@ Expr.prototype.subFree = function(replacement, vbl) {
   return subFree(replacement, vbl, this);
 };
 
+/**
+ * For a rendered step, returns a path to the equation RHS if the rule
+ * was "consider" or the step hasLeftElision; else the main part if
+ * there are hypotheses; else the whole wff.
+ */
+Expr.prototype.pathToVisiblePart = function() {
+  return Toy.path(this.rendering &&
+                  (this.ruleName === 'consider' ||
+                   this.rendering.hasLeftElision)
+                  ? '/main/right'
+                  : (this.hasHyps ? '/main' : ''));
+};
+
 var _assertionCounter = 1;
 
 ////
