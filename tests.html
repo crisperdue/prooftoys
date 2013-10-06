@@ -749,6 +749,27 @@ var testCase = {
     assertEqual('((2 * x) + (neg y))', terms[0].toString());
   },
 
+  testFindMatchingFact: function() {
+    var facts = ['a + b = b + a',
+                 {match: 'neg a', where: 'subst.a.isNumeral()'}
+                 ];
+
+    var result = Toy._findMatchingFact(facts, undefined,
+                                       Toy.parse('neg 1'),
+                                       Toy.path());
+    assertEqual('(neg 1)', result.term);
+    assertEqual('', result.path.toString());
+    assertEqual(undefined, result.stmt);
+
+    result = Toy._findMatchingFact(facts, undefined,
+                                   Toy.parse('x + y'),
+                                   Toy.path());
+    assertEqual('(x + y)', result.term);
+    assertEqual('', result.path.toString());
+    assertEqual('a + b = b + a', result.stmt);
+    assertEqual('y', result.subst.b.toString());
+  },
+
   testGeneralizeTF: function() {
     var gen = Toy.parse('p T = T').generalizeTF(Toy.parse('p F = F'), x);
     assertEqual('((p x) = x)', gen + '');

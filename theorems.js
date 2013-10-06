@@ -2458,7 +2458,7 @@ var ruleInfo = {
                   ];
       var simpler = applyToVisible(step, facts);
       var path1 = step.pathToVisiblePart();
-      var schemas = [{term: 'neg a', where: 'subst.a.isNumeral()'}];
+      var schemas = [{match: 'neg a', where: 'subst.a.isNumeral()'}];
       while (true) {
         var info = findMatchingCall(simpler.locate(path1), schemas);
         if (!info) {
@@ -4848,48 +4848,61 @@ function getStatement(fact) {
 }
 
 /**
- * Finds a single LHS match with one of the given facts.
- * Returns the value of the successful call to matchFinder,
- * or undefined if no call succeeded.
+ * Finds a single LHS match within the given term with one of the
+ * given facts.  Returns the value of the successful call to
+ * findMatchingFact, or undefined if no call succeeded.
  *
- * The facts are an array of values as specified as the facts
- * argument to matchFinder.
+ * All arguments other than the term are passed via "info".  If it is
+ * a plain object, it interprets the following properties:
  *
- * The optional "info" argument becomes available in "where"
- * clauses in all given facts.
+ * facts: List of facts in the format accepted by findMatchingFact.
+ * context: Context information for "where" clauses as
+ *   accepted by findMatchingFact.
+ * searchMethod: Name of method to apply to the term to control
+ *   which subexpressions of the term to apply findMatchingFact to.
  */
-function findMatchingCall(term, facts, info) {
-  return term.searchCalls(matchFinder.bind(null, facts, info));
+function findMatchingCall(term, info) {
+  var facts, cxt, searchMethod;
+  if (info.constructor === Object) {
+    facts = info.facts;
+    cxt = info.context;
+    searchMethod = info.searchMethod;
+  } else {
+    facts = info;
+  }
+  searchMethod = searchMethod || 'searchCalls';
+  return term[searchMethod](findMatchingFact.bind(null, facts, cxt));
 }
 
 /**
- * Searches the given facts list for one that matches the term.  If it
- * finds one, returns info about it in the format returned by
- * findMatchingCall.  The path argument should be a reverse path
- * to the term relative to the proof step where the term appears.
+ * Searches the given facts list for one that matches the given term.
+ * If it finds one, returns info about it in the format returned by
+ * findMatchingCall.  The path argument should be a reverse path to
+ * the term relative to the proof step where the term appears.
  *
  * Each fact is either something acceptable as an argument to
  * getStatement, or a plain object with properties as follows:
  *
  * stmt: value acceptable to getStatement.
- * where: string to evaluate, with "subst" and the "info" argument to
- *   matchFinder available for use in the string.
- * term: term within the fact to match; by default the equation LHS.
+ * where: string to evaluate, with "subst" and the "cxt" argument to
+ *   findMatchingFact available for use in the string.
+ * match: term to match against parts of the step; by default the
+ *   equation LHS.
  *
  * The value returned is undefined or else a plain object with
  * properties:
  * 
  * stmt: statement of the matching fact (undefined if not matching a
  *   fact).
- * term: term passed to matchFinder.
+ * term: term passed to findMatchingFact.
  * path: forward version of the path argument.
  * subst: substitution that makes the given term match the fact.
  *
  */
-function matchFinder(facts, info, term, pth) {
+function findMatchingFact(facts, cxt, term, pth) {
   function doEval(str, subst) {
     // Suppress acccess to the enclosing "facts" and "pth" variables.
-    // OK for str to refer to "info".
+    // OK for str to refer to "cxt" or "term".
     var facts, pth;
     return eval(str);
   }
@@ -4898,21 +4911,15 @@ function matchFinder(facts, info, term, pth) {
     var infoIsObject = factInfo.constructor == Object;
     var stmt = infoIsObject ? factInfo.stmt : factInfo;
     var where = infoIsObject ? factInfo.where : null;
-    var schema = (infoIsObject && factInfo.term
-                  ? Toy.termify(factInfo.term)
+    var schema = (infoIsObject && factInfo.match
+                  ? Toy.termify(factInfo.match)
                   : Toy.getStatement(stmt).getMain().getLeft());
     var subst = term.matchSchema(schema);
-    if (subst) {
-      var pass = true;
-      if (where && typeof where === 'string') {
-        pass = doEval(where, subst);
-      }
-      if (pass) {
-        return {stmt: stmt,
-                term: term,
-                path: pth.reverse(),
-                subst: subst};
-      }
+    if (subst && (!where || doEval(where, subst))) {
+      return {stmt: stmt,
+              term: term,
+              path: pth.reverse(),
+              subst: subst};
     }
   }
   // If no match found the value will be falsy.
@@ -5127,13 +5134,15 @@ Toy.eachFact = eachFact;
 Toy.addTheorem = addTheorem;
 Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
+Toy.getStatement = getStatement;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
 Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
-Toy.getStatement = getStatement;
+Toy._findMatchingCall = findMatchingCall;
+Toy._findMatchingFact = findMatchingFact;
 
 //// INITIALIZATION CODE
 
