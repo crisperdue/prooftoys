@@ -1474,6 +1474,26 @@ Expr.prototype.mergedHypotheses = function() {
 };
 
 
+var _searchTermsOps = ownProperties({'+': true, '-': true, '=': true});
+
+/**
+ * Searches this Expr and then any (addition or subtraction)
+ * subexpressions recursively, searching for one that passes the
+ * test function.  Returns the truthy value from the test, otherwise
+ * a falsy value.
+ */
+Expr.prototype.searchTerms = function(test, path) {
+  if (!path) {
+    path = Toy.path();
+  }
+  var op = this.isCall2() && this.getBinOp().name;
+  return (test(this, path) ||
+          (op && op in _searchTermsOps &&
+           (this.getRight().searchTerms(test, new Path('right', path)) ||
+            this.getLeft().searchTerms(test, new Path('left', path)))));
+};
+
+
 // Expr
 //
 // Methods defined on expressions, but defined only in the subclasses:

@@ -770,6 +770,26 @@ var testCase = {
     assertEqual('y', result.subst.b.toString());
   },
 
+  testSearchTerms: function() {
+    var searched = [];
+    function failer(expr) {
+      searched.push(expr.toString());
+    }
+    var term = Toy.parse('a + b = neg (c + d)');
+    assert(!term.searchTerms(failer));
+    console.log(searched);
+    assertEqual(['((a + b) = (neg (c + d)))',
+                 '(neg (c + d))',
+                 '(a + b)',
+                 'b',
+                 'a'],
+                searched);
+    function finder(expr) {
+      return expr.name === 'b' ? 'yo' : false;
+    }
+    assertEqual('yo', term.searchTerms(finder));
+  },
+
   testGeneralizeTF: function() {
     var gen = Toy.parse('p T = T').generalizeTF(Toy.parse('p F = F'), x);
     assertEqual('((p x) = x)', gen + '');
