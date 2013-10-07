@@ -4940,7 +4940,7 @@ function applyToVisible(step, facts) {
  */
 function applyFactsAtPath(step, facts, path_arg) {
   var path = Toy.path(path_arg);
-  var eqn1 = rules.considerPart(step.locate(path));
+  var eqn1 = rules.considerPart(step, path);
   var eqn2 = applyFactsToRhs(eqn1, facts);
   return (eqn2 == eqn1 ? step : rules.replace(eqn2, step, path));
 }
