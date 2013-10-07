@@ -1135,21 +1135,21 @@ Call.prototype._render = function(minPower) {
     if (Toy.isInfixDesired(op)) {
       // Render as infix, e.g. "x + y"
       var left = this.getLeft();
-      var fnJq = exprJq().append(left._render(thisPower(left)), ' ',
+      var $fn = exprJq().append(left._render(thisPower(left)), ' ',
                                  op._render(0));
-      this.fn.node = dom(fnJq);
+      this.fn.node = dom($fn);
       var right = this.getRight();
-      $expr.append(fnJq, ' ', right._render(thisPower(right) + 1));
+      $expr.append($fn, ' ', right._render(thisPower(right) + 1));
     } else {
       // Anything else render like "f x y".
       // We could render the function part with less parens by
       // reducing the required power by 1 here, but then we might want
       // to reorganize the code for rendering ordinary function calls.
-      var fnJq = exprJq()
+      var $fn = exprJq()
         .append(this.fn.fn._render(Toy.namePower + 1), ' ',
                 this.fn.arg._render(Toy.namePower + 1));
-      this.fn.node = dom(fnJq);
-      $expr.append(fnJq, ' ', this.arg._render(Toy.namePower + 1));
+      this.fn.node = dom($fn);
+      $expr.append($fn, ' ', this.arg._render(Toy.namePower + 1));
     }
     markAsFullExpr($expr);
   } else if (this.fn instanceof Var && Toy.isInfixDesired(this.fn)) {
@@ -1199,9 +1199,9 @@ Lambda.prototype._render = function(minPower) {
   $expr.append('{');
   $expr.append(this.bound._render(0));
   $expr.append('. ');
-  var bodyJq = this.body._render(0);
-  markAsFullExpr(bodyJq);
-  $expr.append(bodyJq);
+  var $body = this.body._render(0);
+  markAsFullExpr($body);
+  $expr.append($body);
   $expr.append('}');
   return $expr;
 };
@@ -1799,15 +1799,15 @@ function getExpr(node) {
 function exprHandleOver(event) {
   var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
   var target = $(event.target);
-  var exprJq = target.closest(selector);
-  // Could be no elements in exprJq.
-  exprJq.addClass('hovered');
+  var $expr = target.closest(selector);
+  // Could be no elements in $expr.
+  $expr.addClass('hovered');
   function isTarget(expr) {
     return expr.node == event.target;
   }
-  var stepJq = exprJq.closest('.proofStep');
-  if (stepJq.length) {
-    var proofStep = stepJq.data('proofStep');
+  var $step = $expr.closest('.proofStep');
+  if ($step.length) {
+    var proofStep = $step.data('proofStep');
     var path = proofStep.pathTo(isTarget);
     hoverShowPath(proofStep, path);
   }
