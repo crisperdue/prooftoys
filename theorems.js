@@ -2480,7 +2480,8 @@ var ruleInfo = {
   removeSubtraction: {
     action: function(step) {
       var facts = ['a - b = a + neg b'];
-      var converted = applyToVisible(step, facts)
+      var info = {facts: facts, searchMethod: 'searchTerms'};
+      var converted = applyToVisible(step, info);
       var simplified = rules.simplifyNegations(converted);
       return simplified.justify('removeSubtraction', arguments, [step]);
     },
@@ -2513,9 +2514,13 @@ var ruleInfo = {
 
   regroupAdditions: {
     action: function(step) {
+      function applyTo(eqn, facts) {
+        return applyFactsToRhs(eqn, {facts: facts,
+                                     searchMethod: 'searchTerms'});
+      }
       function convert(eqn) {
         // Linearize terms.
-        var eqn0 = applyFactsToRhs(eqn, [{stmt: 'a + (b + c) = a + b + c'}]);
+        var eqn0 = applyTo(eqn, [{stmt: 'a + (b + c) = a + b + c'}]);
 
         // Move terms that are numerals to the back of the bus.
         var facts1 = [{stmt: 'a + b = b + a',
@@ -2523,13 +2528,13 @@ var ruleInfo = {
                       {stmt: 'a + b + c = a + c + b',
                        where: '!subst.b.hasVars() && subst.c.hasVars()'}
                      ];
-        var eqn1 = applyFactsToRhs(eqn0, facts1);
+        var eqn1 = applyTo(eqn0, facts1);
 
         // Group numerals together.
         var facts2 = [{stmt: 'a + b + c = a + (b + c)',
                        where: '!subst.b.hasVars()'}
                      ];
-        var eqn2 = applyFactsToRhs(eqn1, facts2);
+        var eqn2 = applyTo(eqn1, facts2);
 
         // These come from rules.cleanupTerms.
         var cleanFacts = ['a * (b * c) = a * b * c',
@@ -2540,7 +2545,7 @@ var ruleInfo = {
                           {stmt: 'a * b / c = a / c * b',
                            where: '!subst.a.hasVars() && !subst.c.hasVars()'}
                          ];
-        var eqn2a = applyFactsToRhs(eqn2, cleanFacts);
+        var eqn2a = applyTo(eqn2, cleanFacts);
 
         // Group terms with common right factor together.
         var facts3 = [{stmt: 'a * c + b * c = (a + b) * c'},
@@ -2548,7 +2553,7 @@ var ruleInfo = {
                       {stmt: 'a * b + b = (a + 1) * b'},
                       {stmt: 'a + a = 2 * a'}
                      ];
-        return applyFactsToRhs(eqn2a, facts3);
+        return applyTo(eqn2a, facts3);
       }
       var result = convertAndReplace(step, step.pathToVisiblePart(), convert);
       return result.justify('regroupAdditions', arguments, [step]);
