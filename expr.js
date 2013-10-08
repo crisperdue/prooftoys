@@ -815,6 +815,36 @@ Expr.prototype.matchSchema = function(schema) {
 };
 
 /**
+ * Returns a truthy value iff this and the given Expr differ only in
+ * names of free and/or bound variables.  When true, the value is a
+ * substition ("alpha conversion") that maps free variable names in
+ * this to Var objects in the Expr.  Applying the substitution to this
+ * Expr results in an Expr that "matches" the Expr argument of this
+ * method.
+ */
+Expr.prototype.alphaMatch = function(expr_arg) {
+  var expr = termify(expr_arg);
+  var subst = expr.matchSchema(this);
+  var result = false;
+  if (!subst) {
+    return false;
+  }
+  // Reverse mapping from name in expr to name in this.
+  var rsubst = {};
+  for (var name in subst) {
+    var value = subst[name];
+    if (!(value.isVariable())) {
+      return false;
+    }
+    if (rsubst[value.name]) {
+      return false;
+    }
+    rsubst[value.name] = name;
+  }
+  return subst;
+};
+
+/**
  * Alternate name for Expr.matchSchema.  The argument is the schema.
  */
 Expr.prototype.findSubst = Expr.prototype.matchSchema;

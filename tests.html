@@ -723,6 +723,23 @@ var testCase = {
     check('{a: 3, b: 2}', 'a + b', '3 + 2');
   },
 
+  testAlphaMatch: function() {
+    assert(!Toy.parse('neg (x - 1)').alphaMatch('neg a'));
+    assert(Toy.parse('neg (x - 1)').alphaMatch('neg (a - 1)'));
+    assert(!Toy.parse('neg (x + y)').alphaMatch('neg (a + a)'));
+    assert(!Toy.parse('neg (x + x)').alphaMatch('neg (a + b)'));
+    assert(Toy.parse('neg (x + y)').alphaMatch('neg (a + b)'));
+    assert(Toy.parse('neg (x + y)').alphaMatch('neg (x + y)'));
+    assert(Toy.parse('neg (x + y)').alphaMatch('neg (y + x)'));
+
+    var term = Toy.parse('neg (x + y)');
+    var term2 = Toy.parse('neg (u + v)');
+    var subst = term.alphaMatch(term2);
+    var step = Toy.rules.eqSelf(term).apply('instMultiVars', subst);
+    console.log(step.str);
+    assert(step.getRight().matches(term2));
+  },
+
   testSearchCalls: function() {
     var names = [];
     var paths = [];
