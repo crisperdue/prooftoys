@@ -1888,8 +1888,7 @@ var ruleInfo = {
   // makeConjunction as needed, followed by forwardChain.)
   forwardChain: {
     action: function(step, schema) {
-      var substitution =
-        Toy.matchAsSchema(schema.unHyp().getLeft(), step.unHyp());
+      var substitution = step.unHyp().matchSchema(schema.unHyp().getLeft());
       assert(substitution, function() {
           return (step.unHyp().toString() +
                   ' does not match LHS of schema\n' + schema);

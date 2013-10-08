@@ -465,23 +465,6 @@ function normalized(expr) {
 }
 
 
-/**
- * Matches the given "schematic" expression against the other
- * expression, returning a subsitution that yields the given
- * expression when given the schema; or null if there is none.
- * Assumes that the schema contains no variable bindings.  The
- * substitution maps from names to expressions.  Tautologies for
- * example qualify as schemas.
- *
- * This is a special case of unification of expressions.
- */
-function matchAsSchema(schema, expr) {
-  var substitution = {};
-  var result = schema._matchAsSchema(expr, substitution);
-  return result ? substitution : null;
-}
-
-
 //// Expr -- the base class
 
 // Note on the sourceStep property and structure sharing among proof steps.
@@ -813,14 +796,22 @@ $.extend(Expr.prototype, {
   });
 
 /**
- * Match this expr against a schema, which may be given as a string.
- * See function matchAsSchema.
+ * Matches the given "schematic" expression against the other
+ * expression, returning a subsitution that yields the given
+ * expression when given the schema; or null if there is none.
+ * Assumes that the schema contains no variable bindings.  The
+ * substitution maps from names to expressions.  Tautologies for
+ * example qualify as schemas.
+ *
+ * This is a special case of unification of expressions.
  */
 Expr.prototype.matchSchema = function(schema) {
   if (typeof schema == 'string') {
     schema = Toy.parse(schema);
   }
-  return matchAsSchema(schema, this);
+  var substitution = {};
+  var result = schema._matchAsSchema(this, substitution);
+  return result ? substitution : null;
 };
 
 /**
@@ -4404,7 +4395,6 @@ Toy.decapture = decapture;
 Toy.path = path;
 Toy.findBinding = findBinding;
 Toy.getBinding = getBinding;
-Toy.matchAsSchema = matchAsSchema;
 Toy.sourceStepLess = sourceStepLess;
 Toy.hypIsLess = hypIsLess;
 Toy.sourceStepComparator = sourceStepComparator;

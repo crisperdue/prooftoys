@@ -706,11 +706,11 @@ var testCase = {
     assertEqual(p.toString(), pp.expand().toString());
   },
 
-  testMatchAsSchema: function() {
+  testMatchSchema: function() {
     function check(expected, schema, term) {
       term = typeof term == 'string' ? Toy.parse(term) : term;
       schema = typeof schema == 'string' ? Toy.parse(schema) : schema;
-      var subst = Toy.matchAsSchema(schema, term);
+      var subst = term.matchSchema(schema);
       if (expected) {
         assertEqual(expected, Toy.debugString(subst));
       } else {
