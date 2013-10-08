@@ -4838,7 +4838,8 @@ function getStatement(fact) {
       // Otherwise it should be a expression in string form.
       var result = Toy.mathParse(fact);
       if (result.isCall2('==>') && result.getRight().isCall2('=')) {
-        // Has assumptions, though not a theorem.
+        // Flag it as having assumptions, though the result is not a
+        // theorem.
         result.hasHyps = true;
       }
       return result;
