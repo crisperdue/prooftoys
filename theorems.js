@@ -2804,30 +2804,6 @@ var ruleInfo = {
     description: 'merge conjunctions in {term}'
   },    
 
-  // Simplify the hypotheses of a step, removing duplicates.
-  // Incomplete, unused.
-  simplifyHyps: {
-    // Note that "replace" does not even call this if its inputs have
-    // tbe same hypotheses.
-    action: function(step) {
-      if (!step.hasHyps) {
-	// Do nothing, don't even display that simplification of
-	// hypotheses was part of the proof.
-	return step;
-      }
-      var hyps = step.getLeft();
-      if (hyps.isCall2('&')) {
-	
-      } else {
-	// Again, don't display this as a step.
-	return step;
-      }
-    },
-    inputs: {step: 1},
-    // form: ('Normalize a conjunction <input name=step>'),
-    hint: 'Normalize a conjunction of normalized conjunctions'
-  },
-
   // Extract the given hypothesis from the given step.  The hypothesis
   // need only match one of the step's hypotheses.  Relies on the step
   // to have normalized (flattened) hypotheses.  If the step is of the
