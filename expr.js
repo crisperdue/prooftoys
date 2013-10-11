@@ -64,13 +64,17 @@ function each(array, fn) {
  * Returns a function that access the value resulting from a call to
  * fn.  On its first call the returned "memo function" calls fn and
  * remembers the value.  Subsequent calls return the remembered value.
+ *
+ * The result has a property "done" that has the value true iff
+ * it has been called at least once.
  */
 function memo(fn) {
   var value;
-  var done = false;
-  return function() {
-    return done ? value : (done = true, value = fn());
+  var memoFn = function() {
+    return memoFn.done ? value : (memoFn.done = true, value = fn());
   }
+  memoFn.done = false;
+  return memoFn;
 }
 
 
