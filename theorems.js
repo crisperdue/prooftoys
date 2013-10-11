@@ -1290,16 +1290,25 @@ var ruleInfo = {
   // substitutes the expression associated with it in the map, using
   // simultaneous substitution.  Handles hypotheses, allowing
   // substitution for variables that are free in the hypotheses.
+  // Optimized to avoid substitutions that have no effect, thus
+  // doing nothing if the substitution is a no-op.
   instMultiVars: {
     action: function(b, map) {
       var hyps = b.hasHyps;
       var step0 = hyps ? rules.asImplication(b) : b;
-      var namesReversed = [];
       var isEqn = step0.isCall2('=');
       var step = isEqn ? step0 : rules.toTIsA(step0);
+      var namesReversed = [];
       for (var name in map) {
+        var value = map[name];
+        if (value.isVariable() && value.name === name) {
+          continue;
+        }
         step = rules.bindEqn(step, name);
 	namesReversed.unshift(name);
+      }
+      if (namesReversed.length === 0) {
+        return b.justify('instMultiVars', arguments, [b]);
       }
       // Then substitute for the renamed variables.
       namesReversed.forEach(function(name) {
