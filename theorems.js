@@ -3988,7 +3988,7 @@ var algebraFacts = {
       return rules.axiom('axiomNeg');
     }
   },
-  'a * recip a = 1': {
+  '@R a & a != 0 ==> a * recip a = 1': {
     action: function() {
       return rules.axiom('axiomReciprocal');
     }
@@ -4511,7 +4511,7 @@ var algebraFacts = {
       return rules.eqnSwap(rules.fact('a / b = a * recip b'));
     }
   },
-  'recip a = 1 / a': {
+  'a != 0 ==> recip a = 1 / a': {
     action: function() {
       return rules.consider('recip s')
       .rewrite('/main/right', 'a = 1 * a')
@@ -4719,18 +4719,19 @@ $.extend(Fact.prototype, {
       // If there is a substitution into the result that yields
       // the goal, do it.
       var goal = this.goal;
-      var subst = goal.matchSchema(result);
+      var subst = result.alphaMatch(goal);
       if (!subst) {
-        subst = goal.getMain().matchSchema(result.getMain());
+        var subst2 = result.getMain().alphaMatch(goal.getMain());
+        assert(!subst2, function() {
+            return 'Assumptions do not match goal ' + goal;
+          }, result);
       }
       assert(subst, function() {
-          return ('Expected proof of ' + goal.toString() +
-                  ', instead got ' + result.toString());
+          return 'Failed to prove ' + goal;
         }, result);
       var result2 = rules.instMultiVars(result, subst);
       return result2;
     }
-
   });
       
 
@@ -4776,19 +4777,6 @@ function getResult(stmt) {
   var fact = _factsMap[goal.getMain().dump()];
   assert(fact, function() { return 'No such fact: ' + goal; });
   return fact.result();
-
-  /* TODO: Consider deleting this.
-  var subst = goal.matchSchema(result);
-  if (!subst) {
-    subst = goal.getMain().matchSchema(result.getMain());
-  }
-  assert(subst, function() {
-      return ('Expected proof of ' + goal.toString() +
-              ', instead got ' + result.toString());
-    }, result);
-  var result2 = rules.instMultiVars(result, subst);
-  return result2;
-  */
 }
 
 /**
