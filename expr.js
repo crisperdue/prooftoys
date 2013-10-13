@@ -77,6 +77,13 @@ function memo(fn) {
   return memoFn;
 }
 
+function format(fmt, args) {
+  var pattern = /\{.*?\}/g;
+  return fmt.replace(pattern, function(arg) {
+      return args[arg.slice(1, -1)];
+    });
+}
+
 
 //// CLASSES ////
 
@@ -134,6 +141,37 @@ function TypeCheckError(msg) {
   this.message = msg;
 }
 Toy.extends(TypeCheckError, Error);
+
+// Stack of active NestedTimers.
+_timers = [];
+
+function NestedTimer(name) {
+  this.name = name;
+  this.elsewhere = 0;
+}
+
+NestedTimer.prototype = {
+
+  start: function() {
+    _timers.push(this);
+    this.elsewhere = Date.now();
+  },
+
+  done: function() {
+    var now = Date.now();
+    assertTrue(this == _timers[_timers.length - 1], 'Timer not nested');
+    _timers.pop();
+    var elapsed = now - this.elsewhere;
+    if (_timers.length) {
+      var prev = _timers[_timers.length - 1];
+      prev.elsewhere += elapsed;
+    }
+    console.log(format('Timer {name}: {elapsed}ms',
+                       {name: this.name,
+                        elapsed: elapsed}));
+    return elapsed;
+  }
+};
 
 
 // SET
@@ -4400,6 +4438,7 @@ function decodeArg(info, steps) {
 //// Export public names.
 
 Toy.memo = memo;
+Toy.format = format;
 Toy.configure = configure;
 Toy.ownProperties = ownProperties;
 Toy.isEmpty = isEmpty;
@@ -4411,6 +4450,7 @@ Toy.catchResult = catchResult;
 Toy.normalReturn = normalReturn;
 Toy.Error = ErrorInfo;
 Toy.TypeCheckError = TypeCheckError;
+Toy.NestedTimer = NestedTimer;
 Toy.Set = Set;
 Toy.Map = Map;
 Toy.TermSet = TermSet;
