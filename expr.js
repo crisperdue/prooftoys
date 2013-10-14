@@ -671,6 +671,10 @@ function isIdentifier(str) {
   return !!str.match(identifierRegex);
 }
 
+function isIntegerLiteral(name) {
+  return name.match(/^-?[0-9]+$/);
+}
+
 /**
  * True iff this is a Var that displays as an identifier.  This is
  * based on Unicode display, which may be a non-identifier in cases such
@@ -3107,6 +3111,178 @@ function parseType(input) {
 }
 
 
+//// TYPE INFERENCE
+////
+//// The type inference code is derived from the description and code
+//// for Hindley-Milner style type inference at
+//// http://lucacardelli.name/Papers/BasicTypechecking.pdf and from
+//// Robert Smallshire's Python implementation at
+//// http://www.smallshire.org.uk/sufficientlysmall/2010/04/11/
+//// a-hindley-milner-type-inference-implementation-in-python/.
+
+// TODO: More and better comments throughout the type analysis code.
+
+/**
+ * Find and return the type of an expression (Expr).
+ */
+function findType(expr) {
+  // In this code types[i] will be the type of vars[i].
+  // The vars are names of variables.  Bound variables and their types
+  // are pushed onto the lists, and on exit from a scope the
+  // information is popped off the lists.  Type lookups search from
+  // the end toward the beginning thus finding the type of the
+  // variable visible in the current scope.
+  var vars = [];
+  var types = [];
+  // A list of TypeVariable objects that are not generic in the
+  // current scope.  Type variables in the types of variables appear
+  // here when their variable is in scope.
+  //
+  // Note: Generic type variables reflect the fact that different
+  // occurrences of the same defined or primitive constant can have
+  // different types.
+  var nonGenerics = [];
+
+  // This is the core of the type inference algorithm.
+  function analyze1(expr) {
+    if (expr instanceof Var) {
+      return getType(expr.name);
+    } else if (expr instanceof Call) {
+      var fnType = analyze1(expr.fn);
+      var argType = analyze1(expr.arg);
+      var resultType = new TypeVariable();
+      unifyTypes(new FunctionType(argType, resultType), fnType);
+      return resultType;
+    } else if (expr instanceof Lambda) {
+      vars.push(expr.bound.name);
+      // TODO: Handle explicit type info on the bound variable.
+      var argType = new TypeVariable();
+      types.push(argType);
+      nonGenerics.push(argType);
+      var resultType = analyze1(expr.body);
+      vars.pop();
+      types.pop();
+      nonGenerics.pop();
+      return new FunctionType(argType, resultType);
+    }
+    throw new TypeCheckError('Expression of unknown type: ' + expr);
+  }
+
+  function getType(name) {
+    if (isIntegerLiteral(name)) {
+      // I say integers are individuals.
+      return individual;
+    }
+    // Is it a bound or (already-seen) free variable?
+    for (var i = vars.length - 1; i >= 0; --i) {
+      if (vars[i] == name) {
+        var type = types[i];
+        // Return a fresh instance of the variable's type.
+        return type.fresh({}, nonGenerics);
+      }
+    }
+    if (isConstant(name)) {
+      return lookupType(name).fresh({}, nonGenerics);
+    } else {
+      // Free variable: not constant, not defined.
+      // Like handling of a variable binding, but scope is the remainder
+      // of the expression, and bound variables get searched first.
+      var varType = new TypeVariable();
+      vars.unshift(name);
+      types.unshift(varType);
+      nonGenerics.unshift(varType);
+      return varType;
+    }
+  }
+
+  /**
+   * Look up the type of a primitive or defined constant.  Result is
+   * not fresh.
+   */
+  function lookupType(name) {
+    if (constantTypes.hasOwnProperty(name)) {
+      return constantTypes[name];
+    } else if (isDefinedByCases(name)) {
+      return definedTypes[name];
+    } else if (isDefined(name)) {
+      return findType(getDefinition(name).getRight());
+    } else {
+      throw new TypeCheckError('Cannot find type for: ' + name);
+    }
+  }
+
+  function isGeneric(v) {
+    return !occursInList(v, nonGenerics);
+  }
+
+  return analyze1(expr);
+}
+
+/**
+ * Assumes "type" is dereferenced.
+ */
+function occursInList(type, types) {
+  for (var i = 0; i < types.length; i++) {
+    if (occursInType(type, types[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ *
+ * Assumes type1 is dereferenced.
+ */
+function occursInType(type1, type2) {
+  var type2 = dereference(type2);
+  if (type2 == type1) {
+    return true;
+  } else if (type2 instanceof TypeOperator) {
+    return occursInList(type1, type2.types);
+  }
+}
+
+function unifyTypes(t1, t2) {
+  var a = dereference(t1);
+  var b = dereference(t2);
+  if (a instanceof TypeVariable) {
+    if (a != b) {
+      if (occursInType(a, b)) {
+        throw new TypeCheckError('recursive unification');
+      }
+      a.instance = b;
+    }
+  } else if (b instanceof TypeVariable) {
+    unifyTypes(b, a);
+  } else if (a instanceof TypeConstant) {
+    if (a !== b) {
+      // Note that this does not permit multiple copies of a constant.
+      throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
+    }
+  } else if (a instanceof TypeOperator && b instanceof TypeOperator) {
+    if (a.name != b.name || a.types.length != b.types.length) {
+      throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
+    }
+    for (var i = 0; i < a.types.length; i++) {
+      unifyTypes(a.types[i], b.types[i]);
+    }
+  } else {
+    throw new TypeCheckError('Not unifiable');
+  }
+}
+
+function dereference(type) {
+  if (type instanceof TypeVariable) {
+    if (type.instance) {
+      type.instance = dereference(type.instance);
+      return type.instance;
+    }
+  }
+  return type;
+}
+
+
 //// CONSTANTS AND DEFINITIONS
 ////
 //// The only primitive constants currently are the built-in T, F, =,
@@ -3334,182 +3510,6 @@ function findDefinition(name, tOrF) {
     assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
     return defnCase;
   }
-}
-
-
-//// TYPE INFERENCE
-////
-//// The type inference code is derived from the description and code
-//// for Hindley-Milner style type inference at
-//// http://lucacardelli.name/Papers/BasicTypechecking.pdf and from
-//// Robert Smallshire's Python implementation at
-//// http://www.smallshire.org.uk/sufficientlysmall/2010/04/11/
-//// a-hindley-milner-type-inference-implementation-in-python/.
-
-// TODO: More and better comments throughout the type analysis code.
-
-/**
- * Find and return the type of an expression (Expr).
- */
-function findType(expr) {
-  // In this code types[i] will be the type of vars[i].
-  // The vars are names of variables.  Bound variables and their types
-  // are pushed onto the lists, and on exit from a scope the
-  // information is popped off the lists.  Type lookups search from
-  // the end toward the beginning thus finding the type of the
-  // variable visible in the current scope.
-  var vars = [];
-  var types = [];
-  // A list of TypeVariable objects that are not generic in the
-  // current scope.  Type variables in the types of variables appear
-  // here when their variable is in scope.
-  //
-  // Note: Generic type variables reflect the fact that different
-  // occurrences of the same defined or primitive constant can have
-  // different types.
-  var nonGenerics = [];
-
-  // This is the core of the type inference algorithm.
-  function analyze1(expr) {
-    if (expr instanceof Var) {
-      return getType(expr.name);
-    } else if (expr instanceof Call) {
-      var fnType = analyze1(expr.fn);
-      var argType = analyze1(expr.arg);
-      var resultType = new TypeVariable();
-      unifyTypes(new FunctionType(argType, resultType), fnType);
-      return resultType;
-    } else if (expr instanceof Lambda) {
-      vars.push(expr.bound.name);
-      // TODO: Handle explicit type info on the bound variable.
-      var argType = new TypeVariable();
-      types.push(argType);
-      nonGenerics.push(argType);
-      var resultType = analyze1(expr.body);
-      vars.pop();
-      types.pop();
-      nonGenerics.pop();
-      return new FunctionType(argType, resultType);
-    }
-    throw new TypeCheckError('Expression of unknown type: ' + expr);
-  }
-
-  function getType(name) {
-    if (isIntegerLiteral(name)) {
-      // I say integers are individuals.
-      return individual;
-    }
-    // Is it a bound or (already-seen) free variable?
-    for (var i = vars.length - 1; i >= 0; --i) {
-      if (vars[i] == name) {
-        var type = types[i];
-        // Return a fresh instance of the variable's type.
-        return type.fresh({}, nonGenerics);
-      }
-    }
-    if (isConstant(name)) {
-      return lookupType(name).fresh({}, nonGenerics);
-    } else {
-      // Free variable: not constant, not defined.
-      // Like handling of a variable binding, but scope is the remainder
-      // of the expression, and bound variables get searched first.
-      var varType = new TypeVariable();
-      vars.unshift(name);
-      types.unshift(varType);
-      nonGenerics.unshift(varType);
-      return varType;
-    }
-  }
-
-  /**
-   * Look up the type of a primitive or defined constant.  Result is
-   * not fresh.
-   */
-  function lookupType(name) {
-    if (constantTypes.hasOwnProperty(name)) {
-      return constantTypes[name];
-    } else if (isDefinedByCases(name)) {
-      return definedTypes[name];
-    } else if (isDefined(name)) {
-      return findType(getDefinition(name).getRight());
-    } else {
-      throw new TypeCheckError('Cannot find type for: ' + name);
-    }
-  }
-
-  function isGeneric(v) {
-    return !occursInList(v, nonGenerics);
-  }
-
-  return analyze1(expr);
-}
-
-function isIntegerLiteral(name) {
-  return name.match(/^-?[0-9]+$/);
-}
-
-/**
- * Assumes "type" is dereferenced.
- */
-function occursInList(type, types) {
-  for (var i = 0; i < types.length; i++) {
-    if (occursInType(type, types[i])) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- *
- * Assumes type1 is dereferenced.
- */
-function occursInType(type1, type2) {
-  var type2 = dereference(type2);
-  if (type2 == type1) {
-    return true;
-  } else if (type2 instanceof TypeOperator) {
-    return occursInList(type1, type2.types);
-  }
-}
-
-function unifyTypes(t1, t2) {
-  var a = dereference(t1);
-  var b = dereference(t2);
-  if (a instanceof TypeVariable) {
-    if (a != b) {
-      if (occursInType(a, b)) {
-        throw new TypeCheckError('recursive unification');
-      }
-      a.instance = b;
-    }
-  } else if (b instanceof TypeVariable) {
-    unifyTypes(b, a);
-  } else if (a instanceof TypeConstant) {
-    if (a !== b) {
-      // Note that this does not permit multiple copies of a constant.
-      throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
-    }
-  } else if (a instanceof TypeOperator && b instanceof TypeOperator) {
-    if (a.name != b.name || a.types.length != b.types.length) {
-      throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
-    }
-    for (var i = 0; i < a.types.length; i++) {
-      unifyTypes(a.types[i], b.types[i]);
-    }
-  } else {
-    throw new TypeCheckError('Not unifiable');
-  }
-}
-
-function dereference(type) {
-  if (type instanceof TypeVariable) {
-    if (type.instance) {
-      type.instance = dereference(type.instance);
-      return type.instance;
-    }
-  }
-  return type;
 }
 
 
