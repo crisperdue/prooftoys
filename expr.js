@@ -2926,17 +2926,6 @@ function TypeVariable(name) {
   }
 }
 
-TypeVariable.prototype.copy = function() {
-  var tp = dereference(this);
-  if (tp instanceof TypeVariable) {
-    return tp;
-  } else if (tp instanceof TypeOperator) {
-    return tp.copy();
-  } else {
-    throw new Error('Not a type expression: ' + tp);
-  }
-};
-
 TypeVariable.prototype.toString = function() {
   return this.instance ? this.instance.toString() : this.name;
 }
@@ -2973,10 +2962,6 @@ function TypeConstant(name) {
 }
 
 $.extend(TypeConstant.prototype, {
-  copy: function() {
-    return this;
-  },
-
   toString: function() {
     return this.name;
   },
@@ -2994,14 +2979,6 @@ function TypeOperator(name, types) {
   this.name = name;
   this.types = types || [];
 }
-
-TypeOperator.prototype.copy = function() {
-  var list = [];
-  for (var i = 0; i < this.types.length; i++) {
-    list.push(this.types[i].copy());
-  }
-  return new TypeOperator(this.name, list);
-};
 
 TypeOperator.prototype.toString = function() {
   var numTypes = this.types.length;
@@ -3027,12 +3004,6 @@ function FunctionType(fromType, toType) {
   this.types = [fromType, toType];
 }
 Toy.extends(FunctionType, TypeOperator);
-
-FunctionType.prototype.copy = function() {
-  return new FunctionType(this.name,
-                          this.types[0].copy(),
-                          this.types[1].copy());
-};
 
 FunctionType.prototype.toString = function() {
   return '(' + this.types[1] + ' ' + this.types[0] + ')';
