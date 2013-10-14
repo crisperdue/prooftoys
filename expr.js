@@ -1557,6 +1557,7 @@ Expr.prototype.searchTerms = function(test, path) {
 };
 
 
+/**
 // Expr
 //
 // Methods defined on expressions, but defined only in the subclasses:
@@ -1767,7 +1768,7 @@ Expr.prototype.searchTerms = function(test, path) {
 // not descend into non-Calls.  Returns the first truthy value found
 // at any level.
 //
-
+*/
 
 //// Var -- variable bindings and references
 
@@ -2907,7 +2908,7 @@ Path.prototype.reverse = function() {
 };
 
 
-//// TYPES
+//// TYPE ANALYSIS
 
 var _counter = 1;
 
@@ -2934,11 +2935,56 @@ TypeVariable.prototype.copy = function() {
   } else {
     throw new Error('Not a type expression: ' + tp);
   }
-}
+};
 
 TypeVariable.prototype.toString = function() {
   return this.instance ? this.instance.toString() : this.name;
 }
+
+/**
+ * The resulting type expression has the same structure as the
+ * input, but all occurrences of each "generic" type variable are
+ * replaced with occurrences of a "fresh" type variable distinct
+ * from all others.
+ *
+ * Note: with only top-level definitions, generic type variables are
+ * exactly those in the types of defined constants, but definitions
+ * in inner scopes can have mixed generic and non-generic type
+ * variables.
+ */
+TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
+  var type = dereference(this);
+  var name = type.name;
+  if (!occursInList(name, nonGenerics)) {
+    if (!mappings.hasOwnProperty(name)) {
+      mappings[name] = new TypeVariable();
+    }
+    return mappings[name];
+  } else {
+    return type;
+  }
+};
+
+/**
+ * Type constant constructor.
+ */
+function TypeConstant(name) {
+  this.name = name;
+}
+
+$.extend(TypeConstant.prototype, {
+  copy: function() {
+    return this;
+  },
+
+  toString: function() {
+    return this.name;
+  },
+
+  fresh: function(mapping, nonGenerics) {
+    return this;
+  }
+});
 
 /**
  * TypeOperator constructor, types is an optional array of type
@@ -2950,12 +2996,12 @@ function TypeOperator(name, types) {
 }
 
 TypeOperator.prototype.copy = function() {
-    var list = [];
-    for (var i = 0; i < this.types.length; i++) {
-      list.push(this.types[i].copy());
-    }
-    return new TypeOperator(this.name, list);
-}
+  var list = [];
+  for (var i = 0; i < this.types.length; i++) {
+    list.push(this.types[i].copy());
+  }
+  return new TypeOperator(this.name, list);
+};
 
 TypeOperator.prototype.toString = function() {
   var numTypes = this.types.length;
@@ -2964,7 +3010,17 @@ TypeOperator.prototype.toString = function() {
     : numTypes == 2
     ? '(' + [this.types[0], this.name, this.types[1]].join(' ') + ')'
     : '(' + this.name + ' ' + this.types.join(' ') + ')';
-}
+};
+
+TypeOperator.prototype.fresh = function(mappings, nonGenerics) {
+  var ptypes = this.types;
+  var freshTypes = [];
+  for (var i = 0; i < ptypes.length; i++) {
+    freshTypes.push(ptypes[i].fresh(mappings, nonGenerics));
+  }
+  return new TypeOperator(this.name, freshTypes);
+};
+
 
 function FunctionType(fromType, toType) {
   TypeOperator.call(this, '->', [fromType, toType]);
@@ -2973,19 +3029,22 @@ function FunctionType(fromType, toType) {
 Toy.extends(FunctionType, TypeOperator);
 
 FunctionType.prototype.copy = function() {
-  var list = [];
-  for (var i = 0; i < this.types.length; i++) {
-    list.push(this.types[i].copy());
-  }
-  return new FunctionType(this.name, list);
+  return new FunctionType(this.name,
+                          this.types[0].copy(),
+                          this.types[1].copy());
 };
 
 FunctionType.prototype.toString = function() {
   return '(' + this.types[1] + ' ' + this.types[0] + ')';
 };
 
-var individual = new TypeOperator('i');
-var boolean = new TypeOperator('o');
+FunctionType.prototype.fresh = function(mappings, nonGenerics) {
+  return new FunctionType(this.types[0].fresh(mappings, nonGenerics),
+                          this.types[1].fresh(mappings, nonGenerics));
+};
+
+var individual = new TypeConstant('i');
+var boolean = new TypeConstant('o');
 
 /**
  * Parse a type string, returning a TypeOperator (type expression).
@@ -3374,11 +3433,11 @@ function findType(expr) {
       if (vars[i] == name) {
         var type = types[i];
         // Return a fresh instance of the variable's type.
-        return fresh(type);
+        return type.fresh({}, nonGenerics);
       }
     }
     if (isConstant(name)) {
-      return fresh(lookupType(name));
+      return lookupType(name).fresh({}, nonGenerics);
     } else {
       // Free variable: not constant, not defined.
       // Like handling of a variable binding, but scope is the remainder
@@ -3389,54 +3448,6 @@ function findType(expr) {
       nonGenerics.unshift(varType);
       return varType;
     }
-  }
-
-  /**
-   * The resulting type expression has the same structure as the
-   * input, but all occurrences of each "generic" type variable are
-   * replaced with occurrences of a "fresh" type variable distinct
-   * from all others.
-   *
-   * Note: with only top-level definitions, generic type variables are
-   * exactly those in the types of defined constants, but definitions
-   * in inner scopes can have mixed generic and non-generic type
-   * variables.
-   */
-  function fresh(type) {
-    // Maps TypeVariable names to TypeVariables.
-    var mappings = {};
-
-    function fresh1(tp) {
-      var type = dereference(tp);
-      if (type instanceof TypeVariable) {
-        var name = type.name;
-        if (isGeneric(name)) {
-          if (!mappings.hasOwnProperty(name)) {
-            mappings[name] = new TypeVariable();
-          }
-          return mappings[name];
-        } else {
-          return type;
-        }
-      } else if (type instanceof TypeOperator) {
-        var ptypes = type.types;
-        var freshTypes = [];
-        for (var i = 0; i < ptypes.length; i++) {
-          freshTypes.push(fresh1(ptypes[i]));
-        }
-        if (type instanceof FunctionType) {
-          return new FunctionType(freshTypes[0], freshTypes[1]);
-        } else {
-          // Implementation note: this does not specialize by type.
-          // TODO: Make "fresh" into a method.
-          return new TypeOperator(type.name, freshTypes);
-        }
-      } else {
-        throw new TypeCheckError('Bad type: ' + type);
-      }
-    }
-
-    return fresh1(type);
   }
 
   /**
@@ -3501,8 +3512,13 @@ function unifyTypes(t1, t2) {
       }
       a.instance = b;
     }
-  } else if (a instanceof TypeOperator && b instanceof TypeVariable) {
+  } else if (b instanceof TypeVariable) {
     unifyTypes(b, a);
+  } else if (a instanceof TypeConstant) {
+    if (a !== b) {
+      // Note that this does not permit multiple copies of a constant.
+      throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
+    }
   } else if (a instanceof TypeOperator && b instanceof TypeOperator) {
     if (a.name != b.name || a.types.length != b.types.length) {
       throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
