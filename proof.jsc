@@ -252,7 +252,7 @@ function ProofEditor() {
   @mainControl.selectionChanged = function() {
     // Forces full display of the appropriate inference rules for
     // the new selection.
-    self.stepEditor.reset();
+    self.stepEditor.ruleSelector.reset();
   };
 
   // TODO: Consider creating the step editor from the proof editor
