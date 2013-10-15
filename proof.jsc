@@ -300,7 +300,7 @@ function ProofEditor() {
   // Clicks in arbitrary areas of the document remove any selection.
   // And clear any proof errors field.
   $(document).on('click', function(event) {
-    if ($(event.target).closest('.proofDisplay').length == 0) {
+    if ($(event.target).closest('.proofContainer').length == 0) {
       // Not in a ProofControl's area.
       @mainControl.deselectStep();
       @mainControl.selectionChanged();
