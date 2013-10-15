@@ -1593,10 +1593,10 @@ function renderInference(step) {
   var prefix = '';
   var stepNum = step.stepNumber;
   if (stepNum) {
-    // The stepNum could be a nonempty string, or undefined.
-    // This looks like the only part affected by the step being
-    // renderable (or not).
-    var match = stepNum.match(/(.*?)([0-9]+)$/);
+    // The stepNum could be a nonempty string, or undefined, or a
+    // numeric ordinal.  This looks like the only part affected by the
+    // step being renderable (or not).
+    var match = String(stepNum).match(/(.*?)([0-9]+)$/);
     if (match) {
       prefix = match[1] + (match[2] - 1) + '.';
     }
@@ -2020,6 +2020,11 @@ function addBottomPanel($node) {
 }
 
 
+//// Settable parameters
+
+Toy.showOrdinals = false;
+
+
 //// Export public names.
 
 Toy.dom = dom;
@@ -2030,7 +2035,6 @@ Toy.stepSites = stepSites;
 Toy.proofToyState = proofToyState;
 Toy.ProofEditor = ProofEditor;
 Toy.ProofControl = ProofControl;
-Toy.showOrdinals = false;
 Toy.renderInference = renderInference;
 Toy.renderProof = renderProof;
 Toy.addBottomPanel = addBottomPanel;
