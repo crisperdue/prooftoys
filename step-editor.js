@@ -87,6 +87,8 @@ var siteTypes = {
  * form: jQuery SPAN to hold the argument input form.
  * proofControl: ProofControl to edit
  * controller: ProofEditor containing this StepEditor.
+ * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
+ * lastRuleSteps: Steps used by last execution of tryRule.
  */
 function StepEditor(controller) {
   // Make this available to all inner functions.
@@ -94,6 +96,8 @@ function StepEditor(controller) {
 
   self.controller = controller;
   self.proofControl = controller.proofControl;
+  self.lastRuleTime = 0;
+  self.lastRuleSteps = 0;
 
   // Create a DIV with the step editor content.
   var div = $('<div class=stepEditor style="clear: both"></div>');
@@ -111,6 +115,9 @@ function StepEditor(controller) {
 
   self.form = $('<span class=sted-form></span>');
   div.append(self.form);
+  div.append('<div class="ruleStats invisible">Last rule ' +
+             '<span class=ruleTime></span> msec, ' +
+             '<span class=ruleSteps></span> steps</div>');
   // TODO: add more content here: div.append('<div>Hello World</div>');
   self.jq = div;
 
@@ -358,6 +365,8 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
  */
 StepEditor.prototype.tryRule = function(rule, args) {
   var result = null;
+  var startTime = Date.now();
+  var startSteps = Toy.getStepCounter();
   try {
     if (Toy.profileName) {
       // Collect CPU profiling information.
@@ -371,13 +380,18 @@ StepEditor.prototype.tryRule = function(rule, args) {
     if (Toy.profileName) {
       console.profileEnd();
     }
+    this.lastRuleTime = Date.now() - startTime;
+    this.lastRuleSteps = Toy.getStepCounter() - startSteps;
+    this.jq.find('.ruleStats').toggleClass('invisible', false);
+    this.jq.find('.ruleTime').text(Math.ceil(this.lastRuleTime));
+    this.jq.find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
   }
   if (!result || result.rendering) {
     // If there is already a rendering, Expr.justify must have found
     // that the "new" step was identical to one of its dependencies,
     // so don't try to add it.  The implementation only currently
     // supports one render per step anyway.
-    this.report('Nothing to do');
+    this.report('nothing done');
   } else {
     this.proofControl.addStep(result);
     this.proofControl.deselectStep();

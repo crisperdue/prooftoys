@@ -215,7 +215,7 @@ span#leftNav {
 
 /* Header line and comments for display. */
 .proofHeader {
-    margin: 1em 0em .5em;
+    margin: 0em 0em 1em .5em;
     line-height: 120%;
 }
 
@@ -291,6 +291,14 @@ span#leftNav {
 /* If in a step with open subproof display or in a subproof, show it. */
 .proofStep.hasSubproof .subproofHider, .proofHeader .subproofHider {
   visibility: visible;
+}
+
+/* Time and step count statistics for proof or step. */
+.ruleStats {
+  margin-left: 2em;
+  font-size: smaller;
+  font-style: italic;
+  color: gray;
 }
 
 /* Hovering or selecting this will override the border color. */

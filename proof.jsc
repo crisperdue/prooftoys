@@ -1648,9 +1648,9 @@ function renderProof(step, where, millis, nSteps) {
   var renderTime = Math.ceil(new Date().getTime() - startRender);
   var stats = '';
   if (millis != null) {
-    stats = '<i style="font-size:smaller; color:gray">Proof '
+    stats = '<span class=ruleStats>Proof '
       + Math.ceil(millis) + ' msec, rendering '
-      + renderTime + ' msec, ' + nSteps + ' steps</i>';
+      + renderTime + ' msec, ' + nSteps + ' steps</span>';
     where.append('<div class=proofHeader>' + stats + '</div>');
   }
   where.append($(controller.node));
