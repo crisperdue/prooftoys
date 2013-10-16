@@ -838,10 +838,10 @@ var testCase = {
     var step1 = rules.axiomCommutativePlus();
     check('(h & h1)', step1, 'R x');
     check('(h2 & h)', step1, 'R y');
-    var h3 = rules.assume('p');
-    var step2 = rules.prependStepHyps(step1, h3);
-    check('((h & h2) & h1)', step2, 'p');
-    check('((h3 & h) & h1)', step2, 'R x');
+
+    var step2 = rules.axiomAssociativePlus();
+    check('((h & h2) & h1)', step2, 'R x');
+    check('((h3 & h) & h1)', step2, 'R y');
   },
 
   testHypMover: function() {
@@ -857,11 +857,11 @@ var testCase = {
     check('(((h1 & h) & h3) = ((h1 & h3) & h))',
           step1, 'R y');
     var h3 = rules.assume('p');
-    var step2 = rules.prependStepHyps(step1, h3);
+    var step2 = rules.appendStepHyps(step1, h3);
     check('((((h & h2) & h3) & h4) = (((h2 & h3) & h4) & h))',
-          step2, 'p');
-    check('((((h1 & h) & h3) & h4) = (((h1 & h3) & h4) & h))',
           step2, 'R x');
+    check('((((h1 & h) & h3) & h4) = (((h1 & h3) & h4) & h))',
+          step2, 'R y');
   },
 
   testMergedHypotheses: function() {

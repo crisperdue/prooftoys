@@ -2130,6 +2130,15 @@ var ruleInfo = {
       h_c = rules.appendStepHyps(h_c, h_equation);
       h_equation = rules.prependStepHyps(h_equation, h_c_arg);
 
+      // Normalize the hypotheses, but only if there is really
+      // something to merge.  This detects that both inputs have been
+      // transformed.
+      if (h_c != h_c_arg && h_equation != h_equation_arg) {
+        var merger = rules.conjunctionsMerger(h_c.getLeft());
+        h_c = rules.r(merger, h_c, '/left');
+        h_equation = rules.r(merger, h_equation, '/left');
+      }
+
       // Now both wffs are implications with the same LHS.  Call it "h".
       var h = h_equation.getLeft();
       if (!h_c.hasHyps) {
@@ -2229,11 +2238,8 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  // Simplify (h1 & h2) ==> p
-	  var step4 = rules.conjunctionsMerger(step2.locate('/left'));
-	  var step5 = rules.r(step4, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
-	  return (step5.asHyps()
+	  return (step2.asHyps()
                   .justify('appendStepHyps', arguments, [target, hypStep]));
 	} else {
 	  // The target does not have hyps.
@@ -2244,7 +2250,7 @@ var ruleInfo = {
 	  var step1 = rules.tautInst('p ==> (h2 ==> p)', subst);
 	  var step2 = rules.modusPonens(target, step1);
           // Rendering of result needs hypStep rendered, so include it as dep.
-          return (step2.asHyps()
+          return (rules.asHypotheses(step2)
                   .justify('appendStepHyps', arguments, [target, hypStep]));
 	}
       } else {
@@ -2263,10 +2269,6 @@ var ruleInfo = {
   // Prefix hypotheses from the hypStep to the target step.  Often
   // used together with appendStepHyps.  If hypStep has no hypotheses,
   // the result is simply the target step.
-  //
-  // TODO: Combine this and appendStepHyps into one rule.  Consider a
-  //   rule that derives (H ==> step1rhs) & (H ==> step2rhs) from
-  //   step1 and step2.  H will be the merger of the hypotheses.
   prependStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
@@ -2285,11 +2287,8 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
-	  // Simplify (h1 & h2) ==> p
-          var pattern = rules.conjunctionsMerger(step2.getLeft());
-          var step5 = rules.r(pattern, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
-          return (step5.asHyps()
+          return (rules.asHypotheses(step2)
                   .justify('prependStepHyps', arguments, [target, hypStep]));
 	} else {
 	  var subst = {
@@ -5119,6 +5118,7 @@ Toy.addTheorem = addTheorem;
 Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
 Toy.getStatement = getStatement;
+Toy.convertAndReplace = convertAndReplace;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
