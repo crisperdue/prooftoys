@@ -2778,21 +2778,25 @@ var ruleInfo = {
     action: function(expr, less) {
       expr.assertCall2('&');
       var eqn = rules.eqSelf(expr);
-      while (eqn.getRight().getLeft().isCall2('&')) {
-	// The left chain has at least 2 elements.
-	var eqn1 = rules.mergeRight(eqn);
-	var chain2 = eqn1.locate('/right/right');
-	var eqn3 = rules.bubbleLeft(chain2, less);
-	eqn = rules.r(eqn3, eqn1, '/right/right');
+      if (expr.getRight().isCall2('&')) {
+        // The right chain is nontrivial, combine the chains.
+        while (eqn.getRight().getLeft().isCall2('&')) {
+	  // The left chain has at least 2 elements.
+	  var eqn1 = rules.mergeRight(eqn);
+	  var chain2 = eqn1.locate('/right/right');
+	  var eqn3 = rules.bubbleLeft(chain2, less);
+	  eqn = rules.r(eqn3, eqn1, '/right/right');
+        }
+        // Always simplify at least once since the RHS is assumed to be
+        // made of two chains.  This time the first chain will disappear
+        // as its one element moves to the second chain.
+        eqn = rules.mergeRight(eqn);
+        var chain2 = eqn.getRight();
+      } else {
+        var chain2 = expr;
       }
-      // Always simplify at least once since the RHS is assumed to be
-      // made of two chains.  This time the first chain will disappear
-      // as its one element moves to the second chain.
-      var eqn1 = rules.mergeRight(eqn);
-      var chain2 = eqn1.getRight();
       var eqn3 = rules.bubbleLeft(chain2, less);
-      eqn = rules.r(eqn3, eqn1, '/right');
-      return eqn;
+      return rules.r(eqn3, eqn, '/right');
     },
   },
 
@@ -3353,7 +3357,10 @@ var ruleInfo = {
       var step6 = rules.eqSelf(Toy.parse('x / y'));
       var step7 = rules.apply(step6, '/left');
       var step8 = rules.replace(step7, step5, '/main/right/arg')
-      return step8.justify('divisionType');
+      // TODO: Normalize the assumptions automatically, not by hand.
+      var step9 = rules.rewrite(step8, '/left',
+                                rules.tautology('a & (b & c) == c & a & b'));
+      return step9.justify('divisionType');
     },
     form: '',
     hint: 'theorem R (x / y)',

@@ -922,7 +922,7 @@ var testCase = {
       assertEqual(expected, actual);
     }
     check('(x & y)', 'y & x');
-    check('(y & z)', 'z & y & z');
+    check('(y & z)', 'y & z & z');
     check('((x & y) & z)', 'x & (y & z)');
     check('((p x) & (p y))', 'p x & p y');
 
@@ -1891,7 +1891,7 @@ var testCase = {
   },
 
   testDivisionType: function() {
-    assertEqual('(((R x) & ((R y) & (y != 0))) ==> (R (x / y)))',
+    assertEqual('((((y != 0) & (R x)) & (R y)) ==> (R (x / y)))',
                 rules.divisionType());
   },
 
