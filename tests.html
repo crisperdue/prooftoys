@@ -914,11 +914,11 @@ var testCase = {
     assert(compare(l2, x) < 0);
   },
 
-  testMergeConjunctions: function() {
+  testConjunctionsMerger: function() {
     var rules = Toy.rules;
     function check(expected, input) {
       var expr = typeof input == 'string' ? Toy.parse(input) : input;
-      var actual = rules.mergeConjunctions(expr).getRight();
+      var actual = rules.conjunctionsMerger(expr).getRight();
       assertEqual(expected, actual);
     }
     check('(x & y)', 'y & x');

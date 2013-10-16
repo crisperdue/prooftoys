@@ -2118,7 +2118,7 @@ var ruleInfo = {
         // step1 had hypotheses.
         var taut = rules.tautology('a ==> (b ==> c) ==> (a & b ==> c)');
         var step2 = rules.forwardChain(step1, taut);
-        var step3 = rules.mergeConjunctions(step2.getLeft());
+        var step3 = rules.conjunctionsMerger(step2.getLeft());
         var result = rules.r(step3, step2, '/left')
           .apply('asHypotheses');
         
@@ -2230,7 +2230,7 @@ var ruleInfo = {
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
 	  // Simplify (h1 & h2) ==> p
-	  var step4 = rules.mergeConjunctions(step2.locate('/left'));
+	  var step4 = rules.conjunctionsMerger(step2.locate('/left'));
 	  var step5 = rules.r(step4, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
 	  return (step5.asHyps()
@@ -2286,7 +2286,7 @@ var ruleInfo = {
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
 	  // Simplify (h1 & h2) ==> p
-          var pattern = rules.mergeConjunctions(step2.getLeft());
+          var pattern = rules.conjunctionsMerger(step2.getLeft());
           var step5 = rules.rewrite(step2, '/left', pattern);
           // Rendering of result needs hypStep rendered, so include it as dep.
           return (step5.asHyps()
@@ -2773,7 +2773,7 @@ var ruleInfo = {
     },
   },
 
-  // Internal rule for mergeConjunctions, with a comparator parameter.
+  // Internal rule for conjunctionsMerger, with a comparator parameter.
   mergeConj: {
     action: function(expr, less) {
       expr.assertCall2('&');
@@ -2804,11 +2804,11 @@ var ruleInfo = {
   // conjunctions, derive an equation that has the input as its LHS
   // and as its RHS has conjuncts ordered by sourceStepLess, with
   // duplicates eliminated.
-  mergeConjunctions: {
+  conjunctionsMerger: {
     action: function(expr) {
       // TODO: Consider whether this line needs to use Toy.hypIsless.
       var result = rules.mergeConj(expr, Toy.sourceStepLess);
-      return result.justify('mergeConjunctions', arguments);
+      return result.justify('conjunctionsMerger', arguments);
     },
     inputs: {term: 1},
     // Too technical to expose for most users.
