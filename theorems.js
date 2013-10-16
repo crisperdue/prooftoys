@@ -4956,8 +4956,7 @@ function applyFactsToRhs(step, facts) {
 function convertAndReplace(step, path, fn) {
   var eqn1 = rules.considerPart(step, path);
   var eqn2 = fn(eqn1);
-  return rules.replace(eqn2, step, path)
-    .justify('convertAndReplace', arguments, step);
+  return rules.replace(eqn2, step, path);
 }
 
 /**
