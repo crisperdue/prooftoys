@@ -467,15 +467,6 @@ var testCase = {
     assertEqual('{x: true}', Toy.debugString(map));
   },
 
-  testSubst: function() {
-    var target = Toy.parse('x = ({x. x} x)');
-    assertEqual('(y = ({x. x} y))', target.subst(y, x));
-    // Result is exactly the input where there are no occurrences.
-    assert(target === target.subst(z, y));
-    assert(target.locate('/right/fn')
-             === target.subst(y, x).locate('/right/fn'));
-  },
-
   testCopy: function() {
     var source = '(x = x)';
     var target = Toy.parse(source);
@@ -1517,9 +1508,9 @@ var testCase = {
     inf = Toy.rules.evalBool(Toy.parse('(p (F | T))'));
     assertEqual('((p (F | T)) = (p T))', inf);
     taut = Toy.parse('(p ==> not p) ==> not p');
-    inf = Toy.rules.evalBool(taut.subst(T, p, {}));
+    inf = Toy.rules.evalBool(taut.subFree(T, p, {}));
     assertEqual('T', inf.getRight());
-    inf = Toy.rules.evalBool(taut.subst(F, p, {}));
+    inf = Toy.rules.evalBool(taut.subFree(F, p, {}));
     assertEqual('T', inf.getRight());
   },
 

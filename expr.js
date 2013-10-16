@@ -439,9 +439,6 @@ function subFree(replacement_arg, v, target) {
   // from parts of the original expression, for example replacing x
   // with (f x) in an expression containing an (f x).  Used in
   // avoiding capture of free variables.
-  //
-  // TODO: Instead of duplicating this bit of structure, note
-  // replacement sites and 
   var replacement = replacement_arg.dup();
   var allNames = {};
   replacement._addNames(allNames);
@@ -1833,10 +1830,6 @@ Var.prototype.dump = function() {
   return this.name;
 }
 
-Var.prototype.subst = function(replacement, name) {
-  return (name == this.name ? replacement : this);
-};
-
 Var.prototype._subFree = function(replacement, name, freeNames, allNames) {
   return (name == this.name ? replacement : this);
 };
@@ -2007,14 +2000,6 @@ Call.prototype._toString = function() {
 
 Call.prototype.dump = function() {
   return '(' + this.fn.dump() + ' ' + this.arg.dump() + ')';
-};
-
-Call.prototype.subst = function(replacement, name) {
-  var fn = this.fn.subst(replacement, name);
-  var arg = this.arg.subst(replacement, name);
-  return (fn == this.fn && arg == this.arg
-          ? this
-          : new Call(fn, arg));
 };
 
 Call.prototype._subFree = function(replacement, name, freeNames, allNames) {
@@ -2330,17 +2315,6 @@ Lambda.prototype._toString = function() {
 
 Lambda.prototype.dump = function() {
   return '{' + this.bound.dump() + '. ' + this.body.dump() + '}';
-};
-
-Lambda.prototype.subst = function(replacement, name) {
-  if (this.bound.name != name) {
-    var body = this.body.subst(replacement, name);
-    return (body == this.body
-            ? this
-            : new Lambda(this.bound, body));
-  } else {
-    return this;
-  }
 };
 
 Lambda.prototype._subFree = function(replacement, name, freeNames, allNames) {
