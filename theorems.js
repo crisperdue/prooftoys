@@ -379,7 +379,7 @@ var ruleInfo = {
       });
       var lambdaExpr = call.fn;
       var result =
-        equal(call, Toy.subFree(call.arg, lambdaExpr.bound, lambdaExpr.body));
+        equal(call, lambdaExpr.body.subFree(call.arg, lambdaExpr.bound));
       // Always make sure the call has a type.  It came from elsewhere.
       Toy.findType(call);
       return rules.assert(result).justify('axiom4', [call]);
@@ -719,7 +719,7 @@ var ruleInfo = {
              'New bound variable ' + newVar.name + ' must not occur free.',
              step);
       var changed = lambda(newVar,
-                           Toy.subFree(newVar, target.bound, target.body));
+                           target.body.subFree(newVar, target.bound));
       var step1 = rules.eqSelf(changed);
       var step2 = rules.r(step1, step, path);
       return step2.justify('changeVar', arguments, [step]);
@@ -1560,15 +1560,15 @@ var ruleInfo = {
             if (wff instanceof Toy.Call && wff.fn instanceof Toy.Call
                 && wff.fn.fn instanceof Toy.Var && wff.fn.fn.name == '=') {
               // WFF is already an equation.
-              var step1 = rules.tautology(Toy.subFree(T, name, wff));
-              var step2 = rules.tautology(Toy.subFree(F, name, wff));
+              var step1 = rules.tautology(wff.subFree(T, name));
+              var step2 = rules.tautology(wff.subFree(F, name));
               var step3 = rules.equationCases(step1, step2, name);
               var result = step3.justify('tautology', arguments);
               _tautologies[key] = result;
               return result;
             } else {
-              var step1 = rules.tautology(equal(T, Toy.subFree(T, name, wff)));
-              var step2 = rules.tautology(equal(T, Toy.subFree(F, name, wff)));
+              var step1 = rules.tautology(equal(T, wff.subFree(T, name)));
+              var step2 = rules.tautology(equal(T, wff.subFree(F, name)));
               var step3 = rules.equationCases(step1, step2, name);
               var step4 = rules.fromTIsA(step3);
               var result = step4.justify('tautology', arguments);

@@ -490,14 +490,14 @@ var testCase = {
     var v = varify('v');
     var target = call(lambda(v, v), x);
     // Now substitute in 'a different v':
-    var result = Toy.subFree(varify('v'), x, target);
+    var result = target.subFree(varify('v'), x);
     // We see that it replaces just the free occurrence.
     assertEqual('({v. v} v)', result.toString());
     // A case where decapturing is needed.
-    result = Toy.subFree(y, x, Toy.parse('{y. x} x'));
+    result = Toy.parse('{y. x} x').subFree(y, x);
     assertEqual('({x_1. y} y)', result);
     // A very similar case where it is not needed.
-    result = Toy.subFree(y, x, Toy.parse('{y. T} x'));
+    result = Toy.parse('{y. T} x').subFree(y, x);
     assertEqual('({y. T} y)', result);
   },
 

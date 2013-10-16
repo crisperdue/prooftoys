@@ -423,38 +423,6 @@ function getStepCounter() {
 }
 
 /**
- * Returns a new expression resulting from substitution of copies of
- * the replacement expression for all free occurrences of the given
- * name (or variable) in the target expression.  Used by Axiom 4
- * (lambda conversion).  Also renames bound variables in the target to
- * prevent them from capturing variables in the replacement.
- */
-function subFree(replacement_arg, v, target) {
-  var name = v instanceof Var ? v.name : v;
-  if (replacement_arg instanceof Var && replacement_arg.name == name) {
-    // No changes required.
-    return target;
-  }
-  // Always replace with a new object so we can detect it as different
-  // from parts of the original expression, for example replacing x
-  // with (f x) in an expression containing an (f x).  Used in
-  // avoiding capture of free variables.
-  var replacement = replacement_arg.dup();
-  var allNames = {};
-  replacement._addNames(allNames);
-  target._addNames(allNames);
-  var result =
-    target._subFree(replacement, name, replacement.freeNames(), allNames);
-  // Now put back the original structure wherever it has been replaced.
-  if (result == replacement) {
-    return replacement_arg;
-  } else {
-    result._smashAll(replacement, replacement_arg);
-    return result;
-  }
-}
-
-/**
  * Returns the name given if it is not in existingNames, a set with
  * name strings as keys.  Otherwise returns a generated name with the
  * same "base" as the one given, and not in existingNames.  The base
@@ -484,7 +452,7 @@ function genVar(name, existingNames) {
  * that have the same name as a free variable of the replacement.  It
  * makes them distinct from all variables appearing in either
  * expression.  After decapturing, straightforward substitution is
- * safe from capturing.
+ * safe from capturing.  Unused, also its helper methods.
  */
 function decapture(target, replacement) {
   var freeNames = replacement.freeNames();
@@ -893,10 +861,35 @@ Expr.prototype.alphaMatch = function(expr_arg) {
 Expr.prototype.findSubst = Expr.prototype.matchSchema;
 
 /**
- * Subfree function as a method on the target.
+ * Returns a new expression resulting from substitution of copies of
+ * the replacement expression for all free occurrences of the given
+ * name (or variable) in this expression.  Used by Axiom 4
+ * (lambda conversion).  Also renames bound variables in the target to
+ * prevent them from capturing variables in the replacement.
  */
-Expr.prototype.subFree = function(replacement, vbl) {
-  return subFree(replacement, vbl, this);
+Expr.prototype.subFree = function(replacement_arg, v) {
+  var name = v instanceof Var ? v.name : v;
+  if (replacement_arg instanceof Var && replacement_arg.name == name) {
+    // No changes required.
+    return this;
+  }
+  // Always replace with a new object so we can detect it as different
+  // from parts of the original expression, for example replacing x
+  // with (f x) in an expression containing an (f x).  Used in
+  // avoiding capture of free variables.
+  var replacement = replacement_arg.dup();
+  var allNames = {};
+  replacement._addNames(allNames);
+  this._addNames(allNames);
+  var result =
+    this._subFree(replacement, name, replacement.freeNames(), allNames);
+  // Now put back the original structure wherever it has been replaced.
+  if (result == replacement) {
+    return replacement_arg;
+  } else {
+    result._smashAll(replacement, replacement_arg);
+    return result;
+  }
 };
 
 /**
@@ -4423,7 +4416,6 @@ Toy.Call = Call;
 Toy.Lambda = Lambda;
 Toy.Path = Path;
 
-Toy.subFree = subFree;
 Toy.genVar = genVar;
 Toy.normalized = normalized
 Toy.decapture = decapture;
