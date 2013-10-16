@@ -2287,7 +2287,7 @@ var ruleInfo = {
 	  var step2 = rules.modusPonens(step, step1);
 	  // Simplify (h1 & h2) ==> p
           var pattern = rules.conjunctionsMerger(step2.getLeft());
-          var step5 = rules.rewrite(step2, '/left', pattern);
+          var step5 = rules.r(pattern, step2, '/left');
           // Rendering of result needs hypStep rendered, so include it as dep.
           return (step5.asHyps()
                   .justify('prependStepHyps', arguments, [target, hypStep]));
