@@ -392,6 +392,21 @@ TermMap.prototype.set = function(term, name) {
 
 // Utilities
 
+// String that matches identifiers, used in both tokenizing and
+// determining categories of names for display.
+// Initial "$" is supported for system-generated names.
+var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
+
+// Names matching this regex are identifiers.
+// The trailing "$" ensures that the entire name is matched.
+var identifierRegex = new RegExp('^' + identifierPattern + '$');
+
+// Variables in particular, not including identifiers for constants.
+var variableRegex = /^[a-z][0-9_]*$|^_/;
+
+// Numeric literals.
+var numeralRegex = /^-?[0-9]+$/;
+
 /**
  * Is the given string a legal variable name?  Only names with a
  * single lower-case letter and then a sequences of digits and/or
@@ -402,7 +417,7 @@ function isVariable(name) {
   assert(typeof name == 'string', function() {
     return 'isVariable - name must be a string: ' + name;
   });
-  return name.match(/^[a-z][0-9_]*$|^_/);
+  return name.match(variableRegex);
 }
 
 /**
@@ -614,15 +629,6 @@ Expr.prototype.isConst = function() {
   return this instanceof Var && isConstant(this.name);
 };
 
-// String that matches identifiers, used in both tokenizing and
-// determining categories of names for display.
-// Initial "$" is supported for system-generated names.
-var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
-
-// Names matching this regex are identifiers.
-// The trailing "$" ensures that the entire name is matched.
-var identifierRegex = new RegExp('^' + identifierPattern + '$');
-
 // True iff the expression is a literal constant.
 Expr.prototype.isLiteral = function() {
   return this instanceof Var && this.value !== undefined;
@@ -637,7 +643,7 @@ function isIdentifier(str) {
 }
 
 function isIntegerLiteral(name) {
-  return name.match(/^-?[0-9]+$/);
+  return name.match(numeralRegex);
 }
 
 /**
