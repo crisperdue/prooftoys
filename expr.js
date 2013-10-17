@@ -1808,19 +1808,17 @@ Expr.prototype.searchTerms = function(test, path) {
 function Var(name, position) {
   // Expr.call(this);
   this.memos = {};
+  this.name = name;
+  this.pname = null;
+  this._value = undefined;
+  this.pos = position;
   if (aliases.hasOwnProperty(name)) {
     this.pname = name;
     this.name = aliases[name];
-  } else {
-    this.name = name;
-    if (isIntegerLiteral(name)) {
-      this._value = parseInt(name);
-    } else if (name.charAt(0) === '"') {
-      this._value = parseStringContent(name);
-    }
-  }
-  if (position != null) {
-    this.pos = position;
+  } else if (isIntegerLiteral(name)) {
+    this._value = parseInt(name);
+  } else if (name.charAt(0) === '"') {
+    this._value = parseStringContent(name);
   }
 };
 Toy.extends(Var, Expr);
