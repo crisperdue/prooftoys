@@ -3265,8 +3265,8 @@ var ruleInfo = {
   axiomArithmetic: {
     action: function(term) {
       if (term.isInfixCall()) {
-	var left = Toy.checkNumber(term.getLeft().value);
-	var right = Toy.checkNumber(term.getRight().value);
+	var left = term.getLeft().getNumValue();
+	var right = term.getRight().getNumValue();
 	var op = term.getBinOp().name;
 	var value;
 	switch(op) {
@@ -3300,7 +3300,7 @@ var ruleInfo = {
         return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else if (term instanceof Toy.Call) {
-        var arg = Toy.checkNumber(term.arg.value);
+        var arg = term.arg.getNumValue();
         var op = term.fn;
         assert(op instanceof Toy.Var,
                function() { return 'Unsupported operator: ' + op; });

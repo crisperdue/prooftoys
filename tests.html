@@ -320,7 +320,7 @@ var testCase = {
     assertEqual('(,=>,x,*,),(end)', result.toString());
     result = Toy.tokenize('f "as\\"df" 2');
     assertEqual('f,"as\\"df",2,(end)', result.toString());
-    assertEqual('as"df', result[1].value);
+    assertEqual('as"df', result[1].getStringValue());
   },
 
   testParse: function() {
@@ -340,15 +340,15 @@ var testCase = {
     result = Toy.parse('a ==> a & c');
     assertEqual('(a ==> (a & c))', result);
     // Numbers
-    assertEqual(42, Toy.parse('42').value);
+    assertEqual(42, Toy.parse('42').getNumValue());
     var expr = Toy.parse('x + 103');
-    assertEqual(103, expr.getRight().value);
-    assertEqual(undefined, expr.getLeft().value);
+    assertEqual(103, expr.getRight().getNumValue());
+    throws(function() { expr.getLeft().getNumValue(); });
     // Strings
     var expr = Toy.parse('f "asdf"')
-    assertEqual('"asdf"', expr.getRight().name);
+    assertEqual('"asdf"', expr.arg.name);
     var expr = Toy.parse('f "as\\"df"');
-    assertEqual('"as\\"df"', expr.getRight().name);
+    assertEqual('"as\\"df"', expr.arg.name);
     assertEqual(8, expr.getRight().name.length);
   },
 
@@ -956,10 +956,11 @@ var testCase = {
 
   // UTILITIES
 
-  testCheckNumber: function() {
-    assertEqual(42, Toy.checkNumber(42));
+  testGetNumValue: function() {
+    var n = Toy.parse('42');
+    assertEqual(42, n.getNumValue());
     try {
-      Toy.checkNumber('42');
+      T.getNumValue();
       Y.Assert.fail('Should throw');
     } catch(e) {}
   },

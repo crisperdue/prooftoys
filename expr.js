@@ -402,7 +402,9 @@ var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
 var identifierRegex = new RegExp('^' + identifierPattern + '$');
 
 // Variables in particular, not including identifiers for constants.
-var variableRegex = /^[a-z][0-9_]*$|^_/;
+// The "." and ":" provide for extension with bound variable unique
+// identifiers and type signatures.
+var variableRegex = /^[a-z][0-9_]*([.:]|$)|^_/;
 
 // Numeric literals.
 var numeralRegex = /^-?[0-9]+$/;
@@ -635,7 +637,7 @@ Expr.prototype.isConst = function() {
 
 // True iff the expression is a literal constant.
 Expr.prototype.isLiteral = function() {
-  return this instanceof Var && this.value !== undefined;
+  return this instanceof Var && this._value !== undefined;
 }
 
 /**
@@ -664,14 +666,51 @@ Expr.prototype.displaysIdentifier = function() {
  * Is this a numeric literal?
  */
 Expr.prototype.isNumeral = function() {
-  return this instanceof Var && typeof this.value == 'number';
+  return this instanceof Var && typeof this._value == 'number';
 };
+
+/**
+ * Check that the given value is numeric, raise an error if not,
+ * return the value if it is.
+ */
+Expr.prototype.getNumValue = function() {
+  assert(this.isNumeral(), function() {
+      return 'Not a numeral: ' + this;
+    });
+  return this._value;
+}
+
+// JavaScript is defined to use IEEE 64-bit floating point in "round
+// to nearest" mode.  2**53 is confusable with 2**53 + 1, so this is
+// the greatest integer value we "allow".
+var MAX_INT = Math.pow(2, 53) - 1;
+
+/**
+ * Check that the given number is within the range where integer
+ * arithmetic is exact, returning it if so, raising an Error if not.
+ */
+function checkRange(number) {
+  assert(Math.abs(number) <= MAX_INT,
+         function() { return 'Number out of range: ' + number; });
+  return number;
+}
 
 /**
  * Is this a string literal?
  */
 Expr.prototype.isString = function() {
-  return this instanceof Var && typeof this.value == 'string';
+  return this instanceof Var && typeof this._value == 'string';
+};
+
+/**
+ * Return the string value of a string literal.  Throws if not
+ * a string literal.
+ */
+Expr.prototype.getStringValue = function() {
+  assert(this.isString(), function() {
+      return 'Not a string literal: ' + this;
+    });
+  return this._value;
 };
 
 /**
@@ -1775,9 +1814,9 @@ function Var(name, position) {
   } else {
     this.name = name;
     if (isIntegerLiteral(name)) {
-      this.value = parseInt(name);
+      this._value = parseInt(name);
     } else if (name.charAt(0) === '"') {
-      this.value = parseStringContent(name);
+      this._value = parseStringContent(name);
     }
   }
   if (position != null) {
@@ -3326,32 +3365,6 @@ var definitions = {
 };
 
 /**
- * Check that the given value is numeric, raise an error if not,
- * return the value if it is.
- */
-function checkNumber(number) {
-  assert(typeof number === 'number', function() {
-      return 'Not a number: ' + number;
-    });
-  return number;
-}
-
-// JavaScript is defined to use IEEE 64-bit floating point in "round
-// to nearest" mode.  2**53 is confusable with 2**53 + 1, so this is
-// the greatest integer value we "allow".
-var MAX_INT = Math.pow(2, 53) - 1;
-
-/**
- * Check that the given number is within the range where integer
- * arithmetic is exact, returning it if so, raising an Error if not.
- */
-function checkRange(number) {
-  assert(Math.abs(number) <= MAX_INT,
-         function() { return 'Number out of range: ' + number; });
-  return number;
-}
-
-/**
  * Add a simple abbreviation-like definition, e.g.
  * define('forall', equal(lambda(x, T))).  Returns the equation.
  */
@@ -3791,7 +3804,7 @@ function getPrecedence(token) {
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
-    return (token.value == null && !isIdentifier(name)
+    return (!token.isLiteral() && !isIdentifier(name)
             // It's written as an operator, give it the default precedence.
             ? 40
             : 100);
@@ -4331,7 +4344,7 @@ function decodeSteps(input) {
         return;
       }
       var stepInfo = stepTerm.asArray();
-      assert(stepInfo.shift().value == i, function() {
+      assert(stepInfo.shift().getNumValue() == i, function() {
           return 'Mismatched step number in: ' + stepInfo;
         });
       var ruleName = stepInfo.shift();
@@ -4352,20 +4365,20 @@ function decodeSteps(input) {
  */
 function decodeArg(info, steps) {
   if (info.isString()) {
-    return (info.value);
+    return (info._value);
   } else {
     var key = info.nth(0).name;
     var value = info.nth(1);
     switch(key) {
       case 's':
         // Step indexes are 1-based.
-        return (steps[value.value - 1]);
+        return (steps[value.getNumValue() - 1]);
         break;
       case 't':
         return (value);
         break;
       case 'path':
-        return (Toy.path(value.value));
+        return (Toy.path(value._value));
         break;
       default:
         assert(false, 'Unknown encoding key: ' + key);
@@ -4424,7 +4437,6 @@ Toy.termify = termify;
 Toy.isConstantName = isConstantName;
 Toy.isVariableName = isVariableName;
 Toy.isIdentifier = isIdentifier;
-Toy.checkNumber = checkNumber;
 Toy.checkRange = checkRange;
 Toy.isDefined = isDefined;
 Toy.isInfixDesired = isInfixDesired;
