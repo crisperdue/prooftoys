@@ -976,11 +976,11 @@ var testCase = {
   // CONSTANTS AND DEFINITIONS
 
   // Actually "proof support" function:
-  testIsConstant: function() {
-    assert(Toy.isConstant('T'));
+  testIsConstantName: function() {
+    assert(Toy.isConstantName('T'));
     assert(T.isConst());
-    assert(Toy.isConstant('==>'));
-    assert(Toy.isConstant('neg'));
+    assert(Toy.isConstantName('==>'));
+    assert(Toy.isConstantName('neg'));
     assert(!equal(x, x).isConst());
   },
 

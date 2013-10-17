@@ -1223,7 +1223,7 @@ var ruleInfo = {
   addForall: {
     action: function(h_a, v) {
       v = varify(v);
-      assert(!(h_a.hasHyps && h_a.getLeft().hasFree(v.name)),
+      assert(!(h_a.hasHyps && h_a.getLeft().hasFreeName(v.name)),
 	     function() {
 	       return v.name + ' occurs free in hypotheses of ' + h_a;
 	     },
@@ -1556,25 +1556,23 @@ var ruleInfo = {
         // Not really a loop, just works with the first free (variable!)
         // name returned.
         for (var name in names) {
-          if (Toy.isVariable(name)) {
-            if (wff instanceof Toy.Call && wff.fn instanceof Toy.Call
-                && wff.fn.fn instanceof Toy.Var && wff.fn.fn.name == '=') {
-              // WFF is already an equation.
-              var step1 = rules.tautology(wff.subFree(T, name));
-              var step2 = rules.tautology(wff.subFree(F, name));
-              var step3 = rules.equationCases(step1, step2, name);
-              var result = step3.justify('tautology', arguments);
-              _tautologies[key] = result;
-              return result;
-            } else {
-              var step1 = rules.tautology(equal(T, wff.subFree(T, name)));
-              var step2 = rules.tautology(equal(T, wff.subFree(F, name)));
-              var step3 = rules.equationCases(step1, step2, name);
-              var step4 = rules.fromTIsA(step3);
-              var result = step4.justify('tautology', arguments);
-              _tautologies[key] = result;
-              return result;
-            }
+          if (wff instanceof Toy.Call && wff.fn instanceof Toy.Call
+              && wff.fn.fn instanceof Toy.Var && wff.fn.fn.name == '=') {
+            // WFF is already an equation.
+            var step1 = rules.tautology(wff.subFree(T, name));
+            var step2 = rules.tautology(wff.subFree(F, name));
+            var step3 = rules.equationCases(step1, step2, name);
+            var result = step3.justify('tautology', arguments);
+            _tautologies[key] = result;
+            return result;
+          } else {
+            var step1 = rules.tautology(equal(T, wff.subFree(T, name)));
+            var step2 = rules.tautology(equal(T, wff.subFree(F, name)));
+            var step3 = rules.equationCases(step1, step2, name);
+            var step4 = rules.fromTIsA(step3);
+            var result = step4.justify('tautology', arguments);
+            _tautologies[key] = result;
+            return result;
           }
         }
         // There are no free variables, evaluate the expression.

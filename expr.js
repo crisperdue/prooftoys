@@ -412,8 +412,11 @@ var numeralRegex = /^-?[0-9]+$/;
  * single lower-case letter and then a sequences of digits and/or
  * underscores, or beginning with an underscore are variables, the
  * rest are considered constants whether defined or not.
+ *
+ * Use the Expr.isVariable method where possible, as it may be
+ * implemented for higher performance.
  */
-function isVariable(name) {
+function isVariableName(name) {
   assert(typeof name == 'string', function() {
     return 'isVariable - name must be a string: ' + name;
   });
@@ -423,8 +426,8 @@ function isVariable(name) {
 /**
  * Any (legal) name that is not a variable is considered a constant.
  */
-function isConstant(name) {
-  return !isVariable(name);
+function isConstantName(name) {
+  return !isVariableName(name);
 }
 
 // Used to order execution of proof steps so they can display
@@ -474,7 +477,8 @@ function decapture(target, replacement) {
   var allNames = {};
   replacement._addNames(allNames);
   target._addNames(allNames);
-  // Now allNames contains every name occurring anywhere in either expression.
+  // Now allNames contains every variable name occurring anywhere in
+  // either expression.
   return target._decapture(freeNames, allNames, null);
 }
 
@@ -612,7 +616,7 @@ Expr.prototype.toUnicode = function() {
  * True iff this is a Var named as a variable.
  */
 Expr.prototype.isVariable = function() {
-  return this instanceof Var && isVariable(this.name);
+  return this instanceof Var && this.name.match(variableRegex);
 };
 
 /**
@@ -626,7 +630,7 @@ Expr.prototype.hasName = function(name) {
  * True iff this is a Var named as a constant.
  */
 Expr.prototype.isConst = function() {
-  return this instanceof Var && isConstant(this.name);
+  return this instanceof Var && isConstantName(this.name);
 };
 
 // True iff the expression is a literal constant.
@@ -682,7 +686,7 @@ Expr.prototype.isBoolConst = function() {
  * Does this Expr have any variable(s)?
  */
 Expr.prototype.hasVars = function() {
-  var map = this.freeVars();
+  var map = this.freeNames();
   return !isEmpty(map);
 };
 
@@ -705,14 +709,6 @@ Expr.prototype.isInfixCall = function() {
           && this.fn instanceof Call
           && this.fn.fn instanceof Var
           && isInfixDesired(this.fn.fn));
-};
-
-/**
- * Returns true iff the given name appears free in this.
- */
-Expr.prototype.hasFreeName = function(name) {
-  assert(typeof name == 'string', 'Not a name: ' + name);
-  return this.freeNames().hasOwnProperty(name);
 };
 
 /**
@@ -989,27 +985,12 @@ Expr.prototype.removeUser = function() {
 //// End of methods for proof steps
 
 /**
- * Finds and returns a Map of free names in this expression, from name
- * to true.
+ * Finds and returns a Map of free variable names in this expression,
+ * from name to true.
  */
 Expr.prototype.freeNames = function() {
   var byName = {};
   this._addFreeNames(byName, null);
-  return byName;
-};
-
-/**
- * Finds and returns a Map of the free variable names in this
- * expression, from the name to "true".  Uses the fact that variables
- * are distinguished from constants by their names.
- */
-Expr.prototype.freeVars = function() {
-  var byName = this.freeNames();
-  for (var name in byName) {
-    if (isConstant(name)) {
-      delete byName[name];
-    }
-  }
   return byName;
 };
 
@@ -1584,9 +1565,9 @@ Expr.prototype.searchTerms = function(test, path) {
 // name in this Expr, renaming bound variables in just the locations
 // where a binding would capture a free variable of the replacement.
 //
-// Assumes freeNames is a Set (Object) of all the names free in the
-// replacement, that allNames contains all names occurring anywhere in
-// this and the replacement.
+// Assumes freeNames is a Set (Object) of all the variable names free
+// in the replacement, that allNames contains all variable names
+// occurring anywhere in this and the replacement.
 //
 //
 // copy()
@@ -1605,10 +1586,10 @@ Expr.prototype.searchTerms = function(test, path) {
 // flagged as having hypotheses.
 //
 //
-// hasFree(name)
+// hasFreeName(name)
 // 
-// True iff the given name (string) appears free in this expression.
-// Does not match against pnames.
+// True iff the given variable or constant name (string) appears free
+// in this expression.  Does not match against pnames.
 //
 //
 // asArray()
@@ -1621,17 +1602,16 @@ Expr.prototype.searchTerms = function(test, path) {
 // _addNames(Map result)
 //
 // Adds all names occurring in this expression to the Map, with value
-// of true for each, both free and bound names.  Private.
+// of true for each, both free and bound names.
 //
 //
 // _addFreeNames(Map result, Bindings bindings)
 // 
-// Adds all names that occur free in this Expr to the result object,
-// with the Var object as the value associated with each name found.
-// Assumes that names in the Bindings object are bound in this
+// Adds all variable names that occur free in this Expr to the result
+// object, with the Var object as the value associated with each name
+// found.  Assumes that names in the Bindings object are bound in this
 // expression's lexical context.  Private helper for the freeNames
-// method.  Does not add names of constants, as they will never be
-// bound anywhere.  TODO: Consider including constants.
+// method.
 //
 //
 // _decapture(freeNames, allNames, bindings)
@@ -1773,7 +1753,7 @@ Expr.prototype.searchTerms = function(test, path) {
 //// Var -- variable bindings and references
 
 //// A Var object can represent a variable (free or bound) or a
-//// constant (see isConstant).
+//// constant (see isConstantName).
 
 /**
  * Make a Var with the given name.  If a non-null integer position is given,
@@ -1843,7 +1823,7 @@ Var.prototype.dup = function() {
   return new Var(this.pname || this.name);
 };
 
-Var.prototype.hasFree = function(name) {
+Var.prototype.hasFreeName = function(name) {
   return this.name == name;
 };
 
@@ -2017,8 +1997,8 @@ Call.prototype.dup = function() {
   return new Call(this.fn, this.arg);
 };
 
-Call.prototype.hasFree = function(name) {
-  return this.fn.hasFree(name) || this.arg.hasFree(name);
+Call.prototype.hasFreeName = function(name) {
+  return this.fn.hasFreeName(name) || this.arg.hasFreeName(name);
 };
 
 Call.prototype.asArray = function() {
@@ -2361,8 +2341,8 @@ Lambda.prototype.dup = function() {
   return new Lambda(this.bound, this.body);
 };
 
-Lambda.prototype.hasFree = function(name) {
-  return this.bound.name != name && this.body.hasFree(name);
+Lambda.prototype.hasFreeName = function(name) {
+  return this.bound.name != name && this.body.hasFreeName(name);
 };
 
 Lambda.prototype.asArray = function() {
@@ -3154,7 +3134,7 @@ function findType(expr) {
         return type.fresh({}, nonGenerics);
       }
     }
-    if (isConstant(name)) {
+    if (isConstantName(name)) {
       return lookupType(name).fresh({}, nonGenerics);
     } else {
       // Free variable: not constant, not defined.
@@ -3376,7 +3356,7 @@ function checkRange(number) {
  * define('forall', equal(lambda(x, T))).  Returns the equation.
  */
 function define(name, definition) {
-  assert(isConstant(name), 'Not a constant name: ' + name);
+  assert(isConstantName(name), 'Not a constant name: ' + name);
   definition = typeof definition == 'string' ? Toy.parse(definition) : definition;
   assert(definition instanceof Expr,
          'Definition must be a term: ' + definition);
@@ -3386,7 +3366,7 @@ function define(name, definition) {
     // Benign redefinition, do nothing.
     return;
   }
-  for (var n in definition.freeVars()) {
+  for (var n in definition.freeNames()) {
     assert(false, 'Definition has free variables: ' + name);
   }
   return definitions[name] = equal(name, definition);
@@ -3397,14 +3377,13 @@ function define(name, definition) {
  * be something like defineCases('not', F, T).
  */
 function defineCases(name, ifTrue, ifFalse) {
-  assert(isConstant(name), 'Not a constant name: ' + name);
+  assert(isConstantName(name), 'Not a constant name: ' + name);
   assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
-  for (var n in ifTrue.freeVars()) {
+  for (var n in ifTrue.freeNames()) {
     assert(false, 'Definition has free variables: ' + name);
   }
-  for (var n in ifFalse.freeVars()) {
+  for (var n in ifFalse.freeNames()) {
     assert(false, 'Definition has free variables: ' + name);
-    // Assumes constants do not appear in freeNames.
   }
   definitions[name] = {T: equal(call(name, 'T'), ifTrue),
                        F: equal(call(name, 'F'), ifFalse)};
@@ -4442,8 +4421,8 @@ Toy.definitions = definitions;
 
 Toy.varify = varify;
 Toy.termify = termify;
-Toy.isConstant = isConstant;
-Toy.isVariable = isVariable;
+Toy.isConstantName = isConstantName;
+Toy.isVariableName = isVariableName;
 Toy.isIdentifier = isIdentifier;
 Toy.checkNumber = checkNumber;
 Toy.checkRange = checkRange;

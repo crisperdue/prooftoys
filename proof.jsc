@@ -1015,7 +1015,7 @@ function exprJq() {
  * variable having the specified name.
  */
 function specialClasses(name) {
-  if (Toy.isVariable(name)) {
+  if (Toy.isVariableName(name)) {
     return ['italic'];
   }
   if (name === 'T' || name === 'F') {

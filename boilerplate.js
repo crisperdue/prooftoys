@@ -108,7 +108,7 @@ Toy.mathMarkup = function(text) {
     } else if (s[0] === '_') {
       return '<sub>' + s.slice(1) + '</sub>';
     } else if (s.match(/^[a-z][0-9]*$/)) {
-      // Variable name, not a constant, see Toy.isVariable in expr.js.
+      // Variable name, not a constant, see Toy.isVariableName in expr.js.
       return '<i>' + s + '</i>';
     } else {
       // It is a constant name.
