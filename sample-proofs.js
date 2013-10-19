@@ -406,7 +406,7 @@
     },
 
     r5238: {
-      args: [['x1', 'x2'], Toy.parse('p x1'), Toy.parse('p x2')]
+      args: [['y', 'z'], Toy.parse('y < z'), Toy.parse('z < y')]
     },
 
     r5239: {

@@ -1991,15 +1991,15 @@ var ruleInfo = {
   r5238a: {
     action: function(v, a, b) {
       v = varify(v);
-      var step1 = rules.axiom('axiom3');
-      var step2 = rules.changeVar(step1, '/right/arg', v);
+      var step2 = rules.axiom('axiom3');
       var step3 = rules.instMultiVars(step2,
                                ({f: lambda(v, a),
                                  g: lambda(v, b)}));
       var step4 = rules.apply(step3, '/right/arg/body/left');
       var step5 = rules.apply(step4, '/right/arg/body/right');
+      var step6 = rules.changeVar(step5, '/right/arg', v);
       // Do not "derive", leave this inline.
-      return step5;
+      return step6;
     },
     comment: ('')
   },
