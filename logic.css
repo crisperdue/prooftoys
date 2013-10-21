@@ -305,7 +305,7 @@ span#leftNav {
  * indicating that the entire step can be selected.
  */
 .proofDisplay.editable .proofStep .stepAndNum.hover {
-  border-color: #aaf;
+  border-color: #88f;
 }
 
 /* But no hover in a subproof display */
@@ -430,9 +430,11 @@ span.stepRef {
   font-weight: bold;
 }
 
-/* When hovering over an expression in an editable proof */
+/* When hovering over an expression in an editable proof.
+   See also .stepAndNum .hovered.
+ */
 .expr.hovered {
-  border-color: #aaf;
+  border-color: #88f;
 }
 
 /* Highlight selected expressions; a bit over-specific
