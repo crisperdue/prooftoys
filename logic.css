@@ -265,11 +265,6 @@ span#leftNav {
     margin-left: 2em;
     /* Careful, this will be inherited by children. */
     text-indent: -2em;
-    /* If needed to avoid undesired text selection:
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
-    */
 }
 
 /* Use the inline-block *class* as needed to avoid contaminating inner
@@ -405,7 +400,10 @@ span.ruleName {
 
 /* To prevent clicks in rapid succession from highlighting text
    or activating a double click action. */
-span.ruleName.link {
+span.ruleName.link, .proofStep, 
+
+/* This class prevents the user from selecting text. */
+.noselect {
   /* Including browser-specific versions */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
