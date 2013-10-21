@@ -55,7 +55,10 @@ var F = new Var('F');
 
 function assertEqual(a, b) {
   if (typeof a === 'string' && b instanceof Toy.Expr) {
-    b = b.toString();
+    // Crudely remove indications of bound variable IDs.
+    // This could be done carefully on the structure of
+    // b if necessary, or with a flag for toString.
+    b = b.toString().replace(/[.][0-9]+/g, '');
   }
   return deepEqual(b, a);
 }
@@ -492,10 +495,10 @@ var testCase = {
     // Now substitute in 'a different v':
     var result = target.subFree(varify('v'), x);
     // We see that it replaces just the free occurrence.
-    assertEqual('({v. v} v)', result.toString());
+    assertEqual('({v. v} v)', result);
     // A case where decapturing is needed.
     result = Toy.parse('{y. x} x').subFree(y, x);
-    assertEqual('({x_1. y} y)', result);
+    assertEqual('({y. y} y)', result);
     // A very similar case where it is not needed.
     result = Toy.parse('{y. T} x').subFree(y, x);
     assertEqual('({y. T} y)', result);

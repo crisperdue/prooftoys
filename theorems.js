@@ -377,9 +377,12 @@ var ruleInfo = {
       assert(call.isOpenCall(), function() {
 	return 'Axiom 4 needs ({v. B} A), got: ' + call.toString();
       });
-      var lambdaExpr = call.fn;
+      var lambda = call.fn;
       var result =
-        equal(call, lambdaExpr.body.subFree(call.arg, lambdaExpr.bound));
+        (call.arg instanceof Toy.Var && call.arg.name === lambda.bound.name
+         // Same idea as optimization in Lambda._subFree.
+         ? equal(call, lambda.body)
+         : equal(call, lambda.body.subFree(call.arg, lambda.bound)));
       // Always make sure the call has a type.  It came from elsewhere.
       Toy.findType(call);
       return rules.assert(result).justify('axiom4', [call]);

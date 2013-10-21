@@ -398,8 +398,9 @@ TermMap.prototype.set = function(term, name) {
 var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
 
 // Names matching this regex are identifiers.
-// The trailing "$" ensures that the entire name is matched.
-var identifierRegex = new RegExp('^' + identifierPattern + '$');
+// The trailing "$" ensures that the entire name is matched
+// up to any extensions for unique ID and/or type information.
+var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
 
 // Variables in particular, not including identifiers for constants.
 // The "." and ":" provide for extension with bound variable unique
@@ -901,36 +902,38 @@ Expr.prototype.alphaMatch = function(expr_arg) {
  */
 Expr.prototype.findSubst = Expr.prototype.matchSchema;
 
+// Last value used to uniquely (re!)name a bound variable.
+// Private to _subFree.
+var _boundVarCounter = 0;
+
 /**
  * Returns a new expression resulting from substitution of copies of
  * the replacement expression for all free occurrences of the given
  * name (or variable) in this expression.  Used by Axiom 4
- * (lambda conversion).  Also renames bound variables in the target to
- * prevent them from capturing variables in the replacement.
+ * (lambda conversion).
+ *
+ * Renames bound variables in the target to prevent them from
+ * capturing variables in the replacement.  The strategy is based on
+ * the idea that all occurrences of bound variables always remain
+ * bound.  Substitution for a bound variable (Axiom 4) never creates a
+ * WFF with any variable both free and bound.  Application of Rule R
+ * to a target step requires an equation as its other input, so any
+ * variables it introduces as free relative to the target scope were
+ * free in the input equation.  Thus if a bound variable is given a
+ * name different from the name of any other bound variable appearing
+ * anywhere at the time, and the name is not reused in the future as a
+ * bound variable name, then it can never be made to occur free.
+ *
+ * Note that Rule R can introduce previously free variables into a
+ * scope where they become bound.
  */
-Expr.prototype.subFree = function(replacement_arg, v) {
+Expr.prototype.subFree = function(replacement, v) {
   var name = v instanceof Var ? v.name : v;
-  if (replacement_arg instanceof Var && replacement_arg.name == name) {
+  if (replacement instanceof Var && replacement.name == name) {
     // No changes required.
     return this;
   }
-  // Always replace with a new object so we can detect it as different
-  // from parts of the original expression, for example replacing x
-  // with (f x) in an expression containing an (f x).  Used in
-  // avoiding capture of free variables.
-  var replacement = replacement_arg.dup();
-  var allNames = {};
-  replacement._addNames(allNames);
-  this._addNames(allNames);
-  var result =
-    this._subFree(replacement, name, replacement.freeNames(), allNames);
-  // Now put back the original structure wherever it has been replaced.
-  if (result == replacement) {
-    return replacement_arg;
-  } else {
-    result._smashAll(replacement, replacement_arg);
-    return result;
-  }
+  return this._subFree(replacement, name);
 };
 
 /**
@@ -1740,7 +1743,7 @@ Expr.prototype.searchTerms = function(test, path) {
 // the given revPath.
 // 
 //
-// generalizeTF(expr2, newVar)
+// generalizeTF(expr2, newVar, bindings)
 //
 // Searches through this and expr2 for subexpressions in this that are
 // the constant T, and F at the same place in expr2.  Returns an
@@ -1749,6 +1752,10 @@ Expr.prototype.searchTerms = function(test, path) {
 // structure and variable names match everywhere except the T/F cases.
 // The newVar should not appear anywhere in this or expr2, to ensure
 // that the result will have this and expr2 as substitution instances.
+//
+// The optional bindings (used in recursive calls) map from names of
+// bound variables in expressions containing this, to names of
+// corresponding bound variables in expressions containing expr2.
 //
 // 
 // findAll(name, action1, expr2, action2)
@@ -1846,7 +1853,7 @@ Var.prototype.dump = function() {
   return this.name;
 }
 
-Var.prototype._subFree = function(replacement, name, freeNames, allNames) {
+Var.prototype._subFree = function(replacement, name) {
   return (name == this.name ? replacement : this);
 };
 
@@ -1921,15 +1928,17 @@ Var.prototype.search = function(pred, bindings) {
   return result;
 };
 
-Var.prototype.generalizeTF = function(expr2, newVar) {
+Var.prototype.generalizeTF = function(expr2, newVar, bindings) {
   if (!(expr2 instanceof Var)) {
     throw new Error('Not a variable: ' + expr2);
   }
   var name1 = this.name;
   var name2 = expr2.name;
-  if (name1 == 'T' && name2 == 'F') {
+  if (name1 === 'T' && name2 === 'F') {
     return newVar;
-  } else if (name1 == name2) {
+  } else if (name1 === name2) {
+    return this;
+  } else if (getBinding(name1, bindings)) {
     return this;
   } else {
     throw new Error('Mismatched names: ' + name1 + ', ' + name2);
@@ -2018,9 +2027,9 @@ Call.prototype.dump = function() {
   return '(' + this.fn.dump() + ' ' + this.arg.dump() + ')';
 };
 
-Call.prototype._subFree = function(replacement, name, freeNames, allNames) {
-  var fn = this.fn._subFree(replacement, name, freeNames, allNames);
-  var arg = this.arg._subFree(replacement, name, freeNames, allNames);
+Call.prototype._subFree = function(replacement, name) {
+  var fn = this.fn._subFree(replacement, name);
+  var arg = this.arg._subFree(replacement, name);
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
@@ -2227,12 +2236,12 @@ Call.prototype.search = function(pred, bindings) {
   return result;
 };
 
-Call.prototype.generalizeTF = function(expr2, newVar) {
+Call.prototype.generalizeTF = function(expr2, newVar, bindings) {
   if (!(expr2 instanceof Call)) {
     throw new Error('Not a Call: ' + expr2);
   }
-  var fn = this.fn.generalizeTF(expr2.fn, newVar);
-  var arg = this.arg.generalizeTF(expr2.arg, newVar);
+  var fn = this.fn.generalizeTF(expr2.fn, newVar, bindings);
+  var arg = this.arg.generalizeTF(expr2.arg, newVar, bindings);
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
@@ -2333,36 +2342,30 @@ Lambda.prototype.dump = function() {
   return '{' + this.bound.dump() + '. ' + this.body.dump() + '}';
 };
 
-Lambda.prototype._subFree = function(replacement, name, freeNames, allNames) {
-  if (this.bound.name == name) {
+function isUniqueName(name) {
+  return name.indexOf('.') > -1;
+}
+
+function uniqueVar(name) {
+  return new Var(name + '.' + ++_boundVarCounter);
+}
+
+Lambda.prototype._subFree = function(replacement, name) {
+  var boundName = this.bound.name;
+  if (boundName === name) {
     // Binds the name; there can be no free occurrences here.
     return this;
+  } else if (isUniqueName(boundName)) {
+    var body = this.body._subFree(replacement, name);
+    return (body === this.body) ? this : new Lambda(this.bound, body);
   } else {
-    var newVar = genVar(name, allNames);
-    var body = this.body._subFree(replacement, name, freeNames, allNames);
-    if (body == this.body) {
-      return this;
-    } else if (freeNames.hasOwnProperty(this.bound.name)) {
-      // Consider decapturing.
-      // 
-      // Decapturing is only needed when the bound name is among the
-      // free variables of the replacement _and_ the name to be replaced
-      // occurs in this.
-      // 
-      // Note that bound.name is known to be different than the name
-      // to be replaced, see above.  So the new body has all of the
-      // original free occurrences of bound.name.  It may have some
-      // more, but they are inside occurrences of the replacement and
-      // we can detect occurrences of the replacement, so we can go
-      // back now and decapture after doing the substitution, renaming
-      // except inside the replacement.
-      body = body._renameFree(this.bound.name, newVar, replacement);
-      return (body == this.body) ? this : new Lambda(newVar, body);
-    } else {
-      // Not a binding of a free variable, just return with the body
-      // already computed.
-      return new Lambda(this.bound, body);
-    }
+    // The bound variable is not uniquely named.  Rename it and try
+    // the same substitution on the resulting lambda.  This is the key
+    // to preventing improper "capturing" substitution in this
+    // algorithm.
+    var newVar = uniqueVar(boundName);
+    var fixup = new Lambda(newVar, this.body._subFree(newVar, boundName));
+    return fixup._subFree(replacement, name);
   }
 };
 
@@ -2465,15 +2468,12 @@ Lambda.prototype.search = function(pred, bindings) {
   return result;
 };
 
-Lambda.prototype.generalizeTF = function(expr2, newVar) {
+Lambda.prototype.generalizeTF = function(expr2, newVar, bindings) {
   if (!(expr2 instanceof Lambda)) {
     throw new Error('Not a variable binding: ' + expr2);
   }
-  if (this.bound.name != expr2.bound.name) {
-    throw new Error('Differing bindings: ' + this.bound.name
-                    + ', ' + expr2.bound.name);
-  }
-  var body = this.body.generalizeTF(expr2.body, newVar);
+  var newBindings = new Bindings(this.bound, expr2.bound, bindings)
+  var body = this.body.generalizeTF(expr2.body, newVar, newBindings);
   return (body == this.body) ? this : new Lambda(this.bound, body);
 };
 
