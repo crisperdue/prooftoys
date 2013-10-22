@@ -320,9 +320,19 @@ span#leftNav {
   visibility: hidden;
 }
 
+/* Checkbox that selects an entire step.  Visible when the
+   step is hovered or selected. */
+.proofStep .checkbox {
+  visibility: hidden;
+}
+
 .proofStep.hover .deleteStep {
   visibility: visible;
   color: red;
+}
+
+.proofStep.hover .checkbox, .proofStep.selected .checkbox {
+  visibility: visible;
 }
 
 /* The noDeleter contains an indicator that the step is hovered. */

@@ -641,7 +641,9 @@ ProofControl.prototype.setEditable = function(state) {
  * ProofControl and in the UI, no other action.
  */
 ProofControl.prototype.selectStep = function(step) {
-  $(step.stepNode).addClass('selected');
+  var $node = $(step.stepNode);
+  $node.addClass('selected');
+  $node.find('.checkbox').prop('checked', true);
   this.selection = step;
 };
 
@@ -652,7 +654,9 @@ ProofControl.prototype.selectStep = function(step) {
 ProofControl.prototype.deselectStep = function() {
   var step = this.selection;
   if (step) {
-    $(step.stepNode).removeClass('selected');
+    var $node = $(step.stepNode);
+    $node.removeClass('selected');
+    $node.find('.checkbox').prop('checked', false);
     this.selection = null;
     this.deselectExpr(step);
   }
@@ -771,15 +775,17 @@ ProofControl.prototype.renderStep = function(step) {
                  // Heavy lower right-shadowed white rightwards arrow
                  : '<span class=noDeleter>\u27ad</span>'); 
   var $step =
-    $('<div class=proofStep>' +
-      delHtml +
-      '<span class=stepAndNum>' +
-      '<span class=stepNumArea>[<span class=stepNumber></span>]</span> ' +
-      '<span class=wff></span>' +
-      '</span>' +
-      // Allow a word break here.
-      '<wbr><span class=stepInfo></span>' +
-      '</div>');
+    $('<div class=proofStep>')
+      .append(delHtml,
+              $('<span class=stepAndNum>')
+              .append($('<span class=stepNumArea>')
+                      .append(self.editable
+                                ? '<input type=checkbox class=checkbox>'
+                                : '',
+                              '[<span class=stepNumber></span>]'),
+                      '<span class=wff></span>'),
+              // Allow a word break here.
+              '<wbr><span class=stepInfo></span>');
   self._stepsJQ.append($step);
   if (self.editable) {
     $step.addClass('withDeleter');
