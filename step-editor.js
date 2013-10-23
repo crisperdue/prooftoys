@@ -89,6 +89,11 @@ var siteTypes = {
  * controller: ProofEditor containing this StepEditor.
  * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
+ *
+ * showRuleType: Selects type of rules to show, as determined by offerOk.
+ *   Takes effect when this editor is reset.
+ * showRules: List of individual rules to show.  Takes effect when this
+ *   editor is reset.
  */
 function StepEditor(controller) {
   // Make this available to all inner functions.
@@ -129,7 +134,8 @@ function StepEditor(controller) {
   if (Toy.useAutocompleter) {
     throw new Error('Autocompleter no longer supported');
   } else {
-    self.showRules = 'algebra';
+    self.showRuleType = 'algebra';
+    self.showRules = [];
 
     // Append the actual rule selector.
     var widget = new BasicRuleSelector(self, $.proxy(self, 'handleSelection'));
@@ -147,7 +153,7 @@ function StepEditor(controller) {
 
     // Step editor has state controlling whether to show all rules.
     selectorSpan.find('.rulesToShow').on('change', function(event) {
-        self.showRules = this.value;
+        self.showRuleType = this.value;
         self.reset();
       });
   }
@@ -578,7 +584,10 @@ StepEditor.prototype.offerableRuleNames = function() {
  */
 StepEditor.prototype.offerOk = function(name) {
   var labels = Toy.rules[name].info.labels;
-  switch (this.showRules) {
+  if (this.showRules.indexOf(name) >= 0) {
+    return true;
+  }
+  switch (this.showRuleType) {
   case 'all':
     return true;
   case 'algebra':
