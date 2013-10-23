@@ -317,7 +317,8 @@ span#leftNav {
 }
 
 /* Hovering or selecting this will override the border color. */
-.stepNumArea, .stepAndNum {
+.stepAndNum {
+  cursor: default;
   border: 1px solid transparent;
 }
 
@@ -329,7 +330,7 @@ span#leftNav {
 }
 
 /* But no hover in a subproof display */
-.proofDisplay.editable .inferenceDisplay .stepAndNumber.hover {
+.proofDisplay.editable .inferenceDisplay .stepAndNum.hover {
   border-color: transparent;
 }
 
@@ -430,7 +431,7 @@ span.ruleName {
 
 /* To prevent clicks in rapid succession from highlighting text
    or activating a double click action. */
-span.ruleName.link, .proofStep, 
+span.ruleName.link, .stepAndNum, 
 
 /* This class prevents the user from selecting text. */
 .noselect {
