@@ -296,6 +296,26 @@ span#leftNav {
   color: gray;
 }
 
+/* Pop-up DIV that says Prooftoys is busy working. */
+.ruleWorking {
+  position: absolute;
+  visibility: hidden;
+  left: 5em;
+  top: 2.5em;
+  font-size: large;
+  font-style: italic;
+  color: red;
+  background-color: #ffa;
+  padding: .15em 2em;
+  border: .2em solid #d00;
+  opacity: .7;
+  box-shadow: 4px 4px 4px #888;
+}
+
+.busy .ruleWorking {
+  visibility: visible;
+}
+
 /* Hovering or selecting this will override the border color. */
 .stepNumArea, .stepAndNum {
   border: 1px solid transparent;
@@ -469,6 +489,7 @@ span.stepRef {
 /* Overrides styles for .proofDisplay. */
 .stepEditor {
   background-color: white;
+  position: relative;
 }
 
 /* Make inputs a bit larger than regular text */

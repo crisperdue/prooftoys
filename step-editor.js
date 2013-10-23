@@ -115,9 +115,13 @@ function StepEditor(controller) {
 
   self.form = $('<span class=sted-form></span>');
   div.append(self.form);
+  // The ruleStats are visible except when a proof is brand new and
+  // there is nothing to show.
   div.append('<div class="ruleStats invisible">Last rule ' +
              '<span class=ruleTime></span> msec, ' +
              '<span class=ruleSteps></span> steps</div>');
+  // Pop-up visible only when a rule is actually running.
+  div.append('<div class="ruleWorking">Working . . .</div>');
   // TODO: add more content here: div.append('<div>Hello World</div>');
   self.jq = div;
 
@@ -228,6 +232,7 @@ StepEditor.prototype.handleSelection = function() {
       this.form.find('input:text').each(function() {
           if (!this.value) {
             this.focus();
+            // Abort the loop.
             return false;
           }
         });
@@ -239,12 +244,12 @@ StepEditor.prototype.handleSelection = function() {
     var siteStep = this.proofControl.selection;
     if (!siteStep || !siteStep.selection) {
       this.error('No selected site');
-      return false;
     }
-    return this.tryRule(Toy.rules.rewriteWithFact,
-                        [siteStep.original,
-                         siteStep.prettyPathTo(siteStep.selection),
-                         value.slice(5)]);
+    tryRuleAsync(this,
+                 Toy.rules.rewriteWithFact,
+                 [siteStep.original,
+                  siteStep.prettyPathTo(siteStep.selection),
+                  value.slice(5)]);
   }
 };
 
@@ -323,8 +328,6 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  * content of the form, and execute the rule with the arguments if
  * there is enough suitable information in the form and selection.
  * Update the proof display with the new step on success.
- *
- * Return true on success, otherwise false.
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // TODO: Get it together on failure reporting here.
@@ -340,7 +343,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
     if (reportFailure) {
       this.error(error.message);
     }
-    return false;
+    return;
   }
   if (args.length != rule.length) {
     Toy.logError('Rule received unnamed arguments: ' + rule);
@@ -351,19 +354,33 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
       if (reportFailure) {
 	this.error('Undefined argument ' + i);
       }
-      return false;
+      return;
     }
   }
-  return this.tryRule(rule, args);
+  tryRuleAsync(this, rule, args);
 };
+
+/**
+ * Runs StepEditor.tryRule, but only after the event handling loop has
+ * returned to the top level so the display can update.  Marks the
+ * step editor's DOM node as busy immediately so the display can
+ * reflect its change in state.
+ */
+function tryRuleAsync(stepEditor, rule, args) {
+  // Flag the step editor as busy via its DOM node.
+  stepEditor.jq.toggleClass('busy', true);
+  Toy.soonDo(stepEditor._tryRule.bind(stepEditor, rule, args));
+}
 
 /**
  * Tries to run the given rule (function) with the given rule arguments.
  * Catches and reports any errors.  Returns true if the rule
  * succeeded, false if it catches an error.  Reports there was nothing
  * to do if the rule returns its input or a null value.
+ *
+ * Private to tryRuleAsync.
  */
-StepEditor.prototype.tryRule = function(rule, args) {
+StepEditor.prototype._tryRule = function(rule, args) {
   var result = null;
   var startTime = Date.now();
   var startSteps = Toy.getStepCounter();
@@ -375,16 +392,20 @@ StepEditor.prototype.tryRule = function(rule, args) {
     result = rule.apply(null, args);
   } catch(error) {
     this.report(error);
-    return false;
+    return;
   } finally {
     if (Toy.profileName) {
       console.profileEnd();
     }
+    // Flag the DOM node as not busy.
+    this.jq.toggleClass('busy', false);
+    // Update the rule stats and show them.
     this.lastRuleTime = Date.now() - startTime;
     this.lastRuleSteps = Toy.getStepCounter() - startSteps;
-    this.jq.find('.ruleStats').toggleClass('invisible', false);
     this.jq.find('.ruleTime').text(Math.ceil(this.lastRuleTime));
     this.jq.find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
+    // Clear the initial invisible state.
+    this.jq.find('.ruleStats').toggleClass('invisible', false);
   }
   if (!result || result.rendering) {
     // If there is already a rendering, Expr.justify must have found
@@ -401,7 +422,6 @@ StepEditor.prototype.tryRule = function(rule, args) {
   this.reset();
   this.focus();
   this.proofControl.proofChanged();
-  return true;
 };
 
 /**
