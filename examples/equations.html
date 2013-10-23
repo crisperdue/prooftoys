@@ -86,9 +86,8 @@ menus back to algebra mode before starting to work.
 <ol id=problemList>
 </ol>
 
-<div id=workArea style="display: none">
+<div id=workArea class=hidden>
 <h3>Problem work area</h3>
-<p>
 <p>
 <div id=proof></div>
 </div>
@@ -148,8 +147,8 @@ $(function() {
       }
 
       function handleTryProblem(event) {
-        var assumptions = event.data.assumptions;
         swapAreas();
+        var assumptions = event.data.assumptions;
         for (var j = 0; j < assumptions.length; j++) {
           editor.addStep(rules.assume(assumptions[j]));
         }
