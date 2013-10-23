@@ -3494,8 +3494,9 @@ function findDefinition(name, tOrF) {
 var _tokens = new RegExp(['[(){}\\[\\]]',
                            // Identifiers: variables and named constants
                            identifierPattern,
-                           // Numeric constants
-                           '-?[0-9]+',
+                           // Numeric constants.  The parser glues together
+                           // negative numerals later.
+                           '[0-9]+',
                            // Strings
                            '"(?:\\\\.|[^"])*"',
                            // Other operators (constants)
@@ -3655,8 +3656,19 @@ function parse(input) {
         // and nullary operators upcoming.
         expr = new Call(token, parseUnaryArg());
       } else if (name === '-') {
-        // Treat '-' here as unary "neg".
-        expr = new Call(new Var('neg'),  parseUnaryArg());
+        // If the token is '-', but does not parse as infix,
+        // treat it as 'neg', or even as part of a negative
+        // number.
+        var peeked = peek();
+        if (peeked.pos === token.pos + 1 && peeked.isNumeral()) {
+          // If the "-" is directly adjacent, treat the whole thing
+          // as a negative numeral.  The tokenizer will not build
+          // a numeral with a leading "-".
+          next();
+          expr = new Var('-' + peeked.name, token.pos);
+        } else {
+          expr = new Call(new Var('neg'),  parseUnaryArg());
+        }
       } else {
         throw new Error('Unexpected token "' + token.name +
                         '" at ' + token.pos);

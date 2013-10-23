@@ -347,6 +347,9 @@ var testCase = {
     var expr = Toy.parse('x + 103');
     assertEqual(103, expr.getRight().getNumValue());
     throws(function() { expr.getLeft().getNumValue(); });
+    assertEqual(-2, Toy.parse('-2').getNumValue());
+    assert(Toy.parse('- 2') instanceof Toy.Call);
+    assertEqual('(-1 + 1)', Toy.parse('-1 + 1'));
     // Strings
     var expr = Toy.parse('f "asdf"')
     assertEqual('"asdf"', expr.arg.name);
