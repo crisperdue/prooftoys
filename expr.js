@@ -2364,7 +2364,7 @@ Lambda.prototype._subFree = function(replacement, name) {
     // to preventing improper "capturing" substitution in this
     // algorithm.
     var newVar = uniqueVar(boundName);
-    var fixup = new Lambda(newVar, this.body._subFree(newVar, boundName));
+    var fixup = lambda(newVar, this.body._subFree(newVar, boundName));
     return fixup._subFree(replacement, name);
   }
 };
@@ -2372,7 +2372,7 @@ Lambda.prototype._subFree = function(replacement, name) {
 // Etc.
 
 Lambda.prototype.copy = function() {
-  var result = new Lambda(this.bound.copy(), this.body.copy());
+  var result = lambda(this.bound.copy(), this.body.copy());
   result.sourceStep = this.sourceStep;
   return result;
 };
@@ -2437,7 +2437,7 @@ Lambda.prototype.replaceAt = function(path, xformer) {
     return xformer(this);
   } else {
     var body = this.body.replaceAt(path.rest('body'), xformer);
-    return (body == this.body) ? this : new Lambda(this.bound, body);
+    return (body == this.body) ? this : lambda(this.bound, body);
   }
 };
 
@@ -2474,7 +2474,7 @@ Lambda.prototype.generalizeTF = function(expr2, newVar, bindings) {
   }
   var newBindings = new Bindings(this.bound, expr2.bound, bindings)
   var body = this.body.generalizeTF(expr2.body, newVar, newBindings);
-  return (body == this.body) ? this : new Lambda(this.bound, body);
+  return (body == this.body) ? this : lambda(this.bound, body);
 };
 
 Lambda.prototype._path = function(pred, revPath) {
@@ -2506,7 +2506,7 @@ Lambda.prototype._matchAsSchema = function(expr, map) {
 };
 
 Lambda.prototype._asPattern = function(term) {
-  return this.__var || new Lambda(this.bound, this.body._asPattern());
+  return this.__var || lambda(this.bound, this.body._asPattern());
 };
 
 Lambda.prototype.searchCalls = function(fn, path) {};
@@ -2590,7 +2590,7 @@ Lambda.prototype._renameFree = function(name, newVar, replacement) {
     return this;
   }
   var body = this.body._renameFree(name, newVar, replacement);
-  return (body == this.body) ? this : new Lambda(this.bound, body);
+  return (body == this.body) ? this : lambda(this.bound, body);
 };
 
 
@@ -3632,7 +3632,7 @@ function parse(input) {
         assert(id.isVariable(), 'Expected identifier, got ' + id.name);
         expect('.');
         var body = mustParseAbove(0);
-        expr = new Lambda(id, body);
+        expr = lambda(id, body);
         expect('}');
       } else if (nextPower === namePower) {
         // Even if lastPower indicates an operator take the token as
