@@ -83,7 +83,7 @@ var siteTypes = {
  * step, for steps that already exist.  Also rearranging proofs.
  *
  * Fields:
- * jq: DIV with the step editor's HTML.
+ * $node: DIV with the step editor's HTML.
  * form: jQuery SPAN to hold the argument input form.
  * proofControl: ProofControl to edit
  * controller: ProofEditor containing this StepEditor.
@@ -123,7 +123,7 @@ function StepEditor(controller) {
   // Pop-up visible only when a rule is actually running.
   div.append('<div class="ruleWorking">Working . . .</div>');
   // TODO: add more content here: div.append('<div>Hello World</div>');
-  self.jq = div;
+  self.$node = div;
 
   // Install a rule selector
   if (Toy.useAutocompleter) {
@@ -134,7 +134,7 @@ function StepEditor(controller) {
     // Append the actual rule selector.
     var widget = new BasicRuleSelector(self, $.proxy(self, 'handleSelection'));
     self.ruleSelector = widget;
-    selectorSpan.append(widget.jq);
+    selectorSpan.append(widget.$node);
 
     // Append checkbox to control "all rules"
     var selHtml = (' <span>show options for</span> ' +
@@ -368,7 +368,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
  */
 function tryRuleAsync(stepEditor, rule, args) {
   // Flag the step editor as busy via its DOM node.
-  stepEditor.jq.toggleClass('busy', true);
+  stepEditor.$node.toggleClass('busy', true);
   Toy.soonDo(stepEditor._tryRule.bind(stepEditor, rule, args));
 }
 
@@ -398,14 +398,14 @@ StepEditor.prototype._tryRule = function(rule, args) {
       console.profileEnd();
     }
     // Flag the DOM node as not busy.
-    this.jq.toggleClass('busy', false);
+    this.$node.toggleClass('busy', false);
     // Update the rule stats and show them.
     this.lastRuleTime = Date.now() - startTime;
     this.lastRuleSteps = Toy.getStepCounter() - startSteps;
-    this.jq.find('.ruleTime').text(Math.ceil(this.lastRuleTime));
-    this.jq.find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
+    this.$node.find('.ruleTime').text(Math.ceil(this.lastRuleTime));
+    this.$node.find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
     // Clear the initial invisible state.
-    this.jq.find('.ruleStats').toggleClass('invisible', false);
+    this.$node.find('.ruleStats').toggleClass('invisible', false);
   }
   if (!result || result.rendering) {
     // If there is already a rendering, Expr.justify must have found
@@ -744,7 +744,7 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
   ruleChooser.append($('<option/>',
                        {text: '-- Apply a rule --', value: ''}));
 
-  this.jq = ruleChooser;
+  this.$node = ruleChooser;
 
   this.reset();
 
@@ -761,7 +761,7 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
  */
 BasicRuleSelector.prototype.reset = function() {
   var self = this;
-  var elt = self.jq[0];
+  var elt = self.$node[0];
   // Delete all rule options, leave just the "choose rule" option.
   elt.options.length = 1;
   // Map from rule display text to rule name.
@@ -807,8 +807,8 @@ BasicRuleSelector.prototype.reset = function() {
  * This is a harmless no-op on known touchscreen devices.
  */
 BasicRuleSelector.prototype.focus = function() {
-  var jq = this.jq;
-  window.setTimeout(function() { jq.focus(); }, 0);
+  var $node = this.$node;
+  window.setTimeout(function() { $node.focus(); }, 0);
 };
 
 

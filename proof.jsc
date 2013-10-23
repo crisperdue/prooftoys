@@ -226,7 +226,7 @@ function ProofEditor() {
     .append(@proofButtons)
     .append(this._stateDisplay)
     .append(@mainControl.node)
-    .append(this.stepEditor.jq)
+    .append(this.stepEditor.$node)
     .append('<div class=proofErrors></div>');
   this.$proofErrors = $(this.containerNode).find('.proofErrors');
   this.setEditable(true);
@@ -362,7 +362,7 @@ ProofEditor.prototype.restoreState = function() {
 
 ProofEditor.prototype.setEditable = @(value) {
   @mainControl.setEditable(value);
-  this.stepEditor.jq.toggle(value);
+  this.stepEditor.$node.toggle(value);
 };
 
 ProofEditor.prototype.showProofButtons = @(value) {
