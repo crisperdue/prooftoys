@@ -205,10 +205,10 @@ function ProofEditor() {
     '</div>\n';
   this._stateDisplay = $(stateDisplayHtml);
   this._stateArea = dom(this._stateDisplay.find('.proofStateArea'));
-  // Toggling the proof state display visibility with a button.
-  // 
-  @proofButtons = $('<div/>');
+  // The proofButtons class is used in some examples.
+  @proofButtons = $('<div class=proofButtons/>');
   var saveRestore =
+    // Toggling the proof state display visibility with a button.
     $('<input type=button '
       + 'value="Save/restore proof ..." '
       + 'title="Save or restore proof state">');
