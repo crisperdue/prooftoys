@@ -3051,7 +3051,7 @@ var ruleInfo = {
     form: '',
     description: 'symmetry of equality',
     comment: 'symmetry of equality',
-    labels: 'algebra basic'
+    labels: 'basic'
   },
 
   equalityTransitive: {
@@ -3068,7 +3068,7 @@ var ruleInfo = {
     form: '',
     description: 'transitivity of equality',
     comment: 'transitivity of equality',
-    labels: 'algebra basic'
+    labels: 'basic'
   },
 
   //
@@ -3325,7 +3325,7 @@ var ruleInfo = {
     form: 'Term to evaluate: <input name=term>',
     comment: 'evaluate arithmetic expression',
     description: 'axiom of arithmetic',
-    labels: 'algebra basic'
+    labels: 'basic'
   },
 
   subtractionType: {
@@ -3816,7 +3816,7 @@ var ruleInfo = {
     hint: 'look up a fact',
     comment: (''),
     description: 'fact',
-    labels: 'algebra basic'
+    labels: 'basic'
   },
 
   //
