@@ -102,6 +102,8 @@ $(function() {
       // Set up event handlers.
 
       function swapAreas(event) {
+        editor.stepEditor.showRules = [];
+        editor.stepEditor.reset();
         editor.proofControl.setSteps([]);
         $problemList.toggle(300);
         $('#workArea').toggle(300);
@@ -112,11 +114,18 @@ $(function() {
         var term = event.data.term;
         editor.addStep(rules.consider(term));
       };
+
+      function tryOwnProblem() {
+        swapAreas();
+        editor.stepEditor.showRules = ['consider'];
+        editor.stepEditor.reset();
+      }
+
       button.on('click', {term: problem}, handleTryProblem);
     }
     $problemList.append('<li><button class=ownProblem>' +
                         'Try your own problem</button></li>');
-    $problemList.find('.ownProblem').on('click', swapAreas);
+    $problemList.find('.ownProblem').on('click', tryOwnProblem);
     $('#proof .proofButtons')
       .append('<button id=tryAnother>Try another problem</button>');
     $('#tryAnother').on('click', swapAreas);
