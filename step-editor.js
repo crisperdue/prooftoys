@@ -796,7 +796,7 @@ BasicRuleSelector.prototype.reset = function() {
     });
   var header = elt.options[0];
   elt.options[0].text = ((elt.options.length == 1)
-                         ? '-- First select a term or step above --'
+                         ? '-- Select an expression or step (click on it) --'
                          : '-- Choose a rule to apply --');
   elt.selectedIndex = 0;
   self.ruleName = '';
