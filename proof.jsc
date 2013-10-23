@@ -1140,12 +1140,22 @@ Call.prototype._render = function(minPower) {
     // This is a call on a named function of two arguments.
     if (Toy.isInfixDesired(op)) {
       // Render as infix, e.g. "x + y"
-      var left = this.getLeft();
-      var $fn = exprJq().append(left._render(thisPower(left)), ' ',
-                                 op._render(0));
-      this.fn.node = dom($fn);
-      var right = this.getRight();
-      $expr.append($fn, ' ', right._render(thisPower(right) + 1));
+      if (op.name in {'*': true, '/': true}) {
+        // Render these without extra whitespace.
+        var left = this.getLeft();
+        var $fn = exprJq().append(left._render(thisPower(left)),
+                                   op._render(0));
+        this.fn.node = dom($fn);
+        var right = this.getRight();
+        $expr.append($fn, right._render(thisPower(right) + 1));
+      } else {
+        var left = this.getLeft();
+        var $fn = exprJq().append(left._render(thisPower(left)), ' ',
+                                   op._render(0));
+        this.fn.node = dom($fn);
+        var right = this.getRight();
+        $expr.append($fn, ' ', right._render(thisPower(right) + 1));
+      }
     } else {
       // Anything else render like "f x y".
       // We could render the function part with less parens by
