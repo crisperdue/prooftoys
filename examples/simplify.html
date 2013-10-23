@@ -55,9 +55,11 @@ problems.
 <ol id=problemList>
 </ol>
 
+<div id=workArea class=hidden>
 <h3>Problem work area</h3>
 <p>
 <div id=proof></div>
+</div>
 
 </span> <!-- content -->
 
@@ -75,31 +77,49 @@ Toy.mathifyAll();
 
 // On DOM ready:
 $(function() {
+    var rules = Toy.rules;
+    var $problemList = $('#problemList');
+    var editor = new Toy.ProofEditor();
+    window.proofEditor = editor;
+    editor.setEditable(true);
+    $('#proof').append(editor.containerNode);
+
     var problems = [
       '3 * h - 14 + 7 * h - 2 * h  - 5 * h + 3',
       '15 * k - 4 - 5 * k + 16',
       '-7 * (2 * y - 6) + 20 * y',
       '4 * (3 * x - 2) - 3 * (x + 7)'
     ];
-    var $problemList = $('#problemList');
-    var editor = new Toy.ProofEditor();
-    window.proofEditor = editor;
-    editor.setEditable(true);
-    $('#proof').append(editor.containerNode);
+
     // Set up handlers for the problems.
     for (var i = 0; i < problems.length; i++) {
       var problem = problems[i];
       var markup = $('<span class=mathColor>')
         .append(Toy.mathMarkup(problem), ' ');
-      var button = $('<button>Try</button>');
-      function handler(event) {
-        var term = event.data.term;
-        editor.proofControl.setSteps([]);
-        editor.addStep(Toy.rules.consider(term));
-      };
-      button.on('click', {term: problem}, handler);
+      var button = $('<button>Try this problem</button>');
       $problemList.append($('<li>').append(markup, button));
+
+      // Set up event handlers.
+
+      function swapAreas(event) {
+        editor.proofControl.setSteps([]);
+        $problemList.toggle(300);
+        $('#workArea').toggle(300);
+      }
+
+      function handleTryProblem(event) {
+        swapAreas();
+        var term = event.data.term;
+        editor.addStep(rules.consider(term));
+      };
+      button.on('click', {term: problem}, handleTryProblem);
     }
+    $problemList.append('<li><button class=ownProblem>' +
+                        'Try your own problem</button></li>');
+    $problemList.find('.ownProblem').on('click', swapAreas);
+    $('#proof .proofButtons')
+      .append('<button id=tryAnother>Try another problem</button>');
+    $('#tryAnother').on('click', swapAreas);
   });
 
 </script>
