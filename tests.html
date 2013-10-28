@@ -310,6 +310,13 @@ var testCase = {
     assertEqual('((= x) y)', call('=', x, y).dump());
   },
 
+  testToUnicode: function() {
+    assertEqual('T', T.toUnicode());
+    assertEqual('a\u2081\u2080\u2089', new Toy.Var('a.109').toUnicode());
+    assertEqual('a:R', new Toy.Var('a:R').toUnicode());
+    assertEqual('xx\u2083:RR', new Toy.Var('xx.3:RR').toUnicode());
+  },
+
   // PARSER
 
   testTokenize: function() {

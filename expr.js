@@ -1836,22 +1836,49 @@ Toy.extends(Var, Expr);
  * counterpart, otherwise just the pname.
  */
 Var.prototype._toString = function() {
-  var name = this.pname || this.name;
-  var uname = useUnicode && unicodeNames[name];
-  return uname || name;
+  return (useUnicode
+          ? this.toUnicode()
+          : this.pname || this.name);
 };
 
 /**
- * Optimization of the toUnicode method when called directly on a Var.
+ * Implementation of toUnicode for Vars.
  */
 Var.prototype.toUnicode = function() {
   var name = this.pname || this.name;
-  return unicodeNames[name] || name;
+  var uname = unicodeNames[name];
+  if (uname) {
+    return uname;
+  }
+  var info = this.parseName();
+  var result = info.name;
+  if (info.sub) {
+    var offset = 0x2080 - '0'.charCodeAt(0);
+    var sub = info.sub;
+    for (var i = 0; i < sub.length; i++) {
+      result += String.fromCharCode(sub.charCodeAt(i) + offset);
+    }
+  }
+  if (info.type) {
+    result += ':' + info.type;
+  }
+  return result;
+};
+
+/**
+ * Parses the Var's name into the base name (e.g. "x"), a unique
+ * subscript if any (digits), and a type expression, returning
+ * information as an object with properties "name", "sub", and
+ * "type", which are undefined if not present.
+ */
+Var.prototype.parseName = function() {
+  var match = this.name.match(/^(.+?)([.](.*?))?([:](.*))?$/);
+  return {name: match[1], sub: match[3], type: match[5]};
 };
 
 Var.prototype.dump = function() {
   return this.name;
-}
+};
 
 Var.prototype._subFree = function(replacement, name) {
   return (name == this.name ? replacement : this);
