@@ -1648,12 +1648,12 @@ var testCase = {
   },
 
   testR5238: function() {
-    var result = Toy.rules.r5238(['x1', 'x2'],
-                               Toy.parse('p x1'),
-                               Toy.parse('p x2'));
+    var result = Toy.rules.r5238(['x', 'y'],
+                               Toy.parse('p x'),
+                               Toy.parse('p y'));
     var wff =
-      ('(({x1. {x2. (p x1)}} = {x1. {x2. (p x2)}}) = '
-       + '(forall {x1. (forall {x2. ((p x1) = (p x2))})}))');
+      ('(({x. {y. (p x)}} = {x. {y. (p y)}}) = '
+       + '(forall {x. (forall {y. ((p x) = (p y))})}))');
     assertEqual(wff, result);
   },
 
