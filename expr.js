@@ -84,6 +84,43 @@ function format(fmt, args) {
     });
 }
 
+// Map from function name to data (calls and times)
+var trackingData = {};
+
+/**
+ * Return a function that calls the given one, timing and counting
+ * calls on it.  Uses the function's name or the opt_name if given.
+ */
+function tracked(fn, opt_name) {
+  var name = opt_name || fn.name;
+  if (typeof fn !== 'function' || !name) {
+    throw new Error('Not a named function');
+  }
+  var data = trackingData[name];
+  if (!data) {
+    data = trackingData[name] = {calls: 0, times: 0};
+  }
+  return function() {
+    var start = Date.now();
+    try {
+      return fn.apply(this, arguments);
+    } finally {
+      data.calls++;
+      data.times += Date.now() - start;
+    }
+  }
+}
+
+/**
+ * Replace the given property of the given object with a tracked
+ * version, reporting using the property name or opt_name if
+ * present.
+ */
+function track(object, property, opt_name) {
+  var old = object[property];
+  object[property] = tracked(object[property], opt_name || property);
+}
+
 
 //// CLASSES ////
 
@@ -4449,6 +4486,9 @@ Toy.ownProperties = ownProperties;
 Toy.isEmpty = isEmpty;
 Toy.each = each;
 Toy.emptySet = emptySet;
+Toy.tracked = tracked;
+Toy.track = track;
+Toy.trackingData = trackingData;
 
 Toy.Result = Result;
 Toy.catchResult = catchResult;
