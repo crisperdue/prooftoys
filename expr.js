@@ -3470,6 +3470,11 @@ var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
 // Variables in particular, not including identifiers for constants.
 // The "." and ":" provide for extension with bound variable unique
 // identifiers and type signatures.
+//
+// TODO: Make variable naming and subscripting consistent and
+// rational!  Currently variable names of a single alphabetic
+// character are pretty good, but ones beginning with underscore
+// are probably nonsensical.
 var variableRegex = /^[a-z][0-9_]*([.:]|$)|^_/;
 
 // Numeric literals.
