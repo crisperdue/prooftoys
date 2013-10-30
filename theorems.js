@@ -5112,7 +5112,7 @@ Toy._factsMap = _factsMap;
 
 // Settable variables, export right here:
 Toy.autoAssert = false;
-Toy.assertFacts = true;
+Toy.assertFacts = false;
 
 Toy.axiomNames = axiomNames;
 Toy.theoremNames = theoremNames;
