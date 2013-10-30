@@ -456,14 +456,6 @@ function decapture(target, replacement) {
   return target._decapture(freeNames, allNames, null);
 }
 
-/**
- * Returns an equivalent expression with normalized names for bound
- * variables.
- */
-function normalized(expr) {
-  return expr.normalized(new Counter(1), null);
-}
-
 
 //// Expr -- the base class
 
@@ -1648,22 +1640,6 @@ Expr.prototype.searchTerms = function(test, path) {
 // with a math operator as the other argument.
 // 
 //
-// normalized(counter, bindings)
-//
-// Returns an equivalent expression with all bound variables
-// systematically renamed, so that "normalized" of any expressions that
-// differ only by names of bound variables gives the same result.
-//
-// The current implementation names the bound variables in the
-// normalized expression $1, $2, $3, etc. in order of appearance in
-// the expression.  As a result, the bound names of normalized
-// expressions never clash with free names, such as free names in
-// hypotheses.
-//
-// Furthermore there is only one binding with any given name within
-// the normalized expression, and none of these names clashes with the
-// name of any free variable.
-//
 // replaceAt(path, xformer)
 //
 // Returns a copy of this expression.  If some part matches the path,
@@ -1880,10 +1856,6 @@ Var.prototype._decapture = function(freeNames, allNames, bindings) {
 
 Var.prototype._addMathVars = function(bindings, set) {
   return false;
-};
-
-Var.prototype.normalized = function(counter, bindings) {
-  return new Var(getBinding(this.name, bindings) || this.name);
 };
 
 Var.prototype.replaceAt = function(path, xformer) {
@@ -2138,11 +2110,6 @@ Call.prototype._addMathVars = function(bindings, set) {
     this.arg._addMathVars(bindings, set);
     return false;
   }
-};
-
-Call.prototype.normalized = function(counter, bindings) {
-  return new Call(this.fn.normalized(counter, bindings),
-                  this.arg.normalized(counter, bindings));
 };
 
 Call.prototype.replaceAt = function(path, xformer) {
@@ -2402,12 +2369,6 @@ Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
 Lambda.prototype._addMathVars = function(bindings, set) {
   this.body._addMathVars(new Bindings(this.bound.name, true, bindings), set);
   return false;
-};
-
-Lambda.prototype.normalized = function(counter, bindings) {
-  var newVar = new Var('$' + counter.next());
-  var newBindings = new Bindings(this.bound.name, newVar.name, bindings);
-  return new Lambda(newVar, this.body.normalized(counter, newBindings));
 };
 
 Lambda.prototype.replaceAt = function(path, xformer) {
@@ -3459,8 +3420,7 @@ function findDefinition(name, tOrF) {
 
 // String that matches identifiers, used in both tokenizing and
 // determining categories of names for display.
-// Initial "$" is supported for system-generated names.
-var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
+var identifierPattern = '[_a-zA-Z][_a-zA-Z0-9]*';
 
 // Names matching this regex are identifiers.
 // The trailing "$" ensures that the entire name is matched
@@ -4517,7 +4477,6 @@ Toy.Lambda = Lambda;
 Toy.Path = Path;
 
 Toy.genVar = genVar;
-Toy.normalized = normalized
 Toy.decapture = decapture;
 Toy.path = path;
 Toy.findBinding = findBinding;
