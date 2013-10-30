@@ -4715,7 +4715,11 @@ $.extend(Fact.prototype, {
 
     // Get the proved result of the fact.
     result: function() {
+      if (Toy.assertFacts && !this._prover.done) {
+        return rules.assert(this.goal);
+      }
       try {
+        // _prover is memoized, so only really runs once.
         var result = this._prover();
       } catch(err) {
         // Flag it as an error in proof execution.
@@ -5106,8 +5110,9 @@ Toy.logicFacts = logicFacts;
 Toy.algebraFacts = algebraFacts;
 Toy._factsMap = _factsMap;
 
-// A settable variable, export right here:
+// Settable variables, export right here:
 Toy.autoAssert = false;
+Toy.assertFacts = true;
 
 Toy.axiomNames = axiomNames;
 Toy.theoremNames = theoremNames;
