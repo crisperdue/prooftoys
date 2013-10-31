@@ -3418,8 +3418,8 @@ function findDefinition(name, tOrF) {
 
 // Var (and constants) naming etc.
 
-// String that matches identifiers, used in both tokenizing and
-// determining categories of names for display.
+// String that matches identifiers, used in the tokenizer and
+// identifierRegex.
 var identifierPattern = '[_a-zA-Z][_a-zA-Z0-9]*';
 
 // Names matching this regex are identifiers.
