@@ -379,7 +379,7 @@ var ruleInfo = {
       });
       var lambda = call.fn;
       var result =
-        (call.arg instanceof Toy.Var && call.arg.name === lambda.bound.name
+        (call.arg instanceof Var && call.arg.name === lambda.bound.name
          // Same idea as optimization in Lambda._subFree.
          ? equal(call, lambda.body)
          : equal(call, lambda.body.subFree(call.arg, lambda.bound)));
@@ -463,8 +463,8 @@ var ruleInfo = {
   // The two forms of "=" are interchangeable (other than precedence).
   eqIsEquiv: {
     action: function() {
-      var step1 = rules.eqSelf(new Toy.Var('='));
-      var step2 = rules.eqSelf(new Toy.Var('=='));
+      var step1 = rules.eqSelf(new Var('='));
+      var step2 = rules.eqSelf(new Var('=='));
       var result = rules.r(step2, step1, '/right');
       return result.justify('eqIsEquiv', []);
     },
@@ -593,11 +593,11 @@ var ruleInfo = {
       var args = [a, path];
       path = Toy.path(path, a);
       var target = a.locate(path);
-      if (target instanceof Toy.Var) {
+      if (target instanceof Var) {
         var result = rules.replace(rules.definition(target.name), a, path);
         return result.justify('useDefinition', args, [a]);
       } else {
-        assert(target instanceof Toy.Call && target.arg instanceof Toy.Var,
+        assert(target instanceof Toy.Call && target.arg instanceof Var,
                  'Target of useDefinition not suitable: ' + target);
         var arg = target.arg;
         assert(arg.name == 'T' || arg.name == 'F',
@@ -743,7 +743,7 @@ var ruleInfo = {
    */
   bindEqn: {
     action: function(h_eqn, v) {
-      v = Toy.varify(v);
+      v = varify(v);
       var eqn = h_eqn.unHyp();
       eqn.assertCall2('=');
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
@@ -834,7 +834,7 @@ var ruleInfo = {
   instForall: {
     action: function(h_target, expr) {
       var target = h_target.unHyp();
-      assert(target.fn instanceof Toy.Var && target.fn.name == 'forall',
+      assert(target.fn instanceof Var && target.fn.name == 'forall',
              "Must be 'forall': " + target.fn,
              h_target);
       assert(target.arg instanceof Toy.Lambda,
@@ -852,7 +852,7 @@ var ruleInfo = {
     },
     inputs: {step: 1, term: 2, condition: {1: function(target) {
       return (target instanceof Toy.Call
-	      && target.fn instanceof Toy.Var
+	      && target.fn instanceof Var
 	      && target.fn.name == 'forall');
     }}},
     form: ('In step <input name=step> instantiate bound var'
@@ -1191,7 +1191,7 @@ var ruleInfo = {
       var t_a = h_t_a.unHyp()
       assertEqn(t_a);
       var left = t_a.locate('/left');
-      assert(left instanceof Toy.Var && left.name == 'T',
+      assert(left instanceof Var && left.name == 'T',
              'Input should be [T = A]: ' + t_a,
              h_t_a);
       var a = t_a.locate('/right');
@@ -1201,7 +1201,7 @@ var ruleInfo = {
     inputs: {equation: 1, condition: {1: function(h_eqn) {
       var eqn = h_eqn.unHyp();
       var left = eqn.getLeft();
-      return (left instanceof Toy.Var && left.name == 'T');
+      return (left instanceof Var && left.name == 'T');
     }}},
     form: 'Eliminate "T = " from step <input name=equation>',
     description: '[T = a] to [a]',
@@ -1253,7 +1253,7 @@ var ruleInfo = {
   instVar: {
     action: function(step, a, v) {
       a = Toy.termify(a);
-      v = Toy.varify(v);
+      v = varify(v);
       var map = {};
       map[v.name] = a;
       var result = rules.instMultiVars(step, map);
@@ -1273,7 +1273,7 @@ var ruleInfo = {
   instantiateVar: {
     action: function(step, path, term) {
       v = step.locate(path);
-      assert(v instanceof Toy.Var, 'Not a variable: ' + v);
+      assert(v instanceof Var, 'Not a variable: ' + v);
       var map = {};
       map[v.name] = term;
       var result = rules.instMultiVars(step, map);
@@ -1492,9 +1492,9 @@ var ruleInfo = {
       var boolOps = {'&': true, '|': true, '==>': true, '=': true, not: true};
       function isReducible(expr) {
         return (expr instanceof Toy.Call
-                && ((expr.fn instanceof Toy.Var
+                && ((expr.fn instanceof Var
                      && boolOps[expr.fn.name]
-                     && expr.arg instanceof Toy.Var
+                     && expr.arg instanceof Var
                      && (expr.arg.name == 'T' || expr.arg.name == 'F'))
                     || expr.fn instanceof Toy.Lambda));
       }
@@ -1507,7 +1507,7 @@ var ruleInfo = {
         }
         var target = right.locate(_path);
         var fn = target.fn;
-        if (fn instanceof Toy.Var) {
+        if (fn instanceof Var) {
           var defn;
           if (fn.name == 'not') {
             defn = rules.theorem(target.arg.name == 'T'
@@ -1560,7 +1560,7 @@ var ruleInfo = {
         // name returned.
         for (var name in names) {
           if (wff instanceof Toy.Call && wff.fn instanceof Toy.Call
-              && wff.fn.fn instanceof Toy.Var && wff.fn.fn.name == '=') {
+              && wff.fn.fn instanceof Var && wff.fn.fn.name == '=') {
             // WFF is already an equation.
             var step1 = rules.tautology(wff.subFree(T, name));
             var step2 = rules.tautology(wff.subFree(F, name));
@@ -1581,7 +1581,7 @@ var ruleInfo = {
         // There are no free variables, evaluate the expression.
         var step11 = rules.evalBool(wff);
         assert(step11.isCall2('=')
-               && step11.getRight() instanceof Toy.Var
+               && step11.getRight() instanceof Var
                && step11.getRight().name == 'T',
                'Not a tautology: ' + step11.getLeft(),
                step11);
@@ -1746,7 +1746,7 @@ var ruleInfo = {
   // {v. f A B} c = f A ({v. B} c) where v is not free in f or a.
   r5235: {
     action: function(v, a, b) {
-      v = Toy.varify(v);
+      v = varify(v);
       var aFree = a.freeNames();
       assert(!aFree.hasOwnProperty(v.name),
 	     'r5235: variable ' + v + 'cannot occur free in ' + a);
@@ -1789,7 +1789,7 @@ var ruleInfo = {
   implyForallBook: {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
-      v = Toy.varify(v);
+      v = varify(v);
       assert(a_b.isCall2('==>'), 'Must be an implication: ' + a_b, h_a_b);
       var a = a_b.getLeft();
       var b = a_b.getRight();
@@ -1828,7 +1828,7 @@ var ruleInfo = {
   // the variable is free, but would not give desired result.
   implyForallThm: {
     action: function(v, a, b) {
-      v = Toy.varify(v);
+      v = varify(v);
       var aFree = a.freeNames();
       assert(!aFree.hasOwnProperty(v.name),
 	     'r5235: variable ' + v + 'cannot occur free in ' + a);
@@ -1869,7 +1869,7 @@ var ruleInfo = {
   // Handles hypotheses.
   implyForall: {
     action: function(v, h_a_b) {
-      v = Toy.varify(v);
+      v = varify(v);
       var a_b = h_a_b.unHyp();
       var step1 = rules.addForall(h_a_b, v);
       var step2 = rules.implyForallThm(v, a_b.getLeft(), a_b.getRight());
@@ -2833,12 +2833,12 @@ var ruleInfo = {
       var infix = Toy.infixCall;
       assert(step.hasHyps, 'Step has no hypotheses');
       var lhs = step.getLeft().hypLocater(hyp);
-      var a = Toy.varify('a');
+      var a = varify('a');
       var taut = infix(infix(lhs, '==>', a),
 		       '==>',
 		       infix(lhs,
 			     '==>',
-			     infix(Toy.varify('h'), '==>', a)));
+			     infix(varify('h'), '==>', a)));
       var step1 = rules.asImplication(step);
       var step2 = rules.forwardChain(step1, rules.tautology(taut));
       var result = rules.asHypotheses(step2);
@@ -2980,7 +2980,7 @@ var ruleInfo = {
       }
       var keepTerms = [];
       keepTermsInfo.forEach(function(info) {
-          keepTerms.push(new Toy.Var(info.name));
+          keepTerms.push(new Var(info.name));
         });
       // A variable for each hypothesis to keep, in order.
       function buildConj(list) {
@@ -3298,18 +3298,18 @@ var ruleInfo = {
           var rhs = value ? T : F;
         } else {
           var value = Toy.checkRange(value);
-          var rhs = new Toy.Var(value.toFixed(0));
+          var rhs = new Var(value.toFixed(0));
         }
         return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else if (term instanceof Toy.Call) {
         var arg = term.arg.getNumValue();
         var op = term.fn;
-        assert(op instanceof Toy.Var,
+        assert(op instanceof Var,
                function() { return 'Unsupported operator: ' + op; });
         if (op.name == 'neg') {
           value = -arg;
-          var rhs = new Toy.Var(value.toFixed(0));
+          var rhs = new Var(value.toFixed(0));
         } else if (op.name == 'R') {
           var rhs = T;
         } else {
