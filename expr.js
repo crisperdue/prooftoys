@@ -413,7 +413,7 @@ Toy.extends(TermMap, Map);
 TermMap.prototype.addTerm = function(term) {
   if (!this.has(term)) {
     var name = 'a' + this.counter++
-    this._set(term, new Toy.Var(name));
+    this._set(term, new Var(name));
     this.subst[name] = term;
   }
   return this.get(term);
@@ -823,7 +823,7 @@ $.extend(Expr.prototype, {
  */
 Expr.prototype.matchSchema = function(schema) {
   if (typeof schema == 'string') {
-    schema = Toy.parse(schema);
+    schema = parse(schema);
   }
   var substitution = {};
   var result = schema._matchAsSchema(this, substitution);
@@ -901,11 +901,11 @@ Expr.prototype.subFree = function(replacement, v) {
  * there are hypotheses; else the whole wff.
  */
 Expr.prototype.pathToVisiblePart = function() {
-  return Toy.path(this.rendering &&
-                  (this.ruleName === 'consider' ||
-                   this.rendering.hasLeftElision)
-                  ? '/main/right'
-                  : (this.hasHyps ? '/main' : ''));
+  return path(this.rendering &&
+              (this.ruleName === 'consider' ||
+               this.rendering.hasLeftElision)
+              ? '/main/right'
+              : (this.hasHyps ? '/main' : ''));
 };
 
 var _assertionCounter = 1;
@@ -1016,7 +1016,6 @@ Expr.prototype.mathVars = function() {
  * to add to.
  */
 Expr.prototype.mathVarConditions = function(expr) {
-  var infix = Toy.infixCall;
   var real = new Var('R');
   // Order the names for nice presentation.
   var names = [];
@@ -1026,7 +1025,7 @@ Expr.prototype.mathVarConditions = function(expr) {
   names.sort();
   names.forEach(function(name) {
       if (expr) {
-        expr = infix(expr, '&', call(real, name));
+        expr = infixCall(expr, '&', call(real, name));
       } else {
         expr = call(real, name);
       }
@@ -1134,8 +1133,8 @@ Expr.prototype.unHyp = function() {
  * any named function.
  */
 Expr.prototype.isCall1 = function(name) {
-  if (this instanceof Toy.Call) {
-    return (this.fn instanceof Toy.Var &&
+  if (this instanceof Call) {
+    return (this.fn instanceof Var &&
             (name == null || this.fn.name == name));
   } else {
     return false;
@@ -1148,10 +1147,10 @@ Expr.prototype.isCall1 = function(name) {
  * a call to any named function.
  */
 Expr.prototype.isCall2 = function(name) {
-  if (this instanceof Toy.Call) {
+  if (this instanceof Call) {
     var left = this.fn;
-    return left instanceof Toy.Call
-      && left.fn instanceof Toy.Var
+    return left instanceof Call
+      && left.fn instanceof Var
       && (name == null || left.fn.name == name);
   } else {
     return false;
@@ -1345,7 +1344,7 @@ Expr.prototype.hypLocater = function(hyp) {
       var left = (right == h
                   ? new Var('h' + (pos + 1))
                   : locater(self.getLeft(), pos + 1));
-      return Toy.infixCall(left, '&', right);
+      return infixCall(left, '&', right);
     }
   }
   return locater(this, 1);
@@ -1375,15 +1374,15 @@ Expr.prototype.hypMover = function(toMove) {
         found = true;
       } else {
         h = new Var('h' + i);
-        rhs = rhs ? Toy.infixCall(rhs, '&', h) : h;
+        rhs = rhs ? infixCall(rhs, '&', h) : h;
       }
-      lhs = lhs ? Toy.infixCall(lhs, '&', h) : h;
+      lhs = lhs ? infixCall(lhs, '&', h) : h;
       i++;
     });
   if (found) {
-    rhs = rhs ? Toy.infixCall(rhs, '&', new Var('h')) : new Var('h');
+    rhs = rhs ? infixCall(rhs, '&', new Var('h')) : new Var('h');
   }
-  return Toy.infixCall(lhs, '=', rhs);
+  return infixCall(lhs, '=', rhs);
 };
 
 /**
@@ -1440,9 +1439,9 @@ Expr.prototype.transformConjuncts = function(xform) {
   if (this.sourceStep) {
     return xform(this);
   } else if (this.isCall2('&')) {
-    return Toy.infixCall(this.getLeft().transformConjuncts(xform),
-                         '&',
-                         xform(this.getRight()));
+    return infixCall(this.getLeft().transformConjuncts(xform),
+                     '&',
+                     xform(this.getRight()));
   } else {
     return xform(this);
   }
@@ -1505,12 +1504,12 @@ Expr.prototype.mergedHypotheses = function() {
   // Build the remaining sorted terms into a chain.
   var rhs = null;
   sorted.forEach(function(term) {
-      rhs = rhs ? Toy.infixCall(rhs, '&', term.__var) : term.__var;
+      rhs = rhs ? infixCall(rhs, '&', term.__var) : term.__var;
     });
 
   var left = this.getLeft()._asPattern();
   var right = this.getRight()._asPattern();
-  var result = Toy.infixCall(Toy.infixCall(left, '&', right), '=', rhs);
+  var result = infixCall(infixCall(left, '&', right), '=', rhs);
   conjuncts.forEach(function(term) {
       delete term.__var;
       delete term.__order;
@@ -1959,7 +1958,7 @@ Call.prototype._toString = function() {
     return this._string;
   }
   function asArg(expr) {
-    if (expr instanceof Toy.Var && isInfixDesired(expr)) {
+    if (expr instanceof Var && isInfixDesired(expr)) {
       return '(' + expr + ')';
     } else {
       return expr.toString();
@@ -3308,7 +3307,7 @@ var definitions = {
  */
 function define(name, definition) {
   assert(isConstantName(name), 'Not a constant name: ' + name);
-  definition = typeof definition == 'string' ? Toy.parse(definition) : definition;
+  definition = typeof definition == 'string' ? parse(definition) : definition;
   assert(definition instanceof Expr,
          'Definition must be a term: ' + definition);
   if (isDefined(name)) {
@@ -3345,7 +3344,7 @@ function defineCases(name, ifTrue, ifFalse) {
  * definition.
  */
 function isDefined(name) {
-  if (name instanceof Toy.Var) {
+  if (name instanceof Var) {
     name = name.name;
   }
   assert(typeof name == 'string', function() {
@@ -3359,7 +3358,7 @@ function isDefined(name) {
  * cases.
  */
 function isDefinedByCases(name) {
-  if (name instanceof Toy.Var) {
+  if (name instanceof Var) {
     name = name.name;
   }
   assert(typeof name == 'string', function() {
@@ -3399,15 +3398,15 @@ function findDefinition(name, tOrF) {
   var defn = definitions[name];
   assert(defn, function() { return 'Not defined: ' + name; });
   if (!tOrF) {
-    assert(defn instanceof Toy.Expr, 'Definition is not simple: ' + name);
+    assert(defn instanceof Expr, 'Definition is not simple: ' + name);
     return defn;
   } else {
-    if (tOrF == true || (tOrF instanceof Toy.Var && tOrF.name == 'T')) {
+    if (tOrF == true || (tOrF instanceof Var && tOrF.name == 'T')) {
       tOrF = 'T';
-    } else if (tOrF == false || (tOrF instanceof Toy.Var && tOrF.name == 'F')) {
+    } else if (tOrF == false || (tOrF instanceof Var && tOrF.name == 'F')) {
       tOrF = 'F';
     }
-    assert(!(defn instanceof Toy.Expr),
+    assert(!(defn instanceof Expr),
              'Definition is not by cases: ' + name);
     var defnCase = defn[tOrF];
     assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
@@ -3569,9 +3568,9 @@ function tokenize(str) {
   var match;
   var result = [];
   while (match = _tokens.exec(str)) {
-    result.push(new Toy.Var(match[0], match.index));
+    result.push(new Var(match[0], match.index));
   }
-  result.push(new Toy.Var('(end)', str.length));
+  result.push(new Var('(end)', str.length));
   return result;
 }
 
@@ -4025,7 +4024,7 @@ function varify(v) {
  * if not an Expr.
  */
 function termify(x) {
-  return (x instanceof Expr) ? x : Toy.parse(x);
+  return (x instanceof Expr) ? x : parse(x);
 }
 
 /**
@@ -4036,9 +4035,9 @@ function termify(x) {
 function call(fn, arg) {
   fn = varify(fn);
   if ((typeof arg) == 'string') {
-    arg = new Toy.Var(arg);
+    arg = new Var(arg);
   }
-  var result = new Toy.Call(fn, arg);
+  var result = new Call(fn, arg);
   // Skip fn and the first "arg" after that.
   for (var i = 2; i < arguments.length; i++) {
     result = call(result, arguments[i]);
@@ -4082,7 +4081,7 @@ function implies(lhs, rhs) {
  * Builds a Lambda.
  */
 function lambda(bound, body) {
-  return new Toy.Lambda(bound, body);
+  return new Lambda(bound, body);
 }
 
 /**
@@ -4253,9 +4252,9 @@ var assert = assertTrue;
  * both left and right sides.
  */
 function assertEqn(expr) {
-  assert(expr instanceof Toy.Call
-         && expr.fn instanceof Toy.Call
-         && expr.fn.fn instanceof Toy.Var
+  assert(expr instanceof Call
+         && expr.fn instanceof Call
+         && expr.fn.fn instanceof Var
          && expr.fn.fn.name == '=',
          'Must be an equation: ' + expr);
 }
@@ -4353,11 +4352,11 @@ function encodeSteps(steps_arg) {
     var args = step.ruleArgs;
     for (var i = 0; i < args.length; i++) {
       var arg = args[i];
-      if (arg instanceof Toy.Path) {
+      if (arg instanceof Path) {
         result.push('(path "' + arg + '")');
       } else if (typeof arg === 'string') {
         result.push(unparseString(arg));
-      } else if (arg instanceof Toy.Expr) {
+      } else if (arg instanceof Expr) {
         if (arg.__index) {
           result.push('(s ' + arg.__index + ')');
         } else {
