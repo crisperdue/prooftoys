@@ -567,6 +567,13 @@ Expr.prototype.toUnicode = function() {
   }
 }
 
+/**
+ * Returns true iff this term is atomic (a variable or constant).
+ */
+Expr.prototype.isAtomic = function() {
+  return this instanceof Var;
+}
+
 // Categorization of Vars:
 //
 // Identifiers
@@ -579,10 +586,14 @@ Expr.prototype.toUnicode = function() {
 // identifers, currently "forall" and "exists".
 
 /**
- * True iff this is a Var named as a variable.
+ * True iff this is a Var named as a variable.  If the optional
+ * name is given, this variable must have the given name.
  */
-Expr.prototype.isVariable = function() {
-  return this instanceof Var && this.name.match(variableRegex);
+Expr.prototype.isVariable = function(opt_name) {
+  if (!(this instanceof Var) || !this.name.match(variableRegex)) {
+    return false;
+  }
+  return opt_name ? this.name === opt_name : true;
 };
 
 /**
@@ -593,10 +604,14 @@ Expr.prototype.hasName = function(name) {
 };
 
 /**
- * True iff this is a Var named as a constant.
+ * True iff this is a Var named as a constant.  If the optional name
+ * is given, this constant must have the given name.
  */
-Expr.prototype.isConst = function() {
-  return this instanceof Var && isConstantName(this.name);
+Expr.prototype.isConst = function(opt_name) {
+  if (!(this instanceof Var) || !isConstantName(this.name)) {
+    return false;
+  }
+  return opt_name ? this.name === opt_name : true;
 };
 
 // True iff the expression is a literal constant.
@@ -4105,6 +4120,9 @@ function lambda(bound, body) {
  * to be rendered as infix.
  */
 function isInfixDesired(vbl) {
+  if (!(vbl instanceof Var)) {
+    return false;
+  }
   var p = getPrecedence(vbl);
   return 0 < p && p < 100;
 }
