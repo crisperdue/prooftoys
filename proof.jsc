@@ -1168,13 +1168,13 @@ Call.prototype._render = function(minPower) {
       $expr.append($fn, ' ', this.arg._render(Toy.namePower + 1));
     }
     markAsFullExpr($expr);
-  } else if (this.fn instanceof Var && Toy.isInfixDesired(this.fn)) {
+  } else if (Toy.isInfixDesired(this.fn)) {
     // Infix operator, but only one argument: render like "(+) x"
     // Parenthesize both function and argument if they are calls.
     $expr.append('(', this.fn._render(0), ') ',
               this.arg._render(Toy.namePower + 1));
     markAsFullExpr($expr);
-  } else if (this.fn instanceof Var && !this.fn.displaysIdentifier()) {
+  } else if (!this.fn.displaysIdentifier()) {
     // Function call with non-identifier operator.
     // Display the function adjacent to its argument, but precede both
     // with a non-breaking space to the left to help the user select
