@@ -11,21 +11,21 @@
   var implies = Toy.implies;
   var lambda = Toy.lambda;
 
-  var Var = Toy.Var;
-  var a = new Var('a');
-  var b = new Var('b');
-  var c = new Var('c');
-  var x = new Var('x');
-  var y = new Var('y');
-  var z = new Var('z');
-  var f = new Var('f');
-  var g = new Var('g');
-  var h = new Var('h');
-  var p = new Var('p');
-  var q = new Var('q');
-  var r = new Var('r');
-  var T = new Var('T');
-  var F = new Var('F');
+  var varify = Toy.varify;
+  var a = varify('a');
+  var b = varify('b');
+  var c = varify('c');
+  var x = varify('x');
+  var y = varify('y');
+  var z = varify('z');
+  var f = varify('f');
+  var g = varify('g');
+  var h = varify('h');
+  var p = varify('p');
+  var q = varify('q');
+  var r = varify('r');
+  var T = Toy.constify('T');
+  var F = Toy.constify('F');
 
   // Node of dropdown control.
   var selector;

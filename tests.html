@@ -30,26 +30,27 @@
 // Make some names visible throughout
 var rules = Toy.rules;
 var varify = Toy.varify;
+var constify = Toy.constify;
 var call = Toy.call;
 var equal = Toy.equal;
 var implies = Toy.implies;
 var lambda = Toy.lambda;
 
 var Var = Toy.Var;
-var a = new Var('a');
-var b = new Var('b');
-var c = new Var('c');
-var x = new Var('x');
-var y = new Var('y');
-var z = new Var('z');
-var f = new Var('f');
-var g = new Var('g');
-var h = new Var('h');
-var p = new Var('p');
-var q = new Var('q');
-var r = new Var('r');
-var T = new Var('T');
-var F = new Var('F');
+var a = varify('a');
+var b = varify('b');
+var c = varify('c');
+var x = varify('x');
+var y = varify('y');
+var z = varify('z');
+var f = varify('f');
+var g = varify('g');
+var h = varify('h');
+var p = varify('p');
+var q = varify('q');
+var r = varify('r');
+var T = constify('T');
+var F = constify('F');
 
 // Assertion utilities:
 
@@ -312,8 +313,8 @@ var testCase = {
 
   testToUnicode: function() {
     assertEqual('T', T.toUnicode());
-    assertEqual('a\u2081\u2080\u2089', new Toy.Var('a.109').toUnicode());
-    assertEqual('a:R', new Toy.Var('a:R').toUnicode());
+    assertEqual('a\u2081\u2080\u2089',  new Toy.Var('a.109').toUnicode());
+    assertEqual('a:R', Toy.varify('a:R').toUnicode());
     assertEqual('xx\u2083:RR', new Toy.Var('xx.3:RR').toUnicode());
   },
 
@@ -398,18 +399,18 @@ var testCase = {
   },
 
   testIsNumeral: function() {
-    var v = new Toy.Var('-3');
+    var v = Toy.constify('-3');
     assert(v.isNumeral());
-    v = new Toy.Var('a1');
+    v = Toy.varify('a1');
     assert(!v.isNumeral());
   },
 
   testIsString: function() {
-    var v = new Toy.Var('"asdf"');
+    var v =  Toy.constify('"asdf"');
     assert(v.isString());
-    v = new Toy.Var('a');
+    v = Toy.varify('a');
     assert(!v.isString());
-    v = new Toy.Var('-3');
+    v = Toy.constify('-3');
     assert(!v.isString());
   },
 
@@ -997,7 +998,7 @@ var testCase = {
     assert(!Toy.isDefined(T));
     assert(!Toy.isDefined('==>'));
     assert(Toy.isDefined('forall'));
-    assert(Toy.isDefined(varify('forall')));
+    assert(Toy.isDefined(Toy.constify('forall')));
     try {
       Toy.isDefined(equal(x, x));
       Y.Assert.fail('Name not a variable or string');
@@ -1284,7 +1285,7 @@ var testCase = {
   },
 
   testInstEqn: function() {
-    var c = new Toy.Var('c');
+    var c = Toy.varify('c');
     var inf = Toy.rules.instEqn(Toy.parse('g y = c'),
                               Toy.parse('f x'),
                               'y');

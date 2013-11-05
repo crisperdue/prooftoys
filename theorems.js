@@ -11,6 +11,7 @@ var assert = Toy.assertTrue;
 //  Make some useful names available here.
 var assertEqn = Toy.assertEqn;
 var varify = Toy.varify;
+var constify = Toy.constify;
 var call = Toy.call;
 var equal = Toy.equal;
 var implies = Toy.implies;
@@ -30,8 +31,8 @@ var h = varify('h');
 var x = varify('x');
 var y = varify('y');
 
-var T = varify('T');
-var F = varify('F');
+var T = constify('T');
+var F = constify('F');
 var zero = Toy.parse('0');
 var one = Toy.parse('1');
 var identity = lambda(x, x);
@@ -463,8 +464,8 @@ var ruleInfo = {
   // The two forms of "=" are interchangeable (other than precedence).
   eqIsEquiv: {
     action: function() {
-      var step1 = rules.eqSelf(new Var('='));
-      var step2 = rules.eqSelf(new Var('=='));
+      var step1 = rules.eqSelf(Toy.constify('='));
+      var step2 = rules.eqSelf(Toy.constify('=='));
       var result = rules.r(step2, step1, '/right');
       return result.justify('eqIsEquiv', []);
     },
@@ -2980,7 +2981,7 @@ var ruleInfo = {
       }
       var keepTerms = [];
       keepTermsInfo.forEach(function(info) {
-          keepTerms.push(new Var(info.name));
+          keepTerms.push(Toy.varify(info.name));
         });
       // A variable for each hypothesis to keep, in order.
       function buildConj(list) {
@@ -3298,7 +3299,7 @@ var ruleInfo = {
           var rhs = value ? T : F;
         } else {
           var value = Toy.checkRange(value);
-          var rhs = new Var(value.toFixed(0));
+          var rhs = Toy.constify(value.toFixed(0));
         }
         return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
@@ -3309,7 +3310,7 @@ var ruleInfo = {
                function() { return 'Unsupported operator: ' + op; });
         if (op.name == 'neg') {
           value = -arg;
-          var rhs = new Var(value.toFixed(0));
+          var rhs = Toy.constify(value.toFixed(0));
         } else if (op.name == 'R') {
           var rhs = T;
         } else {

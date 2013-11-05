@@ -4009,15 +4009,29 @@ function toUnicode(o) {
 } 
 
 /**
- * Return the Var v, or if the argument is a string, create a new Var
- * from it.  Literal constants are not allowed.
+ * Return the Var v, or if the argument is a string, create a new
+ * variable from it.  The name must be legal for a user-created
+ * variable.
  */
 function varify(v) {
   var v = (typeof v == 'string') ? new Var(v) : v;
-  assert(!v.hasOwnProperty('value'),
-         function() { return 'Not a variable: ' + v; });
+  if (!v.isVariable() || v.isGeneratedBound()) {
+    throw new Error('Bad variable name: ' + v.name);
+  }
   return v;
 };
+
+/**
+ * Return the Var c, or if the argument is a string, create a new
+ * constant from it, checking that the name is legal for a constant.
+ */
+function constify(c) {
+  var c = (typeof c == 'string') ? new Var(c) : c;
+  if (!c.isConst()) {
+    throw new Error('Bad constant name: ' + c.name);
+  }
+  return c;
+}
 
 /**
  * Coerce the given Expr or string to an Expr by parsing it
@@ -4028,12 +4042,14 @@ function termify(x) {
 }
 
 /**
- * Calls a function, passing one or more arguments.
+ * Calls a function given as a constant or name of a constant, passing
+ * one or more arguments.
  */
 // TODO: Eliminate use fo binops in favor of infixCall.  This will
 // be problematic for some infix operators.
 function call(fn, arg) {
-  fn = varify(fn);
+  // TODO: Allow fn to be a variable name.
+  fn = fn instanceof Expr ? fn : constify(fn);
   if ((typeof arg) == 'string') {
     arg = new Var(arg);
   }
@@ -4047,12 +4063,12 @@ function call(fn, arg) {
 
 /**
  * Returns a call with the two operands and the given op (middle
- * argument) as the binary operator between them.  The op must be an
- * Expr or string name of a variable or constant.
+ * argument) as the binary operator between them.  The op must be a
+ * constant or a name suitable for one.
  */
 function infixCall(arg1, op, arg2) {
   // TODO: Change this when redefining meaning of infix operators.
-  op = varify(op);
+  op = constify(op);
   return new Call(new Call(op, arg1), arg2);
 }
 
@@ -4493,6 +4509,7 @@ Toy.getDefinition = getDefinition;
 Toy.definitions = definitions;
 
 Toy.varify = varify;
+Toy.constify = constify;
 Toy.termify = termify;
 Toy.isConstantName = isConstantName;
 Toy.isVariableName = isVariableName;
