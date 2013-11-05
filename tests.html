@@ -36,7 +36,7 @@ var equal = Toy.equal;
 var implies = Toy.implies;
 var lambda = Toy.lambda;
 
-var Var = Toy.Var;
+var Atom = Toy.Atom;
 var a = varify('a');
 var b = varify('b');
 var c = varify('c');
@@ -313,9 +313,9 @@ var testCase = {
 
   testToUnicode: function() {
     assertEqual('T', T.toUnicode());
-    assertEqual('a\u2081\u2080\u2089',  new Toy.Var('a.109').toUnicode());
+    assertEqual('a\u2081\u2080\u2089',  new Toy.Atom('a.109').toUnicode());
     assertEqual('a:R', Toy.varify('a:R').toUnicode());
-    assertEqual('xx\u2083:RR', new Toy.Var('xx.3:RR').toUnicode());
+    assertEqual('xx\u2083:RR', new Toy.Atom('xx.3:RR').toUnicode());
   },
 
   // PARSER
@@ -744,7 +744,7 @@ var testCase = {
     var paths = [];
     var terms = [];
     function foo(term, pth) {
-      if (term.fn instanceof Toy.Var) {
+      if (term.fn instanceof Toy.Atom) {
         names.push(term.fn.pname || term.fn.name);
         paths.push(pth.reverse().toString());
       }

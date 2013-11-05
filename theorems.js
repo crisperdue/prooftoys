@@ -709,7 +709,7 @@ var ruleInfo = {
   /**
    * Change the name of a bound variable.  Replaces the lambda
    * subexpression in expr at path with one that binds newName, which
-   * may be a string or Var, and uses it in place of any references to
+   * may be a string or Atom, and uses it in place of any references to
    * the old bound variable.
    */
   changeVar: {

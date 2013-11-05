@@ -27,7 +27,7 @@ var assert = Toy.assertTrue;
 
 // Make the main classes available without "Toy."
 var Expr = Toy.Expr;
-var Var = Toy.Var;
+var Atom = Toy.Atom;
 var Call = Toy.Call;
 var Lambda = Toy.Lambda;
 
@@ -1064,7 +1064,7 @@ function markAsFullExpr($expr) {
 // if the operator's precedence is at least minPower.
 //
 
-Var.prototype._render = function(minPower) {
+Atom.prototype._render = function(minPower) {
   var $expr = exprJq();
   this.node = dom($expr);
   if (this.isVariable() || this.isLiteral()) {
@@ -1085,8 +1085,8 @@ var useParens = {
 };
 
 /**
- * Computes the effective precedence of the given binary operator Var
- * when applied to the given inner binary operator Var.  The result
+ * Computes the effective precedence of the given binary operator Atom
+ * when applied to the given inner binary operator Atom.  The result
  * will be either its normal precedence or one more than the
  * precedence of innerOp if innerOp is listed for the operator in the
  * useParens table.

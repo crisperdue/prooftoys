@@ -9,6 +9,10 @@ var Toy = Toy || {};
 
 //// GENERAL UTILITIES
 
+// A dummy variable used occasionally to make Emacs work indent
+// our code better.
+var _;
+
 /**
  * Configure the given object with the given property descriptors.
  * This is like Object.defineProperties, except key values that are
@@ -26,6 +30,26 @@ function configure(object, properties) {
     }
   }
   return object;
+}
+
+/**
+ * Calling methodical(MyConstructor) adds to the constructor function
+ * a property "methods", so that MyConstructor.methods(properties)
+ * adds those properties to its prototype.
+ *
+ * Also adds a setter property "$" that does the same thing.  This is
+ * semantically strange, but works well with the Emacs indenter for
+ * Java mode, unlike the alternatives.
+ */
+function methodical(constructor) {
+  Object.defineProperty(constructor, '$',
+                        {set: function(properties) {
+                            $.extend(this.prototype, properties);
+                          }
+                        });
+  constructor.methods = function(properties) {
+    $.extend(constructor.prototype, properties);
+  };
 }
 
 /**
@@ -413,7 +437,7 @@ Toy.extends(TermMap, Map);
 TermMap.prototype.addTerm = function(term) {
   if (!this.has(term)) {
     var name = 'a' + this.counter++
-    this._set(term, new Var(name));
+    this._set(term, new Atom(name));
     this.subst[name] = term;
   }
   return this.get(term);
@@ -476,7 +500,7 @@ function decapture(target, replacement) {
 // sourceStep property.)
 
 /**
- * Superclass for terms of all kinds: Var, Call, Lambda.
+ * Superclass for terms of all kinds: Atom, Call, Lambda.
  * See internal comments for details.
  */
 function Expr() {
@@ -513,6 +537,7 @@ function Expr() {
   // TODO: Reimplement so hypothesis display is controlled in a
   // rendered step rather than a proof step.
 }
+methodical(Expr);
 
 // This counts up to supply a unique name for bound variables renamed
 // to avoid capturing.
@@ -527,7 +552,7 @@ Toy.trackSourceSteps = false;
 var useUnicode = false;
 
 Expr.prototype.toString = function() {
-  if (this instanceof Var) {
+  if (this instanceof Atom) {
     return this._toString();
   }
   var prefix = '';
@@ -545,7 +570,7 @@ Expr.prototype.toString = function() {
       && this.hasHyps
       && this.isCall2('==>')
       && isInfixDesired(this.fn.fn)) {
-    var imply = new Var('|-');
+    var imply = new Atom('|-');
     return (prefix + '(' + this.fn.arg._toString() + ' ' + imply + ' '
             + this.arg._toString() + ')');
   } else {
@@ -571,7 +596,7 @@ Expr.prototype.toUnicode = function() {
  * Returns true iff this term is atomic (a variable or constant).
  */
 Expr.prototype.isAtomic = function() {
-  return this instanceof Var;
+  return this instanceof Atom;
 }
 
 // Categorization of Vars:
@@ -586,11 +611,11 @@ Expr.prototype.isAtomic = function() {
 // identifers, currently "forall" and "exists".
 
 /**
- * True iff this is a Var named as a variable.  If the optional
+ * True iff this is a Atom named as a variable.  If the optional
  * name is given, this variable must have the given name.
  */
 Expr.prototype.isVariable = function(opt_name) {
-  if (!(this instanceof Var) || !this.name.match(variableRegex)) {
+  if (!(this instanceof Atom) || !this.name.match(variableRegex)) {
     return false;
   }
   return opt_name ? this.name === opt_name : true;
@@ -600,15 +625,15 @@ Expr.prototype.isVariable = function(opt_name) {
  * True iff this is a var with the given name.
  */
 Expr.prototype.hasName = function(name) {
-  return this instanceof Var && this.name === name;
+  return this instanceof Atom && this.name === name;
 };
 
 /**
- * True iff this is a Var named as a constant.  If the optional name
+ * True iff this is a Atom named as a constant.  If the optional name
  * is given, this constant must have the given name.
  */
 Expr.prototype.isConst = function(opt_name) {
-  if (!(this instanceof Var) || !isConstantName(this.name)) {
+  if (!(this instanceof Atom) || !isConstantName(this.name)) {
     return false;
   }
   return opt_name ? this.name === opt_name : true;
@@ -616,7 +641,7 @@ Expr.prototype.isConst = function(opt_name) {
 
 // True iff the expression is a literal constant.
 Expr.prototype.isLiteral = function() {
-  return this instanceof Var && this._value !== undefined;
+  return this instanceof Atom && this._value !== undefined;
 }
 
 /**
@@ -632,12 +657,12 @@ function isIntegerLiteral(name) {
 }
 
 /**
- * True iff this is a Var that displays as an identifier.  This is
+ * True iff this is a Atom that displays as an identifier.  This is
  * based on Unicode display, which may be a non-identifier in cases such
  * as "forall" and "exists", even when the internal name is an identifier.
  */
 Expr.prototype.displaysIdentifier = function() {
-  return (this instanceof Var &&
+  return (this instanceof Atom &&
           this.toUnicode().match(identifierRegex));
 };
 
@@ -645,7 +670,7 @@ Expr.prototype.displaysIdentifier = function() {
  * Is this a numeric literal?
  */
 Expr.prototype.isNumeral = function() {
-  return this instanceof Var && typeof this._value == 'number';
+  return this instanceof Atom && typeof this._value == 'number';
 };
 
 /**
@@ -678,7 +703,7 @@ function checkRange(number) {
  * Is this a string literal?
  */
 Expr.prototype.isString = function() {
-  return this instanceof Var && typeof this._value == 'string';
+  return this instanceof Atom && typeof this._value == 'string';
 };
 
 /**
@@ -696,7 +721,7 @@ Expr.prototype.getStringValue = function() {
  * This is a constant T or F.
  */
 Expr.prototype.isBoolConst = function() {
-  return (this instanceof Var &&
+  return (this instanceof Atom &&
           (this.name == 'T' || this.name == 'F'));
 };
 
@@ -725,12 +750,12 @@ Expr.prototype.asHyps = function() {
 Expr.prototype.isInfixCall = function() {
   return (this instanceof Call
           && this.fn instanceof Call
-          && this.fn.fn instanceof Var
+          && this.fn.fn instanceof Atom
           && isInfixDesired(this.fn.fn));
 };
 
 /**
- * Returns a new Var with a name that does not occur free
+ * Returns a new Atom with a name that does not occur free
  * in this expression.  If a name is given, uses that name
  * as the starting point for the name of the new variable.
  */
@@ -798,33 +823,35 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   return expr;
 };
 
-$.extend(Expr.prototype, {
-    /**
-     * Applies the named rule to this Expr and any other given arguments
-     * as if by a call to Toy.rules[name](args).  Private to Expr.justify.
-     */
-    apply: function(name, arg1) {
-      var nm = name;
-      arguments[0] = this;
-      return Toy.rules[nm].apply(Toy.rules, arguments);
-    },
+Expr.$ = {
+           
+  /**
+   * Applies the named rule to this Expr and any other given arguments
+   * as if by a call to Toy.rules[name](args).  Private to Expr.justify.
+   */
+  apply: function(name, arg1) {
+    var nm = name;
+    arguments[0] = this;
+    debugger;
+    return Toy.rules[nm].apply(Toy.rules, arguments);
+  },
+      
+  /**
+   * Applies rules.rewriteWithFact to this Expr passing in a path and
+   * fact to use.  Private to Expr.justify.
+   */
+  rewrite: function(path, fact) {
+    return Toy.rules.rewriteWithFact(this, path, fact);
+  },
 
-    /**
-     * Applies rules.rewriteWithFact to this Expr passing in a path and
-     * fact to use.  Private to Expr.justify.
-     */
-    rewrite: function(path, fact) {
-      return Toy.rules.rewriteWithFact(this, path, fact);
-    },
-
-    /**
-     * Applies rules.replace to this Expr passing in a path and
-     * equation to use.  Private to Expr.justify.
-     */
-    replace: function(path, eqn) {
-      return Toy.rules.replace(eqn, this, path);
-    }
-  });
+  /**
+   * Applies rules.replace to this Expr passing in a path and
+   * equation to use.  Private to Expr.justify.
+   */
+  replace: function(path, eqn) {
+    return Toy.rules.replace(eqn, this, path);
+  }
+};
 
 /**
  * Matches the given "schematic" expression against the other
@@ -849,7 +876,7 @@ Expr.prototype.matchSchema = function(schema) {
  * Returns a truthy value iff this and the given Expr differ only in
  * names of free and/or bound variables.  When true, the value is a
  * substition ("alpha conversion") that maps free variable names in
- * this to Var objects in the Expr.  Applying the substitution to this
+ * this to Atom objects in the Expr.  Applying the substitution to this
  * Expr results in an Expr that "matches" the Expr argument of this
  * method.
  */
@@ -902,8 +929,8 @@ Expr.prototype.findSubst = Expr.prototype.matchSchema;
  * scope where they become bound.
  */
 Expr.prototype.subFree = function(replacement, v) {
-  var name = v instanceof Var ? v.name : v;
-  if (replacement instanceof Var && replacement.name == name) {
+  var name = v instanceof Atom ? v.name : v;
+  if (replacement instanceof Atom && replacement.name == name) {
     // No changes required.
     return this;
   }
@@ -1031,7 +1058,7 @@ Expr.prototype.mathVars = function() {
  * to add to.
  */
 Expr.prototype.mathVarConditions = function(expr) {
-  var real = new Var('R');
+  var real = new Atom('R');
   // Order the names for nice presentation.
   var names = [];
   for (var v in this.mathVars()) {
@@ -1120,10 +1147,10 @@ Expr.prototype.getMain = function() {
 
 /**
  * Returns the nth "element" of this expression.  Recurs top down
- * through function parts of calls until finding a Var, which is
+ * through function parts of calls until finding a Atom, which is
  * consider element 0.  The arg part of that call is element 1,
  * and the arg goes up by 1 for each level.  The effect is that a
- * call written as (f a b c) gives the Var "f" as element 0, "a"
+ * call written as (f a b c) gives the Atom "f" as element 0, "a"
  * as element 1, "b" as element 2, and "c" as element 3.
  */
 Expr.prototype.nth = function(n) {
@@ -1149,7 +1176,7 @@ Expr.prototype.unHyp = function() {
  */
 Expr.prototype.isCall1 = function(name) {
   if (this instanceof Call) {
-    return (this.fn instanceof Var &&
+    return (this.fn instanceof Atom &&
             (name == null || this.fn.name == name));
   } else {
     return false;
@@ -1165,7 +1192,7 @@ Expr.prototype.isCall2 = function(name) {
   if (this instanceof Call) {
     var left = this.fn;
     return left instanceof Call
-      && left.fn instanceof Var
+      && left.fn instanceof Atom
       && (name == null || left.fn.name == name);
   } else {
     return false;
@@ -1179,7 +1206,7 @@ Expr.prototype.isOpenCall = function() {
   return this instanceof Call && this.fn instanceof Lambda;
 };
 
-$.extend(Expr.prototype, {
+Expr.$ = {
 
   /**
    * Is it an equation, possibly with assumptions?
@@ -1207,7 +1234,7 @@ $.extend(Expr.prototype, {
     return eqn.getRight();
   }
 
-});
+};
 
 /**
  * Throw an error with message if this is not a call to a function
@@ -1343,21 +1370,21 @@ Expr.prototype.isHypotheses = function() {
  * position from the right.  Helper for rules.extractHypothesis.
  */
 Expr.prototype.hypLocater = function(hyp) {
-  var h = new Var('h');
+  var h = new Atom('h');
   // Note: positions start with 1 at the right end of the chain.
   function locater(self, pos) {
     if (hyp.matches(self)) {
       return h;
     } else if (self.sourceStep || !self.isCall2('&')) {
-      return new Var('h' + pos);
+      return new Atom('h' + pos);
     } else {
       // Self is a conjunction.
       var right = locater(self.getRight(), pos);
-      assert(right instanceof Var, function() {
-          return 'Internal error, not a Var: ' + right;
+      assert(right instanceof Atom, function() {
+          return 'Internal error, not a Atom: ' + right;
         });
       var left = (right == h
-                  ? new Var('h' + (pos + 1))
+                  ? new Atom('h' + (pos + 1))
                   : locater(self.getLeft(), pos + 1));
       return infixCall(left, '&', right);
     }
@@ -1385,17 +1412,17 @@ Expr.prototype.hypMover = function(toMove) {
   this.eachHyp(function(term) {
       var h;
       if (term.matches(toMove)) {
-        h = new Var('h');
+        h = new Atom('h');
         found = true;
       } else {
-        h = new Var('h' + i);
+        h = new Atom('h' + i);
         rhs = rhs ? infixCall(rhs, '&', h) : h;
       }
       lhs = lhs ? infixCall(lhs, '&', h) : h;
       i++;
     });
   if (found) {
-    rhs = rhs ? infixCall(rhs, '&', new Var('h')) : new Var('h');
+    rhs = rhs ? infixCall(rhs, '&', new Atom('h')) : new Atom('h');
   }
   return infixCall(lhs, '=', rhs);
 };
@@ -1475,7 +1502,7 @@ Expr.prototype.mergedHypotheses = function() {
   function add(term) {
     conjuncts.push(term);
     if (!term.__var) {
-      term.__var = new Var('a' + i++);
+      term.__var = new Atom('a' + i++);
       order = term.sourceStep && term.sourceStep.ordinal;
       if (order) {
         // Make a field of width 13 with leading zeroes.
@@ -1597,7 +1624,7 @@ Expr.prototype.searchTerms = function(test, path) {
 // dup()
 //
 // Makes and returns a shallow copy of this Expr, with only the properties
-// defined by the Var, Lambda, and Call classes.  The result is not
+// defined by the Atom, Lambda, and Call classes.  The result is not
 // flagged as having hypotheses.
 //
 //
@@ -1623,7 +1650,7 @@ Expr.prototype.searchTerms = function(test, path) {
 // _addFreeNames(Map result, Bindings bindings)
 // 
 // Adds all variable names that occur free in this Expr to the result
-// object, with the Var object as the value associated with each name
+// object, with the Atom object as the value associated with each name
 // found.  Assumes that names in the Bindings object are bound in this
 // expression's lexical context.  Private helper for the freeNames
 // method.
@@ -1753,23 +1780,28 @@ Expr.prototype.searchTerms = function(test, path) {
 //
 */
 
-//// Var -- variable bindings and references
+//// Atom -- variable bindings and references
 
-//// A Var object can represent a variable (free or bound) or a
+//// A Atom object can represent a variable (free or bound) or a
 //// constant (see isConstantName).
 
 /**
- * Make a Var with the given name.  If a non-null integer position is given,
+ * Make a Atom with the given name.  If a non-null integer position is given,
  * use it to record the index in the input stream.  If the given name
- * is in the "aliases" map, the given name becomes the Var's pname,
- * and the Var's name becomes the value of the alias.  Pnames affect
+ * is in the "aliases" map, the given name becomes the Atom's pname,
+ * and the Atom's name becomes the value of the alias.  Pnames affect
  * only parsing and display, not the logic itself.  If the name
  * represents an integer, sets the "value" property to that integer, or
  * if it represents a string, sets the "value" property to the string.
  *
- * TODO: Check syntax of the name. 
+ * CAUTION: This constructor is for internal use by code in this file
+ * and implementations of methods on Expr, Atom, Call, and Lambda
+ * classes only.  Use factory functions such as varify or constify as
+ * the public APIs.
+ *
+ * TODO: Further reduce use of this too-primitive constructor.
  */
-function Var(name, position) {
+function Atom(name, position) {
   // Expr.call(this);
   this.memos = {};
   this.name = name;
@@ -1785,14 +1817,14 @@ function Var(name, position) {
     this._value = parseStringContent(name);
   }
 };
-Toy.extends(Var, Expr);
+Toy.extends(Atom, Expr);
 
 /**
- * If not producing Unicode, returns this Var's pname.  If producing
+ * If not producing Unicode, returns this Atom's pname.  If producing
  * Unicode, and if the pname has a Unicode counterpart, returns that
  * counterpart, otherwise just the pname.
  */
-Var.prototype._toString = function() {
+Atom.prototype._toString = function() {
   return (useUnicode
           ? this.toUnicode()
           : this.pname || this.name);
@@ -1801,7 +1833,7 @@ Var.prototype._toString = function() {
 /**
  * Implementation of toUnicode for Vars.
  */
-Var.prototype.toUnicode = function() {
+Atom.prototype.toUnicode = function() {
   var name = this.pname || this.name;
   var uname = unicodeNames[name];
   if (uname) {
@@ -1822,69 +1854,69 @@ Var.prototype.toUnicode = function() {
   return result;
 };
 
-Var.prototype.dump = function() {
+Atom.prototype.dump = function() {
   return this.name;
 };
 
-Var.prototype._subFree = function(replacement, name) {
+Atom.prototype._subFree = function(replacement, name) {
   return (name == this.name ? replacement : this);
 };
 
-Var.prototype.copy = function() {
-  var result = new Var(this.pname || this.name);
+Atom.prototype.copy = function() {
+  var result = new Atom(this.pname || this.name);
   result.sourceStep = this.sourceStep;
   return result;
 };
 
-Var.prototype.dup = function() {
-  return new Var(this.pname || this.name);
+Atom.prototype.dup = function() {
+  return new Atom(this.pname || this.name);
 };
 
-Var.prototype.hasFreeName = function(name) {
+Atom.prototype.hasFreeName = function(name) {
   return this.name == name;
 };
 
-Var.prototype.asArray = function() {
+Atom.prototype.asArray = function() {
   return [this];
 };
 
-Var.prototype._addNames = function(map) {
+Atom.prototype._addNames = function(map) {
   map[this.name] = true;
 };
 
-Var.prototype._addFreeNames = function(map, bindings) {
+Atom.prototype._addFreeNames = function(map, bindings) {
   if (this.isVariable() && getBinding(this.name, bindings) == null) {
     map[this.name] = true;
   }
 };
 
-Var.prototype._boundNames = function(path, bindings) {
+Atom.prototype._boundNames = function(path, bindings) {
   return path.isMatch() ? [bindings] : false;
 };
 
-Var.prototype._decapture = function(freeNames, allNames, bindings) {
+Atom.prototype._decapture = function(freeNames, allNames, bindings) {
   // This does not account for pnames, but they should only be for constants.
   var newName = getBinding(this.name, bindings);
-  return newName ? new Var(newName) : this;
+  return newName ? new Atom(newName) : this;
 };
 
-Var.prototype._addMathVars = function(bindings, set) {
+Atom.prototype._addMathVars = function(bindings, set) {
   return false;
 };
 
-Var.prototype.replaceAt = function(path, xformer) {
+Atom.prototype.replaceAt = function(path, xformer) {
   return path.isMatch() ? xformer(this) : this;
 };
 
-Var.prototype._locate = function(path) {
+Atom.prototype._locate = function(path) {
   return path.isMatch() ? this : null;
 };
 
-Var.prototype.matches = function(expr, bindings) {
+Atom.prototype.matches = function(expr, bindings) {
   if (expr == this) {
     return true;
   }
-  if (expr instanceof Var) {
+  if (expr instanceof Atom) {
     var expectedName = getBinding(this.name, bindings) || this.name;
     return expr.name == expectedName;
   } else {
@@ -1892,13 +1924,13 @@ Var.prototype.matches = function(expr, bindings) {
   }
 };
 
-Var.prototype.search = function(pred, bindings) {
+Atom.prototype.search = function(pred, bindings) {
   var result = pred(this) ? this : null;
   return result;
 };
 
-Var.prototype.generalizeTF = function(expr2, newVar, bindings) {
-  if (!(expr2 instanceof Var)) {
+Atom.prototype.generalizeTF = function(expr2, newVar, bindings) {
+  if (!(expr2 instanceof Atom)) {
     throw new Error('Not a variable: ' + expr2);
   }
   var name1 = this.name;
@@ -1914,31 +1946,31 @@ Var.prototype.generalizeTF = function(expr2, newVar, bindings) {
   }
 };
 
-Var.prototype._path = function(pred, revPath) {
+Atom.prototype._path = function(pred, revPath) {
   return pred(this) ? revPath : null;
 };
 
-Var.prototype._prettyPath = function(pred, revPath) {
+Atom.prototype._prettyPath = function(pred, revPath) {
   return pred(this) ? revPath : null;
 };
 
-Var.prototype._bindingPath = function(pred, revPath) {
+Atom.prototype._bindingPath = function(pred, revPath) {
   return null;
 };
 
-Var.prototype.findAll = function(name, action1, expr2, action2) {
+Atom.prototype.findAll = function(name, action1, expr2, action2) {
   if (this.name == name) {
     action1(this);
     action2(expr2);
   }
 };
 
-Var.prototype._matchAsSchema = function(expr, map) {
+Atom.prototype._matchAsSchema = function(expr, map) {
   // This method does not return true when matching a defined name with an
   // expression that matches its definition.  It is a stricter criterion than
   // would be treating definitions exactly as abbreviations.
   if (this.isConst()) {
-    // Expr must be a Var with the same name.
+    // Expr must be a Atom with the same name.
     return this.matches(expr);
   }
   // Only a true variable can match an expression that is not identical to it.
@@ -1951,11 +1983,11 @@ Var.prototype._matchAsSchema = function(expr, map) {
   }
 };
 
-Var.prototype._asPattern = function(term) {
+Atom.prototype._asPattern = function(term) {
   return this.__var || this;
 };
 
-Var.prototype.searchCalls = function(fn, path) {};
+Atom.prototype.searchCalls = function(fn, path) {};
 
 
 //// Call -- application of a function to an argument
@@ -1973,19 +2005,19 @@ Call.prototype._toString = function() {
     return this._string;
   }
   function asArg(expr) {
-    if (expr instanceof Var && isInfixDesired(expr)) {
+    if (expr instanceof Atom && isInfixDesired(expr)) {
       return '(' + expr + ')';
     } else {
       return expr.toString();
     }
   }
-  if (this.fn instanceof Call && this.fn.fn instanceof Var) {
+  if (this.fn instanceof Call && this.fn.fn instanceof Atom) {
     if (isInfixDesired(this.fn.fn)) {
       return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
     } else {
       return '(' + this.fn.fn + ' ' + asArg(this.fn.arg) + ' ' + this.arg + ')';
     }
-  } else if (this.fn instanceof Var && isInfixDesired(this.fn)) {
+  } else if (this.fn instanceof Atom && isInfixDesired(this.fn)) {
     return '(' + this.arg + ' ' + this.fn + ')';
   } else {
     return '(' + this.fn + ' ' + asArg(this.arg) + ')';
@@ -2283,9 +2315,9 @@ Call.prototype.searchCalls = function(fn, path) {
 //// Lambda -- variable bindings
 
 /**
- * Make a variable binding from a Var and an Expr.  Any occurrences
+ * Make a variable binding from a Atom and an Expr.  Any occurrences
  * of the same variable in the body should already be represented
- * by the same Var.
+ * by the same Atom.
  */
 function Lambda(bound, body) {
   // Expr.call(this);
@@ -2377,7 +2409,7 @@ Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
                      ? bindings
                      : new Bindings(oldName, newName, bindings));
   var body = this.body._decapture(freeNames, allNames, newBindings);
-  return (body == this.body) ? this : new Lambda(new Var(newName), body);
+  return (body == this.body) ? this : new Lambda(new Atom(newName), body);
 };
 
 Lambda.prototype._addMathVars = function(bindings, set) {
@@ -2470,7 +2502,7 @@ Lambda.prototype.searchCalls = function(fn, path) {};
  * Returns the term found inside here, or if not found, the first
  * index not seen.
  */
-Var.prototype._nth = function(n) {
+Atom.prototype._nth = function(n) {
   return n == 0 ? this : 1;
 };
 
@@ -2493,7 +2525,7 @@ Lambda.prototype._nth = function(n) {
 // (As used they are duplicates anyway.)
 //
 // Private to subFree.
-Var.prototype._smashAll = function(target, replacement) {
+Atom.prototype._smashAll = function(target, replacement) {
 };
 
 Call.prototype._smashAll = function(target, replacement) {
@@ -2523,7 +2555,7 @@ Lambda.prototype._smashAll = function(target, replacement) {
 // already a substitution result.  So this relies on the substitution
 // to _not_ copy the replacement expression.  Helper method for
 // _subFree.
-Var.prototype._renameFree = function(name, newVar, replacement) {
+Atom.prototype._renameFree = function(name, newVar, replacement) {
   return (this == replacement
           ? this
           : (this.name == name ? newVar : this));
@@ -2585,7 +2617,7 @@ function generateName(name) {
 //// of bound variables.
 
 /**
- * Binding (for a set of variables).  From is a Var, to is an Expr it
+ * Binding (for a set of variables).  From is a Atom, to is an Expr it
  * is bound to.  "More" refers to another bindings unlless it is null,
  * so this can represent a set of bindings rather than just one.  Used
  * in copying to replace occurrences of variables with replacements.
@@ -2908,8 +2940,9 @@ TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
 function TypeConstant(name) {
   this.name = name;
 }
+methodical(TypeConstant);
 
-$.extend(TypeConstant.prototype, {
+TypeConstant.$ = {
   toString: function() {
     return this.name;
   },
@@ -2917,7 +2950,7 @@ $.extend(TypeConstant.prototype, {
   fresh: function(mapping, nonGenerics) {
     return this;
   }
-});
+};
 
 /**
  * TypeOperator constructor, types is an optional array of type
@@ -3089,7 +3122,7 @@ function findType(expr) {
 
   // This is the core of the type inference algorithm.
   function analyze1(expr) {
-    if (expr instanceof Var) {
+    if (expr instanceof Atom) {
       return getType(expr.name);
     } else if (expr instanceof Call) {
       var fnType = analyze1(expr.fn);
@@ -3355,11 +3388,11 @@ function defineCases(name, ifTrue, ifFalse) {
 }
 
 /**
- * Returns whether the name (or Var) currently has a simple
+ * Returns whether the name (or Atom) currently has a simple
  * definition.
  */
 function isDefined(name) {
-  if (name instanceof Var) {
+  if (name instanceof Atom) {
     name = name.name;
   }
   assert(typeof name == 'string', function() {
@@ -3369,11 +3402,11 @@ function isDefined(name) {
 }
 
 /**
- * Returns whether the name (or Var) currently has a definition by
+ * Returns whether the name (or Atom) currently has a definition by
  * cases.
  */
 function isDefinedByCases(name) {
-  if (name instanceof Var) {
+  if (name instanceof Atom) {
     name = name.name;
   }
   assert(typeof name == 'string', function() {
@@ -3402,23 +3435,23 @@ function getDefinition(name, tOrF) {
  * database.  Returns null if there is no definition; throws an error
  * if there is a definition, but wrong type.  If the tOrF argument is
  * present, the definition must be by cases, otherwise simple.  Also
- * accepts a Var.
+ * accepts a Atom.
  *
  * TODO: Somehow avoid the unsafeness of this; consider eliminating
  * this and moving getDefinition functionality into rules.definition.
  * Problem is that the result is not officially justified.
  */
 function findDefinition(name, tOrF) {
-  name = name instanceof Var ? name.name : name;
+  name = name instanceof Atom ? name.name : name;
   var defn = definitions[name];
   assert(defn, function() { return 'Not defined: ' + name; });
   if (!tOrF) {
     assert(defn instanceof Expr, 'Definition is not simple: ' + name);
     return defn;
   } else {
-    if (tOrF == true || (tOrF instanceof Var && tOrF.name == 'T')) {
+    if (tOrF == true || (tOrF instanceof Atom && tOrF.name == 'T')) {
       tOrF = 'T';
-    } else if (tOrF == false || (tOrF instanceof Var && tOrF.name == 'F')) {
+    } else if (tOrF == false || (tOrF instanceof Atom && tOrF.name == 'F')) {
       tOrF = 'F';
     }
     assert(!(defn instanceof Expr),
@@ -3430,7 +3463,7 @@ function findDefinition(name, tOrF) {
 }
 
 
-// Var (and constants) naming etc.
+// Atom (and constants) naming etc.
 
 // String that matches identifiers, used in the tokenizer and
 // identifierRegex.
@@ -3496,10 +3529,10 @@ function genName(name, existingNames) {
 }
 
 /**
- * Returns a new Var with a name generated by genName.
+ * Returns a new Atom with a name generated by genName.
  */
 function genVar(name, existingNames) {
-  return new Var(genName(name, existingNames));
+  return new Atom(genName(name, existingNames));
 }
 
 // Last value used to uniquely (re!)name a bound variable.
@@ -3514,26 +3547,26 @@ var _boundVarCounter = 1;
 function _genBoundVar(name) {
   // Use only the first letter of the previous name to
   // avoid names with multiple numeric parts.
-  return new Var(name[0] + '.' + _boundVarCounter++);
+  return new Atom(name[0] + '.' + _boundVarCounter++);
 }
 
 /**
  * True iff this variable was generated specifically as a bound
  * variable.
  */
-Var.prototype.isGeneratedBound = function() {
+Atom.prototype.isGeneratedBound = function() {
   return this.name.indexOf('.') > -1;
 };
 
 /**
- * Parses the Var's name into the base name (e.g. "x"), subscript if
+ * Parses the Atom's name into the base name (e.g. "x"), subscript if
  * any (digits), and a type expression, returning information as an
  * object with properties "name", "sub", and "type", which are
  * undefined if not present.  The subscript is the part following and
  * underscore or dot, if any, for names generated by genVar or
  * _genBoundVar.
  */
-Var.prototype.parseName = function() {
+Atom.prototype.parseName = function() {
   var match = this.name.match(/^(.+?)([_.](.*?))?([:](.*))?$/);
   return {name: match[1], sub: match[3], type: match[5]};
 };
@@ -3575,7 +3608,7 @@ var _tokens = new RegExp(['[(){}\\[\\]]',
  * ":", or a sequence containing none of these and no whitespace.
  * 
  * This returns an array of tokens in the input string, followed by an
- * "(end)" token, omitting whitespace.  All tokens are Var objects
+ * "(end)" token, omitting whitespace.  All tokens are Atom objects
  * with the text of the token as its name and its index in the input
  * as its "pos" property.
  */
@@ -3583,9 +3616,9 @@ function tokenize(str) {
   var match;
   var result = [];
   while (match = _tokens.exec(str)) {
-    result.push(new Var(match[0], match.index));
+    result.push(new Atom(match[0], match.index));
   }
-  result.push(new Var('(end)', str.length));
+  result.push(new Atom('(end)', str.length));
   return result;
 }
 
@@ -3728,9 +3761,9 @@ function parse(input) {
           // as a negative numeral.  The tokenizer will not build
           // a numeral with a leading "-".
           next();
-          expr = new Var('-' + peeked.name, token.pos);
+          expr = new Atom('-' + peeked.name, token.pos);
         } else {
-          expr = new Call(new Var('neg'),  parseUnaryArg());
+          expr = new Call(new Atom('neg'),  parseUnaryArg());
         }
       } else {
         throw new Error('Unexpected token "' + token.name +
@@ -3840,7 +3873,7 @@ function mathParse(str) {
     var explicit = false;
     if (expr.isCall2('==>')) {
       expr.getLeft().eachHyp(function (hyp) {
-          if (hyp.isCall1('R') && hyp.arg instanceof Var) {
+          if (hyp.isCall1('R') && hyp.arg instanceof Atom) {
             // The expression has at least one explicit real
             // number condition.
             explicit = true;
@@ -4024,12 +4057,12 @@ function toUnicode(o) {
 } 
 
 /**
- * Return the Var v, or if the argument is a string, create a new
+ * Return the Atom v, or if the argument is a string, create a new
  * variable from it.  The name must be legal for a user-created
  * variable.
  */
 function varify(v) {
-  var v = (typeof v == 'string') ? new Var(v) : v;
+  var v = (typeof v == 'string') ? new Atom(v) : v;
   if (!v.isVariable() || v.isGeneratedBound()) {
     throw new Error('Bad variable name: ' + v.name);
   }
@@ -4037,11 +4070,11 @@ function varify(v) {
 };
 
 /**
- * Return the Var c, or if the argument is a string, create a new
+ * Return the Atom c, or if the argument is a string, create a new
  * constant from it, checking that the name is legal for a constant.
  */
 function constify(c) {
-  var c = (typeof c == 'string') ? new Var(c) : c;
+  var c = (typeof c == 'string') ? new Atom(c) : c;
   if (!c.isConst()) {
     throw new Error('Bad constant name: ' + c.name);
   }
@@ -4066,7 +4099,7 @@ function call(fn, arg) {
   // TODO: Allow fn to be a variable name.
   fn = fn instanceof Expr ? fn : constify(fn);
   if ((typeof arg) == 'string') {
-    arg = new Var(arg);
+    arg = new Atom(arg);
   }
   var result = new Call(fn, arg);
   // Skip fn and the first "arg" after that.
@@ -4120,7 +4153,7 @@ function lambda(bound, body) {
  * to be rendered as infix.
  */
 function isInfixDesired(vbl) {
-  if (!(vbl instanceof Var)) {
+  if (!(vbl instanceof Atom)) {
     return false;
   }
   var p = getPrecedence(vbl);
@@ -4128,10 +4161,10 @@ function isInfixDesired(vbl) {
 }
 
 /**
- * True iff the given Var is a unary operator.  Method that applies
+ * True iff the given Atom is a unary operator.  Method that applies
  * only to Vars.
  */
-Var.prototype.isUnary = function() {
+Atom.prototype.isUnary = function() {
   return getPrecedence(this) === 300;
 }
 
@@ -4205,16 +4238,16 @@ function sourceStepComparator(e1, e2) {
  * Generates an expression containing only variables and the given
  * operator, where the variables are named x<indices[n]>, where n is
  * the nth element of indices, an array of nonnegative integers.  The
- * operator is a string or Var.  The indices must contain at least one
+ * operator is a string or Atom.  The indices must contain at least one
  * element.
  *
  * Useful for rearranging expressions containing operators that are
  * commutative and associative.
  */
 function repeatedCall(operator, indices) {
-  var op = (typeof operator == 'string') ? new Var(operator) : operator;
+  var op = (typeof operator == 'string') ? new Atom(operator) : operator;
   function x(n) {
-    return new Var('x' + indices[n]);
+    return new Atom('x' + indices[n]);
   }
   assert(indices.length, 'Empty indices in repeatedExpr');
   if (indices.length == 1) {
@@ -4288,7 +4321,7 @@ var assert = assertTrue;
 function assertEqn(expr) {
   assert(expr instanceof Call
          && expr.fn instanceof Call
-         && expr.fn.fn instanceof Var
+         && expr.fn.fn instanceof Atom
          && expr.fn.fn.name == '=',
          'Must be an equation: ' + expr);
 }
@@ -4504,7 +4537,7 @@ Toy.TermSet = TermSet;
 Toy.TermMap = TermMap;
 
 Toy.Expr = Expr;
-Toy.Var = Var;
+Toy.Atom = Atom;
 Toy.Call = Call;
 Toy.Lambda = Lambda;
 Toy.Path = Path;
