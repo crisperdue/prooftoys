@@ -101,7 +101,7 @@ jQuery(function() {
     var answer = steps[steps.length - 1];
     window.answer = answer;
     window.schema = Toy.parse('h ==> v = ((a * x) + b)');
-    var map = Toy.matchAsSchema(window.schema, answer);
+    var map = answer.matchSchema(window.schema);
     window.map = map;
     console.log(Toy.debugString(map));
 
@@ -110,13 +110,13 @@ jQuery(function() {
     // Schema must match.
     if (!map) { return false; }
 
-    var aOk = map.a instanceof Toy.Var && map.a.value == c1;
+    var aOk = map.a.getNumValue() === c1;
     if (!aOk) { return 'Coefficient a is not ' + c1; }
 
-    var xOk = map.x instanceof Toy.Var && map.x.name == 'x';
+    var xOk = map.x.isVariable() && map.x.name === 'x';
     if (!xOk) { return 'First term does not have form a * x' ; }
 
-    var bOk = map.b instanceof Toy.Var && map.b.value == c1 * c2;
+    var bOk = map.b.getNumValue() === c1 * c2;
     if (!bOk) { return 'Term b is not ' + (c1 * c2); }
 
     return true;
