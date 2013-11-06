@@ -33,26 +33,6 @@ function configure(object, properties) {
 }
 
 /**
- * Calling methodical(MyConstructor) adds to the constructor function
- * a property "methods", so that MyConstructor.methods(properties)
- * adds those properties to its prototype.
- *
- * Also adds a setter property "$" that does the same thing.  This is
- * semantically strange, but works well with the Emacs indenter for
- * Java mode, unlike the alternatives.
- */
-function methodical(constructor) {
-  Object.defineProperty(constructor, '$',
-                        {set: function(properties) {
-                            $.extend(this.prototype, properties);
-                          }
-                        });
-  constructor.methods = function(properties) {
-    $.extend(constructor.prototype, properties);
-  };
-}
-
-/**
  * Returns an object with no prototype, having the own properties
  * of the input object as its properties.
  */
@@ -537,7 +517,7 @@ function Expr() {
   // TODO: Reimplement so hypothesis display is controlled in a
   // rendered step rather than a proof step.
 }
-methodical(Expr);
+Toy.extends(Expr, null);
 
 // This counts up to supply a unique name for bound variables renamed
 // to avoid capturing.
@@ -2940,7 +2920,7 @@ TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
 function TypeConstant(name) {
   this.name = name;
 }
-methodical(TypeConstant);
+Toy.extends(TypeConstant, null);
 
 TypeConstant.$ = {
   toString: function() {
@@ -2960,6 +2940,7 @@ function TypeOperator(name, types) {
   this.name = name;
   this.types = types || [];
 }
+Toy.extends(TypeOperator, null);
 
 TypeOperator.prototype.toString = function() {
   var numTypes = this.types.length;

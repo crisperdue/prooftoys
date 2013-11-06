@@ -226,17 +226,37 @@ Toy.escapeHtml = function(str) {
 
 /**
  * The arguments are a child class constructor and parent class
- * constructor; both should be functions.  Makes the child a
- * subclass of the parent, making the parent's prototype be
- * the prototype for the child's prototype and instances of the
- * child be instances of the parent class.
+ * constructor (or null); both should be functions.  If the parent is
+ * given, makes the child a subclass of the parent, making the
+ * parent's prototype be the prototype for the child's prototype and
+ * instances of the child be instances of the parent class.
+ *
+ * This adds to the child constructor a property "methods", so that
+ * MyConstructor.methods(properties) adds the properties to its
+ * prototype.
+ *
+ * It adds a setter property "$" that does the same thing as
+ * "methods".  This is semantically strange, but works well with the
+ * Emacs indenter for Java mode, unlike the alternatives, and makes
+ * calls on the methods look nice in Chrome debugger stack traces.
  */
-Toy.extends = function(child, parent) {
-  if (typeof child === 'function' && typeof parent === 'function') {
-    child.prototype = Object.create(parent.prototype);
+Toy.extends = function(constructor, parent) {
+  if (typeof constructor === 'function' && typeof parent === 'function') {
+    constructor.prototype = Object.create(parent.prototype);
+  } else if (typeof constructor === 'function' && parent == null) {
+    // Do nothing.
   } else {
     throw new Error('Toy.extends requires functions as arguments.');
   }
+  Object.defineProperty(constructor, '$',
+                        {set: function(properties) {
+                            $.extend(this.prototype, properties);
+                          }
+                        });
+  constructor.methods = function(properties) {
+    $.extend(constructor.prototype, properties);
+  };
+  
 };
 
 // Make ".toString()" accessible as ".str" for debugger interaction.
