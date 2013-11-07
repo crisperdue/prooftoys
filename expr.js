@@ -1677,6 +1677,13 @@ Expr.prototype.searchTerms = function(test, path) {
 // to corresponding variable names of the expression containing e2.
 //
 //
+// traverse(fn)
+//
+// Applies the function to this expression, then recursively to
+// any subexpressions.  Does not descend into the variable binding
+// parts of Lambdas.
+//
+//
 // search(test, bindings)
 //
 // Searches for a subexpression of this that passes the given test,
@@ -1902,6 +1909,10 @@ Atom.prototype.matches = function(expr, bindings) {
   } else {
     return false;
   }
+};
+
+Atom.prototype.traverse = function(fn) {
+  fn(this);
 };
 
 Atom.prototype.search = function(pred, bindings) {
@@ -2205,6 +2216,12 @@ Call.prototype.matches = function(expr, bindings) {
   }
 };
 
+Call.prototype.traverse = function(fn) {
+  fn(this);
+  this.arg.traverse(fn);
+  this.fn.traverse(fn);
+};
+
 Call.prototype.search = function(pred, bindings) {
   var result = pred(this)
     ? this
@@ -2423,6 +2440,11 @@ Lambda.prototype.matches = function(expr, bindings) {
   } else {
     return false;
   }
+};
+
+Lambda.prototype.traverse = function(fn) {
+  fn(this);
+  this.body.traverse(fn);
 };
 
 Lambda.prototype.search = function(pred, bindings) {

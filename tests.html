@@ -620,8 +620,32 @@ var testCase = {
     assertEqual(null, e.locate(right2));
   },
 
+  testTraverse: function() {
+    var result = [];
+    function f(term) {
+      result.push(term);
+    }
+    var x1 = Toy.parse('x + y');
+    x1.traverse(f);
+    assertEqual(5, result.length);
+    assertEqual(x1, result[0]);
+    assertEqual(x1.arg, result[1]);
+    assertEqual(x1.fn, result[2]);
+    assertEqual(x1.fn.arg, result[3]);
+    assertEqual(x1.fn.fn, result[4]);
+
+    var result = [];
+    var x2 = Toy.parse('g {x. T}');
+    x2.traverse(f);
+    assertEqual(4, result.length);
+    assertEqual(x2, result[0]);
+    assertEqual(x2.arg, result[1]);
+    assertEqual(x2.arg.body, result[2]);
+    assertEqual(x2.fn, result[3]);
+  },
+
   testSearch: function() {
-    xPlusX = call('+', x, x)
+    var xPlusX = call('+', x, x)
     var found =
       times2.search(function(expr) { return xPlusX.matches(expr); });
     assertEqual('(x + x)', found.toString());
