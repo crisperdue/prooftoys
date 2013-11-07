@@ -2400,32 +2400,7 @@ var ruleInfo = {
       if (foundPath) {
         return rules.arithmetic(next, _path.concat(foundPath.reverse()));
       }
-      var facts = ['a - a = 0',
-                   'a + 0 = a',
-                   '0 + a = a',
-                   'a * 1 = a',
-                   '1 * a = a',
-                   {stmt: 'a * (b * c) = a * b * c'},
-                   {stmt: 'a * b * c = a * c * b',
-                    where: '!subst.a.hasVars() && !subst.c.hasVars()'},
-                   {stmt: 'a * b / c = a / c * b',
-                    where: '!subst.a.hasVars() && !subst.c.hasVars()'},
-                   {stmt: 'a + b + c = a + (b + c)',
-                    where: '!subst.b.hasVars() && !subst.c.hasVars()'},
-                   {stmt: 'a + b - c = a + (b - c)',
-                    where: '!subst.b.hasVars() && !subst.c.hasVars()'},
-                   {stmt: 'a - b + c = a - (b - c)',
-                    where: '!subst.b.hasVars() && !subst.c.hasVars()'},
-                   {stmt: 'a - b - c = a - (b + c)',
-                    where: '!subst.b.hasVars() && !subst.c.hasVars()'},
-                   '0 * a = 0',
-                   'a * 0 = 0',
-                   'a + b - b = a',
-                   'a - b + b = a',
-                   'a + neg b + b = a',
-                   'a + b + neg b = a'
-                   ];
-      var info = findMatchingCall(step.locate(_path), facts);
+      var info = findMatchingCall(step.locate(_path), basicSimpFacts);
       return (info
               ? rules.rewriteWithFact(step,
                                       _path.concat(info.path),
@@ -4674,6 +4649,37 @@ var algebraFacts = {
 };
 
 /**
+ * Basic simplification facts for algebra, used in _simplifyMath1
+ * and related places.
+ */
+var basicSimpFacts = [
+                      'a - a = 0',
+                      'a + 0 = a',
+                      '0 + a = a',
+                      'a * 1 = a',
+                      '1 * a = a',
+                      {stmt: 'a * (b * c) = a * b * c'},
+                      {stmt: 'a * b * c = a * c * b',
+                       where: '!subst.a.hasVars() && !subst.c.hasVars()'},
+                      {stmt: 'a * b / c = a / c * b',
+                       where: '!subst.a.hasVars() && !subst.c.hasVars()'},
+                      {stmt: 'a + b + c = a + (b + c)',
+                       where: '!subst.b.hasVars() && !subst.c.hasVars()'},
+                      {stmt: 'a + b - c = a + (b - c)',
+                       where: '!subst.b.hasVars() && !subst.c.hasVars()'},
+                      {stmt: 'a - b + c = a - (b - c)',
+                       where: '!subst.b.hasVars() && !subst.c.hasVars()'},
+                      {stmt: 'a - b - c = a - (b + c)',
+                       where: '!subst.b.hasVars() && !subst.c.hasVars()'},
+                      '0 * a = 0',
+                      'a * 0 = 0',
+                      'a + b - b = a',
+                      'a - b + b = a',
+                      'a + neg b + b = a',
+                      'a + b + neg b = a'
+                      ];
+
+/**
  * Treat each key/value pair in the map as an expression and
  * a function to prove it.  Add each as a "fact".
  */
@@ -4865,7 +4871,8 @@ function findMatchingCall(term, info) {
  * Searches the given facts list for one that matches the given term.
  * If it finds one, returns info about it in the format returned by
  * findMatchingCall.  The path argument should be a reverse path to
- * the term relative to the proof step where the term appears.
+ * the term relative to the proof step where the term appears.  The
+ * context argument is available to "where" arguments as "cxt".
  *
  * Each fact is either something acceptable as an argument to
  * getStatement, or a plain object with properties as follows:
@@ -5106,6 +5113,7 @@ function findHyp(term) {
 Toy.rules = rules;
 Toy.logicFacts = logicFacts;
 Toy.algebraFacts = algebraFacts;
+Toy.basicSimpFacts = basicSimpFacts;
 Toy._factsMap = _factsMap;
 
 // Settable variables, export right here:
@@ -5130,7 +5138,7 @@ Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
 Toy._findMatchingCall = findMatchingCall;
-Toy._findMatchingFact = findMatchingFact;
+Toy.findMatchingFact = findMatchingFact;
 
 //// INITIALIZATION CODE
 

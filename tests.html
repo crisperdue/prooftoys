@@ -794,14 +794,14 @@ var testCase = {
                  {match: 'neg a', where: 'subst.a.isNumeral()'}
                  ];
 
-    var result = Toy._findMatchingFact(facts, undefined,
+    var result = Toy.findMatchingFact(facts, undefined,
                                        Toy.parse('neg 1'),
                                        Toy.path());
     assertEqual('(neg 1)', result.term);
     assertEqual('', result.path.toString());
     assertEqual(undefined, result.stmt);
 
-    result = Toy._findMatchingFact(facts, undefined,
+    result = Toy.findMatchingFact(facts, undefined,
                                    Toy.parse('x + y'),
                                    Toy.path());
     assertEqual('(x + y)', result.term);
