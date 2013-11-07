@@ -4924,7 +4924,7 @@ function findMatchingFact(facts, cxt, term, pth) {
  * until none of them any longer is applicable, returning the result.
  */
 function applyToVisible(step, facts) {
-  return applyFactsAtPath(step, facts, step.pathToVisiblePart());
+  return applyFactsWithinSite(step, step.pathToVisiblePart(), facts);
 }
 
 /**
@@ -4932,7 +4932,7 @@ function applyToVisible(step, facts) {
  * until none of them any longer is applicable, returning the result.
  * Returns its input step if no matches are found.
  */
-function applyFactsAtPath(step, facts, path_arg) {
+function applyFactsWithinSite(step, path_arg, facts) {
   var path = Toy.path(path_arg);
   var eqn1 = rules.considerPart(step, path);
   var eqn2 = applyFactsToRhs(eqn1, facts);
@@ -5132,7 +5132,7 @@ Toy.findHyp = findHyp;
 Toy.getStatement = getStatement;
 Toy.convertAndReplace = convertAndReplace;
 Toy.findMatchingFact = findMatchingFact;
-Toy.applyFactsAtPath = applyFactsAtPath;
+Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsToRhs = applyFactsToRhs;
 
 // For testing.
