@@ -4920,6 +4920,23 @@ function findMatchingFact(facts, cxt, term, pth) {
 };
 
 /**
+ * Find and apply one of the facts to the RHS of the given
+ * equation, and return the result.  If no fact applies,
+ * return the equation as-is.
+ */
+function applyFactsToRhs(eqn, facts) {
+  var rhsPath = Toy.path('/main/right', eqn);
+  var revPath = rhsPath.reverse();
+  var info = Toy.findMatchingFact(Toy.basicSimpFacts,
+                                  null,
+                                  eqn.locate(rhsPath),
+                                  revPath);
+  return info
+    ? rules.rewriteWithFact(eqn, info.path, info.stmt)
+    : eqn;
+}
+
+/**
  * Apply the list of fact rewrites to the visible part of the step
  * until none of them any longer is applicable, returning the result.
  */
@@ -4966,6 +4983,23 @@ function convertAndReplace(step, path, fn) {
   var eqn1 = rules.considerPart(step, path);
   var eqn2 = fn(eqn1);
   return rules.replace(eqn2, step, path);
+}
+
+/**
+ * Apply the given simplification function to the equation repeatedly
+ * until the result of the call is identical to its input.  Return
+ * the result of the last call.
+ */
+function whileSimpler(eqn, fn) {
+  var simpler = eqn;
+  var next;
+  while (true) {
+    next = fn(simpler);
+    if (next == simpler) {
+      return next;
+    }
+    simpler = next;
+  }
 }
 
 /**
@@ -5134,6 +5168,8 @@ Toy.convertAndReplace = convertAndReplace;
 Toy.findMatchingFact = findMatchingFact;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
+Toy.applyFactsToRhs = applyFactsToRhs;
+Toy.whileSimpler = whileSimpler;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
