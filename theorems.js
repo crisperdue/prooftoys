@@ -5131,6 +5131,9 @@ Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
 Toy.getStatement = getStatement;
 Toy.convertAndReplace = convertAndReplace;
+Toy.findMatchingFact = findMatchingFact;
+Toy.applyFactsAtPath = applyFactsAtPath;
+Toy.applyFactsToRhs = applyFactsToRhs;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
@@ -5138,7 +5141,6 @@ Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
 Toy._findMatchingCall = findMatchingCall;
-Toy.findMatchingFact = findMatchingFact;
 
 //// INITIALIZATION CODE
 

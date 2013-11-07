@@ -444,6 +444,10 @@ span.ruleName.link, .stepAndNum,
   user-select: none;
 }
 
+.expr {
+  position: relative;
+}
+
 /* Expression in a proof step display, and step numbers */
 .proofStep .expr, span.stepNumber, span.stepReference {
   border-style: solid;
@@ -460,6 +464,28 @@ span.assumptions {
 /* Step reference in assumptions */
 span.stepRef {
   font-weight: bold;
+}
+
+/* Holder for information shown "above" an expression. */
+.above {
+  position: absolute;
+  visibility: hidden;
+  left: -1px;
+  bottom: 1.5em;
+  padding: 2px 2px;
+  border: 1px solid gray;
+  white-space: nowrap;
+  background-color: #ccf;
+  opacity: .9;
+  /* Overrides .proofStep: */
+  text-indent: 0em;
+  /* Overrides math formatting: */
+  font-style: normal;
+}
+
+/* The element is visible when its expression is hovered. */
+.fullExpr.hovered > .above {
+  visibility: visible;
 }
 
 /* When hovering over an expression in an editable proof.
