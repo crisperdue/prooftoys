@@ -2496,7 +2496,7 @@ var ruleInfo = {
   regroupAdditions: {
     action: function(step) {
       function applyTo(eqn, facts) {
-        return applyFactsToRhs(eqn, {facts: facts,
+        return applyFactsWithinRhs(eqn, {facts: facts,
                                      searchMethod: 'searchTerms'});
       }
       function convert(eqn) {
@@ -4935,7 +4935,7 @@ function applyToVisible(step, facts) {
 function applyFactsWithinSite(step, path_arg, facts) {
   var path = Toy.path(path_arg);
   var eqn1 = rules.considerPart(step, path);
-  var eqn2 = applyFactsToRhs(eqn1, facts);
+  var eqn2 = applyFactsWithinRhs(eqn1, facts);
   return (eqn2 == eqn1 ? step : rules.replace(eqn2, step, path));
 }
 
@@ -4945,7 +4945,7 @@ function applyFactsWithinSite(step, path_arg, facts) {
  * applicable, returning the result.  Returns its input step if no
  * matches are found.
  */
-function applyFactsToRhs(step, facts) {
+function applyFactsWithinRhs(step, facts) {
   var rhs = Toy.path('/main/right');
   var info;
   var eqn = step;
@@ -5133,7 +5133,7 @@ Toy.getStatement = getStatement;
 Toy.convertAndReplace = convertAndReplace;
 Toy.findMatchingFact = findMatchingFact;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
-Toy.applyFactsToRhs = applyFactsToRhs;
+Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
