@@ -3949,11 +3949,6 @@ var algebraFacts = {
       return rules.axiom('axiomAssociativeTimes');
     }
   },
-  'a * (b + c) = a * b + a * c': {
-    action: function() {
-      return rules.axiom('axiomDistributivity');
-    }
-  },
   'a + 0 = a': {
     action: function() {
       return rules.axiom('axiomPlusZero');
@@ -4032,8 +4027,13 @@ var algebraFacts = {
   }
 };
 
+// Distributivity
 var distribFacts = {
-  // Distributivity
+  'a * (b + c) = a * b + a * c': {
+    action: function() {
+      return rules.axiom('axiomDistributivity');
+    }
+  },
   '(a + b) * c = a * c + b * c': {
     action: function() {
       var step = rules.consider('(a + b) * c')
