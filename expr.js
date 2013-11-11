@@ -812,7 +812,6 @@ Expr.$ = {
   apply: function(name, arg1) {
     var nm = name;
     arguments[0] = this;
-    debugger;
     return Toy.rules[nm].apply(Toy.rules, arguments);
   },
       
