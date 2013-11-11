@@ -475,12 +475,13 @@ span.stepRef {
   padding: 2px 2px;
   border: 1px solid gray;
   white-space: nowrap;
-  background-color: #ccf;
+  background-color: #afa;
   opacity: .9;
   /* Overrides .proofStep: */
   text-indent: 0em;
   /* Overrides math formatting: */
   font-style: normal;
+  box-shadow: 3px 3px 3px #aaa;
 }
 
 /* The element is visible when its expression is hovered. */
