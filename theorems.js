@@ -3914,8 +3914,14 @@ var logicFacts = {
       return rules.theorem('tIsXIsX')
       .rewrite('/left', 'equalitySymmetric');
     }
-  }
+  },
 
+  // Somewhat useful fact to stick at the end of the list.
+  'not F': {
+    action: function() {
+      return rules.tautology('not F');
+    }
+  }
 };
 
 // These are algebra facts.
@@ -4023,8 +4029,10 @@ var algebraFacts = {
       .rewrite('/main/right', 'a * (b * c) = a * b * c');
       return step;
     }
-  },
+  }
+};
 
+var distribFacts = {
   // Distributivity
   '(a + b) * c = a * c + b * c': {
     action: function() {
@@ -4122,8 +4130,12 @@ var algebraFacts = {
       .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right', 'a * c - b * c = (a - b) * c');
     }
-  },
+  }
+};
 
+$.extend(algebraFacts, distribFacts);
+
+var identityFacts = {
   // Plus zero
   'a = a + 0': {
     action: function() {
@@ -4133,15 +4145,15 @@ var algebraFacts = {
     }
   },
   /* Omit from UI: somewhat redundant
-     'a = 0 + a': {
-     action: function() {
+  'a = 0 + a': {
+   action: function() {
      var step1 = rules.axiom('axiomPlusZero');
      var step2 = rules.eqnSwap(step1);
      var step3 = rules.rewriteWithFact(step2, '/main/right',
      'a + b = b + a');
      return step3;
      }
-     },
+   },
   */
   '0 + a = a': {
     action: function() {
@@ -4183,8 +4195,11 @@ var algebraFacts = {
       return rules.axiom('axiomTimesZero')
       .rewrite('/main/left', 'a * b = b * a');
     }
-  },
+  }
+};
+$.extend(algebraFacts, identityFacts);
 
+var negationFacts = {
   // Negation rules
   'a - b = a + neg b': {
     action: function() {
@@ -4330,9 +4345,11 @@ var algebraFacts = {
       .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
       .rewrite('/main/right/right', 'neg (neg a) = a');
     }
-  },
+  }
+};
+$.extend(algebraFacts, negationFacts);
 
-
+var subtractionFacts = {
   // Subtraction facts
 
   // Moving terms to the left
@@ -4458,9 +4475,12 @@ var algebraFacts = {
               .rewrite('/main/right', 'a - b + c = a + c - b')
               .rewrite('/main/right', 'a + b - b = a'));
     }
-  },
+  }
+};
+$.extend(algebraFacts, subtractionFacts);
 
-  // Reciprocal rules
+var recipFacts = {
+  // Reciprocal facts
 
   'a != 0 ==> recip a * a = 1': {
     action: function() {
@@ -4566,8 +4586,11 @@ var algebraFacts = {
                                          'a * b = b * a');
       return step14;
     }
-  },
+  }
+};
+$.extend(algebraFacts, recipFacts);
 
+var divisionFacts = {
   // Division rules
 
   'c != 0 ==> a * b / c = a / c * b': {
@@ -4608,17 +4631,13 @@ var algebraFacts = {
       .rewrite('/main/right', 'a * recip b = a / b');
       return step;
     }
-  },
-
-  // Somewhat useful fact to stick at the end of the list.
-  'not F': {
-    action: function() {
-      return rules.tautology('not F');
-    }
-  },
+  }
+};
+$.extend(algebraFacts, divisionFacts);
 
   // MOVING EXPRESSIONS AROUND
 
+var algebraIdentities = {
   'a = neg b == a + b = 0': {
     action: function() {
       var step = rules.assume('a = neg b')
@@ -4647,6 +4666,7 @@ var algebraFacts = {
     }
   }
 };
+$.extend(algebraFacts, algebraIdentities);
 
 /**
  * Basic simplification facts for algebra, used in _simplifyMath1
@@ -4927,7 +4947,7 @@ function findMatchingFact(facts, cxt, term, pth) {
 function applyFactsToRhs(eqn, facts) {
   var rhsPath = Toy.path('/main/right', eqn);
   var revPath = rhsPath.reverse();
-  var info = Toy.findMatchingFact(Toy.basicSimpFacts,
+  var info = Toy.findMatchingFact(facts,
                                   null,
                                   eqn.locate(rhsPath),
                                   revPath);
@@ -5142,11 +5162,24 @@ function findHyp(term) {
   return _allHyps[term.dump()];
 }
 
+/**
+ * Makes a facts map into a list of the fact statements.
+ */
+function listFacts(map) {
+  var list = [];
+  for (var key in map) {
+    list.push(key);
+  }
+  return list;
+}
+
+
 //// Export public names.
 
 Toy.rules = rules;
 Toy.logicFacts = logicFacts;
 Toy.algebraFacts = algebraFacts;
+Toy.distribFacts = distribFacts;
 Toy.basicSimpFacts = basicSimpFacts;
 Toy._factsMap = _factsMap;
 
@@ -5170,6 +5203,7 @@ Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsToRhs = applyFactsToRhs;
 Toy.whileSimpler = whileSimpler;
+Toy.listFacts = listFacts;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
