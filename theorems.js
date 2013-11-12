@@ -2385,20 +2385,22 @@ var ruleInfo = {
     labels: 'basic'
   },
 
-  // Simplifies the main part of the given step using the axiom of
+  // Simplifies the part of the given step at _path using the axiom of
   // arithmetic and selected simplifying facts.  Returns its result
   // inline, just the input step if there is nothing to do.
   //
   // From the UI use a rule that calls this one.
   _simplifyMath1: {
     action: function(step, _path) {
-      var next = step;
-      var foundPath = 
-        next.locate(_path).searchCalls(function(term, p) {
-            return (Toy.normalReturn(rules.axiomArithmetic, term) && p);
+      var next = 
+        step.locate(_path).searchCalls(function(term, p) {
+            return (isArithmetic(term) &&
+                    Toy.normalReturn(rules.arithmetic,
+                                     step,
+                                     _path.concat(p.reverse())));
           });
-      if (foundPath) {
-        return rules.arithmetic(next, _path.concat(foundPath.reverse()));
+      if (next) {
+        return next;
       }
       var info = findMatchingCall(step.locate(_path), basicSimpFacts);
       return (info
@@ -2410,24 +2412,35 @@ var ruleInfo = {
   },
 
   // Repeatedly applies simplifyMath1 to do trivial simplifications.
-  doAllArithmetic: {
+  simplifyStep: {
     action: function(step) {
-      var visPath = step.pathToVisiblePart();
-      var next = step;
-      while (true) {
-        var simpler = rules._simplifyMath1(next, visPath);
-        if (simpler === next) {
-          return next.justify('doAllArithmetic', arguments, [step]);
-        }
-        next = simpler;
-      }
+      var result = rules.simplifySite(step, step.pathToVisiblePart());
+      return result.justify('simplifyStep', arguments, [step]);
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
     hint: 'algebra: simplify',
-    description: 'basic simplification;; {in step step}',
+    description: 'simplify math;; {in step step}',
     labels: 'algebra',
   },
+
+  simplifySite: {
+    action: function(step, path) {
+      var _path = Toy.path;
+      var eqn = rules.eqSelf(step.locate(path));
+      var simpler = whileSimpler(eqn, function(eqn) {
+          return rules._simplifyMath1(eqn, _path('/main/right', eqn));
+        });
+      var result = rules.replace(simpler, step, path);
+      return result.justify('simplifySite', arguments, [step]);
+    },
+    inputs: {site: 1},
+    form: ('Simplify step <input name=step>'),
+    hint: 'algebra: simplify selection',
+    description: 'simplify {site};; in {step siteStep}',
+    labels: 'algebra',
+  },
+    
 
   // Move all negations in past additions and multiplications;
   // eliminate double negations.
@@ -4671,6 +4684,8 @@ $.extend(algebraFacts, algebraIdentities);
 /**
  * Basic simplification facts for algebra, used in _simplifyMath1
  * and related places.
+ *
+ * TODO: Consider -1 * a = neg a; a + a = 2 * a; 
  */
 var basicSimpFacts = [
                       'a - a = 0',
@@ -4889,29 +4904,40 @@ function findMatchingCall(term, info) {
 
 /**
  * Searches the given facts list for one that matches the given term.
- * If it finds one, returns info about it in the format returned by
- * findMatchingCall.  The path argument should be a reverse path to
- * the term relative to the proof step where the term appears.  The
- * context argument is available to "where" arguments as "cxt".
+ * If it finds one, returns info about it in a plain object.  The path
+ * argument should be a reverse path to the term relative to the proof
+ * step where the term appears.  The context argument is available to
+ * "where" arguments as "cxt".
  *
  * Each fact is either something acceptable as an argument to
  * getStatement, or a plain object with properties as follows:
  *
- * stmt: value acceptable to getStatement.
+ * stmt: value acceptable to getStatement.  Unless "match" is also
+ *   given this will need to be an equation.
  * where: string to evaluate, with "subst" and the "cxt" argument to
  *   findMatchingFact available for use in the string.
- * match: term to match against parts of the step; by default the
- *   equation LHS.
+ * match: term schema to match against the term; by default the
+ *   stmt LHS.
  *
- * The value returned is undefined or else a plain object with
- * properties:
+ * Alternatively properties:
+ *
+ * apply: a function to apply to the input term and context, which
+ * must return an equation with (a value matching) the term as its LHS
+ * or a falsy value if it fails to produce such an equation.
+ *
+ * The value returned is undefined if no match is found, else a plain
+ * object with properties:
  * 
- * stmt: statement of the matching fact (undefined if not matching a
- *   fact).
+ * stmt: stmt part of the matching fact, or the "match" part if
+ *   there is no stmt.
  * term: term passed to findMatchingFact.
  * path: forward version of the path argument.
  * subst: substitution that makes the given term match the fact.
  *
+ * or if given a function to apply:
+ *
+ * eqn: equation with the input term as its LHS.
+ * path: reverse of the input path, thus a forward path.
  */
 function findMatchingFact(facts, cxt, term, pth) {
   function doEval(str, subst) {
@@ -4923,17 +4949,28 @@ function findMatchingFact(facts, cxt, term, pth) {
   for (var i = 0; i < facts.length; i++) {
     var factInfo = facts[i];
     var infoIsObject = factInfo.constructor == Object;
-    var stmt = infoIsObject ? factInfo.stmt : factInfo;
-    var where = infoIsObject ? factInfo.where : null;
-    var schema = (infoIsObject && factInfo.match
-                  ? Toy.termify(factInfo.match)
-                  : Toy.getStatement(stmt).getMain().getLeft());
-    var subst = term.matchSchema(schema);
-    if (subst && (!where || doEval(where, subst))) {
-      return {stmt: stmt,
-              term: term,
-              path: pth.reverse(),
-              subst: subst};
+    if (infoIsObject && factInfo.apply) {
+      var eqn = factInfo.apply.call(null, term, cxt);
+      if (eqn) {
+        var result = {
+          stmt: eqn,
+          path: pth.reverse()
+        };
+        return result;
+      }
+    } else {
+      var stmt = infoIsObject ? factInfo.stmt : factInfo;
+      var where = infoIsObject ? factInfo.where : null;
+      var schema = (infoIsObject && factInfo.match
+                    ? Toy.termify(factInfo.match)
+                    : Toy.getStatement(stmt).getMain().getLeft());
+      var subst = term.matchSchema(schema);
+      if (subst && (!where || doEval(where, subst))) {
+        return {stmt: stmt,
+                term: term,
+                path: pth.reverse(),
+                subst: subst};
+      }
     }
   }
   // If no match found the value will be falsy.
@@ -5122,6 +5159,57 @@ var theoremNames =
 //// UTILITY FUNCTIONS
 
 /**
+ * Returns a truthy value iff the term has the form of an arithmetic
+ * expression suitable for rules.axiomArithmetic.  This does not do
+ * range checks on the inputs.  On the other hand it is faster and
+ * does not use exceptions.
+ */
+function isArithmetic(term) {
+  if (term.isInfixCall()) {
+    if (!term.getLeft().isNumeral() ||
+        !term.getRight().isNumeral()) {
+      return false;
+    }
+    var op = term.getBinOp().name;
+    switch(op) {
+    case '+':
+    case '*':
+    case '-':
+    case '=':
+    case '!=':
+    case '>':
+    case '>=':
+    case '<':
+    case '<=':
+      return true;
+    case '/':
+      if (right === 0) {
+        return false;
+      }
+      var value = left / right;
+      // abs(value) <= abs(left) since abs(right) >= 1 so the
+      // magnitude is not a problem.  The fractional part of a
+      // result must have denominator no greater than MAX_INT,
+      // so it should be distinguishable from an integer.
+      return value === Math.floor(value);
+    default:
+      return false;
+    }
+  } else if (term instanceof Toy.Call) {
+    return (term.fn.isConst() && term.arg.isNumeral() &&
+            (term.fn.name == 'neg' || term.fn.name == 'R'));
+  }
+}
+
+function arithmetic(term) {
+  if (isArithmetic(term)) {
+    var eqn = rules.eqSelf(term);
+    return Toy.normalReturn(rules.arithmetic, eqn, '/main/right');
+  }
+  // Implicit falsy return.
+}
+
+/**
  * Build a schema for a conjunction of hypotheses, ensuring all are in
  * the TermMap, with optional exclusions, a TermSet.  The schema is of
  * the form a1 && ... && an, where the "a"s are variables for the
@@ -5204,6 +5292,8 @@ Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsToRhs = applyFactsToRhs;
 Toy.whileSimpler = whileSimpler;
 Toy.listFacts = listFacts;
+
+Toy.arithmetic = arithmetic;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
