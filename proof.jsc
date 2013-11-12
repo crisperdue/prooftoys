@@ -799,45 +799,7 @@ ProofControl.prototype.renderStep = function(step) {
 
   // Annotate most of the subexpressions with a popup as appropriate.
   if (this.editable) {
-    step.rendering.traverse(function(term) {
-        if (term.isCall2() && term.node) {
-          var rules = Toy.rules;
-          // These resulting equations are the result of applying the
-          // distributive law and similar ones for subtraction to the
-          // term.
-          var results = Toy.listFacts(Toy.distribFacts)
-            .map(Toy.getStatement)
-            // Include only "forward" facts (ones that distribute "*"
-            // across "+").
-            .filter(@{eqn. (eqn.getMain().getLeft().isCall2('*') &&
-                          term.matchSchema(eqn.getMain().getLeft()))})
-            .map(@{eqn. rules.instMultiVars
-                   (eqn, term.matchSchema(eqn.getMain().getLeft()))});
-          var eqn = rules.consider(term);
-          // If some simplification fact applies directly to the term,
-          // simplify it as far as possible and display.
-          var simplifiers =
-            [{apply: Toy.arithmetic}].concat(Toy.basicSimpFacts);
-          var simpler = Toy.applyFactsToRhs(eqn, simplifiers);
-          if (simpler != eqn) {
-            results.push(rules.simplifySite(simpler, '/main/right'));
-          }
-          if (results.length) {
-            var $term = $(term.node);
-            results.forEach(function(result) {
-                var $div = $('<div class=above></div>');
-                // This line just demonstrates that the popup concept works.
-                // TODO: replace with something nicer and more useful.
-                $div.text(' = ' +
-                          result.getMain().getRight()
-                          .toUnicode()
-                          // Strip any outermost parens.
-                          .replace(/^\((.*)\)$/, '$1'));
-                $term.append($div);
-              });
-          }
-        }
-      });
+    this.renderPopups(step);
   }
 
   // Event handling:
@@ -892,6 +854,50 @@ ProofControl.prototype.renderStep = function(step) {
   return dom($step);
 };
 
+/**
+ * Renders the expression popups for steps in an editable proof.
+ */
+ProofControl.prototype.renderPopups = function(step) {
+  step.rendering.traverse(function(term) {
+      if (term.isCall2() && term.node) {
+        var rules = Toy.rules;
+        // These resulting equations are the result of applying the
+        // distributive law and similar ones for subtraction to the
+        // term.
+        var results = Toy.listFacts(Toy.distribFacts)
+          .map(Toy.getStatement)
+          // Include only "forward" facts (ones that distribute "*"
+          // across "+").
+          .filter(@{eqn. (eqn.getMain().getLeft().isCall2('*') &&
+                        term.matchSchema(eqn.getMain().getLeft()))})
+          .map(@{eqn. rules.instMultiVars
+                 (eqn, term.matchSchema(eqn.getMain().getLeft()))});
+        var eqn = rules.consider(term);
+        // If some simplification fact applies directly to the term,
+        // simplify it as far as possible and display.
+        var simplifiers =
+          [{apply: Toy.arithmetic}].concat(Toy.basicSimpFacts);
+        var simpler = Toy.applyFactsToRhs(eqn, simplifiers);
+        if (simpler != eqn) {
+          results.push(rules.simplifySite(simpler, '/main/right'));
+        }
+        if (results.length) {
+          var $term = $(term.node);
+          results.forEach(function(result) {
+              var $div = $('<div class=above></div>');
+              // This line just demonstrates that the popup concept works.
+              // TODO: replace with something nicer and more useful.
+              $div.text(' = ' +
+                        result.getMain().getRight()
+                        .toUnicode()
+                        // Strip any outermost parens.
+                        .replace(/^\((.*)\)$/, '$1'));
+              $term.append($div);
+            });
+        }
+      }
+    });
+};
 
 /**
  * Returns true iff policy is to elide the LHS of the given step
