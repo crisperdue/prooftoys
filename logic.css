@@ -486,14 +486,14 @@ span.stepRef {
 }
 
 /* The element is visible when its expression is hovered. */
-.fullExpr.hovered > .above {
+.fullExpr.hover > .above {
   visibility: visible;
 }
 
 /* When hovering over an expression in an editable proof.
-   See also .stepAndNum .hovered.
+   See also .stepAndNum .hover.
  */
-.expr.hovered {
+.expr.hover {
   border-color: #88f;
 }
 

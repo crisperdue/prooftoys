@@ -1858,7 +1858,7 @@ function exprHandleOver(event) {
   var target = $(event.target);
   var $expr = target.closest(selector);
   // Could be no elements in $expr.
-  $expr.addClass('hovered');
+  $expr.addClass('hover');
   function isTarget(expr) {
     return expr.node == event.target;
   }
@@ -1876,7 +1876,7 @@ function exprHandleOver(event) {
 function exprHandleOut(event) {
   var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
   var $expr = $(event.target).closest(selector) || $(event.target);
-  $expr.removeClass('hovered');
+  $expr.removeClass('hover');
   var $display = $('#hoverPath');
   if ($display) {
     // Do nothing if there is no bottom panel.
