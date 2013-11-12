@@ -801,9 +801,10 @@ ProofControl.prototype.renderStep = function(step) {
   step.rendering.traverse(function(term) {
       if (term.isCall2() && term.node) {
         var rules = Toy.rules;
-        // These "facts" are the result of applying the distributive
-        // law and similar ones for subtraction to the term.
-        var facts = Toy.listFacts(Toy.distribFacts)
+        // These resulting equations are the result of applying the
+        // distributive law and similar ones for subtraction to the
+        // term.
+        var results = Toy.listFacts(Toy.distribFacts)
           .map(Toy.getStatement)
           // Include only "forward" facts (ones that distribute "*"
           // across "+").
@@ -812,22 +813,22 @@ ProofControl.prototype.renderStep = function(step) {
           .map(@{eqn. rules.instMultiVars
                  (eqn, term.matchSchema(eqn.getMain().getLeft()))});
         var eqn = rules.consider(term);
-        var simpler =
-          Toy.whileSimpler(eqn,
-                           @{eqn.
-                             Toy.applyFactsToRhs(eqn, Toy.basicSimpFacts);
-                           });
+        // If some simplification fact applies directly to the term,
+        // simplify it as far as possible and display.
+        var simplifiers =
+          [{apply: Toy.arithmetic}].concat(Toy.basicSimpFacts);
+        var simpler = Toy.applyFactsToRhs(eqn, simplifiers);
         if (simpler != eqn) {
-          facts.push(simpler);
+          results.push(rules.simplifySite(simpler, '/main/right'));
         }
-        if (facts.length) {
+        if (results.length) {
           var $term = $(term.node);
-          facts.forEach(function(fact) {
+          results.forEach(function(result) {
               var $div = $('<div class=above></div>');
               // This line just demonstrates that the popup concept works.
               // TODO: replace with something nicer and more useful.
               $div.text(' = ' +
-                        fact.getMain().getRight()
+                        result.getMain().getRight()
                         .toUnicode()
                         // Strip any outermost parens.
                         .replace(/^\((.*)\)$/, '$1'));

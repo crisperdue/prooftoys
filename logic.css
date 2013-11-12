@@ -472,6 +472,7 @@ span.stepRef {
   visibility: hidden;
   left: -1px;
   bottom: 1.5em;
+  min-width: 100%;
   padding: 2px 2px;
   border: 1px solid gray;
   white-space: nowrap;
