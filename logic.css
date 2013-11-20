@@ -246,10 +246,10 @@ span#leftNav {
  * than the individual steps.
  */
 .proofSteps {
-  /*
-     The touch screen tap highlighting is confusing, so prevent it.
-  */
+  /* Touch screen tap highlighting is confusing, so prevent it. */
   -webkit-tap-highlight-color: rgba(0,0,0,0);
+  /* For some reason the selection box shadow needs this margin. */
+  margin: 5px 0px;
   /* white-space: nowrap could go here to turn off text wrapping. */
 }
 
@@ -476,13 +476,17 @@ span.stepRef {
   padding: 2px 2px;
   border: 1px solid gray;
   white-space: nowrap;
-  background-color: #afa;
+  background-color: #dfd;
   opacity: .9;
   /* Overrides .proofStep: */
   text-indent: 0em;
   /* Overrides math formatting: */
   font-style: normal;
-  box-shadow: 3px 3px 3px #aaa;
+  box-shadow: 2px 2px 2px #aaa;
+}
+
+.above.hover {
+  background-color: #afa;
 }
 
 /* The element is visible when its expression is hovered. */
@@ -500,7 +504,8 @@ span.stepRef {
 /* Highlight selected expressions; a bit over-specific
    to take precedence over the hover highlight. */
 .proofDisplay.editable .proofStep .expr.selected {
-  border-color: black;
+  border-color: DarkGray;
+  box-shadow: 2px 2px 2px #aaa;
 }
 
 /* Styling for constants T and F, sans-serif roman. */
@@ -519,6 +524,7 @@ span.stepRef {
 /* Overrides styles for .proofDisplay. */
 .stepEditor {
   background-color: white;
+  margin-top: .2em;
   position: relative;
 }
 
