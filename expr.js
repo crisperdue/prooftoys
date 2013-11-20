@@ -1321,6 +1321,10 @@ Expr.prototype.pathToBinding = function(pred) {
   return revPath ? revPath.reverse() : null;
 };
 
+Expr.prototype.traverse = function(rpath) {
+  this._traverse(rpath || path());
+};
+
 /**
  * True iff this expression is a Call with at least N arguments, where
  * N is at least 1.  Meaning to say this and N - 1 levels of calls
@@ -1676,7 +1680,7 @@ Expr.prototype.searchTerms = function(test, path) {
 // to corresponding variable names of the expression containing e2.
 //
 //
-// traverse(fn)
+// _traverse(fn, rpath)
 //
 // Applies the function to this expression, then recursively to
 // any subexpressions.  Does not descend into the variable binding
@@ -1910,8 +1914,8 @@ Atom.prototype.matches = function(expr, bindings) {
   }
 };
 
-Atom.prototype.traverse = function(fn) {
-  fn(this);
+Atom.prototype._traverse = function(fn, rpath) {
+  fn(this, rpath);
 };
 
 Atom.prototype.search = function(pred, bindings) {
@@ -2215,10 +2219,10 @@ Call.prototype.matches = function(expr, bindings) {
   }
 };
 
-Call.prototype.traverse = function(fn) {
-  fn(this);
-  this.arg.traverse(fn);
-  this.fn.traverse(fn);
+Call.prototype._traverse = function(fn, rpath) {
+  fn(this, rpath);
+  this.arg._traverse(fn, new Path('arg', rpath));
+  this.fn._traverse(fn, new Path('fn', rpath));
 };
 
 Call.prototype.search = function(pred, bindings) {
@@ -2441,9 +2445,9 @@ Lambda.prototype.matches = function(expr, bindings) {
   }
 };
 
-Lambda.prototype.traverse = function(fn) {
-  fn(this);
-  this.body.traverse(fn);
+Lambda.prototype._traverse = function(fn, rpath) {
+  fn(this, rpath);
+  this.body._traverse(fn, new Path('body', rpath));
 };
 
 Lambda.prototype.search = function(pred, bindings) {
