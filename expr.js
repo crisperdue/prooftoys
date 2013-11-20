@@ -4033,9 +4033,21 @@ Refresher.prototype.activate = function() {
 
 /**
  * Do the action as soon as the event handling system becomes idle.
+ * It will run after the current initialization or event handler
+ * completes.
  */
 function soonDo(action) {
   return window.setTimeout(action, 0);
+}
+
+/**
+ * Do the action as soon as possible after giving the page a chance to
+ * repaint.  Sometimes Webkit needs a small delay to trigger a
+ * repaint, regardless of some of the claims made on
+ * stackoverflow.com.
+ */
+function afterRepaint(action) {
+  return window.setTimeout(action, 10);
 }
 
 
@@ -4596,6 +4608,7 @@ Toy.debugString = debugString;
 
 Toy.Refresher = Refresher;
 Toy.soonDo = soonDo;
+Toy.afterRepaint = afterRepaint;
 
 // Error analysis
 Toy.errors = errors;
