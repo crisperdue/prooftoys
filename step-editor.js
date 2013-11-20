@@ -375,14 +375,15 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
 function tryRuleAsync(stepEditor, rule, args) {
   // Flag the step editor as busy via its DOM node.
   stepEditor.$node.toggleClass('busy', true);
-  Toy.soonDo(stepEditor._tryRule.bind(stepEditor, rule, args));
+  Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
 }
 
 /**
- * Tries to run the given rule (function) with the given rule arguments.
- * Catches and reports any errors.  Returns true if the rule
- * succeeded, false if it catches an error.  Reports there was nothing
- * to do if the rule returns its input or a null value.
+ * Tries to run the given rule (function) with the given rule
+ * arguments, adding the result to this step editor's proof.  Catches
+ * and reports any errors.  Returns true if the rule succeeded, false
+ * if it catches an error.  Reports there was nothing to do if the
+ * rule returns its input or a null value.
  *
  * Private to tryRuleAsync.
  */
@@ -830,5 +831,7 @@ Toy.stepTypes = stepTypes;
 Toy.siteTypes = siteTypes;
 
 Toy.StepEditor = StepEditor;
+
+Toy.tryRuleAsync = tryRuleAsync;
 
 })();
