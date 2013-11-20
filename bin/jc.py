@@ -15,7 +15,8 @@ import time
 atPattern = re.compile('''/[*][*].*?[*]/ |  # doc comment
                           @[a-zA-Z_0-9]+ |  # @identifier
                           @[(]([a-zA-Z0-9$_,\s]*)[)]\s*[{] |  # method (grp 1)
-                          @[{]([a-zA-Z0-9$_,\s]*)[.]\s*       # fn (grp 2)
+                          @[{]([a-zA-Z0-9$_,\s]*)[.]\s+ |     # fn (grp 2)
+                          @[{]
                        ''',
                        re.DOTALL | re.VERBOSE)
 
@@ -32,7 +33,10 @@ def compile(jsc, js):
       return ('function(' + match.group(1) + ') { var self = this; ')
     elif m.startswith('@{'):
       # function with immediate return expression
-      return ('function(' + match.group(2) + ') { return ')
+      if match.lastindex == 2:
+        return ('function(' + match.group(2) + ') { return ')
+      else:
+        return 'function() { return '
     else:
       return 'self.__' + m[1:]
   try:
