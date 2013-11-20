@@ -1319,9 +1319,9 @@ function renderSubproof(step) {
   // also smoothly scroll the window to keep the given step at the
   // same place in the window.
   var oldTop = $(window).scrollTop();
-  var oldHeight = document.height;
+  var oldHeight = $(document).height();
   $node.insertBefore(step.stepNode);
-  var growth = document.height - oldHeight;
+  var growth = $(document).height() - oldHeight;
   $node.hide();
   // Do the actual animations after computing the net change
   // in document height.
@@ -1353,9 +1353,9 @@ function clearSubproof(step, internal) {
     if (!internal) {
       // Compute the net change in document height.
       var oldTop = $(window).scrollTop();
-      var oldHeight = document.height;
+      var oldHeight = $(document).height();
       container.toggle(false);
-      var growth = document.height - oldHeight;
+      var growth = $(document).height() - oldHeight;
       container.toggle(true);
       // Do the actual animations, similar to the ones in renderSubproof.
       container.hide(
