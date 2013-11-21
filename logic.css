@@ -399,7 +399,8 @@ span#leftNav {
 
 /* Must be specific enough to override the silver/gray border. */
 .proofDisplay.editable .proofStep.selected .stepAndNum {
-  border: 1px solid black;
+  border: 1px solid #888;
+  box-shadow: 2px 2px 2px #888;
 }
 
 /* Old value ("removed"), occurrence of variable to be substituted. */
