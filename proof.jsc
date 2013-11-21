@@ -884,10 +884,15 @@ ProofControl.prototype.renderPopups = function(step) {
 
         // Build results of relevant distributive law rewriters and
         // actions to run them later.
-        var rewriteFn =
-          // Function that rewrites using the stmt.
-          @{stmt. rules.rewriteWithFact(eqn, '/main/right', stmt)};
-        var results = stmts.map(rewriteFn);
+        function substituter(eqn) {
+          // This does the substitution, but leaves the proof (and
+          // creation of side conditions) until later.
+          var subst = term.matchSchema(eqn.getMain().getLeft());
+          return term.subFree(subst);
+        }
+        // This is a list of replacement terms, one for each action
+        // in actions.
+        var results = stmts.map(substituter);
         // Given a statement of a fact, returns a function that will
         // use it in a rewrite when called with no args.
         var actionBuilder =
@@ -903,7 +908,7 @@ ProofControl.prototype.renderPopups = function(step) {
         var simpler = Toy.applyFactsToRhs(eqn, simplifiers);
         if (simpler != eqn) {
           var result = rules.simplifySite(simpler, '/main/right');
-          results.push(result);
+          results.push(result.getMain().getRight());
           var action =
             @{Toy.tryRuleAsync(self.stepEditor,
                                rules.rewriteWithFact,
@@ -915,8 +920,7 @@ ProofControl.prototype.renderPopups = function(step) {
           results.forEach(function(result, i) {
               var $div = $('<div class=above></div>');
               $div.text(' = ' +
-                        result.getMain().getRight()
-                        .toUnicode()
+                        result.toUnicode()
                         // Strip any outermost parens.
                         .replace(/^\((.*)\)$/, '$1'));
               // The node's data.result will be an equation that can

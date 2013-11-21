@@ -301,7 +301,7 @@ span#leftNav {
   position: absolute;
   visibility: hidden;
   left: 5em;
-  top: 2.5em;
+  top: 2em;
   font-size: large;
   font-style: italic;
   color: red;
@@ -481,8 +481,6 @@ span.stepRef {
   opacity: .8;
   /* Overrides .proofStep: */
   text-indent: 0em;
-  /* Overrides math formatting: */
-  font-style: normal;
   box-shadow: 2px 2px 2px #aaa;
 }
 
