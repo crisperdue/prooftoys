@@ -222,6 +222,7 @@ function ProofEditor() {
   clearProof.on('click', function() {@mainControl.setSteps([]); });
   this.containerNode = $('<div class=proofContainer></div>');
   this.stepEditor = new Toy.StepEditor(this);
+  @mainControl.stepEditor = this.stepEditor;
   this.containerNode
     .append(@proofButtons)
     .append(this._stateDisplay)
@@ -429,6 +430,8 @@ function ProofControl(properties) {
   // ID of element to use for saving/restoring proof state.
   // TODO: Make the textarea part of the ProofControl.
   this.textAreaId = 'proofState';
+
+  this.stepEditor = null;
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
   var $node = $('<div class=proofDisplay>' +
@@ -855,49 +858,98 @@ ProofControl.prototype.renderStep = function(step) {
 };
 
 /**
- * Renders the expression popups for steps in an editable proof.
+ * Renders the expression popups for steps in a proof.  The proof
+ * should be editable.
  */
 ProofControl.prototype.renderPopups = function(step) {
-  step.rendering.traverse(function(term) {
+  if (Toy.profileName.match(/^popups/)) {
+    console.profile(Toy.profileName);
+  }
+  var self = this;
+  // Include only "forward" facts (ones that distribute "*"
+  // across "+").
+  var distribStmts = (Toy.listFacts(Toy.distribFacts)
+                      .map(Toy.getStatement)
+                      .filter(@{eqn. eqn.getMain().getLeft().isCall2('*')}));
+  step.rendering.traverse(function(term, rpath) {
       if (term.isCall2() && term.node) {
         var rules = Toy.rules;
         // These resulting equations are the result of applying the
         // distributive law and similar ones for subtraction to the
         // term.
-        var results = Toy.listFacts(Toy.distribFacts)
-          .map(Toy.getStatement)
-          // Include only "forward" facts (ones that distribute "*"
-          // across "+").
-          .filter(@{eqn. (eqn.getMain().getLeft().isCall2('*') &&
-                        term.matchSchema(eqn.getMain().getLeft()))})
-          .map(@{eqn. rules.instMultiVars
-                 (eqn, term.matchSchema(eqn.getMain().getLeft()))});
         var eqn = rules.consider(term);
-        // If some simplification fact applies directly to the term,
-        // simplify it as far as possible and display.
+        var getPath = Toy.memo(@{rpath.reverse()});
+        var stmts = distribStmts
+          .filter(@{eqn. term.matchSchema(eqn.getMain().getLeft())});
+
+        // Build results of relevant distributive law rewriters and
+        // actions to run them later.
+        var rewriteFn =
+          // Function that rewrites using the stmt.
+          @{stmt. rules.rewriteWithFact(eqn, '/main/right', stmt)};
+        var results = stmts.map(rewriteFn);
+        // Given a statement of a fact, returns a function that will
+        // use it in a rewrite when called with no args.
+        var actionBuilder =
+          @{stmt. @{Toy.tryRuleAsync(self.stepEditor,
+                                     rules.rewriteWithFact,
+                                     [step, getPath(), stmt])}};
+        var actions = stmts.map(actionBuilder);
+
+        // Add a result and an action for a local simplifier if one is
+        // found.
         var simplifiers =
           [{apply: Toy.arithmetic}].concat(Toy.basicSimpFacts);
         var simpler = Toy.applyFactsToRhs(eqn, simplifiers);
         if (simpler != eqn) {
-          results.push(rules.simplifySite(simpler, '/main/right'));
+          var result = rules.simplifySite(simpler, '/main/right');
+          results.push(result);
+          var action =
+            @{Toy.tryRuleAsync(self.stepEditor,
+                               rules.rewriteWithFact,
+                               [step, getPath(), result])};
+          actions.push(action);
         }
         if (results.length) {
           var $term = $(term.node);
-          results.forEach(function(result) {
+          results.forEach(function(result, i) {
               var $div = $('<div class=above></div>');
-              // This line just demonstrates that the popup concept works.
-              // TODO: replace with something nicer and more useful.
               $div.text(' = ' +
                         result.getMain().getRight()
                         .toUnicode()
                         // Strip any outermost parens.
                         .replace(/^\((.*)\)$/, '$1'));
+              // The node's data.result will be an equation that can
+              // be used to replace the term.
+              $div.data('action', actions[i]);
               $term.append($div);
             });
         }
       }
     });
+
+  // Event handling:
+
+  // Notice hovering in events with class "above".
+  $(step.stepNode).on('mouseenter mouseleave', '.above',
+                      @{. void $(this).toggleClass('hover'); });
+  // Handle click events on "above" nodes.  Note that the control
+  // must be editable.
+  $(step.stepNode).on('click', '.above', function(event) {
+      // Run the action.
+      var action = $(this).data('action');
+      action();
+      // Prevent the containing .expr node from handling this click,
+      // which would select the term.
+      event.stopPropagation();
+    });
+
+  if (Toy.profileName.match(/^popups/)) {
+    console.profileEnd();
+  }
 };
+
+
 
 /**
  * Returns true iff policy is to elide the LHS of the given step
