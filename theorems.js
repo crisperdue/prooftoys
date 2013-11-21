@@ -5261,6 +5261,29 @@ function listFacts(map) {
   return list;
 }
 
+/**
+ * Developer utility function that modifies the named rule to emit
+ * information about calls to it.
+ */
+function traceRule(name) {
+  var rule = rules[name];
+  function timed() {
+    console.log('Enter', name);
+    console.trace();
+    for (var i = 0; i < arguments.length; i++) {
+      console.log(i, arguments[i].toString());
+    }
+    var t = new Toy.NestedTimer(name);
+    t.start();
+    var result = rule.apply(rules, arguments);
+    t.done();
+    console.log('Exit', name);
+    return result;
+  }
+  timed.info = rule.info;
+  rules[name] = timed;
+}
+
 
 //// Export public names.
 
@@ -5292,6 +5315,8 @@ Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsToRhs = applyFactsToRhs;
 Toy.whileSimpler = whileSimpler;
 Toy.listFacts = listFacts;
+
+Toy.traceRule = traceRule;
 
 Toy.arithmetic = arithmetic;
 
