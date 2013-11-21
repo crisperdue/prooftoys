@@ -33,6 +33,10 @@ function configure(object, properties) {
  * of the input object as its properties.
  */
 function ownProperties(object) {
+  // If it has no prototype just return it.
+  if (Object.getPrototypeOf(object) === null) {
+    return object;
+  }
   var result = Object.create(null);
   Object.getOwnPropertyNames(object).forEach(function(name) {
       result[name] = object[name];
@@ -921,7 +925,7 @@ Expr.prototype.findSubst = Expr.prototype.matchSchema;
  * scope where they become bound.
  */
 Expr.prototype.subFree = function(map_arg) {
-  var map = {};
+  var map = Object.create(null);
   for (var name in map_arg) {
     var replacement = map_arg[name];
     if (replacement instanceof Atom && replacement.name == name) {
@@ -930,7 +934,7 @@ Expr.prototype.subFree = function(map_arg) {
     }
     map[name] = replacement;
   }
-  return isEmpty(map) ? this : this._subFree(ownProperties(map));
+  return isEmpty(map) ? this : this._subFree(map);
 };
 
 /**
