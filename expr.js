@@ -9,14 +9,10 @@ var Toy = Toy || {};
 
 //// GENERAL UTILITIES
 
-// A dummy variable used occasionally to make Emacs work indent
-// our code better.
-var _;
-
 /**
  * Configure the given object with the given property descriptors.
  * This is like Object.defineProperties, except key values that are
- * not specifically of type Object are treated as plain values,
+ * not specifically of type Object are treated as plain values and
  * not made writable, enumerable, or configurable.
  */
 function configure(object, properties) {
@@ -41,6 +37,23 @@ function ownProperties(object) {
   Object.getOwnPropertyNames(object).forEach(function(name) {
       result[name] = object[name];
     });
+  return result;
+}
+
+/**
+ * Builds and returns an object with no prototype and properties taken
+ * from the arguments, an alternating sequence of string keys and
+ * values.  The argument list length must be even.
+ */
+function object0(_args) {
+  var result = Object.create(null);
+  var nargs = arguments.length;
+  if (nargs % 2) {
+    throw new Error('object0 bad arguments list');
+  }
+  for (var i = 0; i < nargs; i += 2) {
+    result[arguments[i]] = arguments[i + 1];
+  }
   return result;
 }
 
@@ -907,13 +920,25 @@ Expr.prototype.findSubst = Expr.prototype.matchSchema;
  * Note that Rule R can introduce previously free variables into a
  * scope where they become bound.
  */
-Expr.prototype.subFree = function(replacement, v) {
-  var name = v instanceof Atom ? v.name : v;
-  if (replacement instanceof Atom && replacement.name == name) {
-    // No changes required.
-    return this;
+Expr.prototype.subFree = function(map_arg) {
+  var map = {};
+  for (var name in map_arg) {
+    var replacement = map_arg[name];
+    if (replacement instanceof Atom && replacement.name == name) {
+      // No changes required.
+      continue;
+    }
+    map[name] = replacement;
   }
-  return this._subFree(replacement, name);
+  return isEmpty(map) ? this : this._subFree(ownProperties(map));
+};
+
+/**
+ * Substitutes the replacement for a single name, which can be
+ * a string or Atom as done by Expr.subFree.
+ */
+Expr.prototype.subFree1 = function(replacement, name) {
+  return this.subFree(object0(name, replacement));
 };
 
 /**
@@ -1584,15 +1609,17 @@ Expr.prototype.searchTerms = function(test, path) {
 // in the replacement.
 //
 //
-// _subFree(Expr replacement, String name, Map freeNames, Map allNames)
+// _subFree(Object map)
 //
-// Substitutes the replacement expression for all free occurrences of
-// name in this Expr, renaming bound variables in just the locations
-// where a binding would capture a free variable of the replacement.
+// The map argument is an object mapping variable names to replacement
+// expressions.  Substitutes the corresponding replacement expression
+// for each free occurrence of each name in this Expr.
 //
-// Assumes freeNames is a Set (Object) of all the variable names free
-// in the replacement, that allNames contains all variable names
-// occurring anywhere in this and the replacement.
+// To ensure no names are captured, also renames bound variables
+// throughout this as required so the names are all unique and in the
+// namespace reserved for bound variables.  (In this logic a bound
+// variable can never become free, though free variables can become
+// bound.)
 //
 //
 // copy()
@@ -1848,8 +1875,9 @@ Atom.prototype.dump = function() {
   return this.name;
 };
 
-Atom.prototype._subFree = function(replacement, name) {
-  return (name == this.name ? replacement : this);
+Atom.prototype._subFree = function(map) {
+  // Note that this assumes the map has no prototype.
+  return map[this.name] || this;
 };
 
 Atom.prototype.copy = function() {
@@ -2022,9 +2050,9 @@ Call.prototype.dump = function() {
   return '(' + this.fn.dump() + ' ' + this.arg.dump() + ')';
 };
 
-Call.prototype._subFree = function(replacement, name) {
-  var fn = this.fn._subFree(replacement, name);
-  var arg = this.arg._subFree(replacement, name);
+Call.prototype._subFree = function(map) {
+  var fn = this.fn._subFree(map);
+  var arg = this.arg._subFree(map);
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
@@ -2338,7 +2366,7 @@ Lambda.prototype.dump = function() {
   return '{' + this.bound.dump() + '. ' + this.body.dump() + '}';
 };
 
-Lambda.prototype._subFree = function(replacement, name) {
+Lambda.prototype._subFree = function(map) {
   var boundName = this.bound.name;
   if (boundName === name) {
     // Binds the name; there can be no free occurrences here.
@@ -2347,7 +2375,7 @@ Lambda.prototype._subFree = function(replacement, name) {
     // By contract of subFree, the replacement will have no free
     // occurrences of the bound name, so this will capture no
     // variables.
-    var body = this.body._subFree(replacement, name);
+    var body = this.body._subFree(map);
     return (body === this.body) ? this : new Lambda(this.bound, body);
   } else {
     // The bound variable is not uniquely named.  Rename it and try
@@ -2355,8 +2383,9 @@ Lambda.prototype._subFree = function(replacement, name) {
     // to preventing improper "capturing" substitution in this
     // algorithm.
     var newVar = _genBoundVar(boundName);
-    var fixup = lambda(newVar, this.body._subFree(newVar, boundName));
-    return fixup._subFree(replacement, name);
+    var renamed =
+      lambda(newVar, this.body._subFree(object0(boundName, newVar)));
+    return renamed._subFree(map);
   }
 };
 
@@ -2524,63 +2553,6 @@ Call.prototype._nth = function(n) {
 
 Lambda.prototype._nth = function(n) {
   assert(false, 'Nth not relevant in lambdas');
-};
-
-// Traverse this, replacing occurrences of target with replacement.
-// (As used they are duplicates anyway.)
-//
-// Private to subFree.
-Atom.prototype._smashAll = function(target, replacement) {
-};
-
-Call.prototype._smashAll = function(target, replacement) {
-  if (this.fn == target) {
-    this.fn = replacement;
-  } else {
-    this.fn._smashAll(target, replacement);
-  }
-  if (this.arg == target) {
-    this.arg = replacement;
-  } else {
-    this.arg._smashAll(target, replacement);
-  }
-};
-
-Lambda.prototype._smashAll = function(target, replacement) {
-  if (this.body == target) {
-    this.body = replacement;
-  } else {
-    this.body._smashAll(target, replacement);
-  }
-};
-
-// Rename all free occurrences of variables having the given name,
-// replacing each of them with variable newVar, but do not rename
-// within occurrences expressions identical to "replacement", which is
-// already a substitution result.  So this relies on the substitution
-// to _not_ copy the replacement expression.  Helper method for
-// _subFree.
-Atom.prototype._renameFree = function(name, newVar, replacement) {
-  return (this == replacement
-          ? this
-          : (this.name == name ? newVar : this));
-};
-
-Call.prototype._renameFree = function(name, newVar, replacement) {
-  if (this == replacement) {
-    return this;
-  }
-  var fn = this.fn._renameFree(name, newVar, replacement);
-  var arg = this.arg._renameFree(name, newVar, replacement);
-  return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
-};
-
-Lambda.prototype._renameFree = function(name, newVar, replacement) {
-  if (this == replacement || this.bound.name == name) {
-    return this;
-  }
-  var body = this.body._renameFree(name, newVar, replacement);
-  return (body == this.body) ? this : lambda(this.bound, body);
 };
 
 
@@ -4536,6 +4508,7 @@ Toy.memo = memo;
 Toy.format = format;
 Toy.configure = configure;
 Toy.ownProperties = ownProperties;
+Toy.object0 = object0;
 Toy.isEmpty = isEmpty;
 Toy.each = each;
 Toy.emptySet = emptySet;

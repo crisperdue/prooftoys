@@ -501,18 +501,22 @@ var testCase = {
   },
 
   testSubFree: function() {
+    var map = Toy.object0;
     var v = varify('v');
     var target = call(lambda(v, v), x);
     // Now substitute in 'a different v':
-    var result = target.subFree(varify('v'), x);
+    var result = target.subFree({x: varify('v')});
     // We see that it replaces just the free occurrence.
     assertEqual('({v. v} v)', result);
     // A case where decapturing is needed.
-    result = Toy.parse('{y. x} x').subFree(y, x);
+    result = Toy.parse('{y. x} x').subFree({x: y});
     assertEqual('({y. y} y)', result);
     // A very similar case where it is not needed.
-    result = Toy.parse('{y. T} x').subFree(y, x);
+    result = Toy.parse('{y. T} x').subFree({x: y});
     assertEqual('({y. T} y)', result);
+    // Multiple substitution.
+    result = Toy.parse('x + y').subFree({y: x, x: y});
+    assertEqual('(y + x)', result);
   },
 
   testMathVars: function() {
@@ -1541,9 +1545,9 @@ var testCase = {
     inf = Toy.rules.evalBool(Toy.parse('(p (F | T))'));
     assertEqual('((p (F | T)) = (p T))', inf);
     taut = Toy.parse('(p ==> not p) ==> not p');
-    inf = Toy.rules.evalBool(taut.subFree(T, p, {}));
+    inf = Toy.rules.evalBool(taut.subFree1(T, p));
     assertEqual('T', inf.getRight());
-    inf = Toy.rules.evalBool(taut.subFree(F, p, {}));
+    inf = Toy.rules.evalBool(taut.subFree1(F, p));
     assertEqual('T', inf.getRight());
   },
 

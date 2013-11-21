@@ -380,9 +380,10 @@ var ruleInfo = {
       var lambda = call.fn;
       var result =
         (call.arg.name === lambda.bound.name
-         // Same idea as optimization in Lambda._subFree.
+         // In this case the substitution will have no effect,
+         // though subFree might incidentally rename the bound variable.
          ? equal(call, lambda.body)
-         : equal(call, lambda.body.subFree(call.arg, lambda.bound)));
+         : equal(call, lambda.body.subFree1(call.arg, lambda.bound)));
       // Always make sure the call has a type.  It came from elsewhere.
       Toy.findType(call);
       return rules.assert(result).justify('axiom4', [call]);
@@ -722,7 +723,7 @@ var ruleInfo = {
              'New bound variable ' + newVar.name + ' must not occur free.',
              step);
       var changed = lambda(newVar,
-                           target.body.subFree(newVar, target.bound));
+                           target.body.subFree1(newVar, target.bound));
       var step1 = rules.eqSelf(changed);
       var step2 = rules.r(step1, step, path);
       return step2.justify('changeVar', arguments, [step]);
@@ -1561,15 +1562,15 @@ var ruleInfo = {
           if (wff instanceof Toy.Call && wff.fn instanceof Toy.Call
               && wff.fn.fn.isConst('=')) {
             // WFF is already an equation.
-            var step1 = rules.tautology(wff.subFree(T, name));
-            var step2 = rules.tautology(wff.subFree(F, name));
+            var step1 = rules.tautology(wff.subFree1(T, name));
+            var step2 = rules.tautology(wff.subFree1(F, name));
             var step3 = rules.equationCases(step1, step2, name);
             var result = step3.justify('tautology', arguments);
             _tautologies[key] = result;
             return result;
           } else {
-            var step1 = rules.tautology(equal(T, wff.subFree(T, name)));
-            var step2 = rules.tautology(equal(T, wff.subFree(F, name)));
+            var step1 = rules.tautology(equal(T, wff.subFree1(T, name)));
+            var step2 = rules.tautology(equal(T, wff.subFree1(F, name)));
             var step3 = rules.equationCases(step1, step2, name);
             var step4 = rules.fromTIsA(step3);
             var result = step4.justify('tautology', arguments);
@@ -2920,11 +2921,11 @@ var ruleInfo = {
       // Make a schema for the desired theorem.
       var goalSchema = infix(buildHypSchema(conjuncts, map), '==>', cVar);
       // Make a version of the theorem with T for "c".
-      var trueGoal = goalSchema.subFree(T, cVar);
+      var trueGoal = goalSchema.subFree1(T, cVar);
       // This is a simple tautology:
       var trueCase = rules.tautInst('p ==> T', {p: trueGoal.getLeft()});
       // Make a version of the theorem with F for "c".
-      var falseGoal = goalSchema.subFree(F, cVar);
+      var falseGoal = goalSchema.subFree1(F, cVar);
       // Prove that its LHS is equal to F.
       var step1 = falsify(falseGoal.getLeft());
       // This means the LHS implies F, which is the desired F case.
