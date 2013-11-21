@@ -470,14 +470,15 @@ span.stepRef {
 .above {
   position: absolute;
   visibility: hidden;
+  cursor: pointer;
   left: -1px;
   bottom: 1.5em;
   min-width: 100%;
   padding: 2px 2px;
   border: 1px solid gray;
   white-space: nowrap;
-  background-color: #dfd;
-  opacity: .9;
+  background-color: #afa;
+  opacity: .8;
   /* Overrides .proofStep: */
   text-indent: 0em;
   /* Overrides math formatting: */
@@ -486,7 +487,7 @@ span.stepRef {
 }
 
 .above.hover {
-  background-color: #afa;
+  opacity: 1;
 }
 
 /* The element is visible when its expression is hovered. */
