@@ -239,12 +239,10 @@ function ProofEditor() {
 
   // Make the ProofControl save state when the proof changes.
   @mainControl.proofChanged = function() {
-    // Changing the proof may change selections (without registering a
-    // click on a step).  It also moves the location of the step
-    // editor on the page, and both are handled appropriately by a
-    // reset.
-    self._refresher.activate();
     // "this" is the ProofControl.
+    self._refresher.activate();
+    // Changing the proof may change selections (without registering a
+    // click on a step), so update the step editor.
     self.stepEditor.reset();
   };
 
