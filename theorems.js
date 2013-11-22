@@ -4177,6 +4177,23 @@ var identityFacts = {
       return step2;
     }
   },
+  'a - 0 = a': {
+    action: function() {
+      var step1 = (rules.consider('a - 0')
+                   .apply('apply', '/main/right')
+                   .apply('arithmetic', '/main/right/right')
+                   .rewrite('/main/right', 'a + 0 = a'));
+      return step1;
+    }
+  },
+  '0 - a = neg a': {
+    action: function() {
+      var step1 = (rules.consider('0 - a')
+                   .apply('apply', '/main/right')
+                   .rewrite('/main/right', '0 + a = a'));
+      return step1;
+    }
+  },
   // Times one
   'a = a * 1': {
     action: function() {
@@ -4694,6 +4711,8 @@ var basicSimpFacts = [
                       '0 + a = a',
                       'a * 1 = a',
                       '1 * a = a',
+                      'a - 0 = a',
+                      '0 - a = neg a',
                       {stmt: 'a * (b * c) = a * b * c'},
                       {stmt: 'a * b * c = a * c * b',
                        where: '!subst.a.hasVars() && !subst.c.hasVars()'},
