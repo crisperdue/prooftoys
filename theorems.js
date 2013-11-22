@@ -2415,7 +2415,7 @@ var ruleInfo = {
   // Repeatedly applies simplifyMath1 to do trivial simplifications.
   simplifyStep: {
     action: function(step) {
-      var result = rules.simplifySite(step, step.pathToVisiblePart());
+      var result = rules._simplifySite(step, step.pathToVisiblePart());
       return result.justify('simplifyStep', arguments, [step]);
     },
     inputs: {step: 1},
@@ -2427,12 +2427,7 @@ var ruleInfo = {
 
   simplifySite: {
     action: function(step, path) {
-      var _path = Toy.path;
-      var eqn = rules.eqSelf(step.locate(path));
-      var simpler = whileSimpler(eqn, function(eqn) {
-          return rules._simplifyMath1(eqn, _path('/main/right', eqn));
-        });
-      var result = rules.replace(simpler, step, path);
+      var result = rules._simplifySite(step, path);
       return result.justify('simplifySite', arguments, [step]);
     },
     inputs: {site: 1},
@@ -2442,6 +2437,17 @@ var ruleInfo = {
     labels: 'algebra',
   },
     
+  // Inline version of simplifySite.
+  _simplifySite: {
+    action: function(step, path) {
+      var _path = Toy.path;
+      var eqn = rules.eqSelf(step.locate(path));
+      var simpler = whileSimpler(eqn, function(eqn) {
+          return rules._simplifyMath1(eqn, _path('/main/right', eqn));
+        });
+      return rules.replace(simpler, step, path);
+    }
+  },
 
   // Move all negations in past additions and multiplications;
   // eliminate double negations.
