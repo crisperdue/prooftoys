@@ -405,8 +405,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
     if (Toy.profileName) {
       console.profileEnd();
     }
-    // Flag the DOM node as not busy.
-    this.$node.toggleClass('busy', false);
     // Update the rule stats and show them.
     this.lastRuleTime = Date.now() - startTime;
     this.lastRuleSteps = Toy.getStepCounter() - startSteps;
@@ -416,6 +414,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.$node.find('.ruleStats').toggleClass('invisible', false);
   }
   if (!result || result.rendering) {
+    // The work is done, show that the prover is not busy.
+    this.$node.toggleClass('busy', false);
     // If there is already a rendering, Expr.justify must have found
     // that the "new" step was identical to one of its dependencies,
     // so don't try to add it.  The implementation only currently
@@ -426,9 +426,19 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.proofControl.deselectStep();
     // Clear the proof errors field.
     this.controller.$proofErrors.html('');
+    // After the browser repaints, try simplifying the step
+    // and adding the result to the proof if simplification
+    // has any effect.
+    var self = this;
+    Toy.afterRepaint(function() {
+        var simplified = Toy.rules.simplifyStep(result);
+        self.$node.toggleClass('busy', false);
+        if (simplified && !simplified.rendering) {
+          self.proofControl.addStep(simplified);
+        }
+      });
   }
   this.focus();
-  this.proofControl.proofChanged();
 };
 
 /**
