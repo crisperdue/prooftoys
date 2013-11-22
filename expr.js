@@ -158,14 +158,15 @@ function Result(value) {
  * the undefined value if the function throws, else the value
  * returned from the function call.
  */
-function normalReturn(fn, arg1, arg2, arg3, arg4) {
+function normalReturn(fn, _args) {
   var result;
+  var args = jQuery.makeArray(arguments);
+  args.shift();
   try {
-    result = fn.call(undefined, arg1, arg2, arg3, arg4);
+    return fn.apply(undefined, args);
   } catch(e) {
     return;
   }
-  return result;
 }
 
 /**
