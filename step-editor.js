@@ -375,6 +375,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
 function tryRuleAsync(stepEditor, rule, args) {
   // Flag the step editor as busy via its DOM node.
   stepEditor.$node.toggleClass('busy', true);
+  stepEditor.reset();
   Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
 }
 
@@ -426,7 +427,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // Clear the proof errors field.
     this.controller.$proofErrors.html('');
   }
-  this.reset();
   this.focus();
   this.proofControl.proofChanged();
 };

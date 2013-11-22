@@ -5167,8 +5167,10 @@ var theoremNames =
  */
 function isArithmetic(term) {
   if (term.isInfixCall()) {
-    if (!term.getLeft().isNumeral() ||
-        !term.getRight().isNumeral()) {
+    var left = term.getLeft();
+    var right = term.getRight();
+    if (!left.isNumeral() ||
+        !right.isNumeral()) {
       return false;
     }
     var op = term.getBinOp().name;
