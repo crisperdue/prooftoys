@@ -888,7 +888,7 @@ ProofControl.prototype.renderPopups = function(step) {
           // This does the substitution, but leaves the proof (and
           // creation of side conditions) until later.
           var subst = term.matchSchema(eqn.getMain().getLeft());
-          return term.subFree(subst);
+          return eqn.getMain().getRight().subFree(subst);
         }
         // This is a list of replacement terms, one for each action
         // in actions.
