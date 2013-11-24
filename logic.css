@@ -490,7 +490,7 @@ span.stepRef {
 }
 
 /* The element is visible when its expression is hovered. */
-.fullExpr.hover > .above {
+.fullExpr.popped > .above {
   visibility: visible;
 }
 

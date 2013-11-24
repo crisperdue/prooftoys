@@ -1923,6 +1923,15 @@ function exprHandleOver(event) {
   function isTarget(expr) {
     return expr.node == event.target;
   }
+  // Flag as ".popped" the first parent .expr containing an ".above",
+  // if any.
+  $expr.add($expr.parents('.fullExpr'))
+    .filter(@{$(this).children('.above').length})
+    // Adding the two sets puts the result in document order.
+    // Self/nearest parent should then be last.
+    .last()
+    .toggleClass('popped', true);
+  // Considering showing textual path to current expression.
   var $step = $expr.closest('.proofStep');
   if ($step.length) {
     var proofStep = $step.data('proofStep');
@@ -1938,6 +1947,12 @@ function exprHandleOut(event) {
   var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
   var $expr = $(event.target).closest(selector) || $(event.target);
   $expr.removeClass('hover');
+  // Unmark any "popped" ancestor.  See exprHandleOver.
+  $expr.add($expr.parents('.fullExpr'))
+    .filter(@{$(this).children('.above').length})
+    .last()
+    .toggleClass('popped', false);
+  // Clear display of the textual hover path.
   var $display = $('#hoverPath');
   if ($display) {
     // Do nothing if there is no bottom panel.
