@@ -778,13 +778,13 @@ ProofControl.prototype.renderStep = function(step) {
   var $step =
     $('<div class=proofStep>')
       .append(delHtml,
-              $('<span class=stepAndNum>')
-              .append($('<span class=stepNumArea>')
-                      .append(self.editable
-                                ? '<input type=checkbox class=checkbox>'
-                                : '',
-                              '[<span class=stepNumber></span>]'),
-                      '<span class=wff></span>'),
+              ($('<span class=stepAndNum>')
+               .append((self.editable
+                        ? '<input type=checkbox class=checkbox>'
+                        : ''),
+                       ($('<span class=stepNumArea>')
+                        .append('[<span class=stepNumber></span>]')),
+                       '<span class=wff></span>')),
               // Allow a word break here.
               '<wbr><span class=stepInfo></span>');
   self._stepsJQ.append($step);
