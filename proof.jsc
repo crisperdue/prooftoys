@@ -263,17 +263,12 @@ function ProofEditor() {
   @mainControl.proofChanged = function() {
     // "this" is the ProofControl.
     self._refresher.activate();
-    // Changing the proof may change selections (without registering a
-    // click on a step), so update the step editor.
-    this.selectionChanged();
   };
 
   // Update the step editor query results when the selection may
   // have changed.
   @mainControl.selectionChanged = function() {
-    // Forces full display of the appropriate inference rules for
-    // the new selection.
-    self.stepEditor.ruleSelector.reset();
+    self.stepEditor.ruleSelector.refresh();
   };
 
   // TODO: Consider creating the step editor from the proof editor
@@ -324,7 +319,6 @@ function ProofEditor() {
     if ($(event.target).closest('.proofContainer').length == 0) {
       // Not in a ProofControl's area.
       @mainControl.deselectStep();
-      @mainControl.selectionChanged();
       self.$proofErrors.html('');
     }
   });
@@ -668,6 +662,7 @@ ProofControl.prototype.selectStep = function(step) {
   $node.addClass('selected');
   $node.find('.checkbox').prop('checked', true);
   this.selection = step;
+  this.selectionChanged();
 };
 
 /**
@@ -682,6 +677,7 @@ ProofControl.prototype.deselectStep = function() {
     $node.find('.checkbox').prop('checked', false);
     this.selection = null;
     this.deselectExpr(step);
+    this.selectionChanged();
   }
 };
 
@@ -694,6 +690,7 @@ ProofControl.prototype.selectExpr = function(expr) {
   this.selection = step;
   $(expr.node).addClass('selected');
   step.selection = expr;
+  this.selectionChanged();
 };
 
 /**
@@ -705,6 +702,7 @@ ProofControl.prototype.deselectExpr = function(step) {
   if (expr) {
     $(expr.node).removeClass('selected');
     step.selection = null;
+    this.selectionChanged();
   }
 };
 
@@ -721,8 +719,6 @@ ProofControl.prototype.handleStepClick = function(step) {
     if (!(step == selected && !expr)) {
       this.selectStep(step);
     }
-    // Communicate that the selection _may_ have changed.
-    this.selectionChanged();
   }
 };
 
@@ -741,8 +737,6 @@ ProofControl.prototype.handleExprSelection = function(expr) {
     if (expr != oldExpr) {
       this.selectExpr(expr);
     }
-    // Communicate that the selection _may_ have changed.
-    this.selectionChanged();
   }
 };
 

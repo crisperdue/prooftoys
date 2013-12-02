@@ -133,8 +133,8 @@ function StepEditor(controller) {
       self.tryExecuteRule(true);
     }
   });
-
 }
+
 
 /**
  * Handle errors in the step editor.  Displays step information in an
@@ -170,7 +170,6 @@ StepEditor.prototype.report = function(error) {
  * point of view: visible with empty input, no rule-specific form.
  */
 StepEditor.prototype.reset = function() {
-  this.ruleSelector.reset();
   this.clearer.addClass('hidden');
   this.form.html('');
 };
@@ -725,9 +724,11 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
   self.stepEditor = stepEditor;
   self.ruleName = '';
 
+  self._refresher = new Toy.Refresher(self.update.bind(self));
+
   // Rule chooser:
   self.$node = $('<div class=ruleSelector/>');
-  self.reset();
+  self.update();
 
   self.$node.on('click', '.ruleItem', function(event) {
     var ruleName = $(this).data('ruleName');
@@ -737,11 +738,15 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
   });
 }
 
+BasicRuleSelector.prototype.refresh = function() {
+  this._refresher.activate();
+}
+
 /**
  * Return the RuleSelector to a "fresh" state, with no rule selected,
  * offered items compatible the currently-selected step or term.
  */
-BasicRuleSelector.prototype.reset = function() {
+BasicRuleSelector.prototype.update = function() {
   var self = this;
   self.$node.empty();
   $header = $('<div class=rules-header/>');
@@ -780,10 +785,11 @@ BasicRuleSelector.prototype.reset = function() {
       self.$node.append($item);
     });
   self.ruleName = '';
+  // TODO: Generate smarter messages for rules that work without a UI
+  //   selection (most theorems and theorem generators).
   $header.text(displayTexts.length
                ? 'Actions:'
                : 'Select a step or expression with a click.');
-
 };
 
 /**
