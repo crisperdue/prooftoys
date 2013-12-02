@@ -785,19 +785,22 @@ var _turnstile = '\u22a6';
  */
 ProofControl.prototype.renderStep = function(step) {
   var self = this;
-  var delHtml = (self.editable
-                 ? '<button class=deleteStep title="Delete step">X</button>'
-                 // Heavy lower right-shadowed white rightwards arrow
-                 : '<span class=noDeleter>\u27ad</span>'); 
+  var $preStep = $(self.editable
+                   ? '<button class=deleteStep title="Delete step">X</button>'
+                   // Heavy lower right-shadowed white rightwards arrow
+                   : '<span class=noDeleter>\u27ad</span>'); 
+  var $stepSelector =
+    ($('<span class=stepSelector>')
+     .append(self.editable
+             ? '<input type=checkbox class=checkbox>'
+             : '',
+             ($('<span class=stepNumArea>')
+              .append('[<span class=stepNumber></span>]'))));
   var $step =
     $('<div class=proofStep>')
-      .append(delHtml,
+      .append($preStep,
               ($('<span class=stepAndNum>')
-               .append((self.editable
-                        ? '<input type=checkbox class=checkbox>'
-                        : ''),
-                       ($('<span class=stepNumArea>')
-                        .append('[<span class=stepNumber></span>]')),
+               .append($stepSelector,
                        '<span class=wff></span>')),
               // Allow a word break here.
               '<wbr><span class=stepInfo></span>');
@@ -835,9 +838,9 @@ ProofControl.prototype.renderStep = function(step) {
        });
   // Hovering the stepNumArea flags the step and number as "hover".
   // TODO: Enclose these two parts in an element.
-  $step.on('mouseenter mouseleave', '.stepNumArea, .checkbox',
+  $step.on('mouseenter mouseleave', '.stepSelector',
            @{void $(this).closest('.stepAndNum').toggleClass('hover'); });
-  $step.on(TOUCHDOWN, '.stepNumArea, .checkbox', function(event) {
+  $step.on(TOUCHDOWN, '.stepSelector', function(event) {
     self.handleStepClick(step);
   });
 

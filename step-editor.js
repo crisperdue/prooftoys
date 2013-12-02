@@ -732,7 +732,6 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
 
   self.$node.on('click', '.ruleItem', function(event) {
     var ruleName = $(this).data('ruleName');
-    console.log(ruleName);
     self.ruleName = ruleName;
     self.stepEditor.handleSelection();
   });
