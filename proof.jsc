@@ -219,12 +219,34 @@ function ProofEditor() {
     });
   var clearProof = $('<input type=button value="Clear proof">');
   @proofButtons.append(clearProof);
-  clearProof.on('click', function() {@mainControl.setSteps([]); });
-  this.containerNode = $('<div class=proofContainer></div>');
-  this.stepEditor = new Toy.StepEditor(this);
+  var selHtml = (' <span>show options for</span> ' +
+                 '<select class=rulesToShow>' +
+                 '<option value=algebra>algebra' +
+                 '<option value=general>general reasoning' +
+                 '<option value=all>all available' +
+                 '</select>');
+  @proofButtons.append(selHtml);
+
+  self.stepEditor = new Toy.StepEditor(this);
   @mainControl.stepEditor = this.stepEditor;
+
+  clearProof.on('click', function() {@mainControl.setSteps([]); });
+  // Step editor has state controlling whether to show all rules.
+  @proofButtons.find('.rulesToShow').on('change', function(event) {
+      self.stepEditor.showRuleType = this.value;
+      self.stepEditor.reset();
+    });
+
+  // The ruleStats are visible except when a proof is brand new and
+  // there is nothing to show.
+  var ruleStats = $('<div class="ruleStats invisible">Last rule ' +
+                    '<span class=ruleTime></span> msec, ' +
+                    '<span class=ruleSteps></span> steps</div>');
+
+  this.containerNode = $('<div class=proofContainer></div>');
   this.containerNode
     .append(@proofButtons)
+    .append(ruleStats)
     .append(this._stateDisplay)
     .append(@mainControl.node)
     .append(this.stepEditor.$node)
@@ -243,7 +265,7 @@ function ProofEditor() {
     self._refresher.activate();
     // Changing the proof may change selections (without registering a
     // click on a step), so update the step editor.
-    self.stepEditor.reset();
+    this.selectionChanged();
   };
 
   // Update the step editor query results when the selection may
@@ -669,6 +691,7 @@ ProofControl.prototype.deselectStep = function() {
  */
 ProofControl.prototype.selectExpr = function(expr) {
   var step = getProofStep(expr);
+  this.selection = step;
   $(expr.node).addClass('selected');
   step.selection = expr;
 };
@@ -718,9 +741,6 @@ ProofControl.prototype.handleExprSelection = function(expr) {
     if (expr != oldExpr) {
       this.selectExpr(expr);
     }
-    // Flag the step as the ProofControl's current selection, but do
-    // not flag it at the UI level.
-    this.selection = step;
     // Communicate that the selection _may_ have changed.
     this.selectionChanged();
   }
@@ -820,9 +840,10 @@ ProofControl.prototype.renderStep = function(step) {
          event.stopPropagation();
        });
   // Hovering the stepNumArea flags the step and number as "hover".
-  $step.on('mouseenter mouseleave', '.stepNumArea',
-           @{. void $(this).closest('.stepAndNum').toggleClass('hover'); });
-  $step.on(TOUCHDOWN, '.stepNumArea', function(event) {
+  // TODO: Enclose these two parts in an element.
+  $step.on('mouseenter mouseleave', '.stepNumArea, .checkbox',
+           @{void $(this).closest('.stepAndNum').toggleClass('hover'); });
+  $step.on(TOUCHDOWN, '.stepNumArea, .checkbox', function(event) {
     self.handleStepClick(step);
   });
 

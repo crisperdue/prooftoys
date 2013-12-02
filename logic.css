@@ -249,7 +249,7 @@ span#leftNav {
   /* Touch screen tap highlighting is confusing, so prevent it. */
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   /* For some reason the selection box shadow needs this margin. */
-  margin: 5px 0px;
+  margin: 5px 0px 1em;
   /* white-space: nowrap could go here to turn off text wrapping. */
 }
 
@@ -300,6 +300,7 @@ span#leftNav {
 .ruleWorking {
   position: absolute;
   visibility: hidden;
+  z-index: 1;
   left: 5em;
   top: 2em;
   font-size: large;
@@ -308,7 +309,6 @@ span#leftNav {
   background-color: #ffa;
   padding: .15em 2em;
   border: .2em solid #d00;
-  opacity: .7;
   box-shadow: 4px 4px 4px #888;
 }
 
@@ -538,6 +538,15 @@ span.stepRef {
   font-size: 120%;
 }
 
+.rules-header {
+  padding-left: 4px;
+  font-weight: bold;
+}
+
+.stepEditor .ruleSelector {
+  min-height: 20em;
+}
+
 /* Text used as a hint, as in a text field */
 .hinted {
   font-style: italic;
@@ -570,6 +579,31 @@ input.varName, input.step, input.equation, input.implication {
   width: 4em;
 }
 
+/* Rule selection items */
+
+.ruleItem:hover {
+  left: -1px;
+  top: -1px;
+  border: 1px solid #aaa;
+  box-shadow: 1px 1px 1px #aaa;
+  background-color: WhiteSmoke;
+}
+
+.ruleItem, .ruleItem:active {
+  position: relative;
+  left: 0px;
+  top: 0px;
+  margin: 2px 1px;
+  padding: 2px 4px;
+  border: 1px solid #eee;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.ruleItem:active {
+  background-color: #aaf;
+  border-color: gray;
+}
 
 /* Proof state display */
 

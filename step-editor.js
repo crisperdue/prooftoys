@@ -109,56 +109,22 @@ function StepEditor(controller) {
   // Button to clear rule input, visible when a form is active.
   self.clearer =
     $('<input class=sted-clear type=button value=x title="Clear the input">');
-  self.clearer.addClass('invisible');
+  self.clearer.addClass('hidden');
   div.append(self.clearer);
-
-  // Selector holds rule selector and related controls, shown
-  // and hidden as a group.
-  var selectorSpan = $('<span class=ruleSelector></span>');
-  div.append(selectorSpan);
-  self._selectorSpan = selectorSpan;
-
   self.form = $('<span class=sted-form></span>');
   div.append(self.form);
-  // The ruleStats are visible except when a proof is brand new and
-  // there is nothing to show.
-  div.append('<div class="ruleStats invisible">Last rule ' +
-             '<span class=ruleTime></span> msec, ' +
-             '<span class=ruleSteps></span> steps</div>');
-  // Pop-up visible only when a rule is actually running.
-  div.append('<div class="ruleWorking">Working . . .</div>');
-  // TODO: add more content here: div.append('<div>Hello World</div>');
   self.$node = div;
 
-  // Install a rule selector
-  if (Toy.useAutocompleter) {
-    throw new Error('Autocompleter no longer supported');
-  } else {
-    self.showRuleType = 'algebra';
-    self.showRules = [];
+  self.showRuleType = 'algebra';
+  self.showRules = [];
 
-    // Append the actual rule selector.
-    var widget = new BasicRuleSelector(self, $.proxy(self, 'handleSelection'));
-    self.ruleSelector = widget;
-    selectorSpan.append(widget.$node);
-
-    // Append checkbox to control "all rules"
-    var selHtml = (' <span>show options for</span> ' +
-                   '<select class=rulesToShow>' +
-                   '<option value=algebra>algebra' +
-                   '<option value=general>general reasoning' +
-                   '<option value=all>all available' +
-                   '</select>');
-    selectorSpan.append(selHtml);
-
-    // Step editor has state controlling whether to show all rules.
-    selectorSpan.find('.rulesToShow').on('change', function(event) {
-        self.showRuleType = this.value;
-        self.reset();
-      });
-  }
-  
+  div.append($('<div class=ruleWorking/>').text('Working . . . '));
+  var widget = new BasicRuleSelector(self);
+  self.ruleSelector = widget;
+  div.append(widget.$node);
+             
   // Install event handlers.
+
   self.clearer.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
   self.form.on('keydown', function(event) {
@@ -167,6 +133,7 @@ function StepEditor(controller) {
       self.tryExecuteRule(true);
     }
   });
+
 }
 
 /**
@@ -204,8 +171,7 @@ StepEditor.prototype.report = function(error) {
  */
 StepEditor.prototype.reset = function() {
   this.ruleSelector.reset();
-  this._selectorSpan.removeClass('hidden');
-  this.clearer.addClass('invisible');
+  this.clearer.addClass('hidden');
   this.form.html('');
 };
 
@@ -227,8 +193,7 @@ StepEditor.prototype.handleSelection = function() {
     if (template) {
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
-      this._selectorSpan.addClass('hidden');
-      this.clearer.removeClass('invisible');
+      this.clearer.removeClass('hidden');
       this.form.html(template);
       addClassInfo(this.form);
       if (!usesSite(rule)) {
@@ -408,10 +373,13 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // Update the rule stats and show them.
     this.lastRuleTime = Date.now() - startTime;
     this.lastRuleSteps = Toy.getStepCounter() - startSteps;
-    this.$node.find('.ruleTime').text(Math.ceil(this.lastRuleTime));
-    this.$node.find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
+    this.controller.containerNode
+      .find('.ruleTime').text(Math.ceil(this.lastRuleTime));
+    this.controller.containerNode
+      .find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
     // Clear the initial invisible state.
-    this.$node.find('.ruleStats').toggleClass('invisible', false);
+    this.controller.containerNode
+      .find('.ruleStats').toggleClass('invisible', false);
   }
   if (!result || result.rendering) {
     // The work is done, show that the prover is not busy.
@@ -758,21 +726,15 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
   self.ruleName = '';
 
   // Rule chooser:
-  var ruleChooser = $('<select/>');
-  // The first option tells the user to select something,
-  // message determined later.
-  ruleChooser.append($('<option/>',
-                       {text: '-- Apply a rule --', value: ''}));
+  self.$node = $('<div class=ruleSelector/>');
+  self.reset();
 
-  this.$node = ruleChooser;
-
-  this.reset();
-
-  ruleChooser.change(function() {
-      var elt = ruleChooser[0];
-      self.ruleName = elt.options[elt.selectedIndex].value;
-      selectionHandler();
-    });
+  self.$node.on('click', '.ruleItem', function(event) {
+    var ruleName = $(this).data('ruleName');
+    console.log(ruleName);
+    self.ruleName = ruleName;
+    self.stepEditor.handleSelection();
+  });
 }
 
 /**
@@ -781,9 +743,9 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
  */
 BasicRuleSelector.prototype.reset = function() {
   var self = this;
-  var elt = self.$node[0];
-  // Delete all rule options, leave just the "choose rule" option.
-  elt.options.length = 1;
+  self.$node.empty();
+  $header = $('<div class=rules-header/>');
+  self.$node.append($header);
   // Map from rule display text to rule name.
   var byDisplay = {};
   var displayTexts = [];
@@ -812,14 +774,16 @@ BasicRuleSelector.prototype.reset = function() {
   });
   displayTexts.sort(function(a, b) { return a.localeCompare(b); });
   displayTexts.forEach(function(display) {
-      elt.add(new Option(display, byDisplay[display]));
+      var $item = $('<div class="ruleItem noselect"/>');
+      $item.text(display);
+      $item.data('ruleName', byDisplay[display]);
+      self.$node.append($item);
     });
-  var header = elt.options[0];
-  elt.options[0].text = ((elt.options.length == 1)
-                         ? '-- Select an expression or step (click on it) --'
-                         : '-- Choose a rule to apply --');
-  elt.selectedIndex = 0;
   self.ruleName = '';
+  $header.text(displayTexts.length
+               ? 'Actions:'
+               : 'Select a step or expression with a click.');
+
 };
 
 /**
@@ -827,8 +791,8 @@ BasicRuleSelector.prototype.reset = function() {
  * This is a harmless no-op on known touchscreen devices.
  */
 BasicRuleSelector.prototype.focus = function() {
-  var $node = this.$node;
-  window.setTimeout(function() { $node.focus(); }, 0);
+  // var $node = this.$node;
+  // window.setTimeout(function() { $node.focus(); }, 0);
 };
 
 
