@@ -18,9 +18,6 @@ var assert = Toy.assertTrue;
 // sted-input: The main input field, has auto-completion.
 // sted-label: Text label of the main input field.
 // sted-paste: Button for pasting the selected part of a WFF.
-//
-// Behavior of the hint message:
-// Hint is initially on, but turned off by keyboard focus.
 
 //
 // Each rule has a descriptor of its arguments
@@ -685,17 +682,17 @@ function acceptsSelection(step, ruleName, acceptTerm) {
 
 
 /**
- * Used by the rule menu creator to convert one query result into a
- * fully-formatted menu entry.  Accepts a query and result object and
- * returns text.  (Ignores the query.)
+ * Produces a rule menu entry from a ruleName, with "axiom"
+ * potentially shortened to "xiom".  Result is currently text,
+ * but may become HTML in the future.
  */
-function ruleMenuFormatter(query, result) {
-  var ruleName = result.text.replace(/^xiom/, 'axiom');
+function ruleMenuFormatter(ruleName) {
+  ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (Toy.isEmpty(info.inputs)) {
     // It is an axiom or theorem with no inputs.
-    if (info.hint) {
-      return info.hint;
+    if (info.menu) {
+      return info.menu;
     }
     var thmText;
     if (info.formula) {
@@ -711,8 +708,8 @@ function ruleMenuFormatter(query, result) {
       return 'theorem ' + thmText;
     }
   } else {
-    // If there are inputs uses hint or other fallback.
-    return Toy.unicodify(info.hint || info.formula || info.comment || '');
+    // If there are inputs uses info.menu or other fallback.
+    return Toy.unicodify(info.menu || info.formula || info.comment || '');
   }
 }
 
@@ -755,7 +752,7 @@ BasicRuleSelector.prototype.update = function() {
   var displayTexts = [];
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var text = ruleMenuFormatter(null, {text: ruleName}, false);
+      var text = ruleMenuFormatter(ruleName);
       displayTexts.push(text);
       byDisplay[text] = ruleName;
     });

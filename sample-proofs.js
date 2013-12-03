@@ -108,7 +108,7 @@
         var sampleInfo = sampleProofs[name];
         var ruleName = sampleInfo.ruleName || name;
         var info = Toy.rules[ruleName].info;
-        var display = info.hint || info.comment || name;
+        var display = info.menu || info.comment || name;
         selectorHtml +=
           '<option value="' + name + '"' + selected + '>' + display + '\n';
       }
