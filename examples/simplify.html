@@ -91,7 +91,41 @@ $(function() {
       '4 * (3 * x - 2) - 3 * (x + 7)'
     ];
 
-    // Set up handlers for the problems.
+    Toy.proofToyState.init();
+
+    var proofVisible = !!Toy.proofToyState.data.proofVisible;
+
+    function swapAreas() {
+      editor.stepEditor.showRules = [];
+      editor.stepEditor.reset();
+      editor.proofControl.setSteps([]);
+      $problemList.toggle(300);
+      $('#workArea').toggle(300);
+      proofVisible = !proofVisible;
+      Toy.proofToyState.data.proofVisible = proofVisible;
+      Toy.proofToyState.store();
+    }
+
+    if (proofVisible) {
+      // Really the proof is not yet visible.
+      proofVisible = false;
+      // So make it visible now.
+      swapAreas();
+    }
+
+    function handleTryProblem(event) {
+      swapAreas();
+      var term = event.data.term;
+      editor.addStep(rules.consider(term));
+    };
+
+    function tryOwnProblem() {
+      swapAreas();
+      editor.stepEditor.showRules = ['consider'];
+      editor.stepEditor.reset();
+    }
+
+    // Insert the problems.
     for (var i = 0; i < problems.length; i++) {
       var problem = problems[i];
       var markup = $('<span class=mathColor>')
@@ -100,26 +134,6 @@ $(function() {
       $problemList.append($('<li>').append(markup, button));
 
       // Set up event handlers.
-
-      function swapAreas(event) {
-        editor.stepEditor.showRules = [];
-        editor.stepEditor.reset();
-        editor.proofControl.setSteps([]);
-        $problemList.toggle(300);
-        $('#workArea').toggle(300);
-      }
-
-      function handleTryProblem(event) {
-        swapAreas();
-        var term = event.data.term;
-        editor.addStep(rules.consider(term));
-      };
-
-      function tryOwnProblem() {
-        swapAreas();
-        editor.stepEditor.showRules = ['consider'];
-        editor.stepEditor.reset();
-      }
 
       button.on('click', {term: problem}, handleTryProblem);
     }

@@ -157,7 +157,7 @@ var proofToyState = {
       console.log('No #ToyStore element.');
     }
   }
-}
+};
 
 
 //// PROOF EDITOR

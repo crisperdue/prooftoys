@@ -126,7 +126,43 @@ $(function() {
       ['x + y = 7', 'x = y + 3']
     ];
 
-    // Set up handlers for the problems.
+    Toy.proofToyState.init();
+
+    var proofVisible = !!Toy.proofToyState.data.proofVisible;
+
+    function swapAreas() {
+      editor.stepEditor.showRules = [];
+      editor.stepEditor.reset();
+      editor.proofControl.setSteps([]);
+      $problemList.toggle(300);
+      $('#workArea').toggle(300);
+      proofVisible = !proofVisible;
+      Toy.proofToyState.data.proofVisible = proofVisible;
+      Toy.proofToyState.store();
+    }
+
+    if (proofVisible) {
+      // Really the proof is not yet visible.
+      proofVisible = false;
+      // So make it visible now.
+      swapAreas();
+    }
+
+    function handleTryProblem(event) {
+      swapAreas();
+      var assumptions = event.data.assumptions;
+      for (var j = 0; j < assumptions.length; j++) {
+        editor.addStep(rules.assume(assumptions[j]));
+      }
+    };
+
+    function tryOwnProblem() {
+      swapAreas();
+      editor.stepEditor.showRules = ['assume'];
+      editor.stepEditor.reset();
+    }
+
+    // Insert the problems.
     for (var i = 0; i < problems.length; i++) {
       var assumptions = problems[i];
       var markup = $('<span class=mathColor>');
@@ -139,29 +175,6 @@ $(function() {
       $problemList.append($('<li>').append(markup, button));
 
       // Set up event handlers.
-
-      function swapAreas(event) {
-        editor.stepEditor.showRules = [];
-        editor.stepEditor.reset();
-        editor.proofControl.setSteps([]);
-        $problemList.toggle(300);
-        $('#workArea').toggle(300);
-      }
-
-      function handleTryProblem(event) {
-        swapAreas();
-        var assumptions = event.data.assumptions;
-        for (var j = 0; j < assumptions.length; j++) {
-          editor.addStep(rules.assume(assumptions[j]));
-        }
-      };
-
-      function tryOwnProblem() {
-        swapAreas();
-        editor.stepEditor.showRules = ['assume'];
-        editor.stepEditor.reset();
-      }
-
       button.on('click', {assumptions: assumptions}, handleTryProblem);
     }
     $problemList.append('<li><button class=ownProblem>' +
