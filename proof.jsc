@@ -1478,7 +1478,7 @@ function formattedStepInfo(step) {
     useDefault = false;
     // Expand the description with the named function.
     var fn = stepFormatters[description.slice(1)];
-    assert(fn, @{. 'No step formatter "' + description.slice(1) + '"'});
+    assert(fn, @{'No step formatter "' + description.slice(1) + '"'});
     description = fn(step);
   }
   // Use default step refs only if there are no formatting directives;
