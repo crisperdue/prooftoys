@@ -686,7 +686,7 @@ function acceptsSelection(step, ruleName, acceptTerm) {
  * potentially shortened to "xiom".  Result is currently text,
  * but may become HTML in the future.
  */
-function ruleMenuFormatter(ruleName) {
+function ruleMenuText(ruleName) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (Toy.isEmpty(info.inputs)) {
@@ -752,7 +752,7 @@ BasicRuleSelector.prototype.update = function() {
   var displayTexts = [];
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var text = ruleMenuFormatter(ruleName);
+      var text = ruleMenuText(ruleName);
       displayTexts.push(text);
       byDisplay[text] = ruleName;
     });
