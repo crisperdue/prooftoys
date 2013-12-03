@@ -327,7 +327,7 @@ var ruleInfo = {
     // Currently not offered in forms; use "replace".
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
-    menu: 'replace term with equal term',
+    menu: 'replace {term} with something equal',
     description: 'replace {site};; {in step siteStep} {using step equation}'
   },
 
@@ -2191,7 +2191,8 @@ var ruleInfo = {
     },
     inputs: {equation: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=equation>'),
-    comment: 'replace term with equal term',
+    menu: 'replace {term} with something equal',
+    comment: 'replace term with something equal',
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'algebra basic'
   },
@@ -2209,7 +2210,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1, site: 2},
     form: ('Replace with left side of step <input name=equation>'),
-    menu: 'replace term with equal term like A = x',
+    menu: 'replace {term} with equal term like A = x',
     comment: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
     description: 'replace {site};; {in step siteStep} {using step equation}',
@@ -2421,7 +2422,7 @@ var ruleInfo = {
     form: ('Simplify step <input name=step>'),
     menu: 'algebra: simplify',
     description: 'simplify math;; {in step step}',
-    labels: 'algebra',
+    labels: 'algebra'
   },
 
   simplifySite: {
@@ -2430,10 +2431,10 @@ var ruleInfo = {
       return result.justify('simplifySite', arguments, [step]);
     },
     inputs: {site: 1},
-    form: ('Simplify step <input name=step>'),
-    menu: 'algebra: simplify selection',
+    form: '',
+    menu: 'algebra: simplify {term}',
     description: 'simplify {site};; in {step siteStep}',
-    labels: 'algebra',
+    labels: 'algebra'
   },
     
   // Inline version of simplifySite.
@@ -2672,7 +2673,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: (''),
-    menu: 'simplify the selected term'
+    menu: 'simplify {term}'
   },
 
   // NOTE: A chain of conjuncts (or other binary operator) is an
@@ -3722,7 +3723,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: add this to both sides',
+    menu: 'algebra: add {term} to both sides',
     description: 'add {site};; {in step siteStep}',
     labels: 'algebra'
   },    
@@ -3735,7 +3736,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: subtract this from both sides',
+    menu: 'algebra: subtract {term} from both sides',
     description: 'subtract {site};; {in step siteStep}',
     labels: 'algebra'
   },    
@@ -3748,7 +3749,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: multiply both sides by this',
+    menu: 'algebra: multiply both sides by {term}',
     description: 'multiply by {site};; {in step siteStep}',
     labels: 'algebra'
   },    
@@ -3761,7 +3762,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: divide both sides by this',
+    menu: 'algebra: divide both sides by {term}',
     description: 'divide by {site};; {in step siteStep}',
     labels: 'algebra'
   },    
