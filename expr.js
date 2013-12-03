@@ -98,10 +98,14 @@ function memo(fn) {
   return memoFn;
 }
 
-function format(fmt, args) {
-  var pattern = /\{.*?\}/g;
-  return fmt.replace(pattern, function(arg) {
-      return args[arg.slice(1, -1)];
+/**
+ * Returns a string derived from the format string and the map by
+ * replacing occurrences of {<string>} in the format string by the
+ * value of that string in the map.
+ */
+function format(fmt, map) {
+  return fmt.replace(/\{.*?\}/g, function(matched) {
+      return map[matched.slice(1, -1)];
     });
 }
 
