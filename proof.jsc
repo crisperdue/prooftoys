@@ -582,7 +582,7 @@ ProofControl.prototype.removeLastStep = function() {
   clearSubproof(step);
   // Remove highlighting by pretending the mouse moved out.
   // Deleting the node will not trigger the mouse out event.
-  hoverStep(step, 'out');
+  highlightStepInputs(step, 'out');
   $(step.stepNode).remove();
   delete step.original.rendering;
   step.ruleDeps.forEach(@{s. s.rendering.removeUser();});
@@ -836,18 +836,18 @@ ProofControl.prototype.renderStep = function(step) {
          // stopImmediatePropagation does not seem to be required here.
          event.stopPropagation();
        });
-  // Hovering the stepNumArea flags the step and number as "hover".
-  // TODO: Enclose these two parts in an element.
-  $step.on('mouseenter mouseleave', '.stepSelector',
-           @{void $(this).closest('.stepAndNum').toggleClass('hover'); });
+  $step.on('mouseenter mouseleave', '.stepSelector', function(event) {
+           $(this).closest('.stepAndNum').toggleClass('hover');
+           highlightStepInputs(step, event.type === 'mouseenter' ? 'in' : 'out');
+    });
   $step.on(TOUCHDOWN, '.stepSelector', function(event) {
     self.handleStepClick(step);
   });
 
   // Set up "hover" event handling on the stepNode.
   $step.hover(function(event) {
-    hoverStep(step, event.type === 'mouseenter' ? 'in' : 'out');
-  });
+      hoverStep(step, event.type === 'mouseenter' ? 'in' : 'out');
+    });
 
   // Deleter events
   // If there is no deleter, this sets nothing up.
@@ -2011,8 +2011,7 @@ function hoverShowPath(wff, path) {
 
 /**
  * Event handler for "hover" events on proof steps.
- * Shows decorations such as the deleter, and highlights
- * references to the step.
+ * Shows decorations such as the deleter.
  */
 function hoverStep(step, direction, event) {
   var action = direction == 'in' ? addClass : removeClass;
@@ -2021,6 +2020,13 @@ function hoverStep(step, direction, event) {
   // as the mouse goes in or out.
   var stepNode = getStepNode(step.node);
   action(stepNode, 'hover');
+}
+
+/**
+ * Highlights inputs to the step and references to it.
+ */
+function highlightStepInputs(step, direction, event) {
+  var action = direction == 'in' ? addClass : removeClass;
 
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
