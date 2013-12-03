@@ -685,14 +685,16 @@ function acceptsSelection(step, ruleName, acceptTerm) {
  * Produces a rule menu entry from a ruleName, with "axiom"
  * potentially shortened to "xiom".  Result is currently text,
  * but may become HTML in the future.
+ *
+ * The term argument
  */
-function ruleMenuText(ruleName) {
+function ruleMenuText(ruleName, term) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (Toy.isEmpty(info.inputs)) {
     // It is an axiom or theorem with no inputs.
     if (info.menu) {
-      return info.menu;
+      return info.menu
     }
     var thmText;
     if (info.formula) {
@@ -708,8 +710,9 @@ function ruleMenuText(ruleName) {
       return 'theorem ' + thmText;
     }
   } else {
-    // If there are inputs uses info.menu or other fallback.
-    return Toy.unicodify(info.menu || info.formula || info.comment || '');
+    // If there are inputs uses info.menu or some fallback.
+    return Toy.unicodify((info.menu && Toy.format(info.menu, {term: term})) ||
+                         info.formula || info.comment || '');
   }
 }
 
@@ -747,12 +750,14 @@ BasicRuleSelector.prototype.update = function() {
   self.$node.empty();
   $header = $('<div class=rules-header/>');
   self.$node.append($header);
+  var step = this.stepEditor.proofControl.selection;
+  var term = step && step.selection;
   // Map from rule display text to rule name.
   var byDisplay = {};
   var displayTexts = [];
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var text = ruleMenuText(ruleName);
+      var text = ruleMenuText(ruleName, term);
       displayTexts.push(text);
       byDisplay[text] = ruleName;
     });
