@@ -147,18 +147,18 @@ StepEditor.prototype.error = function(message) {
  * has a "step" property.
  */
 StepEditor.prototype.report = function(error) {
-  var proofJQ = this.controller.$proofErrors;
-  assert(proofJQ.length, 'proofJQ?');
+  var $proofErrors = this.controller.$proofErrors;
+  assert($proofErrors.length, 'proofJQ?');
   // Clicking _anywhere_ will actually clear the message.
-  proofJQ.html('<button>X</button>');
+  $proofErrors.html('<button>X</button>');
   if (error instanceof Error) {
-    proofJQ.append('<b>Error: ' + error.message + '</b>');
+    $proofErrors.append('<b>Error: ' + error.message + '</b>');
     if (error.step) {
-      Toy.renderProof(error.step, proofJQ);
+      Toy.renderProof(error.step, $proofErrors);
     }
   } else {
     // It should be a string.
-    proofJQ.append('<b>' + error + '</b>');
+    $proofErrors.append('<b>' + error + '</b>');
   }
 };
 
