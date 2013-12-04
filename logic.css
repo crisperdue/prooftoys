@@ -518,7 +518,7 @@ span.stepRef {
 /* Proof step editor */
 
 .proofErrors {
-  margin-top: 1em;
+  margin: 1em 0em;
 }
 
 /* Overrides styles for .proofDisplay. */

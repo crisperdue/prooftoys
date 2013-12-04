@@ -249,8 +249,8 @@ function ProofEditor() {
     .append(ruleStats)
     .append(this._stateDisplay)
     .append(@mainControl.node)
-    .append(this.stepEditor.$node)
-    .append('<div class=proofErrors></div>');
+    .append('<div class=proofErrors></div>')
+    .append(this.stepEditor.$node);
   this.$proofErrors = $(this.containerNode).find('.proofErrors');
   this.setEditable(true);
 
@@ -322,6 +322,10 @@ function ProofEditor() {
       self.$proofErrors.html('');
     }
   });
+  // Always clear the errors when clicked.
+  this.$proofErrors.on('click', function() {
+      self.$proofErrors.html('');
+    });
 }
 
 /**
