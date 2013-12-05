@@ -249,7 +249,7 @@ function ProofEditor() {
     .append(ruleStats)
     .append(this._stateDisplay)
     .append(@mainControl.node)
-    .append('<div class=proofErrors></div>')
+    .append('<div class="proofErrors hidden"></div>')
     .append(this.stepEditor.$node);
   this.$proofErrors = $(this.containerNode).find('.proofErrors');
   this.setEditable(true);
@@ -319,12 +319,12 @@ function ProofEditor() {
     if ($(event.target).closest('.proofContainer').length == 0) {
       // Not in a ProofControl's area.
       @mainControl.deselectStep();
-      self.$proofErrors.html('');
+      self.$proofErrors.hide();
     }
   });
   // Always clear the errors when clicked.
   this.$proofErrors.on('click', function() {
-      self.$proofErrors.html('');
+      self.$proofErrors.hide();
     });
 }
 

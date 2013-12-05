@@ -150,6 +150,7 @@ StepEditor.prototype.report = function(error) {
   var $proofErrors = this.controller.$proofErrors;
   assert($proofErrors.length, 'proofJQ?');
   // Clicking _anywhere_ will actually clear the message.
+  $proofErrors.show();
   $proofErrors.html('<button>X</button>');
   if (error instanceof Error) {
     $proofErrors.append('<b>Error: ' + error.message + '</b>');
@@ -389,7 +390,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.proofControl.addStep(result);
     this.proofControl.deselectStep();
     // Clear the proof errors field.
-    this.controller.$proofErrors.html('');
+    this.controller.$proofErrors.hide();
     // After the browser repaints, try simplifying the step
     // and adding the result to the proof if simplification
     // has any effect.
