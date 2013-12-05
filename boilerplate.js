@@ -1,4 +1,4 @@
-// Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
+// Copyright 2011, 2012, 2013 Crispin Perdue.  All rights reserved.
 
 // TODO: Deploy the app in a single file under flag control.
 // Normally initialize the flag from the page URL, so references
@@ -56,7 +56,7 @@ Toy.insertNav = function() {
 };
 
 Toy.insertSlogans = function() {
-  var slogans = ['"math tools for simple minds"'].join('\n');
+  var slogans = ['"Power tools for your math mind"'].join('\n');
   var elt = document.getElementById('slogans');
   if (elt) {
     elt.innerHTML = slogans;
