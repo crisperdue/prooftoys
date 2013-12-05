@@ -749,6 +749,8 @@ BasicRuleSelector.prototype.refresh = function() {
 BasicRuleSelector.prototype.update = function() {
   var self = this;
   self.$node.empty();
+  self.$node.fadeOut(0);
+  self.$node.fadeIn();
   $header = $('<div class=rules-header/>');
   self.$node.append($header);
   var step = this.stepEditor.proofControl.selection;
