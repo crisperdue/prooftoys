@@ -518,6 +518,9 @@ span.stepRef {
 /* Proof step editor */
 
 .proofErrors {
+  padding: 4px;
+  border: 2px solid DarkSeaGreen;
+  border-radius: 5px;
   margin: 1em 0em;
 }
 
@@ -596,6 +599,7 @@ input.varName, input.step, input.equation, input.implication {
   margin: 2px 1px;
   padding: 2px 4px;
   border: 1px solid #eee;
+  border-radius: 4px;
   cursor: pointer;
   box-shadow: none;
 }
