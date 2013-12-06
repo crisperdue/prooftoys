@@ -990,9 +990,8 @@ function wantLeftElision(step, controller) {
   var index = controller.steps.indexOf(step);
   var prev = index > 0 ? controller.steps[index - 1] : null;
   return (prev &&
-          (prev.hasLeftElision ||
-           prev.ruleName == 'consider' ||
-           prev.ruleName == 'considerPart') &&
+          prev.isEquation() &&
+          step.isEquation() &&
           // "Matches" is OK, maybe better to define and use "identical".
           // They are copies so not ==.
           step.unHyp().getLeft().matches(prev.unHyp().getLeft()));
