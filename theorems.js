@@ -2187,6 +2187,11 @@ var ruleInfo = {
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
         result = rules.asHypotheses(result);
       }
+      if (result.matches(h_c_arg)) {
+        // Help the UI eliminate steps that re no-ops.
+        // TODO: Consider if this can be better optimized.
+        result = h_c_arg;
+      }
       return result.justify('replace', args, [h_equation_arg, h_c_arg]);
     },
     inputs: {equation: 1, site: 2}, // plus constraints.
@@ -2413,9 +2418,18 @@ var ruleInfo = {
   },
 
   // Repeatedly applies simplifyMath1 to do trivial simplifications.
+  //
+  // TODO: Refactor this so the rule itself is not dependent on
+  //   different possible renderings.
   simplifyStep: {
     action: function(step) {
-      var result = rules._simplifySite(step, step.pathToVisiblePart());
+      var visPath = step.pathToVisiblePart();
+      if (step.locate(visPath).isCall2('=')) {
+        var step1 = rules.simplifySite(step, visPath.concat('/right'))
+        var result = rules.simplifySite(step1, visPath.concat('/left'))
+      } else {
+        var result = rules._simplifySite(step, visPath);
+      }
       return result.justify('simplifyStep', arguments, [step]);
     },
     inputs: {step: 1},
@@ -2433,7 +2447,7 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     menu: 'algebra: simplify {term}',
-    description: 'simplify {site};; in {step siteStep}',
+    description: 'simplify {site};; {in step siteStep}',
     labels: 'algebra'
   },
     
@@ -2441,7 +2455,7 @@ var ruleInfo = {
   _simplifySite: {
     action: function(step, path) {
       var _path = Toy.path;
-      var eqn = rules.eqSelf(step.locate(path));
+      var eqn = rules.consider(step.locate(path));
       var simpler = whileSimpler(eqn, function(eqn) {
           return rules._simplifyMath1(eqn, _path('/main/right', eqn));
         });
@@ -3611,7 +3625,7 @@ var ruleInfo = {
   // automatically assumes variables input to math operators are of
   // type R (real).
   consider: {
-    description: 'expression to consider',
+    description: 'expression equal to itself',
     action: function(term) {
       term = Toy.termify(term);
       var step = rules.eqSelf(term);
