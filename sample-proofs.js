@@ -1,4 +1,4 @@
-// Copyright 2011, 2012 Crispin Perdue.  All rights reserved.
+// Copyright 2011, 2012, 2013 Crispin Perdue.  All rights reserved.
 
 (function() {
   // Set up some useful constants and functions.
