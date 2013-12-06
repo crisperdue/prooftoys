@@ -139,6 +139,7 @@ table.binaryTruthTable td.falsy:after {
 
 /* Just below the main heading */
 div#slogans {
+  color: ForestGreen;
   margin-bottom: 1em;
   text-align: center;
   font-style: italic;
@@ -165,14 +166,16 @@ span#leftNav {
   padding-top: 7em;
   display: inline-block;
   width: 20%;
+  text-indent: -1em;
 }
 
 #leftNav a {
   display: block;
   font-style: italic;
-  margin: .3em 1em .3em 1em;
+  font-weight: bold;
+  color: Indigo;
   text-decoration: none;
-  text-indent: -1em;
+  margin: .3em 1em .3em 1em;
 }
 
 /* Left nav items */
@@ -387,14 +390,14 @@ span#leftNav {
 /* Highlighting of parts of proof steps */
 
 .proofStep.dep .stepNumArea {
-  background-color: aqua;
+  background-color: #af6;
  }
 
 /* The "site" class requests display of the expr as a
    "site" input of a proof step.
  */
 .proofStep .expr.site {
-  background-color: aqua;
+  background-color: #af6;
 }
 
 /* Must be specific enough to override the silver/gray border. */
@@ -417,7 +420,7 @@ span#leftNav {
 
 /* New value ("replacement") -- green */
 .proofStep .new {
-  background-color: aqua;
+  background-color: #af6;
 }
 
 /* References to a step number, where it is used as an input */
@@ -478,7 +481,7 @@ span.stepRef {
   padding: 2px 2px;
   border: 1px solid gray;
   white-space: nowrap;
-  background-color: #afa;
+  background-color: Cyan;
   opacity: .8;
   /* Overrides .proofStep: */
   text-indent: 0em;
@@ -589,7 +592,7 @@ input.varName, input.step, input.equation, input.implication {
   top: -1px;
   border: 1px solid #aaa;
   box-shadow: 1px 1px 1px #aaa;
-  background-color: WhiteSmoke;
+  background-color: #fbfbf9;
 }
 
 .ruleItem, .ruleItem:active {
