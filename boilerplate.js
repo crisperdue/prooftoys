@@ -42,9 +42,7 @@ Toy.navText = [
   'href="http://code.google.com/p/prooftoys/issues/entry?template=Comment/suggestion">',
   'Feedback</a>',
   '<br>',
-  'Algebra problems<br>',
-  '<a href="examples/simplify.html">Simplification</a>',
-  '<a href="examples/equations.html">Solving equations</a>',
+  '<a href="http://mathtoys.org/">Mathtoys website<br>(algebra problems)</a>',
   '</ul>'
 ].join('\n');
 
