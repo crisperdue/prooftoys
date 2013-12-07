@@ -955,7 +955,7 @@ ProofControl.prototype.renderPopups = function(step) {
 
   // Notice hovering in events with class "above".
   $(step.stepNode).on('mouseenter mouseleave', '.above',
-                      @{. void $(this).toggleClass('hover'); });
+                      @{void $(this).toggleClass('hover')});
   // Handle click events on "above" nodes.  Note that the control
   // must be editable.
   $(step.stepNode).on('click', '.above', function(event) {
