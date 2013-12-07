@@ -115,9 +115,10 @@ function StepEditor(controller) {
   self.showRuleType = 'algebra';
   self.showRules = [];
 
-  // TODO: Position this relative to the ProofEditor so it doesn't
-  //   move as steps are added.
-  div.append($('<div class=ruleWorking/>').text('Working . . . '));
+  // Attach the "ruleWorking" to the ProofControl node so
+  // it doesn't move when steps are inserted.
+  $(self.proofControl.node)
+    .append($('<div class=ruleWorking/>').text('Working . . . '));
   var widget = new BasicRuleSelector(self);
   self.ruleSelector = widget;
   div.append(widget.$node);
@@ -139,10 +140,16 @@ function StepEditor(controller) {
  */
 StepEditor.prototype._setBusy = function(busy, complete) {
   this.$node.toggleClass('busy', busy);
+  var $working = $(this.proofControl.node).find('.ruleWorking');
   if (busy) {
-    this.$node.find('.ruleWorking').fadeOut(0).fadeIn(200, complete);
+    var offset = this.ruleSelector.$node.offset();
+    // The node needs to be shown to set its offset.
+    $working.toggle(true);
+    $working.offset({left: offset.left + 40, top: offset.top + 25});
+    // Then  turn it off and fade it back in.
+    $working.toggle(false).fadeIn(200, complete);
   } else {
-    this.$node.find('.ruleWorking').fadeIn(0).fadeOut(1000, complete);
+    $working.fadeIn(0).fadeOut(1000, complete);
   }
 };
 

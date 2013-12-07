@@ -302,11 +302,9 @@ span#leftNav {
 /* Pop-up DIV that says Prooftoys is busy working. */
 .ruleWorking {
   position: absolute;
-  /* Initially hidden, will change over time */
+  /* Initially hidden, will change over time and be given position. */
   display: none;
   z-index: 1;
-  left: 5em;
-  top: 2em;
   font-size: large;
   font-style: italic;
   color: red;
