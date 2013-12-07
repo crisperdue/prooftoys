@@ -302,7 +302,8 @@ span#leftNav {
 /* Pop-up DIV that says Prooftoys is busy working. */
 .ruleWorking {
   position: absolute;
-  visibility: hidden;
+  /* Initially hidden, will change over time */
+  display: none;
   z-index: 1;
   left: 5em;
   top: 2em;
@@ -313,10 +314,6 @@ span#leftNav {
   padding: .15em 2em;
   border: .2em solid #d00;
   box-shadow: 4px 4px 4px #888;
-}
-
-.busy .ruleWorking {
-  visibility: visible;
 }
 
 /* Hovering or selecting this will override the border color. */

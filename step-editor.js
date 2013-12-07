@@ -115,6 +115,8 @@ function StepEditor(controller) {
   self.showRuleType = 'algebra';
   self.showRules = [];
 
+  // TODO: Position this relative to the ProofEditor so it doesn't
+  //   move as steps are added.
   div.append($('<div class=ruleWorking/>').text('Working . . . '));
   var widget = new BasicRuleSelector(self);
   self.ruleSelector = widget;
@@ -132,6 +134,17 @@ function StepEditor(controller) {
   });
 }
 
+/**
+ * Marks this StepEditor as busy in the UI.
+ */
+StepEditor.prototype._setBusy = function(busy, complete) {
+  this.$node.toggleClass('busy', busy);
+  if (busy) {
+    this.$node.find('.ruleWorking').fadeOut(0).fadeIn(200, complete);
+  } else {
+    this.$node.find('.ruleWorking').fadeIn(0).fadeOut(1000, complete);
+  }
+};
 
 /**
  * Handle errors in the step editor.  Displays step information in an
@@ -336,9 +349,10 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
  */
 function tryRuleAsync(stepEditor, rule, args) {
   // Flag the step editor as busy via its DOM node.
-  stepEditor.$node.toggleClass('busy', true);
-  stepEditor.reset();
-  Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
+  stepEditor._setBusy(true, function() {
+      stepEditor.reset();
+      Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
+    });
 }
 
 /**
@@ -380,7 +394,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
   }
   if (!result || result.rendering) {
     // The work is done, show that the prover is not busy.
-    this.$node.toggleClass('busy', false);
+    this._setBusy(false);
     // If there is already a rendering, Expr.justify must have found
     // that the "new" step was identical to one of its dependencies,
     // so don't try to add it.  The implementation only currently
@@ -397,7 +411,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     var self = this;
     Toy.afterRepaint(function() {
         var simplified = Toy.rules.simplifyStep(result);
-        self.$node.toggleClass('busy', false);
+        self._setBusy(false);
         if (simplified && !simplified.rendering) {
           self.proofControl.addStep(simplified);
         }
