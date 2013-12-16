@@ -57,6 +57,7 @@ Toy.insertNav = function() {
     nav.innerHTML = Toy.navText;
   }
   Toy.insertGooglePlus();
+  gapi.community.go();
 };
 
 Toy.insertSlogans = function() {
@@ -269,4 +270,3 @@ Toy.extends = function(constructor, parent) {
 Object.defineProperty(Object.prototype,
                       'str',
                       {get: function() { return this.toString(); }});
-
