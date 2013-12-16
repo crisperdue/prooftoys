@@ -14,6 +14,10 @@ if (!window.noProofScripts) {
   document.write('<script src="step-editor.js"></script>\n');
   document.write('<script src="jsc/proof.js"></script>\n');
   document.write('<script src="theorems.js"></script>\n');
+  // Support Google Plus stuff in particular.
+  document.write('<script src="https://apis.google.com/js/platform.js">\n' +
+                 '{parsetags: "explicit"}\n' +
+                 '</script>\n');
 }
 
 var Toy = Toy || {};
@@ -46,11 +50,13 @@ Toy.navText = [
   '</ul>'
 ].join('\n');
 
+// Also inserts Google Plus content if any.
 Toy.insertNav = function() {
   var nav = document.getElementById('leftNav');
   if (nav) {
     nav.innerHTML = Toy.navText;
   }
+  Toy.insertGooglePlus();
 };
 
 Toy.insertSlogans = function() {
@@ -61,6 +67,8 @@ Toy.insertSlogans = function() {
   }
 };
 
+// Do nothing on Prooftoys web sites.
+Toy.insertGooglePlus = function() {}
 
 // Google analytics; the account is specific to Prooftoys.org.
 // TODO: Consider running this code only when the site is prooftoys.org.
@@ -261,3 +269,4 @@ Toy.extends = function(constructor, parent) {
 Object.defineProperty(Object.prototype,
                       'str',
                       {get: function() { return this.toString(); }});
+
