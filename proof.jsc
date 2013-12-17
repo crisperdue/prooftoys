@@ -234,6 +234,7 @@ function ProofEditor() {
   // Step editor has state controlling whether to show all rules.
   @proofButtons.find('.rulesToShow').on('change', function(event) {
       self.stepEditor.showRuleType = this.value;
+      self.stepEditor.ruleSelector.refresh();
       self.stepEditor.reset();
     });
 
