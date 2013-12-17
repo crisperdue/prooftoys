@@ -56,8 +56,6 @@ Toy.insertNav = function() {
   if (nav) {
     nav.innerHTML = Toy.navText;
   }
-  Toy.insertGooglePlus();
-  gapi.community.go();
 };
 
 Toy.insertSlogans = function() {
@@ -67,9 +65,6 @@ Toy.insertSlogans = function() {
     elt.innerHTML = slogans;
   }
 };
-
-// Do nothing on Prooftoys web sites.
-Toy.insertGooglePlus = function() {}
 
 // Google analytics; the account is specific to Prooftoys.org.
 // TODO: Consider running this code only when the site is prooftoys.org.

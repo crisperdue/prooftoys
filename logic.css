@@ -7,11 +7,6 @@ h1 {
   text-align: center;
 }
 
-/* Negative margin to compensate for the preceding Google+ badge */
-h1.mathtoys {
-  margin-top: -50px;
-}
-
 h2 {
   font-size: 1.5em;
   font-weight: bold;
