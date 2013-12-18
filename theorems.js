@@ -3657,7 +3657,7 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     comment: ('consider the selected term'),
-    description: 'consider term for transformation',
+    description: 'expression equal to itself',
     labels: 'display'
   },
 
