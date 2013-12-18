@@ -406,10 +406,14 @@ ProofEditor.prototype.showProofButtons = @(value) {
 /**
  * Construct a ProofControl.
  *
- * Optional single argument, a map, currently only interprets
- * 'stepPrefix' to initialize the stepPrefix property.
+ * Optional single properties argumenent, recognizing:
+ * 
+ * stepPrefix: to initialize the stepPrefix property.
+ * parentStep: parent step, rendered or not.  If given,
+ *   this ProofControl's steps will be assumed to be the
+ *   details for this step.
  *
- * Properties:
+ * ProofControl object properties:
  *
  * steps: an array of the _rendered_ steps displayed.
  *
@@ -445,6 +449,7 @@ function ProofControl(properties) {
   this.selection = null;
   // Prefix string for each step.
   this.stepPrefix = properties.stepPrefix || '';
+  this.parentStep = properties.parentStep || null;
 
   // ID of element to use for saving/restoring proof state.
   // TODO: Make the textarea part of the ProofControl.
@@ -973,28 +978,46 @@ ProofControl.prototype.renderPopups = function(step) {
   }
 };
 
-
+/**
+ * Returns the previous rendered step, if any, which is the previous
+ * step in the same ProofControl, otherwise the previous rendered step
+ * of the controller's parent step (recursively if needed), otherwise
+ * null.
+ */
+function prevRenderedStep(step) {
+  var controller = getProofControl(step);
+  var index = controller.steps.indexOf(step);
+  if (index > 0) {
+    return controller.steps[index - 1];
+  } else {
+    var parent = controller.parentStep;
+    if (parent) {
+      return prevRenderedStep(parent);
+    }
+  }
+  return null;
+}
 
 /**
- * Returns true iff policy is to elide the LHS of the given step
- * within the given ProofControl, assumed to contain it.
+ * Returns true iff policy is to elide the LHS of the given rendered
+ * step.
  *
- * TODO: Consider marking the actual proof steps with an elision flag
- *   much as they are marked with hasHyps.  Some rules may become
- *   sensitive to this flag, and it would provide one way for steps
- *   in subproofs to inherit the property.
+ * TODO: Consider how to show the whole step in case the _next_ step
+ * modifies the LHS of this one, e.g. a rewrite using the LHS.  That
+ * would allow the target site to be highlighted.
  */
-function wantLeftElision(step, controller) {
+function wantLeftElision(step) {
   if (step.ruleName == 'display' || step.ruleName == 'asImplication') {
     return false;
   }
-  var index = controller.steps.indexOf(step);
-  var prev = index > 0 ? controller.steps[index - 1] : null;
+  var prev = prevRenderedStep(step);
   return (prev &&
-          prev.isEquation() &&
-          step.isEquation() &&
+          (prev.hasLeftElision ||
+           prev.ruleName == 'consider' ||
+           prev.ruleName == 'considerPart') &&
           // "Matches" is OK, maybe better to define and use "identical".
-          // They are copies so not ==.
+          // They are copies so not ==, though maybe == with
+          // prev.original?
           step.unHyp().getLeft().matches(prev.unHyp().getLeft()));
 }
 
@@ -1741,7 +1764,8 @@ function renderInference(step) {
       prefix = match[1] + (match[2] - 1) + '.';
     }
   }
-  var controller = new ProofControl({stepPrefix: prefix});
+  var controller =
+    new ProofControl({stepPrefix: prefix, parentStep: step});
   controller.setSteps(steps);
   var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
   var subproofQ = $('<div class=inferenceDisplay></div>');
@@ -1910,10 +1934,14 @@ function getTopProofContainer(expr) {
 
 /**
  * Gets the ProofControl of a rendered term or step, or the node of
- * one.
+ * one.  Returns null if the term or step is not rendered.
  */
 function getProofControl(expr) {
-  var node = expr instanceof Toy.Expr ? expr.node : expr;
+  var node =
+    expr instanceof Toy.Expr ? (expr.node || expr.stepNode) : expr;
+  if (!node) {
+    return null;
+  }
   var ancestor = $(node).closest('.proofDisplay');
   return ancestor.data('proofControl');
 }
