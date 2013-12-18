@@ -696,9 +696,11 @@ function acceptsSelection(step, ruleName, acceptTerm) {
                   && expr.fn instanceof Toy.Lambda));
     }
   } else {
-    return (accept.step
-	    || (accept.equation && step.unHyp().isCall2('='))
-	    || (accept.implication && step.unHyp().isCall2('==>')));
+    // If the rule needs a site, accept only a site, not a step.
+    return (!accept.site &&
+            (accept.step
+             || (accept.equation && step.unHyp().isCall2('='))
+             || (accept.implication && step.unHyp().isCall2('==>'))));
   }
 }
 
