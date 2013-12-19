@@ -2533,9 +2533,9 @@ var ruleInfo = {
         return applyFactsWithinRhs(eqn, {facts: facts,
                                      searchMethod: 'searchTerms'});
       }
-      function convert(eqn) {
+      function convert(term) {
         // Linearize terms.
-        var eqn0 = applyTo(eqn, [{stmt: 'a + (b + c) = a + b + c'}]);
+        var term0 = applyTo(term, [{stmt: 'a + (b + c) = a + b + c'}]);
 
         // Move terms that are numerals to the back of the bus.
         var facts1 = [{stmt: 'a + b = b + a',
@@ -2543,13 +2543,13 @@ var ruleInfo = {
                       {stmt: 'a + b + c = a + c + b',
                        where: '!subst.b.hasVars() && subst.c.hasVars()'}
                      ];
-        var eqn1 = applyTo(eqn0, facts1);
+        var term1 = applyTo(term0, facts1);
 
         // Group numerals together.
         var facts2 = [{stmt: 'a + b + c = a + (b + c)',
                        where: '!subst.b.hasVars()'}
                      ];
-        var eqn2 = applyTo(eqn1, facts2);
+        var term2 = applyTo(term1, facts2);
 
         // These come from rules.cleanupTerms.
         var cleanFacts = ['a * (b * c) = a * b * c',
@@ -2560,7 +2560,7 @@ var ruleInfo = {
                           {stmt: 'a * b / c = a / c * b',
                            where: '!subst.a.hasVars() && !subst.c.hasVars()'}
                          ];
-        var eqn2a = applyTo(eqn2, cleanFacts);
+        var term2a = applyTo(term2, cleanFacts);
 
         // Group terms with common right factor together.
         var facts3 = [{stmt: 'a * c + b * c = (a + b) * c'},
@@ -2568,9 +2568,17 @@ var ruleInfo = {
                       {stmt: 'a * b + b = (a + 1) * b'},
                       {stmt: 'a + a = 2 * a'}
                      ];
-        return applyTo(eqn2a, facts3);
+        return applyTo(term2a, facts3);
       }
-      var result = convertAndReplace(step, step.pathToVisiblePart(), convert);
+      var visPath = step.pathToVisiblePart();
+      if (step.locate(visPath).isCall2('=')) {
+        var step1 =
+          convertAndReplace(step, visPath.concat('/right'), convert);
+        var result =
+          convertAndReplace(step1, visPath.concat('/left'), convert);
+      } else {        
+        var result = convertAndReplace(step, visPath, convert);
+      }
       return result.justify('regroupAdditions', arguments, [step]);
     },
     inputs: {step: 1},
