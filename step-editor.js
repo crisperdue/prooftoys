@@ -136,7 +136,7 @@ function StepEditor(controller) {
 }
 
 /**
- * Marks this StepEditor as busy in the UI.
+ * Marks this StepEditor as busy or not in the UI.
  */
 StepEditor.prototype._setBusy = function(busy, complete) {
   this.$node.toggleClass('busy', busy);
@@ -151,6 +151,7 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   } else {
     $working.fadeIn(0).fadeOut(1000, complete);
   }
+  this.ruleSelector.fadeToggle(!busy);
 };
 
 /**
@@ -766,13 +767,33 @@ BasicRuleSelector.prototype.refresh = function() {
 }
 
 /**
+ * Fades the rule selector in (true) or out (false) based on the
+ * argument.  In all cases the selector continues to occupy space in
+ * the document.  (This avoids jumping scrollbars or possibly even the
+ * document itself jumping around.)
+ */
+BasicRuleSelector.prototype.fadeToggle = function(visible) {
+  var $node = this.$node;
+  if (visible) {
+    $node.toggleClass('hidden', false);
+    $node.fadeTo(100, 1);
+  } else {
+    // This fades out as the busy indicator fades in, so the duration
+    // must be less than the fadeIn duration of the busy indicator;
+    // otherwise completion of this will be delayed by running of the
+    // actual rule.
+    $node.fadeTo(0, 0, function() { $node.toggleClass('hidden', true); });
+  }
+};
+
+/**
  * Return the RuleSelector to a "fresh" state, with no rule selected,
  * offered items compatible the currently-selected step or term.
  */
 BasicRuleSelector.prototype.update = function() {
   var self = this;
-  self.$node.empty();
   self.$node.fadeOut(0);
+  self.$node.empty();
   self.$node.fadeIn();
   $header = $('<div class=rules-header/>');
   self.$node.append($header);
