@@ -218,13 +218,16 @@ span#leftNav {
 
 /* Header line and comments for display. */
 .proofHeader {
-    margin: 0em 0em 1em .5em;
-    line-height: 120%;
+  margin: 0em 0em .4em .5em;
+  padding-top: .2em;
+  line-height: 120%;
 }
 
 /* Indent most subproofs. */
 .proofDisplay .inferenceDisplay {
-  margin-left: 1em;
+  margin: .5em 5px 5px 1em;
+  border: 1px solid silver;
+  box-shadow: 2px 2px 2px #ddd;
 }
 
 /* The first level of subproof needs extra indent in the case
@@ -277,19 +280,57 @@ span#leftNav {
   text-indent: 0em;
 }
 
+/* Subproof controls */
+
+/*
+ * Upward-pointing triangles that indicate a subproof is available.
+ * Visible when step is hovered.
+ */
+.subproofIndicator {
+  visibility: hidden;
+}
+
+.proofStep.hover .subproofIndicator {
+  visibility: visible;
+}
+
 /* Display of element that can hide a subproof */
 .subproofHider {
+  visibility: hidden;
   font-family: sans-serif;
   font-style: italic;
   color: blue;
   cursor: pointer;
-  visibility: hidden;
+  background-color: #ddf;
+  padding: 0px 6px;
+  border: 1px solid #aaf;
 }
 
 /* If in a step with open subproof display or in a subproof, show it. */
 .proofStep.hasSubproof .subproofHider, .proofHeader .subproofHider {
   visibility: visible;
 }
+
+/* Adjacent and similar to subproofHider */
+.techDetailsButton {
+  position: relative;
+  font-family: sans-serif;
+  font-style: italic;
+  color: blue;
+  cursor: pointer;
+  background-color: #ddf;
+  padding: 0px 6px;
+  border: 1px solid #aaf;
+}
+
+.techDetails {
+  margin: 0em .5em;
+  padding: 2px 5px;
+  border: 1px solid #bbb;
+  background-color: aliceblue;
+}
+
+/* Statistics displays */
 
 /* Time and step count statistics for proof or step. */
 .ruleStats {

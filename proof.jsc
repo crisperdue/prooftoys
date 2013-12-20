@@ -1536,7 +1536,7 @@ function formattedStepInfo(step) {
                  ? 'ruleName link'
                  : 'ruleName');
   // black up-pointing small triangle
-  var hider = '<span class="subproofHider">\u25b4</span>';
+  var hider = '<span class=subproofIndicator>\u25b4</span>';
   var result =
     ('<span class="' + classes + '" title="' + comment + '">'
      + hider + ' ' + d1 + ' ' + hider + '</span>' + d2);
@@ -1768,27 +1768,43 @@ function renderInference(step) {
     new ProofControl({stepPrefix: prefix, parentStep: step});
   controller.setSteps(steps);
   var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
-  var subproofQ = $('<div class=inferenceDisplay></div>');
+  var $subproof = $('<div class=inferenceDisplay></div>');
   if (step.ruleName === 'fact') {
-    var header = $('<div class=proofHeader><b>Proof of <span class=math>'
-                   + Toy.mathMarkup(step.toUnicode())
-                   + '</span></b><br>'
-                   + '<i>' + comment + '</i>'
-                   + ' <span class=subproofHider>hide &#x25be;</span></div>');
-  } else {
-    var pruf = step.ruleArgs.length ? 'Rule ' : 'Proof of ';
-     var header = $('<div class=proofHeader><b>' + pruf
-                    + step.ruleName + '</b> '
-                    + computeHeaderArgInfo(step) + '<br>'
+    var $header = $('<div class=proofHeader><b>Proof of <span class=math>'
+                    + Toy.mathMarkup(step.toUnicode())
+                    + '</span></b><br>'
                     + '<i>' + comment + '</i>'
-                   + ' <span class=subproofHider>hide &#x25be;</span></div>');
+                    + ' <span class=subproofHider>hide &#x25be;</span></div>');
+    var $details = null;
+  } else {
+    var $header = $('<div class=proofHeader>' +
+                    '<span class=subproofHider>hide &#x25be;</span>' +
+                    ' <span class="techDetailsButton noselect">' +
+                    '  details +</span>' +
+                    '</div>');
+    var $details = $('<div class="techDetails hidden">' +
+                     '<b>' + (step.ruleArgs.length ? 'Rule ' : 'Proof of ') +
+                     step.ruleName + '</b> ' +
+                     computeHeaderArgInfo(step) + '<br>' +
+                     '<i>' + comment + '</i>' +
+                     '</div>');
   }
-  header.find('.subproofHider')
+  $header.find('.subproofHider')
     .on('click', function() { clearSubproof(step); });
-  subproofQ.append(header);
-  subproofQ.append(controller.node);
-  subproofQ.data('proofControl', controller);
-  return subproofQ;
+  $subproof.append($header);
+  if ($details) {
+    $subproof.append($details);
+    var $button = $header.find('.techDetailsButton');
+    $button.on('click', function() {
+        $button.text($button.text().trim() == 'details +'
+                     ? 'details -'
+                     : 'details +');
+        $details.toggle(100);
+      });
+  }
+  $subproof.append(controller.node);
+  $subproof.data('proofControl', controller);
+  return $subproof;
 }
 
 /**
