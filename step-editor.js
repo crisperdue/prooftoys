@@ -191,6 +191,7 @@ StepEditor.prototype.report = function(error) {
 StepEditor.prototype.reset = function() {
   this.clearer.addClass('hidden');
   this.form.html('');
+  this._setBusy(false);
 };
 
 /**
@@ -381,6 +382,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
       // Collect CPU profiling information.
       console.profile(Toy.profileName);
     }
+
+    // Applies the rule here.
     result = rule.apply(null, args);
   } catch(error) {
     this.report(error);
