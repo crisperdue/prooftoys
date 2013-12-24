@@ -511,6 +511,10 @@ StepEditor.prototype.fillFromForm = function(args) {
  * Parses the string value according to its type, which can
  * be any of the formTypes.  Returns an Expr for step or term
  * types.  Throws an Error if it detects the input is not valid.
+ *
+ * When parsing a term, simplifies the error message, but keeps
+ * the original parsing error as the "cause" property of the
+ * thrown error.
  */
 StepEditor.prototype.parseValue = function(value, type) {
   switch (type) {
@@ -527,15 +531,21 @@ StepEditor.prototype.parseValue = function(value, type) {
     return this.proofControl.steps[Number(value) - 1].original;
   case 'term':
     var tokens = Toy.tokenize(value);
-    // Throws an error if parsing fails:
-    var expr = Toy.parse(tokens);
+    try {
+      // Throws an error if parsing fails:
+      var expr = Toy.parse(tokens);
+    } catch(e) {
+      var err = Error('Could not parse "' + value + '"');
+      err.cause = e;
+      throw err;
+    }
     if (tokens.length) {
       throw new Error('Extra input: "', + tokens[0] + '"');
     }
     var binOps = {'+': true, '-': true, '*': true, '/': true};
     // TODO: Change all infix parsing so the following hack
     //   becomes superfluous.
-    // The following is just a hack so you can type "- 3" as
+    // The following is just a hack so you can type "- <expr>" as
     // input to e.g. rules.applyToBoth with the usual meaning.
     if (expr.isCall1() && expr.fn.name in binOps) {
       var x = Toy.parse('x');
