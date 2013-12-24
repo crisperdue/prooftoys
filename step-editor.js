@@ -155,17 +155,16 @@ StepEditor.prototype._setBusy = function(busy, complete) {
 };
 
 /**
- * Handle errors in the step editor.  Displays step information in an
- * element named "proofErrors" if there is one.
+ * Reports the HTML message as an error in the step editor.
  */
 StepEditor.prototype.error = function(message) {
-  // TODO: implement, really, through a message area.
-  window.alert(message);
+  this.report('<b>' + message + '</b>');
 };
 
 /**
  * Report the error through the DOM and help the user debug in case it
- * has a "step" property.
+ * has a "step" property.  The argument should be an Error object or
+ * an HTML string.
  */
 StepEditor.prototype.report = function(error) {
   var $proofErrors = this.controller.$proofErrors;
@@ -180,7 +179,7 @@ StepEditor.prototype.report = function(error) {
     }
   } else {
     // It should be a string.
-    $proofErrors.append('<b>' + error + '</b>');
+    $proofErrors.append(error);
   }
 };
 
