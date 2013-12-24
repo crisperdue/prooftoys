@@ -177,7 +177,6 @@ var nextProofEditorId = 1;
  * Public properties:
  *
  * proofControl: ProofControl for the proof being edited.
- * $proofErrors: jQuery object for holding error information.
  */
 function ProofEditor() {
   var self = this;
@@ -250,9 +249,7 @@ function ProofEditor() {
     .append(ruleStats)
     .append(this._stateDisplay)
     .append(@mainControl.node)
-    .append('<div class="proofErrors hidden"></div>')
     .append(this.stepEditor.$node);
-  this.$proofErrors = $(this.containerNode).find('.proofErrors');
   this.setEditable(true);
 
   // If the proof has changed, save its state soon.
@@ -320,13 +317,9 @@ function ProofEditor() {
     if ($(event.target).closest('.proofContainer').length == 0) {
       // Not in a ProofControl's area.
       @mainControl.deselectStep();
-      self.$proofErrors.hide();
+      self.stepEditor.$proofErrors.hide();
     }
   });
-  // Always clear the errors when clicked.
-  this.$proofErrors.on('click', function() {
-      self.$proofErrors.hide();
-    });
 }
 
 /**

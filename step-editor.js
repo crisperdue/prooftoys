@@ -110,6 +110,9 @@ function StepEditor(controller) {
   div.append(self.clearer);
   self.form = $('<span class=sted-form></span>');
   div.append(self.form);
+  // Proof errors display.
+  self.$proofErrors = $('<div class="proofErrors hidden"></div>');
+  div.append(self.$proofErrors);
   self.$node = div;
 
   self.showRuleType = 'algebra';
@@ -133,6 +136,12 @@ function StepEditor(controller) {
       self.tryExecuteRule(true);
     }
   });
+  // Always clear the errors when clicked.
+  self.$proofErrors.on('click', function() {
+      // TODO: Don't hide on click in a step debugging display inside
+      //   the error node.
+      $(this).hide();
+    });
 }
 
 /**
@@ -167,7 +176,7 @@ StepEditor.prototype.error = function(message) {
  * an HTML string.
  */
 StepEditor.prototype.report = function(error) {
-  var $proofErrors = this.controller.$proofErrors;
+  var $proofErrors = this.$proofErrors;
   assert($proofErrors.length, 'proofJQ?');
   // Clicking _anywhere_ will actually clear the message.
   $proofErrors.show();
@@ -418,7 +427,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.proofControl.addStep(result);
     this.proofControl.deselectStep();
     // Clear the proof errors field.
-    this.controller.$proofErrors.hide();
+    this.$proofErrors.hide();
     // After the browser repaints, try simplifying the step
     // and adding the result to the proof if simplification
     // has any effect.
