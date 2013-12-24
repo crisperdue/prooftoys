@@ -506,7 +506,7 @@ StepEditor.prototype.parseValue = function(value, type) {
   case 'step':
   case 'equation':
   case 'implication':
-    if (!value.match(/\d+/)) {
+    if (!value.match(/^\d+/)) {
       throw new Error('Not a number: ' + value);
     }
     var index = Number(value) - 1;
