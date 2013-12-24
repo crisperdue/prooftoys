@@ -194,12 +194,14 @@ StepEditor.prototype.report = function(error) {
 
 /**
  * Puts the step editor back in the initial state from the user's
- * point of view: visible with empty input, no rule-specific form.
+ * point of view: visible with empty input, no rule-specific form,
+ * available rules visible.  Does not clear any selection.
  */
 StepEditor.prototype.reset = function() {
   this.clearer.addClass('hidden');
   this.form.html('');
   this._setBusy(false);
+  this.ruleSelector.fadeToggle(true);
 };
 
 /**
@@ -222,6 +224,7 @@ StepEditor.prototype.ruleChosen = function() {
     //   and modify that to always report errors.
     var template = rule.info.form;
     if (template) {
+      this.ruleSelector.fadeToggle(false);
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
