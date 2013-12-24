@@ -149,7 +149,7 @@ StepEditor.prototype._setBusy = function(busy, complete) {
     // Then  turn it off and fade it back in.
     $working.toggle(false).fadeIn(200, complete);
   } else {
-    $working.fadeIn(0).fadeOut(1000, complete);
+    $working.fadeOut(1000, complete);
   }
   this.ruleSelector.fadeToggle(!busy);
 };
@@ -204,10 +204,14 @@ StepEditor.prototype.focus = function() {
 /**
  * Handler for ruleSelector selection of a rule name.
  */
-StepEditor.prototype.handleSelection = function() {
+StepEditor.prototype.ruleChosen = function() {
   var value = this.ruleSelector.ruleName;
   var rule = Toy.rules[value];
   if (rule) {
+    // TODO: Only show the form if there are arguments that need to be
+    //   filled from it.  Instead of calling tryExecuteRule(false),
+    //   check here if all args can be filled from the selection
+    //   and modify that to always report errors.
     var template = rule.info.form;
     if (template) {
       // Template is not empty.  (If there is no template at all, the
@@ -761,7 +765,7 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
   self.$node.on('click', '.ruleItem', function(event) {
     var ruleName = $(this).data('ruleName');
     self.ruleName = ruleName;
-    self.stepEditor.handleSelection();
+    self.stepEditor.ruleChosen();
   });
 }
 
