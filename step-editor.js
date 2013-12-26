@@ -549,7 +549,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     // input to e.g. rules.applyToBoth with the usual meaning.
     if (expr.isCall1() && expr.fn.name in binOps) {
       var x = Toy.parse('x');
-      expr = lambda(x, Toy.infixCall(x, expr.fn, expr.arg));
+      expr = Toy.lambda(x, Toy.infixCall(x, expr.fn, expr.arg));
     }
     return expr;
   case 'varName':
