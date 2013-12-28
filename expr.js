@@ -3651,7 +3651,19 @@ function parse(input) {
  * expression and does not memoize in _parsed.
  */ 
 function justParse(input) {
+  try {
+    return justParse1(input);
+  } catch(e) {
+    var error = new Error('Could not parse "' + input + '"');
+    error.cause = e;
+    throw error;
+  }
+}
 
+/**
+ * Same as justParse, but throws errors with low-level messages.
+ */
+function justParse1(input) {
   var tokens = input;
 
   /**
@@ -3836,7 +3848,11 @@ function justParse(input) {
     // There should be at least one real token.
     throw new Error('No parser input');
   }
-  return parseAbove(0);
+  var result = parseAbove(0);
+  if (tokens.length) {
+    throw new Error('Extra input: "', + tokens[0] + '"');
+  }
+  return result;
 }
 
 /**

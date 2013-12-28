@@ -1943,8 +1943,8 @@ var testCase = {
     assertEqual('(((R x) & (R y)) & (R z))',
                 simplify('R (x - (z * y))'));
     assertEqual('(((y != 0) & (R x)) & (R y))', simplify('R (x / y)'));
-    assertEqual('(R x)', simplify('R (neg x))'));
-    assertEqual('((x != 0) & (R x))', simplify('R (recip x))'));
+    assertEqual('(R x)', simplify('R (neg x)'));
+    assertEqual('((x != 0) & (R x))', simplify('R (recip x)'));
     assertEqual('T', simplify('2 = 2'));
     assertEqual('T', simplify('2 != 0'));
     assertEqual('((((x != 0) & (y != 0)) & (R x)) & (R y))',

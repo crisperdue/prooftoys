@@ -530,18 +530,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     }
     return this.proofControl.steps[Number(value) - 1].original;
   case 'term':
-    var tokens = Toy.tokenize(value);
-    try {
-      // Throws an error if parsing fails:
-      var expr = Toy.parse(tokens);
-    } catch(e) {
-      var err = Error('Could not parse "' + value + '"');
-      err.cause = e;
-      throw err;
-    }
-    if (tokens.length) {
-      throw new Error('Extra input: "', + tokens[0] + '"');
-    }
+    var expr = Toy.parse(value);
     var binOps = {'+': true, '-': true, '*': true, '/': true};
     // TODO: Change all infix parsing so the following hack
     //   becomes superfluous.
