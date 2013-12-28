@@ -3182,7 +3182,7 @@ function findType(expr) {
   }
 
   try {
-  return analyze1(expr);
+    return dereference(analyze1(expr));
   } catch(e) {
     if (e instanceof TypeCheckError) {
       var error = new TypeCheckError('Cannot find type for ' +
