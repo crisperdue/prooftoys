@@ -674,8 +674,8 @@ $.extend(StepEditor.prototype, {
  */
 function acceptsSelection(step, ruleName) {
   var info = Toy.rules[ruleName].info;
-  var accept = info.inputs;
-  if (!accept) {
+  var argInfo = info.inputs;
+  if (!argInfo) {
     // If there is no information about arguments, fail.
     return false;
   }
@@ -685,25 +685,29 @@ function acceptsSelection(step, ruleName) {
     if (info.isRewriter && info.using) {
       // The rule has a "rewriting template", given as the name
       // of the fact to use in rewriting.
-      assert(typeof accept.site === 'number',
+      assert(typeof argInfo.site === 'number',
              function() {
                return 'Rule ' + ruleName + ' must use exactly 1 site.';
              });
+      // Check that the expression matches the LHS of the template.
       return !!expr.findSubst(info.using.unHyp().getLeft());
     } else {
+      // Otherwise OK if it takes a site, or is a proper binding site
+      // or a beta-reducible expression.
+      // 
       // TODO: prevent selection of bound variables as terms.
-      return (accept.site
-              || (accept.bindingSite && expr instanceof Toy.Lambda)
-              || (accept.reducible
+      return (argInfo.site
+              || (argInfo.bindingSite && expr instanceof Toy.Lambda)
+              || (argInfo.reducible
                   && expr instanceof Toy.Call
                   && expr.fn instanceof Toy.Lambda));
     }
   } else {
-    // If the rule needs a site, accept only a site, not a step.
-    return (!accept.site &&
-            (accept.step
-             || (accept.equation && step.unHyp().isCall2('='))
-             || (accept.implication && step.unHyp().isCall2('==>'))));
+    // If the rule needs a site, do not accept just a step.
+    return (!argInfo.site &&
+            (argInfo.step
+             || (argInfo.equation && step.unHyp().isCall2('='))
+             || (argInfo.implication && step.unHyp().isCall2('==>'))));
   }
 }
 
