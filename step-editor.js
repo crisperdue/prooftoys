@@ -529,6 +529,12 @@ StepEditor.prototype.parseValue = function(value, type) {
       throw new Error('No such step: ' + value);
     }
     return this.proofControl.steps[Number(value) - 1].original;
+  case 'bool':
+    var expr = Toy.parse(value);
+    if (Toy.findType(expr) != Toy.boolean) {
+      throw new Error('Not a true/false expression:' + value);
+    }
+    return expr;
   case 'term':
     var expr = Toy.parse(value);
     var binOps = {'+': true, '-': true, '*': true, '/': true};

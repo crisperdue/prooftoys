@@ -144,8 +144,8 @@ var ruleInfo = {
       _allHyps[assumption.dump()] = assumption;
       return result;
     },
-    inputs: {term: 1},
-    form: ('Assume <input name=term>'),
+    inputs: {bool: 1},
+    form: ('Assume <input name=bool>'),
     menu: 'assume hypothetically',
     comment: 'Hypothesis to assume',
     description: 'assumption',
