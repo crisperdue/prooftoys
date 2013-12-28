@@ -608,12 +608,10 @@ StepEditor.prototype.offerOk = function(name) {
  * Only rules with a "form" property are offerable at all.  If so --
  *
  * If the proof has a current selection, the rule is offerable if
- * acceptsSelection returns true given the selected step, rule name, and
- * third argument of false.
+ * acceptsSelection returns true given the selected step and rule
+ * name.
  *
  * Otherwise only rules that take no step and no site are offerable.
- *
- * This assumes the given ruleName is in Toy.rules.
  */
 StepEditor.prototype.offerable = function(ruleName) {
   var info = Toy.rules[ruleName].info;
@@ -624,7 +622,7 @@ StepEditor.prototype.offerable = function(ruleName) {
   if (step) {
     // Something is selected.  Check if the rule accepts the
     // selection.
-    return acceptsSelection(step, ruleName, false);
+    return acceptsSelection(step, ruleName);
   } else {
     // No selection, the rule must take no step or site.
     for (type in info.inputs) {
@@ -669,13 +667,12 @@ $.extend(StepEditor.prototype, {
  * This matches a step against the inputs descriptor of an inference
  * rule.  The step is the selected proof step, ruleName is the name of
  * the rule to match against.  Only call this if a step or part of a
- * step is selected.  The boolean argument determines whether a term
- * should be considered acceptable or not.
+ * step is selected.
  *
  * If something is selected, this accepts rules that can use that input
  * as an argument.
  */
-function acceptsSelection(step, ruleName, acceptTerm) {
+function acceptsSelection(step, ruleName) {
   var info = Toy.rules[ruleName].info;
   var accept = info.inputs;
   if (!accept) {
@@ -696,7 +693,6 @@ function acceptsSelection(step, ruleName, acceptTerm) {
     } else {
       // TODO: prevent selection of bound variables as terms.
       return (accept.site
-              || (acceptTerm && accept.term)
               || (accept.bindingSite && expr instanceof Toy.Lambda)
               || (accept.reducible
                   && expr instanceof Toy.Call
