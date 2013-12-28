@@ -337,7 +337,7 @@ var testCase = {
   testParse: function() {
     var result = Toy.parse('a');
     assertEqual('a', result.dump());
-    result = Toy.parse('(xx)');
+    result = Toy.justParse('(xx)');
     assertEqual('xx', result.dump());
     result = Toy.parse('f x');
     assertEqual('(f x)', result.dump());
@@ -359,9 +359,9 @@ var testCase = {
     assert(Toy.parse('- 2') instanceof Toy.Call);
     assertEqual('(-1 + 1)', Toy.parse('-1 + 1'));
     // Strings
-    var expr = Toy.parse('f "asdf"')
+    var expr = Toy.justParse('f "asdf"')
     assertEqual('"asdf"', expr.arg.name);
-    var expr = Toy.parse('f "as\\"df"');
+    var expr = Toy.justParse('f "as\\"df"');
     assertEqual('"as\\"df"', expr.arg.name);
     assertEqual(8, expr.getRight().name.length);
   },
@@ -435,7 +435,7 @@ var testCase = {
     var step2 = rules.assume('x + y = 5');
     var step3 = rules.replace(step1, step2, Toy.path('/main/left/left'));
     var saved = Toy.encodeSteps([step1, step2, step3]);
-    var parsed = Toy.parse(saved);
+    var parsed = Toy.justParse(saved);
     var a = parsed.asArray();
     assertEqual(4, a.length);
     assertEqual('steps', a[0]);
@@ -445,7 +445,7 @@ var testCase = {
   testDecodeArg: function() {
     var steps = [Toy.rules.assert('x = y + 1')];
     function check(expected, input) {
-      input = typeof input == 'string' ? Toy.parse(input) : input;
+      input = typeof input == 'string' ? Toy.justParse(input) : input;
       var actual = Toy._decodeArg(input, steps);
       assertEqual(expected, actual.toString());
     }

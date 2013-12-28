@@ -3087,7 +3087,9 @@ function parseType(input) {
 // TODO: More and better comments throughout the type analysis code.
 
 /**
- * Find and return the type of an expression (Expr).
+ * Find and return the type of an expression (Expr).  Throws an Error
+ * if type checking fails.  The error may have a "cause" property with
+ * the original error (TypeCheckError).
  */
 function findType(expr) {
   // In this code types[i] will be the type of vars[i].
@@ -3179,7 +3181,18 @@ function findType(expr) {
     return !occursInList(v, nonGenerics);
   }
 
+  try {
   return analyze1(expr);
+  } catch(e) {
+    if (e instanceof TypeCheckError) {
+      var error = new TypeCheckError('Cannot find type for ' +
+                                     expr.toUnicode());
+      error.cause = e;
+      throw error;
+    } else {
+      throw e;
+    }
+  }
 }
 
 /**
@@ -3610,15 +3623,34 @@ function tokenize(str) {
 }
 
 // Map from input strings to their parsed values.  Used for
-// memoization of user inputs.
+// memoization of user inputs.  Only stores inputs for which
+// a type can be found.
 var _parsed = {};
 
 /**
  * Parses a string or array of token strings into an expression
  * (Expr).  Removes tokens parsed from the tokens list.  Throws an
- * Error if parsing fails.
+ * Error if parsing fails or if findType cannot determine a type
+ * for the expression.
  */
 function parse(input) {
+  if (typeof input == 'string' &&
+      _parsed.hasOwnProperty(input)) {
+    return _parsed[input];
+  }
+  var result = justParse(input);
+  findType(result);
+  if (typeof input == 'string') {
+    _parsed[input] = result;
+  }
+  return result;
+}
+
+/**
+ * Same as "parse", but does not try to find a type for the
+ * expression and does not memoize in _parsed.
+ */ 
+function justParse(input) {
 
   var tokens = input;
 
@@ -3796,9 +3828,6 @@ function parse(input) {
   // Do the parse!
 
   if (typeof input == 'string') {
-    if (_parsed.hasOwnProperty(input)) {
-      return _parsed[input];
-    }
     tokens = tokenize(input);
   }
   // The ending token.
@@ -3807,11 +3836,7 @@ function parse(input) {
     // There should be at least one real token.
     throw new Error('No parser input');
   }
-  var result = parseAbove(0);
-  if (typeof input == 'string') {
-    _parsed[input] = result;
-  }
-  return result;
+  return parseAbove(0);
 }
 
 /**
@@ -4459,7 +4484,7 @@ function encodeSteps(steps_arg) {
  * computes and returns an array of steps.
  */
 function decodeSteps(input) {
-  input = typeof input == 'string' ? parse(input) : input;
+  input = typeof input == 'string' ? justParse(input) : input;
   var descriptions = input.asArray();
   var outSteps = [];
   descriptions.forEach(function(stepTerm, i) {
@@ -4616,6 +4641,7 @@ Toy.namePower = namePower;
 Toy.getPrecedence = getPrecedence;
 Toy.tokenize = tokenize;
 Toy.parse = parse;
+Toy.justParse = justParse;
 Toy.mathParse = mathParse;
 
 Toy.logError = logError;
