@@ -979,6 +979,9 @@ ProofControl.prototype.renderPopups = function(step) {
  */
 function prevRenderedStep(step) {
   var controller = getProofControl(step);
+  if (!controller) {
+    return null;
+  }
   var index = controller.steps.indexOf(step);
   if (index > 0) {
     return controller.steps[index - 1];
