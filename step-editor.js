@@ -568,23 +568,6 @@ StepEditor.prototype.parseValue = function(value, type) {
 };
 
 /**
- * Returns a list of names of "offerable" rules, sorted
- * alphabetically, but with axiom names changed to start instead with
- * "x", i.e. "xiom".
- */
-StepEditor.prototype.filteredRuleNames = function() {
-  var matches = [];
-  for (var name in Toy.rules) {
-    display = name.replace(/^axiom/, 'xiom');
-    if (this.offerable(name)) {
-      matches.push(display);
-    }
-  }
-  matches.sort();
-  return matches;
-};
-
-/**
  * Returns a list of names of rules that are "offerable" in the
  * sense of "offerable" returning true and offerOk returning true.
  */
