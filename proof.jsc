@@ -457,7 +457,6 @@ function ProofControl(properties) {
   this.node = dom($node);
   $node.data('proofControl', this);
   var stepsParent = $node.find('.stepsParent');
-  this._stepsJQ = $node.find('.proofSteps');
 
   this.setEditable(false);
   this.setHoverHighlighting(Toy.highlightAllHovers);
@@ -486,12 +485,11 @@ ProofControl.prototype.selectionChanged = function() {};
 ProofControl.prototype.setSteps = function(steps) {
   // Clear rendering properties of current steps, as they will be
   // deleted.
-  var $steps = this._stepsJQ;
   this.steps.forEach(function(step) {
       clearSubproof(step, true);
       step.original.rendering = null;
     });
-  $steps.html('');
+  $(this.node).find('.proofSteps').html('');
   // Now render the desired steps.
   this.steps = [];
   for (var i = 0; i < steps.length; i++) {
@@ -807,7 +805,7 @@ ProofControl.prototype.renderStep = function(step) {
                        '<span class=wff></span>')),
               // Allow a word break here.
               '<wbr><span class=stepInfo></span>');
-  self._stepsJQ.append($step);
+  $(self.node).find('.proofSteps').append($step);
   if (self.editable) {
     $step.addClass('withDeleter');
   }
