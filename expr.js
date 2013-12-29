@@ -2984,6 +2984,15 @@ FunctionType.prototype.fresh = function(mappings, nonGenerics) {
 
 var individual = new TypeConstant('i');
 var boolean = new TypeConstant('o');
+// TODO: Change this to a proper type of its own.
+var realType = individual;
+
+/**
+ * Returns true iff the type of the term is Real.
+ */
+function isReal(term) {
+  return findType(term) == realType;
+}
 
 /**
  * Parse a type string, returning a TypeOperator (type expression).
@@ -4640,6 +4649,8 @@ Toy.errors = errors;
 
 Toy.boolean = boolean;
 Toy.individual = individual;
+Toy.realType = realType;
+Toy.isReal = isReal;
 Toy.TypeVariable = TypeVariable;
 Toy.TypeOperator = TypeOperator;
 Toy.FunctionType = FunctionType;
