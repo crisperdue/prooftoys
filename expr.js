@@ -2988,10 +2988,21 @@ var boolean = new TypeConstant('o');
 var realType = individual;
 
 /**
- * Returns true iff the type of the term is Real.
+ * Returns true iff the type of the term is Real.  Until integrating
+ * findType further into the parser, treat variable names beginning
+ * with t-z as real.
  */
 function isReal(term) {
-  return findType(term) == realType;
+  var type = findType(term);
+  if (type == realType) {
+    return true;
+  }
+  // TODO: Implement similar functionality in the parser, presumably
+  //   before loosening the conditions on various laws of real numbers.
+  return (type instanceof Toy.TypeVariable &&
+          term instanceof Toy.Atom &&
+          term.name.match(/^[t-z]/) &&
+          term.isVariable());
 }
 
 /**
