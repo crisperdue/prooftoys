@@ -55,6 +55,9 @@ var _allHyps = {};
 // action: function implementing the inference rule.
 // inputs: map from type to argument number(s), either a single
 //   number or an array if more than one such argument.
+// toOffer: function of step and optional term or string with
+//   suitable body for such a function.  If it returns false
+//   the rule is not offered in the step editor.
 // form: HTML template for the rule's input form to be presented
 //   by the step editor.
 // menu: plain text for the rule's menu item (may become HTML in the future)
@@ -3744,6 +3747,7 @@ var ruleInfo = {
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
+    toOffer: 'return Toy.isReal(term);',
     form: '',
     menu: 'algebra: add {term} to both sides',
     description: 'add {site};; {in step siteStep}',
@@ -3757,6 +3761,7 @@ var ruleInfo = {
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
+    toOffer: 'return Toy.isReal(term);',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
     description: 'subtract {site};; {in step siteStep}',
@@ -3770,6 +3775,7 @@ var ruleInfo = {
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
+    toOffer: 'return Toy.isReal(term);',
     form: '',
     menu: 'algebra: multiply both sides by {term}',
     description: 'multiply by {site};; {in step siteStep}',
@@ -3783,6 +3789,7 @@ var ruleInfo = {
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
+    toOffer: 'return Toy.isReal(term);',
     form: '',
     menu: 'algebra: divide both sides by {term}',
     description: 'divide by {site};; {in step siteStep}',
@@ -3886,6 +3893,10 @@ function addRules(ruleInfo) {
   }
 }
 
+/**
+ * Process the given info into form for inclusion into
+ * Toy.rules and add the result there.
+ */
 function addRule(key, info) {
   // Give every info "inputs".
   if (!info.inputs) {
@@ -3904,6 +3915,13 @@ function addRule(key, info) {
       info.description = key;
     }
   }
+
+  // If there is a toOffer property with string value, coerce it
+  // to a function of step and path.
+  if (typeof info.toOffer == 'string') {
+    info.toOffer = new Function('step, term', info.toOffer);
+  }
+
   var fn = (typeof info == 'function') ? info : info.action;
   // Associate the action function with the key,
   rules[key] = fn;

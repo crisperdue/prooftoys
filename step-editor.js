@@ -622,7 +622,14 @@ StepEditor.prototype.offerable = function(ruleName) {
   if (step) {
     // Something is selected.  Check if the rule accepts the
     // selection.
-    return acceptsSelection(step, ruleName);
+    if (acceptsSelection(step, ruleName)) {
+      // First check that the rule accepts this type of selection,
+      // now if there is a test, check that the custom test passes.
+      // This way the test can assume for example that there is a
+      // selected term.
+      var test = info.toOffer;
+      return !test || test(step, step.selection);
+    }
   } else {
     // No selection, the rule must take no step or site.
     for (type in info.inputs) {
