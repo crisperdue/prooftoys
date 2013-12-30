@@ -1283,6 +1283,7 @@ var ruleInfo = {
       return simpler.justify('instantiateVar', arguments, [step]);
     },
     inputs: {site: 1, term: 3},
+    toOffer: 'return term.isVariable()',
     form: ('Substitute <input name=term> for the variable.'),
     menu: 'substitute for a free variable',
     comment: ('In a theorem substitute an expression for'
