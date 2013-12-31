@@ -62,6 +62,24 @@ function object0(_args) {
 }
 
 /**
+ * Builds and throws a new Error object with the given info.  If the
+ * info is a string, it becomes the message, otherwise treats the info
+ * as property names and values to assign to the error.
+ *
+ * The optional type if given is the error constructor, defaulting to
+ * Error.
+ */
+function err(info, type) {
+  var error = new (type || Error)();
+  if (typeof info == 'string') {
+    error.message = info;
+  } else {
+    jQuery.extend(error, info);
+  }
+  throw error;
+}
+
+/**
  * Calls the given function on each element of the array, passing it
  * the element, the index, and the array.  If on any iteration the
  * function returns any value other than undefined, immediately
@@ -3107,11 +3125,33 @@ function parseType(input) {
 // TODO: More and better comments throughout the type analysis code.
 
 /**
+ * Expr method that returns any annotated type, otherwise throws
+ * an error.
+ */
+Expr.prototype.getType = function() {
+  return this._type || err('Type not available: ' + this);
+};
+
+/**
+ * Returns the type of the expression like findType, but also
+ * annotates the expression and all subexpressions with type
+ * information as the _type property of each.  Only appropriate for
+ * expressions containing no shared structure such as rendered
+ * expressions.  Variables (Atoms) must be among the structures
+ * not shared.
+ */
+Expr.prototype.annotateWithTypes = function() {
+  return findType(this, true);
+};
+
+/**
  * Find and return the type of an expression (Expr).  Throws an Error
  * if type checking fails.  The error may have a "cause" property with
  * the original error (TypeCheckError).
+ *
+ * The second argument is private to annotateWithTypes.
  */
-function findType(expr) {
+function findType(expr, annotate) {
   // In this code types[i] will be the type of vars[i].
   // The vars are names of variables.  Bound variables and their types
   // are pushed onto the lists, and on exit from a scope the
@@ -3129,13 +3169,18 @@ function findType(expr) {
   // different types.
   var nonGenerics = [];
 
+  var analyze =
+    (annotate
+     ? function(expr) { return expr._type = analyze1(expr); }
+     : analyze1);
+
   // This is the core of the type inference algorithm.
   function analyze1(expr) {
     if (expr instanceof Atom) {
-      return getType(expr.name);
+      return typeFromName(expr.name);
     } else if (expr instanceof Call) {
-      var fnType = analyze1(expr.fn);
-      var argType = analyze1(expr.arg);
+      var fnType = analyze(expr.fn);
+      var argType = analyze(expr.arg);
       var resultType = new TypeVariable();
       unifyTypes(new FunctionType(argType, resultType), fnType);
       return resultType;
@@ -3145,7 +3190,7 @@ function findType(expr) {
       var argType = new TypeVariable();
       types.push(argType);
       nonGenerics.push(argType);
-      var resultType = analyze1(expr.body);
+      var resultType = analyze(expr.body);
       vars.pop();
       types.pop();
       nonGenerics.pop();
@@ -3154,7 +3199,7 @@ function findType(expr) {
     throw new TypeCheckError('Expression of unknown type: ' + expr);
   }
 
-  function getType(name) {
+  function typeFromName(name) {
     if (isIntegerLiteral(name)) {
       // I say integers are individuals.
       return individual;
@@ -3202,13 +3247,12 @@ function findType(expr) {
   }
 
   try {
-    return dereference(analyze1(expr));
+    return dereference(analyze(expr));
   } catch(e) {
     if (e instanceof TypeCheckError) {
-      var error = new TypeCheckError('Cannot find type for ' +
-                                     expr.toUnicode());
-      error.cause = e;
-      throw error;
+      var message = 'Cannot find type for ' + expr.toUnicode();
+      err({message: message, cause: e},
+          TypeCheckError);
     } else {
       throw e;
     }
@@ -3674,9 +3718,7 @@ function justParse(input) {
   try {
     return justParse1(input);
   } catch(e) {
-    var error = new Error('Could not parse "' + input + '"');
-    error.cause = e;
-    throw error;
+    err({cause: e, message: 'Could not parse "' + input + '"'});
   }
 }
 
@@ -4579,6 +4621,7 @@ Toy.format = format;
 Toy.configure = configure;
 Toy.ownProperties = ownProperties;
 Toy.object0 = object0;
+Toy.err = err;
 Toy.isEmpty = isEmpty;
 Toy.each = each;
 Toy.emptySet = emptySet;
