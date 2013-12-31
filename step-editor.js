@@ -591,6 +591,10 @@ StepEditor.prototype.offerApproved = function(name) {
   if (this.showRules.indexOf(name) >= 0) {
     return true;
   }
+  // This test is really just for algebra mode.
+  if (!this.selectionApprovedForMode()) {
+    return false;
+  }
   switch (this.showRuleType) {
   case 'all':
     return true;
@@ -602,6 +606,26 @@ StepEditor.prototype.offerApproved = function(name) {
     throw new Error('Bad rule policy value');
   }
 };
+
+/**
+ * In algebra mode, if there is a selected term, this only returns
+ * true if the term is numeric (type real).  Otherwise true.
+ */
+StepEditor.prototype.selectionApprovedForMode = function() {
+  if (this.showRuleType != 'algebra') {
+    return true;
+  }
+  var step = this.proofControl.selection;
+  if (step) {
+    var expr = step.selection;
+    if (expr) {
+      // The step is rendered, so OK to annotate.
+      step.annotateWithTypes();
+      return expr.isReal();
+    }
+  }
+  return true;
+}
 
 /**
  * Returns true iff the rule name can be offered by the UI.
@@ -652,18 +676,21 @@ $.extend(StepEditor.prototype, {
   offerableFacts: function() {
     var facts = [];
     var step = this.proofControl.selection;
+    if (!this.selectionApprovedForMode()) {
+      return facts;
+    }
     if (step) {
       var expr = step.selection;
       if (expr) {
         Toy.eachFact(function(fact) {
-          var goal = fact.goal;
-          if (goal.isEquation()) {
-            var lhs = goal.eqnLeft();
-            if (expr.matchSchema(lhs)) {
-              facts.push(fact);
+            var goal = fact.goal;
+            if (goal.isEquation()) {
+              var lhs = goal.eqnLeft();
+              if (expr.matchSchema(lhs)) {
+                facts.push(fact);
+              }
             }
-          }
-        });
+          });
       }
     }
     return facts;
