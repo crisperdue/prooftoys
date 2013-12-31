@@ -87,7 +87,7 @@ var siteTypes = {
  * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
  *
- * showRuleType: Selects type of rules to show, as determined by offerOk.
+ * showRuleType: Selects type of rules to show, as determined by offerApproved.
  *   Takes effect when this editor is reset.
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
@@ -569,12 +569,12 @@ StepEditor.prototype.parseValue = function(value, type) {
 
 /**
  * Returns a list of names of rules that are "offerable" in the
- * sense of "offerable" returning true and offerOk returning true.
+ * sense of "offerable" returning true and offerApproved returning true.
  */
 StepEditor.prototype.offerableRuleNames = function() {
   var matches = [];
   for (var name in Toy.rules) {
-    if (this.offerable(name) && this.offerOk(name)) {
+    if (this.offerable(name) && this.offerApproved(name)) {
       matches.push(name);
     }
   }
@@ -586,7 +586,7 @@ StepEditor.prototype.offerableRuleNames = function() {
  * Policy-based rule offering policy function.  Returns a truthy value
  * iff current policy is to show the rule.
  */
-StepEditor.prototype.offerOk = function(name) {
+StepEditor.prototype.offerApproved = function(name) {
   var labels = Toy.rules[name].info.labels;
   if (this.showRules.indexOf(name) >= 0) {
     return true;
