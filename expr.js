@@ -3010,17 +3010,17 @@ var realType = individual;
  * findType further into the parser, treat variable names beginning
  * with t-z as real.
  */
-function isReal(term) {
-  var type = findType(term);
+Expr.prototype.isReal = function() {
+  var type = findType(this);
   if (type == realType) {
     return true;
   }
   // TODO: Implement similar functionality in the parser, presumably
   //   before loosening the conditions on various laws of real numbers.
   return (type instanceof Toy.TypeVariable &&
-          term instanceof Toy.Atom &&
-          term.name.match(/^[t-z]/) &&
-          term.isVariable());
+          this instanceof Toy.Atom &&
+          this.name.match(/^[t-z]/) &&
+          this.isVariable());
 }
 
 /**
@@ -3139,9 +3139,11 @@ Expr.prototype.getType = function() {
  * expressions containing no shared structure such as rendered
  * expressions.  Variables (Atoms) must be among the structures
  * not shared.
+ *
+ * If this is already annotated, simply returns the annotation.
  */
 Expr.prototype.annotateWithTypes = function() {
-  return findType(this, true);
+  return this._type || findType(this, true);
 };
 
 /**
@@ -4704,7 +4706,6 @@ Toy.errors = errors;
 Toy.boolean = boolean;
 Toy.individual = individual;
 Toy.realType = realType;
-Toy.isReal = isReal;
 Toy.TypeVariable = TypeVariable;
 Toy.TypeOperator = TypeOperator;
 Toy.FunctionType = FunctionType;

@@ -3748,7 +3748,7 @@ var ruleInfo = {
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    toOffer: 'return Toy.isReal(term);',
+    toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: add {term} to both sides',
     description: 'add {site};; {in step siteStep}',
@@ -3762,7 +3762,7 @@ var ruleInfo = {
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    toOffer: 'return Toy.isReal(term);',
+    toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
     description: 'subtract {site};; {in step siteStep}',
@@ -3776,7 +3776,7 @@ var ruleInfo = {
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    toOffer: 'return Toy.isReal(term);',
+    toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: multiply both sides by {term}',
     description: 'multiply by {site};; {in step siteStep}',
@@ -3790,7 +3790,7 @@ var ruleInfo = {
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    toOffer: 'return Toy.isReal(term);',
+    toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: divide both sides by {term}',
     description: 'divide by {site};; {in step siteStep}',
