@@ -226,12 +226,14 @@ function ProofEditor() {
                  '</select>');
   @proofButtons.append(selHtml);
 
+  self.$rulesMode = @proofButtons.find('.rulesToShow');
+
   self.stepEditor = new Toy.StepEditor(this);
   @mainControl.stepEditor = this.stepEditor;
 
   clearProof.on('click', function() {@mainControl.setSteps([]); });
   // Step editor has state controlling whether to show all rules.
-  @proofButtons.find('.rulesToShow').on('change', function(event) {
+  self.$rulesMode.on('change', function(event) {
       self.stepEditor.showRuleType = this.value;
       self.stepEditor.ruleSelector.refresh();
       self.stepEditor.reset();
@@ -321,6 +323,18 @@ function ProofEditor() {
     }
   });
 }
+
+/**
+ * Public interface to set the rule and fact offerability mode
+ * of this ProofEditor.
+ */
+ProofEditor.prototype.setRulesMode = @(mode) {
+  this.$rulesMode.val(mode);
+  if (this.$rulesMode.val() != mode) {
+    Toy.err('Bad rules mode setting: ' + mode);
+  }
+  this.$rulesMode.trigger('change');
+};
 
 /**
  * Add a step to the proof.

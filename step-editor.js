@@ -115,7 +115,6 @@ function StepEditor(controller) {
   div.append(self.$proofErrors);
   self.$node = div;
 
-  self.showRuleType = 'algebra';
   self.showRules = [];
 
   // Attach the "ruleWorking" to the ProofControl node so
@@ -126,6 +125,11 @@ function StepEditor(controller) {
   self.ruleSelector = widget;
   div.append(widget.$node);
              
+  self.showRuleType = 'general';
+  // Let the constructor and initialization code all run before
+  // triggering the change action.
+  Toy.soonDo(function() { controller.setRulesMode(self.showRuleType); });
+
   // Install event handlers.
 
   self.clearer.on('click', function() { self.reset(); });
@@ -603,7 +607,7 @@ StepEditor.prototype.offerApproved = function(name) {
   case 'general':
     return labels.basic || labels.display || labels.algebra;
   default:
-    throw new Error('Bad rule policy value');
+    throw new Error('Bad rule policy value: ' + this.showRuleType);
   }
 };
 
@@ -793,7 +797,6 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
 
   // Rule chooser:
   self.$node = $('<div class=ruleSelector/>');
-  self.update();
 
   self.$node.on('click', '.ruleItem', function(event) {
     var ruleName = $(this).data('ruleName');
@@ -877,7 +880,11 @@ BasicRuleSelector.prototype.update = function() {
   //   selection (most theorems and theorem generators).
   $header.text(displayTexts.length
                ? 'Actions:'
-               : 'Select a step or expression with a click.');
+               : (self.stepEditor.proofControl.selection
+                  ? (self.stepEditor.showRuleType == 'algebra'
+                     ? 'Try selecting the whole step or a numeric expression.'
+                     : 'No actions available for the selection in this mode.')
+                  : 'Select a step or expression with a click.'));
 };
 
 /**
