@@ -3011,17 +3011,17 @@ var realType = individual;
  * with t-z as real.
  */
 Expr.prototype.isReal = function() {
-  var type = findType(this);
-  if (type == realType) {
-    return true;
+  if (this._type) {
+    return this.getType() == realType;
+  } else {
+    // TODO: Implement similar functionality in the parser, presumably
+    //   before loosening the conditions on various laws of real numbers.
+    return (type instanceof Toy.TypeVariable &&
+            this instanceof Toy.Atom &&
+            this.name.match(/^[t-z]/) &&
+            this.isVariable());
   }
-  // TODO: Implement similar functionality in the parser, presumably
-  //   before loosening the conditions on various laws of real numbers.
-  return (type instanceof Toy.TypeVariable &&
-          this instanceof Toy.Atom &&
-          this.name.match(/^[t-z]/) &&
-          this.isVariable());
-}
+};
 
 /**
  * Parse a type string, returning a TypeOperator (type expression).
@@ -3129,7 +3129,7 @@ function parseType(input) {
  * an error.
  */
 Expr.prototype.getType = function() {
-  return this._type || err('Type not available: ' + this);
+  return dereference(this._type) || err('Type not available: ' + this);
 };
 
 /**
