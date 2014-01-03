@@ -3451,6 +3451,7 @@ var ruleInfo = {
     },
     isRewriter: true,
     inputs: {site: 1},
+    toOffer: 'return Toy.isArithmetic(term);',
     form: '',
     comment: 'arithmetic',
     labels: 'algebra'
@@ -5418,6 +5419,7 @@ Toy.listFacts = listFacts;
 Toy.traceRule = traceRule;
 
 Toy.arithmetic = arithmetic;
+Toy.isArithmetic = isArithmetic;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
