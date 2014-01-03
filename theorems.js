@@ -331,7 +331,8 @@ var ruleInfo = {
     // form: ('Replace selection with right side of step <input name=equation>'),
     comment: ('Replace an occurrence of a term with an equal term.'),
     menu: 'replace {term} with something equal',
-    description: 'replace {site};; {in step siteStep} {using step equation}'
+    description: 'replace {site};; {in step siteStep} {using step equation}',
+    labels: 'uncommon'
   },
 
   axiom1: {
@@ -2203,7 +2204,7 @@ var ruleInfo = {
     menu: 'replace {term} with something equal',
     comment: 'replace term with something equal',
     description: 'replace {site};; {in step siteStep} {using step equation}',
-    labels: 'algebra basic'
+    labels: 'uncommon'
   },
     
   /**
@@ -2222,6 +2223,35 @@ var ruleInfo = {
     menu: 'replace {term} with equal term like A = x',
     comment: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
+    description: 'replace {site};; {in step siteStep} {using step equation}',
+    labels: 'uncommon'
+  },
+
+  // Ambidextrous replace that tries matching the equation LHS,
+  // but can also replace right-to-left.
+  replaceEither: {
+    action: function(target, _path, equation) {
+      var path = Toy.path(_path);
+      var lhs = equation.getMain().getLeft();
+      var expr = target.locate(path);
+      if (expr.matches(lhs)) {
+        return rules.replace(equation, target, path)
+          .justify('replaceEither', arguments, [target, equation]);
+      } else if (expr.matches(equation.getMain().getRight())) {
+        return (rules.rRight(equation, target, path)
+                .justify('replaceEither', arguments, [target, equation]));
+      } else {
+        Toy.err('Expression ' + expr + ' matches neither side of ' +
+                equation);
+      }
+      var rev = rules.eqnSwap(equation);
+      var result = rules.replace(rev, target, path);
+      return result.justify('rRight', arguments, [target, equation]);
+    },
+    inputs: {site: 1, equation: 3},
+    form: ('Replace this using equation step <input name=equation>'),
+    menu: 'replace {term} with equal term',
+    comment: ('Replaces an occurrence of a term with an equal term'),
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'algebra basic'
   },
