@@ -439,16 +439,41 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // and adding the result to the proof if simplification
     // has any effect.
     var self = this;
+    function checkSolution(result) {
+      if (self.showRuleType == 'algebra' && isSolution(result)) {
+        self.report('You have solved for ' + result.getMain().getLeft());
+      }
+    }
     Toy.afterRepaint(function() {
         var simplified = Toy.rules.simplifyStep(result);
         self._setBusy(false);
         if (simplified && !simplified.rendering) {
           self.proofControl.addStep(simplified);
+          checkSolution(simplified);
+        } else {
+          checkSolution(result);
         }
       });
   }
   this.focus();
 };
+
+/**
+ * Returns a truthy value iff the given step is an equation
+ * of the form <var> = <expr>, where <expr> is a numeral or
+ * a fraction.
+ */
+function isSolution(step) {
+  if (step.isEquation() && step.getMain().getLeft().isVariable()) {
+    var rhs = step.getMain().getRight();
+    return (rhs.isNumeral() ||
+            (rhs.isCall2('/') &&
+             rhs.getLeft().isNumeral() &&
+             rhs.getRight().isNumeral()));
+  } else {
+    return false;
+  }
+}
 
 /**
  * Fill in an argument from the selection if there is a selected
