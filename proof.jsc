@@ -1604,7 +1604,10 @@ function expandMarkup(step, markup) {
   case 'step2':
     return stepNumber(info.inputs.step, 1);
   case 'equation':
+  case 'equation1':
     return stepNumber(info.inputs.equation, 0);
+  case 'equation2':
+    return stepNumber(info.inputs.equation, 1);
   case 'implication':
     return stepNumber(info.inputs.implication, 0);
   case 'siteStep':
