@@ -1290,7 +1290,7 @@ var ruleInfo = {
     comment: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
     description: 'substitute for {site};; {in step siteStep}',
-    labels: 'algebra basic'
+    labels: 'basic'
   },
 
   // More like the book's 5221.  For each name in the map (a string),
@@ -3699,7 +3699,8 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    comment: ('consider the selected term'),
+    menu: 'consider {term} equal to itself',
+    comment: ('prepare to transform term'),
     description: 'expression equal to itself',
     labels: 'display'
   },
