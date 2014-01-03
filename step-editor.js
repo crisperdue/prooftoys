@@ -755,7 +755,8 @@ function acceptsSelection(step, ruleName) {
  * potentially shortened to "xiom".  Result is currently text,
  * but may become HTML in the future.
  *
- * The term argument
+ * If given, the term argument should be a term to format using
+ * {term} in the rule's "menu" format string.
  */
 function ruleMenuText(ruleName, term) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
@@ -780,7 +781,9 @@ function ruleMenuText(ruleName, term) {
     }
   } else {
     // If there are inputs uses info.menu or some fallback.
-    return Toy.unicodify((info.menu && Toy.format(info.menu, {term: term})) ||
+    return Toy.unicodify((info.menu &&
+                          Toy.format(info.menu,
+                                     {term: term && term.toUnicode()})) ||
                          info.formula || info.comment || '');
   }
 }
