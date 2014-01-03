@@ -3827,7 +3827,39 @@ var ruleInfo = {
     menu: 'algebra: divide both sides by {term}',
     description: 'divide by {site};; {in step siteStep}',
     labels: 'algebra'
-  },    
+  },
+
+  addEquationToThis: {
+    action: function(eqn1, eqn2) {
+      var lhs = eqn2.getMain().getLeft();
+      var step1 = rules.addToBoth(eqn1, lhs);
+      var step3 = rules.replaceEither(step1, '/main/right/right', eqn2);
+      return step3.justify('addEquationToThis', arguments, arguments);
+    },
+    inputs: {equation: [1, 2]},
+    // toOffer: 'return step.getMain().getLeft().isReal()',
+    form: ('To step <input name=equation1> add the sides' +
+           ' of step <input name=equation2>'),
+    menu: 'algebra: add the sides an equation to this',
+    description: 'add the sides of steps {equation1} and {equation2}',
+    labels: 'algebra'
+  },
+
+  subtractEquationFromThis: {
+    action: function(eqn1, eqn2) {
+      var lhs = eqn2.getMain().getLeft();
+      var step1 = rules.subtractFromBoth(eqn1, lhs);
+      var step3 = rules.replaceEither(step1, '/main/right/right', eqn2);
+      return step3.justify('subtractEquationFromThis', arguments, arguments);
+    },
+    inputs: {equation: [1, 2]},
+    // toOffer: 'return step.getMain().getLeft().isReal()',
+    form: ('From step <input name=equation1> subtract the sides' +
+           ' of step <input name=equation2>'),
+    menu: 'algebra: subtract an equation from this',
+    description: 'from step {equation1} subtract the sides of step {equation2}',
+    labels: 'algebra'
+  },
 
   // Looks up the statement string, proving it if needed. Returns that
   // result, justified as a "fact".  This is the way to refer to a
