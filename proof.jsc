@@ -2290,7 +2290,7 @@ Toy.simplifiedSelections = true; // Alternatively: Toy.hasTouchEvents;
 // Note: when using 'mousedown' as the TOUCHDOWN event Chrome has been
 // observed to unfocus the keyboard on the subsequent mouseup event,
 // an unwanted effect.
-var TOUCHDOWN = Toy.hasTouchEvents ? 'touchstart' : 'click';
+var TOUCHDOWN = Toy.hasTouchEvents ? 'touchstart' : 'mousedown';
 
 // Override these properties on the page to get custom modes of
 // display and/or operation.
