@@ -551,7 +551,7 @@ StepEditor.prototype.parseValue = function(value, type) {
   case 'equation':
   case 'implication':
     if (!value.match(/^\d+$/)) {
-      throw new Error('Not a number: ' + value);
+      throw new Error('Not a step number: ' + value);
     }
     var index = Number(value) - 1;
     if (index < 0 || index >= this.proofControl.steps.length) {
