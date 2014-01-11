@@ -140,6 +140,7 @@ function StepEditor(controller) {
       self.tryExecuteRule(true);
     }
   });
+  self.form.on('click', 'button', function() { self.tryExecuteRule(true); });
   // Always clear the errors when clicked.
   self.$proofErrors.on('click', function() {
       // TODO: Don't hide on click in a step debugging display inside
@@ -233,6 +234,7 @@ StepEditor.prototype.ruleChosen = function() {
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
       this.form.html(template);
+      this.form.append('<button>Go</button>');
       addClassInfo(this.form);
       if (!usesSite(rule)) {
 	this.addSelectionToForm(rule);
