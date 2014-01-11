@@ -873,7 +873,10 @@ ProofControl.prototype.renderStep = function(step) {
       self.proofChanged();
     }
   });
-               
+
+  // Select or deselect the checkbox solely through the step.
+  $step.on('click', '.checkbox', false);
+
   // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
   // are enabled.
   if (Toy.modes.subproofs) {
