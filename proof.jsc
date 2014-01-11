@@ -875,7 +875,7 @@ ProofControl.prototype.renderStep = function(step) {
   });
 
   // Select or deselect the checkbox solely through the step.
-  $step.on('click', '.checkbox', false);
+  $step.on('click', '.checkbox', function(event) { event.preventDefault(); });
 
   // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
   // are enabled.
