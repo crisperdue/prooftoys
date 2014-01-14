@@ -799,17 +799,13 @@ var testCase = {
                  ];
 
     var result = Toy.findMatchingFact(facts, undefined,
-                                       Toy.parse('neg 1'),
-                                       Toy.path());
+                                       Toy.parse('neg 1'));
     assertEqual('(neg 1)', result.term);
-    assertEqual('', result.path.toString());
     assertEqual(undefined, result.stmt);
 
     result = Toy.findMatchingFact(facts, undefined,
-                                   Toy.parse('x + y'),
-                                   Toy.path());
+                                   Toy.parse('x + y'));
     assertEqual('(x + y)', result.term);
-    assertEqual('', result.path.toString());
     assertEqual('a + b = b + a', result.stmt);
     assertEqual('y', result.subst.b.toString());
   },

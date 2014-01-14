@@ -5030,15 +5030,20 @@ function findMatchingCall(term, info) {
     facts = info;
   }
   searchMethod = searchMethod || 'searchCalls';
-  return term[searchMethod](findMatchingFact.bind(null, facts, cxt));
+  function finder(term, revPath) {
+    var result = findMatchingFact(facts, cxt, term);
+    if (result) {
+      result.path = revPath.reverse();
+    }
+    return result;
+  }
+  return term[searchMethod](finder);
 }
 
 /**
  * Searches the given facts list for one that matches the given term.
- * If it finds one, returns info about it in a plain object.  The path
- * argument should be a reverse path to the term relative to the proof
- * step where the term appears.  The context argument is available to
- * "where" arguments as "cxt".
+ * If it finds one, returns info about it in a plain object.  The
+ * context argument is available to "where" arguments as "cxt".
  *
  * Each fact is either something acceptable as an argument to
  * getStatement, or a plain object with properties as follows:
@@ -5062,19 +5067,17 @@ function findMatchingCall(term, info) {
  * stmt: stmt part of the matching fact, or the "match" part if
  *   there is no stmt.
  * term: term passed to findMatchingFact.
- * path: forward version of the path argument.
  * subst: substitution that makes the given term match the fact.
  *
  * or if given a function to apply:
  *
  * eqn: equation with the input term as its LHS.
- * path: reverse of the input path, thus a forward path.
  */
-function findMatchingFact(facts, cxt, term, pth) {
+function findMatchingFact(facts, cxt, term) {
   function doEval(str, subst) {
-    // Suppress acccess to the enclosing "facts" and "pth" variables.
+    // Suppress acccess to the enclosing "facts" variable.
     // OK for str to refer to "cxt" or "term".
-    var facts, pth;
+    var facts;
     return eval(str);
   }
   for (var i = 0; i < facts.length; i++) {
@@ -5085,7 +5088,6 @@ function findMatchingFact(facts, cxt, term, pth) {
       if (eqn) {
         var result = {
           stmt: eqn,
-          path: pth.reverse()
         };
         return result;
       }
@@ -5099,7 +5101,6 @@ function findMatchingFact(facts, cxt, term, pth) {
       if (subst && (!where || doEval(where, subst))) {
         return {stmt: stmt,
                 term: term,
-                path: pth.reverse(),
                 subst: subst};
       }
     }
@@ -5117,10 +5118,9 @@ function applyFactsToRhs(eqn, facts) {
   var revPath = rhsPath.reverse();
   var info = Toy.findMatchingFact(facts,
                                   null,
-                                  eqn.locate(rhsPath),
-                                  revPath);
+                                  eqn.locate(rhsPath));
   return info
-    ? rules.rewriteWithFact(eqn, info.path, info.stmt)
+    ? rules.rewriteWithFact(eqn, rhsPath, info.stmt)
     : eqn;
 }
 
