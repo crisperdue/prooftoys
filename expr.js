@@ -176,9 +176,9 @@ function Result(value) {
 }
 
 /**
- * Call the given function with up to 4 arguments, returning
- * the undefined value if the function throws, else the value
- * returned from the function call.
+ * Call the given function with the given arguments, returning the
+ * undefined value if the function throws, else the value returned
+ * from the function call.
  */
 function normalReturn(fn, _args) {
   var result;
