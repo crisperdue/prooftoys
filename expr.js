@@ -193,8 +193,8 @@ function normalReturn(fn, _args) {
 
 /**
  * Call the given function of no arguments.  If it throws a Result
- * object, return its "value".  Rethrow anything else, and return the
- * function value if it does not throw.
+ * object, return its "value".  Rethrow any other thrown value, and
+ * return the function value if it does not throw.
  */
 function catchResult(fn) {
   try {
@@ -1821,7 +1821,6 @@ Expr.prototype.searchTerms = function(test, path) {
 // here to that point until the function returns a truthy value.  Does
 // not descend into non-Calls.  Returns the first truthy value found
 // at any level.
-//
 */
 
 //// Atom -- variable bindings and references
