@@ -937,7 +937,7 @@ ProofControl.prototype.renderPopups = function(step) {
         // Add a result and an action for a local simplifier if one is
         // found.
         var simplifiers =
-          [{apply: Toy.arithmetic}].concat(Toy.basicSimpFacts);
+          [{apply: Toy.tryArithmetic}].concat(Toy.basicSimpFacts);
         var simpler = Toy.applyFactsToRhs(eqn, simplifiers);
         if (simpler != eqn) {
           var result = rules.simplifySite(simpler, '/main/right');

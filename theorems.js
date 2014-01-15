@@ -3599,10 +3599,10 @@ var ruleInfo = {
           // If it's an arithmetic expression simplifiable by the
           // axiom of arithmetic, return a function that returns
           // the appropriate statement.
-          try {
-            var result = rules.axiomArithmetic(expr);
+          var result = tryArithmetic(expr);
+          if (result) {
             return function() { return result; };
-          } catch(e) {}
+          }
           if (expr.matchSchema('x * y != 0')) {
             // Simplify statements about nonzero products.
             return memo(function() { return rules.factNonzeroProduct(); });
@@ -3873,6 +3873,7 @@ var ruleInfo = {
         // It is an already proved statement.
         return statement;
       }
+      // Try ordinary proved facts.
       var stmt = getStatement(statement);
       try {
         return getResult(stmt).justify('fact', arguments);
@@ -3883,14 +3884,13 @@ var ruleInfo = {
         }
       }
       // Next try arithmetic facts.
-      try {
-        var result = rules.axiomArithmetic(stmt);
+      var result = tryArithmetic(stmt);
+      if (result) {
         if (result.matchSchema('x = T')) {
           result = rules.rewriteWithFact(result, '', '(x = T) = x');
-          return result.justify('fact', arguments);
         }
-        return result;
-      } catch(err) {}
+        return result.justify('fact', arguments);
+      }
       // Try tautologies.
       try {
         // Inline for tautologies.
@@ -5009,7 +5009,9 @@ function getStatement(fact) {
 /**
  * Finds a single LHS match within the given term with one of the
  * given facts.  Returns the value of the successful call to
- * findMatchingFact, or undefined if no call succeeded.
+ * findMatchingFact, with a "path" property added indicating the path
+ * from the term argument to the matched term, or a falsy value if no
+ * call succeeded.
  *
  * All arguments other than the term are passed via "info".  If it is
  * a plain object, it interprets the following properties:
@@ -5058,20 +5060,16 @@ function findMatchingCall(term, info) {
  * Alternatively properties:
  *
  * apply: a function to apply to the input term and context, which
- * must return an equation with (a value matching) the term as its LHS
- * or a falsy value if it fails to produce such an equation.
+ *   must return an equation whose LHS is the same as the term except
+ *   for possible changes of bound variables, or a falsy value if it
+ *   fails to produce such an equation.
  *
- * The value returned is undefined if no match is found, else a plain
+ * The value returned is falsy if no match is found, else a plain
  * object with properties:
  * 
- * stmt: stmt part of the matching fact, or the "match" part if
- *   there is no stmt.
+ * stmt: stmt part of the matching fact, or falsy if there is none.
  * term: term passed to findMatchingFact.
  * subst: substitution that makes the given term match the fact.
- *
- * or if given a function to apply:
- *
- * eqn: equation with the input term as its LHS.
  */
 function findMatchingFact(facts, cxt, term) {
   function doEval(str, subst) {
@@ -5088,6 +5086,8 @@ function findMatchingFact(facts, cxt, term) {
       if (eqn) {
         var result = {
           stmt: eqn,
+          term: term,
+          subst: {}
         };
         return result;
       }
@@ -5112,6 +5112,8 @@ function findMatchingFact(facts, cxt, term) {
  * Find and apply one of the facts to the RHS of the given
  * equation, and return the result.  If no fact applies,
  * return the equation as-is.
+ *
+ * TODO: Debug me. 
  */
 function applyFactsToRhs(eqn, facts) {
   var rhsPath = Toy.path('/main/right', eqn);
@@ -5292,8 +5294,8 @@ var theoremNames =
 /**
  * Returns a truthy value iff the term has the form of an arithmetic
  * expression suitable for rules.axiomArithmetic.  This does not do
- * range checks on the inputs.  On the other hand it is faster and
- * does not use exceptions.
+ * range checks on the values of numeric inputs.  On the other hand it
+ * is faster and does not use exceptions.
  */
 function isArithmetic(term) {
   if (term.isInfixCall()) {
@@ -5334,10 +5336,13 @@ function isArithmetic(term) {
   }
 }
 
-function arithmetic(term) {
+/**
+ * Has the effect of trying the axiom of arithmetic on the term,
+ * returning a falsy value if rules.
+ */
+function tryArithmetic(term) {
   if (isArithmetic(term)) {
-    var eqn = rules.eqSelf(term);
-    return Toy.normalReturn(rules.arithmetic, eqn, '/main/right');
+    return Toy.normalReturn(rules.axiomArithmetic, term);
   }
   // Implicit falsy return.
 }
@@ -5451,7 +5456,7 @@ Toy.listFacts = listFacts;
 
 Toy.traceRule = traceRule;
 
-Toy.arithmetic = arithmetic;
+Toy.tryArithmetic = tryArithmetic;
 Toy.isArithmetic = isArithmetic;
 
 // For testing.
