@@ -2508,11 +2508,8 @@ var ruleInfo = {
       var simpler = applyToVisible(step, facts);
       var path1 = step.pathToVisiblePart();
       var schemas = [{match: 'neg a', where: 'subst.a.isNumeral()'}];
-      while (true) {
-        var info = findMatchingCall(simpler.locate(path1), schemas);
-        if (!info) {
-          break;
-        }
+      var info;
+      while (info = findMatchingCall(simpler.locate(path1), schemas)) {
         simpler = rules.arithmetic(simpler, path1.concat(info.path));
       }
       return simpler.justify('simplifyNegations', arguments, [step]);
