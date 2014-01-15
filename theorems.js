@@ -5059,7 +5059,8 @@ function findMatchingCall(term, info) {
  * apply: a function to apply to the input term and context, which
  *   must return an equation whose LHS is the same as the term except
  *   for possible changes of bound variables, or a falsy value if it
- *   fails to produce such an equation.
+ *   fails to produce such an equation.  The call is done by
+ *   Toy.normalReturn, and this uses the value returned from it.
  *
  * The value returned is falsy if no match is found, else a plain
  * object with properties:
@@ -5079,7 +5080,7 @@ function findMatchingFact(facts, cxt, term) {
     var factInfo = facts[i];
     var infoIsObject = factInfo.constructor == Object;
     if (infoIsObject && factInfo.apply) {
-      var eqn = factInfo.apply.call(null, term, cxt);
+      var eqn = Toy.normalReturn(factInfo.apply, term, cxt);
       if (eqn) {
         var result = {
           stmt: eqn,
