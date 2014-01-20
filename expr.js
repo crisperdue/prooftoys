@@ -873,12 +873,11 @@ Expr.$ = {
 };
 
 /**
- * Matches the given "schematic" expression against the other
- * expression, returning a subsitution that yields the given
- * expression when given the schema; or null if there is none.
- * Assumes that the schema contains no variable bindings.  The
- * substitution maps from names to expressions.  Tautologies for
- * example qualify as schemas.
+ * Matches the given "schematic" expression against this. Returns a
+ * substitution that yields this expression when given the schema, or
+ * null if there is none.  Assumes that the schema contains no
+ * variable bindings.  The substitution maps from names to
+ * expressions.  Tautologies for example qualify as schemas.
  *
  * This is a special case of unification of expressions.
  */
