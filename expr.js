@@ -698,8 +698,9 @@ Expr.prototype.isNumeral = function() {
  * return the value if it is.
  */
 Expr.prototype.getNumValue = function() {
+  var self = this;
   assert(this.isNumeral(), function() {
-      return 'Not a numeral: ' + this;
+      return 'Not a numeral: ' + self;
     });
   return this._value;
 }
@@ -4409,6 +4410,11 @@ function assertTrue(condition, message, step) {
     errors.push({message: message, step: step});
     var e = new Error(message);
     e.step = step;
+    e.isAssert = true;
+    if (Toy.debugAssertions) {
+      console.log(e.stack);
+      debugger;
+    }
     throw e;
   }
 }
@@ -4698,6 +4704,7 @@ Toy.afterRepaint = afterRepaint;
 
 // Error analysis
 Toy.errors = errors;
+Toy.debugAssertions = true;
 
 // Types
 

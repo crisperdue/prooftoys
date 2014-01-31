@@ -2543,6 +2543,7 @@ var ruleInfo = {
       var facts = ['a * (b * c) = a * b * c',
                    {stmt: 'a * b = b * a',
                     where: '!subst.b.hasVars() && subst.a.hasVars()'},
+                   // TODO: Consider a * b * c = a * c * b instead.
                    {stmt: 'a * b * c = a * (c * b)',
                     where: '!subst.c.hasVars() && subst.b.hasVars()'},
                    {stmt: 'a * b / c = a / c * b',
@@ -2555,6 +2556,64 @@ var ruleInfo = {
     form: ('Clean up the terms in step <input name=step>'),
     menu: 'algebra: clean up terms',
     description: 'clean up each term',
+    labels: 'algebra'
+  },
+
+  // Organize the factors in a term.  Processes multiplication,
+  // division, negation, reciprocal, and arithmetic.
+  //
+  // TODO: Complete this rule, it is just a proof of concept now.
+  organizeFactors: {
+    action: function(step, path) {
+      var xforms = [{apply: tryArithmetic},
+                    {stmt: 'a * b = b * a',
+                     where: 'subst.a.hasVars() && !subst.b.hasVars()'},
+                    {stmt: 'a * b * c = a * c * b',
+                     where: 'subst.b.hasVars() && !subst.c.hasVars()'},
+                    {stmt: 'a * (b * c) = a * b * c'},
+                    {stmt: 'neg (neg a) = a'},
+                    // {stmt: 'a * (b / c) = a * b / c'},
+                    {stmt: 'a * b / c = a / c * b',
+                     where: 'subst.c.isNumeral()'},
+                    // {match: 'a * b', a: 'organize', b: 'organize'},
+                    {matching:
+                     {schema: 'a * b',
+                      parts: {a: 'organize', b: 'organize'}}}
+                    ];
+      var context = {factLists: {organize: xforms}};
+      var term = step.locate(path);
+      var eqn = rules.considerPart(step, path);
+      function rhs(eqn) {
+        return eqn.getMain().getRight();
+      }
+      var rhsPath = Toy.path('/main/right');
+      function organize1(eqn) {
+        var term = rhs(eqn);
+        var fact;
+        var map;
+        if (factInfo = findMatchingFact(xforms, context, rhs(eqn))) {
+          // TODO: Consider using "replace".
+          return rules.rewriteWithFact(eqn,
+                                       rhsPath.concat(factInfo.path),
+                                       factInfo.stmt);
+        } else {
+          return eqn;
+        }
+      }
+      var last = eqn;
+      while (true) {
+        var next = organize1(last);
+        if (next.matches(last)) {
+          return last.justify('organizeFactors', arguments, [step]);
+        } else {
+          last = next;
+        }
+      }
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'algebra: organize factors',
+    description: 'organize the factors',
     labels: 'algebra'
   },
 
@@ -5040,21 +5099,34 @@ function findMatchingCall(term, info) {
 }
 
 /**
- * Searches the given facts list for one that matches the given term.
- * If it finds one, returns info about it in a plain object.  The
- * context argument is available to "where" arguments as "cxt".
+ * Searches the given fact list for a fact that matches the given
+ * term.  If it finds one, returns info about it in a plain object.
+ * The context argument is available to "where" arguments as "cxt",
+ * and any "factLists" property of it defines lists of facts available
+ * by name.  The value is a plain object with identifier keys and fact
+ * list values. Any "fact list" can alternatively be an identifier
+ * string referencing a named list in the context.
  *
- * Each fact is either something acceptable as an argument to
+ * Accepted formats of fact arguments are an argument acceptable to
  * getStatement, or a plain object with properties as follows:
  *
  * stmt: value acceptable to getStatement.  Unless "match" is also
  *   given this will need to be an equation.
- * where: string to evaluate, with "subst" and the "cxt" argument to
- *   findMatchingFact available for use in the string.
- * match: term schema to match against the term; by default the
- *   stmt LHS.
+ * where: optional string to evaluate, with "subst" and the "cxt"
+ *   argument to findMatchingFact available for use in the string.
+ * match: term schema to match against the term.  (By default the
+ *   term is matched against the stmt LHS.)
  *
- * Alternatively properties:
+ * Alternatively to the above three properties, one of the following:
+ * 
+ * matching: The value is a plain object with properties "schema", a
+ *   term schema to match against the term, and "parts", a plain
+ *   object mapping from variable name in the schema to a list of
+ *   facts to match against parts of the term that match that variable
+ *   in the schema.  If the list is instead an identifier (string),
+ *   this finds the list under that key in the "lists" property of the
+ *   context.  In this way lists can be reused, and also enables them
+ *   to be effectively recursive.
  *
  * apply: a function to apply to the input term and context, which
  *   must return an equation whose LHS is the same as the term except
@@ -5068,6 +5140,7 @@ function findMatchingCall(term, info) {
  * stmt: stmt part of the matching fact, or falsy if there is none.
  * term: term passed to findMatchingFact.
  * subst: substitution that makes the given term match the fact.
+ * path: path to the portion of the given term matching the fact.
  */
 function findMatchingFact(facts, cxt, term) {
   function doEval(str, subst) {
@@ -5076,35 +5149,115 @@ function findMatchingFact(facts, cxt, term) {
     var facts;
     return eval(str);
   }
+  if (typeof facts == 'string' && Toy.isIdentifier(facts)) {
+    facts = cxt.factLists && cxt.factLists[facts];
+  }
+  assert(!facts || $.isArray(facts));
   for (var i = 0; i < facts.length; i++) {
     var factInfo = facts[i];
     var infoIsObject = factInfo.constructor == Object;
-    if (infoIsObject && factInfo.apply) {
+    if (!infoIsObject) {
+      var stmt = factInfo;
+      var schema = Toy.getStatement(stmt).getMain().getLeft();
+      var subst = term.matchSchema(schema);
+      if (subst) {
+        var result = {stmt: stmt,
+                      term: term,
+                      path: Toy.path(),
+                      subst: subst};
+        return result;
+      }
+    } else if (factInfo.apply) {
+      // "apply"
       var eqn = Toy.normalReturn(factInfo.apply, term, cxt);
       if (eqn) {
         var result = {
           stmt: eqn,
           term: term,
+          path: Toy.path(),
           subst: {}
         };
         return result;
       }
+    } else if (factInfo.matching) {
+      // "matching"
+      var partInfo = factInfo.matching;
+      return locateMatchingFact(term,
+                                partInfo.schema,
+                                partInfo.parts,
+                                cxt,
+                                Toy.path());
     } else {
-      var stmt = infoIsObject ? factInfo.stmt : factInfo;
-      var where = infoIsObject ? factInfo.where : null;
-      var schema = (infoIsObject && factInfo.match
+      // All other plain objects are handled here.
+      var stmt = factInfo.stmt;
+      var where = factInfo.where;
+      var schema = (factInfo.match
                     ? Toy.termify(factInfo.match)
                     : Toy.getStatement(stmt).getMain().getLeft());
       var subst = term.matchSchema(schema);
       if (subst && (!where || doEval(where, subst))) {
-        return {stmt: stmt,
-                term: term,
-                subst: subst};
+        var result = {stmt: stmt,
+                      term: term,
+                      path: Toy.path(),
+                      subst: subst};
+        return result;
       }
     }
   }
   // If no match found the value will be falsy.
 };
+
+/**
+ * Match the given Expr with the given schema, and if it matches look
+ * through parts of the Expr for a fact matching the part, returning a
+ * proved equation with LHS matching the Expr and RHS applying the
+ * fact.
+ *
+ * The parts of the Expr searched are those matching variables in the
+ * schema, and the varsMap controls which facts are considered in each
+ * part.  Each varsMap entry connects a variable name in the schema to
+ * a list of facts to match against parts of the Expr that match that
+ * variable in the schema.  The list must be suitable as an argument
+ * to findMatchingFact, or if an alphanumeric string, a name that is
+ * a key in the namedLists map.
+ *
+ * The namedLists are a map from list name to fact list.
+ * 
+ * This searches parts of the Expr that match the schema variables.
+ * It searches each part for a fact in the list associated with the
+ * schema variable that matches that part.
+ *
+ * The schema may be given as an Expr or string to parse as an Expr.
+ *
+ * Return value is falsy if nothing found, otherwise a plain object as
+ * returned by findMatchingFact, with the "path" property including
+ * the relative path from the given expr to the site matching the
+ * fact.
+ */
+function locateMatchingFact(expr, schema_arg, varsMap, context) {
+  var schema = Toy.termify(schema_arg);
+  var factLists = context.factLists;
+  var subst;
+  if (subst = expr.matchSchema(schema)) {
+    function searchSchema(schemaTerm, revPath) {
+      if (schemaTerm.isVariable()) {
+        var list = varsMap[schemaTerm.name];
+        if (typeof list == 'string' && Toy.isIdentifier(list)) {
+          list = factLists[list];
+        }
+        if (list) {
+          var result =
+            findMatchingFact(list, context, expr.locate(revPath.reverse()));
+          if (result) {
+            result.path = revPath.reverse().concat(result.path);
+            throw new Toy.Result(result);
+          }
+        }
+      }
+    }
+    return Toy.catchResult(schema.traverse.bind(schema, searchSchema));
+  }
+}
 
 /**
  * Find and apply one of the facts to the RHS of the given
@@ -5463,6 +5616,7 @@ Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
 Toy._findMatchingCall = findMatchingCall;
+Toy._locateMatchingFact = locateMatchingFact;
 
 //// INITIALIZATION CODE
 

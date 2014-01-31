@@ -64,6 +64,18 @@ function assertEqual(a, b) {
   return deepEqual(b, a);
 }
 
+function assertFails(fn) {
+  var debug = Toy.debugAssertions;
+  try {
+    Toy.debugAssertions = false;
+    throws(fn);
+  } catch(e) {
+    assert(e.isAssert, "Test threw, but not an assertion failure");
+  } finally {
+    Toy.debugAssertionss = debug;
+  }
+}
+
 // Make "assert" a synonym for QUnit's ok function.
 var assert = ok;
 
@@ -354,7 +366,7 @@ var testCase = {
     assertEqual(42, Toy.parse('42').getNumValue());
     var expr = Toy.parse('x + 103');
     assertEqual(103, expr.getRight().getNumValue());
-    throws(function() { expr.getLeft().getNumValue(); });
+    assertFails(function() { expr.getLeft().getNumValue(); });
     assertEqual(-2, Toy.parse('-2').getNumValue());
     assert(Toy.parse('- 2') instanceof Toy.Call);
     assertEqual('(-1 + 1)', Toy.parse('-1 + 1'));
@@ -808,6 +820,18 @@ var testCase = {
     assertEqual('(x + y)', result.term);
     assertEqual('a + b = b + a', result.stmt);
     assertEqual('y', result.subst.b.toString());
+
+    var context = {factLists:
+                   {organize:
+                    [{stmt: 'a * b = b * a',
+                      where: 'subst.b.isNumeral() && subst.a.isVariable()'},
+                     {matching:
+                      {schema: 'a * b',
+                       parts: {a: 'organize'}}}
+                    ]}};
+    var info = (Toy.findMatchingFact('organize', context, Toy.parse('x*2*3')));
+    console.log('FMF', info.stmt.str, info.term.str, info.path.str);
+    assertEqual('(x * 2)', info.term);
   },
 
   testSearchTerms: function() {
@@ -1038,7 +1062,7 @@ var testCase = {
     rules.theorem('tt');
     assert(Toy._alreadyProved('tt'));
     // This one is a rule, but not a theorem.
-    throws(function() { Toy._alreadyProved('replace'); });
+    assertFails(function() { Toy._alreadyProved('replace'); });
   },
 
   testGetStatement: function() {
@@ -1083,7 +1107,7 @@ var testCase = {
     var rules = Toy.rules;
     assertEqual('o', Toy.findType(T).toString());
     assertEqual('o', Toy.findType(Toy.parse('x = x')).toString());
-    throws(function() {
+    assertFails(function() {
       Toy.findType(Toy.parse('f f'));
       });
     // The identity function, problematic for some algorithms.
@@ -1973,7 +1997,6 @@ var testCase = {
     check('(x = x)', 'x');
     check('(((R x) & (R y)) ==> ((x + y) = (x + y)))', 'x + y');
   },
-
 
   // Utility functions for proofs.
 
