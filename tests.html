@@ -29,6 +29,7 @@
 
 // Make some names visible throughout
 var rules = Toy.rules;
+var ruleData = Toy._ruleData;
 var varify = Toy.varify;
 var constify = Toy.constify;
 var call = Toy.call;
@@ -1996,6 +1997,43 @@ var testCase = {
     }
     check('(x = x)', 'x');
     check('(((R x) & (R y)) ==> ((x + y) = (x + y)))', 'x + y');
+  },
+
+  testOrganizeFacts: function() {
+    var context = ruleData.organizeFactors.context;
+    var arrange = Toy.arrange;
+    function check(expected, input, factList) {
+      var step = rules.consider(input);
+      var result = arrange(step,
+                           Toy.path('/main/right'),
+                           context,
+                           factList);
+      assertEqual(expected, result.getMain().getRight());
+    }
+
+    var flat = '((x * 2) * 3)';
+    check(flat, 'x * (2 * 3)', 'flatteners');
+
+    var ordered = '((2 * 3) * x)';
+    check(ordered, flat, 'movers');
+
+    var numerated = '((2 * 3) / 4)';
+    check(numerated, '2 / 4 * 3', 'numerators');
+
+    var denominated = '(2 / (3 * 4))';
+    check(denominated, '2 / 3 / 4', 'denominators');
+
+    check('(2 / 12)', denominated, 'arithmetizers');
+    
+    // assert(false);
+  },
+
+  testTransformApplyInvert: function() {
+    var ai = Toy.transformApplyInvert;
+    var result = ai('a / b / c',
+                    'a / b = a * recip b',
+                    'a * b * c = a * c * b');
+    assertEqual('(((a / b) / c) = ((a / c) / b))', result.getRight());
   },
 
   // Utility functions for proofs.

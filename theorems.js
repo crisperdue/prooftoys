@@ -2562,53 +2562,103 @@ var ruleInfo = {
   // Organize the factors in a term.  Processes multiplication,
   // division, negation, reciprocal, and arithmetic.
   //
-  // TODO: Complete this rule, it is just a proof of concept now.
+  // TODO: Justify and test this extensively.
   organizeFactors: {
+    data: function() {
+      var flatteners = [
+        {stmt: 'neg (neg a) = a'},
+        {stmt: 'a * (b * c) = a * b * c'},
+        {stmt: 'a * (b / c) = a * b / c'},
+        {stmt: 'neg (a * b) = neg a * b'},
+        {stmt: 'neg (a / b) = neg a / b'},
+        {stmt: 'a / (b * c) = a / b / c'},
+        {stmt: 'a / (b / c) = a / b * c'},
+        // TODO: Convert to this style:
+        // {match: 'a * b', a: 'flatteners'},
+        {matching:
+         {schema: 'a * b',
+          parts: {a: 'flatteners', b: 'flatteners'}}},
+        {matching:
+         {schema: 'a / b',
+          parts: {a: 'flatteners'}}}
+      ];
+      var numeralAfterVar = 'subst.c.isNumeral() & subst.b.isVariable()';
+      var movers = [
+        // Move "minus signs" to the left.
+        {stmt: 'a * neg b = neg a * b',
+         where: 'subst.a instanceof Toy.Atom'},
+        {stmt: 'a / (neg b) = neg a / b',
+         where: 'subst.a instanceof Toy.Atom'},
+        {stmt: 'a * b * neg c = a * neg b * c'},
+        {stmt: 'a * b / neg c = a * neg b / c'},
+        {stmt: 'a / b * neg c = a / neg b * c'},
+        {stmt: 'a / b / neg c = a / neg b / c'},
+
+        // Move numerals toward the left.
+        {stmt: 'a * b = b * a',
+         where: 'subst.b.isNumeral() & subst.a.isVariable()'},
+        {stmt: 'a * b * c = a * c * b', where: numeralAfterVar},
+        {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
+        {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
+        {stmt: 'a / b * c = a / c * b', where: numeralAfterVar},
+        {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
+
+        {matching:
+         {schema: 'a * b',
+          parts: {a: 'movers'}}}
+      ];
+      var numeralC = 'subst.c.isNumeral()';
+      var numerators = [
+        {stmt: 'a / b * c = a * c / b', where: numeralC},
+        {matching:
+         {schema: 'a * b',
+          parts: {a: 'numerators'}}},
+        {matching:
+         {schema: 'a / b',
+          parts: {a: 'numerators'}}}
+      ];
+      var denominators = [
+        {stmt: 'a / b / c = a / (b * c)', where: numeralC},
+        {matching:
+         {schema: 'a * b',
+          parts: {a: 'denominators'}}},
+        {matching:
+         {schema: 'a / b',
+          parts: {a: 'denominators'}}}
+      ];
+      var bothNumerals = 'subst.a.isNumeral() && subst.b.isNumeral() ';
+      var arithmetizers = [
+        {apply: tryArithmetic},
+        // From 2 / -3 for example produces -2 / 3 for minus two thirds.
+        {stmt: 'a / b = neg a / neg b',
+         where: bothNumerals + ' && subst.b.value < 0'},
+        {matching:
+         {schema: 'a / b',
+          parts: {a: 'arithmetizers', b: 'arithmetizers'}}},
+        {matching:
+         {schema: 'a * b',
+          parts: {a: 'arithmetizers', b: 'arithmetizers'}}}
+      ];
+      var data =
+            {context:
+             {factLists:
+              {flatteners: flatteners,
+               movers: movers,
+               numerators: numerators,
+               denominators: denominators,
+               arithmetizers: arithmetizers
+              }}};
+      return data;
+    },
     action: function(step, path) {
-      var xforms = [{apply: tryArithmetic},
-                    {stmt: 'a * b = b * a',
-                     where: 'subst.a.hasVars() && !subst.b.hasVars()'},
-                    {stmt: 'a * b * c = a * c * b',
-                     where: 'subst.b.hasVars() && !subst.c.hasVars()'},
-                    {stmt: 'a * (b * c) = a * b * c'},
-                    {stmt: 'neg (neg a) = a'},
-                    // {stmt: 'a * (b / c) = a * b / c'},
-                    {stmt: 'a * b / c = a / c * b',
-                     where: 'subst.c.isNumeral()'},
-                    // {match: 'a * b', a: 'organize', b: 'organize'},
-                    {matching:
-                     {schema: 'a * b',
-                      parts: {a: 'organize', b: 'organize'}}}
-                    ];
-      var context = {factLists: {organize: xforms}};
-      var term = step.locate(path);
-      var eqn = rules.considerPart(step, path);
-      function rhs(eqn) {
-        return eqn.getMain().getRight();
-      }
-      var rhsPath = Toy.path('/main/right');
-      function organize1(eqn) {
-        var term = rhs(eqn);
-        var fact;
-        var map;
-        if (factInfo = findMatchingFact(xforms, context, rhs(eqn))) {
-          // TODO: Consider using "replace".
-          return rules.rewriteWithFact(eqn,
-                                       rhsPath.concat(factInfo.path),
-                                       factInfo.stmt);
-        } else {
-          return eqn;
-        }
-      }
-      var last = eqn;
-      while (true) {
-        var next = organize1(last);
-        if (next.matches(last)) {
-          return last.justify('organizeFactors', arguments, [step]);
-        } else {
-          last = next;
-        }
-      }
+      var context = ruleData.organizeFactors.context;
+
+      var flat = arrange(step, path, context, 'flatteners');
+      var ordered = arrange(flat, path, context, 'movers');
+      var numerated = arrange(ordered, path, context, 'numerators');
+      var denominated = arrange(numerated, path, context, 'denominators');
+      var reduced = arrange(denominated, path, context, 'arithmetizers');
+      return reduced.justify('organizeFactors', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
@@ -3995,6 +4045,9 @@ var ruleInfo = {
 // Generated from ruleInfo by addRules, below.
 var rules = {};
 
+// Data per rule, also accessed by rule name.
+var ruleData = {};
+
 // Math markup in the position of a rule name.
 // Helper for addRules.
 function formulaAsDescription(text) {
@@ -4046,6 +4099,13 @@ function addRule(key, info) {
   var fn = (typeof info == 'function') ? info : info.action;
   // Associate the action function with the key,
   rules[key] = fn;
+
+  // Call any "data" function.  The action function is installed
+  // into the rules at this point.
+  if (info.data) {
+    ruleData[key] =
+      (typeof info.data == 'function') ? info.data.call() : info.data;
+  }
 
   // Preprocess labels.  Split, and if there are no explicit labels,
   // give the rule a label of "basic".
@@ -4497,6 +4557,12 @@ var negationFacts = {
       .apply('eqnSwap');
     }
   },
+  'a * neg b = neg a * b': {
+    action: function() {
+      return rules.fact('a * neg b = neg (a * b)')
+      .rewrite('/main/right', 'neg (a * b) = neg a * b');
+    }
+  },
   'neg (a + b) = neg a + neg b': {
     action: function() {
       var step1 = rules.fact('a + neg a = 0');
@@ -4820,7 +4886,13 @@ var divisionFacts = {
       .rewrite('/main/right/left', 'a * recip b = a / b');
       return step;
     }
-  },  
+  },
+  'b != 0 & c != 0 ==> a / b / c = a / (b * c)': {
+    action: function() {
+      return rules.fact('a / (b * c) = a / b / c')
+        .apply('eqnSwap');
+    }
+  },
   'c != 0 ==> a * (b / c) = a * b / c': {
     action: function() {
       var step = rules.consider('a * (b / c)')
@@ -4833,7 +4905,7 @@ var divisionFacts = {
 };
 $.extend(algebraFacts, divisionFacts);
 
-  // MOVING EXPRESSIONS AROUND
+// MOVING EXPRESSIONS AROUND
 
 var algebraIdentities = {
   'a = neg b == a + b = 0': {
@@ -5142,17 +5214,18 @@ function findMatchingCall(term, info) {
  * subst: substitution that makes the given term match the fact.
  * path: path to the portion of the given term matching the fact.
  */
-function findMatchingFact(facts, cxt, term) {
+function findMatchingFact(facts_arg, cxt, term) {
   function doEval(str, subst) {
     // Suppress acccess to the enclosing "facts" variable.
     // OK for str to refer to "cxt" or "term".
     var facts;
     return eval(str);
   }
-  if (typeof facts == 'string' && Toy.isIdentifier(facts)) {
-    facts = cxt.factLists && cxt.factLists[facts];
+  var facts = facts_arg;
+  if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
+    facts = cxt.factLists && cxt.factLists[facts_arg];
   }
-  assert(!facts || $.isArray(facts));
+  assert($.isArray(facts), 'No facts: ' + facts_arg);
   for (var i = 0; i < facts.length; i++) {
     var factInfo = facts[i];
     var infoIsObject = factInfo.constructor == Object;
@@ -5208,24 +5281,17 @@ function findMatchingFact(facts, cxt, term) {
 };
 
 /**
- * Match the given Expr with the given schema, and if it matches look
- * through parts of the Expr for a fact matching the part, returning a
- * proved equation with LHS matching the Expr and RHS applying the
- * fact.
+ * If the given Expr matches the given schema, looks for a fact
+ * matching a part of the Expr that matches one of the variables in
+ * the schema.  If it finds such a fact, returns a proved equation
+ * that is the result of applying it to that part of the Expr.
  *
- * The parts of the Expr searched are those matching variables in the
- * schema, and the varsMap controls which facts are considered in each
- * part.  Each varsMap entry connects a variable name in the schema to
+ * The varsMap controls which facts are considered in each part of the
+ * Expr.  Each varsMap entry connects a variable name in the schema to
  * a list of facts to match against parts of the Expr that match that
  * variable in the schema.  The list must be suitable as an argument
- * to findMatchingFact, or if an alphanumeric string, a name that is
- * a key in the namedLists map.
- *
- * The namedLists are a map from list name to fact list.
- * 
- * This searches parts of the Expr that match the schema variables.
- * It searches each part for a fact in the list associated with the
- * schema variable that matches that part.
+ * to findMatchingFact, or if an alphanumeric string, a name that is a
+ * key in context.factLists.
  *
  * The schema may be given as an Expr or string to parse as an Expr.
  *
@@ -5238,8 +5304,12 @@ function locateMatchingFact(expr, schema_arg, varsMap, context) {
   var schema = Toy.termify(schema_arg);
   var factLists = context.factLists;
   var subst;
-  if (subst = expr.matchSchema(schema)) {
-    function searchSchema(schemaTerm, revPath) {
+  if ((subst = expr.matchSchema(schema))) {
+    // Checks if the given term of the schema matches some fact
+    // in the appropriate factsList, throwing information about
+    // the match if found to Toy.catchResult.
+    // Only schema variables are eligible to match.
+    function checkTerm(schemaTerm, revPath) {
       if (schemaTerm.isVariable()) {
         var list = varsMap[schemaTerm.name];
         if (typeof list == 'string' && Toy.isIdentifier(list)) {
@@ -5255,7 +5325,7 @@ function locateMatchingFact(expr, schema_arg, varsMap, context) {
         }
       }
     }
-    return Toy.catchResult(schema.traverse.bind(schema, searchSchema));
+    return Toy.catchResult(schema.traverse.bind(schema, checkTerm));
   }
 }
 
@@ -5304,10 +5374,10 @@ function applyFactsWithinSite(step, path_arg, facts) {
  * matches are found.
  */
 function applyFactsWithinRhs(step, facts) {
-  var rhs = Toy.path('/main/right');
+  var rhs = Toy.path('/main/right', step);
   var info;
   var eqn = step;
-  while (info = findMatchingCall(eqn.locate(rhs), facts)) {
+  while ((info = findMatchingCall(eqn.locate(rhs), facts))) {
     var fullPath = rhs.concat(info.path);
     eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
   }
@@ -5327,6 +5397,24 @@ function convertAndReplace(step, path, fn) {
 }
 
 /**
+ * Proves that the given term is equal to something by taking it as
+ * equal to itself, applying the given equation throughout its RHS,
+ * rewriting the result with the given fact, then applying the reverse
+ * of the equation throughout the resulting RHS.  The term can be
+ * a string, while the equation and fact can be any statement of fact.
+ */
+function transformApplyInvert(term_arg, eqn_arg, fact) {
+  var term = Toy.termify(term_arg);
+  var eqn = getResult(eqn_arg);
+  var revEqn = rules.eqnSwap(eqn);
+  var step1 = rules.consider(term);
+  var step2 = applyFactsWithinRhs(step1, [eqn]);
+  var step3 = rules.rewriteWithFact(step2, '/main/right', fact);
+  var step4 = applyFactsWithinRhs(step3, [revEqn]);
+  return step4;
+}
+
+/**
  * Apply the given simplification function to the equation repeatedly
  * until the result of the call is identical to its input.  Return
  * the result of the last call.
@@ -5341,6 +5429,36 @@ function whileSimpler(eqn, fn) {
     }
     simpler = next;
   }
+}
+
+/**
+ * Applies the given facts repeatedly to the RHS of the given equation
+ * until none matches, each time replacing the RHS with the result of
+ * applying the matching fact.  Returns the last version created.
+ */ 
+function arrangeRhs(eqn_arg, context, facts) {
+  var rhsPath = Toy.path('/main/right', eqn_arg);
+  var info;
+  var eqn = eqn_arg;
+  while ((info = findMatchingFact(facts, context, eqn.locate(rhsPath)))) {
+    var fullPath = rhsPath.concat(info.path);
+    eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
+  }
+  return eqn; 
+}
+
+/**
+ * Arranges the given part of the given step by repeatedly applying
+ * the given facts until none matches, returning a step with the part
+ * replaced by the result of the rearrangement.
+ *
+ * As a good practice, this considers the part in isolation, only
+ * replacing it in the step when done applying facts.
+ */
+function arrange(step, path, context, facts) {
+  var eqn = rules.consider(step.locate(path));
+  var arranged = arrangeRhs(eqn, context, facts);
+  return rules.replace(arranged, step, path);
 }
 
 /**
@@ -5603,7 +5721,9 @@ Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsToRhs = applyFactsToRhs;
 Toy.whileSimpler = whileSimpler;
+Toy.arrange = arrange;
 Toy.listFacts = listFacts;
+Toy.transformApplyInvert = transformApplyInvert;
 
 Toy.traceRule = traceRule;
 
@@ -5612,6 +5732,7 @@ Toy.isArithmetic = isArithmetic;
 
 // For testing.
 Toy.ruleInfo = ruleInfo;
+Toy._ruleData = ruleData;
 Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
