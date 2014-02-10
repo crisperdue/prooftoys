@@ -264,4 +264,10 @@ Toy.extends = function(constructor, parent) {
 // Make ".toString()" accessible as ".str" for debugger interaction.
 Object.defineProperty(Object.prototype,
                       'str',
-                      {get: function() { return this.toString(); }});
+                      {get: function() {
+                        if (this.toString == Object.prototype.toString) {
+                          return Toy.debugString(this);
+                        } else {
+                          return this.toString();
+                        }
+                      }});
