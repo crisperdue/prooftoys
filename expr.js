@@ -29,6 +29,26 @@ function configure(object, properties) {
 }
 
 /**
+ * True iff the arrays are the same length and elements are ==
+ * at each index.
+ */
+Array.equals = function(a1, a2) {
+  // Optimize identity check.
+  if (a1 === a2) {
+    return true;
+  }
+  if (a1.length != a2.length) {
+    return false;
+  }
+  for (var i = 0; i < a1.length; i++) {
+    if (a1[i] != a2[i]) {
+      return false;
+    }
+  }
+  return true;
+};
+
+/**
  * Returns an object with no prototype, having the own properties
  * of the input object as its properties.
  */

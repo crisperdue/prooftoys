@@ -133,6 +133,16 @@ var testCase = {
 
   // Utilities
 
+  testArrayEquals: function() {
+    var a1 = [{b: 2}, 'asdf', 13];
+    assert(Array.equals(a1, a1));
+    var a2 = a1.concat();
+    assert(Array.equals(a1, a2));
+    assert(!Array.equals(a1, a1.concat([2])));
+    assert(!Array.equals([], a1));
+    assert(!Array.equals(a1, [1, 2, 3]));
+  },
+
   testMemo: function() {
     var a = [];
     function f() {
