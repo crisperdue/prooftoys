@@ -131,7 +131,7 @@ function memo(fn) {
   var value;
   var memoFn = function() {
     return memoFn.done ? value : (memoFn.done = true, value = fn());
-  }
+  };
   memoFn.done = false;
   return memoFn;
 }
@@ -140,6 +140,9 @@ function memo(fn) {
  * Returns a string derived from the format string and the map by
  * replacing occurrences of {<string>} in the format string by the
  * value of that string in the map.
+ *
+ * TODO: Support multiple arguments as an alternative to the map,
+ * referred to by number.
  */
 function format(fmt, map) {
   return fmt.replace(/\{.*?\}/g, function(matched) {
@@ -171,7 +174,7 @@ function tracked(fn, opt_name) {
       data.calls++;
       data.times += Date.now() - start;
     }
-  }
+  };
 }
 
 /**
@@ -1786,6 +1789,7 @@ Expr.prototype.searchTerms = function(test, path) {
 // rather than combinations of /fn and /arg; and returns a forward
 // path.
 //
+//
 // _bindingPath(pred, revPath)
 //
 // Searches for a subexpression of this that passes the test and is
@@ -1793,6 +1797,11 @@ Expr.prototype.searchTerms = function(test, path) {
 // this to the Lambda, with the last path segment first, followed by
 // the given revPath.
 // 
+//
+// _checkSegment(path)
+//
+// Throws an error if the next segment of the path is not appropriate
+// to this type of Expr.
 //
 // generalizeTF(expr2, newVar, bindings)
 //
@@ -1961,8 +1970,7 @@ Atom.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
     return bindings;
   } else {
-    throw new Error('Path segment ' + path.segment +
-                    'is not applicable to Atom; in ' + this);
+    this._checkSegment(path);
   }
 };
 
@@ -2032,6 +2040,13 @@ Atom.prototype._prettyPath = function(pred, revPath) {
 
 Atom.prototype._bindingPath = function(pred, revPath) {
   return null;
+};
+
+Atom.prototype._checkSegment = function(path) {
+  if (!path.isMatch()) {
+    throw new Error('Path ' + path +
+                    ' is not applicable to an Atom; in ' + this);
+  }
 };
 
 Atom.prototype.findAll = function(name, action1, expr2, action2) {
@@ -2160,8 +2175,7 @@ Call.prototype._boundNames = function(path, bindings) {
     } else if (segment === 'arg') {
       return this.arg._boundNames(rest, bindings);
     }
-    throw new Error('Path segment "' + segment +
-                    '" is not applicable to a Call; in ' + this);
+    this._checkSegment(path);
   }
 };
 
@@ -2259,8 +2273,7 @@ Call.prototype.replaceAt = function(path, xformer) {
     } else if (segment === 'arg') {
       return new Call(this.fn, this.arg.replaceAt(path._rest, xformer));
     }
-    throw new Error('Path segment ' + segment +
-                    ' does not match Call: ' + this);
+    this._checkSegment(path);
   }
 };
 
@@ -2284,8 +2297,7 @@ Call.prototype._locate = function(path) {
     } else if (segment === 'arg') {
       return this.arg._locate(rest);
     }
-    throw new Error('Path segment "' + segment +
-                    '" does not match Call: ' + this);
+    this._checkSegment(path);
   }
 };
 
@@ -2365,6 +2377,24 @@ Call.prototype._prettyPath = function(pred, revPath) {
 Call.prototype._bindingPath = function(pred, revPath) {
   return (this.fn._bindingPath(pred, new Path('fn', revPath))
           || this.arg._bindingPath(pred, new Path('arg', revPath)));
+};
+
+// Keys in this object are legitimate paths to apply to a Call.
+var _callSegmentNames = {fn: true, arg: true};
+
+var _binopSegmentNames = {left: true, right: true, binop: true};
+
+Call.prototype._checkSegment = function(path) {
+  var error = false;
+  if (path.segment in _binopSegmentNames && !this.isCall2()) {
+    error = true;
+  } else if (!(path.segment in _callSegmentNames)) {
+    error = true;
+  }
+  if (error) {
+    throw new Error('Path segment ' + path.segment +
+                    'is not applicable to a Call; in ' + this);
+  }
 };
 
 Call.prototype.findAll = function(name, action1, expr2, action2) {
@@ -2511,10 +2541,11 @@ Lambda.prototype._addMathVars = function(bindings, set) {
 Lambda.prototype.replaceAt = function(path, xformer) {
   if (path.isMatch()) {
     return xformer(this);
-  } else {
-    var body = this.body.replaceAt(path.rest('body'), xformer);
+  } else if (path.segment === 'body') {
+    var body = this.body.replaceAt(path._rest, xformer);
     return (body == this.body) ? this : lambda(this.bound, body);
   }
+  this._checkSegment(path);
 };
 
 Lambda.prototype._locate = function(path) {
@@ -2553,7 +2584,7 @@ Lambda.prototype.generalizeTF = function(expr2, newVar, bindings) {
   if (!(expr2 instanceof Lambda)) {
     throw new Error('Not a variable binding: ' + expr2);
   }
-  var newBindings = new Bindings(this.bound, expr2.bound, bindings)
+  var newBindings = new Bindings(this.bound, expr2.bound, bindings);
   var body = this.body.generalizeTF(expr2.body, newVar, newBindings);
   return (body == this.body) ? this : lambda(this.bound, body);
 };
@@ -2574,6 +2605,14 @@ Lambda.prototype._bindingPath = function(pred, revPath) {
   return (pred(this.bound)
           ? revPath
           : this.body._bindingPath(pred, new Path('body', revPath)));
+};
+
+Lambda.prototype._checkSegment = function(path) {
+  var segment = path.segment;
+  if (segment !== 'bound' && segment !== 'body') {
+    throw new Error('Path segment ' + segment +
+                    ' is not applicable to a Lambda; in ' + this);
+  }
 };
 
 Lambda.prototype.findAll = function(name, action1, expr2, action2) {
