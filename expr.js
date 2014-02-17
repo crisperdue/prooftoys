@@ -1134,15 +1134,11 @@ Expr.prototype.mathVarConditions = function(expr) {
 Expr.prototype.boundNames = function(path) {
   path = Toy.path(path);
   var bindings = this._boundNames(path, null);
-  if (bindings) {
-    var map = {};
-    for (var more = bindings[0]; more; more = more.more) {
-      map[more.from] = true;
-    }
-    return map;
-  } else {
-    return {};
+  var map = {};
+  for (var more = bindings; more; more = more.more) {
+    map[more.from] = true;
   }
+  return map;
 };
 
 /**
@@ -1713,6 +1709,13 @@ Expr.prototype.searchTerms = function(test, path) {
 // method.
 //
 //
+// _boundNames(path, bindings)
+//
+// Returns a Bindings object (or null if no bindings) representing the
+// set of bindings in effect at the given path within this Expr, plus
+// the given bindings.
+//
+//
 // _decapture(freeNames, allNames, bindings)
 //
 // Returns a copy of this expression with any bound variables present
@@ -1955,7 +1958,12 @@ Atom.prototype._addFreeNames = function(map, bindings) {
 };
 
 Atom.prototype._boundNames = function(path, bindings) {
-  return path.isMatch() ? [bindings] : false;
+  if (path.isMatch()) {
+    return bindings;
+  } else {
+    throw new Error('Path segment ' + path.segment +
+                    'is not applicable to Atom; in ' + this);
+  }
 };
 
 Atom.prototype._decapture = function(freeNames, allNames, bindings) {
@@ -2134,7 +2142,7 @@ Call.prototype._addFreeNames = function(map, bindings) {
 
 Call.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
-    return [bindings];
+    return bindings;
   } else {
     var segment = path.segment;
     var rest = path._rest;
@@ -2153,7 +2161,7 @@ Call.prototype._boundNames = function(path, bindings) {
       return this.arg._boundNames(rest, bindings);
     }
     throw new Error('Path segment "' + segment +
-                    '" does not match Call: ' + this);
+                    '" is not applicable to a Call; in ' + this);
   }
 };
 
@@ -2467,11 +2475,19 @@ Lambda.prototype._addFreeNames = function(map, bindings) {
 
 Lambda.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
-    return [bindings];
+    return bindings;
   } else {
     var newBindings = new Bindings(this.bound.name, bindings);
-    return (this.bound._boundNames(path.rest('bound'), newBindings)
-            || this.body._boundNames(path.rest('body'), newBindings));
+    var segment = path.segment;
+    var rest = path._rest;
+    if (segment === 'bound') {
+      return this.bound._boundNames(rest, newBindings);
+    } else if (segment === 'body') {
+      return this.body._boundNames(rest, newBindings);
+    }
+    throw new Error('Path segment "' + segment +
+                    '" is not applicable to a Lambda; in ' + this);
+ 
   }
 };
 
