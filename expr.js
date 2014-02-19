@@ -1259,6 +1259,44 @@ Expr.prototype.isOpenCall = function() {
 Expr.$ = {
 
   /**
+   * Returns true iff this is a call to a function of two arguments that
+   * is normally rendered and parsed as an infix binary operator.
+   */
+  isBinOpCall: function() {
+    return this.isCall2() && isInfixDesired(this.getBinOp());
+  },
+
+  /**
+   * Returns an equivalent path that uses "left", "right", and "binop"
+   * to indicate subexpressions of binary operators where possible.
+   */
+  prettifyPath: function(p) {
+    if (p.isEnd()) {
+      return p;
+    }
+    var segment = p.segment;
+    var rest = p._rest;
+    if (this.isCall2() && isInfixDesired(this.getBinOp())) {
+      if (segment === 'arg') {
+        return new Path('right', this.arg.prettifyPath(rest));
+      } else if (segment === 'fn') {
+        var seg2 = rest.segment;
+        if (seg2 === 'fn') {
+          return new Path('binop', this.fn.fn.prettifyPath(rest._rest));
+        } else if (seg2 === 'arg') {
+          return new Path('left', this.fn.arg.prettifyPath(rest._rest));
+        }
+      }
+    }
+    // This expression and path segment are not a special case.
+    // Prettify the subexpression and path at the next level down.
+    var next = this.locate(new Path(segment));
+    // Return a path with this segment and the prettified tail
+    // of this path.
+    return new Path(segment, next.prettifyPath(rest));
+  },
+
+  /**
    * Is it an equation, possibly with assumptions?
    */
   isEquation: function() {

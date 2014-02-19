@@ -740,6 +740,12 @@ var testCase = {
                 '' + call(lambda(x, x), z).pathToBinding(isX));
   },
 
+  testPrettifyPath: function() {
+    var expr = Toy.parse('a + neg (b * c)');
+    var p = Toy.path('/arg/arg/fn/arg');
+    assertEqual('/right/arg/left', expr.prettifyPath(p).str);
+  },
+
   testPathExpand: function() {
     var wff = Toy.parse('x + y + z = w');
     var xPath = '/left/left/left';
