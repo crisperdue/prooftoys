@@ -2549,10 +2549,16 @@ Lambda.prototype.replaceAt = function(path, xformer) {
 };
 
 Lambda.prototype._locate = function(path) {
-  return path.isMatch()
-    ? this
-    : this.bound._locate(path.rest('bound'))
-        || this.body._locate(path.rest('body'));
+  if (path.isMatch()) {
+    return this;
+  }
+  var segment = path.segment;
+  if (segment === 'bound') {
+    return this.bound._locate(path._rest);
+  } else {
+    return this.body._locate(path._rest);
+  }
+  this._checkSegment(path);
 };
 
 Lambda.prototype.matches = function(expr, bindings) {
@@ -2826,10 +2832,6 @@ Path.prototype.getRight = function() {
 
 Path.prototype.tail = function() {
   return this._rest;
-};
-
-Path.prototype.rest = function(direction) {
-  return this.segment === direction ? this._rest : Path.none;
 };
 
 /**

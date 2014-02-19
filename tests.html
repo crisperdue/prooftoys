@@ -622,9 +622,6 @@ var testCase = {
     var path = Toy.path(p);
     assertEqual(p, path.toString());
     assertEqual('a', path.segment);
-    assertEqual('b', path.rest('a').segment);
-    assert(path.rest('a').rest('b').isMatch());
-    assertEqual('(none)', path.rest('b').toString());
     assert(Toy.path('/').isMatch());
     assertEqual('f', Toy.path('fn').next(call(f, x)).toString());
     assertEqual('x', Toy.path('arg').next(call(f, x)).toString());
