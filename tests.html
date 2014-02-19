@@ -715,6 +715,20 @@ var testCase = {
     assertEqual('/arg/arg', findPath('not (not (not p))', 'not p'));
   },
 
+  testParents: function() {
+    var expr = Toy.parse('a + neg (b * c)');
+    var path = Toy.path('/right/arg/fn/arg');
+    assertEqual('b', expr.locate(path));
+
+    var parents = expr.parents(path);
+    assertEqual(5, parents.length);
+    assertEqual('(a + (neg (b * c)))', parents[0]);
+    assertEqual('(neg (b * c))', parents[1]);
+    assertEqual('(b * c)', parents[2]);
+    assertEqual('(b *)', parents[3]);
+    assertEqual('b', parents[4]);
+  },
+
   testPathToBinding: function() {
     function isX(expr) {
       return expr == x;

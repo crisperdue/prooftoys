@@ -1375,6 +1375,12 @@ Expr.prototype.prettyPathTo = function(pred) {
   return this._prettyPath(pred, path(''));
 };
 
+Expr.prototype.parents = function(path) {
+  var result = [];
+  this._parents(path, result);
+  return result;
+};
+
 /**
  * Searches in this for a variable binding that passes the test, given
  * as a boolean function of one argument.  Returns a path from this to
@@ -1783,11 +1789,18 @@ Expr.prototype.searchTerms = function(test, path) {
 // NOT a variable binding.  Returns the "reverse path" to it from
 // this, with the last path segment first, added to the given revPath.
 // 
+//
 // _prettyPath(pred, revPath)
 //
 // Like _path, but for infix expressions produces /left, /right, etc.
 // rather than combinations of /fn and /arg; and returns a forward
 // path.
+//
+//
+// _parents(path, array)
+//
+// Adds this to the array then descends further if the path has
+// more segments.
 //
 //
 // _bindingPath(pred, revPath)
@@ -2036,6 +2049,11 @@ Atom.prototype._path = function(pred, revPath) {
 
 Atom.prototype._prettyPath = function(pred, revPath) {
   return pred(this) ? revPath : null;
+};
+
+Atom.prototype._parents = function(path, result) {
+  result.push(this);
+  this._checkSegment(path);
 };
 
 Atom.prototype._bindingPath = function(pred, revPath) {
@@ -2351,7 +2369,7 @@ Call.prototype._prettyPath = function(pred, revPath) {
     if (p) {
       return new Path('left', p);
     }
-    p = this.getBinOp()._prettyPath(pred, revPath)
+    p = this.getBinOp()._prettyPath(pred, revPath);
     if (p) {
       return new Path('binop', p);
     }
@@ -2372,6 +2390,25 @@ Call.prototype._prettyPath = function(pred, revPath) {
     }
     return null;
   }
+};
+
+Call.prototype._parents = function(path, result) {
+  result.push(this);
+  var segment = path.segment;
+  var rest = path._rest;
+  switch (segment) {
+  case 'left':
+    return this.getLeft()._parents(rest, result);
+  case 'right':
+    return this.getRight()._parents(rest, result);
+  case 'binop':
+    return this.getBinOp()._parents(rest, result);
+  case 'fn':
+    return this.fn._parents(rest, result);
+  case 'arg':
+    return this.arg._parents(rest, result);
+  }
+  this._checkSegment(path);
 };
 
 Call.prototype._bindingPath = function(pred, revPath) {
@@ -2605,6 +2642,18 @@ Lambda.prototype._prettyPath = function(pred, revPath) {
   return pred(this)
     ? revPath
     : this.body._prettyPath(pred, new Path('body', revPath));
+};
+
+Lambda.prototype._parents = function(path, result) {
+  result.push(this);
+  var segment = path.segment;
+  var rest = path._rest;
+  if (segment === 'bound') {
+    return this.bound._parents(rest, result);
+  } else if (segment === 'body') {
+    return this.body._parents(rest, result);
+  }
+  this._checkSegment(path);
 };
 
 Lambda.prototype._bindingPath = function(pred, revPath) {
