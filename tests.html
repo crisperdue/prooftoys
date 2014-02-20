@@ -715,12 +715,12 @@ var testCase = {
     assertEqual('/arg/arg', findPath('not (not (not p))', 'not p'));
   },
 
-  testParents: function() {
+  testAncestors: function() {
     var expr = Toy.parse('a + neg (b * c)');
     var path = Toy.path('/right/arg/fn/arg');
     assertEqual('b', expr.locate(path));
 
-    var parents = expr.parents(path);
+    var parents = expr.ancestors(path);
     assertEqual(5, parents.length);
     assertEqual('(a + (neg (b * c)))', parents[0]);
     assertEqual('(neg (b * c))', parents[1]);
@@ -771,6 +771,22 @@ var testCase = {
     assertEqual(eqPath, pp.toString());
     var p = wff.pathTo(eq);
     assertEqual(p.toString(), pp.expand().toString());
+  },
+
+  testPathParent: function() {
+    var p = Toy.path('/left/right/fn/arg/body');
+    var p1 = p.parent();
+    assertEqual('/left/right/fn/arg', p1.toString());
+    assertEqual('/left/right/fn', p1.parent().toString());
+    assertEqual('', Toy.path('/arg').parent().toString());
+  },
+
+  testPathLast: function() {
+    var p = Toy.path('/left/right/fn/arg/body');
+    assertEqual('body', p.last());
+    var parent = p.parent();
+    assertEqual('arg', parent.last());
+    assertEqual(null, Toy.path().last());
   },
 
   testMatchSchema: function() {

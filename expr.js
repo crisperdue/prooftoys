@@ -1413,9 +1413,16 @@ Expr.prototype.prettyPathTo = function(pred) {
   return this._prettyPath(pred, path(''));
 };
 
-Expr.prototype.parents = function(path) {
+/**
+ * Returns an array of the "ancestor" expressions of the subexpression
+ * of this referenced by the path, starting with this and including
+ * the one at the end of the path.  Returns exactly one ancestor per
+ * segment in the path, plus this.  Note that the expression at the end
+ * of the path is ancestors[ancestors.length - 1].
+ */
+Expr.prototype.ancestors = function(path) {
   var result = [];
-  this._parents(path, result);
+  this._ancestors(path, result);
   return result;
 };
 
@@ -1835,9 +1842,9 @@ Expr.prototype.searchTerms = function(test, path) {
 // path.
 //
 //
-// _parents(path, array)
+// _ancestors(path, array)
 //
-// Adds this to the array then descends further if the path has
+// Adds this to the array and descends further if the path has
 // more segments.
 //
 //
@@ -2089,7 +2096,7 @@ Atom.prototype._prettyPath = function(pred, revPath) {
   return pred(this) ? revPath : null;
 };
 
-Atom.prototype._parents = function(path, result) {
+Atom.prototype._ancestors = function(path, result) {
   result.push(this);
   this._checkSegment(path);
 };
@@ -2430,21 +2437,21 @@ Call.prototype._prettyPath = function(pred, revPath) {
   }
 };
 
-Call.prototype._parents = function(path, result) {
+Call.prototype._ancestors = function(path, result) {
   result.push(this);
   var segment = path.segment;
   var rest = path._rest;
   switch (segment) {
   case 'left':
-    return this.getLeft()._parents(rest, result);
+    return this.getLeft()._ancestors(rest, result);
   case 'right':
-    return this.getRight()._parents(rest, result);
+    return this.getRight()._ancestors(rest, result);
   case 'binop':
-    return this.getBinOp()._parents(rest, result);
+    return this.getBinOp()._ancestors(rest, result);
   case 'fn':
-    return this.fn._parents(rest, result);
+    return this.fn._ancestors(rest, result);
   case 'arg':
-    return this.arg._parents(rest, result);
+    return this.arg._ancestors(rest, result);
   }
   this._checkSegment(path);
 };
@@ -2682,14 +2689,14 @@ Lambda.prototype._prettyPath = function(pred, revPath) {
     : this.body._prettyPath(pred, new Path('body', revPath));
 };
 
-Lambda.prototype._parents = function(path, result) {
+Lambda.prototype._ancestors = function(path, result) {
   result.push(this);
   var segment = path.segment;
   var rest = path._rest;
   if (segment === 'bound') {
-    return this.bound._parents(rest, result);
+    return this.bound._ancestors(rest, result);
   } else if (segment === 'body') {
-    return this.body._parents(rest, result);
+    return this.body._ancestors(rest, result);
   }
   this._checkSegment(path);
 };
@@ -2898,6 +2905,33 @@ Path.prototype.getLeft = function() {
   assert(this.isLeft(), 'Not a leftward path');
   // TODO: Change this when changing the meaning of infix.
   return this._rest._rest;
+};
+
+Path.prototype.parent = function() {
+  var segment = this.segment;
+  if (!segment) {
+    // Also includes the case where we are past the end.
+    err('Empty path can have no parent.');
+  }
+  var rest = this._rest;
+  if (rest.isEnd()) {
+    return path();
+  } else {
+    return new Path(segment, this._rest.parent());
+  }
+};
+
+/**
+ * Gets the last segment from the path, or null if the path is empty.
+ */
+Path.prototype.last = function() {
+  var p = this;
+  var segment = null;
+  while (!p.isEnd()) {
+    segment = p.segment;
+    p = p._rest;
+  }
+  return segment;
 };
 
 /**
