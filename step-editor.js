@@ -342,10 +342,15 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // TODO: Get it together on failure reporting here.
-  var rule = Toy.rules[this.ruleSelector.ruleName];
+  var ruleName = this.ruleSelector.ruleName;
+  var action = Toy.rules[ruleName];
+  // In some cases the action is generated from the test and
+  // in these cases only the test has the correct number of
+  // arguments in its argument list.
+  var nargs = (action.info.test || action).length;
   // Initialize the args array length to be the number of its
   // named arguments.
-  var args = new Array(rule.length);
+  var args = new Array(nargs);
   this.fillWithSelectedSite(args);
   try {
     this.fillFromForm(args);
@@ -356,8 +361,8 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
     }
     return;
   }
-  if (args.length != rule.length) {
-    Toy.logError('Rule received unnamed arguments: ' + rule);
+  if (args.length != nargs) {
+    Toy.logError('Rule received unnamed arguments: ' + ruleName);
   }
   // Check that the args are all filled in.
   for (var i = 0; i < args.length; i++) {
@@ -368,7 +373,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
       return;
     }
   }
-  tryRuleAsync(this, rule, args);
+  tryRuleAsync(this, action, args);
 };
 
 /**

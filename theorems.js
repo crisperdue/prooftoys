@@ -4071,7 +4071,14 @@ function addRules(ruleInfo) {
  * Process the given info into form for inclusion into
  * Toy.rules and add the result there.
  */
-function addRule(key, info) {
+function addRule(key, info_arg) {
+  var info = info_arg.constructor == Object ? info_arg : {action: info_arg};
+  var action = info.action;
+  // Just a test can be given, in which case it must return a continuation
+  // function.
+  if (action && typeof action != 'function') {
+    Toy.err('Rule action not a function: ' + key);
+  }
   // Give every info "inputs".
   if (!info.inputs) {
     info.inputs = {};
@@ -4096,9 +4103,30 @@ function addRule(key, info) {
     info.toOffer = new Function('step, term', info.toOffer);
   }
 
-  var fn = (typeof info == 'function') ? info : info.action;
+  var test = info.test;
+  assert(!test || typeof test == 'function',
+         'Rule test must be a function: ' + key);
+  if (test && !action) {
+    // If there is a test but no action, the test, when successful,
+    // should return a function of no arguments that functions as the
+    // rule action.
+    info.actionContinuesTest = true;
+    action = function(_args) {
+      var ok = test.apply(null, arguments);
+      if (ok) {
+        if (typeof ok == 'function') {
+          return ok();
+        } else {
+          Toy.err('No action for rule ' + key);
+        }
+      }
+      return Toy.err('Rule failed: ' + key);
+    };
+  }
+  assert(action, 'No action for rule ' + key);
+  assert(typeof action == 'function', 'Rule action must be a function: ' + key);
   // Associate the action function with the key,
-  rules[key] = fn;
+  rules[key] = action;
 
   // Call any "data" function.  The action function is installed
   // into the rules at this point.
@@ -4115,7 +4143,7 @@ function addRule(key, info) {
     labels.split(/\s+/)
       .forEach(function(label) { info.labels[label] = true; });
   }
-  if (fn.length === 0 && key.slice(0, 5) === 'axiom') {
+  if (action.length === 0 && key.slice(0, 5) === 'axiom') {
     info.labels.axiom = true;
   }
   if (info.form !== undefined && Toy.isEmpty(info.labels)) {
@@ -4130,7 +4158,7 @@ function addRule(key, info) {
   // TODO: Add this line, making addTheorem and company internal to
   // this function:
   // Function length of 0 means no positional arguments.
-  // if (fn.length === 0) { addTheorem(key); }
+  // if (action.length === 0) { addTheorem(key); }
 }
 
 // Actual rule functions to call from other code.
@@ -5330,21 +5358,13 @@ function locateMatchingFact(expr, schema_arg, varsMap, context) {
 }
 
 /**
- * Find and apply one of the facts to the RHS of the given
- * equation, and return the result.  If no fact applies,
- * return the equation as-is.
- *
- * TODO: Debug me. 
+ * Find and apply one of the facts to the part of the step at the
+ * given path, returning the result, or the input step if none of the
+ * facts apply.
  */
-function applyFactsToRhs(eqn, facts) {
-  var rhsPath = Toy.path('/main/right', eqn);
-  var revPath = rhsPath.reverse();
-  var info = Toy.findMatchingFact(facts,
-                                  null,
-                                  eqn.locate(rhsPath));
-  return info
-    ? rules.rewriteWithFact(eqn, rhsPath, info.stmt)
-    : eqn;
+function applyFactsOnce(step, path, facts) {
+  var info = Toy.findMatchingFact(facts, null, step.locate(path));
+  return info ? rules.rewriteWithFact(step, path, info.stmt) : step;
 }
 
 /**
@@ -5719,7 +5739,7 @@ Toy.convertAndReplace = convertAndReplace;
 Toy.findMatchingFact = findMatchingFact;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
-Toy.applyFactsToRhs = applyFactsToRhs;
+Toy.applyFactsOnce = applyFactsOnce;
 Toy.whileSimpler = whileSimpler;
 Toy.arrange = arrange;
 Toy.listFacts = listFacts;
