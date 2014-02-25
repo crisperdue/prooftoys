@@ -2747,6 +2747,38 @@ var ruleInfo = {
     labels: 'algebra'
   },
 
+  /**
+   * Moves a term to the right in a sequence of summed terms.
+   * The sequence must be "flat", associated to the left.
+   */
+  moveRightTerm: {
+    action: function(step, path_arg) {
+      var path = step.prettifyPath(path_arg);
+      var parentPath = path.parent();
+      var lastSegment = path.last();
+      var result = step;
+      if (lastSegment == 'left') {
+        var commutes = ['a + b = b + a', 'a - b = neg b + a'];
+        result = applyFactsOnce(step, parentPath, commutes);
+      } else if (lastSegment == 'right' && parentPath.last() == 'left') {
+        var associates = [
+          'a + b + c = a + c + b',
+          'a + b - c = a - c + b',
+          'a - b + c = a + c - b',
+          'a - b - c = a - c - b'
+        ];
+        var path2 = parentPath.parent();
+        result = applyFactsOnce(step, path2, associates);
+      }
+      return result.justify('moveRightTerm', arguments, [step]);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'move term to the right',
+    description: 'move term to the right',
+    labels: 'algebra'
+  },
+
   /** TODO: Decide whether to keep or remove this rule.
   removeRightTerm: {
     action: function(step, path) {
