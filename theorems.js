@@ -5089,19 +5089,30 @@ $.extend(Fact.prototype, {
       // the goal, do it.
       var goal = this.goal;
       var subst = result.alphaMatch(goal);
-      if (!subst) {
+      var result2;
+      if (subst) {
+        result2 = rules.instMultiVars(result, subst);
+      } else {
+        // Try matching the main parts of the result and goal,
+        // and potentially reordering assumptions.
         var subst2 = result.getMain().alphaMatch(goal.getMain());
-        assert(!subst2, function() {
+        if (subst2) {
+          // TODO: Consider simplifying assumptions within
+          //   rules.instMultiVars.
+          result2 = (rules.instMultiVars(result, subst2)
+                     .apply('simplifyAssumptions'));
+          assert(result2.matches(goal), function() {
             return 'Assumptions do not match goal ' + goal;
           }, result);
-      }
-      assert(subst, function() {
+        } else {
+          assert(false, function() {
           return 'Failed to prove ' + goal;
         }, result);
-      var result2 = rules.instMultiVars(result, subst);
+        }
+      }
       return result2;
     }
-  });
+});
       
 
 // Private to addFact, getResult, and eachFact.  Maps from a string
