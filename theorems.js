@@ -2758,7 +2758,11 @@ var ruleInfo = {
       var lastSegment = path.last();
       var result = step;
       if (lastSegment == 'left') {
-        var commutes = ['a + b = b + a', 'a - b = neg b + a'];
+        var commutes = [
+          'neg a + b = b - a',
+          'a + b = b + a',
+          'a - b = neg b + a'
+        ];
         result = applyFactsOnce(step, parentPath, commutes);
       } else if (lastSegment == 'right' && parentPath.last() == 'left') {
         var associates = [
@@ -2774,7 +2778,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'move term to the right',
+    menu: 'algebra: move term to the right',
     description: 'move term to the right',
     labels: 'algebra'
   },
@@ -4529,6 +4533,21 @@ var negationFacts = {
   'a + neg b = a - b': {
     action: function() {
       return rules.eqnSwap(rules.fact('a - b = a + neg b'));
+    }
+  },
+  'neg a + b = b - a': {
+    action: function() {
+      var parse = Toy.justParse;
+      return rules.fact('a + neg b = a - b')
+        .rewrite('/main/left', 'a + b = b + a');
+        // .apply('instMultiVars', {a: parse('b'), b: parse('a')});
+    }
+  },
+  'a - b = neg b + a': {
+    action: function() {
+      return rules.fact('a + neg b = a - b')
+      .apply('eqnSwap')
+      .rewrite('/main/right', 'a + b = b + a');
     }
   },
   'neg a + a = 0': {
