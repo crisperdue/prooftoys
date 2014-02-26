@@ -2783,6 +2783,38 @@ var ruleInfo = {
     labels: 'algebra'
   },
 
+  /**
+   * Moves a term to the left in a sequence of summed terms.
+   * The sequence must be "flat" (associated to the left).
+   */
+  moveLeftTerm: {
+    action: function(step, path_arg) {
+      var result = step;
+      var path = step.prettifyPath(path_arg);
+      var lastSegment = path.last();
+      if (lastSegment == 'right') {
+        var parentPath = path.parent();
+        var parent = step.locate(parentPath);
+        var facts = [
+          'a + b + c = a + c + b',
+          'a + b - c = a - c + b',
+          'a - b + c = a + c - b',
+          'a - b - c = a - c - b',
+          // If none of the above is a match:
+          'a + b = b + a',
+          'a - b = neg b + a'
+        ];
+        result = applyFactsOnce(step, parentPath, facts);
+      }
+      return result.justify('moveLeftTerm', arguments, [step]);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'algebra: move term to the left',
+    description: 'move term to the left',
+    labels: 'algebra'
+  },
+
   /** TODO: Decide whether to keep or remove this rule.
   removeRightTerm: {
     action: function(step, path) {
@@ -5125,8 +5157,8 @@ $.extend(Fact.prototype, {
           }, result);
         } else {
           assert(false, function() {
-          return 'Failed to prove ' + goal;
-        }, result);
+            return 'Failed to prove ' + goal;
+          }, result);
         }
       }
       return result2;
