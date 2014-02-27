@@ -4034,7 +4034,7 @@ var ruleInfo = {
     // toOffer: 'return step.getMain().getLeft().isReal()',
     form: ('To step <input name=equation1> add the sides' +
            ' of step <input name=equation2>'),
-    menu: 'algebra: add the sides an equation to this',
+    menu: 'algebra: add the sides of an equation to this',
     description: 'add the sides of steps {equation1} and {equation2}',
     labels: 'algebra'
   },
