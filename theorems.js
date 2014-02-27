@@ -1246,7 +1246,7 @@ var ruleInfo = {
     menu: 'add "forall"',
     comment: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.'),
-    description: 'add \u2200',
+    description: 'add \u2200'
   },
 
   // 5221 (one variable), in the given step substitute term A for free
@@ -5457,7 +5457,7 @@ function locateMatchingFact(expr, schema_arg, varsMap, context) {
  * facts apply.
  */
 function applyFactsOnce(step, path, facts) {
-  var info = Toy.findMatchingFact(facts, null, step.locate(path));
+  var info = findMatchingFact(facts, null, step.locate(path));
   return info ? rules.rewriteWithFact(step, path, info.stmt) : step;
 }
 
