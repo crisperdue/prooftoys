@@ -2752,6 +2752,16 @@ var ruleInfo = {
    * The sequence must be "flat", associated to the left.
    */
   moveRightTerm: {
+    toOffer: function(step, expr) {
+      var path = step.prettyPathTo(expr);
+      var lastSegment = path.last();
+      if (lastSegment == 'left') {
+        var parent = step.locate(path.parent());
+        return parent.isCall2('+') || parent.isCall2('-');
+      } else {
+        return false;
+      }
+    },
     action: function(step, path_arg) {
       var path = step.prettifyPath(path_arg);
       var parentPath = path.parent();
@@ -2788,6 +2798,16 @@ var ruleInfo = {
    * The sequence must be "flat" (associated to the left).
    */
   moveLeftTerm: {
+    toOffer: function(step, expr) {
+      var path = step.prettyPathTo(expr);
+      var lastSegment = path.last();
+      if (lastSegment == 'right') {
+        var parent = step.locate(path.parent());
+        return parent.isCall2('+') || parent.isCall2('-');
+      } else {
+        return false;
+      }
+    },
     action: function(step, path_arg) {
       var result = step;
       var path = step.prettifyPath(path_arg);
