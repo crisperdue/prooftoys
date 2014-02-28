@@ -341,6 +341,11 @@ var testCase = {
     assertEqual('xx\u2083:RR', new Toy.Atom('xx.3:RR').toUnicode());
   },
 
+  testExprIn: function() {
+    assert(Toy.parse('x').in(['y', 'x']));
+    assert(!Toy.parse('x').in(['y', 'z']));
+  },
+
   // PARSER
 
   testTokenize: function() {

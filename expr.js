@@ -636,11 +636,18 @@ Expr.prototype.toUnicode = function() {
 }
 
 /**
+ * Tests if this is an Atom with name in the given list of strings.
+ */
+Expr.prototype.in = function(list) {
+  return this instanceof Atom && list.indexOf(this.name) >= 0;
+};
+
+/**
  * Returns true iff this term is atomic (a variable or constant).
  */
 Expr.prototype.isAtomic = function() {
   return this instanceof Atom;
-}
+};
 
 // Categorization of Vars:
 //
