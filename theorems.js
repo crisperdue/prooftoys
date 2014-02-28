@@ -5751,6 +5751,21 @@ function tryArithmetic(term) {
 }
 
 /**
+ * True iff the given term (with possible multiplication operator) has
+ * a variable "all the way to the right".
+ *
+ * TODO: Consider supporting a term with a denominator.
+ */
+function termHasRightVariable(term) {
+  var s;
+  return (term.isVariable() ||
+          ((s = term.matchSchema('neg v')) && s.v.isVariable()) ||
+          ((s = term.matchSchema('f a v')) && 
+           s.f.isConst('*') &&
+           s.v.isVariable()));
+}
+
+/**
  * Build a schema for a conjunction of hypotheses, ensuring all are in
  * the TermMap, with optional exclusions, a TermSet.  The schema is of
  * the form a1 && ... && an, where the "a"s are variables for the
@@ -5858,6 +5873,7 @@ Toy.whileSimpler = whileSimpler;
 Toy.arrange = arrange;
 Toy.listFacts = listFacts;
 Toy.transformApplyInvert = transformApplyInvert;
+Toy.termHasRightVariable = termHasRightVariable;
 
 Toy.traceRule = traceRule;
 

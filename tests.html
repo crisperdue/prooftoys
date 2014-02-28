@@ -2086,6 +2086,18 @@ var testCase = {
 
   // Utility functions for proofs.
 
+  testTermHasRightVariable: function() {
+    function hasRight(term) {
+      return Toy.termHasRightVariable(Toy.termify(term));
+    }
+    assert(hasRight('x'));
+    assert(!hasRight('2'));
+    assert(!hasRight('T'));
+    assert(hasRight('neg z'));
+    assert(hasRight('x * y'));
+    assert(hasRight('2 * v'));
+  },
+
   testBuildHypSchema: function() {
     var rules = Toy.rules;
     var bs = Toy._buildHypSchema;
