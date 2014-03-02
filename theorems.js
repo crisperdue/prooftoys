@@ -5276,6 +5276,9 @@ function getStatement(fact) {
   }
 }
 
+
+//// Finding matching facts
+
 /**
  * Finds a single LHS match within the given term with one of the
  * given facts.  Returns the value of the successful call to
@@ -5751,18 +5754,23 @@ function tryArithmetic(term) {
 }
 
 /**
- * True iff the given term (with possible multiplication operator) has
- * a variable "all the way to the right".
+ * If the given term (with possible multiplication operator) has
+ * a variable "all the way to the right", returns the variable,
+ * otherwise null.
  *
  * TODO: Consider supporting a term with a denominator.
  */
-function termHasRightVariable(term) {
+function termGetRightVariable(term) {
   var s;
-  return (term.isVariable() ||
-          ((s = term.matchSchema('neg v')) && s.v.isVariable()) ||
-          ((s = term.matchSchema('f a v')) && 
+  return (term.isVariable()
+          ? term
+          : (s = term.matchSchema('neg v')) && s.v.isVariable()
+          ? s.v
+          : ((s = term.matchSchema('f a v')) && 
            s.f.isConst('*') &&
-           s.v.isVariable()));
+             s.v.isVariable())
+          ? s.v
+          : null);
 }
 
 /**
@@ -5873,7 +5881,7 @@ Toy.whileSimpler = whileSimpler;
 Toy.arrange = arrange;
 Toy.listFacts = listFacts;
 Toy.transformApplyInvert = transformApplyInvert;
-Toy.termHasRightVariable = termHasRightVariable;
+Toy.termGetRightVariable = termGetRightVariable;
 
 Toy.traceRule = traceRule;
 

@@ -2086,16 +2086,16 @@ var testCase = {
 
   // Utility functions for proofs.
 
-  testTermHasRightVariable: function() {
-    function hasRight(term) {
-      return Toy.termHasRightVariable(Toy.termify(term));
+  testTermGetRightVariable: function() {
+    function getRight(term) {
+      return Toy.termGetRightVariable(Toy.termify(term));
     }
-    assert(hasRight('x'));
-    assert(!hasRight('2'));
-    assert(!hasRight('T'));
-    assert(hasRight('neg z'));
-    assert(hasRight('x * y'));
-    assert(hasRight('2 * v'));
+    assertEqual('x', getRight('x'));
+    assertEqual(null, getRight('2'));
+    assertEqual(null, getRight('T'));
+    assertEqual('z', getRight('neg z'));
+    assertEqual('y', getRight('x * y'));
+    assertEqual('v', getRight('2 * v'));
   },
 
   testBuildHypSchema: function() {
