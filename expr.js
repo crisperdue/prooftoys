@@ -1421,6 +1421,40 @@ Expr.prototype.prettyPathTo = function(pred) {
 };
 
 /**
+ * If the expression referenced by the given path from this expression
+ * is the right operand of one of the given operators, this returns a
+ * path to its "left neighbor" in the usual presentation of
+ * expressions with operators such as +/- and times/divide.  The
+ * operators are given as an Array of string names, and are assumed to
+ * be binary.  This is assumed to be a "pretty" path with a parent.
+ *
+ * The path may be given as a string.  Returns null if there is no
+ * such left neighbor.
+ */
+Expr.prototype.leftNeighborPath = function(path_arg, operators) {
+  var path = Toy.path(path_arg);
+  if (path.isEnd()) {
+    return null;
+  }
+  if (path.last() != 'right') {
+    return null;
+  }
+  var parentPath = path.parent();
+  var parent = this.locate(parentPath);
+  if (!(parent.isCall2() && parent.getBinOp().in(operators))) {
+    return null;
+  }
+  var left = parent.getLeft();
+  if (left.isCall2() && left.getBinOp().in(operators)) {
+    // Left operand is a call to another binop.
+    return parentPath.concat(Toy.path('/left/right'));
+  } else {
+    // Left operand is something else.
+    return parentPath.concat(Toy.path('/left'));
+  }
+};
+
+/**
  * Returns an array of the "ancestor" expressions of the subexpression
  * of this referenced by the path, starting with this and including
  * the one at the end of the path.  Returns exactly one ancestor per
@@ -2914,6 +2948,10 @@ Path.prototype.getLeft = function() {
   return this._rest._rest;
 };
 
+/**
+ * Returns a Path that has all but the last segment of this path.
+ * If this path has no segments, throws an error.
+ */
 Path.prototype.parent = function() {
   var segment = this.segment;
   if (!segment) {

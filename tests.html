@@ -720,6 +720,21 @@ var testCase = {
     assertEqual('/arg/arg', findPath('not (not (not p))', 'not p'));
   },
 
+  testLeftNeighborPath: function() {
+    function leftPath(expr, path) {
+      var e = Toy.termify(expr);
+      return '' + e.leftNeighborPath(path, ['+', '-']);
+    }
+    assertEqual('null', leftPath('x + y', '/left'));
+    assertEqual('/left', leftPath('x + y', '/right'))
+    assertEqual('/left', leftPath('x - y', '/right'))
+    assertEqual('null', leftPath('x * y', '/right'))
+    assertEqual('null', leftPath('f x', '/arg'))
+    assertEqual('/left/right', leftPath('x + y + z', '/right'))
+    assertEqual('/left/right', leftPath('x - y + z', '/right'))
+    assertEqual('/left/left/right', leftPath('x + y + z + w', '/left/right'))
+  },
+
   testAncestors: function() {
     var expr = Toy.parse('a + neg (b * c)');
     var path = Toy.path('/right/arg/fn/arg');
