@@ -5774,6 +5774,37 @@ function termGetRightVariable(term) {
 }
 
 /**
+ * Returns a plain object with a property for each variable name
+ * occurring in the given multiplicative term.  The value of each
+ * property is the number of occurrences of the variable with that
+ * name.  The term must consist entirely of multiplication and
+ * negation of variables and constants.  If any other kind of
+ * expression occurs in the term, the result is null.
+ */
+function varFactorCounts(term) {
+  var info = {};
+  function mustBeVariable(expr, revPath) {
+    if (expr.isVariable()) {
+      var value = info[expr.name] || 0;
+      info[expr.name] = value + 1;
+    } else if (!expr.isConst()) {
+      throw new Toy.Result(false);
+    }
+  }
+  function addCounts(expr, revPath) {
+    expr.walkPatterns([
+      {match: 'a * b', a: addCounts, b: addCounts},
+      {match: 'neg a', a: addCounts},
+      {match: 'a', a: mustBeVariable}
+    ]);
+    return true;
+  }
+  return (Toy.catchResult(addCounts.bind(null, term, null))
+          ? info
+          : null);
+}
+
+/**
  * Build a schema for a conjunction of hypotheses, ensuring all are in
  * the TermMap, with optional exclusions, a TermSet.  The schema is of
  * the form a1 && ... && an, where the "a"s are variables for the
@@ -5882,6 +5913,7 @@ Toy.arrange = arrange;
 Toy.listFacts = listFacts;
 Toy.transformApplyInvert = transformApplyInvert;
 Toy.termGetRightVariable = termGetRightVariable;
+Toy.varFactorCounts = varFactorCounts;
 
 Toy.traceRule = traceRule;
 

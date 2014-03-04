@@ -2113,6 +2113,20 @@ var testCase = {
     assertEqual('v', getRight('2 * v'));
   },
 
+  testVarFactorCounts: function() {
+    // Note that varFactorCounts exercises Expr.walkPatterns.
+    function check(expected, term) {
+      deepEqual(Toy.varFactorCounts(Toy.parse(term)), expected);
+    }
+    check({x: 1}, 'x');
+    check({}, '2');
+    check({x: 1}, 'x * 2');
+    check({x: 2, y: 1}, 'x * y * x * 5');
+    check(null, 'z + 1');
+    check(null, 'x * (y + 1)');
+    check({x: 2}, 'x * neg x');
+  },
+
   testBuildHypSchema: function() {
     var rules = Toy.rules;
     var bs = Toy._buildHypSchema;

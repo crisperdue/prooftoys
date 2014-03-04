@@ -1725,6 +1725,42 @@ Expr.prototype.searchTerms = function(test, path) {
             this.getLeft().searchTerms(test, new Path('left', path)))));
 };
 
+/**
+ * Searches for a pattern that matches this.  If it finds one, calls
+ * any action function for each schema variable at each of the
+ * variable's occurrences in the matching schema, passing it the
+ * subexpression of this that matches and reverse path to the
+ * occurrence.
+ *
+ * The patternInfo is a plain object with property "match" having the
+ * schema to match, and properties with names of schema variables
+ * having values that are the action function for the schema variable
+ * with that name.
+ */
+Expr.prototype.walkPatterns = function(patternInfos) {
+  var self = this;
+  function handleTerm(schemaTerm, revPath) {
+    // Note this is defined outside the loop, but it uses patternInfo
+    // and map, which are in scope in JavaScript.
+    if (schemaTerm.isVariable()) {
+      var name = schemaTerm.name;
+      if (name && patternInfo[name]) {
+        // Call the function associated with the name of this
+        // variable in the schema.
+        patternInfo[name].call(null, map[name], revPath);
+      }
+    }
+  }
+  for (var i = 0; i < patternInfos.length; i++) {
+    var patternInfo = patternInfos[i];
+    var schema = termify(patternInfo.match);
+    var map = this.matchSchema(schema);
+    if (map) {
+      schema.traverse(handleTerm);
+      break;
+    }
+  }
+};
 
 /**
 // Expr
