@@ -919,8 +919,8 @@ BasicRuleSelector.prototype.update = function() {
                   ? (self.stepEditor.showRuleType == 'algebra'
                      ? 'Try selecting the whole step or a numeric expression.'
                      : 'No actions available for the selection in this mode.')
-                  : ('Select an expression with a click, ' +
-                     'use a checkbox to select the step.')));
+                  : ('Select an expression with a click. ' +
+                     'Checkboxes select the step.')));
 };
 
 /**
