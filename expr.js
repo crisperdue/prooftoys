@@ -199,6 +199,13 @@ function Result(value) {
 }
 
 /**
+ * Throws a Result object with the given value as its value.
+ */
+function throwResult(value) {
+  throw new Result(value);
+}
+
+/**
  * Call the given function with the given arguments, returning the
  * undefined value if the function throws, else the value returned
  * from the function call.
@@ -215,13 +222,16 @@ function normalReturn(fn, _args) {
 }
 
 /**
- * Call the given function of no arguments.  If it throws a Result
- * object, return its "value".  Rethrow any other thrown value, and
- * return the function value if it does not throw.
+ * Call the given function, passing it any additional arguments given.
+ * If it throws a Result object, return its "value".  Rethrow any
+ * other thrown value, and return the function value if it does not
+ * throw.
  */
-function catchResult(fn) {
+function catchResult(fn, _args) {
+  var args = jQuery.makeArray(arguments);
+  args.shift();
   try {
-    return fn();
+    return fn.apply(undefined, args);
   } catch(e) {
     if (e instanceof Result) {
       return e.value;
@@ -4915,6 +4925,7 @@ Toy.track = track;
 Toy.trackingData = trackingData;
 
 Toy.Result = Result;
+Toy.throwResult = throwResult;
 Toy.catchResult = catchResult;
 Toy.normalReturn = normalReturn;
 Toy.Error = ErrorInfo;

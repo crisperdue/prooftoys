@@ -5799,7 +5799,7 @@ function varFactorCounts(term) {
     ]);
     return true;
   }
-  return (Toy.catchResult(addCounts.bind(null, term, null))
+  return (Toy.catchResult(addCounts, term, null)
           ? info
           : null);
 }
