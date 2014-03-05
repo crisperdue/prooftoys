@@ -2127,6 +2127,19 @@ var testCase = {
     check({x: 2}, 'x * neg x');
   },
 
+  testTermLeftThan: function() {
+    function left(a, b) {
+      return Toy.termLeftThan(Toy.termify(a), Toy.termify(b));
+    }
+    assert(left('x', '2'));
+    assert(!left('x', 'x * 2'));
+    assert(!left('x + 1', '2'));
+    assert(left('x * 2 * x', '3 * x'));
+    assert(left('x * y', 'y'));
+    assert(left('x * y', 'y * y * y'));
+    assert(!left('2', 'x'));
+  },
+
   testBuildHypSchema: function() {
     var rules = Toy.rules;
     var bs = Toy._buildHypSchema;

@@ -5805,6 +5805,36 @@ function varFactorCounts(term) {
 }
 
 /**
+ * Returns true iff the multiplicative term e1 belongs strictly to the
+ * left of term e2.  Each term must have varFactorCounts, and one must
+ * have more of some variable than the other.  This compares variable
+ * counts in lexical order by name, stopping at the first count that
+ * differs.
+ */
+function termLeftThan(e1, e2) {
+  var counts1 = varFactorCounts(e1);
+  var counts2 = varFactorCounts(e2);
+  var allKeys =
+    Object.keys(jQuery.extend({}, counts1 || {}, counts2 || {})).sort();
+  // If either expression does not have clear counts, don't require
+  // the terms to be ordered.
+  if (counts1 && counts2) {
+    for (var i = 0; i < allKeys.length; i++) {
+      var key = allKeys[i];
+      var count1 = counts1[key] || 0;
+      var count2 = counts2[key] || 0;
+      if (count1 > count2) {
+        return true;
+      }
+      if (count2 > count1) {
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Build a schema for a conjunction of hypotheses, ensuring all are in
  * the TermMap, with optional exclusions, a TermSet.  The schema is of
  * the form a1 && ... && an, where the "a"s are variables for the
@@ -5914,6 +5944,7 @@ Toy.listFacts = listFacts;
 Toy.transformApplyInvert = transformApplyInvert;
 Toy.termGetRightVariable = termGetRightVariable;
 Toy.varFactorCounts = varFactorCounts;
+Toy.termLeftThan = termLeftThan;
 
 Toy.traceRule = traceRule;
 
