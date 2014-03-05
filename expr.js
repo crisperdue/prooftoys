@@ -524,13 +524,13 @@ function getStepCounter() {
  * safe from capturing.  Unused, also its helper methods.
  */
 function decapture(target, replacement) {
-  var freeNames = replacement.freeNames();
+  var freeVars = replacement.freeVars();
   var allNames = {};
   replacement._addNames(allNames);
   target._addNames(allNames);
   // Now allNames contains every variable name occurring anywhere in
   // either expression.
-  return target._decapture(freeNames, allNames, null);
+  return target._decapture(freeVars, allNames, null);
 }
 
 
@@ -790,7 +790,7 @@ Expr.prototype.isBoolConst = function() {
  * Does this Expr have any variable(s)?
  */
 Expr.prototype.hasVars = function() {
-  var map = this.freeNames();
+  var map = this.freeVars();
   return !isEmpty(map);
 };
 
@@ -822,7 +822,7 @@ Expr.prototype.isInfixCall = function() {
  */
 Expr.prototype.freshVar = function(name) {
   name = name || 'x';
-  return genVar(name, this.freeNames());
+  return genVar(name, this.freeVars());
 };
 
 /**
@@ -1102,7 +1102,7 @@ Expr.prototype.removeUser = function() {
  * Finds and returns a Map of free variable names in this expression,
  * from name to true.
  */
-Expr.prototype.freeNames = function() {
+Expr.prototype.freeVars = function() {
   var byName = {};
   this._addFreeNames(byName, null);
   return byName;
@@ -1846,7 +1846,7 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // Adds all variable names that occur free in this Expr to the result
 // object, with the Atom object as the value associated with each name
 // found.  Assumes that names in the Bindings object are bound in this
-// expression's lexical context.  Private helper for the freeNames
+// expression's lexical context.  Private helper for the freeVars
 // method.
 //
 //
@@ -1857,10 +1857,10 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // the given bindings.
 //
 //
-// _decapture(freeNames, allNames, bindings)
+// _decapture(freeVars, allNames, bindings)
 //
 // Returns a copy of this expression with any bound variables present
-// in freeNames renamed to names not present in allNames and distinct
+// in freeVars renamed to names not present in allNames and distinct
 // from each other.  Assumes that the bindings define suitable
 // renamings determined by enclosing scope, mapping from old variable
 // name to new variable name.
@@ -2119,7 +2119,7 @@ Atom.prototype._boundNames = function(path, bindings) {
   }
 };
 
-Atom.prototype._decapture = function(freeNames, allNames, bindings) {
+Atom.prototype._decapture = function(freeVars, allNames, bindings) {
   // This does not account for pnames, but they should only be for constants.
   var newName = getBinding(this.name, bindings);
   return newName ? new Atom(newName) : this;
@@ -2329,9 +2329,9 @@ Call.prototype._boundNames = function(path, bindings) {
   }
 };
 
-Call.prototype._decapture = function(freeNames, allNames, bindings) {
-  var fn = this.fn._decapture(freeNames, allNames, bindings);
-  var arg = this.arg._decapture(freeNames, allNames, bindings);
+Call.prototype._decapture = function(freeVars, allNames, bindings) {
+  var fn = this.fn._decapture(freeVars, allNames, bindings);
+  var arg = this.arg._decapture(freeVars, allNames, bindings);
   return (fn == this.fn && arg == this.arg ? this : new Call(fn, arg));
 };
 
@@ -2690,15 +2690,15 @@ Lambda.prototype._boundNames = function(path, bindings) {
   }
 };
 
-Lambda.prototype._decapture = function(freeNames, allNames, bindings) {
+Lambda.prototype._decapture = function(freeVars, allNames, bindings) {
   // TODO: Share Vars more for efficiency.
   var oldName = this.bound.name;
-  var newName = freeNames[oldName] ? genName(oldName, allNames) : oldName;
+  var newName = freeVars[oldName] ? genName(oldName, allNames) : oldName;
   // Add a binding only when the new name is different.
   var newBindings = ((newName == oldName)
                      ? bindings
                      : new Bindings(oldName, newName, bindings));
-  var body = this.body._decapture(freeNames, allNames, newBindings);
+  var body = this.body._decapture(freeVars, allNames, newBindings);
   return (body == this.body) ? this : new Lambda(new Atom(newName), body);
 };
 
@@ -3718,7 +3718,7 @@ function define(name, definition) {
     // Benign redefinition, do nothing.
     return;
   }
-  for (var n in definition.freeNames()) {
+  for (var n in definition.freeVars()) {
     assert(false, 'Definition has free variables: ' + name);
   }
   return definitions[name] = equal(name, definition);
@@ -3731,10 +3731,10 @@ function define(name, definition) {
 function defineCases(name, ifTrue, ifFalse) {
   assert(isConstantName(name), 'Not a constant name: ' + name);
   assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
-  for (var n in ifTrue.freeNames()) {
+  for (var n in ifTrue.freeVars()) {
     assert(false, 'Definition has free variables: ' + name);
   }
-  for (var n in ifFalse.freeNames()) {
+  for (var n in ifFalse.freeVars()) {
     assert(false, 'Definition has free variables: ' + name);
   }
   definitions[name] = {T: equal(call(name, 'T'), ifTrue),

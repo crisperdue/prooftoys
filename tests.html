@@ -494,9 +494,9 @@ var testCase = {
     assertEqual('(((y + 3) + y) = 5)', steps[2].unHyp());
   },
 
-  testFreeNames: function() {
+  testFreeVars: function() {
     var wff = lambda(x, call(f, x));
-    var map = wff.freeNames();
+    var map = wff.freeVars();
     assertEqual(true, map['f']);
     assertEqual(undefined, map['x']);
   },
