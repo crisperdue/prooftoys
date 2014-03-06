@@ -2797,7 +2797,7 @@ var ruleInfo = {
    * Moves a term to the left in a sequence of summed terms.
    * The sequence must be "flat" (associated to the left).
    */
-  moveLeftTerm: {
+  moveTermLeft: {
     toOffer: function(step, expr) {
       var path = step.prettyPathTo(expr);
       var lastSegment = path.last();
@@ -2809,24 +2809,23 @@ var ruleInfo = {
       }
     },
     action: function(step, path_arg) {
-      var result = step;
-      var path = step.prettifyPath(path_arg);
-      var lastSegment = path.last();
-      if (lastSegment == 'right') {
-        var parentPath = path.parent();
-        var parent = step.locate(parentPath);
-        var facts = [
-          'a + b + c = a + c + b',
-          'a + b - c = a - c + b',
-          'a - b + c = a + c - b',
-          'a - b - c = a - c - b',
-          // If none of the above is a match:
-          'a + b = b + a',
-          'a - b = neg b + a'
-        ];
-        result = applyFactsOnce(step, parentPath, facts);
-      }
-      return result.justify('moveLeftTerm', arguments, [step]);
+      var facts = [
+        'a + b + c = a + c + b',
+        'a + b - c = a - c + b',
+        'a - b + c = a + c - b',
+        'a - b - c = a - c - b',
+        // If none of the above is a match:
+        'a + b = b + a',
+        'a - b = neg b + a'
+      ];
+      var result = Toy.each(facts, function(fact_arg) {
+          var schema = Toy.termify(fact_arg).getLeft();
+          var info = step.matchSchemaPart(path_arg, schema, 'b');
+          if (info) {
+            return rules.rewriteWithFact(step, info.path, fact_arg);
+          }
+        });
+      return (result || step).justify('moveTermLeft', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
@@ -2850,7 +2849,7 @@ var ruleInfo = {
       var path = step.prettifyPath(path_arg);
       var prev = step;
       while (true) {
-        var further = rules.moveLeftTerm(prev, path);
+        var further = rules.moveTermLeft(prev, path);
         var leftPath = prev.leftNeighborPath(path, ['+', '-']);
         if (further.matches(prev) ||
             !termLeftThan(step.locate(path), step.locate(leftPath))) {
