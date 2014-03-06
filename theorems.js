@@ -2830,9 +2830,43 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: move term to the left',
-    description: 'move term to the left',
+    menu: 'algebra: move term one place left',
+    description: 'move term one place left',
     labels: 'algebra'
+  },
+
+  /**
+   * Moves term to the left as needed until it does not necessarily
+   * belong to the left of its left neighbor.
+   * 
+   */
+  placeTermLeftward: {
+    toOffer: function(step, expr) {
+      var path = step.prettyPathTo(expr);
+      var leftPath = step.leftNeighborPath(path, ['+', '-']);
+      return leftPath && termLeftThan(expr, step.locate(leftPath));
+    },
+    action: function(step, path_arg) {
+      var path = step.prettifyPath(path_arg);
+      var prev = step;
+      while (true) {
+        var further = rules.moveLeftTerm(prev, path);
+        var leftPath = prev.leftNeighborPath(path, ['+', '-']);
+        if (further.matches(prev) ||
+            !termLeftThan(step.locate(path), step.locate(leftPath))) {
+          return further.justify('placeTermLeftward', arguments, [step]);
+        }
+        path = leftPath;
+        prev = further;
+      }
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'algebra: move term left as needed',
+    description: 'move term left as needed',
+    // Could be algebra, but this rule seems better for more advanced
+    // students.
+    labels: ''
   },
 
   /** TODO: Decide whether to keep or remove this rule.
@@ -5756,7 +5790,7 @@ function tryArithmetic(term) {
 /**
  * If the given term (with possible multiplication operator) has
  * a variable "all the way to the right", returns the variable,
- * otherwise null.
+ * otherwise null.  Also works with a term of the form (neg <v>).
  *
  * TODO: Consider supporting a term with a denominator.
  */
