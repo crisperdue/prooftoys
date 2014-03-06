@@ -687,8 +687,14 @@ StepEditor.prototype.offerable = function(ruleName) {
       // now if there is a test, check that the custom test passes.
       // This way the test can assume for example that there is a
       // selected term.
-      var test = info.toOffer;
-      return !test || test(step, step.selection);
+      var offerTest = info.toOffer;
+      if (info.toOffer) {
+        return info.toOffer(step, step.selection);
+      }
+      if (info.test) {
+        return info.test(step, step.locate(step.selection));
+      }
+      return true;
     }
   } else {
     // No selection, the rule must take no step or site.
@@ -920,7 +926,7 @@ BasicRuleSelector.prototype.update = function() {
                      ? 'Try selecting the whole step or a numeric expression.'
                      : 'No actions available for the selection in this mode.')
                   : ('Select an expression with a click. ' +
-                     'Checkboxes select the step.')));
+                     'Checkbox selects the step.')));
 };
 
 /**
