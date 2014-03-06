@@ -2752,6 +2752,21 @@ var ruleInfo = {
    * The sequence must be "flat", associated to the left.
    */
   moveTermRight: {
+    data: function() {
+      var data = {
+        factsA: [
+          'neg a + b = b - a',
+          'a + b = b + a',
+          'a - b = neg b + a'
+        ],
+        factsB: [
+          'a + b + c = a + c + b',
+          'a + b - c = a - c + b',
+          'a - b + c = a + c - b',
+          'a - b - c = a - c - b'
+        ]};
+      return data;
+    },
     toOffer: function(step, expr) {
       // TODO: Clean up this and test for moveTermLeft
       //   by making facts into data and using matchSchemaPart.
@@ -2774,20 +2789,9 @@ var ruleInfo = {
       }
     },
     action: function(step, path_arg) {
-      var factsB = [
-        'a + b + c = a + c + b',
-        'a + b - c = a - c + b',
-        'a - b + c = a + c - b',
-        'a - b - c = a - c - b',
-        'neg b + a = a - b',
-        'b + a = a + b',
-        'b - a = neg a + b'
-      ];
-      var factsA = [
-        'neg a + b = b - a',
-        'a + b = b + a',
-        'a - b = neg b + a'
-      ];
+      var data = ruleData.moveTermRight;
+      var factsB = data.factsB;
+      var factsA = data.factsA;
       function tryFact(name, fact_arg) {
         var schema = Toy.termify(fact_arg).getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
