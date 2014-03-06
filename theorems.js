@@ -2751,45 +2751,59 @@ var ruleInfo = {
    * Moves a term to the right in a sequence of summed terms.
    * The sequence must be "flat", associated to the left.
    */
-  moveRightTerm: {
+  moveTermRight: {
     toOffer: function(step, expr) {
+      // TODO: Clean up this and test for moveTermLeft
+      //   by making facts into data and using matchSchemaPart.
       var path = step.prettyPathTo(expr);
+      if (path.isEnd()) {
+        return false;
+      }
+      var parentPath = path.parent();
+      var parent = step.locate(parentPath);
       var lastSegment = path.last();
       if (lastSegment == 'left') {
-        var parent = step.locate(path.parent());
         return parent.isCall2('+') || parent.isCall2('-');
+      } else if (lastSegment == 'right' &&
+                 !parentPath.isEnd() &&
+                  parentPath.last() == 'left') {
+        var parent2 = step.locate(parentPath.parent());
+        return parent2.isCall2('+') || parent2.isCall2('-');
       } else {
         return false;
       }
     },
     action: function(step, path_arg) {
-      var path = step.prettifyPath(path_arg);
-      var parentPath = path.parent();
-      var lastSegment = path.last();
-      var result = step;
-      if (lastSegment == 'left') {
-        var commutes = [
-          'neg a + b = b - a',
-          'a + b = b + a',
-          'a - b = neg b + a'
-        ];
-        result = applyFactsOnce(step, parentPath, commutes);
-      } else if (lastSegment == 'right' && parentPath.last() == 'left') {
-        var associates = [
-          'a + b + c = a + c + b',
-          'a + b - c = a - c + b',
-          'a - b + c = a + c - b',
-          'a - b - c = a - c - b'
-        ];
-        var path2 = parentPath.parent();
-        result = applyFactsOnce(step, path2, associates);
+      var factsB = [
+        'a + b + c = a + c + b',
+        'a + b - c = a - c + b',
+        'a - b + c = a + c - b',
+        'a - b - c = a - c - b',
+        'neg b + a = a - b',
+        'b + a = a + b',
+        'b - a = neg a + b'
+      ];
+      var factsA = [
+        'neg a + b = b - a',
+        'a + b = b + a',
+        'a - b = neg b + a'
+      ];
+      function tryFact(name, fact_arg) {
+        var schema = Toy.termify(fact_arg).getLeft();
+        var info = step.matchSchemaPart(path_arg, schema, name);
+        if (info) {
+          return rules.rewriteWithFact(step, info.path, fact_arg);
+        }
       }
-      return result.justify('moveRightTerm', arguments, [step]);
+      var result = (Toy.each(factsB, tryFact.bind(null, 'b')) ||
+                    Toy.each(factsA, tryFact.bind(null, 'a')) ||
+                    step);
+      return result.justify('moveTermRight', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: move term to the right',
-    description: 'move term to the right',
+    menu: 'algebra: move term right',
+    description: 'move term right',
     labels: 'algebra'
   },
 
@@ -2829,8 +2843,8 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: move term one place left',
-    description: 'move term one place left',
+    menu: 'algebra: move term left',
+    description: 'move term left',
     labels: 'algebra'
   },
 
