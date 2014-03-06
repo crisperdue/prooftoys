@@ -726,13 +726,28 @@ var testCase = {
       return '' + e.leftNeighborPath(path, ['+', '-']);
     }
     assertEqual('null', leftPath('x + y', '/left'));
-    assertEqual('/left', leftPath('x + y', '/right'))
-    assertEqual('/left', leftPath('x - y', '/right'))
-    assertEqual('null', leftPath('x * y', '/right'))
-    assertEqual('null', leftPath('f x', '/arg'))
-    assertEqual('/left/right', leftPath('x + y + z', '/right'))
-    assertEqual('/left/right', leftPath('x - y + z', '/right'))
-    assertEqual('/left/left/right', leftPath('x + y + z + w', '/left/right'))
+    assertEqual('/left', leftPath('x + y', '/right'));
+    assertEqual('/left', leftPath('x - y', '/right'));
+    assertEqual('null', leftPath('x * y', '/right'));
+    assertEqual('null', leftPath('f x', '/arg'));
+    assertEqual('/left/right', leftPath('x + y + z', '/right'));
+    assertEqual('/left/right', leftPath('x - y + z', '/right'));
+    assertEqual('/left/left/right', leftPath('x + y + z + w', '/left/right'));
+  },
+
+  testRightNeighborPath: function() {
+    function rightPath(expr, path) {
+      var e = Toy.termify(expr);
+      return '' + e.rightNeighborPath(path, ['+', '-']);
+    }
+    assertEqual('null', rightPath('x + y', '/right'));
+    assertEqual('/right', rightPath('x + y', '/left'));
+    assertEqual('/right', rightPath('x - y', '/left'));
+    assertEqual('null', rightPath('x * y', '/left'));
+    assertEqual('null', rightPath('f x', '/arg'));
+    assertEqual('/right', rightPath('x + y + z', '/left/right'));
+    assertEqual('/right', rightPath('x - y + z', '/left/right'));
+    assertEqual('/left/right', rightPath('x + y + z + w', '/left/left/right'));
   },
 
   testAncestors: function() {

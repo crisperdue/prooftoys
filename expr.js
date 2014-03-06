@@ -1465,6 +1465,42 @@ Expr.prototype.leftNeighborPath = function(path_arg, operators) {
 };
 
 /**
+ * Like leftNeighborPath, but gets a right neighbor expression if
+ * there is one, or null if not.
+ */
+Expr.prototype.rightNeighborPath = function(path_arg, operators) {
+  var path = Toy.path(path_arg);
+  if (path.isEnd()) {
+    return null;
+  }
+  // First check if this is a left operand.
+  var parentPath = path.parent();
+  var parent = this.locate(parentPath);
+  if (!(parent.isCall2() && parent.getBinOp().in(operators))) {
+    return null;
+  }
+  if (path.last() == 'left') {
+    return parentPath.concat('/right');
+  }
+  // Then check if this is a right operand with grandparent
+  // a suitable binary expression.
+  if (parentPath.isEnd()) {
+    return null;
+  }
+  if (parentPath.last() != 'left') {
+    return null;
+  }
+  var parentPath2 = parentPath.parent();
+  var parent2 = this.locate(parentPath2);
+  if (parent2.isCall2() && parent2.getBinOp().in(operators)) {
+    // Grandparent expression is a call to another binop.
+    // Return a path to its right operand.
+    return parentPath2.concat(Toy.path('/right'));
+  }
+  return null;
+};
+
+/**
  * Returns an array of the "ancestor" expressions of the subexpression
  * of this referenced by the path, starting with this and including
  * the one at the end of the path.  Returns exactly one ancestor per
