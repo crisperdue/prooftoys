@@ -967,6 +967,44 @@ Expr.prototype.alphaMatch = function(expr_arg) {
 Expr.prototype.findSubst = Expr.prototype.matchSchema;
 
 /**
+ * Attempts to match the given schema to a part of this, so the
+ * variable in the schema with the given name matches the part of this
+ * at the given path.
+ *
+ * If successful, returns a substitution with an extra "path" property
+ * containing the path to the part of this that matches the entire
+ * schema.  The rest of the substitution maps from names of schema
+ * variables to subexpressions of this that match them.
+ *
+ * Assumes that the name only occurs once within the schema.
+ *
+ * The implementation idea is that the path to the part of this
+ * matching the entire schema must be a prefix of the given path to
+ * the part of this matching the schema variable.  If there is such a
+ * path this method finds it, locates part of this expression using
+ * it, and matches that subexpression with the schema.
+ */
+Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, name) {
+  var schema = termify(schema_arg);
+  var targetPath = this.prettifyPath(Toy.path(path_arg));
+  function matchName(expr) {
+    return expr instanceof Atom && expr.name == name;
+  }
+  var schemaPath = schema.prettyPathTo(matchName);
+  var prefix = targetPath.upTo(schemaPath);
+  if (!prefix) {
+    return null;
+  }
+  var target = this.locate(prefix);
+  var subst = target.matchSchema(schema);
+  if (subst) {
+    subst.path = prefix;
+    return subst;
+  }
+  return null;
+}
+
+/**
  * Returns a new expression resulting from substitution of copies of
  * the replacement expression for all free occurrences of the given
  * name (or variable) in this expression.  Used by Axiom 4
@@ -3045,6 +3083,32 @@ Path.prototype.parent = function() {
     return path();
   } else {
     return new Path(segment, this._rest.parent());
+  }
+};
+
+/**
+ * Returns the prefix of this path preceding the given tail.  If the
+ * given tail is not actually a tail of this path, returns null.  No
+ * conversion between pretty and non-pretty paths is done, each must
+ * have the same style.
+ *
+ * If the tail is given as a string it will be converted to a path.
+ */
+Path.prototype.upTo = function(tail) {
+  var revTail = tail.reverse();
+  var revPath = this.reverse();
+  while (true) {
+    if (revTail.isEnd()) {
+      return revPath.reverse();
+    }
+    if (revPath.isEnd()) {
+      return null;
+    }
+    if (revPath.segment != revTail.segment) {
+      return null;
+    }
+    revPath = revPath._rest;
+    revTail = revTail._rest;
   }
 };
 

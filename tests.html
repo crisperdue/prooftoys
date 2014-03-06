@@ -816,6 +816,19 @@ var testCase = {
     assertEqual('', Toy.path('/arg').parent().toString());
   },
 
+  testPathUpTo: function() {
+    function check(expected, path, tail) {
+      assertEqual(expected.toString(),
+                  '' + Toy.path(path).upTo(Toy.path(tail)));
+    }
+    check('/left', '/left', '');
+    check('/left/right', '/left/right', '');
+    check('/left', '/left/right', '/right');
+    check('', '/left/right', '/left/right');
+    check('null', '/left', '/right');
+    check('null', '/left/right', '/left/right/left');
+  },
+
   testPathLast: function() {
     var p = Toy.path('/left/right/fn/arg/body');
     assertEqual('body', p.last());
@@ -856,6 +869,29 @@ var testCase = {
     var step = Toy.rules.eqSelf(term).apply('instMultiVars', subst);
     console.log(step.str);
     assert(step.getRight().matches(term2));
+  },
+
+  testMatchSchemaPart: function() {
+    function check(expectSuccess, term_arg, path, schema_arg, name) {
+      var term = typeof term_arg == 'string' ? Toy.parse(term_arg) : term_arg;
+      var schema = Toy.termify(schema_arg);
+      var subst = term.matchSchemaPart(path, schema, name);
+      if (expectSuccess) {
+        if (subst) {
+          console.log('Subst', Toy.debugString(subst));
+          assertEqual(term.locate(subst.path).toString(),
+                      schema.subFree(subst));
+        } else {
+          assert(false, 'No match found');
+        }
+      } else {
+        assertEqual(null, subst);
+      }
+    }
+    check(true, '3 * x + z', '/left/right', 'a * b', 'b');
+    check(true, '3 * x + z', '/left', 'a + b', 'a');
+    check(false, '3 * x + z', '/left', 'a + b', 'b');
+    assertEqual(1, 2);
   },
 
   testSearchCalls: function() {
