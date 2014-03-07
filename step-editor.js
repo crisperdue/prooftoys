@@ -796,13 +796,13 @@ function acceptsSelection(step, ruleName) {
  * If given, the term argument should be a term to format using
  * {term} in the rule's "menu" format string.
  */
-function ruleMenuText(ruleName, term) {
+function ruleMenuText(ruleName, term, step) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (Toy.isEmpty(info.inputs)) {
     // It is an axiom or theorem with no inputs.
     if (info.menu) {
-      return info.menu
+      return info.menu;
     }
     var thmText;
     if (info.formula) {
@@ -819,9 +819,19 @@ function ruleMenuText(ruleName, term) {
     }
   } else {
     // If there are inputs uses info.menu or some fallback.
+    var right = '?';
+    if (term) {
+      // Set up right neighbor info for rules.groupToRight.
+      var pathToTerm = step.prettyPathTo(term);
+      var parentPath = pathToTerm.upTo('/left') || pathToTerm.upTo('/left/right');
+      if (parentPath) {
+        var rightNeighbor = step.locate(parentPath).getRight();
+        right = rightNeighbor.toUnicode();
+      }
+    }
+    var formatArgs = {term: term && term.toUnicode(), right: right};
     return Toy.unicodify((info.menu &&
-                          Toy.format(info.menu,
-                                     {term: term && term.toUnicode()})) ||
+                          Toy.format(info.menu, formatArgs)) ||
                          info.formula || info.comment || '');
   }
 }
@@ -888,7 +898,7 @@ BasicRuleSelector.prototype.update = function() {
   var displayTexts = [];
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var text = ruleMenuText(ruleName, term);
+      var text = ruleMenuText(ruleName, term, step);
       displayTexts.push(text);
       byDisplay[text] = ruleName;
     });
