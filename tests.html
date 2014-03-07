@@ -893,6 +893,22 @@ var testCase = {
     check(false, '3 * x + z', '/left', 'a + b', 'b');
   },
 
+  testMatchFactPart: function() {
+    var facts = ['a - b = neg b + a', 'a + b + c = a + (b + c)'];
+    var step1 = rules.eqSelf('x + y + 10');
+    var step2 = rules.eqSelf('x - 5 * y');
+    var match = Toy.matchFactPart;
+    var pathToY = '/main/right/left/right';
+    assertEqual('y', step1.locate(pathToY));
+    var func = match(step1, pathToY, facts, 'b');
+    assertEqual('function', typeof func);
+    var result = func();
+    assert(result instanceof Toy.Call, 'is an Expr');
+    console.log('Result', result.str);
+    assertEqual('(x + (y + 10))', result.getMain().getRight());
+    assertEqual(undefined, match(step2, '/main/right', facts, 'b'));
+  },
+
   testSearchCalls: function() {
     var names = [];
     var paths = [];

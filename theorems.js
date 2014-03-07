@@ -5883,6 +5883,28 @@ function termLeftThan(e1, e2) {
 }
 
 /**
+ * Searches the list of equational facts in order for one that matches
+ * a subexpression of the given step.  In particular, the part of the
+ * step at path must match with the variable in the LHS of the fact
+ * having the given name, which should occur exactly once in the
+ * fact's LHS.
+ *
+ * If this finds such a fact it returns a function of no arguments
+ * that applies the fact to the step and returns the result.
+ */
+function matchFactPart(step, path, factList, name) {
+  return Toy.each(factList, function(fact_arg) {
+    var schema = Toy.termify(fact_arg).getLeft();
+    var info = step.matchSchemaPart(path, schema, name);
+    if (info) {
+      return function() {
+        return rules.rewriteWithFact(step, info.path, fact_arg);
+      };
+    }
+  });
+}
+
+/**
  * Build a schema for a conjunction of hypotheses, ensuring all are in
  * the TermMap, with optional exclusions, a TermSet.  The schema is of
  * the form a1 && ... && an, where the "a"s are variables for the
@@ -5993,6 +6015,7 @@ Toy.transformApplyInvert = transformApplyInvert;
 Toy.termGetRightVariable = termGetRightVariable;
 Toy.varFactorCounts = varFactorCounts;
 Toy.termLeftThan = termLeftThan;
+Toy.matchFactPart = matchFactPart;
 
 Toy.traceRule = traceRule;
 
