@@ -3095,7 +3095,7 @@ Path.prototype.parent = function() {
  * If the tail is given as a string it will be converted to a path.
  */
 Path.prototype.upTo = function(tail) {
-  var revTail = tail.reverse();
+  var revTail = path(tail).reverse();
   var revPath = this.reverse();
   while (true) {
     if (revTail.isEnd()) {
