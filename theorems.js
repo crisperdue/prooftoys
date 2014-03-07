@@ -2850,6 +2850,44 @@ var ruleInfo = {
   },
 
   /**
+   * Rule to force association to the right for addition, subtraction,
+   * multiplication, and division.
+   */
+  groupToRight: {
+    data: function() {
+      var facts = [
+        'a + b + c = a + (b + c)',
+        'a + b - c = a + (b - c)',
+        'a - b + c = a + (c - b)',
+        'a - b - c = a - (b + c)',
+        'a * b * c = a * (b * c)',
+        'a * b / c = a * (b / c)',
+        'a / b * c = a * (c / b)',
+        'a / b / c = a / (b * c)'
+      ];
+      return facts;
+    },
+    toOffer: function(step, expr) {
+      var facts = ruleData.groupToRight;
+      return matchFactPart(step, step.pathTo(expr), facts, 'b');
+    },
+    action: function(step, path) {
+      var facts = ruleData.groupToRight;
+      var func = matchFactPart(step, path, facts, 'b');
+      var result = step;
+      if (func) {
+        result = func();
+      }
+      return result.justify('groupToRight', arguments, [step]);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'algebra: group {term} with {right}',
+    description: 'group to the right',
+    labels: 'algebra'
+  },
+
+  /**
    * Moves term to the left as needed until it does not necessarily
    * belong to the left of its left neighbor.
    * 
