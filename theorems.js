@@ -2768,25 +2768,19 @@ var ruleInfo = {
       return data;
     },
     toOffer: function(step, expr) {
-      // TODO: Clean up this and test for moveTermLeft
-      //   by making facts into data and using matchSchemaPart.
-      var path = step.prettyPathTo(expr);
-      if (path.isEnd()) {
-        return false;
+      var path = step.pathTo(expr);
+      var data = ruleData.moveTermRight;
+      var factsB = data.factsB;
+      var factsA = data.factsA;
+      // Truthy value if the given name in the LHS of the fact can
+      // match the part of this at the selected path.
+      function testFact(name, fact_arg) {
+        var schema = Toy.termify(fact_arg).getLeft();
+        var info = step.matchSchemaPart(path, schema, name);
+        return info || undefined;
       }
-      var parentPath = path.parent();
-      var parent = step.locate(parentPath);
-      var lastSegment = path.last();
-      if (lastSegment == 'left') {
-        return parent.isCall2('+') || parent.isCall2('-');
-      } else if (lastSegment == 'right' &&
-                 !parentPath.isEnd() &&
-                  parentPath.last() == 'left') {
-        var parent2 = step.locate(parentPath.parent());
-        return parent2.isCall2('+') || parent2.isCall2('-');
-      } else {
-        return false;
-      }
+      return (Toy.each(factsB, testFact.bind(null, 'b')) ||
+              Toy.each(factsA, testFact.bind(null, 'a')));
     },
     action: function(step, path_arg) {
       var data = ruleData.moveTermRight;
@@ -2827,22 +2821,25 @@ var ruleInfo = {
       }
     },
     action: function(step, path_arg) {
-      var facts = [
+      var factsC = [
         'a + b + c = a + c + b',
         'a + b - c = a - c + b',
         'a - b + c = a + c - b',
-        'a - b - c = a - c - b',
-        // If none of the above is a match:
+        'a - b - c = a - c - b'
+      ];
+      var factsB = [
         'a + b = b + a',
         'a - b = neg b + a'
       ];
-      var result = Toy.each(facts, function(fact_arg) {
-          var schema = Toy.termify(fact_arg).getLeft();
-          var info = step.matchSchemaPart(path_arg, schema, 'b');
-          if (info) {
-            return rules.rewriteWithFact(step, info.path, fact_arg);
-          }
-        });
+      function tryFact(name, fact_arg) {
+        var schema = Toy.termify(fact_arg).getLeft();
+        var info = step.matchSchemaPart(path_arg, schema, name);
+        if (info) {
+          return rules.rewriteWithFact(step, info.path, fact_arg);
+        }
+      }
+      var result = (Toy.each(factsC, tryFact.bind(null, 'c')) ||
+                    Toy.each(factsB, tryFact.bind(null, 'b')));
       return (result || step).justify('moveTermLeft', arguments, [step]);
     },
     inputs: {site: 1},
