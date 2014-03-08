@@ -5163,6 +5163,7 @@ $.extend(algebraFacts, algebraIdentities);
  */
 var basicSimpFacts = [
                       'a - a = 0',
+                      'a + neg a = 0',
                       'a + 0 = a',
                       '0 + a = a',
                       'a * 1 = a',
@@ -5170,10 +5171,7 @@ var basicSimpFacts = [
                       'a - 0 = a',
                       '0 - a = neg a',
                       {stmt: 'a * (b * c) = a * b * c'},
-                      {stmt: 'a * b * c = a * c * b',
-                       where: '!subst.a.hasVars() && !subst.c.hasVars()'},
-                      {stmt: 'a * b / c = a / c * b',
-                       where: '!subst.a.hasVars() && !subst.c.hasVars()'},
+                      'neg (a * b) = neg a * b',
                       {stmt: 'a + b + c = a + (b + c)',
                        where: '!subst.b.hasVars() && !subst.c.hasVars()'},
                       {stmt: 'a + b - c = a + (b - c)',
@@ -5183,11 +5181,7 @@ var basicSimpFacts = [
                       {stmt: 'a - b - c = a - (b + c)',
                        where: '!subst.b.hasVars() && !subst.c.hasVars()'},
                       '0 * a = 0',
-                      'a * 0 = 0',
-                      'a + b - b = a',
-                      'a - b + b = a',
-                      'a + neg b + b = a',
-                      'a + b + neg b = a'
+                      'a * 0 = 0'
                       ];
 
 /**
