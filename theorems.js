@@ -2650,6 +2650,12 @@ var ruleInfo = {
               }}};
       return data;
     },
+    toOffer: function(step, expr) {
+      return (expr.matchSchema('a * b') ||
+              expr.matchSchema('a / b') ||
+              expr.matchSchema('neg (a * b)') ||
+              expr.matchSchema('neg (a / b)'));
+    },
     action: function(step, path) {
       var context = ruleData.organizeFactors.context;
 
@@ -2662,8 +2668,8 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: organize factors',
-    description: 'organize the factors',
+    menu: 'algebra: put in standard form',
+    description: 'put in standard form',
     labels: 'algebra'
   },
 
