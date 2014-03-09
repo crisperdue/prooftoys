@@ -4832,6 +4832,17 @@ var negationFacts = {
       .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
       .rewrite('/main/right/right', 'neg (neg a) = a');
     }
+  },
+  'b != 0 ==> neg a / neg b = a / b': {
+    action: function() {
+      return rules.consider('neg a / neg b')
+      .rewrite('/main/right/left', 'neg a = -1 * a')
+      .rewrite('/main/right/right', 'neg a = -1 * a')
+      .rewrite('/main/right', 'a / (b * c) = a / b / c')
+      .rewrite('/main/right/left', 'a * b / c = a / c * b')
+      .apply('arithmetic', '/main/right/left/left')
+      .rewrite('/main/right/left', '1 * a = a');
+    }
   }
 };
 $.extend(algebraFacts, negationFacts);
