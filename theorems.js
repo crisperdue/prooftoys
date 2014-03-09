@@ -5197,6 +5197,27 @@ var basicSimpFacts = [
 function addFactsMap(map) {
   for (synopsis in map) {
     addFact(synopsis, map[synopsis].action);
+    addSwappedFact(synopsis);
+  }
+}
+
+function addSwappedFact(synopsis) {
+  var statement = getStatement(synopsis);
+  var statement2;
+  var subst;
+  if (subst = statement.matchSchema('a = b')) {
+    statement2 = Toy.parse('b = a').subFree(subst);
+  } else if (subst = statement.matchSchema('h ==> a = b')) {
+    statement2 = Toy.parse('h ==> b = a').subFree(subst);
+  }
+  if (statement2) {
+    if (isRecordedFact(statement2)) {
+      console.log('Swapped fact ' + statement2 + ' already recorded');
+    } else {
+      addFact(statement2, function() {
+          return rules.fact(synopsis).apply('eqnSwap');
+        });
+    }
   }
 }
 
@@ -5314,6 +5335,18 @@ function getResult(stmt) {
   var fact = _factsMap[goal.getMain().dump()];
   assert(fact, function() { return 'No such fact: ' + goal; });
   return fact.result();
+}
+
+
+/**
+ * Tests whether a fact with the given statement is recorded in the
+ * facts database.  The fact need only be recorded, not proved.
+ * Accepts any statement acceptable to getStatement.
+ */
+function isRecordedFact(stmt) {
+  var goal = getStatement(stmt);
+  // Same encoding as in addFact.
+  return !!_factsMap[goal.getMain().dump()];
 }
 
 /**
