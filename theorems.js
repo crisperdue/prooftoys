@@ -5198,7 +5198,11 @@ var basicSimpFacts = [
                       {stmt: 'a - b - c = a - (b + c)',
                        where: '!subst.b.hasVars() && !subst.c.hasVars()'},
                       '0 * a = 0',
-                      'a * 0 = 0'
+                      'a * 0 = 0',
+                      {stmt: 'a / b = neg a / neg b',
+                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
+                      {stmt: 'a * b / c = a / c * b',
+                       where: 'subst.a.isNumeral() && subst.c.isNumeral()'}
                       ];
 
 /**
