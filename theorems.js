@@ -2631,7 +2631,7 @@ var ruleInfo = {
         {apply: tryArithmetic},
         // From 2 / -3 for example produces -2 / 3 for minus two thirds.
         {stmt: 'a / b = neg a / neg b',
-         where: bothNumerals + ' && subst.b.value < 0'},
+         where: bothNumerals + ' && subst.b.getNumValue() < 0'},
         {matching:
          {schema: 'a / b',
           parts: {a: 'arithmetizers', b: 'arithmetizers'}}},
