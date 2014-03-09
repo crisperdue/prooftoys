@@ -5490,11 +5490,12 @@ function findMatchingCall(term, info) {
  * path: path to the portion of the given term matching the fact.
  */
 function findMatchingFact(facts_arg, cxt, term) {
-  function doEval(str, subst) {
+  function doEval(expr, subst) {
     // Suppress acccess to the enclosing "facts" variable.
     // OK for str to refer to "cxt" or "term".
     var facts;
-    return eval(str);
+    var $ = subst;
+    return eval(expr);
   }
   var facts = facts_arg;
   if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
