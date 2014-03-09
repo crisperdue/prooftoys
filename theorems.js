@@ -2469,7 +2469,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
     menu: 'algebra: simplify',
-    description: 'simplify math;; {in step step}',
+    description: 'simplify;; {step step}',
     labels: 'algebra'
   },
 
