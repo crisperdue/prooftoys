@@ -920,7 +920,7 @@ BasicRuleSelector.prototype.update = function() {
         }
       }
     }
-    var display = 'replace with ' + Toy.trimParens(toDisplay.toUnicode());
+    var display = 'change to ' + Toy.trimParens(toDisplay.toUnicode());
     if (subst) {
       display += (' <span class=description>(use ' +
                   Toy.trimParens(statement.toUnicode())
