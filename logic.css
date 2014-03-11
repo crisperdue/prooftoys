@@ -95,6 +95,12 @@ code {
   color: gray;
 }
 
+/* For rule menu descriptions */
+.description {
+  font-style: italic;
+  color: #55f;
+}
+
 /**
  * Truth tables for binary operators
  */

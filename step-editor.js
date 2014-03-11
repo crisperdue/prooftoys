@@ -728,7 +728,7 @@ $.extend(StepEditor.prototype, {
             var goal = fact.goal;
             if (goal.isEquation()) {
               var lhs = goal.eqnLeft();
-              if (expr.matchSchema(lhs)) {
+              if (!(lhs instanceof Toy.Atom) && expr.matchSchema(lhs)) {
                 facts.push(fact);
               }
             }
@@ -903,27 +903,29 @@ BasicRuleSelector.prototype.update = function() {
       byDisplay[text] = ruleName;
     });
   self.stepEditor.offerableFacts().forEach(function(fact) {
-    var expr = Toy.getStatement(fact);
-    var text = expr.toString();
-    if (expr.isEquation() && expr.isCall2('==>')) {
-      // Make the expr be the equation.
-      expr = expr.getRight();
+    var statement = Toy.getStatement(fact);
+    var text = statement.toString();
+    var toDisplay = statement;
+    if (statement.isEquation() && statement.isCall2('==>')) {
+      // Make the statement be the fact's equation.
+      toDisplay = statement = statement.getRight();
       // If as usual the LHS of the equation matches the selection,
-      // set expr to the result of substituting into the RHS.
+      // set toDisplay to the result of substituting into the RHS.
       var step = self.stepEditor.proofControl.selection;
       var selection = step && step.selection;
       if (selection) {
-        var subst = selection.matchSchema(expr.getLeft());
+        var subst = selection.matchSchema(statement.getLeft());
         if (subst) {
-          expr = expr.getRight().subFree(subst);
+          toDisplay = statement.getRight().subFree(subst);
         }
       }
     }
-    var display = expr.toUnicode();
-    if (display[0] === '(') {
-      display = display.slice(1, -1);
+    var display = 'replace with ' + Toy.trimParens(toDisplay.toUnicode());
+    if (subst) {
+      display += (' <span class=description>(use ' +
+                  Toy.trimParens(statement.toUnicode())
+                  + ')</span>');
     }
-    display = 'use ' + display;
     displayTexts.push(display);
     // Value of the option; format of "fact <fact text>"
     // indicates that the text defines a fact to use in
@@ -933,7 +935,7 @@ BasicRuleSelector.prototype.update = function() {
   displayTexts.sort(function(a, b) { return a.localeCompare(b); });
   displayTexts.forEach(function(display) {
       var $item = $('<div class="ruleItem noselect"/>');
-      $item.text(display);
+      $item.html(display);
       $item.data('ruleName', byDisplay[display]);
       self.$node.append($item);
     });
