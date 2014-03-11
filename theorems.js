@@ -2806,7 +2806,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: move term right',
+    menu: 'algebra: move term {term} right',
     description: 'move term right',
     labels: 'algebra'
   },
@@ -2850,7 +2850,7 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: move term left',
+    menu: 'algebra: move term {term} left',
     description: 'move term left',
     labels: 'algebra'
   },
