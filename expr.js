@@ -150,6 +150,13 @@ function format(fmt, map) {
     });
 }
 
+/**
+ * If text begins and ends with left and right parens, trims them off.
+ */
+function trimParens(text) {
+  return text.replace(/^\((.*)\)$/, '$1');
+}
+
 // Map from function name to data (calls and times)
 var trackingData = {};
 
@@ -5013,6 +5020,7 @@ function decodeArg(info, steps) {
 
 Toy.memo = memo;
 Toy.format = format;
+Toy.trimParens = trimParens;
 Toy.configure = configure;
 Toy.ownProperties = ownProperties;
 Toy.object0 = object0;
