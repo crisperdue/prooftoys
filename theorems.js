@@ -4381,12 +4381,14 @@ var algebraFacts = {
   'a + b = b + a': {
     action: function() {
       return rules.axiom('axiomCommutativePlus');
-    }
+    },
+    noSwap: true
   },
   'a * b = b * a': {
     action: function() {
       return rules.axiom('axiomCommutativeTimes');
-    }
+    },
+    noSwap: true
   },
   'a + (b + c) = a + b + c': {
     action: function() {
@@ -5211,11 +5213,18 @@ var basicSimpFacts = [
  */
 function addFactsMap(map) {
   for (synopsis in map) {
-    addFact(synopsis, map[synopsis].action);
-    addSwappedFact(synopsis);
+    var info = map[synopsis];
+    addFact(synopsis, info.action);
+    if (!info.noSwap) {
+      addSwappedFact(synopsis);
+    }
   }
 }
 
+/**
+ * Add the "converse" of an equational fact unless it is already
+ * recorded.
+ */  
 function addSwappedFact(synopsis) {
   var statement = getStatement(synopsis);
   var statement2;
