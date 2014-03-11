@@ -906,7 +906,18 @@ BasicRuleSelector.prototype.update = function() {
     var expr = Toy.getStatement(fact);
     var text = expr.toString();
     if (expr.isEquation() && expr.isCall2('==>')) {
+      // Make the expr be the equation.
       expr = expr.getRight();
+      // If as usual the LHS of the equation matches the selection,
+      // set expr to the result of substituting into the RHS.
+      var step = self.stepEditor.proofControl.selection;
+      var selection = step && step.selection;
+      if (selection) {
+        var subst = selection.matchSchema(expr.getLeft());
+        if (subst) {
+          expr = expr.getRight().subFree(subst);
+        }
+      }
     }
     var display = expr.toUnicode();
     if (display[0] === '(') {
