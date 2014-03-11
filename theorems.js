@@ -2507,7 +2507,7 @@ var ruleInfo = {
                   ];
       var simpler = applyToVisible(step, facts);
       var path1 = step.pathToVisiblePart();
-      var schemas = [{match: 'neg a', where: 'subst.a.isNumeral()'}];
+      var schemas = [{match: 'neg a', where: '$.a.isNumeral()'}];
       var info;
       while (info = findMatchingCall(simpler.locate(path1), schemas)) {
         simpler = rules.arithmetic(simpler, path1.concat(info.path));
@@ -2542,12 +2542,12 @@ var ruleInfo = {
     action: function(step) {
       var facts = ['a * (b * c) = a * b * c',
                    {stmt: 'a * b = b * a',
-                    where: '!subst.b.hasVars() && subst.a.hasVars()'},
+                    where: '!$.b.hasVars() && $.a.hasVars()'},
                    // TODO: Consider a * b * c = a * c * b instead.
                    {stmt: 'a * b * c = a * (c * b)',
-                    where: '!subst.c.hasVars() && subst.b.hasVars()'},
+                    where: '!$.c.hasVars() && $.b.hasVars()'},
                    {stmt: 'a * b / c = a / c * b',
-                    where: '!subst.a.hasVars() && !subst.c.hasVars()'}
+                    where: '!$.a.hasVars() && !$.c.hasVars()'}
                   ];
       var result = applyToVisible(step, facts);
       return result.justify('cleanUpTerms', arguments, [step]);
@@ -2582,7 +2582,7 @@ var ruleInfo = {
          {schema: 'a / b',
           parts: {a: 'flatteners'}}}
       ];
-      var numeralAfterVar = 'subst.c.isNumeral() & subst.b.isVariable()';
+      var numeralAfterVar = '$.c.isNumeral() & $.b.isVariable()';
       var movers = [
         // Move "minus signs" to the left.
         {stmt: 'a * neg b = neg a * b',
@@ -2596,7 +2596,7 @@ var ruleInfo = {
 
         // Move numerals toward the left.
         {stmt: 'a * b = b * a',
-         where: 'subst.b.isNumeral() & subst.a.isVariable()'},
+         where: '$.b.isNumeral() & $.a.isVariable()'},
         {stmt: 'a * b * c = a * c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
@@ -2607,7 +2607,7 @@ var ruleInfo = {
          {schema: 'a * b',
           parts: {a: 'movers'}}}
       ];
-      var numeralC = 'subst.c.isNumeral()';
+      var numeralC = '$.c.isNumeral()';
       var numerators = [
         {stmt: 'a / b * c = a * c / b', where: numeralC},
         {matching:
@@ -2626,12 +2626,12 @@ var ruleInfo = {
          {schema: 'a / b',
           parts: {a: 'denominators'}}}
       ];
-      var bothNumerals = 'subst.a.isNumeral() && subst.b.isNumeral() ';
+      var bothNumerals = '$.a.isNumeral() && $.b.isNumeral() ';
       var arithmetizers = [
         {apply: tryArithmetic},
         // From 2 / -3 for example produces -2 / 3 for minus two thirds.
         {stmt: 'a / b = neg a / neg b',
-         where: bothNumerals + ' && subst.b.getNumValue() < 0'},
+         where: bothNumerals + ' && $.b.getNumValue() < 0'},
         {matching:
          {schema: 'a / b',
           parts: {a: 'arithmetizers', b: 'arithmetizers'}}},
@@ -2685,26 +2685,26 @@ var ruleInfo = {
 
         // Move terms that are numerals to the back of the bus.
         var facts1 = [{stmt: 'a + b = b + a',
-                       where: '!subst.a.hasVars() && subst.b.hasVars()'},
+                       where: '!$.a.hasVars() && $.b.hasVars()'},
                       {stmt: 'a + b + c = a + c + b',
-                       where: '!subst.b.hasVars() && subst.c.hasVars()'}
+                       where: '!$.b.hasVars() && $.c.hasVars()'}
                      ];
         var term1 = applyTo(term0, facts1);
 
         // Group numerals together.
         var facts2 = [{stmt: 'a + b + c = a + (b + c)',
-                       where: '!subst.b.hasVars()'}
+                       where: '!$.b.hasVars()'}
                      ];
         var term2 = applyTo(term1, facts2);
 
         // These come from rules.cleanupTerms.
         var cleanFacts = ['a * (b * c) = a * b * c',
                           {stmt: 'a * b = b * a',
-                           where: '!subst.b.hasVars() && subst.a.hasVars()'},
+                           where: '!$.b.hasVars() && $.a.hasVars()'},
                           {stmt: 'a * b * c = a * (c * b)',
-                           where: '!subst.c.hasVars() && subst.b.hasVars()'},
+                           where: '!$.c.hasVars() && $.b.hasVars()'},
                           {stmt: 'a * b / c = a / c * b',
-                           where: '!subst.a.hasVars() && !subst.c.hasVars()'}
+                           where: '!$.a.hasVars() && !$.c.hasVars()'}
                          ];
         var term2a = applyTo(term2, cleanFacts);
 
@@ -2984,9 +2984,9 @@ var ruleInfo = {
   regroupBy: {
     action: function(step, path, varName) {
       var facts = [{stmt: 'a + b = b + a',
-                    where: 'subst.a.isNumeral() && !subst.b.isNumeral()'},
+                    where: '$.a.isNumeral() && !$.b.isNumeral()'},
                    {stmt: 'a + b + c = a + c + b',
-                    where: 'subst.b.isNumeral() && !subst.c.isNumeral()'}
+                    where: '$.b.isNumeral() && !$.c.isNumeral()'}
                   ];
       var result = applyToVisible(step, facts);
       return result.justify('regroup', arguments, [step]);
@@ -5190,19 +5190,19 @@ var basicSimpFacts = [
                       {stmt: 'a * (b * c) = a * b * c'},
                       'neg (a * b) = neg a * b',
                       {stmt: 'a + b + c = a + (b + c)',
-                       where: '!subst.b.hasVars() && !subst.c.hasVars()'},
+                       where: '!$.b.hasVars() && !$.c.hasVars()'},
                       {stmt: 'a + b - c = a + (b - c)',
-                       where: '!subst.b.hasVars() && !subst.c.hasVars()'},
+                       where: '!$.b.hasVars() && !$.c.hasVars()'},
                       {stmt: 'a - b + c = a - (b - c)',
-                       where: '!subst.b.hasVars() && !subst.c.hasVars()'},
+                       where: '!$.b.hasVars() && !$.c.hasVars()'},
                       {stmt: 'a - b - c = a - (b + c)',
-                       where: '!subst.b.hasVars() && !subst.c.hasVars()'},
+                       where: '!$.b.hasVars() && !$.c.hasVars()'},
                       '0 * a = 0',
                       'a * 0 = 0',
                       {stmt: 'a / b = neg a / neg b',
                        where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
                       {stmt: 'a * b / c = a / c * b',
-                       where: 'subst.a.isNumeral() && subst.c.isNumeral()'}
+                       where: '$.a.isNumeral() && $.c.isNumeral()'}
                       ];
 
 /**
@@ -5494,11 +5494,10 @@ function findMatchingCall(term, info) {
  * path: path to the portion of the given term matching the fact.
  */
 function findMatchingFact(facts_arg, cxt, term) {
-  function doEval(expr, subst) {
+  function doEval(expr, $) {
     // Suppress acccess to the enclosing "facts" variable.
     // OK for str to refer to "cxt" or "term".
     var facts;
-    var $ = subst;
     return eval(expr);
   }
   var facts = facts_arg;
