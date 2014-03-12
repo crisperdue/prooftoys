@@ -86,8 +86,11 @@ var siteTypes = {
  * controller: ProofEditor containing this StepEditor.
  * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
- * announceSolution: Announce if the result of a step solves for
- *   a variable.
+ * solutions: If any of these expressions (or strings) is an alphaMatch
+ *   with a step, announce the step as a solution.
+ * standardSolution: If no explicit solutions given, but the result of
+ *   a step solves for a variable (equal to a numeral or fraction),
+ *   announce that the problem is solved.
  *
  * showRuleType: Selects type of rules to show, as determined by offerApproved.
  *   Takes effect when this editor is reset.
@@ -102,7 +105,8 @@ function StepEditor(controller) {
   self.proofControl = controller.proofControl;
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
-  self.announceSolution = false;
+  self.solutions = [];
+  self.standardSolution = false;
 
   // Create a DIV with the step editor content.
   var div = $('<div class=stepEditor style="clear: both"></div>');
@@ -450,8 +454,9 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // has any effect.
     var self = this;
     function checkSolution(result) {
-      if (self.announceSolution && isSolution(result)) {
-        self.report('You have solved for ' + result.getMain().getLeft());
+      var message = self.isSolution(result);
+      if (message) {
+        self.report(message);
       }
     }
     Toy.afterRepaint(function() {
@@ -469,21 +474,36 @@ StepEditor.prototype._tryRule = function(rule, args) {
 };
 
 /**
- * Returns a truthy value iff the given step is an equation
- * of the form <var> = <expr>, where <expr> is a numeral or
- * a fraction.
+ * If this.solutions is nonempty, returns a solution message iff the
+ * step or its "main part" is an alphaMatch with some element of it.
+ * 
+ * If this.standardSolution is truthy, this returns a truthy value iff
+ * the given step is an equation of the form <var> = <expr>, where
+ * <expr> is a numeral or a fraction.
  */
-function isSolution(step) {
-  if (step.isEquation() && step.getMain().getLeft().isVariable()) {
+StepEditor.prototype.isSolution = function(step) {
+  console.log('Step is', step.str);
+  if (this.solutions.length) {
+    return Toy.each(this.solutions, function(solution) {
+        console.log('Checking against solution', solution.str);
+        if (Toy.termify(solution).alphaMatch(step) ||
+            Toy.termify(solution).alphaMatch(step.getMain())) {
+          return true;
+        }
+      }) && 'This is a valid solution';
+  } else if (this.standardSolution &&
+             step.isEquation() &&
+             step.getMain().getLeft().isVariable()) {
     var rhs = step.getMain().getRight();
-    return (rhs.isNumeral() ||
-            (rhs.isCall2('/') &&
-             rhs.getLeft().isNumeral() &&
-             rhs.getRight().isNumeral()));
+    return ((rhs.isNumeral() ||
+             (rhs.isCall2('/') &&
+              rhs.getLeft().isNumeral() &&
+              rhs.getRight().isNumeral()))
+            && 'You have solved for ' + step.getMain().getLeft().name);
   } else {
     return false;
   }
-}
+};
 
 /**
  * Fill in an argument from the selection if there is a selected
