@@ -92,13 +92,13 @@ code {
 }
 
 .ellipsis {
-  color: gray;
+  color: #888;
 }
 
 /* For rule menu descriptions */
 .description {
   font-style: italic;
-  color: #55f;
+  color: gray;
 }
 
 /**
