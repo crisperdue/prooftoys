@@ -4676,6 +4676,13 @@ var negationFacts = {
       return step2;
     }
   },
+  'a - neg b = a + b': {
+    action: function() {
+      return rules.consider('a - neg b')
+      .apply('apply', '/main/right')
+      .rewrite('/main/right/right', 'neg (neg a) = a');
+    }
+  },
   'a + neg b = a - b': {
     action: function() {
       return rules.eqnSwap(rules.fact('a - b = a + neg b'));
