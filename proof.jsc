@@ -177,6 +177,7 @@ var nextProofEditorId = 1;
  * Public properties:
  *
  * proofControl: ProofControl for the proof being edited.
+ * stepEditor: StepEditor for the proof being edited.
  */
 function ProofEditor() {
   var self = this;

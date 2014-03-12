@@ -86,6 +86,8 @@ var siteTypes = {
  * controller: ProofEditor containing this StepEditor.
  * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
+ * announceSolution: Announce if the result of a step solves for
+ *   a variable.
  *
  * showRuleType: Selects type of rules to show, as determined by offerApproved.
  *   Takes effect when this editor is reset.
@@ -100,6 +102,7 @@ function StepEditor(controller) {
   self.proofControl = controller.proofControl;
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
+  self.announceSolution = false;
 
   // Create a DIV with the step editor content.
   var div = $('<div class=stepEditor style="clear: both"></div>');
@@ -447,7 +450,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // has any effect.
     var self = this;
     function checkSolution(result) {
-      if (self.showRuleType == 'algebra' && isSolution(result)) {
+      if (self.announceSolution && isSolution(result)) {
         self.report('You have solved for ' + result.getMain().getLeft());
       }
     }
