@@ -482,10 +482,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
  * <expr> is a numeral or a fraction.
  */
 StepEditor.prototype.isSolution = function(step) {
-  console.log('Step is', step.str);
   if (this.solutions.length) {
     return Toy.each(this.solutions, function(solution) {
-        console.log('Checking against solution', solution.str);
         if (Toy.termify(solution).alphaMatch(step) ||
             Toy.termify(solution).alphaMatch(step.getMain())) {
           return true;
