@@ -207,7 +207,8 @@ StepEditor.prototype.report = function(error) {
 /**
  * Puts the step editor back in the initial state from the user's
  * point of view: visible with empty input, no rule-specific form,
- * available rules visible.  Does not clear any selection.
+ * available rules visible.  Does not clear any selection, and does
+ * not affect the rules offered.
  */
 StepEditor.prototype.reset = function() {
   this.clearer.addClass('hidden');
