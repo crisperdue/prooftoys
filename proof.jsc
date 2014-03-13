@@ -744,7 +744,7 @@ ProofControl.prototype.handleStepClick = function(step) {
  * toggles the current one if already selected.  Prevents
  * event bubbling up to the step itself.
  */
-ProofControl.prototype.handleExprSelection = function(expr) {
+ProofControl.prototype.handleExprClick = function(expr) {
   if (this.editable) {
     var step = getProofStep(expr);
     var selection = this.selection;
@@ -847,7 +847,7 @@ ProofControl.prototype.renderStep = function(step) {
        // This implements a policy of one selection per proof step.
        // TODO: Implement such policies in the proof controller.
        function(event) {
-         self.handleExprSelection(getExpr(this));
+         self.handleExprClick(getExpr(this));
          // Select only the innermost Expr.
          // stopImmediatePropagation does not seem to be required here.
          event.stopPropagation();
