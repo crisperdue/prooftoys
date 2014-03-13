@@ -523,8 +523,7 @@ span.stepRef {
   padding: 2px 2px;
   border: 1px solid gray;
   white-space: nowrap;
-  background-color: Cyan;
-  opacity: .8;
+  background-color: lightyellow;
   /* Overrides .proofStep: */
   text-indent: 0em;
   box-shadow: 2px 2px 2px #aaa;
