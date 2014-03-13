@@ -213,6 +213,7 @@ StepEditor.prototype.report = function(error) {
 StepEditor.prototype.reset = function() {
   this.clearer.addClass('hidden');
   this.form.html('');
+  this.proofControl.setSelectLock(false);
   this._setBusy(false);
   this.ruleSelector.fadeToggle(true);
 };
@@ -242,6 +243,7 @@ StepEditor.prototype.ruleChosen = function() {
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
       this.form.html(template);
+      this.proofControl.setSelectLock(true);
       this.form.append('<button>Go</button>');
       addClassInfo(this.form);
       if (!usesSite(rule)) {
