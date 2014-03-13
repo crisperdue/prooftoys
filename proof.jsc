@@ -473,6 +473,10 @@ function ProofControl(properties) {
   $node.data('proofControl', this);
   var stepsParent = $node.find('.stepsParent');
 
+  this._editable = false;
+  // Initially selection is not locked out, so selections can be made
+  // when this is editable.
+  this._selectLock = false;
   this.setEditable(false);
   this.setHoverHighlighting(Toy.highlightAllHovers);
 }
@@ -652,18 +656,47 @@ ProofControl.prototype.setHoverHighlighting = function(state) {
 };
 
 /**
+ * Returns true iff this ProofControl is editable.
+ */
+ProofControl.prototype.isEditable = function() {
+  return this._editable;
+};
+
+/**
  * Makes the control editable or not by showing/hiding the
  * editor button and flagging its state.  Also updates event
  * handling accordingly.  Can turn on hoverHighling, but never
  * turns it off.
  */
 ProofControl.prototype.setEditable = function(state) {
-  this.editable = state;
+  this._editable = state;
   if (state) {
     this.setHoverHighlighting(state);
   }
   var nodeQ = $(this.node);
   nodeQ.toggleClass('editable', !!state);
+};
+
+/**
+ * Turns this control's select lock on or off.  When on, the lock
+ * prevents steps and expressions within this control from being
+ * selected.  This does not affect highlighting on hover.  This lock
+ * may be temporarily set for example when a rule has been chosen
+ * based on an existing selection and its form is displayed.
+ */
+ProofControl.prototype.setSelectLock = function(state) {
+  this._selectLock = state;
+};
+
+/**
+ * Result is truthy if selection is currently accepted in this
+ * ProofControl, specifically when the control is editable and
+ * selection is not locked out.
+ */
+ProofControl.prototype.isSelectAllowed = function() {
+  console.log('Lock', this._selectLock);
+  console.log('Editable', this.isEditable());
+  return !this._selectLock && this.isEditable();
 };
 
 
@@ -728,7 +761,7 @@ ProofControl.prototype.deselectExpr = function(step) {
  * already selected.
  */
 ProofControl.prototype.handleStepClick = function(step) {
-  if (this.editable) {
+  if (this.isSelectAllowed()) {
     var selected = this.selection;
     var expr = selected ? selected.selection : null;
     this.deselectStep();
@@ -745,7 +778,7 @@ ProofControl.prototype.handleStepClick = function(step) {
  * event bubbling up to the step itself.
  */
 ProofControl.prototype.handleExprClick = function(expr) {
-  if (this.editable) {
+  if (this.isSelectAllowed()) {
     var step = getProofStep(expr);
     var selection = this.selection;
     var oldExpr = selection ? selection.selection : null;
@@ -801,13 +834,13 @@ var _turnstile = '\u22a6';
  */
 ProofControl.prototype.renderStep = function(step) {
   var self = this;
-  var $preStep = $(self.editable
+  var $preStep = $(self.isEditable()
                    ? '<button class=deleteStep title="Delete step">X</button>'
                    // Heavy lower right-shadowed white rightwards arrow
                    : '<span class=noDeleter>\u27ad</span>'); 
   var $stepSelector =
     ($('<span class=stepSelector>')
-     .append(self.editable
+     .append(!self.isSelectAllowed()
              ? '<input type=checkbox class=checkbox>'
              : '',
              ($('<span class=stepNumArea>')
@@ -821,7 +854,7 @@ ProofControl.prototype.renderStep = function(step) {
               // Allow a word break here.
               '<wbr><span class=stepInfo></span>');
   $(self.node).find('.proofSteps').append($step);
-  if (self.editable) {
+  if (self.isEditable()) {
     $step.addClass('withDeleter');
   }
   $step.data('proofStep', step);
@@ -832,7 +865,7 @@ ProofControl.prototype.renderStep = function(step) {
   $step.find('.stepInfo').html(formattedStepInfo(step));
 
   // Annotate most of the subexpressions with a popup as appropriate.
-  if (this.editable) {
+  if (this.isEditable()) {
     this.renderPopups(step);
   }
 
