@@ -2034,7 +2034,8 @@ function exprHandleOver(event) {
   // Could be no elements in $expr.
   $expr.addClass('hover');
   var proofControl = getProofControl(target);
-  if (proofControl.isSelectAllowed()) {
+  if (!proofControl.selection && proofControl.isSelectAllowed()) {
+    // Only show these if nothing selected and no form is displayed.
     // Flag as ".popped" the first parent .expr containing an ".above",
     // if any.
     $expr.add($expr.parents('.fullExpr'))
