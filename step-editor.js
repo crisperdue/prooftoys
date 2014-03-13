@@ -740,6 +740,7 @@ $.extend(StepEditor.prototype, {
    * conditions).
    */
   offerableFacts: function() {
+    var self = this;
     var facts = [];
     var step = this.proofControl.selection;
     if (!this.selectionApprovedForMode()) {
@@ -752,7 +753,11 @@ $.extend(StepEditor.prototype, {
             var goal = fact.goal;
             if (goal.isEquation()) {
               var lhs = goal.eqnLeft();
-              if (!(lhs instanceof Toy.Atom) && expr.matchSchema(lhs)) {
+              if (expr.matchSchema(lhs) &&
+                  !(self.showRuleType == 'algebra' &&
+                   // In simple algebra mode suppress facts with LHS
+                   // of just a variable or constant.
+                   lhs instanceof Toy.Atom)) {
                 facts.push(fact);
               }
             }
