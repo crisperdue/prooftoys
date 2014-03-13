@@ -944,11 +944,11 @@ BasicRuleSelector.prototype.update = function() {
         }
       }
     }
-    var display = 'change to ' + Toy.trimParens(toDisplay.toUnicode());
+    var display = '= ' + toDisplay.toUnicode();
     if (subst) {
-      display += (' <span class=description>(use ' +
+      display += (' <span class=description>using ' +
                   Toy.trimParens(statement.toUnicode())
-                  + ')</span>');
+                  + '</span>');
     }
     displayTexts.push(display);
     // Value of the option; format of "fact <fact text>"
