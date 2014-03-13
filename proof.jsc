@@ -2034,9 +2034,6 @@ function exprHandleOver(event) {
   var $expr = target.closest(selector);
   // Could be no elements in $expr.
   $expr.addClass('hover');
-  function isTarget(expr) {
-    return expr.node == event.target;
-  }
   // Flag as ".popped" the first parent .expr containing an ".above",
   // if any.
   $expr.add($expr.parents('.fullExpr'))
@@ -2045,13 +2042,10 @@ function exprHandleOver(event) {
     // Self/nearest parent should then be last.
     .last()
     .toggleClass('popped', true);
-  // Considering showing textual path to current expression.
-  var $step = $expr.closest('.proofStep');
-  if ($step.length) {
-    var proofStep = $step.data('proofStep');
-    var path = proofStep.pathTo(isTarget);
-    hoverShowPath(proofStep, path);
-  }
+  // Show textual path to current expression (if enabled).
+  var proofStep = getProofStep(event.target);
+  var path = proofStep.pathTo(@{expr. expr.node == event.target});
+  hoverShowPath(proofStep, path);
 };
 
 /**
