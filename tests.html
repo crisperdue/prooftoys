@@ -1432,14 +1432,6 @@ var testCase = {
     assertEqual('((p r) = (q r))', inf);
   },
 
-  testApplier: function() {
-    var rule = rules.applier;
-    checkRewriter('3', '{x. x} 3', rule);
-    checkRewriter(null, '(f 3)', rule);
-    checkRewriter('(x + (neg y))', 'x - y', rule);
-    checkRewriter('(F = a)', 'not a', rule);
-  },
-
   testApply: function() {
     var rules = Toy.rules;
     // Apply a call to a lambda.

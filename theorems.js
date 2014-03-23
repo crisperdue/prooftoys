@@ -636,55 +636,6 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Derives a rewriter for a call that reduces a call to a lambda, or
-  // expands the definition of a one- or two-argument function and
-  // reduces resulting lambdas.  If none of these apply to the call,
-  // returns null.
-  applier: {
-    action: function(expr) {
-      var args = [expr];
-      assert(expr instanceof Toy.Call);
-      var fn = expr.fn;
-      if (fn instanceof Toy.Lambda) {
-        var result = rules.axiom4(expr);
-        return result.justify('applier', args);
-      }
-      // Call that looks like (<constant> <expr>).
-      if (fn.isConst()) {
-        var defn = Toy.findDefinition(fn.name);
-        if (defn) {
-          var step1 = rules.eqSelf(expr);
-          var step2 = rules.useDefinition(step1, '/right/fn');
-          return step2.justify('applier', args);
-        }
-      }
-      // Call that looks like (<left> <constant> <right>) or
-      // equivalently ((<constant> <arg1>) <arg2>).
-      if (expr.isCall2()) {
-        var call = expr.fn;
-        var fn2 = call.fn;
-        if (fn2.isConst()) {
-          var defn = Toy.findDefinition(fn2.name);
-          if (defn) {
-            var step1 = rules.eqSelf(call);
-            var step2 = rules.useDefinition(step1, '/right/fn');
-            var step3 = rules.simpleApply(step2, '/right');
-            var step4 = rules.eqSelf(expr);
-            var step5 = rules.replace(step3, step4, '/right/fn');
-            var step6 = rules.simpleApply(step5, '/right');
-            return step6.justify('applier', args);
-          }
-        }
-      }
-      return null;
-    },
-    inputs: {term: 1},
-    description: 'apply function in {term}',
-    menu: 'apply the function',
-    comment: 'Equate to call with definition expanded and lambdas reduced'
-  },
-    
-
   // "Reduces" a call identified by a path within a theorem. If the
   // call is an application of a lambda expression to an argument,
   // beta-reduces it.  If the target expression is a call to a named
@@ -692,13 +643,47 @@ var ruleInfo = {
   // and applies the expansions to the argument(s).
   apply: {
     action: function(step, path) {
+      // This function does all the real work for the rule.
+      function applier(expr) {
+        assert(expr instanceof Toy.Call, 'Not a call', step);
+        var fn = expr.fn;
+        if (fn instanceof Toy.Lambda) {
+          return rules.axiom4(expr);
+        }
+        // Call that looks like (<constant> <expr>).
+        if (fn.isConst()) {
+          var defn = Toy.findDefinition(fn.name);
+          if (defn) {
+            var step1 = rules.eqSelf(expr);
+            return rules.useDefinition(step1, '/right/fn');
+          }
+        }
+        // Call that looks like (<left> <constant> <right>) or
+        // equivalently ((<constant> <arg1>) <arg2>).
+        if (expr.isCall2()) {
+          var call = expr.fn;
+          var fn2 = call.fn;
+          if (fn2.isConst()) {
+            var defn = Toy.findDefinition(fn2.name);
+            if (defn) {
+              var step1 = rules.eqSelf(call);
+              var step2 = rules.useDefinition(step1, '/right/fn');
+              var step3 = rules.simpleApply(step2, '/right');
+              var step4 = rules.eqSelf(expr);
+              var step5 = rules.replace(step3, step4, '/right/fn');
+              return rules.simpleApply(step5, '/right');
+            }
+          }
+        }
+        Toy.err({message: 'Cannot apply at ' + target, step: step});
+      }
+
+      // TODO: Make a function like convertAndReplace that takes
+      //   a step, path, and function to apply, yielding an equation
+      //   with RHS to replace the target expression.
       path = Toy.path(path, step);
       var target = step.locate(path);
-      assert(target, function() {
-        return 'Path ' + path + ' not found in ' + step;
-      }, step);
-      var equation = rules.applier(target);
-      assert(equation, function() { return 'Cannot apply at ' + target; });
+      var equation = applier(target);
       var result = rules.replace(equation, step, path);
       return result.justify('apply', [step, path], [step]);
     },
