@@ -2453,6 +2453,7 @@ Call.prototype._addMathVars = function(bindings, set) {
     case '-':
     case '*':
     case '/':
+    case '**':
       addVars();
       result = true;
       break;
