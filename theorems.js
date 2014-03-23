@@ -678,14 +678,8 @@ var ruleInfo = {
         Toy.err({message: 'Cannot apply at ' + target, step: step});
       }
 
-      // TODO: Make a function like convertAndReplace that takes
-      //   a step, path, and function to apply, yielding an equation
-      //   with RHS to replace the target expression.
-      path = Toy.path(path, step);
-      var target = step.locate(path);
-      var equation = applier(target);
-      var result = rules.replace(equation, step, path);
-      return result.justify('apply', [step, path], [step]);
+      return convertAndReplace(step, path, applier)
+        .justify('apply', [step, path], [step]);
     },
     isRewriter: true,
     inputs: {site: 1},
@@ -2664,7 +2658,8 @@ var ruleInfo = {
         return applyFactsWithinRhs(eqn, {facts: facts,
                                      searchMethod: 'searchTerms'});
       }
-      function convert(eqn) {
+      function convert(expr) {
+        var eqn = rules.consider(expr);
         // Linearize eqns.
         var eqn0 = applyTo(eqn, [{stmt: 'a + (b + c) = a + b + c'}]);
 
@@ -5720,15 +5715,16 @@ function applyFactsWithinRhs(step, facts) {
 }
 
 /**
- * Apply the function to the subexpression of step at path.
- * The result must be an equation that equates the original
- * subexpression to something else.  This replaces the
- * subexpression using the equation.
+ * Apply the function to the subexpression of step at path.  The
+ * function must return an equation that equates the original
+ * subexpression to something else.  This replaces the subexpression
+ * using the returned equation.
  */ 
 function convertAndReplace(step, path, fn) {
-  var eqn1 = rules.considerPart(step, path);
-  var eqn2 = fn(eqn1);
-  return rules.replace(eqn2, step, path);
+  var expr = step.locate(path);
+  assert(expr, function() { return 'Bad path ' + path; }, step);
+  var eqn = fn(expr);
+  return rules.replace(eqn, step, path);
 }
 
 /**
