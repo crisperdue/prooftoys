@@ -3523,6 +3523,7 @@ var ruleInfo = {
     description: 'recip is inverse to multiplication'
   },
 
+  // TODO: Prove this as a theorem.
   axiomReciprocal2: {
     action: function() {
       return rules.assert('R (recip x) & recip x != 0 == R x & x != 0')
@@ -3532,6 +3533,32 @@ var ruleInfo = {
     form: '',
     comment: 'nonzero reciprocals',
     description: 'reciprocals are nonzero'
+  },
+
+  // This implies that 0 ** 0 = 1.  It is also legitimate to define
+  // that 0 ** 0 is undefined.
+  // TODO: Eventually prove these laws of powers as theorems.
+  axiomPower0: {
+    action: function() {
+      return rules.assert('R x ==> x ** 0 = 1')
+        .asHyps().justify('axiomPower0');
+    },
+    inputs: {},
+    form: '',
+    comment: 'real number to the zeroth power',
+    description: 'real number to the zeroth power is 1'
+  },
+
+  // TODO: Eventually prove these laws of powers as theorems.
+  axiomNextPower: {
+    action: function() {
+      return rules.assert('x ** (y + 1) = (x ** y) * x')
+        .justify('axiomNextPower');
+    },
+    inputs: {},
+    form: '',
+    comment: 'real number to the next power',
+    description: 'real number to the next power'
   },
 
   // TODO: Prove this as a consequnce of completeness.
@@ -5148,6 +5175,38 @@ var divisionFacts = {
 };
 $.extend(algebraFacts, divisionFacts);
 
+var powerFacts = {
+  'a ** 1 = a': {
+    action: function() {
+      return rules.axiomNextPower()
+      .apply('instMultiVars', {x: Toy.parse('a'), y: Toy.parse('0')})
+      .apply('arithmetic', '/main/left/right')
+      .rewrite('/main/right/left', rules.axiomPower0())
+      .rewrite('/main/right', '1 * a = a');
+    }
+  },
+  'a ** 2 = a * a': {
+    action: function() {
+      return rules.axiomNextPower()
+      .apply('instVar', '1', 'y')
+      .rewrite('/main/right/left', 'a ** 1 = a')
+      .apply('arithmetic', '/main/left/right');
+    }
+  },
+  // TODO: Add a rule to convert a ** n to multiplication for any
+  // non-negative integer n.
+  'a ** 3 = a * a * a': {
+    action: function() {
+      return rules.axiomNextPower()
+      .apply('instVar', '2', 'y')
+      .rewrite('/main/right/left', 'a ** 2 = a * a')
+      .apply('arithmetic', '/main/left/right');
+    }
+  }
+};
+$.extend(algebraFacts, powerFacts);
+
+
 // MOVING EXPRESSIONS AROUND
 
 var algebraIdentities = {
@@ -5319,7 +5378,7 @@ $.extend(Fact.prototype, {
           }, result);
         } else {
           assert(false, function() {
-            return 'Failed to prove ' + goal;
+            return 'Instead of ' + goal + ' proved ' + result;
           }, result);
         }
       }
@@ -5835,7 +5894,7 @@ var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP',
                   'axiomCommutativeTimes', 'axiomAssociativeTimes',
                   'axiomDistributivity', 'axiomPlusZero', 'axiomTimesOne',
                   'axiomTimesZero', 'axiomNeg', 'axiomReciprocal',
-                  'axiomReciprocal2',
+                  'axiomReciprocal2', 'axiomPower0', 'axiomNextPower',
                   'axiomPlusType', 'axiomTimesType',
                   'axiomNegType', 'axiomReciprocalType'];
 
