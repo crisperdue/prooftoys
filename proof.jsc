@@ -1734,19 +1734,13 @@ var stepFormatters = {
     var target = step0.locate(path);
     return 'rename ' + target.bound;
   },
-  instForall: function(step) {
-    var step0 = step.ruleArgs[0];
-    // Get the bound variable of the arg to forall.
-    var bound = step0.locate('/main/arg/bound');
-    return 'substitute for ' + bound;
-  },
   simpleApply: function(step) {
     var step0 = step.ruleArgs[0];
     var path = step.ruleArgs[1];
     var target = step0.locate(path);
     assert(target instanceof Toy.Call);
     assert(target.fn instanceof Toy.Lambda);
-    return 'substitute for ' + target.fn.bound.name;
+    return 'apply function of ' + target.fn.bound.name;
   },
   // TODO: Treat "apply" as a rewrite using arbitrary definitions.
   apply: function(step) {
@@ -1756,7 +1750,7 @@ var stepFormatters = {
     if (target instanceof Toy.Call) {
       var fn = target.fn;
       if (fn instanceof Toy.Lambda) {
-        return 'substitute for ' + target.fn.bound.name;
+        return 'apply function of ' + target.fn.bound.name;
       } else if (target.isCall2()) {
         return 'apply definition of ' + target.getBinOp().toString();
       } else {
@@ -1779,7 +1773,7 @@ var stepFormatters = {
     if (typeof taut === 'string') {
       taut = Toy.parse(taut);
     }
-    return 'tautology ' + Toy.mathMarkup(taut.toUnicode());
+    return 'instance of tautology ' + Toy.mathMarkup(taut.toUnicode());
   }
 };
 

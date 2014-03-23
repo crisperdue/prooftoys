@@ -863,7 +863,7 @@ var ruleInfo = {
     menu: 'instantiate "forall"',
     comment: ('In a "forall", instantiates the bound variable with'
               + ' a given term.'),
-    description: '=instForall'
+    description: 'instantiate &forall;'
   },
 
   // From [A = B] deduce T = [A = B].
