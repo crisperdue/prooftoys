@@ -2664,23 +2664,23 @@ var ruleInfo = {
         return applyFactsWithinRhs(eqn, {facts: facts,
                                      searchMethod: 'searchTerms'});
       }
-      function convert(term) {
-        // Linearize terms.
-        var term0 = applyTo(term, [{stmt: 'a + (b + c) = a + b + c'}]);
+      function convert(eqn) {
+        // Linearize eqns.
+        var eqn0 = applyTo(eqn, [{stmt: 'a + (b + c) = a + b + c'}]);
 
-        // Move terms that are numerals to the back of the bus.
+        // Move eqns that are numerals to the back of the bus.
         var facts1 = [{stmt: 'a + b = b + a',
                        where: '!$.a.hasVars() && $.b.hasVars()'},
                       {stmt: 'a + b + c = a + c + b',
                        where: '!$.b.hasVars() && $.c.hasVars()'}
                      ];
-        var term1 = applyTo(term0, facts1);
+        var eqn1 = applyTo(eqn0, facts1);
 
         // Group numerals together.
         var facts2 = [{stmt: 'a + b + c = a + (b + c)',
                        where: '!$.b.hasVars()'}
                      ];
-        var term2 = applyTo(term1, facts2);
+        var eqn2 = applyTo(eqn1, facts2);
 
         // These come from rules.cleanupTerms.
         var cleanFacts = ['a * (b * c) = a * b * c',
@@ -2691,7 +2691,7 @@ var ruleInfo = {
                           {stmt: 'a * b / c = a / c * b',
                            where: '!$.a.hasVars() && !$.c.hasVars()'}
                          ];
-        var term2a = applyTo(term2, cleanFacts);
+        var eqn2a = applyTo(eqn2, cleanFacts);
 
         // Group terms with common right factor together.
         var facts3 = [{stmt: 'a * c + b * c = (a + b) * c'},
@@ -2699,7 +2699,7 @@ var ruleInfo = {
                       {stmt: 'a * b + b = (a + 1) * b'},
                       {stmt: 'a + a = 2 * a'}
                      ];
-        return applyTo(term2a, facts3);
+        return applyTo(eqn2a, facts3);
       }
       var visPath = step.pathToVisiblePart();
       if (step.locate(visPath).isCall2('=')) {
