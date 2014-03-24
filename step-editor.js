@@ -839,7 +839,11 @@ function ruleMenuText(ruleName, term, step) {
       return info.menu;
     }
     var thmText;
+    // TODO: The "formula" property appears to be a dead end.
+    //   Remove it and support, perhaps including Toy.unicodify.
     if (info.formula) {
+      console.log('Formula found:', Toy.unicodify(info.formula));
+      debugger;
       thmText = Toy.unicodify(info.formula);
     } else {
       var thm = Toy.getTheorem(ruleName);
@@ -864,9 +868,11 @@ function ruleMenuText(ruleName, term, step) {
       }
     }
     var formatArgs = {term: term && term.toUnicode(), right: right};
-    return Toy.unicodify((info.menu &&
-                          Toy.format(info.menu, formatArgs)) ||
-                         info.formula || info.comment || '');
+    if (info.menu) {
+      return Toy.format(info.menu, formatArgs);
+    } else {
+      return Toy.unicodify(info.formula || info.comment || '');
+    }
   }
 }
 
@@ -969,9 +975,9 @@ BasicRuleSelector.prototype.update = function() {
   displayTexts.sort(function(a, b) { return a.localeCompare(b); });
   displayTexts.forEach(function(display) {
       var $item = $('<div class="ruleItem noselect"/>');
+      self.$node.append($item);
       $item.html(display);
       $item.data('ruleName', byDisplay[display]);
-      self.$node.append($item);
     });
   self.ruleName = '';
   // TODO: Generate smarter messages for rules that work without a UI
