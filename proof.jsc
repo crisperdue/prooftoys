@@ -1005,13 +1005,15 @@ ProofControl.prototype.renderPopups = function(step) {
                       @{void $(this).toggleClass('hover')});
   // Handle click events on "above" nodes.  Note that the control
   // must be editable.
+  $(step.stepNode).on(TOUCHDOWN, '.above', function(event) {
+      // Prevent the containing .expr node from handling this touch,
+      // which would select the term.
+      event.stopImmediatePropagation();
+    });
   $(step.stepNode).on('click', '.above', function(event) {
       // Run the action.
       var action = $(this).data('action');
       action();
-      // Prevent the containing .expr node from handling this click,
-      // which would select the term.
-      event.stopPropagation();
     });
 
   if (Toy.profileName.match(/^popups/)) {

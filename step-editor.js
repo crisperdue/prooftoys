@@ -157,7 +157,8 @@ function StepEditor(controller) {
 }
 
 /**
- * Marks this StepEditor as busy or not in the UI.
+ * Marks this StepEditor as busy or not in the UI.  See also
+ * StepEditor.reset.
  */
 StepEditor.prototype._setBusy = function(busy, complete) {
   this.$node.toggleClass('busy', busy);
@@ -166,13 +167,18 @@ StepEditor.prototype._setBusy = function(busy, complete) {
     var offset = this.ruleSelector.$node.offset();
     // The node needs to be shown to set its offset.
     $working.toggle(true);
-    $working.offset({left: offset.left + 40, top: offset.top + 25});
+    $working.offset({left: offset.left + 40, top: offset.top + 5});
     // Then  turn it off and fade it back in.
     $working.toggle(false).fadeIn(200, complete);
   } else {
-    $working.fadeOut(1000, complete);
+    $working.fadeOut(200, complete);
   }
   this.ruleSelector.fadeToggle(!busy);
+  // Clear the form.
+  // TODO: Make these actions into a function/method, see "reset".
+  this.clearer.addClass('hidden');
+  this.form.html('');
+  this.proofControl.setSelectLock(false);
 };
 
 /**
@@ -208,7 +214,7 @@ StepEditor.prototype.report = function(error) {
  * Puts the step editor back in the initial state from the user's
  * point of view: visible with empty input, no rule-specific form,
  * available rules visible.  Does not clear any selection, and does
- * not affect the rules offered.
+ * not affect the rules offered.  See also StepEditor._setBusy.
  */
 StepEditor.prototype.reset = function() {
   this.clearer.addClass('hidden');
@@ -395,7 +401,6 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
 function tryRuleAsync(stepEditor, rule, args) {
   // Flag the step editor as busy via its DOM node.
   stepEditor._setBusy(true, function() {
-      stepEditor.reset();
       Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
     });
 }
