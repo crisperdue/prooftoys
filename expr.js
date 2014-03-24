@@ -4455,20 +4455,54 @@ var unicodeNames = {
   '!=': '\u2260',     // &ne;
   '<=': '\u2264',     // &le;
   '>=': '\u2265',     // &ge;
+  '**': '**',         // Dont change to sdots.
   '*': '\u22c5',      // &sdot;
   '-': '\u2212',      // &minus;
+  '</': '</',         // Treat this as HTML.
   '/': '\u2215',      // division slash
   neg: '-',
   forall: '\u2200',
   exists: '\u2203'
 };
 
+// Unicode superscript digits.  Unfortunately 2 and 3 display
+// differently than the rest in almost all fonts.
+var superscripts = [
+  '\u2070',
+  '\u2071',
+  '\u00b2',
+  '\u00b3',
+  '\u2074',
+  '\u2075',
+  '\u2076',
+  '\u2077',
+  '\u2078',
+  '\u2079'
+];
+
+/**
+ * Convert text to non-HTML Unicode.  Mainly useful for console
+ * logging.
+ */
 function unicodify(text) {
   var pattern =
-    /==>|==|!=|<=|>=|\*|-|\/|\bforall\b|\bexists\b/g;
+    /==>|==|!=|<=|>=|\s*\*\*\s*-?[0-9]+|\*\*|\*|-|<\/|\/|\bforall\b|\bexists\b/g;
   return text.replace(pattern, function(symbol) {
+    var match;
+    if ((match = symbol.match(/\s*\*\*\s*(-?)([0-9]+)/))) {
+      // Part of the text matches an integer exponent.
+      var sign = match[1] ? '\u207b' : '';
+      var exponent = match[2];
+      var supers = '';
+      var zeroCode = '0'.charCodeAt(0);
+      for (var i = 0; i < exponent.length; i++) {
+        supers += superscripts[exponent.charCodeAt(i) - zeroCode];
+      }
+      return sign + supers;
+    } else {
       return unicodeNames[symbol];
-    });
+    }
+  });
 }
 
 // Defines aliases that affect both printing and parsing.
