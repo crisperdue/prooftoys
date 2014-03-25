@@ -639,9 +639,12 @@ Expr.prototype.toString = function() {
 };
 
 /**
- * Converts this Expr to a Unicode string.  The display is currently
- * just the same as the non-Unicode display except that names (or
- * pnames) that have Unicode counterparts are presented as Unicode.
+ * Converts this Expr to a string of Unicode and/or HTML.  The display
+ * is currently just the same as plain text display except
+ * names (or pnames) that have Unicode counterparts are presented as
+ * Unicode and some cases of exponentiation use HTML.
+ *
+ * This is a bit of a misnomer right now.
  */
 Expr.prototype.toUnicode = function() {
   useUnicode = true;
@@ -651,6 +654,12 @@ Expr.prototype.toUnicode = function() {
     useUnicode = false;
   }
 }
+
+/**
+ * Like toUnicode, but allows HTML output.  Currently
+ * these are one and the same; toUnicode may disappear.
+ */
+Expr.prototype.toHtml = Expr.prototype.toUnicode;
 
 /**
  * Tests if this is an Atom with name in the given list of strings.
@@ -2132,7 +2141,7 @@ Atom.prototype._toString = function() {
 };
 
 /**
- * Implementation of toUnicode for Vars.
+ * Implementation of toUnicode for Atoms.
  */
 Atom.prototype.toUnicode = function() {
   var name = this.pname || this.name;
@@ -2154,6 +2163,8 @@ Atom.prototype.toUnicode = function() {
   }
   return result;
 };
+
+Atom.prototype.toHtml = Atom.prototype.toUnicode;
 
 Atom.prototype.dump = function() {
   return this.name;
@@ -2334,10 +2345,17 @@ Call.prototype._toString = function() {
     }
   }
   if (this.fn instanceof Call && this.fn.fn instanceof Atom) {
-    if (isInfixDesired(this.fn.fn)) {
-      return '(' + this.fn.arg + ' ' + this.fn.fn + ' ' + this.arg + ')';
+    var op = this.fn.fn;
+    if (isInfixDesired(op)) {
+      if (useUnicode && op.name == '**') {
+        // Use HTML for exponentiation.  So "Unicode" here is
+        // currently a misnomer.
+        return this.fn.arg + '<sup>' + this.arg + '</sup>';
+      } else {
+        return '(' + this.fn.arg + ' ' + op + ' ' + this.arg + ')';
+      }
     } else {
-      return '(' + this.fn.fn + ' ' + asArg(this.fn.arg) + ' ' + this.arg + ')';
+      return '(' + op + ' ' + asArg(this.fn.arg) + ' ' + this.arg + ')';
     }
   } else if (this.fn instanceof Atom && isInfixDesired(this.fn)) {
     return '(' + this.arg + ' ' + this.fn + ')';
