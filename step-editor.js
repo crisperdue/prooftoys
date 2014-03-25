@@ -838,16 +838,8 @@ function ruleMenuText(ruleName, term, step) {
     if (info.menu) {
       return info.menu;
     }
-    var thmText;
-    // TODO: The "formula" property appears to be a dead end.
-    //   Remove it and support, perhaps including Toy.unicodify.
-    if (info.formula) {
-      console.log('Formula found:', Toy.unicodify(info.formula));
-      debugger;
-      thmText = Toy.unicodify(info.formula);
-    } else {
-      var thm = Toy.getTheorem(ruleName);
-      thmText = Toy.trimParens(thm.unHyp().toHtml());
+    var thm = Toy.getTheorem(ruleName);
+    var thmText = Toy.trimParens(thm.unHyp().toHtml());
     }
     if (ruleName.substring(0, 5) === 'axiom') {
       return 'axiom ' + thmText;
@@ -870,7 +862,7 @@ function ruleMenuText(ruleName, term, step) {
     if (info.menu) {
       return Toy.format(info.menu, formatArgs);
     } else {
-      return Toy.unicodify(info.formula || info.comment || '');
+      return Toy.mathMarkup(info.comment || 'menu?');
     }
   }
 }

@@ -4235,12 +4235,6 @@ var rules = {};
 // Data per rule, also accessed by rule name.
 var ruleData = {};
 
-// Math markup in the position of a rule name.
-// Helper for addRules.
-function formulaAsDescription(text) {
-  return '<span class=math>[' + Toy.mathMarkup(text) + ']</span>';
-}
-
 /**
  * Given a ruleInfo object, add its information to the "rules" object.
  * The "rules" object maps from rule name to function.  Each function
@@ -4277,11 +4271,7 @@ function addRule(key, info_arg) {
   }
   // Default the description to the marked up formula or the ruleName.
   if (!('description' in info)) {
-    if (info.formula) {
-      info.description = formulaAsDescription(info.formula.toString());
-    } else {
-      info.description = key;
-    }
+    info.description = key;
   }
 
   // If there is a toOffer property with string value, coerce it
