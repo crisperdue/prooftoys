@@ -3560,7 +3560,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    menu: 'axiom ' + Toy.parse('R (x + y)').toUnicode(),
+    menu: 'axiom ' + Toy.mathMarkup('R (x + y)'),
     comment: 'sum of real numbers is real',
     description: 'sum of real numbers is real'
   },
@@ -3573,7 +3573,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    menu: 'axiom ' + Toy.parse('R (x * y)').toUnicode(),
+    menu: 'axiom ' + Toy.mathMarkup('R (x*y)'),
     comment: 'product of real numbers is real',
     description: 'product of real numbers is real'
   },
@@ -3585,7 +3585,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    menu: 'axiom ' + Toy.parse('R (neg x)').toUnicode(),
+    menu: 'axiom ' + Toy.mathMarkup('R (-x)'),
     comment: 'negation of real number is real',
     description: 'negation of real number is real'
   },
@@ -3597,7 +3597,7 @@ var ruleInfo = {
 	.justify('axiomReciprocalType');
     },
     inputs: {},
-    menu: 'axiom ' + Toy.parse('x != 0 == R (recip x)').toUnicode(),
+    menu: 'axiom ' + Toy.mathMarkup('x != 0 == R (recip x)'),
     form: '',
     comment: 'reciprocal of nonzero real number is real',
     description: 'reciprocal of real number'
