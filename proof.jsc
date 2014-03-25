@@ -986,7 +986,7 @@ ProofControl.prototype.renderPopups = function(step) {
           results.forEach(function(result, i) {
               var $div = $('<div class=above></div>');
               $div.text(' = ' +
-                        result.toUnicode()
+                        result.toHtml()
                         // Strip any outermost parens.
                         .replace(/^\((.*)\)$/, '$1'));
               // The node's data.result will be an equation that can
@@ -1264,9 +1264,9 @@ Atom.prototype._render = function(minPower) {
     // Variable or literal constant is selectable, not named constants
     markAsFullExpr($expr);
   }
-  var name = this.toUnicode();
+  var name = this.toHtml();
   specialClasses(this.name).forEach(function(cl) { $expr.addClass(cl); });
-  $expr.text(name);
+  $expr.html(name);
   return $expr;
 };
 
@@ -1664,7 +1664,7 @@ function expandMarkup(step, markup) {
     }
     var terms = places.map(function(place) {
         var term = Toy.termify(step.ruleArgs[place - 1]);
-        return Toy.mathMarkup(Toy.toUnicode(term));
+        return term.toHtml();
       });
     return terms.join(', ');
   case 'shortFact':
@@ -1680,12 +1680,12 @@ function expandMarkup(step, markup) {
     return Toy.mathMarkup(text);
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;
-    return Toy.mathMarkup(Toy.toUnicode(step.ruleArgs[place - 1]));
+    return Toy.termify(step.ruleArgs[place - 1]).toHtml();
   case 'site':
     var place = info.inputs.site[0] || info.inputs.site;
     var siteStep = step.ruleArgs[place - 1];
     var term = siteStep.locate(step.ruleArgs[place]);
-    return Toy.mathMarkup(term.toUnicode());
+    return term.toHtml();
   default:
     // Pass it through unchanged.
     return markup;
@@ -1780,7 +1780,7 @@ var stepFormatters = {
     if (typeof taut === 'string') {
       taut = Toy.parse(taut);
     }
-    return 'instance of tautology ' + Toy.mathMarkup(taut.toUnicode());
+    return 'instance of tautology ' + taut.toHtml();
   }
 };
 
@@ -1819,7 +1819,7 @@ function renderInference(step) {
   var $subproof = $('<div class=inferenceDisplay></div>');
   if (step.ruleName === 'fact') {
     var $header = $('<div class=proofHeader><b>Proof of <span class=math>'
-                    + Toy.mathMarkup(step.toUnicode())
+                    + step.toHtml()
                     + '</span></b><br>'
                     + '<i>' + comment + '</i>'
                     + ' <span class=subproofHider>hide &#x25be;</span></div>');
@@ -1893,18 +1893,18 @@ function renderProof(step, where, millis, nSteps) {
  *   Indicate sites in steps in some user-friendly way.
  */
 function computeHeaderArgInfo(step) {
-  function mathSpan(text) {
-    return '<span class=math>' + Toy.mathMarkup(text) + '</span>';
+  function mathSpan(html) {
+    return '<span class=math>' + html + '</span>';
   }
   var argInfo = '';
   for (var i = 0; i < step.ruleArgs.length; i++) {
     var arg = step.ruleArgs[i];
     var argText;
     if (arg instanceof Toy.Expr) {
-      argText = mathSpan(arg.toUnicode());
+      argText = mathSpan(arg.toHtml());
     } else if (typeof arg == 'string' && arg.match(/^(\(|T$|F$)/)) {
       // Is 'T' or 'F' or '(.*'
-      argText = mathSpan(arg);
+      argText = mathSpan(Toy.mathMarkup(arg));
     } else if (typeof arg == 'string' && arg[0] != '/') {
       argText = arg;
     } else if (typeof arg == 'string' || arg instanceof Toy.Path) {

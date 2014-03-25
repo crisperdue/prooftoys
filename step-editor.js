@@ -847,8 +847,7 @@ function ruleMenuText(ruleName, term, step) {
       thmText = Toy.unicodify(info.formula);
     } else {
       var thm = Toy.getTheorem(ruleName);
-      thmText = thm.unHyp().toUnicode();
-      thmText = thmText.replace(/^\((.*)\)$/, '$1');
+      thmText = Toy.trimParens(thm.unHyp().toHtml());
     }
     if (ruleName.substring(0, 5) === 'axiom') {
       return 'axiom ' + thmText;
@@ -864,10 +863,10 @@ function ruleMenuText(ruleName, term, step) {
       var parentPath = pathToTerm.upTo('/left') || pathToTerm.upTo('/left/right');
       if (parentPath) {
         var rightNeighbor = step.locate(parentPath).getRight();
-        right = rightNeighbor.toUnicode();
+        right = rightNeighbor.toHtml();
       }
     }
-    var formatArgs = {term: term && term.toUnicode(), right: right};
+    var formatArgs = {term: term && term.toHtml(), right: right};
     if (info.menu) {
       return Toy.format(info.menu, formatArgs);
     } else {
@@ -960,10 +959,10 @@ BasicRuleSelector.prototype.update = function() {
         }
       }
     }
-    var display = '= ' + toDisplay.toUnicode();
+    var display = '= ' + toDisplay.toHtml();
     if (subst) {
       display += (' <span class=description>using ' +
-                  Toy.trimParens(statement.toUnicode())
+                  Toy.trimParens(statement.toHtml())
                   + '</span>');
     }
     displayTexts.push(display);
