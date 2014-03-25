@@ -840,7 +840,6 @@ function ruleMenuText(ruleName, term, step) {
     }
     var thm = Toy.getTheorem(ruleName);
     var thmText = Toy.trimParens(thm.unHyp().toHtml());
-    }
     if (ruleName.substring(0, 5) === 'axiom') {
       return 'axiom ' + thmText;
     } else {
