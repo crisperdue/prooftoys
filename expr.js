@@ -4500,7 +4500,7 @@ var superscripts = [
 
 /**
  * Convert text to non-HTML Unicode.  Mainly useful for console
- * logging.
+ * logging.  Use Toy.mathMarkup where HTML output is OK.
  */
 function unicodify(text) {
   var pattern =
