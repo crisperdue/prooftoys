@@ -5352,7 +5352,9 @@ $.extend(Fact.prototype, {
           }, result);
         }
       }
-      return result2;
+      var result3 = result2.copyStep();
+      result3.annotateWithTypes();
+      return result3;
     }
 });
       
