@@ -157,6 +157,15 @@ function StepEditor(controller) {
 }
 
 /**
+ * Returns the Expr selected in this StepEditor, or a falsy value if
+ * there is none.
+ */
+StepEditor.prototype.selectedExpr = function() {
+  var step = this.selection;
+  return step && step.selection;
+};
+
+/**
  * Marks this StepEditor as busy or not in the UI.  See also
  * StepEditor.reset.
  */
@@ -656,41 +665,20 @@ StepEditor.prototype.offerApproved = function(name) {
   if (this.showRules.indexOf(name) >= 0) {
     return true;
   }
-  // This test is really just for algebra mode, to avoid offering
-  // rules such as "consider" and "replace" when the selection is
-  // not real-valued.
-  if (!this.selectionApprovedForMode()) {
-    return false;
-  }
   switch (this.showRuleType) {
   case 'all':
     return true;
   case 'algebra':
-    return labels.algebra || labels.display;
+    var expr = this.selectedExpr();
+    return (expr && !expr.isReal()
+            ? false
+            : labels.algebra || labels.display);
   case 'general':
     return labels.basic || labels.display || labels.algebra;
   default:
     throw new Error('Bad rule policy value: ' + this.showRuleType);
   }
 };
-
-/**
- * In algebra mode, if there is a selected term, this only returns
- * true if the term is numeric (type real).  Otherwise true.
- */
-StepEditor.prototype.selectionApprovedForMode = function() {
-  if (this.showRuleType != 'algebra') {
-    return true;
-  }
-  var step = this.proofControl.selection;
-  if (step) {
-    var expr = step.selection;
-    if (expr) {
-      return expr.isReal();
-    }
-  }
-  return true;
-}
 
 /**
  * Returns true iff the rule name can be offered by the UI.
@@ -748,11 +736,21 @@ $.extend(StepEditor.prototype, {
     var self = this;
     var facts = [];
     var step = this.proofControl.selection;
-    if (!this.selectionApprovedForMode()) {
-      return facts;
-    }
     if (step) {
       var expr = step.selection;
+      var TypeConstant = Toy.TypeConstant;
+      // Returns true (a mismatch) iff both Exprs have types that
+      // are type constants (in practice real or boolean), and the
+      // types are not the same.  This is a crude check, but covers
+      // the cases of usual interest.
+      function typesMismatch(e1, e2) {
+        var e1Type = e1.hasType();
+        var e2Type = e2.hasType();
+        return (e1Type instanceof TypeConstant &&
+                e2Type instanceof TypeConstant &&
+                // Perhaps compare the names of the type constants?
+                e1Type != e2Type);
+      }
       if (expr) {
         Toy.eachFact(function(fact) {
             var goal = fact.goal;
@@ -763,10 +761,12 @@ $.extend(StepEditor.prototype, {
                    // In simple algebra mode suppress facts with LHS
                    // of just a variable or constant.
                    lhs instanceof Toy.Atom)) {
-                facts.push(fact);
+                if (!typesMismatch(expr, lhs)) {
+                  facts.push(fact);
+                }
               }
             }
-          });
+        });
       }
     }
     return facts;
