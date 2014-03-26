@@ -936,9 +936,11 @@ BasicRuleSelector.prototype.update = function() {
     var statement = Toy.getStatement(fact);
     var text = statement.toString();
     var toDisplay = statement;
-    if (statement.isEquation() && statement.isCall2('==>')) {
+    if (statement.isEquation()) {
+      if (statement.isCall2('==>')) {
       // Make the statement be the fact's equation.
       toDisplay = statement = statement.getRight();
+      }
       // If as usual the LHS of the equation matches the selection,
       // set toDisplay to the result of substituting into the RHS.
       var step = self.stepEditor.proofControl.selection;
