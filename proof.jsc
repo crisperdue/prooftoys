@@ -833,6 +833,8 @@ var _turnstile = '\u22a6';
  */
 ProofControl.prototype.renderStep = function(step) {
   var self = this;
+  // Annotate all rendered steps with type information.
+  step.annotateWithTypes();
   var $preStep = $(self.isEditable()
                    ? '<button class=deleteStep title="Delete step">X</button>'
                    // Heavy lower right-shadowed white rightwards arrow

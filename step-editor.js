@@ -656,7 +656,9 @@ StepEditor.prototype.offerApproved = function(name) {
   if (this.showRules.indexOf(name) >= 0) {
     return true;
   }
-  // This test is really just for algebra mode.
+  // This test is really just for algebra mode, to avoid offering
+  // rules such as "consider" and "replace" when the selection is
+  // not real-valued.
   if (!this.selectionApprovedForMode()) {
     return false;
   }
@@ -684,8 +686,6 @@ StepEditor.prototype.selectionApprovedForMode = function() {
   if (step) {
     var expr = step.selection;
     if (expr) {
-      // The step is rendered, so OK to annotate.
-      step.annotateWithTypes();
       return expr.isReal();
     }
   }
