@@ -3420,21 +3420,12 @@ var boolean = new TypeConstant('o');
 var realType = individual;
 
 /**
- * Returns true iff the type of the term is Real.  Until integrating
- * findType further into the parser, treat variable names beginning
- * with t-z as real.
+ * Returns true iff the type of the term is Real.  Assumes that this
+ * Expr is part of a WFF that has been annotated with type
+ * information.
  */
 Expr.prototype.isReal = function() {
-  if (this._type) {
-    return this.getType() == realType;
-  } else {
-    // TODO: Implement similar functionality in the parser, presumably
-    //   before loosening the conditions on various laws of real numbers.
-    return (type instanceof Toy.TypeVariable &&
-            this instanceof Toy.Atom &&
-            this.name.match(/^[t-z]/) &&
-            this.isVariable());
-  }
+  return this.getType() == realType;
 };
 
 /**
