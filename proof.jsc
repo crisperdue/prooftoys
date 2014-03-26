@@ -1747,7 +1747,7 @@ var stepFormatters = {
     var target = step0.locate(path);
     assert(target instanceof Toy.Call);
     assert(target.fn instanceof Toy.Lambda);
-    return 'apply function of ' + target.fn.bound.name;
+    return 'apply function of ' + target.fn.bound.toHtml();
   },
   // TODO: Treat "apply" as a rewrite using arbitrary definitions.
   apply: function(step) {
@@ -1757,7 +1757,7 @@ var stepFormatters = {
     if (target instanceof Toy.Call) {
       var fn = target.fn;
       if (fn instanceof Toy.Lambda) {
-        return 'apply function of ' + target.fn.bound.name;
+        return 'apply function of ' + target.fn.bound.toHtml();
       } else if (target.isCall2()) {
         return 'apply definition of ' + target.getBinOp().toString();
       } else {
