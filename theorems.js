@@ -5299,12 +5299,18 @@ Toy.define('/', '{x. {y. x * recip y}}');
 
 //// THEOREMS
 
-function Fact(goal, prover) {
+/**
+ * Constructs a Fact from a goal WFF and a prover, which should be a
+ * function unless the goal is already proved, in which case it should
+ * be some falsy value.
+ */
+function Fact(goal_arg, prover) {
+  var goal = goal_arg.copyStep();
+  goal.annotateWithTypes();
   if (goal.ruleName) {
     // It is already proved.
     assert(!prover, function() { return 'Redundant prover for ' + expr_arg; });
     prover = function() { return goal; }
-    result = goal;
   }
   assert(typeof prover === 'function', 'Not a function: ' + prover);
   this.goal = goal;
@@ -5352,9 +5358,7 @@ $.extend(Fact.prototype, {
           }, result);
         }
       }
-      var result3 = result2.copyStep();
-      result3.annotateWithTypes();
-      return result3;
+      return result2;
     }
 });
       
