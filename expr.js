@@ -3538,6 +3538,14 @@ Expr.prototype.getType = function() {
 };
 
 /**
+ * Like getType, but returns a falsy value if there is no type
+ * annotation.
+ */
+Expr.prototype.hasType = function() {
+  return dereference(this._type);
+};
+
+/**
  * Returns the type of the expression like findType, but also
  * annotates the expression and all subexpressions with type
  * information as the _type property of each.  Only appropriate for
@@ -3720,6 +3728,13 @@ function unifyTypes(t1, t2) {
   }
 }
 
+/**
+ * Returns the given type, removing indirections in the representation
+ * of type variables.
+ *
+ * Note that this is the identity function for objects that are not
+ * type variables, including null and undefined.
+ */
 function dereference(type) {
   if (type instanceof TypeVariable) {
     if (type.instance) {
@@ -5154,6 +5169,7 @@ Toy.boolean = boolean;
 Toy.individual = individual;
 Toy.realType = realType;
 Toy.TypeVariable = TypeVariable;
+Toy.TypeConstant = TypeConstant;
 Toy.TypeOperator = TypeOperator;
 Toy.FunctionType = FunctionType;
 Toy.parseType = parseType;
