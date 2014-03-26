@@ -1312,8 +1312,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     menu: 'substitute for multiple variables',
-    comment: ('Substitute in B for each variable named in the map, '
-              + 'its value in the map'),
+    comment: ('For each variable in the map substitute its value in the map'),
     description: '=instMultiVars'
   },
 
