@@ -271,8 +271,17 @@
       args: [rules.assert(call(p, y)), call(f, x), y],
       level: 1
     },
-    
+
     instMultiVars: {
+      args: [rules.eqSelf('x + y'),
+             {x: Toy.parse('x * y'),
+              y: Toy.parse('x / y')}
+             ],
+      level: 1
+    },
+    
+    instMultiVars2: {
+      ruleName: 'instMultiVars',
       args: [rules.assert(implies(p, call('|', T, q))),
              ({p: Toy.parse('forall {x. T | b}'),
                q: Toy.parse('forall {x. b}')
