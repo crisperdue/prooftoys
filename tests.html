@@ -1747,6 +1747,21 @@ var testCase = {
     assert(result.hasHyps);
   },
 
+  testSourceStepTracking: function() {
+    var taut = rules.tautology('p ==> (h ==> p)');
+    var step1 = rules.assume('forall {y. p y}');
+    var step2 = rules.eqSelf('{x. T} (f x)');
+    var step3 = rules.tautInst(taut, {p: step2, h: step1.getLeft()});
+    var step4 = rules.modusPonens(step2, step3);
+    var step5 = rules.asHypotheses(step4);
+    Toy._flagHyps(step5, step1);
+    assert(step5.hasHyps);
+    assert(step5.getLeft().sourceStep);
+    Toy.trackSourceSteps = true;
+    console.log(step5.toString());
+    Toy.trackSourceSteps = false;
+  },
+
   testAnyImpliesTheorem: function() {
     var thm = Toy.rules.theorem('t');
     var result = Toy.rules.anyImpliesTheorem(Toy.parse('x > 0'), thm);

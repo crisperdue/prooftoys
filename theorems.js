@@ -2255,8 +2255,11 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
+          var hyped = rules.asHypotheses(step2);
+          flagHyps(hyped, target);
+          flagHyps(hyped, hypStep);
           // Rendering of result needs hypStep rendered, so include it as dep.
-	  return (step2.asHyps()
+	  return (hyped
                   .justify('appendStepHyps', arguments, [target, hypStep]));
 	} else {
 	  // The target does not have hyps.
@@ -2266,8 +2269,11 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst('p ==> (h2 ==> p)', subst);
 	  var step2 = rules.modusPonens(target, step1);
+          var hyped = rules.asHypotheses(step2);
+          flagHyps(hyped, target);
+          flagHyps(hyped, hypStep);
           // Rendering of result needs hypStep rendered, so include it as dep.
-          return (rules.asHypotheses(step2)
+          return (hyped
                   .justify('appendStepHyps', arguments, [target, hypStep]));
 	}
       } else {
@@ -2304,8 +2310,11 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst(taut, subst);
 	  var step2 = rules.modusPonens(step, step1);
+          var hyped = rules.asHypotheses(step2);
+          flagHyps(hyped, target);
+          flagHyps(hyped, hypStep);
           // Rendering of result needs hypStep rendered, so include it as dep.
-          return (rules.asHypotheses(step2)
+          return (hyped
                   .justify('prependStepHyps', arguments, [target, hypStep]));
 	} else {
 	  var subst = {
@@ -2314,8 +2323,11 @@ var ruleInfo = {
 	  };
 	  var step1 = rules.tautInst('p ==> (h1 ==> p)', subst);
 	  var step2 = rules.modusPonens(step, step1);
+          var hyped = step2.asHypotheses();
+          flagHyps(hyped, target);
+          flagHyps(hyped, hypStep);
           // Rendering of result needs hypStep rendered, so include it as dep.
-          return (step2.asHyps()
+          return (hyped
                   .justify('prependStepHyps', arguments, [target, hypStep]));
 	}
       } else {
@@ -6046,6 +6058,41 @@ function matchFactPart(step, path, factList, name) {
 }
 
 /**
+ * For each hypothesis in the given step that matches a hypothesis in
+ * the "dep" step that has a sourceStep property, copy the sourceStep
+ * property to the hypothesis in the step.
+ *
+ * This has side effects on the display of Exprs that already exist,
+ * so in some contexts it might affect the display of steps you did
+ * not intend to affect.
+ *
+ * TODO: Consider actually importing hypotheses from dep using rule R
+ * to avoid the possibility of undesired side effects.
+ */
+function flagHyps(step, dep) {
+  if (step.hasHyps && dep.hasHyps) {
+    function flag(hyp) {
+      if (hyp.sourceStep) {
+        // Already flagged, don't change.
+        return true;
+      }
+      function tryFlag(source) {
+        var step = source.sourceStep;
+        if (step && hyp.matches(source)) {
+          hyp.sourceStep = step;
+          // Flag the hyp, and stop searching.
+          return true;
+        }
+      }
+      // Try to flag the hyp with the source step of one of
+      // the hyps from dep.
+      dep.getLeft().eachHyp(tryFlag);
+    }
+    step.getLeft().eachHyp(flag);
+  }
+}
+
+/**
  * Build a schema for a conjunction of hypotheses, ensuring all are in
  * the TermMap, with optional exclusions, a TermSet.  The schema is of
  * the form a1 && ... && an, where the "a"s are variables for the
@@ -6171,6 +6218,7 @@ Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
 Toy._findMatchingCall = findMatchingCall;
 Toy._locateMatchingFact = locateMatchingFact;
+Toy._flagHyps = flagHyps;
 
 //// INITIALIZATION CODE
 
