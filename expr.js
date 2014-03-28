@@ -552,12 +552,17 @@ function decapture(target, replacement) {
 // need them to be present in subsequent steps as hypotheses are
 // carried down from one step to the next.
 //
-// The current solution is that all transformations on expressions that
-// leave a given subexpression the same return the identical
+// The current solution is that all transformations on expressions
+// that leave a given subexpression the same return the identical
 // subexpression object they were given.  This means that all
 // operations that transform expressions must avoid copying except
 // when necessary.  (Rendered copies are not relied on to maintain the
 // sourceStep property.)
+//
+// Rules.appendStepHyps and rules.prependStepHyps also copy sourceStep
+// properties down to resulting steps from their inputs where they
+// match an input hypothesis and are not already flagged.
+// 
 
 /**
  * Superclass for terms of all kinds: Atom, Call, Lambda.
@@ -568,6 +573,7 @@ function Expr() {
   // since the result is conceptually immutable.
   // Duplicated in subclass constructors for speed.
   //
+  this.sourceStep = null;
   // TODO: Rendered copies really should share memos with the originals
   // but they don't.
   this.memos = {};
