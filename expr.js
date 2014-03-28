@@ -1046,6 +1046,14 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, name) {
  *
  * Note that Rule R can introduce previously free variables into a
  * scope where they become bound.
+ *
+ * Note also that we only seem to need to specify the name of a
+ * newly-introduced bound variable in the implementation of bindEqn.
+ * If this is so, the implementation of bindEqn could automatically
+ * rename the new occurrences of bound variables, and it would never
+ * be necessary to rename bound variables in the implementation of
+ * subFree, simplifying its specification and possibly increasing its
+ * performance.
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
