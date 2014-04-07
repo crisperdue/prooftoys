@@ -51,9 +51,12 @@ p {
   cursor: pointer;
 }
 
-/* Prevents these from making the overall line less tall. */
-sub, super {
+sub, sup {
+  /* Prevents these from making the overall line less tall. */
   line-height: 0px;
+  /* Browsers tend to size these for fractions, which makes */
+  /* them a bit bigger than this. */
+  font-size: 70%;
 }
 
 table {
