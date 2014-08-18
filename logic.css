@@ -234,9 +234,16 @@ span#leftNav {
 
 /* Indent most subproofs. */
 .proofDisplay .inferenceDisplay {
-  margin: .5em 5px 5px 1em;
+  margin: 5px 5px 5px 5px;
   border: 1px solid silver;
   box-shadow: 2px 2px 2px #ddd;
+}
+
+/* When inside an inferenceDisplay include a bit of bottom border.
+   (The inferenceDisplay has its own border.)
+ */
+.proofDisplay .inferenceDisplay .proofDisplay {
+  border-bottom: 3px solid transparent;
 }
 
 /* The first level of subproof needs extra indent in the case
@@ -244,11 +251,6 @@ span#leftNav {
  */
 .proofDisplay.editable .inferenceDisplay {
   margin-left: 3em;
-}
-
-/* Nested subproofs get the usual indent. */
-.proofDisplay .inferenceDisplay .inferenceDisplay {
-  margin-left: 1em;
 }
 
 .stepsParent {
@@ -266,6 +268,10 @@ span#leftNav {
   /* For some reason the selection box shadow needs this margin. */
   margin: 5px 0px 1em;
   /* white-space: nowrap could go here to turn off text wrapping. */
+}
+
+.inferenceDisplay .proofSteps {
+  margin-bottom: 0px;
 }
 
 /* The outermost element of a step */
