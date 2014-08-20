@@ -1134,7 +1134,7 @@ Expr.prototype.getBase = function() {
  * true.  Does not copy any information related to rendering.
  */
 Expr.prototype.copyStep = function(deeply) {
-  var expr = deeply ? this.copy() : this.dup();
+  var expr = deeply ? this.copyForRendering() : this.dup();
   expr.details = this.details;
   expr.ruleName = this.ruleName;
   // Some elements of ruleArgs may refer to originals of other steps.
@@ -1910,7 +1910,7 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // bound.)
 //
 //
-// copy()
+// copyForRendering()
 //
 // Makes and returns a deep copy of this Expr, copying all parts
 // including occurrences of Vars, so rendering can add distinct
@@ -2189,7 +2189,7 @@ Atom.prototype._subFree = function(map) {
   return map[this.name] || this;
 };
 
-Atom.prototype.copy = function() {
+Atom.prototype.copyForRendering = function() {
   var result = new Atom(this.pname || this.name);
   result.sourceStep = this.sourceStep;
   return result;
@@ -2388,8 +2388,9 @@ Call.prototype._subFree = function(map) {
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
-Call.prototype.copy = function() {
-  var result = new Call(this.fn.copy(), this.arg.copy());
+Call.prototype.copyForRendering = function() {
+  var result = new Call(this.fn.copyForRendering(),
+                        this.arg.copyForRendering());
   result.sourceStep = this.sourceStep;
   return result;
 };
@@ -2758,8 +2759,9 @@ Lambda.prototype._subFree = function(map) {
 
 // Etc.
 
-Lambda.prototype.copy = function() {
-  var result = lambda(this.bound.copy(), this.body.copy());
+Lambda.prototype.copyForRendering = function() {
+  var result = lambda(this.bound.copyForRendering(),
+                      this.body.copyForRendering());
   result.sourceStep = this.sourceStep;
   return result;
 };
