@@ -426,7 +426,9 @@ Map.prototype.remove = function(key) {
 
 /**
  * Iterate over the map, allowing early return.  The fn receives a
- * value and (string) key.
+ * value and (string) key.  In any iteration where the value of the
+ * function is not the undefined value, immediately returns that
+ * value.
  */
 Map.prototype.each = function(fn, thisObj) {
   var map = this.map
@@ -1134,7 +1136,12 @@ Expr.prototype.getBase = function() {
  * true.  Does not copy any information related to rendering.
  */
 Expr.prototype.copyStep = function(deeply) {
-  var expr = deeply ? this.copyForRendering() : this.dup();
+  var freeVars = this.freeVars();
+  var bindings = null;
+  for (key in freeVars) {
+      bindings = new Bindings(key, key, bindings);
+  }
+  var expr = deeply ? this.copyForRendering(bindings) : this.dup();
   expr.details = this.details;
   expr.ruleName = this.ruleName;
   // Some elements of ruleArgs may refer to originals of other steps.
@@ -1167,7 +1174,7 @@ Expr.prototype.removeUser = function() {
 //// End of methods for proof steps
 
 /**
- * Finds and returns a Map of free variable names in this expression,
+ * Finds and returns a map of free variable names in this expression,
  * from name to true.
  */
 Expr.prototype.freeVars = function() {
@@ -2189,8 +2196,9 @@ Atom.prototype._subFree = function(map) {
   return map[this.name] || this;
 };
 
-Atom.prototype.copyForRendering = function() {
-  var result = new Atom(this.pname || this.name);
+Atom.prototype.copyForRendering = function(bindings) {
+  var name = getBinding(this.name, bindings) || this.pname || this.name;
+  var result = new Atom(name);
   result.sourceStep = this.sourceStep;
   return result;
 };
@@ -2388,9 +2396,9 @@ Call.prototype._subFree = function(map) {
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
-Call.prototype.copyForRendering = function() {
-  var result = new Call(this.fn.copyForRendering(),
-                        this.arg.copyForRendering());
+Call.prototype.copyForRendering = function(bindings) {
+  var result = new Call(this.fn.copyForRendering(bindings),
+                        this.arg.copyForRendering(bindings));
   result.sourceStep = this.sourceStep;
   return result;
 };
@@ -2759,9 +2767,28 @@ Lambda.prototype._subFree = function(map) {
 
 // Etc.
 
-Lambda.prototype.copyForRendering = function() {
-  var result = lambda(this.bound.copyForRendering(),
-                      this.body.copyForRendering());
+Lambda.prototype.copyForRendering = function(bindings) {
+  var bound = this.bound;
+  var name = this.bound.name;
+  var origName = name;
+  if (this.bound.isGeneratedBound()) {
+    var base = bound.parseName().name;
+    name = base;
+    var counter = 0;
+    // Try different names until finding an unused one.
+    while (true) {
+      if (!findBindingValue(name, bindings)) {
+        break;
+      }
+      counter++;
+      name = base + '_' + counter;
+    }   
+  }
+  
+  var newBindings = (name == origName
+                     ? bindings
+                     : new Bindings(origName, name, bindings));
+  var result = lambda(varify(name), this.body.copyForRendering(newBindings));
   result.sourceStep = this.sourceStep;
   return result;
 };
@@ -3023,6 +3050,18 @@ function findBinding(target, bindings) {
     : (target == bindings.from)
     ? bindings
     : findBinding(target, bindings.more);
+}
+
+/**
+ * Like findBinding, but searches for a binding with "to" part equal
+ * to the target value.
+ */
+function findBindingValue(targetValue, bindings) {
+  return bindings == null
+    ? null
+    : (targetValue === bindings.to)
+    ? bindings
+    : findBindingValue(targetValue, bindings.more);
 }
 
 /**
@@ -4016,15 +4055,15 @@ function isConstantName(name) {
  * Returns the name given if it is not in existingNames, a set with
  * name strings as keys.  Otherwise returns a generated name with the
  * same "base" as the one given, and not in existingNames.  The base
- * is the name with any "_N" suffix removed.  The generated suffix
- * will be the lowest-numbered one not yet in use, starting with "_1".
+ * is the name with any trailing digits removed.  The generated suffix
+ * will be the lowest-numbered one not yet in use, starting with "1".
  * Adds the returned name to the existingNames set.
  */
 function genName(name, existingNames) {
-  var base = name.replace(/_[0-9]+$/, '');
+  var base = name.replace(/[0-9]+$/, '');
   var candidate = name;
   for (var i = 1; existingNames[candidate]; i++) {
-    candidate = base + '_' + i;
+    candidate = base + i;
   }
   existingNames[candidate] = true;
   return candidate;
@@ -5128,7 +5167,9 @@ Toy.Path = Path;
 Toy.genVar = genVar;
 Toy.decapture = decapture;
 Toy.path = path;
+Toy.Bindings = Bindings;
 Toy.findBinding = findBinding;
+Toy.findBindingValue = findBindingValue;
 Toy.getBinding = getBinding;
 Toy.sourceStepLess = sourceStepLess;
 Toy.hypIsLess = hypIsLess;

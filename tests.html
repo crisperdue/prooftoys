@@ -523,7 +523,7 @@ var testCase = {
   testDecapture: function() {
     var target = call(lambda(x, x), y);
     var result = Toy.decapture(target, x);
-    assertEqual('({x_1. x_1} y)', result.toString());
+    assertEqual('({x1. x1} y)', result.toString());
     var target = Toy.parse('({x. f x} y)');
     // Result is exactly the input when no decapturing is needed.
     assert(target === Toy.decapture(target, z));
