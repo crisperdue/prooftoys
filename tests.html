@@ -509,14 +509,15 @@ var testCase = {
     assertEqual('{x: true}', Toy.debugString(map));
   },
 
-  testCopy: function() {
+  testCopyForRendering: function() {
+    // TODO: Test the rendering-related aspects.
     var source = '(x = x)';
     var target = Toy.parse(source);
     // Copy is equal to original
-    assertEqual(source, target.copy());
-    assert(target.matches(target.copy()));
+    assertEqual(source, target.copyForRendering());
+    assert(target.matches(target.copyForRendering()));
     // But not identical.
-    assert(target !== target.copy());
+    assert(target !== target.copyForRendering());
   },
 
   testDecapture: function() {
