@@ -1607,6 +1607,10 @@ function formattedStepInfo(step) {
  * Unknown markup passes through, e.g. lambdas -- {x. f x}.
  */
 function expandMarkup(step, markup) {
+  function argStep(place) {
+    var arg = step.ruleArgs[place];
+    return arg.rendering || arg;
+  }
   // Given an array of places, as stored in the value of an "inputs"
   // property of a rule (e.g. rule.inputs.step), and an index into
   // them, returns a step number or phrase ending in a step number,
@@ -1620,12 +1624,12 @@ function expandMarkup(step, markup) {
                  ? places
                  : places[index]);
     if (place) {
-      var stepArg = step.ruleArgs[place - 1];
+      var stepArg = argStep(place - 1);
       if (markupRest && adjacentSteps(stepArg, step)) {
         return '';
       } else {
         return markupRest + '<span class=stepReference>' +
-          stepArg.rendering.stepNumber + '</span>';
+          stepArg.stepNumber + '</span>';
       }
     } else {
       // If the index is out of range return '?'.
@@ -1685,7 +1689,7 @@ function expandMarkup(step, markup) {
     return Toy.termify(step.ruleArgs[place - 1]).toHtml();
   case 'site':
     var place = info.inputs.site[0] || info.inputs.site;
-    var siteStep = step.ruleArgs[place - 1];
+    var siteStep = argStep(place - 1);
     var term = siteStep.locate(step.ruleArgs[place]);
     return term.toHtml();
   default:
@@ -1745,6 +1749,7 @@ var stepFormatters = {
   },
   simpleApply: function(step) {
     var step0 = step.ruleArgs[0];
+    step0 = step0.rendering || step0;
     var path = step.ruleArgs[1];
     var target = step0.locate(path);
     assert(target instanceof Toy.Call);
@@ -1754,6 +1759,7 @@ var stepFormatters = {
   // TODO: Treat "apply" as a rewrite using arbitrary definitions.
   apply: function(step) {
     var step0 = step.ruleArgs[0];
+    step0 = step0.rendering || step0;
     var path = step.ruleArgs[1];
     var target = step0.locate(path);
     if (target instanceof Toy.Call) {
@@ -1903,7 +1909,8 @@ function computeHeaderArgInfo(step) {
     var arg = step.ruleArgs[i];
     var argText;
     if (arg instanceof Toy.Expr) {
-      argText = mathSpan(arg.toHtml());
+      translated = arg.rendering || arg;
+      argText = mathSpan(translated.toHtml());
     } else if (typeof arg == 'string' && arg.match(/^(\(|T$|F$)/)) {
       // Is 'T' or 'F' or '(.*'
       argText = mathSpan(Toy.mathMarkup(arg));
