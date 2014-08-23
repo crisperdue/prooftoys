@@ -2772,10 +2772,15 @@ Lambda.prototype.copyForRendering = function(bindings) {
   var name = this.bound.name;
   var origName = name;
   if (this.bound.isGeneratedBound()) {
+    // When copying a binding of the generatedBound kind, the copy
+    // tries to replace it with a variable that has a simpler name
+    // different than any name bound in this context (or free in the
+    // entire wff).  It retains the base part (with no numeric suffix),
+    // trying first just the base, then successive suffixes until finding
+    // one with no binding in this scope.
     var base = bound.parseName().name;
     name = base;
     var counter = 0;
-    // Try different names until finding an unused one.
     while (true) {
       if (!findBindingValue(name, bindings)) {
         break;
