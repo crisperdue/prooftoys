@@ -1955,7 +1955,7 @@ function computeFirstOrdinal(steps) {
 //// PROOF NAVIGATION
 
 // Every Expr (expression) of a rendered proof has a "node" property
-// that references the node that has the display for that
+// that references the DOM node that has the display for that
 // expression.  From each of these nodes the node for its proof
 // step (Inference) is accessible, and from the node for a proof
 // step, the inference itself accessible.  From any of these nodes
