@@ -75,6 +75,10 @@ def main():
       # Compile the .jsc file
       compile(jsc, js)
 
+# For debugging use with LiveReload:
+# with open('/tmp/foobar', 'w') as msg:
+#   msg.write(str(str(sys.argv)) + '\n')
+
 if __name__ == '__main__':
     main()
 
