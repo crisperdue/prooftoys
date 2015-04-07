@@ -1078,10 +1078,17 @@ Expr.prototype.subFree1 = function(replacement, name) {
   return this.subFree(object0(name, replacement));
 };
 
+// TODO: Eliminate the "consider" rule, allowing instead introduction
+// of new names if there is a proof that such a thing exists.  In this
+// case "exists an x such that x = <expr>", which is always true for
+// any expr, though in some cases x might be null.  (The name must be
+// "new" to the proof.)
+
 /**
- * For a rendered step, returns a path to the equation RHS if the rule
- * was "consider" or the step hasLeftElision; else the main part if
- * there are hypotheses; else the whole wff.
+ * For a non-rendered step, returns a path to the equation RHS if the
+ * rule was "consider" or the step hasLeftElision; else the main part
+ * if there are hypotheses; else the whole wff.  When eliminating the
+ * "consider" rule, eliminate this and its uses also.
  */
 Expr.prototype.pathToVisiblePart = function() {
   return path(this.rendering &&
