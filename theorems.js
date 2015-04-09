@@ -3656,10 +3656,10 @@ var ruleInfo = {
         return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else if (term instanceof Toy.Call) {
-        var arg = term.arg.getNumValue();
         var op = term.fn;
         assert(op.isConst(),
                function() { return 'Unsupported operator: ' + op; });
+        var arg = term.arg.getNumValue();
         if (op.name == 'neg') {
           value = -arg;
           var rhs = Toy.constify(value.toFixed(0));

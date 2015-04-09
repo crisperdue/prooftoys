@@ -636,11 +636,9 @@ Expr.prototype.toString = function() {
   }
   if (Toy.trackSourceSteps
       && this.hasHyps
-      && this.isCall2('==>')
-      && isInfixDesired(this.fn.fn)) {
-    var imply = new Atom('|-');
-    return (prefix + '(' + this.fn.arg._toString() + ' ' + imply + ' '
-            + this.arg._toString() + ')');
+      && this.isCall2('==>')) {
+    return (prefix + '(' + this.getLeft()._toString() + ' |- '
+            + this.getRight()._toString() + ')');
   } else {
     return prefix + this._toString();
   }
