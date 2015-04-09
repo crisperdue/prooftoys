@@ -1375,13 +1375,13 @@ Expr.$ = {
     var rest = p._rest;
     if (this.isCall2() && isInfixDesired(this.getBinOp())) {
       if (segment === 'arg') {
-        return new Path('right', this.arg.prettifyPath(rest));
+        return new Path('right', this.getRight().prettifyPath(rest));
       } else if (segment === 'fn') {
         var seg2 = rest.segment;
         if (seg2 === 'fn') {
-          return new Path('binop', this.fn.fn.prettifyPath(rest._rest));
+          return new Path('binop', this.getBinOp().prettifyPath(rest._rest));
         } else if (seg2 === 'arg') {
-          return new Path('left', this.fn.arg.prettifyPath(rest._rest));
+          return new Path('left', this.getLeft().prettifyPath(rest._rest));
         }
       }
     }
@@ -2377,12 +2377,12 @@ Call.prototype._toString = function() {
       if (useUnicode && op.name == '**') {
         // Use HTML for exponentiation.  So "Unicode" here is
         // currently a misnomer.
-        return this.fn.arg + '<sup>' + this.arg + '</sup>';
+        return this.getLeft() + '<sup>' + this.getRight() + '</sup>';
       } else {
-        return '(' + this.fn.arg + ' ' + op + ' ' + this.arg + ')';
+        return '(' + this.getLeft() + ' ' + op + ' ' + this.getRight() + ')';
       }
     } else {
-      return '(' + op + ' ' + asArg(this.fn.arg) + ' ' + this.arg + ')';
+      return '(' + op + ' ' + asArg(this.getLeft()) + ' ' + this.getRight() + ')';
     }
   } else if (this.fn instanceof Atom && isInfixDesired(this.fn)) {
     return '(' + this.arg + ' ' + this.fn + ')';
@@ -2510,6 +2510,7 @@ Call.prototype._addMathVars = function(bindings, set) {
       addVars();
       break;
     }
+    // TODO: Check here for op is "=" or "!=".
     var isLeftReal = left._addMathVars(bindings, set);
     if (isLeftReal && isFreeVar(right)) {
       set[right.name] = true;

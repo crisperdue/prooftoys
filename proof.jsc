@@ -1379,7 +1379,7 @@ Call.prototype._render = function(minPower) {
     // Display the function adjacent to its argument, but precede both
     // with a non-breaking space to the left to help the user select
     // this expression, and to set them off from preceding infix operator
-    // or other text.
+    // or other text.  Examples are "forall" and "exists".
     if (this.fn.name === 'neg' && this.arg.isNumeral()) {
       // Render e.g. neg 7 as -(7) to distinguish from a negative
       // number.
