@@ -573,8 +573,8 @@ ProofControl.prototype.addStep = function(step) {
 };
 
 /**
- * Finds a step belonging to this ProofControl that has the original
- * of the given step as one of its dependents; or null if none found.
+ * Finds a step belonging to this ProofControl that depends on the original
+ * of the given target step; or null if none found.
  */
 ProofControl.prototype.findDependent = function(target) {
   var original = target.original;
@@ -822,10 +822,10 @@ var _turnstile = '\u22a6';
  *   original, so original proof steps can currently have only one
  *   rendering at a time.
  *
- * - The given step's node has CSS class 'proofStep' and a
- *   'proofStep' data property that refers to the step.  Code
- *   elsewhere may assume that only node's that render a proof step
- *   have the proofStep CSS class.
+ * - The given step's node has CSS class 'proofStep' and a 'proofStep'
+ *   data property that refers to the step.  Code elsewhere may assume
+ *   that a node renders a proof step iff it has the proofStep CSS
+ *   class.
  *
  * - Rendered steps have properties "stepNumber", a string identifying
  *   the step number to display; and "hasLeftElision", a boolean true
