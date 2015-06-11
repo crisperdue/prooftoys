@@ -5254,8 +5254,10 @@ var basicSimpFacts = [
                       'a * 0 = 0',
                       {stmt: 'a / b = neg a / neg b',
                        where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
+                      // This next might be useful as a final prettification.
+                      // We rely on it now to group coefficients, but it is not general.
                       {stmt: 'a * b / c = a / c * b',
-                       where: '$.a.isNumeral() && $.c.isNumeral()'}
+                       where: '$.a.isNumeral() && $.c.isNumeral() && $.b.isVariable()'}
                       ];
 
 /**
