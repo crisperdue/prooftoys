@@ -436,6 +436,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // Applies the rule here.
     result = rule.apply(null, args);
   } catch(error) {
+    this._setBusy(false);
     this.report(error);
     return;
   } finally {
