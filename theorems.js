@@ -5021,11 +5021,6 @@ var recipFacts = {
       return step2;
     }
   },
-  'a * recip b = a / b': {
-    action: function() {
-      return rules.eqnSwap(rules.fact('a / b = a * recip b'));
-    }
-  },
   'a != 0 ==> recip a = 1 / a': {
     action: function() {
       return rules.consider('recip s')
