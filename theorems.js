@@ -2560,7 +2560,8 @@ var ruleInfo = {
         {stmt: 'a * (b * c) = a * b * c'},
         {stmt: 'a * (b / c) = a * b / c'},
         {stmt: 'neg (a * b) = neg a * b'},
-        {stmt: 'neg (a / b) = neg a / b'},
+        // TODO: Restore this line when the fact is available.
+        // {stmt: 'neg (a / b) = neg a / b'},
         {stmt: 'a / (b * c) = a / b / c'},
         {stmt: 'a / (b / c) = a / b * c'},
         // TODO: Convert to this style:
