@@ -4719,12 +4719,6 @@ var negationFacts = {
       .rewrite('/main/right', '-1 * a = neg a');
     }
   },
-  'neg (a * b) = a * neg b': {
-    action: function() {
-      return rules.fact('a * neg b = neg (a * b)')
-      .apply('eqnSwap');
-    }
-  },
   'a * neg b = neg a * b': {
     action: function() {
       return rules.fact('a * neg b = neg (a * b)')
