@@ -2140,12 +2140,10 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 function Atom(name, position) {
   // Expr.call(this);
   this.memos = {};
-  this.name = name;
-  this.pname = null;
+  this.pname = this.name = name;
   this._value = undefined;
   this.pos = position;
   if (aliases.hasOwnProperty(name)) {
-    this.pname = name;
     this.name = aliases[name];
   } else if (isIntegerLiteral(name)) {
     this._value = parseInt(name);
@@ -2163,14 +2161,14 @@ Toy.extends(Atom, Expr);
 Atom.prototype._toString = function() {
   return (useUnicode
           ? this.toUnicode()
-          : this.pname || this.name);
+          : this.pname);
 };
 
 /**
  * Implementation of toUnicode for Atoms.
  */
 Atom.prototype.toUnicode = function() {
-  var name = this.pname || this.name;
+  var name = this.pname;
   var uname = unicodeNames[name];
   if (uname) {
     return uname;
@@ -2202,14 +2200,14 @@ Atom.prototype._subFree = function(map) {
 };
 
 Atom.prototype.copyForRendering = function(bindings) {
-  var name = getBinding(this.name, bindings) || this.pname || this.name;
+  var name = getBinding(this.name, bindings) || this.pname;
   var result = new Atom(name);
   result.sourceStep = this.sourceStep;
   return result;
 };
 
 Atom.prototype.dup = function() {
-  return new Atom(this.pname || this.name);
+  return new Atom(this.pname);
 };
 
 Atom.prototype.hasFreeName = function(name) {
@@ -4484,7 +4482,7 @@ function mathParse(str) {
  *   versus infix context.
  */
 function getPrecedence(token) {
-  var name = token.pname || token.name;
+  var name = token.pname;
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
