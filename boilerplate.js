@@ -6,19 +6,31 @@
 // Load all scripts from js/ subdirectory and preprocess scripts
 // into there.
 
-// Include jQuery in all cases.
-document.write('<script src="lib/jquery-1.10.2.js"></script>\n');
+// Set this variable before loading this file to compensate for
+// extra path elements (e.g. "..") needed to find the scripts
+// correctly.
+var scriptsPrefix = scriptsPrefix || '';
 
-if (!window.noProofScripts) {
-  document.write('<script src="expr.js"></script>\n');
-  document.write('<script src="step-editor.js"></script>\n');
-  document.write('<script src="jsc/proof.js"></script>\n');
-  document.write('<script src="theorems.js"></script>\n');
-  // Support Google Plus stuff in particular.
-  document.write('<script src="https://apis.google.com/js/platform.js">\n' +
-                 '{parsetags: "explicit"}\n' +
-                 '</script>\n');
-}
+(function() {
+  function getScript(name) {
+    var xname = scriptsPrefix ? scriptsPrefix + '/' + name : name;
+    document.write('<script src="' + xname + '"></script>\n');
+  }
+
+  // Include jQuery in all cases.
+  getScript('lib/jquery-1.10.2.js');
+
+  if (!window.noProofScripts) {
+    getScript('expr.js');
+    getScript('step-editor.js');
+    getScript('jsc/proof.js');
+    getScript('theorems.js');
+    // Support Google Plus stuff in particular.
+    document.write('<script src="https://apis.google.com/js/platform.js">\n' +
+                   '{parsetags: "explicit"}\n' +
+                   '</script>\n');
+  }
+})();
 
 var Toy = Toy || {};
 
