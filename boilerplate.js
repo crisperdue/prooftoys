@@ -6,15 +6,17 @@
 // Load all scripts from js/ subdirectory and preprocess scripts
 // into there.
 
-// Set this variable before loading this file to compensate for
-// extra path elements (e.g. "..") needed to find the scripts
-// correctly.
-var scriptsPrefix = scriptsPrefix || '';
 
 (function() {
+  // Try the HTML5 way, otherwise look for a script
+  // named boilerplate.js.
+  var element = document.currentScript
+    || document.querySelector('script[src$="boilerplate.js"]');
+  var src = element.getAttribute('src');
+  var prefix = src.replace(/boilerplate.js$/, '');
+
   function getScript(name) {
-    var xname = scriptsPrefix ? scriptsPrefix + '/' + name : name;
-    document.write('<script src="' + xname + '"></script>\n');
+    document.write('<script src="' + prefix + name + '"></script>\n');
   }
 
   // Include jQuery in all cases.
