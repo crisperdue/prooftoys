@@ -2383,6 +2383,7 @@ Call.prototype._toString = function() {
       return '(' + op + ' ' + asArg(this.getLeft()) + ' ' + this.getRight() + ')';
     }
   } else if (this.fn instanceof Atom && isInfixDesired(this.fn)) {
+    // TODO: Modify this output to be parseable -- ((op) arg)
     return '(' + this.arg + ' ' + this.fn + ')';
   } else {
     return '(' + this.fn + ' ' + asArg(this.arg) + ')';
@@ -4204,7 +4205,8 @@ function justParse(input) {
   try {
     return justParse1(input);
   } catch(e) {
-    err({cause: e, message: 'Could not parse "' + input + '"'});
+    err({cause: e,
+         message: 'Could not parse "' + input + '": ' + e.message});
   }
 }
 
@@ -4231,6 +4233,14 @@ function justParse1(input) {
   }
 
   /**
+   * Returns the second next token without consuming anything,
+   * or the end token if two more tokens are not available.
+   */
+  function peek2() {
+    return tokens[1] || end;
+  }
+
+  /**
    * Consumes the next token as returned by next(), throwing an Error
    * if it is not euqal to the one expected.
    */
@@ -4245,14 +4255,21 @@ function justParse1(input) {
   }
 
   /**
-   * Add this to the power of the next token to break
-   * ties with right associativity.
+   * Given an operator to the left of some expression and one to its
+   * right, should the left one take precedence?  E. g.
+   *
+   * e1 | e2 & ... , where leftOp is "|" and rightOp is "&", or
+   * (p e1 ! ... , where leftOp is "(" and rightOp is "!", or
+   * x + f a - ... , where leftOp is + and rightOp is -, or
+   * We want f a - y to be (f a) - y.
    *
    * TODO: Support right-associative binary operators here.
    *
    */
-  function rightBoost(power) {
-    return (power === unaryPower) ? 1 : 0;
+  function hasPrecedence(leftOp, rightOp) {
+    var left = getPrecedence(leftOp);
+    var right = getPrecedence(rightOp);
+    return left >= right;
   }
 
   /**
@@ -4263,125 +4280,109 @@ function justParse1(input) {
   }
 
   /**
-   * Keep reducing leading parts into subtrees until the next token is
-   * an infix operator with precedence not greater than lastPower (or
-   * equal with right precedence), returning the parse tree built from
-   * everything up to that operator and leaving it in the tokens list.
-   * Returns null if it consumes no input.  ("Above" here means
-   * numerically greater.)  This is a top-down operator precedence
-   * parser.
-   *
-   * This function is responsible for parsing a subexpression that was
-   * preceded by an infix operator or opening "bracket".
-   *
-   * The lastPower will be 0 or 1 if there is no left context, or some
-   * binary operator precedence, or unaryPower - 1 in case the next
-   * operand is for a unary operator.
+   * Returns a truthy value iff the token is a unary or binary
+   * operator.  (Not true for brackets.)
    */
-  function parseAbove(lastPower) {
-    // A "left" expression is context for continued parsing.  It will
-    // either be the function part of a function call or the left
-    // operand of a binary operator, or null if neither of these
-    // is present.
-    var left = null;
-    while (true) {
-      var token = peek();
-      var name = token.name;
-      var nextPower = getPrecedence(token);
-      if (nextPower + rightBoost(nextPower) <= lastPower) {
-        // Return the parse tree from the prior tokens.
-        return left;
-      }
-      // Consume the token.
-      next();
-      var expr = null;
-      // If an atomic expression or unary/nullary expression is
-      // next, expr will get its parse: the right or only side
-      // of this operator or function.
-      if (name === '(') {
-        // The 1 indicates that the parser just saw "(".
-        expr = mustParseAbove(1);
-        expect(')');
-      } else if (name === '{') {
-        var id = next();
-        assert(id.isVariable(), 'Expected identifier, got ' + id.name);
-        expect('.');
-        var body = mustParseAbove(0);
-        expr = lambda(id, body);
-        expect('}');
-      } else if (nextPower === namePower) {
-        // Even if lastPower indicates an operator take the token as
-        // the next expression, e.g. x + f y, where lastPower comes
-        // from "+" and "f" is the current token.
-        expr = token;
-      } else if (!left && lastPower === 1 && peek().name === ')') {
-        // Accept a unary or binary operator as an expression
-        // if directly enclosed in parentheses.
-        expr = token;
-      } else if (left && isBinaryPower(nextPower)) {
-        var right = parseAbove(nextPower);
-        left = right
-          ? infixCall(left, token, right)
-          : new Call(token, left);
-        // Binops are a special case that does not set expr
-        // and use it as an argument to "left".
-        continue;
-      } else if (nextPower === unaryPower) {
-        // Build a parse with the parse tree for all unary
-        // and nullary operators upcoming.
-        expr = new Call(token, parseUnaryArg());
-      } else if (name === '-') {
-        // If the token is '-', but does not parse as infix,
-        // treat it as 'neg', or even as part of a negative
-        // number.
-        var peeked = peek();
-        if (peeked.pos === token.pos + 1 && peeked.isNumeral()) {
-          // If the "-" is directly adjacent, treat the whole thing
-          // as a negative numeral.  The tokenizer will not build
-          // a numeral with a leading "-".
-          next();
-          expr = new Atom('-' + peeked.name, token.pos);
-        } else {
-          expr = new Call(new Atom('neg'),  parseUnaryArg());
-        }
+  function isOperator(token) {
+    var power = getPrecedence(token);
+    return power == unaryPower || isBinaryPower(power);
+  }
+
+  /**
+   * Parses zero or one expressions, stopping at the first operator
+   * token it sees that does not bind tighter than the given one.
+   * (Opening brackets cause recursive calls, so inner calls parse
+   * inner closing brackets.)  Returns the parsed expression or null
+   * if none is available.
+   * 
+   * This function is responsible for parsing a subexpression that was
+   * preceded by an infix operator or opening "bracket", or start of
+   * text.
+   */
+  function parse1Above(lastOp) {
+    // This is a top-down operator precedence parser.
+    var token = next();
+    var name = token.name;
+    var expr;
+    if (name === '(') {
+      var t1 = peek();
+      if (isOperator(t1) && peek2().name === ')') {
+        // Special case of "(<op>)", allowing a bare operator to
+        // appear as an expression.
+        next();
+        next();
+        return t1;
       } else {
-        throw new Error('Unexpected token "' + token.name +
-                        '" at ' + token.pos);
+        expr = mustParseAbove(whatever);
+        expect(')');
+        return expr;
       }
-      left = left ? new Call(left, expr) : expr;
+    } else if (name === '{') {
+      var id = next();
+      assert(id.isVariable(), 'Expected identifier, got ' + id.name);
+      expect('.');
+      var body = mustParseAbove(whatever);
+      expr = lambda(id, body);
+      expect('}');
+      return expr;
+    }
+    var power = getPrecedence(token);
+    // Handle unary operators, including "-".
+    if (power === unaryPower) {
+      return new Call(token, mustParseAbove(token));
+    } else if (token.name === '-') {
+      // If the leading token is '-', treat it as 'neg', or even as
+      // part of a negative number.
+      var peeked = peek();
+      if (peeked.pos === token.pos + 1 && peeked.isNumeral()) {
+        // If the "-" is directly adjacent, treat the whole thing
+        // as a negative numeral.  The tokenizer will not build
+        // a numeral with a leading "-".
+        next();
+        return new Atom('-' + peeked.name, token.pos);
+      } else {
+        var neg = new Atom('neg');
+        return new Call(neg,  mustParseAbove(neg));
+      }
+    } else if (power === namePower) {
+      return token;
+    } else {
+      return null;
     }
   }
 
   /**
-   * Like parseAbove, but throws an Error if it consumes no input.
+   * Parses a sequence of one or more expressions, returning the one
+   * expression or an appropriate Call for a sequence of two or more.
+   * Throws an error if no expressions are available.
+   *
+   * Like parseAbove, always stops before any (top-level) token that
+   * does not bind tighter than the given one.
    */
-  function mustParseAbove(lastPower) {
-    var result = parseAbove(lastPower);
-    if (!result) {
+  function mustParseAbove(lastOp) {
+    var left = parse1Above(lastOp);
+    if (!left) {
       throw new Error('Empty expression at ' + peek().pos);
     }
-    return result;
-  }
-
-  /**
-   * Parses the argument of a unary operator, throwing an error
-   * if the upcoming tokens are not suitable.  Returns an Expr.
-   */
-  function parseUnaryArg() {
-    var token = peek();
-    var power = getPrecedence(token);
-    if (power < unaryPower) {
-      next();
-      return token;
-    } else if (power === unaryPower || token.name === '-') {
-      next();
-      return new Call(token, parseUnaryArg());
-    } else if (power > unaryPower) {
-      // An opening bracket of some kind.
-      return mustParseAbove(power - 1);
-    } else {
-      throw new Error('Unexpected token "' + token.name +
-                      '" at ' + token.pos);
+    while (true) {
+      var token = peek();
+      if (hasPrecedence(lastOp, token)) {
+        // Return the parse tree from the prior tokens.  The token may
+        // still participate in an enclosing expression.
+        return left;
+      } else {
+        var power = getPrecedence(token);
+        if (isBinaryPower(power)) {
+          next();
+          left = infixCall(left, token, mustParseAbove(token));
+        } else {
+          var arg = parse1Above(lastOp);
+          if (!arg) {
+            return left;
+          }
+          left = new Call(left, arg);
+        }
+      }
     }
   }
 
@@ -4396,9 +4397,14 @@ function justParse1(input) {
     // There should be at least one real token.
     throw new Error('No parser input');
   }
-  var result = parseAbove(0);
+  // A token of precedence 0.
+  var whatever = new Atom('(end)');
+  // Parse an expression.  A special "(begin)" delimiter does not seem
+  // to be required, though note this does not require or even allow a
+  // closing paren.
+  var result = mustParseAbove(whatever);
   if (tokens.length) {
-    throw new Error('Extra input: "', + tokens[0] + '"');
+    throw new Error('Extra input: "' + tokens[0] + '"');
   }
   return result;
 }
@@ -4486,10 +4492,11 @@ function getPrecedence(token) {
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
-    return (!token.isLiteral() && !isIdentifier(name)
+    return (!isIdentifier(name) && !token.isLiteral()
             // It's written as an operator, give it the default precedence.
             ? 40
-            : 100);
+            // Otherwise it is a name.
+            : namePower);
   }
 }
 
@@ -4505,9 +4512,6 @@ var precedence = {
   '(end)': 0,
   ')': 0,
   '}': 0,
-  // Value of 1 is reserved in parseAbove and mustParseAbove to indicate
-  // that the preceding token was "(".
-  // 
   // Alias for '=', with lower precedence.
   '==': 2,
   '==>': 11,
@@ -4779,7 +4783,7 @@ function isInfixDesired(vbl) {
     return false;
   }
   var p = getPrecedence(vbl);
-  return 0 < p && p < 100;
+  return 0 < p && p < namePower;
 }
 
 /**

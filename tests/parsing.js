@@ -1,6 +1,8 @@
 
 var parse = Toy.parse;
 
+// Note that there are more parser tests in the main tests file.
+// TODO: Consider moving them here.
 var tests = {
 
   hello: function(a) {
@@ -10,6 +12,21 @@ var tests = {
   atoms: function(a) {
     a.equal(parse('x').str, 'x');
     a.equal(parse('(x)').str, 'x');
+  },
+
+  infix: function(a) {
+    a.equal(parse('a + b').str, '(a + b)');
+    a.equal(parse('(a + b)').str, '(a + b)');
+    a.equal(parse('a + b = b + a').str, '((a + b) = (b + a))');
+  },
+
+  unary: function(a) {
+    a.equal(parse('neg neg a = a').str, '((neg (neg a)) = a)');
+    a.equal(parse('-x = -1 * x').str, '((neg x) = (-1 * x))');
+  },
+
+  specials: function(a) {
+    a.equal(parse('(not) = ((=) F)').dump(), '((= not) (= F))');
   }
 
 };
