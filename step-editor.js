@@ -586,10 +586,6 @@ StepEditor.prototype.fillFromForm = function(args) {
  * Parses the string value according to its type, which can
  * be any of the formTypes.  Returns an Expr for step or term
  * types.  Throws an Error if it detects the input is not valid.
- *
- * When parsing a term, simplifies the error message, but keeps
- * the original parsing error as the "cause" property of the
- * thrown error.
  */
 StepEditor.prototype.parseValue = function(value, type) {
   switch (type) {
