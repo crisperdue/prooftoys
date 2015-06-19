@@ -3495,12 +3495,12 @@ var ruleInfo = {
 
   axiomNeg: {
     action: function() {
-      return rules.assert('R x ==> x + neg x = 0')
-        .asHyps().justify('axiomNeg');
+      return rules.assert('neg x = -1 * x')
+        .justify('axiomNeg');
     },
     inputs: {},
     form: '',
-    comment: 'x + neg x = 0',
+    comment: 'neg x = -1 * x',
     description: 'definition of negation'
   },
 
@@ -4426,7 +4426,12 @@ var algebraFacts = {
   },
   'a + neg a = 0': {
     action: function() {
-      return rules.axiom('axiomNeg');
+      return rules.eqSelf('a + neg a')
+      .rewrite('/main/right/left', 'a = 1 * a')
+      .rewrite('/main/right/right', 'neg a = -1 * a')
+      .rewrite('/main/right', 'a * c + b * c = (a + b) * c')
+      .apply('arithmetic', '/main/right/left')
+      .rewrite('/main/right', '0 * a = 0');
     }
   },
   '@R a & a != 0 ==> a * recip a = 1': {
@@ -4648,7 +4653,7 @@ var negationFacts = {
   },
   'neg a + a = 0': {
     action: function() {
-      return rules.axiom('axiomNeg')
+      return rules.fact('a + neg a = 0')
       .rewrite('/main/left', 'a + b = b + a');
     }
   },
@@ -4681,25 +4686,9 @@ var negationFacts = {
   },
 
   // Negation with multiplication
-  'neg a = -1 * a': {
+  '@neg a = -1 * a': {
     action: function() {
-      // 0 = -1 * a + a
-      var minusOne = rules.fact('0 * a = 0')
-      .replace('/main/left/left',
-               rules.axiomArithmetic(Toy.parse('-1 + 1'))
-               .apply('eqnSwap'))
-      .rewrite('/main/left', '(a + b) * c = a * c + b * c')
-      .apply('_simplifyMath1', '/main/left')
-      .apply('eqnSwap');
-      return rules.fact('neg a + a = 0')
-      .replace('/main/right', minusOne)
-      .apply('subtractFromBoth', 'a')
-      .rewrite('/main/right', 'a + b - c = a + (b - c)')
-      .rewrite('/main/right/right', 'a - a = 0')
-      .rewrite('/main/right', 'a + 0 = a')
-      .rewrite('/main/left', 'a + b - c = a + (b - c)')
-      .rewrite('/main/left/right', 'a - a = 0')
-      .rewrite('/main/left', 'a + 0 = a');
+      return rules.axiomNeg();
     }
   },
   'neg (a * b) = neg a * b': {
