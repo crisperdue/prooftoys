@@ -4178,6 +4178,11 @@ var ruleInfo = {
         // It is an already proved statement.
         return statement;
       }
+      // Try named theorems.
+      var result = getTheorem(statement);
+      if (result) {
+        return result;
+      }
       // Try ordinary proved facts.
       if (isRecordedFact(statement)) {
         return getResult(statement).justify('fact', arguments);
@@ -4188,6 +4193,13 @@ var ruleInfo = {
         var result = tryArithmetic(stmt.eqnLeft());
         if (result && result.alphaMatch(stmt)) {
           return result;
+        }
+      } else {
+        // Relational operators can go here.
+        var result = tryArithmetic(stmt);
+        // x = T is the expected result.
+        if (result && result.matchSchema('x = T')) {
+          return rules.rewriteWithFact(result, '', '(x = T) = x');
         }
       }
       // Try tautologies.
