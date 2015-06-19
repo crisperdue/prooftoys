@@ -4179,22 +4179,16 @@ var ruleInfo = {
         return statement;
       }
       // Try ordinary proved facts.
-      var stmt = getStatement(statement);
-      try {
-        return getResult(stmt).justify('fact', arguments);
-      } catch(err) {
-        if (err.isProofError) {
-          // Proof failed -- abort.
-          throw err;
-        }
+      if (isRecordedFact(statement)) {
+        return getResult(statement).justify('fact', arguments);
       }
       // Next try arithmetic facts.
-      var result = tryArithmetic(stmt);
-      if (result) {
-        if (result.matchSchema('x = T')) {
-          result = rules.rewriteWithFact(result, '', '(x = T) = x');
+      var stmt = getStatement(statement);
+      if (stmt.isEquation()) {
+        var result = tryArithmetic(stmt.eqnLeft());
+        if (result && result.alphaMatch(stmt)) {
+          return result;
         }
-        return result.justify('fact', arguments);
       }
       // Try tautologies.
       try {
@@ -5228,6 +5222,7 @@ $.extend(Fact.prototype, {
         var result = this._prover();
       } catch(err) {
         // Flag it as an error in proof execution.
+        // TODO: Currently unused, consider removing.
         err.isProofError = true;
         throw err;
       }
@@ -5287,9 +5282,8 @@ function addFact(expr_arg, prover) {
 
 /**
  * Accepts any argument acceptable to getStatement.  Looks up a fact
- * matching that statement, returning the proved result.
- * Automatically does alpha conversion if necessary to use the desired
- * variable names.  Throws an exception in case of failure.
+ * matching that statement, returning the proved result.  Throws an
+ * exception in case of failure.
  *
  * Checks that the "main" part of the result matches the "main" part
  * of the statement of the fact.
@@ -5833,7 +5827,7 @@ function isArithmetic(term) {
 
 /**
  * Has the effect of trying the axiom of arithmetic on the term,
- * returning a falsy value if rules.
+ * returning a falsy value if it does not apply.
  */
 function tryArithmetic(term) {
   if (isArithmetic(term)) {
