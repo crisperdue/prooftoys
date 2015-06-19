@@ -2005,6 +2005,14 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // on it.
 //
 //
+// sameAs(expr)
+//
+// True iff all parts of this expression is identical to the
+// corresponding parts of the argument.  This compares atoms by their
+// "name" properties, so constants that are aliases for the same
+// constant still are sameAs each other.
+// 
+//
 // matches(e2, bindings)
 //
 // Tests whether all components of this expression and e2 are the same
@@ -2252,6 +2260,10 @@ Atom.prototype.replaceAt = function(path, xformer) {
 
 Atom.prototype._locate = function(path) {
   return path.isMatch() ? this : null;
+};
+
+Atom.prototype.sameAs = function(expr) {
+  return expr instanceof Atom && this.name === expr.name;
 };
 
 Atom.prototype.matches = function(expr, bindings) {
@@ -2579,6 +2591,12 @@ Call.prototype._locate = function(path) {
   }
 };
 
+Call.prototype.sameAs = function(expr) {
+  return (expr instanceof Call &&
+          this.fn.sameAs(expr.fn) &&
+          this.arg.sameAs(expr.arg));
+};
+
 Call.prototype.matches = function(expr, bindings) {
   if (expr == this) {
     return true;
@@ -2881,6 +2899,12 @@ Lambda.prototype._locate = function(path) {
     return this.body._locate(path._rest);
   }
   this._checkSegment(path);
+};
+
+Lambda.prototype.sameAs = function(expr) {
+  return (expr instanceof Lambda &&
+          this.bound.sameAs(expr.bound) &&
+          this.body.sameAs(expr.body));
 };
 
 Lambda.prototype.matches = function(expr, bindings) {

@@ -496,6 +496,14 @@ var testCase = {
     assertEqual('(((y + 3) + y) = 5)', steps[2].unHyp());
   },
 
+  testSameAs: function() {
+    var e = Toy.parse('a = b + ({x. x + 1} 4)');
+    assert(e.sameAs(e));
+    assert(e.sameAs(e.dup()));
+    assert(!e.sameAs(Toy.parse('a = b + ({y. y + 1} 4)')));
+    assert(!e.sameAs(Toy.parse('a = b')));
+  },
+
   testFreeVars: function() {
     var wff = lambda(x, call(f, x));
     var map = wff.freeVars();
