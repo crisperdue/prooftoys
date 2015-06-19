@@ -478,9 +478,15 @@ StepEditor.prototype._tryRule = function(rule, args) {
       }
     }
     Toy.afterRepaint(function() {
-        var simplified = Toy.rules.simplifyStep(result);
+        var simplified = result;
+        if (result.ruleDeps.length > 0) {
+          // Don't simplify theorems and other facts.
+          simplified = Toy.rules.simplifyStep(result);
+        }
         self._setBusy(false);
         if (simplified && !simplified.rendering) {
+          // TODO: If we see cases where simplification
+          // has no effect, we can check for that here.
           self.proofControl.addStep(simplified);
           checkSolution(simplified);
         } else {
