@@ -481,6 +481,13 @@ StepEditor.prototype._tryRule = function(rule, args) {
         var simplified = result;
         if (result.ruleDeps.length > 0) {
           // Don't simplify theorems and other facts.
+          //
+          // TODO: If this result is an equation with one side
+          // identical to that side of its "predecessor" step, don't
+          // automatically simplify the side that has not changed.
+          // Alternatively, only try simplifications on subexpressions
+          // that contain the site operated on by the rule that
+          // generated this result step.
           simplified = Toy.rules.simplifyStep(result);
         }
         self._setBusy(false);
