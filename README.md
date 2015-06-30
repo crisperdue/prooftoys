@@ -20,4 +20,5 @@ Prooftoys has a web site with pages for interacting with it
 at http://prooftoys.org/.
 
 [Mathtoys](http://mathtoys.org) is an interface to Prooftoys tuned for
-working high school algebra problems.
+working high school algebra problems.  Its unique HTML and code is also
+on GitHub at http://github.com/crisperdue/mathtoys.
