@@ -1,4 +1,5 @@
-// Copyright 2011, 2012, 2013 Crispin Perdue.  All rights reserved.
+// Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
+// All rights reserved.
 
 // TODO: Deploy the app in a single file under flag control.
 // Normally initialize the flag from the page URL, so references

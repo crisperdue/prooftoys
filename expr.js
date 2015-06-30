@@ -1,4 +1,5 @@
-// Copyright 2011, 2012, 2013 Crispin Perdue.  All rights reserved.
+// Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
+// All rights reserved.
 
 // Initialize the app namespace.
 var Toy = Toy || {};

@@ -1,4 +1,4 @@
-
+// Copyright 2015 Crispin Perdue.  All rights reserved.
 
 // Make some names visible throughout
 var rules = Toy.rules;

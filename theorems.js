@@ -1,4 +1,5 @@
-// Copyright 2011, 2012, 2013 Crispin Perdue.  All rights reserved.
+// Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
+// All rights reserved.
 
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
