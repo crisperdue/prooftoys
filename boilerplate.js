@@ -51,7 +51,7 @@ Toy.navText = [
   'Interactive proof builder</a>',
   '<a class=nav target=_blank',
   '   href="http://github.com/crisperdue/prooftoys">',
-  ' Github project site</a>',
+  ' GitHub project site</a>',
   '<a class=nav target=_blank',
   '   href="https://groups.google.com/d/forum/prooftoys">',
   ' Discussion forum</a>',
