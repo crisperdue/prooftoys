@@ -2416,33 +2416,9 @@ var ruleInfo = {
     labels: 'basic'
   },
 
-  // Simplifies the part of the given step at _path using the axiom of
-  // arithmetic and selected simplifying facts.  Returns its result
-  // inline, just the input step if there is nothing to do.
-  //
-  // From the UI use a rule that calls this one.
-  _simplifyMath1: {
-    action: function(step, _path) {
-      var next = 
-        step.locate(_path).searchCalls(function(term, p) {
-            return (isArithmetic(term) &&
-                    Toy.normalReturn(rules.arithmetic,
-                                     step,
-                                     _path.concat(p.reverse())));
-          });
-      if (next) {
-        return next;
-      }
-      var info = findMatchingCall(step.locate(_path), basicSimpFacts);
-      return (info
-              ? rules.rewriteWithFact(step,
-                                      _path.concat(info.path),
-                                      info.stmt)
-              : step);
-    }
-  },
-
   // Repeatedly applies simplifyMath1 to do trivial simplifications.
+  // If the visible part of the step is an equation, simplify each
+  // side, otherwise the entire expression.
   //
   // TODO: Refactor this so the rule itself is not dependent on
   //   different possible renderings.
@@ -2464,6 +2440,9 @@ var ruleInfo = {
     labels: 'algebra'
   },
 
+  // Performs math-oriented simplification throughout the part of the
+  // given step at the given path.  Works repeatedly until no more
+  // simplifications are found.
   simplifySite: {
     action: function(step, path) {
       var result = rules._simplifySite(step, path);
@@ -2485,6 +2464,33 @@ var ruleInfo = {
           return rules._simplifyMath1(eqn, _path('/main/right', eqn));
         });
       return rules.replace(simpler, step, path);
+    }
+  },
+
+  // Simplifies the part of the given step at _path using the axiom of
+  // arithmetic and selected simplifying facts in basicSimpFacts.
+  // Returns its result inline, just the input step if there is
+  // nothing to do.
+  //
+  // From the UI use a rule that calls this one.
+  _simplifyMath1: {
+    action: function(step, _path) {
+      var next = 
+        step.locate(_path).searchCalls(function(term, p) {
+            return (isArithmetic(term) &&
+                    Toy.normalReturn(rules.arithmetic,
+                                     step,
+                                     _path.concat(p.reverse())));
+          });
+      if (next) {
+        return next;
+      }
+      var info = findMatchingCall(step.locate(_path), basicSimpFacts);
+      return (info
+              ? rules.rewriteWithFact(step,
+                                      _path.concat(info.path),
+                                      info.stmt)
+              : step);
     }
   },
 
