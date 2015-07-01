@@ -3626,6 +3626,10 @@ var ruleInfo = {
   // +, -, *, /, neg, =, !=, >, >=, <, <=, and the type operator "R".
   // Checks that inputs are all numeric and that the result can be
   // guaranteed to be an exact integer.
+  //
+  // Result is always an equation (or biconditional) with the given
+  // term as the LHS.  Throws an error if it cannot obey these
+  // specifications.
   axiomArithmetic: {
     action: function(term) {
       if (term.isInfixCall()) {
@@ -5153,10 +5157,13 @@ var basicSimpFacts = [
                       'a * 0 = 0',
                       {stmt: 'a / b = neg a / neg b',
                        where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
-                      // This next might be useful as a final prettification.
-                      // We rely on it now to group coefficients, but it is not general.
+                      // This next might be useful as a final
+                      // prettification.  We rely on it now to group
+                      // coefficients, but it is not general.
                       {stmt: 'a * b / c = a / c * b',
-                       where: '$.a.isNumeral() && $.c.isNumeral() && $.b.isVariable()'}
+                       where:
+                       '$.a.isNumeral() && $.c.isNumeral() && ' +
+                       '$.b.isVariable()'}
                       ];
 
 /**
