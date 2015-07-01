@@ -2475,16 +2475,6 @@ var ruleInfo = {
   // From the UI use a rule that calls this one.
   _simplifyMath1: {
     action: function(step, _path) {
-      var next = 
-        step.locate(_path).searchCalls(function(term, p) {
-            return (isArithmetic(term) &&
-                    Toy.normalReturn(rules.arithmetic,
-                                     step,
-                                     _path.concat(p.reverse())));
-          });
-      if (next) {
-        return next;
-      }
       var info = findMatchingCall(step.locate(_path), basicSimpFacts);
       return (info
               ? rules.rewriteWithFact(step,
@@ -5163,7 +5153,9 @@ var basicSimpFacts = [
                       {stmt: 'a * b / c = a / c * b',
                        where:
                        '$.a.isNumeral() && $.c.isNumeral() && ' +
-                       '$.b.isVariable()'}
+                       '$.b.isVariable()'},
+                      {apply: function(term, cxt) {
+                          return rules.axiomArithmetic(term); } }
                       ];
 
 /**
