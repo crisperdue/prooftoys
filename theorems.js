@@ -280,7 +280,7 @@ var ruleInfo = {
         // bound variables, so the replacement could be a no-op if
         // these are not identical too.  (This is a cheap but not
         // complete check for a no-op.)
-        if (target.locate(path) === equation.getLeft()) {
+        if (target.get(path) === equation.getLeft()) {
           // Quick return if the replacement is a no-op.
           return target.justify('r', [equation, target, path],
                                 [target, equation]);
@@ -555,7 +555,7 @@ var ruleInfo = {
   applyBoth: {
     action: function(h_eqn, a) {
       var eqn = h_eqn.unHyp();
-      var step1 = rules.eqSelf(call(eqn.locate('/left'), a));
+      var step1 = rules.eqSelf(call(eqn.get('/left'), a));
       var step2 = rules.replace(h_eqn, step1, '/right/fn');
       return step2.justify('applyBoth', arguments, [h_eqn]);
     },
@@ -597,7 +597,7 @@ var ruleInfo = {
     action: function(a, path) {
       var args = [a, path];
       path = Toy.path(path, a);
-      var target = a.locate(path);
+      var target = a.get(path);
       if (target.isAtomic()) {
         var result = rules.replace(rules.definition(target.name), a, path);
         return result.justify('useDefinition', args, [a]);
@@ -624,7 +624,7 @@ var ruleInfo = {
   simpleApply: {
     action: function(step, path) {
       // Note that axiom 4 checks validity of its argument.
-      var equation = rules.axiom4(step.locate(path));
+      var equation = rules.axiom4(step.get(path));
       var result = rules.replace(equation, step, path);
       return result.justify('simpleApply', arguments, [step]);
     },
@@ -700,7 +700,7 @@ var ruleInfo = {
     action: function(step, path, newVar) {
       newVar = varify(newVar);
       path = Toy.path(path, step);
-      var target = step.locate(path);
+      var target = step.get(path);
       assert(target instanceof Toy.Lambda, 'Not a function: ' + target, step);
       assert(!step.freeVars()[newVar.name],
              'New bound variable ' + newVar.name + ' must not occur free.',
@@ -850,7 +850,7 @@ var ruleInfo = {
   toTIsEquation: {
     action: function(a_b) {
       assertEqn(a_b);
-      var step1 = rules.eqT(a_b.locate('/left'));
+      var step1 = rules.eqT(a_b.get('/left'));
       var step2 = rules.replace(a_b, step1, '/right/right');
       return step2.justify('toTIsEquation', arguments, [a_b]);
     },
@@ -1015,11 +1015,11 @@ var ruleInfo = {
   // [A = B] & [C = D].  Used in andTBook.
   r5213: function(a_b, c_d) {
     assertEqn(a_b);
-    var a = a_b.locate('/left');
-    var b = a_b.locate('/right');
+    var a = a_b.get('/left');
+    var b = a_b.get('/right');
     assertEqn(c_d);
-    var c = c_d.locate('/left');
-    var d = c_d.locate('/right');
+    var c = c_d.get('/left');
+    var d = c_d.get('/right');
     var step1 = rules.eqT(a);
     var step2 = rules.r(a_b, step1, '/right/right');
     var step3 = rules.eqT(c);
@@ -1173,11 +1173,11 @@ var ruleInfo = {
     action: function(h_t_a) {
       var t_a = h_t_a.unHyp()
       assertEqn(t_a);
-      var left = t_a.locate('/left');
+      var left = t_a.get('/left');
       assert(left.isConst('T'),
              'Input should be [T = A]: ' + t_a,
              h_t_a);
-      var a = t_a.locate('/right');
+      var a = t_a.get('/right');
       var result = rules.replace(rules.r5218(a), h_t_a, '/main');
       return result.justify('fromTIsA', arguments, [h_t_a]);
     },
@@ -1255,7 +1255,7 @@ var ruleInfo = {
   // term as the arguments.
   instantiateVar: {
     action: function(step, path, term) {
-      v = step.locate(path);
+      v = step.get(path);
       assert(v.isVariable(), 'Not a variable: ' + v);
       var map = {};
       map[v.name] = term;
@@ -1488,7 +1488,7 @@ var ruleInfo = {
         if (_path == null) {
           return result.justify('evalBool', arguments);
         }
-        var target = right.locate(_path);
+        var target = right.get(_path);
         var fn = target.fn;
         if (fn.isConst()) {
           var defn;
@@ -1789,7 +1789,7 @@ var ruleInfo = {
       var step3 = rules.addForall(step2, v);
       var step4 = rules.r5235(v, call('not', a), b);
       var step5 = rules.modusPonens(step3, step4);
-      var map6 = {a: a, b: step5.locate('/main/right')};
+      var map6 = {a: a, b: step5.get('/main/right')};
       var step6 = rules.tautInst('not a | b ==> (a ==> b)', map6);
       var step7 = rules.modusPonens(step5, step6);
       return step7.justify('implyForallBook', arguments, [h_a_b]);
@@ -1920,7 +1920,7 @@ var ruleInfo = {
   // TODO: Change "subgoal" to "expandRight"; create similar "expandLeft".
   instantiate: {
     action: function(schema, path, term) {
-      var expr = schema.locate(path);
+      var expr = schema.get(path);
       var subst = term.matchSchema(expr);
       assert(subst, function() {
           return 'Schema ' + expr + ' should match ' + term;
@@ -2212,7 +2212,7 @@ var ruleInfo = {
     action: function(target, _path, equation) {
       var path = Toy.path(_path);
       var lhs = equation.getMain().getLeft();
-      var expr = target.locate(path);
+      var expr = target.get(path);
       if (expr.matches(lhs)) {
         return rules.replace(equation, target, path)
           .justify('replaceEither', arguments, [target, equation]);
@@ -2350,7 +2350,7 @@ var ruleInfo = {
   // the equation.  The step and equation may have hypotheses.
   rewrite: {
     action: function(step, path, equation) {
-      var expr = step.locate(path);
+      var expr = step.get(path);
       var map = expr.findSubst(equation.unHyp().getLeft());
       assert(map, function() {
           return (step.unHyp().toString() +
@@ -2379,7 +2379,7 @@ var ruleInfo = {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
-      var expr = step.locate(path);
+      var expr = step.get(path);
       var map = expr.findSubst(fact.unHyp().getLeft());
       assert(map, function() {
           return ('Sorry, term\n' +
@@ -2425,7 +2425,7 @@ var ruleInfo = {
   simplifyStep: {
     action: function(step) {
       var visPath = step.pathToVisiblePart();
-      if (step.locate(visPath).isCall2('=')) {
+      if (step.get(visPath).isCall2('=')) {
         var step1 = rules.simplifySite(step, visPath.concat('/right'))
         var result = rules.simplifySite(step1, visPath.concat('/left'))
       } else {
@@ -2459,7 +2459,7 @@ var ruleInfo = {
   _simplifySite: {
     action: function(step, path) {
       var _path = Toy.path;
-      var eqn = rules.consider(step.locate(path));
+      var eqn = rules.consider(step.get(path));
       var simpler = whileSimpler(eqn, function(eqn) {
           return rules._simplifyMath1(eqn, _path('/main/right', eqn));
         });
@@ -2475,7 +2475,7 @@ var ruleInfo = {
   // From the UI use a rule that calls this one.
   _simplifyMath1: {
     action: function(step, _path) {
-      var info = findMatchingCall(step.locate(_path), basicSimpFacts);
+      var info = findMatchingCall(step.get(_path), basicSimpFacts);
       return (info
               ? rules.rewriteWithFact(step,
                                       _path.concat(info.path),
@@ -2496,7 +2496,7 @@ var ruleInfo = {
       var path1 = step.pathToVisiblePart();
       var schemas = [{match: 'neg a', where: '$.a.isNumeral()'}];
       var info;
-      while (info = findMatchingCall(simpler.locate(path1), schemas)) {
+      while (info = findMatchingCall(simpler.get(path1), schemas)) {
         simpler = rules.arithmetic(simpler, path1.concat(info.path));
       }
       return simpler.justify('simplifyNegations', arguments, [step]);
@@ -2706,7 +2706,7 @@ var ruleInfo = {
         return applyTo(eqn2a, facts3);
       }
       var visPath = step.pathToVisiblePart();
-      if (step.locate(visPath).isCall2('=')) {
+      if (step.get(visPath).isCall2('=')) {
         var step1 =
           convertAndReplace(step, visPath.concat('/right'), convert);
         var result =
@@ -2809,7 +2809,7 @@ var ruleInfo = {
       var path = step.prettyPathTo(expr);
       var lastSegment = path.last();
       if (lastSegment == 'right') {
-        var parent = step.locate(path.parent());
+        var parent = step.get(path.parent());
         return parent.isCall2('+') || parent.isCall2('-');
       } else {
         return false;
@@ -2891,7 +2891,7 @@ var ruleInfo = {
     toOffer: function(step, expr) {
       var path = step.prettyPathTo(expr);
       var leftPath = step.leftNeighborPath(path, ['+', '-']);
-      return leftPath && termLeftThan(expr, step.locate(leftPath));
+      return leftPath && termLeftThan(expr, step.get(leftPath));
     },
     action: function(step, path_arg) {
       var path = step.prettifyPath(path_arg);
@@ -2900,7 +2900,7 @@ var ruleInfo = {
         var further = rules.moveTermLeft(prev, path);
         var leftPath = prev.leftNeighborPath(path, ['+', '-']);
         if (further.matches(prev) ||
-            !termLeftThan(step.locate(path), step.locate(leftPath))) {
+            !termLeftThan(step.get(path), step.get(leftPath))) {
           return further.justify('placeTermLeftward', arguments, [step]);
         }
         path = leftPath;
@@ -2922,7 +2922,7 @@ var ruleInfo = {
       // This rule assumes that the step has the form
       // H ==> lhs = rhs
       //
-      var term = step.locate(path);
+      var term = step.get(path);
       assert(!step.rendering.hasLeftElision,
              'Not supported: would modify hidden equation left side');
       var xp = path.expand().toString();
@@ -2930,13 +2930,13 @@ var ruleInfo = {
       var outPath;
       if (xp === '/arg/fn/arg/arg') {
         // Path is /main/left/right.
-        var op = step.locate('/main/left/binop');
+        var op = step.get('/main/left/binop');
         assert(op.name === '+' || op.name === '-',
                'Operator needs to be + or -');
         outPath = Toy.path('/main/left');
       } else if (xp === '/arg/arg/arg') {
         // Path is /main/right/right.
-        var op = step.locate('/main/right/binop');
+        var op = step.get('/main/right/binop');
         assert(op.name === '+' || op.name === '-',
                'Operator needs to be + or -');
         outPath = Toy.path('/main/right');
@@ -3049,7 +3049,7 @@ var ruleInfo = {
             var assocInstance = rules.instMultiVars(assoc, map);
 	    var step1 = rules.r(assocInstance, eqn, '/right');
 	    // Then recursively bubble the C in A & C to its proper place.
-	    var step2 = rules.bubbleLeft(step1.locate('/right/left'), less);
+	    var step2 = rules.bubbleLeft(step1.get('/right/left'), less);
 	    // Replace the A & C in RHS of step1 with the result.
 	    var step3 = rules.r(step2, step1, '/right/left');
             // and replace the RHS of the argument with the final result.
@@ -3107,7 +3107,7 @@ var ruleInfo = {
         while (eqn.getRight().getLeft().isCall2('&')) {
 	  // The left chain has at least 2 elements.
 	  var eqn1 = rules.mergeRight(eqn);
-	  var chain2 = eqn1.locate('/right/right');
+	  var chain2 = eqn1.get('/right/right');
 	  var eqn3 = rules.bubbleLeft(chain2, less);
 	  eqn = rules.r(eqn3, eqn1, '/right/right');
         }
@@ -3183,7 +3183,7 @@ var ruleInfo = {
   // and c is the implication RHS.  Useful for simplifying hypotheses.
   isolateHypAt: {
     action: function(step, path) {
-      var result = rules.isolateHyp(step, step.locate(path));
+      var result = rules.isolateHyp(step, step.get(path));
       return result.justify('isolateHypAt', arguments, [step]);
     },
     inputs: {site: 1},
@@ -3731,7 +3731,7 @@ var ruleInfo = {
   // Rewrites a simple arithmetic expression to its value.
   arithmetic: {
     action: function(step, path) {
-      var term = step.locate(path);
+      var term = step.get(path);
       var result;
       if (term.isCall2('!=') &&
           term.getLeft().isNumeral() &&
@@ -3767,8 +3767,8 @@ var ruleInfo = {
 
   rewriteInDepth: {
     action: function(step, path, facts) {
-      var equation = rules.deepTermReplacer(step.locate(path), facts);
-      var result = rules.replace(equation, step.locate(path));
+      var equation = rules.deepTermReplacer(step.get(path), facts);
+      var result = rules.replace(equation, step.get(path));
       return result.justify('rewriteInDepth', arguments);
     },
   },    
@@ -3951,7 +3951,7 @@ var ruleInfo = {
             return step;
           }
           var path = new Toy.Path('left', hypsPath);
-          var expr = step.locate(path);
+          var expr = step.get(path);
           var fact = getArithOp(expr)(expr);
           var simpleFact =
             simplifyHyps(rules.instantiate(fact, '/main/left', expr));
@@ -3996,7 +3996,7 @@ var ruleInfo = {
   // The new step inherits hypotheses from the input step.
   considerPart: {
     action: function(step, path) {
-      var eqn = rules.eqSelf(step.locate(path));
+      var eqn = rules.eqSelf(step.get(path));
       var result = (step.hasHyps
                     ? (rules.anyImpliesTheorem(step.getLeft(), eqn)
                        .apply('asHypotheses'))
@@ -4081,7 +4081,7 @@ var ruleInfo = {
 
   addThisToBoth: {
     action: function(step, path) {
-      var term = step.locate(path);
+      var term = step.get(path);
       return (rules.addToBoth(step, term)
               .justify('addThisToBoth', arguments, [step]));
     },
@@ -4095,7 +4095,7 @@ var ruleInfo = {
 
   subtractThisFromBoth: {
     action: function(step, path) {
-      var term = step.locate(path);
+      var term = step.get(path);
       return (rules.subtractFromBoth(step, term)
               .justify('subtractThisFromBoth', arguments, [step]));
     },
@@ -4109,7 +4109,7 @@ var ruleInfo = {
 
   multiplyBothByThis: {
     action: function(step, path) {
-      var term = step.locate(path);
+      var term = step.get(path);
       return (rules.multiplyBoth(step, term)
               .justify('multiplyBothByThis', arguments, [step]));
     },
@@ -4123,7 +4123,7 @@ var ruleInfo = {
 
   divideBothByThis: {
     action: function(step, path) {
-      var term = step.locate(path);
+      var term = step.get(path);
       return (rules.divideBoth(step, term)
               .justify('divideBothByThis', arguments, [step]));
     },
@@ -4231,16 +4231,16 @@ var ruleInfo = {
     var step2a = rules.apply(step1, '/right');
     var step2b = rules.applyBoth(step2a, F);
     var step2c = rules.apply(step2b, '/right');
-    var step3 = rules.instEqn(a3, step2c.locate('/right/left'), f);
-    var step4 = rules.instEqn(step3, step2c.locate('/right/right'), g);
+    var step3 = rules.instEqn(a3, step2c.get('/right/left'), f);
+    var step4 = rules.instEqn(step3, step2c.get('/right/right'), g);
     var step5 = rules.apply(step4, '/right/arg/body/left');
     var step6 = rules.apply(step5, '/right/arg/body/right');
-    var step7 = rules.applyBoth(fa, step6.locate('/right/arg'));
-    var step8 = rules.instEqn(a3, step7.locate('/right/left'), f);
-    var step9 = rules.instEqn(step8, step7.locate('/right/right'), g);
+    var step7 = rules.applyBoth(fa, step6.get('/right/arg'));
+    var step8 = rules.instEqn(a3, step7.get('/right/left'), f);
+    var step9 = rules.instEqn(step8, step7.get('/right/right'), g);
     var step10 = rules.apply(step9, '/right/arg/body/left');
     var step11 = rules.apply(step10, '/right/arg/body/right');
-    var step12 = rules.r5218(step11.locate('/right/arg/body/right'));
+    var step12 = rules.r5218(step11.get('/right/arg/body/right'));
     var step13 = rules.r(step12, step11, '/right/arg/body');
     return step13.justify('funWithAnd');
   }
@@ -5562,7 +5562,7 @@ function locateMatchingFact(expr, schema_arg, varsMap, context) {
         }
         if (list) {
           var result =
-            findMatchingFact(list, context, expr.locate(revPath.reverse()));
+            findMatchingFact(list, context, expr.get(revPath.reverse()));
           if (result) {
             result.path = revPath.reverse().concat(result.path);
             throw new Toy.Result(result);
@@ -5580,7 +5580,7 @@ function locateMatchingFact(expr, schema_arg, varsMap, context) {
  * facts apply.
  */
 function applyFactsOnce(step, path, facts) {
-  var info = findMatchingFact(facts, null, step.locate(path));
+  var info = findMatchingFact(facts, null, step.get(path));
   return info ? rules.rewriteWithFact(step, path, info.stmt) : step;
 }
 
@@ -5614,7 +5614,7 @@ function applyFactsWithinRhs(step, facts) {
   var rhs = Toy.path('/main/right', step);
   var info;
   var eqn = step;
-  while ((info = findMatchingCall(eqn.locate(rhs), facts))) {
+  while ((info = findMatchingCall(eqn.get(rhs), facts))) {
     var fullPath = rhs.concat(info.path);
     eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
   }
@@ -5628,7 +5628,7 @@ function applyFactsWithinRhs(step, facts) {
  * using the returned equation.
  */ 
 function convertAndReplace(step, path, fn) {
-  var expr = step.locate(path);
+  var expr = step.get(path);
   assert(expr, function() { return 'Bad path ' + path; }, step);
   var eqn = fn(expr);
   return rules.replace(eqn, step, path);
@@ -5678,7 +5678,7 @@ function arrangeRhs(eqn_arg, context, facts) {
   var rhsPath = Toy.path('/main/right', eqn_arg);
   var info;
   var eqn = eqn_arg;
-  while ((info = findMatchingFact(facts, context, eqn.locate(rhsPath)))) {
+  while ((info = findMatchingFact(facts, context, eqn.get(rhsPath)))) {
     var fullPath = rhsPath.concat(info.path);
     eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
   }
@@ -5694,7 +5694,7 @@ function arrangeRhs(eqn_arg, context, facts) {
  * replacing it in the step when done applying facts.
  */
 function arrange(step, path, context, facts) {
-  var eqn = rules.consider(step.locate(path));
+  var eqn = rules.consider(step.get(path));
   var arranged = arrangeRhs(eqn, context, facts);
   return rules.replace(arranged, step, path);
 }

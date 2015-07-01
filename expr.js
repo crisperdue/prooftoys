@@ -1018,7 +1018,7 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, name) {
   if (!prefix) {
     return null;
   }
-  var target = this.locate(prefix);
+  var target = this.get(prefix);
   var subst = target.matchSchema(schema);
   if (subst) {
     subst.path = prefix;
@@ -1388,7 +1388,7 @@ Expr.$ = {
     }
     // This expression and path segment are not a special case.
     // Prettify the subexpression and path at the next level down.
-    var next = this.locate(new Path(segment));
+    var next = this.get(new Path(segment));
     // Return a path with this segment and the prettified tail
     // of this path.
     return new Path(segment, next.prettifyPath(rest));
@@ -1467,11 +1467,11 @@ Expr.prototype.repr = function() {
 };
 
 /**
- * Public version of "locate", finding a subexpression
+ * Public version of "get", finding a subexpression
  * from its path.  Handles /main in the path.
  */
-Expr.prototype.locate = function(_path) {
-  return this._locate(path(_path, this));
+Expr.prototype.get = function(_path) {
+  return this._get(path(_path, this));
 };
 
 /**
@@ -1531,7 +1531,7 @@ Expr.prototype.leftNeighborPath = function(path_arg, operators) {
     return null;
   }
   var parentPath = path.parent();
-  var parent = this.locate(parentPath);
+  var parent = this.get(parentPath);
   if (!(parent.isCall2() && parent.getBinOp().in(operators))) {
     return null;
   }
@@ -1556,7 +1556,7 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
   }
   // First check if this is a left operand.
   var parentPath = path.parent();
-  var parent = this.locate(parentPath);
+  var parent = this.get(parentPath);
   if (!(parent.isCall2() && parent.getBinOp().in(operators))) {
     return null;
   }
@@ -1572,7 +1572,7 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
     return null;
   }
   var parentPath2 = parentPath.parent();
-  var parent2 = this.locate(parentPath2);
+  var parent2 = this.get(parentPath2);
   if (parent2.isCall2() && parent2.getBinOp().in(operators)) {
     // Grandparent expression is a call to another binop.
     // Return a path to its right operand.
@@ -2259,7 +2259,7 @@ Atom.prototype.replaceAt = function(path, xformer) {
   return path.isMatch() ? xformer(this) : this;
 };
 
-Atom.prototype._locate = function(path) {
+Atom.prototype._get = function(path) {
   return path.isMatch() ? this : null;
 };
 
@@ -2568,7 +2568,7 @@ Call.prototype.replaceAt = function(path, xformer) {
   }
 };
 
-Call.prototype._locate = function(path) {
+Call.prototype._get = function(path) {
   if (path.isMatch()) {
     return this;
   } else {
@@ -2576,17 +2576,17 @@ Call.prototype._locate = function(path) {
     var rest = path._rest;
     if (this.fn instanceof Call) {
       if (segment === 'left') {
-        return this.getLeft()._locate(rest);
+        return this.getLeft()._get(rest);
       } else if (segment === 'binop') {
-        return this.getBinOp()._locate(rest);
+        return this.getBinOp()._get(rest);
       } else if (segment === 'right') {
-        return this.getRight()._locate(rest);
+        return this.getRight()._get(rest);
       }
     }
     if (segment === 'fn') {
-      return this.fn._locate(rest);
+      return this.fn._get(rest);
     } else if (segment === 'arg') {
-      return this.arg._locate(rest);
+      return this.arg._get(rest);
     }
     this._checkSegment(path);
   }
@@ -2889,15 +2889,15 @@ Lambda.prototype.replaceAt = function(path, xformer) {
   this._checkSegment(path);
 };
 
-Lambda.prototype._locate = function(path) {
+Lambda.prototype._get = function(path) {
   if (path.isMatch()) {
     return this;
   }
   var segment = path.segment;
   if (segment === 'bound') {
-    return this.bound._locate(path._rest);
+    return this.bound._get(path._rest);
   } else {
-    return this.body._locate(path._rest);
+    return this.body._get(path._rest);
   }
   this._checkSegment(path);
 };

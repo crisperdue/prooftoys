@@ -625,10 +625,10 @@ var testCase = {
     var e = parse('(a + b) + c');
     var path = new Path('left', new Path('left'));
     assertEqual('/left/left', path.toString());
-    assertEqual('a', e.locate(path));
+    assertEqual('a', e.get(path));
 
     var right2 = new Path('right', new Path('right'));
-    assertEqual(null, e.locate(right2));
+    assertEqual(null, e.get(right2));
   },
 
   testTraverse: function() {
@@ -662,9 +662,9 @@ var testCase = {
     assertEqual('(x + x)', found.toString());
   },
 
-  testLocate: function() {
+  testGet: function() {
     var expr = call('forall', lambda(x, call(p, x)));
-    var body = expr.locate(Toy.path('/arg/body'));
+    var body = expr.get(Toy.path('/arg/body'));
     assertEqual('(p x)', body.toString());
   },
 
@@ -735,7 +735,7 @@ var testCase = {
   testAncestors: function() {
     var expr = Toy.parse('a + neg (b * c)');
     var path = Toy.path('/right/arg/fn/arg');
-    assertEqual('b', expr.locate(path));
+    assertEqual('b', expr.get(path));
 
     var parents = expr.ancestors(path);
     assertEqual(5, parents.length);
@@ -766,7 +766,7 @@ var testCase = {
   testPathExpand: function() {
     var wff = Toy.parse('x + y + z = w');
     var xPath = '/left/left/left';
-    var x = wff.locate(xPath);
+    var x = wff.get(xPath);
     assertEqual('x', x.name);
     var pp = wff.prettyPathTo(x);
     assertEqual(xPath, pp.toString());
@@ -774,7 +774,7 @@ var testCase = {
     assertEqual(p.toString(), pp.expand().toString());
 
     var yPath = '/left/left/right';
-    var y = wff.locate(yPath);
+    var y = wff.get(yPath);
     assertEqual('y', y.name);
     var pp = wff.prettyPathTo(y);
     assertEqual(yPath, pp.toString());
@@ -782,7 +782,7 @@ var testCase = {
     assertEqual(p.toString(), pp.expand().toString());
 
     var eqPath = '/binop';
-    var eq = wff.locate(eqPath);
+    var eq = wff.get(eqPath);
     assertEqual('=', eq.name);
     var pp = wff.prettyPathTo(eq);
     assertEqual(eqPath, pp.toString());
@@ -861,7 +861,7 @@ var testCase = {
       if (expectSuccess) {
         if (subst) {
           console.log('Subst', Toy.debugString(subst));
-          assertEqual(term.locate(subst.path).toString(),
+          assertEqual(term.get(subst.path).toString(),
                       schema.subFree(subst));
         } else {
           assert(false, 'No match found');
@@ -881,7 +881,7 @@ var testCase = {
     var step2 = rules.eqSelf('x - 5 * y');
     var match = Toy.matchFactPart;
     var pathToY = '/main/right/left/right';
-    assertEqual('y', step1.locate(pathToY));
+    assertEqual('y', step1.get(pathToY));
     var func = match(step1, pathToY, facts, 'b');
     assertEqual('function', typeof func);
     var result = func();
@@ -2049,7 +2049,7 @@ var testCase = {
     var step1 = rules.instVar(input, '2', x);
     // Apply arithmetic to the "2 != 0" part of the instantiated axiom.
     var result = rules.arithmetic(step1, '/left/right');
-    assertEqual('T', result.locate('/left/right'));
+    assertEqual('T', result.get('/left/right'));
   },
 
   testSubtractionType: function() {
@@ -2065,7 +2065,7 @@ var testCase = {
   testSimplifyStep: function() {
     var step1 = rules.consider('2 * (3 * x)');
     var step2 = rules.simplifyStep(step1);
-    assertEqual('(6 * x)', step2.locate('/main/right'));
+    assertEqual('(6 * x)', step2.get('/main/right'));
   },
 
   testSimplifyAssumptions: function() {

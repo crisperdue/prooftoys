@@ -102,7 +102,7 @@ function stepSites(step) {
     if (Toy.siteTypes.hasOwnProperty(type)) {
       var source = step.ruleArgs[position];
       if (source.rendering) {
-        results.push(source.rendering.locate(step.ruleArgs[position + 1]));
+        results.push(source.rendering.get(step.ruleArgs[position + 1]));
       }
     }
   });
@@ -1691,7 +1691,7 @@ function expandMarkup(step, markup) {
   case 'site':
     var place = info.inputs.site[0] || info.inputs.site;
     var siteStep = argStep(place - 1);
-    var term = siteStep.locate(step.ruleArgs[place]);
+    var term = siteStep.get(step.ruleArgs[place]);
     return term.toHtml();
   default:
     // Pass it through unchanged.
@@ -1745,14 +1745,14 @@ var stepFormatters = {
   changeVar: function(step) {
     var step0 = step.ruleArgs[0];
     var path = step.ruleArgs[1];
-    var target = step0.locate(path);
+    var target = step0.get(path);
     return 'rename ' + target.bound;
   },
   simpleApply: function(step) {
     var step0 = step.ruleArgs[0];
     step0 = step0.rendering || step0;
     var path = step.ruleArgs[1];
-    var target = step0.locate(path);
+    var target = step0.get(path);
     assert(target instanceof Toy.Call);
     assert(target.fn instanceof Toy.Lambda);
     return 'apply function of ' + target.fn.bound.toHtml();
@@ -1762,7 +1762,7 @@ var stepFormatters = {
     var step0 = step.ruleArgs[0];
     step0 = step0.rendering || step0;
     var path = step.ruleArgs[1];
-    var target = step0.locate(path);
+    var target = step0.get(path);
     if (target instanceof Toy.Call) {
       var fn = target.fn;
       if (fn instanceof Toy.Lambda) {
@@ -2109,7 +2109,7 @@ function hoverShowPath(wff, path) {
   var $display = $('#hoverPath');
   if ($display.length) {
     // If there is no bottom panel, do nothing.
-    var expr = wff.locate(path);
+    var expr = wff.get(path);
     var pathStr = path ? path.toString() : '';
     $display.html(pathStr);
   }
@@ -2190,7 +2190,7 @@ function hoverAsRewriter(step, action) {
   // Note: this is likely to require overrides in some rules.
   Toy.stepPaths(step).forEach(function(path) {
     try {
-      action(step.locate(path).node, 'site');
+      action(step.get(path).node, 'site');
     } catch(err) {
       Toy.logError(err);
     }

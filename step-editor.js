@@ -720,7 +720,7 @@ StepEditor.prototype.offerable = function(ruleName) {
         return info.toOffer(step, step.selection);
       }
       if (info.test) {
-        return info.test(step, step.locate(step.selection));
+        return info.test(step, step.get(step.selection));
       }
       return true;
     }
@@ -864,7 +864,7 @@ function ruleMenuText(ruleName, term, step) {
       var pathToTerm = step.prettyPathTo(term);
       var parentPath = pathToTerm.upTo('/left') || pathToTerm.upTo('/left/right');
       if (parentPath) {
-        var rightNeighbor = step.locate(parentPath).getRight();
+        var rightNeighbor = step.get(parentPath).getRight();
         right = rightNeighbor.toHtml();
       }
     }
