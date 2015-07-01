@@ -8,6 +8,7 @@
 //// THEOREMS AND RULES
 
 var assert = Toy.assertTrue;
+var check = Toy.check;
 
 //  Make some useful names available here.
 var assertEqn = Toy.assertEqn;
@@ -3635,13 +3636,14 @@ var ruleInfo = {
         case '*': value = left * right; break;
         case '-': value = left - right; break;
         case '/':
-          assert(right !== 0, 'Cannot divide by zero');
+          // TODO: Consider evaluating these to the null value.
+          check(right !== 0, 'Cannot divide by zero');
           value = left / right;
           // abs(value) <= abs(left) since abs(right) >= 1 so the
           // magnitude is not a problem.  The fractional part of a
           // result must have denominator no greater than MAX_INT,
           // so it should be distinguishable from an integer.
-          assert(value === Math.floor(value), 'Inexact division');
+          check(value === Math.floor(value), 'Inexact division');
           break;
         case '=': value = left === right; break;
         case '!=': value = left !== right; break;
@@ -3650,7 +3652,7 @@ var ruleInfo = {
         case '<': value = left < right; break;
         case '<=': value = left <= right; break;
         default:
-          assert(false, 'Unsupported operator: ' + op);
+          err('Unsupported operator: ' + op);
 	}
         if (typeof value == 'boolean') {
           var rhs = value ? T : F;
@@ -3662,7 +3664,7 @@ var ruleInfo = {
           .justify('axiomArithmetic', arguments);
       } else if (term instanceof Toy.Call) {
         var op = term.fn;
-        assert(op.isConst(),
+        check(op.isConst(),
                function() { return 'Unsupported operator: ' + op; });
         var arg = term.arg.getNumValue();
         if (op.name == 'neg') {
@@ -3671,12 +3673,12 @@ var ruleInfo = {
         } else if (op.name == 'R') {
           var rhs = T;
         } else {
-          assert(false, 'Not an arithmetic expression: ' + term);
+          err('Not an arithmetic expression: ' + term);
         }
         return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else {
-	assert(false, 'Not an arithmetic expression: ' + term);
+	err('Not an arithmetic expression: ' + term);
       }
     },
     inputs: {term: 1},

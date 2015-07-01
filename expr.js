@@ -84,7 +84,8 @@ function object0(_args) {
 
 /**
  * Builds and throws a new Error object with the given info.  If the
- * info is a string, it becomes the message, otherwise treats the info
+ * info is a string, it becomes the message; if it is a function, its
+ * value becomes the message, otherwise treats the info
  * as property names and values to assign to the error.
  *
  * The optional type if given is the error constructor, defaulting to
@@ -92,12 +93,25 @@ function object0(_args) {
  */
 function err(info, type) {
   var error = new (type || Error)();
-  if (typeof info == 'string') {
+  if (typeof info === 'string') {
     error.message = info;
+  } else if (typeof info === 'function') {
+    error.message = info();
   } else {
     jQuery.extend(error, info);
   }
   throw error;
+}
+
+/**
+ * If the condition is not truthy, throws using the function "err"
+ * with the given info and optional type.  See also "assertTrue",
+ * which logs the stack and enters a debugger if available.
+ */
+function check(condition, info, type) {
+  if (!condition) {
+    err(info, type);
+  }
 }
 
 /**
@@ -762,7 +776,7 @@ Expr.prototype.isNumeral = function() {
  */
 Expr.prototype.getNumValue = function() {
   var self = this;
-  assert(this.isNumeral(), function() {
+  check(this.isNumeral(), function() {
       return 'Not a numeral: ' + self;
     });
   return this._value;
@@ -778,8 +792,8 @@ var MAX_INT = Math.pow(2, 53) - 1;
  * arithmetic is exact, returning it if so, raising an Error if not.
  */
 function checkRange(number) {
-  assert(Math.abs(number) <= MAX_INT,
-         function() { return 'Number out of range: ' + number; });
+  check(Math.abs(number) <= MAX_INT,
+        function() { return 'Number out of range: ' + number; });
   return number;
 }
 
@@ -5177,6 +5191,7 @@ Toy.configure = configure;
 Toy.ownProperties = ownProperties;
 Toy.object0 = object0;
 Toy.err = err;
+Toy.check = check;
 Toy.isEmpty = isEmpty;
 Toy.each = each;
 Toy.emptySet = emptySet;
