@@ -77,6 +77,9 @@ var _allHyps = {};
 // inputSide: may be 'right' to indicate that the rule uses
 //   the converse equality (rewrites matching the right side of the
 //   equation rather than the left side).
+// siteSuppliesTerm: applies to rules that take a "site" type as an
+//   input.  If this is true, the site is used only to obtain
+//   a term, not as the target of a transformation.
 //
 
 // Conventions for menu items (using "menu:")
@@ -4086,6 +4089,7 @@ var ruleInfo = {
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
+    siteSuppliesTerm: true,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: add {term} to both sides',
@@ -4100,6 +4104,7 @@ var ruleInfo = {
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
+    siteSuppliesTerm: true,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
@@ -4114,6 +4119,7 @@ var ruleInfo = {
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
+    siteSuppliesTerm: true,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: multiply both sides by {term}',
@@ -4128,6 +4134,7 @@ var ruleInfo = {
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
+    siteSuppliesTerm: true,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: divide both sides by {term}',
