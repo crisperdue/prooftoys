@@ -479,17 +479,21 @@ StepEditor.prototype._tryRule = function(rule, args) {
       }
     }
     Toy.afterRepaint(function() {
-        var simplified = result;
-        if (result.ruleDeps.length > 0) {
-          // Don't simplify theorems and other facts.
-          //
-          // TODO: If this result is an equation with one side
-          // identical to that side of its "predecessor" step, don't
-          // automatically simplify the side that has not changed.
-          // Alternatively, only try simplifications on subexpressions
-          // that contain the site operated on by the rule that
-          // generated this result step.
-          simplified = Toy.rules.simplifyStep(result);
+        simplified = result;
+        // Only simplify results of rules with parameters.
+        if (result.ruleArgs.length > 0) {
+          var site = stepTransformationSite(result);
+          if (site) {
+            // Only simplify the part that has changed.
+            //
+            // TODO: Consider also simplifying ancestors of the
+            // of the changed site.  The ancestors should not
+            // be simplified recursively though, because some of
+            // their children have not been changed.
+            simplified = Toy.rules.simplifySite(result, site.path);
+          } else {
+            simplified = Toy.rules.simplifyStep(result);
+          }
         }
         self._setBusy(false);
         if (simplified && !simplified.rendering) {
@@ -534,6 +538,33 @@ StepEditor.prototype.isSolution = function(step) {
     return false;
   }
 };
+
+/**
+ * Returns an object with attributes 'step' with the given step
+ * depends on, and 'path' with the path to the site of a
+ * transformation for the rule that generated the given step.  Returns
+ * null if the given step depends on no such step.  Supply this with
+ * an actual proof step.  Rules with property 'siteSuppliesTerm' are
+ * not treated here as performing a transformation.
+ */
+function stepTransformationSite(step) {
+  // TODO: Add a rule attribute that distinguishes rule "targets" from
+  // sites that just supply a term as input, so this finds just the
+  // predecessor that was target of an action such as a rewrite.
+  var rule = Toy.rules[step.ruleName];
+  if (!rule.info.siteSuppliesTerm) {
+    var inputs = rule.info.inputs;
+    for (var type in inputs) {
+      if (type in siteTypes) {
+        var args = step.ruleArgs;
+        // Assumes there can be only one "site" argument.
+        var index = inputs[type];
+        return {step: args[index - 1], path: args[index]};
+      }
+    }
+  }
+  return null;
+}
 
 /**
  * Fill in an argument from the selection if there is a selected
@@ -1006,6 +1037,9 @@ BasicRuleSelector.prototype.focus = function() {
 
 
 //// INITIALIZATION
+
+// For testing:
+Toy._stepTransformationSite = stepTransformationSite;
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Toy.profileName = '';
