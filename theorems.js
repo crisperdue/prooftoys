@@ -5139,7 +5139,7 @@ var basicSimpFacts = [
                       'a - 0 = a',
                       '0 - a = neg a',
                       {stmt: 'a * (b * c) = a * b * c'},
-                      'neg (a * b) = neg a * b',
+                      {stmt: 'neg (a * b) = neg a * b'},
                       {stmt: 'a + b = a - neg b',
                        where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
                       {stmt: 'a - b = a + neg b',
@@ -5154,6 +5154,7 @@ var basicSimpFacts = [
                        where: '!$.b.hasVars() && !$.c.hasVars()'},
                       '0 * a = 0',
                       'a * 0 = 0',
+                      {stmt: 'a * neg b = neg a * b'},
                       {stmt: 'a / b = neg a / neg b',
                        where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
                       // This next might be useful as a final
@@ -5164,7 +5165,8 @@ var basicSimpFacts = [
                        '$.a.isNumeral() && $.c.isNumeral() && ' +
                        '$.b.isVariable()'},
                       {apply: function(term, cxt) {
-                          return rules.axiomArithmetic(term); } }
+                          return (isArithmetic(term) &&
+                                  rules.axiomArithmetic(term)); } }
                       ];
 
 /**
