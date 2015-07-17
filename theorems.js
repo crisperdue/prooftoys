@@ -2588,7 +2588,7 @@ var ruleInfo = {
 
         // Move numerals toward the left.
         {stmt: 'a * b = b * a',
-         where: '$.b.isNumeral() & $.a.isVariable()'},
+         where: '$.b.isNumeral() && !$.a.isNumeral()'},
         {stmt: 'a * b * c = a * c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
@@ -2651,6 +2651,7 @@ var ruleInfo = {
     action: function(step, path) {
       var context = ruleData.organizeFactors.context;
 
+      // TODO: Call arrangeRHS here rather than arrange.
       var flat = arrange(step, path, context, 'flatteners');
       var ordered = arrange(flat, path, context, 'movers');
       var numerated = arrange(ordered, path, context, 'numerators');
