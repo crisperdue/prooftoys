@@ -2588,7 +2588,7 @@ var ruleInfo = {
 
         // Move numerals toward the left.
         {stmt: 'a * b = b * a',
-         where: '$.b.isNumeral() && !$.a.isNumeral()'},
+         where: '$.b.isNumeral() && $.a.isVariable()'},
         {stmt: 'a * b * c = a * c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
