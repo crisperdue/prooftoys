@@ -2651,18 +2651,19 @@ var ruleInfo = {
     action: function(step, path) {
       var context = ruleData.organizeFactors.context;
 
-      // TODO: Call arrangeRHS here rather than arrange.
-      var flat = arrange(step, path, context, 'flatteners');
-      var ordered = arrange(flat, path, context, 'movers');
-      var numerated = arrange(ordered, path, context, 'numerators');
-      var denominated = arrange(numerated, path, context, 'denominators');
-      var reduced = arrange(denominated, path, context, 'arithmetizers');
-      return reduced.justify('organizeFactors', arguments, [step]);
+      var eqn = rules.consider(step.get(path));
+      var flat = arrangeRhs(eqn, context, 'flatteners');
+      var ordered = arrangeRhs(flat, context, 'movers');
+      var numerated = arrangeRhs(ordered, context, 'numerators');
+      var denominated = arrangeRhs(numerated, context, 'denominators');
+      var simplified = arrangeRhs(denominated, context, 'arithmetizers');
+      var result = rules.replace(simplified, step, path);
+      return result.justify('organizeFactors', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: put in standard form',
-    description: 'put in standard form',
+    menu: 'algebra: clean up term {term}',
+    description: 'clean up term {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
