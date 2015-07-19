@@ -5499,7 +5499,7 @@ function findMatchingFact(facts_arg, cxt, term) {
       }
     } else if (factInfo.apply) {
       // "apply"
-      var eqn = Toy.normalReturn(factInfo.apply, term, cxt);
+      var eqn = Toy.normalReturn(factInfo.apply, term);
       if (eqn) {
         var result = {
           stmt: eqn,
@@ -5512,11 +5512,14 @@ function findMatchingFact(facts_arg, cxt, term) {
     } else if (factInfo.matching) {
       // "matching"
       var partInfo = factInfo.matching;
-      return locateMatchingFact(term,
-                                partInfo.schema,
-                                partInfo.parts,
-                                cxt,
-                                Toy.path());
+      var result = locateMatchingFact(term,
+                                      partInfo.schema,
+                                      partInfo.parts,
+                                      cxt,
+                                      Toy.path());
+      if (result) {
+        return result;
+      }
     } else {
       // All other plain objects are handled here.
       var stmt = factInfo.stmt;
@@ -5552,10 +5555,9 @@ function findMatchingFact(facts_arg, cxt, term) {
  *
  * The schema may be given as an Expr or string to parse as an Expr.
  *
- * Return value is falsy if nothing found, otherwise a plain object as
- * returned by findMatchingFact, with the "path" property including
- * the relative path from the given expr to the site matching the
- * fact.
+ * Return value is falsy if the Expr does not match the schema or this
+ * finds no matching fact, otherwise a plain object as returned by
+ * findMatchingFact, with "path" property relative to the given expr.
  */
 function locateMatchingFact(expr, schema_arg, varsMap, context) {
   var schema = Toy.termify(schema_arg);
