@@ -683,7 +683,7 @@ var ruleInfo = {
         Toy.err({message: 'Cannot apply at ' + target, step: step});
       }
 
-      return convertAndReplace(step, path, applier)
+      return convert(step, path, applier)
         .justify('apply', [step, path], [step]);
     },
     isRewriter: true,
@@ -2567,10 +2567,10 @@ var ruleInfo = {
         {stmt: 'a / (b / c) = a / b * c'},
         // TODO: Convert to this style:
         // {match: 'a * b', a: 'flatteners'},
-        {matching:
+        {descend:
          {schema: 'a * b',
           parts: {a: 'flatteners', b: 'flatteners'}}},
-        {matching:
+        {descend:
          {schema: 'a / b',
           parts: {a: 'flatteners'}}}
       ];
@@ -2595,26 +2595,26 @@ var ruleInfo = {
         {stmt: 'a / b * c = a / c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
 
-        {matching:
+        {descend:
          {schema: 'a * b',
           parts: {a: 'movers'}}}
       ];
       var numeralC = '$.c.isNumeral()';
       var numerators = [
         {stmt: 'a / b * c = a * c / b', where: numeralC},
-        {matching:
+        {descend:
          {schema: 'a * b',
           parts: {a: 'numerators'}}},
-        {matching:
+        {descend:
          {schema: 'a / b',
           parts: {a: 'numerators'}}}
       ];
       var denominators = [
         {stmt: 'a / b / c = a / (b * c)', where: numeralC},
-        {matching:
+        {descend:
          {schema: 'a * b',
           parts: {a: 'denominators'}}},
-        {matching:
+        {descend:
          {schema: 'a / b',
           parts: {a: 'denominators'}}}
       ];
@@ -2624,10 +2624,10 @@ var ruleInfo = {
         // From 2 / -3 for example produces -2 / 3 for minus two thirds.
         {stmt: 'a / b = neg a / neg b',
          where: bothNumerals + ' && $.b.getNumValue() < 0'},
-        {matching:
+        {descend:
          {schema: 'a / b',
           parts: {a: 'arithmetizers', b: 'arithmetizers'}}},
-        {matching:
+        {descend:
          {schema: 'a * b',
           parts: {a: 'arithmetizers', b: 'arithmetizers'}}}
       ];
@@ -2673,7 +2673,7 @@ var ruleInfo = {
         return applyFactsWithinRhs(eqn, {facts: facts,
                                      searchMethod: 'searchTerms'});
       }
-      function convert(expr) {
+      function converter(expr) {
         var eqn = rules.consider(expr);
         // Linearize eqns.
         var eqn0 = applyTo(eqn, [{stmt: 'a + (b + c) = a + b + c'}]);
@@ -2714,11 +2714,11 @@ var ruleInfo = {
       var visPath = step.pathToVisiblePart();
       if (step.get(visPath).isCall2('=')) {
         var step1 =
-          convertAndReplace(step, visPath.concat('/right'), convert);
+          convert(step, visPath.concat('/right'), converter);
         var result =
-          convertAndReplace(step1, visPath.concat('/left'), convert);
+          convert(step1, visPath.concat('/left'), converter);
       } else {        
-        var result = convertAndReplace(step, visPath, convert);
+        var result = convert(step, visPath, converter);
       }
       return result.justify('regroupAdditions', arguments, [step]);
     },
@@ -5449,7 +5449,7 @@ function findMatchingCall(term, info) {
  *
  * Alternatively to the above three properties, one of the following:
  * 
- * matching: The value is a plain object with properties "schema", a
+ * descend: The value is a plain object with properties "schema", a
  *   term schema to match against the term, and "parts", a plain
  *   object mapping from variable name in the schema to a list of
  *   facts to match against parts of the term that match that variable
@@ -5510,9 +5510,9 @@ function findMatchingFact(facts_arg, cxt, term) {
         };
         return result;
       }
-    } else if (factInfo.matching) {
-      // "matching"
-      var partInfo = factInfo.matching;
+    } else if (factInfo.descend) {
+      // "descend"
+      var partInfo = factInfo.descend;
       var result = locateMatchingFact(term,
                                       partInfo.schema,
                                       partInfo.parts,
@@ -5642,7 +5642,7 @@ function applyFactsWithinRhs(step, facts) {
  * subexpression to something else.  This replaces the subexpression
  * using the returned equation.
  */ 
-function convertAndReplace(step, path, fn) {
+function convert(step, path, fn) {
   var expr = step.get(path);
   assert(expr, function() { return 'Bad path ' + path; }, step);
   var eqn = fn(expr);
@@ -6106,7 +6106,7 @@ Toy.addTheorem = addTheorem;
 Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
 Toy.getStatement = getStatement;
-Toy.convertAndReplace = convertAndReplace;
+Toy.convert = convert;
 Toy.findMatchingFact = findMatchingFact;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;

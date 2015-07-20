@@ -937,7 +937,7 @@ var testCase = {
                    {organize:
                     [{stmt: 'a * b = b * a',
                       where: 'subst.b.isNumeral() && subst.a.isVariable()'},
-                     {matching:
+                     {descend:
                       {schema: 'a * b',
                        parts: {a: 'organize'}}}
                     ]}};
