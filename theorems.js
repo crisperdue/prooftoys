@@ -2651,14 +2651,14 @@ var ruleInfo = {
     action: function(step, path) {
       var context = ruleData.organizeFactors.context;
 
-      var eqn = rules.consider(step.get(path));
-      var flat = arrangeRhs(eqn, context, 'flatteners');
-      var ordered = arrangeRhs(flat, context, 'movers');
-      var numerated = arrangeRhs(ordered, context, 'numerators');
-      var denominated = arrangeRhs(numerated, context, 'denominators');
-      var simplified = arrangeRhs(denominated, context, 'arithmetizers');
-      var result = rules.replace(simplified, step, path);
-      return result.justify('organizeFactors', arguments, [step]);
+      return convert(step, path, function(expr) {
+        var eqn = rules.consider(expr);
+        var flat = arrangeRhs(eqn, context, 'flatteners');
+        var ordered = arrangeRhs(flat, context, 'movers');
+        var numerated = arrangeRhs(ordered, context, 'numerators');
+        var denominated = arrangeRhs(numerated, context, 'denominators');
+        return arrangeRhs(denominated, context, 'arithmetizers');
+      }).justify('organizeFactors', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
