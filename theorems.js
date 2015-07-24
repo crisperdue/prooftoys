@@ -2554,7 +2554,7 @@ var ruleInfo = {
   // division, negation, reciprocal, and arithmetic.
   //
   // TODO: Justify and test this extensively.
-  organizeFactors: {
+  arrangeTerm: {
     data: function() {
       var flatteners = [
         {stmt: 'neg (neg a) = a'},
@@ -2649,7 +2649,7 @@ var ruleInfo = {
               expr.matchSchema('neg (a / b)'));
     },
     action: function(step, path) {
-      var context = ruleData.organizeFactors.context;
+      var context = ruleData.arrangeTerm.context;
 
       return convert(step, path, function(expr) {
         var eqn = rules.consider(expr);
@@ -2658,12 +2658,12 @@ var ruleInfo = {
         var numerated = arrangeRhs(ordered, context, 'numerators');
         var denominated = arrangeRhs(numerated, context, 'denominators');
         return arrangeRhs(denominated, context, 'arithmetizers');
-      }).justify('organizeFactors', arguments, [step]);
+      }).justify('arrangeTerm', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: clean up term {term}',
-    description: 'clean up term {site};; {in step siteStep}',
+    menu: 'algebra: arrange term {term}',
+    description: 'arrange term {site};; {in step siteStep}',
     labels: 'algebra'
   },
 

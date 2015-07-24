@@ -2063,7 +2063,7 @@ var testCase = {
   },
 
   testSimplifyStep: function() {
-    var step1 = rules.consider('2 * (3 * x)');
+    var step1 = rules.consider('2 * 3 * x');
     var step2 = rules.simplifyStep(step1);
     assertEqual('(6 * x)', step2.get('/main/right'));
   },
@@ -2117,8 +2117,8 @@ var testCase = {
     check('(((R x) & (R y)) ==> ((x + y) = (x + y)))', 'x + y');
   },
 
-  testOrganizeFacts: function() {
-    var context = ruleData.organizeFactors.context;
+  testArrange: function() {
+    var context = ruleData.arrangeTerm.context;
     var arrange = Toy.arrange;
     function check(expected, input, factList) {
       var step = rules.consider(input);
