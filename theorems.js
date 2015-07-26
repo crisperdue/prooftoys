@@ -5136,33 +5136,8 @@ var basicSimpFacts = [
                       'a * 1 = a',
                       '1 * a = a',
                       'a - 0 = a',
-                      '0 - a = neg a',
-                      {stmt: 'a * (b * c) = a * b * c'},
-                      {stmt: 'neg (a * b) = neg a * b'},
-                      {stmt: 'a + b = a - neg b',
-                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
-                      {stmt: 'a - b = a + neg b',
-                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
-                      {stmt: 'a + b + c = a + (b + c)',
-                       where: '!$.b.hasVars() && !$.c.hasVars()'},
-                      {stmt: 'a + b - c = a + (b - c)',
-                       where: '!$.b.hasVars() && !$.c.hasVars()'},
-                      {stmt: 'a - b + c = a - (b - c)',
-                       where: '!$.b.hasVars() && !$.c.hasVars()'},
-                      {stmt: 'a - b - c = a - (b + c)',
-                       where: '!$.b.hasVars() && !$.c.hasVars()'},
                       '0 * a = 0',
                       'a * 0 = 0',
-                      {stmt: 'a * neg b = neg a * b'},
-                      {stmt: 'a / b = neg a / neg b',
-                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
-                      // This next might be useful as a final
-                      // prettification.  We rely on it now to group
-                      // coefficients, but it is not general.
-                      {stmt: 'a * b / c = a / c * b',
-                       where:
-                       '$.a.isNumeral() && $.c.isNumeral() && ' +
-                       '$.b.isVariable()'},
                       {apply: function(term, cxt) {
                           return (isArithmetic(term) &&
                                   rules.axiomArithmetic(term)); } }
