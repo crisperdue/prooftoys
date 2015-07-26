@@ -5316,8 +5316,11 @@ function addFact(expr_arg, prover) {
  * matching that statement, returning the proved result.  Throws an
  * exception in case of failure.
  *
- * Checks that the "main" part of the result matches the "main" part
- * of the statement of the fact.
+ * Given any form of statement argument that is not already proved,
+ * this returns the same object every time the same fact is requested.
+ *
+ * Note that the facts database looks up facts by their "main" part,
+ * ignoring any assumptions.
  */
 function getResult(stmt) {
   var goal = getStatement(stmt);
