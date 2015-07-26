@@ -1552,7 +1552,7 @@ function adjacentSteps(step1, step2) {
  * dependencies as "using step(s) ... ".
  */
 function formattedStepInfo(step) {
-  var info = Toy.rules[step.ruleName].info;
+  var info = Toy.getRuleInfo(step);
   var description = info.description;
   var useDefault = true;
   if (description[0] === '=') {
@@ -1637,7 +1637,7 @@ function expandMarkup(step, markup) {
       return '?';
     }
   }
-  var info = Toy.rules[step.ruleName].info;
+  var info = Toy.getRuleInfo(step);
   if (markup.match(/^\{[a-z][_0-9]*[.]/)) {
     // It looks like a lambda, not markup!
     return markup;
@@ -1824,7 +1824,7 @@ function renderInference(step) {
   var controller =
     new ProofControl({stepPrefix: prefix, parentStep: step});
   controller.setSteps(steps);
-  var comment = Toy.escapeHtml(Toy.rules[step.ruleName].info.comment || '');
+  var comment = Toy.escapeHtml(Toy.getRuleInfo(step).comment || '');
   var $subproof = $('<div class=inferenceDisplay></div>');
   if (step.ruleName === 'fact') {
     var $header = $('<div class=proofHeader><b>Proof of <span class=math>'

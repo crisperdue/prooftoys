@@ -6082,6 +6082,32 @@ function traceRule(name) {
   rules[name] = timed;
 }
 
+/**
+ * Returns the plain object with various information about the rule
+ * applied to create the given step.
+ */
+function getRuleInfo(step) {
+  return rules[step.ruleName].info;
+}
+
+/**
+ * If the given step has a "site" input, this returns the path
+ * of the site argument, a string or Path object.  This uses the
+ * "inputs" information of the rule that generated the step to
+ * determine which argument to access.
+ */
+function getStepSite(step) {
+  var inputs = getRuleInfo(step).inputs;
+  for (var type in inputs) {
+    if (type in Toy.siteTypes) {
+      var args = step.ruleArgs;
+      // Assumes there can be only one "site" argument.
+      var index = inputs[type];
+      return args[index];
+    }
+  }
+}
+
 
 //// Export public names.
 
@@ -6119,6 +6145,8 @@ Toy.termGetRightVariable = termGetRightVariable;
 Toy.varFactorCounts = varFactorCounts;
 Toy.termLeftThan = termLeftThan;
 Toy.matchFactPart = matchFactPart;
+Toy.getRuleInfo = getRuleInfo;
+Toy.getStepSite = getStepSite;
 
 Toy.traceRule = traceRule;
 
