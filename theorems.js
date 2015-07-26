@@ -78,9 +78,6 @@ var _allHyps = {};
 // inputSide: may be 'right' to indicate that the rule uses
 //   the converse equality (rewrites matching the right side of the
 //   equation rather than the left side).
-// siteSuppliesTerm: applies to rules that take a "site" type as an
-//   input.  If this is true, the site is used only to obtain
-//   a term, not as the target of a transformation.
 //
 
 // Conventions for menu items (using "menu:")
@@ -2780,6 +2777,7 @@ var ruleInfo = {
       return (Toy.each(factsB, testFact.bind(null, 'b')) ||
               Toy.each(factsA, testFact.bind(null, 'a')));
     },
+    autoSimplify: false,
     action: function(step, path_arg) {
       var data = ruleData.moveTermRight;
       var factsB = data.factsB;
@@ -2818,6 +2816,7 @@ var ruleInfo = {
         return false;
       }
     },
+    autoSimplify: false,
     action: function(step, path_arg) {
       var factsC = [
         'a + b + c = a + c + b',
@@ -2868,6 +2867,11 @@ var ruleInfo = {
     toOffer: function(step, expr) {
       var facts = ruleData.groupToRight;
       return matchFactPart(step, step.pathTo(expr), facts, 'b');
+    },
+    autoSimplify: function(step) {
+      var path = getStepSite(step).parent().parent().concat('/right');
+      debugger;
+      return rules.simplifySite(step, path);
     },
     action: function(step, path) {
       var facts = ruleData.groupToRight;
@@ -4090,7 +4094,7 @@ var ruleInfo = {
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    siteSuppliesTerm: true,
+    autoSimplify: false,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: add {term} to both sides',
@@ -4105,7 +4109,7 @@ var ruleInfo = {
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    siteSuppliesTerm: true,
+    autoSimplify: false,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
@@ -4120,7 +4124,7 @@ var ruleInfo = {
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    siteSuppliesTerm: true,
+    autoSimplify: false,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: multiply both sides by {term}',
@@ -4135,7 +4139,7 @@ var ruleInfo = {
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    siteSuppliesTerm: true,
+    autoSimplify: false,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: divide both sides by {term}',

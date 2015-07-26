@@ -479,24 +479,13 @@ StepEditor.prototype._tryRule = function(rule, args) {
       }
     }
     Toy.afterRepaint(function() {
-        simplified = result;
-        // Only simplify results of rules with parameters.
+        var simplified = result;
+        // Only auto-simplify results of rules with parameters.
         if (result.ruleArgs.length > 0) {
-          var site = stepTransformationSite(result);
-          if (site) {
-            // Only simplify the part that has changed.
-            //
-            // TODO: Consider also simplifying ancestors of the
-            // of the changed site.  The ancestors should not
-            // be simplified recursively though, because some of
-            // their children have not been changed.
-            simplified = Toy.rules.simplifySite(result, site.path);
-          } else {
-            simplified = Toy.rules.simplifyStep(result);
-          }
+          simplified = autoSimplify(result);
         }
         self._setBusy(false);
-        if (simplified && !simplified.rendering) {
+        if (!simplified.rendering) {
           // TODO: If we see cases where simplification
           // has no effect, we can check for that here.
           self.proofControl.addStep(simplified);
@@ -540,30 +529,44 @@ StepEditor.prototype.isSolution = function(step) {
 };
 
 /**
- * Returns an object with attributes 'step' with the given step
- * depends on, and 'path' with the path to the site of a
- * transformation for the rule that generated the given step.  Returns
- * null if the given step depends on no such step.  Supply this with
- * an actual proof step.  Rules with property 'siteSuppliesTerm' are
- * not treated here as performing a transformation.
+ * Supply this with an actual proof step.  If the rule has property
+ * 'autoSimplify', the value should be "false" or a function.  If the
+ * value of this property is "false", returns the step.
+ *
+ * Otherwise if Toy.autoSimplifyWholeStep is true applies
+ * rules.simplifyStep to the result.
+ *
+ * If that global variable is false then: if the value of the
+ * 'autoSimplify' property of the step is true, calls it passing the
+ * step, otherwise simplifies the step's site argument, if any.
  */
-function stepTransformationSite(step) {
+function autoSimplify(step) {
+  return Toy.rules.simplifyStep(step);
+
   // TODO: Add a rule attribute that distinguishes rule "targets" from
   // sites that just supply a term as input, so this finds just the
   // predecessor that was target of an action such as a rewrite.
-  var rule = Toy.rules[step.ruleName];
-  if (!rule.info.siteSuppliesTerm) {
-    var inputs = rule.info.inputs;
-    for (var type in inputs) {
-      if (type in siteTypes) {
-        var args = step.ruleArgs;
-        // Assumes there can be only one "site" argument.
-        var index = inputs[type];
-        return {step: args[index - 1], path: args[index]};
-      }
-    }
+  var simplifier = Toy.getRuleInfo(step).autoSimplify;
+  if (simplifier === false) {
+    return step;
   }
-  return null;
+  if (Toy.autoSimplifyWholeStep) {
+    return Toy.rules.simplifyStep(step);
+  }
+  if (simplifier) {
+    return simplifier(step);
+  }
+  var path = Toy.getStepSite(step);
+  if (path) {
+    return Toy.rules.simplifySite(step, path);
+  }
+  /*
+  if (step.ruleArgs.length === 0) {
+    return step;
+  }
+  */
+  // TODO: Consider other default simplification.
+  return step;
 }
 
 /**
@@ -1039,11 +1042,15 @@ BasicRuleSelector.prototype.focus = function() {
 //// INITIALIZATION
 
 // For testing:
-Toy._stepTransformationSite = stepTransformationSite;
+Toy._autoSimplify = autoSimplify;
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Toy.profileName = '';
 
+// Global setting controlling auto-simplification.
+Toy.autoSimplifyWholeStep = true;
+
+// Export public names.
 Toy.stepTypes = stepTypes;
 Toy.siteTypes = siteTypes;
 
