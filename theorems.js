@@ -2753,30 +2753,27 @@ var ruleInfo = {
    * The sequence must be "flat", associated to the left.
    */
   moveTermRight: {
-    data: function() {
-      var data = {
-        factsA: [
-          'neg a + b = b - a',
-          'a + b = b + a',
-          'a - b = neg b + a'
-        ],
-        factsB: [
-          'a + b + c = a + c + b',
-          'a + b - c = a - c + b',
-          'a - b + c = a + c - b',
-          'a - b - c = a - c - b'
-        ]};
-      return data;
-    },
+    data: {
+      factsA: [
+        'neg a + b = b - a',
+        'a + b = b + a',
+        'a - b = neg b + a'
+      ],
+      factsB: [
+        'a + b + c = a + c + b',
+        'a + b - c = a - c + b',
+        'a - b + c = a + c - b',
+        'a - b - c = a - c - b'
+      ]},
     toOffer: function(step, expr) {
       var path = step.pathTo(expr);
       var data = ruleData.moveTermRight;
-      var factsB = data.factsB;
       var factsA = data.factsA;
+      var factsB = data.factsB;
       // Truthy value if the given name in the LHS of the fact can
       // match the part of this at the selected path.
       function testFact(name, fact_arg) {
-        var schema = Toy.termify(fact_arg).getLeft();
+        var schema = getResult(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path, schema, name);
         return info || undefined;
       }
@@ -2788,7 +2785,7 @@ var ruleInfo = {
       var factsB = data.factsB;
       var factsA = data.factsA;
       function tryFact(name, fact_arg) {
-        var schema = Toy.termify(fact_arg).getLeft();
+        var schema = getResult(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
         if (info) {
           return rules.rewriteWithFact(step, info.path, fact_arg);
