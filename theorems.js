@@ -2777,7 +2777,7 @@ var ruleInfo = {
       return (Toy.each(factsB, testFact.bind(null, 'b')) ||
               Toy.each(factsA, testFact.bind(null, 'a')));
     },
-    autoSimplify: false,
+    autoSimplify: noSimplify,
     action: function(step, path_arg) {
       var data = ruleData.moveTermRight;
       var factsB = data.factsB;
@@ -2816,7 +2816,7 @@ var ruleInfo = {
         return false;
       }
     },
-    autoSimplify: false,
+    autoSimplify: noSimplify,
     action: function(step, path_arg) {
       var factsC = [
         'a + b + c = a + c + b',
@@ -2869,9 +2869,12 @@ var ruleInfo = {
       return matchFactPart(step, step.pathTo(expr), facts, 'b');
     },
     autoSimplify: function(step) {
-      var path = getStepSite(step).parent().parent().concat('/right');
-      debugger;
-      return rules.simplifySite(step, path);
+      if (Toy.autoSimplifyWholeStep) {
+        return rules.simplifyStep(step);
+      } else {
+        var path = getStepSite(step).parent().parent().concat('/right');
+        return rules.simplifySite(step, path);
+      }
     },
     action: function(step, path) {
       var facts = ruleData.groupToRight;
@@ -4094,7 +4097,7 @@ var ruleInfo = {
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: false,
+    autoSimplify: noSimplify,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: add {term} to both sides',
@@ -4109,7 +4112,7 @@ var ruleInfo = {
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: false,
+    autoSimplify: noSimplify,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
@@ -4124,7 +4127,7 @@ var ruleInfo = {
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: false,
+    autoSimplify: noSimplify,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: multiply both sides by {term}',
@@ -4139,7 +4142,7 @@ var ruleInfo = {
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: false,
+    autoSimplify: noSimplify,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: divide both sides by {term}',
@@ -6067,6 +6070,14 @@ function traceRule(name) {
  */
 function getRuleInfo(step) {
   return rules[step.ruleName].info;
+}
+
+/**
+ * A simplification function that does nothing, useful as the
+ * auto-simplifier for rules that want to suppress simplification.
+ */
+function noSimplify(step) {
+  return step;
 }
 
 /**

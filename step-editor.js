@@ -530,43 +530,31 @@ StepEditor.prototype.isSolution = function(step) {
 
 /**
  * Supply this with an actual proof step.  If the rule has property
- * 'autoSimplify', the value should be "false" or a function.  If the
- * value of this property is "false", returns the step.
+ * 'autoSimplify', this applies the value of the property to the step
+ * as the auto-simplification.  It can be an identity function.
  *
- * Otherwise if Toy.autoSimplifyWholeStep is true applies
- * rules.simplifyStep to the result.
- *
- * If that global variable is false then: if the value of the
- * 'autoSimplify' property of the step is true, calls it passing the
- * step, otherwise simplifies the step's site argument, if any.
+ * Otherwise if the step's rule has a "site" argument and global
+ * variable Toy.autoSimplifyWholeStep is false, this simplifies the
+ * site, otherwise it simplifies the whole step.
  */
 function autoSimplify(step) {
-  return Toy.rules.simplifyStep(step);
-
-  // TODO: Add a rule attribute that distinguishes rule "targets" from
-  // sites that just supply a term as input, so this finds just the
-  // predecessor that was target of an action such as a rewrite.
-  var simplifier = Toy.getRuleInfo(step).autoSimplify;
-  if (simplifier === false) {
+  if (step.ruleArgs.length === 0) {
+    // It is an axiom or theorem without parameters.
+    // Simplification does not make sense, so don't do it.
     return step;
   }
-  if (Toy.autoSimplifyWholeStep) {
-    return Toy.rules.simplifyStep(step);
-  }
+  var simplifier = Toy.getRuleInfo(step).autoSimplify;
   if (simplifier) {
+    // Call the rule's simplifier.  To suppress simplification,
+    // supply a simplifier that does nothing.
     return simplifier(step);
   }
   var path = Toy.getStepSite(step);
-  if (path) {
+  if (path && !Toy.autoSimplifyWholeStep) {
     return Toy.rules.simplifySite(step, path);
+  } else {
+    return Toy.rules.simplifyStep(step);
   }
-  /*
-  if (step.ruleArgs.length === 0) {
-    return step;
-  }
-  */
-  // TODO: Consider other default simplification.
-  return step;
 }
 
 /**
