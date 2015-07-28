@@ -4581,6 +4581,29 @@ var distribFacts = {
   }
 };
 
+var _distribFactsMap = {};
+
+Toy._distribFactsMap = _distribFactsMap;
+Toy.getStatementKey = getStatementKey;
+
+/**
+ * Sets up the database of distributive law facts.
+ */
+function recordDistribFacts() {
+  for (var key in distribFacts) {
+    _distribFactsMap[getStatementKey(key)] = true;
+  }
+}
+recordDistribFacts();
+
+/**
+ * Returns a truthy value iff the statement is some version
+ * of the distributed law in distribFacts.
+ */
+function isDistribFact(stmt) {
+  return !!_distribFactsMap[getStatementKey(stmt)];
+}
+
 $.extend(algebraFacts, distribFacts);
 
 var identityFacts = {
@@ -6112,6 +6135,8 @@ Toy.algebraFacts = algebraFacts;
 Toy.distribFacts = distribFacts;
 Toy.basicSimpFacts = basicSimpFacts;
 Toy._factsMap = _factsMap;
+
+Toy.isDistribFact = isDistribFact;
 
 // Settable variables, export right here:
 Toy.autoAssert = false;

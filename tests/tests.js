@@ -2146,6 +2146,11 @@ var testCase = {
     // assert(false);
   },
 
+  testIsDistribFact: function() {
+    assert(true, Toy.isDistribFact('a * (b + c) = a * b + a *c'));
+    assert(!Toy.isDistribFact('a + (b + c) = a + b + c'));
+  },
+
   testTransformApplyInvert: function() {
     var ai = Toy.transformApplyInvert;
     var result = ai('a / b / c',
