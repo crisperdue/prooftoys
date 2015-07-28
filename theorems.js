@@ -5286,7 +5286,7 @@ var _factsMap = {};
 function addFact(expr_arg, prover) {
   var goal = getStatement(expr_arg);
   var fact = new Fact(goal, prover);
-  _factsMap[goal.getMain().dump()] = fact;
+  _factsMap[getStatementKey(goal)] = fact;
   return fact;
 }
 
@@ -5308,11 +5308,17 @@ function getResult(stmt) {
     return goal;
   }
   // Same encoding as in addFact.
-  var fact = _factsMap[goal.getMain().dump()];
+  var fact = _factsMap[getStatementKey(goal)];
   assert(fact, function() { return 'No such fact: ' + goal; });
   return fact.result();
 }
 
+/**
+ * Returns the string key by which statements are indexed as facts.
+ */
+function getStatementKey(stmt) {
+  return getStatement(stmt).getMain().dump();
+}
 
 /**
  * Tests whether a fact with the given statement is recorded in the
@@ -5320,9 +5326,8 @@ function getResult(stmt) {
  * Accepts any statement acceptable to getStatement.
  */
 function isRecordedFact(stmt) {
-  var goal = getStatement(stmt);
   // Same encoding as in addFact.
-  return !!_factsMap[goal.getMain().dump()];
+  return !!_factsMap[getStatementKey(stmt)];
 }
 
 /**
