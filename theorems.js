@@ -5183,8 +5183,10 @@ var basicSimpFacts = [
                       ];
 
 /**
- * Treat each key/value pair in the map as an expression and
- * a function to prove it.  Add each as a "fact".
+ * Treats each key in the map as a synopsis of a mathematical
+ * statement (see getStatement), and treats its value as a function to
+ * prove the statement.  Uses addFact to add each statement and its
+ * proof function to the internal database of provable facts.
  */
 function addFactsMap(map) {
   for (synopsis in map) {
@@ -5238,6 +5240,8 @@ Toy.define('/', '{x. {y. x * recip y}}');
  * Constructs a Fact from a goal WFF and a prover, which should be a
  * function unless the goal is already proved, in which case it should
  * be some falsy value.
+ *
+ * TODO: Consider removing this class, keeping the functionality.
  */
 function Fact(goal_arg, prover) {
   var goal = goal_arg.copyStep();
@@ -5311,9 +5315,6 @@ var _factsMap = {};
  * If the given formula is not the result of a proof, the prover
  * argument is required.  Treats any input that is an implication
  * as a statement with assumptions.
- *
- * TODO: Add the converse when adding a fact, provided the fact
- *   is not its own converse (or perhaps the converse already added).
  */
 function addFact(expr_arg, prover) {
   var goal = getStatement(expr_arg);
@@ -5363,17 +5364,17 @@ function isRecordedFact(stmt) {
 }
 
 /**
- * Returns a formula that is the statement of a "fact".  The fact can
- * be a theorem name, a fact object, an Expr or a parseable string.
- * Given a theorem name or fact object, accesses any known statement
- * of it, or proves it if there is no statement.  Parses a string, and
- * if the result is an implication with an equation as the
- * consequence, treats the antecedent as assumptions.  Automatically
- * adds assumptions that inputs to math operators are real numbers.
+ * Returns an Expr that is the full statement of a "fact".  The input
+ * can be a theorem name, an Expr, or a parseable string.  Given an
+ * Expr, simply returns its input.  Given a theorem name (an
+ * identifier), accesses any already-known statement of it, or proves
+ * it and returns the proved result if not, remembering the proved
+ * statement.
  *
- * Returns an Expr.  If the fact is given as a string, note that the
- * result is the result of Toy.mathParse applied to it, with any
- * antecedent flagged as hypotheses.
+ * Treats a string as the "synopsis" of an actual statement, and
+ * returns the result of parsing it with mathParse.  If the resulting
+ * statement is an implication with an equation as the consequence,
+ * treats the antecedent as assumptions.
  */
 function getStatement(fact) {
   if (typeof fact === 'string') {
