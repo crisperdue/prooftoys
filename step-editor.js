@@ -485,14 +485,11 @@ StepEditor.prototype._tryRule = function(rule, args) {
           simplified = autoSimplify(result);
         }
         self._setBusy(false);
-        if (!simplified.rendering) {
-          // TODO: If we see cases where simplification
-          // has no effect, we can check for that here.
-          self.proofControl.addStep(simplified);
-          checkSolution(simplified);
-        } else {
-          checkSolution(result);
-        }
+        var steps = Toy.unrenderedDeps(simplified);
+        steps.forEach(function(step) {
+            self.proofControl.addStep(step);
+          });
+        checkSolution(simplified);
       });
   }
   this.focus();

@@ -2298,6 +2298,7 @@ Toy.stepSites = stepSites;
 Toy.proofToyState = proofToyState;
 Toy.ProofEditor = ProofEditor;
 Toy.ProofControl = ProofControl;
+Toy.unrenderedDeps = unrenderedDeps;
 Toy.renderInference = renderInference;
 Toy.renderProof = renderProof;
 Toy.addBottomPanel = addBottomPanel;
