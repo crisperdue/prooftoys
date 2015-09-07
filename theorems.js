@@ -2395,6 +2395,15 @@ var ruleInfo = {
       // display as a separate step.
       return result.justify('rewriteWithFact', arguments, [step]);
     },
+    autoSimplify: function(step) {
+      var path = step.ruleArgs[1];
+      var stmt = step.ruleArgs[2];
+      if (isDistribFact(stmt)) {
+        var step1 = rules.arrangeTerm(step, path.concat('/left'));
+        var step2 = rules.arrangeTerm(step1, path.concat('/right'));
+        return step2;
+      }
+    },
     inputs: {site: 1, term: 3},
     form: ('Rewrite the selection using fact <input name=term>'),
     menu: 'rewrite using a fact',
