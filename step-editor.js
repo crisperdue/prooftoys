@@ -531,7 +531,8 @@ StepEditor.prototype.isSolution = function(step) {
 /**
  * Supply this with an actual proof step.  If the rule has property
  * 'autoSimplify', this applies the value of the property to the step
- * as the auto-simplification.  It can be an identity function.
+ * as the auto-simplification.  If it returns a falsy value it will be
+ * treated as a no-op (identity function).
  *
  * Otherwise if the step's rule has a "site" argument and global
  * variable Toy.autoSimplifyWholeStep is false, this simplifies the
@@ -547,13 +548,13 @@ function autoSimplify(step) {
   if (simplifier) {
     // Call the rule's simplifier.  To suppress simplification,
     // supply a simplifier that does nothing.
-    return simplifier(step);
+    return simplifier(step) || step;
   }
   var path = Toy.getStepSite(step);
   if (path && !Toy.autoSimplifyWholeStep) {
-    return Toy.rules.simplifySite(step, path);
+    return Toy.rules.simplifySite(step, path) || assert(false);;
   } else {
-    return Toy.rules.simplifyStep(step);
+    return Toy.rules.simplifyStep(step) || assert(false);
   }
 }
 
