@@ -5233,22 +5233,13 @@ Toy.define('/', '{x. {y. x * recip y}}');
 //// THEOREMS
 
 /**
- * Constructs a Fact from a goal WFF and a prover, which should be a
- * function unless the goal is already proved, in which case it should
- * be some falsy value.
- *
- * TODO: Consider removing this class, keeping the functionality.
+ * Constructs a Fact from a synopsis string and a prover, which should
+ * be a function.  Internal to addFact.
  */
-function Fact(goal_arg, prover) {
-  var goal = goal_arg.copyStep();
-  goal.annotateWithTypes();
-  if (goal.ruleName) {
-    // It is already proved.
-    assert(!prover, function() { return 'Redundant prover for ' + expr_arg; });
-    prover = function() { return goal; }
-  }
+function Fact(synopsis, prover) {
   assert(typeof prover === 'function', 'Not a function: ' + prover);
-  this.goal = goal;
+  this.synopsis = synopsis;
+  this.goal = getStatement(synopsis);
   this._prover = Toy.memo(prover);
 }
 
@@ -5306,15 +5297,14 @@ var _factsMap = {};
 
 /**
  * Adds to the facts database a formula and optionally a function to
- * prove it on demand.  The formula may be given as an object
- * acceptable to getStatement, normally a string or Expr.
+ * prove it on demand.  The formula should be a synopsis string.
  * If the given formula is not the result of a proof, the prover
  * argument is required.  Treats any input that is an implication
  * as a statement with assumptions.
  */
-function addFact(expr_arg, prover) {
-  var goal = getStatement(expr_arg);
-  var fact = new Fact(goal, prover);
+function addFact(synopsis, prover) {
+  var goal = getStatement(synopsis);
+  var fact = new Fact(synopsis, prover);
   _factsMap[getStatementKey(goal)] = fact;
   return fact;
 }
@@ -5343,7 +5333,8 @@ function getResult(stmt) {
 }
 
 /**
- * Returns the string key by which statements are indexed as facts.
+ * Given an argument acceptable to getStatement, returns a string key
+ * usable for looking up information about the fact.
  */
 function getStatementKey(stmt) {
   return getStatement(stmt).getMain().dump();
@@ -5398,8 +5389,6 @@ function getStatement(fact) {
     }
   } else if (fact instanceof Expr) {
     return fact;
-  } else if (fact instanceof Fact) {
-    return fact.goal;
   } else {
     throw new Error('Bad input to getStatement');
   }
