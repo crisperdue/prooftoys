@@ -1189,12 +1189,6 @@ var testCase = {
     assert(Toy.parse('T = T').matches(Toy.getStatement('ttt')));
   },
 
-  testFacts: function() {
-    var rules = Toy.rules;
-    var result = rules.tIsXIsX();
-    Toy.addFact(result);
-    assert(result.matches(Toy.getResult(result)));
-  },
 
   // TYPES
 
