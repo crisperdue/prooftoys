@@ -759,7 +759,7 @@ StepEditor.prototype.offerable = function(ruleName) {
 $.extend(StepEditor.prototype, {
 
   /**
-   * Returns a list of fact objects that are offerable in the UI,
+   * Returns a list of fact statements that are offerable in the UI,
    * currently all that are equational (equation, possibly with
    * conditions).
    */
@@ -783,8 +783,7 @@ $.extend(StepEditor.prototype, {
                 e1Type != e2Type);
       }
       if (expr) {
-        Toy.eachFact(function(fact) {
-            var goal = fact.goal;
+        Toy.eachFact(function(goal, synopsis) {
             if (goal.isEquation()) {
               var lhs = goal.eqnLeft();
               if (expr.matchSchema(lhs) &&
@@ -793,7 +792,7 @@ $.extend(StepEditor.prototype, {
                    // of just a variable or constant.
                    lhs instanceof Toy.Atom)) {
                 if (!typesMismatch(expr, lhs)) {
-                  facts.push(fact);
+                  facts.push(goal);
                 }
               }
             }
@@ -963,8 +962,7 @@ BasicRuleSelector.prototype.update = function() {
       displayTexts.push(text);
       byDisplay[text] = ruleName;
     });
-  self.stepEditor.offerableFacts().forEach(function(fact) {
-    var statement = Toy.getStatement(fact);
+  self.stepEditor.offerableFacts().forEach(function(statement) {
     var text = statement.toString();
     var toDisplay = statement;
     if (statement.isEquation()) {

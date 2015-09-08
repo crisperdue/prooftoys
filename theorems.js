@@ -5721,11 +5721,13 @@ function arrange(step, path, context, facts) {
 
 /**
  * Call the given function for each of the registered facts, passing
- * it the synopsis with which it was created.
+ * it the fact statement (goal) and the synopsis with which it was
+ * created.
  */
 function eachFact(fn) {
   for (var key in _factsMap) {
-    fn(_factsMap[key].synopsis);
+    var f = _factsMap[key];
+    fn(f.goal, f.synopsis);
   }
 }
 

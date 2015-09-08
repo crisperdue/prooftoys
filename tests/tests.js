@@ -2225,9 +2225,9 @@ for (var name in testCase) {
     console.log(name + ': not a function');
   }
 }
-Toy.eachFact(function(synopsis) {
+Toy.eachFact(function(goal, synopsis) {
     console.log('Testing ' + synopsis);
       test(synopsis, function() {
-          assert(Toy.getResult(synopsis).ruleName);
+          assert(Toy.getResult(goal).ruleName);
         });
   });
