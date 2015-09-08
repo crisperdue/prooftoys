@@ -4590,27 +4590,23 @@ var distribFacts = {
   }
 };
 
-var _distribFactsMap = {};
-
-Toy._distribFactsMap = _distribFactsMap;
-Toy.getStatementKey = getStatementKey;
-
-/**
- * Sets up the database of distributive law facts.
- */
-function recordDistribFacts() {
-  for (var key in distribFacts) {
-    _distribFactsMap[getStatementKey(key)] = true;
-  }
-}
-recordDistribFacts();
+// Private to isDistribFact.  Returns a mapping from statement key to
+// value that is truthy iff the statement is in distribFacts.
+var _distribFactsTable =
+  memo(function() {
+      var table = {};
+      for (var key in distribFacts) {
+        table[getStatementKey(key)] = true;
+      }
+      return table;
+    });
 
 /**
  * Returns a truthy value iff the statement is some version
  * of the distributed law in distribFacts.
  */
 function isDistribFact(stmt) {
-  return !!_distribFactsMap[getStatementKey(stmt)];
+  return !!_distribFactsTable()[getStatementKey(stmt)];
 }
 
 $.extend(algebraFacts, distribFacts);
