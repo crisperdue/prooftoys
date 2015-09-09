@@ -928,8 +928,8 @@ ProofControl.prototype.renderStep = function(step) {
 };
 
 /**
- * Renders the expression popups for steps in a proof.  The proof
- * should be editable.
+ * Renders the expression popups for a steps in a ProofControl.  The
+ * proof should be editable.
  */
 ProofControl.prototype.renderPopups = function(step) {
   if (Toy.profileName.match(/^popups/)) {
@@ -940,7 +940,7 @@ ProofControl.prototype.renderPopups = function(step) {
   // across "+").
   var distribStmts = (Toy.listFacts(Toy.distribFacts)
                       .map(Toy.getStatement));
-  step.rendering.traverse(function(term, rpath) {
+  step.traverse(function(term, rpath) {
       if (term.isCall2() && term.node) {
         var rules = Toy.rules;
         // These resulting equations are the result of applying the
@@ -967,7 +967,7 @@ ProofControl.prototype.renderPopups = function(step) {
         var actionBuilder =
           @{stmt. @{Toy.tryRuleAsync(self.stepEditor,
                                      rules.rewriteWithFact,
-                                     [step, getPath(), stmt])}};
+                                     [step.original, getPath(), stmt])}};
         var actions = stmts.map(actionBuilder);
 
         // Add a result and an action for a local simplifier if one is
@@ -981,7 +981,7 @@ ProofControl.prototype.renderPopups = function(step) {
           var action =
             @{Toy.tryRuleAsync(self.stepEditor,
                                rules.rewriteWithFact,
-                               [step, getPath(), result])};
+                               [step.original, getPath(), result])};
           actions.push(action);
         }
         if (results.length) {
