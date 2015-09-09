@@ -274,13 +274,16 @@ Toy.extends = function(constructor, parent) {
   
 };
 
-// Make ".toString()" accessible as ".str" for debugger interaction.
+// Global "str" function is useful for converting arbitrary objects
+// to strings.
+function str(x) {
+  if (x.toString == Object.prototype.toString) {
+    return Toy.debugString(x);
+  } else {
+    return x.toString();
+  }
+}
+// Make str function accessible as ".str" for debugger interaction.
 Object.defineProperty(Object.prototype,
                       'str',
-                      {get: function() {
-                        if (this.toString == Object.prototype.toString) {
-                          return Toy.debugString(this);
-                        } else {
-                          return this.toString();
-                        }
-                      }});
+                      {get: function() { return str(this); }});
