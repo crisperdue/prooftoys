@@ -5043,7 +5043,7 @@ function debugString(o, specials) {
           result += f(value);
         } else if (typeof value == 'string') {
           result += '"' + o[key] + '"';
-        } else if ($.isArray(value)) {
+        } else if (Array.isArray(value)) {
           // Array-like value.
           vString = o[key].toString();
           if (vString.length > 40) {
@@ -5142,7 +5142,7 @@ function decodeSteps(input) {
       assert(stepInfo.shift().getNumValue() == i, function() {
           return 'Mismatched step number in: ' + stepInfo;
         });
-      var ruleName = stepInfo.shift();
+      var ruleName = stepInfo.shift().name;
       // The remainder of the array is arguments to the rule.
       var args = [];
       stepInfo.forEach(function(info) {
