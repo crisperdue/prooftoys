@@ -152,14 +152,17 @@ function memo(fn) {
 }
 
 /**
- * Returns a string derived from the format string and the map by
+ * Returns a string derived from the format string and the object by
  * replacing occurrences of {<string>} in the format string by the
- * value of that string in the map.
+ * value of that property of the object.
  *
- * TODO: Support multiple arguments as an alternative to the map,
- * referred to by number.
+ * Alternatively, supply extra non-Object arguments and access them
+ * as {1}, {2}, etc..  This presumably is more efficient.
  */
-function format(fmt, map) {
+function format(fmt, map_arg) {
+  var map = (map_arg instanceof Object)
+    ? map_arg
+    : arguments;
   return fmt.replace(/\{.*?\}/g, function(matched) {
       return map[matched.slice(1, -1)];
     });
@@ -694,6 +697,14 @@ Expr.prototype.in = function(list) {
  */
 Expr.prototype.isAtomic = function() {
   return this instanceof Atom;
+};
+
+/**
+ * Truthy iff the given Expr (or step) is not only renderable,
+ * but has a rendering.
+ */
+Expr.prototype.isRendered = function() {
+  return !!this.node;
 };
 
 // Categorization of Vars:
@@ -4927,12 +4938,19 @@ function repeatedCall(operator, indices) {
 }
 
 /**
- * Logs an error; the message if that is truthy, otherwise
+ * Returns a truthy value iff the argument is a proof step.
+ */
+function isStep(x) {
+  return x instanceof Expr && x.ruleName;
+}
+
+/**
+ * Logs an error; the message property if that is truthy, otherwise
  * the argument itself.
  */
 function logError(err) {
   if (window.console) {
-    window.console.log('Error: ' + (err.message || err));
+    window.console.error(err.message || err);
   }
 }
 
@@ -4961,13 +4979,22 @@ var errors = [];
  * optional step is supplied it should be the most recent available
  * completed proof step.
  *
+ * If the message is a string, it may be a format string, and all
+ * arguments following it are accessible as {1}, {2}, and so on.
+ *
  * Logs the message and step into the errors list by appending an
  * object with properties 'message' and 'step'.
  */
-function assertTrue(condition, message, step) {
+function assertTrue(condition, message_arg, step) {
   if (!condition) {
-    if (typeof message == 'function') {
-      message = message();
+    var message;
+    if (typeof message_arg == 'function') {
+      message = message_arg();
+    } else {
+      var args = arguments;
+      message = message_arg.replace(/\{.*?\}/g, function(matched) {
+          return args[matched.slice(1, -1) - -1];
+        });
     }
     errors.push({message: message, step: step});
     var e = new Error(message);
@@ -5245,6 +5272,7 @@ Toy.isIdentifier = isIdentifier;
 Toy.checkRange = checkRange;
 Toy.isDefined = isDefined;
 Toy.isInfixDesired = isInfixDesired;
+Toy.isStep = isStep;
 
 Toy.getStepCounter = getStepCounter;
 Toy.infixCall = infixCall;
