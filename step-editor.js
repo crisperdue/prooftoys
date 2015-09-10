@@ -409,6 +409,14 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
  * reflect its change in state.
  */
 function tryRuleAsync(stepEditor, rule, args) {
+  args.forEach(function(arg) {
+      if (Toy.isStep(arg) && arg.isRendered()) {
+        // Really all step arguments to all steps everywhere should be
+        // non-renderable in the current implementation, but this situation
+        // is arguably a greater risk than others.
+        Toy.logError('Argument step ' + arg.stepNumber + ' is renderable.');
+      }
+    });
   // Flag the step editor as busy via its DOM node.
   stepEditor._setBusy(true, function() {
       Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
