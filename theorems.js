@@ -4590,23 +4590,23 @@ var distribFacts = {
   }
 };
 
-// Private to isDistribFact.  Returns a mapping from statement key to
-// value that is truthy iff the statement is in distribFacts.
+// Private to isDistribFact.  A mapping from statement key to value
+// that is truthy iff the statement is in distribFacts.
 var _distribFactsTable =
-  memo(function() {
+    (function() {
       var table = {};
       for (var key in distribFacts) {
         table[getStatementKey(key)] = true;
       }
       return table;
-    });
+    })();
 
 /**
  * Returns a truthy value iff the statement is some version
  * of the distributed law in distribFacts.
  */
 function isDistribFact(stmt) {
-  return !!_distribFactsTable()[getStatementKey(stmt)];
+  return !!_distribFactsTable[getStatementKey(stmt)];
 }
 
 $.extend(algebraFacts, distribFacts);
