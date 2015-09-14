@@ -4929,6 +4929,21 @@ function repeatedCall(operator, indices) {
 }
 
 /**
+ * Commutes the left and right sides of an equation in the form
+ * l = r or a ==> l = r.
+ */
+function commuteEqn(eqn) {
+  var subst;
+  if (subst = eqn.matchSchema('a = b')) {
+    return Toy.parse('b = a').subFree(subst);
+  } else if (subst = eqn.matchSchema('h ==> a = b')) {
+    return Toy.parse('h ==> b = a').subFree(subst);
+  } else {
+    err(format('Not an equation: {1}', eqn));
+  }
+}
+
+/**
  * Returns a truthy value iff the argument is a proof step.
  */
 function isStep(x) {
@@ -5246,6 +5261,7 @@ Toy.sourceStepLess = sourceStepLess;
 Toy.hypIsLess = hypIsLess;
 Toy.sourceStepComparator = sourceStepComparator;
 Toy.repeatedCall = repeatedCall;
+Toy.commuteEqn = commuteEqn;
 
 Toy.define = define;
 Toy.defineCases = defineCases;

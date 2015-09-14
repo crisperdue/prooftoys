@@ -5199,19 +5199,12 @@ function addFactsMap(map) {
  * recorded.
  */  
 function addSwappedFact(synopsis) {
-  var statement = getStatement(synopsis);
-  var statement2;
-  var subst;
-  if (subst = statement.matchSchema('a = b')) {
-    statement2 = Toy.parse('b = a').subFree(subst);
-  } else if (subst = statement.matchSchema('h ==> a = b')) {
-    statement2 = Toy.parse('h ==> b = a').subFree(subst);
-  }
-  if (statement2) {
-    if (isRecordedFact(statement2)) {
-      console.log('Swapped fact ' + statement2 + ' already recorded');
+  var swapped = Toy.normalReturn(Toy.commuteEqn, getStatement(synopsis));
+  if (swapped) {
+    if (isRecordedFact(swapped)) {
+      console.log('Swapped fact ' + swapped + ' already recorded');
     } else {
-      addFact(statement2, function() {
+      addFact(swapped, function() {
           return rules.fact(synopsis).apply('eqnSwap');
         });
     }
