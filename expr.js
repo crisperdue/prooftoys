@@ -1216,9 +1216,13 @@ Expr.prototype.freeVars = function() {
 
 /**
  * Finds all occurrences of free variables in this expression that are
- * used as inputs to known math operators.  This is a convenience
- * rather than a type analysis.  Returns them as a set (map from name
- * to true).
+ * used as inputs to known math operators, or compared for equality
+ * with the result of a math operator that returns a number.  The math
+ * operators are currently the basic 4, exponentiation, and the
+ * ordering relationals.  This is a convenience rather than a type
+ * analysis.
+ *
+ * Returns the result as a set (map from name to true).
  */
 Expr.prototype.mathVars = function() {
   var map = {}; 
