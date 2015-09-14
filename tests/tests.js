@@ -374,9 +374,9 @@ var testCase = {
     assertEqual('(((R x) & (R y)) ==> ((x + y) = (y + x)))',
                 p('x + y = y + x'));
     assertEqual('(((R x) & (R y)) ==> ((x + y) = (y + x)))',
-                p('R x & R y ==> x + y = y + x'));
+                p('@R x & R y ==> x + y = y + x'));
     assertEqual('((R x) ==> ((x + y) = (y + x)))',
-                p('R x ==> x + y = y + x'));
+                p('@R x ==> x + y = y + x'));
   },
 
 

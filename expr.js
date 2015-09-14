@@ -4492,12 +4492,11 @@ function unparseString(content) {
 }
 
 /**
- * Parse the given string.  If it contains any apparent math variables
- * (as by calling Expr.mathVars), and is not already a conditional
- * with real number conditions on variables, adds assumptions that all
- * of those "math variables" are real numbers.
- *
- * If string begins with "@", simply parses the rest.
+ * If string begins with "@", simply parses the rest with "parse".
+ * Otherwise this also checks for any apparent math variables (as by
+ * calling Expr.mathVars) and adds assumptions that all of those "math
+ * variables" are real numbers.  If the main operator of the
+ * expression is ==>, concatenates any added assumptions to its LHS.
  */
 function mathParse(str) {
   if (str[0] === '@') {
@@ -4506,19 +4505,7 @@ function mathParse(str) {
   var expr = parse(str);
   var assume = expr.mathVarConditions();
   if (assume) {
-    var explicit = false;
     if (expr.isCall2('==>')) {
-      expr.getLeft().eachHyp(function (hyp) {
-          if (hyp.isCall1('R') && hyp.arg instanceof Atom) {
-            // The expression has at least one explicit real
-            // number condition.
-            explicit = true;
-          }
-        });
-    }
-    if (explicit) {
-      return expr;
-    } else if (expr.isCall2('==>')) {
       // Any type assumptions follow the LHS.
       var result = infixCall(expr.getLeft().concat(assume, '&'),
                              '==>',
