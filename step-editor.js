@@ -1034,7 +1034,7 @@ BasicRuleSelector.prototype.focus = function() {
 //// INITIALIZATION
 
 // For testing:
-Toy._autoSimplify = autoSimplify;
+Toy.autoSimplify = autoSimplify;
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Toy.profileName = '';

@@ -2402,6 +2402,13 @@ var ruleInfo = {
         var step1 = rules.arrangeTerm(step, path.concat('/left'));
         var step2 = rules.arrangeTerm(step1, path.concat('/right'));
         return step2;
+      } else {
+        return rules.autoSimplifySite(step,
+                                      // Site of the rewrite.
+                                      step.ruleArgs[1],
+                                      // Input step of the rewrite.
+                                      step.ruleArgs[0]
+                                     );
       }
     },
     inputs: {site: 1, term: 3},
@@ -2448,6 +2455,40 @@ var ruleInfo = {
     menu: 'algebra: simplify',
     description: 'simplify;; {step step}',
     labels: 'algebra'
+  },
+
+  // Like simplifySite, but if any simplification result is the same
+  // as the content of the site in refStep, this returns its input
+  // step, thereby doing nothing.  So if the site in refStep was
+  // already simplified, this will not revert to it.  (If the site
+  // was not already simplified, a de-simplification step may
+  // still be re-simplified.)
+  autoSimplifySite: {
+    action: function(step, path, refStep) {
+      var _path = Toy.path;
+      var eqn1 = rules.consider(step.get(path));
+      var ref = refStep.get(path);
+      var abort = false;
+      var simpler = whileSimpler(eqn1, function(eqn) {
+        var next = rules._simplifyMath1(eqn, _path('/main/right', eqn));
+        if (next.getMain().getRight().sameAs(ref)) {
+          abort = true;
+          // Returning the input causes simplification to stop.
+          return eqn;
+        } else {
+          return next;
+        }
+      });
+      return abort
+        ? step
+        : (rules.replace(simpler, step, path)
+           .justify('autoSimplifySite', arguments, [step]));
+    },
+    inputs: {site: 1, step: 3},
+    form: 'Simplify w.r.t. step <input name=step>',
+    menu: 'algebra: auto-simplify {term}',
+    description: 'auto-simplify {site};; {in step siteStep}',
+    labels: 'uncommon'
   },
 
   // Performs math-oriented simplification throughout the part of the
