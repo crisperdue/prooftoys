@@ -3741,6 +3741,7 @@ var ruleInfo = {
     form: 'Term to evaluate: <input name=term>',
     comment: 'evaluate arithmetic expression',
     description: 'axiom of arithmetic',
+    autoSimplify: noSimplify,
     labels: 'basic'
   },
 
