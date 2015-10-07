@@ -2,6 +2,9 @@
 
 # Preprocessor for nicer OOP notation in JavaScript.
 
+# LiveReload: Note that there is a simple plugin for this compiler, defined
+# at /Users/cris/Library/LiveReload/Plugins/jsc.lrplugin//
+
 import argparse
 import glob
 import os
