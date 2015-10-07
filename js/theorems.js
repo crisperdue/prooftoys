@@ -2901,22 +2901,8 @@ var ruleInfo = {
    * multiplication, and division.  Does nothing if not applicable.
    */
   groupToRight: {
-    data: function() {
-      var facts = [
-        'a + b + c = a + (b + c)',
-        'a + b - c = a + (b - c)',
-        'a - b + c = a - (b - c)',
-        'a - b - c = a - (b + c)',
-        'a * b * c = a * (b * c)',
-        'a * b / c = a * (b / c)',
-        'a / b * c = a * (c / b)',
-        'a / b / c = a / (b * c)'
-      ];
-      return facts;
-    },
     toOffer: function(step, expr) {
-      var facts = ruleData.groupToRight;
-      return matchFactPart(step, step.pathTo(expr), facts, 'b');
+      return matchFactPart(step, step.pathTo(expr), regroupingFacts, 'b');
     },
     autoSimplify: function(step) {
       if (Toy.autoSimplifyWholeStep) {
@@ -2927,8 +2913,7 @@ var ruleInfo = {
       }
     },
     action: function(step, path) {
-      var facts = ruleData.groupToRight;
-      var func = matchFactPart(step, path, facts, 'b');
+      var func = matchFactPart(step, path, regroupingFacts, 'b');
       return func
         ? func().justify('groupToRight', arguments, [step])
         : step;
@@ -5927,6 +5912,20 @@ function termGetRightVariable(term) {
           ? s.v
           : null);
 }
+
+// Facts that regroup an add/subtract or multiply/divide term
+// out of their standard order.
+var regroupingFacts = [
+  'a + b + c = a + (b + c)',
+  'a + b - c = a + (b - c)',
+  'a - b + c = a - (b - c)',
+  'a - b - c = a - (b + c)',
+  'a * b * c = a * (b * c)',
+  'a * b / c = a * (b / c)',
+  'a / b * c = a * (c / b)',
+  'a / b / c = a / (b * c)'
+];
+
 
 /**
  * Returns a plain object with a property for each variable name
