@@ -2898,7 +2898,7 @@ var ruleInfo = {
 
   /**
    * Rule to force association to the right for addition, subtraction,
-   * multiplication, and division.
+   * multiplication, and division.  Does nothing if not applicable.
    */
   groupToRight: {
     data: function() {
@@ -2929,11 +2929,9 @@ var ruleInfo = {
     action: function(step, path) {
       var facts = ruleData.groupToRight;
       var func = matchFactPart(step, path, facts, 'b');
-      var result = step;
-      if (func) {
-        result = func();
-      }
-      return result.justify('groupToRight', arguments, [step]);
+      return func
+        ? func().justify('groupToRight', arguments, [step])
+        : step;
     },
     inputs: {site: 1},
     form: '',
