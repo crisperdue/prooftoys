@@ -2039,8 +2039,8 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 //
 // True iff all parts of this expression are identical to the
 // corresponding parts of the argument.  This compares atoms by their
-// "name" properties, so constants that are aliases for the same
-// constant still are sameAs each other.
+// "pname" properties, so constants that are aliases are not sameAs
+// each other.
 // 
 //
 // matches(e2, bindings)
@@ -2293,7 +2293,7 @@ Atom.prototype._get = function(path) {
 };
 
 Atom.prototype.sameAs = function(expr) {
-  return expr instanceof Atom && this.name === expr.name;
+  return expr instanceof Atom && this.pname === expr.pname;
 };
 
 Atom.prototype.matches = function(expr, bindings) {

@@ -468,11 +468,14 @@ var testCase = {
   },
 
   testSameAs: function() {
-    var e = Toy.parse('a = b + ({x. x + 1} 4)');
+    var parse = Toy.parse;
+    var e = parse('a = b + ({x. x + 1} 4)');
     assert(e.sameAs(e));
     assert(e.sameAs(e.dup()));
-    assert(!e.sameAs(Toy.parse('a = b + ({y. y + 1} 4)')));
-    assert(!e.sameAs(Toy.parse('a = b')));
+    assert(!e.sameAs(parse('a = b + ({y. y + 1} 4)')));
+    assert(!e.sameAs(parse('a = b')));
+    assert(!(parse('x = x').sameAs(parse('x == x'))));
+    assert(!(parse('(=)').sameAs(parse('(==)'))));
   },
 
   testFreeVars: function() {
