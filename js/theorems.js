@@ -2713,7 +2713,9 @@ var ruleInfo = {
         var ordered = arrangeRhs(flat, context, 'movers');
         var numerated = arrangeRhs(ordered, context, 'numerators');
         var denominated = arrangeRhs(numerated, context, 'denominators');
-        return arrangeRhs(denominated, context, 'arithmetizers');
+        var arranged = arrangeRhs(denominated, context, 'arithmetizers');
+        // Perhaps this just applies 1 * x = x.
+        return rules.simplifySite(arranged, '/main/right');
       }).justify('arrangeTerm', arguments, [step]);
     },
     inputs: {site: 1},
