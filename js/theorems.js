@@ -4070,7 +4070,7 @@ var ruleInfo = {
       return result.justify('addToBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
-    autoSimplify: simplifyRegrouped,
+    autoSimplify: simplifyRegroupedAdds,
     form: ('Add <input name=term> to both sides of ' +
            'step <input name=equation>'),
     menu: 'algebra: add to both sides',
@@ -4088,7 +4088,7 @@ var ruleInfo = {
       return result.justify('subtractFromBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
-    autoSimplify: simplifyRegrouped,
+    autoSimplify: simplifyRegroupedAdds,
     form: ('Subtract <input name=term> from both sides of ' +
            'step <input name=equation>'),
     menu: 'algebra: subtract from both sides',
@@ -4105,7 +4105,7 @@ var ruleInfo = {
       return result.justify('multiplyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
-    autoSimplify: simplifyRegrouped,
+    autoSimplify: simplifyRegroupedMuls,
     form: ('Multiply both sides of step <input name=equation>' +
            ' by <input name=term>'),
     menu: 'algebra: multiply both sides',
@@ -4124,7 +4124,7 @@ var ruleInfo = {
       return result.justify('divideBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
-    autoSimplify: simplifyRegrouped,
+    autoSimplify: simplifyRegroupedMuls,
     form: ('Divide both sides of step <input name=equation>' +
            ' by <input name=term>'),
     menu: 'algebra: divide both sides',
@@ -4140,7 +4140,7 @@ var ruleInfo = {
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: simplifyRegrouped,
+    autoSimplify: simplifyRegroupedAdds,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: add {term} to both sides',
@@ -4155,7 +4155,7 @@ var ruleInfo = {
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: simplifyRegrouped,
+    autoSimplify: simplifyRegroupedAdds,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
@@ -4170,7 +4170,7 @@ var ruleInfo = {
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: simplifyRegrouped,
+    autoSimplify: simplifyRegroupedMuls,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: multiply both sides by {term}',
@@ -4185,7 +4185,7 @@ var ruleInfo = {
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: simplifyRegrouped,
+    autoSimplify: simplifyRegroupedMuls,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: divide both sides by {term}',
@@ -5935,14 +5935,26 @@ var regroupingFacts = [
   'a / b / c = a / (b * c)'
 ];
 
+/**
+ * Given an equational step with a single term on each side, puts each
+ * in standard form, then does general simplification throughout
+ * the step.  For use after mul/div both sides of an equation.
+ */
+function simplifyRegroupedMuls(eqn) {
+  var left = rules.arrangeTerm(eqn, '/main/left');
+  var right = rules.arrangeTerm(left, '/main/right');
+  return rules.simplifyStep(right);
+}
+
 
 /**
  * Given an equational step, tries regrouping and simplifying the
  * regrouped site, on both sides.  Keeps the result if the
  * simplification succeeds.  Returns the result of applying
- * basic simplifications to the whole step at the end.
+ * basic simplifications to the whole step at the end.  For use
+ * after add/subtract both sides of an equation.
  */
-function simplifyRegrouped(eqn) {
+function simplifyRegroupedAdds(eqn) {
   // Simplify the left side by regrouping and simplifying the result.
   var left = eqn;
   var left1 = applyFactsOnce(eqn, '/main/left', regroupingFacts);
@@ -5951,7 +5963,7 @@ function simplifyRegrouped(eqn) {
     if (left == left1) {
       // Don't bother regrouping if the result cannot be simplified.
       left = eqn;
-      }
+    }
   }
   // Simplify the right side by regrouping and simplifying the result.
   var right = left;
