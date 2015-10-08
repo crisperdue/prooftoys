@@ -2037,7 +2037,7 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 //
 // sameAs(expr)
 //
-// True iff all parts of this expression is identical to the
+// True iff all parts of this expression are identical to the
 // corresponding parts of the argument.  This compares atoms by their
 // "name" properties, so constants that are aliases for the same
 // constant still are sameAs each other.
