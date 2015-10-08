@@ -900,11 +900,15 @@ Expr.prototype.concat = function(expr, op) {
  * ruleDeps arrays are both optional, empty if not given.
  *
  * If this is identical to one of its ruleDeps, returns this
- * unchanged.  (The purpose is to reduce clutter for readers of the
- * proof.)
+ * unchanged, making the step a no-op.  (The purpose is to reduce
+ * clutter for readers of the proof.)
  *
  * TODO: Consider making proof steps distinct from Exprs.  That might
  * simplify and/or clarify some code.
+ *
+ * TODO: Consider always recording the step, but skipping the display
+ * in proof.jsc.  Some steps, especially simplifications, do this
+ * same thing internally by skipping the call to "justify".
  */
 Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps) {
   var ruleDeps = jQuery.makeArray(ruleDeps || []);
