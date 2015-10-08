@@ -276,12 +276,12 @@ var ruleInfo = {
       assert(equation.isCall2('='), function() {
 	return 'Rule R requires equation: ' + equation;
       }, equation);
-      if (equation.getLeft() === equation.getRight()) {
+      if (equation.getLeft().sameAs(equation.getRight())) {
         // The equation LHS must "match" the site, but can differ in
-        // bound variables, so the replacement could be a no-op if
-        // these are not identical too.  (This is a cheap but not
+        // bound variables, so the replacement can only be a no-op if
+        // these are identical too.  (This is a cheap but not
         // complete check for a no-op.)
-        if (target.get(path) === equation.getLeft()) {
+        if (target.get(path).sameAs(equation.getLeft())) {
           // Quick return if the replacement is a no-op.
           return target.justify('r', [equation, target, path],
                                 [target, equation]);
