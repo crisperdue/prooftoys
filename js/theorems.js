@@ -2468,6 +2468,10 @@ var ruleInfo = {
   // already simplified, this will not revert to it.  (If the site
   // was not already simplified, a de-simplification step may
   // still be re-simplified.)
+  //
+  // An alternative, slightly simpler approach would be to suppress
+  // auto-simplification of the result of a rewrite if it is the
+  // inverse of a simplification.
   autoSimplifySite: {
     action: function(step, path, refStep) {
       var _path = Toy.path;
