@@ -4065,6 +4065,7 @@ var ruleInfo = {
       return result.justify('addToBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
+    autoSimplify: simplifyRegrouped,
     form: ('Add <input name=term> to both sides of ' +
            'step <input name=equation>'),
     menu: 'algebra: add to both sides',
@@ -4082,6 +4083,7 @@ var ruleInfo = {
       return result.justify('subtractFromBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
+    autoSimplify: simplifyRegrouped,
     form: ('Subtract <input name=term> from both sides of ' +
            'step <input name=equation>'),
     menu: 'algebra: subtract from both sides',
@@ -4098,6 +4100,7 @@ var ruleInfo = {
       return result.justify('multiplyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
+    autoSimplify: simplifyRegrouped,
     form: ('Multiply both sides of step <input name=equation>' +
            ' by <input name=term>'),
     menu: 'algebra: multiply both sides',
@@ -4116,6 +4119,7 @@ var ruleInfo = {
       return result.justify('divideBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
+    autoSimplify: simplifyRegrouped,
     form: ('Divide both sides of step <input name=equation>' +
            ' by <input name=term>'),
     menu: 'algebra: divide both sides',
@@ -4131,7 +4135,7 @@ var ruleInfo = {
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: noSimplify,
+    autoSimplify: simplifyRegrouped,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: add {term} to both sides',
@@ -4146,7 +4150,7 @@ var ruleInfo = {
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: noSimplify,
+    autoSimplify: simplifyRegrouped,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
@@ -4161,7 +4165,7 @@ var ruleInfo = {
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: noSimplify,
+    autoSimplify: simplifyRegrouped,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: multiply both sides by {term}',
@@ -4176,7 +4180,7 @@ var ruleInfo = {
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: noSimplify,
+    autoSimplify: simplifyRegrouped,
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: divide both sides by {term}',
@@ -5926,6 +5930,36 @@ var regroupingFacts = [
   'a / b / c = a / (b * c)'
 ];
 
+
+/**
+ * Given an equational step, tries regrouping and simplifying the
+ * regrouped site, on both sides.  Keeps the result if the
+ * simplification succeeds.  Returns the result of applying
+ * basic simplifications to the whole step at the end.
+ */
+function simplifyRegrouped(eqn) {
+  // Simplify the left side by regrouping and simplifying the result.
+  var left = eqn;
+  var left1 = applyFactsOnce(eqn, '/main/left', regroupingFacts);
+  if (left1 !== eqn) {
+    left = rules.simplifySite(left1, '/main/left/right');
+    if (left == left1) {
+      // Don't bother regrouping if the result cannot be simplified.
+      left = eqn;
+      }
+  }
+  // Simplify the right side by regrouping and simplifying the result.
+  var right = left;
+  var right1 = applyFactsOnce(left, '/main/right', regroupingFacts);
+  if (right1 !== left) {
+    right = rules.simplifySite(right1, '/main/right/right');
+    if (right == right1) {
+      // Don't bother regrouping if the result cannot be simplified.
+      right = left;
+    }
+  }
+  return rules.simplifyStep(right);
+}
 
 /**
  * Returns a plain object with a property for each variable name
