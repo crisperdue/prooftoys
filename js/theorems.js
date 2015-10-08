@@ -2720,8 +2720,8 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'algebra: arrange term {term}',
-    description: 'arrange term {site};; {in step siteStep}',
+    menu: 'algebra: get standard form of {term}',
+    description: 'standard form of {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
