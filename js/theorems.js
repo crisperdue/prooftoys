@@ -2399,8 +2399,8 @@ var ruleInfo = {
       var path = step.ruleArgs[1];
       var stmt = step.ruleArgs[2];
       if (isDistribFact(stmt)) {
-        var step1 = rules.arrangeTerm(step, path.concat('/left'));
-        var step2 = rules.arrangeTerm(step1, path.concat('/right'));
+        var step1 = rules.arrangeTerm(step, path.concat('/right'));
+        var step2 = rules.arrangeTerm(step1, path.concat('/left'));
         return step2;
       } else {
         var simp1 = rules.autoSimplifySite(step,
@@ -5947,9 +5947,9 @@ var regroupingFacts = [
  * the step.  For use after mul/div both sides of an equation.
  */
 function simplifyRegroupedMuls(eqn) {
-  var left = rules.arrangeTerm(eqn, '/main/left');
-  var right = rules.arrangeTerm(left, '/main/right');
-  return rules.simplifyStep(right);
+  var right = rules.arrangeTerm(eqn, '/main/right');
+  var left = rules.arrangeTerm(right, '/main/left');
+  return rules.simplifyStep(left);
 }
 
 
@@ -5961,27 +5961,27 @@ function simplifyRegroupedMuls(eqn) {
  * after add/subtract both sides of an equation.
  */
 function simplifyRegroupedAdds(eqn) {
-  // Simplify the left side by regrouping and simplifying the result.
-  var left = eqn;
-  var left1 = applyFactsOnce(eqn, '/main/left', regroupingFacts);
-  if (left1 !== eqn) {
-    left = rules.simplifySite(left1, '/main/left/right');
-    if (left == left1) {
-      // Don't bother regrouping if the result cannot be simplified.
-      left = eqn;
-    }
-  }
   // Simplify the right side by regrouping and simplifying the result.
-  var right = left;
-  var right1 = applyFactsOnce(left, '/main/right', regroupingFacts);
-  if (right1 !== left) {
+  var right = eqn;
+  var right1 = applyFactsOnce(eqn, '/main/right', regroupingFacts);
+  if (right1 !== eqn) {
     right = rules.simplifySite(right1, '/main/right/right');
     if (right == right1) {
       // Don't bother regrouping if the result cannot be simplified.
-      right = left;
+      right = eqn;
     }
   }
-  return rules.simplifyStep(right);
+  // Simplify the left side by regrouping and simplifying the result.
+  var left = right;
+  var left1 = applyFactsOnce(right, '/main/left', regroupingFacts);
+  if (left1 !== right) {
+    left = rules.simplifySite(left1, '/main/left/right');
+    if (left == left1) {
+      // Don't bother regrouping if the result cannot be simplified.
+      left = right;
+    }
+  }
+  return rules.simplifyStep(left);
 }
 
 /**
