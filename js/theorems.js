@@ -2403,12 +2403,17 @@ var ruleInfo = {
         var step2 = rules.arrangeTerm(step1, path.concat('/right'));
         return step2;
       } else {
-        return rules.autoSimplifySite(step,
-                                      // Site of the rewrite.
-                                      step.ruleArgs[1],
-                                      // Input step of the rewrite.
-                                      step.ruleArgs[0]
-                                     );
+        var simp1 = rules.autoSimplifySite(step,
+                                           // Site of the rewrite.
+                                           step.ruleArgs[1],
+                                           // Input step of the rewrite.
+                                           step.ruleArgs[0]
+                                           );
+        // Don't do even basic simplifications if simplifying the site
+        // did nothing.  This is intended to avoid automatically
+        // undoing rewrites that "de-simplify".
+        // Perhaps this functionality could go in autoSimplifySite.
+        return (simp1 == step) ? step : rules.simplifyStep(simp1);
       }
     },
     inputs: {site: 1, term: 3},
