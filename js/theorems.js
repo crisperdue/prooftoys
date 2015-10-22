@@ -2630,7 +2630,7 @@ var ruleInfo = {
          {schema: 'a / b',
           parts: {a: 'flatteners'}}}
       ];
-      var numeralAfterVar = '$.c.isNumeral() & $.b.isVariable()';
+      var numeralAfterVar = '$.c.isNumeral() && $.b.isVariable()';
       var movers = [
         // Move "minus signs" to the left.
         {stmt: 'a * neg b = neg a * b',

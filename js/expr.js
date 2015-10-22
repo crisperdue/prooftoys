@@ -719,14 +719,13 @@ Expr.prototype.isRendered = function() {
 // identifers, currently "forall" and "exists".
 
 /**
- * True iff this is a Atom named as a variable.  If the optional
- * name is given, this variable must have the given name.
+ * True iff this is an Atom named as a variable.
+ *
+ * TODO: Consider using a property instead of a regex, as this method
+ * is heavily used.
  */
-Expr.prototype.isVariable = function(opt_name) {
-  if (!(this instanceof Atom) || !this.name.match(variableRegex)) {
-    return false;
-  }
-  return opt_name ? this.name === opt_name : true;
+Expr.prototype.isVariable = function() {
+  return this instanceof Atom && this.name.match(variableRegex);
 };
 
 /**
