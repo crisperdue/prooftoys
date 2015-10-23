@@ -35,19 +35,6 @@ Counter.prototype.next = function() {
 
 
 ////
-//// Internal utility functions
-////
-
-/**
- * Names containing "_" are reserved for use by the system.  The current
- * strategy simply uses a counter to uniqueify.
- */
-function generateName(name) {
-  return name + '_' + Expr.counter++;
-}
-
-
-////
 //// Bindings -- variable binding contexts and bookkeeping for
 //// changing names of bound variables.
 ////

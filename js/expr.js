@@ -196,10 +196,6 @@ function Expr() {
 }
 Toy.extends(Expr, null);
 
-// This counts up to supply a unique name for bound variables renamed
-// to avoid capturing.
-Expr.counter = 1;
-
 // Controls prefixing Calls and Lambdas with sourceStep info.
 // A debugging and perhaps proof development aid when turned on.
 Toy.trackSourceSteps = false;
