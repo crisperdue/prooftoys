@@ -1125,7 +1125,7 @@ function unicodify(text) {
 
 /**
  * Converts an Expr or plain token string to Unicode.
- * TODO: Remove?
+ * TODO: Remove? (Used only one place in proof.jsc)
  */
 function toUnicode(o) {
   if (typeof o === 'string') {
