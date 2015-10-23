@@ -1837,7 +1837,7 @@ function renderInference(step) {
     var $header = $('<div class=proofHeader>' +
                     '<span class=subproofHider>hide &#x25be;</span>' +
                     ' <span class="techDetailsButton noselect">' +
-                    '  details +</span>' +
+                    '  more info</span>' +
                     '</div>');
     var $details = $('<div class="techDetails hidden">' +
                      '<b>' + (step.ruleArgs.length ? 'Rule ' : 'Proof of ') +
@@ -1853,9 +1853,9 @@ function renderInference(step) {
     $subproof.append($details);
     var $button = $header.find('.techDetailsButton');
     $button.on('click', function() {
-        $button.text($button.text().trim() == 'details +'
-                     ? 'details -'
-                     : 'details +');
+        $button.text($button.text().trim() == 'more info'
+                     ? 'less info'
+                     : 'more info');
         $details.toggle(100);
       });
   }

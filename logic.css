@@ -319,6 +319,7 @@ span#leftNav {
   background-color: #ddf;
   padding: 0px 6px;
   border: 1px solid #aaf;
+  font-size: 90%;
 }
 
 /* If in a step with open subproof display or in a subproof, show it. */
@@ -336,6 +337,7 @@ span#leftNav {
   background-color: #ddf;
   padding: 0px 6px;
   border: 1px solid #aaf;
+  font-size: 90%;
 }
 
 .techDetails {
