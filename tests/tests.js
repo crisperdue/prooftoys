@@ -1,5 +1,7 @@
 // Copyright 2015 Crispin Perdue.  All rights reserved.
 
+(function() {
+
 // Make some names visible throughout
 var rules = Toy.rules;
 var ruleData = Toy._ruleData;
@@ -2220,17 +2222,25 @@ var testCase = {
 
 //// RUN TESTS
 
-for (var name in testCase) {
-  var fn = testCase[name];
-  if (typeof fn === 'function') {
-    test(name, fn);
-  } else {
-    console.log(name + ': not a function');
+// Run tests "soon", but after the event system returns to idle,
+// allowing Prooftoys initializations to complete.
+Toy.soonDo(function() {
+  for (var name in testCase) {
+    var fn = testCase[name];
+    if (typeof fn === 'function') {
+      console.log('Testing', name);
+      test(name, fn);
+    } else {
+      console.log(name + ': not a function');
+    }
   }
-}
-Toy.eachFact(function(goal, synopsis) {
-    console.log('Testing ' + synopsis);
-      test(synopsis, function() {
-          assert(Toy.getResult(goal).ruleName);
-        });
-  });
+  Toy.eachFact(function(goal, synopsis) {
+      console.log('Testing ' + synopsis);
+        test(synopsis, function() {
+            assert(Toy.getResult(goal).ruleName);
+          });
+    });
+  console.log('End of tests');
+});
+
+})();
