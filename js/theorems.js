@@ -5252,7 +5252,7 @@ function addSwappedFact(synopsis) {
 }
 
 // Do this after support modules are initialized.
-Toy.soonDo(function() {
+$(function() {
     // Put definitions into their database:
     Toy.define('not', equal(F));
     Toy.define('!=', '{x. {y. not (x = y)}}');
@@ -6275,7 +6275,7 @@ Toy._flagHyps = flagHyps;
 //// INITIALIZATION CODE
 
 // Do this after support modules are initialized.
-Toy.soonDo(function() {
+$(function() {
     // Add all the named theorems to their database.
     for (var i = 0; i < theoremNames.length; i++) {
       addTheorem(theoremNames[i]);
