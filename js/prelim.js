@@ -96,27 +96,9 @@ Path.none._rest = Path.none;
 // interesting.
 var _end = new Path(null, Path.none);
 
-// Private to the "next" method.
-//
-// TODO: Refactor to remove this dependency on expr.js.
-var _pathSteps = {
-  fn: function(o) { return o.fn; },
-  arg: function(o) { return o.arg; },
-  body: function(o) { return o.body; },
-  binop: function(o) { return o.getBinOp(); },
-  left: function(o) { return o.getLeft(); },
-  right: function(o) { return o.getRight(); }
-};
-
 /**
- * Traverses into the given object by getting the property named by
- * this Path's segment.  If the value of the property is a function,
- * applies it as a method, e.g. 'getLeft'.
+ * Truthy value iff this path is precisely empty (and not beyond).
  */
-Path.prototype.next = function(o) {
-  return _pathSteps[this.segment](o);
-};
-
 Path.prototype.isMatch = function() {
   return this == _end;
 };
