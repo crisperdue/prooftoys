@@ -24,6 +24,7 @@ var termify;
 var isInfixDesired;
 var infixCall;
 var parse;
+var lambda;
 
 // Resolve forward references after all code is loaded.
 $(function() {
@@ -31,7 +32,7 @@ $(function() {
     isInfixDesired = Toy.isInfixDesired;
     infixCall = Toy.infixCall;
     parse = Toy.parse;
-    window.fubar = true;
+    lambda = Toy.lambda;
   });
 
 
@@ -2551,8 +2552,7 @@ Lambda.prototype._subFree = function(map) {
     // algorithm.
     var newVar = _genBoundVar(boundName);
     var renamed =
-      Toy.lambda(newVar,
-                 this.body._subFree(Toy.object0(boundName, newVar)));
+      lambda(newVar, this.body._subFree(Toy.object0(boundName, newVar)));
     return renamed._subFree(map);
   }
 };
@@ -2653,7 +2653,7 @@ Lambda.prototype.replaceAt = function(path, xformer) {
     return xformer(this);
   } else if (path.segment === 'body') {
     var body = this.body.replaceAt(path._rest, xformer);
-    return (body == this.body) ? this : Toy.lambda(this.bound, body);
+    return (body == this.body) ? this : lambda(this.bound, body);
   }
   this._checkSegment(path);
 };
