@@ -5251,17 +5251,20 @@ function addSwappedFact(synopsis) {
   }
 }
 
-// Put definitions into their database:
-Toy.define('not', equal(F));
-Toy.define('!=', '{x. {y. not (x = y)}}');
-Toy.define('forall', equal(lambda(x, T)));
-Toy.define('exists', '(!=) {x. F}');
-Toy.defineCases('&', identity, lambda(x, F));
-Toy.defineCases('|', allT, identity);
-Toy.defineCases('==>', identity, allT);
+// Do this after support modules are initialized.
+Toy.soonDo(function() {
+    // Put definitions into their database:
+    Toy.define('not', equal(F));
+    Toy.define('!=', '{x. {y. not (x = y)}}');
+    Toy.define('forall', equal(lambda(x, T)));
+    Toy.define('exists', '(!=) {x. F}');
+    Toy.defineCases('&', identity, lambda(x, F));
+    Toy.defineCases('|', allT, identity);
+    Toy.defineCases('==>', identity, allT);
 
-Toy.define('-', '{x. {y. x + neg y}}');
-Toy.define('/', '{x. {y. x * recip y}}');
+    Toy.define('-', '{x. {y. x + neg y}}');
+    Toy.define('/', '{x. {y. x * recip y}}');
+  });
 
 //// THEOREMS
 
@@ -6268,14 +6271,18 @@ Toy._findMatchingCall = findMatchingCall;
 Toy._locateMatchingFact = locateMatchingFact;
 Toy._flagHyps = flagHyps;
 
+
 //// INITIALIZATION CODE
 
-// Add all the named theorems to their database.
-for (var i = 0; i < theoremNames.length; i++) {
-  addTheorem(theoremNames[i]);
-}
+// Do this after support modules are initialized.
+Toy.soonDo(function() {
+    // Add all the named theorems to their database.
+    for (var i = 0; i < theoremNames.length; i++) {
+      addTheorem(theoremNames[i]);
+    }
 
-addFactsMap(logicFacts);
-addFactsMap(algebraFacts);
+    addFactsMap(logicFacts);
+    addFactsMap(algebraFacts);
+});
 
 })();

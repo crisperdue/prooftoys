@@ -24,7 +24,10 @@
   getScript('../lib/jquery-1.10.2.js');
 
   if (!window.noProofScripts) {
+    getScript('util.js');
+    getScript('prelim.js');
     getScript('expr.js');
+    getScript('xutil.js');
     getScript('step-editor.js');
     getScript('../jsc/proof.js');
     getScript('theorems.js');
