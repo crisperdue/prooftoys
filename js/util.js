@@ -388,12 +388,6 @@ function catchResult(fn, _args) {
   }
 }
 
-// TODO: Remove this.
-function ErrorInfo(message, info) {
-  this.message = message;
-  this.info = info;
-}
-
 
 //// NestedTimer -- timer that excludes time in other timers
 
