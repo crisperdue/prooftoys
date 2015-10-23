@@ -1,9 +1,6 @@
 // Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
 // All rights reserved.
 
-// Initialize the app namespace.
-var Toy = Toy || {};
-
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
 (function() {
