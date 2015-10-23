@@ -13,27 +13,6 @@
 // Make some names available without "Toy" prefix.
 var assert = Toy.assertTrue;
 
-//// Counter -- stateful counter for internal use
-
-/**
- * Mutable counter object.  The default initial value is 1.
- */
-function Counter(start) {
-  if (start == null) {
-    start = 1;
-  }
-  this.counter = start;
-}
-
-/**
- * Returns the next value of the counter and increments it.
- * The first call returns the starting value.
- */
-Counter.prototype.next = function() {
-  return this.counter++;
-};
-
-
 ////
 //// Bindings -- variable binding contexts and bookkeeping for
 //// changing names of bound variables.
