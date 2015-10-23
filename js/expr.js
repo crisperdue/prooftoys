@@ -23,7 +23,9 @@ var infixCall;
 var parse;
 var lambda;
 
-// Resolve forward references after all code is loaded.
+// Resolve forward references after all code is loaded.  Note that
+// jQuery handlers fire deterministically in order of attachment,
+// which is important for our initializations.
 $(function() {
     termify = Toy.termify;
     isInfixDesired = Toy.isInfixDesired;
