@@ -691,7 +691,6 @@ Toy.withErrorReporting = withErrorReporting;
 Toy.assertTrue = assertTrue;
 Toy.assert = assert;
 Toy.debugString = debugString;
-Toy.ErrorInfo = ErrorInfo;
 
 Toy.isEmpty = isEmpty;
 Toy.configure = configure;
