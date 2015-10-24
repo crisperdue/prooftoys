@@ -1,6 +1,9 @@
 // Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
 // All rights reserved.
 
+// Do the initializations here using the "$" function so that
+// initialization of the Prooftoys engine can be completed first.
+// (They also use "$", with handlers established before this one.)
 $(function() {
   // Set up some useful constants and functions.
 
