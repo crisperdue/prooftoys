@@ -1124,18 +1124,6 @@ function unicodify(text) {
 }
 
 /**
- * Converts an Expr or plain token string to Unicode.
- * TODO: Remove? (Used only one place in proof.jsc)
- */
-function toUnicode(o) {
-  if (typeof o === 'string') {
-    return Toy.unicodeNames[o] || o;
-  } else {
-    return o.toUnicode();
-  }
-} 
-
-/**
  * Coerce the given Expr or string to an Expr by parsing it
  * if not an Expr.
  */
@@ -1464,7 +1452,6 @@ Toy.commuteEqn = commuteEqn;
 Toy.encodeSteps = encodeSteps;
 Toy.decodeSteps = decodeSteps;
 
-Toy.toUnicode = toUnicode;
 Toy.unicodify = unicodify;
 
 Toy.termify = termify;

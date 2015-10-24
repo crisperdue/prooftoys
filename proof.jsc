@@ -1736,7 +1736,7 @@ function defaultStepRefs(step, description) {
  */
 var stepFormatters = {
   definition: function(step) {
-    var result = 'definition of ' + Toy.toUnicode(step.ruleArgs[0]);
+    var result = 'definition of ' + Toy.unicodify(step.ruleArgs[0]);
     if (step.ruleArgs.length == 2) {
       result += ' ' + step.ruleArgs[1];
     }
@@ -1768,9 +1768,9 @@ var stepFormatters = {
       if (fn instanceof Toy.Lambda) {
         return 'apply function of ' + target.fn.bound.toHtml();
       } else if (target.isCall2()) {
-        return 'apply definition of ' + target.getBinOp().toString();
+        return 'apply definition of ' + target.getBinOp().toUnicode();
       } else {
-        return 'apply definition of ' + fn.toString();
+        return 'apply definition of ' + fn.toUnicode();
       }
     } else {
       return 'apply: not a Call';
