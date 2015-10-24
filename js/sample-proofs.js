@@ -1,7 +1,7 @@
-// Copyright 2011, 2012, 2013, 2014 Crispin Perdue.
+// Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
 // All rights reserved.
 
-(function() {
+$(function() {
   // Set up some useful constants and functions.
 
   // For convenience.
@@ -474,4 +474,4 @@
 
 Toy.setUpSampleProofs = setUpSampleProofs;
 
-})();
+});
