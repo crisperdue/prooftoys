@@ -274,6 +274,61 @@ Expr.prototype.isRendered = function() {
   return !!this.node;
 };
 
+// Categorization of Atoms:
+//
+// Identifiers
+//   Variables (start with a single lowercase ASCII letter)
+//   Consts (such as sin, cos, forall, exists)
+// Literals (numeric, string, etc)
+// OpSyntax (+, -, etc)
+
+// All "opSyntax" Vars are operators, plus some designated
+// identifers, currently "forall" and "exists".
+
+// String that matches identifiers, used in the tokenizer and
+// identifierRegex.
+var identifierPattern = '[_a-zA-Z][_a-zA-Z0-9]*';
+
+// Names matching this regex are identifiers.
+// The trailing "$" ensures that the entire name is matched
+// up to any extensions for unique ID and/or type information.
+var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
+
+// Variables in particular, not including identifiers for constants.
+// The "." and ":" provide for extension with bound variable unique
+// identifiers and type signatures.
+//
+// TODO: Make variable naming and subscripting consistent and
+// rational!  Currently variable names of a single alphabetic
+// character are pretty good, but ones beginning with underscore
+// are probably nonsensical.
+var variableRegex = /^[a-z][0-9_]*([.:]|$)|^_/;
+
+// Numeric literals.
+var numeralRegex = /^-?[0-9]+$/;
+
+/**
+ * Is the given string a legal variable name?  Only names with a
+ * single lower-case letter and then a sequences of digits and/or
+ * underscores, or beginning with an underscore are variables, the
+ * rest are considered constants whether defined or not.
+ *
+ * Use the Expr.isVariable method where possible, as it may be
+ * implemented for higher performance.
+ */
+function isVariableName(name) {
+  assert(typeof name == 'string', function() {
+    return 'isVariable - name must be a string: ' + name;
+  });
+  return name.match(variableRegex);
+}
+
+/**
+ * Any (legal) name that is not a variable is considered a constant.
+ */
+function isConstantName(name) {
+  return !isVariableName(name);
+}
 
 /**
  * True iff this is an Atom named as a variable.
@@ -389,6 +444,9 @@ Expr.prototype.isBoolConst = function() {
   return (this instanceof Atom &&
           (this.name == 'T' || this.name == 'F'));
 };
+
+
+// Other Expr methods.
 
 /**
  * Does this Expr have any variable(s)?
@@ -2006,62 +2064,6 @@ function constify(c) {
     throw new Error('Bad constant name: ' + c.name);
   }
   return c;
-}
-
-// Categorization of Atoms:
-//
-// Identifiers
-//   Variables (start with a single lowercase ASCII letter)
-//   Consts (such as sin, cos, forall, exists)
-// Literals (numeric, string, etc)
-// OpSyntax (+, -, etc)
-
-// All "opSyntax" Vars are operators, plus some designated
-// identifers, currently "forall" and "exists".
-
-// String that matches identifiers, used in the tokenizer and
-// identifierRegex.
-var identifierPattern = '[_a-zA-Z][_a-zA-Z0-9]*';
-
-// Names matching this regex are identifiers.
-// The trailing "$" ensures that the entire name is matched
-// up to any extensions for unique ID and/or type information.
-var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
-
-// Variables in particular, not including identifiers for constants.
-// The "." and ":" provide for extension with bound variable unique
-// identifiers and type signatures.
-//
-// TODO: Make variable naming and subscripting consistent and
-// rational!  Currently variable names of a single alphabetic
-// character are pretty good, but ones beginning with underscore
-// are probably nonsensical.
-var variableRegex = /^[a-z][0-9_]*([.:]|$)|^_/;
-
-// Numeric literals.
-var numeralRegex = /^-?[0-9]+$/;
-
-/**
- * Is the given string a legal variable name?  Only names with a
- * single lower-case letter and then a sequences of digits and/or
- * underscores, or beginning with an underscore are variables, the
- * rest are considered constants whether defined or not.
- *
- * Use the Expr.isVariable method where possible, as it may be
- * implemented for higher performance.
- */
-function isVariableName(name) {
-  assert(typeof name == 'string', function() {
-    return 'isVariable - name must be a string: ' + name;
-  });
-  return name.match(variableRegex);
-}
-
-/**
- * Any (legal) name that is not a variable is considered a constant.
- */
-function isConstantName(name) {
-  return !isVariableName(name);
 }
 
 /**
