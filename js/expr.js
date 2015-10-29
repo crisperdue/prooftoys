@@ -285,13 +285,16 @@ Expr.prototype.isRendered = function() {
 // All "opSyntax" Vars are operators, plus some designated
 // identifers, currently "forall" and "exists".
 
-// String that matches identifiers, used in the tokenizer and
-// identifierRegex.
-var identifierPattern = '[_a-zA-Z][_a-zA-Z0-9]*';
+// Pattern that matches identifiers, used in the tokenizer and
+// identifierRegex.  This in itself is not a regex.
+var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
 
 // Names matching this regex are identifiers.
 // The trailing "$" ensures that the entire name is matched
 // up to any extensions for unique ID and/or type information.
+// Note that not all identifiers can be entered through the parser,
+// in particular ones with "." (generated bound names) or ":"
+// (for type information).
 var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
 
 // Variables in particular, not including identifiers for constants.
@@ -302,7 +305,7 @@ var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
 // rational!  Currently variable names of a single alphabetic
 // character are pretty good, but ones beginning with underscore
 // are probably nonsensical.
-var variableRegex = /^[a-z][0-9_]*([.:]|$)|^_/;
+var variableRegex = /^[$a-z][0-9_]*([.:]|$)|^_/;
 
 // Numeric literals.
 var numeralRegex = /^-?[0-9]+$/;
@@ -324,7 +327,8 @@ function isVariableName(name) {
 }
 
 /**
- * Any (legal) name that is not a variable is considered a constant.
+ * Any (legal) name that is not a variable is considered a constant, which
+ * can be a named constant or literal constant.
  */
 function isConstantName(name) {
   return !isVariableName(name);
@@ -332,12 +336,9 @@ function isConstantName(name) {
 
 /**
  * True iff this is an Atom named as a variable.
- *
- * TODO: Consider using a property instead of a regex, as this method
- * is heavily used.
  */
 Expr.prototype.isVariable = function() {
-  return this instanceof Atom && this.name.match(variableRegex);
+  return this instanceof Atom && this._value === undefined;
 };
 
 /**
@@ -352,7 +353,7 @@ Expr.prototype.hasName = function(name) {
  * is given, this constant must have the given name.
  */
 Expr.prototype.isConst = function(opt_name) {
-  if (!(this instanceof Atom) || !isConstantName(this.name)) {
+  if (!(this instanceof Atom) || this._value === undefined) {
     return false;
   }
   return opt_name ? this.name === opt_name : true;
@@ -360,7 +361,8 @@ Expr.prototype.isConst = function(opt_name) {
 
 // True iff the expression is a literal constant.
 Expr.prototype.isLiteral = function() {
-  return this instanceof Atom && this._value !== undefined;
+  // Value must be neither null nor undefined.
+  return this instanceof Atom && this._value != null;
 }
 
 /**
@@ -1789,9 +1791,7 @@ Expr.prototype.walkPatterns = function(patternInfos) {
  * use it to record the index in the input stream.  If the given name
  * is in the "aliases" map, the given name becomes the Atom's pname,
  * and the Atom's name becomes the value of the alias.  Pnames affect
- * only parsing and display, not the logic itself.  If the name
- * represents an integer, sets the "value" property to that integer, or
- * if it represents a string, sets the "value" property to the string.
+ * only parsing and display, not the logic itself.
  *
  * CAUTION: This constructor is for internal use by code in this file
  * and implementations of methods on Expr, Atom, Call, and Lambda
@@ -1799,20 +1799,33 @@ Expr.prototype.walkPatterns = function(patternInfos) {
  * the public APIs.
  *
  * TODO: Further reduce use of this too-primitive constructor.
+ *
+ * TODO: Make a separate type for tokens.
  */
 function Atom(name, position) {
   // Expr.call(this);
   this.memos = {};
   this.pname = this.name = name;
   this._value = undefined;
+  if (isConstantName(name))
   this.pos = position;
   if (aliases.hasOwnProperty(name)) {
     this.name = aliases[name];
-  } else if (isIntegerLiteral(name)) {
-    this._value = parseInt(name);
-  } else if (name.charAt(0) === '"') {
-    this._value = Toy.parseStringContent(name);
   }
+  // If the name represents an integer, sets the _value property to
+  // that integer, or if it represents a string, sets the _value
+  // property to the string.
+  //
+  // Variables have _value of "undefined" and named constants have
+  // _value of null.
+  this._value = isVariableName(name)
+    ? undefined
+    : isIntegerLiteral(name)
+    ? parseInt(name)
+    : name.charAt(0) === '"'
+    ? Toy.parseStringContent(name)
+    // Named constants:
+    : null;
 };
 Toy.extends(Atom, Expr);
 
