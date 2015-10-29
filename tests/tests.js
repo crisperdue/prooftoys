@@ -615,8 +615,6 @@ var testCase = {
     assertEqual(p, path.toString());
     assertEqual('a', path.segment);
     assert(Toy.path('/').isMatch());
-    assertEqual('f', Toy.path('fn').next(call(f, x)).toString());
-    assertEqual('x', Toy.path('arg').next(call(f, x)).toString());
     var p2 = '/left/binop';
     assertEqual('/left/binop', Toy.path(p2).toString());
     var p3 = '/arg/fn';
