@@ -1,6 +1,9 @@
 // Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
 // All rights reserved.
 
+// This file implements rendering of proofs and proof steps.
+// For the deductive system itself see theorems.js.
+
 /**
  * Version of the jQuery $ function that type checks its input.
  */
