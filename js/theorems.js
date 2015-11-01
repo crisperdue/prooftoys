@@ -6214,6 +6214,32 @@ function getStepSite(step) {
   }
 }
 
+/**
+ * Returns an array of the steps leading up to and including the given
+ * step, sorted by ordinal, not including the details of any step.
+ */
+function proofOf(step) {
+  // See also the nearly identical Toy.unrenderedDeps.
+  var result = [];
+  // Traverses the dependency graph, recording a copy of every step
+  // and building an array of all of the original steps.  In Java
+  // one might use HashSets to identify already-visited steps,
+  // avoiding temporary modifications to the originals.
+  function visitWithDeps(step) {
+    if (!step.__visited) {
+      result.push(step);
+      step.__visited = true;
+      step.ruleDeps.forEach(function(dep) { visitWithDeps(dep); });
+    }
+  }
+  visitWithDeps(step);
+  result.forEach(function(step) { delete step.__visited; });
+  result.sort(function(s1, s2) {
+      return s1.ordinal - s2.ordinal;
+    });
+  return result;
+}
+
 
 //// Export public names.
 
@@ -6255,6 +6281,7 @@ Toy.termLeftThan = termLeftThan;
 Toy.matchFactPart = matchFactPart;
 Toy.getRuleInfo = getRuleInfo;
 Toy.getStepSite = getStepSite;
+Toy.proofOf = proofOf;
 
 Toy.traceRule = traceRule;
 
