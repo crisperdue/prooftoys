@@ -828,8 +828,8 @@ Expr.prototype.removeUser = function() {
 //// End of methods for proof steps
 
 /**
- * Finds and returns a map of free variable names in this expression,
- * from name to true.
+ * Finds and returns a plain object/map of free variable names in this
+ * expression, from name to true.
  */
 Expr.prototype.freeVars = function() {
   var byName = {};
