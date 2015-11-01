@@ -286,7 +286,10 @@ Expr.prototype.isRendered = function() {
 // identifers, currently "forall" and "exists".
 
 // Pattern that matches identifiers, used in the tokenizer and
-// identifierRegex.  This in itself is not a regex.
+// identifierRegex.  The tokenizer recognizes exactly things matching
+// this as being identifiers.  The system can create identifers not
+// matching this expression, but parses only these.  This in itself is
+// not a regex.
 var identifierPattern = '[_$a-zA-Z][_a-zA-Z0-9]*';
 
 // Names matching this regex are identifiers.
