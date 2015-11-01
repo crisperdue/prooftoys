@@ -423,6 +423,24 @@ NestedTimer.prototype = {
 };
 
 
+//// benchmark -- times repeated calls to a function
+
+/**
+ * Call the function with no arguments "count" times, defaulting to
+ * 1000.  Report the time and number of calls through the console log.
+ * Use Function.bind to presupply arguments to the function.
+ */
+function benchmark(fn, count) {
+  count = count || 1000;
+  var start = Date.now();
+  for (var i = 0; i < count; i++) {
+    fn();
+  }
+  var elapsed = Date.now() - start;
+  console.log(format('{1} calls in {2}ms', count, elapsed));
+}
+
+
 //// SET
 
 function Set(stringifier) {
@@ -709,6 +727,7 @@ Toy.catchResult = catchResult;
 Toy.normalReturn = normalReturn;
 
 Toy.NestedTimer = NestedTimer;
+Toy.benchmark = benchmark;
 Toy.Set = Set;
 Toy.emptySet = emptySet;
 Toy.Map = Map;
