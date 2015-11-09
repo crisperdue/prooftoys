@@ -122,7 +122,7 @@ Path.prototype.isLeft = function() {
 };
 
 Path.prototype.getLeft = function() {
-  assert(this.isLeft(), 'Not a leftward path');
+  assert(this.isLeft(), 'Not a leftward path: {1}', this);
   // TODO: Change this when changing the meaning of infix.
   return this._rest._rest;
 };
@@ -196,7 +196,7 @@ Path.prototype.isRight = function() {
 };
 
 Path.prototype.getRight = function() {
-  assert(this.isRight(), 'Not a rightward path');
+  assert(this.isRight(), 'Not a rightward path: {1}', this);
   // TODO: Change this when changing the meaning of infix.
   return this._rest;
 };

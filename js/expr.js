@@ -46,7 +46,7 @@ function assertEqn(expr) {
          && expr.fn instanceof Call
          && expr.fn.fn instanceof Atom
          && expr.fn.fn.name == '=',
-         'Must be an equation: ' + expr);
+         'Must be an equation: {1}', expr);
 }
 
 //// TermSet and TermMap
@@ -323,9 +323,8 @@ var numeralRegex = /^-?[0-9]+$/;
  * implemented for higher performance.
  */
 function isVariableName(name) {
-  assert(typeof name == 'string', function() {
-    return 'isVariable - name must be a string: ' + name;
-  });
+  assert(typeof name == 'string', 
+         'isVariable - name must be a string: {1}', name);
   return name.match(variableRegex);
 }
 
@@ -436,9 +435,7 @@ Expr.prototype.isString = function() {
  * a string literal.
  */
 Expr.prototype.getStringValue = function() {
-  assert(this.isString(), function() {
-      return 'Not a string literal: ' + this;
-    });
+  assert(this.isString(), 'Not a string literal: {1}', this);
   return this._value;
 };
 
@@ -955,9 +952,7 @@ Expr.prototype.getMain = function() {
  */
 Expr.prototype.nth = function(n) {
   var result = this._nth(n);
-  assert(result instanceof Expr, function() {
-      return 'Expr ' + result + ' has no position ' + n;
-    });
+  assert(result instanceof Expr, 'Expr {1} has no position {2}', result, n);
   return result;
 };
 
@@ -1080,11 +1075,11 @@ Expr.$ = {
  * do.
  */
 Expr.prototype.assertCall1 = function(name) {
-  assert(this.isCall1(name), function() {
-      return (name === undefined
-              ? 'Not a 1-argument call: ' + this
-              : 'Not a 1-argument call to ' + name + ': ' + this);
-    });
+  assert(this.isCall1(name),
+         (name === undefined
+          ? 'Not a 1-argument call: {1}'
+          : 'Not a 1-argument call to {2}: {1}'),
+         this, name);
 };
 
 /**
@@ -1312,9 +1307,8 @@ Expr.prototype.hypLocater = function(hyp) {
     } else {
       // Self is a conjunction.
       var right = locater(self.getRight(), pos);
-      assert(right instanceof Atom, function() {
-          return 'Internal error, not a Atom: ' + right;
-        });
+      assert(right instanceof Atom,
+             'Internal error, not an Atom: {1}', right);
       var left = (right == h
                   ? new Atom('h' + (pos + 1))
                   : locater(self.getLeft(), pos + 1));

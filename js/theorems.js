@@ -273,9 +273,7 @@ var ruleInfo = {
   r: {
     action: function(equation, target, path) {
       path = Toy.path(path, target);
-      assert(equation.isCall2('='), function() {
-	return 'Rule R requires equation: ' + equation;
-      }, equation);
+      assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
       if (equation.getLeft().sameAs(equation.getRight())) {
         // The equation LHS must "match" the site, but can differ in
         // bound variables, so the replacement can only be a no-op if
@@ -291,21 +289,25 @@ var ruleInfo = {
 	if (expr.matches(equation.getLeft())) {
 	  return equation.getRight();
 	} else {
-	  assert(false, 'Rule R: subexpression ' + expr +
-                 '\n of ' + target +
-                 '\n must match ' + equation.getLeft(), target);
+	  assert(false,
+                 'Rule R: subexpression {1}\n of {2}\n must match {3}',
+                 expr, target, equation.getLeft());
 	}
       }
       // Auto-justify input steps if requested by the current configuration.
-      if (!equation.ruleName) {
-        assert(Toy.autoAssert,
-               function() { return 'Rule R unproven equation: ' + equation; });
-	equation.assert();
+      if (!equation.isStep()) {
+        if (Toy.autoAssert) {
+          equation.assert();
+        } else {
+          assert(false, 'Rule R unproven equation: {1}', equation);
+        }
       }
       if (!target.ruleName) {
-        assert(Toy.autoAssert,
-               function() { return 'Rule R unproven target: ' + target; });
-	target.assert();
+        if (Toy.autoAssert) {
+          target.assert();
+        } else {
+          assert(false, 'Rule R unproven target: {1}', target);
+        }
       }
       var result = target.replaceAt(path, replacer);
       var lvars = equation.getLeft().freeVars();
@@ -379,9 +381,8 @@ var ruleInfo = {
   axiom4: {
     action: function(call) {
       call = typeof call == 'string' ? Toy.parse(call) : call;
-      assert(call.isOpenCall(), function() {
-	return 'Axiom 4 needs ({v. B} A), got: ' + call.toString();
-      });
+      assert(call.isOpenCall(),
+             'Axiom 4 needs ({v. B} A), got: {1}', call.toString());
       var lambda = call.fn;
       var result =
         (call.arg.name === lambda.bound.name
@@ -604,10 +605,10 @@ var ruleInfo = {
         return result.justify('useDefinition', args, [a]);
       } else {
         assert(target instanceof Toy.Call,
-               'Target of useDefinition not suitable: ' + target);
+               'Target of useDefinition not suitable: {1}', target);
         var arg = target.arg;
         assert(arg.isConst() && (arg.name == 'T' || arg.name == 'F'),
-               'Target of useDefinition not suitable: ' + target);
+               'Target of useDefinition not suitable: {1}', target);
         var result =
 	  rules.replace(rules.definition(target.fn.name, arg), a, path);
         return result.justify('useDefinition', args, [a]);
@@ -647,7 +648,8 @@ var ruleInfo = {
     action: function(step, path) {
       // This function does all the real work for the rule.
       function applier(expr) {
-        assert(expr instanceof Toy.Call, 'Not a call', step);
+        // Report the step, but not in the message.
+        assert(expr instanceof Toy.Call, 'Not a call: {1}', expr, step);
         var fn = expr.fn;
         if (fn instanceof Toy.Lambda) {
           return rules.axiom4(expr);
@@ -702,9 +704,10 @@ var ruleInfo = {
       newVar = varify(newVar);
       path = Toy.path(path, step);
       var target = step.get(path);
-      assert(target instanceof Toy.Lambda, 'Not a function: ' + target, step);
+      // Report the step, but not in the message.
+      assert(target instanceof Toy.Lambda, 'Not a function: {1}', target, step);
       assert(!step.freeVars()[newVar.name],
-             'New bound variable ' + newVar.name + ' must not occur free.',
+             'New bound variable {1} must not occur free in {2}', newVar.name,
              step);
       var changed = lambda(newVar,
                            target.body.subFree1(newVar, target.bound));
@@ -820,10 +823,10 @@ var ruleInfo = {
     action: function(h_target, expr) {
       var target = h_target.unHyp();
       assert(target.fn.isConst('forall'),
-             "Must be 'forall': " + target.fn,
+             "Must be 'forall': {1}", target.fn,
              h_target);
       assert(target.arg instanceof Toy.Lambda,
-             "Must be lambda expression: " + target.arg,
+             "Must be lambda expression: {1}", target.arg,
              h_target);
       var step1 = rules.useDefinition(h_target, '/main/fn');
       var step2 = rules.applyBoth(step1, expr);
@@ -1176,7 +1179,7 @@ var ruleInfo = {
       assertEqn(t_a);
       var left = t_a.get('/left');
       assert(left.isConst('T'),
-             'Input should be [T = A]: ' + t_a,
+             'Input should be [T = A]: {1}', t_a,
              h_t_a);
       var a = t_a.get('/right');
       var result = rules.replace(rules.r5218(a), h_t_a, '/main');
@@ -1211,10 +1214,7 @@ var ruleInfo = {
     action: function(h_a, v) {
       v = varify(v);
       assert(!(h_a.hasHyps && h_a.getLeft().hasFreeName(v.name)),
-	     function() {
-	       return v.name + ' occurs free in hypotheses of ' + h_a;
-	     },
-             h_a);
+	     '{1} occurs free in hypotheses of {2}', v.name, h_a);
       var step1 = rules.toTIsA(h_a);
       var step2 = rules.theorem('forallXT');
       var step3 = rules.changeVar(step2, '/arg', v);
@@ -1257,7 +1257,7 @@ var ruleInfo = {
   instantiateVar: {
     action: function(step, path, term) {
       v = step.get(path);
-      assert(v.isVariable(), 'Not a variable: ' + v);
+      assert(v.isVariable(), 'Not a variable: {1}', v);
       var map = {};
       map[v.name] = term;
       var result = rules.instMultiVars(step, map);
@@ -1513,7 +1513,7 @@ var ruleInfo = {
         } else if (fn instanceof Toy.Lambda) {
           result = rules.apply(result, '/right' + _path);
         } else {
-          assert(false, 'Unexpected expression: ' + target);
+          assert(false, 'Unexpected expression: {1}', target);
         }
       }
     },
@@ -1564,9 +1564,8 @@ var ruleInfo = {
         }
         // There are no free variables, evaluate the expression.
         var step11 = rules.evalBool(wff);
-        assert(step11.isCall2('=')
-               && step11.getRight().isConst('T'),
-               'Not a tautology: ' + step11.getLeft(),
+        assert(step11.isCall2('=') && step11.getRight().isConst('T'),
+               'Not a tautology: {1}', step11.getLeft(),
                step11);
         var step12 = rules.rRight(step11, rules.theorem('t'), '');
         var result = step12.justify('tautology', arguments);
@@ -1703,10 +1702,9 @@ var ruleInfo = {
   // hypotheses.
   anyImpliesTheorem: {
     action: function(any, theorem) {
-      assert(!theorem.hasHyps, function() {
-          return 'Expecting a theorem, got: ' + theorem.getRight();
-        },
-        theorem);
+      assert(!theorem.hasHyps,
+             'Expecting a theorem, got: {1}', theorem.getRight(),
+             theorem);
       var step1 = rules.toTIsA(theorem);
       var step2 = rules.tautInst('p ==> T', {p: any});
       var step3 = rules.r(step1, step2, '/right');
@@ -1732,7 +1730,7 @@ var ruleInfo = {
       v = varify(v);
       var aFree = a.freeVars();
       assert(!aFree.hasOwnProperty(v.name),
-	     'r5235: variable ' + v + 'cannot occur free in ' + a);
+	     'r5235: variable {1} cannot occur free in {2}', v, a);
       var map1 = {
         p: call('forall', lambda(v, call('|', T, b))),
         q: call('forall', lambda(v, b))
@@ -1773,15 +1771,15 @@ var ruleInfo = {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
       v = varify(v);
-      assert(a_b.isCall2('==>'), 'Must be an implication: ' + a_b, h_a_b);
+      assert(a_b.isCall2('==>'), 'Must be an implication: {1}', a_b, h_a_b);
       var a = a_b.getLeft();
       var b = a_b.getRight();
       // Restriction to ensure the desired result.
       assert(!a.hasFreeName(v.name),
-	     'implyForall: variable ' + v + 'cannot occur free in ' + a, h_a_b);
+	     'implyForall: variable {1} cannot occur free in {2}', v, a, h_a_b);
       if (h_a_b.hasHyps) {
 	assert(!h.hasFreeName(v.name),
-	       'implyForall: variable ' + v + 'cannot occur free in ' + h,
+	       'implyForall: variable {1} cannot occur free in {2}', v, h,
 	       h_a_b);
       }
       var map1 = {a: a, b: b};
@@ -1814,7 +1812,7 @@ var ruleInfo = {
       v = varify(v);
       var aFree = a.freeVars();
       assert(!aFree.hasOwnProperty(v.name),
-	     'r5235: variable ' + v + 'cannot occur free in ' + a);
+	     'r5235: variable {1} cannot occur free in {2}', v, a);
       var map1 = {
         p: call('forall', lambda(v, Toy.infixCall(F, '==>', b))),
         q: call('forall', lambda(v, b))
@@ -1882,10 +1880,9 @@ var ruleInfo = {
   forwardChain: {
     action: function(step, schema) {
       var substitution = step.unHyp().matchSchema(schema.unHyp().getLeft());
-      assert(substitution, function() {
-          return (step.unHyp().toString() +
-                  ' does not match LHS of schema\n' + schema);
-        }, step);
+      assert(substitution, 
+             '{1} does not match LHS of schema\n{2}',
+             step.unHyp(), schema, step);
       var step2 = rules.instMultiVars(schema, substitution);
       var step3 = rules.modusPonens(step, step2);
       return step3.justify('forwardChain', arguments, [step, schema]);
@@ -1923,9 +1920,7 @@ var ruleInfo = {
     action: function(schema, path, term) {
       var expr = schema.get(path);
       var subst = term.matchSchema(expr);
-      assert(subst, function() {
-          return 'Schema ' + expr + ' should match ' + term;
-        });
+      assert(subst, 'Schema {1} should match {2}', expr, term);
       var result = rules.instMultiVars(schema, subst);
       return result.justify('instantiate', arguments, [schema]);
     }
@@ -1952,7 +1947,7 @@ var ruleInfo = {
   // Relates equal functions to equality at all input data points.
   r5238: {
     action: function(vars, a, b) {
-      assert(vars.concat, 'Variables must be an array: ' + vars);
+      assert(Array.isArray(vars), 'Variables must be an array: {1}', vars);
       var result;
       if (vars.length == 0) {
         result = rules.eqSelf(equal(a, b));
@@ -2002,7 +1997,7 @@ var ruleInfo = {
     action: function(equation, target, path) {
       path = Toy.path(path);
       assert(equation.isCall2('='),
-             'Expecting an equation, got: ' + equation,
+             'Expecting an equation, got: {1}',
 	     equation);
       var step1 = rules.axiom('axiom2');
       var a = equation.getLeft();
@@ -2087,9 +2082,8 @@ var ruleInfo = {
                               [h_equation_arg, h_c_arg]);
       }
       // h_equation must have the form H ==> A = B
-      assert(h_equation.isEquation(), function() {
-          return 'Not an equation: ' + h_equation;
-        }, h_equation_arg);
+      assert(h_equation.isEquation(), 
+             'Not an equation: {1}', h_equation);
 
       if (h_c.hasHyps && path.isLeft()) {
         // We are replacing an assumption with something equal
@@ -2157,9 +2151,8 @@ var ruleInfo = {
       for (var name in boundNames) {
 	// Check the variable is not free in any hypotheses.
 	// TODO: Do appropriate checking in 5235 and impliesForall as well.
-        assert(!hypFreeNames.hasOwnProperty(name), function() {
-          return 'Conflicting binding of ' + name + ' in ' + c;
-        }, h_c_arg);
+        assert(!hypFreeNames.hasOwnProperty(name),
+               'Conflicting binding of {1} in {2}', name, c, h_c_arg);
         var step1 = rules.implyForall(name, step1);
       }
       var step2 = rules.r5239(equation, c, cpath);
@@ -2353,10 +2346,9 @@ var ruleInfo = {
     action: function(step, path, equation) {
       var expr = step.get(path);
       var map = expr.findSubst(equation.unHyp().getLeft());
-      assert(map, function() {
-          return (step.unHyp().toString() +
-                  ' must be an instance of LHS of equation\n' + equation);
-        }, step);
+      assert(map, 
+             '{1} must be an instance of LHS of equation\n{2}',
+             step.unHyp(), equation, step);
       var step1 = rules.instMultiVars(equation, map);
       var result = rules.replace(step1, step, path);
       return result.justify('rewrite', arguments, [step, equation]);
@@ -2382,12 +2374,9 @@ var ruleInfo = {
       var fact = rules.fact(statement);
       var expr = step.get(path);
       var map = expr.findSubst(fact.unHyp().getLeft());
-      assert(map, function() {
-          return ('Sorry, term\n' +
-                  expr.toString() +
-                  '\n does not match LHS of\n' +
-                  fact.unHyp().toString());
-        }, step);
+      assert(map,
+             'Sorry, term\n{1}\n does not match LHS of\n{2}',
+             expr, fact.unHyp(), fact);
       var step1 = rules.instMultiVars(fact, map);
       var step2 = rules.replace(step1, step, path);
       var result = rules.simplifyAssumptions(step2);
@@ -2993,12 +2982,10 @@ var ruleInfo = {
         var op = step.get('/main/right/binop');
         assert(op.name === '+' || op.name === '-',
                'Operator needs to be + or -');
-        outPath = Toy.path('/main/right');
+               outPath = Toy.path('/main/right');
       } else {
-        assert(false, function() {
-            return ('Term needs to be on the right outside parentheses: '
-                    + term);
-          });
+        assert(false,
+               'Term needs to be on the right outside parentheses: {1}', term);
       }
       if (op.name === '+') {
         var result = rules.subtractFromBoth(step, term)
@@ -3305,9 +3292,8 @@ var ruleInfo = {
       }
       var map = new Toy.TermMap();
       conjuncts.eachHyp(function (h) { map.addTerm(h); });
-      assert(map.has(c), function() {
-          return 'Must be one of the conjuncts: ' + c;
-        });
+      assert(map.has(c), 
+             'Must be one of the conjuncts: {1}', c);
       var cVar = map.get(c);
       // Make a schema for the desired theorem.
       var goalSchema = infix(buildHypSchema(conjuncts, map), '==>', cVar);
@@ -3806,7 +3792,7 @@ var ruleInfo = {
           var equation = rules.axiomArithmetic(term);
           result = rules.r(equation, step, path);
         } catch(e) {
-          assert(false, 'Not an arithmetic expression: ' + term);
+          assert(false, 'Not an arithmetic expression: {1}', term);
         }
       }
       return result.justify('arithmetic', arguments, [step]);
@@ -4365,7 +4351,7 @@ function addRule(key, info_arg) {
 
   var test = info.test;
   assert(!test || typeof test == 'function',
-         'Rule test must be a function: ' + key);
+         'Rule test must be a function: {1}', key);
   if (test && !action) {
     // If there is a test but no action, the test, when successful,
     // should return a function of no arguments that functions as the
@@ -4383,8 +4369,8 @@ function addRule(key, info_arg) {
       return Toy.err('Rule failed: ' + key);
     };
   }
-  assert(action, 'No action for rule ' + key);
-  assert(typeof action == 'function', 'Rule action must be a function: ' + key);
+  assert(action, 'No action for rule {1}', key);
+  assert(typeof action == 'function', 'Rule action must be a function: {1}', key);
   // Associate the action function with the key,
   rules[key] = action;
 
@@ -5273,7 +5259,7 @@ $(function() {
  * be a function.  Internal to addFact.
  */
 function Fact(synopsis, prover) {
-  assert(typeof prover === 'function', 'Not a function: ' + prover);
+  assert(typeof prover === 'function', 'Not a function: {1}', prover);
   this.synopsis = synopsis;
   this.goal = getStatement(synopsis);
   this._prover = Toy.memo(prover);
@@ -5312,13 +5298,11 @@ $.extend(Fact.prototype, {
           //   rules.instMultiVars.
           result2 = (rules.instMultiVars(result, subst2)
                      .apply('simplifyAssumptions'));
-          assert(result2.matches(goal), function() {
-            return 'Assumptions do not match goal ' + goal;
-          }, result);
+          assert(result2.matches(goal), 
+                 'Assumptions do not match goal {1}', goal);
         } else {
-          assert(false, function() {
-            return 'Instead of ' + goal + ' proved ' + result;
-          }, result);
+          assert(false, 
+                 'Instead of {1} proved {2}', goal, result);
         }
       }
       return result2;
@@ -5364,7 +5348,7 @@ function getResult(stmt) {
   }
   // Same encoding as in addFact.
   var fact = _factsMap[getStatementKey(goal)];
-  assert(fact, function() { return 'No such fact: ' + goal; });
+  assert(fact, 'No such fact: {1}', goal);
   return fact.result();
 }
 
@@ -5524,7 +5508,7 @@ function findMatchingFact(facts_arg, cxt, term) {
   if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
     facts = cxt.factLists && cxt.factLists[facts_arg];
   }
-  assert($.isArray(facts), 'No facts: ' + facts_arg);
+  assert($.isArray(facts), 'No facts: {1}', facts_arg);
   for (var i = 0; i < facts.length; i++) {
     var factInfo = facts[i];
     var infoIsObject = factInfo.constructor == Object;
@@ -5685,7 +5669,7 @@ function applyFactsWithinRhs(step, facts) {
  */ 
 function convert(step, path, fn) {
   var expr = step.get(path);
-  assert(expr, function() { return 'Bad path ' + path; }, step);
+  assert(expr, 'Bad path {1}', path, step);
   var eqn = fn(expr);
   return rules.replace(eqn, step, path);
 }
@@ -5779,8 +5763,8 @@ var _theoremsByName = {};
  * theorem name.
  */
 function addTheorem(name) {
-  assert(!_theoremsByName[name], 'Theorem already exists: ' + name);
-  assert(rules[name], 'No proof: ' + name);
+  assert(!_theoremsByName[name], 'Theorem already exists: {1}', name);
+  assert(rules[name], 'No proof: {1}', name);
   _theoremsByName[name] = true;
 }
 
@@ -5809,8 +5793,7 @@ function getTheorem(name) {
  * Returns true iff the named theorem has already been proved.
  */
 function alreadyProved(name) {
-  assert(_theoremsByName[name],
-         function() { return 'Not a theorem: ' + name; });
+  assert(_theoremsByName[name], 'Not a theorem: {1}', name);
   if (isAxiom(name)) {
     return true;
   } else {

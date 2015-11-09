@@ -98,8 +98,9 @@ var errors = [];
  * Logs the message and step into the errors list by appending an
  * object with properties 'message' and 'step'.
  */
-function assertTrue(condition, message_arg, step) {
+function assertTrue(condition, message_arg) {
   if (!condition) {
+    var step;
     var message;
     if (typeof message_arg == 'function') {
       message = message_arg();
@@ -108,6 +109,16 @@ function assertTrue(condition, message_arg, step) {
       message = message_arg.replace(/\{.*?\}/g, function(matched) {
           return args[matched.slice(1, -1) - -1];
         });
+      var isStep = Toy.isStep;
+      // Find a step argument if there is one.
+      for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        if (isStep(arg)) {
+          // TODO: Handle multiple "step" arguments.
+          step = arg;
+          break;
+        }
+      }
     }
     errors.push({message: message, step: step});
     var e = new Error(message);
@@ -290,9 +301,8 @@ function removeExcept(map1, map2) {
  */
 function each(array, fn) {
   var len = array.length;
-  assert(typeof len === 'number', function() {
-      return 'Not an array: ' + array;
-    });
+  assert(typeof len === 'number', 
+         'Not an array: {1}', array);
   for (var i = 0; i < len; i++) {
     var result = fn(array[i], i, array);
     if (result !== undefined) {

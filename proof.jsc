@@ -633,8 +633,7 @@ ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
  * The step must not have any rendered steps that depend on it.
  */
 ProofControl.prototype.removeStep = function(step) {
-  assert(step.users == 0,
-         'Cannot remove used step ' + step);
+  assert(step.users === 0, 'Cannot remove used step {1}', step);
   // Works by removing from here down, then re-inserting.
   var self = this;
   var index = self.steps.indexOf(step);
@@ -1562,7 +1561,7 @@ function formattedStepInfo(step) {
     useDefault = false;
     // Expand the description with the named function.
     var fn = stepFormatters[description.slice(1)];
-    assert(fn, @{'No step formatter "' + description.slice(1) + '"'});
+    assert(fn, 'No step formatter "{1}"',  description.slice(1));
     description = fn(step);
   }
   // Use default step refs only if there are no formatting directives;
