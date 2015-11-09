@@ -13,6 +13,14 @@
 // global environment except through namespace "Toy".
 (function() {
 
+/**
+ * Toy.incompatible - true iff browser is an old MSIE not compatible
+ * with Prooftoys + jQuery 2 and similar JavaScript.
+ */
+// See http://www.useragentstring.com/pages/Browserlist/.
+Toy.incompatible = !!navigator.userAgent.match(/ MSIE [1-8][.]/);
+
+ 
 ////
 //// Assertions, error reporting and debugging
 ////
