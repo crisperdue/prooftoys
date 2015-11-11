@@ -5,6 +5,8 @@
 # LiveReload: Note that there is a simple plugin for this compiler, defined
 # at /Users/cris/Library/LiveReload/Plugins/jsc.lrplugin//
 
+from __future__ import print_function
+
 import argparse
 import glob
 import os
@@ -43,7 +45,7 @@ def compile(jsc, js):
     else:
       return 'self.__' + m[1:]
   try:
-    os.mkdir('jsc')
+    os.mkdir('../jsc')
   except OSError:
     # Ignore the OSError, which usually means the directory already exists.
     pass
@@ -60,6 +62,7 @@ def getmtime(fname):
   except OSError:
     return 0.0
 
+# LiveReload runs this (the compiler) in the source dir.
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('--monitor', action='store_true')
@@ -71,8 +74,9 @@ def main():
     sys.exit(1)
   else:
     for jsc in names:
-      basename, _ = os.path.splitext(jsc)
-      js = os.path.join('jsc', basename + '.js')
+      dirname, withext = os.path.split(jsc)
+      basename, _ = os.path.splitext(withext)
+      js = os.path.join('../jsc', basename + '.js')
       jsctime = getmtime(jsc)
       jstime = getmtime(js)
       # Compile the .jsc file
@@ -80,7 +84,8 @@ def main():
 
 # For debugging use with LiveReload:
 # with open('/tmp/foobar', 'w') as msg:
-#   msg.write(str(str(sys.argv)) + '\n')
+#   print(os.getcwd(), file=msg)
+#   print(sys.argv, file=msg)
 
 if __name__ == '__main__':
     main()
