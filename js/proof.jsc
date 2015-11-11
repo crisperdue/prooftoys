@@ -56,7 +56,7 @@ function dom($node) {
  * to run when the node is removed from the DOM using jQuery's .remove
  * method, as in:
  *
- * $(node).on('destroyed', function() { /* do stuff */ })
+ * $(node).on('destroyed', function() { "do stuff" })
  *
  * This could make it easier to manage information such as
  * associations between proof steps and their renderings.  The handler
@@ -69,7 +69,6 @@ jQuery.event.special.destroyed = {
     }
   }
 }
-
 
 /**
  * Applies the action to each integer index and "input type" of each of
