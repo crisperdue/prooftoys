@@ -52,6 +52,26 @@ function dom($node) {
 }
 
 /**
+ * Setting up a "destroyed" handler on a node will cause the handler
+ * to run when the node is removed from the DOM using jQuery's .remove
+ * method, as in:
+ *
+ * $(node).on('destroyed', function() { /* do stuff */ })
+ *
+ * This could make it easier to manage information such as
+ * associations between proof steps and their renderings.  The handler
+ * fires as it is being unbound, so so avoid explicitly unbinding.
+ */
+jQuery.event.special.destroyed = {
+  remove: function(o) {
+    if (o.handler) {
+      o.handler.apply(this, arguments);
+    }
+  }
+}
+
+
+/**
  * Applies the action to each integer index and "input type" of each of
  * the arguments described by a rules "inputs" descriptor.  Indexes
  * passed to the action are zero-based, not 1-based as in the
