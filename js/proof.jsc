@@ -625,7 +625,7 @@ ProofControl.prototype.removeLastStep = function() {
   clearSubproof(step);
   // Remove highlighting by pretending the mouse moved out.
   // Deleting the node will not trigger the mouse out event.
-  highlightStepInputs(step, 'out');
+  hoverStepSelector(step, 'out');
   $(step.stepNode).remove();
   delete step.original.rendering;
   step.ruleDeps.forEach(@{s. s.rendering.removeUser();});
@@ -909,8 +909,7 @@ ProofControl.prototype.renderStep = function(step) {
          event.stopPropagation();
        });
   $step.on('mouseenter mouseleave', '.stepSelector', function(event) {
-           $(this).closest('.stepAndNum').toggleClass('hover');
-           highlightStepInputs(step, event.type === 'mouseenter' ? 'in' : 'out');
+      hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
   $step.on(TOUCHDOWN, '.stepSelector', function(event) {
     self.handleStepClick(step);
@@ -2126,12 +2125,16 @@ function hoverStep(step, direction, event) {
 }
 
 /**
- * Highlights inputs to the step, references to it, and steps
+ * Handles hovering over the stepSelector area of a step by
+ * highlighting inputs to the step, references to it, and steps
  * establishing assumptions used by it.
  */
-function highlightStepInputs(step, direction, event) {
+function hoverStepSelector(step, direction, event) {
   // TODO: Use jQuery toggleClass with boolean instead of this action.
   var action = direction == 'in' ? addClass : removeClass;
+
+  // Highlight or unhighlight the step and step number.
+  $(step.stepNode).find('.stepAndNum').toggleClass('hover', direction === 'in');
 
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
