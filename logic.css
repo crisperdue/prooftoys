@@ -439,6 +439,14 @@ span#leftNav {
   color: #777;
 }
 
+/* Indications that an assumption is used in the currently hovered step. */
+.proofStep.assumed .stepNumber {
+  color: black;
+}
+
+.proofStep.assumed .stepNumArea {
+  font-weight: bold;
+}
 
 /* Highlighting of parts of proof steps */
 

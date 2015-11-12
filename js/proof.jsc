@@ -2126,7 +2126,8 @@ function hoverStep(step, direction, event) {
 }
 
 /**
- * Highlights inputs to the step and references to it.
+ * Highlights inputs to the step, references to it, and steps
+ * establishing assumptions used by it.
  */
 function highlightStepInputs(step, direction, event) {
   // TODO: Use jQuery toggleClass with boolean instead of this action.
@@ -2145,7 +2146,8 @@ function highlightStepInputs(step, direction, event) {
     }
   });
 
-  // Rule-specific hover actions, or default.
+  // Highlight steps that provide inputs to this one.
+  // Use rule-specific hover actions, or default.
   var handler = getHoverHandler(step);
   if (handler) {
     // If there is a hover handler for this type of inference, apply it.
@@ -2158,6 +2160,13 @@ function highlightStepInputs(step, direction, event) {
       }
     });
   }
+
+  // Highlight steps that establish assumptions used by this one.
+  Toy.assumptionsUsed(step).forEach(function(assumed) {
+      if (assumed.rendering) {
+        action(getStepNode(assumed.rendering), 'assumed');
+      }
+    });
 }
 
 /**
