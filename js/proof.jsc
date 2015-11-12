@@ -2153,6 +2153,7 @@ function hoverStep(step, direction, event) {
  * Highlights inputs to the step and references to it.
  */
 function highlightStepInputs(step, direction, event) {
+  // TODO: Use jQuery toggleClass with boolean instead of this action.
   var action = direction == 'in' ? addClass : removeClass;
 
   // When entering a step, highlight all references to it.
