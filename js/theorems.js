@@ -125,6 +125,8 @@ var ruleInfo = {
    * used as input to "math operations" are real numbers.
    *
    * TODO: Enable users to disable the automatic real number assumptions.
+   * TODO: Separate assumptions about types of variables from these
+   *   explicit assumptions.
    */
   assume: {
     action: function(assumption) {
