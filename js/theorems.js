@@ -157,6 +157,42 @@ var ruleInfo = {
     labels: 'basic'
   },
 
+  /**
+   * Creates an abbreviation, a form of assumption.
+   * 
+   */
+  abbreviation: {
+    action: function(eqn_arg) {
+      var eqn = termify(eqn_arg);
+      var types = eqn.mathVarConditions();
+      assertEqn(eqn);
+      var v = eqn.getLeft();
+      assert(v.isVariable(),
+             'Abbreviation requires a variable, got: {1}', v);
+      if (types) {
+        var step1 = rules.tautInst('h ==> (v == g)', {
+            h: types,
+            v: v,
+            g: given
+          });
+        var step = rules.dedupeHyps(step1);
+      } else {
+        var step = rules.tautInst('a ==> a', {a: given});
+      }
+      // Flag the step as one with hypotheses, and record this step as
+      // the source of the given.
+      var result = step.asHyps().justify('abbreviation', arguments);
+      given.sourceStep = result;
+      _allHyps[given.dump()] = given;
+      return result;
+    },
+    inputs: {bool: 1},
+    form: ('Add as given: <input name=bool>'),
+    menu: 'given statement',
+    description: 'given',
+    labels: 'basic'
+  },
+
   copy: {
     action: function(step) {
       return step.dup().justify('copy', arguments, [step]);
@@ -6216,10 +6252,58 @@ function proofOf(step) {
     }
   }
   visitWithDeps(step);
-  result.forEach(function(step) { delete step.__visited; });
+  result.forEach(function(step) { step.__visited = false; });
   result.sort(function(s1, s2) {
       return s1.ordinal - s2.ordinal;
     });
+  return result;
+}
+
+/**
+ * Returns an array of "assume" steps preceding this one.  Does not
+ * look at details of steps.
+ */
+function assumptionsBefore(step) {
+  var steps = [];
+  var proofSteps = proofOf(step);
+  proofSteps.forEach(function (step) {
+      if (step.ruleName === 'assume') {
+        steps.push(step);
+      }
+    });
+  return steps;
+}
+
+/**
+ * Returns an array of assumption steps in this proof that create an
+ * assumption exactly the same as a hypothesis of the given step,
+ * ignoring type hypotheses.  Never considers step details.
+ */
+function assumptionsUsed(step) {
+  var hypsPart = Toy.omittingReals(step.getHyps());
+  if (!hypsPart) {
+    return [];
+  }
+  var hypList = [];
+  hypsPart.eachHyp(function (expr) { hypList.push(expr); });
+
+  var assumptions = assumptionsBefore(step);
+  var result = [];
+  for (var i = 0; i < hypList.length; i++) {
+    var hyp = hypList[i];
+    for (var j = 0; j < assumptions.length; j++) {
+      // Notes: Assumption statements about real numbers have type
+      // assumptions "built in".  There should be exactly one other
+      // assumption.
+      var assumed = Toy.omittingReals(assumptions[j].getHyps());
+      assert(assumed, 'No main assumption');
+      if (assumed.sameAs(hyp)) {
+        result.push(assumptions[j]);
+        // We could break here, but let's show even redundant assumptions.
+        // break;
+      }
+    }
+  }
   return result;
 }
 
@@ -6265,6 +6349,7 @@ Toy.matchFactPart = matchFactPart;
 Toy.getRuleInfo = getRuleInfo;
 Toy.getStepSite = getStepSite;
 Toy.proofOf = proofOf;
+Toy.assumptionsUsed = assumptionsUsed;
 
 Toy.traceRule = traceRule;
 
