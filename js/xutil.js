@@ -1319,6 +1319,30 @@ function commuteEqn(eqn) {
 }
 
 /**
+ * Returns a conjunction of a subset of the given hyps (a chain of
+ * conjuncts or null).  If the set is empty returns null.  Note that
+ * this does not copy any conjuncts in the chain.  The subset omits
+ * any that declare a variable to be a real number using the "R"
+ * predicate.
+ */
+function omittingReals(hyps) {
+  if (!hyps) {
+    return null;
+  }
+  var result = null;
+  hyps.eachHyp(function(hyp) {
+      if (!hyp.isCall1('R') || !hyp.arg.isVariable()) {
+        if (result) {
+          result = Toy.infixCall(result, '&', hyp);
+        } else {
+          result = hyp;
+        }
+      }
+    });
+  return result;
+}
+
+/**
  * Compute and return a string representing the given proof steps,
  * which may be either rendered or originals.  Treating expressions
  * with "multiple arguments" as lists, the format is an expression
@@ -1448,6 +1472,7 @@ Toy.hypIsLess = hypIsLess;
 Toy.sourceStepComparator = sourceStepComparator;
 Toy.repeatedCall = repeatedCall;
 Toy.commuteEqn = commuteEqn;
+Toy.omittingReals = omittingReals;
 
 Toy.encodeSteps = encodeSteps;
 Toy.decodeSteps = decodeSteps;

@@ -1108,7 +1108,7 @@ function renderAsStep(step) {
   if (step.hasHyps) {
     var hyps = step.getLeft();
     if (Toy.suppressRealTypeDisplays) {
-      hyps = omittingReals(hyps);
+      hyps = Toy.omittingReals(hyps);
     }
     if (hyps) {
       step.node = renderHyps(step.getLeft());
@@ -1166,7 +1166,7 @@ function renderHyps(expr) {
   var $top = exprJq();
   var hypsNode;
   if (Toy.suppressRealTypeDisplays) {
-    expr = omittingReals(expr);
+    expr = Toy.omittingReals(expr);
   }
   function render(expr) {
     if (expr.sourceStep) {
@@ -1200,30 +1200,6 @@ function renderHyps(expr) {
     $top.append(hypsNode);
   }
   return dom($top);
-}
-
-/**
- * Returns a conjunction of a subset of the given hyps (a chain of
- * conjuncts or null).  If the set is empty returns null.  Note that
- * this does not copy any conjuncts in the chain.  The subset omits
- * any that declare a variable to be a real number using the "R"
- * predicate.
- */
-function omittingReals(hyps) {
-  if (!hyps) {
-    return null;
-  }
-  var result = null;
-  hyps.eachHyp(function(hyp) {
-      if (!hyp.isCall1('R') || !hyp.arg.isVariable()) {
-        if (result) {
-          result = Toy.infixCall(result, '&', hyp);
-        } else {
-          result = hyp;
-        }
-      }
-    });
-  return result;
 }
 
 /**
