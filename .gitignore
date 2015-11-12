@@ -1,1 +1,3 @@
 jsc/
+lib/knockout*
+lib/underscore*
