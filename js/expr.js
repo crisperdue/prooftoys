@@ -959,9 +959,20 @@ Expr.prototype.nth = function(n) {
 /**
  * Returns the RHS of the step if it has hypotheses, otherwise the
  * expression itself.
+ * 
+ * TODO: Use Step class.
  */
 Expr.prototype.unHyp = function() {
   return this.hasHyps ? this.getRight() : this;
+};
+
+/**
+ * Get the hypotheses of this step if it has any, else null.
+ * 
+ * TODO: Use Step class.
+ */
+Expr.prototype.getHyps = function() {
+  return this.isCall2('==>') ? this.getLeft() : null;
 };
 
 /**
