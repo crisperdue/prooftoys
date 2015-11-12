@@ -2235,6 +2235,13 @@ var hoverHandlers = {
   r: hoverReplace,
   replace: hoverReplace,
   rRight: hoverReplace,
+  replaceEither: function(step, action) {
+    // Same as hoverReplace, but the equation is args[2].
+    hoverAsRewriter(step, action);
+    var args = step.original.ruleArgs;
+    var eqnStep = args[2].rendering;
+    action(getStepNode(eqnStep), 'dep');
+  },
   axiom4: function(step, action) {
     var call = step.getLeft();
     action(call.arg.node, 'new');
