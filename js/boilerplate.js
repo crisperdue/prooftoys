@@ -29,7 +29,7 @@
     getScript('expr.js');
     getScript('xutil.js');
     getScript('step-editor.js');
-    getScript('../jsc/proof.js');
+    getScript('../jsc/rendering.js');
     getScript('theorems.js');
     // Support Google Plus stuff in particular.
     document.write('<script src="https://apis.google.com/js/platform.js">\n' +
