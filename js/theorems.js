@@ -248,9 +248,8 @@ var ruleInfo = {
    */
   display: {
     action: function(step) {
-      // Call copyStep to persuade Expr.justify not to entirely
-      // ignore this step.
-      return step.copyStep().justify('display', arguments, [step]);
+      // Force "justify" to not ignore this step.
+      return step.justify('display', arguments, [step], true);
     },
     inputs: {step: 1},
     form: ('Does nothing, but result will display in full. '
