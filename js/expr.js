@@ -1573,15 +1573,6 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // bound.)
 //
 //
-// copyForRendering()
-//
-// Makes and returns a deep copy of this Expr, copying all parts
-// including occurrences of Vars, so rendering can add distinct
-// annotations to each occurrence.  Currently copies only logical
-// structure and the sourceStep property (to help rendering of
-// hypotheses).  Intended only for use in rendering.
-//
-//
 // dup()
 //
 // Makes and returns a shallow copy of this Expr, with only the properties
@@ -1894,13 +1885,6 @@ Atom.prototype._subFree = function(map) {
   return map[this.name] || this;
 };
 
-Atom.prototype.copyForRendering = function(bindings) {
-  var name = getBinding(this.name, bindings) || this.pname;
-  var result = new Atom(name);
-  result.sourceStep = this.sourceStep;
-  return result;
-};
-
 Atom.prototype.dup = function() {
   return new Atom(this.pname);
 };
@@ -2186,13 +2170,6 @@ Call.prototype._subFree = function(map) {
   var fn = this.fn._subFree(map);
   var arg = this.arg._subFree(map);
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
-};
-
-Call.prototype.copyForRendering = function(bindings) {
-  var result = new Call(this.fn.copyForRendering(bindings),
-                        this.arg.copyForRendering(bindings));
-  result.sourceStep = this.sourceStep;
-  return result;
 };
 
 Call.prototype.dup = function() {
@@ -2563,40 +2540,6 @@ Lambda.prototype._subFree = function(map) {
       lambda(newVar, this.body._subFree(Toy.object0(boundName, newVar)));
     return renamed._subFree(map);
   }
-};
-
-// Etc.
-
-Lambda.prototype.copyForRendering = function(bindings) {
-  var findBinding = Toy.findBinding;
-  var bound = this.bound;
-  var name = this.bound.name;
-  var origName = name;
-  if (this.bound.isGeneratedBound()) {
-    // When copying a binding of the generatedBound kind, the copy
-    // tries to replace it with a variable that has a simpler name
-    // different than any name bound in this context (or free in the
-    // entire wff).  It retains the base part (with no numeric suffix),
-    // trying first just the base, then successive suffixes until finding
-    // one with no binding in this scope.
-    var base = bound.parseName().name;
-    name = base;
-    var counter = 0;
-    while (true) {
-      if (!Toy.findBindingValue(name, bindings)) {
-        break;
-      }
-      counter++;
-      name = base + '_' + counter;
-    }   
-  }
-  
-  var newBindings = (name == origName
-                     ? bindings
-                     : new Bindings(origName, name, bindings));
-  var result = lambda(varify(name), this.body.copyForRendering(newBindings));
-  result.sourceStep = this.sourceStep;
-  return result;
 };
 
 Lambda.prototype.dup = function() {
