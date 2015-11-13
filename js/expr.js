@@ -196,6 +196,16 @@ function Expr() {
 }
 Toy.extends(Expr, null);
 
+/**
+ * TODO: Make Step into a whole new class.  For now, it is just an
+ * alias.  There will be some convenience methods such as getMain,
+ * getHyps, unHyp, but access to Expr properties and most methods
+ * will be through the "wff" property.
+ *
+ * Step objects have a "wff" property, but an Expr will not.
+ */
+var Step = Expr;
+
 // Controls prefixing Calls and Lambdas with sourceStep info.
 // A debugging and perhaps proof development aid when turned on.
 Toy.trackSourceSteps = false;
@@ -541,22 +551,30 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
       }
     }
   }
-  var expr = this.dup();
+  var step = this.dup();
+
+  // The beginnings of a Step class.  Only steps will have the
+  // following properties, with .wff accessing the top expression
+  // (wff).
+  //
+  // Note: Likely additional Step methods: freeVars. 
+  step.wff = step;
   // Record the original Expr as details.
   if (this.ruleName) {
-    expr.details = this;
+    step.details = this;
   }
-  // Give the new Expr the specified ruleName.
-  expr.ruleName = ruleName;
+  // Give the new step the specified ruleName.
+  step.ruleName = ruleName;
   // Make the step be its own original, for uniform access to an original.
-  expr.original = expr;
+  // TODO: Stop doing this, to distinguish StepDisplay objects from Steps.
+  step.original = step;
   // Give this step its own new ordinal.
-  expr.ordinal = stepCounter++;
+  step.ordinal = stepCounter++;
   // Carry other information forward.
-  expr.hasHyps = this.hasHyps;
-  expr.ruleArgs = jQuery.makeArray(ruleArgs || []);
-  expr.ruleDeps = ruleDeps;
-  return expr;
+  step.hasHyps = this.hasHyps;
+  step.ruleArgs = jQuery.makeArray(ruleArgs || []);
+  step.ruleDeps = ruleDeps;
+  return step;
 };
 
 Expr.$ = {
@@ -779,7 +797,7 @@ Expr.prototype.assert = function() {
  * own justification and details.  This accesses the bottom level
  * step.
  */
-Expr.prototype.getBase = function() {
+Step.prototype.getBase = function() {
   var result = this;
   while (result.details) {
     result = result.details;
@@ -787,32 +805,37 @@ Expr.prototype.getBase = function() {
   return result;
 };
 
-
 /**
- * Copies this Expr as a proof step, including the parts specific to
- * proof steps.  Makes only a shallow copy of the step-related parts,
- * also a shallow copy of the wff unless the optional argument is
- * true.  Does not copy any information related to rendering.
+ * Copies this step into a renderable proof step, copying its wff
+ * deeply.  Does not copy any information related to rendering.
+ *
+ * TODO: Make this a factory for producing StepDisplay objects.
  */
-Expr.prototype.copyStep = function(deeply) {
-  var freeVars = this.freeVars();
+Step.prototype.copyToRender = function() {
+  // Note: does not copy the "ordinal" property, for no
+  // great reason.
+  var freeVars = this.wff.freeVars();
   var bindings = null;
   for (key in freeVars) {
-      bindings = new Bindings(key, key, bindings);
+    bindings = new Bindings(key, key, bindings);
   }
-  var expr = deeply ? this.copyForRendering(bindings) : this.dup();
-  expr.details = this.details;
-  expr.ruleName = this.ruleName;
+  var wff = this.wff.copyForRendering(bindings);
+  // TODO: Make the step be a StepDisplay.
+  var step = wff;
+  // Flag it as a Step (actually StepDisplay)
+  step.wff = wff;
+  step.details = this.details;
+  step.ruleName = this.ruleName;
   // Some elements of ruleArgs may refer to originals of other steps.
-  expr.ruleArgs = this.ruleArgs;
+  step.ruleArgs = this.ruleArgs;
   // ruleDeps refers to originals of other steps.
-  expr.ruleDeps = this.ruleDeps;
-  expr.hasHyps = this.hasHyps;
-  return expr;
+  step.ruleDeps = this.ruleDeps;
+  step.hasHyps = this.hasHyps;
+  return step;
 };
 
-
-Expr.prototype.addUser = function() {
+// In fact, this method is really for StepDisplay objects.
+Step.prototype.addUser = function() {
   this.users++;
   $(this.stepNode).addClass('hasUsers');
   // It would be nice to do this, but in Chrome hover events
@@ -820,7 +843,7 @@ Expr.prototype.addUser = function() {
   // $(this.stepNode).find('.deleteStep').prop('disabled', true);
 };
 
-Expr.prototype.removeUser = function() {
+Step.prototype.removeUser = function() {
   this.users--;
   if (this.users <= 0) {
     $(this.stepNode).removeClass('hasUsers');
@@ -943,6 +966,8 @@ Expr.prototype.getRight = function() {
  * is a conditional gets its conclusion, otherwise the statement
  * itself.
  *
+ * TODO: Make this available for Step objects.
+ *
  * TODO: Hopefully rework the system so this gets used in place
  *   of hasHyps and unHyp.
  */
@@ -967,8 +992,8 @@ Expr.prototype.nth = function(n) {
 /**
  * Returns the RHS of the step if it has hypotheses, otherwise the
  * expression itself.
- * 
- * TODO: Use Step class.
+ *
+ * TODO: Make this available for Step objects.
  */
 Expr.prototype.unHyp = function() {
   return this.hasHyps ? this.getRight() : this;
@@ -976,11 +1001,10 @@ Expr.prototype.unHyp = function() {
 
 /**
  * Get the hypotheses of this step if it has any, else null.
- * 
- * TODO: Use Step class.
  */
-Expr.prototype.getHyps = function() {
-  return this.isCall2('==>') ? this.getLeft() : null;
+Step.prototype.getHyps = function() {
+  var wff = this.wff;
+  return wff.isCall2('==>') ? wff.getLeft() : null;
 };
 
 /**
@@ -1142,17 +1166,19 @@ Expr.prototype.get = function(_path) {
 
 /**
  * Returns true iff this expression is a proof step.
+ *
+ * TODO: Remove this when there is a Step class.
  */
 Expr.prototype.isStep = function() {
-  // A property only proof steps have.  Could also use "ordinal", etc..
-  return !!this.ruleName;
+  // A property only proof steps have.
+  return !!this.wff;
 };
 
 /**
  * Returns a truthy value iff the argument is a proof step.
  */
 function isStep(x) {
-  return x instanceof Expr && x.ruleName;
+  return x instanceof Step && !!x.wff;
 }
 
 /**
@@ -2829,6 +2855,7 @@ Toy.TermSet = TermSet;
 Toy.TermMap = TermMap;
 
 Toy.Expr = Expr;
+Toy.Step = Step;
 Toy.Atom = Atom;
 Toy.Call = Call;
 Toy.Lambda = Lambda;

@@ -577,7 +577,7 @@ function renderStepNumber(step) {
  */
 ProofControl.prototype.addStep = function(step) {
   // TODO: Move most of this logic into renderStep.
-  var copy = step.copyStep(true);
+  var copy = step.copyToRender();
   copy.users = 0;
   copy.hasLeftElision = false;
   copy.ordinal = step.ordinal;
@@ -2165,7 +2165,7 @@ function hoverStepSelector(step, direction, event) {
   }
 
   // Highlight steps that establish assumptions used by this one.
-  Toy.assumptionsUsed(step).forEach(function(assumed) {
+  Toy.assumptionsUsed(step.original).forEach(function(assumed) {
       if (assumed.rendering) {
         action(getStepNode(assumed.rendering), 'assumed');
       }
