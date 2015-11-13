@@ -805,54 +805,6 @@ Step.prototype.getBase = function() {
   return result;
 };
 
-/**
- * Copies this step into a renderable proof step, copying its wff
- * deeply.  Does not copy any information related to rendering.
- *
- * TODO: Make this a factory for producing StepDisplay objects.
- */
-Step.prototype.copyToRender = function() {
-  // Note: does not copy the "ordinal" property, for no
-  // great reason.
-  var freeVars = this.wff.freeVars();
-  var bindings = null;
-  for (key in freeVars) {
-    bindings = new Bindings(key, key, bindings);
-  }
-  var wff = this.wff.copyForRendering(bindings);
-  // TODO: Make the step be a StepDisplay.
-  var step = wff;
-  // Flag it as a Step (actually StepDisplay)
-  step.wff = wff;
-  step.details = this.details;
-  step.ruleName = this.ruleName;
-  // Some elements of ruleArgs may refer to originals of other steps.
-  step.ruleArgs = this.ruleArgs;
-  // ruleDeps refers to originals of other steps.
-  step.ruleDeps = this.ruleDeps;
-  step.hasHyps = this.hasHyps;
-  return step;
-};
-
-// In fact, this method is really for StepDisplay objects.
-Step.prototype.addUser = function() {
-  this.users++;
-  $(this.stepNode).addClass('hasUsers');
-  // It would be nice to do this, but in Chrome hover events
-  // don't work right with this code.
-  // $(this.stepNode).find('.deleteStep').prop('disabled', true);
-};
-
-Step.prototype.removeUser = function() {
-  this.users--;
-  if (this.users <= 0) {
-    $(this.stepNode).removeClass('hasUsers');
-    // It would be nice to do this, but in Chrome hover events
-    // don't work right with this code.
-    // $(this.stepNode).find('.deleteStep').prop('disabled', false);
-  }
-};
-
 //// End of methods for proof steps
 
 /**
