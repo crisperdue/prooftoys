@@ -162,36 +162,38 @@ var ruleInfo = {
 
   /**
    * Creates an abbreviation, a form of assumption.
-   * 
    */
-  abbreviation: {
+  given: {
     action: function(eqn_arg) {
       var eqn = termify(eqn_arg);
       var types = eqn.mathVarConditions();
-      assertEqn(eqn);
+      eqn.assertCall2('==');
       var v = eqn.getLeft();
+      var given = eqn.getRight();
       assert(v.isVariable(),
              'Abbreviation requires a variable, got: {1}', v);
       if (types) {
-        var step1 = rules.tautInst('h ==> (v == g)', {
+        var step1 = rules.tautInst('h & (v == g) ==> (v == g)', {
             h: types,
             v: v,
             g: given
           });
         var step = rules.dedupeHyps(step1);
       } else {
-        var step = rules.tautInst('a ==> a', {a: given});
+        var step = rules.tautInst('(v == g) ==> (v == g)', {
+            v: v,
+            g: given});
       }
       // Flag the step as one with hypotheses, and record this step as
       // the source of the given.
-      var result = step.asHyps().justify('abbreviation', arguments);
+      var result = step.asHyps().justify('given', arguments);
       given.sourceStep = result;
       _allHyps[given.dump()] = given;
       return result;
     },
     inputs: {bool: 1},
     form: ('Add as given: <input name=bool>'),
-    menu: 'given statement',
+    menu: 'add a statement as given',
     description: 'given',
     labels: 'basic'
   },
