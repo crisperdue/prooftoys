@@ -14,6 +14,7 @@ var check = Toy.check;
 var assertEqn = Toy.assertEqn;
 var varify = Toy.varify;
 var constify = Toy.constify;
+var termify = Toy.termify;
 var call = Toy.call;
 var equal = Toy.equal;
 var implies = Toy.implies;
@@ -491,7 +492,7 @@ var ruleInfo = {
   // to itself. (5200)
   eqSelf: {
     action: function(a) {
-      a = Toy.termify(a);
+      a = termify(a);
       var step1 = rules.axiom4(call(lambda(x, x), a));
       var result = rules.r(step1, step1, '/left');
       return result.justify('eqSelf', arguments);
@@ -1273,7 +1274,7 @@ var ruleInfo = {
   // variable even if free in the hypotheses.
   instVar: {
     action: function(step, a, v) {
-      a = Toy.termify(a);
+      a = termify(a);
       v = varify(v);
       var map = {};
       map[v.name] = a;
@@ -2916,7 +2917,7 @@ var ruleInfo = {
         'a - b = neg b + a'
       ];
       function tryFact(name, fact_arg) {
-        var schema = Toy.termify(fact_arg).getLeft();
+        var schema = termify(fact_arg).getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
         if (info) {
           return rules.rewriteWithFact(step, info.path, fact_arg);
@@ -3276,7 +3277,7 @@ var ruleInfo = {
   // variable types.
   isolateHyp: {
     action: function(step, hyp_arg) {
-      var hyp = Toy.termify(hyp_arg);
+      var hyp = termify(hyp_arg);
       assert(step.isCall2('==>'));
       var taut = rules.tautology(step.getLeft().hypMover(hyp));
       var step1 = rules.rewrite(step, '/left', taut);
@@ -4055,7 +4056,7 @@ var ruleInfo = {
   consider: {
     description: 'expression equal to itself',
     action: function(term) {
-      term = Toy.termify(term);
+      term = termify(term);
       var step = rules.eqSelf(term);
       var conditions = term.mathVarConditions();
       if (conditions) {
@@ -4092,7 +4093,7 @@ var ruleInfo = {
 
   addToBoth: {
     action: function(eqn, term_arg) {
-      var term = Toy.termify(term_arg);
+      var term = termify(term_arg);
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '+', term));
       var result = rules.applyToBoth(fn, eqn);
@@ -4110,7 +4111,7 @@ var ruleInfo = {
 
   subtractFromBoth: {
     action: function(eqn, term_arg) {
-      var term = Toy.termify(term_arg);
+      var term = termify(term_arg);
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '-', term));
       var result = rules.applyToBoth(fn, eqn);
@@ -5588,7 +5589,7 @@ function findMatchingFact(facts_arg, cxt, term) {
       var stmt = factInfo.stmt;
       var where = factInfo.where;
       var schema = (factInfo.match
-                    ? Toy.termify(factInfo.match)
+                    ? termify(factInfo.match)
                     : Toy.getStatement(stmt).getMain().getLeft());
       var subst = term.matchSchema(schema);
       if (subst && (!where || doEval(where, subst))) {
@@ -5623,7 +5624,7 @@ function findMatchingFact(facts_arg, cxt, term) {
  * findMatchingFact, with "path" property relative to the given expr.
  */
 function locateMatchingFact(expr, schema_arg, varsMap, context) {
-  var schema = Toy.termify(schema_arg);
+  var schema = termify(schema_arg);
   var factLists = context.factLists;
   var subst;
   if ((subst = expr.matchSchema(schema))) {
@@ -5719,7 +5720,7 @@ function convert(step, path, fn) {
  * a string, while the equation and fact can be any statement of fact.
  */
 function transformApplyInvert(term_arg, eqn_arg, fact) {
-  var term = Toy.termify(term_arg);
+  var term = termify(term_arg);
   var eqn = getResult(eqn_arg);
   var revEqn = rules.eqnSwap(eqn);
   var step1 = rules.consider(term);
@@ -6080,7 +6081,7 @@ function termLeftThan(e1, e2) {
  */
 function matchFactPart(step, path, factList, name) {
   return Toy.each(factList, function(fact_arg) {
-    var schema = Toy.termify(fact_arg).getLeft();
+    var schema = termify(fact_arg).getLeft();
     var info = step.matchSchemaPart(path, schema, name);
     if (info) {
       return function() {
