@@ -1715,6 +1715,8 @@ var ruleInfo = {
 
   // Adds an assumption to the given step.  Works with or without
   // hypotheses.
+  //
+  // TODO: Consider merging with anyImpliesTheorem.
   addAssumption: {
     action: function(step, expr) {
       if (step.hasHyps) {
@@ -1734,6 +1736,7 @@ var ruleInfo = {
     inputs: {step: 1, term: 2},
     form: ('Add assumption <input name=term> in step <input name=step>'),
     menu: 'add assumption',
+    labels: 'basic',
     description: 'add assumption {term};; {in step step}'
   },
 
