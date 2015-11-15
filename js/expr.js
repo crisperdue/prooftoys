@@ -983,7 +983,7 @@ Expr.prototype.isCall2 = function(name) {
     var left = this.fn;
     return left instanceof Call
       && left.fn instanceof Atom
-      && (name == null || left.fn.name == name);
+      && (name == null || left.fn.name == name || left.fn.pname == name);
   } else {
     return false;
   }
@@ -1095,7 +1095,8 @@ Expr.prototype.assertCall2 = function(name) {
   if (name == null) {
     message = 'Not a call to a named 2-argument function';
   } else {
-    message = ('Not ' + (map[name] || 'a call to ' + name) + ': ' + this);
+    var uni = unicodeNames[name] || name;
+    message = ('Not ' + (map[name] || 'a call to ' + uni) + ': ' + this);
   }
   assert(false, message);
 };
