@@ -218,6 +218,7 @@ var ruleInfo = {
       // Use dup to prevent "justify" from getting input identical
       // to "step".
       var result = step.dup().justify('asImplication', arguments, [step]);
+      // This is the primitive rule that sets hasHyps to false.
       result.hasHyps = false;
       return result;
     },
@@ -225,7 +226,7 @@ var ruleInfo = {
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
     comment: 'assumptions explicit',
-    description: ';;explicit assumptions {in step step}',
+    description: 'assumptions explicit;; {in step step}',
     labels: 'algebra basic'
   },
 
