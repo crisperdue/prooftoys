@@ -1706,8 +1706,6 @@ var ruleInfo = {
 
   // Adds an assumption to the given step.  Works with or without
   // hypotheses.
-  //
-  // TODO: Consider merging with anyImpliesTheorem.
   addAssumption: {
     action: function(step, expr) {
       if (step.hasHyps) {
@@ -1729,26 +1727,6 @@ var ruleInfo = {
     menu: 'add assumption',
     labels: 'basic',
     description: 'add assumption {term};; {in step step}'
-  },
-
-  // Given a theorem and an arbitrary boolean term, proves that the
-  // term implies the theorem.  Note that theorems do not have
-  // hypotheses.
-  anyImpliesTheorem: {
-    action: function(any, theorem) {
-      assert(!theorem.hasHyps,
-             'Expecting a theorem, got: {1}', theorem.getRight(),
-             theorem);
-      var step1 = rules.toTIsA(theorem);
-      var step2 = rules.tautInst('p ==> T', {p: any});
-      var step3 = rules.r(step1, step2, '/right');
-      return step3.justify('anyImpliesTheorem', arguments, [theorem]);
-    },
-    inputs: {term: 1, step: 2},
-    form: ('Derive that <input name=term> implies theorem <input name=step>'),
-    menu: '[q] to [p ==> q]',
-    comment: ('Given a theorem, derive that something implies it.'),
-    labels: 'uncommon'
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
@@ -4056,7 +4034,7 @@ var ruleInfo = {
       var step = rules.eqSelf(term);
       var conditions = term.mathVarConditions();
       if (conditions) {
-        step = rules.anyImpliesTheorem(conditions, step);
+        step = rules.addAssumption(step, conditions);
         step = rules.asHypotheses(step);
       }
       return step.justify('consider', arguments);
@@ -4074,7 +4052,7 @@ var ruleInfo = {
     action: function(step, path) {
       var eqn = rules.eqSelf(step.get(path));
       var result = (step.hasHyps
-                    ? (rules.anyImpliesTheorem(step.getLeft(), eqn)
+                    ? (rules.addAssumption(eqn, step.getLeft())
                        .apply('asHypotheses'))
                     : eqn);
       return result.justify('considerPart', arguments);

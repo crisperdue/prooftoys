@@ -1714,15 +1714,12 @@ var testCase = {
       q: Toy.parse('forall {x. p x}')
     };
     var result = Toy.rules.tautInst(Toy.parse('p ==> T | q'), map1);
-    var expected =
-      '((forall {x. (T | (p x))}) ==> (T | (forall {x. (p x)})))';
-    assertEqual(expected, result);
 
     // With hypotheses:
-    var h_taut = Toy.parse('x > 0 ==> (p ==> p)');
+    var h_taut = rules.tautology('p ==> p');
     h_taut.hasHyps = true;
-    var result = Toy.rules.tautInst(h_taut, {p: q});
-    assertEqual('((x > 0) ==> (q ==> q))', result);
+    var result = Toy.rules.tautInst(h_taut, {p: Toy.parse('x > 0')});
+    assertEqual('((x > 0) ==> (x > 0))', result);
     assert(result.hasHyps);
   },
 
@@ -1739,12 +1736,6 @@ var testCase = {
     Toy.trackSourceSteps = true;
     console.log(step5.toString());
     Toy.trackSourceSteps = false;
-  },
-
-  testAnyImpliesTheorem: function() {
-    var thm = Toy.rules.theorem('t');
-    var result = Toy.rules.anyImpliesTheorem(Toy.parse('x > 0'), thm);
-    assertEqual('((x > 0) ==> T)', result);
   },
 
   testR5235: function() {
