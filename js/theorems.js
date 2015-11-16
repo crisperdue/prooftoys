@@ -122,29 +122,12 @@ var ruleInfo = {
   /**
    * Suppose the given expression to be true.  This is the standard
    * way to introduce hypotheses into proofs.  If given a string,
-   * parses it and uses the result.  Automatically assumes variables
-   * used as input to "math operations" are real numbers.
-   *
-   * TODO: Enable users to disable the automatic real number assumptions.
-   * TODO: Separate assumptions about types of variables from these
-   *   explicit assumptions.
+   * parses it and uses the result.
    */
   assume: {
     action: function(assumption) {
-      if (typeof assumption == 'string') {
-	assumption = Toy.parse(assumption);
-      }
-      var types = assumption.mathVarConditions();
-      // TODO: Fix tautInst to not copy.
-      if (types) {
-        var step1 = rules.tautInst('h & a ==> a', {
-            a: assumption,
-            h: types
-          });
-        var step = rules.dedupeHyps(step1);
-      } else {
-        var step = rules.tautInst('a ==> a', {a: assumption});
-      }
+      assumption = termify(assumption);
+      var step = rules.tautInst('a ==> a', {a: assumption});
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
       var result = step.asHyps().justify('assume', arguments);
