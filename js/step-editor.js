@@ -487,11 +487,11 @@ StepEditor.prototype._tryRule = function(rule, args) {
       }
     }
     Toy.afterRepaint(function() {
-        var simplified = result;
-        // Only auto-simplify results of rules with parameters.
-        if (result.ruleArgs.length > 0) {
-          simplified = autoSimplify(result);
-        }
+        var trial = autoSimplify(result);
+        // If autoSimplify is a no-op, do not display the result.
+        var simplified = (trial.sameAs(result)
+                          ? result
+                          : trial);
         self._setBusy(false);
         var steps = Toy.unrenderedDeps(simplified);
         steps.forEach(function(step) {
