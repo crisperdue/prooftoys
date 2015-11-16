@@ -1519,7 +1519,8 @@ Lambda.prototype.copyForRendering = function(bindings) {
   var newBindings = (name == origName
                      ? bindings
                      : new Bindings(origName, name, bindings));
-  var result = lambda(varify(name), this.body.copyForRendering(newBindings));
+  var result =
+    Toy.lambda(Toy.varify(name), this.body.copyForRendering(newBindings));
   result.sourceStep = this.sourceStep;
   return result;
 };
