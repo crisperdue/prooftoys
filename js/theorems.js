@@ -5711,10 +5711,11 @@ function whileSimpler(eqn, fn) {
  * applying the matching fact.  Returns the last version created.
  */ 
 function arrangeRhs(eqn_arg, context, facts) {
-  var rhsPath = Toy.path('/main/right', eqn_arg);
+  var rhsPath;
   var info;
   var eqn = eqn_arg;
-  while ((info = findMatchingFact(facts, context, eqn.get(rhsPath)))) {
+  while (rhsPath = Toy.path('/main/right', eqn),
+         info = findMatchingFact(facts, context, eqn.get(rhsPath))) {
     var fullPath = rhsPath.concat(info.path);
     eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
   }
