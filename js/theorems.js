@@ -1629,20 +1629,11 @@ var ruleInfo = {
   // The tautology can be given as a parseable string.
   // Handles hypotheses.
   tautInst: {
-    action: function(h_tautology, map) {
-      if (typeof h_tautology == 'string') {
-        h_tautology = Toy.parse(h_tautology);
-      }
-      var tautology = h_tautology.unHyp();
+    action: function(h_tautology_arg, map) {
+      // The tautology has hyps if the arg does.
+      var tautology = termify(h_tautology_arg);
       var step1 = rules.tautology(tautology);
-      var step2 = rules.instMultiVars(step1, map);
-      if (h_tautology.hasHyps) {
-	var h = h_tautology.getLeft();
-	var step3 = rules.anyImpliesTheorem(h, step2);
-	return step3.asHyps().justify('tautInst', arguments);
-      } else {
-	return step2.justify('tautInst', arguments);
-      }
+      return rules.instMultiVars(step1, map).justify('tautInst', arguments);;
     },
     comment: ('substitute into tautology'),
     description: '=tautInst'
