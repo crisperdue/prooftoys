@@ -5233,9 +5233,54 @@ $(function() {
  */
 function Fact(synopsis, prover) {
   assert(typeof prover === 'function', 'Not a function: {1}', prover);
+  var self = this;
+
+  function fullProver() {
+    // If there is a substitution into the result that yields
+    // the goal, do it.
+    var goal = self.goal;
+    var result = prover();
+    var subst = result.alphaMatch(goal);
+    if (subst) {
+      return rules.instMultiVars(result, subst);
+    } else {
+      // Try matching the main parts of the result and goal.
+      // Simplify any assumptions.
+      var subst2 = result.getMain().alphaMatch(goal.getMain());
+      if (subst2) {
+        // The main parts match.
+        //
+        // TODO: Consider simplifying assumptions within
+        //   rules.instMultiVars.
+        var result2 = (rules.instMultiVars(result, subst2)
+                       .apply('simplifyAssumptions'));
+        if (result2.matches(goal)) {
+          return result2;
+        }
+        var added = result2;
+        if (goal.isCall2('==>')) {
+          // Put all the goal's assumptions into the result.
+          //
+          // TODO: Consider not doing this.
+          goal.getLeft().eachHyp(function(term) {
+              added = rules.addAssumption(added, term);
+            });
+        }
+        if (!added.matches(goal)) {
+          console.log('Warning: Proved assumptions do not match goal.');
+          console.log('  Goal:', goal.str);
+          console.log('  Result:', result2.str);
+        }
+        return added;
+      } else {
+        assert(false,
+               'Instead of {1} proved {2}', goal, result);
+      }
+    }
+  }
   this.synopsis = synopsis;
   this.goal = getStatement(synopsis);
-  this._prover = Toy.memo(prover);
+  this._prover = Toy.memo(fullProver);
 }
 
 $.extend(Fact.prototype, {
@@ -5247,41 +5292,17 @@ $.extend(Fact.prototype, {
       }
       try {
         // _prover is memoized, so only really runs once.
-        var result = this._prover();
+        return this._prover();
       } catch(err) {
         // Flag it as an error in proof execution.
         // TODO: Currently unused, consider removing.
         err.isProofError = true;
         throw err;
       }
-
-      // If there is a substitution into the result that yields
-      // the goal, do it.
-      var goal = this.goal;
-      var subst = result.alphaMatch(goal);
-      var result2;
-      if (subst) {
-        result2 = rules.instMultiVars(result, subst);
-      } else {
-        // Try matching the main parts of the result and goal,
-        // and potentially reordering assumptions.
-        var subst2 = result.getMain().alphaMatch(goal.getMain());
-        if (subst2) {
-          // TODO: Consider simplifying assumptions within
-          //   rules.instMultiVars.
-          result2 = (rules.instMultiVars(result, subst2)
-                     .apply('simplifyAssumptions'));
-          assert(result2.matches(goal), 
-                 'Assumptions do not match goal {1}', goal);
-        } else {
-          assert(false, 
-                 'Instead of {1} proved {2}', goal, result);
-        }
-      }
-      return result2;
     }
+
 });
-      
+
 
 // Private to addFact, getResult, and eachFact.  Maps from a string
 // "dump" of a fact to either the proved fact, or to a function to
@@ -5654,6 +5675,9 @@ function convert(step, path, fn) {
  * rewriting the result with the given fact, then applying the reverse
  * of the equation throughout the resulting RHS.  The term can be
  * a string, while the equation and fact can be any statement of fact.
+ *
+ * Intended to capture a design pattern for proving facts about
+ * "inverse" functions such as division and subtraction.
  */
 function transformApplyInvert(term_arg, eqn_arg, fact) {
   var term = termify(term_arg);
