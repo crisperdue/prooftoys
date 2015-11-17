@@ -725,6 +725,7 @@ Toy.check = check;
 Toy.logError = logError;
 Toy.withErrorReporting = withErrorReporting;
 Toy.assertTrue = assertTrue;
+Toy.debugAssertions = true;
 Toy.assert = assert;
 Toy.debugString = debugString;
 
