@@ -2102,7 +2102,7 @@ var testCase = {
       assertEqual(expected, actual + '');
     }
     check('(x = x)', 'x');
-    check('(((R x) & (R y)) ==> ((x + y) = (x + y)))', 'x + y');
+    check('((x + y) = (x + y))', 'x + y');
   },
 
   testArrange: function() {
