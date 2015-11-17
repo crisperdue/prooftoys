@@ -1688,8 +1688,8 @@ var ruleInfo = {
     }
   },
 
-  // Adds an assumption to the given step.  Works with or without
-  // hypotheses.
+  // Adds an assumption to the given step and deduplicates it.  Works
+  // with or without hypotheses.
   addAssumption: {
     action: function(step, expr) {
       if (step.hasHyps) {
@@ -1704,7 +1704,8 @@ var ruleInfo = {
         var step1 = rules.tautInst(taut, map);
         var step2 = rules.modusPonens(step, step1);
       }
-      return step2.asHyps().justify('addAssumption', arguments, [step]);
+      var step3 = rules.dedupeHyps(step2.asHyps());
+      return step3.justify('addAssumption', arguments, [step]);
     },
     inputs: {step: 1, term: 2},
     form: ('Add assumption <input name=term> in step <input name=step>'),
