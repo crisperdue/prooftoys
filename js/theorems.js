@@ -155,24 +155,7 @@ var ruleInfo = {
       var given = eqn.getRight();
       assert(v.isVariable(),
              'Abbreviation requires a variable, got: {1}', v);
-      if (types) {
-        var step1 = rules.tautInst('h & (v == g) ==> (v == g)', {
-            h: types,
-            v: v,
-            g: given
-          });
-        var step = rules.dedupeHyps(step1);
-      } else {
-        var step = rules.tautInst('(v == g) ==> (v == g)', {
-            v: v,
-            g: given});
-      }
-      // Flag the step as one with hypotheses, and record this step as
-      // the source of the given.
-      var result = step.asHyps().justify('given', arguments);
-      given.sourceStep = result;
-      _allHyps[given.dump()] = given;
-      return result;
+      return rules.assume(eqn).justify('given', arguments);
     },
     inputs: {bool: 1},
     form: ('Add as given: <input name=bool>'),
@@ -4008,20 +3991,13 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Consider a term that we may wish to rewrite.  If the term has no
-  // arithmetic operators, this is the same as eqSelf, but it
-  // automatically assumes variables input to math operators are of
-  // type R (real).
+  // Consider a term that we may wish to rewrite.  Functionally
+  // the same as eqSelf, but display is handled specially.
   consider: {
     description: 'expression equal to itself',
     action: function(term) {
       term = termify(term);
       var step = rules.eqSelf(term);
-      var conditions = term.mathVarConditions();
-      if (conditions) {
-        step = rules.addAssumption(step, conditions);
-        step = rules.asHypotheses(step);
-      }
       return step.justify('consider', arguments);
     },
     inputs: {term: 1},
