@@ -5647,10 +5647,11 @@ function applyFactsWithinSite(step, path_arg, facts) {
  * matches are found.
  */
 function applyFactsWithinRhs(step, facts) {
-  var rhs = Toy.path('/main/right', step);
+  var rhs;
   var info;
   var eqn = step;
-  while ((info = findMatchingCall(eqn.get(rhs), facts))) {
+  while (rhs = Toy.path('/main/right', eqn),
+         info = findMatchingCall(eqn.get(rhs), facts)) {
     var fullPath = rhs.concat(info.path);
     eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
   }
