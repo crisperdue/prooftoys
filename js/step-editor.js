@@ -369,11 +369,8 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // TODO: Get it together on failure reporting here.
   var ruleName = this.ruleSelector.ruleName;
-  var action = Toy.rules[ruleName];
-  // In some cases the action is generated from the test and
-  // in these cases only the test has the correct number of
-  // arguments in its argument list.
-  var nargs = (action.info.test || action).length;
+  var rule = Toy.rules[ruleName];
+  var nargs = rule.length;
   // Initialize the args array length to be the number of its
   // named arguments.
   var args = new Array(nargs);
