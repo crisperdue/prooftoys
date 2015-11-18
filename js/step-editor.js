@@ -674,8 +674,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     }
     return expr;
   case 'varName':
-    // Accepts names allowable for user-created variables.
-    if (value.match('^[a-zA-Z]+$')) {
+    if (Toy.isVariableName(value)) {
       return value;
     } else {
       throw new Error('Illegal variable name: ' + value);
