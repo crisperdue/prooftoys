@@ -391,7 +391,10 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
     Toy.logError('Rule received unnamed arguments: ' + ruleName);
   }
   // Check that the args are all filled in.
-  for (var i = 0; i < args.length; i++) {
+  var required = (rule.info.hasOwnProperty('minArgs')
+                  ? rule.info.minArgs
+                  : args.length);
+  for (var i = 0; i < required; i++) {
     if (args[i] === undefined) {
       if (reportFailure) {
 	this.error('Undefined argument ' + i);
@@ -399,7 +402,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
       return;
     }
   }
-  tryRuleAsync(this, action, args);
+  tryRuleAsync(this, rule, args);
 };
 
 /**
@@ -564,7 +567,9 @@ function autoSimplify(step) {
 }
 
 /**
- * Method for use by "computed" 
+ * Returns the 1-based index of the position in the proof display
+ * where the next step would be placed.  For automatic generation of
+ * abbreviation variable names.
  */
 StepEditor.prototype.slotIndex = function() {
   // New steps are always appended.

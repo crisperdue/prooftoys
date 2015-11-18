@@ -58,6 +58,8 @@ var _allHyps = {};
 // action: function implementing the inference rule.
 // inputs: map from type to argument number(s), either a single
 //   number or an array if more than one such argument.
+// minArgs: Number of required args for the action.  Supply a
+//   value here to make trailing arguments optional in the step editor.
 // toOffer: function of step and optional term or string with
 //   suitable body for such a function.  If it returns false
 //   the rule is not offered in the step editor.
