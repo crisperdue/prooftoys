@@ -147,8 +147,10 @@ var ruleInfo = {
    * Creates an abbreviation, a form of assumption.
    */
   given: {
-    action: function(eqn_arg) {
-      var eqn = termify(eqn_arg);
+    action: function(vbl_arg, term_arg) {
+      var vbl = varify(vbl_arg);
+      var term = termify(term_arg);
+      var eqn = Toy.infixCall(vbl, '=', term);
       var types = eqn.mathVarConditions();
       eqn.assertCall2('==');
       var v = eqn.getLeft();
@@ -4322,26 +4324,6 @@ function addRule(key, info_arg) {
     info.toOffer = new Function('step, term', info.toOffer);
   }
 
-  var test = info.test;
-  assert(!test || typeof test == 'function',
-         'Rule test must be a function: {1}', key);
-  if (test && !action) {
-    // If there is a test but no action, the test, when successful,
-    // should return a function of no arguments that functions as the
-    // rule action.
-    info.actionContinuesTest = true;
-    action = function(_args) {
-      var ok = test.apply(null, arguments);
-      if (ok) {
-        if (typeof ok == 'function') {
-          return ok();
-        } else {
-          Toy.err('No action for rule ' + key);
-        }
-      }
-      return Toy.err('Rule failed: ' + key);
-    };
-  }
   assert(action, 'No action for rule {1}', key);
   assert(typeof action == 'function', 'Rule action must be a function: {1}', key);
   // Associate the action function with the key,
