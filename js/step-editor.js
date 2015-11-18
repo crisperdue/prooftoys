@@ -377,7 +377,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // Initialize the args array length to be the number of its
   // named arguments.
   var args = new Array(nargs);
-  this.fillWithSelectedSite(args);
+  this.prefillArgs(args);
   try {
     this.fillFromForm(args);
   } catch(error) {
@@ -564,13 +564,24 @@ function autoSimplify(step) {
 }
 
 /**
- * Fill in an argument from the selection if there is a selected
- * expression (not a selected step) and an argument that needs that
- * type.  Reports an error to the user if preconditions are not met.
+ * Method for use by "computed" 
  */
-StepEditor.prototype.fillWithSelectedSite = function(args) {
+StepEditor.prototype.slotIndex = function() {
+  // New steps are always appended.
+  return this.proofControl.steps.length + 1;
+};
+
+/**
+ * Fill in part of the array argument with the step and path of the
+ * UI's selected site if there is one, based on the name of the rule
+ * selected in the ruleSelector.  Reports an error to the user if
+ * preconditions are not met.
+ */
+StepEditor.prototype.prefillArgs = function(args) {
   var rule = Toy.rules[this.ruleSelector.ruleName];
   var inputs = rule.info.inputs;
+
+  // Fill in site information from a selected expression.
   for (var type in inputs) {
     if (type in siteTypes) {
       var step = this.proofControl.selection;
@@ -578,16 +589,16 @@ StepEditor.prototype.fillWithSelectedSite = function(args) {
       if (expr) {
 	var position = inputs[type];
 	if ((typeof position) == 'number') {
-	  args[position - 1] = step.original;
-	  args[position] = step.prettyPathTo(expr);
-	  // Only fill in one argument (pair) from the selection.
-	  break;
-	} else {
-	  // TODO: Someday support multiple sites per rule.
-	  this.error('Internal error: only one site supported per rule.');
-	}
+          args[position - 1] = step.original;
+          args[position] = step.prettyPathTo(expr);
+          // Only fill in one argument (pair) from the selection.
+          break;
+        } else {
+          // TODO: Someday support multiple sites per rule.
+          this.error('Internal error: only one site supported per rule.');
+        }
       } else {
-	this.error('Expression not selected');
+        this.error('Expression not selected');
       }
     }
   }
