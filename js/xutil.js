@@ -1,6 +1,9 @@
 // Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
 // All rights reserved.
 
+// Utilities for types, parsing, and definitions, building
+// on expressions.
+
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
 (function() {
