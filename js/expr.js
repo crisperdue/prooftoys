@@ -1854,6 +1854,7 @@ Atom.prototype.toUnicode = function() {
 // (When generating HTML and/or Unicode text.)
 var unicodeNames = {
   '==': '\u21d4',     // Two-headed horizontal double arrow.
+  // or: '==': '\u2261',     // Triple equal (equiv)
   '==>': '\u21d2',    // &rArr;
   '!=': '\u2260',     // &ne;
   '<=': '\u2264',     // &le;
