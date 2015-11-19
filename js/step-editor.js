@@ -361,10 +361,11 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 };
 
 /**
- * Fill in the arguments for the rule from any selected site and
- * content of the form, and execute the rule with the arguments if
- * there is enough suitable information in the form and selection.
- * Update the proof display with the new step on success.
+ * Fill in arguments for the rule named by the ruleSelector from the
+ * current selection and the rule's input form, and if successful set
+ * up actual execution and redisplay to occur after the UI has
+ * opportunity to repaint.  Throws in case of failure if reportFailure
+ * is true.
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // TODO: Get it together on failure reporting here.
@@ -399,14 +400,20 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
       return;
     }
   }
+  // Truncate the args array to omit optional args not supplied,
+  // in case the rule looks at its arguments array.
+  for (var i = required; i < args.length; i++) {
+    if (args[i] === undefined) {
+      args.length = i;
+      break;
+    }
+  }
   tryRuleAsync(this, rule, args);
 };
 
 /**
- * Runs StepEditor.tryRule, but only after the event handling loop has
- * returned to the top level so the display can update.  Marks the
- * step editor's DOM node as busy immediately so the display can
- * reflect its change in state.
+ * Turns on the editor's busy indicator and sets the rule up to run
+ * with the given aras as soon as the UI has opportunity to repaint.
  */
 function tryRuleAsync(stepEditor, rule, args) {
   args.forEach(function(arg) {
@@ -430,7 +437,10 @@ function tryRuleAsync(stepEditor, rule, args) {
  * if it catches an error.  Reports there was nothing to do if the
  * rule returns its input or a null value.
  *
- * Private to tryRuleAsync.
+ * The rule runs with Toy.stepEditor set temporarily to this step
+ * editor.
+ *
+ * Use this only in tryRuleAsync.
  */
 StepEditor.prototype._tryRule = function(rule, args) {
   var result = null;
@@ -442,6 +452,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
       console.profile(Toy.profileName);
     }
 
+    Toy.stepEditor = this;
     // Applies the rule here.
     result = rule.apply(null, args);
   } catch(error) {
@@ -449,6 +460,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.report(error);
     return;
   } finally {
+    Toy.stepEditor = null;
     if (Toy.profileName) {
       console.profileEnd();
     }
@@ -573,6 +585,10 @@ StepEditor.prototype.slotIndex = function() {
   return this.proofControl.steps.length + 1;
 };
 
+StepEditor.prototype.genAbbrevName = function() {
+  return '$' + this.slotIndex();
+};
+
 /**
  * Fill in part of the array argument with the step and path of the
  * UI's selected site if there is one, based on the name of the rule
@@ -657,6 +673,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     return this.proofControl.steps[Number(value) - 1].original;
   case 'bool':
     var expr = Toy.parse(value);
+    // XXX
     if (Toy.findType(expr) != Toy.boolean) {
       throw new Error('Not a true/false expression:' + value);
     }
@@ -1054,6 +1071,9 @@ Toy.stepTypes = stepTypes;
 Toy.siteTypes = siteTypes;
 
 Toy.StepEditor = StepEditor;
+
+// Global variable set during execution of a rule from a step editor.
+Toy.stepEditor = null;
 
 Toy.tryRuleAsync = tryRuleAsync;
 
