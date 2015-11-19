@@ -102,8 +102,8 @@ var ruleInfo = {
       }
       return assertion.justify('assert', [assertion]);
     },
-    inputs: {term: 1},
-    form: ('Assert <input name=term>'),
+    inputs: {bool: 1},
+    form: ('Assert <input name=bool>'),
     menu: 'assert without proof',
     labels: 'advanced',
     description: 'assert',
@@ -513,8 +513,8 @@ var ruleInfo = {
       var result = rules.r(eqn, step1, '/binop');
       return result.justify('equivSelf', []);
     },
-    inputs: {term: 1},
-    form: 'Term to prove equal to itself: <input name=term>',
+    inputs: {bool: 1},
+    form: 'Term to prove equal to itself: <input name=bool>',
     menu: 'A \u21d4 A',
     comment: 'Derives A \u21d4 A.',
     description: 'A \u21d4 A',
@@ -1173,8 +1173,8 @@ var ruleInfo = {
       var step2 = rules.instEqn(step1, a, x);
       return step2.justify('r5218', arguments);
     },
-    inputs: {term: 1},
-    form: ('Term to use in ((T = A) = A): <input name=term>'),
+    inputs: {bool: 1},
+    form: ('Term to use in ((T = A) = A): <input name=bool>'),
     menu: '(T = A) = A',
     labels: 'uncommon',
     comment: ('For any expression derives (T = A) = A.'),
@@ -1541,8 +1541,8 @@ var ruleInfo = {
         }
       }
     },
-    inputs: {term: 1},
-    form: 'Boolean term to simplify: <input name=term>',
+    inputs: {bool: 1},
+    form: 'Boolean term to simplify: <input name=bool>',
     labels: 'uncommon',
     comment: ('simplify a boolean term'),
     description: 'calculate boolean value'
@@ -1597,8 +1597,8 @@ var ruleInfo = {
         return result;
       }
     },
-    inputs: {term: 1},
-    form: 'Enter tautology: <input name=term>',
+    inputs: {bool: 1},
+    form: 'Enter tautology: <input name=bool>',
     menu: 'prove a tautology',
     comment: ('Tautology decider.'),
     description: 'tautology'
@@ -1707,8 +1707,8 @@ var ruleInfo = {
       var step3 = rules.dedupeHyps(step2.asHyps());
       return step3.justify('addAssumption', arguments, [step]);
     },
-    inputs: {step: 1, term: 2},
-    form: ('Add assumption <input name=term> in step <input name=step>'),
+    inputs: {step: 1, bool: 2},
+    form: ('Add assumption <input name=bool> in step <input name=step>'),
     menu: 'add assumption',
     labels: 'basic',
     description: 'add assumption {term};; {in step step}'
@@ -1747,11 +1747,11 @@ var ruleInfo = {
       var step6 = rules.instVar(step5, a, p0);
       return step6.justify('r5235', arguments);
     },
-    inputs: {varName: 1, term: [2, 3]},
+    inputs: {varName: 1, bool: [2, 3]},
     /* Do not show, hard to use and seldom helpful.
     form: ('Variable: <input name=varName> '
-	   + 'wff without it free: <input name=term1> '
-	   + 'other wff: <input name=term2>'),
+	   + 'wff without it free: <input name=bool1> '
+	   + 'other wff: <input name=bool2>'),
     */
     labels: 'uncommon',
     comment: ('Move "forall" inside an "or" when variable not free '
@@ -1829,10 +1829,10 @@ var ruleInfo = {
       var step6 = rules.instVar(step5, a, p0);
       return step6.justify('implyForallThm', arguments);
     },
-    inputs: {varName: 1, term: [2, 3]},
+    inputs: {varName: 1, bool: [2, 3]},
     form: ('Variable: <input name=varName> '
-	   + 'wff without it free: <input name=term1> '
-	   + 'other wff: <input name=term2>'),
+	   + 'wff without it free: <input name=bool1> '
+	   + 'other wff: <input name=bool2>'),
     menu: 'forall {v. A ==> B} ==> (A ==> forall {v. B}',
     comment: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
@@ -2041,8 +2041,8 @@ var ruleInfo = {
     // The site need not be part of any proof step, a situation the UI
     // does not support.
     //
-    // inputs: {site: 2, term: 1},  // The term is an equation
-    // form: ('Enter an equation: <input name=term>'),
+    // inputs: {site: 2, bool: 1},  // The term is an equation
+    // form: ('Enter an equation: <input name=bool>'),
     comment: ('Analog to Rule R, expressed as an implication.')
   },
 
@@ -3172,9 +3172,9 @@ var ruleInfo = {
       var result = rules.mergeConj(expr, Toy.sourceStepLess);
       return result.justify('conjunctionsMerger', arguments);
     },
-    inputs: {term: 1},
+    inputs: {bool: 1},
     // Too technical to expose for most users.
-    // form: ('Chains of conjunctions to merge: <input name=term>'),
+    // form: ('Chains of conjunctions to merge: <input name=bool>'),
     menu: 'Derives an equation to merge chains of input conjunctions',
     description: 'merge conjunctions in {term}'
   },    
@@ -3206,8 +3206,8 @@ var ruleInfo = {
       var result = rules.asHypotheses(step2);
       return result.justify('extractHypothesis2', arguments, [step]);
     },
-    inputs: {step: 1, term: 2},
-    form: ('Make assumption <input name=term> explicit '
+    inputs: {step: 1, bool: 2},
+    form: ('Make assumption <input name=bool> explicit '
            + 'in step <input name=step>'),
     description: 'make assumption {term} explicit;; {in step step}',
     labels: 'deprecated',
@@ -3244,8 +3244,8 @@ var ruleInfo = {
       var result = rules.rewrite(step1, '', taut2);
       return result.justify('isolateHyp', arguments, [step]);
     },
-    inputs: {step: 1, term: 2},
-    form: 'extract assumption <input name=term> from step <input name=step>',
+    inputs: {step: 1, bool: 2},
+    form: 'extract assumption <input name=term> from step <input name=bool>',
     comment: 'extract an assumption'
   },
 
@@ -4250,8 +4250,8 @@ var ruleInfo = {
       } catch(err) {}
       throw new Error('No such fact: ' + statement);
     },
-    inputs: {term: 1},
-    form: ('Look up fact <input name=term>'),
+    inputs: {bool: 1},
+    form: ('Look up fact <input name=bool>'),
     menu: 'look up a fact',
     comment: (''),
     description: 'fact',
