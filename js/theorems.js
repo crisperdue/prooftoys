@@ -149,18 +149,31 @@ var ruleInfo = {
    * Creates an abbreviation, a form of assumption.
    */
   given: {
-    action: function(vbl_arg, term_arg) {
-      var vbl = varify(vbl_arg);
+    action: function(term_arg, opt_vbl) {
       var term = termify(term_arg);
-      var eqn = Toy.infixCall(vbl, '=', term);
+      var vbl;
+      if (opt_vbl === undefined) {
+        if (Toy.stepEditor) {
+          vbl = varify(Toy.stepEditor.genAbbrevName());
+        } else {
+          assert(false, 'Rules.given: no variable name supplied.');
+        }
+      } else {
+        vbl = varify(opt_vbl);
+      }
+      var eqn = Toy.infixCall(vbl, '==', term);
       var types = eqn.mathVarConditions();
       eqn.assertCall2('==');
       var v = eqn.getLeft();
       var given = eqn.getRight();
       assert(v.isVariable(),
              'Abbreviation requires a variable, got: {1}', v);
-      return rules.assume(eqn).justify('given', arguments);
+      var result = rules.assume(eqn).justify('given', arguments);
+      eqn.sourceStep = result;
+      _allHyps[eqn.dump()] = eqn;
+      return result;
     },
+    minArgs: 1,
     inputs: {bool: 1},
     form: ('Add as given: <input name=bool>'),
     menu: 'add a statement as given',
