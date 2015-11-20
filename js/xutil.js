@@ -42,9 +42,15 @@ var _typeVarCounter = 1;
 /**
  * Type variable constructor.  The name is optional, 't' followed by
  * digits if not given explicitly.  Names are currently required to
- * begin with 't' when parsed.
+ * begin with 't' when parsed.  The "fresh" method assumes that all
+ * distinct type variables have distinct names within the type
+ * expression it is applied to.
  */
 function TypeVariable(name) {
+  // Type variables are often unified with other type variables or
+  // resolved into more specific types.  When that happens, the
+  // instance is set to some other type.  At the end of such a chain
+  // is the actual resolved type.
   this.instance = null;
   if (name) {
     this.name = name;
@@ -58,10 +64,10 @@ TypeVariable.prototype.toString = function() {
 }
 
 /**
- * The resulting type expression has the same structure as the
- * input, but all occurrences of each "generic" type variable are
- * replaced with occurrences of a "fresh" type variable distinct
- * from all others.
+ * When applying the "fresh" operation to a type expression, the
+ * resulting expression has the same structure as the input, but all
+ * occurrences of each "generic" type variable are replaced with
+ * occurrences of a "fresh" type variable distinct from all others.
  *
  * Note: with only top-level definitions, generic type variables are
  * exactly those in the types of defined constants, but definitions
@@ -305,13 +311,15 @@ function findType(expr, annotate) {
   var vars = [];
   var types = [];
   // A list of TypeVariable objects that are not generic in the
-  // current scope.  Type variables in the types of variables appear
-  // here when their variable is in scope.
+  // current scope.  Type variables in the types of bound variables
+  // appear here when their variable is in scope, and in types of free
+  // variables they are inserted upon the first occurrence of the free
+  // variable, and remain thereafter.
+  var nonGenerics = [];
   //
   // Note: Generic type variables reflect the fact that different
   // occurrences of the same defined or primitive constant can have
   // different types.
-  var nonGenerics = [];
 
   var analyze =
     (annotate
@@ -343,6 +351,9 @@ function findType(expr, annotate) {
     throw new TypeCheckError('Expression of unknown type: ' + expr);
   }
 
+  /**
+   * Returns a type based on the name of an Atom.
+   */
   function typeFromName(name) {
     if (Toy.isIntegerLiteral(name)) {
       // I say integers are individuals.
@@ -505,6 +516,13 @@ function theType() {
 }
 
 // Types of _primitive_ constants only here.
+//
+// TODO: Eliminate all but the truly primitive constants from this list
+//   when functions and predicates can be properly defined.
+//   According to current thinking, all functions here that apply to
+//   real numbers should only apply to individuals, which still may
+//   include many things besides real numbers.  So it looks like only
+//   equality and "the" will have generic types.
 var constantTypes = {
   T: boolean,
   F: boolean,
