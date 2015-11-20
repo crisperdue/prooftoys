@@ -673,8 +673,10 @@ StepEditor.prototype.parseValue = function(value, type) {
     return this.proofControl.steps[Number(value) - 1].original;
   case 'bool':
     var expr = Toy.parse(value);
-    // XXX
-    if (Toy.findType(expr) != Toy.boolean) {
+    var type = Toy.findType(expr);
+    if (!(type === Toy.boolean || type instanceof Toy.TypeVariable)) {
+      // Since variables do not have known types, some expressions may
+      // have unknown types, and we allow that here.
       throw new Error('Not a true/false expression:' + value);
     }
     return expr;
