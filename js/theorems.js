@@ -1891,26 +1891,8 @@ var ruleInfo = {
     description: 'consequence;; of step {step1} using step {step2}'
   },
 
-  // Proves the goal by matching it with the conclusion of the given
-  // theorem and then applying the given inference rule to prove the
-  // premise of the instantiated theorem.  The theorem must be a
-  // conditional.
-  //
-  // TODO: Test me.
-  backwardChain: {
-    action: function(goal, theorem, rule) {
-      theorem.assertCall2('==>');
-      var subst = goal.matchSchema(theorem.getRight());
-      var premise = rule(theorem.getLeft());
-      var result = rules.modusPonens(premise,
-                                     rules.instMultiVars(theorem, subst));
-      var result = rules.instMultiVars(theorem, subst);
-      return result.justify('backwardChain', arguments);
-    }
-  },
-
-  // Instantiates the schema so that the part at the given path is
-  // identical to the given term.
+  // Instantiates the schema theorem so that the part at the given
+  // path is identical to the given term.
   //
   // TODO: Change "subgoal" to "expandRight"; create similar "expandLeft".
   instantiate: {
