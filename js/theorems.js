@@ -514,7 +514,7 @@ var ruleInfo = {
       return result.justify('equivSelf', []);
     },
     inputs: {bool: 1},
-    form: 'Term to prove equal to itself: <input name=bool>',
+    form: 'Statement to prove equal to itself: <input name=bool>',
     menu: 'A \u21d4 A',
     comment: 'Derives A \u21d4 A.',
     description: 'A \u21d4 A',
@@ -536,7 +536,12 @@ var ruleInfo = {
   eqnSwap: {
     action: function(h_ab) {
       var ab = h_ab.unHyp();
-      var aa = rules.eqSelf(ab.getLeft());
+      var op = ab.getBinOp().pname;
+      var aa = (op === '=='
+                ? rules.equivSelf(ab.getLeft())
+                : op === '='
+                ? rules.eqSelf(ab.getLeft())
+                : assert(false, 'Must be an equiv/equation: {1}', ab));
       var ba = rules.replace(h_ab, aa, '/left');
       return ba.justify('eqnSwap', arguments, arguments);
     },
@@ -1876,15 +1881,22 @@ var ruleInfo = {
   // makeConjunction as needed, followed by forwardChain.)
   forwardChain: {
     action: function(step, schema) {
+      var mainOp = schema.unHyp().getBinOp().pname;
       var substitution = step.unHyp().matchSchema(schema.unHyp().getLeft());
       assert(substitution, 
              '{1} does not match LHS of schema\n{2}',
              step.unHyp(), schema, step);
       var step2 = rules.instMultiVars(schema, substitution);
-      var step3 = rules.modusPonens(step, step2);
+      var step3 = (mainOp === '==>'
+                   ? rules.modusPonens(step, step2)
+                   : mainOp === '=='
+                   ? rules.replace(step2, step, '/main')
+                   : assert(false, 'Schema must be like A ==> B or A == B'));
       return step3.justify('forwardChain', arguments, [step, schema]);
     },
     inputs: {step: [1, 2]},
+    labels: 'basic',
+    menu: 'forward chain',
     form: ('Match step <input name=step1> with left side of implication '
            + 'in schema <input name=step2>'),
     comment: ('[p] and [p ==> q] to q'),
