@@ -16,6 +16,10 @@
   var src = element.getAttribute('src');
   var prefix = src.replace(/boilerplate.js$/, '');
 
+  function write(html) {
+    document.write(html);
+  }
+
   function getScript(name) {
     document.write('<script src="' + prefix + name + '"></script>\n');
   }
@@ -23,6 +27,18 @@
   // Include jQuery in all cases.
   getScript('../lib/jquery-1.10.2.js');
 
+  // getScript('../lib/jquery.tooltipster.js');
+
+  // qTip2 tooltips
+  var qtip = 'http://cdn.jsdelivr.net/qtip2/2.2.1/';
+  write('<link rel="stylesheet" href="' + qtip + 'jquery.qtip.css">')
+  write('<script src="' + qtip + 'jquery.qtip.js"></script>');
+
+  write('<link rel="stylesheet" href="../css/logic.css">');
+  
+  // write('<link rel="stylesheet" href="../css/tooltipster-light.css">');
+  // write('<link rel="stylesheet" href="../css/tooltipster.css">');
+  write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">');
   if (!window.noProofScripts) {
     getScript('util.js');
     getScript('prelim.js');
@@ -37,6 +53,27 @@
                    '</script>\n');
   }
 })();
+
+// Create the tooltips only when document ready ... and settled (?)
+window.setTimeout(function () {
+    // Uncomment this line for a simple test.
+    // $('b').attr('title', 'Bold asdf asdf asdf asdf asdf asdf ads ff');
+
+    var options = {
+      position: {my: 'top left', at: 'bottom center'},
+      overwrite: false, // Don't overwrite tooltips already bound
+      show: {
+        delay: 1000,
+        event: 'mouseenter',  // Or perhaps mouseover in some cases.
+        ready: true // Show immediately - important!
+      }
+    };
+    // On demand convert all nonempty titles to qTips.
+    $('body').on('mouseenter', '[title!=""]', function (event) {
+        $(this).qtip(options);
+      });
+    console.log('Tooltips established');
+  }, 1000);
 
 var Toy = Toy || {};
 
