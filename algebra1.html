@@ -88,11 +88,12 @@ jQuery(function() {
   };
 
   // Create an initial proof step:
+  debugger;
   var c1 = random(2, 10);
   var c2 = random(2, 10);
   var term0 = Toy.parse('c1 * (c2 + x)');
-  var term1 = term0.subFree(Toy.constify(c1 + ''), 'c1');
-  var term = term1.subFree(Toy.constify(c2 + ''), 'c2');
+  var term1 = term0.subFree1(Toy.constify(c1 + ''), 'c1');
+  var term = term1.subFree1(Toy.constify(c2 + ''), 'c2');
   var step = rules.consider(term);
   editor.addStep(step);
 
