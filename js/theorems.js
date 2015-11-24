@@ -1716,7 +1716,7 @@ var ruleInfo = {
     form: ('Add assumption <input name=bool> in step <input name=step>'),
     menu: 'add assumption',
     labels: 'basic',
-    description: 'add assumption {term};; {in step step}'
+    description: 'add assumption {bool};; {in step step}'
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
@@ -3170,7 +3170,7 @@ var ruleInfo = {
     // Too technical to expose for most users.
     // form: ('Chains of conjunctions to merge: <input name=bool>'),
     menu: 'Derives an equation to merge chains of input conjunctions',
-    description: 'merge conjunctions in {term}'
+    description: 'merge conjunctions in {bool}'
   },    
 
   // Extract the given hypothesis from the given step.  The hypothesis
@@ -3203,7 +3203,7 @@ var ruleInfo = {
     inputs: {step: 1, bool: 2},
     form: ('Make assumption <input name=bool> explicit '
            + 'in step <input name=step>'),
-    description: 'make assumption {term} explicit;; {in step step}',
+    description: 'make assumption {bool} explicit;; {in step step}',
     labels: 'deprecated',
     comment: 'copy an assumption to the consequent'
   },
@@ -3239,7 +3239,7 @@ var ruleInfo = {
       return result.justify('isolateHyp', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
-    form: 'extract assumption <input name=term> from step <input name=bool>',
+    form: 'extract assumption <input name=bool> from step <input name=bool>',
     comment: 'extract an assumption'
   },
 
