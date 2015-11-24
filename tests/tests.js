@@ -1278,8 +1278,8 @@ var testCase = {
         info[index] = type;
       });
     assertEqual(info[0], 'varName');
-    assertEqual(info[1], 'term');
-    assertEqual(info[2], 'term');
+    assertEqual(info[1], 'bool');
+    assertEqual(info[2], 'bool');
   },
 
 
@@ -2217,7 +2217,8 @@ Toy.soonDo(function() {
   for (var name in testCase) {
     var fn = testCase[name];
     if (typeof fn === 'function') {
-      console.log('Testing', name);
+      // It would be nice to log the name of each test here, but
+      // running "test" only queues the test.
       test(name, fn);
     } else {
       console.log(name + ': not a function');
