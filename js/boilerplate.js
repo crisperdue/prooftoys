@@ -58,9 +58,10 @@
 window.setTimeout(function () {
     // Uncomment this line for a simple test.
     // $('b').attr('title', 'Bold asdf asdf asdf asdf asdf asdf ads ff');
-
     var options = {
       position: {my: 'top left', at: 'bottom center'},
+      // This could be attractive, but does not work in combo with others.
+      // position: {target: 'mouse'},
       overwrite: false, // Don't overwrite tooltips already bound
       show: {
         delay: 1000,
@@ -68,7 +69,8 @@ window.setTimeout(function () {
         ready: true // Show immediately - important!
       }
     };
-    // On demand convert all nonempty titles to qTips.
+    // On need convert any nonempty title to a qTips.  This enables
+    // qTip for existing elements and also ones dynamically created.
     $('body').on('mouseenter', '[title!=""]', function (event) {
         $(this).qtip(options);
       });
