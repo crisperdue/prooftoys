@@ -104,6 +104,15 @@ code {
   color: gray;
 }
 
+/* For tooltips (qTip2) */
+.qtip {
+  font-size: .8em;
+  font-size: .8rem;
+  line-height: .85em;
+  line-height: .85rem;
+  box-shadow: 2px 2px 2px #aaa;
+}
+
 /**
  * Truth tables for binary operators
  */
