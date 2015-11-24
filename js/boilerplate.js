@@ -289,7 +289,7 @@ Toy.escapeHtml = function(str) {
  * instances of the child be instances of the parent class.
  *
  * This adds to the child constructor a property "methods", so that
- * MyConstructor.methods(properties) adds the properties to its
+ * MyConstructor.addMethods(properties) adds the properties to its
  * prototype.
  *
  * It adds a setter property "$" that does the same thing as
@@ -305,12 +305,7 @@ Toy.extends = function(constructor, parent) {
   } else {
     throw new Error('Toy.extends requires functions as arguments.');
   }
-  Object.defineProperty(constructor, '$',
-                        {set: function(properties) {
-                            $.extend(this.prototype, properties);
-                          }
-                        });
-  constructor.methods = function(properties) {
+  constructor.addMethods = function(properties) {
     $.extend(constructor.prototype, properties);
   };
   

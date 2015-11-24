@@ -95,7 +95,7 @@ function TypeConstant(name) {
 }
 Toy.extends(TypeConstant, null);
 
-TypeConstant.$ = {
+var tcMethods = {
   toString: function() {
     return this.name;
   },
@@ -104,6 +104,7 @@ TypeConstant.$ = {
     return this;
   }
 };
+TypeConstant.addMethods(tcMethods);
 
 /**
  * TypeOperator constructor, types is an optional array of type

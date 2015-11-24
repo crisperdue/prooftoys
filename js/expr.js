@@ -577,8 +577,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   return step;
 };
 
-Expr.$ = {
-           
+var ruleMethods = {
+
   /**
    * Applies the named rule to this Expr and any other given arguments
    * as if by a call to Toy.rules[name](args).  Private to Expr.justify.
@@ -605,6 +605,7 @@ Expr.$ = {
     return Toy.rules.replace(eqn, this, path);
   }
 };
+Expr.addMethods(ruleMethods);
 
 /**
  * Matches the given "schematic" expression against this. Returns a
@@ -996,7 +997,7 @@ Expr.prototype.isOpenCall = function() {
   return this instanceof Call && this.fn instanceof Lambda;
 };
 
-Expr.$ = {
+var exprMethods = {
 
   /**
    * Returns true iff this is a call to a function of two arguments that
@@ -1063,6 +1064,7 @@ Expr.$ = {
   }
 
 };
+Expr.addMethods(exprMethods);
 
 /**
  * Throw an error with message if this is not a call to a function
