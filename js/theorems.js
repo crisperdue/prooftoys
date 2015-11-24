@@ -4403,8 +4403,13 @@ var logicFacts = {
   }
 };
 
+//
 // These are algebra facts.
-var algebraFacts = {
+//
+
+var algebraFacts = {};
+
+var realAxiomFacts = {
 
   // Axioms
 
@@ -4444,7 +4449,12 @@ var algebraFacts = {
     action: function() {
       return rules.axiom('axiomTimesZero');
     }
-  },
+  }
+};
+$.extend(algebraFacts, realAxiomFacts);
+
+
+var basicFacts = {
   'a + neg a = 0': {
     action: function() {
       return rules.eqSelf('a + neg a')
@@ -4500,6 +4510,8 @@ var algebraFacts = {
     }
   }
 };
+
+$.extend(algebraFacts, basicFacts);
 
 // Distributivity
 var distribFacts = {
