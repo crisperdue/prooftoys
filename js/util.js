@@ -717,6 +717,82 @@ function afterRepaint(action) {
   return window.setTimeout(action, 10);
 }
 
+/**
+ * Create and return a DIV that renders as a right triangle pointing
+ * in the given direction (left, right, up, or down), of the given
+ * height and color, specified in any form acceptable to CSS.  A
+ * numeric height is taken as pixels.  Do not put anything in the DIV,
+ * or the effect will be ruined.
+ *
+ * Sets the CSS pointer-events property to 'none', but you can
+ * override this if you prefer.
+ */
+function makeTriangle(where, height, color) {
+  color = color || 'black';
+  height = height || '10px';
+  var topBottomProps = {
+    height: 0,
+    width: 0,
+    borderLeftWidth: height,
+    borderLeftStyle: 'solid',
+    borderLeftColor: 'transparent',
+    borderRightWidth: height,
+    borderRightStyle: 'solid',
+    borderRightColor: 'transparent',
+    borderTopWidth: height,
+    borderTopStyle: 'solid',
+    borderTopColor: color,
+    borderBottomWidth: height,
+    borderBottomStyle: 'solid',
+    borderBottomColor: color,
+    pointerEvents: 'none'
+  };
+  var leftRightProps = {
+    height: 0,
+    width: 0,
+    borderTopWidth: height,
+    borderTopStyle: 'solid',
+    borderTopColor: 'transparent',
+    borderBottomWidth: height,
+    borderBottomStyle: 'solid',
+    borderBottomColor: 'transparent',
+    borderLeftWidth: height,
+    borderLeftStyle: 'solid',
+    borderLeftColor: color,
+    borderRightWidth: height,
+    borderRightStyle: 'solid',
+    borderRightColor: color,
+    pointerEvents: 'none'
+  };
+  var mapping = {
+    'up': topBottomProps,
+    'down': topBottomProps,
+    'left': leftRightProps,
+    'right': leftRightProps
+  };
+  var properties = mapping[where];
+  if (!properties) {
+    throw new Error('Triangle direction must be up, down, right, or left');
+  }
+  var zeroProp = {
+    'up': 'borderTopWidth',
+    'down': 'borderBottomWidth',
+    'left': 'borderLeftWidth',
+    'right': 'borderRightWidth'
+  };
+  properties[zeroProp[where]] = 0;
+  var div = $('<div>');
+  div.css(properties);
+  return div[0];
+}
+
+/**
+ * Supports testing of makeTriangle.
+ */
+function _testTriangle(where, height, color) {
+  var tt = makeTriangle(where, height, color);
+  $('body').prepend(tt);
+};
 
 //// Export public names.
 
@@ -758,5 +834,9 @@ Toy.trackingData = trackingData;
 Toy.Refresher = Refresher;
 Toy.soonDo = soonDo;
 Toy.afterRepaint = afterRepaint;
+Toy.makeTriangle = makeTriangle;
+
+// for interactive testing
+Toy._testTriangle = _testTriangle;
 
 })();
