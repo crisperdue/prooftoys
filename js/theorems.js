@@ -1715,7 +1715,8 @@ var ruleInfo = {
   // Adds an assumption to the given step and deduplicates it.  Works
   // with or without hypotheses.
   addAssumption: {
-    action: function(step, expr) {
+    action: function(step, expr_arg) {
+      var expr = termify(expr_arg);
       if (step.hasHyps) {
         var step0 = rules.asImplication(step);
         var taut = rules.tautology('(p ==> q) ==> (p & a ==> q)');
@@ -1899,7 +1900,8 @@ var ruleInfo = {
   // (In this implementation it is more straightforward to use
   // makeConjunction as needed, followed by forwardChain.)
   forwardChain: {
-    action: function(step, schema) {
+    action: function(step, schema_arg) {
+      var schema = rules.fact(schema_arg);
       var mainOp = schema.unHyp().getBinOp().pname;
       var substitution = step.unHyp().matchSchema(schema.unHyp().getLeft());
       assert(substitution, 
