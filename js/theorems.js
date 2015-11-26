@@ -1228,6 +1228,23 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
+  // Replace an occurrence of T at the given path of the given tautology
+  // (or other proved statement) with the given step..
+  replaceT: {
+    action: function(statement, path, step) {
+      var step2 = (Toy.isStep(statement) 
+                   ? statement
+                   : rules.tautology(statement));
+      assert(step2.get(path).isConst('T'),
+             'Site should be T, not {1}', step2.get(path));
+      var eqn1 = rules.r5218(step).apply('eqnSwap');
+      var eqn2 = rules.r(eqn1, step, '');
+      return (rules.r(eqn2, step2, path)
+              .justify('replaceT', arguments, [step, statement]));
+    }
+    // TODO: Support suitable inputs descriptor.
+  },
+
   // Lemma helper for addForall, a pure theorem.
   forallXT: {
     action: function() {
