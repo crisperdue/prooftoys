@@ -350,6 +350,7 @@ function isConstantName(name) {
  * True iff this is an Atom named as a variable.
  */
 Expr.prototype.isVariable = function() {
+  // this._value set in constructor.
   return this instanceof Atom && this._value === undefined;
 };
 
@@ -1796,7 +1797,7 @@ function Atom(name, position) {
   this.pname = this.name = name;
   this._value = undefined;
   if (isConstantName(name))
-  this.pos = position;
+    this.pos = position;
   if (aliases.hasOwnProperty(name)) {
     this.name = aliases[name];
   }
