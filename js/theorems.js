@@ -1187,6 +1187,7 @@ var ruleInfo = {
   },
 
   // 5219.  Works with hypotheses.
+  // With hyps, [h ==> A] to [h ==> T = A]
   toTIsA: {
     action: function(h_a) {
       var step1 = rules.r5218(h_a.unHyp());
@@ -1202,6 +1203,7 @@ var ruleInfo = {
   },
 
   // also 5219.  Works with hypotheses.
+  // With hyps, [h ==> (T == A)] to [h ==> A]
   fromTIsA: {
     action: function(h_t_a) {
       var t_a = h_t_a.unHyp()
