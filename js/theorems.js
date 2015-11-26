@@ -4693,6 +4693,56 @@ var identityFacts = {
 };
 $.extend(algebraFacts, identityFacts);
 
+var equivalences = {
+
+  'a = b == a + c = b + c': {
+    action: function() {
+      // TODO: Make a mechanism that automatically combines
+      // assumptions, thus greatly simplifying rules like this one.
+      var forward = (rules.assume('a = b')
+                     .apply('addToBoth', 'c')
+                     .apply('addAssumption', 'R a')
+                     .apply('addAssumption', 'R b')
+                     .apply('addAssumption', 'R c')
+                     .apply('asImplication'));
+      var back = (rules.assume('a+c=b+c')
+                  .apply('subtractFromBoth', 'c')
+                  .apply('groupToRight', '/main/left/left/right')
+                  .apply('simplifySite', '/main/left')
+                  .apply('groupToRight', '/main/right/left/right')
+                  .apply('simplifySite', '/main/right')
+                  .apply('asImplication'));
+      var conj = rules.makeConjunction(forward, back);
+      var taut = ('(a & p & q & r ==> b) & (b & p & q & r ==> a)' +
+                  ' == (p & q & r ==> (a == b))');
+      return rules.forwardChain(conj, taut).apply('asHypotheses');
+    }
+  },
+
+/*
+  'a = b == a - c = b - c': {
+    action: function() {
+      return rules.assert('R a & R b ==> (a = b) == a - c = b - c');
+    }
+  },
+
+  // Prove c != 0 from the real-value conditions in the givens.
+  '(a = b | c = 0) == a * c = b * c': {
+    a | c ==> b
+      a ==> b
+      c ==> b
+    b ==> a | c
+    !a & !c ==> !b
+  },
+
+  'a = b == a / c = b / c': {
+
+  },
+*/
+
+};
+$.extend(algebraFacts, equivalences);
+
 var negationFacts = {
   // Negation rules
   'a - b = a + neg b': {
