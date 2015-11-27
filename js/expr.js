@@ -1856,8 +1856,8 @@ Atom.prototype.toUnicode = function() {
 // Translations of names, applied during conversion to Unicode.
 // (When generating HTML and/or Unicode text.)
 var unicodeNames = {
-  '==': '\u21d4',     // Two-headed horizontal double arrow.
-  // or: '==': '\u2261',     // Triple equal (equiv)
+  '==': '\u2261',     // Triple equal (equiv)
+  // or '==': '\u21d4',     // Two-headed horizontal double arrow.
   '&': '\u2227',      // &and;
   '|': '\u2228',      // &or;
   'not': '\u00ac',    // &not;
