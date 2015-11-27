@@ -1622,7 +1622,7 @@ var ruleInfo = {
       }
     },
     inputs: {bool: 1},
-    form: 'Enter tautology: <input name=bool>',
+    form: 'Enter tautology: <input name=bool size=40>',
     menu: 'prove a tautology',
     comment: ('Tautology decider.'),
     description: 'tautology'
