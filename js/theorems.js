@@ -4701,9 +4701,6 @@ var equivalences = {
       // assumptions, thus greatly simplifying rules like this one.
       var forward = (rules.assume('a = b')
                      .apply('addToBoth', 'c')
-                     .apply('addAssumption', 'R a')
-                     .apply('addAssumption', 'R b')
-                     .apply('addAssumption', 'R c')
                      .apply('asImplication'));
       var back = (rules.assume('a+c=b+c')
                   .apply('subtractFromBoth', 'c')
@@ -4713,8 +4710,8 @@ var equivalences = {
                   .apply('simplifySite', '/main/right')
                   .apply('asImplication'));
       var conj = rules.makeConjunction(forward, back);
-      var taut = ('(a & p & q & r ==> b) & (b & p & q & r ==> a)' +
-                  ' == (p & q & r ==> (a == b))');
+      var taut = ('(a ==> b) & (b & p & q & r ==> a)' +
+                  ' ==> (p & q & r ==> (a == b))');
       return rules.forwardChain(conj, taut).apply('asHypotheses');
     }
   },
