@@ -4266,7 +4266,7 @@ var ruleInfo = {
       throw new Error('No such fact: ' + statement);
     },
     inputs: {bool: 1},
-    form: ('Look up fact <input name=bool>'),
+    form: ('Look up fact <input name=bool size=40>'),
     menu: 'look up a fact',
     comment: (''),
     description: 'fact',
