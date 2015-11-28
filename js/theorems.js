@@ -4710,8 +4710,7 @@ var equivalences = {
                   .apply('simplifySite', '/main/right')
                   .apply('asImplication'));
       var conj = rules.makeConjunction(forward, back);
-      var taut = ('(a => b) & (b & p & q & r => a)' +
-                  ' => (p & q & r => (a == b))');
+      var taut = '(a => b) & (b & p & q & r => a) => (p & q & r => (a == b))';
       return rules.forwardChain(conj, taut).apply('asHypotheses');
     }
   },
