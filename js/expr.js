@@ -231,7 +231,7 @@ Expr.prototype.toString = function() {
   }
   if (Toy.trackSourceSteps
       && this.hasHyps
-      && this.isCall2('==>')) {
+      && this.isCall2('=>')) {
     return (prefix + '(' + this.getLeft()._toString() + ' |- '
             + this.getRight()._toString() + ')');
   } else {
@@ -926,7 +926,7 @@ Expr.prototype.getRight = function() {
  *   of hasHyps and unHyp.
  */
 Expr.prototype.getMain = function() {
-  return this.isCall2('==>') ? this.getRight() : this;
+  return this.isCall2('=>') ? this.getRight() : this;
 };
 
 /**
@@ -958,7 +958,7 @@ Expr.prototype.unHyp = function() {
  */
 Step.prototype.getHyps = function() {
   var wff = this.wff;
-  return wff.isCall2('==>') ? wff.getLeft() : null;
+  return wff.isCall2('=>') ? wff.getLeft() : null;
 };
 
 /**
@@ -1043,14 +1043,14 @@ var exprMethods = {
    */
   isEquation: function() {
     return (this.isCall2('=') ||
-            (this.isCall2('==>') && this.getRight().isCall2('=')));
+            (this.isCall2('=>') && this.getRight().isCall2('=')));
   },
 
   /**
    * Gets the left side of an equation, possibly with assumptions.
    */
   eqnLeft: function() {
-    var eqn = this.isCall2('==>') ? this.getRight() : this;
+    var eqn = this.isCall2('=>') ? this.getRight() : this;
     eqn.assertCall2('=');
     return eqn.getLeft();
   },
@@ -1059,7 +1059,7 @@ var exprMethods = {
    * Gets the right side of an equation, possibly with assumptions.
    */
   eqnRight: function() {
-    var eqn = this.isCall2('==>') ? this.getRight() : this;
+    var eqn = this.isCall2('=>') ? this.getRight() : this;
     eqn.assertCall2('=');
     return eqn.getRight();
   }
@@ -1089,7 +1089,7 @@ Expr.prototype.assertCall2 = function(name) {
     return;
   }
   var map = {
-    '==>': 'a conditional',
+    '=>': 'a conditional',
     '=': 'an equation',
     '&': 'a conjunction',
     '|': 'a disjunction'
@@ -1861,7 +1861,7 @@ var unicodeNames = {
   '&': '\u2227',      // &and;
   '|': '\u2228',      // &or;
   'not': '\u00ac',    // &not;
-  '==>': '\u21d2',    // &rArr;
+  '=>': '\u21d2',    // &rArr;
   '!=': '\u2260',     // &ne;
   '<=': '\u2264',     // &le;
   '>=': '\u2265',     // &ge;

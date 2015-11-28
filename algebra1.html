@@ -100,7 +100,7 @@ jQuery(function() {
     var steps = editor.__mainControl.steps;
     var answer = steps[steps.length - 1];
     window.answer = answer;
-    window.schema = Toy.parse('h ==> v = ((a * x) + b)');
+    window.schema = Toy.parse('h => v = ((a * x) + b)');
     var map = answer.matchSchema(window.schema);
     window.map = map;
     console.log(Toy.debugString(map));

@@ -323,7 +323,7 @@ $(function() {
     modusPonens: {
       args: function() {
         var step1 = Toy.rules.assume('p');
-        var step2 = Toy.rules.assume('p ==> q');
+        var step2 = Toy.rules.assume('p => q');
         return [step1, step2];
       },
       level: 1
@@ -350,22 +350,22 @@ $(function() {
     trueEquals: {},
     
     evalBool: {
-      args: [call('==>',
-                  call('==>', F, call('not', F)),
+      args: [call('=>',
+                  call('=>', F, call('not', F)),
                   call('not', F))]
     },
     
     tautology: {
       /* This tautology is already an equation, let's test one that is not.
-      args: [equal(call('==>', call('&', p, q), r),
-                   call('==>', p, call('==>', q, r)))],
+      args: [equal(call('=>', call('&', p, q), r),
+                   call('=>', p, call('=>', q, r)))],
       */
-      args: [Toy.parse('(p ==> q) & (not p ==> q) ==> q')],
+      args: [Toy.parse('(p => q) & (not p => q) => q')],
       level: 1
     },
     
     tautInst: {
-      args: [Toy.parse('p ==> T | q'), ({
+      args: [Toy.parse('p => T | q'), ({
         p: Toy.parse('forall {x. T | p x}'),
         q: Toy.parse('forall {x. p x}')
       })],
@@ -383,13 +383,13 @@ $(function() {
 
     implyForallNoHyps: {
       ruleName: 'implyForall',
-      args: [x, rules.assert(Toy.parse('p ==> q x'))],
+      args: [x, rules.assert(Toy.parse('p => q x'))],
     },
 
     implyForall: {
       args: function() {
         var step1 = Toy.rules.assume('y > 0');
-        var step2 = Toy.rules.assert('y > 0 ==> (p ==> q x)');
+        var step2 = Toy.rules.assert('y > 0 => (p => q x)');
         var step3 = Toy.rules.modusPonens(step1, step2);
 	return [x, step3];
       },
@@ -399,7 +399,7 @@ $(function() {
     implyForallBookHyps: {
       ruleName: 'implyForallBook',
       args: function() {
-	var wff = Toy.parse('y > 0 ==> (p ==> q x)');
+	var wff = Toy.parse('y > 0 => (p => q x)');
         wff.hasHyps = true;
 	return [x, wff];
       },
@@ -407,8 +407,8 @@ $(function() {
 
     forwardChain: {
       args: function() {
-        var step1 = Toy.rules.assume('p x & (p x ==> q x)');
-        var step2 = Toy.rules.tautology('a & (a ==> b) ==> b');
+        var step1 = Toy.rules.assume('p x & (p x => q x)');
+        var step2 = Toy.rules.tautology('a & (a => b) => b');
         return [step1, step2];
       },
       level: 1
@@ -429,9 +429,9 @@ $(function() {
     replace: {
       args: function() {
         var step1 = Toy.rules.assume('x >= 0');
-        var step2 = Toy.rules.assert('x >= 0 ==> (x = (abs x))');
+        var step2 = Toy.rules.assert('x >= 0 => (x = (abs x))');
         var step3 = Toy.rules.modusPonens(step1, step2);
-        var step4 = Toy.rules.assert('x >= 0 ==> (x + x) >= x');
+        var step4 = Toy.rules.assert('x >= 0 => (x + x) >= x');
         var step5 = Toy.rules.modusPonens(step1, step4);
         return [step3, step5, '/main/right'];
       },

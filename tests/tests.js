@@ -88,8 +88,8 @@ Toy.trackSourceSteps = false;
 // Example equation: x + x = 2 * x
 var times2 = call('=', call('+', x, x), call('*', '2', x));
 
-// Example WFF: x > 0 ==> x + x > x
-var bigger = call('==>', call('>', x, '0'),
+// Example WFF: x > 0 => x + x > x
+var bigger = call('=>', call('>', x, '0'),
                   call('>', call('+', x, x), x));
 
 // This is a bit different than standard QUnit style, but the content
@@ -351,8 +351,8 @@ var testCase = {
     assertEqual('({x. x} T)', result);
     result = Toy.parse('a + b * c');
     assertEqual('(a + (b * c))', result);
-    result = Toy.parse('a ==> a & c');
-    assertEqual('(a ==> (a & c))', result);
+    result = Toy.parse('a => a & c');
+    assertEqual('(a => (a & c))', result);
     // Numbers
     assertEqual(42, Toy.parse('42').getNumValue());
     var expr = Toy.parse('x + 103');
@@ -373,12 +373,12 @@ var testCase = {
     var p = Toy.mathParse;
     assertEqual('a', p('a'));
     assertEqual('(x = y)', p('x = y'));
-    assertEqual('(((R x) & (R y)) ==> ((x + y) = (y + x)))',
+    assertEqual('(((R x) & (R y)) => ((x + y) = (y + x)))',
                 p('x + y = y + x'));
-    assertEqual('(((R x) & (R y)) ==> ((x + y) = (y + x)))',
-                p('@R x & R y ==> x + y = y + x'));
-    assertEqual('((R x) ==> ((x + y) = (y + x)))',
-                p('@R x ==> x + y = y + x'));
+    assertEqual('(((R x) & (R y)) => ((x + y) = (y + x)))',
+                p('@R x & R y => x + y = y + x'));
+    assertEqual('((R x) => ((x + y) = (y + x)))',
+                p('@R x => x + y = y + x'));
   },
 
 
@@ -697,11 +697,11 @@ var testCase = {
     assertEqual('/left', findPath('x = y', 'x'));
     assertEqual('/right', findPath('x = y', 'y'));
     assertEqual('/binop', findPath('x = y', '(=)'));
-    assertEqual('/right', findPath('T == (T ==> T)', 'T ==> T'));
+    assertEqual('/right', findPath('T == (T => T)', 'T => T'));
     assertEqual('/left/right', findPath('(x + y) + z', 'y'));
     assertEqual('/arg', findPath('not p', 'p'));
     assertEqual('/fn', findPath('not p', '(not)'))
-    assertEqual('/right/arg', findPath('q ==> not p', 'p'));
+    assertEqual('/right/arg', findPath('q => not p', 'p'));
     assertEqual('/arg/arg', findPath('not (not (not p))', 'not p'));
   },
 
@@ -835,7 +835,7 @@ var testCase = {
     }
     check('{p: (x = x)}', p, equal(x, x));
     check('{p: (x < 1), q: (x = 0)}',
-          implies(p, q), Toy.parse('x < 1 ==> (x = 0)'));
+          implies(p, q), Toy.parse('x < 1 => (x = 0)'));
     check('{a: 3, b: 2}', 'a + b', '3 + 2');
   },
 
@@ -1151,7 +1151,7 @@ var testCase = {
   testIsConstantName: function() {
     assert(Toy.isConstantName('T'));
     assert(T.isConst());
-    assert(Toy.isConstantName('==>'));
+    assert(Toy.isConstantName('=>'));
     assert(Toy.isConstantName('neg'));
     assert(!equal(x, x).isConst());
   },
@@ -1159,7 +1159,7 @@ var testCase = {
   testIsDefined: function() {
     assert(!Toy.isDefined('T'));
     assert(!Toy.isDefined(T));
-    assert(!Toy.isDefined('==>'));
+    assert(!Toy.isDefined('=>'));
     assert(Toy.isDefined('forall'));
     assert(Toy.isDefined(Toy.constify('forall')));
     try {
@@ -1246,7 +1246,7 @@ var testCase = {
     // From set to individual:
     check('(i (o i))',
           // Max of a set having at least one positive number.
-          '{p. the {x. p x & x > 0 & forall {y. p y ==> x >= y}}}');
+          '{p. the {x. p x & x > 0 & forall {y. p y => x >= y}}}');
     // From set and individual to boolean, note how the
     // first argument type appears last when written out.
     //         y  x
@@ -1256,7 +1256,7 @@ var testCase = {
     check('o', '({x. x} p) = p');
     // An example where the type check in Rule R catches improper
     // use of types.
-    var step1 = Toy.parse('p (f g) ==> p g').assert();
+    var step1 = Toy.parse('p (f g) => p g').assert();
     // This is pathological in that p and f each appear on just
     // one side of the equation, which means the value of the
     // expressions containing them are not affected by their
@@ -1288,7 +1288,7 @@ var testCase = {
   testRuleR: function() {
     var path = Toy.path('/right/left');
     var result = Toy.rules.r(times2, bigger, path);
-    assertEqual('((x > 0) ==> ((2 * x) > x))', result);
+    assertEqual('((x > 0) => ((2 * x) > x))', result);
   },
 
   testAxiom4: function() {
@@ -1302,7 +1302,7 @@ var testCase = {
   testAxioms: function() {
     assertEqual('(((g T) & (g F)) == (forall {a. (g a)}))',
                 Toy.rules.axiom1());
-    assertEqual('((x = y) ==> ((h x) = (h y)))',
+    assertEqual('((x = y) => ((h x) = (h y)))',
                 Toy.rules.axiom2());
     assertEqual('((f = g) = (forall {x. ((f x) = (g x))}))',
                 Toy.rules.axiom3());
@@ -1351,13 +1351,13 @@ var testCase = {
       Toy.rules.asHypotheses(step1);
       Y.Assert.fail('Should throw');
     } catch(e) {}
-    var step2 = Toy.rules.assert('p ==> p');
+    var step2 = Toy.rules.assert('p => p');
     var step3 = Toy.rules.assume('p');
-    var step4 = Toy.rules.assert('p ==> q');
+    var step4 = Toy.rules.assert('p => q');
     var step5 = Toy.rules.modusPonens(step3, step4);
     var step6 = Toy.rules.asImplication(step5);
     var result = Toy.rules.asHypotheses(step6);
-    assertEqual('(p ==> q)', result);
+    assertEqual('(p => q)', result);
     assert(result.hasHyps);
   },
 
@@ -1418,13 +1418,13 @@ var testCase = {
     var result = rules.apply(step1, '/left');
     assertEqual('(2 = 2)', result);
     // Apply a call to 1-arg function:
-    var step1 = rules.tautology('(p ==> not p) ==> not p');
+    var step1 = rules.tautology('(p => not p) => not p');
     var result = rules.apply(step1, '/right');
-    assertEqual('((p ==> (not p)) ==> (F = p))', result);
+    assertEqual('((p => (not p)) => (F = p))', result);
     // Apply a call to a 2-arg function:
     var step1 = rules.assume('x != y');
     var result = rules.apply(step1, '/right');
-    assertEqual('((x != y) ==> (not (x = y)))', result);
+    assertEqual('((x != y) => (not (x = y)))', result);
   },
 
   testUseDefinition: function() {
@@ -1498,7 +1498,7 @@ var testCase = {
     var step1 = Toy.rules.assert('forall {y. p y}');
     var step2 = Toy.rules.appendStepHyps(step1, hyps);
     var result = Toy.rules.instForall(step2, call(f, y));
-    assertEqual('((p y) ==> (p (f y)))', result)
+    assertEqual('((p y) => (p (f y)))', result)
     assert(result.hasHyps);
   },
 
@@ -1537,7 +1537,7 @@ var testCase = {
     // Hyps
     var step1 = Toy.rules.assume(p);
     var result = Toy.rules.toTIsA(step1);
-    assertEqual('(p ==> (T = p))', result);
+    assertEqual('(p => (T = p))', result);
   },
 
   testFromTIsA: function() {
@@ -1547,7 +1547,7 @@ var testCase = {
     var step1 = Toy.rules.assume(p);
     var step2 = Toy.rules.toTIsA(step1);
     var result = Toy.rules.fromTIsA(step2);
-    assertEqual('(p ==> p)', result);
+    assertEqual('(p => p)', result);
   },
 
   testAddForall: function() {
@@ -1556,10 +1556,10 @@ var testCase = {
 
     // Hypotheses
     var step1 = Toy.rules.assume(Toy.parse('x = 0'));
-    var wff = Toy.parse('x = 0 ==> y > x');
+    var wff = Toy.parse('x = 0 => y > x');
     wff.hasHyps = true;
     wff.getLeft().sourceStep = step1;
-    assertEqual('((x = 0) ==> (forall {y. (y > x)}))',
+    assertEqual('((x = 0) => (forall {y. (y > x)}))',
                 Toy.rules.addForall(wff, 'y'));
   },
 
@@ -1589,7 +1589,7 @@ var testCase = {
                q: Toy.parse('forall {x. b}')
     };
     var result = Toy.rules.instMultiVars(implies(p, call('|', T, q)), map);
-    assertEqual('((forall {x. (T | b)}) ==> (T | (forall {x. b})))',
+    assertEqual('((forall {x. (T | b)}) => (T | (forall {x. b})))',
                 result);
 
     // Hypotheses
@@ -1598,7 +1598,7 @@ var testCase = {
     var map2 = {x: call(p, x),
                 y: call(p, y)};
     var result = Toy.rules.instMultiVars(step, map2);
-    assertEqual('(((p x) = (p y)) ==> ((h (p x)) = (h (p y))))', result);
+    assertEqual('(((p x) = (p y)) => ((h (p x)) = (h (p y))))', result);
   },
 
   testCases: function() {
@@ -1613,7 +1613,7 @@ var testCase = {
     result = Toy.rules.cases(step1, step2, 'x');
     // TODO: In tests with hypotheses, allow order of hypotheses
     //   to vary.
-    assertEqual('(((p T) & (p F)) ==> (p x))', result);
+    assertEqual('(((p T) & (p F)) => (p x))', result);
     assert(result.hasHyps);
   },
 
@@ -1622,11 +1622,11 @@ var testCase = {
     assertEqual('q', result);
 
     // Hypotheses
-    var step1 = Toy.rules.assume('p ==> not p');
+    var step1 = Toy.rules.assume('p => not p');
     // A tautology, but don't rely on the tautology rule here.
-    var step2 = Toy.rules.assert('(p ==> not p) ==> not p');
+    var step2 = Toy.rules.assert('(p => not p) => not p');
     result = Toy.rules.modusPonens(step1, step2);
-    assertEqual('((p ==> (not p)) ==> (not p))', result);
+    assertEqual('((p => (not p)) => (not p))', result);
     assert(result.hasHyps);
   },
 
@@ -1665,7 +1665,7 @@ var testCase = {
     assertEqual('((F & T) = F)', inf);
     inf = Toy.rules.evalBool(Toy.parse('(p (F | T))'));
     assertEqual('((p (F | T)) = (p T))', inf);
-    taut = Toy.parse('(p ==> not p) ==> not p');
+    taut = Toy.parse('(p => not p) => not p');
     inf = Toy.rules.evalBool(taut.subFree1(T, p));
     assertEqual('T', inf.getRight());
     inf = Toy.rules.evalBool(taut.subFree1(F, p));
@@ -1686,11 +1686,11 @@ var testCase = {
     // var inf = Toy.rules.tautology('x == x');
     // assertEqual('(x == x)', inf);
 
-    var wff = Toy.parse('(p ==> not p) ==> not p');
+    var wff = Toy.parse('(p => not p) => not p');
     var inf = Toy.rules.tautology(wff);
     assertEqual(wff.toString(), inf);
 
-    var wff = Toy.parse('(p & q ==> r) == (p ==> (q ==> r))');
+    var wff = Toy.parse('(p & q => r) == (p => (q => r))');
     var proved = Toy.rules.tautology(wff);
     assertEqual(wff.toString(), proved);
     var proved = Toy.rules.tautology(wff);
@@ -1704,7 +1704,7 @@ var testCase = {
     var step1 = Toy.rules.assume(p);
     var step2 = Toy.rules.assume(q);
     result = Toy.rules.makeConjunction(step1, step2);
-    assertEqual('((p & q) ==> (p & q))', result);
+    assertEqual('((p & q) => (p & q))', result);
   },
 
   testTautInst: function() {
@@ -1713,18 +1713,18 @@ var testCase = {
       p: Toy.parse('forall {x. T | p x}'),
       q: Toy.parse('forall {x. p x}')
     };
-    var result = Toy.rules.tautInst(Toy.parse('p ==> T | q'), map1);
+    var result = Toy.rules.tautInst(Toy.parse('p => T | q'), map1);
 
     // With hypotheses:
-    var h_taut = rules.tautology('p ==> p');
+    var h_taut = rules.tautology('p => p');
     h_taut.hasHyps = true;
     var result = Toy.rules.tautInst(h_taut, {p: Toy.parse('x > 0')});
-    assertEqual('((x > 0) ==> (x > 0))', result);
+    assertEqual('((x > 0) => (x > 0))', result);
     assert(result.hasHyps);
   },
 
   testSourceStepTracking: function() {
-    var taut = rules.tautology('p ==> (h ==> p)');
+    var taut = rules.tautology('p => (h => p)');
     var step1 = rules.assume('forall {y. p y}');
     var step2 = rules.eqSelf('{x. T} (f x)');
     var step3 = rules.tautInst(taut, {p: step2, h: step1.getLeft()});
@@ -1741,40 +1741,40 @@ var testCase = {
   testR5235: function() {
     var inf = Toy.rules.r5235(x, p, call(q, x));
     var wff =
-      '((forall {x. (p | (q x))}) ==> (p | (forall {x. (q x)})))';
+      '((forall {x. (p | (q x))}) => (p | (forall {x. (q x)})))';
     assertEqual(wff, inf);
   },
 
   testImplyForallThm: function() {
     var result = Toy.rules.implyForallThm(x, p, call(q, x));
     var wff =
-      '((forall {x. (p ==> (q x))}) ==> (p ==> (forall {x. (q x)})))';
+      '((forall {x. (p => (q x))}) => (p => (forall {x. (q x)})))';
     assertEqual(wff, result);
   },
 
   testImplyForall: function() {
-    var result = Toy.rules.implyForall(x, Toy.parse('p ==> q x'));
-    assertEqual('(p ==> (forall {x. (q x)}))', result);
+    var result = Toy.rules.implyForall(x, Toy.parse('p => q x'));
+    assertEqual('(p => (forall {x. (q x)}))', result);
 
     // With hypotheses:
-    var step1 = Toy.rules.assert('R y ==> (p ==> q x)');
+    var step1 = Toy.rules.assert('R y => (p => q x)');
     var step2 = Toy.rules.assume('R y');
     var step3 = Toy.rules.modusPonens(step2, step1);
     result = Toy.rules.implyForall(x, step3);
-    assertEqual('((R y) ==> (p ==> (forall {x. (q x)})))', result);
+    assertEqual('((R y) => (p => (forall {x. (q x)})))', result);
   },
 
   testForwardChain: function() {
-    var step1 = Toy.rules.assume('p x & (p x ==> q x)');
-    var taut = rules.tautology('a & (a ==> b) ==> b');
+    var step1 = Toy.rules.assume('p x & (p x => q x)');
+    var taut = rules.tautology('a & (a => b) => b');
     var inf = Toy.rules.forwardChain(step1, taut);
     assertEqual('(q x)', inf.unHyp());
 
-    var step1 = Toy.rules.assert('h x ==> (p x & (p x ==> q x))');
+    var step1 = Toy.rules.assert('h x => (p x & (p x => q x))');
     var step2 = Toy.rules.assume('h x');
     var step3 = Toy.rules.modusPonens(step2, step1);
     var result = Toy.rules.forwardChain(step3, taut);
-    assertEqual('((h x) ==> (q x))', result);
+    assertEqual('((h x) => (q x))', result);
     assert(result.hasHyps);
   },
 
@@ -1809,13 +1809,13 @@ var testCase = {
 
   testR5239: function() {
     var inf = Toy.rules.r5239(equal(p, q), equal(r, p), '/right');
-    assertEqual('((p = q) ==> ((r = p) = (r = q)))', inf);
+    assertEqual('((p = q) => ((r = p) = (r = q)))', inf);
 
     inf = Toy.rules.r5239(equal(p, q),
                           lambda(p, equal(q, p)),
                           '/body/right');
     var expected =
-      '((forall {p. (p = q)}) ==> ({p. (q = p)} = {p. (q = q)}))';
+      '((forall {p. (p = q)}) => ({p. (q = p)} = {p. (q = q)}))';
     assertEqual(expected, inf);
 
     // Here 'y' is bound in C and free in A = B.
@@ -1823,15 +1823,15 @@ var testCase = {
                         Toy.parse('{y. T}'),
                         '/body');
     var expected =
-      '((forall {y. (T = (y > x))}) ==> ({y. T} = {y. (y > x)}))';
+      '((forall {y. (T = (y > x))}) => ({y. T} = {y. (y > x)}))';
     assertEqual(expected, inf);
   },
 
   testReplace: function() {
-    var result = Toy.rules.replace(Toy.parse('x > 0 ==> (x = (abs x))'),
-                                 Toy.parse('x > 0 ==> ((x + x) > x)'),
+    var result = Toy.rules.replace(Toy.parse('x > 0 => (x = (abs x))'),
+                                 Toy.parse('x > 0 => ((x + x) > x)'),
                                  '/right/right');
-    assertEqual('((x > 0) ==> ((x + x) > (abs x)))', result);
+    assertEqual('((x > 0) => ((x + x) > (abs x)))', result);
   },
 
   testDeepTermReplacer: function() {
@@ -1858,7 +1858,7 @@ var testCase = {
                 rules.deepTermReplacer(term,
                                        [taut, taut2]));
     var expected =
-      '(((R x) & (R y)) ==> (((x * y) != 0) = ((x != 0) & (y != 0))))'
+      '(((R x) & (R y)) => (((x * y) != 0) = ((x != 0) & (y != 0))))'
     assertEqual(expected,
                 rules.deepTermReplacer(Toy.parse('x * y != 0'),
                                        [rules.factNonzeroProduct()]));
@@ -1891,7 +1891,7 @@ var testCase = {
                 rules.conjunctsSimplifier(term,
                                           [taut, taut2]));
     var expected =
-      '(((R x) & (R y)) ==> (((x * y) != 0) = ((x != 0) & (y != 0))))'
+      '(((R x) & (R y)) => (((x * y) != 0) = ((x != 0) & (y != 0))))'
     assertEqual(expected,
                 rules.conjunctsSimplifier(Toy.parse('x * y != 0'),
                                           [rules.factNonzeroProduct()]));
@@ -1960,11 +1960,11 @@ var testCase = {
     var rules = Toy.rules;
     var step = rules.axiomCommutativePlus();
     var expected =
-      '(((R x) & (R y)) ==> ((R x) ==> ((x + y) = (y + x))))';
+      '(((R x) & (R y)) => ((R x) => ((x + y) = (y + x))))';
     var result = rules.extractHypothesis2(step, Toy.parse('R x'));
     assertEqual(expected, result);
     expected =
-      '(((R x) & (R y)) ==> ((R y) ==> ((x + y) = (y + x))))';
+      '(((R x) & (R y)) => ((R y) => ((x + y) = (y + x))))';
     result = rules.extractHypothesis2(step, Toy.parse('R y'));
     assertEqual(expected, result);
   },
@@ -1972,13 +1972,13 @@ var testCase = {
   testIsolateHypAt: function() {
     var step = rules.axiom('axiomCommutativePlus');
     var actual = rules.isolateHypAt(step, '/left/left');
-    assertEqual('((R y) ==> ((R x) ==> ((x + y) = (y + x))))', actual);
+    assertEqual('((R y) => ((R x) => ((x + y) = (y + x))))', actual);
   },
 
   testIsolateHyp: function() {
     var step = rules.axiom('axiomCommutativePlus');
     var actual = rules.isolateHyp(step, 'R x');
-    assertEqual('((R y) ==> ((R x) ==> ((x + y) = (y + x))))', actual);
+    assertEqual('((R y) => ((R x) => ((x + y) = (y + x))))', actual);
   },
 
   testConjunctionDeduper: function() {
@@ -2002,7 +2002,7 @@ var testCase = {
         typeof conjunct == 'string' ? Toy.parse(conjunct) : conjunct;
       // Y.log(rule(conjuncts, conjunct));
       var result = rule(conjuncts, conjunct);
-      assertEqual(Toy.infixCall(conjuncts, '==>', conjunct) + '',
+      assertEqual(Toy.infixCall(conjuncts, '=>', conjunct) + '',
                   result);
     }
     check('a', 'a');
@@ -2041,12 +2041,12 @@ var testCase = {
   },
 
   testSubtractionType: function() {
-    assertEqual('(((R x) & (R y)) ==> (R (x - y)))',
+    assertEqual('(((R x) & (R y)) => (R (x - y)))',
                 rules.subtractionType());
   },
 
   testDivisionType: function() {
-    assertEqual('((((y != 0) & (R x)) & (R y)) ==> (R (x / y)))',
+    assertEqual('((((y != 0) & (R x)) & (R y)) => (R (x / y)))',
                 rules.divisionType());
   },
 
@@ -2091,7 +2091,7 @@ var testCase = {
                 rules.subtractFromBoth(eqn, x5));
     assertEqual('((x * (x + 5)) = (x * (x + 5)))',
                 rules.multiplyBoth(eqn, x5));
-    assertEqual('(((x + 5) != 0) ==> ((x / (x + 5)) = (x / (x + 5))))',
+    assertEqual('(((x + 5) != 0) => ((x / (x + 5)) = (x / (x + 5))))',
                 rules.divideBoth(eqn, x5));
   },
 

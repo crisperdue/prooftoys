@@ -170,7 +170,7 @@ Toy.mathMarkup = function(text) {
     } else {
       // It is a constant name.
       switch(s) {
-      case '==>': return '&rArr;';
+      case '=>': return '&rArr;';
       case '==': return '&#x21d4;';	// Bidirectional implication
       case '!=': return '&ne;';
       case '>=': return '&ge;';

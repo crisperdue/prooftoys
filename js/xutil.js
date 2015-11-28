@@ -567,7 +567,7 @@ var constantTypes = {
 var definedTypes = {
   '&': booleanBinOpType(),
   '|': booleanBinOpType(),
-  '==>': booleanBinOpType()
+  '=>': booleanBinOpType()
 };
 
 // Indexed by the name defined.  Value is an expression if
@@ -1018,7 +1018,7 @@ function unparseString(content) {
  * Otherwise this also checks for any apparent math variables (as by
  * calling Expr.mathVars) and adds assumptions that all of those "math
  * variables" are real numbers.  If the main operator of the
- * expression is ==>, concatenates any added assumptions to its LHS.
+ * expression is =>, concatenates any added assumptions to its LHS.
  */
 function mathParse(str) {
   if (str[0] === '@') {
@@ -1027,14 +1027,14 @@ function mathParse(str) {
   var expr = parse(str);
   var assume = expr.mathVarConditions();
   if (assume) {
-    if (expr.isCall2('==>')) {
+    if (expr.isCall2('=>')) {
       // Any type assumptions follow the LHS.
       var result = infixCall(expr.getLeft().concat(assume, '&'),
-                             '==>',
+                             '=>',
                              expr.getRight());
       return result;
     } else {
-      var result = infixCall(assume, '==>', expr);
+      var result = infixCall(assume, '=>', expr);
       result.hasHyps = true;
       return result;
     }
@@ -1077,7 +1077,7 @@ var precedence = {
   '}': 0,
   // Alias for '=', with lower precedence.
   '==': 2,
-  '==>': 11,
+  '=>': 11,
   '|': 13,
   '&': 15,
   // Unlike the book, equality binds tighter than implication.  This
@@ -1126,7 +1126,7 @@ var superscripts = [
  */
 function unicodify(text) {
   var pattern =
-    /==>|==|!=|<=|>=|\s*\*\*\s*-?[0-9]+|\*\*|\*|-|<\/|\/|\bforall\b|\bexists\b/g;
+    /=>|==|!=|<=|>=|\s*\*\*\s*-?[0-9]+|\*\*|\*|-|<\/|\/|\bforall\b|\bexists\b/g;
   return text.replace(pattern, function(symbol) {
     var match;
     if ((match = symbol.match(/\s*\*\*\s*(-?)([0-9]+)/))) {
@@ -1199,10 +1199,10 @@ function equal(lhs, rhs) {
 }
 
 /**
- * Builds an expression [lhs ==> rhs].
+ * Builds an expression [lhs => rhs].
  */
 function implies(lhs, rhs) {
-  return call('==>', lhs, rhs);
+  return call('=>', lhs, rhs);
 }
 
 /**
@@ -1327,14 +1327,14 @@ function repeatedCall(operator, indices) {
 
 /**
  * Commutes the left and right sides of an equation in the form
- * l = r or a ==> l = r.
+ * l = r or a => l = r.
  */
 function commuteEqn(eqn) {
   var subst;
   if (subst = eqn.matchSchema('a = b')) {
     return Toy.parse('b = a').subFree(subst);
-  } else if (subst = eqn.matchSchema('h ==> a = b')) {
-    return Toy.parse('h ==> b = a').subFree(subst);
+  } else if (subst = eqn.matchSchema('h => a = b')) {
+    return Toy.parse('h => b = a').subFree(subst);
   } else {
     err(format('Not an equation: {1}', eqn));
   }

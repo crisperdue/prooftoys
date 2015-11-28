@@ -52,13 +52,13 @@ The first axiom, commutativity of addition
 Since Prooftoys can work with other kinds of values, the full
 statements of the axioms say explicitly that they are only guaranteed
 for real numbers.  In this case the full statement is:
-<s>R x & R y ==> x + y = y + x</s>, or with parentheses to clarify
-grouping, <s>((R x) & (R y)) ==> (x + y = y + x)</s>.
+<s>R x & R y => x + y = y + x</s>, or with parentheses to clarify
+grouping, <s>((R x) & (R y)) => (x + y = y + x)</s>.
 <p>
 <s>R x</s> means "<s>x</s> is a real number".
 The conditions about real numbers are not normally shown in the
 Prooftoys displays, to help reduce visual clutter.  The symbols
-<s>&</s> and <s>==></s> represent the mathematical
+<s>&</s> and <s>=></s> represent the mathematical
 "and" and "implies" relationships, explained further in the
 <a href="booleans.html">Logic through Pictures</a> page.
 <p>
@@ -129,7 +129,7 @@ the number 1 is an abbreviation for the assumption introduced on line
 on line 2.  So if line 1 assumes <s>x = y * 2</s> and line 2
 assumes <s>x + y = 6</s>, the whole line amounts to:
 <blockquote>
-<s>14. (x = y * 2) & (x + y = 6) ==> x = 4</s>
+<s>14. (x = y * 2) & (x + y = 6) => x = 4</s>
 </blockquote>
 <p>
 For additional background it may be helpful to read

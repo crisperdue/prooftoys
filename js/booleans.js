@@ -265,7 +265,7 @@ function drawStatements() {
                    birds2);
     });
 
-  // Picture where bird ==> wings, with normal shading.
+  // Picture where bird => wings, with normal shading.
   c = initCxt('birdWingsTrue');
   withinCircle(c, function() {
       render(c, merge(birds, {outside: true}));
@@ -274,7 +274,7 @@ function drawStatements() {
   installCircleHighlighting($('#implicationTable'),
                             c.canvas, birds, wings);
 
-  // Picture where bird ==> wings is not true everywhere, with normal shading.
+  // Picture where bird => wings is not true everywhere, with normal shading.
   c = initCxt('birdWingsFalse');
   withinCircle(c, function() {
       render(c, merge(birds2, {outside: true}));

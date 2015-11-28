@@ -274,7 +274,7 @@ function path(arg, opt_expr) {
   if (segments[0] == '') {
     segments.splice(0, 1);
   }
-  // Handle the result of splitting '/' ==> ['', '']:
+  // Handle the result of splitting '/' => ['', '']:
   if (segments.length == 1 && segments[0] == '') {
     segments = [];
   }

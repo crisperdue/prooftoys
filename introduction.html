@@ -55,7 +55,7 @@ operators, which are represented internally as function calls.
 Infix operators available in order of increasing precedence are:
 <ul>
 <li><code>==</code> (equivalence, displays as "<s>==</s>")
-<li><code>==></code> (implication, displays as "<s>==></s>")
+<li><code>=></code> (implication, displays as "<s>=></s>")
 <li><code>|</code> (or)
 <li><code>&</code> (and)
 <li><code>= != &lt; &lt;= &gt; &gt;=</code>
@@ -117,7 +117,7 @@ to it.  The Prooftoys <s>replace</s> rule is the same
 as the Q<sub>0</sub> derived Rule R', which does the same sort of
 replacement when the equation is conditional.  In other words it
 allows <s>C</s> to be replaced by <s>D</s> if
-<s>H ==> (C = D)</s>.
+<s>H => (C = D)</s>.
 It turns out that most equations in basic textbook algebra problems
 have this form when written out in full, which makes this rule
 especially useful.  See the section
@@ -189,11 +189,11 @@ Here Line 2 refers to the assumption on line 1, and
 line 4 refers to the assumptions on lines 1 and 3.
 Line 2 is a shorthand for:
 <blockquote>
-2. <s>x / 4 = y ==> x = 4 * y</s>
+2. <s>x / 4 = y => x = 4 * y</s>
 </blockquote>
 and line 4 similarly is just a shorthand for:
 <blockquote>
-4. <s>(x / 4 = y & y = 5) ==> x = 20</s>
+4. <s>(x / 4 = y & y = 5) => x = 20</s>
 </blockquote>
 
 <h2>Using the proof builder</h2>
@@ -241,21 +241,21 @@ enter an assumption click in the text entry field and select the rule
 <code>&lt;Enter&gt;</code>.  You will see the first line of your proof.
 <p>
 Next use the rule <s>assume hypothetically</s> again, typing in
-<code>p ==> q</code> as your second assumption.
+<code>p => q</code> as your second assumption.
 <p>
 For the inference step, click on the step number "1" at the <i>very
 beginning</i> in the first line of the proof display.  The whole line
 will highlight itself (in yellow) and stay highlighted as you move the
 mouse away.  Now use the dropdown list control to select a rule of
-inference to use.  When you select <s>[p] and [p ==> q] to [q]</s> from the
+inference to use.  When you select <s>[p] and [p => q] to [q]</s> from the
 list, a small form will appear with "1" as the hypothesis step.  Enter
 <code>2</code> as the number of the implication step to apply the rule
 to.  Press <code>&lt;Enter&gt;</code>.  You should see the conclusion
 <s>q</s> added to the proof.
 <p>
-Note that in this rule <s>[p]</s>, <s>[p ==> q]</s>, and <s>[q]</s> are
+Note that in this rule <s>[p]</s>, <s>[p => q]</s>, and <s>[q]</s> are
 patterns.  The rule needs two steps as its inputs, which must match
-the patterns <s>[p]</s> and <s>[p ==> q]</s>.  <s>p</s> can be any
+the patterns <s>[p]</s> and <s>[p => q]</s>.  <s>p</s> can be any
 expression, but it must be the same in both of the input steps.  The
 result of the inference will be the expression that matches with
 <s>q</s> in the second input step.  The brackets just indicate the
@@ -327,7 +327,7 @@ jQuery(function() {
 
   // Modus ponens
   var mp1 = rules.assume('p');
-  var mp2 = rules.assume('p ==> q');
+  var mp2 = rules.assume('p => q');
   var mp3 = rules.forwardChain(mp1, mp2);
   var mp4 = rules.asImplication(mp3);
   Toy.renderProof(mp4, $('#modusPonens'));

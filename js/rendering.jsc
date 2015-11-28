@@ -1274,8 +1274,8 @@ Atom.prototype._render = function(minPower) {
 // Private to effectivePower.
 var useParens = {
   '|': new Toy.Set().addAll(['&']),
-  '==>': new Toy.Set().addAll(['==>', '=']),
-  '==': new Toy.Set().addAll(['==>'])
+  '=>': new Toy.Set().addAll(['=>', '=']),
+  '==': new Toy.Set().addAll(['=>'])
 };
 
 /**
@@ -1779,7 +1779,7 @@ function expandMarkup(step, markup) {
   case 'shortFact':
     var place = info.inputs.term[0] || info.inputs.term;
     var term = Toy.termify(step.ruleArgs[place - 1]);
-    if (term.isCall2('==>')) {
+    if (term.isCall2('=>')) {
       term = term.getRight();
     }
     var text = term.toString();

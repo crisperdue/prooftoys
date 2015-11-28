@@ -304,7 +304,7 @@ function usesSite(rule) {
 /**
  * Adds class=step, class=term, etc. to each form element according
  * to its name -- same as the name, but stripping off any numeric suffix,
- * e.g. step2 ==> step.  Also prevents autocompletion, basically because
+ * e.g. step2 => step.  Also prevents autocompletion, basically because
  * some sites add autosuggest entries to fields named "term".
  */
 function addClassInfo(form) {
@@ -348,7 +348,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
       } else {
 	if (fieldType == 'step'
 	    || (fieldType == 'equation' && step.unHyp().isCall2('='))
-	    || (fieldType == 'implication' && step.unHyp().isCall2('==>'))) {
+	    || (fieldType == 'implication' && step.unHyp().isCall2('=>'))) {
 	  this.value = n;
           // Stop iteration.
 	  return false;
@@ -879,7 +879,7 @@ function acceptsSelection(step, ruleName) {
     return (!argInfo.site &&
             (argInfo.step
              || (argInfo.equation && step.unHyp().isCall2('='))
-             || (argInfo.implication && step.unHyp().isCall2('==>'))));
+             || (argInfo.implication && step.unHyp().isCall2('=>'))));
   }
 }
 
@@ -997,7 +997,7 @@ BasicRuleSelector.prototype.update = function() {
     var text = statement.toString();
     var toDisplay = statement;
     if (statement.isEquation()) {
-      if (statement.isCall2('==>')) {
+      if (statement.isCall2('=>')) {
       // Make the statement be the fact's equation.
       toDisplay = statement = statement.getRight();
       }
