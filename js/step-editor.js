@@ -172,8 +172,11 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   this.$node.toggleClass('busy', busy);
   var $working = $(this.proofControl.node).find('.ruleWorking');
   if (busy) {
+    // Temporarily turn on display of ruleSelector to get its offset.
+    this.ruleSelector.$node.toggle(true);
     var offset = this.ruleSelector.$node.offset();
-    // The node needs to be shown to set its offset.
+    this.ruleSelector.$node.toggle(false);
+    // and similarly for $working to set its offset.
     $working.toggle(true);
     $working.offset({left: offset.left + 40, top: offset.top + 5});
     // Then  turn it off and fade it back in.
