@@ -429,6 +429,7 @@ ProofEditor.prototype.showProofButtons = @(value) {
 
 // DOM representation notes:
 //
+// <div class=proofDisplay>
 // <div class=stepsParent>  (TODO: remove this obsolete level of DIV)
 //   <div class=proofSteps>  (getStepsNode)
 //     // Proof steps and possible subproofs between them
@@ -454,6 +455,8 @@ ProofEditor.prototype.showProofButtons = @(value) {
  * CSS class proofDisplay and the ProofControl as the value of its
  * data('proofControl').  Only ProofControl nodes should have the
  * proofDisplay class.
+ *
+ * stepsNode: DOM node of the proofSteps DIV.
  *
  * stepPrefix: string prefixed to each step number, defaults to
  * an empty string.  Set only during initialization.
@@ -494,9 +497,10 @@ function ProofControl(properties) {
   var $node = $('<div class=proofDisplay>' +
              '<div class=stepsParent><div class=proofSteps></div></div>' +
              '</div>');
-  this.node = dom($node);
   $node.data('proofControl', this);
-  var stepsParent = $node.find('.stepsParent');
+  this.node = dom($node);
+
+  this.stepsNode = dom($node.find('.proofSteps'));
 
   this._editable = false;
   // Initially selection is not locked out, so selections can be made
@@ -878,7 +882,7 @@ ProofControl.prototype.renderStep = function(step) {
                        '<span class=wff></span>')),
               // Allow a word break here.
               '<wbr><span class=stepInfo></span>');
-  $(self.node).find('.proofSteps').append($step);
+  $(self.stepsNode).append($step);
   if (self.isEditable()) {
     $step.addClass('withDeleter');
   }
