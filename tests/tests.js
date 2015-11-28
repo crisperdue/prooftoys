@@ -1556,9 +1556,8 @@ var testCase = {
 
     // Hypotheses
     var step1 = Toy.rules.assume(Toy.parse('x = 0'));
-    var wff = Toy.parse('x = 0 => y > x');
-    wff.hasHyps = true;
-    wff.getLeft().sourceStep = step1;
+    var wff = Toy.rules.assert('x = 0 => y > x').apply('asHypotheses');
+    // wff.getLeft().sourceStep = step1;
     assertEqual('((x = 0) => (forall {y. (y > x)}))',
                 Toy.rules.addForall(wff, 'y'));
   },
@@ -2037,7 +2036,7 @@ var testCase = {
     var step1 = rules.instVar(input, '2', x);
     // Apply arithmetic to the "2 != 0" part of the instantiated axiom.
     var result = rules.arithmetic(step1, '/left/right');
-    assertEqual('T', result.get('/left/right'));
+    assert(Toy.parse('2 != 0').sameAs(result.get('/left')));
   },
 
   testSubtractionType: function() {

@@ -67,6 +67,10 @@ var _allHyps = {};
  * unless "retain" is true, making the step a no-op.  (The purpose is
  * to reduce clutter for readers of the proof.)
  *
+ * If there is exactly one ruleDep, and the result assumptions are
+ * not the same object as the ruleDep's assumptions, dedupeHyps of
+ * the result here automatically.
+ *
  * TODO: Make a Step class for proof steps, and have this method
  * return a new one.
  *
@@ -112,6 +116,13 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   step.hasHyps = this.hasHyps;
   step.ruleArgs = jQuery.makeArray(ruleArgs || []);
   step.ruleDeps = ruleDeps;
+
+  var prev = ruleDeps[0];
+  if (ruleDeps.length === 1 && prev.hasHyps && step.hasHyps &&
+      prev.getHyps() !== step.getHyps()) {
+    step = rules.dedupeHyps(step);
+  }
+
   return step;
 };
 
@@ -3489,7 +3500,9 @@ var ruleInfo = {
   // Works with hypotheses and with plain implications.
   dedupeHyps: {
     action: function(step) {
-      step.assertCall2('=>');
+      if (!step.isCall2('=>')) {
+        return step;
+      }
       var deduper =
         rules.conjunctionDeduper(step.getLeft(), Toy.sourceStepComparator);
       var result = rules.replace(deduper, step, '/left');
