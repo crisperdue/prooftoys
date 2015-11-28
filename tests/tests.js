@@ -2224,13 +2224,14 @@ Toy.soonDo(function() {
       console.log(name + ': not a function');
     }
   }
+  var nFacts = 0;
   Toy.eachFact(function(goal, synopsis) {
-      console.log('Testing ' + synopsis);
-        test(synopsis, function() {
-            assert(Toy.getResult(goal).ruleName);
-          });
+      test(synopsis, function() {
+          assert(Toy.getResult(goal).ruleName);
+        });
+      nFacts++;
     });
-  console.log('End of tests');
+  console.log('Queued', nFacts, 'facts to test');
 });
 
 })();
