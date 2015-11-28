@@ -963,14 +963,13 @@ BasicRuleSelector.prototype.refresh = function() {
 BasicRuleSelector.prototype.fadeToggle = function(visible) {
   var $node = this.$node;
   if (visible) {
-    $node.toggleClass('hidden', false);
-    $node.fadeTo(100, 1);
+    $node.fadeIn(200);
   } else {
     // This fades out as the busy indicator fades in, so the duration
     // must be less than the fadeIn duration of the busy indicator;
     // otherwise completion of this will be delayed by running of the
     // actual rule.
-    $node.fadeTo(0, 0, function() { $node.toggleClass('hidden', true); });
+    $node.fadeOut(0);
   }
 };
 
