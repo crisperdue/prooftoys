@@ -150,10 +150,8 @@ function StepEditor(controller) {
   });
   self.form.on('click', 'button', function() { self.tryExecuteRule(true); });
   // Always clear the errors when clicked.
-  self.$proofErrors.on('click', function() {
-      // TODO: Don't hide on click in a step debugging display inside
-      //   the error node.
-      $(this).hide();
+  self.$proofErrors.on('click', '.clearer', function() {
+      self.$proofErrors.hide();
     });
 }
 
@@ -208,7 +206,7 @@ StepEditor.prototype.report = function(error) {
   assert($proofErrors.length, 'proofJQ?');
   // Clicking _anywhere_ will actually clear the message.
   $proofErrors.show();
-  $proofErrors.html('<button>X</button>');
+  $proofErrors.html('<button class=clearer>X</button>');
   if (error instanceof Error) {
     $proofErrors.append('<b>Error: ' + error.message + '</b>');
     if (error.step) {
