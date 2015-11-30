@@ -1238,7 +1238,13 @@ Atom.prototype.isUnary = function() {
  * than dump(expr2).  Useful for ordering deduplicated hypotheses.
  */
 function sourceStepLess(e1, e2) {
-  if (e1.sourceStep) {
+  if (e1.isCall1('R')) {
+    if (e2.isCall1('R')) {
+      return sourceStepComparator(e1.arg, e2.arg);
+    } else {
+      return -1;
+    }
+  } else if (e1.sourceStep) {
     if (e2.sourceStep) {
       return e1.sourceStep.ordinal < e2.sourceStep.ordinal;
     } else {
@@ -1278,10 +1284,17 @@ function hypIsLess(e1, e2) {
 /**
  * Comparator for Array.sort corresponding to sourceStepLess.
  * Expressions from assumptions (steps) come before others, and others
- * sort lexicographically using "dump".
+ * sort lexicographically using "dump".  Value < 0 means e1 is less
+ * than e2.
  */
 function sourceStepComparator(e1, e2) {
-  if (e1.sourceStep) {
+  if (e1.isCall1('R')) {
+    if (e2.isCall1('R')) {
+      return sourceStepComparator(e1.arg, e2.arg);
+    } else {
+      return -1;
+    }
+  } else if (e1.sourceStep) {
     if (e2.sourceStep) {
       return e1.sourceStep.ordinal - e2.sourceStep.ordinal;
     } else {

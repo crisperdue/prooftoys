@@ -119,10 +119,13 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
 
   var prev = ruleDeps[0];
   if (ruleDeps.length === 1 && prev.hasHyps && step.hasHyps &&
-      prev.getHyps() !== step.getHyps()) {
+      prev.getLeft() !== step.getLeft() && prev.getRight() !== step.getRight()) {
+    // If the step did not affect the assumptions there should be no
+    // need to dedupe, and if it modified only assumptions that was
+    // probably its purpose, so don't undo it.
+    // Note that deduping amounts to normalization.
     step = rules.dedupeHyps(step);
   }
-
   return step;
 };
 
