@@ -3313,7 +3313,7 @@ var ruleInfo = {
     },
     inputs: {bool: 1},
     // Too technical to expose for most users.
-    // form: ('Chains of conjunctions to merge: <input name=bool>'),
+    // form: ('Conjunctions to merge: <input name=bool>'),
     menu: 'Derives an equation to merge chains of input conjunctions',
     description: 'merge conjunctions in {bool}'
   },    
@@ -3377,14 +3377,21 @@ var ruleInfo = {
     action: function(step, hyp_arg) {
       var hyp = termify(hyp_arg);
       assert(step.isCall2('=>'));
-      var taut = rules.tautology(step.getLeft().hypMover(hyp));
-      var step1 = rules.rewrite(step, '/left', taut);
-      var taut2 = rules.tautology('a & b => c == a => (b => c)');
-      var result = rules.rewrite(step1, '', taut2);
+      if (hyp.sameAs(step.getLeft())) {
+        var result = rules.asImplication(step);
+      } else {
+        var taut = rules.tautology(step.getLeft().hypMover(hyp));
+        var step1 = rules.rewrite(step, '/left', taut);
+        var taut2 = rules.tautology('a & b => c == a => (b => c)');
+        var result = rules.rewrite(step1, '', taut2);
+      }
       return result.justify('isolateHyp', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
-    form: 'extract assumption <input name=bool> from step <input name=bool>',
+    menu: 'extract an assumption',
+    form: 'extract assumption <input name=bool> from step <input name=step>',
+    description: 'extract assumption {bool};; {in step step}',
+    labels: 'basic',
     comment: 'extract an assumption'
   },
 
