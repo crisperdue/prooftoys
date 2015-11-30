@@ -636,7 +636,12 @@ input.sted-clear {
 /* Inputs for rule arguments */
 
 /* input.string is currently just used for defined names */
-input.term, input.string {
+input.term, input.string, input.bool {
+  font-style: italic;
+  width: 20em;
+}
+
+input.bool {
   font-style: italic;
   width: 30em;
 }
