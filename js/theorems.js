@@ -1499,7 +1499,8 @@ var ruleInfo = {
       var step1 = rules.theorem('r5212');
       var step2 = rules.replace(stepa, step1, '/left');
       var step3 = rules.replace(stepb, step2, '/main/right');
-      return step3.justify('makeConjunction', arguments, [a, b]);
+      return (step3.apply('dedupeHyps')
+              .justify('makeConjunction', arguments, [a, b]));
     },
     inputs: {step: [1, 2]},
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
