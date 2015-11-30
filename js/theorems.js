@@ -4831,21 +4831,18 @@ var equivalences = {
 
   'a = b == a + c = b + c': {
     action: function() {
-      // TODO: Make a mechanism that automatically combines
-      // assumptions, thus greatly simplifying rules like this one.
       var forward = (rules.assume('a = b')
                      .apply('addToBoth', 'c')
                      .apply('asImplication'));
-      var back = (rules.assume('a+c=b+c')
+      var back = (rules.assume('a + c = b + c')
                   .apply('subtractFromBoth', 'c')
                   .apply('groupToRight', '/main/left/left/right')
                   .apply('simplifySite', '/main/left')
                   .apply('groupToRight', '/main/right/left/right')
                   .apply('simplifySite', '/main/right')
-                  .apply('asImplication'));
+                  .apply('isolateHyp', 'a + c = b + c'))
       var conj = rules.makeConjunction(forward, back);
-      var taut = '(a => b) & (h & b => a) => (h => (a == b))';
-      return rules.forwardChain(conj, taut).apply('asHypotheses');
+      return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
     }
   },
 
