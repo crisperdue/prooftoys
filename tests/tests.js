@@ -2035,8 +2035,9 @@ var testCase = {
     input = rules.axiomReciprocal();
     var step1 = rules.instVar(input, '2', x);
     // Apply arithmetic to the "2 != 0" part of the instantiated axiom.
-    var result = rules.arithmetic(step1, '/left/right');
-    assert(Toy.parse('2 != 0').sameAs(result.get('/left')));
+    var location = '/left/right';
+    var result = rules.arithmetic(step1, location);
+    assertEqual('T', result.get(location));
   },
 
   testSubtractionType: function() {
