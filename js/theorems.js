@@ -3359,10 +3359,10 @@ var ruleInfo = {
   // of the form h' => (e => c) where e is the referenced element,
   // h' is the proof step's hypotheses excluding occurrences of "e",
   // and c is the implication RHS.  Useful for simplifying hypotheses.
-  isolateHypAt: {
+  extractHypAt: {
     action: function(step, path) {
-      var result = rules.isolateHyp(step, step.get(path));
-      return result.justify('isolateHypAt', arguments, [step]);
+      var result = rules.extractHyp(step, step.get(path));
+      return result.justify('extractHypAt', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
@@ -3371,10 +3371,10 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Like isolateHypAt, taking its hypotheses as a term to be matched.
+  // Like extractHypAt, taking its hypotheses as a term to be matched.
   // Useful for isolating (extracting) implicit assumptions such as
   // variable types.
-  isolateHyp: {
+  extractHyp: {
     action: function(step, hyp_arg) {
       var hyp = termify(hyp_arg);
       assert(step.isCall2('=>'));
@@ -3386,7 +3386,7 @@ var ruleInfo = {
         var taut2 = rules.tautology('a & b => c == a => (b => c)');
         var result = rules.rewrite(step1, '', taut2);
       }
-      return result.justify('isolateHyp', arguments, [step]);
+      return result.justify('extractHyp', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
     menu: 'extract an assumption',
@@ -4840,7 +4840,7 @@ var equivalences = {
                   .apply('simplifySite', '/main/left')
                   .apply('groupToRight', '/main/right/left/right')
                   .apply('simplifySite', '/main/right')
-                  .apply('isolateHyp', 'a + c = b + c'))
+                  .apply('extractHyp', 'a + c = b + c'))
       var conj = rules.makeConjunction(forward, back);
       return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
     }
@@ -5332,14 +5332,14 @@ var algebraIdentities = {
       var step = rules.assume('a = neg b')
       .apply('addToBoth', 'b')
       .rewrite('/main/right', 'neg a + a = 0')
-      .apply('isolateHyp', 'a = neg b');
+      .apply('extractHyp', 'a = neg b');
       var converse = rules.assume('a + b = 0')
       .apply('addToBoth', 'neg b')
       .rewrite('/main/right', '0 + a = a')
       .rewrite('/main/left', 'a + b + c = a + (b + c)')
       .rewrite('/main/left/right', 'a + neg a = 0')
       .rewrite('/main/left', 'a + 0 = a')
-      .apply('isolateHyp', 'a + b = 0');
+      .apply('extractHyp', 'a + b = 0');
       var conj = rules.makeConjunction(step, converse);
       var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
       return rules.rewrite(conj, '/main', taut);

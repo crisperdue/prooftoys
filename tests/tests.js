@@ -1970,13 +1970,13 @@ var testCase = {
 
   testIsolateHypAt: function() {
     var step = rules.axiom('axiomCommutativePlus');
-    var actual = rules.isolateHypAt(step, '/left/left');
+    var actual = rules.extractHypAt(step, '/left/left');
     assertEqual('((R y) => ((R x) => ((x + y) = (y + x))))', actual);
   },
 
   testIsolateHyp: function() {
     var step = rules.axiom('axiomCommutativePlus');
-    var actual = rules.isolateHyp(step, 'R x');
+    var actual = rules.extractHyp(step, 'R x');
     assertEqual('((R y) => ((R x) => ((x + y) = (y + x))))', actual);
   },
 
