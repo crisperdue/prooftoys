@@ -1242,8 +1242,10 @@ function sourceStepLess(e1, e2) {
     if (e2.isCall1('R')) {
       return sourceStepComparator(e1.arg, e2.arg);
     } else {
-      return -1;
+      return true;
     }
+  } else if (e2.isCall2('R')) {
+    return 1;
   } else if (e1.sourceStep) {
     if (e2.sourceStep) {
       return e1.sourceStep.ordinal < e2.sourceStep.ordinal;
@@ -1294,6 +1296,8 @@ function sourceStepComparator(e1, e2) {
     } else {
       return -1;
     }
+  } else if (e2.isCall1('R')) {
+    return 1;
   } else if (e1.sourceStep) {
     if (e2.sourceStep) {
       return e1.sourceStep.ordinal - e2.sourceStep.ordinal;
