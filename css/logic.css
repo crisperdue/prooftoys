@@ -620,12 +620,6 @@ span.stepRef {
   color: #999;
 }
 
-/* Input for rule name */
-input.sted-input {
-  font-family: inherit;
-  font-size: 100%;
-  width: 80%;
-}
 
 /* Button to clear the current editor input form */
 input.sted-clear {

@@ -14,11 +14,6 @@ var assert = Toy.assertTrue;
 // CSS class names beginning with "sted-" are reserved to
 // the step editor.  Access to nodes through their class
 // should always work in the context of the step editor's node.
-// The CSS classes are:
-//
-// sted-input: The main input field, has auto-completion.
-// sted-label: Text label of the main input field.
-// sted-paste: Button for pasting the selected part of a WFF.
 
 //
 // Each rule has a descriptor of its arguments
