@@ -4853,13 +4853,47 @@ var equivalences = {
     }
   },
 
-  // Prove c != 0 from the real-value conditions in the givens.
-  '(a = b | c = 0) == a * c = b * c': {
-    a | c => b
-      a => b
-      c => b
-    b => a | c
-    !a & !c => !b
+  // If functions are total, an operation such as x / 0 has a value,
+  // though the value might not be a number.  Thus an equation such as
+  // x / (1 - x) = 1 / (1 - x) is true when x = 1 since 1 / 0 = 1 / 0,
+  // with the same operations being applied to the same inputs.
+
+  // It is logically correct to allow x = 1 as a solution to the
+  // equation x / (1 - x) = 1 / (1 - x).  Even if such problems are
+  // not stated with the side conditions that avoid zero denominators,
+  // the fact that x / x = 1 == x != 0 prevents more serious
+  // difficulties.
+
+  // In textbook math, a solution is only considered valid if it
+  // results in values outside the domain, usually the real numbers.
+  // Ann implementable approach to this is to state the problem with
+  // the side condition, e.g. if the given is X1 / X2 = X3 (where the
+  // Xes are expressions), state the problem as X1 / X2 = X3 and X2 !=
+  // 0, on the grounds that the values involved will not be real
+  // numbers ("undefined").
+
+  // Note: we could use the following to generate the side condition.
+  // (a = b | c = 0) == a * c = b * c
+  //   and therefore
+  // c != 0 => (a = b == a * c = b * c)
+  //   and so
+  // (c != 0 & a == c != 0 & b)
+  // This lets us multiply both sides when appropriate.
+
+  // We could use the following to eliminate the side condition
+  // (for example in case a is <expr> = 0):
+  // ((!a => (b == c)) & (a => !b) & (a => !c)) => (b == c)
+  //
+  // In the usual use case b is an equation to solve and c is the
+  // solution.  This works for most division by zero situations, where
+  // a is X = 0 for an expression X, but if both sides of b have the
+  // same denominator, for example, it will be true when that
+  // denominator is zero, so this approach will not apply.
+  //
+  // This is probably also not so good for educational
+  // purposes because it gets us involved with undefined terms.
+  //
+
   },
 
   'a = b == a / c = b / c': {
