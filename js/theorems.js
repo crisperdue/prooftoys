@@ -5249,16 +5249,6 @@ var recipFacts = {
       return rules.forwardChain(fact, taut);
     }
   },
-  /* Proved above from axiomReciprocal.
-  '@R a & a != 0 => recip a != 0': {
-    action: function() {
-    var taut = rules.tautology('(a => b & c) => (a => c)');
-    var fact = rules.fact('@R a & a != 0 => R (recip a) & recip a != 0');
-    return rules.forwardChain(fact, taut);
-    }
-  },
-  */
-
   'a != 0 & b != 0 => recip (a * b) = recip a * recip b': {
     action: function() {
       var step1 = rules.fact('a * recip a = 1');
