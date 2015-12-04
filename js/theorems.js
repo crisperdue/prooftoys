@@ -2773,7 +2773,6 @@ var ruleInfo = {
          where: '$.b.isNumeral() && $.a.isVariable()'},
         {stmt: 'a * b * c = a * c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
-        {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
         {stmt: 'a / b * c = a / c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
 
@@ -4846,13 +4845,24 @@ var equivalences = {
     }
   },
 
-/*
   'a = b == a - c = b - c': {
     action: function() {
-      return rules.assert('R a & R b => (a = b) == a - c = b - c');
+      var forward = (rules.assume('a = b')
+                     .apply('subtractFromBoth', 'c')
+                     .apply('asImplication'));
+      var back = (rules.assume('a - c = b - c')
+                  .apply('addToBoth', 'c')
+                  .apply('groupToRight', '/main/left/left/right')
+                  .apply('simplifySite', '/main/left')
+                  .apply('groupToRight', '/main/right/left/right')
+                  .apply('simplifySite', '/main/right')
+                  .apply('extractHyp', 'a - c = b - c'))
+      var conj = rules.makeConjunction(forward, back);
+      return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
     }
   },
 
+/*
   // If functions are total, an operation such as x / 0 has a value,
   // though the value might not be a number.  Thus an equation such as
   // x / (1 - x) = 1 / (1 - x) is true when x = 1 since 1 / 0 = 1 / 0,
