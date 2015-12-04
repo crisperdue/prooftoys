@@ -6060,15 +6060,6 @@ var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP',
                   'axiomPlusType', 'axiomTimesType',
                   'axiomNegType', 'axiomReciprocalType'];
 
-var theoremNames =
-  (axiomNames.concat(['defFFromBook', 'r5217Book', 'r5225',
-                      'defAnd', 'tIsXIsX', 'forallXT', 'xAlwaysX',
-                      'r5211', 't', 'r5212', 'r5230TF', 'r5230FT',
-                      'r5231T', 'r5231F', 'falseEquals', 'trueEquals',
-                      'subtractionType', 'divisionType', 'eqIsEquiv',
-                      'equalitySymmetric', 'equalityTransitive',
-                      'factNonzeroProduct']));
-
 
 //// UTILITY FUNCTIONS
 
@@ -6524,7 +6515,6 @@ Toy.assertFacts = false;
 Toy.getStepCounter = getStepCounter;
 
 Toy.axiomNames = axiomNames;
-Toy.theoremNames = theoremNames;
 Toy.addRule = addRule;
 Toy.addFact = addFact;
 Toy.getResult = getResult;
@@ -6572,8 +6562,11 @@ Toy._flagHyps = flagHyps;
 // Do this after support modules are initialized.
 $(function() {
     // Add all the named theorems to their database.
-    for (var i = 0; i < theoremNames.length; i++) {
-      addTheorem(theoremNames[i]);
+    for (var name in rules) {
+      var action = rules[name];
+      if (action.length == 0) {
+        addTheorem(name);
+      }
     }
 
     addFactsMap(logicFacts);
