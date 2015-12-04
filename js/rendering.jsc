@@ -1754,6 +1754,8 @@ function expandMarkup(step, markup) {
   var markupRest = matches[1];
   var markupName = matches[2];
   switch (markupName) {
+  case 'string':
+    return Toy.escapeHtml(step.ruleArgs[info.inputs.string - 1]);
   case 'step':
   case 'step1':
     return stepNumber(info.inputs.step, 0);

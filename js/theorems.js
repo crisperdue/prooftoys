@@ -374,10 +374,19 @@ var ruleInfo = {
    * Refer to a theorem by looking it up in the database rather
    * than proving it all over again.
    */
-  theorem: function(name) {
-    // See the "axiom" rule for explanation of the
-    // re-justification on each lookup.
-    return Toy.getTheorem(name).justify('theorem', [name]);
+  theorem: {
+    action: function(name) {
+      // See the "axiom" rule for explanation of the
+      // re-justification on each lookup.
+      assert(rules[name], 'No theorem named {1}', name);
+      return Toy.getTheorem(name).justify('theorem', [name]);
+    },
+    inputs: {string: 1},
+    form: ('Look up theorem named <input name=string>'),
+    menu: 'look up a theorem',
+    comment: (''),
+    description: 'theorem {string}',
+    labels: 'basic'
   },
 
   /**
@@ -4361,13 +4370,14 @@ var ruleInfo = {
   // Currently inline if it is a no-op.
   // Also proves statements of tautologies and simple arithmetic facts.
   // Removes any " = T" from boolean-valued arithmetic facts.
+  // Programmatic usage supports theorems by name, but not the UI.
   fact: {
     action: function(statement) {
-      if (statement.ruleName) {
+      if (Toy.isStep(statement)) {
         // It is an already proved statement.
         return statement;
       }
-      // Try named theorems.
+      // Try named theorems (not available from the UI).
       var result = getTheorem(statement);
       if (result) {
         return result;
