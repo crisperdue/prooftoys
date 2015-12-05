@@ -1788,11 +1788,7 @@ function expandMarkup(step, markup) {
     if (term.isCall2('=>')) {
       term = term.getRight();
     }
-    var text = term.toString();
-    if (text[0] === '(') {
-      text = text.slice(1, -1);
-    }
-    return Toy.mathMarkup(text);
+    return termDisplay(term);
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;
     return Toy.termify(step.ruleArgs[place - 1]).toHtml();
@@ -1805,6 +1801,17 @@ function expandMarkup(step, markup) {
     // Pass it through unchanged.
     return markup;
   }
+}
+
+/**
+ * Returns an HTML display of the given term, as in step descriptions.
+ */
+function termDisplay(term) {
+  var text = term.toString();
+  if (text[0] === '(') {
+    text = text.slice(1, -1);
+  }
+  return Toy.mathMarkup(text);
 }
 
 /**
