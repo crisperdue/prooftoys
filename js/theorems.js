@@ -190,8 +190,8 @@ Expr.addMethods(ruleMethods);
 // form: HTML template for the rule's input form to be presented
 //   by the step editor.
 // menu: plain text for the rule's menu item (may become HTML in the future)
-// comment: plain text comment to become the title of mentions of the rule
-//   name in proof displays and the description in subproof displays.
+// tooltip: plain text to become the title attribute of mentions of the
+//   rule name in proof displays and the description in subproof displays.
 // result: For theorems with no parameters only; this is the statement
 //   of the theorem.  If given as text in ruleInfo, converted into an
 //   expression in "rules".
@@ -231,7 +231,7 @@ var ruleInfo = {
     menu: 'assert without proof',
     labels: 'advanced',
     description: 'assert',
-    comment: 'WFF to assert (possibly to prove later)'
+    tooltip: 'WFF to assert (possibly to prove later)'
   },
 
   define: {
@@ -242,7 +242,7 @@ var ruleInfo = {
     form: ('Define name <input name=varName> as <input name=term>'),
     labels: 'uncommon',
     description: 'define {var}',
-    comment: 'create a simple definition'
+    tooltip: 'create a simple definition'
   },
 
   /**
@@ -264,7 +264,7 @@ var ruleInfo = {
     inputs: {bool: 1},
     form: ('Assume <input name=bool>'),
     menu: 'assume hypothetically',
-    comment: 'Hypothesis to assume',
+    tooltip: 'Hypothesis to assume',
     description: 'assumption',
     labels: 'basic'
   },
@@ -349,7 +349,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Convert hypotheses to explicit implication in step '
            + '<input name=step>'),
-    comment: 'assumptions explicit',
+    tooltip: 'assumptions explicit',
     description: 'assumptions explicit;; {in step step}',
     labels: 'algebra basic'
   },
@@ -365,7 +365,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
-    comment: 'show full equation',
+    tooltip: 'show full equation',
     description: 'show full equation;; {in step step}',
     labels: 'display basic'
   },
@@ -385,7 +385,7 @@ var ruleInfo = {
     inputs: {string: 1},
     form: ('Look up theorem named <input name=string>'),
     menu: 'look up a theorem',
-    comment: (''),
+    tooltip: (''),
     description: 'theorem',
     labels: 'basic'
   },
@@ -405,7 +405,7 @@ var ruleInfo = {
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
            + 'if by cases enter T or F <input name=optString>'),
-    comment: 'look up a definition',
+    tooltip: 'look up a definition',
     description: '=definition'
   },
 
@@ -478,7 +478,7 @@ var ruleInfo = {
     inputs: {equation: 1, site: 2},
     // Currently not offered in forms; use "replace".
     // form: ('Replace selection with right side of step <input name=equation>'),
-    comment: ('Replace an occurrence of a term with an equal term.'),
+    tooltip: ('Replace an occurrence of a term with an equal term.'),
     menu: 'replace {term} with something equal',
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'uncommon'
@@ -492,7 +492,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'axiom of T & F',
-    comment: ('T and F are all the booleans')
+    tooltip: ('T and F are all the booleans')
   },
 
   axiom2: {
@@ -503,7 +503,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'axiom of function application',
-    comment: ('functions take equal values to equal values')
+    tooltip: ('functions take equal values to equal values')
   },
 
   axiom3: {
@@ -513,7 +513,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: ('extensionality: functions are equal based on equal results'
+    tooltip: ('extensionality: functions are equal based on equal results'
 	      + ' on all inputs.'),
     description: 'axiom of equal functions'
   },
@@ -543,7 +543,7 @@ var ruleInfo = {
     form: 'Enter {v. body} expr <input name=term>',
     menu: 'apply a function to its argument',
     description: 'axiom of substitution',
-    comment: ('')
+    tooltip: ('')
   },
 
   axiom5: {
@@ -553,7 +553,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: ('axiom of description'),
+    tooltip: ('axiom of description'),
     description: 'axiom of description'
   },
 
@@ -570,7 +570,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'boolean axiom',
-    comment: ('')
+    tooltip: ('')
   },
 
   // Definition of F, for book-style proofs.
@@ -607,7 +607,7 @@ var ruleInfo = {
     inputs: {term: 1},
     form: 'Term to prove equal to itself: <input name=term>',
     menu: 'A = A',
-    comment: 'Derives A = A.',
+    tooltip: 'Derives A = A.',
     description: 'A = A',
     labels: 'primitive'
   },
@@ -621,7 +621,7 @@ var ruleInfo = {
       return result.justify('eqIsEquiv', []);
     },
     form: '',
-    comment: '= and \u21d4 are the same',
+    tooltip: '= and \u21d4 are the same',
     labels: 'uncommon'
   },
 
@@ -637,7 +637,7 @@ var ruleInfo = {
     inputs: {bool: 1},
     form: 'Statement to prove equal to itself: <input name=bool>',
     menu: 'A \u21d4 A',
-    comment: 'Derives A \u21d4 A.',
+    tooltip: 'Derives A \u21d4 A.',
     description: 'A \u21d4 A',
     labels: 'primitive'
   },
@@ -669,7 +669,7 @@ var ruleInfo = {
     inputs: {equation: 1},
     form: 'Swap sides in step <input name=equation>',
     menu: '[a = b] to [b = a]',
-    comment: 'from a = b deduce b = a',
+    tooltip: 'from a = b deduce b = a',
     description: '[a = b] to [b = a]',
     labels: 'basic algebra'
   },
@@ -683,7 +683,7 @@ var ruleInfo = {
     },
     description: '[a = b] and [b = c] to [a = c]',
     menu: '[a = b] and [b = c] to [a = c]',
-    comment: 'from a = b and b = c deduce a = c'
+    tooltip: 'from a = b and b = c deduce a = c'
   },
 
   // r5201d, not used.  Works with hypotheses.
@@ -715,7 +715,7 @@ var ruleInfo = {
     form: ('Apply both sides of step <input name=equation>'
 	   + ' to term <input name=term>'),
     menu: '[f = g] to [f x = g x]',
-    comment: 'given f = g, deduce (f x) = (g x)',
+    tooltip: 'given f = g, deduce (f x) = (g x)',
     description: '[f = g] to [f x = g x]',
   },
 
@@ -737,7 +737,7 @@ var ruleInfo = {
     form: ('Apply function <input name=term>'
 	   + ' to both sides of step <input name=equation>'),
     menu: '[a = b] to [f a = f b]',
-    comment: 'given a = b deduce (f a) = (f b)',
+    tooltip: 'given a = b deduce (f a) = (f b)',
     description: 'from a = b to (f a) = (f b)'
   },
 
@@ -767,7 +767,7 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     menu: 'replace name with its definition',
-    comment: (''),
+    tooltip: (''),
     description: 'definition of {site}'
   },
 
@@ -784,7 +784,7 @@ var ruleInfo = {
     isRewriter: true,
     // form: '',
     menu: 'apply a function to its argument',
-    comment: ('Applies a lambda to its argument'),
+    tooltip: ('Applies a lambda to its argument'),
     description: '=simpleApply',
     labels: 'uncommon'
   },
@@ -839,7 +839,7 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     menu: 'apply a function to its argument',
-    comment: ('Applies a function, named or not, to one or two arguments'),
+    tooltip: ('Applies a function, named or not, to one or two arguments'),
     description: '=apply'
   },
 
@@ -868,7 +868,7 @@ var ruleInfo = {
     inputs: {bindingSite: 1, varName: 3},
     form: ('Rename to <input name=varName>'),
     menu: 'rename a bound variable',
-    comment: ('Change the name of a bound variable.  The new name '
+    tooltip: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
               + 'the one with changed bound variable.'),
@@ -891,7 +891,7 @@ var ruleInfo = {
     inputs: {equation: 1, varName: 2},
     form: ('Bind variable <input name=varName> in step <input name=equation>'),
     menu: '[a = b] to [{v. a} = {v. b}]',
-    comment: ('Makes each side of an equation into a function'
+    tooltip: ('Makes each side of an equation into a function'
               + ' of the variable you choose.'),
     description: '[a = b] to [{v. a} = {v. b}]',
     labels: 'primitive'
@@ -914,7 +914,7 @@ var ruleInfo = {
     form: ('Instantiate <input name=varName> with <input name=term> '
 	   + 'in step <input name=equation>'),
     menu: 'substitute for a variable in equation',
-    comment: ('Instantiates a free variable in an equation.'),
+    tooltip: ('Instantiates a free variable in an equation.'),
     description: 'substitute for {var}',
     labels: 'primitive'
   },
@@ -949,7 +949,7 @@ var ruleInfo = {
     inputs: {term: 1},
     form: ('Term to prove equal to itself: <input name=term>'),
     menu: '(T = (A = A))',
-    comment: ('Proves T = [A = A].'),
+    tooltip: ('Proves T = [A = A].'),
     description: 'T = (A = A)',
     labels: 'primitive'
   },
@@ -995,7 +995,7 @@ var ruleInfo = {
     form: ('In step <input name=step> instantiate bound var'
 	   + ' with term <input name=term>'),
     menu: 'instantiate "forall"',
-    comment: ('In a "forall", instantiates the bound variable with'
+    tooltip: ('In a "forall", instantiates the bound variable with'
               + ' a given term.'),
     description: 'instantiate &forall;'
   },
@@ -1011,7 +1011,7 @@ var ruleInfo = {
     inputs: {equation: 1},
     form: 'Introduce "T = " into step <input name=equation>',
     menu: '[a = b] to [T = (a = b)]',
-    comment: ('From [a = b] deduce T = [a = b].'),
+    tooltip: ('From [a = b] deduce T = [a = b].'),
     description: 'from a = b to T = (a = b)',
     labels: 'primitive'
   },
@@ -1030,7 +1030,7 @@ var ruleInfo = {
       var step6 = rules.eqnSwap(step5);
       return step6.justify('r5230FT');
     },
-    comment: ('[F = T] = F')
+    tooltip: ('[F = T] = F')
   },
 
   // Bookish: (F = T) = F
@@ -1072,7 +1072,7 @@ var ruleInfo = {
       var step6 = rules.eqnSwap(step5);
       return step6.justify('r5230TF');
     },
-    comment: ('[T = F] = F')
+    tooltip: ('[T = F] = F')
   },
 
   // Prove [F = T] = F from r5230TF.
@@ -1122,7 +1122,7 @@ var ruleInfo = {
       var step8 = rules.fromTIsA(step7);
       return step8.justify('r5230FT_alternate');
     },
-    comment: ('[F = T] = F')
+    tooltip: ('[F = T] = F')
   },
 
   // [T & T] = T.  Uses no book-specific definitions.
@@ -1270,7 +1270,7 @@ var ruleInfo = {
 	   + ' false case step <input name=equation2>,'
 	   + ' use variable <input name=varName>'),
     menu: 'proof by cases, for equations',
-    comment: ('Given two proved equations C and D obtainable by substitution' +
+    tooltip: ('Given two proved equations C and D obtainable by substitution' +
               ' for a free variable of an equation A = B; C by substituting' +
               ' T, and D by substituting F, proves A = B.'),
     labels: 'primitive'
@@ -1300,7 +1300,7 @@ var ruleInfo = {
     form: ('Term to use in ((T = A) = A): <input name=bool>'),
     menu: '(T = A) = A',
     labels: 'uncommon',
-    comment: ('For any expression derives (T = A) = A.'),
+    tooltip: ('For any expression derives (T = A) = A.'),
     description: '(T = A) = A'
   },
 
@@ -1315,7 +1315,7 @@ var ruleInfo = {
     inputs: {step: 1},
     form: 'Introduce "T = " into step <input name=step>',
     menu: '[a] to [T = a]',
-    comment: ('From A derives T = A'),
+    tooltip: ('From A derives T = A'),
     description: '[a] to [T = a];; {in step step}',
     labels: 'primitive'
   },
@@ -1342,7 +1342,7 @@ var ruleInfo = {
     form: 'Eliminate "T = " from step <input name=equation>',
     description: '[T = a] to [a]',
     menu: '[T = a] to [a]',
-    comment: ('From T = A derives A'),
+    tooltip: ('From T = A derives A'),
     labels: 'primitive'
   },
 
@@ -1390,7 +1390,7 @@ var ruleInfo = {
     form: ('In step <input name=step> generalize on variable '
            + '<input name=varName>'),
     menu: 'add "forall"',
-    comment: ('Universal Generalization, wrap a theorem A in'
+    tooltip: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.'),
     description: 'add \u2200'
   },
@@ -1412,7 +1412,7 @@ var ruleInfo = {
     form: ('In step <input name=step>, for variable <input name=varName> '
            + 'substitute <input name=term>'),
     menu: 'substitute for a free variable',
-    comment: ('In a theorem substitute an expression for'
+    tooltip: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
     description: 'substitute for {var};; {in step step}'
   },
@@ -1433,7 +1433,7 @@ var ruleInfo = {
     toOffer: 'return term.isVariable()',
     form: ('Substitute <input name=term> for the variable.'),
     menu: 'substitute for a free variable',
-    comment: ('In a theorem substitute an expression for'
+    tooltip: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
     description: 'substitute for {site};; {in step siteStep}',
     labels: 'basic'
@@ -1479,7 +1479,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     menu: 'substitute for multiple variables',
-    comment: ('For each variable in the map substitute its value in the map'),
+    tooltip: ('For each variable in the map substitute its value in the map'),
     description: '=instMultiVars'
   },
 
@@ -1498,7 +1498,7 @@ var ruleInfo = {
     inputs: {step: [1, 2]},
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
     menu: '[p] and [q] to [p & q]',
-    comment: ('Given a and b, derive a & b'),
+    tooltip: ('Given a and b, derive a & b'),
     description: 'p & q;; using steps {step1}, {step2}'
   },
 
@@ -1529,7 +1529,7 @@ var ruleInfo = {
 	   + ' false case <input name=step2>,'
 	   + ' use variable name <input name=varName>'),
     menu: 'proof by cases',
-    comment: ('Prove a theorem by cases given two theorems that'
+    tooltip: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.'),
     description: 'cases: {var} true in step {step1}, false in step {step2}'
   },
@@ -1551,7 +1551,7 @@ var ruleInfo = {
     form: ('Modus ponens: hypothesis step <input name=step>,'
 	   + ' implication in step <input name=implication>'),
     menu: 'modus ponens',
-    comment: ('Modus Ponens.  Given A and A => B derives B.'),
+    tooltip: ('Modus Ponens.  Given A and A => B derives B.'),
     description: '[p] and [p &rArr; q] to q',
     labels: 'primitive'
   },
@@ -1590,7 +1590,7 @@ var ruleInfo = {
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
       return rules.r(rules.theorem('r5230FT'), step2, '/right');
     },
-    comment: ('[not T] = F')
+    tooltip: ('[not T] = F')
   },
 
   // [not F] = T
@@ -1681,7 +1681,7 @@ var ruleInfo = {
     inputs: {bool: 1},
     form: 'Boolean term to simplify: <input name=bool>',
     labels: 'uncommon',
-    comment: ('simplify a boolean term'),
+    tooltip: ('simplify a boolean term'),
     description: 'calculate boolean value'
   },
 
@@ -1737,7 +1737,7 @@ var ruleInfo = {
     inputs: {bool: 1},
     form: 'Enter tautology: <input name=bool size=40>',
     menu: 'prove a tautology',
-    comment: ('Tautology decider.'),
+    tooltip: ('Tautology decider.'),
     description: 'tautology'
   },
 
@@ -1756,7 +1756,7 @@ var ruleInfo = {
       var step1 = rules.tautology(tautology);
       return rules.instMultiVars(step1, map).justify('tautInst', arguments);;
     },
-    comment: ('substitute into tautology'),
+    tooltip: ('substitute into tautology'),
     description: '=tautInst'
   },
 
@@ -1892,7 +1892,7 @@ var ruleInfo = {
 	   + 'other wff: <input name=bool2>'),
     */
     labels: 'uncommon',
-    comment: ('Move "forall" inside an "or" when variable not free '
+    tooltip: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
     description: 'move forall'
   },
@@ -1934,7 +1934,7 @@ var ruleInfo = {
 	   + 'variable <input name=varName> '
 	   + 'implication <input name=implication>'),
     */
-    comment: ('Move "forall" inside "implies" provided the variable '
+    tooltip: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.'),
     description: 'move forall'
   },
@@ -1972,7 +1972,7 @@ var ruleInfo = {
 	   + 'wff without it free: <input name=bool1> '
 	   + 'other wff: <input name=bool2>'),
     menu: 'forall {v. A => B} => (A => forall {v. B}',
-    comment: ('Move "forall" inside an "or" when variable not free '
+    tooltip: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
     description: 'move forall',
     labels: 'uncommon'
@@ -1997,7 +1997,7 @@ var ruleInfo = {
 	   + 'variable <input name=varName> '
 	   + 'implication <input name=implication>'),
     menu: 'Move "forall" inside "implies"',
-    comment: ('Move "forall" inside "implies" provided the variable '
+    tooltip: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.'),
     description: 'move forall'
   },
@@ -2033,7 +2033,7 @@ var ruleInfo = {
     menu: 'forward chain',
     form: ('Match step <input name=step1> with left side of implication '
            + 'in schema <input name=step2>'),
-    comment: ('[p] and [p => q] to q'),
+    tooltip: ('[p] and [p => q] to q'),
     description: 'consequence;; of step {step1} using step {step2}'
   },
 
@@ -2090,7 +2090,7 @@ var ruleInfo = {
       return result.justify('r5238', arguments);
     },
     // TODO: inputs: ... ?
-    comment: ('Equal functions equate to equal expression values.')
+    tooltip: ('Equal functions equate to equal expression values.')
   },
 
   // "Base case" of 5238, with just a single variable.
@@ -2107,7 +2107,7 @@ var ruleInfo = {
       // Do not "derive", leave this inline.
       return step6;
     },
-    comment: ('')
+    tooltip: ('')
   },
 
   // 5239, closely following the description and names in the book.
@@ -2171,7 +2171,7 @@ var ruleInfo = {
     //
     // inputs: {site: 2, bool: 1},  // The term is an equation
     // form: ('Enter an equation: <input name=bool>'),
-    comment: ('Analog to Rule R, expressed as an implication.')
+    tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
   // Like Rule R', based on 5240 (the Deduction Theorem).  The
@@ -2300,7 +2300,7 @@ var ruleInfo = {
     inputs: {equation: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=equation>'),
     menu: 'replace {term} with something equal',
-    comment: 'replace term with something equal',
+    tooltip: 'replace term with something equal',
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'uncommon'
   },
@@ -2319,7 +2319,7 @@ var ruleInfo = {
     inputs: {equation: 1, site: 2},
     form: ('Replace with left side of step <input name=equation>'),
     menu: 'replace {term} with equal term like A = x',
-    comment: ('Replaces an occurrence of a term with an equal term,'
+    tooltip: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'uncommon'
@@ -2349,7 +2349,7 @@ var ruleInfo = {
     inputs: {site: 1, equation: 3},
     form: ('Replace this using equation step <input name=equation>'),
     menu: 'replace {term} with equal term',
-    comment: ('Replaces an occurrence of a term with an equal term'),
+    tooltip: ('Replaces an occurrence of a term with an equal term'),
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'algebra basic'
   },
@@ -3338,7 +3338,7 @@ var ruleInfo = {
            + 'in step <input name=step>'),
     description: 'make assumption {bool} explicit;; {in step step}',
     labels: 'deprecated',
-    comment: 'copy an assumption to the consequent'
+    tooltip: 'copy an assumption to the consequent'
   },
 
   // Given a proof step that is an implication and a path that
@@ -3354,7 +3354,7 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     menu: 'move to conclusions',
-    comment: 'move assumption to the conclusions',
+    tooltip: 'move assumption to the conclusions',
     labels: 'uncommon'
   },
 
@@ -3380,7 +3380,7 @@ var ruleInfo = {
     form: 'extract assumption <input name=bool> from step <input name=step>',
     description: 'extract assumption {bool};; {in step step}',
     labels: 'basic',
-    comment: 'extract an assumption'
+    tooltip: 'extract an assumption'
   },
 
   // Simplifies hyps => (a => b) to hyps & a => b. 
@@ -3508,7 +3508,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
-    comment: 'remove redundant hypotheses',
+    tooltip: 'remove redundant hypotheses',
     labels: 'uncommon'
   },
 
@@ -3524,7 +3524,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1},
     form: 'Equation of conjunctions: <input name=equation>',
-    comment: 'prove equality of two chains of conjunctions',
+    tooltip: 'prove equality of two chains of conjunctions',
     labels: 'uncommon'
   },
 
@@ -3546,7 +3546,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'symmetry of equality',
-    comment: 'symmetry of equality',
+    tooltip: 'symmetry of equality',
     labels: 'basic'
   },
 
@@ -3562,7 +3562,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'transitivity of equality',
-    comment: 'transitivity of equality',
+    tooltip: 'transitivity of equality',
     labels: 'basic'
   },
 
@@ -3580,7 +3580,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'commutativity of addition',
+    tooltip: 'commutativity of addition',
     description: 'commutativity of addition'
   },
 
@@ -3591,7 +3591,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'associativity of addition',
+    tooltip: 'associativity of addition',
     description: 'associativity of addition'
   },
 
@@ -3602,7 +3602,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'commutativity of multiplication',
+    tooltip: 'commutativity of multiplication',
     description: 'commutativity'
   },
 
@@ -3613,7 +3613,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'associativity of multiplication',
+    tooltip: 'associativity of multiplication',
     description: 'associativity of multiplication'
   },
 
@@ -3624,7 +3624,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'distributive law',
+    tooltip: 'distributive law',
     description: 'distributive law'
   },
 
@@ -3635,7 +3635,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'x + 0 = x',
+    tooltip: 'x + 0 = x',
     description: 'additive identity'
   },
 
@@ -3646,7 +3646,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'x * 1 = x',
+    tooltip: 'x * 1 = x',
     description: 'multiplicative identity'
   },
 
@@ -3657,7 +3657,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'x * 0 = 0',
+    tooltip: 'x * 0 = 0',
     description: 'multiplication by 0'
   },
 
@@ -3668,7 +3668,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'neg x = -1 * x',
+    tooltip: 'neg x = -1 * x',
     description: 'definition of negation'
   },
 
@@ -3679,7 +3679,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'x * recip x = 1 if x is not 0',
+    tooltip: 'x * recip x = 1 if x is not 0',
     description: 'recip is inverse to multiplication'
   },
 
@@ -3691,7 +3691,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'nonzero reciprocals',
+    tooltip: 'nonzero reciprocals',
     description: 'reciprocals are nonzero'
   },
 
@@ -3705,7 +3705,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'real number to the zeroth power',
+    tooltip: 'real number to the zeroth power',
     description: 'real number to the zeroth power is 1'
   },
 
@@ -3717,7 +3717,7 @@ var ruleInfo = {
     },
     inputs: {},
     form: '',
-    comment: 'real number to the next power',
+    tooltip: 'real number to the next power',
     description: 'real number to the next power'
   },
 
@@ -3741,7 +3741,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     menu: 'axiom ' + Toy.mathMarkup('R (x + y)'),
-    comment: 'sum of real numbers is real',
+    tooltip: 'sum of real numbers is real',
     description: 'sum of real numbers is real'
   },
 
@@ -3754,7 +3754,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     menu: 'axiom ' + Toy.mathMarkup('R (x*y)'),
-    comment: 'product of real numbers is real',
+    tooltip: 'product of real numbers is real',
     description: 'product of real numbers is real'
   },
 
@@ -3766,7 +3766,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     menu: 'axiom ' + Toy.mathMarkup('R (-x)'),
-    comment: 'negation of real number is real',
+    tooltip: 'negation of real number is real',
     description: 'negation of real number is real'
   },
 
@@ -3779,7 +3779,7 @@ var ruleInfo = {
     inputs: {},
     menu: 'axiom ' + Toy.mathMarkup('x != 0 == R (recip x)'),
     form: '',
-    comment: 'reciprocal of nonzero real number is real',
+    tooltip: 'reciprocal of nonzero real number is real',
     description: 'reciprocal of real number'
   },
 
@@ -3850,7 +3850,7 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Term to evaluate: <input name=term>',
-    comment: 'evaluate arithmetic expression',
+    tooltip: 'evaluate arithmetic expression',
     description: 'axiom of arithmetic',
     autoSimplify: noSimplify,
     labels: 'basic'
@@ -3869,7 +3869,7 @@ var ruleInfo = {
     },
     form: '',
     menu: 'theorem R (x - y)',
-    comment: 'difference of real numbers is real',
+    tooltip: 'difference of real numbers is real',
     description: 'difference of real numbers is real',
     labels: 'uncommon'
   },
@@ -3890,7 +3890,7 @@ var ruleInfo = {
     },
     form: '',
     menu: 'theorem R (x / y)',
-    comment: 'quotient of real numbers is real',
+    tooltip: 'quotient of real numbers is real',
     description: 'quotient of real numbers is real',
     labels: 'uncommon'
   },
@@ -3930,7 +3930,7 @@ var ruleInfo = {
     inputs: {site: 1},
     toOffer: 'return Toy.isArithmetic(term);',
     form: '',
-    comment: 'arithmetic',
+    tooltip: 'arithmetic',
     labels: 'algebra'
   },
 
@@ -4135,7 +4135,7 @@ var ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
-    comment: 'simplify assumptions in a step',
+    tooltip: 'simplify assumptions in a step',
     menu: 'simplify assumptions',
     labels: 'uncommon'
   },
@@ -4152,7 +4152,7 @@ var ruleInfo = {
     inputs: {term: 1},
     form: 'Term to consider: <input name=term>',
     menu: 'consider a term to transform',
-    comment: ('consider a term to transform'),
+    tooltip: ('consider a term to transform'),
     labels: 'basic'
   },
 
@@ -4170,7 +4170,7 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     menu: 'consider {term} equal to itself',
-    comment: ('prepare to transform term'),
+    tooltip: ('prepare to transform term'),
     description: 'expression equal to itself',
     labels: 'display'
   },
@@ -4188,7 +4188,7 @@ var ruleInfo = {
     form: ('Add <input name=term> to both sides of ' +
            'step <input name=equation>'),
     menu: 'algebra: add to both sides',
-    comment: ('add to both sides'),
+    tooltip: ('add to both sides'),
     description: 'add {term};; {in step equation}',
     labels: 'algebra'
   },
@@ -4206,7 +4206,7 @@ var ruleInfo = {
     form: ('Subtract <input name=term> from both sides of ' +
            'step <input name=equation>'),
     menu: 'algebra: subtract from both sides',
-    comment: ('subtract from both sides'),
+    tooltip: ('subtract from both sides'),
     description: 'subtract {term};; {in step equation}',
     labels: 'algebra'
   },
@@ -4223,7 +4223,7 @@ var ruleInfo = {
     form: ('Multiply both sides of step <input name=equation>' +
            ' by <input name=term>'),
     menu: 'algebra: multiply both sides',
-    comment: ('multiply both sides'),
+    tooltip: ('multiply both sides'),
     description: 'multiply by {term};; {in step equation}',
     labels: 'algebra'
   },
@@ -4242,7 +4242,7 @@ var ruleInfo = {
     form: ('Divide both sides of step <input name=equation>' +
            ' by <input name=term>'),
     menu: 'algebra: divide both sides',
-    comment: ('divide both sides'),
+    tooltip: ('divide both sides'),
     description: 'divide by {term};; {in step equation}',
     labels: 'algebra'
   },
@@ -4386,7 +4386,7 @@ var ruleInfo = {
     inputs: {bool: 1},
     form: ('Look up fact <input name=bool size=40>'),
     menu: 'look up a fact',
-    comment: (''),
+    tooltip: (''),
     description: 'fact',
     labels: 'basic'
   },

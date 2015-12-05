@@ -112,7 +112,7 @@ $(function() {
         var sampleInfo = sampleProofs[name];
         var ruleName = sampleInfo.ruleName || name;
         var info = Toy.rules[ruleName].info;
-        var display = info.menu || info.comment || name;
+        var display = info.menu || info.tooltip || name;
         selectorHtml +=
           '<option value="' + name + '"' + selected + '>' + display + '\n';
       }

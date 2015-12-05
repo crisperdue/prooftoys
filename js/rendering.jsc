@@ -1685,7 +1685,7 @@ function formattedStepInfo(step) {
                   @{markup. expandMarkup(step, markup)});
   d2 = d2.replace(/[{].*?[}]/g,
                   @{markup. expandMarkup(step, markup)});
-  var comment = (Toy.escapeHtml(info.comment || '') +
+  var tooltip = (Toy.escapeHtml(info.tooltip || '') +
                  ' (&quot;' + step.ruleName + '&quot;)');
   // If a rule has "assert" as its last step, that is its only
   // step, because "assert" has no dependencies.  So we treat the
@@ -1698,7 +1698,7 @@ function formattedStepInfo(step) {
   // black up-pointing small triangle
   var hider = '<span class=subproofIndicator>\u25b4</span>';
   var result =
-    ('<span class="' + classes + '" title="' + comment + '">'
+    ('<span class="' + classes + '" title="' + tooltip + '">'
      + hider + ' ' + d1 + ' ' + hider + '</span>' + d2);
   return result + (useDefault ? defaultStepRefs(step, description) : '');
 }
@@ -1939,13 +1939,13 @@ function renderInference(step) {
   var controller =
     new ProofControl({stepPrefix: prefix, parentStep: step});
   controller.setSteps(steps);
-  var comment = Toy.escapeHtml(Toy.getRuleInfo(step).comment || '');
+  var tooltip = Toy.escapeHtml(Toy.getRuleInfo(step).tooltip || '');
   var $subproof = $('<div class=inferenceDisplay></div>');
   if (step.ruleName === 'fact') {
     var $header = $('<div class=proofHeader><b>Proof of <span class=math>'
                     + step.toHtml()
                     + '</span></b><br>'
-                    + '<i>' + comment + '</i>'
+                    + '<i>' + tooltip + '</i>'
                     + ' <span class=subproofHider>hide &#x25be;</span></div>');
     var $details = null;
   } else {
@@ -1958,7 +1958,7 @@ function renderInference(step) {
                      '<b>' + (step.ruleArgs.length ? 'Rule ' : 'Proof of ') +
                      step.ruleName + '</b> ' +
                      computeHeaderArgInfo(step) + '<br>' +
-                     '<i>' + comment + '</i>' +
+                     '<i>' + tooltip + '</i>' +
                      '</div>');
   }
   $header.find('.subproofHider')
