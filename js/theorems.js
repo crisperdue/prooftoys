@@ -409,19 +409,6 @@ var ruleInfo = {
   },
 
   /**
-   * Refers to an axiom (one that takes no arguments).  Obsolete.
-   */
-  axiom: function(name) {
-    // TODO: Remove this; just use the axioms directly as rules.
-    //   These days they run efficiently.
-    //
-    // The "length" is the number of declared arguments.
-    assert(name.substring(0, 5) == 'axiom' && rules[name].length == 0,
-           function() { return 'Not an axiom: ' + name; });
-    return rules[name]();
-  },
-
-  /**
    * Replace the subexpression of the target at the path with the
    * equation's RHS.  This is rule R.  The subexpression must match
    * the equation's LHS, meaning they are the same except possibly
@@ -937,7 +924,7 @@ var ruleInfo = {
    */
   xAlwaysX: {
     action: function() {
-      var a3 = rules.axiom('axiom3');
+      var a3 = rules.axiom3();
       var step1 = rules.instEqn(a3, f, g);
       var step2 = rules.instEqn(step1, lambda(y, y), f)
       var step3 = rules.apply(step2, '/right/arg/body/right');
@@ -1034,7 +1021,7 @@ var ruleInfo = {
   // (Or r5230TF, see the alternate proof further below.)
   r5230FT: {
     action: function() {
-      var step1 = rules.axiom('axiomPNeqNotP');
+      var step1 = rules.axiomPNeqNotP();
       var step2 = rules.instForall(step1, F);
       var step3 = rules.useDefinition(step2, '/fn');
       var step4 = rules.useDefinition(step3, '/arg/right/fn');
@@ -1048,7 +1035,7 @@ var ruleInfo = {
   // Bookish: (F = T) = F
   r5230FTBook: {
     action: function() {
-      var step1 = rules.axiom('axiom2');
+      var step1 = rules.axiom2();
       var map = {h: Toy.parse('{x. x = F}'),
                  x: F,
                  y: T};
@@ -1076,7 +1063,7 @@ var ruleInfo = {
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
   r5230TF: {
     action: function() {
-      var step1 = rules.axiom('axiomPNeqNotP');
+      var step1 = rules.axiomPNeqNotP();
       var step2 = rules.instForall(step1, T);
       var step3 = rules.useDefinition(step2, '/fn');
       var step4 = rules.useDefinition(step3, '/arg/right/fn');
@@ -1100,7 +1087,7 @@ var ruleInfo = {
       // It is applied to steps that have no hypotheses, but still
       // instVar uses toTIsA (and fromTIsA).
       // TODO: Confirm that this is all correct.
-      var step1a = rules.instVar(rules.axiom('axiom2'), F, x);
+      var step1a = rules.instVar(rules.axiom2(), F, x);
       var step1b = rules.instVar(step1a, T, y);
       var step1c = rules.instVar(step1b, lambda(x, equal(x, F)), h);
       var step2a = rules.apply(step1c, '/right/left');
@@ -1148,7 +1135,7 @@ var ruleInfo = {
 
   // Book version of r5211.
   r5211Book: function() {
-    var step1 = rules.instEqn(rules.axiom('axiom1'), lambda(y, T), g);
+    var step1 = rules.instEqn(rules.axiom1(), lambda(y, T), g);
     var step2a = rules.apply(step1, '/right/arg/body');
     var step2b = rules.apply(step2a, '/left/right');
     var step2c = rules.apply(step2b, '/left/left');
@@ -1199,7 +1186,7 @@ var ruleInfo = {
   // Bookish: T & F = F
   r5214: {
     action: function() {
-      var step1 = rules.axiom('axiom1');
+      var step1 = rules.axiom1();
       var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
       var step3 = rules.apply(step2, '/right/arg/body');
       var step4 = rules.apply(step3, '/left/right');
@@ -1212,7 +1199,7 @@ var ruleInfo = {
 
   // 5216 by the book.
   andTBook: function(a) {
-    var step1 = rules.axiom('axiom1');
+    var step1 = rules.axiom1();
     var step2 =
       rules.instEqn(step1, lambda(x, equal(call('&', T, x), x)), g);
     var step3 = rules.apply(step2, '/left/left');
@@ -1234,7 +1221,7 @@ var ruleInfo = {
 
   // Book only.  We use axiomPNeqNotP instead of defining F.
   r5217Book: function() {
-    var step1 = rules.instEqn(rules.axiom('axiom1'),
+    var step1 = rules.instEqn(rules.axiom1(),
                               lambda(x, equal(T, x)), g);
     var step2a = rules.apply(step1, '/left/left');
     var step2b = rules.apply(step2a, '/left/right');
@@ -1242,7 +1229,7 @@ var ruleInfo = {
     var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
     var step4a = rules.andT(equal(T, F));
     var step4b = rules.r(step4a, step3, '/left');
-    var step5a = rules.instEqn(rules.axiom('axiom3'), lambda(x, T), f);
+    var step5a = rules.instEqn(rules.axiom3(), lambda(x, T), f);
     var step5b = rules.instEqn(step5a, lambda(x, x), g);
     var step6a = rules.apply(step5b, '/right/arg/body/left');
     var step6b = rules.apply(step6a, '/right/arg/body/right');
@@ -1271,7 +1258,7 @@ var ruleInfo = {
       var newVar = Toy.genVar('w', caseT.allNames());
       var gen = caseT.generalizeTF(caseF, newVar);
       var lexpr = lambda(newVar, gen);
-      var step4 = rules.instEqn(rules.axiom('axiom1'), lexpr, g);
+      var step4 = rules.instEqn(rules.axiom1(), lexpr, g);
       var step5 = rules.apply(step4, '/right/arg/body');
       var step6 = rules.apply(step5, '/left/right');
       var step7 = rules.apply(step6, '/left/left');
@@ -1533,7 +1520,7 @@ var ruleInfo = {
       var step2a = rules.axiom4(call(lambda(newVar, gen), F));
       var step2b = rules.rRight(step2a, caseF, '/main');
       var step4 = rules.makeConjunction(step1b, step2b);
-      var step5 = rules.instVar(rules.axiom('axiom1'),
+      var step5 = rules.instVar(rules.axiom1(),
                                 lambda(newVar, gen), g);
       var step6 = rules.replace(step5, step4, '/main');
       var step7a = rules.instForall(step6, v);
@@ -1575,7 +1562,7 @@ var ruleInfo = {
   // (forall f) => f x
   r5225: {
     action: function() {
-      var step1 = rules.axiom('axiom2');
+      var step1 = rules.axiom2();
       var map = {h: Toy.parse('{g. g x}'),
                  x: Toy.parse('{x. T}'),
                  y: f};
@@ -1640,7 +1627,7 @@ var ruleInfo = {
       var step3 = rules.apply(step2, '/left');
       var step4 = rules.r(step3, step1, '/right');
       var step5 = rules.addForall(step4, x);
-      var step6 = rules.instVar(rules.axiom('axiom3'), equal(T), f);
+      var step6 = rules.instVar(rules.axiom3(), equal(T), f);
       var step7 = rules.instVar(step6, lambda(x, x), g);
       var step8 = rules.rRight(step7, step5, '');
       return step8.justify('trueEquals', arguments);
@@ -2118,7 +2105,7 @@ var ruleInfo = {
   r5238a: {
     action: function(v, a, b) {
       v = varify(v);
-      var step2 = rules.axiom('axiom3');
+      var step2 = rules.axiom3();
       var step3 = rules.instMultiVars(step2,
                                ({f: lambda(v, a),
                                  g: lambda(v, b)}));
@@ -2145,7 +2132,7 @@ var ruleInfo = {
       assert(equation.isCall2('='),
              'Expecting an equation, got: {1}',
 	     equation);
-      var step1 = rules.axiom('axiom2');
+      var step1 = rules.axiom2();
       var a = equation.getLeft();
       var b = equation.getRight();
       var boundNames = target.boundNames(path);
@@ -3574,7 +3561,7 @@ var ruleInfo = {
 
   equalityTransitive: {
     action: function() {
-      var step1 = rules.axiom('axiom2');
+      var step1 = rules.axiom2();
       var step2 = rules.instVar(step1, Toy.parse('{t. t = z}'), varify('h'));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = rules.apply(step3, '/right/right');
@@ -3881,9 +3868,9 @@ var ruleInfo = {
 
   subtractionType: {
     action: function() {
-      var step1 = rules.axiom('axiomPlusType');
+      var step1 = rules.axiomPlusType();
       var step2 = rules.instVar(step1, Toy.parse('neg y'), 'y');
-      var step3 = rules.axiom('axiomNegType');
+      var step3 = rules.axiomNegType();
       var step4 = rules.instVar(step3, y, x);
       var step5 = rules.rRight(step4, step2, '/left/right');
       var step6 = rules.eqSelf(Toy.parse('x - y'));
@@ -3900,9 +3887,9 @@ var ruleInfo = {
 
   divisionType: {
     action: function() {
-      var step1 = rules.axiom('axiomTimesType');
+      var step1 = rules.axiomTimesType();
       var step2 = rules.instVar(step1, Toy.parse('recip y'), 'y');
-      var step3 = rules.axiom('axiomReciprocalType');
+      var step3 = rules.axiomReciprocalType();
       var step4 = rules.instVar(step3, y, x);
       var step5 = rules.rRight(step4, step2, '/left/right');
       var step6 = rules.eqSelf(Toy.parse('x / y'));
@@ -4060,16 +4047,16 @@ var ruleInfo = {
         assert(expr.isCall1('R'));
         return rules.axiomArithmetic(call('R', expr.arg));
       };
-      var adder = proveIsT(rules.axiom('axiomPlusType'));
-      var multiplier = proveIsT(rules.axiom('axiomTimesType'));
+      var adder = proveIsT(rules.axiomPlusType());
+      var multiplier = proveIsT(rules.axiomTimesType());
       var subtracter = proveIsT(rules.subtractionType());
       var divider = proveIsT(rules.divisionType());
       var negger = memo(function() {
-          return rules.axiom('axiomNegType').apply('eqnSwap');
+          return rules.axiomNegType().apply('eqnSwap');
         });
       // x != 0 => (R (recip x) == R x)
       var reciper = memo(function() {
-          var step = rules.axiom('axiomReciprocalType');
+          var step = rules.axiomReciprocalType();
           var schema = rules.tautology('(a & b == c) => (b => (c == a))');
           var step2 = rules.forwardChain(step, schema);
           var result = rules.asHypotheses(step2);
@@ -4579,39 +4566,39 @@ var realAxiomFacts = {
 
   'a + b = b + a': {
     action: function() {
-      return rules.axiom('axiomCommutativePlus');
+      return rules.axiomCommutativePlus();
     },
     noSwap: true
   },
   'a * b = b * a': {
     action: function() {
-      return rules.axiom('axiomCommutativeTimes');
+      return rules.axiomCommutativeTimes();
     },
     noSwap: true
   },
   'a + (b + c) = a + b + c': {
     action: function() {
-      return rules.axiom('axiomAssociativePlus');
+      return rules.axiomAssociativePlus();
     }
   },
   'a * (b * c) = a * b * c': {
     action: function() {
-      return rules.axiom('axiomAssociativeTimes');
+      return rules.axiomAssociativeTimes();
     }
   },
   'a + 0 = a': {
     action: function() {
-      return rules.axiom('axiomPlusZero');
+      return rules.axiomPlusZero();
     }
   },
   'a * 1 = a': {
     action: function() {
-      return rules.axiom('axiomTimesOne');
+      return rules.axiomTimesOne();
     }
   },
   'a * 0 = 0': {
     action: function() {
-      return rules.axiom('axiomTimesZero');
+      return rules.axiomTimesZero();
     }
   }
 };
@@ -4631,7 +4618,7 @@ var basicFacts = {
   },
   '@R a & a != 0 => a * recip a = 1': {
     action: function() {
-      return rules.axiom('axiomReciprocal');
+      return rules.axiomReciprocal();
     }
   },
   'a * b != 0 == a != 0 & b != 0': {
@@ -4681,7 +4668,7 @@ $.extend(algebraFacts, basicFacts);
 var distribFacts = {
   'a * (b + c) = a * b + a * c': {
     action: function() {
-      return rules.axiom('axiomDistributivity');
+      return rules.axiomDistributivity();
     }
   },
   '(a + b) * c = a * c + b * c': {
@@ -4782,7 +4769,7 @@ var identityFacts = {
   /* Omit from UI: somewhat redundant
   'a = 0 + a': {
    action: function() {
-     var step1 = rules.axiom('axiomPlusZero');
+     var step1 = rules.axiomPlusZero();
      var step2 = rules.eqnSwap(step1);
      var step3 = rules.rewriteWithFact(step2, '/main/right',
      'a + b = b + a');
@@ -4792,7 +4779,7 @@ var identityFacts = {
   */
   '0 + a = a': {
     action: function() {
-      var step1 = rules.axiom('axiomPlusZero');
+      var step1 = rules.axiomPlusZero();
       var step2 = rules.rewriteWithFact(step1, '/main/left',
                                         'a + b = b + a');
       return step2;
@@ -4818,7 +4805,7 @@ var identityFacts = {
   // Times one
   'a = 1 * a': {
     action: function() {
-      var step1 = rules.axiom('axiomTimesOne');
+      var step1 = rules.axiomTimesOne();
       var step2 = rules.eqnSwap(step1);
       var step3 = rules.rewriteWithFact(step2, '/main/right',
                                         'a * b = b * a');
@@ -4829,7 +4816,7 @@ var identityFacts = {
   // Zero times
   '0 * a = 0': {
     action: function() {
-      return rules.axiom('axiomTimesZero')
+      return rules.axiomTimesZero()
       .rewrite('/main/left', 'a * b = b * a');
     }
   }
@@ -5200,13 +5187,13 @@ var recipFacts = {
 
   'a != 0 => recip a * a = 1': {
     action: function() {
-      return rules.axiom('axiomReciprocal')
+      return rules.axiomReciprocal()
       .rewrite('/main/left', 'a * b = b * a');
     }
   },
   'a != 0 => recip a != 0': {
     action: function() {
-      var step1 = rules.axiom('axiomReciprocal');
+      var step1 = rules.axiomReciprocal();
       var step2 = rules.fact('1 != 0');
       var step3 = rules.rRight(step1, step2, '/left')
       .rewrite('/main', 'a * b != 0 == a != 0 & b != 0');
@@ -5248,14 +5235,14 @@ var recipFacts = {
   '@R (recip a) & recip a != 0 => R a & a != 0': {
     action: function() {
       var taut = rules.tautology('(a == b) => (a => b)');
-      var fact = rules.axiom('axiomReciprocal2');
+      var fact = rules.axiomReciprocal2();
       return rules.forwardChain(fact, taut);
     }
   },
   '@R a & a != 0 => R (recip a) & recip a != 0': {
     action: function() {
       var taut = rules.tautology('(a == b) => (b => a)');
-      var fact = rules.axiom('axiomReciprocal2');
+      var fact = rules.axiomReciprocal2();
       return rules.forwardChain(fact, taut);
     }
   },
@@ -5635,7 +5622,7 @@ function getStatement(fact) {
       if (!alreadyProved(fact)) {
         console.log('Proving in getStatement: ' + fact);
       }
-      return isAxiom(fact) ? rules.axiom(fact) : rules.theorem(fact);
+      return rules.theorem(fact);
     } else {
       // Otherwise it should be a expression in string form.
       var result = Toy.mathParse(fact);
@@ -6015,6 +6002,8 @@ function addTheorem(name) {
 /**
  * Gets an existing theorem from the theorems database, or returns
  * null if there is none.  Runs the proof if it has not already run.
+ *
+ * TODO: Memoize theorems and eliminate this.
  */
 function getTheorem(name) {
   var result = _theoremsByName[name];

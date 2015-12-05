@@ -1568,7 +1568,7 @@ var testCase = {
 
     // Hypotheses
     // TODO: Make this really test with hypotheses.
-    var step1 = Toy.rules.axiom('axiom2');
+    var step1 = Toy.rules.axiom2();
     result = Toy.rules.instVar(step1, call(p, x), x);
   },
 
@@ -1579,7 +1579,7 @@ var testCase = {
 
     // Hypotheses
     // TODO: Make this really test with hypotheses.
-    var step1 = Toy.rules.axiom('axiom2');
+    var step1 = Toy.rules.axiom2();
     result = Toy.rules.instVar(step1, call(p, x), x);
   },
 
@@ -1593,7 +1593,7 @@ var testCase = {
 
     // Hypotheses
     // TODO: Make this really test with hypotheses.
-    var step = Toy.rules.axiom('axiom2');
+    var step = Toy.rules.axiom2();
     var map2 = {x: call(p, x),
                 y: call(p, y)};
     var result = Toy.rules.instMultiVars(step, map2);
@@ -1969,13 +1969,13 @@ var testCase = {
   },
 
   testIsolateHypAt: function() {
-    var step = rules.axiom('axiomCommutativePlus');
+    var step = rules.axiomCommutativePlus();
     var actual = rules.extractHypAt(step, '/left/left');
     assertEqual('((R y) => ((R x) => ((x + y) = (y + x))))', actual);
   },
 
   testIsolateHyp: function() {
-    var step = rules.axiom('axiomCommutativePlus');
+    var step = rules.axiomCommutativePlus();
     var actual = rules.extractHyp(step, 'R x');
     assertEqual('((R y) => ((R x) => ((x + y) = (y + x))))', actual);
   },
