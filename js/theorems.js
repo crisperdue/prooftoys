@@ -371,21 +371,22 @@ var ruleInfo = {
   },
       
   /**
-   * Refer to a theorem by looking it up in the database rather
-   * than proving it all over again.
+   * Refer to a theorem by name, for the UI.
    */
   theorem: {
     action: function(name) {
       // See the "axiom" rule for explanation of the
       // re-justification on each lookup.
       assert(rules[name], 'No theorem named {1}', name);
-      return Toy.getTheorem(name).justify('theorem', [name]);
+      assert(rules[name].length == 0,
+             'Rule needs argument(s): {1}', name);
+      return rules[name]().justify('theorem', [name]);
     },
     inputs: {string: 1},
     form: ('Look up theorem named <input name=string>'),
     menu: 'look up a theorem',
     comment: (''),
-    description: 'theorem {string}',
+    description: 'theorem',
     labels: 'basic'
   },
 
@@ -613,7 +614,7 @@ var ruleInfo = {
 
   // The two forms of "=" are interchangeable (other than precedence).
   eqIsEquiv: {
-    action: function() {
+    proof: function() {
       var step1 = rules.eqSelf(Toy.constify('='));
       var step2 = rules.eqSelf(Toy.constify('=='));
       var result = rules.r(step2, step1, '/right');
@@ -923,7 +924,7 @@ var ruleInfo = {
    * Helper lemma for eqT.
    */
   xAlwaysX: {
-    action: function() {
+    proof: function() {
       var a3 = rules.axiom3();
       var step1 = rules.instEqn(a3, f, g);
       var step2 = rules.instEqn(step1, lambda(y, y), f)
@@ -1020,7 +1021,7 @@ var ruleInfo = {
   //
   // (Or r5230TF, see the alternate proof further below.)
   r5230FT: {
-    action: function() {
+    proof: function() {
       var step1 = rules.axiomPNeqNotP();
       var step2 = rules.instForall(step1, F);
       var step3 = rules.useDefinition(step2, '/fn');
@@ -1034,7 +1035,7 @@ var ruleInfo = {
 
   // Bookish: (F = T) = F
   r5230FTBook: {
-    action: function() {
+    proof: function() {
       var step1 = rules.axiom2();
       var map = {h: Toy.parse('{x. x = F}'),
                  x: F,
@@ -1062,7 +1063,7 @@ var ruleInfo = {
   // Prove [T = F] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
   r5230TF: {
-    action: function() {
+    proof: function() {
       var step1 = rules.axiomPNeqNotP();
       var step2 = rules.instForall(step1, T);
       var step3 = rules.useDefinition(step2, '/fn');
@@ -1081,7 +1082,7 @@ var ruleInfo = {
   //  
   // TODO: Is there a more elegant proof of this?
   r5230FT_alternate: {
-    action: function() {
+    proof: function() {
       // Note: this uses instVar on facts of the form A => B,
       // which is only supported by instVar by using fromTIsA and toTisA.
       // It is applied to steps that have no hypotheses, but still
@@ -1156,11 +1157,10 @@ var ruleInfo = {
   },
 
   r5212Book: {
-    action: function() {
+    proof: function() {
       var step1 = rules.r5211Book();
       var step2 = rules.theorem('t');
-      var step3 = rules.rRight(step1, step2, '');
-      return step3.justify('r5212Book');
+      return rules.rRight(step1, step2, '');
     }
   },
 
@@ -1185,15 +1185,14 @@ var ruleInfo = {
 
   // Bookish: T & F = F
   r5214: {
-    action: function() {
+    proof: function() {
       var step1 = rules.axiom1();
       var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
       var step3 = rules.apply(step2, '/right/arg/body');
       var step4 = rules.apply(step3, '/left/right');
       var step5 = rules.apply(step4, '/left/left');
       var step6 = rules.defFFromBook();
-      var step7 = rules.rRight(step6, step5, '/right');
-      return step7.justify('r5214');
+      return rules.rRight(step6, step5, '/right');
     }
   },
 
@@ -1280,13 +1279,12 @@ var ruleInfo = {
   // Note that this or 5230TF or symmetry of equality of booleans
   // might be taken as an axiom given r5230FT_alternate.
   tIsXIsX: {
-    action: function() {
+    proof: function() {
       // TODO: Switch back to r5230TF whenever desired.
       var step1 = rules.theorem('r5217Book');
       var step2 = rules.eqT(T);
       var step3 = rules.eqnSwap(step2);
-      var step4 = rules.equationCases(step3, step1, 'x');
-      return step4.justify('tIsXIsX');
+      return rules.equationCases(step3, step1, 'x');
     }
   },
 
@@ -1367,11 +1365,10 @@ var ruleInfo = {
 
   // Lemma helper for addForall, a pure theorem.
   forallXT: {
-    action: function() {
+    proof: function() {
       var step1 = rules.eqSelf(Toy.parse('{x. T}'));
       var fa = rules.definition('forall');
-      var result = rules.rRight(fa, step1, '/fn');
-      return result.justify('forallXT', arguments);
+      return rules.rRight(fa, step1, '/fn');
     }
   },
 
@@ -1561,7 +1558,7 @@ var ruleInfo = {
 
   // (forall f) => f x
   r5225: {
-    action: function() {
+    proof: function() {
       var step1 = rules.axiom2();
       var map = {h: Toy.parse('{g. g x}'),
                  x: Toy.parse('{x. T}'),
@@ -1571,57 +1568,53 @@ var ruleInfo = {
       var step4 = rules.apply(step3, '/right/left');
       var step5 = rules.apply(step4, '/right/left');
       var step6 = rules.apply(step5, '/right/right');
-      var step7 = rules.r(rules.r5218(Toy.parse('f x')), step6, '/right');
-      return step7.justify('r5225');
+      return rules.r(rules.r5218(Toy.parse('f x')), step6, '/right');
     }
   },
 
   // F => x; bookish
   r5227: {
-    action: function() {
+    proof: function() {
       var step1 = rules.theorem('r5225');
       var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'f');
       var step3 = rules.defFFromBook();
       var step4 = rules.rRight(step3, step2, '/left');
-      var step5 = rules.apply(step4, '/right');
-      return step5.justify('r5227');
+      return rules.apply(step4, '/right');
     }
   },
 
   // [not T] = F
   r5231T: {
-    action: function() {
+    proof: function() {
       var step1 = rules.eqSelf(call('not', T));
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
-      var step3 = rules.r(rules.theorem('r5230FT'), step2, '/right');
-      return step3.justify('r5231T');
+      return rules.r(rules.theorem('r5230FT'), step2, '/right');
     },
     comment: ('[not T] = F')
   },
 
   // [not F] = T
   r5231F: {
-    action: function() {
+    proof: function() {
       var step1 = rules.eqSelf(call('not', F));
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
       var step3 = rules.eqT(F);
-      var step4 = rules.rRight(step3, step2, '/right');
-      return step4.justify('r5231F');
+      return rules.rRight(step3, step2, '/right');
     }
   },
 
   // Helper for evalBool, not in book.
   // [[F =] = not].
   falseEquals: {
-    action: function() {
-      return rules.eqnSwap(rules.definition('not')).justify('falseEquals');
+    proof: function() {
+      return rules.eqnSwap(rules.definition('not'));
     }
   },
 
   // Another helper for evalBool, not in book.
   // [[T =] = {x. x}].
   trueEquals: {
-    action: function() {
+    proof: function() {
       var step1 = rules.r5218(x);
       var step2 = rules.eqSelf(Toy.parse('{x. x} x'));
       var step3 = rules.apply(step2, '/left');
@@ -1629,8 +1622,7 @@ var ruleInfo = {
       var step5 = rules.addForall(step4, x);
       var step6 = rules.instVar(rules.axiom3(), equal(T), f);
       var step7 = rules.instVar(step6, lambda(x, x), g);
-      var step8 = rules.rRight(step7, step5, '');
-      return step8.justify('trueEquals', arguments);
+      return rules.rRight(step7, step5, '');
     }
   },
 
@@ -3540,7 +3532,7 @@ var ruleInfo = {
   // From the section "Equality and descriptions" in the book.
 
   equalitySymmetric: {
-    action: function() {
+    proof: function() {
       var step1 = rules.assume('x = y');
       var step2 = rules.eqSelf(x);
       var step3 = rules.replace(step1, step2, '/left');
@@ -3549,8 +3541,7 @@ var ruleInfo = {
       var step5 = rules.instMultiVars(step4, subst);
       var step6 = rules.makeConjunction(step4, step5);
       var taut = rules.tautology('(p => q) & (q => p) => (p == q)');
-      var step7 = rules.forwardChain(step6, taut);
-      return step7.justify('equalitySymmetric', arguments);
+      return rules.forwardChain(step6, taut);
     },
     inputs: {},
     form: '',
@@ -3560,14 +3551,13 @@ var ruleInfo = {
   },
 
   equalityTransitive: {
-    action: function() {
+    proof: function() {
       var step1 = rules.axiom2();
       var step2 = rules.instVar(step1, Toy.parse('{t. t = z}'), varify('h'));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = rules.apply(step3, '/right/right');
       var taut = rules.tautology('(a => (b = c)) => (a & c => b)');
-      var step5 = rules.forwardChain(step4, taut);
-      return step5.justify('equalityTransitive', arguments);
+      return rules.forwardChain(step4, taut);
     },
     inputs: {},
     form: '',
@@ -3733,9 +3723,9 @@ var ruleInfo = {
 
   // TODO: Prove this as a consequnce of completeness.
   factNonzeroProduct: {
-    action: function() {
-      return rules.assert('R x & R y => (x * y != 0) = (x != 0 & y != 0)')
-        .asHyps().justify('factNonzeroProduct');
+    proof: function() {
+      return (rules.assert('R x & R y => (x * y != 0) = (x != 0 & y != 0)')
+              .asHyps());
     }
   },
 
@@ -3746,7 +3736,7 @@ var ruleInfo = {
   axiomPlusType: {
     action: function() {
       return rules.assert('R x & R y => R (x + y)')
-	.justify('axiomPlusType');
+        .justify('axiomPlusType');
     },
     inputs: {},
     form: '',
@@ -3867,7 +3857,7 @@ var ruleInfo = {
   },
 
   subtractionType: {
-    action: function() {
+    proof: function() {
       var step1 = rules.axiomPlusType();
       var step2 = rules.instVar(step1, Toy.parse('neg y'), 'y');
       var step3 = rules.axiomNegType();
@@ -3875,8 +3865,7 @@ var ruleInfo = {
       var step5 = rules.rRight(step4, step2, '/left/right');
       var step6 = rules.eqSelf(Toy.parse('x - y'));
       var step7 = rules.apply(step6, '/left');
-      var step8 = rules.replace(step7, step5, '/main/right/arg')
-      return step8.justify('subtractionType');
+      return rules.replace(step7, step5, '/main/right/arg');
     },
     form: '',
     menu: 'theorem R (x - y)',
@@ -3886,7 +3875,7 @@ var ruleInfo = {
   },
 
   divisionType: {
-    action: function() {
+    proof: function() {
       var step1 = rules.axiomTimesType();
       var step2 = rules.instVar(step1, Toy.parse('recip y'), 'y');
       var step3 = rules.axiomReciprocalType();
@@ -3896,9 +3885,8 @@ var ruleInfo = {
       var step7 = rules.apply(step6, '/left');
       var step8 = rules.replace(step7, step5, '/main/right/arg')
       // TODO: Normalize the assumptions automatically, not by hand.
-      var step9 = rules.rewrite(step8, '/left',
-                                rules.tautology('a & (b & c) == c & a & b'));
-      return step9.justify('divisionType');
+      return rules.rewrite(step8, '/left',
+                           rules.tautology('a & (b & c) == c & a & b'));
     },
     form: '',
     menu: 'theorem R (x / y)',
@@ -4458,7 +4446,26 @@ function addRules(ruleInfo) {
  */
 function addRule(key, info_arg) {
   var info = info_arg.constructor == Object ? info_arg : {action: info_arg};
-  var action = info.action;
+  var proof = info.proof;
+  // This will become the "rule object":
+  var action;
+  if (proof) {
+    // The proof should have no arguments, and should not do its
+    // own call to "justify".
+    //
+    // TODO: In the future, allow type parameters and memoize
+    //   as appropriate.
+    assert(!info.action, 'Both proof and action for {1}', key);
+    // Don't rerun the proof every time, but do re-justify on each
+    // call.
+    action = function() { 
+      if (action.result === undefined) {
+        action.result = proof();
+      }
+      return action.result.justify(key, []);
+    };
+  }
+  action = action || info.action;
   // Just a test can be given, in which case it must return a continuation
   // function.
   if (action && typeof action != 'function') {
@@ -4515,11 +4522,6 @@ function addRule(key, info_arg) {
 
   // and metadata as the function's "info" property.
   rules[key].info = info;
-
-  // TODO: Add this line, making addTheorem and company internal to
-  // this function:
-  // Function length of 0 means no positional arguments.
-  // if (action.length === 0) { addTheorem(key); }
 }
 
 // Actual rule functions to call from other code.
@@ -5982,55 +5984,27 @@ function eachFact(fn) {
   }
 }
 
-// Private to addTheorem, getTheorem, and the initializations
-// at the bottom of this file.  Maps from name to an inference
-// containing a proof of the theorem, or true, indicating
-// that the the theorem's proof procedure has not run.
-var _theoremsByName = {};
-
 /**
- * Checks that the theorem is not already in the database, then adds a
- * function to prove it to the set of theorems, which are indexed by
- * theorem name.
- */
-function addTheorem(name) {
-  assert(!_theoremsByName[name], 'Theorem already exists: {1}', name);
-  assert(rules[name], 'No proof: {1}', name);
-  _theoremsByName[name] = true;
-}
-
-/**
- * Gets an existing theorem from the theorems database, or returns
- * null if there is none.  Runs the proof if it has not already run.
- *
- * TODO: Memoize theorems and eliminate this.
+ * Checks that the named rule is a theorem (i.e. takes no arguments),
+ * and gets its result.
  */
 function getTheorem(name) {
-  var result = _theoremsByName[name];
-  if (result == true) {
-    result = _theoremsByName[name] = rules[name]();
-    /* TODO: find a way to use this code here.  See explanation
-       in the "axiom" rule.
-    if (axiomNames.indexOf(name) >= 0) {
-      result = thm.justify(name);
-      // If there are details, the displayer will enable display of them,
-      // but there is really no proof of the axiom.
-      delete result.details;
-    }
-    */
+  var action = rules[name];
+  if (!action) {
+    return null;
   }
-  return result;
+  assert(action.length === 0, 'Rule {1} needs parameters', name);
+  return action();
 }
 
 /**
  * Returns true iff the named theorem has already been proved.
  */
 function alreadyProved(name) {
-  assert(_theoremsByName[name], 'Not a theorem: {1}', name);
   if (isAxiom(name)) {
     return true;
   } else {
-    return _theoremsByName[name] instanceof Expr;
+    return !!rules[name].result;
   }
 }
 
@@ -6518,7 +6492,6 @@ Toy.addRule = addRule;
 Toy.addFact = addFact;
 Toy.getResult = getResult;
 Toy.eachFact = eachFact;
-Toy.addTheorem = addTheorem;
 Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
 Toy.getStatement = getStatement;
@@ -6560,14 +6533,6 @@ Toy._flagHyps = flagHyps;
 
 // Do this after support modules are initialized.
 $(function() {
-    // Add all the named theorems to their database.
-    for (var name in rules) {
-      var action = rules[name];
-      if (action.length == 0) {
-        addTheorem(name);
-      }
-    }
-
     addFactsMap(logicFacts);
     addFactsMap(algebraFacts);
 });

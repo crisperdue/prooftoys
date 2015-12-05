@@ -1171,13 +1171,8 @@ var testCase = {
   testAlreadyProved: function() {
     var rules = Toy.rules;
     assert(Toy._alreadyProved('axiomCommutativePlus'));
-    Toy.addRule('tt', function() { return rules.eqSelf('T'); });
-    Toy.addTheorem('tt');
-    assert(!Toy._alreadyProved('tt'));
-    rules.theorem('tt');
-    assert(Toy._alreadyProved('tt'));
     // This one is a rule, but not a theorem.
-    assertFails(function() { Toy._alreadyProved('replace'); });
+    assert(!Toy._alreadyProved('replace'));
   },
 
   testGetStatement: function() {
@@ -1188,7 +1183,6 @@ var testCase = {
     assertEqual(wff, Toy.getStatement(str));
     assertEqual(wff, Toy.getStatement(wff));
     Toy.addRule('ttt', function() { return rules.eqSelf('T'); });
-    Toy.addTheorem('ttt');
     assert(Toy.parse('T = T').matches(Toy.getStatement('ttt')));
   },
 
