@@ -4441,8 +4441,8 @@ function addRules(ruleInfo) {
 }
 
 /**
- * Process the given info into form for inclusion into
- * Toy.rules and add the result there.
+ * Process the given info into form for inclusion into Toy.rules and
+ * add the result there.
  */
 function addRule(key, info_arg) {
   var info = info_arg.constructor == Object ? info_arg : {action: info_arg};
@@ -4491,7 +4491,8 @@ function addRule(key, info_arg) {
   if (!('description' in info)) {
     info.description = key;
   }
-
+  // Include the rule name in every tooltip.
+  info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), key);
   // If there is a toOffer property with string value, coerce it
   // to a function of step and path.
   if (typeof info.toOffer == 'string') {
