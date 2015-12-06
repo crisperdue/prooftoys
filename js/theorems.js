@@ -4456,6 +4456,13 @@ function addRule(key, info_arg) {
     // TODO: In the future, allow type parameters and memoize
     //   as appropriate.
     assert(!info.action, 'Both proof and action for {1}', key);
+
+    // Describe theorems as "theorem" by default.
+    // The theorem name will be added as ruleName into the tooltip.
+    if (!('description' in info)) {
+      info.description = 'theorem'
+    }
+
     // Don't rerun the proof every time, but do re-justify on each
     // call.
     action = function() { 
