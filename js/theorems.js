@@ -371,7 +371,7 @@ var ruleInfo = {
   },
       
   /**
-   * Refer to a theorem by name, for the UI.
+   * Refer to a theorem by name, for the UI.  Inline.
    */
   theorem: {
     action: function(name) {
@@ -380,7 +380,7 @@ var ruleInfo = {
       assert(rules[name], 'No theorem named {1}', name);
       assert(rules[name].length == 0,
              'Rule needs argument(s): {1}', name);
-      return rules[name]().justify('theorem', [name]);
+      return rules[name]();
     },
     inputs: {string: 1},
     form: ('Look up theorem named <input name=string>'),
