@@ -3546,7 +3546,6 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'symmetry of equality',
-    tooltip: 'symmetry of equality',
     labels: 'basic'
   },
 
@@ -3562,7 +3561,6 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'transitivity of equality',
-    tooltip: 'transitivity of equality',
     labels: 'basic'
   },
 
