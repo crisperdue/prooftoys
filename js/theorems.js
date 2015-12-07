@@ -6021,24 +6021,6 @@ function isAxiom(name) {
   return name.substring(0, 5) === 'axiom';
 }
 
-// Add the axioms and theorems to the "database".  This can only
-// include ones that are not "axiom schemas", i.e. not parameterized.
-// Most of these axioms really have type parameters.  Ideally axiom
-// and theorem schemas will be able to stay, but the details remain
-// to be determined.
-//
-// TODO: Determine axioms and theorems as rules with no parameters;
-//   treat them all as facts; remove these hand-generated lists.
-
-var axiomNames = ['axiom1', 'axiom2', 'axiom3', 'axiom5', 'axiomPNeqNotP',
-                  'axiomCommutativePlus', 'axiomAssociativePlus',
-                  'axiomCommutativeTimes', 'axiomAssociativeTimes',
-                  'axiomDistributivity', 'axiomPlusZero', 'axiomTimesOne',
-                  'axiomTimesZero', 'axiomNeg', 'axiomReciprocal',
-                  'axiomReciprocal2', 'axiomPower0', 'axiomNextPower',
-                  'axiomPlusType', 'axiomTimesType',
-                  'axiomNegType', 'axiomReciprocalType'];
-
 
 //// UTILITY FUNCTIONS
 
@@ -6493,7 +6475,6 @@ Toy.assertFacts = false;
 
 Toy.getStepCounter = getStepCounter;
 
-Toy.axiomNames = axiomNames;
 Toy.addRule = addRule;
 Toy.addFact = addFact;
 Toy.getResult = getResult;
