@@ -548,13 +548,25 @@ var ruleInfo = {
 
   axiom5: {
     action: function() {
-      var result = rules.assert('(the ((=) y)) = y');
+      var result = rules.assert('the {x. x = y} = y');
       return result.justify('axiom5');
     },
     inputs: {},
     form: '',
     tooltip: ('axiom of description'),
     description: 'axiom of description'
+  },
+
+  // Equivalent to axiom5.
+  axiom5Book: {
+    action: function() {
+      var result = rules.assert('(the ((=) y)) = y');
+      return result.justify('axiom5');
+    },
+    inputs: {},
+    form: '',
+    tooltip: ('axiom of description'),
+    description: 'Andrews axiom of description'
   },
 
   // Generalizes axiomTIsNotF.
