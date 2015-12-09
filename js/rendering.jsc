@@ -37,6 +37,11 @@ var Lambda = Toy.Lambda;
 var Step = Toy.Step;
 var Bindings = Toy.Bindings;
 
+// Test in context of rendering.js.
+window.Rtest = function(x) {
+  setTimeout(function() { console.log(window.Tval = eval(x)); });
+};
+
 /**
  * Converts a singleton jQuery object to its DOM node,
  * checking carefully that it is a jQuery singleton.
