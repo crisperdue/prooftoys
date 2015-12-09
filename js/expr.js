@@ -1724,9 +1724,10 @@ Toy.extends(Atom, Expr);
  * counterpart, otherwise just the pname.
  */
 Atom.prototype._toString = function() {
-  return (useUnicode
-          ? this.toUnicode()
-          : this.pname);
+  var output = (useUnicode ? this.toUnicode() : this.pname);
+  return (Toy.showTypes && this._type
+          ? output + ":" + this._type.toString()
+          : output);
 };
 
 /**
@@ -1771,6 +1772,8 @@ var unicodeNames = {
   '</': '</',         // Treat this as HTML.
   '/': '\u2215',      // division slash
   neg: '-',
+  empty: '\u2205',    // Null set
+  none: '\u22a5',     // Bottom / "up tack"
   forall: '\u2200',
   exists: '\u2203'
 };
@@ -2672,6 +2675,7 @@ Toy.isIntegerLiteral = isIntegerLiteral;
 Toy.checkRange = checkRange;
 Toy.isStep = isStep;
 
+Toy.showTypes = false;
 Toy.unicodeNames = unicodeNames;
 
 Toy.genVar = genVar;
