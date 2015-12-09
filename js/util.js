@@ -25,6 +25,15 @@ Toy.incompatible = !!navigator.userAgent.match(/ MSIE [1-8][.]/);
 //// Assertions, error reporting and debugging
 ////
 
+// In Prooftoys, some "errors" are nonlocal flow of control, and
+// intended to be caught, as in catch/throwResult.  Most errors are
+// program bugs, and should enter the debugger immediately if the
+// debugger is available, with reporting to the developer and/or end
+// user as appropriate.  With reporting to the end user is appropriate
+// recovery of application state.  In some situations the calling code
+// may intentionally create situations leading to errors, noticing and
+// responding to those errors, bypassing the usual reporting.
+
 /**
  * Builds and throws a new Error object with the given info.  If the
  * info is a string, it becomes the message; if it is a function, its
