@@ -389,7 +389,7 @@ var ruleInfo = {
     },
     inputs: {string: 1},
     form: ('Look up theorem named <input name=string>'),
-    menu: 'look up a theorem',
+    menu: 'look up a theorem by name',
     tooltip: (''),
     description: 'theorem',
     labels: 'basic'
@@ -4506,6 +4506,8 @@ function addRule(key, info_arg) {
   if (!('description' in info)) {
     info.description = key;
   }
+  // Remember the basic tooltip
+  info.basicTooltip = info.tooltip;
   // Include the rule name in every tooltip.
   info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), key);
   // If there is a toOffer property with string value, coerce it
@@ -4654,7 +4656,8 @@ var basicFacts = {
   'a = b == b = a': {
     action: function() {
       return rules.equalitySymmetric();
-    }
+    },
+    noSwap: true
   },
 
   // Addition

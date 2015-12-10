@@ -921,7 +921,7 @@ function ruleMenuText(ruleName, term, step) {
     if (info.menu) {
       return Toy.format(info.menu, formatArgs);
     } else {
-      return Toy.mathMarkup(info.tooltip || 'menu?');
+      return Toy.mathMarkup(info.basicTooltip || 'menu?');
     }
   }
 }
