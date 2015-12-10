@@ -331,7 +331,14 @@ function each(array, fn) {
 function memo(fn) {
   var value;
   var memoFn = function() {
-    return memoFn.done ? value : (memoFn.done = true, value = fn());
+    if (memoFn.done) {
+      return value;
+    } else {
+      value = fn();
+      // If fn aborts, consider it not done.
+      memoFn.done = true;
+      return value;
+    }
   };
   memoFn.done = false;
   return memoFn;
