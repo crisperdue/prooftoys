@@ -5490,7 +5490,8 @@ $(function() {
     Toy.define('/', '{x. {y. x * recip y}}');
   });
 
-//// THEOREMS
+
+//// FACTS
 
 /**
  * Constructs a Fact from a synopsis string and a prover, which should
