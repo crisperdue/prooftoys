@@ -304,6 +304,10 @@ Expr.prototype.annotateWithTypes = function() {
  * The second argument is private to annotateWithTypes.
  */
 function findType(expr, annotate) {
+  if (expr._type) {
+    return expr._type;
+  }
+
   // In this code types[i] will be the type of vars[i].
   // The vars are names of variables.  Bound variables and their types
   // are pushed onto the lists, and on exit from a scope the
@@ -393,6 +397,7 @@ function findType(expr, annotate) {
     } else if (isDefinedByCases(name)) {
       return definedTypes[name];
     } else if (isDefined(name)) {
+      console.log(name, 'is defined but type is not recorded.');
       return findType(getDefinition(name).getRight());
     } else {
       throw new TypeCheckError('Cannot find type for: ' + name);
@@ -429,7 +434,6 @@ function occursInList(type, types) {
 }
 
 /**
- *
  * Assumes type1 is dereferenced.
  */
 function occursInType(type1, type2) {
@@ -603,6 +607,7 @@ function define(name, definition) {
   for (var n in definition.freeVars()) {
     assert(false, 'Definition has free variables: ' + name);
   }
+  constantTypes[name] = findType(definition);
   return definitions[name] = equal(name, definition);
 }
 
