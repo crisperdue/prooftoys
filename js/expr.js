@@ -1762,7 +1762,7 @@ var unicodeNames = {
   '&': '\u2227',      // &and;
   '|': '\u2228',      // &or;
   'not': '\u00ac',    // &not;
-  '=>': '\u21d2',    // &rArr;
+  '=>': '\u21d2',     // &rArr; ("implies")
   '!=': '\u2260',     // &ne;
   '<=': '\u2264',     // &le;
   '>=': '\u2265',     // &ge;
@@ -1771,8 +1771,9 @@ var unicodeNames = {
   '-': '\u2212',      // &minus;
   '</': '</',         // Treat this as HTML.
   '/': '\u2215',      // division slash
-  neg: '-',
+  neg: '-',           // (different than "minus")
   empty: '\u2205',    // Null set
+  iota: '\u2129',     // Inverted iota
   none: '\u22a5',     // Bottom / "up tack"
   forall: '\u2200',
   exists: '\u2203'
