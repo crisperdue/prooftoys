@@ -50,6 +50,11 @@ var _tautologies = {};
 // TODO: Consider changing the rep accordingly.
 var _allHyps = {};
 
+// Interactive testing in context of theorems.js.
+window.Thtest = function(x) {
+  setTimeout(function() { console.log(window.Tval = eval(x)); });
+};
+
 
 //
 // Expr methods for inference
@@ -548,7 +553,7 @@ var ruleInfo = {
 
   axiom5: {
     action: function() {
-      var result = rules.assert('the {x. x = y} = y');
+      var result = rules.assert('iota {x. x = y} = y');
       return result.justify('axiom5');
     },
     inputs: {},
@@ -557,10 +562,10 @@ var ruleInfo = {
     description: 'axiom of description'
   },
 
-  // Equivalent to axiom5.
+  // Equivalent to axiom5, but uses a curried form.
   axiom5Book: {
     action: function() {
-      var result = rules.assert('(the ((=) y)) = y');
+      var result = rules.assert('(iota ((=) y)) = y');
       return result.justify('axiom5');
     },
     inputs: {},
@@ -5472,6 +5477,14 @@ $(function() {
     Toy.defineCases('&', identity, lambda(x, F));
     Toy.defineCases('|', allT, identity);
     Toy.defineCases('=>', identity, allT);
+    Toy.define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
+
+    Toy.define('empty', '{x. F}');
+    Toy.define('none', 'iota empty');
+    // Collection has multiple elements:
+    Toy.define('multi', '{a. exists {x. exists {y. a x & a y & x != y}}}');
+    // Always either "none" or the member of the singleton set:
+    Toy.define('the', '{a. if (multi a) none (iota a)}');
 
     Toy.define('-', '{x. {y. x + neg y}}');
     Toy.define('/', '{x. {y. x * recip y}}');

@@ -60,6 +60,8 @@ function TypeVariable(name) {
 }
 
 TypeVariable.prototype.toString = function() {
+  // Returns the dereferenced value without modifying
+  // the internals.
   return this.instance ? this.instance.toString() : this.name;
 }
 
@@ -284,10 +286,9 @@ Expr.prototype.hasType = function() {
 /**
  * Returns the type of the expression like findType, but also
  * annotates the expression and all subexpressions with type
- * information as the _type property of each.  Only appropriate for
- * expressions containing no shared structure such as rendered
- * expressions.  Variables (Atoms) must be among the structures
- * not shared.
+ * information as the _type property of each.  Every occurrence of any
+ * shared structure must have the same type, so the definition must be
+ * copied when replacing an occurrence of a defined constant.
  *
  * If this is already annotated, simply returns the annotation.
  */
@@ -523,12 +524,13 @@ function theType() {
 //   According to current thinking, all functions here that apply to
 //   real numbers should only apply to individuals, which still may
 //   include many things besides real numbers.  So it looks like only
-//   equality and "the" will have generic types.
+//   equality, iota, and "the" will have generic types.
 var constantTypes = {
   T: boolean,
   F: boolean,
   '=': equalityType(),
-  the: theType(),
+  iota: theType(),
+
   // The real numbers.
   R: new FunctionType(individual, boolean),
   '>': equalityType(),
@@ -580,7 +582,7 @@ var definitions = {
   T: true,
   F: true,
   '=': true,
-  the: true
+  iota: true
 };
 
 /**

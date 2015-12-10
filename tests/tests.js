@@ -1221,7 +1221,8 @@ var testCase = {
     assertEqual('o', Toy.findType(rules.axiom1()).toString());
     assertEqual('o', Toy.findType(rules.axiom2()).toString());
     assertEqual('o', Toy.findType(rules.axiom3()).toString());
-    assertEqual('o', Toy.findType(rules.axiom4(Toy.parse('({x. x} y)'))).toString());
+    assertEqual('o',
+                Toy.findType(rules.axiom4(Toy.parse('({x. x} y)'))).toString());
     assertEqual('o', Toy.findType(rules.axiom5()).toString());
     function check(expected, expr) {
       expr = (typeof expr == 'string') ? Toy.parse(expr) : expr;
@@ -1240,7 +1241,7 @@ var testCase = {
     // From set to individual:
     check('(i (o i))',
           // Max of a set having at least one positive number.
-          '{p. the {x. p x & x > 0 & forall {y. p y => x >= y}}}');
+          '{p. iota {x. p x & x > 0 & forall {y. p y => x >= y}}}');
     // From set and individual to boolean, note how the
     // first argument type appears last when written out.
     //         y  x
@@ -1300,7 +1301,7 @@ var testCase = {
                 Toy.rules.axiom2());
     assertEqual('((f = g) = (forall {x. ((f x) = (g x))}))',
                 Toy.rules.axiom3());
-    assertEqual('((the (y =)) = y)',
+    assertEqual('((iota {x. (x = y)}) = y)',
                 Toy.rules.axiom5());
     // Real numbers.  Make sure parsing works.
     Toy.rules.axiomCommutativePlus();
