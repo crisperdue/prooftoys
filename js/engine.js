@@ -3292,7 +3292,9 @@ function Fact(synopsis, prover) {
   assert(typeof prover === 'function', 'Not a function: {1}', prover);
   var self = this;
 
-  function fullProver() {
+  // This function wraps around the user-supplied fact prover
+  // to do the generic parts of the work.
+  function genericProver() {
     // If there is a substitution into the result that yields
     // the goal, do it.
     var goal = self.goal;
@@ -3337,7 +3339,7 @@ function Fact(synopsis, prover) {
   }
   this.synopsis = synopsis;
   this.goal = getStatement(synopsis);
-  this._prover = Toy.memo(fullProver);
+  this._prover = Toy.memo(genericProver);
 }
 
 $.extend(Fact.prototype, {
