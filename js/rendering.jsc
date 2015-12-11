@@ -1284,23 +1284,23 @@ Atom.prototype._render = function(minPower) {
 var useParens = {
   '|': new Toy.Set().addAll(['&']),
   '=>': new Toy.Set().addAll(['=>', '=']),
-  '==': new Toy.Set().addAll(['=>'])
+  '==': new Toy.Set().addAll(['=>', '='])
 };
 
 /**
- * Computes the effective precedence of the given binary operator Atom
- * when applied to the given inner binary operator Atom.  The result
- * will be either its normal precedence or one more than the
- * precedence of innerOp if innerOp is listed for the operator in the
- * useParens table.
+ * Computes the effective precedence of the given outer binary
+ * operator Atom when applied to the given inner binary operator Atom.
+ * The result will be either its normal precedence or one more than
+ * the precedence of innerOp if innerOp is listed for the operator in
+ * the useParens table.
  *
  * The effect is to force parentheses around an expressions with the
  * inner operator if it is an argument of an argument with the outer
  * operator.
  */
 function effectivePower(outer, inner) {
-  var specialOps = useParens[outer.name] || Toy.emptySet;
-  return (specialOps.has(inner.name)
+  var specialOps = useParens[outer.pname] || Toy.emptySet;
+  return (specialOps.has(inner.pname)
           ? Toy.getPrecedence(inner) + 1
           : Toy.getPrecedence(outer));
 }
