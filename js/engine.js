@@ -2580,7 +2580,7 @@ var ruleInfo = {
     form: ('Rewrite the selection using fact <input name=term>'),
     menu: 'rewrite using a fact',
     isRewriter: true,
-    description: '{in step siteStep} use;; {shortFact}'
+    description: 'use;; {shortFact} {&nbsp;in step siteStep}'
   },
 
   // NOTE: A chain of conjuncts (or other binary operator) is an
