@@ -40,7 +40,7 @@
     getScript('xutil.js');
     getScript('step-editor.js');
     getScript('../jsc/rendering.js');
-    getScript('theorems.js');
+    getScript('engine.js');
     getScript('numbers.js');
     // Support Google Plus stuff in particular.
     document.write('<script src="https://apis.google.com/js/platform.js">\n' +
