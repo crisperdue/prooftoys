@@ -3608,6 +3608,107 @@ var ruleInfo = {
     labels: 'basic'
   },
 
+  rewriteInDepth: {
+    action: function(step, path, facts) {
+      var equation = rules.deepTermReplacer(step.get(path), facts);
+      var result = rules.replace(equation, step.get(path));
+      return result.justify('rewriteInDepth', arguments);
+    },
+  },    
+
+  // Proves an equation that can replace the given term.  Applies the
+  // given List of equational facts recursively, traversing the term
+  // bottom-up, applying the first fact that succeeds to each
+  // subexpression.  Returns an equation with the term on the LHS and
+  // the replacement on the right.
+  //
+  // TODO: Extend to take a conversion function in place of the facts.
+  deepTermReplacer: {
+    action: function(term, facts) {
+      var step = rules.eqSelf(term);
+      var step1;
+      if (term instanceof Call) {
+        var stepFn = rules.deepTermReplacer(term.fn, facts);
+        var stepArg = rules.deepTermReplacer(term.arg, facts);
+        step1 = step.replace('/right/fn', stepFn)
+          .replace('/right/arg', stepArg);
+      } else {
+        step1 = step;
+      }
+      var result = Toy.each(facts, function(fact) {
+          try {
+            return step1.rewrite('/right', fact);
+          } catch(e) {}
+        });
+      result = result || step1;
+      return result.justify('deepTermReplacer', arguments);
+    }
+  },
+
+  // Proves an equation that can replace the given boolean term.
+  // Applies itself recursively to the given List of equational facts,
+  // descending into the arguments of conjunctions (a & b), bottom-up,
+  // applying the first fact (if any) that succeeds to each subexpression.
+  // Returns an equation with the term on the LHS and the replacement
+  // on the right.
+  //
+  // TODO: Extend to take a conversion function in place of the facts.
+  conjunctsSimplifier: {
+    action: function(term, facts) {
+      var step = rules.eqSelf(term);
+      var step1;
+      if (term.isCall2('&')) {
+        var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
+        var stepRight = rules.conjunctsSimplifier(term.getRight(), facts);
+        step1 = step.replace('/right/left', stepLeft)
+          .replace('/main/right/right', stepRight);
+      } else {
+        step1 = step;
+      }
+      var result = Toy.each(facts, function(fact) {
+          try {
+            return step1.rewrite('/right', fact);
+          } catch(e) {}
+        }) || step1;
+      try {
+        result = result.rewrite('/main/right',
+                                rules.tautology('a & (b & c) == a & b & c'));
+      } catch(e) {}
+      return result.justify('conjunctsSimplifier', arguments);
+    }
+  },
+
+  //
+  // OPTIONAL/UNUSED
+  // 
+
+  // Experiment with Andrews' definition of "and".
+  funWithAnd: function() {
+    var f = varify('f');
+    var g = varify('g');
+    var fa = rules.definition('forall');
+    var a2 = rules.axiom2();
+    var a3 = rules.axiom3();
+    var step1 = rules.applyBoth(rules.defAnd(), T);
+    var step2a = rules.apply(step1, '/right');
+    var step2b = rules.applyBoth(step2a, F);
+    var step2c = rules.apply(step2b, '/right');
+    var step3 = rules.instEqn(a3, step2c.get('/right/left'), f);
+    var step4 = rules.instEqn(step3, step2c.get('/right/right'), g);
+    var step5 = rules.apply(step4, '/right/arg/body/left');
+    var step6 = rules.apply(step5, '/right/arg/body/right');
+    var step7 = rules.applyBoth(fa, step6.get('/right/arg'));
+    var step8 = rules.instEqn(a3, step7.get('/right/left'), f);
+    var step9 = rules.instEqn(step8, step7.get('/right/right'), g);
+    var step10 = rules.apply(step9, '/right/arg/body/left');
+    var step11 = rules.apply(step10, '/right/arg/body/right');
+    var step12 = rules.r5218(step11.get('/right/arg/body/right'));
+    var step13 = rules.r(step12, step11, '/right/arg/body');
+    return step13.justify('funWithAnd');
+  }
+};
+
+var numbersInfo = {
   //
   // Real numbers
   // 
@@ -3978,76 +4079,6 @@ var ruleInfo = {
 
   // Managing numeric type hypotheses
 
-  rewriteInDepth: {
-    action: function(step, path, facts) {
-      var equation = rules.deepTermReplacer(step.get(path), facts);
-      var result = rules.replace(equation, step.get(path));
-      return result.justify('rewriteInDepth', arguments);
-    },
-  },    
-
-  // Proves an equation that can replace the given term.  Applies the
-  // given List of equational facts recursively, traversing the term
-  // bottom-up, applying the first fact that succeeds to each
-  // subexpression.  Returns an equation with the term on the LHS and
-  // the replacement on the right.
-  //
-  // TODO: Extend to take a conversion function in place of the facts.
-  deepTermReplacer: {
-    action: function(term, facts) {
-      var step = rules.eqSelf(term);
-      var step1;
-      if (term instanceof Call) {
-        var stepFn = rules.deepTermReplacer(term.fn, facts);
-        var stepArg = rules.deepTermReplacer(term.arg, facts);
-        step1 = step.replace('/right/fn', stepFn)
-          .replace('/right/arg', stepArg);
-      } else {
-        step1 = step;
-      }
-      var result = Toy.each(facts, function(fact) {
-          try {
-            return step1.rewrite('/right', fact);
-          } catch(e) {}
-        });
-      result = result || step1;
-      return result.justify('deepTermReplacer', arguments);
-    }
-  },
-
-  // Proves an equation that can replace the given boolean term.
-  // Applies itself recursively to the given List of equational facts,
-  // descending into the arguments of conjunctions (a & b), bottom-up,
-  // applying the first fact (if any) that succeeds to each subexpression.
-  // Returns an equation with the term on the LHS and the replacement
-  // on the right.
-  //
-  // TODO: Extend to take a conversion function in place of the facts.
-  conjunctsSimplifier: {
-    action: function(term, facts) {
-      var step = rules.eqSelf(term);
-      var step1;
-      if (term.isCall2('&')) {
-        var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
-        var stepRight = rules.conjunctsSimplifier(term.getRight(), facts);
-        step1 = step.replace('/right/left', stepLeft)
-          .replace('/main/right/right', stepRight);
-      } else {
-        step1 = step;
-      }
-      var result = Toy.each(facts, function(fact) {
-          try {
-            return step1.rewrite('/right', fact);
-          } catch(e) {}
-        }) || step1;
-      try {
-        result = result.rewrite('/main/right',
-                                rules.tautology('a & (b & c) == a & b & c'));
-      } catch(e) {}
-      return result.justify('conjunctsSimplifier', arguments);
-    }
-  },
-
   // Given a step that is a conditional, proves a version with the
   // assumptions simplified.  Reduces assumptions about "R" type of
   // expressions with arithmetic operators to assumptions about "R"
@@ -4398,35 +4429,6 @@ var ruleInfo = {
     labels: 'basic'
   },
 
-  //
-  // OPTIONAL/UNUSED
-  // 
-
-  // Experiment with Andrews' definition of "and".
-  funWithAnd: function() {
-    var f = varify('f');
-    var g = varify('g');
-    var fa = rules.definition('forall');
-    var a2 = rules.axiom2();
-    var a3 = rules.axiom3();
-    var step1 = rules.applyBoth(rules.defAnd(), T);
-    var step2a = rules.apply(step1, '/right');
-    var step2b = rules.applyBoth(step2a, F);
-    var step2c = rules.apply(step2b, '/right');
-    var step3 = rules.instEqn(a3, step2c.get('/right/left'), f);
-    var step4 = rules.instEqn(step3, step2c.get('/right/right'), g);
-    var step5 = rules.apply(step4, '/right/arg/body/left');
-    var step6 = rules.apply(step5, '/right/arg/body/right');
-    var step7 = rules.applyBoth(fa, step6.get('/right/arg'));
-    var step8 = rules.instEqn(a3, step7.get('/right/left'), f);
-    var step9 = rules.instEqn(step8, step7.get('/right/right'), g);
-    var step10 = rules.apply(step9, '/right/arg/body/left');
-    var step11 = rules.apply(step10, '/right/arg/body/right');
-    var step12 = rules.r5218(step11.get('/right/arg/body/right'));
-    var step13 = rules.r(step12, step11, '/right/arg/body');
-    return step13.justify('funWithAnd');
-  }
-
 };  // End of ruleInfo.
 
 // Map from rule name to function used in all proofs.
@@ -4544,7 +4546,6 @@ function addRule(key, info_arg) {
 }
 
 // Actual rule functions to call from other code.
-addRules(ruleInfo);
 
 
 //// FACTS
@@ -6546,6 +6547,8 @@ Toy._flagHyps = flagHyps;
 
 // Do this after support modules are initialized.
 $(function() {
+    addRules(ruleInfo);
+    addRules(numbersInfo);
     addFactsMap(logicFacts);
     addFactsMap(algebraFacts);
 });
