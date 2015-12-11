@@ -629,6 +629,41 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
+  // Consider a term that we may wish to rewrite.  Functionally
+  // the same as eqSelf, but display is handled specially.
+  consider: {
+    description: 'expression equal to itself',
+    action: function(term) {
+      term = termify(term);
+      var step = rules.eqSelf(term);
+      return step.justify('consider', arguments);
+    },
+    inputs: {term: 1},
+    form: 'Term to consider: <input name=term>',
+    menu: 'consider a term to transform',
+    tooltip: ('consider a term to transform'),
+    labels: 'basic'
+  },
+
+  // Similar to "consider", but uses a selected term.
+  // The new step inherits hypotheses from the input step.
+  considerPart: {
+    action: function(step, path) {
+      var eqn = rules.eqSelf(step.get(path));
+      var result = (step.hasHyps
+                    ? (rules.addAssumption(eqn, step.getLeft())
+                       .apply('asHypotheses'))
+                    : eqn);
+      return result.justify('considerPart', arguments);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'consider {term} equal to itself',
+    tooltip: ('prepare to transform term'),
+    description: 'expression equal to itself',
+    labels: 'display'
+  },
+
   // The two forms of "=" are interchangeable (other than precedence).
   eqIsEquiv: {
     proof: function() {
@@ -4153,41 +4188,6 @@ var ruleInfo = {
     tooltip: 'simplify assumptions in a step',
     menu: 'simplify assumptions',
     labels: 'uncommon'
-  },
-
-  // Consider a term that we may wish to rewrite.  Functionally
-  // the same as eqSelf, but display is handled specially.
-  consider: {
-    description: 'expression equal to itself',
-    action: function(term) {
-      term = termify(term);
-      var step = rules.eqSelf(term);
-      return step.justify('consider', arguments);
-    },
-    inputs: {term: 1},
-    form: 'Term to consider: <input name=term>',
-    menu: 'consider a term to transform',
-    tooltip: ('consider a term to transform'),
-    labels: 'basic'
-  },
-
-  // Similar to "consider", but uses a selected term.
-  // The new step inherits hypotheses from the input step.
-  considerPart: {
-    action: function(step, path) {
-      var eqn = rules.eqSelf(step.get(path));
-      var result = (step.hasHyps
-                    ? (rules.addAssumption(eqn, step.getLeft())
-                       .apply('asHypotheses'))
-                    : eqn);
-      return result.justify('considerPart', arguments);
-    },
-    inputs: {site: 1},
-    form: '',
-    menu: 'consider {term} equal to itself',
-    tooltip: ('prepare to transform term'),
-    description: 'expression equal to itself',
-    labels: 'display'
   },
 
   addToBoth: {
