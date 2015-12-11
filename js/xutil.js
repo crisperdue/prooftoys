@@ -595,7 +595,7 @@ var definitions = {
  */
 function define(name, definition) {
   assert(Toy.isConstantName(name), 'Not a constant name: ' + name);
-  definition = typeof definition == 'string' ? parse(definition) : definition;
+  definition = termify(definition);
   assert(definition instanceof Expr,
          'Definition must be a term: ' + definition);
   if (isDefined(name)) {
@@ -608,7 +608,7 @@ function define(name, definition) {
     assert(false, 'Definition has free variables: ' + name);
   }
   constantTypes[name] = findType(definition);
-  return definitions[name] = equal(name, definition);
+  return definitions[name] = equal(Toy.constify(name), definition);
 }
 
 /**
@@ -618,6 +618,8 @@ function define(name, definition) {
 function defineCases(name, ifTrue, ifFalse) {
   assert(Toy.isConstantName(name), 'Not a constant name: ' + name);
   assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
+  ifTrue = termify(ifTrue);
+  ifFalse = termify(ifFalse);
   for (var n in ifTrue.freeVars()) {
     assert(false, 'Definition has free variables: ' + name);
   }
@@ -1161,18 +1163,15 @@ function termify(x) {
 }
 
 /**
- * Calls a function given as a constant or name of a constant, passing
+ * Calls a function given as an Expr or name of a constant, passing
  * one or more arguments.
  */
-// TODO: Eliminate use fo binops in favor of infixCall.  This will
+// TODO: Eliminate use of binops in favor of infixCall.  This will
 // be problematic for some infix operators.
 function call(fn, arg) {
   // TODO: Allow fn to be a variable name.
   fn = fn instanceof Expr ? fn : Toy.constify(fn);
-  if ((typeof arg) == 'string') {
-    arg = new Atom(arg);
-  }
-  var result = new Call(fn, arg);
+  var result = new Call(fn, termify(arg));
   // Skip fn and the first "arg" after that.
   for (var i = 2; i < arguments.length; i++) {
     result = call(result, arguments[i]);
@@ -1182,13 +1181,12 @@ function call(fn, arg) {
 
 /**
  * Returns a call with the two operands and the given op (middle
- * argument) as the binary operator between them.  The op must be a
- * constant or a name suitable for one.
+ * argument) as the binary operator between them.  The op must be an
+ * Expr or name of a constant.
  */
 function infixCall(arg1, op, arg2) {
   // TODO: Change this when redefining meaning of infix operators.
-  op = Toy.constify(op);
-  return new Call(new Call(op, arg1), arg2);
+  return call(op, arg1, arg2);
 }
 
 /**

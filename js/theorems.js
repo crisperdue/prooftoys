@@ -26,19 +26,9 @@ var Lambda = Toy.lambda;
 
 var memo = Toy.memo;
 
-// Include all variables that appear in axioms, plus common constants.
-var f = varify('f');
-var g = varify('g');
-var h = varify('h');
-var x = varify('x');
-var y = varify('y');
-
+// Predefine some common constants.
 var T = constify('T');
 var F = constify('F');
-var zero = Toy.parse('0');
-var one = Toy.parse('1');
-var identity = lambda(x, x);
-var allT = lambda(x, T);
 
 // Map from tautology string representation to tautology,
 // for proved tautologies.  Private to the tautology rule.
@@ -592,20 +582,18 @@ var ruleInfo = {
 
   // Definition of F, for book-style proofs.
   defFFromBook: function() {
-    return equal(F, call('forall', lambda(x, x))).justify('defFFromBook');
+    return Toy.parse('F = forall {x. x}').justify('defFFromBook');
   },
 
   // Book only.
   defAnd: function() {
-    var result =
-      equal('&', lambda(x, lambda(y, equal(lambda(g, call(g, T, T)),
-                                            lambda(g, call(g, x, y))))));
-    return result.justify('defAnd');
+    return (Toy.parse('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
+            .justify('defAnd'));
   },
 
   // Book only.
   defImplies: function() {
-    return equal('=>', Toy.parse('{x. {y. x == x & y}}')).justify('defImplies');
+    return Toy.parse('(=>) = {x. {y. x == x & y}}').justify('defImplies');
   },
 
   //
@@ -617,7 +605,7 @@ var ruleInfo = {
   eqSelf: {
     action: function(a) {
       a = termify(a);
-      var step1 = rules.axiom4(call(lambda(x, x), a));
+      var step1 = rules.axiom4(call(Toy.parse('{x. x}'), a));
       var result = rules.r(step1, step1, '/left');
       return result.justify('eqSelf', arguments);
     },
@@ -955,7 +943,9 @@ var ruleInfo = {
    * hypotheses.
    */
   instEqn: {
-    action: function(b_c, a, v) {
+    action: function(b_c_arg, a_arg, v) {
+      var b_c = termify(b_c_arg);
+      var a = termify(a_arg);
       var bound = rules.bindEqn(b_c, v);
       var step2 = rules.applyBoth(bound, a);
       var step3 = rules.apply(step2, '/left');
@@ -978,11 +968,11 @@ var ruleInfo = {
   xAlwaysX: {
     proof: function() {
       var a3 = rules.axiom3();
-      var step1 = rules.instEqn(a3, f, g);
-      var step2 = rules.instEqn(step1, lambda(y, y), f)
+      var step1 = rules.instEqn(a3, 'f', 'g');
+      var step2 = rules.instEqn(step1, '{y. y}', 'f');
       var step3 = rules.apply(step2, '/right/arg/body/right');
       var step4 = rules.apply(step3, '/right/arg/body/left');
-      var step5 = rules.eqSelf(lambda(y, y));
+      var step5 = rules.eqSelf(Toy.parse('{y. y}'));
       var step6 = rules.replace(step4, step5, '');
       return step6.justify('xAlwaysX', arguments);
     }
@@ -1135,14 +1125,15 @@ var ruleInfo = {
   // TODO: Is there a more elegant proof of this?
   r5230FT_alternate: {
     proof: function() {
+      var x = Toy.parse('x');
       // Note: this uses instVar on facts of the form A => B,
       // which is only supported by instVar by using fromTIsA and toTisA.
       // It is applied to steps that have no hypotheses, but still
       // instVar uses toTIsA (and fromTIsA).
       // TODO: Confirm that this is all correct.
       var step1a = rules.instVar(rules.axiom2(), F, x);
-      var step1b = rules.instVar(step1a, T, y);
-      var step1c = rules.instVar(step1b, lambda(x, equal(x, F)), h);
+      var step1b = rules.instVar(step1a, T, 'y');
+      var step1c = rules.instVar(step1b, '{x. x = F}', 'h');
       var step2a = rules.apply(step1c, '/right/left');
       var step2b = rules.apply(step2a, '/right/right');
       var step3aa = rules.eqT(F);
@@ -1188,11 +1179,11 @@ var ruleInfo = {
 
   // Book version of r5211.
   r5211Book: function() {
-    var step1 = rules.instEqn(rules.axiom1(), lambda(y, T), g);
+    var step1 = rules.instEqn(rules.axiom1(), lambda(y, T), 'g');
     var step2a = rules.apply(step1, '/right/arg/body');
     var step2b = rules.apply(step2a, '/left/right');
     var step2c = rules.apply(step2b, '/left/left');
-    var step3a = rules.eqT(lambda(x, T));
+    var step3a = rules.eqT(Toy.parse('{x. T}'));
     var step3b = rules.rRight(rules.definition('forall'), step3a, '/right/fn');
     var step4 = rules.rRight(step3b, step2c, '/right');
     return step4.justify('r5211Book');
@@ -1251,8 +1242,7 @@ var ruleInfo = {
   // 5216 by the book.
   andTBook: function(a) {
     var step1 = rules.axiom1();
-    var step2 =
-      rules.instEqn(step1, lambda(x, equal(call('&', T, x), x)), g);
+    var step2 = rules.instEqn(step1, '{x. T & x == x}', 'g');
     var step3 = rules.apply(step2, '/left/left');
     var step4 = rules.apply(step3, '/left/right');
     var step5 = rules.apply(step4, '/right/arg/body');
@@ -1272,16 +1262,15 @@ var ruleInfo = {
 
   // Book only.  We use axiomPNeqNotP instead of defining F.
   r5217Book: function() {
-    var step1 = rules.instEqn(rules.axiom1(),
-                              lambda(x, equal(T, x)), g);
+    var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
     var step2a = rules.apply(step1, '/left/left');
     var step2b = rules.apply(step2a, '/left/right');
     var step2c = rules.apply(step2b, '/right/arg/body');
     var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
     var step4a = rules.andT(equal(T, F));
     var step4b = rules.r(step4a, step3, '/left');
-    var step5a = rules.instEqn(rules.axiom3(), lambda(x, T), f);
-    var step5b = rules.instEqn(step5a, lambda(x, x), g);
+    var step5a = rules.instEqn(rules.axiom3(), '{x. T}', 'f');
+    var step5b = rules.instEqn(step5a, '{x. x}', 'g');
     var step6a = rules.apply(step5b, '/right/arg/body/left');
     var step6b = rules.apply(step6a, '/right/arg/body/right');
     var step6c = rules.useDefinition(rules.defFFromBook(),
@@ -1309,7 +1298,7 @@ var ruleInfo = {
       var newVar = Toy.genVar('w', caseT.allNames());
       var gen = caseT.generalizeTF(caseF, newVar);
       var lexpr = lambda(newVar, gen);
-      var step4 = rules.instEqn(rules.axiom1(), lexpr, g);
+      var step4 = rules.instEqn(rules.axiom1(), lexpr, 'g');
       var step5 = rules.apply(step4, '/right/arg/body');
       var step6 = rules.apply(step5, '/left/right');
       var step7 = rules.apply(step6, '/left/left');
@@ -1345,7 +1334,7 @@ var ruleInfo = {
   r5218: {
     action: function(a) {
       var step1 = rules.theorem('tIsXIsX');
-      var step2 = rules.instEqn(step1, a, x);
+      var step2 = rules.instEqn(step1, a, 'x');
       return step2.justify('r5218', arguments);
     },
     inputs: {bool: 1},
@@ -1569,8 +1558,7 @@ var ruleInfo = {
       var step2a = rules.axiom4(call(lambda(newVar, gen), F));
       var step2b = rules.rRight(step2a, caseF, '/main');
       var step4 = rules.makeConjunction(step1b, step2b);
-      var step5 = rules.instVar(rules.axiom1(),
-                                lambda(newVar, gen), g);
+      var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), 'g');
       var step6 = rules.replace(step5, step4, '/main');
       var step7a = rules.instForall(step6, v);
       var step7b = rules.apply(step7a, '/main');
@@ -1614,7 +1602,7 @@ var ruleInfo = {
       var step1 = rules.axiom2();
       var map = {h: Toy.parse('{g. g x}'),
                  x: Toy.parse('{x. T}'),
-                 y: f};
+                 y: Toy.parse('f')};
       var step2 = rules.instMultiVars(step1, map);
       var step3 = rules.rRight(rules.definition('forall'), step2, '/left/fn');
       var step4 = rules.apply(step3, '/right/left');
@@ -1667,13 +1655,14 @@ var ruleInfo = {
   // [[T =] = {x. x}].
   trueEquals: {
     proof: function() {
+      var x = varify('x');
       var step1 = rules.r5218(x);
       var step2 = rules.eqSelf(Toy.parse('{x. x} x'));
       var step3 = rules.apply(step2, '/left');
       var step4 = rules.r(step3, step1, '/right');
       var step5 = rules.addForall(step4, x);
-      var step6 = rules.instVar(rules.axiom3(), equal(T), f);
-      var step7 = rules.instVar(step6, lambda(x, x), g);
+      var step6 = rules.instVar(rules.axiom3(), equal(T), 'f');
+      var step7 = rules.instVar(step6, '{x. x}', 'g');
       return rules.rRight(step7, step5, '');
     }
   },
@@ -1965,6 +1954,7 @@ var ruleInfo = {
       assert(!a.hasFreeName(v.name),
 	     'implyForall: variable {1} cannot occur free in {2}', v, a, h_a_b);
       if (h_a_b.hasHyps) {
+        var h = h_a_b.getLeft();
 	assert(!h.hasFreeName(v.name),
 	       'implyForall: variable {1} cannot occur free in {2}', v, h,
 	       h_a_b);
@@ -3585,6 +3575,8 @@ var ruleInfo = {
 
   equalitySymmetric: {
     proof: function() {
+      var x = varify('x');
+      var y = varify('y');
       var step1 = rules.assume('x = y');
       var step2 = rules.eqSelf(x);
       var step3 = rules.replace(step1, step2, '/left');
@@ -3911,7 +3903,7 @@ var ruleInfo = {
       var step1 = rules.axiomPlusType();
       var step2 = rules.instVar(step1, Toy.parse('neg y'), 'y');
       var step3 = rules.axiomNegType();
-      var step4 = rules.instVar(step3, y, x);
+      var step4 = rules.instVar(step3, 'y', 'x');
       var step5 = rules.rRight(step4, step2, '/left/right');
       var step6 = rules.eqSelf(Toy.parse('x - y'));
       var step7 = rules.apply(step6, '/left');
@@ -3929,7 +3921,7 @@ var ruleInfo = {
       var step1 = rules.axiomTimesType();
       var step2 = rules.instVar(step1, Toy.parse('recip y'), 'y');
       var step3 = rules.axiomReciprocalType();
-      var step4 = rules.instVar(step3, y, x);
+      var step4 = rules.instVar(step3, 'y', 'x');
       var step5 = rules.rRight(step4, step2, '/left/right');
       var step6 = rules.eqSelf(Toy.parse('x / y'));
       var step7 = rules.apply(step6, '/left');
@@ -4248,7 +4240,7 @@ var ruleInfo = {
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '/', term));
       var result = rules.applyToBoth(fn, eqn)
-        .apply('addAssumption', Toy.infixCall(term, '!=', zero))
+        .apply('addAssumption', Toy.infixCall(term, '!=', '0'))
         .apply('simplifyAssumptions');
       return result.justify('divideBoth', arguments, [eqn]);
     },
@@ -4412,6 +4404,8 @@ var ruleInfo = {
 
   // Experiment with Andrews' definition of "and".
   funWithAnd: function() {
+    var f = varify('f');
+    var g = varify('g');
     var fa = rules.definition('forall');
     var a2 = rules.axiom2();
     var a3 = rules.axiom3();
@@ -5472,12 +5466,15 @@ function addSwappedFact(synopsis) {
 
 // Do this after support modules are initialized.
 $(function() {
+    var identity = Toy.parse('{x. x}');
+    var allT = Toy.parse('{x. T}');
+
     // Put definitions into their database:
     Toy.define('not', equal(F));
     Toy.define('!=', '{x. {y. not (x = y)}}');
-    Toy.define('forall', equal(lambda(x, T)));
+    Toy.define('forall', '(=) {x. T}');
     Toy.define('exists', '(!=) {x. F}');
-    Toy.defineCases('&', identity, lambda(x, F));
+    Toy.defineCases('&', identity, '{x. F}');
     Toy.defineCases('|', allT, identity);
     Toy.defineCases('=>', identity, allT);
     Toy.define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');

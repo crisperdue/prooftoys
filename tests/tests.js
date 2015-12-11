@@ -1504,7 +1504,7 @@ var testCase = {
 
   testAndTBook: function() {
     var inf = Toy.rules.andTBook(p);
-    assertEqual('((T & p) = p)', inf);
+    assertEqual('((T & p) == p)', inf);
   },
 
   testAndT: function() {
