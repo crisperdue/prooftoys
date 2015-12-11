@@ -4,7 +4,7 @@
 
 // Make some names visible throughout
 var rules = Toy.rules;
-var ruleData = Toy._ruleData;
+var ruleData = Toy.ruleData;
 var varify = Toy.varify;
 var constify = Toy.constify;
 var call = Toy.call;
