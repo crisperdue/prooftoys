@@ -1125,11 +1125,10 @@ function renderAsStep(step) {
       var $wff = $(step.node);
     } else {
       // Must we make the $wff if there are hyps, but none visible?
-      var $wff = exprJq();
+      var $wff = exprJq(true);
       step.node = dom($wff);
     }
     $wff.append(renderMain(step));
-    markAsFullExpr($wff);
     return dom($wff);
   } else {
     return renderMain(step);
@@ -1173,7 +1172,7 @@ function renderMain(step) {
  * a new Expr DOM node, returning the node.
  */
 function renderHyps(expr) {
-  var $top = exprJq();
+  var $top = exprJq(true);
   var hypsNode;
   if (Toy.suppressRealTypeDisplays) {
     expr = Toy.omittingReals(expr);
@@ -1213,10 +1212,15 @@ function renderHyps(expr) {
 }
 
 /**
- * Build and return a jQuery of class "expr".
+ * Build and return a jQuery of class "expr", and mark as "fullExpr"
+ * if the optional "full" argument is truthy.
  */
-function exprJq() {
-  return $('<span class=expr></span>');
+function exprJq(full) {
+  var $expr = $('<span class=expr></span>');
+  if (full) {
+    $expr.addClass('fullExpr');
+  }
+  return $expr;
 }
 
 /**
@@ -1244,15 +1248,6 @@ function textNode(text) {
   return document.createTextNode(text);
 }
 
-/**
- * Marks the given JQ as a "full expr", selectable in the
- * simplified selections mode, and highlighted on hover in
- * that mode.
- */
-function markAsFullExpr($expr) {
-  $expr.addClass('fullExpr');
-}
-
 // NOTE that some methods on Expr and its subclasses appear here.
 
 // _render(minPower)
@@ -1263,17 +1258,17 @@ function markAsFullExpr($expr) {
 // be done only once to any given expression.  Helper for the render
 // method.  (Not public)
 //
+// The optional second argument is used only by Atom rendering, and
+// indicates that the expression represents a function (or
+// syntactically an operator).
+//
 // Omits parentheses around an expression that uses an operator
 // if the operator's precedence is at least minPower.
 //
 
-Atom.prototype._render = function(minPower) {
-  var $expr = exprJq();
+Atom.prototype._render = function(minPower, isFn) {
+  var $expr = exprJq(!isFn);
   this.node = dom($expr);
-  if (this.isVariable() || this.isLiteral()) {
-    // Variable or literal constant is selectable, not named constants
-    markAsFullExpr($expr);
-  }
   var name = this.toHtml();
   specialClasses(this.name).forEach(function(cl) { $expr.addClass(cl); });
   $expr.html(name);
@@ -1308,7 +1303,7 @@ function effectivePower(outer, inner) {
 // minPower is the precedence required to do without parentheses.
 Call.prototype._render = function(minPower) {
   var self = this;
-  var $expr = exprJq();
+  var $expr = exprJq(true);
   this.node = dom($expr);
 
   // Step number (string) in case rendering is tracking source steps
@@ -1348,7 +1343,7 @@ Call.prototype._render = function(minPower) {
       if (op.name in {'*': true, '/': true}) {
         // Render these without extra whitespace.
         var $fn = exprJq().append(left._render(thisPower(left)),
-                                   op._render(0));
+                                  op._render(0, true));
         this.fn.node = dom($fn);
         $expr.append($fn, right._render(thisPower(right) + 1));
       } else if (op.name == '**' && right.isNumeral()) {
@@ -1360,7 +1355,7 @@ Call.prototype._render = function(minPower) {
                      $('<sup>').append(right.getNumValue()));
       } else {
         var $fn = exprJq().append(left._render(thisPower(left)), ' ',
-                                   op._render(0));
+                                  op._render(0, true));
         this.fn.node = dom($fn);
         $expr.append($fn, ' ', right._render(thisPower(right) + 1));
       }
@@ -1370,18 +1365,16 @@ Call.prototype._render = function(minPower) {
       // reducing the required power by 1 here, but then we might want
       // to reorganize the code for rendering ordinary function calls.
       var $fn = exprJq()
-        .append(this.fn.fn._render(Toy.namePower + 1), ' ',
+        .append(this.fn.fn._render(Toy.namePower + 1, true), ' ',
                 this.fn.arg._render(Toy.namePower + 1));
       this.fn.node = dom($fn);
       $expr.append($fn, ' ', this.arg._render(Toy.namePower + 1));
     }
-    markAsFullExpr($expr);
   } else if (Toy.isInfixDesired(this.fn)) {
     // Infix operator, but only one argument: render like "(+) x"
     // Parenthesize both function and argument if they are calls.
     $expr.append('(', this.fn._render(0), ') ',
-              this.arg._render(Toy.namePower + 1));
-    markAsFullExpr($expr);
+                 this.arg._render(Toy.namePower + 1));
   } else if (!this.fn.displaysIdentifier()) {
     // Function call with non-identifier operator.
     // Display the function adjacent to its argument, but precede both
@@ -1391,18 +1384,16 @@ Call.prototype._render = function(minPower) {
     if (this.fn.name === 'neg' && this.arg.isNumeral()) {
       // Render e.g. neg 7 as -(7) to distinguish from a negative
       // number.
-      $expr.append(this.fn._render(0),
-                '(', this.arg._render(Toy.unaryPower), ')');
+      $expr.append(this.fn._render(0, true),
+                   '(', this.arg._render(Toy.unaryPower), ')');
     } else {
-      $expr.append('\u00a0', this.fn._render(0),
-                this.arg._render(Toy.unaryPower));
+      $expr.append('\u00a0', this.fn._render(0, true),
+                   this.arg._render(Toy.unaryPower));
     }
-    markAsFullExpr($expr);
   } else {
     // Normal function call: "f x" or " ... x".
-    $expr.append(this.fn._render(Toy.namePower + 1), ' ',
-              this.arg._render(Toy.unaryPower));
-    markAsFullExpr($expr);
+    $expr.append(this.fn._render(Toy.namePower + 1, true), ' ',
+                 this.arg._render(Toy.unaryPower));
   }
   if (parens) {
     $expr.append(')');
@@ -1411,9 +1402,8 @@ Call.prototype._render = function(minPower) {
 };
 
 Lambda.prototype._render = function(minPower) {
-  var $expr = exprJq();
+  var $expr = exprJq(true);
   this.node = dom($expr);
-  markAsFullExpr($expr);
   var stepNum = (Toy.trackSourceSteps
                  && this.sourceStep
                  && this.sourceStep.rendering.stepNumber);
@@ -1424,7 +1414,6 @@ Lambda.prototype._render = function(minPower) {
   $expr.append(this.bound._render(0));
   $expr.append('. ');
   var $body = this.body._render(0);
-  markAsFullExpr($body);
   $expr.append($body);
   $expr.append('}');
   return $expr;
