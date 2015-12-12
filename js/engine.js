@@ -790,23 +790,28 @@ var ruleInfo = {
   // be a call to the named function, with T or F as the argument.
   // Works with hypotheses.
   useDefinition: {
+    // TODO: This still needs significant work to function smoothly
+    //   in the UI, to find the appropriate name in 1-arg function
+    //   calls, and to really handle definitions by cases properly.
     action: function(a, path) {
       var args = [a, path];
       path = Toy.path(path, a);
       var target = a.get(path);
+      var result;
       if (target.isAtomic()) {
-        var result = rules.replace(rules.definition(target.name), a, path);
-        return result.justify('useDefinition', args, [a]);
+        result = rules.replace(rules.definition(target.name), a, path);
+      } else if (target.isCall2()) {
+        result = rules.replace(rules.definition(target.getBinOp().name),
+                               a, path.concat('/binop'))
       } else {
         assert(target instanceof Toy.Call,
                'Target of useDefinition not suitable: {1}', target);
         var arg = target.arg;
         assert(arg.isConst() && (arg.name == 'T' || arg.name == 'F'),
                'Target of useDefinition not suitable: {1}', target);
-        var result =
-	  rules.replace(rules.definition(target.fn.name, arg), a, path);
-        return result.justify('useDefinition', args, [a]);
+        result = rules.replace(rules.definition(target.fn.name, arg), a, path);
       }
+      return result.justify('useDefinition', args, [a]);
     },
     inputs: {site: 1},
     form: '',
