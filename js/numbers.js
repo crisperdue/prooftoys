@@ -413,8 +413,14 @@ var numbersInfo = {
     }
   },
 
-  // All of the type axioms are true in actual type theory, but
-  // in type theory the reciprocal is always a real number.
+  // Type-related axioms
+
+  // This axiom applies to all normal objects, not just reals.
+  axiomRealNotNull: {
+    proof: function() {
+      return rules.assert('not (R none)');
+    }
+  },
 
   // Note: not structured as a rewrite rule.
   axiomPlusType: {
@@ -1654,12 +1660,28 @@ var realAxiomFacts = {
     action: function() {
       return rules.axiomTimesZero();
     }
+  },
+  'not (R none)': {
+    action: function() {
+      return rules.axiomRealNotNull();
+    }
   }
 };
 $.extend(algebraFacts, realAxiomFacts);
 
 
 var basicFacts = {
+  '@R a => a != none': {
+    action: function() {
+      var asm = rules.assume('a = none');
+      return (rules.fact('not (R none)')
+              .replace('/arg/arg', asm)
+              .apply('asImplication')
+              .apply('forwardChain', 'a => not b == b => not a')
+              .apply('simplifySite', '/right'));
+    }
+  },
+
   'a + neg a = 0': {
     action: function() {
       return rules.eqSelf('a + neg a')
