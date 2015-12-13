@@ -3231,6 +3231,15 @@ var logicFacts = {
     action: function() {
       return rules.tautology('not F');
     }
+  },
+
+  '(a != b) == not (a = b)': {
+    action: function() {
+      return (rules.eqSelf('a != b')
+              .apply('useDefinition', '/right')
+              .apply('apply', '/right/fn')
+              .apply('apply', '/right'));
+    }
   }
 };
 
