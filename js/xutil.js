@@ -678,7 +678,7 @@ function getDefinition(name, tOrF) {
  * database.  Returns null if there is no definition; throws an error
  * if there is a definition, but wrong type.  If the tOrF argument is
  * present, the definition must be by cases, otherwise simple.  Also
- * accepts a Atom.
+ * accepts an Atom.
  *
  * TODO: Somehow avoid the unsafeness of this; consider eliminating
  * this and moving getDefinition functionality into rules.definition.
