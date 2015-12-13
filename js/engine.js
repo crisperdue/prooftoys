@@ -164,7 +164,7 @@ var ruleMethods = {
    * equation to use.  Private to Expr.justify.
    */
   replace: function(path, eqn) {
-    return Toy.rules.replace(eqn, this, path);
+    return Toy.rules.replaceEither( this, path, eqn);
   }
 };
 Expr.addMethods(ruleMethods);
