@@ -2450,6 +2450,7 @@ $.extend(algebraFacts, algebraIdentities);
  * TODO: Consider -1 * a = neg a; a + a = 2 * a; 
  */
 var basicSimpFacts = [
+                      'not (a = b) = (a != b)',
                       'a - a = 0',
                       'a + neg a = 0',
                       'a + 0 = a',
