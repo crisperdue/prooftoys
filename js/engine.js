@@ -25,6 +25,7 @@ var implies = Toy.implies;
 var lambda = Toy.lambda;
 
 var Expr = Toy.Expr;
+var Atom = Toy.Atom;
 var Call = Toy.Call;
 var Lambda = Toy.lambda;
 
@@ -785,33 +786,39 @@ var ruleInfo = {
     description: 'from a = b to (f a) = (f b)'
   },
 
-  // Use the definition of the given name at the given location
-  // in WFF A.  If the definition is by cases the location should
-  // be a call to the named function, with T or F as the argument.
-  // Works with hypotheses.
+  // Use the definition of the name at the given location in the given
+  // step.  If the definition is by cases the location should be a
+  // call to the named function, with T or F as the argument.
+  // For the benefit of the UI, if the path is to a call, uses
+  // the definition of the named function of the call, even if there
+  // is more than one argument, by descending into fn parts.
   useDefinition: {
-    // TODO: This still needs significant work to function smoothly
-    //   in the UI, to find the appropriate name in 1-arg function
-    //   calls, and to really handle definitions by cases properly.
-    action: function(a, path) {
-      var args = [a, path];
-      path = Toy.path(path, a);
-      var target = a.get(path);
+    action: function(step, path) {
+      var args = [step, path];
+      path = Toy.path(path, step);
       var result;
-      if (target.isAtomic()) {
-        result = rules.replace(rules.definition(target.name), a, path);
-      } else if (target.isCall2()) {
-        result = rules.replace(rules.definition(target.getBinOp().name),
-                               a, path.concat('/binop'))
-      } else {
-        assert(target instanceof Toy.Call,
-               'Target of useDefinition not suitable: {1}', target);
-        var arg = target.arg;
-        assert(arg.isConst() && (arg.name == 'T' || arg.name == 'F'),
-               'Target of useDefinition not suitable: {1}', target);
-        result = rules.replace(rules.definition(target.fn.name, arg), a, path);
+      var target = step.get(path);
+      // Undefined if the path refers to an Atom.
+      var parent;
+      var parentPath;
+      // Descend to the named function, even if multiple arguments.
+      while (target instanceof Call) {
+        parentPath = parentPath ? parentPath.concat('/fn') : path;
+        parent = target;
+        target = target.fn;
       }
-      return result.justify('useDefinition', args, [a]);
+      // At this point the parent (if defined) is a Call.
+      // The parentPath is path to the parent if any.
+      assert(target instanceof Atom, 'Not a symbol: {1}', target);
+      if (Toy.isDefinedByCases(target)) {
+        assert(parent, 'To use a definition by cases, refer to a call.');
+        result = rules.replace(rules.definition(target.name, parent.arg),
+                               step, parentPath);
+      } else {
+        result = rules.replace(rules.definition(target.name), step,
+                               parentPath ? parentPath.concat('/fn') : path);
+      }
+      return result.justify('useDefinition', args, [step]);
     },
     inputs: {site: 1},
     form: '',
