@@ -2084,13 +2084,15 @@ var ruleInfo = {
                    : mainOp === '=='
                    ? rules.replace(step2, step, '/main')
                    : assert(false, 'Schema must be like A => B or A == B'));
-      return step3.justify('forwardChain', arguments, [step, schema]);
+      // Schema is listed as a dependency here so it can be recognized
+      // as a dependency, e.g. when rendering a proof.
+      return step3.justify('forwardChain', [step, schema], [step, schema]);
     },
     inputs: {step: [1, 2]},
     labels: 'basic',
     menu: 'forward chain',
-    form: ('Match step <input name=step1> with left side of implication '
-           + 'in schema <input name=step2>'),
+    form: ('Match step <input name=step1> with left side of '
+           + 'step <input name=step2>'),
     tooltip: ('[p] and [p => q] to q'),
     description: 'consequence;; of step {step1} using step {step2}'
   },
