@@ -1778,10 +1778,10 @@ var testCase = {
   },
 
   testSubgoal: function() {
-    expect(0);
-    var input = Toy.parse('R (x + (y + 2))');
-    var theorem = rules.axiomTimesType();
-    console.log(rules.subgoal(input, theorem));
+    var input = Toy.parse('a & b => c');
+    var theorem = rules.tautology('(p == q) => (p => q)');
+    var result = rules.subgoal(input, theorem);
+    assertEqual('(((a & b) == c) => ((a & b) => c))', result);
   },
 
   testR5238a: function() {
