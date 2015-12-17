@@ -464,8 +464,9 @@ Expr.prototype.hasVars = function() {
  * having hypotheses.  Useful in tests, perhaps other contexts also.
  */
 Expr.prototype.asHyps = function() {
-  // Note: requires theorems.js to run.
-  return Toy.rules.asHypotheses(this);
+  var result = this.dup();
+  result.hasHyps = true;
+  return result;
 };
 
 /**
