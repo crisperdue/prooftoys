@@ -475,7 +475,7 @@ var ruleInfo = {
 	  break;
 	}
       }
-      var result = target.hasHyps ? rules.asHypotheses(result) : result;
+      var result = target.hasHyps ? result.asHyps() : result;
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation]);
       justified.details = null;
