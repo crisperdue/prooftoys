@@ -256,7 +256,7 @@ var ruleInfo = {
       var step = rules.tautInst('a => a', {a: assumption});
       // Flag the step as one with hypotheses, and record this step as
       // the source of the assumption.
-      var result = step.asHyps().justify('assume', arguments);
+      var result = rules.asHypotheses(step).justify('assume', arguments);
       assumption.sourceStep = result;
       _allHyps[assumption.dump()] = assumption;
       return result;
@@ -469,7 +469,7 @@ var ruleInfo = {
 	  break;
 	}
       }
-      var result = target.hasHyps ? result.asHyps() : result;
+      var result = target.hasHyps ? rules.asHypotheses(result) : result;
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation]);
       justified.details = null;
@@ -1899,7 +1899,7 @@ var ruleInfo = {
         var step1 = rules.tautInst(taut, map);
         var step2 = rules.modusPonens(step, step1);
       }
-      var step3 = rules.dedupeHyps(step2.asHyps());
+      var step3 = rules.dedupeHyps(rules.asHypotheses(step2));
       return step3.justify('addAssumption', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
