@@ -1937,20 +1937,19 @@ var equivalences = {
   },
 
 /*
-  // If functions are total, an operation such as x / 0 has a value,
+  // Since functions are total, an operation such as x / 0 has a value,
   // though the value might not be a number.  Thus an equation such as
   // x / (1 - x) = 1 / (1 - x) is true when x = 1 since 1 / 0 = 1 / 0,
   // with the same operations being applied to the same inputs.
 
   // It is logically correct to allow x = 1 as a solution to the
-  // equation x / (1 - x) = 1 / (1 - x).  Even if such problems are
+  // equation x / (1 - x) = 2 / (1 - x).  Even if such problems are
   // not stated with the side conditions that avoid zero denominators,
-  // the fact that x / x = 1 == x != 0 prevents more serious
-  // difficulties.
+  // the fact that x / x = 1 == x != 0 prevents inconsistency.
 
   // In textbook math, a solution is only considered valid if it
   // results in values outside the domain, usually the real numbers.
-  // Ann implementable approach to this is to state the problem with
+  // An implementable approach to this is to state the problem with
   // the side condition, e.g. if the given is X1 / X2 = X3 (where the
   // Xes are expressions), state the problem as X1 / X2 = X3 and X2 !=
   // 0, on the grounds that the values involved will not be real
@@ -1961,7 +1960,7 @@ var equivalences = {
   //   and therefore
   // c != 0 => (a = b == a * c = b * c)
   //   and so
-  // (c != 0 & a == c != 0 & b)
+  // (c != 0 & a = b) == (c != 0 & a * c = b * c)
   // This lets us multiply both sides when appropriate.
 
   // We could use the following to eliminate the side condition
@@ -1974,8 +1973,9 @@ var equivalences = {
   // same denominator, for example, it will be true when that
   // denominator is zero, so this approach will not apply.
   //
-  // This is probably also not so good for educational
-  // purposes because it gets us involved with undefined terms.
+  // Unfortunately, eliminating the side condition in this way is
+  // probably not great for educational purposes because the reasoning
+  // involves "undefined" terms.
   //
 
   },
