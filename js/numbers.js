@@ -425,7 +425,7 @@ var numbersInfo = {
   // Note: not structured as a rewrite rule.
   axiomPlusType: {
     action: function() {
-      return rules.assert('R x & R y => R (x + y)')
+      return rules.assert('R x & R y == R (x + y)')
         .justify('axiomPlusType');
     },
     inputs: {},
@@ -438,7 +438,7 @@ var numbersInfo = {
   // Note: not structured as a rewrite rule.
   axiomTimesType: {
     action: function() {
-      return rules.assert('R x & R y => R (x * y)')
+      return rules.assert('R x & R y == R (x * y)')
 	.justify('axiomTimesType');
     },
     inputs: {},

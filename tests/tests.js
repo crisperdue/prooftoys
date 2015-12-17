@@ -2036,12 +2036,12 @@ var testCase = {
   },
 
   testSubtractionType: function() {
-    assertEqual('(((R x) & (R y)) => (R (x - y)))',
+    assertEqual('(((R x) & (R y)) = (R (x - y)))',
                 rules.subtractionType());
   },
 
   testDivisionType: function() {
-    assertEqual('((((y != 0) & (R x)) & (R y)) => (R (x / y)))',
+    assertEqual('((((y != 0) & (R x)) & (R y)) = (R (x / y)))',
                 rules.divisionType());
   },
 
