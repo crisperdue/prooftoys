@@ -314,11 +314,17 @@ var ruleInfo = {
   },
 
   /**
-   * From an implication with LHS consisting of a set of hypotheses,
-   * derives the equivalent step with the hypotheses.
+   * From an implication or equivalence, derives a step with the LHS
+   * as its hypotheses, and the same RHS.  Result is always an
+   * implication.
    */
   asHypotheses: {
-    action: function(step) {
+    action: function(step_arg) {
+      step_arg.assertCall2();
+      var op = step_arg.wff.getBinOp().pname;
+      var step = ((op in {'=': true, '==': true})
+                  ? rules.forwardChain(step_arg, '(a == b) => (a => b)')
+                  : step_arg);
       step.assertCall2('=>');
       // Use dup to prevent "justify" from getting input identical
       // to "step".
