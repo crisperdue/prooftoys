@@ -707,14 +707,14 @@ var ruleInfo = {
   // r5201b.  Works with hypotheses.
   eqnSwap: {
     action: function(h_ab) {
-      var ab = h_ab.unHyp();
+      var ab = h_ab.getMain();
       var op = ab.getBinOp().pname;
       var aa = (op === '=='
                 ? rules.equivSelf(ab.getLeft())
                 : op === '='
                 ? rules.eqSelf(ab.getLeft())
                 : assert(false, 'Must be an equiv/equation: {1}', ab));
-      var ba = rules.replace(h_ab, aa, '/left');
+      var ba = rules.replace(h_ab, aa, '/main/left');
       return ba.justify('eqnSwap', arguments, arguments);
     },
     inputs: {equation: 1},
