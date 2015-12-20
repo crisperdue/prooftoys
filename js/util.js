@@ -346,7 +346,7 @@ function memo(fn) {
 
 /**
  * Returns a string derived from the format string and the object by
- * replacing occurrences of {<string>} in the format string by the
+ * replacing occurrences of {<identifier>} in the format string by the
  * value of that property of the object.
  *
  * Alternatively, supply extra non-Object arguments and access them
@@ -356,7 +356,7 @@ function format(fmt, map_arg) {
   var map = (map_arg instanceof Object)
     ? map_arg
     : arguments;
-  return fmt.replace(/\{.*?\}/g, function(matched) {
+  return fmt.replace(/\{[$_a-zA-Z0-9]*?\}/g, function(matched) {
       return map[matched.slice(1, -1)];
     });
 }
