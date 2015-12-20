@@ -104,6 +104,17 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   // Record the original Expr as details.
   if (this.ruleName) {
     step.details = this;
+  } else {
+    switch(ruleName) {
+    case 'assert':
+    // TODO: "define" should not have to be a special case here.
+    case 'define':
+    case 'definition':
+    case 'r':
+      break;
+    default:
+      assert(false, 'Input to "justify" should be a step ({1})', this);
+    }
   }
   // Give the new step the specified ruleName.
   step.ruleName = ruleName;
