@@ -1822,9 +1822,10 @@ var testCase = {
   },
 
   testReplace: function() {
-    var result = Toy.rules.replace(Toy.parse('x > 0 => (x = (abs x))'),
-                                 Toy.parse('x > 0 => ((x + x) > x)'),
-                                 '/right/right');
+    var rules = Toy.rules;
+    var result = rules.replace(rules.assert('x > 0 => (x = (abs x))'),
+                               rules.assert('x > 0 => ((x + x) > x)'),
+                               '/right/right');
     assertEqual('((x > 0) => ((x + x) > (abs x)))', result);
   },
 
