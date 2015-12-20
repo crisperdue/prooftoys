@@ -237,10 +237,8 @@ var ruleInfo = {
    * parses it and uses the result as its input.
    */
   assert: {
-    action: function(assertion) {
-      if (typeof assertion == 'string') {
-	assertion = Toy.parse(assertion);
-      }
+    action: function(assertion_arg) {
+      var assertion = termify(assertion_arg);
       return assertion.justify('assert', [assertion]);
     },
     inputs: {bool: 1},
