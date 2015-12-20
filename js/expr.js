@@ -1798,8 +1798,16 @@ Atom.prototype._subFree = function(map) {
   return map[this.name] || this;
 };
 
+/**
+ * Applies to Steps, thus use of ".wff".
+ * TODO: Move into engine.js, deleting Lambda.dup, probably inline.
+ */
 Atom.prototype.dup = function() {
-  return new Atom(this.pname);
+  var result = new Atom(this.pname);
+  if (this.wff) {
+    result.wff = this.wff;
+  }
+  return result;
 };
 
 Atom.prototype.hasFreeName = function(name) {
@@ -2085,8 +2093,15 @@ Call.prototype._subFree = function(map) {
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
+/**
+ * Used for Steps as well as Exprs, thus use of ".wff".
+ */
 Call.prototype.dup = function() {
-  return new Call(this.fn, this.arg);
+  var result = new Call(this.fn, this.arg);
+  if (this.wff) {
+    result.wff = this.wff;
+  }
+  return result;
 };
 
 Call.prototype.hasFreeName = function(name) {

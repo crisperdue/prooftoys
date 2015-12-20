@@ -307,7 +307,8 @@ var ruleInfo = {
 
   copy: {
     action: function(step) {
-      return step.dup().justify('copy', arguments, [step]);
+      // Always make a new step, that is the point.
+      return step.justify('copy', arguments, [step], true);
     },
     inputs: {step: 1},
     description: 'copy;; {of step step}'
@@ -326,9 +327,8 @@ var ruleInfo = {
                   ? rules.forwardChain(step_arg, '(a == b) => (a => b)')
                   : step_arg);
       step.assertCall2('=>');
-      // Use dup to prevent "justify" from getting input identical
-      // to "step".
-      var result = step.dup().justify('asHypotheses', arguments, [step]);
+      // Always make a new step so we can mark it hasHyps.
+      var result = step.justify('asHypotheses', arguments, [step], true);
       result.hasHyps = true;
       return result;
     },
@@ -345,9 +345,8 @@ var ruleInfo = {
    */
   asImplication: {
     action: function(step) {
-      // Use dup to prevent "justify" from getting input identical
-      // to "step".
-      var result = step.dup().justify('asImplication', arguments, [step]);
+      // Always make a new step so we can mark it as not hasHyps.
+      var result = step.justify('asImplication', arguments, [step], true);
       // This is the primitive rule that sets hasHyps to false.
       result.hasHyps = false;
       return result;
@@ -591,18 +590,19 @@ var ruleInfo = {
 
   // Definition of F, for book-style proofs.
   defFFromBook: function() {
-    return Toy.parse('F = forall {x. x}').justify('defFFromBook');
+    return rules.assert('F = forall {x. x}').justify('defFFromBook');
   },
 
   // Book only.
   defAnd: function() {
-    return (Toy.parse('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
+    return (rules.assert('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
             .justify('defAnd'));
   },
 
   // Book only.
   defImplies: function() {
-    return Toy.parse('(=>) = {x. {y. x == x & y}}').justify('defImplies');
+    return (rules.assert('(=>) = {x. {y. x == x & y}}')
+            .justify('defImplies'));
   },
 
   //

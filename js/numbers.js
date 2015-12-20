@@ -259,8 +259,8 @@ var numbersInfo = {
 
   axiomCommutativePlus: {
     action: function() {
-      return rules.assert('R x & R y => x + y = y + x')
-        .asHyps().justify('axiomCommutativePlus');
+      return (rules.assert('R x & R y => x + y = y + x')
+              .apply('asHypotheses').justify('axiomCommutativePlus'));
     },
     inputs: {},
     form: '',
@@ -270,8 +270,8 @@ var numbersInfo = {
 
   axiomAssociativePlus: {
     action: function() {
-      return rules.assert('R x & R y & R z => x + (y + z) = (x + y) + z')
-	.asHyps().justify('axiomAssociativePlus');
+        return (rules.assert('R x & R y & R z => x + (y + z) = (x + y) + z')
+                .apply('asHypotheses').justify('axiomAssociativePlus'));
     },
     inputs: {},
     form: '',
@@ -281,9 +281,9 @@ var numbersInfo = {
 
   axiomCommutativeTimes: {
     action: function() {
-      return rules.assert('R x & R y => x * y = y * x')
-	.asHyps().justify('axiomCommutativeTimes');
-    },
+        return (rules.assert('R x & R y => x * y = y * x')
+                .apply('asHypotheses').justify('axiomCommutativeTimes'));
+      },
     inputs: {},
     form: '',
     tooltip: 'commutativity of multiplication',
@@ -292,9 +292,9 @@ var numbersInfo = {
 
   axiomAssociativeTimes: {
     action: function() {
-      return rules.assert('R x & R y & R z => x * (y * z) = (x * y) * z')
-	.asHyps().justify('axiomAssociativeTimes');
-    },
+          return (rules.assert('R x & R y & R z => x * (y * z) = (x * y) * z')
+                  .apply('asHypotheses').justify('axiomAssociativeTimes'));
+      },
     inputs: {},
     form: '',
     tooltip: 'associativity of multiplication',
@@ -303,9 +303,9 @@ var numbersInfo = {
 
   axiomDistributivity: {
     action: function() {
-      return rules.assert('R x & R y & R z => x * (y + z) = x * y + x * z')
-	.asHyps().justify('axiomDistributivity');
-    },
+        return (rules.assert('R x & R y & R z => x * (y + z) = x * y + x * z')
+                .apply('asHypotheses').justify('axiomDistributivity'));
+      },
     inputs: {},
     form: '',
     tooltip: 'distributive law',
@@ -314,9 +314,9 @@ var numbersInfo = {
 
   axiomPlusZero: {
     action: function() {
-      return rules.assert('R x => x + 0 = x')
-        .asHyps().justify('axiomPlusZero');
-    },
+        return (rules.assert('R x => x + 0 = x')
+                .apply('asHypotheses').justify('axiomPlusZero'));
+      },
     inputs: {},
     form: '',
     tooltip: 'x + 0 = x',
@@ -325,9 +325,9 @@ var numbersInfo = {
 
   axiomTimesOne: {
     action: function() {
-      return rules.assert('R x => x * 1 = x')
-        .asHyps().justify('axiomTimesOne');
-    },
+        return (rules.assert('R x => x * 1 = x')
+                .apply('asHypotheses').justify('axiomTimesOne'));
+      },
     inputs: {},
     form: '',
     tooltip: 'x * 1 = x',
@@ -336,9 +336,9 @@ var numbersInfo = {
 
   axiomTimesZero: {
     action: function() {
-      return rules.assert('R x => x * 0 = 0')
-        .asHyps().justify('axiomTimesZero');
-    },
+        return (rules.assert('R x => x * 0 = 0')
+                .apply('asHypotheses').justify('axiomTimesZero'));
+      },
     inputs: {},
     form: '',
     tooltip: 'x * 0 = 0',
@@ -347,9 +347,8 @@ var numbersInfo = {
 
   axiomNeg: {
     action: function() {
-      return rules.assert('neg x = -1 * x')
-        .justify('axiomNeg');
-    },
+        return rules.assert('neg x = -1 * x').justify('axiomNeg');
+      },
     inputs: {},
     form: '',
     tooltip: 'neg x = -1 * x',
@@ -358,9 +357,9 @@ var numbersInfo = {
 
   axiomReciprocal: {
     action: function() {
-      return rules.assert('R x & x != 0 => x * recip x = 1')
-        .asHyps().justify('axiomReciprocal');
-    },
+        return (rules.assert('R x & x != 0 => x * recip x = 1')
+                .apply('asHypotheses').justify('axiomReciprocal'));
+      },
     inputs: {},
     form: '',
     tooltip: 'x * recip x = 1 if x is not 0',
@@ -384,9 +383,9 @@ var numbersInfo = {
   // TODO: Eventually prove these laws of powers as theorems.
   axiomPower0: {
     action: function() {
-      return rules.assert('R x => x ** 0 = 1')
-        .asHyps().justify('axiomPower0');
-    },
+        return (rules.assert('R x => x ** 0 = 1')
+                .apply('asHypotheses').justify('axiomPower0'));
+      },
     inputs: {},
     form: '',
     tooltip: 'real number to the zeroth power',
@@ -407,10 +406,10 @@ var numbersInfo = {
 
   // TODO: Prove this as a consequnce of completeness.
   factNonzeroProduct: {
-    proof: function() {
-      return (rules.assert('R x & R y => (x * y != 0) = (x != 0 & y != 0)')
-              .apply('asHypotheses'));
-    }
+      proof: function() {
+        return (rules.assert('R x & R y => (x * y != 0) = (x != 0 & y != 0)')
+                .apply('asHypotheses'));
+      }
   },
 
   // Type-related axioms
