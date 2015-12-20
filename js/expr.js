@@ -1468,13 +1468,6 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // bound.)
 //
 //
-// dup()
-//
-// Makes and returns a shallow copy of this Expr, with only the properties
-// defined by the Atom, Lambda, and Call classes.  The result is not
-// flagged as having hypotheses.
-//
-//
 // hasFreeName(name)
 // 
 // True iff the given variable or constant name (string) appears free
@@ -1788,17 +1781,6 @@ Atom.prototype._subFree = function(map) {
   return map[this.name] || this;
 };
 
-/**
- * Applies to Steps, thus use of ".wff".
- * TODO: Move into engine.js, deleting Lambda.dup, probably inline.
- */
-Atom.prototype.dup = function() {
-  var result = new Atom(this.pname);
-  if (this.wff) {
-    result.wff = this.wff;
-  }
-  return result;
-};
 
 Atom.prototype.hasFreeName = function(name) {
   return this.name == name;
@@ -2081,17 +2063,6 @@ Call.prototype._subFree = function(map) {
   var fn = this.fn._subFree(map);
   var arg = this.arg._subFree(map);
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
-};
-
-/**
- * Used for Steps as well as Exprs, thus use of ".wff".
- */
-Call.prototype.dup = function() {
-  var result = new Call(this.fn, this.arg);
-  if (this.wff) {
-    result.wff = this.wff;
-  }
-  return result;
 };
 
 Call.prototype.hasFreeName = function(name) {
@@ -2458,10 +2429,6 @@ Lambda.prototype._subFree = function(map) {
       lambda(newVar, this.body._subFree(Toy.object0(boundName, newVar)));
     return renamed._subFree(map);
   }
-};
-
-Lambda.prototype.dup = function() {
-  return new Lambda(this.bound, this.body);
 };
 
 Lambda.prototype.hasFreeName = function(name) {

@@ -473,7 +473,7 @@ var testCase = {
     var parse = Toy.parse;
     var e = parse('a = b + ({x. x + 1} 4)');
     assert(e.sameAs(e));
-    assert(e.sameAs(e.dup()));
+    assert(e.sameAs(new Toy.Call(e.fn, e.arg)));
     assert(!e.sameAs(parse('a = b + ({y. y + 1} 4)')));
     assert(!e.sameAs(parse('a = b')));
     assert(!(parse('x = x').sameAs(parse('x == x'))));

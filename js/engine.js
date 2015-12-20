@@ -93,7 +93,13 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
       }
     }
   }
-  var step = this.dup();
+  // Allocate a new object to be the new Step.
+  var step = (this instanceof Call
+              ? new Call(this.fn, this.arg)
+              : this instanceof Atom
+              ? new Atom(this.pname)
+              // Impossible for a step!
+              : null);
 
   // The beginnings of a Step class.  Only steps will have the
   // following properties, with .wff accessing the top expression
