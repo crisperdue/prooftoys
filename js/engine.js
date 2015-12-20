@@ -483,9 +483,9 @@ var ruleInfo = {
 	  break;
 	}
       }
-      var result = target.hasHyps ? result.asHyps() : result;
       var justified = result.justify('r', [equation, target, path],
-                                     [target, equation]);
+                                     [target, equation], true);
+      justified.hasHyps = target.hasHyps;
       justified.details = null;
       return justified;
     },

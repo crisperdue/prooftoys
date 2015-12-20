@@ -460,16 +460,6 @@ Expr.prototype.hasVars = function() {
 };
 
 /**
- * Returns a new expression like this implication, but marked as
- * having hypotheses.  Useful in tests, perhaps other contexts also.
- */
-Expr.prototype.asHyps = function() {
-  var result = this.dup();
-  result.hasHyps = true;
-  return result;
-};
-
-/**
  * Returns true iff this is a call that would display in infix (a Call
  * internally of the form ((op arg1) arg2), where op is a symbol
  * defined to display as infix.
