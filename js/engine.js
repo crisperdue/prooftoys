@@ -381,8 +381,6 @@ var ruleInfo = {
    */
   theorem: {
     action: function(name) {
-      // See the "axiom" rule for explanation of the
-      // re-justification on each lookup.
       assert(rules[name], 'No theorem named {1}', name);
       assert(rules[name].length == 0,
              'Rule needs argument(s): {1}', name);
@@ -3141,7 +3139,7 @@ function addRule(key, info_arg) {
     }
 
     // Don't rerun the proof every time, but do re-justify on each
-    // call.
+    // call so each use will return a step with its own ordinal.
     action = function() { 
       if (action.result === undefined) {
         action.result = proof();
