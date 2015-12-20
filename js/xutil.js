@@ -594,7 +594,7 @@ var definitions = {
  * define('forall', equal(lambda(x, T))).  Returns the equation.
  */
 function define(name, definition) {
-  assert(Toy.isConstantName(name), 'Not a constant name: ' + name);
+  assert(Toy.isConstantName(name), 'Not a constant name: {1}', name);
   definition = termify(definition);
   assert(definition instanceof Expr,
          'Definition must be a term: ' + definition);

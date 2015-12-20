@@ -251,13 +251,13 @@ var ruleInfo = {
 
   define: {
     action: function(name, definition) {
-      return Toy.define(name, definition).justify('define', arguments);
+      Toy.define(name, definition);
+      return rules.definition(name);
     },
-    inputs: {varName: 1, term: 2},
-    form: ('Define name <input name=varName> as <input name=term>'),
-    labels: 'uncommon',
-    description: 'define {var}',
-    tooltip: 'create a simple definition'
+    inputs: {string: 1, term: 2},
+    form: ('Define name <input name=string> as <input name=term>'),
+    description: 'define {string}',
+    tooltip: 'define a name'
   },
 
   /**
