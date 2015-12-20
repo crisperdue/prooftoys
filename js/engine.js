@@ -3273,7 +3273,8 @@ var logicFacts = {
 function addFactsMap(map) {
   for (synopsis in map) {
     var info = map[synopsis];
-    addFact(synopsis, info.action);
+    // TODO: Change facts to use "proof:" rather than "action:".
+    addFact(synopsis, info.proof || info.action);
     if (!info.noSwap) {
       addSwappedFact(synopsis);
     }
