@@ -759,6 +759,8 @@ var numbersInfo = {
     labels: 'uncommon'
   },
 
+  // TODO: Thes "both" ops are less general than the related facts
+  //   such as 'a = b => a * c = b * c'.  Consider using those here.
   addToBoth: {
     action: function(eqn, term_arg) {
       var term = termify(term_arg);
@@ -1737,6 +1739,20 @@ var basicFacts = {
       .rewrite('/main/right', 'a * (b * c) = a * b * c');
       return step;
     }
+  },
+  // Note: this is more general than multiplyBoth, consider
+  //   basing that on this.
+  // TODO: Consider adding similar facts for other basic ops.
+  '@a = b => a * c = b * c': {
+    proof: function() {
+      return (rules.assume('a = b')
+              .apply('multiplyBoth', 'c')
+              .apply('asImplication'));
+    },
+    // rules.eqnSwap does not yet work, because a = b is not
+    // technically an assumption.
+    // TODO: Remove this when eqnSwap gets better.
+    noSwap: true
   }
 };
 
@@ -2397,6 +2413,13 @@ var divisionFacts = {
       .rewrite('/main/right', 'a * recip b = a / b');
       return step;
     }
+  },
+  'a != 0 => a / a = 1': {
+    proof: function() {
+      var fact = rules.fact('a / b = a * recip b').apply('eqnSwap');
+      return (rules.fact('a != 0 => a * recip a = 1')
+              .rewrite('/main/left', fact));
+    }
   }
 };
 $.extend(algebraFacts, divisionFacts);
@@ -2483,6 +2506,7 @@ var basicSimpFacts = [
                       'a - 0 = a',
                       '0 * a = 0',
                       'a * 0 = 0',
+                      'a != 0 => a / a = 1',
                       {apply: function(term, cxt) {
                           return (isArithmetic(term) &&
                                   rules.axiomArithmetic(term)); } }
