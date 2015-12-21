@@ -1953,6 +1953,33 @@ var equivalences = {
     }
   },
 
+  // This is primarily a lemma for the following one.
+  'c != 0 => (a * c = b * c => a = b)': {
+    // TODO: Figure out why the user must enter the c != 0 part
+    //   when working interactively.
+    proof: function() {
+      var rewrite = rules.rewriteWithFact;
+      var s1 = rules.assume('a * c = b * c');
+      var s2 = rules.divideBoth(s1, 'c');
+      var s3 = rewrite(s2, '/main/right', 'a * b / c = a * (b / c)');
+      var s6 = rewrite(s3, '/main/left', 'a * b / c = a * (b / c)');
+      var s7 = rules.simplifyStep(s6);
+      var s8 = rules.extractHyp(s7, 'a * c = b * c');
+      return s8;
+    }
+  },
+
+  'c != 0 => (a * c = b * c == a = b)': {
+    proof: function() {
+      var fact1 = rules.fact('c != 0 => (a * c = b * c => a = b)');
+      var fact2 = rules.fact('a = b => a * c = b * c');
+      var conj = rules.makeConjunction(fact1, fact2);
+      var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
+      var result = rules.forwardChain(conj, taut);
+      return result;
+    }
+  }
+
 /*
   // Since functions are total, an operation such as x / 0 has a value,
   // though the value might not be a number.  Thus an equation such as
