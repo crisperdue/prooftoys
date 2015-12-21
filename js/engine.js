@@ -785,6 +785,10 @@ var ruleInfo = {
 
   // r5201f.  Works with hypotheses.
   // If f is a lambda expression, also applies it to both sides.
+  //
+  // TODO: Reverse the arguments for consistency with other rules
+  //   that operate on a step; add a version apply2Both that takes
+  //   a function of 2 args and an extra term; use in addToBoth, etc..
   applyToBoth: {
     action: function(f, h_ab) {
       var ab = h_ab.unHyp();
