@@ -1701,10 +1701,10 @@ function formattedStepInfo(step) {
  * of {step}, {step1}, {step2}, {equation}, {implication}, and
  * {siteStep} expand to the step number of the step argument.
  *
- * Appearances of {term} display as the term; {var} as the variable
- * name, {site} as the term at the site; {terms} displays as a
- * comma-separated list of all term inputs.
- * Unknown markup passes through, e.g. lambdas -- {x. f x}.
+ * Appearances of {term} or {bool} as appropriate display as the term;
+ * {var} as the variable name, {site} as the term at the site; {terms}
+ * (or {bools}) displays as a comma-separated list of all those
+ * inputs.  Unknown markup passes through, e.g. lambdas -- {x. f x}.
  */
 function expandMarkup(step, markup) {
   function argStep(place) {
@@ -1763,9 +1763,11 @@ function expandMarkup(step, markup) {
     return stepNumber(info.inputs.implication, 0);
   case 'siteStep':
     return stepNumber(info.inputs.site, 0);
+  case 'bool':
+  case 'bools':
   case 'term':
   case 'terms':
-    var places = info.inputs.term;
+    var places = info.inputs[markupName.startsWith('bool') ? 'bool' : 'term'];
     // Convert number to array.
     if (typeof places === 'number') {
       places = [places];
