@@ -796,7 +796,8 @@ var numbersInfo = {
   },
 
   multiplyBoth: {
-    action: function(eqn, term) {
+    action: function(eqn, term_arg) {
+      var term = termify(term_arg);
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '*', term));
       var result = rules.applyToBoth(fn, eqn);
@@ -813,7 +814,8 @@ var numbersInfo = {
   },
 
   divideBoth: {
-    action: function(eqn, term) {
+    action: function(eqn, term_arg) {
+      var term = termify(term_arg);
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '/', term));
       var result = rules.applyToBoth(fn, eqn)
