@@ -3236,12 +3236,12 @@ function addRule(key, info_arg) {
 var logicFacts = {
   // Logic
   '(T = a) = a': {
-    action: function() {
+    proof: function() {
       return rules.theorem('tIsXIsX');
     }
   },
   '(a = T) = a': {
-    action: function() {
+    proof: function() {
       return rules.theorem('tIsXIsX')
       .rewrite('/left', 'equalitySymmetric');
     }
@@ -3249,13 +3249,13 @@ var logicFacts = {
 
   // Somewhat useful fact to stick at the end of the list.
   'not F': {
-    action: function() {
+    proof: function() {
       return rules.tautology('not F');
     }
   },
 
   '(a != b) == not (a = b)': {
-    action: function() {
+    proof: function() {
       return (rules.eqSelf('a != b')
               .apply('useDefinition', '/right')
               .apply('apply', '/right/fn')
@@ -3273,8 +3273,8 @@ var logicFacts = {
 function addFactsMap(map) {
   for (synopsis in map) {
     var info = map[synopsis];
-    // TODO: Change facts to use "proof:" rather than "action:".
-    addFact(synopsis, info.proof || info.action);
+    assert(info.proof, 'Need proof: property for {1}', synopsis);
+    addFact(synopsis, info.proof);
     if (!info.noSwap) {
       addSwappedFact(synopsis);
     }
