@@ -5,6 +5,19 @@
 // inference rules and other machinery that is relatively
 // independent of the problem domain.
 
+// This could be organized as something like:
+//
+// Subcore: rules and theorems needed to prove the various facts
+// about truth tables.
+//
+// Booleans: truth table facts and probably the tautology checker.
+//
+// Core: full replacement, cases, and other basics.
+//
+// Assumptions: management and simplification of assumptions.
+//
+// Facts: support for facts and rewriting.
+
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
 (function() {
