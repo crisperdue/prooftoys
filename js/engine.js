@@ -1348,6 +1348,9 @@ var ruleInfo = {
     return step2;
   },
 
+  // 5217 is the same as 5230TF.
+  // [T = F] = F
+
   // Book only.  We use axiomPNeqNotP instead of defining F.
   r5217Book: function() {
     var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
@@ -1355,7 +1358,7 @@ var ruleInfo = {
     var step2b = rules.apply(step2a, '/left/right');
     var step2c = rules.apply(step2b, '/right/arg/body');
     var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
-    var step4a = rules.andT(equal(T, F));
+    var step4a = rules.andTBook(equal(T, F));
     var step4b = rules.r(step4a, step3, '/left');
     var step5a = rules.instEqn(rules.axiom3(), '{x. T}', 'f');
     var step5b = rules.instEqn(step5a, '{x. x}', 'g');
@@ -1368,10 +1371,7 @@ var ruleInfo = {
     return step7.justify('r5217Book');
   },
 
-  // 5217 is the same as 5230TF.
-  // [T = F] = F
-  // Not used, though previously used in 5218.
-
+  // [T = x] = x
   // Note that this or 5230TF or symmetry of equality of booleans
   // might be taken as an axiom given r5230FT_alternate.
   tIsXIsX: {
