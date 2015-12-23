@@ -1143,8 +1143,7 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
-  //// This may be roughly the end of "subcore".
-  //// Now onward to proving the usual truth table facts.
+  //// Now onward to proving a few of the usual truth table facts.
 
   // Prove [F = T] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
@@ -1314,7 +1313,7 @@ var ruleInfo = {
   },
 
 
-  // Bookish: T & F = F
+  // Bookish: [T & F] = F
   r5214: {
     proof: function() {
       var step1 = rules.axiom1();
@@ -1327,7 +1326,7 @@ var ruleInfo = {
     }
   },
 
-  // 5216 by the book.
+  // 5216 by the book: [T & A] = A
   andTBook: function(a) {
     var step1 = rules.axiom1();
     var step2 = rules.instEqn(step1, '{x. T & x == x}', 'g');
@@ -1348,7 +1347,7 @@ var ruleInfo = {
     return step2;
   },
 
-  // 5217 is the same as 5230TF.
+  // r5217 is the same as r5230TF.
   // [T = F] = F
 
   // Book only.  We use axiomPNeqNotP instead of defining F.
@@ -1370,6 +1369,8 @@ var ruleInfo = {
     var step7 = rules.rRight(step6d, step4b, '/right');
     return step7.justify('r5217Book');
   },
+
+  //// This might be treated as the end of the subcore.
 
   // [T = x] = x
   // Note that this or 5230TF or symmetry of equality of booleans
@@ -1400,8 +1401,7 @@ var ruleInfo = {
     description: '(T = A) = A'
   },
 
-  // 5219.  Works with hypotheses.
-  // With hyps, [h => A] to [h => T = A]
+  // 5219: [A] to [T = A].  Works with hypotheses.
   toTIsA: {
     action: function(h_a) {
       var step1 = rules.r5218(h_a.unHyp());
@@ -1416,8 +1416,7 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
-  // also 5219.  Works with hypotheses.
-  // With hyps, [h => (T == A)] to [h => A]
+  // also 5219: [T = A] to [A].  Works with hypotheses.
   fromTIsA: {
     action: function(h_t_a) {
       var t_a = h_t_a.unHyp()
@@ -1442,8 +1441,7 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
-  // Replace an occurrence of T at the given path of the given tautology
-  // (or other proved statement) with the given step..
+  // Replace an occurrence of T at the given path of the given step.
   replaceT: {
     action: function(statement, path, step) {
       var step2 = (Toy.isStep(statement) 
@@ -1459,7 +1457,7 @@ var ruleInfo = {
     // TODO: Support suitable inputs descriptor.
   },
 
-  // Lemma helper for addForall, a pure theorem.
+  // Lemma helper for addForall; a pure theorem.
   forallXT: {
     proof: function() {
       var step1 = rules.eqSelf(Toy.parse('{x. T}'));
