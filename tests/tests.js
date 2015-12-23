@@ -1545,8 +1545,8 @@ var testCase = {
     assertEqual('(p => p)', result);
   },
 
-  testAddForall: function() {
-    var inf = Toy.rules.addForall(call(p, y), y);
+  testToForall: function() {
+    var inf = Toy.rules.toForall(call(p, y), y);
     assertEqual('(forall {y. (p y)})', inf);
 
     // Hypotheses
@@ -1554,7 +1554,7 @@ var testCase = {
     var wff = Toy.rules.assert('x = 0 => y > x').apply('asHypotheses');
     // wff.getLeft().sourceStep = step1;
     assertEqual('((x = 0) => (forall {y. (y > x)}))',
-                Toy.rules.addForall(wff, 'y'));
+                Toy.rules.toForall(wff, 'y'));
   },
 
   testInstVar: function() {

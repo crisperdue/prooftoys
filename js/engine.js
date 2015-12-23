@@ -1457,7 +1457,7 @@ var ruleInfo = {
     // TODO: Support suitable inputs descriptor.
   },
 
-  // Lemma helper for addForall; a pure theorem.
+  // Lemma helper for toForall; a pure theorem.
   forallXT: {
     proof: function() {
       var step1 = rules.eqSelf(Toy.parse('{x. T}'));
@@ -1469,7 +1469,7 @@ var ruleInfo = {
   // 5220 (universal generalization).  From A deduces forall {v. A}.
   // The variable v may be given as a string, which it converts
   // internally to a variable.  Supports hypotheses.
-  addForall: {
+  toForall: {
     action: function(h_a, v) {
       v = varify(v);
       assert(!(h_a.hasHyps && h_a.getLeft().hasFreeName(v.name)),
@@ -1478,7 +1478,7 @@ var ruleInfo = {
       var step2 = rules.theorem('forallXT');
       var step3 = rules.changeVar(step2, '/arg', v);
       var step4 = rules.replace(step1, step3, '/arg/body');
-      return step4.justify('addForall', arguments, [h_a]);
+      return step4.justify('toForall', arguments, [h_a]);
     },
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable '
@@ -1713,7 +1713,7 @@ var ruleInfo = {
       var step2 = rules.eqSelf(Toy.parse('{x. x} x'));
       var step3 = rules.apply(step2, '/left');
       var step4 = rules.r(step3, step1, '/right');
-      var step5 = rules.addForall(step4, x);
+      var step5 = rules.toForall(step4, x);
       var step6 = rules.instVar(rules.axiom3(), equal(T), 'f');
       var step7 = rules.instVar(step6, '{x. x}', 'g');
       return rules.rRight(step7, step5, '');
@@ -2015,7 +2015,7 @@ var ruleInfo = {
       var map1 = {a: a, b: b};
       var step1 = rules.tautInst('(a => b) => not a | b', map1);
       var step2 = rules.modusPonens(h_a_b, step1);
-      var step3 = rules.addForall(step2, v);
+      var step3 = rules.toForall(step2, v);
       var step4 = rules.r5235(v, call('not', a), b);
       var step5 = rules.modusPonens(step3, step4);
       var map6 = {a: a, b: step5.get('/main/right')};
@@ -2082,7 +2082,7 @@ var ruleInfo = {
     action: function(v, h_a_b) {
       v = varify(v);
       var a_b = h_a_b.unHyp();
-      var step1 = rules.addForall(h_a_b, v);
+      var step1 = rules.toForall(h_a_b, v);
       var step2 = rules.implyForallThm(v, a_b.getLeft(), a_b.getRight());
       var step3 = rules.modusPonens(step1, step2);
       return step3.justify('implyForall', arguments, [h_a_b]);

@@ -266,7 +266,7 @@ $(function() {
       args: [rules.assert(call('=', T, p))]
     },
     
-    addForall: {
+    toForall: {
       args: [rules.assert(call(p, y)), y],
       level: 1
     },
