@@ -1110,6 +1110,42 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
+  // Given two WFFs each of the form A = B that are the result
+  // of substituting T and F respectively for a variable,
+  // proves the WFF with the variable.
+  equationCases: {
+    action: function(caseT, caseF, v) {
+      v = varify(v);
+      var stepT1 = rules.toTIsEquation(caseT);
+      var stepF1 = rules.toTIsEquation(caseF);
+      var step2 = rules.replace(stepT1, rules.theorem('r5212'), '/left');
+      var step3 = rules.replace(stepF1, step2, '/right');
+      // Note: If a variable is not in caseT it is also not in caseF.
+      var newVar = Toy.genVar('w', caseT.allNames());
+      var gen = caseT.generalizeTF(caseF, newVar);
+      var lexpr = lambda(newVar, gen);
+      var step4 = rules.instEqn(rules.axiom1(), lexpr, 'g');
+      var step5 = rules.apply(step4, '/right/arg/body');
+      var step6 = rules.apply(step5, '/left/right');
+      var step7 = rules.apply(step6, '/left/left');
+      var step8 = rules.replace(step7, step3, '');
+      var step9 = rules.instForall(step8, v);
+      return step9.justify('equationCases', arguments, [caseT, caseF]);
+    },
+    inputs: {equation: [1, 2], varName: 3},
+    form: ('Cases: true case step <input name=equation1>'
+	   + ' false case step <input name=equation2>,'
+	   + ' use variable <input name=varName>'),
+    menu: 'proof by cases, for equations',
+    tooltip: ('Given two proved equations C and D obtainable by substitution' +
+              ' for a free variable of an equation A = B; C by substituting' +
+              ' T, and D by substituting F, proves A = B.'),
+    labels: 'primitive'
+  },
+
+  //// This may be roughly the end of "subcore".
+  //// Now onward to proving the usual truth table facts.
+
   // Prove [F = T] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
   //
@@ -1335,39 +1371,6 @@ var ruleInfo = {
   // 5217 is the same as 5230TF.
   // [T = F] = F
   // Not used, though previously used in 5218.
-
-  // Given two WFFs each of the form A = B that are the result
-  // of substituting T and F respectively for a variable,
-  // proves the WFF with the variable.
-  equationCases: {
-    action: function(caseT, caseF, v) {
-      v = varify(v);
-      var stepT1 = rules.toTIsEquation(caseT);
-      var stepF1 = rules.toTIsEquation(caseF);
-      var step2 = rules.replace(stepT1, rules.theorem('r5212'), '/left');
-      var step3 = rules.replace(stepF1, step2, '/right');
-      // Note: If a variable is not in caseT it is also not in caseF.
-      var newVar = Toy.genVar('w', caseT.allNames());
-      var gen = caseT.generalizeTF(caseF, newVar);
-      var lexpr = lambda(newVar, gen);
-      var step4 = rules.instEqn(rules.axiom1(), lexpr, 'g');
-      var step5 = rules.apply(step4, '/right/arg/body');
-      var step6 = rules.apply(step5, '/left/right');
-      var step7 = rules.apply(step6, '/left/left');
-      var step8 = rules.replace(step7, step3, '');
-      var step9 = rules.instForall(step8, v);
-      return step9.justify('equationCases', arguments, [caseT, caseF]);
-    },
-    inputs: {equation: [1, 2], varName: 3},
-    form: ('Cases: true case step <input name=equation1>'
-	   + ' false case step <input name=equation2>,'
-	   + ' use variable <input name=varName>'),
-    menu: 'proof by cases, for equations',
-    tooltip: ('Given two proved equations C and D obtainable by substitution' +
-              ' for a free variable of an equation A = B; C by substituting' +
-              ' T, and D by substituting F, proves A = B.'),
-    labels: 'primitive'
-  },
 
   // Note that this or 5230TF or symmetry of equality of booleans
   // might be taken as an axiom given r5230FT_alternate.
