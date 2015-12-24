@@ -1016,7 +1016,7 @@ Expr.prototype.get = function(_path) {
  *
  * TODO: Remove this when there is a Step class.
  */
-Expr.prototype.isStep = function() {
+Expr.prototype.isProved = function() {
   // A property only proof steps have.
   return !!this.wff;
 };
@@ -1024,7 +1024,7 @@ Expr.prototype.isStep = function() {
 /**
  * Returns a truthy value iff the argument is a proof step.
  */
-function isStep(x) {
+function isProved(x) {
   return x instanceof Step && !!x.wff;
 }
 
@@ -2647,7 +2647,7 @@ Toy.isVariableName = isVariableName;
 Toy.isIdentifier = isIdentifier;
 Toy.isIntegerLiteral = isIntegerLiteral;
 Toy.checkRange = checkRange;
-Toy.isStep = isStep;
+Toy.isProved = isProved;
 
 Toy.showTypes = false;
 Toy.unicodeNames = unicodeNames;

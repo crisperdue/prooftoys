@@ -413,7 +413,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
  */
 function tryRuleAsync(stepEditor, rule, args) {
   args.forEach(function(arg) {
-      if (Toy.isStep(arg) && arg.isRendered()) {
+      if (Toy.isProved(arg) && arg.isRendered()) {
         // Really all step arguments to all steps everywhere should be
         // non-renderable in the current implementation, but this situation
         // is arguably a greater risk than others.

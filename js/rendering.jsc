@@ -107,7 +107,7 @@ function eachArgType(ruleName, action) {
  * a list of paths used in its rule.
  */
 function stepPaths(step) {
-  assert(step.isStep(), 'Not a step: ' + step);
+  assert(step.isProved(), 'Not a step: ' + step);
   var results = [];
   var args = step.ruleArgs;
   eachArgType(step.ruleName, function(position, type) {
@@ -124,7 +124,7 @@ function stepPaths(step) {
  * sites for this step.  Their nodes will contain the rendering of the sites.
  */
 function stepSites(step) {
-  assert(step.isStep(), 'Not a step: ' + step);
+  assert(step.isProved(), 'Not a step: ' + step);
   var results = [];
   var args = step.ruleArgs;
   eachArgType(step.ruleName, function(position, type) {

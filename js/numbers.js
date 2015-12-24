@@ -936,7 +936,7 @@ var numbersInfo = {
   // Programmatic usage supports theorems by name, but not the UI.
   fact: {
     action: function(statement) {
-      if (Toy.isStep(statement)) {
+      if (Toy.isProved(statement)) {
         // It is an already proved statement.
         return statement;
       }

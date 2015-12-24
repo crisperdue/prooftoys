@@ -118,11 +118,11 @@ function assertTrue(condition, message_arg) {
       message = message_arg.replace(/\{.*?\}/g, function(matched) {
           return args[matched.slice(1, -1) - -1];
         });
-      var isStep = Toy.isStep;
+      var isProved = Toy.isProved;
       // Find a step argument if there is one.
       for (var i = 0; i < args.length; i++) {
         var arg = args[i];
-        if (isStep(arg)) {
+        if (isProved(arg)) {
           // TODO: Handle multiple "step" arguments.
           step = arg;
           break;

@@ -471,7 +471,7 @@ var ruleInfo = {
 	}
       }
       // Auto-justify input steps if requested by the current configuration.
-      if (!equation.isStep()) {
+      if (!equation.isProved()) {
         if (Toy.autoAssert) {
           equation.assert();
         } else {
@@ -1449,7 +1449,7 @@ var ruleInfo = {
   // Replace an occurrence of T at the given path of the given step.
   replaceT: {
     action: function(statement, path, step) {
-      var step2 = (Toy.isStep(statement) 
+      var step2 = (Toy.isProved(statement) 
                    ? statement
                    : rules.tautology(statement));
       assert(step2.get(path).isConst('T'),
