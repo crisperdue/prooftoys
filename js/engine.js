@@ -676,7 +676,7 @@ var ruleInfo = {
     action: function(step, path) {
       var eqn = rules.eqSelf(step.get(path));
       var result = (step.hasHyps
-                    ? (rules.addAssumption(eqn, step.getLeft())
+                    ? (rules.andAssume(eqn, step.getLeft())
                        .apply('asHypotheses'))
                     : eqn);
       return result.justify('considerPart', arguments);
@@ -1926,7 +1926,7 @@ var ruleInfo = {
 
   // Adds an assumption to the given step and deduplicates it.  Works
   // with or without hypotheses.
-  addAssumption: {
+  andAssume: {
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
       if (step.hasHyps) {
@@ -1942,7 +1942,7 @@ var ruleInfo = {
         var step2 = rules.modusPonens(step, step1);
       }
       var step3 = rules.dedupeHyps(rules.asHypotheses(step2));
-      return step3.justify('addAssumption', arguments, [step]);
+      return step3.justify('andAssume', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
     form: ('Add assumption <input name=bool> in step <input name=step>'),
@@ -3389,7 +3389,7 @@ function Fact(synopsis, prover) {
           //
           // TODO: Consider not doing this.
           goal.getLeft().eachHyp(function(term) {
-              added = rules.addAssumption(added, term);
+              added = rules.andAssume(added, term);
             });
         }
         if (!added.matches(goal)) {

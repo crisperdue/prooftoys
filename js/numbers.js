@@ -821,7 +821,7 @@ var numbersInfo = {
       var x = term.freshVar();
       var fn = lambda(x, Toy.infixCall(x, '/', term));
       var result = rules.applyToBoth(fn, eqn)
-        .apply('addAssumption', Toy.infixCall(term, '!=', '0'))
+        .apply('andAssume', Toy.infixCall(term, '!=', '0'))
         .apply('simplifyAssumptions');
       return result.justify('divideBoth', arguments, [eqn]);
     },
