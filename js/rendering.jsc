@@ -1270,6 +1270,9 @@ Atom.prototype._render = function(minPower, isFn) {
   var $expr = exprJq(!isFn);
   this.node = dom($expr);
   var name = this.toHtml();
+  if (!isFn && this.isOperator()) {
+    name = '(' + name + ')';
+  }
   specialClasses(this.name).forEach(function(cl) { $expr.addClass(cl); });
   $expr.html(name);
   return $expr;
