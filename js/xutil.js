@@ -1111,6 +1111,16 @@ var precedence = {
   '{': 1000
 };
 
+/**
+ * Returns a truthy value iff this Expr is an Atom with a specific
+ * precedence, so not a simple named or literal constant, nor a
+ * variable.  This is used to control extra parenthesization when
+ * such an Expr is rendered (or perhaps printed).
+ */
+Expr.prototype.isOperator = function() {
+  return this instanceof Atom && this.pname in precedence;
+};
+
 
 //// UTILITY FUNCTIONS
 
