@@ -821,6 +821,27 @@ var ruleInfo = {
     description: 'from a = b to (f a) = (f b)'
   },
 
+  // Apply a function of 2 args to each side of the given equation,
+  // with the side of the equation as first argument and the given
+  // term as second argument, resulting in a call to the function
+  // with the equation side as first argument and the given
+  // second argument.
+  applyToBothWith: {
+    action: function(a_b, f_arg, c_arg) {
+      var f = Toy.constify(f_arg);
+      var c = termify(c_arg);
+      var fn = call(call(termify('{f. {y. {x. f x y}}}'), f), c);
+      return (rules.applyToBoth(fn, a_b)
+              .apply('simpleApply', '/main/right/fn/fn')
+              .apply('simpleApply', '/main/right/fn')
+              .apply('simpleApply', '/main/right')
+              .apply('simpleApply', '/main/left/fn/fn')
+              .apply('simpleApply', '/main/left/fn')
+              .apply('simpleApply', '/main/left')
+              .justify('applyToBothWith', arguments, [a_b]));
+    },
+  },
+
   // Use the definition of the name at the given location in the given
   // step.  If the definition is by cases the location should be a
   // call to the named function, with T or F as the argument.

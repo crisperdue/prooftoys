@@ -763,11 +763,8 @@ var numbersInfo = {
   //   such as 'a = b => a * c = b * c'.  Consider using those here.
   addToBoth: {
     action: function(eqn, term_arg) {
-      var term = termify(term_arg);
-      var x = term.freshVar();
-      var fn = lambda(x, Toy.infixCall(x, '+', term));
-      var result = rules.applyToBoth(fn, eqn);
-      return result.justify('addToBoth', arguments, [eqn]);
+      return (rules.applyToBothWith(eqn, '+', term_arg)
+              .justify('addToBoth', arguments, [eqn]));
     },
     inputs: {equation: 1, term: 2},
     autoSimplify: simplifyRegroupedAdds,
@@ -781,11 +778,8 @@ var numbersInfo = {
 
   subtractFromBoth: {
     action: function(eqn, term_arg) {
-      var term = termify(term_arg);
-      var x = term.freshVar();
-      var fn = lambda(x, Toy.infixCall(x, '-', term));
-      var result = rules.applyToBoth(fn, eqn);
-      return result.justify('subtractFromBoth', arguments, [eqn]);
+      return (rules.applyToBothWith(eqn, '-', term_arg)
+              .justify('subtractFromBoth', arguments, [eqn]));
     },
     inputs: {equation: 1, term: 2},
     autoSimplify: simplifyRegroupedAdds,
@@ -799,11 +793,8 @@ var numbersInfo = {
 
   multiplyBoth: {
     action: function(eqn, term_arg) {
-      var term = termify(term_arg);
-      var x = term.freshVar();
-      var fn = lambda(x, Toy.infixCall(x, '*', term));
-      var result = rules.applyToBoth(fn, eqn);
-      return result.justify('multiplyBoth', arguments, [eqn]);
+      return (rules.applyToBothWith(eqn, '*', term_arg)
+              .justify('multiplyBoth', arguments, [eqn]));
     },
     inputs: {equation: 1, term: 2},
     autoSimplify: simplifyRegroupedMuls,
@@ -817,13 +808,8 @@ var numbersInfo = {
 
   divideBoth: {
     action: function(eqn, term_arg) {
-      var term = termify(term_arg);
-      var x = term.freshVar();
-      var fn = lambda(x, Toy.infixCall(x, '/', term));
-      var result = rules.applyToBoth(fn, eqn)
-        .apply('andAssume', Toy.infixCall(term, '!=', '0'))
-        .apply('simplifyAssumptions');
-      return result.justify('divideBoth', arguments, [eqn]);
+      return (rules.applyToBothWith(eqn, '/', term_arg)
+              .justify('divideBoth', arguments, [eqn]));
     },
     inputs: {equation: 1, term: 2},
     autoSimplify: simplifyRegroupedMuls,
