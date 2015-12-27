@@ -180,9 +180,8 @@ span#leftNav {
 
 #leftNav a {
   display: block;
-  font-style: italic;
   font-weight: bold;
-  color: Indigo;
+  color: Sienna;
   text-decoration: none;
   margin: .3em 1em .3em 1em;
 }
