@@ -1269,7 +1269,7 @@ var testCase = {
   testEachArgType: function() {
     var each = Toy.eachArgType;
     info = [];
-    each('implyForallThm', function(index, type) {
+    each('implyForallGen', function(index, type) {
         info[index] = type;
       });
     assertEqual(info[0], 'varName');
@@ -1740,7 +1740,7 @@ var testCase = {
   },
 
   testImplyForallThm: function() {
-    var result = Toy.rules.implyForallThm(x, p, call(q, x));
+    var result = Toy.rules.implyForallGen(x, p, call(q, x));
     var wff =
       '((forall {x. (p => (q x))}) => (p => (forall {x. (q x)})))';
     assertEqual(wff, result);

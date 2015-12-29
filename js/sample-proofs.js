@@ -377,7 +377,7 @@ $(function() {
       args: [x, p, call(q, x)]
     },
 
-    implyForallThm: {
+    implyForallGen: {
       args: [x, p, call(q, x)]
     },
 

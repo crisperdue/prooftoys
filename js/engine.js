@@ -2064,7 +2064,7 @@ var ruleInfo = {
   // Given a variable v that is not free in the given wff A, and a wff B, derive
   // ((forall {v. A => B}) => (A => forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
-  implyForallThm: {
+  implyForallGen: {
     action: function(v, a, b) {
       v = varify(v);
       var aFree = a.freeVars();
@@ -2087,7 +2087,7 @@ var ruleInfo = {
       var p0 = Toy.genVar('p', freeNames);
       var step5 = rules.cases(step4, step1, p0);
       var step6 = rules.instVar(step5, a, p0);
-      return step6.justify('implyForallThm', arguments);
+      return step6.justify('implyForallGen', arguments);
     },
     inputs: {varName: 1, bool: [2, 3]},
     form: ('Variable: <input name=varName> '
@@ -2102,7 +2102,7 @@ var ruleInfo = {
 
   // Given a proof step H |- A => B and a variable v, derives
   // H |- (A => forall {v. B}) provided that v is not free in A or H.
-  // (5237)  Implemented via implyForallThm.
+  // (5237)  Implemented via implyForallGen.
   //
   // Handles hypotheses.
   implyForall: {
@@ -2110,7 +2110,7 @@ var ruleInfo = {
       v = varify(v);
       var a_b = h_a_b.unHyp();
       var step1 = rules.toForall(h_a_b, v);
-      var step2 = rules.implyForallThm(v, a_b.getLeft(), a_b.getRight());
+      var step2 = rules.implyForallGen(v, a_b.getLeft(), a_b.getRight());
       var step3 = rules.modusPonens(step1, step2);
       return step3.justify('implyForall', arguments, [h_a_b]);
     },
