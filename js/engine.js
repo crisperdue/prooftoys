@@ -1285,7 +1285,7 @@ var ruleInfo = {
   // Book version of r5211.
   r5211Book: {
     proof: function() {
-      var step1 = rules.instEqn(rules.axiom1(), lambda(y, T), 'g');
+      var step1 = rules.instEqn(rules.axiom1(), '{y. T}', 'g');
       var step2a = rules.apply(step1, '/right/arg/body');
       var step2b = rules.apply(step2a, '/left/right');
       var step2c = rules.apply(step2b, '/left/left');
