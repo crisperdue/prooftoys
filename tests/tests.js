@@ -2220,6 +2220,19 @@ Toy.soonDo(function() {
       console.log(name + ': not a function');
     }
   }
+  var rules = Toy.rules;
+  var nTheorems = 0;
+  for (var name in rules) {
+    var prover = rules[name];
+    if (prover.length == 0) {
+      test(name, function(prover, name) {
+          var result = Toy.normalReturn(prover);
+          assert(result, 'Proof of ' + name + ' failed.');
+        }.bind(null, prover, name));
+      nTheorems++;
+    }
+  }
+  console.log('Queued', nTheorems, 'theorems to test.');
   var nFacts = 0;
   Toy.eachFact(function(goal, synopsis) {
       test(synopsis, function() {
@@ -2227,7 +2240,7 @@ Toy.soonDo(function() {
         });
       nFacts++;
     });
-  console.log('Queued', nFacts, 'facts to test');
+  console.log('Queued', nFacts, 'facts to test.');
 });
 
 })();
