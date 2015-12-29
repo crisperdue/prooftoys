@@ -2228,6 +2228,7 @@ Toy.soonDo(function() {
       test(name, function(prover, name) {
           var result = Toy.normalReturn(prover);
           assert(result, 'Proof of ' + name + ' failed.');
+          console.log('Proved', name + ':', result.toString());
         }.bind(null, prover, name));
       nTheorems++;
     }
