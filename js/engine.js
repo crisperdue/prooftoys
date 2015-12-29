@@ -1564,6 +1564,8 @@ var ruleInfo = {
   // substitutes the expression associated with it in the map, using
   // simultaneous substitution.  Handles hypotheses, allowing
   // substitution for variables that are free in the hypotheses.
+  // Parses string values in the map.
+  //
   // Optimized to avoid substitutions that have no effect, thus
   // doing nothing if the substitution is a no-op.
   instMultiVars: {
@@ -1574,7 +1576,7 @@ var ruleInfo = {
       var step = isEqn ? step0 : rules.toTIsA(step0);
       var namesReversed = [];
       for (var name in map) {
-        var value = map[name];
+        var value = termify(map[name]);
         if (value.isVariable() && value.name === name) {
           continue;
         }
@@ -2098,6 +2100,21 @@ var ruleInfo = {
               + 'in the left argument of the "or".'),
     description: 'move forall',
     labels: 'uncommon'
+  },
+
+  implyForallThm: {
+    proof: function() {
+      var t1 = rules.tautology('p => (F => q)');
+      var map1 = {p: 'forall {x. F => q x}',
+                  q: 'forall {x. q x}'};
+      var step1 = rules.instMultiVars(t1, map1);
+      var t2 = rules.tautology('p => (T => p)');
+      var step2 = rules.instMultiVars(t2, {p: 'forall {x. q x}'});
+      var t3 = rules.tautology('p == (T => p)');
+      var step3 = rules.instMultiVars(t3, {p: 'q x'});
+      var step4 = rules.replaceEither(step2, '/left/arg/body', step3);
+      return rules.cases(step4, step1, 'p');
+    }
   },
 
   // Given a proof step H |- A => B and a variable v, derives
