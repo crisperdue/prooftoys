@@ -802,7 +802,8 @@ var ruleInfo = {
   //   that operate on a step; add a version apply2Both that takes
   //   a function of 2 args and an extra term; use in addToBoth, etc..
   applyToBoth: {
-    action: function(f, h_ab) {
+    action: function(f_arg, h_ab) {
+      var f = termify(f_arg);
       var ab = h_ab.unHyp();
       var fafa = rules.eqSelf(call(f, ab.getLeft()));
       var fafb = rules.replace(h_ab, fafa, '/right/arg');
