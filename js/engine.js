@@ -3208,6 +3208,12 @@ function addRule(key, info_arg) {
     //
     // TODO: In the future, allow type parameters and memoize
     //   as appropriate.
+    // TODO: Consider checking that "actions" _do_ have parameters.
+    // TODO: Consider supporting "statement" properties on theorems,
+    //   indicating the statement to be proved.  Note that giving
+    //   theorems names enables distinguishing among different
+    //   proofs of the same statement.
+    assert(proof.length == 0, 'Proof of {1} requires parameters');
     assert(!info.action, 'Both proof and action for {1}', key);
 
     // Describe theorems as "theorem" by default.
