@@ -1980,7 +1980,8 @@ var ruleInfo = {
   // the variable is free, but would not give desired result.
   // This is Axiom Schema 5 of Andrews' first-order logic F.
   //
-  // NOTE: This is by the book; use implyForallThm in proofs!
+  // NOTE: This is by the book; use implyForallThm or perhaps
+  // implyForall in proofs!
   //
   // TODO: Prove a theorem schema for removing quantification over terms
   // that do not depend on the bound variable.  Something like:
@@ -2069,29 +2070,14 @@ var ruleInfo = {
   // ((forall {v. A => B}) => (A => forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
   implyForallGen: {
-    action: function(v, a, b) {
-      v = varify(v);
-      var aFree = a.freeVars();
-      assert(!aFree.hasOwnProperty(v.name),
-	     'r5235: variable {1} cannot occur free in {2}', v, a);
-      var map1 = {
-        p: call('forall', lambda(v, Toy.infixCall(F, '=>', b))),
-        q: call('forall', lambda(v, b))
-      };
-      var step1 = rules.tautInst('p => (F => q)', map1);
-      var step2 = rules.tautInst('p => (T => p)',
-                                 ({p: call('forall', lambda(v, b))}));
-      var step3 = rules.tautInst('p == (T => p)',
-                                 ({p: b}));
-      var step4 = rules.r(step3, step2, '/left/arg/body');
-
-      var freeNames = $.extend({}, aFree, b.freeVars());
-      // Treat v as a free variable also.
-      freeNames[v.name] = true;
-      var p0 = Toy.genVar('p', freeNames);
-      var step5 = rules.cases(step4, step1, p0);
-      var step6 = rules.instVar(step5, a, p0);
-      return step6.justify('implyForallGen', arguments);
+    action: function(v, a_arg, b_arg) {
+      var p = termify(a_arg);
+      var q = lambda(v, termify(b_arg));
+      var step1 = rules.implyForallThm();
+      var step2 = (rules.instMultiVars(step1, {p: p, q: q})
+                   .apply('simpleApply', '/left/arg/body/right')
+                   .apply('simpleApply', '/right/right/arg/body'));
+      return step2.justify('implyForallGen', arguments);
     },
     inputs: {varName: 1, bool: [2, 3]},
     form: ('Variable: <input name=varName> '
@@ -2123,7 +2109,7 @@ var ruleInfo = {
   // H |- (A => forall {v. B}) provided that v is not free in A or H.
   // (5237)  Implemented via implyForallGen.
   //
-  // Handles hypotheses.
+  // Handles hypotheses.  Note: with hyps, has two levels of =>.
   implyForall: {
     action: function(v, h_a_b) {
       v = varify(v);
