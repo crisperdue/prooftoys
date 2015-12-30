@@ -518,6 +518,23 @@ Expr.prototype.matchSchema = function(schema) {
 };
 
 /**
+ * Returns a list (Array) of the names of the free variables of this
+ * Expr whose names are not keys in the given map (plain object), in
+ * lexicographic order.
+ */
+Expr.prototype.unmappedVars = function(map) {
+  // Plain object, mapping from name to true.
+  var allFree = this.freeVars();
+  var result = [];
+  for (var name in allFree) {
+    if (!(name in map)) {
+      result.push(name);
+    }
+  }
+  return result.sort();
+};
+
+/**
  * Returns a truthy value iff this and the given Expr differ only in
  * names of free and/or bound variables.  When true, the value is a
  * substition ("alpha conversion") that maps free variable names in

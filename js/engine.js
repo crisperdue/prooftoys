@@ -2137,11 +2137,21 @@ var ruleInfo = {
   },
     
   // Rule P/Q for a single antecedent (5234).  The schema step must
-  // have the form (A => B), where A matches the given input step and
-  // all free variables of B are also free in A.  For tautologies with
-  // a conjunction on the LHS as shown in the book, use this with
-  // makeConjunction.  The step may have hypotheses, which are not
-  // matched against the schema.
+  // have the form (A => B), where A matches the given input step, or
+  // the form (A == B), which implies (A => B).  This matches the step
+  // against A in the schema, and deduces the appropriate instance of
+  // B.
+  //
+  // This version extends Andrews' version in that any (free)
+  // variables of B not also (free) in A are universally quantified
+  // in the result, with the quantified variables in lexicographic
+  // order by name.  This way, instantiating these variables later
+  // affects exactly the sites in the schema where the variable
+  // originally occurred, and the order is predictable.
+  // 
+  // For tautologies with a conjunction on the LHS as shown in the
+  // book, use this with makeConjunction.  The step may have
+  // hypotheses, which are not matched against the schema.
   //
   // Andrews calls his enhanced version of forward chaining "Rule P".
   // (In this implementation it is more straightforward to use
@@ -2154,7 +2164,14 @@ var ruleInfo = {
       assert(substitution, 
              '{1} does not match LHS of schema\n{2}',
              step.unHyp(), schema, step);
-      var step2 = rules.instMultiVars(schema, substitution);
+      var unmapped = schema.unmappedVars(substitution);
+      var schema2 = schema;
+      // Variables first in unmapped are quantified first/outermost.
+      while (unmapped.length) {
+        schema2 = rules.implyForall(unmapped.pop(), schema2);
+      }
+      // Schema2 may have some newly-quantified variables in its RHS.
+      var step2 = rules.instMultiVars(schema2, substitution);
       var step3 = (mainOp === '=>'
                    ? rules.modusPonens(step, step2)
                    : mainOp === '=='

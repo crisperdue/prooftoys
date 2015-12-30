@@ -7,6 +7,7 @@ var rules = Toy.rules;
 var ruleData = Toy.ruleData;
 var varify = Toy.varify;
 var constify = Toy.constify;
+var termify = Toy.termify;
 var call = Toy.call;
 var equal = Toy.equal;
 var implies = Toy.implies;
@@ -38,6 +39,13 @@ function assertEqual(a, b) {
     b = b.toString().replace(/[.][0-9]+/g, '');
   }
   return deepEqual(b, a);
+}
+
+function assertMatches(expected, actual, msg) {
+  assert(termify(expected).matches(actual),
+         msg +
+         'Expected: ' + expected.toString() +
+         '\ngot: ' + actual.toString());
 }
 
 function assertFails(fn) {
@@ -1770,6 +1778,13 @@ var testCase = {
     var result = Toy.rules.forwardChain(step3, taut);
     assertEqual('((h x) => (q x))', result);
     assert(result.hasHyps);
+
+    var step1 = rules.assume('x = y');
+    var step2 = rules.addToBoth(step1, 'z');
+    var step3 = rules.extractHyp(step2, 'x = y');
+    var arith = rules.axiomArithmetic(Toy.parse('5 + 3'));
+    var step4 = rules.forwardChain(arith, step3);
+    assertMatches('forall {x. (5 + 3) + x = 8 + x}', step4);
   },
 
   testBackwardChain: function() {
