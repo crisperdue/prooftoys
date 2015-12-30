@@ -1980,6 +1980,8 @@ var ruleInfo = {
   // the variable is free, but would not give desired result.
   // This is Axiom Schema 5 of Andrews' first-order logic F.
   //
+  // NOTE: This is by the book; use implyForallThm in proofs!
+  //
   // TODO: Prove a theorem schema for removing quantification over terms
   // that do not depend on the bound variable.  Something like:
   // {v. f A B} c = f A ({v. B} c) where v is not free in f or a.

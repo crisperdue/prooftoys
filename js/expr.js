@@ -2426,7 +2426,7 @@ Lambda.prototype._subFree = function(map) {
     // algorithm.
     var newVar = _genBoundVar(boundName);
     var renamed =
-      lambda(newVar, this.body._subFree(Toy.object0(boundName, newVar)));
+      new Lambda(newVar, this.body._subFree(Toy.object0(boundName, newVar)));
     return renamed._subFree(map);
   }
 };
@@ -2489,7 +2489,7 @@ Lambda.prototype.replaceAt = function(path, xformer) {
     return xformer(this);
   } else if (path.segment === 'body') {
     var body = this.body.replaceAt(path._rest, xformer);
-    return (body == this.body) ? this : lambda(this.bound, body);
+    return (body == this.body) ? this : new Lambda(this.bound, body);
   }
   this._checkSegment(path);
 };
@@ -2544,7 +2544,7 @@ Lambda.prototype.generalizeTF = function(expr2, newVar, bindings) {
   }
   var newBindings = new Bindings(this.bound, expr2.bound, bindings);
   var body = this.body.generalizeTF(expr2.body, newVar, newBindings);
-  return (body == this.body) ? this : lambda(this.bound, body);
+  return (body == this.body) ? this : new Lambda(this.bound, body);
 };
 
 Lambda.prototype._path = function(pred, revPath) {
@@ -2596,7 +2596,7 @@ Lambda.prototype._matchAsSchema = function(expr, map) {
 };
 
 Lambda.prototype._asPattern = function(term) {
-  return this.__var || lambda(this.bound, this.body._asPattern());
+  return this.__var || new Lambda(this.bound, this.body._asPattern());
 };
 
 Lambda.prototype.searchCalls = function(fn, path) {};

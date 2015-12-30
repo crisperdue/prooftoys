@@ -1221,10 +1221,12 @@ function implies(lhs, rhs) {
 }
 
 /**
- * Builds a Lambda.
+ * Builds a Lambda.  The "bound" argument may be a name, converted to
+ * an Atom with varify.  If generating a bound variable
+ * programmatically, call the Lambda constructor directly.
  */
 function lambda(bound, body) {
-  return new Lambda(bound, body);
+  return new Lambda(Toy.varify(bound), body);
 }
 
 /**
