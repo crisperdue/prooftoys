@@ -2227,7 +2227,15 @@ Toy.soonDo(function() {
     if (prover.length == 0) {
       test(name, function(prover, name) {
           var result = Toy.normalReturn(prover);
-          assert(result, 'Proof of ' + name + ' failed.');
+          var stmt = prover.info.statement;
+          if (stmt) {
+            assert(Toy.termify(stmt).matches(result),
+                   'For ' + name +
+                   '\nexpected: ' + stmt +
+                   '\ngot: ' + result.toString());
+          } else {
+            assert(result, 'Proof of ' + name + ' failed.');
+          }
           console.log('Proved', name + ':', result.toString());
         }.bind(null, prover, name));
       nTheorems++;

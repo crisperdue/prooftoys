@@ -210,6 +210,12 @@ Expr.addMethods(ruleMethods);
 // Properties here for each name are:
 //
 // action: function implementing the inference rule.
+// proof: for a theorem (no args), this instead of "action".
+//   Do not call "justify", that is done automatically and
+//   the proof is memoized.
+// statement: for a theorem, this string optionally states the
+//   theorem proved.  Used by tests.
+//   TODO: Consider checking during actual proof of the theorem.
 // inputs: map from type to argument number(s), either a single
 //   number or an array if more than one such argument.
 // minArgs: Number of required args for the action.  Supply a
@@ -2091,6 +2097,7 @@ var ruleInfo = {
   },
 
   implyForallThm: {
+    statement: 'forall {x. p => q x} => (p => forall {x. q x})',
     proof: function() {
       var t1 = rules.tautology('p => (F => q)');
       var map1 = {p: 'forall {x. F => q x}',
