@@ -1780,7 +1780,7 @@ var testCase = {
     assert(result.hasHyps);
 
     var step1 = rules.assume('x = y');
-    var step2 = rules.addToBoth(step1, 'z');
+    var step2 = rules.applyToBoth('{x. x + z}', step1);
     var step3 = rules.extractHyp(step2, 'x = y');
     var arith = rules.axiomArithmetic(Toy.parse('5 + 3'));
     var step4 = rules.forwardChain(arith, step3);
