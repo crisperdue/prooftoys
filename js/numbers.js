@@ -1726,22 +1726,13 @@ var basicFacts = {
       return step;
     }
   },
-  // Note: this is more general than multiplyBoth, consider
-  //   basing that on this.
-  // TODO: Consider adding similar facts for other basic ops.
-  '@a = b => a * c = b * c': {
+  'a * b * c = a * (c * b)': {
     proof: function() {
-      return (rules.assume('a = b')
-              .apply('multiplyBoth', 'c')
-              .apply('asImplication'));
-    },
-    // rules.eqnSwap does not yet work, because a = b is not
-    // technically an assumption.
-    // TODO: Remove this when eqnSwap gets better.
-    noSwap: true
+      return (rules.fact('a * b * c = a * (b * c)')
+              .rewrite('/main/right/right', 'a * b = b * a'));
+    }
   }
 };
-
 $.extend(algebraFacts, basicFacts);
 
 // Distributivity
@@ -1955,16 +1946,50 @@ var equivalences = {
     }
   },
 
-  'c != 0 => (a * c = b * c == a = b)': {
+  'c != 0 => (a = b == a * c = b * c)': {
     proof: function() {
-      var fact1 = rules.fact('c != 0 => (a * c = b * c => a = b)');
-      var fact2 = rules.fact('a = b => a * c = b * c');
-      var conj = rules.makeConjunction(fact1, fact2);
+      var forward = (rules.assume('a = b')
+                     .apply('multiplyBoth', 'c')
+                     .apply('asImplication'));
+      var back = rules.fact('c != 0 => (a * c = b * c => a = b)');
+      var conj = rules.makeConjunction(forward, back);
       var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
       var result = rules.forwardChain(conj, taut);
       return result;
     }
+  },
+
+  // This is primarily a lemma for the following one.
+  'c != 0 => (a / c = b / c => a = b)': {
+    // TODO: Figure out why the user must enter the c != 0 part
+    //   when working interactively.
+    proof: function() {
+      var regroup = rules.fact('a / b * c = a * (c / b)');
+      var cancel = rules.fact('a != 0 => a / a = 1');
+      return (rules.assume('a / c = b / c')
+              .apply('multiplyBoth', 'c')
+              .rewrite('/main/right', regroup)
+              .rewrite('/main/right/right', cancel)
+              .rewrite('/main/left', regroup)
+              .rewrite('/main/left/right', cancel)
+              .apply('simplifyStep')
+              .apply('extractHyp', 'a / c = b / c'));
+    }
+  },
+
+  'c != 0 => (a = b == a / c = b / c)': {
+    proof: function() {
+      var forward = (rules.assume('a = b')
+                     .apply('divideBoth', 'c')
+                     .apply('asImplication'));
+      var back = rules.fact('c != 0 => (a / c = b / c => a = b)');
+      var conj = rules.makeConjunction(forward, back);
+      return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
+    }
   }
+};
+$.extend(algebraFacts, equivalences);
+
 
 /*
   // Since functions are total, an operation such as x / 0 has a value,
@@ -2007,16 +2032,7 @@ var equivalences = {
   // probably not great for educational purposes because the reasoning
   // involves "undefined" terms.
   //
-
-  },
-
-  'a = b == a / c = b / c': {
-
-  },
-*/
-
-};
-$.extend(algebraFacts, equivalences);
+  */
 
 var negationFacts = {
   // Negation rules
@@ -2404,6 +2420,15 @@ var divisionFacts = {
       .rewrite('/main/right', 'a * b * c = a * c * b')
       .rewrite('/main/right', 'a * recip b = a / b');
       return step;
+    }
+  },
+  'b != 0 => a / b * c = a * (c / b)': {
+    proof: function() {
+      var divFact = rules.fact('a * recip b = a / b');
+      return (rules.fact('a * b * c = a * (c * b)')
+              .apply('instVar', 'recip d', 'b')
+              .rewrite('/main/right/right', divFact)
+              .rewrite('/main/left/left', divFact));
     }
   },
   'b != 0 & c != 0 => a / (b * c) = a / b / c': {
