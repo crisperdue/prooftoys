@@ -1307,7 +1307,7 @@ var testCase = {
                 Toy.rules.axiom1());
     assertEqual('((x = y) => ((h x) = (h y)))',
                 Toy.rules.axiom2());
-    assertEqual('((f = g) = (forall {x. ((f x) = (g x))}))',
+    assertEqual('((f = g) == (forall {x. ((f x) = (g x))}))',
                 Toy.rules.axiom3());
     assertEqual('((iota {x. (x = y)}) = y)',
                 Toy.rules.axiom5());

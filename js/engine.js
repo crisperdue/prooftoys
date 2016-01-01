@@ -545,7 +545,7 @@ var ruleInfo = {
 
   axiom3: {
     action: function() {
-      var result = rules.assert('(f = g) = forall {x. f x = g x}');
+      var result = rules.assert('(f = g) == forall {x. f x = g x}');
       return result.justify('axiom3');
     },
     inputs: {},
