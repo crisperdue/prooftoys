@@ -1905,7 +1905,7 @@ Atom.prototype._bindingPath = function(pred, revPath) {
 Atom.prototype._checkSegment = function(path) {
   if (!path.isMatch()) {
     throw new Error('Path ' + path +
-                    ' is not applicable to an Atom; in ' + this);
+                    ' is not applicable to an Atom: ' + this);
   }
 };
 
@@ -2368,7 +2368,7 @@ Call.prototype._checkSegment = function(path) {
   }
   if (error) {
     throw new Error('Path segment ' + path.segment +
-                    'is not applicable to a Call; in ' + this);
+                    ' is not applicable to a Call: ' + this);
   }
 };
 
@@ -2479,7 +2479,7 @@ Lambda.prototype._boundNames = function(path, bindings) {
       return this.body._boundNames(rest, newBindings);
     }
     throw new Error('Path segment "' + segment +
-                    '" is not applicable to a Lambda; in ' + this);
+                    '" is not applicable to a Lambda: ' + this);
  
   }
 };
@@ -2598,7 +2598,7 @@ Lambda.prototype._checkSegment = function(path) {
   var segment = path.segment;
   if (segment !== 'bound' && segment !== 'body') {
     throw new Error('Path segment ' + segment +
-                    ' is not applicable to a Lambda; in ' + this);
+                    ' is not applicable to a Lambda: ' + this);
   }
 };
 
