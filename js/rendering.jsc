@@ -1805,11 +1805,8 @@ function expandMarkup(step, markup) {
  * Returns an HTML display of the given term, as in step descriptions.
  */
 function termDisplay(term) {
-  var text = term.toString();
-  if (text[0] === '(') {
-    text = text.slice(1, -1);
-  }
-  return Toy.mathMarkup(text);
+  var text = term.toHtml();
+  return (text[0] === '(') ? text.slice(1, -1) : text;
 }
 
 /**
