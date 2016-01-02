@@ -1561,8 +1561,8 @@ var ruleInfo = {
     },
     inputs: {site: 1, term: 3},
     toOffer: 'return term.isVariable()',
-    form: ('Substitute <input name=term> for the variable.'),
-    menu: 'substitute for a free variable',
+    form: ('Substitute <input name=term> for {term}'),
+    menu: 'substitute for {term}',
     tooltip: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
     description: 'substitute for {site};; {in step siteStep}',
