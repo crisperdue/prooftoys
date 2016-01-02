@@ -249,14 +249,17 @@ StepEditor.prototype.ruleChosen = function() {
     //   check here if all args can be filled from the selection
     //   and modify that to always report errors.
     var template = rule.info.form;
+    var step = this.proofControl.selection;
+    var term = step && step.selection;
+    var formatArgs = {term: (term && term.toHtml()) || '{term}'};
     if (template) {
       this.ruleSelector.fadeToggle(false);
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
-      this.form.html(template);
+      this.form.html(Toy.format(template, formatArgs));
       this.proofControl.setSelectLock(true);
-      this.form.append('<button>Go</button>');
+      this.form.append(' <button>Go</button>');
       addClassInfo(this.form);
       if (!usesSite(rule)) {
 	this.addSelectionToForm(rule);

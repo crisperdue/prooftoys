@@ -224,8 +224,11 @@ Expr.addMethods(ruleMethods);
 //   suitable body for such a function.  If it returns false
 //   the rule is not offered in the step editor.
 // form: HTML template for the rule's input form to be presented
-//   by the step editor.
-// menu: plain text for the rule's menu item (may become HTML in the future)
+//   by the step editor, as a template allowing {term} for
+//   the selected term.
+// menu: plain text for the rule's menu item (may become HTML in the future),
+//   as a template allowing {term} for the selected term or {right}
+//   for a possible term to its right ("group with").
 // tooltip: plain text to become the title attribute of mentions of the
 //   rule name in proof displays and the description in subproof displays.
 // result: For theorems with no parameters only; this is the statement
