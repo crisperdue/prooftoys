@@ -154,10 +154,10 @@ Toy.mathMarkup = function(text) {
       case 'forall ': return '&forall;';
       case 'exists': return '&exist;';
       case 'exists ': return '&exist;';
-      case '&&':
+      case '&':
       case 'and':
         return '&and;';
-      case '||':
+      case '|':
       case 'or':
         return '&or;';
       case 'not':
