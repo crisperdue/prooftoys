@@ -1593,7 +1593,7 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // this, with the last path segment first, added to the given revPath.
 // 
 //
-// _prettyPath(pred, revPath)
+// _prettyPath(pred, path)
 //
 // Like _path, but for infix expressions produces /left, /right, etc.
 // rather than combinations of /fn and /arg; and returns a forward
@@ -1889,8 +1889,8 @@ Atom.prototype._path = function(pred, revPath) {
   return pred(this) ? revPath : null;
 };
 
-Atom.prototype._prettyPath = function(pred, revPath) {
-  return pred(this) ? revPath : null;
+Atom.prototype._prettyPath = function(pred, pth) {
+  return pred(this) ? pth : null;
 };
 
 Atom.prototype._ancestors = function(path, result) {
@@ -2298,31 +2298,31 @@ Call.prototype._path = function(pred, revPath) {
       || this.arg._path(pred, new Path('arg', revPath));
 };
 
-Call.prototype._prettyPath = function(pred, revPath) {
+Call.prototype._prettyPath = function(pred, pth) {
   var p;
   if (pred(this)) {
-    return revPath;
+    return pth;
   } else if (this.isInfixCall()) {
-    p = this.getLeft()._prettyPath(pred, revPath);
+    p = this.getLeft()._prettyPath(pred, pth);
     if (p) {
       return new Path('left', p);
     }
-    p = this.getBinOp()._prettyPath(pred, revPath);
+    p = this.getBinOp()._prettyPath(pred, pth);
     if (p) {
       return new Path('binop', p);
     }
-    p = this.getRight()._prettyPath(pred, revPath);
+    p = this.getRight()._prettyPath(pred, pth);
     if (p) {
       return new Path('right', p);
     } else {
       return null;
     }
   } else {
-    p = this.fn._prettyPath(pred, revPath);
+    p = this.fn._prettyPath(pred, pth);
     if (p) {
       return new Path('fn', p);
     }
-    p = this.arg._prettyPath(pred, revPath);
+    p = this.arg._prettyPath(pred, pth);
     if (p) {
       return new Path('arg', p);
     }
