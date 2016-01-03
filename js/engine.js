@@ -2115,6 +2115,17 @@ var ruleInfo = {
     }
   },
 
+  orForallThm: {
+    statement: 'forall {x. p | q x} => (p | forall {x. q x})',
+    proof: function() {
+      var taut = rules.tautology('not a => b == a | b');
+      return (rules.implyForallThm()
+              .apply('instVar', 'not p', 'p')
+              .rewrite('/left/arg/body', taut)
+              .rewrite('/right', taut));
+    }
+  },
+
   // Given a proof step H |- A => B and a variable v, derives
   // H |- (A => forall {v. B}) provided that v is not free in A or H.
   // (5237)  Implemented via implyForallGen.
