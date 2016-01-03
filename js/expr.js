@@ -2570,10 +2570,13 @@ Lambda.prototype._path = function(pred, revPath) {
     : this.body._path(pred, new Path('body', revPath));
 };
 
-Lambda.prototype._prettyPath = function(pred, revPath) {
-  return pred(this)
-    ? revPath
-    : this.body._prettyPath(pred, new Path('body', revPath));
+Lambda.prototype._prettyPath = function(pred, pth) {
+  if (pred(this)) {
+    return pth;
+  } else {
+    var p = this.body._prettyPath(pred, pth);
+    return p ? new Path('body', p) : null;
+  }
 };
 
 Lambda.prototype._ancestors = function(path, result) {

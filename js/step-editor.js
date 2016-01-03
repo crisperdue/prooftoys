@@ -412,7 +412,7 @@ StepEditor.prototype.tryExecuteRule = function(reportFailure) {
 
 /**
  * Turns on the editor's busy indicator and sets the rule up to run
- * with the given aras as soon as the UI has opportunity to repaint.
+ * with the given args as soon as the UI has opportunity to repaint.
  */
 function tryRuleAsync(stepEditor, rule, args) {
   args.forEach(function(arg) {
