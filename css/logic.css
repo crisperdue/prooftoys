@@ -155,6 +155,10 @@ div#slogans {
   font-style: italic;
 }
 
+div#slogans .author {
+  white-space: nowrap;
+}
+
 /*
  * About the layout of Prooftoys pages and the use of SPAN tags
  *

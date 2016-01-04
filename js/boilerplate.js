@@ -101,7 +101,9 @@ Toy.insertSlogans = function() {
       var list = text.split('\n\n');
       while (list.length) {
         var i = Math.floor(Math.random() * list.length);
-        Toy.quotes.push(list[i]);
+        var quote = list[i];
+        quote = quote.replace(/-- .*$/, '<span class=author>$&</span>');
+        Toy.quotes.push(quote);
         list.splice(i, 1);
       }
     }
