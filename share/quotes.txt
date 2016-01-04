@@ -1,6 +1,6 @@
-Power tools for your math mind
+Mathtoys: Power tools for your math mind
 
-Math skills and understanding
+Mathtoys: Math skills and reasoning
 
 Everything should be as simple as possible, but no simpler. -- Albert
 Einstein
@@ -12,11 +12,9 @@ Math does not need to be made easy.  It is already easy. -- Jaime Escalante
 
 You can't always get what you want. -- The Rolling Stones
 
-Sometimes, you get what you need. -- The Rolling Stones
-
 Science is the belief in the ignorance of experts. -- Richard Feynman
 
-Everything takes longer and costs more.
+Everything takes longer and costs more. -- Experienced Engineer
 
 A man may imagine things that are false, but he can only understand
 things that are true. -- Isaac Newton
@@ -33,15 +31,16 @@ consent. -- Abraham Lincoln
 The past is never dead. It's not even past. -- William Faulkner
 
 I never teach my pupils. I only attempt to provide the conditions
-in which they can learn. -- Albert Einstein"
+in which they can learn. -- Albert Einstein
 
 A sense of humor is part of the art of leadership, of getting along
 with people, of getting things done. -- Dwight Eisenhower
 
 All paid jobs absorb and degrade the mind. -- Aristotle
 
-The law, in its majestic equality, forbids the rich as well as the poor
-to sleep under bridges, to beg in the streets, and to steal bread. -- Anatole France
+The law, in its majestic equality, forbids the rich as well as the
+poor to sleep under bridges, to beg in the streets, and to steal
+bread. -- Anatole France
 
 To punish me for my contempt for authority, fate made me
 an authority myself. -- Albert Einstein
@@ -50,7 +49,7 @@ The one function TV news performs very well is that when there is no news
 we give it to you with the same emphasis as if there were. -- David Brinkley
 
 I can't understand it. I can't even understand the people
-who can understand it. -- Queen Juliana
+who can understand it. -- Queen Juliana of the Netherlands
 
 When I'm working on a problem, I never think about beauty.
 I think only how to solve the problem. But when I have finished,
