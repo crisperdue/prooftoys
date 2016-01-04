@@ -14,6 +14,7 @@
   var element = document.currentScript
     || document.querySelector('script[src$="boilerplate.js"]');
   var src = element.getAttribute('src');
+  // URL of this script, up to the actual name:
   var prefix = src.replace(/boilerplate.js$/, '');
 
   function write(html) {
@@ -86,10 +87,42 @@ Toy.insertNav = function() {
 };
 
 Toy.insertSlogans = function() {
-  var slogans = ['"Power tools for your math mind"'].join('\n');
+  var slogan = 'Power tools for your math mind';
   var elt = document.getElementById('slogans');
   if (elt) {
-    elt.innerHTML = slogans;
+    elt.innerHTML = slogan;
+
+    // Get the collection of quotes.
+    Toy.quotes = [];
+    var quoteIndex = 0;
+    // Splits the quote text into quotes and install them
+    // into Toy.quotes in random order.
+    function setupQuotes(text) {
+      var list = text.split('\n\n');
+      while (list.length) {
+        var i = Math.floor(Math.random() * list.length);
+        Toy.quotes.push(list[i]);
+        list.splice(i, 1);
+      }
+    }
+    // Rotates to the next quote.
+    function nextQuote() {
+      quoteIndex++;
+      if (quoteIndex >= Toy.quotes.length) {
+        quoteIndex = 0;
+      }
+      var quote = Toy.quotes[quoteIndex];
+      jQuery('#slogans').html(quote);
+    }
+    // Set up periodic update of the quote display.
+    function scanQuotes() {
+      if (Toy.quotes.length) {
+        setInterval(nextQuote, 10 * 1000);
+      }
+    }
+    // Load the quotes file.
+    $.get('share/quotes.txt', {dataType: 'text'})
+      .done(function(data) { setupQuotes(data); scanQuotes(); });
   }
 };
 
