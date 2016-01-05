@@ -1781,12 +1781,12 @@ function expandMarkup(step, markup) {
       });
     return terms.join(', ');
   case 'shortFact':
-    var place = info.inputs.term[0] || info.inputs.term;
-    var term = Toy.termify(step.ruleArgs[place - 1]);
-    if (term.isCall2('=>')) {
-      term = term.getRight();
+    var place = info.inputs.bool[0] || info.inputs.bool;
+    var bool = Toy.termify(step.ruleArgs[place - 1]);
+    if (bool.isCall2('=>')) {
+      bool = bool.getRight();
     }
-    return termDisplay(term);
+    return termDisplay(bool);
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;
     return Toy.termify(step.ruleArgs[place - 1]).toHtml();

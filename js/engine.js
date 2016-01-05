@@ -2168,9 +2168,9 @@ var ruleInfo = {
     
   // Rule P/Q for a single antecedent (5234).  The schema step must
   // have the form (A => B), where A matches the given input step, or
-  // the form (A == B), which implies (A => B).  This matches the step
-  // against A in the schema, and deduces the appropriate instance of
-  // B.
+  // the form (A == B), which implies (A => B) and (B => A).  This
+  // matches the step against A in the schema, and deduces the
+  // appropriate instance of B, or vice-versa in the case (A == B).
   //
   // This version extends Andrews' version in that any (free)
   // variables of B not also (free) in A are universally quantified
@@ -2191,6 +2191,10 @@ var ruleInfo = {
       var schema = rules.fact(schema_arg);
       var mainOp = schema.unHyp().getBinOp().pname;
       var substitution = step.unHyp().matchSchema(schema.unHyp().getLeft());
+      if (!substitution && (mainOp === '==' || mainOp === '=')) {
+        // Allow RHS match in case schema is an equivalence.
+        substitution = step.unHyp().matchSchema(schema.unHyp().getRight());
+      }
       assert(substitution, 
              '{1} does not match LHS of schema\n{2}',
              step.unHyp(), schema, step);
@@ -2205,7 +2209,7 @@ var ruleInfo = {
       var step3 = (mainOp === '=>'
                    ? rules.modusPonens(step, step2)
                    : mainOp === '=='
-                   ? rules.replace(step2, step, '/main')
+                   ? rules.replaceEither(step, '/main', step2)
                    : assert(false, 'Schema must be like A => B or A == B'));
       // Schema is listed as a dependency here so it can be recognized
       // as a dependency, e.g. when rendering a proof.
@@ -2713,8 +2717,8 @@ var ruleInfo = {
         return (simp1 == step) ? step : rules.simplifyStep(simp1);
       }
     },
-    inputs: {site: 1, term: 3},
-    form: ('Rewrite the selection using fact <input name=term>'),
+    inputs: {site: 1, bool: 3},
+    form: ('Rewrite {term} using fact <input name=bool>'),
     menu: 'rewrite using a fact',
     isRewriter: true,
     description: 'use;; {shortFact} {&nbsp;in step siteStep}'
