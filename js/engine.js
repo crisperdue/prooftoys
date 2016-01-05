@@ -2079,7 +2079,7 @@ var ruleInfo = {
   },
 
   // Given a variable v that is not free in the given wff A, and a wff B, derive
-  // ((forall {v. A => B}) => (A => forall {v. B})).  Could run even if
+  // ((forall {v. A => B}) == (A => forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
   implyForallGen: {
     action: function(v, a_arg, b_arg) {
@@ -2102,33 +2102,6 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  implyForallThm: {
-    statement: 'forall {x. p => q x} => (p => forall {x. q x})',
-    proof: function() {
-      var t1 = rules.tautology('p => (F => q)');
-      var map1 = {p: 'forall {x. F => q x}',
-                  q: 'forall {x. q x}'};
-      var step1 = rules.instMultiVars(t1, map1);
-      var t2 = rules.tautology('p => (T => p)');
-      var step2 = rules.instMultiVars(t2, {p: 'forall {x. q x}'});
-      var t3 = rules.tautology('p == (T => p)');
-      var step3 = rules.instMultiVars(t3, {p: 'q x'});
-      var step4 = rules.replaceEither(step2, '/left/arg/body', step3);
-      return rules.cases(step4, step1, 'p');
-    }
-  },
-
-  orForallThm: {
-    statement: 'forall {x. p | q x} => (p | forall {x. q x})',
-    proof: function() {
-      var taut = rules.tautology('not a => b == a | b');
-      return (rules.implyForallThm()
-              .apply('instVar', 'not p', 'p')
-              .rewrite('/left/arg/body', taut)
-              .rewrite('/right', taut));
-    }
-  },
-
   orForall: {
     statement: 'forall {x. p | q x} == (p | forall {x. q x})',
     proof: function() {
@@ -2145,6 +2118,18 @@ var ruleInfo = {
     }
   },
 
+  // TODO: Rename implyForall, then give this the name implyForall.
+  implyForallThm: {
+    statement: 'forall {x. p => q x} = (p => forall {x. q x})',
+    proof: function() {
+      var taut = 'not a | b == a => b';
+      return (rules.orForall()
+              .apply('instVar', 'not p', 'p')
+              .rewrite('/right', taut)
+              .rewrite('/left/arg/body', taut));
+    }
+  },
+
   // Given a proof step H |- A => B and a variable v, derives
   // H |- (A => forall {v. B}) provided that v is not free in A or H.
   // (5237)  Implemented via implyForallGen.
@@ -2156,7 +2141,7 @@ var ruleInfo = {
       var a_b = h_a_b.unHyp();
       var step1 = rules.toForall(h_a_b, v);
       var step2 = rules.implyForallGen(v, a_b.getLeft(), a_b.getRight());
-      var step3 = rules.modusPonens(step1, step2);
+      var step3 = rules.replace(step2, step1, '/main');
       return step3.justify('implyForall', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},

@@ -1752,13 +1752,6 @@ var testCase = {
     assertEqual(wff, inf);
   },
 
-  testImplyForallThm: function() {
-    var result = Toy.rules.implyForallGen(x, p, call(q, x));
-    var wff =
-      '((forall {x. (p => (q x))}) => (p => (forall {x. (q x)})))';
-    assertEqual(wff, result);
-  },
-
   testImplyForall: function() {
     var result = Toy.rules.implyForall(x, Toy.parse('p => q x'));
     assertEqual('(p => (forall {x. (q x)}))', result);
