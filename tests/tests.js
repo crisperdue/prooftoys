@@ -1553,6 +1553,11 @@ var testCase = {
     assertEqual('(p => p)', result);
   },
 
+  testReplaceT: function() {
+    var actual = rules.replaceT(rules.tautology('T | p'), '/left', 'not F');
+    assertEqual('((not F) | p)', actual);
+  },
+
   testToForall: function() {
     var inf = Toy.rules.toForall(call(p, y), y);
     assertEqual('(forall {y. (p y)})', inf);

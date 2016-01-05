@@ -1479,18 +1479,21 @@ var ruleInfo = {
 
   // Replace an occurrence of T at the given path of the given step.
   replaceT: {
-    action: function(statement, path, step) {
-      var step2 = (Toy.isProved(statement) 
-                   ? statement
-                   : rules.tautology(statement));
-      assert(step2.get(path).isConst('T'),
-             'Site should be T, not {1}', step2.get(path));
-      var eqn1 = rules.r5218(step).apply('eqnSwap');
-      var eqn2 = rules.r(eqn1, step, '');
-      return (rules.r(eqn2, step2, path)
-              .justify('replaceT', arguments, [step, statement]));
-    }
-    // TODO: Support suitable inputs descriptor.
+    action: function(step, path, stmt_arg) {
+      var fact = rules.fact(stmt_arg);
+      assert(step.get(path).isConst('T'),
+             'Site should be T, not {1}', step.get(path));
+      var eqn = rules.toTIsA(fact);
+      return (rules.r(eqn, step, path)
+              .justify('replaceT', arguments, [step]));
+    },
+    inputs: {site: 1, bool: 3},
+    toOffer: 'return term instanceof Toy.Atom && term.pname == "T"',
+    form: ('Replace T with fact <input name=bool>'),
+    menu: 'replace T with a fact',
+    tooltip: ('Replaces an occurrence of T with a fact'),
+    description: 'replace T;; {in step siteStep} with {shortFact}',
+    labels: 'basic'
   },
 
   // Lemma helper for toForall; a pure theorem.
