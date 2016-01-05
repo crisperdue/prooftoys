@@ -2126,6 +2126,22 @@ var ruleInfo = {
     }
   },
 
+  orForall: {
+    statement: 'forall {x. p | q x} == (p | forall {x. q x})',
+    proof: function() {
+      var taut1 = rules.tautology('T | a');
+      var all = rules.instVar(taut1, 'q x', 'a').apply('toForall', 'x');
+      var or = rules.instVar(taut1, 'forall {x. q x}', 'a');
+      var and = rules.makeConjunction(all, or);
+      var trueCase = rules.forwardChain(and, 'a & b => (a == b)');
+
+      var falseCase = (rules.eqSelf('forall {x. q x}')
+                       .rewrite('/right', 'p == F | p')
+                       .rewrite('/left/arg/body', 'p == F | p'));
+      return rules.cases(trueCase, falseCase, 'p');
+    }
+  },
+
   // Given a proof step H |- A => B and a variable v, derives
   // H |- (A => forall {v. B}) provided that v is not free in A or H.
   // (5237)  Implemented via implyForallGen.
