@@ -1992,8 +1992,8 @@ var ruleInfo = {
   // the variable is free, but would not give desired result.
   // This is Axiom Schema 5 of Andrews' first-order logic F.
   //
-  // NOTE: This is by the book; use implyForallThm or perhaps
-  // implyForall in proofs!
+  // NOTE: This is by the book; use implyForall or perhaps
+  // toImplyForall in proofs!
   //
   // TODO: Prove a theorem schema for removing quantification over terms
   // that do not depend on the bound variable.  Something like:
@@ -2068,7 +2068,7 @@ var ruleInfo = {
       return step7.justify('implyForallBook', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},
-    /* Do not offer at this time, use implyForall instead.
+    /* Do not offer at this time, use toImplyForall instead.
     form: ('Move forall inside "implies" binding '
 	   + 'variable <input name=varName> '
 	   + 'implication <input name=implication>'),
@@ -2085,7 +2085,7 @@ var ruleInfo = {
     action: function(v, a_arg, b_arg) {
       var p = termify(a_arg);
       var q = lambda(v, termify(b_arg));
-      var step1 = rules.implyForallThm();
+      var step1 = rules.implyForall();
       var step2 = (rules.instMultiVars(step1, {p: p, q: q})
                    .apply('simpleApply', '/left/arg/body/right')
                    .apply('simpleApply', '/right/right/arg/body'));
@@ -2119,7 +2119,7 @@ var ruleInfo = {
   },
 
   // TODO: Rename implyForall, then give this the name implyForall.
-  implyForallThm: {
+  implyForall: {
     statement: 'forall {x. p => q x} = (p => forall {x. q x})',
     proof: function() {
       var taut = 'not a | b == a => b';
@@ -2135,23 +2135,23 @@ var ruleInfo = {
   // (5237)  Implemented via implyForallGen.
   //
   // Handles hypotheses.  Note: with hyps, has two levels of =>.
-  implyForall: {
+  toImplyForall: {
     action: function(v, h_a_b) {
       v = varify(v);
       var a_b = h_a_b.unHyp();
       var step1 = rules.toForall(h_a_b, v);
       var step2 = rules.implyForallGen(v, a_b.getLeft(), a_b.getRight());
       var step3 = rules.replace(step2, step1, '/main');
-      return step3.justify('implyForall', arguments, [h_a_b]);
+      return step3.justify('toImplyForall', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},
     form: ('Move forall inside "implies" binding '
 	   + 'variable <input name=varName> '
-	   + 'implication <input name=implication>'),
-    menu: 'Move "forall" inside "implies"',
-    tooltip: ('Move "forall" inside "implies" provided the variable '
-              + 'is not free in the first argument.'),
-    description: 'move forall'
+	   + 'in step <input name=implication>'),
+    menu: 'Add "forall" after =>',
+    tooltip: ('Add "forall" after "implies" provided the variable '
+              + 'is not free to the left of the "implies".'),
+    description: 'add forall after =>'
   },
     
   // Rule P/Q for a single antecedent (5234).  The schema step must
@@ -2190,7 +2190,7 @@ var ruleInfo = {
       var schema2 = schema;
       // Variables first in unmapped are quantified first/outermost.
       while (unmapped.length) {
-        schema2 = rules.implyForall(unmapped.pop(), schema2);
+        schema2 = rules.toImplyForall(unmapped.pop(), schema2);
       }
       // Schema2 may have some newly-quantified variables in its RHS.
       var step2 = rules.instMultiVars(schema2, substitution);
@@ -2453,7 +2453,7 @@ var ruleInfo = {
 	// TODO: Do appropriate checking in 5235 and impliesForall as well.
         assert(!hypFreeNames.hasOwnProperty(name),
                'Conflicting binding of {1} in {2}', name, c, h_c_arg);
-        var step1 = rules.implyForall(name, step1);
+        var step1 = rules.toImplyForall(name, step1);
       }
       var step2 = rules.r5239(equation, c, cpath);
       var step3 = rules.makeConjunction(step1, step2);

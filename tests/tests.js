@@ -1752,15 +1752,15 @@ var testCase = {
     assertEqual(wff, inf);
   },
 
-  testImplyForall: function() {
-    var result = Toy.rules.implyForall(x, Toy.parse('p => q x'));
+  testToImplyForall: function() {
+    var result = Toy.rules.toImplyForall(x, Toy.parse('p => q x'));
     assertEqual('(p => (forall {x. (q x)}))', result);
 
     // With hypotheses:
     var step1 = Toy.rules.assert('R y => (p => q x)');
     var step2 = Toy.rules.assume('R y');
     var step3 = Toy.rules.modusPonens(step2, step1);
-    result = Toy.rules.implyForall(x, step3);
+    result = Toy.rules.toImplyForall(x, step3);
     assertEqual('((R y) => (p => (forall {x. (q x)})))', result);
   },
 
