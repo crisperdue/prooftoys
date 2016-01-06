@@ -1833,7 +1833,8 @@ var ruleInfo = {
       var key = wff.dump();
       var taut = _tautologies[key];
       if (taut) {
-        return taut;
+        // Re-justify to create a new step.
+        return taut.justify('tautology', arguments);
       } else {
         var names = wff.freeVars();
         // Not really a loop, just works with the first free (variable!)
@@ -1845,8 +1846,10 @@ var ruleInfo = {
             var step1 = rules.tautology(wff.subFree1(T, name));
             var step2 = rules.tautology(wff.subFree1(F, name));
             var step3 = rules.equationCases(step1, step2, name);
+            // Record before the final justification, so all occurrences
+            // look the same when displayed.
+            _tautologies[key] = step3;
             var result = step3.justify('tautology', arguments);
-            _tautologies[key] = result;
             return result;
           } else {
             var step1 = rules.tautology(equal(T, wff.subFree1(T, name)));
