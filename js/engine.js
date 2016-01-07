@@ -2373,7 +2373,10 @@ var ruleInfo = {
   // an equation and not an implication.
   //
   // TODO: Support h_c_arg with assumptions and a leftward path by
-  // ignoring that there are assumptions.
+  //   ignoring that there are assumptions.
+  //
+  // TODO: Change this to conjoin any assumptions in the two input
+  //   steps and let simplifications clean up the assumptions later.
   replace: {
     action: function(h_equation_arg, h_c_arg, path) {
       var args = [h_equation_arg, h_c_arg, path];
