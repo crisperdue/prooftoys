@@ -2208,15 +2208,15 @@ var ruleInfo = {
                    : assert(false, 'Schema must be like A => B or A == B'));
       // Schema is listed as a dependency here so it can be recognized
       // as a dependency, e.g. when rendering a proof.
-      return step3.justify('forwardChain', [step, schema], [step, schema]);
+      return step3.justify('forwardChain', [step, schema], [step]);
     },
-    inputs: {step: [1, 2]},
+    inputs: {step: 1, bool: 2},
     labels: 'basic',
     menu: 'forward chain',
-    form: ('Match step <input name=step1> with left side of '
-           + 'step <input name=step2>'),
+    form: ('Match step <input name=step> with left side of ' +
+           'fact [left => right] <input name=bool>'),
     tooltip: ('[p] and [p => q] to q'),
-    description: 'consequence;; of step {step1} using step {step2}'
+    description: 'consequence;; of step {step} using {shortFact}'
   },
 
   // Instantiates the schema theorem so that the part at the given
