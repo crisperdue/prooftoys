@@ -3240,6 +3240,14 @@ function addRules(ruleInfo) {
 /**
  * Process the given info into form for inclusion into Toy.rules and
  * add the result there.
+ *
+ * TODO: Bind each rule's action function so "this" is the function
+ * itself, providing easy access to metadata, including any "data"
+ * property.
+ *
+ * TODO: Give Step objects a prototype with a method for each named
+ *   rule not otherwise on the prototype, defined so calling it invokes
+ *   the rule with appropriate arguments.
  */
 function addRule(key, info_arg) {
   var info = info_arg.constructor == Object ? info_arg : {action: info_arg};
