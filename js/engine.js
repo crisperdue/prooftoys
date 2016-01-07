@@ -106,47 +106,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
       }
     }
   }
-  // Allocate a new object to be the new Step.
-  var step = (this instanceof Call
-              ? new Call(this.fn, this.arg)
-              : this instanceof Atom
-              ? new Atom(this.pname)
-              // Impossible for a step!
-              : null);
-
-  // The beginnings of a Step class.  Only steps will have the
-  // following properties, with .wff accessing the top expression
-  // (wff).
-  //
-  // Note: Likely additional Step methods: freeVars. 
-  step.wff = step;
-  // Record the original Expr as details.
-  if (this.ruleName) {
-    step.details = this;
-  } else {
-    switch(ruleName) {
-    case 'assert':
-    // TODO: "define" should not have to be a special case here.
-    case 'define':
-    case 'definition':
-    case 'r':
-      break;
-    default:
-      assert(false, 'Input to "justify" should be a step ({1})', this);
-    }
-  }
-  // Give the new step the specified ruleName.
-  step.ruleName = ruleName;
-  // Make the step be its own original, for uniform access to an original.
-  // TODO: Stop doing this, to distinguish StepDisplay objects from Steps.
-  step.original = step;
-  // Give this step its own new ordinal.
-  step.ordinal = stepCounter++;
-  // Carry other information forward.
-  step.hasHyps = this.hasHyps;
-  step.ruleArgs = jQuery.makeArray(ruleArgs || []);
-  step.ruleDeps = ruleDeps;
-
+  var step = this;
   var prev = ruleDeps[0];
   if (ruleDeps.length === 1 && prev.hasHyps && step.hasHyps &&
       prev.getLeft() !== step.getLeft() && prev.getRight() !== step.getRight()) {
@@ -156,7 +116,51 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
     // Note that deduping amounts to normalization.
     step = rules.dedupeHyps(step);
   }
-  return step;
+
+  // Allocate a new object to be the new Step.
+  var result = (step instanceof Call
+              ? new Call(step.fn, step.arg)
+              : step instanceof Atom
+              ? new Atom(step.pname)
+              // Impossible for a step!
+              : null);
+
+  // The beginnings of a Step class.  Only steps will have the
+  // following properties, with .wff accessing the top expression
+  // (wff).
+  //
+  // Note: Likely additional Step methods: freeVars. 
+  result.wff = result;
+  // Record the step as details.
+  // Note that above, primitive rules have no deps.
+  if (Toy.isProved(this)) {
+    // Except for primitive rules listed just below.
+    result.details = step;
+  } else {
+    switch(ruleName) {
+    case 'assert':
+    // TODO: "define" should not have to be a special case here.
+    case 'define':
+    case 'definition':
+    case 'r':
+      break;
+    default:
+      assert(false, 'Input to "justify" should be a step ({1})', step);
+    }
+  }
+  // Give the new step the specified ruleName.
+  result.ruleName = ruleName;
+  // Make the step be its own original, for uniform access to an original.
+  // TODO: Stop doing this, to distinguish StepDisplay objects from Steps.
+  result.original = result;
+  // Give this step its own new ordinal.
+  result.ordinal = stepCounter++;
+  // Carry other information forward.
+  result.hasHyps = step.hasHyps;
+  result.ruleArgs = jQuery.makeArray(ruleArgs || []);
+  result.ruleDeps = ruleDeps;
+
+  return result;
 };
 
 // Used to order execution of proof steps so they can display
