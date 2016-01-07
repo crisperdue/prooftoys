@@ -257,6 +257,11 @@ span#leftNav {
   margin-left: 3em;
 }
 
+/* Inner inferenceDisplay blocks indent less. */
+.proofDisplay.editable .inferenceDisplay .inferenceDisplay {
+  margin-left: 1em;
+}
+
 .stepsParent {
   /* Can support absolute positioning of children; currently unused. */
   position: relative;
