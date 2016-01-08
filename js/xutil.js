@@ -1250,61 +1250,20 @@ Atom.prototype.isUnary = function() {
 }
 
 /**
- * True iff the source step of expr1 is less than the source step of
- * expr2, otherwise true iff dump(expr1) is lexicographically less
- * than dump(expr2).  Useful for ordering deduplicated hypotheses.
+ * True iff the result of calling sourceStepComparator is less than 0.
+ * Useful for ordering deduplicated hypotheses.
  */
 function sourceStepLess(e1, e2) {
-  if (e1.isCall1('R')) {
-    if (e2.isCall1('R')) {
-      return sourceStepComparator(e1.arg, e2.arg);
-    } else {
-      return true;
-    }
-  } else if (e2.isCall2('R')) {
-    return 1;
-  } else if (e1.sourceStep) {
-    if (e2.sourceStep) {
-      return e1.sourceStep.ordinal < e2.sourceStep.ordinal;
-    } else {
-      return true;
-    }
-  } else if (e2.sourceStep) {
-    return false;
-  } else {
-    // Neither has a source step.
-    return e1.dump() < e2.dump();
-  }
+  return sourceStepComparator(e1, e2) < 0;
 }
 
 /**
- * True iff dump(expr1) is lexicographically less than dump(expr2),
- * otherwise true iff the source step of expr1 is less than the source
- * step of expr2.  Expressions with no source step compare greater
- * than expressions with a source step.
- *
- * In use this is used in sorting of expressions, so it must bring
- * equal expressions together so simplifications can see them.
- */
-function hypIsLess(e1, e2) {
-  if (e1.dump() < e2.dump()) {
-    return true;
-  } else if (e1.sourceStep) {
-    if (e2.sourceStep) {
-      return e1.sourceStep.ordinal < e2.sourceStep.ordinal;
-    } else {
-      return true;
-    }
-  } else if (e2.sourceStep) {
-    return false;
-  }
-}
-
-/**
- * Comparator for Array.sort corresponding to sourceStepLess.
- * Expressions from assumptions (steps) come before others, and others
- * sort lexicographically using "dump".  Value < 0 means e1 is less
- * than e2.
+ * Comparator for Array.sort corresponding to sourceStepLess.  Terms
+ * that are calls to "R" come first, ordered from each other by the
+ * result of applying this to their argument terms. Terms from
+ * assumption steps come next, ordered by the step ordinal, and the
+ * rest sort lexicographically using "dump".  Value < 0 means e1 is
+ * less than e2.
  */
 function sourceStepComparator(e1, e2) {
   if (e1.isCall1('R')) {
@@ -1524,7 +1483,6 @@ Toy.lambda = lambda;
 Toy.isInfixDesired = isInfixDesired;
 
 Toy.sourceStepLess = sourceStepLess;
-Toy.hypIsLess = hypIsLess;
 Toy.sourceStepComparator = sourceStepComparator;
 Toy.repeatedCall = repeatedCall;
 Toy.commuteEqn = commuteEqn;
