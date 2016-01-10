@@ -745,6 +745,10 @@ var numbersInfo = {
           var fact = getArithOp(expr)(expr);
           var simpleFact =
             simplifyHyps(rules.instantiate(fact, '/main/left', expr));
+          // Replaces an assumption, potentially adding additional assumptions
+          // to the result, as in case of recip or nonzero assumptions.
+          // Result with added assumptions is still equivalent to the original
+          // provided that all new ones are duplicates of existing.
           step = rules.replace(simpleFact, step, path);
         }
       }
