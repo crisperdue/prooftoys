@@ -4124,15 +4124,15 @@ function traceRule(name) {
   var rule = rules[name];
   function timed() {
     console.log('Enter', name);
-    console.trace();
     for (var i = 0; i < arguments.length; i++) {
-      console.log(i, arguments[i].toString());
+      console.log(i, arguments[i] + '');
     }
     var t = new Toy.NestedTimer(name);
     t.start();
     var result = rule.apply(rules, arguments);
-    t.done();
-    console.log('Exit', name);
+    var elapsed = t.end();
+    console.log('=', result + '');
+    console.log('Exit', name, elapsed, 'ms');
     return result;
   }
   timed.info = rule.info;

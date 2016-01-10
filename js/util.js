@@ -440,7 +440,10 @@ NestedTimer.prototype = {
     this.elsewhere = Date.now();
   },
 
-  done: function() {
+  /*
+   * Ends the timer and returns its time in milliseconds.
+   */
+  end: function() {
     var now = Date.now();
     assertTrue(this == _timers[_timers.length - 1], 'Timer not nested');
     _timers.pop();
@@ -449,9 +452,6 @@ NestedTimer.prototype = {
       var prev = _timers[_timers.length - 1];
       prev.elsewhere += elapsed;
     }
-    console.log(format('Timer {name}: {elapsed}ms',
-                       {name: this.name,
-                        elapsed: elapsed}));
     return elapsed;
   }
 };
