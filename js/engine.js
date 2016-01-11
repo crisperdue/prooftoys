@@ -1970,11 +1970,10 @@ var ruleInfo = {
 
   // Adds an assumption to the given step and deduplicates it.  Works
   // with or without hypotheses.
-  // TODO: hyps.  This looks buggy.
   andAssume: {
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
-      if (step.hasHyps) {
+      if (step.isCall2('=>')) {
         var step0 = rules.asImplication(step);
         var taut = rules.tautology('(p => q) => (p & a => q)');
         var map = {p: step.getLeft(), q: step.getRight(), a: expr};
