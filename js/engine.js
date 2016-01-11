@@ -685,6 +685,7 @@ var ruleInfo = {
 
   // Similar to "consider", but uses a selected term.
   // The new step inherits hypotheses from the input step.
+  // TODO: hyps
   considerPart: {
     action: function(step, path) {
       var eqn = rules.eqSelf(step.get(path));
@@ -1969,6 +1970,7 @@ var ruleInfo = {
 
   // Adds an assumption to the given step and deduplicates it.  Works
   // with or without hypotheses.
+  // TODO: hyps.  This looks buggy.
   andAssume: {
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
@@ -2047,6 +2049,7 @@ var ruleInfo = {
   // (5237)  This version implemented via 5235, so much less efficient.
   //
   // Handles hypotheses.
+  // TODO: hyps
   implyForallBook: {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
@@ -2543,6 +2546,7 @@ var ruleInfo = {
   // providing two steps with the same hypotheses in preparation for
   // applying various rules of inference.  If hypStep has no
   // hypotheses, the result is simply the target step.
+  // TODO: hyps
   appendStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
@@ -2597,6 +2601,7 @@ var ruleInfo = {
   // Prefix hypotheses from the hypStep to the target step.  Often
   // used together with appendStepHyps.  If hypStep has no hypotheses,
   // the result is simply the target step.
+  // TODO: hyps
   prependStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
@@ -4040,6 +4045,8 @@ function matchFactPart(step, path, factList, name) {
  *
  * TODO: Consider actually importing hypotheses from dep using rule R
  * to avoid the possibility of undesired side effects.
+ *
+ * TODO: hyps
  */
 function flagHyps(step, dep) {
   if (step.hasHyps && dep.hasHyps) {
