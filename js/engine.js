@@ -2401,6 +2401,10 @@ var ruleInfo = {
         // We are replacing an assumption with something equal
         // that may add its own assumptions.
         var step1 = rules.asImplication(h_c)
+          // TODO: Make this block of code continue to do something
+          // reasonable after removing .hasHyps checks.  At least
+          // change .replace to .rl (replace matching equation LHS and
+          // do not simplify).
           .replace(path, h_equation)
           .apply('asImplication');
         // Use the tautology to conjoin all of the assumptions.
