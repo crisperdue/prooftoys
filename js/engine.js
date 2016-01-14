@@ -2450,8 +2450,6 @@ var ruleInfo = {
       // equation is A = B
       var equation = h_equation.getRight();
       var c = h_c.getRight();
-      var a = equation.getLeft();
-      var b = equation.getRight();
 
       // Path relative to c.  This is one segment shorter than the
       // input path, but is the same length if hyps were added to h_c
