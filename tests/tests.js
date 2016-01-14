@@ -1609,19 +1609,13 @@ var testCase = {
   },
 
   testCases: function() {
-    var result = Toy.rules.cases(equal(call(p, T), T),
-                               equal(call(p, F), F),
-                               x);
-    assertEqual('((p x) = x)', result);
-
-    // Hypotheses
-    var step1 = Toy.rules.assume('p T');
-    var step2 = Toy.rules.assume('p F')
-    result = Toy.rules.cases(step1, step2, 'x');
-    // TODO: In tests with hypotheses, allow order of hypotheses
-    //   to vary.
-    assertEqual('(((p T) & (p F)) => (p x))', result);
-    assert(result.hasHyps);
+    var ident = Toy.parse('{x. x}');
+    var trueCase = rules.axiom4(call(ident, T));
+    var falseCase = rules.axiom4(call(ident, F));
+    var result = Toy.rules.cases(trueCase,
+                                 falseCase,
+                                 x);
+    assertEqual('(({x. x} x) = x)', result);
   },
 
   testModusPonens: function() {

@@ -1644,23 +1644,23 @@ var ruleInfo = {
 
   // (5222) Given two theorems that are substitutions of T and
   // F respectively into a WFF; and a variable or variable name,
-  // proves the WFF.  Works with hypotheses.
+  // proves the WFF.  No automatic management of hypotheses.
   cases: {
     action: function(caseT, caseF, v) {
       v = varify(v);
       // Note: caseF has no variables not in caseT, so no need to
       // calculate all of its names.
       var newVar = Toy.genVar('v', caseT.allNames());
-      var gen = caseT.unHyp().generalizeTF(caseF.unHyp(), newVar);
+      var gen = caseT.generalizeTF(caseF, newVar);
       var step1a = rules.axiom4(call(lambda(newVar, gen), T));
-      var step1b = rules.rRight(step1a, caseT, '/main');
+      var step1b = rules.rRight(step1a, caseT, '');
       var step2a = rules.axiom4(call(lambda(newVar, gen), F));
-      var step2b = rules.rRight(step2a, caseF, '/main');
+      var step2b = rules.rRight(step2a, caseF, '');
       var step4 = rules.makeConjunction(step1b, step2b);
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), 'g');
-      var step6 = rules.replace(step5, step4, '/main');
+      var step6 = rules.replace(step5, step4, '');
       var step7a = rules.instForall(step6, v);
-      var step7b = rules.apply(step7a, '/main');
+      var step7b = rules.apply(step7a, '');
       return step7b.justify('cases', arguments, [caseT, caseF]);
     },
     inputs: {step: [1, 2], varName: 3},
