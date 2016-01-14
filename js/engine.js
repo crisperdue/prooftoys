@@ -475,13 +475,13 @@ var ruleInfo = {
         }
       }
       function replacer(expr) {
-	if (expr.matches(equation.getLeft())) {
-	  return equation.getRight();
-	} else {
-	  assert(false,
+        if (expr.matches(equation.getLeft())) {
+          return equation.getRight();
+        } else {
+          assert(false,
                  'Rule R: subexpression {1}\n of {2}\n must match {3}',
                  expr, target, equation.getLeft());
-	}
+        }
       }
       // Auto-justify input steps if requested by the current configuration.
       if (!equation.isProved()) {
@@ -508,10 +508,10 @@ var ruleInfo = {
       // typecheck it.
       var rvars = equation.getRight().freeVars();
       for (var name in rvars) {
-	if (!(name in lvars)) {
-	  Toy.findType(result);
-	  break;
-	}
+        if (!(name in lvars)) {
+          Toy.findType(result);
+          break;
+        }
       }
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation], true);
@@ -558,7 +558,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     tooltip: ('extensionality: functions are equal based on equal results'
-	      + ' on all inputs.'),
+              + ' on all inputs.'),
     description: 'axiom of equal functions'
   },
 
@@ -803,7 +803,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1, term: 2},
     form: ('Apply both sides of step <input name=equation>'
-	   + ' to term <input name=term>'),
+           + ' to term <input name=term>'),
     menu: '[f = g] to [f x = g x]',
     tooltip: 'given f = g, deduce (f x) = (g x)',
     description: '[f = g] to [f x = g x]',
@@ -830,7 +830,7 @@ var ruleInfo = {
     },
     inputs: {term: 1, equation: 2},
     form: ('Apply function <input name=term>'
-	   + ' to both sides of step <input name=equation>'),
+           + ' to both sides of step <input name=equation>'),
     menu: '[a = b] to [f a = f b]',
     tooltip: 'given a = b deduce (f a) = (f b)',
     description: 'from a = b to (f a) = (f b)'
@@ -1041,7 +1041,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1, term: 2, varName: 3},
     form: ('Instantiate <input name=varName> with <input name=term> '
-	   + 'in step <input name=equation>'),
+           + 'in step <input name=equation>'),
     menu: 'substitute for a variable in equation',
     tooltip: ('Instantiates a free variable in an equation.'),
     description: 'substitute for {var}',
@@ -1119,10 +1119,10 @@ var ruleInfo = {
     },
     inputs: {step: 1, term: 2, condition: {1: function(target) {
       return (target instanceof Toy.Call
-	      && target.fn.isConst('forall'));
+              && target.fn.isConst('forall'));
     }}},
     form: ('In step <input name=step> instantiate bound var'
-	   + ' with term <input name=term>'),
+           + ' with term <input name=term>'),
     menu: 'instantiate "forall"',
     tooltip: ('In a "forall", instantiates the bound variable with'
               + ' a given term.'),
@@ -1169,8 +1169,8 @@ var ruleInfo = {
     },
     inputs: {equation: [1, 2], varName: 3},
     form: ('Cases: true case step <input name=equation1>'
-	   + ' false case step <input name=equation2>,'
-	   + ' use variable <input name=varName>'),
+           + ' false case step <input name=equation2>,'
+           + ' use variable <input name=varName>'),
     menu: 'proof by cases, for equations',
     tooltip: ('Given two proved equations C and D obtainable by substitution' +
               ' for a free variable of an equation A = B; C by substituting' +
@@ -1517,7 +1517,7 @@ var ruleInfo = {
     action: function(h_a, v) {
       v = varify(v);
       assert(!(h_a.hasHyps && h_a.getLeft().hasFreeName(v.name)),
-	     '{1} occurs free in hypotheses of {2}', v.name, h_a);
+             '{1} occurs free in hypotheses of {2}', v.name, h_a);
       var step1 = rules.toTIsA(h_a);
       var step2 = rules.theorem('forallXT');
       var step3 = rules.changeVar(step2, '/arg', v);
@@ -1598,7 +1598,7 @@ var ruleInfo = {
           continue;
         }
         step = rules.bindEqn(step, name);
-	namesReversed.unshift(name);
+        namesReversed.unshift(name);
       }
       if (namesReversed.length === 0) {
         return b.justify('instMultiVars', arguments, [b]);
@@ -1665,8 +1665,8 @@ var ruleInfo = {
     },
     inputs: {step: [1, 2], varName: 3},
     form: ('Cases: true case step <input name=step1>,'
-	   + ' false case <input name=step2>,'
-	   + ' use variable name <input name=varName>'),
+           + ' false case <input name=step2>,'
+           + ' use variable name <input name=varName>'),
     menu: 'proof by cases',
     tooltip: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.'),
@@ -1688,7 +1688,7 @@ var ruleInfo = {
     },
     inputs: {step: 1, implication: 2},
     form: ('Modus ponens: hypothesis step <input name=step>,'
-	   + ' implication in step <input name=implication>'),
+           + ' implication in step <input name=implication>'),
     menu: 'modus ponens',
     tooltip: ('Modus Ponens.  Given A and A => B derives B.'),
     description: '[p] and [p &rArr; q] to q',
@@ -2011,7 +2011,7 @@ var ruleInfo = {
       v = varify(v);
       var aFree = a.freeVars();
       assert(!aFree.hasOwnProperty(v.name),
-	     'r5235: variable {1} cannot occur free in {2}', v, a);
+             'r5235: variable {1} cannot occur free in {2}', v, a);
       var map1 = {
         p: call('forall', lambda(v, call('|', T, b))),
         q: call('forall', lambda(v, b))
@@ -2034,8 +2034,8 @@ var ruleInfo = {
     inputs: {varName: 1, bool: [2, 3]},
     /* Do not show, hard to use and seldom helpful.
     form: ('Variable: <input name=varName> '
-	   + 'wff without it free: <input name=bool1> '
-	   + 'other wff: <input name=bool2>'),
+           + 'wff without it free: <input name=bool1> '
+           + 'other wff: <input name=bool2>'),
     */
     labels: 'uncommon',
     tooltip: ('Move "forall" inside an "or" when variable not free '
@@ -2058,12 +2058,12 @@ var ruleInfo = {
       var b = a_b.getRight();
       // Restriction to ensure the desired result.
       assert(!a.hasFreeName(v.name),
-	     'implyForall: variable {1} cannot occur free in {2}', v, a, h_a_b);
+             'implyForall: variable {1} cannot occur free in {2}', v, a, h_a_b);
       if (h_a_b.hasHyps) {
         var h = h_a_b.getLeft();
-	assert(!h.hasFreeName(v.name),
-	       'implyForall: variable {1} cannot occur free in {2}', v, h,
-	       h_a_b);
+        assert(!h.hasFreeName(v.name),
+               'implyForall: variable {1} cannot occur free in {2}', v, h,
+               h_a_b);
       }
       var map1 = {a: a, b: b};
       var step1 = rules.tautInst('(a => b) => not a | b', map1);
@@ -2079,8 +2079,8 @@ var ruleInfo = {
     inputs: {varName: 1, implication: 2},
     /* Do not offer at this time, use toImplyForall instead.
     form: ('Move forall inside "implies" binding '
-	   + 'variable <input name=varName> '
-	   + 'implication <input name=implication>'),
+           + 'variable <input name=varName> '
+           + 'implication <input name=implication>'),
     */
     tooltip: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.'),
@@ -2102,8 +2102,8 @@ var ruleInfo = {
     },
     inputs: {varName: 1, bool: [2, 3]},
     form: ('Variable: <input name=varName> '
-	   + 'wff without it free: <input name=bool1> '
-	   + 'other wff: <input name=bool2>'),
+           + 'wff without it free: <input name=bool1> '
+           + 'other wff: <input name=bool2>'),
     menu: 'forall {v. A => B} => (A => forall {v. B}',
     tooltip: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
@@ -2155,8 +2155,8 @@ var ruleInfo = {
     },
     inputs: {varName: 1, implication: 2},
     form: ('Move forall inside "implies" binding '
-	   + 'variable <input name=varName> '
-	   + 'in step <input name=implication>'),
+           + 'variable <input name=varName> '
+           + 'in step <input name=implication>'),
     menu: 'Add "forall" after =>',
     tooltip: ('Add "forall" after "implies" provided the variable '
               + 'is not free to the left of the "implies".'),
@@ -2307,7 +2307,7 @@ var ruleInfo = {
       path = Toy.path(path);
       assert(equation.isCall2('='),
              'Expecting an equation, got: {1}',
-	     equation);
+             equation);
       var step1 = rules.axiom2();
       var a = equation.getLeft();
       var b = equation.getRight();
@@ -2331,8 +2331,8 @@ var ruleInfo = {
       }
       var g = target.replaceAt(path, function(expr) { return texpr; });
       var step2 =
-	rules.instMultiVars(step1,
-			    ({x: aBound, y: bBound, h: lambda(t, g)}));
+        rules.instMultiVars(step1,
+                            ({x: aBound, y: bBound, h: lambda(t, g)}));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = step3;
       for (var i = 0; i < boundNameList.length; i++) {
@@ -2390,7 +2390,7 @@ var ruleInfo = {
         // applicable.  The case with hypotheses in h_c can be
         // considered as rule RR (5202).
         var result = rules.r(h_equation, h_c, path);
-	return result.justify('replace', args,
+        return result.justify('replace', args,
                               [h_equation_arg, h_c_arg]);
       }
       // h_equation must have the form H => A = B
@@ -2436,11 +2436,11 @@ var ruleInfo = {
       // Now both wffs are implications with the same LHS.  Call it "h".
       var h = h_equation.getLeft();
       if (!h_c.hasHyps) {
-	// If there are no hypotheses, we did not attempt to make the
-	// LHS of the two input steps match.
-	assert(h_c.getLeft().matches(h),
-	       'LHS mismatch in "replace" rule',
-	       h_c_arg);
+        // If there are no hypotheses, we did not attempt to make the
+        // LHS of the two input steps match.
+        assert(h_c.getLeft().matches(h),
+               'LHS mismatch in "replace" rule',
+               h_c_arg);
       }
 
       // From here on work with implications directly, not hypotheses.
@@ -2456,15 +2456,15 @@ var ruleInfo = {
       // by appendStepHyps, i.e. h_equation_arg had them but not
       // h_c_arg.
       var cpath = (h_equation_arg.hasHyps && !h_c_arg.hasHyps
-		   ? path
-		   : path.getRight());
+                   ? path
+                   : path.getRight());
       var boundNames = c.boundNames(cpath);
       Toy.removeExcept(boundNames, equation.freeVars());
       var hypFreeNames = h.freeVars();
       var step1 = h_equation;
       for (var name in boundNames) {
-	// Check the variable is not free in any hypotheses.
-	// TODO: Do appropriate checking in 5235 and impliesForall as well.
+        // Check the variable is not free in any hypotheses.
+        // TODO: Do appropriate checking in 5235 and impliesForall as well.
         assert(!hypFreeNames.hasOwnProperty(name),
                'Conflicting binding of {1} in {2}', name, c, h_c_arg);
         var step1 = rules.toImplyForall(name, step1);
@@ -2551,50 +2551,50 @@ var ruleInfo = {
   appendStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
-	if (target.hasHyps) {
-	  if (target.getLeft().matches(hypStep.getLeft())) {
-	    // Hyps are the same, so no change to the given step.
-	    return target;
-	  }
+        if (target.hasHyps) {
+          if (target.getLeft().matches(hypStep.getLeft())) {
+            // Hyps are the same, so no change to the given step.
+            return target;
+          }
           var step = rules.asImplication(target);
-	  var taut = Toy.parse('(h1 => p) => ((h1 & h2) => p)');
-	  var subst = {
-	    h1: step.getLeft(),
-	    h2: hypStep.getLeft(),
-	    p: step.getRight()
-	  };
-	  var step1 = rules.tautInst(taut, subst);
-	  var step2 = rules.modusPonens(step, step1);
-          var hyped = rules.asHypotheses(step2);
-          flagHyps(hyped, target);
-          flagHyps(hyped, hypStep);
-          // Rendering of result needs hypStep rendered, so include it as dep.
-	  return (hyped
-                  .justify('appendStepHyps', arguments, [target, hypStep]));
-	} else {
-	  // The target does not have hyps.
-	  var subst = {
-	    p: target,
-	    h2: hypStep.getLeft()
-	  };
-	  var step1 = rules.tautInst('p => (h2 => p)', subst);
-	  var step2 = rules.modusPonens(target, step1);
+          var taut = Toy.parse('(h1 => p) => ((h1 & h2) => p)');
+          var subst = {
+            h1: step.getLeft(),
+            h2: hypStep.getLeft(),
+            p: step.getRight()
+          };
+          var step1 = rules.tautInst(taut, subst);
+          var step2 = rules.modusPonens(step, step1);
           var hyped = rules.asHypotheses(step2);
           flagHyps(hyped, target);
           flagHyps(hyped, hypStep);
           // Rendering of result needs hypStep rendered, so include it as dep.
           return (hyped
                   .justify('appendStepHyps', arguments, [target, hypStep]));
-	}
+        } else {
+          // The target does not have hyps.
+          var subst = {
+            p: target,
+            h2: hypStep.getLeft()
+          };
+          var step1 = rules.tautInst('p => (h2 => p)', subst);
+          var step2 = rules.modusPonens(target, step1);
+          var hyped = rules.asHypotheses(step2);
+          flagHyps(hyped, target);
+          flagHyps(hyped, hypStep);
+          // Rendering of result needs hypStep rendered, so include it as dep.
+          return (hyped
+                  .justify('appendStepHyps', arguments, [target, hypStep]));
+        }
       } else {
-	// Don't do anything and don't display any new proof step.
-	return target;
+        // Don't do anything and don't display any new proof step.
+        return target;
       }
     },
     inputs: {step: [1, 2]},
     menu: 'combine hypotheses',
     form: ('Add to step <input name=step1> hypotheses from step '
-	   + '<input name=step2>'),
+           + '<input name=step2>'),
     description: 'add step {step2} assumptions {to step step1}',
     labels: 'uncommon'
   },
@@ -2607,49 +2607,49 @@ var ruleInfo = {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
         var step = rules.asImplication(target);
-	if (target.hasHyps) {
-	  if (step.getLeft().matches(hypStep.getLeft())) {
-	    // Hyps are the same, so no change to the given step.
+        if (target.hasHyps) {
+          if (step.getLeft().matches(hypStep.getLeft())) {
+            // Hyps are the same, so no change to the given step.
             // Don't show the call to this rule.
-	    return step;
-	  }
-	  var taut = Toy.parse('(h2 => p) => ((h1 & h2) => p)');
-	  var subst = {
-	    h1: hypStep.getLeft(),
-	    h2: step.getLeft(),
-	    p: step.getRight()
-	  };
-	  var step1 = rules.tautInst(taut, subst);
-	  var step2 = rules.modusPonens(step, step1);
+            return step;
+          }
+          var taut = Toy.parse('(h2 => p) => ((h1 & h2) => p)');
+          var subst = {
+            h1: hypStep.getLeft(),
+            h2: step.getLeft(),
+            p: step.getRight()
+          };
+          var step1 = rules.tautInst(taut, subst);
+          var step2 = rules.modusPonens(step, step1);
           var hyped = rules.asHypotheses(step2);
           flagHyps(hyped, target);
           flagHyps(hyped, hypStep);
           // Rendering of result needs hypStep rendered, so include it as dep.
           return (hyped
                   .justify('prependStepHyps', arguments, [target, hypStep]));
-	} else {
-	  var subst = {
-	    p: step,
-	    h1: hypStep.getLeft()
-	  };
-	  var step1 = rules.tautInst('p => (h1 => p)', subst);
-	  var step2 = rules.modusPonens(step, step1);
+        } else {
+          var subst = {
+            p: step,
+            h1: hypStep.getLeft()
+          };
+          var step1 = rules.tautInst('p => (h1 => p)', subst);
+          var step2 = rules.modusPonens(step, step1);
           var hyped = step2.asHypotheses();
           flagHyps(hyped, target);
           flagHyps(hyped, hypStep);
           // Rendering of result needs hypStep rendered, so include it as dep.
           return (hyped
                   .justify('prependStepHyps', arguments, [target, hypStep]));
-	}
+        }
       } else {
-	// Don't display this no-op inference step.
-	return target;
+        // Don't display this no-op inference step.
+        return target;
       }
     },
     inputs: {step: [1, 2]},
     menu: 'combine hypotheses',
     form: ('To step <input name=step1> prefix the hypotheses of step '
-	   + '<input name=step2>'),
+           + '<input name=step2>'),
     description: 'add step {step2} assumptions {to step step1}',
     labels: 'uncommon'
   },
@@ -2746,52 +2746,52 @@ var ruleInfo = {
       // This does all the work except the justification of the subproof.
       function bubble(eqn) {
         // TODO: Specialize the code slightly to work with hypotheses.
-	var expr = eqn.getRight();
-	var a = expr.getLeft();
-	var b = expr.getRight();
+        var expr = eqn.getRight();
+        var a = expr.getLeft();
+        var b = expr.getRight();
         // expr is a & b
-	if (a.isCall2('&')) {
+        if (a.isCall2('&')) {
           // expr is a & b & c
-	  var c = b;
-	  b = a.getRight();
-	  a = a.getLeft();
-	  // Eqn is lhs = (a & b) & c
-	  if (b.matches(c)) {
+          var c = b;
+          b = a.getRight();
+          a = a.getLeft();
+          // Eqn is lhs = (a & b) & c
+          if (b.matches(c)) {
             // RHS is a & b & b
-	    var simpler =
+            var simpler =
               rules.rewrite(eqn, '/right',
                             rules.tautology('a & b & b == a & b'));
-	    // Keep bubbling the rightmost to the left.
-	    return bubble(simpler);
-	  } else if (less(c, b)) {
+            // Keep bubbling the rightmost to the left.
+            return bubble(simpler);
+          } else if (less(c, b)) {
             // Replace the equation's RHS according using associativity.
             var assoc = rules.tautology('a & b & c == a & c & b');
             var map = expr.findSubst(assoc.getLeft());
             var assocInstance = rules.instMultiVars(assoc, map);
-	    var step1 = rules.r(assocInstance, eqn, '/right');
-	    // Then recursively bubble the C in A & C to its proper place.
-	    var step2 = rules.bubbleLeft(step1.get('/right/left'), less);
-	    // Replace the A & C in RHS of step1 with the result.
-	    var step3 = rules.r(step2, step1, '/right/left');
+            var step1 = rules.r(assocInstance, eqn, '/right');
+            // Then recursively bubble the C in A & C to its proper place.
+            var step2 = rules.bubbleLeft(step1.get('/right/left'), less);
+            // Replace the A & C in RHS of step1 with the result.
+            var step3 = rules.r(step2, step1, '/right/left');
             // and replace the RHS of the argument with the final result.
-	    return step3;
-	  } else {
-	    // C is in place.
-	    return eqn;
-	  }
-	} else {
-	  // Base case: Eqn is lhs = a & b.
-	  if (a.matches(b)) {
-	    return rules.rewrite(eqn, '/right',
+            return step3;
+          } else {
+            // C is in place.
+            return eqn;
+          }
+        } else {
+          // Base case: Eqn is lhs = a & b.
+          if (a.matches(b)) {
+            return rules.rewrite(eqn, '/right',
                                  rules.tautology('a & a == a'));
-	  } else if (less(b, a)) {
-	    return rules.rewrite(eqn, '/right',
+          } else if (less(b, a)) {
+            return rules.rewrite(eqn, '/right',
                                  rules.tautology('a & b == b & a'));
-	  } else {
-	    // B is properly placed.
-	    return eqn;
-	  }
-	}
+          } else {
+            // B is properly placed.
+            return eqn;
+          }
+        }
       }
       var equation = rules.eqSelf(chain, chain);
       var result = bubble(equation);
@@ -2826,11 +2826,11 @@ var ruleInfo = {
       if (expr.getRight().isCall2('&')) {
         // The right chain is nontrivial, combine the chains.
         while (eqn.getRight().getLeft().isCall2('&')) {
-	  // The left chain has at least 2 elements.
-	  var eqn1 = rules.mergeRight(eqn);
-	  var chain2 = eqn1.get('/right/right');
-	  var eqn3 = rules.bubbleLeft(chain2, less);
-	  eqn = rules.r(eqn3, eqn1, '/right/right');
+          // The left chain has at least 2 elements.
+          var eqn1 = rules.mergeRight(eqn);
+          var chain2 = eqn1.get('/right/right');
+          var eqn3 = rules.bubbleLeft(chain2, less);
+          eqn = rules.r(eqn3, eqn1, '/right/right');
         }
         // Always simplify at least once since the RHS is assumed to be
         // made of two chains.  This time the first chain will disappear
@@ -2880,10 +2880,10 @@ var ruleInfo = {
       var lhs = step.getLeft().hypLocater(hyp);
       var a = varify('a');
       var taut = infix(infix(lhs, '=>', a),
-		       '=>',
-		       infix(lhs,
-			     '=>',
-			     infix(varify('h'), '=>', a)));
+                       '=>',
+                       infix(lhs,
+                             '=>',
+                             infix(varify('h'), '=>', a)));
       var step1 = rules.asImplication(step);
       var step2 = rules.forwardChain(step1, rules.tautology(taut));
       var result = rules.asHypotheses(step2);
