@@ -969,17 +969,17 @@ var numbersInfo = {
     labels: 'basic'
   },
 
-  // Variant of "rewrite" that simplifies numeric types after applying
-  // the fact.
+  // Variant of rules.rewrite for use from the UI, when the equation
+  // is a proof step, not a well-known fact; otherwise the same as
+  // rules.rewrite.
   rewriteNumeric: {
     action: function(step, path, equation) {
-      var step1 = rules.rewriteOnly(step, path, equation);
-      var result = rules.simplifyAssumptions(step1);
-      return result.justify('rewriteNumeric', arguments, [step, equation]);
+      return (rules.rewrite(step, path, equation)
+              .justify('rewriteNumeric', arguments, [step, equation]));
     },
     inputs: {site: 1, equation: 3},
-    form: ('Rewrite the site using equation <input name=equation>'),
-    menu: 'match with an equation LHS',
+    form: ('Rewrite the site using step <input name=equation>'),
+    menu: 'rewrite',
     description: 'rewrite {site};; {in step siteStep} {using step equation}',
     labels: 'basic'
   },
