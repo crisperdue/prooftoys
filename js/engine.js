@@ -2677,10 +2677,9 @@ var ruleInfo = {
     labels: 'advanced'
   },
 
-  // Rewrite a term using an equational fact, taking a statement of
-  // the desired fact as an argument term (string or Expr).  indirect
-  // use with well-known facts.  This simplifies assumptions including
-  // numeric type assumptions after rewriting.
+  // Version of the rewrite rule for indirect use with well-known
+  // facts.  This simplifies assumptions including numeric type
+  // assumptions after rewriting.
   //
   // TODO: Combine both sorts of rewrite rules into one, so a rewrite
   // works well in code and UI with any form of fact or proof step.
@@ -2688,13 +2687,7 @@ var ruleInfo = {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
-      var expr = step.get(path);
-      var map = expr.findSubst(fact.unHyp().getLeft());
-      assert(map,
-             'Sorry, term\n{1}\n does not match LHS of\n{2}',
-             expr, fact.unHyp(), fact);
-      var step1 = rules.instMultiVars(fact, map);
-      var step2 = rules.replace(step1, step, path);
+      var step2 = rules.rewrite(step, path, fact);
       var result = rules.simplifyAssumptions(step2);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
