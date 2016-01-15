@@ -997,7 +997,7 @@ ProofControl.prototype.renderPopups = function(step) {
         // use it in a rewrite when called with no args.
         var actionBuilder =
           @{stmt. @{Toy.tryRuleAsync(self.stepEditor,
-                                     rules.rewriteWithFact,
+                                     rules.rewrite,
                                      [step.original, getPath(), stmt])}};
         var actions = stmts.map(actionBuilder);
 
@@ -1011,7 +1011,7 @@ ProofControl.prototype.renderPopups = function(step) {
           results.push(result.getMain().getRight());
           var action =
             @{Toy.tryRuleAsync(self.stepEditor,
-                               rules.rewriteWithFact,
+                               rules.rewrite,
                                [step.original, getPath(), result])};
           actions.push(action);
         }

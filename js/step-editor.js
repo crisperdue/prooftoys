@@ -275,14 +275,14 @@ StepEditor.prototype.ruleChosen = function() {
     }
     this.tryExecuteRule(false);
   } else if (value.slice(0, 5) === 'fact ') {
-    // Values "fact etc" indicate use of rewriteWithFact, and
+    // Values "fact etc" indicate use of rules.rewrite, and
     // the desired fact is indicated by the rest of the value.
     var siteStep = this.proofControl.selection;
     if (!siteStep || !siteStep.selection) {
       this.error('No selected site');
     }
     tryRuleAsync(this,
-                 Toy.rules.rewriteWithFact,
+                 Toy.rules.rewrite,
                  [siteStep.original,
                   siteStep.prettyPathTo(siteStep.selection),
                   value.slice(5)]);
@@ -1022,7 +1022,7 @@ BasicRuleSelector.prototype.update = function() {
     displayTexts.push(display);
     // Value of the option; format of "fact <fact text>"
     // indicates that the text defines a fact to use in
-    // rewriteWithFact.
+    // rules.rewrite.
     byDisplay[display] = 'fact ' + text;
   });
   displayTexts.sort(function(a, b) { return a.localeCompare(b); });

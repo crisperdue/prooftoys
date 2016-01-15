@@ -173,11 +173,14 @@ function getStepCounter() {
   return stepCounter;
 }
 
+/**
+ * These become methods on steps, set up by Step.justify.
+ */
 var ruleMethods = {
 
   /**
    * Applies the named rule to this Expr and any other given arguments
-   * as if by a call to Toy.rules[name](args).  Private to Expr.justify.
+   * as if by a call to Toy.rules[name](args).
    */
   apply: function(name, arg1) {
     var nm = name;
@@ -186,16 +189,16 @@ var ruleMethods = {
   },
       
   /**
-   * Applies rules.rewriteWithFact to this Expr passing in a path and
-   * fact to use.  Private to Expr.justify.
+   * Applies rules.rewrite to this Expr passing in a path and
+   * fact to use.
    */
   rewrite: function(path, fact) {
-    return Toy.rules.rewriteWithFact(this, path, fact);
+    return Toy.rules.rewrite(this, path, fact);
   },
 
   /**
    * Applies rules.replace to this Expr passing in a path and
-   * equation to use.  Private to Expr.justify.
+   * equation to use.
    */
   replace: function(path, eqn) {
     return Toy.rules.replaceEither( this, path, eqn);
@@ -2658,6 +2661,7 @@ var ruleInfo = {
   // the step at the given path must match the LHS of the equation.
   // Replaces that part of the step with the appropriate instance of
   // the equation.  The step and equation may have hypotheses.
+  // Should not often be needed via UI.
   rewriteOnly: {
     action: function(step, path, equation) {
       var expr = step.get(path);
@@ -2677,13 +2681,10 @@ var ruleInfo = {
     labels: 'advanced'
   },
 
-  // Version of the rewrite rule for indirect use with well-known
-  // facts.  This simplifies assumptions including numeric type
-  // assumptions after rewriting.
-  //
-  // TODO: Combine both sorts of rewrite rules into one, so a rewrite
-  // works well in code and UI with any form of fact or proof step.
-  rewriteWithFact: {
+  // Version of the rewrite rule good for general use in code and for
+  // indirect use in the UI with well-known facts.  This simplifies
+  // assumptions including numeric type assumptions after rewriting.
+  rewrite: {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
@@ -2691,7 +2692,7 @@ var ruleInfo = {
       var result = rules.simplifyAssumptions(step2);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
-      return result.justify('rewriteWithFact', arguments, [step]);
+      return result.justify('rewrite', arguments, [step]);
     },
     autoSimplify: function(step) {
       var path = step.ruleArgs[1];
@@ -2936,7 +2937,7 @@ var ruleInfo = {
   useAsHyp: {
     action: function(step) {
       var taut = rules.tautology('a => (b => c) == a & b => c');
-      var result = rules.rewriteWithFact(step, '', taut);
+      var result = rules.rewrite(step, '', taut);
       return result.justify('useAsHyp', arguments, step);
     },
     inputs: {step: 1},
@@ -3837,7 +3838,7 @@ function locateMatchingFact(expr, schema_arg, varsMap, context) {
  */
 function applyFactsOnce(step, path, facts) {
   var info = findMatchingFact(facts, null, step.get(path));
-  return info ? rules.rewriteWithFact(step, path, info.stmt) : step;
+  return info ? rules.rewrite(step, path, info.stmt) : step;
 }
 
 /**
@@ -3873,7 +3874,7 @@ function applyFactsWithinRhs(step, facts) {
   while (rhs = Toy.path('/main/right', eqn),
          info = findMatchingCall(eqn.get(rhs), facts)) {
     var fullPath = rhs.concat(info.path);
-    eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
+    eqn = rules.rewrite(eqn, fullPath, info.stmt);
   }
   return eqn;
 }
@@ -3907,7 +3908,7 @@ function transformApplyInvert(term_arg, eqn_arg, fact) {
   var revEqn = rules.eqnSwap(eqn);
   var step1 = rules.consider(term);
   var step2 = applyFactsWithinRhs(step1, [eqn]);
-  var step3 = rules.rewriteWithFact(step2, '/main/right', fact);
+  var step3 = rules.rewrite(step2, '/main/right', fact);
   var step4 = applyFactsWithinRhs(step3, [revEqn]);
   return step4;
 }
@@ -3941,7 +3942,7 @@ function arrangeRhs(eqn_arg, context, facts) {
   while (rhsPath = Toy.path('/main/right', eqn),
          info = findMatchingFact(facts, context, eqn.get(rhsPath))) {
     var fullPath = rhsPath.concat(info.path);
-    eqn = rules.rewriteWithFact(eqn, fullPath, info.stmt);
+    eqn = rules.rewrite(eqn, fullPath, info.stmt);
   }
   return eqn; 
 }
@@ -4022,7 +4023,7 @@ function matchFactPart(step, path, factList, name) {
     var info = step.matchSchemaPart(path, schema, name);
     if (info) {
       return function() {
-        return rules.rewriteWithFact(step, info.path, fact_arg);
+        return rules.rewrite(step, info.path, fact_arg);
       };
     }
   });

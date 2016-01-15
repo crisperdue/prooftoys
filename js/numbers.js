@@ -951,7 +951,7 @@ var numbersInfo = {
         var result = tryArithmetic(stmt);
         // x = T is the expected result.
         if (result && result.matchSchema('x = T')) {
-          return rules.rewriteWithFact(result, '', '(x = T) = x');
+          return rules.rewrite(result, '', '(x = T) = x');
         }
       }
       // Try tautologies.
@@ -1083,7 +1083,7 @@ var numbersInfo = {
     action: function(step, _path) {
       var info = Toy.findMatchingCall(step.get(_path), basicSimpFacts);
       return (info
-              ? rules.rewriteWithFact(step,
+              ? rules.rewrite(step,
                                       _path.concat(info.path),
                                       info.stmt)
               : step);
@@ -1393,7 +1393,7 @@ var numbersInfo = {
         var schema = Toy.getResult(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
         if (info) {
-          return rules.rewriteWithFact(step, info.path, fact_arg);
+          return rules.rewrite(step, info.path, fact_arg);
         }
       }
       var result = (Toy.each(factsB, tryFact.bind(null, 'b')) ||
@@ -1439,7 +1439,7 @@ var numbersInfo = {
         var schema = termify(fact_arg).getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
         if (info) {
-          return rules.rewriteWithFact(step, info.path, fact_arg);
+          return rules.rewrite(step, info.path, fact_arg);
         }
       }
       var result = (Toy.each(factsC, tryFact.bind(null, 'c')) ||
@@ -1592,7 +1592,7 @@ var numbersInfo = {
       var facts = ['(T = x) = x', '(x = T) = x'];
       return Toy.each(facts, function(fact) {
           try {
-            return rules.rewriteWithFact(step, path, fact);
+            return rules.rewrite(step, path, fact);
           } catch(e) { }
         });
       try {
@@ -1846,8 +1846,8 @@ var identityFacts = {
    proof: function() {
      var step1 = rules.axiomPlusZero();
      var step2 = rules.eqnSwap(step1);
-     var step3 = rules.rewriteWithFact(step2, '/main/right',
-     'a + b = b + a');
+     var step3 = rules.rewrite(step2, '/main/right',
+                               'a + b = b + a');
      return step3;
      }
    },
@@ -1855,8 +1855,8 @@ var identityFacts = {
   '0 + a = a': {
     proof: function() {
       var step1 = rules.axiomPlusZero();
-      var step2 = rules.rewriteWithFact(step1, '/main/left',
-                                        'a + b = b + a');
+      var step2 = rules.rewrite(step1, '/main/left',
+                                'a + b = b + a');
       return step2;
     }
   },
@@ -1882,7 +1882,7 @@ var identityFacts = {
     proof: function() {
       var step1 = rules.axiomTimesOne();
       var step2 = rules.eqnSwap(step1);
-      var step3 = rules.rewriteWithFact(step2, '/main/right',
+      var step3 = rules.rewrite(step2, '/main/right',
                                         'a * b = b * a');
       return step3;
     }
@@ -1939,7 +1939,7 @@ var equivalences = {
     // TODO: Figure out why the user must enter the c != 0 part
     //   when working interactively.
     proof: function() {
-      var rewrite = rules.rewriteWithFact;
+      var rewrite = rules.rewrite;
       var s1 = rules.assume('a * c = b * c');
       var s2 = rules.divideBoth(s1, 'c');
       var s3 = rewrite(s2, '/main/right', 'a * b / c = a * (b / c)');
@@ -2135,30 +2135,22 @@ var negationFacts = {
   },
   'neg (a + b) = neg a + neg b': {
     proof: function() {
+      var rewrite = rules.rewrite;
       var step1 = rules.fact('a + neg a = 0');
       var step2 = rules.instVar(step1, Toy.parse('a + b'), 'a');
-      var step3 = rules.rewriteWithFact(step2, '/right/left',
+      var step3 = rewrite(step2, '/right/left',
                                         'a + b + c = a + c + b');
       var step4 = rules.addToBoth(step3, Toy.parse('neg b'));
-      var step5 = rules.rewriteWithFact(step4, '/right/left',
-                                        'a + b + c = a + (b + c)');
-      var step6 = rules.rewriteWithFact(step5, '/right/left/right',
-                                        'a + neg a = 0');
-      var step7 = rules.rewriteWithFact(step6, '/right/right',
-                                        '0 + a = a');
-      var step8 = rules.rewriteWithFact(step7, '/right/left',
-                                        'a + 0 = a');
+      var step5 = rewrite(step4, '/right/left', 'a + b + c = a + (b + c)');
+      var step6 = rewrite(step5, '/right/left/right', 'a + neg a = 0');
+      var step7 = rewrite(step6, '/right/right', '0 + a = a');
+      var step8 = rewrite(step7, '/right/left', 'a + 0 = a');
       var step9 = rules.addToBoth(step8, Toy.parse('neg a'));
-      var step10 = rules.rewriteWithFact(step9, '/right/left/left',
-                                         'a + b = b + a');
-      var step11 = rules.rewriteWithFact(step10, '/right/left',
-                                         'a + b + c = a + (b + c)');
-      var step12 = rules.rewriteWithFact(step11, '/right/left/right',
-                                         'a + neg a = 0');
-      var step13 = rules.rewriteWithFact(step12, '/right/left',
-                                         'a + 0 = a');
-      var step14 = rules.rewriteWithFact(step13, '/right/right',
-                                         'a + b = b + a');
+      var step10 = rewrite(step9, '/right/left/left', 'a + b = b + a');
+      var step11 = rewrite(step10, '/right/left', 'a + b + c = a + (b + c)');
+      var step12 = rewrite(step11, '/right/left/right', 'a + neg a = 0');
+      var step13 = rewrite(step12, '/right/left', 'a + 0 = a');
+      var step14 = rewrite(step13, '/right/right', 'a + b = b + a');
       return step14;
     }
   },
@@ -2345,16 +2337,14 @@ var recipFacts = {
   },
   'a != 0 => recip (recip a) = a': {
     proof: function() {
+      var rewrite = rules.rewrite;
       var step1 = rules.fact('a * recip a = 1');
       var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip a)'));
-      var step3 = rules.rewriteWithFact(step2, '/main/right',
-                                        '1 * a = a');
-      var step4 = rules.rewriteWithFact(step3, '/main/left',
-                                        'a * b * c = a * (b * c)');
+      var step3 = rewrite(step2, '/main/right', '1 * a = a');
+      var step4 = rewrite(step3, '/main/left', 'a * b * c = a * (b * c)');
       var step5 = rules.instVar(step1, Toy.parse('recip a'), 'a');
       var step6 = rules.replace(step5, step4, '/main/left/right');
-      var step7 = rules.rewriteWithFact(step6, '/main/left',
-                                        'a * 1 = a');
+      var step7 = rewrite(step6, '/main/left', 'a * 1 = a');
       var step8 = rules.eqnSwap(step7);
       return step8;
     }
@@ -2375,30 +2365,21 @@ var recipFacts = {
   },
   'a != 0 & b != 0 => recip (a * b) = recip a * recip b': {
     proof: function() {
+      var rewrite = rules.rewrite;
       var step1 = rules.fact('a * recip a = 1');
       var step2 = rules.instVar(step1, Toy.parse('a * b'), 'a');
-      var step3 = rules.rewriteWithFact(step2, '/right/left',
-                                        'a * b * c = a * c * b');
+      var step3 = rewrite(step2, '/right/left', 'a * b * c = a * c * b');
       var step4 = rules.multiplyBoth(step3, Toy.parse('recip b'));
-      var step5 = rules.rewriteWithFact(step4, '/right/left',
-                                        'a * b * c = a * (b * c)');
-      var step6 = rules.rewriteWithFact(step5, '/right/left/right',
-                                        'a * recip a = 1');
-      var step7 = rules.rewriteWithFact(step6, '/right/right',
-                                        '1 * a = a');
-      var step8 = rules.rewriteWithFact(step7, '/right/left',
-                                        'a * 1 = a');
+      var step5 = rewrite(step4, '/right/left', 'a * b * c = a * (b * c)');
+      var step6 = rewrite(step5, '/right/left/right', 'a * recip a = 1');
+      var step7 = rewrite(step6, '/right/right', '1 * a = a');
+      var step8 = rewrite(step7, '/right/left', 'a * 1 = a');
       var step9 = rules.multiplyBoth(step8, Toy.parse('recip a'));
-      var step10 = rules.rewriteWithFact(step9, '/right/left/left',
-                                         'a * b = b * a');
-      var step11 = rules.rewriteWithFact(step10, '/right/left',
-                                         'a * b * c = a * (b * c)');
-      var step12 = rules.rewriteWithFact(step11, '/right/left/right',
-                                         'a * recip a = 1');
-      var step13 = rules.rewriteWithFact(step12, '/right/left',
-                                         'a * 1 = a');
-      var step14 = rules.rewriteWithFact(step13, '/right/right',
-                                         'a * b = b * a');
+      var step10 = rewrite(step9, '/right/left/left', 'a * b = b * a');
+      var step11 = rewrite(step10, '/right/left', 'a * b * c = a * (b * c)');
+      var step12 = rewrite(step11, '/right/left/right', 'a * recip a = 1');
+      var step13 = rewrite(step12, '/right/left', 'a * 1 = a');
+      var step14 = rewrite(step13, '/right/right', 'a * b = b * a');
       return step14;
     }
   }
