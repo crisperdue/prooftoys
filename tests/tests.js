@@ -1039,7 +1039,7 @@ var testCase = {
       input = typeof input == 'string' ? Toy.parse(input) : input;
       var eqn = input.mergedHypotheses();
       var taut = Toy.rules.tautology(eqn);
-      var result = Toy.rules.rewrite(input, '/', taut);
+      var result = Toy.rules.rewriteOnly(input, '/', taut);
       assertEqual(expected, result);
     }
     check('(a & b)', 'a & b');

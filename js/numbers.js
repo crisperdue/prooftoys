@@ -574,8 +574,8 @@ var numbersInfo = {
       var step7 = rules.apply(step6, '/left');
       var step8 = rules.replace(step7, step5, '/main/right/arg')
       // TODO: Normalize the assumptions automatically, not by hand.
-      return rules.rewrite(step8, '/left',
-                           rules.tautology('a & (b & c) == c & a & b'));
+      return rules.rewriteOnly(step8, '/left',
+                               rules.tautology('a & (b & c) == c & a & b'));
     },
     form: '',
     menu: 'theorem R (x / y)',
@@ -973,7 +973,7 @@ var numbersInfo = {
   // the fact.
   rewriteNumeric: {
     action: function(step, path, equation) {
-      var step1 = rules.rewrite(step, path, equation);
+      var step1 = rules.rewriteOnly(step, path, equation);
       var result = rules.simplifyAssumptions(step1);
       return result.justify('rewriteNumeric', arguments, [step, equation]);
     },
@@ -2516,7 +2516,7 @@ var algebraIdentities = {
       .apply('extractHyp', 'a + b = 0');
       var conj = rules.makeConjunction(step, converse);
       var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
-      return rules.rewrite(conj, '/main', taut);
+      return rules.rewriteOnly(conj, '/main', taut);
 
     }
   },

@@ -2658,7 +2658,7 @@ var ruleInfo = {
   // the step at the given path must match the LHS of the equation.
   // Replaces that part of the step with the appropriate instance of
   // the equation.  The step and equation may have hypotheses.
-  rewrite: {
+  rewriteOnly: {
     action: function(step, path, equation) {
       var expr = step.get(path);
       var map = expr.findSubst(equation.unHyp().getLeft());
@@ -2687,7 +2687,7 @@ var ruleInfo = {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
-      var step2 = rules.rewrite(step, path, fact);
+      var step2 = rules.rewriteOnly(step, path, fact);
       var result = rules.simplifyAssumptions(step2);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
@@ -2752,8 +2752,8 @@ var ruleInfo = {
           if (b.matches(c)) {
             // RHS is a & b & b
             var simpler =
-              rules.rewrite(eqn, '/right',
-                            rules.tautology('a & b & b == a & b'));
+              rules.rewriteOnly(eqn, '/right',
+                                rules.tautology('a & b & b == a & b'));
             // Keep bubbling the rightmost to the left.
             return bubble(simpler);
           } else if (less(c, b)) {
@@ -2775,11 +2775,11 @@ var ruleInfo = {
         } else {
           // Base case: Eqn is lhs = a & b.
           if (a.matches(b)) {
-            return rules.rewrite(eqn, '/right',
-                                 rules.tautology('a & a == a'));
+            return rules.rewriteOnly(eqn, '/right',
+                                     rules.tautology('a & a == a'));
           } else if (less(b, a)) {
-            return rules.rewrite(eqn, '/right',
-                                 rules.tautology('a & b == b & a'));
+            return rules.rewriteOnly(eqn, '/right',
+                                     rules.tautology('a & b == b & a'));
           } else {
             // B is properly placed.
             return eqn;
@@ -2806,7 +2806,7 @@ var ruleInfo = {
       var mover = (expr.getLeft().isCall2('&')
                    ? rules.tautology('(a & b) & c == a & (c & b)')
                    : rules.tautology('a & b == b & a'));
-      var result = rules.rewrite(eqn, '/right', mover);
+      var result = rules.rewriteOnly(eqn, '/right', mover);
       return result.justify('mergeRight', arguments, [eqn]);
     },
   },
@@ -2918,9 +2918,9 @@ var ruleInfo = {
         var result = rules.asImplication(step);
       } else {
         var taut = rules.tautology(step.getLeft().hypMover(hyp));
-        var step1 = rules.rewrite(step, '/left', taut);
+        var step1 = rules.rewriteOnly(step, '/left', taut);
         var taut2 = rules.tautology('a & b => c == a => (b => c)');
-        var result = rules.rewrite(step1, '', taut2);
+        var result = rules.rewriteOnly(step1, '', taut2);
       }
       return result.justify('extractHyp', arguments, [step]);
     },
@@ -2963,7 +2963,7 @@ var ruleInfo = {
             var falsy = falsify(left);
             var eqn = rules.eqSelf(hyps);
             var step1 = rules.replace(falsy, eqn, '/right/left');
-            return rules.rewrite(step1, '/right', tautFX)
+            return rules.rewriteOnly(step1, '/right', tautFX)
           }
         } else if (hyps.matches(F)) {
           return rules.eqSelf(F);
