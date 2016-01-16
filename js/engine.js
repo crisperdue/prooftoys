@@ -1246,6 +1246,7 @@ var ruleInfo = {
   //  
   // TODO: Is there a more elegant proof of this?
   r5230FT_alternate: {
+    statement: '(F = T) = F',
     proof: function() {
       var x = Toy.parse('x');
       // Note: this uses instVar on facts of the form A => B,
@@ -1265,7 +1266,7 @@ var ruleInfo = {
       var step3c = rules.r(step3bb, step3b, '/right');
       // From this point most of the work is basically a proof
       // that [A => F] => not A, a tautology.
-      var step4 = rules.toTIsA(step3c);
+      var step4 = rules.rewrite(step3c, '', 'p = (T = p)');
       // We are going to prove the cases of: (x => F) = (x = F)
       // First with x = F.
       var step11 = rules.definition('=>', F);
@@ -1284,7 +1285,7 @@ var ruleInfo = {
       var step6 = rules.instEqn(step5, equal(F, T), x);
       // And use the fact that [F = T] => F
       var step7 = rules.rRight(step4, step6, '/left');
-      return rules.fromTIsA(step7);
+      return rules.rewrite(step7, '', '(T = p) = p');
     },
     tooltip: ('[F = T] = F')
   },

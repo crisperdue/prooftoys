@@ -638,11 +638,13 @@ var numbersInfo = {
         // Shortcut inline return.
         return step;
       }
-      // From a conditional a => b, prove a => (b == T).
-      // Returns a memoized function that yields the proved result.
+      // From a conditional a => b, prove a => (b == T), with a as
+      // hypothesis.  Returns a memoized function that yields the
+      // proved result.
       function proveIsT(stmt) {
         return memo(function() {
-            return stmt.apply('asHypotheses').apply('toTIsA').apply('eqnSwap');
+            return (stmt.apply('asHypotheses')
+                    .rewrite('/right', 'p == (p == T)'));
           });
       }
       //
