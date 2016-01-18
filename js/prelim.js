@@ -76,10 +76,11 @@ function getBinding(target, bindings) {
 //   paths.
 
 /**
- * Construct a Path from a segment string (fn, arg, bound, body, left,
- * right, or binop) and an optional Path, which defaults to an empty
- * path.  Thus if "rest" is null the result is a path with a single
- * segment.
+ * Construct a Path from a segment string ('fn', 'arg', 'bound',
+ * 'body', 'left', 'right', 'binop', or null) and an optional Path,
+ * which defaults to an empty path.  Thus if "rest" is null the result
+ * is a path with a single segment, and if both are null it is an
+ * empty path.
  */
 function Path(segment, rest) {
   this.segment = segment;
