@@ -483,7 +483,14 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // supports one render per step anyway.
     this.report('nothing done');
   } else {
-    this.proofControl.addStep(result);
+    try {
+      this.proofControl.addStep(result);
+    } catch(error) {
+      this._setBusy(false);
+      error.message = 'Error rendering step ' + step + ': ' + error.message;
+      this.report(error);
+      return;
+    }
     this.proofControl.deselectStep();
     // Clear the proof errors field.
     this.$proofErrors.hide();
