@@ -1492,7 +1492,7 @@ var ruleInfo = {
       var fact = rules.fact(stmt_arg);
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
-      var eqn = rules.toTIsA(fact);
+      var eqn = rules.rewrite(fact, '', 'p = (T = p)');
       return (rules.r(eqn, step, path)
               .justify('replaceT', arguments, [step]));
     },
@@ -1531,7 +1531,7 @@ var ruleInfo = {
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable '
            + '<input name=varName>'),
-    menu: 'add "forall"',
+    menu: 'add \u2200',
     tooltip: ('Universal Generalization, wrap a theorem A in'
               + ' (forall v A) using the variable of your choice.'),
     description: 'add \u2200'
