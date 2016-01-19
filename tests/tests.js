@@ -444,7 +444,7 @@ var testCase = {
   testEncodeSteps: function() {
     var step1 = rules.assume('x = y + 3');
     var step2 = rules.assume('x + y = 5');
-    var step3 = rules.replace(step1, step2, Toy.path('/main/left/left'));
+    var step3 = rules.rplace(step1, step2, Toy.path('/main/left/left'));
     var saved = Toy.encodeSteps([step1, step2, step3]);
     var parsed = Toy.justParse(saved);
     var a = parsed.asArray();
@@ -469,7 +469,7 @@ var testCase = {
   testDecodeSteps: function() {
     var step1 = rules.assume('x = y + 3');
     var step2 = rules.assume('x + y = 5');
-    var step3 = rules.replace(step1, step2, Toy.path('/main/left/left'));
+    var step3 = rules.rplace(step1, step2, Toy.path('/main/left/left'));
     var saved = Toy.encodeSteps([step1, step2, step3]);
     var steps = Toy.decodeSteps(saved);
     console.log(steps);
@@ -1180,7 +1180,7 @@ var testCase = {
     var rules = Toy.rules;
     assert(Toy._alreadyProved('axiomCommutativePlus'));
     // This one is a rule, but not a theorem.
-    assert(!Toy._alreadyProved('replace'));
+    assert(!Toy._alreadyProved('rplace'));
   },
 
   testGetStatement: function() {
@@ -1830,7 +1830,7 @@ var testCase = {
 
   testReplace: function() {
     var rules = Toy.rules;
-    var result = rules.replace(rules.assert('x > 0 => (x = (abs x))'),
+    var result = rules.rplace(rules.assert('x > 0 => (x = (abs x))'),
                                rules.assert('x > 0 => ((x + x) > x)'),
                                '/right/right');
     assertEqual('((x > 0) => ((x + x) > (abs x)))', result);

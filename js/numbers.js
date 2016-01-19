@@ -554,7 +554,7 @@ var numbersInfo = {
       var step5 = rules.rRight(step4, step2, '/left/right');
       var step6 = rules.eqSelf(Toy.parse('x - y'));
       var step7 = rules.apply(step6, '/left');
-      return rules.replace(step7, step5, '/main/right/arg');
+      return rules.rplace(step7, step5, '/main/right/arg');
     },
     form: '',
     menu: 'theorem R (x - y)',
@@ -572,7 +572,7 @@ var numbersInfo = {
       var step5 = rules.rRight(step4, step2, '/left/right');
       var step6 = rules.eqSelf(Toy.parse('x / y'));
       var step7 = rules.apply(step6, '/left');
-      var step8 = rules.replace(step7, step5, '/main/right/arg')
+      var step8 = rules.rplace(step7, step5, '/main/right/arg')
       // TODO: Normalize the assumptions automatically, not by hand.
       return rules.rewriteOnly(step8, '/left',
                                rules.tautology('a & (b & c) == c & a & b'));
@@ -751,7 +751,7 @@ var numbersInfo = {
           // to the result, as in case of recip or nonzero assumptions.
           // Result with added assumptions is still equivalent to the original
           // provided that all new ones are duplicates of existing.
-          step = rules.replace(simpleFact, step, path);
+          step = rules.rplace(simpleFact, step, path);
         }
       }
       return (simplifyHyps(step)
@@ -1038,7 +1038,7 @@ var numbersInfo = {
       });
       return abort
         ? step
-        : (rules.replace(simpler, step, path)
+        : (rules.rplace(simpler, step, path)
            .justify('autoSimplifySite', arguments, [step]));
     },
     inputs: {site: 1, step: 3},
@@ -1071,7 +1071,7 @@ var numbersInfo = {
       var simpler = Toy.whileSimpler(eqn, function(eqn) {
           return rules._simplifyMath1(eqn, _path('/main/right', eqn));
         });
-      return rules.replace(simpler, step, path);
+      return rules.rplace(simpler, step, path);
     }
   },
 
@@ -1670,7 +1670,7 @@ var basicFacts = {
     proof: function() {
       var asm = rules.assume('a = none');
       return (rules.fact('not (R none)')
-              .replace('/arg/arg', asm)
+              .rplace('/arg/arg', asm)
               .apply('asImplication')
               .apply('forwardChain', 'a => not b == b => not a')
               .apply('simplifySite', '/right'));
@@ -2345,7 +2345,7 @@ var recipFacts = {
       var step3 = rewrite(step2, '/main/right', '1 * a = a');
       var step4 = rewrite(step3, '/main/left', 'a * b * c = a * (b * c)');
       var step5 = rules.instVar(step1, Toy.parse('recip a'), 'a');
-      var step6 = rules.replace(step5, step4, '/main/left/right');
+      var step6 = rules.rplace(step5, step4, '/main/left/right');
       var step7 = rewrite(step6, '/main/left', 'a * 1 = a');
       var step8 = rules.eqnSwap(step7);
       return step8;

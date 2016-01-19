@@ -200,8 +200,8 @@ var ruleMethods = {
    * Applies rules.replace to this Expr passing in a path and
    * equation to use.
    */
-  replace: function(path, eqn) {
-    return Toy.rules.replaceEither( this, path, eqn);
+  rplace: function(path, eqn) {
+    return Toy.rules.replaceEither(this, path, eqn);
   }
 };
 Expr.addMethods(ruleMethods);
@@ -740,7 +740,7 @@ var ruleInfo = {
     action: function(a, ab) {
       var aa = rules.eqSelf(a);
       var b = ab.getRight();
-      var result = rules.replace(ab, a, '/');
+      var result = rules.rplace(ab, a, '/');
       return result.justify('replaceWhole', arguments, arguments);
     },
     inputs: {step: 1, equation: 2},
@@ -756,7 +756,7 @@ var ruleInfo = {
                 : op === '='
                 ? rules.eqSelf(ab.getLeft())
                 : assert(false, 'Must be an equiv/equation: {1}', ab));
-      var ba = rules.replace(h_ab, aa, '/main/left');
+      var ba = rules.rplace(h_ab, aa, '/main/left');
       return ba.justify('eqnSwap', arguments, arguments);
     },
     inputs: {equation: 1},
@@ -770,7 +770,7 @@ var ruleInfo = {
   // r5201c.  Works with hypotheses.
   eqnChain: {
     action: function(ab, bc) {
-      var ac = rules.replace(bc, ab, '/main/right');
+      var ac = rules.rplace(bc, ab, '/main/right');
       var result = ac;
       return result.justify('eqnChain', arguments, arguments);
     },
@@ -788,8 +788,8 @@ var ruleInfo = {
       var d = cd.getRight();
       var ac = call(a, c);
       var acac = rules.eqSelf(ac);
-      var acbc = rules.replace(ab, acac, '/right/fn');
-      var acbd = rules.replace(cd, acbc, '/right/arg');
+      var acbc = rules.rplace(ab, acac, '/right/fn');
+      var acbd = rules.rplace(cd, acbc, '/right/arg');
       var result = acbd;
       return result.justify('applyBySides', arguments, arguments);
     },
@@ -801,7 +801,7 @@ var ruleInfo = {
     action: function(h_eqn, a) {
       var eqn = h_eqn.unHyp();
       var step1 = rules.eqSelf(call(eqn.get('/left'), a));
-      var step2 = rules.replace(h_eqn, step1, '/right/fn');
+      var step2 = rules.rplace(h_eqn, step1, '/right/fn');
       return step2.justify('applyBoth', arguments, [h_eqn]);
     },
     inputs: {equation: 1, term: 2},
@@ -823,7 +823,7 @@ var ruleInfo = {
       var f = termify(f_arg);
       var ab = h_ab.unHyp();
       var fafa = rules.eqSelf(call(f, ab.getLeft()));
-      var fafb = rules.replace(h_ab, fafa, '/right/arg');
+      var fafb = rules.rplace(h_ab, fafa, '/right/arg');
       var result = fafb;
       if (f instanceof Toy.Lambda) {
         var step2 = rules.apply(fafb, '/main/left');
@@ -886,10 +886,10 @@ var ruleInfo = {
       assert(target instanceof Atom, 'Not a symbol: {1}', target);
       if (Toy.isDefinedByCases(target)) {
         assert(parent, 'To use a definition by cases, refer to a call.');
-        result = rules.replace(rules.definition(target.name, parent.arg),
+        result = rules.rplace(rules.definition(target.name, parent.arg),
                                step, parentPath);
       } else {
-        result = rules.replace(rules.definition(target.name), step,
+        result = rules.rplace(rules.definition(target.name), step,
                                parentPath ? parentPath.concat('/fn') : path);
       }
       return result.justify('useDefinition', args, [step]);
@@ -907,7 +907,7 @@ var ruleInfo = {
     action: function(step, path) {
       // Note that axiom 4 checks validity of its argument.
       var equation = rules.axiom4(step.get(path));
-      var result = rules.replace(equation, step, path);
+      var result = rules.rplace(equation, step, path);
       return result.justify('simpleApply', arguments, [step]);
     },
     inputs: {reducible: 1},
@@ -954,7 +954,7 @@ var ruleInfo = {
               var step2 = rules.useDefinition(step1, '/right/fn');
               var step3 = rules.simpleApply(step2, '/right');
               var step4 = rules.eqSelf(expr);
-              var step5 = rules.replace(step3, step4, '/right/fn');
+              var step5 = rules.rplace(step3, step4, '/right/fn');
               return rules.simpleApply(step5, '/right');
             }
           }
@@ -1015,7 +1015,7 @@ var ruleInfo = {
       var eqn = h_eqn.unHyp();
       eqn.assertCall2('=');
       var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
-      var step2 = rules.replace(h_eqn, step1, '/right/body');
+      var step2 = rules.rplace(h_eqn, step1, '/right/body');
       return step2.justify('bindEqn', arguments, [h_eqn]);
     },
     inputs: {equation: 1, varName: 2},
@@ -1063,7 +1063,7 @@ var ruleInfo = {
       var step3 = rules.apply(step2, '/right/arg/body/right');
       var step4 = rules.apply(step3, '/right/arg/body/left');
       var step5 = rules.eqSelf(Toy.parse('{y. y}'));
-      return rules.replace(step4, step5, '');
+      return rules.rplace(step4, step5, '');
     }
   },
 
@@ -1117,7 +1117,7 @@ var ruleInfo = {
       // Rule fromTIsA depends on instForall via tIsXIsX and
       // equationCases, though this next step is a simplified fromTIsA
       // without hypotheses.
-      var step5 = rules.replace(step4, rules.theorem('t'), '/main');
+      var step5 = rules.rplace(step4, rules.theorem('t'), '/main');
       return step5.justify('instForall', arguments, [h_target]);
     },
     inputs: {step: 1, term: 2, condition: {1: function(target) {
@@ -1137,7 +1137,7 @@ var ruleInfo = {
     action: function(a_b) {
       assertEqn(a_b);
       var step1 = rules.eqT(a_b.get('/left'));
-      var step2 = rules.replace(a_b, step1, '/right/right');
+      var step2 = rules.rplace(a_b, step1, '/right/right');
       return step2.justify('toTIsEquation', arguments, [a_b]);
     },
     inputs: {equation: 1},
@@ -1156,8 +1156,8 @@ var ruleInfo = {
       v = varify(v);
       var stepT1 = rules.toTIsEquation(caseT);
       var stepF1 = rules.toTIsEquation(caseF);
-      var step2 = rules.replace(stepT1, rules.theorem('r5212'), '/left');
-      var step3 = rules.replace(stepF1, step2, '/right');
+      var step2 = rules.rplace(stepT1, rules.theorem('r5212'), '/left');
+      var step3 = rules.rplace(stepF1, step2, '/right');
       // Note: If a variable is not in caseT it is also not in caseF.
       var newVar = Toy.genVar('w', caseT.allNames());
       var gen = caseT.generalizeTF(caseF, newVar);
@@ -1166,7 +1166,7 @@ var ruleInfo = {
       var step5 = rules.apply(step4, '/right/arg/body');
       var step6 = rules.apply(step5, '/left/right');
       var step7 = rules.apply(step6, '/left/left');
-      var step8 = rules.replace(step7, step3, '');
+      var step8 = rules.rplace(step7, step3, '');
       var step9 = rules.instForall(step8, v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
@@ -1471,7 +1471,7 @@ var ruleInfo = {
              'Input should be [T = A]: {1}', t_a,
              h_t_a);
       var a = t_a.get('/right');
-      var result = rules.replace(rules.r5218(a), h_t_a, '/main');
+      var result = rules.rplace(rules.r5218(a), h_t_a, '/main');
       return result.justify('fromTIsA', arguments, [h_t_a]);
     },
     inputs: {equation: 1, condition: {1: function(h_eqn) {
@@ -1525,7 +1525,7 @@ var ruleInfo = {
       var step1 = rules.toTIsA(h_a);
       var step2 = rules.theorem('forallXT');
       var step3 = rules.changeVar(step2, '/arg', v);
-      var step4 = rules.replace(step1, step3, '/arg/body');
+      var step4 = rules.rplace(step1, step3, '/arg/body');
       return step4.justify('toForall', arguments, [h_a]);
     },
     inputs: {step: 1, varName: 2},
@@ -1634,8 +1634,8 @@ var ruleInfo = {
       var stepa = rules.toTIsA(a);
       var stepb = rules.toTIsA(b);
       var step1 = rules.theorem('r5212');
-      var step2 = rules.replace(stepa, step1, '/left');
-      var step3 = rules.replace(stepb, step2, '/main/right');
+      var step2 = rules.rplace(stepa, step1, '/left');
+      var step3 = rules.rplace(stepb, step2, '/main/right');
       return (step3.apply('dedupeHyps')
               .justify('makeConjunction', arguments, [a, b]));
     },
@@ -1662,7 +1662,7 @@ var ruleInfo = {
       var step2b = rules.rRight(step2a, caseF, '');
       var step4 = rules.makeConjunction(step1b, step2b);
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), 'g');
-      var step6 = rules.replace(step5, step4, '');
+      var step6 = rules.rplace(step5, step4, '');
       var step7a = rules.instForall(step6, v);
       var step7b = rules.apply(step7a, '');
       return step7b.justify('cases', arguments, [caseT, caseF]);
@@ -2154,7 +2154,7 @@ var ruleInfo = {
       var a_b = h_a_b.unHyp();
       var step1 = rules.toForall(h_a_b, v);
       var step2 = rules.implyForallGen(v, a_b.getLeft(), a_b.getRight());
-      var step3 = rules.replace(step2, step1, '/main');
+      var step3 = rules.rplace(step2, step1, '/main');
       return step3.justify('toImplyForall', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},
@@ -2383,7 +2383,7 @@ var ruleInfo = {
   //
   // TODO: Change this to conjoin any assumptions in the two input
   //   steps and let simplifications clean up the assumptions later.
-  replace: {
+  rplace: {
     action: function(h_equation_arg, h_c_arg, path) {
       var args = [h_equation_arg, h_c_arg, path];
       path = Toy.path(path, h_c_arg);
@@ -2394,7 +2394,7 @@ var ruleInfo = {
         // applicable.  The case with hypotheses in h_c can be
         // considered as rule RR (5202).
         var result = rules.r(h_equation, h_c, path);
-        return result.justify('replace', args,
+        return result.justify('rplace', args,
                               [h_equation_arg, h_c_arg]);
       }
       // h_equation must have the form H => A = B
@@ -2409,7 +2409,7 @@ var ruleInfo = {
           // reasonable after removing .hasHyps checks.  At least
           // change .replace to .rl (replace matching equation LHS and
           // do not simplify).
-          .replace(path, h_equation)
+          .rplace(path, h_equation)
           .apply('asImplication');
         // Use the tautology to conjoin all of the assumptions.
         // Note that forward chaining would ignore the "a" part if
@@ -2420,7 +2420,7 @@ var ruleInfo = {
         var result = rules.r(step3, step2, '/left')
           .apply('asHypotheses');
         
-        return result.justify('replace', args,
+        return result.justify('rplace', args,
                               [h_equation_arg, h_c_arg]);
       }
 
@@ -2488,7 +2488,7 @@ var ruleInfo = {
         // TODO: Consider if this can be better optimized.
         result = h_c_arg;
       }
-      return result.justify('replace', args, [h_equation_arg, h_c_arg]);
+      return result.justify('rplace', args, [h_equation_arg, h_c_arg]);
     },
     inputs: {equation: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=equation>'),
@@ -2506,7 +2506,7 @@ var ruleInfo = {
     action: function(equation, target, path) {
       path = Toy.path(path);
       var rev = rules.eqnSwap(equation);
-      var result = rules.replace(rev, target, path);
+      var result = rules.rplace(rev, target, path);
       return result.justify('rRight', arguments, [target, equation]);
     },
     inputs: {equation: 1, site: 2},
@@ -2526,7 +2526,7 @@ var ruleInfo = {
       var lhs = equation.getMain().getLeft();
       var expr = target.get(path);
       if (expr.matches(lhs)) {
-        return rules.replace(equation, target, path)
+        return rules.rplace(equation, target, path)
           .justify('replaceEither', arguments, [target, equation]);
       } else if (expr.matches(equation.getMain().getRight())) {
         return (rules.rRight(equation, target, path)
@@ -2536,7 +2536,7 @@ var ruleInfo = {
                 equation);
       }
       var rev = rules.eqnSwap(equation);
-      var result = rules.replace(rev, target, path);
+      var result = rules.rplace(rev, target, path);
       return result.justify('rRight', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3},
@@ -2671,7 +2671,7 @@ var ruleInfo = {
              '{1} must be an instance of LHS of equation\n{2}',
              step.unHyp(), equation, step);
       var step1 = rules.instMultiVars(equation, map);
-      var result = rules.replace(step1, step, path);
+      var result = rules.rplace(step1, step, path);
       return result.justify('rewrite', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
@@ -2964,7 +2964,7 @@ var ruleInfo = {
             var left = hyps.getLeft();
             var falsy = falsify(left);
             var eqn = rules.eqSelf(hyps);
-            var step1 = rules.replace(falsy, eqn, '/right/left');
+            var step1 = rules.rplace(falsy, eqn, '/right/left');
             return rules.rewriteOnly(step1, '/right', tautFX)
           }
         } else if (hyps.matches(F)) {
@@ -3054,7 +3054,7 @@ var ruleInfo = {
       }
       var deduper =
         rules.conjunctionDeduper(step.getLeft(), Toy.sourceStepComparator);
-      var result = rules.replace(deduper, step, '/left');
+      var result = rules.rplace(deduper, step, '/left');
       return result.justify('dedupeHyps', arguments, [step]);
     },
     inputs: {step: 1},
@@ -3088,7 +3088,7 @@ var ruleInfo = {
       var y = varify('y');
       var step1 = rules.assume('x = y');
       var step2 = rules.eqSelf(x);
-      var step3 = rules.replace(step1, step2, '/left');
+      var step3 = rules.rplace(step1, step2, '/left');
       var step4 = rules.asImplication(step3);
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step4, subst);
@@ -3120,7 +3120,7 @@ var ruleInfo = {
   rewriteInDepth: {
     action: function(step, path, facts) {
       var equation = rules.deepTermReplacer(step.get(path), facts);
-      var result = rules.replace(equation, step.get(path));
+      var result = rules.rplace(equation, step.get(path));
       return result.justify('rewriteInDepth', arguments);
     },
   },    
@@ -3139,8 +3139,8 @@ var ruleInfo = {
       if (term instanceof Call) {
         var stepFn = rules.deepTermReplacer(term.fn, facts);
         var stepArg = rules.deepTermReplacer(term.arg, facts);
-        step1 = step.replace('/right/fn', stepFn)
-          .replace('/right/arg', stepArg);
+        step1 = step.rplace('/right/fn', stepFn)
+          .rplace('/right/arg', stepArg);
       } else {
         step1 = step;
       }
@@ -3169,8 +3169,8 @@ var ruleInfo = {
       if (term.isCall2('&')) {
         var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
         var stepRight = rules.conjunctsSimplifier(term.getRight(), facts);
-        step1 = step.replace('/right/left', stepLeft)
-          .replace('/main/right/right', stepRight);
+        step1 = step.rplace('/right/left', stepLeft)
+          .rplace('/main/right/right', stepRight);
       } else {
         step1 = step;
       }
@@ -3859,7 +3859,7 @@ function applyFactsWithinSite(step, path_arg, facts) {
   var path = Toy.path(path_arg);
   var eqn1 = rules.considerPart(step, path);
   var eqn2 = applyFactsWithinRhs(eqn1, facts);
-  return (eqn2 == eqn1 ? step : rules.replace(eqn2, step, path));
+  return (eqn2 == eqn1 ? step : rules.rplace(eqn2, step, path));
 }
 
 /**
@@ -3890,7 +3890,7 @@ function convert(step, path, fn) {
   var expr = step.get(path);
   assert(expr, 'Bad path {1}', path, step);
   var eqn = fn(expr);
-  return rules.replace(eqn, step, path);
+  return rules.rplace(eqn, step, path);
 }
 
 /**
@@ -3959,7 +3959,7 @@ function arrangeRhs(eqn_arg, context, facts) {
 function arrange(step, path, context, facts) {
   var eqn = rules.consider(step.get(path));
   var arranged = arrangeRhs(eqn, context, facts);
-  return rules.replace(arranged, step, path);
+  return rules.rplace(arranged, step, path);
 }
 
 /**
