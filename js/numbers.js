@@ -1670,7 +1670,7 @@ var basicFacts = {
     proof: function() {
       var asm = rules.assume('a = none');
       return (rules.fact('not (R none)')
-              .apply('replaceEither', '/arg/arg', asm)
+              .rplace('/arg/arg', rules.eqnSwap(asm))
               .apply('asImplication')
               .apply('forwardChain', 'a => not b == b => not a')
               .apply('simplifySite', '/right'));
