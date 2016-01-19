@@ -2520,6 +2520,8 @@ var ruleInfo = {
 
   // Ambidextrous replace that tries matching the equation LHS,
   // but can also replace right-to-left.
+  // TODO: remove this in favor of UI that finds opportunities to
+  //   replace in either direction.
   replaceEither: {
     action: function(target, _path, equation) {
       var path = Toy.path(_path);
