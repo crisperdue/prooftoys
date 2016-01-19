@@ -201,7 +201,7 @@ var ruleMethods = {
    * equation to use.
    */
   rplace: function(path, eqn) {
-    return Toy.rules.replaceEither(this, path, eqn);
+    return Toy.rules.rplace(eqn, this, path);
   }
 };
 Expr.addMethods(ruleMethods);
