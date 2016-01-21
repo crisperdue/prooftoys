@@ -1504,6 +1504,35 @@ var ruleInfo = {
     labels: 'basic'
   },
 
+  // Replace part of a step with T if it matches a proved step
+  // or the consequent of a proved conditional.
+  // Note: uses rules.replace with conditional if the site only
+  // matches the step as RHS of its conditional.
+  trueBy: {
+    action: function(target, path, step) {
+      var term = target.get(path);
+      var map = term.matchSchema(step);
+      if (map) {
+        var step2 = rules.rewrite(step, '', 'p = (p = T)');
+        var result = rules.r(step2, target, path);
+      } else if (step.isCall2('=>') &&
+                 (map = term.matchSchema(step2.getRight()))) {
+        var step2 = rules.rewrite(step, '/right', 'p = (p = T)');
+        var result = rules.replace(target, path, step2);
+      } else {
+        assert(false, 'Term {1} does not match {2} or {3}', step.get(path), step2);
+      }
+      return result.justify('trueBy', arguments, [target, step]);
+    },
+    inputs: {site: 1, step: 3},
+    toOffer: 'return term.isBoolean()',
+    form: ('Match {term} with proved result <input name=step>'),
+    menu: 'replace {term} with T',
+    description: ('replace true term {site} with T;; ' +
+                  '{in step siteStep} {by step step}'),
+    labels: 'basic'
+  },
+
   // Lemma helper for toForall; a pure theorem.
   forallXT: {
     proof: function() {
