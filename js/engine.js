@@ -1488,20 +1488,19 @@ var ruleInfo = {
 
   // Replace an occurrence of T at the given path of the given step.
   replaceT: {
-    action: function(step, path, stmt_arg) {
-      var fact = rules.fact(stmt_arg);
+    action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
-      var eqn = rules.rewrite(fact, '', 'p = (T = p)');
+      var eqn = rules.rewrite(step2, '', 'p = (T = p)');
       return (rules.r(eqn, step, path)
-              .justify('replaceT', arguments, [step]));
+              .justify('replaceT', arguments, [step, step2]));
     },
-    inputs: {site: 1, bool: 3},
+    inputs: {site: 1, step: 3},
     toOffer: 'return term instanceof Toy.Atom && term.pname == "T"',
-    form: ('Replace T with fact <input name=bool>'),
-    menu: 'replace T with a fact',
-    tooltip: ('Replaces an occurrence of T with a fact'),
-    description: 'replace T;; {in step siteStep} with {shortFact}',
+    form: ('Replace T with step <input name=step>'),
+    menu: 'replace T with a true statement',
+    tooltip: ('Replaces an occurrence of T with a true statement'),
+    description: 'replace T;; {in step siteStep} {with step step}',
     labels: 'basic'
   },
 

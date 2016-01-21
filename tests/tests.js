@@ -1554,8 +1554,9 @@ var testCase = {
   },
 
   testReplaceT: function() {
-    var actual = rules.replaceT(rules.tautology('T | p'), '/left', 'not F');
-    assertEqual('((not F) | p)', actual);
+    var actual = rules.replaceT(rules.tautology('T | p'), '/left',
+                                rules.axiom2());
+    assertEqual('(((x = y) => ((h x) = (h y))) | p)', actual);
   },
 
   testToForall: function() {
