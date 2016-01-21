@@ -1639,8 +1639,10 @@ var ruleInfo = {
               .justify('makeConjunction', arguments, [a, b]));
     },
     inputs: {step: [1, 2]},
+    // An approximation, good enough until we can remove this whole rule.
+    toOffer: 'return step.hasHyps',
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
-    menu: '[p] and [q] to [p & q]',
+    menu: '[h => p] and [h => q] to [h => p & q]',
     tooltip: ('Given a and b, derive a & b'),
     description: 'p & q;; using steps {step1}, {step2}'
   },
@@ -1971,8 +1973,24 @@ var ruleInfo = {
     }
   },
 
-  // Adds an assumption to the given step and deduplicates it.  Works
-  // with or without hypotheses.
+  // Deduces the conjunction of two proved steps; oblivious of hypotheses.
+  and: {
+    action: function(step1, step2) {
+      return (rules.replaceT(rules.tautology('T & T'), '/right', step2)
+              .apply('replaceT', '/left', step1)
+              .justify('and', arguments, arguments));
+    },
+    inputs: {step: [1, 2]},
+    form: ('Prove conjunction of step <input name=step1> ' +
+           'and step <input name=step2>'),
+    menu: '[p] and [q] to [p & q]',
+    tooltip: ('Given [p] and [q], derive p & q'),
+    description: 'p & q;; from steps {step1}, {step2}',
+    labels: 'basic'
+  },
+
+  // Adds an assumption to the given step and deduplicates it.
+  // Oblivious to hypotheses.
   andAssume: {
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
