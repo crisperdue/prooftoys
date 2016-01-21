@@ -487,7 +487,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
       this.proofControl.addStep(result);
     } catch(error) {
       this._setBusy(false);
-      error.message = 'Error rendering step ' + step + ': ' + error.message;
+      error.message = 'Error rendering step ' + result + ': ' + error.message;
       this.report(error);
       return;
     }
