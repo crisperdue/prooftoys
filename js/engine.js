@@ -1526,7 +1526,7 @@ var ruleInfo = {
     },
     inputs: {site: 1, step: 3},
     toOffer: 'return term.isBoolean()',
-    form: ('Match {term} with proved result <input name=step>'),
+    form: ('Match {term} with proved step <input name=step>'),
     menu: 'replace {term} with T',
     description: ('replace true term {site} with T;; ' +
                   '{in step siteStep} {by step step}'),
@@ -2347,8 +2347,8 @@ var ruleInfo = {
   // 5239, closely following the description and names in the book.
   // Analog to Rule R, expressed as an implication.  Theorem schema.
   //
-  // Given equation A = B, target C, and a path relative to C, returns
-  // a wff of the form "forall ... (A = B) => (C = D), where D is
+  // Given equation A = B, target wff C, and a path relative to C, proves
+  // a wff of the form "(forall ... A = B) => (C = D), where D is
   // obtained like the result of applying Rule R to A = B and C.  The
   // "forall" binds free variables of A = B that are bound at the
   // replacement location in C.
