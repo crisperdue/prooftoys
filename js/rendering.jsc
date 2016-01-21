@@ -1772,6 +1772,9 @@ function expandMarkup(step, markup) {
   case 'term':
   case 'terms':
     var places = info.inputs[markupName.startsWith('bool') ? 'bool' : 'term'];
+    if (places == null) {
+      return markup;
+    }
     // Convert number to array.
     if (typeof places === 'number') {
       places = [places];
