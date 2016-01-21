@@ -297,6 +297,20 @@ Expr.prototype.annotateWithTypes = function() {
 };
 
 /**
+ * Analyzed type of this is boolean.
+ */
+Expr.prototype.isBoolean = function() {
+  return this.getType()==boolean;
+};
+
+/**
+ * Analyzed type of this is individual.
+ */
+Expr.prototype.isIndividual = function() {
+  return this.getType()==individual;
+};
+
+/**
  * Find and return the type of an expression (Expr).  Throws an Error
  * if type checking fails.  The error may have a "cause" property with
  * the original error (TypeCheckError).
