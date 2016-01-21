@@ -2339,8 +2339,9 @@ function hoverReplace(step, action) {
 // and the operation is "addClass" or "removeClass".
 var hoverHandlers = {
   r: hoverReplace,
-  replace: hoverReplace,
+  rplace: hoverReplace,
   rRight: hoverReplace,
+  replace: hoverAsRewriter,
   replaceEither: function(step, action) {
     // Same as hoverReplace, but the equation is args[2].
     hoverAsRewriter(step, action);
