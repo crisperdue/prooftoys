@@ -1508,6 +1508,10 @@ var ruleInfo = {
   // or the consequent of a proved conditional.
   // Note: uses rules.replace with conditional if the site only
   // matches the step as RHS of its conditional.
+  //
+  // TODO: Extend this to "known truth value" where the term or its
+  //   negation is proved.  Include boolean simplification on the
+  //   result of the replacement.
   trueBy: {
     action: function(target, path, step) {
       var term = target.get(path);
