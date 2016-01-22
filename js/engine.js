@@ -2404,11 +2404,11 @@ var ruleInfo = {
       var step8 = rules.r(step7, step6, '/left');
       return step8.justify('r5239', arguments);
     },
-    // The site need not be part of any proof step, a situation the UI
-    // does not support.
-    //
-    // inputs: {site: 2, bool: 1},  // The term is an equation
-    // form: ('Enter an equation: <input name=bool>'),
+    // First arg is any equation, need not be proved.
+    inputs: {bool: [1, 2], path: 3},
+    form: ('Apply equation <input name=bool1> to <input name=bool2> at ' +
+           '<input name=path>'),
+    labels: 'basic',
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
