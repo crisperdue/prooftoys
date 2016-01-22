@@ -2690,7 +2690,7 @@ var ruleInfo = {
           };
           var step1 = rules.tautInst('p => (h1 => p)', subst);
           var step2 = rules.modusPonens(step, step1);
-          var hyped = step2.asHypotheses();
+          var hyped = rules.asHypotheses(step2);
           flagHyps(hyped, target);
           flagHyps(hyped, hypStep);
           // Rendering of result needs hypStep rendered, so include it as dep.
