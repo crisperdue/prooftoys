@@ -2412,6 +2412,63 @@ var ruleInfo = {
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
+  replace: {
+    action: function(target, path, equation) {
+      assert(equation.isEquation(), 'Not an equation: {1}', equation);
+      if (equation.isCall2('=')) {
+        return rules.r(equation, target, path);
+      }
+      // The result of this has the form [h => (forall ... eq)],
+      // same as LHS of step3; see below for h, eq and step3.
+      function quantEquation() {
+        var boundNames = target.boundNames(path);
+        Toy.removeExcept(boundNames, equation.freeVars());
+        var hypFreeNames = h.freeVars();
+        // Quantify over just the variables free in the equation and
+        // bound at the target site.
+        var quantEqn = equation;
+        for (var name in boundNames) {
+          // Check the variable is not free in any hypotheses.
+          // TODO: Do appropriate checking in 5235 and impliesForall as well.
+          assert(!(name in hypFreeNames),
+                 'Conflicting binding of {1} in {2}', name, c, h_c_arg);
+          // or rewrite using 2127 since all of these are free in the eq part.
+          quantEqn = rules.toImplyForall(name, quantEqn);
+        }
+        return quantEqn;
+      }
+
+      // The equation is a conditional, eq is its pure equation part.
+      var eq = equation.getRight();
+      var h = equation.getLeft();
+      var step1 = rules.r5239(eq, target, path);
+      var step2 = rules.trueBy(step1, '/right/left', target);
+      // Step3 will be [(forall ... eq) => D], where D is the target
+      // after replacement, and the quantifier binds no free vars of eq.
+      var step3 = rules.rewrite(step2, '/right', '(T = p) = p');
+      var step4 = step3;
+      var quantEqn = quantEquation()
+      // If the replacement site has no variable bindings, then quantEqn
+      // and equation are the same, so skip the chaining.
+      if (!quantEqn.wff.sameAs(equation.wff)) {
+        var conj1 = rules.and(quantEqn, step3);
+        var taut1 = rules.tautology('(p => q) & (q => r) => (p => r)');
+        // This use of forwardChain will not find hypotheses, because
+        // rules.and does not produce statements with hypotheses.
+        step4 = rules.forwardChain(conj1, taut1);
+      }
+      // Now we have [h => D].
+      var simpler = rules.rewrite(step4, '', '(p => (q => r) == (p & q => r))');
+      return simpler.justify('replace', arguments, [target, equation]);
+    },
+    inputs: {site: 1, equation: 3}, // plus further constraints
+    form: ('Replace site with right side of equation <input name=equation>'),
+    menu: 'replace {term} with something equal',
+    tooltip: 'replace term with something equal',
+    description: 'replace {site};; {in step siteStep} {using step equation}',
+    labels: 'algebra basic'
+  },
+
   // Like Rule R', based on 5240 (the Deduction Theorem).  The
   // proof here is a subset of the proof of 5240.
   //
