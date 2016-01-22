@@ -704,6 +704,8 @@ StepEditor.prototype.parseValue = function(value, type) {
     } else {
       throw new Error('Illegal variable name: ' + value);
     }
+  case 'path':
+    return Toy.path(value);
   case 'string':
     if (value.length) {
       return value;
@@ -712,6 +714,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     }
   case 'optString':
     return value;
+
   default:
     throw new Error('Type not parseable: ' + type);
   }
