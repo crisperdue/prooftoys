@@ -1873,6 +1873,16 @@ var ruleInfo = {
       if (typeof wff == 'string') {
         wff = Toy.parse(wff);
       }
+      // TODO: Right here check for patterns such as -
+      //   p | T == T, p & F == F, p => T == T, and negations such as
+      //   p | not F = T and so on.
+      //   Where these occur, this is an instance of a simpler tautology
+      //   and need not be analyzed further.  In addition, forms such as
+      //   p | F == T is equivalent to p == T along with similar examples,
+      //   so this can be broken down into a smaller wff.
+      // NOTE that saving proved tautologies as we already do has
+      //   potential for accomplishing similar improvements, though it
+      //   would work better if saved variable names were standardized.
       var key = wff.dump();
       var taut = _tautologies[key];
       if (taut) {
