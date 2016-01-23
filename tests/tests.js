@@ -1717,12 +1717,9 @@ var testCase = {
     };
     var result = Toy.rules.tautInst(Toy.parse('p => T | q'), map1);
 
-    // With hypotheses:
-    var h_taut = rules.tautology('p => p');
-    h_taut.hasHyps = true;
-    var result = Toy.rules.tautInst(h_taut, {p: Toy.parse('x > 0')});
-    assertEqual('((x > 0) => (x > 0))', result);
-    assert(result.hasHyps);
+    var h_taut = rules.tautology('p => (q => p)');
+    var result = Toy.rules.tautInst(h_taut, {p: 'x > 0'});
+    assertEqual('((x > 0) => (q => (x > 0)))', result);
   },
 
   testSourceStepTracking: function() {
