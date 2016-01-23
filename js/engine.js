@@ -1877,6 +1877,8 @@ var ruleInfo = {
       var taut = _tautologies[key];
       if (taut) {
         // Re-justify to create a new step.
+        // Saved steps in _tautologies only keep details, for
+        // nice displays.
         return taut.justify('tautology', arguments);
       } else {
         var names = wff.freeVars();
@@ -1899,8 +1901,8 @@ var ruleInfo = {
             var step2 = rules.tautology(equal(T, wff.subFree1(F, name)));
             var step3 = rules.equationCases(step1, step2, name);
             var step4 = rules.fromTIsA(step3);
+            _tautologies[key] = step4;
             var result = step4.justify('tautology', arguments);
-            _tautologies[key] = result;
             return result;
           }
         }
@@ -1910,8 +1912,8 @@ var ruleInfo = {
                'Not a tautology: {1}', step11.getLeft(),
                step11);
         var step12 = rules.rRight(step11, rules.theorem('t'), '');
+        _tautologies[key] = step12;
         var result = step12.justify('tautology', arguments);
-        _tautologies[key] = result;
         return result;
       }
     },
@@ -1929,7 +1931,6 @@ var ruleInfo = {
   // hypotheses, and a substitution, derives an instantiation of the
   // tautology using the substitution, with the same hypotheses.
   // The tautology can be given as a parseable string.
-  // Handles hypotheses.
   tautInst: {
     action: function(h_tautology_arg, map) {
       // The tautology has hyps if the arg does.
