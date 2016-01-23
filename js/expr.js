@@ -719,7 +719,9 @@ Step.prototype.getBase = function() {
 
 /**
  * Finds and returns a plain object/map of free variable names in this
- * expression, from name to true.
+ * expression, from name to true.  In typical implementations iteration
+ * over the map will get variables in right-to-left order for the
+ * potential benefit of performance in things like tautology checking.
  */
 Expr.prototype.freeVars = function() {
   var byName = {};
@@ -2098,8 +2100,10 @@ Call.prototype._addNames = function(map) {
 };
 
 Call.prototype._addFreeNames = function(map, bindings) {
-  this.fn._addFreeNames(map, bindings);
+  // Add the arg first to encourage right-to-left ordering in typical
+  // implementation iteration.
   this.arg._addFreeNames(map, bindings);
+  this.fn._addFreeNames(map, bindings);
 };
 
 Call.prototype._boundNames = function(path, bindings) {
