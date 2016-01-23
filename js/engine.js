@@ -2412,6 +2412,15 @@ var ruleInfo = {
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
+  // Version of Andrews Rule R' that ignores hypotheses.  Uses a
+  // potentially conditional equation to replace a term in a target
+  // step.  The result is conditional iff the equation is conditional,
+  // so if the target is also conditional, the result looks like this:
+  // [p => (q => r], where p is the antecedant of the equation, the
+  // target and result both having the form [q => r].
+  //
+  // Takes its arguments in the usual order, unlike rules.r and
+  // rules.rplace, with the target first.
   replace: {
     action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
@@ -2438,6 +2447,7 @@ var ruleInfo = {
         return quantEqn;
       }
 
+      // Main body of the rule is here.
       // The equation is a conditional, eq is its pure equation part.
       var eq = equation.getRight();
       var h = equation.getLeft();
@@ -2457,9 +2467,7 @@ var ruleInfo = {
         // rules.and does not produce statements with hypotheses.
         step4 = rules.forwardChain(conj1, taut1);
       }
-      // Now we have [h => D].
-      var simpler = rules.rewrite(step4, '', '(p => (q => r) == (p & q => r))');
-      return simpler.justify('replace', arguments, [target, equation]);
+      return step4.justify('replace', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
