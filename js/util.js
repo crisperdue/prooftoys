@@ -368,6 +368,19 @@ function trimParens(text) {
   return text.replace(/^\((.*)\)$/, '$1');
 }
 
+/**
+ * Sort a map (object), returning a list of objects with key and value
+ * properties.  The comparator should accept two plain objects with
+ * key and value properties, returning numbers as appropriate to their
+ * desired ordering.
+ */
+function sortMap(object, comparator) {
+  var list = [];
+  for (var key in object) {
+    list.push({key: key, value: object[key]});
+  }
+  return list.sort(comparator);
+}
 
 //// Result -- returning values using catch/throw.
 
@@ -831,6 +844,7 @@ Toy.each = each;
 Toy.memo = memo;
 Toy.format = format;
 Toy.trimParens = trimParens;
+Toy.sortMap = sortMap;
 
 Toy.Result = Result;
 Toy.throwResult = throwResult;

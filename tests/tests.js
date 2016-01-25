@@ -164,6 +164,18 @@ var testCase = {
     assert(o.count === 3);
   },
 
+  testFormat: function() {
+    assertEqual('foo bar baz', Toy.format('foo {1} {2}', 'bar', 'baz'));
+    var map = {a: 'bar', b: 'baz'};
+    assertEqual('foo bazbar', Toy.format('foo {b}{a}', map));
+  },
+
+  testSortMap: function() {
+    var map = {a: 3, b: 2, c: 0, d: 1};
+    var pairs = Toy.sortMap(map, function(a, b) { return a.value - b.value; });
+    assertEqual('cdba', pairs.map(function(v) { return v.key; }).join(''));
+  },
+
   // Sets, TermSets
 
   testSet: function() {
