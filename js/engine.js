@@ -2478,7 +2478,11 @@ var ruleInfo = {
         // rules.and does not produce statements with hypotheses.
         step4 = rules.forwardChain(conj1, taut1);
       }
-      return step4.justify('replace', arguments, [target, equation]);
+      var step5 = (target.isCall2('=>')
+                   ? (step4.rewrite('', 'a => (b => c) == a & b => c')
+                      .apply('arrangeAsms'))
+                   : step4);
+      return step5.justify('replace', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
