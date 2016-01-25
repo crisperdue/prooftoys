@@ -3076,8 +3076,15 @@ var ruleInfo = {
     description: 'absorb antecedent into the assumptions'
   },
 
-  // Proves that the given chain of conjuncts imply the specific
-  // conjunct "c", which must match one of them.
+  // Efficiently proves that the given chain of conjuncts imply the
+  // specific conjunct "c", which must match one of them.  Proves
+  // by cases on the truth of "c", where the T case is simple, and
+  // the F case is proved by breaking down the chain into smaller
+  // chains until the occurrence of "c" is found.
+  //
+  // TODO: At least simplify this to prove (and remember?) the
+  // underlying tautology, and apply the tautology using tautInst.
+  // Or generalize to lists of optionally negated disjuncts.
   conjunctsImplyConjunct: {
     action: function(conjuncts, c) {
       var infix = Toy.infixCall;
@@ -3127,10 +3134,19 @@ var ruleInfo = {
   },
 
   // Treats conj as a chain of conjunctions.  Equates it with a
-  // deduplicated version.  If a comparator function is supplied, it
-  // defines an ordering of the deduplicated terms by returning true
-  // when its first argument is less than its second.
+  // deduplicated version in which occurrences of T are also removed.
+  // If a comparator function is supplied, the result will conform to
+  // the ordering it defines by returning true when its first argument
+  // should come before its second argument.
   conjunctionDeduper: {
+    // Implemented by building an appropriate equivalence tautology,
+    // proving it with rules.tautology, and instantiating.
+    //
+    // TODO: The tautology could be proved in a linear number of proof
+    // steps.  For a list A of conjunctions, pre-prove [A => Ai] for
+    // each member of A.  Use these to prove each conjunct separately,
+    // then build the equal list with rules.and.  Also prove in the
+    // opposite direction if desired.
     action: function(conj, comparator) {
       var map = new Toy.TermMap();
       // A variable (or T) for each conjunct, in order of occurrence.
