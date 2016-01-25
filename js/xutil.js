@@ -1333,6 +1333,25 @@ function repeatedCall(operator, indices) {
 }
 
 /**
+ * Given an operator name and a list of terms, produces a term
+ * that is a "chain" of calls to the operator.  If the list
+ * is emtpry, return the given default, or if just one item,
+ * returns the item.
+ */
+function chainCall(operator, list, dfault) {
+  if (list.length == 0) {
+    return dfault;
+  }
+  // else
+  var infix = Toy.infixCall;
+  var result = list[0];
+  for (var i = 1; i < list.length; i++) {
+    result = infix(result, operator, list[i]);
+  }
+  return result;
+}
+
+/**
  * Commutes the left and right sides of an equation in the form
  * l = r or a => l = r.
  */
@@ -1499,6 +1518,7 @@ Toy.isInfixDesired = isInfixDesired;
 Toy.sourceStepLess = sourceStepLess;
 Toy.sourceStepComparator = sourceStepComparator;
 Toy.repeatedCall = repeatedCall;
+Toy.chainCall = chainCall;
 Toy.commuteEqn = commuteEqn;
 Toy.omittingReals = omittingReals;
 

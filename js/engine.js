@@ -3133,11 +3133,10 @@ var ruleInfo = {
     }
   },
 
-  // Treats conj as a chain of conjunctions.  Equates it with a
-  // deduplicated version in which occurrences of T are also removed.
-  // If a comparator function is supplied, the result will conform to
-  // the ordering it defines by returning true when its first argument
-  // should come before its second argument.
+  // Treats conj as a tree of conjunctions.  Equates it with a
+  // deduplicated and "linearized" version, omitting occurrences of T.
+  // The result will conform to the ordering of terms defined by the
+  // Array.sort comparator.
   conjunctionArranger: {
     // Implemented by building an appropriate equivalence tautology,
     // proving it with rules.tautology, and instantiating.
@@ -3149,40 +3148,32 @@ var ruleInfo = {
     // opposite direction if desired.
     action: function(conj, comparator) {
       var map = new Toy.TermMap();
-      // A variable (or T) for each conjunct, in order of occurrence.
-      var allTerms = [];
-      conj.eachHyp(function(term) {
-        if (term.matches(T)) {
-          // Keep occurrences of T as-is in the inputs, and no output.
-          allTerms.push(T);
+      var infix = Toy.infixCall;
+      function transform(term) {
+        if (term.isCall2('&')) {
+          return infix(transform(term.getLeft()), '&',
+                       transform(term.getRight()));
+        } else if (term.sameAs(T)) {
+          // Return it without mapping it to a variable.
+          return T;
         } else {
-          allTerms.push(map.addTerm(term));
+          return map.addTerm(term);
         }
-      });
-      var keepTermsInfo = [];
-      var subst = map.subst;
-      for (var name in subst) {
-        keepTermsInfo.push({term: subst[name], name: name});
       }
-      if (comparator) {
-        function compare(a, b) { return comparator(a.term, b.term); }
-        keepTermsInfo.sort(compare);
+      var schema = transform(conj);
+
+      // Create a list of the variables for terms that will go into the
+      // RHS of the result equation, sorted by the desired ordering of
+      // the terms themselves.
+      
+      function compare(a, b) {
+        return comparator(a.value, b.value);
       }
-      var keepTerms = [];
-      keepTermsInfo.forEach(function(info) {
-          keepTerms.push(Toy.varify(info.name));
-        });
-      // A variable for each hypothesis to keep, in order.
-      function buildConj(list) {
-        var result = null;
-        for (var i = 0; i < list.length; i++) {
-          var term = list[i];
-          result = result ? Toy.infixCall(result, '&', term) : term;
-        }
-        return result || T;
-      }
-      var rewriter =
-        Toy.infixCall(buildConj(allTerms), '==', buildConj(keepTerms));
+      var keepTermsInfo = Toy.sortMap(map.subst, compare);
+      // The desired list of variables:
+      var keepTerms = keepTermsInfo.map(function(pair) { return pair.key; });
+      var rewriter = Toy.infixCall(schema, '==',
+                                   Toy.chainCall('&', keepTerms, T));
       var result = rules.instMultiVars(rules.tautology(rewriter), map.subst);
       return result.justify('conjunctionArranger', arguments);
     }
