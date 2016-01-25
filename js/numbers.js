@@ -755,7 +755,7 @@ var numbersInfo = {
         }
       }
       return (simplifyHyps(step)
-              .apply('dedupeHyps')
+              .apply('arrangeAsms')
               .justify('simplifyAssumptions', arguments, [step]));
     },
     inputs: {step: 1},

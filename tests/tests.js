@@ -2012,7 +2012,7 @@ var testCase = {
     check('(R x) & (R y)', '(R x)');
   },
 
-  testDedupeHyps: function() {
+  testArrangeAsms: function() {
     expect(0);
     // TODO: Implement.
   },

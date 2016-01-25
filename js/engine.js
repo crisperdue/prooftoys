@@ -81,7 +81,7 @@ window.Thtest = function(x) {
  * to reduce clutter for readers of the proof.)
  *
  * If there is exactly one ruleDep, and the result assumptions are
- * not the same object as the ruleDep's assumptions, dedupeHyps of
+ * not the same object as the ruleDep's assumptions, arrangeAsms of
  * the result here automatically.
  *
  * TODO: Make a Step class for proof steps, and have this method
@@ -114,7 +114,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
     // need to dedupe, and if it modified only assumptions that was
     // probably its purpose, so don't undo it.
     // Note that deduping amounts to normalization.
-    step = rules.dedupeHyps(step);
+    step = rules.arrangeAsms(step);
   }
 
   // Allocate a new object to be the new Step.
@@ -1668,7 +1668,7 @@ var ruleInfo = {
       var step1 = rules.theorem('r5212');
       var step2 = rules.rplace(stepa, step1, '/left');
       var step3 = rules.rplace(stepb, step2, '/main/right');
-      return (step3.apply('dedupeHyps')
+      return (step3.apply('arrangeAsms')
               .justify('makeConjunction', arguments, [a, b]));
     },
     inputs: {step: [1, 2]},
@@ -2050,7 +2050,7 @@ var ruleInfo = {
         var step1 = rules.tautInst(taut, map);
         var step2 = rules.modusPonens(step, step1);
       }
-      var step3 = rules.dedupeHyps(rules.asHypotheses(step2));
+      var step3 = rules.arrangeAsms(rules.asHypotheses(step2));
       return step3.justify('andAssume', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
@@ -3191,7 +3191,7 @@ var ruleInfo = {
   // Derives a step with hypotheses deduplicated and ordered as by
   // sourceStepComparator, including removal of occurrences of T.
   // Works with hypotheses and with plain implications.
-  dedupeHyps: {
+  arrangeAsms: {
     action: function(step) {
       if (!step.isCall2('=>')) {
         return step;
@@ -3199,7 +3199,7 @@ var ruleInfo = {
       var deduper =
         rules.conjunctionDeduper(step.getLeft(), Toy.sourceStepComparator);
       var result = rules.rplace(deduper, step, '/left');
-      return result.justify('dedupeHyps', arguments, [step]);
+      return result.justify('arrangeAsms', arguments, [step]);
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
