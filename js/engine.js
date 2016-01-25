@@ -1531,9 +1531,8 @@ var ruleInfo = {
     inputs: {site: 1, step: 3},
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with proved step <input name=step>'),
-    menu: 'replace {term} with T',
-    description: ('replace true term {site} with T;; ' +
-                  '{in step siteStep} {by step step}'),
+    menu: 'replace proved {term} with T',
+    description: ('term is known true; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
 
