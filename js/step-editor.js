@@ -1,4 +1,4 @@
-// Copyright 2011, 2012, 2013, 2014, 2015 Crispin Perdue.
+// Copyright 2011 - 2016 Crispin Perdue.
 // All rights reserved.
 
 // Set everything up immediately on load, avoiding changes to

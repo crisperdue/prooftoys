@@ -1,4 +1,4 @@
-// Copyright 2015 Crispin Perdue.  All rights reserved.
+// Copyright 2011 - 2016 Crispin Perdue.
 
 (function() {
 
