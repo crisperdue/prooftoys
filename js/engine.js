@@ -3138,7 +3138,7 @@ var ruleInfo = {
   // If a comparator function is supplied, the result will conform to
   // the ordering it defines by returning true when its first argument
   // should come before its second argument.
-  conjunctionDeduper: {
+  conjunctionArranger: {
     // Implemented by building an appropriate equivalence tautology,
     // proving it with rules.tautology, and instantiating.
     //
@@ -3184,7 +3184,7 @@ var ruleInfo = {
       var rewriter =
         Toy.infixCall(buildConj(allTerms), '==', buildConj(keepTerms));
       var result = rules.instMultiVars(rules.tautology(rewriter), map.subst);
-      return result.justify('conjunctionDeduper', arguments);
+      return result.justify('conjunctionArranger', arguments);
     }
   },
 
@@ -3197,7 +3197,7 @@ var ruleInfo = {
         return step;
       }
       var deduper =
-        rules.conjunctionDeduper(step.getLeft(), Toy.sourceStepComparator);
+        rules.conjunctionArranger(step.getLeft(), Toy.sourceStepComparator);
       var result = rules.rplace(deduper, step, '/left');
       return result.justify('arrangeAsms', arguments, [step]);
     },

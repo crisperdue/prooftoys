@@ -1983,7 +1983,7 @@ var testCase = {
 
   testConjunctionDeduper: function() {
     function rule(term) {
-      return rules.conjunctionDeduper(term, Toy.sourceStepComparator);
+      return rules.conjunctionArranger(term, Toy.sourceStepComparator);
     }
     checkRewriter('((R x) & (R y))', '(R y) & (R x)', rule);
     checkRewriter('(R x)', '(R x) & (R x)', rule);
