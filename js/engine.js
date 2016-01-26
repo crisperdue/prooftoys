@@ -1532,7 +1532,7 @@ var ruleInfo = {
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with proved step <input name=step>'),
     menu: 'replace proved {term} with T',
-    description: ('term is known true; {in step siteStep} {by step step}'),
+    description: ('term is known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
 
