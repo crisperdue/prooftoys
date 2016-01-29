@@ -598,6 +598,7 @@ ProofControl.prototype.addStep = function(step) {
   copy.original = step;
   step.ruleDeps.forEach(@{s. void s.rendering.addUser();});
   this.steps.push(copy);
+  // Give it a stepNumber early so rendering code can find it.
   copy.stepNumber = (Toy.showOrdinals
                      ? step.ordinal
                      : this.stepPrefix + this.steps.length);
@@ -883,8 +884,7 @@ ProofControl.prototype.renderStep = function(step) {
     $('<div class=proofStep>')
       .append($preStep,
               ($('<span class=stepAndNum>')
-               .append($stepSelector,
-                       '<span class=wff></span>')),
+               .append($stepSelector, '<span class=wff></span>')),
               // Allow a word break here.
               '<wbr><span class=stepInfo></span>');
   $(self.stepsNode).append($step);
