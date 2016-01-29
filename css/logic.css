@@ -537,6 +537,8 @@ span.assumptions {
 /* Step reference in assumptions */
 span.stepRef {
   font-weight: bold;
+  /* Should be just as in span.assumptions */
+  color: #999;
 }
 
 /* Holder for information shown "above" an expression. */
