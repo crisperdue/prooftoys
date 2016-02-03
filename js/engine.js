@@ -2549,8 +2549,7 @@ var ruleInfo = {
         var result = rules.r(step3, step2, '/left')
           .apply('asHypotheses');
         
-        return result.justify('rplace', args,
-                              [h_equation_arg, h_c_arg]);
+        return result.justify('rplace', args, [h_equation_arg, h_c_arg]);
       }
 
       // Give the two WFFs the same hypotheses.
