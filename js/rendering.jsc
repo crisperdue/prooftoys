@@ -596,7 +596,8 @@ ProofControl.prototype.addStep = function(step) {
   copy.rendering = copy;
   step.original = step;
   copy.original = step;
-  step.ruleDeps.forEach(@{s. void s.rendering.addUser();});
+  step.ruleDeps.forEach(@{s. void s.rendering && s.rendering.addUser(); });
+  copy.proofDisplay = this;
   this.steps.push(copy);
   // Give it a stepNumber early so rendering code can find it.
   copy.stepNumber = (Toy.showOrdinals
@@ -847,6 +848,9 @@ var _turnstile = '\u22a6';
  *
  * - A rendered step has an "original" property referring to the
  *   unrendered proof step from which it was created.
+ *
+ * - A rendered step has a "proofDisplay" property referring to
+ *   the ProofControl it belongs to.
  *
  * - When a rendered step has a subproof display open, it has a
  *   "subproofControl" property referring to the subproof's
@@ -2123,15 +2127,21 @@ function getTopProofContainer(expr) {
 /**
  * Gets the ProofControl of a rendered term or step, or the node of
  * one.  Returns null if the term or step is not rendered.
+ *
+ * TODO: Split this into at least two different things when there is
+ * an actual Step class.
  */
 function getProofControl(expr) {
-  var node =
-    expr instanceof Toy.Expr ? (expr.node || expr.stepNode) : expr;
-  if (!node) {
-    return null;
+  if (expr instanceof Expr && expr.isProved()) {
+    return expr.proofDisplay;
+  } else {
+    var node = expr instanceof Toy.Expr ? expr.node : expr;
+    if (!node) {
+      return null;
+    }
+    var ancestor = $(node).closest('.proofDisplay');
+    return ancestor.data('proofControl');
   }
-  var ancestor = $(node).closest('.proofDisplay');
-  return ancestor.data('proofControl');
 }
 
 
