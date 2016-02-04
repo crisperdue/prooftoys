@@ -899,6 +899,8 @@ ProofControl.prototype.renderStep = function(step) {
   step.stepNode = dom($step);
   var elide = wantLeftElision(step, self);
   step.hasLeftElision = elide;
+  // Initialize now when step is connected with proof display.
+  step.asmSteps = getAssumptionSteps(step);
   $step.find('.wff').empty().append(renderAsStep(step));
   $step.find('.stepInfo').html(formattedStepInfo(step));
 
@@ -1119,20 +1121,23 @@ function wantLeftElision(step) {
  * that come from outside.
  */
 function renderAsStep(step) {
-  if (step.hasHyps) {
-    var hyps = step.getLeft();
-    if (Toy.suppressRealTypeDisplays) {
-      hyps = Toy.omittingReals(hyps);
-    }
-    if (hyps) {
-      step.node = renderHyps(step.getLeft());
-      var $wff = $(step.node);
+  if (step.isCall2('=>')) {
+    var asms = step.getLeft();
+    // Must we make the $wff if there are assumptions, but none visible?
+    var $wff = exprJq(true);
+    step.node = dom($wff);
+    if (asms) {
+      var info = {asmSteps: step.asmSteps, typeConds: step.typeConds};
+      if (step.hasHyps) {
+        $wff.append(renderHyps(asms, info), renderMain(step));
+      } else {
+        $wff.append(asms._render(info, 0), ' ',
+                    step.wff.getBinOp()._render(info, 0, true), ' ',
+                    renderMain(step));
+      }
     } else {
-      // Must we make the $wff if there are hyps, but none visible?
-      var $wff = exprJq(true);
-      step.node = dom($wff);
+      $wff.append(renderMain(step));
     }
-    $wff.append(renderMain(step));
     return dom($wff);
   } else {
     return renderMain(step);
@@ -1140,18 +1145,19 @@ function renderAsStep(step) {
 };
 
 /**
- * Renders the "main" part of a renderable step, meaning everything
- * but the hypotheses.  Currently gives special treatment to equations
- * starting with rules.consider and immediately following steps.
- * Returns a new DOM node that renders it.
+ * Returns a new DOM node that renders the "main" part of a renderable
+ * step, meaning everything but the assumptions / hypotheses.
+ * Currently gives special treatment to equations starting with
+ * rules.consider and immediately following steps.
  */
 function renderMain(step) {
-  var main = step.unHyp();
+  var info = {asmSteps: [], typeConds: step.typeConds};
+  var main = step.getMain();
   if (main.isCall2('=')) {
     if (step.ruleName === 'consider' || step.ruleName === 'considerPart') {
       var $expr = exprJq();
       main.node = dom($expr);
-      $expr.append(main.getRight()._render(0));
+      $expr.append(main.getRight()._render(info, 0));
       $expr.append(' = ');
       $expr.append('<span class=ellipsis>&hellip;</span>');
     } else {
@@ -1160,14 +1166,14 @@ function renderMain(step) {
         main.node = dom($expr);
         $expr.append('<span class=ellipsis>&hellip;</span>');
         $expr.append(' = ');
-        $expr.append(main.getRight()._render(0));
+        $expr.append(main.getRight()._render(info, 0));
       } else {
-        var $expr = main._render(0);
+        var $expr = main._render(info, 0);
       }
     }
     return dom($expr);
   } else {
-    return dom(main._render(0));
+    return dom(main._render(info, 0));
   }
 }
 
@@ -1175,12 +1181,9 @@ function renderMain(step) {
  * Walk through the expression as a set of hypotheses, rendering into
  * a new Expr DOM node, returning the node.
  */
-function renderHyps(expr) {
+function renderHyps(expr, inStep) {
   var $top = exprJq(true);
   var hypsNode;
-  if (Toy.suppressRealTypeDisplays) {
-    expr = Toy.omittingReals(expr);
-  }
   function render(expr) {
     var step = expr.sourceStep;
     if (step && step.rendering) {
@@ -1204,17 +1207,91 @@ function renderHyps(expr) {
         render(rhs);
       }
     } else {
-      hypsNode.append(expr._render(0));
+      // Note: step is null in this call to _render!
+      hypsNode.append(expr._render(inStep, 0));
     }
   }
-  if (expr) {
-    hypsNode = $('<span class=assumptions></span>');
-    render(expr);
-    hypsNode.append(':');
-    $top.append(hypsNode);
-  }
+  hypsNode = $('<span class=assumptions></span>');
+  render(expr);
+  hypsNode.append(':');
+  $top.append(hypsNode);
   return dom($top);
 }
+
+/**
+ * Given a rendered step, returns an array of rendered assumption
+ * steps preceding it in its proof or preceding parent steps in parent
+ * proofs, in order, steps in parent proofs first.  Includes the step
+ * and parents in the potential results.
+ */
+function getAssumptionSteps(rstep) {
+  var resultSteps = [];
+  function addAsms(rstep) {
+    var controller = getProofControl(rstep);
+    var parent = controller.parentStep;
+    if (parent) {
+      addAsms(parent);
+    }
+    var steps = controller.steps;
+    for (var i = 0; i < steps.length; i++) {
+      var astep = steps[i];
+      if (astep.ruleName == 'assume') {
+        resultSteps.push(astep);
+      }
+      // Don't search past the argument step.
+      if (astep == rstep) {
+        return;
+      }
+    }
+  }
+  addAsms(rstep);
+  return resultSteps;
+}
+
+/**
+ * Returns the first rendered assumption step in the list such that
+ * asm matches the assumption, if there is one, else a falsy value.
+ */
+function findAsmStep(asm, asmSteps) {
+  return Toy.each(asmSteps, function(step) {
+      var a = step.wff.getLeft();
+      if (a.matches(asm)) {
+        return step;
+      }
+    });
+}
+
+/**
+ * Truthy iff the given term is a type condition on a variable.
+ * Currently this means just a call on R, but extension to other
+ * types is intended.
+ */
+function isTypeCond(expr) {
+  return expr.isCall1('R') && expr.arg.isVariable();
+}
+
+/**
+ * Truthy iff the given term is a tree of conjunctions of terms
+ * for which isTypeCond is true.
+ */
+function allTypeConds(expr) {
+  return (isTypeCond(expr) ||
+          (expr.isCall2('&') && allTypeConds(expr.getLeft()) && 
+           allTypeConds(expr.getRight())));
+}
+
+/**
+ * Finds and returns a subexpression of the given term for which
+ * allTypeConds is true, descending only into left subexpressions
+ * of terms that are isCall2, such as conjunctions in the assumptions
+ * part of a wff; othewise a falsy value.
+ */
+function getTypeConds(expr) {
+  return (allTypeConds(expr)
+          ? expr
+          : (expr.isCall2() && getTypeConds(expr.getLeft())));
+};
+
 
 /**
  * Build and return a jQuery of class "expr", and mark as "fullExpr"
@@ -1255,13 +1332,17 @@ function textNode(text) {
 
 // NOTE that some methods on Expr and its subclasses appear here.
 
-// _render(minPower)
+// _render(info, minPower)
 //
 // Render this expression into a new DOM node, returning a jQuery
 // object for the node.  Sets the expression's "node" property to
 // refer to the DOM node created to enclose this expression.  Should
 // be done only once to any given expression.  Helper for the render
 // method.  (Not public)
+//
+// The rendering is in the context of the given step information,
+// which must have properties asmSteps and typeConds as in a step;
+// asmSteps being empty if assumptions are not to be abbreviated.
 //
 // The optional second argument is used only by Atom rendering, and
 // indicates that the expression represents a function (or
@@ -1271,7 +1352,7 @@ function textNode(text) {
 // if the operator's precedence is at least minPower.
 //
 
-Atom.prototype._render = function(minPower, isFn) {
+Atom.prototype._render = function(info, minPower, isFn) {
   var $expr = exprJq(!isFn);
   this.node = dom($expr);
   var name = this.toHtml();
@@ -1309,11 +1390,10 @@ function effectivePower(outer, inner) {
 }
 
 // minPower is the precedence required to do without parentheses.
-Call.prototype._render = function(minPower) {
+Call.prototype._render = function(info, minPower) {
   var self = this;
   var $expr = exprJq(true);
   this.node = dom($expr);
-
   // Step number (string) in case rendering is tracking source steps
   // and this term has a sourceStep.
   var stepNum = (Toy.trackSourceSteps
@@ -1322,6 +1402,21 @@ Call.prototype._render = function(minPower) {
   if (stepNum) {
     $expr.append('$', stepNum);
   }
+
+  if (this == info.typeConds) {
+    $expr.append('<span class=ellipsis title="Types of variables"> . </span>');
+    return $expr;
+  }
+
+  var aStep = findAsmStep(this, info.asmSteps);
+  if (aStep) {
+    $expr.addClass('stepRef');
+    // Note that this requires the unrendered proof step to be already
+    // linked to a rendering with proper stepNumber:
+    $expr.append(aStep.stepNumber);
+    return $expr;
+  }
+
   var parens = stepNum;
   if (!parens) {
     var prec = Toy.getPrecedence;
@@ -1350,22 +1445,22 @@ Call.prototype._render = function(minPower) {
       var right = this.getRight();
       if (op.name in {'*': true, '/': true}) {
         // Render these without extra whitespace.
-        var $fn = exprJq().append(left._render(thisPower(left)),
-                                  op._render(0, true));
+        var $fn = exprJq().append(left._render(info, thisPower(left)),
+                                  op._render(info, 0, true));
         this.fn.node = dom($fn);
-        $expr.append($fn, right._render(thisPower(right) + 1));
+        $expr.append($fn, right._render(info, thisPower(right) + 1));
       } else if (op.name == '**' && right.isNumeral()) {
         // Integer exponent: display as superscript without making
         // the exponent selectable by itself.  This makes it practical
         // to select the entire expression.
-        var $left = exprJq().append(left._render(thisPower(left)));
+        var $left = exprJq().append(left._render(info, thisPower(left)));
         $expr.append($left,
                      $('<sup>').append(right.getNumValue()));
       } else {
-        var $fn = exprJq().append(left._render(thisPower(left)), ' ',
-                                  op._render(0, true));
+        var $fn = exprJq().append(left._render(info, thisPower(left)), ' ',
+                                  op._render(info, 0, true));
         this.fn.node = dom($fn);
-        $expr.append($fn, ' ', right._render(thisPower(right) + 1));
+        $expr.append($fn, ' ', right._render(info, thisPower(right) + 1));
       }
     } else {
       // Anything else render like "f x y".
@@ -1373,16 +1468,16 @@ Call.prototype._render = function(minPower) {
       // reducing the required power by 1 here, but then we might want
       // to reorganize the code for rendering ordinary function calls.
       var $fn = exprJq()
-        .append(this.fn.fn._render(Toy.namePower + 1, true), ' ',
-                this.fn.arg._render(Toy.namePower + 1));
+        .append(this.fn.fn._render(info, Toy.namePower + 1, true), ' ',
+                this.fn.arg._render(info, Toy.namePower + 1));
       this.fn.node = dom($fn);
-      $expr.append($fn, ' ', this.arg._render(Toy.namePower + 1));
+      $expr.append($fn, ' ', this.arg._render(info, Toy.namePower + 1));
     }
   } else if (Toy.isInfixDesired(this.fn)) {
     // Infix operator, but only one argument: render like "(+) x"
     // Parenthesize both function and argument if they are calls.
-    $expr.append('(', this.fn._render(0), ') ',
-                 this.arg._render(Toy.namePower + 1));
+    $expr.append('(', this.fn._render(info, 0), ') ',
+                 this.arg._render(info, Toy.namePower + 1));
   } else if (!this.fn.displaysIdentifier()) {
     // Function call with non-identifier operator.
     // Display the function adjacent to its argument, but precede both
@@ -1392,16 +1487,16 @@ Call.prototype._render = function(minPower) {
     if (this.fn.name === 'neg' && this.arg.isNumeral()) {
       // Render e.g. neg 7 as -(7) to distinguish from a negative
       // number.
-      $expr.append(this.fn._render(0, true),
-                   '(', this.arg._render(Toy.unaryPower), ')');
+      $expr.append(this.fn._render(info, 0, true),
+                   '(', this.arg._render(info, Toy.unaryPower), ')');
     } else {
-      $expr.append('\u00a0', this.fn._render(0, true),
-                   this.arg._render(Toy.unaryPower));
+      $expr.append('\u00a0', this.fn._render(info, 0, true),
+                   this.arg._render(info, Toy.unaryPower));
     }
   } else {
     // Normal function call: "f x" or " ... x".
-    $expr.append(this.fn._render(Toy.namePower + 1, true), ' ',
-                 this.arg._render(Toy.unaryPower));
+    $expr.append(this.fn._render(info, Toy.namePower + 1, true), ' ',
+                 this.arg._render(info, Toy.unaryPower));
   }
   if (parens) {
     $expr.append(')');
@@ -1409,7 +1504,7 @@ Call.prototype._render = function(minPower) {
   return $expr;
 };
 
-Lambda.prototype._render = function(minPower) {
+Lambda.prototype._render = function(info, minPower) {
   var $expr = exprJq(true);
   this.node = dom($expr);
   var stepNum = (Toy.trackSourceSteps
@@ -1419,9 +1514,9 @@ Lambda.prototype._render = function(minPower) {
     $expr.append('$' + stepNum);
   }
   $expr.append('{');
-  $expr.append(this.bound._render(0));
+  $expr.append(this.bound._render(info, 0));
   $expr.append('. ');
-  var $body = this.body._render(0);
+  var $body = this.body._render(info, 0);
   $expr.append($body);
   $expr.append('}');
   return $expr;
@@ -1453,6 +1548,13 @@ Step.prototype.copyToRender = function() {
   // ruleDeps refers to originals of other steps.
   step.ruleDeps = this.ruleDeps;
   step.hasHyps = this.hasHyps;
+  // Assumption steps in scope for this step, including the step
+  // itself.  If an assumption step is in scope, the term it
+  // introduces can be abbreviated in this step display.
+  // Initialized when the step is connected with the proof display.
+  step.asmSteps = null;
+  // If non-null, this term will render as an ellipsis.
+  step.typeConds = wff.isCall2('=>') && getTypeConds(wff.getLeft());
   return step;
 };
 
@@ -2456,6 +2558,7 @@ Toy.getExpr = getExpr;
 // For debugging
 Toy._adjacentSteps = adjacentSteps;
 Toy._effectivePower = effectivePower;
+Toy._getAssumptionSteps = getAssumptionSteps;
 
 // For testing:
 Toy._formattedStepInfo = formattedStepInfo;
