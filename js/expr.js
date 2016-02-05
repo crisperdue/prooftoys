@@ -777,7 +777,7 @@ Expr.prototype.mathVarConditions = function(expr) {
  * to true.
  */
 Expr.prototype.boundNames = function(path) {
-  path = Toy.path(path);
+  path = Toy.path(path, this);
   var bindings = this._boundNames(path, null);
   var map = {};
   for (var more = bindings; more; more = more.more) {

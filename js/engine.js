@@ -2368,7 +2368,7 @@ var ruleInfo = {
   // replacement location in C.
   r5239: {
     action: function(equation, target, path) {
-      path = Toy.path(path);
+      path = Toy.path(path, target);
       assert(equation.isCall2('='),
              'Expecting an equation, got: {1}',
              equation);
@@ -2796,12 +2796,12 @@ var ruleInfo = {
   rewriteOnly: {
     action: function(step, path, equation) {
       var expr = step.get(path);
-      var map = expr.findSubst(equation.unHyp().getLeft());
+      var map = expr.findSubst(equation.getMain().getLeft());
       assert(map, 
              '{1} must be an instance of LHS of equation\n{2}',
              step.unHyp(), equation, step);
-      var step1 = rules.instMultiVars(equation, map);
-      var result = rules.rplace(step1, step, path);
+      var eqn = rules.instMultiVars(equation, map);
+      var result = rules.rplace(eqn, step, path);
       return result.justify('rewrite', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
