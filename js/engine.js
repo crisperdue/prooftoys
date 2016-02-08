@@ -1063,7 +1063,7 @@ var ruleInfo = {
       var step3 = rules.apply(step2, '/right/arg/body/right');
       var step4 = rules.apply(step3, '/right/arg/body/left');
       var step5 = rules.eqSelf(Toy.parse('{y. y}'));
-      return rules.rplace(step4, step5, '');
+      return rules.r(step4, step5, '');
     }
   },
 
@@ -1166,7 +1166,7 @@ var ruleInfo = {
       var step5 = rules.apply(step4, '/right/arg/body');
       var step6 = rules.apply(step5, '/left/right');
       var step7 = rules.apply(step6, '/left/left');
-      var step8 = rules.rplace(step7, step3, '');
+      var step8 = rules.r(step7, step3, '');
       var step9 = rules.instForall(step8, v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
