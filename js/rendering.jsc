@@ -1404,8 +1404,8 @@ Call.prototype._render = function(info, minPower) {
   }
 
   if (this == info.typeConds) {
-    $expr.append('<span class=ellipsis title="Types of variables">*</span>');
-    return $expr;
+    return $expr.append($('<span class=ellipsis>&star;</span>')
+                        .prop('title', Toy.trimParens(this.toString())));
   }
 
   var aStep = findAsmStep(this, info.asmSteps);
