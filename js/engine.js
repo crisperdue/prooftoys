@@ -3628,15 +3628,11 @@ function Fact(synopsis, prover) {
         if (result2.matches(goal)) {
           return result2;
         }
-        var added = result2;
-        if (goal.isCall2('=>')) {
-          // Put all the goal's assumptions into the result.
-          //
-          // TODO: Consider not doing this.
-          goal.getLeft().eachHyp(function(term) {
-              added = rules.andAssume(added, term);
-            });
-        }
+        // Put the goal's assumptions into the result.
+        // TODO: Consider not doing this.
+        var added = (goal.isCall2('=>')
+                     ? rules.andAssume(result2, goal.getLeft())
+                     : result2);
         if (!added.matches(goal)) {
           console.log('Warning: Proved assumptions do not match goal.');
           console.log('  Goal:', goal.str);
