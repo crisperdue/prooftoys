@@ -1627,9 +1627,8 @@ var ruleInfo = {
   instMultiVars: {
     action: function(b, map) {
       var hyps = b.hasHyps;
-      var step0 = hyps ? rules.asImplication(b) : b;
-      var isEqn = step0.isCall2('=');
-      var step = isEqn ? step0 : rules.toTIsA(step0);
+      var isEqn = b.isCall2('=');
+      var step = isEqn ? b : rules.rewrite(b, '', 'a == (T == a)');
       var namesReversed = [];
       for (var name in map) {
         var value = termify(map[name]);
