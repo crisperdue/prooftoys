@@ -1237,11 +1237,14 @@ Expr.prototype.hypLocater = function(hyp) {
  * the same variables in order, but at most one occurrence of 'h' as
  * its last chain element.
  *
- * In other words this generates a equation tautology that works with
- * rules.rewrite to deduplicate matching chain elements and put a
- * single occurrence of the given term at the right end of the chain.
+ * In other words this generates an equation tautology that works with
+ * rules.rewrite to remove duplicate occurrences of the given term and
+ * put a single occurrence of it at the right end of the chain.
  */
 Expr.prototype.hypMover = function(toMove) {
+  // TODO: Re-implement to work with any conjunct in a tree of conjuncts,
+  // replacing its occurrences by T and adding it to the end, then
+  // deduplicating with conjunctionArranger.
   var i = 1;
   var lhs = null;
   var rhs = null;
