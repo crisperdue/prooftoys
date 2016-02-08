@@ -461,6 +461,10 @@ var ruleInfo = {
    * equation's RHS.  This is rule R.  The subexpression must match
    * the equation's LHS, meaning they are the same except possibly
    * in names of vound variables.
+   *
+   * Extended to work with hypotheses by flagging the result with
+   * hypotheses in case the target has them and the result is also
+   * a conditional.
    */
   r: {
     action: function(equation, target, path) {
@@ -518,7 +522,7 @@ var ruleInfo = {
       }
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation], true);
-      justified.hasHyps = target.hasHyps;
+      justified.hasHyps = target.hasHyps && justified.isCall2('=>');
       justified.details = null;
       return justified;
     },
