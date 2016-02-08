@@ -3025,11 +3025,15 @@ var ruleInfo = {
     tooltip: 'copy an assumption to the consequent'
   },
 
-  // Given a proof step that is an implication and a path that
-  // refers to an element of the LHS conjunction chain, derives a step
-  // of the form h' => (e => c) where e is the referenced element,
-  // h' is the proof step's hypotheses excluding occurrences of "e",
-  // and c is the implication RHS.  Useful for simplifying hypotheses.
+  // Given a proof step of the form [h => a] and a path that refers to
+  // an element "e" of h taken as a conjunction chain, derives a step
+  // of the form [h' => (e => a)] where e is the referenced element,
+  // and h' is h with all occurrences of "e" removed.  The result
+  // has hypotheses iff the input proof step has hypotheses.
+  //
+  // If e is h, returns [h => a] without hypotheses.
+  //
+  // TODO: Specify what to do if h does not satisfy the preconditions.
   extractHypAt: {
     action: function(step, path) {
       var result = rules.extractHyp(step, step.get(path));
@@ -3043,18 +3047,21 @@ var ruleInfo = {
   },
 
   // Like extractHypAt, taking its hypotheses as a term to be matched.
-  // Useful for isolating (extracting) implicit assumptions such as
-  // variable types.
+  // Useful for pulling out implicit assumptions such as variable
+  // types.
+  //
+  // TODO: Specify what to do if h does not satisfy the preconditions.
   extractHyp: {
     action: function(step, hyp_arg) {
       var hyp = termify(hyp_arg);
       assert(step.isCall2('=>'));
-      if (hyp.sameAs(step.getLeft())) {
+      if (hyp.matches(step.getLeft())) {
         var result = rules.asImplication(step);
       } else {
         var taut = rules.tautology(step.getLeft().hypMover(hyp));
         var step1 = rules.rewriteOnly(step, '/left', taut);
         var taut2 = rules.tautology('a & b => c == a => (b => c)');
+        // Result has hyps iff input step has hyps.
         var result = rules.rewriteOnly(step1, '', taut2);
       }
       return result.justify('extractHyp', arguments, [step]);
