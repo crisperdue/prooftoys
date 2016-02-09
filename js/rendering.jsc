@@ -1129,7 +1129,7 @@ function renderAsStep(step) {
     if (asms) {
       var info = {asmSteps: step.asmSteps, typeConds: step.typeConds};
       if (step.hasHyps) {
-        $wff.append(renderHyps(asms, info), renderMain(step));
+        $wff.append(renderHyps(asms, info), ':', renderMain(step));
       } else {
         $wff.append(asms._render(info, 0), ' ',
                     step.wff.getBinOp()._render(info, 0, true), ' ',
@@ -1178,24 +1178,19 @@ function renderMain(step) {
 }
 
 /**
- * Walk through the expression as a set of hypotheses, rendering into
- * a new Expr DOM node, returning the node.
+ * Walks through the expression as a tree of conjuncts, with info as
+ * defined for Expr._render.  Converts "&" to "," parenthesizing
+ * conjuncts that do not have the usual left association.  Nodes
+ * created here only support selection of individual conjuncts, not
+ * larger trees of conjuncts.  (This design decision could easily
+ * change in the future.) Creates and returns a new Expr DOM node.
  */
-function renderHyps(expr, inStep) {
-  var $top = exprJq(true);
+function renderHyps(expr, info) {
+  var $top = exprJq();
   var hypsNode;
   function render(expr) {
     var step = expr.sourceStep;
-    if (step && step.rendering) {
-      var $expr = exprJq();
-      expr.node = dom($expr);
-      var span = $('<span class=stepRef/>');
-      // Note that this requires the unrendered proof step to be already
-      // linked to a rendering with proper stepNumber:
-      span.append(step.rendering.stepNumber);
-      $expr.append(span);
-      hypsNode.append($expr);
-    } else if (expr.isCall2('&')) {
+    if (expr.isCall2('&')) {
       render(expr.getLeft());
       hypsNode.append(', ');
       var rhs = expr.getRight();
@@ -1207,13 +1202,11 @@ function renderHyps(expr, inStep) {
         render(rhs);
       }
     } else {
-      // Note: step is null in this call to _render!
-      hypsNode.append(expr._render(inStep, 0));
+      hypsNode.append(expr._render(info, 0));
     }
   }
   hypsNode = $('<span class=assumptions></span>');
   render(expr);
-  hypsNode.append(':');
   $top.append(hypsNode);
   return dom($top);
 }
