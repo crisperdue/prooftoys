@@ -1185,11 +1185,13 @@ function renderMain(step) {
  * change in the future.) Creates and returns a new Expr DOM node.
  */
 function renderHyps(expr, info) {
+  var types = info.typeConds;
   var $top = exprJq();
   var hypsNode;
   function render(expr) {
-    var step = expr.sourceStep;
-    if (expr.isCall2('&')) {
+    if (expr.matches(types)) {
+      hypsNode.append(renderTypeConds(expr));
+    } else if (expr.isCall2('&')) {
       render(expr.getLeft());
       hypsNode.append(', ');
       var rhs = expr.getRight();
@@ -1208,6 +1210,16 @@ function renderHyps(expr, info) {
   render(expr);
   $top.append(hypsNode);
   return dom($top);
+}
+
+/**
+ * Returns a jQuery object rendering the given expr as the type
+ * conditions of a step, a styled star with tooltip displaying the
+ * expression.
+ */
+function renderTypeConds(expr) {
+  return ($('<span class=ellipsis>&star;</span>')
+          .prop('title', Toy.trimParens(expr.toString())));
 }
 
 /**
@@ -1410,8 +1422,7 @@ Call.prototype._render = function(info, minPower) {
   }
 
   if (this == info.typeConds) {
-    return $expr.append($('<span class=ellipsis>&star;</span>')
-                        .prop('title', Toy.trimParens(this.toString())));
+    return $expr.append(renderTypeConds(this));
   }
 
   var aStep = findAsmStep(this, info.asmSteps);
