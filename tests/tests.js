@@ -1046,24 +1046,6 @@ var testCase = {
           step2, 'R y');
   },
 
-  testMergedHypotheses: function() {
-    function check(expected, input) {
-      input = typeof input == 'string' ? Toy.parse(input) : input;
-      var eqn = input.mergedHypotheses();
-      var taut = Toy.rules.tautology(eqn);
-      var result = Toy.rules.rewriteOnly(input, '/', taut);
-      assertEqual(expected, result);
-    }
-    check('(a & b)', 'a & b');
-    check('a', 'a & a');
-    check('(a & b)', 'a & (a & b)');
-    check('((a & b) & c)', 'a & (b & c)');
-    check('(a & b)', '(a & b) & (a & b)');
-    check('(a & b)', '(a & b) & (b & a)');
-    check('((a & b) & c)', '(a & b) & (c & b & a)');
-    check('((a & b) & c)', '(b & a) & (b & c & a)');
-  },
-
   testIsHypotheses: function() {
     var step1 = Toy.rules.assume(Toy.parse('p x'));
     assert(step1.getLeft().isHypotheses());
