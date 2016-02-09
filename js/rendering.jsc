@@ -1124,20 +1124,18 @@ function renderAsStep(step) {
   if (step.isCall2('=>')) {
     var asms = step.getLeft();
     // Must we make the $wff if there are assumptions, but none visible?
-    var $wff = exprJq(true);
-    step.node = dom($wff);
-    if (asms) {
-      var info = {asmSteps: step.asmSteps, typeConds: step.typeConds};
-      if (step.hasHyps) {
-        $wff.append(renderHyps(asms, info), ':', renderMain(step));
-      } else {
-        $wff.append(asms._render(info, 0), ' ',
-                    step.wff.getBinOp()._render(info, 0, true), ' ',
-                    renderMain(step));
-      }
+    var $wff;
+    var aSteps = step.asmSteps;
+    var conds = step.typeConds;
+    if (step.hasHyps) {
+      var info = {asmSteps: aSteps, typeConds: conds, isTop: false};
+      $wff = (exprJq(true)
+              .append(renderHyps(asms, info), ':', renderMain(step)));
     } else {
-      $wff.append(renderMain(step));
+      var info = {asmSteps: aSteps, typeConds: conds, isTop: true};
+      $wff = step.wff._render(info, 0);
     }
+    step.node = dom($wff);
     return dom($wff);
   } else {
     return renderMain(step);
@@ -1151,7 +1149,8 @@ function renderAsStep(step) {
  * rules.consider and immediately following steps.
  */
 function renderMain(step) {
-  var info = {asmSteps: [], typeConds: step.typeConds};
+  // Do not render any parts specially as assumptions:
+  var info = {asmSteps: [], typeConds: null};
   var main = step.getMain();
   if (main.isCall2('=')) {
     if (step.ruleName === 'consider' || step.ruleName === 'considerPart') {
@@ -1333,16 +1332,17 @@ function textNode(text) {
 // be done only once to any given expression.  Helper for the render
 // method.  (Not public)
 //
-// The rendering is in the context of the given step information,
-// which must have properties asmSteps and typeConds as in a step;
-// asmSteps being empty if assumptions are not to be abbreviated.
-//
-// The optional second argument is used only by Atom rendering, and
-// indicates that the expression represents a function (or
-// syntactically an operator).
+// The rendering is in the context of the given "info" step
+// information, which must have properties asmSteps and typeConds as
+// in a step; asmSteps being empty if assumptions are not to be
+// abbreviated.
 //
 // Omits parentheses around an expression that uses an operator
 // if the operator's precedence is at least minPower.
+//
+// The optional third argument is used only by Atom rendering, and if
+// truthy indicates that the expression represents a function (or
+// syntactically an operator).
 //
 
 Atom.prototype._render = function(info, minPower, isFn) {
@@ -1394,6 +1394,19 @@ Call.prototype._render = function(info, minPower) {
                  && this.sourceStep.rendering.stepNumber);
   if (stepNum) {
     $expr.append('$', stepNum);
+  }
+
+  // Note if this term is top-level.
+  var isTop = info.isTop;
+  // For sure no subexpressions will be top-level.
+  info.isTop = false;
+  // Set up suitable info for subexpressions.  The leftInfo and info are
+  // the same except for direct subexpressions of a top-level implication.
+  var leftInfo = info;
+  if (isTop) {
+    // In code below here, info applies to all subexpressions except
+    // those that are clearly to the left of a top-level conditional.
+    info = {asmSteps: [], typeConds: null, isTop: false};
   }
 
   if (this == info.typeConds) {
@@ -1450,7 +1463,9 @@ Call.prototype._render = function(info, minPower) {
         $expr.append($left,
                      $('<sup>').append(right.getNumValue()));
       } else {
-        var $fn = exprJq().append(left._render(info, thisPower(left)), ' ',
+        // Rendering of most infix operators.  This is the one usage
+        // of leftInfo.
+        var $fn = exprJq().append(left._render(leftInfo, thisPower(left)), ' ',
                                   op._render(info, 0, true));
         this.fn.node = dom($fn);
         $expr.append($fn, ' ', right._render(info, thisPower(right) + 1));
