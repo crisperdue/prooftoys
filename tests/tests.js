@@ -1830,7 +1830,7 @@ var testCase = {
   },
 
   testDeepTermReplacer: function() {
-    // Leverages the code for testConjunctsReplacer.
+    // Leverages the code for testConjunctsSimplifier.
     // 
     // First a no-op transformation.
     var taut = rules.tautology('a | not a == T');
@@ -1847,11 +1847,11 @@ var testCase = {
     // Transformation, with transform of the results of
     // transforming the subexpressions.
     expected =
-      '(((((x | (not x)) & (y | (not y))) & z) & w) = ((T & z) & w))';
+      '(((((x | (not x)) & (y | (not y))) & z) & w) = (((T & T) & z) & w))';
     var taut2 = rules.tautology('T & T == T');
     assertEqual(expected,
                 rules.deepTermReplacer(term,
-                                       [taut, taut2]));
+                                       [taut2, taut]));
     var expected =
       '(((R x) & (R y)) => (((x * y) != 0) = ((x != 0) & (y != 0))))'
     assertEqual(expected,

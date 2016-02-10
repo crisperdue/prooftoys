@@ -644,7 +644,7 @@ var numbersInfo = {
       function proveIsT(stmt) {
         return memo(function() {
             return (stmt.apply('asHypotheses')
-                    .rewrite('/right', 'p == (p == T)'));
+                    .apply('rewriteOnly', '/right', 'p == (p == T)'));
           });
       }
       //
@@ -953,7 +953,7 @@ var numbersInfo = {
         var result = tryArithmetic(stmt);
         // x = T is the expected result.
         if (result && result.matchSchema('x = T')) {
-          return rules.rewrite(result, '', '(x = T) = x');
+          return rules.rewriteOnly(result, '', '(x = T) = x');
         }
       }
       // Try tautologies.
@@ -1085,9 +1085,7 @@ var numbersInfo = {
     action: function(step, _path) {
       var info = Toy.findMatchingCall(step.get(_path), basicSimpFacts);
       return (info
-              ? rules.rewrite(step,
-                                      _path.concat(info.path),
-                                      info.stmt)
+              ? rules.rewrite(step, _path.concat(info.path), info.stmt)
               : step);
     }
   },

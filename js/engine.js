@@ -1270,7 +1270,7 @@ var ruleInfo = {
       var step3c = rules.r(step3bb, step3b, '/right');
       // From this point most of the work is basically a proof
       // that [A => F] => not A, a tautology.
-      var step4 = rules.rewrite(step3c, '', 'p = (T = p)');
+      var step4 = rules.rewriteOnly(step3c, '', 'p == (T == p)');
       // We are going to prove the cases of: (x => F) = (x = F)
       // First with x = F.
       var step11 = rules.definition('=>', F);
@@ -1289,7 +1289,7 @@ var ruleInfo = {
       var step6 = rules.instEqn(step5, equal(F, T), x);
       // And use the fact that [F = T] => F
       var step7 = rules.rRight(step4, step6, '/left');
-      return rules.rewrite(step7, '', '(T = p) = p');
+      return rules.rewriteOnly(step7, '', '(T == p) == p');
     },
     tooltip: ('[F = T] = F')
   },
@@ -1495,7 +1495,7 @@ var ruleInfo = {
     action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
-      var eqn = rules.rewrite(step2, '', 'p = (T = p)');
+      var eqn = rules.rewriteOnly(step2, '', 'p == (T == p)');
       return (rules.r(eqn, step, path)
               .justify('replaceT', arguments, [step, step2]));
     },
@@ -1521,11 +1521,11 @@ var ruleInfo = {
       var term = target.get(path);
       var map = term.matchSchema(step);
       if (map) {
-        var step2 = rules.rewrite(step, '', 'p = (p = T)');
+        var step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
         var result = rules.r(step2, target, path);
       } else if (step.isCall2('=>') &&
                  (map = term.matchSchema(step2.getRight()))) {
-        var step2 = rules.rewrite(step, '/right', 'p = (p = T)');
+        var step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
         var result = rules.replace(target, path, step2);
       } else {
         assert(false, 'Term {1} does not match {2} or {3}', step.get(path), step2);
@@ -1628,7 +1628,7 @@ var ruleInfo = {
     action: function(b, map) {
       var hyps = b.hasHyps;
       var isEqn = b.isCall2('=');
-      var step = isEqn ? b : rules.rewrite(b, '', 'a == (T == a)');
+      var step = isEqn ? b : rules.rewriteOnly(b, '', 'a == (T == a)');
       var namesReversed = [];
       for (var name in map) {
         var value = termify(map[name]);
@@ -2188,8 +2188,8 @@ var ruleInfo = {
       var trueCase = rules.forwardChain(and, 'a & b => (a == b)');
 
       var falseCase = (rules.eqSelf('forall {x. q x}')
-                       .rewrite('/right', 'p == F | p')
-                       .rewrite('/left/arg/body', 'p == F | p'));
+                       .apply('rewriteOnly', '/right', 'p == F | p')
+                       .apply('rewriteOnly', '/left/arg/body', 'p == F | p'));
       return rules.cases(trueCase, falseCase, 'p');
     }
   },
@@ -2201,8 +2201,8 @@ var ruleInfo = {
       var taut = 'not a | b == a => b';
       return (rules.orForall()
               .apply('instVar', 'not p', 'p')
-              .rewrite('/right', taut)
-              .rewrite('/left/arg/body', taut));
+              .apply('rewriteOnly', '/right', taut)
+              .apply('rewriteOnly', '/left/arg/body', taut));
     }
   },
 
@@ -2468,7 +2468,7 @@ var ruleInfo = {
       var step2 = rules.trueBy(step1, '/right/left', target);
       // Step3 will be [(forall ... eq) => D], where D is the target
       // after replacement, and the quantifier binds no free vars of eq.
-      var step3 = rules.rewrite(step2, '/right', '(T = p) = p');
+      var step3 = rules.rewriteOnly(step2, '/right', '(T == p) == p');
       var step4 = step3;
       var quantEqn = quantEquation()
       // If the replacement site has no variable bindings, then quantEqn
@@ -2481,7 +2481,7 @@ var ruleInfo = {
         step4 = rules.forwardChain(conj1, taut1);
       }
       var step5 = (target.isCall2('=>')
-                   ? (step4.rewrite('', 'a => (b => c) == a & b => c')
+                   ? (step4.rewriteOnly('', 'a => (b => c) == a & b => c')
                       .apply('arrangeAsms'))
                    : step4);
       return step5.justify('replace', arguments, [target, equation]);
@@ -2795,29 +2795,45 @@ var ruleInfo = {
   // the step at the given path must match the LHS of the equation.
   // Replaces that part of the step with the appropriate instance of
   // the equation.  The step and equation may have hypotheses.
-  // Should not often be needed via UI.
-  rewriteOnly: {
+  // Suitable for use from the UI when needed.
+  rewriteOnlyFrom: {
     action: function(step, path, equation) {
       var expr = step.get(path);
       var map = expr.findSubst(equation.getMain().getLeft());
-      assert(map, 
-             '{1} must be an instance of LHS of equation\n{2}',
-             step.unHyp(), equation, step);
+      if (!map) { err('Fact not applicable'); }
       var eqn = rules.instMultiVars(equation, map);
       var result = rules.rplace(eqn, step, path);
-      return result.justify('rewrite', arguments, [step, equation]);
+      return result.justify('rewriteOnlyFrom', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
-    // In the UI use rewriteNumeric instead.
-    // form: ('Rewrite the site using equation <input name=equation>'),
-    menu: 'rewrite using an equation',
+    form: ('Primitive rewrite using equation step <input name=equation>'),
+    menu: 'primitive rewrite',
     description: 'rewrite {site};; {in step siteStep} {using step equation}',
-    labels: 'advanced'
+  },
+
+  // Primitive rewriter with no simplification; accepts a statement.
+  // In the UI, could be used with well-known facts, but probably better
+  // to just offer users rewriteOnlyFrom.
+  rewriteOnly: {
+    action: function(step, path, statement) {
+      return (rules.rewriteOnlyFrom(step, path, rules.fact(statement))
+              .justify('rewriteOnly', arguments, [step]));
+    },
+    inputs: {site: 1, bool: 3},
+    form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
+    menu: 'primitive rewrite using a fact',
+    isRewriter: true,
+    description: 'use;; {shortFact} {&nbsp;in step siteStep}',
+    labels: 'primitive'
   },
 
   // Version of the rewrite rule good for general use in code and for
-  // indirect use in the UI with well-known facts.  This simplifies
-  // assumptions including numeric type assumptions after rewriting.
+  // indirect use in the UI with well-known facts.  (In the display
+  // this does not give access to the proof of the fact.)  This
+  // simplifies assumptions including numeric type assumptions after
+  // rewriting.
+  //
+  // TODO: Move to numbers.js.
   rewrite: {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
@@ -3078,7 +3094,7 @@ var ruleInfo = {
   useAsHyp: {
     action: function(step) {
       var taut = rules.tautology('a => (b => c) == a & b => c');
-      var result = rules.rewrite(step, '', taut);
+      var result = rules.rewriteOnly(step, '', taut);
       return result.justify('useAsHyp', arguments, step);
     },
     inputs: {step: 1},
@@ -3276,9 +3292,11 @@ var ruleInfo = {
   // given List of equational facts recursively, traversing the term
   // bottom-up, applying the first fact that succeeds to each
   // subexpression.  Returns an equation with the term on the LHS and
-  // the replacement on the right.
+  // the replacement on the right.  Does not transform results of
+  // transformations.
   //
   // TODO: Extend to take a conversion function in place of the facts.
+  // TODO: Unused, consider removing.
   deepTermReplacer: {
     action: function(term, facts) {
       var step = rules.eqSelf(term);
@@ -3293,7 +3311,7 @@ var ruleInfo = {
       }
       var result = Toy.each(facts, function(fact) {
           try {
-            return step1.rewrite('/right', fact);
+            return rules.rewriteOnly(step, '/right', fact);
           } catch(e) {}
         });
       result = result || step1;
@@ -3316,19 +3334,19 @@ var ruleInfo = {
       if (term.isCall2('&')) {
         var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
         var stepRight = rules.conjunctsSimplifier(term.getRight(), facts);
-        step1 = step.rplace('/right/left', stepLeft)
-          .rplace('/main/right/right', stepRight);
+        step1 = (step.rplace('/right/left', stepLeft)
+                 .rplace('/right/right', stepRight));
       } else {
         step1 = step;
       }
       var result = Toy.each(facts, function(fact) {
           try {
-            return step1.rewrite('/right', fact);
+            return rules.rewriteOnly(step1, '/right', fact);
           } catch(e) {}
         }) || step1;
       try {
-        result = result.rewrite('/main/right',
-                                rules.tautology('a & (b & c) == a & b & c'));
+        var taut = rules.tautology('a & (b & c) == a & b & c');
+        result = rules.rewriteOnly(result, '/right', taut);
       } catch(e) {}
       return result.justify('conjunctsSimplifier', arguments);
     }
@@ -3512,7 +3530,7 @@ var logicFacts = {
   '(a = T) = a': {
     proof: function() {
       return rules.theorem('tIsXIsX')
-      .rewrite('/left', 'equalitySymmetric');
+      .apply('rewriteOnly', '/left', 'equalitySymmetric');
     }
   },
 
@@ -3978,7 +3996,7 @@ function locateMatchingFact(expr, schema_arg, varsMap, context) {
 /**
  * Find and apply one of the facts to the part of the step at the
  * given path, returning the result, or the input step if none of the
- * facts apply.
+ * facts apply.  Note: uses rules.rewrite, not rewriteOnly.
  */
 function applyFactsOnce(step, path, facts) {
   var info = findMatchingFact(facts, null, step.get(path));
@@ -4009,7 +4027,7 @@ function applyFactsWithinSite(step, path_arg, facts) {
  * Apply the list of facts as rewrites to the RHS of the given step,
  * which must be an equation.  Repeats until none of them is
  * applicable, returning the result.  Returns its input step if no
- * matches are found.
+ * matches are found.  Uses rules.rewrite, not rewriteOnly.
  */
 function applyFactsWithinRhs(step, facts) {
   var rhs;
@@ -4159,7 +4177,8 @@ function isAxiom(name) {
  * fact's LHS.
  *
  * If this finds such a fact it returns a function of no arguments
- * that applies the fact to the step and returns the result.
+ * that applies the fact to the step using rules.rewrite and returning
+ * the result of the rewrite.
  */
 function matchFactPart(step, path, factList, name) {
   return Toy.each(factList, function(fact_arg) {
