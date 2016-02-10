@@ -89,3 +89,8 @@ into it deeply enough. -― Richard Feynman
 
 People who like this sort of thing will find this the sort of thing they like.
 -- Artemus Ward
+
+Logic is justly considered the basis of all other sciences, even if only
+for the reason that in every argument we employ concepts taken from
+the field of logic, and that every correct inference proceeds
+in accordance with its laws. -- Alfred Tarski
