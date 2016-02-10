@@ -422,6 +422,7 @@ var numbersInfo = {
   },
 
   // Note: not structured as a rewrite rule.
+  // TODO: Change to a conditional
   axiomPlusType: {
     action: function() {
       return rules.assert('R x & R y == R (x + y)')
@@ -435,6 +436,7 @@ var numbersInfo = {
   },
 
   // Note: not structured as a rewrite rule.
+  // TODO: Change to a conditional
   axiomTimesType: {
     action: function() {
       return rules.assert('R x & R y == R (x * y)')
@@ -546,6 +548,8 @@ var numbersInfo = {
   },
 
   subtractionType: {
+    // TODO: Change to a conditional
+    statement: '@R x & R y == R (x - y)',
     proof: function() {
       var step1 = rules.axiomPlusType();
       var step2 = rules.instVar(step1, Toy.parse('neg y'), 'y');
@@ -564,6 +568,8 @@ var numbersInfo = {
   },
 
   divisionType: {
+    // TODO: Change to a conditional
+    statement: '@R x & R y & y != 0 == R (x / y)',
     proof: function() {
       var step1 = rules.axiomTimesType();
       var step2 = rules.instVar(step1, Toy.parse('recip y'), 'y');
@@ -575,7 +581,7 @@ var numbersInfo = {
       var step8 = rules.rplace(step7, step5, '/main/right/arg')
       // TODO: Normalize the assumptions automatically, not by hand.
       return rules.rewriteOnly(step8, '/left',
-                               rules.tautology('a & (b & c) == c & a & b'));
+                               rules.tautology('a & (b & c) == a & b & c'));
     },
     form: '',
     menu: 'theorem R (x / y)',

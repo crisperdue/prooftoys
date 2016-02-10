@@ -1060,6 +1060,7 @@ var ruleInfo = {
    * Helper lemma for eqT.
    */
   xAlwaysX: {
+    statement: 'forall {x. x = x}',
     proof: function() {
       var a3 = rules.axiom3();
       var step1 = rules.instEqn(a3, 'f', 'g');
@@ -1094,6 +1095,7 @@ var ruleInfo = {
    * eqSelf.
    */
   t: {
+    statement: 'T',
     proof: function() {
       var step1 = rules.eqSelf(T);
       var step2 = rules.eqT(T);
@@ -1192,6 +1194,7 @@ var ruleInfo = {
   //
   // (Or r5230TF, see the alternate proof further below.)
   r5230FT: {
+    statement: '(F == T) == F',
     proof: function() {
       var step1 = rules.axiomPNeqNotP();
       var step2 = rules.instForall(step1, F);
@@ -1205,6 +1208,7 @@ var ruleInfo = {
 
   // Bookish: (F = T) = F
   r5230FTBook: {
+    statement: '(F == T) == F',
     proof: function() {
       var step1 = rules.axiom2();
       var map = {h: Toy.parse('{x. x = F}'),
@@ -1232,6 +1236,7 @@ var ruleInfo = {
   // Prove [T = F] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
   r5230TF: {
+    statement: '(T == F) == F',
     proof: function() {
       var step1 = rules.axiomPNeqNotP();
       var step2 = rules.instForall(step1, T);
@@ -1297,6 +1302,7 @@ var ruleInfo = {
   // [T & T] = T.  Uses no book-specific definitions.
   // Only used in 5212 and book version of 5216.
   r5211: {
+    statement: 'T & T == T',
     proof: function() {
       var step1 = rules.definition('&', T);
       var step2 = rules.applyBoth(step1, T);
@@ -1306,6 +1312,7 @@ var ruleInfo = {
 
   // Book version of r5211.
   r5211Book: {
+    statement: 'T & T == T',
     proof: function() {
       var step1 = rules.instEqn(rules.axiom1(), '{y. T}', 'g');
       var step2a = rules.apply(step1, '/right/arg/body');
@@ -1321,6 +1328,7 @@ var ruleInfo = {
   // Used to prove equationCases.  The "cases" rule
   // and makeConjunction could treat this as a tautology.
   r5212: {
+    statement: 'T & T',
     proof: function() {
       return rules.rRight(rules.theorem('r5211'),
                           rules.theorem('t'),
@@ -1329,6 +1337,7 @@ var ruleInfo = {
   },
 
   r5212Book: {
+    statement: 'T & T',
     proof: function() {
       var step1 = rules.r5211Book();
       var step2 = rules.theorem('t');
@@ -1356,9 +1365,9 @@ var ruleInfo = {
     }
   },
 
-
   // Bookish: [T & F] = F
   r5214: {
+    statement: 'T & F == F',
     proof: function() {
       var step1 = rules.axiom1();
       var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
@@ -1425,6 +1434,7 @@ var ruleInfo = {
   // Note that this or 5230TF or symmetry of equality of booleans
   // might be taken as an axiom given r5230FT_alternate.
   tIsXIsX: {
+    statement: '(T == x) == x',
     proof: function() {
       // TODO: Switch back to r5230TF whenever desired.
       var step1 = rules.theorem('r5217Book');
@@ -1542,6 +1552,7 @@ var ruleInfo = {
 
   // Lemma helper for toForall; a pure theorem.
   forallXT: {
+    statement: 'forall {x. T}',
     proof: function() {
       var step1 = rules.eqSelf(Toy.parse('{x. T}'));
       var fa = rules.definition('forall');
@@ -1737,6 +1748,7 @@ var ruleInfo = {
 
   // (forall f) => f x
   r5225: {
+    statement: 'forall f => f x',
     proof: function() {
       var step1 = rules.axiom2();
       var map = {h: Toy.parse('{g. g x}'),
@@ -1753,6 +1765,7 @@ var ruleInfo = {
 
   // F => x; bookish
   r5227: {
+    statement: 'F => x',
     proof: function() {
       var step1 = rules.theorem('r5225');
       var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'f');
@@ -1764,6 +1777,7 @@ var ruleInfo = {
 
   // [not T] = F
   r5231T: {
+    statement: 'not T == F',
     proof: function() {
       var step1 = rules.eqSelf(call('not', T));
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
@@ -1774,6 +1788,7 @@ var ruleInfo = {
 
   // [not F] = T
   r5231F: {
+    statement: 'not F == T',
     proof: function() {
       var step1 = rules.eqSelf(call('not', F));
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
@@ -1785,6 +1800,7 @@ var ruleInfo = {
   // Helper for evalBool, not in book.
   // [[F =] = not].
   falseEquals: {
+    statement: '((==) F) == (not)',
     proof: function() {
       return rules.eqnSwap(rules.definition('not'));
     }
@@ -1793,6 +1809,7 @@ var ruleInfo = {
   // Another helper for evalBool, not in book.
   // [[T =] = {x. x}].
   trueEquals: {
+    statement: '((==) T) == {x. x}',
     proof: function() {
       var x = varify('x');
       var step1 = rules.r5218(x);
@@ -3246,6 +3263,7 @@ var ruleInfo = {
   // From the section "Equality and descriptions" in the book.
 
   equalitySymmetric: {
+    statement: '(x = y) == (y = x)',
     proof: function() {
       var x = varify('x');
       var y = varify('y');
@@ -3266,6 +3284,7 @@ var ruleInfo = {
   },
 
   equalityTransitive: {
+    statement: 'x = y & y = z => x = z',
     proof: function() {
       var step1 = rules.axiom2();
       var step2 = rules.instVar(step1, Toy.parse('{t. t = z}'), varify('h'));
