@@ -2228,7 +2228,11 @@ Toy.soonDo(function() {
       test(name, function(prover, name) {
           var result = Toy.normalReturn(prover);
           var stmt = prover.info.statement;
+          // Check that the statement of the theorem matches
+          // what was proved.
           if (stmt) {
+            // TODO: Use rules.equalConjunctions to compare goal
+            //   assumptions with assumptions in proved results.
             assert(Toy.termify(stmt).matches(result),
                    'For ' + name +
                    '\nexpected: ' + stmt +

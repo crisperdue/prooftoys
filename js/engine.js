@@ -3651,6 +3651,8 @@ function Fact(synopsis, prover) {
         var added = (goal.isCall2('=>')
                      ? rules.andAssume(result2, goal.getLeft())
                      : result2);
+        // TODO: Use rules.equalConjunctions to compare goal
+        //   assumptions with assumptions in proved results.
         if (!added.matches(goal)) {
           console.log('Warning: Proved assumptions do not match goal.');
           console.log('  Goal:', goal.str);

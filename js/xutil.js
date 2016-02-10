@@ -1041,7 +1041,7 @@ function unparseString(content) {
  * Otherwise this also checks for any apparent math variables (as by
  * calling Expr.mathVars) and adds assumptions that all of those "math
  * variables" are real numbers.  If the main operator of the
- * expression is =>, concatenates any added assumptions to its LHS.
+ * expression is =>, concatenates any added assumptions and its LHS.
  */
 function mathParse(str) {
   if (str[0] === '@') {
@@ -1051,8 +1051,10 @@ function mathParse(str) {
   var assume = expr.mathVarConditions();
   if (assume) {
     if (expr.isCall2('=>')) {
-      // Any type assumptions follow the LHS.
-      var result = infixCall(expr.getLeft().concat(assume, '&'),
+      // Any type assumptions precede the LHS.
+      // These may later be matched against a proved result, so we aim
+      // to achieve the usual ordering here.
+      var result = infixCall(assume.concat(expr.getLeft(), '&'),
                              '=>',
                              expr.getRight());
       return result;
