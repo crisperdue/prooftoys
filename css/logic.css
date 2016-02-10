@@ -529,16 +529,18 @@ span.ruleName.link, .stepAndNum,
 }
 
 span.assumptions {
-  color: #999;
+  color: #aaa;
   margin-left: .3em;
   margin-right: .1em;
 }
 
 /* Step reference in assumptions */
 span.stepRef {
+  font-family: sans-serif;
+  font-size: 90%;
   font-weight: bold;
-  /* Should be just as in span.assumptions */
-  color: #999;
+  /* Should be same as in span.assumptions */
+  color: #aaa;
 }
 
 /* Holder for information shown "above" an expression. */
