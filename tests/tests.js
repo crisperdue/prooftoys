@@ -2036,16 +2036,6 @@ var testCase = {
     assertEqual('T', result.get(location));
   },
 
-  testSubtractionType: function() {
-    assertEqual('(((R x) & (R y)) = (R (x - y)))',
-                rules.subtractionType());
-  },
-
-  testDivisionType: function() {
-    assertEqual('((((y != 0) & (R x)) & (R y)) = (R (x / y)))',
-                rules.divisionType());
-  },
-
   testSimplifyStep: function() {
     var step1 = rules.consider('2 * 3 * x');
     var step2 = rules.simplifyStep(step1);
