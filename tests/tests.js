@@ -871,7 +871,7 @@ var testCase = {
     var term = Toy.parse('neg (x + y)');
     var term2 = Toy.parse('neg (u + v)');
     var subst = term.alphaMatch(term2);
-    var step = Toy.rules.eqSelf(term).apply('instMultiVars', subst);
+    var step = Toy.rules.eqSelf(term).then('instMultiVars', subst);
     console.log(step.str);
     assert(step.getRight().matches(term2));
   },
@@ -1560,7 +1560,7 @@ var testCase = {
 
     // Hypotheses
     var step1 = Toy.rules.assume(Toy.parse('x = 0'));
-    var wff = Toy.rules.assert('x = 0 => y > x').apply('asHypotheses');
+    var wff = Toy.rules.assert('x = 0 => y > x').then('asHypotheses');
     // wff.getLeft().sourceStep = step1;
     assertEqual('((x = 0) => (forall {y. (y > x)}))',
                 Toy.rules.toForall(wff, 'y'));
@@ -2056,7 +2056,7 @@ var testCase = {
     var asm = rules.assume('a');
     function simplify(term) {
       return (rules.instVar(asm, Toy.termify(term), 'a')
-              .apply('simplifyAssumptions').getLeft());
+              .then('simplifyAssumptions').getLeft());
     }
     assertEqual('(R x)', simplify('R x'));
     assertEqual('T', simplify('R 2'));

@@ -182,7 +182,7 @@ var ruleMethods = {
    * Applies the named rule to this Expr and any other given arguments
    * as if by a call to Toy.rules[name](args).
    */
-  apply: function(name, arg1) {
+  then: function(name, arg1) {
     var nm = name;
     arguments[0] = this;
     return Toy.rules[nm].apply(Toy.rules, arguments);
@@ -698,7 +698,7 @@ var ruleInfo = {
       var eqn = rules.eqSelf(step.get(path));
       var result = (step.hasHyps
                     ? (rules.andAssume(eqn, step.getLeft())
-                       .apply('asHypotheses'))
+                       .then('asHypotheses'))
                     : eqn);
       return result.justify('considerPart', arguments);
     },
@@ -854,12 +854,12 @@ var ruleInfo = {
       var c = termify(c_arg);
       var fn = call(call(termify('{f. {y. {x. f x y}}}'), f), c);
       return (rules.applyToBoth(fn, a_b)
-              .apply('simpleApply', '/main/right/fn/fn')
-              .apply('simpleApply', '/main/right/fn')
-              .apply('simpleApply', '/main/right')
-              .apply('simpleApply', '/main/left/fn/fn')
-              .apply('simpleApply', '/main/left/fn')
-              .apply('simpleApply', '/main/left')
+              .then('simpleApply', '/main/right/fn/fn')
+              .then('simpleApply', '/main/right/fn')
+              .then('simpleApply', '/main/right')
+              .then('simpleApply', '/main/left/fn/fn')
+              .then('simpleApply', '/main/left/fn')
+              .then('simpleApply', '/main/left')
               .justify('applyToBothWith', arguments, [a_b]));
     },
   },
@@ -1670,7 +1670,7 @@ var ruleInfo = {
       var step1 = rules.theorem('r5212');
       var step2 = rules.rplace(stepa, step1, '/left');
       var step3 = rules.rplace(stepb, step2, '/main/right');
-      return (step3.apply('arrangeAsms')
+      return (step3.then('arrangeAsms')
               .justify('makeConjunction', arguments, [a, b]));
     },
     inputs: {step: [1, 2]},
@@ -2023,7 +2023,7 @@ var ruleInfo = {
   and: {
     action: function(step1, step2) {
       return (rules.replaceT(rules.tautology('T & T'), '/right', step2)
-              .apply('replaceT', '/left', step1)
+              .then('replaceT', '/left', step1)
               .justify('and', arguments, arguments));
     },
     inputs: {step: [1, 2]},
@@ -2163,8 +2163,8 @@ var ruleInfo = {
       var q = lambda(v, termify(b_arg));
       var step1 = rules.implyForall();
       var step2 = (rules.instMultiVars(step1, {p: p, q: q})
-                   .apply('simpleApply', '/left/arg/body/right')
-                   .apply('simpleApply', '/right/right/arg/body'));
+                   .then('simpleApply', '/left/arg/body/right')
+                   .then('simpleApply', '/right/right/arg/body'));
       return step2.justify('implyForallGen', arguments);
     },
     inputs: {varName: 1, bool: [2, 3]},
@@ -2182,14 +2182,14 @@ var ruleInfo = {
     statement: 'forall {x. p | q x} == (p | forall {x. q x})',
     proof: function() {
       var taut1 = rules.tautology('T | a');
-      var all = rules.instVar(taut1, 'q x', 'a').apply('toForall', 'x');
+      var all = rules.instVar(taut1, 'q x', 'a').then('toForall', 'x');
       var or = rules.instVar(taut1, 'forall {x. q x}', 'a');
       var and = rules.makeConjunction(all, or);
       var trueCase = rules.forwardChain(and, 'a & b => (a == b)');
 
       var falseCase = (rules.eqSelf('forall {x. q x}')
-                       .apply('rewriteOnly', '/right', 'p == F | p')
-                       .apply('rewriteOnly', '/left/arg/body', 'p == F | p'));
+                       .then('rewriteOnly', '/right', 'p == F | p')
+                       .then('rewriteOnly', '/left/arg/body', 'p == F | p'));
       return rules.cases(trueCase, falseCase, 'p');
     }
   },
@@ -2200,9 +2200,9 @@ var ruleInfo = {
     proof: function() {
       var taut = 'not a | b == a => b';
       return (rules.orForall()
-              .apply('instVar', 'not p', 'p')
-              .apply('rewriteOnly', '/right', taut)
-              .apply('rewriteOnly', '/left/arg/body', taut));
+              .then('instVar', 'not p', 'p')
+              .then('rewriteOnly', '/right', taut)
+              .then('rewriteOnly', '/left/arg/body', taut));
     }
   },
 
@@ -2482,7 +2482,7 @@ var ruleInfo = {
       }
       var step5 = (target.isCall2('=>')
                    ? (step4.rewriteOnly('', 'a => (b => c) == a & b => c')
-                      .apply('arrangeAsms'))
+                      .then('arrangeAsms'))
                    : step4);
       return step5.justify('replace', arguments, [target, equation]);
     },
@@ -2542,7 +2542,7 @@ var ruleInfo = {
           // change .replace to .rl (replace matching equation LHS and
           // do not simplify).
           .rplace(path, h_equation)
-          .apply('asImplication');
+          .then('asImplication');
         // Use the tautology to conjoin all of the assumptions.
         // Note that forward chaining would ignore the "a" part if
         // step1 had hypotheses.
@@ -2550,7 +2550,7 @@ var ruleInfo = {
         var step2 = rules.forwardChain(step1, taut);
         var step3 = rules.conjunctionsMerger(step2.getLeft());
         var result = rules.r(step3, step2, '/left')
-          .apply('asHypotheses');
+          .then('asHypotheses');
         
         return result.justify('rplace', args, [h_equation_arg, h_c_arg]);
       }
@@ -3530,7 +3530,7 @@ var logicFacts = {
   '(a = T) = a': {
     proof: function() {
       return rules.theorem('tIsXIsX')
-      .apply('rewriteOnly', '/left', 'equalitySymmetric');
+      .then('rewriteOnly', '/left', 'equalitySymmetric');
     }
   },
 
@@ -3544,9 +3544,9 @@ var logicFacts = {
   '(a != b) == not (a = b)': {
     proof: function() {
       return (rules.eqSelf('a != b')
-              .apply('useDefinition', '/right')
-              .apply('apply', '/right/fn')
-              .apply('apply', '/right'));
+              .then('useDefinition', '/right')
+              .then('apply', '/right/fn')
+              .then('apply', '/right'));
     }
   }
 };
@@ -3579,7 +3579,7 @@ function addSwappedFact(synopsis) {
       console.log('Swapped fact ' + swapped + ' already recorded');
     } else {
       addFact(swapped, function() {
-          return rules.fact(synopsis).apply('eqnSwap');
+          return rules.fact(synopsis).then('eqnSwap');
         });
     }
   }
@@ -3642,7 +3642,7 @@ function Fact(synopsis, prover) {
         // TODO: Consider simplifying assumptions within
         //   rules.instMultiVars.
         var result2 = (rules.instMultiVars(result, subst2)
-                       .apply('simplifyAssumptions'));
+                       .then('simplifyAssumptions'));
         if (result2.matches(goal)) {
           return result2;
         }

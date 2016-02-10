@@ -260,7 +260,7 @@ var numbersInfo = {
   axiomCommutativePlus: {
     action: function() {
       return (rules.assert('R x & R y => x + y = y + x')
-              .apply('asHypotheses').justify('axiomCommutativePlus'));
+              .then('asHypotheses').justify('axiomCommutativePlus'));
     },
     inputs: {},
     form: '',
@@ -271,7 +271,7 @@ var numbersInfo = {
   axiomAssociativePlus: {
     action: function() {
         return (rules.assert('R x & R y & R z => x + (y + z) = (x + y) + z')
-                .apply('asHypotheses').justify('axiomAssociativePlus'));
+                .then('asHypotheses').justify('axiomAssociativePlus'));
     },
     inputs: {},
     form: '',
@@ -282,7 +282,7 @@ var numbersInfo = {
   axiomCommutativeTimes: {
     action: function() {
         return (rules.assert('R x & R y => x * y = y * x')
-                .apply('asHypotheses').justify('axiomCommutativeTimes'));
+                .then('asHypotheses').justify('axiomCommutativeTimes'));
       },
     inputs: {},
     form: '',
@@ -293,7 +293,7 @@ var numbersInfo = {
   axiomAssociativeTimes: {
     action: function() {
           return (rules.assert('R x & R y & R z => x * (y * z) = (x * y) * z')
-                  .apply('asHypotheses').justify('axiomAssociativeTimes'));
+                  .then('asHypotheses').justify('axiomAssociativeTimes'));
       },
     inputs: {},
     form: '',
@@ -304,7 +304,7 @@ var numbersInfo = {
   axiomDistributivity: {
     action: function() {
         return (rules.assert('R x & R y & R z => x * (y + z) = x * y + x * z')
-                .apply('asHypotheses').justify('axiomDistributivity'));
+                .then('asHypotheses').justify('axiomDistributivity'));
       },
     inputs: {},
     form: '',
@@ -315,7 +315,7 @@ var numbersInfo = {
   axiomPlusZero: {
     action: function() {
         return (rules.assert('R x => x + 0 = x')
-                .apply('asHypotheses').justify('axiomPlusZero'));
+                .then('asHypotheses').justify('axiomPlusZero'));
       },
     inputs: {},
     form: '',
@@ -326,7 +326,7 @@ var numbersInfo = {
   axiomTimesOne: {
     action: function() {
         return (rules.assert('R x => x * 1 = x')
-                .apply('asHypotheses').justify('axiomTimesOne'));
+                .then('asHypotheses').justify('axiomTimesOne'));
       },
     inputs: {},
     form: '',
@@ -337,7 +337,7 @@ var numbersInfo = {
   axiomTimesZero: {
     action: function() {
         return (rules.assert('R x => x * 0 = 0')
-                .apply('asHypotheses').justify('axiomTimesZero'));
+                .then('asHypotheses').justify('axiomTimesZero'));
       },
     inputs: {},
     form: '',
@@ -358,7 +358,7 @@ var numbersInfo = {
   axiomReciprocal: {
     action: function() {
         return (rules.assert('R x & x != 0 => x * recip x = 1')
-                .apply('asHypotheses').justify('axiomReciprocal'));
+                .then('asHypotheses').justify('axiomReciprocal'));
       },
     inputs: {},
     form: '',
@@ -384,7 +384,7 @@ var numbersInfo = {
   axiomPower0: {
     action: function() {
         return (rules.assert('R x => x ** 0 = 1')
-                .apply('asHypotheses').justify('axiomPower0'));
+                .then('asHypotheses').justify('axiomPower0'));
       },
     inputs: {},
     form: '',
@@ -408,7 +408,7 @@ var numbersInfo = {
   factNonzeroProduct: {
       proof: function() {
         return (rules.assert('R x & R y => (x * y != 0) = (x != 0 & y != 0)')
-                .apply('asHypotheses'));
+                .then('asHypotheses'));
       }
   },
 
@@ -643,8 +643,8 @@ var numbersInfo = {
       // proved result.
       function proveIsT(stmt) {
         return memo(function() {
-            return (stmt.apply('asHypotheses')
-                    .apply('rewriteOnly', '/right', 'p == (p == T)'));
+            return (stmt.then('asHypotheses')
+                    .then('rewriteOnly', '/right', 'p == (p == T)'));
           });
       }
       //
@@ -661,7 +661,7 @@ var numbersInfo = {
       var subtracter = proveIsT(rules.subtractionType());
       var divider = proveIsT(rules.divisionType());
       var negger = memo(function() {
-          return rules.axiomNegType().apply('eqnSwap');
+          return rules.axiomNegType().then('eqnSwap');
         });
       // x != 0 => (R (recip x) == R x)
       var reciper = memo(function() {
@@ -755,7 +755,7 @@ var numbersInfo = {
         }
       }
       return (simplifyHyps(step)
-              .apply('arrangeAsms')
+              .then('arrangeAsms')
               .justify('simplifyAssumptions', arguments, [step]));
     },
     inputs: {step: 1},
@@ -1342,7 +1342,7 @@ var numbersInfo = {
   regroup: {
     action: function(step) {
       return rules.removeSubtraction(step)
-      .apply('regroupAdditions')
+      .then('regroupAdditions')
       .justify('regroup', arguments, [step]);
     },
     inputs: {step: 1},
@@ -1669,9 +1669,9 @@ var basicFacts = {
       var asm = rules.assume('a = none');
       return (rules.fact('not (R none)')
               .rplace('/arg/arg', rules.eqnSwap(asm))
-              .apply('asImplication')
-              .apply('forwardChain', 'a => not b == b => not a')
-              .apply('simplifySite', '/right'));
+              .then('asImplication')
+              .then('forwardChain', 'a => not b == b => not a')
+              .then('simplifySite', '/right'));
     }
   },
 
@@ -1681,7 +1681,7 @@ var basicFacts = {
       .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right/right', 'neg a = -1 * a')
       .rewrite('/main/right', 'a * c + b * c = (a + b) * c')
-      .apply('arithmetic', '/main/right/left')
+      .then('arithmetic', '/main/right/left')
       .rewrite('/main/right', '0 * a = 0');
     }
   },
@@ -1777,7 +1777,7 @@ var distribFacts = {
       return rules.consider('a + a')
       .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right', 'a * b + b = (a + 1) * b')
-      .apply('arithmetic', '/main/right/left');
+      .then('arithmetic', '/main/right/left');
     }
   },
 
@@ -1863,8 +1863,8 @@ var identityFacts = {
   'a - 0 = a': {
     proof: function() {
       var step1 = (rules.consider('a - 0')
-                   .apply('apply', '/main/right')
-                   .apply('arithmetic', '/main/right/right')
+                   .then('apply', '/main/right')
+                   .then('arithmetic', '/main/right/right')
                    .rewrite('/main/right', 'a + 0 = a'));
       return step1;
     }
@@ -1872,7 +1872,7 @@ var identityFacts = {
   '0 - a = neg a': {
     proof: function() {
       var step1 = (rules.consider('0 - a')
-                   .apply('apply', '/main/right')
+                   .then('apply', '/main/right')
                    .rewrite('/main/right', '0 + a = a'));
       return step1;
     }
@@ -1903,15 +1903,15 @@ var equivalences = {
   'a = b == a + c = b + c': {
     proof: function() {
       var forward = (rules.assume('a = b')
-                     .apply('addToBoth', 'c')
-                     .apply('asImplication'));
+                     .then('addToBoth', 'c')
+                     .then('asImplication'));
       var back = (rules.assume('a + c = b + c')
-                  .apply('subtractFromBoth', 'c')
-                  .apply('groupToRight', '/main/left/left/right')
-                  .apply('simplifySite', '/main/left')
-                  .apply('groupToRight', '/main/right/left/right')
-                  .apply('simplifySite', '/main/right')
-                  .apply('extractHyp', 'a + c = b + c'))
+                  .then('subtractFromBoth', 'c')
+                  .then('groupToRight', '/main/left/left/right')
+                  .then('simplifySite', '/main/left')
+                  .then('groupToRight', '/main/right/left/right')
+                  .then('simplifySite', '/main/right')
+                  .then('extractHyp', 'a + c = b + c'))
       var conj = rules.makeConjunction(forward, back);
       return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
     }
@@ -1920,15 +1920,15 @@ var equivalences = {
   'a = b == a - c = b - c': {
     proof: function() {
       var forward = (rules.assume('a = b')
-                     .apply('subtractFromBoth', 'c')
-                     .apply('asImplication'));
+                     .then('subtractFromBoth', 'c')
+                     .then('asImplication'));
       var back = (rules.assume('a - c = b - c')
-                  .apply('addToBoth', 'c')
-                  .apply('groupToRight', '/main/left/left/right')
-                  .apply('simplifySite', '/main/left')
-                  .apply('groupToRight', '/main/right/left/right')
-                  .apply('simplifySite', '/main/right')
-                  .apply('extractHyp', 'a - c = b - c'))
+                  .then('addToBoth', 'c')
+                  .then('groupToRight', '/main/left/left/right')
+                  .then('simplifySite', '/main/left')
+                  .then('groupToRight', '/main/right/left/right')
+                  .then('simplifySite', '/main/right')
+                  .then('extractHyp', 'a - c = b - c'))
       var conj = rules.makeConjunction(forward, back);
       return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
     }
@@ -1953,8 +1953,8 @@ var equivalences = {
   'c != 0 => (a = b == a * c = b * c)': {
     proof: function() {
       var forward = (rules.assume('a = b')
-                     .apply('multiplyBoth', 'c')
-                     .apply('asImplication'));
+                     .then('multiplyBoth', 'c')
+                     .then('asImplication'));
       var back = rules.fact('c != 0 => (a * c = b * c => a = b)');
       var conj = rules.makeConjunction(forward, back);
       var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
@@ -1971,21 +1971,21 @@ var equivalences = {
       var regroup = rules.fact('a / b * c = a * (c / b)');
       var cancel = rules.fact('a != 0 => a / a = 1');
       return (rules.assume('a / c = b / c')
-              .apply('multiplyBoth', 'c')
+              .then('multiplyBoth', 'c')
               .rewrite('/main/right', regroup)
               .rewrite('/main/right/right', cancel)
               .rewrite('/main/left', regroup)
               .rewrite('/main/left/right', cancel)
-              .apply('simplifyStep')
-              .apply('extractHyp', 'a / c = b / c'));
+              .then('simplifyStep')
+              .then('extractHyp', 'a / c = b / c'));
     }
   },
 
   'c != 0 => (a = b == a / c = b / c)': {
     proof: function() {
       var forward = (rules.assume('a = b')
-                     .apply('divideBoth', 'c')
-                     .apply('asImplication'));
+                     .then('divideBoth', 'c')
+                     .then('asImplication'));
       var back = rules.fact('c != 0 => (a / c = b / c => a = b)');
       var conj = rules.makeConjunction(forward, back);
       return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
@@ -2050,7 +2050,7 @@ var negationFacts = {
   'a - neg b = a + b': {
     proof: function() {
       return rules.consider('a - neg b')
-      .apply('apply', '/main/right')
+      .then('apply', '/main/right')
       .rewrite('/main/right/right', 'neg (neg a) = a');
     }
   },
@@ -2059,13 +2059,13 @@ var negationFacts = {
       var parse = Toy.justParse;
       return rules.fact('a + neg b = a - b')
         .rewrite('/main/left', 'a + b = b + a');
-        // .apply('instMultiVars', {a: parse('b'), b: parse('a')});
+        // .then('instMultiVars', {a: parse('b'), b: parse('a')});
     }
   },
   'a - b = neg b + a': {
     proof: function() {
       return rules.fact('a + neg b = a - b')
-      .apply('eqnSwap')
+      .then('eqnSwap')
       .rewrite('/main/right', 'a + b = b + a');
     }
   },
@@ -2078,8 +2078,8 @@ var negationFacts = {
   'neg (neg a) = a': {
     proof: function() {
       return rules.fact('neg a + a = 0')
-      .apply('instVar', 'neg a', 'a')
-      .apply('addToBoth', Toy.parse('a'))
+      .then('instVar', 'neg a', 'a')
+      .then('addToBoth', Toy.parse('a'))
       .rewrite('/main/left', 'a + b + c = a + (b + c)')
       .rewrite('/main/left/right', 'neg a + a = 0')
       .rewrite('/main/left', 'a + 0 = a')
@@ -2179,7 +2179,7 @@ var negationFacts = {
       .rewrite('/main/right/right', 'neg a = -1 * a')
       .rewrite('/main/right', 'a / (b * c) = a / b / c')
       .rewrite('/main/right/left', 'a * b / c = a / c * b')
-      .apply('arithmetic', '/main/right/left/left')
+      .then('arithmetic', '/main/right/left/left')
       .rewrite('/main/right/left', '1 * a = a');
     }
   }
@@ -2277,7 +2277,7 @@ var subtractionFacts = {
   'a - a = 0': {
     proof: function() {
       return (rules.eqSelf('a - a')
-              .apply('apply', '/right')
+              .then('apply', '/right')
               .rewrite('/main/right', 'a + neg a = 0'));
     }
   },
@@ -2411,7 +2411,7 @@ var divisionFacts = {
     proof: function() {
       var divFact = rules.fact('a * recip b = a / b');
       return (rules.fact('a * b * c = a * (c * b)')
-              .apply('instVar', 'recip d', 'b')
+              .then('instVar', 'recip d', 'b')
               .rewrite('/main/right/right', divFact)
               .rewrite('/main/left/left', divFact));
     }
@@ -2439,7 +2439,7 @@ var divisionFacts = {
   },
   'a != 0 => a / a = 1': {
     proof: function() {
-      var fact = rules.fact('a / b = a * recip b').apply('eqnSwap');
+      var fact = rules.fact('a / b = a * recip b').then('eqnSwap');
       return (rules.fact('a != 0 => a * recip a = 1')
               .rewrite('/main/left', fact));
     }
@@ -2451,8 +2451,8 @@ var powerFacts = {
   'a ** 1 = a': {
     proof: function() {
       return rules.axiomNextPower()
-      .apply('instMultiVars', {x: Toy.parse('a'), y: Toy.parse('0')})
-      .apply('arithmetic', '/main/left/right')
+      .then('instMultiVars', {x: Toy.parse('a'), y: Toy.parse('0')})
+      .then('arithmetic', '/main/left/right')
       .rewrite('/main/right/left', rules.axiomPower0())
       .rewrite('/main/right', '1 * a = a');
     }
@@ -2460,9 +2460,9 @@ var powerFacts = {
   'a ** 2 = a * a': {
     proof: function() {
       return rules.axiomNextPower()
-      .apply('instVar', '1', 'y')
+      .then('instVar', '1', 'y')
       .rewrite('/main/right/left', 'a ** 1 = a')
-      .apply('arithmetic', '/main/left/right');
+      .then('arithmetic', '/main/left/right');
     }
   },
   // TODO: Add a rule to convert a ** n to multiplication for any
@@ -2470,9 +2470,9 @@ var powerFacts = {
   'a ** 3 = a * a * a': {
     proof: function() {
       return rules.axiomNextPower()
-      .apply('instVar', '2', 'y')
+      .then('instVar', '2', 'y')
       .rewrite('/main/right/left', 'a ** 2 = a * a')
-      .apply('arithmetic', '/main/left/right');
+      .then('arithmetic', '/main/left/right');
     }
   }
 };
@@ -2485,16 +2485,16 @@ var algebraIdentities = {
   'a = neg b == a + b = 0': {
     proof: function() {
       var step = rules.assume('a = neg b')
-      .apply('addToBoth', 'b')
+      .then('addToBoth', 'b')
       .rewrite('/main/right', 'neg a + a = 0')
-      .apply('extractHyp', 'a = neg b');
+      .then('extractHyp', 'a = neg b');
       var converse = rules.assume('a + b = 0')
-      .apply('addToBoth', 'neg b')
+      .then('addToBoth', 'neg b')
       .rewrite('/main/right', '0 + a = a')
       .rewrite('/main/left', 'a + b + c = a + (b + c)')
       .rewrite('/main/left/right', 'a + neg a = 0')
       .rewrite('/main/left', 'a + 0 = a')
-      .apply('extractHyp', 'a + b = 0');
+      .then('extractHyp', 'a + b = 0');
       var conj = rules.makeConjunction(step, converse);
       var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
       return rules.rewriteOnly(conj, '/main', taut);
@@ -2504,7 +2504,7 @@ var algebraIdentities = {
   'a = b == a - b = 0': {
     proof: function() {
       return rules.fact('a = neg b == a + b = 0')
-      .apply('instVar', 'neg b', 'b')
+      .then('instVar', 'neg b', 'b')
       .rewrite('/main/left/right', 'neg (neg a) = a')
       .rewrite('/main/right/left', 'a + neg b = a - b');
     }
