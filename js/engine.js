@@ -3462,7 +3462,7 @@ function addRule(key, info_arg) {
   // If the rule (theorem) has an explicit statement (it should be
   // provably true), coerce it to an Expr if given as a string.
   if (typeof info.statement === 'string') {
-    info.statement = Toy.parse(info.statement);
+    info.statement = Toy.mathParse(info.statement);
   }
   // Default the description to the marked up formula or the ruleName.
   if (!('description' in info)) {
