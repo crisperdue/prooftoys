@@ -258,123 +258,94 @@ var numbersInfo = {
   // the hypotheses.  This is equivalent to A1 & A2 => <equation>.
 
   axiomCommutativePlus: {
-    action: function() {
+    proof: function() {
       return (rules.assert('R x & R y => x + y = y + x')
-              .then('asHypotheses').justify('axiomCommutativePlus'));
+              .then('asHypotheses'));
     },
-    inputs: {},
-    form: '',
-    tooltip: 'commutativity of addition',
-    description: 'commutativity of addition'
+    description: 'commutativity'
   },
 
   axiomAssociativePlus: {
-    action: function() {
-        return (rules.assert('R x & R y & R z => x + (y + z) = (x + y) + z')
-                .then('asHypotheses').justify('axiomAssociativePlus'));
+    proof: function() {
+      return (rules.assert('R x & R y & R z => x + (y + z) = (x + y) + z')
+              .then('asHypotheses'));
     },
-    inputs: {},
-    form: '',
-    tooltip: 'associativity of addition',
-    description: 'associativity of addition'
+    description: 'associativity'
   },
 
   axiomCommutativeTimes: {
-    action: function() {
-        return (rules.assert('R x & R y => x * y = y * x')
-                .then('asHypotheses').justify('axiomCommutativeTimes'));
-      },
-    inputs: {},
-    form: '',
-    tooltip: 'commutativity of multiplication',
+    proof: function() {
+      return (rules.assert('R x & R y => x * y = y * x')
+              .then('asHypotheses'));
+    },
     description: 'commutativity'
   },
 
   axiomAssociativeTimes: {
-    action: function() {
-          return (rules.assert('R x & R y & R z => x * (y * z) = (x * y) * z')
-                  .then('asHypotheses').justify('axiomAssociativeTimes'));
-      },
-    inputs: {},
-    form: '',
-    tooltip: 'associativity of multiplication',
-    description: 'associativity of multiplication'
+    proof: function() {
+      return (rules.assert('R x & R y & R z => x * (y * z) = (x * y) * z')
+              .then('asHypotheses'));
+    },
+    description: 'associativity'
   },
 
   axiomDistributivity: {
-    action: function() {
-        return (rules.assert('R x & R y & R z => x * (y + z) = x * y + x * z')
-                .then('asHypotheses').justify('axiomDistributivity'));
-      },
-    inputs: {},
-    form: '',
-    tooltip: 'distributive law',
+    proof: function() {
+      return (rules.assert('R x & R y & R z => x * (y + z) = x * y + x * z')
+              .then('asHypotheses'));
+    },
     description: 'distributive law'
   },
 
   axiomPlusZero: {
-    action: function() {
-        return (rules.assert('R x => x + 0 = x')
-                .then('asHypotheses').justify('axiomPlusZero'));
-      },
-    inputs: {},
-    form: '',
+    proof: function() {
+      return (rules.assert('R x => x + 0 = x')
+              .then('asHypotheses'));
+    },
     tooltip: 'x + 0 = x',
     description: 'additive identity'
   },
 
   axiomTimesOne: {
-    action: function() {
-        return (rules.assert('R x => x * 1 = x')
-                .then('asHypotheses').justify('axiomTimesOne'));
-      },
-    inputs: {},
-    form: '',
+    proof: function() {
+      return (rules.assert('R x => x * 1 = x')
+              .then('asHypotheses'));
+    },
     tooltip: 'x * 1 = x',
     description: 'multiplicative identity'
   },
 
   axiomTimesZero: {
-    action: function() {
-        return (rules.assert('R x => x * 0 = 0')
-                .then('asHypotheses').justify('axiomTimesZero'));
-      },
-    inputs: {},
-    form: '',
+    proof: function() {
+      return (rules.assert('R x => x * 0 = 0')
+              .then('asHypotheses'));
+    },
     tooltip: 'x * 0 = 0',
     description: 'multiplication by 0'
   },
 
   axiomNeg: {
-    action: function() {
-        return rules.assert('neg x = -1 * x').justify('axiomNeg');
-      },
-    inputs: {},
-    form: '',
+    proof: function() {
+      return rules.assert('neg x = -1 * x');
+    },
     tooltip: 'neg x = -1 * x',
     description: 'definition of negation'
   },
 
   axiomReciprocal: {
-    action: function() {
-        return (rules.assert('R x & x != 0 => x * recip x = 1')
-                .then('asHypotheses').justify('axiomReciprocal'));
-      },
-    inputs: {},
-    form: '',
+    proof: function() {
+      return (rules.assert('R x & x != 0 => x * recip x = 1')
+              .then('asHypotheses'));
+    },
     tooltip: 'x * recip x = 1 if x is not 0',
     description: 'recip is inverse to multiplication'
   },
 
   // TODO: Prove this as a theorem.
   axiomReciprocal2: {
-    action: function() {
-      return rules.assert('R (recip x) & recip x != 0 == R x & x != 0')
-        .justify('axiomReciprocal2');
+    proof: function() {
+      return rules.assert('R (recip x) & recip x != 0 == R x & x != 0');
     },
-    inputs: {},
-    form: '',
-    tooltip: 'nonzero reciprocals',
     description: 'reciprocals are nonzero'
   },
 
@@ -382,40 +353,35 @@ var numbersInfo = {
   // that 0 ** 0 is undefined.
   // TODO: Eventually prove these laws of powers as theorems.
   axiomPower0: {
-    action: function() {
+    proof: function() {
         return (rules.assert('R x => x ** 0 = 1')
-                .then('asHypotheses').justify('axiomPower0'));
-      },
-    inputs: {},
-    form: '',
-    tooltip: 'real number to the zeroth power',
+                .then('asHypotheses'));
+    },
     description: 'real number to the zeroth power is 1'
   },
 
   // TODO: Eventually prove these laws of powers as theorems.
   axiomNextPower: {
-    action: function() {
-      return rules.assert('x ** (y + 1) = (x ** y) * x')
-        .justify('axiomNextPower');
+    proof: function() {
+      // TODO: Add conditions R x & R y.
+      return rules.assert('x ** (y + 1) = (x ** y) * x');
     },
-    inputs: {},
-    form: '',
-    tooltip: 'real number to the next power',
     description: 'real number to the next power'
   },
 
   // TODO: Prove this as a consequnce of completeness.
   factNonzeroProduct: {
-      proof: function() {
-        return (rules.assert('R x & R y => (x * y != 0) = (x != 0 & y != 0)')
-                .then('asHypotheses'));
-      }
+    proof: function() {
+      return (rules.assert('R x & R y => (x * y != 0) = (x != 0 & y != 0)')
+              .then('asHypotheses'));
+    }
   },
 
   // Type-related axioms
 
   // This axiom applies to all normal objects, not just reals.
   axiomRealNotNull: {
+    // Note: not conditional.
     proof: function() {
       return rules.assert('not (R none)');
     }
@@ -424,54 +390,30 @@ var numbersInfo = {
   // Note: not structured as a rewrite rule.
   // TODO: Change to a conditional
   axiomPlusType: {
-    action: function() {
-      return rules.assert('R x & R y == R (x + y)')
-        .justify('axiomPlusType');
-    },
-    inputs: {},
-    form: '',
-    menu: 'axiom ' + Toy.mathMarkup('R (x + y)'),
-    tooltip: 'sum of real numbers is real',
-    description: 'sum of real numbers is real'
+    proof: function() {
+      return rules.assert('R x & R y == R (x + y)');
+    }
   },
 
   // Note: not structured as a rewrite rule.
   // TODO: Change to a conditional
   axiomTimesType: {
-    action: function() {
-      return rules.assert('R x & R y == R (x * y)')
-	.justify('axiomTimesType');
-    },
-    inputs: {},
-    form: '',
-    menu: 'axiom ' + Toy.mathMarkup('R (x*y)'),
-    tooltip: 'product of real numbers is real',
-    description: 'product of real numbers is real'
+    proof: function() {
+      return rules.assert('R x & R y == R (x * y)');
+    }
   },
 
   axiomNegType: {
-    action: function() {
-      return rules.assert('R x == R (neg x)')
-	.justify('axiomNegType');
-    },
-    inputs: {},
-    form: '',
-    menu: 'axiom ' + Toy.mathMarkup('R (-x)'),
-    tooltip: 'negation of real number is real',
-    description: 'negation of real number is real'
+    proof: function() {
+      return rules.assert('R x == R (neg x)');
+    }
   },
 
   // TODO: Replace me.
   axiomReciprocalType: {
-    action: function() {
-      return rules.assert('R x & x != 0 == R (recip x)')
-	.justify('axiomReciprocalType');
-    },
-    inputs: {},
-    menu: 'axiom ' + Toy.mathMarkup('x != 0 == R (recip x)'),
-    form: '',
-    tooltip: 'reciprocal of nonzero real number is real',
-    description: 'reciprocal of real number'
+    proof: function() {
+      return rules.assert('R x & x != 0 == R (recip x)');
+    }
   },
 
   // Evaluates arithmetic expressions with operators:
