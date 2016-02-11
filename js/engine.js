@@ -751,6 +751,7 @@ var ruleInfo = {
   },
 
   // r5201b.  Works with hypotheses.
+  // TODO: hyps -- input step is an equation.
   eqnSwap: {
     action: function(h_ab) {
       var ab = h_ab.getMain();
@@ -772,6 +773,7 @@ var ruleInfo = {
   },
 
   // r5201c.  Works with hypotheses.
+  // TODO: hyps -- input step is an equation.
   eqnChain: {
     action: function(ab, bc) {
       var ac = rules.rplace(bc, ab, '/main/right');
@@ -819,6 +821,8 @@ var ruleInfo = {
   // r5201f.  Works with hypotheses.
   // If f is a lambda expression, also applies it to both sides.
   //
+  // TODO: hyps -- one input step is an equation.
+  //
   // TODO: Reverse the arguments for consistency with other rules
   //   that operate on a step; add a version apply2Both that takes
   //   a function of 2 args and an extra term; use in addToBoth, etc..
@@ -848,6 +852,8 @@ var ruleInfo = {
   // term as second argument, resulting in a call to the function
   // with the equation side as first argument and the given
   // second argument.
+  // 
+  // TODO: hyps -- input step is an equation.
   applyToBothWith: {
     action: function(a_b, f_arg, c_arg) {
       var f = Toy.constify(f_arg);
@@ -1107,6 +1113,9 @@ var ruleInfo = {
   // all occurrences of x.  Uses no book-specific definitions,
   // and relies only on theorem "T", 5200, and reduce. (5215)
   // Handles hypotheses.
+  //
+  // TODO: hyps -- input step is an equation.
+  //   (Target converts to an equation.)
   instForall: {
     action: function(h_target, expr) {
       var target = h_target.unHyp();
@@ -1674,6 +1683,10 @@ var ruleInfo = {
 
   // Given two theorems a and b, proves a & b.
   // Handles hypotheses.
+  // 
+  // TODO: hyps -- We could replace uses of this with rules.and, then
+  //   if desired combine assumptions.  Or rename this to andIf, and
+  //   combine asms whenever possible.
   makeConjunction: {
     action: function(a, b) {
       var stepa = rules.toTIsA(a);
@@ -1726,6 +1739,9 @@ var ruleInfo = {
 
   // Given P and P => Q, derive Q. (5224)
   // Handles hypotheses.
+  //
+  // TODO: hyps -- aim to remove uses of this with hypotheses.
+  //   rules.trueBy and/or forwardChain can serve in its place.
   modusPonens: {
     action: function(a, b) {
       var step1 = rules.toTIsA(a);
@@ -2132,7 +2148,7 @@ var ruleInfo = {
   // (5237)  This version implemented via 5235, so much less efficient.
   //
   // Handles hypotheses.
-  // TODO: hyps
+  // TODO: hyps (can remove /main by moving A into assumptions, then back)
   implyForallBook: {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
@@ -2211,7 +2227,6 @@ var ruleInfo = {
     }
   },
 
-  // TODO: Rename implyForall, then give this the name implyForall.
   implyForall: {
     statement: 'forall {x. p => q x} = (p => forall {x. q x})',
     proof: function() {
@@ -2228,6 +2243,9 @@ var ruleInfo = {
   // (5237)  Implemented via implyForallGen.
   //
   // Handles hypotheses.  Note: with hyps, has two levels of =>.
+  //
+  // TODO: hyps -- can be emulated with addForall and moving A
+  //   into/out of assumptions.
   toImplyForall: {
     action: function(v, h_a_b) {
       v = varify(v);
@@ -2267,6 +2285,8 @@ var ruleInfo = {
   // Andrews calls his enhanced version of forward chaining "Rule P".
   // (In this implementation it is more straightforward to use
   // makeConjunction as needed, followed by forwardChain.)
+  //
+  // TODO: hyps -- best strategy TBD.
   forwardChain: {
     action: function(step, schema_arg) {
       var schema = rules.fact(schema_arg);
@@ -4049,6 +4069,8 @@ function applyFactsWithinSite(step, path_arg, facts) {
  * which must be an equation.  Repeats until none of them is
  * applicable, returning the result.  Returns its input step if no
  * matches are found.  Uses rules.rewrite, not rewriteOnly.
+ *
+ * TODO: hyps -- step is an equation.
  */
 function applyFactsWithinRhs(step, facts) {
   var rhs;
@@ -4084,6 +4106,8 @@ function convert(step, path, fn) {
  *
  * Intended to capture a design pattern for proving facts about
  * "inverse" functions such as division and subtraction.
+ *
+ * TODO: hyps -- step2 is an equation.
  */
 function transformApplyInvert(term_arg, eqn_arg, fact) {
   var term = termify(term_arg);
