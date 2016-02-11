@@ -2230,7 +2230,6 @@ Toy.soonDo(function() {
           } else {
             assert(result, 'Proof of ' + name + ' failed.');
           }
-          console.log('Proved', name + ':', result.toString());
         }.bind(null, prover, name));
       nTheorems++;
     }
