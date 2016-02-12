@@ -328,7 +328,7 @@ jQuery(function() {
   // Modus ponens
   var mp1 = rules.assume('p');
   var mp2 = rules.assume('p => q');
-  var mp3 = rules.forwardChain(mp1, mp2);
+  var mp3 = rules.modusPonens(mp1, mp2);
   var mp4 = rules.asImplication(mp3);
   Toy.renderProof(mp4, $('#modusPonens'));
 

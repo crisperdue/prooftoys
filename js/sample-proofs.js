@@ -407,9 +407,11 @@ $(function() {
 
     forwardChain: {
       args: function() {
-        var step1 = Toy.rules.assume('p x & (p x => q x)');
-        var step2 = Toy.rules.tautology('a & (a => b) => b');
-        return [step1, step2];
+        var step1 = Toy.rules.assume('p x');
+        var step2 = Toy.rules.assume('p x => q x');
+        var step3 = Toy.rules.makeConjunction(step1, step2);
+        var step4 = Toy.rules.tautology('a & (a => b) => b');
+        return [step3, step4];
       },
       level: 1
     },
