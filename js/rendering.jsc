@@ -1360,6 +1360,15 @@ function textNode(text) {
 Atom.prototype._render = function(info, minPower, isFn) {
   var $expr = exprJq(!isFn);
   this.node = dom($expr);
+  var aStep = findAsmStep(this, info.asmSteps);
+  if (aStep) {
+    $expr.addClass('stepRef');
+    // Note that this requires the unrendered proof step to be already
+    // linked to a rendering with proper stepNumber:
+    $expr.append(aStep.stepNumber);
+    return $expr;
+  }
+
   var name = this.toHtml();
   if (!isFn && this.isOperator()) {
     name = '(' + name + ')';
