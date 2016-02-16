@@ -1244,7 +1244,7 @@ function getAssumptionSteps(rstep) {
     var steps = controller.steps;
     for (var i = 0; i < steps.length; i++) {
       var astep = steps[i];
-      if (astep.ruleName == 'assume') {
+      if (astep.ruleName == 'assume' || astep.ruleName == 'given') {
         resultSteps.push(astep);
       }
       // Don't search past the argument step.
