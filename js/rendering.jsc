@@ -1121,7 +1121,12 @@ function wantLeftElision(step) {
  * that come from outside.
  */
 function renderAsStep(step) {
-  if (step.isCall2('=>')) {
+  if (step.ruleName == 'asImplication') {
+    var info = {asmSteps: [], typeConds: null, isTop: false};
+    $wff = step.wff._render(info, 0);
+    step.node = dom($wff);
+    return dom($wff);
+  } else if (step.isCall2('=>')) {
     var asms = step.getLeft();
     // Must we make the $wff if there are assumptions, but none visible?
     var $wff;
