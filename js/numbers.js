@@ -713,8 +713,9 @@ var numbersInfo = {
     labels: 'uncommon'
   },
 
-  // TODO: Thes "both" ops are less general than the related facts
-  //   such as 'a = b => a * c = b * c'.  Consider using those here.
+  // TODO: Replace these "both" rules with ones that take a site as
+  //   input, rewriting the equation at the site using a fact such as
+  //   'a = b == a + c = b + c'.
   addToBoth: {
     action: function(eqn, term_arg) {
       return (rules.applyToBothWith(eqn, '+', term_arg)

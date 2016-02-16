@@ -2401,10 +2401,10 @@ var ruleInfo = {
   // 5239, closely following the description and names in the book.
   // Analog to Rule R, expressed as an implication.  Theorem schema.
   //
-  // Given equation A = B, target wff C, and a path relative to C, proves
-  // a wff of the form "(forall ... A = B) => (C = D), where D is
-  // obtained like the result of applying Rule R to A = B and C.  The
-  // "forall" binds free variables of A = B that are bound at the
+  // Given equation A = B, target wff C, and a path relative to C,
+  // proves a wff of the form "(forall ... A = B) => (C = D), where D
+  // is obtained similarly to an application of Rule R to A = B and C.
+  // The "forall" binds free variables of A = B that are bound at the
   // replacement location in C.
   r5239: {
     action: function(equation, target, path) {
@@ -2458,16 +2458,18 @@ var ruleInfo = {
     inputs: {bool: [1, 2], path: 3},
     form: ('Apply equation <input name=bool1> to <input name=bool2> at ' +
            '<input name=path>'),
-    labels: 'basic',
+    menu: 'prove A = B => (C == D) where D is C with an A replaced by B',
+    labels: 'advanced',
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
-  // Version of Andrews Rule R' that ignores hypotheses.  Uses a
-  // potentially conditional equation to replace a term in a target
-  // step.  The result is conditional iff the equation is conditional,
-  // so if the target is also conditional, the result looks like this:
-  // [p => (q => r], where p is the antecedant of the equation, the
-  // target and result both having the form [q => r].
+  // Version of Andrews Rule R' that uses a conditional rather than
+  // hypotheses.  Uses a potentially conditional equation to replace a
+  // term in a target step.  The result is conditional iff the
+  // equation is conditional, so if the target is also conditional,
+  // the result looks like: [p => (q => r)], where p is the antecedant
+  // of the equation, the target and result both having the form [q =>
+  // r].
   //
   // Takes its arguments in the usual order, unlike rules.r and
   // rules.rplace, with the target first.
