@@ -2287,6 +2287,12 @@ var ruleInfo = {
   // makeConjunction as needed, followed by forwardChain.)
   //
   // TODO: hyps -- best strategy TBD.
+  //
+  // TODO: Apply a similar quantification strategy to rewriting, since
+  // the same issues apply to rewrites.
+  //
+  // TODO: Remove support here for equivalences, and replace the
+  // relevant occurrences of this rule with uses of rewriting.
   forwardChain: {
     action: function(step, schema_arg) {
       var schema = rules.fact(schema_arg);
