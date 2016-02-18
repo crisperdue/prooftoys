@@ -69,7 +69,7 @@ var siteTypes = {
 };
 
 /**
- * A ProofControl can have only one StepEditor.  It appears at the end
+ * A ProofDisplay can have only one StepEditor.  It appears at the end
  * of an editable proof.
  *
  * TODO: Support essential step editing such as justification of an assumed
@@ -78,7 +78,7 @@ var siteTypes = {
  * Fields:
  * $node: DIV with the step editor's HTML.
  * form: jQuery SPAN to hold the argument input form.
- * proofControl: ProofControl to edit
+ * proofDisplay: ProofDisplay to edit
  * controller: ProofEditor containing this StepEditor.
  * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
@@ -98,7 +98,7 @@ function StepEditor(controller) {
   var self = this;
 
   self.controller = controller;
-  self.proofControl = controller.proofControl;
+  self.proofDisplay = controller.proofDisplay;
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
   self.solutions = [];
@@ -120,9 +120,9 @@ function StepEditor(controller) {
 
   self.showRules = [];
 
-  // Attach the "ruleWorking" to the ProofControl node so
+  // Attach the "ruleWorking" to the ProofDisplay node so
   // it doesn't move when steps are inserted.
-  $(self.proofControl.node)
+  $(self.proofDisplay.node)
     .append($('<div class=ruleWorking/>').text('Working . . . '));
   var widget = new BasicRuleSelector(self);
   self.ruleSelector = widget;
@@ -165,7 +165,7 @@ StepEditor.prototype.selectedExpr = function() {
  */
 StepEditor.prototype._setBusy = function(busy, complete) {
   this.$node.toggleClass('busy', busy);
-  var $working = $(this.proofControl.node).find('.ruleWorking');
+  var $working = $(this.proofDisplay.node).find('.ruleWorking');
   if (busy) {
     // Temporarily turn on display of ruleSelector to get its offset.
     this.ruleSelector.$node.toggle(true);
@@ -184,7 +184,7 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   // TODO: Make these actions into a function/method, see "reset".
   this.clearer.addClass('hidden');
   this.form.html('');
-  this.proofControl.setSelectLock(false);
+  this.proofDisplay.setSelectLock(false);
 };
 
 /**
@@ -225,7 +225,7 @@ StepEditor.prototype.report = function(error) {
 StepEditor.prototype.reset = function() {
   this.clearer.addClass('hidden');
   this.form.html('');
-  this.proofControl.setSelectLock(false);
+  this.proofDisplay.setSelectLock(false);
   this._setBusy(false);
   this.ruleSelector.fadeToggle(true);
 };
@@ -249,7 +249,7 @@ StepEditor.prototype.ruleChosen = function() {
     //   check here if all args can be filled from the selection
     //   and modify that to always report errors.
     var template = rule.info.form;
-    var step = this.proofControl.selection;
+    var step = this.proofDisplay.selection;
     var term = step && step.selection;
     var formatArgs = {term: (term && term.toHtml()) || '{term}'};
     if (template) {
@@ -258,7 +258,7 @@ StepEditor.prototype.ruleChosen = function() {
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
       this.form.html(Toy.format(template, formatArgs));
-      this.proofControl.setSelectLock(true);
+      this.proofDisplay.setSelectLock(true);
       this.form.append(' <button>Go</button>');
       addClassInfo(this.form);
       if (!usesSite(rule)) {
@@ -277,7 +277,7 @@ StepEditor.prototype.ruleChosen = function() {
   } else if (value.slice(0, 5) === 'fact ') {
     // Values "fact etc" indicate use of rules.rewrite, and
     // the desired fact is indicated by the rest of the value.
-    var siteStep = this.proofControl.selection;
+    var siteStep = this.proofDisplay.selection;
     if (!siteStep || !siteStep.selection) {
       this.error('No selected site');
     }
@@ -327,8 +327,8 @@ function addClassInfo(form) {
  * sites, which do not appear in forms.
  */
 StepEditor.prototype.addSelectionToForm = function(rule) {
-  var proofControl = this.proofControl;
-  var step = proofControl.selection;
+  var proofDisplay = this.proofDisplay;
+  var step = proofDisplay.selection;
   if (step) {
     var expr = step.selection;
     var form = this.form;
@@ -484,14 +484,14 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.report('nothing done');
   } else {
     try {
-      this.proofControl.addStep(result);
+      this.proofDisplay.addStep(result);
     } catch(error) {
       this._setBusy(false);
       error.message = 'Error rendering step ' + result + ': ' + error.message;
       this.report(error);
       return;
     }
-    this.proofControl.deselectStep();
+    this.proofDisplay.deselectStep();
     // Clear the proof errors field.
     this.$proofErrors.hide();
     // After the browser repaints, try simplifying the step
@@ -513,7 +513,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
         self._setBusy(false);
         var steps = Toy.unrenderedDeps(simplified);
         steps.forEach(function(step) {
-            self.proofControl.addStep(step);
+            self.proofDisplay.addStep(step);
           });
         checkSolution(simplified);
       });
@@ -588,7 +588,7 @@ function autoSimplify(step) {
  */
 StepEditor.prototype.slotIndex = function() {
   // New steps are always appended.
-  return this.proofControl.steps.length + 1;
+  return this.proofDisplay.steps.length + 1;
 };
 
 StepEditor.prototype.genAbbrevName = function() {
@@ -608,7 +608,7 @@ StepEditor.prototype.prefillArgs = function(args) {
   // Fill in site information from a selected expression.
   for (var type in inputs) {
     if (type in siteTypes) {
-      var step = this.proofControl.selection;
+      var step = this.proofDisplay.selection;
       var expr = step && step.selection;
       if (expr) {
 	var position = inputs[type];
@@ -673,10 +673,10 @@ StepEditor.prototype.parseValue = function(value, type) {
       throw new Error('Not a step number: ' + value);
     }
     var index = Number(value) - 1;
-    if (index < 0 || index >= this.proofControl.steps.length) {
+    if (index < 0 || index >= this.proofDisplay.steps.length) {
       throw new Error('No such step: ' + value);
     }
-    return this.proofControl.steps[Number(value) - 1].original;
+    return this.proofDisplay.steps[Number(value) - 1].original;
   case 'bool':
     var expr = Toy.parse(value);
     var type = Toy.findType(expr);
@@ -774,7 +774,7 @@ StepEditor.prototype.offerable = function(ruleName) {
   if (!('form' in info)) {
     return false;
   }
-  var step = this.proofControl.selection;
+  var step = this.proofDisplay.selection;
   if (step) {
     // Something is selected.  Check if the rule accepts the
     // selection.
@@ -809,7 +809,7 @@ $.extend(StepEditor.prototype, {
   offerableFacts: function() {
     var self = this;
     var facts = [];
-    var step = this.proofControl.selection;
+    var step = this.proofDisplay.selection;
     if (step) {
       var expr = step.selection;
       var TypeConstant = Toy.TypeConstant;
@@ -993,7 +993,7 @@ BasicRuleSelector.prototype.update = function() {
   self.$node.fadeIn();
   $header = $('<div class=rules-header/>');
   self.$node.append($header);
-  var step = this.stepEditor.proofControl.selection;
+  var step = this.stepEditor.proofDisplay.selection;
   var term = step && step.selection;
   // Map from rule display text to rule name.
   var byDisplay = {};
@@ -1014,7 +1014,7 @@ BasicRuleSelector.prototype.update = function() {
       }
       // If as usual the LHS of the equation matches the selection,
       // set toDisplay to the result of substituting into the RHS.
-      var step = self.stepEditor.proofControl.selection;
+      var step = self.stepEditor.proofDisplay.selection;
       var selection = step && step.selection;
       if (selection) {
         var subst = selection.matchSchema(statement.getLeft());
@@ -1047,7 +1047,7 @@ BasicRuleSelector.prototype.update = function() {
   //   selection (most theorems and theorem generators).
   $header.text(displayTexts.length
                ? 'Actions:'
-               : (self.stepEditor.proofControl.selection
+               : (self.stepEditor.proofDisplay.selection
                   ? (self.stepEditor.showRuleType == 'algebra'
                      ? 'Try selecting the whole step or a numeric expression.'
                      : 'No actions available for the selection in this mode.')

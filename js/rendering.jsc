@@ -192,21 +192,21 @@ var proofToyState = {
 
 //// PROOF EDITOR
 
-// TODO: Consider how to refactor ProofEditor, ProofControl, and
+// TODO: Consider how to refactor ProofEditor, ProofDisplay, and
 //   StepEditor for cleaner code.  Should ProofEditor subclass from
-//   ProofControl?
+//   ProofDisplay?
 
 // Each instance has a numeric ID.
 var nextProofEditorId = 1;
 
 /**
  * Construct a proof displayer/editor, which is a composite made from
- * a ProofControl.  User interaction may also create additional
- * subproof ProofControl objects within this.
+ * a ProofDisplay.  User interaction may also create additional
+ * subproof ProofDisplay objects within this.
  *
  * Public properties:
  *
- * proofControl: ProofControl for the proof being edited.
+ * proofDisplay: ProofDisplay for the proof being edited.
  * stepEditor: StepEditor for the proof being edited.
  */
 function ProofEditor() {
@@ -216,8 +216,8 @@ function ProofEditor() {
   // Data of this ProofEditor to remember across page load/unload,
   // representable in JSON.
   this.data = {};
-  @mainControl = new ProofControl();
-  this.proofControl = @mainControl;
+  @mainDisplay = new ProofDisplay();
+  this.proofDisplay = @mainDisplay;
   var stateDisplayHtml =
     '<div class="proofStateDisplay hidden"\n' +
     ' style="padding: 1em; border: 2px solid #aaf">\n' +
@@ -260,9 +260,9 @@ function ProofEditor() {
   self.$rulesMode = @proofButtons.find('.rulesToShow');
 
   self.stepEditor = new Toy.StepEditor(this);
-  @mainControl.stepEditor = this.stepEditor;
+  @mainDisplay.stepEditor = this.stepEditor;
 
-  clearProof.on('click', function() {@mainControl.setSteps([]); });
+  clearProof.on('click', function() {@mainDisplay.setSteps([]); });
   // Step editor has state controlling whether to show all rules.
   self.$rulesMode.on('change', function(event) {
       self.stepEditor.showRuleType = this.value;
@@ -281,7 +281,7 @@ function ProofEditor() {
     .append(@proofButtons)
     .append(ruleStats)
     .append(this._stateDisplay)
-    .append(@mainControl.node)
+    .append(@mainDisplay.node)
     .append(this.stepEditor.$node);
   this.setEditable(true);
 
@@ -290,20 +290,20 @@ function ProofEditor() {
       self.saveState();
     });
 
-  // Make the ProofControl save state when the proof changes.
-  @mainControl.proofChanged = function() {
-    // "this" is the ProofControl.
+  // Make the ProofDisplay save state when the proof changes.
+  @mainDisplay.proofChanged = function() {
+    // "this" is the ProofDisplay.
     self._refresher.activate();
   };
 
   // Update the step editor query results when the selection may
   // have changed.
-  @mainControl.selectionChanged = function() {
+  @mainDisplay.selectionChanged = function() {
     self.stepEditor.ruleSelector.refresh();
   };
 
   // TODO: Consider creating the step editor from the proof editor
-  //   rather than ProofControls for cleaner structure, less redundant
+  //   rather than ProofDisplays for cleaner structure, less redundant
   //   step editors.
 
   // Handler for the "restore proof" button.  Restores proof state from
@@ -334,7 +334,7 @@ function ProofEditor() {
     if (data) {
       self.data = data;
       if (data.proofState) {
-        @mainControl.setSteps(Toy.decodeSteps(data.proofState));
+        @mainDisplay.setSteps(Toy.decodeSteps(data.proofState));
       }
     } else {
       proofToyState.data.proofEditors[self.proofEditorId] = self.data;
@@ -348,8 +348,8 @@ function ProofEditor() {
   // And clear any proof errors field.
   $(document).on('click', function(event) {
     if ($(event.target).closest('.proofContainer').length == 0) {
-      // Not in a ProofControl's area.
-      @mainControl.deselectStep();
+      // Not in a ProofDisplay's area.
+      @mainDisplay.deselectStep();
       self.stepEditor.$proofErrors.hide();
     }
   });
@@ -371,14 +371,14 @@ ProofEditor.prototype.setRulesMode = @(mode) {
  * Add a step to the proof.
  */
 ProofEditor.prototype.addStep = @(step) {
-  @mainControl.addStep(step);
+  @mainDisplay.addStep(step);
 };
 
 /**
  * Gets the state of the proof, in string form.
  */
 ProofEditor.prototype.getStateString = @() {
-  return Toy.encodeSteps(@mainControl.steps)
+  return Toy.encodeSteps(@mainDisplay.steps)
 };
 
 /**
@@ -387,14 +387,14 @@ ProofEditor.prototype.getStateString = @() {
  */
 ProofEditor.prototype.setStateFromString = @(encoded) {
   var steps = Toy.decodeSteps(encoded);
-  @mainControl.setSteps(steps);
+  @mainDisplay.setSteps(steps);
 };
 
 /**
  * Sets the steps to the given array of non-renderable steps.
  */
 ProofEditor.prototype.setSteps = @(steps) {
-  @mainControl.setSteps(steps);
+  @mainDisplay.setSteps(steps);
 };
 
 /**
@@ -419,7 +419,7 @@ ProofEditor.prototype.restoreState = function() {
 };
 
 ProofEditor.prototype.setEditable = @(value) {
-  @mainControl.setEditable(value);
+  @mainDisplay.setEditable(value);
   this.stepEditor.$node.toggle(value);
 };
 
@@ -443,22 +443,22 @@ ProofEditor.prototype.showProofButtons = @(value) {
 //     <div class=inferenceDisplay>
 
 /**
- * Construct a ProofControl.
+ * Construct a ProofDisplay.
  *
  * Optional single properties argumenent, recognizing:
  * 
  * stepPrefix: to initialize the stepPrefix property.
  * parentStep: parent step, rendered or not.  If given,
- *   this ProofControl's steps will be assumed to be the
+ *   this ProofDisplay's steps will be assumed to be the
  *   details for this step.
  *
- * ProofControl object properties:
+ * ProofDisplay object properties:
  *
  * steps: an array of the _rendered_ steps displayed.
  *
  * node: Node containing the entire rendering of the proof.  This has
- * CSS class proofDisplay and the ProofControl as the value of its
- * data('proofControl').  Only ProofControl nodes should have the
+ * CSS class proofDisplay and the ProofDisplay as the value of its
+ * data('proofDisplay').  Only ProofDisplay nodes should have the
  * proofDisplay class.
  *
  * stepsNode: DOM node of the proofSteps DIV.
@@ -473,13 +473,13 @@ ProofEditor.prototype.showProofButtons = @(value) {
  * Expr.justify.
  *
  * Note that the stepNumber property of a step depends on its position
- * in its ProofControl's steps array, so it must be a property of a
+ * in its ProofDisplay's steps array, so it must be a property of a
  * _rendered_ step.
  *
  * TODO: Consider supporting a set of renderings per unrendered proof
  * step.
  */
-function ProofControl(properties) {
+function ProofDisplay(properties) {
   properties = properties || {};
   var controller = this;
   this.steps = [];
@@ -493,7 +493,7 @@ function ProofControl(properties) {
   this.parentStep = properties.parentStep || null;
 
   // ID of element to use for saving/restoring proof state.
-  // TODO: Make the textarea part of the ProofControl.
+  // TODO: Make the textarea part of the ProofDisplay.
   this.textAreaId = 'proofState';
 
   this.stepEditor = null;
@@ -502,7 +502,7 @@ function ProofControl(properties) {
   var $node = $('<div class=proofDisplay>' +
              '<div class=stepsParent><div class=proofSteps></div></div>' +
              '</div>');
-  $node.data('proofControl', this);
+  $node.data('proofDisplay', this);
   this.node = dom($node);
 
   this.stepsNode = dom($node.find('.proofSteps'));
@@ -519,13 +519,13 @@ function ProofControl(properties) {
  * By default do nothing when the proof changes, but instances may
  * provide their own actions.
  */
-ProofControl.prototype.proofChanged = function() {};
+ProofDisplay.prototype.proofChanged = function() {};
 
 /**
  * Like proofChanged, default is a no-op but instances may override
  * this.
  */
-ProofControl.prototype.selectionChanged = function() {};
+ProofDisplay.prototype.selectionChanged = function() {};
 
 /**
  * Sets the steps of this proof control to be renderings of the ones
@@ -535,7 +535,7 @@ ProofControl.prototype.selectionChanged = function() {};
  * TODO: Make a sensible policy for accepting renderable versus
  * nonrenderable steps.
  */
-ProofControl.prototype.setSteps = function(steps) {
+ProofDisplay.prototype.setSteps = function(steps) {
   // Clear rendering properties of current steps, as they will be
   // deleted.
   this.steps.forEach(function(step) {
@@ -560,7 +560,7 @@ ProofControl.prototype.setSteps = function(steps) {
  *   since more than the numbering may change, e.g. steps become
  *   adjacent after a deletion.
  */
-ProofControl.prototype._renumber = function() {
+ProofDisplay.prototype._renumber = function() {
   var self = this;
   // Give the steps numbers from 1 to N.
   this.steps.forEach(function(step, i) {
@@ -586,7 +586,7 @@ function renderStepNumber(step) {
  * of the control's proof, assigning it the stepNumber for its
  * position.
  */
-ProofControl.prototype.addStep = function(step) {
+ProofDisplay.prototype.addStep = function(step) {
   // TODO: Move most of this logic into renderStep.
   var copy = step.copyToRender();
   copy.users = 0;
@@ -609,10 +609,10 @@ ProofControl.prototype.addStep = function(step) {
 };
 
 /**
- * Finds a step belonging to this ProofControl that depends on the original
+ * Finds a step belonging to this ProofDisplay that depends on the original
  * of the given target step; or null if none found.
  */
-ProofControl.prototype.findDependent = function(target) {
+ProofDisplay.prototype.findDependent = function(target) {
   var original = target.original;
   for (var i = 0; i < this.steps.length; i++) {
     var step = this.steps[i];
@@ -627,7 +627,7 @@ ProofControl.prototype.findDependent = function(target) {
  * Unconditionally remove the rendered step from this controller,
  * deselecting it if selected.
  */
-ProofControl.prototype.removeLastStep = function() {
+ProofDisplay.prototype.removeLastStep = function() {
   var self = this;
   var steps = self.steps;
   var index = steps.length - 1;
@@ -649,7 +649,7 @@ ProofControl.prototype.removeLastStep = function() {
  * Remove from the proof display the given top-level rendered proof
  * step and all other steps of the display that come after it.
  */
-ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
+ProofDisplay.prototype.removeStepAndFollowing = function(toRemove) {
   var index = this.steps.indexOf(toRemove);
   var steps = this.steps;
   // Remove the last remaining step in each iteration so there is
@@ -664,7 +664,7 @@ ProofControl.prototype.removeStepAndFollowing = function(toRemove) {
  * Remove just the given rendered step from this proof.
  * The step must not have any rendered steps that depend on it.
  */
-ProofControl.prototype.removeStep = function(step) {
+ProofDisplay.prototype.removeStep = function(step) {
   assert(step.users === 0, 'Cannot remove used step {1}', step);
   // Works by removing from here down, then re-inserting.
   var self = this;
@@ -678,7 +678,7 @@ ProofControl.prototype.removeStep = function(step) {
  * Turn highlighting of expressions on or off by adding or removing
  * handlers for their events.
  */
-ProofControl.prototype.setHoverHighlighting = function(state) {
+ProofDisplay.prototype.setHoverHighlighting = function(state) {
   var action = state ? 'on' : 'off';
   var $node = $(this.node);
   $node[action]('mouseover', exprHandleOver);
@@ -691,9 +691,9 @@ ProofControl.prototype.setHoverHighlighting = function(state) {
 };
 
 /**
- * Returns true iff this ProofControl is editable.
+ * Returns true iff this ProofDisplay is editable.
  */
-ProofControl.prototype.isEditable = function() {
+ProofDisplay.prototype.isEditable = function() {
   return this._editable;
 };
 
@@ -703,7 +703,7 @@ ProofControl.prototype.isEditable = function() {
  * handling accordingly.  Can turn on hoverHighling, but never
  * turns it off.
  */
-ProofControl.prototype.setEditable = function(state) {
+ProofDisplay.prototype.setEditable = function(state) {
   this._editable = state;
   if (state) {
     this.setHoverHighlighting(state);
@@ -719,17 +719,17 @@ ProofControl.prototype.setEditable = function(state) {
  * may be temporarily set for example when a rule has been chosen
  * based on an existing selection and its form is displayed.
  */
-ProofControl.prototype.setSelectLock = function(state) {
+ProofDisplay.prototype.setSelectLock = function(state) {
   this._selectLock = state;
 };
 
 /**
  * Result is truthy if selection is currently accepted in this
- * ProofControl, specifically when the control is editable and
+ * ProofDisplay, specifically when the control is editable and
  * selection is not locked out.  Display of "popup" replacement
  * expressions also keys off of this.
  */
-ProofControl.prototype.isSelectAllowed = function() {
+ProofDisplay.prototype.isSelectAllowed = function() {
   return !this._selectLock && this.isEditable();
 };
 
@@ -738,9 +738,9 @@ ProofControl.prototype.isSelectAllowed = function() {
 
 /**
  * Unconditionally flag the renderable step as selected within this
- * ProofControl and in the UI, no other action.
+ * ProofDisplay and in the UI, no other action.
  */
-ProofControl.prototype.selectStep = function(step) {
+ProofDisplay.prototype.selectStep = function(step) {
   var $node = $(step.stepNode);
   $node.addClass('selected');
   $node.find('.checkbox').prop('checked', true);
@@ -750,9 +750,9 @@ ProofControl.prototype.selectStep = function(step) {
 
 /**
  * Unconditionally deselect any selected step and any selected
- * expression in it, in both the ProofControl and the UI.
+ * expression in it, in both the ProofDisplay and the UI.
  */
-ProofControl.prototype.deselectStep = function() {
+ProofDisplay.prototype.deselectStep = function() {
   var step = this.selection;
   if (step) {
     var $node = $(step.stepNode);
@@ -765,10 +765,10 @@ ProofControl.prototype.deselectStep = function() {
 };
 
 /**
- * Unconditionally select the expr in this ProofControl and in the UI,
+ * Unconditionally select the expr in this ProofDisplay and in the UI,
  * no other action.
  */
-ProofControl.prototype.selectExpr = function(expr) {
+ProofDisplay.prototype.selectExpr = function(expr) {
   var step = getProofStep(expr);
   this.selection = step;
   $(expr.node).addClass('selected');
@@ -780,7 +780,7 @@ ProofControl.prototype.selectExpr = function(expr) {
  * Unconditionally deselect any selected expr in the
  * step, no other action.
  */
-ProofControl.prototype.deselectExpr = function(step) {
+ProofDisplay.prototype.deselectExpr = function(step) {
   var expr = step.selection;
   if (expr) {
     $(expr.node).removeClass('selected');
@@ -794,7 +794,7 @@ ProofControl.prototype.deselectExpr = function(step) {
  * step, deselecting any other.  Toggles the current one if
  * already selected.
  */
-ProofControl.prototype.handleStepClick = function(step) {
+ProofDisplay.prototype.handleStepClick = function(step) {
   if (this.isSelectAllowed()) {
     var selected = this.selection;
     var expr = selected ? selected.selection : null;
@@ -811,7 +811,7 @@ ProofControl.prototype.handleStepClick = function(step) {
  * toggles the current one if already selected.  Prevents
  * event bubbling up to the step itself.
  */
-ProofControl.prototype.handleExprClick = function(expr) {
+ProofDisplay.prototype.handleExprClick = function(expr) {
   if (this.isSelectAllowed()) {
     var step = getProofStep(expr);
     var selection = this.selection;
@@ -850,11 +850,11 @@ var _turnstile = '\u22a6';
  *   unrendered proof step from which it was created.
  *
  * - A rendered step has a "proofDisplay" property referring to
- *   the ProofControl it belongs to.
+ *   the ProofDisplay it belongs to.
  *
  * - When a rendered step has a subproof display open, it has a
- *   "subproofControl" property referring to the subproof's
- *   ProofControl.
+ *   "subproofDisplay" property referring to the subproof's
+ *   ProofDisplay.
  *
  * - Creation of a rendered step adds a "rendering" property to the
  *   original, so original proof steps can currently have only one
@@ -869,7 +869,7 @@ var _turnstile = '\u22a6';
  *   the step number to display; and "hasLeftElision", a boolean true
  *   to request omitting display of the LHS of an equation.
  */
-ProofControl.prototype.renderStep = function(step) {
+ProofDisplay.prototype.renderStep = function(step) {
   var self = this;
   // Annotate all rendered steps with type information.
   step.annotateWithTypes();
@@ -912,7 +912,7 @@ ProofControl.prototype.renderStep = function(step) {
   // Event handling:
 
   // Expr hovering is already handled by delegation in
-  // ProofControl.setEditable.
+  // ProofDisplay.setEditable.
   //
   // TODO: Consider using delegation more extensively.
   var exprSelector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
@@ -954,7 +954,7 @@ ProofControl.prototype.renderStep = function(step) {
   // are enabled.
   if (Toy.modes.subproofs) {
     $step.on('click', 'span.ruleName.link', function(event) {
-      if (step.subproofControl) {
+      if (step.subproofDisplay) {
         clearSubproof(step);
       } else {
         renderSubproof(step);
@@ -965,10 +965,10 @@ ProofControl.prototype.renderStep = function(step) {
 };
 
 /**
- * Renders the expression popups for a steps in a ProofControl.  The
+ * Renders the expression popups for a steps in a ProofDisplay.  The
  * proof should be editable.
  */
-ProofControl.prototype.renderPopups = function(step) {
+ProofDisplay.prototype.renderPopups = function(step) {
   if (Toy.profileName.match(/^popups/)) {
     console.profile(Toy.profileName);
   }
@@ -1063,12 +1063,12 @@ ProofControl.prototype.renderPopups = function(step) {
 
 /**
  * Returns the previous rendered step, if any, which is the previous
- * step in the same ProofControl, otherwise the previous rendered step
+ * step in the same ProofDisplay, otherwise the previous rendered step
  * of the controller's parent step (recursively if needed), otherwise
  * null.
  */
 function prevRenderedStep(step) {
-  var controller = getProofControl(step);
+  var controller = getProofDisplay(step);
   if (!controller) {
     return null;
   }
@@ -1236,7 +1236,7 @@ function renderTypeConds(expr) {
 function getAssumptionSteps(rstep) {
   var resultSteps = [];
   function addAsms(rstep) {
-    var controller = getProofControl(rstep);
+    var controller = getProofDisplay(rstep);
     var parent = controller.parentStep;
     if (parent) {
       addAsms(parent);
@@ -1696,11 +1696,11 @@ function unrenderedDeps(step) {
 
 /**
  * Renders details of the given rendered proof step and sets the
- * subproofControl property of the step to the ProofControl for the
+ * subproofDisplay property of the step to the ProofDisplay for the
  * subproof.
  */
 function renderSubproof(step) {
-  var controller = getProofControl(step);
+  var controller = getProofDisplay(step);
   var $node;
   if (step.ruleName == 'theorem') {
     $node = renderInference(Toy.getTheorem(step.ruleArgs[0]));
@@ -1708,7 +1708,7 @@ function renderSubproof(step) {
     $node = renderInference(step);
   }
   $(getStepNode(step)).addClass('hasSubproof');
-  step.subproofControl = $node.data('proofControl');
+  step.subproofDisplay = $node.data('proofDisplay');
 
   // Animate display of the subproof.  While sliding in the display,
   // also smoothly scroll the window to keep the given step at the
@@ -1728,15 +1728,15 @@ function renderSubproof(step) {
 
 /**
  * Clear any subproof of this step and any subproofs of its steps
- * recursively.  Remove the subproofControl property from the step.
+ * recursively.  Remove the subproofDisplay property from the step.
  *
  * The second argument is true when no UI action is desired.
  */
 function clearSubproof(step, internal) {
   // TODO: Consider ways to clean up this whole function.
-  var controller = step.subproofControl;
+  var controller = step.subproofDisplay;
   if (controller) {
-    delete step.subproofControl;
+    delete step.subproofDisplay;
     controller.steps.forEach(function(step) {
         // Record that the rendering is gone.
         step.original.rendering = null;
@@ -1772,8 +1772,8 @@ function clearSubproof(step, internal) {
 function adjacentSteps(step1, step2) {
   step1 = step1.rendering;
   step2 = step2.rendering;
-  var controller = getProofControl(step1);
-  var controller2 = getProofControl(step2);
+  var controller = getProofDisplay(step1);
+  var controller2 = getProofDisplay(step2);
   if (controller2 !== controller) {
     return false;
   }
@@ -2049,8 +2049,8 @@ var stepFormatters = {
 /**
  * Given a proof step, renders a header and the proof steps
  * of its as-yet-unrendered details within a container DIV with CSS
- * class inferenceDisplay.  Sets the 'proofControl' data property of
- * the node to refer to the new ProofControl.  If the step is
+ * class inferenceDisplay.  Sets the 'proofDisplay' data property of
+ * the node to refer to the new ProofDisplay.  If the step is
  * rendered, the details are rendered with step numbers relative to
  * its own step number.
  *
@@ -2075,7 +2075,7 @@ function renderInference(step) {
     }
   }
   var controller =
-    new ProofControl({stepPrefix: prefix, parentStep: step});
+    new ProofDisplay({stepPrefix: prefix, parentStep: step});
   controller.setSteps(steps);
   var tooltip = Toy.escapeHtml(Toy.getRuleInfo(step).tooltip || '');
   var $subproof = $('<div class=inferenceDisplay></div>');
@@ -2113,14 +2113,14 @@ function renderInference(step) {
       });
   }
   $subproof.append(controller.node);
-  $subproof.data('proofControl', controller);
+  $subproof.data('proofDisplay', controller);
   return $subproof;
 }
 
 /**
  * Renders a proof of steps that derive a given step.  Renders the
  * unrendered steps up to and including the given step, appending the
- * display to the given Node.  Returns a new ProofControl containing
+ * display to the given Node.  Returns a new ProofDisplay containing
  * the rendering.
  *
  * If millis are given they should be the elapsed time for executing
@@ -2133,7 +2133,7 @@ function renderProof(step, where, millis, nSteps) {
   where = $(where);
   var startRender = new Date().getTime();
   var steps = unrenderedDeps(step);
-  var controller = new ProofControl();
+  var controller = new ProofDisplay();
   controller.setSteps(steps);
   var renderTime = Math.ceil(new Date().getTime() - startRender);
   var stats = '';
@@ -2245,7 +2245,7 @@ function getStepsNode(node) {
 /**
  * Get a jQuery for the parent node containing the top-level proof and
  * subproofs where this rendered expr can be found.  That parent node
- * is currently not part of a ProofControl, but by convention should
+ * is currently not part of a ProofDisplay, but by convention should
  * contain only the top-level proof and its subproofs.
  */
 function getTopProofContainer(expr) {
@@ -2260,13 +2260,13 @@ function getTopProofContainer(expr) {
 }
 
 /**
- * Gets the ProofControl of a rendered term or step, or the node of
+ * Gets the ProofDisplay of a rendered term or step, or the node of
  * one.  Returns null if the term or step is not rendered.
  *
  * TODO: Split this into at least two different things when there is
  * an actual Step class.
  */
-function getProofControl(expr) {
+function getProofDisplay(expr) {
   if (expr instanceof Expr && expr.isProved()) {
     return expr.proofDisplay;
   } else {
@@ -2275,7 +2275,7 @@ function getProofControl(expr) {
       return null;
     }
     var ancestor = $(node).closest('.proofDisplay');
-    return ancestor.data('proofControl');
+    return ancestor.data('proofDisplay');
   }
 }
 
@@ -2303,8 +2303,8 @@ function exprHandleOver(event) {
   var $expr = $(target).closest(selector);
   // Could be no elements in $expr.
   $expr.addClass('hover');
-  var proofControl = getProofControl(target);
-  if (!proofControl.selection && proofControl.isSelectAllowed()) {
+  var proofDisplay = getProofDisplay(target);
+  if (!proofDisplay.selection && proofDisplay.isSelectAllowed()) {
     // Only show these if nothing selected and no form is displayed.
     // Flag as ".popped" the first parent .expr containing an ".above",
     // if any.
@@ -2578,7 +2578,7 @@ Toy.stepSites = stepSites;
 
 Toy.proofToyState = proofToyState;
 Toy.ProofEditor = ProofEditor;
-Toy.ProofControl = ProofControl;
+Toy.ProofDisplay = ProofDisplay;
 Toy.unrenderedDeps = unrenderedDeps;
 Toy.renderInference = renderInference;
 Toy.renderProof = renderProof;

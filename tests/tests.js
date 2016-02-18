@@ -1442,7 +1442,7 @@ var testCase = {
     assertEqual('(T = (b = b))', Toy.rules.eqT('b'));
     var step = Toy.rules.eqT(call(f, x));
     assertEqual('(T = ((f x) = (f x)))', step);
-    var controller = new Toy.ProofControl();
+    var controller = new Toy.ProofDisplay();
     // or controller.setSteps(Toy.unrenderedDeps(step));
     controller.addStep(step);
     var step2 = Toy.rules.instVar(step, y, x);

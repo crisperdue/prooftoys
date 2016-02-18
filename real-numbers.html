@@ -156,7 +156,7 @@ Toy.mathifyAll();
 // On DOM ready:
 jQuery(function() {
     var rules = Toy.rules;
-    var axiomList = new Toy.ProofControl();
+    var axiomList = new Toy.ProofDisplay();
     $('#axiomList').append(axiomList.node);
     window.axiomList = axiomList;
     // Numeric axioms:
@@ -172,7 +172,7 @@ jQuery(function() {
     var a10 = rules.axiomReciprocal();
     axiomList.setSteps([a1, a2, a3, a4, a5, a6, a7, a8, a9, a10]);
 
-    var sample = new Toy.ProofControl();
+    var sample = new Toy.ProofDisplay();
     window.sampleProof = sample;
     $('#sampleProof').append(sample.node);
     var step1 = rules.assume('x = y * 2');

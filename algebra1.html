@@ -97,7 +97,7 @@ jQuery(function() {
   editor.addStep(step);
 
   function checkAnswer() {
-    var steps = editor.__mainControl.steps;
+    var steps = editor.proofControl.steps;
     var answer = steps[steps.length - 1];
     window.answer = answer;
     window.schema = Toy.parse('h => v = ((a * x) + b)');
