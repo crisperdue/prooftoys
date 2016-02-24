@@ -2845,7 +2845,7 @@ var ruleInfo = {
     action: function(step, path, equation) {
       var expr = step.get(path);
       var map = expr.findSubst(equation.getMain().getLeft());
-      if (!map) { err('Fact not applicable'); }
+      if (!map) { Toy.err(Toy.format('Fact not applicable: {1}', equation)); }
       var eqn = rules.instMultiVars(equation, map);
       var result = rules.rplace(eqn, step, path);
       return result.justify('rewriteOnlyFrom', arguments, [step, equation]);
