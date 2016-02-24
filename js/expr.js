@@ -927,16 +927,16 @@ var exprMethods = {
       return p;
     }
     var segment = p.segment;
-    var rest = p._rest;
+    var rest = p.rest;
     if (this.isCall2() && isInfixDesired(this.getBinOp())) {
       if (segment === 'arg') {
         return new Path('right', this.getRight().prettifyPath(rest));
       } else if (segment === 'fn') {
         var seg2 = rest.segment;
         if (seg2 === 'fn') {
-          return new Path('binop', this.getBinOp().prettifyPath(rest._rest));
+          return new Path('binop', this.getBinOp().prettifyPath(rest.rest));
         } else if (seg2 === 'arg') {
-          return new Path('left', this.getLeft().prettifyPath(rest._rest));
+          return new Path('left', this.getLeft().prettifyPath(rest.rest));
         }
       }
     }
@@ -2044,7 +2044,7 @@ Call.prototype._boundNames = function(path, bindings) {
     return bindings;
   } else {
     var segment = path.segment;
-    var rest = path._rest;
+    var rest = path.rest;
     if (this.fn instanceof Call) {
       if (segment === 'left') {
         return this.getLeft()._boundNames(rest, bindings);
@@ -2142,23 +2142,23 @@ Call.prototype.replaceAt = function(path, xformer) {
     var segment = path.segment;
     if (this.fn instanceof Call) {
       if (segment === 'left') {
-        return infixCall(this.getLeft().replaceAt(path._rest, xformer),
+        return infixCall(this.getLeft().replaceAt(path.rest, xformer),
                          this.getBinOp(),
                          this.getRight());
       } else if (segment === 'binop') {
         return infixCall(this.getLeft(),
-                         this.getBinOp().replaceAt(path._rest, xformer),
+                         this.getBinOp().replaceAt(path.rest, xformer),
                          this.getRight());
       } else if (segment === 'right') {
         return infixCall(this.getLeft(),
                          this.getBinOp(),
-                         this.getRight().replaceAt(path._rest, xformer));
+                         this.getRight().replaceAt(path.rest, xformer));
       }
     }
     if (segment === 'fn') {
-      return new Call(this.fn.replaceAt(path._rest, xformer), this.arg);
+      return new Call(this.fn.replaceAt(path.rest, xformer), this.arg);
     } else if (segment === 'arg') {
-      return new Call(this.fn, this.arg.replaceAt(path._rest, xformer));
+      return new Call(this.fn, this.arg.replaceAt(path.rest, xformer));
     }
     this._checkSegment(path);
   }
@@ -2169,7 +2169,7 @@ Call.prototype._get = function(path) {
     return this;
   } else {
     var segment = path.segment;
-    var rest = path._rest;
+    var rest = path.rest;
     if (this.fn instanceof Call) {
       if (segment === 'left') {
         return this.getLeft()._get(rest);
@@ -2270,7 +2270,7 @@ Call.prototype._prettyPath = function(pred, pth) {
 Call.prototype._ancestors = function(path, result) {
   result.push(this);
   var segment = path.segment;
-  var rest = path._rest;
+  var rest = path.rest;
   switch (segment) {
   case 'left':
     return this.getLeft()._ancestors(rest, result);
@@ -2409,7 +2409,7 @@ Lambda.prototype._boundNames = function(path, bindings) {
   } else {
     var newBindings = new Bindings(this.bound.name, bindings);
     var segment = path.segment;
-    var rest = path._rest;
+    var rest = path.rest;
     if (segment === 'bound') {
       return this.bound._boundNames(rest, newBindings);
     } else if (segment === 'body') {
@@ -2442,7 +2442,7 @@ Lambda.prototype.replaceAt = function(path, xformer) {
   if (path.isMatch()) {
     return xformer(this);
   } else if (path.segment === 'body') {
-    var body = this.body.replaceAt(path._rest, xformer);
+    var body = this.body.replaceAt(path.rest, xformer);
     return (body == this.body) ? this : new Lambda(this.bound, body);
   }
   this._checkSegment(path);
@@ -2454,9 +2454,9 @@ Lambda.prototype._get = function(path) {
   }
   var segment = path.segment;
   if (segment === 'bound') {
-    return this.bound._get(path._rest);
+    return this.bound._get(path.rest);
   } else {
-    return this.body._get(path._rest);
+    return this.body._get(path.rest);
   }
   this._checkSegment(path);
 };
@@ -2519,7 +2519,7 @@ Lambda.prototype._prettyPath = function(pred, pth) {
 Lambda.prototype._ancestors = function(path, result) {
   result.push(this);
   var segment = path.segment;
-  var rest = path._rest;
+  var rest = path.rest;
   if (segment === 'bound') {
     return this.bound._ancestors(rest, result);
   } else if (segment === 'body') {

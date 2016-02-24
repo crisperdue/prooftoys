@@ -85,14 +85,14 @@ function getBinding(target, bindings) {
  */
 function Path(segment, rest) {
   this.segment = segment;
-  this._rest = rest || _end;;
+  this.rest = rest || _end;;
 }
 
 // The chain of Path objects goes on forever.
 Path.none = new Path(null, null);
 
 // This makes the chain endless.
-Path.none._rest = Path.none;
+Path.none.rest = Path.none;
 
 // This marks the end of the path.  Past this is nothing
 // interesting.
@@ -119,14 +119,14 @@ Path.prototype.isEnd = function() {
 Path.prototype.isLeft = function() {
   return (this.segment == 'left'
           || (this.segment == 'fn'
-              && this._rest
-              && this._rest.segment =='arg'));
+              && this.rest
+              && this.rest.segment =='arg'));
 };
 
 Path.prototype.getLeft = function() {
   assert(this.isLeft(), 'Not a leftward path: {1}', this);
   // TODO: Change this when changing the meaning of infix.
-  return this._rest._rest;
+  return this.rest.rest;
 };
 
 /**
@@ -139,11 +139,11 @@ Path.prototype.parent = function() {
     // Also includes the case where we are past the end.
     err('Empty path can have no parent.');
   }
-  var rest = this._rest;
+  var rest = this.rest;
   if (rest.isEnd()) {
     return path();
   } else {
-    return new Path(segment, this._rest.parent());
+    return new Path(segment, this.rest.parent());
   }
 };
 
@@ -168,8 +168,8 @@ Path.prototype.upTo = function(tail) {
     if (revPath.segment != revTail.segment) {
       return null;
     }
-    revPath = revPath._rest;
-    revTail = revTail._rest;
+    revPath = revPath.rest;
+    revTail = revTail.rest;
   }
 };
 
@@ -181,7 +181,7 @@ Path.prototype.last = function() {
   var segment = null;
   while (!p.isEnd()) {
     segment = p.segment;
-    p = p._rest;
+    p = p.rest;
   }
   return segment;
 };
@@ -200,11 +200,11 @@ Path.prototype.isRight = function() {
 Path.prototype.getRight = function() {
   assert(this.isRight(), 'Not a rightward path: {1}', this);
   // TODO: Change this when changing the meaning of infix.
-  return this._rest;
+  return this.rest;
 };
 
 Path.prototype.tail = function() {
-  return this._rest;
+  return this.rest;
 };
 
 /**
@@ -221,7 +221,7 @@ Path.prototype.toString = function() {
     var path = this;
     while (path != _end) {
       content = content + '/' + path.segment;
-      path = path._rest;
+      path = path.rest;
     }
   }
   return content;
@@ -246,7 +246,7 @@ function path(arg, opt_expr) {
   // is given and has hypotheses, return a path to its RHS.
   function adjust(path) {
     if (expr && path.segment == 'main') {
-      path = path._rest;
+      path = path.rest;
       if (expr.hasHyps) {
         path = new Path('right', path);
       }
@@ -297,7 +297,7 @@ Path.prototype.concat = function(p) {
   if (this == _end) {
     return p;
   } else {
-    return new Path(this.segment, this._rest.concat(p));
+    return new Path(this.segment, this.rest.concat(p));
   }
 };
 
@@ -307,7 +307,7 @@ Path.prototype.concat = function(p) {
  */
 Path.prototype.expand = function() {
   function xpand(segment, tail) {
-    var xrest = tail.isEnd() ? tail : xpand(tail.segment, tail._rest);
+    var xrest = tail.isEnd() ? tail : xpand(tail.segment, tail.rest);
     switch (segment) {
     case 'left':
       return new Path('fn', new Path('arg', xrest));
@@ -322,7 +322,7 @@ Path.prototype.expand = function() {
   assert(this !== Path.none, 'Illegal "none" Path');
   return (this.isEnd()
           ? this
-          : xpand(this.segment, this._rest));
+          : xpand(this.segment, this.rest));
 };
 
 /**
