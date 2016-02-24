@@ -16,6 +16,7 @@ var memo = Toy.memo;
 
 //  Make some useful names available here.
 var assertEqn = Toy.assertEqn;
+var err = Toy.err;
 var varify = Toy.varify;
 var constify = Toy.constify;
 var termify = Toy.termify;
