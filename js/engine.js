@@ -1594,8 +1594,8 @@ var ruleInfo = {
 
   // 5221 (one variable), in the given step substitute term A for free
   // variable v, which may also be a string, which will be converted
-  // to a variable.  Handles hypotheses, allowing substitution for a
-  // variable even if free in the hypotheses.
+  // to a variable.  In case the step has hypotheses, allows
+  // substitution for a variable even if free in the hypotheses.
   instVar: {
     action: function(step, a, v) {
       a = termify(a);
