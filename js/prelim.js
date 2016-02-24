@@ -12,6 +12,7 @@
 
 // Make some names available without "Toy" prefix.
 var assert = Toy.assertTrue;
+var err = Toy.err;
 
 ////
 //// Bindings -- variable binding contexts and bookkeeping for
