@@ -1500,7 +1500,7 @@ var numbersInfo = {
         .rewrite(outPath, 'a + 0 = a');
         return result.justify('removeRightTerm', arguments, [step]);
       } else {
-        var result = rules.addToBoth(step, term)
+        var result = rules.applyToBothWith(step, '+', term)
         .rewrite(outPath, 'a - b + c = a + (c - b)')
         .rewrite(outPath.concat('/right'), 'a - a = 0')
         .rewrite(outPath, 'a + 0 = a');
@@ -1852,7 +1852,7 @@ var equivalences = {
   'a = b == a + c = b + c': {
     proof: function() {
       var forward = (rules.assume('a = b')
-                     .then('addToBoth', 'c')
+                     .then('applyToBothWith', '+', 'c')
                      .then('asImplication'));
       var back = (rules.assume('a + c = b + c')
                   .then('subtractFromBoth', 'c')
@@ -1872,7 +1872,7 @@ var equivalences = {
                      .then('subtractFromBoth', 'c')
                      .then('asImplication'));
       var back = (rules.assume('a - c = b - c')
-                  .then('addToBoth', 'c')
+                  .then('applyToBothWith', '+', 'c')
                   .then('groupToRight', '/main/left/left/right')
                   .then('simplifySite', '/main/left')
                   .then('groupToRight', '/main/right/left/right')
@@ -2028,7 +2028,7 @@ var negationFacts = {
     proof: function() {
       return rules.fact('neg a + a = 0')
       .then('instVar', 'neg a', 'a')
-      .then('addToBoth', Toy.parse('a'))
+      .then('applyToBothWith', '+', 'a')
       .rewrite('/main/left', 'a + b + c = a + (b + c)')
       .rewrite('/main/left/right', 'neg a + a = 0')
       .rewrite('/main/left', 'a + 0 = a')
@@ -2089,12 +2089,12 @@ var negationFacts = {
       var step2 = rules.instVar(step1, Toy.parse('a + b'), 'a');
       var step3 = rewrite(step2, '/right/left',
                                         'a + b + c = a + c + b');
-      var step4 = rules.addToBoth(step3, Toy.parse('neg b'));
+      var step4 = rules.applyToBothWith(step3, '+', 'neg b')
       var step5 = rewrite(step4, '/right/left', 'a + b + c = a + (b + c)');
       var step6 = rewrite(step5, '/right/left/right', 'a + neg a = 0');
       var step7 = rewrite(step6, '/right/right', '0 + a = a');
       var step8 = rewrite(step7, '/right/left', 'a + 0 = a');
-      var step9 = rules.addToBoth(step8, Toy.parse('neg a'));
+      var step9 = rules.applyToBothWith(step8, '+', 'neg a');
       var step10 = rewrite(step9, '/right/left/left', 'a + b = b + a');
       var step11 = rewrite(step10, '/right/left', 'a + b + c = a + (b + c)');
       var step12 = rewrite(step11, '/right/left/right', 'a + neg a = 0');
@@ -2434,11 +2434,11 @@ var algebraIdentities = {
   'a = neg b == a + b = 0': {
     proof: function() {
       var step = rules.assume('a = neg b')
-      .then('addToBoth', 'b')
+      .then('applyToBothWith', '+', 'b')
       .rewrite('/main/right', 'neg a + a = 0')
       .then('extractHyp', 'a = neg b');
       var converse = rules.assume('a + b = 0')
-      .then('addToBoth', 'neg b')
+      .then('applyToBothWith', '+', 'neg b')
       .rewrite('/main/right', '0 + a = a')
       .rewrite('/main/left', 'a + b + c = a + (b + c)')
       .rewrite('/main/left/right', 'a + neg a = 0')
