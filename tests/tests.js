@@ -2071,8 +2071,8 @@ var testCase = {
   testOperateOnBoth: function() {
     var eqn = rules.eqSelf(x);
     var x5 = Toy.parse('x + 5');
-    assertEqual('((x + (x + 5)) = (x + (x + 5)))',
-                rules.addToBoth(eqn, x5));
+    assertEqual('((R x) => ((x + (x + 5)) = (x + (x + 5))))',
+                rules.addToBoth(eqn, '', x5));
     assertEqual('((x - (x + 5)) = (x - (x + 5)))',
                 rules.subtractFromBoth(eqn, x5));
     assertEqual('((x * (x + 5)) = (x * (x + 5)))',

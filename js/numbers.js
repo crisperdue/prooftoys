@@ -714,21 +714,27 @@ var numbersInfo = {
     labels: 'uncommon'
   },
 
-  // TODO: Replace these "both" rules with ones that take a site as
-  //   input, rewriting the equation at the site using a fact such as
-  //   'a = b == a + c = b + c'.
+  // Add the given term to the equation in the step at the given path,
+  // typically /right/right.
   addToBoth: {
-    action: function(eqn, term_arg) {
-      return (rules.applyToBothWith(eqn, '+', term_arg)
-              .justify('addToBoth', arguments, [eqn]));
+    action: function(step, eqnPath, term_arg) {
+      var fact = rules.fact('a = b == a + c = b + c');
+      var c1 = step.wff.freshVar('c');
+      // Since the input step has no free occurrences of c1, the
+      // rewrite will have free occurrences of it exactly where
+      // it occurs in this fact, which is the desired situation.
+      // Note that if c1 is the same as c, the instVar is a no-op.
+      var fact2 = rules.instVar(fact, term_arg, c1);
+      return (rules.rewrite(step, eqnPath, fact2)
+              .then('instVar', term_arg, c1)
+              .justify('addToBoth', arguments, [step]));
     },
-    inputs: {equation: 1, term: 2},
+    inputs: {site: 1, term: 3},
     autoSimplify: simplifyRegroupedAdds,
-    form: ('Add <input name=term> to both sides of ' +
-           'step <input name=equation>'),
+    form: ('Add <input name=term> to both sides of the equation'),
     menu: 'algebra: add to both sides',
     tooltip: ('add to both sides'),
-    description: 'add {term};; {in step equation}',
+    description: 'add {term} to both sides;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -780,7 +786,12 @@ var numbersInfo = {
   addThisToBoth: {
     action: function(step, path) {
       var term = step.get(path);
-      return (rules.addToBoth(step, term)
+      // TODO: Check more carefully that the selection is in an
+      //   equation and the equation is at this path.  Consider
+      //   finding the equation in a more flexible way.
+      var eqn  = step.getRight().getRight();
+      assert(eqn.isEquation(), 'Not an equation: {1}', eqn);
+      return (rules.addToBoth(step, '/right/right', term)
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
