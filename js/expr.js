@@ -1902,12 +1902,13 @@ function constify(c) {
 }
 
 /**
- * Returns the name given if it is not in existingNames, a set with
- * name strings as keys.  Otherwise returns a generated name with the
- * same "base" as the one given, and not in existingNames.  The base
- * is the name with any trailing digits removed.  The generated suffix
- * will be the lowest-numbered one not yet in use, starting with "1".
- * Adds the returned name to the existingNames set.
+ * Returns the string name given if it is not in existingNames, an
+ * object/set with name strings as keys.  Otherwise returns a
+ * generated name with the same "base" as the one given, and not in
+ * existingNames.  The base is the name with any trailing digits
+ * removed.  The generated suffix will be the lowest-numbered one not
+ * yet in use, starting with "1".  Adds the returned name to the
+ * existingNames set.
  */
 function genName(name, existingNames) {
   var base = name.replace(/[0-9]+$/, '');
