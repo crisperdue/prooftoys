@@ -1031,6 +1031,16 @@ Expr.prototype.get = function(_path) {
 };
 
 /**
+ * Return the subexpression of this referenced by
+ * the given segment string.
+ */
+Expr.prototype.descend = function(segment) {
+  var p = new Toy.Path(segment);
+  this._checkSegment(p);
+  return this.get(p);
+};
+
+/**
  * Returns true iff this expression is a proof step.
  *
  * TODO: Remove this when there is a Step class.
