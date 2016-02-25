@@ -787,25 +787,12 @@ var numbersInfo = {
   // equation containing it.
   addThisToBoth: {
     action: function(step, path) {
-      // Expr traversed to in the part of path preceding tail.
-      var term = step.wff;
-      // Path with any /main converted:
-      var p = Toy.path(path, term);
-      // Portion of path not yet traversed.
-      var tail = p;
-      // Path to the equation found.
-      var eqnPath;
-      // Now traverse down the path, recording equations found.
-      while (!tail.isEnd()) {
-        if (term.isCall2('=')) {
-          // An equation is found, remember the path to it.
-          eqnPath = p.upTo(tail);
-        }
-        var term = term.descend(tail.segment);
-        tail = tail.rest;
+      function isEqn(term) {
+        return term.isCall2('=');
       }
+      var eqnPath = step.wff.findParent(path, isEqn);
       assert(eqnPath, 'No equation found in {1}', step.wff);
-      return (rules.addToBoth(step, eqnPath, term)
+      return (rules.addToBoth(step, eqnPath, step.wff.get(path))
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
