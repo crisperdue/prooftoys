@@ -2298,16 +2298,10 @@ var _callSegmentNames = {fn: true, arg: true};
 var _binopSegmentNames = {left: true, right: true, binop: true};
 
 Call.prototype._checkSegment = function(path) {
-  var error = false;
-  if (path.segment in _binopSegmentNames && !this.isCall2()) {
-    error = true;
-  } else if (!(path.segment in _callSegmentNames)) {
-    error = true;
-  }
-  if (error) {
-    throw new Error('Path segment ' + path.segment +
-                    ' is not applicable to a Call: ' + this);
-  }
+  assert(this.isCall2()
+         ? path.segment in _binopSegmentNames 
+         : path.segment in _callSegmentNames,
+         'Path segment {1} is not applicable to Call {2}', path.segment, this);
 };
 
 Call.prototype.findAll = function(name, action1, expr2, action2) {
