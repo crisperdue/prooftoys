@@ -783,15 +783,29 @@ var numbersInfo = {
     labels: 'algebra'
   },
 
+  // Add the term at the given site to both sides of the (innermost)
+  // equation containing it.
   addThisToBoth: {
     action: function(step, path) {
-      var term = step.get(path);
-      // TODO: Check more carefully that the selection is in an
-      //   equation and the equation is at this path.  Consider
-      //   finding the equation in a more flexible way.
-      var eqn  = step.getRight().getRight();
-      assert(eqn.isEquation(), 'Not an equation: {1}', eqn);
-      return (rules.addToBoth(step, '/right/right', term)
+      // Expr traversed to in the part of path preceding tail.
+      var term = step.wff;
+      // Path with any /main converted:
+      var p = Toy.path(path, term);
+      // Portion of path not yet traversed.
+      var tail = p;
+      // Path to the equation found.
+      var eqnPath;
+      // Now traverse down the path, recording equations found.
+      while (!tail.isEnd()) {
+        if (term.isCall2('=')) {
+          // An equation is found, remember the path to it.
+          eqnPath = p.upTo(tail);
+        }
+        var term = term.descend(tail.segment);
+        tail = tail.rest;
+      }
+      assert(eqnPath, 'No equation found in {1}', step.wff);
+      return (rules.addToBoth(step, eqnPath, term)
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
