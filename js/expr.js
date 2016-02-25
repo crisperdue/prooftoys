@@ -1153,9 +1153,10 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
  * segment in the path, plus this.  Note that the expression at the end
  * of the path is ancestors[ancestors.length - 1].
  */
-Expr.prototype.ancestors = function(path) {
+Expr.prototype.ancestors = function(path_arg) {
+  var p = path(path_arg, this);
   var result = [];
-  this._ancestors(path, result);
+  this._ancestors(p, result);
   return result;
 };
 
