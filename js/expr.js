@@ -1171,6 +1171,35 @@ Expr.prototype.ancestors = function(path_arg) {
 };
 
 /**
+ * Among the ancestors of the subexpression at the given path (see
+ * Expr.ancestors), finds a path to the ancestor nearest to the
+ * subexpression that passes the given test.  Returns null if none is
+ * found.
+ */
+Expr.prototype.findParent = function(path_arg, test) {
+  var p = Toy.path(path_arg, this);
+  // Expression descended to so far.
+  var term = this;
+  // Portion of path not yet traversed.
+  var tail = p;
+  // Path to the latest parent found.
+  var foundPath = null;
+  // Now traverse down the path, recording paths to parents that pass.
+  while (true) {
+    if (test(term)) {
+      // Parent is found, remember the path to it.
+      foundPath = p.upTo(tail);
+    }
+    if (tail.isEnd()) {
+      break;
+    }
+    term = term.descend(tail.segment);
+    tail = tail.rest;
+  }
+  return foundPath;
+};
+
+/**
  * Searches in this for a variable binding that passes the test, given
  * as a boolean function of one argument.  Returns a path from this to
  * the Lambda containing the occurrence, or null if none found.  Tests

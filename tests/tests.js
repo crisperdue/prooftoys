@@ -769,6 +769,15 @@ var testCase = {
     assertEqual('b', parents[4]);
   },
 
+  testFindParent: function() {
+    var expr = Toy.parse('a + neg (b * c)');
+    var path = Toy.path('/right/arg/left');
+    assertEqual('b', expr.get(path));
+
+    function test(term) { return term.isCall2('*'); }
+    assertEqual('(b * c)', expr.get(expr.findParent(path, test)));
+  },
+
   testPathToBinding: function() {
     function isX(expr) {
       return expr == x;
