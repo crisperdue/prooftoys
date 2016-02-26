@@ -739,47 +739,59 @@ var numbersInfo = {
   },
 
   subtractFromBoth: {
-    action: function(eqn, term_arg) {
-      return (rules.applyToBothWith(eqn, '-', term_arg)
-              .justify('subtractFromBoth', arguments, [eqn]));
+    action: function(step, eqnPath, term_arg) {
+      var fact = rules.fact('a = b == a - c = b - c');
+      var c1 = step.wff.freshVar('c');
+      // See addToBoth.
+      var fact2 = rules.instVar(fact, term_arg, c1);
+      return (rules.rewrite(step, eqnPath, fact2)
+              .then('instVar', term_arg, c1)
+              .justify('subtractFromBoth', arguments, [step]));
     },
-    inputs: {equation: 1, term: 2},
+    inputs: {site: 1, term: 3},
     autoSimplify: simplifyRegroupedAdds,
-    form: ('Subtract <input name=term> from both sides of ' +
-           'step <input name=equation>'),
+    form: ('Subtract <input name=term> from both sides of the equation'),
     menu: 'algebra: subtract from both sides',
     tooltip: ('subtract from both sides'),
-    description: 'subtract {term};; {in step equation}',
+    description: 'subtract {term} from both sides;; {in step siteStep}',
     labels: 'algebra'
   },
 
   multiplyBoth: {
-    action: function(eqn, term_arg) {
-      return (rules.applyToBothWith(eqn, '*', term_arg)
-              .justify('multiplyBoth', arguments, [eqn]));
+    action: function(step, eqnPath, term_arg) {
+      var fact = rules.fact('c != 0 => (a = b == a * c = b * c)');
+      var c1 = step.wff.freshVar('c');
+      // See addToBoth.
+      var fact2 = rules.instVar(fact, term_arg, c1);
+      return (rules.rewrite(step, eqnPath, fact2)
+              .then('instVar', term_arg, c1)
+              .justify('multiplyBoth', arguments, [step]));
     },
-    inputs: {equation: 1, term: 2},
+    inputs: {site: 1, term: 3},
     autoSimplify: simplifyRegroupedMuls,
-    form: ('Multiply both sides of step <input name=equation>' +
-           ' by <input name=term>'),
+    form: ('Multiply both sides of the equation by <input name=term>'),
     menu: 'algebra: multiply both sides',
     tooltip: ('multiply both sides'),
-    description: 'multiply by {term};; {in step equation}',
+    description: 'multiply both sides by {term};; {in step siteStep}',
     labels: 'algebra'
   },
 
   divideBoth: {
-    action: function(eqn, term_arg) {
-      return (rules.applyToBothWith(eqn, '/', term_arg)
-              .justify('divideBoth', arguments, [eqn]));
+    action: function(step, eqnPath, term_arg) {
+      var fact = rules.fact('c != 0 => (a = b == a / c = b / c)');
+      var c1 = step.wff.freshVar('c');
+      // See addToBoth.
+      var fact2 = rules.instVar(fact, term_arg, c1);
+      return (rules.rewrite(step, eqnPath, fact2)
+              .then('instVar', term_arg, c1)
+              .justify('divideBoth', arguments, [step]));
     },
-    inputs: {equation: 1, term: 2},
+    inputs: {site: 1, term: 3},
     autoSimplify: simplifyRegroupedMuls,
-    form: ('Divide both sides of step <input name=equation>' +
-           ' by <input name=term>'),
+    form: ('Divide both sides of the equation by <input name=term>'),
     menu: 'algebra: divide both sides',
     tooltip: ('divide both sides'),
-    description: 'divide by {term};; {in step equation}',
+    description: 'divide both sides by {term};; {in step equation}',
     labels: 'algebra'
   },
 
@@ -806,8 +818,12 @@ var numbersInfo = {
 
   subtractThisFromBoth: {
     action: function(step, path) {
-      var term = step.get(path);
-      return (rules.subtractFromBoth(step, term)
+      function isEqn(term) {
+        return term.isCall2('=');
+      }
+      var eqnPath = step.wff.findParent(path, isEqn);
+      assert(eqnPath, 'No equation found in {1}', step.wff);
+      return (rules.subtractFromBoth(step, eqnPath, step.wff.get(path))
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
@@ -821,8 +837,12 @@ var numbersInfo = {
 
   multiplyBothByThis: {
     action: function(step, path) {
-      var term = step.get(path);
-      return (rules.multiplyBoth(step, term)
+      function isEqn(term) {
+        return term.isCall2('=');
+      }
+      var eqnPath = step.wff.findParent(path, isEqn);
+      assert(eqnPath, 'No equation found in {1}', step.wff);
+      return (rules.multiplyBoth(step, eqnPath, step.wff.get(path))
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
@@ -836,8 +856,12 @@ var numbersInfo = {
 
   divideBothByThis: {
     action: function(step, path) {
-      var term = step.get(path);
-      return (rules.divideBoth(step, term)
+      function isEqn(term) {
+        return term.isCall2('=');
+      }
+      var eqnPath = step.wff.findParent(path, isEqn);
+      assert(eqnPath, 'No equation found in {1}', step.wff);
+      return (rules.divideBoth(step, eqnPath, step.wff.get(path))
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
@@ -852,7 +876,7 @@ var numbersInfo = {
   addEquationToThis: {
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
-      var step1 = rules.addToBoth(eqn1, lhs);
+      var step1 = rules.applyToBothWith(eqn1, '+', lhs);
       var step3 = rules.replaceEither(step1, '/main/right/right', eqn2);
       return step3.justify('addEquationToThis', arguments, arguments);
     },
@@ -868,7 +892,7 @@ var numbersInfo = {
   subtractEquationFromThis: {
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
-      var step1 = rules.subtractFromBoth(eqn1, lhs);
+      var step1 = rules.applyToBothWith(eqn1, '-', lhs);
       var step3 = rules.replaceEither(step1, '/main/right/right', eqn2);
       return step3.justify('subtractEquationFromThis', arguments, arguments);
     },
@@ -1507,7 +1531,7 @@ var numbersInfo = {
                'Term needs to be on the right outside parentheses: {1}', term);
       }
       if (op.name === '+') {
-        var result = rules.subtractFromBoth(step, term)
+        var result = rules.applyToBothWith(step, '-', term)
         .rewrite(outPath, 'a + b - c = a + (b - c)')
         .rewrite(outPath.concat('/right'), 'a - a = 0')
         .rewrite(outPath, 'a + 0 = a');
@@ -1868,7 +1892,7 @@ var equivalences = {
                      .then('applyToBothWith', '+', 'c')
                      .then('asImplication'));
       var back = (rules.assume('a + c = b + c')
-                  .then('subtractFromBoth', 'c')
+                  .then('applyToBothWith', '-', 'c')
                   .then('groupToRight', '/main/left/left/right')
                   .then('simplifySite', '/main/left')
                   .then('groupToRight', '/main/right/left/right')
@@ -1882,7 +1906,7 @@ var equivalences = {
   'a = b == a - c = b - c': {
     proof: function() {
       var forward = (rules.assume('a = b')
-                     .then('subtractFromBoth', 'c')
+                     .then('applyToBothWith', '-', 'c')
                      .then('asImplication'));
       var back = (rules.assume('a - c = b - c')
                   .then('applyToBothWith', '+', 'c')
@@ -1896,14 +1920,14 @@ var equivalences = {
     }
   },
 
-  // This is primarily a lemma for the following one.
+  // This is primarily a lemma for the following equivalence.
   'c != 0 => (a * c = b * c => a = b)': {
     // TODO: Figure out why the user must enter the c != 0 part
     //   when working interactively.
     proof: function() {
       var rewrite = rules.rewrite;
       var s1 = rules.assume('a * c = b * c');
-      var s2 = rules.divideBoth(s1, 'c');
+      var s2 = rules.applyToBothWith(s1, '/', 'c');
       var s3 = rewrite(s2, '/main/right', 'a * b / c = a * (b / c)');
       var s6 = rewrite(s3, '/main/left', 'a * b / c = a * (b / c)');
       var s7 = rules.simplifyStep(s6);
@@ -1915,7 +1939,7 @@ var equivalences = {
   'c != 0 => (a = b == a * c = b * c)': {
     proof: function() {
       var forward = (rules.assume('a = b')
-                     .then('multiplyBoth', 'c')
+                     .then('applyToBothWith', '*', 'c')
                      .then('asImplication'));
       var back = rules.fact('c != 0 => (a * c = b * c => a = b)');
       var conj = rules.makeConjunction(forward, back);
@@ -1925,7 +1949,7 @@ var equivalences = {
     }
   },
 
-  // This is primarily a lemma for the following one.
+  // This is primarily a lemma for the following equivalence.
   'c != 0 => (a / c = b / c => a = b)': {
     // TODO: Figure out why the user must enter the c != 0 part
     //   when working interactively.
@@ -1933,7 +1957,7 @@ var equivalences = {
       var regroup = rules.fact('a / b * c = a * (c / b)');
       var cancel = rules.fact('a != 0 => a / a = 1');
       return (rules.assume('a / c = b / c')
-              .then('multiplyBoth', 'c')
+              .then('applyToBothWith', '*', 'c')
               .rewrite('/main/right', regroup)
               .rewrite('/main/right/right', cancel)
               .rewrite('/main/left', regroup)
@@ -1946,7 +1970,7 @@ var equivalences = {
   'c != 0 => (a = b == a / c = b / c)': {
     proof: function() {
       var forward = (rules.assume('a = b')
-                     .then('divideBoth', 'c')
+                     .then('applyToBothWith', '/', 'c')
                      .then('asImplication'));
       var back = rules.fact('c != 0 => (a / c = b / c => a = b)');
       var conj = rules.makeConjunction(forward, back);
@@ -2301,7 +2325,7 @@ var recipFacts = {
     proof: function() {
       var rewrite = rules.rewrite;
       var step1 = rules.fact('a * recip a = 1');
-      var step2 = rules.multiplyBoth(step1, Toy.parse('recip (recip a)'));
+      var step2 = rules.applyToBothWith(step1, '*', Toy.parse('recip (recip a)'));
       var step3 = rewrite(step2, '/main/right', '1 * a = a');
       var step4 = rewrite(step3, '/main/left', 'a * b * c = a * (b * c)');
       var step5 = rules.instVar(step1, Toy.parse('recip a'), 'a');
@@ -2331,12 +2355,12 @@ var recipFacts = {
       var step1 = rules.fact('a * recip a = 1');
       var step2 = rules.instVar(step1, Toy.parse('a * b'), 'a');
       var step3 = rewrite(step2, '/right/left', 'a * b * c = a * c * b');
-      var step4 = rules.multiplyBoth(step3, Toy.parse('recip b'));
+      var step4 = rules.applyToBothWith(step3, '*', Toy.parse('recip b'));
       var step5 = rewrite(step4, '/right/left', 'a * b * c = a * (b * c)');
       var step6 = rewrite(step5, '/right/left/right', 'a * recip a = 1');
       var step7 = rewrite(step6, '/right/right', '1 * a = a');
       var step8 = rewrite(step7, '/right/left', 'a * 1 = a');
-      var step9 = rules.multiplyBoth(step8, Toy.parse('recip a'));
+      var step9 = rules.applyToBothWith(step8, '*', Toy.parse('recip a'));
       var step10 = rewrite(step9, '/right/left/left', 'a * b = b * a');
       var step11 = rewrite(step10, '/right/left', 'a * b * c = a * (b * c)');
       var step12 = rewrite(step11, '/right/left/right', 'a * recip a = 1');
