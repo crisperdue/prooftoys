@@ -587,148 +587,23 @@ var numbersInfo = {
     labels: 'algebra'
   },
 
-  // Managing numeric type hypotheses
-
-  // Given a step that is a conditional, proves a version with the
-  // assumptions simplified.  Reduces assumptions about "R" type of
-  // expressions with arithmetic operators to assumptions about "R"
-  // type of variables; removes assumptions that specific numerals are
-  // real or nonzero; simplifies assumptions about products being
-  // nonzero into assertions that both operands are real; removes
-  // duplicate terms and occurrences of T.
-  simplifyAssumptions: {
-    action: function(step) {
-      if (!step.isCall2('=>')) {
-        // Shortcut inline return.
-        return step;
-      }
-      // From a conditional a => b, prove a => (b == T), with a as
-      // hypothesis.  Returns a memoized function that yields the
-      // proved result.
-      function proveIsT(stmt) {
-        return memo(function() {
-            return (stmt.then('asHypotheses')
-                    .then('rewriteOnly', '/right', 'p == (p == T)'));
-          });
-      }
-      //
-      // All of these facts are returnable from getArithOp, below.
-      //
-      var numeraler = function(expr) {
-        // We can't memoize this one because a different fact is needed
-        // for each different numeral.
-        assert(expr.isCall1('R'));
-        return rules.axiomArithmetic(call('R', expr.arg));
-      };
-      var adder = proveIsT(rules.axiomPlusType());
-      var multiplier = proveIsT(rules.axiomTimesType());
-      var subtracter = proveIsT(rules.subtractionType());
-      var divider = proveIsT(rules.divisionType());
-      var negger = memo(function() {
-          return rules.axiomNegType().then('eqnSwap');
-        });
-      // x != 0 => (R (recip x) == R x)
-      var reciper = memo(function() {
-          var step = rules.axiomReciprocalType();
-          var schema = rules.tautology('(a & b == c) => (b => (c == a))');
-          var step2 = rules.forwardChain(step, schema);
-          var result = rules.asHypotheses(step2);
-          return result;
-        });
-      var binOps = {'+': adder, '*': multiplier,
-                    '-': subtracter, '/': divider};
-      binOps = Toy.ownProperties(binOps);
-      var unOps = {neg: negger, recip: reciper};
-      unOps = Toy.ownProperties(unOps);
-      //
-      // Returns the appropriate memoized rule/fact for this type
-      // expression or else a falsy value.  Each fact must have the
-      // form h => (R <expr>) = <expr2> with h as hypotheses, or just
-      // (R <expr>) = <expr2>.
-      function getArithOp(expr) {
-        // TODO: Handle numeral arguments to R here,
-        //   and direct calls of != with numerals.
-        if (expr.isCall1('R')) {
-          var arg = expr.arg;
-          return (arg.isNumeral()
-                  ? numeraler
-                  : arg.isBinOp()
-                  ?  binOps[arg.getBinOp()]
-                  : arg.isCall1()
-                  ? unOps[arg.fn]
-                  : null);
-        } else {
-          // If it's an arithmetic expression simplifiable by the
-          // axiom of arithmetic, return a function that returns
-          // the appropriate statement.
-          var result = tryArithmetic(expr);
-          if (result) {
-            return function() { return result; };
-          }
-          if (expr.matchSchema('x * y != 0')) {
-            // Simplify statements about nonzero products.
-            return memo(function() { return rules.factNonzeroProduct(); });
-          }
-          if (expr.matchSchema('recip x != 0')) {
-            // Simplify statements about nonzero reciprocals.
-            return proveIsT(rules.fact('@R a & a != 0 => recip a != 0'));
-          }
-        }
-        return null;
-      }
-      // Finds and returns a path to a conjunct in the given term that
-      // passes the test, or returns null.
-      function findConjunct(term, test) {
-        var Path = Toy.Path;
-        function find(term, revPath) {
-          if (test(term)) {
-            return revPath;
-          } else if (term.isCall2('&')) {
-            return find(term.getLeft(), new Path('left', revPath))
-              || find(term.getRight(), new Path('right', revPath));
-          } else {
-            return null;
-          }
-        }
-        var rpath = find(term, Toy.path(''));
-        return rpath ? rpath.reverse() : null;
-      }
-      function simplifyHyps(stepArg) {
-        if (!stepArg.isCall2('=>')) {
-          return stepArg;
-        }
-        var step = stepArg;
-        // Repeatedly replace assumptions that match some rule
-        // from getArithOp until there is none.
-        while (true) {
-          var hyps = step.getLeft();
-          var hypsPath = findConjunct(hyps, getArithOp);
-          if (!hypsPath) {
-            return step;
-          }
-          var path = new Toy.Path('left', hypsPath);
-          var expr = step.get(path);
-          var fact = getArithOp(expr)(expr);
-          var simpleFact =
-            simplifyHyps(rules.instantiate(fact, '/main/left', expr));
-          // Replaces an assumption, potentially adding additional assumptions
-          // to the result, as in case of recip or nonzero assumptions.
-          // Result with added assumptions is still equivalent to the original
-          // provided that all new ones are duplicates of existing.
-          step = rules.rplace(simpleFact, step, path);
-        }
-      }
-      return (simplifyHyps(step)
-              .then('arrangeAsms')
-              .justify('simplifyAssumptions', arguments, [step]));
+  // Variant of rules.rewrite for use from the UI, when the equation
+  // is a proof step, not a well-known fact; otherwise the same as
+  // rules.rewrite.
+  rewriteNumeric: {
+    action: function(step, path, equation) {
+      return (rules.rewrite(step, path, equation)
+              .justify('rewriteNumeric', arguments, [step, equation]));
     },
-    inputs: {step: 1},
-    form: 'Step to simplify: <input name=step>',
-    tooltip: 'simplify assumptions in a step',
-    menu: 'simplify assumptions',
-    labels: 'uncommon'
-  },
+    inputs: {site: 1, equation: 3},
+    form: ('Rewrite the site using step <input name=equation>'),
+    menu: 'rewrite',
+    description: 'rewrite {site};; {in step siteStep} {using step equation}',
+    labels: 'basic'
+  }
+};
 
+equationOpsInfo = {
   // Add the given term to the equation in the step at the given path,
   // typically /right/right.
   addToBoth: {
@@ -970,21 +845,151 @@ var numbersInfo = {
     tooltip: (''),
     description: 'fact',
     labels: 'basic'
-  },
+  }
+};
 
-  // Variant of rules.rewrite for use from the UI, when the equation
-  // is a proof step, not a well-known fact; otherwise the same as
-  // rules.rewrite.
-  rewriteNumeric: {
-    action: function(step, path, equation) {
-      return (rules.rewrite(step, path, equation)
-              .justify('rewriteNumeric', arguments, [step, equation]));
+var simplifiersInfo = {
+
+  // Managing numeric type hypotheses
+
+  // Given a step that is a conditional, proves a version with the
+  // assumptions simplified.  Reduces assumptions about "R" type of
+  // expressions with arithmetic operators to assumptions about "R"
+  // type of variables; removes assumptions that specific numerals are
+  // real or nonzero; simplifies assumptions about products being
+  // nonzero into assertions that both operands are real; removes
+  // duplicate terms and occurrences of T.
+  simplifyAssumptions: {
+    action: function(step) {
+      if (!step.isCall2('=>')) {
+        // Shortcut inline return.
+        return step;
+      }
+      // From a conditional a => b, prove a => (b == T), with a as
+      // hypothesis.  Returns a memoized function that yields the
+      // proved result.
+      function proveIsT(stmt) {
+        return memo(function() {
+            return (stmt.then('asHypotheses')
+                    .then('rewriteOnly', '/right', 'p == (p == T)'));
+          });
+      }
+      //
+      // All of these facts are returnable from getArithOp, below.
+      //
+      var numeraler = function(expr) {
+        // We can't memoize this one because a different fact is needed
+        // for each different numeral.
+        assert(expr.isCall1('R'));
+        return rules.axiomArithmetic(call('R', expr.arg));
+      };
+      var adder = proveIsT(rules.axiomPlusType());
+      var multiplier = proveIsT(rules.axiomTimesType());
+      var subtracter = proveIsT(rules.subtractionType());
+      var divider = proveIsT(rules.divisionType());
+      var negger = memo(function() {
+          return rules.axiomNegType().then('eqnSwap');
+        });
+      // x != 0 => (R (recip x) == R x)
+      var reciper = memo(function() {
+          var step = rules.axiomReciprocalType();
+          var schema = rules.tautology('(a & b == c) => (b => (c == a))');
+          var step2 = rules.forwardChain(step, schema);
+          var result = rules.asHypotheses(step2);
+          return result;
+        });
+      var binOps = {'+': adder, '*': multiplier,
+                    '-': subtracter, '/': divider};
+      binOps = Toy.ownProperties(binOps);
+      var unOps = {neg: negger, recip: reciper};
+      unOps = Toy.ownProperties(unOps);
+      //
+      // Returns the appropriate memoized rule/fact for this type
+      // expression or else a falsy value.  Each fact must have the
+      // form h => (R <expr>) = <expr2> with h as hypotheses, or just
+      // (R <expr>) = <expr2>.
+      function getArithOp(expr) {
+        // TODO: Handle numeral arguments to R here,
+        //   and direct calls of != with numerals.
+        if (expr.isCall1('R')) {
+          var arg = expr.arg;
+          return (arg.isNumeral()
+                  ? numeraler
+                  : arg.isBinOp()
+                  ?  binOps[arg.getBinOp()]
+                  : arg.isCall1()
+                  ? unOps[arg.fn]
+                  : null);
+        } else {
+          // If it's an arithmetic expression simplifiable by the
+          // axiom of arithmetic, return a function that returns
+          // the appropriate statement.
+          var result = tryArithmetic(expr);
+          if (result) {
+            return function() { return result; };
+          }
+          if (expr.matchSchema('x * y != 0')) {
+            // Simplify statements about nonzero products.
+            return memo(function() { return rules.factNonzeroProduct(); });
+          }
+          if (expr.matchSchema('recip x != 0')) {
+            // Simplify statements about nonzero reciprocals.
+            return proveIsT(rules.fact('@R a & a != 0 => recip a != 0'));
+          }
+        }
+        return null;
+      }
+      // Finds and returns a path to a conjunct in the given term that
+      // passes the test, or returns null.
+      function findConjunct(term, test) {
+        var Path = Toy.Path;
+        function find(term, revPath) {
+          if (test(term)) {
+            return revPath;
+          } else if (term.isCall2('&')) {
+            return find(term.getLeft(), new Path('left', revPath))
+              || find(term.getRight(), new Path('right', revPath));
+          } else {
+            return null;
+          }
+        }
+        var rpath = find(term, Toy.path(''));
+        return rpath ? rpath.reverse() : null;
+      }
+      function simplifyHyps(stepArg) {
+        if (!stepArg.isCall2('=>')) {
+          return stepArg;
+        }
+        var step = stepArg;
+        // Repeatedly replace assumptions that match some rule
+        // from getArithOp until there is none.
+        while (true) {
+          var hyps = step.getLeft();
+          var hypsPath = findConjunct(hyps, getArithOp);
+          if (!hypsPath) {
+            return step;
+          }
+          var path = new Toy.Path('left', hypsPath);
+          var expr = step.get(path);
+          var fact = getArithOp(expr)(expr);
+          var simpleFact =
+            simplifyHyps(rules.instantiate(fact, '/main/left', expr));
+          // Replaces an assumption, potentially adding additional assumptions
+          // to the result, as in case of recip or nonzero assumptions.
+          // Result with added assumptions is still equivalent to the original
+          // provided that all new ones are duplicates of existing.
+          step = rules.rplace(simpleFact, step, path);
+        }
+      }
+      return (simplifyHyps(step)
+              .then('arrangeAsms')
+              .justify('simplifyAssumptions', arguments, [step]));
     },
-    inputs: {site: 1, equation: 3},
-    form: ('Rewrite the site using step <input name=equation>'),
-    menu: 'rewrite',
-    description: 'rewrite {site};; {in step siteStep} {using step equation}',
-    labels: 'basic'
+    inputs: {step: 1},
+    form: 'Step to simplify: <input name=step>',
+    tooltip: 'simplify assumptions in a step',
+    menu: 'simplify assumptions',
+    labels: 'uncommon'
   },
 
   // Repeatedly applies simplifyMath1 to do trivial simplifications.
@@ -1151,8 +1156,10 @@ var numbersInfo = {
     menu: 'algebra: clean up terms',
     description: 'clean up each term',
     labels: 'algebra'
-  },
+  }
+};
 
+var moversInfo = {
   // Organize the factors in a term.  Processes multiplication,
   // division, negation, reciprocal, and arithmetic.
   //
@@ -2555,6 +2562,9 @@ Toy.isArithmetic = isArithmetic;
 // Do this after support modules are initialized.
 $(function() {
     Toy.addRules(numbersInfo);
+    Toy.addRules(equationOpsInfo);
+    Toy.addRules(simplifiersInfo);
+    Toy.addRules(moversInfo);
     Toy.addFactsMap(algebraFacts);
 });
 
