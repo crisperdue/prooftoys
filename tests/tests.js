@@ -2082,12 +2082,12 @@ var testCase = {
     var x5 = Toy.parse('x + 5');
     assertEqual('((R x) => ((x + (x + 5)) = (x + (x + 5))))',
                 rules.addToBoth(eqn, '', x5));
-    assertEqual('((x - (x + 5)) = (x - (x + 5)))',
-                rules.subtractFromBoth(eqn, x5));
-    assertEqual('((x * (x + 5)) = (x * (x + 5)))',
-                rules.multiplyBoth(eqn, x5));
-    assertEqual('((x / (x + 5)) = (x / (x + 5)))',
-                rules.divideBoth(eqn, x5));
+    assertEqual('((R x) => ((x - (x + 5)) = (x - (x + 5))))',
+                rules.subtractFromBoth(eqn, '', x5));
+    assertEqual('(((R x) & ((x + 5) != 0)) => ((x * (x + 5)) = (x * (x + 5))))',
+                rules.multiplyBoth(eqn, '', x5));
+    assertEqual('(((R x) & ((x + 5) != 0)) => ((x / (x + 5)) = (x / (x + 5))))',
+                rules.divideBoth(eqn, '', x5));
   },
 
   testConsider: function() {
