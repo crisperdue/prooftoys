@@ -596,7 +596,7 @@ ProofDisplay.prototype.addStep = function(step) {
   copy.rendering = copy;
   step.original = step;
   copy.original = step;
-  step.ruleDeps.forEach(@{s. void s.rendering && s.rendering.addUser(); });
+  step.ruleDeps.forEach(@{s. s.rendering && s.rendering.addUser(); });
   copy.proofDisplay = this;
   this.steps.push(copy);
   // Give it a stepNumber early so rendering code can find it.
