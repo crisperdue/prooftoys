@@ -145,7 +145,8 @@ var regroupingFacts = [
  * appropriate when dividing.
  */
 function simplifyMultiplyBoth(step) {
-  var eqnPath = Toy.path(step.ruleArgs[1]);
+  var pathStep = step.ruleName === 'multiplyBoth' ? step : step.details;
+  var eqnPath = Toy.path(pathStep.ruleArgs[1]);
   var rightSimpler = rules.arrangeTerm(step, eqnPath.concat('/right'));
   var leftSimpler = rules.arrangeTerm(rightSimpler, eqnPath.concat('/left'));
   return rules.simplifyStep(leftSimpler);
@@ -166,7 +167,8 @@ function simplifyMultiplyThis(step) {
  * TODO: Move the functionality into one or two rules.
  */
 function simplifyAddToBoth(step) {
-  var eqnPath = Toy.path(step.ruleArgs[1]);
+  var pathStep = step.ruleName === 'addToBoth' ? step : step.details;
+  var eqnPath = Toy.path(pathStep.ruleArgs[1]);
   var applyFactsOnce = Toy.applyFactsOnce;
   // Simplify the right side by regrouping and simplifying the result.
   var right = step;
@@ -189,14 +191,6 @@ function simplifyAddToBoth(step) {
     }
   }
   return rules.simplifyStep(left);
-}
-
-/**
- * Add/subtract "this" on both sides uses add/sub both.  This simplifies
- * the result of that work.
- */
-function simplifyAddThis(step) {
-  return simplifyAddToBoth(step.details);
 }
 
 /**
@@ -604,6 +598,7 @@ var numbersInfo = {
 };
 
 equationOpsInfo = {
+
   // Add the given term to the equation in the step at the given path,
   // typically /right/right.
   addToBoth: {
@@ -698,7 +693,7 @@ equationOpsInfo = {
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: simplifyAddThis,
+    autoSimplify: function(step) { return simplifyAddToBoth(step); },
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: add {term} to both sides',
@@ -717,7 +712,7 @@ equationOpsInfo = {
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: simplifyAddThis,
+    autoSimplify: function(step) { return simplifyAddToBoth(step); },
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
