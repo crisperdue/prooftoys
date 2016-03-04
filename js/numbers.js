@@ -1080,7 +1080,7 @@ var simplifiersInfo = {
   // From the UI use a rule that calls this one.
   _simplifyMath1: {
     action: function(step, _path) {
-      var info = Toy.findMatchingCall(step.get(_path), basicSimpFacts);
+      var info = Toy.searchForMatchingFact(step.get(_path), basicSimpFacts);
       return (info
               ? rules.rewrite(step, _path.concat(info.path), info.stmt)
               : step);
@@ -1099,7 +1099,7 @@ var simplifiersInfo = {
       var path1 = step.pathToVisiblePart();
       var schemas = [{match: 'neg a', where: '$.a.isNumeral()'}];
       var info;
-      while (info = Toy.findMatchingCall(simpler.get(path1), schemas)) {
+      while (info = Toy.searchForMatchingFact(simpler.get(path1), schemas)) {
         simpler = rules.arithmetic(simpler, path1.concat(info.path));
       }
       return simpler.justify('simplifyNegations', arguments, [step]);

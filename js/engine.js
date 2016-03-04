@@ -3859,9 +3859,10 @@ function getStatement(fact) {
  * context: Context information for "where" clauses as
  *   accepted by findMatchingFact.
  * searchMethod: Name of method to apply to the term to control
- *   which subexpressions of the term to apply findMatchingFact to.
+ *   which subexpressions of the term to apply findMatchingFact to;
+ *   defaults to 'searchCalls', which searches through calls.
  */
-function findMatchingCall(term, info) {
+function searchForMatchingFact(term, info) {
   var facts, cxt, searchMethod;
   if (info.constructor === Object) {
     facts = info.facts;
@@ -4079,7 +4080,7 @@ function applyFactsWithinRhs(step, facts) {
   var info;
   var eqn = step;
   while (rhs = Toy.path('/main/right', eqn),
-         info = findMatchingCall(eqn.get(rhs), facts)) {
+         info = searchForMatchingFact(eqn.get(rhs), facts)) {
     var fullPath = rhs.concat(info.path);
     eqn = rules.rewrite(eqn, fullPath, info.stmt);
   }
@@ -4486,7 +4487,7 @@ Toy.arrangeRhs = arrangeRhs;
 Toy.listFacts = listFacts;
 Toy.transformApplyInvert = transformApplyInvert;
 Toy.matchFactPart = matchFactPart;
-Toy.findMatchingCall = findMatchingCall;
+Toy.searchForMatchingFact = searchForMatchingFact;
 Toy.getRuleInfo = getRuleInfo;
 Toy.getStepSite = getStepSite;
 Toy.proofOf = proofOf;
