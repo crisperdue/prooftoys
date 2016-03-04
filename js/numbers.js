@@ -127,60 +127,6 @@ function termGetRightVariable(term) {
           : null);
 }
 
-// Facts that regroup an add/subtract or multiply/divide term
-// out of their standard order.
-var regroupingFacts = [
-  'a + b + c = a + (b + c)',
-  'a + b - c = a + (b - c)',
-  'a - b + c = a - (b - c)',
-  'a - b - c = a - (b + c)',
-  'a * b * c = a * (b * c)',
-  'a * b / c = a * (b / c)',
-  'a / b * c = a * (c / b)',
-  'a / b / c = a / (b * c)'
-];
-
-/**
- * Arrange the terms on each side of the equation input.  Also
- * appropriate when dividing.
- */
-function simplifyMulDivBoth(step, eqnPath) {
-  var rightSimpler = rules.arrangeTerm(step, eqnPath.concat('/right'));
-  var leftSimpler = rules.arrangeTerm(rightSimpler, eqnPath.concat('/left'));
-  return rules.simplifyStep(leftSimpler);
-}
-
-/**
- * After add/subtract both sides, this tries regrouping and then
- * possible simplification.
- *
- * TODO: Move the functionality into one or two rules.
- */
-function simplifyAddSubBoth(step, eqnPath) {
-  var applyFactsOnce = Toy.applyFactsOnce;
-  // Simplify the right side by regrouping and simplifying the result.
-  var right = step;
-  var right1 = applyFactsOnce(step, eqnPath.concat('/right'), regroupingFacts);
-  if (right1 !== step) {
-    right = rules.simplifySite(right1, eqnPath.concat('/right/right'));
-    if (right == right1) {
-      // Don't bother regrouping if the result cannot be simplified.
-      right = step;
-    }
-  }
-  // Simplify the left side by regrouping and simplifying the result.
-  var left = right;
-  var left1 = applyFactsOnce(right, eqnPath.concat('/left'), regroupingFacts);
-  if (left1 !== right) {
-    left = rules.simplifySite(left1, eqnPath.concat('/left/right'));
-    if (left == left1) {
-      // Don't bother regrouping if the result cannot be simplified.
-      left = right;
-    }
-  }
-  return rules.simplifyStep(left);
-}
-
 /**
  * Returns a plain object with a property for each variable name
  * occurring in the given multiplicative term.  The value of each
@@ -838,6 +784,62 @@ equationOpsInfo = {
     labels: 'basic'
   }
 };
+
+//// Support code for the equation operations rules above.
+
+// Facts that regroup an add/subtract or multiply/divide term
+// out of their standard order.
+var regroupingFacts = [
+  'a + b + c = a + (b + c)',
+  'a + b - c = a + (b - c)',
+  'a - b + c = a - (b - c)',
+  'a - b - c = a - (b + c)',
+  'a * b * c = a * (b * c)',
+  'a * b / c = a * (b / c)',
+  'a / b * c = a * (c / b)',
+  'a / b / c = a / (b * c)'
+];
+
+/**
+ * Arrange the terms on each side of the equation input.  Also
+ * appropriate when dividing.
+ */
+function simplifyMulDivBoth(step, eqnPath) {
+  var rightSimpler = rules.arrangeTerm(step, eqnPath.concat('/right'));
+  var leftSimpler = rules.arrangeTerm(rightSimpler, eqnPath.concat('/left'));
+  return rules.simplifyStep(leftSimpler);
+}
+
+/**
+ * After add/subtract both sides, this tries regrouping and then
+ * possible simplification.
+ *
+ * TODO: Move the functionality into one or two rules.
+ */
+function simplifyAddSubBoth(step, eqnPath) {
+  var applyFactsOnce = Toy.applyFactsOnce;
+  // Simplify the right side by regrouping and simplifying the result.
+  var right = step;
+  var right1 = applyFactsOnce(step, eqnPath.concat('/right'), regroupingFacts);
+  if (right1 !== step) {
+    right = rules.simplifySite(right1, eqnPath.concat('/right/right'));
+    if (right == right1) {
+      // Don't bother regrouping if the result cannot be simplified.
+      right = step;
+    }
+  }
+  // Simplify the left side by regrouping and simplifying the result.
+  var left = right;
+  var left1 = applyFactsOnce(right, eqnPath.concat('/left'), regroupingFacts);
+  if (left1 !== right) {
+    left = rules.simplifySite(left1, eqnPath.concat('/left/right'));
+    if (left == left1) {
+      // Don't bother regrouping if the result cannot be simplified.
+      left = right;
+    }
+  }
+  return rules.simplifyStep(left);
+}
 
 var simplifiersInfo = {
 
