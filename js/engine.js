@@ -3875,7 +3875,7 @@ function searchForMatchingFact(term, info) {
   function finder(term, revPath) {
     var result = findMatchingFact(facts, cxt, term);
     if (result) {
-      result.path = revPath.reverse();
+      result.path = revPath.reverse().concat(result.path);
     }
     return result;
   }
