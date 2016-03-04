@@ -990,9 +990,9 @@ var simplifiersInfo = {
     labels: 'uncommon'
   },
 
-  // Repeatedly applies simplifyMath1 to do trivial simplifications.
-  // If the visible part of the step is an equation, simplify each
-  // side, otherwise the entire expression.
+  // Simplifies repeatedly using basicSimpFacts.  If the visible part
+  // of the step is an equation, simplify each side, otherwise the
+  // entire expression.
   //
   // TODO: Refactor this so the rule itself is not dependent on
   //   different possible renderings.
@@ -1052,8 +1052,8 @@ var simplifiersInfo = {
     labels: 'uncommon'
   },
 
-  // Performs math-oriented simplification throughout the part of the
-  // given step at the given path.  Works repeatedly until no more
+  // Applies simplification repeatedly within the part of the given
+  // step at the given path using basicSimpFacts until no more
   // simplifications are found.
   simplifySite: {
     action: function(step, path) {
@@ -1079,10 +1079,9 @@ var simplifiersInfo = {
     }
   },
 
-  // Simplifies the part of the given step at _path using the axiom of
-  // arithmetic and selected simplifying facts in basicSimpFacts.
-  // Returns its result inline, just the input step if there is
-  // nothing to do.
+  // Applies up to one simplification within the part of the given
+  // step at _path using basicSimpFacts.  Returns its result inline,
+  // just the input step if there is nothing to do.
   //
   // From the UI use a rule that calls this one.
   _simplifyMath1: {
