@@ -3882,16 +3882,20 @@ function findMatchingCall(term, info) {
 }
 
 /**
- * Searches the given fact list for a fact that matches the given
- * term.  If it finds one, returns info about it in a plain object.
- * The context argument is available to "where" arguments as "cxt",
- * and any "factLists" property of it defines lists of facts available
- * by name.  The value is a plain object with identifier keys and fact
- * list values. Any "fact list" can alternatively be an identifier
- * string referencing a named list in the context.
+ * Searches the given pattern list for one that matches the given
+ * term.  If it finds one, returns info about it in a plain object
+ * in the format described below.
  *
- * Accepted formats of fact arguments are an argument acceptable to
- * getStatement, or a plain object with properties as follows:
+ * The context argument is available to "where" arguments as "cxt",
+ * and any "factLists" property of the context defines lists of named
+ * patterns accessible by using the name in place of an explicit list.
+ * The value of the factLists property is a plain object mapping from
+ * list name to a list (array) value.  In this way lists can be
+ * reused, and also enables them to be effectively recursive.
+ *
+ * Pattern arguments can be an argument acceptable to getStatement, or:
+ *
+ * A plain object with properties as follows:
  *
  * stmt: value acceptable to getStatement.  Unless "match" is also
  *   given this will need to be an equation.
@@ -3900,30 +3904,32 @@ function findMatchingCall(term, info) {
  * match: term schema to match against the term.  (By default the
  *   term is matched against the stmt LHS.)
  *
- * Alternatively to the above three properties, one of the following:
+ * A plain object with a single property, either:
  * 
- * descend: The value is a plain object with properties "schema", a
- *   term schema to match against the term, and "parts", a plain
- *   object mapping from variable name in the schema to a list of
- *   facts to match against parts of the term that match that variable
- *   in the schema.  If the list is instead an identifier (string),
- *   this finds the list under that key in the "lists" property of the
- *   context.  In this way lists can be reused, and also enables them
- *   to be effectively recursive.
+ * descend: a plain object with properties "schema", a schema
+ *   (possibly in string form) to match against the term, and "parts",
+ *   a plain object mapping from variable names in this schema each to
+ *   a pattern list as described above. If the search reaches this
+ *   "descend" item and the schema matches the term, the search
+ *   descends into the parts of the term, applying each schema
+ *   variable's list of facts to the part of the term matching that
+ *   schema variable.
  *
  * apply: a function to apply to the input term and context, which
  *   must return an equation whose LHS is the same as the term except
  *   for possible changes of bound variables, or a falsy value if it
  *   fails to produce such an equation.  The call is done by
- *   Toy.normalReturn, and this uses the value returned from it.
+ *   Toy.normalReturn, and this uses the value returned from that.
  *
  * The value returned is falsy if no match is found, else a plain
  * object with properties:
  * 
- * stmt: stmt part of the matching fact, or falsy if there is none.
- * term: term passed to findMatchingFact.
- * subst: substitution that makes the given term match the fact.
- * path: path to the portion of the given term matching the fact.
+ * stmt: pattern part of the ultimately matching pattern, or the equation
+ *   returned by an "apply" pattern.
+ * term: the term argument to findMatchingFact.
+ * subst: substitution that makes the given term match the fact (empty for
+ *   "apply" patterns).
+ * path: path to the portion of the given term that matched some pattern.
  */
 function findMatchingFact(facts_arg, cxt, term) {
   function doEval(expr, $) {
@@ -3966,11 +3972,10 @@ function findMatchingFact(facts_arg, cxt, term) {
     } else if (factInfo.descend) {
       // "descend"
       var partInfo = factInfo.descend;
-      var result = locateMatchingFact(term,
-                                      partInfo.schema,
-                                      partInfo.parts,
-                                      cxt,
-                                      Toy.path());
+      var result = _locateMatchingFact(term,
+                                       partInfo.schema,
+                                       partInfo.parts,
+                                       cxt);
       if (result) {
         return result;
       }
@@ -3995,25 +4000,14 @@ function findMatchingFact(facts_arg, cxt, term) {
 };
 
 /**
- * If the given Expr matches the given schema, looks for a fact
- * matching a part of the Expr that matches one of the variables in
- * the schema.  If it finds such a fact, returns a proved equation
- * that is the result of applying it to that part of the Expr.
+ * This handles "descend" patterns in findMatchingFact, and is private
+ * to it.
  *
- * The varsMap controls which facts are considered in each part of the
- * Expr.  Each varsMap entry connects a variable name in the schema to
- * a list of facts to match against parts of the Expr that match that
- * variable in the schema.  The list must be suitable as an argument
- * to findMatchingFact, or if an alphanumeric string, a name that is a
- * key in context.factLists.
- *
- * The schema may be given as an Expr or string to parse as an Expr.
- *
- * Return value is falsy if the Expr does not match the schema or this
- * finds no matching fact, otherwise a plain object as returned by
- * findMatchingFact, with "path" property relative to the given expr.
+ * Arguments are the term argument to findMatchingFact, the schema
+ * property of the "descend" pattern, the "parts" property of the
+ * "descend" pattern, and the context argument to findMatchingFact.
  */
-function locateMatchingFact(expr, schema_arg, varsMap, context) {
+function _locateMatchingFact(expr, schema_arg, varsMap, context) {
   var schema = termify(schema_arg);
   var factLists = context.factLists;
   var subst;
@@ -4507,7 +4501,7 @@ Toy.traceRule = traceRule;
 Toy._tautologies = _tautologies;
 Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
-Toy._locateMatchingFact = locateMatchingFact;
+Toy._locateMatchingFact = _locateMatchingFact;
 Toy._flagHyps = flagHyps;
 
 
