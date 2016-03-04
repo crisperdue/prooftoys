@@ -1200,6 +1200,13 @@ Expr.prototype.findParent = function(path_arg, test) {
 };
 
 /**
+ * Returns the parent subexpression that is a binary call to '=' (or '==')
+ */
+Expr.prototype.parentEqn = function(path) {
+  return this.findParent(path, function(term) { return term.isCall2('='); });
+};
+
+/**
  * Searches in this for a variable binding that passes the test, given
  * as a boolean function of one argument.  Returns a path from this to
  * the Lambda containing the occurrence, or null if none found.  Tests
@@ -1216,8 +1223,15 @@ Expr.prototype.pathToBinding = function(pred) {
   return revPath ? revPath.reverse() : null;
 };
 
-Expr.prototype.traverse = function(rpath) {
-  this._traverse(rpath || path());
+/**
+ * Walks through all subexpressions of this Expr, applying the
+ * function to each one, passing the (reverse) path to the
+ * subexpression as an argument.  The rpath is relative to this,
+ * though if an rpath is given here, the function receives the
+ * concatenation of the one given here and the relative path.
+ */
+Expr.prototype.traverse = function(fn, rpath) {
+  this._traverse(fn, rpath || path());
 };
 
 /**
