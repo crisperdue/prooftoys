@@ -144,20 +144,10 @@ var regroupingFacts = [
  * Arrange the terms on each side of the equation input.  Also
  * appropriate when dividing.
  */
-function simplifyMultiplyBoth(step) {
-  var pathStep = step.ruleName === 'multiplyBoth' ? step : step.details;
-  var eqnPath = Toy.path(pathStep.ruleArgs[1]);
+function simplifyMulDivBoth(step, eqnPath) {
   var rightSimpler = rules.arrangeTerm(step, eqnPath.concat('/right'));
   var leftSimpler = rules.arrangeTerm(rightSimpler, eqnPath.concat('/left'));
   return rules.simplifyStep(leftSimpler);
-}
-
-/**
- * Multiplying/dividing by "this" does its work by locating and operating
- * on an equation.
- */
-function simplifyMultiplyThis(step) {
-  return simplifyMultiplyBoth(step.details);
 }
 
 /**
@@ -166,9 +156,7 @@ function simplifyMultiplyThis(step) {
  *
  * TODO: Move the functionality into one or two rules.
  */
-function simplifyAddToBoth(step) {
-  var pathStep = step.ruleName === 'addToBoth' ? step : step.details;
-  var eqnPath = Toy.path(pathStep.ruleArgs[1]);
+function simplifyAddSubBoth(step, eqnPath) {
   var applyFactsOnce = Toy.applyFactsOnce;
   // Simplify the right side by regrouping and simplifying the result.
   var right = step;
@@ -615,7 +603,9 @@ equationOpsInfo = {
               .justify('addToBoth', arguments, [step]));
     },
     inputs: {site: 1, term: 3},
-    autoSimplify: simplifyAddToBoth,
+    autoSimplify: function(step) {
+      return simplifyAddSubBoth(step, step.ruleArgs[1]);
+    },
     form: ('Add <input name=term> to both sides of the equation'),
     menu: 'algebra: add to both sides',
     tooltip: ('add to both sides'),
@@ -634,7 +624,9 @@ equationOpsInfo = {
               .justify('subtractFromBoth', arguments, [step]));
     },
     inputs: {site: 1, term: 3},
-    autoSimplify: simplifyAddToBoth,
+    autoSimplify: function(step) {
+      return simplifyAddSubBoth(step, step.ruleArgs[1]);
+    },
     form: ('Subtract <input name=term> from both sides of the equation'),
     menu: 'algebra: subtract from both sides',
     tooltip: ('subtract from both sides'),
@@ -653,7 +645,9 @@ equationOpsInfo = {
               .justify('multiplyBoth', arguments, [step]));
     },
     inputs: {site: 1, term: 3},
-    autoSimplify: simplifyMultiplyBoth,
+    autoSimplify: function(step) {
+      return simplifyMulDivBoth(step, step.ruleArgs[1]);
+    },
     form: ('Multiply both sides of the equation by <input name=term>'),
     menu: 'algebra: multiply both sides',
     tooltip: ('multiply both sides'),
@@ -672,7 +666,9 @@ equationOpsInfo = {
               .justify('divideBoth', arguments, [step]));
     },
     inputs: {site: 1, term: 3},
-    autoSimplify: simplifyMultiplyBoth,
+    autoSimplify: function(step) {
+      return simplifyMulDivBoth(step, step.ruleArgs[1]);
+    },
     form: ('Divide both sides of the equation by <input name=term>'),
     menu: 'algebra: divide both sides',
     tooltip: ('divide both sides'),
@@ -684,16 +680,16 @@ equationOpsInfo = {
   // equation containing it.
   addThisToBoth: {
     action: function(step, path) {
-      function isEqn(term) {
-        return term.isCall2('=');
-      }
-      var eqnPath = step.wff.findParent(path, isEqn);
+      var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
       return (rules.addToBoth(step, eqnPath, step.wff.get(path))
               .justify('addThisToBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: function(step) { return simplifyAddToBoth(step); },
+    autoSimplify: function(step) {
+      var path = step.ruleArgs[1];
+      return simplifyAddSubBoth(step, step.wff.parentEqn(path)); 
+    },
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: add {term} to both sides',
@@ -703,16 +699,16 @@ equationOpsInfo = {
 
   subtractThisFromBoth: {
     action: function(step, path) {
-      function isEqn(term) {
-        return term.isCall2('=');
-      }
-      var eqnPath = step.wff.findParent(path, isEqn);
+      var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
       return (rules.subtractFromBoth(step, eqnPath, step.wff.get(path))
               .justify('subtractThisFromBoth', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: function(step) { return simplifyAddToBoth(step); },
+    autoSimplify: function(step) {
+      var path = step.ruleArgs[1];
+      return simplifyAddSubBoth(step, step.wff.parentEqn(path));
+    },
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: subtract {term} from both sides',
@@ -722,16 +718,16 @@ equationOpsInfo = {
 
   multiplyBothByThis: {
     action: function(step, path) {
-      function isEqn(term) {
-        return term.isCall2('=');
-      }
-      var eqnPath = step.wff.findParent(path, isEqn);
+      var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
       return (rules.multiplyBoth(step, eqnPath, step.wff.get(path))
               .justify('multiplyBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: simplifyMultiplyThis,
+    autoSimplify: function(step) {
+      var path = step.ruleArgs[1];
+      return simplifyMulDivBoth(step, step.wff.parentEqn(step, path));
+    },
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: multiply both sides by {term}',
@@ -741,16 +737,16 @@ equationOpsInfo = {
 
   divideBothByThis: {
     action: function(step, path) {
-      function isEqn(term) {
-        return term.isCall2('=');
-      }
-      var eqnPath = step.wff.findParent(path, isEqn);
+      var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
       return (rules.divideBoth(step, eqnPath, step.wff.get(path))
               .justify('divideBothByThis', arguments, [step]));
     },
     inputs: {site: 1},
-    autoSimplify: simplifyMultiplyThis,
+    autoSimplify: function(step) {
+      var path = step.ruleArgs[1];
+      return simplifyMulDivBoth(step, step.wff.parentEqn(step, path));
+    },
     toOffer: 'return term.isReal();',
     form: '',
     menu: 'algebra: divide both sides by {term}',
