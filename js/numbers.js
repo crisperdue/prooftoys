@@ -827,7 +827,7 @@ function simplifyAddSubBoth(step, eqnPath) {
   var right = step;
   var right1 = applyFactsOnce(step, eqnPath.concat('/right'), regroupingFacts);
   if (right1 !== step) {
-    right = rules.simplifySite(right1, eqnPath.concat('/right/right'));
+    right = rules.simplifySite(right1, eqnPath.concat('/right'));
     if (right == right1) {
       // Don't bother regrouping if the result cannot be simplified.
       right = step;
@@ -837,13 +837,13 @@ function simplifyAddSubBoth(step, eqnPath) {
   var left = right;
   var left1 = applyFactsOnce(right, eqnPath.concat('/left'), regroupingFacts);
   if (left1 !== right) {
-    left = rules.simplifySite(left1, eqnPath.concat('/left/right'));
+    left = rules.simplifySite(left1, eqnPath.concat('/left'));
     if (left == left1) {
       // Don't bother regrouping if the result cannot be simplified.
       left = right;
     }
   }
-  return rules.simplifyStep(left);
+  return left;
 }
 
 var simplifiersInfo = {
