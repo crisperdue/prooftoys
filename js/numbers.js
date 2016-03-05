@@ -1048,7 +1048,7 @@ var simplifiersInfo = {
     inputs: {site: 1, step: 3},
     form: 'Simplify w.r.t. step <input name=step>',
     menu: 'algebra: auto-simplify {term}',
-    description: 'auto-simplify {site};; {in step siteStep}',
+    description: 'simplify;; {in siteStep}',
     labels: 'uncommon'
   },
 
@@ -1063,7 +1063,7 @@ var simplifiersInfo = {
     inputs: {site: 1},
     form: '',
     menu: 'algebra: simplify {term}',
-    description: 'simplify {site};; {in step siteStep}',
+    description: 'simplify;; {in step siteStep}',
     labels: 'algebra'
   },
     
