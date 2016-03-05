@@ -1009,9 +1009,8 @@ ProofDisplay.prototype.renderPopups = function(step) {
 
         // Add a result and an action for a local simplifier if one is
         // found.
-        var simplifiers =
-          [{apply: Toy.tryArithmetic}].concat(Toy.basicSimpFacts);
-        var simpler = Toy.applyFactsOnce(eqn, '/main/right', simplifiers);
+        var simpler = Toy.applyFactsOnce(eqn, '/main/right',
+                                         Toy.basicSimpFacts);
         if (simpler != eqn) {
           var result = rules.simplifySite(simpler, '/main/right');
           results.push(result.getMain().getRight());
