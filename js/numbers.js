@@ -1030,7 +1030,7 @@ var simplifiersInfo = {
       var eqn1 = rules.consider(step.get(path));
       var ref = refStep.get(path);
       var abort = false;
-      var simpler = Toy.whileSimpler(eqn1, function(eqn) {
+      var simpler = Toy.whileChanges(eqn1, function(eqn) {
         var next = rules._simplifyMath1(eqn, _path('/main/right', eqn));
         if (next.getMain().getRight().sameAs(ref)) {
           abort = true;
@@ -1072,7 +1072,7 @@ var simplifiersInfo = {
     action: function(step, path) {
       var _path = Toy.path;
       var eqn = rules.consider(step.get(path));
-      var simpler = Toy.whileSimpler(eqn, function(eqn) {
+      var simpler = Toy.whileChanges(eqn, function(eqn) {
           return rules._simplifyMath1(eqn, _path('/main/right', eqn));
         });
       return rules.rplace(simpler, step, path);

@@ -4128,7 +4128,7 @@ function transformApplyInvert(term_arg, eqn_arg, fact) {
  * until the result of the call is identical to its input.  Return
  * the result of the last call.
  */
-function whileSimpler(eqn, fn) {
+function whileChanges(eqn, fn) {
   var simpler = eqn;
   var next;
   while (true) {
@@ -4481,7 +4481,7 @@ Toy.findMatchingFact = findMatchingFact;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsOnce = applyFactsOnce;
-Toy.whileSimpler = whileSimpler;
+Toy.whileChanges = whileChanges;
 Toy.arrange = arrange;
 Toy.arrangeRhs = arrangeRhs;
 Toy.listFacts = listFacts;
