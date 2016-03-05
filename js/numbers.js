@@ -728,7 +728,7 @@ equationOpsInfo = {
     inputs: {site: 1},
     autoSimplify: function(step) {
       var path = step.ruleArgs[1];
-      return simplifyMulDivBoth(step, step.wff.parentEqn(step, path));
+      return simplifyMulDivBoth(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
     form: '',
@@ -747,7 +747,7 @@ equationOpsInfo = {
     inputs: {site: 1},
     autoSimplify: function(step) {
       var path = step.ruleArgs[1];
-      return simplifyMulDivBoth(step, step.wff.parentEqn(step, path));
+      return simplifyMulDivBoth(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
     form: '',
