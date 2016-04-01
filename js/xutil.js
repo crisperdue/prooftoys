@@ -1047,7 +1047,7 @@ function mathParse(str) {
   if (str[0] === '@') {
     return parse(str.slice(1));
   }
-  var expr = parse(str);
+  var expr = justParse(str);
   var assume = expr.mathVarConditions();
   if (assume) {
     if (expr.isCall2('=>')) {
@@ -1057,13 +1057,16 @@ function mathParse(str) {
       var result = infixCall(assume.concat(expr.getLeft(), '&'),
                              '=>',
                              expr.getRight());
+      findType(result);
       return result;
     } else {
       var result = infixCall(assume, '=>', expr);
       result.hasHyps = true;
+      findType(result);
       return result;
     }
   } else {
+    findType(expr);
     return expr;
   }
 }
