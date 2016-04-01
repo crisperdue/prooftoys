@@ -752,6 +752,33 @@ var _tokens = new RegExp(['[(){}\\[\\]]',
                          'g');
 
 /**
+ * In most cases the Unicode displays can serve as alternative names
+ * for the more ASCCI-style tokens known to the parsing code.
+ *
+ * TODO: Consider making most or all non-ASCII operator characters
+ * self-delimiting, meaning that a sequence of them is always a
+ * sequence of tokens, never a single multi-character token.
+ */
+function _buildAltTokens() {
+  var result = {};
+  var map = Toy.unicodeNames;
+  for (var name in map) {
+    // Do not map a hyphen to unary negation.  It could be and very
+    // often is "minus".
+    if (name !== 'neg') {
+      result[map[name]] = name;
+    }
+  }
+  return result;
+}
+
+// Object/map from alternative token names to the standard internal
+// token name.  Useful for pasting displays of formulas into text
+// fields.  Private to Toy.tokenize.
+var _altTokens = _buildAltTokens();
+
+
+/**
  * A token is a parenthesis or brace, or a sequence of characters
  * starting with an alphabetic (possibly preceded by an underscore
  * ("_"), followed by zero or more characters that are alphanumeric or
@@ -766,7 +793,8 @@ function tokenize(str) {
   var match;
   var result = [];
   while (match = _tokens.exec(str)) {
-    result.push(new Atom(match[0], match.index));
+    var name = match[0];
+    result.push(new Atom(_altTokens[name] || name, match.index));
   }
   result.push(new Atom('(end)', str.length));
   return result;
