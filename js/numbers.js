@@ -1825,14 +1825,17 @@ var distribFacts = {
 
 // Private to isDistribFact.  A mapping from statement key to value
 // that is truthy iff the statement is in distribFacts.
-var _distribFactsTable =
-    (function() {
-      var table = {};
-      for (var key in distribFacts) {
-        table[Toy.getStatementKey(key)] = true;
-      }
-      return table;
-    })();
+var _distribFactsTable;
+
+// Initialization deferred until initialization makes parsing and thus
+// getStatementKey available.
+$(function() {
+    var table = {};
+    for (var key in distribFacts) {
+      table[Toy.getStatementKey(key)] = true;
+    }
+    _distribFactsTable = table;
+  });
 
 /**
  * Returns a truthy value iff the statement is some version
