@@ -592,7 +592,7 @@ StepEditor.prototype.slotIndex = function() {
 };
 
 StepEditor.prototype.genAbbrevName = function() {
-  return '$' + this.slotIndex();
+  return '$_' + this.slotIndex();
 };
 
 /**

@@ -1362,6 +1362,8 @@ function textNode(text) {
 //
 
 Atom.prototype._render = function(info, minPower, isFn) {
+  // Note that this does not style any subscript differently than
+  // the main part of the variable name.
   var $expr = exprJq(!isFn);
   this.node = dom($expr);
   var aStep = findAsmStep(this, info.asmSteps);
