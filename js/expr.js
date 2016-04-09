@@ -345,6 +345,23 @@ Expr.prototype.isVariable = function() {
 };
 
 /**
+ * If an atom is named starting with "$", it is intended to be
+ * an abbreviation.
+ */
+Expr.prototype.isAbbrev = function() {
+  return this instanceof Atom && this.name.startsWith('$');
+};
+
+/**
+ * Truthy iff this term has the form of a definition of an
+ * abbreviation, in other words (<var> == <term>), where the name of
+ * <var> startw with "$".
+ */
+Expr.prototype.isAbbrevDef = function() {
+  return this.isCall2('==') && this.getLeft().isAbbrev();
+};
+
+/**
  * True iff this is a var with the given name.
  */
 Expr.prototype.hasName = function(name) {
