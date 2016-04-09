@@ -92,3 +92,6 @@ Logic is justly considered the basis of all other sciences, even if only
 for the reason that in every argument we employ concepts taken from
 the field of logic, and that every correct inference proceeds
 in accordance with its laws. -- Alfred Tarski
+
+It is impossible to make anything truly foolproof because
+fools are so ingenious. -- Anonymous
