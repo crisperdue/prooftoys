@@ -1069,12 +1069,12 @@ var testCase = {
     var step1 = Toy.rules.assume('p T');
     var step2 = Toy.rules.assume('p F');
     // Which step came earlier?
-    assert(Toy.sourceStepLess(step1.getLeft(), step2.getLeft()));
-    assert(!Toy.sourceStepLess(step2.getLeft(), step1.getLeft()));
+    assert(Toy.asmLess(step1.getLeft(), step2.getLeft()));
+    assert(!Toy.asmLess(step2.getLeft(), step1.getLeft()));
   },
 
   testSourceStepComparator: function() {
-    var compare = Toy.sourceStepComparator;
+    var compare = Toy.asmComparator;
     var step1 = Toy.rules.assume('p T');
     var l1 = step1.getLeft();
     var step2 = Toy.rules.assume('p F');
@@ -1987,7 +1987,7 @@ var testCase = {
 
   testConjunctionDeduper: function() {
     function rule(term) {
-      return rules.conjunctionArranger(term, Toy.sourceStepComparator);
+      return rules.conjunctionArranger(term, Toy.asmComparator);
     }
     checkRewriter('((R x) & (R y))', '(R y) & (R x)', rule);
     checkRewriter('(R x)', '(R x) & (R x)', rule);

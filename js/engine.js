@@ -3036,12 +3036,12 @@ var ruleInfo = {
 
   // From a term that is a conjunction of two normalized chains of
   // conjunctions, derive an equation that has the input as its LHS
-  // and as its RHS has conjuncts ordered by sourceStepLess, with
+  // and as its RHS has conjuncts ordered by asmLess, with
   // duplicates eliminated.
   conjunctionsMerger: {
     action: function(expr) {
       // TODO: Consider whether this line needs to use Toy.hypIsless.
-      var result = rules.mergeConj(expr, Toy.sourceStepLess);
+      var result = rules.mergeConj(expr, Toy.asmLess);
       return result.justify('conjunctionsMerger', arguments);
     },
     inputs: {bool: 1},
@@ -3253,7 +3253,7 @@ var ruleInfo = {
   },
 
   // Derives a step with hypotheses deduplicated and ordered as by
-  // sourceStepComparator, including removal of occurrences of T.
+  // asmComparator, including removal of occurrences of T.
   // Works with hypotheses and with plain implications.
   arrangeAsms: {
     action: function(step) {
@@ -3261,7 +3261,7 @@ var ruleInfo = {
         return step;
       }
       var deduper =
-        rules.conjunctionArranger(step.getLeft(), Toy.sourceStepComparator);
+        rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
       var result = rules.rplace(deduper, step, '/left');
       return result.justify('arrangeAsms', arguments, [step]);
     },

@@ -1297,25 +1297,25 @@ Atom.prototype.isUnary = function() {
 }
 
 /**
- * True iff the result of calling sourceStepComparator is less than 0.
+ * True iff the result of calling asmComparator is less than 0.
  * Useful for ordering deduplicated hypotheses.
  */
-function sourceStepLess(e1, e2) {
-  return sourceStepComparator(e1, e2) < 0;
+function asmLess(e1, e2) {
+  return asmComparator(e1, e2) < 0;
 }
 
 /**
- * Comparator for Array.sort corresponding to sourceStepLess.  Terms
+ * Comparator for Array.sort corresponding to asmLess.  Terms
  * that are calls to "R" come first, ordered from each other by the
  * result of applying this to their argument terms. Terms from
  * assumption steps come next, ordered by the step ordinal, and the
  * rest sort lexicographically using "dump".  Value < 0 means e1 is
  * less than e2.
  */
-function sourceStepComparator(e1, e2) {
+function asmComparator(e1, e2) {
   if (e1.isCall1('R')) {
     if (e2.isCall1('R')) {
-      return sourceStepComparator(e1.arg, e2.arg);
+      return asmComparator(e1.arg, e2.arg);
     } else {
       return -1;
     }
@@ -1548,8 +1548,8 @@ Toy.implies = implies;
 Toy.lambda = lambda;
 Toy.isInfixDesired = isInfixDesired;
 
-Toy.sourceStepLess = sourceStepLess;
-Toy.sourceStepComparator = sourceStepComparator;
+Toy.asmLess = asmLess;
+Toy.asmComparator = asmComparator;
 Toy.repeatedCall = repeatedCall;
 Toy.chainCall = chainCall;
 Toy.commuteEqn = commuteEqn;
