@@ -1305,37 +1305,42 @@ function asmLess(e1, e2) {
 }
 
 /**
- * Comparator for Array.sort corresponding to asmLess.  Terms
- * that are calls to "R" come first, ordered from each other by the
- * result of applying this to their argument terms. Terms from
- * assumption steps come next, ordered by the step ordinal, and the
- * rest sort lexicographically using "dump".  Value < 0 means e1 is
- * less than e2.
+ * Comparator for Array.sort corresponding to asmLess.  Terms that are
+ * calls to "R" come first, then abbreviations, then terms from
+ * assumption steps come next, ordered by the step ordinal, and then
+ * all others.  Value < 0 means e1 is less than e2.  Value is 0 iff
+ * the terms are identical.
  */
 function asmComparator(e1, e2) {
-  if (e1.isCall1('R')) {
-    if (e2.isCall1('R')) {
-      return asmComparator(e1.arg, e2.arg);
-    } else {
-      return -1;
-    }
-  } else if (e2.isCall1('R')) {
-    return 1;
-  } else if (e1.sourceStep) {
-    if (e2.sourceStep) {
-      return e1.sourceStep.ordinal - e2.sourceStep.ordinal;
-    } else {
-      return -1;
-    }
-  } else if (e2.sourceStep) {
-    return 1;
-  } else {
-    var s1 = e1.dump();
-    var s2 = e2.dump();
-    return (s1 === s2
-            ? 0
-            : (s1 < s2 ? -1 : 1));
+  function asmScore(e) {
+    return (e.isCall1('R')
+            ? 1
+            : e.isAbbrevDef()
+            ? 2
+            : e.sourceStep
+            ? 3
+            : 4);
   }
+  var s1 = asmScore(e1);
+  var s2 = asmScore(e2);
+  var diff = s1 - s2;
+  if (diff) {
+    return Math.sign(diff);
+  }
+  switch (s1) {
+  case 1:
+    return asmComparator(e1.arg, e2.arg);
+  case 3:
+    return e1.sourceStep.ordinal - e2.sourceStep.ordinal;
+  case 2:
+  case 4:
+    var x1 = e1.dump();
+    var x2 = e2.dump();
+    return (x1 === x2
+            ? 0
+            : (x1 < x2 ? -1 : 1));
+  }
+  Toy.err('Internal error');
 }
 
 /**
