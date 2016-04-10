@@ -20,6 +20,17 @@
 // See http://www.useragentstring.com/pages/Browserlist/.
 Toy.incompatible = !!navigator.userAgent.match(/ MSIE [1-8][.]/);
 
+/**
+ * Polyfill for the new standard Math.sign.
+ */
+Math.sign = Math.sign || function(x) {
+  x = +x; // convert to a number
+  if (x === 0 || isNaN(x)) {
+    return x;
+  }
+  return x > 0 ? 1 : -1;
+}
+
  
 ////
 //// Assertions, error reporting and debugging
