@@ -1121,7 +1121,7 @@ function wantLeftElision(step) {
  */
 function renderAsStep(step) {
   if (step.ruleName == 'asImplication') {
-    var info = {asmSteps: [], typeConds: null, isTop: false};
+    var info = {asmSteps: [], implicitAsms: null, isTop: false};
     $wff = step.wff._render(info, 0);
     step.node = dom($wff);
     return dom($wff);
@@ -1130,13 +1130,13 @@ function renderAsStep(step) {
     // Must we make the $wff if there are assumptions, but none visible?
     var $wff;
     var aSteps = step.asmSteps;
-    var conds = step.typeConds;
+    var conds = step.implicitAsms;
     if (step.hasHyps) {
-      var info = {asmSteps: aSteps, typeConds: conds, isTop: false};
+      var info = {asmSteps: aSteps, implicitAsms: conds, isTop: false};
       $wff = (exprJq(true)
               .append(renderHyps(asms, info), ':', renderMain(step)));
     } else {
-      var info = {asmSteps: aSteps, typeConds: conds, isTop: true};
+      var info = {asmSteps: aSteps, implicitAsms: conds, isTop: true};
       $wff = step.wff._render(info, 0);
     }
     step.node = dom($wff);
@@ -1154,7 +1154,7 @@ function renderAsStep(step) {
  */
 function renderMain(step) {
   // Do not render any parts specially as assumptions:
-  var info = {asmSteps: [], typeConds: null};
+  var info = {asmSteps: [], implicitAsms: null};
   var main = step.getMain();
   if (main.isCall2('=')) {
     if (step.ruleName === 'consider' || step.ruleName === 'considerPart') {
@@ -1189,12 +1189,12 @@ function renderMain(step) {
  * change in the future.) Creates and returns a new Expr DOM node.
  */
 function renderHyps(expr, info) {
-  var types = info.typeConds;
+  var types = info.implicitAsms;
   var $top = exprJq();
   var hypsNode;
   function render(expr) {
     if (expr.matches(types)) {
-      hypsNode.append(renderTypeConds(expr));
+      hypsNode.append(renderImplicitAsms(expr));
     } else if (expr.isCall2('&')) {
       render(expr.getLeft());
       hypsNode.append(', ');
@@ -1221,7 +1221,7 @@ function renderHyps(expr, info) {
  * conditions of a step, a styled star with tooltip displaying the
  * expression.
  */
-function renderTypeConds(expr) {
+function renderImplicitAsms(expr) {
   return ($('<span class=ellipsis>&star;</span>')
           .prop('title', Toy.trimParens(expr.toString())));
 }
@@ -1282,22 +1282,22 @@ function isTypeCond(expr) {
  * Truthy iff the given term is a tree of conjunctions of terms
  * for which isTypeCond is true.
  */
-function allTypeConds(expr) {
-  return (isTypeCond(expr) ||
-          (expr.isCall2('&') && allTypeConds(expr.getLeft()) && 
-           allTypeConds(expr.getRight())));
+function allImplicit(expr) {
+  return (isTypeCond(expr) || expr.isAbbrevDef() ||
+          (expr.isCall2('&') && allImplicit(expr.getLeft()) && 
+           allImplicit(expr.getRight())));
 }
 
 /**
  * Finds and returns a subexpression of the given term for which
- * allTypeConds is true, descending only into left subexpressions
+ * allImplicit is true, descending only into left subexpressions
  * of terms that are isCall2, such as conjunctions in the assumptions
  * part of a wff; othewise a falsy value.
  */
-function getTypeConds(expr) {
-  return (allTypeConds(expr)
+function getImplicitAsms(expr) {
+  return (allImplicit(expr)
           ? expr
-          : (expr.isCall2() && getTypeConds(expr.getLeft())));
+          : (expr.isCall2() && getImplicitAsms(expr.getLeft())));
 };
 
 
@@ -1349,7 +1349,7 @@ function textNode(text) {
 // method.  (Not public)
 //
 // The rendering is in the context of the given "info" step
-// information, which must have properties asmSteps and typeConds as
+// information, which must have properties asmSteps and implicitAsms as
 // in a step; asmSteps being empty if assumptions are not to be
 // abbreviated.
 //
@@ -1433,11 +1433,11 @@ Call.prototype._render = function(info, minPower) {
   if (isTop) {
     // In code below here, info applies to all subexpressions except
     // those that are clearly to the left of a top-level conditional.
-    info = {asmSteps: [], typeConds: null, isTop: false};
+    info = {asmSteps: [], implicitAsms: null, isTop: false};
   }
 
-  if (this == info.typeConds) {
-    return $expr.append(renderTypeConds(this));
+  if (this == info.implicitAsms) {
+    return $expr.append(renderImplicitAsms(this));
   }
 
   var aStep = findAsmStep(this, info.asmSteps);
@@ -1588,7 +1588,7 @@ Step.prototype.copyToRender = function() {
   // Initialized when the step is connected with the proof display.
   step.asmSteps = null;
   // If non-null, this term will render as an ellipsis.
-  step.typeConds = wff.isCall2('=>') && getTypeConds(wff.getLeft());
+  step.implicitAsms = wff.isCall2('=>') && getImplicitAsms(wff.getLeft());
   return step;
 };
 
