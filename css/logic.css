@@ -1,5 +1,14 @@
 /** Add css rules here for your application. */
 
+/*
+ * For uses of Font-Awesome, do not inherit any text-indent values, working
+ * around a deficiency in its standard styles.  (Class fa displays as
+ * inline-block.)
+ */
+.fa {
+  text-indent: 0;
+}
+
 h1 {
   font-size: 2em;
   font-weight: bold;

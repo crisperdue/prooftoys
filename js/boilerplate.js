@@ -28,12 +28,12 @@
   // Include jQuery in all cases.
   getScript('../lib/jquery-1.10.2.js');
 
+  write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.css">');
   write('<link rel="stylesheet" href="../css/logic.css">');
 
   // getScript('../lib/jquery.tooltipster.js');
   // write('<link rel="stylesheet" href="../css/tooltipster-light.css">');
   // write('<link rel="stylesheet" href="../css/tooltipster.css">');
-  write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">');
   if (!window.noProofScripts) {
     getScript('util.js');
     getScript('prelim.js');
