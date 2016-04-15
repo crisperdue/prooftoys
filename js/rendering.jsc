@@ -1222,7 +1222,7 @@ function renderHyps(expr, info) {
  * expression.
  */
 function renderImplicitAsms(expr) {
-  return ($('<span class=ellipsis>&star;</span>')
+  return ($('<span style="color: MediumBlue">&hellip; </i>')
           .prop('title', Toy.trimParens(expr.toString())));
 }
 
