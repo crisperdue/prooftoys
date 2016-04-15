@@ -143,7 +143,10 @@ function decapture(target, replacement) {
 // Rules.appendStepHyps and rules.prependStepHyps also copy sourceStep
 // properties down to resulting steps from their inputs where they
 // match an input hypothesis and are not already flagged.
-// 
+//
+// TODO: Consider recording this property only in rendered proof steps
+// and computing it in the manner of Toy.assumptionsBefore (using
+// Toy.proofOf).
 
 /**
  * Superclass for terms of all kinds: Atom, Call, Lambda.
