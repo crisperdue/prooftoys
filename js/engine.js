@@ -2328,7 +2328,7 @@ var ruleInfo = {
     form: ('Match step <input name=step> with left side of ' +
            'fact [left => right] <input name=bool>'),
     tooltip: ('[p] and [p => q] to q'),
-    description: 'consequence;; of step {step} using {shortFact}'
+    description: 'consequence;; of step {step} using {bool}'
   },
 
   // Instantiates the schema theorem so that the part at the given
