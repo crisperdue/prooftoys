@@ -873,10 +873,6 @@ ProofDisplay.prototype.renderStep = function(step) {
   var self = this;
   // Annotate all rendered steps with type information.
   step.annotateWithTypes();
-  var $preStep = $(self.isEditable()
-                   ? '<button class=deleteStep title="Delete step">X</button>'
-                   // Heavy lower right-shadowed white rightwards arrow
-                   : '<span class=noDeleter>\u27ad</span>'); 
   var $stepSelector =
     ($('<span class=stepSelector>')
      .append(self.isEditable()
@@ -885,12 +881,15 @@ ProofDisplay.prototype.renderStep = function(step) {
              ($('<span class=stepNumArea>')
               .append('[<span class=stepNumber></span>]'))));
   var $step =
-    $('<div class=proofStep>')
-      .append($preStep,
-              ($('<span class=stepAndNum>')
-               .append($stepSelector, '<span class=wff></span>')),
-              // Allow a word break here.
-              '<wbr><span class=stepInfo></span>');
+    ($('<div class=proofStep>')
+     .append('<span class="fa fa-info-circle stepHoverInfo">&nbsp;</span>',
+             (self.isEditable()
+              ? '<button class=deleteStep title="Delete step">X</button>'
+              : ''),
+             ($('<span class=stepAndNum>')
+              .append($stepSelector, '<span class=wff></span>')),
+             // Allow a word break here.
+             '<wbr><span class=stepInfo></span>'));
   $(self.stepsNode).append($step);
   if (self.isEditable()) {
     $step.addClass('withDeleter');

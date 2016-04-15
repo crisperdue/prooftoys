@@ -408,6 +408,15 @@ span#leftNav {
   border-color: transparent;
 }
 
+.proofStep .stepHoverInfo {
+    color: #55f;
+    visibility: hidden;
+}
+
+.proofStep.hover .stepHoverInfo {
+    visibility: visible;
+}
+
 /* Step deleter control, only visible when the step is hovered. */
 .proofStep .deleteStep {
   font-weight: bold;
