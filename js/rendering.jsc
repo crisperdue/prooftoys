@@ -1921,7 +1921,7 @@ function expandMarkup(step, markup) {
     }
     var terms = places.map(function(place) {
         var term = Toy.termify(step.ruleArgs[place - 1]);
-        return term.toHtml();
+        return termDisplay(term);
       });
     return terms.join(', ');
   case 'shortFact':
