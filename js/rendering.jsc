@@ -1282,7 +1282,7 @@ function isTypeCond(expr) {
  * for which isTypeCond is true.
  */
 function allImplicit(expr) {
-  return (isTypeCond(expr) || expr.isAbbrevDef() ||
+  return (isTypeCond(expr) || expr.isAbbrevDef() || expr.sourceStep ||
           (expr.isCall2('&') && allImplicit(expr.getLeft()) && 
            allImplicit(expr.getRight())));
 }
