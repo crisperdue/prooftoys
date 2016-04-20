@@ -1065,7 +1065,7 @@ var testCase = {
     assert(conj2.isHypotheses());
   },
 
-  testSourceStepLess: function() {
+  testAsmLess: function() {
     var step1 = Toy.rules.assume('p T');
     var step2 = Toy.rules.assume('p F');
     // Which step came earlier?
@@ -1073,7 +1073,7 @@ var testCase = {
     assert(!Toy.asmLess(step2.getLeft(), step1.getLeft()));
   },
 
-  testSourceStepComparator: function() {
+  testAsmComparator: function() {
     var compare = Toy.asmComparator;
     var step1 = Toy.rules.assume('p T');
     var l1 = step1.getLeft();
@@ -1083,8 +1083,8 @@ var testCase = {
     assert(compare(l1, l2) < 0);
     assertEqual(0, compare(l1, l1));
     assert(compare(l2, l1) > 0);
-    assert(compare(x, l2) > 0);
-    assert(compare(l2, x) < 0);
+    assert(compare(x, l2) < 0);
+    assert(compare(l2, x) > 0);
   },
 
   testConjunctionsMerger: function() {
@@ -2064,14 +2064,14 @@ var testCase = {
     assertEqual('((R x) & (R y))', simplify('R (x - y)'));
     assertEqual('(((R x) & (R y)) & (R z))',
                 simplify('R (x - (z * y))'));
-    assertEqual('(((R x) & (R y)) & (y != 0))', simplify('R (x / y)'));
+    assertEqual('(((y != 0) & (R x)) & (R y))', simplify('R (x / y)'));
     assertEqual('(R x)', simplify('R (neg x)'));
-    assertEqual('((R x) & (x != 0))', simplify('R (recip x)'));
+    assertEqual('((x != 0) & (R x))', simplify('R (recip x)'));
     assertEqual('T', simplify('2 = 2'));
     assertEqual('T', simplify('2 != 0'));
-    assertEqual('((((R x) & (R y)) & (x != 0)) & (y != 0))',
+    assertEqual('((((x != 0) & (y != 0)) & (R x)) & (R y))',
                 simplify('x * y != 0'));
-    assertEqual('((((R x) & (R y)) & (x != 0)) & (y != 0))',
+    assertEqual('((((x != 0) & (y != 0)) & (R x)) & (R y))',
                 simplify('R (recip (x * y))'));
 
     // TODO: Tests for removal of conditions such as (2 != 0).
@@ -2084,9 +2084,9 @@ var testCase = {
                 rules.addToBoth(eqn, '', x5));
     assertEqual('((R x) => ((x - (x + 5)) = (x - (x + 5))))',
                 rules.subtractFromBoth(eqn, '', x5));
-    assertEqual('(((R x) & ((x + 5) != 0)) => ((x * (x + 5)) = (x * (x + 5))))',
+    assertEqual('((((x + 5) != 0) & (R x)) => ((x * (x + 5)) = (x * (x + 5))))',
                 rules.multiplyBoth(eqn, '', x5));
-    assertEqual('(((R x) & ((x + 5) != 0)) => ((x / (x + 5)) = (x / (x + 5))))',
+    assertEqual('((((x + 5) != 0) & (R x)) => ((x / (x + 5)) = (x / (x + 5))))',
                 rules.divideBoth(eqn, '', x5));
   },
 

@@ -1314,12 +1314,12 @@ function asmLess(e1, e2) {
 function asmComparator(e1, e2) {
   function asmScore(e) {
     return (e.isCall1('R')
-            ? 1
+            ? 4
             : e.isAbbrevDef()
-            ? 2
-            : e.sourceStep
             ? 3
-            : 4);
+            : e.sourceStep
+            ? 2
+            : 1);
   }
   var s1 = asmScore(e1);
   var s2 = asmScore(e2);
@@ -1328,12 +1328,12 @@ function asmComparator(e1, e2) {
     return Math.sign(diff);
   }
   switch (s1) {
-  case 1:
-    return asmComparator(e1.arg, e2.arg);
-  case 3:
-    return e1.sourceStep.ordinal - e2.sourceStep.ordinal;
-  case 2:
   case 4:
+    return asmComparator(e1.arg, e2.arg);
+  case 2:
+    return e1.sourceStep.ordinal - e2.sourceStep.ordinal;
+  case 3:
+  case 1:
     var x1 = e1.dump();
     var x2 = e2.dump();
     return (x1 === x2
