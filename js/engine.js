@@ -290,7 +290,7 @@ var ruleInfo = {
   },
 
   /**
-   * Suppose the given expression to be true.  This is the standard
+   * Suppose the given statement to be true.  This is the standard
    * way to introduce hypotheses into proofs.  If given a string,
    * parses it and uses the result.
    */
@@ -308,8 +308,27 @@ var ruleInfo = {
     inputs: {bool: 1},
     form: ('Assume <input name=bool>'),
     menu: 'assume hypothetically',
-    tooltip: 'Hypothesis to assume',
+    tooltip: 'Statement to assume',
     description: 'assumption',
+    labels: 'basic'
+  },
+
+  /**
+   * Suppose the given statement to be true.  The UI will display the
+   * statement in each step where it occurs, even though it is among
+   * the assumptions.
+   */
+  assumeExplicitly: {
+    action: function(asm_arg) {
+      var assumption = termify(asm_arg);
+      var step = rules.tautInst('a => a', {a: assumption});
+      return step.justify('assumeExplicitly', arguments);
+    },
+    inputs: {bool: 1},
+    form: ('Assume <input name=bool>'),
+    menu: 'assume temporarily',
+    tooltip: 'Statement to assume',
+    description: 'temporary assumption',
     labels: 'basic'
   },
 
