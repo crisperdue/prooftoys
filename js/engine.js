@@ -307,7 +307,7 @@ var ruleInfo = {
     },
     inputs: {bool: 1},
     form: ('Assume <input name=bool>'),
-    menu: 'assume hypothetically',
+    menu: 'assume',
     tooltip: 'Statement to assume',
     description: 'assumption',
     labels: 'basic'
@@ -327,7 +327,7 @@ var ruleInfo = {
     inputs: {bool: 1},
     form: ('Assume <input name=bool>'),
     menu: 'assume temporarily',
-    tooltip: 'Statement to assume',
+    tooltip: 'Statement to assume (show occurrences)',
     description: 'temporary assumption',
     labels: 'basic'
   },
