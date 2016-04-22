@@ -349,12 +349,6 @@ var ruleInfo = {
         vbl = varify(opt_vbl);
       }
       var eqn = Toy.infixCall(vbl, '==', term);
-      var types = eqn.mathVarConditions();
-      eqn.assertCall2('==');
-      var v = eqn.getLeft();
-      var given = eqn.getRight();
-      assert(v.isVariable(),
-             'Abbreviation requires a variable, got: {1}', v);
       var result = rules.assume(eqn).justify('given', arguments);
       eqn.sourceStep = result;
       _allHyps[eqn.dump()] = eqn;
