@@ -4444,7 +4444,7 @@ function assumptionsBefore(step) {
  * ignoring type hypotheses.  Never considers step details.
  */
 function assumptionsUsed(step) {
-  var hypsPart = Toy.omittingReals(step.getHyps());
+  var hypsPart = Toy.omittingReals(step.getAsms());
   if (!hypsPart) {
     return [];
   }
@@ -4459,7 +4459,7 @@ function assumptionsUsed(step) {
       // Notes: Assumption statements about real numbers have type
       // assumptions "built in".  There should be exactly one other
       // assumption.
-      var assumed = Toy.omittingReals(assumptions[j].getHyps());
+      var assumed = Toy.omittingReals(assumptions[j].getAsms());
       assert(assumed, 'No main assumption');
       if (assumed.sameAs(hyp)) {
         result.push(assumptions[j]);
