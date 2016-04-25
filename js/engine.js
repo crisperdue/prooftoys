@@ -4433,32 +4433,31 @@ function assumptionsBefore(step) {
 }
 
 /**
- * Returns an array of assumption steps in this proof that create an
- * assumption exactly the same as a hypothesis of the given step,
- * ignoring type hypotheses.  Never considers step details.
+ * Returns an array of "assume" steps in the proof of the given step
+ * (see Toy.proofOf) that create an assumption of the step.  Assumes
+ * that the assumptions are a chain of conjuncts, which is true of
+ * normalized assumptions.  Used in rendering to highlight the sources
+ * of assumptions.
  */
 function assumptionsUsed(step) {
-  var hypsPart = Toy.omittingReals(step.getAsms());
-  if (!hypsPart) {
+  var asms = step.getAsms();
+  if (!asms) {
     return [];
   }
-  var hypList = [];
-  hypsPart.eachHyp(function (expr) { hypList.push(expr); });
+  var asmList = [];
+  asms.eachHyp(function (expr) { asmList.push(expr); });
 
-  var assumptions = assumptionsBefore(step);
+  var steps = proofOf(step);
   var result = [];
-  for (var i = 0; i < hypList.length; i++) {
-    var hyp = hypList[i];
-    for (var j = 0; j < assumptions.length; j++) {
-      // Notes: Assumption statements about real numbers have type
-      // assumptions "built in".  There should be exactly one other
-      // assumption.
-      var assumed = Toy.omittingReals(assumptions[j].getAsms());
-      assert(assumed, 'No main assumption');
-      if (assumed.sameAs(hyp)) {
-        result.push(assumptions[j]);
-        // We could break here, but let's show even redundant assumptions.
-        // break;
+  for (var i = 0; i < steps.length; i++) {
+    var step = steps[i];
+    if (step.ruleName === 'assume') {
+      for (var j = 0; j < asmList.length; j++) {
+        var asm = asmList[j];
+        // Note that every "assume" step is a conditional.
+        if (step.getRight().sameAs(asm)) {
+          result.push(steps[i]);
+        }
       }
     }
   }

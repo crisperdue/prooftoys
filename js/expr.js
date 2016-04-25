@@ -1314,6 +1314,8 @@ Expr.prototype.hypLocater = function(hyp) {
  * In other words this generates an equation tautology that works with
  * rules.rewrite to remove duplicate occurrences of the given term and
  * put a single occurrence of it at the right end of the chain.
+ *
+ * TODO: Consider adding Step.eachAsm.
  */
 Expr.prototype.hypMover = function(toMove) {
   // TODO: Re-implement to work with any conjunct in a tree of conjuncts,
@@ -1362,11 +1364,11 @@ Expr.prototype.hypsBySource = function() {
 };
 
 /**
- * Taking this expression as a chain of hypotheses, applies the given
+ * Taking this expression as a chain of assumptions, applies the given
  * action function to each conjunct in the chain, going from left to
- * right.  Treats the chain as hypotheses, and any element with a
- * sourceStep stops further descent into the chain, regardless whether
- * it is a conjunction itself.
+ * right.  Any element with a sourceStep property stops further
+ * descent into the chain, regardless whether it is a conjunction
+ * itself.
  *
  * If the action returns a truthy value given any hyp, that value
  * immediately becomes the value of the call.  Otherwise returns

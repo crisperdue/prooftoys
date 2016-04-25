@@ -899,7 +899,7 @@ ProofDisplay.prototype.renderStep = function(step) {
   var elide = wantLeftElision(step, self);
   step.hasLeftElision = elide;
   // Initialize now when step is connected with proof display.
-  step.asmSteps = getAssumptionSteps(step);
+  step.asmSteps = Toy.assumptionsBefore(step);
   $step.find('.wff').empty().append(renderAsStep(step));
   $step.find('.stepInfo').html(formattedStepInfo(step));
 
@@ -1180,6 +1180,7 @@ function renderMain(step) {
 }
 
 /**
+ * Renders the expr as hypotheses (for steps flagged with hasHyps).
  * Walks through the expression as a tree of conjuncts, with info as
  * defined for Expr._render.  Converts "&" to "," parenthesizing
  * conjuncts that do not have the usual left association.  Nodes
