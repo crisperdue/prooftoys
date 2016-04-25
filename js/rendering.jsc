@@ -898,7 +898,8 @@ ProofDisplay.prototype.renderStep = function(step) {
   step.stepNode = dom($step);
   var elide = wantLeftElision(step, self);
   step.hasLeftElision = elide;
-  // Initialize now when step is connected with proof display.
+  // Remember this value for future use.  Could be computed from
+  // previous step if preferred.
   step.asmSteps = Toy.assumptionsBefore(step);
   $step.find('.wff').empty().append(renderAsStep(step));
   $step.find('.stepInfo').html(formattedStepInfo(step));

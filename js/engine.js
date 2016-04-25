@@ -4418,14 +4418,15 @@ function proofOf(step) {
 }
 
 /**
- * Returns an array of "assume" steps preceding this one.  Does not
- * look at details of steps.
+ * Returns an array of steps preceding this one that establish
+ * assumptions that later steps might not display, currently "assume"
+ * and "given" steps; in the future perhaps other similar kinds.
  */
 function assumptionsBefore(step) {
   var steps = [];
   var proofSteps = proofOf(step);
   proofSteps.forEach(function (step) {
-      if (step.ruleName === 'assume') {
+      if (step.ruleName === 'assume' || step.ruleName === 'given') {
         steps.push(step);
       }
     });
