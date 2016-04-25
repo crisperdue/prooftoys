@@ -4503,6 +4503,7 @@ Toy.searchForMatchingFact = searchForMatchingFact;
 Toy.getRuleInfo = getRuleInfo;
 Toy.getStepSite = getStepSite;
 Toy.proofOf = proofOf;
+Toy.assumptionsBefore = assumptionsBefore;
 Toy.assumptionsUsed = assumptionsUsed;
 
 Toy.ruleInfo = ruleInfo;
