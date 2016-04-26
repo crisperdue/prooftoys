@@ -1121,7 +1121,7 @@ function wantLeftElision(step) {
  */
 function renderAsStep(step) {
   if (step.ruleName == 'asImplication') {
-    var info = {asmSteps: [], isTop: false};
+    var info = {asmSteps: []};
     $wff = step.wff._render(info, 0);
     step.node = dom($wff);
     return dom($wff);
@@ -1131,11 +1131,11 @@ function renderAsStep(step) {
     var $wff;
     var aSteps = step.asmSteps;
     if (step.hasHyps) {
-      var info = {asmSteps: aSteps, isTop: false};
+      var info = {asmSteps: aSteps};
       $wff = (exprJq(true)
               .append(renderHyps(asms, info), ':', renderMain(step)));
     } else {
-      var info = {asmSteps: aSteps, isTop: true};
+      var info = {asmSteps: aSteps};
       $wff = step.wff._render(info, 0);
     }
     step.node = dom($wff);
@@ -1283,8 +1283,7 @@ function textNode(text) {
 // method.  (Not public)
 //
 // The rendering is in the context of the given "info" step
-// information, which must have property asmSteps as in a step, and
-// isTop.
+// information, which must have property asmSteps as in a step.
 //
 // Omits parentheses around an expression that uses an operator
 // if the operator's precedence is at least minPower.
@@ -1356,19 +1355,6 @@ Call.prototype._render = function(info, minPower) {
     $expr.append('$', stepNum);
   }
 
-  // Note if this term is top-level.
-  var isTop = info.isTop;
-  // For sure no subexpressions will be top-level.
-  info.isTop = false;
-  // Set up suitable info for subexpressions.  The leftInfo and info are
-  // the same except for direct subexpressions of a top-level implication.
-  var leftInfo = info;
-  if (isTop) {
-    // In code below here, info applies to all subexpressions except
-    // those that are clearly to the left of a top-level conditional.
-    info = {asmSteps: [], isTop: false};
-  }
-
   var aStep = findAsmStep(this, info.asmSteps);
   if (aStep) {
     $expr.addClass('stepRef');
@@ -1418,9 +1404,7 @@ Call.prototype._render = function(info, minPower) {
         $expr.append($left,
                      $('<sup>').append(right.getNumValue()));
       } else {
-        // Rendering of most infix operators.  This is the one usage
-        // of leftInfo.
-        var $fn = exprJq().append(left._render(leftInfo, thisPower(left)), ' ',
+        var $fn = exprJq().append(left._render(info, thisPower(left)), ' ',
                                   op._render(info, 0, true));
         this.fn.node = dom($fn);
         $expr.append($fn, ' ', right._render(info, thisPower(right) + 1));
