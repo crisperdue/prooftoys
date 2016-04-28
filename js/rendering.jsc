@@ -882,7 +882,7 @@ ProofDisplay.prototype.renderStep = function(step) {
               .append('[<span class=stepNumber></span>]'))));
   var $step =
     ($('<div class=proofStep>')
-     .append('<span class="fa fa-info-circle stepHoverInfo">&nbsp;</span>',
+     .append('<span class="fa fa-question-circle-o stepHoverInfo">&nbsp;</span>',
              (self.isEditable()
               ? '<button class=deleteStep title="Delete step">X</button>'
               : ''),
