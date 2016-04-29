@@ -873,23 +873,28 @@ ProofDisplay.prototype.renderStep = function(step) {
   var self = this;
   // Annotate all rendered steps with type information.
   step.annotateWithTypes();
-  var $stepSelector =
-    ($('<span class=stepSelector>')
-     .append(self.isEditable()
-             ? '<input type=checkbox class=checkbox>'
-             : '',
-             ($('<span class=stepNumArea>')
-              .append('[<span class=stepNumber></span>]'))));
-  var $step =
-    ($('<div class=proofStep>')
-     .append('<span class="fa fa-question-circle-o stepHoverInfo">&nbsp;</span>',
-             (self.isEditable()
-              ? '<button class=deleteStep title="Delete step">X</button>'
-              : ''),
-             ($('<span class=stepAndNum>')
-              .append($stepSelector, '<span class=wff></span>')),
-             // Allow a word break here.
-             '<wbr><span class=stepInfo></span>'));
+
+  // Make an object for rendering of the whole step.
+  var $step = ($('<div class=proofStep>')
+               // The stepHoverInfo is on the left, with an "info" symbol
+               // or an "assumed" symbol.
+               //
+               // Here we have CSS classes fa and fa-fw with no
+               // character specified.  The character is controlled by
+               // logic.css, not necessarily an fa "icon".
+               .append('<span class="fa fa-fw stepHoverInfo">'));
+  // If editable, add appropriate parts.
+  if (self.isEditable()) {
+    $step.append('<button class=deleteStep title="Delete step">X</button>',
+                 '<input type=checkbox class="stepSelector checkbox">');
+  }
+  $numArea = ($('<span class="stepNumArea stepSelector">')
+              .append('[<span class=stepNumber></span>]'));
+  $stepAndNum = ($('<span class=stepAndNum>')
+                 .append($numArea, '<span class=wff></span>'));
+  $step.append($stepAndNum,
+               // Allow a word break before the description.
+               '<wbr><span class=stepInfo></span>');
   $(self.stepsNode).append($step);
   if (self.isEditable()) {
     $step.addClass('withDeleter');
@@ -2298,6 +2303,13 @@ function hoverStep(step, direction, event) {
   // as the mouse goes in or out.
   var stepNode = getStepNode(step.node);
   action(stepNode, 'hover');
+
+  // Highlight steps that establish assumptions used by this one.
+  Toy.assumptionsUsed(step.original).forEach(function(assumed) {
+      if (assumed.rendering) {
+        action(getStepNode(assumed.rendering), 'assumed');
+      }
+    });
 }
 
 /**
@@ -2339,13 +2351,6 @@ function hoverStepSelector(step, direction, event) {
       }
     });
   }
-
-  // Highlight steps that establish assumptions used by this one.
-  Toy.assumptionsUsed(step.original).forEach(function(assumed) {
-      if (assumed.rendering) {
-        action(getStepNode(assumed.rendering), 'assumed');
-      }
-    });
 }
 
 /**

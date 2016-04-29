@@ -408,14 +408,36 @@ span#leftNav {
   border-color: transparent;
 }
 
+/* The stepHoverInfo area is active when the step is hovered
+   or flagged as "assumed" (by hovering some step that assumes it).
+ */
 .proofStep .stepHoverInfo {
-    color: #88f;
     visibility: hidden;
 }
 
 .proofStep.hover .stepHoverInfo {
+    color: #88f;
     visibility: visible;
 }
+
+.proofStep.assumed .stepHoverInfo {
+    color: #66a;
+    visibility: visible;
+}
+
+/* When some step assumes it, the content is a circled small letter a. */
+.proofStep.assumed .stepHoverInfo::before {
+    content: "\24d0";
+}
+
+
+/* fa-question-circle-o Unicode.  Note that this overrides the
+   small letter a by being below it.  To see these
+   as appropriate, uncomment this section
+.proofStep.hover .stepHoverInfo::before {
+    content: "\f29c";
+}
+*/
 
 /* Step deleter control, only visible when the step is hovered. */
 .proofStep .deleteStep {
@@ -466,17 +488,8 @@ span#leftNav {
   color: #777;
 }
 
-/* Indications that an assumption is used in the currently hovered step. */
-.proofStep.assumed .stepNumber {
-  color: black;
-}
-
 .proofStep .stepNumArea {
   border: 1px solid transparent;
-}
-
-.proofStep.assumed .stepNumArea {
-  font-weight: bold;
 }
 
 /* Expression in a proof step display, and step numbers */
