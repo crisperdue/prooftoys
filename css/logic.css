@@ -400,12 +400,14 @@ span#leftNav {
  * indicating that the entire step can be selected.
  */
 .proofDisplay.editable .proofStep .stepAndNum.hover {
-  border-color: #88f;
+  border-color: #ccc;
+  box-shadow: 2px 2px 2px #ccc;
 }
 
 /* But no hover in a subproof display */
 .proofDisplay.editable .inferenceDisplay .stepAndNum.hover {
   border-color: transparent;
+  box-shadow: none;
 }
 
 /* The stepHoverInfo area is active when the step is hovered
