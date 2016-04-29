@@ -414,6 +414,7 @@ span#leftNav {
    or flagged as "assumed" (by hovering some step that assumes it).
  */
 .proofStep .stepHoverInfo {
+    position: relative;
     visibility: hidden;
 }
 
@@ -427,19 +428,37 @@ span#leftNav {
     visibility: visible;
 }
 
-/* When some step assumes it, the content is a circled small letter a. */
+/* When some step assumes it, the content is a circled small letter "a". */
 .proofStep.assumed .stepHoverInfo::before {
     content: "\24d0";
 }
 
-
-/* fa-question-circle-o Unicode.  Note that this overrides the
-   small letter a by being below it.  To see these
-   as appropriate, uncomment this section
+/* fa-question-circle-o Unicode.  This takes priority over the
+   circled small letter "a" by being below it.
+ */
 .proofStep.hover .stepHoverInfo::before {
     content: "\f29c";
 }
-*/
+
+/* This displays information such as assumptions
+   when the "stepHoverInfo" area is hovered.
+ */
+.hoverInfoBox {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    left: .3em;
+    top: 1em;
+    width: 400px;
+    text-align: left;
+    font-size: 90%;
+    line-height: 1.2;
+    color: black;
+    background-color: ivory;
+    padding: 2px;
+    border: 1px solid silver;
+    box-shadow: 2px 2px 2px #666;
+}
 
 /* Step deleter control, only visible when the step is hovered. */
 .proofStep .deleteStep {
