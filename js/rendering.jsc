@@ -2328,12 +2328,15 @@ function hoverStepInfo(step) {
   $box = $('<div class=hoverInfoBox>');
   var s = step.original;
   var asms = s.getAsms();
-  $box.append($('<b>').append(asms ? 'Assumptions:' : 'No assumptions'));
-  $box.append('<br><br>');
-  asms.eachHyp(function(asm) {
-      $box.append(Toy.trimParens(asm.toUnicode()));
-      $box.append('<br>');
-    });
+  if (asms) {
+    $box.append('<b>Assumptions:</b><br><br>');
+    asms.eachHyp(function(asm) {
+        $box.append(Toy.trimParens(asm.toUnicode()));
+        $box.append('<br>');
+      });
+  } else {
+    $box.append('<b>No assumptions</b>');
+  }
   $info.append($box);
 }
 
