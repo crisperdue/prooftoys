@@ -447,7 +447,7 @@ span#leftNav {
     display: block;
     position: absolute;
     z-index: 1;
-    left: .3em;
+    left: .4em;
     top: 1em;
     width: 400px;
     text-align: left;
@@ -456,6 +456,7 @@ span#leftNav {
     color: black;
     background-color: ivory;
     padding: 2px;
+    padding-left: 10px;
     border: 1px solid silver;
     box-shadow: 2px 2px 2px #aaa;
 }
