@@ -392,8 +392,8 @@ var ruleInfo = {
     inputs: {implication: 1},
     form: ('Convert implication to hypotheses in step '
            + '<input name=implication>'),
-    menu: 'assumptions implicit',
-    description: 'assumptions implicit;; {in step implication}',
+    menu: 'convert to hypotheses',
+    description: 'convert to hypotheses;; {in step implication}',
   },
 
   /**
