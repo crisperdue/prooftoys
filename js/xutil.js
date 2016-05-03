@@ -1410,6 +1410,8 @@ function commuteEqn(eqn) {
  * this does not copy any conjuncts in the chain.  The subset omits
  * any that declare a variable to be a real number using the "R"
  * predicate.
+ *
+ * TODO: Unused, remove.
  */
 function omittingReals(hyps) {
   if (!hyps) {
