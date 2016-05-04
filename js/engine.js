@@ -400,6 +400,8 @@ var ruleInfo = {
    * Converts a wff with hypotheses to an implication.  If there are
    * no hypotheses, returns its input unchanged.  Rendering displays
    * the result of this in its entirety.
+   *
+   * TODO: Rename to something like displayAll. 
    */
   asImplication: {
     action: function(step) {

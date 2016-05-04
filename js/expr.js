@@ -358,7 +358,10 @@ Expr.prototype.isAbbrev = function() {
 /**
  * Truthy iff this term has the form of a definition of an
  * abbreviation, in other words (<var> == <term>), where the name of
- * <var> startw with "$".
+ * <var> starts with "$".
+ *
+ * TODO: This is overly specific.  Consider superseding it with
+ * mechanisms that properly detect abbreviations.
  */
 Expr.prototype.isAbbrevDef = function() {
   return this.isCall2('==') && this.getLeft().isAbbrev();
