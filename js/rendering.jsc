@@ -1337,20 +1337,23 @@ var useParens = {
 
 /**
  * Computes the effective precedence of the given outer binary
- * operator Atom when applied to the given inner binary operator Atom.
+ * operator Atom when the inner expression is one of its operands.
  * The result will be either its normal precedence or one more than
  * the precedence of innerOp if innerOp is listed for the operator in
  * the useParens table.
  *
- * The effect is to force parentheses around an expressions with the
- * inner operator if it is an argument of an argument with the outer
- * operator.
+ * The effect is to force parentheses around the inner expression if
+ * it is an of an operand of the outer operator.
  */
-function effectivePower(outer, inner) {
-  var specialOps = useParens[outer.pname] || Toy.emptySet;
-  return (specialOps.has(inner.pname)
-          ? Toy.getPrecedence(inner) + 1
-          : Toy.getPrecedence(outer));
+function effectivePower(op, inner) {
+  if (inner.isCall2()) {
+    var innerOp = inner.getBinOp();
+    var specialOps = useParens[op.pname];
+    if (specialOps && specialOps.has(innerOp.pname)) {
+      return Toy.getPrecedence(innerOp) + 1;
+    }
+  }
+  return Toy.getPrecedence(op);
 }
 
 // minPower is the precedence required to do without parentheses.
@@ -1390,12 +1393,10 @@ Call.prototype._render = function(info, minPower) {
   }
   if (this.isCall2()) {
     var op = this.getBinOp();
-    // Assumes this.isCall2().
+    // In other words, the effective power of this expr's operator, for
+    // purposes of deciding whether to parenthesize argument expressions.
     function thisPower(subExpr) {
-      var result = subExpr.isCall2()
-        ? effectivePower(op, subExpr.getBinOp())
-        : Toy.getPrecedence(op);
-      return result;
+      return effectivePower(op, subExpr);
     }
     // This is a call on a named function of two arguments.
     if (Toy.isInfixDesired(op)) {
