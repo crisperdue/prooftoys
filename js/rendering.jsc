@@ -1548,6 +1548,7 @@ Step.prototype.removeUser = function() {
 Atom.prototype.copyForRendering = function(bindings) {
   var name = Toy.getBinding(this.name, bindings) || this.pname;
   var result = new Atom(name);
+  result.node = null;
   result.sourceStep = this.sourceStep;
   return result;
 };
@@ -1555,6 +1556,7 @@ Atom.prototype.copyForRendering = function(bindings) {
 Call.prototype.copyForRendering = function(bindings) {
   var result = new Call(this.fn.copyForRendering(bindings),
                         this.arg.copyForRendering(bindings));
+  result.node = null;
   result.sourceStep = this.sourceStep;
   return result;
 };
@@ -1588,6 +1590,7 @@ Lambda.prototype.copyForRendering = function(bindings) {
                      : new Bindings(origName, name, bindings));
   var result =
     Toy.lambda(Toy.varify(name), this.body.copyForRendering(newBindings));
+  result.node = null;
   result.sourceStep = this.sourceStep;
   return result;
 };
