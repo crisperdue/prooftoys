@@ -1633,7 +1633,7 @@ function renderSubproof(step) {
   } else {
     $node = renderInference(step);
   }
-  $(getStepNode(step)).addClass('hasSubproof');
+  $(step.stepNode).addClass('hasSubproof');
   step.subproofDisplay = $node.data('proofDisplay');
 
   // Animate display of the subproof.  While sliding in the display,
@@ -1682,7 +1682,7 @@ function clearSubproof(step, internal) {
       container.hide(
                      {duration: 200,
                       complete: function() {
-                         $(getStepNode(step)).removeClass('hasSubproof');
+                         $(step.stepNode).removeClass('hasSubproof');
                          // Remove after hiding.
                          container.remove();
                        }});
@@ -2170,12 +2170,12 @@ function getStepsNode(node) {
 
 /**
  * Get a jQuery for the parent node containing the top-level proof and
- * subproofs where this rendered expr can be found.  That parent node
+ * subproofs where this rendered step can be found.  That parent node
  * is currently not part of a ProofDisplay, but by convention should
  * contain only the top-level proof and its subproofs.
  */
-function getTopProofContainer(expr) {
-  var $proofDisplay = $(expr.node).closest('.proofDisplay');
+function getTopProofContainer(step) {
+  var $proofDisplay = $(step.stepNode).closest('.proofDisplay');
   var $display = $proofDisplay.closest('.inferenceDisplay');
   if ($display.length === 0) {
     $display = $proofDisplay;
@@ -2310,13 +2310,12 @@ function hoverStep(step, direction, event) {
 
   // Always add or remove the "hover" class to the step node
   // as the mouse goes in or out.
-  var stepNode = getStepNode(step.node);
-  action(stepNode, 'hover');
+  action(step.stepNode, 'hover');
 
   // Highlight steps that establish assumptions used by this one.
   Toy.assumptionsUsed(step.original).forEach(function(assumed) {
       if (assumed.rendering) {
-        action(getStepNode(assumed.rendering), 'assumed');
+        action(assumed.rendering.stepNode, 'assumed');
       }
     });
 }
@@ -2376,7 +2375,7 @@ function hoverStepSelector(step, direction, event) {
     // If no handler apply or remove default highlighting.
     step.ruleDeps.forEach(function(dep) {
       if (dep.rendering) {
-        action(getStepNode(dep.rendering), 'dep');
+        action(dep.rendering.stepNode, 'dep');
       }
     });
   }
@@ -2424,7 +2423,7 @@ function hoverReplace(step, action) {
   hoverAsRewriter(step, action);
   var args = step.original.ruleArgs;
   var eqnStep = args[0].rendering;
-  action(getStepNode(eqnStep), 'dep');
+  action(eqnStep.stepNode, 'dep');
 }
 
 // Arguments to the handler functions are an inference
@@ -2439,7 +2438,7 @@ var hoverHandlers = {
     hoverAsRewriter(step, action);
     var args = step.original.ruleArgs;
     var eqnStep = args[2].rendering;
-    action(getStepNode(eqnStep), 'dep');
+    action(eqnStep.stepNode, 'dep');
   },
   axiom4: function(step, action) {
     var call = step.getLeft();
@@ -2460,7 +2459,7 @@ var hoverHandlers = {
     var eqn = args[0].rendering;
     // Name of variable being instantiated.
     var varName = args[2].ruleName;
-    action(getStepNode(eqn), 'dep');
+    action(eqn.stepNode, 'dep');
     eqn.findAll(varName,
                 function(_var) { action(_var.node, 'occur'); },
                 step,
@@ -2472,7 +2471,7 @@ var hoverHandlers = {
     var input = args[0].rendering;
     // Name of variable being instantiated.
     var varName = args[2].name || args[2];
-    action(getStepNode(input), 'dep');
+    action(input.stepNode, 'dep');
     input.findAll(varName,
                   function(_var) { action(_var.node, 'occur'); },
                   step,
@@ -2485,7 +2484,7 @@ var hoverHandlers = {
     var input = args[0].rendering.unHyp();
     // Name of variable being instantiated.
     var varName = input.arg.bound.name;
-    action(getStepNode(input), 'dep');
+    action(input.stepNode, 'dep');
     var body = input.arg.body;
     body.findAll(varName,
                  function(_var) { action(_var.node, 'occur'); },
