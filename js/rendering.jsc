@@ -1294,8 +1294,15 @@ function textNode(text) {
 // be done only once to any given expression.  Helper for the render
 // method.  (Not public)
 //
+// If the expr already has a node, just return a jQuery for the node,
+// to enable special rendering of certain exprs beforehand.
+//
 // The rendering is in the context of the given "info" step
 // information, which must have property asmSteps as in a step.
+//
+// TODO: This property is currently unused because assumptions are
+// either rendered normally or not at all.  Consider removing the
+// argument.
 //
 // Omits parentheses around an expression that uses an operator
 // if the operator's precedence is at least minPower.
@@ -1306,6 +1313,10 @@ function textNode(text) {
 //
 
 Atom.prototype._render = function(info, minPower, isFn) {
+  if (this.node) {
+    return $(this.node);
+  }
+
   // Note that this does not style any subscript differently than
   // the main part of the variable name.
   var $expr = exprJq(!isFn);
@@ -1358,6 +1369,10 @@ function effectivePower(op, inner) {
 
 // minPower is the precedence required to do without parentheses.
 Call.prototype._render = function(info, minPower) {
+  if (this.node) {
+    return $(this.node);
+  }
+
   var self = this;
   var $expr = exprJq(true);
   this.node = dom($expr);
@@ -1465,6 +1480,10 @@ Call.prototype._render = function(info, minPower) {
 };
 
 Lambda.prototype._render = function(info, minPower) {
+  if (this.node) {
+    return $(this.node);
+  }
+
   var $expr = exprJq(true);
   this.node = dom($expr);
   var stepNum = (Toy.trackSourceSteps
