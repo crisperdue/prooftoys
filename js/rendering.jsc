@@ -1120,8 +1120,8 @@ function wantLeftElision(step) {
 
 
 /**
- * Renders a renderable step into a new DOM node, returning the
- * node.  Omits surrounding parens if the step is a Call.
+ * Renders the top-level expression of a step into a node, returning
+ * the node.  Omits surrounding parens if the step is a Call.
  *
  * TODO: Consider fleshing out the concept of display with fewer
  * parentheses.
@@ -1131,63 +1131,79 @@ function wantLeftElision(step) {
  * that come from outside.
  */
 function renderWff(step) {
+  var info = {asmSteps: []};
+  var wff = step.wff;
+  var $wff;
   if (step.ruleName == 'asImplication') {
-    var info = {asmSteps: []};
-    $wff = step.wff._render(info, 0);
-    step.node = dom($wff);
+    // Display absolutely everything in this case.
+    $wff = wff._render(info, 0);
+    wff.node = dom($wff);
     return dom($wff);
-  } else if (step.isCall2('=>')) {
-    var asms = step.getLeft();
-    // Must we make the $wff if there are assumptions, but none visible?
-    var $wff;
-    var aSteps = step.asmSteps;
-    if (step.hasHyps) {
-      var info = {asmSteps: aSteps};
-      $wff = (exprJq(true)
-              .append(renderHyps(asms, info), ':', renderMain(step)));
-    } else {
-      // Conditional, but no hyps.
-      var info = {asmSteps: aSteps};
-      $wff = step.wff._render(info, 0);
+  } else if (step.ruleName == 'consider' || step.ruleName === 'considerPart') {
+    wff.node = dom(exprJq().append(wff.getRight()._render(info, 0),
+                                   ' = <span class=ellipsis>&hellip;</span>'));
+    return wff.node;
+  } else if (wff.isCall2('=>')) {
+    var asmPart = wff.getLeft();
+    var mainPart = wff.getRight();
+    var mainOnly = allImplicit(asmPart, step);
+    var power = mainOnly ? 0 : Toy.getPrecedence(wff.getBinOp());
+    // Render the RHS as the main.
+    mainPart.node = (renderMain(mainPart, step) ||
+                     dom(mainPart._render(info, power)));
+
+    if (mainOnly) {
+      // All assumptions are implicit, so the rendering is just the
+      // main part.
+      return mainPart.node;
     }
-    step.node = dom($wff);
-    return dom($wff);
+    // There is at least one explicit assumption.
+    var explicit = asmPart;
+    // Descend into left parts of a chain of assumptions until the
+    // right side argument is explicit or only one member left in the
+    // chain.  The resulting chain will contain only explicit assumptions.
+    while (explicit.isCall2('&') &&
+           findAsmStep(explicit.getRight(), step.asmSteps)) {
+      explicit = explicit.getLeft();
+    }
+    // When rendering the step as a whole, take the rendering of the
+    // explicit part as the rendering for the whole LHS of the
+    // conditional.
+    asmPart.node = dom(explicit._render(info, power));
+    // Now render the entire wff into a node.
+    $wff = step.wff._render(info, 0);
+    // But in the end we want the explicit part to be properly
+    // associated with its own display, so fix up the assignments of
+    // nodes.
+    explicit.node = asmPart.node;
+    asmPart.node = null;
+    wff.node = dom($wff);
+    return wff.node;
   } else {
-    return renderMain(step);
+    // The step is not a conditional.  Render it as the main.
+    return wff.node = renderMain(wff, step) || dom(wff._render(info, 0));
   }
 };
 
 /**
- * Returns a new DOM node that renders the "main" part of a renderable
- * step, meaning everything but the assumptions / hypotheses.
- * Currently gives special treatment to equations starting with
- * rules.consider and immediately following steps.
+ * Renders the given expr of the given step with left elision if the
+ * step has left elision, returning the DOM node result, otherwise
+ * just returns a falsy value.
+ *
+ * TODO: Consider changing this and its uses to precompute any special
+ * rendering.
  */
-function renderMain(step) {
-  // Do not render any parts specially as assumptions:
+function renderMain(expr, step) {
   var info = {asmSteps: []};
-  var main = step.getMain();
-  if (main.isCall2('=')) {
-    if (step.ruleName === 'consider' || step.ruleName === 'considerPart') {
-      var $expr = exprJq();
-      main.node = dom($expr);
-      $expr.append(main.getRight()._render(info, 0));
-      $expr.append(' = ');
-      $expr.append('<span class=ellipsis>&hellip;</span>');
-    } else {
-      if (step.hasLeftElision) {
-        var $expr = exprJq();
-        main.node = dom($expr);
-        $expr.append('<span class=ellipsis>&hellip;</span>');
-        $expr.append(' = ');
-        $expr.append(main.getRight()._render(info, 0));
-      } else {
-        var $expr = main._render(info, 0);
-      }
-    }
+  if (expr.isCall2('=') && step.hasLeftElision) {
+    var $expr = exprJq();
+    expr.node = dom($expr);
+    $expr.append('<span class=ellipsis>&hellip;</span>');
+    $expr.append(' = ');
+    $expr.append(expr.getRight()._render(info, 0));
     return dom($expr);
   } else {
-    return dom(main._render(info, 0));
+    return null;
   }
 }
 
@@ -1245,6 +1261,19 @@ function findAsmStep(asm, asmSteps) {
  */
 function isTypeCond(expr) {
   return expr.isCall1('R') && expr.arg.isVariable();
+}
+
+/**
+ * Truthy iff the given term is an assumption that is "in scope"
+ * for the step, or is a conjunction of allImplicit terms.
+ * (This makes the whole term implicit.)
+ */
+function allImplicit(expr, step) {
+  return (isTypeCond(expr) ||
+          findAsmStep(expr, step.asmSteps) ||
+          (expr.isCall2('&') &&
+           allImplicit(expr.getLeft(), step) && 
+           allImplicit(expr.getRight(), step)));
 }
 
 /**
@@ -1394,6 +1423,8 @@ Call.prototype._render = function(info, minPower) {
     return $expr;
   }
 
+  // True if reporting the source step, or if the main operator has
+  // precedence less than minPower.
   var parens = stepNum;
   if (!parens) {
     var prec = Toy.getPrecedence;
@@ -1432,6 +1463,7 @@ Call.prototype._render = function(info, minPower) {
         $expr.append($left,
                      $('<sup>').append(right.getNumValue()));
       } else {
+        // A typical binary operator invocation, e.g. x + y.
         var $fn = exprJq().append(left._render(info, thisPower(left)), ' ',
                                   op._render(info, 0, true));
         this.fn.node = dom($fn);
