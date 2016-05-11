@@ -1372,7 +1372,7 @@ Atom.prototype._render = function(info, minPower, isFn) {
 var useParens = {
   '|': new Toy.Set().addAll(['&']),
   '=>': new Toy.Set().addAll(['=>', '=']),
-  '==': new Toy.Set().addAll(['=>', '='])
+  '==': new Toy.Set().addAll(['=>'])
 };
 
 /**
