@@ -541,18 +541,32 @@ StepEditor.prototype.isSolution = function(step) {
       }) && 'You have found a valid solution';
   } else if (this.standardSolution && step.isEquation()) {
     // TODO: Check that the assumptions of the solution are all
-    //   assumptions/givens of the problem.
+    //   assumptions/givens of the problem, or assumptions about types
+    //   of variables.
     // TODO: Support other sorts of solutions such as solving for
     //   one variable in the presence of others, and constant expressions
     //   other than trivial fractions.
-    // TODO: Check that fractions are reduced to lowest terms.
     var eqn = step.getMain();
+    function gcd(expr) {
+      return Toy.gcd(expr.getLeft().getNumValue(),
+                     expr.getRight().getNumValue());
+    }
+    function isLowestTerms(expr) {
+      return (expr.isNumeral() ||
+              (Toy.isFraction(expr) && gcd(expr) === 1));
+    }
     if (eqn.isCall2('==') && eqn.getRight().isCall2('=') &&
-        eqn.getRight().getLeft().isVariable() &&
-        Toy.isFraction(eqn.getRight().getRight())) {
-      return 'You have solved for ' + step.getMain().getRight().getLeft().pname;
+        eqn.getRight().getLeft().isVariable()) {
+      // The main part of the step is an equivalence containing an equation.
+      var answer = eqn.getRight().getRight();
+      if (isLowestTerms(answer)) {
+        return ('You have solved for ' +
+                step.getMain().getRight().getLeft().pname);
+      }
+      // Else it is not recognized as a solution.
     } else if (eqn.getLeft().isVariable()) {
-      if (Toy.isFraction(eqn.getRight())) {
+      // The main part of the step is just an equation.
+      if (isLowestTerms(eqn.getRight())) {
         return format('If there is a solution for {1} this is it',
                       step.getMain().getLeft().name);
       }
