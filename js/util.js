@@ -43,6 +43,30 @@ Math.trunc = Math.trunc || function(x) {
   return x < 0 ? Math.ceil(x) : Math.floor(x);
 }
 
+/**
+ * Returns the GCD of two positive integers; actually the truncation
+ * of the absolute values of any two numbers, except if either
+ * number's absolute value is less than 1, returns 1.  For correct
+ * results supply inputs <= MAX_INT.
+ */
+function gcd(x, y) {
+  var x1 = Math.trunc(Math.abs(x));
+  var y1 = Math.trunc(Math.abs(y));
+  var a = Math.max(x1, y1);
+  var b = Math.min(x1, y1);
+  if (b < 1) {
+    return 1;
+  }
+  while (true) {
+    var r = a % b;
+    if (r === 0) {
+      return b;
+    }
+    a = b;
+    b = r;
+  }
+}
+
  
 ////
 //// Assertions, error reporting and debugging
@@ -849,6 +873,7 @@ function _testTriangle(where, height, color) {
 //// Export public names.
 
 Toy.MAX_INT = MAX_INT;
+Toy.gcd = gcd;
 
 Toy.err = err;
 Toy.check = check;

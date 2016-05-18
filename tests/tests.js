@@ -116,6 +116,16 @@ var testCase = {
 
   // Utilities
 
+  testGcd: function() {
+    gcd = Toy.gcd;
+    assertEqual(12, gcd(60, 24));
+    assertEqual(1, gcd(1.5, .5));
+    assertEqual(1, gcd(-1.5, -.3));
+    assertEqual(6, gcd(240, 18));
+    assertEqual(2, gcd(-16, 6));
+    assertEqual(2, gcd(-16, -6));
+  },
+
   testArrayEquals: function() {
     var a1 = [{b: 2}, 'asdf', 13];
     assert(Array.equals(a1, a1));
