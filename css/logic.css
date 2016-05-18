@@ -657,6 +657,9 @@ span.stepRef {
   background-color: white;
   margin-top: .2em;
   position: relative;
+  /* Allow plenty of space for the ruleSelector, though it is not always
+     displayed. */
+  min-height: 800px;
 }
 
 /* Make inputs a bit larger than regular text */
@@ -672,11 +675,6 @@ span.stepRef {
 .rules-header {
   padding-left: 4px;
   font-weight: bold;
-}
-
-.stepEditor .ruleSelector {
-  /* Roughly the interior height of the window is good. */
-  min-height: 800px;
 }
 
 /* Text used as a hint, as in a text field */
