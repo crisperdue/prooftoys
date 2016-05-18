@@ -548,9 +548,17 @@ StepEditor.prototype.isSolution = function(step) {
     // TODO: Check that fractions are reduced to lowest terms.
     var eqn = step.getMain();
     if (eqn.isCall2('==') && eqn.getRight().isCall2('=') &&
-        eqn.getRight().getLeft().isVariable() &&
-        Toy.isFraction(eqn.getRight().getRight())) {
-      return 'You have solved for ' + step.getMain().getRight().getLeft().pname;
+        eqn.getRight().getLeft().isVariable()) {
+      var answer = eqn.getRight().getRight();
+      function gcd(expr) {
+        return Toy.gcd(expr.getLeft().getNumValue(),
+                       expr.getRight().getNumValue());
+      }
+      if (answer.isNumeral() || Toy.isFraction(answer) && gcd(answer) === 1) {
+        return ('You have solved for ' +
+                step.getMain().getRight().getLeft().pname);
+      }
+      // Else it is not recognized as a solution.
     } else if (eqn.getLeft().isVariable()) {
       if (Toy.isFraction(eqn.getRight())) {
         return format('If there is a solution for {1} this is it',
