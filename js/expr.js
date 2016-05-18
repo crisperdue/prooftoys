@@ -443,17 +443,12 @@ Expr.prototype.getNumValue = function() {
   return this._value;
 }
 
-// JavaScript is defined to use IEEE 64-bit floating point in "round
-// to nearest" mode.  2**53 is confusable with 2**53 + 1, so this is
-// the greatest integer value we "allow".
-var MAX_INT = Math.pow(2, 53) - 1;
-
 /**
  * Check that the given number is within the range where integer
  * arithmetic is exact, returning it if so, raising an Error if not.
  */
 function checkRange(number) {
-  Toy.check(Math.abs(number) <= MAX_INT,
+  Toy.check(Math.abs(number) <= Toy.MAX_INT,
         function() { return 'Number out of range: ' + number; });
   return number;
 }
