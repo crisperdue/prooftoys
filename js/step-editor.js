@@ -8,6 +8,8 @@
 // Make application assertions available through "assert".
 var assert = Toy.assertTrue;
 
+var format = Toy.format;
+
 
 //// PROOF STEP EDITOR
 
@@ -257,7 +259,7 @@ StepEditor.prototype.ruleChosen = function() {
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
-      this.form.html(Toy.format(template, formatArgs));
+      this.form.html(format(template, formatArgs));
       this.proofDisplay.setSelectLock(true);
       this.form.append(' <button>Go</button>');
       addClassInfo(this.form);
@@ -525,8 +527,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
  * If this.solutions is nonempty, returns a solution message iff the
  * step or its "main part" is an alphaMatch with some element of it.
  * 
- * If this.standardSolution is truthy, this returns a truthy value iff
- * the given step is an equation of the form <var> = <expr>, where
+ * If this.standardSolution is truthy, this returns a solution message
+ * iff the given step is an equation of the form <var> = <expr>, where
  * <expr> is a numeral or a fraction.
  */
 StepEditor.prototype.isSolution = function(step) {
@@ -536,19 +538,27 @@ StepEditor.prototype.isSolution = function(step) {
             Toy.termify(solution).alphaMatch(step.getMain())) {
           return true;
         }
-      }) && 'This is a valid solution';
-  } else if (this.standardSolution &&
-             step.isEquation() &&
-             step.getMain().getLeft().isVariable()) {
-    var rhs = step.getMain().getRight();
-    return ((rhs.isNumeral() ||
-             (rhs.isCall2('/') &&
-              rhs.getLeft().isNumeral() &&
-              rhs.getRight().isNumeral()))
-            && 'You have solved for ' + step.getMain().getLeft().name);
-  } else {
-    return false;
+      }) && 'You have found a valid solution';
+  } else if (this.standardSolution && step.isEquation()) {
+    // TODO: Check that the assumptions of the solution are all
+    //   assumptions/givens of the problem.
+    // TODO: Support other sorts of solutions such as solving for
+    //   one variable in the presence of others, and constant expressions
+    //   other than trivial fractions.
+    // TODO: Check that fractions are reduced to lowest terms.
+    var eqn = step.getMain();
+    if (eqn.isCall2('==') && eqn.getRight().isCall2('=') &&
+        eqn.getRight().getLeft().isVariable() &&
+        Toy.isFraction(eqn.getRight().getRight())) {
+      return 'You have solved for ' + step.getMain().getRight().getLeft().pname;
+    } else if (eqn.getLeft().isVariable()) {
+      if (Toy.isFraction(eqn.getRight())) {
+        return format('If there is a solution for {1} this is it',
+                      step.getMain().getLeft().name);
+      }
+    }
   }
+  return false;
 };
 
 /**
