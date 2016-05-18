@@ -404,6 +404,17 @@ function isIntegerLiteral(name) {
 }
 
 /**
+ * Returns a truthy value iff the given term is a numeral, or it is
+ * the quotient of two numerals.
+ */
+function isFraction(expr) {
+  return (expr.isNumeral() ||
+          (expr.isCall2('/') &&
+           expr.getLeft().isNumeral() &&
+           expr.getRight().isNumeral()));
+}
+
+/**
  * True iff this is a Atom that displays as an identifier.  This is
  * based on Unicode display, which may be a non-identifier in cases such
  * as "forall" and "exists", even when the internal name is an identifier.
@@ -2676,6 +2687,7 @@ Toy.isConstantName = isConstantName;
 Toy.isVariableName = isVariableName;
 Toy.isIdentifier = isIdentifier;
 Toy.isIntegerLiteral = isIntegerLiteral;
+Toy.isFraction = isFraction;
 Toy.checkRange = checkRange;
 Toy.isProved = isProved;
 
