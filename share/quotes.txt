@@ -95,3 +95,6 @@ in accordance with its laws. -- Alfred Tarski
 
 It is impossible to make anything truly foolproof because
 fools are so ingenious. -- Anonymous
+
+I shall try to correct errors when shown to be errors; and I shall adopt new views
+so fast as they shall appear to be true views. -- Abraham Lincoln
