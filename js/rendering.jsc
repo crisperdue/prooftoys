@@ -1166,7 +1166,8 @@ function renderWff(step) {
     // right side argument is explicit or only one member left in the
     // chain.  The resulting chain will contain only explicit assumptions.
     while (explicit.isCall2('&') &&
-           findAsmStep(explicit.getRight(), step.asmSteps)) {
+           (isTypeCond(explicit.getRight()) ||
+            findAsmStep(explicit.getRight(), step.asmSteps))) {
       explicit = explicit.getLeft();
     }
     // When rendering the step as a whole, take the rendering of the
@@ -1251,7 +1252,14 @@ function renderHyps(expr, info) {
 function findAsmStep(asm, asmSteps) {
   return Toy.each(asmSteps, function(step) {
       // Note that members of asmSteps have the form a => b.
-      if (step.wff.getRight().matches(asm)) {
+      var rhs = step.wff.getRight();
+      if (rhs.matches(asm)) {
+        return step;
+      }
+      if (rhs.isCall2('==') && rhs.getLeft().isVariable() &&
+          rhs.getLeft().pname[0] == '$' && rhs.getRight().matches(asm)) {
+        // The assumption matches the definition of an abbreviation
+        // as created for problem "givens".  Consider it implicit.
         return step;
       }
     });
