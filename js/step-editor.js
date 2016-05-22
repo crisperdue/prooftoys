@@ -494,7 +494,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
       return;
     }
     this.proofDisplay.deselectStep();
-    // Clear the proof errors field.
+    // Make sure the proof errors field is cleared.
     this.$proofErrors.hide();
     // After the browser repaints, try simplifying the step
     // and adding the result to the proof if simplification
@@ -983,6 +983,10 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
   });
 }
 
+/**
+ * Call this any time this object's display might need to be updated.
+ * The display update will occur when the event loop becomes idle.
+ */
 BasicRuleSelector.prototype.refresh = function() {
   this._refresher.activate();
 }
@@ -1015,6 +1019,9 @@ BasicRuleSelector.prototype.update = function() {
   self.$node.fadeOut(0);
   self.$node.empty();
   self.$node.fadeIn();
+  // Clear any message displays whenever this changes, as when
+  // the user selects an expression or step.
+  self.stepEditor.$proofErrors.hide();
   $header = $('<div class=rules-header/>');
   self.$node.append($header);
   var step = this.stepEditor.proofDisplay.selection;
