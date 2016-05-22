@@ -463,6 +463,9 @@ ProofEditor.prototype.showProofButtons = @(value) {
  *
  * stepsNode: DOM node of the proofSteps DIV.
  *
+ * stepEditor: StepEditor for this (top-level) ProofDisplay,
+ * or null if there is none.
+ *
  * stepPrefix: string prefixed to each step number, defaults to
  * an empty string.  Set only during initialization.
  *
