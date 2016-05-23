@@ -1508,7 +1508,8 @@ Call.prototype._render = function(info, minPower) {
       $expr.append(this.fn._render(info, 0, true),
                    '(', this.arg._render(info, Toy.unaryPower), ')');
     } else {
-      $expr.append('\u00a0', this.fn._render(info, 0, true),
+      // Unary operator; ensure space before, then op and arg.
+      $expr.append(' ', this.fn._render(info, 0, true),
                    this.arg._render(info, Toy.unaryPower));
     }
   } else {
