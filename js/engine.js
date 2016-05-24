@@ -2691,8 +2691,11 @@ var ruleInfo = {
   },
     
   /**
-   * Same as "replace", but replaces an occurrence in target of the right
+   * Same as "rplace", but replaces an occurrence in target of the right
    * side of the equation with its left side.  Accepts hypotheses.
+   *
+   * TODO: Modify this the target arg comes first, consistent with most
+   * other rules.
    */
   rRight: {
     action: function(equation, target, path) {
@@ -2712,8 +2715,6 @@ var ruleInfo = {
 
   // Ambidextrous replace that tries matching the equation LHS,
   // but can also replace right-to-left.
-  // TODO: remove this in favor of UI that finds opportunities to
-  //   replace in either direction.
   replaceEither: {
     action: function(target, _path, equation) {
       var path = Toy.path(_path);
