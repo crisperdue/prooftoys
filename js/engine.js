@@ -2730,9 +2730,6 @@ var ruleInfo = {
         Toy.err('Expression ' + expr + ' matches neither side of ' +
                 equation);
       }
-      var rev = rules.eqnSwap(equation);
-      var result = rules.rplace(rev, target, path);
-      return result.justify('rRight', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Replace this using equation step <input name=equation>'),
