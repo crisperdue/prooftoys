@@ -2501,6 +2501,8 @@ var hoverHandlers = {
   replace: hoverAsRewriter,
   replaceEither: function(step, action) {
     // Same as hoverReplace, but the equation is args[2].
+    // TODO: Calling hoverAsRewriter does not work when this replaces
+    //   a right side.  Fix so it does work.
     hoverAsRewriter(step, action);
     var args = step.original.ruleArgs;
     var eqnStep = args[2].rendering;
