@@ -2851,6 +2851,32 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
+  // Given a step of the form A => B, a path to a subexpression b of
+  // B, and an equation step b = c, proves (b = c => (B = B')), where
+  // B' is B with the referenced occurrence of b replaced by c.  Omits
+  // assumptions of both input steps.  Really neither one needs to be
+  // proved.  They just provide convenient ways to refer to terms and
+  // parts of terms for application of r5239.
+  replaceIsEquiv: {
+    action: function(step, path_arg, equation) {
+      var path = Toy.path(path_arg);
+      // The restrictions on this step are for convenient implementation.
+      step.wff.assertCall2('=>');
+      var targetWff = step.getRight();
+      assert(path.isRight(), 'Site must be in the RHS');
+      var path2 = path.rest;
+      var eqn = (equation.isCall2('=>') ? equation.getRight() : equation);
+      var result = rules.r5239(eqn, targetWff, path2);
+      return result.justify('replaceIsEquiv', arguments, [step]);
+    },
+    inputs: {site: 1, equation: 3},
+    form: ('Replace this using equation step <input name=equation>'),
+    menu: 'replace giving equivalent',
+    description: ('result of replacing {site} is equivalent;; ' +
+                  '{in step siteStep} {using step equation}'),
+    labels: 'algebra basic'
+  },
+
   // Takes a proof step, a path, and a proved equation.  The part of
   // the step at the given path must match the LHS of the equation.
   // Replaces that part of the step with the appropriate instance of
