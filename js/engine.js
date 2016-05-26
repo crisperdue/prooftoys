@@ -115,6 +115,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
     // need to dedupe, and if it modified only assumptions that was
     // probably its purpose, so don't undo it.
     // Note that deduping amounts to normalization.
+    // Uncomment this to show where arrangeAsms is called here.
+    // console.log('arrangeAsms of', step.ruleName);
     step = rules.arrangeAsms(step);
   }
 
