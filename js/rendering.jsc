@@ -1152,7 +1152,7 @@ function renderWff(step) {
     var mainOnly = allImplicit(asmPart, step);
     var power = mainOnly ? 0 : Toy.getPrecedence(wff.getBinOp());
     // Render the RHS as the main.
-    mainPart.node = (renderMain(mainPart, step) ||
+    mainPart.node = (renderWithElision(mainPart, step) ||
                      dom(mainPart._render(info, power)));
 
     if (mainOnly) {
@@ -1185,7 +1185,7 @@ function renderWff(step) {
     return wff.node;
   } else {
     // The step is not a conditional.  Render it as the main.
-    return wff.node = renderMain(wff, step) || dom(wff._render(info, 0));
+    return wff.node = renderWithElision(wff, step) || dom(wff._render(info, 0));
   }
 };
 
@@ -1197,7 +1197,7 @@ function renderWff(step) {
  * TODO: Consider changing this and its uses to precompute any special
  * rendering.
  */
-function renderMain(expr, step) {
+function renderWithElision(expr, step) {
   var info = {asmSteps: []};
   if (expr.isCall2('=') && step.hasLeftElision) {
     var $expr = exprJq();
