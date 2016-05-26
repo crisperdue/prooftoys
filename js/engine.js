@@ -710,16 +710,9 @@ var ruleInfo = {
   },
 
   // Similar to "consider", but uses a selected term.
-  // The new step inherits hypotheses from the input step.
-  // TODO: hyps
   considerPart: {
     action: function(step, path) {
-      var eqn = rules.eqSelf(step.get(path));
-      var result = (step.hasHyps
-                    ? (rules.andAssume(eqn, step.getLeft())
-                       .then('asHypotheses'))
-                    : eqn);
-      return result.justify('considerPart', arguments);
+      return rules.consider(step.get(path)).justify('considerPart', arguments);
     },
     inputs: {site: 1},
     form: '',
