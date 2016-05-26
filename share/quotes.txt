@@ -98,3 +98,6 @@ fools are so ingenious. -- Anonymous
 
 I shall try to correct errors when shown to be errors; and I shall adopt new views
 so fast as they shall appear to be true views. -- Abraham Lincoln
+
+The smallest natural number not definable by nine words is definable by nine words.
+-- Jules Richard
