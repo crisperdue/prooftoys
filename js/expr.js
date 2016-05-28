@@ -1685,9 +1685,10 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 //
 // Tree walks though this Expr and all Calls it contains, recursively,
 // calling the function at each Call and passing a reverse path from
-// here to that point until the function returns a truthy value.  Does
-// not descend into non-Calls.  Returns the first truthy value found
-// at any level.
+// here to that point until the function returns a truthy value.
+// Descends first into the arg part to make the search proceed right
+// to left.  Does not descend into non-Calls.  Returns the first
+// truthy value found at any level.
 */
 
 //// Atom -- variable bindings and references
