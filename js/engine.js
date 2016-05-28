@@ -2852,22 +2852,47 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Given a step of the form A => B, a path to a subexpression b of
-  // B, and an equation step b = c, proves (b = c => (B = B')), where
-  // B' is B with the referenced occurrence of b replaced by c.  Omits
-  // assumptions of both input steps.  Really neither one needs to be
-  // proved.  They just provide convenient ways to refer to terms and
-  // parts of terms for application of r5239.
+  // Given a step A, a path to its selected subexpression b, and an
+  // equation step containing an equation of the form (b = c), this
+  // proves (b = c => (B = B')), where B is either A, or if A is a
+  // call to "==" or "=>", the appropriate top-level subexpression of
+  // A, and B' is B with the referenced occurrence of b replaced by c.
+  // If step B has the form C => D or C == D and the subexpression is
+  // part of C or D, uses C or D as appropriate in place of B.  If the
+  // equation step is an equivalence (or conditional), this uses its
+  // RHS as the equation.
+  //
+  // Extracts subexpressions from the input steps, but does not need
+  // either one to be proved; they just provide convenient access to
+  // terms and parts of terms for application of r5239.
   replaceIsEquiv: {
-    action: function(step, path_arg, equation) {
+    action: function(step, path_arg, eqnStep) {
       var path = Toy.path(path_arg);
-      // The restrictions on this step are for convenient implementation.
-      step.wff.assertCall2('=>');
-      var targetWff = step.getRight();
-      assert(path.isRight(), 'Site must be in the RHS');
-      var path2 = path.rest;
-      var eqn = (equation.isCall2('=>') ? equation.getRight() : equation);
-      var result = rules.r5239(eqn, targetWff, path2);
+      var wff = step.wff;
+
+      // A boolean part of the step:
+      var targetWff = wff;
+      // Path to the target, relative to targetWff:
+      var targetPath = path;
+      // TODO: "==" would be preferable to "=", but we can't ensure it
+      // will be that here.
+      if (wff.isCall2('=') || wff.isCall2('=>')) {
+        targetWff = path.isLeft() ? wff.getLeft() : wff.getRight();
+        targetPath = path.rest;
+      }
+      var target = targetWff.get(targetPath);
+
+      var eqn;
+      var eqnWff = eqnStep.wff;
+      function test(term, pth) {
+        if (term.isCall2('=') && term.getLeft().matches(target)) {
+          return term;
+        }
+      }
+      // searchCalls finds the rightmost occurrence, which seems best.
+      var eqn = eqnStep.searchCalls(test);
+      assert(eqn, 'Occurrence of {1} = ... not found', target.toUnicode());
+      var result = rules.r5239(eqn, targetWff, targetPath);
       return result.justify('replaceIsEquiv', arguments, [step]);
     },
     inputs: {site: 1, equation: 3},
