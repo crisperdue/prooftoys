@@ -699,7 +699,13 @@ var ruleInfo = {
     description: 'expression equal to itself',
     action: function(term) {
       term = termify(term);
-      var step = rules.eqSelf(term);
+      if (term.isCall2('=')) {
+        // TODO: More generally, if the term is known to have a boolean value
+        // use equiv.
+        var step = rules.equivSelf(term);
+      } else {
+        var step = rules.eqSelf(term);
+      }
       return step.justify('consider', arguments);
     },
     inputs: {term: 1},

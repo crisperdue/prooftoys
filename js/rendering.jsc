@@ -1143,8 +1143,13 @@ function renderWff(step) {
     wff.node = dom($wff);
     return dom($wff);
   } else if (step.ruleName == 'consider' || step.ruleName === 'considerPart') {
-    wff.node = dom(exprJq().append(wff.getRight()._render(info, 0),
-                                   ' = <span class=ellipsis>&hellip;</span>'));
+    // Op is always "=" or "==".
+    var op = wff.getBinOp().toUnicode();
+    var power = Toy.getPrecedence(wff.getBinOp());
+    // The right side renders on the left here so any changes to it appear
+    // on the right side in following steps.
+    wff.node = dom(exprJq().append(wff.getRight()._render(info, power), ' ', op,
+                                   ' <span class=ellipsis>&hellip;</span>'));
     return wff.node;
   } else if (wff.isCall2('=>')) {
     var asmPart = wff.getLeft();
