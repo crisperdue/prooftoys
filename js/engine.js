@@ -335,36 +335,6 @@ var ruleInfo = {
     labels: 'basic'
   },
 
-  /**
-   * Creates an abbreviation, a form of assumption.
-   */
-  given: {
-    action: function(term_arg, opt_vbl) {
-      var term = termify(term_arg);
-      var vbl;
-      if (opt_vbl === undefined) {
-        if (Toy.stepEditor) {
-          vbl = varify(Toy.stepEditor.genAbbrevName());
-        } else {
-          assert(false, 'Rules.given: no variable name supplied.');
-        }
-      } else {
-        vbl = varify(opt_vbl);
-      }
-      var eqn = Toy.infixCall(vbl, '==', term);
-      var result = rules.assume(eqn).justify('given', arguments);
-      eqn.sourceStep = result;
-      _allHyps[eqn.dump()] = eqn;
-      return result;
-    },
-    minArgs: 1,
-    inputs: {bool: 1},
-    form: ('Add as given: <input name=bool>'),
-    menu: 'add a statement as given',
-    description: 'given',
-    labels: 'basic'
-  },
-
   copy: {
     action: function(step) {
       // Always make a new step, that is the point.
@@ -4480,7 +4450,7 @@ function assumptionsBefore(step) {
   var steps = [];
   var proofSteps = proofOf(step);
   proofSteps.forEach(function (step) {
-      if (step.ruleName === 'assume' || step.ruleName === 'given') {
+      if (step.ruleName === 'assume') {
         steps.push(step);
       }
     });
