@@ -139,7 +139,6 @@ TypeOperator.prototype.fresh = function(mappings, nonGenerics) {
 
 function FunctionType(fromType, toType) {
   TypeOperator.call(this, '->', [fromType, toType]);
-  this.types = [fromType, toType];
 }
 Toy.extends(FunctionType, TypeOperator);
 
