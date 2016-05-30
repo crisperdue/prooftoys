@@ -1208,7 +1208,7 @@ function renderWithElision(expr, step) {
     var $expr = exprJq();
     expr.node = dom($expr);
     $expr.append('<span class=ellipsis>&hellip;</span>');
-    $expr.append(' = ');
+    $expr.append(expr.isCall2('==') ? ' &equiv; ' : ' = ');
     $expr.append(expr.getRight()._render(info, 0));
     return dom($expr);
   } else {
