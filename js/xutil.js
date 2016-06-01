@@ -94,6 +94,7 @@ TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
  */
 function TypeConstant(name) {
   this.name = name;
+  this.types = [];
 }
 Toy.extends(TypeConstant, null);
 
