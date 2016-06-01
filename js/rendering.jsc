@@ -1214,7 +1214,7 @@ function renderWithElision(expr, step) {
                  // Display equivalences as equivs.  This eventually
                  // call toUnicode, and if there is a type, displays
                  // approprriately.
-                 expr.getBinOp().render(0, true), ' ',
+                 expr.getBinOp().render(info, 0, true), ' ',
                  expr.getRight().render(info, 0));
     return dom($expr);
   } else {
