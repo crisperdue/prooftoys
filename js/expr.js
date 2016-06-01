@@ -1756,10 +1756,17 @@ Atom.prototype._toString = function() {
  */
 Atom.prototype.toUnicode = function() {
   var name = this.pname;
+  // This special handling of "=" is a forward reference to
+  // xutil.js.
+  var type = this.hasType && this.hasType();
+  if (type && this.pname == '=' && Toy.isBooleanBinOp(this)) {
+    name = '==';
+  }
   var uname = unicodeNames[name];
   if (uname) {
     return uname;
   }
+
   var info = this.parseName();
   var result = info.name;
   if (info.sub) {
