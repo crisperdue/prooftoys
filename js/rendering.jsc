@@ -878,18 +878,21 @@ ProofDisplay.prototype.renderStep = function(step) {
   step.annotateWithTypes();
 
   // Make an object for rendering of the whole step.
-  var $step = ($('<div class=proofStep>')
-               // The stepHoverInfo is on the left, with an "info" symbol
-               // or an "assumed" symbol.
-               //
-               // Here we have CSS classes fa and fa-fw with no
-               // character specified.  The character is controlled by
-               // logic.css, not necessarily an fa "icon".
-               .append('<span class="fa fa-fw stepHoverInfo">'));
-  // If editable, add appropriate parts.
+  var $step = $('<div class=proofStep>');
+  // If editable, add deleter.
   if (self.isEditable()) {
-    $step.append('<button class=deleteStep title="Delete step">X</button>',
-                 '<input type=checkbox class="stepSelector checkbox">');
+    $step.append('<button class=deleteStep title="Delete step">X</button>');
+  }
+  // The stepHoverInfo is on the left, with an "info" symbol
+  // or an "assumed" symbol.
+  //
+  // Here we have CSS classes fa and fa-fw with no
+  // character specified.  The character is controlled by
+  // logic.css, not necessarily an fa "icon".
+  $step.append('<span class="fa fa-fw stepHoverInfo">');
+  // If editable, add checkbox.
+  if (self.isEditable()) {
+    $step.append('<input type=checkbox class="stepSelector checkbox">');
   }
   $numArea = ($('<span class="stepNumArea stepSelector">')
               .append('[<span class=stepNumber></span>]'));
