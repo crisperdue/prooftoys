@@ -514,6 +514,22 @@ function booleanBinOpType() {
   return new FunctionType(boolean, new FunctionType(boolean, boolean));
 }
 
+/**
+ * Returns a truthy value iff the term has been annotated with a type
+ * and the type maps from 2 booleans to a boolean.
+ */
+function isBooleanBinOp(term) {
+  var type = term.hasType();
+  if ((type instanceof FunctionType) && dereference(type.types[0]) == boolean) {
+    var t1 = dereference(type.types[1]);
+    return ((t1 instanceof FunctionType) &&
+            dereference(t1.types[0]) == boolean &&
+            dereference(t1.types[1]) == boolean);
+  } else {
+    return false;
+  }
+}
+
 function equalityType() {
   var v = new TypeVariable();
   return new FunctionType(v, new FunctionType(v, boolean));
@@ -1563,6 +1579,7 @@ Toy.TypeOperator = TypeOperator;
 Toy.FunctionType = FunctionType;
 Toy.parseType = parseType;
 Toy.findType = findType;
+Toy.isBooleanBinOp = isBooleanBinOp;
 
 // Expression parsing
 
