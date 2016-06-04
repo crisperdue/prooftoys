@@ -449,12 +449,12 @@ span#leftNav {
     z-index: 1;
     left: .7em;
     top: 1em;
-    width: 400px;
+    width: 600px;
     text-align: left;
-    font-size: 90%;
     line-height: 1.2;
     color: black;
     background-color: ivory;
+    opacity: .9;
     padding: 2px;
     padding-left: 10px;
     border: 1px solid silver;
