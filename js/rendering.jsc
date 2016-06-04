@@ -928,14 +928,19 @@ ProofDisplay.prototype.renderStep = function(step) {
   // TODO: Consider using delegation more extensively.
   var exprSelector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
   $step.on(TOUCHDOWN, exprSelector,
-       // This implements a policy of one selection per proof step.
-       // TODO: Implement such policies in the proof controller.
-       function(event) {
-         self.handleExprClick(getExpr(this));
-         // Select only the innermost Expr.
-         // stopImmediatePropagation does not seem to be required here.
-         event.stopPropagation();
-       });
+           // This implements a policy of one selection per proof step.
+           // TODO: Implement such policies in the proof controller.
+           function(event) {
+             var expr = getExpr(this);
+             // Ignore clicks on tooltips, popups and such that may be
+             // descendants of the step's node.
+             if (expr) {
+               self.handleExprClick(expr);
+               // Select only the innermost Expr.
+               // stopImmediatePropagation does not seem to be required here.
+               event.stopPropagation();
+             }
+           });
   $step.on('mouseenter mouseleave', '.stepSelector', function(event) {
       hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
@@ -2230,7 +2235,7 @@ function getStepNode(expr) {
 /**
  * Gets the proof step (Expr) of the step that renders
  * in part into the given DOM Node.  Also accepts an Expr of
- * a rendered proof.
+ * a rendered proof.  Returns null if there is none.
  */
 function getProofStep(node) {
   return $(getStepNode(node)).data('proofStep');
@@ -2283,13 +2288,16 @@ function getProofDisplay(expr) {
 
 
 /**
- * Returns the expression associated with a DOM node.
+ * Returns the expression associated with a DOM node, specifically an
+ * Expr whose node property is the given node.  Returns a falsy value
+ * if there is none.
  */
 function getExpr(node) {
   // Go up to the proof step then look through all subexpressions.
   var step = getProofStep(node);
-  return step.search(function (expr) { return expr.node == node; },
-                     true);
+  return (step &&
+          step.search(function (expr) { return expr.node == node; },
+                      true));
 }
 
 
