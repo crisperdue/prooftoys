@@ -2405,22 +2405,16 @@ function hoverStep(step, direction, event) {
 }
 
 /**
- * Renders "info" about the given rendered step, responding to an 
+ * Renders "info" about the given rendered step in response to
+ * hovering over a step's .stepHoverInfo element.  Now renders
+ * the entire step rather than just assumptions.
  */
 function hoverStepInfo(step) {
-  $info = $(step.stepNode).find('.stepHoverInfo');
-  $box = $('<div class=hoverInfoBox>');
-  var s = step.original;
-  var asms = s.getAsms();
-  if (asms) {
-    $box.append('<b>Assumptions:</b><br><br>');
-    asms.eachHyp(function(asm) {
-        $box.append(Toy.trimParens(asm.toUnicode()));
-        $box.append('<br>');
-      });
-  } else {
-    $box.append('<b>No assumptions</b>');
-  }
+  var $info = $(step.stepNode).find('.stepHoverInfo');
+  var info = {asmSteps: []};
+  var $box = $('<div class=hoverInfoBox>');
+  var copy = step.original.copyToRender();
+  $box.append(copy.wff.render(info, 0));
   $info.append($box);
 }
 
