@@ -2927,11 +2927,18 @@ var ruleInfo = {
       return result.justify('rewrite', arguments, [step]);
     },
     autoSimplify: function(step) {
+      var inStep = step.ruleArgs[0];
       var path = step.ruleArgs[1];
       var stmt = step.ruleArgs[2];
       if (Toy.isDistribFact(stmt)) {
-        var step1 = rules.arrangeTerm(step, path.concat('/right'));
-        var step2 = rules.arrangeTerm(step1, path.concat('/left'));
+        // This check is a heuristic for determining whether the rewrite
+        // makes the site of the change different in the result compared
+        // with its location in the input step.
+        // TODO: Improve this somehow and encapsulate the concept.
+        var path1 = (!inStep.isCall2('=>') && step.isCall2('=>')
+                     ? Toy.path('/right').concat(path) : path);
+        var step1 = rules.arrangeTerm(step, path1.concat('/right'));
+        var step2 = rules.arrangeTerm(step1, path1.concat('/left'));
         return step2;
       } else {
         var simp1 = rules.autoSimplifySite(step,
