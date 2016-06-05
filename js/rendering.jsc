@@ -2414,6 +2414,7 @@ function hoverStepInfo(step) {
   var info = {asmSteps: []};
   var $box = $('<div class=hoverInfoBox>');
   var copy = step.original.copyToRender();
+  copy.annotateWithTypes();
   $box.append(copy.wff.render(info, 0));
   $info.append($box);
 }
