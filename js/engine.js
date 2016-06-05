@@ -2521,10 +2521,9 @@ var ruleInfo = {
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
-    menu: 'replace {term} with something equal',
-    tooltip: 'replace term with something equal',
+    menu: 'replace using term like {term} = A',
     description: 'replace {site};; {in step siteStep} {using step equation}',
-    labels: 'algebra basic'
+    labels: 'uncommon'
   },
 
   // Like Rule R', based on 5240 (the Deduction Theorem).  The
@@ -2656,7 +2655,7 @@ var ruleInfo = {
     },
     inputs: {equation: 1, site: 2}, // plus constraints.
     form: ('Replace selection with right side of step <input name=equation>'),
-    menu: 'replace {term} with something equal',
+    menu: 'replace using term like {term} = A',
     tooltip: 'replace term with something equal',
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'uncommon'
@@ -2678,15 +2677,16 @@ var ruleInfo = {
     },
     inputs: {equation: 1, site: 2},
     form: ('Replace with left side of step <input name=equation>'),
-    menu: 'replace {term} with equal term like A = x',
+    menu: 'replace using term like A = {term}',
     tooltip: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'uncommon'
   },
 
-  // Ambidextrous replace that tries matching the equation LHS,
-  // but can also replace right-to-left.
+  // Ambidextrous replace that tries matching the equation LHS, but
+  // can also replace right-to-left.  Applies rules.replaceIsEquiv if
+  // these do not match.
   replaceEither: {
     action: function(target, _path, equation) {
       var path = Toy.path(_path);
@@ -2698,6 +2698,8 @@ var ruleInfo = {
       } else if (expr.matches(equation.getMain().getRight())) {
         return (rules.rRight(equation, target, path)
                 .justify('replaceEither', arguments, [target, equation]));
+      } else if (lhs.isCall2('=') && expr.matches(lhs.getLeft())) {
+        return rules.replaceIsEquiv(target, path, equation);
       } else {
         Toy.err('Expression ' + expr + ' matches neither side of ' +
                 equation);
@@ -2868,9 +2870,9 @@ var ruleInfo = {
     inputs: {site: 1, equation: 3},
     form: ('Replace this using equation step <input name=equation>'),
     menu: 'replace giving equivalent',
-    description: ('result of replacing {site} is equivalent;; ' +
+    description: ('replace {site};; ' +
                   '{in step siteStep} {using step equation}'),
-    labels: 'algebra basic'
+    labels: 'uncommon'
   },
 
   // Takes a proof step, a path, and a proved equation.  The part of
