@@ -858,10 +858,16 @@ var simplifiersInfo = {
   // nonzero into assertions that both operands are real; removes
   // duplicate terms and occurrences of T.
   simplifyAssumptions: {
-    action: function(step) {
-      if (!step.isCall2('=>')) {
+    action: function(step_arg) {
+      var step = step_arg;
+      if (!step.wff.isCall2('=>')) {
         // Shortcut inline return.
         return step;
+      }
+      // Flatten assumptions.  Consider putting this into arrangeAsms
+      // and moving current arrangeAsms code into a new permuteAsms.
+      while (step.getRight().isCall2('=>')) {
+        step = rules.rewriteOnly(step, '', 'a => (b => c) == (a & b => c)');
       }
       // From a conditional a => b, prove a => (b == T), with a as
       // hypothesis.  Returns a memoized function that yields the
