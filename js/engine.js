@@ -3727,15 +3727,12 @@ function Fact(synopsis, prover) {
       return rules.instMultiVars(result, subst);
     } else {
       // Try matching the main parts of the result and goal.
-      // Simplify any assumptions.
+      // Reorder any assumptions as needed.
       var subst2 = result.getMain().alphaMatch(goal.getMain());
       if (subst2) {
-        // The main parts match.
-        //
-        // TODO: Consider simplifying assumptions within
-        //   rules.instMultiVars.
+        // The main parts match up to change of variables.
         var result2 = (rules.instMultiVars(result, subst2)
-                       .then('simplifyAssumptions'));
+                       .then('arrangeAsms'));
         if (result2.matches(goal)) {
           return result2;
         }
