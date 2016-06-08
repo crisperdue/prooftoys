@@ -1262,14 +1262,8 @@ function renderHyps(expr, info) {
 function findAsmStep(asm, asmSteps) {
   return Toy.each(asmSteps, function(step) {
       // Note that members of asmSteps have the form a => b.
-      var rhs = step.wff.getRight();
-      if (rhs.matches(asm)) {
-        return step;
-      }
-      if (rhs.isCall2('==') && rhs.getLeft().isVariable() &&
-          rhs.getLeft().pname[0] == '$' && rhs.getRight().matches(asm)) {
-        // The assumption matches the definition of an abbreviation
-        // as created for problem "givens".  Consider it implicit.
+      var lhs = step.wff.getLeft();
+      if (lhs.matches(asm)) {
         return step;
       }
     });
