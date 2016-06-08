@@ -2699,6 +2699,7 @@ var ruleInfo = {
         return (rules.rRight(equation, target, path)
                 .justify('replaceEither', arguments, [target, equation]));
       } else if (lhs.isCall2('=') && expr.matches(lhs.getLeft())) {
+        // Apply the more complex rule "inline", so only it displays.
         return rules.replaceIsEquiv(target, path, equation);
       } else {
         Toy.err('Expression ' + expr + ' matches neither side of ' +
@@ -2865,7 +2866,7 @@ var ruleInfo = {
       var eqn = eqnStep.searchCalls(test);
       assert(eqn, 'Occurrence of {1} = ... not found', target.toUnicode());
       var result = rules.r5239(eqn, targetWff, targetPath);
-      return result.justify('replaceIsEquiv', arguments, [step]);
+      return result.justify('replaceIsEquiv', arguments, []);
     },
     inputs: {site: 1, equation: 3},
     form: ('Replace this using equation step <input name=equation>'),
