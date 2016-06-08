@@ -4451,13 +4451,15 @@ function proofOf(step) {
 /**
  * Returns an array of steps preceding this one that establish
  * assumptions that later steps might not display, currently "assume"
- * and "given" steps; in the future perhaps other similar kinds.
+ * and "consider" steps; in the future perhaps other similar kinds.
  */
-function assumptionsBefore(step) {
+function assumptionsBefore(step_arg) {
   var steps = [];
-  var proofSteps = proofOf(step);
+  var proofSteps = proofOf(step_arg);
   proofSteps.forEach(function (step) {
-      if (step.ruleName === 'assume') {
+      var ruleName = step.ruleName;
+      if (ruleName === 'assume' ||
+          ruleName === 'replaceIsEquiv') {
         steps.push(step);
       }
     });
