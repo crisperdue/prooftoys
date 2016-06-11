@@ -2724,6 +2724,7 @@ var ruleInfo = {
     action: function(target, _path, equation) {
       var path = Toy.path(_path);
       var lhs = equation.getMain().getLeft();
+      var rhs = equation.getMain().getRight();
       var expr = target.get(path);
       if (expr.matches(lhs)) {
         return rules.rplace(equation, target, path)
@@ -2731,8 +2732,9 @@ var ruleInfo = {
       } else if (expr.matches(equation.getMain().getRight())) {
         return (rules.rRight(equation, target, path)
                 .justify('replaceEither', arguments, [target, equation]));
-      } else if (lhs.isCall2('=') && expr.matches(lhs.getLeft())) {
-        // Apply the more complex rule "inline", so only it displays.
+      } else if (rhs.isCall2('=') && expr.matches(rhs.getLeft())) {
+        // Apply the more complex rule "inline", so it displays and
+        // not this rule.
         return rules.replaceIsEquiv(target, path, equation);
       } else {
         Toy.err('Expression ' + expr + ' matches neither side of ' +
