@@ -699,7 +699,6 @@ var ruleInfo = {
   // Consider a term that we may wish to rewrite.  Functionally
   // the same as eqSelf, but display is handled specially.
   consider: {
-    description: 'expression equal to itself',
     action: function(term) {
       term = termify(term);
       if (term.isCall2('=')) {
@@ -715,6 +714,7 @@ var ruleInfo = {
     form: 'Term to consider: <input name=term>',
     menu: 'consider a term to transform',
     tooltip: ('consider a term to transform'),
+    description: 'given',
     labels: 'basic'
   },
 
