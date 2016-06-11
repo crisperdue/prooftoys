@@ -1150,8 +1150,11 @@ function renderWff(step) {
     var power = Toy.getPrecedence(wff.getBinOp());
     // The right side renders on the left here so any changes to it appear
     // on the right side in following steps.
-    wff.node = dom(exprJq().append(wff.getRight().render(info, power), ' ', op,
-                                   ' <span class=ellipsis>&hellip;</span>'));
+    //
+    // Give the WFF its own node, but it won't be practical to select it
+    // because it has no "real estate" of its own.  In practice this just
+    // displays its RHS.
+    wff.node = dom(exprJq().append(wff.getRight().render(info, 0)));
     return wff.node;
   } else if (wff.isCall2('=>')) {
     var asmPart = wff.getLeft();
