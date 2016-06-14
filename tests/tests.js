@@ -1075,6 +1075,19 @@ var testCase = {
     assert(conj2.isHypotheses());
   },
 
+  testEachConj: function() {
+    function find(needle, haystack) {
+      var x1 = termify(needle);
+      var x2 = termify(haystack);
+      function test(x) { 
+        return x.matches(x1) && x1;
+      }
+      return x2.eachConj(test);
+    }
+    assertEqual('(a = b)', find('a = b', 'T & (a = b)'));
+    assertEqual(false, find('a = b', 'T & (b = c)'));
+  },
+
   testAsmLess: function() {
     var step1 = Toy.rules.assume('p T');
     var step2 = Toy.rules.assume('p F');

@@ -1395,6 +1395,21 @@ Expr.prototype.eachHyp = function(action) {
 };
 
 /**
+ * Taking this is a tree of conjuncts, applies the given action
+ * function to each leaf node, in order from left to right.  If any
+ * call returns a truthy value, that becomes immediately the result,
+ * stopping the tree traversal.
+ */
+Expr.prototype.eachConj = function(action) {
+  if (this.isCall2('&')) {
+    return (this.getLeft().eachConj(action) ||
+            this.getRight().eachConj(action));
+  } else {
+    return action(this);
+  }
+};
+
+/**
  * Transforms an expression that is a chain of conjuncts by applying
  * the xform function to each of its conjuncts.  To match eachHyp,
  * Descends into left-hand arguments except any that have a sourceStep
