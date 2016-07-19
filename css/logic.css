@@ -429,14 +429,14 @@ span#leftNav {
 }
 
 /* When some step assumes it, the content is a circled small letter "a". */
-.proofStep.assumed .stepHoverInfo::before {
+.proofStep.assumed .stepHoverInfo .fa::before {
     content: "\24d0";
 }
 
 /* fa-question-circle-o Unicode.  This takes priority over the
-   circled small letter "a" by being below it.
+   circled small letter "a" by being below it in this file.
  */
-.proofStep.hover .stepHoverInfo::before {
+.proofStep.hover .stepHoverInfo .fa::before {
     content: "\f29c";
 }
 
@@ -444,12 +444,15 @@ span#leftNav {
    when the "stepHoverInfo" area is hovered.
  */
 .hoverInfoBox {
-    display: block;
+    /* Initially none. */
+    display: none;
     position: absolute;
     z-index: 1;
-    left: .7em;
+    left: .9em;
     top: 1em;
     width: 600px;
+    /* Override inherited value from proofStep */
+    text-indent: 0;
     text-align: left;
     line-height: 1.2;
     color: black;
@@ -458,7 +461,7 @@ span#leftNav {
     padding: 2px;
     padding-left: 10px;
     border: 1px solid silver;
-    box-shadow: 2px 2px 2px #aaa;
+    box-shadow: 2px 2px 2px #ccc;
 }
 
 /* Step deleter control, only visible when the step is hovered. */
