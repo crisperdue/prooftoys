@@ -410,38 +410,38 @@ span#leftNav {
   box-shadow: none;
 }
 
-/* The stepHoverInfo area is active when the step is hovered
+/* The stepHoverMark area is active when the step is hovered
    or flagged as "assumed" (by hovering some step that assumes it).
  */
-.proofStep .stepHoverInfo {
+.proofStep .stepHoverMark {
     position: relative;
     visibility: hidden;
 }
 
-.proofStep.hover .stepHoverInfo {
+.proofStep.hover .stepHoverMark {
     color: #88f;
     visibility: visible;
 }
 
-.proofStep.assumed .stepHoverInfo {
+.proofStep.assumed .stepHoverMark {
     color: #66a;
     visibility: visible;
 }
 
 /* When some step assumes it, the content is a circled small letter "a". */
-.proofStep.assumed .stepHoverInfo .fa::before {
+.proofStep.assumed .stepHoverMark .fa::before {
     content: "\24d0";
 }
 
 /* fa-question-circle-o Unicode.  This takes priority over the
    circled small letter "a" by being below it in this file.
  */
-.proofStep.hover .stepHoverInfo .fa::before {
+.proofStep.hover .stepHoverMark .fa::before {
     content: "\f29c";
 }
 
 /* This displays information such as assumptions
-   when the "stepHoverInfo" area is hovered.
+   when the "stepHoverMark" area is hovered.
  */
 .hoverInfoBox {
     /* Initially none. */

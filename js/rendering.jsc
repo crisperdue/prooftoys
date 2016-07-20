@@ -883,15 +883,15 @@ ProofDisplay.prototype.renderStep = function(step) {
   if (self.isEditable()) {
     $step.append('<button class=deleteStep title="Delete step">X</button>');
   }
-  // The stepHoverInfo is on the left, with an "info" symbol
+  // The stepHoverMark is on the left, with an "info" symbol
   // or an "assumed" symbol.
-  $step.append($('<span class=stepHoverInfo>')
+  $step.append($('<span class=stepHoverMark>')
                // Here we have CSS classes fa and fa-fw with no
                // character specified.  The character is controlled by
                // logic.css, not necessarily an fa "icon".
                .append('<span class="fa fa-fw"></span>',
                        // This is a place to display information (the full step)
-                       // when the stepHoverInfo is hovered.
+                       // when the stepHoverMark is hovered.
                        '<div class=hoverInfoBox></div>'));
   // If editable, add checkbox.
   if (self.isEditable()) {
@@ -947,10 +947,10 @@ ProofDisplay.prototype.renderStep = function(step) {
   $step.on('mouseenter mouseleave', '.stepSelector', function(event) {
       hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
-  $step.on('mouseenter', '.stepHoverInfo', function(event) {
+  $step.on('mouseenter', '.stepHoverMark', function(event) {
         fillHoverInfoBox(step);
     });
-  $step.on('mouseleave', '.stepHoverInfo', function(event) {
+  $step.on('mouseleave', '.stepHoverMark', function(event) {
       $step.find('.hoverInfoBox').toggle(false);
     });
   $step.on(TOUCHDOWN, '.stepSelector', function(event) {
@@ -2399,7 +2399,7 @@ function hoverStep(step, direction, event) {
 
 /**
  * Renders "info" about the given rendered step in response to
- * hovering over a step's .stepHoverInfo element.  Now renders the
+ * hovering over a step's .stepHoverMark element.  Now renders the
  * entire step rather than just assumptions.  Also makes the box
  * visible.
  */
