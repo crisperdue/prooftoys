@@ -1400,10 +1400,10 @@ Expr.prototype.eachHyp = function(action) {
  * call returns a truthy value, that becomes immediately the result,
  * stopping the tree traversal.
  */
-Expr.prototype.eachConj = function(action) {
+Expr.prototype.findConj = function(action) {
   if (this.isCall2('&')) {
-    return (this.getLeft().eachConj(action) ||
-            this.getRight().eachConj(action));
+    return (this.getLeft().findConj(action) ||
+            this.getRight().findConj(action));
   } else {
     return action(this);
   }
