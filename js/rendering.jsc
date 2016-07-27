@@ -1275,21 +1275,12 @@ function findAsmStep(asm, asmSteps) {
 }
 
 /**
- * Truthy iff the given term is a type condition on a variable.
- * Currently this means just a call on R, but extension to other
- * types is intended.
- */
-function isTypeCond(expr) {
-  return expr.isCall1('R') && expr.arg.isVariable();
-}
-
-/**
  * Truthy iff the given term is an assumption that is "in scope"
  * for the step, or is a conjunction of allImplicit terms.
  * (This makes the whole term implicit.)
  */
 function allImplicit(expr, step) {
-  return (isTypeCond(expr) ||
+  return (expr.isTypeCond() ||
           findAsmStep(expr, step.asmSteps) ||
           (expr.isCall2('&') &&
            allImplicit(expr.getLeft(), step) && 

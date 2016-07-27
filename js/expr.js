@@ -477,6 +477,15 @@ Expr.prototype.isBoolConst = function() {
           (this.name == 'T' || this.name == 'F'));
 };
 
+/**
+ * Truthy iff the given term is a type condition on a variable.
+ * Currently this means just a call on R, but extension to other
+ * types is intended.
+ */
+Expr.prototype.isTypeCond = function() {
+  return this.isCall1('R') && this.arg.isVariable();
+};
+
 
 // Other Expr methods.
 
