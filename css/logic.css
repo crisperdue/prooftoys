@@ -301,9 +301,9 @@ span#leftNav {
        */
     border: 1px solid transparent;
     /* Indent continuation lines, but not the first one. */
-    margin-left: 2em;
+    padding-left: 6em;
     /* Careful, this will be inherited by children. */
-    text-indent: -2em;
+    text-indent: -6em;
 }
 
 /* Use the inline-block *class* as needed to avoid contaminating inner
