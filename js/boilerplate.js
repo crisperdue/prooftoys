@@ -61,7 +61,7 @@ Toy.navText = [
   '<a class=nav href="booleans.html">',
   'Basic logic through pictures</a>',
   '<a class=nav href="real-numbers.html">',
-  'Working with real numbers',
+  'Working with real numbers</a>',
   '<a class=nav href="proofbuilder.html">',
   'Interactive proof builder</a>',
   '<a class=nav target=_blank',
