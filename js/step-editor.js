@@ -84,6 +84,7 @@ var siteTypes = {
  * controller: ProofEditor containing this StepEditor.
  * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
+ * givens: steps defining the problem, normally instances of "consider".
  * solutions: If any of these expressions (or strings) is an alphaMatch
  *   with a step, announce the step as a solution.
  * standardSolution: If no explicit solutions given, but the result of
