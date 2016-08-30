@@ -1407,7 +1407,8 @@ Expr.prototype.eachHyp = function(action) {
  * Taking this is a tree of conjuncts, applies the given action
  * function to each leaf node, in order from left to right.  If any
  * call returns a truthy value, that becomes immediately the result,
- * stopping the tree traversal.
+ * stopping the tree traversal.  The action is applied only to nodes
+ * that are not conjunctions.
  */
 Expr.prototype.findConj = function(action) {
   if (this.isCall2('&')) {
