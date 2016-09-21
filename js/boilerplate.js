@@ -128,25 +128,17 @@ Toy.insertSlogans = function() {
   }
 };
 
-// Google analytics; the account is specific to Prooftoys.org.
-// TODO: Consider running this code only when the site is prooftoys.org.
-
+// Google analytics support.
 if (!location.pathname.match(/\/tests.html$/)) {
-  var _gaq = _gaq || [];
-  var pluginUrl = '//www.google-analytics.com/plugins/ga/inpage_linkid.js';
-  _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
-  _gaq.push(['_setAccount', 'UA-28801147-2']);
-  _gaq.push(['_trackPageview']);
+  var id = (location.hostname == 'prooftoys.org'
+            ? 'UA-28801147-2' : 'UA-28801147-3');
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript';
-    ga.async = true;
-    ga.src = ('https:' == document.location.protocol
-              ? 'https://ssl'
-              : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(ga, s);
-  })();
+  ga('create', id, 'auto');
+  ga('send', 'pageview');
 }
 
 //
