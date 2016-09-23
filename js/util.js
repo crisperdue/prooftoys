@@ -17,7 +17,10 @@
  * Toy.incompatible - true iff browser is an old MSIE not compatible
  * with Prooftoys + jQuery 2 and similar JavaScript.
  */
-// See http://www.useragentstring.com/pages/Browserlist/.
+// See http://www.useragentstring.com/.
+// TODO: Support only "modern" browsers based on caniuse.com and
+//   similar.  In particular MSIE 11+, but other requirements TBD,
+//   perhaps all browsers shown in default views in caniuse.com.
 Toy.incompatible = !!navigator.userAgent.match(/ MSIE [1-8][.]/);
 
 // JavaScript is defined to use IEEE 64-bit floating point in "round
