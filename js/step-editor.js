@@ -502,7 +502,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // has any effect.
     var self = this;
     function checkSolution(result) {
-      var message = self.isSolution(result);
+      var message = self.solutionMsg(result);
       if (message) {
         self.report(message);
       }
@@ -532,7 +532,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
  * iff the given step is an equation of the form <var> = <expr>, where
  * <expr> is a numeral or a fraction.
  */
-StepEditor.prototype.isSolution = function(step) {
+StepEditor.prototype.solutionMsg = function(step) {
   if (this.solutions.length) {
     return Toy.each(this.solutions, function(solution) {
         if (Toy.termify(solution).alphaMatch(step) ||
