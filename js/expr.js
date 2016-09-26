@@ -1404,11 +1404,27 @@ Expr.prototype.eachHyp = function(action) {
 };
 
 /**
+ * Taking this is a tree of disjuncts, applies the given action
+ * function to each leaf node, in order from left to right.  If any
+ * call returns a truthy value, that becomes immediately the result,
+ * stopping the tree traversal.  The action is applied only to leaf
+ * nodes, i.e. ones that are not themselves disjunctions.
+ */
+Expr.prototype.findDisj = function(action) {
+  if (this.isCall2('|')) {
+    return (this.getLeft().findDisj(action) ||
+            this.getRight().findDisj(action));
+  } else {
+    return action(this);
+  }
+};
+
+/**
  * Taking this is a tree of conjuncts, applies the given action
  * function to each leaf node, in order from left to right.  If any
  * call returns a truthy value, that becomes immediately the result,
- * stopping the tree traversal.  The action is applied only to nodes
- * that are not conjunctions.
+ * stopping the tree traversal.  The action is applied only to leaf
+ * nodes, i.e. nodes that are not themselves conjunctions.
  */
 Expr.prototype.findConj = function(action) {
   if (this.isCall2('&')) {

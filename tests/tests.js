@@ -1,4 +1,5 @@
 // Copyright 2011 - 2016 Crispin Perdue.
+// All rights reserved.
 
 (function() {
 
@@ -1075,17 +1076,31 @@ var testCase = {
     assert(conj2.isHypotheses());
   },
 
-  testEachConj: function() {
+  testFindConj: function() {
     function find(needle, haystack) {
       var x1 = termify(needle);
       var x2 = termify(haystack);
       function test(x) { 
         return x.matches(x1) && x1;
       }
-      return x2.eachConj(test);
+      return x2.findConj(test);
     }
     assertEqual('(a = b)', find('a = b', 'T & (a = b)'));
     assertEqual(false, find('a = b', 'T & (b = c)'));
+  },
+
+  testFindDisj: function() {
+    function find(needle, haystack) {
+      var x1 = termify(needle);
+      var x2 = termify(haystack);
+      function test(x) { 
+        return x.matches(x1) && x1;
+      }
+      return x2.findDisj(test);
+    }
+    assertEqual('b', find('b', 'T | a | b'));
+    assertEqual(false, find('a', 'T | (a = b)'));
+    assertEqual(false, find('b', 'T & (b | c)'));
   },
 
   testAsmLess: function() {
