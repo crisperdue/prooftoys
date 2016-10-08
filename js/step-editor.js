@@ -104,6 +104,7 @@ function StepEditor(controller) {
   self.proofDisplay = controller.proofDisplay;
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
+  self.givens = [];
   self.solutions = [];
   self.standardSolution = false;
 
