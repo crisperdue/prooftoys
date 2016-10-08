@@ -945,7 +945,7 @@ var simplifiersInfo = {
       }
       // Finds and returns a path to a conjunct in the given term that
       // passes the test, or returns null.
-      function findConjunct(term, test) {
+      function scanConjunct(term, test) {
         var Path = Toy.Path;
         function find(term, revPath) {
           if (test(term)) {
@@ -969,7 +969,7 @@ var simplifiersInfo = {
         // from getArithOp until there is none.
         while (true) {
           var hyps = step.getLeft();
-          var hypsPath = findConjunct(hyps, getArithOp);
+          var hypsPath = scanConjunct(hyps, getArithOp);
           if (!hypsPath) {
             return step;
           }
