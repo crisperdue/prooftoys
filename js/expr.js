@@ -1410,10 +1410,10 @@ Expr.prototype.eachHyp = function(action) {
  * stopping the tree traversal.  The action is applied only to leaf
  * nodes, i.e. ones that are not themselves disjunctions.
  */
-Expr.prototype.scanDisj = function(action) {
+Expr.prototype.scanDisjuncts = function(action) {
   if (this.isCall2('|')) {
-    return (this.getLeft().scanDisj(action) ||
-            this.getRight().scanDisj(action));
+    return (this.getLeft().scanDisjuncts(action) ||
+            this.getRight().scanDisjuncts(action));
   } else {
     return action(this);
   }
@@ -1426,10 +1426,10 @@ Expr.prototype.scanDisj = function(action) {
  * stopping the tree traversal.  The action is applied only to leaf
  * nodes, i.e. nodes that are not themselves conjunctions.
  */
-Expr.prototype.scanConj = function(action) {
+Expr.prototype.scanConjuncts = function(action) {
   if (this.isCall2('&')) {
-    return (this.getLeft().scanConj(action) ||
-            this.getRight().scanConj(action));
+    return (this.getLeft().scanConjuncts(action) ||
+            this.getRight().scanConjuncts(action));
   } else {
     return action(this);
   }

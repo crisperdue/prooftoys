@@ -1083,7 +1083,7 @@ var testCase = {
       function test(x) { 
         return x.matches(x1) && x1;
       }
-      return x2.scanConj(test);
+      return x2.scanConjuncts(test);
     }
     assertEqual('(a = b)', find('a = b', 'T & (a = b)'));
     assertEqual(false, find('a = b', 'T & (b = c)'));
@@ -1096,7 +1096,7 @@ var testCase = {
       function test(x) { 
         return x.matches(x1) && x1;
       }
-      return x2.scanDisj(test);
+      return x2.scanDisjuncts(test);
     }
     assertEqual('b', find('b', 'T | a | b'));
     assertEqual(false, find('a', 'T | (a = b)'));
