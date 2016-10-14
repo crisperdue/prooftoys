@@ -990,7 +990,8 @@ var ruleInfo = {
             }
           }
         }
-        Toy.err({message: 'Cannot apply at ' + target, step: step});
+        Toy.err({message: 'Cannot apply at ' + step.get(path) + ' in ' + step,
+                 step: step});
       }
 
       return convert(step, path, applier)
