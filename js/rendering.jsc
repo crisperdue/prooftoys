@@ -207,6 +207,7 @@ var nextProofEditorId = 1;
  * Public properties:
  *
  * proofDisplay: ProofDisplay for the proof being edited.
+ * containerNode: jQuery object for outermost DOM node for the display.
  * stepEditor: StepEditor for the proof being edited.
  */
 function ProofEditor() {
