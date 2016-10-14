@@ -1076,8 +1076,8 @@ var testCase = {
     assert(conj2.isHypotheses());
   },
 
-  testFindConj: function() {
-    function find(needle, haystack) {
+  testScanConjuncts: function() {
+    function scan(needle, haystack) {
       var x1 = termify(needle);
       var x2 = termify(haystack);
       function test(x) { 
@@ -1085,12 +1085,12 @@ var testCase = {
       }
       return x2.scanConjuncts(test);
     }
-    assertEqual('(a = b)', find('a = b', 'T & (a = b)'));
-    assertEqual(false, find('a = b', 'T & (b = c)'));
+    assertEqual('(a = b)', scan('a = b', 'T & (a = b)'));
+    assertEqual(false, scan('a = b', 'T & (b = c)'));
   },
 
-  testFindDisj: function() {
-    function find(needle, haystack) {
+  testScanDisjuncts: function() {
+    function scan(needle, haystack) {
       var x1 = termify(needle);
       var x2 = termify(haystack);
       function test(x) { 
@@ -1098,9 +1098,9 @@ var testCase = {
       }
       return x2.scanDisjuncts(test);
     }
-    assertEqual('b', find('b', 'T | a | b'));
-    assertEqual(false, find('a', 'T | (a = b)'));
-    assertEqual(false, find('b', 'T & (b | c)'));
+    assertEqual('b', scan('b', 'T | a | b'));
+    assertEqual(false, scan('a', 'T | (a = b)'));
+    assertEqual(false, scan('b', 'T & (b | c)'));
   },
 
   testAsmLess: function() {
