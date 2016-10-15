@@ -2491,11 +2491,7 @@ Lambda.prototype.dump = function() {
 };
 
 Lambda.prototype._subFree = function(map) {
-  var boundName = this.bound.name;
-  if (boundName === name) {
-    // Binds the name; there can be no free occurrences here.
-    return this;
-  } else if (this.bound.isGeneratedBound()) {
+  if (this.bound.isGeneratedBound()) {
     // By contract of subFree, the replacement will have no free
     // occurrences of the bound name, so this will capture no
     // variables.
@@ -2506,6 +2502,7 @@ Lambda.prototype._subFree = function(map) {
     // the same substitution on the resulting lambda.  This is the key
     // to preventing improper "capturing" substitution in this
     // algorithm.
+    var boundName = this.bound.name;
     var newVar = _genBoundVar(boundName);
     var renamed =
       new Lambda(newVar, this.body._subFree(Toy.object0(boundName, newVar)));

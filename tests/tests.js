@@ -563,6 +563,9 @@ var testCase = {
     // Multiple substitution.
     result = Toy.parse('x + y').subFree({y: x, x: y});
     assertEqual('(y + x)', result);
+    // Failing case 10/2016
+    result = Toy.parse('(f = g) == forall {x. f x = g x}').subFree({g: varify('f')});
+    assertEqual('((f = f) == (forall {x. ((f x) = (f x))}))', result);
   },
 
   testMathVars: function() {
@@ -1483,6 +1486,9 @@ var testCase = {
                               Toy.parse('f x'),
                               'y');
     assertEqual('((g (f x)) = c)', inf);
+
+    var ff = rules.instEqn(rules.axiom3(), 'f', 'g');
+    assertEqual('((f = f) = (forall {x. ((f x) = (f x))}))', ff);
   },
 
   testEqT: function() {
