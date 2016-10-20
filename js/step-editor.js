@@ -106,7 +106,7 @@ function StepEditor(controller) {
   self.lastRuleSteps = 0;
   self.givens = [];
   self.solutions = [];
-  self.standardSolution = false;
+  self.standardSolution = true;
 
   // Create a DIV with the step editor content.
   var div = $('<div class=stepEditor style="clear: both"></div>');
@@ -534,6 +534,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
  * <expr> is a numeral or a fraction.
  */
 StepEditor.prototype.solutionMsg = function(step) {
+  // TODO: Use result of StepEditor.solutionStatus here.
   if (this.solutions.length) {
     return Toy.each(this.solutions, function(solution) {
         if (Toy.termify(solution).alphaMatch(step) ||

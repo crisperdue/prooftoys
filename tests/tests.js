@@ -30,6 +30,9 @@ var r = varify('r');
 var T = constify('T');
 var F = constify('F');
 
+var parse = Toy.parse;
+
+
 // Assertion utilities:
 
 function assertEqual(a, b) {
@@ -2169,8 +2172,6 @@ var testCase = {
     check(denominated, '2 / 3 / 4', 'denominators');
 
     check('(2 / 12)', denominated, 'arithmetizers');
-    
-    // assert(false);
   },
 
   testIsDistribFact: function() {
@@ -2238,6 +2239,121 @@ var testCase = {
 
   // END OF RULES AND THEOREMS
 
+  // StepEditor
+
+  testSolutionStatus: function() {
+    function canon0(status) {
+      if (status.constructor !== Object) {
+        return status;
+      }
+
+      function canonize(solution) {
+        var vblInfo = [];
+        var byVar = solution.byVar;
+        for (var v in byVar) {
+          var value = byVar[v];
+          vblInfo.push({name: v, eqn: value.eqn.toString(), status: value.status});
+        }
+        function compareVblName(o1, o2) {
+          var n1 = o1.vbl;
+          var n2 = o2.vbl;
+          return n1 < n2 ? -1 : n1 === n2 ? 0 : 1;
+        }
+        // Sort the list in a predictable order.
+        vblInfo.sort(compareVblName);
+        // Return a representation of the overall solution.
+        return {byVar: vblInfo,
+                fml: solution.formula.toString()};
+      }
+      var sols = status.solutions.map(canonize);
+      function compareByFml(a, b) {
+        var fml1 = a.fml, fml2 = b.fml;
+        return (fml1 < fml2 ? -1 : fml1 === fml2 ? 0 : 1);
+      }
+      var sorted = sols.sort(compareByFml);
+      return {precise: status.precise, solutions: sols.sort(compareByFml)};
+    }
+    // Return a canonical string for the given solution status.
+    // Properties in a standard order and solutions ordered
+    // lexicographically by formula.toString with property "fml".
+    // Assumes JSON.stringify preserves object literal property orders.
+    function canonical(status) {
+      return JSON.stringify(canon0(status), null, 1);
+    }
+
+    var ped = new Toy.ProofEditor();
+    var ed = ped.stepEditor;
+    var rules = Toy.rules;
+    function asGiven(asm) {
+      return rules.consider(asm);
+    }
+
+    // Trivially solved problem.
+    ed.givens = ['x = 2'].map(asGiven);
+    var sol1 = ed.givens[0];
+    var status = ed.solutionStatus(sol1);
+    var expected = {
+      precise: true,
+      solutions: [{
+          byVar: {
+            x: {
+              eqn: "(x = 2)",
+              status: "solved"
+            }
+          },
+          formula: "(x = 2)"}]};
+    assertEqual(canonical(expected), canonical(status));
+
+    // Partially solved problem in two variables.
+    ed.givens = ['x = 2', 'y = x + 5'].map(asGiven);
+    sol1 = rules.equivSelf('x = 2 & y = x + 5');
+    status = ed.solutionStatus(sol1);
+    expected = {
+      precise: true,
+      solutions: [{
+          byVar: {
+            x: {
+              eqn: "(x = 2)",
+              status: "solved"
+            },
+            y: {
+              eqn: "(y = (x + 5))",
+              status: ["x"]
+            }
+          },
+          formula: "((x = 2) & (y = (x + 5)))"}]};
+    assertEqual(canonical(expected), canonical(status));
+
+    // Simple unsolved problem.
+    ed.givens = ['x + 2 = 5'].map(asGiven);
+    status = ed.solutionStatus(ed.givens[0]);
+    expected = {
+      precise: true,
+      solutions: [{
+          byVar: {},
+          formula: "((x + 2) = 5)"}]};
+    assertEqual(canonical(expected), canonical(status));
+
+    // Unsolved (and unsolvable) problem in two variables.
+    ed.givens = ['x + 2 = y', 'y = 3 + x'].map(asGiven);
+    status = ed.solutionStatus(ed.givens[0]);
+    expected = {
+      precise: true,
+      solutions: [{
+          byVar: {
+            y: {
+              eqn: "(y = (3 + x))",
+              status: ["x"]
+            }
+          },
+          formula: "((x + 2) = y)"}]};
+    console.log('Expected:', canonical(expected));
+    console.log('Actual:', canonical(status));
+    assertEqual(canonical(expected), canonical(status));
+
+    assert(false);
+  },
+
   // Looking at what can be done with Andrews' definition of "and".
   // From here you can get counterexamples to the possibilities
   // that ordered pairs other than TT satisfy the definition.
@@ -2267,9 +2383,10 @@ Toy.soonDo(function() {
   var nTheorems = 0;
   for (var name in rules) {
     var prover = rules[name];
+    // Prover is a function and its length is its number of args.
     if (prover.length == 0) {
       test(name, function(prover, name) {
-          var result = Toy.normalReturn(prover);
+          var result = prover();
           var stmt = prover.info.statement;
           // Check that the statement of the theorem matches
           // what was proved.
@@ -2279,7 +2396,7 @@ Toy.soonDo(function() {
             assert(Toy.termify(stmt).matches(result),
                    'For ' + name +
                    '\nexpected: ' + stmt +
-                   '\ngot: ' + result.toString());
+                   '\ngot: ' + result);
           } else {
             assert(result, 'Proof of ' + name + ' failed.');
           }

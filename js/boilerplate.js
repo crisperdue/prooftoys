@@ -40,6 +40,7 @@
     getScript('expr.js');
     getScript('xutil.js');
     getScript('step-editor.js');
+    getScript('solution-status.js');
     getScript('../jsc/rendering.js');
     getScript('engine.js');
     getScript('numbers.js');
