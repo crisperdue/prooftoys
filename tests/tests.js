@@ -2285,7 +2285,7 @@ var testCase = {
     var ed = ped.stepEditor;
     var rules = Toy.rules;
     function asGiven(asm) {
-      return rules.consider(asm);
+      return rules.equivSelf(asm);
     }
 
     // Trivially solved problem.
@@ -2335,8 +2335,10 @@ var testCase = {
     assertEqual(canonical(expected), canonical(status));
 
     // Unsolved (and unsolvable) problem in two variables.
-    ed.givens = ['x + 2 = y', 'y = 3 + x'].map(asGiven);
-    status = ed.solutionStatus(ed.givens[0]);
+    var terms = ['x + 2 = y', 'y = 3 + x'];
+    ed.givens = terms.map(asGiven);
+    var step = asGiven(terms[0] + ' & ' + terms[1]);
+    status = ed.solutionStatus(step);
     expected = {
       precise: true,
       solutions: [{
@@ -2346,7 +2348,7 @@ var testCase = {
               status: ["x"]
             }
           },
-          formula: "((x + 2) = y)"}]};
+          formula: "(((x + 2) = y) & (y = (3 + x)))"}]};
     console.log('Expected:', canonical(expected));
     console.log('Actual:', canonical(status));
     assertEqual(canonical(expected), canonical(status));
