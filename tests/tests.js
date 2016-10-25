@@ -2290,8 +2290,8 @@ var testCase = {
 
     // Trivially solved problem.
     ed.givens = ['x = 2'].map(asGiven);
-    var sol1 = ed.givens[0];
-    var status = ed.solutionStatus(sol1);
+    var step = ed.givens[0];
+    var status = ed.solutionStatus(step);
     var expected = {
       precise: true,
       solutions: [{
@@ -2304,10 +2304,33 @@ var testCase = {
           formula: "(x = 2)"}]};
     assertEqual(canonical(expected), canonical(status));
 
+    // Step with "bad LHS".
+    ed.givens = ['x = 2'].map(asGiven);
+    step = rules.assert('x = 2 => T == x = 2');
+    status = ed.solutionStatus(step);
+    expected = 'badLHS';
+    assertEqual(canonical(expected), canonical(status));
+
+    // Trivially solved problem, not precise.
+    ed.givens = ['x = 2'].map(asGiven);
+    step = rules.assert('x = 2 => x = 2');
+    status = ed.solutionStatus(step);
+    expected = {
+      precise: false,
+      solutions: [{
+          byVar: {
+            x: {
+              eqn: "(x = 2)",
+              status: "solved"
+            }
+          },
+          formula: "(x = 2)"}]};
+    assertEqual(canonical(expected), canonical(status));
+
     // Partially solved problem in two variables.
     ed.givens = ['x = 2', 'y = x + 5'].map(asGiven);
-    sol1 = rules.equivSelf('x = 2 & y = x + 5');
-    status = ed.solutionStatus(sol1);
+    step = rules.equivSelf('x = 2 & y = x + 5');
+    status = ed.solutionStatus(step);
     expected = {
       precise: true,
       solutions: [{
@@ -2334,10 +2357,70 @@ var testCase = {
           formula: "((x + 2) = 5)"}]};
     assertEqual(canonical(expected), canonical(status));
 
-    // Unsolved (and unsolvable) problem in two variables.
-    var terms = ['x + 2 = y', 'y = 3 + x'];
+    // standardSolution == false
+    try {
+      ed.standardSolution = false;
+      var term = 'x + 2 = 5';
+      ed.givens = [asGiven(term)];
+      step = rules.assert('x + 2 = 5 == x = 3');
+      status = ed.solutionStatus(step);
+      assert(false === status);
+    } finally {
+      ed.standardSolution = true;
+    }
+
+    // No givens.
+    var terms = ['x + 2 = 5'];
+    ed.givens = [];
+    step = asGiven(terms[0]);
+    status = ed.solutionStatus(step);
+    assertEqual('noGivens', status);
+
+    // Extra assumptions
+    terms = ['x + 2 = 5'];
     ed.givens = terms.map(asGiven);
-    var step = asGiven(terms[0] + ' & ' + terms[1]);
+    // Note this is actually a theorem.
+    step = rules.assert('T & x + 2 = 5 => x = 3');
+    status = ed.solutionStatus(step);
+    assertEqual('badAsms', status);
+
+    // Totally unsolved problem in two variables.
+    terms = ['x + y = 7', 'x - y = 3'];
+    ed.givens = terms.map(asGiven);
+    step = asGiven(terms[0] + ' & ' + terms[1]);
+    status = ed.solutionStatus(step);
+    expected = {
+      precise: true,
+      solutions: [{byVar: {},
+          formula: "(((x + y) = 7) & ((x - y) = 3))"}]};
+    assertEqual(canonical(expected), canonical(status));
+
+    // Totally solved problem in two variables.
+    terms = ['x + y = 7', 'x - y = 3'];
+    ed.givens = terms.map(asGiven);
+    step = rules.assert('x - y = 3 & x + y = 7 == x = 5 & y = 2');
+    status = ed.solutionStatus(step);
+    expected = {
+      precise: true,
+      solutions: [{
+          byVar: {
+            x: {
+              eqn: '(x = 5)',
+              status: 'solved'
+            },
+            y: {
+              eqn: '(y = 2)',
+              status: 'solved'
+            }
+          },
+          formula: "((x = 5) & (y = 2))"}]};
+    assertEqual(canonical(expected), canonical(status));
+
+    // Problem in two variables, solved for y only
+    // (no complete solution is possible here).
+    terms = ['x + 2 = y', 'y = 3 + x'];
+    ed.givens = terms.map(asGiven);
+    step = asGiven(terms[0] + ' & ' + terms[1]);
     status = ed.solutionStatus(step);
     expected = {
       precise: true,
@@ -2349,11 +2432,7 @@ var testCase = {
             }
           },
           formula: "(((x + 2) = y) & (y = (3 + x)))"}]};
-    console.log('Expected:', canonical(expected));
-    console.log('Actual:', canonical(status));
     assertEqual(canonical(expected), canonical(status));
-
-    assert(false);
   },
 
   // Looking at what can be done with Andrews' definition of "and".

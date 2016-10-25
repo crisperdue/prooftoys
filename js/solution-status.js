@@ -145,14 +145,13 @@ StepEditor.prototype._checkFaults = function(step) {
 
   // True if one or more assumptions is neither a type assumption
   // nor a given.
-  var badAsms = true;
   if (wff.isCall2('=>')) {
     function isBadAsm(asm) {
-      if (!this.isGiven(asm) && !asm.isTypeCond()) {
+      if (!self.isGiven(asm) && !asm.isTypeCond()) {
         return true;
       }
     }
-    var badAsm = wff.getLeft().scanConjuncts(isBadAsm);
+    var badAsms = wff.getLeft().scanConjuncts(isBadAsm);
     if (badAsms) {
       // If the step has extraneous assumptions, it is not a solution.
       return 'badAsms';
@@ -193,18 +192,20 @@ StepEditor.prototype._checkFaults = function(step) {
  * Else "noGivens" if there are no givens.
  * Else "badAsms" if the step uses extra assumptions.
  *
- * The usual form of a step in an algebra problem is one of:
+ * This method handles steps of these three forms:
  * typeAsms => givens == equations; or -
  * typeAsms & givens => equations; or conceivably some mixture:
  * typeAsms & someGivens => moreGivens == equations
  *
- * In case of the first or third form, the return value is:
+ * The first and third forms contain an equivalence.  This method only
+ * recognizes solutions and partial solutions in which the LHS
+ * contains only givens.  It returns
  *
  * "badLHS" if the LHS of the equivalence has any conjuncts that are
  *   not givens.
  *
  * If none of the above (mostly error) conditions applies, the return
- * value is an object with properties:
+ * value is an object with properties as follows:
  *
  * precise: true iff main connective is == (not =>) after assuming
  *   appropriate types for variables.
