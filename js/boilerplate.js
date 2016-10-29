@@ -320,7 +320,7 @@ function str(x) {
     return x.toString();
   }
 }
-// Make str function accessible as ".str" for debugger interaction.
+// Make str function accessible as ".$$" for debugger interaction.
 Object.defineProperty(Object.prototype,
-                      'str',
+                      '$$',
                       {get: function() { return str(this); }});

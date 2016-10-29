@@ -3782,8 +3782,8 @@ function Fact(synopsis, prover) {
         //   assumptions with assumptions in proved results.
         if (!added.matches(goal)) {
           console.log('Warning: Proved assumptions do not match goal.');
-          console.log('  Goal:', goal.str);
-          console.log('  Result:', result2.str);
+          console.log('  Goal:', goal.toString());
+          console.log('  Result:', result2.toString());
         }
         return added;
       } else {

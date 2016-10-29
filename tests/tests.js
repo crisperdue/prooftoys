@@ -809,7 +809,7 @@ var testCase = {
   testPrettifyPath: function() {
     var expr = Toy.parse('a + neg (b * c)');
     var p = Toy.path('/arg/arg/fn/arg');
-    assertEqual('/right/arg/left', expr.prettifyPath(p).str);
+    assertEqual('/right/arg/left', expr.prettifyPath(p).toString());
   },
 
   testPathExpand: function() {
