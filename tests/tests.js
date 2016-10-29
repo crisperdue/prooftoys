@@ -2242,6 +2242,8 @@ var testCase = {
   // StepEditor
 
   testSolutionStatus: function() {
+
+    // Support code.
     function canon0(status) {
       if (status.constructor !== Object) {
         return status;
@@ -2273,6 +2275,7 @@ var testCase = {
       var sorted = sols.sort(compareByFml);
       return {precise: status.precise, solutions: sols.sort(compareByFml)};
     }
+
     // Return a canonical string for the given solution status.
     // Properties in a standard order and solutions ordered
     // lexicographically by formula.toString with property "fml".
@@ -2287,6 +2290,8 @@ var testCase = {
     function asGiven(asm) {
       return rules.equivSelf(asm);
     }
+
+    // Test cases:
 
     // Trivially solved problem.
     ed.givens = ['x = 2'].map(asGiven);
@@ -2352,9 +2357,7 @@ var testCase = {
     status = ed.solutionStatus(ed.givens[0]);
     expected = {
       precise: true,
-      solutions: [{
-          byVar: {},
-          formula: "((x + 2) = 5)"}]};
+      solutions: []};
     assertEqual(canonical(expected), canonical(status));
 
     // standardSolution == false
@@ -2391,8 +2394,8 @@ var testCase = {
     status = ed.solutionStatus(step);
     expected = {
       precise: true,
-      solutions: [{byVar: {},
-          formula: "(((x + y) = 7) & ((x - y) = 3))"}]};
+      solutions: []
+    };
     assertEqual(canonical(expected), canonical(status));
 
     // Totally solved problem in two variables.

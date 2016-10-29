@@ -128,7 +128,11 @@ function oneSolutionStatus(solution, givenVars) {
   // Add info for this solution into "vars".  The solution may be a
   // conjunction of equations or a single equation.
   solution.scanConjuncts(addSolutionPart);
-  return {byVar: byVar, formula: solution, conditional: conditional};
+  if (Toy.isEmpty(byVar)) {
+    return null;
+  } else {
+    return {byVar: byVar, formula: solution, conditional: conditional};
+  }
 }
 
 StepEditor.prototype._checkFaults = function(step) {
@@ -211,8 +215,8 @@ StepEditor.prototype._checkFaults = function(step) {
  *   appropriate types for variables.
  * solutions: list of individual solution status objects.
  *
- * Solution status object; one for each conjunction and refers to the
- *   equations in that conjunction:
+ * Solution status object; one for each conjunction that shows signs
+ *   of progress toward being a solution:
  *
  *   formula: formula (conjunction) representing this solution.
  *   byVar: object/map indexed by variable name.  Each value is an
@@ -264,10 +268,14 @@ StepEditor.prototype.solutionStatus = function(step) {
   var givenVars = {};
   this.givens.forEach(function(g) { $.extend(givenVars, g.wff.freeVars()); });
 
-  // This will be a list of solution results, one for each solution.
+  // This will be a list of solution results, one for each conjunction
+  // that shows progress toward becoming a solution.
   var solutionResults = [];
   solutions.scanDisjuncts(function(term) {
-      solutionResults.push(oneSolutionStatus(term, givenVars));
+      var stat = oneSolutionStatus(term, givenVars);
+      if (stat) {
+        solutionResults.push(stat);
+      }
     });
 
   // Indicates that (the step has assumptions and) the assumptions
