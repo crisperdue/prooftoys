@@ -52,22 +52,14 @@ function notTypeCond(asm) {
 /**
  * Returns a solution status for a single equation as described for
  * StepEditor.solutionStatus.  If the equation LHS is simply a
- * variable, returns 'none', 'solved', 'simplify', 'overdetermined',
- * or a list of names of other variables it is solved for in the given
- * step.  Otherwise returns null.
+ * variable, returns 'solved', 'simplify', or a list of names of other
+ * variables it is solved for in the given step.  If the LHS is not a
+ * variable, returns null.
  */
 function eqnStatus(eqn, givenVars) {
   // The equation should have the form <var> = <expr>.
   if (!(eqn.isCall2('=') && eqn.getLeft().isVariable())) {
     return null;
-  }
-
-  function power(status) {
-    return (status == 'solved'
-            ? 10
-            : status == 'simplify'
-            ? 5
-            : 1);
   }
   var varName = eqn.getLeft().pname;
   var answer = eqn.getRight();
