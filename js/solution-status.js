@@ -182,7 +182,7 @@ StepEditor.prototype._checkFaults = function(step) {
  * "Atomic" status values:
  *
  * Boolean - true or false if there are stated solutions and the step
- *   does or does not match one.
+ *   does (or does not) match one.
  *
  * Else false if standardSolution is false.
  * Else "noGivens" if there are no givens.
@@ -206,6 +206,8 @@ StepEditor.prototype._checkFaults = function(step) {
  * precise: true iff main connective is == (not =>) after assuming
  *   appropriate types for variables.
  * solutions: list of individual solution status objects.
+ * nDisjuncts: number of disjuncts in the "solutions" section of the
+ *   statement.
  *
  * Solution status object; one for each conjunction that shows signs
  *   of progress toward being a solution:
@@ -214,7 +216,7 @@ StepEditor.prototype._checkFaults = function(step) {
  *   byVar: object/map indexed by variable name.  Each value is an
  *       object/map with properties:
  *     eqn: the equation in this solution with this vbl as its LHS.
- *     status: 'none', 'solved', 'simplify', 'overdetermined', or a
+ *     status: 'solved', 'simplify', 'overdetermined', or a
  *       list of names of other variables the given variable is solved
  *       for in the given step.  Variables not in solution position are
  *       not included.  "Solved" indicates the variable appears in
@@ -263,7 +265,9 @@ StepEditor.prototype.solutionStatus = function(step) {
   // This will be a list of solution results, one for each conjunction
   // that shows progress toward becoming a solution.
   var solutionResults = [];
+  var nDisjuncts = 0;
   solutions.scanDisjuncts(function(term) {
+      nDisjuncts++;
       var stat = oneSolutionStatus(term, givenVars);
       if (stat) {
         solutionResults.push(stat);
@@ -275,7 +279,10 @@ StepEditor.prototype.solutionStatus = function(step) {
   // but not a precise solution.
   var asmsGiven = (wff.isCall2('=>') &&
                    wff.getLeft().scanConjuncts(this.isGiven.bind(this)));
-  return {precise: !asmsGiven, solutions: solutionResults};
+  return {precise: !asmsGiven,
+      solutions: solutionResults,
+      nDisjuncts: nDisjuncts
+      };
 };
 
 })();
