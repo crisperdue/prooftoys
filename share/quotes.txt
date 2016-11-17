@@ -83,7 +83,7 @@ because you might not get there. -- Yogi Berra
 
 Nobody ever figures out what life is all about, and it doesn't matter.
 Explore the world. Nearly everything is really interesting if you go
-into it deeply enough. -― Richard Feynman
+into it deeply enough. -- Richard Feynman
 
 People who like this sort of thing will find this the sort of thing they like.
 -- Artemus Ward
@@ -110,3 +110,8 @@ for those who are to come, and point the way. -- Nikola Tesla
 Believe all you hear. Your world may not be a better one than the one the
 blocks live in but it’ll be a sight more vivid. -- Chad Mulligan, in
 "Stand on Zanzibar"
+
+Virtually nothing from the last three hundred years has found its way
+into the classroom.  Yet most of the mathematics used in today's world
+was developed in the last two hundred years, let alone the last three
+hundred. -- Keith Devlin, "Introduction to Mathematical Thinking"
