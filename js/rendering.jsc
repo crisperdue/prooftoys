@@ -270,6 +270,7 @@ function ProofEditor() {
       self.stepEditor.ruleSelector.refresh();
       self.stepEditor.reset();
     });
+  self.$rulesMode.trigger('change');
 
   // The ruleStats are visible except when a proof is brand new and
   // there is nothing to show.

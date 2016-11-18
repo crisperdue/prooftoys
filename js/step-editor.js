@@ -133,12 +133,8 @@ function StepEditor(controller) {
   div.append(widget.$node);
              
   self.showRuleType = 'general';
-  // Let the constructor and initialization code all run before
-  // triggering the change action.
-  Toy.soonDo(function() { controller.setRulesMode(self.showRuleType); });
 
   // Install event handlers.
-
   self.clearer.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
   self.form.on('keydown', function(event) {
