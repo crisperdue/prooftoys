@@ -155,6 +155,23 @@ function StepEditor(controller) {
 }
 
 /**
+ * Define the "givens" property as a virtual property.  Setting it has
+ * the side effect of modify the "givenVars" property as well, which
+ * should be treated as readonly.
+ */
+Object.defineProperty(StepEditor.prototype, "givens", {
+    get: function() { return this._givens; },
+    set: function(g) {
+      this._givens = g;
+      // An object/set with names of all variables in any of the
+      // givens:
+      var vars = {};
+      this._givens.forEach(function(g) { $.extend(vars, g.wff.freeVars()); });
+      this.givenVars = vars;
+    }
+  });
+
+/**
  * Returns the Expr selected in this StepEditor, or a falsy value if
  * there is none.
  */
