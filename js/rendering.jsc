@@ -192,9 +192,11 @@ var proofToyState = {
 
 //// PROOF EDITOR
 
-// TODO: Consider how to refactor ProofEditor, ProofDisplay, and
-//   StepEditor for cleaner code.  Should ProofEditor subclass from
-//   ProofDisplay?
+// TODO: Use events and event handlers to make cleaner separation
+//   between ProofEditor, ProofDisplay, and StepEditor.  StepEditor
+//   needs some kind of access to the array of proof steps to
+//   translate step numbers to steps.  Perhaps ProofDisplay can notify
+//   when its list of steps changes.
 
 // Each instance has a numeric ID.
 var nextProofEditorId = 1;
@@ -429,7 +431,8 @@ ProofEditor.prototype.showProofButtons = @(value) {
   @proofButtons.toggle(value);
 };
 
-//// PROOF CONTROL
+
+//// ProofDisplay
 
 // TODO: Extend these to support proof steps that can take more
 // than one selection.

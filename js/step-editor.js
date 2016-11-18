@@ -100,6 +100,11 @@ function StepEditor(controller) {
   // Make this available to all inner functions.
   var self = this;
 
+  // TODO: Eliminate the "controller" property and make cleaner separation
+  //   between StepEditor (StepBuilder?) and its proof display as indicated
+  //   in other TODOs.  The step editor still needs to refer to the steps
+  //   in the proofDisplay, though it could/should be separated from all other
+  //   aspects.
   self.controller = controller;
   self.proofDisplay = controller.proofDisplay;
   self.lastRuleTime = 0;
@@ -126,6 +131,8 @@ function StepEditor(controller) {
 
   // Attach the "ruleWorking" to the ProofDisplay node so
   // it doesn't move when steps are inserted.
+  // TODO: Position the thing relative to the document each time it is
+  //   displayed, removing a dependency on proofDisplay.
   $(self.proofDisplay.node)
     .append($('<div class=ruleWorking/>').text('Working . . . '));
   var widget = new BasicRuleSelector(self);
@@ -266,6 +273,9 @@ StepEditor.prototype.ruleChosen = function() {
     //   check here if all args can be filled from the selection
     //   and modify that to always report errors.
     var template = rule.info.form;
+    // TODO: In the proof editor set up an event handler so the step editor
+    //   can be aware of selections in the proof display (and also suppress
+    //   selections instead of "selectLock").
     var step = this.proofDisplay.selection;
     var term = step && step.selection;
     var formatArgs = {term: (term && term.toHtml()) || '{term}'};
@@ -483,6 +493,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // Update the rule stats and show them.
     this.lastRuleTime = Date.now() - startTime;
     this.lastRuleSteps = Toy.getStepCounter() - startSteps;
+    // TODO: Consider providing an event with info the controller can
+    //   use to display this info -- and move this code into handler.
     this.controller.containerNode
       .find('.ruleTime').text(Math.ceil(this.lastRuleTime));
     this.controller.containerNode
@@ -500,6 +512,10 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // supports one render per step anyway.
     this.report('nothing done');
   } else {
+    // TODO: Trigger an event and let the proofDisplay show the step,
+    //   removing most of this code.  It may be desirable for the
+    //   proof display to trigger another event after the step is
+    //   successfully rendered, triggering auto-simplification.
     try {
       this.proofDisplay.addStep(result);
     } catch(error) {
