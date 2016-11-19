@@ -84,12 +84,6 @@ var siteTypes = {
  * controller: ProofEditor containing this StepEditor.
  * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
- * givens: steps defining the problem, normally instances of "consider".
- * solutions: If any of these expressions (or strings) is an alphaMatch
- *   with a step, announce the step as a solution.
- * standardSolution: If no explicit solutions given, but the result of
- *   a step solves for a variable (equal to a numeral or fraction),
- *   announce that the problem is solved.
  *
  * showRuleType: Selects type of rules to show, as determined by offerApproved.
  *   Takes effect when this editor is reset.
@@ -109,9 +103,6 @@ function StepEditor(controller) {
   self.proofDisplay = controller.proofDisplay;
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
-  self.givens = [];
-  self.solutions = [];
-  self.standardSolution = true;
 
   // Create a DIV with the step editor content.
   var div = $('<div class=stepEditor style="clear: both"></div>');
@@ -156,23 +147,6 @@ function StepEditor(controller) {
       self.$proofErrors.hide();
     });
 }
-
-/**
- * Define the "givens" property as a virtual property.  Setting it has
- * the side effect of modify the "givenVars" property as well, which
- * should be treated as readonly.
- */
-Object.defineProperty(StepEditor.prototype, "givens", {
-    get: function() { return this._givens; },
-    set: function(g) {
-      this._givens = g;
-      // An object/set with names of all variables in any of the
-      // givens:
-      var vars = {};
-      this._givens.forEach(function(g) { $.extend(vars, g.wff.freeVars()); });
-      this.givenVars = vars;
-    }
-  });
 
 /**
  * Returns the Expr selected in this StepEditor, or a falsy value if
@@ -532,7 +506,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // has any effect.
     var self = this;
     function checkSolution(result) {
-      var message = self.solutionMsg(result);
+      var message = self.controller.solutionMsg(result);
       if (message) {
         self.report(message);
       }
@@ -552,59 +526,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
       });
   }
   this.focus();
-};
-
-/**
- * If this.solutions is nonempty, returns a solution message iff the
- * step or its "main part" is an alphaMatch with some element of it.
- * 
- * If this.standardSolution is truthy, this returns a solution message
- * iff the given step is an equation of the form <var> = <expr>, where
- * <expr> is a numeral or a fraction.
- */
-StepEditor.prototype.solutionMsg = function(step) {
-  // TODO: Use result of StepEditor.solutionStatus here.
-  if (this.solutions.length) {
-    return Toy.each(this.solutions, function(solution) {
-        if (Toy.termify(solution).alphaMatch(step) ||
-            Toy.termify(solution).alphaMatch(step.getMain())) {
-          return true;
-        }
-      }) && 'You have found a valid solution';
-  } else if (this.standardSolution && step.isEquation()) {
-    // TODO: Check that the assumptions of the solution are all
-    //   assumptions/givens of the problem, or assumptions about types
-    //   of variables.
-    // TODO: Support other sorts of solutions such as solving for
-    //   one variable in the presence of others, and constant expressions
-    //   other than trivial fractions.
-    var eqn = step.getMain();
-    function gcd(expr) {
-      return Toy.gcd(expr.getLeft().getNumValue(),
-                     expr.getRight().getNumValue());
-    }
-    function isLowestTerms(expr) {
-      return (expr.isNumeral() ||
-              (Toy.isFraction(expr) && gcd(expr) === 1));
-    }
-    if (eqn.isCall2('==') && eqn.getRight().isCall2('=') &&
-        eqn.getRight().getLeft().isVariable()) {
-      // The main part of the step is an equivalence containing an equation.
-      var answer = eqn.getRight().getRight();
-      if (isLowestTerms(answer)) {
-        return ('You have solved for ' +
-                step.getMain().getRight().getLeft().pname);
-      }
-      // Else it is not recognized as a solution.
-    } else if (eqn.getLeft().isVariable()) {
-      // The main part of the step is just an equation.
-      if (isLowestTerms(eqn.getRight())) {
-        return format('If there is a solution for {1} this is it',
-                      step.getMain().getLeft().name);
-      }
-    }
-  }
-  return false;
 };
 
 /**
