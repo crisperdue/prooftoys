@@ -211,7 +211,10 @@ var nextProofEditorId = 1;
  * proofDisplay: ProofDisplay for the proof being edited.
  * containerNode: jQuery object for outermost DOM node for the display.
  * stepEditor: StepEditor for the proof being edited.
- * givens: steps defining the problem, normally instances of "consider".
+ * givens: boolean terms defining the problem, often equations (not steps).
+ *   Should only be set once, before adding any steps.
+ * givenVars: object/set keyed by names of variables free in the givens;
+ *   read-only.
  * solutions: If any of these expressions (or strings) is an alphaMatch
  *   with a step, announce the step as a solution.
  * standardSolution: If no explicit solutions given, but the result of
@@ -220,7 +223,8 @@ var nextProofEditorId = 1;
  */
 function ProofEditor() {
   var self = this;
-  self.givens = [];
+  self._givens = [];
+  self.givenVars = {};
   self.solutions = [];
   self.standardSolution = true;
   // Set the ID.
@@ -376,11 +380,16 @@ function ProofEditor() {
 Object.defineProperty(ProofEditor.prototype, "givens", {
     get: function() { return this._givens; },
     set: function(g) {
-      this._givens = g;
+      assert(this._givens.length == 0, 'Givens are already set');
+      for (var i = 0; i < g.length; i++) {
+        var g1 = Toy.termify(g[i]);
+        this._givens.push(g1);
+        this.addStep(Toy.rules.consider(g1));
+      }
       // An object/set with names of all variables in any of the
       // givens:
       var vars = {};
-      this._givens.forEach(function(g) { $.extend(vars, g.wff.freeVars()); });
+      this._givens.forEach(function(g) { $.extend(vars, g.freeVars()); });
       this.givenVars = vars;
     }
   });
