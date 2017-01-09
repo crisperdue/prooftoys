@@ -46,6 +46,26 @@ Math.trunc = Math.trunc || function(x) {
   return x < 0 ? Math.ceil(x) : Math.floor(x);
 }
 
+var ownProperty = Object.prototype.hasOwnProperty;
+
+/**
+ * Version of hasOwnProperty that is not accessed through the
+ * prototype chain, so it works even if the object has a
+ * "hasOwnProperty" property.
+ * 
+ */
+function hasOwn(thing, name) {
+  return ownProperty.call(thing, name);
+};
+
+/**
+ * Gets the named property if it is an own property, otherwise
+ * returns "undefined".
+ */
+function getOwn(thing, name) {
+  return (hasOwn(thing, name) ? thing[name] : undefined);
+};
+
 /**
  * Returns the GCD of two positive integers; actually the truncation
  * of the absolute values of any two numbers, except if either
@@ -208,7 +228,7 @@ function debugString(o, specials) {
     keys.sort();
     for (var i = 0; i < keys.length; i++) {
       var key = keys[i];
-      if (o.hasOwnProperty(key)) {
+      if (hasOwn(o, key)) {
         if (result.length > 1) {
           result += ', ';
         }
@@ -313,6 +333,13 @@ function ownProperties(object) {
 }
 
 /**
+ * Synonym for ownProperties.
+ */
+function asMap(object) {
+  return ownProperties(object);
+}
+
+/**
  * Builds and returns an object with no prototype and properties taken
  * from the arguments, an alternating sequence of string keys and
  * values.  The argument list length must be even.
@@ -345,7 +372,7 @@ function removeAll(map1, map2) {
  */
 function removeExcept(map1, map2) {
   for (var k in map1) {
-    if (!map2.hasOwnProperty(k)) {
+    if (!hasOwn(map2, k)) {
       delete map1[k];
     }
   }
@@ -555,12 +582,17 @@ Set.prototype.add = function(value) {
 };
 
 /**
- * Add all the values in the array to this Set.
- * Return this set.
+ * Add all the values in the given array or Set to this Set.
+ * Return this.
  */
-Set.prototype.addAll = function(array) {
+Set.prototype.addAll = function(more) {
   var self = this;
-  array.forEach(function(value) { self.add(value); });
+  function add(value) { self.add(value); }
+  if (more instanceof Set) {
+    more.each(add);
+  } else {
+    more.forEach(add);
+  }
   return self;
 };
 
@@ -568,7 +600,7 @@ Set.prototype.addAll = function(array) {
  * Does the set contain the element (one with the same key)?
  */
 Set.prototype.has = function(value) {
-  return this.map.hasOwnProperty(this.stringifier(value));
+  return hasOwn(this.map, this.stringifier(value));
 };
 
 /**
@@ -648,7 +680,7 @@ Map.prototype.set = function(key, value) {
  * Does it have an element with matching key?
  */
 Map.prototype.has = function(key) {
-  return this.map.hasOwnProperty(this.stringifier(key));
+  return hasOwn(this.map, this.stringifier(key));
 };
 
 /**
@@ -657,7 +689,7 @@ Map.prototype.has = function(key) {
 Map.prototype.get = function(key) {
   var map = this.map;
   var k = this.stringifier(key);
-  return map.hasOwnProperty(k) ? map[k] : this.dfault;
+  return hasOwn(map, k) ? map[k] : this.dfault;
 };
 
 /**
@@ -875,6 +907,9 @@ function _testTriangle(where, height, color) {
 
 //// Export public names.
 
+Toy.hasOwn = hasOwn;
+Toy.getOwn = getOwn;
+
 Toy.MAX_INT = MAX_INT;
 Toy.gcd = gcd;
 
@@ -889,6 +924,7 @@ Toy.debugString = debugString;
 
 Toy.isEmpty = isEmpty;
 Toy.configure = configure;
+Toy.asMap = asMap;
 Toy.ownProperties = ownProperties;
 Toy.object0 = object0;
 Toy.removeAll = removeAll;
