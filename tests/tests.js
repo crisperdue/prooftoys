@@ -1,4 +1,4 @@
-// Copyright 2011 - 2016 Crispin Perdue.
+// Copyright 2011 - 2017 Crispin Perdue.
 // All rights reserved.
 
 (function() {
@@ -91,6 +91,50 @@ function checkRewriter(expected, input, rule) {
     }
   }
 }
+
+/**
+ * Copy a value for presentation to QUnit.deepEqual, which looks in
+ * too many places.
+ */
+function qUnitCopy(obj) {
+  if (typeof obj !== 'object') {
+    return obj;
+  }
+  if (obj === null) {
+    return obj;
+  }
+  if (obj.qUnitCopy) {
+    return obj.qUnitCopy();
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(x => qUnitCopy(x));
+  }
+  if (obj.constructor === Object) {
+    var keys = Object.keys(obj);
+    var copy = {};
+    keys.forEach(k => copy[k] = qUnitCopy(obj[k]));
+    return copy;
+  }
+  return obj;
+}
+
+// Customize copying of Exprs.
+Toy.Expr.prototype.qUnitCopy = function() {
+  return 'Expr ' + this.toUnicode();
+};
+
+// Customize copying of TermSets.
+Toy.TermSet.prototype.qUnitCopy = function() {
+  return qUnitCopy(this.map);
+};
+
+/**
+ * Copies the object with qUnitCopy and logs the copy to the console.
+ */
+function logDeeply(obj) {
+  console.log(JSON.stringify(qUnitCopy(obj), null, 1));
+}
+
 
 // Set up some useful constants and functions.
 
@@ -2240,6 +2284,121 @@ var testCase = {
   // END OF RULES AND THEOREMS
 
   // ProofEditor
+
+  testEqnStatus: function() {
+    var givenVars = {
+      x: true,
+      y: true
+    }
+    function status(eqn) {
+      return Toy._eqnStatus(termify(eqn), givenVars);
+    }
+    assertEqual(null, status('R x'));
+    assertEqual({}, status('x = 5'));
+    assertEqual({}, status('y = 5'));
+    assertEqual(null, status('z = 5'));
+    assertEqual(null, status('x = 5 * z'));
+    assertEqual({y: true}, status('x = 5 + y'));
+    assertEqual(null, status('x = 5 + y - x'));
+    assertEqual({x: true}, status('y = 5 - x'));
+  },
+
+  testAnalyzeConditions: function() {
+    var analyze = Toy._analyzeConditions;
+    var TermSet = Toy.TermSet;
+    function ts(a) {
+      var set = new TermSet();
+      a.forEach(x => set.add(x));
+      return set;
+    }
+    var gg = ['R x', 'x + y = 5', 'x - y = 3'].map(parse);
+    var problemGivens = ts(gg);
+    function check(expected, expr) {
+      var result = qUnitCopy(analyze(expr, problemGivens));
+      deepEqual(result, qUnitCopy(expected), 'Woot?');
+    }
+    var expr = parse('R x & x + y = 5 & x > 3');
+    var expect = {};
+    expect.tcs = ts([gg[0]]);
+    expect.givens = ts([gg[1]]);
+    expect.others = ts([parse('x > 3')]);
+    check(expect, expr);
+  },
+
+  testAnalyzeSolutions: function() {
+    var analyze = Toy._analyzeSolutions;
+    var givenVars = {x: true, y: true, z: true};
+    var disj = parse('x = 1 / y');
+    var result = analyze(disj, givenVars);
+    var actual = qUnitCopy(result);
+    var expected = [{
+        byVar: {
+          x: {
+            eqn: 'Expr (x = (1 ∕ y))',
+            status: {
+              y: true
+            }
+          }
+        },
+        overages: [],
+        tcs: {},
+        others: {}
+      }
+      ];
+    deepEqual(actual, expected);
+
+    disj = parse('x = 3 & x = 5 & y > z');
+    result = analyze(disj, givenVars);
+    expected = [{
+        byVar: {},
+        overages: ["x"],
+        tcs: {},
+        others: {"((> y) z)": "Expr (y > z)"}
+      }
+      ];
+    deepEqual(qUnitCopy(result), expected);
+  },
+
+  testProofStatusInfo: function() {
+    var ed = new Toy.ProofEditor();
+    ed.givens = ['x + y = 5', 'x - y = 3'];
+    var formulas = {
+      a: 'x + y = 5 & x - y = 3 == x = y - 5 & x - y = 3'
+    };
+    var step = rules.assert(formulas.a);
+    ed.addStep(step);
+    var stats = ed.statusInfo(step);
+    logDeeply(stats);
+    var expected = {
+      structure: "equiv",
+      tcInfo: null,
+      givensInfo: {
+        tcs: {},
+        givens: {
+          "((= ((+ x) y)) 5)": "Expr ((x + y) = 5)",
+          "((= ((- x) y)) 3)": "Expr ((x − y) = 3)"
+        },
+        others: {}
+      },
+      solutionsInfo: [{
+          byVar: {
+            x: {
+              eqn: "Expr (x = (y − 5))",
+              status: {
+                y: true
+              }
+            }
+          },
+          overages: [],
+          tcs: {},
+          others: {
+            "((= ((- x) y)) 3)": "Expr ((x − y) = 3)"
+          }
+        }
+        ]
+    };
+    assert(false, 'JKJK');
+  },
 
   /*
   testSolutionStatus: function() {
