@@ -455,7 +455,7 @@ ProofEditor.prototype.solutionStatus = function(step) {
     }
     var isConditional = (structure == 'tentative' ||
                          structure == 'equiv' && tcGivens.size());
-    var givensPresent = new TermSet().add(givsInfo.givens).add(tcGivens);
+    var givensPresent = new TermSet().addAll(givsInfo.givens).addAll(tcGivens);
     var absentGivens = [];
     // Returns fml iff it is not present in this step.
     function checkAbsent(fml) {
