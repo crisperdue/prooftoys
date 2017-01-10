@@ -125,7 +125,9 @@ Toy.Expr.prototype.qUnitCopy = function() {
 
 // Customize copying of TermSets.
 Toy.TermSet.prototype.qUnitCopy = function() {
-  return qUnitCopy(this.map);
+  var members = [];
+  this.each(x => void members.push(x.toUnicode()));
+  return members.sort();
 };
 
 /**
@@ -2340,9 +2342,9 @@ var testCase = {
             }
           }
         },
+        others: [],
         overages: [],
-        tcs: {},
-        others: {}
+        tcs: []
       }
       ];
     deepEqual(actual, expected);
@@ -2351,9 +2353,9 @@ var testCase = {
     result = analyze(disj, givenVars);
     expected = [{
         byVar: {},
+        others: ["(y > z)"],
         overages: ["x"],
-        tcs: {},
-        others: {"((> y) z)": "Expr (y > z)"}
+        tcs: []
       }
       ];
     deepEqual(qUnitCopy(result), expected);
@@ -2363,22 +2365,19 @@ var testCase = {
     var ed = new Toy.ProofEditor();
     ed.givens = ['x + y = 5', 'x - y = 3'];
     var formulas = {
-      a: 'x + y = 5 & x - y = 3 == x = y - 5 & x - y = 3'
+      a: 'x + y = 5 & x - y = 3 == x = y - 5 & x - y = 3',
+      b: 'x = 3 & x = 5 == x = 3 & x = 5'
     };
     var step = rules.assert(formulas.a);
     ed.addStep(step);
     var stats = ed.statusInfo(step);
-    logDeeply(stats);
     var expected = {
       structure: "equiv",
       tcInfo: null,
       givensInfo: {
-        tcs: {},
-        givens: {
-          "((= ((+ x) y)) 5)": "Expr ((x + y) = 5)",
-          "((= ((- x) y)) 3)": "Expr ((x − y) = 3)"
-        },
-        others: {}
+        tcs: [],
+        givens: ["((x + y) = 5)", "((x − y) = 3)"],
+        others: []
       },
       solutionsInfo: [{
           byVar: {
@@ -2390,214 +2389,62 @@ var testCase = {
             }
           },
           overages: [],
-          tcs: {},
-          others: {
-            "((= ((- x) y)) 3)": "Expr ((x − y) = 3)"
-          }
+          tcs: [],
+          others: ["((x − y) = 3)"]
         }
         ]
     };
-    assert(false, 'JKJK');
-  },
+    deepEqual(qUnitCopy(stats), expected);
 
-  /*
-  testSolutionStatus: function() {
-
-    // Support code.
-    function canon0(status) {
-      if (status.constructor !== Object) {
-        return status;
-      }
-
-      function canonize(solution) {
-        var vblInfo = [];
-        var byVar = solution.byVar;
-        for (var v in byVar) {
-          var value = byVar[v];
-          vblInfo.push({name: v, eqn: value.eqn.toString(), status: value.status});
+    var step2 = rules.assert(formulas.b);
+    ed.addStep(step2);
+    var stats2 = ed.statusInfo(step2);
+    var expected2 = {
+      structure: 'equiv',
+      tcInfo: null,
+      givensInfo: {
+        tcs: [],
+        givens: [],
+        others: ['(x = 3)', '(x = 5)']
+      },
+      solutionsInfo: [{
+          byVar: {},
+          overages: ['x'],
+          tcs: [],
+          others: []
         }
-        function compareVblName(o1, o2) {
-          var n1 = o1.vbl;
-          var n2 = o2.vbl;
-          return n1 < n2 ? -1 : n1 === n2 ? 0 : 1;
-        }
-        // Sort the list in a predictable order.
-        vblInfo.sort(compareVblName);
-        // Return a representation of the overall solution.
-        return {byVar: vblInfo,
-                fml: solution.formula.toString()};
-      }
-      var sols = status.solutions.map(canonize);
-      function compareByFml(a, b) {
-        var fml1 = a.fml, fml2 = b.fml;
-        return (fml1 < fml2 ? -1 : fml1 === fml2 ? 0 : 1);
-      }
-      var sorted = sols.sort(compareByFml);
-      return {precise: status.precise, solutions: sols.sort(compareByFml)};
-    }
-
-    // Return a canonical string for the given solution status.
-    // Properties in a standard order and solutions ordered
-    // lexicographically by formula.toString with property "fml".
-    // Assumes JSON.stringify preserves object literal property orders.
-    function canonical(status) {
-      return JSON.stringify(canon0(status), null, 1);
-    }
-
-    var ed = new Toy.ProofEditor();
-    var rules = Toy.rules;
-    function asGiven(asm) {
-      return rules.equivSelf(asm);
-    }
-
-    // Test cases:
-
-    // Trivially solved problem.
-    ed.givens = ['x = 2'].map(asGiven);
-    var step = ed.givens[0];
-    var status = ed.solutionStatus(step);
-    var expected = {
-      precise: true,
-      solutions: [{
-          byVar: {
-            x: {
-              eqn: "(x = 2)",
-              status: "solved"
-            }
-          },
-          formula: "(x = 2)"}]};
-    assertEqual(canonical(expected), canonical(status));
-
-    // Step with "bad LHS".
-    ed.givens = ['x = 2'].map(asGiven);
-    step = rules.assert('x = 2 => T == x = 2');
-    status = ed.solutionStatus(step);
-    expected = 'badLHS';
-    assertEqual(canonical(expected), canonical(status));
-
-    // Trivially solved problem, not precise.
-    ed.givens = ['x = 2'].map(asGiven);
-    step = rules.assert('x = 2 => x = 2');
-    status = ed.solutionStatus(step);
-    expected = {
-      precise: false,
-      solutions: [{
-          byVar: {
-            x: {
-              eqn: "(x = 2)",
-              status: "solved"
-            }
-          },
-          formula: "(x = 2)"}]};
-    assertEqual(canonical(expected), canonical(status));
-
-    // Partially solved problem in two variables.
-    ed.givens = ['x = 2', 'y = x + 5'].map(asGiven);
-    step = rules.equivSelf('x = 2 & y = x + 5');
-    status = ed.solutionStatus(step);
-    expected = {
-      precise: true,
-      solutions: [{
-          byVar: {
-            x: {
-              eqn: "(x = 2)",
-              status: "solved"
-            },
-            y: {
-              eqn: "(y = (x + 5))",
-              status: ["x"]
-            }
-          },
-          formula: "((x = 2) & (y = (x + 5)))"}]};
-    assertEqual(canonical(expected), canonical(status));
-
-    // Simple unsolved problem.
-    ed.givens = ['x + 2 = 5'].map(asGiven);
-    status = ed.solutionStatus(ed.givens[0]);
-    expected = {
-      precise: true,
-      solutions: []};
-    assertEqual(canonical(expected), canonical(status));
-
-    // standardSolution == false
-    try {
-      ed.standardSolution = false;
-      var term = 'x + 2 = 5';
-      ed.givens = [asGiven(term)];
-      step = rules.assert('x + 2 = 5 == x = 3');
-      status = ed.solutionStatus(step);
-      assert(false === status);
-    } finally {
-      ed.standardSolution = true;
-    }
-
-    // No givens.
-    var terms = ['x + 2 = 5'];
-    ed.givens = [];
-    step = asGiven(terms[0]);
-    status = ed.solutionStatus(step);
-    assertEqual('noGivens', status);
-
-    // Extra assumptions
-    terms = ['x + 2 = 5'];
-    ed.givens = terms.map(asGiven);
-    // Note this is actually a theorem.
-    step = rules.assert('T & x + 2 = 5 => x = 3');
-    status = ed.solutionStatus(step);
-    assertEqual('badAsms', status);
-
-    // Totally unsolved problem in two variables.
-    terms = ['x + y = 7', 'x - y = 3'];
-    ed.givens = terms.map(asGiven);
-    step = asGiven(terms[0] + ' & ' + terms[1]);
-    status = ed.solutionStatus(step);
-    expected = {
-      precise: true,
-      solutions: []
+        ]
     };
-    assertEqual(canonical(expected), canonical(status));
-
-    // Totally solved problem in two variables.
-    terms = ['x + y = 7', 'x - y = 3'];
-    ed.givens = terms.map(asGiven);
-    step = rules.assert('x - y = 3 & x + y = 7 == x = 5 & y = 2');
-    status = ed.solutionStatus(step);
-    expected = {
-      precise: true,
-      solutions: [{
-          byVar: {
-            x: {
-              eqn: '(x = 5)',
-              status: 'solved'
-            },
-            y: {
-              eqn: '(y = 2)',
-              status: 'solved'
-            }
-          },
-          formula: "((x = 5) & (y = 2))"}]};
-    assertEqual(canonical(expected), canonical(status));
-
-    // Problem in two variables, solved for y only
-    // (no complete solution is possible here).
-    terms = ['x + 2 = y', 'y = 3 + x'];
-    ed.givens = terms.map(asGiven);
-    step = asGiven(terms[0] + ' & ' + terms[1]);
-    status = ed.solutionStatus(step);
-    expected = {
-      precise: true,
-      solutions: [{
-          byVar: {
-            y: {
-              eqn: "(y = (3 + x))",
-              status: ["x"]
-            }
-          },
-          formula: "(((x + 2) = y) & (y = (3 + x)))"}]};
-    assertEqual(canonical(expected), canonical(status));
+    deepEqual(qUnitCopy(stats2), expected2);
   },
 
-  */
+  testSolutionStatus: function() {
+    var ed = new Toy.ProofEditor();
+    ed.givens = ['x + y = 5', 'x - y = 3'];
+    var formulas = {
+      a: 'x + y = 5 & x - y = 3 == x = y - 5 & x - y = 3',
+      b: 'x = 3 & x = 5 == x = 3 & x = 5'
+    };
+    var step = rules.assert(formulas.a);
+    ed.addStep(step);
+    var stats = ed.solutionStatus(step);
+    var expected = {
+      type: "equiv",
+      status: [{
+          byVar: {
+            x: {
+              eqn: 'Expr (x = (y − 5))',
+              status: {y: true}
+            }
+          },
+          overages: [],
+          tcs: [],
+          others: ['((x − y) = 3)']
+        }],
+      absentGivens: []
+    };
+    deepEqual(qUnitCopy(stats), expected);
+  },
 
   // Looking at what can be done with Andrews' definition of "and".
   // From here you can get counterexamples to the possibilities
