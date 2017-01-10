@@ -575,10 +575,11 @@ function Set(stringifier) {
 var emptySet = Object.freeze(new Set());
 
 /**
- * Add an element.
+ * Add an element, returning this.
  */
 Set.prototype.add = function(value) {
   this.map[this.stringifier(value)] = value;
+  return this;
 };
 
 /**
@@ -653,6 +654,15 @@ Set.prototype.choose = function() {
   for (var key in this.map) {
     return this.map[key];
   }
+};
+
+/**
+ * Returns an iterable (actually an array) of the values in the Set.
+ */
+Set.prototype.values = function() {
+  var result = [];
+  this.each(x => void result.push(x));
+  return result;
 };
 
 

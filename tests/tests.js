@@ -269,6 +269,14 @@ var testCase = {
       });
     assertEqual(2, found);
     assert(items.indexOf(2) >= 0);
+    // addAll
+    var copy = new Toy.Set();
+    copy.addAll(set);
+    assertEqual(2, copy.size());
+    copy.addAll([22]);
+    assertEqual(3, copy.size());
+    // values
+    assertEqual([2, 22, 'one'], copy.values().sort());
   },
 
   testTermSet: function() {
