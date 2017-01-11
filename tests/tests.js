@@ -2293,7 +2293,7 @@ var testCase = {
 
   // END OF RULES AND THEOREMS
 
-  // ProofEditor
+  // ProofEditor - solution status
 
   testEqnStatus: function() {
     var givenVars = {
@@ -2345,13 +2345,13 @@ var testCase = {
         byVar: {
           x: {
             eqn: 'Expr (x = (1 ∕ y))',
-            status: {
+            using: {
               y: true
             }
           }
         },
         others: [],
-        overages: [],
+        overages: {},
         tcs: []
       }
       ];
@@ -2362,7 +2362,7 @@ var testCase = {
     expected = [{
         byVar: {},
         others: ["(y > z)"],
-        overages: ["x"],
+        overages: {x: true},
         tcs: []
       }
       ];
@@ -2391,12 +2391,12 @@ var testCase = {
           byVar: {
             x: {
               eqn: "Expr (x = (y − 5))",
-              status: {
+              using: {
                 y: true
               }
             }
           },
-          overages: [],
+          overages: {},
           tcs: [],
           others: ["((x − y) = 3)"]
         }
@@ -2417,7 +2417,7 @@ var testCase = {
       },
       solutionsInfo: [{
           byVar: {},
-          overages: ['x'],
+          overages: {x: true},
           tcs: [],
           others: []
         }
@@ -2431,7 +2431,8 @@ var testCase = {
     ed.givens = ['x + y = 5', 'x - y = 3'];
     var formulas = {
       a: 'x + y = 5 & x - y = 3 == x = y - 5 & x - y = 3',
-      b: 'x = 3 & x = 5 == x = 3 & x = 5'
+      b: 'x + y = 5 & x - y = 3 == x = 4 & x - y = 3',
+      c: 'x = 3 & y = 5 == x = 3 & y = 5'
     };
     var step = rules.assert(formulas.a);
     ed.addStep(step);
@@ -2442,16 +2443,63 @@ var testCase = {
           byVar: {
             x: {
               eqn: 'Expr (x = (y − 5))',
-              status: {y: true}
+              using: {y: true}
             }
           },
-          overages: [],
+          overages: {},
           tcs: [],
           others: ['((x − y) = 3)']
         }],
       absentGivens: []
     };
     deepEqual(qUnitCopy(stats), expected);
+
+    step  = rules.assert(formulas.b);
+    stats = ed.solutionStatus(step);
+    expected = {
+      type: "equiv",
+      status: [{
+          byVar: {
+            x: {
+              eqn: "Expr (x = 4)",
+              using: {}
+            }
+          },
+          overages: {},
+          tcs: [],
+          others: ["((x − y) = 3)"]
+        }],
+      absentGivens: []
+    };
+    deepEqual(qUnitCopy(stats), expected);
+
+    ed = new Toy.ProofEditor();
+    ed.givens = ['x = 3', 'y = 5'];
+    step = rules.assert(formulas.c);
+    // This time don't even add the step to the proof.
+    stats = ed.solutionStatus(step);
+    expected = {
+      type: "equiv",
+      status: [{
+          byVar: {
+            x: {
+              eqn: "Expr (x = 3)",
+              using: {}
+            },
+            y: {
+              eqn: "Expr (y = 5)",
+              using: {}
+            }
+          },
+          overages: {},
+          tcs: [],
+          others: []
+        }],
+      absentGivens: []
+    };
+    deepEqual(qUnitCopy(stats), expected);
+
+    // TODO: Test the 'confirmation' result type.
   },
 
   // Looking at what can be done with Andrews' definition of "and".

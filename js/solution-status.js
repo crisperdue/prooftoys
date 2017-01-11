@@ -104,22 +104,20 @@ function eqnStatus(eqn, givenVars) {
  */
 function analyze1Solution(conj, givenVars) {
   var byVar = {};
-  var overages = [];
+  var overages = {};
   var tcs = new TermSet();
   var others = new TermSet();
   function analyzeConjunct(term) {
     var status = eqnStatus(term, givenVars);
     if (status) {
       var name = term.getLeft().name;
-      if (overages[name]) {
-        overages.push(name);
-      } else if (byVar[name]) {
+      if (byVar[name]) {
         delete byVar[name];
-        overages = [name];
+        overages[name] = true;
       } else {
         var info = {
           eqn: term,
-          status: status
+          using: status
         };
         byVar[name] = info;
       }
@@ -145,19 +143,19 @@ function analyze1Solution(conj, givenVars) {
  * object/maps a "solution info" object, having the following
  * properties:
  *   eqns: Array of all equations among the term's conjuncts.
- *   overages: an array of names of variables that appear in more than
+ *   overages: a map/set of names of variables that appear in more than
  *     one equation of this "solution" as its LHS.
  *   byVar: an object/map with an entry for each variable that appears
  *     in exactly one equation of the solution as its LHS.  Each entry
  *     value is an object with properties:
  *       eqn: the equation itself,
- *       status: status of the equation as from eqnStatus.
- *   tcs: array of any type conditions appearing in the "solution".
- *   others: array of other conjuncts in the "solution".
+ *       using: set of RHS vars of the equation as from eqnStatus.
+ *   tcs: TermSet of any type conditions appearing in the "solution".
+ *   others: TermSet of other conjuncts in the "solution".
  *
  * Thus for example if x2 is the parsed form of "x = 2", the value is:
- * [{eqns: [x2], byVar: {x: {eqn: x2, status: []}},
- *   overages: [], tcs: [], others: []}]
+ * [{byVar: {x: {eqn: x2, using: {}}}, overages: {},
+ *   tcs: TermSet(...), others: TermSet(...)}]
  */
 function analyzeSolutions(disj, givenVars) {
   var results = [];
@@ -266,16 +264,6 @@ ProofEditor.prototype.statusInfo = function(step) {
   return result;
 };
 
-// tentative: truthy if the format is conditions => solutions or
-//   conditions1 => (conditions2 == solutions).  Type conditions
-//   do not count as conditions in this case, only explicit (normally
-//   equational conditions.  In this case any solutions found must
-//   be tested to see if they satisfy the givens.
-//
-// confirmation: truthy if the format is solutions => conditions.  In this
-//   case all solutions are valid, but there may be others also.
-//
-
 // Notes:
 //
 // If any givens are missing there may be excess solutions.
@@ -288,56 +276,16 @@ ProofEditor.prototype.statusInfo = function(step) {
 // complete.  An exception is that conds may include (temporary)
 // definitions.  These will be eliminable if / when their uses have been
 // eliminated.
-
-// TODO: Keep comments, remove existing code here?
-/**
- * Returns information about apparent progress toward solution of a
- * problem of solving an equation.  The problem may be stated with
- * multiple variables and may have multiple solutions, so in the
- * general case the "solution" may be a disjunction of multiple
- * conjunctions, each conjunction representing one specific solution
- * to the problem.  A specific solution may have multiple equations,
- * one for each variable to be solved for.
- *
- * "Atomic" status values:
- *
- * Boolean - true or false if there are stated solutions and the step
- *   does (or does not) match one.
- *
- * Else false if standardSolution is false.
- * Else "noGivens" if there are no givens.
- *
- * This method handles steps of these three forms:
- * typeAsms => (givens == equations); or
- * typeAsms & givens => equations; or conceivably some mixture:
- * typeAsms & someGivens => (moreGivens == equations)
- *
- * If none of the above (mostly error) conditions applies, the return
- * value is an object with properties as follows:
- *
- * precise: true iff main connective is == (not =>) after assuming
- *   appropriate types for variables.
- * solutions: list of individual solution status objects.
- * nDisjuncts: number of disjuncts in the "solutions" section of the
- *   statement.
- *
- * Solution status object; one for each conjunction that shows signs
- *   of progress toward being a solution:
- *
- *   formula: formula (conjunction) representing this solution.
- *   byVar: object/map indexed by variable name.  Each value is an
- *       object/map with properties:
- *     eqn: the equation in this solution with this variable as its LHS.
- *     status: 'solved', 'simplify', 'overdetermined', or a
- *       list of names of other variables the given variable is solved
- *       for in the given step.  Variables not in solution position are
- *       not included.  "Solved" indicates the variable appears in
- *       solution position in exactly one equation, depending on no free
- *       variables.  "Simplify" indicates the same, except the RHS is
- *       not simplified.  "Overdetermined" indicates that the variable
- *       appears in solution position in more than one equation.
- */
-
+//
+// About the "type" property of the result: 
+// tentative: truthy if the format is conditions => solutions or
+//   conditions1 => (conditions2 == solutions).  Type conditions
+//   do not count as conditions in this case, only explicit (normally
+//   equational conditions.  In this case any solutions found must
+//   be tested to see if they satisfy the givens.
+//
+// confirmation: truthy if the format is solutions => conditions.  In this
+//   case all solutions are valid, but there may be others also.
 
 /**
  * Returns solution status in a form prepared for straightforward
@@ -346,24 +294,29 @@ ProofEditor.prototype.statusInfo = function(step) {
  * true: iff the step matches a stated solution.
  * 'noStandard': if this ProofEditor has standSolution turned off.
  * 'noGivens': if the problem has no givens.
- * null: if not in the form of a potential solution (statusInfo returned null).
- * null: if this is in the form of a confirmation, but does
- *   not solve for all variables.
+ * null: if not in any of the formats recognized by statusInfo.
+ * null: if this is in the form of a confirmation, but does not solve
+ *   for all variables, has overages or extra conditions in the LHS.
  * 
  * If in the form <solution> => <givens>, an object with properties:
  * type: 'confirmation'
- * status: an object/map of information about solutions "by variable"
+ * givens: a TermSet of the givens in the RHS.
+ * solution: an object/map of information about solutions "by variable"
+ * In this form there is no harm if the RHS has additional conjuncts that
+ * are not givens, but they are not part of the return value.
  *
  * If in tentative or equivalence form:
  * If extra assumptions are present, an object with property:
  * extras: array of those extra assumptions
  *
  * Otherwise in case of these forms, an object with properties:
- * progress: true
  * type: 'equiv' if truly an equivalence (no givens with type conds),
  *   otherwise 'tentative'.
- * status: array of solution status objects
- * missing: array of any givens not among the assumptions and LHS generally.
+ * status: array of solution status objects.  In this context the
+ *   "byVar" property is typically the one of interest, and "overages"
+ *   should be checked.
+ * absentGivens: TermSet of any problem givens not in the assumptions
+ *   or LHS.
  */
 ProofEditor.prototype.solutionStatus = function(step) {
   // TODO: Support simplified expressions other than trivial
@@ -421,13 +374,14 @@ ProofEditor.prototype.solutionStatus = function(step) {
 
     // Ignore steps that have certain kinds of defects.
     // TODO: Check tcs appropriately.
-    if (isEmpty(givsInfo) || overages.length || solInfo.others.length) {
+    if (isEmpty(givsInfo) || !isEmpty(overages) || solInfo.others.size()) {
       return null;
     }
     var result = {
       // This step does not preclude other solutions.
       type: 'confirmation',
-      solutions: eqnsByVar
+      givens: givsInfo.givens,
+      solution: eqnsByVar
     };
     return result;
   } else {
@@ -437,6 +391,7 @@ ProofEditor.prototype.solutionStatus = function(step) {
     var tcGivens = tcInfo ? tcInfo.givens : new TermSet();
     var tcOthers = tcInfo ? tcInfo.others : new TermSet();
     var allOthers = new TermSet();
+    // eslint-disable-next-line no-inner-declarations
     function add(value) { allOthers.add(value); }
     givsInfo.others.each(add);
     tcOthers.each(add);
@@ -456,11 +411,12 @@ ProofEditor.prototype.solutionStatus = function(step) {
     var isConditional = (structure == 'tentative' ||
                          structure == 'equiv' && tcGivens.size());
     var givensPresent = new TermSet().addAll(givsInfo.givens).addAll(tcGivens);
-    var absentGivens = [];
+    var absentGivens = new TermSet();
     // Returns fml iff it is not present in this step.
+    // eslint-disable-next-line no-inner-declarations
     function checkAbsent(fml) {
       if (!givensPresent.has(fml)) {
-        absentGivens.push(fml);
+        absentGivens.add(fml);
       }
     }
     problemGivens.each(checkAbsent);
