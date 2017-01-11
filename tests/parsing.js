@@ -10,19 +10,19 @@ var tests = {
   },
 
   atoms: function(a) {
-    a.equal(parse('x').str, 'x');
-    a.equal(parse('(x)').str, 'x');
+    a.equal(parse('x').toString(), 'x');
+    a.equal(parse('(x)').toString(), 'x');
   },
 
   infix: function(a) {
-    a.equal(parse('a + b').str, '(a + b)');
-    a.equal(parse('(a + b)').str, '(a + b)');
-    a.equal(parse('a + b = b + a').str, '((a + b) = (b + a))');
+    a.equal(parse('a + b').toString(), '(a + b)');
+    a.equal(parse('(a + b)').toString(), '(a + b)');
+    a.equal(parse('a + b = b + a').toString(), '((a + b) = (b + a))');
   },
 
   unary: function(a) {
-    a.equal(parse('neg neg a = a').str, '((neg (neg a)) = a)');
-    a.equal(parse('-x = -1 * x').str, '((neg x) = (-1 * x))');
+    a.equal(parse('neg neg a = a').toString(), '((neg (neg a)) = a)');
+    a.equal(parse('-x = -1 * x').toString(), '((neg x) = (-1 * x))');
   },
 
   specials: function(a) {
