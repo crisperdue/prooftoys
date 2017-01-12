@@ -2500,6 +2500,22 @@ var testCase = {
     deepEqual(qUnitCopy(stats), expected);
 
     // TODO: Test the 'confirmation' result type.
+    ed = new Toy.ProofEditor();
+    ed.givens = ['x - 3 = 2'];
+    step = rules.assert('x = 5 => x - 3 = 2');
+    stats = ed.solutionStatus(step);
+    logDeeply(stats);
+    expected = {
+      type: "confirmation",
+      givens: ["((x − 3) = 2)"],
+      solution: {
+        x: {
+          eqn: "Expr (x = 5)",
+          using: {}
+        }
+      }
+    };
+    deepEqual(qUnitCopy(stats), expected);
   },
 
   // Looking at what can be done with Andrews' definition of "and".
