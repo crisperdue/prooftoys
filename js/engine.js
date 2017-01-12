@@ -1185,16 +1185,32 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
-  // Given two WFFs each of the form A = B that are the result
-  // of substituting T and F respectively for a variable,
-  // proves the WFF with the variable.
+  // Deduces the conjunction of two proved equations without hypotheses.
+  // Helper for equationCases.
+  andEqns: {
+    action: function(step1, step2) {
+      var step3 = rules.toTIsEquation(step1);
+      var step4 = rules.toTIsEquation(step2);
+      var step5 = rules.rplace(step3, rules.theorem('r5212'), '/left');
+      var step6 = rules.rplace(step4, step5, '/right');
+      return (step6.justify('andEqns', arguments, arguments));
+    },
+    inputs: {step: [1, 2]},
+    form: ('Prove conjunction of equation <input name=step1> ' +
+           'and equation <input name=step2>'),
+    menu: '[a = b] and [c = d] to [a = b & c = d]',
+    tooltip: ('Given [a = b] and [c = d], derive [a = b & c = d]'),
+    description: 'a = b & c = d;; from steps {step1}, {step2}',
+    labels: 'internal'
+  },
+
+  // Given two WFFs each of the form A = B that are the result of
+  // substituting T and F respectively for a variable, proves the WFF
+  // with the variable.  Does not work with hypotheses.
   equationCases: {
     action: function(caseT, caseF, v) {
       v = varify(v);
-      var stepT1 = rules.toTIsEquation(caseT);
-      var stepF1 = rules.toTIsEquation(caseF);
-      var step2 = rules.rplace(stepT1, rules.theorem('r5212'), '/left');
-      var step3 = rules.rplace(stepF1, step2, '/right');
+      var step1 = rules.andEqns(caseT, caseF);
       // Note: If a variable is not in caseT it is also not in caseF.
       var newVar = Toy.genVar('w', caseT.allNames());
       var gen = caseT.generalizeTF(caseF, newVar);
@@ -1203,7 +1219,7 @@ var ruleInfo = {
       var step5 = rules.apply(step4, '/right/arg/body');
       var step6 = rules.apply(step5, '/left/right');
       var step7 = rules.apply(step6, '/left/left');
-      var step8 = rules.r(step7, step3, '');
+      var step8 = rules.r(step7, step1, '');
       var step9 = rules.instForall(step8, v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
@@ -1437,8 +1453,6 @@ var ruleInfo = {
 
   // r5217 is the same as r5230TF.
   // [T = F] = F
-
-  // Book only.  We use axiomPNeqNotP instead of defining F.
   r5217Book: {
     proof: function() {
       var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
@@ -1536,8 +1550,8 @@ var ruleInfo = {
     action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
-      var eqn = rules.rewriteOnly(step2, '', 'p == (T == p)');
-      return (rules.r(eqn, step, path)
+      var tIsA = rules.toTIsA(step2);
+      return (rules.r(tIsA, step, path)
               .justify('replaceT', arguments, [step, step2]));
     },
     inputs: {site: 1, step: 3},
@@ -1731,6 +1745,12 @@ var ruleInfo = {
   // (5222) Given two theorems that are substitutions of T and
   // F respectively into a WFF; and a variable or variable name,
   // proves the WFF.  No automatic management of hypotheses.
+  // TODO: Consider whether this can be obsoleted by equationCases
+  //   together with a rule like 2139 (Cases).
+  // TODO: In fact consider deriving this from equationCases.  Unlike
+  //   5222 in the book, this does not allow the variable to appear
+  //   in any assumptions, so equationCases could be used, and
+  //   in fact the uses of this do not have assumptions.
   cases: {
     action: function(caseT, caseF, v) {
       v = varify(v);
@@ -2074,7 +2094,7 @@ var ruleInfo = {
     }
   },
 
-  // Deduces the conjunction of two proved steps; oblivious of hypotheses.
+  // Deduces the conjunction of two proved steps; oblivious to hypotheses.
   and: {
     action: function(step1, step2) {
       return (rules.replaceT(rules.tautology('T & T'), '/right', step2)
@@ -2149,6 +2169,7 @@ var ruleInfo = {
       // Treat v as a free variable also.
       freeNames[v.name] = true;
       var p0 = Toy.genVar('p', freeNames);
+      // TODO: Consider using rule P and 2139 instead of "cases" here.
       var step5 = rules.cases(step1, step4, p0);
       var step6 = rules.instVar(step5, a, p0);
       return step6.justify('r5235', arguments);
@@ -2236,6 +2257,7 @@ var ruleInfo = {
   orForall: {
     statement: 'forall {x. p | q x} == (p | forall {x. q x})',
     proof: function() {
+      // TODO: This proof could use 2139 instead of "cases".
       var taut1 = rules.tautology('T | a');
       var all = rules.instVar(taut1, 'q x', 'a').then('toForall', 'x');
       var or = rules.instVar(taut1, 'forall {x. q x}', 'a');
@@ -3282,6 +3304,8 @@ var ruleInfo = {
       var taut = rules.tautology('p = F => (p => F)');
       var falseCase = rules.forwardChain(step1, taut);
       // Complete proof of the desired schema:
+      // TODO: Consider replacing use of rules.cases here with another
+      // similar rule.
       var step2 = rules.cases(trueCase, falseCase, cVar);
       // Instantiate back to get the desired instance:
       var result = rules.instMultiVars(step2, map.subst);
