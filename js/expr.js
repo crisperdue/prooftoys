@@ -102,26 +102,6 @@ TermMap.prototype.set = function(term, name) {
 };
 
 
-// Utilities
-
-/**
- * Returns a copy of the target, renaming any bound variables in it
- * that have the same name as a free variable of the replacement.  It
- * makes them distinct from all variables appearing in either
- * expression.  After decapturing, straightforward substitution is
- * safe from capturing.  Unused, also its helper methods.
- */
-function decapture(target, replacement) {
-  var freeVars = replacement.freeVars();
-  var allNames = {};
-  replacement._addNames(allNames);
-  target._addNames(allNames);
-  // Now allNames contains every variable name occurring anywhere in
-  // either expression.
-  return target._decapture(freeVars, allNames, null);
-}
-
-
 //// Expr -- the base class
 
 // Note on the sourceStep property and structure sharing among proof steps.
@@ -1580,23 +1560,6 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // the given bindings.
 //
 //
-// _decapture(freeVars, allNames, bindings)
-//
-// Returns a copy of this expression with any bound variables present
-// in freeVars renamed to names not present in allNames and distinct
-// from each other.  Assumes that the bindings define suitable
-// renamings determined by enclosing scope, mapping from old variable
-// name to new variable name.
-//
-// Private helper for the decapture function.
-//
-// TODO: Only rename bound variables that would actually capture a
-// newly-introduced name.  This will help displays of hypotheses.
-// 
-// TODO: Map in bindings directly to a new variable, reducing object
-// creation.
-//
-//
 // _addMathVars(bindings, set)
 //
 // Helper for Expr.mathVars.  Traverses this expression, adding to the
@@ -1891,12 +1854,6 @@ Atom.prototype._boundNames = function(path, bindings) {
   } else {
     this._checkSegment(path);
   }
-};
-
-Atom.prototype._decapture = function(freeVars, allNames, bindings) {
-  // This does not account for pnames, but they should only be for constants.
-  var newName = getBinding(this.name, bindings);
-  return newName ? new Atom(newName) : this;
 };
 
 Atom.prototype._addMathVars = function(bindings, set) {
@@ -2195,12 +2152,6 @@ Call.prototype._boundNames = function(path, bindings) {
     }
     this._checkSegment(path);
   }
-};
-
-Call.prototype._decapture = function(freeVars, allNames, bindings) {
-  var fn = this.fn._decapture(freeVars, allNames, bindings);
-  var arg = this.arg._decapture(freeVars, allNames, bindings);
-  return (fn == this.fn && arg == this.arg ? this : new Call(fn, arg));
 };
 
 Call.prototype._addMathVars = function(bindings, set) {
@@ -2546,18 +2497,6 @@ Lambda.prototype._boundNames = function(path, bindings) {
   }
 };
 
-Lambda.prototype._decapture = function(freeVars, allNames, bindings) {
-  // TODO: Share Vars more for efficiency.
-  var oldName = this.bound.name;
-  var newName = freeVars[oldName] ? genName(oldName, allNames) : oldName;
-  // Add a binding only when the new name is different.
-  var newBindings = ((newName == oldName)
-                     ? bindings
-                     : new Bindings(oldName, newName, bindings));
-  var body = this.body._decapture(freeVars, allNames, newBindings);
-  return (body == this.body) ? this : new Lambda(new Atom(newName), body);
-};
-
 Lambda.prototype._addMathVars = function(bindings, set) {
   this.body._addMathVars(new Bindings(this.bound.name, true, bindings), set);
   return false;
@@ -2736,7 +2675,6 @@ Toy.showTypes = false;
 Toy.unicodeNames = unicodeNames;
 
 Toy.genVar = genVar;
-Toy.decapture = decapture;
 
 // Private to xutil.js:
 Toy._identifierPattern = identifierPattern;

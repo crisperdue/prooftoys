@@ -594,15 +594,6 @@ var testCase = {
     assert(target !== target.copyForRendering());
   },
 
-  testDecapture: function() {
-    var target = call(lambda(x, x), y);
-    var result = Toy.decapture(target, x);
-    assertEqual('({x1. x1} y)', result.toString());
-    var target = Toy.parse('({x. f x} y)');
-    // Result is exactly the input when no decapturing is needed.
-    assert(target === Toy.decapture(target, z));
-  },
-
   testSubFree: function() {
     var map = Toy.object0;
     var v = varify('v');
