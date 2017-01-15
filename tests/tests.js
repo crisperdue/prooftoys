@@ -2515,6 +2515,13 @@ var testCase = {
   testFunWithAnd: function() {
     expect(0);
     var result = Toy.rules.funWithAnd();
+  },
+
+  // Tell the profiler we are done profiling the tests.
+  testDoneTesting: function() {
+    expect(0);
+    console.profileEnd();
+    // console.log('Profiling session ended.');
   }
 
 };
@@ -2568,6 +2575,9 @@ Toy.soonDo(function() {
       nFacts++;
     });
   console.log('Queued', nFacts, 'facts to test.');
+  // When the next lines run, the tests run with profiling.
+  // console.log('Running tests with profiling');
+  // console.profile('Tests');
 });
 
 })();
