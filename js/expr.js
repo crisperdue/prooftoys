@@ -626,50 +626,31 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, name) {
 }
 
 /**
- * Returns a new expression resulting from substitution of copies of
- * the replacement expression for all free occurrences of the given
- * name (or variable) in this expression.  Used by Axiom 4
- * (lambda conversion).
+ * Returns a new expression resulting from applying the given
+ * substitution to all free occurrences of variables named in it.
+ * The substitution is an object/map from name to Expr.
  *
- * Renames bound variables in the target to prevent them from
- * capturing variables in the replacement.  The strategy is based on
- * the idea that all occurrences of bound variables always remain
- * bound.  Substitution for a bound variable (Axiom 4) never creates a
- * WFF with any variable both free and bound.  Application of Rule R
- * to a target step requires an equation as its other input, so any
- * variables it introduces as free relative to the target scope were
- * free in the input equation.  Thus if a bound variable is given a
- * name different from the name of any other bound variable appearing
- * anywhere at the time, and the name is not reused in the future as a
- * bound variable name, then it can never be made to occur free.
- *
- * Note that Rule R can introduce previously free variables into a
- * scope where they become bound.
- *
- * Note also that we only seem to need to specify the name of a
- * newly-introduced bound variable in the implementation of bindEqn.
- * If this is so, the implementation of bindEqn could automatically
- * rename the new occurrences of bound variables, and it would never
- * be necessary to rename bound variables in the implementation of
- * subFree, simplifying its specification and possibly increasing its
- * performance.
+ * Renames enough bound variables in the target to ensure that they
+ * are all distinct from variables in the replacement, possibly more
+ * than necessary, so don't count on bound variables to keep their
+ * names after a substitution.
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
   for (var name in map_arg) {
     var replacement = map_arg[name];
-    if (replacement instanceof Atom && replacement.name == name) {
-      // No changes required.
-      continue;
+    if (!(replacement instanceof Atom && replacement.name == name)) {
+      // Include only substitutions that actually change the name.
+      map[name] = replacement;
     }
-    map[name] = replacement;
   }
   return Toy.isEmpty(map) ? this : this._subFree(map);
 };
 
 /**
- * Substitutes the replacement for a single name, which can be
- * a string or Atom as done by Expr.subFree.
+ * Substitutes the replacement for a single name, which can be a
+ * string or Atom as done by Expr.subFree.  Used by Axiom 4 (lambda
+ * conversion).
  */
 Expr.prototype.subFree1 = function(replacement, name) {
   return this.subFree(Toy.object0(name, replacement));
@@ -1524,6 +1505,22 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // variable can never become free, though free variables can become
 // bound.)
 //
+// This strategy is based on the idea that all occurrences of bound
+// variables always remain bound.  Substitution for a bound variable
+// (Axiom 4) never creates a WFF with any variable both free and
+// bound.  Application of Rule R to a target step requires an equation
+// as its other input, so any variables it introduces as free relative
+// to the target scope were free in the input equation.  Thus if a
+// bound variable is given a name different from the name of any other
+// bound variable appearing anywhere at the time, and the name is not
+// reused in the future as a bound variable name, then it can never be
+// made to occur free.
+//
+// Note that Rule R can introduce previously free variables into a
+// scope where they become bound.
+//
+// TODO: Modify Expr.get to ensure that it never returns any free
+// variables that are in the namespace for bound variables.
 //
 // hasFreeName(name)
 // 
