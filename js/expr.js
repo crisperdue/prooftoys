@@ -1,4 +1,4 @@
-// Copyright 2011 - 2016 Crispin Perdue.
+// Copyright 2011 - 2017 Crispin Perdue.
 // All rights reserved.
 
 // Set everything up immediately on load, avoiding changes to the
@@ -634,11 +634,18 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, name) {
  * are all distinct from variables in the replacement, possibly more
  * than necessary, so don't count on bound variables to keep their
  * names after a substitution.
+ *
+ * Automatically-renamed bound variables are not permitted as free
+ * variables in the replacement terms -- they must be contained in
+ * their bindings (lambda expressions).  This is enforced by an
+ * assertion.
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
   for (var name in map_arg) {
     var replacement = map_arg[name];
+    assert(!hasGeneratedBound(replacement),
+           'Has generated bound var: {1}', replacement);
     if (!(replacement instanceof Atom && replacement.name == name)) {
       // Include only substitutions that actually change the name.
       map[name] = replacement;
@@ -646,6 +653,24 @@ Expr.prototype.subFree = function(map_arg) {
   }
   return Toy.isEmpty(map) ? this : this._subFree(map);
 };
+
+/**
+ * Boolean, true iff the given term contains any automatically-renamed
+ * bound variable free in it.
+ */
+function hasGeneratedBound(term) {
+  function hasGB(term, bindings) {
+    if (term instanceof Lambda) {
+      return hasGB(term.body, new Bindings(term.bound.name, true, bindings));
+    } else if (term instanceof Atom) {
+      return term.isGeneratedBound() && !Toy.findBinding(term.name, bindings);
+    } else if (term instanceof Call) {
+      return hasGB(term.fn) || hasGB(term.arg);
+    } else {
+      assert(false, 'Impossible');
+    }
+  }
+}
 
 /**
  * Substitutes the replacement for a single name, which can be a
