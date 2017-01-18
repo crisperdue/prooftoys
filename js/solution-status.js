@@ -294,7 +294,7 @@ ProofEditor.prototype.statusInfo = function(step) {
  * display.  Current return values, in order of checking:
  *
  * true: iff the step matches a stated solution.
- * 'noStandard': if this ProofEditor has standSolution turned off.
+ * 'noStandard': if this ProofEditor has standardSolution turned off.
  * 'noGivens': if the problem has no givens.
  * null: if not in any of the formats recognized by statusInfo.
  * null: if this is in the form of a confirmation, but does not solve
@@ -433,12 +433,6 @@ ProofEditor.prototype.solutionStatus = function(step) {
     };
     return result;
   }
-};
-
-// For testing.
-window.eqnStatus = function(eqn_arg) {
-  var eqn = Toy.termify(eqn_arg);
-  return eqnStatus(eqn, eqn.freeVars());
 };
 
 // For testing:
