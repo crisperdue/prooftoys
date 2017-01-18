@@ -309,12 +309,13 @@ ProofEditor.prototype.statusInfo = function(step) {
  *
  * If in tentative or equivalence form:
  * If extra assumptions are present, an object with property:
- * extras: array of those extra assumptions
+ * type: 'extras'
+ * extras: TermSet of those extra assumptions
  *
  * Otherwise in case of these forms, an object with properties:
  * type: 'equiv' if truly an equivalence (no givens with type conds),
  *   otherwise 'tentative'.
- * status: array of solution status objects.  In this context the
+ * solutions: array of solution status objects.  In this context the
  *   "byVar" property is typically the one of interest, and "overages"
  *   should be checked.
  * absentGivens: TermSet of any problem givens not in the assumptions
@@ -406,6 +407,7 @@ ProofEditor.prototype.solutionStatus = function(step) {
     if (allOthers.size()) {
       // Something like this.
       result = {
+        type: 'extras',
         extras: allOthers
       };
       return result;
@@ -428,7 +430,7 @@ ProofEditor.prototype.solutionStatus = function(step) {
     // solution(s).
     result = {
       type: isConditional ? 'tentative' : 'equiv',
-      status: solsInfo,
+      solutions: solsInfo,
       absentGivens: absentGivens
     };
     return result;

@@ -2430,7 +2430,7 @@ var testCase = {
     var stats = ed.solutionStatus(step);
     var expected = {
       type: "equiv",
-      status: [{
+      solutions: [{
           byVar: {
             x: {
               eqn: 'Expr (x = (y − 5))',
@@ -2449,7 +2449,7 @@ var testCase = {
     stats = ed.solutionStatus(step);
     expected = {
       type: "equiv",
-      status: [{
+      solutions: [{
           byVar: {
             x: {
               eqn: "Expr (x = 4)",
@@ -2471,7 +2471,7 @@ var testCase = {
     stats = ed.solutionStatus(step);
     expected = {
       type: "equiv",
-      status: [{
+      solutions: [{
           byVar: {
             x: {
               eqn: "Expr (x = 3)",
