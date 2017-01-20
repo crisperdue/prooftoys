@@ -469,9 +469,12 @@ ProofEditor.prototype.solutionMessage = function(step) {
       var format = Toy.format;
       var isEmpty = Toy.isEmpty;
       var solutions = status.solutions;
-      var msgs = [type === 'tentative' ? 'Candidate solutions:' : 'Solutions'];
+      var msgs = [];
       for (var i = 0; i < solutions.length; i++) {
         var sol = solutions[i];
+        if (sol.eqns.length === 0) {
+          continue;
+        }
         var solMsg = sol.eqns.map(x => x.toUnicode()).join(' \u2227 ');
         msgs.push(format('{1} solves for ', solMsg));
         var overages = sol.overages;
@@ -486,6 +489,9 @@ ProofEditor.prototype.solutionMessage = function(step) {
             }
           }
         }
+      }
+      if (msgs.length) {
+        msgs.unshift(type === 'tentative' ? 'Candidate solutions:' : 'Solutions:');
       }
       return msgs.join('\n');
     }
