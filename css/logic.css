@@ -89,6 +89,10 @@ code {
   white-space: wrap;
 }
 
+.pre {
+  white-space: pre;
+}
+
 /* Math-oriented text */
 .math, .mathColor, s {
   font-family: STIXGeneral, Times, serif;

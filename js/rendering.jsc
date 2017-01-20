@@ -469,59 +469,6 @@ ProofEditor.prototype.showProofButtons = @(value) {
   @proofButtons.toggle(value);
 };
 
-/**
- * If this.solutions is nonempty, returns a solution message iff the
- * step or its "main part" is an alphaMatch with some element of it.
- * 
- * If this.standardSolution is truthy, this returns a solution message
- * iff the given step is an equation of the form <var> = <expr>, where
- * <expr> is a numeral or a fraction.
- */
-ProofEditor.prototype.solutionMsg = function(step) {
-  // TODO: Use result of StepEditor.solutionStatus here.
-  if (this.solutions.length) {
-    return Toy.each(this.solutions, function(solution) {
-        if (Toy.termify(solution).alphaMatch(step) ||
-            Toy.termify(solution).alphaMatch(step.getMain())) {
-          return true;
-        }
-      }) && 'You have found a valid solution';
-  } else if (this.standardSolution && step.isEquation()) {
-    // TODO: Check that the assumptions of the solution are all
-    //   assumptions/givens of the problem, or assumptions about types
-    //   of variables.
-    // TODO: Support other sorts of solutions such as solving for
-    //   one variable in the presence of others, and constant expressions
-    //   other than trivial fractions.
-    var eqn = step.getMain();
-    function gcd(expr) {
-      return Toy.gcd(expr.getLeft().getNumValue(),
-                     expr.getRight().getNumValue());
-    }
-    function isLowestTerms(expr) {
-      return (expr.isNumeral() ||
-              (Toy.isFraction(expr) && gcd(expr) === 1));
-    }
-    if (eqn.isCall2('==') && eqn.getRight().isCall2('=') &&
-        eqn.getRight().getLeft().isVariable()) {
-      // The main part of the step is an equivalence containing an equation.
-      var answer = eqn.getRight().getRight();
-      if (isLowestTerms(answer)) {
-        return ('You have solved for ' +
-                step.getMain().getRight().getLeft().pname);
-      }
-      // Else it is not recognized as a solution.
-    } else if (eqn.getLeft().isVariable()) {
-      // The main part of the step is just an equation.
-      if (isLowestTerms(eqn.getRight())) {
-        return format('If there is a solution for {1} this is it',
-                      step.getMain().getLeft().name);
-      }
-    }
-  }
-  return false;
-};
-
 
 //// ProofDisplay
 
@@ -1044,7 +991,7 @@ ProofDisplay.prototype.renderStep = function(step) {
       hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
   $step.on('mouseenter', '.stepHoverMark', function(event) {
-        fillHoverInfoBox(step);
+      fillHoverInfoBox(self.proofEditor, step);
     });
   $step.on('mouseleave', '.stepHoverMark', function(event) {
       $step.find('.hoverInfoBox').toggle(false);
@@ -2490,13 +2437,15 @@ function hoverStep(step, direction, event) {
  * entire step rather than just assumptions.  Also makes the box
  * visible.
  */
-function fillHoverInfoBox(step) {
+function fillHoverInfoBox(proofEditor, step) {
   var $box = $(step.stepNode).find('.hoverInfoBox');
   if ($box.children().length == 0) {
     var info = {asmSteps: []};
     var copy = step.original.copyToRender();
     copy.annotateWithTypes();
-    $box.append(copy.wff.render(info, 0));
+    var message = proofEditor.solutionMessage(step);
+    var $msgs = $('<div class=pre>').append(message);
+    $box.append(copy.wff.render(info, 0), $msgs);
   }
   $box.toggle(true);
 }
