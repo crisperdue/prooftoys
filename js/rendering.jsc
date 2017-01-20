@@ -235,6 +235,7 @@ function ProofEditor() {
   // representable in JSON.
   this.data = {};
   @mainDisplay = new ProofDisplay();
+  @mainDisplay.proofEditor = self;
   this.proofDisplay = @mainDisplay;
   var stateDisplayHtml =
     '<div class="proofStateDisplay hidden"\n' +
@@ -277,15 +278,15 @@ function ProofEditor() {
 
   self.$rulesMode = @proofButtons.find('.rulesToShow');
 
-  self.stepEditor = new Toy.StepEditor(this);
-  @mainDisplay.stepEditor = this.stepEditor;
+  var stepEditor = new Toy.StepEditor(this);
+  self.stepEditor = stepEditor;
 
   clearProof.on('click', function() {@mainDisplay.setSteps([]); });
   // Step editor has state controlling whether to show all rules.
   self.$rulesMode.on('change', function(event) {
-      self.stepEditor.showRuleType = this.value;
-      self.stepEditor.ruleSelector.refresh();
-      self.stepEditor.reset();
+      stepEditor.showRuleType = this.value;
+      stepEditor.ruleSelector.refresh();
+      stepEditor.reset();
     });
   self.$rulesMode.trigger('change');
 
@@ -301,7 +302,7 @@ function ProofEditor() {
     .append(ruleStats)
     .append(this._stateDisplay)
     .append(@mainDisplay.node)
-    .append(this.stepEditor.$node);
+    .append(stepEditor.$node);
   this.setEditable(true);
 
   // If the proof has changed, save its state soon.
@@ -318,7 +319,7 @@ function ProofEditor() {
   // Update the step editor query results when the selection may
   // have changed.
   @mainDisplay.selectionChanged = function() {
-    self.stepEditor.ruleSelector.refresh();
+    stepEditor.ruleSelector.refresh();
   };
 
   // TODO: Consider creating the step editor from the proof editor
@@ -369,7 +370,7 @@ function ProofEditor() {
     if ($(event.target).closest('.proofContainer').length == 0) {
       // Not in a ProofDisplay's area.
       @mainDisplay.deselectStep();
-      self.stepEditor.$proofErrors.hide();
+      stepEditor.$proofErrors.hide();
     }
   });
 }
@@ -558,8 +559,8 @@ ProofEditor.prototype.solutionMsg = function(step) {
  *
  * stepsNode: DOM node of the proofSteps DIV.
  *
- * stepEditor: StepEditor for this (top-level) ProofDisplay,
- * or null if there is none.
+ * proofEditor: ProofEditor for this (top-level) ProofDisplay,
+ *   or null if there is none.
  *
  * stepPrefix: string prefixed to each step number, defaults to
  * an empty string.  Set only during initialization.
@@ -594,7 +595,7 @@ function ProofDisplay(properties) {
   // TODO: Make the textarea part of the ProofDisplay.
   this.textAreaId = 'proofState';
 
-  this.stepEditor = null;
+  this.proofEditor = null;
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
   var $node = $('<div class=proofDisplay>' +
@@ -1122,7 +1123,7 @@ ProofDisplay.prototype.renderPopups = function(step) {
         // Given a statement of a fact, returns a function that will
         // use it in a rewrite when called with no args.
         var actionBuilder =
-          @{stmt. @{Toy.tryRuleAsync(self.stepEditor,
+          @{stmt. @{Toy.tryRuleAsync(self.proofEditor.stepEditor,
                                      rules.rewrite,
                                      [step.original, getPath(), stmt])}};
         var actions = stmts.map(actionBuilder);
@@ -1135,7 +1136,7 @@ ProofDisplay.prototype.renderPopups = function(step) {
           var result = rules.simplifySite(simpler, '/main/right');
           results.push(result.getMain().getRight());
           var action =
-            @{Toy.tryRuleAsync(self.stepEditor,
+            @{Toy.tryRuleAsync(self.proofEditor.stepEditor,
                                rules.rewrite,
                                [step.original, getPath(), result])};
           actions.push(action);
