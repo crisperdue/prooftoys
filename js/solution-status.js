@@ -440,6 +440,58 @@ ProofEditor.prototype.solutionStatus = function(step) {
   }
 };
 
+ProofEditor.prototype.solutionMessage = function(step) {
+  var status = this.solutionStatus(step);
+  if (status == true) {
+    return 'You have found a solution';
+  } else if (status === 'noStandard' ||
+             status === 'noGivens' ||
+             status == null) {
+    return '';
+  } else if (status.extras) {
+  } else {
+    var type = status.type;
+    function termSetList(terms) {
+      var a = [];
+      terms.each(function (a) { extras.push(a.toUnicode()); });
+      return extras.join(', ');
+    }
+    if (type === 'extras') {
+      var asms = termSetList(status.extras);
+      return ('Caution: step has extra assumptions: ' + asms);
+    } else if (type === 'confirmation') {
+      if (status.givens.superset(this.givens)) {
+        return 'This is one solution to the problem';
+      } else {
+        return ('This is one solution of ' + termSetList(status.givens));
+      }
+    } else if (type === 'equiv' || type === 'tentative') {
+      var format = Toy.format;
+      var isEmpty = Toy.isEmpty;
+      var solutions = status.solutions;
+      var msgs = [type === 'tentative' ? 'Candidate solutions:' : 'Solutions'];
+      for (var i = 0; i < solutions.length; i++) {
+        var sol = solutions[i];
+        var solMsg = sol.eqns.map(x => x.toUnicode()).join(' \u2227 ');
+        msgs.push(format('{1} solves for ', solMsg));
+        var overages = sol.overages;
+        if (isEmpty(overages)) {
+          var byVar = sol.byVar;
+          for (var name in byVar) {
+            var termsOf = byVar[name].using;
+            if (isEmpty(termsOf)) {
+              msgs.push(format('  {1}', name));
+            } else {
+              msgs.push(format('  {1} in terms of {2}', name, termsOf.join(', ')));
+            }
+          }
+        }
+      }
+      return msgs.join('\n');
+    }
+  }
+};
+
 // For testing:
 Toy._eqnStatus = eqnStatus;
 Toy._analyzeConditions = analyzeConditions;
