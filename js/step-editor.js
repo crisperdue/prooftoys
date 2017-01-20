@@ -81,7 +81,6 @@ var siteTypes = {
  * $node: DIV with the step editor's HTML.
  * form: jQuery SPAN to hold the argument input form.
  * proofDisplay: ProofDisplay to edit
- * controller: ProofEditor containing this StepEditor.
  * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
  *
@@ -90,17 +89,17 @@ var siteTypes = {
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
  */
-function StepEditor(controller) {
+function StepEditor(proofEditor) {
   // Make this available to all inner functions.
   var self = this;
 
-  // TODO: Eliminate the "controller" property and make cleaner separation
+  // TODO: Eliminate the "proofEditor" property and make cleaner separation
   //   between StepEditor (StepBuilder?) and its proof display as indicated
   //   in other TODOs.  The step editor still needs to refer to the steps
   //   in the proofDisplay, though it could/should be separated from all other
   //   aspects.
-  self.controller = controller;
-  self.proofDisplay = controller.proofDisplay;
+  self._proofEditor = proofEditor;
+  self.proofDisplay = proofEditor.proofDisplay;
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
 
@@ -467,14 +466,14 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // Update the rule stats and show them.
     this.lastRuleTime = Date.now() - startTime;
     this.lastRuleSteps = Toy.getStepCounter() - startSteps;
-    // TODO: Consider providing an event with info the controller can
+    // TODO: Consider providing an event with info the ProofEditor can
     //   use to display this info -- and move this code into handler.
-    this.controller.containerNode
+    this._proofEditor.containerNode
       .find('.ruleTime').text(Math.ceil(this.lastRuleTime));
-    this.controller.containerNode
+    this._proofEditor.containerNode
       .find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
     // Clear the initial invisible state.
-    this.controller.containerNode
+    this._proofEditor.containerNode
       .find('.ruleStats').toggleClass('invisible', false);
   }
   if (!result || result.rendering) {
@@ -506,7 +505,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // has any effect.
     var self = this;
     function checkSolution(result) {
-      var message = self.controller.solutionMsg(result);
+      var message = self._proofEditor.solutionMsg(result);
       if (message) {
         self.report(message);
       }
