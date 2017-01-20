@@ -299,7 +299,11 @@ Toy.escapeHtml = function(str) {
  */
 Toy.extends = function(constructor, parent) {
   if (typeof constructor === 'function' && typeof parent === 'function') {
-    constructor.prototype = Object.create(parent.prototype);
+    // Set up the prototype for the child class.
+    // Instances will see this as their constructor.
+    constructor.prototype = Object.create(parent.prototype, {
+        constructor: {value: constructor}
+      });
   } else if (typeof constructor === 'function' && parent == null) {
     // Do nothing.
   } else {
