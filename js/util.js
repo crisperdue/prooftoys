@@ -605,6 +605,23 @@ Set.prototype.has = function(value) {
 };
 
 /**
+ * Applies to another collection that has an "each" method that
+ * iterates over its elements, exiting in case of a defined value.
+ * Returns a boolean value indicating whether this contains all the
+ * elements of the other collection.
+ */
+Set.prototype.superset = function(other) {
+  var result = true;
+  other.each(function(o) {
+      if (!this.has(o)) {
+        result = false;
+        return false;
+      }
+    });
+  return result;
+};
+
+/**
  * Remove the element.
  */
 Set.prototype.remove = function(value) {
@@ -663,6 +680,11 @@ Set.prototype.values = function() {
   var result = [];
   this.each(x => void result.push(x));
   return result;
+};
+
+Set.prototype.toString = function() {
+  var values = this.values().map(function (x) { return x.toString(); });
+  return format('{1}({2})', this.constructor.name || '', values);
 };
 
 
