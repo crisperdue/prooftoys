@@ -2341,6 +2341,7 @@ var testCase = {
             }
           }
         },
+        eqns: ['Expr (x = (1 ∕ y))'],
         others: [],
         overages: {},
         tcs: []
@@ -2352,7 +2353,8 @@ var testCase = {
     result = analyze(disj, givenVars);
     expected = [{
         byVar: {},
-        others: ["(y > z)"],
+        eqns: ['Expr (x = 3)', 'Expr (x = 5)'],
+        others: ['(y > z)'],
         overages: {x: true},
         tcs: []
       }
@@ -2387,6 +2389,7 @@ var testCase = {
               }
             }
           },
+          eqns: ['Expr (x = (y − 5))'],
           overages: {},
           tcs: [],
           others: ["((x − y) = 3)"]
@@ -2408,6 +2411,7 @@ var testCase = {
       },
       solutionsInfo: [{
           byVar: {},
+          eqns: ['Expr (x = 3)', 'Expr (x = 5)'],
           overages: {x: true},
           tcs: [],
           others: []
@@ -2437,6 +2441,7 @@ var testCase = {
               using: {y: true}
             }
           },
+          eqns: ['Expr (x = (y − 5))'],
           overages: {},
           tcs: [],
           others: ['((x − y) = 3)']
@@ -2456,6 +2461,7 @@ var testCase = {
               using: {}
             }
           },
+          eqns: ['Expr (x = 4)'],
           overages: {},
           tcs: [],
           others: ["((x − y) = 3)"]
@@ -2482,6 +2488,7 @@ var testCase = {
               using: {}
             }
           },
+          eqns: ['Expr (x = 3)', 'Expr (y = 5)'],
           overages: {},
           tcs: [],
           others: []

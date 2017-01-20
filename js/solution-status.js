@@ -103,6 +103,7 @@ function eqnStatus(eqn, givenVars) {
  * analyzeSolutions.
  */
 function analyze1Solution(conj, givenVars) {
+  var eqns = [];
   var byVar = {};
   var overages = {};
   var tcs = new TermSet();
@@ -110,6 +111,7 @@ function analyze1Solution(conj, givenVars) {
   function analyzeConjunct(term) {
     var status = eqnStatus(term, givenVars);
     if (status) {
+      eqns.push(term);
       var name = term.getLeft().name;
       if (byVar[name]) {
         delete byVar[name];
@@ -130,6 +132,7 @@ function analyze1Solution(conj, givenVars) {
   conj.scanConjuncts(analyzeConjunct);
   var result = {
     byVar: byVar,
+    eqns: eqns,
     overages: overages,
     tcs: tcs,
     others: others
