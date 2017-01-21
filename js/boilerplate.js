@@ -281,40 +281,6 @@ Toy.escapeHtml = function(str) {
                      function(match) { return _HTML_MAP[match]; });
 };
 
-/**
- * The arguments are a child class constructor and parent class
- * constructor (or null); both should be functions.  If the parent is
- * given, makes the child a subclass of the parent, making the
- * parent's prototype be the prototype for the child's prototype and
- * instances of the child be instances of the parent class.
- *
- * This adds to the child constructor a property "methods", so that
- * MyConstructor.addMethods(properties) adds the properties to its
- * prototype.
- *
- * It adds a setter property "$" that does the same thing as
- * "methods".  This is semantically strange, but works well with the
- * Emacs indenter for Java mode, unlike the alternatives, and makes
- * calls on the methods look nice in Chrome debugger stack traces.
- */
-Toy.extends = function(constructor, parent) {
-  if (typeof constructor === 'function' && typeof parent === 'function') {
-    // Set up the prototype for the child class.
-    // Instances will see this as their constructor.
-    constructor.prototype = Object.create(parent.prototype, {
-        constructor: {value: constructor}
-      });
-  } else if (typeof constructor === 'function' && parent == null) {
-    // Do nothing.
-  } else {
-    throw new Error('Toy.extends requires functions as arguments.');
-  }
-  constructor.addMethods = function(properties) {
-    $.extend(constructor.prototype, properties);
-  };
-  
-};
-
 // Global "str" function is useful for converting arbitrary objects
 // to strings.
 function str(x) {

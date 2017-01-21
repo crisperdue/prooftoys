@@ -67,6 +67,39 @@ function getOwn(thing, name) {
 };
 
 /**
+ * The arguments are a child class constructor and parent class
+ * constructor (or null); both should be functions.  If the parent is
+ * given, makes the child a subclass of the parent, making the
+ * parent's prototype be the prototype for the child's prototype and
+ * instances of the child be instances of the parent class.
+ *
+ * This adds to the child constructor a property "methods", so that
+ * MyConstructor.addMethods(properties) adds the properties to its
+ * prototype.
+ *
+ * It adds a setter property "$" that does the same thing as
+ * "methods".  This is semantically strange, but works well with the
+ * Emacs indenter for Java mode, unlike the alternatives, and makes
+ * calls on the methods look nice in Chrome debugger stack traces.
+ */
+Toy.extends = function(constructor, parent) {
+  if (typeof constructor === 'function' && typeof parent === 'function') {
+    // Set up the prototype for the child class.
+    // Instances will see this as their constructor.
+    constructor.prototype = Object.create(parent.prototype, {
+        constructor: {value: constructor}
+      });
+  } else if (typeof constructor === 'function' && parent == null) {
+    // Do nothing.
+  } else {
+    throw new Error('Toy.extends requires functions as arguments.');
+  }
+  constructor.addMethods = function(properties) {
+    $.extend(constructor.prototype, properties);
+  };
+};
+
+/**
  * Returns the GCD of two positive integers; actually the truncation
  * of the absolute values of any two numbers, except if either
  * number's absolute value is less than 1, returns 0.  For correct
@@ -941,6 +974,8 @@ function _testTriangle(where, height, color) {
 
 Toy.hasOwn = hasOwn;
 Toy.getOwn = getOwn;
+// Done at point of definition because "extends" is a reserved word.
+// Toy.extends = extends;
 
 Toy.MAX_INT = MAX_INT;
 Toy.gcd = gcd;
