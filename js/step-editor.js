@@ -442,6 +442,7 @@ function tryRuleAsync(stepEditor, rule, args) {
  * Use this only in tryRuleAsync.
  */
 StepEditor.prototype._tryRule = function(rule, args) {
+  var self = this;
   var result = null;
   var startTime = Date.now();
   var startSteps = Toy.getStepCounter();
@@ -500,16 +501,18 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.proofDisplay.deselectStep();
     // Make sure the proof errors field is cleared.
     this.$proofErrors.hide();
+    // Set (or clear) the message in the $status box.
+    function showStatus() {
+      var steps = self.proofDisplay.steps;
+      var step  = steps[steps.length - 1];
+      var message = self._proofEditor.solutionMessage(step);
+      var $status = self.ruleSelector.$status;
+      $status.empty();
+      $status.append(message);
+    }
     // After the browser repaints, try simplifying the step
     // and adding the result to the proof if simplification
     // has any effect.
-    var self = this;
-    function checkSolution(result) {
-      var message = self._proofEditor.solutionMsg(result);
-      if (message) {
-        self.report(message);
-      }
-    }
     Toy.afterRepaint(function() {
         var trial = autoSimplify(result);
         // If autoSimplify is a no-op, do not display the result.
@@ -521,7 +524,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
         steps.forEach(function(step) {
             self.proofDisplay.addStep(step);
           });
-        checkSolution(simplified);
+        showStatus();
       });
   }
   this.focus();
@@ -974,8 +977,10 @@ BasicRuleSelector.prototype.update = function() {
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
   self.stepEditor.$proofErrors.hide();
+  var $status = $('<div class=solutionStatus/>');
+  self.$status = $status;
   $header = $('<div class=rules-header/>');
-  self.$node.append($header);
+  self.$node.append($status, $header);
   var step = this.stepEditor.proofDisplay.selection;
   var term = step && step.selection;
   // Map from rule display text to rule name.
