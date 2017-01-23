@@ -387,7 +387,7 @@ Object.defineProperty(ProofEditor.prototype, "givens", {
       for (var i = 0; i < g.length; i++) {
         var g1 = Toy.termify(g[i]);
         this._givens.add(g1);
-        this.addStep(Toy.rules.consider(g1));
+        this.addStep(Toy.rules.given(g1));
       }
       // An object/set with names of all variables in any of the
       // givens:
@@ -1189,7 +1189,9 @@ function renderWff(step) {
     $wff = wff.render(info, 0);
     wff.node = dom($wff);
     return dom($wff);
-  } else if (step.ruleName == 'consider' || step.ruleName === 'considerPart') {
+  } else if (step.ruleName === 'consider' ||
+             step.ruleName === 'considerPart' ||
+             step.ruleName === 'given') {
     // Op is always "=" or "==".
     var op = wff.getBinOp().toUnicode();
     var power = Toy.getPrecedence(wff.getBinOp());

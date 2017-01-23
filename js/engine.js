@@ -681,6 +681,21 @@ var ruleInfo = {
     form: 'Term to consider: <input name=term>',
     menu: 'consider a term to transform',
     tooltip: ('consider a term to transform'),
+    description: 'consider',
+    labels: 'basic'
+  },
+
+  // Like "consider", but for formulas (boolean-valued terms)
+  given: {
+    action: function(term) {
+      term = termify(term);
+      var step = rules.equivSelf(term);
+      return step.justify('given', arguments);
+    },
+    inputs: {term: 1},
+    form: 'Formula to take as given: <input name=term>',
+    menu: 'statement to take as given',
+    tooltip: ('statement to take as given'),
     description: 'given',
     labels: 'basic'
   },
