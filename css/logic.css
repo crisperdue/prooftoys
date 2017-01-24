@@ -444,6 +444,16 @@ span#leftNav {
     content: "\f29c";
 }
 
+/* The box with info about progress toward solution(s)
+ */
+.solutionStatus {
+    white-space: pre;
+    margin: .2em;
+    border: 2px solid #0ee;
+    border-radius: 6px;
+    padding: 3px;
+}
+
 /* This displays information such as assumptions
    when the "stepHoverMark" area is hovered.
  */
