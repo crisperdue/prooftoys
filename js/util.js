@@ -698,6 +698,16 @@ Set.prototype.isEmpty = function() {
 };
 
 /**
+ * Remove all members of this Set.
+ */
+Set.prototype.clear = function() {
+  var map = this.map;
+  for (var key in map) {
+    delete map[key];
+  }
+};
+
+/**
  * Returns an element of the set or undefined if the set is empty.
  */
 Set.prototype.choose = function() {
