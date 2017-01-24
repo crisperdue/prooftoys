@@ -967,10 +967,8 @@ BasicRuleSelector.prototype.update = function() {
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
   self.stepEditor.$proofErrors.hide();
-  var $status = $('<div class="solutionStatus hidden"/>');
-  self.$status = $status;
   $header = $('<div class=rules-header/>');
-  self.$node.append($status, $header);
+  self.$node.append($header);
   var step = this.stepEditor.proofDisplay.selection;
   var term = step && step.selection;
   // Map from rule display text to rule name.

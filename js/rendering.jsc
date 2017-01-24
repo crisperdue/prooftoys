@@ -290,19 +290,22 @@ function ProofEditor() {
       stepEditor.reset();
     });
   self.$rulesMode.trigger('change');
-
   // The ruleStats are visible except when a proof is brand new and
   // there is nothing to show.
   var ruleStats = $('<div class="ruleStats invisible">Last rule ' +
                     '<span class=ruleTime></span> msec, ' +
                     '<span class=ruleSteps></span> steps</div>');
-
+  // This element is for messages about status of solving the problem.
+  var $status = $('<div class="solutionStatus hidden"/>');
+  self.$status = $status;
+  // Top-level element of the proof editor display:
   this.containerNode = $('<div class=proofContainer></div>');
   this.containerNode
     .append(@proofButtons)
     .append(ruleStats)
     .append(this._stateDisplay)
     .append(@mainDisplay.node)
+    .append(self.$status)
     .append(stepEditor.$node);
   this.setEditable(true);
 
@@ -315,7 +318,7 @@ function ProofEditor() {
       var steps = self.proofDisplay.steps;
       var step  = steps[steps.length - 1];
       var message = self.solutionMessage(step);
-      var $status = self.stepEditor.ruleSelector.$status;
+      var $status = self.$status;
       $status.empty();
       $status.append(message);
       $status.toggle(!!message);
