@@ -310,22 +310,6 @@ function ProofEditor() {
       self.saveState();
     });
 
-  // Make the ProofDisplay save state when the proof changes.
-  @mainDisplay.proofChanged = function() {
-    // "this" is the ProofDisplay.
-    self._refresher.activate();
-  };
-
-  // Update the step editor query results when the selection may
-  // have changed.
-  @mainDisplay.selectionChanged = function() {
-    stepEditor.ruleSelector.refresh();
-  };
-
-  // TODO: Consider creating the step editor from the proof editor
-  //   rather than ProofDisplays for cleaner structure, less redundant
-  //   step editors.
-
   // Handler for the "restore proof" button.  Restores proof state from
   // the text area and saves global state.
   function restoreProof() {
@@ -562,16 +546,18 @@ function ProofDisplay(properties) {
 }
 
 /**
- * By default do nothing when the proof changes, but instances may
- * provide their own actions.
+ * Notify that the proof has changed.
  */
-ProofDisplay.prototype.proofChanged = function() {};
+ProofDisplay.prototype.proofChanged = function() {
+  this.proofEditor && this.proofEditor._refresher.activate();
+};
 
 /**
- * Like proofChanged, default is a no-op but instances may override
- * this.
+ * Notify that the selection has changed.
  */
-ProofDisplay.prototype.selectionChanged = function() {};
+ProofDisplay.prototype.selectionChanged = function() {
+  this.proofEditor && this.proofEditor.stepEditor.ruleSelector.refresh();
+};
 
 /**
  * Sets the steps of this proof control to be renderings of the ones
