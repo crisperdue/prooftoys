@@ -576,6 +576,7 @@ ProofDisplay.prototype.setSteps = function(steps) {
     });
   $(this.node).find('.proofSteps').html('');
   // Now render the desired steps.
+  this.proofChanged();
   this.steps = [];
   for (var i = 0; i < steps.length; i++) {
     this.addStep(steps[i]);
@@ -997,7 +998,6 @@ ProofDisplay.prototype.renderStep = function(step) {
     if (step.users == 0) {
       // If the step has users the button is effectively disabled.
       self.removeStep(step);
-      self.proofChanged();
     }
   });
 
