@@ -311,6 +311,14 @@ function ProofEditor() {
       self._updateGivens();
       self._updateGivenVars();
       self.saveState();
+      // Set (or clear) the message in the $status box.
+      var steps = self.proofDisplay.steps;
+      var step  = steps[steps.length - 1];
+      var message = self.solutionMessage(step);
+      var $status = self.stepEditor.ruleSelector.$status;
+      $status.empty();
+      $status.append(message);
+      $status.toggle(!!message);
     });
 
   // Handler for the "restore proof" button.  Restores proof state from
