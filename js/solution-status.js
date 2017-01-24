@@ -485,7 +485,12 @@ ProofEditor.prototype.solutionMessage = function(step) {
             if (isEmpty(termsOf)) {
               msgs.push(format('  {1}', name));
             } else {
-              msgs.push(format('  {1} in terms of {2}', name, termsOf.join(', ')));
+              var names = [];
+              for (var name in termsOf) {
+                names.push(name);
+              }
+              msgs.push(format('  {1} in terms of {2}',
+                               name, names.join(', ')));
             }
           }
         }
