@@ -34,7 +34,7 @@ var T = constify('T');
 var F = constify('F');
 
 var convert = Toy.convert;
-
+var applyToVisible = Toy.applyToVisible;
 
 //// Utility functions
 

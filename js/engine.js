@@ -4569,6 +4569,7 @@ Toy.findMatchingFact = findMatchingFact;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsOnce = applyFactsOnce;
+Toy.applyToVisible = applyToVisible;
 Toy.whileChanges = whileChanges;
 Toy.arrange = arrange;
 Toy.arrangeRhs = arrangeRhs;
