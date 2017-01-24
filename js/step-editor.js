@@ -501,15 +501,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.proofDisplay.deselectStep();
     // Make sure the proof errors field is cleared.
     this.$proofErrors.hide();
-    // Set (or clear) the message in the $status box.
-    function showStatus() {
-      var steps = self.proofDisplay.steps;
-      var step  = steps[steps.length - 1];
-      var message = self._proofEditor.solutionMessage(step);
-      var $status = self.ruleSelector.$status;
-      $status.empty();
-      $status.append(message);
-    }
     // After the browser repaints, try simplifying the step
     // and adding the result to the proof if simplification
     // has any effect.
@@ -524,7 +515,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
         steps.forEach(function(step) {
             self.proofDisplay.addStep(step);
           });
-        showStatus();
       });
   }
   this.focus();
@@ -977,7 +967,7 @@ BasicRuleSelector.prototype.update = function() {
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
   self.stepEditor.$proofErrors.hide();
-  var $status = $('<div class=solutionStatus/>');
+  var $status = $('<div class="solutionStatus hidden"/>');
   self.$status = $status;
   $header = $('<div class=rules-header/>');
   self.$node.append($status, $header);
