@@ -226,6 +226,7 @@ var nextProofEditorId = 1;
 function ProofEditor() {
   var self = this;
   self._givens = new TermSet();
+  self._explicitGivens = false;
   self.givenVars = {};
   self.solutions = [];
   self.standardSolution = true;
@@ -307,6 +308,8 @@ function ProofEditor() {
 
   // If the proof has changed, save its state soon.
   this._refresher = new Toy.Refresher(function() {
+      self._updateGivens();
+      self._updateGivenVars();
       self.saveState();
     });
 
@@ -362,24 +365,53 @@ function ProofEditor() {
 /**
  * Define the "givens" property as a virtual property.  Setting it has
  * the side effect of modify the "givenVars" property as well, which
- * should be treated as readonly.
+ * should be treated as readonly.  If not set explicitly through the
+ * setter, givens will come from uses of the "given" rule.
  */
 Object.defineProperty(ProofEditor.prototype, "givens", {
     get: function() { return this._givens; },
     set: function(g) {
-      assert(this._givens.size() == 0, 'Givens are already set');
+      assert(this.proofDisplay.steps.length == 0 ||
+             (!this._explicitGivens && this._givens.size() == 0),
+             'Givens are already set');
+      this._explicitGivens = true;
       for (var i = 0; i < g.length; i++) {
         var g1 = Toy.termify(g[i]);
         this._givens.add(g1);
         this.addStep(Toy.rules.given(g1));
       }
-      // An object/set with names of all variables in any of the
-      // givens:
-      var vars = {};
-      this._givens.each(function(g) { $.extend(vars, g.freeVars()); });
-      this.givenVars = vars;
+      this._updateGivenVars();
     }
   });
+
+/**
+ * Recompute the problem givens.  Does nothing for "canned" problems
+ * where the givens are stated explicitly in advance.
+ */
+ProofEditor.prototype._updateGivens = function() {
+  var self = this;
+  if (self._explicitGivens) {
+    return;
+  }
+  self._givens.clear();
+  self.proofDisplay.steps.forEach(function(step) {
+      if (step.ruleName === 'given') {
+        self._givens.add(step.wff.getMain().getRight());
+      }
+    })
+};
+
+/**
+ * Update the givenVars to match the (possibly changed) set of givens
+ * of this problem.
+ */
+ProofEditor.prototype._updateGivenVars = function() {
+  // An object/set with names of all variables in any of the
+  // givens:
+  var vars = {};
+  this._givens.each(function(g) { $.extend(vars, g.freeVars()); });
+  this.givenVars = vars;
+};
 
 /**
  * Public interface to set the rule and fact offerability mode
