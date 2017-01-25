@@ -1904,13 +1904,13 @@ var testCase = {
 
   testR5239: function() {
     var inf = Toy.rules.r5239(equal(p, q), equal(r, p), '/right');
-    assertEqual('((p = q) => ((r = p) = (r = q)))', inf);
+    assertEqual('((p = q) => ((r = p) == (r = q)))', inf);
 
     inf = Toy.rules.r5239(equal(p, q),
                           lambda(p, equal(q, p)),
                           '/body/right');
     var expected =
-      '((forall {p. (p = q)}) => ({p. (q = p)} = {p. (q = q)}))';
+      '((forall {p. (p = q)}) => ({p. (q = p)} == {p. (q = q)}))';
     assertEqual(expected, inf);
 
     // Here 'y' is bound in C and free in A = B.
@@ -1918,7 +1918,7 @@ var testCase = {
                         Toy.parse('{y. T}'),
                         '/body');
     var expected =
-      '((forall {y. (T = (y > x))}) => ({y. T} = {y. (y > x)}))';
+      '((forall {y. (T = (y > x))}) => ({y. T} == {y. (y > x)}))';
     assertEqual(expected, inf);
   },
 
@@ -2497,12 +2497,10 @@ var testCase = {
     };
     deepEqual(qUnitCopy(stats), expected);
 
-    // TODO: Test the 'confirmation' result type.
     ed = new Toy.ProofEditor();
     ed.givens = ['x - 3 = 2'];
     step = rules.assert('x = 5 => x - 3 = 2');
     stats = ed.solutionStatus(step);
-    logDeeply(stats);
     expected = {
       type: "confirmation",
       givens: ["((x − 3) = 2)"],
@@ -2514,6 +2512,35 @@ var testCase = {
       }
     };
     deepEqual(qUnitCopy(stats), expected);
+
+    // Simultaneous linear equations:
+    ed = new Toy.ProofEditor();
+    ed.givens = ['x = y + 3', 'x + y = 7'];
+    var wff = 'x = y + 3 & R y => (x + y = 7 == y = 2)';
+    step = rules.assert(wff);
+    stats = ed.solutionStatus(step);
+    logDeeply(stats);
+    expected = {
+      absentGivens: [],
+      solutions: [{
+          byVar: {
+            y: {
+              eqn: 'Expr (y = 2)',
+              using: {}
+            }
+          },
+          eqns: [
+                   'Expr (y = 2)'
+                   ],
+          others: [],
+          overages: {},
+          tcs: []
+        }
+        ],
+      type: 'equiv'
+    };
+    deepEqual(qUnitCopy(stats), expected);
+
   },
 
   // Looking at what can be done with Andrews' definition of "and".

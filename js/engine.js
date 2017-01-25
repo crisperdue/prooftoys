@@ -2461,7 +2461,7 @@ var ruleInfo = {
       assert(equation.isCall2('='),
              'Expecting an equation, got: {1}',
              equation);
-      var step1 = rules.axiom2();
+      var step1 = rules.axiom2a();
       var a = equation.getLeft();
       var b = equation.getRight();
       var boundNames = target.boundNames(path);
@@ -2485,7 +2485,7 @@ var ruleInfo = {
       var g = target.replaceAt(path, function(expr) { return texpr; });
       var step2 =
         rules.instMultiVars(step1,
-                            ({x: aBound, y: bBound, h: lambda(t, g)}));
+                            ({x: aBound, y: bBound, p: lambda(t, g)}));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = step3;
       for (var i = 0; i < boundNameList.length; i++) {
