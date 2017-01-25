@@ -546,6 +546,23 @@ var ruleInfo = {
     tooltip: ('functions take equal values to equal values')
   },
 
+  /**
+   * Axiom 2 specialized for predicates.  This is actually more like
+   * Andrews' axiom 2.
+   */
+  axiom2a: {
+    action: function() {
+      var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
+      var step2 = rules.eqIsEquiv();
+      var result = rules.replace(step1, '/right/binop', step2);
+      return result.justify('axiom2a');
+    },
+    inputs: {},
+    form: '',
+    description: 'axiom of predicate application',
+    tooltip: ('predicates take equal values to the same truth value')
+  },
+
   axiom3: {
     action: function() {
       var result = rules.assert('(f = g) == forall {x. f x = g x}');
