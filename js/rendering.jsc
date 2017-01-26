@@ -1302,40 +1302,6 @@ function renderWithElision(expr, step) {
 }
 
 /**
- * Renders the expr as hypotheses (for steps flagged with hasHyps).
- * Walks through the expression as a tree of conjuncts, with info as
- * defined for Expr.render.  Converts "&" to "," parenthesizing
- * conjuncts that do not have the usual left association.  Nodes
- * created here only support selection of individual conjuncts, not
- * larger trees of conjuncts.  (This design decision could easily
- * change in the future.) Creates and returns a new Expr DOM node.
- */
-function renderHyps(expr, info) {
-  var $top = exprJq();
-  var hypsNode;
-  function render(expr) {
-    if (expr.isCall2('&')) {
-      render(expr.getLeft());
-      hypsNode.append(', ');
-      var rhs = expr.getRight();
-      if (rhs.isCall2('&')) {
-        hypsNode.append('(');
-        render(rhs);
-        hypsNode.append(')');
-      } else {
-        render(rhs);
-      }
-    } else {
-      hypsNode.append(expr.render(info, 0));
-    }
-  }
-  hypsNode = $('<span class=assumptions></span>');
-  render(expr);
-  $top.append(hypsNode);
-  return dom($top);
-}
-
-/**
  * Returns the first assumption step in the list such that asm matches
  * the assumption, if there is one, else a falsy value.
  */
