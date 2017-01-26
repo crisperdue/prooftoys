@@ -1209,10 +1209,6 @@ function wantLeftElision(step) {
  *
  * TODO: Consider fleshing out the concept of display with fewer
  * parentheses.
- *
- * TODO: When displaying hypotheses, somehow properly distinguish
- * hypotheses that come from within the current subproof versus those
- * that come from outside.
  */
 function renderWff(step) {
   var info = {asmSteps: []};
@@ -1295,8 +1291,8 @@ function renderWithElision(expr, step) {
     expr.node = dom($expr);
     $expr.append('<span class=ellipsis>&hellip;</span> ',
                  // Display equivalences as equivs.  This eventually
-                 // call toUnicode, and if there is a type, displays
-                 // approprriately.
+                 // calls toUnicode, and if there is a type, displays
+                 // appropriately.
                  expr.getBinOp().render(info, 0, true), ' ',
                  expr.getRight().render(info, 0));
     return dom($expr);
