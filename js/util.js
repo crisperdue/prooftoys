@@ -175,7 +175,7 @@ function check(condition, info, type) {
  */
 function logError(err) {
   if (window.console) {
-    window.console.error(err.message || err);
+    window.console.error(err.stack);
   }
 }
 
