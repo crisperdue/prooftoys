@@ -1231,7 +1231,7 @@ function renderWff(step) {
     // Give the WFF its own node, but it won't be practical to select it
     // because it has no "real estate" of its own.  In practice this just
     // displays its RHS.
-    wff.node = dom(exprJq().append(wff.getRight().render(info, 0)));
+    wff.node = dom(exprJq().append(wff.getRight().renderTopConj(info, 0)));
     return wff.node;
   } else if (wff.isCall2('=>')) {
     var asmPart = wff.getLeft();
@@ -1240,7 +1240,7 @@ function renderWff(step) {
     var power = mainOnly ? 0 : Toy.getPrecedence(wff.getBinOp());
     // Render the RHS as the main.
     mainPart.node = (renderWithElision(mainPart, step) ||
-                     dom(mainPart.render(info, power)));
+                     dom(mainPart.renderTopConj(info, power)));
 
     if (mainOnly) {
       // All assumptions are implicit, so the rendering is just the
@@ -1272,7 +1272,7 @@ function renderWff(step) {
     return wff.node;
   } else {
     // The step is not a conditional.  Render it as the main.
-    return wff.node = renderWithElision(wff, step) || dom(wff.render(info, 0));
+    return wff.node = renderWithElision(wff, step) || dom(wff.renderTopConj(info, 0));
   }
 };
 
@@ -1294,12 +1294,24 @@ function renderWithElision(expr, step) {
                  // calls toUnicode, and if there is a type, displays
                  // appropriately.
                  expr.getBinOp().render(info, 0, true), ' ',
-                 expr.getRight().render(info, 0));
+                 expr.getRight().renderTopConj(info, 0));
     return dom($expr);
   } else {
     return null;
   }
 }
+
+Expr.prototype.renderTopConj = function(info, minPower) {
+  function annotateTopConj(expr) {
+    if (expr.isCall2('&')) {
+      expr.getBinOp().breakAfter = true;
+      annotateTopConj(expr.getLeft());
+    }
+  }
+  console.log(this.$$);
+  annotateTopConj(this);
+  return this.render(info, minPower);
+};
 
 /**
  * Returns the first assumption step in the list such that asm matches
@@ -1518,7 +1530,8 @@ Call.prototype.render = function(info, minPower) {
         var $fn = exprJq().append(left.render(info, thisPower(left)), ' ',
                                   op.render(info, 0, true));
         this.fn.node = dom($fn);
-        $expr.append($fn, ' ', right.render(info, thisPower(right) + 1));
+        var afterOp = op.breakAfter ? '<br>\n' : ' ';
+        $expr.append($fn, afterOp, right.render(info, thisPower(right) + 1));
       }
     } else {
       // Anything else render like "f x y".

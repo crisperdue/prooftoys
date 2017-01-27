@@ -494,8 +494,10 @@ StepEditor.prototype._tryRule = function(rule, args) {
       this.proofDisplay.addStep(result);
     } catch(error) {
       this._setBusy(false);
+      Toy.logError(error);
       error.message = 'Error rendering step ' + result + ': ' + error.message;
       this.report(error);
+      debugger;
       return;
     }
     this.proofDisplay.deselectStep();
