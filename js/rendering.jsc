@@ -1231,6 +1231,9 @@ function renderWff(step) {
     // Give the WFF its own node, but it won't be practical to select it
     // because it has no "real estate" of its own.  In practice this just
     // displays its RHS.
+    //
+    // Note that levels of nesting here are as in " ... == <rhs>"
+    // renderings, so the same levels of flexbox nesting works for both.
     wff.node = dom(exprJq().append(wff.getRight().renderTopConj(info, 0)));
     return wff.node;
   } else if (wff.isCall2('=>')) {
@@ -1238,7 +1241,7 @@ function renderWff(step) {
     var mainPart = wff.getRight();
     var mainOnly = allImplicit(asmPart, step);
     var power = mainOnly ? 0 : Toy.getPrecedence(wff.getBinOp());
-    // Render the RHS as the main.
+    // Render the RHS (consequent) as the main.
     mainPart.node = (renderWithElision(mainPart, step) ||
                      dom(mainPart.renderTopConj(info, power)));
 
@@ -1246,6 +1249,11 @@ function renderWff(step) {
       // All assumptions are implicit, so the rendering is just the
       // main part.
       return mainPart.node;
+    }
+    // In this case we want one more level of flexbox to ensure the
+    // mainPart is a flexbox.  Specify it with a class.
+    if (mainPart.isCall2('==')) {
+      $(mainPart.node).addClass('flexbox');
     }
     // There is at least one explicit assumption.
     var explicit = asmPart;
@@ -1261,7 +1269,8 @@ function renderWff(step) {
     // explicit part as the rendering for the whole LHS of the
     // conditional.
     asmPart.node = dom(explicit.render(info, power));
-    // Now render the entire wff into a node.
+    // Now render the entire wff into a node.  The renderer will stop
+    // when it reaches the asmPart, because that already has a node.
     $wff = step.wff.render(info, 0);
     // But in the end we want the explicit part to be properly
     // associated with its own display, so fix up the assignments of

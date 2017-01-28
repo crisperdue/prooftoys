@@ -299,16 +299,14 @@ span#leftNav {
 
 /* The outermost element of a step */
 .proofStep {
+    display: flex;
+    align-items: center;
     background-color: white;
     font-family: STIXGeneral, times, serif;
     /* Each proofStep has a 1px border, which is gray when
        the step is selected in the UI or hovered.
        */
     border: 1px solid transparent;
-    /* Indent continuation lines, but not the first one. */
-    padding-left: 6em;
-    /* Careful, this will be inherited by children. */
-    text-indent: -6em;
 }
 
 /* Use the inline-block *class* as needed to avoid contaminating inner
@@ -397,8 +395,22 @@ span#leftNav {
 
 /* Hovering or selecting this will override the border color. */
 .stepAndNum {
-  cursor: default;
-  border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    cursor: default;
+    border: 1px solid transparent;
+}
+
+/* Make the .expr child of stepAndNum automatically a flexbox. */
+.stepAndNum > .expr {
+    display: flex;
+    align-items: center;
+}
+
+/* Handy for making elements display as flexboxes. */
+.flexbox {
+    display: flex;
+    align-items: center;
 }
 
 /* Hovering the step number highlights the step and number,
@@ -521,6 +533,7 @@ span#leftNav {
 .proofStep .stepInfo {
     white-space: nowrap;
     color: #777;
+    margin-left: 5px;
 }
 
 .proofStep .stepNumber {
@@ -529,7 +542,8 @@ span#leftNav {
 }
 
 .proofStep .stepNumArea {
-  border: 1px solid transparent;
+    border: 1px solid transparent;
+    margin-right: 5px;
 }
 
 /* Expression in a proof step display, and step numbers */
