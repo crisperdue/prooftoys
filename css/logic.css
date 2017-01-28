@@ -109,6 +109,7 @@ code {
 
 .ellipsis {
   color: #aaa;
+  margin-right: 3px;
 }
 
 /* For rule menu descriptions */
@@ -163,7 +164,7 @@ table.binaryTruthTable td.falsy:after {
 div#slogans {
   color: ForestGreen;
   margin: 0em 10em;
-  min-height: 4em;
+  min-height: 6em;
   text-align: center;
   font-style: italic;
 }
