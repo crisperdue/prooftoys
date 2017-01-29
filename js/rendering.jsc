@@ -993,7 +993,16 @@ ProofDisplay.prototype.renderStep = function(step) {
   // Remember this value for future use.  Could be computed from
   // previous step if preferred.
   step.asmSteps = Toy.assumptionsBefore(step);
-  $stepAndNum.append(renderWff(step));
+  var $wff = $(renderWff(step));
+  // Find exprs that are not fullExpr, but also not T or F or
+  // similar with "special classes".  This code may be a bit
+  // simplistic in the longer run.
+  var $exprs = $wff.find('[class=expr]');
+  // Remove them from the DOM so flex layout can work better.
+  // TODO: Make a more permanent fix, one that for example does
+  //   not attach abandoned DOM nodes to parts of rendered steps.
+  $exprs.replaceWith(function() { return $(this).contents(); });
+  $stepAndNum.append($wff);
   $step.find('.stepInfo').html(formattedStepInfo(step));
 
   // Annotate subexpressions with popups as appropriate.
@@ -1253,7 +1262,7 @@ function renderWff(step) {
     // In this case we want one more level of flexbox to ensure the
     // mainPart is a flexbox.  Specify it with a class.
     if (mainPart.isCall2('==')) {
-      $(mainPart.node).addClass('flexbox');
+      $(mainPart.node).addClass('flexBox');
     }
     // There is at least one explicit assumption.
     var explicit = asmPart;

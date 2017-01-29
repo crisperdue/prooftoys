@@ -301,6 +301,7 @@ span#leftNav {
 .proofStep {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     background-color: white;
     font-family: STIXGeneral, times, serif;
     /* Each proofStep has a 1px border, which is gray when
@@ -395,7 +396,9 @@ span#leftNav {
 
 /* Hovering or selecting this will override the border color. */
 .stepAndNum {
+    flex-basis: 60%;
     display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     cursor: default;
     border: 1px solid transparent;
@@ -408,7 +411,7 @@ span#leftNav {
 }
 
 /* Handy for making elements display as flexboxes. */
-.flexbox {
+.flexBox {
     display: flex;
     align-items: center;
 }
@@ -531,9 +534,9 @@ span#leftNav {
 
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
+    margin: 0 auto 0 .5em;
     white-space: nowrap;
     color: #777;
-    margin-left: 5px;
 }
 
 .proofStep .stepNumber {
