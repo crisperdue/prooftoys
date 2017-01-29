@@ -1369,10 +1369,17 @@ function specialClasses(name) {
   if (Toy.isVariableName(name)) {
     return ['italic'];
   }
-  if (name === 'T' || name === 'F') {
+  switch(name) {
+  case 'T':
+  case 'F':
     return ['trueFalse'];
+  case '&':
+    return ['logicAnd'];
+  case '|':
+    return ['logicOr'];
+  default:
+    return [];
   }
-  return [];
 }
 
 /**

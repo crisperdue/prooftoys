@@ -668,12 +668,17 @@ span.stepRef {
   box-shadow: 2px 2px 2px #aaa;
 }
 
+/* Styling for special-case names */
+
 /* Styling for constants T and F, sans-serif roman. */
 .proofStep .expr .trueFalse {
   font-family: sans-serif;
   font-size: 90%;
 }
 
+.expr .logicAnd, .expr .logicOr {
+    font-size: 80%;
+}
 
 /* Proof step editor */
 
