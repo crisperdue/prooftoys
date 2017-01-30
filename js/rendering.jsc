@@ -959,7 +959,11 @@ ProofDisplay.prototype.renderStep = function(step) {
   var $proofStep = $('<div class=proofStep>');
   // This object will have the display of the step, step number, and
   // all of its controls, everything except the step info display with
-  // rule name and such.
+  // rule name and such.  In some ways it would be nice for this to be
+  // a regular DIV with two inline-block children, but the first is
+  // itself a flex box with (vertically) centered items, and it does
+  // not align vertically with its sibling unless this is also a flex
+  // box also with centered children.
   var $step = $('<div class=flexBox>');
   $proofStep.append($step);
   // If editable, add deleter.
