@@ -26,7 +26,7 @@
   }
 
   // Include jQuery in all cases.
-  getScript('../lib/jquery-1.10.2.js');
+  getScript('../lib/jquery-3.1.1.js');
 
   write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.css">');
   write('<link rel="stylesheet" href="../css/logic.css">');
