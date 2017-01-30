@@ -396,7 +396,6 @@ span#leftNav {
 
 /* Hovering or selecting this will override the border color. */
 .stepAndNum {
-    flex-basis: 60%;
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
@@ -534,7 +533,11 @@ span#leftNav {
 
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
-    margin: 0 auto 0 .5em;
+    /* The 1em left margin is a compromise.  We would really like
+     * to indent this whole display more when it flows down to a
+     * new line, but flex layout does not support that.
+     */
+    margin: 0 auto 0 1em;
     white-space: nowrap;
     color: #777;
 }

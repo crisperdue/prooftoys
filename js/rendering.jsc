@@ -956,7 +956,12 @@ ProofDisplay.prototype.renderStep = function(step) {
   step.annotateWithTypes();
 
   // Make an object for rendering of the whole step.
-  var $step = $('<div class=proofStep>');
+  var $proofStep = $('<div class=proofStep>');
+  // This object will have the display of the step, step number, and
+  // all of its controls, everything except the step info display with
+  // rule name and such.
+  var $step = $('<div class=flexBox>');
+  $proofStep.append($step);
   // If editable, add deleter.
   if (self.isEditable()) {
     $step.append('<button class=deleteStep title="Delete step">X</button>');
@@ -979,15 +984,14 @@ ProofDisplay.prototype.renderStep = function(step) {
               .append('[<span class=stepNumber></span>]'));
   $stepAndNum = ($('<span class=stepAndNum>')
                  .append($numArea));
-  $step.append($stepAndNum,
-               // Allow a word break before the description.
-               '<wbr><span class=stepInfo></span>');
-  $(self.stepsNode).append($step);
+  $step.append($stepAndNum);
+  $proofStep.append('<span class=stepInfo></span>');
+  $(self.stepsNode).append($proofStep);
   if (self.isEditable()) {
-    $step.addClass('withDeleter');
+    $proofStep.addClass('withDeleter');
   }
-  $step.data('proofStep', step);
-  step.stepNode = dom($step);
+  $proofStep.data('proofStep', step);
+  step.stepNode = dom($proofStep);
   var elide = wantLeftElision(step, self);
   step.hasLeftElision = elide;
   // Remember this value for future use.  Could be computed from
@@ -1003,7 +1007,7 @@ ProofDisplay.prototype.renderStep = function(step) {
   //   not attach abandoned DOM nodes to parts of rendered steps.
   $exprs.replaceWith(function() { return $(this).contents(); });
   $stepAndNum.append($wff);
-  $step.find('.stepInfo').html(formattedStepInfo(step));
+  $proofStep.find('.stepInfo').html(formattedStepInfo(step));
 
   // Annotate subexpressions with popups as appropriate.
   if (this.isEditable()) {
@@ -1045,7 +1049,7 @@ ProofDisplay.prototype.renderStep = function(step) {
   });
 
   // Set up "hover" event handling on the stepNode.
-  $step.hover(function(event) {
+  $proofStep.hover(function(event) {
       hoverStep(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
 
@@ -1064,7 +1068,7 @@ ProofDisplay.prototype.renderStep = function(step) {
   // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
   // are enabled.
   if (Toy.modes.subproofs) {
-    $step.on('click', 'span.ruleName.link', function(event) {
+    $proofStep.on('click', 'span.ruleName.link', function(event) {
       if (step.subproofDisplay) {
         clearSubproof(step);
       } else {
