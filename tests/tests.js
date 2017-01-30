@@ -2563,8 +2563,10 @@ var testCase = {
 //// RUN TESTS
 
 // Run tests "soon", but after the event system returns to idle,
-// allowing Prooftoys initializations to complete.
-Toy.soonDo(function() {
+// allowing Prooftoys initializations to complete.  In jQuery 3.1.1
+// the initializations seem to run only after the event loop has
+// returned to idle, at least when running tests.
+window.setTimeout(function() {
   for (var name in testCase) {
     var fn = testCase[name];
     if (typeof fn === 'function') {
@@ -2612,6 +2614,6 @@ Toy.soonDo(function() {
   // When the next lines run, the tests run with profiling.
   // console.log('Running tests with profiling');
   // console.profile('Tests');
-});
+  }, 200);
 
 })();
