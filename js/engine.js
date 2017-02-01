@@ -2450,13 +2450,16 @@ var ruleInfo = {
   // 5239, closely following the description and names in the book.
   // Analog to Rule R, expressed as an implication.  Theorem schema.
   //
-  // Given equation A = B, target wff C, and a path relative to C,
+  // Given a target wff C, a path relative to C, and an equation A = B,
   // proves a wff of the form "(forall ... A = B) => (C = D), where D
   // is obtained similarly to an application of Rule R to A = B and C.
   // The "forall" binds free variables of A = B that are bound at the
   // replacement location in C.
+  //
+  // Note that the target and the equation are merely formulas.  They
+  // need not be proved or true statements.
   r5239: {
-    action: function(equation, target, path) {
+    action: function(target, path, equation) {
       path = Toy.path(path, target);
       assert(equation.isCall2('='),
              'Expecting an equation, got: {1}',
@@ -2504,8 +2507,8 @@ var ruleInfo = {
       return step8.justify('r5239', arguments);
     },
     // First arg is any equation, need not be proved.
-    inputs: {bool: [1, 2], path: 3},
-    form: ('Apply equation <input name=bool1> to <input name=bool2> at ' +
+    inputs: {bool: [1, 3], path: 2},
+    form: ('Apply equation <input name=bool2> to <input name=bool1> at ' +
            '<input name=path>'),
     menu: 'prove A = B => (C == D) where D is C with an A replaced by B',
     labels: 'advanced',
@@ -2552,7 +2555,7 @@ var ruleInfo = {
       // The equation is a conditional, eq is its pure equation part.
       var eq = equation.getRight();
       var h = equation.getLeft();
-      var step1 = rules.r5239(eq, target, path);
+      var step1 = rules.r5239(target, path, eq);
       var step2 = rules.trueBy(step1, '/right/left', target);
       // Step3 will be [(forall ... eq) => D], where D is the target
       // after replacement, and the quantifier binds no free vars of eq.
@@ -2691,7 +2694,7 @@ var ruleInfo = {
                'Conflicting binding of {1} in {2}', name, c, h_c_arg);
         var step1 = rules.toImplyForall(name, step1);
       }
-      var step2 = rules.r5239(equation, c, cpath);
+      var step2 = rules.r5239(c, cpath, equation);
       var step3 = rules.makeConjunction(step1, step2);
       var tautology = rules.tautology('(p => q) & (q => r) => (p => r)');
       var step4 = rules.forwardChain(step3, tautology);
@@ -2922,7 +2925,7 @@ var ruleInfo = {
       // searchCalls finds the rightmost occurrence, which seems best.
       var eqn = eqnStep.searchCalls(test);
       assert(eqn, 'Occurrence of {1} = ... not found', target.toUnicode());
-      var result = rules.r5239(eqn, targetWff, targetPath);
+      var result = rules.r5239(targetWff, targetPath, eqn);
       return result.justify('replaceIsEquiv', arguments, []);
     },
     inputs: {site: 1, equation: 3},

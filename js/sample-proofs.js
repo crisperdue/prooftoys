@@ -425,7 +425,7 @@ $(function() {
     },
 
     r5239: {
-      args: [equal(p, q), lambda(p, equal(q, p)), '/body/right']
+      args: [lambda(p, equal(q, p)), '/body/right', equal(p, q)]
     },
 
     replace: {

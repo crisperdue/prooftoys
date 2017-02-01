@@ -1903,20 +1903,17 @@ var testCase = {
   },
 
   testR5239: function() {
-    var inf = Toy.rules.r5239(equal(p, q), equal(r, p), '/right');
+    var inf = Toy.rules.r5239(equal(r, p), '/right', equal(p, q));
     assertEqual('((p = q) => ((r = p) == (r = q)))', inf);
 
-    inf = Toy.rules.r5239(equal(p, q),
-                          lambda(p, equal(q, p)),
-                          '/body/right');
+    inf = Toy.rules.r5239(lambda(p, equal(q, p)), '/body/right', equal(p, q));
     var expected =
       '((forall {p. (p = q)}) => ({p. (q = p)} == {p. (q = q)}))';
     assertEqual(expected, inf);
 
     // Here 'y' is bound in C and free in A = B.
-    inf = Toy.rules.r5239(Toy.parse('(T = (y > x))'),
-                        Toy.parse('{y. T}'),
-                        '/body');
+    inf = Toy.rules.r5239(Toy.parse('{y. T}'), '/body',
+                          Toy.parse('(T = (y > x))'));
     var expected =
       '((forall {y. (T = (y > x))}) => ({y. T} == {y. (y > x)}))';
     assertEqual(expected, inf);
