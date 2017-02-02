@@ -2515,11 +2515,11 @@ var ruleInfo = {
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
-  // Uses r5239 to prove that a = b & C == a = b & D.
+  // Uses r5239 to prove that C & a = b == D & a = b
   r5239a: {
     action: function r5239a(target, path, equation) {
       var step = rules.r5239(target, path, equation);
-      var taut = rules.tautology('a => (b == c) == (a & b == a & c)');
+      var taut = rules.tautology('a => (b == c) == (b & a == c & a)');
       var subst = step.wff.matchSchema(taut.getLeft());
       var inst = rules.instMultiVars(taut, subst);
       var result = rules.replace(step, '', inst);
