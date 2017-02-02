@@ -2534,6 +2534,109 @@ var ruleInfo = {
     tooltip: ('Theorem generator used with simultaneous equations.')
   },
 
+  // This is the core rule for replacing terms in simultaneous equations.
+  //
+  // The target term must be part of a tree of conjuncts in the step
+  // and the tree must also contain an equation with one side equal to the target.
+  // This replaces the target with the other side of that equation.
+  replaceConjunct: {
+    // The basic idea of this rule is to apply the equivalence:
+    // (t1 = t2 & A == t1 = t2 & A[t1 :1= t2]),
+    // where t1 and t2 are terms, and t1 occurs in A with all of its
+    // free variables also free there.  The :1= operator is like
+    // substitution with :=, but replacing just one occurrence (not
+    // specifying which occurrence).
+    //
+    // This function searches the ancestor nodes of the targe
+    // expression, seeking a conjunction that also has a suitable
+    // equation as a descendant, one of whose sides is the same as the
+    // target.  If none is found, the rule fails.
+    //
+    // If the equation is an immediate child of the conjunction, this
+    // skips the next phase, which embeds the conjunction found in
+    // another conjunction that has it as the left operand and the
+    // equation as its right operand.
+    //
+    // At this point it applies r5239a to the possibly transformed
+    // conjunction.
+    // 
+    // If the conjunction was transformed, it finds and applies a
+    // tautology to eliminate the added occurrence of the equation,
+    // simplifying the RHS of the result of r5239a.
+    //
+    // Finally it replaces the found conjunction using the equivalence
+    // from r5239a or its simplified version
+    //
+    // TODO: Currently the equation's LHS must match the target.
+    // Extend this rule to handle an equation with RHS matching the target.
+    action: function replaceConjunct(step, path) {
+      var Path = Toy.Path;
+      var wff = step.wff;
+      var pretty = wff.prettifyPath(path);
+      // This will become the reverse of the path from the root to the
+      // conjunct found.
+      var revTail = pretty.reverse();
+      // This will become the forward path from the conjunct found
+      // to the target.  Will also be pretty.
+      var localPath = null;
+      // Ancestors of the target node, always non-empty.
+      var ancestors = wff.ancestors(pretty).reverse();
+      var target = ancestors[0];
+      // This will become the nearest ancestor of the target that is a
+      // conjunction whose other child is an ancestor of a suitable
+      // equation (possibly the equation itself).
+      var conjunction;
+      // Child of the conjunction that is an ancestor of the target.
+      var conjunct;
+      // True iff the term is a "suitable equation" whose LHS matches
+      // the target.
+      function suitable(term) {
+        return term.isCall2('=') && term.getLeft().matches(target);
+      }
+      // This will become a "pretty" path from the conjunction found
+      // to the suitable equation found below it.
+      var eqnPath;
+      for (var i = 1; i < ancestors.length; i++) {
+        // Initially the target node.
+        var child = ancestors[i - 1];
+        var term = ancestors[i];
+        if (term.isCall2('&')) {
+          eqnPath = term.pathTo(suitable);
+          if (eqnPath) {
+            // Suitable conjunct is found.
+            conjunction = term;
+            conjunct = child;
+            // Use "right" and "left" in the path to the equation.
+            eqnPath = conjunction.prettifyPath(eqnPath);
+            break;
+          }
+        }
+        // This sets up localPath and revTail for the next ancestor.
+        localPath = new Path(revTail.segment, localPath);
+        revTail = revTail.rest;
+      }
+      check(conjunction, 'No conjunction found');
+      var eqn = conjunction.get(eqnPath);
+      var result;
+      if (eqnPath.toString() === '/right') {
+        // This will equate the conjunction (conjunct & eqn) with
+        // another conjunction where the target is replaced.
+        var equiv = rules.r5239a(conjunct, localPath, eqn);
+        // Replaces the conjunction with a new conjunction.
+        result = rules.replace(step, revTail.rest.reverse(), equiv);
+      } else {
+        var equiv1 = rules.r5239a(conjunct, localPath, eqn);
+        // Now show that the conjunction is equivalent to one
+        // with eqn duplicated beside the found conjunct.
+        // etc -- var conjunction2 = Toy.infixCall(conjunct, '&', eqn);
+        // Then replace (conjunct & eqn) with (conjunct2 & eqn).
+        // Then remove the added copy of eqn.
+        assert(false, 'Unimplemented, replaceConjunct');
+      }
+      return result.justify('replace', arguments, [step]);
+    }
+  },
+
   // Version of Andrews Rule R' that uses a conditional rather than
   // hypotheses.  Uses a potentially conditional equation to replace a
   // term in a target step.  The result is conditional iff the
