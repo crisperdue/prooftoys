@@ -1919,6 +1919,14 @@ var testCase = {
     assertEqual(expected, inf);
   },
 
+  testR5239a: function() {
+    var result = rules.r5239a(parse('x + y = 5'),
+                              Toy.path('/left/left'),
+                              parse('x = y + 1'));
+    var fml = 'x = y + 1 & x + y = 5 == x = y + 1 & y + 1 + y = 5';
+    assertEqual(parse(fml).toString(), result);
+  },
+
   testReplace: function() {
     var rules = Toy.rules;
     var result = rules.rplace(rules.assert('x > 0 => (x = (abs x))'),

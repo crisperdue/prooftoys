@@ -2515,6 +2515,25 @@ var ruleInfo = {
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
+  // Uses r5239 to prove that a = b & C == a = b & D.
+  r5239a: {
+    action: function r5239a(target, path, equation) {
+      var step = rules.r5239(target, path, equation);
+      var taut = rules.tautology('a => (b == c) == (a & b == a & c)');
+      var subst = step.wff.matchSchema(taut.getLeft());
+      var inst = rules.instMultiVars(taut, subst);
+      var result = rules.replace(step, '', inst);
+      return result.justify('r5239a', arguments);
+    },
+    // First arg is any equation, need not be proved.
+    inputs: {bool: [1, 3], path: 2},
+    form: ('Apply equation <input name=bool2> to <input name=bool1> at ' +
+           '<input name=path>'),
+    menu: 'prove (A = B) & C == (A = B) & D where D is C with an A replaced by B',
+    labels: 'advanced',
+    tooltip: ('Theorem generator used with simultaneous equations.')
+  },
+
   // Version of Andrews Rule R' that uses a conditional rather than
   // hypotheses.  Uses a potentially conditional equation to replace a
   // term in a target step.  The result is conditional iff the
