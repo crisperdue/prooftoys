@@ -2545,7 +2545,13 @@ var testCase = {
       type: 'equiv'
     };
     deepEqual(qUnitCopy(stats), expected);
+  },
 
+  testReplaceConjunct: function() {
+    var step = rules.given('x + y = 5 & x = y + 3');
+    var result = rules.replaceConjunct(step, Toy.path('/right/left/left/left'));
+    assertEqual('((((x + y) = 5) & (x = (y + 3))) == ' +
+             '((((y + 3) + y) = 5) & (x = (y + 3))))', result)
   },
 
   // Looking at what can be done with Andrews' definition of "and".
@@ -2564,6 +2570,7 @@ var testCase = {
   }
 
 };
+
 
 //// RUN TESTS
 
