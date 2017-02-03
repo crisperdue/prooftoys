@@ -969,7 +969,7 @@ var simplifiersInfo = {
         // from getArithOp until there is none.
         while (true) {
           var hyps = step.getLeft();
-          var hypsPath = scanConjunctsunct(hyps, getArithOp);
+          var hypsPath = scanConjuncts(hyps, getArithOp);
           if (!hypsPath) {
             return step;
           }
