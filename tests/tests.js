@@ -2287,6 +2287,13 @@ var testCase = {
     assertEqual('a3', map.get(Toy.parse('R z')));
   },
 
+  testPathToConjunct: function() {
+    function compute(x, f) {
+      return Toy._pathToConjunct(termify(x), f) + '';
+    }
+    assertEqual('/left/left', compute('a & b & c', e => e.name == 'a'));
+  },
+
   // END OF RULES AND THEOREMS
 
   // ProofEditor - solution status

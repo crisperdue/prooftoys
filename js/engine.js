@@ -58,7 +58,7 @@ var _tautologies = {};
 // TODO: Consider changing the rep accordingly.
 var _allHyps = {};
 
-// Interactive testing in context of theorems.js.
+// Interactive testing support.
 window.Thtest = function(x) {
   setTimeout(function() { console.log(window.Tval = eval(x)); });
 };
@@ -4711,6 +4711,33 @@ function assumptionsUsed(step) {
   return result;
 }
 
+/**
+ * The given Expr is treated as the root of a tree of conjuncts.
+ * This searches for a direct or indirect conjunct of it that
+ * passes the test.  Returns a (pretty) path to the node found,
+ * or null if none is found.
+ */
+function pathToConjunct(root, test) {
+  var Path = Toy.Path;
+  function pathFrom(node) {
+    if (test(node)) {
+      return Path.empty;
+    }
+    if (node.isCall2('&')) {
+      var rpath = pathFrom(node.getRight());
+      if (rpath) {
+        return new Path('right', rpath);
+      }
+      var lpath = pathFrom(node.getLeft());
+      if (lpath) {
+        return new Path('left', lpath);
+      }
+    }
+    return null;
+  }
+  return pathFrom(root);
+}
+
 
 //// Export public names.
 
@@ -4765,6 +4792,7 @@ Toy._buildHypSchema = buildHypSchema;
 Toy._alreadyProved = alreadyProved;
 Toy._locateMatchingFact = _locateMatchingFact;
 Toy._flagHyps = flagHyps;
+Toy._pathToConjunct = pathToConjunct;
 
 
 //// INITIALIZATION CODE
