@@ -1,4 +1,4 @@
-// Copyright 2011 - 2016 Crispin Perdue.
+// Copyright 2011 - 2017 Crispin Perdue.
 // All rights reserved.
 
 ////
@@ -97,6 +97,9 @@ Path.none.rest = Path.none;
 // This marks the end of the path.  Past this is nothing
 // interesting.
 var _end = new Path(null, Path.none);
+
+// The empty path.
+Path.empty = _end;
 
 /**
  * Truthy value iff this path is precisely empty (and not beyond).
