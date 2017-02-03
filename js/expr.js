@@ -1090,6 +1090,8 @@ function isProved(x) {
  * Alternatively accepts a term to be found.
  */
 Expr.prototype.pathTo = function(pred) {
+  // TODO: Make a more efficient version that works directly with
+  // forward paths.
   if (pred instanceof Expr) {
     var target = pred;
     pred = function(term) { return target == term; };
@@ -1636,7 +1638,7 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // Searches for a subexpression of this that passes the test and is
 // NOT a variable binding.  Returns the "reverse path" to it from
 // this, with the last path segment first, added to the given revPath.
-// 
+//
 //
 // _prettyPath(pred, path)
 //
