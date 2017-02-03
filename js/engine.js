@@ -2515,7 +2515,8 @@ var ruleInfo = {
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
-  // Uses r5239 to prove that C & a = b == D & a = b
+  // Uses r5239 to prove that C & (a = b) == D & (a = b) where D is
+  // like C, but with an occurrence of "a" replaced.
   r5239a: {
     action: function r5239a(target, path, equation) {
       var step = rules.r5239(target, path, equation);
@@ -2571,22 +2572,25 @@ var ruleInfo = {
     // Extend this rule to handle an equation with RHS matching the target.
     action: function replaceConjunct(step, path) {
       var Path = Toy.Path;
+      var infixCall = Toy.infixCall;
       var wff = step.wff;
-      var pretty = wff.prettifyPath(path);
-      // This will become the reverse of the path from the root to the
-      // suitable target ancestor found.
-      var revToAncestor = pretty.reverse();
-      // This will become the forward path from the target ancestor to
-      // the target.  Will also be pretty.
-      var localPath = null;
-      // Ancestors of the target node, always non-empty.
-      var ancestors = wff.ancestors(pretty).reverse();
+      var prettyPath = wff.prettifyPath(path);
+      // This will become the path from the root to the suitable
+      // target ancestor found.
+      var toAncestor = prettyPath;
+      // This will become the path from the target ancestor to the
+      // target.  Will also be pretty.
+      var fromAncestor = Path.empty;
+      // Ancestors of the target node, always non-empty, innermost
+      // (i.e. target) first.
+      var ancestors = wff.ancestors(prettyPath).reverse();
       var target = ancestors[0];
       // This will become the nearest ancestor of the target that is a
-      // conjunction whose other child is an ancestor of a suitable
-      // equation (possibly the equation itself).
+      // conjunction and has a suitable equation among its direct or
+      // indirect conjuncts (which form a tree).
       var conjunction;
-      // Ancestor of the target that is a child of the conjunction found.
+      // Child of the conjunction that is also an ancestor of the
+      // target node.
       var ancestor;
       // True iff the term is a "suitable equation" whose LHS matches
       // the target.
@@ -2594,41 +2598,45 @@ var ruleInfo = {
         return term.isCall2('=') && term.getLeft().matches(target);
       }
       // This will become a "pretty" path from the conjunction found
-      // to the suitable equation found below it.
+      // to the suitable equation below it.
       var eqnPath;
       for (var i = 1; i < ancestors.length; i++) {
-        // Initially the target node.
-        ancestor = ancestors[i - 1];
         var term = ancestors[i];
         if (term.isCall2('&')) {
           eqnPath = term.pathTo(suitable);
           if (eqnPath) {
             // Suitable ancestor is found.
             conjunction = term;
+            ancestor = ancestors[i - 1];
             // Use "right" and "left" in the path to the equation.
             eqnPath = conjunction.prettifyPath(eqnPath);
             break;
           }
         }
-        // This sets up localPath and revToAncestor for the next ancestor.
-        localPath = new Path(revToAncestor.segment, localPath);
-        revToAncestor = revToAncestor.rest;
+        // This sets up fromAncestor and revToAncestor for the next ancestor.
+        fromAncestor = new Path(toAncestor.last(), fromAncestor);
+        toAncestor = toAncestor.parent();
       }
       check(conjunction, 'No conjunction found');
+      
       var eqn = conjunction.get(eqnPath);
       var result;
       if (eqnPath.toString() === '/right') {
         // This will equate the conjunction (ancestor & eqn) with
         // another conjunction where the target is replaced.
-        var equiv = rules.r5239a(ancestor, localPath, eqn);
+        var equiv = rules.r5239a(ancestor, fromAncestor, eqn);
         // Replaces the conjunction with a new conjunction.
-        result = rules.replace(step, revToAncestor.rest.reverse(), equiv);
+        result = rules.replace(step, toAncestor.parent(), equiv);
       } else {
         // The suitable equation is not the ancestor's sibling, but is
         // a descendant of its sibling.  We will copy it up into position
         // as the sibling, then remove the duplicate later.
-        var equiv1 = rules.r5239a(ancestor, localPath, eqn);
-        var infixCall = Toy.infixCall;
+        var replacer1 = rules.r5239a(ancestor, fromAncestor, eqn);
+        var conjunction1 = replacer1.getRight();
+
+        // Now prove that replacing the conjunction found is
+        // equivalent to the conjunction with the ancestor replaced by
+        // (ancestor & eqn).
         var map = new Toy.TermMap();
         function conjunctionSchema(term) {
           if (term.isCall2('&')) {
@@ -2639,12 +2647,11 @@ var ruleInfo = {
             return map.get(term);
           }
         }
-        // This is the conjunction with a duplicated part.
-        var conjunction2 = equiv1.getRight();
         // This is the schema for conjunction2.
         var schema2 = conjunctionSchema(conjunction2);
         // This tautology shows that the duplicate can be removed.
-        var taut = rules.tautology(infixCall(schema2, '==', schema2.getLeft()));
+        var remover = rules.tautology(infixCall(schema2, '==',
+                                                schema2.getLeft()));
         // This removes the duplicate from the right side of equiv1.
         var equiv2  = rules.rewriteOnly(equiv1, '/right', taut);
         result = rules.replace();
