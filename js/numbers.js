@@ -945,7 +945,7 @@ var simplifiersInfo = {
       }
       // Finds and returns a path to a conjunct in the given term that
       // passes the test, or returns null.
-      function scanConjunctsunct(term, test) {
+      function scanConjuncts(term, test) {
         var Path = Toy.Path;
         function find(term, revPath) {
           if (test(term)) {
