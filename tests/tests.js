@@ -2294,6 +2294,12 @@ var testCase = {
     assertEqual('/left/left', compute('a & b & c', e => e.name == 'a'));
   },
 
+  testConjunctionSchema: function() {
+    var result = Toy._conjunctionSchema(Toy.parse('2<3 & (3<4 & (b => c))')).$$
+    assertEqual('(a1 & (a2 & a3))', result);
+    assertEqual('a1', Toy._conjunctionSchema(Toy.parse('a => b')).$$);
+  },
+
   // END OF RULES AND THEOREMS
 
   // ProofEditor - solution status

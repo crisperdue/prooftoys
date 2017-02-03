@@ -4738,6 +4738,26 @@ function pathToConjunct(root, test) {
   return pathFrom(root);
 }
 
+/**
+ * Builds and returns a propositional schema from the given term,
+ * with the structure of the tree of conjunctions rooted at the term.
+ * Matching parts get the same variable letter.
+ */
+function conjunctionSchema(term) {
+  var map = new Toy.TermMap();
+  var infixCall = Toy.infixCall;
+  function makeSchema(term) {
+    if (term.isCall2('&')) {
+      return infixCall(makeSchema(term.getLeft()), '&',
+                       makeSchema(term.getRight()));
+    } else {
+      map.addTerm(term);
+      return map.get(term);
+    }
+  }
+  return makeSchema(term);
+}
+
 
 //// Export public names.
 
@@ -4793,6 +4813,7 @@ Toy._alreadyProved = alreadyProved;
 Toy._locateMatchingFact = _locateMatchingFact;
 Toy._flagHyps = flagHyps;
 Toy._pathToConjunct = pathToConjunct;
+Toy._conjunctionSchema = conjunctionSchema;
 
 
 //// INITIALIZATION CODE
