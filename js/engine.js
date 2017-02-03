@@ -2574,10 +2574,10 @@ var ruleInfo = {
       var wff = step.wff;
       var pretty = wff.prettifyPath(path);
       // This will become the reverse of the path from the root to the
-      // conjunct found.
-      var revTail = pretty.reverse();
-      // This will become the forward path from the conjunct found
-      // to the target.  Will also be pretty.
+      // suitable target ancestor found.
+      var revToAncestor = pretty.reverse();
+      // This will become the forward path from the target ancestor to
+      // the target.  Will also be pretty.
       var localPath = null;
       // Ancestors of the target node, always non-empty.
       var ancestors = wff.ancestors(pretty).reverse();
@@ -2586,8 +2586,8 @@ var ruleInfo = {
       // conjunction whose other child is an ancestor of a suitable
       // equation (possibly the equation itself).
       var conjunction;
-      // Child of the conjunction that is an ancestor of the target.
-      var conjunct;
+      // Ancestor of the target that is a child of the conjunction found.
+      var ancestor;
       // True iff the term is a "suitable equation" whose LHS matches
       // the target.
       function suitable(term) {
@@ -2598,38 +2598,60 @@ var ruleInfo = {
       var eqnPath;
       for (var i = 1; i < ancestors.length; i++) {
         // Initially the target node.
-        var child = ancestors[i - 1];
+        ancestor = ancestors[i - 1];
         var term = ancestors[i];
         if (term.isCall2('&')) {
           eqnPath = term.pathTo(suitable);
           if (eqnPath) {
-            // Suitable conjunct is found.
+            // Suitable ancestor is found.
             conjunction = term;
-            conjunct = child;
             // Use "right" and "left" in the path to the equation.
             eqnPath = conjunction.prettifyPath(eqnPath);
             break;
           }
         }
-        // This sets up localPath and revTail for the next ancestor.
-        localPath = new Path(revTail.segment, localPath);
-        revTail = revTail.rest;
+        // This sets up localPath and revToAncestor for the next ancestor.
+        localPath = new Path(revToAncestor.segment, localPath);
+        revToAncestor = revToAncestor.rest;
       }
       check(conjunction, 'No conjunction found');
       var eqn = conjunction.get(eqnPath);
       var result;
       if (eqnPath.toString() === '/right') {
-        // This will equate the conjunction (conjunct & eqn) with
+        // This will equate the conjunction (ancestor & eqn) with
         // another conjunction where the target is replaced.
-        var equiv = rules.r5239a(conjunct, localPath, eqn);
+        var equiv = rules.r5239a(ancestor, localPath, eqn);
         // Replaces the conjunction with a new conjunction.
-        result = rules.replace(step, revTail.rest.reverse(), equiv);
+        result = rules.replace(step, revToAncestor.rest.reverse(), equiv);
       } else {
-        var equiv1 = rules.r5239a(conjunct, localPath, eqn);
+        // The suitable equation is not the ancestor's sibling, but is
+        // a descendant of its sibling.  We will copy it up into position
+        // as the sibling, then remove the duplicate later.
+        var equiv1 = rules.r5239a(ancestor, localPath, eqn);
+        var infixCall = Toy.infixCall;
+        var map = new Toy.TermMap();
+        function conjunctionSchema(term) {
+          if (term.isCall2('&')) {
+            return infixCall(conjSchema(term.getLeft()), '&',
+                             conjSchema(term.getRight()));
+          } else {
+            map.addTerm(term);
+            return map.get(term);
+          }
+        }
+        // This is the conjunction with a duplicated part.
+        var conjunction2 = equiv1.getRight();
+        // This is the schema for conjunction2.
+        var schema2 = conjunctionSchema(conjunction2);
+        // This tautology shows that the duplicate can be removed.
+        var taut = rules.tautology(infixCall(schema2, '==', schema2.getLeft()));
+        // This removes the duplicate from the right side of equiv1.
+        var equiv2  = rules.rewriteOnly(equiv1, '/right', taut);
+        result = rules.replace();
         // Now show that the conjunction is equivalent to one
-        // with eqn duplicated beside the found conjunct.
-        // etc -- var conjunction2 = Toy.infixCall(conjunct, '&', eqn);
-        // Then replace (conjunct & eqn) with (conjunct2 & eqn).
+        // with eqn duplicated beside the found ancestor.
+        // etc -- var conjunction2 = Toy.infixCall(ancestor, '&', eqn);
+        // Then replace (ancestor & eqn) with (conjunct2 & eqn).
         // Then remove the added copy of eqn.
         assert(false, 'Unimplemented, replaceConjunct');
       }
