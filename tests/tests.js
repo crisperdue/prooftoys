@@ -2563,8 +2563,14 @@ var testCase = {
   testReplaceConjunct: function() {
     var step = rules.given('x + y = 5 & x = y + 3');
     var result = rules.replaceConjunct(step, Toy.path('/right/left/left/left'));
-    assertEqual('((((x + y) = 5) & (x = (y + 3))) == ' +
-             '((((y + 3) + y) = 5) & (x = (y + 3))))', result)
+    var expect = ('((((x + y) = 5) & (x = (y + 3))) == ' +
+                  '((((y + 3) + y) = 5) & (x = (y + 3))))');
+    assertEqual(expect, result)
+    step = rules.given('x = y + 3 & x + y = 5');
+    result = rules.replaceConjunct(step, Toy.path('/right/right/left/left'));
+    expect = ('(((x = (y + 3)) & ((x + y) = 5)) == ' +
+              '((x = (y + 3)) & (((y + 3) + y) = 5)))');
+    assertEqual(expect, result);
   },
 
   // Looking at what can be done with Andrews' definition of "and".
