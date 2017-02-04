@@ -151,6 +151,31 @@ Path.prototype.parent = function() {
 };
 
 /**
+ * Returns the path that results by getting the "rest" of this path
+ * N times in succession.
+ */
+Path.prototype.nth = function(n) {
+  var tail = this;
+  for (var i = 0; i < n; i++) {
+    tail = tail.rest;
+  }
+  return tail;
+};
+
+/**
+ * Returns a path with the first N segments of this path.
+ */
+Path.prototype.firstN = function(n) {
+  var tail = this;
+  var rev = Toy.Path.empty;
+  for (var i = 0; i < n; i++) {
+    rev = new Path(tail.segment, rev);
+    tail = tail.rest;
+  }
+  return rev.reverse();
+};
+
+/**
  * Returns the prefix of this path preceding the given tail.  If the
  * given tail is not actually a tail of this path, returns null.  No
  * conversion between pretty and non-pretty paths is done, each must
