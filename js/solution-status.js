@@ -485,7 +485,7 @@ var methods = {
               if (name in rhsVars) {
                 // Not a solution, do not comment.
               } else if (isEmpty(rhsVars)) {
-                var msg = format('Solves for {1}', name);
+                var msg = format('&check; Solves for {1}', name);
                 if (!isLowestTerms(byVar[name].eqn.getMain().getRight())) {
                   msg += ', but needs simplification';
                 }
@@ -495,7 +495,7 @@ var methods = {
                 for (var rhsName in rhsVars) {
                   names.push(rhsName);
                 }
-                msgs.push(format('Solves for {1} in terms of {2}',
+                msgs.push(format('&check; Solves for {1} in terms of {2}',
                                  name, names.join(', ')));
               }
             }
