@@ -868,13 +868,14 @@ function acceptsSelection(step, ruleName) {
 
 /**
  * Produces a rule menu entry from a ruleName, with "axiom"
- * potentially shortened to "xiom".  Result is currently text,
- * but may become HTML in the future.
+ * potentially shortened to "xiom".  Result is currently text, but may
+ * become HTML in the future.  Called with a step if there is a
+ * selection, and with the selected term if a term is selected.
  *
  * If given, the term argument should be a term to format using
  * {term} in the rule's "menu" format string.
  */
-function ruleMenuText(ruleName, term, step) {
+function ruleMenuText(ruleName, step, term) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (Toy.isEmpty(info.inputs)) {
@@ -978,7 +979,7 @@ BasicRuleSelector.prototype.update = function() {
   var displayTexts = [];
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var text = ruleMenuText(ruleName, term, step);
+      var text = ruleMenuText(ruleName, step, term);
       displayTexts.push(text);
       byDisplay[text] = ruleName;
     });
