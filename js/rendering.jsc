@@ -1334,7 +1334,6 @@ Expr.prototype.renderTopConj = function(info, minPower) {
       annotateTopConj(expr.getLeft());
     }
   }
-  console.log(this.$$);
   annotateTopConj(this);
   return this.render(info, minPower);
 };
