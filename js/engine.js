@@ -2658,8 +2658,38 @@ var ruleInfo = {
       var equiv3 = rules.rewriteOnly(equiv2, '/right',
                                      infixCall(rhs, '==', schema));
       var result = rules.replace(step, toConjunction, equiv3);
-      return result.justify('replace', arguments, [step]);
-    }
+      return result.justify('replaceConjunct', arguments, [step]);
+    },
+    inputs: {site: 1},
+    form: '',
+    menuGen: function(ruleName, step, term) {
+      if (step && term && term.isVariable() &&
+          (step.isCall2('=>') || step.isCall2('=='))) {
+        var main = step.getRight();
+        var vname = term.name;
+        var terms = new Toy.TermSet();
+        function add(term) {
+          terms.add(term);
+        }
+        var conjuncts = main.scanConjuncts(add);
+        if (terms.size() > 1) {
+          function check(eqn) {
+            if (eqn.isCall2('=') && eqn.getLeft().isVariable() &&
+                eqn.getLeft().name === vname) {
+              return eqn;
+            }
+          }
+          var eqn = terms.each(check);
+          if (eqn) {
+            return Toy.format('replace {1} with {2}',
+                              term.pname, eqn.getRight().toUnicode());
+          }
+        }
+      }
+    },
+    tooltip: ('Replaces an occurrence of a term with an equal term'),
+    description: 'replace {site};; {in step siteStep}',
+    labels: 'algebra basic'
   },
 
   // Version of Andrews Rule R' that uses a conditional rather than
