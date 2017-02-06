@@ -872,12 +872,21 @@ function acceptsSelection(step, ruleName) {
  * become HTML in the future.  Called with a step if there is a
  * selection, and with the selected term if a term is selected.
  *
- * If given, the term argument should be a term to format using
- * {term} in the rule's "menu" format string.
+ * This is expected to return either a falsy value (including the
+ * empty string), indicating the rule will not be offered, or a string
+ * with the menu text, or an array of strings, indicating multiple
+ * menu items for this rule with the possibly selected step and term.
+ *
+ * If given, the term argument can be formatted using {term} in the
+ * rule's "menu" format string.
  */
 function ruleMenuText(ruleName, step, term) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
+  if (info.menuGen) {
+    var gen = info.menuGen;
+    return gen(ruleName, step, term)
+  }
   if (Toy.isEmpty(info.inputs)) {
     // It is an axiom or theorem with no inputs.
     if (info.menu) {
@@ -960,7 +969,7 @@ BasicRuleSelector.prototype.fadeToggle = function(visible) {
 
 /**
  * Return the RuleSelector to a "fresh" state, with no rule selected,
- * offered items compatible the currently-selected step or term.
+ * offered items reflecting the currently-selected step or term.
  */
 BasicRuleSelector.prototype.update = function() {
   var self = this;
@@ -980,8 +989,15 @@ BasicRuleSelector.prototype.update = function() {
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       var text = ruleMenuText(ruleName, step, term);
-      displayTexts.push(text);
-      byDisplay[text] = ruleName;
+      if (Array.isArray(text)) {
+        text.forEach(function(msg) {
+            displayText.push(msg);
+            byDisplay[msg] = ruleName;
+          });
+      } else if (text) {
+        displayTexts.push(text);
+        byDisplay[text] = ruleName;
+      }
     });
   self.stepEditor.offerableFacts().forEach(function(statement) {
     var text = statement.toString();
