@@ -951,9 +951,7 @@ BasicRuleSelector.prototype.refresh = function() {
 
 /**
  * Fades the rule selector in (true) or out (false) based on the
- * argument.  In all cases the selector continues to occupy space in
- * the document.  (This avoids jumping scrollbars or possibly even the
- * document itself jumping around.)
+ * argument.
  */
 BasicRuleSelector.prototype.fadeToggle = function(visible) {
   var $node = this.$node;
