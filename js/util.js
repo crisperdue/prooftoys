@@ -123,6 +123,14 @@ function gcd(x, y) {
   }
 }
 
+/**
+ * Returns the LCM of two integers.  This always returns a positive
+ * value regardless of their signs.
+ */
+function lcm(x, y) {
+  return Math.abs(x * y) / gcd(x, y);
+}
+
  
 ////
 //// Assertions, error reporting and debugging
@@ -989,6 +997,7 @@ Toy.getOwn = getOwn;
 
 Toy.MAX_INT = MAX_INT;
 Toy.gcd = gcd;
+Toy.lcm = lcm;
 
 Toy.err = err;
 Toy.check = check;
