@@ -2663,15 +2663,28 @@ var ruleInfo = {
     inputs: {site: 1},
     form: '',
     menuGen: function(ruleName, step, term) {
-      if (step && term && term.isVariable() &&
-          (step.isCall2('=>') || step.isCall2('=='))) {
-        var main = step.getRight();
+      if (step && term && term.isVariable()) {
+        var wff = step.wff;
+        var path = wff.prettyPathTo(term);
+        var ancestors = wff.ancestors(path);
+        var conjunction;
+        var i;
+        // Find the innermost conjunction containing the term, then
+        // the innermost non-conjunction containing that.
+        for (i = ancestors.length - 1; i >= 0; --i) {
+          var node = ancestors[i];
+          if (node.isCall2('&')) {
+            conjunction = node;
+          } else if (conjunction) {
+            break;
+          }
+        }
         var vname = term.name;
         var terms = new Toy.TermSet();
         function add(term) {
           terms.add(term);
         }
-        var conjuncts = main.scanConjuncts(add);
+        var conjuncts = conjunction.scanConjuncts(add);
         if (terms.size() > 1) {
           function check(eqn) {
             if (eqn.isCall2('=') && eqn.getLeft().isVariable() &&
