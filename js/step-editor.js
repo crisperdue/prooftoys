@@ -870,7 +870,8 @@ function acceptsSelection(step, ruleName) {
  * Produces a rule menu entry from a ruleName, with "axiom"
  * potentially shortened to "xiom".  Result is currently text, but may
  * become HTML in the future.  Called with a step if there is a
- * selection, and with the selected term if a term is selected.
+ * selection, and with the selected term if a term is selected.  The
+ * step and term are of the rendered type.
  *
  * This is expected to return either a falsy value (including the
  * empty string), indicating the rule will not be offered, or a string
