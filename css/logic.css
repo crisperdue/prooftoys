@@ -715,10 +715,25 @@ span.stepRef {
   font-size: 120%;
 }
 
-.rules-header {
+/* Main node for the rule selector, contains the rulesContainer. */
+.ruleSelector {
+    position: relative;
+}
+
+/* Contains the rest of the rule selector, positioned absolute
+   in an effort to avoid troubling the repaint process, flexboxes
+   in particular.
+ */
+.rulesContainer {
+    position: absolute;
+}
+
+/* Heading display for the rule selector. */
+.rulesHeader {
   padding-left: 4px;
   font-weight: bold;
 }
+
 
 /* Text used as a hint, as in a text field */
 .hinted {
