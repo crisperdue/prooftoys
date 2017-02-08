@@ -972,14 +972,12 @@ BasicRuleSelector.prototype.fadeToggle = function(visible) {
  */
 BasicRuleSelector.prototype.update = function() {
   var self = this;
-  self.$node.fadeOut(0);
-  self.$node.empty();
-  self.$node.fadeIn();
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
   self.stepEditor.$proofErrors.hide();
-  $header = $('<div class=rules-header/>');
-  self.$node.append($header);
+  var $container = $('<div class=rulesContainer>');
+  var $header = $('<div class=rulesHeader/>');
+  $container.append($header);
   var step = this.stepEditor.proofDisplay.selection;
   var term = step && step.selection;
   // Map from rule display text to rule name.
@@ -1030,12 +1028,14 @@ BasicRuleSelector.prototype.update = function() {
     byDisplay[display] = 'fact ' + text;
   });
   displayTexts.sort(function(a, b) { return a.localeCompare(b); });
+  var items = [];
   displayTexts.forEach(function(display) {
       var $item = $('<div class="ruleItem noselect"/>');
-      self.$node.append($item);
       $item.html(display);
+      items.push($item);
       $item.data('ruleName', byDisplay[display]);
     });
+  $container.append(items);
   self.ruleName = '';
   // TODO: Generate smarter messages for rules that work without a UI
   //   selection (most theorems and theorem generators).
@@ -1047,6 +1047,10 @@ BasicRuleSelector.prototype.update = function() {
                      : 'No actions available for the selection in this mode.')
                   : ('Select an expression with a click. ' +
                      'Checkbox selects the step.')));
+  self.$node.fadeOut(0);
+  self.$node.empty();
+  self.$node.append($container);
+  self.$node.fadeIn();
 };
 
 /**
