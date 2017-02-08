@@ -751,8 +751,10 @@ ProofDisplay.prototype.removeStep = function(step) {
   var self = this;
   var index = self.steps.indexOf(step);
   var followers = self.steps.slice(index + 1);
+  var top = $(window).scrollTop();
   self.removeStepAndFollowing(step);
   followers.forEach(@{s. self.addStep(s.original)});
+  $(window).scrollTop(top);
 };
 
 /**

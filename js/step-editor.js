@@ -1,4 +1,4 @@
-// Copyright 2011 - 2016 Crispin Perdue.
+// Copyright 2011 - 2017 Crispin Perdue.
 // All rights reserved.
 
 // Set everything up immediately on load, avoiding changes to
@@ -491,6 +491,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     //   proof display to trigger another event after the step is
     //   successfully rendered, triggering auto-simplification.
     try {
+      var top = $(window).scrollTop();
       this.proofDisplay.addStep(result);
     } catch(error) {
       this._setBusy(false);
@@ -514,12 +515,15 @@ StepEditor.prototype._tryRule = function(rule, args) {
                           : trial);
         self._setBusy(false);
         var steps = Toy.unrenderedDeps(simplified);
+        var top2 = $(window).scrollTop();
         steps.forEach(function(step) {
             self.proofDisplay.addStep(step);
           });
+        checkTop(top2);
       });
   }
   this.focus();
+  checkTop(top);
 };
 
 /**
@@ -1062,6 +1066,28 @@ BasicRuleSelector.prototype.focus = function() {
   // window.setTimeout(function() { $node.focus(); }, 0);
 };
 
+/**
+ * Ensures that the page's scrollTop (pageYOffset) remains at the
+ * level given by its argument, recorded previously.  This helps work
+ * around undesirable and weird scrolling induced by inserting or
+ * deleting flexbox nodes in the DOM.  There is also one similar
+ * workaround in rendering.js.
+ */
+function checkTop(oldTop) {
+  function reset() {
+    var top = $(window).scrollTop();
+    if (top !== oldTop) {
+      /*
+      console.log(Toy.format('Resetting scrolltop from {1} to {2} at {3}.',
+                             top, oldTop, new Date().toISOString()));
+      */
+      $(window).scrollTop(oldTop);
+    }
+  }
+  reset();
+  // Uncomment this to reset again a little bit later.
+  // window.setTimeout(reset, 100);
+}
 
 //// INITIALIZATION
 
