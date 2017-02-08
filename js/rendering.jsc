@@ -282,7 +282,7 @@ function ProofEditor() {
   var stepEditor = new Toy.StepEditor(this);
   self.stepEditor = stepEditor;
 
-  clearProof.on('click', function() {@mainDisplay.setSteps([]); });
+  clearProof.on('click', function() { self.clear(); });
   // Step editor has state controlling whether to show all rules.
   self.$rulesMode.on('change', function(event) {
       stepEditor.showRuleType = this.value;
@@ -312,7 +312,6 @@ function ProofEditor() {
   // If the proof has changed, save its state soon.
   this._refresher = new Toy.Refresher(function() {
       self._updateGivens();
-      self._updateGivenVars();
       self.saveState();
       // Set (or clear) the message in the $status box.
       var steps = self.proofDisplay.steps;
@@ -379,6 +378,16 @@ function ProofEditor() {
 }
 
 /**
+ * Empties the proof and problem statement for a fresh start.
+ */
+ProofEditor.prototype.clear = function() {
+  this.stepEditor.showRules = [];
+  this.stepEditor.reset();
+  this.proofDisplay.setSteps([]);
+  this._explicitGivens = false;
+};
+
+/**
  * Define the "givens" property as a virtual property.  Setting it has
  * the side effect of modify the "givenVars" property as well, which
  * should be treated as readonly.  If not set explicitly through the
@@ -391,10 +400,14 @@ Object.defineProperty(ProofEditor.prototype, "givens", {
              (!this._explicitGivens && this._givens.size() == 0),
              'Givens are already set');
       this._explicitGivens = true;
+      var wff;
       for (var i = 0; i < g.length; i++) {
         var g1 = Toy.termify(g[i]);
         this._givens.add(g1);
-        this.addStep(Toy.rules.given(g1));
+        wff = (wff ? Toy.infixCall(wff, '&', g1) : g1);
+      }
+      if (wff) {
+        this.addStep(Toy.rules.given(wff));
       }
       this._updateGivenVars();
     }
@@ -402,19 +415,26 @@ Object.defineProperty(ProofEditor.prototype, "givens", {
 
 /**
  * Recompute the problem givens.  Does nothing for "canned" problems
- * where the givens are stated explicitly in advance.
+ * where the givens are stated explicitly in advance.  Only the first
+ * use of rules.given applies.
+ * TODO: Handle multiple steps with rule "given" more gracefully.
  */
 ProofEditor.prototype._updateGivens = function() {
   var self = this;
   if (self._explicitGivens) {
     return;
   }
+  var steps = self.proofDisplay.steps;
   self._givens.clear();
-  self.proofDisplay.steps.forEach(function(step) {
-      if (step.ruleName === 'given') {
-        self._givens.add(step.wff.getMain().getRight());
-      }
-    })
+  function add(given) { self._givens.add(given); }
+  for (var i = 0; i < steps.length; i++) {
+    var step = steps[i];
+    if (step.ruleName === 'given') {
+      step.wff.getMain().getRight().scanConjuncts(add);
+      break;
+    }
+  }
+  self._updateGivenVars();
 };
 
 /**
