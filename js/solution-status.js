@@ -469,11 +469,19 @@ var methods = {
         var solutions = status.solutions;
         var messages = [];
         var nonempties = 0;
+        // Count of the number of full solutions found.
+        var fullCount = 0;
         for (var i = 0; i < solutions.length; i++) {
           var sol = solutions[i];
           var msg = this.messageForSolution(step, sol);
           messages.push(msg);
           if (msg) { nonempties++; }
+          if (msg.match(/&check;/)) {
+            fullCount++;
+          }
+        }
+        if (fullCount == solutions.length) {
+          return '&check; Problem solved.';
         }
         var multiple = nonempties > 1;
         var results = [];
@@ -548,6 +556,7 @@ var methods = {
       }
     }
     if (fullySolvedCount == varsList.length) {
+      // The &check; is matched against a regex in progressMessage.
       results.push('&check; A full solution.');
     } else if (unsolved.length) {
       results.push('Needs to solve for ' + unsolved.join(', '));
@@ -555,7 +564,6 @@ var methods = {
     return results.join('\n');
   }
 };
-
 $.extend(ProofEditor.prototype, methods);
 
 /**
@@ -569,17 +577,15 @@ function messageForName(name, info) {
   if (name in rhsVars) {
     // Not solved, do not comment.
   } else if (isEmpty(rhsVars)) {
+    // The "Solves for \w*" part is matched against a regex
+    // in messageForSolution.
     msg = format('Solves for {1}', name);
     if (!isLowestTerms(info.eqn.getMain().getRight())) {
       msg += ', but needs simplification';
     }
   } else {
-    var names = [];
-    for (var rhsName in rhsVars) {
-      names.push(rhsName);
-    }
     msg = format('Solves for {1} in terms of {2}',
-                 name, names.join(', '));
+                 name, Object.keys(rhsVars).sort().join(', '));
   }
   return msg;
 }
