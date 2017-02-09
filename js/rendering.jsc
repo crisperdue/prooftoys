@@ -319,7 +319,7 @@ function ProofEditor() {
       var len = steps.length;
       if (len) {
         var step = steps[len - 1];
-        var message = self.solutionMessage(step);
+        var message = self.progressMessage(step);
         $status.empty();
         $status.append(message);
         $status.toggle(!!message);
@@ -2508,7 +2508,7 @@ function fillHoverInfoBox(proofEditor, step) {
     var info = {asmSteps: []};
     var copy = step.original.copyToRender();
     copy.annotateWithTypes();
-    var message = proofEditor ? proofEditor.solutionMessage(step) : '';
+    var message = proofEditor ? proofEditor.progressMessage(step) : '';
     var $msgs = $('<div class=pre>').append(message);
     $box.append(copy.wff.render(info, 0), $msgs);
   }

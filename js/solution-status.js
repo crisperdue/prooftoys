@@ -443,10 +443,10 @@ var methods = {
   },
 
   /**
-   * Solution status message for the entire step, could be multiple
+   * Solution progress message for the entire step, could be multiple
    * messages in case of multiple solutions.
    */
-  solutionMessage: function(step) {
+  progressMessage: function(step) {
     var status = this.solutionStatus(step);
     if (status == true) {
       return 'You have found a solution';
