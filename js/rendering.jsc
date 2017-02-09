@@ -986,7 +986,7 @@ ProofDisplay.prototype.renderStep = function(step) {
   // itself a flex box with (vertically) centered items, and it does
   // not align vertically with its sibling unless this is also a flex
   // box also with centered children.
-  var $step = $('<div class=flexBox>');
+  var $step = $('<div class=stepAndControls>');
   $proofStep.append($step);
   // If editable, add deleter.
   if (self.isEditable()) {

@@ -409,6 +409,12 @@ span#leftNav {
     align-items: center;
 }
 
+.stepAndControls {
+    display: flex;
+    align-items: center;
+    min-width: 40%
+}
+
 /* Handy for making elements display as flexboxes. */
 .flexBox {
     display: flex;
