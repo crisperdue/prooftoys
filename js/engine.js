@@ -683,11 +683,11 @@ var ruleInfo = {
   // Consider a term that we may wish to rewrite.  Functionally
   // the same as eqSelf, but display is handled specially.
   consider: {
-    action: function(term) {
-      term = termify(term);
-      if (term.isCall2('=')) {
-        // TODO: More generally, if the term is known to have a boolean value
-        // use equiv.
+    action: function(term_arg) {
+      term = termify(term_arg);
+      var copy = term.copyForRendering(null);
+      copy.annotateWithTypes();
+      if (copy.isBoolean()) {
         var step = rules.equivSelf(term);
       } else {
         var step = rules.eqSelf(term);
