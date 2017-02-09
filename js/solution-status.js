@@ -463,7 +463,7 @@ var methods = {
         if (status.givens.superset(this.givens)) {
           return 'This is one solution to the problem';
         } else {
-          return ('This is one solution of ' + termSetList(status.givens));
+          return ('This is one solution of ' + status.givens);
         }
       } else if (type === 'equiv' || type === 'tentative') {
         var solutions = status.solutions;
@@ -540,7 +540,7 @@ var methods = {
       var msg = messagesByName[name];
       if (msg) {
         results.push(msg);
-        if (msg.match('Solves for [^,]*$')) {
+        if (msg.match(/Solves for \w*$/)) {
           fullySolvedCount++;
         }
       } else {
