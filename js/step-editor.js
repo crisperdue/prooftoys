@@ -93,11 +93,8 @@ function StepEditor(proofEditor) {
   // Make this available to all inner functions.
   var self = this;
 
-  // TODO: Eliminate the "proofEditor" property and make cleaner separation
-  //   between StepEditor (StepBuilder?) and its proof display as indicated
-  //   in other TODOs.  The step editor still needs to refer to the steps
-  //   in the proofDisplay, though it could/should be separated from all other
-  //   aspects.
+  // TODO: Reconsider the distinction and the relationship between the
+  // StepEditor and ProofEditor.
   self._proofEditor = proofEditor;
   self.proofDisplay = proofEditor.proofDisplay;
   self.lastRuleTime = 0;
@@ -873,24 +870,24 @@ function acceptsSelection(step, ruleName) {
 /**
  * Produces a rule menu entry from a ruleName, with "axiom"
  * potentially shortened to "xiom".  Result is currently text, but may
- * become HTML in the future.  Called with a step if there is a
- * selection, and with the selected term if a term is selected.  The
- * step and term are of the rendered type.
+ * become HTML in the future.  Called with a (rendered) step if there
+ * is a selection, the selected term if a term is selected, and the
+ * ProofEditor in which the menu is to exist.
  *
  * This is expected to return either a falsy value (including the
  * empty string), indicating the rule will not be offered, or a string
  * with the menu text, or an array of strings, indicating multiple
  * menu items for this rule with the possibly selected step and term.
  *
- * If given, the term argument can be formatted using {term} in the
- * rule's "menu" format string.
+ * If there is a selected term, it can be formatted using {term} in
+ * the rule's "menu" format string.
  */
-function ruleMenuText(ruleName, step, term) {
+function ruleMenuText(ruleName, step, term, proofEditor) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (info.menuGen) {
     var gen = info.menuGen;
-    return gen(ruleName, step, term)
+    return gen(ruleName, step, term, proofEditor);
   }
   if (Toy.isEmpty(info.inputs)) {
     // It is an axiom or theorem with no inputs.
@@ -989,7 +986,8 @@ BasicRuleSelector.prototype.update = function() {
   var displayTexts = [];
   self.stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var text = ruleMenuText(ruleName, step, term);
+      var text = ruleMenuText(ruleName, step, term,
+                              self.stepEditor._proofEditor);
       if (Array.isArray(text)) {
         text.forEach(function(msg) {
             displayText.push(msg);
@@ -1036,8 +1034,8 @@ BasicRuleSelector.prototype.update = function() {
   displayTexts.forEach(function(display) {
       var $item = $('<div class="ruleItem noselect"/>');
       $item.html(display);
-      items.push($item);
       $item.data('ruleName', byDisplay[display]);
+      items.push($item);
     });
   $container.append(items);
   self.ruleName = '';
