@@ -442,6 +442,10 @@ var methods = {
     }
   },
 
+  /**
+   * Solution status message for the entire step, could be multiple
+   * messages in case of multiple solutions.
+   */
   solutionMessage: function(step) {
     var status = this.solutionStatus(step);
     if (status == true) {
@@ -450,16 +454,10 @@ var methods = {
                status === 'noGivens' ||
                status == null) {
       return '';
-    } else if (status.extras) {
     } else {
       var type = status.type;
-      function termSetList(terms) {
-        var a = [];
-        terms.each(function (a) { extras.push(a.toUnicode()); });
-        return extras.join(', ');
-      }
       if (type === 'extras') {
-        var asms = termSetList(status.extras);
+        var asms = status.extras.values().map(x => x.toUnicode()).join(', ');
         return ('Caution: step has extra assumptions: ' + asms);
       } else if (type === 'confirmation') {
         if (status.givens.superset(this.givens)) {
@@ -468,51 +466,123 @@ var methods = {
           return ('This is one solution of ' + termSetList(status.givens));
         }
       } else if (type === 'equiv' || type === 'tentative') {
-        var format = Toy.format;
-        var isEmpty = Toy.isEmpty;
         var solutions = status.solutions;
-        var msgs = [];
+        var messages = [];
+        var nonempties = 0;
         for (var i = 0; i < solutions.length; i++) {
           var sol = solutions[i];
-          if (sol.eqns.length === 0) {
+          var msg = this.messageForSolution(step, sol);
+          messages.push(msg);
+          if (msg) { nonempties++; }
+        }
+        var multiple = nonempties > 1;
+        var results = [];
+        for (var i = 0; i < messages.length; i++) {
+          var msg = messages[i];
+          if (msg === '') {
             continue;
           }
-          var overages = sol.overages;
-          if (isEmpty(overages)) {
-            var byVar = sol.byVar;
-            for (var name in byVar) {
-              var rhsVars = byVar[name].using;
-              if (name in rhsVars) {
-                // Not a solution, do not comment.
-              } else if (isEmpty(rhsVars)) {
-                var msg = format('&check; Solves for {1}', name);
-                if (!isLowestTerms(byVar[name].eqn.getMain().getRight())) {
-                  msg += ', but needs simplification';
-                }
-                msgs.push(msg);
-              } else {
-                var names = [];
-                for (var rhsName in rhsVars) {
-                  names.push(rhsName);
-                }
-                msgs.push(format('&check; Solves for {1} in terms of {2}',
-                                 name, names.join(', ')));
-              }
-            }
+          if (multiple) {
+            msg = 'Solution = ' + (i + 1) + ':\n' + msg;
           }
+          results.push(msg);
         }
-        if (msgs.length) {
-          if (type === 'tentative') {
-            msgs.unshift('Tentatively ');
-          }
-        }
-        return msgs.join('\n');
+        return results.join('\n\n');
       }
     }
+  },
+
+  /**
+   * Message for one of the status.solutions objects for a step.
+   */
+  messageForSolution: function(step, sol) {
+    var self = this;
+    var isEmpty = Toy.isEmpty;
+    var format = Toy.format;
+    if (sol.eqns.length === 0) {
+      return '';
+    }
+    var overages = sol.overages;
+    if (!isEmpty(overages)) {
+      var overNames = Object.getOwnPropertyNames(overages);
+      var has = (overNames.length == 1 ? 'has' : 'have');
+      var names = overNames.join(', ');
+      return format('{1} {2} multiple possibly contradictory solutions.',
+                    names, has);
+    }
+    // Message for each name, keyed by name, only if message is
+    // non-empty.
+    var messagesByName = {};
+    var byVar = sol.byVar;
+    for (var name in byVar) {
+      var msg = messageForName(name, byVar[name]);
+      if (msg) {
+        messagesByName[name] = msg;
+      }
+    }
+    if (Toy.isEmpty(messagesByName)) {
+      // No message at all if nothing here resembling a solution.
+      return '';
+    }
+    // Sorted array of "given" variable names.
+    var varsList = Object.getOwnPropertyNames(this.givenVars).sort();
+    // Array of messages.
+    var results = [];
+    if (type === 'tentative') {
+      results.push('Tentatively ');
+    }
+    // Array of problem variable names not solved at all.
+    var unsolved = []
+    // Count of variables fully solved for.
+    var fullySolvedCount = 0;
+    for (i = 0; i < varsList.length; i++) {
+      var name = varsList[i];
+      var msg = messagesByName[name];
+      if (msg) {
+        results.push(msg);
+        if (msg.match('Solves for [^,]*$')) {
+          fullySolvedCount++;
+        }
+      } else {
+        unsolved.push(name);
+      }
+    }
+    if (fullySolvedCount == varsList.length) {
+      results.push('&check; A full solution.');
+    } else if (unsolved.length) {
+      results.push('Needs to solve for ' + unsolved.join(', '));
+    }
+    return results.join('\n');
   }
 };
 
 $.extend(ProofEditor.prototype, methods);
+
+/**
+ * Returns a string with message in a solution for the name, possibly
+ * empty string.  Here info is the byVar information for the name.
+ */
+function messageForName(name, info) {
+  var format = Toy.format;
+  var rhsVars = info.using;
+  var msg = '';
+  if (name in rhsVars) {
+    // Not solved, do not comment.
+  } else if (isEmpty(rhsVars)) {
+    msg = format('Solves for {1}', name);
+    if (!isLowestTerms(info.eqn.getMain().getRight())) {
+      msg += ', but needs simplification';
+    }
+  } else {
+    var names = [];
+    for (var rhsName in rhsVars) {
+      names.push(rhsName);
+    }
+    msg = format('Solves for {1} in terms of {2}',
+                 name, names.join(', '));
+  }
+  return msg;
+}
 
 // For testing:
 Toy._eqnStatus = eqnStatus;
