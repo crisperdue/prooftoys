@@ -445,6 +445,8 @@ var methods = {
   /**
    * Solution progress message for the entire step, could be multiple
    * messages in case of multiple solutions.
+   * TODO: Handle cases where the solution part is "F".
+   * TODO: Consider how to handle underdetermined problems.
    */
   progressMessage: function(step) {
     var status = this.solutionStatus(step);
