@@ -2686,6 +2686,9 @@ var ruleInfo = {
             break;
           }
         }
+        if (!conjunction) {
+          return null;
+        }
         var vname = term.name;
         var terms = new Toy.TermSet();
         function add(term) {
