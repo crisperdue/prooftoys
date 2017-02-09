@@ -212,9 +212,9 @@ var nextProofEditorId = 1;
  * proofDisplay: ProofDisplay for the proof being edited.
  * containerNode: jQuery object for outermost DOM node for the display.
  * stepEditor: StepEditor for the proof being edited.
- * givens: boolean terms defining the problem, often equations (not steps).
- *   Should only be set once, before adding any steps.  Set this to an
- *   array of formulas, and read it as a TermSet.
+ * givens: array of boolean terms defining the problem, often
+ *   equations (not steps).  Should only be set when the proof is
+ *   empty.  Read it as a TermSet.
  * givenVars: object/set keyed by names of variables free in the givens;
  *   read-only.
  * solutions: If any of these expressions (or strings) is an alphaMatch
@@ -226,7 +226,6 @@ var nextProofEditorId = 1;
 function ProofEditor() {
   var self = this;
   self._givens = new TermSet();
-  self._explicitGivens = false;
   self.givenVars = {};
   self.solutions = [];
   self.standardSolution = true;
@@ -384,7 +383,6 @@ ProofEditor.prototype.clear = function() {
   this.stepEditor.showRules = [];
   this.stepEditor.reset();
   this.proofDisplay.setSteps([]);
-  this._explicitGivens = false;
 };
 
 /**
@@ -396,10 +394,7 @@ ProofEditor.prototype.clear = function() {
 Object.defineProperty(ProofEditor.prototype, "givens", {
     get: function() { return this._givens; },
     set: function(g) {
-      assert(this.proofDisplay.steps.length == 0 ||
-             (!this._explicitGivens && this._givens.size() == 0),
-             'Givens are already set');
-      this._explicitGivens = true;
+      assert(this.proofDisplay.steps.length == 0, 'Proof is not empty');
       var wff;
       for (var i = 0; i < g.length; i++) {
         var g1 = Toy.termify(g[i]);
@@ -414,24 +409,18 @@ Object.defineProperty(ProofEditor.prototype, "givens", {
   });
 
 /**
- * Recompute the problem givens.  Does nothing for "canned" problems
- * where the givens are stated explicitly in advance.  Only the first
- * use of rules.given applies.
- * TODO: Handle multiple steps with rule "given" more gracefully.
+ * Recompute the problem givens from the first proof step
+ * if its rule name is "given".
  */
 ProofEditor.prototype._updateGivens = function() {
   var self = this;
-  if (self._explicitGivens) {
-    return;
-  }
   var steps = self.proofDisplay.steps;
   self._givens.clear();
   function add(given) { self._givens.add(given); }
-  for (var i = 0; i < steps.length; i++) {
-    var step = steps[i];
+  if (steps.length > 0) {
+    var step = steps[0];
     if (step.ruleName === 'given') {
       step.wff.getMain().getRight().scanConjuncts(add);
-      break;
     }
   }
   self._updateGivenVars();
@@ -618,6 +607,8 @@ function ProofDisplay(properties) {
  */
 ProofDisplay.prototype.proofChanged = function() {
   this.proofEditor && this.proofEditor._refresher.activate();
+  // This next only needed on account of rules.given as of 02/2017.
+  this.proofEditor && this.proofEditor.stepEditor.ruleSelector.refresh();
 };
 
 /**
