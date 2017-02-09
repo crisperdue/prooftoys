@@ -703,6 +703,8 @@ var ruleInfo = {
   },
 
   // Like "consider", but for formulas (boolean-valued terms)
+  // Special case: this is only offerable if there are no steps
+  // already in a proof.
   given: {
     action: function(term) {
       term = termify(term);
@@ -711,10 +713,15 @@ var ruleInfo = {
     },
     inputs: {term: 1},
     form: 'Formula to take as given: <input name=term>',
-    menu: 'statement to take as given',
+    menuGen: function(ruleName, step, term, proofEditor) {
+      // This rule is only available if the proof is currently empty.
+      return (proofEditor.proofDisplay.steps.length == 0
+              ? 'problem to solve (givens)'
+              : null);
+    },
     tooltip: ('statement to take as given'),
     description: 'given',
-    labels: 'basic'
+    labels: 'algebra basic'
   },
 
   // Similar to "consider", but uses a selected term.
