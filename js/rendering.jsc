@@ -1015,13 +1015,14 @@ ProofDisplay.prototype.renderStep = function(step) {
   // previous step if preferred.
   step.asmSteps = Toy.assumptionsBefore(step);
   var $wff = $(renderWff(step));
-  // Find exprs that are not fullExpr, but also not T or F or
-  // similar with "special classes".  This code may be a bit
-  // simplistic in the longer run.
+  // Find exprs that have no other classes, such as fullExpr.
   var $exprs = $wff.find('[class=expr]');
-  // Remove them from the DOM so flex layout can work better.
-  // TODO: Make a more permanent fix, one that for example does
-  //   not attach abandoned DOM nodes to parts of rendered steps.
+  // Remove them from the DOM, so flex layout can work better, mainly
+  // so binary operators are nested the same as both their left and
+  // right operands.
+  // TODO: Make a more permanent fix, one that for example does not
+  //   work by postprocessing or result in attachment of abandoned DOM
+  //   nodes to parts of rendered steps.
   $exprs.replaceWith(function() { return $(this).contents(); });
   $stepAndNum.append($wff);
   $proofStep.find('.stepInfo').html(formattedStepInfo(step));
@@ -1406,6 +1407,8 @@ function specialClasses(name) {
     return ['logicAnd'];
   case '|':
     return ['logicOr'];
+  case '==':
+    return ['equiv'];
   default:
     return [];
   }
@@ -1471,7 +1474,7 @@ Atom.prototype.render = function(info, minPower, isFn) {
   if (!isFn && this.isOperator()) {
     name = '(' + name + ')';
   }
-  specialClasses(this.name).forEach(function(cl) { $expr.addClass(cl); });
+  specialClasses(this.pname).forEach(function(cl) { $expr.addClass(cl); });
   $expr.html(name);
   return $expr;
 };

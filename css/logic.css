@@ -559,7 +559,9 @@ span#leftNav {
 }
 
 /* Expression in a proof step display, and step numbers */
-.proofStep .expr, span.stepNumber, span.stepReference {
+/* The .fullExpr here would be .expr if we wanted to highlight
+   all expr nodes. */
+.proofStep .fullExpr, span.stepNumber, span.stepReference {
   border-style: solid;
   border-width: 1px;
   border-color: transparent;
@@ -690,7 +692,13 @@ span.stepRef {
 
 .expr .logicAnd, .expr .logicOr {
     font-size: 80%;
+    color: gray;
 }
+
+.expr.equiv {
+    margin: 0 5px;
+}
+
 
 /* Proof step editor */
 
