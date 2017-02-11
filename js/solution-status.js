@@ -374,7 +374,10 @@ var methods = {
       // At most one full solution is present in this format, possibly
       // just a solution for one variable.
       // TODO: Consider extending this code to handle LHS disjunctions,
-      // thus multiple solutions in one step; looks easy to implement.
+      //   thus multiple solutions in one step; looks easy to implement.
+      // TODO: Handle the case where there are no solutions because
+      //   the "solutions part" is F (false).  This means there are no
+      //   solutions.
       if (solsInfo.length == 0) { return null; }
       var solInfo = solsInfo[0];
       var overages = solInfo.overages;
