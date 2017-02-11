@@ -450,6 +450,7 @@ var methods = {
   progressMessage: function(step) {
     var status = this.solutionStatus(step);
     if (status == true) {
+      // This is the meaning of this status.
       return 'You have found a solution';
     } else if (status === 'noStandard' ||
                status === 'noGivens' ||
@@ -466,6 +467,11 @@ var methods = {
         }
       } else if (type === 'equiv' || type === 'tentative') {
         var solutions = status.solutions;
+        if (solutions.length == 1 && solutions[0].others.has(Toy.parse('F'))) {
+          // If there was just one "solution" with one of the "others"
+          // being "F", we have shown there is no solution.
+          return '&check; You have shown there is no solution.';
+        }
         var messages = [];
         // Count of non-empty messages to report.
         var nonempties = 0;
