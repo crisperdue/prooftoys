@@ -398,25 +398,20 @@ var methods = {
       var tcInfo = info.tcInfo;
       var tcGivens = tcInfo ? tcInfo.givens : new TermSet();
       var tcOthers = tcInfo ? tcInfo.others : new TermSet();
+      // If an extra assumption is present, we may not want to show
+      // this step as progress toward a solution.  Although the extra
+      // assumption might not have been used to derive the step's
+      // conclusion or that it is consistent with the givens, most
+      // likely any tentative solution would be spurious.
+      // TODO: Figure out reasonable ways to distinguish between
+      //   arbitrary extra assumptions and necessary ones such as
+      //   division by nonzero.
       var allOthers = new TermSet();
       // eslint-disable-next-line no-inner-declarations
       function add(value) { allOthers.add(value); }
       givsInfo.others.each(add);
       tcOthers.each(add);
 
-      // If an extra assumption is present, we do not show this step as
-      // progress toward a solution.  Although the extra assumption
-      // might not have been used to derive the step's conclusion or
-      // that it is consistent with the givens, most likely any
-      // tentative solution would be spurious.
-      if (allOthers.size()) {
-        // Something like this.
-        result = {
-          type: 'extras',
-          extras: allOthers
-        };
-        return result;
-      }
       var isConditional = (structure == 'tentative' ||
                            structure == 'equiv' && tcGivens.size());
       var givensPresent = new TermSet().addAll(givsInfo.givens).addAll(tcGivens);
@@ -436,7 +431,8 @@ var methods = {
       result = {
         type: isConditional ? 'tentative' : 'equiv',
         solutions: solsInfo,
-        absentGivens: absentGivens
+        absentGivens: absentGivens,
+        extras: allOthers
       };
       return result;
     }
@@ -458,10 +454,8 @@ var methods = {
       return '';
     } else {
       var type = status.type;
-      if (type === 'extras') {
-        var asms = status.extras.values().map(x => x.toUnicode()).join(', ');
-        return ('Caution: step has extra assumptions: ' + asms);
-      } else if (type === 'confirmation') {
+      if (type === 'confirmation') {
+        // TODO: Consider if extras should be reported here.
         if (status.givens.superset(this.givens)) {
           return 'This is one solution to the problem';
         } else {
@@ -470,6 +464,7 @@ var methods = {
       } else if (type === 'equiv' || type === 'tentative') {
         var solutions = status.solutions;
         var messages = [];
+        // Count of non-empty messages to report.
         var nonempties = 0;
         // Count of the number of full solutions found.
         var fullCount = 0;
@@ -478,15 +473,28 @@ var methods = {
           var msg = this.messageForSolution(step, sol);
           messages.push(msg);
           if (msg) { nonempties++; }
+          // Heuristic to detect a "full" solution.
           if (msg.match(/&check;/)) {
             fullCount++;
           }
         }
+        var extrasMessage = '';
+        if (status.extras.size()) {
+          var asms = status.extras.values().map(x => x.toUnicode()).join(', ');
+          extrasMessage = 'Caution: step has extra assumptions: ' + asms;
+        }
         if (fullCount == solutions.length) {
-          return '&check; Problem solved.';
+          if (extrasMessage) {
+            return ['Problem appears to be solved.', extrasMessage];
+          } else {
+            return '&check; Problem solved.';
+          }
         }
         var multiple = nonempties > 1;
         var results = [];
+        if (extrasMessage) {
+          results.push(extrasMessage);
+        }
         for (var i = 0; i < messages.length; i++) {
           var msg = messages[i];
           if (msg === '') {
