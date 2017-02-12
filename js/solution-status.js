@@ -288,7 +288,7 @@ var methods = {
   // tentative: truthy if the format is conditions => solutions or
   //   conditions1 => (conditions2 == solutions).  Type conditions
   //   do not count as conditions in this case, only explicit (normally
-  //   equational conditions.  In this case any solutions found must
+  //   equational) conditions.  In this case any solutions found must
   //   be tested to see if they satisfy the givens.
   //
   // confirmation: truthy if the format is solutions => conditions.  In this
@@ -318,8 +318,8 @@ var methods = {
    * extras: TermSet of those extra assumptions
    *
    * Otherwise in case of these forms, an object with properties:
-   * type: 'equiv' if truly an equivalence (no givens with type conds),
-   *   otherwise 'tentative'.
+   * type: 'equiv' if truly an equivalence (no givens among the type
+   *   conds), otherwise 'tentative'.
    * solutions: array of solution status objects.  In this context the
    *   "byVar" property is typically the one of interest, and "overages"
    *   should be checked.
@@ -454,8 +454,13 @@ var methods = {
       return 'You have found a solution';
     } else if (status === 'noStandard' ||
                status === 'noGivens' ||
-               status == null) {
-      return '';
+               status == null ||
+               // No message if the step has none of the givens as an
+               // assumption.  Most likely it is some general fact not
+               // directly part of progress toward the solution.
+               (status.absentGivens &&
+                status.absentGivens.size() == this.givens.size())) {
+      return null;
     } else {
       var type = status.type;
       if (type === 'confirmation') {
@@ -494,7 +499,8 @@ var methods = {
         }
         if (fullCount == solutions.length) {
           if (extrasMessage) {
-            return ['Problem appears to be solved.', extrasMessage];
+            return ['Otherwise the problem appears to be solved.',
+                    extrasMessage];
           } else {
             return '&check; Problem solved.';
           }
