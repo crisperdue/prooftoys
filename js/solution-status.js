@@ -508,6 +508,8 @@ var methods = {
         var multiple = nonempties > 1;
         var results = [];
         if (extrasMessage) {
+          // TODO: Consider whether to report this message if there
+          //   are no others to report.
           results.push(extrasMessage);
         }
         for (var i = 0; i < messages.length; i++) {
