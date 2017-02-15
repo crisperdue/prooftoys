@@ -1732,10 +1732,6 @@ var testCase = {
     assertEqual('((T = x) = x)', rules.tIsXIsX());
   },
 
-  testR5230TF: function() {
-    assertEqual('((T = F) = F)', Toy.rules.r5230TF());
-  },
-
   testR5230FT_alternate: function() {
     assertEqual('((F = T) = F)', Toy.rules.r5230FT_alternate());
   },

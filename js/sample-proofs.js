@@ -333,11 +333,7 @@ $(function() {
 
     r5227: {},
 
-    r5230TF: {},
-    
-    r5230FT: {},
-    
-    r5230FTBook: {},
+    r5230FTBook_almost: {},
 
     r5230FT_alternate: {},
     

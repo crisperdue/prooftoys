@@ -1242,11 +1242,13 @@ var ruleInfo = {
 
   //// Now onward to proving a few of the usual truth table facts.
 
+  // TODO: Prove 5229, then finish proving r5230FTBook_almost from it.
+
   // Prove [F = T] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
   //
   // (Or r5230TF, see the alternate proof further below.)
-  r5230FT: {
+  r5230FT_bogus: {
     statement: '(F == T) == F',
     proof: function() {
       var step1 = rules.axiomPNeqNotP();
@@ -1259,8 +1261,9 @@ var ruleInfo = {
     tooltip: ('[F = T] = F')
   },
 
-  // Bookish: (F = T) = F
-  r5230FTBook: {
+  // Bookish: (F = T) = F.
+  // TODO: Prove 5229 then complete this.
+  r5230FTBook_almost: {
     statement: '(F == T) == F',
     proof: function() {
       var step1 = rules.axiom2();
@@ -1288,20 +1291,20 @@ var ruleInfo = {
 
   // Prove [T = F] = F.  Number reflects dependencies in the book
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
-  r5230TF: {
+  r5230TF_bogus: {
     statement: '(T == F) == F',
     proof: function() {
       var step1 = rules.axiomPNeqNotP();
       var step2 = rules.instForall(step1, T);
       var step3 = rules.useDefinition(step2, '/fn');
       var step4 = rules.useDefinition(step3, '/arg/right/fn');
-      var step5 = rules.r(rules.r5230FT(), step4, '/right/right');
+      var step5 = rules.r(rules.r5230FT_alternate(), step4, '/right/right');
       return rules.eqnSwap(step5);
     },
     tooltip: ('[T = F] = F')
   },
 
-  // Prove [F = T] = F from r5230TF.
+  // Prove [F = T] = F from r5217.
   //
   // Note that the proof of r5230TF depends on r5230FT; but if
   // something like r5230TF were an axiom, then this would make sense.
@@ -1339,7 +1342,7 @@ var ruleInfo = {
       var step21 = rules.definition('=>', T);
       var step22 = rules.applyBoth(step21, F);
       var step23 = rules.apply(step22, '/right');
-      var step24 = rules.r5230TF();
+      var step24 = rules.r5217Book();
       var step25 = rules.rRight(step24, step23, '/right');
       // Now use the cases rule:
       var step5 = rules.equationCases(step25, step14, x);
@@ -1460,6 +1463,7 @@ var ruleInfo = {
   // r5217 is the same as r5230TF.
   // [T = F] = F
   r5217Book: {
+    statement: 'T == F == F',
     proof: function() {
       var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
       var step2a = rules.apply(step1, '/left/left');
@@ -1845,7 +1849,7 @@ var ruleInfo = {
     proof: function() {
       var step1 = rules.eqSelf(call('not', T));
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
-      return rules.r(rules.theorem('r5230FT'), step2, '/right');
+      return rules.r(rules.theorem('r5230FT_alternate'), step2, '/right');
     },
     tooltip: ('[not T] = F')
   },
