@@ -2870,10 +2870,6 @@ var ruleInfo = {
                h_c_arg);
       }
 
-      // From here on work with implications directly, not hypotheses.
-      h_equation = rules.asImplication(h_equation);
-      h_c = rules.asImplication(h_c);
-
       // equation is A = B
       var equation = h_equation.getRight();
       var c = h_c.getRight();
@@ -2888,7 +2884,7 @@ var ruleInfo = {
       var boundNames = c.boundNames(cpath);
       Toy.removeExcept(boundNames, equation.freeVars());
       var hypFreeNames = h.freeVars();
-      var step1 = h_equation;
+      var step1 = rules.asImplication(h_equation);
       for (var name in boundNames) {
         // Check the variable is not free in any hypotheses.
         // TODO: Do appropriate checking in 5235 and impliesForall as well.
@@ -2900,7 +2896,7 @@ var ruleInfo = {
       var step3 = rules.makeConjunction(step1, step2);
       var tautology = rules.tautology('(p => q) & (q => r) => (p => r)');
       var step4 = rules.forwardChain(step3, tautology);
-      var step5 = rules.makeConjunction(h_c, step4);
+      var step5 = rules.makeConjunction(rules.asImplication(h_c), step4);
       var taut2 = rules.tautology('(h => p) & (h => (p = q)) => (h => q)');
       var result = rules.forwardChain(step5, taut2);
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
