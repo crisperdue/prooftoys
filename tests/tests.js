@@ -2452,6 +2452,7 @@ var testCase = {
     var stats = ed.solutionStatus(step);
     var expected = {
       type: "equiv",
+      extras: [],
       solutions: [{
           byVar: {
             x: {
@@ -2472,6 +2473,7 @@ var testCase = {
     stats = ed.solutionStatus(step);
     expected = {
       type: "equiv",
+      extras: [],
       solutions: [{
           byVar: {
             x: {
@@ -2495,6 +2497,7 @@ var testCase = {
     stats = ed.solutionStatus(step);
     expected = {
       type: "equiv",
+      extras: [],
       solutions: [{
           byVar: {
             x: {
@@ -2540,6 +2543,7 @@ var testCase = {
     logDeeply(stats);
     expected = {
       absentGivens: [],
+      extras: [],
       solutions: [{
           byVar: {
             y: {
