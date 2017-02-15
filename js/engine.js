@@ -2294,8 +2294,8 @@ var ruleInfo = {
   //
   // Handles hypotheses.  Note: with hyps, has two levels of =>.
   //
-  // TODO: hyps -- can be emulated with addForall and moving A
-  //   into/out of assumptions.
+  // TODO: hyps -- can be emulated with toForall and moving A into/out
+  //   of assumptions.
   toImplyForall: {
     action: function(v, h_a_b) {
       v = varify(v);
@@ -2522,8 +2522,10 @@ var ruleInfo = {
     tooltip: ('Analog to Rule R, expressed as an implication.')
   },
 
-  // Uses r5239 to prove that C & (a = b) == D & (a = b) where D is
-  // like C, but with an occurrence of "a" replaced.
+  // Uses r5239 to prove C & (forall)(a = b) == D & (forall)(a = b)
+  // where D is like C, but with an occurrence of "a" replaced, and
+  // "(forall)" here indicates potential universal quantification of
+  // some variables of (a = b).
   r5239a: {
     action: function r5239a(base, path, equation) {
       var step = rules.r5239(base, path, equation);
