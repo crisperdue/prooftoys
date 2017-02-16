@@ -626,22 +626,6 @@ var ruleInfo = {
     description: 'Andrews axiom of description'
   },
 
-  // Generalizes axiomTIsNotF.
-  // Rewrite to (forall {p. F = [p = [not p]]}), instantiate, expand "not":
-  // 1. F = [F = [F = F]], so 2. F = [F = T] (r5230FT)
-  // 3. F = [T = [F = T]], so F = [T = F] (r5230TF) by
-  // Rule R on r5230FT and step 3.
-  axiomPNeqNotP: {
-    action: function() {
-      var result = rules.assert('forall {p. not (p = not p)}');
-      return result.justify('axiomPNeqNotP');
-    },
-    inputs: {},
-    form: '',
-    description: 'boolean axiom',
-    tooltip: ('')
-  },
-
   // Definition of F, for book-style proofs.
   defFFromBook: function() {
     return rules.assert('F = forall {x. x}').justify('defFFromBook');
@@ -1248,19 +1232,6 @@ var ruleInfo = {
   // proof, but this proof needs only simple rules and axiomPNeqNotP.
   //
   // (Or r5230TF, see the alternate proof further below.)
-  r5230FT_bogus: {
-    statement: '(F == T) == F',
-    proof: function() {
-      var step1 = rules.axiomPNeqNotP();
-      var step2 = rules.instForall(step1, F);
-      var step3 = rules.useDefinition(step2, '/fn');
-      var step4 = rules.useDefinition(step3, '/arg/right/fn');
-      var step5 = rules.rRight(rules.eqT(F), step4, '/right/right');
-      return rules.eqnSwap(step5);
-    },
-    tooltip: ('[F = T] = F')
-  },
-
   // Bookish: (F = T) = F.
   // TODO: Prove 5229 then complete this.
   r5230FTBook_almost: {
@@ -1287,21 +1258,6 @@ var ruleInfo = {
       var step15 = rules.instEqn(step14, Toy.parse('F = T'), 'x')
       return rules.r(step15, step13, '/right');
     }
-  },
-
-  // Prove [T = F] = F.  Number reflects dependencies in the book
-  // proof, but this proof needs only simple rules and axiomPNeqNotP.
-  r5230TF_bogus: {
-    statement: '(T == F) == F',
-    proof: function() {
-      var step1 = rules.axiomPNeqNotP();
-      var step2 = rules.instForall(step1, T);
-      var step3 = rules.useDefinition(step2, '/fn');
-      var step4 = rules.useDefinition(step3, '/arg/right/fn');
-      var step5 = rules.r(rules.r5230FT_alternate(), step4, '/right/right');
-      return rules.eqnSwap(step5);
-    },
-    tooltip: ('[T = F] = F')
   },
 
   // Prove [F = T] = F from r5217.
