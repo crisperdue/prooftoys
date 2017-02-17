@@ -1321,8 +1321,8 @@ function renderWff(step) {
 /**
  * Renders the given expr of the given step with left elision if the
  * step has left elision, returning the DOM node result, otherwise
- * just returns a falsy value.  The result is a plain "expr" node
- * with the ellipsis display and the RHS of the equality.
+ * just returns a falsy value.  The result is a "fullExpr" node with
+ * the ellipsis display, the operator, and the RHS of the equality.
  *
  * TODO: Consider changing this and its uses to precompute any special
  * rendering.
@@ -1330,7 +1330,7 @@ function renderWff(step) {
 function renderWithElision(expr, step) {
   var info = {asmSteps: []};
   if (expr.isCall2('=') && step.hasLeftElision) {
-    var $expr = exprJq();
+    var $expr = exprJq(true);
     expr.node = dom($expr);
     $expr.append('<span class=ellipsis>&hellip;</span> ',
                  // Display equivalences as equivs.  This eventually
