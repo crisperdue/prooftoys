@@ -109,7 +109,7 @@ code {
 
 .ellipsis {
   color: #aaa;
-  margin-right: 3px;
+  margin: 0px 5px;
 }
 
 /* For rule menu descriptions */
