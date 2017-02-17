@@ -1923,7 +1923,7 @@ var testCase = {
     assertEqual(parse(fml).toString(), result);
   },
 
-  testReplace: function() {
+  testRplace: function() {
     var rules = Toy.rules;
     var result = rules.rplace(rules.assert('x > 0 => (x = (abs x))'),
                                rules.assert('x > 0 => ((x + x) > x)'),
