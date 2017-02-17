@@ -1218,7 +1218,9 @@ function prevRenderedStep(step) {
 
 /**
  * Returns true iff policy is to elide the LHS of the given rendered
- * step.
+ * step.  Current policy calls for elision if this step and the
+ * preceding rendered step are both equations, possibly conditional
+ * equations.
  *
  * TODO: Consider how to show the whole step in case the _next_ step
  * modifies the LHS of this one, e.g. a rewrite using the LHS.  That
@@ -1319,7 +1321,8 @@ function renderWff(step) {
 /**
  * Renders the given expr of the given step with left elision if the
  * step has left elision, returning the DOM node result, otherwise
- * just returns a falsy value.
+ * just returns a falsy value.  The result is a plain "expr" node
+ * with the ellipsis display and the RHS of the equality.
  *
  * TODO: Consider changing this and its uses to precompute any special
  * rendering.

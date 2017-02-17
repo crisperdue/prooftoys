@@ -4678,7 +4678,9 @@ function proofOf(step) {
 /**
  * Returns an array of steps preceding this one that establish
  * assumptions that later steps might not display, currently "assume"
- * and "consider" steps; in the future perhaps other similar kinds.
+ * and "replaceIsEquiv" steps; in the future perhaps other similar
+ * kinds.  The result is selected steps from the result of
+ * proofOf(step), based on the ruleName for the step.
  */
 function assumptionsBefore(step_arg) {
   var steps = [];
