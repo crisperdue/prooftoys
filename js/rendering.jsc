@@ -1217,14 +1217,15 @@ function prevRenderedStep(step) {
 }
 
 /**
- * Returns true iff policy is to elide the LHS of the given rendered
- * step.  Current policy calls for elision if this step and the
- * preceding rendered step are both equations, possibly conditional
- * equations.
+ * Returns true iff policy is to elide the LHS of the formula of the
+ * given rendered step.  Current policy calls for elision if the main
+ * parts of the given rendered step and the preceding rendered step
+ * are both equations, possibly conditional equations, with the same
+ * LHS.
  *
- * TODO: Consider how to show the whole step in case the _next_ step
- * modifies the LHS of this one, e.g. a rewrite using the LHS.  That
- * would allow the target site to be highlighted.
+ * TODO: Consider the possibility of showing the whole step in case
+ * the _next_ step modifies the LHS of this one, e.g. a rewrite using
+ * the LHS.  That would allow the target site to be highlighted.
  */
 function wantLeftElision(step) {
   if (step.ruleName == 'display' || step.ruleName == 'asImplication') {
