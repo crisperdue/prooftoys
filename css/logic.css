@@ -338,9 +338,9 @@ span#leftNav {
   font-style: italic;
   color: blue;
   cursor: pointer;
-  background-color: #ddf;
-  padding: 0px 6px;
-  border: 1px solid #aaf;
+  background-color: #eef;
+  padding: 1px 6px;
+  border: 1px solid #bbf;
   font-size: 90%;
 }
 
@@ -356,9 +356,9 @@ span#leftNav {
   font-style: italic;
   color: blue;
   cursor: pointer;
-  background-color: #ddf;
-  padding: 0px 6px;
-  border: 1px solid #aaf;
+  background-color: #eef;
+  padding: 1px 6px;
+  border: 1px solid #bbf;
   font-size: 90%;
 }
 
