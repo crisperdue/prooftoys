@@ -2831,6 +2831,10 @@ var ruleInfo = {
                h_c_arg);
       }
 
+      // From here on work with implications directly, not hypotheses.
+      h_equation = rules.asImplication(h_equation);
+      h_c = rules.asImplication(h_c);
+
       // equation is A = B
       var equation = h_equation.getRight();
       var c = h_c.getRight();
@@ -2845,30 +2849,24 @@ var ruleInfo = {
       var boundNames = c.boundNames(cpath);
       Toy.removeExcept(boundNames, equation.freeVars());
       var hypFreeNames = h.freeVars();
-      // Put quantifiers into h_equation.
-      var step1 = rules.asImplication(h_equation);
+      var step1 = h_equation;
       for (var name in boundNames) {
         // Check the variable is not free in any hypotheses.
         // TODO: Do appropriate checking in 5235 and impliesForall as well.
         assert(!hypFreeNames.hasOwnProperty(name),
                'Conflicting binding of {1} in {2}', name, c, h_c_arg);
-        step1 = rules.toImplyForall(name, step1);
+        var step1 = rules.toImplyForall(name, step1);
       }
-      // Put h_equation back in hypothesis form.
-      // step1 = rules.asHypotheses(step1);
-      // This next block is the core of the rule.
-      // Show that C & (forall)(a = b) == D & (forall)(a = b).
-      var step2 = rules.r5239a(c, cpath, equation);
-      // Combine h_c and (forall)(a = b) into a conjunction.
-      // Do not use makeConjunction as it relies on this rule.
-      var step3 = rules.and(h_c, step1);
-      var taut1 = rules.tautology('(h => a) & (h => b) => (h => a & b)');
-      var conj = rules.forwardChain(step3, taut1)
-      // Replace C with D in conj.
-      var step4 = rules.r(step2, conj, '/right');
-      // Retain just D as the consequent.
-      var taut = rules.tautology('(h => a & b) => (h => a)');
-      var result = rules.forwardChain(step4, taut).then('asHypotheses');
+      var step2 = rules.r5239(c, cpath, equation);
+      var step3 = rules.makeConjunction(step1, step2);
+      var tautology = rules.tautology('(p => q) & (q => r) => (p => r)');
+      var step4 = rules.forwardChain(step3, tautology);
+      var step5 = rules.makeConjunction(h_c, step4);
+      var taut2 = rules.tautology('(h => p) & (h => (p = q)) => (h => q)');
+      var result = rules.forwardChain(step5, taut2);
+      if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
+        result = rules.asHypotheses(result);
+      }
       if (result.matches(h_c_arg)) {
         // Help the UI eliminate steps that re no-ops.
         // TODO: Consider if this can be better optimized.
