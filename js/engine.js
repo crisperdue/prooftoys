@@ -2789,6 +2789,8 @@ var ruleInfo = {
       if (h_c.hasHyps && path.isLeft()) {
         // We are replacing an assumption with something equal
         // that may add its own assumptions.
+        // TODO: This branch is only used in rules.simplifyAssumptions.
+        //   Move this code to there.
         var step1 = rules.asImplication(h_c)
           // TODO: Make this block of code continue to do something
           // reasonable after removing .hasHyps checks.  At least

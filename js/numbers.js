@@ -982,6 +982,8 @@ var simplifiersInfo = {
           // to the result, as in case of recip or nonzero assumptions.
           // Result with added assumptions is still equivalent to the original
           // provided that all new ones are duplicates of existing.
+          // TODO: Use rules.r with tautologies instead of rules.rplace, and
+          //   remove the special-purpose code put there to handle this case.
           step = rules.rplace(simpleFact, step, path);
         }
       }
