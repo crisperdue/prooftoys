@@ -2852,8 +2852,8 @@ var ruleInfo = {
       }
 
       // From here on work with implications directly, not hypotheses.
-      h_equation = rules.asImplication(h_equation);
-      h_c = rules.asImplication(h_c);
+      // h_equation = rules.asImplication(h_equation);
+      // h_c = rules.asImplication(h_c);
 
       // equation is A = B
       var equation = h_equation.getRight();
@@ -2878,12 +2878,10 @@ var ruleInfo = {
         var step1 = rules.toImplyForall(name, step1);
       }
       var step2 = rules.r5239(c, cpath, equation);
-      var step3 = rules.makeConjunction(step1, step2);
       var tautology = rules.tautology('(p => q) & (q => r) => (p => r)');
-      var step4 = rules.forwardChain(step3, tautology);
-      var step5 = rules.makeConjunction(h_c, step4);
-      var taut2 = rules.tautology('(h => p) & (h => (p = q)) => (h => q)');
-      var result = rules.forwardChain(step5, taut2);
+      var step4 = rules.p2(step1, step2, tautology);
+      var taut2 = rules.tautology('(h => p) & (h => (p == q)) => (h => q)');
+      var result = rules.p2(h_c, step4, taut2);
       if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
         result = rules.asHypotheses(result);
       }
