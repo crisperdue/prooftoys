@@ -2065,8 +2065,7 @@ var ruleInfo = {
   and: {
     action: function(step1, step2) {
       return (rules.replaceT(rules.tautology('T & T'), '/right', step2)
-              .then('replaceT', '/left',
-                    rules.asImplication(step1))
+              .then('replaceT', '/left', step1)
               .justify('and', arguments, arguments));
     },
     inputs: {step: [1, 2]},
