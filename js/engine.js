@@ -2866,6 +2866,15 @@ var ruleInfo = {
       var cpath = (h_equation_arg.hasHyps && !h_c_arg.hasHyps
                    ? path
                    : path.getRight());
+
+      // TODO: In case C is an equivalence, apply 5239 to the equation
+      //   and the RHS of C (which is q below), shortening cpath one
+      //   more step, giving [h => (q == r)], where r is the result of
+      //   replacing the target part of the RHS of C using the
+      //   equation.  Apply this tautology to get the desired result:
+      //
+      //   (h => (p == q)) & (h => (q == r)) => (h => (p == r))
+
       var boundNames = c.boundNames(cpath);
       Toy.removeExcept(boundNames, equation.freeVars());
       var hypFreeNames = h.freeVars();
