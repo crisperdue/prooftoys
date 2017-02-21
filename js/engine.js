@@ -1511,12 +1511,13 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
-  // Replace an occurrence of T at the given path of the given step.
+  // Replace an occurrence of T at the given path of the given step
+  // with the entirety of another step, ignore any hypotheses there.
   replaceT: {
     action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
-      var tIsA = rules.toTIsA(step2);	// TODO: Ignore hyps in step2.
+      var tIsA = rules.toTIsA(rules.asImplication(step2));
       return (rules.r(tIsA, step, path)
               .justify('replaceT', arguments, [step, step2]));
     },
