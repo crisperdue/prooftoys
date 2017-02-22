@@ -120,7 +120,7 @@ Toy.insertSlogans = function() {
     // Set up periodic update of the quote display.
     function scanQuotes() {
       if (Toy.quotes.length) {
-        setInterval(nextQuote, 10 * 1000);
+        setInterval(nextQuote, 30 * 1000);
       }
     }
     // Load the quotes file.
