@@ -176,6 +176,13 @@ var testCase = {
     assertEqual(2, gcd(-16, -6));
   },
 
+  testGetPrimes: function() {
+    var primes = Toy.getPrimes()
+    assertEqual(2, primes[0]);
+    assertEqual(3432, primes.length);
+    assertEqual(31991, primes[primes.length - 1]);
+  },
+
   testArrayEquals: function() {
     var a1 = [{b: 2}, 'asdf', 13];
     assert(Array.equals(a1, a1));

@@ -131,6 +131,39 @@ function lcm(x, y) {
   return Math.abs(x * y) / gcd(x, y);
 }
 
+// Array of prime numbers up to 32000.
+var primes = [];
+
+/**
+ * Returns an array of all prime numbers up to 32000.  This is enough
+ * to ensure factoring of any number less than 10**9.
+ */
+function getPrimes() {
+  "use strict";
+  if (primes.length === 0) {
+    primes.push(2);
+    // Limit of 32000 guarantees ability to factor any natural number
+    // less than 1e9 (a billion).
+    for (var x = 3; x < 32000; x += 2) {
+      var isPrime = true;
+      var max = Math.sqrt(x);
+      for (var i = 0; ; i++) {
+        var y = primes[i];
+        if (y > max) {
+          break;
+        }
+        if (x % y === 0) {
+          isPrime = false;
+          break;
+        }
+      }
+      if (isPrime) {
+        primes.push(x);
+      }
+    }
+  }
+  return primes;
+}
  
 ////
 //// Assertions, error reporting and debugging
@@ -998,6 +1031,7 @@ Toy.getOwn = getOwn;
 Toy.MAX_INT = MAX_INT;
 Toy.gcd = gcd;
 Toy.lcm = lcm;
+Toy.getPrimes = getPrimes;
 
 Toy.err = err;
 Toy.check = check;
