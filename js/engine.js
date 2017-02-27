@@ -2851,10 +2851,6 @@ var ruleInfo = {
                h_c_arg);
       }
 
-      // From here on work with implications directly, not hypotheses.
-      // h_equation = rules.asImplication(h_equation);
-      // h_c = rules.asImplication(h_c);
-
       // equation is A = B
       var equation = h_equation.getRight();
       var c = h_c.getRight();
@@ -2878,12 +2874,16 @@ var ruleInfo = {
       var boundNames = c.boundNames(cpath);
       Toy.removeExcept(boundNames, equation.freeVars());
       var hypFreeNames = h.freeVars();
-      var step1 = h_equation;
+      var step1 = rules.asImplication(h_equation);
       for (var name in boundNames) {
         // Check the variable is not free in any hypotheses.
         // TODO: Do appropriate checking in 5235 and impliesForall as well.
         assert(!hypFreeNames.hasOwnProperty(name),
                'Conflicting binding of {1} in {2}', name, c, h_c_arg);
+        // Make sure each name bound in the target site is wrapped in a
+        // "forall" in the equation.
+        // TODO: If use of hasHyps goes away, this can become an appropriate
+        //   use of toForall.
         var step1 = rules.toImplyForall(name, step1);
       }
       var step2 = rules.r5239(c, cpath, equation);
