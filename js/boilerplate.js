@@ -286,6 +286,9 @@ Toy.escapeHtml = function(str) {
 function str(x) {
   if (x.toString == Object.prototype.toString) {
     return Toy.debugString(x);
+  } else if (x instanceof Toy.Expr) {
+    var prefix = (x.hasHyps ? '|' : '') + (x.wff ? '|-' : '');
+    return (prefix ? prefix + ' ' + x.toString() : x.toString());
   } else {
     return x.toString();
   }
