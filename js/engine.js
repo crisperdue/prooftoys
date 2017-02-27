@@ -1,4 +1,4 @@
-// Copyright 2011 - 2016 Crispin Perdue.
+// Copyright 2011 - 2017 Crispin Perdue.
 // All rights reserved.
 //
 // This file implements the logic, its axioms, basic theorems,

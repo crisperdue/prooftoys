@@ -1,4 +1,4 @@
-// Copyright 2011 - 2016 Crispin Perdue.
+// Copyright 2011 - 2017 Crispin Perdue.
 // All rights reserved.
 
 // Set all of this up immediately upon load, but avoiding changes
@@ -1653,16 +1653,19 @@ var realAxiomFacts = {
     }
   },
   'a + 0 = a': {
+    simplifier: true,
     proof: function() {
       return rules.axiomPlusZero();
     }
   },
   'a * 1 = a': {
+    simplifier: true,
     proof: function() {
       return rules.axiomTimesOne();
     }
   },
   'a * 0 = 0': {
+    simplifier: true,
     proof: function() {
       return rules.axiomTimesZero();
     }
@@ -1689,6 +1692,7 @@ var basicFacts = {
   },
 
   'a + neg a = 0': {
+    simplifier: true,
     proof: function() {
       return rules.eqSelf('a + neg a')
       .rewrite('/main/right/left', 'a = 1 * a')
@@ -1869,6 +1873,7 @@ var identityFacts = {
    },
   */
   '0 + a = a': {
+    simplifier: true,
     proof: function() {
       var step1 = rules.axiomPlusZero();
       var step2 = rules.rewrite(step1, '/main/left',
@@ -1877,6 +1882,7 @@ var identityFacts = {
     }
   },
   'a - 0 = a': {
+    simplifier: true,
     proof: function() {
       var step1 = (rules.consider('a - 0')
                    .then('apply', '/main/right')
@@ -1894,18 +1900,19 @@ var identityFacts = {
     }
   },
   // Times one
-  'a = 1 * a': {
+  '1 * a = a': {
+    simplifier: true,
     proof: function() {
       var step1 = rules.axiomTimesOne();
-      var step2 = rules.eqnSwap(step1);
-      var step3 = rules.rewrite(step2, '/main/right',
-                                        'a * b = b * a');
-      return step3;
+      var step2 = rules.rewrite(step1, '/main/left',
+                                'a * b = b * a');
+      return step2;
     }
   },
 
   // Zero times
   '0 * a = 0': {
+    simplifier: true,
     proof: function() {
       return rules.axiomTimesZero()
       .rewrite('/main/left', 'a * b = b * a');
@@ -2291,6 +2298,7 @@ var subtractionFacts = {
 
   // Simplification
   'a - a = 0': {
+    simplifier: true,
     proof: function() {
       return (rules.eqSelf('a - a')
               .then('apply', '/right')
@@ -2454,6 +2462,7 @@ var divisionFacts = {
     }
   },
   'a != 0 => a / a = 1': {
+    simplifier: true,
     proof: function() {
       var fact = rules.fact('a / b = a * recip b').then('eqnSwap');
       return (rules.fact('a != 0 => a * recip a = 1')
