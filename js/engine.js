@@ -3904,29 +3904,44 @@ var logicFacts = {
  * proof function to the internal database of provable facts.
  */
 function addFactsMap(map) {
-  for (synopsis in map) {
+  for (var synopsis in map) {
     var info = map[synopsis];
+    info.synopsis = synopsis;
     assert(info.proof, 'Need proof: property for {1}', synopsis);
-    addFact(synopsis, info.proof);
+    addFact(info);
     if (!info.noSwap) {
-      addSwappedFact(synopsis);
+      addSwappedFact(info);
     }
   }
 }
 
 /**
- * Add the "converse" of an equational fact unless it is already
- * recorded.
+ * Add the "converse" of an equational fact if it is not already
+ * recorded.  Determines the statement from the info's synopsis and
+ * commute's its equation if any.  If it is not an equation, does
+ * nothing.
+ *
+ * TODO: Consider using info other than the synopsis as appropriate.
  */  
-function addSwappedFact(synopsis) {
-  var swapped = Toy.normalReturn(Toy.commuteEqn, getStatement(synopsis));
-  if (swapped) {
+function addSwappedFact(info) {
+  var synopsis = info.synopsis;
+  var stmt = getStatement(synopsis);
+  if (stmt.isEquation()) {
+    var swapped = Toy.commuteEqn(stmt);
     if (isRecordedFact(swapped)) {
       console.log('Swapped fact ' + swapped + ' already recorded');
     } else {
-      addFact(swapped, function() {
-          return rules.fact(synopsis).then('eqnSwap');
-        });
+      function proof() {
+        return rules.fact(synopsis).then('eqnSwap');
+      }
+      var updates = {
+        goal: swapped,
+        proof: proof,
+        prover: asFactProver(proof, swapped),
+        simplifier: false
+      };
+      var info = $.extend({}, info, updates);
+      _factsMap[getStatementKey(info.goal)] = info;
     }
   }
 }
@@ -3961,19 +3976,17 @@ $(function() {
 //// FACTS
 
 /**
- * Constructs a Fact from a synopsis string and a prover, which should
- * be a function.  Internal to addFact.
+ * Constructs and returns a fact from the proof function of a fact and
+ * a goal statement for the fact.  Internal to addFact and
+ * addSwappedFact.
  */
-function Fact(synopsis, prover) {
+function asFactProver(prover, goal) {
   assert(typeof prover === 'function', 'Not a function: {1}', prover);
-  var self = this;
 
   // This function wraps around the user-supplied fact prover
   // to do the generic parts of the work.
-  function genericProver() {
+  function wrapper() {
     // If there is a substitution into the result that yields
-    // the goal, do it.
-    var goal = self.goal;
     var result = prover();
     var subst = result.alphaMatch(goal);
     if (subst) {
@@ -4008,77 +4021,94 @@ function Fact(synopsis, prover) {
       }
     }
   }
-  this.synopsis = synopsis;
-  this.goal = getStatement(synopsis);
-  this._prover = Toy.memo(genericProver);
+  return wrapper;
 }
-
-$.extend(Fact.prototype, {
-
-    // Get the proved result of the fact.
-    result: function() {
-      if (Toy.assertFacts && !this._prover.done) {
-        return rules.assert(this.goal);
-      }
-      try {
-        // _prover is memoized, so only really runs once.
-        return this._prover();
-      } catch(err) {
-        // Flag it as an error in proof execution.
-        // TODO: Currently unused, consider removing.
-        err.isProofError = true;
-        throw err;
-      }
-    }
-
-});
 
 
 // Private to addFact, getResult, and eachFact.  Maps from a string
-// "dump" of a fact to either the proved fact, or to a function to
-// prove it.
+// "dump" of a fact to fact info, consisting of:
+//
+// synopsis (optional): synopsis string
+// goal: Expr statement of the synopsis, used as lookup key.
+// prover: function intended to prove the fact.
+// proved: proved statement
 var _factsMap = {};
 
 /**
- * Adds to the facts database a formula and optionally a function to
- * prove it on demand.  The formula should be a synopsis string.
- * If the given formula is not the result of a proof, the prover
- * argument is required.  Treats any input that is an implication
- * as a statement with assumptions.
+ * Adds an entry to the facts database given information in the format
+ * of fact entries in facts maps, assuming here that the synopsis is
+ * already added to the info as a synopsis property.  Currently uses
+ * the synopsis property to generate a goal and the proof property
+ * as the prover.
+ *
+ * TODO: Extend this and/or add other functions to add facts based
+ *   on other information such as an already-proved statement.
  */
-function addFact(synopsis, prover) {
-  var goal = getStatement(synopsis);
-  var fact = new Fact(synopsis, prover);
-  _factsMap[getStatementKey(goal)] = fact;
-  return fact;
+function addFact(info) {
+  info.goal = getStatement(info.synopsis);
+  info.prover = asFactProver(info.proof, info.goal);
+  info.proved = null;
+  _factsMap[getStatementKey(info.goal)] = info;
+  return info;
 }
 
 /**
- * Accepts any argument acceptable to getStatement.  Looks up a fact
- * matching that statement, returning the proved result.  Throws an
- * exception in case of failure.
+ * Accepts a proved step or any argument acceptable to getStatement.
+ * Returns the proved step, or looks up a fact matching the statement,
+ * returning the proved result.  Throws an exception in case of
+ * failure.
  *
  * Given any form of statement argument that is not already proved,
  * this returns the same object every time the same fact is requested.
  *
- * Note that the facts database looks up facts by their "main" part,
- * ignoring any assumptions.
+ * Note that the facts database currently looks up facts by their
+ * "main" part, ignoring any assumptions.
+ *
+ * TODO: Consider renaming to something like "stepify" and using as
+ *   a conversion for inputs to steps in the vein of "termify".
  */
 function getResult(stmt) {
-  var goal = getStatement(stmt);
-  if (goal.ruleName) {
-    // Proved!
-    return goal;
+  if (Toy.isProved(stmt)) {
+    return stmt;
   }
+  var goal = getStatement(stmt);
   // Same encoding as in addFact.
-  var fact = _factsMap[getStatementKey(goal)];
-  assert(fact, 'No such fact: {1}', goal);
-  return fact.result();
+  var info = _factsMap[getStatementKey(goal)];
+  assert(info, 'No such fact: {1}', goal);
+  if (info.proved) {
+    return info.proved;
+  }
+  var prover = info.prover;
+  // Get the proved result of the fact.
+  if (Toy.assertFacts && !prover.done) {
+    return rules.assert(goal);
+  }
+  try {
+    info.proved = prover();
+    return info.proved;
+  } catch(err) {
+    // Flag it as an error in proof execution.
+    // TODO: Currently unused, consider removing.
+    err.isProofError = true;
+    throw err;
+  }
 }
 
 /**
  * Given an argument acceptable to getStatement, returns a string key
- * usable for looking up information about the fact.
+ * usable for looking up information about the fact.  If the statement
+ * is conditional, the key represents its consequent; otherwise it
+ * represents the entire statement.
+ *
+ * TODO: Rename this to indicate that it only uses the consequent in
+ *   generating the key.  Or perhaps better, move this functionality
+ *   into its uses and support storing the same fact under multiple
+ *   keys, ond based on just the consequent and another based on the
+ *   entire statement.
+ * 
+ * TODO: Make all code related to facts insensitive to choices of
+ *   variable names by normalizing names when recording and looking up
+ *   facts.
  */
 function getStatementKey(stmt) {
   return getStatement(stmt).getMain().dump();
@@ -4096,11 +4126,11 @@ function isRecordedFact(stmt) {
 
 /**
  * Returns an Expr that is the full statement of a "fact".  The input
- * can be a theorem name, an Expr, or a parseable string.  Given an
- * Expr, simply returns its input.  Given a theorem name (an
- * identifier), accesses any already-known statement of it, or proves
- * it and returns the proved result if not, remembering the proved
- * statement.
+ * can be a proved statement, a theorem name, an Expr, or a parseable
+ * string.  Given an Expr, simply returns its input.  Given a theorem
+ * name (an identifier), accesses any already-known statement of it,
+ * or proves it and returns the proved result if not, remembering the
+ * proved statement.  Given a proved statement, returns its wff.
  *
  * Treats a string as the "synopsis" of an actual statement, and
  * returns the result of parsing it with mathParse.  If the resulting
@@ -4108,7 +4138,9 @@ function isRecordedFact(stmt) {
  * treats the antecedent as assumptions.
  */
 function getStatement(fact) {
-  if (typeof fact === 'string') {
+  if (Toy.isProved(fact)) {
+    return fact.wff;
+  } else if (typeof fact === 'string') {
     if (Toy.isIdentifier(fact)) {
       // It's the name of an axiom or theorem.
       var statement = rules[fact].info.statement;
@@ -4127,6 +4159,9 @@ function getStatement(fact) {
       if (result.isCall2('=>') && result.getRight().isCall2('=')) {
         // Flag it as having assumptions, though the result is not a
         // theorem.
+        //
+        // TODO: Remove this line, which makes no sense as only steps
+        //   rightly have hyps.
         result.hasHyps = true;
       }
       return result;
@@ -4470,7 +4505,7 @@ function arrange(step, path, context, facts) {
 /**
  * Call the given function for each of the registered facts, passing
  * it the fact statement (goal) and the synopsis with which it was
- * created.
+ * created, if any.
  */
 function eachFact(fn) {
   for (var key in _factsMap) {
