@@ -1407,7 +1407,7 @@ function chainCall(operator, list, dfault) {
 
 /**
  * Commutes the left and right sides of an equation in the form
- * l = r or a => l = r.
+ * l = r or a => l = r.  Calls err if structure does not match.
  */
 function commuteEqn(eqn) {
   var subst;
