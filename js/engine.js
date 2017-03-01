@@ -113,11 +113,18 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
       prev.getLeft() !== step.getLeft() && prev.getRight() !== step.getRight()) {
     // If the step did not affect the assumptions there should be no
     // need to dedupe, and if it modified only assumptions that was
-    // probably its purpose, so don't undo it.
-    // Note that deduping amounts to normalization.
-    // Uncomment this to show where arrangeAsms is called here.
-    // console.log('arrangeAsms of', step.ruleName);
-    step = rules.arrangeAsms(step);
+    // probably its purpose, so don't undo it.  Really, the code below
+    // could just call simplifyAssumptions (which itself calls arrangeAsms),
+    // but perhaps this structure gives a patina of modularity.
+    //
+    // In practice this usually occurs as a result of instantiating one or
+    // more variables, i.e. instMultiVars, but could also be result of
+    // instantiating universal quantifier(s).
+    //
+    // TODO: Consider moving this bit of code.
+    step = (rules.simplifyAssumptions
+            ? rules.simplifyAssumptions(step)
+            : rules.arrangeAsms(step));
   }
 
   // Allocate a new object to be the new Step.

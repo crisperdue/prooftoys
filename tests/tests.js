@@ -2137,11 +2137,10 @@ var testCase = {
     var input = rules.assume('x = 2 + 2');
     var result = rules.arithmetic(input, '/right/right');
     assertEqual('(x = 4)', result.getRight());
-    input = rules.axiomReciprocal();
-    var step1 = rules.instVar(input, '2', x);
+    input = rules.assume('T == 2 != 0');
     // Apply arithmetic to the "2 != 0" part of the instantiated axiom.
     var location = '/left/right';
-    var result = rules.arithmetic(step1, location);
+    var result = rules.arithmetic(input, location);
     assertEqual('T', result.get(location));
   },
 
