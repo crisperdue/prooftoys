@@ -3942,7 +3942,7 @@ function addSwappedFact(info) {
         desimplifier: !!info.simplifier
       };
       var info = $.extend({}, info, updates);
-      _factsMap[getStatementKey(info.goal)] = info;
+      setFactInfo(info.goal, info);
     }
   }
 }
@@ -4026,7 +4026,7 @@ function asFactProver(prover, goal) {
 }
 
 
-// Private to addFact, getResult, and eachFact.  Maps from a string
+// Private to lookupFactInfo and setFactInfo.  Maps from a string
 // "dump" of a fact to fact info, consisting of:
 //
 // synopsis (optional): synopsis string
@@ -4034,6 +4034,22 @@ function asFactProver(prover, goal) {
 // prover: function intended to prove the fact.
 // proved: proved statement
 var _factsMap = {};
+
+/**
+ * Access any fact info stored for the given statement.
+ */
+function lookupFactInfo(stmt) {
+  return _factsMap[getStatementKey(stmt)];
+}
+
+/**
+ * Set fact info for the given statement.  See comments on _factsMap
+ * and fact management functions for the expectations on the info
+ * argument.
+ */
+function setFactInfo(stmt, info) {
+  _factsMap[getStatementKey(stmt)] = info;
+}
 
 /**
  * Adds an entry to the facts database given information in the format
@@ -4056,7 +4072,7 @@ function addFact(info) {
   info.goal = getStatement(info.synopsis);
   info.prover = asFactProver(info.proof, info.goal);
   info.proved = null;
-  _factsMap[getStatementKey(info.goal)] = info;
+  setFactInfo(info.goal, info);
   return info;
 }
 
@@ -4081,7 +4097,7 @@ function getResult(stmt) {
   }
   var goal = getStatement(stmt);
   // Same encoding as in addFact.
-  var info = _factsMap[getStatementKey(goal)];
+  var info = lookupFactInfo(goal);
   assert(info, 'No such fact: {1}', goal);
   if (info.proved) {
     return info.proved;
@@ -4129,7 +4145,7 @@ function getStatementKey(stmt) {
  */
 function isRecordedFact(stmt) {
   // Same encoding as in addFact.
-  return !!_factsMap[getStatementKey(stmt)];
+  return !!lookupFactInfo(stmt);
 }
 
 /**
@@ -4857,6 +4873,7 @@ Toy.getStepCounter = getStepCounter;
 
 Toy.addRule = addRule;
 Toy.addRules = addRules;
+Toy.lookupFactInfo = lookupFactInfo;
 Toy.addFact = addFact;
 Toy.addFactsMap = addFactsMap;
 Toy.isRecordedFact = isRecordedFact;
