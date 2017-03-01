@@ -864,11 +864,6 @@ var simplifiersInfo = {
         // Shortcut inline return.
         return step;
       }
-      // Flatten assumptions.  Consider putting this into arrangeAsms
-      // and moving current arrangeAsms code into a new permuteAsms.
-      while (step.getRight().isCall2('=>')) {
-        step = rules.rewriteOnly(step, '', 'a => (b => c) == (a & b => c)');
-      }
       // From a conditional a => b, prove a => (b == T), with a as
       // hypothesis.  Returns a memoized function that yields the
       // proved result.
