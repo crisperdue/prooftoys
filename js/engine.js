@@ -3938,7 +3938,8 @@ function addSwappedFact(info) {
         goal: swapped,
         proof: proof,
         prover: asFactProver(proof, swapped),
-        simplifier: false
+        simplifier: !!info.desimplifier,
+        desimplifier: !!info.simplifier
       };
       var info = $.extend({}, info, updates);
       _factsMap[getStatementKey(info.goal)] = info;
@@ -4040,6 +4041,13 @@ var _factsMap = {};
  * already added to the info as a synopsis property.  Currently uses
  * the synopsis property to generate a goal and the proof property
  * as the prover.
+ *
+ * Currently recognizes input properties as follows:
+ *
+ * synopsis: input acceptable to getStatement, usually a string.
+ * proof: function to return the proved fact, matching the synopsis.
+ * simplifier: true iff this fact is a simplifier.
+ * desimplifier: true iff this fact is the "converse" of a simplifier.
  *
  * TODO: Extend this and/or add other functions to add facts based
  *   on other information such as an already-proved statement.

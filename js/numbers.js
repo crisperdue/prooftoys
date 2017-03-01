@@ -1618,7 +1618,7 @@ var moversInfo = {
     menu: 'simplify {term}'
   },
 
-};  // End of numbersInfo.
+};  // End of simplifiersInfo.
 
 //
 // These are algebra facts.
