@@ -2463,6 +2463,26 @@ var divisionFacts = {
       return (rules.fact('a != 0 => a * recip a = 1')
               .rewrite('/main/left', fact));
     }
+  },
+  'b != 0 & c != 0 => a / b = (a * c) / (b * c)': {
+    proof: function() {
+      var fact = rules.fact('1 = (a / a)').then('instVar', 'c', 'a');
+      return (rules.consider('a / b')
+              .rewrite('/right', 'a = (a * 1)')
+              .rewrite('/right/right/right', fact)
+              .rewrite('/right/right', 'c != 0 => a / c * b = a * b / c')
+              .rewrite('/right/right/left', 'c != 0 => a * (b / c) = a * b / c')
+              .rewrite('/right/right', 'b != 0 & c != 0 => a / b / c = a / (b * c)')
+              .rewrite('/right/right/right', 'a * b = b * a'))
+    }
+  },
+  'b != 0 & c != 0 => a / b = (a / c) / (b / c)': {
+    proof: function() {
+      return (rules.fact('a / b = (a * c) / (b * c)')
+              .then('instVar', 'recip c', 'c')
+              .rewrite('/right/right/left', 'a * recip b = a / b')
+              .rewrite('/right/right/right', 'a * (recip b) = a / b'));
+    }
   }
 };
 $.extend(algebraFacts, divisionFacts);
