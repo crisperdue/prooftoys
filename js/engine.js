@@ -3200,7 +3200,9 @@ var ruleInfo = {
         var step1 = rules.arrangeTerm(step, path1.concat('/right'));
         var step2 = rules.arrangeTerm(step1, path1.concat('/left'));
         return step2;
-      } else {
+      } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
+        // The left part may already be transformed by simplifyAssumptions,
+        // and the target may not even exist.
         var simp1 = rules.autoSimplifySite(step,
                                            // Site of the rewrite.
                                            step.ruleArgs[1],
