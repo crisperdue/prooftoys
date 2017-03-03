@@ -176,6 +176,22 @@ var testCase = {
     assertEqual(2, gcd(-16, -6));
   },
 
+  testDiv: function() {
+    var div = Toy.div;
+    assertEqual(2, div(8, 3));
+    assertEqual(-3, div(8, -3));
+    assertEqual(-3, div(-8, 3));
+    assertEqual(2, div(-8, -3));
+  },
+
+  testMod: function() {
+    var mod = Toy.mod;
+    assertEqual(2, mod(8, 3));
+    assertEqual(-1, mod(8, -3));
+    assertEqual(1, mod(-8, 3));
+    assertEqual(-2, mod(-8, -3));
+  },
+
   testGetPrimes: function() {
     var primes = Toy.getPrimes()
     assertEqual(2, primes[0]);

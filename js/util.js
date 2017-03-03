@@ -46,6 +46,23 @@ Math.trunc = Math.trunc || function(x) {
   return x < 0 ? Math.ceil(x) : Math.floor(x);
 }
 
+/**
+ * Knuth-style div defined by the floor of the quotient.
+ * Always yields an integer.
+ */
+function div(n, divisor) {
+  return Math.floor(n / divisor);
+}
+
+/**
+ * Knuth-style modulus, where a nonzero result always has
+ * the sign of the divisor.  Obeys the rule that
+ * b * div(a, b) + mod(a, b) = a.
+ */
+function mod(n, divisor) {
+  return n - divisor * div(n, divisor);
+}
+
 var ownProperty = Object.prototype.hasOwnProperty;
 
 /**
@@ -1029,6 +1046,8 @@ Toy.getOwn = getOwn;
 // Toy.extends = extends;
 
 Toy.MAX_INT = MAX_INT;
+Toy.div = div;
+Toy.mod = mod;
 Toy.gcd = gcd;
 Toy.lcm = lcm;
 Toy.getPrimes = getPrimes;
