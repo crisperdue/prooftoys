@@ -199,6 +199,13 @@ var testCase = {
     assertEqual(31991, primes[primes.length - 1]);
   },
 
+  testNextPrimeFactor: function() {
+    var factor = Toy.nextPrimeFactor;
+    assertEqual(5, factor(55, 0));
+    assertEqual(11, factor(55, 5));
+    assertEqual(undefined, factor(55, 11));
+  },
+
   testArrayEquals: function() {
     var a1 = [{b: 2}, 'asdf', 13];
     assert(Array.equals(a1, a1));

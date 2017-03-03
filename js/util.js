@@ -182,6 +182,21 @@ function getPrimes() {
   return primes;
 }
  
+/**
+ * Returns the least prime number among the result of getPrimes
+ * that is greater than "last" and a factor of x.  Returns
+ * the undefined value if none is found.
+ */
+function nextPrimeFactor(x, last) {
+  var primes = getPrimes();
+  for (var i = 0; i < primes.length; i++) {
+    var p = primes[i];
+    if (p > last && mod(x, p) === 0) {
+      return p;
+    }
+  }
+}
+
 ////
 //// Assertions, error reporting and debugging
 ////
@@ -1051,6 +1066,7 @@ Toy.mod = mod;
 Toy.gcd = gcd;
 Toy.lcm = lcm;
 Toy.getPrimes = getPrimes;
+Toy.nextPrimeFactor = nextPrimeFactor;
 
 Toy.err = err;
 Toy.check = check;
