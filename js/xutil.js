@@ -1,4 +1,4 @@
-// Copyright 2011 - 2016 Crispin Perdue.
+// Copyright 2011 - 2017 Crispin Perdue.
 // All rights reserved.
 
 // Utilities for types, parsing, and definitions, building
@@ -576,6 +576,8 @@ var constantTypes = {
   '-': fun2Type(),
   '*': fun2Type(),
   '/': fun2Type(),
+  div: fun2Type(),
+  mod: fun2Type(),
   '**': fun2Type(),
   neg: funType(),
   recip: funType(),
@@ -1164,6 +1166,8 @@ var precedence = {
   '-': 30,
   '*': 40,
   '/': 40,
+  div: 40,
+  mod: 40,
   '**': 50,
   forall: unaryPower,
   exists: unaryPower,
