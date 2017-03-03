@@ -360,10 +360,10 @@ var numbersInfo = {
     }
   },
 
-  // Evaluates arithmetic expressions with operators:
-  // +, -, *, /, neg, =, !=, >, >=, <, <=, and the type operator "R".
-  // Checks that inputs are all numeric and that the result can be
-  // guaranteed to be an exact integer.
+  // Evaluates arithmetic expressions with operators: +, -, *, /, div,
+  // mod, neg, =, !=, >, >=, <, <=, and the type operator "R".  Checks
+  // that inputs are all numeric and that the result can be guaranteed
+  // to be an exact integer.
   //
   // Result is always an equation (or biconditional) with the given
   // term as the LHS.  Throws an error if it cannot obey these
@@ -389,6 +389,8 @@ var numbersInfo = {
           // so it should be distinguishable from an integer.
           check(value === Math.floor(value), 'Inexact division');
           break;
+        case 'div': value = Toy.div(left, right); break;
+        case 'mod': value = Toy.mod(left, right); break;
         case '=': value = left === right; break;
         case '!=': value = left !== right; break;
         case '>': value = left > right; break;
