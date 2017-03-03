@@ -610,6 +610,7 @@ equationOpsInfo = {
     autoSimplify: function(step) {
       return simplifyAddSubBoth(step, step.ruleArgs[1]);
     },
+    toOffer: 'return term.isCall2("=");',
     form: ('Add <input name=term> to both sides of the equation'),
     menu: 'algebra: add to both sides',
     tooltip: ('add to both sides'),
@@ -631,6 +632,7 @@ equationOpsInfo = {
     autoSimplify: function(step) {
       return simplifyAddSubBoth(step, step.ruleArgs[1]);
     },
+    toOffer: 'return term.isCall2("=");',
     form: ('Subtract <input name=term> from both sides of the equation'),
     menu: 'algebra: subtract from both sides',
     tooltip: ('subtract from both sides'),
@@ -652,6 +654,7 @@ equationOpsInfo = {
     autoSimplify: function(step) {
       return simplifyMulDivBoth(step, step.ruleArgs[1]);
     },
+    toOffer: 'return term.isCall2("=");',
     form: ('Multiply both sides of the equation by <input name=term>'),
     menu: 'algebra: multiply both sides',
     tooltip: ('multiply both sides'),
@@ -673,6 +676,7 @@ equationOpsInfo = {
     autoSimplify: function(step) {
       return simplifyMulDivBoth(step, step.ruleArgs[1]);
     },
+    toOffer: 'return term.isCall2("=");',
     form: ('Divide both sides of the equation by <input name=term>'),
     menu: 'algebra: divide both sides',
     tooltip: ('divide both sides'),
