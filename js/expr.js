@@ -501,9 +501,11 @@ Expr.prototype.freshVar = function(name) {
 
 /**
  * Returns a new expression that "concatenates" this expression with
- * zero or more expressions joined by the named operator.  A null
- * value indicates zero expressions, otherwise the expressions have
- * the form (((e1 op e2) op e3) ... ).
+ * zero or more expressions joined by the named binary operator.  This
+ * becomes the first operand of a chain of expressions connected by
+ * the operator.  A null value indicates zero expressions, otherwise
+ * the result has the form (((this op e1) op e2) ... ), where e1
+ * ... are the operands of the expr argument taken as a chain.
  */
 Expr.prototype.concat = function(expr, op) {
   if (!expr) {

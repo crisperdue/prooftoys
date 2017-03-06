@@ -117,10 +117,10 @@ Toy.extends = function(constructor, parent) {
 };
 
 /**
- * Returns the GCD of two positive integers; actually the truncation
- * of the absolute values of any two numbers, except if either
- * number's absolute value is less than 1, returns 0.  For correct
- * results supply inputs <= MAX_INT.
+ * Returns the GCD of two positive integers using Euclid's algorithm;
+ * actually the truncation of the absolute values of any two numbers,
+ * except if either number's absolute value is less than 1, returns 0.
+ * For correct results supply inputs <= MAX_INT.
  */
 function gcd(x, y) {
   var x1 = Math.trunc(Math.abs(x));
