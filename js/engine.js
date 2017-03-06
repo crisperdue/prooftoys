@@ -3996,6 +3996,12 @@ function addSwappedFact(info) {
       function proof() {
         return rules.fact(synopsis).then('eqnSwap');
       }
+      // Annotate the new goal with type info for type comparison
+      // with portions of steps in the UI.
+      //
+      // Careful: It is very doubtful whether annotated structures can be
+      // shared as part of any other steps or Exprs.
+      swapped.annotateWithTypes();
       var updates = {
         goal: swapped,
         proof: proof,
@@ -4132,6 +4138,12 @@ function setFactInfo(stmt, info) {
  */
 function addFact(info) {
   info.goal = getStatement(info.synopsis);
+  // Annotate the new goal with type info for type comparison
+  // with portions of steps in the UI.
+  //
+  // Careful: It is very doubtful whether annotated structures can be
+  // shared as part of any other steps or Exprs.
+  info.goal.annotateWithTypes();
   info.prover = asFactProver(info.proof, info.goal);
   info.proved = null;
   setFactInfo(info.goal, info);
