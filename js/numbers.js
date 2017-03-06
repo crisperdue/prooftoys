@@ -368,6 +368,9 @@ var numbersInfo = {
   // Result is always an equation (or biconditional) with the given
   // term as the LHS.  Throws an error if it cannot obey these
   // specifications.
+  //
+  // TODO: Include facts that a / b = c is false for integers
+  //   a, b, and c unless b divides a exactly.
   axiomArithmetic: {
     action: function(term) {
       if (term.isInfixCall()) {
@@ -403,8 +406,7 @@ var numbersInfo = {
         if (typeof value == 'boolean') {
           var rhs = value ? T : F;
         } else {
-          var value = Toy.checkRange(value);
-          var rhs = Toy.constify(value.toFixed(0));
+          var rhs = Toy.numify(value);
         }
         return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
@@ -415,7 +417,7 @@ var numbersInfo = {
         var arg = term.arg.getNumValue();
         if (op.name == 'neg') {
           value = -arg;
-          var rhs = Toy.constify(value.toFixed(0));
+          var rhs = Toy.numify(value);
         } else if (op.name == 'R') {
           var rhs = T;
         } else {
@@ -1108,7 +1110,7 @@ var simplifiersInfo = {
     description: 'clean up each term',
     labels: 'algebra'
   }
-};
+};  // End of simplifiersInfo.
 
 var moversInfo = {
   // Organize the factors in a term.  Processes multiplication,

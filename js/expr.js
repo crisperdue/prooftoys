@@ -2019,6 +2019,17 @@ function constify(c) {
 }
 
 /**
+ * Converts a JS number to a numeric constant, checking that it
+ * it is acceptable as a numeric constant.
+ */
+function numify(num) {
+  assert(typeof num === 'number');
+  Toy.checkRange(num);
+  assert(Math.floor(num) === num);
+  return Toy.constify(num.toFixed(0));
+}
+
+/**
  * Returns the string name given if it is not in existingNames, an
  * object/set with name strings as keys.  Otherwise returns a
  * generated name with the same "base" as the one given, and not in
@@ -2689,6 +2700,7 @@ Toy.Lambda = Lambda;
 
 Toy.varify = varify;
 Toy.constify = constify;
+Toy.numify = numify;
 Toy.isConstantName = isConstantName;
 Toy.isVariableName = isVariableName;
 Toy.isIdentifier = isIdentifier;
