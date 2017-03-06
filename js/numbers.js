@@ -1566,7 +1566,78 @@ var moversInfo = {
     menu: 'simplify {term}'
   },
 
-};  // End of simplifiersInfo.
+};  // End of moversInfo.
+
+
+var fractionsInfo = {
+
+  /**
+   * Reduces the selected fraction to lower terms using their least
+   * common divisor (via Toy.npd).  No, not the greatest common
+   * divisor, for pedagogical reasons.
+   */
+  reduceFraction: {
+    action: function(step, path) {
+      var expr = step.get(path);
+      var lv = expr.getLeft().getNumValue();
+      var rv = expr.getRight().getNumValue();
+      var divisor = Toy.npd(lv, rv, 0);
+      var fact = rules.fact('b != 0 & c != 0 => a / b = (a / c) / (b / c)');
+      var step1 = rules.instVar(fact, Toy.numify(divisor), 'c');
+      var result = rules.rewriteOnlyFrom(step, path, step1);
+      return result.justify('reduceFraction', arguments, [step]);
+    },
+    toOffer: function(step, expr) {
+      if (expr.isCall2('/')) {
+        var l = expr.getLeft();
+        var r = expr.getRight();
+        if (l.isNumeral() && r.isNumeral()) {
+          var lv = l.getNumValue();
+          var rv = r.getNumValue();
+          return Toy.npd(lv, rv, 0);
+        }
+      }
+    },
+    inputs: {site: 1},
+    form: (''),
+    menu: 'reduce fraction {term}',
+    labels: 'algebra'
+  },
+
+  /**
+   * Reduces the selected fraction to the form 1/k in the case where
+   * the numerator exactly divides the denominator.
+   */
+  reduceFraction1: {
+    action: function(step, path) {
+      var expr = step.get(path);
+      var lv = expr.getLeft().getNumValue();
+      var rv = expr.getRight().getNumValue();
+      var divisor = Math.min(lv, rv);
+      var fact = rules.fact('b != 0 & c != 0 => a / b = (a / c) / (b / c)');
+      var step1 = rules.instVar(fact, Toy.numify(divisor), 'c');
+      var result = rules.rewriteOnlyFrom(step, path, step1);
+      return result.justify('reduceFraction1', arguments, [step]);
+    },
+    toOffer: function(step, expr) {
+      if (expr.isCall2('/')) {
+        var l = expr.getLeft();
+        var r = expr.getRight();
+        if (l.isNumeral() && r.isNumeral()) {
+          var lv = l.getNumValue();
+          var rv = r.getNumValue();
+          return lv % rv === 0 || rv % lv === 0;
+        }
+      }
+    },
+    inputs: {site: 1},
+    form: (''),
+    menu: 'fully reduce {term}',
+    labels: 'algebra'
+  }
+
+};  // End fractionsInfo.
+
 
 //
 // These are algebra facts.
@@ -2550,6 +2621,7 @@ $(function() {
     Toy.addRules(equationOpsInfo);
     Toy.addRules(simplifiersInfo);
     Toy.addRules(moversInfo);
+    Toy.addRules(fractionsInfo);
     Toy.addFactsMap(algebraFacts);
 });
 
