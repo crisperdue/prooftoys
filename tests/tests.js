@@ -203,7 +203,18 @@ var testCase = {
     var factor = Toy.nextPrimeFactor;
     assertEqual(5, factor(55, 0));
     assertEqual(11, factor(55, 5));
-    assertEqual(undefined, factor(55, 11));
+    assertEqual(null, factor(55, 11));
+  },
+
+  testNpd: function() {
+    var npd = Toy.npd;
+    assertEqual(null, npd(7, 12, 0));
+    assertEqual(3, npd(30, 15, 0));
+    assertEqual(5, npd(30, 15, 3));
+    assertEqual(null, npd(30, 15, 5));
+    assertEqual(null, npd(30, 15, 15));
+    assertEqual(3, npd(15, 27, 0))
+    assertEqual(null, npd(15, 27, 3));
   },
 
   testArrayEquals: function() {

@@ -148,12 +148,41 @@ function lcm(x, y) {
   return Math.abs(x * y) / gcd(x, y);
 }
 
+/**
+ * Returns the "next prime divisor" of x and y, being the smallest
+ * prime number among the result of getPrimes that is greater than n
+ * and exactly divides both x and y.  Returns null if none is found.
+ * This provides a naive means for finding successive common divisors
+ * and eventually finding a GCD and/or reducing a fraction to lowest
+ * terms.
+ */
+function npd(x, y, n) {
+  var xFactor = nextPrimeFactor(x, n);
+  var yFactor = nextPrimeFactor(y, n);
+  // This is the largest number that need by considered as a factor
+  // of both x and y.
+  var max = Math.min(Math.abs(x), Math.abs(y));
+  while (xFactor && yFactor &&
+         xFactor <= max && yFactor <= max) {
+    if (xFactor === yFactor) {
+      return xFactor;
+    }
+    // At this point xFactor !== yFactor.
+    if (xFactor < yFactor) {
+      xFactor = nextPrimeFactor(x, xFactor);
+    } else {
+      yFactor = nextPrimeFactor(y, yFactor);
+    }
+  }
+  return null;
+}
+
 // Array of prime numbers up to 32000.
 var primes = [];
 
 /**
  * Returns an array of all prime numbers up to 32000.  This is enough
- * to ensure factoring of any number less than 10**9.
+ * to support factoring of any number less than 10**9.
  */
 function getPrimes() {
   "use strict";
@@ -183,18 +212,20 @@ function getPrimes() {
 }
  
 /**
- * Returns the least prime number among the result of getPrimes
- * that is greater than "last" and a factor of x.  Returns
- * the undefined value if none is found.
+ * Returns the least prime number among the result of getPrimes that
+ * is greater than "last" and a factor of x, possibly x itself.
+ * Returns null if there is none.
  */
 function nextPrimeFactor(x, last) {
+  var abs = Math.abs(x);
   var primes = getPrimes();
   for (var i = 0; i < primes.length; i++) {
     var p = primes[i];
-    if (p > last && mod(x, p) === 0) {
+    if (p > last && abs >= p && x % p === 0) {
       return p;
     }
   }
+  return null;
 }
 
 ////
@@ -1065,6 +1096,7 @@ Toy.div = div;
 Toy.mod = mod;
 Toy.gcd = gcd;
 Toy.lcm = lcm;
+Toy.npd = npd;
 Toy.getPrimes = getPrimes;
 Toy.nextPrimeFactor = nextPrimeFactor;
 
