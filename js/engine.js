@@ -3174,8 +3174,6 @@ var ruleInfo = {
   // this does not give access to the proof of the fact.)  This
   // simplifies assumptions including numeric type assumptions after
   // rewriting.
-  //
-  // TODO: Move to numbers.js.
   rewrite: {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
@@ -3705,6 +3703,61 @@ var ruleInfo = {
       } catch(e) {}
       return result.justify('conjunctsSimplifier', arguments);
     }
+  },
+
+  // Looks up the statement string, proving it if needed. Returns that
+  // result, justified as a "fact".  This is the way to refer to a
+  // fact in a proof, displaying it on its own proof line.
+  // Currently inline if it is a no-op.
+  // Also proves statements of tautologies and simple arithmetic facts.
+  // Removes any " = T" from boolean-valued arithmetic facts.
+  // Programmatic usage supports theorems by name, but not the UI.
+  //
+  // This is really part of the engine, but includes some
+  // functionality for numbers.
+  fact: {
+    action: function(statement) {
+      if (Toy.isProved(statement)) {
+        // It is an already proved statement.
+        return statement;
+      }
+      // Try named theorems (not available from the UI).
+      var result = Toy.getTheorem(statement);
+      if (result) {
+        return result;
+      }
+      // Try ordinary proved facts.
+      if (Toy.isRecordedFact(statement)) {
+        return Toy.getResult(statement).justify('fact', arguments);
+      }
+      // Next try arithmetic facts.
+      var stmt = Toy.getStatement(statement);
+      if (stmt.isEquation()) {
+        var result = Toy.tryArithmetic(stmt.eqnLeft());
+        if (result && result.alphaMatch(stmt)) {
+          return result;
+        }
+      } else {
+        // Relational operators can go here.
+        var result = Toy.tryArithmetic(stmt);
+        // x = T is the expected result.
+        if (result && result.matchSchema('x = T')) {
+          return rules.rewriteOnly(result, '', '(x = T) = x');
+        }
+      }
+      // Try tautologies.
+      try {
+        // Inline for tautologies.
+        return rules.tautology(statement);
+      } catch(err) {}
+      throw new Error('No such fact: ' + statement);
+    },
+    inputs: {bool: 1},
+    form: ('Look up fact <input name=bool size=40>'),
+    menu: 'look up a fact',
+    tooltip: (''),
+    description: 'fact',
+    labels: 'basic'
   },
 
   //
