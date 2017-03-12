@@ -1196,19 +1196,19 @@ ProofDisplay.prototype.renderPopups = function(step) {
 /**
  * Returns the previous rendered step, if any, which is the previous
  * step in the same ProofDisplay, otherwise the previous rendered step
- * of the controller's parent step (recursively if needed), otherwise
- * null.
+ * of the ProofDisplay's parent step (recursively if needed),
+ * otherwise null.
  */
 function prevRenderedStep(step) {
-  var controller = getProofDisplay(step);
-  if (!controller) {
+  var proofDisplay = getProofDisplay(step);
+  if (!proofDisplay) {
     return null;
   }
-  var index = controller.steps.indexOf(step);
+  var index = proofDisplay.steps.indexOf(step);
   if (index > 0) {
-    return controller.steps[index - 1];
+    return proofDisplay.steps[index - 1];
   } else {
-    var parent = controller.parentStep;
+    var parent = proofDisplay.parentStep;
     if (parent) {
       return prevRenderedStep(parent);
     }
