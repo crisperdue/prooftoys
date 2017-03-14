@@ -17,35 +17,9 @@ var format = Toy.format;
 // the step editor.  Access to nodes through their class
 // should always work in the context of the step editor's node.
 
-//
-// Each rule has a descriptor of its arguments
-// associated with its name.  The descriptors are maps from keywords
-// to argument number.  The descriptor keyword definitions are:
-//
-// step: Matches any proof step.
-// 
-// equation: Matches a proof step that is an equation.
-//
-// implication: Matches a proof step that is an implication.
-// 
-// term: Matches any term.
-//
-// reducible: Matches a call to anonymous function (lambda)
-//
-// varName: Name suitable for a variable.
-//
-// string: Arbitrary nonempty string.
-//
-// optString: Optional arbitrary string.
-//
-// site: Term in a step; the rule expects the term's step and path
-//   to the term as inputs.
-//
-// bindingSite: Matches a variable binding in a step (as in "changeVar").
-//
-
 // All types that can be entered in a form.  Omits site, bindingSite,
-// and reducible, which are currently not supported in forms.
+// and reducible, which are currently not supported in forms.  See
+// See comments for ruleInfo in engine.js for details on the types.
 var formTypes = {
   term: true,
   varName: true,

@@ -235,6 +235,18 @@ Expr.addMethods(ruleMethods);
 //   TODO: Consider checking during actual proof of the theorem.
 // inputs: map from type to argument number(s), either a single
 //   number or an array if more than one such argument.
+//   The supported types are:
+//     step: Matches any proof step.
+//     equation: Matches a proof step that is an equation.
+//     implication: Matches a proof step that is an implication.
+//     term: Matches any term.
+//     reducible: Matches a call to anonymous function (lambda)
+//     varName: Name suitable for a variable.
+//     string: Arbitrary nonempty string.
+//     optString: Optional arbitrary string.
+//     site: Term in a step; the rule expects the term's step and path
+//       to the term as inputs.
+//     bindingSite: Matches a variable binding in a step (as in "changeVar").
 // minArgs: Number of required args for the action.  Supply a
 //   value here to make trailing arguments optional in the step editor.
 // toOffer: function of step and optional term or string with
