@@ -285,7 +285,7 @@ function ProofEditor() {
   // Step editor has state controlling whether to show all rules.
   self.$rulesMode.on('change', function(event) {
       stepEditor.showRuleType = this.value;
-      stepEditor.ruleSelector.refresh();
+      stepEditor.ruleMenu.refresh();
       stepEditor.reset();
     });
   self.$rulesMode.trigger('change');
@@ -608,14 +608,14 @@ function ProofDisplay(properties) {
 ProofDisplay.prototype.proofChanged = function() {
   this.proofEditor && this.proofEditor._refresher.activate();
   // This next only needed on account of rules.given as of 02/2017.
-  this.proofEditor && this.proofEditor.stepEditor.ruleSelector.refresh();
+  this.proofEditor && this.proofEditor.stepEditor.ruleMenu.refresh();
 };
 
 /**
  * Notify that the selection has changed.
  */
 ProofDisplay.prototype.selectionChanged = function() {
-  this.proofEditor && this.proofEditor.stepEditor.ruleSelector.refresh();
+  this.proofEditor && this.proofEditor.stepEditor.ruleMenu.refresh();
 };
 
 /**

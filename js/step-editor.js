@@ -96,8 +96,8 @@ function StepEditor(proofEditor) {
   //   displayed, removing a dependency on proofDisplay.
   $(self.proofDisplay.node)
     .append($('<div class=ruleWorking/>').text('Working . . . '));
-  var widget = new BasicRuleSelector(self);
-  self.ruleSelector = widget;
+  var widget = new RuleMenu(self);
+  self.ruleMenu = widget;
   div.append(widget.$node);
              
   self.showRuleType = 'general';
@@ -135,10 +135,10 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   this.$node.toggleClass('busy', busy);
   var $working = $(this.proofDisplay.node).find('.ruleWorking');
   if (busy) {
-    // Temporarily turn on display of ruleSelector to get its offset.
-    this.ruleSelector.$node.toggle(true);
-    var offset = this.ruleSelector.$node.offset();
-    this.ruleSelector.$node.toggle(false);
+    // Temporarily turn on display of the ruleMenu to get its offset.
+    this.ruleMenu.$node.toggle(true);
+    var offset = this.ruleMenu.$node.offset();
+    this.ruleMenu.$node.toggle(false);
     // and similarly for $working to set its offset.
     $working.toggle(true);
     $working.offset({left: offset.left + 40, top: offset.top + 5});
@@ -147,7 +147,7 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   } else {
     $working.fadeOut(200, complete);
   }
-  this.ruleSelector.fadeToggle(!busy);
+  this.ruleMenu.fadeToggle(!busy);
   // Clear the form.
   // TODO: Make these actions into a function/method, see "reset".
   this.clearer.addClass('hidden');
@@ -195,21 +195,21 @@ StepEditor.prototype.reset = function() {
   this.form.html('');
   this.proofDisplay.setSelectLock(false);
   this._setBusy(false);
-  this.ruleSelector.fadeToggle(true);
+  this.ruleMenu.fadeToggle(true);
 };
 
 /**
  * Attempt to take keyboard focus.
  */
 StepEditor.prototype.focus = function() {
-  this.ruleSelector.focus();
+  this.ruleMenu.focus();
 };
 
 /**
- * Handler for ruleSelector selection of a rule name.
+ * Handler for ruleMenu selection of a rule name.
  */
 StepEditor.prototype.ruleChosen = function() {
-  var value = this.ruleSelector.ruleName;
+  var value = this.ruleMenu.ruleName;
   var rule = Toy.rules[value];
   if (rule) {
     // TODO: Only show the form if there are arguments that need to be
@@ -224,7 +224,7 @@ StepEditor.prototype.ruleChosen = function() {
     var term = step && step.selection;
     var formatArgs = {term: (term && term.toHtml()) || '{term}'};
     if (template) {
-      this.ruleSelector.fadeToggle(false);
+      this.ruleMenu.fadeToggle(false);
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
@@ -331,7 +331,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 };
 
 /**
- * Fill in arguments for the rule named by the ruleSelector from the
+ * Fill in arguments for the rule named by the ruleMenu from the
  * current selection and the rule's input form, and if successful set
  * up actual execution and redisplay to occur after the UI has
  * opportunity to repaint.  Throws in case of failure if reportFailure
@@ -339,7 +339,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  */
 StepEditor.prototype.tryExecuteRule = function(reportFailure) {
   // TODO: Get it together on failure reporting here.
-  var ruleName = this.ruleSelector.ruleName;
+  var ruleName = this.ruleMenu.ruleName;
   var rule = Toy.rules[ruleName];
   var nargs = rule.length;
   // Initialize the args array length to be the number of its
@@ -544,11 +544,11 @@ StepEditor.prototype.genAbbrevName = function() {
 /**
  * Fill in part of the array argument with the step and path of the
  * UI's selected site if there is one, based on the name of the rule
- * selected in the ruleSelector.  Reports an error to the user if
+ * selected in the ruleMenu.  Reports an error to the user if
  * preconditions are not met.
  */
 StepEditor.prototype.prefillArgs = function(args) {
-  var rule = Toy.rules[this.ruleSelector.ruleName];
+  var rule = Toy.rules[this.ruleMenu.ruleName];
   var inputs = rule.info.inputs;
 
   // Fill in site information from a selected expression.
@@ -579,7 +579,7 @@ StepEditor.prototype.prefillArgs = function(args) {
  */
 StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
-  var rule = Toy.rules[this.ruleSelector.ruleName];
+  var rule = Toy.rules[this.ruleMenu.ruleName];
   $(this.form).find('input').each(function() {
     // The "name" attribute of the input element should be the name of
     // an input type, possibly followed by some digits indicating
@@ -897,9 +897,9 @@ function ruleMenuText(ruleName, step, term, proofEditor) {
 }
 
 
-//// BASICRULESELECTOR
+//// RULEMENU
 
-function BasicRuleSelector(stepEditor, selectionHandler, options) {
+function RuleMenu(stepEditor, selectionHandler, options) {
   var self = this;
   self.stepEditor = stepEditor;
   self.ruleName = '';
@@ -907,7 +907,7 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
   self._refresher = new Toy.Refresher(self.update.bind(self));
 
   // Rule chooser:
-  self.$node = $('<div class=ruleSelector/>');
+  self.$node = $('<div class=ruleMenu/>');
 
   self.$node.on('click', '.ruleItem', function(event) {
     var ruleName = $(this).data('ruleName');
@@ -920,7 +920,7 @@ function BasicRuleSelector(stepEditor, selectionHandler, options) {
  * Call this any time this object's display might need to be updated.
  * The display update will occur when the event loop becomes idle.
  */
-BasicRuleSelector.prototype.refresh = function() {
+RuleMenu.prototype.refresh = function() {
   this._refresher.activate();
 }
 
@@ -928,7 +928,7 @@ BasicRuleSelector.prototype.refresh = function() {
  * Fades the rule selector in (true) or out (false) based on the
  * argument.
  */
-BasicRuleSelector.prototype.fadeToggle = function(visible) {
+RuleMenu.prototype.fadeToggle = function(visible) {
   var $node = this.$node;
   if (visible) {
     $node.fadeIn(200);
@@ -945,7 +945,7 @@ BasicRuleSelector.prototype.fadeToggle = function(visible) {
  * Return the RuleSelector to a "fresh" state, with no rule selected,
  * offered items reflecting the currently-selected step or term.
  */
-BasicRuleSelector.prototype.update = function() {
+RuleMenu.prototype.update = function() {
   var self = this;
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
@@ -1033,7 +1033,7 @@ BasicRuleSelector.prototype.update = function() {
  * Take keyboard focus if the underlying widget can do so.
  * This is a harmless no-op on known touchscreen devices.
  */
-BasicRuleSelector.prototype.focus = function() {
+RuleMenu.prototype.focus = function() {
   // var $node = this.$node;
   // window.setTimeout(function() { $node.focus(); }, 0);
 };

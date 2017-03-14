@@ -715,7 +715,7 @@ span.stepRef {
   background-color: white;
   margin-top: .2em;
   position: relative;
-  /* Allow plenty of space for the ruleSelector, though it is not always
+  /* Allow plenty of space for the ruleMenu, though it is not always
      displayed. */
   min-height: 800px;
 }
@@ -731,7 +731,7 @@ span.stepRef {
 }
 
 /* Main node for the rule selector, contains the rulesContainer. */
-.ruleSelector {
+.ruleMenu {
     position: relative;
 }
 
