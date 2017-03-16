@@ -53,9 +53,11 @@ var siteTypes = {
  *
  * Fields:
  * $node: DIV with the step editor's HTML.
+ * ruleName: name of rule selected from the RuleMenu; used with form
+ *   information in tryExecuteRule.
  * form: jQuery SPAN to hold the argument input form.
  * proofDisplay: ProofDisplay to edit
- * lastRuleTime: Milliseconds consumed by last esecution of tryRule.
+ * lastRuleTime: Milliseconds consumed by last execution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
  *
  * showRuleType: Selects type of rules to show, as determined by offerApproved.
@@ -81,6 +83,7 @@ function StepEditor(proofEditor) {
     $('<input class=sted-clear type=button value=x title="Clear the input">');
   self.clearer.addClass('hidden');
   div.append(self.clearer);
+  self.ruleName = '';
   self.form = $('<span class=sted-form></span>');
   div.append(self.form);
   // Proof errors display.
@@ -96,9 +99,9 @@ function StepEditor(proofEditor) {
   //   displayed, removing a dependency on proofDisplay.
   $(self.proofDisplay.node)
     .append($('<div class=ruleWorking/>').text('Working . . . '));
-  var widget = new RuleMenu(self);
-  self.ruleMenu = widget;
-  div.append(widget.$node);
+  var menu = new RuleMenu(self);
+  self.ruleMenu = menu;
+  div.append(menu.$node);
              
   self.showRuleType = 'general';
 
@@ -206,16 +209,27 @@ StepEditor.prototype.focus = function() {
 };
 
 /**
- * Handler for ruleMenu selection of a rule name.
+ * Handler for ruleMenu selection of a rule name.  Overall purpose is
+ * to run the rule from information already available, otherwise to
+ * display the input form.
  */
-StepEditor.prototype.ruleChosen = function() {
-  var value = this.ruleMenu.ruleName;
-  var rule = Toy.rules[value];
+StepEditor.prototype.ruleChosen = function(ruleName) {
+  this.ruleName = ruleName;
+  var rule = Toy.rules[ruleName];
   if (rule) {
-    // TODO: Only show the form if there are arguments that need to be
-    //   filled from it.  Instead of calling tryExecuteRule(false),
-    //   check here if all args can be filled from the selection
-    //   and modify that to always report errors.
+    var nargs = rule.length;
+    // Initialize the args array length to be the number of its
+    // named arguments.
+    var args = new Array(nargs);
+    this.fillFromSelection(args);
+    if (this.checkArgs(args, rule.info.minArgs, false)) {
+      tryRuleAsync(this, rule, args);
+      return;
+    }
+
+    // Some args still need to be filled in; just show the rule's
+    // form.
+
     var template = rule.info.form;
     // TODO: In the proof editor set up an event handler so the step editor
     //   can be aware of selections in the proof display (and also suppress
@@ -243,9 +257,10 @@ StepEditor.prototype.ruleChosen = function() {
             return false;
           }
         });
+    } else {
+      this.error(format('Rule needs a form: {1}', ruleName));
     }
-    this.tryExecuteRule(false);
-  } else if (value.slice(0, 5) === 'fact ') {
+  } else if (ruleName.slice(0, 5) === 'fact ') {
     // Values "fact etc" indicate use of rules.rewrite, and
     // the desired fact is indicated by the rest of the value.
     var siteStep = this.proofDisplay.selection;
@@ -256,8 +271,48 @@ StepEditor.prototype.ruleChosen = function() {
                  Toy.rules.rewrite,
                  [siteStep.original,
                   siteStep.prettyPathTo(siteStep.selection),
-                  value.slice(5)]);
+                  ruleName.slice(5)]);
+  } else {
+    assert(false, format('No such rule: {1}', ruleName));
   }
+};
+
+/**
+ * Check that the given args Array is filled in with values that are
+ * not instances of Error, and that up to minArgs, the values are not
+ * the undefined value.  If reportError is true, report the problem in
+ * the StepEditor, and in any case return true iff all is OK, else
+ * false.  If the values are OK and some optional args are undefined,
+ * truncate the args array to omit the unneeded undefined values.
+ */
+StepEditor.prototype.checkArgs = function(args, minArgs, reportError) {
+  // Check that the args are all filled in.
+  var required = (typeof minArgs == 'number'
+                  ? minArgs
+                  : args.length);
+  for (var i = 0; i < args.length; i++) {
+    var value = args[i];
+    if (value === undefined && i < required) {
+      if (reportError) {
+        this.error('Undefined argument ' + i);
+      }
+      return false
+    } else if (value instanceof Error) {
+      if (reportError) {
+	this.error(value.message);
+      }
+      return false;
+    }
+  }
+  // Truncate the args array to omit optional args not supplied,
+  // in case the rule looks at its arguments array.
+  for (var i = required; i < args.length; i++) {
+    if (args[i] === undefined) {
+      args.length = i;
+      break;
+    }
+  }
+  return true;
 };
 
 /**
@@ -334,51 +389,23 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  * Fill in arguments for the rule named by the ruleMenu from the
  * current selection and the rule's input form, and if successful set
  * up actual execution and redisplay to occur after the UI has
- * opportunity to repaint.  Throws in case of failure if reportFailure
- * is true.
+ * opportunity to repaint.  If reportFailure is true, shows the
+ * user any error message from calling fillFromForm.  Otherwise
+ * just leaves the form up for the user to complete.
  */
-StepEditor.prototype.tryExecuteRule = function(reportFailure) {
+StepEditor.prototype.tryExecuteRule = function() {
   // TODO: Get it together on failure reporting here.
-  var ruleName = this.ruleMenu.ruleName;
+  var ruleName = this.ruleName;
   var rule = Toy.rules[ruleName];
   var nargs = rule.length;
   // Initialize the args array length to be the number of its
   // named arguments.
   var args = new Array(nargs);
-  this.prefillArgs(args);
-  try {
-    this.fillFromForm(args);
-  } catch(error) {
-    // The form is not ready, fail.
-    if (reportFailure) {
-      this.error(error.message);
-    }
-    return;
+  this.fillFromSelection(args);
+  this.fillFromForm(args);
+  if (this.checkArgs(args, rule.info.minArgs, true)) {
+    tryRuleAsync(this, rule, args);
   }
-  if (args.length != nargs) {
-    Toy.logError('Rule received unnamed arguments: ' + ruleName);
-  }
-  // Check that the args are all filled in.
-  var required = (rule.info.hasOwnProperty('minArgs')
-                  ? rule.info.minArgs
-                  : args.length);
-  for (var i = 0; i < required; i++) {
-    if (args[i] === undefined) {
-      if (reportFailure) {
-	this.error('Undefined argument ' + i);
-      }
-      return;
-    }
-  }
-  // Truncate the args array to omit optional args not supplied,
-  // in case the rule looks at its arguments array.
-  for (var i = required; i < args.length; i++) {
-    if (args[i] === undefined) {
-      args.length = i;
-      break;
-    }
-  }
-  tryRuleAsync(this, rule, args);
 };
 
 /**
@@ -542,33 +569,40 @@ StepEditor.prototype.genAbbrevName = function() {
 };
 
 /**
- * Fill in part of the array argument with the step and path of the
- * UI's selected site if there is one, based on the name of the rule
- * selected in the ruleMenu.  Reports an error to the user if
- * preconditions are not met.
+ * Fill in part of the args array with the step or step and path of
+ * the UI's selection if there is one, using the input descriptor of
+ * of the StepEditor's current rule.  Currently not picky about the
+ * detailed requirements of the various kinds of site and step
+ * arguments.  Relies on other components to do these checks.
  */
-StepEditor.prototype.prefillArgs = function(args) {
-  var rule = Toy.rules[this.ruleMenu.ruleName];
+StepEditor.prototype.fillFromSelection = function(args) {
+  var step = this.proofDisplay.selection;
+  if (!step) {
+    return;
+  }
+  var expr = step.selection;
+  var rule = Toy.rules[this.ruleName];
   var inputs = rule.info.inputs;
-
-  // Fill in site information from a selected expression.
-  for (var type in inputs) {
-    if (type in siteTypes) {
-      var step = this.proofDisplay.selection;
-      var expr = step && step.selection;
-      if (expr) {
-	var position = inputs[type];
-	if ((typeof position) == 'number') {
-          args[position - 1] = step.original;
-          args[position] = step.prettyPathTo(expr);
-          // Only fill in one argument (pair) from the selection.
-          break;
-        } else {
-          // TODO: Someday support multiple sites per rule.
-          this.error('Internal error: only one site supported per rule.');
-        }
-      } else {
-        this.error('Expression not selected');
+  // Fill in args information from a selection.
+  if (expr) {
+    for (var type in siteTypes) {
+      var input = inputs[type];
+      if (input) {
+        var position = Array.isArray(input) ? input[0] : input;
+        args[position - 1] = step.original;
+        args[position] = step.prettyPathTo(expr);
+        // Only fill in one argument (pair) from the selection.
+        break;
+      }
+    }
+  } else {
+    for (var type in stepTypes) {
+      var input = inputs[type];
+      if (input) {
+        var position = Array.isArray(input) ? input[0] : input;
+        args[position - 1] = step;
+        // Only fill in one step.
+        break;
       }
     }
   }
@@ -579,7 +613,7 @@ StepEditor.prototype.prefillArgs = function(args) {
  */
 StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
-  var rule = Toy.rules[this.ruleMenu.ruleName];
+  var rule = Toy.rules[this.ruleName];
   $(this.form).find('input').each(function() {
     // The "name" attribute of the input element should be the name of
     // an input type, possibly followed by some digits indicating
@@ -608,7 +642,8 @@ StepEditor.prototype.fillFromForm = function(args) {
 /**
  * Parses the string value according to its type, which can
  * be any of the formTypes.  Returns an Expr for step or term
- * types.  Throws an Error if it detects the input is not valid.
+ * types.  Returns an Error if it detects the input is not valid.
+ * (Does not throw.)
  */
 StepEditor.prototype.parseValue = function(value, type) {
   switch (type) {
@@ -616,11 +651,11 @@ StepEditor.prototype.parseValue = function(value, type) {
   case 'equation':
   case 'implication':
     if (!value.match(/^\d+$/)) {
-      throw new Error('Not a step number: ' + value);
+      return new Error('Not a step number: ' + value);
     }
     var index = Number(value) - 1;
     if (index < 0 || index >= this.proofDisplay.steps.length) {
-      throw new Error('No such step: ' + value);
+      return new Error('No such step: ' + value);
     }
     return this.proofDisplay.steps[Number(value) - 1].original;
   case 'bool':
@@ -629,7 +664,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     if (!(type === Toy.boolean || type instanceof Toy.TypeVariable)) {
       // Since variables do not have known types, some expressions may
       // have unknown types, and we allow that here.
-      throw new Error('Not a true/false expression:' + value);
+      return new Error('Not a true/false expression:' + value);
     }
     return expr;
   case 'term':
@@ -648,7 +683,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     if (Toy.isVariableName(value)) {
       return value;
     } else {
-      throw new Error('Illegal variable name: ' + value);
+      return new Error('Illegal variable name: ' + value);
     }
   case 'path':
     return Toy.path(value);
@@ -656,13 +691,13 @@ StepEditor.prototype.parseValue = function(value, type) {
     if (value.length) {
       return value;
     } else {
-      throw new Error('Empty field');
+      return new Error('Empty field');
     }
   case 'optString':
     return value;
 
   default:
-    throw new Error('Type not parseable: ' + type);
+    return new Error('Type not parseable: ' + type);
   }
 };
 
@@ -899,21 +934,33 @@ function ruleMenuText(ruleName, step, term, proofEditor) {
 
 //// RULEMENU
 
-function RuleMenu(stepEditor, selectionHandler, options) {
+/**
+ * Widget that displays a list of rules for the user to try
+ * if desired. Constructor argument is the StepEditor it
+ * applies to when updating itself.
+ *
+ * Public properties:
+ *
+ * stepEditor: StepEditor as passed to the constructor.
+ * length: current number of items in the menu.
+ * changed: true iff its refresh has been activated, but
+ *   the update has not yet run.
+ */
+function RuleMenu(stepEditor) {
   var self = this;
   self.stepEditor = stepEditor;
-  self.ruleName = '';
-
   self._refresher = new Toy.Refresher(self.update.bind(self));
+  self.length = 0;
+  self.changed = false;
 
   // Rule chooser:
   self.$node = $('<div class=ruleMenu/>');
 
   self.$node.on('click', '.ruleItem', function(event) {
-    var ruleName = $(this).data('ruleName');
-    self.ruleName = ruleName;
-    self.stepEditor.ruleChosen();
-  });
+      // Run the step editor's ruleChosen method with
+      // the ruleName of the menu item.
+      self.stepEditor.ruleChosen($(this).data('ruleName'));
+    });
 }
 
 /**
@@ -921,6 +968,7 @@ function RuleMenu(stepEditor, selectionHandler, options) {
  * The display update will occur when the event loop becomes idle.
  */
 RuleMenu.prototype.refresh = function() {
+  this.changed = true;
   this._refresher.activate();
 }
 
@@ -1012,7 +1060,8 @@ RuleMenu.prototype.update = function() {
       items.push($item);
     });
   $container.append(items);
-  self.ruleName = '';
+  self.length = items.length
+  self.changed = false;
   // TODO: Generate smarter messages for rules that work without a UI
   //   selection (most theorems and theorem generators).
   $header.text(displayTexts.length
