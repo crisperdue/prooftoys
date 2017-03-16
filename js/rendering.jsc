@@ -298,7 +298,7 @@ function ProofEditor() {
   var $status = $('<div class="solutionStatus hidden"/>');
   self.$status = $status;
   // Top-level element of the proof editor display:
-  this.containerNode = $('<div class=proofContainer></div>');
+  this.containerNode = $('<div class=proofEditor></div>');
   this.containerNode
     .append(@proofButtons)
     .append(ruleStats)
@@ -368,7 +368,7 @@ function ProofEditor() {
   // Clicks in arbitrary areas of the document remove any selection.
   // And clear any proof errors field.
   $(document).on('click', function(event) {
-    if ($(event.target).closest('.proofContainer').length == 0) {
+    if ($(event.target).closest('.proofEditor').length == 0) {
       // Not in a ProofDisplay's area.
       @mainDisplay.deselectStep();
       stepEditor.$proofErrors.hide();
@@ -2346,14 +2346,7 @@ function getStepsNode(node) {
  * contain only the top-level proof and its subproofs.
  */
 function getTopProofContainer(step) {
-  var $proofDisplay = $(step.stepNode).closest('.proofDisplay');
-  var $display = $proofDisplay.closest('.inferenceDisplay');
-  if ($display.length === 0) {
-    $display = $proofDisplay;
-  }
-  // TODO: Flag the parent as "proofContainer" and simply search for that.
-  var parent = $display.parent();
-  return parent;
+  return $(step.stepNode).closest('.proofEditor');
 }
 
 /**
