@@ -202,6 +202,7 @@ var numbersInfo = {
   // the hypotheses.  This is equivalent to A1 & A2 => <equation>.
 
   axiomCommutativePlus: {
+    statement: '@R x & R y => x + y = y + x',
     proof: function() {
       return (rules.assert('R x & R y => x + y = y + x')
               .then('asHypotheses'));
@@ -210,6 +211,7 @@ var numbersInfo = {
   },
 
   axiomAssociativePlus: {
+    statement: '@R x & R y & R z => x + (y + z) = (x + y) + z',
     proof: function() {
       return (rules.assert('R x & R y & R z => x + (y + z) = (x + y) + z')
               .then('asHypotheses'));
@@ -218,6 +220,7 @@ var numbersInfo = {
   },
 
   axiomCommutativeTimes: {
+    statement: '@R x & R y => x * y = y * x',
     proof: function() {
       return (rules.assert('R x & R y => x * y = y * x')
               .then('asHypotheses'));
@@ -226,6 +229,7 @@ var numbersInfo = {
   },
 
   axiomAssociativeTimes: {
+    statement: '@R x & R y & R z => x * (y * z) = (x * y) * z',
     proof: function() {
       return (rules.assert('R x & R y & R z => x * (y * z) = (x * y) * z')
               .then('asHypotheses'));
@@ -234,6 +238,7 @@ var numbersInfo = {
   },
 
   axiomDistributivity: {
+    statement: '@R x & R y & R z => x * (y + z) = x * y + x * z',
     proof: function() {
       return (rules.assert('R x & R y & R z => x * (y + z) = x * y + x * z')
               .then('asHypotheses'));
@@ -242,6 +247,7 @@ var numbersInfo = {
   },
 
   axiomPlusZero: {
+    statement: '@R x => x + 0 = x',
     proof: function() {
       return (rules.assert('R x => x + 0 = x')
               .then('asHypotheses'));
@@ -251,6 +257,7 @@ var numbersInfo = {
   },
 
   axiomTimesOne: {
+    statement: '@R x => x * 1 = x',
     proof: function() {
       return (rules.assert('R x => x * 1 = x')
               .then('asHypotheses'));
@@ -260,6 +267,7 @@ var numbersInfo = {
   },
 
   axiomTimesZero: {
+    statement: '@R x => x * 0 = 0',
     proof: function() {
       return (rules.assert('R x => x * 0 = 0')
               .then('asHypotheses'));
@@ -269,6 +277,7 @@ var numbersInfo = {
   },
 
   axiomNeg: {
+    statement: '@neg x = -1 * x',
     proof: function() {
       return rules.assert('neg x = -1 * x');
     },
@@ -277,6 +286,7 @@ var numbersInfo = {
   },
 
   axiomReciprocal: {
+    statement: '@R x & x != 0 => x * recip x = 1',
     proof: function() {
       return (rules.assert('R x & x != 0 => x * recip x = 1')
               .then('asHypotheses'));
@@ -287,6 +297,7 @@ var numbersInfo = {
 
   // TODO: Prove this as a theorem.
   axiomReciprocal2: {
+    statement: '@R (recip x) & recip x != 0 == R x & x != 0',
     proof: function() {
       return rules.assert('R (recip x) & recip x != 0 == R x & x != 0');
     },
@@ -297,6 +308,7 @@ var numbersInfo = {
   // that 0 ** 0 is undefined.
   // TODO: Eventually prove these laws of powers as theorems.
   axiomPower0: {
+    statement: '@R x => x ** 0 = 1',
     proof: function() {
         return (rules.assert('R x => x ** 0 = 1')
                 .then('asHypotheses'));
@@ -306,6 +318,7 @@ var numbersInfo = {
 
   // TODO: Eventually prove these laws of powers as theorems.
   axiomNextPower: {
+    statement: '@x ** (y + 1) = (x ** y) * x',
     proof: function() {
       // TODO: Add conditions R x & R y.
       return rules.assert('x ** (y + 1) = (x ** y) * x');
@@ -315,6 +328,7 @@ var numbersInfo = {
 
   // TODO: Prove this as a consequnce of completeness.
   factNonzeroProduct: {
+    statement: '@R x & R y => (x * y != 0) = (x != 0 & y != 0)',
     proof: function() {
       return (rules.assert('R x & R y => (x * y != 0) = (x != 0 & y != 0)')
               .then('asHypotheses'));
@@ -325,31 +339,35 @@ var numbersInfo = {
 
   // This axiom applies to all normal objects, not just reals.
   axiomRealNotNull: {
-    // Note: not conditional.
+    statement: '@not (R none)',
     proof: function() {
       return rules.assert('not (R none)');
     }
   },
 
   axiomPlusType: {
+    statement: '@R x & R y == R (x + y)',
     proof: function() {
       return rules.assert('R x & R y == R (x + y)');
     }
   },
 
   axiomTimesType: {
+    statement: '@R x & R y == R (x * y)',
     proof: function() {
       return rules.assert('R x & R y == R (x * y)');
     }
   },
 
   axiomNegType: {
+    statement: '@R x == R (neg x)',
     proof: function() {
       return rules.assert('R x == R (neg x)');
     }
   },
 
   axiomReciprocalType: {
+    statement: '@R x & x != 0 == R (recip x)',
     proof: function() {
       return rules.assert('R x & x != 0 == R (recip x)');
     }
