@@ -331,16 +331,12 @@ var numbersInfo = {
     }
   },
 
-  // Note: not structured as a rewrite rule.
-  // TODO: Change to a conditional
   axiomPlusType: {
     proof: function() {
       return rules.assert('R x & R y == R (x + y)');
     }
   },
 
-  // Note: not structured as a rewrite rule.
-  // TODO: Change to a conditional
   axiomTimesType: {
     proof: function() {
       return rules.assert('R x & R y == R (x * y)');
@@ -353,7 +349,6 @@ var numbersInfo = {
     }
   },
 
-  // TODO: Replace me.
   axiomReciprocalType: {
     proof: function() {
       return rules.assert('R x & x != 0 == R (recip x)');
@@ -438,7 +433,6 @@ var numbersInfo = {
   },
 
   subtractionType: {
-    // TODO: Change to a conditional
     statement: '@R x & R y == R (x - y)',
     proof: function() {
       var step1 = rules.axiomPlusType();
@@ -458,7 +452,6 @@ var numbersInfo = {
   },
 
   divisionType: {
-    // TODO: Change to a conditional
     statement: '@R x & R y & y != 0 == R (x / y)',
     proof: function() {
       var step1 = rules.axiomTimesType();
@@ -924,6 +917,8 @@ var simplifiersInfo = {
           var path = new Toy.Path('left', hypsPath);
           var expr = step.get(path);
           var fact = getArithOp(expr)(expr);
+          // If no facts appearing here were conditionals, the recursion
+          // would be unnecessary.  But see reciper, above.
           var simpleFact =
             simplifyHyps(rules.instantiate(fact, '/main/left', expr));
           // Replaces an assumption, potentially adding additional assumptions
