@@ -1039,7 +1039,7 @@ ProofDisplay.prototype.renderStep = function(step) {
   //
   // TODO: Consider using delegation more extensively.
   var exprSelector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
-  $step.on(TOUCHDOWN, exprSelector,
+  $proofStep.on(TOUCHDOWN, exprSelector,
            // This implements a policy of one selection per proof step.
            // TODO: Implement such policies in the proof controller.
            function(event) {
@@ -1053,16 +1053,16 @@ ProofDisplay.prototype.renderStep = function(step) {
                event.stopPropagation();
              }
            });
-  $step.on('mouseenter mouseleave', '.stepSelector', function(event) {
+  $proofStep.on('mouseenter mouseleave', '.stepSelector', function(event) {
       hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
-  $step.on('mouseenter', '.stepHoverMark', function(event) {
+  $proofStep.on('mouseenter', '.stepHoverMark', function(event) {
       fillHoverInfoBox(self.proofEditor, step);
     });
-  $step.on('mouseleave', '.stepHoverMark', function(event) {
+  $proofStep.on('mouseleave', '.stepHoverMark', function(event) {
       $step.find('.hoverInfoBox').toggle(false);
     });
-  $step.on(TOUCHDOWN, '.stepSelector', function(event) {
+  $proofStep.on(TOUCHDOWN, '.stepSelector', function(event) {
     self.handleStepClick(step);
   });
 
@@ -1073,7 +1073,7 @@ ProofDisplay.prototype.renderStep = function(step) {
 
   // Deleter events
   // If there is no deleter, this sets nothing up.
-  $step.on('click', '.deleteStep', function(event) {
+  $proofStep.on('click', '.deleteStep', function(event) {
     if (step.users == 0) {
       // If the step has users the button is effectively disabled.
       self.removeStep(step);
@@ -1081,7 +1081,7 @@ ProofDisplay.prototype.renderStep = function(step) {
   });
 
   // Select or deselect the checkbox solely through the step.
-  $step.on('click', '.checkbox', function(event) { event.preventDefault(); });
+  $proofStep.on('click', '.checkbox', function(event) { event.preventDefault(); });
 
   // Clicking on a ruleName "link" (if any) shows the subproof when subproofs
   // are enabled.
