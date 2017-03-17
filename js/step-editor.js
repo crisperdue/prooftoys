@@ -75,23 +75,21 @@ function StepEditor(proofEditor) {
   self.proofDisplay = proofEditor.proofDisplay;
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
+  self.ruleName = '';
+  self.showRuleType = 'general';
+  self.showRules = [];
 
   // Create a DIV with the step editor content.
   var div = $('<div class=stepEditor style="clear: both"></div>');
+
   // Button to clear rule input, visible when a form is active.
   self.clearer =
     $('<input class=sted-clear type=button value=x title="Clear the input">');
   self.clearer.addClass('hidden');
-  div.append(self.clearer);
-  self.ruleName = '';
   self.form = $('<span class=sted-form></span>');
-  div.append(self.form);
   // Proof errors display.
   self.$proofErrors = $('<div class="proofErrors hidden"></div>');
-  div.append(self.$proofErrors);
   self.$node = div;
-
-  self.showRules = [];
 
   // Attach the "ruleWorking" to the ProofDisplay node so
   // it doesn't move when steps are inserted.
@@ -101,9 +99,12 @@ function StepEditor(proofEditor) {
     .append($('<div class=ruleWorking/>').text('Working . . . '));
   var menu = new RuleMenu(self);
   self.ruleMenu = menu;
-  div.append(menu.$node);
-             
-  self.showRuleType = 'general';
+
+  // This will contain suggestions for next steps.
+  self.nextSteps = new Toy.ProofDisplay();
+
+  div.append(self.clearer, self.form, self.$proofErrors,
+             self.nextSteps.node, menu.$node);
 
   // Install event handlers.
   self.clearer.on('click', function() { self.reset(); });
