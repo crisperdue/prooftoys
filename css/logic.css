@@ -415,7 +415,12 @@ span#leftNav {
     min-width: 40%
 }
 
-/* Handy for making elements display as flexboxes. */
+/* For basic layout with flexboxes. */
+.flex {
+    display: flex;
+}
+
+/* Flexboxes with centered children. */
 .flexBox {
     display: flex;
     align-items: center;
