@@ -250,6 +250,11 @@ span#leftNav {
   line-height: 120%;
 }
 
+/* Box around next step suggestions */
+.proofDisplay.nextSteps {
+    margin-left: 2em;
+}
+
 /* Indent most subproofs. */
 .proofDisplay .inferenceDisplay {
   margin: 5px 5px 5px 5px;

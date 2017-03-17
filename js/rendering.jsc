@@ -535,6 +535,10 @@ ProofEditor.prototype.showProofButtons = @(value) {
  * parentStep: parent step, rendered or not.  If given,
  *   this ProofDisplay's steps will be assumed to be the
  *   details for this step.
+ * prevStep: If given, this rendered step will be considered
+ *   the previous rendered step for all steps within this
+ *   ProofDisplay.  Used for display of alternative next steps
+ *   in the "rule selector" of the step editor (builder).
  *
  * ProofDisplay object properties:
  *
@@ -578,6 +582,7 @@ function ProofDisplay(properties) {
   // Prefix string for each step.
   this.stepPrefix = properties.stepPrefix || '';
   this.parentStep = properties.parentStep || null;
+  this.prevStep = properties.prevStep || null;
 
   // ID of element to use for saving/restoring proof state.
   // TODO: Make the textarea part of the ProofDisplay.
@@ -615,7 +620,7 @@ ProofDisplay.prototype.proofChanged = function() {
  * Notify that the selection has changed.
  */
 ProofDisplay.prototype.selectionChanged = function() {
-  this.proofEditor && this.proofEditor.stepEditor.ruleMenu.refresh();
+  this.proofEditor && this.proofEditor.stepEditor.refresh();
 };
 
 /**
@@ -1181,6 +1186,9 @@ function prevRenderedStep(step) {
   var proofDisplay = getProofDisplay(step);
   if (!proofDisplay) {
     return null;
+  }
+  if (proofDisplay.prevStep) {
+    return proofDisplay.prevStep;
   }
   var index = proofDisplay.steps.indexOf(step);
   if (index > 0) {

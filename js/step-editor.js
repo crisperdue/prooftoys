@@ -57,6 +57,8 @@ var siteTypes = {
  *   information in tryExecuteRule.
  * form: jQuery SPAN to hold the argument input form.
  * proofDisplay: ProofDisplay to edit
+ * nextSteps: ProofDisplay used to show possible "next steps" based
+ *   on rules applicable to any current selection.
  * lastRuleTime: Milliseconds consumed by last execution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
  *
@@ -101,10 +103,12 @@ function StepEditor(proofEditor) {
   self.ruleMenu = menu;
 
   // This will contain suggestions for next steps.
-  self.nextSteps = new Toy.ProofDisplay();
-
+  var nexts = self.nextSteps = new Toy.ProofDisplay();
+  $(nexts.node).addClass('nextSteps');
+  var $nextBox = ($('<div><b>Next step suggestions:</b></div>')
+                  .append(nexts.node));
   $div.append(self.clearer, self.form, self.$proofErrors,
-             self.nextSteps.node, menu.$node);
+              $nextBox, menu.$node);
 
   // Install event handlers.
   self.clearer.on('click', function() { self.reset(); });
@@ -121,6 +125,29 @@ function StepEditor(proofEditor) {
       self.$proofErrors.hide();
     });
 }
+
+StepEditor.prototype.refresh = function() {
+  this.ruleMenu.refresh();
+  this._refreshNextSteps(this.nextSteps);
+};
+
+/**
+ * Internal to StepEditor; activates refresh of the next steps
+ * suggestions.
+ */
+StepEditor.prototype._refreshNextSteps = function() {
+  var self = this;
+  var display = self.nextSteps;
+  var step = self.proofDisplay.selection;
+  display.setSteps([]);
+  display.prevStep = step;
+  self.offerableFacts().forEach(function(statement) {
+      var next = Toy.rules.rewrite(step.original,
+                                   step.prettyPathTo(step.selection),
+                                   statement);
+      display.addStep(next);
+  });
+};
 
 /**
  * Returns the Expr selected in this StepEditor, or a falsy value if
