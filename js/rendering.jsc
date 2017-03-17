@@ -2512,17 +2512,16 @@ function fillHoverInfoBox(proofEditor, step) {
  * establishing assumptions used by it.
  */
 function hoverStepSelector(step, direction, event) {
-  // TODO: Use jQuery toggleClass with boolean instead of this action.
-  var action = direction == 'in' ? addClass : removeClass;
+  var entering = direction === 'in';
 
   // Highlight or unhighlight the step and step number.
-  $(step.stepNode).find('.stepAndNum').toggleClass('hover', direction === 'in');
+  $(step.stepNode).find('.stepAndNum').toggleClass('hover', entering);
 
   // When entering a step, highlight all references to it.
   // When leaving remove highlights from all references.
   var container = getTopProofContainer(step);
   container.find('span.stepReference').each(function() {
-    if (direction == 'in') {
+    if (entering) {
       if (this.innerHTML == step.stepNumber) {
         $(this).addClass('referenced');
       }
@@ -2534,6 +2533,8 @@ function hoverStepSelector(step, direction, event) {
   // Highlight steps that provide inputs to this one.
   // Use rule-specific hover actions, or default.
   var handler = getHoverHandler(step);
+  // TODO: pass a boolean instead of an action.
+  var action = entering ? addClass : removeClass;
   if (handler) {
     // If there is a hover handler for this type of inference, apply it.
     handler(step, action);
