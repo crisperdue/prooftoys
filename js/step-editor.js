@@ -991,8 +991,8 @@ RuleMenu.prototype.fadeToggle = function(visible) {
 };
 
 /**
- * Return the RuleSelector to a "fresh" state, with no rule selected,
- * offered items reflecting the currently-selected step or term.
+ * Updates the step suggestions and rule menu to offer items
+ * reflecting the currently-selected step or term, if any.
  */
 RuleMenu.prototype.update = function() {
   var self = this;
@@ -1001,7 +1001,8 @@ RuleMenu.prototype.update = function() {
   self.stepEditor.$proofErrors.hide();
   var $container = $('<div class=rulesContainer>');
   var $header = $('<div class=rulesHeader/>');
-  $container.append($header);
+  var $items = $('<div class=rulesItems/>');
+  $container.append($header, $items);
   var step = this.stepEditor.proofDisplay.selection;
   var term = step && step.selection;
   // Map from rule display text to rule name.
@@ -1060,9 +1061,9 @@ RuleMenu.prototype.update = function() {
       $item.data('ruleName', byDisplay[display]);
       items.push($item);
     });
-  $container.append(items);
   self.length = items.length
   self.changed = false;
+  $items.append(items);
   // TODO: Generate smarter messages for rules that work without a UI
   //   selection (most theorems and theorem generators).
   $header.text(displayTexts.length

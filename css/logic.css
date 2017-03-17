@@ -735,6 +735,9 @@ span.stepRef {
   font-size: 120%;
 }
 
+
+/* Rules menu */
+
 /* Main node for the rule selector, contains the rulesContainer. */
 .ruleMenu {
     position: relative;
@@ -754,6 +757,11 @@ span.stepRef {
   font-weight: bold;
 }
 
+.ruleMenu .rulesItems {
+    margin-left: 3em;
+}
+
+/* Other */
 
 /* Text used as a hint, as in a text field */
 .hinted {
