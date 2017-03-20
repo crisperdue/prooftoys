@@ -640,31 +640,7 @@ ProofDisplay.prototype.setSteps = function(steps) {
   for (var i = 0; i < steps.length; i++) {
     this.addStep(steps[i]);
   }
-  this._renumber();
 };
-
-/**
- * Gives the steps numbers from 1 to N, or each its ordinal if
- * showOrdinals flag is true.  Updates step number display of each.
- *
- * TODO: Consider eliminating this in a redesign of rendering.
- *   Probably simpler to re-render steps rather than renumbering them,
- *   since more than the numbering may change, e.g. steps become
- *   adjacent after a deletion.
- */
-ProofDisplay.prototype._renumber = function() {
-  var self = this;
-  // Give the steps numbers from 1 to N.
-  this.steps.forEach(function(step, i) {
-    // Fix up the step number and its display.
-    step.stepNumber = (Toy.showOrdinals
-                       ? step.ordinal
-                       : self.stepPrefix + (i + 1));
-    renderStepNumber(step);
-  });
-  // TODO: This will also need to support renumbering of any step
-  // detail displays.
-};  
 
 /**
  * Render's the step number into its element of class "stepNumber".
