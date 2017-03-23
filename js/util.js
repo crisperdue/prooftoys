@@ -1,4 +1,4 @@
-// Copyright 2011 - 2016 Crispin Perdue.
+// Copyright 2011 - 2017 Crispin Perdue.
 // All rights reserved.
 
 ////
@@ -1084,6 +1084,145 @@ function _testTriangle(where, height, color) {
   $('body').prepend(tt);
 };
 
+
+//// RPC with message queuing
+//
+// This section uses ES6 / ES2015 language features
+
+/**
+ * Message queue constructor for RPC communication, as with Web Worker
+ * threads.  If a numeric argument and URI string are supplied, will
+ * immediately create and add that many Worker threads.
+ */
+function MessageQueue(n, uri) {
+  var Map = window.Map;
+  // Queue of messages to be sent.
+  this.queue = [];
+  // Map from rpc ID to message, containing messages that have been sent
+  // but not yet responded to.
+  this.inProgress = new Map();
+  // Set of Web Workers handling messages from this queue.
+  this.workers = new Set();
+  // Workers not currently handling a request.
+  this.idleWorkers = [];
+
+  if (arguments.length == 2) {
+    for (var i = 0; i < n; i++) {
+      this.addWorker(new Worker(uri));
+    }
+  }
+}
+
+MessageQueue.id = 1;
+
+var msgMethods = {
+
+  /**
+   * Adds a worker to the pool of workers available to handle RPCs.
+   */
+  addWorker: function(w) {
+    w.onmessage = this._handleReply.bind(this);
+    this.workers.add(w);
+    this.idleWorkers.unshift(w);
+    this._dispatch();
+  },
+
+  /**
+   * Sends a request via the queue.  Returns a Promise to be resolved
+   * with the result of the call.
+   */
+  send: function(message) {
+    var wrapper = {channelType: 'RPC', id: MessageQueue.id++, data: message};
+    var info;
+    var promise = new Promise(function(resolve, reject) {
+        info = {resolve: resolve, reject: reject, wrapper: wrapper};
+      });
+    this.queue.push(info);
+    this._dispatch();
+    return promise;
+  },
+
+  /**
+   * Internal method invoked as the onmessage handler
+   * of the worker.
+   */
+  _handleReply: function(event) {
+    var wrapper = event.data;
+    if (wrapper.channelType === 'RPC') {
+      var message = wrapper.result;
+      var id = wrapper.id;
+      var info = this.inProgress.get(id);
+      if (info) {
+        this.inProgress.delete(id);
+        this.idleWorkers.push(event.target);
+        if (wrapper.hasOwnProperty('error')) {
+          info.reject(wrapper.error);
+        } else {
+          info.resolve(wrapper.result);
+        }
+      } else {
+        console.log('RPC reply unknown ID', event);
+        debugger;
+      }
+      this._dispatch();
+    } else {
+      this.handleOther(event);
+    }
+  },
+
+  /**
+   * Called when the MessageQueue receives a message from
+   * a worker and it does not have a channelType property
+   * with value "RPC".
+   */
+  handleOther: function(event) {
+    console.log('Unknown MessageQueue response', event);
+  },
+
+  /**
+   * Called at the very start of each dispatch.  This may be
+   * overridden to rearrange the lists of waiting requests and idle
+   * workers if desired to change the effect of the dispatch.
+   */
+  schedule: function() {},
+
+  /**
+   * Private method called internally at points where it might be
+   * appropriate to send another RPC request.  If there is an
+   * idle worker and a request in the queue, sends the first
+   * request to the first idle worker.
+   */
+  _dispatch: function() {
+    this.schedule();
+    if (this.workers.size() === 0) {
+      console.log('No RPC workers');
+    }
+    if (this.idleWorkers.length && this.queue.length) {
+      var worker = this.idleWorkers.shift();
+      var info = this.queue.shift();
+      worker.postMessage(info.wrapper);
+      this.inProgress.set(info.wrapper.id, info);
+    }
+  }
+};
+
+Object.assign(MessageQueue.prototype, msgMethods);
+
+/* Test code
+
+var q = new Toy.MessageQueue(1, 'pt/js/worker.js');
+var p = q.send({action: 'ping'})
+         .then(x => (console.log('ping', x), x))
+         .catch(x => console.log('Failed', x));
+var p = q.send({action: 'fail'})
+         .then(x => (console.log('fail?', x), x))
+         .catch(x => console.log('Failed', x));
+var p = q.send({action: 'plus1', input: 4})
+         .then(x => (console.log('Plus1', x), x))
+         .catch(x => console.log('Failed', x));
+*/
+
+
 //// Export public names.
 
 Toy.hasOwn = hasOwn;
@@ -1142,7 +1281,8 @@ Toy.soonDo = soonDo;
 Toy.afterRepaint = afterRepaint;
 Toy.makeTriangle = makeTriangle;
 
+Toy.MessageQueue = MessageQueue;
+
 // for interactive testing
 Toy._testTriangle = _testTriangle;
 
-})();
