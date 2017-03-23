@@ -1360,3 +1360,4 @@ Toy.FakeRpcWorker = FakeRpcWorker;
 // for interactive testing
 Toy._testTriangle = _testTriangle;
 
+})();
