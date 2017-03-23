@@ -1223,6 +1223,74 @@ var p = q.send({action: 'plus1', input: 4})
 */
 
 
+//// Simulated Web Worker objects
+
+/**
+ * Creates a fake Worker usable from the MessageQueue API.  Messages
+ * passed to the message queue will be passed to RPC handler methods
+ * as-is, without copying or encoding of any kind.
+ *
+ * Assign a function to the "onmessage" property to receive RPC
+ * results.
+ */
+function FakeRpcWorker(receiver) {
+  this.receiver = receiver;
+  this.onmessage = null;
+}
+
+/**
+ * Posts a message to this FakeRpcWorker.  This results in calling the
+ * internal handler from a timer, and later call to the FakeWorker's
+ * onmessage property passing a faked-up event, an object that has a
+ * "target" property and a "data" property, but currently no other
+ * information.
+ */
+FakeRpcWorker.prototype.postMessage = function(wrapper) {
+  var self = this;
+  var receiver = self.receiver;
+  var reply = {target: self};
+  // This function is the same as the onmessage handler function for
+  // initRpc in worker.js, except this receives the RPC wrapper
+  // object directly, not wrapped in an event, and replies by calling
+  // the fake worker's onmessage property from a timer.
+  function handler() {
+    if (wrapper.channelType === 'RPC') {
+      try {
+        var id = wrapper.id;
+        var message = wrapper.data;
+        var action = message.action;
+        var actions = receiver.actions;
+        if (!actions.hasOwnProperty(action)) {
+          throw new Error('Unknown RPC action', action);
+        }
+        var fn = actions[action].bind(receiver);
+        var result = fn(message, wrapper);
+        reply.data = {channelType: 'RPC', id: id, result: result};
+      } catch(error) {
+        var e = (receiver.encodeError
+                 ? receiver.encodeError(error)
+                 : error instanceof Error
+                 ? {type: error.constructor.name, message: error.message}
+                 : '?');
+        // Follow the example of Toy.afterRepaint in allowing time for
+        // repaints and other more urgent activities to take priority.
+        reply.data = {channelType: 'RPC', id: id, error: e};
+      }
+      function replier() {
+        var responder = self.onmessage;
+        responder(reply);
+      }
+      window.setTimeout(replier, 10);
+    } else if (receiver.handleOther) {
+      receiver.handleOther(event);
+    } else {
+      console.log('Unhandled message', event);
+    }
+  }
+  // Call the handler soon from a timer.
+  window.setTimeout(handler, 10);
+}
+
 //// Export public names.
 
 Toy.hasOwn = hasOwn;
@@ -1282,7 +1350,9 @@ Toy.afterRepaint = afterRepaint;
 Toy.makeTriangle = makeTriangle;
 
 Toy.MessageQueue = MessageQueue;
+Toy.FakeRpcWorker = FakeRpcWorker;
 
 // for interactive testing
 Toy._testTriangle = _testTriangle;
 
+})();
