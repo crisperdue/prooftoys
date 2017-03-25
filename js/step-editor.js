@@ -105,8 +105,8 @@ function StepEditor(proofEditor) {
   // This will contain suggestions for next steps.
   var nexts = self.nextSteps = new Toy.ProofDisplay();
   $(nexts.node).addClass('nextSteps');
-  var $nextBox = ($('<div><b>Next step suggestions:</b></div>')
-                  .append(nexts.node));
+  var $nextBox = $('<div class=nextStepsContainer>');
+  $nextBox.append('<b>Next step suggestions:</b></div>', nexts.node);
   $div.append(self.clearer, self.form, self.$proofErrors,
               $nextBox, menu.$node);
 
