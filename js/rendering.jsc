@@ -660,6 +660,7 @@ function renderStepNumber(step) {
  * position.
  */
 ProofDisplay.prototype.addStep = function(step) {
+  var self = this;
   // TODO: Move most of this logic into renderStep.
   var copy = step.copyToRender();
   copy.users = 0;
@@ -669,7 +670,11 @@ ProofDisplay.prototype.addStep = function(step) {
   copy.rendering = copy;
   step.original = step;
   copy.original = step;
-  step.ruleDeps.forEach(@{s. s.rendering && s.rendering.addUser(); });
+  step.ruleDeps.forEach(function(s) {
+      if (self == getProofDisplay(s.rendering)) {
+        s.rendering.addUser();
+      }
+    });
   copy.proofDisplay = this;
   this.steps.push(copy);
   // Give it a stepNumber early so rendering code can find it.
@@ -716,7 +721,12 @@ ProofDisplay.prototype.removeLastStep = function() {
   hoverStepSelector(step, 'out');
   $(step.stepNode).remove();
   delete step.original.rendering;
-  step.ruleDeps.forEach(@{s. s.rendering.removeUser();});
+  var display = getProofDisplay(step);
+  step.ruleDeps.forEach(function(s) {
+      if (getProofDisplay(s.rendering) == display) {
+        s.rendering.removeUser();
+      }
+    });
   steps.length = index;
 };
 
