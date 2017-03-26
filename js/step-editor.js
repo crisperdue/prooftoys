@@ -1139,7 +1139,36 @@ function checkTop(oldTop) {
   // window.setTimeout(reset, 100);
 }
 
+/**
+ * Send an RPC message to an inference worker, returning a Promise
+ * to receive the result.
+ */
+function sendRule(name, args) {
+  return Toy.rpcWorkers.send({action: 'rule', name: name, args: args});
+}
+
+
 //// INITIALIZATION
+
+/**
+ * RPC setup for Mathtoys:
+ */
+$(function () {
+    var receiver = {
+      actions: {
+        rule: function(message) {
+          var step = Toy.rules[message.name].apply(null, message.args);
+          return {step: step};
+        }
+      }
+    };
+    var fakeWorker = new Toy.FakeRpcWorker(receiver);
+    var queue = new Toy.MessageQueue();
+    queue.addWorker(fakeWorker);
+    // This is the endpoint for accessing worker threads via RPC.
+    Toy.rpcWorkers = queue;
+  });
+
 
 // For testing:
 Toy.autoSimplify = autoSimplify;
