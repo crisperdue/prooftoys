@@ -2562,17 +2562,22 @@ function getHoverHandler(step) {
  * Highlights input sites as usual for rewrite rules.
  */
 function hoverAsRewriter(step, action) {
+  // These are selections in the input step.
   var selections = Toy.stepSites(step);
   // Highlight the input sites expressions for the step while hovered.
   selections.forEach(function(expr) {
     action(expr.node, 'site');
   });
 
+  var deeper = step.wff.isCall2('=>') && step.ruleDeps[0].wff.isCall2('=');
+  var right = Toy.path('/right');
+
   // Show the corresponding subexpressions of this step if possible.
   // Note: this is likely to require overrides in some rules.
   Toy.stepPaths(step).forEach(function(path) {
     try {
-      action(step.get(path).node, 'site');
+      var main = deeper ? step.wff.getRight() : step.wff;
+      action(main.get(path).node, 'site');
     } catch(err) {
       Toy.logError(err);
     }
