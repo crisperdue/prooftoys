@@ -724,7 +724,7 @@ span.stepRef {
 /* Overrides styles for .proofDisplay. */
 .stepEditor {
   background-color: white;
-  margin-top: .2em;
+  margin-top: 2em;
   position: relative;
   /* Allow plenty of space for the ruleMenu, though it is not always
      displayed. */
@@ -749,22 +749,10 @@ span.stepRef {
     position: relative;
 }
 
-/* Contains the rest of the rule selector, positioned absolute
-   in an effort to avoid troubling the repaint process, flexboxes
-   in particular.
- */
-.rulesContainer {
-    position: absolute;
-}
-
-/* Heading display for the rule selector. */
-.rulesHeader {
-  padding-left: 4px;
-  font-weight: bold;
-}
-
 .ruleMenu .rulesItems {
+    display: inline-block;
     margin-left: 3em;
+    margin-top: .4em;
 }
 
 /* Other */

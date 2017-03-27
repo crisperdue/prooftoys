@@ -979,6 +979,7 @@ var simplifiersInfo = {
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
     menu: 'algebra: simplify',
+    offerExample: true,
     description: 'simplify;; {step step}',
     labels: 'algebra'
   },
@@ -1032,6 +1033,7 @@ var simplifiersInfo = {
     inputs: {site: 1},
     form: '',
     menu: 'algebra: simplify {term}',
+    offerExample: true,
     description: 'simplify;; {in step siteStep}',
     labels: 'algebra'
   },
@@ -1082,6 +1084,7 @@ var simplifiersInfo = {
     inputs: {step: 1},
     form: ('Simplify negations in <input name=step>'),
     menu: 'algebra: simplify negations',
+    offerExample: true,
     description: 'simplify negations',
     labels: 'algebra'
   },

@@ -57,7 +57,7 @@ var siteTypes = {
  *   information in tryExecuteRule.
  * form: jQuery SPAN to hold the argument input form.
  * proofDisplay: ProofDisplay to edit
- * nextSteps: ProofDisplay used to show possible "next steps" based
+ * stepSuggester: StepSuggester used to show possible "next steps" based
  *   on rules applicable to any current selection.
  * lastRuleTime: Milliseconds consumed by last execution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
@@ -93,6 +93,9 @@ function StepEditor(proofEditor) {
   self.$proofErrors = $('<div class="proofErrors hidden"></div>');
   self.$node = $div;
 
+  self.$advice = $('<div class="hidden"><b>Next: select an expression ' +
+                   'with a click, checkbox selects the step.</b></div>');
+
   // Attach the "ruleWorking" to the ProofDisplay node so
   // it doesn't move when steps are inserted.
   // TODO: Position the thing relative to the document each time it is
@@ -103,12 +106,9 @@ function StepEditor(proofEditor) {
   self.ruleMenu = menu;
 
   // This will contain suggestions for next steps.
-  var nexts = self.nextSteps = new Toy.ProofDisplay();
-  $(nexts.node).addClass('nextSteps');
-  var $nextBox = $('<div class=nextStepsContainer>');
-  $nextBox.append('<b>Next step suggestions:</b></div>', nexts.node);
+  self.stepSuggester = new StepSuggester(self);
   $div.append(self.clearer, self.form, self.$proofErrors,
-              $nextBox, menu.$node);
+              self.$advice, self.stepSuggester.$node, menu.$node);
 
   // Install event handlers.
   self.clearer.on('click', function() { self.reset(); });
@@ -128,25 +128,13 @@ function StepEditor(proofEditor) {
 
 StepEditor.prototype.refresh = function() {
   this.ruleMenu.refresh();
-  this._refreshNextSteps(this.nextSteps);
-};
-
-/**
- * Internal to StepEditor; activates refresh of the next steps
- * suggestions.
- */
-StepEditor.prototype._refreshNextSteps = function() {
-  var self = this;
-  var display = self.nextSteps;
-  var step = self.proofDisplay.selection;
-  display.setSteps([]);
-  display.prevStep = step;
-  self.offerableFacts().forEach(function(statement) {
-      var next = Toy.rules.rewrite(step.original,
-                                   step.prettyPathTo(step.selection),
-                                   statement);
-      display.addStep(next);
-  });
+  this.stepSuggester.refresh();
+  /*
+  var showAdvice = (!this.selection &&
+                    this.ruleMenu.$node.is(':hidden') &&
+                    this.$nextBox.is(':hidden'));
+  this.$advice.toggleClass('hidden', !showAdvice);
+  */
 };
 
 /**
@@ -960,6 +948,92 @@ function ruleMenuText(ruleName, step, term, proofEditor) {
 }
 
 
+//// STEPSUGGESTER
+
+/**
+ * Widget that displays suggestions for possible next steps.  Has
+ * public properties:
+ *
+ * stepEditor: StepEditor of which this is part.
+ * display: ProofDisplay that holds the suggested steps.
+ * length: Number of suggested possible steps.
+ * $node: jQuery with DOM node of the widget presentation.
+ */
+function StepSuggester(stepEditor) {
+  var self = this;
+  self.length = 0;
+  self.stepEditor = stepEditor;
+  var nexts = self.display = new Toy.ProofDisplay();
+  $(nexts.node).addClass('nextSteps');
+  var $node = self.$node = $('<div class="nextStepsContainer hidden">');
+  $node.append('<b>Next step suggestions:</b></div>', nexts.node);
+  // When activated, this will update the display when the event loop
+  // next comes back to idle.
+  self._refresher = new Toy.Refresher(self._update.bind(self));
+}
+
+var suggesterMethods = {
+
+  /**
+   * Use this to indicate that some state has changed which may affect
+   * the desired list of step suggestions.
+   */
+  refresh: function() {
+    this._refresher.activate();
+  },
+
+  /**
+   * Internal to the StepSuggester; updates the display of suggested
+   * next steps.
+   */
+  _update: function() {
+    var self = this;
+    var display = self.display;
+    var stepEditor = self.stepEditor;
+    // Hide the nextSteps display temporarily; show it later if not empty.
+    var $container = self.$node;
+    $container.addClass('hidden');
+    display.setSteps([]);
+    var mainDisplay = stepEditor.proofDisplay;
+    var step = mainDisplay.selection;
+    if (step) {
+      var term = step.selection;
+      var path = term && step.prettyPathTo(term);
+      var rules = Toy.rules;
+      display.prevStep = step;
+      stepEditor.offerableRuleNames().forEach(function(name) {
+          var info = rules[name].info;
+          function addStep(result) {
+            if (!result.step.matches(step)) {
+              // A simplifer may return a step identical to its
+              // input, which is intended to be ignored.
+              display.addStep(result.step);
+            }
+          }
+          if (info.offerExample) {
+            sendRule(name, path ? [step.original, path] : [step.original])
+              .then(addStep);
+          }
+        });
+      stepEditor.offerableFacts().forEach(function(statement) {
+          var next = rules.rewrite(step.original,
+                                   step.prettyPathTo(step.selection),
+                                   statement);
+          display.addStep(next);
+      });
+    }
+    self.length = display.steps.length;
+    if (self.length > 0) {
+      $container.removeClass('hidden');
+    }
+    // TODO: Consider updating the advice using Promises.
+    var bothEmpty = self.length == 0 && stepEditor.ruleMenu.length == 0;
+    stepEditor.$advice.toggle(bothEmpty);
+  }
+};
+Object.assign(StepSuggester.prototype, suggesterMethods);
+
+
 //// RULEMENU
 
 /**
@@ -977,12 +1051,16 @@ function ruleMenuText(ruleName, step, term, proofEditor) {
 function RuleMenu(stepEditor) {
   var self = this;
   self.stepEditor = stepEditor;
-  self._refresher = new Toy.Refresher(self.update.bind(self));
+  self._refresher = new Toy.Refresher(self._update.bind(self));
   self.length = 0;
   self.changed = false;
 
   // Rule chooser:
-  self.$node = $('<div class=ruleMenu/>');
+  self.$node = $('<div class=ruleMenu><b>Actions:</b></div>');
+  self.$items = $('<div class=rulesItems/>');
+  // An intermediate DIV so the rulesItems div can be inline-block to
+  // shrink-wrap itself around the individual items.
+  self.$node.append($('<div/>').append(self.$items));
 
   self.$node.on('click', '.ruleItem', function(event) {
       // Run the step editor's ruleChosen method with
@@ -1021,65 +1099,38 @@ RuleMenu.prototype.fadeToggle = function(visible) {
  * Updates the step suggestions and rule menu to offer items
  * reflecting the currently-selected step or term, if any.
  */
-RuleMenu.prototype.update = function() {
+RuleMenu.prototype._update = function() {
   var self = this;
+  var stepEditor = self.stepEditor;
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
-  self.stepEditor.$proofErrors.hide();
-  var $container = $('<div class=rulesContainer>');
-  var $header = $('<div class=rulesHeader/>');
-  var $items = $('<div class=rulesItems/>');
-  $container.append($header, $items);
-  var step = this.stepEditor.proofDisplay.selection;
+  stepEditor.$proofErrors.hide();
+  var $items = self.$items;
+  $items.empty();
+  var step = stepEditor.proofDisplay.selection;
   var term = step && step.selection;
   // Map from rule display text to rule name.
   var byDisplay = {};
   var displayTexts = [];
-  self.stepEditor.offerableRuleNames().forEach(function(name) {
+  stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      var text = ruleMenuText(ruleName, step, term,
-                              self.stepEditor._proofEditor);
-      if (Array.isArray(text)) {
-        text.forEach(function(msg) {
-            displayText.push(msg);
-            byDisplay[msg] = ruleName;
-          });
-      } else if (text) {
-        displayTexts.push(text);
-        byDisplay[text] = ruleName;
-      }
-    });
-  self.stepEditor.offerableFacts().forEach(function(statement) {
-    var text = statement.toString();
-    var toDisplay = statement;
-    if (statement.isEquation()) {
-      if (statement.isCall2('=>')) {
-      // Make the statement be the fact's equation.
-      toDisplay = statement = statement.getRight();
-      }
-      // If as usual the LHS of the equation matches the selection,
-      // set toDisplay to the result of substituting into the RHS.
-      var step = self.stepEditor.proofDisplay.selection;
-      var selection = step && step.selection;
-      if (selection) {
-        var subst = selection.matchSchema(statement.getLeft());
-        if (subst) {
-          toDisplay = statement.getRight().subFree(subst);
+      if (!Toy.rules[ruleName].offerExample) {
+        var text = ruleMenuText(ruleName, step, term,
+                                stepEditor._proofEditor);
+        if (Array.isArray(text)) {
+          // An array occurs when a rule may be used in multiple ways,
+          // notably where there are multiple possible replacements of
+          // a term by equal terms.
+          text.forEach(function(msg) {
+              displayText.push(msg);
+              byDisplay[msg] = ruleName;
+            });
+        } else if (text) {
+          displayTexts.push(text);
+          byDisplay[text] = ruleName;
         }
       }
-    }
-    var display = '= ' + toDisplay.toHtml();
-    if (subst) {
-      display += (' <span class=description>using ' +
-                  Toy.trimParens(statement.toHtml())
-                  + '</span>');
-    }
-    displayTexts.push(display);
-    // Value of the option; format of "fact <fact text>"
-    // indicates that the text defines a fact to use in
-    // rules.rewrite.
-    byDisplay[display] = 'fact ' + text;
-  });
+    });
   displayTexts.sort(function(a, b) { return a.localeCompare(b); });
   var items = [];
   displayTexts.forEach(function(display) {
@@ -1093,18 +1144,13 @@ RuleMenu.prototype.update = function() {
   $items.append(items);
   // TODO: Generate smarter messages for rules that work without a UI
   //   selection (most theorems and theorem generators).
-  $header.text(displayTexts.length
-               ? 'Actions:'
-               : (self.stepEditor.proofDisplay.selection
-                  ? (self.stepEditor.showRuleType == 'algebra'
-                     ? 'Try selecting the whole step or a numeric expression.'
-                     : 'No actions available for the selection in this mode.')
-                  : ('Select an expression with a click. ' +
-                     'Checkbox selects the step.')));
   self.$node.fadeOut(0);
-  self.$node.empty();
-  self.$node.append($container);
-  self.$node.fadeIn();
+  if (displayTexts.length > 0) {
+    self.$node.fadeIn();
+  }
+  // TODO: Consider updating the advice using Promises.
+  var bothEmpty = self.length == 0 && stepEditor.stepSuggester.length == 0;
+  stepEditor.$advice.toggle(bothEmpty);
 };
 
 /**
