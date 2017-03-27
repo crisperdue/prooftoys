@@ -250,11 +250,6 @@ span#leftNav {
   line-height: 120%;
 }
 
-/* Box around next step suggestions */
-.proofDisplay.nextSteps {
-    margin-left: 2em;
-}
-
 /* Indent most subproofs. */
 .proofDisplay .inferenceDisplay {
   margin: 5px 5px 5px 5px;
@@ -353,6 +348,37 @@ span#leftNav {
 .proofStep.hasSubproof .subproofHider, .proofHeader .subproofHider {
   visibility: visible;
 }
+
+
+/* Next steps displays */
+
+/* Container for next step suggestions */
+.proofDisplay.nextSteps {
+    margin-left: 2em;
+}
+
+.proofDisplay.nextSteps .stepNumber {
+    display: inline-block;
+    width: 1em;
+    text-align: center;
+}
+
+/* In nextSteps displays the stepNumArea just contains a
+   stepNumPlaceholder, and these rules give it content
+   and style. */
+.proofDisplay.nextSteps .stepAndNum .stepNumPlaceholder::before {
+    color: #ddd;
+    content: "--";
+}
+
+/* When hovered, shows a checkmark. */
+.proofDisplay.nextSteps .stepAndNum.hover .stepNumPlaceholder::before {
+    color: #0c0;
+    font-weight: bold;
+    content: "\002713";
+}
+
+/* Others */
 
 /* Adjacent and similar to subproofHider */
 .techDetailsButton {

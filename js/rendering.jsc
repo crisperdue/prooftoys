@@ -644,7 +644,7 @@ ProofDisplay.prototype.setSteps = function(steps) {
  * Render's the step number into its element of class "stepNumber".
  */
 function renderStepNumber(step) {
-  $(step.stepNode).find('.stepNumber').text(step.stepNumber);
+  $(step.stepNode).find('.stepNumber').html(step.stepNumber);
 }
 
 /**
@@ -672,7 +672,7 @@ ProofDisplay.prototype.addStep = function(step) {
   this.steps.push(copy);
   // Give it a stepNumber early so rendering code can find it.
   copy.stepNumber = (this.prevStep
-                     ? '--'
+                     ? '<span class=stepNumPlaceholder/>'
                      : (Toy.showOrdinals
                         ? step.ordinal
                         : this.stepPrefix + this.steps.length));

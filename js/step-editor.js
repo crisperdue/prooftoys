@@ -970,6 +970,19 @@ function StepSuggester(stepEditor) {
   // When activated, this will update the display when the event loop
   // next comes back to idle.
   self._refresher = new Toy.Refresher(self._update.bind(self));
+
+  // Event handling
+
+  $node.on('click', '.stepSelector', function(event) {
+      var dStep = Toy.getProofStep(event.target);
+      console.log('Click on', event.target, '=', dStep.$$);
+      var step = dStep.original;
+      var rule = Toy.rules[step.ruleName];
+      var result = rule.apply(null, step.ruleArgs);
+      // TODO: Consider what if "nothing done"??
+      stepEditor.proofDisplay.addStep(result);
+      stepEditor.proofDisplay.deselectStep();
+    });
 }
 
 var suggesterMethods = {
