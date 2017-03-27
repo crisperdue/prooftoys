@@ -1242,6 +1242,7 @@ var moversInfo = {
       }).justify('arrangeTerm', arguments, [step]);
     },
     inputs: {site: 1},
+    offerExample: true,
     form: '',
     menu: 'algebra: get standard form of {term}',
     description: 'standard form of {site};; {in step siteStep}',
