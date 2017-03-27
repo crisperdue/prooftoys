@@ -632,16 +632,9 @@ ProofDisplay.prototype.selectionChanged = function() {
  * nonrenderable steps.
  */
 ProofDisplay.prototype.setSteps = function(steps) {
-  // Clear rendering properties of current steps, as they will be
-  // deleted.
-  this.steps.forEach(function(step) {
-      clearSubproof(step, true);
-      step.original.rendering = null;
-    });
-  $(this.node).find('.proofSteps').html('');
-  // Now render the desired steps.
-  this.proofChanged();
-  this.steps = [];
+  if (this.steps.length > 0) {
+    this.removeStepAndFollowing(this.steps[0]);
+  }
   for (var i = 0; i < steps.length; i++) {
     this.addStep(steps[i]);
   }
