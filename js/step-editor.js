@@ -1114,7 +1114,7 @@ RuleMenu.prototype._update = function() {
   var displayTexts = [];
   stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      if (!Toy.rules[ruleName].offerExample) {
+      if (!Toy.rules[ruleName].info.offerExample) {
         var text = ruleMenuText(ruleName, step, term,
                                 stepEditor._proofEditor);
         if (Array.isArray(text)) {
