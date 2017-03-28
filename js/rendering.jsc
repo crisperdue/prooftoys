@@ -321,9 +321,9 @@ function ProofEditor() {
         var message = self.progressMessage(step);
         $status.empty();
         $status.append(message);
-        $status.toggle(!!message);
+        $status.toggleClass('hidden', !message);
       } else {
-        $status.toggle(false);
+        $status.toggleClass('hidden', true);
       }
     });
 

@@ -93,7 +93,7 @@ function StepEditor(proofEditor) {
   self.$proofErrors = $('<div class="proofErrors hidden"></div>');
   self.$node = $div;
 
-  self.$advice = $('<div class="hidden"><b>Next: select an expression ' +
+  self.$advice = $('<div class="advice hidden"><b>Select an expression ' +
                    'with a click, checkbox selects the step.</b></div>');
 
   // Attach the "ruleWorking" to the ProofDisplay node so
@@ -129,12 +129,6 @@ function StepEditor(proofEditor) {
 StepEditor.prototype.refresh = function() {
   this.ruleMenu.refresh();
   this.stepSuggester.refresh();
-  /*
-  var showAdvice = (!this.selection &&
-                    this.ruleMenu.$node.is(':hidden') &&
-                    this.$nextBox.is(':hidden'));
-  this.$advice.toggleClass('hidden', !showAdvice);
-  */
 };
 
 /**
@@ -975,7 +969,6 @@ function StepSuggester(stepEditor) {
 
   $node.on('click', '.stepSelector', function(event) {
       var dStep = Toy.getProofStep(event.target);
-      console.log('Click on', event.target, '=', dStep.$$);
       var step = dStep.original;
       var rule = Toy.rules[step.ruleName];
       var result = rule.apply(null, step.ruleArgs);
@@ -1041,7 +1034,7 @@ var suggesterMethods = {
     }
     // TODO: Consider updating the advice using Promises.
     var bothEmpty = self.length == 0 && stepEditor.ruleMenu.length == 0;
-    stepEditor.$advice.toggle(bothEmpty);
+    stepEditor.$advice.toggleClass('hidden', !bothEmpty);
   }
 };
 Object.assign(StepSuggester.prototype, suggesterMethods);
@@ -1163,7 +1156,7 @@ RuleMenu.prototype._update = function() {
   }
   // TODO: Consider updating the advice using Promises.
   var bothEmpty = self.length == 0 && stepEditor.stepSuggester.length == 0;
-  stepEditor.$advice.toggle(bothEmpty);
+  stepEditor.$advice.toggleClass('hidden', !bothEmpty);
 };
 
 /**

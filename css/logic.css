@@ -231,11 +231,6 @@ span#leftNav {
   padding: .2em 1em;
 }
 
-/* Not displayed */
-.hidden {
-  display: none;
-}
-
 /* Invisibly fills space */
 .invisible {
   visibility: hidden;
@@ -410,6 +405,10 @@ span#leftNav {
   color: gray;
 }
 
+/* Comment that you can select an expression or step. */
+.advice {
+}
+
 /* Pop-up DIV that says Prooftoys is busy working. */
 .ruleWorking {
   position: absolute;
@@ -504,7 +503,7 @@ span#leftNav {
 /* The box with info about progress toward solution(s)
  */
 .solutionStatus {
-    float: left;
+    display: inline-block;
     white-space: pre;
     margin: .2em;
     border: 2px solid #0cf;
@@ -851,4 +850,11 @@ input.varName, input.step, input.equation, input.implication {
 textarea.proofStateArea {
     width: 95%;
     margin: 1em 0em;
+}
+
+/* At the end to be as potent as possible.  */
+
+/* Not displayed */
+.hidden {
+  display: none;
 }
