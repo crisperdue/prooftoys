@@ -738,9 +738,9 @@ var ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'consider {term} equal to itself',
+    menu: 'consider {term} in isolation',
     tooltip: ('prepare to transform term'),
-    description: 'expression equal to itself',
+    description: 'term equal to itself',
     labels: 'display'
   },
 
