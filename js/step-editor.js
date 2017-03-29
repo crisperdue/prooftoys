@@ -1089,16 +1089,13 @@ RuleMenu.prototype.refresh = function() {
  * argument.
  */
 RuleMenu.prototype.fadeToggle = function(visible) {
+  // This currently does not use fading, because the model
+  // is now to use CSS class "hidden", and code related
+  // to $advice relies on the value to decide whether to
+  // show the $advice.
   var $node = this.$node;
-  if (visible) {
-    $node.fadeIn(200);
-  } else {
-    // This fades out as the busy indicator fades in, so the duration
-    // must be less than the fadeIn duration of the busy indicator;
-    // otherwise completion of this will be delayed by running of the
-    // actual rule.
-    $node.fadeOut(0);
-  }
+  $node.toggleClass('hidden', !visible);
+  return;
 };
 
 /**
