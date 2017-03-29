@@ -4167,6 +4167,14 @@ function addFact(info) {
 }
 
 /**
+ * Like getResult, below, but always proves the statement if it has
+ * an associate prover function.
+ */
+function proveResult(stmt) {
+  return getResult(stmt, true);
+}
+
+/**
  * Accepts a proved step or any argument acceptable to getStatement.
  * Returns the proved step, or looks up a fact matching the statement,
  * returning the proved result.  Throws an exception in case of
@@ -4178,10 +4186,14 @@ function addFact(info) {
  * Note that the facts database currently looks up facts by their
  * "main" part, ignoring any assumptions.
  *
+ * The optional second argument, for internal use only, if true,
+ * overrides any setting of Toy.assertFacts and assures that a proved
+ * result will be returned (if there is a prover function).
+ *
  * TODO: Consider renaming to something like "stepify" and using as
  *   a conversion for inputs to steps in the vein of "termify".
  */
-function getResult(stmt) {
+function getResult(stmt, mustProve) {
   if (Toy.isProved(stmt)) {
     return stmt;
   }
@@ -4194,7 +4206,7 @@ function getResult(stmt) {
   }
   var prover = info.prover;
   // Get the proved result of the fact.
-  if (Toy.assertFacts && !prover.done) {
+  if (Toy.assertFacts && !mustProve && !prover.done) {
     return rules.assert(goal);
   }
   try {
@@ -4967,6 +4979,7 @@ Toy.lookupFactInfo = lookupFactInfo;
 Toy.addFact = addFact;
 Toy.addFactsMap = addFactsMap;
 Toy.isRecordedFact = isRecordedFact;
+Toy.proveResult = proveResult;
 Toy.getResult = getResult;
 Toy.eachFact = eachFact;
 Toy.getTheorem = getTheorem;
