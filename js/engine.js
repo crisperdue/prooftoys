@@ -1553,14 +1553,14 @@ var ruleInfo = {
     labels: 'basic'
   },
 
-  // Replace part of a step with T if it matches a proved step
-  // or the consequent of a proved conditional.
-  // Note: uses rules.replace with conditional if the site only
-  // matches the step as RHS of its conditional.
+  // Replace part of a step with T if it matches a proved step or the
+  // consequent of a proved conditional, taking the proved step as a
+  // schema.  If it matches a consequent, the antecedent becomes an
+  // assumption of the resulting statement.
   //
-  // TODO: Extend this to "known truth value" where the term or its
-  //   negation is proved.  Include boolean simplification on the
-  //   result of the replacement.
+  // TODO: Consider extending this to "known truth value" where the
+  //   term or its negation is proved, and including boolean
+  //   simplification on the result of the replacement.
   trueBy: {
     action: function(target, path, step) {
       var term = target.get(path);
@@ -1710,9 +1710,9 @@ var ruleInfo = {
   // Given two theorems a and b, proves a & b.
   // Handles hypotheses.
   // 
-  // TODO: hyps -- We could replace uses of this with rules.and, then
-  //   if desired combine assumptions.  Or rename this to andIf, and
-  //   combine asms whenever possible.
+  // TODO: hyps -- We could replace this rule with combinations of the
+  //   fact [A == A & T], and an inverse of rules.trueBy.  That pair
+  //   would cover this rule and handle other situations also.
   makeConjunction: {
     action: function(a, b) {
       var stepa = rules.toTIsA(a);
@@ -2729,6 +2729,9 @@ var ruleInfo = {
   //
   // Takes its arguments in the usual order, unlike rules.r and
   // rules.rplace, with the target first.
+  //
+  // TODO: XXX This appears to be mostly broken, and breaks a couple
+  // of other rules if the equation is a conditional equation.
   replace: {
     action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
