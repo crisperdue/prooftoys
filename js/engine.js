@@ -4980,7 +4980,7 @@ Toy._factsMap = _factsMap;
 
 // Settable variables, export right here:
 Toy.autoAssert = false;
-Toy.assertFacts = false;
+Toy.assertFacts = true;
 
 Toy.getStepCounter = getStepCounter;
 
