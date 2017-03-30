@@ -971,10 +971,7 @@ function StepSuggester(stepEditor) {
       var dStep = Toy.getProofStep(event.target);
       var step = dStep.original;
       var rule = Toy.rules[step.ruleName];
-      var result = rule.apply(null, step.ruleArgs);
-      // TODO: Consider what if "nothing done"??
-      stepEditor.proofDisplay.addStep(result);
-      stepEditor.proofDisplay.deselectStep();
+      Toy.tryRuleAsync(stepEditor, rule, step.ruleArgs);
     });
 }
 
