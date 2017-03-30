@@ -367,7 +367,7 @@ span#leftNav {
 }
 
 /* When hovered, shows a checkmark. */
-.proofDisplay.nextSteps .stepAndNum.hover .stepNumPlaceholder::before {
+.proofDisplay.nextSteps .proofStep.hover .stepNumPlaceholder::before {
     color: #0c0;
     font-weight: bold;
     content: "\002713";
@@ -616,7 +616,6 @@ span#leftNav {
   border-color: silver;
 }
 
-/*
 /* Must be specific enough to override the silver/gray border. */
 .proofDisplay.editable .proofStep.selected .stepAndNum {
   border: 1px solid #888;
