@@ -960,7 +960,7 @@ function StepSuggester(stepEditor) {
   var nexts = self.display = new Toy.ProofDisplay();
   $(nexts.node).addClass('nextSteps');
   var $node = self.$node = $('<div class="nextStepsContainer hidden">');
-  $node.append('<b>Next step suggestions:</b></div>', nexts.node);
+  $node.append('<b>Some next step options:</b></div>', nexts.node);
   // When activated, this will update the display when the event loop
   // next comes back to idle.
   self._refresher = new Toy.Refresher(self._update.bind(self));
@@ -1059,7 +1059,7 @@ function RuleMenu(stepEditor) {
   self.changed = false;
 
   // Rule chooser:
-  self.$node = $('<div class=ruleMenu><b>Actions:</b></div>');
+  self.$node = $('<div class=ruleMenu><b>Actions to try:</b></div>');
   self.$items = $('<div class=rulesItems/>');
   // An intermediate DIV so the rulesItems div can be inline-block to
   // shrink-wrap itself around the individual items.
