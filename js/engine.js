@@ -4210,7 +4210,15 @@ function getResult(stmt, mustProve) {
   var prover = info.prover;
   // Get the proved result of the fact.
   if (Toy.assertFacts && !mustProve && !prover.done) {
-    return rules.assert(goal);
+    var result = rules.assert(goal);
+    if (result.isCall2('=>')) {
+      // Treat any conditional as having hypotheses.
+      //
+      // TODO: Skipping this might provide a good test for the system
+      //   working with conditionals directly.
+      result = rules.asHypotheses(result);
+    }
+    return result;
   }
   try {
     info.proved = prover();
