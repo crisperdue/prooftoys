@@ -3,6 +3,9 @@
 
 (function() {
 
+// Run tests with all facts being proved.
+Toy.assertFacts = false;
+
 // Make some names visible throughout
 var rules = Toy.rules;
 var ruleData = Toy.ruleData;
