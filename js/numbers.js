@@ -533,10 +533,10 @@ var numbersInfo = {
   // Variant of rules.rewrite for use from the UI, when the equation
   // is a proof step, not a well-known fact; otherwise the same as
   // rules.rewrite.
-  rewriteNumeric: {
+  rewriteFrom: {
     action: function(step, path, equation) {
       return (rules.rewrite(step, path, equation)
-              .justify('rewriteNumeric', arguments, [step, equation]));
+              .justify('rewriteFrom', arguments, [step, equation]));
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using step <input name=equation>'),
