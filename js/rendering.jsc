@@ -2572,7 +2572,8 @@ function hoverAsRewriter(step, action) {
       var main = deeper ? step.wff.getRight() : step.wff;
       action(main.get(path).node, 'site');
     } catch(err) {
-      Toy.logError(err);
+      console.warn('Cannot hover in step', step.$$);
+      console.warn('Hover got error', err.message);
     }
   });
 }
