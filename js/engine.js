@@ -1553,10 +1553,11 @@ var ruleInfo = {
     labels: 'basic'
   },
 
-  // Replace part of a step with T if it matches a proved step or the
-  // consequent of a proved conditional, taking the proved step as a
-  // schema.  If it matches a consequent, the antecedent becomes an
-  // assumption of the resulting statement.
+  // Replace part of a target step with T if it matches a proved step
+  // or the consequent of a proved conditional, taking the proved step
+  // as a schema.  If the target term matches the consequent of the
+  // proved step, the antecedent becomes an assumption of the
+  // resulting statement.
   //
   // TODO: Consider extending this to "known truth value" where the
   //   term or its negation is proved, and including boolean
