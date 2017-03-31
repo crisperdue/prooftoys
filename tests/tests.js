@@ -1969,9 +1969,11 @@ var testCase = {
 
   testRplace: function() {
     var rules = Toy.rules;
-    var result = rules.rplace(rules.assert('x > 0 => (x = (abs x))'),
-                               rules.assert('x > 0 => ((x + x) > x)'),
-                               '/right/right');
+    var rule = (rules.assert('x > 0 => (x = (abs x))')
+                .andThen('asHypotheses'));
+    var target = (rules.assert('x > 0 => ((x + x) > x)')
+                  .andThen('asHypotheses'));
+    var result = rules.rplace(rule, target, '/right/right');
     assertEqual('((x > 0) => ((x + x) > (abs x)))', result);
   },
 

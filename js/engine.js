@@ -2801,12 +2801,14 @@ var ruleInfo = {
   // segment 'main', which it interprets as 'right' if h_c has
   // hypotheses, otherwise ignoring it.
   //
+  // Accepts a plain equation with no hypotheses, applying rule R.
+  //
+  // Otherwise the equation must have hypotheses, and the result will
+  // have hypotheses.
+  //
   // Note: When generating a no-op equation, it is desirable to make
   // the LHS and RHS be the same object (and same as the target),
   // because rule R will recognize the no-op.
-  //
-  // For convenience applies rule R directly if the equation is really
-  // an equation and not an implication.
   //
   // TODO: Support h_c_arg with assumptions and a leftward path by
   //   ignoring that there are assumptions.
@@ -2830,6 +2832,11 @@ var ruleInfo = {
       // h_equation must have the form H => A = B
       assert(h_equation.isEquation(), 
              'Not an equation: {1}', h_equation);
+      // Note: If this assertion is removed the rule appears to work
+      // if both inputs are plain conditionals with identical
+      // antecedents.
+      assert(h_equation.hasHyps,
+             'Plain conditional equation in rules.rplace:', h_equation);
 
       if (h_c.hasHyps && path.isLeft()) {
         // We are replacing an assumption with something equal
@@ -2855,7 +2862,8 @@ var ruleInfo = {
         return result.justify('rplace', args, [h_equation_arg, h_c_arg]);
       }
 
-      // Give the two WFFs the same hypotheses.
+      // Give the two WFFs the same hypotheses.  If either
+      // input has hyps, both of these will have hyps.
       h_c = rules.appendStepHyps(h_c, h_equation);
       h_equation = rules.prependStepHyps(h_equation, h_c_arg);
 
@@ -2873,7 +2881,7 @@ var ruleInfo = {
       if (!h_c.hasHyps) {
         // If there are no hypotheses, we did not attempt to make the
         // LHS of the two input steps match.
-        assert(h_c.getLeft().matches(h),
+        assert(h_c.isCall2('=>') && h_c.getLeft().matches(h),
                'LHS mismatch in "replace" rule',
                h_c_arg);
       }
@@ -2994,8 +3002,9 @@ var ruleInfo = {
   // Add hypotheses to the target step from hypStep.  This is key to
   // providing two steps with the same hypotheses in preparation for
   // applying various rules of inference.  If hypStep has no
-  // hypotheses, the result is simply the target step.
-  // TODO: hyps
+  // hypotheses, the result is simply the target step.  Otherwise if
+  // the target has no hypotheses, it "inherits" them from hypstep, no
+  // matter if it is a conditional.
   appendStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
@@ -3049,8 +3058,9 @@ var ruleInfo = {
 
   // Prefix hypotheses from the hypStep to the target step.  Often
   // used together with appendStepHyps.  If hypStep has no hypotheses,
-  // the result is simply the target step.
-  // TODO: hyps
+  // the result is simply the target step.  Otherwise if the target
+  // has no hypotheses, it "inherits" them from hypstep, no matter if
+  // it is a conditional.
   prependStepHyps: {
     action: function(target, hypStep) {
       if (hypStep.hasHyps) {
