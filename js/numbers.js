@@ -1871,6 +1871,9 @@ var distribFacts = {
   }
 };
 
+// TODO: Need distributivity of division over addition and subtraction.
+
+
 // Private to isDistribFact.  A mapping from statement key to value
 // that is truthy iff the statement is in distribFacts.
 var _distribFactsTable;
