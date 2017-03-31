@@ -3183,6 +3183,21 @@ var ruleInfo = {
     description: 'rewrite {site};; {in step siteStep} {using step equation}',
   },
 
+  // Variant of rules.rewrite for use from the UI, when the equation
+  // is a proof step, not a well-known fact; otherwise the same as
+  // rules.rewrite.
+  rewriteFrom: {
+    action: function(step, path, equation) {
+      return (rules.rewrite(step, path, equation)
+              .justify('rewriteFrom', arguments, [step, equation]));
+    },
+    inputs: {site: 1, equation: 3},
+    form: ('Rewrite the site using step <input name=equation>'),
+    menu: 'rewrite',
+    description: 'rewrite {site};; {in step siteStep} {using step equation}',
+    labels: 'basic'
+  },
+
   // Primitive rewriter with no simplification; accepts a statement.
   // In the UI, could be used with well-known facts, but probably better
   // to just offer users rewriteOnlyFrom.
