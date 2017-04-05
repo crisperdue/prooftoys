@@ -2384,6 +2384,12 @@ var ruleInfo = {
     description: 'consequence;; of step {step} using {bool}'
   },
 
+  /*
+  cases: {
+
+  },
+  */
+
   // Instantiates the schema theorem so that the part at the given
   // path is identical to the given term.
   //
@@ -4123,10 +4129,12 @@ function asFactProver(prover, goal) {
                      : result2);
         // TODO: Use rules.equalConjunctions to compare goal
         //   assumptions with assumptions in proved results.
-        if (!added.matches(goal)) {
-          console.log('Warning: Proved assumptions do not match goal.');
-          console.log('  Goal:', goal.toString());
-          console.log('  Result:', result2.toString());
+        if (!added.isCall2('=>') ||
+            !(Toy.makeConjunctionSet(added.getLeft())
+              .equals(Toy.makeConjunctionSet(goal.getLeft())))) {
+          console.warn('Warning: Proved assumptions do not match goal.');
+          console.warn('  Goal:', goal.toString());
+          console.warn('  Result:', added.toString());
         }
         return added;
       } else {
