@@ -68,6 +68,7 @@ function TermSet(term) {
 }  
 Toy.extends(TermSet, Set);
 
+
 /**
  * A Map from terms to variables.  Use TermMap.addTerm to set up
  * values, never TermMap.set.  The "subst" field maintains a
@@ -1426,6 +1427,17 @@ Expr.prototype.scanConjuncts = function(action) {
 };
 
 /**
+ * Makes a new TermSet of all the conjuncts obtained by
+ * applynig scanConjuncts to the given term, as for example
+ * making the assumptions of a step into a TermSet.
+ */
+function makeConjunctionSet(term) {
+  var set = new TermSet();
+  term.scanConjuncts(function (t) { set.add(t); });
+  return set;
+}
+
+/**
  * Transforms an expression that is a chain of conjuncts by applying
  * the xform function to each of its conjuncts.  To match eachHyp,
  * Descends into left-hand arguments except any that have a sourceStep
@@ -2711,6 +2723,7 @@ Toy.isProved = isProved;
 
 Toy.showTypes = false;
 Toy.unicodeNames = unicodeNames;
+Toy.makeConjunctionSet = makeConjunctionSet;
 
 Toy.genVar = genVar;
 
