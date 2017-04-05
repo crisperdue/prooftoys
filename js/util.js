@@ -748,14 +748,25 @@ Set.prototype.has = function(value) {
  * elements of the other collection.
  */
 Set.prototype.superset = function(other) {
+  var self = this;
   var result = true;
   other.each(function(o) {
-      if (!this.has(o)) {
+      if (!self.has(o)) {
         result = false;
         return false;
       }
     });
   return result;
+};
+
+/**
+ * Returns true iff this and the argument set each contain all the
+ * elements of the other one.
+ *
+ * TODO: Consider making more efficient.
+ */
+Set.prototype.equals = function(other) {
+  return this.superset(other) && other.superset(this);
 };
 
 /**
