@@ -1749,13 +1749,13 @@ var testCase = {
     assertEqual('(((p x) = (p y)) => ((h (p x)) = (h (p y))))', result);
   },
 
-  testCases: function() {
+  testCasesTF: function() {
     var ident = Toy.parse('{x. x}');
     var trueCase = rules.axiom4(call(ident, T));
     var falseCase = rules.axiom4(call(ident, F));
-    var result = Toy.rules.cases(trueCase,
-                                 falseCase,
-                                 x);
+    var result = Toy.rules.casesTF(trueCase,
+                                   falseCase,
+                                   x);
     assertEqual('(({x. x} x) = x)', result);
   },
 

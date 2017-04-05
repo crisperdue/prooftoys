@@ -1736,13 +1736,13 @@ var ruleInfo = {
   // (5222) Given two theorems that are substitutions of T and
   // F respectively into a WFF; and a variable or variable name,
   // proves the WFF.  No automatic management of hypotheses.
-  // TODO: Consider whether this can be obsoleted by equationCases
-  //   together with a rule like 2139 (Cases).
-  // TODO: In fact consider deriving this from equationCases.  Unlike
+  // TODO: Consider using the real cases rule (2139) in place of this
+  //   everywhere.  This is called with conditionals, but not
+  //   with hypotheses.
+  // TODO: Consider deriving this from equationCases.  Unlike
   //   5222 in the book, this does not allow the variable to appear
-  //   in any assumptions, so equationCases could be used, and
-  //   in fact the uses of this do not have assumptions.
-  cases: {
+  //   in any assumptions, so equationCases could be used.
+  casesTF: {
     action: function(caseT, caseF, v) {
       v = varify(v);
       // Note: caseF has no variables not in caseT, so no need to
@@ -1758,13 +1758,13 @@ var ruleInfo = {
       var step6 = rules.rplace(step5, step4, '');
       var step7a = rules.instForall(step6, v);
       var step7b = rules.apply(step7a, '');
-      return step7b.justify('cases', arguments, [caseT, caseF]);
+      return step7b.justify('casesTF', arguments, [caseT, caseF]);
     },
     inputs: {step: [1, 2], varName: 3},
-    form: ('Cases: true case step <input name=step1>,'
+    form: ('CasesTF: true case step <input name=step1>,'
            + ' false case <input name=step2>,'
            + ' use variable name <input name=varName>'),
-    menu: 'proof by cases',
+    menu: 'proof by true/false cases',
     tooltip: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.'),
     description: 'cases: {var} true in step {step1}, false in step {step2}'
@@ -2179,7 +2179,7 @@ var ruleInfo = {
       freeNames[v.name] = true;
       var p0 = Toy.genVar('p', freeNames);
       // TODO: Consider using rule P and 2139 instead of "cases" here.
-      var step5 = rules.cases(step1, step4, p0);
+      var step5 = rules.casesTF(step1, step4, p0);
       var step6 = rules.instVar(step5, a, p0);
       return step6.justify('r5235', arguments);
     },
@@ -2276,7 +2276,7 @@ var ruleInfo = {
       var falseCase = (rules.eqSelf('forall {x. q x}')
                        .andThen('rewriteOnly', '/right', 'p == F | p')
                        .andThen('rewriteOnly', '/left/arg/body', 'p == F | p'));
-      return rules.cases(trueCase, falseCase, 'p');
+      return rules.casesTF(trueCase, falseCase, 'p');
     }
   },
 
@@ -3550,7 +3550,7 @@ var ruleInfo = {
       // Complete proof of the desired schema:
       // TODO: Consider replacing use of rules.cases here with another
       // similar rule.
-      var step2 = rules.cases(trueCase, falseCase, cVar);
+      var step2 = rules.casesTF(trueCase, falseCase, cVar);
       // Instantiate back to get the desired instance:
       var result = rules.instMultiVars(step2, map.subst);
       return result.justify('conjunctsImplyConjunct', arguments);

@@ -303,7 +303,7 @@ $(function() {
       level: 1
     },
 
-    cases: {
+    casesTF: {
       args: function() {
         var step1 = Toy.rules.assume('p T');
         var step2 = Toy.rules.assume('p F');
