@@ -999,33 +999,35 @@ var suggesterMethods = {
     display.setSteps([]);
     var mainDisplay = stepEditor.proofDisplay;
     var step = mainDisplay.selection;
+    var factsToOffer = [];
     if (step) {
       var term = step.selection;
       var path = term && step.prettyPathTo(term);
       var rules = Toy.rules;
       display.prevStep = step;
+      function addStep(result) {
+        if (!result.step.matches(step)) {
+          // A simplifer may return a step identical to its
+          // input, which is intended to be ignored.
+          display.addStep(result.step);
+        }
+      }
       stepEditor.offerableRuleNames().forEach(function(name) {
           var info = rules[name].info;
-          function addStep(result) {
-            if (!result.step.matches(step)) {
-              // A simplifer may return a step identical to its
-              // input, which is intended to be ignored.
-              display.addStep(result.step);
-            }
-          }
           if (info.offerExample) {
             sendRule(name, path ? [step.original, path] : [step.original])
               .then(addStep);
           }
         });
-      stepEditor.offerableFacts().forEach(function(statement) {
-          var next = rules.rewrite(step.original,
-                                   step.prettyPathTo(step.selection),
-                                   statement);
-          display.addStep(next);
+      factsToOffer = stepEditor.offerableFacts();
+      factsToOffer.forEach(function(statement) {
+          sendRule('rewrite',
+                   [step.original,
+                    step.prettyPathTo(step.selection),
+                    statement]).then(addStep);
       });
     }
-    self.length = display.steps.length;
+    self.length = factsToOffer.length;
     if (self.length > 0) {
       $container.removeClass('hidden');
     }
