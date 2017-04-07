@@ -1154,8 +1154,8 @@ var msgMethods = {
   },
 
   /**
-   * Internal method invoked as the onmessage handler
-   * of the worker.
+   * Internal method invoked as the onmessage handler for replies from
+   * the worker.
    */
   _handleReply: function(event) {
     var wrapper = event.data;
@@ -1264,10 +1264,11 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
   var self = this;
   var receiver = self.receiver;
   var reply = {target: self};
-  // This function is the same as the onmessage handler function for
-  // initRpc in worker.js, except this receives the RPC wrapper
-  // object directly, not wrapped in an event, and replies by calling
-  // the fake worker's onmessage property from a timer.
+  // This function is the same as the "real" onmessage handler
+  // function in worker.js for messages to a worker, except this
+  // receives the RPC wrapper object directly, not wrapped in an
+  // event, and replies by calling the fake worker's onmessage
+  // property from a timer.
   function handler() {
     if (wrapper.channelType === 'RPC') {
       try {
@@ -1287,14 +1288,15 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
                  : error instanceof Error
                  ? {type: error.constructor.name, message: error.message}
                  : '?');
-        // Follow the example of Toy.afterRepaint in allowing time for
-        // repaints and other more urgent activities to take priority.
         reply.data = {channelType: 'RPC', id: id, error: e};
       }
       function replier() {
         var responder = self.onmessage;
         responder(reply);
       }
+      // The worker code should not access the DOM, so there should
+      // not be reason to wait for a repaint before handling the
+      // worker's reply.
       window.setTimeout(replier, 0);
     } else if (receiver.handleOther) {
       receiver.handleOther(event);
@@ -1303,6 +1305,8 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
     }
   }
   // Call the handler from a timer.
+  // Follow the example of Toy.afterRepaint in allowing time for
+  // repaints and other more urgent activities to take priority.
   window.setTimeout(handler, 10);
 }
 
