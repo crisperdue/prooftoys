@@ -366,12 +366,21 @@ span#leftNav {
     content: "--";
 }
 
-/* When hovered, shows a checkmark. */
+/* When hover is elsewhere over the step, show a question mark. */
 .proofDisplay.nextSteps .proofStep.hover .stepNumPlaceholder::before {
+    color: #0c0;
+    font-weight: bold;
+    content: "?";
+}
+
+/* When hovered, shows a checkmark. */
+.proofDisplay.nextSteps .proofStep .stepAndNum.hover
+  .stepNumPlaceholder::before {
     color: #0c0;
     font-weight: bold;
     content: "\002713";
 }
+
 
 /* Others */
 
