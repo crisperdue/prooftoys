@@ -4254,15 +4254,8 @@ function getResult(stmt, mustProve) {
     }
     return result;
   }
-  try {
-    info.proved = prover();
-    return info.proved;
-  } catch(err) {
-    // Flag it as an error in proof execution.
-    // TODO: Currently unused, consider removing.
-    err.isProofError = true;
-    throw err;
-  }
+  info.proved = prover();
+  return info.proved;
 }
 
 /**
