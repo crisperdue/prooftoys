@@ -2493,6 +2493,15 @@ var divisionFacts = {
               .rewrite('/main/left', fact));
     }
   },
+  'b != 0 => a = a * b / b': {
+    proof: function() {
+      var fact = rules.fact('1 = (a / a)').andThen('instVar', 'b', 'a');
+      return (rules.consider('a')
+              .rewrite('/right', 'a = a * 1')
+              .rewrite('/right/right/right', fact)
+              .rewrite('/right/right', 'a * (b / c) = a * b / c'));
+    }
+  },
   'b != 0 & c != 0 => a / b = (a * c) / (b * c)': {
     proof: function() {
       var fact = rules.fact('1 = (a / a)').andThen('instVar', 'c', 'a');
