@@ -115,3 +115,6 @@ Virtually nothing from the last three hundred years has found its way
 into the classroom.  Yet most of the mathematics used in today's world
 was developed in the last two hundred years, let alone the last three
 hundred. -- Keith Devlin, "Introduction to Mathematical Thinking"
+
+Human history becomes more and more a race between education and
+catastrophe.  -- H. G. Wells, Outline of History p. 504
