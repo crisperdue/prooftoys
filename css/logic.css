@@ -347,9 +347,23 @@ span#leftNav {
 
 /* Next steps displays */
 
+.nextStepsContainer {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 1em;
+}
+
 /* Container for next step suggestions */
 .proofDisplay.nextSteps {
     margin-left: 2em;
+}
+
+.proofDisplay.nextSteps .proofSteps {
+    margin: 10px 0 0 0;
+}
+
+.proofDisplay.nextSteps .proofStep:nth-child(even) {
+    background-color: #eee;
 }
 
 .proofDisplay.nextSteps .stepNumber {
@@ -838,7 +852,6 @@ input.varName, input.step, input.equation, input.implication {
   margin: 2px 1px;
   padding: 2px 4px;
   border: 1px solid #eee;
-  border-radius: 4px;
   cursor: pointer;
   box-shadow: none;
 }
