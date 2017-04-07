@@ -260,7 +260,7 @@ StepEditor.prototype.ruleChosen = function(ruleName) {
 	this.addSelectionToForm(rule);
       }
       // Focus the first empty text field of the form.
-      this.form.find('input[type=text]').each(function() {
+      this.form.find('input[type=text],input:not([type])').each(function() {
           if (!this.value) {
             this.focus();
             // Abort the loop.
