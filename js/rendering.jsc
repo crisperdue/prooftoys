@@ -285,6 +285,7 @@ function ProofEditor() {
   // Step editor has state controlling whether to show all rules.
   self.$rulesMode.on('change', function(event) {
       stepEditor.showRuleType = this.value;
+      stepEditor.stepSuggester.refresh();
       stepEditor.ruleMenu.refresh();
       stepEditor.reset();
     });
