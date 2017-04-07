@@ -160,7 +160,7 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   } else {
     $working.fadeOut(200, complete);
   }
-  this.ruleMenu.fadeToggle(!busy);
+  this.ruleMenu.$node.toggle(!busy);
   // Clear the form.
   // TODO: Make these actions into a function/method, see "reset".
   this.clearer.addClass('hidden');
@@ -208,7 +208,7 @@ StepEditor.prototype.reset = function() {
   this.form.html('');
   this.proofDisplay.setSelectLock(false);
   this._setBusy(false);
-  this.ruleMenu.fadeToggle(true);
+  this.ruleMenu.$node.toggle(true);
 };
 
 /**
@@ -248,7 +248,7 @@ StepEditor.prototype.ruleChosen = function(ruleName) {
     var term = step && step.selection;
     var formatArgs = {term: (term && term.toHtml()) || '{term}'};
     if (template) {
-      this.ruleMenu.fadeToggle(false);
+      this.ruleMenu.$node.toggle(false);
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
@@ -1080,20 +1080,6 @@ RuleMenu.prototype.refresh = function() {
   this.changed = true;
   this._refresher.activate();
 }
-
-/**
- * Fades the rule selector in (true) or out (false) based on the
- * argument.
- */
-RuleMenu.prototype.fadeToggle = function(visible) {
-  // This currently does not use fading, because the model
-  // is now to use CSS class "hidden", and code related
-  // to $advice relies on the value to decide whether to
-  // show the $advice.
-  var $node = this.$node;
-  $node.toggleClass('hidden', !visible);
-  return;
-};
 
 /**
  * Updates the step suggestions and rule menu to offer items
