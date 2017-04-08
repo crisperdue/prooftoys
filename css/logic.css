@@ -755,9 +755,12 @@ span.stepRef {
 }
 
 .expr.equiv {
-    margin: 0 5px;
+    margin: 0 .3em;
 }
 
+.expr.multiply {
+    margin: 0 .1em;
+}
 
 /* Proof step editor */
 

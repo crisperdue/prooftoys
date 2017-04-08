@@ -1403,6 +1403,8 @@ function specialClasses(name) {
     return ['logicOr'];
   case '==':
     return ['equiv'];
+  case '*':
+    return ['multiply'];
   default:
     return [];
   }
