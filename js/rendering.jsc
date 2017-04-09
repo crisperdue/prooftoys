@@ -1096,7 +1096,12 @@ ProofDisplay.prototype.renderPopups = function(step) {
   // Include only "forward" distributive facts (ones that distribute
   // "*" across "+").
   var distribKeys = Toy.listFacts(Toy.distribFacts);
-  var assocKeys = ['a + b + c = a + (b + c)', 'a * b * c = a * (b * c)'];
+  // Also include the very simplest of associative facts.
+  var assocKeys = ['a + b + c = a + (b + c)',
+                   'a + b - c = a + (b - c)',
+                   'a * b * c = a * (b * c)',
+                   'a * b / c = a * (b / c)'
+                   ];
   var distribStmts = (distribKeys.concat(assocKeys)
                       .map(Toy.getStatement));
   step.traverse(function(term, rpath) {
