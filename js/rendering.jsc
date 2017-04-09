@@ -1093,9 +1093,11 @@ ProofDisplay.prototype.renderPopups = function(step) {
     console.profile(Toy.profileName);
   }
   var self = this;
-  // Include only "forward" facts (ones that distribute "*"
-  // across "+").
-  var distribStmts = (Toy.listFacts(Toy.distribFacts)
+  // Include only "forward" distributive facts (ones that distribute
+  // "*" across "+").
+  var distribKeys = Toy.listFacts(Toy.distribFacts);
+  var assocKeys = ['a + b + c = a + (b + c)', 'a * b * c = a * (b * c)'];
+  var distribStmts = (distribKeys.concat(assocKeys)
                       .map(Toy.getStatement));
   step.traverse(function(term, rpath) {
       if (term.isCall2() && term.node) {

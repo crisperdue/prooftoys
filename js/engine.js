@@ -4814,7 +4814,7 @@ function findHyp(term) {
 }
 
 /**
- * Makes a facts map into a list of the fact statements.
+ * Makes a facts map into a list of the fact keys.
  */
 function listFacts(map) {
   var list = [];
