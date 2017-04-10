@@ -1002,15 +1002,7 @@ ProofDisplay.prototype.renderStep = function(step) {
   // previous step if preferred.
   step.asmSteps = Toy.assumptionsBefore(step);
   var $wff = $(renderWff(step));
-  // Find exprs that have no other classes, such as fullExpr.
-  var $exprs = $wff.find('[class=expr]');
-  // Remove them from the DOM, so flex layout can work better, mainly
-  // so binary operators are nested the same as both their left and
-  // right operands.
-  // TODO: Make a more permanent fix, one that for example does not
-  //   work by postprocessing or result in attachment of abandoned DOM
-  //   nodes to parts of rendered steps.
-  $exprs.replaceWith(function() { return $(this).contents(); });
+  hackOnRendering($wff);
   $stepAndNum.append($wff);
   $proofStep.find('.stepInfo').html(formattedStepInfo(step));
 
@@ -1083,6 +1075,27 @@ ProofDisplay.prototype.renderStep = function(step) {
   }
   return dom($step);
 };
+
+/**
+ * This is a postprocessing hack to simplify the DOM tree for a term
+ * after it has been constructed by the normal rendering process.
+ * This removes .expr nodes that have no other classes, primarily to
+ * make flex layout work better, but it also reduces the (undesired)
+ * extra horizontal whitespace embedded in every display.
+ *
+ * TODO: Make a more permanent fix, one that for example does not
+ *   work by postprocessing or result in attachment of abandoned DOM
+ *   nodes to parts of rendered steps.
+ */
+function hackOnRendering($wff) {
+  // Find exprs that have no other classes, such as fullExpr.
+  var $exprs = $wff.find('[class=expr]');
+  // Remove them from the DOM, so flex layout can work better, mainly
+  // so binary operators are nested the same as both their left and
+  // right operands.
+  $exprs.replaceWith(function() { return $(this).contents(); });
+  return $wff;
+}
 
 /**
  * Renders the expression popups for a steps in a ProofDisplay.  The
@@ -2500,7 +2513,11 @@ function fillHoverInfoBox(proofEditor, step) {
     copy.annotateWithTypes();
     var message = proofEditor ? proofEditor.progressMessage(step) : '';
     var $msgs = $('<div class=pre>').append(message);
-    $box.append(copy.wff.render(info, 0), $msgs);
+    var $step = $('<div class=flex>');
+    // TODO: The hack does not really help flex layout here, but with
+    //   more work it should be able to help.
+    $step.append(hackOnRendering(copy.wff.render(info, 0)));
+    $box.append($step, $msgs);
   }
   $box.toggle(true);
 }
