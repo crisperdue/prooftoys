@@ -643,7 +643,7 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: 'algebra: to [ . . . + {term} = . . . + {term}]',
+    menu: ' &hellip; + {term} = &hellip; + {term}',
     description: 'add {site};; {in step siteStep}',
     labels: 'algebra'
   },    
@@ -662,7 +662,7 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: 'algebra: to [ . . . - {term} = . . . - {term}]',
+    menu: ' &hellip; &minus; {term} = &hellip; &minus; {term}',
     description: 'subtract {site};; {in step siteStep}',
     labels: 'algebra'
   },    
@@ -681,7 +681,7 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: 'algebra: to [ . . . * {term} = . . . * {term}]',
+    menu: ' &hellip; &sdot; {term} = &hellip; &sdot; {term}',
     description: 'multiply by {site};; {in step siteStep}',
     labels: 'algebra'
   },    
@@ -700,7 +700,7 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: 'algebra: to [ . . . / {term} = . . . / {term}]',
+    menu: ' &hellip; \u2215 {term} = &hellip; \u2215 {term}',
     description: 'divide by {site};; {in step siteStep}',
     labels: 'algebra'
   },

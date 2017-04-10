@@ -857,6 +857,7 @@ input.varName, input.step, input.equation, input.implication {
   border: 1px solid #eee;
   cursor: pointer;
   box-shadow: none;
+  font-family: StixGeneral, times, serif;
 }
 
 .ruleItem:active {
