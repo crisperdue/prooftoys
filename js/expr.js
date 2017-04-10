@@ -398,13 +398,14 @@ function isFraction(expr) {
 /**
  * Double struck C N Q P R Z.
  */
-var moreLettersRegex = /[\u2102\u2115\u2119\u211a\u211d\u2124]/;
+var moreLettersRegex = /^[\u2102\u2115\u2119\u211a\u211d\u2124]$/;
 
 /**
  * True iff this is a Atom that displays as an identifier.  This is
  * based on Unicode display, which may be a non-identifier in cases such
  * as "forall" and "exists", even when the internal name is an identifier.
  * Currently includes double-struck letters for common numerical types.
+ * TODO: Consider simply special-casing quantifier symbols instead of this.
  */
 Expr.prototype.displaysIdentifier = function() {
   if (this instanceof Atom) {
