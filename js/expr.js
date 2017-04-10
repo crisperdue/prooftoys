@@ -396,13 +396,22 @@ function isFraction(expr) {
 }
 
 /**
+ * Double struck C N Q P R Z.
+ */
+var moreLettersRegex = /[\u2102\u2115\u2119\u211a\u211d\u2124]/;
+
+/**
  * True iff this is a Atom that displays as an identifier.  This is
  * based on Unicode display, which may be a non-identifier in cases such
  * as "forall" and "exists", even when the internal name is an identifier.
+ * Currently includes double-struck letters for common numerical types.
  */
 Expr.prototype.displaysIdentifier = function() {
-  return (this instanceof Atom &&
-          this.toUnicode().match(identifierRegex));
+  if (this instanceof Atom) {
+    var uni = this.toUnicode();
+    return (uni.match(identifierRegex) ||
+            uni.match(moreLettersRegex));
+  }
 };
 
 /**
@@ -1845,6 +1854,7 @@ var unicodeNames = {
   empty: '\u2205',    // Null set
   iota: '\u2129',     // Inverted iota
   none: '\u22a5',     // Bottom / "up tack"
+  R: '\u211d',        // Real numbers
   forall: '\u2200',
   exists: '\u2203'
 };
