@@ -574,7 +574,8 @@ span#leftNav {
 
 .proofStep.hover .deleteStep {
   visibility: visible;
-  color: red;
+  background-color: #f88;
+  color: white;
 }
 
 .proofStep.hover .checkbox, .proofStep.selected .checkbox {
@@ -591,9 +592,11 @@ span#leftNav {
   visibility: visible;
 } 
 
-/* The step has other steps that depend on it. */
+/* The step has other steps that depend on it.
+   In effect this is the disabled version of the button. */
 .proofStep.hover.hasUsers .deleteStep {
   visibility: visible;
+  background-color: white;
   color: silver;
 }
 
