@@ -433,6 +433,9 @@ var ruleInfo = {
       
   /**
    * Refer to a theorem by name, for the UI.  Inline.
+   *
+   * TODO: Consider adding a rule that takes a ruleName as an
+   *   argument, also for the UI.
    */
   theorem: {
     action: function(name) {
@@ -4687,6 +4690,8 @@ function eachFact(fn) {
 /**
  * Checks that the named rule is a theorem (i.e. takes no arguments),
  * and gets its result.
+ *
+ * TODO: Use rules.theorem instead, and remove this function.
  */
 function getTheorem(name) {
   var action = rules[name];
