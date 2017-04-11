@@ -643,10 +643,10 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: ' &hellip; + {term} = &hellip; + {term}',
+    menu: ' &hellip; + {term} = &hellip; + {term} (add to both sides)',
     description: 'add {site};; {in step siteStep}',
     labels: 'algebra'
-  },    
+  },
 
   subtractThisFromBoth: {
     action: function(step, path) {
@@ -662,10 +662,11 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: ' &hellip; &minus; {term} = &hellip; &minus; {term}',
+    menu: (' &hellip; &minus; {term} = &hellip; &minus; {term}' +
+           ' (subtract from both sides)'),
     description: 'subtract {site};; {in step siteStep}',
     labels: 'algebra'
-  },    
+  },
 
   multiplyBothByThis: {
     action: function(step, path) {
@@ -681,10 +682,11 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: ' &hellip; &sdot; {term} = &hellip; &sdot; {term}',
+    menu: (' &hellip; &sdot; {term} = &hellip; &sdot; {term}' +
+           ' (multiply both sides)'),
     description: 'multiply by {site};; {in step siteStep}',
     labels: 'algebra'
-  },    
+  },
 
   divideBothByThis: {
     action: function(step, path) {
@@ -700,7 +702,8 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: ' &hellip; \u2215 {term} = &hellip; \u2215 {term}',
+    menu: (' &hellip; \u2215 {term} = &hellip; \u2215 {term}' +
+           ' (divide both sides)'),
     description: 'divide by {site};; {in step siteStep}',
     labels: 'algebra'
   },
