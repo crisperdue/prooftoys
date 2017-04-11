@@ -616,6 +616,7 @@ span#leftNav {
 .proofStep .stepNumArea {
     border: 1px solid transparent;
     margin-right: 5px;
+    position: relative;
 }
 
 /* Expression in a proof step display, and step numbers */

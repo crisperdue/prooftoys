@@ -970,22 +970,31 @@ ProofDisplay.prototype.renderStep = function(step) {
   if (self.isEditable()) {
     $step.append('<button class=deleteStep title="Delete step">X</button>');
   }
-  // The stepHoverMark is on the left, with an "info" symbol
-  // or an "assumed" symbol.
-  $step.append($('<span class=stepHoverMark>')
-               // Here we have CSS classes fa and fa-fw with no
-               // character specified.  The character is controlled by
-               // logic.css, not necessarily an fa "icon".
-               .append('<span class="fa fa-fw"></span>',
-                       // This is a place to display information (the full step)
-                       // when the stepHoverMark is hovered.
-                       '<div class=hoverInfoBox></div>'));
+  // If the UI is configured for it, include the node for "?" or circled a.
+  if (Toy.showStepHoverMark) {
+    // The stepHoverMark is on the left, with an "info" symbol
+    // or an "assumed" symbol.
+    $step.append($('<span class=stepHoverMark>')
+                 // Here we have CSS classes fa and fa-fw with no
+                 // character specified.  The character is controlled by
+                 // logic.css, not necessarily an fa "icon".
+                 .append('<span class="fa fa-fw"></span>',
+                         // This is a place to display information (the full step)
+                         // when the stepHoverMark is hovered.
+                         '<div class=hoverInfoBox></div>'));
+  }
   // If editable, add checkbox.
   if (self.isEditable()) {
     $step.append('<input type=checkbox class="stepSelector checkbox">');
   }
   $numArea = ($('<span class="stepNumArea stepSelector">')
               .append('[<span class=stepNumber></span>]'));
+  // If the "hover mark" is not configured, put the hoverInfoBox
+  // inside the stepNumArea and show it on hover when the shift key is
+  // down, see below.
+  if (!Toy.showStepHoverMark) {
+    $numArea.append('<div class=hoverInfoBox></div>');
+  }
   $stepAndNum = ($('<span class=stepAndNum>')
                  .append($numArea));
   $step.append($stepAndNum);
@@ -1035,7 +1044,17 @@ ProofDisplay.prototype.renderStep = function(step) {
   $proofStep.on('mouseenter mouseleave', '.stepSelector', function(event) {
       hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
+  $proofStep.on('mouseenter', '.stepNumArea', function(event) {
+      if (!Toy.showStepHoverMark && event.shiftKey) {
+        fillHoverInfoBox(self.proofEditor, step);
+      }
+    });
+  $proofStep.on('mouseleave', '.stepNumArea', function(event) {
+      $step.find('.hoverInfoBox').toggle(false);
+    });
   $proofStep.on('mouseenter', '.stepHoverMark', function(event) {
+      // If the stepHoverMark is not configured "in", this will not
+      // happen.
       fillHoverInfoBox(self.proofEditor, step);
     });
   $proofStep.on('mouseleave', '.stepHoverMark', function(event) {
@@ -2738,6 +2757,9 @@ Toy.highlightAllHovers = true;
 
 // Global parameter to suppress displaying hypotheses such as "(R x)".
 Toy.suppressRealTypeDisplays = true;
+
+// UI config parameter, see its usage.
+Toy.showStepHoverMark = false;
 
 // Detect if the device has a touch screen, e.g. a tablet.
 // Mobile jQuery 1.1 does this same test.
