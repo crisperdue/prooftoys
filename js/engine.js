@@ -4199,6 +4199,12 @@ function addFact(info) {
   info.goal.annotateWithTypes();
   info.prover = asFactProver(info.proof, info.goal);
   info.proved = null;
+  var labels = info.labels;
+  info.labels = {};
+  if (typeof labels === 'string') {
+    labels.split(/\s+/)
+      .forEach(function(label) { info.labels[label] = true; });
+  }
   setFactInfo(info.goal, info);
   return info;
 }
@@ -4674,7 +4680,7 @@ function arrange(step, path, context, facts) {
 function eachFact(fn) {
   for (var key in _factsMap) {
     var f = _factsMap[key];
-    fn(f.goal, f.synopsis);
+    fn(f);
   }
 }
 

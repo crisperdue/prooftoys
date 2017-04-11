@@ -2680,9 +2680,9 @@ window.setTimeout(function() {
   }
   console.log('Queued', nTheorems, 'theorems to test.');
   var nFacts = 0;
-  Toy.eachFact(function(goal, synopsis) {
-      test(synopsis, function() {
-          assert(Toy.getResult(goal).ruleName);
+  Toy.eachFact(function(info) {
+      test(info.synopsis, function() {
+          assert(Toy.getResult(info.goal).ruleName);
         });
       nFacts++;
     });

@@ -2503,7 +2503,8 @@ var divisionFacts = {
               .rewrite('/right', 'a = a * 1')
               .rewrite('/right/right/right', fact)
               .rewrite('/right/right', 'a * (b / c) = a * b / c'));
-    }
+    },
+    labels: 'algebra'
   },
   'b != 0 & c != 0 => a / b = (a * c) / (b * c)': {
     proof: function() {
@@ -2515,7 +2516,8 @@ var divisionFacts = {
               .rewrite('/right/right/left', 'c != 0 => a * (b / c) = a * b / c')
               .rewrite('/right/right', 'b != 0 & c != 0 => a / b / c = a / (b * c)')
               .rewrite('/right/right/right', 'a * b = b * a'))
-    }
+    },
+    labels: 'algebra'
   },
   'b != 0 & c != 0 => a / b = (a / c) / (b / c)': {
     proof: function() {

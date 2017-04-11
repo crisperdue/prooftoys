@@ -817,14 +817,16 @@ $.extend(StepEditor.prototype, {
                 e1Type != e2Type);
       }
       if (expr) {
-        Toy.eachFact(function(goal, synopsis) {
+        Toy.eachFact(function(info) {
+            var goal = info.goal;
             if (goal.isEquation()) {
               var lhs = goal.eqnLeft();
               if (expr.matchSchema(lhs) &&
                   !(self.showRuleType == 'algebra' &&
-                   // In simple algebra mode suppress facts with LHS
-                   // of just a variable or constant.
-                   lhs instanceof Toy.Atom)) {
+                    !info.labels.algebra &&
+                    // In simple algebra mode suppress facts with LHS
+                    // of just a variable or constant.
+                    lhs instanceof Toy.Atom)) {
                 if (!typesMismatch(expr, lhs)) {
                   facts.push(goal);
                 }
