@@ -1829,12 +1829,7 @@ function unrenderedDeps(step) {
  */
 function renderSubproof(step) {
   var controller = getProofDisplay(step);
-  var $node;
-  if (step.ruleName == 'theorem') {
-    $node = renderInference(Toy.getTheorem(step.ruleArgs[0]));
-  } else {
-    $node = renderInference(step);
-  }
+  var $node = renderInference(step);
   $(step.stepNode).addClass('hasSubproof');
   step.subproofDisplay = $node.data('proofDisplay');
 
