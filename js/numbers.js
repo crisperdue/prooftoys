@@ -2504,6 +2504,25 @@ var divisionFacts = {
               .rewrite('/right/right/right', fact)
               .rewrite('/right/right', 'a * (b / c) = a * b / c'));
     },
+  },
+  // This is useful for converting a summand to a fraction like
+  // its neighbor.
+  '@R b & R c & c != 0 => a / c + b = a / c + b * c / c': {
+    proof: function() {
+      var fact = rules.fact('a = a * b / b').andThen('instVar', 'c', 'b');
+      return (rules.consider('a / c + b')
+              .rewrite('/right/right', fact));
+    },
+    labels: 'algebra'
+  },
+  // Also useful for converting a summand to a fraction like
+  // its neighbor.
+  '@R b & R c & c != 0 => a + b / c = a * c / c + b / c': {
+    proof: function() {
+      var fact = rules.fact('a = a * b / b').andThen('instVar', 'c', 'b');
+      return (rules.consider('a + b / c')
+              .rewrite('/right/left', fact));
+    },
     labels: 'algebra'
   },
   'b != 0 & c != 0 => a / b = (a * c) / (b * c)': {
