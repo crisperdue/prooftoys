@@ -4033,38 +4033,26 @@ function addFactsMap(map) {
 
 /**
  * Add the "converse" of an equational fact if it is not already
- * recorded.  Determines the statement from the info's synopsis and
- * commute's its equation if any.  If it is not an equation, does
- * nothing.
- *
- * TODO: Consider using info other than the synopsis as appropriate.
+ * recorded.  Determines the statement from the info's goal.  If it is
+ * an equation, switches its LHS and RHS, otherwise does nothing.
  */  
 function addSwappedFact(info) {
-  var synopsis = info.synopsis;
-  var stmt = getStatement(synopsis);
+  var stmt = getStatement(info.goal);
   if (stmt.isEquation()) {
     var swapped = Toy.commuteEqn(stmt);
     if (isRecordedFact(swapped)) {
-      console.log('Swapped fact ' + swapped + ' already recorded');
+      console.warn('Swapped fact ' + swapped + ' already recorded');
     } else {
+
       function proof() {
-        return rules.fact(synopsis).andThen('eqnSwap');
+        return rules.fact(stmt).andThen('eqnSwap');
       }
-      // Annotate the new goal with type info for type comparison
-      // with portions of steps in the UI.
-      //
-      // Careful: It is very doubtful whether annotated structures can be
-      // shared as part of any other steps or Exprs.
-      swapped.annotateWithTypes();
-      var updates = {
-        goal: swapped,
-        proof: proof,
-        prover: asFactProver(proof, swapped),
-        simplifier: !!info.desimplifier,
-        desimplifier: !!info.simplifier
+      var info2 = {proof: proof,
+                   goal: swapped,
+                   simplifier: !!info.desimplifier,
+                   desimplifier: !!info.simplifier
       };
-      var info = $.extend({}, info, updates);
-      setFactInfo(info.goal, info);
+      addFact(info2);
     }
   }
 }
@@ -4154,13 +4142,20 @@ function asFactProver(prover, goal) {
 // "dump" of a fact to fact info, consisting of:
 //
 // synopsis (optional): synopsis string
-// goal: Expr statement of the synopsis, used as lookup key.
-// prover: function intended to prove the fact.
+// goal: Expr statement of the fact, with all assumptions
+// labels: object / set of labels like the ones for rules
+// simplifier: true if this is an equation that simplifies
+// desimplifier: true if this is an equation that "desimplifies"
+// noSwap: if true, inhibits automatic generation of a fact
+//   with equation LHS and RHS swapped
+// prover: function intended to prove the fact
 // proved: proved statement
 var _factsMap = {};
 
 /**
- * Access any fact info stored for the given statement.
+ * Access any fact info stored for the given statement, which can be
+ * anything recognized by getStatement.  If the resulting statement is
+ * conditional, only uses the consequent for lookup.
  */
 function lookupFactInfo(stmt) {
   return _factsMap[getStatementKey(stmt)];
@@ -4168,11 +4163,11 @@ function lookupFactInfo(stmt) {
 
 /**
  * Set fact info for the given statement.  See comments on _factsMap
- * and fact management functions for the expectations on the info
+ * and fact management functions for the expectations on the
  * argument.
  */
-function setFactInfo(stmt, info) {
-  _factsMap[getStatementKey(stmt)] = info;
+function setFactInfo(info) {
+  _factsMap[getStatementKey(info.goal)] = info;
 }
 
 /**
@@ -4188,12 +4183,14 @@ function setFactInfo(stmt, info) {
  * proof: function to return the proved fact, matching the synopsis.
  * simplifier: true iff this fact is a simplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
+ * labels: Object/set of label names, if given as a string, parses
+ *   space-separated parts into a set.
  *
  * TODO: Extend this and/or add other functions to add facts based
  *   on other information such as an already-proved statement.
  */
 function addFact(info) {
-  info.goal = getStatement(info.synopsis);
+  info.goal = info.goal || getStatement(info.synopsis);
   // Annotate the new goal with type info for type comparison
   // with portions of steps in the UI.
   //
@@ -4208,7 +4205,7 @@ function addFact(info) {
     labels.split(/\s+/)
       .forEach(function(label) { info.labels[label] = true; });
   }
-  setFactInfo(info.goal, info);
+  setFactInfo(info);
   return info;
 }
 
@@ -4243,17 +4240,17 @@ function getResult(stmt, mustProve) {
   if (Toy.isProved(stmt)) {
     return stmt;
   }
-  var goal = getStatement(stmt);
+  var statement = getStatement(stmt);
   // Same encoding as in addFact.
-  var info = lookupFactInfo(goal);
-  assert(info, 'No such fact: {1}', goal);
+  var info = lookupFactInfo(statement);
+  assert(info, 'No such fact: {1}', statement);
   if (info.proved) {
     return info.proved;
   }
   var prover = info.prover;
   // Get the proved result of the fact.
   if (Toy.assertFacts && !mustProve && !prover.done) {
-    var result = rules.assert(goal);
+    var result = rules.assert(info.goal);
     if (result.isCall2('=>')) {
       // Treat any conditional as having hypotheses.
       //
@@ -4306,9 +4303,10 @@ function isRecordedFact(stmt) {
  * proved statement.  Given a proved statement, returns its wff.
  *
  * Treats a string as the "synopsis" of an actual statement, and
- * returns the result of parsing it with mathParse.  If the resulting
- * statement is an implication with an equation as the consequence,
- * treats the antecedent as assumptions.
+ * returns the result of parsing it with mathParse (which adds type
+ * assumptions based on use of basic numerical functions).  If the
+ * resulting statement is an implication with an equation as the
+ * consequence, treats the antecedent as assumptions.
  */
 function getStatement(fact) {
   if (Toy.isProved(fact)) {
