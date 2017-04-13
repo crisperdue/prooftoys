@@ -1948,7 +1948,12 @@ function formattedStepInfo(step) {
   // If a rule has "assert" as its last step, that is its only
   // step, because "assert" has no dependencies.  So we treat the
   // rule as an axiom, regardless of whether it has parameters.
-  var classes = ((step.details &&
+  // Facts may be asserted when used, but proved later on request,
+  // TODO: Allow facts to be flagged as axioms so their displays
+  //   can be distinguished from other facts, perhaps by simply
+  //   omitting the 'proof' property.
+  var classes = (step.ruleName == 'fact' ||
+                 (step.details &&
                   step.details.ruleName !== 'assert' &&
                   Toy.modes.subproofs)
                  ? 'ruleName link'
