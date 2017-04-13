@@ -938,6 +938,7 @@ function ruleMenuText(ruleName, step, term, proofEditor) {
     if (info.menu) {
       return Toy.format(info.menu, formatArgs);
     } else {
+      // TODO: Reconcile use of math markup here vs. non-use in menus.
       return Toy.mathMarkup(info.basicTooltip || 'menu?');
     }
   }

@@ -311,6 +311,7 @@ var ruleInfo = {
     },
     inputs: {string: 1, term: 2},
     form: ('Define name <input name=string> as <input name=term>'),
+    menu: 'define a name',
     description: 'define {string}',
     tooltip: 'define a name'
   },
@@ -467,6 +468,7 @@ var ruleInfo = {
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
            + 'if by cases enter T or F <input name=optString>'),
+    menu: 'look up a definition',
     tooltip: 'look up a definition',
     description: '=definition'
   },
