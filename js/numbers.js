@@ -1128,8 +1128,7 @@ var moversInfo = {
         {stmt: 'a * (b * c) = a * b * c'},
         {stmt: 'a * (b / c) = a * b / c'},
         {stmt: 'neg (a * b) = neg a * b'},
-        // TODO: Restore this line when the fact is available.
-        // {stmt: 'neg (a / b) = neg a / b'},
+        {stmt: 'neg (a / b) = neg a / b'},
         {stmt: 'a / (b * c) = a / b / c'},
         {stmt: 'a / (b / c) = a / b * c'},
         // TODO: Convert to this style:
@@ -2182,6 +2181,18 @@ var negationFacts = {
       .rewrite('/main/right', 'neg (a * b) = neg a * b');
     }
   },
+
+  // Negation with division
+  'neg (a / b) = neg a / b': {
+    proof: function() {
+      return (rules.consider('neg (a / b)')
+              .rewrite('/main/right', 'neg a = -1 * a')
+              .rewrite('/main/right', 'a * (b / c) = a * b / c')
+              .rewrite('/main/right/left', '-1 * a = neg a'));
+    }
+  },
+
+  // Other negation facts
   'neg (a + b) = neg a + neg b': {
     proof: function() {
       var rewrite = rules.rewrite;
