@@ -3179,6 +3179,12 @@ var ruleInfo = {
   // Replaces that part of the step with the appropriate instance of
   // the equation.  The step and equation may have hypotheses.
   // Suitable for use from the UI when needed.
+  //
+  // TODO: Consider renaming _free_ variables introduced into the step
+  //   by the equation so they are distinct from all free variables
+  //   that were already in the equation.  Doing so would enable
+  //   maximum flexibility in following substitutions, though it raises
+  //   issues about access to the potentially new variable(s).
   rewriteOnlyFrom: {
     action: function(step, path, equation) {
       var expr = step.get(path);
