@@ -1883,7 +1883,6 @@ $(function() {
 function isDistribFact(stmt) {
   return !!_distribFactsTable[Toy.getStatementKey(stmt)];
 }
-
 $.extend(algebraFacts, distribFacts);
 
 var identityFacts = {
@@ -2515,12 +2514,30 @@ var divisionFacts = {
     },
     labels: 'algebra'
   },
-  // Also useful for converting a summand to a fraction like
+  // Likewise useful for converting a summand to a fraction like
   // its neighbor.
   '@R b & R c & c != 0 => a + b / c = a * c / c + b / c': {
     proof: function() {
       var fact = rules.fact('a = a * b / b').andThen('instVar', 'c', 'b');
       return (rules.consider('a + b / c')
+              .rewrite('/right/left', fact));
+    },
+    labels: 'algebra'
+  },
+  // Similar to the above, but now for subtraction rather than addition.
+  '@R b & R c & c != 0 => a / c - b = a / c - b * c / c': {
+    proof: function() {
+      var fact = rules.fact('a = a * b / b').andThen('instVar', 'c', 'b');
+      return (rules.consider('a / c - b')
+              .rewrite('/right/right', fact));
+    },
+    labels: 'algebra'
+  },
+  // More of the same.
+  '@R b & R c & c != 0 => a - b / c = a * c / c - b / c': {
+    proof: function() {
+      var fact = rules.fact('a = a * b / b').andThen('instVar', 'c', 'b');
+      return (rules.consider('a - b / c')
               .rewrite('/right/left', fact));
     },
     labels: 'algebra'
@@ -2544,6 +2561,24 @@ var divisionFacts = {
               .andThen('instVar', 'recip c', 'c')
               .rewrite('/right/right/left', 'a * recip b = a / b')
               .rewrite('/right/right/right', 'a * (recip b) = a / b'));
+    }
+  },
+  'c != 0 => (a + b) / c = a / c + b / c': {
+    proof: function() {
+      var tx = Toy.transformApplyInvert;
+      var mp = Toy.mathParse;
+      return tx(Toy.parse('(a + b) / c'),
+                mp('a / b = a * recip b'),
+                mp('(a + b) * c = a * c + b * c'))
+    }
+  },
+  'c != 0 => (a - b) / c = a / c - b / c': {
+    proof: function() {
+      var tx = Toy.transformApplyInvert;
+      var mp = Toy.mathParse;
+      return tx(Toy.parse('(a - b) / c'),
+                mp('a / b = a * recip b'),
+                mp('(a - b) * c = a * c - b * c'))
     }
   }
 };
