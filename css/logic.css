@@ -390,7 +390,7 @@ span#leftNav {
 /* When hovered, shows a checkmark. */
 .proofDisplay.nextSteps .proofStep .stepAndNum.hover
   .stepNumPlaceholder::before {
-    color: #0c0;
+    color: #00c;
     font-weight: bold;
     content: "\002713";
 }
