@@ -985,7 +985,14 @@ var simplifiersInfo = {
   autoSimplifySite: {
     action: function(step, path, refStep) {
       var _path = Toy.path;
-      var eqn1 = rules.consider(step.get(path));
+      var term = step.get(path);
+      if (!term) {
+        // In some situations the path may need adjustment.  This is
+        // a workaround for cases where the path is totally wrong.
+        // TODO: Improve on this.
+        return step;
+      }
+      var eqn1 = rules.consider(term);
       var ref = refStep.get(path);
       var abort = false;
       var simpler = Toy.whileChanges(eqn1, function(eqn) {
