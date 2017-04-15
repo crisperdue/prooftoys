@@ -1009,6 +1009,16 @@ function soonDo(action) {
 }
 
 /**
+ * Returns a promise that resolves after the given number
+ * of microseconds.
+ */
+function wait(millis) {
+  return new Promise(function (resolve, reject) {
+      setTimeout(resolve, millis);
+  });
+}
+
+/**
  * Do the action as soon as possible after giving the page a chance to
  * repaint.  Sometimes Webkit needs a small delay to trigger a
  * repaint, regardless of some of the claims made on
@@ -1016,6 +1026,14 @@ function soonDo(action) {
  */
 function afterRepaint(action) {
   return window.setTimeout(action, 10);
+}
+
+/**
+ * Returns a promise that resolves after allowing enough time
+ * for a repaint to trigger.
+ */
+function allowRepaint() {
+  return wait(10);
 }
 
 /**
@@ -1366,7 +1384,9 @@ Toy.trackingData = trackingData;
 
 Toy.Refresher = Refresher;
 Toy.soonDo = soonDo;
+Toy.wait = wait;
 Toy.afterRepaint = afterRepaint;
+Toy.allowRepaint = allowRepaint;
 Toy.makeTriangle = makeTriangle;
 
 Toy.MessageQueue = MessageQueue;
