@@ -52,7 +52,7 @@ var siteTypes = {
  * step, for steps that already exist.  Also rearranging proofs.
  *
  * Fields:
- * $node: DIV with the step editor's HTML.
+ * $node: DIV with the step editor's HTML, has class stepEditor.
  * ruleName: name of rule selected from the RuleMenu; used with form
  *   information in tryExecuteRule.
  * form: jQuery SPAN to hold the argument input form.
@@ -149,18 +149,25 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   var $working = $(this.proofDisplay.node).find('.ruleWorking');
   if (busy) {
     // Temporarily turn on display of the ruleMenu to get its offset.
-    this.ruleMenu.$node.toggle(true);
-    var offset = this.ruleMenu.$node.offset();
-    this.ruleMenu.$node.toggle(false);
+    this.ruleMenu.$node.toggleClass('hidden', false);
+    var offset = this.stepSuggester.$node.offset();
+    this.ruleMenu.$node.toggleClass('hidden', true);
+    this.stepSuggester.$node.toggleClass('hidden', true);
     // and similarly for $working to set its offset.
     $working.toggle(true);
     $working.offset({left: offset.left + 40, top: offset.top + 5});
     // Then  turn it off and fade it back in.
     $working.toggle(false).fadeIn(200, complete);
   } else {
+    // TODO: Consider adding hide / unhide methods to RuleMenu and
+    //   StepSuggester instead of this rather crude dependency on their
+    //   lengths.  The "unhide" would not necessarily remove the
+    //   "hidden" style class, just set its visibility to "normal".
+    this.ruleMenu.$node.toggleClass('hidden', this.ruleMenu.length === 0);
+    this.stepSuggester.$node.toggleClass('hidden',
+                                         this.stepSuggester.length === 0);
     $working.fadeOut(200, complete);
   }
-  this.ruleMenu.$node.toggle(!busy);
   // Clear the form.
   // TODO: Make these actions into a function/method, see "reset".
   this.clearer.addClass('hidden');
@@ -208,7 +215,6 @@ StepEditor.prototype.reset = function() {
   this.form.html('');
   this.proofDisplay.setSelectLock(false);
   this._setBusy(false);
-  this.ruleMenu.$node.toggle(true);
 };
 
 /**
@@ -248,7 +254,13 @@ StepEditor.prototype.ruleChosen = function(ruleName) {
     var term = step && step.selection;
     var formatArgs = {term: (term && term.toHtml()) || '{term}'};
     if (template) {
-      this.ruleMenu.$node.toggle(false);
+      // These lines rely on reset of the step editor to return the hidden
+      // status back to normal.
+      // TODO: Probably the menu and suggester should have update methods
+      //   that are sensitive to presence of a form or inference in progress.
+      //   Code like this then would just tell them to refresh.
+      this.ruleMenu.$node.toggleClass('hidden', true);
+      this.stepSuggester.$node.toggleClass('hidden', true);
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
@@ -997,9 +1009,9 @@ var suggesterMethods = {
     var display = self.display;
     var stepEditor = self.stepEditor;
     // Hide the nextSteps display temporarily; show it later if not empty.
-    var $container = self.$node;
-    $container.addClass('hidden');
+    self.$node.addClass('hidden');
     display.setSteps([]);
+    self.length = 0;
     var mainDisplay = stepEditor.proofDisplay;
     var step = mainDisplay.selection;
     var factsToOffer = [];
@@ -1009,10 +1021,16 @@ var suggesterMethods = {
       var rules = Toy.rules;
       display.prevStep = step;
       function addStep(result) {
+        // TODO: Detect when the result is not relevant and don't add
+        //   it.  This occurs if the user selects a new action before
+        //   all suggestions have been added to the suggester.
         if (!result.step.matches(step)) {
           // A simplifer may return a step identical to its
           // input, which is intended to be ignored.
           display.addStep(result.step);
+          self.length++;
+          self.$node.removeClass('hidden');
+          stepEditor.$advice.addClass('hidden');
         }
       }
       stepEditor.offerableRuleNames().forEach(function(name) {
@@ -1024,19 +1042,13 @@ var suggesterMethods = {
         });
       factsToOffer = stepEditor.offerableFacts();
       factsToOffer.forEach(function(statement) {
+          self.length++;
           sendRule('rewrite',
                    [step.original,
                     step.prettyPathTo(step.selection),
                     statement]).then(addStep);
       });
     }
-    self.length = factsToOffer.length;
-    if (self.length > 0) {
-      $container.removeClass('hidden');
-    }
-    // TODO: Consider updating the advice using Promises.
-    var bothEmpty = self.length == 0 && stepEditor.ruleMenu.length == 0;
-    stepEditor.$advice.toggleClass('hidden', !bothEmpty);
   }
 };
 Object.assign(StepSuggester.prototype, suggesterMethods);
@@ -1133,12 +1145,7 @@ RuleMenu.prototype._update = function() {
   self.length = items.length
   self.changed = false;
   $items.append(items);
-  // TODO: Generate smarter messages for rules that work without a UI
-  //   selection (most theorems and theorem generators).
-  self.$node.fadeOut(0);
-  if (displayTexts.length > 0) {
-    self.$node.fadeIn();
-  }
+  self.$node.toggleClass('hidden', displayTexts.length === 0);
   // TODO: Consider updating the advice using Promises.
   var bothEmpty = self.length == 0 && stepEditor.stepSuggester.length == 0;
   stepEditor.$advice.toggleClass('hidden', !bothEmpty);
