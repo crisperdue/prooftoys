@@ -198,6 +198,7 @@ StepEditor.prototype.report = function(error) {
     if (error.step) {
       Toy.renderProof(error.step, $proofErrors);
     }
+    debugger;
   } else {
     // It should be a string.
     $proofErrors.append(error);
