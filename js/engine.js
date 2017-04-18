@@ -3007,7 +3007,9 @@ var ruleInfo = {
     menu: 'replace {term} with equal term',
     tooltip: ('Replaces an occurrence of a term with an equal term'),
     description: 'replace {site};; {in step siteStep} {using step equation}',
-    labels: 'algebra basic'
+    // TODO: Do offer this rule, like replaceConjunct, when there is a
+    //   suitable equation(s) to use with it.
+    labels: 'basic'
   },
 
   // Add hypotheses to the target step from hypStep.  This is key to

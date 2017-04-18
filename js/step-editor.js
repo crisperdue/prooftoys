@@ -740,8 +740,9 @@ StepEditor.prototype.offerableRuleNames = function() {
 };
 
 /**
- * Policy-based rule offering policy function.  Returns a truthy value
- * iff current policy is to show the rule.
+ * Policy-based rule offering policy function based on this.showRules
+ * and rule labels.  Returns a truthy value iff current policy is to
+ * show the rule.
  */
 StepEditor.prototype.offerApproved = function(name) {
   var labels = Toy.rules[name].info.labels;
