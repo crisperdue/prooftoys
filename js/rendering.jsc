@@ -1088,6 +1088,22 @@ ProofDisplay.prototype.renderStep = function(step) {
       if (step.subproofDisplay) {
         clearSubproof(step);
       } else {
+        if (step.ruleName == 'fact' &&
+            (step.details.ruleName == 'assert' ||
+             (step.details.ruleName == 'asHypotheses' &&
+              step.details.ruleArgs[0].ruleName == 'assert'))) {
+          var copy = (step instanceof Call
+              ? new Call(step.fn, step.arg)
+              : step instanceof Atom
+              ? new Atom(step.pname)
+              // Impossible for a step!
+              : null);
+          var fact = Toy.proveResult(copy);
+          step.details = fact.details;
+          // TODO: The proved fact's assumptions may be in different
+          //   order than the original.  Consider filling steps to
+          //   reorder them in the new result.
+        }
         renderSubproof(step);
       }
     });
