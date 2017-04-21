@@ -4042,6 +4042,45 @@ function addFactsMap(map) {
 }
 
 /**
+ * Adds an entry to the facts database given information in the format
+ * of fact entries in facts maps, assuming here that the synopsis is
+ * already added to the info as a synopsis property.  Currently uses
+ * the synopsis property to generate a goal and the proof property
+ * as the prover.
+ *
+ * Currently recognizes input properties as follows:
+ *
+ * synopsis: input acceptable to getStatement, usually a string.
+ * proof: function to return the proved fact, matching the synopsis.
+ * simplifier: true iff this fact is a simplifier.
+ * desimplifier: true iff this fact is the "converse" of a simplifier.
+ * labels: Object/set of label names, if given as a string, parses
+ *   space-separated parts into a set.
+ *
+ * TODO: Extend this and/or add other functions to add facts based
+ *   on other information such as an already-proved statement.
+ */
+function addFact(info) {
+  info.goal = info.goal || getStatement(info.synopsis);
+  // Annotate the new goal with type info for type comparison
+  // with portions of steps in the UI.
+  //
+  // Careful: It is very doubtful whether annotated structures can be
+  // shared as part of any other steps or Exprs.
+  info.goal.annotateWithTypes();
+  info.prover = asFactProver(info.proof, info.goal);
+  info.proved = null;
+  var labels = info.labels;
+  info.labels = {};
+  if (typeof labels === 'string') {
+    labels.split(/\s+/)
+      .forEach(function(label) { info.labels[label] = true; });
+  }
+  setFactInfo(info);
+  return info;
+}
+
+/**
  * Add the "converse" of an equational fact if it is not already
  * recorded.  Determines the statement from the info's goal.  If it is
  * an equation, switches its LHS and RHS, otherwise does nothing.
@@ -4178,45 +4217,6 @@ function lookupFactInfo(stmt) {
  */
 function setFactInfo(info) {
   _factsMap[getStatementKey(info.goal)] = info;
-}
-
-/**
- * Adds an entry to the facts database given information in the format
- * of fact entries in facts maps, assuming here that the synopsis is
- * already added to the info as a synopsis property.  Currently uses
- * the synopsis property to generate a goal and the proof property
- * as the prover.
- *
- * Currently recognizes input properties as follows:
- *
- * synopsis: input acceptable to getStatement, usually a string.
- * proof: function to return the proved fact, matching the synopsis.
- * simplifier: true iff this fact is a simplifier.
- * desimplifier: true iff this fact is the "converse" of a simplifier.
- * labels: Object/set of label names, if given as a string, parses
- *   space-separated parts into a set.
- *
- * TODO: Extend this and/or add other functions to add facts based
- *   on other information such as an already-proved statement.
- */
-function addFact(info) {
-  info.goal = info.goal || getStatement(info.synopsis);
-  // Annotate the new goal with type info for type comparison
-  // with portions of steps in the UI.
-  //
-  // Careful: It is very doubtful whether annotated structures can be
-  // shared as part of any other steps or Exprs.
-  info.goal.annotateWithTypes();
-  info.prover = asFactProver(info.proof, info.goal);
-  info.proved = null;
-  var labels = info.labels;
-  info.labels = {};
-  if (typeof labels === 'string') {
-    labels.split(/\s+/)
-      .forEach(function(label) { info.labels[label] = true; });
-  }
-  setFactInfo(info);
-  return info;
 }
 
 /**
