@@ -808,8 +808,11 @@ $.extend(StepEditor.prototype, {
 
   /**
    * Returns a list of fact statements that are offerable in the UI,
-   * currently all that are equational (equation, possibly with
-   * conditions).
+   * currently all equational facts whose LHS matches the currently
+   * selected term.
+   *
+   * In algebra mode, if the LHS is atomic, does not offer unless the
+   * rule has the "algebra" label.
    */
   offerableFacts: function() {
     var self = this;
@@ -835,13 +838,22 @@ $.extend(StepEditor.prototype, {
             var goal = info.goal;
             if (goal.isEquation()) {
               var lhs = goal.eqnLeft();
-              if (expr.matchSchema(lhs) &&
-                  !(self.showRuleType == 'algebra' &&
-                    !info.labels.algebra &&
+              if (typesMismatch(expr, lhs)) {
+                return;
+              }
+              if (expr.matchSchema(lhs)) {
+                if (self.showRuleType == 'algebra') {
+                  if (info.labels.algebra) {
+                    facts.push(goal);
+                  } else if (lhs instanceof Toy.Atom) {
                     // In simple algebra mode suppress facts with LHS
                     // of just a variable or constant.
-                    lhs instanceof Toy.Atom)) {
-                if (!typesMismatch(expr, lhs)) {
+                    return;
+                  } else if (isLeftAssociative(goal.getMain())) {
+                    facts.push(goal);
+                  }
+                  // Otherwise don't show the fact in algebra mode.
+                } else {
                   facts.push(goal);
                 }
               }
@@ -852,6 +864,24 @@ $.extend(StepEditor.prototype, {
     return facts;
   }
 });
+
+/**
+ * True iff the equation (lhs = rhs) transforms (a op1 (b op2 c)) to
+ * (a op3 b) op4 c, removing parentheses.  The ops must either be +
+ * and - or * and /.  In other words simple parenthesis removal.
+ * Reordering the parts is OK here.
+ */
+function isLeftAssociative(eqn) {
+  // Temporary so we can check for regressions due to changes in
+  // offerableFacts, above.
+  return true;
+  var lhs = eqn.getLeft();
+  var rhs = eqn.getRight();
+  if (lhs.isCall2() && rhs.isCall2()) {
+    var op1 = lhs.getBinOp();
+  }
+  return false;
+}
 
 /**
  * This matches a step against the inputs descriptor of an inference
