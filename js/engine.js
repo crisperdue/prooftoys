@@ -173,6 +173,31 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   return result;
 };
 
+//
+// Utility functions
+//
+
+/**
+ * Process a value as a set of labels.  If it is a string, convert it
+ * to an object/set by treating it as a space-separated list of words.
+ */
+function processLabels(labels) {
+  switch(typeof labels) {
+  case 'string':
+    var result = {};
+    labels.split(/\s+/)
+      .forEach(function(label) { result[label] = true; });
+    return result;
+  case 'object':
+    return labels;
+  default:
+    if (labels) {
+      console.error('Bad labels', labels);
+    }
+    return {};
+  }
+}
+
 // Used to order execution of proof steps so they can display
 // in order of execution in an automatically-generated proof.
 // This increments on every call to "justify".
@@ -3962,14 +3987,7 @@ function addRule(key, info_arg) {
       (typeof info.data == 'function') ? info.data.call() : info.data;
   }
 
-  // Preprocess labels.  Split, and if there are no explicit labels,
-  // give the rule a label of "basic".
-  var labels = info.labels;
-  info.labels = {};
-  if (typeof labels === 'string') {
-    labels.split(/\s+/)
-      .forEach(function(label) { info.labels[label] = true; });
-  }
+  info.labels = processLabels(info.labels);
   if (action.length === 0 && key.slice(0, 5) === 'axiom') {
     info.labels.axiom = true;
   }
@@ -4070,12 +4088,7 @@ function addFact(info) {
   info.goal.annotateWithTypes();
   info.prover = asFactProver(info.proof, info.goal);
   info.proved = null;
-  var labels = info.labels;
-  info.labels = {};
-  if (typeof labels === 'string') {
-    labels.split(/\s+/)
-      .forEach(function(label) { info.labels[label] = true; });
-  }
+  info.labels = processLabels(info.labels);
   setFactInfo(info);
   return info;
 }
