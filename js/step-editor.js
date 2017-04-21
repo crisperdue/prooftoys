@@ -860,31 +860,6 @@ $.extend(StepEditor.prototype, {
 });
 
 /**
- * True iff the equation (lhs = rhs) transforms (a op1 (b op2 c)) to
- * (a op3 b) op4 c, removing parentheses.  The ops must either be +
- * and - or * and /.  In other words simple parenthesis removal.
- * Reordering the parts is OK here.
- */
-function isLeftAssociative(eqn) {
-  console.log('Eqn', eqn.$$);
-  var map = eqn.matchSchema('(o1 a (o2 b c)) = (o3 (o4 a b) c)');
-  console.log('Match is', map);
-  var additive = {'+': true, '-': true};
-  var multiplicative = {'*': true, '/': true};
-  if (map) {
-    if (map.o1 in additive && map.o2 in additive &&
-        map.o3 in additive && map.o4 in additive) {
-      return true;
-    }
-    if (map.o1 in multiplicative && map.o2 in multiplicative &&
-        map.o3 in multiplicative && map.o4 in multiplicative) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
  * This matches a step against the inputs descriptor of an inference
  * rule.  The step is the selected proof step, ruleName is the name of
  * the rule to match against.  Only call this if a step or part of a
