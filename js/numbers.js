@@ -1677,12 +1677,17 @@ var realAxiomFacts = {
   'a + (b + c) = a + b + c': {
     proof: function() {
       return rules.axiomAssociativePlus();
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra2' }
   },
   'a * (b * c) = a * b * c': {
     proof: function() {
       return rules.axiomAssociativeTimes();
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra2' }
+
   },
   'a + 0 = a': {
     simplifier: true,
@@ -1748,7 +1753,8 @@ var basicFacts = {
     proof: function() {
       return rules.equalitySymmetric();
     },
-    noSwap: true
+    noSwap: true,
+    labels: 'algebra'
   },
 
   // Addition
@@ -1793,7 +1799,9 @@ var distribFacts = {
   'a * (b + c) = a * b + a * c': {
     proof: function() {
       return rules.axiomDistributivity();
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
   '(a + b) * c = a * c + b * c': {
     proof: function() {
@@ -1803,7 +1811,9 @@ var distribFacts = {
       .rewrite('/main/right/right', 'a * b = b * a')
       .rewrite('/main/right/left', 'a * b = b * a');
       return step;
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
   'a * b + b = (a + 1) * b': {
     proof: function() {
@@ -1811,7 +1821,9 @@ var distribFacts = {
       .rewrite('/main/right/right', 'a = 1 * a')
       .rewrite('/main/right', 'a * c + b * c = (a + b) * c');
       return step;
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
   'b + a * b = (1 + a) * b': {
     proof: function() {
@@ -1819,7 +1831,9 @@ var distribFacts = {
       .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right', 'a * c + b * c = (a + b) * c');
       return step;
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
   'a + a = 2 * a': {
     proof: function() {
@@ -1827,7 +1841,9 @@ var distribFacts = {
       .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right', 'a * b + b = (a + 1) * b')
       .andThen('arithmetic', '/main/right/left');
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
 
   // Distributivity with subtraction
@@ -1839,7 +1855,9 @@ var distribFacts = {
       .rewrite('/main/right', 'a * (b + c) = a * b + a * c')
       .rewrite('/main/right/right', 'a * neg b = neg (a * b)')
       .rewrite('/main/right', 'a + neg b = a - b');
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
   '(a - b) * c = a * c - b * c': {
     proof: function() {
@@ -1849,21 +1867,27 @@ var distribFacts = {
       .rewrite('/main/right/right', 'a * b = b * a')
       .rewrite('/main/right/left', 'a * b = b * a');
       return step;
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
   'a * b - b = (a - 1) * b': {
     proof: function() {
       return rules.consider('a * b - b')
       .rewrite('/main/right/right', 'a = 1 * a')
       .rewrite('/main/right', 'a * c - b * c = (a - b) * c');
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
   'b - a * b = (1 - a) * b': {
     proof: function() {
       return rules.consider('b - a * b')
       .rewrite('/main/right/left', 'a = 1 * a')
       .rewrite('/main/right', 'a * c - b * c = (a - b) * c');
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   }
 };
 
@@ -2300,15 +2324,17 @@ var subtractionFacts = {
     }
   },
 
-  // Four cases: each operation can be + or -, and initial association
-  // can be to the left or right.
+  // Associativity: four cases: each operation can be + or -, and
+  // initial association can be to the left or right.
   'a + b - c = a + (b - c)': {
     proof: function() {
       return rules.consider('a + b - c')
       .rewrite('/main/right', 'a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + (b + c)')
       .rewrite('/main/right/right', 'a + neg b = a - b');
-    }
+    },
+    labels: 'algebra2',
+    converse: { labels: 'algebra' }
   },
   'a - (b + c) = a - b - c': {
     proof: function() {
@@ -2320,7 +2346,9 @@ var subtractionFacts = {
       .rewrite('/main/right', 'a + neg b = a - b')
       .rewrite('/main/right/left', 'a + neg b = a - b');
       return step;
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra2' }
   },  
   'a - b - c = a - c - b': {
     proof: function() {
@@ -2339,7 +2367,9 @@ var subtractionFacts = {
       .rewrite('/main/right/right/right', 'neg (neg a) = a')
       .rewrite('/main/right', 'a + (b + c) = a + b + c')
       .rewrite('/main/right/left', 'a + neg b = a - b');
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra2' }
   },
 
   // Simplification
@@ -2583,6 +2613,7 @@ var divisionFacts = {
               .rewrite('/right/right/right', 'a * (recip b) = a / b'));
     }
   },
+  // Distributivity:
   'c != 0 => (a + b) / c = a / c + b / c': {
     proof: function() {
       var tx = Toy.transformApplyInvert;
@@ -2590,8 +2621,11 @@ var divisionFacts = {
       return tx(Toy.parse('(a + b) / c'),
                 mp('a / b = a * recip b'),
                 mp('(a + b) * c = a * c + b * c'))
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   },
+  // Distributivity:
   'c != 0 => (a - b) / c = a / c - b / c': {
     proof: function() {
       var tx = Toy.transformApplyInvert;
@@ -2599,7 +2633,9 @@ var divisionFacts = {
       return tx(Toy.parse('(a - b) / c'),
                 mp('a / b = a * recip b'),
                 mp('(a - b) * c = a * c - b * c'))
-    }
+    },
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
   }
 };
 $.extend(algebraFacts, divisionFacts);

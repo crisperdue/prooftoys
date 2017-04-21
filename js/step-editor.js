@@ -845,12 +845,6 @@ $.extend(StepEditor.prototype, {
                 if (self.showRuleType == 'algebra') {
                   if (info.labels.algebra) {
                     facts.push(goal);
-                  } else if (lhs instanceof Toy.Atom) {
-                    // In simple algebra mode suppress facts with LHS
-                    // of just a variable or constant.
-                    return;
-                  } else if (isLeftAssociative(goal.getMain())) {
-                    facts.push(goal);
                   }
                   // Otherwise don't show the fact in algebra mode.
                 } else {
