@@ -1664,12 +1664,14 @@ var realAxiomFacts = {
     proof: function() {
       return rules.axiomCommutativePlus();
     },
+    labels: 'algebra',
     noSwap: true
   },
   'a * b = b * a': {
     proof: function() {
       return rules.axiomCommutativeTimes();
     },
+    labels: 'algebra',
     noSwap: true
   },
   'a + (b + c) = a + b + c': {
