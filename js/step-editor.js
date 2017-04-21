@@ -866,13 +866,20 @@ $.extend(StepEditor.prototype, {
  * Reordering the parts is OK here.
  */
 function isLeftAssociative(eqn) {
-  // Temporary so we can check for regressions due to changes in
-  // offerableFacts, above.
-  return true;
-  var lhs = eqn.getLeft();
-  var rhs = eqn.getRight();
-  if (lhs.isCall2() && rhs.isCall2()) {
-    var op1 = lhs.getBinOp();
+  console.log('Eqn', eqn.$$);
+  var map = eqn.matchSchema('(o1 a (o2 b c)) = (o3 (o4 a b) c)');
+  console.log('Match is', map);
+  var additive = {'+': true, '-': true};
+  var multiplicative = {'*': true, '/': true};
+  if (map) {
+    if (map.o1 in additive && map.o2 in additive &&
+        map.o3 in additive && map.o4 in additive) {
+      return true;
+    }
+    if (map.o1 in multiplicative && map.o2 in multiplicative &&
+        map.o3 in multiplicative && map.o4 in multiplicative) {
+      return true;
+    }
   }
   return false;
 }
