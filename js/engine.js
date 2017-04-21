@@ -4074,6 +4074,8 @@ function addFactsMap(map) {
  * desimplifier: true iff this fact is the "converse" of a simplifier.
  * labels: Object/set of label names, if given as a string, parses
  *   space-separated parts into a set.
+ * converse.labels: Like labels, but applies to a "swapped" version
+ *   of the fact, if any.
  *
  * TODO: Extend this and/or add other functions to add facts based
  *   on other information such as an already-proved statement.
@@ -4105,14 +4107,15 @@ function addSwappedFact(info) {
     if (isRecordedFact(swapped)) {
       console.warn('Swapped fact ' + swapped + ' already recorded');
     } else {
-
       function proof() {
         return rules.fact(stmt).andThen('eqnSwap');
       }
+      var labels2 = processLabels(info.converse && info.converse.labels);
       var info2 = {proof: proof,
                    goal: swapped,
                    simplifier: !!info.desimplifier,
-                   desimplifier: !!info.simplifier
+                   desimplifier: !!info.simplifier,
+                   labels: labels2
       };
       addFact(info2);
     }
