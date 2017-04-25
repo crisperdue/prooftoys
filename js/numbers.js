@@ -1645,6 +1645,36 @@ var fractionsInfo = {
     form: (''),
     menu: 'fully reduce {term}',
     labels: 'algebra'
+  },
+
+  /**
+   * Given a numeric term (integer) that has prime factors, produce a
+   * step that equates it to its prime factors.
+   */
+  primeFactors: {
+    action: function(term_arg) {
+      var term = termify(term_arg);
+      var factors = [];
+      if (term.isNumeral()) {
+        factors = Toy.primeFactors(term.getNumValue());
+      }
+      assert(factors.length > 0, 'Does not have prime factors: {1}', term);
+      var result = new Toy.numify(factors[0]);
+      for (var i = 1; i < factors.length; i++) {
+        result = Toy.infixCall(result, '*', new Toy.numify(factors[i]));
+      }
+      return (rules.assert(Toy.infixCall(term, '=', result))
+              .justify('primeFactors', [term]));
+    },
+    inputs: {term: 1},
+    form: '',
+    menu: 'prime factors of {term}',
+    description: 'prime factors of {term}',
+    labels: 'algebra',
+    toOffer: function(step, expr) {
+      return expr && expr.isNumeral();
+    },
+    autoSimplify: noSimplify
   }
 
 };  // End fractionsInfo.
