@@ -210,7 +210,7 @@ function getPrimes() {
   }
   return primes;
 }
- 
+
 /**
  * Returns the least prime number among the result of getPrimes that
  * is greater than "last" and a factor of x, possibly x itself.
