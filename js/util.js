@@ -228,6 +228,27 @@ function nextPrimeFactor(x, last) {
   return null;
 }
 
+/**
+ * Returns an array with the prime factors of the given number.
+ * Result is an empty array if the input is not a positive integer, or
+ * does not have prime factors (e.g. -1, 0), or the function finds no
+ * prime factor within its search range (up to approximately the
+ * square root of a billion).
+ */
+function primeFactors(n) {
+  result = [];
+  if (Number.isInteger(n) && n > 0) {
+    var p = 0;
+    while (p = nextPrimeFactor(n, p)) {
+      while (n % p == 0) {
+        result.push(p);
+        n = n / p;
+      }
+    }
+  }
+  return result;
+}
+
 ////
 //// Assertions, error reporting and debugging
 ////
@@ -1344,6 +1365,7 @@ Toy.lcm = lcm;
 Toy.npd = npd;
 Toy.getPrimes = getPrimes;
 Toy.nextPrimeFactor = nextPrimeFactor;
+Toy.primeFactors = primeFactors;
 
 Toy.err = err;
 Toy.check = check;
