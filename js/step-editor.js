@@ -608,15 +608,22 @@ StepEditor.prototype.fillFromSelection = function(args) {
   var inputs = rule.info.inputs;
   // Fill in args information from a selection.
   if (expr) {
+    var isSite = false;
     for (var type in siteTypes) {
       var input = inputs[type];
       if (input) {
         var position = Array.isArray(input) ? input[0] : input;
         args[position - 1] = step.original;
         args[position] = step.prettyPathTo(expr);
+        isSite = true;
         // Only fill in one argument (pair) from the selection.
         break;
       }
+    }
+    if (!isSite && inputs.term) {
+      var terms = inputs.term;
+      var position = Array.isArray(terms) ? terms[0] : terms;
+      args[position - 1] = expr;
     }
   } else {
     for (var type in stepTypes) {
@@ -776,6 +783,8 @@ StepEditor.prototype.offerApproved = function(name) {
  */
 StepEditor.prototype.offerable = function(ruleName) {
   var info = Toy.rules[ruleName].info;
+  // TODO: Test and then hopefully remove this test, which looks
+  //   obsolete.
   if (!('form' in info)) {
     return false;
   }
@@ -792,6 +801,10 @@ StepEditor.prototype.offerable = function(ruleName) {
       }
       return true;
     }
+  } else if (!info.form) {
+    // The form property is present, but nothing in it, so
+    // arguments cannot come from the form.
+    return false;
   } else {
     // No selection, the rule must not require a step or site.
     for (type in info.inputs) {
@@ -893,6 +906,7 @@ function acceptsSelection(step, ruleName) {
       // 
       // TODO: prevent selection of bound variables as terms.
       return (argInfo.site
+              || argInfo.term
               || (argInfo.bindingSite && expr instanceof Toy.Lambda)
               || (argInfo.reducible
                   && expr instanceof Toy.Call
