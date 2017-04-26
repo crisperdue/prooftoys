@@ -209,6 +209,21 @@ function getStepCounter() {
 }
 
 /**
+ * Adjusts a path to account for application of a typical rewrite rule
+ * that could prefix the path with /right, given a step that is the
+ * input to the rewrite and a step that is the result of the rewrite.
+ *
+ * This could give incorrect results currently in case the first step
+ * is conditional but without hyps, but this will be correct when hyps
+ * are gone.
+ */
+Toy.Path.prototype.adjustForRewrite = function(step1, step2) {
+  return (!step1.isCall2('=>') && step2.isCall2('=>')
+          ? Toy.path('/right').concat(this)
+          : this);
+};
+
+/**
  * These become methods on steps, set up by Step.justify.
  */
 var ruleMethods = {
