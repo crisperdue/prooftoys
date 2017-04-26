@@ -992,15 +992,17 @@ var testCase = {
   },
 
   testMatchSchemaPart: function() {
-    function check(expectSuccess, term_arg, path, schema_arg, name) {
-      var term = typeof term_arg == 'string' ? Toy.parse(term_arg) : term_arg;
-      var schema = Toy.termify(schema_arg);
+    // Given a boolean, a term, a path in the term, a schema, and a
+    // schema part, checks that Expr.matchSchemaPart succeeds or fails
+    // according to the boolean, and produces a suitable substitution
+    // on success.
+    function check(expectSuccess, term_arg, path, schema, name) {
+      var term = Toy.termify(term_arg);
       var subst = term.matchSchemaPart(path, schema, name);
       if (expectSuccess) {
         if (subst) {
-          console.log('Subst', Toy.debugString(subst));
           assertEqual(term.get(subst.path).toString(),
-                      schema.subFree(subst));
+                      Toy.termify(schema).subFree(subst));
         } else {
           assert(false, 'No match found');
         }
@@ -1011,6 +1013,8 @@ var testCase = {
     check(true, '3 * x + z', '/left/right', 'a * b', 'b');
     check(true, '3 * x + z', '/left', 'a + b', 'a');
     check(false, '3 * x + z', '/left', 'a + b', 'b');
+    check(true, 'x + y + z = x + (y + z)', '/right/right',
+          'a + (b + c)', 'b + c');
   },
 
   testMatchFactPart: function() {

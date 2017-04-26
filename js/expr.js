@@ -601,30 +601,40 @@ Expr.prototype.alphaMatch = function(expr_arg) {
 Expr.prototype.findSubst = Expr.prototype.matchSchema;
 
 /**
- * Attempts to match the given schema to a part of this, so the
- * variable in the schema with the given name matches the part of this
- * at the given path.
+ * Attempts to match the given schema to a part of this, given a path
+ * in this, a schema, and a "schema part", which should occur exactly
+ * once in the schema.  Let's call the part of this at the given path
+ * the "target" expression.  This calculates the path where the schema
+ * part occurs in the schema (the "schema path"), then identifies an
+ * expression in this that contains the target at that same "schema
+ * path".
+ *
+ * All arguments may be given as strings as desired.
  *
  * If successful, returns a substitution with an extra "path" property
  * containing the path to the part of this that matches the entire
  * schema.  The rest of the substitution maps from names of schema
- * variables to subexpressions of this that match them.
- *
- * Assumes that the name only occurs once within the schema.
+ * variables to subexpressions of this that match them.  If not
+ * successful, returns null.
  *
  * The implementation idea is that the path to the part of this
- * matching the entire schema must be a prefix of the given path to
- * the part of this matching the schema variable.  If there is such a
- * path this method finds it, locates part of this expression using
- * it, and matches that subexpression with the schema.
+ * matching the entire schema must be a prefix of the given path.  If
+ * there is such a path this method finds it, locates part of this
+ * expression using it, and matches that subexpression with the
+ * schema.
+ *
+ * The same task could be done by passing a (pretty) path from the
+ * schema to the part of interest, rather than the part itself, but
+ * this way seems to result in more readable code.
  */
-Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, name) {
+Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
   var schema = termify(schema_arg);
+  var part = termify(schema_part);
   var targetPath = this.prettifyPath(Toy.path(path_arg));
-  function matchName(expr) {
-    return expr instanceof Atom && expr.name == name;
+  function match(expr) {
+    return expr.matches(part);
   }
-  var schemaPath = schema.prettyPathTo(matchName);
+  var schemaPath = schema.prettyPathTo(match);
   var prefix = targetPath.upTo(schemaPath);
   if (!prefix) {
     return null;
@@ -636,7 +646,7 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, name) {
     return subst;
   }
   return null;
-}
+};
 
 /**
  * Returns a new expression resulting from applying the given
