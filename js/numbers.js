@@ -1246,8 +1246,8 @@ var moversInfo = {
   regroupAdditions: {
     action: function(step) {
       function applyTo(eqn, facts) {
-        return applyFactsWithinRhs(eqn, {facts: facts,
-                                     searchMethod: 'searchTerms'});
+        return Toy.applyFactsWithinRhs(eqn, {facts: facts,
+                                             searchMethod: 'searchTerms'});
       }
       function converter(expr) {
         var eqn = rules.consider(expr);
