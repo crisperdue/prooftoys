@@ -1648,6 +1648,44 @@ var fractionsInfo = {
   },
 
   /**
+   * Given a target expression which is the sum of two fractions (with
+   * integer denominators) and a requested new denominator, this
+   * produces a result with the fraction denominators changed to the
+   * specified value, which must be an exact multiple of both.
+   */
+  commonDenominator: {
+    action: function(step, path_arg, num) {
+      var path = Toy.path(path_arg, step);
+      var n = num.getNumValue();
+      var expr = step.get(path);
+      var map = (expr.matchSchema('a / d1 + b / d2') ||
+                 expr.matchSchema('a / d1 - b / d2'));
+      assert(map, 'Not sum/diff of fractions: {1}', expr);
+      var d1 = map.d1.getNumValue();
+      var d2 = map.d2.getNumValue();
+      assert(n % d1 == 0 && n % d2 == 0, 'Not a multiple: {1}', n);
+      var k1 = n / d1;
+      var k2 = n / d2;
+      var fact = rules.fact('a / b = a * c / (b * c)');
+      var fact1 = rules.instVar(fact, Toy.numify(k1), 'c');
+      var step1 = step.rewrite(path.concat('/left'), fact1);
+      var p2 = path.adjustForRewrite(step, step1);
+      var fact2 = rules.instVar(fact, Toy.numify(k2), 'c');
+      return (step1.rewrite(p2.concat('/right'), fact2)
+              .justify('commonDenominator', arguments, [step]));
+    },
+    toOffer: function(step, expr) {
+      var map = (expr.matchSchema('a / d1 + b / d2') ||
+                 expr.matchSchema('a / d1 - b / d2'));
+      return (map && map.d1.isNumeral() && map.d2.isNumeral());
+    },
+    inputs: {site: 1, term: 3},
+    form: 'Use denominator <input name=term>',
+    menu: 'use common denominator',
+    labels: 'algebra'
+  },
+
+  /**
    * Given a numeric term (integer) that has prime factors, produce a
    * step that equates it to its prime factors.
    */
