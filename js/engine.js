@@ -4456,8 +4456,11 @@ function searchForMatchingFact(term, info) {
  *
  * stmt: value acceptable to getStatement.  Unless "match" is also
  *   given this will need to be an equation.
- * where: optional string to evaluate, with "subst" and the "cxt"
- *   argument to findMatchingFact available for use in the string.
+ * where: optional string to evaluate, with "subst" 
+ *   argument to findMatchingFact available as "$" and cxt and term
+ *   available as free variables for use in the string.
+ *   OR if it is a function, call it with the substition, cxt, and
+ *   term as arguments.
  * match: term schema to match against the term.  (By default the
  *   term is matched against the stmt LHS.)
  *
@@ -4489,11 +4492,15 @@ function searchForMatchingFact(term, info) {
  * path: path to the portion of the given term that matched some pattern.
  */
 function findMatchingFact(facts_arg, cxt, term) {
-  function doEval(expr, $) {
-    // Suppress acccess to the enclosing "facts" variable.
-    // OK for str to refer to "cxt" or "term".
-    var facts;
-    return eval(expr);
+  function apply$(expr, $) {
+    if (typeof expr === 'function') {
+      return expr($, cxt, term);
+    } else {
+      // Suppress acccess to the enclosing "facts" variable.
+      // OK for str to refer to "cxt" or "term".
+      var facts;
+      return eval(expr);
+    }
   }
   var facts = facts_arg;
   if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
@@ -4544,7 +4551,7 @@ function findMatchingFact(facts_arg, cxt, term) {
                     ? termify(factInfo.match)
                     : Toy.getStatement(stmt).getMain().getLeft());
       var subst = term.matchSchema(schema);
-      if (subst && (!where || doEval(where, subst))) {
+      if (subst && (!where || apply$(where, subst))) {
         var result = {stmt: stmt,
                       term: term,
                       path: Toy.path(),
