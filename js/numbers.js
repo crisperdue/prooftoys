@@ -756,6 +756,13 @@ var regroupingFacts = [
   'a / b / c = a / (b * c)'
 ];
 
+var ungroupingFacts;
+$(function() {
+    ungroupingFacts = regroupingFacts.map(function(fact) {
+        return Toy.commuteEqn(termify(fact));
+      });
+  });
+
 /**
  * Arrange the terms on each side of the equation input.  Also
  * appropriate when dividing.
@@ -1450,6 +1457,32 @@ var moversInfo = {
     form: '',
     menu: 'algebra: group {term} with {right}',
     description: 'group to the right',
+    labels: 'algebra'
+  },
+
+  /**
+   * Removes parentheses from an add/sub/mul/div expression that
+   * needs them to force association to the right.  Uses converses
+   * of regroupingFacts.
+   */
+  ungroup: {
+    toOffer: function(step, expr) {
+      var path = step.prettyPathTo(expr).upTo('/right');
+      if (!path) {
+        return false;
+      }
+      var term = step.get(path);
+      return !!Toy.findMatchingFact(ungroupingFacts, null, term);
+    },
+    action: function(step, path_arg) {
+      var path = step.prettifyPath(path_arg).upTo('/right');
+      return (Toy.applyFactsOnce(step, path, ungroupingFacts)
+              .justify('ungroup', arguments, [step]));
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'algebra: ungroup {term}',
+    description: 'ungroup',
     labels: 'algebra'
   },
 
@@ -2826,6 +2859,9 @@ $(function() {
     Toy.addRules(moversInfo);
     Toy.addRules(fractionsInfo);
     Toy.addFactsMap(algebraFacts);
+
+    // For testing (computed value).
+    Toy._ungroupingFacts = ungroupingFacts;
 });
 
 })();
