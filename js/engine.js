@@ -3900,6 +3900,16 @@ var ruleInfo = {
 var rules = {};
 
 // Data per rule, also accessed by rule name.
+//
+// TODO: If a rule has a "data" property, set rules[ruleName] to a new
+//   function that binds "this" to the rule's action function, and set
+//   up the properties of the "data" object as properties of the
+//   action function.
+//
+//   Also consider making every rule a "fancy" rule whose action
+//   function has the appropriate name, that automatically converts
+//   its inputs based on its input descriptor.  For each of these
+//   define rules['fast_' + name] to be the simplest form.
 var ruleData = {};
 
 /**
