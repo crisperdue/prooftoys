@@ -8,7 +8,6 @@
 //// THEOREMS AND RULES
 
 var rules = Toy.rules;
-var ruleData = Toy.ruleData;
 
 var assert = Toy.assertTrue;
 var check = Toy.check;
@@ -1221,7 +1220,7 @@ var moversInfo = {
               expr.matchSchema('neg (a / b)'));
     },
     action: function(step, path) {
-      var context = ruleData.arrangeTerm.context;
+      var context = this.data.context;
       var arrangeRhs = Toy.arrangeRhs;
 
       return convert(step, path, function(expr) {
@@ -1343,7 +1342,7 @@ var moversInfo = {
       ]},
     toOffer: function(step, expr) {
       var path = step.pathTo(expr);
-      var data = ruleData.moveTermRight;
+      var data = this.data;
       var factsA = data.factsA;
       var factsB = data.factsB;
       // Truthy value if the given name in the LHS of the fact can
@@ -1358,7 +1357,7 @@ var moversInfo = {
     },
     autoSimplify: noSimplify,
     action: function(step, path_arg) {
-      var data = ruleData.moveTermRight;
+      var data = this.data;
       var factsB = data.factsB;
       var factsA = data.factsA;
       function tryFact(name, fact_arg) {

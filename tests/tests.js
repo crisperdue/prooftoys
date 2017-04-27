@@ -2243,7 +2243,7 @@ var testCase = {
   },
 
   testArrange: function() {
-    var context = ruleData.arrangeTerm.context;
+    var context = Toy.rules.arrangeTerm.data.context;
     var arrange = Toy.arrange;
     function check(expected, input, factList) {
       var step = rules.consider(input);

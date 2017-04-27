@@ -3899,19 +3899,6 @@ var ruleInfo = {
 // Generated from ruleInfo by addRules, below.
 var rules = {};
 
-// Data per rule, also accessed by rule name.
-//
-// TODO: If a rule has a "data" property, set rules[ruleName] to a new
-//   function that binds "this" to the rule's action function, and set
-//   up the properties of the "data" object as properties of the
-//   action function.
-//
-//   Also consider making every rule a "fancy" rule whose action
-//   function has the appropriate name, that automatically converts
-//   its inputs based on its input descriptor.  For each of these
-//   define rules['fast_' + name] to be the simplest form.
-var ruleData = {};
-
 /**
  * Given a ruleInfo object, add its information to the "rules" object.
  * The "rules" object maps from rule name to function.  Each function
@@ -3929,6 +3916,10 @@ function addRules(ruleInfo) {
  * Process the given info into form for inclusion into Toy.rules and
  * add the result there.
  *
+ * If a rule has a "data" property, set rules[ruleName] to a new
+ * function that binds "this" to the rule's action function, and set
+ * up the "data" object as the "data" property of the action function.
+ *
  * TODO: Bind each rule's action function so "this" is the function
  * itself, providing easy access to metadata, including any "data"
  * property.
@@ -3936,6 +3927,11 @@ function addRules(ruleInfo) {
  * TODO: Give Step objects a prototype with a method for each named
  *   rule not otherwise on the prototype, defined so calling it invokes
  *   the rule with appropriate arguments.
+ *
+ *   Also consider making every rule a "fancy" rule whose action
+ *   function has the appropriate name, that automatically converts
+ *   its inputs based on its input descriptor.  For each of these
+ *   define rules['fast_' + name] to be the simplest form.
  */
 function addRule(key, info_arg) {
   var info = info_arg.constructor == Object ? info_arg : {action: info_arg};
@@ -3972,11 +3968,10 @@ function addRule(key, info_arg) {
     };
   }
   action = action || info.action;
-  // Just a test can be given, in which case it must return a continuation
-  // function.
-  if (action && typeof action != 'function') {
-    Toy.err('Rule action not a function: ' + key);
-  }
+  assert(action, 'No action for rule {1}', key);
+  assert(typeof action === 'function',
+         'Rule action must be a function: {1}', key);
+
   // Give every info "inputs".
   if (!info.inputs) {
     info.inputs = {};
@@ -3994,22 +3989,30 @@ function addRule(key, info_arg) {
   info.basicTooltip = info.tooltip;
   // Include the rule name in every tooltip.
   info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), key);
+
   // If there is a toOffer property with string value, coerce it
   // to a function of step and path.
-  if (typeof info.toOffer == 'string') {
+  if (typeof info.toOffer === 'string') {
     info.toOffer = new Function('step, term', info.toOffer);
   }
+  // Make the action function available here also as "this".
+  if (typeof info.toOffer === 'function') {
+    info.toOffer = info.toOffer.bind(action);
+  }
 
-  assert(action, 'No action for rule {1}', key);
-  assert(typeof action == 'function', 'Rule action must be a function: {1}', key);
   // Associate the action function with the key,
-  rules[key] = action;
-
-  // Call any "data" function.  The action function is installed
-  // into the rules at this point.
   if (info.data) {
-    ruleData[key] =
-      (typeof info.data == 'function') ? info.data.call() : info.data;
+    // Call any "data" function.  The action function is installed
+    // into the rules at this point.
+    var data = (typeof info.data === 'function'
+                ? info.data.call()
+                : info.data);
+    action.data = data;
+    rules[key] = action.bind(action);
+    // Make the data available from the wrapper action too.
+    rules[key].data = data;
+  } else {
+    rules[key] = action;
   }
 
   info.labels = processLabels(info.labels);
@@ -5104,7 +5107,6 @@ Toy.assumptionsBefore = assumptionsBefore;
 Toy.assumptionsUsed = assumptionsUsed;
 
 Toy.ruleInfo = ruleInfo;
-Toy.ruleData = ruleData;
 
 Toy.traceRule = traceRule;
 
