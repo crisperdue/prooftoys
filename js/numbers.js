@@ -1696,11 +1696,13 @@ var fractionsInfo = {
         factors = Toy.primeFactors(term.getNumValue());
       }
       assert(factors.length > 0, 'Does not have prime factors: {1}', term);
-      var result = new Toy.numify(factors[0]);
+      var product = new Toy.numify(factors[0]);
       for (var i = 1; i < factors.length; i++) {
-        result = Toy.infixCall(result, '*', new Toy.numify(factors[i]));
+        product = Toy.infixCall(product, '*', new Toy.numify(factors[i]));
       }
-      return (rules.assert(Toy.infixCall(term, '=', result))
+      var step = rules.consider(Toy.infixCall(term, '=', product));
+      return (rules.simplifySite(step, '/left')
+              .andThen('fromTIsA')
               .justify('primeFactors', [term]));
     },
     inputs: {term: 1},
