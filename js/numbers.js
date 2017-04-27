@@ -2777,7 +2777,8 @@ $.extend(algebraFacts, algebraIdentities);
  * Basic simplification facts for algebra, used in _simplifyMath1
  * and related places.
  *
- * TODO: Consider -1 * a = neg a; a + a = 2 * a; 
+ * TODO: Consider -1 * a = neg a; a + a = 2 * a;
+ *   Consider whether x - 7 is simpler than x + -7.
  */
 var basicSimpFacts = [
                       'not (a = b) = (a != b)',
@@ -2791,6 +2792,10 @@ var basicSimpFacts = [
                       '0 * a = 0',
                       'a * 0 = 0',
                       'a != 0 => a / a = 1',
+                      {stmt: 'a + neg b = a - b',
+                       where: '!$.b.isNumeral()'},
+                      {stmt: 'a - b = a + neg b',
+                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
                       {apply: function(term, cxt) {
                           return (isArithmetic(term) &&
                                   rules.axiomArithmetic(term)); } }
