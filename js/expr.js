@@ -704,24 +704,19 @@ Expr.prototype.subFree1 = function(replacement, name) {
   return this.subFree(Toy.object0(name, replacement));
 };
 
-// TODO: Eliminate the "consider" rule, allowing instead introduction
-// of new names if there is a proof that such a thing exists.  In this
-// case "exists an x such that x = <expr>", which is always true for
-// any expr, though in some cases x might be null.  (The name must be
-// "new" to the proof.)
-
 /**
- * For a non-rendered step, returns a path to the equation RHS if the
- * rule was "consider" or the step hasLeftElision; else the main part
- * if there are hypotheses; else the whole wff.  When eliminating the
- * "consider" rule, eliminate this and its uses also.
+ * Called with a non-rendered step; returns a rough approximation
+ * of a path to the (main) part of the step that should be visible
+ * (and ordinarily a reasonable subject for simplification).
+ *
+ * TODO: Rename to indicate that the result is actually a path to
+ *   the "usual" part to be simplified.
  */
 Expr.prototype.pathToVisiblePart = function() {
-  return path(this.rendering &&
-              (this.ruleName === 'consider' ||
-               this.rendering.hasLeftElision)
+  var main = this.getMain();
+  return path(main.isCall2('==')
               ? '/main/right'
-              : (this.hasHyps ? '/main' : ''));
+              : '/main');
 };
 
 var _assertionCounter = 1;
