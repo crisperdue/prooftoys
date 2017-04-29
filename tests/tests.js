@@ -596,7 +596,6 @@ var testCase = {
     var step3 = rules.rplace(step1, step2, Toy.path('/main/left/left'));
     var saved = Toy.encodeSteps([step1, step2, step3]);
     var steps = Toy.decodeSteps(saved);
-    console.log(steps);
     assertEqual(3, steps.length);
     assertEqual('(((y + 3) + y) = 5)', steps[2].unHyp());
   },
@@ -987,7 +986,6 @@ var testCase = {
     var term2 = Toy.parse('neg (u + v)');
     var subst = term.alphaMatch(term2);
     var step = Toy.rules.eqSelf(term).andThen('instMultiVars', subst);
-    console.log(step.str);
     assert(step.getRight().matches(term2));
   },
 
@@ -1028,7 +1026,6 @@ var testCase = {
     assertEqual('function', typeof func);
     var result = func();
     assert(result instanceof Toy.Call, 'is an Expr');
-    console.log('Result', result.str);
     assertEqual('(x + (y + 10))', result.getMain().getRight());
     assertEqual(undefined, match(step2, '/main/right', facts, 'b'));
   },
@@ -1084,7 +1081,6 @@ var testCase = {
                        parts: {a: 'organize'}}}
                     ]}};
     var info = (Toy.findMatchingFact('organize', context, Toy.parse('x*2*3')));
-    console.log('FMF', info.stmt.str, info.term.str, info.path.str);
     assertEqual('(x * 2)', info.term);
   },
 
@@ -1095,7 +1091,6 @@ var testCase = {
     }
     var term = Toy.parse('a + b = neg (c + d)');
     assert(!term.searchTerms(failer));
-    console.log(searched);
     assertEqual(['((a + b) = (neg (c + d)))',
                  '(neg (c + d))',
                  '(a + b)',
@@ -1873,7 +1868,6 @@ var testCase = {
     assert(step5.hasHyps);
     assert(step5.getLeft().sourceStep);
     Toy.trackSourceSteps = true;
-    console.log(step5.toString());
     Toy.trackSourceSteps = false;
   },
 
@@ -2585,7 +2579,6 @@ var testCase = {
     var wff = 'x = y + 3 & R y => (x + y = 7 == y = 2)';
     step = rules.assert(wff);
     stats = ed.solutionStatus(step);
-    logDeeply(stats);
     expected = {
       absentGivens: [],
       extras: [],
