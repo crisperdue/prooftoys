@@ -1686,8 +1686,7 @@ var fractionsInfo = {
    * specified value, which must be an exact multiple of both.
    */
   commonDenominator: {
-    action: function(step, path_arg, num) {
-      var path = Toy.path(path_arg, step);
+    action: function(step, path, num) {
       var n = num.getNumValue();
       var expr = step.get(path);
       var map = (expr.matchSchema('a / d1 + b / d2') ||
@@ -1701,9 +1700,8 @@ var fractionsInfo = {
       var fact = rules.fact('a / b = a * c / (b * c)');
       var fact1 = rules.instVar(fact, Toy.numify(k1), 'c');
       var step1 = step.rewrite(path.concat('/left'), fact1);
-      var p2 = path.adjustForRewrite(step, step1);
       var fact2 = rules.instVar(fact, Toy.numify(k2), 'c');
-      return (step1.rewrite(p2.concat('/right'), fact2)
+      return (step1.rewrite(path.concat('/right'), fact2)
               .justify('commonDenominator', arguments, [step]));
     },
     toOffer: function(step, expr) {
