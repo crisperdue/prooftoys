@@ -1121,13 +1121,26 @@ Expr.prototype.pathTo = function(pred) {
 /**
  * Like Expr.pathTo, but for infix calls produces a path with /left,
  * /right, or /binop rather than combinations of /fn and /arg.
+ *
+ * Furthermore, if this is a Step, it makes the path a "main" path,
+ * replacing an initial /right if there are hyps, otherwise
+ * simply adding it, so the path will still be usable if replacements
+ * add assumptions to a target step.
  */
 Expr.prototype.prettyPathTo = function(pred) {
   if (pred instanceof Expr) {
     var target = pred;
     pred = function(term) { return target == term; };
   }
-  return this._prettyPath(pred, path(''));
+  var p = this._prettyPath(pred, path(''));
+  if (this.isProved()) {
+    // TODO: change hasHyps to isCall2('=>').
+    p = (p.segment === 'right' && this.hasHyps
+         // Change it from /right to /main.
+         ? new Path('main', p.rest)
+         : new Path('main', p));
+  }
+  return p;
 };
 
 /**
