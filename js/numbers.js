@@ -1718,6 +1718,48 @@ var fractionsInfo = {
   },
 
   /**
+   * Convert the target term from "coefficient" form to "fraction"
+   * form.  The coefficient is the leftmost factor of the term, and if
+   * it has a (numeric) denominator, this moves it to be the
+   * denominator of the entire term.  If this rule fails for any
+   * reason, it returns the given step unchanged.
+   */
+  asFraction: {
+    toOffer: function(step, target) {
+      var path = step.pathTo(target);
+      return this(step, path) !== step;
+    },
+    action: function(step, path) {
+      var infix = Toy.infixCall;
+      var target = step.get(path);
+      var coefficient = target;
+      // Get the "coefficient" part (leftmost call to "*").
+      while (coefficient.isCall2('*') && coefficient.getLeft().isCall2()) {
+        coefficient = coefficient.getLeft();
+      }
+      if (coefficient.isCall2('/') && coefficient.getRight().isNumeral()) {
+        var divisor = coefficient.getRight();
+        var step1 = rules.eqSelf(target);
+        var step2 = (rules.multiplyBoth(step1, '', divisor)
+                     .andThen('arrangeTerm', '/main/right')
+                     .andThen('divideBoth', '/main', divisor)
+                     .rewrite('/main/left', 'a * b / c = a * (b / c)')
+                     .andThen('simplifySite', '/main/left/right')
+                     .andThen('simplifySite', '/main/left'));
+        return (rules.rplace(step2, step, path)
+                .justify('asFraction', arguments, [step]));
+      } else {
+        return step;
+      }
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'to fraction form',
+    description: 'convert to fraction form',
+    labels: 'algebra'
+  },
+
+  /**
    * Given a numeric term (integer) that has prime factors, produce a
    * step that equates it to its prime factors.
    */
