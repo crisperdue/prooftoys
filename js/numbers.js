@@ -1824,8 +1824,9 @@ var basicFacts = {
       var asm = rules.assume('a = none');
       return (rules.fact('not (R none)')
               .rplace('/arg/arg', rules.eqnSwap(asm))
+              // Just to make the display clearer:
               .andThen('asImplication')
-              .andThen('forwardChain', 'a => not b == b => not a')
+              .andThen('rewriteOnly', '', 'a => not b == b => not a')
               .andThen('simplifySite', '/right'));
     }
   },
