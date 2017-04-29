@@ -235,7 +235,8 @@ var ruleMethods = {
   andThen: function(name, arg1) {
     var nm = name;
     arguments[0] = this;
-    return Toy.rules[nm].apply(Toy.rules, arguments);
+    var result = Toy.rules[nm].apply(Toy.rules, arguments);
+    return result;
   },
       
   /**
