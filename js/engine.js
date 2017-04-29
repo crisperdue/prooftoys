@@ -4217,9 +4217,10 @@ function asFactProver(prover, goal) {
         if (!added.isCall2('=>') ||
             !(Toy.makeConjunctionSet(added.getLeft())
               .equals(Toy.makeConjunctionSet(goal.getLeft())))) {
-          console.warn('Warning: Proved assumptions do not match goal.');
+          console.group('Warning: Proved assumptions do not match goal.');
           console.warn('  Goal:', goal.toString());
           console.warn('  Result:', added.toString());
+          console.groupEnd();
         }
         return added;
       } else {
