@@ -1134,8 +1134,7 @@ Expr.prototype.prettyPathTo = function(pred) {
   }
   var p = this._prettyPath(pred, path(''));
   if (this.isProved()) {
-    // TODO: change hasHyps to isCall2('=>').
-    p = (p.segment === 'right' && this.hasHyps
+    p = (p.segment === 'right' && this.isCall2('=>')
          // Change it from /right to /main.
          ? new Path('main', p.rest)
          : new Path('main', p));
