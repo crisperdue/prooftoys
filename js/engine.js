@@ -4202,30 +4202,30 @@ function asFactProver(prover, goal) {
       var subst2 = result.getMain().alphaMatch(goal.getMain());
       if (subst2) {
         // The main parts match up to change of variables.
-        var result2 = (rules.instMultiVars(result, subst2)
+        var proved = (rules.instMultiVars(result, subst2)
                        .andThen('arrangeAsms'));
-        if (result2.matches(goal)) {
-          return result2;
+        if (proved.matches(goal)) {
+          return proved;
         }
-        // Put the goal's assumptions into the result.
-        // TODO: Consider not doing this.
-        var added = (goal.isCall2('=>')
-                     ? rules.andAssume(result2, goal.getLeft())
-                     : result2);
-        // TODO: Use rules.equalConjunctions to compare goal
-        //   assumptions with assumptions in proved results.
-        if (!added.isCall2('=>') ||
-            !(Toy.makeConjunctionSet(added.getLeft())
-              .equals(Toy.makeConjunctionSet(goal.getLeft())))) {
-          console.group('Warning: Proved assumptions do not match goal.');
-          console.warn('  Goal:', goal.toString());
-          console.warn('  Result:', added.toString());
+        var conjSet = Toy.makeConjunctionSet;
+        var empty = new Toy.TermSet();
+        var goalAsms = goal.isCall2('=>') ? conjSet(goal.getLeft()) : empty;
+        var factAsms = proved.isCall2('=>') ? conjSet(proved.getLeft()) : empty;
+        if (!goalAsms.superset(factAsms)) {
+          console.group('Warning: Fact requires unintended assumptions.');
+          console.warn('Fact:', proved.toString());
+          console.warn('Goal:', goal.toString());
           console.groupEnd();
         }
-        return added;
+        if (!factAsms.superset(goalAsms)) {
+          console.group('Note: Goal has unneeded assumptions.');
+          console.info('Fact:', proved.toString());
+          console.info('Goal:', goal.toString());
+          console.groupEnd();
+        }
+        return proved;
       } else {
-        assert(false,
-               'Instead of {1} proved {2}', goal, result);
+        assert(false, 'Instead of {1} proved {2}', goal, result);
       }
     }
   }
