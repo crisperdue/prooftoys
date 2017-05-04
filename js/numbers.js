@@ -2659,6 +2659,14 @@ var divisionFacts = {
               .rewrite('/main/left/left', divFact));
     }
   },
+  'b != 0 => a / b * b  = a': {
+    proof: function() {
+      return (rules.fact('a / b * c = a * (c / b)')
+              .andThen('instVar', 'b', 'c')
+              .andThen('simplifyStep'));
+    },
+    simplifier: true
+  },
   'b != 0 & c != 0 => a / (b * c) = a / b / c': {
     proof: function() {
       var step = rules.consider('a / (b * c)')
@@ -2670,6 +2678,14 @@ var divisionFacts = {
       .rewrite('/main/right/left', 'a * recip b = a / b');
       return step;
     }
+  },
+  'a != 0 & b != 0 => a / (a * b) = 1 / b': {
+    proof: function() {
+      return (rules.fact('a / (b * c) = a / b / c')
+              .andThen('instVar', 'a', 'b')
+              .andThen('simplifyStep'));
+    },
+    simplifier: true
   },
   'c != 0 => a * (b / c) = a * b / c': {
     proof: function() {
@@ -2688,14 +2704,13 @@ var divisionFacts = {
               .rewrite('/main/left', fact));
     }
   },
-  'b != 0 => a = a * b / b': {
+  'b != 0 => a * b / b = a': {
     proof: function() {
-      var fact = rules.fact('1 = (a / a)').andThen('instVar', 'b', 'a');
-      return (rules.consider('a')
-              .rewrite('/right', 'a = a * 1')
-              .rewrite('/right/right/right', fact)
-              .rewrite('/right/right', 'a * (b / c) = a * b / c'));
+      return (rules.fact('a * b / c = a * (b / c)')
+              .andThen('instVar', 'b', 'c')
+              .andThen('simplifyStep'));
     },
+    simplifier: true
   },
   // This is useful for converting a summand to a fraction like
   // its neighbor.
