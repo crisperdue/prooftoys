@@ -956,6 +956,8 @@ var ruleInfo = {
   // For the benefit of the UI, if the path is to a call, uses
   // the definition of the named function of the call, even if there
   // is more than one argument, by descending into fn parts.
+  //
+  // TODO: Fix bug here that A != B does not become not (A = B).
   useDefinition: {
     action: function(step, path) {
       var args = [step, path];
