@@ -1134,9 +1134,11 @@ Expr.prototype.prettyPathTo = function(pred) {
   }
   var p = this._prettyPath(pred, path(''));
   if (this.isProved()) {
-    p = (p.segment === 'right' && this.isCall2('=>')
-         // Change it from /right to /main.
-         ? new Path('main', p.rest)
+    p = (this.isCall2('=>')
+         ? (p.segment === 'right'
+            // Change it from /right to /main.
+            ? new Path('main', p.rest)
+            : p)
          : new Path('main', p));
   }
   return p;
@@ -1659,9 +1661,11 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 //
 // _traverse(fn, rpath)
 //
-// Applies the function to this expression, then recursively to
-// any subexpressions.  Does not descend into the variable binding
-// parts of Lambdas.
+// Applies the function to this expression, then recursively to any
+// subexpressions.  Does not descend into the variable binding parts
+// of Lambdas.  Used on rendered steps, perhaps also non-rendered.
+//
+// TODO: Consider how to support flexible paths better, with /main.
 //
 //
 // search(test, bindings)
