@@ -41,7 +41,9 @@ function initRpc(receiver) {
         var e = (receiver.encodeError
                  ? receiver.encodeError(error)
                  : error instanceof Error
-                 ? {type: error.constructor.name, message: error.message}
+                 ? {type: error.constructor.name,
+                    message: error.message,
+                    stack: error.stack}
                  : '?');
         self.postMessage({channelType: 'RPC', id: id, error: e});
       }

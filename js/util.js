@@ -1179,7 +1179,9 @@ var msgMethods = {
 
   /**
    * Sends a request via the queue.  Returns a Promise to be resolved
-   * with the result of the call.
+   * with the result of the call.  Standard RPC worker error responses
+   * are a plain object with properties:  type: name of Error object
+   * constructor, message: error.message, stack: error.stack.
    */
   send: function(message) {
     var wrapper = {channelType: 'RPC', id: MessageQueue.id++, data: message};
@@ -1211,7 +1213,7 @@ var msgMethods = {
           info.resolve(wrapper.result);
         }
       } else {
-        console.log('RPC reply unknown ID', event);
+        console.error('RPC reply unknown ID', event);
         debugger;
       }
       this._dispatch();
@@ -1325,7 +1327,9 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
         var e = (receiver.encodeError
                  ? receiver.encodeError(error)
                  : error instanceof Error
-                 ? {type: error.constructor.name, message: error.message}
+                 ? {type: error.constructor.name,
+                    message: error.message,
+                    stack: error.stack}
                  : '?');
         reply.data = {channelType: 'RPC', id: id, error: e};
       }
