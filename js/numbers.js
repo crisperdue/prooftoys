@@ -2864,24 +2864,14 @@ var algebraIdentities = {
 $.extend(algebraFacts, algebraIdentities);
 
 /**
- * Basic simplification facts for algebra, used in _simplifyMath1
- * and related places.
+ * Simplification facts for algebra, used in _simplifyMath1
+ * and related places.  During initialization all facts
+ * flagged as simplifier: true are added to this list.
  *
  * TODO: Consider -1 * a = neg a; a + a = 2 * a;
  *   Consider whether x - 7 is simpler than x + -7.
  */
 var basicSimpFacts = [
-                      'not (a = b) = (a != b)',
-                      'a - a = 0',
-                      'a + neg a = 0',
-                      'a + 0 = a',
-                      '0 + a = a',
-                      'a * 1 = a',
-                      '1 * a = a',
-                      'a - 0 = a',
-                      '0 * a = 0',
-                      'a * 0 = 0',
-                      'a != 0 => a / a = 1',
                       {stmt: 'a + neg b = a - b',
                        where: '!$.b.isNumeral()'},
                       {stmt: 'a - b = a + neg b',
@@ -2915,6 +2905,12 @@ $(function() {
     Toy.addRules(moversInfo);
     Toy.addRules(fractionsInfo);
     Toy.addFactsMap(algebraFacts);
+
+    Toy.eachFact(function(info) {
+        if (info.simplifier) {
+          basicSimpFacts.push(info.synopsis);
+        }
+      });
 
     // For testing (computed value).
     Toy._ungroupingFacts = ungroupingFacts;
