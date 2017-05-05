@@ -1058,6 +1058,7 @@ var suggesterMethods = {
       stepEditor.offerableRuleNames().forEach(function(name) {
           var info = rules[name].info;
           if (info.offerExample) {
+            // TODO: Report or handle error returns.
             sendRule(name, path ? [step.original, path] : [step.original])
               .then(addStep);
           }
@@ -1065,6 +1066,7 @@ var suggesterMethods = {
       factsToOffer = stepEditor.offerableFacts();
       factsToOffer.forEach(function(statement) {
           self.length++;
+          // TODO: Report or handle error returns.
           sendRule('rewrite',
                    [step.original,
                     step.prettyPathTo(step.selection),
@@ -1222,6 +1224,8 @@ function sendRule(name, args) {
 $(function () {
     var receiver = {
       actions: {
+        // The "rule" action returns a resulting step as its "step"
+        // property, or standard error information in case of error.
         rule: function(message) {
           var step = Toy.rules[message.name].apply(null, message.args);
           return {step: step};
