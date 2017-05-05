@@ -3296,14 +3296,8 @@ var ruleInfo = {
       var path = step.ruleArgs[1];
       var stmt = step.ruleArgs[2];
       if (Toy.isDistribFact(stmt)) {
-        // This check is a heuristic for determining whether the rewrite
-        // makes the site of the change different in the result compared
-        // with its location in the input step.
-        // TODO: Improve this somehow and encapsulate the concept.
-        var path1 = (!inStep.isCall2('=>') && step.isCall2('=>')
-                     ? Toy.path('/right').concat(path) : path);
-        var step1 = rules.arrangeTerm(step, path1.concat('/right'));
-        var step2 = rules.arrangeTerm(step1, path1.concat('/left'));
+        var step1 = rules.arrangeTerm(step, path.concat('/right'));
+        var step2 = rules.arrangeTerm(step1, path.concat('/left'));
         return step2;
       } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
         // The left part may already be transformed by simplifyAssumptions,

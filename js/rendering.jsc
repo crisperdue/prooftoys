@@ -1159,7 +1159,9 @@ ProofDisplay.prototype.renderPopups = function(step) {
         // distributive law and similar ones for subtraction to the
         // term.
         var eqn = rules.consider(term);
-        var getPath = Toy.memo(@{rpath.reverse()});
+        // Use prettyPathTo so the path will be flexible regarding
+        // assumptions.
+        var getPath = Toy.memo(@{step.prettyPathTo(term)});
         var stmts = distribStmts
           .filter(@{eqn. term.matchSchema(eqn.getMain().getLeft())});
 
