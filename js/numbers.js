@@ -1802,6 +1802,11 @@ var realAxiomFacts = {
 
   // Axioms
 
+  // TODO: Many of these carry unnecessary conditions that their
+  // arguments are real numbers, which propagate to unnecessary
+  // nonzero conditions of many facts about division and reciprocal.
+  // Lift the unnecessary conditions all around.
+
   'a + b = b + a': {
     proof: function() {
       return rules.axiomCommutativePlus();
