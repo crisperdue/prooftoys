@@ -4095,6 +4095,8 @@ function addFactsMap(map) {
  *
  * synopsis: input acceptable to getStatement, usually a string.
  * proof: function to return the proved fact, matching the synopsis.
+ *   If the proof function returns a falsy value, the "fact" rule
+ *   will treat it as a stub and assert the desired result.
  * simplifier: true iff this fact is a simplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
  * labels: Object/set of label names, if given as a string, parses
@@ -4188,8 +4190,16 @@ function asFactProver(prover, goal) {
   // This function wraps around the user-supplied fact prover
   // to do the generic parts of the work.
   function wrapper() {
-    // If there is a substitution into the result that yields
     var result = prover();
+    if (!result) {
+      // The proof is just a stub not yet filled in.
+      console.warn('No proof for fact', goal.toUnicode());
+      result = rules.assert(goal);
+      return (result.isCall2('=>')
+              ? rules.asHypotheses(result)
+              : result);
+    }
+    // Seek a substitution into the result that yields the goal.
     var subst = result.alphaMatch(goal);
     if (subst) {
       return rules.instMultiVars(result, subst);
