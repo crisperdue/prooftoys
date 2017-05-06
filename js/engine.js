@@ -4107,6 +4107,7 @@ function addFactsMap(map) {
  */
 function addFact(info) {
   info.goal = info.goal || getStatement(info.synopsis);
+  info.synopsis = info.synopsis || info.goal.toString();
   // Annotate the new goal with type info for type comparison
   // with portions of steps in the UI.
   //
