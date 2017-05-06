@@ -1170,8 +1170,8 @@ var moversInfo = {
          where: '$.b.isNumeral() && $.a.isVariable()'},
         {stmt: 'a * b * c = a * c * b', where: numeralAfterVar},
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
-        {stmt: 'a / b * c = a / c * b', where: numeralAfterVar},
-        {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
+        {stmt: 'a / b * c = a * c / b', where: numeralAfterVar},
+        {stmt: 'a / b / c = a / c / b', where: numeralAfterVar},
 
         {descend:
          {schema: 'a * b',
