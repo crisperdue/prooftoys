@@ -1133,15 +1133,9 @@ Expr.prototype.prettyPathTo = function(pred) {
     pred = function(term) { return target == term; };
   }
   var p = this._prettyPath(pred, path(''));
-  if (this.isProved()) {
-    p = (this.isCall2('=>')
-         ? (p.segment === 'right'
-            // Change it from /right to /main.
-            ? new Path('main', p.rest)
-            : p)
-         : new Path('main', p));
-  }
-  return p;
+  return (this.isProved() && !this.isCall2('=>')
+          ? new Path('main', p)
+          : p);
 };
 
 /**
