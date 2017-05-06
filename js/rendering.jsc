@@ -1088,6 +1088,9 @@ ProofDisplay.prototype.renderStep = function(step) {
       if (step.subproofDisplay) {
         clearSubproof(step);
       } else {
+        // This code knows the structure of results produced by
+        // asserted facts, either in getResult (when the proof is not
+        // invoked), or in asFactProver (when the proof does nothing).
         if (step.ruleName == 'fact' &&
             (step.details.ruleName == 'assert' ||
              (step.details.ruleName == 'asHypotheses' &&
