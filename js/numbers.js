@@ -2584,6 +2584,7 @@ var recipFacts = {
     }
   },
   'a != 0 => recip (recip a) = a': {
+    simplifier: true,
     proof: function() {
       var rewrite = rules.rewrite;
       var step1 = rules.fact('a * recip a = 1');
