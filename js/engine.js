@@ -4118,6 +4118,9 @@ function addFact(info) {
   info.goal.annotateWithTypes();
   info.prover = asFactProver(info.proof, info.goal);
   info.proved = null;
+  // Set to true when starting to attempt a proof, then
+  // to false when the proof succeeds.
+  info.inProgress = false;
   info.labels = processLabels(info.labels);
   setFactInfo(info);
   return info;
@@ -4323,8 +4326,25 @@ function getResult(stmt, mustProve) {
     }
     return result;
   }
+  info.inProgress = true;
   info.proved = prover();
+  // Note that the fact remains in progress if its prover throws, which
+  // may or may not be good thing.
+  info.inProgress = false;
   return info.proved;
+}
+
+/**
+ * Returns true iff a proof of this statement is underway but not
+ * completed.  Can be used to prevent infinite regress, as in the case
+ * of simplifiers that might be skipped during their own proof.
+ */
+function isInProgress(stmt) {
+  if (!lookupFactInfo(stmt)) {
+    console.warn('No fact', stmt.$$);
+    return false;
+  }
+  return lookupFactInfo(stmt).inProgress;
 }
 
 /**
@@ -4473,6 +4493,12 @@ function searchForMatchingFact(term, info) {
  * match: term schema to match against the term.  (By default the
  *   term is matched against the stmt LHS.)
  *
+ * For fact statements passed as list elements or the "stmt" property
+ * of a list element, if proof of the fact is in progress at the time,
+ * the fact is ignored in the search.  This provides a crude mechanism
+ * for avoiding infinite regress, for example when simplifying steps
+ * of the proof of a simplifier fact.
+ *   
  * A plain object with a single property, either:
  *
  * descend: a plain object with properties "schema", a schema
@@ -4521,14 +4547,16 @@ function findMatchingFact(facts_arg, cxt, term) {
     var infoIsObject = factInfo.constructor == Object;
     if (!infoIsObject) {
       var stmt = factInfo;
-      var schema = Toy.getStatement(stmt).getMain().getLeft();
-      var subst = term.matchSchema(schema);
-      if (subst) {
-        var result = {stmt: stmt,
-                      term: term,
-                      path: Toy.path(),
-                      subst: subst};
-        return result;
+      if (!isInProgress(stmt)) {
+        var schema = Toy.getStatement(stmt).getMain().getLeft();
+        var subst = term.matchSchema(schema);
+        if (subst) {
+          var result = {stmt: stmt,
+                        term: term,
+                        path: Toy.path(),
+                        subst: subst};
+          return result;
+        }
       }
     } else if (factInfo.apply) {
       // "apply"
@@ -4555,17 +4583,19 @@ function findMatchingFact(facts_arg, cxt, term) {
     } else {
       // All other plain objects are handled here.
       var stmt = factInfo.stmt;
-      var where = factInfo.where;
-      var schema = (factInfo.match
-                    ? termify(factInfo.match)
-                    : Toy.getStatement(stmt).getMain().getLeft());
-      var subst = term.matchSchema(schema);
-      if (subst && (!where || apply$(where, subst))) {
-        var result = {stmt: stmt,
-                      term: term,
-                      path: Toy.path(),
-                      subst: subst};
-        return result;
+      if (!(stmt && isInProgress(stmt))) {
+        var where = factInfo.where;
+        var schema = (factInfo.match
+                      ? termify(factInfo.match)
+                      : Toy.getStatement(stmt).getMain().getLeft());
+        var subst = term.matchSchema(schema);
+        if (subst && (!where || apply$(where, subst))) {
+          var result = {stmt: stmt,
+                        term: term,
+                        path: Toy.path(),
+                        subst: subst};
+          return result;
+        }
       }
     }
   }
