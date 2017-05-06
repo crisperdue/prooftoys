@@ -2685,6 +2685,30 @@ var divisionFacts = {
       return step;
     }
   },
+  'b != 0 & c != 0 => a / b / c = a / c / b': {
+    proof: function() {
+      var arrange = Toy.applyFactsWithinRhs;
+      var step1 = arrange(rules.consider('a / b / c'),
+                          ['a / b = a * recip b']);
+      var step2 = rules.rewrite(step1, '/main/right',
+                                'a * b * c = a * c * b');
+      var step3 = arrange(step2, ['a * recip b = a / b']);
+      return step3;
+    }
+  },
+  'b != 0 & c != 0 => a / (b / c) = a / b * c': {
+    proof: function() {
+      var arrange = Toy.applyFactsWithinRhs;
+      var step1 = arrange(rules.consider('a / (b / c)'),
+                          ['a / b = a * recip b',
+                           'recip (a * b) = recip a * recip b',
+                           'recip (recip a) = a']);
+      var result = arrange(step1,
+                           ['a * (b * c) = a * b * c',
+                            'a * recip b = a / b']);
+      return result;
+    }
+  },
   'a != 0 & b != 0 => a / (a * b) = 1 / b': {
     proof: function() {
       return (rules.fact('a / (b * c) = a / b / c')
