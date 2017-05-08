@@ -499,8 +499,8 @@ var methods = {
         }
         if (fullCount == solutions.length) {
           if (extrasMessage) {
-            return ['Otherwise the problem appears to be solved.',
-                    extrasMessage];
+            return (extrasMessage + '\n' +
+                    'Otherwise the problem appears to be solved.');
           } else {
             return '&check; Problem solved.';
           }
