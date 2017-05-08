@@ -2364,6 +2364,16 @@ var negationFacts = {
   },
 
   // Negation with division
+  'a / -1 = -1 * a': {
+    proof: function() {
+      var fact = rules.axiomArithmetic('1 / -1');
+      return (rules.consider('a / -1')
+              .rewrite('/main/right/left', 'a = a * 1')
+              .rewrite('/main/right', 'a * b / c = a * (b / c)')
+              .rewrite('/main/right/right', fact)
+              .rewrite('/main/right', 'a * b = b * a'));
+    }
+  },
   'neg (a / b) = neg a / b': {
     proof: function() {
       return (rules.consider('neg (a / b)')
