@@ -384,7 +384,8 @@ var numbersInfo = {
   // TODO: Include facts that a / b = c is false for integers
   //   a, b, and c unless b divides a exactly.
   axiomArithmetic: {
-    action: function(term) {
+    action: function(term_arg) {
+      var term = termify(term_arg);
       if (term.isInfixCall()) {
 	var left = term.getLeft().getNumValue();
 	var right = term.getRight().getNumValue();
