@@ -1131,18 +1131,24 @@ var simplifiersInfo = {
 };  // End of simplifiersInfo.
 
 var moversInfo = {
+
   // Organize the factors in a term.  Processes multiplication,
   // division, negation, reciprocal, and arithmetic.
   //
   // TODO: Justify and test this extensively.
-  arrangeTerm: {
+  arrangeRational: {
     data: function() {
+      var denegaters = [{stmt: 'neg a = -1 * a'},
+                        {descend:
+                         {schema: 'a * b',
+                          parts: {a: 'denegaters', b: 'denegaters'}}},
+                        {descend:
+                         {schema: 'a / b',
+                          parts: {a: 'denegaters', b: 'denegaters'}}}];
+      // Removes parentheses from nested terms.
       var flatteners = [
-        {stmt: 'neg (neg a) = a'},
         {stmt: 'a * (b * c) = a * b * c'},
         {stmt: 'a * (b / c) = a * b / c'},
-        {stmt: 'neg (a * b) = neg a * b'},
-        {stmt: 'neg (a / b) = neg a / b'},
         {stmt: 'a / (b * c) = a / b / c'},
         {stmt: 'a / (b / c) = a / b * c'},
         // TODO: Support the following style, like in walkPatterns,
@@ -1156,18 +1162,8 @@ var moversInfo = {
           parts: {a: 'flatteners'}}}
       ];
       var numeralAfterVar = '$.c.isNumeral() && $.b.isVariable()';
-      var movers = [
-        // Move "minus signs" to the left.
-        {stmt: 'a * neg b = neg a * b',
-         where: 'subst.a instanceof Toy.Atom'},
-        {stmt: 'a / (neg b) = neg a / b',
-         where: 'subst.a instanceof Toy.Atom'},
-        {stmt: 'a * b * neg c = a * neg b * c'},
-        {stmt: 'a * b / neg c = a * neg b / c'},
-        {stmt: 'a / b * neg c = a / neg b * c'},
-        {stmt: 'a / b / neg c = a / neg b / c'},
-
-        // Move numerals toward the left.
+      // Moves numerals to the left.
+      var numLeftMovers = [
         {stmt: 'a * b = b * a',
          where: '$.b.isNumeral() && $.a.isVariable()'},
         {stmt: 'a * b * c = a * c * b', where: numeralAfterVar},
@@ -1176,17 +1172,37 @@ var moversInfo = {
         {stmt: 'a / b / c = a / c / b', where: numeralAfterVar},
         {descend: {
             schema: 'a * b',
-            parts: {a: 'movers'}
+            parts: {a: 'numLeftMovers'}
           }
         },
         {descend: {
           schema: 'a / b',
-          parts: {a: 'movers'}}
+          parts: {a: 'numLeftMovers'}}
+        }
+      ];
+      var numeralBeforeVar = '$.b.isNumeral() && $.c.isVariable()';
+      // Moves numerals to the right.
+      var numRightMovers = [
+        {stmt: 'a * b = b * a',
+         where: '$.a.isNumeral() && $.b.isVariable()'},
+        {stmt: 'a * b * c = a * c * b', where: numeralBeforeVar},
+        {stmt: 'a * b / c = a / c * b', where: numeralBeforeVar},
+        {stmt: 'a / b * c = a * c / b', where: numeralBeforeVar},
+        {stmt: 'a / b / c = a / c / b', where: numeralBeforeVar},
+        {descend: {
+            schema: 'a * b',
+            parts: {a: 'numRightMovers'}
+          }
+        },
+        {descend: {
+          schema: 'a / b',
+          parts: {a: 'numRightMovers'}}
         }
       ];
       var numeralC = '$.c.isNumeral()';
+      // Groups together terms that belong in the numerator.
       var numerators = [
-        {stmt: 'a / b * c = a * c / b', where: numeralC},
+        {stmt: 'a / b * c = a * c / b', xwhere: numeralC},
         {descend:
          {schema: 'a * b',
           parts: {a: 'numerators'}}},
@@ -1194,8 +1210,10 @@ var moversInfo = {
          {schema: 'a / b',
           parts: {a: 'numerators'}}}
       ];
+      // Groups together terms that belong in the denominator, albeit
+      // grouped to the right.  When done there is only one division.
       var denominators = [
-        {stmt: 'a / b / c = a / (b * c)', where: numeralC},
+        {stmt: 'a / b / c = a / (b * c)', xwhere: numeralC},
         {descend:
          {schema: 'a * b',
           parts: {a: 'denominators'}}},
@@ -1219,8 +1237,10 @@ var moversInfo = {
       var data =
             {context:
              {factLists:
-              {flatteners: flatteners,
-               movers: movers,
+              {denegaters: denegaters,
+               flatteners: flatteners,
+               numLeftMovers: numLeftMovers,
+               numRightMovers: numRightMovers,
                numerators: numerators,
                denominators: denominators,
                arithmetizers: arithmetizers
@@ -1233,26 +1253,95 @@ var moversInfo = {
               expr.matchSchema('neg (a * b)') ||
               expr.matchSchema('neg (a / b)'));
     },
-    action: function(step, path) {
+    action: function arrangeRational(step, path, numsLeft) {
       var context = this.data.context;
       var arrangeRhs = Toy.arrangeRhs;
 
       return convert(step, path, function(expr) {
-        var eqn = rules.consider(expr);
-        var flat = arrangeRhs(eqn, context, 'flatteners');
-        var ordered = arrangeRhs(flat, context, 'movers');
-        var numerated = arrangeRhs(ordered, context, 'numerators');
-        var denominated = arrangeRhs(numerated, context, 'denominators');
-        var arranged = arrangeRhs(denominated, context, 'arithmetizers');
-        // Perhaps this just applies 1 * x = x.
-        return rules.simplifySite(arranged, '/main/right');
-      }).justify('arrangeTerm', arguments, [step]);
+          var infix = Toy.infixCall;
+          var eqn = rules.consider(expr);
+          var nonegs = arrangeRhs(eqn, context, 'denegaters');
+          var flat = arrangeRhs(nonegs, context, 'flatteners');
+          var numMovers = numsLeft ? 'numLeftMovers' : 'numRightMovers';
+          var ordered = arrangeRhs(flat, context, numMovers);
+          var numerated = arrangeRhs(ordered, context, 'numerators');
+          var denominated = arrangeRhs(numerated, context, 'denominators');
+          var arithmetized = arrangeRhs(denominated, context, 'arithmetizers');
+          var div = arithmetized.getMain().matchSchema('l = a / b');
+          var resulted;
+          if (div) {
+            var b = div.b;
+            var product = b.matchSchema('c * d');
+            if (product && product.c.isNumeral() &&
+                product.c.getNumValue() < 0) {
+              var fact1 = rules.arithmetic('-1 / -1').andThen('eqnSwap');
+              var quotient = rules.consider(infix(div.a, '/', div.b));
+              resulted = (rules.rewrite(arithmetized, '/main/right', 'a = a * 1')
+                          .rewrite('/main/right/right', fact1)
+                          // CAUTION: recursive call.  There will be
+                          // trouble if recursion reaches here.
+                          // TODO: Decide at the start whether to multiply
+                          //   by -1 / -1 and skip this whole condition.
+                          .andThen('arrangeRational'));
+            } else {
+              // Flatten the denominator.
+              var denom = rules.consider(b);
+              var denom2 = arrangeRhs(denom, context, 'flatteners');
+              resulted = rules.rplace(denom2, arithmetized, '/main/right/right');
+            }
+          } else {
+            resulted = arithmetized;
+          }
+          // Perhaps this just applies 1 * x = x and -1 * x = neg x.
+          return rules.simplifySite(resulted, '/main/right');
+        }).justify('arrangeRational', arguments, [step]);
     },
     inputs: {site: 1},
     offerExample: true,
     form: '',
-    menu: 'algebra: get standard form of {term}',
-    description: 'standard form of {site};; {in step siteStep}',
+    menu: 'algebra: ratio form of {term}',
+    description: 'ratio form of {site};; {in step siteStep}',
+    labels: ''
+  },
+
+  /**
+   * Arrange a rational expression, this time with numerical coefficients
+   * on the left, which is a common standard form, but less useful
+   * in case we want to convert the result to coefficient form.
+   */
+  arrangeRatio: {
+    action: function arrangeRatio(step, path) {
+      return (rules.arrangeRational(step, path, true)
+              .justify('arrangeRatio', arguments, step));
+    },
+    inputs: {site: 1},
+    offerExample: true,
+    form: '',
+    menu: 'algebra: useful ratio form of {term}',
+    description: 'useful ratio form of {site};; {in step siteStep}',
+    labels: 'algebra'
+  },
+
+  /**
+   * Arrange a rational expression into "coefficient" form, with a leading
+   * numeric coefficient where possible.  This form is useful as preparation
+   * for gathering like terms.
+   *
+   * TODO: Complete this.
+   */
+  arrangeTerm: {
+    action: function arrangeTerm(step, path) {
+      var step = rules.arrangeRatio(step, path);
+      var facts = [
+      ];
+      return (Toy.applyFactsOnce(step, path, facts)
+              .justify('arrangeTerm', arguments, step));
+    },
+    inputs: {site: 1},
+    offerExample: true,
+    form: '',
+    menu: 'algebra: ratio with coefficient for {term}',
+    description: ' ratio with coefficient for {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
