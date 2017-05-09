@@ -1174,10 +1174,15 @@ var moversInfo = {
         {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
         {stmt: 'a / b * c = a * c / b', where: numeralAfterVar},
         {stmt: 'a / b / c = a / c / b', where: numeralAfterVar},
-
-        {descend:
-         {schema: 'a * b',
-          parts: {a: 'movers'}}}
+        {descend: {
+            schema: 'a * b',
+            parts: {a: 'movers'}
+          }
+        },
+        {descend: {
+          schema: 'a / b',
+          parts: {a: 'movers'}}
+        }
       ];
       var numeralC = '$.c.isNumeral()';
       var numerators = [
