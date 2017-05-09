@@ -1144,7 +1144,8 @@ var moversInfo = {
         {stmt: 'neg (a / b) = neg a / b'},
         {stmt: 'a / (b * c) = a / b / c'},
         {stmt: 'a / (b / c) = a / b * c'},
-        // TODO: Convert to this style:
+        // TODO: Support the following style, like in walkPatterns,
+        //   and convert uses of "descend" to it.
         // {match: 'a * b', a: 'flatteners'},
         {descend:
          {schema: 'a * b',
@@ -2908,8 +2909,7 @@ $.extend(algebraFacts, algebraIdentities);
  * and related places.  During initialization all facts
  * flagged as simplifier: true are added to this list.
  *
- * TODO: Consider -1 * a = neg a; a + a = 2 * a;
- *   Consider whether x - 7 is simpler than x + -7.
+ * TODO: Consider whether x - 7 is simpler than x + -7.
  */
 var basicSimpFacts = [
                       'not (a = b) == a != b',
