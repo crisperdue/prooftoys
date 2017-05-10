@@ -1132,21 +1132,8 @@ var simplifiersInfo = {
 
 var moversInfo = {
 
-  // Organize the factors in a term.  Processes multiplication,
-  // division, negation, reciprocal, and arithmetic.
-  //
-  // TODO: Justify and test this extensively.
-  arrangeRational: {
-    data: function() {
-      var denegaters = [{stmt: 'neg a = -1 * a'},
-                        {descend:
-                         {schema: 'a * b',
-                          parts: {a: 'denegaters', b: 'denegaters'}}},
-                        {descend:
-                         {schema: 'a / b',
-                          parts: {a: 'denegaters', b: 'denegaters'}}}];
-      // Removes parentheses from nested terms.
-      var flatteners = [
+  flattenTerm: {
+    data: {flatteners: [
         {stmt: 'a * (b * c) = a * b * c'},
         {stmt: 'a * (b / c) = a * b / c'},
         {stmt: 'a / (b * c) = a / b / c'},
@@ -1160,7 +1147,41 @@ var moversInfo = {
         {descend:
          {schema: 'a / b',
           parts: {a: 'flatteners'}}}
-      ];
+    ], denegaters: [
+        {stmt: 'neg a = -1 * a'},
+        {descend:
+         {schema: 'a * b',
+          parts: {a: 'denegaters', b: 'denegaters'}}},
+        {descend:
+         {schema: 'a / b',
+          parts: {a: 'denegaters', b: 'denegaters'}}}
+    ]},
+    action: function flattenTerm(step, path) {
+      var context = {factLists:
+                     {denegaters: this.data.denegaters,
+                      flatteners: this.data.flatteners}};
+      return convert(step, path, function(expr) {
+          var arrangeRhs = Toy.arrangeRhs;
+          var eqn = rules.consider(step.get(path));
+          var noneg = arrangeRhs(eqn, context, 'denegaters');
+          var flat = arrangeRhs(noneg, context, 'flatteners');
+          return rules.simplifySite(flat, '/main/right');
+        }).justify('flattenTerm', arguments, [step]);
+    },
+    inputs: {site: 1},
+    offerExample: true,
+    form: '',
+    menu: 'algebra: flatten {term}',
+    description: 'flatten term {site};; {in step siteStep}',
+    labels: 'algebra'
+  },
+
+  // Organize the factors in a term.  Processes multiplication,
+  // division, negation, reciprocal, and arithmetic.
+  //
+  // TODO: Justify and test this extensively.
+  arrangeRational: {
+    data: function() {
       var numeralAfterVar = '$.c.isNumeral() && $.b.isVariable()';
       // Moves numerals to the left.
       var numLeftMovers = [
@@ -1237,9 +1258,7 @@ var moversInfo = {
       var data =
             {context:
              {factLists:
-              {denegaters: denegaters,
-               flatteners: flatteners,
-               numLeftMovers: numLeftMovers,
+              {numLeftMovers: numLeftMovers,
                numRightMovers: numRightMovers,
                numerators: numerators,
                denominators: denominators,
@@ -1260,8 +1279,7 @@ var moversInfo = {
       return convert(step, path, function(expr) {
           var infix = Toy.infixCall;
           var eqn = rules.consider(expr);
-          var nonegs = arrangeRhs(eqn, context, 'denegaters');
-          var flat = arrangeRhs(nonegs, context, 'flatteners');
+          var flat = rules.flattenTerm(eqn, '/main/right');
           var numMovers = numsLeft ? 'numLeftMovers' : 'numRightMovers';
           var ordered = arrangeRhs(flat, context, numMovers);
           var numerated = arrangeRhs(ordered, context, 'numerators');
@@ -1285,9 +1303,7 @@ var moversInfo = {
                           .andThen('arrangeRational'));
             } else {
               // Flatten the denominator.
-              var denom = rules.consider(b);
-              var denom2 = arrangeRhs(denom, context, 'flatteners');
-              resulted = rules.rplace(denom2, arithmetized, '/main/right/right');
+              resulted = rules.flattenTerm(arithmetized, '/main/right/right');
             }
           } else {
             resulted = arithmetized;
