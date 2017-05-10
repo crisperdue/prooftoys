@@ -4108,7 +4108,9 @@ function addFactsMap(map) {
  *   on other information such as an already-proved statement.
  */
 function addFact(info) {
-  info.goal = info.goal || getStatement(info.synopsis);
+  // The goal is a rendered Expr just because that makes a complete
+  // copy that can be properly annotated with types.
+  info.goal = (info.goal || getStatement(info.synopsis)).copyForRendering(null);
   info.synopsis = info.synopsis || info.goal.toString();
   // Annotate the new goal with type info for type comparison
   // with portions of steps in the UI.
