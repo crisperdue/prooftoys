@@ -1132,6 +1132,12 @@ var simplifiersInfo = {
 
 var moversInfo = {
 
+  /**
+   * "Flattens" a term made up of "*", "/", and "neg".  Converts
+   * uses of "neg" into multiplication by -1, then removes
+   * parentheses, traversing uses of "*" and "/".  Simplfies
+   * the resulting RHS.
+   */
   flattenTerm: {
     data: {flatteners: [
         {stmt: 'a * (b * c) = a * b * c'},

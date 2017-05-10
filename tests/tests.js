@@ -2236,31 +2236,18 @@ var testCase = {
     check('((x + y) = (x + y))', 'x + y');
   },
 
-  testArrange: function() {
-    var context = Toy.rules.arrangeTerm.data.context;
-    var arrange = Toy.arrange;
-    function check(expected, input, factList) {
+  testFlattenTerm: function() {
+    function check(expected, input) {
       var step = rules.consider(input);
-      var result = arrange(step,
-                           Toy.path('/main/right'),
-                           context,
-                           factList);
+      var right = Toy.path('/main/right');
+      var result = rules.flattenTerm(step, right);
       assertEqual(expected, result.getMain().getRight());
     }
 
-    var flat = '((x * 2) * 3)';
-    check(flat, 'x * (2 * 3)', 'flatteners');
-
-    var ordered = '((2 * 3) * x)';
-    check(ordered, flat, 'movers');
-
-    var numerated = '((2 * 3) / 4)';
-    check(numerated, '2 / 4 * 3', 'numerators');
-
-    var denominated = '(2 / (3 * 4))';
-    check(denominated, '2 / 3 / 4', 'denominators');
-
-    check('(2 / 12)', denominated, 'arithmetizers');
+    check('((x * 2) * 3)', 'x * (2 * 3)');
+    check('((2 / 4) / 3)', '2 / (4 * 3)');
+    check('((2 / 3) / 4)', '2 / 3 / 4');
+    check('((x / -1) / x)', 'x / (neg x)');
   },
 
   testIsDistribFact: function() {
