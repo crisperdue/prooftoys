@@ -2923,6 +2923,32 @@ var divisionFacts = {
               .rewrite('/right/right/right', 'a * (recip b) = a / b'));
     }
   },
+  // Used in arrangeTerm.
+  'c != 0 & d != 0 => (a * b) / (c * d) = (b / d) * (a / c)': {
+    proof: function() {
+      return (rules.consider('a * b / (c * d)')
+              .andThen('flattenTerm', '/main/right')
+              .rewrite('/main/right/left', 'a * b / c = a / c * b')
+              .rewrite('/main/right', 'a * b / c = a * (b / c)')
+              .rewrite('/main/right', 'a * b = b * a'));
+    }
+  },
+  // Used in arrangeTerm.
+  'c != 0 => a * b / c = b * (a / c)': {
+    proof: function() {
+      return (rules.consider('a * b / c')
+              .rewrite('/main/right/left', 'a * b = b * a')
+              .rewrite('/main/right', 'a * b / c = a * (b / c)'));
+    }
+  },
+  // Used in arrangeTerm.
+  'a / (b * c) = 1 / c * (a / b)': {
+    proof: function() {
+      return (rules.consider('a / (b * c)')
+              .rewrite('/main/right/left', 'a = a * 1')
+              .rewrite('/main/right', 'a * b / (c * d) = (b / d) * (a / c)'));
+    }
+  },
   // Distributivity:
   'c != 0 => (a + b) / c = a / c + b / c': {
     proof: function() {
