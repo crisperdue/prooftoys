@@ -1239,6 +1239,46 @@ function termify(x) {
   return (x instanceof Expr) ? x : parse(x);
 }
 
+var boolOps = {
+  '==': true,
+  '&': true,
+  '|': true,
+  '=>': true
+};
+
+/**
+ * Given a term, creates a new schema term that consists only of the
+ * boolean operators (==, &, |, =>, and "not"), and variables, having
+ * the original as a substitution instance.  Descends into all
+ * occurrences of the boolean operators and no others, replacing all
+ * other terms with boolean variables.  The schema variables are the
+ * TermMap variables, in textual order from left to right.
+ */
+function boolSchema(term) {
+  var map = new Toy.TermMap();
+  var infix = Toy.infixCall;
+  function makeSchema(term) {
+    var v = map.get(term);
+    if (v) {
+      return v;
+    }
+    if (term.isCall2()) {
+      var op = term.getBinOp()
+      if (op.pname in boolOps) {
+        return infix(makeSchema(term.getLeft()), op,
+                     makeSchema(term.getRight()));
+      }
+    }
+    if (term.isCall1('not')) {
+      return new Toy.Call(term.fn, makeSchema(term.arg));
+    }
+    map.addTerm(term);
+    return map.get(term);
+  }
+  return makeSchema(term);
+}
+
+
 /**
  * Calls a function given as an Expr or name of a constant, passing
  * one or more arguments.
@@ -1562,6 +1602,10 @@ Toy.unicodify = unicodify;
 
 Toy.termify = termify;
 
+Toy.boolSchema = boolSchema;
+
+// Definitions
+
 Toy.define = define;
 Toy.defineCases = defineCases;
 Toy.isDefined = isDefined;
@@ -1570,7 +1614,6 @@ Toy.findDefinition = findDefinition;
 Toy.getDefinition = getDefinition;
 // For testing:
 Toy.definitions = definitions;
-
 
 // Types
 
