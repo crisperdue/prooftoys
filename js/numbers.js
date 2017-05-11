@@ -1185,10 +1185,10 @@ var moversInfo = {
     labels: 'algebra'
   },
 
-  // Organize the factors in a term.  Processes multiplication,
-  // division, negation, reciprocal, and arithmetic.
-  //
-  // TODO: Justify and test this extensively.
+  /**
+   * Organize the factors in a term.  Processes multiplication,
+   * division, negation, reciprocal, and arithmetic.
+   */
   arrangeRational: {
     data: function() {
       var numeralAfterVar = '$.c.isNumeral() && $.b.isVariable()';
@@ -1230,9 +1230,11 @@ var moversInfo = {
         }
       ];
       var numeralC = '$.c.isNumeral()';
-      // Groups together terms that belong in the numerator.
+      // Groups together terms that belong in the numerator by
+      // moving multiplications to the left.
+      // Assumes the term is already flattened.
       var numerators = [
-        {stmt: 'a / b * c = a * c / b', xwhere: numeralC},
+        {stmt: 'a / b * c = a * c / b'},
         {descend:
          {schema: 'a * b',
           parts: {a: 'numerators'}}},
@@ -1242,8 +1244,9 @@ var moversInfo = {
       ];
       // Groups together terms that belong in the denominator, albeit
       // grouped to the right.  When done there is only one division.
+      // Assumes the term is already flattened.
       var denominators = [
-        {stmt: 'a / b / c = a / (b * c)', xwhere: numeralC},
+        {stmt: 'a / b / c = a / (b * c)'},
         {descend:
          {schema: 'a * b',
           parts: {a: 'denominators'}}},
@@ -1254,6 +1257,8 @@ var moversInfo = {
       var bothNumerals = '$.a.isNumeral() && $.b.isNumeral() ';
       var arithmetizers = [
         {apply: tryArithmetic},
+        // If there is a negated numeral in the denominator, moves
+        // the negation into the numerator.
         // From 2 / -3 for example produces -2 / 3 for minus two thirds.
         {stmt: 'a / b = neg a / neg b',
          where: bothNumerals + ' && $.b.getNumValue() < 0'},
@@ -1297,6 +1302,8 @@ var moversInfo = {
           var div = arithmetized.getMain().matchSchema('l = a / b');
           var resulted;
           if (div) {
+            // TODO: Debug this branch of the code, including the
+            // recursive call.
             var b = div.b;
             var product = b.matchSchema('c * d');
             if (product && product.c.isNumeral() &&
@@ -1309,7 +1316,7 @@ var moversInfo = {
                           // trouble if recursion reaches here.
                           // TODO: Decide at the start whether to multiply
                           //   by -1 / -1 and skip this whole condition.
-                          .andThen('arrangeRational'));
+                          .andThen('arrangeRational', path));
             } else {
               // Flatten the denominator.
               resulted = rules.flattenTerm(arithmetized, '/main/right/right');
