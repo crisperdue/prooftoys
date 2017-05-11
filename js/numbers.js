@@ -994,6 +994,7 @@ var simplifiersInfo = {
       var _path = Toy.path;
       var term = step.get(path);
       if (!term) {
+        console.trace(Toy.format('No term in {1} at path {2}', step, path));
         // In some situations the path may need adjustment.  This is
         // a workaround for cases where the path is totally wrong.
         // TODO: Improve on this.
