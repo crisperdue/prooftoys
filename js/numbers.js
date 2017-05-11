@@ -1042,7 +1042,7 @@ var simplifiersInfo = {
     description: 'simplify;; {in step siteStep}',
     labels: 'algebra'
   },
-    
+
   // Inline version of simplifySite.
   _simplifySite: {
     action: function(step, path) {
@@ -1359,12 +1359,22 @@ var moversInfo = {
    * numeric coefficient where possible.  This form is useful as preparation
    * for gathering like terms.
    *
-   * TODO: Complete this.
+   * TODO: Debug me; I am also slow.
    */
   arrangeTerm: {
     action: function arrangeTerm(step, path) {
-      var step = rules.arrangeRatio(step, path);
+      var step = rules.arrangeRational(step, path);
+      // These facts cover the cases where there is a numeral
+      // at the end of the numerator or denominator or both.
       var facts = [
+          {stmt: 'a * b = b * a',
+           where: '$.b.isNumeral()'},
+          {stmt: 'a * b / (c * d) = b / d * (a / c)',
+           where: '$.b.isNumeral() && $.d.isNumeral()'},
+          {stmt: 'a * b / c = b * (a / c)',
+           where: '$.b.isNumeral()'},
+          {stmt: 'a / (b * c) = 1 / c * (a / b)',
+           where: '$.c.isNumeral()'}
       ];
       return (Toy.applyFactsOnce(step, path, facts)
               .justify('arrangeTerm', arguments, step));
@@ -1373,7 +1383,7 @@ var moversInfo = {
     offerExample: true,
     form: '',
     menu: 'algebra: ratio with coefficient for {term}',
-    description: ' ratio with coefficient for {site};; {in step siteStep}',
+    description: 'ratio with coefficient for {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
