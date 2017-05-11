@@ -1005,6 +1005,8 @@ var simplifiersInfo = {
       var abort = false;
       var simpler = Toy.whileChanges(eqn1, function(eqn) {
         var next = rules._simplifyMath1(eqn, _path('/main/right', eqn));
+        // This check relies on _simplifyMath1 trying first to simplify
+        // the whole term.
         if (next.getMain().getRight().sameAs(ref)) {
           abort = true;
           // Returning the input causes simplification to stop.
@@ -1172,7 +1174,7 @@ var moversInfo = {
           var eqn = rules.consider(step.get(path));
           var noneg = arrangeRhs(eqn, context, 'denegaters');
           var flat = arrangeRhs(noneg, context, 'flatteners');
-          return rules.simplifySite(flat, '/main/right');
+          return flat;
         }).justify('flattenTerm', arguments, [step]);
     },
     inputs: {site: 1},
@@ -1322,9 +1324,9 @@ var moversInfo = {
     inputs: {site: 1},
     offerExample: true,
     form: '',
-    menu: 'algebra: ratio form of {term}',
-    description: 'ratio form of {site};; {in step siteStep}',
-    labels: ''
+    menu: 'algebra: useful ratio form of {term}',
+    description: 'useful ratio form of {site};; {in step siteStep}',
+    labels: 'algebra'
   },
 
   /**
@@ -1340,8 +1342,8 @@ var moversInfo = {
     inputs: {site: 1},
     offerExample: true,
     form: '',
-    menu: 'algebra: useful ratio form of {term}',
-    description: 'useful ratio form of {site};; {in step siteStep}',
+    menu: 'algebra: ratio form of {term}',
+    description: 'ratio form of {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
