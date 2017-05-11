@@ -1268,6 +1268,19 @@ var testCase = {
     check('(a1 => (a2 => a1))', 'p => (q => p)');
   },
 
+  testStandardVars: function() {
+    function check(expected_arg, term) {
+      var expected = termify(expected_arg).toString();
+      assertEqual(expected, Toy.standardVars(termify(term)).toString());
+    }
+    check('((a1 = (a2 + 1)) == ((a2 + 1) = a1))',
+          'x = y + 1 == y + 1 = x');
+    check('(a1 => (a2 => a1))',
+          'p => (q => p)');
+    check('(((a1 > a2) & (a2 > a3)) => (a1 > a3))',
+          '(a > b) & (b > c) => (a > c)');
+  },
+
   // ALIASES
 
   testAliases: function() {

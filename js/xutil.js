@@ -1278,6 +1278,29 @@ function boolSchema(term) {
   return makeSchema(term);
 }
 
+/**
+ * Convert all (free) variables in the given term to standard names
+ * as by TermMap, with those names in text order from left to right.
+ * Anonymous lambda are not yet supported.
+ */
+function standardVars(term) {
+  var map = new Toy.TermMap();
+  function makeSchema(term) {
+    if (term instanceof Toy.Call) {
+      return new Toy.Call(makeSchema(term.fn),
+                          makeSchema(term.arg));
+    } else if (term instanceof Toy.Lambda) {
+      Toy.err('Lambdas not yet supported in facts');
+    } else if (term instanceof Toy.Atom) {
+      if (term.isVariable()) {
+        return map.addTerm(term);
+      } else {
+        return term;
+      }
+    }
+  }
+  return makeSchema(term);
+}
 
 /**
  * Calls a function given as an Expr or name of a constant, passing
@@ -1603,6 +1626,7 @@ Toy.unicodify = unicodify;
 Toy.termify = termify;
 
 Toy.boolSchema = boolSchema;
+Toy.standardVars = standardVars;
 
 // Definitions
 
