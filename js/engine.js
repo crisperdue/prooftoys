@@ -3827,12 +3827,15 @@ var ruleInfo = {
       if (result) {
         return result;
       }
+      var stmt = Toy.getStatement(statement);
       // Try ordinary proved facts.
-      if (Toy.isRecordedFact(statement)) {
-        return Toy.getResult(statement).justify('fact', arguments);
+      if (Toy.isRecordedFact(stmt)) {
+        var fact = Toy.getResult(stmt);
+        var map = stmt.matchSchema(fact.getMain());
+        var instance = rules.instMultiVars(fact, map);
+        return instance.justify('fact', arguments);
       }
       // Next try arithmetic facts.
-      var stmt = Toy.getStatement(statement);
       if (stmt.isEquation()) {
         var result = Toy.tryArithmetic(stmt.eqnLeft());
         if (result && result.alphaMatch(stmt)) {
@@ -4076,7 +4079,7 @@ function addFactsMap(map) {
   for (var synopsis in map) {
     var info = map[synopsis];
     info.synopsis = synopsis;
-    assert(info.proof, 'Need proof: property for {1}', synopsis);
+    assert(info.proof, 'Need "proof" property for {1}', synopsis);
     addFact(info);
     if (!info.noSwap) {
       addSwappedFact(info);
