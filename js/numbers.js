@@ -1363,7 +1363,7 @@ var moversInfo = {
    */
   arrangeTerm: {
     action: function arrangeTerm(step, path) {
-      var step = rules.arrangeRational(step, path);
+      var step1 = rules.arrangeRational(step, path);
       // These facts cover the cases where there is a numeral
       // at the end of the numerator or denominator or both.
       var facts = [
@@ -1376,7 +1376,7 @@ var moversInfo = {
           {stmt: 'a / (b * c) = 1 / c * (a / b)',
            where: '$.c.isNumeral()'}
       ];
-      return (Toy.applyFactsOnce(step, path, facts)
+      return (Toy.applyFactsOnce(step1, path, facts)
               .justify('arrangeTerm', arguments, step));
     },
     inputs: {site: 1},
