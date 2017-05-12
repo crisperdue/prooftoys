@@ -1475,13 +1475,16 @@ function chainCall(operator, list, dfault) {
 /**
  * Commutes the left and right sides of an equation in the form
  * l = r or a => l = r.  Calls err if structure does not match.
+ * Returns the same form of "=" found in the equation.
  */
 function commuteEqn(eqn) {
+  var infix = Toy.infixCall;
   var subst;
   if (subst = eqn.matchSchema('a = b')) {
-    return Toy.parse('b = a').subFree(subst);
+    return infix(subst.b, eqn.getBinOp(), subst.a);
   } else if (subst = eqn.matchSchema('h => a = b')) {
-    return Toy.parse('h => b = a').subFree(subst);
+    var op = eqn.getRight().getBinOp();
+    return infix(subst.h, '=>', infix(subst.b, op, subst.a))
   } else {
     err(format('Not an equation: {1}', eqn));
   }

@@ -4362,6 +4362,10 @@ function isInProgress(stmt) {
  *   entire statement.
  */
 function getStatementKey(stmt) {
+  // This currently uses toString, which is sensitive to aliases
+  // in particular "==" for "=", compared with "dump", which is not.
+  // TODO: Determine what to do about facts such as pure logic facts,
+  //   which are generic across types, and implement accordingly.
   return Toy.standardVars(getStatement(stmt).getMain()).toString();
 }
 
