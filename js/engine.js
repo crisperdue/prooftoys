@@ -415,15 +415,15 @@ var ruleInfo = {
    * implication.
    */
   asHypotheses: {
-    action: function(step_arg) {
-      step_arg.assertCall2();
-      var op = step_arg.wff.getBinOp().pname;
-      var step = ((op in {'=': true, '==': true})
-                  ? rules.forwardChain(step_arg, '(a == b) => (a => b)')
-                  : step_arg);
-      step.assertCall2('=>');
+    action: function(step) {
+      step.assertCall2();
+      var op = step.wff.getBinOp().pname;
+      var step1 = ((op in {'=': true, '==': true})
+                   ? rules.forwardChain(step, '(a == b) => (a => b)')
+                   : step);
+      step1.assertCall2('=>');
       // Always make a new step so we can mark it hasHyps.
-      var result = step.justify('asHypotheses', arguments, [step], true);
+      var result = step1.justify('asHypotheses', arguments, [step]);
       result.hasHyps = true;
       return result;
     },
