@@ -4360,13 +4360,9 @@ function isInProgress(stmt) {
  *   into its uses and support storing the same fact under multiple
  *   keys, ond based on just the consequent and another based on the
  *   entire statement.
- * 
- * TODO: Make all code related to facts insensitive to choices of
- *   variable names by normalizing names when recording and looking up
- *   facts.
  */
 function getStatementKey(stmt) {
-  return getStatement(stmt).getMain().dump();
+  return Toy.standardVars(getStatement(stmt).getMain()).toString();
 }
 
 /**
