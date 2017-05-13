@@ -1146,10 +1146,14 @@ function _testTriangle(where, height, color) {
  */
 function MessageQueue(n, uri) {
   var Map = window.Map;
-  // Queue of messages to be sent.
+  // Queue of messages to be sent.  Each item is a data structure with
+  // properties "resolve", "reject", and "wrapper", where the wrapper
+  // has a channelType, an "id", and "data", which is the message
+  // itself.
   this.queue = [];
   // Map from rpc ID to message, containing messages that have been sent
-  // but not yet responded to.
+  // but not yet responded to.  The items have the same structure as
+  // queue elements.
   this.inProgress = new Map();
   // Set of Web Workers handling messages from this queue.
   this.workers = new Set();
