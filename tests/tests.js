@@ -2404,6 +2404,7 @@ var testCase = {
         byVar: {
           x: {
             eqn: 'Expr (x = (1 ∕ y))',
+            swapped: false,
             using: {
               y: true
             }
@@ -2452,6 +2453,7 @@ var testCase = {
           byVar: {
             x: {
               eqn: "Expr (x = (y − 5))",
+              swapped: false,
               using: {
                 y: true
               }
@@ -2507,6 +2509,7 @@ var testCase = {
           byVar: {
             x: {
               eqn: 'Expr (x = (y − 5))',
+              swapped: false,
               using: {y: true}
             }
           },
@@ -2528,6 +2531,7 @@ var testCase = {
           byVar: {
             x: {
               eqn: "Expr (x = 4)",
+              swapped: false,
               using: {}
             }
           },
@@ -2552,10 +2556,12 @@ var testCase = {
           byVar: {
             x: {
               eqn: "Expr (x = 3)",
+              swapped: false,
               using: {}
             },
             y: {
               eqn: "Expr (y = 5)",
+              swapped: false,
               using: {}
             }
           },
@@ -2578,6 +2584,7 @@ var testCase = {
       solution: {
         x: {
           eqn: "Expr (x = 5)",
+          swapped: false,
           using: {}
         }
       }
@@ -2597,6 +2604,7 @@ var testCase = {
           byVar: {
             y: {
               eqn: 'Expr (y = 2)',
+              swapped: false,
               using: {}
             }
           },
