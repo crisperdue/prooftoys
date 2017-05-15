@@ -1167,6 +1167,27 @@ function MessageQueue(n, uri) {
   }
 }
 
+// Will be set to the time of the first call to rpcLog.
+var rpcLogStart;
+
+/**
+ * Log messages, the RPC ID, and the number of milliseconds since
+ * rpcLogStart if RPC logging is turned on by setting Toy.logRpc to
+ * true.
+ */
+function rpcLog(_args) {
+  if (!Toy.logRpc) {
+    return;
+  }
+  if (!rpcLogStart) {
+    rpcLogStart = Date.now();
+  }
+  var a = jQuery.makeArray(arguments);
+  a.push('at');
+  a.push(Date.now() - rpcLogStart);
+  console.log.apply(console, a);
+}
+
 MessageQueue.id = 1;
 
 var msgMethods = {
@@ -1188,12 +1209,21 @@ var msgMethods = {
    * constructor, message: error.message, stack: error.stack.
    */
   send: function(message) {
-    var wrapper = {channelType: 'RPC', id: MessageQueue.id++, data: message};
-    var info;
-    var promise = new Promise(function(resolve, reject) {
-        info = {resolve: resolve, reject: reject, wrapper: wrapper};
+    var id = MessageQueue.id++;
+    var wrapper = {channelType: 'RPC', id: id, data: message};
+    var resolve, reject;
+    var promise = makeRpcPromise(function(res, rej) {
+        resolve = res;
+        reject = rej;
       });
+    promise.mq = this;
+    promise.id = id;
+    var info = {promise: promise,
+                resolve: resolve,
+                reject: reject,
+                wrapper: wrapper};
     this.queue.push(info);
+    rpcLog('Queueing RPC', id);
     this._dispatch();
     return promise;
   },
@@ -1211,10 +1241,14 @@ var msgMethods = {
       if (info) {
         this.inProgress.delete(id);
         this.idleWorkers.push(event.target);
-        if (wrapper.hasOwnProperty('error')) {
-          info.reject(wrapper.error);
+        if (!info.promise.canceled) {
+          if (wrapper.hasOwnProperty('error')) {
+            info.reject(wrapper);
+          } else {
+            info.resolve(wrapper);
+          }
         } else {
-          info.resolve(wrapper.result);
+          rpcLog('Ignoring reply to canceled RPC', id);
         }
       } else {
         console.error('RPC reply unknown ID', event);
@@ -1232,7 +1266,7 @@ var msgMethods = {
    * with value "RPC".
    */
   handleOther: function(event) {
-    console.log('Unknown MessageQueue response', event);
+    console.warn('Unknown MessageQueue response', event);
   },
 
   /**
@@ -1251,12 +1285,13 @@ var msgMethods = {
   _dispatch: function() {
     this.schedule();
     if (this.workers.size() === 0) {
-      console.log('No RPC workers');
+      console.warn('No RPC workers');
     }
     if (this.idleWorkers.length && this.queue.length) {
       var worker = this.idleWorkers.shift();
       var info = this.queue.shift();
       worker.postMessage(info.wrapper);
+      rpcLog('Launched RPC', info.wrapper.id);
       this.inProgress.set(info.wrapper.id, info);
     }
   }
@@ -1264,7 +1299,65 @@ var msgMethods = {
 
 Object.assign(MessageQueue.prototype, msgMethods);
 
-/* Test code
+
+/**
+ * Factory function that makes a Promise specialized for use with
+ * MessageQueue RPCs.
+ *
+ * This is not a class because subclassing of built-in objects such as
+ * Promise is tricky without ES2015 subclassing.  So it just extends
+ * each object individually.
+ *
+ * Has slots "mq" for the RPC message queue of its message, and
+ * "id" for the ID of the RPC call it waits for.
+ */
+function makeRpcPromise(initFn) {
+  var p = new Promise(initFn);
+  p.mq = null;
+  p.id = -1;
+  p.canceled = false;
+  Object.assign(p, rpcPromiseMethods);
+  return p;
+}
+
+rpcPromiseMethods = {
+
+  /**
+   * Convenience method that pushes this Promise onto the given array,
+   * returning the Promise.
+   */
+  addTo: function(array) {
+    array.push(this);
+    return this;
+  },
+
+  /**
+   * After the cancel method is called, this Promise will never
+   * resolve or reject.  If its RPC is in a waiting queue, this
+   * removes it, and if it is in progress, the response code will
+   * ignore it.  Sets the "canceled" property to true.
+   */
+  cancel: function() {
+    this.canceled = true;
+    var a = this.mq.queue;
+    var id = this.id;
+    rpcLog('Trying to cancel RPC', id);
+    rpcLog('Queue length =', a.length);
+    for (var i = 0; i < a.length; i++) {
+      rpcLog('  RPC', a[i].wrapper.id);
+    }
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].wrapper.id === id) {
+        a.splice(i, 1);
+        rpcLog('Dequeueing RPC', id)
+        return;
+      }
+    }
+  }
+};
+
+
+/* Test code for RPC
 
 var q = new Toy.MessageQueue(1, 'pt/js/worker.js');
 var p = q.send({action: 'ping'})
@@ -1312,7 +1405,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
   // This function is the same as the "real" onmessage handler
   // function in worker.js for messages to a worker, except this
   // receives the RPC wrapper object directly, not wrapped in an
-  // event, and replies by calling the fake worker's onmessage
+  // event, and replies by calling the fake worker object's onmessage
   // property from a timer.
   function handler() {
     if (wrapper.channelType === 'RPC') {
@@ -1339,8 +1432,11 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
       }
       function replier() {
         var responder = self.onmessage;
+        rpcLog('Handling RPC reply', reply.data.id);
         responder(reply);
+        rpcLog('Handled RPC reply', reply.data.id);
       }
+      rpcLog('Posting reply for RPC', reply.data.id);
       // The worker code should not access the DOM, so there should
       // not be reason to wait for a repaint before handling the
       // worker's reply.
@@ -1348,7 +1444,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
     } else if (receiver.handleOther) {
       receiver.handleOther(event);
     } else {
-      console.log('Unhandled message', event);
+      console.warn('Unhandled message', event);
     }
   }
   // Call the handler from a timer.
@@ -1419,8 +1515,11 @@ Toy.afterRepaint = afterRepaint;
 Toy.allowRepaint = allowRepaint;
 Toy.makeTriangle = makeTriangle;
 
+Toy.rpcLog = rpcLog;
+Toy.logRpc = false;
 Toy.MessageQueue = MessageQueue;
 Toy.FakeRpcWorker = FakeRpcWorker;
+Toy.makeRpcPromise = makeRpcPromise;
 
 // for interactive testing
 Toy._testTriangle = _testTriangle;
