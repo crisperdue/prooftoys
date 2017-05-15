@@ -1486,7 +1486,7 @@ function commuteEqn(eqn) {
     var op = eqn.getRight().getBinOp();
     return infix(subst.h, '=>', infix(subst.b, op, subst.a))
   } else {
-    err(format('Not an equation: {1}', eqn));
+    err(Toy.format('Not an equation: {1}', eqn));
   }
 }
 
