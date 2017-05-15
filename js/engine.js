@@ -4160,28 +4160,31 @@ function addSwappedFact(info) {
 
 // Do this after support modules are initialized.
 $(function() {
+    var define = Toy.define;
+    var defineCases = Toy.defineCases;
+
     var identity = Toy.parse('{x. x}');
     var allT = Toy.parse('{x. T}');
 
     // Put definitions into their database:
-    Toy.define('not', equal(F));
-    Toy.define('!=', '{x. {y. not (x = y)}}');
-    Toy.define('forall', '(=) {x. T}');
-    Toy.define('exists', '(!=) {x. F}');
-    Toy.defineCases('&', identity, '{x. F}');
-    Toy.defineCases('|', allT, identity);
-    Toy.defineCases('=>', identity, allT);
-    Toy.define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
+    define('not', equal(F));
+    define('!=', '{x. {y. not (x = y)}}');
+    define('forall', '(=) {x. T}');
+    define('exists', '(!=) {x. F}');
+    defineCases('&', identity, '{x. F}');
+    defineCases('|', allT, identity);
+    defineCases('=>', identity, allT);
+    define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
 
-    Toy.define('empty', '{x. F}');
-    Toy.define('none', 'iota empty');
+    define('empty', '{x. F}');
+    define('none', 'iota empty');
     // Collection has multiple elements:
-    Toy.define('multi', '{a. exists {x. exists {y. a x & a y & x != y}}}');
+    define('multi', '{a. exists {x. exists {y. a x & a y & x != y}}}');
     // Always either "none" or the member of the singleton set:
-    Toy.define('the', '{a. if (multi a) none (iota a)}');
-
-    Toy.define('-', '{x. {y. x + neg y}}');
-    Toy.define('/', '{x. {y. x * recip y}}');
+    define('the', '{a. if (multi a) none (iota a)}');
+    
+    define('-', '{x. {y. x + neg y}}');
+    define('/', '{x. {y. x * recip y}}');
   });
 
 
