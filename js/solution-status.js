@@ -95,7 +95,7 @@ function analyze1Solution(conj, givenVars) {
   function analyzeConjunct(term) {
     var swapped = false;
     var status = eqnStatus(term, givenVars);
-    if (!status) {
+    if (!status && term.isCall2('=')) {
       swapped = true;
       status = eqnStatus(Toy.commuteEqn(term), givenVars);
     }
