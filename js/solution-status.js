@@ -80,9 +80,9 @@ function eqnStatus(eqn, givenVars) {
 }
 
 /**
- * Internal to analyzeSolutions.  Analyzes one term of a disjunction
- * within a "solutions" formula.  The given term itself is potentially
- * a conjunction.  Builds and returns the information structure that
+ * Internal to analyzeSolutions.  Analyzes one term of a disjunct of a
+ * "solutions" formula.  The given term itself is potentially a
+ * conjunction.  Builds and returns the information structure that
  * will be the relevant element of the array returned by
  * analyzeSolutions.
  */
@@ -93,16 +93,22 @@ function analyze1Solution(conj, givenVars) {
   var tcs = new TermSet();
   var others = new TermSet();
   function analyzeConjunct(term) {
+    var swapped = false;
     var status = eqnStatus(term, givenVars);
+    if (!status) {
+      swapped = true;
+      status = eqnStatus(Toy.commuteEqn(term), givenVars);
+    }
     if (status) {
       eqns.push(term);
-      var name = term.getLeft().name;
+      var name = swapped ? term.getRight().name : term.getLeft().name;
       if (byVar[name]) {
         delete byVar[name];
         overages[name] = true;
       } else {
         var info = {
           eqn: term,
+          swapped: swapped,
           using: status
         };
         byVar[name] = info;
@@ -606,8 +612,13 @@ function messageForName(name, info) {
     // The "Solves for \w*" part is matched against a regex
     // in messageForSolution.
     msg = format('Solves for {1}', name);
-    if (!isLowestTerms(info.eqn.getMain().getRight())) {
+    var main = info.eqn.getMain();
+    var rhs = info.swapped ? main.getLeft() : main.getRight();
+    if (!isLowestTerms(rhs)) {
       msg += ', but needs simplification';
+    }
+    if (info.swapped) {
+      msg += format('; {1} should be on the left', name);
     }
   } else {
     msg = format('Solves for {1} in terms of {2}',
