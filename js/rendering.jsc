@@ -319,7 +319,7 @@ function ProofEditor() {
       var len = steps.length;
       if (len) {
         var step = steps[len - 1];
-        var message = self.progressMessage(step);
+        var message = self.progressMessage(step.original);
         $status.empty();
         $status.append(message);
         $status.toggleClass('hidden', !message);

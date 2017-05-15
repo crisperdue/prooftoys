@@ -296,7 +296,7 @@ var methods = {
 
   /**
    * Returns solution status in a form prepared for straightforward
-   * display.  Current return values, in order of checking:
+   * display.  Return values, in order of checking:
    *
    * true: iff the step matches a stated solution.
    * 'noStandard': if this ProofEditor has standardSolution turned off.
@@ -444,7 +444,6 @@ var methods = {
   /**
    * Solution progress message for the entire step, could be multiple
    * messages in case of multiple solutions.
-   * TODO: Handle cases where the solution part is "F".
    * TODO: Consider how to handle underdetermined problems.
    */
   progressMessage: function(step) {
