@@ -1001,10 +1001,16 @@ function StepSuggester(stepEditor) {
   // When activated, this will update the display when the event loop
   // next comes back to idle.
   self._refresher = new Toy.Refresher(self._update.bind(self));
+  self._suggestions = [];
 
   // Event handling
 
   $node.on('click', '.stepSelector', function(event) {
+      // Stop work on building suggestions.  This only affects ones
+      // not yet displayed.
+      self._suggestions.forEach(function(promise) {
+          promise.cancel();
+        });
       var dStep = Toy.getProofStep(event.target);
       var step = dStep.original;
       var rule = Toy.rules[step.ruleName];
@@ -1036,17 +1042,24 @@ var suggesterMethods = {
     self.length = 0;
     var mainDisplay = stepEditor.proofDisplay;
     var step = mainDisplay.selection;
+    self._suggestions = [];
     var factsToOffer = [];
     if (step) {
       var term = step.selection;
       var path = term && step.prettyPathTo(term);
       var rules = Toy.rules;
       display.prevStep = step;
-      function addStep(result) {
-        // TODO: Detect when the result is not relevant and don't add
-        //   it.  This occurs if the user selects a new action before
-        //   all suggestions have been added to the suggester.
-        if (!result.step.matches(step)) {
+      function addStep(wrapper) {
+        var result = wrapper.result;
+        if (!self._suggestions.find(function(promise) {
+              return promise.id === wrapper.id;
+            })) {
+          rpcLog('Not adding step for old RPC', wrapper.id);
+        }
+        if (self._suggestions.find(function(promise) {
+              return promise.id === wrapper.id;
+            }) && !result.step.matches(step)) {
+          // rpcLog('Adding step of RPC ID =', wrapper.id);
           // A simplifer may return a step identical to its
           // input, which is intended to be ignored.
           display.addStep(result.step);
@@ -1060,6 +1073,7 @@ var suggesterMethods = {
           if (info.offerExample) {
             // TODO: Report or handle error returns.
             sendRule(name, path ? [step.original, path] : [step.original])
+              .addTo(self._suggestions)
               .then(addStep);
           }
         });
@@ -1070,7 +1084,9 @@ var suggesterMethods = {
           sendRule('rewrite',
                    [step.original,
                     step.prettyPathTo(step.selection),
-                    statement]).then(addStep);
+                    statement])
+            .addTo(self._suggestions)
+            .then(addStep);
       });
     }
   }
