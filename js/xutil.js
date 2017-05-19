@@ -368,7 +368,7 @@ function findType(expr, annotate) {
       nonGenerics.pop();
       return new FunctionType(argType, resultType);
     }
-    throw new TypeCheckError('Expression of unknown type: ' + expr);
+    throw new TypeCheckError('Not an expression: ' + expr);
   }
 
   /**
