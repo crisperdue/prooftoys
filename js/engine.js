@@ -268,12 +268,18 @@ Expr.addMethods(ruleMethods);
 // Properties here for each name are:
 //
 // action: function implementing the inference rule.
-// proof: for a theorem (no args), this instead of "action".
+//
+// proof: for a theorem (no args), use this instead of "action".
 //   Do not call "justify", that is done automatically and
 //   the proof is memoized.
-// statement: for a theorem, this string optionally states the
-//   theorem proved.  Used by tests.
-//   TODO: Consider checking during actual proof of the theorem.
+//
+// statement: for a theorem, this string optionally states the theorem
+//   proved.  In this case the theorem is also added as a fact.  If
+//   the value is an equation, with or without assumptions, if its
+//   converse is not already added when the theorem is added, its
+//   converse will be added as a fact.  Also used by tests.  TODO:
+//   Consider checking during actual proof of the theorem.
+//
 // inputs: map from type to argument number(s), either a single
 //   number or an array if more than one such argument.
 //   The supported types are:
@@ -288,32 +294,53 @@ Expr.addMethods(ruleMethods);
 //     site: Term in a step; the rule expects the term's step and path
 //       to the term as inputs.
 //     bindingSite: Matches a variable binding in a step (as in "changeVar").
+//
+// TODO: Consider defining a new form of input descriptor.  Every rule
+//   with the new property would be a "fancy" rule whose action
+//   function has the appropriate name, that automatically converts
+//   its inputs based on its input descriptor.  For each of these
+//   define a rule 'fast_' + name to be the simplest form.
+//
+// data: If a rule has a "data" property, set rules[ruleName] to a new
+// function that binds "this" to the rule's action function, and set
+// up the "data" object as the "data" property of the action function.
+//
 // minArgs: Number of required args for the action.  Supply a
 //   value here to make trailing arguments optional in the step editor.
+//
 // toOffer: function of step and optional term or string with
 //   suitable body for such a function.  If it returns false
 //   the rule is not offered in the step editor.
+//
 // form: HTML template for the rule's input form to be presented
 //   by the step editor, as a template allowing {term} for
 //   the selected term.
+//
 // menu: plain text for the rule's menu item (may become HTML in the future),
 //   as a template allowing {term} for the selected term or {right}
 //   for a possible term to its right ("group with").
+//
 // tooltip: plain text to become the title attribute of mentions of the
 //   rule name in proof displays and the description in subproof displays.
+//
 // result: For theorems with no parameters only; this is the statement
 //   of the theorem.  If given as text in ruleInfo, converted into an
 //   expression in "rules".
+//
 // description: HTML word or phrase to display for the rule name.
+//
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
+//
 // using: if present, normally the equation or implication used for
 //   the rule, as for rewriters.  The equation may have conditions.
 //   When working forward the left side of the main equation must
 //   match the site to be operated on.
+//
 // inputSide: may be 'right' to indicate that the rule uses
 //   the converse equality (rewrites matching the right side of the
 //   equation rather than the left side).
+//
 // offerExample: applies to rules only, not facts.  If true and the
 //   rule needs only some sort of selection as input, the step
 //   suggester will run it to generate a sample next step and the
@@ -3914,24 +3941,7 @@ function addRules(ruleInfo) {
 
 /**
  * Process the given info into form for inclusion into Toy.rules and
- * add the result there.
- *
- * If a rule has a "data" property, set rules[ruleName] to a new
- * function that binds "this" to the rule's action function, and set
- * up the "data" object as the "data" property of the action function.
- *
- * TODO: Bind each rule's action function so "this" is the function
- * itself, providing easy access to metadata, including any "data"
- * property.
- *
- * TODO: Give Step objects a prototype with a method for each named
- *   rule not otherwise on the prototype, defined so calling it invokes
- *   the rule with appropriate arguments.
- *
- *   Also consider making every rule a "fancy" rule whose action
- *   function has the appropriate name, that automatically converts
- *   its inputs based on its input descriptor.  For each of these
- *   define rules['fast_' + name] to be the simplest form.
+ * add the result there.  For details see the comments for ruleInfo.
  */
 function addRule(key, info_arg) {
   var info = info_arg.constructor == Object ? info_arg : {action: info_arg};
@@ -3967,19 +3977,28 @@ function addRule(key, info_arg) {
       return action.result.justify(key, []);
     };
   }
+  // If the rule (theorem) has an explicit statement (which should be
+  // provably true), coerce the statement to an Expr if given as a
+  // string.
+  if (typeof info.statement === 'string') {
+    info.statement = Toy.mathParse(info.statement);
+  }
   action = action || info.action;
-  assert(action, 'No action for rule {1}', key);
+  if (action == null) {
+    var stmt = info.statement;
+    assert(stmt && key.startsWith('axiom'), 'No action for rule {1}', key);
+    action = function() { return rules.assert(stmt); };
+    // Add it as a fact also, and potentially "swapped".
+    // TODO: Work out a way for this to accept fact metadata.
+    addFact({goal: stmt, proof: action});
+    addSwappedFact({goal: stmt, proof: action});
+  }
   assert(typeof action === 'function',
          'Rule action must be a function: {1}', key);
 
   // Give every info "inputs".
   if (!info.inputs) {
     info.inputs = {};
-  }
-  // If the rule (theorem) has an explicit statement (it should be
-  // provably true), coerce it to an Expr if given as a string.
-  if (typeof info.statement === 'string') {
-    info.statement = Toy.mathParse(info.statement);
   }
   // Default the description to the marked up formula or the ruleName.
   if (!('description' in info)) {

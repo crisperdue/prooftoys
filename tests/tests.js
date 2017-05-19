@@ -672,8 +672,6 @@ var testCase = {
     check('{}', 'x = y');
     check('{x: true, y: true}', 'x = y + 1');
     check('{x: true, y: true}', 'x + ({z. z + y} 1)');
-    // A more thorough implementation might include y also.
-    check('{x: true}', 'x + ({z. z = y} 1)');
   },
 
   testMathVarConditions: function() {
