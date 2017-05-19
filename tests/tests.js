@@ -2701,6 +2701,10 @@ window.setTimeout(function() {
       nFacts++;
     });
   console.log('Queued', nFacts, 'facts to test.');
+  test('End of tests', function() {
+      expect(0);
+      console.log('End of test run at ', new Date());
+    });
   // When the next lines run, the tests run with profiling.
   // console.log('Running tests with profiling');
   // console.profile('Tests');
