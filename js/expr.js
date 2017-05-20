@@ -428,9 +428,7 @@ Expr.prototype.isNumeral = function() {
  */
 Expr.prototype.getNumValue = function() {
   var self = this;
-  Toy.check(this.isNumeral(), function() {
-      return 'Not a numeral: ' + self;
-    });
+  assert(this.isNumeral(), 'Not a numeral: {1}', self);
   return this._value;
 }
 
@@ -439,8 +437,8 @@ Expr.prototype.getNumValue = function() {
  * arithmetic is exact, returning it if so, raising an Error if not.
  */
 function checkRange(number) {
-  Toy.check(Math.abs(number) <= Toy.MAX_INT,
-        function() { return 'Number out of range: ' + number; });
+  assert(Math.abs(number) <= Toy.MAX_INT,
+         'Number out of range: {1}', number);
   return number;
 }
 

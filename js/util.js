@@ -253,45 +253,31 @@ function primeFactors(n) {
 //// Assertions, error reporting and debugging
 ////
 
-// In Prooftoys, some "errors" are nonlocal flow of control, and
-// intended to be caught, as in catch/throwResult.  Most errors are
-// program bugs, and should enter the debugger immediately if the
-// debugger is available, with reporting to the developer and/or end
-// user as appropriate.  With reporting to the end user is appropriate
-// recovery of application state.  In some situations the calling code
-// may intentionally create situations leading to errors, noticing and
-// responding to those errors, bypassing the usual reporting.
-
 /**
- * Builds and throws a new Error object with the given info.  If the
- * info is a string, it becomes the message; if it is a function, its
- * value becomes the message, otherwise treats the info
- * as property names and values to assign to the error.
+ * Signals an error, which should be a programming error.
+ * Enters the debugger if available, and then throws an error.
+ * 
+ * The "info" argument can be either a string or object.  If a string,
+ * it becomes the message property of the error.  If an object, adds
+ * its properties to the new error object.  If a type argument is
+ * given, that becomes the type of the new error.
  *
  * The optional type if given is the error constructor, defaulting to
  * Error.
+ *
+ * TODO: remove the "type" parameter, but if the info is neither a
+ * string nor a plain object, throw it as the error object.
  */
 function err(info, type) {
   var error = new (type || Error)();
   if (typeof info === 'string') {
     error.message = info;
-  } else if (typeof info === 'function') {
-    error.message = info();
   } else {
     jQuery.extend(error, info);
   }
+  console.error(error.message);
+  debugger;
   throw error;
-}
-
-/**
- * If the condition is not truthy, throws using the function "err"
- * with the given info and optional type.  See also "assertTrue",
- * which logs the stack and enters a debugger if available.
- */
-function check(condition, info, type) {
-  if (!condition) {
-    err(info, type);
-  }
 }
 
 /**
@@ -307,6 +293,8 @@ function logError(err) {
 /**
  * Call the given function passing no arguments.  Report any errors to
  * the user and to the console, then rethrow.
+ *
+ * TODO: Delete this.
  */
 function withErrorReporting(fn) {
   try {
@@ -1472,7 +1460,6 @@ Toy.nextPrimeFactor = nextPrimeFactor;
 Toy.primeFactors = primeFactors;
 
 Toy.err = err;
-Toy.check = check;
 Toy.logError = logError;
 Toy.withErrorReporting = withErrorReporting;
 Toy.assertTrue = assertTrue;

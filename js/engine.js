@@ -25,7 +25,6 @@
 //// THEOREMS AND RULES
 
 var assert = Toy.assertTrue;
-var check = Toy.check;
 
 //  Make some useful names available here.
 var assertEqn = Toy.assertEqn;
@@ -2702,7 +2701,7 @@ var ruleInfo = {
       }
       // ancestors[i] is now the conjunction.
       // Do a sanity check.
-      check(conjunction, 'No suitable conjunction found');
+      assert(conjunction, 'No suitable conjunction found');
       // This is the equation that will be applied.
       var eqn = conjunction.get(eqnPath);
       // Path to the conjunction is a prefix of the target path.
@@ -3881,7 +3880,7 @@ var ruleInfo = {
         // Inline for tautologies.
         return rules.tautology(statement);
       } catch(err) {}
-      throw new Error('No such fact: ' + statement);
+      Toy.err('No such fact: ' + statement);
     },
     inputs: {bool: 1},
     form: ('Look up fact <input name=bool size=40>'),

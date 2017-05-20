@@ -10,7 +10,6 @@
 var rules = Toy.rules;
 
 var assert = Toy.assertTrue;
-var check = Toy.check;
 var memo = Toy.memo;
 
 //  Make some useful names available here.
@@ -380,9 +379,6 @@ var numbersInfo = {
   // Result is always an equation (or biconditional) with the given
   // term as the LHS.  Throws an error if it cannot obey these
   // specifications.
-  //
-  // TODO: Include facts that a / b = c is false for integers
-  //   a, b, and c unless b divides a exactly.
   axiomArithmetic: {
     action: function(term_arg) {
       var term = termify(term_arg);
@@ -397,13 +393,13 @@ var numbersInfo = {
         case '-': value = left - right; break;
         case '/':
           // TODO: Consider evaluating these to the null value.
-          check(right !== 0, 'Cannot divide by zero');
+          assert(right !== 0, 'Cannot divide by zero');
           value = left / right;
           // abs(value) <= abs(left) since abs(right) >= 1 so the
           // magnitude is not a problem.  The fractional part of a
           // result must have denominator no greater than MAX_INT,
           // so it should be distinguishable from an integer.
-          check(value === Math.floor(value), 'Inexact division');
+          assert(value === Math.floor(value), 'Inexact division');
           break;
         case 'div': value = Toy.div(left, right); break;
         case 'mod': value = Toy.mod(left, right); break;
@@ -425,8 +421,7 @@ var numbersInfo = {
           .justify('axiomArithmetic', arguments);
       } else if (term instanceof Toy.Call) {
         var op = term.fn;
-        check(op.isConst(),
-               function() { return 'Unsupported operator: ' + op; });
+        assert(op.isConst(), 'Unsupported operator: {1}', op);
         var arg = term.arg.getNumValue();
         if (op.name == 'neg') {
           value = -arg;
