@@ -536,13 +536,18 @@ function equalityType() {
   return new FunctionType(v, new FunctionType(v, boolean));
 }
 
+/**
+ * Function from individuals to individuals.
+ */ 
 function funType() {
-  var v = new TypeVariable();
-  return new FunctionType(v, v);
+  return new FunctionType(individual, individual);
 }
 
+/**
+ * Function of two individuals, returning an individual.
+ */
 function fun2Type() {
-  var v = new TypeVariable();
+  var v = individual;
   return new FunctionType(v, new FunctionType(v, v));
 }
 
