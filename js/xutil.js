@@ -613,9 +613,9 @@ var definedTypes = {
   '=>': booleanBinOpType()
 };
 
-// Indexed by the name defined.  Value is an expression if
-// the definition is simple.  If by cases, the value is a
-// map from 'T' and 'F' to the definition for each case.
+// Indexed by the name defined.  Value is an Expr (not a step) if the
+// definition is simple.  If by cases, the value is a map from 'T' and
+// 'F' to the definition for each case.
 //
 // Primitive constants are here, but the definitions are truthy fakes.
 // This prevents them from being defined later.
@@ -642,7 +642,7 @@ function define(name, definition) {
     return;
   }
   for (var n in definition.freeVars()) {
-    assert(false, 'Definition has free variables: ' + name);
+    Toy.err('Requested definition has free variable: {1}', name);
   }
   constantTypes[name] = findType(definition);
   return definitions[name] = equal(Toy.constify(name), definition);
@@ -701,8 +701,6 @@ function isDefinedByCases(name) {
  * database.  Throws an exception if an appropriate definition is not
  * found.  Pass true or false or T or F or 'T' or 'F' to get the
  * appropriate part of a definition by cases.
- *
- * TODO: See findDefinition for more information on this.
  */
 function getDefinition(name, tOrF) {
   var defn = findDefinition(name, tOrF);
@@ -712,21 +710,16 @@ function getDefinition(name, tOrF) {
 
 /**
  * Finds a definition or by-cases definition in the definitions
- * database.  Returns null if there is no definition; throws an error
- * if there is a definition, but wrong type.  If the tOrF argument is
- * present, the definition must be by cases, otherwise simple.  Also
- * accepts an Atom.
- *
- * TODO: Somehow avoid the unsafeness of this; consider eliminating
- * this and moving getDefinition functionality into rules.definition.
- * Problem is that the result is not officially justified.
+ * database.  If the tOrF argument is present, the definition must be
+ * by cases, otherwise simple.  Also accepts an Atom.  Signals an
+ * error if there is no definition or it is of the wrong kind.
  */
 function findDefinition(name, tOrF) {
   name = name instanceof Atom ? name.name : name;
   var defn = definitions[name];
-  assert(defn, function() { return 'Not defined: ' + name; });
+  assert(defn, 'Not defined: {1}', name);
   if (!tOrF) {
-    assert(defn instanceof Expr, 'Definition is not simple: ' + name);
+    assert(defn instanceof Expr, 'Definition is not simple: {1}', name);
     return defn;
   } else {
     if (tOrF == true || (tOrF instanceof Atom && tOrF.name == 'T')) {
@@ -734,10 +727,9 @@ function findDefinition(name, tOrF) {
     } else if (tOrF == false || (tOrF instanceof Atom && tOrF.name == 'F')) {
       tOrF = 'F';
     }
-    assert(!(defn instanceof Expr),
-             'Definition is not by cases: ' + name);
+    assert(!(defn instanceof Expr), 'Definition is not by cases: {1}', name);
     var defnCase = defn[tOrF];
-    assert(defnCase, 'Not defined: ' + name + ' ' + tOrF);
+    assert(defnCase, 'Not defined: {1} {2}', name, tOrF);
     return defnCase;
   }
 }
