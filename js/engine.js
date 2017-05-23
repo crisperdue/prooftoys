@@ -1031,7 +1031,7 @@ var ruleInfo = {
     inputs: {reducible: 1},
     isRewriter: true,
     // form: '',
-    menu: 'apply a function to its argument',
+    menu: 'apply a lambda to its argument',
     tooltip: ('Applies a lambda to its argument'),
     description: '=simpleApply',
     labels: 'uncommon'
@@ -1044,9 +1044,8 @@ var ruleInfo = {
   // and applies the expansions to the argument(s).
   apply: {
     action: function(step, path) {
-      // This function does all the real work for the rule.
+      // Returns an identity with arg as LHS.
       function applier(expr) {
-        // Report the step, but not in the message.
         assert(expr instanceof Toy.Call, 'Not a call: {1}', expr, step);
         var fn = expr.fn;
         if (fn instanceof Toy.Lambda) {
@@ -1056,8 +1055,9 @@ var ruleInfo = {
         if (fn.isConst()) {
           var defn = Toy.findDefinition(fn.name);
           if (defn) {
-            var step1 = rules.eqSelf(expr);
-            return rules.useDefinition(step1, '/right/fn');
+            return (rules.eqSelf(expr)
+                    .andThen('useDefinition', '/right/fn')
+                    .andThen('simpleApply', '/right'));
           }
         }
         // Call that looks like (<left> <constant> <right>) or
@@ -1087,7 +1087,7 @@ var ruleInfo = {
     isRewriter: true,
     inputs: {site: 1},
     form: '',
-    menu: 'apply a function to its argument',
+    menu: 'apply a function',
     tooltip: ('Applies a function, named or not, to one or two arguments'),
     description: '=apply'
   },
