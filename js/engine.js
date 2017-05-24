@@ -3890,6 +3890,32 @@ var ruleInfo = {
     labels: 'basic'
   },
 
+  // Traditionally in lambda calculus (use of) this is referred to as
+  // "eta conversion".
+  eta: {
+    statement: '{x. p x} = p',
+    proof: function() {
+      // fact1 is: forall {x. {x. p x} x = p x}
+      var fact1 = rules.axiom4('{x. p x} x').andThen('toForall', 'x');
+      // fact2 is: <fact1> == {x. p x} = p
+      var fact2 = (rules.axiom3()
+                   .andThen('eqnSwap')
+                   .andThen('instMultiVars', {f: '{x. p x}', g: 'p'}));
+      return rules.r(fact2, fact1, '');
+    }
+  },
+
+  // 5304
+  exists1a: {
+    statement: 'exists1 {y. p y} == exists {y. p = {x. x = y}}',
+    proof: function() {
+      var step = (rules.eqSelf('exists1 {y. p y}')
+                  .andThen('useDefinition', '/right/fn')
+                  .andThen('apply', '/right'));
+      return rules.r(rules.eta(), step, '/right/arg/body/left');
+    }
+  },
+
   //
   // OPTIONAL/UNUSED
   // 
