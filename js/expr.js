@@ -1870,7 +1870,8 @@ var unicodeNames = {
   none: '\u22a5',     // Bottom / "up tack"
   R: '\u211d',        // Real numbers
   forall: '\u2200',
-  exists: '\u2203'
+  exists: '\u2203',
+  exists1: '\u2203!'
 };
 
 // Defines aliases that affect both printing and parsing.
