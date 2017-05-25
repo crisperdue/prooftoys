@@ -1869,20 +1869,19 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
-  // (forall f) => f x
   r5225: {
-    statement: 'forall f => f x',
+    statement: 'forall p => p x',
     proof: function() {
       var step1 = rules.axiom2();
       var map = {h: Toy.parse('{g. g x}'),
                  x: Toy.parse('{x. T}'),
-                 y: Toy.parse('f')};
+                 y: Toy.parse('p')};
       var step2 = rules.instMultiVars(step1, map);
       var step3 = rules.rRight(rules.definition('forall'), step2, '/left/fn');
       var step4 = rules.apply(step3, '/right/left');
       var step5 = rules.apply(step4, '/right/left');
       var step6 = rules.apply(step5, '/right/right');
-      return rules.r(rules.r5218(Toy.parse('f x')), step6, '/right');
+      return rules.r(rules.r5218(Toy.parse('p x')), step6, '/right');
     }
   },
 
