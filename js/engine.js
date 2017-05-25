@@ -2355,7 +2355,7 @@ var ruleInfo = {
   },
 
   implyForall: {
-    statement: 'forall {x. p => q x} = (p => forall {x. q x})',
+    statement: 'forall {x. p => q x} == (p => forall {x. q x})',
     proof: function() {
       var taut = 'not a | b == a => b';
       return (rules.orForall()
