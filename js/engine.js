@@ -691,9 +691,10 @@ var ruleInfo = {
       Toy.findType(call);
       return rules.assert(result).justify('axiom4', [call]);
     },
+    labels: 'primitive',
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
-    menu: 'apply a function to its argument',
+    menu: 'apply a lambda to its argument',
     description: 'axiom of substitution',
     tooltip: ('')
   },
