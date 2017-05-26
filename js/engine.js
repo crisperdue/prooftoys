@@ -1886,6 +1886,8 @@ var ruleInfo = {
     }
   },
 
+  // r5226 is r5225 with "f" and "x" instantiated, then beta conversion.
+
   // F => x; bookish
   r5227: {
     statement: 'F => x',
@@ -2160,6 +2162,8 @@ var ruleInfo = {
   },
 
   // Deduces the conjunction of two proved steps; ignores hypotheses.
+  // Introducing a T wherever desired, then substituting a theorem,
+  // with or without assumptions, may be a more effective approach.
   and: {
     action: function(step1, step2) {
       return (rules.replaceT(rules.tautology('T & T'), '/right', step2)
@@ -2354,6 +2358,8 @@ var ruleInfo = {
     }
   },
 
+  // This is probably the most useful form of quantifier remover that
+  // requires a variable to be not free.
   implyForall: {
     statement: 'forall {x. p => q x} == (p => forall {x. q x})',
     proof: function() {
@@ -2627,6 +2633,8 @@ var ruleInfo = {
     tooltip: ('Theorem generator used with simultaneous equations.')
   },
 
+  // Not in Andrews' textbook
+  //
   // This is the core rule for replacing terms in simultaneous equations.
   //
   // The target term must be part of a tree of conjuncts in the step
@@ -3245,6 +3253,11 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
+
+  ////
+  //// Rewriting -- beyond Andrews' textbook
+  ////
+
   // Takes a proof step, a path, and a proved equation.  The part of
   // the step at the given path must match the LHS of the equation.
   // Replaces that part of the step with the appropriate instance of
@@ -3347,6 +3360,10 @@ var ruleInfo = {
     isRewriter: true,
     description: 'use;; {shortFact} {&nbsp;in step siteStep}'
   },
+
+  ////
+  //// Conjunction management
+  //// 
 
   // NOTE: A chain of conjuncts (or other binary operator) is an
   // expression that can be written a & b & ... & z.  An expression
@@ -3720,8 +3737,9 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-
-  // From the section "Equality and descriptions" in the book.
+  ////
+  //// From the section "Equality and descriptions" in the book.
+  ////
 
   equalitySymmetric: {
     statement: '(x = y) == (y = x)',
