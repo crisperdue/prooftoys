@@ -281,6 +281,16 @@ function err(info, type) {
 }
 
 /**
+ * Intended to be like "err" without entering the debugger, but
+ * currently accepts only a message as input, and throws
+ * an Error with that.  For situations where the problem may
+ * be due to bad input.
+ */
+function fail(msg) {
+  throw new Error(msg);
+}
+
+/**
  * Logs an error; the message property if that is truthy, otherwise
  * the argument itself.
  */
@@ -1460,6 +1470,7 @@ Toy.nextPrimeFactor = nextPrimeFactor;
 Toy.primeFactors = primeFactors;
 
 Toy.err = err;
+Toy.fail = fail;
 Toy.logError = logError;
 Toy.withErrorReporting = withErrorReporting;
 Toy.assertTrue = assertTrue;
