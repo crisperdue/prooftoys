@@ -214,6 +214,19 @@ Expr.prototype.toString = function() {
 };
 
 /**
+ * Returns a string presenting this Expr or Step, including
+ * type information for variables.
+ */
+Expr.prototype.show = function () {
+  try {
+    Toy.showTypes = true;
+    return this.toString();
+  } finally {
+    Toy.showTypes = false;
+  }
+};
+
+/**
  * Converts this Expr to a string of Unicode and/or HTML.  The display
  * is currently just the same as plain text display except
  * names (or pnames) that have Unicode counterparts are presented as
