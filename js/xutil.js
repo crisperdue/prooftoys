@@ -158,15 +158,6 @@ var boolean = new TypeConstant('o');
 var realType = individual;
 
 /**
- * Returns true iff the type of the term is Real.  Assumes that this
- * Expr is part of a WFF that has been annotated with type
- * information.
- */
-Expr.prototype.isReal = function() {
-  return this.getType() == realType;
-};
-
-/**
  * Parse a type string, returning a TypeOperator (type expression).
  * Input can only be parenthesized sequences of "i", "o", a single
  * upper case letter, or "t" followed by digits, with space as the
@@ -272,7 +263,7 @@ function parseType(input) {
  * an error.
  */
 Expr.prototype.getType = function() {
-  return dereference(this._type) || err('Type not available: ' + this);
+  return dereference(this._type) || Toy.fail('Type not available: ' + this);
 };
 
 /**
@@ -297,17 +288,26 @@ Expr.prototype.annotateWithTypes = function() {
 };
 
 /**
- * Analyzed type of this is boolean.
+ * Returns true iff the type of the term is Real.  Only ever returns
+ * true if Expr is part of a WFF that has been annotated with type
+ * information.
  */
-Expr.prototype.isBoolean = function() {
-  return this.getType()==boolean;
+Expr.prototype.isReal = function() {
+  return this.hasType() == realType;
 };
 
 /**
- * Analyzed type of this is individual.
+ * Analyzed type of this is boolean, similarly to isReal.
+ */
+Expr.prototype.isBoolean = function() {
+  return this.hasType() == boolean;
+};
+
+/**
+ * Analyzed type of this is individual, similarly to isReal.
  */
 Expr.prototype.isIndividual = function() {
-  return this.getType()==individual;
+  return this.hasType() == individual;
 };
 
 /**
@@ -426,9 +426,9 @@ function findType(expr, annotate) {
     return dereference(analyze(expr));
   } catch(e) {
     if (e instanceof TypeCheckError) {
-      var message = 'Cannot find type for ' + expr.toUnicode();
-      err({message: message, cause: e},
-          TypeCheckError);
+      var e2 = new TypeCheckError('Cannot find type for ' + expr.toUnicode());
+      e2.cause = e;
+      throw e2;
     } else {
       throw e;
     }
