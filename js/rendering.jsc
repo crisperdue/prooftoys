@@ -670,6 +670,8 @@ ProofDisplay.prototype.addStep = function(step) {
       }
     });
   copy.proofDisplay = this;
+  try {
+    copy.annotateWithTypes();
   this.steps.push(copy);
   // Give it a stepNumber early so rendering code can find it.
   copy.stepNumber = (this.prevStep
@@ -680,6 +682,11 @@ ProofDisplay.prototype.addStep = function(step) {
   this.renderStep(copy);
   renderStepNumber(copy);
   this.proofChanged();
+  } catch(e) {
+    // Warn about the problem, usually type annotation.
+    console.warn('Failed to add step', step.$$);
+    console.warn(e);
+  }
 };
 
 /**
@@ -952,8 +959,6 @@ var _turnstile = '\u22a6';
  */
 ProofDisplay.prototype.renderStep = function(step) {
   var self = this;
-  // Annotate all rendered steps with type information.
-  step.annotateWithTypes();
 
   // Make an object for rendering of the whole step.
   var $proofStep = $('<div class=proofStep>');
