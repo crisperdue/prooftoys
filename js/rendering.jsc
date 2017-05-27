@@ -672,16 +672,16 @@ ProofDisplay.prototype.addStep = function(step) {
   copy.proofDisplay = this;
   try {
     copy.annotateWithTypes();
-  this.steps.push(copy);
-  // Give it a stepNumber early so rendering code can find it.
-  copy.stepNumber = (this.prevStep
-                     ? '<span class=stepNumPlaceholder/>'
-                     : (Toy.showOrdinals
-                        ? step.ordinal
-                        : this.stepPrefix + this.steps.length));
-  this.renderStep(copy);
-  renderStepNumber(copy);
-  this.proofChanged();
+    this.steps.push(copy);
+    // Give it a stepNumber early so rendering code can find it.
+    copy.stepNumber = (this.prevStep
+                       ? '<span class=stepNumPlaceholder/>'
+                       : (Toy.showOrdinals
+                          ? step.ordinal
+                          : this.stepPrefix + this.steps.length));
+    this.renderStep(copy);
+    renderStepNumber(copy);
+    this.proofChanged();
   } catch(e) {
     // Warn about the problem, usually type annotation.
     console.warn('Failed to add step', step.$$);
@@ -1095,9 +1095,14 @@ ProofDisplay.prototype.renderStep = function(step) {
       } else {
         // This code knows the structure of results produced by
         // asserted facts, either in getResult (when the proof is not
-        // invoked), or in asFactProver (when the proof does nothing).
+        // invoked), or in asFactProver (when there is no proof).
+        //
+        // TODO: This will be the place to handle omission of details
+        //   in a proof sent back by a worker thread, when the full
+        //   proof is overly long.
         if (step.ruleName == 'fact' &&
-            (step.details.ruleName == 'assert' ||
+            (!step.details ||
+             step.details.ruleName == 'assert' ||
              (step.details.ruleName == 'asHypotheses' &&
               step.details.ruleArgs[0].ruleName == 'assert'))) {
           var copy = (step instanceof Call
@@ -1107,6 +1112,7 @@ ProofDisplay.prototype.renderStep = function(step) {
               // Impossible for a step!
               : null);
           var fact = Toy.proveResult(copy);
+          // Supply previously-lacking details for the step.
           step.details = fact.details;
           // TODO: The proved fact's assumptions may be in different
           //   order than the original.  Consider filling steps to
