@@ -165,7 +165,7 @@ StepEditor.prototype._setBusy = function(busy, complete) {
     //   "hidden" style class, just set its visibility to "normal".
     this.ruleMenu.$node.toggleClass('hidden', this.ruleMenu.length === 0);
     this.stepSuggester.$node.toggleClass('hidden',
-                                         this.stepSuggester.length === 0);
+                                         !this.stepSuggester.showable());
     $working.fadeOut(200, complete);
   }
   // Clear the form.
@@ -987,12 +987,10 @@ function ruleMenuText(ruleName, step, term, proofEditor) {
  *
  * stepEditor: StepEditor of which this is part.
  * display: ProofDisplay that holds the suggested steps.
- * length: Number of suggested possible steps.
  * $node: jQuery with DOM node of the widget presentation.
  */
 function StepSuggester(stepEditor) {
   var self = this;
-  self.length = 0;
   self.stepEditor = stepEditor;
   var nexts = self.display = new Toy.ProofDisplay();
   $(nexts.node).addClass('nextSteps');
@@ -1029,6 +1027,13 @@ var suggesterMethods = {
   },
 
   /**
+   * Returns true if there is data here to show.
+   */
+  showable: function() {
+    return this.display.steps.length > 0;
+  },
+
+  /**
    * Internal to the StepSuggester; updates the display of suggested
    * next steps.
    */
@@ -1039,7 +1044,6 @@ var suggesterMethods = {
     // Hide the nextSteps display temporarily; show it later if not empty.
     self.$node.addClass('hidden');
     display.setSteps([]);
-    self.length = 0;
     var mainDisplay = stepEditor.proofDisplay;
     var step = mainDisplay.selection;
     self._suggestions = [];
@@ -1049,6 +1053,8 @@ var suggesterMethods = {
       var path = term && step.prettyPathTo(term);
       var rules = Toy.rules;
       display.prevStep = step;
+      // Given an RPC result wrapper, this adds its step if appropriate
+      // and possible, and 
       function addStep(wrapper) {
         var result = wrapper.result;
         if (!self._suggestions.find(function(promise) {
@@ -1059,13 +1065,13 @@ var suggesterMethods = {
         if (self._suggestions.find(function(promise) {
               return promise.id === wrapper.id;
             }) && !result.step.matches(step)) {
-          // rpcLog('Adding step of RPC ID =', wrapper.id);
           // A simplifer may return a step identical to its
           // input, which is intended to be ignored.
           display.addStep(result.step);
-          self.length++;
-          self.$node.removeClass('hidden');
-          stepEditor.$advice.addClass('hidden');
+          if (self.showable()) {
+            self.$node.removeClass('hidden');
+            stepEditor.$advice.addClass('hidden');
+          }
         }
       }
       stepEditor.offerableRuleNames().forEach(function(name) {
@@ -1074,7 +1080,12 @@ var suggesterMethods = {
             // TODO: Report or handle error returns.
             sendRule(name, path ? [step.original, path] : [step.original])
               .addTo(self._suggestions)
-              .then(addStep);
+              .then(addStep)
+              .catch(function(wrapper) {
+                  var msg = 'Rule suggestion error {1}: {2}';
+                  console.warn(Toy.format(msg, wrapper.error.type,
+                                          wrapper.error.message));
+                });
           }
         });
       factsToOffer = stepEditor.offerableFacts();
@@ -1086,10 +1097,16 @@ var suggesterMethods = {
                     step.prettyPathTo(step.selection),
                     statement])
             .addTo(self._suggestions)
-            .then(addStep);
-      });
+            .then(addStep)
+            .catch(function(wrapper) {
+                var msg = 'Fact suggestion {1}:\n  {2}';
+                console.warn(Toy.format(msg, wrapper.error.type,
+                                        wrapper.error.message));
+              });
+        });
     }
   }
+
 };
 Object.assign(StepSuggester.prototype, suggesterMethods);
 
@@ -1187,7 +1204,8 @@ RuleMenu.prototype._update = function() {
   $items.append(items);
   self.$node.toggleClass('hidden', displayTexts.length === 0);
   // TODO: Consider updating the advice using Promises.
-  var bothEmpty = self.length == 0 && stepEditor.stepSuggester.length == 0;
+  var bothEmpty = (self.length == 0 &&
+                   stepEditor.stepSuggester.$node.hasClass('hidden'));
   stepEditor.$advice.toggleClass('hidden', !bothEmpty);
 };
 
