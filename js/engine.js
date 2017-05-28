@@ -3875,6 +3875,8 @@ var ruleInfo = {
       // Try ordinary proved facts.
       if (Toy.isRecordedFact(stmt)) {
         var fact = Toy.getResult(stmt);
+        // Converts the standardized names of free variables into the
+        // ones given.
         var map = stmt.matchSchema(fact.getMain());
         var instance = rules.instMultiVars(fact, map);
         return instance.justify('fact', arguments);
