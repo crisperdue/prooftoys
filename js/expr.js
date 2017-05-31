@@ -72,12 +72,20 @@ Toy.extends(TermSet, Set);
 /**
  * A Map from terms to variables.  Use TermMap.addTerm to set up
  * values, never TermMap.set.  The "subst" field maintains a
- * corresponding substitution from names to terms.
+ * corresponding substitution from names of free variables to terms.
  */
 function TermMap() {
   Map.call(this, identifyTerm);
   this.counter = 1;
   this.subst = {};
+  // Array of current bound variables, outermost first.
+  this.boundVars = [];
+  // Arrays of variables and terms shadowed by currently bound variables,
+  // in the same order as boundVars.  The vars are ones already generated
+  // for this TermMap.  If a bound variable does not shadow an existing
+  // mapping, the entries here are null.
+  this.shadowVars = [];
+  this.shadowTerms = [];
 }
 Toy.extends(TermMap, Map);
 
@@ -93,6 +101,41 @@ TermMap.prototype.addTerm = function(term) {
     this.subst[name] = term;
   }
   return this.get(term);
+};
+
+/**
+ * Adds a new variable to the map for an inner binding and returns it.
+ * The argument is the variable in the original Lambda.
+ */
+TermMap.prototype.bindVar = function(vbl) {
+  var name = 'a' + this.counter++
+  var newVar = new Atom(name);
+  this.boundVars.push(newVar);
+  var outer = this.get(vbl);
+  this._set(vbl, newVar);
+  if (outer) {
+    this.shadowVars.push(outer);
+    this.shadowTerms.push(vbl);
+  } else {
+    this.shadowVars.push(null);
+    this.shadowTerms.push(null);
+  }
+  return newVar;
+};
+
+/**
+ * Handles the end of a scope by popping off information about the
+ * binding.  Restores the shadowed binding if there was one, ie. in
+ * the original expression, the bound variable had the same name as
+ * one in an outer scope.
+ */
+TermMap.prototype.unbind = function() {
+  var term = this.shadowTerms.pop();
+  var v = this.shadowVars.pop();
+  this.boundVars.pop();
+  if (v) {
+    this._set(term, v);
+  }
 };
 
 // Make TermMap.set private.

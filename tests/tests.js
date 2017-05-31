@@ -1277,6 +1277,8 @@ var testCase = {
           'p => (q => p)');
     check('(((a1 > a2) & (a2 > a3)) => (a1 > a3))',
           '(a > b) & (b > c) => (a > c)');
+    check('((a1 = ({a2. a2} a1)) & ((a3 + 1) = (a1 - 1)))',
+          'x = {x. x} x & y + 1 = x - 1');
   },
 
   // ALIASES
