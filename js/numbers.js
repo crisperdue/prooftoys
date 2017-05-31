@@ -188,6 +188,19 @@ function termLeftThan(e1, e2) {
 
 
 ////
+//// Definitions
+////
+
+$(function() {
+    var define = Toy.define;
+    define('neg', '{x. -1 * x}');
+    define('-', '{x. {y. x + neg y}}');
+    define('/', '{x. {y. the {z. x = y * z}}}');
+    define('recip', '{x. 1 / x}');
+  });
+
+
+////
 //// Inference rules
 ////
 
@@ -274,15 +287,7 @@ var numbersInfo = {
     description: 'multiplication by 0'
   },
 
-  axiomNeg: {
-    statement: '@neg x = -1 * x',
-    proof: function() {
-      return rules.assert('neg x = -1 * x');
-    },
-    tooltip: 'neg x = -1 * x',
-    description: 'definition of negation'
-  },
-
+  // TODO: Make this a theorem someday.
   axiomReciprocal: {
     statement: '@R x & x != 0 => x * recip x = 1',
     proof: function() {
@@ -343,6 +348,8 @@ var numbersInfo = {
     }
   },
 
+  // Some interim "axioms" to be replaced by proved facts.
+
   axiomPlusType: {
     statement: '@R x & R y == R (x + y)',
     proof: function() {
@@ -364,12 +371,27 @@ var numbersInfo = {
     }
   },
 
-  axiomReciprocalType: {
-    statement: '@R x & x != 0 == R (recip x)',
-    proof: function() {
-      return rules.assert('R x & x != 0 == R (recip x)');
-    }
+  axiomDivisionType: {
+    statement: '@R x & R y & y != 0 == R (x / y)'
   },
+
+  axiomStrictPlus: {
+    statement: '@not (R (x + y)) == (x + y = none)'
+  },
+
+  axiomStrictTimes: {
+    statement: '@not (R (x * y)) == (x * y = none)'
+  },
+
+  axiomStrictNeg: {
+    statement: '@not (R (neg x)) == neg x = none'
+  },
+
+  axiomStrictRecip: {
+    statement: '@not (R (recip x)) == recip x = none'
+  },
+
+  // End of interim axioms.
 
   // Evaluates arithmetic expressions with operators: +, -, *, /, div,
   // mod, neg, =, !=, >, >=, <, <=, and the type operator "R".  Checks
@@ -464,26 +486,9 @@ var numbersInfo = {
     labels: 'uncommon'
   },
 
-  divisionType: {
-    statement: '@R x & R y & y != 0 == R (x / y)',
-    proof: function() {
-      var step1 = rules.axiomTimesType();
-      var step2 = rules.instVar(step1, Toy.parse('recip y'), 'y');
-      var step3 = rules.axiomReciprocalType();
-      var step4 = rules.instVar(step3, 'y', 'x');
-      var step5 = rules.rRight(step4, step2, '/left/right');
-      var step6 = rules.eqSelf(Toy.parse('x / y'));
-      var step7 = rules.apply(step6, '/left');
-      var step8 = rules.rplace(step7, step5, '/main/right/arg')
-      // TODO: Normalize the assumptions automatically, not by hand.
-      return rules.rewriteOnly(step8, '/left',
-                               rules.tautology('a & (b & c) == a & b & c'));
-    },
-    form: '',
-    menu: 'theorem R (x / y)',
-    tooltip: 'quotient of real numbers is real',
-    description: 'quotient of real numbers is real',
-    labels: 'uncommon'
+  reciprocalType: {
+    statement: '@R x & x != 0 == R (recip x)',
+    // TODO: Prove me!
   },
 
   //
@@ -839,13 +844,13 @@ var simplifiersInfo = {
       var adder = proveIsT(rules.axiomPlusType());
       var multiplier = proveIsT(rules.axiomTimesType());
       var subtracter = proveIsT(rules.subtractionType());
-      var divider = proveIsT(rules.divisionType());
+      var divider = proveIsT(rules.axiomDivisionType());
       var negger = memo(function() {
           return rules.axiomNegType().andThen('eqnSwap');
         });
       // x != 0 => (R (recip x) == R x)
       var reciper = memo(function() {
-          var step = rules.axiomReciprocalType();
+          var step = rules.reciprocalType();
           var schema = rules.tautology('(a & b == c) => (b => (c == a))');
           var step2 = rules.forwardChain(step, schema);
           var result = rules.asHypotheses(step2);
@@ -2009,6 +2014,14 @@ var basicFacts = {
     }
   },
 
+  '@neg x = -1 * x': {
+    proof: function() {
+      return (rules.consider('neg x')
+              .andThen('useDefinition', '/right')
+              .andThen('apply', '/right'));
+    }
+  },
+
   'a + neg a = 0': {
     simplifier: true,
     proof: function() {
@@ -2466,11 +2479,7 @@ var negationFacts = {
   },
 
   // Negation with multiplication
-  '@neg a = -1 * a': {
-    proof: function() {
-      return rules.axiomNeg();
-    }
-  },
+
   'neg (a * b) = neg a * b': {
     proof: function() {
       return rules.consider('neg (a * b)')
@@ -2713,11 +2722,7 @@ var recipFacts = {
     }
   },
   'a / b = a * recip b': {
-    proof: function() {
-      var step1 = rules.consider('a / b');
-      var step2 = rules.apply(step1, '/main/right');
-      return step2;
-    }
+    // TODO: Prove me!
   },
   'a != 0 => recip a = 1 / a': {
     proof: function() {

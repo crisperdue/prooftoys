@@ -620,6 +620,7 @@ var ruleInfo = {
   },
 
   axiom1: {
+    statement: 'g T & g F == forall {a. g a}',
     action: function() {
       var result = rules.assert('g T & g F == forall {a. g a}');
       return result.justify('axiom1');
@@ -631,6 +632,7 @@ var ruleInfo = {
   },
 
   axiom2: {
+    statement: 'x = y => h x = h y',
     action: function() {
       var result = rules.assert('x = y => h x = h y');
       return result.justify('axiom2');
@@ -659,6 +661,7 @@ var ruleInfo = {
   },
 
   axiom3: {
+    statement: '(f = g) == forall {x. f x = g x}',
     action: function() {
       var result = rules.assert('(f = g) == forall {x. f x = g x}');
       return result.justify('axiom3');
@@ -700,6 +703,7 @@ var ruleInfo = {
   },
 
   axiom5: {
+    statement: 'iota {x. x = y} = y',
     action: function() {
       var result = rules.assert('iota {x. x = y} = y');
       return result.justify('axiom5');
@@ -712,6 +716,7 @@ var ruleInfo = {
 
   // Equivalent to axiom5, but uses a curried form.
   axiom5Book: {
+    statement: '(iota ((=) y)) = y',
     action: function() {
       var result = rules.assert('(iota ((=) y)) = y');
       return result.justify('axiom5');
@@ -3991,8 +3996,15 @@ function addRules(ruleInfo) {
 function addRule(key, info_arg) {
   var info = info_arg.constructor == Object ? info_arg : {action: info_arg};
   var proof = info.proof;
+  var statement = info.statement;
   // This will become the "rule object":
   var action;
+  // If the rule (theorem) has an explicit statement (which should be
+  // provably true), coerce the statement to an Expr if given as a
+  // string.
+  if (typeof statement === 'string') {
+    statement = info.statement = Toy.mathParse(statement);
+  }
   if (proof) {
     // The proof should have no arguments, and should not do its
     // own call to "justify".
@@ -4006,11 +4018,19 @@ function addRule(key, info_arg) {
     //   proofs of the same statement.
     assert(proof.length == 0, 'Proof of {1} requires parameters');
     assert(!info.action, 'Both proof and action for {1}', key);
-
+  }
+  if (proof || statement) {
     // Describe theorems as "theorem" by default.
     // The theorem name will be added as ruleName into the tooltip.
     if (!('description' in info)) {
       info.description = 'theorem'
+    }
+
+    // If there is a statement but no proof, just assert the statement.
+    if (!proof) {
+      proof = function() {
+        return rules.assert(statement);
+      }
     }
 
     // Don't rerun the proof every time, but do re-justify on each
@@ -4022,16 +4042,12 @@ function addRule(key, info_arg) {
       return action.result.justify(key, []);
     };
   }
-  // If the rule (theorem) has an explicit statement (which should be
-  // provably true), coerce the statement to an Expr if given as a
-  // string.
-  if (typeof info.statement === 'string') {
-    info.statement = Toy.mathParse(info.statement);
-  }
   action = action || info.action;
   if (action == null) {
     var stmt = info.statement;
-    assert(stmt && key.startsWith('axiom'), 'No action for rule {1}', key);
+    if (!(stmt && key.startsWith('axiom'))) {
+      console.warn('No action for rule {1}', key);
+    }
     action = function() { return rules.assert(stmt); };
     // Add it as a fact also, and potentially "swapped".
     // TODO: Work out a way for this to accept fact metadata.
@@ -4143,7 +4159,6 @@ function addFactsMap(map) {
   for (var synopsis in map) {
     var info = map[synopsis];
     info.synopsis = synopsis;
-    assert(info.proof, 'Need "proof" property for {1}', synopsis);
     addFact(info);
     if (!info.noSwap) {
       addSwappedFact(info);
@@ -4154,16 +4169,18 @@ function addFactsMap(map) {
 /**
  * Adds an entry to the facts database given information in the format
  * of fact entries in facts maps, assuming here that the synopsis is
- * already added to the info as a synopsis property.  Currently uses
- * the synopsis property to generate a goal and the proof property
- * as the prover.
+ * already added to the info as a synopsis property.  Can use the
+ * synopsis property to generate a goal and the proof property as the
+ * prover.
  *
  * Currently recognizes input properties as follows:
  *
+ * goal: if present, can generate the synopsis; if proved, becomes
+ *   the proved result, and any proof function will be ignored.
  * synopsis: input acceptable to getStatement, usually a string.
  * proof: function to return the proved fact, matching the synopsis.
- *   If the proof function returns a falsy value, the "fact" rule
- *   will treat it as a stub and assert the desired result.
+ *   If not present, the "fact" rule will assert the goal (derived
+ *   by getStatement from the synopsis.
  * simplifier: true iff this fact is a simplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
  * labels: Object/set of label names, if given as a string, parses
@@ -4175,6 +4192,7 @@ function addFactsMap(map) {
  *   on other information such as an already-proved statement.
  */
 function addFact(info) {
+  info.proved = info.goal && info.goal.isProved() || null;
   // The goal is a rendered Expr just because that makes a complete
   // copy that can be properly annotated with types.
   info.goal = (info.goal || getStatement(info.synopsis)).copyForRendering(null);
@@ -4185,8 +4203,9 @@ function addFact(info) {
   // Careful: It is very doubtful whether annotated structures can be
   // shared as part of any other steps or Exprs.
   info.goal.annotateWithTypes();
+  if (!info.proved) {
   info.prover = asFactProver(info.proof, info.goal);
-  info.proved = null;
+  }
   // Set to true when starting to attempt a proof, then
   // to false when the proof succeeds.
   info.inProgress = false;
@@ -4240,34 +4259,42 @@ $(function() {
     defineCases('|', allT, identity);
     defineCases('=>', identity, allT);
     define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
-
     define('empty', '{x. F}');
     define('none', 'iota empty');
     // Collection has multiple elements:
     define('multi', '{a. exists {x. exists {y. a x & a y & x != y}}}');
     // Always either "none" or the member of the singleton set:
     define('the', '{a. if (multi a) none (iota a)}');
-    
-    define('-', '{x. {y. x + neg y}}');
-    define('/', '{x. {y. x * recip y}}');
   });
 
 
 //// FACTS
 
 /**
- * Constructs and returns a fact from the proof function of a fact and
- * a goal statement for the fact.  Internal to addFact and
- * addSwappedFact.
+ * Accepts a "prover" function of no arguments and a goal statement
+ * (Expr).  The prover may be null, in which case this generates
+ * a trivial prover that asserts the goal.
+ *
+ * Returns a function to construct and return a proved statement from
+ * the arguments.  The returned function runs the prover to prove the
+ * goal.  When running the prover, the returned function also attempts
+ * to use exactly the free variables in the goal, and arranges the
+ * assumptions accordingly.  It warns if assumptions do not match up
+ * with the goal, and raises an error if the main part if it cannot
+ * make the main part match exactly.
+ *
+ * Internal to addFact and addSwappedFact.
  */
 function asFactProver(prover, goal) {
-  assert(typeof prover === 'function', 'Not a function: {1}', prover);
-
+  assert(!prover || typeof prover === 'function',
+         'Not a function: {1}', prover);
   // This function wraps around the user-supplied fact prover
   // to do the generic parts of the work.
   function wrapper() {
-    var result = prover();
-    if (!result) {
+    var result;
+    if (goal.isProved()) {
+      result = goal;
+    } else if (!prover) {
       // The proof is just a stub not yet filled in.
       console.warn('No proof for fact', goal.toUnicode());
       result = rules.assert(goal);
@@ -4275,6 +4302,7 @@ function asFactProver(prover, goal) {
               ? rules.asHypotheses(result)
               : result);
     }
+    var result = prover();
     // Seek a substitution into the result that yields the goal.
     var subst = result.alphaMatch(goal);
     if (subst) {
@@ -4327,7 +4355,7 @@ function asFactProver(prover, goal) {
 // noSwap: if true, inhibits automatic generation of a fact
 //   with equation LHS and RHS swapped
 // prover: function intended to prove the fact
-// proved: proved statement
+// proved: proved statement or null if not yet proved
 var _factsMap = {};
 
 /**

@@ -1468,21 +1468,6 @@ var testCase = {
                 Toy.rules.axiom3());
     assertEqual('((iota {x. (x = y)}) = y)',
                 Toy.rules.axiom5());
-    // Real numbers.  Make sure parsing works.
-    Toy.rules.axiomCommutativePlus();
-    Toy.rules.axiomCommutativeTimes();
-    Toy.rules.axiomAssociativePlus();
-    Toy.rules.axiomAssociativeTimes();
-    Toy.rules.axiomDistributivity();
-    Toy.rules.axiomPlusZero();
-    Toy.rules.axiomTimesOne();
-    Toy.rules.axiomTimesZero();
-    Toy.rules.axiomNeg();
-    Toy.rules.axiomReciprocal();
-    Toy.rules.axiomPlusType();
-    Toy.rules.axiomTimesType();
-    Toy.rules.axiomNegType();
-    Toy.rules.axiomReciprocalType();
   },
 
   testAxiomArithmetic: function() {
@@ -2681,12 +2666,20 @@ window.setTimeout(function() {
           if (stmt) {
             // TODO: Use rules.equalConjunctions to compare goal
             //   assumptions with assumptions in proved results.
-            assert(Toy.termify(stmt).matches(result),
+            assert(stmt.matches(result),
                    'For ' + name +
                    '\nexpected: ' + stmt +
                    '\ngot: ' + result);
           } else {
+            // This lets most theorems pass if they do not have
+            // a statement.
+            // TODO: Consider requiring a statement for every theorem.
             assert(result, 'Proof of ' + name + ' failed.');
+            if (result) {
+              console.warn('No statement for', name, '- proved', result.$$);
+            } else {
+              Toy.fail('Proof of ' + name + ' failed.');
+            }
           }
         }.bind(null, prover, name));
       nTheorems++;
