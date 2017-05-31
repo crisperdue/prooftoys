@@ -1893,7 +1893,7 @@ var ruleInfo = {
     statement: 'F => x',
     proof: function() {
       var step1 = rules.theorem('r5225');
-      var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'f');
+      var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'p');
       var step3 = rules.defFFromBook();
       var step4 = rules.rRight(step3, step2, '/left');
       return rules.apply(step4, '/right');
