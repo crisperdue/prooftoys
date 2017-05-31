@@ -2642,19 +2642,49 @@ var testCase = {
 // the initializations seem to run only after the event loop has
 // returned to idle, at least when running tests.
 window.setTimeout(function() {
-  for (var name in testCase) {
+  true;
+  // Set this to an array of theorem names, test case names, and fact
+  // statements to be specifically tested.  Fact statements usually
+  // will be strings here.
+  var toTest = null;  // Or an array, like ['testEqSelf'];
+
+  // Runs the named test case or warns if there is none such.
+  function doTestCase(name) {
     var fn = testCase[name];
     if (typeof fn === 'function') {
       // It would be nice to log the name of each test here, but
       // running "test" only queues the test.
       test(name, fn);
     } else {
-      console.log(name + ': not a function');
+      console.warn(name + ': not a function');
+    }
+  }
+  if (toTest) {
+    toTest.forEach(function(name) {
+        if (testCase[name]) {
+          doTestCase(name);
+        }
+      });
+  } else {
+    for (var name in testCase) {
+      doTestCase(name);
     }
   }
   var rules = Toy.rules;
   var nTheorems = 0;
-  for (var name in rules) {
+  // Set up an object/map of rules to test; the elements of toTest
+  // that name rules, if toTest is an array, otherwise all rules.
+  var ruleTests = {};
+  if (toTest) {
+    toTest.forEach(function(name) {
+        if (name in rules) {
+          ruleTests[name] = true;
+        }
+      });
+  } else {
+    ruleTests = rules;
+  }
+  for (var name in ruleTests) {
     var prover = rules[name];
     // Prover is a function and its length is its number of args.
     if (prover.length == 0) {
@@ -2686,13 +2716,27 @@ window.setTimeout(function() {
     }
   }
   console.log('Queued', nTheorems, 'theorems to test.');
-  var nFacts = 0;
-  Toy.eachFact(function(info) {
+  // Tests one fact given its fact info.
+  function testFact(info) {
       test(info.synopsis, function() {
           assert(Toy.getResult(info.goal).ruleName);
         });
       nFacts++;
-    });
+  }
+  var nFacts = 0;
+  if (toTest) {
+    toTest.forEach(function(key) {
+        // Ignore identifiers as getStatement does.
+        if (!Toy.isIdentifier(key)) {
+          var info = Toy.lookupFactInfo(key);
+          if (info) {
+            testFact(info);
+          }
+        }
+      });
+  } else {
+    Toy.eachFact(testFact);
+  }
   console.log('Queued', nFacts, 'facts to test.');
   test('End of tests', function() {
       expect(0);
