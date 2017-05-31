@@ -1276,9 +1276,8 @@ function boolSchema(term) {
 }
 
 /**
- * Convert all (free) variables in the given term to standard names
- * as by TermMap, with those names in text order from left to right.
- * Anonymous lambda are not yet supported.
+ * Convert all variables in the given term to standard names as by
+ * TermMap, with those names in text order from left to right.
  */
 function standardVars(term) {
   var map = new Toy.TermMap();
@@ -1287,7 +1286,10 @@ function standardVars(term) {
       return new Toy.Call(makeSchema(term.fn),
                           makeSchema(term.arg));
     } else if (term instanceof Toy.Lambda) {
-      Toy.err('Lambdas not yet supported in facts');
+      var v = map.bindVar(term.bound);
+      var result = new Toy.Lambda(v, makeSchema(term.body));
+      map.unbind();
+      return result;
     } else if (term instanceof Toy.Atom) {
       if (term.isVariable()) {
         return map.addTerm(term);
