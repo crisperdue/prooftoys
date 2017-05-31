@@ -1578,9 +1578,9 @@ var testCase = {
     var result = rules.apply(step1, '/left');
     assertEqual('(2 = 2)', result);
     // Apply a call to 1-arg function:
-    var step1 = rules.tautology('(p => not p) => not p');
+    var step1 = rules.eqSelf('neg x');
     var result = rules.apply(step1, '/right');
-    assertEqual('((p => (not p)) => (F = p))', result);
+    assertEqual('((neg x) = (-1 * x))', result);
     // Apply a call to a 2-arg function:
     var step1 = rules.assume('x != y');
     var result = rules.apply(step1, '/right');
