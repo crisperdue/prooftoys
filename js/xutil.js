@@ -1135,6 +1135,8 @@ function getPrecedence(token) {
 }
 
 // Unary operators should all be the same.
+// No unary operators exist at this time, but the constant
+// is used in rendering.
 var unaryPower = 200;
 
 // Alphanumeric names have this power unless specified otherwise.
@@ -1166,10 +1168,6 @@ var precedence = {
   div: 40,
   mod: 40,
   '**': 50,
-  forall: unaryPower,
-  exists: unaryPower,
-  not: unaryPower,
-  neg: unaryPower,
   // Specials
   '(': 1000,
   '{': 1000

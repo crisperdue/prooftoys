@@ -478,7 +478,7 @@ var testCase = {
     assertEqual('(f x)', result.dump());
     result = Toy.parse('(not) = ((=) F)');
     assertEqual('((= not) (= F))', result.dump());
-    assertEqual('((neg (neg a)) = a)', Toy.parse('neg neg a = a'));
+    assertEqual('((neg (neg a)) = a)', Toy.parse('neg (neg a) = a'));
     result = Toy.parse('{x. x} T');
     assertEqual('({x. x} T)', result);
     result = Toy.parse('a + b * c');

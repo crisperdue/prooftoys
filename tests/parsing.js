@@ -25,6 +25,12 @@ var tests = {
     a.equal(parse('-x = -1 * x').toString(), '((neg x) = (-1 * x))');
   },
 
+  defined: function(a) {
+    a.equal(parse('forall').toString(), 'forall');
+    a.equal(parse('exists').toString(), 'exists');
+    a.equal(parse('exists p').toString(), '(exists p)');
+  },
+
   specials: function(a) {
     a.equal(parse('(not) = ((=) F)').dump(), '((= not) (= F))');
   }
