@@ -79,13 +79,13 @@ TypeVariable.prototype.toString = function() {
 TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
   var type = dereference(this);
   var name = type.name;
-  if (!occursInList(name, nonGenerics)) {
+  if (occursInList(name, nonGenerics)) {
+    return type;
+  } else {
     if (!mappings.hasOwnProperty(name)) {
       mappings[name] = new TypeVariable();
     }
     return mappings[name];
-  } else {
-    return type;
   }
 };
 
