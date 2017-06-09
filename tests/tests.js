@@ -1391,12 +1391,14 @@ var testCase = {
     assertEqual('o',
                 Toy.findType(rules.axiom4(Toy.parse('({x. x} y)'))).toString());
     assertEqual('o', Toy.findType(rules.axiom5()).toString());
+
     function check(expected, expr) {
       expr = (typeof expr == 'string') ? Toy.parse(expr) : expr;
       var type = Toy.findType(expr);
       // for debugging:
       // Y.log(expected + '/' + type);
-      assertEqual(expected, type.toString());
+      // replace type variables with just "t".
+      assertEqual(expected, type.toString().replace(/t[0-9]*/, 't'));
     }
     // Note that all the "> 0" conditions below force variables to
     // be individual variables.
@@ -1416,6 +1418,11 @@ var testCase = {
     check('((o i) (o i))', '{x. {y. (x = ((>) y)) & (y > 0)}}');
     // Successful typing of the identity function
     check('o', '({x. x} p) = p');
+
+    check('(o o)', 'not');
+    check('(o (o t))', '(!=) {x. F}');
+    check('(o (o t))', '{x. x != {y. F}}');
+
     // An example where the type check in Rule R catches improper
     // use of types.
     var step1 = Toy.parse('p (f g) => p g').assert();
@@ -2741,7 +2748,7 @@ window.setTimeout(function() {
   }
   console.log('Queued', nFacts, 'facts to test.');
   test('End of tests', function() {
-      expect(0);
+      assert(true, 'End of tests at ' + new Date());
       console.log('End of test run at ', new Date());
     });
   // When the next lines run, the tests run with profiling.

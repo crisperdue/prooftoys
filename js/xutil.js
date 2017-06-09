@@ -63,13 +63,16 @@ TypeVariable.prototype.toString = function() {
   // Returns the dereferenced value without modifying
   // the internals.
   return this.instance ? this.instance.toString() : this.name;
-}
+};
 
 /**
  * When applying the "fresh" operation to a type expression, the
  * resulting expression has the same structure as the input, but all
  * occurrences of each "generic" type variable are replaced with
  * occurrences of a "fresh" type variable distinct from all others.
+ *
+ * The mappings are from previous type variable names to new type
+ * variable names.
  *
  * Note: with only top-level definitions, generic type variables are
  * exactly those in the types of defined constants, but definitions
@@ -78,14 +81,19 @@ TypeVariable.prototype.toString = function() {
  */
 TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
   var type = dereference(this);
-  var name = type.name;
-  if (occursInList(name, nonGenerics)) {
-    return type;
-  } else {
-    if (!mappings.hasOwnProperty(name)) {
-      mappings[name] = new TypeVariable();
+  if (type instanceof TypeVariable) {
+    var name = type.name;
+    if (occursInList(name, nonGenerics)) {
+      return type;
+    } else {
+      if (!mappings.hasOwnProperty(name)) {
+        mappings[name] = new TypeVariable();
+      }
+      return mappings[name];
     }
-    return mappings[name];
+  } else {
+    // This is not really a variable after being dereferenced.
+    return type.fresh(mappings, nonGenerics);
   }
 };
 
@@ -310,16 +318,27 @@ Expr.prototype.isIndividual = function() {
   return this.hasType() == individual;
 };
 
+// TODO: Consider implementing a "mating" function to use in rule R to
+// unify the type of the target site with the type of the term that
+// will replace it.  The function must unify the two types and
+// propagate the unification throughout the result.
+//
+// Note that if the type of the replacement term has no type variables
+// in it, it can be used as-is with its types intact.  If the mating
+// results in a replacement with no variables, the result might
+// sensibly be cached for future use.  In some situations the result
+// of rule R may have to be a completely new structure.
+
 /**
- * Find and return the type of an expression (Expr).  Throws an Error
- * if type checking fails.  The error may have a "cause" property with
- * the original error (TypeCheckError).
+ * Find and return the (dereferenced)type of an expression (Expr).
+ * Throws an Error if type checking fails.  The error may have a
+ * "cause" property with the original error (TypeCheckError).
  *
  * The second argument is private to annotateWithTypes.
  */
 function findType(expr, annotate) {
   if (expr._type) {
-    return expr._type;
+    return dereference(expr._type);
   }
 
   // In this code types[i] will be the type of vars[i].
@@ -335,6 +354,9 @@ function findType(expr, annotate) {
   // appear here when their variable is in scope, and in types of free
   // variables they are inserted upon the first occurrence of the free
   // variable, and remain thereafter.
+  // TODO: Consider removing nonGenerics, using just vars instead,
+  //   Q0 does not have truly generic functions, just families of
+  //   type-specific functions.
   var nonGenerics = [];
   //
   // Note: Generic type variables reflect the fact that different
@@ -411,7 +433,7 @@ function findType(expr, annotate) {
     } else if (isDefinedByCases(name)) {
       return definedTypes[name];
     } else if (isDefined(name)) {
-      console.log(name, 'is defined but type is not recorded.');
+      console.warn(name, 'is defined but type is not recorded.');
       return findType(getDefinition(name).getRight());
     } else {
       throw new TypeCheckError('Cannot find type for: ' + name);
@@ -422,8 +444,45 @@ function findType(expr, annotate) {
     return !occursInList(v, nonGenerics);
   }
 
+  /**
+   * Dereference the type to make sure its "instance" is the most
+   * specific one available.  If it is a type operator, do the
+   * same with its type arguments.
+   */
+  function tidy(type) {
+    var t = dereference(type);
+    if (t instanceof TypeOperator) {
+      var types = t.types;
+      for (var i = 0; i < types.length; i++) {
+        tidy(t.types[i]);
+      }
+    }
+  }
+
+  /**
+   * Tidy up the type information for the given expression and all of
+   * its subexpressions.
+   */
+  function tidyAll(term) {
+    if (term instanceof Call) {
+      tidy(term.arg._type);
+      tidy(term.fn._type);
+    } else if (term instanceof Lambda) {
+      tidy(term.body._type)
+    }
+    tidy(term._type);
+  }
+
   try {
-    return dereference(analyze(expr));
+    var result = analyze(expr);
+    if (annotate) {
+      // If annotating, walk through all subexpressions of the expr,
+      // tidying up their types, which are now all in final form.
+      tidyAll(expr);
+    } else {
+      tidy(result);
+    }
+    return result;
   } catch(e) {
     if (e instanceof TypeCheckError) {
       var e2 = new TypeCheckError('Cannot find type for ' + expr.toUnicode());
@@ -494,6 +553,9 @@ function unifyTypes(t1, t2) {
  *
  * Note that this is the identity function for objects that are not
  * type variables, including null and undefined.
+ *
+ * Also, unification mutates Type objects, so the result may mutate as
+ * a result of any future unifications relevant to this type.
  */
 function dereference(type) {
   if (type instanceof TypeVariable) {
@@ -1671,5 +1733,7 @@ Toy._decodeArg = decodeArg;
 
 // For debugging
 Toy.nParsed = nParsed;
+Toy._constantTypes = constantTypes;
+Toy._dereference = dereference;
 
 })();
