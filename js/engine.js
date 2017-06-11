@@ -4421,7 +4421,7 @@ function getResult(stmt, mustProve) {
   var statement = getStatement(stmt);
   // Same encoding as in addFact.
   var info = lookupFactInfo(statement);
-  assert(info, 'No such fact: {1}', statement);
+  assert(info, 'Not a recorded fact: {1}', statement);
   if (info.proved) {
     return info.proved;
   }
@@ -4453,7 +4453,7 @@ function getResult(stmt, mustProve) {
  */
 function isInProgress(stmt) {
   if (!lookupFactInfo(stmt)) {
-    console.warn('No fact', stmt.$$);
+    // It could be a tautology, but not a recorded fact.
     return false;
   }
   return lookupFactInfo(stmt).inProgress;
@@ -4558,6 +4558,8 @@ function getStatement(fact) {
  * searchMethod: Name of method to apply to the term to control
  *   which subexpressions of the term to apply findMatchingFact to;
  *   defaults to 'searchCalls', which searches through calls.
+ *
+ * If the info is an array, it must be the list of facts.
  */
 function searchForMatchingFact(term, info) {
   var facts, cxt, searchMethod;
@@ -4591,7 +4593,8 @@ function searchForMatchingFact(term, info) {
  * list name to a list (array) value.  In this way lists can be
  * reused, and also enables them to be effectively recursive.
  *
- * Pattern arguments can be an argument acceptable to getStatement, or:
+ * Each pattern argument can be an argument acceptable to
+ * getStatement, or:
  *
  * A plain object with properties as follows:
  *
@@ -4611,7 +4614,7 @@ function searchForMatchingFact(term, info) {
  * for avoiding infinite regress, for example when simplifying steps
  * of the proof of a simplifier fact.
  *   
- * A plain object with a single property, either:
+ * Or it can be a plain object with a single property, either:
  *
  * descend: a plain object with properties "schema", a schema
  *   (possibly in string form) to match against the term, and "parts",
