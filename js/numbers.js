@@ -3069,6 +3069,8 @@ $.extend(algebraFacts, algebraIdentities);
  * TODO: Consider whether x - 7 is simpler than x + -7.
  */
 var basicSimpFacts = [
+                      'T & a == a',
+                      'a & T == a',
                       'not (a = b) == a != b',
                       {stmt: 'a + neg b = a - b',
                        where: '!$.b.isNumeral()'},
