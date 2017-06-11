@@ -2088,6 +2088,7 @@ var ruleInfo = {
     form: 'Enter tautology: <input name=bool size=40>',
     menu: 'prove a tautology',
     tooltip: ('Tautology decider.'),
+    autoSimplify: noSimplify,
     description: 'tautology'
   },
 
