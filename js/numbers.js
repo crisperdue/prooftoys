@@ -33,16 +33,10 @@ var F = constify('F');
 
 var convert = Toy.convert;
 var applyToVisible = Toy.applyToVisible;
+var noSimplify = Toy.noSimplify;
+
 
 //// Utility functions
-
-/**
- * A simplification function that does nothing, useful as the
- * auto-simplifier for rules that want to suppress simplification.
- */
-function noSimplify(step) {
-  return step;
-}
 
 // Interactive testing in context of this file.
 window.Numtest = function(x) {

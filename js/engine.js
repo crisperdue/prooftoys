@@ -208,6 +208,14 @@ function getStepCounter() {
 }
 
 /**
+ * A simplification function that does nothing, useful as the
+ * auto-simplifier for rules that want to suppress simplification.
+ */
+function noSimplify(step) {
+  return step;
+}
+
+/**
  * Adjusts a path to account for application of a typical rewrite rule
  * that could prefix the path with /right, given a step that is the
  * input to the rewrite and a step that is the result of the rewrite.
@@ -5222,6 +5230,7 @@ Toy.autoAssert = false;
 Toy.assertFacts = true;
 
 Toy.getStepCounter = getStepCounter;
+Toy.noSimplify = noSimplify;
 
 Toy.addRule = addRule;
 Toy.addRules = addRules;
