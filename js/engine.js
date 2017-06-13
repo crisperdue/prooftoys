@@ -4139,6 +4139,20 @@ var logicFacts = {
               .andThen('apply', '/right/fn')
               .andThen('apply', '/right'));
     }
+  },
+
+  'exists p == not (forall {x. not (p x)})': {
+    proof: function() {
+      var all = (rules.axiom3()
+                 .andThen('instMultiVars', {f: 'p', g: '{x. F}'})
+                 .andThen('apply', '/right/arg/body/right')
+                 .rewrite('/right/arg/body', '(a == F) == (not a)'));
+      return (rules.eqSelf('exists p')
+              .andThen('useDefinition', '/right/fn')
+              .andThen('apply', '/right')
+              .rewrite('/right', 'x != y == not (x = y)')
+              .andThen('rewriteOnlyFrom', '/right/arg', all));
+    }
   }
 };
 
