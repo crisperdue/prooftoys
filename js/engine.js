@@ -4259,7 +4259,7 @@ $(function() {
     define('not', equal(F));
     define('!=', '{x. {y. not (x = y)}}');
     define('forall', '(=) {x. T}');
-    define('exists', '(!=) {x. F}');
+    define('exists', '{p. p != {x. F}}');
     define('exists1', '{p. exists {y. p = {x. x = y}}}');
     defineCases('&', identity, '{x. F}');
     defineCases('|', allT, identity);
