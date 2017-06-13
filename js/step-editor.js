@@ -849,20 +849,21 @@ $.extend(StepEditor.prototype, {
       if (expr) {
         Toy.eachFact(function(info) {
             var goal = info.goal;
-            if (goal.isEquation()) {
-              var lhs = goal.eqnLeft();
-              if (typesMismatch(expr, lhs)) {
-                return;
-              }
-              if (expr.matchSchema(lhs)) {
-                if (self.showRuleType == 'algebra') {
-                  if (info.labels.algebra) {
-                    facts.push(goal);
-                  }
-                  // Otherwise don't show the fact in algebra mode.
-                } else {
+            if (!goal.isRewriter()) {
+              return;
+            }
+            var lhs = goal.eqnLeft();
+            if (typesMismatch(expr, lhs)) {
+              return;
+            }
+            if (expr.matchSchema(lhs)) {
+              if (self.showRuleType == 'algebra') {
+                if (info.labels.algebra) {
                   facts.push(goal);
                 }
+                // Otherwise don't show the fact in algebra mode.
+              } else {
+                facts.push(goal);
               }
             }
         });
