@@ -4054,16 +4054,11 @@ function addRule(key, info_arg) {
     };
   }
   action = action || info.action;
-  if (action == null) {
-    var stmt = info.statement;
-    if (!(stmt && key.startsWith('axiom'))) {
-      console.warn('No action for rule {1}', key);
-    }
-    action = function() { return rules.assert(stmt); };
+  if (statement) {
     // Add it as a fact also, and potentially "swapped".
     // TODO: Work out a way for this to accept fact metadata.
-    addFact({goal: stmt, proof: action});
-    addSwappedFact({goal: stmt, proof: action});
+    addFact({goal: statement, proof: action});
+    addSwappedFact({goal: statement, proof: action});
   }
   assert(typeof action === 'function',
          'Rule action must be a function: {1}', key);
