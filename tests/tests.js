@@ -969,6 +969,7 @@ var testCase = {
     check('{p: (x < 1), q: (x = 0)}',
           implies(p, q), Toy.parse('x < 1 => (x = 0)'));
     check('{a: 3, b: 2}', 'a + b', '3 + 2');
+    check('{p: {x. (p x)}}', 'exists p', 'exists {x. (p x)}');
   },
 
   testAlphaMatch: function() {

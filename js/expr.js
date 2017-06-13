@@ -587,8 +587,7 @@ Expr.prototype.concat = function(expr, op) {
 /**
  * Matches the given "schematic" expression against this. Returns a
  * substitution that yields this expression when given the schema, or
- * null if there is none.  Assumes that the schema contains no
- * variable bindings.  The substitution maps from names to
+ * null if there is none.  The substitution maps from names to
  * expressions.  Tautologies for example qualify as schemas.
  *
  * This is a special case of unification of expressions.
@@ -598,7 +597,7 @@ Expr.prototype.matchSchema = function(schema) {
     schema = parse(schema);
   }
   var substitution = {};
-  var result = schema._matchAsSchema(this, substitution);
+  var result = schema._matchAsSchema(this, substitution, null);
   return result ? substitution : null;
 };
 
@@ -2062,7 +2061,7 @@ Atom.prototype.findAll = function(name, action1, expr2, action2) {
   }
 };
 
-Atom.prototype._matchAsSchema = function(expr, map) {
+Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   // This method does not return true when matching a defined name with an
   // expression that matches its definition.  It is a stricter criterion than
   // would be treating definitions exactly as abbreviations.
@@ -2070,14 +2069,23 @@ Atom.prototype._matchAsSchema = function(expr, map) {
     // Expr must be a Atom with the same name.
     return this.matches(expr);
   }
-  // Only a true variable can match an expression that is not identical to it.
-  var binding = map[this.name];
-  if (binding) {
-    return expr.matches(binding);
+  var name = this.name;
+  var boundTo = getBinding(name, bindings);
+  if (boundTo) {
+    // This is a bound variable.  It matches iff the argument is the
+    // corresponding bound variable in expr.
+    return expr.name == boundTo;
+  }
+  // This is a free variable.  If it is being substituted, check it,
+  // otherwise add a mapping for it into the substitution.
+  var mapped = map[name];
+  if (mapped) {
+    return expr.matches(mapped);
   } else {
-    map[this.name] = expr;
+    map[name] = expr;
     return true;
   }
+  return false;
 };
 
 Atom.prototype._asPattern = function(term) {
@@ -2525,10 +2533,10 @@ Call.prototype.findAll = function(name, action1, expr2, action2) {
   this.arg.findAll(name, action1, expr2.arg, action2);
 };
 
-Call.prototype._matchAsSchema = function(expr, map) {
+Call.prototype._matchAsSchema = function(expr, map, bindings) {
   return (expr instanceof Call
-          && this.fn._matchAsSchema(expr.fn, map)
-          && this.arg._matchAsSchema(expr.arg, map));
+          && this.fn._matchAsSchema(expr.fn, map, bindings)
+          && this.arg._matchAsSchema(expr.arg, map, bindings));
 };
 
 Call.prototype._asPattern = function(term) {
@@ -2744,8 +2752,13 @@ Lambda.prototype.findAll = function(name, action1, expr2, action2) {
   }
 };
 
-Lambda.prototype._matchAsSchema = function(expr, map) {
-  throw new Error('Schema expression cannot contain variable bindings.');
+Lambda.prototype._matchAsSchema = function(expr, map, bindings) {
+  if (expr instanceof Lambda) {
+    var extended = new Bindings(this.bound.name, expr.bound.name, bindings);
+    return this.body._matchAsSchema(expr.body, map, extended);
+  } else {
+    return false;
+  }
 };
 
 Lambda.prototype._asPattern = function(term) {
