@@ -722,19 +722,6 @@ var ruleInfo = {
     description: 'axiom of description'
   },
 
-  // Equivalent to axiom5, but uses a curried form.
-  axiom5Book: {
-    statement: '(iota ((=) y)) = y',
-    action: function() {
-      var result = rules.assert('(iota ((=) y)) = y');
-      return result.justify('axiom5');
-    },
-    inputs: {},
-    form: '',
-    tooltip: ('axiom of description'),
-    description: 'Andrews axiom of description'
-  },
-
   // Definition of F, for book-style proofs.
   defFFromBook: function() {
     return rules.assert('F = forall {x. x}').justify('defFFromBook');
