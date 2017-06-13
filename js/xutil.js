@@ -1362,6 +1362,38 @@ function standardVars(term) {
 }
 
 /**
+ * True iff this expression has the form of a rewrite rule, being an
+ * equation, possibly with assumptions, and all free variables in
+ * assumptions appearing also in the LHS of the equation.  (This
+ * eliminates facts such as transitivity of equality.)
+ */
+Expr.prototype.isRewriter = function() {
+  var stmt = this;
+  if (!stmt.isEquation()) {
+    return false;
+  }
+  // Should statements like [R a & R b => (a = b == a + c = b + c)] be
+  // treated differently?  (It introduces a new var in the RHS.)
+  // This seems OK as it is.
+  if (stmt.isCall2('=>')) {
+    var asms = stmt.getLeft();
+    var lhs = stmt.eqnLeft();
+    var aFree = asms.freeVars();
+    var lFree = lhs.freeVars();
+    for (var name in aFree) {
+      if (!(name in lFree)) {
+        // Some free var in the assumptions is not free in the LHS.
+        return false;
+      }
+    }
+  }
+  return true;
+};
+  
+
+//// SIMPLE UTILITIES
+
+/**
  * Calls a function given as an Expr or name of a constant, passing
  * one or more arguments.
  */
