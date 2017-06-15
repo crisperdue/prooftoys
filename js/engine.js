@@ -4070,6 +4070,11 @@ function addRule(key, info_arg) {
     action = function() { 
       if (action.result === undefined) {
         action.result = proof();
+        if (statement) {
+          assert(action.result.matches(statement),
+                 'Failed to prove {1},\n  instead proved {2}',
+                 statement, action.result);
+        }
       }
       return action.result.justify(key, []);
     };
