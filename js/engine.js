@@ -2379,6 +2379,17 @@ var ruleInfo = {
   // x bound, substituting for it does not result in any free
   // occurrences of x.
   existImplies: {
+    // TODO: Check theorem statements when proving.
+    //
+    // TODO: Consider asserting theorems until proof is requested.
+    //
+    // TODO: Implement precondition functions intended to check that
+    //   a rule can succeed.  Plan is that they return a truthy value
+    //   on success, and store it in a global variable immediately
+    //   before calling the main rule code.
+    //
+    // TODO: Implement "eRule" based on this theorem, with a precondition
+    //   that checks applicability.
     statement: 'forall {x. p x => q} == (exists p => q)',
     proof: function() {
       var fact = rules.fact('not (forall {x. not (p x)}) == exists p');
