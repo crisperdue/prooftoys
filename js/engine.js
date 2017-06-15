@@ -2360,7 +2360,8 @@ var ruleInfo = {
   },
 
   // This is probably the most useful form of quantifier remover that
-  // requires a variable to be not free.
+  // requires a variable to be not free.  It does not appear in the
+  // book, but the numbered ones are corollaries of it.
   implyForall: {
     statement: 'forall {x. p => q x} == (p => forall {x. q x})',
     proof: function() {
@@ -2369,6 +2370,28 @@ var ruleInfo = {
               .andThen('instVar', 'not p', 'p')
               .andThen('rewriteOnly', '/right', taut)
               .andThen('rewriteOnly', '/left/arg/body', taut));
+    }
+  },
+
+  // Counterpart to R2134.  This does almost all the work for the
+  // "Exists rule".  The LHS quantifier limits the "E rule" to use
+  // where x is not free in any hypothesis, and since "q" appears with
+  // x bound, substituting for it does not result in any free
+  // occurrences of x.
+  existImplies: {
+    statement: 'forall {x. p x => q} == (exists p => q)',
+    proof: function() {
+      var fact = rules.fact('not (forall {x. not (p x)}) == exists p');
+      return (rules.implyForall()
+              .andThen('instMultiVars', {p: 'not q', q: '{x. not (p x)}'})
+              .andThen('apply', '/right/right/arg/body')
+              .andThen('apply', '/left/arg/body/right')
+              .andThen('rewrite', '/right', 'not a => b == not b => a')
+              .andThen('rewrite', '/left/arg/body',
+                       'not a => not b == b => a')
+              .andThen('replace', '/right/left', fact)
+              
+              );
     }
   },
 
@@ -4211,7 +4234,7 @@ function addFact(info) {
   // shared as part of any other steps or Exprs.
   info.goal.annotateWithTypes();
   if (!info.proved) {
-  info.prover = asFactProver(info.proof, info.goal);
+    info.prover = asFactProver(info.proof, info.goal);
   }
   // Set to true when starting to attempt a proof, then
   // to false when the proof succeeds.
