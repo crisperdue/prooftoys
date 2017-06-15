@@ -2400,9 +2400,7 @@ var ruleInfo = {
               .andThen('rewrite', '/right', 'not a => b == not b => a')
               .andThen('rewrite', '/left/arg/body',
                        'not a => not b == b => a')
-              .andThen('replace', '/right/left', fact)
-              
-              );
+              .andThen('replace', '/right/left', fact));
     }
   },
 
