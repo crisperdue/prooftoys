@@ -360,7 +360,7 @@ function assertTrue(condition, message_arg) {
     e.step = step;
     e.isAssert = true;
     if (Toy.debugAssertions) {
-      console.log(e.stack);
+      console.error(e.message);
       debugger;
     }
     throw e;
