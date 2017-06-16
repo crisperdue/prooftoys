@@ -697,7 +697,7 @@ var ruleInfo = {
          // In this case the substitution will have no effect,
          // though subFree might incidentally rename the bound variable.
          ? equal(call, lambda.body)
-         : equal(call, lambda.body.subFree1(call.arg, lambda.bound)));
+         : equal(call, lambda.body.subFree1(call.arg, lambda.bound.name)));
       // Always make sure the call has a type.  It came from elsewhere.
       Toy.findType(call);
       return rules.assert(result).justify('axiom4', [call]);
