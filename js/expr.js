@@ -720,8 +720,9 @@ Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
   for (var name in map_arg) {
     var replacement = map_arg[name];
-    assert(!hasGeneratedBound(replacement),
-           'Has generated bound var: {1}', replacement);
+    if (replacement.hasGeneratedBound()) {
+      // console.warn('Has generated bound var:', replacement.$$);
+    }
     if (!(replacement instanceof Atom && replacement.name == name)) {
       // Include only substitutions that actually change the name.
       map[name] = replacement;
@@ -734,7 +735,7 @@ Expr.prototype.subFree = function(map_arg) {
  * Boolean, true iff the given term contains any automatically-renamed
  * bound variable free in it.
  */
-function hasGeneratedBound(term) {
+Expr.prototype.hasGeneratedBound = function() {
   function hasGB(term, bindings) {
     if (term instanceof Lambda) {
       return hasGB(term.body, new Bindings(term.bound.name, true, bindings));
@@ -746,6 +747,7 @@ function hasGeneratedBound(term) {
       assert(false, 'Impossible');
     }
   }
+  return hasGB(this, null);
 }
 
 /**

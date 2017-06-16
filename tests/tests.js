@@ -998,7 +998,9 @@ var testCase = {
       var subst = term.matchSchemaPart(path, schema, name);
       if (expectSuccess) {
         if (subst) {
-          assertEqual(term.get(subst.path).toString(),
+          var path = subst.path;
+          delete subst.path;
+          assertEqual(term.get(path).toString(),
                       Toy.termify(schema).subFree(subst));
         } else {
           assert(false, 'No match found');
