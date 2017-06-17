@@ -2535,6 +2535,17 @@ Call.prototype.findAll = function(name, action1, expr2, action2) {
   this.arg.findAll(name, action1, expr2.arg, action2);
 };
 
+// TODO: A call with a free predicate variable and some bound
+//   variables as arguments can expand to any boolean term containing
+//   those bound variables.  To do this, first substitute one or more
+//   nested lambdas for the predicate variable, (call it "p").
+//
+//   The innermost lambda has the form {x. A}, with "x" being the last
+//   of the variables appearing as arguments to "p".  Any additional
+//   lambdas bind  variables that are preceding arguments of "p".
+//
+//   Similarly for terms of other types.
+//   
 Call.prototype._matchAsSchema = function(expr, map, bindings) {
   return (expr instanceof Call
           && this.fn._matchAsSchema(expr.fn, map, bindings)
