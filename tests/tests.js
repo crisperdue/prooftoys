@@ -657,6 +657,11 @@ var testCase = {
     // Failing case 10/2016
     result = Toy.parse('(f = g) == forall {x. f x = g x}').subFree({g: varify('f')});
     assertEqual('((f = f) == (forall {x. ((f x) = (f x))}))', result);
+    // Request substitution for bound var.
+    result = Toy.parse('({g. (g T T)} = g)').subFree({g: varify('f')});
+    assertEqual('({g. (g T T)} = f)', result);
+    result = Toy.parse('({g. (g p T)} = g)').subFree({g: varify('f'), p: T});
+    assertEqual('({g. (g T T)} = f)', result);
   },
 
   testMathVars: function() {

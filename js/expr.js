@@ -718,42 +718,26 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
+  var freeVars = {};
   for (var name in map_arg) {
     var replacement = map_arg[name];
-    if (replacement.hasGeneratedBound()) {
-      // console.warn('Has generated bound var:', replacement.$$);
-    }
     if (!(replacement instanceof Atom && replacement.name == name)) {
       // Include only substitutions that actually change the name.
       map[name] = replacement;
+      Object.assign(freeVars, replacement.freeVars());
     }
   }
-  return Toy.isEmpty(map) ? this : this._subFree(map);
+  var result = Toy.isEmpty(map) ? this : this._subFree(map, freeVars);
+  return result;
 };
-
-/**
- * Boolean, true iff the given term contains any automatically-renamed
- * bound variable free in it.
- */
-Expr.prototype.hasGeneratedBound = function() {
-  function hasGB(term, bindings) {
-    if (term instanceof Lambda) {
-      return hasGB(term.body, new Bindings(term.bound.name, true, bindings));
-    } else if (term instanceof Atom) {
-      return term.isGeneratedBound() && !Toy.findBinding(term.name, bindings);
-    } else if (term instanceof Call) {
-      return hasGB(term.fn) || hasGB(term.arg);
-    } else {
-      assert(false, 'Impossible');
-    }
-  }
-  return hasGB(this, null);
-}
 
 /**
  * Substitutes the replacement for a single name, which can be a
  * string or Atom as done by Expr.subFree.  Used by Axiom 4 (lambda
  * conversion).
+ *
+ * TODO: Implement this independently of subFree, as this can be
+ *   faster and cleaner.
  */
 Expr.prototype.subFree1 = function(replacement, name) {
   return this.subFree(Toy.object0(name, replacement));
@@ -1618,28 +1602,12 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // expressions.  Substitutes the corresponding replacement expression
 // for each free occurrence of each name in this Expr.
 //
-// To ensure no names are captured, also renames bound variables
-// throughout this as required so the names are all unique and in the
-// namespace reserved for bound variables.  (In this logic a bound
-// variable can never become free, though free variables can become
-// bound.)
-//
-// This strategy is based on the idea that all occurrences of bound
-// variables always remain bound.  Substitution for a bound variable
-// (Axiom 4) never creates a WFF with any variable both free and
-// bound.  Application of Rule R to a target step requires an equation
-// as its other input, so any variables it introduces as free relative
-// to the target scope were free in the input equation.  Thus if a
-// bound variable is given a name different from the name of any other
-// bound variable appearing anywhere at the time, and the name is not
-// reused in the future as a bound variable name, then it can never be
-// made to occur free.
+// To ensure no names are captured, renames all bound variables in this
+// with the same name as any free variable in the replacement terms.
 //
 // Note that Rule R can introduce previously free variables into a
 // scope where they become bound.
 //
-// TODO: Modify Expr.get to ensure that it never returns any free
-// variables that are in the namespace for bound variables.
 //
 // hasFreeName(name)
 // 
@@ -1944,7 +1912,7 @@ Atom.prototype.dump = function() {
   return this.name;
 };
 
-Atom.prototype._subFree = function(map) {
+Atom.prototype._subFree = function(map, freeVars) {
   // Note that this assumes the map has no prototype.
   return map[this.name] || this;
 };
@@ -2244,9 +2212,9 @@ Call.prototype.dump = function() {
   return '(' + this.fn.dump() + ' ' + this.arg.dump() + ')';
 };
 
-Call.prototype._subFree = function(map) {
-  var fn = this.fn._subFree(map);
-  var arg = this.arg._subFree(map);
+Call.prototype._subFree = function(map, freeVars) {
+  var fn = this.fn._subFree(map, freeVars);
+  var arg = this.arg._subFree(map, freeVars);
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
@@ -2594,24 +2562,34 @@ Lambda.prototype.dump = function() {
   return '{' + this.bound.dump() + '. ' + this.body.dump() + '}';
 };
 
-Lambda.prototype._subFree = function(map) {
-  if (this.bound.isGeneratedBound()) {
-    // By contract of subFree, the replacement will have no free
-    // occurrences of the bound name, so this will capture no
-    // variables.
-    var body = this.body._subFree(map);
-    return (body === this.body) ? this : new Lambda(this.bound, body);
-  } else {
-    // The bound variable is not uniquely named.  Rename it and try
-    // the same substitution on the resulting lambda.  This is the key
-    // to preventing improper "capturing" substitution in this
-    // algorithm.
-    var boundName = this.bound.name;
-    var newVar = _genBoundVar(boundName);
-    var renamed =
-      new Lambda(newVar, this.body._subFree(Toy.object0(boundName, newVar)));
-    return renamed._subFree(map);
+Lambda.prototype._subFree = function(map, freeVars) {
+  var boundName = this.bound.name;
+  var savedRebinding = map[boundName]
+  if (savedRebinding) {
+    delete map[boundName];
+    if (Toy.isEmpty(map)) {
+      map[boundName] = savedRebinding;
+      return this;
+    }
   }
+  var result;
+  if (boundName in freeVars) {
+    var newVar = _genBoundVar(boundName);
+    var newBody = this.body._subFree(Toy.object0(boundName, newVar), {});
+    // Rename even if no capturing actually occurs.  Replacing the
+    // bound variable with a new one will reduce likelihood of future
+    // name collisions.
+    var renamed = new Lambda(newVar, newBody);
+    result = renamed._subFree(map, freeVars);
+  } else {
+    var newBody = this.body._subFree(map, freeVars);
+    // Don't copy anything if no substitution is actually done.
+    result = (newBody === this.body) ? this : new Lambda(this.bound, newBody);
+  }
+  if (savedRebinding) {
+    map[boundName] = savedRebinding;
+  }
+  return result;
 };
 
 Lambda.prototype.hasFreeName = function(name) {
