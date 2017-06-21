@@ -269,6 +269,8 @@ Expr.addMethods(ruleMethods);
 // Inference rules, axioms, theorems
 //
 
+// ruleInfo:
+//
 // Map from inference rule name to a JavaScript function that
 // implements it.  The functions may use a global variable
 // named "rules" that should have all of these functions in it.
@@ -286,6 +288,25 @@ Expr.addMethods(ruleMethods);
 //   converse is not already added when the theorem is added, its
 //   converse will be added as a fact.  Also used by tests.  TODO:
 //   Consider checking during actual proof of the theorem.
+//
+// precheck: if present, a function that must accept the same arguments
+//   as the main action.  When the rule action is called, it will call this
+//   automatically, followed immediately by the declared action function.
+//
+//   This is intended to return a falsy value if the rule is not
+//   applicable to the arguments, in which case the rule will fail
+//   with Toy.fail.  Otherwise it should return any data useful to the
+//   main action function, which will have access to that result
+//   through the global temporary Toy._actionInfo.
+//
+//   To call the precheck directly, refer to rules.<rulename>.precheck.
+//   A call to rules.<rulename>.main will automatically receive the
+//   precheck's result information if called before any other rule or
+//   precheck.
+//
+// onFail: if a rule's action function is called in the ordinary manner,
+//   and it has precheck, and the precheck fails, then its onFail
+//   action will run with access to the same arguments
 //
 // inputs: map from type to argument number(s), either a single
 //   number or an array if more than one such argument.
@@ -4029,6 +4050,12 @@ function addRule(key, info_arg) {
   var statement = info.statement;
   // This will become the "rule object":
   var action;
+  // This will become the "main function" -- the action or proof property
+  // with user-written code.
+  var main;
+  // True iff the action function has a wrapper around it.  Among other things
+  // it implies that "this" will be set up for it.
+  var actionWrapped = false;
   // If the rule (theorem) has an explicit statement (which should be
   // provably true), coerce the statement to an Expr if given as a
   // string.
@@ -4046,23 +4073,26 @@ function addRule(key, info_arg) {
     //   indicating the statement to be proved.  Note that giving
     //   theorems names enables distinguishing among different
     //   proofs of the same statement.
-    assert(proof.length == 0, 'Proof of {1} requires parameters');
+    assert(typeof proof === 'function',
+           'Proof of {1} should be a function', key);
+    assert(proof.length == 0, 'Proof of {1} requires parameters', key);
     assert(!info.action, 'Both proof and action for {1}', key);
+    // User-supplied proof function is the main.
+    main = proof;
   }
-  if (proof || statement) {
-    // Describe theorems as "theorem" by default.
-    // The theorem name will be added as ruleName into the tooltip.
-    if (!('description' in info)) {
-      info.description = 'theorem'
-    }
-
+  if (statement) {
+    // Add it as a fact also, and potentially "swapped".
+    // TODO: Work out a way for this to accept fact metadata.
+    addFact({goal: statement, proof: action});
+    addSwappedFact({goal: statement, proof: action});
     // If there is a statement but no proof, just assert the statement.
     if (!proof) {
       proof = function() {
         return rules.assert(statement);
       }
     }
-
+  }
+  if (proof) {
     // Don't rerun the proof every time, but do re-justify on each
     // call so each use will return a step with its own ordinal.
     action = function() { 
@@ -4076,21 +4106,72 @@ function addRule(key, info_arg) {
       }
       return action.result.justify(key, []);
     };
+    // Describe theorems as "theorem" by default.
+    // The theorem name will be added as ruleName into the tooltip.
+    if (!('description' in info)) {
+      info.description = 'theorem'
+    }
+  } else {
+    // It is a rule of inference, not an axiom or theorem.
+    // The action property is the user code to run it.
+    main = info.action;
+    assert(typeof main === 'function',
+           'Rule action must be a function: {1}', key);
+
+    if (info.precheck) {
+      // There is a precheck.
+      var checker = function(_args) {
+        return Toy._actionInfo = info.precheck.apply(main, arguments);
+      }
+      action = function(_args) {
+        checker(arguments);
+        return (Toy._actionInfo
+                ? main.apply(action, arguments)
+                : info.onFail
+                ? info.onFail.call(action)
+                : Toy.fail(Toy.format('Rule {1} not applicable', key)));
+      }
+      // Set properties on the outer action to give access to the
+      // main from the the precheck.
+      action.precheck = checker;
+      action.main = main;
+      // Assert that the main code has access to data and metadata
+      // through "this".
+      actionWrapped = true;
+    }
   }
-  action = action || info.action;
-  if (statement) {
-    // Add it as a fact also, and potentially "swapped".
-    // TODO: Work out a way for this to accept fact metadata.
-    addFact({goal: statement, proof: action});
-    addSwappedFact({goal: statement, proof: action});
+
+  // The following code applies to all rules, axioms, theorems and
+  // inference rules.
+
+  if (info.data) {
+    // Set the "data" property of the outer action so the main
+    // and precheck can access it.  If it is a function, call it
+    // and use the result.
+    if (typeof info.data === 'function') {
+      info.data = info.data.call();
+    }
+    if (!actionWrapped) {
+      // Make the outer action function available to the main
+      // function as "this".
+      action = function(_args) {
+        return main.apply(action, arguments);
+      };
+      actionWrapped = true;
+    }
+    // Also make the data a property of "this".
+    action.data = info.data;
   }
-  assert(typeof action === 'function',
-         'Rule action must be a function: {1}', key);
+  // Even if there is no wrapping, set up "action".
+  action || (action = main);
+
+  // Set up remaining metatadata.
 
   // Give every info "inputs".
   if (!info.inputs) {
     info.inputs = {};
   }
+
   // Default the description to the marked up formula or the ruleName.
   if (!('description' in info)) {
     info.description = key;
@@ -4110,23 +4191,8 @@ function addRule(key, info_arg) {
     info.toOffer = info.toOffer.bind(action);
   }
 
-  // Associate the action function with the key,
-  if (info.data) {
-    // Call any "data" function.  The action function is installed
-    // into the rules at this point.
-    var data = (typeof info.data === 'function'
-                ? info.data.call()
-                : info.data);
-    action.data = data;
-    rules[key] = action.bind(action);
-    // Make the data available from the wrapper action too.
-    rules[key].data = data;
-  } else {
-    rules[key] = action;
-  }
-
   info.labels = processLabels(info.labels);
-  if (action.length === 0 && key.slice(0, 5) === 'axiom') {
+  if (action && action.length === 0 && key.slice(0, 5) === 'axiom') {
     info.labels.axiom = true;
   }
   if (info.form !== undefined && Toy.isEmpty(info.labels)) {
@@ -4135,11 +4201,24 @@ function addRule(key, info_arg) {
     info.labels.basic = true;
   }
 
-  // and metadata as the function's "info" property.
-  rules[key].info = info;
-}
+  // Add the key to the info as a ruleName property.
+  info.ruleName = key;
 
-// Actual rule functions to call from other code.
+  // Add all metadata as the function's "info" property.
+  action.info = info;
+  
+  // Assign a name to the wrapper and main.
+  if (actionWrapped) {
+    Object.defineProperty(action, 'name',
+                          {value: key + '_wrapper'});
+    Object.defineProperty(main, 'name', {value: key});
+  } else {
+    Object.defineProperty(action, 'name', {value: key});
+  }
+
+  // Finally install the action into the rules.
+  rules[key] = action;
+}
 
 
 //// FACTS
@@ -5304,6 +5383,10 @@ Toy.assumptionsUsed = assumptionsUsed;
 Toy.ruleInfo = ruleInfo;
 
 Toy.traceRule = traceRule;
+
+// For communication between an action precheck and the rule's main
+// action function.
+Toy._actionInfo;
 
 // For testing.
 Toy._tautologies = _tautologies;
