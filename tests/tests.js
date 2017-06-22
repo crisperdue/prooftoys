@@ -713,6 +713,17 @@ var testCase = {
     assert(times2.isCall2('='), 'Times2 not an equation?');
   },
 
+  testAsCall: function() {
+    var a1 = rules.axiom1();
+    assertEqual(null, a1.asCall(0));
+    assertEqual(a1.toString(), a1.asCall(1));
+    assertEqual('=', a1.asCall(2).fn.name);
+    assertEqual(null, a1.asCall(3));
+    assertEqual(null, Toy.parse('x').asCall(1));
+    assertEqual(null, Toy.parse('x').asCall(0));
+    assertEqual(null, Toy.parse('x').asCall(-1));
+  },
+
   testTransformConjuncts: function() {
     function xform(expr) {
       return (expr.matchSchema('a | not a')) ? T : expr;
@@ -884,6 +895,16 @@ var testCase = {
 
     function test(term) { return term.isCall2('*'); }
     assertEqual('(b * c)', expr.get(expr.findParent(path, test)));
+  },
+
+  testNumBindings: function() {
+    var nb = Toy.numBindings;
+    var Bindings = Toy.Bindings;
+    assertEqual(0, nb(null));
+    var b = new Bindings('a', true);
+    assertEqual(1, nb(b));
+    var b2 = new Bindings('b', true, b);
+    assertEqual(2, nb(b2));
   },
 
   testPathToBinding: function() {

@@ -36,6 +36,18 @@ function Bindings(from, to, more) {
 }
 
 /**
+ * Returns the number of bindings represented by this object,
+ * or you could say, the depth of nesting.
+ */
+function numBindings(bindings) {
+  var i = 0;
+  for (var b = bindings; b; b = b.more) {
+    i++;
+  }
+  return i;
+}
+
+/**
  * Finds and returns the binding in bindings with "from" equal
  * to the target, or null if it finds no such binding.
  */
@@ -370,6 +382,7 @@ Path.prototype.reverse = function() {
 //// Export public names.
 
 Toy.Bindings = Bindings;
+Toy.numBindings = numBindings;
 Toy.findBinding = findBinding;
 Toy.findBindingValue = findBindingValue;
 Toy.getBinding = getBinding;

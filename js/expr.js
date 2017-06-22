@@ -992,6 +992,26 @@ Expr.prototype.isOpenCall = function() {
 var exprMethods = {
 
   /**
+   * If this can be interpreted as a call with N or more arguments,
+   * where N is at least 1, returns the Call expression that has
+   * the first of those N as its (only) argument.  Otherwise returns
+   * null.
+   */
+  asCall: function(n) {
+    if (n <= 0 || !(this instanceof Call)) {
+      return null;
+    }
+    var result = this;
+    while (--n > 0) {
+      result = result.fn;
+      if (!(result instanceof Call)) {
+        return null;
+      }
+    }
+    return result;
+  },
+
+  /**
    * Returns true iff this is a call to a function of two arguments that
    * is normally rendered and parsed as an infix binary operator.
    */
