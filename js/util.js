@@ -377,6 +377,9 @@ var assert = assertTrue;
  * for presenting the value of any key with that name.
  */
 function debugString(o, specials) {
+  if (o === null) {
+    return 'null';
+  }
   if (typeof o == 'object') {
     var result = '{';
     var keys = [];
