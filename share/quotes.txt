@@ -116,7 +116,7 @@ was developed in the last two hundred years, let alone the last three
 hundred. -- Keith Devlin, "Introduction to Mathematical Thinking"
 
 Human history becomes more and more a race between education and
-catastrophe.  -- H. G. Wells, Outline of History p. 504
+catastrophe.  -- H. G. Wells, "Outline of History" p. 504
 
 Again I saw that under the sun the race is not to the swift,
 nor the battle to the strong, nor bread to the wise,
@@ -129,3 +129,6 @@ but that's the way to bet. -- Damon Runyon
 Why should there not be a patient confidence in the ultimate justice
 of the people? Is there any better or equal hope,
 in the world? -- Abraham Lincoln
+
+No wise fish would go anywhere without a porpoise. -- The Mock Turtle,
+"Alice in Wonderland"
