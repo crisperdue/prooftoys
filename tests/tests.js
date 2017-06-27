@@ -713,15 +713,37 @@ var testCase = {
     assert(times2.isCall2('='), 'Times2 not an equation?');
   },
 
-  testAsCall: function() {
+  testFunc: function() {
+    function check(expect, term) {
+      assertEqual('' + expect, '' + termify(term).func());
+    }
+    check(null, '{x. x}');
+    check(null, 'T');
+    check('f', '(f x)');
+    check('=', '0 = 1');
+    check('g', 'g 1 2 3 4 5')
+  },
+
+  testArgs: function() {
+    function check(expect, term) {
+      assertEqual(expect.toString(), termify(term).args().$$);
+    }
+    check('', '{x. x}');
+    check('', 'T');
+    check('x', '(f x)');
+    check('0,1', '0 = 1');
+    check('1,2,3,4,5', 'g 1 2 3 4 5')
+  },
+
+  testAsFunCall: function() {
     var a1 = rules.axiom1();
-    assertEqual(null, a1.asCall(0));
-    assertEqual(a1.toString(), a1.asCall(1));
-    assertEqual('=', a1.asCall(2).fn.name);
-    assertEqual(null, a1.asCall(3));
-    assertEqual(null, Toy.parse('x').asCall(1));
-    assertEqual(null, Toy.parse('x').asCall(0));
-    assertEqual(null, Toy.parse('x').asCall(-1));
+    assertEqual(null, a1.asFunCall(0));
+    assertEqual(a1.fn.toString(), a1.asFunCall(1));
+    assertEqual('=', a1.asFunCall(2).name);
+    assertEqual(null, a1.asFunCall(3));
+    assertEqual(null, Toy.parse('x').asFunCall(1));
+    assertEqual(null, Toy.parse('x').asFunCall(0));
+    assertEqual(null, Toy.parse('x').asFunCall(-1));
   },
 
   testTransformConjuncts: function() {
@@ -988,7 +1010,7 @@ var testCase = {
       if (expected) {
         assertEqual(expected, Toy.debugString(subst));
       } else {
-        Y.log(Toy.debugString(subst));
+        console.log(Toy.debugString(subst));
       }
     }
     check('{p: (x = x)}', p, equal(x, x));
@@ -996,6 +1018,14 @@ var testCase = {
           implies(p, q), Toy.parse('x < 1 => (x = 0)'));
     check('{a: 3, b: 2}', 'a + b', '3 + 2');
     check('{p: {x. (p x)}}', 'exists p', 'exists {x. (p x)}');
+    check('{p: {x. ((x = 1) => (x > 0))}}',
+          'forall {x. p x}',
+          'forall {x. x = 1 => x > 0}');
+    check('{p: (q y)}', 'forall {x. p}', 'forall {x. q y}');
+    check('null', 'forall {x. p}', 'forall {x. x >= 0}');
+    check('{p: {x. {y. ((x > y) == (y < x))}}}',
+          'forall {x. forall {y. p x y}}',
+          'forall {x. forall {y. x > y == y < x}}');
   },
 
   testAlphaMatch: function() {

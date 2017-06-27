@@ -993,11 +993,11 @@ var exprMethods = {
 
   /**
    * If this can be interpreted as a call with N or more arguments,
-   * where N is at least 1, returns the Call expression that has
-   * the first of those N as its (only) argument.  Otherwise returns
-   * null.
+   * where N is at least 1, returns the term that has the role of the
+   * function to apply to the first of those N as its (only) argument.
+   * Otherwise returns null.
    */
-  asCall: function(n) {
+  asFunCall: function(n) {
     if (n <= 0 || !(this instanceof Call)) {
       return null;
     }
@@ -1008,7 +1008,48 @@ var exprMethods = {
         return null;
       }
     }
+    return result.fn;
+  },
+
+  /**
+   * If this term is a call to a function variable, return the
+   * variable, otherwise null.  It can be a call with any number of
+   * arguments, minimum of 1.
+   */
+  func: function() {
+    var term = this;
+    if (!(term instanceof Call)) {
+      return null;
+    }
+    while (term instanceof Call) {
+      term = term.fn;
+    }
+    return term;
+  },
+
+  args: function() {
+    var term = this;
+    var result = [];
+    while (term instanceof Call) {
+      result.unshift(term.arg);
+      term = term.fn;
+    }
     return result;
+  },
+
+  asArg: function(n, total) {
+    var depth = total - n;
+    if (depth < 0 || !(this instanceof Call)) {
+      return null;
+    }
+    var call = this;
+    while (depth-- > 0) {
+      call = call.fn;
+      if (!(call instanceof Call)) {
+        return null;
+      }
+    }
+    return call.arg;
   },
 
   /**
@@ -1772,14 +1813,21 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // all the locations where this does.
 //
 //
-// _matchAsSchema(expr, substitution)
+// _matchAsSchema(expr, substitution, bindings)
 //
 // Checks that this expression matches the argument expression under
-// the given substitution (map from names to expressions).  Returns
-// true iff it does and extends the substitution to a new variable if
-// needed to make this and the argument match.  "This" must not
-// contain any variable bindings, but the expression can contain
-// anything.  Matching here is as defined for the "matches" method.
+// the given substitution (map from names in this to expressions in
+// expr).  The bindings indicate the variable bindings in effect for
+// this and the argument expression, mapping from variable name in
+// this to variable name in expr.
+//
+// Returns true iff it does and extends the substitution to a
+// new variable if needed to make this and the argument match.  If
+// this contains lambda expressions, it is smart about match failure
+// due to capturing of free variables in the expr, and smart about
+// using calls to function variables in this to enable substitution in
+// spite of capturing.  Matching here is as defined for the "matches"
+// method.
 //
 //
 // _asPattern()
@@ -2062,9 +2110,20 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   var name = this.name;
   var boundTo = getBinding(name, bindings);
   if (boundTo) {
+    // TODO: This check only works when descending into parallel lambdas
+    //   on each side.  Make it do that properly.
     // This is a bound variable.  It matches iff the argument is the
     // corresponding bound variable in expr.
     return expr.name == boundTo;
+  }
+  // If this is within the scope of any bound variables, make sure the
+  // substitution would not have to rename any of them, violating the
+  // requirements for matching.
+  var frees = bindings && expr.freeVars();
+  for (var binding = bindings; binding; binding = binding.more) {
+    if (frees[binding.from]) {
+      return false;
+    }
   }
   // This is a free variable.  If it is being substituted, check it,
   // otherwise add a mapping for it into the substitution.
@@ -2535,9 +2594,70 @@ Call.prototype.findAll = function(name, action1, expr2, action2) {
 //   Similarly for terms of other types.
 //   
 Call.prototype._matchAsSchema = function(expr, map, bindings) {
-  return (expr instanceof Call
-          && this.fn._matchAsSchema(expr.fn, map, bindings)
-          && this.arg._matchAsSchema(expr.arg, map, bindings));
+  // The arg is free in this context, proceed normally.
+  if (!getBinding(this.arg.name, bindings)) {
+    return (expr instanceof Call
+            && this.fn._matchAsSchema(expr.fn, map, bindings)
+            && this.arg._matchAsSchema(expr.arg, map, bindings));
+  }
+  // The arg is bound in this context, so matching requires it to be
+  // an arg of a free function variable.
+  var fn = this.func();
+  if (fn && fn.isVariable() && !getBinding(fn.name, bindings)) {
+    // If all variables bound at this site, whose counterparts occur
+    // free in expr, appear as actual arguments to the function, we
+    // can still find a substitution.
+    var args = this.args();
+    // These are free in expr, but may be bound in expr's context.
+    var exprVars = expr.freeVars();
+    // If any variable occurring (free) in expr is bound in expr's
+    // context and thus needs to have a bound variable here
+    // substituted for it, but that bound variable is not in the args,
+    // the substitution fails.
+    var findBindingValue = Toy.findBindingValue;
+    for (var name in exprVars) {
+      var b = findBindingValue(name, bindings);
+      if (b) {
+        var argName = b.from;
+        if (!args.find(function(arg) {
+              return arg.isVariable() && arg.name == argName;
+            })) {
+          return false;
+        }
+      }
+    }
+    // The function call has the arguments needed to enable the
+    // substitution.  Construct a lambda to substitute for the
+    // function variable.
+    var result = expr;
+    var arg;
+    while (args.length) {
+      // Actual argument.
+      var arg = args.pop();
+      if (arg.isVariable()) {
+        // This is non-null iff bound here.  Iff bound here, it
+        // corresponds to a variable bound in expr.
+        var otherName = getBinding(arg.name, bindings);
+        // If it is a fresh variable, it will be substituted nowhere.
+        var toBind = (otherName
+                      ? new Atom(otherName)
+                      : expr.freshVar(arg.name));
+        result = new Toy.Lambda(toBind, result);
+      } else {
+        return false;
+      }
+    }
+    var existing = map[fn.name];
+    // Fail if there is an existing substitution and the computed
+    // result does not match it.
+    if (existing && !existing.matches(result)) {
+      return false;
+    }
+    // Substitute the lambda term for the function variable.
+    map[fn.name] = result;
+    // Report success without traversing this further.
+    return true;
+  }
 };
 
 Call.prototype._asPattern = function(term) {
@@ -2764,6 +2884,13 @@ Lambda.prototype.findAll = function(name, action1, expr2, action2) {
 };
 
 Lambda.prototype._matchAsSchema = function(expr, map, bindings) {
+  // TODO: Consider if there is a more effective way to reduce
+  //   introduction of new lambda terms by the code for this method
+  //   for Calls.
+  if (this.matches(expr, bindings)) {
+    return true;
+  }
+  // This is the "general case" code.
   if (expr instanceof Lambda) {
     var extended = new Bindings(this.bound.name, expr.bound.name, bindings);
     return this.body._matchAsSchema(expr.body, map, extended);
