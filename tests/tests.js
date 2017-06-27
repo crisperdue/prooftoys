@@ -735,17 +735,6 @@ var testCase = {
     check('1,2,3,4,5', 'g 1 2 3 4 5')
   },
 
-  testAsFunCall: function() {
-    var a1 = rules.axiom1();
-    assertEqual(null, a1.asFunCall(0));
-    assertEqual(a1.fn.toString(), a1.asFunCall(1));
-    assertEqual('=', a1.asFunCall(2).name);
-    assertEqual(null, a1.asFunCall(3));
-    assertEqual(null, Toy.parse('x').asFunCall(1));
-    assertEqual(null, Toy.parse('x').asFunCall(0));
-    assertEqual(null, Toy.parse('x').asFunCall(-1));
-  },
-
   testTransformConjuncts: function() {
     function xform(expr) {
       return (expr.matchSchema('a | not a')) ? T : expr;

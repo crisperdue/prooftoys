@@ -992,26 +992,6 @@ Expr.prototype.isOpenCall = function() {
 var exprMethods = {
 
   /**
-   * If this can be interpreted as a call with N or more arguments,
-   * where N is at least 1, returns the term that has the role of the
-   * function to apply to the first of those N as its (only) argument.
-   * Otherwise returns null.
-   */
-  asFunCall: function(n) {
-    if (n <= 0 || !(this instanceof Call)) {
-      return null;
-    }
-    var result = this;
-    while (--n > 0) {
-      result = result.fn;
-      if (!(result instanceof Call)) {
-        return null;
-      }
-    }
-    return result.fn;
-  },
-
-  /**
    * If this term is a call to a function variable, return the
    * variable, otherwise null.  It can be a call with any number of
    * arguments, minimum of 1.
@@ -1035,21 +1015,6 @@ var exprMethods = {
       term = term.fn;
     }
     return result;
-  },
-
-  asArg: function(n, total) {
-    var depth = total - n;
-    if (depth < 0 || !(this instanceof Call)) {
-      return null;
-    }
-    var call = this;
-    while (depth-- > 0) {
-      call = call.fn;
-      if (!(call instanceof Call)) {
-        return null;
-      }
-    }
-    return call.arg;
   },
 
   /**
