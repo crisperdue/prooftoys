@@ -591,6 +591,10 @@ Expr.prototype.concat = function(expr, op) {
  * expressions.  Tautologies for example qualify as schemas.
  *
  * This is a special case of unification of expressions.
+ *
+ * TODO: When matching schemas with quantifiers, typical users of
+ *   of this will want to reduce out lambda expressions that the
+ *   substitution might introduce before proceeding further.
  */
 Expr.prototype.matchSchema = function(schema) {
   if (typeof schema == 'string') {
@@ -2559,12 +2563,24 @@ Call.prototype.findAll = function(name, action1, expr2, action2) {
 //   Similarly for terms of other types.
 //   
 Call.prototype._matchAsSchema = function(expr, map, bindings) {
-  // The arg is free in this context, proceed normally.
-  if (!getBinding(this.arg.name, bindings)) {
-    return (expr instanceof Call
-            && this.fn._matchAsSchema(expr.fn, map, bindings)
-            && this.arg._matchAsSchema(expr.arg, map, bindings));
+  // If there is a match without introducing lambdas, use it.
+  // Copy the substitution and restore it if necessary.
+  var map2 = Object.assign({}, map);
+  if (expr instanceof Call
+      && this.fn._matchAsSchema(expr.fn, map, bindings)
+      && this.arg._matchAsSchema(expr.arg, map, bindings)) {
+    return true;
   }
+  // TODO: If the arg is free in this context, consider doing a
+  //   recursive call here thus excluding this arg from the
+  //   more complex calculations here.
+  //
+  // First-order matching failed, so try 
+  // Clear the map to remove any additional substitutions tried.
+  Object.keys(map).forEach(function(key) { delete map[key]; });
+  // and restore the substitution to its previous state.
+  Object.assign(map, map2);
+  // if (getBinding(this.arg.name, bindings)) {
   // The arg is bound in this context, so matching requires it to be
   // an arg of a free function variable.
   var fn = this.func();
@@ -2849,13 +2865,6 @@ Lambda.prototype.findAll = function(name, action1, expr2, action2) {
 };
 
 Lambda.prototype._matchAsSchema = function(expr, map, bindings) {
-  // TODO: Consider if there is a more effective way to reduce
-  //   introduction of new lambda terms by the code for this method
-  //   for Calls.
-  if (this.matches(expr, bindings)) {
-    return true;
-  }
-  // This is the "general case" code.
   if (expr instanceof Lambda) {
     var extended = new Bindings(this.bound.name, expr.bound.name, bindings);
     return this.body._matchAsSchema(expr.body, map, extended);
