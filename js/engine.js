@@ -2395,10 +2395,10 @@ var ruleInfo = {
   },
 
   // Counterpart to R2134.  This does almost all the work for the
-  // "Exists rule".  The LHS quantifier limits the "E rule" to use
-  // where x is not free in any hypothesis, and since "q" appears with
-  // x bound, substituting for it does not result in any free
-  // occurrences of x.
+  // "Exists rule" (2135, 5244).  The LHS quantifier limits the "E
+  // rule" to use where x is not free in any hypothesis, and since "q"
+  // appears with x bound, substituting for it does not result in any
+  // free occurrences of x.
   existImplies: {
     // TODO: Check theorem statements when proving.
     //
