@@ -2399,21 +2399,19 @@ var ruleInfo = {
     }
   },
 
+  // General TODOs:
+  //
+  // TODO: Check theorem statements when proving.
+  //
+  // TODO: Consider asserting theorems until proof is requested.
+  //
+
   // Counterpart to R2134.  This does almost all the work for the
   // "Exists rule" (2135, 5244).  The LHS quantifier limits the "E
   // rule" to use where x is not free in any hypothesis, and since "q"
   // appears with x bound, substituting for it does not result in any
   // free occurrences of x.
   existImplies: {
-    // TODO: Check theorem statements when proving.
-    //
-    // TODO: Consider asserting theorems until proof is requested.
-    //
-    // TODO: Implement precondition functions intended to check that
-    //   a rule can succeed.  Plan is that they return a truthy value
-    //   on success, and store it in a global variable immediately
-    //   before calling the main rule code.
-    //
     // TODO: Implement "eRule" based on this theorem, with a precondition
     //   that checks applicability.
     statement: 'forall {x. p x => q} == (exists p => q)',
