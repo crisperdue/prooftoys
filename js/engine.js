@@ -242,7 +242,9 @@ var ruleMethods = {
   andThen: function(name, arg1) {
     var nm = name;
     arguments[0] = this;
-    var result = Toy.rules[nm].apply(Toy.rules, arguments);
+    var rule = Toy.rules[nm];
+    assert(rule, 'No rule with name "{1}"', nm);
+    var result = rule.apply(Toy.rules, arguments);
     return result;
   },
       
