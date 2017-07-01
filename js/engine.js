@@ -1893,6 +1893,9 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
+  // Note: With substitution for p, this can take the place of 5215
+  // (universal instantiation).  To apply, match "forall p" with an
+  // existing statement. Then "apply" p to user's choice of x.
   r5225: {
     statement: 'forall p => p x',
     proof: function() {
@@ -4270,6 +4273,19 @@ var logicFacts = {
               .andThen('apply', '/right')
               .rewrite('/right', 'x != y == not (x = y)')
               .andThen('rewriteOnlyFrom', '/right/arg', all));
+    }
+  },
+
+  // This has the effect of 5242, existential generalization (EGen).
+  'p x => exists p': {
+    proof: function() {
+      return (rules.r5225()
+              .andThen('instVar', '{x. not (p x)}', 'p')
+              .andThen('apply', '/right')
+              .andThen('rewriteOnly', '',
+                       'a => not b == b => not a')
+              .andThen('rewriteOnly', '/right',
+                       'not (forall {x. not (p x)}) == exists p'));
     }
   }
 };
