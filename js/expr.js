@@ -585,6 +585,30 @@ Expr.prototype.concat = function(expr, op) {
 };
 
 /**
+ * Match this term with the given pattern, which may be a string or
+ * Expr.  The result is an object/map or null.  If there is a purely
+ * syntactic substitution that transforms the pattern into this, the
+ * result is that substitution, which may be empty.  If there is no
+ * such substitution, the result is null.
+ *
+ * The resulting substitution disregards scopes of variables, so
+ * applying it via rules of inference such as instVar or Axiom 4 may
+ * not yield a term equal to this as its result, even modulo changes
+ * of bound variable names.  This is only for matching of syntactic
+ * templates, as for example in rules.eRule.
+ *
+ * Beyond purely syntactic matching, a pattern variable bound to a
+ * term also matches terms that differ from the first binding by
+ * change of bound variable names.
+ */
+Expr.prototype.matchPattern = function(pattern_arg) {
+  var pattern = termify(pattern_arg);
+  var subst = {};
+  var ok = pattern._matchAsPattern(this, subst, null);
+  return ok ? subst : null;
+};
+
+/**
  * Matches the given "schematic" expression against this. Returns a
  * substitution that yields this expression when given the schema, or
  * null if there is none.  The substitution maps from names to
@@ -2106,6 +2130,21 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   return false;
 };
 
+Atom.prototype._matchAsPattern = function(term, map) {
+  if (this.isConst()) {
+    return this.matches(term);
+  } else {
+    // This is a variable.
+    var value = map[this.name];
+    if (value) {
+      return value.matches(term);
+    } else {
+      map[this.name] = term;
+      return true;
+    }
+  }
+};
+
 Atom.prototype._asPattern = function(term) {
   return this.__var || this;
 };
@@ -2641,6 +2680,12 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
   }
 };
 
+Call.prototype._matchAsPattern = function(term, map) {
+  return (term instanceof Call &&
+          this.fn._matchAsPattern(term.fn, map) &&
+          this.arg._matchAsPattern(term.arg, map));
+};
+
 Call.prototype._asPattern = function(term) {
   return this.__var || new Call(this.fn._asPattern(), this.arg._asPattern());
 };
@@ -2871,6 +2916,15 @@ Lambda.prototype._matchAsSchema = function(expr, map, bindings) {
   } else {
     return false;
   }
+};
+
+Lambda.prototype._matchAsPattern = function(term, map) {
+  // TODO: Consider supporting matches with lambdas differing only by
+  //   change of bound variable names.  Such a match presumably would
+  //   not create any bindings in the substitution.
+  return (term instanceof Lambda &&
+          this.bound._matchAsPattern(term.bound, map) &&
+          this.body._matchAsPattern(term.body, map));
 };
 
 Lambda.prototype._asPattern = function(term) {

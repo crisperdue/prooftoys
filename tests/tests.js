@@ -991,6 +991,34 @@ var testCase = {
     assertEqual(null, Toy.path().last());
   },
 
+  testMatchPattern: function() {
+    function check(expected, pattern_arg, term_arg) {
+      var term = termify(term_arg);
+      var pattern = termify(pattern_arg);
+      var subst = term.matchPattern(pattern);
+      if (expected) {
+        assertEqual(expected, Toy.debugString(subst));
+      } else {
+        console.log(Toy.debugString(subst));
+      }
+    }
+    check('{p: (x = x)}', p, equal(x, x));
+    check('{p: (x < 1), q: (x = 0)}',
+          'p => q', 'x < 1 => (x = 0)');
+    check('{a: 3, b: 2}', 'a + b', '3 + 2');
+    check('{p: {x. (p x)}}', 'exists p', 'exists {x. (p x)}');
+    check('null',
+          'forall {x. p x}',
+          'forall {x. x = 1 => x > 0}');
+    check('{p: (q y), x: x}', 'forall {x. p}', 'forall {x. q y}');
+    check('{p: (q x), x: x}', 'forall {x. p}', 'forall {x. q x}');
+    check('{p: (x >= 0), x: x}', 'forall {x. p}', 'forall {x. x >= 0}');
+    check('{p: (x >= 0), y: x}', 'forall {y. p}', 'forall {x. x >= 0}');
+    check('null',
+          'forall {x. forall {y. p x y}}',
+          'forall {x. forall {y. x > y == y < x}}');
+  },
+
   testMatchSchema: function() {
     function check(expected, schema, term) {
       term = typeof term == 'string' ? Toy.parse(term) : term;
