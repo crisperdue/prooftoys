@@ -937,7 +937,7 @@ function acceptsSelection(step, ruleName) {
  * If there is a selected term, it can be formatted using {term} in
  * the rule's "menu" format string.
  */
-function ruleMenuText(ruleName, step, term, proofEditor) {
+function ruleMenuInfo(ruleName, step, term, proofEditor) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (info.menuGen) {
@@ -1175,19 +1175,20 @@ RuleMenu.prototype._update = function() {
   stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       if (!Toy.rules[ruleName].info.offerExample) {
-        var text = ruleMenuText(ruleName, step, term,
+        // Info is a string or array of strings.
+        var info = ruleMenuInfo(ruleName, step, term,
                                 stepEditor._proofEditor);
-        if (Array.isArray(text)) {
+        if (Array.isArray(info)) {
           // An array occurs when a rule may be used in multiple ways,
           // notably where there are multiple possible replacements of
           // a term by equal terms.
-          text.forEach(function(msg) {
-              displayText.push(msg);
+          info.forEach(function(msg) {
+              displayTexts.push(msg);
               byDisplay[msg] = ruleName;
             });
-        } else if (text) {
-          displayTexts.push(text);
-          byDisplay[text] = ruleName;
+        } else if (info) {
+          displayTexts.push(info);
+          byDisplay[info] = ruleName;
         }
       }
     });

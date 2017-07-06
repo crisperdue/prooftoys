@@ -350,6 +350,12 @@ Expr.addMethods(ruleMethods);
 //   as a template allowing {term} for the selected term or {right}
 //   for a possible term to its right ("group with").
 //
+// menuGen: function to return zero or more menu entries for
+//   application(s) of the rule.  It will be passed the ruleName,
+//   step, selected term or null if none, and the ProofEditor for which
+//   it is generating the menu.  Expected to return a falsy value for
+//   
+//
 // tooltip: plain text to become the title attribute of mentions of the
 //   rule name in proof displays and the description in subproof displays.
 //
@@ -819,7 +825,7 @@ var ruleInfo = {
     menuGen: function(ruleName, step, term, proofEditor) {
       // This rule is only available if the proof is currently empty.
       return (proofEditor.proofDisplay.steps.length == 0
-              ? 'problem to solve (givens)'
+              ? ['problem to solve (givens)']
               : null);
     },
     tooltip: ('statement to take as given'),
@@ -2840,24 +2846,26 @@ var ruleInfo = {
           return null;
         }
         var vname = term.name;
+        var results = [];
         var terms = new Toy.TermSet();
         function add(term) {
           terms.add(term);
         }
+        var format = Toy.format;
         var conjuncts = conjunction.scanConjuncts(add);
         if (terms.size() > 1) {
+          // There are multiple conjunctions, so check for possible
+          // replacements.
           function check(eqn) {
             if (eqn.isCall2('=') && eqn.getLeft().isVariable() &&
                 eqn.getLeft().name === vname) {
-              return eqn;
-            }
+              results.push(format('replace {1} with {2}',
+                                  term.pname, eqn.getRight().toUnicode()));
           }
-          var eqn = terms.each(check);
-          if (eqn) {
-            return Toy.format('replace {1} with {2}',
-                              term.pname, eqn.getRight().toUnicode());
           }
+          terms.each(check);
         }
+        return results;
       }
     },
     tooltip: ('Replaces an occurrence of a term with an equal term'),
