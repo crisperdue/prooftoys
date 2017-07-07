@@ -658,10 +658,6 @@ var ruleInfo = {
 
   axiom1: {
     statement: 'g T & g F == forall {a. g a}',
-    action: function() {
-      var result = rules.assert('g T & g F == forall {a. g a}');
-      return result.justify('axiom1');
-    },
     inputs: {},
     form: '',
     description: 'axiom of T & F',
@@ -670,10 +666,6 @@ var ruleInfo = {
 
   axiom2: {
     statement: 'x = y => h x = h y',
-    action: function() {
-      var result = rules.assert('x = y => h x = h y');
-      return result.justify('axiom2');
-    },
     inputs: {},
     form: '',
     description: 'axiom of function application',
@@ -699,10 +691,6 @@ var ruleInfo = {
 
   axiom3: {
     statement: '(f = g) == forall {x. f x = g x}',
-    action: function() {
-      var result = rules.assert('(f = g) == forall {x. f x = g x}');
-      return result.justify('axiom3');
-    },
     inputs: {},
     form: '',
     tooltip: ('extensionality: functions are equal based on equal results'
@@ -741,10 +729,6 @@ var ruleInfo = {
 
   axiom5: {
     statement: 'iota {x. x = y} = y',
-    action: function() {
-      var result = rules.assert('iota {x. x = y} = y');
-      return result.justify('axiom5');
-    },
     inputs: {},
     form: '',
     tooltip: ('axiom of description'),
