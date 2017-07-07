@@ -4051,7 +4051,7 @@ function addRule(key, info_arg) {
   var proof = info.proof;
   var statement = info.statement;
   // This will become the "rule object":
-  var action;
+  var rule;
   // This will become the "main function" -- the action or proof property
   // with user-written code.
   var main;
@@ -4085,8 +4085,8 @@ function addRule(key, info_arg) {
   if (statement) {
     // Add it as a fact also, and potentially "swapped".
     // TODO: Work out a way for this to accept fact metadata.
-    addFact({goal: statement, proof: action});
-    addSwappedFact({goal: statement, proof: action});
+    addFact({goal: statement, proof: rule});
+    addSwappedFact({goal: statement, proof: rule});
     // If there is a statement but no proof, just assert the statement.
     if (!proof) {
       proof = function() {
@@ -4097,16 +4097,16 @@ function addRule(key, info_arg) {
   if (proof) {
     // Don't rerun the proof every time, but do re-justify on each
     // call so each use will return a step with its own ordinal.
-    action = function() { 
-      if (action.result === undefined) {
-        action.result = proof();
+    rule = function() { 
+      if (rule.result === undefined) {
+        rule.result = proof();
         if (statement) {
-          assert(action.result.matches(statement),
+          assert(rule.result.matches(statement),
                  'Failed to prove {1},\n  instead proved {2}',
-                 statement, action.result);
+                 statement, rule.result);
         }
       }
-      return action.result.justify(key, []);
+      return rule.result.justify(key, []);
     };
     // Describe theorems as "theorem" by default.
     // The theorem name will be added as ruleName into the tooltip.
@@ -4125,18 +4125,18 @@ function addRule(key, info_arg) {
       var checker = function(_args) {
         return Toy._actionInfo = info.precheck.apply(main, arguments);
       }
-      action = function(_args) {
+      rule = function(_args) {
         checker(arguments);
         return (Toy._actionInfo
-                ? main.apply(action, arguments)
+                ? main.apply(rule, arguments)
                 : info.onFail
-                ? info.onFail.call(action)
+                ? info.onFail.call(rule)
                 : Toy.fail(Toy.format('Rule {1} not applicable', key)));
       }
       // Set properties on the outer action to give access to the
       // main from the the precheck.
-      action.precheck = checker;
-      action.main = main;
+      rule.precheck = checker;
+      rule.main = main;
       // Assert that the main code has access to data and metadata
       // through "this".
       actionWrapped = true;
@@ -4156,16 +4156,16 @@ function addRule(key, info_arg) {
     if (!actionWrapped) {
       // Make the outer action function available to the main
       // function as "this".
-      action = function(_args) {
-        return main.apply(action, arguments);
+      rule = function(_args) {
+        return main.apply(rule, arguments);
       };
       actionWrapped = true;
     }
     // Also make the data a property of "this".
-    action.data = info.data;
+    rule.data = info.data;
   }
-  // Even if there is no wrapping, set up "action".
-  action || (action = main);
+  // Even if there is no wrapping, set up "rule".
+  rule || (rule = main);
 
   // Set up remaining metatadata.
 
@@ -4190,11 +4190,11 @@ function addRule(key, info_arg) {
   }
   // Make the action function available here also as "this".
   if (typeof info.toOffer === 'function') {
-    info.toOffer = info.toOffer.bind(action);
+    info.toOffer = info.toOffer.bind(rule);
   }
 
   info.labels = processLabels(info.labels);
-  if (action && action.length === 0 && key.slice(0, 5) === 'axiom') {
+  if (rule && rule.length === 0 && key.slice(0, 5) === 'axiom') {
     info.labels.axiom = true;
   }
   if (info.form !== undefined && Toy.isEmpty(info.labels)) {
@@ -4207,19 +4207,19 @@ function addRule(key, info_arg) {
   info.ruleName = key;
 
   // Add all metadata as the function's "info" property.
-  action.info = info;
+  rule.info = info;
   
   // Assign a name to the wrapper and main.
   if (actionWrapped) {
-    Object.defineProperty(action, 'name',
+    Object.defineProperty(rule, 'name',
                           {value: key + '_wrapper'});
     Object.defineProperty(main, 'name', {value: key});
   } else {
-    Object.defineProperty(action, 'name', {value: key});
+    Object.defineProperty(rule, 'name', {value: key});
   }
 
-  // Finally install the action into the rules.
-  rules[key] = action;
+  // Finally install the rule into the rules.
+  rules[key] = rule;
 }
 
 
