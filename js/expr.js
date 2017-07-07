@@ -2743,7 +2743,7 @@ Lambda.prototype._subFree = function(map, freeVars) {
     var newVar = _genBoundVar(boundName);
     var newBody = this.body._subFree(Toy.object0(boundName, newVar), {});
     // Rename even if no capturing actually occurs.  Replacing the
-    // bound variable with a new one will reduce likelihood of future
+    // bound variable with a new one may reduce likelihood of future
     // name collisions.
     var renamed = new Lambda(newVar, newBody);
     result = renamed._subFree(map, freeVars);

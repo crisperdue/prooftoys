@@ -2350,9 +2350,13 @@ var ruleInfo = {
     description: 'move forall'
   },
 
-  // Given a variable v that is not free in the given wff A, and a wff B, derive
-  // ((forall {v. A => B}) == (A => forall {v. B})).  Could run even if
-  // the variable is free, but would not give desired result.
+  // Given a variable v that is not free in the given wff A, and a wff
+  // B, derives ((forall {v. A => B}) == (A => forall {v. B})).  Could
+  // run even if the variable is free, but would not give desired
+  // result.
+  //
+  // When rewriting with implyForall does the beta reductions that are
+  // here, this can probably go away.
   implyForallGen: {
     action: function(v, a_arg, b_arg) {
       var p = termify(a_arg);
@@ -2377,13 +2381,13 @@ var ruleInfo = {
   orForall: {
     statement: 'forall {x. p | q x} == (p | forall {x. q x})',
     proof: function() {
-      // TODO: This proof could use 2139 instead of "cases".
+      // TODO: This proof could use 2139 instead of "casesTF".
       var taut1 = rules.tautology('T | a');
+      // None of these steps are conditionals, so no hypotheses anywhere.
       var all = rules.instVar(taut1, 'q x', 'a').andThen('toForall', 'x');
       var or = rules.instVar(taut1, 'forall {x. q x}', 'a');
       var and = rules.makeConjunction(all, or);
       var trueCase = rules.forwardChain(and, 'a & b => (a == b)');
-
       var falseCase = (rules.eqSelf('forall {x. q x}')
                        .andThen('rewriteOnly', '/right', 'p == F | p')
                        .andThen('rewriteOnly', '/left/arg/body', 'p == F | p'));
@@ -2394,6 +2398,10 @@ var ruleInfo = {
   // This is probably the most useful form of quantifier remover that
   // requires a variable to be not free.  It does not appear in the
   // book, but the numbered ones are corollaries of it.
+  //
+  // The proof does not use any rules with hypotheses, and in
+  // particular it uses toForall only on an entire step (in orForall),
+  // so it could be used to build Rule R'.
   implyForall: {
     statement: 'forall {x. p => q x} == (p => forall {x. q x})',
     proof: function() {
@@ -2906,7 +2914,6 @@ var ruleInfo = {
           // TODO: Do appropriate checking in 5235 and impliesForall as well.
           assert(!(name in hypFreeNames),
                  'Conflicting binding of {1} in {2}', name, c, h_c_arg);
-          // or rewrite using 2127 since all of these are free in the eq part.
           quantEqn = rules.toImplyForall(name, quantEqn);
         }
         return quantEqn;
