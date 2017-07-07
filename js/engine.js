@@ -4055,9 +4055,8 @@ function addRule(key, info_arg) {
   // This will become the "main function" -- the action or proof property
   // with user-written code.
   var main;
-  // True iff the action function has a wrapper around it.  Among other things
-  // it implies that "this" will be set up for it.
-  var actionWrapped = false;
+  // True iff the main function has access to the rule object as "this".
+  var mainHasThis = false;
   // If the rule (theorem) has an explicit statement (which should be
   // provably true), coerce the statement to an Expr if given as a
   // string.
@@ -4083,18 +4082,21 @@ function addRule(key, info_arg) {
     main = proof;
   }
   if (statement) {
-    // Add it as a fact also, and potentially "swapped".
-    // TODO: Work out a way for this to accept fact metadata.
-    addFact({goal: statement, proof: rule});
-    addSwappedFact({goal: statement, proof: rule});
     // If there is a statement but no proof, just assert the statement.
     if (!proof) {
       proof = function() {
         return rules.assert(statement);
       }
+      main = proof;
     }
+    // Add it as a fact also, and potentially "swapped".
+    // TODO: Work out a way for this to accept fact metadata.
+    addFact({goal: statement, proof: proof});
+    addSwappedFact({goal: statement, proof: proof});
   }
   if (proof) {
+    // A statement or proof was given.
+    // 
     // Don't rerun the proof every time, but do re-justify on each
     // call so each use will return a step with its own ordinal.
     rule = function() { 
@@ -4139,7 +4141,7 @@ function addRule(key, info_arg) {
       rule.main = main;
       // Assert that the main code has access to data and metadata
       // through "this".
-      actionWrapped = true;
+      mainHasThis = true;
     }
   }
 
@@ -4153,13 +4155,13 @@ function addRule(key, info_arg) {
     if (typeof info.data === 'function') {
       info.data = info.data.call();
     }
-    if (!actionWrapped) {
+    if (!mainHasThis) {
       // Make the outer action function available to the main
       // function as "this".
       rule = function(_args) {
         return main.apply(rule, arguments);
       };
-      actionWrapped = true;
+      mainHasThis = true;
     }
     // Also make the data a property of "this".
     rule.data = info.data;
@@ -4210,7 +4212,7 @@ function addRule(key, info_arg) {
   rule.info = info;
   
   // Assign a name to the wrapper and main.
-  if (actionWrapped) {
+  if (rule !== main) {
     Object.defineProperty(rule, 'name',
                           {value: key + '_wrapper'});
     Object.defineProperty(main, 'name', {value: key});
