@@ -4128,8 +4128,8 @@ function addRule(key, info_arg) {
 
     if (info.precheck) {
       // There is a precheck.
-      var checker = function(_args) {
-        return Toy._actionInfo = info.precheck.apply(main, arguments);
+      var checker = function(argList) {
+        return Toy._actionInfo = info.precheck.apply(main, argList);
       }
       rule = function(_args) {
         checker(arguments);
