@@ -1708,6 +1708,59 @@ var ruleInfo = {
     description: 'add \u2200'
   },
 
+  // 5220 variant that from A deduces forall {v. A} disregarding
+  // hypotheses.  The variable v may be given as a string, which it
+  // converts internally to a variable.
+  toForall0: {
+    action: function(step, v) {
+      v = varify(v);
+      var step1 = rules.rewriteOnly(step, '', 'a == (T == a)');
+      var step2 = rules.theorem('forallXT');
+      var step3 = rules.changeVar(step2, '/arg', v);
+      var step4 = rules.r(step1, step3, '/arg/body');
+      return step4.justify('toForall0', arguments, [step]);
+    },
+    inputs: {step: 1, varName: 2},
+    form: ('In step <input name=step> generalize on variable '
+           + '<input name=varName>'),
+    menu: '[A] to [\u2200{v. A}]',
+    tooltip: ('UGen for  a whole step'),
+    description: '[A] to [\u2200{v. A}]'
+  },
+
+  // 5220 variant, from [A => B] deduces [A => forall {v. B}].
+  // The variable v may be given as a string, which it converts
+  // internally to a variable.
+  toForall1: {
+    precheck: function(step, v_arg) {
+      var v = varify(v_arg);
+      var format = Toy.format;
+      if (!step.isCall2('=>')) {
+        this.failure = format('Not a conditional: {1}', step);
+      }
+      if (step.getLeft().hasFreeName(v.name)) {
+        this.failure = format('{1} occurs free in LHS of {2}', v.name, step);
+      }
+      return !this.failure;
+    },
+    action: function(step, v) {
+      // Step is a conditional.
+      v = varify(v);
+      var step1 = rules.rewriteOnly(step, '/right', 'a == (T == a)');
+      var step2 = rules.theorem('forallXT');
+      var step3 = rules.changeVar(step2, '/arg', v);
+      // var step4 = rules.replace(step3, '/main/arg/body', step1);
+      var step4 = rules.rplace(step1, step3, '/main/arg/body');
+      return step4.justify('toForall1', arguments, [step]);
+    },
+    inputs: {step: 1, varName: 2},
+    form: ('In step <input name=step> generalize on variable '
+           + '<input name=varName>'),
+    menu: '[A => B] to [A => \u2200{v. B}]',
+    tooltip: ('UGen for [A => B]'),
+    description: '[A => B] to [A => \u2200{v. B}]',
+  },
+
   // 5221 (one variable), in the given step substitute term A for free
   // variable v, which may also be a string, which will be converted
   // to a variable.  In case the step has hypotheses, allows
