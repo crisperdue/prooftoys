@@ -2432,8 +2432,8 @@ var ruleInfo = {
   //
   // Handles hypotheses.  Note: with hyps, has two levels of =>.
   //
-  // TODO: hyps -- can be emulated with toForall and moving A into/out
-  //   of assumptions.
+  // TODO: Change this to move "A" into the LHS (where there is an LHS),
+  //   apply toForall, then move it back to the RHS.
   toImplyForall: {
     action: function(v, h_a_b) {
       v = varify(v);
@@ -2474,7 +2474,10 @@ var ruleInfo = {
   // (In this implementation it is more straightforward to use
   // makeConjunction as needed, followed by forwardChain.)
   //
-  // TODO: hyps -- best strategy TBD.
+  // TODO: Make this always apply to the entire input step,
+  //   ignoring hypotheses.  Fix the (1?) usage with hyps as flagged,
+  //   then change this to not use toImplyForall and replace all
+  //   other occurrences of it.
   //
   // TODO: Apply a similar quantification strategy to rewriting, since
   // the same issues apply to rewrites.
@@ -2898,6 +2901,7 @@ var ruleInfo = {
           // TODO: Do appropriate checking in 5235 and impliesForall as well.
           assert(!(name in hypFreeNames),
                  'Conflicting binding of {1} in {2}', name, c, h_c_arg);
+          // TODO: quantEqn = rules.toForall1(quantEqn, name);
           quantEqn = rules.toImplyForall(name, quantEqn);
         }
         return quantEqn;

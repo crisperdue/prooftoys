@@ -2284,6 +2284,7 @@ var equivalences = {
                   .andThen('simplifySite', '/main/right')
                   .andThen('extractHyp', 'a + c = b + c'))
       var conj = rules.makeConjunction(forward, back);
+      // TODO: use rewriteOnly.
       return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
     }
   },
@@ -2301,6 +2302,7 @@ var equivalences = {
                   .andThen('simplifySite', '/main/right')
                   .andThen('extractHyp', 'a - c = b - c'))
       var conj = rules.makeConjunction(forward, back);
+      // TODO: use rewriteOnly.
       return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
     }
   },
@@ -2329,6 +2331,7 @@ var equivalences = {
       var back = rules.fact('c != 0 => (a * c = b * c => a = b)');
       var conj = rules.makeConjunction(forward, back);
       var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
+      // TODO: use rewriteOnly.
       var result = rules.forwardChain(conj, taut);
       return result;
     }
@@ -2359,6 +2362,7 @@ var equivalences = {
                      .andThen('asImplication'));
       var back = rules.fact('c != 0 => (a / c = b / c => a = b)');
       var conj = rules.makeConjunction(forward, back);
+      // TODO: use rewriteOnly.
       return rules.forwardChain(conj, '(p => q) & (q => p) == (p == q)');
     }
   }
@@ -2710,9 +2714,11 @@ var recipFacts = {
     proof: function() {
       var step1 = rules.axiomReciprocal();
       var step2 = rules.fact('1 != 0');
-      var step3 = rules.rRight(step1, step2, '/left')
-      .rewrite('/main', 'a * b != 0 == a != 0 & b != 0');
+      var step3 = (rules.rRight(step1, step2, '/left')
+                   .rewrite('/main', 'a * b != 0 == a != 0 & b != 0'));
       var step4 = rules.tautology('a & b => b');
+      // TODO: Change the tautology here along with change to forwardChain,
+      //   when it no longer is sensitive to hypotheses.
       var step5 = rules.forwardChain(step3, step4);
       return step5;
     }
