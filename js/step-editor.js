@@ -233,7 +233,15 @@ StepEditor.prototype.ruleChosen = function(ruleName) {
   this.ruleName = ruleName;
   var rule = Toy.rules[ruleName];
   if (rule) {
+    var minArgs = rule.info.minArgs;
     var nargs = rule.length;
+    // TODO: This is something of an abuse of minArgs, because
+    //   it substitutes for the number of named args rather than
+    //   supplementing it with information about how many can
+    //   be omitted in calls.
+    if (minArgs && minArgs > nargs) {
+      nargs = minArgs;
+    }
     // Initialize the args array length to be the number of its
     // named arguments.
     var args = new Array(nargs);
@@ -419,13 +427,15 @@ StepEditor.prototype.tryExecuteRule = function() {
   // TODO: Get it together on failure reporting here.
   var ruleName = this.ruleName;
   var rule = Toy.rules[ruleName];
+  var minArgs = rule.info.minArgs;
   var nargs = rule.length;
+  var len = (minArgs && minArgs > nargs ? minArgs : nargs);
   // Initialize the args array length to be the number of its
-  // named arguments.
-  var args = new Array(nargs);
+  // named arguments, or minArgs, whichever is more.
+  var args = new Array(len);
   this.fillFromSelection(args);
   this.fillFromForm(args);
-  if (this.checkArgs(args, rule.info.minArgs, true)) {
+  if (this.checkArgs(args, minArgs, true)) {
     tryRuleAsync(this, rule, args);
   }
 };

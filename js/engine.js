@@ -308,7 +308,8 @@ Expr.addMethods(ruleMethods);
 //
 // onFail: if a rule's action function is called in the ordinary manner,
 //   and it has precheck, and the precheck fails, then its onFail
-//   action will run with access to the same arguments
+//   action will run with access to the same arguments and access
+//   to the rule object as "this".
 //
 // inputs: map from type to argument number(s), either a single
 //   number or an array if more than one such argument.
@@ -4138,6 +4139,9 @@ function addRule(key, info_arg) {
                 : info.onFail
                 ? info.onFail.call(rule)
                 : Toy.fail(Toy.format('Rule {1} not applicable', key)));
+      }
+      if (info.minArgs != null) {
+        info.minArgs = main.length;
       }
       // Set properties on the outer action to give access to the
       // main from the the precheck.
