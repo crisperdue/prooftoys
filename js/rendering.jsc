@@ -1100,23 +1100,28 @@ ProofDisplay.prototype.renderStep = function(step) {
         // TODO: This will be the place to handle omission of details
         //   in a proof sent back by a worker thread, when the full
         //   proof is overly long.
-        if (step.ruleName == 'fact' &&
-            (!step.details ||
-             step.details.ruleName == 'assert' ||
-             (step.details.ruleName == 'asHypotheses' &&
-              step.details.ruleArgs[0].ruleName == 'assert'))) {
-          var copy = (step instanceof Call
-              ? new Call(step.fn, step.arg)
-              : step instanceof Atom
-              ? new Atom(step.pname)
-              // Impossible for a step!
-              : null);
-          var fact = Toy.proveResult(copy);
-          // Supply previously-lacking details for the step.
-          step.details = fact.details;
-          // TODO: The proved fact's assumptions may be in different
-          //   order than the original.  Consider filling steps to
-          //   reorder them in the new result.
+        if (step.ruleName == 'fact') {
+          var details = step.details;
+          if (details && details.ruleName == 'instMultiVars') {
+            details = details.ruleArgs[0];
+          }
+          if (details && details.ruleName == 'asHypotheses') {
+            details = details.ruleArgs[0];
+          }
+          if (details.ruleName == 'assert') {
+            var copy = (step instanceof Call
+                        ? new Call(step.fn, step.arg)
+                        : step instanceof Atom
+                        ? new Atom(step.pname)
+                        // Impossible for a step!
+                        : null);
+            var fact = Toy.proveResult(copy);
+            // Supply previously-lacking details for the step.
+            step.details = fact.details;
+            // TODO: The proved fact's assumptions may be in different
+            //   order than the original.  Consider filling steps to
+            //   reorder them in the new result.
+          }
         }
         renderSubproof(step);
       }
