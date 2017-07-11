@@ -4586,9 +4586,9 @@ function proveResult(stmt) {
 }
 
 /**
- * Accepts a proved step or any argument acceptable to getStatement.
- * Returns the proved step, or looks up a fact matching the statement,
- * returning the proved result.  Throws an exception in case of
+ * Accepts any argument acceptable to getStatement.  Returns a proof
+ * of the step, or one like it except for changes of names of
+ * variables including free variables.  Throws an exception in case of
  * failure.
  *
  * Given any form of statement argument that is not already proved,
@@ -4617,7 +4617,7 @@ function getResult(stmt, mustProve) {
   }
   var prover = info.prover;
   // Get the proved result of the fact.
-  if (Toy.assertFacts && !mustProve && !prover.done) {
+  if (Toy.assertFacts && !mustProve) {
     var result = rules.assert(info.goal);
     if (result.isCall2('=>')) {
       // Treat any conditional as having hypotheses.
