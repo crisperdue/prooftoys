@@ -3964,16 +3964,15 @@ var ruleInfo = {
     }
   },
 
-  // Looks up the statement string, proving it if needed. Returns that
-  // result, justified as a "fact".  This is the way to refer to a
-  // fact in a proof, displaying it on its own proof line.
-  // Currently inline if it is a no-op.
-  // Also proves statements of tautologies and simple arithmetic facts.
-  // Removes any " = T" from boolean-valued arithmetic facts.
-  // Programmatic usage supports theorems by name, but not the UI.
+  // If the given statement is not a proved step, looks it up in the
+  // facts database, proving or just asserting it if not already
+  // proved.  Returns that result, justified as a "fact".  Currently
+  // inline if it is a no-op.  Also proves statements of tautologies
+  // and simple arithmetic facts.  Removes any " = T" from
+  // boolean-valued arithmetic facts.  Programmatic usage supports
+  // theorems by name, but not the UI.
   //
-  // This is really part of the engine, but includes some
-  // functionality for numbers.
+  // Contains some functionality specific to numbers.
   fact: {
     action: function(statement) {
       if (Toy.isProved(statement)) {
@@ -3985,6 +3984,7 @@ var ruleInfo = {
       if (result) {
         return result;
       }
+      // This is the full statement of the fact.
       var stmt = Toy.getStatement(statement);
       // Try ordinary proved facts.
       if (Toy.isRecordedFact(stmt)) {
@@ -4394,6 +4394,7 @@ function addFact(info) {
   info.proved = info.goal && info.goal.isProved() || null;
   // The goal is a rendered Expr just because that makes a complete
   // copy that can be properly annotated with types.
+  // TODO: Use expandSynopsis here.
   info.goal = (info.goal || getStatement(info.synopsis)).copyForRendering(null);
   info.synopsis = info.synopsis || info.goal.toString();
   // Annotate the new goal with type info for type comparison
@@ -4504,6 +4505,9 @@ function asFactProver(prover, goal) {
     var result = prover();
     // Seek a substitution into the result that yields the goal.
     var subst = result.alphaMatch(goal);
+    // TODO: Check that substitutions exist, but don't actually do
+    //   substitutions here.  Now rules.fact substitutes as needed to
+    //   use the variables desired at each use.
     if (subst) {
       return rules.instMultiVars(result, subst);
     } else {
@@ -4614,8 +4618,8 @@ function getResult(stmt, mustProve) {
     return info.proved;
   }
   var prover = info.prover;
-  // Get the proved result of the fact.
   if (Toy.assertFacts && !mustProve) {
+    // Assert the fact as returned by getStatement.
     var result = rules.assert(info.goal);
     if (result.isCall2('=>')) {
       // Treat any conditional as having hypotheses.
@@ -4627,6 +4631,7 @@ function getResult(stmt, mustProve) {
     return result;
   }
   info.inProgress = true;
+  // Get the proved result of the fact.
   info.proved = prover();
   // Note that the fact remains in progress if its prover throws, which
   // may or may not be good thing.
@@ -4664,6 +4669,7 @@ function getStatementKey(stmt) {
   // in particular "==" for "=", compared with "dump", which is not.
   // TODO: Determine what to do about facts such as pure logic facts,
   //   which are generic across types, and implement accordingly.
+  // TODO: Use stmt just as a synopsis here.
   return Toy.standardVars(getStatement(stmt).getMain()).toString();
 }
 
@@ -4690,6 +4696,12 @@ function isRecordedFact(stmt) {
  * assumptions based on use of basic numerical functions).  If the
  * resulting statement is an implication with an equation as the
  * consequence, treats the antecedent as assumptions.
+ *
+ * TODO: This adds only type assumptions, so it may neglect other
+ *   assumptions and not return a true statement when given a correct
+ *   synopsis string.  Should probably split into "fullStatement"
+ *   which expands a synopsis, and "getStatement" which looks up
+ *   a fact to create a goal from the synopsis.
  */
 function getStatement(fact) {
   if (Toy.isProved(fact)) {
