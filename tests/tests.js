@@ -1983,24 +1983,20 @@ var testCase = {
   },
 
   testForwardChain: function() {
-    var step1 = Toy.rules.assume('p x & (p x => q x)');
-    var taut = rules.tautology('a & (a => b) => b');
-    var inf = Toy.rules.forwardChain(step1, taut);
-    assertEqual('(q x)', inf.unHyp());
+    var step = (rules.axiom1()
+                .andThen('forwardChain', '(a == b) => (a => b)'));
+    assertEqual('(((g T) & (g F)) => (forall {a. (g a)}))', step);
+    
+   var step1 = rules.assert('p x & (p x => q x)');
+    var mpTaut = rules.tautology('a & (a => b) => b');
+    var inf = rules.forwardChain(step1, mpTaut);
+    assertEqual('(q x)', inf);
 
-    var step1 = Toy.rules.assert('h x => (p x & (p x => q x))');
-    var step2 = Toy.rules.assume('h x');
-    var step3 = Toy.rules.modusPonens(step2, step1);
-    var result = Toy.rules.forwardChain(step3, taut);
-    assertEqual('((h x) => (q x))', result);
-    assert(result.hasHyps);
-
-    var step1 = rules.assume('x = y');
-    var step2 = rules.applyToBoth('{x. x + z}', step1);
-    var step3 = rules.extractHyp(step2, 'x = y');
-    var arith = rules.axiomArithmetic(Toy.parse('5 + 3'));
-    var step4 = rules.forwardChain(arith, step3);
-    assertMatches('forall {x. (5 + 3) + x = 8 + x}', step4);
+    var step1 = rules.fact('neg a = 0 - a');
+    var step2 = rules.rewrite(step1, '/left/fn', 'f = {x. f x}');
+    var step3 = rules.instVar(step2, '5', 'x');
+    var step4 = rules.rewrite(step3, '/left/fn', '{x. f x} = f');
+    assertEqual('((R a) => ((neg a) = (0 - a)))', step4);
   },
 
   testBackwardChain: function() {

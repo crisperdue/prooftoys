@@ -2528,10 +2528,8 @@ var ruleInfo = {
   // (In this implementation it is more straightforward to use
   // makeConjunction as needed, followed by forwardChain.)
   //
-  // TODO: Make this always apply to the entire input step,
-  //   ignoring hypotheses.  Fix the (1?) usage with hyps as flagged,
-  //   then change this to not use toImplyForall and replace all
-  //   other occurrences of it.
+  // This always applies to the entire input step, ignoring
+  // hypotheses.
   //
   // TODO: Apply a similar quantification strategy to rewriting, since
   // the same issues apply to rewrites.
@@ -2541,25 +2539,25 @@ var ruleInfo = {
   forwardChain: {
     action: function(step, schema_arg) {
       var schema = rules.fact(schema_arg);
-      var mainOp = schema.unHyp().getBinOp().pname;
-      var substitution = step.unHyp().matchSchema(schema.unHyp().getLeft());
+      var mainOp = schema.getBinOp().pname;
+      var substitution = step.matchSchema(schema.getLeft());
       if (!substitution && (mainOp === '==' || mainOp === '=')) {
         // Allow RHS match in case schema is an equivalence.
-        substitution = step.unHyp().matchSchema(schema.unHyp().getRight());
+        substitution = step.matchSchema(schema.getRight());
       }
       assert(substitution, 
              '{1} does not match LHS of schema\n{2}',
-             step.unHyp(), schema, step);
+             step, schema, step);
       var unmapped = schema.unmappedVars(substitution);
       var schema2 = schema;
       // Variables first in unmapped are quantified first/outermost.
       while (unmapped.length) {
-        schema2 = rules.toImplyForall(unmapped.pop(), schema2);
+        schema2 = rules.toForall1(unmapped.pop(), schema2);
       }
       // Schema2 may have some newly-quantified variables in its RHS.
       var step2 = rules.instMultiVars(schema2, substitution);
       var step3 = (mainOp === '=>'
-                   ? rules.modusPonens(step, step2)
+                   ? rules.modusPonens(rules.asImplication(step), step2)
                    : mainOp === '=='
                    ? rules.replaceEither(step, '/main', step2)
                    : assert(false, 'Schema must be like A => B or A == B'));
