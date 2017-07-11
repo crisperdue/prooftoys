@@ -3989,9 +3989,8 @@ var ruleInfo = {
       // Try ordinary proved facts.
       if (Toy.isRecordedFact(stmt)) {
         var fact = Toy.getResult(stmt);
-        // Converts the standardized names of free variables into the
-        // ones given.
-        var map = stmt.matchSchema(fact.getMain());
+        // Converts names of free variables into the ones given.
+        var map = fact.alphaMatch(stmt);
         var instance = rules.instMultiVars(fact, map);
         return instance.justify('fact', arguments);
       }
@@ -4016,8 +4015,8 @@ var ruleInfo = {
       } catch(err) {}
       Toy.err('No such fact: ' + statement);
     },
-    inputs: {bool: 1},
-    form: ('Look up fact <input name=bool size=40>'),
+    inputs: {string: 1},
+    form: ('Look up fact <input name=string size=40>'),
     menu: 'look up a fact',
     tooltip: (''),
     description: 'fact',
@@ -4420,7 +4419,7 @@ function addFact(info) {
  * an equation, switches its LHS and RHS, otherwise does nothing.
  */  
 function addSwappedFact(info) {
-  var stmt = getStatement(info.goal);
+  var stmt = info.goal;
   if (stmt.isEquation()) {
     var swapped = Toy.commuteEqn(stmt);
     if (isRecordedFact(swapped)) {
