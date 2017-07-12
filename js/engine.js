@@ -3974,18 +3974,18 @@ var ruleInfo = {
   //
   // Contains some functionality specific to numbers.
   fact: {
-    action: function(statement) {
-      if (Toy.isProved(statement)) {
+    action: function(synopsis) {
+      if (Toy.isProved(synopsis)) {
         // It is an already proved statement.
-        return statement;
+        return synopsis;
       }
       // Try named theorems (not available from the UI).
-      var result = Toy.getTheorem(statement);
+      var result = Toy.getTheorem(synopsis);
       if (result) {
         return result;
       }
       // This is the full statement of the fact.
-      var stmt = Toy.getStatement(statement);
+      var stmt = Toy.getStatement(synopsis);
       // Try ordinary proved facts.
       if (Toy.isRecordedFact(stmt)) {
         var fact = Toy.getResult(stmt);
@@ -4011,9 +4011,9 @@ var ruleInfo = {
       // Try tautologies.
       try {
         // Inline for tautologies.
-        return rules.tautology(statement);
+        return rules.tautology(synopsis);
       } catch(err) {}
-      Toy.err('No such fact: ' + statement);
+      Toy.err('No such fact: ' + synopsis);
     },
     inputs: {string: 1},
     form: ('Look up fact <input name=string size=40>'),
