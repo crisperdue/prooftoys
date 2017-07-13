@@ -2980,7 +2980,8 @@ var ruleInfo = {
         step4 = rules.forwardChain(conj1, taut1);
       }
       var step5 = (target.isCall2('=>')
-                   ? (step4.rewriteOnly('', 'a => (b => c) == a & b => c')
+                   ? (rules.rewriteOnly(step4, '',
+                                        'a => (b => c) == a & b => c')
                       .andThen('arrangeAsms'))
                    : step4);
       return step5.justify('replace', arguments, [target, equation]);
