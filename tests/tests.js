@@ -1418,19 +1418,6 @@ var testCase = {
     assert(!Toy._alreadyProved('rplace'));
   },
 
-  /*
-  testGetStatement: function() {
-    assert(Toy.parse('g T & g F == forall {a. (g a)}')
-           .matches(Toy.getStatement('axiom1')));
-    var str = 'forall {x. x = x}';
-    var wff = Toy.parse(str);
-    assertEqual(wff, Toy.getStatement(str));
-    assertEqual(wff, Toy.getStatement(wff));
-    Toy.addRule('ttt', function() { return rules.eqSelf('T'); });
-    assert(Toy.parse('T = T').matches(Toy.getStatement('ttt')));
-  },
-  */
-
 
   // TYPES
 
@@ -2809,7 +2796,6 @@ window.setTimeout(function() {
   var nFacts = 0;
   if (toTest) {
     toTest.forEach(function(key) {
-        // Ignore identifiers as getStatement does.
         if (!Toy.isIdentifier(key)) {
           var info = Toy.lookupFactInfo(key);
           if (info) {

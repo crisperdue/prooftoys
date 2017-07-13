@@ -4350,9 +4350,9 @@ var logicFacts = {
 
 /**
  * Treats each key in the map as a synopsis of a mathematical
- * statement (see getStatement), and treats its value as a function to
- * prove the statement.  Uses addFact to add each statement and its
- * proof function to the internal database of provable facts.
+ * statement, and treats its value as a function to prove the
+ * statement.  Uses addFact to add each statement and its proof
+ * function to the internal database of provable facts.
  */
 function addFactsMap(map) {
   for (var synopsis in map) {
@@ -4375,11 +4375,12 @@ function addFactsMap(map) {
  * Currently recognizes input properties as follows:
  *
  * goal: if present, can generate the synopsis; if proved, becomes
- *   the proved result, and any proof function will be ignored.
- * synopsis: input acceptable to getStatement, usually a string.
- * proof: function to return the proved fact, matching the synopsis.
- *   If not present, the "fact" rule will assert the goal (derived
- *   by getStatement from the synopsis.
+ *   the proved result, and any proof function will be ignored,
+ *   otherwise a WFF.
+ * synopsis:  string for input to mathParse.  Must parse to a
+ *   complete statement of the fact, to be used as the goal.
+ * proof: function to return the proved fact, matching the goal.
+ *   If not present, one will be generated to assert the goal.
  * simplifier: true iff this fact is a simplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
  * labels: Object/set of label names, if given as a string, parses
@@ -4564,8 +4565,8 @@ var _factsMap = {};
 
 /**
  * Access any fact info stored for the given statement, which can be
- * anything recognized by getStatement.  If the resulting statement is
- * conditional, only uses the consequent for lookup.
+ * anything recognized by getStatementKey.  If the statement is
+ * conditional, getStatementKey only uses the consequent for lookup.
  */
 function lookupFactInfo(stmt) {
   return _factsMap[getStatementKey(stmt)];
@@ -4616,7 +4617,6 @@ function getResult(statement, mustProve) {
   }
   var prover = info.prover;
   if (Toy.assertFacts && !mustProve) {
-    // Assert the fact as returned by getStatement.
     var result = rules.assert(info.goal);
     if (result.isCall2('=>')) {
       // Treat any conditional as having hypotheses.
@@ -4696,62 +4696,6 @@ function findFact(stmt) {
   return info ? info.goal : null;
 }
 
-/**
- * Returns an Expr that is the full statement of a "fact".  The input
- * can be a proved statement, a theorem name, an Expr, or a parseable
- * string.  Given an Expr, simply returns its input.  Given a theorem
- * name (an identifier), accesses any already-known statement of it,
- * or proves it and returns the proved result if not, remembering the
- * proved statement.  Given a proved statement, returns its wff.
- *
- * Treats a string as the "synopsis" of an actual statement, and
- * returns the result of parsing it with mathParse (which adds type
- * assumptions based on use of basic numerical functions).  If the
- * resulting statement is an implication with an equation as the
- * consequence, treats the antecedent as assumptions.
- *
- * TODO: This adds only type assumptions, so it may neglect other
- *   assumptions and not return a true statement when given a correct
- *   synopsis string.  Should probably split into "fullStatement"
- *   which expands a synopsis, and "getStatement" which looks up
- *   a fact to create a goal from the synopsis.
- */
-function getStatement(fact) {
-  if (Toy.isProved(fact)) {
-    return fact.wff;
-  } else if (typeof fact === 'string') {
-    if (Toy.isIdentifier(fact)) {
-      // It's the name of an axiom or theorem.
-      var statement = rules[fact].info.statement;
-      if (statement) {
-        // Work with an asserted statement of the theorem if there
-        // is one.
-        return statement;
-      }
-      if (!alreadyProved(fact)) {
-        console.log('Proving in getStatement: ' + fact);
-      }
-      return rules.theorem(fact);
-    } else {
-      // Otherwise it should be a expression in string form.
-      var result = Toy.mathParse(fact);
-      if (result.isCall2('=>') && result.getRight().isCall2('=')) {
-        // Flag it as having assumptions, though the result is not a
-        // theorem.
-        //
-        // TODO: Remove this line, which makes no sense as only steps
-        //   rightly have hyps.
-        result.hasHyps = true;
-      }
-      return result;
-    }
-  } else if (fact instanceof Expr) {
-    return fact;
-  } else {
-    throw new Error('Bad input to getStatement');
-  }
-}
-
 
 //// Finding matching facts
 
@@ -4807,11 +4751,11 @@ function searchForMatchingFact(term, info) {
  * reused, and also enables them to be effectively recursive.
  *
  * Each pattern argument can be an argument acceptable to
- * getStatement, or:
+ * getStatementKey, or:
  *
  * A plain object with properties as follows:
  *
- * stmt: value acceptable to getStatement.  Unless "match" is also
+ * stmt: value acceptable to getStatementKey.  Unless "match" is also
  *   given this will need to be an equation.
  * where: optional string to evaluate, with "subst" 
  *   argument to findMatchingFact available as "$" and cxt and term
@@ -5459,7 +5403,6 @@ Toy.getResult = getResult;
 Toy.eachFact = eachFact;
 Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
-Toy.getStatement = getStatement;
 Toy.getStatementKey = getStatementKey;
 Toy.convert = convert;
 Toy.findMatchingFact = findMatchingFact;
