@@ -872,7 +872,7 @@ var ruleInfo = {
   },
 
   // r5201b.  Works with hypotheses.
-  // TODO: hyps -- input step is an equation.
+  // TODO: Use "replace" to work with conditional equations.
   eqnSwap: {
     action: function(h_ab) {
       var ab = h_ab.getMain();
@@ -4050,6 +4050,48 @@ var ruleInfo = {
       return rules.r(rules.eta(), step, '/right/arg/body/left');
     }
   },
+
+  // From unique existence for p conclude an equivalence with iota for
+  // all x.
+  //
+  // Simplified statement of 5312.
+  exists1Forall: {
+    statement: 'exists1 p => forall {x. p x == x = iota p}',
+    proof: function() {
+      var a1 = rules.assume('p = {x. x = y}');
+      var a2 = rules.eqnSwap(a1);
+      var step1 = (rules.axiom5()
+                   .rplace('/left/arg', a2)
+                   .andThen('asHypotheses')
+                   .andThen('eqnSwap'));
+      // Line shows bug in rules.replace.
+      // var step2 = rules.replace(a1, '/main/right/body/right', step1);
+      var step2 = rules.rplace(step1, a1, '/main/right/body/right');
+      var step3 = (rules.axiom3()
+                   .andThen('instMultiVars', {f: 'p', g: '{x. x = iota p}'})
+                   .andThen('apply', '/right/arg/body/right'));
+      // Line shows bug in rules.replace.
+      // var step4 = rules.replace(step2, '/main', step3);
+      var step4 = (rules.rplace(step3, step2, '/main')
+                   .andThen('toForall0', 'y'));
+      var map = {p: '{y. p = {x. x = y}}',
+                 q: 'forall {x. p x == x = iota p}'};
+      // TODO: Consider converting this to use eRule.
+      var step5 = (rules.existImplies()
+                   .andThen('instMultiVars', map)
+                   .andThen('simpleApply', '/left/arg/body/left'));
+      // Line shows bug in rules.modusPonens without hyps.
+      // var step6 = rules.modusPonens(step4, step5);
+      var step6 = (rules.trueBy(step5, '/left', step4)
+                   .andThen('rewriteOnly', '', '(T == x) == x'));
+      var step7 = (rules.consider('exists1 p')
+                   .andThen('useDefinition', '/left/fn')
+                   .andThen('simpleApply', '/left'));
+      var step8 = rules.rewrite(step6, '/left', step7);
+      return step8;
+    }
+  },
+  
 
   //
   // OPTIONAL/UNUSED
