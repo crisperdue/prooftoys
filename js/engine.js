@@ -487,7 +487,7 @@ var ruleInfo = {
                    : step);
       step1.assertCall2('=>');
       // Always make a new step so we can mark it hasHyps.
-      var result = step1.justify('asHypotheses', arguments, [step]);
+      var result = step1.justify('asHypotheses', arguments, [step], true);
       result.hasHyps = true;
       return result;
     },
