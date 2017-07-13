@@ -3985,9 +3985,9 @@ var ruleInfo = {
         return result;
       }
       // This is the full statement of the fact.
-      var stmt = Toy.getStatement(synopsis);
+      var stmt = findFact(synopsis);
       // Try ordinary proved facts.
-      if (Toy.isRecordedFact(stmt)) {
+      if (stmt) {
         var fact = Toy.getResult(stmt);
         // Converts names of free variables into the ones given.
         var map = fact.alphaMatch(stmt);
@@ -3995,6 +3995,7 @@ var ruleInfo = {
         return instance.justify('fact', arguments);
       }
       // Next try arithmetic facts.
+      stmt = termify(synopsis);
       if (stmt.isEquation()) {
         var result = Toy.tryArithmetic(stmt.eqnLeft());
         if (result && result.alphaMatch(stmt)) {
@@ -4394,7 +4395,8 @@ function addFact(info) {
   // The goal is a rendered Expr just because that makes a complete
   // copy that can be properly annotated with types.
   // TODO: Use expandSynopsis here.
-  info.goal = (info.goal || getStatement(info.synopsis)).copyForRendering(null);
+  info.goal = (info.goal ||
+               Toy.mathParse(info.synopsis)).copyForRendering(null);
   info.synopsis = info.synopsis || info.goal.toString();
   // Annotate the new goal with type info for type comparison
   // with portions of steps in the UI.
@@ -4587,13 +4589,10 @@ function proveResult(stmt) {
 }
 
 /**
- * Accepts any argument acceptable to getStatement.  Returns a proof
- * of the step, or one like it except for changes of names of
- * variables including free variables.  Throws an exception in case of
- * failure.
- *
- * Given any form of statement argument that is not already proved,
- * this returns the same object every time the same fact is requested.
+ * Accepts an already-proved step or the full statement of some
+ * recorded fact.  Returns a proof of the step, or one like it except
+ * for changes of names of variables including free variables.  Throws
+ * an exception in case of failure.
  *
  * Note that the facts database currently looks up facts by their
  * "main" part, ignoring any assumptions.
@@ -4605,14 +4604,13 @@ function proveResult(stmt) {
  * TODO: Consider renaming to something like "stepify" and using as
  *   a conversion for inputs to steps in the vein of "termify".
  */
-function getResult(stmt, mustProve) {
-  if (Toy.isProved(stmt)) {
-    return stmt;
+function getResult(statement, mustProve) {
+  if (Toy.isProved(statement)) {
+    return statement;
   }
-  var statement = getStatement(stmt);
-  // Same encoding as in addFact.
   var info = lookupFactInfo(statement);
   assert(info, 'Not a recorded fact: {1}', statement);
+  // TODO: Consider more precise checking of the result of the lookup.
   if (info.proved) {
     return info.proved;
   }
@@ -4652,7 +4650,7 @@ function isInProgress(stmt) {
 }
 
 /**
- * Given an argument acceptable to getStatement, returns a string key
+ * Given a term or string that parses to one, returns a string key
  * usable for looking up information about the fact.  If the statement
  * is conditional, the key represents its consequent; otherwise it
  * represents the entire statement.
@@ -4660,8 +4658,8 @@ function isInProgress(stmt) {
  * TODO: Rename this to indicate that it only uses the consequent in
  *   generating the key.  Or perhaps better, move this functionality
  *   into its uses and support storing the same fact under multiple
- *   keys, ond based on just the consequent and another based on the
- *   entire statement.
+ *   keys, for example one based on just the consequent and another
+ *   based on the entire statement.
  */
 function getStatementKey(stmt) {
   // This currently uses toString, which is sensitive to aliases
@@ -4669,17 +4667,33 @@ function getStatementKey(stmt) {
   // TODO: Determine what to do about facts such as pure logic facts,
   //   which are generic across types, and implement accordingly.
   // TODO: Use stmt just as a synopsis here.
-  return Toy.standardVars(getStatement(stmt).getMain()).toString();
+  return Toy.standardVars(termify(stmt).getMain()).toString();
 }
 
 /**
  * Tests whether a fact with the given statement is recorded in the
  * facts database.  The fact need only be recorded, not proved.
- * Accepts any statement acceptable to getStatement.
+ * Accepts a term or parseable string.
  */
 function isRecordedFact(stmt) {
-  // Same encoding as in addFact.
   return !!lookupFactInfo(stmt);
+}
+
+/**
+ * Looks for a fact recorded in the facts database by addFact or
+ * addRule.  The input must be a term or string parseable into a term.
+ * The database ony uses the RHS of conditional facts as a lookup key,
+ * and accordingly this function matches an unconditional argument
+ * as the key.  Or if the argument is conditional, it only matches
+ * the RHS against the stored key.  At present no further checking
+ * is done here.
+ *
+ * Returns a statement of the fact, generally not the proved fact,
+ * or null if no such fact was found.
+ */
+function findFact(stmt) {
+  var info = lookupFactInfo(stmt);
+  return info ? info.goal : null;
 }
 
 /**
@@ -4862,7 +4876,7 @@ function findMatchingFact(facts_arg, cxt, term) {
     if (!infoIsObject) {
       var stmt = factInfo;
       if (!isInProgress(stmt)) {
-        var schema = Toy.getStatement(stmt).getMain().getLeft();
+        var schema = termify(stmt).getMain().getLeft();
         var subst = term.matchSchema(schema);
         if (subst) {
           var result = {stmt: stmt,
@@ -4901,7 +4915,7 @@ function findMatchingFact(facts_arg, cxt, term) {
         var where = factInfo.where;
         var schema = (factInfo.match
                       ? termify(factInfo.match)
-                      : Toy.getStatement(stmt).getMain().getLeft());
+                      : termify(stmt).getMain().getLeft());
         var subst = term.matchSchema(schema);
         if (subst && (!where || apply$(where, subst))) {
           var result = {stmt: stmt,
@@ -5021,12 +5035,11 @@ function convert(step, path, fn) {
  * equal to itself, applying the given equation throughout its RHS,
  * rewriting the result with the given fact, then applying the reverse
  * of the equation throughout the resulting RHS.  The term can be
- * a string, while the equation and fact can be any statement of fact.
+ * a string, while the equation can be proved steps or statements
+ * of any recorded equational fact.
  *
  * Intended to capture a design pattern for proving facts about
  * "inverse" functions such as division and subtraction.
- *
- * TODO: hyps -- step2 is an equation.
  */
 function transformApplyInvert(term_arg, eqn_arg, fact) {
   var term = termify(term_arg);

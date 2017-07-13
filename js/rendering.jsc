@@ -1177,7 +1177,7 @@ ProofDisplay.prototype.renderPopups = function(step) {
                    'a * b / c = a * (b / c)'
                    ];
   var distribStmts = (distribKeys.concat(assocKeys)
-                      .map(Toy.getStatement));
+                      .map(Toy.mathParse));
   step.traverse(function(term, rpath) {
       if (term.isCall2() && term.node) {
         var rules = Toy.rules;

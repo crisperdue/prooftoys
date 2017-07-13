@@ -1418,6 +1418,7 @@ var testCase = {
     assert(!Toy._alreadyProved('rplace'));
   },
 
+  /*
   testGetStatement: function() {
     assert(Toy.parse('g T & g F == forall {a. (g a)}')
            .matches(Toy.getStatement('axiom1')));
@@ -1428,6 +1429,7 @@ var testCase = {
     Toy.addRule('ttt', function() { return rules.eqSelf('T'); });
     assert(Toy.parse('T = T').matches(Toy.getStatement('ttt')));
   },
+  */
 
 
   // TYPES
