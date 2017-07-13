@@ -887,7 +887,7 @@ var simplifiersInfo = {
           }
           if (expr.matchSchema('recip x != 0')) {
             // Simplify statements about nonzero reciprocals.
-            return proveIsT(rules.fact('@R a & a != 0 => recip a != 0'));
+            return proveIsT(rules.fact('recip a != 0'));
           }
         }
         return null;
