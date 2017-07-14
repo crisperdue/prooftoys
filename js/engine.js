@@ -4059,14 +4059,11 @@ var ruleInfo = {
     statement: 'exists1 p => forall {x. p x == x = iota p}',
     proof: function() {
       var a1 = rules.assume('p = {x. x = y}');
-      var a2 = rules.eqnSwap(a1);
       var step1 = (rules.axiom5()
-                   .rplace('/left/arg', a2)
-                   .andThen('asHypotheses')
-                   .andThen('eqnSwap'));
+                   .andThen('replaceEither', '/left/arg', a1));
       // Line shows bug in rules.replace.
       // var step2 = rules.replace(a1, '/main/right/body/right', step1);
-      var step2 = rules.rplace(step1, a1, '/main/right/body/right');
+      var step2 = rules.replaceEither(a1, '/main/right/body/right', step1);
       var step3 = (rules.axiom3()
                    .andThen('instMultiVars', {f: 'p', g: '{x. x = iota p}'})
                    .andThen('apply', '/right/arg/body/right'));
