@@ -1713,14 +1713,15 @@ var testCase = {
 
   testInstForall: function() {
     var result = Toy.rules.instForall(call('forall', lambda(y, call(p, y))),
-                                    call(f, y))
+                                      '',
+                                      call(f, y))
     assertEqual('(p (f y))', result);
 
     // Hypotheses
     var hyps = Toy.rules.assume('p y');
     var step1 = Toy.rules.assert('forall {y. p y}');
     var step2 = Toy.rules.appendStepHyps(step1, hyps);
-    var result = Toy.rules.instForall(step2, call(f, y));
+    var result = Toy.rules.instForall(step2, '/right', call(f, y));
     assertEqual('((p y) => (p (f y)))', result)
     assert(result.hasHyps);
   },

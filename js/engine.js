@@ -1241,15 +1241,19 @@ var ruleInfo = {
   // TODO: hyps -- input step is an equation.
   //   (Target converts to an equation.)
   instForall: {
-    action: function(h_target, expr) {
-      var target = h_target.unHyp();
-      assert(target.fn.isConst('forall'),
-             "Must be 'forall': {1}", target.fn,
-             h_target);
-      assert(target.arg instanceof Toy.Lambda,
-             "Must be lambda expression: {1}", target.arg,
-             h_target);
-      var step1 = rules.useDefinition(h_target, '/main/fn');
+    precheck: function(step, path, expr) {
+      var target = step.get(path);
+      var pathStr = path.toString();
+      return (target &&
+              target.isCall1('forall') &&
+              target.arg instanceof Toy.Lambda &&
+              (pathStr === '' ||
+               pathStr === '/right' ||
+               pathStr === '/arg'));
+    },
+    action: function(step, path, expr) {
+      var target = step.get(path);
+      var step1 = rules.useDefinition(step, path);
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.apply(step2, '/main/left');
       var step4 = rules.apply(step3, '/main/right');
@@ -1257,17 +1261,16 @@ var ruleInfo = {
       // equationCases, though this next step is a simplified fromTIsA
       // without hypotheses.
       var step5 = rules.rplace(step4, rules.theorem('t'), '/main');
-      return step5.justify('instForall', arguments, [h_target]);
+      return step5.justify('instForall', arguments, [step]);
     },
-    inputs: {step: 1, term: 2, condition: {1: function(target) {
-      return (target instanceof Toy.Call
-              && target.fn.isConst('forall'));
-    }}},
-    form: ('In step <input name=step> instantiate bound var'
-           + ' with term <input name=term>'),
-    menu: 'instantiate "forall"',
-    tooltip: ('In a "forall", instantiates the bound variable with'
-              + ' a given term.'),
+    toOffer: function(step, term) {
+      var path = step.prettyPathTo(term);
+      return rules.instForall.precheck(step, path, term);
+    },
+    inputs: {site: 1, term: 3},
+    form: ('Instantiate &forall; with term <input name=term>'),
+    menu: 'instantiate &forall;',
+    tooltip: ('In &forall;, instantiates the bound variable.'),
     description: 'instantiate &forall;'
   },
 
@@ -1322,7 +1325,7 @@ var ruleInfo = {
       var step6 = rules.apply(step5, '/left/right');
       var step7 = rules.apply(step6, '/left/left');
       var step8 = rules.r(step7, step1, '');
-      var step9 = rules.instForall(step8, v);
+      var step9 = rules.instForall(step8, '', v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
     },
     inputs: {equation: [1, 2], varName: 3},
@@ -1514,7 +1517,7 @@ var ruleInfo = {
       var step7 = rules.r5214();
       var step8 = rules.r5213(rules.theorem('r5211'), step7);
       var step9 = rules.r(step5, step8, '/');
-      var step10 = rules.instForall(step9, a);
+      var step10 = rules.instForall(step9, '', a);
       return step10.justify('andTBook', arguments);
     }
   },
@@ -1898,7 +1901,7 @@ var ruleInfo = {
       var step4 = rules.makeConjunction(step1b, step2b);
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), 'g');
       var step6 = rules.rplace(step5, step4, '');
-      var step7a = rules.instForall(step6, v);
+      var step7a = rules.instForall(step6, '', v);
       var step7b = rules.apply(step7a, '');
       return step7b.justify('casesTF', arguments, [caseT, caseF]);
     },
