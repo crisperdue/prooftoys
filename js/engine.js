@@ -4223,18 +4223,18 @@ function addRule(key, info_arg) {
 
     if (info.precheck) {
       // There is a precheck.
-      var checker = function(argList) {
-        return Toy._actionInfo = info.precheck.apply(main, argList);
+      var checker = function(_args) {
+        return Toy._actionInfo = info.precheck.apply(main, arguments);
       }
       rule = function(_args) {
-        checker(arguments);
+        checker.apply(null, arguments);
         return (Toy._actionInfo
                 ? main.apply(rule, arguments)
                 : info.onFail
                 ? info.onFail.call(rule)
                 : Toy.fail(Toy.format('Rule {1} not applicable', key)));
       }
-      if (info.minArgs != null) {
+      if (info.minArgs == null) {
         info.minArgs = main.length;
       }
       // Set properties on the outer action to give access to the
