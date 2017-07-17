@@ -1659,7 +1659,7 @@ var ruleInfo = {
         var step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
         var result = rules.r(step2, target, path);
       } else if (step.isCall2('=>') &&
-                 (map = term.matchSchema(step2.getRight()))) {
+                 (map = term.matchSchema(step.getRight()))) {
         var step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
         var result = rules.replace(target, path, step2);
       } else {
