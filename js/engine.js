@@ -1730,7 +1730,7 @@ var ruleInfo = {
            + '<input name=varName>'),
     menu: '[A] to [\u2200{v. A}]',
     tooltip: ('UGen for  a whole step'),
-    description: '[A] to [\u2200{v. A}]'
+    description: '[A] to [\u2200{v. A}];; in step {step}'
   },
 
   // 5220 variant, from [A => B] deduces [A => forall {v. B}].
@@ -1763,7 +1763,7 @@ var ruleInfo = {
            + '<input name=varName>'),
     menu: '[A => B] to [A => \u2200{v. B}]',
     tooltip: ('UGen for [A => B]'),
-    description: '[A => B] to [A => \u2200{v. B}]',
+    description: '[A => B] to [A => \u2200{v. B}];; in step {step}',
   },
 
   // 5221 (one variable), in the given step substitute term A for free
