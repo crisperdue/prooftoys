@@ -706,7 +706,7 @@ equationOpsInfo = {
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
       var step1 = rules.applyToBothWith(eqn1, '+', lhs);
-      var step3 = rules.replaceEither(step1, '/main/right/right', eqn2);
+      var step3 = rules.rplaceEither(step1, '/main/right/right', eqn2);
       return step3.justify('addEquationToThis', arguments, arguments);
     },
     inputs: {equation: [1, 2]},
@@ -722,7 +722,7 @@ equationOpsInfo = {
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
       var step1 = rules.applyToBothWith(eqn1, '-', lhs);
-      var step3 = rules.replaceEither(step1, '/main/right/right', eqn2);
+      var step3 = rules.rplaceEither(step1, '/main/right/right', eqn2);
       return step3.justify('subtractEquationFromThis', arguments, arguments);
     },
     inputs: {equation: [1, 2]},

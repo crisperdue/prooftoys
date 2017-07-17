@@ -2685,7 +2685,7 @@ var hoverHandlers = {
   rplace: hoverReplace,
   rRight: hoverReplace,
   replace: hoverAsRewriter,
-  replaceEither: function(step, action) {
+  rplaceEither: function(step, action) {
     // Same as hoverReplace, but the equation is args[2].
     // TODO: Calling hoverAsRewriter does not work when this replaces
     //   a right side.  Fix so it does work.

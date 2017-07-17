@@ -2562,7 +2562,7 @@ var ruleInfo = {
       var step3 = (mainOp === '=>'
                    ? rules.modusPonens(rules.asImplication(step), step2)
                    : mainOp === '=='
-                   ? rules.replaceEither(step, '/main', step2)
+                   ? rules.rplaceEither(step, '/main', step2)
                    : assert(false, 'Schema must be like A => B or A == B'));
       // Schema is listed as a dependency here so it can be recognized
       // as a dependency, e.g. when rendering a proof.
@@ -3178,7 +3178,7 @@ var ruleInfo = {
   // Ambidextrous replace that tries matching the equation LHS, but
   // can also replace right-to-left.  Applies rules.replaceIsEquiv if
   // these do not match.
-  replaceEither: {
+  rplaceEither: {
     action: function(target, _path, equation) {
       var path = Toy.path(_path);
       var lhs = equation.getMain().getLeft();
@@ -3186,10 +3186,10 @@ var ruleInfo = {
       var expr = target.get(path);
       if (expr.matches(lhs)) {
         return rules.rplace(equation, target, path)
-          .justify('replaceEither', arguments, [target, equation]);
+          .justify('rplaceEither', arguments, [target, equation]);
       } else if (expr.matches(equation.getMain().getRight())) {
         return (rules.rRight(equation, target, path)
-                .justify('replaceEither', arguments, [target, equation]));
+                .justify('rplaceEither', arguments, [target, equation]));
       } else if (rhs.isCall2('=') && expr.matches(rhs.getLeft())) {
         // Apply the more complex rule "inline", so it displays and
         // not this rule.
@@ -4067,10 +4067,10 @@ var ruleInfo = {
     proof: function() {
       var a1 = rules.assume('p = {x. x = y}');
       var step1 = (rules.axiom5()
-                   .andThen('replaceEither', '/left/arg', a1));
+                   .andThen('rplaceEither', '/left/arg', a1));
       // Line shows bug in rules.replace.
       // var step2 = rules.replace(a1, '/main/right/body/right', step1);
-      var step2 = rules.replaceEither(a1, '/main/right/body/right', step1);
+      var step2 = rules.rplaceEither(a1, '/main/right/body/right', step1);
       var step3 = (rules.axiom3()
                    .andThen('instMultiVars', {f: 'p', g: '{x. x = iota p}'})
                    .andThen('apply', '/right/arg/body/right'));
