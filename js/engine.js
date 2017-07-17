@@ -1691,6 +1691,8 @@ var ruleInfo = {
   // 5220 (universal generalization).  From A deduces forall {v. A}.
   // The variable v may be given as a string, which it converts
   // internally to a variable.  Supports hypotheses.
+  // TODO: Remove this in favor of toForall0 and toForall1
+  //   or similarly implyForall.
   toForall: {
     action: function(h_a, v) {
       v = varify(v);
