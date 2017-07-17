@@ -2965,11 +2965,15 @@ var ruleInfo = {
       var eq = equation.getRight();
       var h = equation.getLeft();
       var step1 = rules.r5239(target, path, eq);
-      var step2 = rules.trueBy(step1, '/right/left', target);
-      // Step3 will be [(forall ... eq) => D], where D is the target
-      // after replacement, and the quantifier binds no free vars of eq.
-      var step3 = rules.rewriteOnly(step2, '/right', '(T == p) == p');
+      var step2a = rules.trueBy(step1, '/right/left', target);
+      var step2b = rules.rewriteOnly(step2a, '/right', '(T == p) == p');
+      // Use the equation's assumptions as assumptions in place of
+      // the equation itself.
+      var step3 = rules.p2(equation, step2b,
+                           '(a => b) & (b => c) => (a => c)');
       var step4 = step3;
+      // quantEqn will be [(forall ... eq) => D], where D is the target
+      // after replacement, and the quantifier binds no free vars of eq.
       var quantEqn = quantEquation()
       // If the replacement site has no variable bindings, then quantEqn
       // and equation are the same, so skip the chaining.
@@ -2989,9 +2993,9 @@ var ruleInfo = {
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
-    menu: 'replace using term like {term} = A',
+    menu: 'replace using a step like {term} = . . .',
     description: 'replace {site};; {in step siteStep} {using step equation}',
-    labels: 'uncommon'
+    labels: 'basic'
   },
 
   // Like Rule R', based on 5240 (the Deduction Theorem).  The
