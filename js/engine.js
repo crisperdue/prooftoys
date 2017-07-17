@@ -2467,8 +2467,6 @@ var ruleInfo = {
   // appears with x bound, substituting for it does not result in any
   // free occurrences of x.
   existImplies: {
-    // TODO: Implement "eRule" based on this theorem, with a precondition
-    //   that checks applicability.
     statement: 'forall {x. p x => q} == (exists p => q)',
     proof: function() {
       var fact = rules.fact('not (forall {x. not (p x)}) == exists p');
@@ -2660,7 +2658,7 @@ var ruleInfo = {
   // Analog to Rule R, expressed as an implication.  Theorem schema.
   //
   // Given a target wff C, a path relative to C, and an equation A = B,
-  // proves a wff of the form "(forall ... A = B) => (C = D), where D
+  // proves a wff of the form "(forall ... A = B) => (C == D), where D
   // is obtained similarly to an application of Rule R to A = B and C.
   // The "forall" binds free variables of A = B that are bound at the
   // replacement location in C.
