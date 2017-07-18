@@ -1666,7 +1666,8 @@ var ruleInfo = {
         var step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
         var result = rules.replace(target, path, step2);
       } else {
-        assert(false, 'Term {1} does not match {2} or {3}', step.get(path), step2);
+        assert(false, 'Term {1} does not match {2}',
+               target.get(path), step);
       }
       return result.justify('trueBy', arguments, [target, step]);
     },
