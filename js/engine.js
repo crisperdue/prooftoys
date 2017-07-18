@@ -3209,6 +3209,46 @@ var ruleInfo = {
     labels: 'basic'
   },
 
+  // Ambidextrous replace that tries matching the equation LHS, but
+  // can also replace right-to-left.
+  replaceEither: {
+    action: function(target, _path, equation) {
+      // TODO: Figure out what to do about Toy.path!
+      var path = Toy.path(_path);
+      var lhs = equation.getMain().getLeft();
+      var rhs = equation.getMain().getRight();
+      var expr = target.get(path);
+      assert(expr, 'Target {1} has no path {2}', target, path);
+      if (expr.matches(lhs)) {
+        return rules.replace(target, path, equation)
+          .justify('replaceEither', arguments, [target, equation]);
+      } else if (expr.matches(equation.getMain().getRight())) {
+        var step1 = rules.eqnSwap(equation);
+        return (rules.replace(target, path, step1)
+                .justify('replaceEither', arguments, [target, equation]));
+      } else if (rhs.isCall2('=') && expr.matches(rhs.getLeft())) {
+        // Apply the more complex rule "inline", so it displays and
+        // not this rule.
+        return rules.replaceIsEquiv(target, path, equation);
+      } else {
+        Toy.err('Expression ' + expr + ' matches neither side of ' +
+                equation);
+      }
+    },
+    inputs: {site: 1, equation: 3},
+    form: ('Replace this using equation step <input name=equation>'),
+    menuGen: function(ruleName, step, term, proofEditor) {
+      return Toy.format('rEplace {1} with equal term', term);
+      var ed = proofEditor;
+      var result;
+      for (var i = 0; i < ed.steps.length; i++) {
+      }
+    },
+    tooltip: ('Replaces an occurrence of a term with an equal term'),
+    description: 'replace {site};; {in step siteStep} {using step equation}',
+    labels: 'basic'
+  },
+
   // Add hypotheses to the target step from hypStep.  This is key to
   // providing two steps with the same hypotheses in preparation for
   // applying various rules of inference.  If hypStep has no
