@@ -1731,7 +1731,7 @@ var ruleInfo = {
            + '<input name=varName>'),
     menu: '[A] to [\u2200{v. A}]',
     tooltip: ('UGen for  a whole step'),
-    description: '[A] to [\u2200{v. A}];; in step {step}'
+    description: '[A] to [\u2200{v. A}];; {in step step}'
   },
 
   // 5220 variant, from [A => B] deduces [A => forall {v. B}].
@@ -1764,7 +1764,7 @@ var ruleInfo = {
            + '<input name=varName>'),
     menu: '[A => B] to [A => \u2200{v. B}]',
     tooltip: ('UGen for [A => B]'),
-    description: '[A => B] to [A => \u2200{v. B}];; in step {step}',
+    description: '[A => B] to [A => \u2200{v. B}];; {in step step}',
   },
 
   // 5221 (one variable), in the given step substitute term A for free
@@ -3176,7 +3176,7 @@ var ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Ambidextrous replace that tries matching the equation LHS, but
+  // Ambidextrous "rplace" that tries matching the equation LHS, but
   // can also replace right-to-left.  Applies rules.replaceIsEquiv if
   // these do not match.
   rplaceEither: {
@@ -3202,7 +3202,7 @@ var ruleInfo = {
     },
     inputs: {site: 1, equation: 3},
     form: ('Replace this using equation step <input name=equation>'),
-    menu: 'replace {term} with equal term',
+    menu: '"rplace" {term} with equal term',
     tooltip: ('Replaces an occurrence of a term with an equal term'),
     description: 'replace {site};; {in step siteStep} {using step equation}',
     // TODO: Do offer this rule, like replaceConjunct, when there is a
