@@ -871,8 +871,7 @@ var ruleInfo = {
     inputs: {step: 1, equation: 2},
   },
 
-  // r5201b.  Works with hypotheses.
-  // TODO: Use "replace" to work with conditional equations.
+  // r5201b, works with conditional equations.
   eqnSwap: {
     action: function(h_ab) {
       var ab = h_ab.getMain();
@@ -882,7 +881,7 @@ var ruleInfo = {
                 : op === '='
                 ? rules.eqSelf(ab.getLeft())
                 : assert(false, 'Must be an equiv/equation: {1}', ab));
-      var ba = rules.rplace(h_ab, aa, '/main/left');
+      var ba = rules.replace(aa, '/main/left', h_ab);
       return ba.justify('eqnSwap', arguments, arguments);
     },
     inputs: {equation: 1},
