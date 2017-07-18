@@ -3375,6 +3375,11 @@ var ruleInfo = {
   // Extracts subexpressions from the input steps, but does not need
   // either one to be proved; they just provide convenient access to
   // terms and parts of terms for application of r5239.
+  //
+  // This offers one approach to solving simultaneous equations,
+  // in which the equations are in separate steps rather than
+  // being conjoined.  Generally preferred now for practical
+  // reasons is replaceConjunct.
   replaceIsEquiv: {
     action: function(step, path_arg, eqnStep) {
       var path = Toy.path(path_arg);

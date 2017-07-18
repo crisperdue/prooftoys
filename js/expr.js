@@ -201,6 +201,7 @@ function Expr() {
   // not copy when not needed, so this property carries down through a
   // proof, which helps to support displaying the source step number
   // when displaying hypotheses.
+  // TODO: The sourceStep property is deprecated; remove it.
   //
   // The "assume" rule flags its result as "hasHyps" as well as
   // recording the sourceStep of its input.  The "justify" method
