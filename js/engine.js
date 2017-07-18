@@ -4107,20 +4107,20 @@ var ruleInfo = {
     proof: function() {
       var a1 = rules.assume('p = {x. x = y}');
       var step1 = (rules.axiom5()
-                   .andThen('rplaceEither', '/left/arg', a1));
+                   .andThen('replaceEither', '/left/arg', a1));
       // Line shows bug in rules.replace.
-      // var step2 = rules.replace(a1, '/main/right/body/right', step1);
-      var step2 = rules.rplaceEither(a1, '/main/right/body/right', step1);
+      var step2 = rules.replaceEither(a1, '/right/right/body/right', step1);
+      // var step2 = rules.rplaceEither(a1, '/main/right/body/right', step1);
       var step3 = (rules.axiom3()
                    .andThen('instMultiVars', {f: 'p', g: '{x. x = iota p}'})
                    .andThen('apply', '/right/arg/body/right'));
       // Line shows bug in rules.replace.
-      // var step4 = rules.replace(step2, '/main', step3);
-      var step4 = (rules.rplace(step3, step2, '/main')
+      var step4 = (rules.replace(step2, '/right', step3)
                    .andThen('toForall0', 'y'));
+      // var step4 = (rules.rplace(step3, step2, '/main')
+      // .andThen('toForall0', 'y'));
       var map = {p: '{y. p = {x. x = y}}',
                  q: 'forall {x. p x == x = iota p}'};
-      // TODO: Consider converting this to use eRule.
       var step5 = (rules.existImplies()
                    .andThen('instMultiVars', map)
                    .andThen('simpleApply', '/left/arg/body/left'));
