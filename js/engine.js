@@ -2926,17 +2926,14 @@ var ruleInfo = {
 
   // Version of Andrews Rule R' that uses a conditional rather than
   // hypotheses.  Uses a potentially conditional equation to replace a
-  // term in a target step.  The result is conditional iff the
-  // equation is conditional, so if the target is also conditional,
-  // the result looks like: [p => (q => r)], where p is the antecedant
-  // of the equation, the target and result both having the form [q =>
-  // r].
+  // term in a target step.  If both input steps are conditional,
+  // collapses the result [a1 => (a2 => q)] into [a1 & a2 => q].
   //
-  // Takes its arguments in the usual order, unlike rules.r and
-  // rules.rplace, with the target first.
+  // For backward compatibility, if either input has hypotheses,
+  // the result has hypotheses.
   //
-  // TODO: XXX This appears to be mostly broken, and breaks a couple
-  // of other rules if the equation is a conditional equation.
+  // Takes its arguments in the usual order with the target first,
+  // unlike rules.r and rules.rplace.
   replace: {
     action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
@@ -2992,7 +2989,10 @@ var ruleInfo = {
                                         'a => (b => c) == a & b => c')
                       .andThen('arrangeAsms'))
                    : step4);
-      return step5.justify('replace', arguments, [target, equation]);
+      var step6 = (target.hasHyps || equation.hasHyps
+                   ? rules.asHypotheses(step5)
+                   : step);
+      return step6.justify('replace', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
