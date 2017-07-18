@@ -237,6 +237,7 @@ function ProofEditor() {
   @mainDisplay = new ProofDisplay();
   @mainDisplay.proofEditor = self;
   this.proofDisplay = @mainDisplay;
+  this.steps = @mainDisplay.steps;
   var stateDisplayHtml =
     '<div class="proofStateDisplay hidden"\n' +
     ' style="padding: 1em; border: 2px solid #aaf">\n' +
