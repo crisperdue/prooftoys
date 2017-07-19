@@ -1384,8 +1384,8 @@ function renderWff(step) {
     // associated with its own display, so fix up the assignments of
     // nodes.
     if (explicit != asmPart) {
-    explicit.node = asmPart.node;
-    asmPart.node = null;
+      explicit.node = asmPart.node;
+      asmPart.node = null;
     }
     wff.node = dom($wff);
     return wff.node;
