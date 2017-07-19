@@ -4384,12 +4384,12 @@ function addRule(key, info_arg) {
 
 var logicFacts = {
   // Logic
-  '(T = a) = a': {
+  '(T = a) == a': {
     proof: function() {
       return rules.theorem('tIsXIsX');
     }
   },
-  '(a = T) = a': {
+  '(a = T) == a': {
     proof: function() {
       return rules.theorem('tIsXIsX')
       .andThen('rewriteOnly', '/left', 'equalitySymmetric');
@@ -4403,12 +4403,25 @@ var logicFacts = {
     }
   },
 
+  '(T => a) == a': {
+    proof: function() {
+      return rules.tautology('(T => a) == a');
+    }
+  },
+
   '(a != b) == not (a = b)': {
     proof: function() {
       return (rules.eqSelf('a != b')
               .andThen('useDefinition', '/right')
               .andThen('apply', '/right/fn')
               .andThen('apply', '/right'));
+    }
+  },
+
+  'x = x == T': {
+    proof: function() {
+      return (rules.eqSelf('x')
+              .andThen('rewriteOnly', '', 'a == (a == T)'));
     }
   },
 
@@ -4436,6 +4449,15 @@ var logicFacts = {
                        'a => not b == b => not a')
               .andThen('rewriteOnly', '/right',
                        'not (forall {x. not (p x)}) == exists p'));
+    }
+  },
+
+  'exists {y. y = x}': {
+    proof: function() {
+      return (rules.fact('p x => exists p')
+              .andThen('instVar', '{y. y = x}', 'p')
+              .andThen('simpleApply', '/left')
+              .andThen('simplifySite', ''));
     }
   }
 };

@@ -3074,6 +3074,8 @@ $.extend(algebraFacts, algebraIdentities);
 var basicSimpFacts = [
                       'T & a == a',
                       'a & T == a',
+                      'x = x == T',
+                      'T => a == a',
                       'not (a = b) == a != b',
                       {stmt: 'a + neg b = a - b',
                        where: '!$.b.isNumeral()'},
