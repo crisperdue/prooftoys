@@ -1383,8 +1383,10 @@ function renderWff(step) {
     // But in the end we want the explicit part to be properly
     // associated with its own display, so fix up the assignments of
     // nodes.
+    if (explicit != asmPart) {
     explicit.node = asmPart.node;
     asmPart.node = null;
+    }
     wff.node = dom($wff);
     return wff.node;
   } else {
