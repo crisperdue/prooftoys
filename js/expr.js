@@ -315,6 +315,32 @@ Expr.prototype.isRendered = function() {
   return !!this.node;
 };
 
+/**
+ * Find all free occurrences of the given variable name and return
+ * reverse paths to all of them as an Array.
+ */
+Expr.prototype.locateFree = function(name) {
+  var paths = [];
+  this._locateFree(name, Path.empty, paths);
+  return paths;
+}
+
+Expr.prototype._locateFree = function(name, path, paths) {
+  if (this instanceof Atom) {
+    if (this.name === name) {
+      paths.push(path);
+    }
+  } else if (this instanceof Call) {
+    this.fn._locateFree(name, new Path('fn', path), paths);
+    this.arg._locateFree(name, new Path('arg', path), paths);
+  } else if (this instanceof Lambda) {
+    if (this.bound.name !== name) {
+      this.body._locateFree(name, new Path('body', path), paths);
+    }
+  }
+};
+
+
 // Categorization of Atoms:
 //
 // Identifiers

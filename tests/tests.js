@@ -1042,7 +1042,32 @@ var testCase = {
     check('null', 'forall {x. p}', 'forall {x. x >= 0}');
     check('{p: {x. {y. ((x > y) == (y < x))}}}',
           'forall {x. forall {y. p x y}}',
-          'forall {x. forall {y. x > y == y < x}}');
+          'forall {x. forall {y. x > y == y < x}}',
+          '{p: 2}');
+  },
+
+  testLocateFree: function() {
+    function str(x) {
+      return x.toString();
+    }
+    var a5 = Toy.rules.axiom5();
+    var result = a5.locateFree('x');
+    assertEqual([], result.map(str));
+    result = a5.locateFree('y');
+    assertEqual(["/arg/body/arg/arg/fn", "/arg"],
+                result.map(str));
+
+    var a3 = Toy.rules.axiom3();
+    var result = a3.locateFree('x');
+    assertEqual([], result.map(str));
+    result = a3.locateFree('f');
+    assertEqual(["/arg/fn/arg/fn",
+                 "/fn/arg/fn/body/arg/arg"],
+                result.map(str));
+    result = a3.locateFree('g');
+    assertEqual(["/arg/arg/fn",
+                 "/fn/arg/body/arg/arg"],
+                result.map(str));
   },
 
   testAlphaMatch: function() {
