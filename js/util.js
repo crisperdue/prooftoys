@@ -380,6 +380,13 @@ function debugString(o, specials) {
   if (o === null) {
     return 'null';
   }
+  if (Array.isArray(o)) {
+    var result = [];
+    for (var i = 0; i < o.length; i++) {
+      result.push(debugString(o[i]));
+    }
+    return '[' + result.join(', ') + ']';
+  }
   if (typeof o == 'object') {
     var result = '{';
     var keys = [];
@@ -393,6 +400,7 @@ function debugString(o, specials) {
         }
         result += key + ': ';
         var value = o[key];
+        // Now add display of the value for the key:
         var f = specials && specials[key];
         if (f) {
           result += f(value);
