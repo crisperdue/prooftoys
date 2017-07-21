@@ -1020,11 +1020,17 @@ var testCase = {
   },
 
   testMatchSchema: function() {
-    function check(expected, schema, term) {
+    function check(expected, schema, term, expectedExpansions) {
       term = typeof term == 'string' ? Toy.parse(term) : term;
       schema = typeof schema == 'string' ? Toy.parse(schema) : schema;
       var subst = term.matchSchema(schema);
       if (expected) {
+        var expanded = (subst && subst['%expansions']) || '';
+        if (expanded) {
+          delete subst['%expansions'];
+        }
+        assertEqual(expectedExpansions || '',
+                    Toy.debugString(expanded));
         assertEqual(expected, Toy.debugString(subst));
       } else {
         console.log(Toy.debugString(subst));
@@ -1037,7 +1043,8 @@ var testCase = {
     check('{p: {x. (p x)}}', 'exists p', 'exists {x. (p x)}');
     check('{p: {x. ((x = 1) => (x > 0))}}',
           'forall {x. p x}',
-          'forall {x. x = 1 => x > 0}');
+          'forall {x. x = 1 => x > 0}',
+          '{p: 1}');
     check('{p: (q y)}', 'forall {x. p}', 'forall {x. q y}');
     check('null', 'forall {x. p}', 'forall {x. x >= 0}');
     check('{p: {x. {y. ((x > y) == (y < x))}}}',

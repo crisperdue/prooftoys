@@ -643,9 +643,11 @@ Expr.prototype.matchPattern = function(pattern_arg) {
  *
  * This is a special case of unification of expressions.
  *
- * TODO: When matching schemas with quantifiers, typical users of
- *   of this will want to reduce out lambda expressions that the
- *   substitution might introduce before proceeding further.
+ * In case of substitutions into contexts with bound variables, this
+ * may also perform substitutions that yield a result that is
+ * equivalent to the input only after some beta reductions.
+ * Information about the number of expansions introduced per variable
+ * is in the substition under the key "%expansions".
  */
 Expr.prototype.matchSchema = function(schema) {
   if (typeof schema == 'string') {
@@ -2619,19 +2621,6 @@ Call.prototype.findAll = function(name, action1, expr2, action2) {
   this.arg.findAll(name, action1, expr2.arg, action2);
 };
 
-// TODO: A call with a free predicate variable and some bound
-//   variables as arguments can expand to any boolean term containing
-//   those bound variables.  To do this, first substitute one or more
-//   nested lambdas for the predicate variable, (call it "p").
-//
-//   The innermost lambda has the form {x. A}, with "x" being the last
-//   of the variables appearing as arguments to "p".  Any additional
-//   lambdas bind  variables that are preceding arguments of "p".  Each
-//   of these created lambdas is wrapped in a call to an identity
-//   function so it can be found after the substitution.
-//
-//   Similarly for terms of other types.
-//   
 Call.prototype._matchAsSchema = function(expr, map, bindings) {
   // If there is a match without introducing lambdas, use it.
   // Copy the substitution and restore it if necessary.
@@ -2682,6 +2671,9 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
     // function variable.
     var result = expr;
     var arg;
+    // Number of beta expansions applied to the substition for fn.
+    var expansions = 0;
+
     while (args.length) {
       // Actual argument.
       var arg = args.pop();
@@ -2694,6 +2686,7 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
                       ? new Atom(otherName)
                       : expr.freshVar(arg.name));
         result = new Toy.Lambda(toBind, result);
+        expansions++;
       } else {
         return false;
       }
@@ -2703,6 +2696,14 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
     // result does not match it.
     if (existing && !existing.matches(result)) {
       return false;
+    }
+    
+    if (expansions > 0) {
+      var xpanded = map['%expansions'];
+      if (!xpanded) {
+        xpanded = map['%expansions'] = {};
+      }
+      xpanded[fn.name] = expansions;
     }
     // Substitute the lambda term for the function variable.
     map[fn.name] = result;
