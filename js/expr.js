@@ -2152,6 +2152,8 @@ Atom.prototype._asPattern = function(term) {
 
 Atom.prototype.searchCalls = function(fn, path) {};
 
+
+
 //// Utilities on Atoms
 
 /**
@@ -2598,7 +2600,9 @@ Call.prototype.findAll = function(name, action1, expr2, action2) {
 //
 //   The innermost lambda has the form {x. A}, with "x" being the last
 //   of the variables appearing as arguments to "p".  Any additional
-//   lambdas bind  variables that are preceding arguments of "p".
+//   lambdas bind  variables that are preceding arguments of "p".  Each
+//   of these created lambdas is wrapped in a call to an identity
+//   function so it can be found after the substitution.
 //
 //   Similarly for terms of other types.
 //   
@@ -2615,12 +2619,12 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
   //   recursive call here thus excluding this arg from the
   //   more complex calculations here.
   //
-  // First-order matching failed, so try 
+  // First-order matching failed, so try a higher-order match.
+  //
   // Clear the map to remove any additional substitutions tried.
   Object.keys(map).forEach(function(key) { delete map[key]; });
   // and restore the substitution to its previous state.
   Object.assign(map, map2);
-  // if (getBinding(this.arg.name, bindings)) {
   // The arg is bound in this context, so matching requires it to be
   // an arg of a free function variable.
   var fn = this.func();
@@ -2731,8 +2735,11 @@ Lambda.prototype.dump = function() {
 
 Lambda.prototype._subFree = function(map, freeVars) {
   var boundName = this.bound.name;
-  var savedRebinding = map[boundName]
+  var savedRebinding = map[boundName];
   if (savedRebinding) {
+    // A variable to be substituted is bound here.
+    // Remove it from the map during substitution in this scope,
+    // and if there are no others, return this immediately.
     delete map[boundName];
     if (Toy.isEmpty(map)) {
       map[boundName] = savedRebinding;
