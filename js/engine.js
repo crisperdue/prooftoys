@@ -4425,6 +4425,14 @@ var logicFacts = {
     }
   },
 
+  'ident x = x': {
+    proof: function() {
+      return (rules.eqSelf('ident x')
+              .andThen('useDefinition', '/right/fn')
+              .andThen('simpleApply', '/right'));
+    }
+  },
+
   'exists p == not (forall {x. not (p x)})': {
     proof: function() {
       var all = (rules.axiom3()
@@ -4577,6 +4585,8 @@ $(function() {
     define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
     define('empty', '{x. F}');
     define('none', 'iota empty');
+    // The identity function
+    define('ident', '{x. x}');
     // Collection has multiple elements:
     define('multi', '{a. exists {x. exists {y. a x & a y & x != y}}}');
     // Always either "none" or the member of the singleton set:
