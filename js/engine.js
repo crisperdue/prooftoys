@@ -39,7 +39,7 @@ var lambda = Toy.lambda;
 var Expr = Toy.Expr;
 var Atom = Toy.Atom;
 var Call = Toy.Call;
-var Lambda = Toy.lambda;
+var Lambda = Toy.Lambda;
 
 var memo = Toy.memo;
 
