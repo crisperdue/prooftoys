@@ -2208,7 +2208,7 @@ var stepFormatters = {
     var map = step.ruleArgs[1];
     var keys = [];
     for (key in map) {
-      keys.push(key);
+      key !== '%expansions' && keys.push(key);
     }
     return 'substitute for ' + keys.join(', ') + ';; {in step step}';
   },
