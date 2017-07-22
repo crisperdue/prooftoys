@@ -3566,6 +3566,61 @@ var ruleInfo = {
     description: 'use;; {shortFact} {&nbsp;in step siteStep}'
   },
 
+  // E-Rule (5244), specified by a step and name.  Checks first for
+  // assumptions preceding a boolean term containing the variable,
+  // then for a simple conditional with it in the antecedent.
+  eRule: {
+    precheck: function(step, name) {
+      var map = (step.matchPattern('a => (p => q)')
+                 || step.matchPattern('p => q'));
+      // Returns the map if all preconditions are OK.
+      return (map && (!map.a || !map.a.freeVars()[name]) &&
+              map.p.freeVars()[name] &&
+              !map.q.freeVars()[name] &&
+              map);
+    },
+    action: function(step, name) {
+      var map = Toy._actionInfo;
+      if (map.a) {
+        var qstep = rules.toForall1(step, name);
+        return (rules.rewrite(qstep, '/main/left', rules.existImplies())
+                .justify('eRule', arguments, [step]));
+      } else {
+        var qstep = rules.toForall0(step, name);
+        return (rules.rewrite(qstep, '/main', rules.existImplies())
+                .justify('eRule', arguments, [step]));
+      }
+    },
+    inputs: {step: 1, varName: 2},
+    form: ('In step <input name=step>, existentially quantify ' +
+           '<input name=varName>'),
+    menu: 'existentially quantify',
+    tooltip: ('Existentially quantify antecedent'),
+    description: '&exist; {var};; {in step step}'
+  },
+
+  // E-Rule (5244), specified by a step and a path to an occurrence of
+  // a free variable.  The variable must occur free in a suitable part
+  // of the step.
+  eRule2: {
+    precheck: function(step, path) {
+      var v = step.get(path);
+      var name = v.isVariable() && v.name;
+      return rules.eRule.precheck(step, name);
+    },
+    action: function(step, path) {
+      var name = step.get(path).name;
+      // Note that this rule is currently inline.
+      return rules.eRule(step, name);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: ('[A => B] to [&exist; A => B]'),
+    tooltip: 'Existentially quantify antecedent',
+    description: '&exist; {site};; {in step step}',
+    labels: 'basic'
+  },
+
   ////
   //// Conjunction management
   //// 
