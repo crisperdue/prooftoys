@@ -2085,6 +2085,18 @@ var testCase = {
     assertEqual('((x > 0) => ((x + x) > (abs x)))', result);
   },
 
+  // This tests beta-expansion of "p x" during matching, and automatic
+  // beta reduction before replacement in rewriting.
+  testRewriteExpansion: function() {
+    var step = (rules.fact('p x => exists p')
+                .andThen('instVar', '{x. x > 0}', 'p')
+                .andThen('simpleApply', '/left')
+                .andThen('toForall0', 'x'));
+    var result = rules.rewriteOnly(step, '', 'existImplies');
+    assertEqual('((exists {x. (x > 0)}) => (exists {x. (x > 0)}))',
+                result);
+  },
+
   testDeepTermReplacer: function() {
     // Leverages the code for testConjunctsSimplifier.
     // 

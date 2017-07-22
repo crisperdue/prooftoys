@@ -1825,6 +1825,9 @@ var ruleInfo = {
       var step = isEqn ? b : rules.rewriteOnly(b, '', 'a == (T == a)');
       var namesReversed = [];
       for (var name in map) {
+        if (name === '%expansions') {
+          continue;
+        }
         var value = termify(map[name]);
         if (value.isVariable() && value.name === name) {
           continue;
@@ -3442,7 +3445,42 @@ var ruleInfo = {
         Toy.fail(Toy.format('Fact not applicable: {1}', equation));
       }
       var eqn = rules.instMultiVars(equation, map);
-      var result = rules.rplace(eqn, step, path);
+      var simpler = eqn;
+
+      // Beta-reduce expansions created during matching.  These must
+      // make the equation LHS match so the replace rule can apply.
+      // Where possible, this also applies beta reduction to
+      // occurrences of "expanded" variables on the RHS as well.
+      var expansions = map['%expansions'];
+      if (expansions) {
+        // The substitution expands one or more variables.
+        for (var name in expansions) {
+          // Array of paths to _all_ free occurrences of the variable
+          // in the equation, not just those needed to make its LHS
+          // match.
+          var paths = equation.locateFree(name);
+          for (var i = 0; i < paths.length; i++) {
+            // Reverse path to one occurrence of the variable.
+            var revPath = paths[i];
+            // Count of expansions done for this variable.
+            var count = expansions[name];
+            while (count--) {
+              var p = revPath.rest.reverse();
+              var term = simpler.get(p);
+              // Do a beta reduction if possible.
+              if (term instanceof Call && term.fn instanceof Lambda) {
+                simpler = rules.simpleApply(simpler, p);
+                // If successful go up one level in the parse tree.
+                revPath = revPath.rest;
+              } else {
+                break;
+              }
+            }
+          }
+        }
+      }
+      // Do the actual replacement.
+      var result = rules.rplace(simpler, step, path);
       return result.justify('rewriteOnlyFrom', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
