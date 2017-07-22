@@ -1680,7 +1680,7 @@ Call.prototype.render = function(info, minPower) {
     $expr.append('(', this.fn.render(info, 0), ') ',
                  this.arg.render(info, Toy.namePower + 1));
   } else if (!this.fn.displaysIdentifier()) {
-    // Function call with non-identifier operator.
+    // Function call with non-identifier operator, or lambda.
     // Display the function adjacent to its argument, but precede both
     // with a non-breaking space to the left to help the user select
     // this expression, and to set them off from preceding infix operator
@@ -1692,7 +1692,7 @@ Call.prototype.render = function(info, minPower) {
                    '(', this.arg.render(info, Toy.unaryPower), ')');
     } else {
       // Unary operator; ensure space before, then op and arg.
-      $expr.append(' ', this.fn.render(info, 0, true),
+      $expr.append('&nbsp;', this.fn.render(info, 0, true),
                    this.arg.render(info, Toy.unaryPower));
     }
   } else {
