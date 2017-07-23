@@ -3208,12 +3208,12 @@ var ruleInfo = {
     },
     inputs: {site: 1, equation: 3},
     form: ('Replace this using equation step <input name=equation>'),
-    menu: '"rplace" {term} with equal term',
+    menu: 'Replace {term} with equal term (old-style)',
     tooltip: ('Replaces an occurrence of a term with an equal term'),
     description: 'replace {site};; {in step siteStep} {using step equation}',
     // TODO: Do offer this rule, like replaceConjunct, when there is a
     //   suitable equation(s) to use with it.
-    labels: 'basic'
+    labels: ''
   },
 
   // Ambidextrous replace that tries matching the equation LHS, but
@@ -3245,7 +3245,8 @@ var ruleInfo = {
     inputs: {site: 1, equation: 3},
     form: ('Replace this using equation step <input name=equation>'),
     menuGen: function(ruleName, step, term, proofEditor) {
-      return Toy.format('rEplace {1} with equal term', term);
+      return Toy.format('replace {1} with equal term (old-style)', term);
+      // TODO: Finish this.
       var ed = proofEditor;
       var result;
       for (var i = 0; i < ed.steps.length; i++) {
