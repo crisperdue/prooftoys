@@ -339,6 +339,10 @@ Expr.addMethods(ruleMethods);
 // minArgs: Number of required args for the action.  Supply a
 //   value here to make trailing arguments optional in the step editor.
 //
+// maxArgs: Optional maximum number of args to pass to the rule.
+//   Unless already present, added automatically by addRule when
+//   making a rule with a "varargs" wrapper.
+//
 // toOffer: function of step and optional term or string with
 //   suitable body for such a function.  If it returns false
 //   the rule is not offered in the step editor.
@@ -4376,8 +4380,8 @@ function addRule(key, info_arg) {
                 ? info.onFail.call(rule)
                 : Toy.fail(Toy.format('Rule {1} not applicable', key)));
       }
-      if (info.minArgs == null) {
-        info.minArgs = main.length;
+      if (info.maxArgs == null) {
+        info.maxArgs = main.length;
       }
       // Set properties on the outer action to give access to the
       // main from the the precheck.
