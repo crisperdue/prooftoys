@@ -4128,6 +4128,9 @@ var ruleInfo = {
   // boolean-valued arithmetic facts.  Programmatic usage supports
   // theorems by name, but not the UI.
   //
+  // For some cases - tautologies, proved statements, and theorems
+  // in particular, this rule is inline.
+  //
   // Contains some functionality specific to numbers.
   fact: {
     action: function(synopsis) {
@@ -4155,14 +4158,15 @@ var ruleInfo = {
       if (stmt.isEquation()) {
         var result = Toy.tryArithmetic(stmt.eqnLeft());
         if (result && result.alphaMatch(stmt)) {
-          return result;
+          return result.justify('fact');
         }
       } else {
         // Relational operators can go here.
         var result = Toy.tryArithmetic(stmt);
         // x = T is the expected result.
         if (result && result.matchSchema('x = T')) {
-          return rules.rewriteOnly(result, '', '(x = T) = x');
+          return (rules.rewriteOnly(result, '', '(x = T) = x')
+                  .justify('fact'));
         }
       }
       // Try tautologies.
