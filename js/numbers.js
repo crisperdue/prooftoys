@@ -1290,12 +1290,12 @@ var moversInfo = {
     action: function arrangeRational(step, path, numsLeft) {
       var context = this.data.context;
       var arrangeRhs = Toy.arrangeRhs;
+      var numMovers = numsLeft ? 'numLeftMovers' : 'numRightMovers';
 
       return convert(step, path, function(expr) {
           var infix = Toy.infixCall;
           var eqn = rules.consider(expr);
           var flat = rules.flattenTerm(eqn, '/main/right');
-          var numMovers = numsLeft ? 'numLeftMovers' : 'numRightMovers';
           var ordered = arrangeRhs(flat, context, numMovers);
           var numerated = arrangeRhs(ordered, context, 'numerators');
           var denominated = arrangeRhs(numerated, context, 'denominators');
@@ -1351,8 +1351,8 @@ var moversInfo = {
     offerExample: true,
     toOffer: 'return term.isReal()',
     form: '',
-    menu: 'algebra: ratio form of {term}',
-    description: 'ratio form of {site};; {in step siteStep}',
+    menu: 'algebra: put numeric coefficient first',
+    description: 'coefficient form of {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1385,11 +1385,13 @@ var moversInfo = {
     offerExample: true,
     toOffer: 'return term.isReal()',
     form: '',
-    menu: 'algebra: ratio with coefficient for {term}',
-    description: 'ratio with coefficient for {site};; {in step siteStep}',
+    menu: 'algebra: to standard form for term in sum',
+    description: 'standard form for term {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
+  // Regrouping, but just for additions.
+  // TODO: When there is a more suitable regrouping rule, remove this.
   regroupAdditions: {
     action: function(step) {
       function applyTo(eqn, facts) {
