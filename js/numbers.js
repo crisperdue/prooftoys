@@ -810,6 +810,10 @@ var simplifiersInfo = {
   // real or nonzero; simplifies assumptions about products being
   // nonzero into assertions that both operands are real; removes
   // duplicate terms and occurrences of T.
+  //
+  // Note that when rearranging terms as with commutativity and
+  // associativity, it is efficient to defer this simplification
+  // until all rearrangements are completed.
   simplifyAssumptions: {
     action: function(step_arg) {
       var step = step_arg;
@@ -1182,7 +1186,9 @@ var moversInfo = {
 
   /**
    * Organize the factors in a term.  Processes multiplication,
-   * division, negation, reciprocal, and arithmetic.
+   * division, negation, reciprocal, and does arithmetic.  Works by
+   * applying flattenTerm, which also simplifies out negations, then
+   * 
    */
   arrangeRational: {
     data: function() {

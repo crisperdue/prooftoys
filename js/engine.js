@@ -121,6 +121,11 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
     // instantiating universal quantifier(s).
     //
     // TODO: Consider moving this bit of code.
+    // TODO: Consider supporting deferral, or "temporary suppression"
+    //   of these automatic invocations of simplifyAssumptions during
+    //   complex operations where it is now done repeatedly,
+    //   especially rearrangements with commutativity and
+    //   associativity.
     step = (rules.simplifyAssumptions
             ? rules.simplifyAssumptions(step)
             : rules.arrangeAsms(step));
