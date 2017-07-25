@@ -1134,6 +1134,81 @@ var simplifiersInfo = {
 
 var moversInfo = {
 
+  // Uses the associative law to "flatten" an expression made
+  // up of additions and subtractions.
+  flattenSum: {
+    data: {flatteners: [
+           {stmt: 'a + (b + c) = a + b + c'},
+           {stmt: 'a + (b - c) = a + b - c'},
+           {stmt: 'a - (b + c) = a - b - c'},
+           {stmt: 'a - (b - c) = a - b + c'},
+           {descend:
+            {schema: 'a + b',
+             parts: {a: 'flatteners', b: 'flatteners'}}},
+           {descend:
+            {schema: 'a - b',
+             parts: {a: 'flatteners', b: 'flatteners'}}}]
+    },
+    action: function(step, path) {
+      var context = {factLists: {flatteners: this.data.flatteners}};
+      return convert(step, path, function(expr) {
+          var arrangeRhs = Toy.arrangeRhs;
+          var eqn = rules.consider(step.get(path));
+          var flat = arrangeRhs(eqn, context, 'flatteners');
+          return flat;
+        }).justify('flattenSum', arguments, [step]);
+    },
+    inputs: {site: 1},
+    toOffer: function(step, term) {
+      return (term.matchSchema('a + b') || term.matchSchema('a - b'));
+    },
+    offerExample: true,
+    form: '',
+    menu: 'algebra: flatten {term}',
+    description: 'flatten term {site};; {in step siteStep}',
+    labels: 'algebra'
+  },
+
+  // In a flattened sequence of additions and subtractions, this
+  // moves all the numeric terms to the end.
+  arrangeSum: {
+    action: function(step, path) {
+      var numeralBefore = '$.b.isNumeral() && !$.c.isNumeral()';
+      var numRightMovers = [
+        {stmt: 'a + b = b + a',
+         where: '$.a.isNumeral() && !$.b.isNumeral()'},
+        {stmt: 'a + b + c = a + c + b', where: numeralBefore},
+        {stmt: 'a + b - c = a - c + b', where: numeralBefore},
+        {stmt: 'a - b + c = a + c - b', where: numeralBefore},
+        {stmt: 'a - b - c = a - c - b', where: numeralBefore},
+        {descend: {
+            schema: 'a + b',
+            parts: {a: 'numRightMovers'}
+          }
+        },
+        {descend: {
+          schema: 'a - b',
+          parts: {a: 'numRightMovers'}}
+        }];
+      var context = {factLists: {numRightMovers: numRightMovers}};
+      return convert(step, path, function(expr) {
+          var arrangeRhs = Toy.arrangeRhs;
+          var eqn = rules.consider(step.get(path));
+          var flat = arrangeRhs(eqn, context, 'numRightMovers');
+          return flat;
+        }).justify('arrangeSum', arguments, [step]);
+    },
+    inputs: {site: 1},
+    toOffer: function(step, term) {
+      return (term.matchSchema('a + b') || term.matchSchema('a - b'));
+    },
+    offerExample: true,
+    form: '',
+    menu: 'algebra: move like terms together in {term}',
+    description: 'move like terms together in {site};; {in step siteStep}',
+    labels: 'algebra'
+  },
+
   /**
    * "Flattens" a term made up of "*", "/", and "neg".  Converts
    * uses of "neg" into multiplication by -1, then removes
