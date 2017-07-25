@@ -821,7 +821,7 @@ $.extend(StepEditor.prototype, {
    * selected term.
    *
    * In algebra mode, if the LHS is atomic, does not offer unless the
-   * rule has the "algebra" label.
+   * fact has the "algebra" label.
    */
   offerableFacts: function() {
     var self = this;
@@ -1033,6 +1033,10 @@ var suggesterMethods = {
   /**
    * Internal to the StepSuggester; updates the display of suggested
    * next steps.
+   *
+   * The current policy is to offer all rules that are offerable and
+   * have a "offerExample" property with truthy values, and to offer
+   * all facts that are offerable.
    */
   _update: function() {
     var self = this;
@@ -1103,7 +1107,6 @@ var suggesterMethods = {
         });
     }
   }
-
 };
 Object.assign(StepSuggester.prototype, suggesterMethods);
 
