@@ -1188,10 +1188,17 @@ var moversInfo = {
    * Organize the factors in a term.  Processes multiplication,
    * division, negation, reciprocal, and does arithmetic.  Works by
    * applying flattenTerm, which also simplifies out negations, then
-   * 
+   * moves numeric terms all to the left, separates numerator terms
+   * from denominator terms without disturbing ordering of numerals,
+   * and finally does arithmetic on numeric products.
+   *
+   * Inline, for internal use.
    */
   arrangeRational: {
     data: function() {
+      // TODO: For terms containing composite terms e.g. 2*(x + y),
+      //   consider changing "isVariable" in these tests to
+      //   just "not a numeral".
       var numeralAfterVar = '$.c.isNumeral() && $.b.isVariable()';
       // Moves numerals to the left.
       var numLeftMovers = [
@@ -1212,7 +1219,7 @@ var moversInfo = {
         }
       ];
       var numeralBeforeVar = '$.b.isNumeral() && $.c.isVariable()';
-      // Moves numerals to the right.
+      // Moves numerals to the right.  Currently unused.
       var numRightMovers = [
         {stmt: 'a * b = b * a',
          where: '$.a.isNumeral() && $.b.isVariable()'},
@@ -1291,12 +1298,13 @@ var moversInfo = {
       var context = this.data.context;
       var arrangeRhs = Toy.arrangeRhs;
       var numMovers = numsLeft ? 'numLeftMovers' : 'numRightMovers';
-
       return convert(step, path, function(expr) {
           var infix = Toy.infixCall;
           var eqn = rules.consider(expr);
           var flat = rules.flattenTerm(eqn, '/main/right');
-          var ordered = arrangeRhs(flat, context, numMovers);
+          // TODO: For large terms consider separating numerator
+          //   and denominator first, then move numerals within each.
+          var ordered = arrangeRhs(flat, context, 'numLeftMovers');
           var numerated = arrangeRhs(ordered, context, 'numerators');
           var denominated = arrangeRhs(numerated, context, 'denominators');
           var arithmetized = arrangeRhs(denominated, context, 'arithmetizers');
@@ -1327,32 +1335,27 @@ var moversInfo = {
           }
           // Perhaps this just applies 1 * x = x and -1 * x = neg x.
           return rules.simplifySite(resulted, '/main/right');
-        }).justify('arrangeRational', arguments, [step]);
+        });
     },
-    inputs: {site: 1},
-    offerExample: true,
-    form: '',
-    menu: 'algebra: useful ratio form of {term}',
-    description: 'useful ratio form of {site};; {in step siteStep}',
-    labels: 'algebra'
   },
 
   /**
-   * Arrange a rational expression, this time with numerical coefficients
-   * on the left, which is a common standard form, but less useful
-   * in case we want to convert the result to coefficient form.
+   * Arrange a rational expression with numeric coefficents on the
+   * left.  This is useful, but if there is a denominator or more than
+   * two factors in the numerator, the result will need to be
+   * converted to coefficient form.
    */
-  arrangeRatio: {
-    action: function arrangeRatio(step, path) {
+  arrangeTerm: {
+    action: function arrangeTerm(step, path) {
       return (rules.arrangeRational(step, path, true)
-              .justify('arrangeRatio', arguments, step));
+              .justify('arrangeTerm', arguments, step));
     },
     inputs: {site: 1},
     offerExample: true,
     toOffer: 'return term.isReal()',
     form: '',
-    menu: 'algebra: put numeric coefficient first',
-    description: 'coefficient form of {site};; {in step siteStep}',
+    menu: 'algebra: to standard form for term in sum',
+    description: 'standard form for term {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1361,11 +1364,15 @@ var moversInfo = {
    * numeric coefficient where possible.  This form is useful as preparation
    * for gathering like terms.
    *
-   * TODO: Debug me; I am also slow.
-   */
-  arrangeTerm: {
-    action: function arrangeTerm(step, path) {
-      var step1 = rules.arrangeRational(step, path);
+   * TODO: Complete the implementation, or perhaps implement a rule
+   *   that converts the "ratio" form above into coefficient form.
+   *   A known problem with the code here is that numeric terms
+   *   are not coalesced into a single factor.  Pull them all
+   *   out of both numerator and denominator, then do arithmetic.
+   *   
+  arrangeWithCoefficient: {
+    action: function arrangeWithCoefficient(step, path) {
+      var step1 = rules.arrangeRational(step, path, false);
       // These facts cover the cases where there is a numeral
       // at the end of the numerator or denominator or both.
       var facts = [
@@ -1379,16 +1386,17 @@ var moversInfo = {
            where: '$.c.isNumeral()'}
       ];
       return (Toy.applyFactsOnce(step1, path, facts)
-              .justify('arrangeTerm', arguments, step));
+              .justify('arrangeWithCoefficient', arguments, step));
     },
     inputs: {site: 1},
     offerExample: true,
     toOffer: 'return term.isReal()',
     form: '',
-    menu: 'algebra: to standard form for term in sum',
-    description: 'standard form for term {site};; {in step siteStep}',
+    menu: 'algebra: put numeric coefficient first',
+    description: 'coefficient form of {site};; {in step siteStep}',
     labels: 'algebra'
   },
+   */
 
   // Regrouping, but just for additions.
   // TODO: When there is a more suitable regrouping rule, remove this.
