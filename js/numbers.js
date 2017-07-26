@@ -958,7 +958,8 @@ var simplifiersInfo = {
   // entire expression.
   //
   // TODO: Refactor this so the rule itself is not dependent on
-  //   different possible renderings.
+  //   different possible renderings.  Probably make it accept a
+  //   site, which in the UI is determined by the visible part.
   simplifyStep: {
     action: function(step) {
       var visPath = step.pathToVisiblePart();
@@ -2095,6 +2096,10 @@ var basicFacts = {
   'exists R': {
     proof: function() {
       return (rules.fact('p x => exists p')
+              // This line helps simplifyStep to simplify the
+              // assumptions and also helps the display to show
+              // the user what is going on.
+              .andThen('asImplication')
               .andThen('instMultiVars', {x: '0', 'p': 'R'})
               .andThen('simplifyStep'));
     }
