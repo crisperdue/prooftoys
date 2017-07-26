@@ -769,34 +769,16 @@ function simplifyMulDivBoth(step, eqnPath) {
 }
 
 /**
- * After add/subtract both sides, this tries regrouping and then
- * possible simplification.
+ * This does the auto-simplification for add/subtract both sides.  It
+ * tries regrouping and then possible simplification.
  *
- * TODO: Move the functionality into one or two rules.
  */
 function simplifyAddSubBoth(step, eqnPath) {
-  var applyFactsOnce = Toy.applyFactsOnce;
-  // Simplify the right side by regrouping and simplifying the result.
-  var right = step;
-  var right1 = applyFactsOnce(step, eqnPath.concat('/right'), regroupingFacts);
-  if (right1 !== step) {
-    right = rules.simplifySite(right1, eqnPath.concat('/right'));
-    if (right == right1) {
-      // Don't bother regrouping if the result cannot be simplified.
-      right = step;
-    }
-  }
-  // Simplify the left side by regrouping and simplifying the result.
-  var left = right;
-  var left1 = applyFactsOnce(right, eqnPath.concat('/left'), regroupingFacts);
-  if (left1 !== right) {
-    left = rules.simplifySite(left1, eqnPath.concat('/left'));
-    if (left == left1) {
-      // Don't bother regrouping if the result cannot be simplified.
-      left = right;
-    }
-  }
-  return left;
+  var right = eqnPath.concat('/right');
+  var left = eqnPath.concat('/left');
+  var step1 = rules.arrangeSum(step, right);
+  var step2 = rules.arrangeSum(step1, left);
+  return rules.simplifyStep(step2);
 }
 
 var simplifiersInfo = {
