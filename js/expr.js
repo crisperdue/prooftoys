@@ -2582,6 +2582,9 @@ Call.prototype._prettyPath = function(pred, pth) {
 
 Call.prototype._ancestors = function(path, result) {
   result.push(this);
+  if (path.isEnd()) {
+    return;
+  }
   var segment = path.segment;
   var rest = path.rest;
   switch (segment) {
