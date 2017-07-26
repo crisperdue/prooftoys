@@ -2090,6 +2090,16 @@ $.extend(algebraFacts, realAxiomFacts);
 
 
 var basicFacts = {
+
+  // A real number exists.  Equivalently exists {x. R x}.
+  'exists R': {
+    proof: function() {
+      return (rules.fact('p x => exists p')
+              .andThen('instMultiVars', {x: '0', 'p': 'R'})
+              .andThen('simplifyStep'));
+    }
+  },
+  
   '@R a => a != none': {
     proof: function() {
       var asm = rules.assume('a = none');
@@ -2785,7 +2795,26 @@ var subtractionFacts = {
               .rewrite('/main/right', 'a - b + c = a + c - b')
               .rewrite('/main/right', 'a + b - b = a'));
     }
+  },
+
+  'a + b - b = a': {
+    proof: function() {
+      return (rules.fact('a + b - c = a + (b - c)')
+              .andThen('instVar', 'b', 'c')
+              .andThen('simplifyStep'));
+    },
+    simplifier: true
+  },
+
+  'a - b + b = a': {
+    proof: function() {
+      return (rules.fact('a - b + c = a - (b - c)')
+              .andThen('instVar', 'b', 'c')
+              .andThen('simplifyStep'));
+    },
+    simplifier: true
   }
+
 };
 $.extend(algebraFacts, subtractionFacts);
 
