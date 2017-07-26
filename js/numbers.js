@@ -3173,6 +3173,24 @@ var algebraIdentities = {
 $.extend(algebraFacts, algebraIdentities);
 
 /**
+ * Internal functions for the regrouping patterns below.  This returns
+ * a truthy value iff the "b" and "c" parts of the given object/map
+ * are both "numeric", defined as having no free variables.
+ *
+ * One would like this to just check that each is a numeral, but
+ * during simplification some grouping may occur before groups (such
+ * as (2 + 3) are reduced to a single numeral.  We don't want that
+ * to prevent further grouping of numeric constants.
+ *
+ * The current implementation is still simplistic.
+ */
+function areNumericBC(map, cxt, term) {
+  var numericB = Toy.isEmpty(map.b.freeVars());
+  var numericC = Toy.isEmpty(map.c.freeVars());
+  return numericB && numericC;
+}
+
+/**
  * Simplification facts for algebra, used in _simplifyMath1
  * and related places.  During initialization all facts
  * flagged as simplifier: true are added to this list.
@@ -3191,7 +3209,21 @@ var basicSimpFacts = [
                        where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
                       {apply: function(term, cxt) {
                           return (isArithmetic(term) &&
-                                  rules.axiomArithmetic(term)); } }
+                                  rules.axiomArithmetic(term));
+                        }
+                      },
+                      // In some sense these just prepare for a
+                      // simplification step, but the result is good.
+                      {stmt: 'a + b + c = a + (b + c)',
+                       where: areNumericBC},
+                      {stmt: 'a + b - c = a + (b - c)',
+                       where: areNumericBC},
+                      {stmt: 'a - b + c = a - (b - c)',
+                       where: areNumericBC},
+                      {stmt: 'a - b - c = a - (b + c)',
+                       where: areNumericBC},
+                      {stmt: 'a * b * c = a * (b * c)',
+                       where: areNumericBC}
                       ];
 
 
