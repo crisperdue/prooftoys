@@ -3552,7 +3552,8 @@ var ruleInfo = {
       if (Toy.isDistribFact(stmt)) {
         var step1 = rules.arrangeTerm(step, path.concat('/right'));
         var step2 = rules.arrangeTerm(step1, path.concat('/left'));
-        return step2;
+        var step3 = rules.simplifyStep(step2);
+        return step3;
       } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
         // The left part may already be transformed by simplifyAssumptions,
         // and the target may not even exist.
