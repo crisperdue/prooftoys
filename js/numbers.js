@@ -1190,8 +1190,8 @@ var moversInfo = {
     },
     offerExample: true,
     form: '',
-    menu: 'algebra: move like terms together in {term}',
-    description: 'move like terms together in {site};; {in step siteStep}',
+    menu: 'algebra: collect like terms in {term}',
+    description: 'collect like terms in {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
