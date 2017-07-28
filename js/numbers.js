@@ -1326,6 +1326,10 @@ var moversInfo = {
       var bothNumerals = '$.a.isNumeral() && $.b.isNumeral() ';
       var arithmetizers = [
         {apply: tryArithmetic},
+        // TODO: Perhaps neither tryArithmetic nor arithRight
+        //   are needed here given that the site will be simplified
+        //   in the end.
+        // {apply: arithRight},
         // If there is a negated numeral in the denominator, moves
         // the negation into the numerator.
         // From 2 / -3 for example produces -2 / 3 for minus two thirds.
@@ -1406,17 +1410,17 @@ var moversInfo = {
    * two factors in the numerator, the result will need to be
    * converted to coefficient form.
    */
-  arrangeTerm: {
-    action: function arrangeTerm(step, path) {
+  arrangeRatio: {
+    action: function arrangeRatio(step, path) {
       return (rules.arrangeRational(step, path, true)
-              .justify('arrangeTerm', arguments, step));
+              .justify('arrangeRatio', arguments, step));
     },
     inputs: {site: 1},
     offerExample: true,
     toOffer: 'return term.isReal()',
     form: '',
-    menu: 'algebra: to standard form for term in sum',
-    description: 'standard form for term {site};; {in step siteStep}',
+    menu: 'algebra: to standard ratio form',
+    description: 'standard ratio form for term {site};; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1431,9 +1435,11 @@ var moversInfo = {
    *   are not coalesced into a single factor.  Pull them all
    *   out of both numerator and denominator, then do arithmetic.
    *   
-  arrangeWithCoefficient: {
-    action: function arrangeWithCoefficient(step, path) {
+   */
+  arrangeTerm: {
+    action: function arrangeTerm(step, path) {
       var step1 = rules.arrangeRational(step, path, false);
+      var step2 = rules.simplifySite(step1, path);
       // These facts cover the cases where there is a numeral
       // at the end of the numerator or denominator or both.
       var facts = [
@@ -1446,18 +1452,17 @@ var moversInfo = {
           {stmt: 'a / (b * c) = 1 / c * (a / b)',
            where: '$.c.isNumeral()'}
       ];
-      return (Toy.applyFactsOnce(step1, path, facts)
-              .justify('arrangeWithCoefficient', arguments, step));
+      return (Toy.applyFactsOnce(step2, path, facts)
+              .justify('arrangeTerm', arguments, step));
     },
     inputs: {site: 1},
     offerExample: true,
     toOffer: 'return term.isReal()',
     form: '',
-    menu: 'algebra: put numeric coefficient first',
-    description: 'coefficient form of {site};; {in step siteStep}',
+    menu: 'algebra: to standard form for term in sum',
+    description: 'standard form for term {site};; {in step siteStep}',
     labels: 'algebra'
   },
-   */
 
   // Regrouping, but just for additions.
   // TODO: When there is a more suitable regrouping rule, remove this.
