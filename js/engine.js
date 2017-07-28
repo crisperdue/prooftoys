@@ -5640,6 +5640,7 @@ Toy.getTheorem = getTheorem;
 Toy.findHyp = findHyp;
 Toy.getStatementKey = getStatementKey;
 Toy.convert = convert;
+Toy.findFact = findFact;
 Toy.findMatchingFact = findMatchingFact;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
