@@ -415,7 +415,9 @@ var numbersInfo = {
           // magnitude is not a problem.  The fractional part of a
           // result must have denominator no greater than MAX_INT,
           // so it should be distinguishable from an integer.
-          assert(value === Math.floor(value), 'Inexact division');
+          if (value !== Math.floor(value)) {
+            Toy.fail('Inexact division');
+          }
           break;
         case 'div': value = Toy.div(left, right); break;
         case 'mod': value = Toy.mod(left, right); break;
@@ -511,7 +513,7 @@ var numbersInfo = {
           var equation = rules.axiomArithmetic(term);
           result = rules.r(equation, step, path);
         } catch(e) {
-          assert(false, 'Not an arithmetic expression: {1}', term);
+          Toy.fail('Not an arithmetic expression: {1}', term);
         }
       }
       return result.justify('arithmetic', arguments, [step]);
