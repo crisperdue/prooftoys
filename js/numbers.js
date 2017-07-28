@@ -3213,7 +3213,7 @@ function arithRight(term, cxt) {
       var info = _arithInfo;
       for (var i = 0; i < info.length; i++) {
         var item = info[i];
-        var map = term.matchSchema(Toy.findFact(item.schema).eqnLeft());
+        var map = term.matchSchema(Toy.parse(item.schema).getLeft());
         if (map) {
           var nz = item.nz;
           var bValue = map.b.isNumeral() && map.b.getNumValue();
