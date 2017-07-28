@@ -1365,7 +1365,7 @@ var moversInfo = {
           var flat = rules.flattenTerm(eqn, '/main/right');
           // TODO: For large terms consider separating numerator
           //   and denominator first, then move numerals within each.
-          var ordered = arrangeRhs(flat, context, 'numLeftMovers');
+          var ordered = arrangeRhs(flat, context, numMovers);
           var numerated = arrangeRhs(ordered, context, 'numerators');
           var denominated = arrangeRhs(numerated, context, 'denominators');
           var arithmetized = arrangeRhs(denominated, context, 'arithmetizers');
