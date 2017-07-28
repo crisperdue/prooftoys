@@ -281,13 +281,12 @@ function err(info, type) {
 }
 
 /**
- * Intended to be like "err" without entering the debugger, but
- * currently accepts only a message as input, and throws
- * an Error with that.  For situations where the problem may
- * be due to bad input.
+ * Intended to be like an assertion failure, but without entering the
+ * debugger For situations where the problem is not considered to be
+ * a coding error.
  */
-function fail(msg) {
-  throw new Error(msg);
+function fail(msg, _args) {
+  throw new Error(Toy.format.apply(null, arguments));
 }
 
 /**
