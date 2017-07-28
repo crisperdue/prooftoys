@@ -3174,22 +3174,65 @@ var algebraIdentities = {
 };
 $.extend(algebraFacts, algebraIdentities);
 
+// Internal to arithRight.
+var _arithInfo = [{schema: 'a + b + c = a + (b + c)'},
+                  {schema: 'a + b - c = a + (b - c)'},
+                  {schema: 'a - b + c = a - (b - c)'},
+                  {schema: 'a - b - c = a - (b + c)'},
+                  {schema: 'a * b * c = a * (b * c)'},
+                  {schema: 'a * b / c = a * (b / c)',
+                   nz: {c: true}},
+                  {schema: 'a / b * c = a / (b / c)',
+                   nz: {b: true, c: true}},
+                  {schema: 'a / b / c = a / (b * c)',
+                   nz: {b: true, c: true}},
+                  ];
+
+// Internal to arithRight.
+var _arithOps = {'+': true, '-': true, '*': true, '/': true};
+
 /**
- * Internal functions for the regrouping patterns below.  This returns
- * a truthy value iff the "b" and "c" parts of the given object/map
- * are both "numeric", defined as having no free variables.
- *
- * One would like this to just check that each is a numeral, but
- * during simplification some grouping may occur before groups (such
- * as (2 + 3) are reduced to a single numeral.  We don't want that
- * to prevent further grouping of numeric constants.
- *
- * The current implementation is still simplistic.
+ * If the given term has the form [a op1 b op2 c] where op1 and op2
+ * are among the basic four math operations, and an associative law
+ * can be applied, followed by an arithmetic simplification on b and c
+ * (with their new operator), then this does so, and returns an
+ * equation with LHS matching the term and RHS in reduced form.
  */
-function areNumericBC(map, cxt, term) {
-  var numericB = Toy.isEmpty(map.b.freeVars());
-  var numericC = Toy.isEmpty(map.c.freeVars());
-  return numericB && numericC;
+function arithRight(term, cxt) {
+  // TODO: When all of these facts are proved to be unconditionally
+  //   true, remove "nz" conditions that cause the side condition to
+  //   be added when the fact is used.  When arithmetic includes the
+  //   null element, remove all "nz" conditions.
+  if (term.isCall2() && term.getLeft().isCall2()) {
+    var op1 = term.getLeft().getBinOp().name;
+    var op2 = term.getBinOp().name;
+    if (((op1 === '+' || op1 === '-') &&
+         (op2 === '+' || op2 === '-')) ||
+        ((op1 === '*' || op1 === '/') &&
+         (op2 === '*' || op2 === '/'))) {
+      var info = _arithInfo;
+      for (var i = 0; i < info.length; i++) {
+        var item = info[i];
+        var map = term.matchSchema(Toy.findFact(item.schema).eqnLeft());
+        if (map) {
+          var nz = item.nz;
+          var bValue = map.b.isNumeral() && map.b.getNumValue();
+          var cValue = map.c.isNumeral() && map.c.getNumValue();
+          if (bValue === 0 && nz.b ||
+              cValue === 0 && nz.c) {
+            continue;
+          }
+          var step1 = rules.consider(term);
+          var step2 = rules.rewrite(step1, '/right', item.schema);
+          var eqn = Toy.tryArithmetic(step2.get('/main/right/right'));
+          if (eqn) {
+            var step3 = rules.replace(step2, '/main/right/right', eqn);
+            return step3;
+          }
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -3214,18 +3257,7 @@ var basicSimpFacts = [
                                   rules.axiomArithmetic(term));
                         }
                       },
-                      // In some sense these just prepare for a
-                      // simplification step, but the result is good.
-                      {stmt: 'a + b + c = a + (b + c)',
-                       where: areNumericBC},
-                      {stmt: 'a + b - c = a + (b - c)',
-                       where: areNumericBC},
-                      {stmt: 'a - b + c = a - (b - c)',
-                       where: areNumericBC},
-                      {stmt: 'a - b - c = a - (b + c)',
-                       where: areNumericBC},
-                      {stmt: 'a * b * c = a * (b * c)',
-                       where: areNumericBC}
+                      {apply: arithRight}
                       ];
 
 
