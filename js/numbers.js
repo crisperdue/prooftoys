@@ -1581,7 +1581,6 @@ var moversInfo = {
       return (Toy.each(factsB, testFact.bind(null, 'b')) ||
               Toy.each(factsA, testFact.bind(null, 'a')));
     },
-    autoSimplify: noSimplify,
     action: function(step, path_arg) {
       var data = this.data;
       var factsB = data.factsB;
@@ -1620,7 +1619,6 @@ var moversInfo = {
         return false;
       }
     },
-    autoSimplify: noSimplify,
     action: function(step, path_arg) {
       var factsC = [
         'a + b + c = a + c + b',
@@ -2529,8 +2527,8 @@ var negationFacts = {
       var parse = Toy.justParse;
       return rules.fact('a + neg b = a - b')
         .rewrite('/main/left', 'a + b = b + a');
-        // .andThen('instMultiVars', {a: parse('b'), b: parse('a')});
-    }
+    },
+    simplifier: true
   },
   'a - b = neg b + a': {
     proof: function() {
@@ -3256,8 +3254,16 @@ var basicSimpFacts = [
                       'T => a == a',
                       'not (a = b) == a != b',
                       {stmt: 'a + neg b = a - b',
+                       // This condition makes extra-sure there will be
+                       // no circularity during simplification.
+                       // Negation of a numeral will be simplified by
+                       // other rules.
                        where: '!$.b.isNumeral()'},
                       {stmt: 'a - b = a + neg b',
+                       // This one is an exception to the general rule
+                       // that simplifiers make the expression tree
+                       // smaller; but arithmetic will follow this, and
+                       // with high priority.
                        where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
                       {apply: function(term, cxt) {
                           return (isArithmetic(term) &&

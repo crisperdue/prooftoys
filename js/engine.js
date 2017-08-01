@@ -4179,6 +4179,7 @@ var ruleInfo = {
     },
     inputs: {string: 1},
     form: ('Look up fact <input name=string size=40>'),
+    autoSimplify: noSimplify,
     menu: 'look up a fact',
     tooltip: (''),
     description: 'fact',
