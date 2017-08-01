@@ -2554,22 +2554,6 @@ var negationFacts = {
       .rewrite('/main/right', '0 + a = a');
     }
   },
-  'a + neg b + b = a': {
-    proof: function() {
-      return rules.consider('a + neg b + b')
-      .rewrite('/main/right', 'a + b + c = a + (b + c)')
-      .rewrite('/main/right/right', 'neg a + a = 0')
-      .rewrite('/main/right', 'a + 0 = a');
-    }
-  },
-  'a + b + neg b = a': {
-    proof: function() {
-      return rules.consider('a + b + neg b')
-      .rewrite('/main/right', 'a + b + c = a + (b + c)')
-      .rewrite('/main/right/right', 'a + neg a = 0')
-      .rewrite('/main/right', 'a + 0 = a');
-    }
-  },
 
   // Negation with multiplication
 
