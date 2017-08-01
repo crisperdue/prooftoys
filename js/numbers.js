@@ -1163,6 +1163,8 @@ var moversInfo = {
       var numRightMovers = [
         {stmt: 'a + b = b + a',
          where: '$.a.isNumeral() && !$.b.isNumeral()'},
+        {stmt: 'a - b = neg b + a',
+         where: '$.a.isNumeral() && !$.b.isNumeral()'},
         {stmt: 'a + b + c = a + c + b', where: numeralBefore},
         {stmt: 'a + b - c = a - c + b', where: numeralBefore},
         {stmt: 'a - b + c = a + c - b', where: numeralBefore},
