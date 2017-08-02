@@ -4542,6 +4542,9 @@ var logicFacts = {
     }
   },
 
+  // This is the classic definition of the existential quantifier,
+  // proved from a concise definition.  We could have made a
+  // technically correct definition based directly on this.
   'exists p == not (forall {x. not (p x)})': {
     proof: function() {
       var all = (rules.axiom3()
