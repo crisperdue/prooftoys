@@ -2143,7 +2143,7 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   // requirements for matching.
   var frees = bindings && expr.freeVars();
   for (var binding = bindings; binding; binding = binding.more) {
-    if (frees[binding.from]) {
+    if (frees[binding.to]) {
       return false;
     }
   }
