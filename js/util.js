@@ -596,7 +596,7 @@ function memo(fn) {
  * as {1}, {2}, etc..  This presumably is more efficient.
  */
 function format(fmt, map_arg) {
-  var map = (map_arg.constructor === Object)
+  var map = (map_arg && map_arg.constructor === Object)
     ? map_arg
     : arguments;
   return fmt.replace(/\{[$_a-zA-Z0-9]*?\}/g, function(matched) {
