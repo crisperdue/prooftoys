@@ -2495,6 +2495,123 @@ var ruleInfo = {
     }
   },
 
+  // This removes an irrelevant assumption of the form <vbl> = <term>,
+  // where the variable does not occur in the term nor elsewhere in
+  // the step.  The arguments are a step and path to the assumption.
+  removeLet: {
+    precheck: function(step, path) {
+      if (!(step.isCall2('=>') && path.isLeft())) {
+        return false;
+      }
+      var term = step.get(path);
+      if (!term.isCall2('=')) {
+        return false;
+      }
+      var vbl = term.getLeft();
+      if (!vbl.isVariable()) {
+        return false;
+      }
+      var val = term.getRight();
+      if (vName in val.freeVars()) {
+        return false;
+      }
+      var vName = vbl.name;
+      var step1 = rules.extractHypAt(step, path);
+      var map = step1.matchSchema('a => (b => c)');
+      if (map) {
+        var aFree = map.a.freeVars();
+        var cFree = map.c.freeVars();
+        if (!(vName in aFree || vName in cFree)) {
+          return {extracted: step1, vName: vName, rewrite: true};
+        }
+      } else {
+        var cFree = step.wff.getRight().freeVars();
+        if (!(vName in cFree)) {
+          return {extracted: step1, vName: vName, rewrite: false};
+        }
+      }
+      return false;
+    },
+    action: function(step, path) {
+      var info = Toy._actionInfo;
+      var step1 = info.extracted;
+      var vName = info.vName;
+      var asm = step.get(path);
+      var step2 = (info.rewrite
+                   ? rules.rewrite(step1, '', 'a => (b => c) == b => (a => c)')
+                   : step1);
+      var step3 = rules.toForall0(step2, vName);
+      var equiv = rules.fact('forall {x. p x => q} == exists p => q');
+      var step4 = rules.rewriteOnly(step3, '', equiv);
+      var exists = (rules.fact('exists {y. y = x}')
+                    .andThen('instVar', asm.getRight(), 'x'));
+      var step5 = rules.trueBy(step4, '/left', exists);
+      var step6 = rules.rewrite(step5, '', 'T => x == x');
+      return step6.justify('removeLet', arguments, [step]);
+    },
+    inputs: {site: 1},
+    labels: 'basic',
+    form: (''),
+    menu: 'remove irrelevant assumption',
+    tooltip: 'Remove irrelevant assumption',
+    description: 'remove irrelevant assumption {site};; {in step siteStep}'
+  },
+
+  // Removes an irrelevant type assumption of the form (R v) at the
+  // target site.  Currently only for predicate R, but should be
+  // extended as needed.
+  removeTypeAsm: {
+    precheck: function(step, path) {
+      if (!(step.isCall2('=>') && path.isLeft())) {
+        return false;
+      }
+      var term = step.get(path);
+      var termMap = term.matchSchema('R v');
+      if (!termMap || !termMap.v.isVariable()) {
+        return false;
+      }
+      var step1 = rules.extractHypAt(step, path);
+      var map = step1.matchSchema('a => (b => c)');
+      var vName = termMap.v.name;
+      if (map) {
+        var aFree = map.a.freeVars();
+        var cFree = map.c.freeVars();
+        if (!(vName in aFree || vName in cFree)) {
+          return {extracted: step1, vName: vName, rewrite: true};
+        }
+      } else {
+        // The step had no other assumptions.
+        var cFree = step.wff.getRight().freeVars();
+        if (!(vName in cFree)) {
+          return {extracted: step1, vName: vName, rewrite: false};
+        }
+      }
+      return false;
+    },
+    action: function(step, path) {
+      var info = Toy._actionInfo;
+      var step1 = info.extracted;
+      var vName = info.vName;
+      var asm = step.get(path);
+      var step2 = (info.rewrite
+                   ? rules.rewrite(step1, '', 'a => (b => c) == b => (a => c)')
+                   : step1);
+      var step3 = rules.toForall0(step2, vName);
+      var equiv = rules.fact('forall {x. p x => q} == exists p => q');
+      var step4 = rules.rewriteOnly(step3, '', equiv);
+      var exists = rules.fact('exists R');
+      var step5 = rules.trueBy(step4, '/left', exists);
+      var step6 = rules.rewrite(step5, '', 'T => x == x');
+      return step6.justify('removeTypeAsm', arguments, [step]);
+    },
+    inputs: {site: 1},
+    labels: 'basic',
+    form: (''),
+    menu: 'remove irrelevant type assumption',
+    tooltip: 'Remove irrelevant type assumption',
+    description: 'remove irrelevant type assumption {site};; {in step siteStep}'
+  },
+
   // Given a proof step H |- A => B and a variable v, derives
   // H |- (A => forall {v. B}) provided that v is not free in A or H.
   // (5237)  Implemented via implyForallGen.
@@ -2540,8 +2657,9 @@ var ruleInfo = {
   // hypotheses, which are not matched against the schema.
   //
   // Andrews calls his enhanced version of forward chaining "Rule P".
-  // (In this implementation it is more straightforward to use
-  // makeConjunction as needed, followed by forwardChain.)
+  // (This system only provides for one or two antecedents, this rule
+  // forwardChain, and rule P2.  Use makeConjunction as needed,
+  // followed by one of them.)
   //
   // This always applies to the entire input step, ignoring
   // hypotheses.
