@@ -1139,9 +1139,10 @@ function RuleMenu(stepEditor) {
   // Rule chooser:
   self.$node = $('<div class=ruleMenu><b>Actions to try:</b></div>');
   self.$items = $('<div class=rulesItems/>');
-  // An intermediate DIV so the rulesItems div can be inline-block to
-  // shrink-wrap itself around the individual items.
-  self.$node.append($('<div/>').append(self.$items));
+  // An intermediate DIV.  This one is set to have vertical scrolling,
+  // and the rulesItems div can be inline-block to shrink-wrap itself
+  // around the individual items.
+  self.$node.append($('<div class=scrollingMenu/>').append(self.$items));
 
   self.$node.on('click', '.ruleItem', function(event) {
       // Run the step editor's ruleChosen method with
