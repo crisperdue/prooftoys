@@ -1317,7 +1317,7 @@ $(function () {
 Toy.autoSimplify = autoSimplify;
 
 // Global variable to enable use of StepSuggester.
-Toy.useStepSuggester = true;
+Toy.useStepSuggester = false;
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Toy.profileName = '';
