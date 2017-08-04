@@ -1045,6 +1045,10 @@ var suggesterMethods = {
     // Hide the nextSteps display temporarily; show it later if not empty.
     self.$node.addClass('hidden');
     display.setSteps([]);
+    // If suggestions are disabled, stop here.
+    if (!Toy.useStepSuggester) {
+      return;
+    }
     var mainDisplay = stepEditor.proofDisplay;
     var step = mainDisplay.selection;
     self._suggestions = [];
@@ -1153,7 +1157,7 @@ function RuleMenu(stepEditor) {
 RuleMenu.prototype.refresh = function() {
   this.changed = true;
   this._refresher.activate();
-}
+};
 
 /**
  * Updates the step suggestions and rule menu to offer items
@@ -1174,7 +1178,7 @@ RuleMenu.prototype._update = function() {
   var displayTexts = [];
   stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      if (!Toy.rules[ruleName].info.offerExample) {
+      if (!Toy.useStepSuggester || !Toy.rules[ruleName].info.offerExample) {
         // Info is a string or array of strings.
         var info = ruleMenuInfo(ruleName, step, term,
                                 stepEditor._proofEditor);
@@ -1192,6 +1196,40 @@ RuleMenu.prototype._update = function() {
         }
       }
     });
+  
+  if (!Toy.useStepSuggester) {
+    self.stepEditor.offerableFacts().forEach(function(statement) {
+        var text = statement.toString();
+        var toDisplay = statement;
+        if (statement.isEquation()) {
+          if (statement.isCall2('=>')) {
+            // Make the statement be the fact's equation.
+            toDisplay = statement = statement.getRight();
+          }
+          // If as usual the LHS of the equation matches the selection,
+          // set toDisplay to the result of substituting into the RHS.
+          var step = self.stepEditor.proofDisplay.selection;
+          var selection = step && step.selection;
+          if (selection) {
+            var subst = selection.matchSchema(statement.getLeft());
+            if (subst) {
+              toDisplay = statement.getRight().subFree(subst);
+            }
+          }
+        }
+        var display = '= ' + toDisplay.toHtml();
+        if (subst) {
+          display += (' <span class=description>using ' +
+                      Toy.trimParens(statement.toHtml())
+                      + '</span>');
+        }
+        displayTexts.push(display);
+        // Value of the option; format of "fact <fact text>"
+        // indicates that the text defines a fact to use in
+        // rules.rewrite.
+        byDisplay[display] = 'fact ' + text;
+      });
+  }
   displayTexts.sort(function(a, b) { return a.localeCompare(b); });
   var items = [];
   displayTexts.forEach(function(display) {
@@ -1277,6 +1315,9 @@ $(function () {
 
 // For testing:
 Toy.autoSimplify = autoSimplify;
+
+// Global variable to enable use of StepSuggester.
+Toy.useStepSuggester = true;
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Toy.profileName = '';
