@@ -448,8 +448,10 @@ var methods = {
   },
 
   /**
-   * Solution progress message for the entire step, could be multiple
-   * messages in case of multiple solutions.
+   * Solution progress message for the entire step as a single string.
+   * It could be a combination of multiple messages separated in case
+   * of multiple solutions.
+   *
    * TODO: Consider how to handle underdetermined problems.
    */
   progressMessage: function(step) {

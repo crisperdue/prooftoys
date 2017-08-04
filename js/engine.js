@@ -363,8 +363,8 @@ Expr.addMethods(ruleMethods);
 // menuGen: function to return zero or more menu entries for
 //   application(s) of the rule.  It will be passed the ruleName,
 //   step, selected term or null if none, and the ProofEditor for which
-//   it is generating the menu.  Expected to return a falsy value for
-//   
+//   it is generating the menu.  A falsy value indicates no
+//   menu entries; a non-empty string is for one entry.
 //
 // tooltip: plain text to become the title attribute of mentions of the
 //   rule name in proof displays and the description in subproof displays.
@@ -3045,7 +3045,7 @@ var ruleInfo = {
                 eqn.getLeft().name === vname) {
               results.push(format('replace {1} with {2}',
                                   term.pname, eqn.getRight().toUnicode()));
-          }
+            }
           }
           terms.each(check);
         }
