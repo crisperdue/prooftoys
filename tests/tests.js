@@ -2085,6 +2085,34 @@ var testCase = {
     assertEqual('((x > 0) => ((x + x) > (abs x)))', result);
   },
 
+  testRemoveLet: function() {
+    var given = rules.given('x + 2 = 5');
+    var added = rules.andAssume(given, 'y = 8');
+    var removed = rules.removeLet(added, '/left');
+    assertEqual(given.toString(), removed);
+
+    var given = (rules.given('x + 2 = 5')
+                 .andThen('rewriteOnly', '/right/left', 'x + y = y + x'));
+    var added = rules.andAssume(given, 'y = 8');
+    var p = added.wff.pathTo(termify('y = 8'));
+    var removed = rules.removeLet(added, p);
+    assert(removed.wff.matchSchema('R v => (a == b)'));
+  },
+
+  testRemoveTypeAsm: function() {
+    var given = rules.given('x + 2 = 5');
+    var added = rules.andAssume(given, 'R y');
+    var removed = rules.removeTypeAsm(added, '/left');
+    assertEqual(given.toString(), removed);
+
+    var given = (rules.given('x + 2 = 5')
+                 .andThen('rewriteOnly', '/right/left', 'x + y = y + x'));
+    var added = rules.andAssume(given, 'R y');
+    var p = added.wff.pathTo(termify('R y'));
+    var removed = rules.removeTypeAsm(added, p);
+    assert(removed.wff.matchSchema('R v => (a == b)'));
+  },
+
   // This tests beta-expansion of "p x" during matching, and automatic
   // beta reduction before replacement in rewriting.
   testRewriteExpansion: function() {

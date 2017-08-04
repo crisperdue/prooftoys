@@ -2499,7 +2499,8 @@ var ruleInfo = {
   // where the variable does not occur in the term nor elsewhere in
   // the step.  The arguments are a step and path to the assumption.
   removeLet: {
-    precheck: function(step, path) {
+    precheck: function(step, path_arg) {
+      var path = Toy.path(path_arg);
       if (!(step.isCall2('=>') && path.isLeft())) {
         return false;
       }
@@ -2532,8 +2533,9 @@ var ruleInfo = {
       }
       return false;
     },
-    action: function(step, path) {
+    action: function(step, path_arg) {
       var info = Toy._actionInfo;
+      var path = Toy.path(path_arg);
       var step1 = info.extracted;
       var vName = info.vName;
       var asm = step.get(path);
@@ -2561,7 +2563,8 @@ var ruleInfo = {
   // target site.  Currently only for predicate R, but should be
   // extended as needed.
   removeTypeAsm: {
-    precheck: function(step, path) {
+    precheck: function(step, path_arg) {
+      var path = Toy.path(path_arg);
       if (!(step.isCall2('=>') && path.isLeft())) {
         return false;
       }
@@ -2588,7 +2591,8 @@ var ruleInfo = {
       }
       return false;
     },
-    action: function(step, path) {
+    action: function(step, path_arg) {
+      var path = Toy.path(path_arg);
       var info = Toy._actionInfo;
       var step1 = info.extracted;
       var vName = info.vName;
