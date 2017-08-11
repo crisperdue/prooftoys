@@ -1359,9 +1359,19 @@ rpcPromiseMethods = {
    */
   cancel: function() {
     this.canceled = true;
+    this.dequeue();
+  },
+
+  /**
+   * Attempts to dequeue this Promise, succeeding when it is still
+   * in its message queue.  In case of success the Promise will
+   * never resolve or reject.  Returns boolean value, truthy for
+   * success.
+   */
+  dequeue: function() {
     var a = this.mq.queue;
     var id = this.id;
-    rpcLog('Trying to cancel RPC', id);
+    rpcLog('RPC dequeue request', id);
     rpcLog('Queue length =', a.length);
     for (var i = 0; i < a.length; i++) {
       rpcLog('  RPC', a[i].wrapper.id);
@@ -1369,11 +1379,13 @@ rpcPromiseMethods = {
     for (var i = 0; i < a.length; i++) {
       if (a[i].wrapper.id === id) {
         a.splice(i, 1);
-        rpcLog('Dequeueing RPC', id)
-        return;
+        rpcLog('Dequeued RPC', id)
+        return true;
       }
     }
+    return false;
   }
+
 };
 
 
