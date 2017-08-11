@@ -1286,7 +1286,7 @@ function checkTop(oldTop) {
  * to receive the result.
  */
 function sendRule(name, args) {
-  return Toy.rpcWorkers.enqueue({action: 'rule', name: name, args: args});
+  return Toy.rpcQueue.enqueue({action: 'rule', name: name, args: args});
 }
 
 
@@ -1310,7 +1310,7 @@ $(function () {
     var queue = new Toy.MessageQueue();
     queue.addWorker(fakeWorker);
     // This is the endpoint for accessing worker threads via RPC.
-    Toy.rpcWorkers = queue;
+    Toy.rpcQueue = queue;
   });
 
 
