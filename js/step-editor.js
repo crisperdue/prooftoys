@@ -1065,7 +1065,7 @@ var suggesterMethods = {
         if (!self._suggestions.find(function(promise) {
               return promise.id === wrapper.id;
             })) {
-          rpcLog('Not adding step for old RPC', wrapper.id);
+          Toy.rpcLog('Not adding step for old RPC', wrapper.id);
         }
         if (self._suggestions.find(function(promise) {
               return promise.id === wrapper.id;
