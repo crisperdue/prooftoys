@@ -639,7 +639,7 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: ' &hellip; + {term} = &hellip; + {term} (add to both sides)',
+    menu: ' algebra: add {term} to both sides',
     description: 'add {site};; {in step siteStep}',
     labels: 'algebra'
   },
@@ -658,8 +658,7 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: (' &hellip; &minus; {term} = &hellip; &minus; {term}' +
-           ' (subtract from both sides)'),
+    menu: ' algebra: subtract {term} from both sides',
     description: 'subtract {site};; {in step siteStep}',
     labels: 'algebra'
   },
@@ -678,8 +677,7 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: (' &hellip; &sdot; {term} = &hellip; &sdot; {term}' +
-           ' (multiply both sides)'),
+    menu: ' algebra: multiply both sides by {term}',
     description: 'multiply by {site};; {in step siteStep}',
     labels: 'algebra'
   },
@@ -698,8 +696,7 @@ equationOpsInfo = {
     },
     toOffer: 'return term.isReal();',
     form: '',
-    menu: (' &hellip; \u2215 {term} = &hellip; \u2215 {term}' +
-           ' (divide both sides)'),
+    menu: ' algebra: divide both sides by {term}',
     description: 'divide by {site};; {in step siteStep}',
     labels: 'algebra'
   },
