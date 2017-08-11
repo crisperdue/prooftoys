@@ -1001,11 +1001,6 @@ function StepSuggester(stepEditor) {
   // Event handling
 
   $node.on('click', '.stepSelector', function(event) {
-      // Stop work on building suggestions.  This only affects ones
-      // not yet displayed.
-      self._suggestions.forEach(function(promise) {
-          promise.cancel();
-        });
       var dStep = Toy.getProofStep(event.target);
       var step = dStep.original;
       var rule = Toy.rules[step.ruleName];
@@ -1051,6 +1046,11 @@ var suggesterMethods = {
     }
     var mainDisplay = stepEditor.proofDisplay;
     var step = mainDisplay.selection;
+    // Stop work on building suggestions.  This only affects ones
+    // not yet displayed.
+    self._suggestions.forEach(function(promise) {
+        promise.cancel();
+      });
     self._suggestions = [];
     var factsToOffer = [];
     if (step) {
