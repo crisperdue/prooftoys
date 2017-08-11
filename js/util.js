@@ -1153,6 +1153,7 @@ function _testTriangle(where, height, color) {
  * immediately create and add that many Worker threads.
  */
 function MessageQueue(n, uri) {
+  // Refer to window.Map and not Toy.Map.
   var Map = window.Map;
   // Queue of messages to be sent.  Each item is a data structure with
   // properties "resolve", "reject", and "wrapper", where the wrapper
@@ -1213,8 +1214,11 @@ var msgMethods = {
   /**
    * Sends a request via the queue.  Returns a Promise to be resolved
    * with the result of the call.  Standard RPC worker error responses
-   * are a plain object with properties:  type: name of Error object
-   * constructor, message: error.message, stack: error.stack.
+   * are a plain object with properties:
+   *
+   * type: name of Error object constructor,
+   * message: error.message,
+   * stack: error.stack.
    */
   send: function(message) {
     var id = MessageQueue.id++;
@@ -1286,9 +1290,9 @@ var msgMethods = {
 
   /**
    * Private method called internally at points where it might be
-   * appropriate to send another RPC request.  If there is an
-   * idle worker and a request in the queue, sends the first
-   * request to the first idle worker.
+   * appropriate to post another RPC call message.  If there is an
+   * idle worker and a request in the queue, posts the first request
+   * to the first idle worker.
    */
   _dispatch: function() {
     this.schedule();
