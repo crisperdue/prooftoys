@@ -1262,7 +1262,7 @@ var msgMethods = {
         this.inProgress.delete(id);
         this.idleWorkers.push(event.target);
         if (!info.promise.canceled) {
-          if (wrapper.hasOwnProperty('error')) {
+          if (wrapper.isError) {
             info.reject(wrapper);
           } else {
             info.resolve(wrapper);
@@ -1452,7 +1452,8 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
         }
         var fn = actions[action].bind(receiver);
         var result = fn(message, wrapper);
-        reply.data = {channelType: 'RPC', id: id, result: result};
+        reply.data = {channelType: 'RPC', id: id, result: result,
+                      isError: false};
       } catch(error) {
         var e = (receiver.encodeError
                  ? receiver.encodeError(error)
@@ -1461,7 +1462,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
                     message: error.message,
                     stack: error.stack}
                  : '?');
-        reply.data = {channelType: 'RPC', id: id, error: e};
+        reply.data = {channelType: 'RPC', id: id, result: e, isError: true};
       }
       function replier() {
         var responder = self.onmessage;

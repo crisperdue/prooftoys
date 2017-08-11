@@ -1088,8 +1088,8 @@ var suggesterMethods = {
               .then(addStep)
               .catch(function(wrapper) {
                   var msg = 'Rule suggestion error {1}: {2}';
-                  console.warn(Toy.format(msg, wrapper.error.type,
-                                          wrapper.error.message));
+                  console.warn(Toy.format(msg, wrapper.result.type,
+                                          wrapper.result.message));
                 });
           }
         });
@@ -1105,8 +1105,8 @@ var suggesterMethods = {
             .then(addStep)
             .catch(function(wrapper) {
                 var msg = 'Fact suggestion {1}:\n  {2}';
-                console.warn(Toy.format(msg, wrapper.error.type,
-                                        wrapper.error.message));
+                console.warn(Toy.format(msg, wrapper.result.type,
+                                        wrapper.result.message));
               });
         });
     }
