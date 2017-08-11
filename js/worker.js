@@ -10,7 +10,7 @@
  * actions property ("own" properties) become available as values of
  * the "action" property in RPC messages, and the associated function
  * runs to handle the RPC, taking as its argument the message passed
- * in the call to MessageQueue.send.  The function runs with the
+ * in the call to MessageQueue.enqueue.  The function runs with the
  * receiver as "this".
  *
  * Reports the return value of the action function through a "result"

@@ -1220,7 +1220,7 @@ var msgMethods = {
    * message: error.message,
    * stack: error.stack.
    */
-  send: function(message) {
+  enqueue: function(message) {
     var id = MessageQueue.id++;
     var wrapper = {channelType: 'RPC', id: id, data: message};
     var resolve, reject;
@@ -1372,13 +1372,13 @@ rpcPromiseMethods = {
 /* Test code for RPC
 
 var q = new Toy.MessageQueue(1, 'pt/js/worker.js');
-var p = q.send({action: 'ping'})
+var p = q.enqueue({action: 'ping'})
          .then(x => (console.log('ping', x), x))
          .catch(x => console.log('Failed', x));
-var p = q.send({action: 'fail'})
+var p = q.enqueue({action: 'fail'})
          .then(x => (console.log('fail?', x), x))
          .catch(x => console.log('Failed', x));
-var p = q.send({action: 'plus1', input: 4})
+var p = q.enqueue({action: 'plus1', input: 4})
          .then(x => (console.log('Plus1', x), x))
          .catch(x => console.log('Failed', x));
 */

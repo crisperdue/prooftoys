@@ -1282,11 +1282,11 @@ function checkTop(oldTop) {
 }
 
 /**
- * Send an RPC message to an inference worker, returning a Promise
+ * Enqueue an RPC message to an inference worker, returning a Promise
  * to receive the result.
  */
 function sendRule(name, args) {
-  return Toy.rpcWorkers.send({action: 'rule', name: name, args: args});
+  return Toy.rpcWorkers.enqueue({action: 'rule', name: name, args: args});
 }
 
 
