@@ -1156,9 +1156,12 @@ function MessageQueue(n, uri) {
   // Refer to window.Map and not Toy.Map.
   var Map = window.Map;
   // Queue of messages to be sent.  Each item is a data structure with
-  // properties "resolve", "reject", and "wrapper", where the wrapper
-  // has a channelType, an "id", and "data", which is the message
-  // itself.
+  // properties "promise", "resolve", "reject", and "wrapper", where
+  // the wrapper has a "channelType", an "id", and "data", which is
+  // the message itself as enqueued.
+  //
+  // Of these, only the wrapper and its properties are passed to
+  // worker code and only these should be referenced in client code.
   this.queue = [];
   // Map from rpc ID to message, containing messages that have been sent
   // but not yet responded to.  The items have the same structure as
@@ -1212,9 +1215,14 @@ var msgMethods = {
   },
 
   /**
-   * Sends a request via the queue.  Returns a Promise to be resolved
-   * with the result of the call.  Standard RPC worker error responses
-   * are a plain object with properties:
+   * Sends a request via the queue.  Returns a specialized Promise to
+   * be resolved with the result of the call.  Worker code will
+   * receive this wrapped in a plain object with properties
+   * "channelType" having the value "RPC", "id" a unique message ID,
+   * and "data" containing the message argument.
+   *
+   * Standard RPC worker error responses are a plain object with
+   * properties:
    *
    * type: name of Error object constructor,
    * message: error.message,
@@ -1346,8 +1354,8 @@ rpcPromiseMethods = {
   /**
    * After the cancel method is called, this Promise will never
    * resolve or reject.  If its RPC is in a waiting queue, this
-   * removes it, and if it is in progress, the response code will
-   * ignore it.  Sets the "canceled" property to true.
+   * removes it, and if it is in progress, the response handling code
+   * will ignore it.  Sets the "canceled" property to true.
    */
   cancel: function() {
     this.canceled = true;
@@ -1401,24 +1409,37 @@ function FakeRpcWorker(receiver) {
 
 /**
  * Posts a message to this FakeRpcWorker.  This results in calling the
- * internal handler from a timer, and later call to the FakeWorker's
- * onmessage property passing a faked-up event, an object that has a
- * "target" property and a "data" property, but currently no other
- * information.
+ * internal handler from a timer, and later a call to the FakeWorker's
+ * onmessage property, passing it a faked-up event, an object that has
+ * a "target" property and a "data" property with the worker's reply
+ * data, but currently no other information.  The internal handler
+ * function takes the place of a real Worker's onmessage handler in
+ * its internal global scope.
+ *
+ * The internal handler function builds reply data that is a plain
+ * object with properties: "channelType" with value "RPC"; "id" with
+ * the same RPC call ID passed in, "result" with the
+ * application-specific result value, and boolean "isError" true
+ * if the result is to be considered a failure.
  *
  * Starts the worker with a short delay to promote prompt repainting.
- * The worker's reply notification has no delay on the theory that
- * the worker will not modify the DOM.
+ * The worker's reply notification is also asynchronous, but has no
+ * delay on the theory that the worker will not modify the DOM.
  */
 FakeRpcWorker.prototype.postMessage = function(wrapper) {
+  // TODO: Give each worker a fake global scope object property,
+  //   e.g. named "scope".  Separate out the handler and replier here,
+  //   attaching them as the global scope onmessage event handler and
+  //   postMessage function.
   var self = this;
   var receiver = self.receiver;
+  // This is the fake reply event to be passed to the reply handler.
   var reply = {target: self};
-  // This function is the same as the "real" onmessage handler
+  // This function does the work of a "real" onmessage handler
   // function in worker.js for messages to a worker, except this
   // receives the RPC wrapper object directly, not wrapped in an
   // event, and replies by calling the fake worker object's onmessage
-  // property from a timer.
+  // property asynchronously.
   function handler() {
     if (wrapper.channelType === 'RPC') {
       try {
