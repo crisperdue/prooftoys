@@ -233,9 +233,7 @@ StepEditor.prototype.ruleChosen = function(ruleName) {
   this.ruleName = ruleName;
   var rule = Toy.rules[ruleName];
   if (rule) {
-    var nargs = Math.max(rule.length, rule.info.maxArgs || 0);
-    var args = new Array(nargs);
-    this.fillFromSelection(ruleName, args);
+    var args = this.argsFromSelection(ruleName);
     if (this.checkArgs(args, rule.info.minArgs, false)) {
       tryRuleAsync(this, rule, args);
       return;
@@ -418,9 +416,7 @@ StepEditor.prototype.tryExecuteRule = function() {
   var ruleName = this.ruleName;
   var rule = Toy.rules[ruleName];
   var minArgs = rule.info.minArgs;
-  var nargs = Math.max(rule.length, rule.info.maxArgs || 0);
-  var args = new Array(nargs);
-  this.fillFromSelection(ruleName, args);
+  var args = this.argsFromSelection(ruleName);
   this.fillFromForm(args);
   if (this.checkArgs(args, minArgs, true)) {
     tryRuleAsync(this, rule, args);
@@ -588,16 +584,19 @@ StepEditor.prototype.genAbbrevName = function() {
 };
 
 /**
- * Fill in part of the args array with the step or step and path of
- * the UI's selection if there is one, using the input descriptor of
- * of the StepEditor's current rule.  Currently not picky about the
- * detailed requirements of the various kinds of site and step
- * arguments.  Relies on other components to do these checks.
+ * Create and fill in part of the args array with the step or step and
+ * path of the UI's selection if there is one, using the input
+ * descriptor of of the StepEditor's current rule.  Currently not
+ * picky about the detailed requirements of the various kinds of site
+ * and step arguments.  Relies on other components to do these checks.
  */
-StepEditor.prototype.fillFromSelection = function(ruleName, args) {
+StepEditor.prototype.argsFromSelection = function(ruleName) {
+  var rule = Toy.rules[ruleName];
+  var nargs = Math.max(rule.length, rule.info.maxArgs || 0);
+  var args = new Array(nargs);
   var step = this.proofDisplay.selection;
   if (!step) {
-    return;
+    return args;
   }
   var expr = step.selection;
   var rule = Toy.rules[ruleName];
@@ -632,6 +631,7 @@ StepEditor.prototype.fillFromSelection = function(ruleName, args) {
       }
     }
   }
+  return args;
 };
 
 /**
