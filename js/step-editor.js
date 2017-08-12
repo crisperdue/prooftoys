@@ -235,7 +235,7 @@ StepEditor.prototype.ruleChosen = function(ruleName) {
   if (rule) {
     var nargs = Math.max(rule.length, rule.info.maxArgs || 0);
     var args = new Array(nargs);
-    this.fillFromSelection(args);
+    this.fillFromSelection(ruleName, args);
     if (this.checkArgs(args, rule.info.minArgs, false)) {
       tryRuleAsync(this, rule, args);
       return;
@@ -420,7 +420,7 @@ StepEditor.prototype.tryExecuteRule = function() {
   var minArgs = rule.info.minArgs;
   var nargs = Math.max(rule.length, rule.info.maxArgs || 0);
   var args = new Array(nargs);
-  this.fillFromSelection(args);
+  this.fillFromSelection(ruleName, args);
   this.fillFromForm(args);
   if (this.checkArgs(args, minArgs, true)) {
     tryRuleAsync(this, rule, args);
@@ -594,13 +594,13 @@ StepEditor.prototype.genAbbrevName = function() {
  * detailed requirements of the various kinds of site and step
  * arguments.  Relies on other components to do these checks.
  */
-StepEditor.prototype.fillFromSelection = function(args) {
+StepEditor.prototype.fillFromSelection = function(ruleName, args) {
   var step = this.proofDisplay.selection;
   if (!step) {
     return;
   }
   var expr = step.selection;
-  var rule = Toy.rules[this.ruleName];
+  var rule = Toy.rules[ruleName];
   var inputs = rule.info.inputs;
   // Fill in args information from a selection.
   if (expr) {
