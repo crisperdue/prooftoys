@@ -309,6 +309,12 @@ span#leftNav {
     width: 100%;
 }
 
+.proofStep.stepSuggestion {
+    position: absolute;
+    background-color: beige;
+    border: 1px solid #ddc;
+}
+
 /* Use the inline-block *class* as needed to avoid contaminating inner
    inline-block elements with the text-indent above. */
 .proofStep .inline-block {

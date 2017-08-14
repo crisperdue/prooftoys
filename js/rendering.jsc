@@ -687,8 +687,7 @@ ProofDisplay.prototype.suggestStep = function(step) {
     if (rendered) {
       this.suggesting = true;
       var node = rendered.stepNode;
-      // TODO: Set a CSS class instead.
-      $(node).css('position', 'absolute');
+      $(node).addClass('stepSuggestion');
       return rendered;
     }
   }
