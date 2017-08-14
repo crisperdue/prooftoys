@@ -230,6 +230,9 @@ StepEditor.prototype.focus = function() {
  * display the input form.
  */
 StepEditor.prototype.ruleChosen = function(ruleName) {
+  // This method runs from a click, so a suggestion may well
+  // be active.  Make sure it is not displayed.
+  this.proofDisplay.hideSuggestion();
   this.ruleName = ruleName;
   var rule = Toy.rules[ruleName];
   if (rule) {
@@ -1128,6 +1131,9 @@ Object.assign(StepSuggester.prototype, suggesterMethods);
  * length: current number of items in the menu.
  * changed: true iff its refresh has been activated, but
  *   the update has not yet run.
+ *
+ * Internal-ish properties:
+ * hovering: DOM node under mouse or null.
  */
 function RuleMenu(stepEditor) {
   var self = this;
@@ -1135,19 +1141,96 @@ function RuleMenu(stepEditor) {
   self._refresher = new Toy.Refresher(self._update.bind(self));
   self.length = 0;
   self.changed = false;
+  // A rule menu item node or null.  If the mouse is hovering over an
+  // item at any given time, this will be it.
+  self.hovering = null;
 
   // Rule chooser:
-  self.$node = $('<div class=ruleMenu><b>Actions to try:</b></div>');
+  var $node = $('<div class=ruleMenu><b>Actions to try:</b></div>');
+  self.$node = $node;
   self.$items = $('<div class=rulesItems/>');
   // An intermediate DIV.  This one is set to have vertical scrolling,
   // and the rulesItems div can be inline-block to shrink-wrap itself
   // around the individual items.
-  self.$node.append($('<div class=scrollingMenu/>').append(self.$items));
+  $node.append($('<div class=scrollingMenu/>').append(self.$items));
 
-  self.$node.on('click', '.ruleItem', function(event) {
+  $node.on('click', '.ruleItem', function(event) {
       // Run the step editor's ruleChosen method with
       // the ruleName of the menu item.
       self.stepEditor.ruleChosen($(this).data('ruleName'));
+    });
+
+  // Here are handlers for "enter" and "leave".  This code avoids
+  // assuming that these events come in pairs.
+  $node.on('mouseenter', '.ruleItem', function(event) {
+      // Note that this item is currently hovered.
+      self.hovering = this;
+      var $this = $(this);
+      // The "step" data property indicates that a step has been computed
+      // for this menu item.
+      var step = $this.data('step');
+      if (step) {
+        // A step is already computed, show its result.
+        stepEditor.proofDisplay.suggestStep(step);
+      } else if (!$this.data('promise')) {
+        // The "promise" data property indicates that a request for a
+        // step has been issued.
+        var ruleName = $this.data('ruleName');
+        var promise;
+        if (ruleName.slice(0, 5) === 'fact ') {
+          // See StepEditor.ruleChosen for essentially the same code.
+          // Values "fact etc" indicate use of rules.rewrite, and
+          // the desired fact is indicated by the rest of the value.
+          var siteStep = stepEditor.proofDisplay.selection;
+          if (!siteStep || !siteStep.selection) {
+            stepEditor.error('No selected site');
+          }
+          promise = sendRule('rewrite', 
+                             [siteStep.original,
+                              siteStep.prettyPathTo(siteStep.selection),
+                              ruleName.slice(5)]);
+        } else if (Toy.rules[ruleName]) {
+          var rule = Toy.rules[ruleName];
+          var args = stepEditor.argsFromSelection(ruleName);
+          if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
+            promise = sendRule(ruleName, args);
+          }
+        } else {
+          console.warn('No such rule:', ruleName);
+        }
+        if (promise) {
+          $this.data('promise', promise);
+          promise.then(function(info) {
+              // The rule has successfully run.
+              // First tidy up a little.
+              $this.removeData('promise');
+              var step = info.result.step;
+              // Make note of the result.
+              $this.data('step', step);
+              if (self.hovering === $this[0]) {
+                // At this (future) point in time, if this item is
+                // hovered, show the result.
+                stepEditor.proofDisplay.suggestStep(step);
+              }
+            })
+            .catch(function(info) {
+                console.warn('Rule menu error', info.message);
+              });
+        }
+      }
+    });
+  // When the mouse leaves an item, hide any suggested step.  If a
+  // request has been issued for an appropriate suggestion, but is
+  // still waiting in the queue, remove it from the queue and note
+  // that no request is pending.
+  $node.on('mouseleave', '.ruleItem', function(event) {
+      self.hovering = null;
+      var $this = $(this);
+      stepEditor.proofDisplay.hideSuggestion();
+      var promise = $this.data('promise');
+      if (promise && promise.dequeue()) {
+        $this.removeData('promise');
+      }
     });
 }
 
