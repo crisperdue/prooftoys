@@ -145,6 +145,10 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   //
   // Note: Likely additional Step methods: freeVars. 
   result.wff = result;
+  // TODO: The "rendering" (and also "original") property is quite
+  //   sparse.  Consider eliminating "original" for non-rendered steps
+  //   and storing "rendering" in a WeakMap.
+  result.rendering = null;
   // Record the step as details.
   // Note that above, primitive rules have no deps.
   if (Toy.isProved(this)) {

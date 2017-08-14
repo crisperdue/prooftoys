@@ -722,7 +722,7 @@ ProofDisplay.prototype.removeLastStep = function() {
   // Deleting the node will not trigger the mouse out event.
   hoverStepSelector(step, 'out');
   $(step.stepNode).remove();
-  delete step.original.rendering;
+  step.original.rendering = null;
   var display = getProofDisplay(step);
   step.ruleDeps.forEach(function(s) {
       if (getProofDisplay(s.rendering) == display) {
