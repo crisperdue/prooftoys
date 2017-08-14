@@ -300,9 +300,13 @@ span#leftNav {
     background-color: white;
     font-family: STIXGeneral, times, serif;
     /* Each proofStep has a 1px border, which is gray when
-       the step is selected in the UI or hovered.
-       */
+     * the step is selected in the UI or hovered.
+     */
     border: 1px solid transparent;
+    /* This kind of element may be given position:absolute as
+     * a "step suggestion".  The width matters then.
+     */
+    width: 100%;
 }
 
 /* Use the inline-block *class* as needed to avoid contaminating inner

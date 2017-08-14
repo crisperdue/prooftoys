@@ -581,6 +581,8 @@ function ProofDisplay(properties) {
   this.selections = [];
   // Single selected step when exactly one is selected, or null.
   this.selection = null;
+  // True if the final displayed step is a suggestion
+  this.suggesting = false;
   // Prefix string for each step.
   this.stepPrefix = properties.stepPrefix || '';
   this.parentStep = properties.parentStep || null;
@@ -650,13 +652,61 @@ function renderStepNumber(step) {
 }
 
 /**
+ * Hides any suggested step, doing necessary bookkeeping.
+ */
+ProofDisplay.prototype.hideSuggestion = function() {
+  if (this.suggesting) {
+    this.suggesting = false;
+    var steps = this.steps;
+    var step = steps[steps.length - 1];
+    if (step && step.users === 0) {
+      // Does not trigger some sort of refresh.
+      this.removeLastStep();
+    } else {
+      console.warn('Suggested step has users:', step.toString());
+    }
+  }
+};
+
+/**
+ * Adds the given "real" proof step to the display as a suggestion.
+ * This is like addStep except for the status.  The proof is not
+ * considered changed, and change logic does not fire, e.g. no
+ * RuleMenu update.
+ */
+ProofDisplay.prototype.suggestStep = function(step) {
+  // TODO: This seems to be sluggish.  Consider placing suggestions
+  //   in a "stepSuggestions" area in the DOM, as fully-built DIVs
+  //   and just switching among them.
+  this.hideSuggestion();
+  if (step.rendering) {
+    // TODO: Report to user.
+    console.log('nothing done');
+  } else {
+    var rendered = this.addStep(step, true);
+    if (rendered) {
+      this.suggesting = true;
+      var node = rendered.stepNode;
+      // TODO: Set a CSS class instead.
+      $(node).css('position', 'absolute');
+      return rendered;
+    }
+  }
+  return null;
+};
+
+/**
  * Adds a rendering of the given "real" proof step to the end
  * of the control's proof, assigning it the stepNumber for its
  * position.
+ *
+ * Returns the rendered version, or null if adding to the
+ * proof display failed.
  */
-ProofDisplay.prototype.addStep = function(step) {
+ProofDisplay.prototype.addStep = function(step, _isSuggestion) {
   var self = this;
   // TODO: Move most of this logic into renderStep.
+  assert(!step.rendering, 'Already rendered', step);
   var copy = step.copyToRender();
   copy.users = 0;
   copy.hasLeftElision = false;
@@ -682,7 +732,8 @@ ProofDisplay.prototype.addStep = function(step) {
                           : this.stepPrefix + this.steps.length));
     this.renderStep(copy);
     renderStepNumber(copy);
-    this.proofChanged();
+    _isSuggestion || this.proofChanged();
+    return copy;
   } catch(e) {
     // Warn about the problem, usually type annotation.
     console.warn('Failed to add step', step.$$);
@@ -707,7 +758,8 @@ ProofDisplay.prototype.findDependent = function(target) {
 
 /**
  * Unconditionally remove the rendered step from this controller,
- * deselecting it if selected.
+ * deselecting it if selected.  Only triggers refreshing of menus if
+ * the step was selected.
  */
 ProofDisplay.prototype.removeLastStep = function() {
   var self = this;
