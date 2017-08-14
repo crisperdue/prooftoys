@@ -625,7 +625,7 @@ StepEditor.prototype.argsFromSelection = function(ruleName) {
       var input = inputs[type];
       if (input) {
         var position = Array.isArray(input) ? input[0] : input;
-        args[position - 1] = step;
+        args[position - 1] = step.original;
         // Only fill in one step.
         break;
       }
