@@ -392,6 +392,17 @@ ProofEditor.prototype.clear = function() {
 };
 
 /**
+ * Requests status display on or off.  Regardless of the request,
+ * status is only ever displayed if it contains text.  (Status change
+ * methods modify its visibility directly.)
+ */
+ProofEditor.prototype.requestStatusDisplay = function(vis) {
+  var $display = this.$statusDisplay;
+  var text = $display.text()
+  $display.toggleClass('hidden', !(text && vis));
+};
+
+/**
  * Define the "givens" property as a virtual property.  Setting it has
  * the side effect of modify the "givenVars" property as well, which
  * should be treated as readonly.  If not set explicitly through the

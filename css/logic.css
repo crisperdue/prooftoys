@@ -315,6 +315,7 @@ span#leftNav {
     position: absolute;
     background-color: #eef;
     border: .5px solid silver;
+    z-axis: 1;
 }
 
 /* Use the inline-block *class* as needed to avoid contaminating inner
@@ -538,8 +539,8 @@ span#leftNav {
 /* The box with info about progress toward solution(s)
  */
 .solutionStatus {
-    margin: .2em 0;
-    min-height: 3em;
+    margin: .2em 0 .2em 2em;
+    min-height: 4em;
 }
 
 .solutionStatusDisplay {

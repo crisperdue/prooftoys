@@ -102,7 +102,12 @@ function StepEditor(proofEditor) {
   //   displayed, removing a dependency on proofDisplay.
   $(self.proofDisplay.node)
     .append($('<div class=ruleWorking/>').text('Working . . . '));
+
   var menu = new RuleMenu(self);
+  // Suppress solution status display when the mouse is within the
+  // menu, leaving more room for step suggestions.
+  menu.onEnter(function() { proofEditor.requestStatusDisplay(false); });
+  menu.onLeave(function() { proofEditor.requestStatusDisplay(true); });
   self.ruleMenu = menu;
 
   // This will contain suggestions for next steps.
@@ -1132,6 +1137,9 @@ Object.assign(StepSuggester.prototype, suggesterMethods);
  * changed: true iff its refresh has been activated, but
  *   the update has not yet run.
  *
+ * onEnter, method: pass a function to call when the mouse enters.
+ * onLeave, method: pass a function to call when the mouse leaves.
+ *
  * Internal-ish properties:
  * hovering: DOM node under mouse or null.
  */
@@ -1152,7 +1160,26 @@ function RuleMenu(stepEditor) {
   // An intermediate DIV.  This one is set to have vertical scrolling,
   // and the rulesItems div can be inline-block to shrink-wrap itself
   // around the individual items.
-  $node.append($('<div class=scrollingMenu/>').append(self.$items));
+  var $scrollArea = $('<div class=scrollingMenu/>');
+  $scrollArea.append(self.$items);
+  $node.append($scrollArea);
+
+  // Concise code to set up pseudo-events for "enter" and "leave".
+  // Note that the methods are on the instance, not the prototype.
+  // Invoke via onEnter and onLeave methods.  Note: leavers are also
+  // called when the menu is hidden.
+  var enters = $.Callbacks();
+  self.onEnter = enters.add.bind(enters);
+  $scrollArea.on('mouseenter', function() {
+      enters.fire();
+    });
+  var leavers = $.Callbacks();
+  self.onLeave = leavers.add.bind(leavers);
+  $scrollArea.on('mouseleave', function() {
+      leavers.fire();
+    });
+  // Make the leavers available from methods.
+  self._leavers = leavers;
 
   $node.on('click', '.ruleItem', function(event) {
       // Run the step editor's ruleChosen method with
@@ -1326,6 +1353,12 @@ RuleMenu.prototype._update = function() {
   self.changed = false;
   $items.append(items);
   self.$node.toggleClass('hidden', displayTexts.length === 0);
+  if (displayTexts.length === 0) {
+    // The menu can be hidden by clicks within it, and that does not
+    // trigger a mouse leave event.
+    self._leavers.fire();
+  }
+
   // TODO: Consider updating the advice using Promises.
   var bothEmpty = (self.length == 0 &&
                    stepEditor.stepSuggester.$node.hasClass('hidden'));
