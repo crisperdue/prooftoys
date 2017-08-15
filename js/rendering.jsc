@@ -724,7 +724,9 @@ ProofDisplay.prototype.addStep = function(step, _isSuggestion) {
     copy.annotateWithTypes();
     this.steps.push(copy);
     // Give it a stepNumber early so rendering code can find it.
-    copy.stepNumber = (this.prevStep
+    copy.stepNumber = (_isSuggestion
+                       ? '?'
+                       : this.prevStep
                        ? '<span class=stepNumPlaceholder/>'
                        : (Toy.showOrdinals
                           ? step.ordinal
