@@ -259,6 +259,10 @@ span#leftNav {
   border-bottom: 3px solid transparent;
 }
 
+.proofDisplay.editable {
+    margin-bottom: .5em;
+}
+
 /* The first level of subproof needs extra indent in the case
  * where there is a "deleter" button on the left.
  */
@@ -283,8 +287,6 @@ span#leftNav {
 .proofSteps {
   /* Touch screen tap highlighting is confusing, so prevent it. */
   -webkit-tap-highlight-color: rgba(0,0,0,0);
-  /* For some reason the selection box shadow needs this margin. */
-  margin: 5px 0px 1em;
   /* white-space: nowrap could go here to turn off text wrapping. */
 }
 
@@ -311,8 +313,8 @@ span#leftNav {
 
 .proofStep.stepSuggestion {
     position: absolute;
-    background-color: beige;
-    border: 1px solid #ddc;
+    background-color: #eef;
+    border: .5px solid silver;
 }
 
 /* Use the inline-block *class* as needed to avoid contaminating inner
@@ -536,6 +538,11 @@ span#leftNav {
 /* The box with info about progress toward solution(s)
  */
 .solutionStatus {
+    margin: .2em 0;
+    min-height: 3em;
+}
+
+.solutionStatusDisplay {
     display: inline-block;
     white-space: pre;
     margin: .2em;
@@ -789,11 +796,8 @@ span.stepRef {
 /* Overrides styles for .proofDisplay. */
 .stepEditor {
   background-color: white;
-  margin-top: 2em;
+  margin-top: .2em;
   position: relative;
-  /* Allow plenty of space for the ruleMenu, though it is not always
-     displayed. */
-  min-height: 800px;
 }
 
 /* Make inputs a bit larger than regular text */
@@ -812,6 +816,12 @@ span.stepRef {
 /* Main node for the rule selector, contains the rulesContainer. */
 .ruleMenu {
     position: relative;
+}
+
+/* Hidden rule menu is invisible, but keeps its space. */
+.ruleMenu.hidden {
+    display: block;
+    visibility: hidden;
 }
 
 .ruleMenu .scrollingMenu {

@@ -297,8 +297,11 @@ function ProofEditor() {
                     '<span class=ruleTime></span> msec, ' +
                     '<span class=ruleSteps></span> steps</div>');
   // This element is for messages about status of solving the problem.
-  var $status = $('<div class="solutionStatus hidden"/>');
+  var $status = $('<div class="solutionStatus"/>');
+  var $statusDisplay = $('<div class=solutionStatusDisplay hidden/>');
+  $status.append($statusDisplay);
   self.$status = $status;
+  self.$statusDisplay = $statusDisplay;
   // Top-level element of the proof editor display:
   this.containerNode = $('<div class=proofEditor></div>');
   this.containerNode
@@ -317,15 +320,16 @@ function ProofEditor() {
       // Set (or clear) the message in the $status box.
       var steps = self.proofDisplay.steps;
       var $status = self.$status;
+      var $statusDisplay = self.$statusDisplay;
       var len = steps.length;
       if (len) {
         var step = steps[len - 1];
         var message = self.progressMessage(step.original);
-        $status.empty();
-        $status.append(message);
-        $status.toggleClass('hidden', !message);
+        $statusDisplay.empty();
+        $statusDisplay.append(message);
+        $statusDisplay.toggleClass('hidden', !message);
       } else {
-        $status.toggleClass('hidden', true);
+        $statusDisplay.toggleClass('hidden', true);
       }
     });
 

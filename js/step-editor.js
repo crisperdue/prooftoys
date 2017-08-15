@@ -82,7 +82,7 @@ function StepEditor(proofEditor) {
   self.showRules = [];
 
   // Create a DIV with the step editor content.
-  var $div = $('<div class=stepEditor style="clear: both"></div>');
+  var $div = $('<div class=stepEditor/>');
 
   // Button to clear rule input, visible when a form is active.
   self.clearer =
