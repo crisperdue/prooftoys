@@ -746,7 +746,7 @@ ProofDisplay.prototype.addStep = function(step, _isSuggestion) {
                        : (Toy.showOrdinals
                           ? step.ordinal
                           : this.stepPrefix + this.steps.length));
-    this.renderStep(copy);
+    $(self.stepsNode).append(this.renderStep(copy));
     renderStepNumber(copy);
     _isSuggestion || this.proofChanged();
     return copy;
@@ -1073,7 +1073,6 @@ ProofDisplay.prototype.renderStep = function(step) {
                  .append($numArea));
   $step.append($stepAndNum);
   $proofStep.append('<span class=stepInfo></span>');
-  $(self.stepsNode).append($proofStep);
   if (self.isEditable()) {
     $proofStep.addClass('withDeleter');
   }
@@ -1203,7 +1202,7 @@ ProofDisplay.prototype.renderStep = function(step) {
       }
     });
   }
-  return dom($step);
+  return dom($proofStep);
 };
 
 /**
