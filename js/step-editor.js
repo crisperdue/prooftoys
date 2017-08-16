@@ -1190,61 +1190,7 @@ function RuleMenu(stepEditor) {
   // Here are handlers for "enter" and "leave".  This code avoids
   // assuming that these events come in pairs.
   $node.on('mouseenter', '.ruleItem', function(event) {
-      // Note that this item is currently hovered.
-      self.hovering = this;
-      var $this = $(this);
-      // The "step" data property indicates that a step has been computed
-      // for this menu item.
-      var step = $this.data('step');
-      if (step) {
-        // A step is already computed, show its result.
-        stepEditor.proofDisplay.suggestStep(step);
-      } else if (!$this.data('promise')) {
-        // The "promise" data property indicates that a request for a
-        // step has been issued.
-        var ruleName = $this.data('ruleName');
-        var promise;
-        if (ruleName.slice(0, 5) === 'fact ') {
-          // See StepEditor.ruleChosen for essentially the same code.
-          // Values "fact etc" indicate use of rules.rewrite, and
-          // the desired fact is indicated by the rest of the value.
-          var siteStep = stepEditor.proofDisplay.selection;
-          if (!siteStep || !siteStep.selection) {
-            stepEditor.error('No selected site');
-          }
-          promise = sendRule('rewrite', 
-                             [siteStep.original,
-                              siteStep.prettyPathTo(siteStep.selection),
-                              ruleName.slice(5)]);
-        } else if (Toy.rules[ruleName]) {
-          var rule = Toy.rules[ruleName];
-          var args = stepEditor.argsFromSelection(ruleName);
-          if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
-            promise = sendRule(ruleName, args);
-          }
-        } else {
-          console.warn('No such rule:', ruleName);
-        }
-        if (promise) {
-          $this.data('promise', promise);
-          promise.then(function(info) {
-              // The rule has successfully run.
-              // First tidy up a little.
-              $this.removeData('promise');
-              var step = info.result.step;
-              // Make note of the result.
-              $this.data('step', step);
-              if (self.hovering === $this[0]) {
-                // At this (future) point in time, if this item is
-                // hovered, show the result.
-                stepEditor.proofDisplay.suggestStep(step);
-              }
-            })
-            .catch(function(info) {
-                console.warn('Rule menu error', info.message);
-              });
-        }
-      }
+      handleMouseEnterItem(self, this, event);
     });
   // When the mouse leaves an item, hide any suggested step.  If a
   // request has been issued for an appropriate suggestion, but is
@@ -1259,6 +1205,68 @@ function RuleMenu(stepEditor) {
         $this.removeData('promise');
       }
     });
+}
+
+/**
+ * Event handler for mouseenter events on RuleMenu items.
+ */
+function handleMouseEnterItem(ruleMenu, node, event) {
+  var stepEditor = ruleMenu.stepEditor;
+  // Note that this item is currently hovered.
+  ruleMenu.hovering = node;
+  var $node = $(node);
+  // The "step" data property indicates that a step has been computed
+  // for this menu item.
+  var step = $node.data('step');
+  if (step) {
+    // A step is already computed, show its result.
+    stepEditor.proofDisplay.suggestStep(step);
+  } else if (!$node.data('promise')) {
+    // The "promise" data property indicates that a request for a
+    // step has been issued.
+    var ruleName = $node.data('ruleName');
+    var promise;
+    if (ruleName.slice(0, 5) === 'fact ') {
+      // See StepEditor.ruleChosen for essentially the same code.
+      // Values "fact etc" indicate use of rules.rewrite, and
+      // the desired fact is indicated by the rest of the value.
+      var siteStep = stepEditor.proofDisplay.selection;
+      if (!siteStep || !siteStep.selection) {
+        stepEditor.error('No selected site');
+      }
+      promise = sendRule('rewrite', 
+                         [siteStep.original,
+                          siteStep.prettyPathTo(siteStep.selection),
+                          ruleName.slice(5)]);
+    } else if (Toy.rules[ruleName]) {
+      var rule = Toy.rules[ruleName];
+      var args = stepEditor.argsFromSelection(ruleName);
+      if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
+        promise = sendRule(ruleName, args);
+      }
+    } else {
+      console.warn('No such rule:', ruleName);
+    }
+    if (promise) {
+      $node.data('promise', promise);
+      promise.then(function(info) {
+          // The rule has successfully run.
+          // First tidy up a little.
+          $node.removeData('promise');
+          var step = info.result.step;
+          // Make note of the result.
+          $node.data('step', step);
+          if (ruleMenu.hovering === $node[0]) {
+            // At this (future) point in time, if this item is
+            // hovered, show the result.
+            stepEditor.proofDisplay.suggestStep(step);
+          }
+        })
+        .catch(function(info) {
+            console.warn('Rule menu error', info.message);
+          });
+    }
+  }
 }
 
 /**
