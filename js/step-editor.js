@@ -1217,7 +1217,7 @@ function handleMouseEnterItem(ruleMenu, node, event) {
   var $node = $(node);
   // The "step" data property indicates that a step has been computed
   // for this menu item.
-  var step = $node.data('step');
+  var step = $node.data('suggestion');
   if (step) {
     // A step is already computed, show its result.
     stepEditor.proofDisplay.suggestStep(step);
@@ -1255,7 +1255,7 @@ function handleMouseEnterItem(ruleMenu, node, event) {
           $node.removeData('promise');
           var step = info.result.step;
           // Make note of the result.
-          $node.data('step', step);
+          $node.data('suggestion', step);
           if (ruleMenu.hovering === $node[0]) {
             // At this (future) point in time, if this item is
             // hovered, show the result.
