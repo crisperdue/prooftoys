@@ -1332,10 +1332,16 @@ ProofDisplay.prototype.renderPopups = function(step) {
 };
 
 /**
- * Returns the previous rendered step, if any, which is the previous
- * step in the same ProofDisplay, otherwise the previous rendered step
- * of the ProofDisplay's parent step (recursively if needed),
- * otherwise null.
+ * Returns the rendered step immediately previous to this one
+ * in the same ProofDisplay, otherwise the previous rendered step
+ * of the ProofDisplay's parent step (recursively if needed).
+ *
+ * As a special case, if the proofDisplay has a prevStep property
+ * returns that (for dedicated step suggestion ProofDisplays).
+ *
+ * If the the given rendered step has a ProofDisplay, but is not
+ * among its steps, this takes it to immediately follow the last
+ * of the displayed steps.
  */
 function prevRenderedStep(step) {
   var proofDisplay = getProofDisplay(step);
@@ -1348,13 +1354,14 @@ function prevRenderedStep(step) {
   var index = proofDisplay.steps.indexOf(step);
   if (index > 0) {
     return proofDisplay.steps[index - 1];
-  } else {
+  } else if (index == 0) {
     var parent = proofDisplay.parentStep;
     if (parent) {
       return prevRenderedStep(parent);
     }
+  } else {
+    return proofDisplay.getLastStep();
   }
-  return null;
 }
 
 /**
