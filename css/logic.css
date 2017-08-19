@@ -321,6 +321,12 @@ span#leftNav {
     pointer-events: none;
 }
 
+.proofStep.stepMessage {
+    display: block;
+    width: calc(100% - 5em);
+    padding-left: 5em;
+}
+
 /* Use the inline-block *class* as needed to avoid contaminating inner
    inline-block elements with the text-indent above. */
 .proofStep .inline-block {

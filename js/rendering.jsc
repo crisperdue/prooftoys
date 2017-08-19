@@ -679,43 +679,60 @@ function renderStepNumber(step) {
  * Hides any suggested step, doing necessary bookkeeping.
  */
 ProofDisplay.prototype.hideSuggestion = function() {
-  var step = this.suggesting;
-  if (step) {
-    // This does not remove event listeners and data.
-    $(step.stepNode).detach();
+  var node = this.suggesting;
+  if (node) {
+    // This does not remove event listeners and data.  To be safe,
+    // they wil be removed when the RuleMenu is updated.
+    $(node).detach();
     this.suggesting = null;
   }
 };
 
 /**
- * Adds the given "real" proof step to the display as a suggestion.
- * This is like addStep except for the status.  The proof is not
- * considered changed, and change logic does not fire, e.g. no
- * RuleMenu update.
+ * Renders the given "real" proof step as a suggestion.  Returns a DOM
+ * node containing either the rendered step, or HTML with a suitable
+ * message.
  */
-ProofDisplay.prototype.suggestStep = function(step) {
-  // TODO: This seems to be sluggish.  Consider placing suggestions
-  //   in a "stepSuggestions" area in the DOM, as fully-built DIVs
-  //   and just switching among them.
-  this.hideSuggestion();
-  var last = this.getLastStep().original;
-  if (last && last.matches(step)) {
-    // TODO: Report to user.
-    console.log('nothing done');
-  } else {
-    var rendered = step.rendering || this.renderStep(step);
-    if (rendered) {
-      rendered.stepNumber = '?';
-      renderStepNumber(rendered);
-      var node = rendered.stepNode;
-      $(node).addClass('stepSuggestion');
-      $(this.stepsNode).append(node);
-      this.suggesting = rendered;
-      return rendered;
-    }
+ProofDisplay.prototype.stepSuggestion = function(step) {
+  // Rules that wind up doing nothing generally return one of their
+  // inputs, and that input would already be rendered.  This is a
+  // quick hack way to detect that.  Suggested steps have a rendering,
+  // but it is not attached to the document.
+  if (step.rendering && document.contains(step.rendering.stepNode)) {
+    return this.suggestionMessage('nothing to do');
   }
-  return null;
+  var rendered = step.rendering || this.renderStep(step);
+  if (rendered) {
+    rendered.stepNumber = '&ndash;';
+    renderStepNumber(rendered);
+    var node = rendered.stepNode;
+    $(node).addClass('stepSuggestion');
+    return node;
+  }
+  return this.suggestionMessage('failed to render step ' +
+                                step.toUnicode());
 };
+
+/**
+ * Returns a DOM node with styling appropriate for a suggestion, whose
+ * HTML content is the given message string.
+ */
+ProofDisplay.prototype.suggestionMessage = function(message) {
+  var $div = $('<div class="proofStep stepSuggestion stepMessage"/>');
+  $div.append(message);
+  return $div[0];
+};
+
+/**
+ * Inserts the given DOM node into the spot set aside for suggestions,
+ * i.e. after all the display's steps.
+ */
+ProofDisplay.prototype.suggest = function(node) {
+  this.hideSuggestion();
+  $(this.stepsNode).append(node);
+  this.suggesting = node;
+};
+
 
 /**
  * Create and return a renderable step to display the given real step

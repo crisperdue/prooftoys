@@ -1215,12 +1215,13 @@ function handleMouseEnterItem(ruleMenu, node, event) {
   // Note that this item is currently hovered.
   ruleMenu.hovering = node;
   var $node = $(node);
-  // The "step" data property indicates that a step has been computed
-  // for this menu item.
-  var step = $node.data('suggestion');
-  if (step) {
-    // A step is already computed, show its result.
-    stepEditor.proofDisplay.suggestStep(step);
+  // The "suggestion" data property indicates that a suggestion has
+  // been computed for this menu item.  It is a DOM node that may
+  // have a proofStep in it.
+  var suggestion = $node.data('suggestion');
+  if (suggestion) {
+    // A suggestion is already computed; show it.
+    stepEditor.proofDisplay.suggest(suggestion);
   } else if (!$node.data('promise')) {
     // The "promise" data property indicates that a request for a
     // step has been issued.
@@ -1239,6 +1240,7 @@ function handleMouseEnterItem(ruleMenu, node, event) {
                           siteStep.prettyPathTo(siteStep.selection),
                           ruleName.slice(5)]);
     } else if (Toy.rules[ruleName]) {
+      // It is a rule other than a rewrite with fact.
       var rule = Toy.rules[ruleName];
       var args = stepEditor.argsFromSelection(ruleName);
       if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
@@ -1254,12 +1256,15 @@ function handleMouseEnterItem(ruleMenu, node, event) {
           // First tidy up a little.
           $node.removeData('promise');
           var step = info.result.step;
-          // Make note of the result.
-          $node.data('suggestion', step);
+          // Make note of the result, remembering its node.
           if (ruleMenu.hovering === $node[0]) {
             // At this (future) point in time, if this item is
             // hovered, show the result.
-            stepEditor.proofDisplay.suggestStep(step);
+            var display = stepEditor.proofDisplay;
+            var suggestionNode = display.stepSuggestion(step);
+            $node.data('suggestion', suggestionNode);
+            display.suggest(suggestionNode);
+
           }
         })
         .catch(function(info) {
@@ -1288,7 +1293,16 @@ RuleMenu.prototype._update = function() {
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
   stepEditor.$proofErrors.hide();
+
+
+
   var $items = self.$items;
+  // Remove data and event handlers from suggestions.  They have
+  // not been previously removed.
+  $items.find('.ruleItem').each(function() {
+      var suggestion = $(this).data('suggestion');
+      suggestion && $(suggestion).remove();
+    });
   $items.empty();
   var step = stepEditor.proofDisplay.selection;
   var term = step && step.selection;
