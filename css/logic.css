@@ -315,7 +315,10 @@ span#leftNav {
     position: absolute;
     background-color: #eef;
     border: .5px solid silver;
-    z-axis: 1;
+    /* Try to help situations where this overlaps the menu. */
+    z-index: 1;
+    opacity: .75;
+    pointer-events: none;
 }
 
 /* Use the inline-block *class* as needed to avoid contaminating inner
