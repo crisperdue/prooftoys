@@ -627,6 +627,15 @@ function ProofDisplay(properties) {
 }
 
 /**
+ * Returns the last step of this display, or a null
+ * value if the display is empty.
+ */
+ProofDisplay.prototype.getLastStep = function() {
+  var steps = this.steps;
+  return steps[steps.length - 1];
+}
+
+/**
  * Notify that the proof has changed.
  */
 ProofDisplay.prototype.proofChanged = function() {
