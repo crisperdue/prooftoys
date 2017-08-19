@@ -596,8 +596,8 @@ function ProofDisplay(properties) {
   this.selections = [];
   // Single selected step when exactly one is selected, or null.
   this.selection = null;
-  // True if the final displayed step is a suggestion
-  this.suggesting = false;
+  // If a step is being suggested, the rendered version of the step.
+  this.suggesting = null;
   // Prefix string for each step.
   this.stepPrefix = properties.stepPrefix || '';
   this.parentStep = properties.parentStep || null;
@@ -679,16 +679,11 @@ function renderStepNumber(step) {
  * Hides any suggested step, doing necessary bookkeeping.
  */
 ProofDisplay.prototype.hideSuggestion = function() {
-  if (this.suggesting) {
-    this.suggesting = false;
-    var steps = this.steps;
-    var step = steps[steps.length - 1];
-    if (step && step.users === 0) {
-      // Does not trigger some sort of refresh.
-      this.removeLastStep();
-    } else {
-      console.warn('Suggested step has users:', step.toString());
-    }
+  var step = this.suggesting;
+  if (step) {
+    // This does not remove event listeners and data.
+    $(step.stepNode).detach();
+    this.suggesting = null;
   }
 };
 
@@ -703,15 +698,19 @@ ProofDisplay.prototype.suggestStep = function(step) {
   //   in a "stepSuggestions" area in the DOM, as fully-built DIVs
   //   and just switching among them.
   this.hideSuggestion();
-  if (step.rendering) {
+  var last = this.getLastStep().original;
+  if (last && last.matches(step)) {
     // TODO: Report to user.
     console.log('nothing done');
   } else {
-    var rendered = this.addStep(step, true);
+    var rendered = step.rendering || this.renderStep(step);
     if (rendered) {
-      this.suggesting = true;
+      rendered.stepNumber = '?';
+      renderStepNumber(rendered);
       var node = rendered.stepNode;
       $(node).addClass('stepSuggestion');
+      $(this.stepsNode).append(node);
+      this.suggesting = rendered;
       return rendered;
     }
   }
@@ -719,14 +718,41 @@ ProofDisplay.prototype.suggestStep = function(step) {
 };
 
 /**
- * Adds a rendering of the given "real" proof step to the end
- * of the control's proof, assigning it the stepNumber for its
- * position.
+ * Create and return a renderable step to display the given real step
+ * within the given display.
  *
- * Returns the rendered version, or null if adding to the
- * proof display failed.
+ * This also sets up event handlers for click and hover events within
+ * the step.  Does not insert the new node into the document.
+ *
+ * The rendering is structured as follows:
+ *
+ * - Each rendered expression and subexpression has a "node" property
+ *   that refers to a DOM node with its rendering.
+ *
+ * - A rendered step has an "original" property referring to the
+ *   unrendered proof step from which it was created.
+ *
+ * - A rendered step has a "proofDisplay" property referring to
+ *   the ProofDisplay it belongs to.
+ *
+ * - When a rendered step has a subproof display open, it has a
+ *   "subproofDisplay" property referring to the subproof's
+ *   ProofDisplay.
+ *
+ * - Creation of a rendered step adds a "rendering" property to the
+ *   original, so original proof steps can currently have only one
+ *   rendering at a time.
+ *
+ * - The given step's node has CSS class 'proofStep' and a 'proofStep'
+ *   data property that refers to the step.  Code elsewhere may assume
+ *   that a node renders a proof step iff it has the proofStep CSS
+ *   class.
+ *
+ * - Rendered steps have properties "stepNumber", a string identifying
+ *   the step number to display; and "hasLeftElision", a boolean true
+ *   to request omitting display of the LHS of an equation.
  */
-ProofDisplay.prototype.addStep = function(step, _isSuggestion) {
+ProofDisplay.prototype.renderStep = function(step) {
   var self = this;
   // TODO: Move most of this logic into renderStep.
   assert(!step.rendering, 'Already rendered', step);
@@ -744,21 +770,33 @@ ProofDisplay.prototype.addStep = function(step, _isSuggestion) {
       }
     });
   copy.proofDisplay = this;
+  var node = this.renderStep1(copy);
+  return $(node).data('proofStep');
+};
+
+/**
+ * Adds a rendering of the given "real" proof step to the end
+ * of the control's proof, assigning it the stepNumber for its
+ * position.
+ *
+ * Returns the rendered version, or null if adding to the
+ * proof display failed.
+ */
+ProofDisplay.prototype.addStep = function(step) {
+  var self = this;
+  var rendered = self.renderStep(step);
+  $(self.stepsNode).append(rendered.stepNode);
   try {
-    copy.annotateWithTypes();
-    this.steps.push(copy);
-    // Give it a stepNumber early so rendering code can find it.
-    copy.stepNumber = (_isSuggestion
-                       ? '?'
-                       : this.prevStep
-                       ? '<span class=stepNumPlaceholder/>'
-                       : (Toy.showOrdinals
-                          ? step.ordinal
-                          : this.stepPrefix + this.steps.length));
-    $(self.stepsNode).append(this.renderStep(copy));
-    renderStepNumber(copy);
-    _isSuggestion || this.proofChanged();
-    return copy;
+    rendered.annotateWithTypes();
+    this.steps.push(rendered);
+    rendered.stepNumber =  (this.prevStep
+                            ? '<span class=stepNumPlaceholder/>'
+                            : (Toy.showOrdinals
+                               ? step.ordinal
+                               : this.stepPrefix + this.steps.length));
+    renderStepNumber(rendered);
+    this.proofChanged();
+    return rendered;
   } catch(e) {
     // Warn about the problem, usually type annotation.
     console.warn('Failed to add step', step.$$);
@@ -999,43 +1037,9 @@ ProofDisplay.prototype.handleExprClick = function(expr) {
 var _turnstile = '\u22a6';
 
 /**
- * Create and return a DOM node to display the renderable step within
- * the given controller.  Assumes that the renderable step is already
- * inserted into the controller's steps array.
- *
- * This also sets up event handlers for click
- * and hover events within the step.  Does not insert the new node
- * into the document.
- *
- * The rendering is structured as follows:
- *
- * - Each rendered expression and subexpression has a "node" property
- *   that refers to a DOM node with its rendering.
- *
- * - A rendered step has an "original" property referring to the
- *   unrendered proof step from which it was created.
- *
- * - A rendered step has a "proofDisplay" property referring to
- *   the ProofDisplay it belongs to.
- *
- * - When a rendered step has a subproof display open, it has a
- *   "subproofDisplay" property referring to the subproof's
- *   ProofDisplay.
- *
- * - Creation of a rendered step adds a "rendering" property to the
- *   original, so original proof steps can currently have only one
- *   rendering at a time.
- *
- * - The given step's node has CSS class 'proofStep' and a 'proofStep'
- *   data property that refers to the step.  Code elsewhere may assume
- *   that a node renders a proof step iff it has the proofStep CSS
- *   class.
- *
- * - Rendered steps have properties "stepNumber", a string identifying
- *   the step number to display; and "hasLeftElision", a boolean true
- *   to request omitting display of the LHS of an equation.
+ * Most of the work for renderStep gets done here.
  */
-ProofDisplay.prototype.renderStep = function(step) {
+ProofDisplay.prototype.renderStep1 = function(step) {
   var self = this;
 
   // Make an object for rendering of the whole step.
