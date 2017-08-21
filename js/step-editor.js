@@ -1212,16 +1212,19 @@ function RuleMenu(stepEditor) {
  */
 function handleMouseEnterItem(ruleMenu, node, event) {
   var stepEditor = ruleMenu.stepEditor;
+  var display = stepEditor.proofDisplay;
   // Note that this item is currently hovered.
   ruleMenu.hovering = node;
   var $node = $(node);
   // The "suggestion" data property indicates that a suggestion has
   // been computed for this menu item.  It is a DOM node that may
   // have a proofStep in it.
+  var working = display.suggestionMessage('Working . . . ');
+  display.suggest(working);
   var suggestion = $node.data('suggestion');
   if (suggestion) {
     // A suggestion is already computed; show it.
-    stepEditor.proofDisplay.suggest(suggestion);
+    display.suggest(suggestion);
   } else if (!$node.data('promise')) {
     // The "promise" data property indicates that a request for a
     // step has been issued.
@@ -1231,7 +1234,7 @@ function handleMouseEnterItem(ruleMenu, node, event) {
       // See StepEditor.ruleChosen for essentially the same code.
       // Values "fact etc" indicate use of rules.rewrite, and
       // the desired fact is indicated by the rest of the value.
-      var siteStep = stepEditor.proofDisplay.selection;
+      var siteStep = display.selection;
       if (!siteStep || !siteStep.selection) {
         stepEditor.error('No selected site');
       }
@@ -1260,7 +1263,6 @@ function handleMouseEnterItem(ruleMenu, node, event) {
           if (ruleMenu.hovering === $node[0]) {
             // At this (future) point in time, if this item is
             // hovered, show the result.
-            var display = stepEditor.proofDisplay;
             var suggestionNode = display.stepSuggestion(step);
             $node.data('suggestion', suggestionNode);
             display.suggest(suggestionNode);
