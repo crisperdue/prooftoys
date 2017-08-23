@@ -777,6 +777,9 @@ Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
   var freeVars = {};
   for (var name in map_arg) {
+    if (name === '%expansions') {
+      continue;
+    }
     var replacement = map_arg[name];
     if (!(replacement instanceof Atom && replacement.name == name)) {
       // Include only substitutions that actually change the name.
