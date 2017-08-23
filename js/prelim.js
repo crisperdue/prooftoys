@@ -275,7 +275,8 @@ Path.prototype.toString = function() {
  * 'binop'.
  *
  * If the optional expr is supplied, adjust any /main path according
- * to whether the expr has hypotheses or not.
+ * to whether the expr has hypotheses or not, and any /rt path
+ * based on the expr being a conditional.
  *
  * A null input indicates an empty path.
  */
@@ -284,11 +285,20 @@ function path(arg, opt_expr) {
 
   // If the initial segment of the path is 'main', and the expression
   // is given and has hypotheses, return a path to its RHS.
+  // Similarly for 'rt' for a conditional.
   function adjust(path) {
-    if (expr && path.segment == 'main') {
-      path = path.rest;
-      if (expr.hasHyps) {
-        path = new Path('right', path);
+    if (expr) {
+      var segment = path.segment;
+      if (segment == 'main') {
+        path = path.rest;
+        if (expr.hasHyps) {
+          path = new Path('right', path);
+        }
+      } else if (segment == 'rt') {
+        path = path.rest;
+        if (expr.isCall2('=>')) {
+          path = new Path('right', path);
+        }
       }
     }
     return path;
