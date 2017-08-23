@@ -1250,10 +1250,8 @@ var ruleInfo = {
   // Target is forall {x. B}, expr is A, which will replace
   // all occurrences of x.  Uses no book-specific definitions,
   // and relies only on theorem "T", 5200, and reduce. (5215)
-  // Handles hypotheses.
   //
-  // TODO: hyps -- input step is an equation.
-  //   (Target converts to an equation.)
+  // Works with target as RHS of conditional.
   instForall: {
     precheck: function(step, path, expr) {
       var target = step.get(path);
@@ -1262,19 +1260,20 @@ var ruleInfo = {
               target.isCall1('forall') &&
               target.arg instanceof Toy.Lambda &&
               (pathStr === '' ||
-               pathStr === '/right' ||
-               pathStr === '/arg'));
+               (step.wff.isCall2('=>') &&
+                (pathStr === '/right' ||
+                 pathStr === '/arg'))));
     },
     action: function(step, path, expr) {
       var target = step.get(path);
       var step1 = rules.useDefinition(step, path);
       var step2 = rules.applyBoth(step1, expr);
-      var step3 = rules.apply(step2, '/main/left');
-      var step4 = rules.apply(step3, '/main/right');
+      var step3 = rules.apply(step2, '/rt/left');
+      var step4 = rules.apply(step3, '/rt/right');
       // Rule fromTIsA depends on instForall via tIsXIsX and
       // equationCases, though this next step is a simplified fromTIsA
       // without hypotheses.
-      var step5 = rules.rplace(step4, rules.theorem('t'), '/main');
+      var step5 = rules.replace(rules.theorem('t'), '', step4);
       return step5.justify('instForall', arguments, [step]);
     },
     toOffer: function(step, term) {
