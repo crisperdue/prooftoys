@@ -271,6 +271,15 @@ var numbersInfo = {
     description: 'multiplicative identity'
   },
 
+  // TODO: Prove this.
+  uniqueQuotient: {
+    // This is provable: when y is 0 and x is 0, z can be any number.
+    // If y = 0 and x != 0, or x = 0 and y != 0 there is no solution.
+    // All others are OK.
+    statement: '@R x & R y & x != 0 & y != 0 => exists1 {z. y * z = x}',
+    description: 'unique existence of quotient'
+  },
+
   axiomTimesZero: {
     statement: '@R x => x * 0 = 0',
     proof: function() {
