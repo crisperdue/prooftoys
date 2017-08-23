@@ -3128,7 +3128,7 @@ var ruleInfo = {
                    : step4);
       var step6 = (target.hasHyps || equation.hasHyps
                    ? rules.asHypotheses(step5)
-                   : step);
+                   : step5);
       return step6.justify('replace', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
