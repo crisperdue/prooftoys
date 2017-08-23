@@ -1248,6 +1248,8 @@ function handleMouseEnterItem(ruleMenu, node, event) {
       var args = stepEditor.argsFromSelection(ruleName);
       if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
         promise = sendRule(ruleName, args);
+      } else {
+        display.suggest(display.suggestionMessage('(needs user input)'));
       }
     } else {
       console.warn('No such rule:', ruleName);
@@ -1270,7 +1272,12 @@ function handleMouseEnterItem(ruleMenu, node, event) {
           }
         })
         .catch(function(info) {
-            console.warn('Rule menu error', info.message);
+            $node.removeData('promise');
+            var messageNode = display.suggestionMessage('not applicable');
+            $node.data('suggestion', messageNode);
+            display.suggest(messageNode);
+            console.error('Rule menu error', info.message);
+            debugger;
           });
     }
   }
