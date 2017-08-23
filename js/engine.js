@@ -873,6 +873,9 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
+  // TODO: Make all forms of r5201 work with conditionals rather
+  //   than hypotheses.
+
   // r5201a, not used.  Works with hypotheses.
   replaceWhole: {
     action: function(a, ab) {
@@ -884,7 +887,7 @@ var ruleInfo = {
     inputs: {step: 1, equation: 2},
   },
 
-  // r5201b, works with conditional equations.
+  // r5201b, works with conditionals.
   eqnSwap: {
     action: function(h_ab) {
       var ab = h_ab.getMain();
@@ -935,13 +938,12 @@ var ruleInfo = {
     inputs: {equation: [1, 2]}
   },
 
-  // r5201e.  Works with hypotheses.
+  // r5201e.  Works with conditionals.
   applyBoth: {
-    action: function(h_eqn, a) {
-      var eqn = h_eqn.unHyp();
-      var step1 = rules.eqSelf(call(eqn.get('/left'), a));
-      var step2 = rules.rplace(h_eqn, step1, '/right/fn');
-      return step2.justify('applyBoth', arguments, [h_eqn]);
+    action: function(eqn, a) {
+      var step1 = rules.eqSelf(call(eqn.eqnLeft(), a));
+      var step2 = rules.replace(step1, '/right/fn', eqn);
+      return step2.justify('applyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
     form: ('Apply both sides of step <input name=equation>'
