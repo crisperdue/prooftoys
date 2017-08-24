@@ -1613,6 +1613,17 @@ function textNode(text) {
 
 // NOTE that some methods on Expr and its subclasses appear here.
 
+// renderTerm()
+//
+// Copies this non-rendered term and renders the result, returning a
+// DOM node containing the rendering.
+
+Expr.prototype.renderTerm = function() {
+  var copy = this.copyForRendering(null);
+  var jq = copy.render({asmSteps: []}, 0);
+  return jq[0];
+};
+
 // render(info, minPower)
 //
 // Render this expression into a new DOM node, returning a jQuery
