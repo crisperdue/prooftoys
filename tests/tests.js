@@ -1636,12 +1636,6 @@ var testCase = {
     assertEqual('(F == F)', Toy.rules.equivSelf(F));
   },
 
-  testR5201a: function() {
-    var result = Toy.rules.replaceWhole(call(p, x),
-                                      call('=', call(p, x), call(q, x)));
-    assertEqual('(q x)', result);
-  },
-
   testR5201b: function() {
     var inf = Toy.rules.eqnSwap(call('=', p, q));
     assertEqual('(q = p)', inf);

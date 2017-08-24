@@ -151,11 +151,6 @@ $(function() {
       level: 1
     },
 
-    replaceWhole: {
-      args: [rules.assert(call(p, x)),
-             rules.assert(call('=', call(p, x), call(q, x)))],
-    },
-
     eqnSwap: {
       args: [rules.axiom4(Toy.parse('{x. x} (p = q)'))],
       level: 1

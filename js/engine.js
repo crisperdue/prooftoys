@@ -876,16 +876,8 @@ var ruleInfo = {
   // TODO: Make all forms of r5201 work with conditionals rather
   //   than hypotheses.
 
-  // r5201a, not used.  Works with hypotheses.
-  replaceWhole: {
-    action: function(a, ab) {
-      var aa = rules.eqSelf(a);
-      var b = ab.getRight();
-      var result = rules.rplace(ab, a, '/');
-      return result.justify('replaceWhole', arguments, arguments);
-    },
-    inputs: {step: 1, equation: 2},
-  },
+  // r5201a is not implemented.  It would be ambiguous in case the
+  // "whole" is a conditional.  Use rules.replaceT instead.
 
   // r5201b, works with conditionals.
   eqnSwap: {
@@ -921,7 +913,7 @@ var ruleInfo = {
     tooltip: 'from a = b and b = c deduce a = c'
   },
 
-  // r5201d, not used.  Works with hypotheses.
+  // r5201d, not used.  The current form only works with plain equations.
   applyBySides: {
     action: function(ab, cd) {
       var a = ab.getLeft();
@@ -1256,13 +1248,14 @@ var ruleInfo = {
     precheck: function(step, path, expr) {
       var target = step.get(path);
       var pathStr = path.toString();
-      return (target &&
+      var ok = (target &&
               target.isCall1('forall') &&
               target.arg instanceof Toy.Lambda &&
               (pathStr === '' ||
                (step.wff.isCall2('=>') &&
                 (pathStr === '/right' ||
                  pathStr === '/arg'))));
+      return ok;
     },
     action: function(step, path, expr) {
       var target = step.get(path);
