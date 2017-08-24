@@ -1356,7 +1356,7 @@ RuleMenu.prototype._update = function() {
             }
           }
         }
-        var display = '= ' + toDisplay.toHtml();
+        var display = '= <span class=menuTerm></span>';
         if (subst) {
           display += (' <span class=description>using ' +
                       Toy.trimParens(statement.toHtml())
@@ -1365,7 +1365,10 @@ RuleMenu.prototype._update = function() {
         // Value of the option; format of "fact <fact text>"
         // indicates that the text defines a fact to use in
         // rules.rewrite.
-        itemInfos.push({ruleName: 'fact ' + text, html: display});
+        var info = {ruleName: 'fact ' + text,
+                    html: display,
+                    term: toDisplay};
+        itemInfos.push(info);
       });
   }
   itemInfos.sort(function(a, b) {
@@ -1374,6 +1377,9 @@ RuleMenu.prototype._update = function() {
   var items = itemInfos.map(function(info) {
       var $item = $('<div class="ruleItem noselect"/>');
       $item.html(info.html);
+      if (info.term) {
+        $item.find('.menuTerm').append(info.term.renderTerm());
+      }
       $item.data('ruleName', info.ruleName);
       return $item
     });
