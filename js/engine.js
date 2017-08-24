@@ -4469,7 +4469,10 @@ function addRule(key, info_arg) {
     // If there is a statement but no proof, just assert the statement.
     if (!proof) {
       proof = function() {
-        return rules.assert(statement);
+        var result = rules.assert(statement);
+        return (result.isCall2('=>')
+                ? rules.asHypotheses(result)
+                : result);
       }
       main = proof;
     }
