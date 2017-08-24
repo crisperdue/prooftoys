@@ -1315,9 +1315,8 @@ RuleMenu.prototype._update = function() {
   $items.empty();
   var step = stepEditor.proofDisplay.selection;
   var term = step && step.selection;
-  // Map from rule display text to rule name.
-  var byDisplay = {};
-  var displayTexts = [];
+  // Plain object describing each menu item.
+  var itemInfos = [];
   stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       if (!Toy.useStepSuggester || !Toy.rules[ruleName].info.offerExample) {
@@ -1329,12 +1328,10 @@ RuleMenu.prototype._update = function() {
           // notably where there are multiple possible replacements of
           // a term by equal terms.
           info.forEach(function(msg) {
-              displayTexts.push(msg);
-              byDisplay[msg] = ruleName;
+              itemInfos.push({ruleName: ruleName, html: msg});
             });
         } else if (info) {
-          displayTexts.push(info);
-          byDisplay[info] = ruleName;
+          itemInfos.push({ruleName: ruleName, html: info});
         }
       }
     });
@@ -1365,26 +1362,26 @@ RuleMenu.prototype._update = function() {
                       Toy.trimParens(statement.toHtml())
                       + '</span>');
         }
-        displayTexts.push(display);
         // Value of the option; format of "fact <fact text>"
         // indicates that the text defines a fact to use in
         // rules.rewrite.
-        byDisplay[display] = 'fact ' + text;
+        itemInfos.push({ruleName: 'fact ' + text, html: display});
       });
   }
-  displayTexts.sort(function(a, b) { return a.localeCompare(b); });
-  var items = [];
-  displayTexts.forEach(function(display) {
+  itemInfos.sort(function(a, b) {
+      return a.html.localeCompare(b.html);
+    });
+  var items = itemInfos.map(function(info) {
       var $item = $('<div class="ruleItem noselect"/>');
-      $item.html(display);
-      $item.data('ruleName', byDisplay[display]);
-      items.push($item);
+      $item.html(info.html);
+      $item.data('ruleName', info.ruleName);
+      return $item
     });
   self.length = items.length
   self.changed = false;
   $items.append(items);
-  self.$node.toggleClass('hidden', displayTexts.length === 0);
-  if (displayTexts.length === 0) {
+  self.$node.toggleClass('hidden', items.length === 0);
+  if (items.length === 0) {
     // The menu can be hidden by clicks within it, and that does not
     // trigger a mouse leave event.
     self._leavers.fire();
