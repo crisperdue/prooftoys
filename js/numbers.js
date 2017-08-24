@@ -537,7 +537,31 @@ var numbersInfo = {
 
 };
 
-equationOpsInfo = {
+
+var divisionInfo = {
+
+  // First step toward identifying division as the inverse of
+  // multiplication.
+  //
+  // TODO: Carry this forward into a proof of the desired result.
+  quotientExists: {
+    statement: ('@R x & R y & x != 0 & y != 0 => ' +
+                '(y * z = x == z = iota {z. y * z = x})'), // "the"!
+    proof: function() {
+      var step1 = rules.uniqueQuotient();
+      var step2 = rules.exists1Forall();
+      var step3 = rules.instVar(step2, '{z. y * z = x}', 'p');
+      var step4 = rules.instForall(step3, '/right', 'z');
+      var step5 = rules.simpleApply(step4, '/right/left');
+      var step6 = rules.p2(step1, step5,
+                           '(p => q) & (q => r) => (p => r)');
+      return step6;
+    }
+  }
+
+};
+
+var equationOpsInfo = {
 
   // Add the given term to the equation in the step at the given path,
   // typically /right/right.
@@ -2886,6 +2910,7 @@ var recipFacts = {
 $.extend(algebraFacts, recipFacts);
 
 var divisionFacts = {
+
   // Division rules
 
   'c != 0 => a * b / c = a / c * b': {
@@ -3282,6 +3307,7 @@ Toy.isArithmetic = isArithmetic;
 // Do this after support modules are initialized.
 $(function() {
     Toy.addRules(numbersInfo);
+    Toy.addRules(divisionInfo);
     Toy.addRules(equationOpsInfo);
     Toy.addRules(simplifiersInfo);
     Toy.addRules(moversInfo);
