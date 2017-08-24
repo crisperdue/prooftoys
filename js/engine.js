@@ -900,13 +900,11 @@ var ruleInfo = {
     labels: 'basic algebra'
   },
 
-  // r5201c.  Works with hypotheses.
-  // TODO: hyps -- input step is an equation.
+  // r5201c.  Works with conditionals.
   eqnChain: {
     action: function(ab, bc) {
-      var ac = rules.rplace(bc, ab, '/main/right');
-      var result = ac;
-      return result.justify('eqnChain', arguments, arguments);
+      var ac = rules.replace(ab, '/rt/right', bc);
+      return ac.justify('eqnChain', arguments, arguments);
     },
     description: '[a = b] and [b = c] to [a = c]',
     menu: '[a = b] and [b = c] to [a = c]',
@@ -945,26 +943,19 @@ var ruleInfo = {
     description: '[f = g] to [f x = g x]',
   },
 
-  // r5201f.  Works with hypotheses.
+  // r5201f.  Works with a conditional equation.
   // If f is a lambda expression, also applies it to both sides.
-  //
-  // TODO: hyps -- one input step is an equation.
-  //
-  // TODO: Reverse the arguments for consistency with other rules
-  //   that operate on a step; add a version apply2Both that takes
-  //   a function of 2 args and an extra term; use in addToBoth, etc..
   applyToBoth: {
-    action: function(f_arg, h_ab) {
+    action: function(f_arg, ab) {
       var f = termify(f_arg);
-      var ab = h_ab.unHyp();
-      var fafa = rules.eqSelf(call(f, ab.getLeft()));
-      var fafb = rules.rplace(h_ab, fafa, '/right/arg');
+      var fafa = rules.eqSelf(call(f, ab.eqnLeft()));
+      var fafb = rules.replace(fafa, '/right/arg', ab);
       var result = fafb;
       if (f instanceof Toy.Lambda) {
         var step2 = rules.apply(fafb, '/main/left');
         var result = rules.apply(step2, '/main/right');
       }
-      return result.justify('applyToBoth', arguments, [h_ab]);
+      return result.justify('applyToBoth', arguments, [ab]);
     },
     inputs: {term: 1, equation: 2},
     form: ('Apply function <input name=term>'
@@ -980,19 +971,19 @@ var ruleInfo = {
   // with the equation side as first argument and the given
   // second argument.
   // 
-  // TODO: hyps -- input step is an equation.
+  // Works with a conditional equation.
   applyToBothWith: {
     action: function(a_b, f_arg, c_arg) {
       var f = Toy.constify(f_arg);
       var c = termify(c_arg);
       var fn = call(call(termify('{f. {y. {x. f x y}}}'), f), c);
       return (rules.applyToBoth(fn, a_b)
-              .andThen('simpleApply', '/main/right/fn/fn')
-              .andThen('simpleApply', '/main/right/fn')
-              .andThen('simpleApply', '/main/right')
-              .andThen('simpleApply', '/main/left/fn/fn')
-              .andThen('simpleApply', '/main/left/fn')
-              .andThen('simpleApply', '/main/left')
+              .andThen('simpleApply', '/rt/right/fn/fn')
+              .andThen('simpleApply', '/rt/right/fn')
+              .andThen('simpleApply', '/rt/right')
+              .andThen('simpleApply', '/rt/left/fn/fn')
+              .andThen('simpleApply', '/rt/left/fn')
+              .andThen('simpleApply', '/rt/left')
               .justify('applyToBothWith', arguments, [a_b]));
     },
   },

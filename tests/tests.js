@@ -1617,7 +1617,7 @@ var testCase = {
   },
 
   testApplyToBoth: function() {
-    var inf = Toy.rules.applyToBoth(p, call('=', q, r));
+    var inf = Toy.rules.applyToBoth(p, rules.assert(call('=', q, r)));
     assertEqual('((p q) = (p r))', inf);
     var step = Toy.rules.assume('x = y + 1');
     var result = Toy.rules.applyToBoth(Toy.parse('{x. x - 1}'), step);
