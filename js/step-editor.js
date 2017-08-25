@@ -929,18 +929,19 @@ function acceptsSelection(step, ruleName) {
 
 /**
  * Produces a rule menu entry from a ruleName, with "axiom"
- * potentially shortened to "xiom".  Result is currently text, but may
- * become HTML in the future.  Called with a (rendered) step if there
- * is a selection, the selected term if a term is selected, and the
- * ProofEditor in which the menu is to exist.
+ * potentially shortened to "xiom".  Called with a (rendered) step if
+ * there is a selection, the selected term if a term is selected, and
+ * the menu's ProofEditor.
  *
- * This is expected to return either a falsy value (including the
- * empty string), indicating the rule will not be offered, or a string
- * with the menu text, or an array of strings, indicating multiple
- * menu items for this rule with the possibly selected step and term.
+ * This returns either a falsy value (including the empty string),
+ * indicating the rule will not be offered, or a string with the menu
+ * text, or an array of strings, indicating multiple menu items for
+ * this rule with the possibly selected step and term.  Returned
+ * strings should be HTML text.
  *
  * If there is a selected term, it can be formatted using {term} in
- * the rule's "menu" format string.
+ * the rule's "menu" format string, or {right} for the term's
+ * right-hand neighbor.
  */
 function ruleMenuInfo(ruleName, step, term, proofEditor) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
