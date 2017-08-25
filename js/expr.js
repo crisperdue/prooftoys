@@ -1490,26 +1490,6 @@ Expr.prototype.hypMover = function(toMove) {
 };
 
 /**
- * Returns a map from step ordinal to hypothesis for all conjoined
- * hypotheses in this expression.  TODO: Test me.
- */
-Expr.prototype.hypsBySource = function() {
-  // The hypotheses are the conjuncts at all level that have a
-  // sourceStep property.
-  var map = {};
-  function search(expr) {
-    if (expr.sourceStep && expr.sourceStep.ordinal) {
-      map[expr.sourceStep.ordinal] = expr;
-    } else if (expr.isCall2('&')) {
-      search(expr.getLeft());
-      search(expr.getRight());
-    }
-  }
-  search(this);
-  return map;
-};
-
-/**
  * Taking this expression as a chain of assumptions, applies the given
  * action function to each conjunct in the chain, going from left to
  * right.  Any element with a sourceStep property stops further
