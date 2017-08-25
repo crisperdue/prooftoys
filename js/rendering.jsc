@@ -139,6 +139,21 @@ function stepSites(step) {
   return results;
 }
 
+/**
+ * Given a rendered step and rendered term within it, this finds the
+ * term's right neighbor term if there is one, or returns null.  The
+ * right neighbor of b is c in either (b + c) or ((a + b) + c) where
+ * "+" indicates any binary operator(s).
+ */
+function getRightNeighbor(step, term) {
+  var pathToTerm = step.prettyPathTo(term);
+  var parentPath = pathToTerm.upTo('/left') || pathToTerm.upTo('/left/right');
+  var rightNeighbor = (parentPath
+                       ? step.get(parentPath).getRight()
+                       : null);
+  return rightNeighbor;
+}
+
 
 //// APPLICATION DATA STORAGE
 
@@ -2893,6 +2908,7 @@ Toy.dom = dom;
 Toy.eachArgType = eachArgType;
 Toy.stepPaths = stepPaths;
 Toy.stepSites = stepSites;
+Toy.getRightNeighbor = getRightNeighbor;
 
 Toy.proofToyState = proofToyState;
 Toy.ProofEditor = ProofEditor;
