@@ -1380,16 +1380,12 @@ RuleMenu.prototype._update = function() {
   self.changed = false;
   $items.append(items);
   if (term) {
-    var $term = $(term.node).clone();
-    // Get rid of "pop-ups" that might be rendered there.
-    $term.find('.above').remove();
+    var $term = $(term.copyForRendering().renderTerm());
     $items.find('.menuSelected').append($term);
     var rightTerm = Toy.getRightNeighbor(step, term);
     var $right = '?';
     if (rightTerm) {
-      var $right = $(rightTerm.node).clone();
-      // Be careful about pop-ups.
-      $right.find('.above').remove();
+      var $right = $(rightTerm.copyForRendering().renderTerm());
     }
     $items.find('.menuRightNeighbor').append($right);
   }

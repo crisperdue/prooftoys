@@ -1918,7 +1918,8 @@ Step.prototype.removeUser = function() {
 // including occurrences of Vars, so rendering can add distinct
 // annotations to each occurrence.  Currently copies only logical
 // structure and the sourceStep property (to help rendering of
-// hypotheses).  Intended only for use in rendering.
+// hypotheses).  Intended only for use in rendering.  Can operate on
+// either renderable or nonrenderable terms.
 //
 //
 Atom.prototype.copyForRendering = function(bindings) {
