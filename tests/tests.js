@@ -1266,16 +1266,6 @@ var testCase = {
           step2, 'R y');
   },
 
-  testIsHypotheses: function() {
-    var step1 = Toy.rules.assume(Toy.parse('p x'));
-    assert(step1.getLeft().isHypotheses());
-    assert(step1.getRight().isHypotheses());
-    var conj = Toy.infixCall(step1.getLeft(), '&', step1.getRight());
-    assert(conj.isHypotheses());
-    var conj2 = Toy.infixCall(conj, '&', conj);
-    assert(conj2.isHypotheses());
-  },
-
   testScanConjuncts: function() {
     function scan(needle, haystack) {
       var x1 = termify(needle);

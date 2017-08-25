@@ -1420,17 +1420,6 @@ Expr.prototype.hasArgs = function(n) {
   return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
 }
 
-/**		
- * True iff this is a conjunction of expressions that are hypotheses		
- * by having a sourceStep property.
- */		
-Expr.prototype.isHypotheses = function() {
-  return (this.sourceStep
-          || (this.isCall2('&')
-              && this.getLeft().isHypotheses()
-              && this.getRight().isHypotheses()));
-};
-
 /**
  * Treating this as a chain of hypotheses hk & h(k-1) & ... h1,
  * given an expression that matches one of the hypotheses in the set,
