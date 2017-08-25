@@ -51,12 +51,6 @@ var F = constify('F');
 // for proved tautologies.  Private to the tautology rule.
 var _tautologies = {};
 
-// All hypotheses in a map keyed by textual representation from
-// "dump".  Private to rules.assume and findHyp.
-// Representation should probably ignore names of bound variables.
-// TODO: Consider changing the rep accordingly.
-var _allHyps = {};
-
 // Interactive testing support.
 window.Thtest = function(x) {
   setTimeout(function() { console.log(window.Tval = eval(x)); });
@@ -447,7 +441,6 @@ var ruleInfo = {
       // the source of the assumption.
       var result = rules.asHypotheses(step).justify('assume', arguments);
       assumption.sourceStep = result;
-      _allHyps[assumption.dump()] = assumption;
       return result;
     },
     inputs: {bool: 1},
@@ -5538,15 +5531,6 @@ function hypsExcept(hyps, exclusions) {
 }
 
 /**
- * Find a term identical to the given one among the hypotheses
- * created by the "assume" rule, or return null if none found.
- * TODO: Consider whether to keep this experimental functionality.
- */
-function findHyp(term) {
-  return _allHyps[term.dump()];
-}
-
-/**
  * Makes a facts map into a list of the fact keys.
  */
 function listFacts(map) {
@@ -5755,7 +5739,6 @@ Toy.proveResult = proveResult;
 Toy.getResult = getResult;
 Toy.eachFact = eachFact;
 Toy.getTheorem = getTheorem;
-Toy.findHyp = findHyp;
 Toy.getStatementKey = getStatementKey;
 Toy.convert = convert;
 Toy.findFact = findFact;
