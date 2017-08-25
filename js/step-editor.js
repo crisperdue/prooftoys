@@ -1340,24 +1340,24 @@ RuleMenu.prototype._update = function() {
   if (!Toy.useStepSuggester) {
     self.stepEditor.offerableFacts().forEach(function(statement) {
         var text = statement.toString();
-        var toDisplay = statement;
+        var resultTerm = statement;
         if (statement.isEquation()) {
           if (statement.isCall2('=>')) {
             // Make the statement be the fact's equation.
-            toDisplay = statement = statement.getRight();
+            resultTerm = statement = statement.getRight();
           }
           // If as usual the LHS of the equation matches the selection,
-          // set toDisplay to the result of substituting into the RHS.
+          // set resultTerm to the result of substituting into the RHS.
           var step = self.stepEditor.proofDisplay.selection;
           var selection = step && step.selection;
           if (selection) {
             var subst = selection.matchSchema(statement.getLeft());
             if (subst) {
-              toDisplay = statement.getRight().subFree(subst);
+              resultTerm = statement.getRight().subFree(subst);
             }
           }
         }
-        var display = '= <span class=menuTerm></span>';
+        var display = '= <span class=menuResult></span>';
         if (subst) {
           display += (' <span class=description>using ' +
                       Toy.trimParens(statement.toHtml())
@@ -1368,7 +1368,7 @@ RuleMenu.prototype._update = function() {
         // rules.rewrite.
         var info = {ruleName: 'fact ' + text,
                     html: display,
-                    term: toDisplay};
+                    result: resultTerm};
         itemInfos.push(info);
       });
   }
@@ -1378,8 +1378,8 @@ RuleMenu.prototype._update = function() {
   var items = itemInfos.map(function(info) {
       var $item = $('<div class="ruleItem noselect"/>');
       $item.html(info.html);
-      if (info.term) {
-        $item.find('.menuTerm').append(info.term.renderTerm());
+      if (info.result) {
+        $item.find('.menuResult').append(info.result.renderTerm());
       }
       $item.data('ruleName', info.ruleName);
       return $item
