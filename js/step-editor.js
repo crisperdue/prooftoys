@@ -964,17 +964,9 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
     }
   } else {
     // If there are inputs uses info.menu or some fallback.
-    var right = '?';
-    if (term) {
-      // Set up right neighbor info for rules.groupToRight.
-      var pathToTerm = step.prettyPathTo(term);
-      var parentPath = pathToTerm.upTo('/left') || pathToTerm.upTo('/left/right');
-      if (parentPath) {
-        var rightNeighbor = step.get(parentPath).getRight();
-        right = rightNeighbor.toHtml();
-      }
-    }
-    var formatArgs = {term: term && term.toHtml(), right: right};
+    // We are deferring the rendering work to the RuleMenu code.
+    var formatArgs = {term: '<span class=menuSelected></span>',
+                      right: '<span class=menuRightNeighbor></span>'};
     if (info.menu) {
       return Toy.format(info.menu, formatArgs);
     } else {
@@ -1387,6 +1379,20 @@ RuleMenu.prototype._update = function() {
   self.length = items.length
   self.changed = false;
   $items.append(items);
+  if (term) {
+    var $term = $(term.node).clone();
+    // Get rid of "pop-ups" that might be rendered there.
+    $term.find('.above').remove();
+    $items.find('.menuSelected').append($term);
+    var rightTerm = Toy.getRightNeighbor(step, term);
+    var $right = '?';
+    if (rightTerm) {
+      var $right = $(rightTerm.node).clone();
+      // Be careful about pop-ups.
+      $right.find('.above').remove();
+    }
+    $items.find('.menuRightNeighbor').append($right);
+  }
   self.$node.toggleClass('hidden', items.length === 0);
   if (items.length === 0) {
     // The menu can be hidden by clicks within it, and that does not
