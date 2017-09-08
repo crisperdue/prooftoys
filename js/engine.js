@@ -4666,7 +4666,20 @@ var logicFacts = {
     }
   },
 
-  // This has the effect of 5242, existential generalization (EGen).
+  // This has the core reasoning for 5242, existential generalization
+  // (EGen).
+  //
+  // TODO: Add a rule that goes from an arbitrary step with selected
+  //   (non-boolean) term to an existentially quantified variant.
+  //
+  // TODO: Consider adding a rule that converts an arbitrary step with
+  //   selected term to an application of a lambda to the selected term.
+  //
+  // TODO: Consider for each of the above, a rule that replaces
+  //   another occurrence of the same term with the new bound
+  //   variable.  For existential quantification, the rule may need to
+  //   look at the step from which the selected one is derived, to
+  //   determine whether it is such an occurrence.
   'p x => exists p': {
     proof: function() {
       return (rules.r5225()
