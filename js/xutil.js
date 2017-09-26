@@ -487,6 +487,10 @@ function findType(expr, annotate) {
     if (e instanceof TypeCheckError) {
       var e2 = new TypeCheckError('Cannot find type for ' + expr.toUnicode());
       e2.cause = e;
+      console.error(e);
+      // Pause if debugger is activated.  In some situations this could
+      // occur even if execution could continue.
+      debugger;
       throw e2;
     } else {
       throw e;
@@ -773,7 +777,7 @@ function getDefinition(name, tOrF) {
 /**
  * Finds a definition or by-cases definition in the definitions
  * database.  If the tOrF argument is present, the definition must be
- * by cases, otherwise simple.  Also accepts an Atom.  Signals an
+ * by cases, otherwise simple.  Also accepts an Atom.  Throws an
  * error if there is no definition or it is of the wrong kind.
  */
 function findDefinition(name, tOrF) {
