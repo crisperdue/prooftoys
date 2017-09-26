@@ -189,7 +189,17 @@ $(function() {
     var define = Toy.define;
     define('neg', '{x. -1 * x}');
     define('-', '{x. {y. x + neg y}}');
-    define('/', '{x. {y. the {z. x = y * z}}}');
+    // TODO: Rename this to something like realDiv, and define "/"
+    //   conditionally for the real numbers, with values for non-real,
+    //   non-null inputs not defined.
+    // TODO: That will require an implementation of "conditional"
+    //   definitions that only specify the value of their "constant"
+    //   under certain conditions, such as the arguments having values
+    //   among the real numbers.
+    //
+    //   This definition then can serve as a witness that there exist
+    //   functions satisfying the conditional definition.
+    define('/', '{x. {y. the {z. R z & R x & R y & x = y * z}}}');
     define('recip', '{x. 1 / x}');
   });
 
