@@ -1300,6 +1300,14 @@ function termify(x) {
   return (x instanceof Expr) ? x : parse(x);
 }
 
+/**
+ * Coerce the given Object to a string by taking its 'name' property
+ * if it is not a string.  Expects a string or Atom.
+ */
+function namify(x) {
+  return (typeof x === 'string') ? x : x.name;
+}
+
 var boolOps = {
   '==': true,
   '&': true,
@@ -1722,6 +1730,7 @@ Toy.decodeSteps = decodeSteps;
 Toy.unicodify = unicodify;
 
 Toy.termify = termify;
+Toy.namify = namify;
 
 Toy.boolSchema = boolSchema;
 Toy.standardVars = standardVars;
