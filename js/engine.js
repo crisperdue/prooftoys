@@ -4817,15 +4817,19 @@ $(function() {
     defineCases('&', identity, '{x. F}');
     defineCases('|', allT, identity);
     defineCases('=>', identity, allT);
+
+    // It would be desirable for the constants in this next group to
+    // all have generic types.
     define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
     define('empty', '{x. F}');
     define('none', 'iota empty');
+    define('?', '{p. {x. if p x none}}');
     // The identity function
     define('ident', '{x. x}');
     // Collection has multiple elements:
-    define('multi', '{a. exists {x. exists {y. a x & a y & x != y}}}');
+    define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
     // Always either "none" or the member of the singleton set:
-    define('the', '{a. if (multi a) none (iota a)}');
+    define('the', '{p. if (exists1 p) (iota p) none}');
   });
 
 

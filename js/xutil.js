@@ -1215,6 +1215,8 @@ var precedence = {
   ')': 0,
   '}': 0,
   // Alias for '=', with lower precedence.
+  // TODO: Use this for boolean equivalence when all terms are
+  //   properly marked with types. 
   '==': 2,
   '=>': 11,
   '|': 13,
@@ -1227,6 +1229,8 @@ var precedence = {
   '<=': 20,
   '>': 20,
   '>=': 20,
+  // Infix operator meaning "if condition then value else none".
+  '?': 25,
   '+': 30,
   '-': 30,
   '*': 40,
