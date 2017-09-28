@@ -681,7 +681,8 @@ var definedTypes = {
 
 // Indexed by the name defined.  Value is an Expr (not a step) if the
 // definition is simple.  If by cases, the value is a map from 'T' and
-// 'F' to the definition for each case.
+// 'F' to the definition for each case.  The "definition" rule justifies
+// the defining WFF on each access.
 //
 // Primitive constants are here, but the definitions are truthy fakes.
 // This prevents them from being defined later.
@@ -695,6 +696,9 @@ var definitions = {
 /**
  * Add a simple abbreviation-like definition, e.g.
  * define('forall', equal(lambda(x, T))).  Returns the equation.
+ *
+ * TODO: Require that the defining term only have (free) type
+ *   variables that are also in the defined name.
  */
 function define(name, definition) {
   assert(Toy.isConstantName(name), 'Not a constant name: {1}', name);
@@ -777,13 +781,17 @@ function getDefinition(name, tOrF) {
 /**
  * Finds a definition or by-cases definition in the definitions
  * database.  If the tOrF argument is present, the definition must be
- * by cases, otherwise simple.  Also accepts an Atom.  Throws an
- * error if there is no definition or it is of the wrong kind.
+ * by cases, otherwise simple.  Also accepts an Atom.
+ *
+ * Returns null if there is no definition.  Throws an error if the
+ * definition is of the wrong kind.
  */
 function findDefinition(name, tOrF) {
   name = name instanceof Atom ? name.name : name;
   var defn = definitions[name];
-  assert(defn, 'Not defined: {1}', name);
+  if (!defn) {
+    return null;
+  }
   if (!tOrF) {
     assert(defn instanceof Expr, 'Definition is not simple: {1}', name);
     return defn;
@@ -797,6 +805,46 @@ function findDefinition(name, tOrF) {
     var defnCase = defn[tOrF];
     assert(defnCase, 'Not defined: {1} {2}', name, tOrF);
     return defnCase;
+  }
+}
+
+/**
+ * Defines the name (Atom or parseable string) using the definition,
+ * which is a WFF or parseable string and proved statement (a step or
+ * statement of a fact or theorem name).
+ *
+ * The proved statement must have the form "exists {v. A}", where
+ * substituting the new constant for "v" in "{v. A}" gives a statement
+ * that matches the given definition (up to changes of bound
+ * variables).
+ *
+ * The proved statement must have no free variables, and only (free)
+ * type variables that are in the bound variable of its main
+ * existential quantifier.
+ *
+ * If the conditions are met, this asserts the given definition and
+ * returns it.  It functions like an axiom, but with assurance that it
+ * will not introduce any contradiction into the system.
+ *
+ * TODO: Consider supporting definition of multiple constants with one
+ *   defining fact (with multiple existentially quantified variables).
+ *
+ * TODO: Test this.
+ */
+function definex(name_arg, fact) {
+  var constant = Toy.constify(name_arg);
+  var name = constant.name;
+  var result = Toy.getTheorem(fact) || Toy.getResult(fact);
+  if (result) {
+    assert(result.isCall1('exists'), 'Not an existential statement', result);
+    assert(result.arg instanceof Toy.Lambda, 'Not a lambda:', result.arg);
+    var free = result.freeVars();
+    assert(Toy.isEmpty(free), 'Definition must be a closed statement', result);
+    var definition = result.arg.body.subFree1(constant, result.arg.bound);
+    // TODO: Check for free type variables as specified.
+    definitions[name] = definition;
+  } else {
+    assert(false, 'Not proved: ' + result);
   }
 }
 
@@ -1743,6 +1791,7 @@ Toy.standardVars = standardVars;
 
 Toy.define = define;
 Toy.defineCases = defineCases;
+Toy.definex = definex;
 Toy.isDefined = isDefined;
 Toy.isDefinedByCases = isDefinedByCases;
 Toy.findDefinition = findDefinition;
