@@ -1434,12 +1434,18 @@ var testCase = {
   },
 
   testAlreadyProved: function() {
-    var rules = Toy.rules;
     assert(Toy._alreadyProved('axiomCommutativePlus'));
     // This one is a rule, but not a theorem.
     assert(!Toy._alreadyProved('rplace'));
   },
 
+  // Also tests rules.eQuantify.
+  testDefinex: function() {
+    var fact = rules.fact('1 > 0');
+    var ex = rules.eQuantify(fact, '/left');
+    Toy.definex('posNum', ex);
+    assertEqual('(posNum > 0)', Toy.getDefinition('posNum'));
+  },
 
   // TYPES
 

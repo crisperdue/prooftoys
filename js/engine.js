@@ -4305,6 +4305,40 @@ var ruleInfo = {
     }
   },
 
+  // Derive exists {x. p x} from a witnessing term.  This only replaces the
+  // selected occurrence, not substituting throughout. (5242)
+  eQuantify: {
+    precheck: function(step, path) {
+      var term = step.get(path);
+      var type = Toy.findType(term);
+      // The current check merely excludes booleans.
+      // TODO: Improve this when types are truly available.  Support
+      //   predicates and functions of individuals, et cetera.
+      return type !== Toy.boolean;
+    },
+    action: function(step, path_arg) {
+      var path = Toy.path(path_arg, step);
+      var term = step.get(path);
+      var v = step.wff.freshVar('x');
+      function replacer(term) { return v; }
+      var replaced = step.wff.replaceAt(path, replacer);
+      var test = Toy.lambda(v, replaced);
+      var eqn = rules.axiom4(call(test, term));
+      assert(eqn.getRight().matches(step.wff));
+      // This is the step, converted to be application of predicate to term.
+      var step2 = rules.r(rules.eqnSwap(eqn), step, '');
+      // XXX:
+      var fact = rules.fact('p x => exists p').andThen('asImplication');
+      var result = rules.forwardChain(step2, fact);
+      return result.justify('eQuantify', arguments, [step]);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: "A to &exist; x. A'",
+    description: 'existentially quantify',
+    labels: 'basic'
+  },
+
   // 5304
   exists1a: {
     statement: 'exists1 {y. p y} == exists {y. p = {x. x = y}}',
@@ -4667,13 +4701,11 @@ var logicFacts = {
   },
 
   // This has the core reasoning for 5242, existential generalization
-  // (EGen).
-  //
-  // TODO: Add a rule that goes from an arbitrary step with selected
-  //   (non-boolean) term to an existentially quantified variant.
+  // (EGen / eQuantify).
   //
   // TODO: Consider adding a rule that converts an arbitrary step with
   //   selected term to an application of a lambda to the selected term.
+  //   The code for that is in eQuantify.
   //
   // TODO: Consider for each of the above, a rule that replaces
   //   another occurrence of the same term with the new bound
