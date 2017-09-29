@@ -2657,7 +2657,7 @@ var ruleInfo = {
   // relevant occurrences of this rule with uses of rewriting.
   forwardChain: {
     action: function(step, schema_arg) {
-      var schema = rules.fact(schema_arg);
+      var schema = rules.fact(schema_arg).andThen('asImplication');
       var mainOp = schema.getBinOp().pname;
       var substitution = step.matchSchema(schema.getLeft());
       if (!substitution && (mainOp === '==' || mainOp === '=')) {
@@ -4327,8 +4327,7 @@ var ruleInfo = {
       assert(eqn.getRight().matches(step.wff));
       // This is the step, converted to be application of predicate to term.
       var step2 = rules.r(rules.eqnSwap(eqn), step, '');
-      // XXX:
-      var fact = rules.fact('p x => exists p').andThen('asImplication');
+      var fact = rules.fact('p x => exists p');
       var result = rules.forwardChain(step2, fact);
       return result.justify('eQuantify', arguments, [step]);
     },
