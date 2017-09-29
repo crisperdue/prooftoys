@@ -350,9 +350,11 @@ Expr.addMethods(ruleMethods);
 //   suitable body for such a function.  If it returns false
 //   the rule is not offered in the step editor.
 //
-// form: HTML template for the rule's input form to be presented
-//   by the step editor, as a template allowing {term} for
-//   the selected term.
+// form: HTML template for the rule's input form to be presented by
+//   the step editor, as a template allowing {term} for the selected
+//   term.  StepEditor will never offer a rule without a form
+//   property, at least an empty one.
+//   TODO: Separate out this kind of non-offerability.
 //
 // menu: plain text for the rule's menu item (may become HTML in the future),
 //   as a template allowing {term} for the selected term or {right}
@@ -1035,8 +1037,11 @@ var ruleInfo = {
     },
     inputs: {reducible: 1},
     isRewriter: true,
+    // Not offered interactively.
     // form: '',
-    menu: 'apply a lambda to its argument',
+    menuGen: function(ruleName, step, term) {
+      return Toy.format('apply function of {1}', term.fn.bound);
+    },
     tooltip: ('Applies a lambda to its argument'),
     description: '=simpleApply',
     labels: 'uncommon'
@@ -1092,7 +1097,14 @@ var ruleInfo = {
     isRewriter: true,
     inputs: {site: 1},
     form: '',
-    menu: 'apply a function',
+    menuGen: function(ruleName, step, term) {
+      var format = Toy.format;
+      if (term.fn.isConst()) {
+        return format('apply definition of {1}', term.fn);
+      } else {
+        return format('apply function of {1}', term.fn.bound);
+      }
+    },
     tooltip: ('Applies a function, named or not, to one or two arguments'),
     description: '=apply'
   },
