@@ -4735,6 +4735,15 @@ var logicFacts = {
     }
   },
 
+  'if T x y = x': {
+    proof: function() {
+      return (rules.consider('if T x y')
+              .andThen('rewriteOnly', '/right/fn/fn', 'if T = {x. {y. x}}')
+              .andThen('apply', '/right/fn')
+              .andThen('apply', '/right'));
+    }
+  },
+
   'if F = {x. {y. y}}': {
     proof: function() {
       return (rules.consider('if F')
@@ -4743,6 +4752,15 @@ var logicFacts = {
               .andThen('simplifySite', '/main/right/body/body/arg/body')
               .andThen('rewriteOnly',
                        '/right/body/body', 'iota {x. x = y} = y'));
+    }
+  },
+
+  'if F x y = y': {
+    proof: function() {
+      return (rules.consider('if F x y')
+              .andThen('rewriteOnly', '/right/fn/fn', 'if F = {x. {y. y}}')
+              .andThen('apply', '/right/fn')
+              .andThen('apply', '/right'));
     }
   },
 
