@@ -1783,26 +1783,6 @@ var moversInfo = {
   },
   */
 
-  // Remove "T = " and "= T", evaluate boolean expression, do arithmetic.
-  // Inline, throws if no simplification found.
-  simplifySiteOnce: {
-    action: function(step, path) {
-      var facts = ['(T = x) = x', '(x = T) = x'];
-      return Toy.each(facts, function(fact) {
-          try {
-            return rules.rewrite(step, path, fact);
-          } catch(e) { }
-        });
-      try {
-        return rules.arithmetic(step, path);
-      } catch(e) { }
-      throw new Error('No simplification found');
-    },
-    inputs: {site: 1},
-    form: (''),
-    menu: 'simplify {term}'
-  },
-
 };  // End of moversInfo.
 
 
