@@ -4727,7 +4727,6 @@ var logicFacts = {
   'if T = {x. {y. x}}': {
     proof: function() {
       return (rules.consider('if T')
-              .andThen('useDefinition', '/right')
               .andThen('apply', '/right')
               .andThen('simplifySite', '/right/body/body/arg/body')
               .andThen('rewriteOnly',
@@ -4747,7 +4746,6 @@ var logicFacts = {
   'if F = {x. {y. y}}': {
     proof: function() {
       return (rules.consider('if F')
-              .andThen('useDefinition', '/right')
               .andThen('apply', '/right')
               .andThen('simplifySite', '/main/right/body/body/arg/body')
               .andThen('rewriteOnly',
