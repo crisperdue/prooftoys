@@ -4724,6 +4724,28 @@ var logicFacts = {
     }
   },
 
+  'if T = {x. {y. x}}': {
+    proof: function() {
+      return (rules.consider('if T')
+              .andThen('useDefinition', '/right')
+              .andThen('apply', '/right')
+              .andThen('simplifySite', '/right/body/body/arg/body')
+              .andThen('rewriteOnly',
+                       '/right/body/body', 'iota {x. x = y} = y'));
+    }
+  },
+
+  'if F = {x. {y. y}}': {
+    proof: function() {
+      return (rules.consider('if F')
+              .andThen('useDefinition', '/right')
+              .andThen('apply', '/right')
+              .andThen('simplifySite', '/main/right/body/body/arg/body')
+              .andThen('rewriteOnly',
+                       '/right/body/body', 'iota {x. x = y} = y'));
+    }
+  },
+
   'exists {y. y = x}': {
     proof: function() {
       return (rules.fact('p x => exists p')
