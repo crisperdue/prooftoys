@@ -935,13 +935,13 @@ function acceptsSelection(step, ruleName) {
  *
  * This returns either a falsy value (including the empty string),
  * indicating the rule will not be offered, or a string with the menu
- * text, or an array of strings, indicating multiple menu items for
+ * HTML, or an array of strings, indicating multiple menu items for
  * this rule with the possibly selected step and term.  Returned
  * strings should be HTML text.
  *
  * If there is a selected term, it can be formatted using {term} in
  * the rule's "menu" format string, or {right} for the term's
- * right-hand neighbor.
+ * right-hand neighbor when there is one.
  */
 function ruleMenuInfo(ruleName, step, term, proofEditor) {
   ruleName = ruleName.replace(/^xiom/, 'axiom');
@@ -963,8 +963,9 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
       return 'theorem ' + thmText;
     }
   } else {
-    // If there are inputs uses info.menu or some fallback.
-    // We are deferring the rendering work to the RuleMenu code.
+    // If there are inputs uses info.menu or some fallback.  This
+    // defers the rendering work to the RuleMenu code where it is more
+    // convenient and the HTML has been converted to DOM structure.
     var formatArgs = {term: '<span class=menuSelected></span>',
                       right: '<span class=menuRightNeighbor></span>'};
     if (info.menu) {
@@ -1380,6 +1381,8 @@ RuleMenu.prototype._update = function() {
   self.changed = false;
   $items.append(items);
   if (term) {
+    // If there is a selected term, render it and any right neighbor term,
+    // and insert the renderings into their slots in menu items.
     var $term = $(term.copyForRendering().renderTerm());
     $items.find('.menuSelected').append($term);
     var rightTerm = Toy.getRightNeighbor(step, term);
