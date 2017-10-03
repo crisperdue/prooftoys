@@ -3175,27 +3175,7 @@ var ruleInfo = {
              'Plain conditional equation in rules.rplace:', h_equation);
 
       if (h_c.hasHyps && path.isLeft()) {
-        // We are replacing an assumption with something equal
-        // that may add its own assumptions.
-        // TODO: This branch is only used in rules.simplifyAssumptions.
-        //   Move this code to there.
-        var step1 = rules.asImplication(h_c)
-          // TODO: Make this block of code continue to do something
-          // reasonable after removing .hasHyps checks.  At least
-          // change .replace to .rl (replace matching equation LHS and
-          // do not simplify).
-          .rplace(path, h_equation)
-          .andThen('asImplication');
-        // Use the tautology to conjoin all of the assumptions.
-        // Note that forward chaining would ignore the "a" part if
-        // step1 had hypotheses.
-        var taut = rules.tautology('a => (b => c) => (a & b => c)');
-        var step2 = rules.forwardChain(step1, taut);
-        var step3 = rules.conjunctionsMerger(step2.getLeft());
-        var result = rules.r(step3, step2, '/left')
-          .andThen('asHypotheses');
-        
-        return result.justify('rplace', args, [h_equation_arg, h_c_arg]);
+        assert(false, 'Not supporting paths into assumptions in rplace');
       }
 
       // Give the two WFFs the same hypotheses.  If either
