@@ -711,8 +711,16 @@ function define(name, definition) {
     // Benign redefinition, do nothing.
     return;
   }
-  for (var n in definition.freeVars()) {
-    Toy.err('Requested definition has free variable: {1}', name);
+  var freeSet = definition.freeVars();
+  if (!Toy.isEmpty(freeSet)) {
+    var freeList = [];
+    for (var nm in freeSet) {
+      freeList.push(nm);
+    }
+    var names = freeList.join(', ');
+    assert(false, 'Definition of {1} has free variable(s) {2}',
+           name, names);
+    return null;
   }
   constantTypes[name] = findType(definition);
   return definitions[name] = equal(Toy.constify(name), definition);
