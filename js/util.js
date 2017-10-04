@@ -444,6 +444,17 @@ function isEmpty(o) {
 }
 
 /**
+ * Returns the number of enumerable properties possessed by the object.
+ */
+function mapSize(o) {
+  var n = 0;
+  for (var key in o) {
+    n++;
+  }
+  return n;
+}
+
+/**
  * Configure the given object with the given property descriptors.
  * This is like Object.defineProperties, except key values that are
  * not specifically of type Object are treated as plain values and
@@ -1527,6 +1538,7 @@ Toy.assert = assert;
 Toy.debugString = debugString;
 
 Toy.isEmpty = isEmpty;
+Toy.mapSize = mapSize;
 Toy.configure = configure;
 Toy.asMap = asMap;
 Toy.ownProperties = ownProperties;
