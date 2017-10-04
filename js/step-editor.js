@@ -1273,7 +1273,6 @@ function handleMouseEnterItem(ruleMenu, node, event) {
             $node.data('suggestion', messageNode);
             display.suggest(messageNode);
             console.error('Rule menu error', info.message);
-            debugger;
           });
     }
   }

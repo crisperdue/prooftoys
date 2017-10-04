@@ -1486,6 +1486,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
                     stack: error.stack}
                  : '?');
         reply.data = {channelType: 'RPC', id: id, result: e, isError: true};
+        debugger;
       }
       function replier() {
         var responder = self.onmessage;
