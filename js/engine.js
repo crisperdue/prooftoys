@@ -1055,6 +1055,9 @@ var ruleInfo = {
   // function supplying one or two arguments, expands the definition
   // and applies the expansions to the argument(s).
   apply: {
+    precheck: function(step, path) {
+      return step.get(path) instanceof Toy.Call;
+    },
     action: function(step, path) {
       // Returns an identity with arg as LHS.
       function applier(expr) {
