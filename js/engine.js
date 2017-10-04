@@ -294,11 +294,13 @@ Expr.addMethods(ruleMethods);
 //   converse will be added as a fact.  Also used by tests.  TODO:
 //   Consider checking during actual proof of the theorem.
 //
-// precheck: if present, a function that must accept the same arguments
-//   as the main action.  When the rule action is called, it will call this
-//   automatically, followed immediately by the declared action function.
+// precheck: if present, a function that must accept the same
+//   arguments as the main action.  When the rule action is called, it
+//   will call this automatically, followed immediately by the
+//   declared action function.  The RuleMenu uses it as well, to rule
+//   out inapplicable rules.
 //
-//   This is intended to return a falsy value if the rule is not
+//   This is expected to return a falsy value if the rule is not
 //   applicable to the arguments, in which case the rule will fail
 //   with Toy.fail.  Otherwise it should return any data useful to the
 //   main action function, which will have access to that result

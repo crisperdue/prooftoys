@@ -796,8 +796,24 @@ StepEditor.prototype.offerable = function(ruleName) {
   }
   var step = this.proofDisplay.selection;
   if (step) {
-    // Something is selected.  Check if the rule accepts the
-    // selection.
+    // Something is selected.
+    var precheck = info.precheck;
+    var term = step.selection;
+    var inputs = info.inputs;
+    // See if the rule has a precheck that can "rule it out".
+    // The rule must have a single input of a site or step type.
+    if (precheck && Toy.mapSize(info.inputs) == 1 &&
+        (term
+         // This list needs to match siteTypes.
+         ? inputs.site || inputs.bindingSite || inputs.reducible
+         // This list needs to match stepTypes.
+         : inputs.step || inputs.equation || inputs.implication)) {
+      var ok = term ? precheck(step, term) : precheck(step);
+      if (!ok) {
+        return false;
+      }
+    }
+    // Check if the rule accepts the selection.
     if (acceptsSelection(step, ruleName)) {
       // If the rule has a "toOffer" property, apply it as a further
       // test of offerability.
