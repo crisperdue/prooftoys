@@ -374,9 +374,7 @@ function addClassInfo(form) {
  * steps this will be a reference to the step, and for terms it
  * will be a textual rendering of the selected expression.
  *
- * TODO: Modify spec and implementation to just add step references
- * but not selected expressions to the form.  Selected expressions are
- * sites, which do not appear in forms.
+ * Only call this if the rule does not use a site (usesSite).
  */
 StepEditor.prototype.addSelectionToForm = function(rule) {
   var proofDisplay = this.proofDisplay;
@@ -779,7 +777,11 @@ StepEditor.prototype.offerApproved = function(name) {
  * Returns true iff the rule name can be offered by the UI.
  * Only rules with a "form" property are offerable at all.  If so --
  *
- * If the proof has a current selection, the rule is offerable if
+ * If the rule has a precheck and a single "inputs" declaration
+ * of a kind that works with a selection, run the precheck and
+ * return false if it is falsy.
+ *  
+ * Else if the proof has a current selection, the rule is offerable if
  * acceptsSelection returns true given the selected step and rule
  * name.
  *
