@@ -788,7 +788,8 @@ StepEditor.prototype.offerApproved = function(name) {
  * Otherwise only rules that take no step and no site are offerable.
  */
 StepEditor.prototype.offerable = function(ruleName) {
-  var info = Toy.rules[ruleName].info;
+  var rule = Toy.rules[ruleName];
+  var info = rule.info;
   // TODO: Test and then hopefully remove this test, which looks
   //   obsolete.
   if (!('form' in info)) {
@@ -797,7 +798,7 @@ StepEditor.prototype.offerable = function(ruleName) {
   var step = this.proofDisplay.selection;
   if (step) {
     // Something is selected.
-    var precheck = info.precheck;
+    var precheck = rule.precheck;
     var term = step.selection;
     var inputs = info.inputs;
     // See if the rule has a precheck that can "rule it out".
@@ -808,7 +809,7 @@ StepEditor.prototype.offerable = function(ruleName) {
          ? inputs.site || inputs.bindingSite || inputs.reducible
          // This list needs to match stepTypes.
          : inputs.step || inputs.equation || inputs.implication)) {
-      var ok = term ? precheck(step, term) : precheck(step);
+      var ok = term ? precheck(step, step.pathTo(term)) : precheck(step);
       if (!ok) {
         return false;
       }
