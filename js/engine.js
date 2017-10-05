@@ -4473,8 +4473,8 @@ function addRule(key, info_arg) {
     main = proof;
   }
   if (statement) {
-    // If there is a statement but no proof, just assert the statement.
     if (!proof) {
+      // If there is a statement but no proof, just assert the statement.
       proof = function() {
         var result = rules.assert(statement);
         return (result.isCall2('=>')
@@ -4484,9 +4484,27 @@ function addRule(key, info_arg) {
       main = proof;
     }
     // Add it as a fact also, and potentially "swapped".
-    // TODO: Work out a way for this to accept fact metadata.
-    addFact({goal: statement, proof: proof});
-    addSwappedFact({goal: statement, proof: proof});
+    // A fact needs a statement, so we rely here on having a statement given.
+    var factProps = {
+      simplifier: true,
+      desimplifier: true,
+      noSwap: true,
+      labels: true,
+      converse: true
+    };
+    // Accept selected fact properties in the rule metadata.
+    var properties = {goal: statement, proof: proof};
+    for (var k in factProps) {
+      if (k in info) {
+        // Uncomment this for detailed tracing.
+        // console.warn('Adding', k, 'to', key);
+        properties[k] = info[k];
+      }
+    }
+    addFact(properties);
+    if (!properties.noSwap) {
+      addSwappedFact(properties);
+    }
   }
   if (proof) {
     // A statement or proof was given.
