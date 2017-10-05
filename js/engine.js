@@ -4785,6 +4785,19 @@ function addFactsMap(map) {
   }
 }
 
+// Object / set of property names supported in fact info data, used
+// for validation of fact properties.  See addFact.
+var factProperties = {
+  goal: true,
+  synopsis: true,
+  proof: true,
+  simplifier: true,
+  desimplifier: true,
+  noSwap: true,
+  labels: true,
+  converse: true
+};
+
 /**
  * Adds an entry to the facts database given information in the format
  * of fact entries in facts maps, assuming here that the synopsis is
@@ -4812,6 +4825,12 @@ function addFactsMap(map) {
  *   on other information such as an already-proved statement.
  */
 function addFact(info) {
+  for (var key in info) {
+    if (!(key in factProperties)) {
+      var id = info.goal ? info.goal.$$ : info.synopsis;
+      console.warn('In fact', id, 'extra info key:', key);
+    }
+  }
   info.proved = info.goal && info.goal.isProved() || null;
   // The goal is a rendered Expr just because that makes a complete
   // copy that can be properly annotated with types.
