@@ -870,6 +870,7 @@ $.extend(StepEditor.prototype, {
                 e1Type != e2Type);
       }
       if (expr) {
+        var mode = self.showRuleType;
         Toy.eachFact(function(info) {
             var goal = info.goal;
             if (!goal.isRewriter()) {
@@ -880,13 +881,18 @@ $.extend(StepEditor.prototype, {
               return;
             }
             if (expr.matchSchema(lhs)) {
-              if (self.showRuleType == 'algebra') {
+              if (mode == 'algebra') {
                 if (info.labels.algebra) {
                   facts.push(goal);
                 }
                 // Otherwise don't show the fact in algebra mode.
-              } else {
-                facts.push(goal);
+              } else if (mode == 'general') {
+                // Only show desimplifiers in "everything" mode.
+                // TODO: Include them as "introducers" in both "general"
+                //   mode and "everything" modes.
+                if (!info.desimplifier) {
+                  facts.push(goal);
+                }
               }
             }
         });
