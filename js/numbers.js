@@ -442,7 +442,7 @@ var numbersInfo = {
       var step6 = rules.eqSelf(Toy.parse('x - y'));
       var step7 = rules.apply(step6, '/left');
       return rules.rplace(step7, step5, '/main/right/arg');
-    },
+      },
     form: '',
     menu: 'theorem R (x - y)',
     tooltip: 'difference of real numbers is real',
@@ -797,9 +797,9 @@ var simplifiersInfo = {
       // From a conditional a => b, prove a => (b == T), with a as
       // hypothesis.  Returns a memoized function that yields the
       // proved result.
-      function proveIsT(stmt) {
+      function proveIsT(step) {
         return memo(function() {
-            return (stmt.andThen('asHypotheses')
+            return (step.andThen('asHypotheses')
                     .andThen('rewriteOnly', '/right', 'p == (p == T)'));
           });
       }
@@ -909,7 +909,7 @@ var simplifiersInfo = {
           // Replaces an assumption, potentially adding additional assumptions
           // to the result, as in case of recip or nonzero assumptions.
           // Result with added assumptions is still equivalent to the original
-          // provided that all new ones are duplicates of existing.
+          // provided that all added are duplicates of existing.
           step = rules.replace(step, path, simpleFact);
         }
       }
