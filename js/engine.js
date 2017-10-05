@@ -743,7 +743,8 @@ var ruleInfo = {
     inputs: {},
     form: '',
     tooltip: ('axiom of description'),
-    description: 'axiom of description'
+    description: 'axiom of description',
+    simplifier: true
   },
 
   // Definition of F, for book-style proofs.
@@ -843,6 +844,7 @@ var ruleInfo = {
 
   // The two forms of "=" are interchangeable (other than precedence).
   eqIsEquiv: {
+    statement: '(=) = (==)',
     proof: function() {
       var step1 = rules.eqSelf(Toy.constify('='));
       var step2 = rules.eqSelf(Toy.constify('=='));
@@ -1574,7 +1576,8 @@ var ruleInfo = {
       var step2 = rules.eqT(T);
       var step3 = rules.eqnSwap(step2);
       return rules.equationCases(step3, step1, 'x');
-    }
+    },
+    simplifier: true
   },
 
   // 5218: [T = A] = A
@@ -4299,7 +4302,8 @@ var ruleInfo = {
                    .andThen('eqnSwap')
                    .andThen('instMultiVars', {f: '{x. p x}', g: 'p'}));
       return rules.r(fact2, fact1, '');
-    }
+    },
+    simplifier: true
   },
 
   // Derive exists {x. p x} from a witnessing term.  This only replaces the
@@ -4651,13 +4655,15 @@ var logicFacts = {
   '(T = a) == a': {
     proof: function() {
       return rules.theorem('tIsXIsX');
-    }
+    },
+    simplifier: true
   },
   '(a = T) == a': {
     proof: function() {
       return rules.theorem('tIsXIsX')
       .andThen('rewriteOnly', '/left', 'equalitySymmetric');
-    }
+    },
+    simplifier: true
   },
 
   // Somewhat useful fact to stick at the end of the list.
@@ -4670,7 +4676,8 @@ var logicFacts = {
   '(T => a) == a': {
     proof: function() {
       return rules.tautology('(T => a) == a');
-    }
+    },
+    simplifier: true
   },
 
   '(a != b) == not (a = b)': {
@@ -4686,7 +4693,8 @@ var logicFacts = {
     proof: function() {
       return (rules.eqSelf('x')
               .andThen('rewriteOnly', '', 'a == (a == T)'));
-    }
+    },
+    simplifier: true
   },
 
   'ident x = x': {
@@ -4694,7 +4702,8 @@ var logicFacts = {
       return (rules.eqSelf('ident x')
               .andThen('useDefinition', '/right/fn')
               .andThen('simpleApply', '/right'));
-    }
+    },
+    simplifier: true
   },
 
   // This is the classic definition of the existential quantifier,
@@ -4711,7 +4720,8 @@ var logicFacts = {
               .andThen('apply', '/right')
               .rewrite('/right', 'x != y == not (x = y)')
               .andThen('rewriteOnlyFrom', '/right/arg', all));
-    }
+    },
+    desimplifier: true
   },
 
   // This has the core reasoning for 5242, existential generalization
@@ -4754,7 +4764,8 @@ var logicFacts = {
               .andThen('rewriteOnly', '/right/fn/fn', 'if T = {x. {y. x}}')
               .andThen('apply', '/right/fn')
               .andThen('apply', '/right'));
-    }
+    },
+    simplifier: true
   },
 
   'if F = {x. {y. y}}': {
@@ -4773,7 +4784,8 @@ var logicFacts = {
               .andThen('rewriteOnly', '/right/fn/fn', 'if F = {x. {y. y}}')
               .andThen('apply', '/right/fn')
               .andThen('apply', '/right'));
-    }
+    },
+    simplifier: true
   },
 
   'exists {y. y = x}': {
