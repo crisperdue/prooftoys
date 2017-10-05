@@ -200,6 +200,16 @@ $(function() {
     //   This definition then can serve as a witness that there exist
     //   functions satisfying the conditional definition.
     define('/', '{x. {y. the {z. R z & R x & R y & x = y * z}}}');
+    define('strict', '{f. f none = none}');
+    define('strict2',
+           '{f. forall {x. forall {y. f x none = none & f none y = none}}}');
+    /**
+     * We desire something like this, but it needs some supporting
+     * theorems such as probably 5307.
+     *
+     * definex('quotient',
+     * 'exists {q. strict2 q & (R x & R y => q x y = x / y');
+     */
     define('recip', '{x. 1 / x}');
   });
 
@@ -307,7 +317,15 @@ var numbersInfo = {
     statement: '@not (R none)',
   },
 
-  // Some interim "axioms" to be replaced by proved facts.
+  axiomStrictPlus: {
+    statement: '@strict2 (+)'
+  },
+
+  axiomStrictTimes: {
+    statement: '@strict2 (*)'
+  },
+
+  // Closure properties
 
   axiomPlusType: {
     statement: '@R x & R y == R (x + y)',
@@ -317,20 +335,14 @@ var numbersInfo = {
     statement: '@R x & R y == R (x * y)',
   },
 
+  // Some interim "axioms" to be replaced by proved facts.
+
   axiomNegType: {
     statement: '@R x == R (neg x)',
   },
 
   axiomDivisionType: {
     statement: '@R x & R y & y != 0 == R (x / y)'
-  },
-
-  axiomStrictPlus: {
-    statement: '@not (R (x + y)) == (x + y = none)'
-  },
-
-  axiomStrictTimes: {
-    statement: '@not (R (x * y)) == (x * y = none)'
   },
 
   axiomStrictNeg: {
