@@ -2675,6 +2675,8 @@ var ruleInfo = {
   //
   // TODO: Remove support here for equivalences, and replace the
   // relevant occurrences of this rule with uses of rewriting.
+  //
+  // TODO: Consider merging this functionality with rules.trueBy.
   forwardChain: {
     action: function(step, schema_arg) {
       var schema = rules.fact(schema_arg).andThen('asImplication');
