@@ -767,7 +767,7 @@ StepEditor.prototype.offerApproved = function(name) {
             ? false
             : labels.algebra || labels.display);
   case 'general':
-    return labels.basic || labels.display || labels.algebra;
+    return labels.general || labels.basic || labels.display || labels.algebra;
   default:
     throw new Error('Bad rule policy value: ' + this.showRuleType);
   }
