@@ -4938,7 +4938,8 @@ $(function() {
     // It would be desirable for the constants in this next group to
     // all have generic types.
     define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
-    define('empty', '{p. p = {x. F}}');
+    // This is the empty collection.
+    define('empty', '{x. F}');
     define('none', 'iota empty');
     define('?', '{p. {x. if p x none}}');
     // The identity function
