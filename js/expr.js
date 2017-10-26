@@ -56,8 +56,15 @@ function assertEqn(expr) {
  * as a string.
  */
 function identifyTerm(term) {
+  var ident = term.memos.ident;
+  if (ident) {
+    return ident;
+  }
+  window.idCount = (window.idCount || 0) + 1
   // TODO: Make this function memoize dumps.
-  return term.dump();
+  ident = term.dump();
+  term.memos.ident = ident;
+  return ident;
 };
 
 function TermSet(term) {
