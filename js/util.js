@@ -1005,6 +1005,25 @@ function track(object, property, opt_name) {
   object[property] = tracked(object[property], opt_name || property);
 }
 
+// Finding and reporting different stack contexts where code runs:
+
+Toy.callStacks = new Map();
+
+function noticeStack() {
+  var stack = new Error().stack;
+  Toy.callStacks.set(stack, (Toy.callStacks.get(stack) || 0) + 1);
+}
+
+function showStacks() {
+  for (var s of Toy.callStacks.keys()) {
+    if (!(s.match(/rewrite/))) {
+      console.log(s);
+    }
+  }
+};
+
+
+
 
 //// Refresher class and deferred actions
 
@@ -1566,6 +1585,8 @@ Toy.Map = Map;
 Toy.track = track;
 Toy.tracked = tracked;
 Toy.trackingData = trackingData;
+Toy.noticeStack = noticeStack;
+Toy.showStacks = showStacks;
 
 Toy.Refresher = Refresher;
 Toy.soonDo = soonDo;
