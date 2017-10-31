@@ -1810,8 +1810,8 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // Apply the action function to every subexpression in this that is a
 // free variable with the given name, and action2 to the
 // subexpressions of expr2 at those same locations.  This method also
-// does the same traversal of expr2, so it must have expressions at
-// all the locations where this does.
+// attempts to do the same traversal of expr2, and calls action2
+// where expr2 has a part corresponding to the part in expr1.
 //
 //
 // _matchAsSchema(expr, substitution, bindings)
@@ -2096,7 +2096,7 @@ Atom.prototype._checkSegment = function(path) {
 Atom.prototype.findAll = function(name, action1, expr2, action2) {
   if (this.name == name) {
     action1(this);
-    action2(expr2);
+    expr2 && action2(expr2);
   }
 };
 
@@ -2599,8 +2599,8 @@ Call.prototype._checkSegment = function(path) {
 };
 
 Call.prototype.findAll = function(name, action1, expr2, action2) {
-  this.fn.findAll(name, action1, expr2.fn, action2);
-  this.arg.findAll(name, action1, expr2.arg, action2);
+  this.fn.findAll(name, action1, expr2 && expr2.fn, action2);
+  this.arg.findAll(name, action1, expr2 && expr2.arg, action2);
 };
 
 Call.prototype._matchAsSchema = function(expr, map, bindings) {
@@ -2922,7 +2922,7 @@ Lambda.prototype._checkSegment = function(path) {
 
 Lambda.prototype.findAll = function(name, action1, expr2, action2) {
   if (this.bound.name != name) {
-    this.body.findAll(name, action1, expr2.body, action2);
+    this.body.findAll(name, action1, expr2 && expr2.body, action2);
   }
 };
 
