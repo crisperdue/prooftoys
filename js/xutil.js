@@ -723,7 +723,9 @@ function define(name, definition) {
     return null;
   }
   constantTypes[name] = findType(definition);
-  return definitions[name] = equal(Toy.constify(name), definition);
+  var defn = equal(Toy.constify(name), definition);
+  definitions[name] = defn;
+  return defn;
 }
 
 /**
@@ -791,8 +793,7 @@ function getDefinition(name, tOrF) {
  * database.  If the tOrF argument is present, the definition must be
  * by cases, otherwise simple.  Also accepts an Atom.
  *
- * Returns null if there is no definition.  Throws an error if the
- * definition is of the wrong kind.
+ * Returns null if there is no such definition.
  */
 function findDefinition(name, tOrF) {
   name = name instanceof Atom ? name.name : name;
@@ -801,17 +802,17 @@ function findDefinition(name, tOrF) {
     return null;
   }
   if (!tOrF) {
-    assert(defn instanceof Expr, 'Definition is not simple: {1}', name);
-    return defn;
+    return defn instanceof Expr && defn;
   } else {
     if (tOrF == true || (tOrF instanceof Atom && tOrF.name == 'T')) {
       tOrF = 'T';
     } else if (tOrF == false || (tOrF instanceof Atom && tOrF.name == 'F')) {
       tOrF = 'F';
     }
-    assert(!(defn instanceof Expr), 'Definition is not by cases: {1}', name);
+    if (defn instanceof Expr) {
+      return null;
+    }
     var defnCase = defn[tOrF];
-    assert(defnCase, 'Not defined: {1} {2}', name, tOrF);
     return defnCase;
   }
 }
