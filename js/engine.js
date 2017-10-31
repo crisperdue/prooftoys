@@ -4278,8 +4278,11 @@ var ruleInfo = {
       }
       // Try tautologies.
       try {
-        // Inline for tautologies.
-        return rules.tautology(synopsis);
+        // Inline for tautologies.  Call looksBoolean to avoid ugly
+        // and unnecessary errors from rules.tautology.
+        return (Toy.looksBoolean(stmt)
+                ? rules.tautology(stmt)
+                : err(''));
       } catch(err) {}
       Toy.err('No such fact: ' + synopsis);
     },

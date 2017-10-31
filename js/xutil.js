@@ -1376,6 +1376,39 @@ var boolOps = {
   '=>': true
 };
 
+// Boolean ops for looksBoolean.
+var looseBoolOps = {
+  '==': true,
+  // This one is practical though a bit deprecated.  If it appears
+  // with only the other boolean ops, it will generally work out.
+  '=': true,
+  '&': true,
+  '|': true,
+  '=>': true
+};
+
+/**
+ * Given a term, returns a truthy value if it has the superficial
+ * form of a statement in propositional calculus, using just the
+ * usual boolean operators as for boolSchema, and the only other
+ * constants present are T and F.
+ */
+function looksBoolean(term) {
+  if (term instanceof Atom) {
+    return term.isVariable() || term.name == 'T' || term.name == 'F';
+  }
+  if (term.isCall2()) {
+    var op = term.getBinOp();
+    return (op.pname in looseBoolOps &&
+            looksBoolean(term.getLeft()) &&
+            looksBoolean(term.getRight()));
+  }
+  if (term.isCall1('not')) {
+    return looksBoolean(term.arg);
+  }
+  return false;
+}
+
 /**
  * Given a term, creates a new schema term that consists only of the
  * boolean operators (==, &, |, =>, and "not"), and variables, having
@@ -1793,6 +1826,7 @@ Toy.unicodify = unicodify;
 Toy.termify = termify;
 Toy.namify = namify;
 
+Toy.looksBoolean = looksBoolean;
 Toy.boolSchema = boolSchema;
 Toy.standardVars = standardVars;
 
