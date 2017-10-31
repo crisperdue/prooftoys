@@ -253,12 +253,14 @@ var numbersInfo = {
 
   axiomPlusZero: {
     statement: '@R x => x + 0 = x',
+    simplifier: true,
     tooltip: 'x + 0 = x',
     description: 'additive identity'
   },
 
   axiomTimesOne: {
     statement: '@R x => x * 1 = x',
+    simplifier: true,
     tooltip: 'x * 1 = x',
     description: 'multiplicative identity'
   },
@@ -274,6 +276,7 @@ var numbersInfo = {
 
   axiomTimesZero: {
     statement: '@R x => x * 0 = 0',
+    simplifier: true,
     tooltip: 'x * 0 = 0',
     description: 'multiplication by 0'
   },
@@ -281,6 +284,7 @@ var numbersInfo = {
   // TODO: Make this a theorem someday.
   axiomReciprocal: {
     statement: '@R x & x != 0 => x * recip x = 1',
+    simplifier: true,
     tooltip: 'x * recip x = 1 if x is not 0',
     description: 'recip is inverse to multiplication'
   },
@@ -296,6 +300,7 @@ var numbersInfo = {
   // TODO: Eventually prove these laws of powers as theorems.
   axiomPower0: {
     statement: '@R x => x ** 0 = 1',
+    simplifier: true,
     description: 'real number to the zeroth power is 1'
   },
 
@@ -315,6 +320,7 @@ var numbersInfo = {
   // This axiom applies to all normal objects, not just reals.
   axiomRealNotNull: {
     statement: '@not (R none)',
+    simplifier: true
   },
 
   axiomStrictPlus: {
@@ -339,18 +345,22 @@ var numbersInfo = {
 
   axiomNegType: {
     statement: '@R x == R (neg x)',
+    desimplifier: true
   },
 
   axiomDivisionType: {
-    statement: '@R x & R y & y != 0 == R (x / y)'
+    statement: '@R x & R y & y != 0 == R (x / y)',
+    simplifier: true
   },
 
   axiomStrictNeg: {
-    statement: '@not (R (neg x)) == neg x = none'
+    statement: '@not (R (neg x)) == neg x = none',
+    simplifier: true
   },
 
   axiomStrictRecip: {
-    statement: '@not (R (recip x)) == recip x = none'
+    statement: '@not (R (recip x)) == recip x = none',
+    simplifier: true
   },
 
   // End of interim axioms.
