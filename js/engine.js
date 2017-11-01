@@ -423,7 +423,9 @@ var ruleInfo = {
   define: {
     action: function(name, definition) {
       Toy.define(name, definition);
-      return rules.definition(name);
+      var defn = rules.definition(name);
+      addDefnFacts(defn);
+      return defn;
     },
     inputs: {string: 1, term: 2},
     form: ('Define name <input name=string> as <input name=term>'),
@@ -4644,6 +4646,33 @@ function addRule(key, info_arg) {
   rules[key] = rule;
 }
 
+/**
+ * For a simple definitions of a functions or predicate, generate
+ * basic equational facts.
+ *
+ * TODO: Consider calling this from Toy.define in the future if the
+ *   module dependencies are acceptable.
+ */
+function addDefnFacts(definition) {
+  if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
+    var name = definition.getLeft().name;
+    var result = definition;
+    var lambda = definition.getRight();
+    while (lambda instanceof Lambda) {
+      var bound = lambda.bound;
+      result = (rules.applyBoth(result, bound)
+                .andThen('simpleApply', '/right'));
+      lambda = result.getRight();
+    }
+    // TODO: Consider adding a fact unconditionally, and treating
+    //   it automatically as a desimplifier.
+    if (result != definition) {
+      addFact({goal: result});
+      addSwappedFact({goal: result});
+    }
+  }
+}
+
 
 //// FACTS
 
@@ -4882,7 +4911,11 @@ function addFact(info) {
   // to false when the proof succeeds.
   info.inProgress = false;
   info.labels = processLabels(info.labels);
+  if (isRecordedFact(info.goal)) {
+    console.warn('Fact', info.goal.$$, 'already recorded, skipping.');
+  } else {
   setFactInfo(info);
+  }
   return info;
 }
 
@@ -4898,9 +4931,7 @@ function addSwappedFact(info) {
   var stmt = info.goal;
   if (stmt.isEquation()) {
     var swapped = Toy.commuteEqn(stmt);
-    if (isRecordedFact(swapped)) {
-      console.warn('Swapped fact ' + swapped + ' already recorded');
-    } else {
+    if (!isRecordedFact(swapped)) {
       function proof() {
         return rules.fact(stmt).andThen('eqnSwap');
       }
@@ -5865,6 +5896,7 @@ Toy.noSimplify = noSimplify;
 
 Toy.addRule = addRule;
 Toy.addRules = addRules;
+Toy.addDefnFacts = addDefnFacts;
 Toy.lookupFactInfo = lookupFactInfo;
 Toy.addFact = addFact;
 Toy.addFactsMap = addFactsMap;

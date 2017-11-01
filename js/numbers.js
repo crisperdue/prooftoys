@@ -3271,6 +3271,14 @@ $(function() {
     Toy.addRules(fractionsInfo);
     Toy.addFactsMap(algebraFacts);
 
+    // Add basic facts for function definitions.
+    for (var name in Toy.definitions) {
+      var defn = Toy.findDefinition(name);
+      if (defn) {
+        Toy.addDefnFacts(rules.definition(name));
+      }
+    }
+
     Toy.eachFact(function(info) {
         if (info.simplifier) {
           basicSimpFacts.push(info.synopsis);
