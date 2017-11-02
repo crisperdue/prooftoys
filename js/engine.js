@@ -3544,11 +3544,15 @@ var ruleInfo = {
   //// Rewriting -- beyond Andrews' textbook
   ////
 
-  // Takes a proof step, a path, and a proved equation.  The part of
-  // the step at the given path must match the LHS of the equation.
-  // Replaces that part of the step with the appropriate instance of
-  // the equation.  The step and equation may have hypotheses.
-  // Suitable for use from the UI when needed.
+  // Takes a proof step, a path, and a proved step, typically an
+  // equation.  The part of the step at the given path must match the
+  // LHS of the equation.  Replaces that part of the step with the
+  // appropriate instance of the equation.  The step and equation may
+  // have hypotheses.  Suitable for use from the UI when needed.
+  //
+  // If the equation argument is not an equation according to
+  // isEquation, rewrites its main part to <main> = T and operates on
+  // that as the equation.
   //
   // TODO: Consider renaming _free_ variables introduced into the step
   //   by the equation so they are distinct from all free variables
@@ -3556,14 +3560,25 @@ var ruleInfo = {
   //   maximum flexibility in following substitutions, though it raises
   //   issues about access to the potentially new variable(s).
   rewriteOnlyFrom: {
-    action: function(step, path, equation) {
+    action: function(step, path, eqn_arg) {
       var expr = step.get(path);
-      var map = expr.findSubst(equation.getMain().getLeft());
+      var isEqn = eqn_arg.isEquation();
+      var matchPart = (isEqn
+                       ? eqn_arg.eqnLeft()
+                       : eqn_arg.isCall2('=>')
+                       ? eqn_arg.getRight()
+                       : eqn_arg);
+      // Convert to an actual equation if necessary.
+      var equation = (isEqn
+                      ? eqn_arg
+                      // Coerce to an equation.
+                      : eqn_arg.andThen('rewriteOnly',
+                                        '/rt', 'a == (a == T)'));
+      var map = expr.findSubst(matchPart);
       if (!map) {
         Toy.fail(Toy.format('Fact not applicable: {1}', equation));
       }
-      var eqn = rules.instMultiVars(equation, map);
-      var simpler = eqn;
+      var simpler = rules.instMultiVars(equation, map);
 
       // Beta-reduce expansions created during matching.  These must
       // make the equation LHS match so the replace rule can apply.
@@ -3599,7 +3614,7 @@ var ruleInfo = {
       }
       // Do the actual replacement.
       var result = rules.rplace(simpler, step, path);
-      return result.justify('rewriteOnlyFrom', arguments, [step, equation]);
+      return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Primitive rewrite using equation step <input name=equation>'),
