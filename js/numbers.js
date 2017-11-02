@@ -334,30 +334,88 @@ var numbersInfo = {
   // Closure properties
 
   axiomPlusType: {
-    statement: '@R x & R y == R (x + y)',
+    statement: '@R x & R y == R (x + y)'
   },
 
   axiomTimesType: {
-    statement: '@R x & R y == R (x * y)',
+    statement: '@R x & R y == R (x * y)'
+  },
+
+  axiomRealPlusClosed: {
+    statement: '@R x & R y => R (x + y)',
+    simplifier: true
+  },
+
+  axiomRealTimesClosed: {
+    statement: '@R x & R y => R (x * y)',
+    simplifier: true
+  },
+
+  realNegClosed: {
+    statement: '@R x => R (neg x)',
+    simplifier: true,
+    proof: function() {
+      return (rules.axiomRealTimesClosed()
+              .andThen('instMultiVars', {x: '-1', y: 'x'})
+              .andThen('rewriteOnly', '/right/arg', '-1 * x = neg x'));
+    }
+  },
+
+  realSubClosed: {
+    statement: '@R x & R y => R (x - y)',
+    simplifier: true,
+    proof: function() {
+      return (rules.axiomRealPlusClosed()
+              .andThen('instMultiVars', {y: 'neg y'})
+              .andThen('rewriteOnly', '/right/arg', 'x + neg y = x - y'));
+    }
+  },
+
+  realDivClosed: {
+    statement: '@R x & R y & y != 0 => R (x / y)',
+    simplifier: true,
+    // TODO: Prove this.  We need to:
+    // Prove that y != 0 => exists1 {z. x = y * z}
+    // for real numbers, using full field axioms including
+    // ordering laws.
+  },
+
+  divByZero: {
+    statement: '@R x => x / 0 = none',
+    simplifier: true,
+    // We know that:
+    // 0 = 0 * 0, and
+    // 0 = 0 * 1, two different values for z in the definition of "/".
+    // So 0 / 0 = none
+    //
+    // R x => 0 = 0 * x
+    // R x & y != 0 => x * 0 != y
+    // So R x & y != 0 => x / y = none
+    // 
+    // So finally R x & y = 0 => x / y = none
   },
 
   // Some interim "axioms" to be replaced by proved facts.
 
+  // TODO: Prove or fix this.
   axiomNegType: {
     statement: '@R x == R (neg x)',
     desimplifier: true
   },
 
+  // TODO: Remove.
   axiomDivisionType: {
     statement: '@R x & R y & y != 0 == R (x / y)',
     simplifier: true
   },
 
+  // TODO: Fix this; just claim neg none = none.
   axiomStrictNeg: {
     statement: '@not (R (neg x)) == neg x = none',
     simplifier: true
   },
 
+  // TODO: Fix this; just claim recip none = none.
   axiomStrictRecip: {
     statement: '@not (R (recip x)) == recip x = none',
     simplifier: true
@@ -441,6 +499,7 @@ var numbersInfo = {
     labels: 'basic'
   },
 
+  // TODO: remove.
   subtractionType: {
     statement: '@R x & R y == R (x - y)',
     proof: function() {
@@ -460,9 +519,9 @@ var numbersInfo = {
     labels: 'uncommon'
   },
 
+  // TODO: remove.
   reciprocalType: {
     statement: '@R x & x != 0 == R (recip x)',
-    // TODO: Prove me!
   },
 
   //
@@ -2484,12 +2543,20 @@ $.extend(algebraFacts, equivalences);
   */
 
 var negationFacts = {
-  // Negation rules
+
+  // With addition and subtraction
+
   'a - b = a + neg b': {
     proof: function() {
       var step1 = rules.consider('a - b');
       var step2 = rules.apply(step1, '/main/right');
       return step2;
+    }
+  },
+  'a - b = a + -1 * b': {
+    proof: function() {
+      return (rules.fact('a - b = a + neg b')
+              .andThen('apply', '/main/right/right'));
     }
   },
   'a - neg b = a + b': {
