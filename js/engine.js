@@ -5333,6 +5333,14 @@ function searchForMatchingFact(term, info) {
  * path: path to the portion of the given term that matched some pattern.
  */
 function findMatchingFact(facts_arg, cxt, term) {
+  // This finds the fact part to match.  If the fact is not an equation,
+  // uses the main part instead of the LHS.
+  function schemaPart(fact) {
+    var main = fact.getMain();
+    return (main.isCall2('=')
+            ? main.getLeft()
+            : main);
+  }
   function apply$(expr, $) {
     if (typeof expr === 'function') {
       return expr($, cxt, term);
@@ -5354,7 +5362,7 @@ function findMatchingFact(facts_arg, cxt, term) {
     if (!infoIsObject) {
       var stmt = factInfo;
       if (!isInProgress(stmt)) {
-        var schema = termify(stmt).getMain().getLeft();
+        var schema = schemaPart(termify(stmt));
         var subst = term.matchSchema(schema);
         if (subst) {
           var result = {stmt: stmt,
@@ -5393,7 +5401,7 @@ function findMatchingFact(facts_arg, cxt, term) {
         var where = factInfo.where;
         var schema = (factInfo.match
                       ? termify(factInfo.match)
-                      : termify(stmt).getMain().getLeft());
+                      : schemaPart(termify(stmt)));
         var subst = term.matchSchema(schema);
         if (subst && (!where || apply$(where, subst))) {
           var result = {stmt: stmt,
