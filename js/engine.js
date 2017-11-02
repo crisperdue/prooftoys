@@ -395,6 +395,11 @@ Expr.addMethods(ruleMethods);
 //   ruleMenu will not include it in the menu.
 //
 
+// Rule definitions that have statements (and are thus theorems)
+// support the same properties as facts, specifically: simplifier,
+// desimplifier, noSwap, labels, and converse (for properties of facts
+// that have a swapped version).
+
 // Conventions for menu items (using "menu:")
 // Step templates are in square brackets, such as [T = A].
 // Rules (including axiom 4) that take a term as input use A, B to
@@ -5210,12 +5215,12 @@ function isRecordedFact(stmt) {
 
 /**
  * Looks for a fact recorded in the facts database by addFact or
- * addRule.  The input must be a term or string parseable into a term.
- * The database ony uses the RHS of conditional facts as a lookup key,
- * and accordingly this function matches an unconditional argument
- * as the key.  Or if the argument is conditional, it only matches
- * the RHS against the stored key.  At present no further checking
- * is done here.
+ * addRule.  The input must be a term or string parseable into a term,
+ * as for getStatementKey.  The database uses only the RHS of
+ * conditional facts as a lookup key, and accordingly this function
+ * matches an unconditional argument as the key.  Or if the argument
+ * is conditional, it only matches the RHS against the stored key.  At
+ * present no further checking is done here.
  *
  * Returns a statement of the fact, generally not the proved fact,
  * or null if no such fact was found.
