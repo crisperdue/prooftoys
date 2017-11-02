@@ -380,6 +380,17 @@ var numbersInfo = {
     // ordering laws.
   },
 
+  realRecipClosed: {
+    statement: '@x != 0 & R x => R (recip x)',
+    simplifier: true,
+    proof: function() {
+      var step1 =  (rules.realDivClosed()
+                    .andThen('instMultiVars', {x: '1', y: 'x'}));
+      return (step1.andThen('rewrite', step1.find('1 / x'),
+                            '1 / x = recip x'));
+    }
+  },
+
   divByZero: {
     statement: '@R x => x / 0 = none',
     simplifier: true,
