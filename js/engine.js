@@ -4251,18 +4251,25 @@ var ruleInfo = {
     }
   },
 
-  // If the given statement is not a proved step, looks it up in the
-  // facts database, proving or just asserting it if not already
-  // proved.  Returns that result, justified as a "fact".  Currently
-  // inline if it is a no-op.  Also proves statements of tautologies
-  // and simple arithmetic facts.  Removes any " = T" from
-  // boolean-valued arithmetic facts.  Programmatic usage supports
-  // theorems by name, but not the UI.
+  // If the given statement is a proved step, returns the input.
+  // Otherwise coerces it to a fact synopsis and looks that up in the
+  // facts database, matching only against the "main" parts of facts.
+  //
+  // If it is not proved and does not match a recorded fact, attempts
+  // to prove it as a tautologies or simple arithmetic fact.  Removes
+  // any " = T" from boolean-valued arithmetic facts.  Programmatic
+  // usage supports theorems by name, but not the UI.  Accepts a
+  // string value.
+  //
+  // If a fact or synopsis is conditional, its consequent portion
+  // is used for the matching during lookup.
   //
   // For some cases - tautologies, proved statements, and theorems
   // in particular, this rule is inline.
   //
-  // Contains some functionality specific to numbers.
+  // TODO: Add a separate "realFact" rule for looking up facts about
+  //   real numbers, and match the more concise forms only in that rule,
+  //   making "fact" more straightforward.
   fact: {
     action: function(synopsis) {
       if (Toy.isProved(synopsis)) {
@@ -4274,13 +4281,14 @@ var ruleInfo = {
       if (result) {
         return result;
       }
-      // This is the full statement of the fact.
+      // This is the full statement (goal) of the fact.
       var stmt = findFact(synopsis);
       // Try ordinary proved facts.
       if (stmt) {
+        var getSynopsis = Toy.getSynopsis;
         var fact = Toy.getResult(stmt);
-        // Converts names of free variables into the ones given.
-        var map = fact.alphaMatch(stmt);
+        // Maps free variables of the fact into ones given here.
+        var map = getSynopsis(fact).alphaMatch(getSynopsis(synopsis));
         var instance = rules.instMultiVars(fact, map);
         return instance.justify('fact', arguments);
       }
@@ -5201,7 +5209,16 @@ function getStatementKey(stmt) {
   // TODO: Determine what to do about facts such as pure logic facts,
   //   which are generic across types, and implement accordingly.
   // TODO: Use stmt just as a synopsis here.
-  return Toy.standardVars(termify(stmt).getMain()).toString();
+  return Toy.standardVars(getSynopsis(stmt)).toString();
+}
+
+/**
+ * Returns the portion of the given statement to use as the synopsis,
+ * parsing it from a string if needed.  Fact lookup encodes this as a
+ * string "statement key".
+ */
+function getSynopsis(stmt) {
+  return termify(stmt).getMain();
 }
 
 /**
@@ -5937,6 +5954,7 @@ Toy.getResult = getResult;
 Toy.eachFact = eachFact;
 Toy.getTheorem = getTheorem;
 Toy.getStatementKey = getStatementKey;
+Toy.getSynopsis = getSynopsis;
 Toy.convert = convert;
 Toy.findFact = findFact;
 Toy.findMatchingFact = findMatchingFact;
