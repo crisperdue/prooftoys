@@ -1829,10 +1829,12 @@ var ruleInfo = {
   // substitution for variables that are free in the hypotheses.
   // Parses string values in the map.
   //
-  // Optimized to avoid substitutions that have no effect, thus
-  // doing nothing if the substitution is a no-op.
+  // Optimized to avoid substitutions that have no effect, returning
+  // its input, justified as "instMultiVars".
   instMultiVars: {
     action: function(b, map) {
+      assert(map.constructor === Object,
+             'Non-map argument to instMultiVars: {1}', map);
       var hyps = b.hasHyps;
       var isEqn = b.isCall2('=');
       var step = isEqn ? b : rules.rewriteOnly(b, '', 'a == (T == a)');
