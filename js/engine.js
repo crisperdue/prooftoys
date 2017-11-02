@@ -4906,7 +4906,7 @@ function addFact(info) {
       console.warn('In fact', id, 'extra info key:', key);
     }
   }
-  info.proved = info.goal && info.goal.isProved() || null;
+  info.proved = info.goal && info.goal.isProved() && info.goal;
   // The goal is a rendered Expr just because that makes a complete
   // copy that can be properly annotated with types.
   // TODO: Use expandSynopsis here.
@@ -5086,7 +5086,7 @@ function asFactProver(prover, goal) {
 // noSwap: if true, inhibits automatic generation of a fact
 //   with equation LHS and RHS swapped
 // prover: function intended to prove the fact
-// proved: proved statement or null if not yet proved
+// proved: proved statement or falsy if not yet proved
 var _factsMap = {};
 
 /**
@@ -5156,6 +5156,7 @@ function getResult(statement, mustProve) {
   info.inProgress = true;
   // Get the proved result of the fact.
   info.proved = prover();
+  assert(info.proved instanceof Expr);
   // Note that the fact remains in progress if its prover throws, which
   // may or may not be good thing.
   info.inProgress = false;
