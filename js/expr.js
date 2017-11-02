@@ -1251,6 +1251,19 @@ Expr.prototype.pathTo = function(pred) {
 };
 
 /**
+ * Searches for the (first) subexpression of this that "matches"
+ * the given term, an Expr or string parsed to one.  Returns a
+ * path to the term if found, or null.
+ */
+Expr.prototype.find = function(term_arg) {
+  var term = termify(term_arg);
+  function alike(x) {
+    return x.matches(term);
+  }
+  return this.pathTo(alike);
+};
+
+/**
  * Like Expr.pathTo, but for infix calls produces a path with /left,
  * /right, or /binop rather than combinations of /fn and /arg.
  *
