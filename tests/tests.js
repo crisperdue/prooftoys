@@ -140,6 +140,15 @@ function logDeeply(obj) {
   console.log(JSON.stringify(qUnitCopy(obj), null, 1));
 }
 
+/**
+ * Runs a test, providing opportunity for logging or other extra
+ * activity.
+ */
+function runTest(name, fn) {
+  // console.log('Running', name);
+  return test(name, fn);
+}
+
 
 // Set up some useful constants and functions.
 
@@ -154,7 +163,7 @@ var bigger = call('=>', call('>', x, '0'),
                   call('>', call('+', x, x), x));
 
 // This is a bit different than standard QUnit style, but the content
-// is the same The code block just below interprets all of these as
+// is the same.  The code block just below interprets all of these as
 // qUnit tests.
 var testCase = {
 
@@ -2775,7 +2784,7 @@ var testCase = {
 // the initializations seem to run only after the event loop has
 // returned to idle, at least when running tests.
 window.setTimeout(function() {
-  true;
+
   // Set this to an array of theorem names, test case names, and fact
   // statements to be specifically tested.  Fact statements usually
   // will be strings here.
@@ -2787,7 +2796,7 @@ window.setTimeout(function() {
     if (typeof fn === 'function') {
       // It would be nice to log the name of each test here, but
       // running "test" only queues the test.
-      test(name, fn);
+      runTest(name, fn);
     } else {
       console.warn(name + ': not a function');
     }
@@ -2821,7 +2830,7 @@ window.setTimeout(function() {
     var prover = rules[name];
     // Prover is a function and its length is its number of args.
     if (prover.length == 0) {
-      test(name, function(prover, name) {
+      runTest(name, function(prover, name) {
           var result = prover();
           var stmt = prover.info.statement;
           // Check that the statement of the theorem matches
@@ -2851,7 +2860,7 @@ window.setTimeout(function() {
   console.log('Queued', nTheorems, 'theorems to test.');
   // Tests one fact given its fact info.
   function testFact(info) {
-      test(info.synopsis, function() {
+      runTest(info.synopsis, function() {
           assert(Toy.getResult(info.goal).ruleName);
         });
       nFacts++;
@@ -2870,13 +2879,13 @@ window.setTimeout(function() {
     Toy.eachFact(testFact);
   }
   console.log('Queued', nFacts, 'facts to test.');
-  test('End of tests', function() {
+  runTest('End of tests', function() {
       assert(true, 'End of tests at ' + new Date());
       console.log('End of test run at ', new Date());
     });
   // When the next lines run, the tests run with profiling.
   // console.log('Running tests with profiling');
   // console.profile('Tests');
-  }, 200);
+  }, 2000);
 
 })();
