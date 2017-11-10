@@ -259,7 +259,7 @@ var ruleMethods = {
    * Applies rules.rewrite to this Expr passing in a path and
    * fact to use.
    */
-  rewrite: function(path, fact) {
+  rewrite: function rewrite_method(path, fact) {
     return Toy.rules.rewrite(this, path, fact);
   },
 
@@ -1842,7 +1842,7 @@ var ruleInfo = {
   // its input, justified as "instMultiVars".
   instMultiVars: {
     action: function(b, map) {
-      assert(map.constructor === Object,
+      assert(map && map.constructor && map.constructor === Object,
              'Non-map argument to instMultiVars: {1}', map);
       var hyps = b.hasHyps;
       var isEqn = b.isCall2('=');
@@ -5037,7 +5037,7 @@ function asFactProver(prover, goal) {
          'Not a function: {1}', prover);
   // This function wraps around the user-supplied fact prover
   // to do the generic parts of the work.
-  function wrapper() {
+  function factProverWrapper() {
     var result;
     if (goal.isProved()) {
       result = goal;
@@ -5090,7 +5090,7 @@ function asFactProver(prover, goal) {
       }
     }
   }
-  return wrapper;
+  return factProverWrapper;
 }
 
 
