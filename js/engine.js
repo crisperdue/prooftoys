@@ -5513,7 +5513,7 @@ function convert(step, path, fn) {
   var expr = step.get(path);
   assert(expr, 'Bad path {1}', path, step);
   var eqn = fn(expr);
-  return rules.rplace(eqn, step, path);
+  return rules.replace(step, path, eqn);
 }
 
 /**
