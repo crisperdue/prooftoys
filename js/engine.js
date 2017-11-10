@@ -603,6 +603,15 @@ var ruleInfo = {
                                 [target, equation]);
         }
       }
+      // Logs the location of the test where autoAssert is used.
+      function logWhere(term) {
+        var e = new Error();
+        var lines = e.stack.split('\n');
+        // Note that the follwing regex may be Chrome-specific.
+        function test(line) { return line.match(/Object.test/); }
+        var where = lines.find(test) || 'at unknown location';
+        console.warn('Asserting', term.$$, where);
+      }
       function replacer(expr) {
         if (expr.matches(equation.getLeft())) {
           return equation.getRight();
@@ -615,13 +624,15 @@ var ruleInfo = {
       // Auto-justify input steps if requested by the current configuration.
       if (!equation.isProved()) {
         if (Toy.autoAssert) {
+          logWhere(equation);
           equation.assert();
         } else {
           assert(false, 'Rule R unproven equation: {1}', equation);
         }
       }
-      if (!target.ruleName) {
+      if (!target.isProved()) {
         if (Toy.autoAssert) {
+          logWhere(target);
           target.assert();
         } else {
           assert(false, 'Rule R unproven target: {1}', target);
