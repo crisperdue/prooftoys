@@ -4164,7 +4164,7 @@ var ruleInfo = {
     inputs: {},
     form: '',
     description: 'symmetry of equality',
-    labels: 'basic'
+    labels: 'algebra'
   },
 
   equalityTransitive: {
