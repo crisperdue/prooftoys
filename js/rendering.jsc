@@ -1237,11 +1237,10 @@ ProofDisplay.prototype.renderStep1 = function(step) {
             // Convert the variable names in the actual proof to the
             // ones mentioned in the usage of the fact.
             var map = copy.matchSchema(result0);
-            // Replace the step details with the real proof.
-            step.details = Toy.rules.instMultiVars(result0, map);
-            // TODO: The proved fact's assumptions may be in different
-            //   order than the original.  Consider adding steps to
-            //   reorder them in the new result.
+            // If for some reason there is no mapping, proceed without it,
+            // ignoring the issue.
+            result0 = map ? Toy.rules.instMultiVars(result0, map) : result0;
+            step.details = result0;
           }
         }
         renderSubproof(step);
