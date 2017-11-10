@@ -1101,9 +1101,9 @@ var simplifiersInfo = {
       var _path = Toy.path;
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.whileChanges(eqn, function(eqn) {
-          return rules._simplifyMath1(eqn, _path('/main/right', eqn));
+          return rules._simplifyMath1(eqn, _path('/rt/right', eqn));
         });
-      return rules.rplace(simpler, step, path);
+      return rules.replace(step, path, simpler);
     }
   },
 
