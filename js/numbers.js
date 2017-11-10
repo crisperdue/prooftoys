@@ -2875,13 +2875,6 @@ var recipFacts = {
   'a / b = a * recip b': {
     // TODO: Prove me!
   },
-  'a != 0 => recip a = 1 / a': {
-    proof: function() {
-      return rules.consider('recip s')
-      .rewrite('/main/right', 'a = 1 * a')
-      .rewrite('/main/right', 'a * recip b = a / b');
-    }
-  },
   'a != 0 => recip (recip a) = a': {
     simplifier: true,
     proof: function() {
