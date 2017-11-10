@@ -357,7 +357,7 @@ var numbersInfo = {
     proof: function() {
       return (rules.axiomRealTimesClosed()
               .andThen('instMultiVars', {x: '-1', y: 'x'})
-              .andThen('rewriteOnly', '/right/arg', '-1 * x = neg x'));
+              .andThen('rewrite', '/right/arg', '-1 * x = neg x'));
     }
   },
 
@@ -367,7 +367,7 @@ var numbersInfo = {
     proof: function() {
       return (rules.axiomRealPlusClosed()
               .andThen('instMultiVars', {y: 'neg y'})
-              .andThen('rewriteOnly', '/right/arg', 'x + neg y = x - y'));
+              .andThen('rewrite', '/right/arg', 'x + neg y = x - y'));
     }
   },
 
