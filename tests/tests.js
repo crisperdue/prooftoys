@@ -145,6 +145,7 @@ function logDeeply(obj) {
  * activity.
  */
 function runTest(name, fn) {
+  // Uncomment this to log the start of each test function.
   // console.log('Running', name);
   return test(name, fn);
 }
@@ -2860,6 +2861,8 @@ window.setTimeout(function() {
   // When the next lines run, the tests run with profiling.
   // console.log('Running tests with profiling');
   // console.profile('Tests');
-  }, 2000);
+  // If the delay is much longer the web page display will initially
+  // show a very short run with no tests, then correct itself later.
+  }, 10);
 
 })();
