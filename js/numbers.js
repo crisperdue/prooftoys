@@ -3343,6 +3343,8 @@ $(function() {
     Toy.addRules(fractionsInfo);
     Toy.addFactsMap(algebraFacts);
 
+    // From here is overall initialization for the complete system.
+
     // Add basic facts for function definitions.
     for (var name in Toy.definitions) {
       var defn = Toy.findDefinition(name);

@@ -84,6 +84,10 @@ window.Thtest = function(x) {
  * TODO: Consider always recording the step, but skipping the display
  * in proof.jsc.  Some steps, especially simplifications, do this
  * same thing internally by skipping the call to "justify".
+ *
+ * TODO: Add a "justify0" method that never modifies assumptions,
+ * or alternatively, never "arrange" them here, leaving that task
+ * to rules such as "replace".
  */
 Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   // Note: when splitting Step and Expr, make a version of this just

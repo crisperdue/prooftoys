@@ -1069,7 +1069,8 @@ ProofDisplay.prototype.handleExprClick = function(expr) {
 var _turnstile = '\u22a6';
 
 /**
- * Most of the work for renderStep gets done here.
+ * Most of the work for renderStep gets done here.  The step
+ * must be renderable.
  */
 ProofDisplay.prototype.renderStep1 = function(step) {
   var self = this;
