@@ -3674,10 +3674,11 @@ var ruleInfo = {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
       var step2 = rules.rewriteOnly(step, path, fact);
-      var result = rules.simplifyAssumptions(step2);
+      var reduced = rules.reduceRealAsms(step2);
+      var arranged = rules.arrangeAsms(reduced);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
-      return result.justify('rewrite', arguments, [step]);
+      return arranged.justify('rewrite', arguments, [step]);
     },
     autoSimplify: function(step) {
       var inStep = step.ruleArgs[0];
@@ -4948,7 +4949,7 @@ function addFact(info) {
   if (isRecordedFact(info.goal)) {
     console.warn('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
-  setFactInfo(info);
+    setFactInfo(info);
   }
   return info;
 }

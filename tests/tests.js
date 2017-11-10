@@ -2336,32 +2336,6 @@ var testCase = {
     assertEqual('(6 * x)', step2.get('/main/right'));
   },
 
-  testSimplifyAssumptions: function() {
-    var asm = rules.assume('a');
-    function simplify(term) {
-      return (rules.instVar(asm, Toy.termify(term), 'a')
-              .andThen('simplifyAssumptions').getLeft());
-    }
-    assertEqual('(R x)', simplify('R x'));
-    assertEqual('T', simplify('R 2'));
-    assertEqual('((R x) & (R y))', simplify('R (x + y)'));
-    assertEqual('((R x) & (R y))', simplify('R (x * y)'));
-    assertEqual('((R x) & (R y))', simplify('R (x - y)'));
-    assertEqual('(((R x) & (R y)) & (R z))',
-                simplify('R (x - (z * y))'));
-    assertEqual('(((y != 0) & (R x)) & (R y))', simplify('R (x / y)'));
-    assertEqual('(R x)', simplify('R (neg x)'));
-    assertEqual('((x != 0) & (R x))', simplify('R (recip x)'));
-    assertEqual('T', simplify('2 = 2'));
-    assertEqual('T', simplify('2 != 0'));
-    assertEqual('((((x != 0) & (y != 0)) & (R x)) & (R y))',
-                simplify('x * y != 0'));
-    assertEqual('((((x != 0) & (y != 0)) & (R x)) & (R y))',
-                simplify('R (recip (x * y))'));
-
-    // TODO: Tests for removal of conditions such as (2 != 0).
-  },
-
   testOperateOnBoth: function() {
     var eqn = rules.eqSelf(x);
     var x5 = Toy.parse('x + 5');
