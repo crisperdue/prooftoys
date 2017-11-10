@@ -105,29 +105,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
     }
   }
   var step = this;
-  var prev = ruleDeps[0];
-  if (ruleDeps.length === 1 && prev.hasHyps && step.hasHyps &&
-      prev.getLeft() !== step.getLeft() && prev.getRight() !== step.getRight()) {
-    // If the step did not affect the assumptions there should be no
-    // need to dedupe, and if it modified only assumptions that was
-    // probably its purpose, so don't undo it.  Really, the code below
-    // could just call simplifyAssumptions (which itself calls arrangeAsms),
-    // but perhaps this structure gives a patina of modularity.
-    //
-    // In practice this usually occurs as a result of instantiating one or
-    // more variables, i.e. instMultiVars, but could also be result of
-    // instantiating universal quantifier(s).
-    //
-    // TODO: Consider moving this bit of code.
-    // TODO: Consider supporting deferral, or "temporary suppression"
-    //   of these automatic invocations of simplifyAssumptions during
-    //   complex operations where it is now done repeatedly,
-    //   especially rearrangements with commutativity and
-    //   associativity.
-    step = (rules.simplifyAssumptions
-            ? rules.simplifyAssumptions(step)
-            : rules.arrangeAsms(step));
-  }
+  // At this spot we could conditionally run arrangeAsms, but omitting
+  // that automagic behavior for now.
 
   // Allocate a new object to be the new Step.
   var result = (step instanceof Call
@@ -1819,8 +1798,7 @@ var ruleInfo = {
       var map = {};
       map[v.name] = term;
       var result = rules.instMultiVars(step, map);
-      var simpler = rules.simplifyAssumptions(result);
-      return simpler.justify('instantiateVar', arguments, [step]);
+      return result.justify('instantiateVar', arguments, [step]);
     },
     inputs: {site: 1, term: 3},
     toOffer: 'return term.isVariable()',
@@ -3690,7 +3668,7 @@ var ruleInfo = {
         var step3 = rules.simplifyStep(step2);
         return step3;
       } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
-        // The left part may already be transformed by simplifyAssumptions,
+        // The left part may already be transformed,
         // and the target may not even exist.
         var simp1 = rules.autoSimplifySite(step,
                                            // Site of the rewrite.

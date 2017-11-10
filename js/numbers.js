@@ -856,28 +856,6 @@ var simplifiersInfo = {
 
   // Managing numeric type hypotheses
 
-  // Given a step that is a conditional, proves a version with the
-  // assumptions simplified.  Reduces assumptions about "R" type of
-  // expressions with arithmetic operators to assumptions about "R"
-  // type of variables; removes assumptions that specific numerals are
-  // real or nonzero; simplifies assumptions about products being
-  // nonzero into assertions that both operands are real; removes
-  // duplicate terms and occurrences of T.
-  //
-  // Note that when rearranging terms as with commutativity and
-  // associativity, it is efficient to defer this simplification
-  // until all rearrangements are completed.
-  simplifyAssumptions: {
-    action: function(step_arg) {
-      return step_arg;
-    },
-    inputs: {step: 1},
-    form: 'Step to simplify: <input name=step>',
-    tooltip: 'simplify assumptions in a step',
-    menu: 'simplify assumptions',
-    labels: 'uncommon'
-  },
-
   // Simplifies repeatedly using basicSimpFacts.  If the visible part
   // of the step is an equation, simplify each side, otherwise the
   // entire expression.
