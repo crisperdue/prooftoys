@@ -947,6 +947,9 @@ var simplifiersInfo = {
     labels: 'algebra'
   },
 
+  // TODO: Create a "rules.simplifier" that takes a term argument
+  //   and proves it equal to some (hopefully) simpler term.
+
   // Inline version of simplifySite.
   _simplifySite: {
     action: function(step, path) {

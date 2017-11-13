@@ -488,9 +488,7 @@ function findType(expr, annotate) {
       var e2 = new TypeCheckError('Cannot find type for ' + expr.toUnicode());
       e2.cause = e;
       console.error(e);
-      // Pause if debugger is activated.  In some situations this could
-      // occur even if execution could continue.
-      debugger;
+      // Place a breakpoint here to help diagnose the problem.
       throw e2;
     } else {
       throw e;

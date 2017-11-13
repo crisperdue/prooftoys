@@ -1226,6 +1226,9 @@ ProofDisplay.prototype.renderStep1 = function(step) {
             // The fact was asserted without a proof.  Substitute an
             // actual proof, creating it if necessary.  First create a
             // new Step object.
+            //
+            // TODO: This should be a copy of the original, not the
+            // rendering, eh?
             var copy = (step instanceof Call
                         ? new Call(step.fn, step.arg)
                         : step instanceof Atom
