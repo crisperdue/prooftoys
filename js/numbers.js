@@ -1074,6 +1074,7 @@ var simplifiersInfo = {
     inputs: {step: 1},
     form: '',
     menu: 'simplify real number assumptions',
+    description: 'simplify numeric assumptions',
     labels: 'general'
   }
 
