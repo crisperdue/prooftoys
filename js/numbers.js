@@ -268,7 +268,7 @@ var numbersInfo = {
   // TODO: Prove this.
   uniqueQuotient: {
     // This is provable: when y is 0 and x is 0, z can be any number.
-    // If y = 0 and x != 0, or x = 0 and y != 0 there is no solution.
+    // If y = 0 and x != 0 there is no solution.
     // All others are OK.
     statement: '@R x & R y & x != 0 & y != 0 => exists1 {z. y * z = x}',
     description: 'unique existence of quotient'
@@ -310,9 +310,10 @@ var numbersInfo = {
     description: 'real number to the next power'
   },
 
-  // TODO: Prove this as a consequnce of completeness.
+  // TODO: Prove this as a consequnce of field axioms.
   factNonzeroProduct: {
-    statement: '@R x & R y => (x * y != 0) = (x != 0 & y != 0)',
+    statement: '@R x & R y => (x * y != 0 == x != 0 & y != 0)',
+    simplifier: true  // Good mainly for simplifying assumptions.
   },
 
   // Type-related axioms
@@ -332,14 +333,6 @@ var numbersInfo = {
   },
 
   // Closure properties
-
-  axiomPlusType: {
-    statement: '@R x & R y == R (x + y)'
-  },
-
-  axiomTimesType: {
-    statement: '@R x & R y == R (x * y)'
-  },
 
   axiomRealPlusClosed: {
     statement: '@R x & R y => R (x + y)',
@@ -404,32 +397,6 @@ var numbersInfo = {
     // So R x & y != 0 => x / y = none
     // 
     // So finally R x & y = 0 => x / y = none
-  },
-
-  // Some interim "axioms" to be replaced by proved facts.
-
-  // TODO: Prove or fix this.
-  axiomNegType: {
-    statement: '@R x == R (neg x)',
-    // desimplifier: true
-  },
-
-  // TODO: Remove.
-  axiomDivisionType: {
-    statement: '@R x & R y & y != 0 == R (x / y)',
-    // simplifier: true
-  },
-
-  // TODO: Fix this; just claim neg none = none.
-  axiomStrictNeg: {
-    statement: '@not (R (neg x)) == neg x = none',
-    // simplifier: true
-  },
-
-  // TODO: Fix this; just claim recip none = none.
-  axiomStrictRecip: {
-    statement: '@not (R (recip x)) == recip x = none',
-    // simplifier: true
   },
 
   // End of interim axioms.
@@ -508,31 +475,6 @@ var numbersInfo = {
     description: 'axiom of arithmetic',
     autoSimplify: noSimplify,
     labels: 'basic'
-  },
-
-  // TODO: remove.
-  subtractionType: {
-    statement: '@R x & R y == R (x - y)',
-    proof: function() {
-      var step1 = rules.axiomPlusType();
-      var step2 = rules.instVar(step1, Toy.parse('neg y'), 'y');
-      var step3 = rules.axiomNegType();
-      var step4 = rules.instVar(step3, 'y', 'x');
-      var step5 = rules.rRight(step4, step2, '/left/right');
-      var step6 = rules.eqSelf(Toy.parse('x - y'));
-      var step7 = rules.apply(step6, '/left');
-      return rules.rplace(step7, step5, '/main/right/arg');
-      },
-    form: '',
-    menu: 'theorem R (x - y)',
-    tooltip: 'difference of real numbers is real',
-    description: 'difference of real numbers is real',
-    labels: 'uncommon'
-  },
-
-  // TODO: remove.
-  reciprocalType: {
-    statement: '@R x & x != 0 == R (recip x)',
   },
 
   //
@@ -2073,11 +2015,6 @@ var basicFacts = {
       return rules.axiomReciprocal();
     }
   },
-  'a * b != 0 == a != 0 & b != 0': {
-    proof: function() {
-      return rules.factNonzeroProduct();
-    }
-  },
   'a = b == b = a': {
     proof: function() {
       return rules.equalitySymmetric();
@@ -2543,7 +2480,7 @@ var negationFacts = {
               .rewrite('/main/right', 'a * b = b * a'));
     }
   },
-  'neg (a / b) = neg a / b': {
+  'b != 0 => neg (a / b) = neg a / b': {
     proof: function() {
       return (rules.consider('neg (a / b)')
               .rewrite('/main/right', 'neg a = -1 * a')
