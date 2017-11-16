@@ -1271,6 +1271,8 @@ Expr.prototype.find = function(term_arg) {
  * replacing an initial /right if there are hyps, otherwise
  * simply adding it, so the path will still be usable if replacements
  * add assumptions to a target step.
+ *
+ * TODO: Consider changing to "/rt" rather than "/main".
  */
 Expr.prototype.prettyPathTo = function(pred) {
   if (pred instanceof Expr) {

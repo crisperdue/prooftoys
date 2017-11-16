@@ -1255,6 +1255,8 @@ var ruleInfo = {
       var ok = (target &&
               target.isCall1('forall') &&
               target.arg instanceof Toy.Lambda &&
+                // TODO: Handle /main and /rt paths also,
+                //   and cases where the target is unconditional.
               (pathStr === '' ||
                (step.wff.isCall2('=>') &&
                 (pathStr === '/right' ||
@@ -1977,7 +1979,7 @@ var ruleInfo = {
     }
   },
 
-  // r5226 is r5225 with "f" and "x" instantiated, then beta conversion.
+  // r5226 is r5225 with "p" and "x" instantiated, then beta conversion.
 
   // F => x; bookish
   r5227: {

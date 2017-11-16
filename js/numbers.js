@@ -2442,7 +2442,10 @@ var negationFacts = {
     }
   },
 
-  // Negation with multiplication
+  // Negation with multiplication.
+  //
+  // TODO: When negation gets a number-specific definition,
+  // facts about it will become specific to (real) numbers.
 
   'neg (a * b) = neg a * b': {
     proof: function() {

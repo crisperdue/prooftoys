@@ -628,6 +628,10 @@ function theType() {
 //   real numbers should only apply to individuals, which still may
 //   include many things besides real numbers.  So it looks like only
 //   equality, iota, and "the" will have generic types.
+//
+// TODO: Consider using only boolean values here and using this just to
+//   test whether a name is already defined.  The defining statement
+//   presumably will give the constant its type.
 var constantTypes = {
   T: boolean,
   F: boolean,
@@ -697,6 +701,13 @@ var definitions = {
  *
  * TODO: Require that the defining term only have (free) type
  *   variables that are also in the defined name.
+ *
+ * TODO: Consider replacing this function with one that takes a
+ *   defining statement as its argument instead of a name and
+ *   "definition".  It would automatically recognize certain forms
+ *   such as [C = <term>] and [A => C = <term>], and arbitrary WFFs
+ *   would also be supported if the apppropriate existence fact is
+ *   already established.
  */
 function define(name, definition) {
   assert(Toy.isConstantName(name), 'Not a constant name: {1}', name);
