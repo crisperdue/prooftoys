@@ -199,7 +199,7 @@ $(function() {
     //
     //   This definition then can serve as a witness that there exist
     //   functions satisfying the conditional definition.
-    define('/', '{x. {y. the {z. R z & R x & R y & x = y * z}}}');
+    define('/', '{x. {y. the {z. R x & R y & R z & x = y * z}}}');
     define('strict', '{f. f none = none}');
     define('strict2',
            '{f. forall {x. forall {y. f x none = none & f none y = none}}}');
@@ -267,10 +267,11 @@ var numbersInfo = {
 
   // TODO: Prove this.
   uniqueQuotient: {
-    // This is provable: when y is 0 and x is 0, z can be any number.
+    // This is provable:
+    // If y = 0 and x = 0, z can be any real number.
     // If y = 0 and x != 0 there is no solution.
     // All others are OK.
-    statement: '@R x & R y & x != 0 & y != 0 => exists1 {z. y * z = x}',
+    statement: '@R x & R y & y != 0 => exists1 {z. R z & x = y * z}',
     description: 'unique existence of quotient'
   },
 
