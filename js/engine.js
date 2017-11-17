@@ -1253,14 +1253,14 @@ var ruleInfo = {
       var target = step.get(path);
       var pathStr = path.toString();
       var ok = (target &&
-              target.isCall1('forall') &&
-              target.arg instanceof Toy.Lambda &&
+                target.isCall1('forall') &&
+                target.arg instanceof Toy.Lambda &&
                 // TODO: Handle /main and /rt paths also,
                 //   and cases where the target is unconditional.
-              (pathStr === '' ||
-               (step.wff.isCall2('=>') &&
-                (pathStr === '/right' ||
-                 pathStr === '/arg'))));
+                (pathStr === '' ||
+                 (step.wff.isCall2('=>') &&
+                  (pathStr === '/right' ||
+                   pathStr === '/arg'))));
       return ok;
     },
     action: function(step, path, expr) {
@@ -1699,6 +1699,29 @@ var ruleInfo = {
       var step1 = rules.eqSelf(Toy.parse('{x. T}'));
       var fa = rules.definition('forall');
       return rules.rRight(fa, step1, '/fn');
+    }
+  },
+
+  existsXT: {
+    statement: 'exists {x. T}',
+    proof: function() {
+      return (rules.fact('p x => exists p')
+              .andThen('instVar', '{x. T}', 'p')
+              .andThen('simpleApply', '/left')
+              .andThen('simplifySite', ''));
+    }
+  },
+
+  // This actually says NOT (forall {x. F}).
+  forallXF: {
+    statement: 'not (forall {x. F})',
+    proof: function() {
+      var fact = rules.fact('exists p == not (forall {x. not (p x)})');
+      return (fact.andThen('instVar', '{x. T}', 'p')
+              .andThen('apply', fact.find('p x'))
+              .andThen('simplifySite', fact.find('not (p x)'))
+              .andThen('trueBy', '/left', rules.existsXT())
+              .andThen('simplifySite', ''));
     }
   },
 
@@ -2471,6 +2494,34 @@ var ruleInfo = {
               .andThen('instVar', 'not p', 'p')
               .andThen('rewriteOnly', '/right', taut)
               .andThen('rewriteOnly', '/left/arg/body', taut));
+    }
+  },
+
+  // 2127
+  equivForall: {
+    statement: 'forall {x. p} == p',
+    proof: function() {
+      var term = '{x. F} x';
+      var falsity = (rules.forallXF()
+                     .andThen('rewriteOnly', '', 'not a == (a == F)'));
+      var step1 = rules.orForall().andThen('instVar', '{x. F}', 'q');
+      var step2 = rules.simpleApply(step1, step1.find(term));
+      var step3 = rules.simpleApply(step2, step2.find(term));
+      var step4 = rules.rewriteOnly(step3, '/right/right', falsity);
+      var step5 = (step4.andThen('simplifySite', '/right')
+                   .andThen('simplifySite', '/left/arg/body'));
+      return step5;
+    }
+  },
+
+  // 2128
+  equivExists: {
+    statement: 'exists {x. p} == p',
+    proof: function() {
+      var step1 = (rules.equivForall()
+                   .andThen('instVar', 'not p', 'p'));
+      return (rules.applyToBoth('not', step1)
+              .andThen('simplifyStep'));
     }
   },
 
@@ -4413,7 +4464,40 @@ var ruleInfo = {
       return step8;
     }
   },
-  
+
+  /* TODO: Remove these two as not very useful.
+  ifTrue: {
+    statement: 'c => if c x y = x',
+    proof:function() {
+      var assumed = rules.assume('T == c');
+      var fact = rules.fact('if T x y = x');
+      return (fact.andThen('replace', fact.find('T'), assumed)
+              .andThen('rewriteOnly', '/left', 'T == x == x'));
+    }
+  },
+
+  ifFalse: {
+    statement: 'not c => if c x y = y',
+    proof:function() {
+      var assumed = rules.assume('F == c');
+      var fact = rules.fact('if F x y = y');
+      return (fact.andThen('replace', fact.find('F'), assumed)
+              .andThen('rewriteOnly', '/left', 'F == x == (not x)'));
+    }
+  },
+  */
+
+  exists1The: {
+    statement: 'exists1 p => the p = iota p',
+    proof: function() {
+      var assumed = rules.assume('exists1 p');
+      var step1 = rules.fact('the p = if (exists1 p) (iota p) none');
+      var loc1 = step1.find('exists1 p');
+      return (step1.andThen('trueBy', loc1, assumed)
+              .rewrite('/right/right', 'if T x y = x'));
+    }
+  },
+
 
   //
   // OPTIONAL/UNUSED

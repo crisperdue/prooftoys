@@ -3127,6 +3127,7 @@ var basicSimpFacts = [
                       'not T == F',
                       'not F == T',
                       '(a == T) == a',
+                      'not (not a) == a',
                       'x = x == T',
                       'T => a == a',
                       'not (a = b) == a != b',
