@@ -73,11 +73,6 @@ window.Thtest = function(x) {
  * unless "retain" is true, making the step a no-op.  (The purpose is
  * to reduce clutter for readers of the proof.)
  *
- * If there is exactly one ruleDep, and the result and the ruleDep
- * both have hypotheses, and the result hyps are not the same object
- * as the ruleDep's hyps, nor is the result "main" the same object as
- * the ruleDep main, applies arrangeAsms to the result.
- *
  * TODO: Make a Step class for proof steps, and have this method
  * return a new one.
  *
