@@ -271,8 +271,8 @@ var numbersInfo = {
     // If y = 0 and x = 0, z can be any real number.
     // If y = 0 and x != 0 there is no solution.
     // All others are OK.
-    statement: '@R x & R y & y != 0 => exists1 {z. R z & x = y * z}',
-    description: 'unique existence of quotient'
+    statement: 'y != 0 => exists1 {z. R x & R y & R z & x = y * z}',
+    description: 'quotient is unique'
   },
 
   axiomTimesZero: {
