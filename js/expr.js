@@ -2116,6 +2116,11 @@ Atom.prototype.findAll = function(name, action1, expr2, action2) {
 };
 
 Atom.prototype._matchAsSchema = function(expr, map, bindings) {
+  // TODO: Make sure that when a variable occurs in the schema with an
+  //   already-established substitution, it not only matches this term
+  //   against the expansion, but treats variables in the established
+  //   expansion as potential targets for substitution as well.
+  //   
   // This method does not return true when matching a defined name with an
   // expression that matches its definition.  It is a stricter criterion than
   // would be treating definitions exactly as abbreviations.
@@ -2145,6 +2150,7 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   // otherwise add a mapping for it into the substitution.
   var mapped = map[name];
   if (mapped) {
+    // This is the spot where further substitutions may be possible.
     return expr.matches(mapped);
   } else {
     map[name] = expr;
