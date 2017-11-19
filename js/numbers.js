@@ -527,8 +527,8 @@ var divisionInfo = {
   //
   // TODO: Carry this forward into a proof of the desired result.
   quotientExists: {
-    statement: ('@R x & R y & x != 0 & y != 0 => ' +
-                '(y * z = x == z = iota {z. y * z = x})'), // "the"!
+    statement:
+    'y != 0 => (z = the {z. R x & R y & R z & x = y * z} => x = y * z)',
     proof: function() {
       var step1 = rules.uniqueQuotient();
       var step2 = rules.exists1Forall();
