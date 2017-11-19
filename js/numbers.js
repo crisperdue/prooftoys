@@ -522,22 +522,30 @@ var numbersInfo = {
 
 var divisionInfo = {
 
-  // First step toward identifying division as the inverse of
-  // multiplication.
-  //
-  // TODO: Carry this forward into a proof of the desired result.
-  quotientExists: {
-    statement:
-    'y != 0 => (z = the {z. R x & R y & R z & x = y * z} => x = y * z)',
+  // Division is an inverse of multiplication.
+  divisionIsInverse: {
+    statement: '@y != 0 & R x & R y => (R z & x = y * z == z = x / y)',
     proof: function() {
       var step1 = rules.uniqueQuotient();
       var step2 = rules.exists1Forall();
-      var step3 = rules.instVar(step2, '{z. y * z = x}', 'p');
-      var step4 = rules.instForall(step3, '/right', 'z');
-      var step5 = rules.simpleApply(step4, '/right/left');
-      var step6 = rules.p2(step1, step5,
-                           '(p => q) & (q => r) => (p => r)');
-      return step6;
+      var path = step2.find('p x');
+      // TODO: Extend Expr.matchSchema to handle this.  (Rules.p2 uses
+      //   matchSchema.
+      var step3 = rules.instVar(step2, '{z. R x & R y & R z & x = y * z}', 'p');
+      var step4 = rules.p2(step1, step3, '(a => b) & (b => c) => (a => c)');
+      var step5 = rules.simpleApply(step4, path);
+      var step6 = rules.instForall(step5, '/right', Toy.parse('z'));
+      var fml = 'the {z. R x & R y & R z & x = y * z} = x / y';
+      var divDefn = rules.fact(fml);
+      var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);
+      var loc7 = Toy.path('/right').concat(step7.getRight().find('R x'));
+      var asm7 = rules.assume('R x');
+      var step8 = rules.trueBy(step7, loc7, asm7);
+      var loc8 = Toy.path('/right').concat(step8.getRight().find('R y'));
+      var asm8 = rules.assume('R y');
+      var step9 = rules.trueBy(step8, loc8, asm8);
+      var step10 = rules.simplifySite(step9, '/rt/left');
+      return step10;
     }
   }
 
