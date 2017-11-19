@@ -4148,6 +4148,9 @@ var ruleInfo = {
   // Derives a step with hypotheses deduplicated and ordered as by
   // asmComparator, including removal of occurrences of T.
   // Works with hypotheses and with plain implications.
+  // TODO: Make this much faster by using sets of tautologies that
+  //   show conjuncts imply a single one of its conjuncts, and using
+  //   those to build the rearranged conjunction.
   arrangeAsms: {
     action: function(step) {
       if (!step.isCall2('=>')) {
