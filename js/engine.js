@@ -2738,7 +2738,7 @@ var ruleInfo = {
       }
       assert(substitution, 
              '{1} does not match LHS of schema\n{2}',
-             step, schema, step);
+             step, schema);
       var unmapped = schema.unmappedVars(substitution);
       var schema2 = schema;
       // Variables first in unmapped are quantified first/outermost.
@@ -4429,12 +4429,13 @@ var ruleInfo = {
     }
   },
 
-  // From unique existence for p conclude an equivalence with iota for
-  // all x.
+  // From unique existence for p conclude an equivalence with "the"
+  // (iota) for all x.
   //
-  // Simplified statement of 5312.
+  // Simplified statement of 5312, using "the" in place of iota.
+  // You can use exists1The to replace "the" with "iota".
   exists1Forall: {
-    statement: 'exists1 p => forall {x. p x == x = iota p}',
+    statement: 'exists1 p => forall {x. p x == x = the p}',
     proof: function() {
       var a1 = rules.assume('p = {x. x = y}');
       var step1 = (rules.axiom5()
@@ -4456,7 +4457,11 @@ var ruleInfo = {
                    .andThen('useDefinition', '/left/fn')
                    .andThen('simpleApply', '/left'));
       var step8 = rules.rewrite(step6, '/left', step7);
-      return step8;
+      var loc8 = step8.find('iota p');
+      var step9 = rules.replace(step8, loc8,
+                                (rules.exists1The()
+                                 .andThen('eqnSwap')));
+      return step9;
     }
   },
 
