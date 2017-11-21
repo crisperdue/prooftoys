@@ -4534,7 +4534,7 @@ var ruleInfo = {
 };  // End of ruleInfo.
 
 // Map from rule name to function used in all proofs.
-// Generated from ruleInfo by addRules, below.
+// Generated from ruleInfo by addRulesMap, below.
 var rules = {};
 
 /**
@@ -4544,7 +4544,7 @@ var rules = {};
  * ruleInfo object entry for the name.  If not supplied in the rule
  * definition, the info.inputs is defaulted to an empty object here.
  */
-function addRules(ruleInfo) {
+function addRulesMap(ruleInfo) {
   for (var key in ruleInfo) {
     addRule(key, ruleInfo[key]);
   }
@@ -6019,7 +6019,7 @@ Toy.getStepCounter = getStepCounter;
 Toy.noSimplify = noSimplify;
 
 Toy.addRule = addRule;
-Toy.addRules = addRules;
+Toy.addRulesMap = addRulesMap;
 Toy.addDefnFacts = addDefnFacts;
 Toy.lookupFactInfo = lookupFactInfo;
 Toy.addFact = addFact;
@@ -6073,7 +6073,7 @@ Toy._conjunctionSchema = conjunctionSchema;
 
 // Do this after support modules are initialized.
 $(function() {
-    addRules(ruleInfo);
+    addRulesMap(ruleInfo);
     addFactsMap(logicFacts);
 });
 

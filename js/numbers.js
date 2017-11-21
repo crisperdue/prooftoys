@@ -3180,12 +3180,12 @@ Toy.isArithmetic = isArithmetic;
 
 // Do this after support modules are initialized.
 $(function() {
-    Toy.addRules(numbersInfo);
-    Toy.addRules(divisionInfo);
-    Toy.addRules(equationOpsInfo);
-    Toy.addRules(simplifiersInfo);
-    Toy.addRules(moversInfo);
-    Toy.addRules(fractionsInfo);
+    Toy.addRulesMap(numbersInfo);
+    Toy.addRulesMap(divisionInfo);
+    Toy.addRulesMap(equationOpsInfo);
+    Toy.addRulesMap(simplifiersInfo);
+    Toy.addRulesMap(moversInfo);
+    Toy.addRulesMap(fractionsInfo);
     Toy.addFactsMap(algebraFacts);
 
     // From here is overall initialization for the complete system.
