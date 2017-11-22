@@ -519,6 +519,36 @@ var numbersInfo = {
 
 };
 
+var fieldOrdering =
+  [
+   {statement: 'not (x < x)',
+    description: 'strict ordering axiom 1'},
+   {statement: 'x < y => not (y < x)',
+    description: 'strict ordering axiom 2'},
+   {statement: 'x < y | y < x | x = y',
+    description: 'strict ordering axiom 3'},
+   {statement: 'x < y & y < z => x < z',
+    description: 'strict ordering transitivity'},
+
+   // Completeness:
+   //
+   // infix (x is_ub S)
+   // define is_ub = [x ∈ ℝ, S ⊆ ℝ. ∀ y ∈ S. y ≤ x]
+   // ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
+   //          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
+
+   {statement: 'x < y => x + z < y + z'},
+   {statement: '0 < x & 0 < y => 0 < x * y'}
+   ];
+
+
+var fieldInverses =
+  [
+   {statement: 'R x => exists {y. R y & x + y = 0}',
+    description: 'field axiom: existence of additive inverse'},
+   {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}',
+    description: 'field axiom: existence of multiplicative inverse'}
+   ];
 
 var divisionInfo = {
 
@@ -3187,6 +3217,9 @@ $(function() {
     Toy.addRulesMap(moversInfo);
     Toy.addRulesMap(fractionsInfo);
     Toy.addFactsMap(algebraFacts);
+
+    Toy.addRules(fieldOrdering);
+    Toy.addRules(fieldInverses);
 
     // From here is overall initialization for the complete system.
 
