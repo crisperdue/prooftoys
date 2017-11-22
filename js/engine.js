@@ -265,6 +265,10 @@ Expr.addMethods(ruleMethods);
 //   Do not call "justify", that is done automatically and
 //   the proof is memoized.
 //
+// name: name of the rule, axiom or theorem; required if it is a rule
+//   of inference with one or more arguments (see below).  Used to
+//   look up the rule in "rules".
+//
 // statement: for a theorem, this string optionally states the theorem
 //   proved.  In this case the theorem is also added as a fact.  If
 //   the value is an equation, with or without assumptions, if its
@@ -4534,6 +4538,7 @@ var ruleInfo = {
 };  // End of ruleInfo.
 
 // Map from rule name to function used in all proofs.
+// This is a central global variable.
 // Generated from ruleInfo by addRulesMap, below.
 var rules = {};
 
@@ -4546,16 +4551,40 @@ var rules = {};
  */
 function addRulesMap(ruleInfo) {
   for (var key in ruleInfo) {
-    addRule(key, ruleInfo[key]);
+    var value = ruleInfo[key];
+    if (value.constructor != Object) {
+      console.warn('Old-style rule action', key);
+    }
+    var info = value.constructor == Object ? value : {action: value};
+    if (info.ruleName) {
+      console.warn('Property "ruleName" found for rule with key', key);
+    }
+    info.name = key;
+    addRule(info);
   }
+}
+
+/**
+ * Adds an array of rules (axioms and theorems/facts, named or not),
+ * each in the form of a plain object with properties.  If a fact has
+ * a name, the name appears as a "name" property.
+ *
+ * TODO: Convert addFactsMap to use this internal instead of addFact.
+ */
+function addRules(ruleList) {
+  ruleList.forEach(addRule);
 }
 
 /**
  * Process the given info into form for inclusion into Toy.rules and
  * add the result there.  For details see the comments for ruleInfo.
  */
-function addRule(key, info_arg) {
-  var info = info_arg.constructor == Object ? info_arg : {action: info_arg};
+function addRule(info) {
+  var name = info.name;
+  if (name && rules[name]) {
+    console.warn('Inference rule with name', name, 'already declared');
+  }
+
   var proof = info.proof;
   var statement = info.statement;
   // This will become the "rule object":
@@ -4579,9 +4608,9 @@ function addRule(key, info_arg) {
     //   as appropriate.
     // TODO: Consider checking that "actions" _do_ have parameters.
     assert(typeof proof === 'function',
-           'Proof of {1} should be a function', key);
-    assert(proof.length == 0, 'Proof of {1} requires parameters', key);
-    assert(!info.action, 'Both proof and action for {1}', key);
+           'Proof of {1} should be a function', name);
+    assert(proof.length == 0, 'Proof of {1} requires parameters', name);
+    assert(!info.action, 'Both proof and action for {1}', name);
     // User-supplied proof function is the main.
     main = proof;
   }
@@ -4610,7 +4639,7 @@ function addRule(key, info_arg) {
     for (var k in factProps) {
       if (k in info) {
         // Uncomment this for detailed tracing.
-        // console.warn('Adding', k, 'to', key);
+        // console.warn('Adding', k, 'to', name);
         properties[k] = info[k];
       }
     }
@@ -4633,7 +4662,7 @@ function addRule(key, info_arg) {
                  statement, rule.result);
         }
       }
-      return rule.result.justify(key, []);
+      return rule.result.justify(name, []);
     };
     // Describe theorems as "theorem" by default.
     // The theorem name will be added as ruleName into the tooltip.
@@ -4642,10 +4671,11 @@ function addRule(key, info_arg) {
     }
   } else {
     // It is a rule of inference, not an axiom or theorem.
+    assert(name, 'Inference rule must have a name', info);
     // The action property is the user code to run it.
     main = info.action;
     assert(typeof main === 'function',
-           'Rule action must be a function: {1}', key);
+           'Rule action must be a function: {1}', name);
 
     if (info.precheck) {
       // There is a precheck.
@@ -4658,7 +4688,7 @@ function addRule(key, info_arg) {
                 ? main.apply(rule, arguments)
                 : info.onFail
                 ? info.onFail.call(rule)
-                : Toy.fail(Toy.format('Rule {1} not applicable', key)));
+                : Toy.fail(Toy.format('Rule {1} not applicable', name)));
       }
       if (info.maxArgs == null) {
         info.maxArgs = main.length;
@@ -4706,12 +4736,11 @@ function addRule(key, info_arg) {
 
   // Default the description to the marked up formula or the ruleName.
   if (!('description' in info)) {
-    info.description = key;
+    // The name could be undefined.
+    info.description = name;
   }
   // Remember the basic tooltip
   info.basicTooltip = info.tooltip;
-  // Include the rule name in every tooltip.
-  info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), key);
 
   // If there is a toOffer property with string value, coerce it
   // to a function of step and path.
@@ -4724,32 +4753,35 @@ function addRule(key, info_arg) {
   }
 
   info.labels = processLabels(info.labels);
-  if (rule && rule.length === 0 && key.slice(0, 5) === 'axiom') {
-    info.labels.axiom = true;
-  }
   if (info.form !== undefined && Toy.isEmpty(info.labels)) {
     // Anything conceivably offerable (with a form), default to
     // "basic" if no other labels.
     info.labels.basic = true;
   }
 
-  // Add the key to the info as a ruleName property.
-  info.ruleName = key;
-
   // Add all metadata as the function's "info" property.
   rule.info = info;
   
-  // Assign a name to the wrapper and main.
-  if (rule !== main) {
-    Object.defineProperty(rule, 'name',
-                          {value: key + '_wrapper'});
-    Object.defineProperty(main, 'name', {value: key});
-  } else {
-    Object.defineProperty(rule, 'name', {value: key});
-  }
+  if (name) {
+    // Include the rule name in the tooltip.
+    info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), name);
 
-  // Finally install the rule into the rules.
-  rules[key] = rule;
+    if (rule && rule.length === 0 && name.slice(0, 5) === 'axiom') {
+      info.labels.axiom = true;
+    }
+
+    // Assign a name to the wrapper and main.
+    if (rule !== main) {
+      Object.defineProperty(rule, 'name',
+                            {value: name + '_wrapper'});
+      Object.defineProperty(main, 'name', {value: name});
+    } else {
+      Object.defineProperty(rule, 'name', {value: name});
+    }
+
+    // Finally install the rule into the rules.
+    rules[name] = rule;
+  }
 }
 
 /**
@@ -6020,6 +6052,7 @@ Toy.noSimplify = noSimplify;
 
 Toy.addRule = addRule;
 Toy.addRulesMap = addRulesMap;
+Toy.addRules = addRules;
 Toy.addDefnFacts = addDefnFacts;
 Toy.lookupFactInfo = lookupFactInfo;
 Toy.addFact = addFact;
