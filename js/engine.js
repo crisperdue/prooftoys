@@ -357,7 +357,10 @@ Expr.addMethods(ruleMethods);
 //   of the theorem.  If given as text in ruleInfo, converted into an
 //   expression in "rules".
 //
-// description: HTML word or phrase to display for the rule name.
+// description: HTML word or phrase for use in one-line description,
+//   or function to compute it, as in rules.fact.  If beginning with
+//   "=", name of a "step formatter" in stepFormatters follows.
+//   Either sort of function receives the step as argument.
 //
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
@@ -4372,7 +4375,11 @@ var ruleInfo = {
     autoSimplify: noSimplify,
     menu: 'look up a fact',
     tooltip: (''),
-    description: 'fact',
+    description: function(step) {
+      var info = lookupFactInfo(step.ruleArgs[0]);
+      var d = info && info.description;
+      return d || 'fact';
+    },
     labels: 'basic'
   },
 
@@ -4389,6 +4396,7 @@ var ruleInfo = {
                    .andThen('instMultiVars', {f: '{x. p x}', g: 'p'}));
       return rules.r(fact2, fact1, '');
     },
+    description: 'eta conversion',
     simplifier: true
   },
 
@@ -4628,6 +4636,7 @@ function addRule(info) {
     // Add it as a fact also, and potentially "swapped".
     // A fact needs a statement, so we rely here on having a statement given.
     var factProps = {
+      description: true,
       simplifier: true,
       desimplifier: true,
       noSwap: true,
@@ -4993,6 +5002,7 @@ var factProperties = {
   desimplifier: true,
   noSwap: true,
   labels: true,
+  description: true,
   converse: true
 };
 
@@ -5012,6 +5022,7 @@ var factProperties = {
  *   complete statement of the fact, to be used as the goal.
  * proof: function to return the proved fact, matching the goal.
  *   If not present, one will be generated to assert the goal.
+ * description: string or function as for a rule description.
  * simplifier: true iff this fact is a simplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
  * labels: Object/set of label names, if given as a string, parses
@@ -5078,6 +5089,7 @@ function addSwappedFact(info) {
                    goal: swapped,
                    simplifier: !!info.desimplifier,
                    desimplifier: !!info.simplifier,
+                   description: info.description,
                    labels: labels2
       };
       addFact(info2);

@@ -2102,6 +2102,9 @@ function formattedStepInfo(step) {
   var info = Toy.getRuleInfo(step);
   var description = info.description;
   var useDefault = true;
+  if (typeof description === 'function') {
+    description = description(step);
+  }
   if (description[0] === '=') {
     useDefault = false;
     // Expand the description with the named function.
