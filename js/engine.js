@@ -4883,6 +4883,14 @@ var logicFacts = {
     simplifier: true
   },
 
+  '(negate p) x == not (p x)': {
+    proof: function() {
+      return (rules.consider('(negate p) x')
+              .andThen('apply', '/right/fn')
+              .andThen('apply', '/right'));
+    }
+  },
+
   // This is the classic definition of the existential quantifier,
   // proved from a concise definition.  We could have made a
   // technically correct definition based directly on this.
@@ -5128,6 +5136,10 @@ $(function() {
     define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
     // Always either "none" or the member of the singleton set:
     define('the', '{p. if (exists1 p) (iota p) none}');
+    // This "negates" a predicate, returning a predicate whose value
+    // is the negation of the value of the given predicate.  (Just one
+    // argument!)
+    define('negate', '{p. {x. not (p x)}}');
   });
 
 
