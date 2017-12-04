@@ -916,8 +916,8 @@ var simplifiersInfo = {
   // step at the given path using basicSimpFacts until no more
   // simplifications are found.
   simplifySite: {
-    action: function(step, path) {
-      var result = rules._simplifySite(step, path);
+    action: function(step, path, opt_facts) {
+      var result = rules._simplifySite(step, path, opt_facts);
       return result.justify('simplifySite', arguments, [step]);
     },
     inputs: {site: 1},
@@ -933,24 +933,26 @@ var simplifiersInfo = {
 
   // Inline version of simplifySite.
   _simplifySite: {
-    action: function(step, path) {
+    action: function(step, path, opt_facts) {
       var _path = Toy.path;
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.whileChanges(eqn, function(eqn) {
-          return rules._simplifyMath1(eqn, _path('/rt/right', eqn));
+          return rules._simplifyMath1(eqn, _path('/rt/right', eqn, opt_facts));
         });
       return rules.replace(step, path, simpler);
     }
   },
 
   // Applies up to one simplification within the part of the given
-  // step at _path using basicSimpFacts.  Returns its result inline,
-  // just the input step if there is nothing to do.
+  // step at _path using the given facts, or basicSimpFacts if facts
+  // are not given.  Returns its result inline, just the input step if
+  // there is nothing to do.
   //
   // From the UI use a rule that calls this one.
   _simplifyMath1: {
-    action: function(step, _path) {
-      var info = Toy.searchForMatchingFact(step.get(_path), basicSimpFacts);
+    action: function(step, _path, opt_facts) {
+      var facts = opt_facts || basicSimpFacts;
+      var info = Toy.searchForMatchingFact(step.get(_path), facts);
       return (info
               ? rules.rewrite(step, _path.concat(info.path), info.stmt)
               : step);
