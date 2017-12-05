@@ -964,6 +964,28 @@ Map.prototype.isEmpty = function() {
   return true;
 };
 
+//// Array snapshots
+
+/**
+ * Create a new "array snapshot" with a degree of protection against
+ * accidental programmer modification of the array.  The values in the
+ * array are intended to be accessed only through an iterator.
+ */
+function ArraySnap(a) {
+  var self = this;
+  self._arraySnap = a.concat();
+  self[Symbol.iterator] = function() {
+    return self._arraySnap[Symbol.iterator]();
+  }
+}
+
+/**
+ * Returns a new Array with all the elements of this ArraySnap.
+ */
+ArraySnap.prototype.copy = function() {
+  return this._arraySnap.concat();
+}
+
 
 //// Counting and timing calls on functions.
 
@@ -1581,6 +1603,7 @@ Toy.benchmark = benchmark;
 Toy.Set = Set;
 Toy.emptySet = emptySet;
 Toy.Map = Map;
+Toy.ArraySnap = ArraySnap;
 
 Toy.track = track;
 Toy.tracked = tracked;
