@@ -5222,8 +5222,8 @@ function asFactProver(prover, goal) {
 }
 
 
-// Private to lookupFactInfo and setFactInfo.  Maps from a string
-// "dump" of a fact to fact info, consisting of:
+// Private to lookupFactInfo and setFactInfo.  Maps from a canonical
+// string "dump" of a fact to fact info, consisting of:
 //
 // synopsis (optional): synopsis string
 // goal: Expr statement of the fact, with all assumptions
@@ -5323,6 +5323,12 @@ function isInProgress(stmt) {
   return lookupFactInfo(stmt).inProgress;
 }
 
+// Cache of statement keys for statements that are in the form of
+// strings, as is often the case in lists of facts.  The policy
+// is to compute the mapping once and remember it forever, but
+// in principle this is a cache.
+_statementKeys = {};
+
 /**
  * Given a term or string that parses to one, returns a string key
  * usable for looking up information about the fact.  If the statement
@@ -5336,12 +5342,23 @@ function isInProgress(stmt) {
  *   based on the entire statement.
  */
 function getStatementKey(stmt) {
+  // If the statement is a string, look in the cache.
+  if (typeof stmt === 'string') {
+    var cached = _statementKeys[stmt];
+    if (cached) {
+      return cached;
+    }
+  }
   // This currently uses toString, which is sensitive to aliases
   // in particular "==" for "=", compared with "dump", which is not.
   // TODO: Determine what to do about facts such as pure logic facts,
   //   which are generic across types, and implement accordingly.
   // TODO: Use stmt just as a synopsis here.
-  return Toy.standardVars(getSynopsis(stmt)).toString();
+  var key = Toy.standardVars(getSynopsis(stmt)).toString();
+  if (typeof stmt === 'string') {
+    _statementKeys[stmt] = key;
+  }
+  return key;
 }
 
 /**
@@ -6115,6 +6132,9 @@ Toy.traceRule = traceRule;
 // For communication between an action precheck and the rule's main
 // action function.
 Toy._actionInfo;
+
+// For debugging.
+Toy._statementKeys = _statementKeys;
 
 // For testing.
 Toy._tautologies = _tautologies;
