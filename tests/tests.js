@@ -1183,10 +1183,10 @@ var testCase = {
     assertEqual(undefined, result.stmt);
 
     result = Toy.findMatchingFact(facts, undefined,
-                                   Toy.parse('x + y'));
-    assertEqual('(x + y)', result.term);
-    assertEqual('a + b = b + a', result.stmt);
-    assertEqual('y', result.subst.b.toString());
+                                   Toy.parse('a + b'));
+    assertEqual('(a + b)', result.term);
+    assertEqual('((x + y) = (y + x))', Toy.getSynopsis(result.stmt));
+    assertEqual('b', result.subst.y.toString());
 
     var context = {factLists:
                    {organize:

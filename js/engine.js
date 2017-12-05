@@ -5491,7 +5491,7 @@ function searchForMatchingFact(term, info) {
  * The value returned is falsy if no match is found, else a plain
  * object with properties:
  * 
- * stmt: pattern part of the ultimately matching pattern, or the equation
+ * stmt: Relevant fact statement, proved or not, or the equation
  *   returned by an "apply" pattern.
  * term: the term argument to findMatchingFact.
  * subst: substitution that makes the given term match the fact (empty for
@@ -5521,17 +5521,21 @@ function findMatchingFact(facts_arg, cxt, term) {
   if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
     facts = cxt.factLists && cxt.factLists[facts_arg];
   }
-  assert($.isArray(facts), 'No facts: {1}', facts_arg);
-  for (var i = 0; i < facts.length; i++) {
-    var factInfo = facts[i];
+  assert(facts && facts[Symbol.iterator], 'No facts: {1}', facts_arg);
+  for (var it = facts[Symbol.iterator](), v = it.next(); !v.done; v = it.next()) {
+    var factInfo = v.value;
     var infoIsObject = factInfo.constructor == Object;
     if (!infoIsObject) {
       var stmt = factInfo;
       if (!isInProgress(stmt)) {
-        var schema = schemaPart(termify(stmt));
+        // The call to rules.fact handles tautologies and arithmetic
+        // facts.  For reasons that are not clear, rules.fact is much
+        // slower than findFact.
+        var fullFact = findFact(stmt) || rules.fact(stmt);
+        var schema = schemaPart(fullFact);
         var subst = term.matchSchema(schema);
         if (subst) {
-          var result = {stmt: stmt,
+          var result = {stmt: fullFact,
                         term: term,
                         path: Toy.path(),
                         subst: subst};
