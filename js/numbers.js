@@ -921,6 +921,7 @@ var simplifiersInfo = {
       return result.justify('simplifySite', arguments, [step]);
     },
     inputs: {site: 1},
+    minArgs: 2,
     form: '',
     menu: 'algebra: simplify {term}',
     offerExample: true,
