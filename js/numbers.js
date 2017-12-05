@@ -519,7 +519,7 @@ var numbersInfo = {
 
 };
 
-var fieldOrdering =
+var realOrdering =
   [
    {statement: 'not (x < x)',
     description: 'strict ordering axiom 1'},
@@ -542,12 +542,16 @@ var fieldOrdering =
    ];
 
 
-var fieldInverses =
+var fieldLaws =
   [
+   {statement: 'exists {z. R z & R x => x + z = x}',
+    description: 'field axiom: additive identity exists'},
+   {statement: 'exists {y. R y & R x & x != 0 => x * y = x}',
+    description: 'field axiom: multiplicative identity exists'},
    {statement: 'R x => exists {y. R y & x + y = 0}',
-    description: 'field axiom: existence of additive inverse'},
+    description: 'field axiom: additive inverse exists'},
    {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}',
-    description: 'field axiom: existence of multiplicative inverse'}
+    description: 'field axiom: multiplicative inverse exists'}
    ];
 
 var divisionInfo = {
@@ -3221,8 +3225,8 @@ $(function() {
     Toy.addRulesMap(fractionsInfo);
     Toy.addFactsMap(algebraFacts);
 
-    Toy.addRules(fieldOrdering);
-    Toy.addRules(fieldInverses);
+    Toy.addRules(realOrdering);
+    Toy.addRules(fieldLaws);
 
     // From here is overall initialization for the complete system.
 
@@ -3239,6 +3243,8 @@ $(function() {
           basicSimpFacts.push(info.synopsis);
         }
       });
+    // We could "freeze" the basic facts to help prevent unexpected results.
+    // basicSimpFacts = new Toy.ArraySnap(basicSimpFacts);
 
     // For testing (computed value).
     Toy._ungroupingFacts = ungroupingFacts;
