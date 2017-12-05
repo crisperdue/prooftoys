@@ -1855,14 +1855,15 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // pattern from them.
 //
 //
-// searchCalls(fn, path)
+// searchMost(fn, opt_path, opt_quantified)
 //
-// Tree walks though this Expr and all Calls it contains, recursively,
+// Tree walks though this Expr and its subexpressions, recursively,
 // calling the function at each Call, passing it the Call and a
 // reverse path from this term to that point until the function
 // returns a truthy value.  Descends first into the arg part to make
-// the search proceed right to left.  Does not descend into non-Calls.
-// Returns the first truthy value found at any level.
+// the search proceed right to left.  All subexpressions of Lambda
+// terms receive a truthy value for opt_quantified.  Returns the first
+// truthy value returned from "fn" at any level.
 */
 
 //// Atom -- variable bindings and references
@@ -2178,7 +2179,7 @@ Atom.prototype._asPattern = function(term) {
   return this.__var || this;
 };
 
-Atom.prototype.searchCalls = function(fn, path) {};
+Atom.prototype.searchMost = function(fn, path, isQuantified) {};
 
 
 
@@ -2725,15 +2726,15 @@ Call.prototype._asPattern = function(term) {
   return this.__var || new Call(this.fn._asPattern(), this.arg._asPattern());
 };
 
-Call.prototype.searchCalls = function(fn, path) {
+Call.prototype.searchMost = function(fn, path, isQuantified) {
   if (!path) {
     path = Toy.path();
   }
   return (fn(this, path) ||
           // Try the arg first to help substitutions apply toward the
           // right sides of formulas.
-          this.arg.searchCalls(fn, new Path('arg', path)) ||
-          this.fn.searchCalls(fn, new Path('fn', path)));
+          this.arg.searchMost(fn, new Path('arg', path), isQuantified) ||
+          this.fn.searchMost(fn, new Path('fn', path, isQuantified)));
 };
 
 
@@ -2969,7 +2970,9 @@ Lambda.prototype._asPattern = function(term) {
   return this.__var || new Lambda(this.bound, this.body._asPattern());
 };
 
-Lambda.prototype.searchCalls = function(fn, path) {};
+Lambda.prototype.searchMost = function(fn, path) {
+  return this.body.searchMost(fn, new Path('body', path), true);
+};
 
 // Private methods grouped by name.
 

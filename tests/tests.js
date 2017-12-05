@@ -1146,7 +1146,7 @@ var testCase = {
     assertEqual(undefined, match(step2, '/main/right', facts, 'b'));
   },
 
-  testSearchCalls: function() {
+  testSearchMost: function() {
     var names = [];
     var paths = [];
     var terms = [];
@@ -1159,7 +1159,7 @@ var testCase = {
         terms.push(term);
       }
     }
-    Toy.parse('2 * x + neg y = 12 == T').searchCalls(foo);
+    Toy.parse('2 * x + neg y = 12 == T').searchMost(foo);
     assertEqual(["==", "=", "neg", "+", "*"], names);
     assertEqual(["/fn",
                  "/fn/arg/fn",

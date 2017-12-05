@@ -3580,8 +3580,8 @@ var ruleInfo = {
           return term;
         }
       }
-      // searchCalls finds the rightmost occurrence, which seems best.
-      var eqn = eqnStep.searchCalls(test);
+      // searchMost finds the rightmost occurrence, which seems best.
+      var eqn = eqnStep.searchMost(test);
       assert(eqn, 'Occurrence of {1} = ... not found', target.toUnicode());
       var result = rules.r5239(targetWff, targetPath, eqn);
       return result.justify('replaceIsEquiv', arguments, []);
@@ -5427,15 +5427,15 @@ function searchForMatchingFact(term, info) {
   } else {
     facts = info;
   }
-  searchMethod = searchMethod || 'searchCalls';
-  function finder(term, revPath) {
+  searchMethod = searchMethod || 'searchMost';
+  function factFinder(term, revPath, isQuantified) {
     var result = findMatchingFact(facts, cxt, term);
     if (result) {
       result.path = revPath.reverse().concat(result.path);
     }
     return result;
   }
-  return term[searchMethod](finder);
+  return term[searchMethod](factFinder);
 }
 
 /**
