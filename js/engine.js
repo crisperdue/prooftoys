@@ -4883,6 +4883,12 @@ var logicFacts = {
     simplifier: true
   },
 
+  'negate p = {x. not (p x)}': {
+    proof: function() {
+      return (rules.consider('negate p').andThen('apply', '/right'));
+    }
+  },
+
   '(negate p) x == not (p x)': {
     proof: function() {
       return (rules.consider('(negate p) x')
@@ -4907,6 +4913,18 @@ var logicFacts = {
               .andThen('rewriteOnlyFrom', '/right/arg', all));
     },
     desimplifier: true
+  },
+
+  'exists {x. not (p x)} == not (forall p)': {
+    proof: function() {
+      var step1 = (rules.fact('exists p == not (forall {x. not (p x)})')
+                   .andThen('instMultiVars', {p: 'negate p'})
+                   .andThen('rewriteOnly', '/left/arg', 'negate p = {x. not (p x)}'));
+      var loc1 = step1.find('negate p x');
+      return (step1.andThen('rewriteOnly', loc1, 'negate p x = not (p x)')
+              .andThen('simplifySite', '/right/arg')
+              .andThen('rewriteOnly', '/right/arg/arg', '{x. p x} = p'));
+    }
   },
 
   // This has the core reasoning for 5242, existential generalization

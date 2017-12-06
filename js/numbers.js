@@ -3177,6 +3177,7 @@ var basicSimpFacts = [
                       'x = x == T',
                       'T => a == a',
                       'not (a = b) == a != b',
+                      '(negate p) x == not (p x)',
                       'if T x y = x',
                       'if F x y = y',
                       {stmt: 'a + neg b = a - b',
