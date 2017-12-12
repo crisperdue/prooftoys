@@ -942,7 +942,7 @@ var simplifiersInfo = {
       var _path = Toy.path;
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.whileChanges(eqn, function(eqn) {
-          return rules._simplifyMath1(eqn, _path('/rt/right', eqn, opt_facts));
+          return rules._simplifyMath1(eqn, _path('/rt/right', eqn), opt_facts);
         });
       return rules.replace(step, path, simpler);
     }
@@ -1037,14 +1037,24 @@ var simplifiersInfo = {
       if (!step.isCall2('=>')) {
         return step;
       }
-      // var simpler = rules.simplifySite(step, '/left');
-      var path = Toy.path;
-      var eqn = rules.consider(step.getLeft());
-      // TODO: Call rules.simplifySite instead after modifying
-      //   _simplifySite to use /rt/right instead of /main/right.
-      var reduced = Toy.whileChanges(eqn, function(eqn) {
-          return rules._simplifyMath1(eqn, path('/rt/right', eqn));
-        });
+
+      var realTypeFacts =
+      [
+       'R (x + y)',
+       'R (x * y)',
+       'R (x - y)',
+       'y != 0 => R (x / y)',
+       'R (neg x)',
+       'x != 0 => R (recip x)',
+       'x != 0 => recip x != 0',
+       'x != 0 & y != 0 == x * y != 0',
+       {apply: function(term, cxt) {
+           return (isArithmetic(term) &&
+                   rules.axiomArithmetic(term));
+         }
+       }
+       ];
+      var reduced = rules.simplifySite(step, '/left', realTypeFacts);
       // In the reduced term, real constants disappear and composite
       // terms either reduce to (R <vbl>) or <asms> => ( ... == T).
       // In the last case, the reducing rewrite rule runs this rule on
@@ -1053,11 +1063,10 @@ var simplifiersInfo = {
       //
       // If Step.justify (or "replace") arranges assumptions, it is
       // not necessary to do that here.
-      var deduper = rules.conjunctionArranger(reduced.eqnRight(),
+      var deduper = rules.conjunctionArranger(reduced.getLeft(),
                                               Toy.asmComparator);
-      var deduped = rules.replace(reduced, '/rt/right', deduper);
-      return (rules.replace(step, '/left', deduped)
-              .justify('reduceRealAsms', arguments, [step]));
+      var deduped = rules.replace(reduced, '/left', deduper);
+      return (deduped.justify('reduceRealAsms', arguments, [step]));
     },
     inputs: {step: 1},
     form: '',

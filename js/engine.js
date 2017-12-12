@@ -3674,7 +3674,7 @@ var ruleInfo = {
         }
       }
       // Do the actual replacement.
-      var result = rules.rplace(simpler, step, path);
+      var result = rules.replace(step, path, simpler);
       return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
     },
     inputs: {site: 1, equation: 3},
