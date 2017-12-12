@@ -247,6 +247,12 @@ var ruleMethods = {
 };
 Expr.addMethods(ruleMethods);
 
+// Caches (details of) results of rules.fact that are given a string
+// as input, for performance of functions such as findMatchingFact.
+// Used in rules.fact to quickly get the proof of a fact given as a
+// string.  Not to be confused with _factsMap, which contains information
+// about facts as they are stated, not as they are looked up.
+var _factMap = {};
 
 //
 // Inference rules, axioms, theorems
@@ -4324,6 +4330,13 @@ var ruleInfo = {
   //   making "fact" more straightforward.
   fact: {
     action: function(synopsis) {
+      if (typeof synopsis === 'string') {
+        var proved = _factMap[synopsis];
+        if (proved) {
+          // console.log('FACT: found ', synopsis);
+          return proved.justify('fact', arguments);
+        }
+      }
       if (Toy.isProved(synopsis)) {
         // It is an already proved statement.
         return synopsis;
@@ -4342,6 +4355,7 @@ var ruleInfo = {
         // Maps free variables of the fact into ones given here.
         var map = getSynopsis(fact).alphaMatch(getSynopsis(synopsis));
         var instance = rules.instMultiVars(fact, map);
+        ((typeof synopsis === 'string') && (_factMap[synopsis] = instance));
         return instance.justify('fact', arguments);
       }
       // Next try arithmetic facts.
