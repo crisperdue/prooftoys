@@ -942,6 +942,8 @@ var simplifiersInfo = {
       var _path = Toy.path;
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.whileChanges(eqn, function(eqn) {
+          // This usage of /rt is kind of cool in that it automatically
+          // adapts in case some versions of eqn have assumptions.
           return rules._simplifyMath1(eqn, _path('/rt/right', eqn), opt_facts);
         });
       return rules.replace(step, path, simpler);

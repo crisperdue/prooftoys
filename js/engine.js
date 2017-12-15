@@ -5651,15 +5651,15 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
           // Use stmt to create the schema, because it may have different
           // free variables than the recorded fact.
           var schema = schemaPart(termify(stmt));
-        var subst = term.matchSchema(schema);
-        if (subst) {
-          var result = {stmt: fullFact,
-                        term: term,
-                        path: Toy.path(),
-                        subst: subst};
-          return result;
+          var subst = term.matchSchema(schema);
+          if (subst) {
+            var result = {stmt: fullFact,
+                          term: term,
+                          path: Toy.path(),
+                          subst: subst};
+            return result;
+          }
         }
-      }
       }
     } else if (factInfo.apply) {
       // "apply"
@@ -5690,21 +5690,21 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
       if (!(stmt && isInProgress(stmt))) {
         var fact = stmt && rules.fact(stmt);
         if (!(pureOnly && fact && fact.isCall2('=>'))) {
-        var where = factInfo.where;
-        var schema = (factInfo.match
-                      ? termify(factInfo.match)
+          var where = factInfo.where;
+          var schema = (factInfo.match
+                        ? termify(factInfo.match)
                         : schemaPart(fact));
-        var subst = term.matchSchema(schema);
-        if (subst && (!where || apply$(where, subst))) {
-          var result = {stmt: stmt,
-                        term: term,
-                        path: Toy.path(),
-                        subst: subst};
-          return result;
+          var subst = term.matchSchema(schema);
+          if (subst && (!where || apply$(where, subst))) {
+            var result = {stmt: stmt,
+                          term: term,
+                          path: Toy.path(),
+                          subst: subst};
+            return result;
+          }
         }
       }
     }
-  }
   }
   // If no match found the value will be falsy.
 };
@@ -5759,6 +5759,10 @@ function applyFactsOnce(step, path, facts) {
 /**
  * Apply the list of fact rewrites to the visible part of the step
  * until none of them any longer is applicable, returning the result.
+ *
+ * TODO: Replace uses of this.  Provide interactive commands that are
+ *   specific to the visible part.  If not interactive, use commands
+ *   not dependent on visibility status.
  */
 function applyToVisible(step, facts) {
   return applyFactsWithinSite(step, step.pathToVisiblePart(), facts);
