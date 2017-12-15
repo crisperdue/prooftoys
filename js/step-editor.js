@@ -1295,7 +1295,7 @@ function handleMouseEnterItem(ruleMenu, node, event) {
             var messageNode = display.suggestionMessage('not applicable');
             $node.data('suggestion', messageNode);
             display.suggest(messageNode);
-            console.error('Rule menu error', info.message);
+            console.error('Rule menu error:', info.result.message);
           });
     }
   }
