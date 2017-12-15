@@ -1506,19 +1506,11 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
   // property asynchronously.
   function handler() {
     if (wrapper.channelType === 'RPC') {
-      try {
-        var id = wrapper.id;
-        var message = wrapper.data;
-        var action = message.action;
-        var actions = receiver.actions;
-        if (!actions.hasOwnProperty(action)) {
-          throw new Error('Unknown RPC action', action);
-        }
-        var fn = actions[action].bind(receiver);
-        var result = fn(message, wrapper);
-        reply.data = {channelType: 'RPC', id: id, result: result,
-                      isError: false};
-      } catch(error) {
+      // Handle errors without catching them, so the debugger can
+      // take control at the point of the error.
+      function handleError(msg, url, line, col, error) {
+        // Restore the old error handler here ASAP.
+        window.onerror = oldHandler;
         var e = (receiver.encodeError
                  ? receiver.encodeError(error)
                  : error instanceof Error
@@ -1527,8 +1519,23 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
                     stack: error.stack}
                  : '?');
         reply.data = {channelType: 'RPC', id: id, result: e, isError: true};
-        debugger;
+        // Emulate the usual protocol for replies.
+        rpcLog('Posting error reply for RPC', reply.data.id);
+        window.setTimeout(replier, 0);
       }
+      var oldHandler = window.onerror;
+      window.onerror = handleError;
+      var id = wrapper.id;
+      var message = wrapper.data;
+      var action = message.action;
+      var actions = receiver.actions;
+      if (!actions.hasOwnProperty(action)) {
+        throw new Error('Unknown RPC action', action);
+      }
+      var fn = actions[action].bind(receiver);
+      var result = fn(message, wrapper);
+      reply.data = {channelType: 'RPC', id: id, result: result,
+                    isError: false};
       function replier() {
         var responder = self.onmessage;
         rpcLog('Handling RPC reply', reply.data.id);
@@ -1540,6 +1547,8 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
       // not be reason to wait for a repaint before handling the
       // worker's reply.
       window.setTimeout(replier, 0);
+      // When successful, restore the old handler immediately.
+      window.onerror = oldHandler;
     } else if (receiver.handleOther) {
       receiver.handleOther(event);
     } else {
