@@ -2526,10 +2526,54 @@ var ruleInfo = {
   equivExists: {
     statement: 'exists {x. p} == p',
     proof: function() {
-      var step1 = (rules.equivForall()
-                   .andThen('instVar', 'not p', 'p'));
-      return (rules.applyToBoth('not', step1)
-              .andThen('simplifyStep'));
+      var step1 = (rules.equivForall().andThen('instVar', 'not p', 'p'));
+      return (rules.applyToBoth('not', step1).andThen('simplifyStep'));
+    }
+  },
+
+  // 2132
+  forallOr: {
+    statement: 'forall {x. p x} | forall {x. q x} => forall {x. p x | q x}',
+    proof: function() {
+      var step1 = (rules.fact('forall p => p x')
+                   .andThen('rewriteOnly', '/left/arg', 'p = {x. p x}'));
+      var step2 = step1.andThen('instVar', 'q', 'p');
+      var step3 = rules.p2(step1, step2,
+                           '(a => b) & (c => d) => (a | c => b | d)');
+      var step4 = rules.toForall0(step3, 'x');
+      var step5 = rules.rewriteOnly(step4, '', 'implyForall');
+      return step5;
+    }
+  },
+
+  // 2138
+  andExists: {
+    statement: 'exists {x. p x & q x} => exists {x. p x} & exists {x. q x}',
+    proof: function() {
+      var notAll = 'not (forall p) == exists {x. not (p x)}'
+      var reducers = [{pure: true,
+                       apply: function(term, cxt) {
+            var result = term.isReducible();
+            if (result) {
+              result = rules.axiom4(term);
+            }
+            return result;
+            return (term.isReducible() &&
+                    rules.axiom4(term));
+          }
+        },
+        'not (not a) = a',
+        'not (not a | not b) == a & b'];
+      return (rules.forallOr()
+              .andThen('instMultiVars', {p: 'negate p', q: 'negate q'})
+              .andThen('simplifySite', '', ['negate p x == not (p x)'])
+              .andThen('rewriteOnly', '', 'a => b == not b => not a')
+              .andThen('rewriteOnly', '/left', notAll)
+              .andThen('rewriteOnly', '/right', 'not (a | b) == not a & not b')
+              .andThen('rewriteOnly', '/right/right', notAll)
+              .andThen('rewriteOnly', '/right/left', notAll)
+              .andThen('_simplifySite', '', reducers)
+              );
     }
   },
 
@@ -4410,8 +4454,11 @@ var ruleInfo = {
                    .andThen('instMultiVars', {f: '{x. p x}', g: 'p'}));
       return rules.r(fact2, fact1, '');
     },
-    description: 'eta conversion',
-    simplifier: true
+    // When used as a simplifier, this seems to interact badly in some
+    // cases with higher-order matching.  An example is proving andExists
+    // with assertFacts == false.
+    // simplifier: true,
+    description: 'eta conversion'
   },
 
   // Derive exists {x. p x} from a witnessing term.  This only replaces the
