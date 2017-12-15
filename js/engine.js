@@ -5841,7 +5841,7 @@ function whileChanges(eqn, fn) {
   var next;
   while (true) {
     next = fn(simpler);
-    if (next == simpler) {
+    if (next.matches(simpler)) {
       return next;
     }
     simpler = next;
