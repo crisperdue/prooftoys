@@ -4693,6 +4693,13 @@ function addRule(info) {
                 : result);
       }
       main = proof;
+      if (!info.axiom) {
+        if (typeof name !== 'string') {
+          console.warn('No proof for', statement.$$);
+        } else if (!name.startsWith('axiom')) {
+          console.warn('No proof for', name);
+        }
+      }
     }
     // Add it as a fact also, and potentially "swapped".
     // A fact needs a statement, so we rely here on having a statement given.
@@ -5148,7 +5155,7 @@ function addFact(info) {
   info.inProgress = false;
   info.labels = processLabels(info.labels);
   if (isRecordedFact(info.goal)) {
-    console.warn('Fact', info.goal.$$, 'already recorded, skipping.');
+    console.info('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
     setFactInfo(info);
   }

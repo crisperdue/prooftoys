@@ -526,12 +526,16 @@ var numbersInfo = {
 var realOrdering =
   [
    {statement: 'not (x < x)',
+    axiom: true,
     description: 'strict ordering axiom 1'},
    {statement: 'x < y => not (y < x)',
+    axiom: true,
     description: 'strict ordering axiom 2'},
    {statement: 'x < y | y < x | x = y',
+    axiom: true,
     description: 'strict ordering axiom 3'},
    {statement: 'x < y & y < z => x < z',
+    axiom: true,
     description: 'strict ordering transitivity'},
 
    // Completeness:
@@ -541,20 +545,30 @@ var realOrdering =
    // ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
    //          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
 
-   {statement: 'x < y => x + z < y + z'},
-   {statement: '0 < x & 0 < y => 0 < x * y'}
+   {statement: 'x < y => x + z < y + z',
+    axiom: true,
+    description: 'ordering of reals and addition'
+   },
+   {statement: '0 < x & 0 < y => 0 < x * y',
+    axiom: true,
+    description: 'ordering of reals and multiplication'
+   }
    ];
 
 
 var fieldLaws =
   [
    {statement: 'exists {z. R z & R x => x + z = x}',
+    axiom: true,
     description: 'field axiom: additive identity exists'},
    {statement: 'exists {y. R y & R x & x != 0 => x * y = x}',
+    axiom: true,
     description: 'field axiom: multiplicative identity exists'},
    {statement: 'R x => exists {y. R y & x + y = 0}',
+    axiom: true,
     description: 'field axiom: additive inverse exists'},
    {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}',
+    axiom: true,
     description: 'field axiom: multiplicative inverse exists'}
    ];
 
