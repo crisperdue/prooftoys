@@ -374,6 +374,10 @@ var numbersInfo = {
     // ordering laws.
   },
 
+  realNZRecip: {
+    statement: '@x != 0 => recip x != 0'
+  },
+
   realRecipClosed: {
     statement: '@x != 0 & R x => R (recip x)',
     simplifier: true,
@@ -966,6 +970,30 @@ var simplifiersInfo = {
     }
   },
 
+  // Uses the given facts to simplify the assumptions of the given
+  // step.  This is not intended to do any of the work of arrangeAsms.
+  // For steps involving real numbers see reduceRealAsms.  This
+  // differs from simplifySite in that it also simplifies any
+  // assumptions introduced by conditional facts in the facts list.
+  simplifyAsms: {
+    action: function(step, facts) {
+      if (!step.wff.isCall2('=>')) {
+        return step;
+      }
+      var eqn = rules.consider(step.get('/left'));
+      var simpler = Toy.whileChanges(eqn, function(eqn) {
+          // This usage of /rt is kind of cool in that it automatically
+          // adapts in case some versions of eqn have assumptions.
+          return rules._simplifyMath1(eqn, Toy.path('/rt/right', eqn), facts);
+        });
+      // The original eqn has no assumptions, but "simpler" may have
+      // some.  Simplify those in turn.
+      var simpler2 = rules.simplifyAsms(simpler, facts);
+      return (rules.replace(step, '/left', simpler2)
+              .justify('simplifyAsms', arguments, [step]));
+    }
+  },
+
   // Move all negations in past additions and multiplications;
   // eliminate double negations.
   simplifyNegations: {
@@ -1049,14 +1077,14 @@ var simplifiersInfo = {
        'R (neg x)',
        'x != 0 => R (recip x)',
        'x != 0 => recip x != 0',
-       'x != 0 & y != 0 == x * y != 0',
+       'x * y != 0 == x != 0 & y != 0',
        {apply: function(term, cxt) {
            return (isArithmetic(term) &&
                    rules.axiomArithmetic(term));
          }
        }
        ];
-      var reduced = rules.simplifySite(step, '/left', realTypeFacts);
+      var reduced = rules.simplifyAsms(step, realTypeFacts);
       // In the reduced term, real constants disappear and composite
       // terms either reduce to (R <vbl>) or <asms> => ( ... == T).
       // In the last case, the reducing rewrite rule runs this rule on
