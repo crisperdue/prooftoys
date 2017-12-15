@@ -5444,24 +5444,56 @@ function findFact(stmt) {
  * facts: List of facts in the format accepted by findMatchingFact.
  * context: Context information for "where" clauses as
  *   accepted by findMatchingFact.
+ *   TODO: (BUG!) Accept an "isQuantified" property here, or more 
+ *      detailed information, to indicate enclosing bound variables.
  * searchMethod: Name of method to apply to the term to control
  *   which subexpressions of the term to apply findMatchingFact to;
  *   defaults to 'searchCalls', which searches through calls.
  *
  * If the info is an array, it must be the list of facts.
+ *
+ * TODO: Consider changing this to something like applyMatchingFactIn,
+ *   doing essentially the same search, but attempting to apply the
+ *   first fact that seems to match, and continuing the search if
+ *   application fails.
  */
 function searchForMatchingFact(term, info) {
-  var facts, cxt, searchMethod;
+  var allFacts, searchMethod;
+  var cxt = {};
   if (info.constructor === Object) {
-    facts = info.facts;
-    cxt = info.context;
+    allFacts = info.facts;
+    info.context && Object.assign(cxt, info.context);
     searchMethod = info.searchMethod;
   } else {
-    facts = info;
+    allFacts = info;
+  }
+  // If set to non-null, just unconditional facts.  At present only
+  // includes facts that are just a statement in string form.
+  // Computed here for efficiency.
+  //
+  // TODO: Handle more complicated facts (as needed).
+  var pureFacts = null;
+  function isPureFact(fact) {
+    if (typeof fact === 'string' || fact instanceof Expr) {
+      // This next line supports ordinary facts and also tautologies.
+      // It relies on findFact to return a conditional whenever
+      // it is given a statement that has implicit assumptions.
+      var fullFact = findFact(fact) || termify(fact);
+      return fullFact && fullFact.isCall2('=');
+    } else if (fact.constructor === Object && fact.pure) {
+      return true;
+    }
   }
   searchMethod = searchMethod || 'searchMost';
   function factFinder(term, revPath, isQuantified) {
-    var result = findMatchingFact(facts, cxt, term);
+    if (isQuantified) {
+      pureFacts = pureFacts || allFacts.filter(isPureFact);
+    }
+    // If some free variables of a conditional fact do not appear in
+    // its condition(s), this may exclude it unnecessarily.
+    // TODO: Consider a more precise check here.
+    var facts = isQuantified ? pureFacts : allFacts;
+    var result = findMatchingFact(facts, cxt, term, isQuantified);
     if (result) {
       result.path = revPath.reverse().concat(result.path);
     }
@@ -5482,6 +5514,9 @@ function searchForMatchingFact(term, info) {
  * list name to a list (array) value.  In this way lists can be
  * reused, and also enables them to be effectively recursive.
  *
+ * If pureOnly is true, this only accepts a fact that is a pure
+ * equation, with no conditions on it.
+ * 
  * Each pattern argument can be an argument acceptable to
  * getStatementKey, or:
  *
@@ -5496,6 +5531,7 @@ function searchForMatchingFact(term, info) {
  *   term as arguments.
  * match: term schema to match against the term.  (By default the
  *   term is matched against the stmt LHS.)
+ *   TODO: Consider removing this; there is only one use.
  *
  * For fact statements passed as list elements or the "stmt" property
  * of a list element, if proof of the fact is in progress at the time,
@@ -5529,8 +5565,12 @@ function searchForMatchingFact(term, info) {
  * subst: substitution that makes the given term match the fact (empty for
  *   "apply" patterns).
  * path: path to the portion of the given term that matched some pattern.
+ *
+ * TODO: Consider changing this to something like "applyMatchingFact",
+ *   attempting to apply the first fact that appears to match, and
+ *   continuing the search if the application fails.
  */
-function findMatchingFact(facts_arg, cxt, term) {
+function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   // This finds the fact part to match.  If the fact is not an equation,
   // uses the main part instead of the LHS.
   function schemaPart(fact) {
@@ -5556,15 +5596,14 @@ function findMatchingFact(facts_arg, cxt, term) {
   assert(facts && facts[Symbol.iterator], 'No facts: {1}', facts_arg);
   for (var it = facts[Symbol.iterator](), v = it.next(); !v.done; v = it.next()) {
     var factInfo = v.value;
-    var infoIsObject = factInfo.constructor == Object;
-    if (!infoIsObject) {
+    if (factInfo.constructor !== Object) {
       var stmt = factInfo;
       if (!isInProgress(stmt)) {
-        // The call to rules.fact handles tautologies and arithmetic
-        // facts.  For reasons that are not clear, rules.fact is much
-        // slower than findFact.
-        var fullFact = findFact(stmt) || rules.fact(stmt);
-        var schema = schemaPart(fullFact);
+        var fullFact = rules.fact(stmt);
+        if (!(pureOnly && fullFact.isCall2('=>'))) {
+          // Use stmt to create the schema, because it may have different
+          // free variables than the recorded fact.
+          var schema = schemaPart(termify(stmt));
         var subst = term.matchSchema(schema);
         if (subst) {
           var result = {stmt: fullFact,
@@ -5574,10 +5613,11 @@ function findMatchingFact(facts_arg, cxt, term) {
           return result;
         }
       }
+      }
     } else if (factInfo.apply) {
       // "apply"
       var eqn = Toy.normalReturn(factInfo.apply, term);
-      if (eqn) {
+      if (eqn && !(pureOnly && eqn.isCall2('=>'))) {
         var result = {
           stmt: eqn,
           term: term,
@@ -5589,6 +5629,7 @@ function findMatchingFact(facts_arg, cxt, term) {
     } else if (factInfo.descend) {
       // "descend"
       var partInfo = factInfo.descend;
+      // TODO: Handle pureOnly here.
       var result = _locateMatchingFact(term,
                                        partInfo.schema,
                                        partInfo.parts,
@@ -5600,10 +5641,12 @@ function findMatchingFact(facts_arg, cxt, term) {
       // All other plain objects are handled here.
       var stmt = factInfo.stmt;
       if (!(stmt && isInProgress(stmt))) {
+        var fact = stmt && rules.fact(stmt);
+        if (!(pureOnly && fact && fact.isCall2('=>'))) {
         var where = factInfo.where;
         var schema = (factInfo.match
                       ? termify(factInfo.match)
-                      : schemaPart(termify(stmt)));
+                        : schemaPart(fact));
         var subst = term.matchSchema(schema);
         if (subst && (!where || apply$(where, subst))) {
           var result = {stmt: stmt,
@@ -5614,6 +5657,7 @@ function findMatchingFact(facts_arg, cxt, term) {
         }
       }
     }
+  }
   }
   // If no match found the value will be falsy.
 };

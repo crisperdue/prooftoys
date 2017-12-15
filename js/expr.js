@@ -2730,7 +2730,7 @@ Call.prototype.searchMost = function(fn, path, isQuantified) {
   if (!path) {
     path = Toy.path();
   }
-  return (fn(this, path) ||
+  return (fn(this, path, isQuantified) ||
           // Try the arg first to help substitutions apply toward the
           // right sides of formulas.
           this.arg.searchMost(fn, new Path('arg', path), isQuantified) ||
@@ -2970,8 +2970,9 @@ Lambda.prototype._asPattern = function(term) {
   return this.__var || new Lambda(this.bound, this.body._asPattern());
 };
 
-Lambda.prototype.searchMost = function(fn, path) {
-  return this.body.searchMost(fn, new Path('body', path), true);
+Lambda.prototype.searchMost = function(fn, path, isQuantified) {
+  return (fn(this, path, isQuantified) ||
+          this.body.searchMost(fn, new Path('body', path), true));
 };
 
 // Private methods grouped by name.
