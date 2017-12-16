@@ -2488,20 +2488,20 @@ var negationFacts = {
 
   // With addition and subtraction
 
-  'a - b = a + neg b': {
+  '@a - b = a + neg b': {
     proof: function() {
       var step1 = rules.consider('a - b');
       var step2 = rules.apply(step1, '/main/right');
       return step2;
     }
   },
-  'a - b = a + -1 * b': {
+  '@a - b = a + -1 * b': {
     proof: function() {
       return (rules.fact('a - b = a + neg b')
               .andThen('apply', '/main/right/right'));
     }
   },
-  'a - neg b = a + b': {
+  '@R b => a - neg b = a + b': {
     proof: function() {
       return rules.consider('a - neg b')
       .andThen('apply', '/main/right')
@@ -2981,7 +2981,7 @@ var divisionFacts = {
   },
   // Likewise useful for converting a summand to a fraction like
   // its neighbor.
-  '@R b & R c & c != 0 => a + b / c = a * c / c + b / c': {
+  '@R a & R c & c != 0 => a + b / c = a * c / c + b / c': {
     proof: function() {
       var fact = rules.fact('a = a * b / b').andThen('instVar', 'c', 'b');
       return (rules.consider('a + b / c')
@@ -2999,7 +2999,7 @@ var divisionFacts = {
     labels: 'algebra'
   },
   // More of the same.
-  '@R b & R c & c != 0 => a - b / c = a * c / c - b / c': {
+  '@R a & R c & c != 0 => a - b / c = a * c / c - b / c': {
     proof: function() {
       var fact = rules.fact('a = a * b / b').andThen('instVar', 'c', 'b');
       return (rules.consider('a - b / c')
@@ -3047,7 +3047,7 @@ var divisionFacts = {
     }
   },
   // Used in arrangeTerm.
-  'a / (b * c) = 1 / c * (a / b)': {
+  'b != 0 & c != 0 => a / (b * c) = 1 / c * (a / b)': {
     proof: function() {
       return (rules.consider('a / (b * c)')
               .rewrite('/main/right/left', 'a = a * 1')
