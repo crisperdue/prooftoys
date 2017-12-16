@@ -697,6 +697,7 @@ var ruleInfo = {
    * Andrews' axiom 2.
    */
   axiom2a: {
+    statement: 'x = y => (p x == p y)',
     action: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
       var step2 = rules.eqIsEquiv();
@@ -757,20 +758,32 @@ var ruleInfo = {
   },
 
   // Definition of F, for book-style proofs.
-  defFFromBook: function() {
-    return rules.assert('F = forall {x. x}').justify('defFFromBook');
+  defFFromBook: {
+    statement: 'F = forall {x. x}',
+    axiom: true,
+    action: function() {
+      return rules.assert('F = forall {x. x}').justify('defFFromBook');
+    }
   },
 
   // Book only.
-  defAnd: function() {
-    return (rules.assert('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
-            .justify('defAnd'));
+  defAnd: {
+    statement: '(&) = {x. {y. ({g. (g T T)} = {g. (g x y)})}}',
+    axiom: true,
+    action: function() {
+      return (rules.assert('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
+              .justify('defAnd'));
+    }
   },
 
   // Book only.
-  defImplies: function() {
-    return (rules.assert('(=>) = {x. {y. x == x & y}}')
-            .justify('defImplies'));
+  defImplies: {
+    statement: '(=>) = {x. {y. (x == (x & y))}}',
+    axiom: true,
+    action: function() {
+      return (rules.assert('(=>) = {x. {y. x == x & y}}')
+              .justify('defImplies'));
+    }
   },
 
   //
@@ -4581,6 +4594,8 @@ var ruleInfo = {
 
   // Experiment with Andrews' definition of "and".
   funWithAnd: {
+    statement: ('{x. T} = {x. ((x T T) = (x T F))} == ' +
+                '(forall {x. ((x T T) = (x T F))})'),
     proof: function() {
       var f = varify('f');
       var g = varify('g');
