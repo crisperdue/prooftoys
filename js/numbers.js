@@ -8,6 +8,7 @@
 //// THEOREMS AND RULES
 
 var rules = Toy.rules;
+var addRule = Toy.addRule;
 
 var assert = Toy.assertTrue;
 var memo = Toy.memo;
@@ -526,17 +527,21 @@ var numbersInfo = {
 var realOrdering =
   [
    {statement: 'not (x < x)',
-    axiom: true,
-    description: 'strict ordering axiom 1'},
+    description: 'strict ordering axiom 1',
+    axiom: true
+   },
    {statement: 'x < y => not (y < x)',
-    axiom: true,
-    description: 'strict ordering axiom 2'},
+    description: 'strict ordering axiom 2',
+    axiom: true
+   },
    {statement: 'x < y | y < x | x = y',
-    axiom: true,
-    description: 'strict ordering axiom 3'},
+    description: 'strict ordering axiom 3',
+    axiom: true
+   },
    {statement: 'x < y & y < z => x < z',
-    axiom: true,
-    description: 'strict ordering transitivity'},
+    description: 'strict ordering transitivity',
+    axiom: true
+   },
 
    // Completeness:
    //
@@ -546,30 +551,33 @@ var realOrdering =
    //          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
 
    {statement: 'x < y => x + z < y + z',
-    axiom: true,
-    description: 'ordering of reals and addition'
+    description: 'ordering of reals and addition',
+    axiom: true
    },
    {statement: '0 < x & 0 < y => 0 < x * y',
-    axiom: true,
-    description: 'ordering of reals and multiplication'
+    description: 'ordering of reals and multiplication',
+    axiom: true
    }
    ];
-
 
 var fieldLaws =
   [
    {statement: 'exists {z. R z & R x => x + z = x}',
-    axiom: true,
-    description: 'field axiom: additive identity exists'},
+    description: 'field axiom: additive identity exists',
+    axiom: true
+   },
    {statement: 'exists {y. R y & R x & x != 0 => x * y = x}',
-    axiom: true,
-    description: 'field axiom: multiplicative identity exists'},
+    description: 'field axiom: multiplicative identity exists',
+    axiom: true
+   },
    {statement: 'R x => exists {y. R y & x + y = 0}',
-    axiom: true,
-    description: 'field axiom: additive inverse exists'},
+    description: 'field axiom: additive inverse exists',
+    axiom: true
+   },
    {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}',
-    axiom: true,
-    description: 'field axiom: multiplicative inverse exists'}
+    description: 'field axiom: multiplicative inverse exists',
+    axiom: true
+   }
    ];
 
 var divisionInfo = {

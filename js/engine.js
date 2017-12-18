@@ -4653,7 +4653,7 @@ function addRulesMap(ruleInfo) {
  * each in the form of a plain object with properties.  If a fact has
  * a name, the name appears as a "name" property.
  *
- * TODO: Convert addFactsMap to use this internal instead of addFact.
+ * TODO: Convert addFactsMap to use this internally instead of addFact.
  */
 function addRules(ruleList) {
   ruleList.forEach(addRule);
