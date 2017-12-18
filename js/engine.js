@@ -5303,14 +5303,15 @@ function asFactProver(prover, goal) {
         var factAsms = proved.isCall2('=>') ? conjSet(proved.getLeft()) : empty;
         if (!goalAsms.superset(factAsms)) {
           console.group('Warning: Fact requires unintended assumptions.');
-          console.warn('Fact:', proved.toString());
-          console.warn('Goal:', goal.toString());
+          console.error('Proved:', proved.toString());
+          console.error('Stated:', goal.toString());
           console.groupEnd();
+          assert(false, 'Fact statement is missing some assumptions');
         }
         if (!factAsms.superset(goalAsms)) {
-          console.group('Note: Goal has unneeded assumptions.');
-          console.info('Fact:', proved.toString());
-          console.info('Goal:', goal.toString());
+          console.group('Note: Fact statement has unneeded assumptions.');
+          console.info('Proved:', proved.toString());
+          console.info('Stated:', goal.toString());
           console.groupEnd();
         }
         return proved;
