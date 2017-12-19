@@ -712,6 +712,8 @@ var ruleInfo = {
 
   axiom3: {
     statement: '(f = g) == forall {x. f x = g x}',
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
     inputs: {},
     form: '',
     tooltip: ('extensionality: functions are equal based on equal results'
@@ -2521,6 +2523,8 @@ var ruleInfo = {
   // 2127
   equivForall: {
     statement: 'forall {x. p} == p',
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
     proof: function() {
       var term = '{x. F} x';
       var falsity = (rules.forallXF()
@@ -2538,6 +2542,8 @@ var ruleInfo = {
   // 2128
   equivExists: {
     statement: 'exists {x. p} == p',
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
     proof: function() {
       var step1 = (rules.equivForall().andThen('instVar', 'not p', 'p'));
       return (rules.applyToBoth('not', step1).andThen('simplifyStep'));
@@ -4458,6 +4464,8 @@ var ruleInfo = {
   // "eta conversion".
   eta: {
     statement: '{x. p x} = p',
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
     proof: function() {
       // fact1 is: forall {x. {x. p x} x = p x}
       var fact1 = rules.axiom4('{x. p x} x').andThen('toForall', 'x');

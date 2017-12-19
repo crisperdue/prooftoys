@@ -861,6 +861,8 @@ $.extend(StepEditor.prototype, {
       // are type constants (in practice real or boolean), and the
       // types are not the same.  This is a crude check, but covers
       // the cases of usual interest.
+      // TODO: Properly unify the types, probably as part of schema
+      //   matching, and eliminate this hack function.
       function typesMismatch(e1, e2) {
         var e1Type = e1.hasType();
         var e2Type = e2.hasType();
@@ -878,6 +880,11 @@ $.extend(StepEditor.prototype, {
             }
             var lhs = goal.eqnLeft();
             if (typesMismatch(expr, lhs)) {
+              return;
+            }
+            if (info.labels.higherOrder && mode != 'all') {
+              // Do not offer facts with higher-order variables until
+              // we can match them properly when generating the menu.
               return;
             }
             if (expr.matchSchema(lhs)) {
@@ -1320,9 +1327,6 @@ RuleMenu.prototype._update = function() {
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
   stepEditor.$proofErrors.hide();
-
-
-
   var $items = self.$items;
   // Remove data and event handlers from suggestions.  They have
   // not been previously removed.
