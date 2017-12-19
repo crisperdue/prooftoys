@@ -9,6 +9,7 @@
 
 var rules = Toy.rules;
 var addRule = Toy.addRule;
+var definex = Toy.definex;
 
 var assert = Toy.assertTrue;
 var memo = Toy.memo;
@@ -562,11 +563,11 @@ var realOrdering =
 
 var fieldLaws =
   [
-   {statement: 'exists {z. R z & R x => x + z = x}',
+   {statement: '@exists {z. forall {x. R z & R x => x + z = x}}',
     description: 'field axiom: additive identity exists',
     axiom: true
    },
-   {statement: 'exists {y. R y & R x & x != 0 => x * y = x}',
+   {statement: '@exists {y. forall {x. R y & R x => x * y = x}}',
     description: 'field axiom: multiplicative identity exists',
     axiom: true
    },
@@ -3289,6 +3290,13 @@ $(function() {
 
     Toy.addRules(realOrdering);
     Toy.addRules(fieldLaws);
+    // Declare 0 and 1 to be the additive and multiplicative identities.
+    //
+    // For practical reasons, within the range of exact integer
+    // literals all instances of these facts are built in, but the
+    // general facts are only stated here, and of course justified.
+    definex('0', 'exists {z. forall {x. R z & R x => x + z = x}}');
+    definex('1', 'exists {z. forall {x. R z & R x => x * z = x}}');
 
     // From here is overall initialization for the complete system.
 

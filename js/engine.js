@@ -4524,6 +4524,9 @@ var ruleInfo = {
   // Simplified statement of 5312, using "the" in place of iota.
   // You can use exists1The to replace "the" with "iota".
   exists1Forall: {
+    // TODO: In this example the occurrence of "forall" could be
+    // removed, leaving all occurrences of "x" free.  Consider how
+    // to do practical matching in such cases.
     statement: 'exists1 p => forall {x. p x == x = the p}',
     proof: function() {
       var a1 = rules.assume('p = {x. x = y}');
