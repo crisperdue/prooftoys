@@ -9,6 +9,8 @@
 
 var rules = Toy.rules;
 var addRule = Toy.addRule;
+var addRules = Toy.addRules;
+var define = Toy.define;
 var definex = Toy.definex;
 
 var assert = Toy.assertTrue;
@@ -188,7 +190,6 @@ function termLeftThan(e1, e2) {
 ////
 
 $(function() {
-    var define = Toy.define;
     define('neg', '{x. -1 * x}');
     define('-', '{x. {y. x + neg y}}');
     // TODO: Rename this to something like realDiv, and define "/"
@@ -563,11 +564,11 @@ var realOrdering =
 
 var fieldLaws =
   [
-   {statement: '@exists {z. forall {x. R z & R x => x + z = x}}',
+   {statement: '@exists {z. isAddIdentity z}',
     description: 'field axiom: additive identity exists',
     axiom: true
    },
-   {statement: '@exists {y. forall {x. R y & R x => x * y = x}}',
+   {statement: '@exists {y. isMulIdentity y}',
     description: 'field axiom: multiplicative identity exists',
     axiom: true
    },
@@ -580,6 +581,29 @@ var fieldLaws =
     axiom: true
    }
    ];
+
+$(function() {
+
+    define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
+    define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
+
+    var facts =
+    [
+       {statement: '@exists {z. R z & forall {x. R x => x + z = x}}',
+        proof: function() {
+           return (rules.fact('exists {z. isAddIdentity z}')
+                   .andThen('apply', '/arg/body'));
+         }
+       },
+       {statement: '@exists {z. R z & forall {x. R x => x * z = x}}',
+        proof: function() {
+           return (rules.fact('exists {z. isMulIdentity z}')
+                   .andThen('apply', '/arg/body'));
+         }
+       }
+       ];
+    addRules(facts);
+  });
 
 var divisionInfo = {
 
@@ -3295,8 +3319,8 @@ $(function() {
     // For practical reasons, within the range of exact integer
     // literals all instances of these facts are built in, but the
     // general facts are only stated here, and of course justified.
-    definex('0', 'exists {z. forall {x. R z & R x => x + z = x}}');
-    definex('1', 'exists {z. forall {x. R z & R x => x * z = x}}');
+    definex('0', 'exists {z. isAddIdentity z}');
+    definex('1', 'exists {z. isMulIdentity z}');
 
     // From here is overall initialization for the complete system.
 
