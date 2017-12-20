@@ -12,6 +12,7 @@ var addRule = Toy.addRule;
 var addRules = Toy.addRules;
 var define = Toy.define;
 var definex = Toy.definex;
+var basicSimpFacts = Toy.basicSimpFacts;
 
 var assert = Toy.assertTrue;
 var memo = Toy.memo;
@@ -3240,58 +3241,11 @@ function arithRight(term, cxt) {
   }
 }
 
-/**
- * Simplification facts for algebra, used in _simplifyMath1
- * and related places.  During initialization all facts
- * flagged as simplifier: true are added to this list.
- *
- * TODO: Consider whether x - 7 is simpler than x + -7.
- */
-var basicSimpFacts = [
-                      'T & a == a',
-                      'a & T == a',
-                      'F & a == F',
-                      'a & F == F',
-                      'T | a == T',
-                      'a | T == T',
-                      'F | a == a',
-                      'a | F == a',
-                      'not T == F',
-                      'not F == T',
-                      '(a == T) == a',
-                      'not (not a) == a',
-                      'x = x == T',
-                      'T => a == a',
-                      'not (a = b) == a != b',
-                      '(negate p) x == not (p x)',
-                      'if T x y = x',
-                      'if F x y = y',
-                      {stmt: 'a + neg b = a - b',
-                       // This condition makes extra-sure there will be
-                       // no circularity during simplification.
-                       // Negation of a numeral will be simplified by
-                       // other rules.
-                       where: '!$.b.isNumeral()'},
-                      {stmt: 'a - b = a + neg b',
-                       // This one is an exception to the general rule
-                       // that simplifiers make the expression tree
-                       // smaller; but arithmetic will follow this, and
-                       // with high priority.
-                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
-                      {apply: function(term, cxt) {
-                          return (isArithmetic(term) &&
-                                  rules.axiomArithmetic(term));
-                        }
-                      },
-                      {apply: arithRight}
-                      ];
-
 
 //// Export public names.
 
 Toy.algebraFacts = algebraFacts;
 Toy.distribFacts = distribFacts;
-Toy.basicSimpFacts = basicSimpFacts;
 Toy.isDistribFact = isDistribFact;
 Toy.termGetRightVariable = termGetRightVariable;
 Toy.varFactorCounts = varFactorCounts;
@@ -3325,18 +3279,22 @@ $(function() {
     // From here is overall initialization for the complete system.
 
     // Add basic facts for function definitions.
+    // TODO: Consider moving this somewhere it will run more
+    //   "automatically", perhaps even code that creates definitions.
     for (var name in Toy.definitions) {
       var defn = Toy.findDefinition(name);
       if (defn) {
         Toy.addDefnFacts(rules.definition(name));
       }
     }
-
+    // TODO: Move this into addFact.
     Toy.eachFact(function(info) {
         if (info.simplifier) {
           basicSimpFacts.push(info.synopsis);
         }
       });
+    // This is an easy way to get arithRight into the list of simplifiers.
+    basicSimpFacts.push({apply: arithRight});
     // We could "freeze" the basic facts to help prevent unexpected results.
     // basicSimpFacts = new Toy.ArraySnap(basicSimpFacts);
 

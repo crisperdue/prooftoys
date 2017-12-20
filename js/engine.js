@@ -6242,6 +6242,53 @@ function conjunctionSchema(term) {
   return makeSchema(term);
 }
 
+/**
+ * Simplification facts for algebra, used in _simplifyMath1
+ * and related places.  During initialization all facts
+ * flagged as simplifier: true are added to this list.
+ *
+ * TODO: Consider whether x - 7 is simpler than x + -7.
+ * TODO: Declare number facts as simplifiers rather than adding here.
+ */
+var basicSimpFacts = [
+                      'T & a == a',
+                      'a & T == a',
+                      'F & a == F',
+                      'a & F == F',
+                      'T | a == T',
+                      'a | T == T',
+                      'F | a == a',
+                      'a | F == a',
+                      'not T == F',
+                      'not F == T',
+                      '(a == T) == a',
+                      'not (not a) == a',
+                      'x = x == T',
+                      'T => a == a',
+                      'not (a = b) == a != b',
+                      '(negate p) x == not (p x)',
+                      'if T x y = x',
+                      'if F x y = y',
+                      {stmt: 'a + neg b = a - b',
+                       // This condition makes extra-sure there will be
+                       // no circularity during simplification.
+                       // Negation of a numeral will be simplified by
+                       // other rules.
+                       where: '!$.b.isNumeral()'},
+                      {stmt: 'a - b = a + neg b',
+                       // This one is an exception to the general rule
+                       // that simplifiers make the expression tree
+                       // smaller; but arithmetic will follow this, and
+                       // with high priority.
+                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
+                      {apply: function(term, cxt) {
+                          return (Toy.isArithmetic(term) &&
+                                  rules.axiomArithmetic(term));
+                        }
+                      }
+                      // {apply: arithRight} Done in numbers.js.
+                      ];
+
 
 //// Export public names.
 
@@ -6291,6 +6338,7 @@ Toy.assumptionsBefore = assumptionsBefore;
 Toy.assumptionsUsed = assumptionsUsed;
 
 Toy.ruleInfo = ruleInfo;
+Toy.basicSimpFacts = basicSimpFacts;
 
 Toy.traceRule = traceRule;
 
