@@ -3287,12 +3287,6 @@ $(function() {
         Toy.addDefnFacts(rules.definition(name));
       }
     }
-    // TODO: Move this into addFact.
-    Toy.eachFact(function(info) {
-        if (info.simplifier) {
-          basicSimpFacts.push(info.synopsis);
-        }
-      });
     // This is an easy way to get arithRight into the list of simplifiers.
     basicSimpFacts.push({apply: arithRight});
     // We could "freeze" the basic facts to help prevent unexpected results.

@@ -802,7 +802,8 @@ function getDefinition(name, tOrF) {
  * database.  If the tOrF argument is present, the definition must be
  * by cases, otherwise simple.  Also accepts an Atom.
  *
- * Returns null if there is no such definition.
+ * Returns null if the given name has no definition; false if
+ * it is a primitive constant.
  */
 function findDefinition(name, tOrF) {
   name = name instanceof Atom ? name.name : name;

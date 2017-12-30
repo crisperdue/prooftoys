@@ -5183,6 +5183,9 @@ function addFact(info) {
   if (isRecordedFact(info.goal)) {
     console.info('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
+    if (info.simplifier) {
+      basicSimpFacts.push(info.synopsis);
+    }
     setFactInfo(info);
   }
   return info;
