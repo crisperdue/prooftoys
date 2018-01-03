@@ -186,36 +186,32 @@ function termLeftThan(e1, e2) {
 }
 
 
-////
 //// Definitions
-////
 
-$(function() {
-    define('neg', '{x. -1 * x}');
-    define('-', '{x. {y. x + neg y}}');
-    // TODO: Rename this to something like realDiv, and define "/"
-    //   conditionally for the real numbers, with values for non-real,
-    //   non-null inputs not defined.
-    // TODO: That will require an implementation of "conditional"
-    //   definitions that only specify the value of their "constant"
-    //   under certain conditions, such as the arguments having values
-    //   among the real numbers.
-    //
-    //   This definition then can serve as a witness that there exist
-    //   functions satisfying the conditional definition.
-    define('/', '{x. {y. the {z. R x & R y & R z & x = y * z}}}');
-    define('strict', '{f. f none = none}');
-    define('strict2',
-           '{f. forall {x. forall {y. f x none = none & f none y = none}}}');
-    /**
-     * We desire something like this, but it needs some supporting
-     * theorems such as probably 5307.
-     *
-     * definex('quotient',
-     * 'exists {q. strict2 q & (R x & R y => q x y = x / y');
-     */
-    define('recip', '{x. 1 / x}');
-  });
+define('neg', '{x. -1 * x}');
+define('-', '{x. {y. x + neg y}}');
+// TODO: Rename this to something like realDiv, and define "/"
+//   conditionally for the real numbers, with values for non-real,
+//   non-null inputs not defined.
+// TODO: That will require an implementation of "conditional"
+//   definitions that only specify the value of their "constant"
+//   under certain conditions, such as the arguments having values
+//   among the real numbers.
+//
+//   This definition then can serve as a witness that there exist
+//   functions satisfying the conditional definition.
+define('/', '{x. {y. the {z. R x & R y & R z & x = y * z}}}');
+define('strict', '{f. f none = none}');
+define('strict2',
+       '{f. forall {x. forall {y. f x none = none & f none y = none}}}');
+/**
+ * We desire something like this, but it needs some supporting
+ * theorems such as probably 5307.
+ *
+ * definex('quotient',
+ * 'exists {q. strict2 q & (R x & R y => q x y = x / y');
+ */
+define('recip', '{x. 1 / x}');
 
 
 ////
@@ -583,28 +579,25 @@ var fieldLaws =
    }
    ];
 
-$(function() {
+define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
+define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
 
-    define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
-    define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
-
-    var facts =
-    [
-       {statement: '@exists {z. R z & forall {x. R x => x + z = x}}',
-        proof: function() {
-           return (rules.fact('exists {z. isAddIdentity z}')
-                   .andThen('apply', '/arg/body'));
-         }
-       },
-       {statement: '@exists {z. R z & forall {x. R x => x * z = x}}',
-        proof: function() {
-           return (rules.fact('exists {z. isMulIdentity z}')
-                   .andThen('apply', '/arg/body'));
-         }
-       }
-       ];
-    addRules(facts);
-  });
+var facts =
+[
+   {statement: '@exists {z. R z & forall {x. R x => x + z = x}}',
+    proof: function() {
+       return (rules.fact('exists {z. isAddIdentity z}')
+               .andThen('apply', '/arg/body'));
+     }
+   },
+   {statement: '@exists {z. R z & forall {x. R x => x * z = x}}',
+    proof: function() {
+       return (rules.fact('exists {z. isMulIdentity z}')
+               .andThen('apply', '/arg/body'));
+     }
+   }
+   ];
+addRules(facts);
 
 var divisionInfo = {
 
@@ -859,11 +852,8 @@ var regroupingFacts = [
   'a / b / c = a / (b * c)'
 ];
 
-var ungroupingFacts;
-$(function() {
-    ungroupingFacts = regroupingFacts.map(function(fact) {
-        return Toy.commuteEqn(termify(fact));
-      });
+var ungroupingFacts = regroupingFacts.map(function(fact) {
+    return Toy.commuteEqn(termify(fact));
   });
 
 /**
@@ -2295,18 +2285,10 @@ var distribFacts = {
 
 // Private to isDistribFact.  A mapping from statement key to value
 // that is truthy iff the statement is in distribFacts.
-var _distribFactsTable;
-
-// Initialization deferred until initialization makes parsing and thus
-// getStatementKey available.
-// TODO: Consider doing this initialization sooner.
-$(function() {
-    var table = {};
-    for (var key in distribFacts) {
-      table[Toy.getStatementKey(key)] = true;
-    }
-    _distribFactsTable = table;
-  });
+var _distribFactsTable = {};
+for (var key in distribFacts) {
+  _distribFactsTable[Toy.getStatementKey(key)] = true;
+}
 
 /**
  * Returns a truthy value iff the statement is some version
@@ -3257,44 +3239,41 @@ Toy.isArithmetic = isArithmetic;
 
 //// INITIALIZATION CODE
 
-// Do this after support modules are initialized.
-$(function() {
-    Toy.addRulesMap(numbersInfo);
-    Toy.addRulesMap(divisionInfo);
-    Toy.addRulesMap(equationOpsInfo);
-    Toy.addRulesMap(simplifiersInfo);
-    Toy.addRulesMap(moversInfo);
-    Toy.addRulesMap(fractionsInfo);
-    Toy.addFactsMap(algebraFacts);
+Toy.addRulesMap(numbersInfo);
+Toy.addRulesMap(divisionInfo);
+Toy.addRulesMap(equationOpsInfo);
+Toy.addRulesMap(simplifiersInfo);
+Toy.addRulesMap(moversInfo);
+Toy.addRulesMap(fractionsInfo);
+Toy.addFactsMap(algebraFacts);
 
-    Toy.addRules(realOrdering);
-    Toy.addRules(fieldLaws);
-    // Declare 0 and 1 to be the additive and multiplicative identities.
-    //
-    // For practical reasons, within the range of exact integer
-    // literals all instances of these facts are built in, but the
-    // general facts are only stated here, and of course justified.
-    definex('0', 'exists {z. isAddIdentity z}');
-    definex('1', 'exists {z. isMulIdentity z}');
+Toy.addRules(realOrdering);
+Toy.addRules(fieldLaws);
+// Declare 0 and 1 to be the additive and multiplicative identities.
+//
+// For practical reasons, within the range of exact integer
+// literals all instances of these facts are built in, but the
+// general facts are only stated here, and of course justified.
+definex('0', 'exists {z. isAddIdentity z}');
+definex('1', 'exists {z. isMulIdentity z}');
 
-    // From here is overall initialization for the complete system.
+// From here is overall initialization for the complete system.
 
-    // Add basic facts for function definitions.
-    // TODO: Consider moving this somewhere it will run more
-    //   "automatically", perhaps even code that creates definitions.
-    for (var name in Toy.definitions) {
-      var defn = Toy.findDefinition(name);
-      if (defn) {
-        Toy.addDefnFacts(rules.definition(name));
-      }
-    }
-    // This is an easy way to get arithRight into the list of simplifiers.
-    basicSimpFacts.push({apply: arithRight});
-    // We could "freeze" the basic facts to help prevent unexpected results.
-    // basicSimpFacts = new Toy.ArraySnap(basicSimpFacts);
+// Add basic facts for function definitions.
+// TODO: Consider moving this somewhere it will run more
+//   "automatically", perhaps even code that creates definitions.
+for (var name in Toy.definitions) {
+  var defn = Toy.findDefinition(name);
+  if (defn) {
+    Toy.addDefnFacts(rules.definition(name));
+  }
+}
+// This is an easy way to get arithRight into the list of simplifiers.
+basicSimpFacts.push({apply: arithRight});
+// We could "freeze" the basic facts to help prevent unexpected results.
+// basicSimpFacts = new Toy.ArraySnap(basicSimpFacts);
 
-    // For testing (computed value).
-    Toy._ungroupingFacts = ungroupingFacts;
-});
+// For testing (computed value).
+Toy._ungroupingFacts = ungroupingFacts;
 
 })();
