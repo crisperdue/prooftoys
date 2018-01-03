@@ -1,4 +1,4 @@
-// Copyright 2011 - 2017 Crispin Perdue.
+// Copyright 2011 - 2018 Crispin Perdue.
 // All rights reserved.
 
 // Utilities for types, parsing, and definitions, building
@@ -1893,5 +1893,7 @@ Toy._decodeArg = decodeArg;
 Toy.nParsed = nParsed;
 Toy._constantTypes = constantTypes;
 Toy._dereference = dereference;
+
+Toy.loaded.trigger('xutil');
 
 })();

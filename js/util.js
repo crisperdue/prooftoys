@@ -1,4 +1,4 @@
-// Copyright 2011 - 2017 Crispin Perdue.
+// Copyright 2011 - 2018 Crispin Perdue.
 // All rights reserved.
 
 ////
@@ -740,6 +740,14 @@ function benchmark(fn, count) {
   var elapsed = Date.now() - start;
   console.log(format('{1} calls in {2}ms', count, elapsed));
 }
+
+
+//// Custom events
+
+// Plain object where we can hang events for completion of module
+// loading.  Indicate module loaded using Toy.loaded.trigger('xutil'),
+// and notice loading with e.g. Toy.loaded.on('xutil', ... ).
+Toy.loaded = jQuery({});
 
 
 //// SET

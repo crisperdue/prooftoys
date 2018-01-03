@@ -1,4 +1,4 @@
-// Copyright 2011 - 2017 Crispin Perdue.
+// Copyright 2011 - 2018 Crispin Perdue.
 // All rights reserved.
 
 // Set everything up immediately on load, avoiding changes to the
@@ -23,10 +23,15 @@ var infixCall;
 var parse;
 var lambda;
 
-// Resolve forward references after all code is loaded.  Note that
-// jQuery handlers fire deterministically in order of attachment,
-// which is important for our initializations.
-$(function() {
+// Resolve variables defined in xutil.js.  In loaded modules, here
+// xutil.js, the call to "trigger" invokes handlers immediately.
+//
+// When using ES6 modules this initialization will no longer be
+// needed.
+//
+// TODO: Replace top-level usage of $(function ... ) with ordinary
+//   top-level execution except where we need the DOM available.
+Toy.loaded.on('xutil', function() {
     termify = Toy.termify;
     isInfixDesired = Toy.isInfixDesired;
     infixCall = Toy.infixCall;
