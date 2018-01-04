@@ -20,14 +20,13 @@ var err = Toy.err;
 ////
 
 /**
- * Binding (for a set of variables).  From is a Atom, to is an Expr it
- * is bound to.  "More" refers to another bindings unlless it is null,
- * so this can represent a set of bindings rather than just one.  Used
- * in copying to replace occurrences of variables with replacements.
+ * Binding (for a set of variables).  From is usually a variable name,
+ * "to" is an Expr it is bound to.  "More" refers to another bindings
+ * unless it is null, so this can represent a set of bindings rather
+ * than just one.  Used in copying to replace occurrences of variables
+ * with replacements.
  *
- * In _addFreeNames, bindings contain variables that are bound and thus
- * not free in an expression's lexical context.  In that case the
- * bindings all have the value "true".
+ * In _addFreeVars, bindings simply have the value "true".
  */
 function Bindings(from, to, more) {
   this.from = from;

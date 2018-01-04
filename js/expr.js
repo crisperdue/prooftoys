@@ -878,7 +878,7 @@ Step.prototype.getBase = function() {
  */
 Expr.prototype.freeVars = function() {
   var byName = {};
-  this._addFreeNames(byName, null);
+  this._addFreeVars(byName, null);
   return byName;
 };
 
@@ -1710,12 +1710,12 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // of true for each, both free and bound names.
 //
 //
-// _addFreeNames(Map result, Bindings bindings)
+// _addFreeVars(Map result, Bindings bindings)
 // 
 // Adds all variable names that occur free in this Expr to the result
-// object, with the Atom object as the value associated with each name
-// found.  Assumes that names in the Bindings object are bound in this
-// expression's lexical context.  Private helper for the freeVars
+// object/map, with the Atom object as the value associated with each
+// name found.  Assumes that names in the Bindings object are bound in
+// this expression's lexical context.  Private helper for the freeVars
 // method.
 //
 //
@@ -2020,7 +2020,7 @@ Atom.prototype._addNames = function(map) {
   map[this.name] = true;
 };
 
-Atom.prototype._addFreeNames = function(map, bindings) {
+Atom.prototype._addFreeVars = function(map, bindings) {
   if (this.isVariable() && getBinding(this.name, bindings) == null) {
     map[this.name] = true;
   }
@@ -2357,11 +2357,11 @@ Call.prototype._addNames = function(map) {
   this.arg._addNames(map);
 };
 
-Call.prototype._addFreeNames = function(map, bindings) {
+Call.prototype._addFreeVars = function(map, bindings) {
   // Add the arg first to encourage right-to-left ordering in typical
   // implementation iteration.
-  this.arg._addFreeNames(map, bindings);
-  this.fn._addFreeNames(map, bindings);
+  this.arg._addFreeVars(map, bindings);
+  this.fn._addFreeVars(map, bindings);
 };
 
 Call.prototype._boundNames = function(path, bindings) {
@@ -2815,9 +2815,9 @@ Lambda.prototype._addNames = function(map) {
   this.body._addNames(map);
 };
 
-Lambda.prototype._addFreeNames = function(map, bindings) {
+Lambda.prototype._addFreeVars = function(map, bindings) {
   var name = this.bound.name;
-  this.body._addFreeNames(map, new Bindings(name, true, bindings));
+  this.body._addFreeVars(map, new Bindings(name, true, bindings));
 };
 
 Lambda.prototype._boundNames = function(path, bindings) {
