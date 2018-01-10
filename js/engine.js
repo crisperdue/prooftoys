@@ -1130,6 +1130,9 @@ var ruleInfo = {
     form: '',
     menuGen: function(ruleName, step, term) {
       var format = Toy.format;
+      if (!(term instanceof Call)) {
+        return null;
+      }
       if (term.fn.isConst()) {
         return format('apply definition of {1}', term.fn);
       } else {
