@@ -1514,8 +1514,8 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
   // property asynchronously.
   function handler() {
     if (wrapper.channelType === 'RPC') {
-      // Handle errors without catching them, so the debugger can
-      // take control at the point of the error.
+      // Handle (thrown) errors without catching them, so the debugger
+      // can take control at the point of the error.
       function handleError(msg, url, line, col, error) {
         // Restore the old error handler here ASAP.
         window.onerror = oldHandler;
