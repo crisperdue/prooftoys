@@ -1445,7 +1445,27 @@ Expr.prototype.traverse = function(fn, rpath) {
  */
 Expr.prototype.hasArgs = function(n) {
   return (n < 1) ? true : this instanceof Call && this.fn.hasArgs(n - 1);
-}
+};
+
+/**
+ * Returns the number of arguments passed to the function in this
+ * Call.  The result is based on the structure of the Call, merely
+ * calculating the depth to reach a Lambda or Atom.  Result is zero if
+ * given a Lambda or Atom.
+ */
+Expr.prototype.argsPassed = function() {
+  return (this instanceof Call
+          ? this.fn.argsPassed() + 1
+          : 0);
+};
+
+/**
+ * Descends recursively into "fn" parts of this Expr to the first
+ * Lambda or Atom, returning it.
+ */
+Expr.prototype.funPart = function() {
+  return (this instanceof Call ? this.fn.funPart() : this);
+};
 
 /**
  * Treating this as a chain of hypotheses hk & h(k-1) & ... h1,
