@@ -809,7 +809,11 @@ StepEditor.prototype.offerable = function(ruleName) {
          ? inputs.site || inputs.bindingSite || inputs.reducible
          // This list needs to match stepTypes.
          : inputs.step || inputs.equation || inputs.implication)) {
-      var ok = term ? precheck(step, step.pathTo(term)) : precheck(step);
+      var ok = (inputs.term
+                ? precheck(term)
+                : term
+                ? precheck(step, step.pathTo(term))
+                : precheck(step));
       if (!ok) {
         return false;
       }
