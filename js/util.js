@@ -1512,7 +1512,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
   // receives the RPC wrapper object directly, not wrapped in an
   // event, and replies by calling the fake worker object's onmessage
   // property asynchronously.
-  function handler() {
+  function workerMessageHandler() {
     if (wrapper.channelType === 'RPC') {
       // Handle (thrown) errors without catching them, so the debugger
       // can take control at the point of the error.
@@ -1566,7 +1566,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
   // Call the handler from a timer.
   // Follow the example of Toy.afterRepaint in allowing time for
   // repaints and other more urgent activities to take priority.
-  window.setTimeout(handler, 10);
+  window.setTimeout(workerMessageHandler, 10);
 }
 
 
