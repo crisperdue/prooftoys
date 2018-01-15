@@ -423,23 +423,6 @@ function findType(expr, annotate) {
     }
   }
 
-  /**
-   * Look up the type of a primitive or defined constant.  Result is
-   * not fresh.
-   */
-  function lookupType(name) {
-    if (constantTypes.hasOwnProperty(name)) {
-      return constantTypes[name];
-    } else if (isDefinedByCases(name)) {
-      return definedTypes[name];
-    } else if (isDefined(name)) {
-      console.warn(name, 'is defined but type is not recorded.');
-      return findType(getDefinition(name).getRight());
-    } else {
-      throw new TypeCheckError('Cannot find type for: ' + name);
-    }
-  }
-
   function isGeneric(v) {
     return !occursInList(v, nonGenerics);
   }
@@ -493,6 +476,27 @@ function findType(expr, annotate) {
     } else {
       throw e;
     }
+  }
+}
+
+/**
+ * Look up the type of a primitive or defined constant.  Result is
+ * not fresh.  If the optional second argument is truthy, returns
+ * null if not found; otherwise throws an error.
+ */
+function lookupType(name, orNull) {
+  if (constantTypes.hasOwnProperty(name)) {
+    return constantTypes[name];
+  } else if (isDefinedByCases(name)) {
+    return definedTypes[name];
+  } else if (isDefinedSimply(name)) {
+    console.warn(name, 'is defined but type is not recorded.');
+    return findType(getDefinition(name).getRight());
+  } else {
+    if (orNull) {
+      return null;
+    }
+    throw new TypeCheckError('Cannot find type for: ' + name);
   }
 }
 
@@ -760,7 +764,7 @@ function defineCases(name, ifTrue, ifFalse) {
  * Returns whether the name (or Atom) currently has a simple
  * definition.
  */
-function isDefined(name) {
+function isDefinedSimply(name) {
   if (name instanceof Atom) {
     name = name.name;
   }
@@ -825,6 +829,14 @@ function findDefinition(name, tOrF) {
     var defnCase = defn[tOrF];
     return defnCase;
   }
+}
+
+/**
+ * Returns a truthy value iff the name has a definition.
+ */
+function isDefined(name) {
+  var def = definitions[name];
+  return def !== true && !!def;
 }
 
 /**
@@ -1852,8 +1864,9 @@ Toy.standardVars = standardVars;
 Toy.define = define;
 Toy.defineCases = defineCases;
 Toy.definex = definex;
-Toy.isDefined = isDefined;
+Toy.isDefinedSimply = isDefinedSimply;
 Toy.isDefinedByCases = isDefinedByCases;
+Toy.isDefined = isDefined;
 Toy.findDefinition = findDefinition;
 Toy.getDefinition = getDefinition;
 // For testing:

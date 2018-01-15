@@ -1434,8 +1434,10 @@ var testCase = {
   testIsDefined: function() {
     assert(!Toy.isDefined('T'));
     assert(!Toy.isDefined(T));
-    assert(!Toy.isDefined('=>'));
+    assert(!Toy.isDefinedSimply('=>'));
+    assert(Toy.isDefined('=>'));
     assert(Toy.isDefined('forall'));
+    assert(Toy.isDefinedSimply('forall'));
     assert(Toy.isDefined(Toy.constify('forall')));
     try {
       Toy.isDefined(equal(x, x));
