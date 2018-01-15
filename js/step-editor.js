@@ -806,7 +806,8 @@ StepEditor.prototype.offerable = function(ruleName) {
     if (precheck && Toy.mapSize(info.inputs) == 1 &&
         (term
          // This list needs to match siteTypes.
-         ? inputs.site || inputs.bindingSite || inputs.reducible
+         ? (inputs.site || inputs.bindingSite || inputs.reducible ||
+            inputs.term)
          // This list needs to match stepTypes.
          : inputs.step || inputs.equation || inputs.implication)) {
       var ok = (inputs.term
