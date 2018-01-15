@@ -415,6 +415,10 @@ var numbersInfo = {
   // term as the LHS.  Throws an error if it cannot obey these
   // specifications.
   axiomArithmetic: {
+    precheck: function(term_arg) {
+      var term = termify(term_arg);
+      return Toy.isArithmetic(term);
+    },
     action: function(term_arg) {
       var term = termify(term_arg);
       if (term.isInfixCall()) {
