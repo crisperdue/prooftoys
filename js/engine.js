@@ -426,6 +426,11 @@ var ruleInfo = {
     inputs: {string: 1, term: 2},
     form: ('Define name <input name=string> as <input name=term>'),
     menu: 'define a name',
+    // TODO: Consider offering to define a name for the selected term
+    //   if circumstances are appropriate.
+    // Currently does not offer to define a name if there is any
+    // selection.
+    toOffer: 'return step == null',
     description: 'define {string}',
     tooltip: 'define a name'
   },
@@ -826,6 +831,7 @@ var ruleInfo = {
     inputs: {term: 1},
     form: 'Term to consider: <input name=term>',
     menu: 'consider a term to transform',
+    toOffer: 'return step == null',
     tooltip: ('consider a term to transform'),
     description: 'consider',
     labels: 'basic'
