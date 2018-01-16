@@ -1026,6 +1026,13 @@ var ruleInfo = {
   //
   // TODO: Fix bug here that A != B does not become not (A = B).
   useDefinition: {
+    precheck: function(step, path) {
+      var term = step.get(path);
+      var fn = term.funPart();
+      // The fn could be a Lambda, which is not defined.
+      // This returns falsy if the function is an "unused" constant.
+      return (fn instanceof Atom && Toy.isDefined(fn.name));
+    },
     action: function(step, path) {
       var args = [step, path];
       path = Toy.path(path, step);
@@ -1088,7 +1095,14 @@ var ruleInfo = {
   // and applies the expansions to the argument(s).
   apply: {
     precheck: function(step, path) {
-      return step.get(path) instanceof Toy.Call;
+      var term = step.get(path);
+      var fn = term.funPart();
+      var n = term.argsPassed();
+      // The fn could be a Lambda, which is not defined.
+      // This returns falsy if the function is an "unused" constant.
+      return ((n === 1 || n === 2) &&
+              ((fn instanceof Atom && Toy.isDefined(fn.name)) ||
+               fn instanceof Lambda));
     },
     action: function(step, path) {
       // Returns an identity with arg as LHS.
