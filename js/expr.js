@@ -2825,12 +2825,16 @@ Lambda.prototype._subFree = function(map, freeVars) {
   }
   var result;
   if (boundName in freeVars) {
+    // The bound name here appears as a free variable in some replacement
+    // expression.
+    //
+    // Rename the bound variable without checking whether capturing
+    // actually would occur.  Replacing the bound variable with a new one
+    // may reduce likelihood of future name collisions.
     var newVar = _genBoundVar(boundName);
     var newBody = this.body._subFree(Toy.object0(boundName, newVar), {});
-    // Rename even if no capturing actually occurs.  Replacing the
-    // bound variable with a new one may reduce likelihood of future
-    // name collisions.
     var renamed = new Lambda(newVar, newBody);
+    // Substitute into the modified Lambda term.
     result = renamed._subFree(map, freeVars);
   } else {
     var newBody = this.body._subFree(map, freeVars);
