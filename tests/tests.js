@@ -1431,6 +1431,16 @@ var testCase = {
     assert(!equal(x, x).isConst());
   },
 
+  testIsNamedConst: function() {
+    var jp = Toy.justParse;
+    assert(jp('xx').isNamedConst());
+    assert(jp('forall').isNamedConst());
+    assert(jp('0').isNamedConst());
+    assert(jp('1').isNamedConst());
+    assert(!jp('2').isNamedConst());
+    assert(!jp('x').isNamedConst());
+  },
+
   testIsDefined: function() {
     assert(!Toy.isDefined('T'));
     assert(!Toy.isDefined(T));
@@ -2766,7 +2776,7 @@ window.setTimeout(function() {
   // Set this to an array of theorem names, test case names, and fact
   // statements to be specifically tested.  Fact statements usually
   // will be strings here.
-  var toTest = ['testR5201d'];  // An array of test keys
+  // var toTest = ['testIsNamedConst'];  // An array of test keys
   var toTest = null;  // Override the array with null to test all.
 
   // Runs the named test case or warns if there is none such.

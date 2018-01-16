@@ -424,6 +424,23 @@ Expr.prototype.isVariable = function() {
 };
 
 /**
+ * Returns boolean indicating if this is a named constant, an Atom
+ * that is not a variable, but not a literal except for 0, 1, or the
+ * empty string.  (With complex numbers, "i" becomes another named
+ * constant that is also a literal.)
+ */
+Expr.prototype.isNamedConst = function() {
+  // In some sense this check is optional:
+  if (!(this instanceof Atom)) {
+    return false;
+  }
+  // If not an Atom or is a variable, _value is "undefined"
+  // and this is not a named constant.
+  var v = this._value;
+  return v === null || v === 0 || v === 1 || v === '';
+}
+
+/**
  * If an atom is named starting with "$", it is intended to be
  * an abbreviation.
  */
