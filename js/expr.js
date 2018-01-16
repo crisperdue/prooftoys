@@ -1698,14 +1698,18 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // in the replacement.
 //
 //
-// _subFree(Object map)
+// _subFree(Object map, Object freeVars)
 //
 // The map argument is an object mapping variable names to replacement
 // expressions.  Substitutes the corresponding replacement expression
 // for each free occurrence of each name in this Expr.
 //
-// To ensure no names are captured, renames all bound variables in this
-// with the same name as any free variable in the replacement terms.
+// freeVars must be given as an object / set of all names free in any
+// of the replacement expressions.
+//
+// To ensure no names are captured, renames all bound variables in
+// this that have the same name as any free variable in the
+// replacement terms.
 //
 // Note that Rule R can introduce previously free variables into a
 // scope where they become bound.
