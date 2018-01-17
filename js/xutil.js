@@ -624,7 +624,14 @@ function theType() {
   return new FunctionType(new FunctionType(v, boolean), v);
 }
 
-// Types of _primitive_ constants only here.
+// Primitive constants.  Unlike textbook, these include T and F.
+var _primitives = {T: true, F: true, '=': true, iota: true};
+
+Atom.prototype.isPrimitive = function() {
+  return _primitives.hasOwnProperty(this.name);
+};
+
+// Types of constants here.
 //
 // TODO: Eliminate all but the truly primitive constants from this list
 //   when functions and predicates can be properly defined.
