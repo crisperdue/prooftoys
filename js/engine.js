@@ -1138,8 +1138,7 @@ var ruleInfo = {
             }
           }
         }
-        Toy.err({message: 'Cannot apply at ' + step.get(path) + ' in ' + step,
-                 step: step});
+        Toy.fail('Cannot apply at {1} in {2}', step.get(path), step);
       }
 
       return convert(step, path, applier)
@@ -5861,15 +5860,18 @@ function applyFactsWithinRhs(step, facts) {
 
 /**
  * Apply the function to the subexpression of step at path.  The
- * function must return an equation that equates the original
+ * function should return an equation that equates the original
  * subexpression to something else.  This replaces the subexpression
  * using the returned equation.
+ *
+ * Allows the function to return a falsy value, returning the same
+ * value itself.
  */ 
 function convert(step, path, fn) {
   var expr = step.get(path);
   assert(expr, 'Bad path {1}', path, step);
   var eqn = fn(expr);
-  return rules.replace(step, path, eqn);
+  return eqn && rules.replace(step, path, eqn);
 }
 
 /**
