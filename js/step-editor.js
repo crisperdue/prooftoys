@@ -496,14 +496,20 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this._proofEditor.containerNode
       .find('.ruleStats').toggleClass('invisible', false);
   }
-  if (!result || result.rendering) {
+  if (!result) {
+    // Certain rules may return null indicating failure, such
+    // as a rule that attempts to prove a statement.
     // The work is done, show that the prover is not busy.
     this._setBusy(false);
-    // If there is already a rendering, Expr.justify must have found
-    // that the "new" step was identical to one of its dependencies,
-    // so don't try to add it.  The implementation only currently
-    // supports one render per step anyway.
-    this.report('nothing done');
+    this.report('Rule failed');
+  } else if (result.rendering) {
+      // The work is done, show that the prover is not busy.
+      this._setBusy(false);
+      // If there is already a rendering, Expr.justify must have found
+      // that the "new" step was identical to one of its dependencies,
+      // so don't try to add it.  The implementation only currently
+      // supports one render per step anyway.
+      this.report('nothing done');
   } else {
     // TODO: Trigger an event and let the proofDisplay show the step,
     //   removing most of this code.  It may be desirable for the
@@ -1294,20 +1300,28 @@ function handleMouseEnterItem(ruleMenu, node, event) {
           var step = info.result.step;
           // Make note of the result, remembering its node.
           if (ruleMenu.hovering === $node[0]) {
-            // At this (future) point in time, if this item is
-            // hovered, show the result.
-            var suggestionNode = display.stepSuggestion(step);
-            $node.data('suggestion', suggestionNode);
-            display.suggest(suggestionNode);
+            // At this point in time after the rule has run, if this
+            // item is hovered, show the result.  Treat a null result
+            // as failure of the rule.
+            var node = (step
+                        ? display.stepSuggestion(step)
+                        : display.suggestionMessage('failed'));
+            $node.data('suggestion', node);
+            display.suggest(node);
 
           }
         })
         .catch(function(info) {
+            // If the "then" throws an error, that becomes the info.
             $node.removeData('promise');
             var messageNode = display.suggestionMessage('not applicable');
             $node.data('suggestion', messageNode);
             display.suggest(messageNode);
-            console.error('Rule menu error:', info.result.message);
+            if (info.result) {
+              console.error('Rule menu error:', info.result.message);
+            } else {
+              console.error('Rule menu internal error:', info);
+            }
           });
     }
   }
