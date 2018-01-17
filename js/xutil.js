@@ -410,7 +410,11 @@ function findType(expr, annotate) {
       }
     }
     if (Toy.isConstantName(name)) {
-      return lookupType(name).fresh({}, nonGenerics);
+      var result = lookupType(name).fresh({}, nonGenerics);
+      if (!result) {
+        throw new TypeCheckError('Cannot find type for: ' + name);
+      }
+      return result;
     } else {
       // Free variable: not constant, not defined.
       // Like handling of a variable binding, but scope is the remainder
@@ -481,10 +485,9 @@ function findType(expr, annotate) {
 
 /**
  * Look up the type of a primitive or defined constant.  Result is
- * not fresh.  If the optional second argument is truthy, returns
- * null if not found; otherwise throws an error.
+ * not fresh.  Returns null if preconditions are not met.
  */
-function lookupType(name, orNull) {
+function lookupType(name) {
   if (constantTypes.hasOwnProperty(name)) {
     return constantTypes[name];
   } else if (isDefinedByCases(name)) {
@@ -493,10 +496,7 @@ function lookupType(name, orNull) {
     console.warn(name, 'is defined but type is not recorded.');
     return findType(getDefinition(name).getRight());
   } else {
-    if (orNull) {
-      return null;
-    }
-    throw new TypeCheckError('Cannot find type for: ' + name);
+    return null;
   }
 }
 
@@ -1892,6 +1892,7 @@ Toy.FunctionType = FunctionType;
 Toy.parseType = parseType;
 Toy.findType = findType;
 Toy.isBooleanBinOp = isBooleanBinOp;
+Toy.lookupType = lookupType;
 
 // Expression parsing
 
