@@ -630,6 +630,9 @@ function isBooleanBinOp(term) {
   }
 }
 
+/**
+ * Function of any two things of the same type, with boolean result.
+ */
 function equalityType() {
   var v = new TypeVariable();
   return new FunctionType(v, new FunctionType(v, boolean));
@@ -650,6 +653,10 @@ function fun2Type() {
   return new FunctionType(v, new FunctionType(v, v));
 }
 
+/**
+ * Function from a collection of things of some type, to
+ * a thing of that type.
+ */
 function theType() {
   var v = new TypeVariable();
   return new FunctionType(new FunctionType(v, boolean), v);
@@ -664,17 +671,11 @@ Atom.prototype.isPrimitive = function() {
 
 // Types of constants here.
 //
-// TODO: Eliminate all but the truly primitive constants from this list
-//   when functions and predicates can be properly defined.
-//   According to current thinking, all functions here that apply to
-//   real numbers should only apply to individuals, which still may
-//   include many things besides real numbers.  So it looks like only
-//   equality, iota, and "the" will have generic types.
+// TODO: Trim this collection as more constants become properly
+//   defined.
 //
-// TODO: Consider using only boolean values here and using this just to
-//   test whether a name is already defined.  The defining statement
-//   presumably will give the constant its type.
 var constantTypes = {
+  // Primitive constants
   T: boolean,
   F: boolean,
   '=': equalityType(),
@@ -682,11 +683,13 @@ var constantTypes = {
 
   // The real numbers.
   R: new FunctionType(individual, boolean),
+  // Functions with inputs of arbitrary type
   '>': equalityType(),
   '>=': equalityType(),
   '<': equalityType(),
   '<=': equalityType(),
   '!=': equalityType(),
+  // Functions on individuals
   '+': fun2Type(),
   '-': fun2Type(),
   '*': fun2Type(),
@@ -750,6 +753,8 @@ var definitions = {
  *   such as [C = <term>] and [A => C = <term>], and arbitrary WFFs
  *   would also be supported if the apppropriate existence fact is
  *   already established.
+ *
+ * TODO: Replace this with uses of addDefinition.
  */
 function define(name, definition) {
   assert(Toy.isConstantName(name), 'Not a constant name: {1}', name);
@@ -782,6 +787,9 @@ function define(name, definition) {
 /**
  * Add a simple definition with true/false cases.  A call could
  * be something like defineCases('not', F, T).
+ *
+ * TODO: Consider replacing this with definitions whose statement
+ *   includes "if-then-else".
  */
 function defineCases(name, ifTrue, ifFalse) {
   assert(Toy.isConstantName(name), 'Not a constant name: ' + name);
