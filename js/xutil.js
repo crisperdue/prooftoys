@@ -763,6 +763,12 @@ function defineCases(name, ifTrue, ifFalse) {
   for (var n in ifFalse.freeVars()) {
     assert(false, 'Definition has free variables: ' + name);
   }
+  // Procedurally unify the type of the true branch and the false
+  // branch, and add a boolean input.
+  var type1 = findType(ifTrue);
+  unifyTypes(type1, findType(ifFalse));
+  var type = new FunctionType(boolean, dereference(type1));
+  constantTypes[name] = type;
   definitions[name] = {T: equal(call(name, 'T'), ifTrue),
                        F: equal(call(name, 'F'), ifFalse)};
 }
