@@ -330,9 +330,15 @@ Expr.prototype.isIndividual = function() {
 // of rule R may have to be a completely new structure.
 
 /**
- * Find and return the (dereferenced)type of an expression (Expr).
+ * Find and return the (dereferenced) type of an expression (Expr).
  * Throws an Error if type checking fails.  The error may have a
  * "cause" property with the original error (TypeCheckError).
+ *
+ * This uses established types of primitive and defined constants.  It
+ * also allows new constants to appear, much like free variables.  It
+ * registers the types of any such occurrences of new constants using
+ * the same type analysis as for free variables.  This is intended for
+ * parsing of new constant definitions.
  *
  * The second argument is private to annotateWithTypes.
  */
@@ -371,7 +377,7 @@ function findType(expr, annotate) {
   // This is the core of the type inference algorithm.
   function analyze1(expr) {
     if (expr instanceof Atom) {
-      return typeFromName(expr.name);
+      return typeFromName(expr);
     } else if (expr instanceof Call) {
       var fnType = analyze(expr.fn);
       var argType = analyze(expr.arg);
@@ -394,14 +400,23 @@ function findType(expr, annotate) {
   }
 
   /**
-   * Returns a type based on the name of an Atom.
+   * Returns the type of an Atom, based largely on its name.  May have
+   * side effects on "vars", "types", and "nonGenerics".
    */
-  function typeFromName(name) {
-    if (Toy.isIntegerLiteral(name)) {
+  function typeFromName(atom) {
+    var name = atom.name;
+    if (constantTypes.hasOwnProperty(name)) {
+      // If it is a constant -- primitive, defined, or even a constant
+      // name that has appeared in a well-formed term but is not yet
+      // defined, return its type.
+      return constantTypes[name].fresh({}, nonGenerics);
+    }
+    if (atom.isLiteral()) {
       // I say integers are individuals.
       return individual;
     }
-    // Is it a bound or (already-seen) free variable?
+    // Is it a bound or (already-seen) free variable, or constant seen
+    // in this analysis with no type recorded in constantTypes?
     for (var i = vars.length - 1; i >= 0; --i) {
       if (vars[i] == name) {
         var type = types[i];
@@ -409,22 +424,14 @@ function findType(expr, annotate) {
         return type.fresh({}, nonGenerics);
       }
     }
-    if (Toy.isConstantName(name)) {
-      var result = lookupType(name).fresh({}, nonGenerics);
-      if (!result) {
-        throw new TypeCheckError('Cannot find type for: ' + name);
-      }
-      return result;
-    } else {
-      // Free variable: not constant, not defined.
-      // Like handling of a variable binding, but scope is the remainder
-      // of the expression, and bound variables get searched first.
-      var varType = new TypeVariable();
-      vars.unshift(name);
-      types.unshift(varType);
-      nonGenerics.unshift(varType);
-      return varType;
-    }
+    // Free variable, or constant not yet defined.
+    // Like handling of a variable binding, but scope is the remainder
+    // of the expression, and bound variables get searched first.
+    var varType = new TypeVariable();
+    vars.unshift(name);
+    types.unshift(varType);
+    nonGenerics.unshift(varType);
+    return varType;
   }
 
   function isGeneric(v) {
@@ -461,13 +468,37 @@ function findType(expr, annotate) {
   }
 
   try {
+    // The analysis can throw.
     var result = analyze(expr);
+    // If successful do the rest of the work.
     if (annotate) {
       // If annotating, walk through all subexpressions of the expr,
       // tidying up their types, which are now all in final form.
       tidyAll(expr);
     } else {
       tidy(result);
+    }
+    // Scan through "vars" for the names of any constants analyzed
+    // here for the first time, and record the discovered type
+    // information.  This preferably would only have effect when
+    // parsing the definition of a new constant, as real forward
+    // references might not record the exact type.
+    for (var i = 0; i < vars.length; i++) {
+      var nm = vars[i];
+      if (Toy.isConstantName(nm)) {
+        // If the name already had a recorded type in constantTypes,
+        // it would not be in the vars list.
+        var type = types[i];
+        tidy(type);
+        console.log('New constant', nm, 'assigned type', '' + type);
+        console.log('  in', '' + expr);
+        // TODO: Consider adding the name and expr to a list of forms
+        //   introducing new constants, and check at certain moments
+        //   whether all names in it have definitions, giving a warning
+        //   if not.  For example one might check when the event loop
+        //   returns to idle.
+        constantTypes[nm] = dereference(type);
+      }
     }
     return result;
   } catch(e) {
