@@ -1703,15 +1703,21 @@ var ruleInfo = {
     labels: 'basic'
   },
 
+  // We could consider making a rule, something like "trueInFact",
+  // that generalizes forwardChain to use a proved value anywhere in a
+  // fact, not just as the antecedent in a conditional.  Looking at
+  // truth tables with a row containing a T and an F, if the other row
+  // contains only F, the formula is a conjunction, and implies a
+  // formula with just one variable; similarly if the other row has T
+  // and F in the same columns, it is equivalent to a formula with
+  // just one variable.  Otherwise it is an equivalence or a
+  // conditional, and "trueBy" is readily used in these cases.
+
   // Replace part of a target step with T if it matches a proved step
   // or the consequent of a proved conditional, taking the proved step
   // as a schema.  If the target term matches the consequent of the
   // proved step, the antecedent becomes an assumption of the
   // resulting statement.
-  //
-  // TODO: Consider extending this to "known truth value" where the
-  //   term or its negation is proved, and including boolean
-  //   simplification on the result of the replacement.
   trueBy: {
     action: function(target, path, step) {
       var term = target.get(path);
@@ -2806,17 +2812,19 @@ var ruleInfo = {
   // affects exactly the sites in the schema where the variable
   // originally occurred, and the order is predictable.
   // 
+  // Unlike Andrews' rule, there is no special handling here for
+  // hypotheses.  Include them as antecedent of a conditional
+  // in the schema.
+  // 
   // For tautologies with a conjunction on the LHS as shown in the
-  // book, use this with makeConjunction.  The step may have
-  // hypotheses, which are not matched against the schema.
+  // book, use rule P2.  If there are more than two conjuncts, combine
+  // one or both with rules.and.
   //
   // Andrews calls his enhanced version of forward chaining "Rule P".
-  // (This system only provides for one or two antecedents, this rule
-  // forwardChain, and rule P2.  Use makeConjunction as needed,
-  // followed by one of them.)
-  //
-  // This always applies to the entire input step, ignoring
-  // hypotheses.
+  // (This system currently only provides for one or two conjuncts in
+  // the antecedent, through this forwardChain rule, and rule P2.  If
+  // there are more than two conjuncts, use rules.and to collect them
+  // together.)
   //
   // TODO: Apply a similar quantification strategy to rewriting, since
   // the same issues apply to rewrites.
