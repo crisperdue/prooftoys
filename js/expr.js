@@ -900,6 +900,18 @@ Expr.prototype.freeVars = function() {
 };
 
 /**
+ * Finds and returns a plain object/map of free variable and constant
+ * names in this expression, from name to true.  Numeric literals other
+ * than 0 and 1 are not considered names, but as abbreviations for
+ * expressions containing 0 and 1.
+ */
+Expr.prototype.undefNames = function() {
+  var byName = {};
+  this._addUndefNames(byName, null);
+  return byName;
+};
+
+/**
  * Finds all occurrences of free variables in this expression that are
  * used as inputs to known math operators, or compared for equality
  * with the result of a math operator that returns a number.  The math
@@ -1760,6 +1772,16 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // method.
 //
 //
+// _addUndefNames(Map result, Bindings bindings)
+// 
+// Adds to the object/set all constant names that occur free in this
+// Expr and are not already defined.  Assumes that names in the
+// Bindings object are bound in this expression's lexical context, even
+// if they have the form of named constants (so constant names could
+// be used for bound variables if desired).
+// Private helper for the undefNames method.
+//
+//
 // _boundNames(path, bindings)
 //
 // Returns a Bindings object (or null if no bindings) representing the
@@ -2067,6 +2089,15 @@ Atom.prototype._addFreeVars = function(map, bindings) {
   }
 };
 
+Atom.prototype._addUndefNames = function(map, bindings) {
+  var name = this.name;
+  if (this.isNamedConst() &&
+      getBinding(name, bindings) == null &&
+      !Toy.isDefined(name)) {
+    map[this.name] = true;
+  }
+};
+
 Atom.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
     return bindings;
@@ -2172,7 +2203,7 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   // expression that matches its definition.  It is a stricter criterion than
   // would be treating definitions exactly as abbreviations.
   if (this.isConst()) {
-    // Expr must be a Atom with the same name.
+    // Expr must be an Atom with the same name.
     return this.matches(expr);
   }
   var name = this.name;
@@ -2197,7 +2228,6 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   // otherwise add a mapping for it into the substitution.
   var mapped = map[name];
   if (mapped) {
-    // This is the spot where further substitutions may be possible.
     return expr.matches(mapped);
   } else {
     map[name] = expr;
@@ -2403,6 +2433,11 @@ Call.prototype._addFreeVars = function(map, bindings) {
   // implementation iteration.
   this.arg._addFreeVars(map, bindings);
   this.fn._addFreeVars(map, bindings);
+};
+
+Call.prototype._addUndefNames = function(map, bindings) {
+  this.arg._addUndefNames(map, bindings);
+  this.fn._addUndefNames(map, bindings);
 };
 
 Call.prototype._boundNames = function(path, bindings) {
@@ -2863,6 +2898,11 @@ Lambda.prototype._addNames = function(map) {
 Lambda.prototype._addFreeVars = function(map, bindings) {
   var name = this.bound.name;
   this.body._addFreeVars(map, new Bindings(name, true, bindings));
+};
+
+Lambda.prototype._addUndefNames = function(map, bindings) {
+  var name = this.bound.name;
+  this.body._addUndefNames(map, new Bindings(name, true, bindings));
 };
 
 Lambda.prototype._boundNames = function(path, bindings) {
