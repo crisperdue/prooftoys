@@ -1288,27 +1288,35 @@ var ruleInfo = {
     }
   },
 
-  // Target is forall {x. B}, expr is A, which will replace
-  // all occurrences of x.  Uses no book-specific definitions,
+  // Target is a step of the form forall {x. B}, expr is A, which will
+  // replace all occurrences of x.  Uses no book-specific definitions,
   // and relies only on theorem "T", 5200, and reduce. (5215)
   //
-  // Works with target as RHS of conditional.
+  // Accepts a string for the expr, and supports a target that is the
+  // RHS of a conditional.
+  //
+  // TODO: Consider splittnig this into two forms, one where the
+  //   target term is at top level, one where it is the conclusion of
+  //   a conditional.
   instForall: {
-    precheck: function(step, path, expr) {
+    precheck: function(step, path, expr_arg) {
+      var expr = termify(expr_arg);
       var target = step.get(path);
       var pathStr = path.toString();
       var ok = (target &&
                 target.isCall1('forall') &&
                 target.arg instanceof Toy.Lambda &&
-                // TODO: Handle /main and /rt paths also,
-                //   and cases where the target is unconditional.
+                // TODO: Handle cases where the target is unconditional.
                 (pathStr === '' ||
                  (step.wff.isCall2('=>') &&
                   (pathStr === '/right' ||
+                   pathStr === '/rt' ||
+                   pathStr === '/main' ||
                    pathStr === '/arg'))));
       return ok;
     },
-    action: function(step, path, expr) {
+    action: function(step, path, expr_arg) {
+      var expr = termify(expr_arg);
       var target = step.get(path);
       var step1 = rules.useDefinition(step, path);
       var step2 = rules.applyBoth(step1, expr);
