@@ -260,10 +260,13 @@ var _factMap = {};
 
 // ruleInfo:
 //
-// Map from inference rule name to a JavaScript function that
-// implements it.  The functions may use a global variable
-// named "rules" that should have all of these functions in it.
-// Properties here for each name are:
+// This is structured as a map from the name of an inference rule or
+// theorem to properties of the rule or theorem.
+//
+// Properties here for each name are as follows.  These properties are
+// available directly when calling addRule.  In that case, pass "name"
+// as a property along with the others.  When calling addRule, unnamed
+// facts and definitions are also supported through the properties.
 //
 // action: function implementing the inference rule.
 //
@@ -282,6 +285,13 @@ var _factMap = {};
 //   converse will be added as a fact.  Also used by tests.  TODO:
 //   Consider checking during actual proof of the theorem.
 //
+// definition: for a definition, this is a statement, often of the
+//   form <name> = <term>, that defines the new constant name.  Once
+//   the definition is made, this statement is taken as true, as if it
+//   were a new axiom, but without danger of creating a contradiction.
+//   Other forms can also be used as definitions if justifying facts
+//   are proved.  See the function "definition" for more details.
+//   
 // precheck: if present, a function that must accept the same
 //   arguments as the main action.  When the rule action is called, it
 //   will call this automatically, followed immediately by the
@@ -2819,7 +2829,7 @@ var ruleInfo = {
   // order by name.  This way, instantiating these variables later
   // affects exactly the sites in the schema where the variable
   // originally occurred, and the order is predictable.
-  // 
+  //
   // Unlike Andrews' rule, there is no special handling here for
   // hypotheses.  Include them as antecedent of a conditional
   // in the schema.
@@ -4749,6 +4759,11 @@ function addRule(info) {
     console.warn('Inference rule with name', name, 'already declared');
   }
 
+  if (info.definition) {
+    definition(info.definition);
+    return;
+  }
+
   var proof = info.proof;
   var statement = info.statement;
   // This will become the "rule object":
@@ -4957,28 +4972,165 @@ function addRule(info) {
 }
 
 /**
- * For a simple definitions of a functions or predicate, generate
- * basic equational facts.
+ * Add the given definition to the system.  It must define a named
+ * constant that is not already defined.  The argument is a WFF that
+ * will become true as the definition of the new constant.  The WFF
+ * must contain a (free) occurrence of exactly one new constant name.
+ * If it is of the form:
  *
- * TODO: Consider calling this from Toy.define in the future if the
- *   module dependencies are acceptable.
+ * <name> = <term>
+ *
+ * and <name> does not occur free in <term>, the equational definition
+ * is accepted.
+ *
+ * If the definition has some other form, then there must be a
+ * recorded fact of the form: exists {<var>. <condition2>}, where
+ * <var> is a variable name that does not occur free in the condition,
+ * and condition2 is the result of substituting <var> for <name> in
+ * the condition.
+ *
+ * TODO: Perhaps appropriate top-level forms might be: "fact", "rule",
+ * and "definition".  Each would just add its item to a global list,
+ * perhaps even the same global list.  Additionally, the top-level
+ * form might do some bookkeeping and report errors, at least for
+ * definitions.  These can run at top-level in modules where the logic
+ * is available.
+ */
+function definition(defn_arg) {
+  var isRecorded = Toy.isRecordedFact;
+  var definitions = Toy.definitions;
+  var defn = termify(defn_arg);
+  // Free occurrences of names of constants that do not have
+  // definitions.
+  var undefs = defn.undefNames();
+  var undefList = Object.keys(undefs);
+  assert(undefList.length > 0,
+         'Definition {1}\n  needs a fresh constant name.', defn);
+  assert(undefList.length === 1,
+         'Definition {1} has multiple new constants {2}',
+         defn, undefList.join(', '));
+  var name = undefList[0];
+  var defined = new Atom(name);
+  if (defn.isCall2('=') &&
+      defn.getLeft().matches(defined) &&
+      Toy.isEmpty(defn.getRight().undefNames())) {
+    // It is a classic equational definition.
+    // Add it to the definitions database.
+    definitions[name] = defn;
+    addDefnFacts(defn);
+  } else {
+    // It is not a classic equational definition.
+    var x = genVar('x', defn.allNames());
+    // Substitute the fresh variable for the constant name.
+    var body = defn.subFree1(x, name);
+    var exists1 = Toy.call('exists1', Toy.lambda(x, body));
+    if (isRecorded(exists1)) {
+      // TODO: Add the fact that only one value has the property.
+    } else {
+      var exists = Toy.call('exists', Toy.lambda(x, body));
+      assert(isRecorded(exists), 'Definition {1} needs an existence fact.', defn);
+    }
+    definitions[name] = defn;
+  }
+}
+
+/**
+ * This function only has effect for equational definitions
+ * of the form <atom> = <term>.
+ *
+ * If it is a function definition (the term is a lambda), it generates
+ * basic equational facts.  In other words if f = {x. <term>},
+ * generates the fact f x = <term>, and so on if there are multiple
+ * arguments.
+ *
+ * After unwrapping any lambdas, lIf the definition has one of the
+ * specific forms:
+ *
+ * <name> = the <condition>; or
+ * <name> = iota <condition>
+ *
+ * and if there is a recorded fact of the form exists1 <condition>, it
+ * proves the additional fact that <condition>(<name>).  If there is a
+ * recorded fact <precond> => exists1 <condition>, it proves a fact
+ * that <precond> => <condition>(<name>).  If the definition uses
+ * "the" rather than "iota", it proves [if <precond> then
+ * <condition>(<name>) else null].
+ *
+ * Definitions of this kind using "the", or perhaps iota, will only go
+ * through properly once basic logic with facts about quantifiers and
+ * unique existence are in place.  This seems a reasonable
+ * requirement.  Omitting the accompanying unique existence fact will
+ * prevent the system from failing in its automatic proof.
+ *
+ * TODO: Consider supporting "the" better by using available facts
+ *   that show when the needed exists1 property does and does not
+ *   apply.
+ *
+ * TODO: Implement the <precond> support.  Consider extending this for
+ *   additional cases TBD.
  */
 function addDefnFacts(definition) {
+  // This relies on having applyBoth and simpleApply available whenever
+  // a function is defined.
   if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
-    var name = definition.getLeft().name;
-    var result = definition;
+    var defined = definition.getLeft();
+    var name = defined.name;
+    var eqn = definition;
     var lambda = definition.getRight();
     while (lambda instanceof Lambda) {
       var bound = lambda.bound;
-      result = (rules.applyBoth(result, bound)
-                .andThen('simpleApply', '/right'));
-      lambda = result.getRight();
+      eqn = (rules.applyBoth(eqn, bound)
+             .andThen('simpleApply', '/right'));
+      lambda = eqn.getRight();
     }
     // TODO: Consider adding a fact unconditionally, and treating
     //   it automatically as a desimplifier.
-    if (result != definition) {
-      addFact({goal: result});
-      addSwappedFact({goal: result});
+    if (eqn != definition) {
+      addFact({goal: eqn});
+      addSwappedFact({goal: eqn});
+    }
+    // From here on, if the remaining RHS is a "the" or "iota", and
+    // there is an appropriate "exists1" fact for its property, we
+    // generate a fact that having the described property is
+    // equivalent to being the value of the RHS.
+    var rhs = eqn.getRight();
+    if (rhs.isCall1('the') || rhs.isCall1('iota')) {
+      // The definition looks like <name> = the . . .
+      // Add the standard fact for definitions of this kind.
+      var condition = rhs.arg;
+      var ex1 = Toy.call('exists1', condition);
+      if (isRecordedFact(ex1)) {
+        var step = rules.fact(ex1);
+        var step1 = (rhs.isCall1('iota')
+                     ? rules.rewriteOnly(step, '/rt/right', 'exists1The')
+                     : step);
+        var v = step1.get('/rt/arg/bound');
+        var ex2 = (rules.exists1Forall()
+                   .andThen('instForall', '/right', v));
+        var step2 = (step1.wff.isCall2('=>')
+                     ? rules.forwardChain2(step1, ex2)
+                     : rules.forwardChain(step1, ex2));
+        var result = (rules.simpleApply(step2, '/right/left')
+                      .rewrite('/rt/right/right', rules.eqnSwap(eqn)));
+        // Add the key fact for this definition, equivalence between being
+        // equal to the new constant and having its property.
+        console.info('For', name, 'adding fact', result.toString());
+        addFact({goal: result});
+      } else {
+        const v = (condition instanceof Lambda
+                   ? condition.bound
+                   : termify('x'));
+        const e1 = rules.consider('v = t == p v');
+        const map = {v: v, t: eqn.getLeft(), p: condition};
+        const e2 = rules.instMultiVars(e1, map);
+        const e3 = (condition instanceof Lambda
+                    ? rules.simpleApply(e2, '/right/right')
+                    : e2);
+        const goal = e3.getRight();
+        console.warn('For definition', definition.toString());
+        console.warn('No recorded fact', ex1.toString());
+        console.warn('So not proving', goal.toString());
+      }
     }
   }
 }
@@ -6386,6 +6538,7 @@ Toy.noSimplify = noSimplify;
 Toy.addRule = addRule;
 Toy.addRulesMap = addRulesMap;
 Toy.addRules = addRules;
+Toy.definition = definition;
 Toy.addDefnFacts = addDefnFacts;
 Toy.lookupFactInfo = lookupFactInfo;
 Toy.addFact = addFact;

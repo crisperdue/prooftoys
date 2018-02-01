@@ -2531,7 +2531,6 @@ var negationFacts = {
   },
   'neg a + b = b - a': {
     proof: function() {
-      var parse = Toy.justParse;
       return rules.fact('a + neg b = a - b')
         .rewrite('/main/left', 'a + b = b + a');
     },
