@@ -12,6 +12,7 @@ var addRule = Toy.addRule;
 var addRules = Toy.addRules;
 var define = Toy.define;
 var definex = Toy.definex;
+const definition = Toy.definition;
 var basicSimpFacts = Toy.basicSimpFacts;
 
 var assert = Toy.assertTrue;
@@ -562,6 +563,7 @@ var realOrdering =
     axiom: true
    }
    ];
+Toy.addRules(realOrdering);
 
 var fieldLaws =
   [
@@ -582,12 +584,13 @@ var fieldLaws =
     axiom: true
    }
    ];
+addRules(fieldLaws);
 
 define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
 define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
 
 var facts =
-[
+  [
    {statement: '@exists {z. R z & forall {x. R x => x + z = x}}',
     proof: function() {
        return (rules.fact('exists {z. isAddIdentity z}')
@@ -602,6 +605,14 @@ var facts =
    }
    ];
 addRules(facts);
+
+// Declare 0 and 1 to be the additive and multiplicative identities.
+//
+// For practical reasons, within the range of exact integer
+// literals all instances of these facts are built in, but the
+// general facts are only stated here, and of course justified.
+definition('isAddIdentity 0');
+definition('isMulIdentity 1');
 
 var divisionInfo = {
 
@@ -3249,16 +3260,6 @@ Toy.addRulesMap(simplifiersInfo);
 Toy.addRulesMap(moversInfo);
 Toy.addRulesMap(fractionsInfo);
 Toy.addFactsMap(algebraFacts);
-
-Toy.addRules(realOrdering);
-Toy.addRules(fieldLaws);
-// Declare 0 and 1 to be the additive and multiplicative identities.
-//
-// For practical reasons, within the range of exact integer
-// literals all instances of these facts are built in, but the
-// general facts are only stated here, and of course justified.
-definex('0', 'exists {z. isAddIdentity z}');
-definex('1', 'exists {z. isMulIdentity z}');
 
 // From here is overall initialization for the complete system.
 

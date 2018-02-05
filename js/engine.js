@@ -5031,6 +5031,7 @@ function definition(defn_arg) {
       assert(isRecorded(exists), 'Definition {1} needs an existence fact.', defn);
     }
     definitions[name] = defn;
+    addFact({goal: rules.definition(name)});
   }
 }
 
@@ -5128,8 +5129,8 @@ function addDefnFacts(definition) {
                     : e2);
         const goal = e3.getRight();
         console.warn('For definition', definition.toString());
-        console.warn('No recorded fact', ex1.toString());
-        console.warn('So not proving', goal.toString());
+        console.warn('  no recorded fact', ex1.toString());
+        console.warn('  so not concluding', goal.toString());
       }
     }
   }
@@ -6569,6 +6570,8 @@ Toy.getStepSite = getStepSite;
 Toy.proofOf = proofOf;
 Toy.assumptionsBefore = assumptionsBefore;
 Toy.assumptionsUsed = assumptionsUsed;
+
+Toy.definition = definition;
 
 Toy.ruleInfo = ruleInfo;
 Toy.basicSimpFacts = basicSimpFacts;

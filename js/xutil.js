@@ -490,8 +490,8 @@ function findType(expr, annotate) {
         // it would not be in the vars list.
         var type = types[i];
         tidy(type);
-        console.log('New constant', nm, 'assigned type', '' + type);
-        console.log('  in', '' + expr);
+        // console.log('New constant', nm, 'assigned type', '' + type);
+        // console.log('  in', '' + expr);
         // TODO: Consider adding the name and expr to a list of forms
         //   introducing new constants, and check at certain moments
         //   whether all names in it have definitions, giving a warning
