@@ -5020,7 +5020,7 @@ function definition(defn_arg) {
     addDefnFacts(defn);
   } else {
     // It is not a classic equational definition.
-    var x = genVar('x', defn.allNames());
+    var x = Toy.genVar('x', defn.allNames());
     // Substitute the fresh variable for the constant name.
     var body = defn.subFree1(x, name);
     var exists1 = Toy.call('exists1', Toy.lambda(x, body));
