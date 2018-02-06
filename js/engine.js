@@ -258,6 +258,431 @@ var _factMap = {};
 // Inference rules, axioms, theorems
 //
 
+// Map from rule name to function used in all proofs.
+// This is a central global variable.
+// Generated from ruleInfo by addRulesMap, below.
+var rules = {};
+
+/**
+ * Given a ruleInfo object, add its information to the "rules" object.
+ * The "rules" object maps from rule name to function.  Each function
+ * has an "info" property containing all the properties present in the
+ * ruleInfo object entry for the name.  If not supplied in the rule
+ * definition, the info.inputs is defaulted to an empty object here.
+ */
+function addRulesMap(ruleInfo) {
+  for (var key in ruleInfo) {
+    var value = ruleInfo[key];
+    if (value.constructor != Object) {
+      console.warn('Old-style rule action', key);
+    }
+    var info = value.constructor == Object ? value : {action: value};
+    if (info.ruleName) {
+      console.warn('Property "ruleName" found for rule with key', key);
+    }
+    info.name = key;
+    addRule(info);
+  }
+}
+
+/**
+ * Adds an array of rules (axioms and theorems/facts, named or not),
+ * each in the form of a plain object with properties.  If a fact has
+ * a name, the name appears as a "name" property.
+ *
+ * TODO: Convert addFactsMap to use this internally instead of addFact.
+ */
+function addRules(ruleList) {
+  ruleList.forEach(addRule);
+}
+
+/**
+ * Process the given info into form for inclusion into Toy.rules and
+ * add the result there.  For details see the comments for ruleInfo.
+ */
+function addRule(info) {
+  var name = info.name;
+  if (name && rules[name]) {
+    console.warn('Inference rule with name', name, 'already declared');
+  }
+
+  if (info.definition) {
+    definition(info.definition);
+    return;
+  }
+
+  var proof = info.proof;
+  var statement = info.statement;
+  // This will become the "rule object":
+  var rule;
+  // This will become the "main function" -- the action or proof property
+  // with user-written code.
+  var main;
+  // True iff the main function has access to the rule object as "this".
+  var mainHasThis = false;
+  // If the rule (theorem) has an explicit statement (which should be
+  // provably true), coerce the statement to an Expr if given as a
+  // string.
+  if (typeof statement === 'string') {
+    statement = info.statement = Toy.mathParse(statement);
+  }
+  if (proof) {
+    // The proof should have no arguments, and should not do its
+    // own call to "justify".
+    //
+    // TODO: In the future, allow type parameters and memoize
+    //   as appropriate.
+    // TODO: Consider checking that "actions" _do_ have parameters.
+    assert(typeof proof === 'function',
+           'Proof of {1} should be a function', name);
+    assert(proof.length == 0, 'Proof of {1} requires parameters', name);
+    assert(!info.action, 'Both proof and action for {1}', name);
+    // User-supplied proof function is the main.
+    main = proof;
+  }
+  if (statement) {
+    if (!proof) {
+      // If there is a statement but no proof, just assert the statement.
+      proof = function() {
+        var result = rules.assert(statement);
+        return (result.isCall2('=>')
+                ? rules.asHypotheses(result)
+                : result);
+      }
+      main = proof;
+      if (!info.axiom) {
+        if (typeof name !== 'string') {
+          console.warn('No proof for', statement.$$);
+        } else if (!name.startsWith('axiom')) {
+          console.warn('No proof for', name);
+        }
+      }
+    }
+    // Add it as a fact also, and potentially "swapped".
+    // A fact needs a statement, so we rely here on having a statement given.
+    var factProps = {
+      description: true,
+      simplifier: true,
+      desimplifier: true,
+      noSwap: true,
+      labels: true,
+      converse: true
+    };
+    // Accept selected fact properties in the rule metadata.
+    var properties = {goal: statement, proof: proof};
+    for (var k in factProps) {
+      if (k in info) {
+        // Uncomment this for detailed tracing.
+        // console.warn('Adding', k, 'to', name);
+        properties[k] = info[k];
+      }
+    }
+    addFact(properties);
+    if (!properties.noSwap) {
+      addSwappedFact(properties);
+    }
+  }
+  if (proof) {
+    // A statement or proof was given.
+    // 
+    // Don't rerun the proof every time, but do re-justify on each
+    // call so each use will return a step with its own ordinal.
+    rule = function() { 
+      if (rule.result === undefined) {
+        rule.result = proof();
+        if (statement) {
+          assert(rule.result.matches(statement),
+                 'Failed to prove {1},\n  instead proved {2}',
+                 statement, rule.result);
+        }
+      }
+      return rule.result.justify(name, []);
+    };
+    // Describe theorems as "theorem" by default.
+    // The theorem name will be added as ruleName into the tooltip.
+    if (!('description' in info)) {
+      info.description = 'theorem'
+    }
+  } else {
+    // It is a rule of inference, not an axiom or theorem.
+    assert(name, 'Inference rule must have a name', info);
+    // The action property is the user code to run it.
+    main = info.action;
+    assert(typeof main === 'function',
+           'Rule action must be a function: {1}', name);
+
+    if (info.precheck) {
+      // There is a precheck.
+      var checker = function(_args) {
+        return Toy._actionInfo = info.precheck.apply(main, arguments);
+      }
+      rule = function(_args) {
+        checker.apply(null, arguments);
+        return (Toy._actionInfo
+                ? main.apply(rule, arguments)
+                : info.onFail
+                ? info.onFail.call(rule)
+                : Toy.fail(Toy.format('Rule {1} not applicable', name)));
+      }
+      if (info.maxArgs == null) {
+        info.maxArgs = main.length;
+      }
+      // Set properties on the outer action to give access to the
+      // main from the the precheck.
+      rule.precheck = checker;
+      rule.main = main;
+      // Assert that the main code has access to data and metadata
+      // through "this".
+      mainHasThis = true;
+    }
+  }
+
+  // The following code applies to all rules, axioms, theorems and
+  // inference rules.
+
+  if (info.data) {
+    // Set the "data" property of the outer action so the main
+    // and precheck can access it.  If it is a function, call it
+    // and use the result.
+    if (typeof info.data === 'function') {
+      info.data = info.data.call();
+    }
+    if (!mainHasThis) {
+      // Make the outer action function available to the main
+      // function as "this".
+      rule = function(_args) {
+        return main.apply(rule, arguments);
+      };
+      mainHasThis = true;
+    }
+    // Also make the data a property of "this".
+    rule.data = info.data;
+  }
+  // Even if there is no wrapping, set up "rule".
+  rule || (rule = main);
+
+  // Set up remaining metatadata.
+
+  // Give every info "inputs".
+  if (!info.inputs) {
+    info.inputs = {};
+  }
+
+  // Default the description to the marked up formula or the ruleName.
+  if (!('description' in info)) {
+    // The name could be undefined.
+    info.description = name;
+  }
+  // Remember the basic tooltip
+  info.basicTooltip = info.tooltip;
+
+  // If there is a toOffer property with string value, coerce it
+  // to a function of step and path.
+  if (typeof info.toOffer === 'string') {
+    info.toOffer = new Function('step, term', info.toOffer);
+  }
+  // Make the action function available here also as "this".
+  if (typeof info.toOffer === 'function') {
+    info.toOffer = info.toOffer.bind(rule);
+  }
+
+  info.labels = processLabels(info.labels);
+  if (info.form !== undefined && Toy.isEmpty(info.labels)) {
+    // Anything conceivably offerable (with a form), default to
+    // "basic" if no other labels.
+    info.labels.basic = true;
+  }
+
+  // Add all metadata as the function's "info" property.
+  rule.info = info;
+  
+  if (name) {
+    // Include the rule name in the tooltip.
+    info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), name);
+
+    if (rule && rule.length === 0 && name.slice(0, 5) === 'axiom') {
+      info.labels.axiom = true;
+    }
+
+    // Assign a name to the wrapper and main.
+    if (rule !== main) {
+      Object.defineProperty(rule, 'name',
+                            {value: name + '_wrapper'});
+      Object.defineProperty(main, 'name', {value: name});
+    } else {
+      Object.defineProperty(rule, 'name', {value: name});
+    }
+
+    // Finally install the rule into the rules.
+    rules[name] = rule;
+  }
+}
+
+/**
+ * Add the given definition to the system.  It must define a named
+ * constant that is not already defined.  The argument is a WFF that
+ * will become true as the definition of the new constant.  The WFF
+ * must contain a (free) occurrence of exactly one new constant name.
+ * If it is of the form:
+ *
+ * <name> = <term>
+ *
+ * and <name> does not occur free in <term>, the equational definition
+ * is accepted.
+ *
+ * If the definition has some other form, then there must be a
+ * recorded fact of the form: exists {<var>. <condition2>}, where
+ * <var> is a variable name that does not occur free in the condition,
+ * and condition2 is the result of substituting <var> for <name> in
+ * the condition.
+ *
+ * TODO: Perhaps appropriate top-level forms might be: "fact", "rule",
+ * and "definition".  Each would just add its item to a global list,
+ * perhaps even the same global list.  Additionally, the top-level
+ * form might do some bookkeeping and report errors, at least for
+ * definitions.  These can run at top-level in modules where the logic
+ * is available.
+ */
+function definition(defn_arg) {
+  var isRecorded = Toy.isRecordedFact;
+  var definitions = Toy.definitions;
+  var defn = termify(defn_arg);
+  // Free occurrences of names of constants that do not have
+  // definitions.
+  var undefs = defn.undefNames();
+  var undefList = Object.keys(undefs);
+  assert(undefList.length > 0,
+         'Definition {1}\n  needs a fresh constant name.', defn);
+  assert(undefList.length === 1,
+         'Definition {1} has multiple new constants {2}',
+         defn, undefList.join(', '));
+  var name = undefList[0];
+  var defined = new Atom(name);
+  if (defn.isCall2('=') &&
+      defn.getLeft().matches(defined) &&
+      Toy.isEmpty(defn.getRight().undefNames())) {
+    // It is a classic equational definition.
+    // Add it to the definitions database.
+    definitions[name] = defn;
+    addDefnFacts(defn);
+  } else {
+    // It is not a classic equational definition.
+    var x = Toy.genVar('x', defn.allNames());
+    // Substitute the fresh variable for the constant name.
+    var body = defn.subFree1(x, name);
+    var exists1 = Toy.call('exists1', Toy.lambda(x, body));
+    if (isRecorded(exists1)) {
+      // TODO: Add the fact that only one value has the property.
+    } else {
+      var exists = Toy.call('exists', Toy.lambda(x, body));
+      assert(isRecorded(exists), 'Definition {1} needs an existence fact.', defn);
+    }
+    definitions[name] = defn;
+    addFact({goal: rules.definition(name)});
+  }
+}
+
+/**
+ * This function only has effect for equational definitions
+ * of the form <atom> = <term>.
+ *
+ * If it is a function definition (the term is a lambda), it generates
+ * basic equational facts.  In other words if f = {x. <term>},
+ * generates the fact f x = <term>, and so on if there are multiple
+ * arguments.
+ *
+ * After unwrapping any lambdas, lIf the definition has one of the
+ * specific forms:
+ *
+ * <name> = the <condition>; or
+ * <name> = iota <condition>
+ *
+ * and if there is a recorded fact of the form exists1 <condition>, it
+ * proves the additional fact that <condition>(<name>).  If there is a
+ * recorded fact <precond> => exists1 <condition>, it proves a fact
+ * that <precond> => <condition>(<name>).  If the definition uses
+ * "the" rather than "iota", it proves [if <precond> then
+ * <condition>(<name>) else null].
+ *
+ * Definitions of this kind using "the", or perhaps iota, will only go
+ * through properly once basic logic with facts about quantifiers and
+ * unique existence are in place.  This seems a reasonable
+ * requirement.  Omitting the accompanying unique existence fact will
+ * prevent the system from failing in its automatic proof.
+ *
+ * TODO: Consider supporting "the" better by using available facts
+ *   that show when the needed exists1 property does and does not
+ *   apply.
+ *
+ * TODO: Implement the <precond> support.  Consider extending this for
+ *   additional cases TBD.
+ */
+function addDefnFacts(definition) {
+  // This relies on having applyBoth and simpleApply available whenever
+  // a function is defined.
+  if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
+    var defined = definition.getLeft();
+    var name = defined.name;
+    var eqn = definition;
+    var lambda = definition.getRight();
+    while (lambda instanceof Lambda) {
+      var bound = lambda.bound;
+      eqn = (rules.applyBoth(eqn, bound)
+             .andThen('simpleApply', '/right'));
+      lambda = eqn.getRight();
+    }
+    // TODO: Consider adding a fact unconditionally, and treating
+    //   it automatically as a desimplifier.
+    if (eqn != definition) {
+      addFact({goal: eqn});
+      addSwappedFact({goal: eqn});
+    }
+    // From here on, if the remaining RHS is a "the" or "iota", and
+    // there is an appropriate "exists1" fact for its property, we
+    // generate a fact that having the described property is
+    // equivalent to being the value of the RHS.
+    var rhs = eqn.getRight();
+    if (rhs.isCall1('the') || rhs.isCall1('iota')) {
+      // The definition looks like <name> = the . . .
+      // Add the standard fact for definitions of this kind.
+      var condition = rhs.arg;
+      var ex1 = Toy.call('exists1', condition);
+      if (isRecordedFact(ex1)) {
+        var step = rules.fact(ex1);
+        var step1 = (rhs.isCall1('iota')
+                     ? rules.rewriteOnly(step, '/rt/right', 'exists1The')
+                     : step);
+        var v = step1.get('/rt/arg/bound');
+        var ex2 = (rules.exists1Forall()
+                   .andThen('instForall', '/right', v));
+        var step2 = (step1.wff.isCall2('=>')
+                     ? rules.forwardChain2(step1, ex2)
+                     : rules.forwardChain(step1, ex2));
+        var result = (rules.simpleApply(step2, '/right/left')
+                      .rewrite('/rt/right/right', rules.eqnSwap(eqn)));
+        // Add the key fact for this definition, equivalence between being
+        // equal to the new constant and having its property.
+        console.info('For', name, 'adding fact', result.toString());
+        addFact({goal: result});
+      } else {
+        const v = (condition instanceof Lambda
+                   ? condition.bound
+                   : termify('x'));
+        const e1 = rules.consider('v = t == p v');
+        const map = {v: v, t: eqn.getLeft(), p: condition};
+        const e2 = rules.instMultiVars(e1, map);
+        const e3 = (condition instanceof Lambda
+                    ? rules.simpleApply(e2, '/right/right')
+                    : e2);
+        const goal = e3.getRight();
+        console.warn('For definition', definition.toString());
+        console.warn('  no recorded fact', ex1.toString());
+        console.warn('  so not concluding', goal.toString());
+      }
+    }
+  }
+}
+
 // ruleInfo:
 //
 // This is structured as a map from the name of an inference rule or
@@ -4710,431 +5135,6 @@ var ruleInfo = {
     }
   }
 };  // End of ruleInfo.
-
-// Map from rule name to function used in all proofs.
-// This is a central global variable.
-// Generated from ruleInfo by addRulesMap, below.
-var rules = {};
-
-/**
- * Given a ruleInfo object, add its information to the "rules" object.
- * The "rules" object maps from rule name to function.  Each function
- * has an "info" property containing all the properties present in the
- * ruleInfo object entry for the name.  If not supplied in the rule
- * definition, the info.inputs is defaulted to an empty object here.
- */
-function addRulesMap(ruleInfo) {
-  for (var key in ruleInfo) {
-    var value = ruleInfo[key];
-    if (value.constructor != Object) {
-      console.warn('Old-style rule action', key);
-    }
-    var info = value.constructor == Object ? value : {action: value};
-    if (info.ruleName) {
-      console.warn('Property "ruleName" found for rule with key', key);
-    }
-    info.name = key;
-    addRule(info);
-  }
-}
-
-/**
- * Adds an array of rules (axioms and theorems/facts, named or not),
- * each in the form of a plain object with properties.  If a fact has
- * a name, the name appears as a "name" property.
- *
- * TODO: Convert addFactsMap to use this internally instead of addFact.
- */
-function addRules(ruleList) {
-  ruleList.forEach(addRule);
-}
-
-/**
- * Process the given info into form for inclusion into Toy.rules and
- * add the result there.  For details see the comments for ruleInfo.
- */
-function addRule(info) {
-  var name = info.name;
-  if (name && rules[name]) {
-    console.warn('Inference rule with name', name, 'already declared');
-  }
-
-  if (info.definition) {
-    definition(info.definition);
-    return;
-  }
-
-  var proof = info.proof;
-  var statement = info.statement;
-  // This will become the "rule object":
-  var rule;
-  // This will become the "main function" -- the action or proof property
-  // with user-written code.
-  var main;
-  // True iff the main function has access to the rule object as "this".
-  var mainHasThis = false;
-  // If the rule (theorem) has an explicit statement (which should be
-  // provably true), coerce the statement to an Expr if given as a
-  // string.
-  if (typeof statement === 'string') {
-    statement = info.statement = Toy.mathParse(statement);
-  }
-  if (proof) {
-    // The proof should have no arguments, and should not do its
-    // own call to "justify".
-    //
-    // TODO: In the future, allow type parameters and memoize
-    //   as appropriate.
-    // TODO: Consider checking that "actions" _do_ have parameters.
-    assert(typeof proof === 'function',
-           'Proof of {1} should be a function', name);
-    assert(proof.length == 0, 'Proof of {1} requires parameters', name);
-    assert(!info.action, 'Both proof and action for {1}', name);
-    // User-supplied proof function is the main.
-    main = proof;
-  }
-  if (statement) {
-    if (!proof) {
-      // If there is a statement but no proof, just assert the statement.
-      proof = function() {
-        var result = rules.assert(statement);
-        return (result.isCall2('=>')
-                ? rules.asHypotheses(result)
-                : result);
-      }
-      main = proof;
-      if (!info.axiom) {
-        if (typeof name !== 'string') {
-          console.warn('No proof for', statement.$$);
-        } else if (!name.startsWith('axiom')) {
-          console.warn('No proof for', name);
-        }
-      }
-    }
-    // Add it as a fact also, and potentially "swapped".
-    // A fact needs a statement, so we rely here on having a statement given.
-    var factProps = {
-      description: true,
-      simplifier: true,
-      desimplifier: true,
-      noSwap: true,
-      labels: true,
-      converse: true
-    };
-    // Accept selected fact properties in the rule metadata.
-    var properties = {goal: statement, proof: proof};
-    for (var k in factProps) {
-      if (k in info) {
-        // Uncomment this for detailed tracing.
-        // console.warn('Adding', k, 'to', name);
-        properties[k] = info[k];
-      }
-    }
-    addFact(properties);
-    if (!properties.noSwap) {
-      addSwappedFact(properties);
-    }
-  }
-  if (proof) {
-    // A statement or proof was given.
-    // 
-    // Don't rerun the proof every time, but do re-justify on each
-    // call so each use will return a step with its own ordinal.
-    rule = function() { 
-      if (rule.result === undefined) {
-        rule.result = proof();
-        if (statement) {
-          assert(rule.result.matches(statement),
-                 'Failed to prove {1},\n  instead proved {2}',
-                 statement, rule.result);
-        }
-      }
-      return rule.result.justify(name, []);
-    };
-    // Describe theorems as "theorem" by default.
-    // The theorem name will be added as ruleName into the tooltip.
-    if (!('description' in info)) {
-      info.description = 'theorem'
-    }
-  } else {
-    // It is a rule of inference, not an axiom or theorem.
-    assert(name, 'Inference rule must have a name', info);
-    // The action property is the user code to run it.
-    main = info.action;
-    assert(typeof main === 'function',
-           'Rule action must be a function: {1}', name);
-
-    if (info.precheck) {
-      // There is a precheck.
-      var checker = function(_args) {
-        return Toy._actionInfo = info.precheck.apply(main, arguments);
-      }
-      rule = function(_args) {
-        checker.apply(null, arguments);
-        return (Toy._actionInfo
-                ? main.apply(rule, arguments)
-                : info.onFail
-                ? info.onFail.call(rule)
-                : Toy.fail(Toy.format('Rule {1} not applicable', name)));
-      }
-      if (info.maxArgs == null) {
-        info.maxArgs = main.length;
-      }
-      // Set properties on the outer action to give access to the
-      // main from the the precheck.
-      rule.precheck = checker;
-      rule.main = main;
-      // Assert that the main code has access to data and metadata
-      // through "this".
-      mainHasThis = true;
-    }
-  }
-
-  // The following code applies to all rules, axioms, theorems and
-  // inference rules.
-
-  if (info.data) {
-    // Set the "data" property of the outer action so the main
-    // and precheck can access it.  If it is a function, call it
-    // and use the result.
-    if (typeof info.data === 'function') {
-      info.data = info.data.call();
-    }
-    if (!mainHasThis) {
-      // Make the outer action function available to the main
-      // function as "this".
-      rule = function(_args) {
-        return main.apply(rule, arguments);
-      };
-      mainHasThis = true;
-    }
-    // Also make the data a property of "this".
-    rule.data = info.data;
-  }
-  // Even if there is no wrapping, set up "rule".
-  rule || (rule = main);
-
-  // Set up remaining metatadata.
-
-  // Give every info "inputs".
-  if (!info.inputs) {
-    info.inputs = {};
-  }
-
-  // Default the description to the marked up formula or the ruleName.
-  if (!('description' in info)) {
-    // The name could be undefined.
-    info.description = name;
-  }
-  // Remember the basic tooltip
-  info.basicTooltip = info.tooltip;
-
-  // If there is a toOffer property with string value, coerce it
-  // to a function of step and path.
-  if (typeof info.toOffer === 'string') {
-    info.toOffer = new Function('step, term', info.toOffer);
-  }
-  // Make the action function available here also as "this".
-  if (typeof info.toOffer === 'function') {
-    info.toOffer = info.toOffer.bind(rule);
-  }
-
-  info.labels = processLabels(info.labels);
-  if (info.form !== undefined && Toy.isEmpty(info.labels)) {
-    // Anything conceivably offerable (with a form), default to
-    // "basic" if no other labels.
-    info.labels.basic = true;
-  }
-
-  // Add all metadata as the function's "info" property.
-  rule.info = info;
-  
-  if (name) {
-    // Include the rule name in the tooltip.
-    info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), name);
-
-    if (rule && rule.length === 0 && name.slice(0, 5) === 'axiom') {
-      info.labels.axiom = true;
-    }
-
-    // Assign a name to the wrapper and main.
-    if (rule !== main) {
-      Object.defineProperty(rule, 'name',
-                            {value: name + '_wrapper'});
-      Object.defineProperty(main, 'name', {value: name});
-    } else {
-      Object.defineProperty(rule, 'name', {value: name});
-    }
-
-    // Finally install the rule into the rules.
-    rules[name] = rule;
-  }
-}
-
-/**
- * Add the given definition to the system.  It must define a named
- * constant that is not already defined.  The argument is a WFF that
- * will become true as the definition of the new constant.  The WFF
- * must contain a (free) occurrence of exactly one new constant name.
- * If it is of the form:
- *
- * <name> = <term>
- *
- * and <name> does not occur free in <term>, the equational definition
- * is accepted.
- *
- * If the definition has some other form, then there must be a
- * recorded fact of the form: exists {<var>. <condition2>}, where
- * <var> is a variable name that does not occur free in the condition,
- * and condition2 is the result of substituting <var> for <name> in
- * the condition.
- *
- * TODO: Perhaps appropriate top-level forms might be: "fact", "rule",
- * and "definition".  Each would just add its item to a global list,
- * perhaps even the same global list.  Additionally, the top-level
- * form might do some bookkeeping and report errors, at least for
- * definitions.  These can run at top-level in modules where the logic
- * is available.
- */
-function definition(defn_arg) {
-  var isRecorded = Toy.isRecordedFact;
-  var definitions = Toy.definitions;
-  var defn = termify(defn_arg);
-  // Free occurrences of names of constants that do not have
-  // definitions.
-  var undefs = defn.undefNames();
-  var undefList = Object.keys(undefs);
-  assert(undefList.length > 0,
-         'Definition {1}\n  needs a fresh constant name.', defn);
-  assert(undefList.length === 1,
-         'Definition {1} has multiple new constants {2}',
-         defn, undefList.join(', '));
-  var name = undefList[0];
-  var defined = new Atom(name);
-  if (defn.isCall2('=') &&
-      defn.getLeft().matches(defined) &&
-      Toy.isEmpty(defn.getRight().undefNames())) {
-    // It is a classic equational definition.
-    // Add it to the definitions database.
-    definitions[name] = defn;
-    addDefnFacts(defn);
-  } else {
-    // It is not a classic equational definition.
-    var x = Toy.genVar('x', defn.allNames());
-    // Substitute the fresh variable for the constant name.
-    var body = defn.subFree1(x, name);
-    var exists1 = Toy.call('exists1', Toy.lambda(x, body));
-    if (isRecorded(exists1)) {
-      // TODO: Add the fact that only one value has the property.
-    } else {
-      var exists = Toy.call('exists', Toy.lambda(x, body));
-      assert(isRecorded(exists), 'Definition {1} needs an existence fact.', defn);
-    }
-    definitions[name] = defn;
-    addFact({goal: rules.definition(name)});
-  }
-}
-
-/**
- * This function only has effect for equational definitions
- * of the form <atom> = <term>.
- *
- * If it is a function definition (the term is a lambda), it generates
- * basic equational facts.  In other words if f = {x. <term>},
- * generates the fact f x = <term>, and so on if there are multiple
- * arguments.
- *
- * After unwrapping any lambdas, lIf the definition has one of the
- * specific forms:
- *
- * <name> = the <condition>; or
- * <name> = iota <condition>
- *
- * and if there is a recorded fact of the form exists1 <condition>, it
- * proves the additional fact that <condition>(<name>).  If there is a
- * recorded fact <precond> => exists1 <condition>, it proves a fact
- * that <precond> => <condition>(<name>).  If the definition uses
- * "the" rather than "iota", it proves [if <precond> then
- * <condition>(<name>) else null].
- *
- * Definitions of this kind using "the", or perhaps iota, will only go
- * through properly once basic logic with facts about quantifiers and
- * unique existence are in place.  This seems a reasonable
- * requirement.  Omitting the accompanying unique existence fact will
- * prevent the system from failing in its automatic proof.
- *
- * TODO: Consider supporting "the" better by using available facts
- *   that show when the needed exists1 property does and does not
- *   apply.
- *
- * TODO: Implement the <precond> support.  Consider extending this for
- *   additional cases TBD.
- */
-function addDefnFacts(definition) {
-  // This relies on having applyBoth and simpleApply available whenever
-  // a function is defined.
-  if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
-    var defined = definition.getLeft();
-    var name = defined.name;
-    var eqn = definition;
-    var lambda = definition.getRight();
-    while (lambda instanceof Lambda) {
-      var bound = lambda.bound;
-      eqn = (rules.applyBoth(eqn, bound)
-             .andThen('simpleApply', '/right'));
-      lambda = eqn.getRight();
-    }
-    // TODO: Consider adding a fact unconditionally, and treating
-    //   it automatically as a desimplifier.
-    if (eqn != definition) {
-      addFact({goal: eqn});
-      addSwappedFact({goal: eqn});
-    }
-    // From here on, if the remaining RHS is a "the" or "iota", and
-    // there is an appropriate "exists1" fact for its property, we
-    // generate a fact that having the described property is
-    // equivalent to being the value of the RHS.
-    var rhs = eqn.getRight();
-    if (rhs.isCall1('the') || rhs.isCall1('iota')) {
-      // The definition looks like <name> = the . . .
-      // Add the standard fact for definitions of this kind.
-      var condition = rhs.arg;
-      var ex1 = Toy.call('exists1', condition);
-      if (isRecordedFact(ex1)) {
-        var step = rules.fact(ex1);
-        var step1 = (rhs.isCall1('iota')
-                     ? rules.rewriteOnly(step, '/rt/right', 'exists1The')
-                     : step);
-        var v = step1.get('/rt/arg/bound');
-        var ex2 = (rules.exists1Forall()
-                   .andThen('instForall', '/right', v));
-        var step2 = (step1.wff.isCall2('=>')
-                     ? rules.forwardChain2(step1, ex2)
-                     : rules.forwardChain(step1, ex2));
-        var result = (rules.simpleApply(step2, '/right/left')
-                      .rewrite('/rt/right/right', rules.eqnSwap(eqn)));
-        // Add the key fact for this definition, equivalence between being
-        // equal to the new constant and having its property.
-        console.info('For', name, 'adding fact', result.toString());
-        addFact({goal: result});
-      } else {
-        const v = (condition instanceof Lambda
-                   ? condition.bound
-                   : termify('x'));
-        const e1 = rules.consider('v = t == p v');
-        const map = {v: v, t: eqn.getLeft(), p: condition};
-        const e2 = rules.instMultiVars(e1, map);
-        const e3 = (condition instanceof Lambda
-                    ? rules.simpleApply(e2, '/right/right')
-                    : e2);
-        const goal = e3.getRight();
-        console.warn('For definition', definition.toString());
-        console.warn('  no recorded fact', ex1.toString());
-        console.warn('  so not concluding', goal.toString());
-      }
-    }
-  }
-}
 
 
 //// FACTS
