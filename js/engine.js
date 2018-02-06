@@ -683,6 +683,134 @@ function addDefnFacts(definition) {
   }
 }
 
+
+//// Support for adding facts
+
+/**
+ * Treats each key in the map as a synopsis of a mathematical
+ * statement, and treats its value as a function to prove the
+ * statement.  Uses addFact to add each statement and its proof
+ * function to the internal database of provable facts.
+ */
+function addFactsMap(map) {
+  for (var synopsis in map) {
+    var info = map[synopsis];
+    info.synopsis = synopsis;
+    addFact(info);
+    if (!info.noSwap) {
+      addSwappedFact(info);
+    }
+  }
+}
+
+// Object / set of property names supported in fact info data, used
+// for validation of fact properties.  See addFact.
+var factProperties = {
+  goal: true,
+  synopsis: true,
+  proof: true,
+  simplifier: true,
+  desimplifier: true,
+  noSwap: true,
+  labels: true,
+  description: true,
+  converse: true
+};
+
+/**
+ * Adds an entry to the facts database given information in the format
+ * of fact entries in facts maps, assuming here that the synopsis is
+ * already added to the info as a synopsis property.  Can use the
+ * synopsis property to generate a goal and the proof property as the
+ * prover.
+ *
+ * Currently recognizes input properties as follows:
+ *
+ * goal: if present, can generate the synopsis; if proved, becomes
+ *   the proved result, and any proof function will be ignored,
+ *   otherwise a WFF.
+ * synopsis:  string for input to mathParse.  Must parse to a
+ *   complete statement of the fact, to be used as the goal.
+ * proof: function to return the proved fact, matching the goal.
+ *   If not present, one will be generated to assert the goal.
+ * description: string or function as for a rule description.
+ * simplifier: true iff this fact is a simplifier.
+ * desimplifier: true iff this fact is the "converse" of a simplifier.
+ * labels: Object/set of label names, if given as a string, parses
+ *   space-separated parts into a set.
+ * converse.labels: Like labels, but applies to a "swapped" version
+ *   of the fact, if any.
+ *
+ * TODO: Extend this and/or add other functions to add facts based
+ *   on other information such as an already-proved statement.
+ */
+function addFact(info) {
+  for (var key in info) {
+    if (!(key in factProperties)) {
+      var id = info.goal ? info.goal.$$ : info.synopsis;
+      console.warn('In fact', id, 'extra info key:', key);
+    }
+  }
+  info.proved = info.goal && info.goal.isProved() && info.goal;
+  // The goal is a rendered Expr just because that makes a complete
+  // copy that can be properly annotated with types.
+  // TODO: Use expandSynopsis here.
+  info.goal = (info.goal ||
+               Toy.mathParse(info.synopsis)).copyForRendering(null);
+  info.synopsis = info.synopsis || info.goal.toString();
+  // Annotate the new goal with type info for type comparison
+  // with portions of steps in the UI.
+  //
+  // Careful: It is very doubtful whether annotated structures can be
+  // shared as part of any other steps or Exprs.
+  info.goal.annotateWithTypes();
+  if (!info.proved) {
+    info.prover = asFactProver(info.proof, info.goal);
+  }
+  // Set to true when starting to attempt a proof, then
+  // to false when the proof succeeds.
+  info.inProgress = false;
+  info.labels = processLabels(info.labels);
+  if (isRecordedFact(info.goal)) {
+    console.info('Fact', info.goal.$$, 'already recorded, skipping.');
+  } else {
+    if (info.simplifier) {
+      basicSimpFacts.push(info.synopsis);
+    }
+    setFactInfo(info);
+  }
+  return info;
+}
+
+/**
+ * Add the "converse" of an equational fact if it is not already
+ * recorded.  Determines the statement from the info's goal.  If it is
+ * an equation, switches its LHS and RHS, otherwise does nothing.
+ *
+ * If the fact to be swapped is a simplifier or desimplifier, the
+ * newly-created fact will be appropriately labeled as the opposite.
+ */  
+function addSwappedFact(info) {
+  var stmt = info.goal;
+  if (stmt.isEquation()) {
+    var swapped = Toy.commuteEqn(stmt);
+    if (!isRecordedFact(swapped)) {
+      function proof() {
+        return rules.fact(stmt).andThen('eqnSwap');
+      }
+      var labels2 = processLabels(info.converse && info.converse.labels);
+      var info2 = {proof: proof,
+                   goal: swapped,
+                   simplifier: !!info.desimplifier,
+                   desimplifier: !!info.simplifier,
+                   description: info.description,
+                   labels: labels2
+      };
+      addFact(info2);
+    }
+  }
+}
+
 // ruleInfo:
 //
 // This is structured as a map from the name of an inference rule or
@@ -5316,131 +5444,6 @@ var logicFacts = {
     }
   }
 };
-
-/**
- * Treats each key in the map as a synopsis of a mathematical
- * statement, and treats its value as a function to prove the
- * statement.  Uses addFact to add each statement and its proof
- * function to the internal database of provable facts.
- */
-function addFactsMap(map) {
-  for (var synopsis in map) {
-    var info = map[synopsis];
-    info.synopsis = synopsis;
-    addFact(info);
-    if (!info.noSwap) {
-      addSwappedFact(info);
-    }
-  }
-}
-
-// Object / set of property names supported in fact info data, used
-// for validation of fact properties.  See addFact.
-var factProperties = {
-  goal: true,
-  synopsis: true,
-  proof: true,
-  simplifier: true,
-  desimplifier: true,
-  noSwap: true,
-  labels: true,
-  description: true,
-  converse: true
-};
-
-/**
- * Adds an entry to the facts database given information in the format
- * of fact entries in facts maps, assuming here that the synopsis is
- * already added to the info as a synopsis property.  Can use the
- * synopsis property to generate a goal and the proof property as the
- * prover.
- *
- * Currently recognizes input properties as follows:
- *
- * goal: if present, can generate the synopsis; if proved, becomes
- *   the proved result, and any proof function will be ignored,
- *   otherwise a WFF.
- * synopsis:  string for input to mathParse.  Must parse to a
- *   complete statement of the fact, to be used as the goal.
- * proof: function to return the proved fact, matching the goal.
- *   If not present, one will be generated to assert the goal.
- * description: string or function as for a rule description.
- * simplifier: true iff this fact is a simplifier.
- * desimplifier: true iff this fact is the "converse" of a simplifier.
- * labels: Object/set of label names, if given as a string, parses
- *   space-separated parts into a set.
- * converse.labels: Like labels, but applies to a "swapped" version
- *   of the fact, if any.
- *
- * TODO: Extend this and/or add other functions to add facts based
- *   on other information such as an already-proved statement.
- */
-function addFact(info) {
-  for (var key in info) {
-    if (!(key in factProperties)) {
-      var id = info.goal ? info.goal.$$ : info.synopsis;
-      console.warn('In fact', id, 'extra info key:', key);
-    }
-  }
-  info.proved = info.goal && info.goal.isProved() && info.goal;
-  // The goal is a rendered Expr just because that makes a complete
-  // copy that can be properly annotated with types.
-  // TODO: Use expandSynopsis here.
-  info.goal = (info.goal ||
-               Toy.mathParse(info.synopsis)).copyForRendering(null);
-  info.synopsis = info.synopsis || info.goal.toString();
-  // Annotate the new goal with type info for type comparison
-  // with portions of steps in the UI.
-  //
-  // Careful: It is very doubtful whether annotated structures can be
-  // shared as part of any other steps or Exprs.
-  info.goal.annotateWithTypes();
-  if (!info.proved) {
-    info.prover = asFactProver(info.proof, info.goal);
-  }
-  // Set to true when starting to attempt a proof, then
-  // to false when the proof succeeds.
-  info.inProgress = false;
-  info.labels = processLabels(info.labels);
-  if (isRecordedFact(info.goal)) {
-    console.info('Fact', info.goal.$$, 'already recorded, skipping.');
-  } else {
-    if (info.simplifier) {
-      basicSimpFacts.push(info.synopsis);
-    }
-    setFactInfo(info);
-  }
-  return info;
-}
-
-/**
- * Add the "converse" of an equational fact if it is not already
- * recorded.  Determines the statement from the info's goal.  If it is
- * an equation, switches its LHS and RHS, otherwise does nothing.
- *
- * If the fact to be swapped is a simplifier or desimplifier, the
- * newly-created fact will be appropriately labeled as the opposite.
- */  
-function addSwappedFact(info) {
-  var stmt = info.goal;
-  if (stmt.isEquation()) {
-    var swapped = Toy.commuteEqn(stmt);
-    if (!isRecordedFact(swapped)) {
-      function proof() {
-        return rules.fact(stmt).andThen('eqnSwap');
-      }
-      var labels2 = processLabels(info.converse && info.converse.labels);
-      var info2 = {proof: proof,
-                   goal: swapped,
-                   simplifier: !!info.desimplifier,
-                   desimplifier: !!info.simplifier,
-                   description: info.description,
-                   labels: labels2
-      };
-      addFact(info2);
-    }
-  }
-}
 
 //// Initializations: Do this after support modules are initialized.
 
