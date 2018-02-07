@@ -5445,43 +5445,6 @@ var logicFacts = {
   }
 };
 
-//// Initializations: Do this after support modules are initialized.
-
-var define = Toy.define;
-var defineCases = Toy.defineCases;
-
-var identity = Toy.parse('{x. x}');
-var allT = Toy.parse('{x. T}');
-
-// Put definitions into their database:
-define('not', equal(F));
-define('!=', '{x. {y. not (x = y)}}');
-define('forall', '(=) {x. T}');
-define('exists', '{p. p != {x. F}}');
-define('exists1', '{p. exists {y. p = {x. x = y}}}');
-defineCases('&', identity, '{x. F}');
-defineCases('|', allT, identity);
-defineCases('=>', identity, allT);
-
-// It would be desirable for the constants in this next group to
-// all have generic types.
-define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
-// This is the empty collection.
-define('empty', '{x. F}');
-define('none', 'iota empty');
-define('?', '{p. {x. if p x none}}');
-// The identity function
-define('ident', '{x. x}');
-// Collection has multiple elements:
-define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
-// Always either "none" or the member of the singleton set:
-define('the', '{p. if (exists1 p) (iota p) none}');
-// This "negates" a predicate, returning a predicate whose value
-// is the negation of the value of the given predicate.  (Just one
-// argument!)
-define('negate', '{p. {x. not (p x)}}');
-
-
 //// FACTS
 
 /**
@@ -6521,6 +6484,41 @@ var basicSimpFacts = [
 
 
 //// Initialization
+
+var define = Toy.define;
+var defineCases = Toy.defineCases;
+
+var identity = Toy.parse('{x. x}');
+var allT = Toy.parse('{x. T}');
+
+// Put definitions into their database:
+define('not', equal(F));
+define('!=', '{x. {y. not (x = y)}}');
+define('forall', '(=) {x. T}');
+define('exists', '{p. p != {x. F}}');
+define('exists1', '{p. exists {y. p = {x. x = y}}}');
+defineCases('&', identity, '{x. F}');
+defineCases('|', allT, identity);
+defineCases('=>', identity, allT);
+
+// It would be desirable for the constants in this next group to
+// all have generic types.
+define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
+// This is the empty collection.
+define('empty', '{x. F}');
+define('none', 'iota empty');
+define('?', '{p. {x. if p x none}}');
+// The identity function
+define('ident', '{x. x}');
+// Collection has multiple elements:
+define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
+// Always either "none" or the member of the singleton set:
+define('the', '{p. if (exists1 p) (iota p) none}');
+// This "negates" a predicate, returning a predicate whose value
+// is the negation of the value of the given predicate.  (Just one
+// argument!)
+define('negate', '{p. {x. not (p x)}}');
+
 
 addRulesMap(ruleInfo);
 addFactsMap(logicFacts);
