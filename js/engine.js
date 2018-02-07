@@ -684,6 +684,1044 @@ function addDefnFacts(definition) {
 }
 
 
+//// FACTS
+
+/**
+ * Accepts a "prover" function of no arguments and a goal statement
+ * (Expr).  The prover may be null, in which case this generates
+ * a trivial prover that asserts the goal.
+ *
+ * Returns a function to construct and return a proved statement from
+ * the arguments.  The returned function runs the prover to prove the
+ * goal.  When running the prover, the returned function also attempts
+ * to use exactly the free variables in the goal, and arranges the
+ * assumptions accordingly.  It warns if assumptions do not match up
+ * with the goal, and raises an error if the main part if it cannot
+ * make the main part match exactly.
+ *
+ * Internal to addFact and addSwappedFact.
+ */
+function asFactProver(prover, goal) {
+  assert(!prover || typeof prover === 'function',
+         'Not a function: {1}', prover);
+  // This function wraps around the user-supplied fact prover
+  // to do the generic parts of the work.
+  function factProverWrapper() {
+    var result;
+    if (goal.isProved()) {
+      result = goal;
+    } else if (!prover) {
+      // The proof is just a stub not yet filled in.
+      console.warn('No proof for fact', goal.toUnicode());
+      result = rules.assert(goal);
+      return (result.isCall2('=>')
+              ? rules.asHypotheses(result)
+              : result);
+    }
+    var result = prover();
+    // Seek a substitution into the result that yields the goal.
+    var subst = result.alphaMatch(goal);
+    // TODO: Check that substitutions exist, but don't actually do
+    //   substitutions here.  Now rules.fact substitutes as needed to
+    //   use the variables desired at each use.
+    if (subst) {
+      return rules.instMultiVars(result, subst);
+    } else {
+      // Try matching the main parts of the result and goal.
+      // Reorder any assumptions as needed.
+      var subst2 = result.getMain().alphaMatch(goal.getMain());
+      if (subst2) {
+        // The main parts match up to change of variables.
+        var proved = (rules.instMultiVars(result, subst2)
+                       .andThen('arrangeAsms'));
+        if (proved.matches(goal)) {
+          return proved;
+        }
+        var conjSet = Toy.makeConjunctionSet;
+        var empty = new Toy.TermSet();
+        var goalAsms = goal.isCall2('=>') ? conjSet(goal.getLeft()) : empty;
+        var factAsms = proved.isCall2('=>') ? conjSet(proved.getLeft()) : empty;
+        if (!goalAsms.superset(factAsms)) {
+          console.group('Warning: Fact requires unintended assumptions.');
+          console.error('Proved:', proved.toString());
+          console.error('Stated:', goal.toString());
+          console.groupEnd();
+          assert(false, 'Fact statement is missing some assumptions');
+        }
+        if (!factAsms.superset(goalAsms)) {
+          console.group('Note: Fact statement has unneeded assumptions.');
+          console.info('Proved:', proved.toString());
+          console.info('Stated:', goal.toString());
+          console.groupEnd();
+        }
+        return proved;
+      } else {
+        assert(false, 'Instead of {1} proved {2}', goal, result);
+      }
+    }
+  }
+  return factProverWrapper;
+}
+
+
+// Private to lookupFactInfo and setFactInfo.  Maps from a canonical
+// string "dump" of a fact to fact info, consisting of:
+//
+// synopsis (optional): synopsis string
+// goal: Expr statement of the fact, with all assumptions
+// labels: object / set of labels like the ones for rules
+// simplifier: true if this is an equation that simplifies
+// desimplifier: true if this is an equation that "desimplifies"
+// noSwap: if true, inhibits automatic generation of a fact
+//   with equation LHS and RHS swapped
+// prover: function intended to prove the fact
+// proved: proved statement or falsy if not yet proved
+var _factsMap = {};
+
+/**
+ * Access any fact info stored for the given statement, which can be
+ * anything recognized by getStatementKey.  If the statement is
+ * conditional, getStatementKey only uses the consequent for lookup.
+ */
+function lookupFactInfo(stmt) {
+  return _factsMap[getStatementKey(stmt)];
+}
+
+/**
+ * Set fact info for the given statement.  See comments on _factsMap
+ * and fact management functions for the expectations on the
+ * argument.
+ */
+function setFactInfo(info) {
+  _factsMap[getStatementKey(info.goal)] = info;
+}
+
+/**
+ * Like getResult, below, but always proves the statement if it has
+ * an associate prover function.
+ */
+function proveResult(stmt) {
+  return getResult(stmt, true);
+}
+
+/**
+ * Accepts an already-proved step or the full statement of some
+ * recorded fact.  Returns a proof of the step, or one like it except
+ * for changes of names of variables including free variables.  Throws
+ * an exception in case of failure.
+ *
+ * Note that the facts database currently looks up facts by their
+ * "main" part, ignoring any assumptions.
+ *
+ * The optional second argument, for internal use only, if true,
+ * overrides any setting of Toy.assertFacts and assures that a proved
+ * result will be returned (if there is a prover function).
+ *
+ * TODO: Consider renaming to something like "stepify" and using as
+ *   a conversion for inputs to steps in the vein of "termify".
+ */
+function getResult(statement, mustProve) {
+  if (Toy.isProved(statement)) {
+    return statement;
+  }
+  var info = lookupFactInfo(statement);
+  assert(info, 'Not a recorded fact: {1}', statement);
+  // TODO: Consider more precise checking of the result of the lookup.
+  if (info.proved) {
+    return info.proved;
+  }
+  var prover = info.prover;
+  if (Toy.assertFacts && !mustProve) {
+    var result = rules.assert(info.goal);
+    if (result.isCall2('=>')) {
+      // Treat any conditional as having hypotheses.
+      //
+      // TODO: Skipping this might provide a good test for the system
+      //   working with conditionals directly.
+      result = rules.asHypotheses(result);
+    }
+    return result;
+  }
+  info.inProgress = true;
+  // Get the proved result of the fact.
+  info.proved = prover();
+  assert(info.proved instanceof Expr);
+  // Note that the fact remains in progress if its prover throws, which
+  // may or may not be good thing.
+  info.inProgress = false;
+  return info.proved;
+}
+
+/**
+ * Returns true iff a proof of this statement is underway but not
+ * completed.  Can be used to prevent infinite regress, as in the case
+ * of simplifiers that might be skipped during their own proof.
+ */
+function isInProgress(stmt) {
+  if (!lookupFactInfo(stmt)) {
+    // It could be a tautology, but not a recorded fact.
+    return false;
+  }
+  return lookupFactInfo(stmt).inProgress;
+}
+
+// Cache of statement keys for statements that are in the form of
+// strings, as is often the case in lists of facts.  The policy
+// is to compute the mapping once and remember it forever, but
+// in principle this is a cache.
+_statementKeys = {};
+
+/**
+ * Given a term or string that parses to one, returns a string key
+ * usable for looking up information about the fact.  If the statement
+ * is conditional, the key represents its consequent; otherwise it
+ * represents the entire statement.
+ *
+ * TODO: Rename this to indicate that it only uses the consequent in
+ *   generating the key.  Or perhaps better, move this functionality
+ *   into its uses and support storing the same fact under multiple
+ *   keys, for example one based on just the consequent and another
+ *   based on the entire statement.
+ */
+function getStatementKey(stmt) {
+  // If the statement is a string, look in the cache.
+  if (typeof stmt === 'string') {
+    var cached = _statementKeys[stmt];
+    if (cached) {
+      return cached;
+    }
+  }
+  // This currently uses toString, which is sensitive to aliases
+  // in particular "==" for "=", compared with "dump", which is not.
+  // TODO: Determine what to do about facts such as pure logic facts,
+  //   which are generic across types, and implement accordingly.
+  // TODO: Use stmt just as a synopsis here.
+  var key = Toy.standardVars(getSynopsis(stmt)).toString();
+  if (typeof stmt === 'string') {
+    _statementKeys[stmt] = key;
+  }
+  return key;
+}
+
+/**
+ * Returns the portion of the given statement to use as the synopsis,
+ * parsing it from a string if needed.  Fact lookup encodes this as a
+ * string "statement key".
+ */
+function getSynopsis(stmt) {
+  return termify(stmt).getMain();
+}
+
+/**
+ * Tests whether a fact with the given statement is recorded in the
+ * facts database.  The fact need only be recorded, not proved.
+ * Accepts a term or parseable string.
+ */
+function isRecordedFact(stmt) {
+  return !!lookupFactInfo(stmt);
+}
+
+/**
+ * Looks for a fact recorded in the facts database by addFact or
+ * addRule.  The input must be a term or string parseable into a term,
+ * as for getStatementKey.  The database uses only the RHS of
+ * conditional facts as a lookup key, and accordingly this function
+ * matches an unconditional argument as the key.  Or if the argument
+ * is conditional, it only matches the RHS against the stored key.  At
+ * present no further checking is done here.
+ *
+ * Returns a statement of the fact, generally not the proved fact,
+ * or null if no such fact was found.
+ */
+function findFact(stmt) {
+  var info = lookupFactInfo(stmt);
+  return info ? info.goal : null;
+}
+
+
+//// Finding matching facts
+
+/**
+ * Finds a single LHS match within the given term with one of the
+ * given facts.  Returns the value of the successful call to
+ * findMatchingFact, with a "path" property added indicating the path
+ * from the term argument to the matched term, or a falsy value if no
+ * call succeeded.
+ *
+ * All arguments other than the term are passed via "info".  If it is
+ * a plain object, it interprets the following properties:
+ *
+ * facts: List of facts in the format accepted by findMatchingFact.
+ * context: Context information for "where" clauses as
+ *   accepted by findMatchingFact.
+ *   TODO: (BUG!) Accept an "isQuantified" property here, or more 
+ *      detailed information, to indicate enclosing bound variables.
+ * searchMethod: Name of method to apply to the term to control
+ *   which subexpressions of the term to apply findMatchingFact to;
+ *   defaults to 'searchCalls', which searches through calls.
+ *
+ * If the info is an array, it must be the list of facts.
+ *
+ * TODO: Consider changing this to something like applyMatchingFactIn,
+ *   doing essentially the same search, but attempting to apply the
+ *   first fact that seems to match, and continuing the search if
+ *   application fails.
+ */
+function searchForMatchingFact(term, info) {
+  var allFacts, searchMethod;
+  var cxt = {};
+  if (info.constructor === Object) {
+    allFacts = info.facts;
+    info.context && Object.assign(cxt, info.context);
+    searchMethod = info.searchMethod;
+  } else {
+    allFacts = info;
+  }
+  // If set to non-null, just unconditional facts.  At present only
+  // includes facts that are just a statement in string form.
+  // Computed here for efficiency.
+  //
+  // TODO: Handle more complicated facts (as needed).
+  var pureFacts = null;
+  function isPureFact(fact) {
+    if (typeof fact === 'string' || fact instanceof Expr) {
+      // This next line supports ordinary facts and also tautologies.
+      // It relies on findFact to return a conditional whenever
+      // it is given a statement that has implicit assumptions.
+      var fullFact = findFact(fact) || termify(fact);
+      return fullFact && fullFact.isCall2('=');
+    } else if (fact.constructor === Object && fact.pure) {
+      return true;
+    }
+  }
+  searchMethod = searchMethod || 'searchMost';
+  function factFinder(term, revPath, isQuantified) {
+    if (isQuantified) {
+      pureFacts = pureFacts || allFacts.filter(isPureFact);
+    }
+    // If some free variables of a conditional fact do not appear in
+    // its condition(s), this may exclude it unnecessarily.
+    // TODO: Consider a more precise check here.
+    var facts = isQuantified ? pureFacts : allFacts;
+    var result = findMatchingFact(facts, cxt, term, isQuantified);
+    if (result) {
+      result.path = revPath.reverse().concat(result.path);
+    }
+    return result;
+  }
+  return term[searchMethod](factFinder);
+}
+
+/**
+ * Searches the given pattern list for one that matches the given
+ * term.  If it finds one, returns info about it in a plain object
+ * in the format described below.
+ *
+ * The context argument is available to "where" arguments as "cxt",
+ * and any "factLists" property of the context defines lists of named
+ * patterns accessible by using the name in place of an explicit list.
+ * The value of the factLists property is a plain object mapping from
+ * list name to a list (array) value.  In this way lists can be
+ * reused, and also enables them to be effectively recursive.
+ *
+ * If pureOnly is true, this only accepts a fact that is a pure
+ * equation, with no conditions on it.
+ * 
+ * Each pattern argument can be an argument acceptable to
+ * getStatementKey, or:
+ *
+ * A plain object with properties as follows:
+ *
+ * stmt: value acceptable to getStatementKey.  Unless "match" is also
+ *   given this will need to be an equation.
+ * where: optional string to evaluate, with "subst" 
+ *   argument to findMatchingFact available as "$" and cxt and term
+ *   available as free variables for use in the string.
+ *   OR if it is a function, call it with the substition, cxt, and
+ *   term as arguments.
+ * match: term schema to match against the term.  (By default the
+ *   term is matched against the stmt LHS.)
+ *   TODO: Consider removing this; there is only one use.
+ *
+ * For fact statements passed as list elements or the "stmt" property
+ * of a list element, if proof of the fact is in progress at the time,
+ * the fact is ignored in the search.  This provides a crude mechanism
+ * for avoiding infinite regress, for example when simplifying steps
+ * of the proof of a simplifier fact.
+ *   
+ * Or it can be a plain object with a single property, either:
+ *
+ * descend: a plain object with properties "schema", a schema
+ *   (possibly in string form) to match against the term, and "parts",
+ *   a plain object mapping from variable names in this schema each to
+ *   a pattern list as described above. If the search reaches this
+ *   "descend" item and the schema matches the term, the search
+ *   descends into the parts of the term, applying each schema
+ *   variable's list of facts to the part of the term matching that
+ *   schema variable.
+ *
+ * apply: a function to apply to the input term and context, which
+ *   must return an equation whose LHS is the same as the term except
+ *   for possible changes of bound variables, or a falsy value if it
+ *   fails to produce such an equation.  The call is done by
+ *   Toy.normalReturn, and this uses the value returned from that.
+ *
+ * The value returned is falsy if no match is found, else a plain
+ * object with properties:
+ * 
+ * stmt: Relevant fact statement, proved or not, or the equation
+ *   returned by an "apply" pattern.
+ * term: the term argument to findMatchingFact.
+ * subst: substitution that makes the given term match the fact (empty for
+ *   "apply" patterns).
+ * path: path to the portion of the given term that matched some pattern.
+ *
+ * TODO: Consider changing this to something like "applyMatchingFact",
+ *   attempting to apply the first fact that appears to match, and
+ *   continuing the search if the application fails.
+ */
+function findMatchingFact(facts_arg, cxt, term, pureOnly) {
+  // This finds the fact part to match.  If the fact is not an equation,
+  // uses the main part instead of the LHS.
+  function schemaPart(fact) {
+    var main = fact.getMain();
+    return (main.isCall2('=')
+            ? main.getLeft()
+            : main);
+  }
+  function apply$(expr, $) {
+    if (typeof expr === 'function') {
+      return expr($, cxt, term);
+    } else {
+      // Suppress acccess to the enclosing "facts" variable.
+      // OK for str to refer to "cxt" or "term".
+      var facts;
+      return eval(expr);
+    }
+  }
+  var facts = facts_arg;
+  if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
+    facts = cxt.factLists && cxt.factLists[facts_arg];
+  }
+  assert(facts && facts[Symbol.iterator], 'No facts: {1}', facts_arg);
+  for (var it = facts[Symbol.iterator](), v = it.next(); !v.done; v = it.next()) {
+    var factInfo = v.value;
+    if (factInfo.constructor !== Object) {
+      var stmt = factInfo;
+      if (!isInProgress(stmt)) {
+        var fullFact = rules.fact(stmt);
+        if (!(pureOnly && fullFact.isCall2('=>'))) {
+          // Use stmt to create the schema, because it may have different
+          // free variables than the recorded fact.
+          var schema = schemaPart(termify(stmt));
+          var subst = term.matchSchema(schema);
+          if (subst) {
+            var result = {stmt: fullFact,
+                          term: term,
+                          path: Toy.path(),
+                          subst: subst};
+            return result;
+          }
+        }
+      }
+    } else if (factInfo.apply) {
+      // "apply"
+      var eqn = Toy.normalReturn(factInfo.apply, term);
+      if (eqn && !(pureOnly && eqn.isCall2('=>'))) {
+        var result = {
+          stmt: eqn,
+          term: term,
+          path: Toy.path(),
+          subst: {}
+        };
+        return result;
+      }
+    } else if (factInfo.descend) {
+      // "descend"
+      var partInfo = factInfo.descend;
+      // TODO: Handle pureOnly here.
+      var result = _locateMatchingFact(term,
+                                       partInfo.schema,
+                                       partInfo.parts,
+                                       cxt);
+      if (result) {
+        return result;
+      }
+    } else {
+      // All other plain objects are handled here.
+      var stmt = factInfo.stmt;
+      if (!(stmt && isInProgress(stmt))) {
+        var fact = stmt && rules.fact(stmt);
+        if (!(pureOnly && fact && fact.isCall2('=>'))) {
+          var where = factInfo.where;
+          var schema = (factInfo.match
+                        ? termify(factInfo.match)
+                        : schemaPart(fact));
+          var subst = term.matchSchema(schema);
+          if (subst && (!where || apply$(where, subst))) {
+            var result = {stmt: stmt,
+                          term: term,
+                          path: Toy.path(),
+                          subst: subst};
+            return result;
+          }
+        }
+      }
+    }
+  }
+  // If no match found the value will be falsy.
+};
+
+/**
+ * This handles "descend" patterns in findMatchingFact, and is private
+ * to it.
+ *
+ * Arguments are the term argument to findMatchingFact, the schema
+ * property of the "descend" pattern, the "parts" property of the
+ * "descend" pattern, and the context argument to findMatchingFact.
+ */
+function _locateMatchingFact(expr, schema_arg, varsMap, context) {
+  var schema = termify(schema_arg);
+  var factLists = context.factLists;
+  var subst;
+  if ((subst = expr.matchSchema(schema))) {
+    // Checks if the given term of the schema matches some fact
+    // in the appropriate factsList, throwing information about
+    // the match if found to Toy.catchResult.
+    // Only schema variables are eligible to match.
+    function checkTerm(schemaTerm, revPath) {
+      if (schemaTerm.isVariable()) {
+        var list = varsMap[schemaTerm.name];
+        if (typeof list == 'string' && Toy.isIdentifier(list)) {
+          list = factLists[list];
+        }
+        if (list) {
+          var result =
+            findMatchingFact(list, context, expr.get(revPath.reverse()));
+          if (result) {
+            result.path = revPath.reverse().concat(result.path);
+            throw new Toy.Result(result);
+          }
+        }
+      }
+    }
+    return Toy.catchResult(schema.traverse.bind(schema, checkTerm));
+  }
+}
+
+/**
+ * Find and apply one of the facts to the part of the step at the
+ * given path, returning the result, or the input step if none of the
+ * facts apply.  Note: uses rules.rewrite, not rewriteOnly.
+ */
+function applyFactsOnce(step, path, facts) {
+  var info = findMatchingFact(facts, null, step.get(path));
+  return info ? rules.rewrite(step, path, info.stmt) : step;
+}
+
+/**
+ * Apply the list of fact rewrites to the visible part of the step
+ * until none of them any longer is applicable, returning the result.
+ *
+ * TODO: Replace uses of this.  Provide interactive commands that are
+ *   specific to the visible part.  If not interactive, use commands
+ *   not dependent on visibility status.
+ */
+function applyToVisible(step, facts) {
+  return applyFactsWithinSite(step, step.pathToVisiblePart(), facts);
+}
+
+/**
+ * Apply the list of facts as rewrites to the given part of the step
+ * until none of them any longer is applicable, returning the result.
+ * Returns its input step if no matches are found.
+ */
+function applyFactsWithinSite(step, path_arg, facts) {
+  var path = Toy.path(path_arg);
+  var eqn1 = rules.considerPart(step, path);
+  var eqn2 = applyFactsWithinRhs(eqn1, facts);
+  return (eqn2 == eqn1 ? step : rules.rplace(eqn2, step, path));
+}
+
+/**
+ * Apply the list of facts as rewrites to the RHS of the given step,
+ * which must be an equation.  Repeats until none of them is
+ * applicable, returning the result.  Returns its input step if no
+ * matches are found.  Uses rules.rewrite, not rewriteOnly.
+ *
+ * TODO: hyps -- step is an equation.
+ */
+function applyFactsWithinRhs(step, facts) {
+  var rhs;
+  var info;
+  var eqn = step;
+  while (rhs = Toy.path('/main/right', eqn),
+         info = searchForMatchingFact(eqn.get(rhs), facts)) {
+    var fullPath = rhs.concat(info.path);
+    eqn = rules.rewrite(eqn, fullPath, info.stmt);
+  }
+  return eqn;
+}
+
+/**
+ * Apply the function to the subexpression of step at path.  The
+ * function should return an equation that equates the original
+ * subexpression to something else.  This replaces the subexpression
+ * using the returned equation.
+ *
+ * Allows the function to return a falsy value, returning the same
+ * value itself.
+ */ 
+function convert(step, path, fn) {
+  var expr = step.get(path);
+  assert(expr, 'Bad path {1}', path, step);
+  var eqn = fn(expr);
+  return eqn && rules.replace(step, path, eqn);
+}
+
+/**
+ * Proves that the given term is equal to something by taking it as
+ * equal to itself, applying the given equation throughout its RHS,
+ * rewriting the result with the given fact, then applying the reverse
+ * of the equation throughout the resulting RHS.  The term can be
+ * a string, while the equation can be proved steps or statements
+ * of any recorded equational fact.
+ *
+ * Intended to capture a design pattern for proving facts about
+ * "inverse" functions such as division and subtraction.
+ */
+function transformApplyInvert(term_arg, eqn_arg, fact) {
+  var term = termify(term_arg);
+  var eqn = getResult(eqn_arg);
+  var revEqn = rules.eqnSwap(eqn);
+  var step1 = rules.consider(term);
+  var step2 = applyFactsWithinRhs(step1, [eqn]);
+  var step3 = rules.rewrite(step2, '/main/right', fact);
+  var step4 = applyFactsWithinRhs(step3, [revEqn]);
+  return step4;
+}
+
+/**
+ * Apply the given simplification function to the equation repeatedly
+ * until the result of the call is identical to its input.  Return
+ * the result of the last call.
+ */
+function whileChanges(eqn, fn) {
+  var simpler = eqn;
+  var next;
+  while (true) {
+    next = fn(simpler);
+    if (next.matches(simpler)) {
+      return next;
+    }
+    simpler = next;
+  }
+}
+
+/**
+ * Applies the given facts repeatedly to the RHS of the given equation
+ * until none matches, each time replacing the RHS with the result of
+ * applying the matching fact.  Returns the last version created.
+ */ 
+function arrangeRhs(eqn_arg, context, facts) {
+  var rhsPath;
+  var info;
+  var eqn = eqn_arg;
+  while (rhsPath = Toy.path('/main/right', eqn),
+         info = findMatchingFact(facts, context, eqn.get(rhsPath))) {
+    var fullPath = rhsPath.concat(info.path);
+    eqn = rules.rewrite(eqn, fullPath, info.stmt);
+  }
+  return eqn; 
+}
+
+/**
+ * Arranges the given part of the given step by repeatedly applying
+ * the given facts until none matches, returning a step with the part
+ * replaced by the result of the rearrangement.
+ *
+ * As a good practice, this considers the part in isolation, only
+ * replacing it in the step when done applying facts.
+ */
+function arrange(step, path, context, facts) {
+  var eqn = rules.consider(step.get(path));
+  var arranged = arrangeRhs(eqn, context, facts);
+  return rules.rplace(arranged, step, path);
+}
+
+/**
+ * Call the given function for each of the registered facts, passing
+ * it the fact statement (goal) and the synopsis with which it was
+ * created, if any.
+ */
+function eachFact(fn) {
+  for (var key in _factsMap) {
+    var f = _factsMap[key];
+    fn(f);
+  }
+}
+
+/**
+ * Checks that the named rule is a theorem (i.e. takes no arguments),
+ * and gets its result.
+ *
+ * TODO: Use rules.theorem instead, and remove this function.
+ */
+function getTheorem(name) {
+  var action = rules[name];
+  if (!action) {
+    return null;
+  }
+  assert(action.length === 0, 'Rule {1} needs parameters', name);
+  return action();
+}
+
+/**
+ * Returns true iff the named theorem has already been proved.
+ */
+function alreadyProved(name) {
+  if (isAxiom(name)) {
+    return true;
+  } else {
+    return !!rules[name].result;
+  }
+}
+
+/**
+ * True iff the name is the name of an axiom.
+ */
+function isAxiom(name) {
+  return name.substring(0, 5) === 'axiom';
+}
+
+
+//// UTILITY FUNCTIONS
+
+/**
+ * Searches the list of equational facts in order for one that matches
+ * a subexpression of the given step.  In particular, the part of the
+ * step at path must match with the variable in the LHS of the fact
+ * having the given name, which should occur exactly once in the
+ * fact's LHS.
+ *
+ * If this finds such a fact it returns a function of no arguments
+ * that applies the fact to the step using rules.rewrite and returning
+ * the result of the rewrite.
+ */
+function matchFactPart(step, path, factList, name) {
+  return Toy.each(factList, function(fact_arg) {
+    var schema = termify(fact_arg).getLeft();
+    var info = step.matchSchemaPart(path, schema, name);
+    if (info) {
+      return function() {
+        return rules.rewrite(step, info.path, fact_arg);
+      };
+    }
+  });
+}
+
+/**
+ * For each hypothesis in the given step that matches a hypothesis in
+ * the "dep" step that has a sourceStep property, copy the sourceStep
+ * property to the hypothesis in the step.
+ *
+ * This has side effects on the display of Exprs that already exist,
+ * so in some contexts it might affect the display of steps you did
+ * not intend to affect.
+ *
+ * TODO: Consider actually importing hypotheses from dep using rule R
+ * to avoid the possibility of undesired side effects.
+ *
+ * TODO: hyps
+ */
+function flagHyps(step, dep) {
+  if (step.hasHyps && dep.hasHyps) {
+    function flag(hyp) {
+      if (hyp.sourceStep) {
+        // Already flagged, don't change.
+        return true;
+      }
+      function tryFlag(source) {
+        var step = source.sourceStep;
+        if (step && hyp.matches(source)) {
+          hyp.sourceStep = step;
+          // Flag the hyp, and stop searching.
+          return true;
+        }
+      }
+      // Try to flag the hyp with the source step of one of
+      // the hyps from dep.
+      dep.getLeft().eachHyp(tryFlag);
+    }
+    step.getLeft().eachHyp(flag);
+  }
+}
+
+/**
+ * Build a schema for a conjunction of hypotheses, ensuring all are in
+ * the TermMap, with optional exclusions, a TermSet.  The schema is of
+ * the form a1 && ... && an, where the "a"s are variables for the
+ * terms for each hyp in hyps.
+ */
+function buildHypSchema(hyps, map, exclusions) {
+  var schema = null;
+  hyps.eachHyp(function(hyp) {
+      var v = map.addTerm(hyp);
+      if (!exclusions || !exclusions.has(hyp)) {
+        schema = schema ? Toy.infixCall(schema, '&', v) : v;
+      }
+    });
+  return schema;
+}
+
+/**
+ * Returns the given conjunction of hypotheses except any appearing in
+ * the exclusions TermSet.  If there are no such hypotheses, returns
+ * T.
+ */
+function hypsExcept(hyps, exclusions) {
+  var result = null;
+  hyps.eachHyp(function(hyp) {
+      if (!exclusions.has(hyp)) {
+        result = result ? Toy.infixCall(result, '&', hyp) : hyp;
+      }
+    });
+  return result;
+}
+
+/**
+ * Makes a facts map into a list of the fact keys.
+ */
+function listFacts(map) {
+  var list = [];
+  for (var key in map) {
+    list.push(key);
+  }
+  return list;
+}
+
+/**
+ * Developer utility function that modifies the named rule to emit
+ * information about calls to it.
+ */
+function traceRule(name) {
+  var rule = rules[name];
+  function timed() {
+    console.log('Enter', name);
+    for (var i = 0; i < arguments.length; i++) {
+      console.log(i, arguments[i] + '');
+    }
+    var t = new Toy.NestedTimer(name);
+    t.start();
+    var result = rule.apply(rules, arguments);
+    var elapsed = t.end();
+    console.log('=', result + '');
+    console.log('Exit', name, elapsed, 'ms');
+    return result;
+  }
+  timed.info = rule.info;
+  rules[name] = timed;
+}
+
+/**
+ * Returns the plain object with various information about the rule
+ * applied to create the given step.
+ */
+function getRuleInfo(step) {
+  return rules[step.ruleName].info;
+}
+
+/**
+ * If the given step has a "site" input, this returns the path
+ * of the site argument, a string or Path object.  This uses the
+ * "inputs" information of the rule that generated the step to
+ * determine which argument to access.
+ */
+function getStepSite(step) {
+  var inputs = getRuleInfo(step).inputs;
+  for (var type in inputs) {
+    if (type in Toy.siteTypes) {
+      var args = step.ruleArgs;
+      // Assumes there can be only one "site" argument.
+      var index = inputs[type];
+      return args[index];
+    }
+  }
+}
+
+/**
+ * Returns an array of the steps leading up to and including the given
+ * step, sorted by ordinal, not including the details of any step.
+ */
+function proofOf(step) {
+  // See also the nearly identical Toy.unrenderedDeps.
+  var result = [];
+  // Traverses the dependency graph, recording a copy of every step
+  // and building an array of all of the original steps.  In Java
+  // one might use HashSets to identify already-visited steps,
+  // avoiding temporary modifications to the originals.
+  function visitWithDeps(step) {
+    if (!step.__visited) {
+      result.push(step);
+      step.__visited = true;
+      step.ruleDeps.forEach(function(dep) { visitWithDeps(dep); });
+    }
+  }
+  visitWithDeps(step);
+  result.forEach(function(step) { step.__visited = false; });
+  result.sort(function(s1, s2) {
+      return s1.ordinal - s2.ordinal;
+    });
+  return result;
+}
+
+/**
+ * Returns an array of steps preceding this one that establish
+ * assumptions that later steps might not display, currently "assume"
+ * and "replaceIsEquiv" steps; in the future perhaps other similar
+ * kinds.  The result is selected steps from the result of
+ * proofOf(step), based on the ruleName for the step.
+ */
+function assumptionsBefore(step_arg) {
+  var steps = [];
+  var proofSteps = proofOf(step_arg);
+  proofSteps.forEach(function (step) {
+      var ruleName = step.ruleName;
+      if (ruleName === 'assume' ||
+          ruleName === 'replaceIsEquiv') {
+        steps.push(step);
+      }
+    });
+  return steps;
+}
+
+/**
+ * Returns an array of "assume" steps in the proof of the given step
+ * (see Toy.proofOf) that create an assumption of the step.  Assumes
+ * that the assumptions are a chain of conjuncts, which is true of
+ * normalized assumptions.  Used in rendering to highlight the sources
+ * of assumptions.
+ */
+function assumptionsUsed(step) {
+  var asms = step.getAsms();
+  if (!asms) {
+    return [];
+  }
+  var asmList = [];
+  asms.eachHyp(function (expr) { asmList.push(expr); });
+
+  var steps = proofOf(step);
+  var result = [];
+  for (var i = 0; i < steps.length; i++) {
+    var step = steps[i];
+    if (step.ruleName === 'assume') {
+      for (var j = 0; j < asmList.length; j++) {
+        var asm = asmList[j];
+        // Note that every "assume" step is a conditional.
+        if (step.getRight().sameAs(asm)) {
+          result.push(steps[i]);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * The given Expr is treated as the root of a tree of conjuncts.
+ * This searches for a direct or indirect conjunct of it that
+ * passes the test.  Returns a (pretty) path to the node found,
+ * or null if none is found.
+ */
+function pathToConjunct(root, test) {
+  var Path = Toy.Path;
+  function pathFrom(node) {
+    if (test(node)) {
+      return Path.empty;
+    }
+    if (node.isCall2('&')) {
+      var rpath = pathFrom(node.getRight());
+      if (rpath) {
+        return new Path('right', rpath);
+      }
+      var lpath = pathFrom(node.getLeft());
+      if (lpath) {
+        return new Path('left', lpath);
+      }
+    }
+    return null;
+  }
+  return pathFrom(root);
+}
+
+/**
+ * Builds and returns a propositional schema from the given term,
+ * with the structure of the tree of conjunctions rooted at the term.
+ * Matching parts get the same variable letter.
+ */
+function conjunctionSchema(term) {
+  var map = new Toy.TermMap();
+  var infixCall = Toy.infixCall;
+  function makeSchema(term) {
+    if (term.isCall2('&')) {
+      return infixCall(makeSchema(term.getLeft()), '&',
+                       makeSchema(term.getRight()));
+    } else {
+      map.addTerm(term);
+      return map.get(term);
+    }
+  }
+  return makeSchema(term);
+}
+
+/**
+ * Simplification facts for algebra, used in _simplifyMath1
+ * and related places.  During initialization all facts
+ * flagged as simplifier: true are added to this list.
+ *
+ * TODO: Consider whether x - 7 is simpler than x + -7.
+ * TODO: Declare number facts as simplifiers rather than adding here.
+ */
+var basicSimpFacts = [
+                      'T & a == a',
+                      'a & T == a',
+                      'F & a == F',
+                      'a & F == F',
+                      'T | a == T',
+                      'a | T == T',
+                      'F | a == a',
+                      'a | F == a',
+                      'not T == F',
+                      'not F == T',
+                      '(a == T) == a',
+                      'not (not a) == a',
+                      'x = x == T',
+                      'T => a == a',
+                      'not (a = b) == a != b',
+                      '(negate p) x == not (p x)',
+                      'if T x y = x',
+                      'if F x y = y',
+                      {stmt: 'a + neg b = a - b',
+                       // This condition makes extra-sure there will be
+                       // no circularity during simplification.
+                       // Negation of a numeral will be simplified by
+                       // other rules.
+                       where: '!$.b.isNumeral()'},
+                      {stmt: 'a - b = a + neg b',
+                       // This one is an exception to the general rule
+                       // that simplifiers make the expression tree
+                       // smaller; but arithmetic will follow this, and
+                       // with high priority.
+                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
+                      {apply: function(term, cxt) {
+                          return (Toy.isArithmetic(term) &&
+                                  rules.axiomArithmetic(term));
+                        }
+                      }
+                      // {apply: arithRight} Done in numbers.js.
+                      ];
+
+
 //// Support for adding facts
 
 /**
@@ -5444,1044 +6482,6 @@ var logicFacts = {
     }
   }
 };
-
-//// FACTS
-
-/**
- * Accepts a "prover" function of no arguments and a goal statement
- * (Expr).  The prover may be null, in which case this generates
- * a trivial prover that asserts the goal.
- *
- * Returns a function to construct and return a proved statement from
- * the arguments.  The returned function runs the prover to prove the
- * goal.  When running the prover, the returned function also attempts
- * to use exactly the free variables in the goal, and arranges the
- * assumptions accordingly.  It warns if assumptions do not match up
- * with the goal, and raises an error if the main part if it cannot
- * make the main part match exactly.
- *
- * Internal to addFact and addSwappedFact.
- */
-function asFactProver(prover, goal) {
-  assert(!prover || typeof prover === 'function',
-         'Not a function: {1}', prover);
-  // This function wraps around the user-supplied fact prover
-  // to do the generic parts of the work.
-  function factProverWrapper() {
-    var result;
-    if (goal.isProved()) {
-      result = goal;
-    } else if (!prover) {
-      // The proof is just a stub not yet filled in.
-      console.warn('No proof for fact', goal.toUnicode());
-      result = rules.assert(goal);
-      return (result.isCall2('=>')
-              ? rules.asHypotheses(result)
-              : result);
-    }
-    var result = prover();
-    // Seek a substitution into the result that yields the goal.
-    var subst = result.alphaMatch(goal);
-    // TODO: Check that substitutions exist, but don't actually do
-    //   substitutions here.  Now rules.fact substitutes as needed to
-    //   use the variables desired at each use.
-    if (subst) {
-      return rules.instMultiVars(result, subst);
-    } else {
-      // Try matching the main parts of the result and goal.
-      // Reorder any assumptions as needed.
-      var subst2 = result.getMain().alphaMatch(goal.getMain());
-      if (subst2) {
-        // The main parts match up to change of variables.
-        var proved = (rules.instMultiVars(result, subst2)
-                       .andThen('arrangeAsms'));
-        if (proved.matches(goal)) {
-          return proved;
-        }
-        var conjSet = Toy.makeConjunctionSet;
-        var empty = new Toy.TermSet();
-        var goalAsms = goal.isCall2('=>') ? conjSet(goal.getLeft()) : empty;
-        var factAsms = proved.isCall2('=>') ? conjSet(proved.getLeft()) : empty;
-        if (!goalAsms.superset(factAsms)) {
-          console.group('Warning: Fact requires unintended assumptions.');
-          console.error('Proved:', proved.toString());
-          console.error('Stated:', goal.toString());
-          console.groupEnd();
-          assert(false, 'Fact statement is missing some assumptions');
-        }
-        if (!factAsms.superset(goalAsms)) {
-          console.group('Note: Fact statement has unneeded assumptions.');
-          console.info('Proved:', proved.toString());
-          console.info('Stated:', goal.toString());
-          console.groupEnd();
-        }
-        return proved;
-      } else {
-        assert(false, 'Instead of {1} proved {2}', goal, result);
-      }
-    }
-  }
-  return factProverWrapper;
-}
-
-
-// Private to lookupFactInfo and setFactInfo.  Maps from a canonical
-// string "dump" of a fact to fact info, consisting of:
-//
-// synopsis (optional): synopsis string
-// goal: Expr statement of the fact, with all assumptions
-// labels: object / set of labels like the ones for rules
-// simplifier: true if this is an equation that simplifies
-// desimplifier: true if this is an equation that "desimplifies"
-// noSwap: if true, inhibits automatic generation of a fact
-//   with equation LHS and RHS swapped
-// prover: function intended to prove the fact
-// proved: proved statement or falsy if not yet proved
-var _factsMap = {};
-
-/**
- * Access any fact info stored for the given statement, which can be
- * anything recognized by getStatementKey.  If the statement is
- * conditional, getStatementKey only uses the consequent for lookup.
- */
-function lookupFactInfo(stmt) {
-  return _factsMap[getStatementKey(stmt)];
-}
-
-/**
- * Set fact info for the given statement.  See comments on _factsMap
- * and fact management functions for the expectations on the
- * argument.
- */
-function setFactInfo(info) {
-  _factsMap[getStatementKey(info.goal)] = info;
-}
-
-/**
- * Like getResult, below, but always proves the statement if it has
- * an associate prover function.
- */
-function proveResult(stmt) {
-  return getResult(stmt, true);
-}
-
-/**
- * Accepts an already-proved step or the full statement of some
- * recorded fact.  Returns a proof of the step, or one like it except
- * for changes of names of variables including free variables.  Throws
- * an exception in case of failure.
- *
- * Note that the facts database currently looks up facts by their
- * "main" part, ignoring any assumptions.
- *
- * The optional second argument, for internal use only, if true,
- * overrides any setting of Toy.assertFacts and assures that a proved
- * result will be returned (if there is a prover function).
- *
- * TODO: Consider renaming to something like "stepify" and using as
- *   a conversion for inputs to steps in the vein of "termify".
- */
-function getResult(statement, mustProve) {
-  if (Toy.isProved(statement)) {
-    return statement;
-  }
-  var info = lookupFactInfo(statement);
-  assert(info, 'Not a recorded fact: {1}', statement);
-  // TODO: Consider more precise checking of the result of the lookup.
-  if (info.proved) {
-    return info.proved;
-  }
-  var prover = info.prover;
-  if (Toy.assertFacts && !mustProve) {
-    var result = rules.assert(info.goal);
-    if (result.isCall2('=>')) {
-      // Treat any conditional as having hypotheses.
-      //
-      // TODO: Skipping this might provide a good test for the system
-      //   working with conditionals directly.
-      result = rules.asHypotheses(result);
-    }
-    return result;
-  }
-  info.inProgress = true;
-  // Get the proved result of the fact.
-  info.proved = prover();
-  assert(info.proved instanceof Expr);
-  // Note that the fact remains in progress if its prover throws, which
-  // may or may not be good thing.
-  info.inProgress = false;
-  return info.proved;
-}
-
-/**
- * Returns true iff a proof of this statement is underway but not
- * completed.  Can be used to prevent infinite regress, as in the case
- * of simplifiers that might be skipped during their own proof.
- */
-function isInProgress(stmt) {
-  if (!lookupFactInfo(stmt)) {
-    // It could be a tautology, but not a recorded fact.
-    return false;
-  }
-  return lookupFactInfo(stmt).inProgress;
-}
-
-// Cache of statement keys for statements that are in the form of
-// strings, as is often the case in lists of facts.  The policy
-// is to compute the mapping once and remember it forever, but
-// in principle this is a cache.
-_statementKeys = {};
-
-/**
- * Given a term or string that parses to one, returns a string key
- * usable for looking up information about the fact.  If the statement
- * is conditional, the key represents its consequent; otherwise it
- * represents the entire statement.
- *
- * TODO: Rename this to indicate that it only uses the consequent in
- *   generating the key.  Or perhaps better, move this functionality
- *   into its uses and support storing the same fact under multiple
- *   keys, for example one based on just the consequent and another
- *   based on the entire statement.
- */
-function getStatementKey(stmt) {
-  // If the statement is a string, look in the cache.
-  if (typeof stmt === 'string') {
-    var cached = _statementKeys[stmt];
-    if (cached) {
-      return cached;
-    }
-  }
-  // This currently uses toString, which is sensitive to aliases
-  // in particular "==" for "=", compared with "dump", which is not.
-  // TODO: Determine what to do about facts such as pure logic facts,
-  //   which are generic across types, and implement accordingly.
-  // TODO: Use stmt just as a synopsis here.
-  var key = Toy.standardVars(getSynopsis(stmt)).toString();
-  if (typeof stmt === 'string') {
-    _statementKeys[stmt] = key;
-  }
-  return key;
-}
-
-/**
- * Returns the portion of the given statement to use as the synopsis,
- * parsing it from a string if needed.  Fact lookup encodes this as a
- * string "statement key".
- */
-function getSynopsis(stmt) {
-  return termify(stmt).getMain();
-}
-
-/**
- * Tests whether a fact with the given statement is recorded in the
- * facts database.  The fact need only be recorded, not proved.
- * Accepts a term or parseable string.
- */
-function isRecordedFact(stmt) {
-  return !!lookupFactInfo(stmt);
-}
-
-/**
- * Looks for a fact recorded in the facts database by addFact or
- * addRule.  The input must be a term or string parseable into a term,
- * as for getStatementKey.  The database uses only the RHS of
- * conditional facts as a lookup key, and accordingly this function
- * matches an unconditional argument as the key.  Or if the argument
- * is conditional, it only matches the RHS against the stored key.  At
- * present no further checking is done here.
- *
- * Returns a statement of the fact, generally not the proved fact,
- * or null if no such fact was found.
- */
-function findFact(stmt) {
-  var info = lookupFactInfo(stmt);
-  return info ? info.goal : null;
-}
-
-
-//// Finding matching facts
-
-/**
- * Finds a single LHS match within the given term with one of the
- * given facts.  Returns the value of the successful call to
- * findMatchingFact, with a "path" property added indicating the path
- * from the term argument to the matched term, or a falsy value if no
- * call succeeded.
- *
- * All arguments other than the term are passed via "info".  If it is
- * a plain object, it interprets the following properties:
- *
- * facts: List of facts in the format accepted by findMatchingFact.
- * context: Context information for "where" clauses as
- *   accepted by findMatchingFact.
- *   TODO: (BUG!) Accept an "isQuantified" property here, or more 
- *      detailed information, to indicate enclosing bound variables.
- * searchMethod: Name of method to apply to the term to control
- *   which subexpressions of the term to apply findMatchingFact to;
- *   defaults to 'searchCalls', which searches through calls.
- *
- * If the info is an array, it must be the list of facts.
- *
- * TODO: Consider changing this to something like applyMatchingFactIn,
- *   doing essentially the same search, but attempting to apply the
- *   first fact that seems to match, and continuing the search if
- *   application fails.
- */
-function searchForMatchingFact(term, info) {
-  var allFacts, searchMethod;
-  var cxt = {};
-  if (info.constructor === Object) {
-    allFacts = info.facts;
-    info.context && Object.assign(cxt, info.context);
-    searchMethod = info.searchMethod;
-  } else {
-    allFacts = info;
-  }
-  // If set to non-null, just unconditional facts.  At present only
-  // includes facts that are just a statement in string form.
-  // Computed here for efficiency.
-  //
-  // TODO: Handle more complicated facts (as needed).
-  var pureFacts = null;
-  function isPureFact(fact) {
-    if (typeof fact === 'string' || fact instanceof Expr) {
-      // This next line supports ordinary facts and also tautologies.
-      // It relies on findFact to return a conditional whenever
-      // it is given a statement that has implicit assumptions.
-      var fullFact = findFact(fact) || termify(fact);
-      return fullFact && fullFact.isCall2('=');
-    } else if (fact.constructor === Object && fact.pure) {
-      return true;
-    }
-  }
-  searchMethod = searchMethod || 'searchMost';
-  function factFinder(term, revPath, isQuantified) {
-    if (isQuantified) {
-      pureFacts = pureFacts || allFacts.filter(isPureFact);
-    }
-    // If some free variables of a conditional fact do not appear in
-    // its condition(s), this may exclude it unnecessarily.
-    // TODO: Consider a more precise check here.
-    var facts = isQuantified ? pureFacts : allFacts;
-    var result = findMatchingFact(facts, cxt, term, isQuantified);
-    if (result) {
-      result.path = revPath.reverse().concat(result.path);
-    }
-    return result;
-  }
-  return term[searchMethod](factFinder);
-}
-
-/**
- * Searches the given pattern list for one that matches the given
- * term.  If it finds one, returns info about it in a plain object
- * in the format described below.
- *
- * The context argument is available to "where" arguments as "cxt",
- * and any "factLists" property of the context defines lists of named
- * patterns accessible by using the name in place of an explicit list.
- * The value of the factLists property is a plain object mapping from
- * list name to a list (array) value.  In this way lists can be
- * reused, and also enables them to be effectively recursive.
- *
- * If pureOnly is true, this only accepts a fact that is a pure
- * equation, with no conditions on it.
- * 
- * Each pattern argument can be an argument acceptable to
- * getStatementKey, or:
- *
- * A plain object with properties as follows:
- *
- * stmt: value acceptable to getStatementKey.  Unless "match" is also
- *   given this will need to be an equation.
- * where: optional string to evaluate, with "subst" 
- *   argument to findMatchingFact available as "$" and cxt and term
- *   available as free variables for use in the string.
- *   OR if it is a function, call it with the substition, cxt, and
- *   term as arguments.
- * match: term schema to match against the term.  (By default the
- *   term is matched against the stmt LHS.)
- *   TODO: Consider removing this; there is only one use.
- *
- * For fact statements passed as list elements or the "stmt" property
- * of a list element, if proof of the fact is in progress at the time,
- * the fact is ignored in the search.  This provides a crude mechanism
- * for avoiding infinite regress, for example when simplifying steps
- * of the proof of a simplifier fact.
- *   
- * Or it can be a plain object with a single property, either:
- *
- * descend: a plain object with properties "schema", a schema
- *   (possibly in string form) to match against the term, and "parts",
- *   a plain object mapping from variable names in this schema each to
- *   a pattern list as described above. If the search reaches this
- *   "descend" item and the schema matches the term, the search
- *   descends into the parts of the term, applying each schema
- *   variable's list of facts to the part of the term matching that
- *   schema variable.
- *
- * apply: a function to apply to the input term and context, which
- *   must return an equation whose LHS is the same as the term except
- *   for possible changes of bound variables, or a falsy value if it
- *   fails to produce such an equation.  The call is done by
- *   Toy.normalReturn, and this uses the value returned from that.
- *
- * The value returned is falsy if no match is found, else a plain
- * object with properties:
- * 
- * stmt: Relevant fact statement, proved or not, or the equation
- *   returned by an "apply" pattern.
- * term: the term argument to findMatchingFact.
- * subst: substitution that makes the given term match the fact (empty for
- *   "apply" patterns).
- * path: path to the portion of the given term that matched some pattern.
- *
- * TODO: Consider changing this to something like "applyMatchingFact",
- *   attempting to apply the first fact that appears to match, and
- *   continuing the search if the application fails.
- */
-function findMatchingFact(facts_arg, cxt, term, pureOnly) {
-  // This finds the fact part to match.  If the fact is not an equation,
-  // uses the main part instead of the LHS.
-  function schemaPart(fact) {
-    var main = fact.getMain();
-    return (main.isCall2('=')
-            ? main.getLeft()
-            : main);
-  }
-  function apply$(expr, $) {
-    if (typeof expr === 'function') {
-      return expr($, cxt, term);
-    } else {
-      // Suppress acccess to the enclosing "facts" variable.
-      // OK for str to refer to "cxt" or "term".
-      var facts;
-      return eval(expr);
-    }
-  }
-  var facts = facts_arg;
-  if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
-    facts = cxt.factLists && cxt.factLists[facts_arg];
-  }
-  assert(facts && facts[Symbol.iterator], 'No facts: {1}', facts_arg);
-  for (var it = facts[Symbol.iterator](), v = it.next(); !v.done; v = it.next()) {
-    var factInfo = v.value;
-    if (factInfo.constructor !== Object) {
-      var stmt = factInfo;
-      if (!isInProgress(stmt)) {
-        var fullFact = rules.fact(stmt);
-        if (!(pureOnly && fullFact.isCall2('=>'))) {
-          // Use stmt to create the schema, because it may have different
-          // free variables than the recorded fact.
-          var schema = schemaPart(termify(stmt));
-          var subst = term.matchSchema(schema);
-          if (subst) {
-            var result = {stmt: fullFact,
-                          term: term,
-                          path: Toy.path(),
-                          subst: subst};
-            return result;
-          }
-        }
-      }
-    } else if (factInfo.apply) {
-      // "apply"
-      var eqn = Toy.normalReturn(factInfo.apply, term);
-      if (eqn && !(pureOnly && eqn.isCall2('=>'))) {
-        var result = {
-          stmt: eqn,
-          term: term,
-          path: Toy.path(),
-          subst: {}
-        };
-        return result;
-      }
-    } else if (factInfo.descend) {
-      // "descend"
-      var partInfo = factInfo.descend;
-      // TODO: Handle pureOnly here.
-      var result = _locateMatchingFact(term,
-                                       partInfo.schema,
-                                       partInfo.parts,
-                                       cxt);
-      if (result) {
-        return result;
-      }
-    } else {
-      // All other plain objects are handled here.
-      var stmt = factInfo.stmt;
-      if (!(stmt && isInProgress(stmt))) {
-        var fact = stmt && rules.fact(stmt);
-        if (!(pureOnly && fact && fact.isCall2('=>'))) {
-          var where = factInfo.where;
-          var schema = (factInfo.match
-                        ? termify(factInfo.match)
-                        : schemaPart(fact));
-          var subst = term.matchSchema(schema);
-          if (subst && (!where || apply$(where, subst))) {
-            var result = {stmt: stmt,
-                          term: term,
-                          path: Toy.path(),
-                          subst: subst};
-            return result;
-          }
-        }
-      }
-    }
-  }
-  // If no match found the value will be falsy.
-};
-
-/**
- * This handles "descend" patterns in findMatchingFact, and is private
- * to it.
- *
- * Arguments are the term argument to findMatchingFact, the schema
- * property of the "descend" pattern, the "parts" property of the
- * "descend" pattern, and the context argument to findMatchingFact.
- */
-function _locateMatchingFact(expr, schema_arg, varsMap, context) {
-  var schema = termify(schema_arg);
-  var factLists = context.factLists;
-  var subst;
-  if ((subst = expr.matchSchema(schema))) {
-    // Checks if the given term of the schema matches some fact
-    // in the appropriate factsList, throwing information about
-    // the match if found to Toy.catchResult.
-    // Only schema variables are eligible to match.
-    function checkTerm(schemaTerm, revPath) {
-      if (schemaTerm.isVariable()) {
-        var list = varsMap[schemaTerm.name];
-        if (typeof list == 'string' && Toy.isIdentifier(list)) {
-          list = factLists[list];
-        }
-        if (list) {
-          var result =
-            findMatchingFact(list, context, expr.get(revPath.reverse()));
-          if (result) {
-            result.path = revPath.reverse().concat(result.path);
-            throw new Toy.Result(result);
-          }
-        }
-      }
-    }
-    return Toy.catchResult(schema.traverse.bind(schema, checkTerm));
-  }
-}
-
-/**
- * Find and apply one of the facts to the part of the step at the
- * given path, returning the result, or the input step if none of the
- * facts apply.  Note: uses rules.rewrite, not rewriteOnly.
- */
-function applyFactsOnce(step, path, facts) {
-  var info = findMatchingFact(facts, null, step.get(path));
-  return info ? rules.rewrite(step, path, info.stmt) : step;
-}
-
-/**
- * Apply the list of fact rewrites to the visible part of the step
- * until none of them any longer is applicable, returning the result.
- *
- * TODO: Replace uses of this.  Provide interactive commands that are
- *   specific to the visible part.  If not interactive, use commands
- *   not dependent on visibility status.
- */
-function applyToVisible(step, facts) {
-  return applyFactsWithinSite(step, step.pathToVisiblePart(), facts);
-}
-
-/**
- * Apply the list of facts as rewrites to the given part of the step
- * until none of them any longer is applicable, returning the result.
- * Returns its input step if no matches are found.
- */
-function applyFactsWithinSite(step, path_arg, facts) {
-  var path = Toy.path(path_arg);
-  var eqn1 = rules.considerPart(step, path);
-  var eqn2 = applyFactsWithinRhs(eqn1, facts);
-  return (eqn2 == eqn1 ? step : rules.rplace(eqn2, step, path));
-}
-
-/**
- * Apply the list of facts as rewrites to the RHS of the given step,
- * which must be an equation.  Repeats until none of them is
- * applicable, returning the result.  Returns its input step if no
- * matches are found.  Uses rules.rewrite, not rewriteOnly.
- *
- * TODO: hyps -- step is an equation.
- */
-function applyFactsWithinRhs(step, facts) {
-  var rhs;
-  var info;
-  var eqn = step;
-  while (rhs = Toy.path('/main/right', eqn),
-         info = searchForMatchingFact(eqn.get(rhs), facts)) {
-    var fullPath = rhs.concat(info.path);
-    eqn = rules.rewrite(eqn, fullPath, info.stmt);
-  }
-  return eqn;
-}
-
-/**
- * Apply the function to the subexpression of step at path.  The
- * function should return an equation that equates the original
- * subexpression to something else.  This replaces the subexpression
- * using the returned equation.
- *
- * Allows the function to return a falsy value, returning the same
- * value itself.
- */ 
-function convert(step, path, fn) {
-  var expr = step.get(path);
-  assert(expr, 'Bad path {1}', path, step);
-  var eqn = fn(expr);
-  return eqn && rules.replace(step, path, eqn);
-}
-
-/**
- * Proves that the given term is equal to something by taking it as
- * equal to itself, applying the given equation throughout its RHS,
- * rewriting the result with the given fact, then applying the reverse
- * of the equation throughout the resulting RHS.  The term can be
- * a string, while the equation can be proved steps or statements
- * of any recorded equational fact.
- *
- * Intended to capture a design pattern for proving facts about
- * "inverse" functions such as division and subtraction.
- */
-function transformApplyInvert(term_arg, eqn_arg, fact) {
-  var term = termify(term_arg);
-  var eqn = getResult(eqn_arg);
-  var revEqn = rules.eqnSwap(eqn);
-  var step1 = rules.consider(term);
-  var step2 = applyFactsWithinRhs(step1, [eqn]);
-  var step3 = rules.rewrite(step2, '/main/right', fact);
-  var step4 = applyFactsWithinRhs(step3, [revEqn]);
-  return step4;
-}
-
-/**
- * Apply the given simplification function to the equation repeatedly
- * until the result of the call is identical to its input.  Return
- * the result of the last call.
- */
-function whileChanges(eqn, fn) {
-  var simpler = eqn;
-  var next;
-  while (true) {
-    next = fn(simpler);
-    if (next.matches(simpler)) {
-      return next;
-    }
-    simpler = next;
-  }
-}
-
-/**
- * Applies the given facts repeatedly to the RHS of the given equation
- * until none matches, each time replacing the RHS with the result of
- * applying the matching fact.  Returns the last version created.
- */ 
-function arrangeRhs(eqn_arg, context, facts) {
-  var rhsPath;
-  var info;
-  var eqn = eqn_arg;
-  while (rhsPath = Toy.path('/main/right', eqn),
-         info = findMatchingFact(facts, context, eqn.get(rhsPath))) {
-    var fullPath = rhsPath.concat(info.path);
-    eqn = rules.rewrite(eqn, fullPath, info.stmt);
-  }
-  return eqn; 
-}
-
-/**
- * Arranges the given part of the given step by repeatedly applying
- * the given facts until none matches, returning a step with the part
- * replaced by the result of the rearrangement.
- *
- * As a good practice, this considers the part in isolation, only
- * replacing it in the step when done applying facts.
- */
-function arrange(step, path, context, facts) {
-  var eqn = rules.consider(step.get(path));
-  var arranged = arrangeRhs(eqn, context, facts);
-  return rules.rplace(arranged, step, path);
-}
-
-/**
- * Call the given function for each of the registered facts, passing
- * it the fact statement (goal) and the synopsis with which it was
- * created, if any.
- */
-function eachFact(fn) {
-  for (var key in _factsMap) {
-    var f = _factsMap[key];
-    fn(f);
-  }
-}
-
-/**
- * Checks that the named rule is a theorem (i.e. takes no arguments),
- * and gets its result.
- *
- * TODO: Use rules.theorem instead, and remove this function.
- */
-function getTheorem(name) {
-  var action = rules[name];
-  if (!action) {
-    return null;
-  }
-  assert(action.length === 0, 'Rule {1} needs parameters', name);
-  return action();
-}
-
-/**
- * Returns true iff the named theorem has already been proved.
- */
-function alreadyProved(name) {
-  if (isAxiom(name)) {
-    return true;
-  } else {
-    return !!rules[name].result;
-  }
-}
-
-/**
- * True iff the name is the name of an axiom.
- */
-function isAxiom(name) {
-  return name.substring(0, 5) === 'axiom';
-}
-
-
-//// UTILITY FUNCTIONS
-
-/**
- * Searches the list of equational facts in order for one that matches
- * a subexpression of the given step.  In particular, the part of the
- * step at path must match with the variable in the LHS of the fact
- * having the given name, which should occur exactly once in the
- * fact's LHS.
- *
- * If this finds such a fact it returns a function of no arguments
- * that applies the fact to the step using rules.rewrite and returning
- * the result of the rewrite.
- */
-function matchFactPart(step, path, factList, name) {
-  return Toy.each(factList, function(fact_arg) {
-    var schema = termify(fact_arg).getLeft();
-    var info = step.matchSchemaPart(path, schema, name);
-    if (info) {
-      return function() {
-        return rules.rewrite(step, info.path, fact_arg);
-      };
-    }
-  });
-}
-
-/**
- * For each hypothesis in the given step that matches a hypothesis in
- * the "dep" step that has a sourceStep property, copy the sourceStep
- * property to the hypothesis in the step.
- *
- * This has side effects on the display of Exprs that already exist,
- * so in some contexts it might affect the display of steps you did
- * not intend to affect.
- *
- * TODO: Consider actually importing hypotheses from dep using rule R
- * to avoid the possibility of undesired side effects.
- *
- * TODO: hyps
- */
-function flagHyps(step, dep) {
-  if (step.hasHyps && dep.hasHyps) {
-    function flag(hyp) {
-      if (hyp.sourceStep) {
-        // Already flagged, don't change.
-        return true;
-      }
-      function tryFlag(source) {
-        var step = source.sourceStep;
-        if (step && hyp.matches(source)) {
-          hyp.sourceStep = step;
-          // Flag the hyp, and stop searching.
-          return true;
-        }
-      }
-      // Try to flag the hyp with the source step of one of
-      // the hyps from dep.
-      dep.getLeft().eachHyp(tryFlag);
-    }
-    step.getLeft().eachHyp(flag);
-  }
-}
-
-/**
- * Build a schema for a conjunction of hypotheses, ensuring all are in
- * the TermMap, with optional exclusions, a TermSet.  The schema is of
- * the form a1 && ... && an, where the "a"s are variables for the
- * terms for each hyp in hyps.
- */
-function buildHypSchema(hyps, map, exclusions) {
-  var schema = null;
-  hyps.eachHyp(function(hyp) {
-      var v = map.addTerm(hyp);
-      if (!exclusions || !exclusions.has(hyp)) {
-        schema = schema ? Toy.infixCall(schema, '&', v) : v;
-      }
-    });
-  return schema;
-}
-
-/**
- * Returns the given conjunction of hypotheses except any appearing in
- * the exclusions TermSet.  If there are no such hypotheses, returns
- * T.
- */
-function hypsExcept(hyps, exclusions) {
-  var result = null;
-  hyps.eachHyp(function(hyp) {
-      if (!exclusions.has(hyp)) {
-        result = result ? Toy.infixCall(result, '&', hyp) : hyp;
-      }
-    });
-  return result;
-}
-
-/**
- * Makes a facts map into a list of the fact keys.
- */
-function listFacts(map) {
-  var list = [];
-  for (var key in map) {
-    list.push(key);
-  }
-  return list;
-}
-
-/**
- * Developer utility function that modifies the named rule to emit
- * information about calls to it.
- */
-function traceRule(name) {
-  var rule = rules[name];
-  function timed() {
-    console.log('Enter', name);
-    for (var i = 0; i < arguments.length; i++) {
-      console.log(i, arguments[i] + '');
-    }
-    var t = new Toy.NestedTimer(name);
-    t.start();
-    var result = rule.apply(rules, arguments);
-    var elapsed = t.end();
-    console.log('=', result + '');
-    console.log('Exit', name, elapsed, 'ms');
-    return result;
-  }
-  timed.info = rule.info;
-  rules[name] = timed;
-}
-
-/**
- * Returns the plain object with various information about the rule
- * applied to create the given step.
- */
-function getRuleInfo(step) {
-  return rules[step.ruleName].info;
-}
-
-/**
- * If the given step has a "site" input, this returns the path
- * of the site argument, a string or Path object.  This uses the
- * "inputs" information of the rule that generated the step to
- * determine which argument to access.
- */
-function getStepSite(step) {
-  var inputs = getRuleInfo(step).inputs;
-  for (var type in inputs) {
-    if (type in Toy.siteTypes) {
-      var args = step.ruleArgs;
-      // Assumes there can be only one "site" argument.
-      var index = inputs[type];
-      return args[index];
-    }
-  }
-}
-
-/**
- * Returns an array of the steps leading up to and including the given
- * step, sorted by ordinal, not including the details of any step.
- */
-function proofOf(step) {
-  // See also the nearly identical Toy.unrenderedDeps.
-  var result = [];
-  // Traverses the dependency graph, recording a copy of every step
-  // and building an array of all of the original steps.  In Java
-  // one might use HashSets to identify already-visited steps,
-  // avoiding temporary modifications to the originals.
-  function visitWithDeps(step) {
-    if (!step.__visited) {
-      result.push(step);
-      step.__visited = true;
-      step.ruleDeps.forEach(function(dep) { visitWithDeps(dep); });
-    }
-  }
-  visitWithDeps(step);
-  result.forEach(function(step) { step.__visited = false; });
-  result.sort(function(s1, s2) {
-      return s1.ordinal - s2.ordinal;
-    });
-  return result;
-}
-
-/**
- * Returns an array of steps preceding this one that establish
- * assumptions that later steps might not display, currently "assume"
- * and "replaceIsEquiv" steps; in the future perhaps other similar
- * kinds.  The result is selected steps from the result of
- * proofOf(step), based on the ruleName for the step.
- */
-function assumptionsBefore(step_arg) {
-  var steps = [];
-  var proofSteps = proofOf(step_arg);
-  proofSteps.forEach(function (step) {
-      var ruleName = step.ruleName;
-      if (ruleName === 'assume' ||
-          ruleName === 'replaceIsEquiv') {
-        steps.push(step);
-      }
-    });
-  return steps;
-}
-
-/**
- * Returns an array of "assume" steps in the proof of the given step
- * (see Toy.proofOf) that create an assumption of the step.  Assumes
- * that the assumptions are a chain of conjuncts, which is true of
- * normalized assumptions.  Used in rendering to highlight the sources
- * of assumptions.
- */
-function assumptionsUsed(step) {
-  var asms = step.getAsms();
-  if (!asms) {
-    return [];
-  }
-  var asmList = [];
-  asms.eachHyp(function (expr) { asmList.push(expr); });
-
-  var steps = proofOf(step);
-  var result = [];
-  for (var i = 0; i < steps.length; i++) {
-    var step = steps[i];
-    if (step.ruleName === 'assume') {
-      for (var j = 0; j < asmList.length; j++) {
-        var asm = asmList[j];
-        // Note that every "assume" step is a conditional.
-        if (step.getRight().sameAs(asm)) {
-          result.push(steps[i]);
-        }
-      }
-    }
-  }
-  return result;
-}
-
-/**
- * The given Expr is treated as the root of a tree of conjuncts.
- * This searches for a direct or indirect conjunct of it that
- * passes the test.  Returns a (pretty) path to the node found,
- * or null if none is found.
- */
-function pathToConjunct(root, test) {
-  var Path = Toy.Path;
-  function pathFrom(node) {
-    if (test(node)) {
-      return Path.empty;
-    }
-    if (node.isCall2('&')) {
-      var rpath = pathFrom(node.getRight());
-      if (rpath) {
-        return new Path('right', rpath);
-      }
-      var lpath = pathFrom(node.getLeft());
-      if (lpath) {
-        return new Path('left', lpath);
-      }
-    }
-    return null;
-  }
-  return pathFrom(root);
-}
-
-/**
- * Builds and returns a propositional schema from the given term,
- * with the structure of the tree of conjunctions rooted at the term.
- * Matching parts get the same variable letter.
- */
-function conjunctionSchema(term) {
-  var map = new Toy.TermMap();
-  var infixCall = Toy.infixCall;
-  function makeSchema(term) {
-    if (term.isCall2('&')) {
-      return infixCall(makeSchema(term.getLeft()), '&',
-                       makeSchema(term.getRight()));
-    } else {
-      map.addTerm(term);
-      return map.get(term);
-    }
-  }
-  return makeSchema(term);
-}
-
-/**
- * Simplification facts for algebra, used in _simplifyMath1
- * and related places.  During initialization all facts
- * flagged as simplifier: true are added to this list.
- *
- * TODO: Consider whether x - 7 is simpler than x + -7.
- * TODO: Declare number facts as simplifiers rather than adding here.
- */
-var basicSimpFacts = [
-                      'T & a == a',
-                      'a & T == a',
-                      'F & a == F',
-                      'a & F == F',
-                      'T | a == T',
-                      'a | T == T',
-                      'F | a == a',
-                      'a | F == a',
-                      'not T == F',
-                      'not F == T',
-                      '(a == T) == a',
-                      'not (not a) == a',
-                      'x = x == T',
-                      'T => a == a',
-                      'not (a = b) == a != b',
-                      '(negate p) x == not (p x)',
-                      'if T x y = x',
-                      'if F x y = y',
-                      {stmt: 'a + neg b = a - b',
-                       // This condition makes extra-sure there will be
-                       // no circularity during simplification.
-                       // Negation of a numeral will be simplified by
-                       // other rules.
-                       where: '!$.b.isNumeral()'},
-                      {stmt: 'a - b = a + neg b',
-                       // This one is an exception to the general rule
-                       // that simplifiers make the expression tree
-                       // smaller; but arithmetic will follow this, and
-                       // with high priority.
-                       where: '$.b.isNumeral() && $.b.getNumValue() < 0'},
-                      {apply: function(term, cxt) {
-                          return (Toy.isArithmetic(term) &&
-                                  rules.axiomArithmetic(term));
-                        }
-                      }
-                      // {apply: arithRight} Done in numbers.js.
-                      ];
-
 
 //// Initialization
 
