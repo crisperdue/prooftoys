@@ -6501,6 +6501,16 @@ defineCases('&', identity, '{x. F}');
 defineCases('|', allT, identity);
 defineCases('=>', identity, allT);
 
+// This is an equivalent formulation of unique existence.
+// The proof is not trivial, see for example eu1 in Metamath.
+//
+// TODO: Consider perhaps proving this by showing that either
+//   a collection is the singleton, or empty, or has more than
+//   one member.
+const
+  _e1a = 'exists1 p == exists p & forall {x. forall {y. p x & p y => x = y}}';
+addRule({statement: _e1a});
+
 // It would be desirable for the constants in this next group to
 // all have generic types.
 define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
