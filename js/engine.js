@@ -1937,9 +1937,11 @@ function addSwappedFact(info) {
 //   Unless already present, added automatically by addRule when
 //   making a rule with a "varargs" wrapper.
 //
-// toOffer: function of step and optional term or string with
-//   suitable body for such a function.  If it returns false
-//   the rule is not offered in the step editor.
+// toOffer: function of step and optional term, or string containing
+//   expression to return from such a function, with arguments "step",
+//   and "term".  The step and term in this case belong to the
+//   rendering of the step, and have type annotations.  If this
+//   returns a falsy value, the step editor will not offer it.
 //
 // form: HTML template for the rule's input form to be presented by
 //   the step editor, as a template allowing {term} for the selected
@@ -2470,6 +2472,21 @@ var ruleInfo = {
     menu: 'consider {term} in isolation',
     tooltip: ('prepare to transform term'),
     description: 'term equal to itself',
+    labels: 'display'
+  },
+
+  // Assume the target boolean term, like considerPart, but making it
+  // an assumption.
+  assumePart: {
+    toOffer: 'return term.isBoolean()',
+    action: function(step, path) {
+      return rules.assume(step.get(path)).justify('assumePart', arguments);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'assume {term}',
+    tooltip: ('assume term'),
+    description: 'assume',
     labels: 'display'
   },
 
