@@ -892,6 +892,17 @@ function isDefined(name) {
 }
 
 /**
+ * Returns a truthy value iff the given name has a simple equational
+ * definition as a function (Lambda).
+ */
+function isFunDef(name) {
+  const def = definitions[name];
+  return (def instanceof Expr &&
+          def.isCall2('=') &&
+          def.getRight() instanceof Lambda);
+}
+
+/**
  * Defines the name (Atom or parseable string) using the definition,
  * which is a WFF or parseable string and proved statement (a step or
  * statement of a fact or theorem name).
@@ -1919,6 +1930,7 @@ Toy.definex = definex;
 Toy.isDefinedSimply = isDefinedSimply;
 Toy.isDefinedByCases = isDefinedByCases;
 Toy.isDefined = isDefined;
+Toy.isFunDef = isFunDef;
 Toy.findDefinition = findDefinition;
 Toy.getDefinition = getDefinition;
 // For testing:

@@ -35,6 +35,10 @@ var F = constify('F');
 
 var parse = Toy.parse;
 
+// Define a constant 'posNum', known to be a number greater than 0,
+// which is defined with an existential fact.
+Toy.definex('posNum', rules.eQuantify(rules.fact('1 > 0'), '/left'));
+
 
 // Assertion utilities:
 
@@ -1455,6 +1459,14 @@ var testCase = {
     } catch(e) {}
   },
 
+  testIsFunDef: function() {
+    const check = Toy.isFunDef;
+    assert(!check('T'));
+    assert(!check('&'));
+    assert(check('neg'));
+    assert(!check('posNum'));
+  },
+
   testAlreadyProved: function() {
     assert(Toy._alreadyProved('axiomCommutativePlus'));
     // This one is a rule, but not a theorem.
@@ -1463,9 +1475,6 @@ var testCase = {
 
   // Also tests rules.eQuantify.
   testDefinex: function() {
-    var fact = rules.fact('1 > 0');
-    var ex = rules.eQuantify(fact, '/left');
-    Toy.definex('posNum', ex);
     assertEqual('(posNum > 0)', Toy.getDefinition('posNum'));
   },
 
