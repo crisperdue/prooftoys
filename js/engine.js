@@ -2702,8 +2702,8 @@ var ruleInfo = {
       // The fn could be a Lambda, which is not defined.
       // This returns falsy if the function is an "unused" constant.
       return ((n === 1 || n === 2) &&
-              ((fn instanceof Atom && Toy.isDefined(fn.name)) ||
-               fn instanceof Lambda));
+              (fn instanceof Lambda ||
+               (fn instanceof Atom && Toy.isFunDef(fn.name))));
     },
     action: function(step, path) {
       // Returns an identity with arg as LHS.
