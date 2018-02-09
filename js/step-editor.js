@@ -1489,7 +1489,7 @@ function checkTop(oldTop) {
  * to receive the result.
  */
 function sendRule(name, args) {
-  return Toy.rpcQueue.enqueue({action: 'rule', name: name, args: args});
+  return Toy.rpcQueue.enqueue({action: 'runRule', name: name, args: args});
 }
 
 
@@ -1503,7 +1503,7 @@ $(function () {
       actions: {
         // The "rule" action returns a resulting step as its "step"
         // property, or standard error information in case of error.
-        rule: function(message) {
+        runRule: function(message) {
           var step = Toy.rules[message.name].apply(null, message.args);
           return {step: step};
         }
