@@ -4050,7 +4050,6 @@ var ruleInfo = {
       // Treat v as a free variable also.
       freeNames[v.name] = true;
       var p0 = Toy.genVar('p', freeNames);
-      // TODO: Consider using rule P and 2139 instead of "cases" here.
       var step5 = rules.casesTF(step1, step4, p0);
       var step6 = rules.instVar(step5, a, p0);
       return step6.justify('r5235', arguments);
@@ -4142,7 +4141,6 @@ var ruleInfo = {
   orForall: {
     statement: 'forall {x. p | q x} == (p | forall {x. q x})',
     proof: function() {
-      // TODO: This proof could use 2139 instead of "casesTF".
       var taut1 = rules.tautology('T | a');
       // None of these steps are conditionals, so no hypotheses anywhere.
       var all = rules.instVar(taut1, 'q x', 'a').andThen('toForall', 'x');
@@ -5852,9 +5850,7 @@ var ruleInfo = {
       // This means the LHS implies F, which is the desired F case.
       var taut = rules.tautology('p = F => (p => F)');
       var falseCase = rules.forwardChain(step1, taut);
-      // Complete proof of the desired schema:
-      // TODO: Consider replacing use of rules.cases here with another
-      // similar rule.
+      // This will be the desired tautology.
       var step2 = rules.casesTF(trueCase, falseCase, cVar);
       // Instantiate back to get the desired instance:
       var result = rules.instMultiVars(step2, map.subst);
