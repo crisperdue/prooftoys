@@ -2785,8 +2785,10 @@ window.setTimeout(function() {
   // Set this to an array of theorem names, test case names, and fact
   // statements to be specifically tested.  Fact statements usually
   // will be strings here.
-  // var toTest = ['testIsNamedConst'];  // An array of test keys
-  var toTest = null;  // Override the array with null to test all.
+  // A null value means "test all".
+  var toTest = null;
+  // An array of test keys runs all tests.
+  // toTest = ['testConjunctsImplyConjunct'];
 
   // Runs the named test case or warns if there is none such.
   function doTestCase(name) {
