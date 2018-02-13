@@ -10,11 +10,7 @@ sought.  -- Matsuo Basho
 
 Calculus does not need to be made easy.  It is easy already. -- Jaime Escalante
 
-You can't always get what you want. -- The Rolling Stones
-
 Science is the belief in the ignorance of experts. -- Richard Feynman
-
-Everything takes longer and costs more. -- Experienced Engineer
 
 A man may imagine things that are false, but he can only understand
 things that are true. -- Isaac Newton
@@ -25,13 +21,7 @@ Calling a tail a leg doesn't make it a leg.  -- Abraham Lincoln
 I don't like that man. I must get to know him better. -- Abraham
 Lincoln
 
-No man is good enough to govern another man without that other's
-consent. -- Abraham Lincoln
-
 The past is never dead. It's not even past. -- William Faulkner
-
-I never teach my pupils. I only attempt to provide the conditions
-in which they can learn. -- Albert Einstein
 
 A sense of humor is part of the art of leadership, of getting along
 with people, of getting things done. -- Dwight Eisenhower
@@ -55,11 +45,11 @@ if the solution is not beautiful, I know it is wrong. -- Buckminster Fuller
 
 Facts are stubborn things, but statistics are more pliable. -- Mark Twain
 
-When I find myself in the company of scientists, I feel like a shabby curate who has strayed by mistake into a drawing room full of dukes. -- W H Auden
+When I find myself in the company of scientists, I feel like a shabby curate
+who has strayed by mistake into a drawing room full of dukes. -- W H Auden
 
-No opera plot can be sensible, for people do not sing when they are feeling sensible. -- W H Auden
-
-It's a naïve domestic Burgundy without any breeding, but I think you'll be amused by its presumption. -- James Thurber
+No opera plot can be sensible, for people do not sing
+when they are feeling sensible. -- W H Auden
 
 The universe ... cannot be understood unless one first learns
 to comprehend the language in which it is written.
@@ -125,10 +115,6 @@ but time and chance happen to them all. -- Ecclesiastes 9:11
 
 The race is not always to the swift, nor the battle to the strong,
 but that's the way to bet. -- Damon Runyon
-
-Why should there not be a patient confidence in the ultimate justice
-of the people? Is there any better or equal hope,
-in the world? -- Abraham Lincoln
 
 No wise fish would go anywhere without a porpoise. -- The Mock Turtle,
 "Alice in Wonderland"
