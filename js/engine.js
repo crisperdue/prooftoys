@@ -3577,7 +3577,7 @@ var ruleInfo = {
   // Handles hypotheses.
   // 
   // TODO: hyps -- We could replace this rule with combinations of the
-  //   fact [A == A & T], and an inverse of rules.trueBy.  That pair
+  //   fact [A == A & T], and replaceT.  That pair
   //   would cover this rule and handle other situations also.
   makeConjunction: {
     action: function(a, b) {
@@ -3731,7 +3731,7 @@ var ruleInfo = {
       var step2 = rules.eqSelf(Toy.parse('{x. x} x'));
       var step3 = rules.apply(step2, '/left');
       var step4 = rules.r(step3, step1, '/right');
-      var step5 = rules.toForall(step4, x);
+      var step5 = rules.toForall0(step4, x);
       var step6 = rules.instVar(rules.axiom3(), equal(T), 'f');
       var step7 = rules.instVar(step6, '{x. x}', 'g');
       return rules.rRight(step7, step5, '');
@@ -3957,8 +3957,8 @@ var ruleInfo = {
   // with or without assumptions, may be a more effective approach.
   and: {
     action: function(step1, step2) {
-      return (rules.replaceT(rules.tautology('T & T'), '/right', step2)
-              .andThen('replaceT', '/left', step1)
+      return (rules.replaceT0(rules.tautology('T & T'), '/right', step2)
+              .andThen('replaceT0', '/left', step1)
               .justify('and', arguments, arguments));
     },
     inputs: {step: [1, 2]},
@@ -4069,6 +4069,8 @@ var ruleInfo = {
   //
   // Handles hypotheses.
   // TODO: hyps (can remove /main by moving A into assumptions, then back)
+  /* Commented out as part of campaign to eliminate toForall and rules
+   * that are sensitive to hypotheses in steps.
   implyForallBook: {
     action: function(v, h_a_b) {
       var a_b = h_a_b.unHyp();
@@ -4088,7 +4090,7 @@ var ruleInfo = {
       var map1 = {a: a, b: b};
       var step1 = rules.tautInst('(a => b) => not a | b', map1);
       var step2 = rules.modusPonens(h_a_b, step1);
-      var step3 = rules.toForall(step2, v);
+      var step3 = rules.toForall(step2, v);  // Whole rule is commented out.
       var step4 = rules.r5235(v, call('not', a), b);
       var step5 = rules.modusPonens(step3, step4);
       var map6 = {a: a, b: step5.get('/main/right')};
@@ -4097,15 +4099,15 @@ var ruleInfo = {
       return step7.justify('implyForallBook', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},
-    /* Do not offer at this time, use toImplyForall instead.
-    form: ('Move forall inside "implies" binding '
+    // Do not offer at this time, use toImplyForall instead.
+    formX: ('Move forall inside "implies" binding '
            + 'variable <input name=varName> '
            + 'implication <input name=implication>'),
-    */
     tooltip: ('Move "forall" inside "implies" provided the variable '
               + 'is not free in the first argument.'),
     description: 'move forall'
   },
+  */
 
   // Given a variable v that is not free in the given wff A, and a wff
   // B, derives ((forall {v. A => B}) == (A => forall {v. B})).  Could
@@ -4140,7 +4142,7 @@ var ruleInfo = {
     proof: function() {
       var taut1 = rules.tautology('T | a');
       // None of these steps are conditionals, so no hypotheses anywhere.
-      var all = rules.instVar(taut1, 'q x', 'a').andThen('toForall', 'x');
+      var all = rules.instVar(taut1, 'q x', 'a').andThen('toForall0', 'x');
       var or = rules.instVar(taut1, 'forall {x. q x}', 'a');
       var and = rules.and(all, or);
       var trueCase = rules.forwardChain(and, 'a & b => (a == b)');
@@ -4405,7 +4407,7 @@ var ruleInfo = {
     action: function(v, h_a_b) {
       v = varify(v);
       var a_b = h_a_b.unHyp();
-      var step1 = rules.toForall(h_a_b, v);
+      var step1 = rules.toForall(h_a_b, v);  // Only use of plain "toForall".
       var step2 = rules.implyForallGen(v, a_b.getLeft(), a_b.getRight());
       var step3 = rules.rplace(step2, step1, '/main');
       return step3.justify('toImplyForall', arguments, [h_a_b]);
@@ -6148,7 +6150,7 @@ var ruleInfo = {
     converse: {labels: 'higherOrder'},
     proof: function() {
       // fact1 is: forall {x. {x. p x} x = p x}
-      var fact1 = rules.axiom4('{x. p x} x').andThen('toForall', 'x');
+      var fact1 = rules.axiom4('{x. p x} x').andThen('toForall0', 'x');
       // fact2 is: <fact1> == {x. p x} = p
       var fact2 = (rules.axiom3()
                    .andThen('eqnSwap')

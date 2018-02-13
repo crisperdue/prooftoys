@@ -387,6 +387,7 @@ $(function() {
       level: 1
     },
 
+    /*
     implyForallBookHyps: {
       ruleName: 'implyForallBook',
       args: function() {
@@ -395,6 +396,7 @@ $(function() {
 	return [x, wff];
       },
     },
+    */
 
     forwardChain: {
       args: function() {
