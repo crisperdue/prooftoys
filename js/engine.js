@@ -3254,7 +3254,7 @@ var ruleInfo = {
     simplifier: true
   },
 
-  // 5218: [T = A] = A
+  // 5218: [T == A] == A
   // Stepping stone to universal generalization.
   r5218: {
     action: function(a) {
@@ -3270,7 +3270,7 @@ var ruleInfo = {
     description: '(T = A) = A'
   },
 
-  // 5219: [A] to [T = A].  Works with hypotheses.
+  // 5219: [A] to [T == A].  Works with hypotheses.
   toTIsA: {
     action: function(h_a) {
       var step1 = rules.r5218(h_a.unHyp());
@@ -3285,18 +3285,13 @@ var ruleInfo = {
     labels: 'primitive'
   },
 
-  // also 5219: [T = A] to [A].  Works with hypotheses.
+  // also 5219: [opt_asm => (T == A)] to [opt_asm => A].  Works with conditionals.
   fromTIsA: {
-    action: function(h_t_a) {
-      var t_a = h_t_a.unHyp()
-      assertEqn(t_a);
-      var left = t_a.get('/left');
-      assert(left.isConst('T'),
-             'Input should be [T = A]: {1}', t_a,
-             h_t_a);
-      var a = t_a.get('/right');
-      var result = rules.rplace(rules.r5218(a), h_t_a, '/main');
-      return result.justify('fromTIsA', arguments, [h_t_a]);
+    action: function(step) {
+      assert(step.wff.eqnLeft().isConst('T'),
+             'Input should be [opt_asm => (T == A)]:\n  {1}', step);
+      var result = rules.replace(step, '/rt', rules.r5218(step.eqnRight()));
+      return result.justify('fromTIsA', arguments, [step]);
     },
     inputs: {equation: 1, condition: {1: function(h_eqn) {
       var eqn = h_eqn.unHyp();

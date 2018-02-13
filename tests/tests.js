@@ -1818,9 +1818,9 @@ var testCase = {
   },
 
   testFromTIsA: function() {
-    var inf = Toy.rules.fromTIsA(call('=', T, p));
-    assertEqual('p', inf);
-    // Hyps
+    var inf = rules.fromTIsA(rules.equivSelf('T'));
+    assertEqual('T', inf);
+    // Assumptions
     var step1 = Toy.rules.assume(p);
     var step2 = Toy.rules.toTIsA(step1);
     var result = Toy.rules.fromTIsA(step2);
