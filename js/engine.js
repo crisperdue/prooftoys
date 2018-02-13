@@ -3601,9 +3601,6 @@ var ruleInfo = {
   // (5222) Given two theorems that are substitutions of T and
   // F respectively into a WFF; and a variable or variable name,
   // proves the WFF.  No automatic management of hypotheses.
-  // TODO: Consider using the real cases rule (2139) in place of this
-  //   everywhere.  This is called with conditionals, but not
-  //   with hypotheses.
   // TODO: Consider deriving this from equationCases.  Unlike
   //   5222 in the book, this does not allow the variable to appear
   //   in any assumptions, so equationCases could be used.
@@ -3618,7 +3615,7 @@ var ruleInfo = {
       var step1b = rules.rRight(step1a, caseT, '');
       var step2a = rules.axiom4(call(lambda(newVar, gen), F));
       var step2b = rules.rRight(step2a, caseF, '');
-      var step4 = rules.makeConjunction(step1b, step2b);
+      var step4 = rules.and(step1b, step2b);
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), 'g');
       var step6 = rules.rplace(step5, step4, '');
       var step7a = rules.instForall(step6, '', v);
@@ -4145,7 +4142,7 @@ var ruleInfo = {
       // None of these steps are conditionals, so no hypotheses anywhere.
       var all = rules.instVar(taut1, 'q x', 'a').andThen('toForall', 'x');
       var or = rules.instVar(taut1, 'forall {x. q x}', 'a');
-      var and = rules.makeConjunction(all, or);
+      var and = rules.and(all, or);
       var trueCase = rules.forwardChain(and, 'a & b => (a == b)');
       var falseCase = (rules.eqSelf('forall {x. q x}')
                        .andThen('rewriteOnly', '/right', 'p == F | p')
@@ -5957,7 +5954,7 @@ var ruleInfo = {
       var step4 = rules.asImplication(step3);
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step4, subst);
-      var step6 = rules.makeConjunction(step4, step5);
+      var step6 = rules.and(step4, step5);
       var taut = rules.tautology('(p => q) & (q => p) => (p == q)');
       return rules.forwardChain(step6, taut);
     },
