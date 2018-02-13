@@ -2524,7 +2524,7 @@ var ruleInfo = {
   //   than hypotheses.
 
   // r5201a is not implemented.  It would be ambiguous in case the
-  // "whole" is a conditional.  Use rules.replaceT instead.
+  // "whole" is a conditional.  Use rules.replaceT0 instead.
 
   // r5201b, works with conditionals.
   eqnSwap: {
@@ -3311,7 +3311,27 @@ var ruleInfo = {
   },
 
   // Replace an occurrence of T at the given path of the given step
-  // with the entirety of another step, ignore any hypotheses there.
+  // with the entirety of another step.
+  replaceT0: {
+    action: function(step, path, step2) {
+      assert(step.get(path).isConst('T'),
+             'Site should be T, not {1}', step.get(path));
+      var tIsA = rules.toTIsA(rules.asImplication(step2));
+      return (rules.r(tIsA, step, path)
+              .justify('replaceT0', arguments, [step, step2]));
+    },
+    inputs: {site: 1, step: 3},
+    toOffer: 'return term instanceof Toy.Atom && term.pname == "T"',
+    form: ('Replace T with step <input name=step>'),
+    menu: 'replace T with a true statement',
+    tooltip: ('Replaces an occurrence of T with a true statement'),
+    description: 'replace T;; {in step siteStep} {with step step}',
+    labels: 'basic'
+  },
+
+  // Replace an occurrence of T at the given path of the given step
+  // with the consequent of another step, or just the step if
+  // it is not conditional.
   replaceT: {
     action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),

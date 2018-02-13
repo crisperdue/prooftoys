@@ -1828,8 +1828,8 @@ var testCase = {
   },
 
   testReplaceT: function() {
-    var actual = rules.replaceT(rules.tautology('T | p'), '/left',
-                                rules.axiom2());
+    var actual = rules.replaceT0(rules.tautology('T | p'), '/left',
+                                 rules.axiom2());
     assertEqual('(((x = y) => ((h x) = (h y))) | p)', actual);
   },
 
