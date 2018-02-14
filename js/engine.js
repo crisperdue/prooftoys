@@ -6123,7 +6123,7 @@ var ruleInfo = {
       if (stmt.isEquation()) {
         var result = Toy.tryArithmetic(stmt.eqnLeft());
         if (result && result.alphaMatch(stmt)) {
-          return result.justify('fact');
+          return result.justify('fact', arguments);
         }
       } else {
         // Relational operators can go here.
@@ -6131,7 +6131,7 @@ var ruleInfo = {
         // x = T is the expected result.
         if (result && result.matchSchema('x = T')) {
           return (rules.rewriteOnly(result, '', '(x = T) = x')
-                  .justify('fact'));
+                  .justify('fact', arguments));
         }
       }
       // Try tautologies.
