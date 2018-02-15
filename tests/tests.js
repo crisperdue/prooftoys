@@ -37,7 +37,7 @@ var parse = Toy.parse;
 
 // Define a constant 'posNum', known to be a number greater than 0,
 // which is defined with an existential fact.
-Toy.definex('posNum', rules.eQuantify(rules.fact('1 > 0'), '/left'));
+Toy.definex('posNum', rules.witnessExists(rules.fact('1 > 0'), '/left'));
 
 
 // Assertion utilities:
@@ -1473,7 +1473,7 @@ var testCase = {
     assert(!Toy._alreadyProved('rplace'));
   },
 
-  // Also tests rules.eQuantify.
+  // Also tests rules.witnessExists.
   testDefinex: function() {
     assertEqual('(posNum > 0)', Toy.getDefinition('posNum'));
   },
@@ -2472,7 +2472,7 @@ var testCase = {
   },
 
   testEQuantify: function() {
-    var result = rules.fact('1 > 0').andThen('eQuantify', '/left');
+    var result = rules.fact('1 > 0').andThen('witnessExists', '/left');
     assertEqual('(exists {x. (x > 0)})', result);
   },
 

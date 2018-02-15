@@ -6177,7 +6177,7 @@ var ruleInfo = {
 
   // Derive exists {x. p x} from a witnessing term.  This only replaces the
   // selected occurrence, not substituting throughout. (5242)
-  eQuantify: {
+  witnessExists: {
     precheck: function(step, path) {
       var term = step.get(path);
       var type = Toy.findType(term);
@@ -6199,7 +6199,7 @@ var ruleInfo = {
       var step2 = rules.r(rules.eqnSwap(eqn), step, '');
       var fact = rules.fact('p x => exists p');
       var result = rules.forwardChain(step2, fact);
-      return result.justify('eQuantify', arguments, [step]);
+      return result.justify('witnessExsits', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
@@ -6433,11 +6433,11 @@ var logicFacts = {
   },
 
   // This has the core reasoning for 5242, existential generalization
-  // (EGen / eQuantify).
+  // (EGen / witnessExists).
   //
   // TODO: Consider adding a rule that converts an arbitrary step with
   //   selected term to an application of a lambda to the selected term.
-  //   The code for that is in eQuantify.
+  //   The code for that is in witnessExists.
   //
   // TODO: Consider for each of the above, a rule that replaces
   //   another occurrence of the same term with the new bound
