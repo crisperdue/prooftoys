@@ -3483,8 +3483,7 @@ var ruleInfo = {
       var step1 = rules.rewriteOnly(step, '/right', 'a == (T == a)');
       var step2 = rules.theorem('forallXT');
       var step3 = rules.changeVar(step2, '/arg', v);
-      // var step4 = rules.replace(step3, '/main/arg/body', step1);
-      var step4 = rules.rplace(step1, step3, '/main/arg/body');
+      var step4 = rules.replace(step3, '/main/arg/body', step1);
       return step4.justify('toForall1', arguments, [step]);
     },
     inputs: {step: 1, varName: 2},
@@ -4916,8 +4915,7 @@ var ruleInfo = {
           // TODO: Do appropriate checking in 5235 and impliesForall as well.
           assert(!(name in hypFreeNames),
                  'Conflicting binding of {1} in {2}', name, c, h_c_arg);
-          // TODO: quantEqn = rules.toForall1(quantEqn, name);
-          quantEqn = rules.toImplyForall(name, quantEqn);
+          quantEqn = rules.toForall1(quantEqn, name);
         }
         return quantEqn;
       }
@@ -5068,9 +5066,7 @@ var ruleInfo = {
                'Conflicting binding of {1} in {2}', name, c, h_c_arg);
         // Make sure each name bound in the target site is wrapped in a
         // "forall" in the equation.
-        // TODO: If use of hasHyps goes away, this can become an appropriate
-        //   use of toForall.
-        var step1 = rules.toImplyForall(name, step1);
+        step1 = rules.toForall1(step1, name);
       }
       var step2 = rules.r5239(c, cpath, equation);
       var tautology = rules.tautology('(p => q) & (q => r) => (p => r)');
