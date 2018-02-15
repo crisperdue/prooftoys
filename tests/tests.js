@@ -2471,6 +2471,11 @@ var testCase = {
     assertEqual('a1', Toy._conjunctionSchema(Toy.parse('a => b')).$$);
   },
 
+  testEQuantify: function() {
+    var result = rules.fact('1 > 0').andThen('eQuantify', '/left');
+    assertEqual('(exists {x. (x > 0)})', result);
+  },
+
   // END OF RULES AND THEOREMS
 
   // ProofEditor - solution status
