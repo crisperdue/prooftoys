@@ -41,6 +41,9 @@ var convert = Toy.convert;
 var applyToVisible = Toy.applyToVisible;
 var noSimplify = Toy.noSimplify;
 
+var addFact = Toy.addFact;
+var addFactsMap = Toy.addFactsMap;
+
 
 //// Utility functions
 
@@ -2099,7 +2102,7 @@ var realAxiomFacts = {
     }
   }
 };
-$.extend(algebraFacts, realAxiomFacts);
+addFactsMap(realAxiomFacts);
 
 
 var basicFacts = {
@@ -2196,7 +2199,7 @@ var basicFacts = {
     }
   }
 };
-$.extend(algebraFacts, basicFacts);
+addFactsMap(basicFacts);
 
 // Distributivity
 var distribFacts = {
@@ -2312,7 +2315,7 @@ for (var key in distribFacts) {
 function isDistribFact(stmt) {
   return !!_distribFactsTable[Toy.getStatementKey(stmt)];
 }
-$.extend(algebraFacts, distribFacts);
+addFactsMap(distribFacts);
 
 var identityFacts = {
   // Plus zero
@@ -2374,7 +2377,20 @@ var identityFacts = {
     }
   }
 };
-$.extend(algebraFacts, identityFacts);
+addFactsMap(identityFacts);
+
+// This fact has the same consequent as transitivity of equality,
+// so we cannot reference it through the usual fact lookup.
+addRule({name: 'abcPlus',
+         statement: '@a + c = b + c & R a & R b & R c => a = b',
+         proof: function() {
+             return (rules.assume('a + c = b + c')
+                     .andThen('applyToBothWith', '-', 'c')
+                     .andThen('groupToRight', '/main/left/left/right')
+                     .andThen('simplifySite', '/main/left')
+                     .andThen('groupToRight', '/main/right/left/right')
+                     .andThen('simplifySite', '/main/right'));
+         }});
 
 var equivalences = {
 
@@ -2383,12 +2399,7 @@ var equivalences = {
       var forward = (rules.assume('a = b')
                      .andThen('applyToBothWith', '+', 'c')
                      .andThen('asImplication'));
-      var back = (rules.assume('a + c = b + c')
-                  .andThen('applyToBothWith', '-', 'c')
-                  .andThen('groupToRight', '/main/left/left/right')
-                  .andThen('simplifySite', '/main/left')
-                  .andThen('groupToRight', '/main/right/left/right')
-                  .andThen('simplifySite', '/main/right')
+      var back = (rules.abcPlus()
                   .andThen('extractHyp', 'a + c = b + c'))
       var conj = rules.makeConjunction(forward, back);
       return rules.rewriteOnly(conj, '/main', '(p => q) & (q => p) == (p == q)');
@@ -2470,7 +2481,7 @@ var equivalences = {
     }
   }
 };
-$.extend(algebraFacts, equivalences);
+addFactsMap(equivalences);
 
 
 /*
@@ -2674,7 +2685,7 @@ var negationFacts = {
     }
   }
 };
-$.extend(algebraFacts, negationFacts);
+addFactsMap(negationFacts);
 
 var subtractionFacts = {
   // Subtraction facts
@@ -2815,7 +2826,7 @@ var subtractionFacts = {
   }
 
 };
-$.extend(algebraFacts, subtractionFacts);
+addFactsMap(subtractionFacts);
 
 var recipFacts = {
   // Reciprocal facts
@@ -2890,7 +2901,7 @@ var recipFacts = {
     }
   }
 };
-$.extend(algebraFacts, recipFacts);
+addFactsMap(recipFacts);
 
 var divisionFacts = {
 
@@ -3110,7 +3121,7 @@ var divisionFacts = {
     converse: { labels: 'algebra' }
   }
 };
-$.extend(algebraFacts, divisionFacts);
+addFactsMap(divisionFacts);
 
 var powerFacts = {
   'a ** 1 = a': {
@@ -3141,7 +3152,7 @@ var powerFacts = {
     }
   }
 };
-$.extend(algebraFacts, powerFacts);
+addFactsMap(powerFacts);
 
 
 // MOVING EXPRESSIONS AROUND
@@ -3175,7 +3186,7 @@ var algebraIdentities = {
     }
   }
 };
-$.extend(algebraFacts, algebraIdentities);
+addFactsMap(algebraIdentities);
 
 // Internal to arithRight.
 var _arithInfo = [{schema: 'a + b + c = a + (b + c)'},
@@ -3241,7 +3252,6 @@ function arithRight(term, cxt) {
 
 //// Export public names.
 
-Toy.algebraFacts = algebraFacts;
 Toy.distribFacts = distribFacts;
 Toy.isDistribFact = isDistribFact;
 Toy.termGetRightVariable = termGetRightVariable;
@@ -3259,7 +3269,6 @@ Toy.addRulesMap(equationOpsInfo);
 Toy.addRulesMap(simplifiersInfo);
 Toy.addRulesMap(moversInfo);
 Toy.addRulesMap(fractionsInfo);
-Toy.addFactsMap(algebraFacts);
 
 // From here is overall initialization for the complete system.
 
