@@ -11,7 +11,7 @@ var Bindings = Toy.Bindings;
 var getBinding = Toy.getBinding;
 var assert = Toy.assertTrue;
 var ToySet = Toy.ToySet;
-var ToyMap = Toy.Map;
+var ToyMap = Toy.ToyMap;
 
 // Code in this file may reference xutil.js, but handle forward
 // references properly.

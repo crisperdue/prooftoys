@@ -894,14 +894,14 @@ ToySet.prototype.toString = function() {
 };
 
 
-//// MAP
+//// ToyMap
 
 /**
  * Arguments are a function to convert a key object to an identifying
  * string, and a default value when getting a key that is not in the
  * map.  The default default is the undefined value.
  */
-function Map(stringifier, dfault) {
+function ToyMap(stringifier, dfault) {
   this.map = {};
   this.stringifier = stringifier || String;
   this.dfault = dfault;
@@ -910,21 +910,21 @@ function Map(stringifier, dfault) {
 /**
  * Set the value of a map element.
  */
-Map.prototype.set = function(key, value) {
+ToyMap.prototype.set = function(key, value) {
   this.map[this.stringifier(key)] = value;
 };
 
 /**
  * Does it have an element with matching key?
  */
-Map.prototype.has = function(key) {
+ToyMap.prototype.has = function(key) {
   return hasOwn(this.map, this.stringifier(key));
 };
 
 /**
  * Gets the value at a key or undefined if no such element.
  */
-Map.prototype.get = function(key) {
+ToyMap.prototype.get = function(key) {
   var map = this.map;
   var k = this.stringifier(key);
   return hasOwn(map, k) ? map[k] : this.dfault;
@@ -933,7 +933,7 @@ Map.prototype.get = function(key) {
 /**
  * Remove any element with matching key.
  */
-Map.prototype.remove = function(key) {
+ToyMap.prototype.remove = function(key) {
   delete this.map[this.stringifier(key)];
 };
 
@@ -943,7 +943,7 @@ Map.prototype.remove = function(key) {
  * function is not the undefined value, immediately returns that
  * value.
  */
-Map.prototype.each = function(fn, thisObj) {
+ToyMap.prototype.each = function(fn, thisObj) {
   var map = this.map
   for (var key in map) {
     var result = fn.call(thisObj, map[key], key);
@@ -956,7 +956,7 @@ Map.prototype.each = function(fn, thisObj) {
 /**
  * Number of distinct keys in the map.
  */
-Map.prototype.size = function() {
+ToyMap.prototype.size = function() {
   var counter = 0;
   this.each(function () { counter++; });
   return counter;
@@ -965,7 +965,7 @@ Map.prototype.size = function() {
 /**
  * Is it empty?
  */
-Map.prototype.isEmpty = function() {
+ToyMap.prototype.isEmpty = function() {
   for (var key in this.map) {
     return false;
   }
@@ -1213,8 +1213,6 @@ function _testTriangle(where, height, color) {
  * immediately create and add that many Worker threads.
  */
 function MessageQueue(n, uri) {
-  // Refer to window.Map and not Toy.Map.
-  var Map = window.Map;
   // Queue of messages to be sent.  Each item is a data structure with
   // properties "promise", "resolve", "reject", and "wrapper", where
   // the wrapper has a "channelType", an "id", and "data", which is
@@ -1619,7 +1617,7 @@ Toy.NestedTimer = NestedTimer;
 Toy.benchmark = benchmark;
 Toy.ToySet = ToySet;
 Toy.emptySet = emptySet;
-Toy.Map = Map;
+Toy.ToyMap = ToyMap;
 Toy.ArraySnap = ArraySnap;
 
 Toy.track = track;

@@ -358,10 +358,10 @@ var testCase = {
     assert(set.has(term));
   },
 
-  // Maps, TermMaps
+  // ToyMap, TermMap
 
   testMap: function() {
-    var map = new Toy.Map();
+    var map = new Toy.ToyMap();
     var term = call(f, x);
     assert(map.isEmpty());
     assertEqual(0, map.size());
@@ -385,7 +385,7 @@ var testCase = {
   },
 
   testMap0: function() {
-    var map = new Toy.Map(String, 0);
+    var map = new Toy.ToyMap(String, 0);
     assert(map.isEmpty());
     assert(!map.has('foo'));
     assertEqual(0, map.get('foo'));
