@@ -1696,9 +1696,9 @@ Atom.prototype.render = function(info, minPower, isFn) {
 
 // Private to effectivePower.
 var useParens = {
-  '|': new Toy.Set().addAll(['&']),
-  '=>': new Toy.Set().addAll(['=>', '=']),
-  '==': new Toy.Set().addAll(['=>'])
+  '|': new Set(['&']),
+  '=>': new Set(['=>', '=']),
+  '==': new Set(['=>'])
 };
 
 /**
