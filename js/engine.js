@@ -3417,31 +3417,6 @@ var ruleInfo = {
     }
   },
 
-  // 5220 (universal generalization).  From A deduces forall {v. A}.
-  // The variable v may be given as a string, which it converts
-  // internally to a variable.  Supports hypotheses.
-  // TODO: Remove this in favor of toForall0 and toForall1
-  //   or similarly implyForall.
-  toForall: {
-    action: function(h_a, v) {
-      v = varify(v);
-      assert(!(h_a.hasHyps && h_a.getLeft().hasFreeName(v.name)),
-             '{1} occurs free in hypotheses of {2}', v.name, h_a);
-      var step1 = rules.toTIsA(h_a);
-      var step2 = rules.theorem('forallXT');
-      var step3 = rules.changeVar(step2, '/arg', v);
-      var step4 = rules.rplace(step1, step3, '/arg/body');
-      return step4.justify('toForall', arguments, [h_a]);
-    },
-    inputs: {step: 1, varName: 2},
-    form: ('In step <input name=step> generalize on variable '
-           + '<input name=varName>'),
-    menu: 'add \u2200',
-    tooltip: ('Universal Generalization, wrap a theorem A in'
-              + ' (forall v A) using the variable of your choice.'),
-    description: 'add \u2200'
-  },
-
   // 5220 variant that from A deduces forall {v. A} disregarding
   // hypotheses.  The variable v may be given as a string, which it
   // converts internally to a variable.
@@ -4113,7 +4088,8 @@ var ruleInfo = {
       return step7.justify('implyForallBook', arguments, [h_a_b]);
     },
     inputs: {varName: 1, implication: 2},
-    // Do not offer at this time, use toImplyForall instead.
+    // Do not offer at this time, use something like rewriting
+    // with implyForall instead.
     formX: ('Move forall inside "implies" binding '
            + 'variable <input name=varName> '
            + 'implication <input name=implication>'),
@@ -4409,33 +4385,6 @@ var ruleInfo = {
     description: 'remove irrelevant type assumption {site};; {in step siteStep}'
   },
 
-  // Given a proof step H |- A => B and a variable v, derives
-  // H |- (A => forall {v. B}) provided that v is not free in A or H.
-  // (5237)  Implemented via implyForallGen.
-  //
-  // Handles hypotheses.  Note: with hyps, has two levels of =>.
-  //
-  // TODO: Change this to move "A" into the LHS (where there is an LHS),
-  //   apply toForall, then move it back to the RHS.
-  toImplyForall: {
-    action: function(v, h_a_b) {
-      v = varify(v);
-      var a_b = h_a_b.unHyp();
-      var step1 = rules.toForall(h_a_b, v);  // Only use of plain "toForall".
-      var step2 = rules.implyForallGen(v, a_b.getLeft(), a_b.getRight());
-      var step3 = rules.rplace(step2, step1, '/main');
-      return step3.justify('toImplyForall', arguments, [h_a_b]);
-    },
-    inputs: {varName: 1, implication: 2},
-    form: ('Move forall inside "implies" binding '
-           + 'variable <input name=varName> '
-           + 'in step <input name=implication>'),
-    menu: 'Add "forall" after =>',
-    tooltip: ('Add "forall" after "implies" provided the variable '
-              + 'is not free to the left of the "implies".'),
-    description: 'add forall after =>'
-  },
-    
   // Rule P/Q for a single antecedent (5234).  The schema step must
   // have the form (A => B), where A matches the given input step, or
   // the form (A == B), which implies (A => B) and (B => A).  This

@@ -1833,18 +1833,6 @@ var testCase = {
     assertEqual('(((x = y) => ((h x) = (h y))) | p)', actual);
   },
 
-  testToForall: function() {
-    var inf = Toy.rules.toForall(call(p, y), y);
-    assertEqual('(forall {y. (p y)})', inf);
-
-    // Hypotheses
-    var step1 = Toy.rules.assume(Toy.parse('x = 0'));
-    var wff = Toy.rules.assert('x = 0 => y > x').andThen('asHypotheses');
-    // wff.getLeft().sourceStep = step1;
-    assertEqual('((x = 0) => (forall {y. (y > x)}))',
-                Toy.rules.toForall(wff, 'y'));
-  },
-
   testInstVar: function() {
     var result = Toy.rules.instVar(call(p, y), call(f, x), y);
     assertEqual('(p (f x))', result);
@@ -2011,18 +1999,6 @@ var testCase = {
     var wff =
       '((forall {x. (p | (q x))}) => (p | (forall {x. (q x)})))';
     assertEqual(wff, inf);
-  },
-
-  testToImplyForall: function() {
-    var result = Toy.rules.toImplyForall(x, Toy.parse('p => q x'));
-    assertEqual('(p => (forall {x. (q x)}))', result);
-
-    // With hypotheses:
-    var step1 = Toy.rules.assert('R y => (p => q x)');
-    var step2 = Toy.rules.assume('R y');
-    var step3 = Toy.rules.modusPonens(step2, step1);
-    result = Toy.rules.toImplyForall(x, step3);
-    assertEqual('((R y) => (p => (forall {x. (q x)})))', result);
   },
 
   testForwardChain: function() {
