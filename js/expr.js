@@ -889,12 +889,26 @@ Step.prototype.getBase = function() {
 
 /**
  * Finds and returns a plain object/map of free variable names in this
- * expression, from name to true.  In typical implementations iteration
- * over the map will get variables in right-to-left order for the
- * potential benefit of performance in things like tautology checking.
+ * expression, from name to true.  In typical implementations
+ * iteration over the map will get variables in right-to-left order
+ * for the potential benefit of performance in things like tautology
+ * checking.  For guaranteed ordering, see Expr.freeVarSet.
  */
 Expr.prototype.freeVars = function() {
-  var byName = {};
+  var byName = new window.Set();
+  this._addFreeVars(byName, null);
+  var result = {};
+  byName.forEach(function(name) { result[name] = true; });
+  return result;
+};
+
+/**
+ * Finds and returns a Set object containing all the free variable
+ * names in this expression.  Iteration is guaranteed to return the
+ * names in textual right-to-left order.
+ */
+Expr.prototype.freeVarSet = function() {
+  var byName = new window.Set();
   this._addFreeVars(byName, null);
   return byName;
 };
@@ -2083,9 +2097,9 @@ Atom.prototype._addNames = function(map) {
   map[this.name] = true;
 };
 
-Atom.prototype._addFreeVars = function(map, bindings) {
+Atom.prototype._addFreeVars = function(set, bindings) {
   if (this.isVariable() && getBinding(this.name, bindings) == null) {
-    map[this.name] = true;
+    set.add(this.name);
   }
 };
 
@@ -2428,11 +2442,11 @@ Call.prototype._addNames = function(map) {
   this.arg._addNames(map);
 };
 
-Call.prototype._addFreeVars = function(map, bindings) {
+Call.prototype._addFreeVars = function(set, bindings) {
   // Add the arg first to encourage right-to-left ordering in typical
   // implementation iteration.
-  this.arg._addFreeVars(map, bindings);
-  this.fn._addFreeVars(map, bindings);
+  this.arg._addFreeVars(set, bindings);
+  this.fn._addFreeVars(set, bindings);
 };
 
 Call.prototype._addUndefNames = function(map, bindings) {
@@ -2895,9 +2909,9 @@ Lambda.prototype._addNames = function(map) {
   this.body._addNames(map);
 };
 
-Lambda.prototype._addFreeVars = function(map, bindings) {
+Lambda.prototype._addFreeVars = function(set, bindings) {
   var name = this.bound.name;
-  this.body._addFreeVars(map, new Bindings(name, true, bindings));
+  this.body._addFreeVars(set, new Bindings(name, true, bindings));
 };
 
 Lambda.prototype._addUndefNames = function(map, bindings) {
