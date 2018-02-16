@@ -294,10 +294,10 @@ var testCase = {
     assertEqual('cdba', pairs.map(function(v) { return v.key; }).join(''));
   },
 
-  // Sets, TermSets
+  // ToySet, TermSet
 
-  testSet: function() {
-    var set = new Toy.Set();
+  testToySet: function() {
+    var set = new Toy.ToySet();
     // isEmpty
     assert(set.isEmpty());
     // size
@@ -328,7 +328,7 @@ var testCase = {
     assertEqual(2, found);
     assert(items.indexOf(2) >= 0);
     // addAll
-    var copy = new Toy.Set();
+    var copy = new Toy.ToySet();
     copy.addAll(set);
     assertEqual(2, copy.size());
     copy.addAll([22]);

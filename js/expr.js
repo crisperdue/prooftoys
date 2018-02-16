@@ -10,7 +10,7 @@ var path = Toy.path;
 var Bindings = Toy.Bindings;
 var getBinding = Toy.getBinding;
 var assert = Toy.assertTrue;
-var ToySet = Toy.Set;
+var ToySet = Toy.ToySet;
 var ToyMap = Toy.Map;
 
 // Code in this file may reference xutil.js, but handle forward

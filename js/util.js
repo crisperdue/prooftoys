@@ -752,29 +752,29 @@ Toy.loaded = jQuery({});
 
 //// SET
 
-function Set(stringifier) {
+function ToySet(stringifier) {
   this.map = {};
   this.stringifier = stringifier || String;
 }
 
-var emptySet = Object.freeze(new Set());
+var emptySet = Object.freeze(new ToySet());
 
 /**
  * Add an element, returning this.
  */
-Set.prototype.add = function(value) {
+ToySet.prototype.add = function(value) {
   this.map[this.stringifier(value)] = value;
   return this;
 };
 
 /**
- * Add all the values in the given array or Set to this Set.
+ * Add all the values in the given array or ToySet to this ToySet.
  * Return this.
  */
-Set.prototype.addAll = function(more) {
+ToySet.prototype.addAll = function(more) {
   var self = this;
   function add(value) { self.add(value); }
-  if (more instanceof Set) {
+  if (more instanceof ToySet) {
     more.each(add);
   } else {
     more.forEach(add);
@@ -785,7 +785,7 @@ Set.prototype.addAll = function(more) {
 /**
  * Does the set contain the element (one with the same key)?
  */
-Set.prototype.has = function(value) {
+ToySet.prototype.has = function(value) {
   return hasOwn(this.map, this.stringifier(value));
 };
 
@@ -795,7 +795,7 @@ Set.prototype.has = function(value) {
  * Returns a boolean value indicating whether this contains all the
  * elements of the other collection.
  */
-Set.prototype.superset = function(other) {
+ToySet.prototype.superset = function(other) {
   var self = this;
   var result = true;
   other.each(function(o) {
@@ -813,14 +813,14 @@ Set.prototype.superset = function(other) {
  *
  * TODO: Consider making more efficient.
  */
-Set.prototype.equals = function(other) {
+ToySet.prototype.equals = function(other) {
   return this.superset(other) && other.superset(this);
 };
 
 /**
  * Remove the element.
  */
-Set.prototype.remove = function(value) {
+ToySet.prototype.remove = function(value) {
   delete this.map[this.stringifier(value)];
 };
 
@@ -831,7 +831,7 @@ Set.prototype.remove = function(value) {
  * returns any value other than "undefined" that value becomes the
  * return value of this method, and iteration ends.
  */
-Set.prototype.each = function(fn, thisObj) {
+ToySet.prototype.each = function(fn, thisObj) {
   var map = this.map
   for (var key in map) {
     var result = fn.call(thisObj, map[key], key);
@@ -844,7 +844,7 @@ Set.prototype.each = function(fn, thisObj) {
 /**
  * Count of distinct elements.
  */
-Set.prototype.size = function() {
+ToySet.prototype.size = function() {
   var counter = 0;
   this.each(function () { counter++; });
   return counter;
@@ -853,7 +853,7 @@ Set.prototype.size = function() {
 /**
  * Is the set empty?
  */
-Set.prototype.isEmpty = function() {
+ToySet.prototype.isEmpty = function() {
   for (var key in this.map) {
     return false;
   }
@@ -861,9 +861,9 @@ Set.prototype.isEmpty = function() {
 };
 
 /**
- * Remove all members of this Set.
+ * Remove all members of this ToySet.
  */
-Set.prototype.clear = function() {
+ToySet.prototype.clear = function() {
   var map = this.map;
   for (var key in map) {
     delete map[key];
@@ -873,22 +873,22 @@ Set.prototype.clear = function() {
 /**
  * Returns an element of the set or undefined if the set is empty.
  */
-Set.prototype.choose = function() {
+ToySet.prototype.choose = function() {
   for (var key in this.map) {
     return this.map[key];
   }
 };
 
 /**
- * Returns an iterable (actually an array) of the values in the Set.
+ * Returns an iterable (actually an array) of the values in the ToySet.
  */
-Set.prototype.values = function() {
+ToySet.prototype.values = function() {
   var result = [];
   this.each(x => void result.push(x));
   return result;
 };
 
-Set.prototype.toString = function() {
+ToySet.prototype.toString = function() {
   var values = this.values().map(function (x) { return x.toString(); });
   return format('{1}({2})', this.constructor.name || '', values);
 };
@@ -1228,7 +1228,7 @@ function MessageQueue(n, uri) {
   // queue elements.
   this.inProgress = new Map();
   // Set of Web Workers handling messages from this queue.
-  this.workers = new Set();
+  this.workers = new ToySet();
   // Workers not currently handling a request.
   this.idleWorkers = [];
 
@@ -1617,7 +1617,7 @@ Toy.normalReturn = normalReturn;
 
 Toy.NestedTimer = NestedTimer;
 Toy.benchmark = benchmark;
-Toy.Set = Set;
+Toy.ToySet = ToySet;
 Toy.emptySet = emptySet;
 Toy.Map = Map;
 Toy.ArraySnap = ArraySnap;
