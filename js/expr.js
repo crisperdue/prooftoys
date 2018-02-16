@@ -10,8 +10,8 @@ var path = Toy.path;
 var Bindings = Toy.Bindings;
 var getBinding = Toy.getBinding;
 var assert = Toy.assertTrue;
-var Set = Toy.Set;
-var Map = Toy.Map;
+var ToySet = Toy.Set;
+var ToyMap = Toy.Map;
 
 // Code in this file may reference xutil.js, but handle forward
 // references properly.
@@ -73,21 +73,21 @@ function identifyTerm(term) {
 };
 
 function TermSet(term) {
-  Set.call(this, identifyTerm);
+  ToySet.call(this, identifyTerm);
   if (term) {
     this.add(term);
   }
 }  
-Toy.extends(TermSet, Set);
+Toy.extends(TermSet, ToySet);
 
 
 /**
- * A Map from terms to variables.  Use TermMap.addTerm to set up
+ * A map from terms to variables.  Use TermMap.addTerm to set up
  * values, never TermMap.set.  The "subst" field maintains a
  * corresponding substitution from names of free variables to terms.
  */
 function TermMap() {
-  Map.call(this, identifyTerm);
+  ToyMap.call(this, identifyTerm);
   this.counter = 1;
   this.subst = {};
   // Array of current bound variables, outermost first.
@@ -99,7 +99,7 @@ function TermMap() {
   this.shadowVars = [];
   this.shadowTerms = [];
 }
-Toy.extends(TermMap, Map);
+Toy.extends(TermMap, ToyMap);
 
 /**
  * Ensure the term is in this map.  If not already present, assign it
@@ -151,7 +151,7 @@ TermMap.prototype.unbind = function() {
 };
 
 // Make TermMap.set private.
-TermMap.prototype._set = Map.prototype.set;
+TermMap.prototype._set = ToyMap.prototype.set;
 
 TermMap.prototype.set = function(term, name) {
   throw new Error('Unsupported: TermMap.set', term, name);
@@ -895,7 +895,7 @@ Step.prototype.getBase = function() {
  * checking.  For guaranteed ordering, see Expr.freeVarSet.
  */
 Expr.prototype.freeVars = function() {
-  var byName = new window.Set();
+  var byName = new Set();
   this._addFreeVars(byName, null);
   var result = {};
   byName.forEach(function(name) { result[name] = true; });
@@ -908,7 +908,7 @@ Expr.prototype.freeVars = function() {
  * names in textual right-to-left order.
  */
 Expr.prototype.freeVarSet = function() {
-  var byName = new window.Set();
+  var byName = new Set();
   this._addFreeVars(byName, null);
   return byName;
 };
@@ -969,8 +969,8 @@ Expr.prototype.mathVarConditions = function(expr) {
 
 /**
  * Finds and returns a set of all the names bound in this expression
- * at the location given by the path, represented by a Map from names
- * to true.
+ * at the location given by the path, represented by an object/map
+ * from names to true.
  */
 Expr.prototype.boundNames = function(path) {
   path = Toy.path(path, this);
@@ -983,8 +983,8 @@ Expr.prototype.boundNames = function(path) {
 };
 
 /**
- * Finds and returns a Map with all names occurring in this expression
- * as the keys, with values of "true".
+ * Finds and returns an object/map with all names occurring in this
+ * expression as the keys, with values of "true".
  */
 Expr.prototype.allNames = function() {
   var byName = {};
@@ -1771,22 +1771,21 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // an array containing just that.
 //
 //
-// _addNames(Map result)
+// _addNames(map result)
 //
-// Adds all names occurring in this expression to the Map, with value
-// of true for each, both free and bound names.
+// Adds all names occurring in this expression to the object/map, with
+// value of true for each, both free and bound names.
 //
 //
-// _addFreeVars(Map result, Bindings bindings)
+// _addFreeVars(Set result, Bindings bindings)
 // 
 // Adds all variable names that occur free in this Expr to the result
-// object/map, with the Atom object as the value associated with each
-// name found.  Assumes that names in the Bindings object are bound in
-// this expression's lexical context.  Private helper for the freeVars
+// Set.  Assumes that names in the Bindings object are bound in this
+// expression's lexical context.  Private helper for the freeVars
 // method.
 //
 //
-// _addUndefNames(Map result, Bindings bindings)
+// _addUndefNames(map result, Bindings bindings)
 // 
 // Adds to the object/set all constant names that occur free in this
 // Expr and are not already defined.  Assumes that names in the
