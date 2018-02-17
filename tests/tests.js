@@ -701,7 +701,7 @@ var testCase = {
     }
     check('undefined', 'x');
     check('(R x)', 'x + x');
-    check('((R x) & (R y))', 'y + x * y');
+    check('((R y) & (R x))', 'y + x * y');
     check('(((R x) & (R y)) & (R z))', 'z * y * x');
   },
 

@@ -944,7 +944,10 @@ Expr.prototype.mathVars = function() {
 /**
  * Returns a conjunction of conditions that each of the mathVars of
  * this expression is of type R (real), or null if the set of mathVars
- * is empty.
+ * is empty.  The variables occur in the conditions in the order they
+ * are returned from the freeVars method.  This is based on order of
+ * occurrence, so mathParse will give results that alphaMatch when
+ * given inputs that alphaMatch when given to Toy.parse.
  *
  * If the optional expr is present, uses that as an initial conjunct
  * to add to.
@@ -953,10 +956,13 @@ Expr.prototype.mathVarConditions = function(expr) {
   var real = new Atom('R');
   // Order the names for nice presentation.
   var names = [];
-  for (var v in this.mathVars()) {
-    names.push(v);
-  }
-  names.sort();
+  const freeVars = Array.from(this.freeVarSet());
+  const numVars = this.mathVars();
+  freeVars.forEach(function(name) {
+      if (numVars[name]) {
+        names.push(name);
+      }
+    });
   names.forEach(function(name) {
       if (expr) {
         expr = Toy.infixCall(expr, '&', Toy.call(real, name));
