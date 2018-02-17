@@ -1350,14 +1350,13 @@ function arrange(step, path, context, facts) {
 }
 
 /**
- * Call the given function for each of the registered facts, passing
- * it the fact statement (goal) and the synopsis with which it was
- * created, if any.
+ * Call the given function for each recorded fact, passing
+ * it the info object stored for the fact.
  */
 function eachFact(fn) {
-  for (var key in _factsMap) {
-    var f = _factsMap[key];
-    fn(f);
+  for (const key in _factsMap) {
+    const info = _factsMap[key];
+    fn(info);
   }
 }
 
