@@ -909,7 +909,7 @@ Expr.prototype.freeVars = function() {
  */
 Expr.prototype.freeVarSet = function() {
   var byName = new Set();
-  this._addFreeVars(byName, null);
+  this._addFreeVarSet(byName, null);
   return byName;
 };
 
@@ -2108,6 +2108,8 @@ Atom.prototype._addFreeVars = function(set, bindings) {
   }
 };
 
+Atom.prototype._addFreeVarSet = Atom.prototype._addFreeVars;
+
 Atom.prototype._addUndefNames = function(map, bindings) {
   var name = this.name;
   if (this.isNamedConst() &&
@@ -2452,6 +2454,11 @@ Call.prototype._addFreeVars = function(set, bindings) {
   // implementation iteration.
   this.arg._addFreeVars(set, bindings);
   this.fn._addFreeVars(set, bindings);
+};
+
+Call.prototype._addFreeVarSet = function(set, bindings) {
+  this.fn._addFreeVarSet(set, bindings);
+  this.arg._addFreeVarSet(set, bindings);
 };
 
 Call.prototype._addUndefNames = function(map, bindings) {
@@ -2918,6 +2925,12 @@ Lambda.prototype._addFreeVars = function(set, bindings) {
   var name = this.bound.name;
   this.body._addFreeVars(set, new Bindings(name, true, bindings));
 };
+
+Lambda.prototype._addFreeVarSet = function(set, bindings) {
+  var name = this.bound.name;
+  this.body._addFreeVarSet(set, new Bindings(name, true, bindings));
+};
+
 
 Lambda.prototype._addUndefNames = function(map, bindings) {
   var name = this.bound.name;
