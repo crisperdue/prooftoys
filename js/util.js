@@ -300,6 +300,20 @@ function logError(err) {
 }
 
 /**
+ * Logs all facts containing the given pattern of operator characters
+ * in the given order.  Operates by "squishing" the keys of
+ * _factsMap into just the occurrences of the characters
+ * +, -, *, /, =, >, <, !, and checking for ocurrences of the given
+ * pattern string among these squished representations of the facts.
+ */
+function factSquish(pattern) {
+  return (Object.keys(Toy._factsMap)
+          .map(k => [k, k.replace(/[^-+*/=!<>]/g, '')])
+          .filter(pair => pair[1].includes(pattern))
+          .forEach(pair => console.log(pair[0])));
+}
+
+/**
  * Call the given function passing no arguments.  Report any errors to
  * the user and to the console, then rethrow.
  *
@@ -1588,6 +1602,7 @@ Toy.primeFactors = primeFactors;
 Toy.err = err;
 Toy.fail = fail;
 Toy.logError = logError;
+Toy.factSquish = factSquish;
 Toy.withErrorReporting = withErrorReporting;
 Toy.assertTrue = assertTrue;
 Toy.debugAssertions = true;
