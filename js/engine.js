@@ -778,10 +778,47 @@ function asFactProver(prover, goal) {
 // proved: proved statement or falsy if not yet proved
 var _factsMap = {};
 
+// Facts are recorded under a key that represents the consequent of
+// the fact if it is conditional, and otherwise the full fact.  In
+// either case the full statement of the fact is the value.  A fact
+// declaration must give a full and exact statement of the fact,
+// though it may be abbreviated in the sense that the types of free
+// variables may be implicit, to be filled in automatically during
+// execution of the declaration.  The implicit type conditions are
+// appended to the end of the list of assumptions.
+
+//
+// Fact references appear where a fact is used, as in rules.fact or in
+// rules.rewrite and some of its variants.  A fact reference is a wff,
+// in the form of an Expr or string, and resolves to a recorded fact
+// by a matching process described next.
+// 
+// If a fact reference is not conditional, it is considered as if
+// conditional with an empty set of assumptions.
+//
+// A reference resolves to a recorded fact if and only if there is
+// exactly one such fact such that: 1) the consequent of the reference
+// exactly matches the consequent of the fact, and 2) the assumptions
+// of the reference, taken as a set, are a subset or equal to the set
+// of assumptions of the fact that is referred to.  The matching is
+// done allowing for changes of variable names between the recorded
+// fact and the reference.
+
+// Where there are multiple types in the system, references to common
+// concepts such as commutativity and associativity need to be
+// distinguished according to the types of values intended (real
+// number, abelian group, etc.).  The plan is to provide convenient
+// functions that convert a short fact statement such as for example
+// "x + y = y + x" into one with the intended variable types.  This
+// may be done either with an explicit function applied to the
+// statement, or by using specialized rules that internally apply
+// conversions to statements given to them.  [[Perhaps for groups and
+// algebraic structures generally, it should be possible to specialize
+// by the operation rather than by the variable names.]]
+
 /**
  * Access any fact info stored for the given statement, which can be
- * anything recognized by getStatementKey.  If the statement is
- * conditional, getStatementKey only uses the consequent for lookup.
+ * anything recognized by getStatementKey.
  */
 function lookupFactInfo(stmt) {
   return _factsMap[getStatementKey(stmt)];
