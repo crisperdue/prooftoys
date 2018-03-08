@@ -1335,6 +1335,28 @@ function mathParse(str) {
 }
 
 /**
+ * Adds "math var conditions" as the rightmost assumptions of this
+ * wff.
+ */
+Expr.prototype.andMathVarConditions = function() {
+  var assume = this.mathVarConditions();
+  if (assume) {
+    if (this.isCall2('=>')) {
+      // Any type assumptions follow the LHS.
+      // These may later be matched against a proved result, so we aim
+      // to achieve the usual ordering here.
+      return infixCall(this.getLeft().concat(assume, '&'),
+                       '=>',
+                       this.getRight());
+    } else {
+      return infixCall(assume, '=>', this);
+    }
+  } else {
+    return this;
+  }
+};
+
+/**
  * Get a precedence value: 100 for identifiers, defaults to same as
  * multiplication for unknown non-symbols.
  *
@@ -1750,7 +1772,7 @@ function repeatedCall(operator, indices) {
 /**
  * Given an operator name and a list of terms, produces a term
  * that is a "chain" of calls to the operator.  If the list
- * is emtpry, return the given default, or if just one item,
+ * is empty, return the given default, or if just one item,
  * returns the item.
  */
 function chainCall(operator, list, dfault) {
