@@ -1136,7 +1136,7 @@ var testCase = {
   },
 
   testMatchFactPart: function() {
-    var facts = ['a - b = neg b + a', 'a + b + c = a + (b + c)'];
+    var facts = ['@a - b = neg b + a', 'a + b + c = a + (b + c)'];
     var step1 = rules.eqSelf('x + y + 10');
     var step2 = rules.eqSelf('x - 5 * y');
     var match = Toy.matchFactPart;
