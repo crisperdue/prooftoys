@@ -1293,13 +1293,25 @@ function unparseString(content) {
  * calling Expr.mathVars) and adds assumptions that all of those "math
  * variables" are real numbers.  If the main operator of the
  * expression is =>, concatenates any added assumptions at the end of
- * its LHS.
+ * its LHS.  Given an Expr, simply returns it.
+ *
+ * TODO: Eventually modify this to use type declarations for
+ *   variables, such as "x is real".  It will then need an extra
+ *   (probably optional) parameter to specify the parsing context.  At
+ *   that point, fact references and other statements will need to be
+ *   able to identify the parsing context.  For example lists of facts
+ *   will need to be able to include statements about default types of
+ *   variables according to their names.
  */
 function mathParse(str) {
+  if (str instanceof Expr) {
+    return str;
+  }
   if (str[0] === '@') {
     return parse(str.slice(1));
   }
   var expr = justParse(str);
+  // TODO: Convert this inline code to a call to andMathVarConditions.
   var assume = expr.mathVarConditions();
   if (assume) {
     if (expr.isCall2('=>')) {
@@ -1313,7 +1325,6 @@ function mathParse(str) {
       return result;
     } else {
       var result = infixCall(assume, '=>', expr);
-      result.hasHyps = true;
       findType(result);
       return result;
     }
