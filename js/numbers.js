@@ -44,6 +44,25 @@ var noSimplify = Toy.noSimplify;
 var addFact = Toy.addFact;
 var addFactsMap = Toy.addFactsMap;
 
+// This list may be added onto later.
+var realTypeFacts =
+  [
+   'R (x + y)',
+   'R (x * y)',
+   'R (x - y)',
+   'y != 0 => R (x / y)',
+   'R (neg x)',
+   'x != 0 => R (recip x)',
+   // This next fact is added later, after proving realRecipClosed.
+   // 'x != 0 => recip x != 0',
+   'x * y != 0 == x != 0 & y != 0',
+   {apply: function(term, cxt) {
+       return (isArithmetic(term) &&
+               rules.axiomArithmetic(term));
+     }
+   }
+   ];
+
 
 //// Utility functions
 
@@ -1124,22 +1143,6 @@ var simplifiersInfo = {
         return step;
       }
 
-      var realTypeFacts =
-      [
-       'R (x + y)',
-       'R (x * y)',
-       'R (x - y)',
-       'y != 0 => R (x / y)',
-       'R (neg x)',
-       'x != 0 => R (recip x)',
-       'x != 0 => recip x != 0',
-       'x * y != 0 == x != 0 & y != 0',
-       {apply: function(term, cxt) {
-           return (isArithmetic(term) &&
-                   rules.axiomArithmetic(term));
-         }
-       }
-       ];
       var reduced = rules.simplifyAsms(step, realTypeFacts);
       // In the reduced term, real constants disappear and composite
       // terms either reduce to (R <vbl>) or <asms> => ( ... == T).
@@ -3285,6 +3288,12 @@ for (var name in Toy.definitions) {
 basicSimpFacts.push({apply: arithRight});
 // We could "freeze" the basic facts to help prevent unexpected results.
 // basicSimpFacts = new Toy.ArraySnap(basicSimpFacts);
+
+rules.fact('realRecipClosed');
+// Prove realRecipClosed without using this fact about nonzero reciprocal
+// to avoid a circularity problem, which shows up in tests because
+// then facts are carefully proved on first use.
+realTypeFacts.push('x != 0 => recip x != 0');
 
 // For testing (computed value).
 Toy._ungroupingFacts = ungroupingFacts;
