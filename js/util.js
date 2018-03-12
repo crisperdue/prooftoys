@@ -803,6 +803,12 @@ ToySet.prototype.has = function(value) {
   return hasOwn(this.map, this.stringifier(value));
 };
 
+ToySet.prototype.size = function() {
+  var result = 0;
+  this.each(function(x) { result++; });
+  return result;
+};
+
 /**
  * Applies to another collection that has an "each" method that
  * iterates over its elements, exiting in case of a defined value.
@@ -828,7 +834,7 @@ ToySet.prototype.superset = function(other) {
  * TODO: Consider making more efficient.
  */
 ToySet.prototype.equals = function(other) {
-  return this.superset(other) && other.superset(this);
+  return this.size() === other.size() && this.superset(other);
 };
 
 /**

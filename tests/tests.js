@@ -1293,6 +1293,26 @@ var testCase = {
     assertEqual(false, scan('a = b', 'T & (b = c)'));
   },
 
+  testMakeConjunctionSet: function() {
+    const make = Toy.makeConjunctionSet;
+    const a = termify('a');
+    const ts = make(a);
+    assertEqual(1, ts.size());
+    assert(ts.has(a));
+    const a2 = termify('a & a');
+    const ts2 = make(a2);
+    assertEqual(1, ts2.size());
+    const abc = termify('a & (b & c)');
+    const ts3 = make(abc);
+    assertEqual(3, ts3.size());
+  },
+
+  testAsmSet: function() {
+    assertEqual(0, termify('a & b').asmSet().size());
+    assertEqual(2, termify('a & b => c').asmSet().size());
+    assertEqual(1, termify('a & a => b').asmSet().size());
+  },
+
   testScanDisjuncts: function() {
     function scan(needle, haystack) {
       var x1 = termify(needle);
@@ -2769,7 +2789,7 @@ window.setTimeout(function() {
   // A null value means "test all".
   var toTest = null;
   // An array of test keys runs all tests.
-  // toTest = ['testConjunctsImplyConjunct'];
+  // toTest = ['testAsmSet'];
 
   // Runs the named test case or warns if there is none such.
   function doTestCase(name) {

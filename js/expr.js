@@ -1641,7 +1641,7 @@ Expr.prototype.scanConjuncts = function(action) {
 
 /**
  * Makes a new TermSet of all the conjuncts obtained by
- * applynig scanConjuncts to the given term, as for example
+ * applying scanConjuncts to the given term, as for example
  * making the assumptions of a step into a TermSet.
  */
 function makeConjunctionSet(term) {
@@ -1649,6 +1649,17 @@ function makeConjunctionSet(term) {
   term.scanConjuncts(function (t) { set.add(t); });
   return set;
 }
+
+/**
+ * Build and return a TermSet containing the assumptions
+ * of this wff.  If the wff is not conditional, returns
+ * an empty set.
+ */
+Expr.prototype.asmSet = function() {
+  return (this.isCall2('=>')
+          ? Toy.makeConjunctionSet(this.getLeft())
+          : new Toy.TermSet());
+};
 
 /**
  * Transforms an expression that is a chain of conjuncts by applying
