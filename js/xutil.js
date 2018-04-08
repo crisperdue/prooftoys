@@ -1026,6 +1026,7 @@ function tokenize(str) {
 // Map from input strings to their parsed values.  Used for
 // memoization of user inputs.  Only stores inputs for which
 // a type can be found.
+// TODO: Use a Map.
 var _parsed = {};
 
 /**
@@ -1287,6 +1288,8 @@ function unparseString(content) {
   return '"' + s2 + '"';
 }
 
+var _mathParsed = new Map();
+
 /**
  * If string begins with "@", simply parses the rest with "parse".
  * Otherwise this also checks for any apparent math variables (as by
@@ -1310,6 +1313,10 @@ function mathParse(str) {
   if (str[0] === '@') {
     return parse(str.slice(1));
   }
+  const parsed = _mathParsed.get(str);
+  if (parsed) {
+    return parsed;
+  }
   var expr = justParse(str);
   // TODO: Convert this inline code to a call to andMathVarConditions.
   var assume = expr.mathVarConditions();
@@ -1322,14 +1329,17 @@ function mathParse(str) {
                              '=>',
                              expr.getRight());
       findType(result);
+      _mathParsed.set(str, result);
       return result;
     } else {
       var result = infixCall(assume, '=>', expr);
       findType(result);
+      _mathParsed.set(str, result);
       return result;
     }
   } else {
     findType(expr);
+    _mathParsed.set(str, expr);
     return expr;
   }
 }
@@ -2000,6 +2010,8 @@ Toy.parseStringContent = parseStringContent;
 Toy._equalityType = equalityType;
 Toy.unparseString = unparseString;
 Toy._decodeArg = decodeArg;
+Toy._parsed = _parsed;
+Toy._mathParsed = _mathParsed;
 
 // For debugging
 Toy.nParsed = nParsed;
