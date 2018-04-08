@@ -905,7 +905,8 @@ Expr.prototype.freeVars = function() {
 /**
  * Finds and returns a Set object containing all the free variable
  * names in this expression.  Iteration is guaranteed to return the
- * names in textual right-to-left order.
+ * names in traversal order of first occurrence, where function is
+ * considered to come before arg in calls.
  */
 Expr.prototype.freeVarSet = function() {
   var byName = new Set();
