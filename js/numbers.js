@@ -374,7 +374,7 @@ var numbersInfo = {
     proof: function() {
       return (rules.axiomRealTimesClosed()
               .andThen('instMultiVars', {x: '-1', y: 'x'})
-              .andThen('rewrite', '/right/arg', '-1 * x = neg x'));
+              .andThen('rewrite', '/right/arg', '@ -1 * x = neg x'));
     }
   },
 
@@ -384,12 +384,12 @@ var numbersInfo = {
     proof: function() {
       return (rules.axiomRealPlusClosed()
               .andThen('instMultiVars', {y: 'neg y'})
-              .andThen('rewrite', '/right/arg', 'x + neg y = x - y'));
+              .andThen('rewrite', '/right/arg', '@ x + neg y = x - y'));
     }
   },
 
   realDivClosed: {
-    statement: '@R x & R y & y != 0 => R (x / y)',
+    statement: 'y != 0 => R (x / y)',
     simplifier: true,
     // TODO: Prove this.  We need to:
     // Prove that y != 0 => exists1 {z. x = y * z}
@@ -398,17 +398,17 @@ var numbersInfo = {
   },
 
   realNZRecip: {
-    statement: '@x != 0 => recip x != 0'
+    statement: '@ x != 0 => recip x != 0'
   },
 
   realRecipClosed: {
-    statement: '@x != 0 & R x => R (recip x)',
+    statement: '@ x != 0 & R x => R (recip x)',
     simplifier: true,
     proof: function() {
       var step1 =  (rules.realDivClosed()
                     .andThen('instMultiVars', {x: '1', y: 'x'}));
       return (step1.andThen('rewrite', step1.find('1 / x'),
-                            '1 / x = recip x'));
+                            '@ 1 / x = recip x'));
     }
   },
 
@@ -589,11 +589,13 @@ Toy.addRules(realOrdering);
 
 var fieldLaws =
   [
-   {statement: '@exists {z. isAddIdentity z}',
+   // TODO: Try stating these identities with different name
+   //   for bound variable once standardVars can handle it.
+   {statement: '@exists {x. isAddIdentity x}',
     description: 'field axiom: additive identity exists',
     axiom: true
    },
-   {statement: '@exists {y. isMulIdentity y}',
+   {statement: '@exists {x. isMulIdentity x}',
     description: 'field axiom: multiplicative identity exists',
     axiom: true
    },
@@ -615,13 +617,13 @@ var facts =
   [
    {statement: '@exists {z. R z & forall {x. R x => x + z = x}}',
     proof: function() {
-       return (rules.fact('exists {z. isAddIdentity z}')
+       return (rules.fact('exists {x. isAddIdentity x}')
                .andThen('apply', '/arg/body'));
      }
    },
    {statement: '@exists {z. R z & forall {x. R x => x * z = x}}',
     proof: function() {
-       return (rules.fact('exists {z. isMulIdentity z}')
+       return (rules.fact('exists {x. isMulIdentity x}')
                .andThen('apply', '/arg/body'));
      }
    }
@@ -651,7 +653,7 @@ var divisionInfo = {
       var step4 = rules.p2(step1, step3, '(a => b) & (b => c) => (a => c)');
       var step5 = rules.simpleApply(step4, path);
       var step6 = rules.instForall(step5, '/right', Toy.parse('z'));
-      var fml = 'the {z. R x & R y & R z & x = y * z} = x / y';
+      var fml = '@ the {z. R x & R y & R z & x = y * z} = x / y';
       var divDefn = rules.fact(fml);
       var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);
       var loc7 = Toy.path('/right').concat(step7.getRight().find('R x'));
@@ -889,10 +891,6 @@ var regroupingFacts = [
   'a / b / c = a / (b * c)'
 ];
 
-var ungroupingFacts = regroupingFacts.map(function(fact) {
-    return Toy.commuteEqn(termify(fact));
-  });
-
 /**
  * Arrange the terms on each side of the equation input.  Also
  * appropriate when dividing.
@@ -1098,7 +1096,7 @@ var simplifiersInfo = {
   // and simplifies negations.
   removeSubtraction: {
     action: function(step) {
-      var facts = ['a - b = a + neg b'];
+      var facts = ['@a - b = a + neg b'];
       var info = {facts: facts, searchMethod: 'searchTerms'};
       var converted = applyToVisible(step, info);
       var simplified = rules.simplifyNegations(converted);
@@ -1211,7 +1209,7 @@ var moversInfo = {
       var numRightMovers = [
         {stmt: 'a + b = b + a',
          where: '$.a.isNumeral() && !$.b.isNumeral()'},
-        {stmt: 'a - b = neg b + a',
+        {stmt: '@a - b = neg b + a',
          where: '$.a.isNumeral() && !$.b.isNumeral()'},
         {stmt: 'a + b + c = a + c + b', where: numeralBefore},
         {stmt: 'a + b - c = a - c + b', where: numeralBefore},
@@ -1267,7 +1265,7 @@ var moversInfo = {
          {schema: 'a / b',
           parts: {a: 'flatteners'}}}
     ], denegaters: [
-        {stmt: 'neg a = -1 * a'},
+        {stmt: '@ neg a = -1 * a'},
         {descend:
          {schema: 'a * b',
           parts: {a: 'denegaters', b: 'denegaters'}}},
@@ -1606,7 +1604,7 @@ var moversInfo = {
       factsA: [
         'neg a + b = b - a',
         'a + b = b + a',
-        'a - b = neg b + a'
+        '@a - b = neg b + a'
       ],
       factsB: [
         'a + b + c = a + c + b',
@@ -1676,7 +1674,7 @@ var moversInfo = {
       ];
       var factsB = [
         'a + b = b + a',
-        'a - b = neg b + a'
+        '@a - b = neg b + a'
       ];
       function tryFact(name, fact_arg) {
         var schema = termify(fact_arg).getLeft();
@@ -2148,7 +2146,7 @@ var basicFacts = {
     proof: function() {
       return rules.eqSelf('a + neg a')
       .rewrite('/main/right/left', 'a = 1 * a')
-      .rewrite('/main/right/right', 'neg a = -1 * a')
+      .rewrite('/main/right/right', '@ neg a = -1 * a')
       .rewrite('/main/right', 'a * c + b * c = (a + b) * c')
       .andThen('arithmetic', '/main/right/left')
       .rewrite('/main/right', '0 * a = 0');
@@ -2261,10 +2259,10 @@ var distribFacts = {
   'a * (b - c) = a * b - a * c': {
     proof: function() {
       return rules.consider('a * (b - c)')
-      .rewrite('/main/right/right', 'a - b = a + neg b')
+      .rewrite('/main/right/right', '@a - b = a + neg b')
       .rewrite('/main/right', 'a * (b + c) = a * b + a * c')
       .rewrite('/main/right/right', 'a * neg b = neg (a * b)')
-      .rewrite('/main/right', 'a + neg b = a - b');
+      .rewrite('/main/right', '@a + neg b = a - b');
     },
     labels: 'algebra',
     converse: { labels: 'algebra' }
@@ -2543,7 +2541,7 @@ var negationFacts = {
   },
   '@a - b = a + -1 * b': {
     proof: function() {
-      return (rules.fact('a - b = a + neg b')
+      return (rules.fact('@a - b = a + neg b')
               .andThen('apply', '/main/right/right'));
     }
   },
@@ -2556,14 +2554,14 @@ var negationFacts = {
   },
   'neg a + b = b - a': {
     proof: function() {
-      return rules.fact('a + neg b = a - b')
+      return rules.fact('@a + neg b = a - b')
         .rewrite('/main/left', 'a + b = b + a');
     },
     simplifier: true
   },
-  'a - b = neg b + a': {
+  '@a - b = neg b + a': {
     proof: function() {
-      return rules.fact('a + neg b = a - b')
+      return rules.fact('@a + neg b = a - b')
       .andThen('eqnSwap')
       .rewrite('/main/right', 'a + b = b + a');
     }
@@ -2661,17 +2659,17 @@ var negationFacts = {
   'neg (a - b) = b - a': {
     proof: function() {
       return rules.consider('neg (a - b)')
-      .rewrite('/main/right/arg', 'a - b = a + neg b')
+      .rewrite('/main/right/arg', '@a - b = a + neg b')
       .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
       .rewrite('/main/right/right', 'neg (neg a) = a')
       .rewrite('/main/right', 'a + b = b + a')
-      .rewrite('/main/right', 'a + neg b = a - b');
+      .rewrite('/main/right', '@a + neg b = a - b');
     }
   },
   'neg (a - b) = neg a + b': {
     proof: function() {
       return rules.consider('neg (a - b)')
-      .rewrite('/main/right/arg', 'a - b = a + neg b')
+      .rewrite('/main/right/arg', '@a - b = a + neg b')
       .rewrite('/main/right', 'neg (a + b) = neg a + neg b')
       .rewrite('/main/right/right', 'neg (neg a) = a');
     }
@@ -2697,31 +2695,31 @@ var subtractionFacts = {
   'a + b - c = a - c + b': {
     proof: function() {
       return rules.consider('a + b - c')
-      .rewrite('/main/right', 'a - b = a + neg b')
+      .rewrite('/main/right', '@a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + c + b')
-      .rewrite('/main/right/left', 'a + neg b = a - b');
+      .rewrite('/main/right/left', '@a + neg b = a - b');
     }
   },
   'a - b + c = a + c - b': {
     proof: function() {
       return rules.consider('a - b + c')
-      .rewrite('/main/right/left', 'a - b = a + neg b')
+      .rewrite('/main/right/left', '@a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + c + b')
-      .rewrite('/main/right', 'a + neg b = a - b');
+      .rewrite('/main/right', '@a + neg b = a - b');
     }
   },
   'a - b + c = a + (c - b)': {
     proof: function() {
       return rules.fact('a - b + c = a + c - b')
-      .rewrite('/main/right', 'a - b = a + neg b')
+      .rewrite('/main/right', '@a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + (b + c)')
-      .rewrite('/main/right/right', 'a + neg b = a - b');
+      .rewrite('/main/right/right', '@a + neg b = a - b');
     }
   },
   'a - (b - c) = a + (c - b)': {
     proof: function() {
       return rules.consider('a - (b - c)')
-      .rewrite('/main/right', 'a - b = a + neg b')
+      .rewrite('/main/right', '@a - b = a + neg b')
       .rewrite('/main/right/right', 'neg (a - b) = b - a');
     }
   },
@@ -2729,9 +2727,9 @@ var subtractionFacts = {
     proof: function() {
       return rules.consider('a - (b - c)')
       .rewrite('/main/right', 'a - (b - c) = a + (c - b)')
-      .rewrite('/main/right/right', 'a - b = a + neg b')
+      .rewrite('/main/right/right', '@a - b = a + neg b')
       .rewrite('/main/right', 'a + (b + c) = a + b + c')
-      .rewrite('/main/right', 'a + neg b = a - b');
+      .rewrite('/main/right', '@a + neg b = a - b');
     }
   },
 
@@ -2740,9 +2738,9 @@ var subtractionFacts = {
   'a + b - c = a + (b - c)': {
     proof: function() {
       return rules.consider('a + b - c')
-      .rewrite('/main/right', 'a - b = a + neg b')
+      .rewrite('/main/right', '@a - b = a + neg b')
       .rewrite('/main/right', 'a + b + c = a + (b + c)')
-      .rewrite('/main/right/right', 'a + neg b = a - b');
+      .rewrite('/main/right/right', '@a + neg b = a - b');
     },
     labels: 'algebra2',
     converse: { labels: 'algebra' }
@@ -2750,12 +2748,12 @@ var subtractionFacts = {
   'a - (b + c) = a - b - c': {
     proof: function() {
       var step = rules.consider('a - (b + c)')
-      .rewrite('/main/right', 'a - b = a + neg b')
+      .rewrite('/main/right', '@a - b = a + neg b')
       .rewrite('/main/right/right',
                'neg (a + b) = neg a + neg b')
       .rewrite('/main/right', 'a + (b + c) = a + b + c')
-      .rewrite('/main/right', 'a + neg b = a - b')
-      .rewrite('/main/right/left', 'a + neg b = a - b');
+      .rewrite('/main/right', '@a + neg b = a - b')
+      .rewrite('/main/right/left', '@a + neg b = a - b');
       return step;
     },
     labels: 'algebra',
@@ -2764,20 +2762,20 @@ var subtractionFacts = {
   'a - b - c = a - c - b': {
     proof: function() {
       return rules.consider('a - b - c')
-      .rewrite('/main/right/left', 'a - b = a + neg b')
+      .rewrite('/main/right/left', '@a - b = a + neg b')
       .rewrite('/main/right', 'a + b - c = a - c + b')
-      .rewrite('/main/right', 'a + neg b = a - b');
+      .rewrite('/main/right', '@a + neg b = a - b');
     }
   },
   'a - (b - c) = a - b + c': {
     proof: function() {
       return rules.consider('a - (b - c)')
-      .rewrite('/main/right/right', 'a - b = a + neg b')
-      .rewrite('/main/right', 'a - b = a + neg b')
+      .rewrite('/main/right/right', '@a - b = a + neg b')
+      .rewrite('/main/right', '@a - b = a + neg b')
       .rewrite('/main/right/right', 'neg (a + b) = neg a + neg b')
       .rewrite('/main/right/right/right', 'neg (neg a) = a')
       .rewrite('/main/right', 'a + (b + c) = a + b + c')
-      .rewrite('/main/right/left', 'a + neg b = a - b');
+      .rewrite('/main/right/left', '@a + neg b = a - b');
     },
     labels: 'algebra',
     converse: { labels: 'algebra2' }
@@ -3185,7 +3183,7 @@ var algebraIdentities = {
       return rules.fact('a = neg b == a + b = 0')
       .andThen('instVar', 'neg b', 'b')
       .rewrite('/main/left/right', 'neg (neg a) = a')
-      .rewrite('/main/right/left', 'a + neg b = a - b');
+      .rewrite('/main/right/left', '@a + neg b = a - b');
     }
   }
 };
