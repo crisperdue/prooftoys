@@ -886,9 +886,9 @@ var regroupingFacts = [
   'a - b + c = a - (b - c)',
   'a - b - c = a - (b + c)',
   'a * b * c = a * (b * c)',
-  'a * b / c = a * (b / c)',
-  'a / b * c = a * (c / b)',
-  'a / b / c = a / (b * c)'
+  'c != 0 => a * b / c = a * (b / c)',
+  'b != 0 => a / b * c = a * (c / b)',
+  'b != 0 & c != 0 => a / b / c = a / (b * c)'
 ];
 
 /**
@@ -1252,9 +1252,9 @@ var moversInfo = {
   flattenTerm: {
     data: {flatteners: [
         {stmt: 'a * (b * c) = a * b * c'},
-        {stmt: 'a * (b / c) = a * b / c'},
-        {stmt: 'a / (b * c) = a / b / c'},
-        {stmt: 'a / (b / c) = a / b * c'},
+        {stmt: 'c != 0 => a * (b / c) = a * b / c'},
+        {stmt: 'b != 0 & c != 0 => a / (b * c) = a / b / c'},
+        {stmt: 'b != 0 & c != 0 => a / (b / c) = a / b * c'},
         // TODO: Support the following style, like in walkPatterns,
         //   and convert uses of "descend" to it.
         // {match: 'a * b', a: 'flatteners'},
@@ -1314,8 +1314,8 @@ var moversInfo = {
         {stmt: 'a * b = b * a',
          where: '$.b.isNumeral() && $.a.isVariable()'},
         {stmt: 'a * b * c = a * c * b', where: numeralAfterVar},
-        {stmt: 'a * b / c = a / c * b', where: numeralAfterVar},
-        {stmt: 'a / b * c = a * c / b', where: numeralAfterVar},
+        {stmt: 'c != 0 => a * b / c = a / c * b', where: numeralAfterVar},
+        {stmt: 'b != 0 => a / b * c = a * c / b', where: numeralAfterVar},
         {stmt: 'a / b / c = a / c / b', where: numeralAfterVar},
         {descend: {
             schema: 'a * b',
@@ -1332,10 +1332,14 @@ var moversInfo = {
       var numRightMovers = [
         {stmt: 'a * b = b * a',
          where: '$.a.isNumeral() && $.b.isVariable()'},
-        {stmt: 'a * b * c = a * c * b', where: numeralBeforeVar},
-        {stmt: 'a * b / c = a / c * b', where: numeralBeforeVar},
-        {stmt: 'a / b * c = a * c / b', where: numeralBeforeVar},
-        {stmt: 'a / b / c = a / c / b', where: numeralBeforeVar},
+        {stmt: 'a * b * c = a * c * b',
+         where: numeralBeforeVar},
+        {stmt: 'c != 0 => a * b / c = a / c * b',
+         where: numeralBeforeVar},
+        {stmt: 'b != 0 => a / b * c = a * c / b',
+         where: numeralBeforeVar},
+        {stmt: 'b != 0 & c != 0 => a / b / c = a / c / b',
+         where: numeralBeforeVar},
         {descend: {
             schema: 'a * b',
             parts: {a: 'numRightMovers'}
@@ -1351,7 +1355,7 @@ var moversInfo = {
       // moving multiplications to the left.
       // Assumes the term is already flattened.
       var numerators = [
-        {stmt: 'a / b * c = a * c / b'},
+        {stmt: 'b != 0 => a / b * c = a * c / b'},
         {descend:
          {schema: 'a * b',
           parts: {a: 'numerators'}}},
@@ -1363,7 +1367,7 @@ var moversInfo = {
       // grouped to the right.  When done there is only one division.
       // Assumes the term is already flattened.
       var denominators = [
-        {stmt: 'a / b / c = a / (b * c)'},
+        {stmt: 'b != 0 & c != 0 => a / b / c = a / (b * c)'},
         {descend:
          {schema: 'a * b',
           parts: {a: 'denominators'}}},
@@ -1381,7 +1385,7 @@ var moversInfo = {
         // If there is a negated numeral in the denominator, moves
         // the negation into the numerator.
         // From 2 / -3 for example produces -2 / 3 for minus two thirds.
-        {stmt: 'a / b = neg a / neg b',
+        {stmt: 'b != 0 => a / b = neg a / neg b',
          where: bothNumerals + ' && $.b.getNumValue() < 0'},
         {descend:
          {schema: 'a / b',
@@ -1493,11 +1497,11 @@ var moversInfo = {
       var facts = [
           {stmt: 'a * b = b * a',
            where: '$.b.isNumeral()'},
-          {stmt: 'a * b / (c * d) = b / d * (a / c)',
+          {stmt: 'c!= 0 & d != 0 => a * b / (c * d) = b / d * (a / c)',
            where: '$.b.isNumeral() && $.d.isNumeral()'},
-          {stmt: 'a * b / c = b * (a / c)',
+          {stmt: 'c != 0 => a * b / c = b * (a / c)',
            where: '$.b.isNumeral()'},
-          {stmt: 'a / (b * c) = 1 / c * (a / b)',
+          {stmt: 'b != 0 & c != 0 => a / (b * c) = 1 / c * (a / b)',
            where: '$.c.isNumeral()'}
       ];
       return (Toy.applyFactsOnce(step2, path, facts)
@@ -2152,7 +2156,7 @@ var basicFacts = {
       .rewrite('/main/right', '0 * a = 0');
     }
   },
-  '@R a & a != 0 => a * recip a = 1': {
+  'a != 0 => a * recip a = 1': {
     proof: function() {
       return rules.axiomReciprocal();
     }
@@ -2432,8 +2436,8 @@ var equivalences = {
       var rewrite = rules.rewrite;
       var s1 = rules.assume('a * c = b * c');
       var s2 = rules.applyToBothWith(s1, '/', 'c');
-      var s3 = rewrite(s2, '/main/right', 'a * b / c = a * (b / c)');
-      var s6 = rewrite(s3, '/main/left', 'a * b / c = a * (b / c)');
+      var s3 = rewrite(s2, '/main/right', 'c != 0 => a * b / c = a * (b / c)');
+      var s6 = rewrite(s3, '/main/left', 'c != 0 => a * b / c = a * (b / c)');
       var s7 = rules.simplifyStep(s6);
       var s8 = rules.extractHyp(s7, 'a * c = b * c');
       return s8;
@@ -2458,7 +2462,7 @@ var equivalences = {
     // TODO: Figure out why the user must enter the c != 0 part
     //   when working interactively.
     proof: function() {
-      var regroup = rules.fact('a / b * c = a * (c / b)');
+      var regroup = rules.fact('b != 0 => a / b * c = a * (c / b)');
       var cancel = rules.fact('a != 0 => a / a = 1');
       return (rules.assume('a / c = b / c')
               .andThen('applyToBothWith', '*', 'c')
@@ -2856,7 +2860,7 @@ var recipFacts = {
     simplifier: true,
     proof: function() {
       var rewrite = rules.rewrite;
-      var step1 = rules.fact('a * recip a = 1');
+      var step1 = rules.fact('a != 0 => a * recip a = 1');
       var step2 = rules.applyToBothWith(step1, '*', Toy.parse('recip (recip a)'));
       var step3 = rewrite(step2, '/main/right', '1 * a = a');
       var step4 = rewrite(step3, '/main/left', 'a * b * c = a * (b * c)');
@@ -2884,18 +2888,21 @@ var recipFacts = {
   'a != 0 & b != 0 => recip (a * b) = recip a * recip b': {
     proof: function() {
       var rewrite = rules.rewrite;
-      var step1 = rules.fact('a * recip a = 1');
+      var step1 = rules.fact('a != 0 => a * recip a = 1');
       var step2 = rules.instVar(step1, Toy.parse('a * b'), 'a');
       var step3 = rewrite(step2, '/right/left', 'a * b * c = a * c * b');
       var step4 = rules.applyToBothWith(step3, '*', Toy.parse('recip b'));
-      var step5 = rewrite(step4, '/right/left', 'a * b * c = a * (b * c)');
-      var step6 = rewrite(step5, '/right/left/right', 'a * recip a = 1');
+      var step5 = rewrite(step4, '/right/left',
+                          'a * b * c = a * (b * c)');
+      var step6 = rewrite(step5, '/right/left/right',
+                          'a != 0 => a * recip a = 1');
       var step7 = rewrite(step6, '/right/right', '1 * a = a');
       var step8 = rewrite(step7, '/right/left', 'a * 1 = a');
       var step9 = rules.applyToBothWith(step8, '*', Toy.parse('recip a'));
       var step10 = rewrite(step9, '/right/left/left', 'a * b = b * a');
       var step11 = rewrite(step10, '/right/left', 'a * b * c = a * (b * c)');
-      var step12 = rewrite(step11, '/right/left/right', 'a * recip a = 1');
+      var step12 = rewrite(step11, '/right/left/right',
+                           'a != 0 => a * recip a = 1');
       var step13 = rewrite(step12, '/right/left', 'a * 1 = a');
       var step14 = rewrite(step13, '/right/right', 'a * b = b * a');
       return step14;
@@ -2937,7 +2944,7 @@ var divisionFacts = {
   },
   'b != 0 => a / b * b  = a': {
     proof: function() {
-      return (rules.fact('a / b * c = a * (c / b)')
+      return (rules.fact('b != 0 => a / b * c = a * (c / b)')
               .andThen('instVar', 'b', 'c')
               .andThen('simplifyStep'));
     },
@@ -2948,7 +2955,7 @@ var divisionFacts = {
       var step = rules.consider('a / (b * c)')
       .rewrite('/main/right', 'a / b = a * recip b')
       .rewrite('/main/right/right',
-               'recip (a * b) = recip a * recip b')
+               'a != 0 & b != 0 => recip (a * b) = recip a * recip b')
       .rewrite('/main/right', 'a * (b * c) = a * b * c')
       .rewrite('/main/right', 'a * recip b = a / b')
       .rewrite('/main/right/left', 'a * recip b = a / b');
@@ -2971,8 +2978,8 @@ var divisionFacts = {
       var arrange = Toy.applyFactsWithinRhs;
       var step1 = arrange(rules.consider('a / (b / c)'),
                           ['a / b = a * recip b',
-                           'recip (a * b) = recip a * recip b',
-                           'recip (recip a) = a']);
+                           'a != 0 & b != 0 => recip (a * b) = recip a * recip b',
+                           'a != 0 => recip (recip a) = a']);
       var result = arrange(step1,
                            ['a * (b * c) = a * b * c',
                             'a * recip b = a / b']);
@@ -2981,7 +2988,7 @@ var divisionFacts = {
   },
   'a != 0 & b != 0 => a / (a * b) = 1 / b': {
     proof: function() {
-      return (rules.fact('a / (b * c) = a / b / c')
+      return (rules.fact('b != 0 & c != 0 => a / (b * c) = a / b / c')
               .andThen('instVar', 'a', 'b')
               .andThen('simplifyStep'));
     },
@@ -3006,7 +3013,7 @@ var divisionFacts = {
   },
   'b != 0 => a * b / b = a': {
     proof: function() {
-      return (rules.fact('a * b / c = a * (b / c)')
+      return (rules.fact('c != 0 => a * b / c = a * (b / c)')
               .andThen('instVar', 'b', 'c')
               .andThen('simplifyStep'));
     },
@@ -3195,11 +3202,11 @@ var _arithInfo = [{schema: 'a + b + c = a + (b + c)'},
                   {schema: 'a - b + c = a - (b - c)'},
                   {schema: 'a - b - c = a - (b + c)'},
                   {schema: 'a * b * c = a * (b * c)'},
-                  {schema: 'a * b / c = a * (b / c)',
+                  {schema: 'c != 0 => a * b / c = a * (b / c)',
                    nz: {c: true}},
-                  {schema: 'a / b * c = a / (b / c)',
+                  {schema: 'b != 0 & c != 0 => a / b * c = a / (b / c)',
                    nz: {b: true, c: true}},
-                  {schema: 'a / b / c = a / (b * c)',
+                  {schema: 'b != 0 & c != 0 => a / b / c = a / (b * c)',
                    nz: {b: true, c: true}},
                   ];
 
