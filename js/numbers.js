@@ -1069,19 +1069,15 @@ var simplifiersInfo = {
 
   // Move all negations in past additions and multiplications;
   // eliminate double negations.
+  // TODO: Consider removing this as redundant.
   simplifyNegations: {
     action: function(step) {
       var facts = ['neg (a + b) = neg a + neg b',
                    'neg (neg a) = a',
-                   'neg (a * b) = neg a * b'
+                   'neg (a * b) = neg a * b',
+                   {apply: tryArithmetic}
                   ];
       var simpler = applyToVisible(step, facts);
-      var path1 = step.pathToVisiblePart();
-      var schemas = [{match: 'neg a', where: '$.a.isNumeral()'}];
-      var info;
-      while (info = Toy.searchForMatchingFact(simpler.get(path1), schemas)) {
-        simpler = rules.arithmetic(simpler, path1.concat(info.path));
-      }
       return simpler.justify('simplifyNegations', arguments, [step]);
     },
     inputs: {step: 1},
