@@ -250,8 +250,9 @@ Expr.addMethods(ruleMethods);
 // Caches (details of) results of rules.fact that are given a string
 // as input, for performance of functions such as findMatchingFact.
 // Used in rules.fact to quickly get the proof of a fact given as a
-// string.  Not to be confused with _factsMap, which contains information
-// about facts as they are stated, not as they are looked up.
+// string.  Not to be confused with _factsMap, which contains
+// information about facts as they are stated, not as they are looked
+// up.  The values are Step objects.  Private to rules.fact.
 var _factMap = {};
 
 //
@@ -298,7 +299,11 @@ function addRules(ruleList) {
 
 /**
  * Process the given info into form for inclusion into Toy.rules and
- * add the result there.  For details see the comments for ruleInfo.
+ * add the resulting rule or rules.  This does not do inference, so it
+ * can be called before any theorems are proved.
+ *
+ * For details of the structure of the argument see the comments for
+ * ruleInfo.
  */
 function addRule(info) {
   var name = info.name;
@@ -1263,6 +1268,9 @@ function applyFactsOnce(step, path, facts) {
  * TODO: Replace uses of this.  Provide interactive commands that are
  *   specific to the visible part.  If not interactive, use commands
  *   not dependent on visibility status.
+ *
+ * TODO: Consider if perhaps all uses of this are obsolete already,
+ *   and remove or modify those commands.
  */
 function applyToVisible(step, facts) {
   return applyFactsWithinSite(step, step.pathToVisiblePart(), facts);
@@ -1798,6 +1806,9 @@ var factProperties = {
  * synopsis property to generate a goal and the proof property as the
  * prover.
  *
+ * This does no inference, so it can be called before proving any
+ * theorems.
+ *
  * Currently recognizes input properties as follows:
  *
  * goal: if present, can generate the synopsis; if proved, becomes
@@ -1815,8 +1826,11 @@ var factProperties = {
  * converse.labels: Like labels, but applies to a "swapped" version
  *   of the fact, if any.
  *
- * TODO: Extend this and/or add other functions to add facts based
- *   on other information such as an already-proved statement.
+ * The info object is stored in the database with an additional
+ * "selfRef" property, in the form of a fact reference as used for
+ * fact lookups, treating the fact as a reference to itself; also
+ * a "standardSubst" property that renames the free variables as
+ * expected in generating keys for lookup of fact references.
  */
 function addFact(info) {
   for (var key in info) {
