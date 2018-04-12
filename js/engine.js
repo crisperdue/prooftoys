@@ -748,10 +748,14 @@ function asFactProver(prover, goal) {
         var factAsms = proved.isCall2('=>') ? conjSet(proved.getLeft()) : empty;
         if (!goalAsms.superset(factAsms)) {
           console.group('Warning: Fact requires unintended assumptions.');
+          console.error('Some results may rely on the incorrect fact.');
           console.error('Proved:', proved.toString());
           console.error('Stated:', goal.toString());
           console.groupEnd();
-          assert(false, 'Fact statement is missing some assumptions');
+          // This is a serious issue, so if the debugger is open,
+          // pause here.  This also allows work to continue, so the
+          // proof can be reviewed in the user interface.
+          debugger;
         }
         if (!factAsms.superset(goalAsms)) {
           console.group('Note: Fact statement has unneeded assumptions.');
