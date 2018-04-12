@@ -707,7 +707,7 @@ function catchResult(fn, _args) {
 //// NestedTimer -- timer that excludes time in other timers
 
 // Stack of active NestedTimers.
-_timers = [];
+const _timers = [];
 
 function NestedTimer(name) {
   this.name = name;
@@ -1418,7 +1418,7 @@ function makeRpcPromise(initFn) {
   return p;
 }
 
-rpcPromiseMethods = {
+const rpcPromiseMethods = {
 
   /**
    * Convenience method that pushes this Promise onto the given array,
