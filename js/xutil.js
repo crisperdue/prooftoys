@@ -1571,10 +1571,52 @@ function boolSchema(term) {
 }
 
 /**
+ * Returns a substitution that renames all of the free variables
+ * of the term into the "standard" variable names, following a
+ * predictable, "left-to-right" order.
+ */
+function standardSubst(term) {
+  const free = term.freeVarSet();
+  // Names in a known LR order.
+  const freeVars = Array.from(free);
+  const subst = {};
+  var counter = 1;
+  freeVars.forEach(function(name) {
+      // Using variable names as in TermMap.addTerm.
+      subst[name] = new Atom('a' + counter);
+      counter++;
+    });
+  return subst;
+}
+
+/**
+ * Inverts a substitution such as the result of calling standardSubst,
+ * that just renames variables.  The input should map each of its
+ * input names to a different variable.
+ *
+ * So the result of revSubst is also a renaming, and the result of
+ * revSubst(standardSubst(x)) is the same as x.
+ */
+function revSubst(subst) {
+  const result = {};
+  for (const key in subst) {
+    const v = subst[key];
+    assert(v instanceof Atom, 'Not a renaming: {1}', v);
+    result[v.name] = new Atom(key);
+  }
+  return result;
+}
+
+/**
  * Convert all variables in the given term to standard names as by
  * TermMap, with those names in text order from left to right.
  */
 function standardVars(term) {
+  // TODO: Revert this definition to its previous, now commented-out state.
+  //   Remove standardSubst and revSubst as less useful and overly complex,
+  //   using Expr.matchSchema to determine variable renamings from
+  //   fact declarations to usage.
+  /*
   var map = new Toy.TermMap();
   function makeSchema(term) {
     if (term instanceof Toy.Call) {
@@ -1594,6 +1636,8 @@ function standardVars(term) {
     }
   }
   return makeSchema(term);
+  */
+  return term.subFree(standardSubst(term));
 }
 
 /**
@@ -1965,6 +2009,8 @@ Toy.namify = namify;
 Toy.looksBoolean = looksBoolean;
 Toy.boolSchema = boolSchema;
 Toy.standardVars = standardVars;
+Toy.standardSubst = standardSubst;
+Toy.revSubst = revSubst;
 
 // Definitions
 
