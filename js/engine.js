@@ -889,12 +889,18 @@ function getResult(statement, mustProve) {
     return result;
   }
   info.inProgress = true;
+  try {
   // Get the proved result of the fact.
   info.proved = prover();
   assert(info.proved instanceof Expr);
   // Note that the fact remains in progress if its prover throws, which
   // may or may not be good thing.
   info.inProgress = false;
+  } finally {
+    if (info.inProgress) {
+      console.error('Proof of fact failed', '' + statement);
+    }
+  }
   return info.proved;
 }
 
