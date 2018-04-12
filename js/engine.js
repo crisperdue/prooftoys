@@ -549,7 +549,6 @@ function addRule(info) {
  * is available.
  */
 function definition(defn_arg) {
-  var isRecorded = Toy.isRecordedFact;
   var definitions = Toy.definitions;
   var defn = termify(defn_arg);
   // Free occurrences of names of constants that do not have
@@ -576,11 +575,12 @@ function definition(defn_arg) {
     // Substitute the fresh variable for the constant name.
     var body = defn.subFree1(x, name);
     var exists1 = Toy.call('exists1', Toy.lambda(x, body));
-    if (isRecorded(exists1)) {
+    if (isRecordedFact(exists1)) {
       // TODO: Add the fact that only one value has the property.
     } else {
       var exists = Toy.call('exists', Toy.lambda(x, body));
-      assert(isRecorded(exists), 'Definition {1} needs an existence fact.', defn);
+      assert(isRecordedFact(exists),
+             'Definition {1} needs an existence fact.', defn);
     }
     definitions[name] = defn;
     addFact({goal: rules.definition(name)});
