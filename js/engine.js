@@ -1091,9 +1091,6 @@ function searchForMatchingFact(term, info) {
  *   available as free variables for use in the string.
  *   OR if it is a function, call it with the substition, cxt, and
  *   term as arguments.
- * match: term schema to match against the term.  (By default the
- *   term is matched against the stmt LHS.)
- *   TODO: Consider removing this; there is only one use.
  *
  * For fact statements passed as list elements or the "stmt" property
  * of a list element, if proof of the fact is in progress at the time,
