@@ -878,7 +878,7 @@ function factsExtending(resInfo) {
 function factExpansion(stmt) {
   const factInfo = resolveToFactInfo(stmt);
   const resInfo = getResInfo(stmt);
-  const expanded = resInfo.expanded;
+  const expanded = resInfo._expansion;
   if (expanded) {
     return expanded;
   }
@@ -889,7 +889,7 @@ function factExpansion(stmt) {
   const map2 = resInfo.standardSubst;
   const map = factDeclToRef(map1, map2);
   const expansion = factInfo.goal.subFree(map);
-  resInfo.expanded = expansion;
+  resInfo._expansion = expansion;
   return expansion;
 }
 
@@ -911,11 +911,11 @@ function resolveToFactInfo(stmt) {
   const resInfo = getResInfo(stmt);
   const resolutions = _resolutionsByKey.get(resInfo.key) || [];
   const resolvent = resolutions.find(function(rec) {
-      // TODO: Consider if this is a bug, with a check for equality of
-      //   asmSet being needed.  Or if it results in a distinct
-      //   resolution for each distinct statement object.  (Note that
-      //   _statementResolutions ensures that lookups of the same
-      //   statement object result in the same resInfo object.)
+      //  Note that _statementResInfos ensures that lookups of the
+      //  same statement object result in the same resInfo object.
+      //  Also, factExpansion currently expects different statements
+      //  to have different resInfo objects, so sharing of resInfos
+      //  among different statements would be incompatible with that.
       return rec.resInfo == resInfo;
     });
   if (resolvent) {
@@ -1102,15 +1102,13 @@ function isInProgress(stmt) {
  * used over and over.  Private to getResInfo.
  *
  * The resInfo is a plain object with properties "key", "asmSet",
- * "key", "expanded", and "standardSubst", all related to a particular
- * fact statement.  The asmSet is a TermSet of the statement's
- * assumptions, the key is its "fact key", the stmt is the wff
- * statement it comes from, standardSubst a substitution that
- * converts its free variables to standard variables, and expanded
- * is cached here by factExpansion, but null until that is called.
- *
- * TODO: Rename expanded to _expanded, as it is internal to
- *   factExpansion
+ * "key", and "standardSubst", all related to a particular fact
+ * statement.  Also one property internal to factExpansion.  The
+ * asmSet is a TermSet of the statement's assumptions, the key is its
+ * "fact key", the stmt is the wff statement it comes from,
+ * standardSubst a substitution that converts its free variables to
+ * standard variables, and expanded is cached here by factExpansion,
+ * but null until that is called.
  *
  * This can support string keys, but mathParse already accelerates
  * conversion of strings to wffs.
@@ -6822,8 +6820,8 @@ function dumpFactResolutions() {
           }
           const resInfo = resItem.resInfo;
           console.log('  from ' + resInfo.stmt);
-          if (resInfo.expanded) {
-            console.log('  as ' + resInfo.expanded);
+          if (resInfo._expansion) {
+            console.log('  as ' + resInfo._expansion);
           }
         });
     });
