@@ -31,6 +31,7 @@ var assertEqn = Toy.assertEqn;
 var varify = Toy.varify;
 var constify = Toy.constify;
 var termify = Toy.termify;
+var mathParse = Toy.mathParse;
 var call = Toy.call;
 var equal = Toy.equal;
 var implies = Toy.implies;
@@ -253,6 +254,8 @@ Expr.addMethods(ruleMethods);
 // string.  Not to be confused with _factsMap, which contains
 // information about facts as they are stated, not as they are looked
 // up.  The values are Step objects.  Private to rules.fact.
+//
+// TODO: Consider removing this or upgrading it to a Map.
 var _factMap = {};
 
 //
@@ -773,11 +776,12 @@ function asFactProver(prover, goal) {
 }
 
 
-// Private to lookupFactInfo and setFactInfo.  Maps from a canonical
-// string "dump" of a fact to fact info, consisting of:
+//// About fact info objects.  These are plain objects with properties:
 //
 // synopsis (optional): synopsis string
-// goal: Expr statement of the fact, with all assumptions
+// goal: Expr statement of the fact, with all assumptions.  All
+//   variables are exactly as declared, though functions such as
+//   mathParse may add assumptions before returning the Expr.
 // labels: object / set of labels like the ones for rules
 // simplifier: true if this is an equation that simplifies
 // desimplifier: true if this is an equation that "desimplifies"
@@ -785,62 +789,234 @@ function asFactProver(prover, goal) {
 //   with equation LHS and RHS swapped
 // prover: function intended to prove the fact
 // proved: proved statement or falsy if not yet proved
-var _factsMap = {};
+// keyInfo: key and asmSet information as for factRecords.
 
-// Facts are recorded under a key that represents the consequent of
-// the fact if it is conditional, and otherwise the full fact.  In
-// either case the full statement of the fact is the value.  A fact
-// declaration must give a full and exact statement of the fact,
-// though it may be abbreviated in the sense that the types of free
-// variables may be implicit, to be filled in automatically during
-// execution of the declaration.  The implicit type conditions are
-// appended to the end of the list of assumptions.
-
+//// About standard forms of statements, including fact declarations
 //
-// Fact references appear where a fact is used, as in rules.fact or in
-// rules.rewrite and some of its variants.  A fact reference is a wff,
-// in the form of an Expr or string, and resolves to a recorded fact
-// by a matching process described next.
 // 
-// If a fact reference is not conditional, it is considered as if
-// conditional with an empty set of assumptions.
+
+// Every fact declared by addFact or addRule is recorded under a
+// string key that represents the consequent of the fact if it is
+// conditional, and otherwise the full fact.  In either case the
+// fact's (unique) fact properties object is the stored value.  This
+// maps from fact key to an array of fact property objects as
+// described above.  Private to factsExtending, setFactInfo, and
+// eachFact (but see also factSquish).
+//
+// This structure be eliminated, using _resolutionsByKey in its place.
+var _factsByKey = new Map();
+
+// Fact declarations and fact references:
+
+// A fact declaration, as in addFact, is an unabbreviated statement of
+// the fact.  (If the statement is to be parsed, the parsing code
+// may fill in parts, such as type assumptions, that are implicit
+// in the string form.)
+
+// Fact references appear where a fact is used, as in rules.fact or in
+// rules.rewrite and its variants.  A fact reference is a wff, in the
+// form of an Expr or string, and resolves to a recorded fact by the
+// following matching process:
+// 
+// If a fact reference is not conditional, treat it as a conditional
+// with an empty set of assumptions.
 //
 // A reference resolves to a recorded fact if and only if there is
-// exactly one such fact such that: 1) the consequent of the reference
+// exactly one such fact for which: 1) the consequent of the reference
 // exactly matches the consequent of the fact, and 2) the assumptions
 // of the reference, taken as a set, are a subset or equal to the set
-// of assumptions of the fact that is referred to.  The matching is
-// done allowing for changes of variable names between the recorded
-// fact and the reference.
-
-// Where there are multiple types in the system, references to common
-// concepts such as commutativity and associativity need to be
-// distinguished according to the types of values intended (real
-// number, abelian group, etc.).  The plan is to provide convenient
-// functions that convert a short fact statement such as for example
-// "x + y = y + x" into one with the intended variable types.  This
-// may be done either with an explicit function applied to the
-// statement, or by using specialized rules that internally apply
-// conversions to statements given to them.  [[Perhaps for groups and
-// algebraic structures generally, it should be possible to specialize
-// by the operation rather than by the variable names.]]
+// of assumptions of the fact that is referred to.  The matching
+// allows for changes of variable names between the recorded fact and
+// the reference.
 
 /**
- * Access any fact info stored for the given statement, which can be
- * anything recognized by getStatementKey.
+ * Map from string representing the body / "main" part of a statement
+ * to array of records each describing the association from a
+ * statement to the fact it references.  This contains a record for
+ * each statement that has been resolved to a fact, where the
+ * statements with different order of assumptions and/or changes of
+ * variable names are considered to be the same statement.  Each
+ * record is an Object with properties "resInfo" and "factInfo", where
+ * "resInfo" is a "statement resolution information" object and
+ * "factInfo" is the object with all the properties of the fact.
+ *
+ * This could also be used to look up factInfo from a fact goal or equivalent that
+ * may have different variable names or order of assumptions, but that
+ * is more directly supported through _factsByKey.
+ * 
+ * This supports fairly efficient resolution of actual or proposed
+ * fact references to facts, and is used to ensure that no fact
+ * reference ever becomes ambiguous.
+ *
+ * TODO: With _factsByKey giving access to factInfo and
+ * _resolutionsByKey giving access to resInfo, possibly this could
+ * store just pairs of statement and fact goal.
  */
-function lookupFactInfo(stmt) {
-  return _factsMap[getStatementKey(stmt)];
+const _resolutionsByKey = new Map();
+
+/**
+ * This returns an array of fact information objects of recorded facts
+ * that match the given resInfo.  The facts extend the resInfo in that
+ * they have the same key ("main part") and possibly additional
+ * assumptions.
+ */
+function factsExtending(resInfo) {
+  const factPropsList = _factsByKey.get(resInfo.key) || [];
+  const results = factPropsList.filter(function(factProps) {
+      const stmtInfo = getResInfo(factProps.goal);
+      return (stmtInfo.key == resInfo.key &&
+              stmtInfo.asmSet.superset(resInfo.asmSet));
+    });
+  return results;
 }
 
 /**
- * Set fact info for the given statement.  See comments on _factsMap
- * and fact management functions for the expectations on the
- * argument.
+ * Returns the "expansion" of a statement.  The result is a version of
+ * the full declared fact of the statement, with free variables as in
+ * the given statement rather than the declaration.
+ */
+function factExpansion(stmt) {
+  const factInfo = resolveToFactInfo(stmt);
+  const resInfo = getResInfo(stmt);
+  const expanded = resInfo.expanded;
+  if (expanded) {
+    return expanded;
+  }
+  // TODO: Use matching here rather than standardSubst, and
+  //   revert standardVars to work as it used to.  Remove
+  //   standardSubst and factDeclToRef.
+  const map1 = factInfo.standardSubst;
+  const map2 = resInfo.standardSubst;
+  const map = factDeclToRef(map1, map2);
+  const expansion = factInfo.goal.subFree(map);
+  resInfo.expanded = expansion;
+  return expansion;
+}
+
+/**
+ * This returns information about the recorded fact the given
+ * statement is considered to refer to.
+ *
+ * A statement is considered to properly refer to a fact iff there is
+ * exactly one fact such that the fact's main part exactly matches the
+ * statement's main part and the assumptions of the fact are a
+ * superset of the assumptions of the statement, both of these
+ * allowing for renaming of variables.
+ *
+ * Returns the desired fact info, or null if there is no such fact or
+ * the reference is ambiguous.
+ */
+function resolveToFactInfo(stmt) {
+  // The resInfo is "fact resolution information" for the statemement.
+  const resInfo = getResInfo(stmt);
+  const resolutions = _resolutionsByKey.get(resInfo.key) || [];
+  const resolvent = resolutions.find(function(rec) {
+      // TODO: Consider if this is a bug, with a check for equality of
+      //   asmSet being needed.  Or if it results in a distinct
+      //   resolution for each distinct statement object.  (Note that
+      //   _statementResolutions ensures that lookups of the same
+      //   statement object result in the same resInfo object.)
+      return rec.resInfo == resInfo;
+    });
+  if (resolvent) {
+    return resolvent.factInfo;
+  }
+  const candidates = factsExtending(resInfo);
+  if (candidates.length == 1) {
+    resolutions.length > 0 || _resolutionsByKey.set(resInfo.key, resolutions);
+    resolutions.push({resInfo: resInfo, factInfo: candidates[0]});
+    return candidates[0];
+  }
+  return null;
+}
+
+/**
+ * Resolves the given statement wff to a full fact statement if
+ * possible, otherwise returns null.  Like resolveToFactInfo, but
+ * returns just the goal.
+ */
+function resolveToFact(stmt) {
+  const info = resolveToFactInfo(stmt);
+  return info ? info.goal : null;
+}
+
+/**
+ * Returns true iff the given wff exactly matches a recorded fact in
+ * the sense that, when its variables are renamed to be the standard
+ * variables, its main part exactly matches a recorded fact and its
+ * set of assumptions is equal to the set of assumptions of the result
+ * of standardizing the variables of the recorded fact.
+ *
+ * NOTE: In the unlikely event that the recorded fact has multiple
+ * variables that are free only in its assumptions, the result could
+ * be false even though the statements have the same assumptions.
+ * This would be due to different ordering of assumptions between the
+ * given statement and the recorded fact, and thus different
+ * assignments of variable names.
+ *
+ * Also note that any assumption with free variable(s) in the LHS can
+ * be converted to an existential term where the variable is bound,
+ * making this scenario particularly unlikely.
+ */
+function isRecordedFact(stmt) {
+  // First check that the statement resolves to a specific fact.
+  const factInfo = resolveToFactInfo(stmt);
+  if (factInfo) {
+    // Then verify that the statement and the fact are indeed
+    // equivalent.
+    const asms = getResInfo(stmt).asmSet;
+    const factAsms = getResInfo(factInfo.goal).asmSet;
+    return asms.equals(factAsms);
+  }
+  return false;
+}
+
+/**
+ * Record the given fact information; private to addFact.  See
+ * comments on _factsByKey and fact management functions for the
+ * expectations on the argument.
+ *
+ * Returns truthy for success, falsy if the new fact statement is not
+ * allowable: either already recorded or alters the meaning of a
+ * statement already referring to a different fact.
  */
 function setFactInfo(info) {
-  _factsMap[getStatementKey(info.goal)] = info;
+  if (isRecordedFact(info.goal)) {
+    console.log('Already recorded fact:', info.goal.toString());
+    return false;
+  }
+  const key = getResInfo(info.goal).key;
+  const facts = _factsByKey.get(key) || [];
+  // Ensure that the key has an array of facts.
+  facts.length > 0 || _factsByKey.set(key, facts);
+  // Tentatively add the fact to the list.
+  facts.push(info);
+  const resolutions = _resolutionsByKey.get(key);
+  // If foundRef becomes non-null, this will become an array of the
+  // facts that it could refer to.
+  var extFacts;
+  if (resolutions) {
+    // If found, this is a ref whose statement would refer to a
+    // different fact in the presence of the tentative new fact.
+    const foundRef = resolutions.find(function(rec) {
+        extFacts = factsExtending(rec.resInfo);
+        return (extFacts.length != 1 ||
+                extFacts[0].factInfo != rec.factInfo);
+      });
+    if (foundRef) {
+      // There was an issue.  Immediately remove the fact from the list.
+      facts.pop();
+      // Then complain and return false.
+      console.error('New fact', info.goal.toString());
+      // TODO: Make available info to improve the following message.
+      //   Reference to the stated fact reference would be helpful.
+      console.log('  would affect the meaning of', foundRef.resInfo);
+      return false;
+    }
+  }
+  return true;
 }
+
 
 /**
  * Like getResult, below, but always proves the statement if it has
@@ -870,7 +1046,7 @@ function getResult(statement, mustProve) {
   if (Toy.isProved(statement)) {
     return statement;
   }
-  var info = lookupFactInfo(statement);
+  var info = resolveToFactInfo(statement);
   assert(info, 'Not a recorded fact: {1}', statement);
   // TODO: Consider more precise checking of the result of the lookup.
   if (info.proved) {
@@ -890,12 +1066,12 @@ function getResult(statement, mustProve) {
   }
   info.inProgress = true;
   try {
-  // Get the proved result of the fact.
-  info.proved = prover();
-  assert(info.proved instanceof Expr);
-  // Note that the fact remains in progress if its prover throws, which
-  // may or may not be good thing.
-  info.inProgress = false;
+    // Get the proved result of the fact.
+    info.proved = prover();
+    assert(info.proved instanceof Expr);
+    // Note that the fact remains in progress if its prover throws, which
+    // may or may not be good thing.
+    info.inProgress = false;
   } finally {
     if (info.inProgress) {
       console.error('Proof of fact failed', '' + statement);
@@ -910,84 +1086,109 @@ function getResult(statement, mustProve) {
  * of simplifiers that might be skipped during their own proof.
  */
 function isInProgress(stmt) {
-  if (!lookupFactInfo(stmt)) {
+  if (!resolveToFactInfo(stmt)) {
     // It could be a tautology, but not a recorded fact.
     return false;
   }
-  return lookupFactInfo(stmt).inProgress;
+  const info = resolveToFactInfo(stmt);
+  return info && info.inProgress;
 }
 
-// Cache of statement keys for statements that are in the form of
-// strings, as is often the case in lists of facts.  The policy
-// is to compute the mapping once and remember it forever, but
-// in principle this is a cache.
-_statementKeys = {};
+/**
+ * JS Map from statement in wff (or currently string) form to
+ * information about the statement.  The information is a resInfo
+ * object, for getResInfo.  This serves as a cache to accelerate these
+ * calculations, especially given that the same statements tend to be
+ * used over and over.  Private to getResInfo.
+ *
+ * The resInfo is a plain object with properties "key", "asmSet",
+ * "key", "expanded", and "standardSubst", all related to a particular
+ * fact statement.  The asmSet is a TermSet of the statement's
+ * assumptions, the key is its "fact key", the stmt is the wff
+ * statement it comes from, standardSubst a substitution that
+ * converts its free variables to standard variables, and expanded
+ * is cached here by factExpansion, but null until that is called.
+ *
+ * TODO: Rename expanded to _expanded, as it is internal to
+ *   factExpansion
+ *
+ * This can support string keys, but mathParse already accelerates
+ * conversion of strings to wffs.
+ *
+ * TODO: Rename to _statementResInfos.
+ */
+const _statementResolutions = new Map();
+
+const noTerms = new Toy.TermSet();
 
 /**
- * Given a term or string that parses to one, returns a string key
- * usable for looking up information about the fact.  If the statement
- * is conditional, the key represents its consequent; otherwise it
- * represents the entire statement.
+ * Given a wff (or currently a string that parses to one using
+ * mathParse), returns a "resInfo" or "fact resolution information"
+ * object, which has information useful for resolving exactly which
+ * fact the statement is intended to refer to.  The result is a
+ * resInfo object as described just above.
+ * 
+ * The key is a string that represents the main/body of the wff, with
+ * all variables of that part replaced with standard variables so the
+ * key does not depend on the names of variables supplied as the
+ * statement.  The asmSet is a TermSet of the assumptions, also using
+ * standard variable names.
  *
- * TODO: Rename this to indicate that it only uses the consequent in
- *   generating the key.  Or perhaps better, move this functionality
- *   into its uses and support storing the same fact under multiple
- *   keys, for example one based on just the consequent and another
- *   based on the entire statement.
+ * This remembers the association between the given statement object
+ * and the resInfo to speed repeated lookups, which is the usual case
+ * for fact references in rewriting rules or fact lists.
  */
-function getStatementKey(stmt) {
-  // If the statement is a string, look in the cache.
-  if (typeof stmt === 'string') {
-    var cached = _statementKeys[stmt];
-    if (cached) {
-      return cached;
+function getResInfo(stmt) {
+  // Computes the resolution info for the statement and caches the
+  // association in _statementResolutions.
+  function computeStatementInfo(stmt) {
+    if (typeof stmt == 'string') {
+      console.error('Deprecated: resInfo of string:', stmt);
     }
+    // TODO: Fix higher-level code to do the parsing, so different
+    //   type assumptions and such can be handled at that level.
+    const wff = mathParse(stmt);
+    const main = wff.getMain();
+    const hasAsms = wff.isCall2('=>');
+    const wff2 = (hasAsms
+                  // This makes a wff with main first, and also has
+                  // any assumptions, ordered after the main part.  We
+                  // do not expect this to be a theorem.
+                  ? Toy.infixCall(main, '&', wff.getLeft())
+                  : wff);
+    const stdSubst = Toy.standardSubst(wff2);
+    const asmSet = hasAsms ? wff.getLeft().subFree(stdSubst).asmSet() : noTerms;
+    // Key generation currently uses toString, which is sensitive to
+    // aliases in particular "==" for "=", compared with "dump", which
+    // is not.
+    const key = main.subFree(stdSubst).toString();
+    const info = {key: key, asmSet: asmSet,
+                  standardSubst: stdSubst,
+                  // TODO: Consider removing stmt and standardSubst here.
+                  stmt: stmt, expanded: null};
+    _statementResolutions.set(stmt, info);
+    return info;
   }
-  // This currently uses toString, which is sensitive to aliases
-  // in particular "==" for "=", compared with "dump", which is not.
-  // TODO: Determine what to do about facts such as pure logic facts,
-  //   which are generic across types, and implement accordingly.
-  // TODO: Use stmt just as a synopsis here.
-  var key = Toy.standardVars(getSynopsis(stmt)).toString();
-  if (typeof stmt === 'string') {
-    _statementKeys[stmt] = key;
+  return (_statementResolutions.get(stmt) ||
+          computeStatementInfo(stmt));
+}
+
+/**
+ * From a standardSubst renaming substitution for a fact declaration
+ * and one for a fact reference, this generates a renaming
+ * substitution that converts the declared fact to have the free
+ * variables of the fact reference.  (Fact declarations and fact
+ * references commonly have different free variables.)
+ */
+function factDeclToRef(fromFact, fromStmt) {
+  const toStmt = Toy.revSubst(fromStmt);
+  const result = {};
+  for (const key in fromFact) {
+    const v = fromFact[key];
+    assert(v instanceof Atom, 'Not a renaming: {1}', v);
+    result[key] = toStmt[v.name];
   }
-  return key;
-}
-
-/**
- * Returns the portion of the given statement to use as the synopsis,
- * parsing it from a string if needed.  Fact lookup encodes this as a
- * string "statement key".
- */
-function getSynopsis(stmt) {
-  return termify(stmt).getMain();
-}
-
-/**
- * Tests whether a fact with the given statement is recorded in the
- * facts database.  The fact need only be recorded, not proved.
- * Accepts a term or parseable string.
- */
-function isRecordedFact(stmt) {
-  return !!lookupFactInfo(stmt);
-}
-
-/**
- * Looks for a fact recorded in the facts database by addFact or
- * addRule.  The input must be a term or string parseable into a term,
- * as for getStatementKey.  The database uses only the RHS of
- * conditional facts as a lookup key, and accordingly this function
- * matches an unconditional argument as the key.  Or if the argument
- * is conditional, it only matches the RHS against the stored key.  At
- * present no further checking is done here.
- *
- * Returns a statement of the fact, generally not the proved fact,
- * or null if no such fact was found.
- */
-function findFact(stmt) {
-  var info = lookupFactInfo(stmt);
-  return info ? info.goal : null;
+  return result;
 }
 
 
@@ -1038,9 +1239,9 @@ function searchForMatchingFact(term, info) {
   function isPureFact(fact) {
     if (typeof fact === 'string' || fact instanceof Expr) {
       // This next line supports ordinary facts and also tautologies.
-      // It relies on findFact to return a conditional whenever
+      // It relies on resolveToFact to return a conditional whenever
       // it is given a statement that has implicit assumptions.
-      var fullFact = findFact(fact) || termify(fact);
+      var fullFact = resolveToFact(fact) || termify(fact);
       return fullFact && fullFact.isCall2('=');
     } else if (fact.constructor === Object && fact.pure) {
       return true;
@@ -1130,6 +1331,15 @@ function searchForMatchingFact(term, info) {
  *   continuing the search if the application fails.
  */
 function findMatchingFact(facts_arg, cxt, term, pureOnly) {
+  // This function interprets a fact statement as a wff.
+  // Currently it uses mathParse.
+  // TODO: Use the context (cxt) and perhaps other information to determine
+  //   this aspect of the interpretation of a fact statement, enabling
+  //   fact statements here that are not interpreted as relating to real
+  //   numbers.
+  function interpret(stmt) {
+    return mathParse(stmt);
+  }
   // This finds the fact part to match.  If the fact is not an equation,
   // uses the main part instead of the LHS.
   function schemaPart(fact) {
@@ -1154,15 +1364,22 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   }
   assert(facts && facts[Symbol.iterator], 'No facts: {1}', facts_arg);
   for (var it = facts[Symbol.iterator](), v = it.next(); !v.done; v = it.next()) {
-    var factInfo = v.value;
-    if (factInfo.constructor !== Object) {
-      var stmt = factInfo;
+    var factMatcher = v.value;
+    if (factMatcher.constructor !== Object) {
+      // The factMatcher is a string or wff.
+      // The stmt is a wff, so there will be no need for lower-level code
+      // to decide how to "interpret" / parse it.
+      var stmt = interpret(factMatcher);
       if (!isInProgress(stmt)) {
-        var fullFact = rules.fact(stmt);
+        // TODO: Change this to match before checking for inProgress,
+        //   and warn when a match is rejected due to fact proof in
+        //   progress.
+        var fullFact = (resolveToFact(stmt) ||
+                        // The "fact" might be a tautology.
+                        // Could it even be something else?  Not clear.
+                        rules.fact(stmt));
         if (!(pureOnly && fullFact.isCall2('=>'))) {
-          // Use stmt to create the schema, because it may have different
-          // free variables than the recorded fact.
-          var schema = schemaPart(termify(stmt));
+          var schema = schemaPart(fullFact);
           var subst = term.matchSchema(schema);
           if (subst) {
             var result = {stmt: fullFact,
@@ -1173,9 +1390,9 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
           }
         }
       }
-    } else if (factInfo.apply) {
+    } else if (factMatcher.apply) {
       // "apply"
-      var eqn = Toy.normalReturn(factInfo.apply, term);
+      var eqn = Toy.normalReturn(factMatcher.apply, term);
       if (eqn && !(pureOnly && eqn.isCall2('=>'))) {
         var result = {
           stmt: eqn,
@@ -1185,9 +1402,9 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
         };
         return result;
       }
-    } else if (factInfo.descend) {
+    } else if (factMatcher.descend) {
       // "descend"
-      var partInfo = factInfo.descend;
+      var partInfo = factMatcher.descend;
       // TODO: Handle pureOnly here.
       var result = _locateMatchingFact(term,
                                        partInfo.schema,
@@ -1197,24 +1414,33 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
         return result;
       }
     } else {
-      // All other plain objects are handled here.
-      var stmt = factInfo.stmt;
-      if (!(stmt && isInProgress(stmt))) {
-        var fact = stmt && rules.fact(stmt);
-        if (!(pureOnly && fact && fact.isCall2('=>'))) {
-          var where = factInfo.where;
-          var schema = (factInfo.match
-                        ? termify(factInfo.match)
-                        : schemaPart(fact));
-          var subst = term.matchSchema(schema);
-          if (subst && (!where || apply$(where, subst))) {
-            var result = {stmt: stmt,
-                          term: term,
-                          path: Toy.path(),
-                          subst: subst};
-            return result;
-          }
-        }
+      const stmt = interpret(factMatcher.stmt);
+      if (!stmt) {
+        console.warn('Nothing to do in fact matcher:',
+                     factMatcher);
+        return null;
+      }
+      const factInfo = resolveToFactInfo(stmt);
+      if (!factInfo) {
+        console.error('No such fact:', ''+stmt);
+        return null;
+      }
+      if (factInfo.inProgress) {
+        return null;
+      }
+      if (pureOnly && factInfo.goal.isCall2('=>')) {
+        return null;
+      }
+      const expansion = factExpansion(stmt);
+      const schema = schemaPart(expansion);
+      const subst = term.matchSchema(schema);
+      const where = factMatcher.where;
+      if (subst && (!where || apply$(where, subst))) {
+        var result = {stmt: expansion,
+                      term: term,
+                      path: Toy.path(),
+                      subst: subst};
+        return result;
       }
     }
   }
@@ -1382,7 +1608,8 @@ function arrangeRhs(eqn_arg, context, facts) {
   while (rhsPath = Toy.path('/main/right', eqn),
          info = findMatchingFact(facts, context, eqn.get(rhsPath))) {
     var fullPath = rhsPath.concat(info.path);
-    eqn = rules.rewrite(eqn, fullPath, info.stmt);
+    const next = rules.rewrite(eqn, fullPath, info.stmt);
+    eqn = next;
   }
   return eqn; 
 }
@@ -1406,10 +1633,11 @@ function arrange(step, path, context, facts) {
  * it the info object stored for the fact.
  */
 function eachFact(fn) {
-  for (const key in _factsMap) {
-    const info = _factsMap[key];
-    fn(info);
-  }
+  _factsByKey.forEach(function(list) {
+      list.forEach(function(info) {
+          fn(info);
+        });
+    });
 }
 
 /**
@@ -1458,10 +1686,13 @@ function isAxiom(name) {
  * If this finds such a fact it returns a function of no arguments
  * that applies the fact to the step using rules.rewrite and returning
  * the result of the rewrite.
+ *
+ * TODO: Consider how to make sure the facts in factList are
+ *   interpreted appropriately.
  */
 function matchFactPart(step, path, factList, name) {
   return Toy.each(factList, function(fact_arg) {
-    var schema = termify(fact_arg).getLeft();
+    var schema = resolveToFact(fact_arg).getMain().getLeft(); // XXX
     var info = step.matchSchemaPart(path, schema, name);
     if (info) {
       return function() {
@@ -1752,13 +1983,13 @@ var basicSimpFacts = [
                       '(negate p) x == not (p x)',
                       'if T x y = x',
                       'if F x y = y',
-                      {stmt: 'a + neg b = a - b',
+                      {stmt: '@a + neg b = a - b',
                        // This condition makes extra-sure there will be
                        // no circularity during simplification.
                        // Negation of a numeral will be simplified by
                        // other rules.
                        where: '!$.b.isNumeral()'},
-                      {stmt: 'a - b = a + neg b',
+                      {stmt: '@a - b = a + neg b',
                        // This one is an exception to the general rule
                        // that simplifiers make the expression tree
                        // smaller; but arithmetic will follow this, and
@@ -1849,10 +2080,9 @@ function addFact(info) {
   info.proved = info.goal && info.goal.isProved() && info.goal;
   // The goal is a rendered Expr just because that makes a complete
   // copy that can be properly annotated with types.
-  // TODO: Use expandSynopsis here.
-  info.goal = (info.goal ||
-               Toy.mathParse(info.synopsis)).copyForRendering(null);
-  info.synopsis = info.synopsis || info.goal.toString();
+  info.goal = ((info.goal || mathParse(info.synopsis))
+               .copyForRendering(null));
+  // info.synopsis = info.synopsis || info.goal.toString();
   // Annotate the new goal with type info for type comparison
   // with portions of steps in the UI.
   //
@@ -1869,8 +2099,20 @@ function addFact(info) {
   if (isRecordedFact(info.goal)) {
     console.info('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
+    const wff = info.goal;
+    // TODO: Factor out this code here and in getResInfo.
+    const wff2 = (wff.isCall2('=>')
+                  // This makes a wff with main first, and also has
+                  // any assumptions, ordered after the main part.  We
+                  // do not expect this to be a theorem.
+                  ? Toy.infixCall(wff.getRight(), '&', wff.getLeft())
+                  : wff);
+    info.standardSubst = Toy.standardSubst(wff2);
     if (info.simplifier) {
-      basicSimpFacts.push(info.synopsis);
+      // This puts a string onto basicSimpFacts for fast cached
+      // lookups, but watch out for cases where toString and parse are
+      // not inverses.
+      basicSimpFacts.push('@' + info.goal.toString());
     }
     setFactInfo(info);
   }
@@ -4305,7 +4547,7 @@ var ruleInfo = {
   // "Exists rule" (2135, 5244).  The LHS quantifier limits the "E
   // rule" to use where x is not free in any hypothesis, and since "q"
   // appears with x bound, substituting for it does not result in any
-  // free occurrences of x.
+  // new occurrences of x within the "forall".
   existImplies: {
     statement: 'forall {x. p x => q} == (exists p => q)',
     proof: function() {
@@ -4870,6 +5112,7 @@ var ruleInfo = {
           terms.add(term);
         }
         var format = Toy.format;
+        // TODO: Use makeConjunctionSet there.
         var conjuncts = conjunction.scanConjuncts(add);
         if (terms.size() > 1) {
           // There are multiple conjunctions, so check for possible
@@ -6072,34 +6315,31 @@ var ruleInfo = {
   },
 
   // If the given statement is a proved step, returns the input.
-  // Otherwise coerces it to a fact synopsis and looks that up in the
-  // facts database, matching only against the "main" parts of facts.
+  // Otherwise if the statement is a string, parses it with mathParse
+  // into a wff.  If the wff matches a recorded fact, permitting
+  // changes of variable names, it proves it from the fact by changing
+  // variable names, and returns the proved result.
   //
-  // If it is not proved and does not match a recorded fact, attempts
-  // to prove it as a tautologies or simple arithmetic fact.  Removes
-  // any " = T" from boolean-valued arithmetic facts.  Programmatic
-  // usage supports theorems by name, but not the UI.  Accepts a
-  // string value.
+  // If the above conditions do not apply, attempts to prove the wff
+  // as a tautology or simple arithmetic fact.  Removes any " = T"
+  // from boolean-valued arithmetic facts.  Programmatic usage
+  // supports theorems by name, but not the UI.
   //
-  // If a fact or synopsis is conditional, its consequent portion
-  // is used for the matching during lookup.
-  //
-  // For some cases - tautologies, proved statements, and theorems
-  // in particular, this rule is inline.
-  //
-  // TODO: Add a separate "realFact" rule for looking up facts about
-  //   real numbers, and match the more concise forms only in that rule,
-  //   making "fact" more straightforward.
+  // For tautologies, proved statements, and theorems in particular,
+  // this rule is inline.
   fact: {
     action: function(synopsis) {
+      // Check if the synopsis string has already resulted in a proved
+      // fact with suitable variable names.
+      //
+      // TODO: Consider upgrading _factMap to an actual Map, or using
+      //   mathParse and resolveToFactInfo here, then removing it.
       if (typeof synopsis === 'string') {
         var proved = _factMap[synopsis];
         if (proved) {
-          // console.log('FACT: found ', synopsis);
           return proved.justify('fact', arguments);
         }
-      }
-      if (Toy.isProved(synopsis)) {
+      } else if (Toy.isProved(synopsis)) {
         // It is an already proved statement.
         return synopsis;
       }
@@ -6108,28 +6348,33 @@ var ruleInfo = {
       if (result) {
         return result;
       }
-      // This is the full statement (goal) of the fact.
-      var stmt = findFact(synopsis);
+      // Currently rules.fact parses any string synopsis
+      // with mathParse.
+      const factInfo = resolveToFactInfo(mathParse(synopsis));
       // Try ordinary proved facts.
-      if (stmt) {
-        var getSynopsis = Toy.getSynopsis;
-        var fact = Toy.getResult(stmt);
+      if (factInfo) {
+        const factGoal = factInfo.goal;
+        var fact = Toy.getResult(factGoal);
+        const map1 = factInfo.standardSubst;
+        const map2 = getResInfo(synopsis).standardSubst;
         // Maps free variables of the fact into ones given here.
-        var map = getSynopsis(fact).alphaMatch(getSynopsis(synopsis));
-        var instance = rules.instMultiVars(fact, map);
+        const map = factDeclToRef(map1, map2);
+        const instance = rules.instMultiVars(fact, map);
+        // Remember the proof for future reference.
         ((typeof synopsis === 'string') && (_factMap[synopsis] = instance));
+        // Justify the final result in each usage of the fact.
         return instance.justify('fact', arguments);
       }
       // Next try arithmetic facts.
-      stmt = termify(synopsis);
-      if (stmt.isEquation()) {
-        var result = Toy.tryArithmetic(stmt.eqnLeft());
-        if (result && result.alphaMatch(stmt)) {
+      const goalHere = termify(synopsis);
+      if (goalHere.isEquation()) {
+        var result = Toy.tryArithmetic(goalHere.eqnLeft());
+        if (result && result.alphaMatch(goalHere)) {
           return result.justify('fact', arguments);
         }
       } else {
         // Relational operators can go here.
-        var result = Toy.tryArithmetic(stmt);
+        var result = Toy.tryArithmetic(goalHere);
         // x = T is the expected result.
         if (result && result.matchSchema('x = T')) {
           return (rules.rewriteOnly(result, '', '(x = T) = x')
@@ -6140,11 +6385,11 @@ var ruleInfo = {
       try {
         // Inline for tautologies.  Call looksBoolean to avoid ugly
         // and unnecessary errors from rules.tautology.
-        return (Toy.looksBoolean(stmt)
-                ? rules.tautology(stmt)
+        return (Toy.looksBoolean(goalHere)
+                ? rules.tautology(goalHere)
                 : err(''));
       } catch(err) {}
-      Toy.err('No such fact: ' + synopsis);
+      Toy.err('No such fact:' + goalHere + ' (as ' + synopsis + ')');
     },
     inputs: {string: 1},
     form: ('Look up fact <input name=string size=40>'),
@@ -6152,7 +6397,7 @@ var ruleInfo = {
     menu: 'look up a fact',
     tooltip: (''),
     description: function(step) {
-      var info = lookupFactInfo(step.ruleArgs[0]);
+      var info = resolveToFactInfo(step.ruleArgs[0]);
       var d = info && info.description;
       return d || 'fact';
     },
@@ -6562,12 +6807,36 @@ define('negate', '{p. {x. not (p x)}}');
 addRulesMap(ruleInfo);
 addFactsMap(logicFacts);
 
+/**
+ * Dumps out fact resolutions as a debugging aid.
+ */
+function dumpFactResolutions() {
+  const map = _resolutionsByKey;
+  map.forEach(function(list, k) {
+      console.log('Key', k);
+      let goal = null;
+      list.forEach(function(resItem) {
+          if (!goal) {
+            goal = resItem.factInfo.goal;
+            console.log('  fact ' + resItem.factInfo.goal);
+          }
+          const resInfo = resItem.resInfo;
+          console.log('  from ' + resInfo.stmt);
+          if (resInfo.expanded) {
+            console.log('  as ' + resInfo.expanded);
+          }
+        });
+    });
+}
 
 //// Export public names.
 
 Toy.rules = rules;
 Toy.logicFacts = logicFacts;
-Toy._factsMap = _factsMap;
+Toy._factsByKey = _factsByKey;
+
+Toy.factsExtending = factsExtending;
+Toy.factExpansion = factExpansion;
 
 // Settable variables, export right here:
 Toy.autoAssert = false;
@@ -6581,7 +6850,8 @@ Toy.addRulesMap = addRulesMap;
 Toy.addRules = addRules;
 Toy.definition = definition;
 Toy.addDefnFacts = addDefnFacts;
-Toy.lookupFactInfo = lookupFactInfo;
+Toy.resolveToFactInfo = resolveToFactInfo;
+Toy.resolveToFact = resolveToFact;
 Toy.addFact = addFact;
 Toy.addFactsMap = addFactsMap;
 Toy.isRecordedFact = isRecordedFact;
@@ -6589,10 +6859,8 @@ Toy.proveResult = proveResult;
 Toy.getResult = getResult;
 Toy.eachFact = eachFact;
 Toy.getTheorem = getTheorem;
-Toy.getStatementKey = getStatementKey;
-Toy.getSynopsis = getSynopsis;
+Toy.getResInfo = getResInfo;
 Toy.convert = convert;
-Toy.findFact = findFact;
 Toy.findMatchingFact = findMatchingFact;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
@@ -6623,7 +6891,9 @@ Toy.traceRule = traceRule;
 Toy._actionInfo;
 
 // For debugging.
-Toy._statementKeys = _statementKeys;
+Toy._statementResolutions = _statementResolutions;
+Toy._resolutionsByKey = _resolutionsByKey;
+Toy.dumpFactResolutions = dumpFactResolutions;
 
 // For testing.
 Toy._tautologies = _tautologies;

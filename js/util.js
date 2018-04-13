@@ -300,14 +300,14 @@ function logError(err) {
 }
 
 /**
- * Logs all facts containing the given pattern of operator characters
- * in the given order.  Operates by "squishing" the keys of
- * _factsMap into just the occurrences of the characters
+ * For debugging: Logs all facts containing the given pattern of
+ * operator characters in the given order.  Operates by "squishing"
+ * the keys of _factsByKey into just the occurrences of the characters
  * +, -, *, /, =, >, <, !, and checking for ocurrences of the given
  * pattern string among these squished representations of the facts.
  */
 function factSquish(pattern) {
-  return (Object.keys(Toy._factsMap)
+  return (Array.from(Toy._factsByKey.keys())
           .map(k => [k, k.replace(/[^-+*/=!<>]/g, '')])
           .filter(pair => pair[1].includes(pattern))
           .forEach(pair => console.log(pair[0])));

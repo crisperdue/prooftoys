@@ -1105,6 +1105,7 @@ var simplifiersInfo = {
     labels: 'algebra'
   },
 
+  // TODO: Review the usefulness of this and possibly remove it.
   cleanUpTerms: {
     action: function(step) {
       var facts = ['a * (b * c) = a * b * c',
@@ -1620,7 +1621,7 @@ var moversInfo = {
       // Truthy value if the given name in the LHS of the fact can
       // match the part of this at the selected path.
       function testFact(name, fact_arg) {
-        var schema = Toy.getResult(fact_arg).getMain().getLeft();
+        var schema = Toy.resolveToFact(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path, schema, name);
         return info || undefined;
       }
@@ -2298,15 +2299,16 @@ var distribFacts = {
     converse: { labels: 'algebra' }
   }
 };
+addFactsMap(distribFacts);
 
 // TODO: Need distributivity of division over addition and subtraction.
 
 
 // Private to isDistribFact.  A mapping from statement key to value
 // that is truthy iff the statement is in distribFacts.
-var _distribFactsTable = {};
+const _distribFacts = new Set();
 for (var key in distribFacts) {
-  _distribFactsTable[Toy.getStatementKey(key)] = true;
+  _distribFacts.add(Toy.resolveToFact(key));
 }
 
 /**
@@ -2314,9 +2316,8 @@ for (var key in distribFacts) {
  * of the distributed law in distribFacts.
  */
 function isDistribFact(stmt) {
-  return !!_distribFactsTable[Toy.getStatementKey(stmt)];
+  return _distribFacts.has(Toy.resolveToFact(stmt));
 }
-addFactsMap(distribFacts);
 
 var identityFacts = {
   // Plus zero
@@ -3253,6 +3254,10 @@ function arithRight(term, cxt) {
   }
 }
 
+
+var ungroupingFacts = regroupingFacts.map(function(fact) {
+    return Toy.commuteEqn(Toy.resolveToFact(fact));
+  });
 
 //// Export public names.
 

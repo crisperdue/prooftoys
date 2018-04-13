@@ -2237,10 +2237,7 @@ function expandMarkup(step, markup) {
     return terms.join(', ');
   case 'shortFact':
     var place = info.inputs.bool[0] || info.inputs.bool;
-    var bool = Toy.termify(step.ruleArgs[place - 1]);
-    if (bool.isCall2('=>')) {
-      bool = bool.getRight();
-    }
+    var bool = Toy.mathParse(step.ruleArgs[place - 1]).getMain();
     return termDisplay(bool);
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;

@@ -1177,14 +1177,16 @@ var testCase = {
   },
 
   testFindMatchingFact: function() {
-    var facts = ['a + b = b + a',
-                 {match: 'neg a', where: 'subst.a.isNumeral()'}
-                 ];
-
+    function matchNeg(term) {
+      const subst = term.matchSchema('neg a');
+      return (subst && subst.a.isNumeral() &&
+              rules.arithmetic(term));
+    }
+    var facts = (['a + b = b + a', {apply: matchNeg}]);
     var result = Toy.findMatchingFact(facts, undefined,
                                        Toy.parse('neg 1'));
     assertEqual('(neg 1)', result.term);
-    assertEqual(undefined, result.stmt);
+    assertEqual('-1', result.stmt);
 
     result = Toy.findMatchingFact(facts, undefined,
                                    Toy.parse('x + y'));
@@ -1195,7 +1197,7 @@ var testCase = {
     var context = {factLists:
                    {organize:
                     [{stmt: 'a * b = b * a',
-                      where: 'subst.b.isNumeral() && subst.a.isVariable()'},
+                      where: '$.b.isNumeral() && $.a.isVariable()'},
                      {descend:
                       {schema: 'a * b',
                        parts: {a: 'organize'}}}
@@ -1409,7 +1411,7 @@ var testCase = {
           'p => (q => p)');
     check('(((a1 > a2) & (a2 > a3)) => (a1 > a3))',
           '(a > b) & (b > c) => (a > c)');
-    check('((a1 = ({a2. a2} a1)) & ((a3 + 1) = (a1 - 1)))',
+    check('((a1 = ({x. x} a1)) & ((a2 + 1) = (a1 - 1)))',
           'x = {x. x} x & y + 1 = x - 1');
   },
 
@@ -2789,7 +2791,7 @@ window.setTimeout(function() {
   // A null value means "test all".
   var toTest = null;
   // An array of test keys runs all tests.
-  // toTest = ['testAsmSet'];
+  // toTest = ['testSimplifyStep'];
 
   // Runs the named test case or warns if there is none such.
   function doTestCase(name) {
@@ -2870,7 +2872,7 @@ window.setTimeout(function() {
   if (toTest) {
     toTest.forEach(function(key) {
         if (!Toy.isIdentifier(key)) {
-          var info = Toy.lookupFactInfo(key);
+          var info = Toy.resolveToFactInfo(key);
           if (info) {
             testFact(info);
           }

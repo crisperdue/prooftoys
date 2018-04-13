@@ -297,7 +297,9 @@ StepEditor.prototype.ruleChosen = function(ruleName) {
                  Toy.rules.rewrite,
                  [siteStep.original,
                   siteStep.prettyPathTo(siteStep.selection),
-                  ruleName.slice(5)]);
+                  // Parsing here will cause the wff to be taken literally
+                  // without potential addition of type assumptions.
+                  Toy.parse(ruleName.slice(5))]);
   } else {
     assert(false, format('No such rule: {1}', ruleName));
   }
@@ -1278,7 +1280,9 @@ function handleMouseEnterItem(ruleMenu, node, event) {
       promise = sendRule('rewrite', 
                          [siteStep.original,
                           siteStep.prettyPathTo(siteStep.selection),
-                          ruleName.slice(5)]);
+                          // Parsing here prevents the goal from being
+                          // expanded during later parsing.
+                          Toy.parse(ruleName.slice(5))]);
     } else if (Toy.rules[ruleName]) {
       // It is a rule other than a rewrite with fact.
       var rule = Toy.rules[ruleName];
