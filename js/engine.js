@@ -1112,10 +1112,8 @@ function isInProgress(stmt) {
  *
  * This can support string keys, but mathParse already accelerates
  * conversion of strings to wffs.
- *
- * TODO: Rename to _statementResInfos.
  */
-const _statementResolutions = new Map();
+const _statementResInfos = new Map();
 
 const noTerms = new Toy.TermSet();
 
@@ -1138,7 +1136,7 @@ const noTerms = new Toy.TermSet();
  */
 function getResInfo(stmt) {
   // Computes the resolution info for the statement and caches the
-  // association in _statementResolutions.
+  // association in _statementResInfos.
   function computeStatementInfo(stmt) {
     if (typeof stmt == 'string') {
       console.error('Deprecated: resInfo of string:', stmt);
@@ -1163,11 +1161,11 @@ function getResInfo(stmt) {
     const info = {key: key, asmSet: asmSet,
                   standardSubst: stdSubst,
                   // TODO: Consider removing stmt and standardSubst here.
-                  stmt: stmt, expanded: null};
-    _statementResolutions.set(stmt, info);
+                  stmt: stmt, _expansion: null};
+    _statementResInfos.set(stmt, info);
     return info;
   }
-  return (_statementResolutions.get(stmt) ||
+  return (_statementResInfos.get(stmt) ||
           computeStatementInfo(stmt));
 }
 
@@ -6889,7 +6887,7 @@ Toy.traceRule = traceRule;
 Toy._actionInfo;
 
 // For debugging.
-Toy._statementResolutions = _statementResolutions;
+Toy._statementResInfos = _statementResInfos;
 Toy._resolutionsByKey = _resolutionsByKey;
 Toy.dumpFactResolutions = dumpFactResolutions;
 
