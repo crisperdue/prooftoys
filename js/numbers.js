@@ -53,8 +53,7 @@ var realTypeFacts =
    'y != 0 => R (x / y)',
    'R (neg x)',
    'x != 0 => R (recip x)',
-   // This next fact is added later, after proving realRecipClosed.
-   // 'x != 0 => recip x != 0',
+   'x != 0 => recip x != 0',
    'x * y != 0 == x != 0 & y != 0',
    {apply: function(term, cxt) {
        return (isArithmetic(term) &&
@@ -395,10 +394,6 @@ var numbersInfo = {
     // Prove that y != 0 => exists1 {z. x = y * z}
     // for real numbers, using full field axioms including
     // ordering laws.
-  },
-
-  realNZRecip: {
-    statement: '@ x != 0 => recip x != 0'
   },
 
   realRecipClosed: {
@@ -3292,16 +3287,9 @@ for (var name in Toy.definitions) {
 }
 // This is an easy way to get arithRight into the list of simplifiers.
 basicSimpFacts.push({apply: arithRight});
-// We could "freeze" the basic facts to help prevent unexpected results.
-// basicSimpFacts = new Toy.ArraySnap(basicSimpFacts);
-
-rules.fact('realRecipClosed');
-// Prove realRecipClosed without using this fact about nonzero reciprocal
-// to avoid a circularity problem, which shows up in tests because
-// then facts are carefully proved on first use.
-realTypeFacts.push('x != 0 => recip x != 0');
 
 // For testing (computed value).
 Toy._ungroupingFacts = ungroupingFacts;
+Toy._realTypeFacts = realTypeFacts;
 
 })();
