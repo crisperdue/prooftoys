@@ -2584,19 +2584,19 @@ var negationFacts = {
   'neg (a * b) = neg a * b': {
     proof: function() {
       return rules.consider('neg (a * b)')
-      .rewrite('/main/right', 'neg a = -1 * a')
+      .rewrite('/main/right', '@ neg a = -1 * a')
       .rewrite('/main/right', 'a * (b * c) = (a * b) * c')
-      .rewrite('/main/right/left', '-1 * a = neg a');
+      .rewrite('/main/right/left', '@ -1 * a = neg a');
     }
   },
   'a * neg b = neg (a * b)': {
     proof: function() {
       return rules.consider('a * neg b')
-      .rewrite('/main/right/right', 'neg a = -1 * a')
+      .rewrite('/main/right/right', '@ neg a = -1 * a')
       .rewrite('/main/right', 'a * (b * c) = a * b * c')
       .rewrite('/main/right/left', 'a * b = b * a')
       .rewrite('/main/right', 'a * b * c = a * (b * c)')
-      .rewrite('/main/right', '-1 * a = neg a');
+      .rewrite('/main/right', '@ -1 * a = neg a');
     }
   },
   'a * neg b = neg a * b': {
@@ -2620,9 +2620,9 @@ var negationFacts = {
   'b != 0 => neg (a / b) = neg a / b': {
     proof: function() {
       return (rules.consider('neg (a / b)')
-              .rewrite('/main/right', 'neg a = -1 * a')
+              .rewrite('/main/right', '@ neg a = -1 * a')
               .rewrite('/main/right', 'a * (b / c) = a * b / c')
-              .rewrite('/main/right/left', '-1 * a = neg a'));
+              .rewrite('/main/right/left', '@ -1 * a = neg a'));
     }
   },
 
@@ -2669,8 +2669,8 @@ var negationFacts = {
   'b != 0 => neg a / neg b = a / b': {
     proof: function() {
       return rules.consider('neg a / neg b')
-      .rewrite('/main/right/left', 'neg a = -1 * a')
-      .rewrite('/main/right/right', 'neg a = -1 * a')
+      .rewrite('/main/right/left', '@ neg a = -1 * a')
+      .rewrite('/main/right/right', '@ neg a = -1 * a')
       .rewrite('/main/right', 'a / (b * c) = a / b / c')
       .rewrite('/main/right/left', 'a * b / c = a / c * b')
       .andThen('arithmetic', '/main/right/left/left')

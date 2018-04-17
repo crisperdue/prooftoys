@@ -859,6 +859,8 @@ const _resolutionsByKey = new Map();
  * that match the given resInfo.  The facts extend the resInfo in that
  * they have the same key ("main part") and possibly additional
  * assumptions.
+ *
+ * TODO: See TODO for resolveToFactInfo.
  */
 function factsExtending(resInfo) {
   const factPropsList = _factsByKey.get(resInfo.key) || [];
@@ -882,12 +884,9 @@ function factExpansion(stmt) {
   if (expanded) {
     return expanded;
   }
-  // TODO: Use matching here rather than standardSubst, and
-  //   revert standardVars to work as it used to.  Remove
-  //   standardSubst and factDeclToRef.
-  const map1 = factInfo.standardSubst;
-  const map2 = resInfo.standardSubst;
-  const map = factDeclToRef(map1, map2);
+  const asStated = factInfo.goal.getMain();
+  const asRequested = resInfo.stmt.getMain();
+  const map = asRequested.matchSchema(asStated);
   const expansion = factInfo.goal.subFree(map);
   resInfo._expansion = expansion;
   return expansion;
@@ -905,17 +904,28 @@ function factExpansion(stmt) {
  *
  * Returns the desired fact info, or null if there is no such fact or
  * the reference is ambiguous.
+ *
+ * If the fact has in its assumptions any free variables that are not
+ * also free in the consequent, and if a fact reference also has the
+ * assumption, they currently must have the same name.
+ *
+ * TODO: Consider strengthened support for references to facts that
+ *   have free variables that occur in the assumptions but not the
+ *   consequent.  That requires more detailed matching of assumptions
+ *   in factsExtending.
  */
 function resolveToFactInfo(stmt) {
   // The resInfo is "fact resolution information" for the statemement.
   const resInfo = getResInfo(stmt);
   const resolutions = _resolutionsByKey.get(resInfo.key) || [];
+  // This gets a non-null value iff stmt has already been resolved.
   const resolvent = resolutions.find(function(rec) {
-      //  Note that _statementResInfos ensures that lookups of the
-      //  same statement object result in the same resInfo object.
-      //  Also, factExpansion currently expects different statements
-      //  to have different resInfo objects, so sharing of resInfos
-      //  among different statements would be incompatible with that.
+      //  Use of object identity here is OK because _statementResInfos
+      //  ensures that repeated lookups of the same statement object
+      //  result in the same resInfo object.  Also, factExpansion
+      //  currently expects distinct statement objects to have
+      //  distinct resInfo objects, and sharing of resInfos among
+      //  different statements would be incompatible with that.
       return rec.resInfo == resInfo;
     });
   if (resolvent) {
@@ -1101,14 +1111,11 @@ function isInProgress(stmt) {
  * calculations, especially given that the same statements tend to be
  * used over and over.  Private to getResInfo.
  *
- * The resInfo is a plain object with properties "key", "asmSet",
- * "key", and "standardSubst", all related to a particular fact
- * statement.  Also one property internal to factExpansion.  The
- * asmSet is a TermSet of the statement's assumptions, the key is its
- * "fact key", the stmt is the wff statement it comes from,
- * standardSubst a substitution that converts its free variables to
- * standard variables, and expanded is cached here by factExpansion,
- * but null until that is called.
+ * The resInfo is a plain object with properties "key", "asmSet", and
+ * "key", all related to a particular fact statement.  Also one
+ * property internal to factExpansion.  The asmSet is a TermSet of the
+ * statement's assumptions, the key is its "fact key", the stmt is the
+ * wff statement it comes from.
  *
  * This can support string keys, but mathParse already accelerates
  * conversion of strings to wffs.
@@ -1142,49 +1149,33 @@ function getResInfo(stmt) {
       console.error('Deprecated: resInfo of string:', stmt);
     }
     // TODO: Fix higher-level code to do the parsing, so different
-    //   type assumptions and such can be handled at that level.
+    //   type assumptions and such can be inserted at that level.
     const wff = mathParse(stmt);
     const main = wff.getMain();
     const hasAsms = wff.isCall2('=>');
+    // This makes a wff with main first, and also has
+    // any assumptions, ordered after the main part.  We
+    // do not expect this to be a theorem.
     const wff2 = (hasAsms
-                  // This makes a wff with main first, and also has
-                  // any assumptions, ordered after the main part.  We
-                  // do not expect this to be a theorem.
                   ? Toy.infixCall(main, '&', wff.getLeft())
                   : wff);
-    const stdSubst = Toy.standardSubst(wff2);
-    const asmSet = hasAsms ? wff.getLeft().subFree(stdSubst).asmSet() : noTerms;
+    const standard = Toy.standardVars(wff2);
+    const asmSet = (hasAsms
+                    ? Toy.makeConjunctionSet(standard.getRight())
+                    : noTerms);
     // Key generation currently uses toString, which is sensitive to
     // aliases in particular "==" for "=", compared with "dump", which
     // is not.
-    const key = main.subFree(stdSubst).toString();
+    const key = (hasAsms ? standard.getLeft() : standard).toString();
     const info = {key: key, asmSet: asmSet,
-                  standardSubst: stdSubst,
-                  // TODO: Consider removing stmt and standardSubst here.
-                  stmt: stmt, _expansion: null};
+                  standardVars: standard,
+                  // _expansion will be initialized later.
+                  stmt: wff, _expansion: null};
     _statementResInfos.set(stmt, info);
     return info;
   }
   return (_statementResInfos.get(stmt) ||
           computeStatementInfo(stmt));
-}
-
-/**
- * From a standardSubst renaming substitution for a fact declaration
- * and one for a fact reference, this generates a renaming
- * substitution that converts the declared fact to have the free
- * variables of the fact reference.  (Fact declarations and fact
- * references commonly have different free variables.)
- */
-function factDeclToRef(fromFact, fromStmt) {
-  const toStmt = Toy.revSubst(fromStmt);
-  const result = {};
-  for (const key in fromFact) {
-    const v = fromFact[key];
-    assert(v instanceof Atom, 'Not a renaming: {1}', v);
-    result[key] = toStmt[v.name];
-  }
-  return result;
 }
 
 
@@ -2062,9 +2053,7 @@ var factProperties = {
  *
  * The info object is stored in the database with an additional
  * "selfRef" property, in the form of a fact reference as used for
- * fact lookups, treating the fact as a reference to itself; also
- * a "standardSubst" property that renames the free variables as
- * expected in generating keys for lookup of fact references.
+ * fact lookups, treating the fact as a reference to itself.
  */
 function addFact(info) {
   for (var key in info) {
@@ -2103,7 +2092,6 @@ function addFact(info) {
                   // do not expect this to be a theorem.
                   ? Toy.infixCall(wff.getRight(), '&', wff.getLeft())
                   : wff);
-    info.standardSubst = Toy.standardSubst(wff2);
     if (info.simplifier) {
       // This puts a string onto basicSimpFacts for fast cached
       // lookups, but watch out for cases where toString and parse are
@@ -6351,10 +6339,9 @@ var ruleInfo = {
       if (factInfo) {
         const factGoal = factInfo.goal;
         var fact = Toy.getResult(factGoal);
-        const map1 = factInfo.standardSubst;
-        const map2 = getResInfo(synopsis).standardSubst;
+        const expansion = factExpansion(synopsis);
         // Maps free variables of the fact into ones given here.
-        const map = factDeclToRef(map1, map2);
+        const map = expansion.getMain().matchSchema(fact.getMain());
         const instance = rules.instMultiVars(fact, map);
         // Remember the proof for future reference.
         ((typeof synopsis === 'string') && (_factMap[synopsis] = instance));
