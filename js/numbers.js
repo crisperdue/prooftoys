@@ -610,13 +610,13 @@ define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
 
 var facts =
   [
-   {statement: '@exists {z. R z & forall {x. R x => x + z = x}}',
+   {statement: 'exists {z. R z & forall {x. R x => x + z = x}}',
     proof: function() {
        return (rules.fact('exists {x. isAddIdentity x}')
                .andThen('apply', '/arg/body'));
      }
    },
-   {statement: '@exists {z. R z & forall {x. R x => x * z = x}}',
+   {statement: 'exists {z. R z & forall {x. R x => x * z = x}}',
     proof: function() {
        return (rules.fact('exists {x. isMulIdentity x}')
                .andThen('apply', '/arg/body'));
