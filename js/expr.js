@@ -930,11 +930,14 @@ Expr.prototype.undefNames = function() {
  * Finds all occurrences of free variables in this expression that are
  * used as inputs to known math operators, or compared for equality
  * with the result of a math operator that returns a number.  The math
- * operators are currently the basic 4, exponentiation, and the
- * ordering relationals.  This is a convenience rather than a type
- * analysis.
+ * operators are currently the basic 4, neg, recip, exponentiation,
+ * and the ordering relationals.  This is a convenience rather than a
+ * type analysis.
  *
  * Returns the result as a set (map from name to true).
+ *
+ * TODO: Replace this with a system that provides default types
+ *   for variables according to their names.
  */
 Expr.prototype.mathVars = function() {
   var map = {}; 
@@ -2551,14 +2554,15 @@ Call.prototype._addMathVars = function(bindings, set) {
       addVars();
       break;
     }
-    // TODO: Check here for op is "=" or "!=".
     var isLeftReal = left._addMathVars(bindings, set);
-    if (isLeftReal && isFreeVar(right)) {
-      set[right.name] = true;
-    }
     var isRightReal = right._addMathVars(bindings, set);
-    if (isRightReal && isFreeVar(left)) {
-      set[left.name] = true;
+    if (op == '=' || op == '!=') {
+       if (isLeftReal && isFreeVar(right)) {
+        set[right.name] = true;
+      }
+      if (isRightReal && isFreeVar(left)) {
+        set[left.name] = true;
+      }
     }
     return result;
   } else {
