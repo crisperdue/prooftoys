@@ -2612,6 +2612,24 @@ var ruleInfo = {
     description: 'axiom of equal functions'
   },
 
+  axiom3a: {
+    statement: '(p = q) == forall {x. p x == q x}',
+    proof: function() {
+      const map = {f: 'p', g: 'q'};
+      const step1 = rules.instMultiVars(rules.axiom3(), map);
+      const step2 = rules.eqIsEquiv();
+      const result = rules.replace(step1, '/right/arg/body/binop', step2);
+      return result.justify('axiom3a');
+    },
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
+    inputs: {},
+    form: '',
+    tooltip: ('extensionality: predicates are equal ' +
+              'based on equal membership.'),
+    description: 'axiom of equal predicates'
+  },
+
   /**
    * Generates an instance of Axiom 4 from an application of a lambda
    * expression to an argument expression, returning a term that
@@ -6443,7 +6461,7 @@ var ruleInfo = {
   },
 
   // 5304
-  exists1a: {
+  exists1b: {
     statement: 'exists1 {y. p y} == exists {y. p = {x. x = y}}',
     proof: function() {
       var step = (rules.eqSelf('exists1 {y. p y}')
@@ -6766,7 +6784,7 @@ defineCases('=>', identity, allT);
 //   one member.
 const
   _e1a = 'exists1 p == exists p & forall {x. forall {y. p x & p y => x = y}}';
-addRule({statement: _e1a});
+addRule({name: 'exists1a', statement: _e1a});
 
 // It would be desirable for the constants in this next group to
 // all have generic types.
