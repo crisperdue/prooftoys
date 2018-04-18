@@ -1318,30 +1318,10 @@ function mathParse(str) {
     return parsed;
   }
   var expr = justParse(str);
-  // TODO: Convert this inline code to a call to andMathVarConditions.
-  var assume = expr.mathVarConditions();
-  if (assume) {
-    if (expr.isCall2('=>')) {
-      // Any type assumptions precede the LHS.
-      // These may later be matched against a proved result, so we aim
-      // to achieve the usual ordering here.
-      var result = infixCall(expr.getLeft().concat(assume, '&'),
-                             '=>',
-                             expr.getRight());
-      findType(result);
-      _mathParsed.set(str, result);
-      return result;
-    } else {
-      var result = infixCall(assume, '=>', expr);
-      findType(result);
-      _mathParsed.set(str, result);
-      return result;
-    }
-  } else {
-    findType(expr);
-    _mathParsed.set(str, expr);
-    return expr;
-  }
+  var result = expr.andMathVarConditions();
+  findType(result);
+  _mathParsed.set(str, result);
+  return result;
 }
 
 /**
