@@ -542,7 +542,12 @@ function addRule(info) {
  * recorded fact of the form: exists {<var>. <condition2>}, where
  * <var> is a variable name that does not occur free in the condition,
  * and condition2 is the result of substituting <var> for <name> in
- * the condition.
+ * the condition.  Of course the recorded fact could use exists1 in
+ * place of exists.
+ *
+ * TODO: If there is an "exists1" fact, this should automatically
+ * generate a fact, with proof, that anything having the property is equal
+ * to the new constant.
  *
  * TODO: Perhaps appropriate top-level forms might be: "fact", "rule",
  * and "definition".  Each would just add its item to a global list,
@@ -580,6 +585,7 @@ function definition(defn_arg) {
     var exists1 = Toy.call('exists1', Toy.lambda(x, body));
     if (isRecordedFact(exists1)) {
       // TODO: Add the fact that only one value has the property.
+      console.warn('Not using exists1 fact for {1}.', defn);
     } else {
       var exists = Toy.call('exists', Toy.lambda(x, body));
       assert(isRecordedFact(exists),
