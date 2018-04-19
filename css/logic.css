@@ -318,6 +318,7 @@ span#leftNav {
     /* Try to help situations where this overlaps the menu. */
     z-index: 1;
     opacity: .75;
+    /* This node is transparent to mouse events. */
     pointer-events: none;
 }
 

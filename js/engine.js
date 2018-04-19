@@ -3214,7 +3214,7 @@ var ruleInfo = {
   // Accepts a string for the expr, and supports a target that is the
   // RHS of a conditional.
   //
-  // TODO: Consider splittnig this into two forms, one where the
+  // TODO: Consider splitting this into two forms, one where the
   //   target term is at top level, one where it is the conclusion of
   //   a conditional.
   instForall: {
@@ -6464,7 +6464,7 @@ var ruleInfo = {
   exists1b: {
     statement: 'exists1 {y. p y} == exists {y. p = {x. x = y}}',
     proof: function() {
-      var step = (rules.eqSelf('exists1 {y. p y}')
+      var step = (rules.equivSelf('exists1 {y. p y}')
                   .andThen('useDefinition', '/right/fn')
                   .andThen('apply', '/right'));
       return rules.r(rules.eta(), step, '/right/arg/body/left');
