@@ -2178,6 +2178,17 @@ define('the', '{p. if (exists1 p) (iota p) none}');
 // argument!)
 define('negate', '{p. {x. not (p x)}}');
 
+// TODO: Use a flag to enable the system to initialize with either a
+// precisely Andrews-style system with just equality and iota as
+// primitives, or alternatively with additional primitives T, F, and
+// "if", plus two axioms for "if".  T and F are currently listed as
+// primitive constants, but F is also "defined" with what amounts to
+// an axiom "defFFromBook", and definition by cases is in the system
+// core, which is much like including "if".
+//
+// The Andrews system has fewer axioms, primitive constants, and
+// concepts, but the extended system results in a quicker and more
+// conventional development of propositional calculus.
 
 // ruleInfo:
 //
