@@ -44,6 +44,12 @@ var Lambda = Toy.Lambda;
 
 var memo = Toy.memo;
 
+var define = Toy.define;
+var defineCases = Toy.defineCases;
+
+var identity = Toy.parse('{x. x}');
+var allT = Toy.parse('{x. T}');
+
 // Predefine some common constants.
 var T = constify('T');
 var F = constify('F');
@@ -2137,6 +2143,41 @@ function addSwappedFact(info) {
     }
   }
 }
+
+
+//// SOME DEFINITIONS
+
+// Adding definitions before use enables type checking to use the
+// known types of the constants.
+
+define('not', equal(F));
+define('!=', '{x. {y. not (x = y)}}');
+define('forall', '(=) {x. T}');
+define('exists', '{p. p != {x. F}}');
+define('exists1', '{p. exists {y. p = {x. x = y}}}');
+defineCases('&', identity, '{x. F}');
+defineCases('|', allT, identity);
+defineCases('=>', identity, allT);
+
+// It would be desirable for the constants in this next group to
+// all have generic types.
+define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
+// This is the empty collection.
+define('empty', '{x. F}');
+define('none', 'iota empty');
+define('?', '{p. {x. if p x none}}');
+// The identity function
+define('ident', '{x. x}');
+
+// Collection has multiple elements:
+define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
+// Always either "none" or the member of the singleton set:
+define('the', '{p. if (exists1 p) (iota p) none}');
+// This "negates" a predicate, returning a predicate whose value
+// is the negation of the value of the given predicate.  (Just one
+// argument!)
+define('negate', '{p. {x. not (p x)}}');
+
 
 // ruleInfo:
 //
@@ -6581,10 +6622,13 @@ var ruleInfo = {
       return rules.r(step12, step11, '/right/arg/body');
     }
   }
+
 };  // End of ruleInfo.
 
 
-//// FACTS
+addRulesMap(ruleInfo);
+
+//// LOGIC FACTS
 
 // The fact information is organized with the synopsis as
 // a map key to take advantage of debug printing of the functions
@@ -6764,23 +6808,7 @@ var logicFacts = {
   }
 };
 
-//// Initialization
-
-var define = Toy.define;
-var defineCases = Toy.defineCases;
-
-var identity = Toy.parse('{x. x}');
-var allT = Toy.parse('{x. T}');
-
-// Put definitions into their database:
-define('not', equal(F));
-define('!=', '{x. {y. not (x = y)}}');
-define('forall', '(=) {x. T}');
-define('exists', '{p. p != {x. F}}');
-define('exists1', '{p. exists {y. p = {x. x = y}}}');
-defineCases('&', identity, '{x. F}');
-defineCases('|', allT, identity);
-defineCases('=>', identity, allT);
+addFactsMap(logicFacts);
 
 // This is an equivalent formulation of unique existence.
 // The proof is not trivial, see for example eu1 in Metamath.
@@ -6792,27 +6820,6 @@ const
   _e1a = 'exists1 p == exists p & forall {x. forall {y. p x & p y => x = y}}';
 addRule({name: 'exists1a', statement: _e1a});
 
-// It would be desirable for the constants in this next group to
-// all have generic types.
-define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
-// This is the empty collection.
-define('empty', '{x. F}');
-define('none', 'iota empty');
-define('?', '{p. {x. if p x none}}');
-// The identity function
-define('ident', '{x. x}');
-// Collection has multiple elements:
-define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
-// Always either "none" or the member of the singleton set:
-define('the', '{p. if (exists1 p) (iota p) none}');
-// This "negates" a predicate, returning a predicate whose value
-// is the negation of the value of the given predicate.  (Just one
-// argument!)
-define('negate', '{p. {x. not (p x)}}');
-
-
-addRulesMap(ruleInfo);
-addFactsMap(logicFacts);
 
 /**
  * Dumps out fact resolutions as a debugging aid.
