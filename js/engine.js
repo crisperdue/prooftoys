@@ -2340,7 +2340,7 @@ define('negate', '{p. {x. not (p x)}}');
 // Rules (including axiom 4) that take a term as input use A, B to
 //   show where the term goes, not enclosed in square brackets.
 
-var ruleInfo = {
+var baseRules = {
 
   /**
    * The name "assertion" is used in displays to indicate that
@@ -3379,9 +3379,13 @@ var ruleInfo = {
               ' for a free variable of an equation A = B; C by substituting' +
               ' T, and D by substituting F, proves A = B.'),
     labels: 'primitive'
-  },
+  }
+};
+addRulesMap(baseRules);
 
-  //// Now onward to proving a few of the usual truth table facts.
+// Now onward to proving a few of the usual truth table facts.
+
+const bookishFacts = {
 
   // TODO: Prove 5229, then finish proving r5230FTBook_almost from it.
 
@@ -3413,6 +3417,99 @@ var ruleInfo = {
       var step14 = rules.tautology('x & F == F');
       var step15 = rules.instEqn(step14, Toy.parse('F = T'), 'x')
       return rules.r(step15, step13, '/right');
+    }
+  },
+
+  // Book version of r5211.
+  r5211Book: {
+    statement: 'T & T == T',
+    proof: function() {
+      var step1 = rules.instEqn(rules.axiom1(), '{y. T}', 'g');
+      var step2a = rules.apply(step1, '/right/arg/body');
+      var step2b = rules.apply(step2a, '/left/right');
+      var step2c = rules.apply(step2b, '/left/left');
+      var step3a = rules.eqT(Toy.parse('{x. T}'));
+      var step3b = rules.rRight(rules.definition('forall'), step3a, '/right/fn');
+      return rules.rRight(step3b, step2c, '/right');
+    }
+  },
+
+  r5212Book: {
+    statement: 'T & T',
+    proof: function() {
+      var step1 = rules.r5211Book();
+      var step2 = rules.theorem('t');
+      return rules.rRight(step1, step2, '');
+    }
+  },
+
+  // Bookish: [T & F] = F
+  r5214: {
+    statement: 'T & F == F',
+    proof: function() {
+      var step1 = rules.axiom1();
+      var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
+      var step3 = rules.apply(step2, '/right/arg/body');
+      var step4 = rules.apply(step3, '/left/right');
+      var step5 = rules.apply(step4, '/left/left');
+      var step6 = rules.defFFromBook();
+      return rules.rRight(step6, step5, '/right');
+    }
+  },
+
+  // 5216 by the book: [T & A] = A
+  andTBook: {
+    action: function(a) {
+      var step1 = rules.axiom1();
+      var step2 = rules.instEqn(step1, '{x. T & x == x}', 'g');
+      var step3 = rules.apply(step2, '/left/left');
+      var step4 = rules.apply(step3, '/left/right');
+      var step5 = rules.apply(step4, '/right/arg/body');
+      var step7 = rules.r5214();
+      var step8 = rules.r5213(rules.theorem('r5211'), step7);
+      var step9 = rules.r(step5, step8, '/');
+      var step10 = rules.instForall(step9, '', a);
+      return step10.justify('andTBook', arguments);
+    }
+  },
+
+  // r5217 is the same as r5230TF.
+  // [T = F] = F
+  r5217Book: {
+    statement: 'T == F == F',
+    proof: function() {
+      var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
+      var step2a = rules.apply(step1, '/left/left');
+      var step2b = rules.apply(step2a, '/left/right');
+      var step2c = rules.apply(step2b, '/right/arg/body');
+      var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
+      var step4a = rules.andTBook(equal(T, F));
+      var step4b = rules.r(step4a, step3, '/left');
+      var step5a = rules.instEqn(rules.axiom3(), '{x. T}', 'f');
+      var step5b = rules.instEqn(step5a, '{x. x}', 'g');
+      var step6a = rules.apply(step5b, '/right/arg/body/left');
+      var step6b = rules.apply(step6a, '/right/arg/body/right');
+      var step6c = rules.useDefinition(rules.defFFromBook(),
+                                       '/right/fn');
+      var step6d = rules.rRight(step6c, step6b, '/left');
+      return rules.rRight(step6d, step4b, '/right');
+    }
+  }
+
+};
+addRulesMap(bookishFacts);
+
+// These are facts that rely on unbookish definitions by cases.
+const unbookishFacts = {
+
+  // [T & T] = T.  Uses no book-specific definitions.
+  // Only used in 5212 and book version of 5216.
+  r5211: {
+    statement: 'T & T == T',
+    proof: function() {
+      var step1 = rules.definition('&', T);
+      var step2 = rules.applyBoth(step1, T);
+      return rules.apply(step2, '/right');
     }
   },
 
@@ -3461,30 +3558,21 @@ var ruleInfo = {
     tooltip: ('[F = T] = F')
   },
 
-  // [T & T] = T.  Uses no book-specific definitions.
-  // Only used in 5212 and book version of 5216.
-  r5211: {
-    statement: 'T & T == T',
-    proof: function() {
-      var step1 = rules.definition('&', T);
-      var step2 = rules.applyBoth(step1, T);
-      return rules.apply(step2, '/right');
+  // 5216, using the definition of "true and".  Not used.
+  andT: {
+    action: function(a) {
+      var step1 = rules.applyBoth(rules.definition('&', T), a);
+      var step2 = rules.apply(step1, '/right');
+      return step2.justify('andT', [a]);
     }
-  },
+  }
 
-  // Book version of r5211.
-  r5211Book: {
-    statement: 'T & T == T',
-    proof: function() {
-      var step1 = rules.instEqn(rules.axiom1(), '{y. T}', 'g');
-      var step2a = rules.apply(step1, '/right/arg/body');
-      var step2b = rules.apply(step2a, '/left/right');
-      var step2c = rules.apply(step2b, '/left/left');
-      var step3a = rules.eqT(Toy.parse('{x. T}'));
-      var step3b = rules.rRight(rules.definition('forall'), step3a, '/right/fn');
-      return rules.rRight(step3b, step2c, '/right');
-    }
-  },
+};
+addRulesMap(unbookishFacts);
+
+// These are not specific to book definitions, but currently may
+// use (non-book) definitions by cases.
+const truthTableFacts = {
 
   // T & T.  Uses no book-specific definitions.
   // Used to prove equationCases.  The "cases" rule
@@ -3498,16 +3586,7 @@ var ruleInfo = {
     }
   },
 
-  r5212Book: {
-    statement: 'T & T',
-    proof: function() {
-      var step1 = rules.r5211Book();
-      var step2 = rules.theorem('t');
-      return rules.rRight(step1, step2, '');
-    }
-  },
-
-  // Bookish: From theorems A = B and C = D, derives theorem
+  // From theorems A = B and C = D, derives theorem
   // [A = B] & [C = D].  Used in andTBook.
   r5213: {
     action: function(a_b, c_d) {
@@ -3525,71 +3604,14 @@ var ruleInfo = {
       var step6 = rules.r(step4, step5, '/right');
       return step6.justify('r5213', arguments, arguments);
     }
-  },
+  }
 
-  // Bookish: [T & F] = F
-  r5214: {
-    statement: 'T & F == F',
-    proof: function() {
-      var step1 = rules.axiom1();
-      var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
-      var step3 = rules.apply(step2, '/right/arg/body');
-      var step4 = rules.apply(step3, '/left/right');
-      var step5 = rules.apply(step4, '/left/left');
-      var step6 = rules.defFFromBook();
-      return rules.rRight(step6, step5, '/right');
-    }
-  },
+};
+addRulesMap(truthTableFacts);
 
-  // 5216 by the book: [T & A] = A
-  andTBook: {
-    action: function(a) {
-      var step1 = rules.axiom1();
-      var step2 = rules.instEqn(step1, '{x. T & x == x}', 'g');
-      var step3 = rules.apply(step2, '/left/left');
-      var step4 = rules.apply(step3, '/left/right');
-      var step5 = rules.apply(step4, '/right/arg/body');
-      var step7 = rules.r5214();
-      var step8 = rules.r5213(rules.theorem('r5211'), step7);
-      var step9 = rules.r(step5, step8, '/');
-      var step10 = rules.instForall(step9, '', a);
-      return step10.justify('andTBook', arguments);
-    }
-  },
+// This might be treated as the end of the subcore.
 
-  // 5216, using the definition of "true and".  Not used.
-  andT: {
-    action: function(a) {
-      var step1 = rules.applyBoth(rules.definition('&', T), a);
-      var step2 = rules.apply(step1, '/right');
-      return step2.justify('andT', [a]);
-    }
-  },
-
-  // r5217 is the same as r5230TF.
-  // [T = F] = F
-  r5217Book: {
-    statement: 'T == F == F',
-    proof: function() {
-      var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
-      var step2a = rules.apply(step1, '/left/left');
-      var step2b = rules.apply(step2a, '/left/right');
-      var step2c = rules.apply(step2b, '/right/arg/body');
-      var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
-      var step4a = rules.andTBook(equal(T, F));
-      var step4b = rules.r(step4a, step3, '/left');
-      var step5a = rules.instEqn(rules.axiom3(), '{x. T}', 'f');
-      var step5b = rules.instEqn(step5a, '{x. x}', 'g');
-      var step6a = rules.apply(step5b, '/right/arg/body/left');
-      var step6b = rules.apply(step6a, '/right/arg/body/right');
-      var step6c = rules.useDefinition(rules.defFFromBook(),
-                                       '/right/fn');
-      var step6d = rules.rRight(step6c, step6b, '/left');
-      return rules.rRight(step6d, step4b, '/right');
-    }
-  },
-
-  //// This might be treated as the end of the subcore.
+const ruleInfo = {
 
   // [T = x] = x
   // Note that this or 5230TF or symmetry of equality of booleans
