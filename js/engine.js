@@ -3300,8 +3300,8 @@ var ruleInfo = {
       var step3 = rules.apply(step2, '/rt/left');
       var step4 = rules.apply(step3, '/rt/right');
       // Rule fromTIsA depends on instForall via tIsXIsX and
-      // equationCases, though this next step is a simplified fromTIsA
-      // without hypotheses.
+      // equationCases.  So fromTIsA is not usable here, though this
+      // next step is a simplified fromTIsA without hypotheses.
       var step5 = rules.replace(rules.theorem('t'), '', step4);
       return step5.justify('instForall', arguments, [step]);
     },
@@ -3390,7 +3390,6 @@ var ruleInfo = {
   //
   // (Or r5230TF, see the alternate proof further below.)
   // Bookish: (F = T) = F.
-  // TODO: Prove 5229 then complete this.
   r5230FTBook_almost: {
     statement: '(F == T) == F',
     proof: function() {
@@ -3417,21 +3416,15 @@ var ruleInfo = {
     }
   },
 
-  // Prove [F = T] = F from r5217.
+  // Proves [F = T] = F (r5230FT) from r5217Book (r5230TF).
+  // Relies also on facts about "=>", which are not currently
+  // proven from "book" definitions.
   //
-  // Note that the proof of r5230TF depends on r5230FT; but if
-  // something like r5230TF were an axiom, then this would make sense.
-  //  
   // TODO: Is there a more elegant proof of this?
   r5230FT_alternate: {
     statement: '(F = T) = F',
     proof: function() {
       var x = Toy.parse('x');
-      // Note: this uses instVar on facts of the form A => B,
-      // which is only supported by instVar by using fromTIsA and toTisA.
-      // It is applied to steps that have no hypotheses, but still
-      // instVar uses toTIsA (and fromTIsA).
-      // TODO: Confirm that this is all correct.
       var step1a = rules.instVar(rules.axiom2(), F, x);
       var step1b = rules.instVar(step1a, T, 'y');
       var step1c = rules.instVar(step1b, '{x. x = F}', 'h');
@@ -3604,7 +3597,6 @@ var ruleInfo = {
   tIsXIsX: {
     statement: '(T == x) == x',
     proof: function() {
-      // TODO: Switch back to r5230TF whenever desired.
       var step1 = rules.theorem('r5217Book');
       var step2 = rules.eqT(T);
       var step3 = rules.eqnSwap(step2);
@@ -4090,8 +4082,11 @@ var ruleInfo = {
   // are reduced.  (These are calls to =, &, |, =>, or "not", and
   // lambda expressions, with an argument of T or F.)  Reduces
   // repeatedly until no subexpression can be reduced.
-  // TODO: Prove all the truth table facts and use them directly
-  // here.  Can we have unnamed theorems?
+  //
+  // TODO: Prove all the truth table facts and use them here.
+  //
+  // TODO: Implement this recursively for cleaner presentation of
+  // results and greater efficiency.
   evalBool: {
     action: function(expr) {
       var boolOps = {'&': true, '|': true, '=>': true, '=': true, not: true};
