@@ -1811,11 +1811,6 @@ var testCase = {
     assertEqual('((T & p) == p)', inf);
   },
 
-  testAndT: function() {
-    var inf = Toy.rules.andT(p);
-    assertEqual('((T & p) = p)', inf);
-  },
-
   testR5217Book: function() {
     assertEqual('((T = F) = F)', Toy.rules.r5217Book());
   },
@@ -2763,7 +2758,9 @@ var testCase = {
   // that ordered pairs other than TT satisfy the definition.
   testFunWithAnd: function() {
     expect(0);
-    var result = Toy.rules.funWithAnd();
+    if (!Toy.useDefnsByCases) {
+      const result = Toy.rules.funWithAnd();
+    }
   },
 
   // Tell the profiler we are done profiling the tests.

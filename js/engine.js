@@ -22,6 +22,28 @@
 // to the global environment (except through the "Toy" namespace).
 (function() {
 
+// Set Toy.bookish to true before loading this file to use definitions
+// from Andrews' book and no others.  Will be usable only after
+// completion of r5230FTBook_almost and full implementation of the
+// useDefnsByCases flag.
+const bookish = Toy.bookish || false;
+
+if (Toy.useDefnsByCases == null) {
+  Toy.useDefnsByCases = !bookish;
+}
+
+// TODO: Complete the support for this flag, as discussed where
+// it is currently used.
+const useDefnsByCases = Toy.useDefnsByCases;
+
+// The book definition of F is just fine, and can be presented either
+// as a definition or as an ordinary fact.  But by taking [T != F] and
+// [F != T] as axioms we could skip some technical development and
+// omit the book definition entirely.  This constant could be turned
+// into a flag to toggle between use of the definition and use of the
+// two extra axioms.
+const useFalseDefn = true;
+
 //// THEOREMS AND RULES
 
 var assert = Toy.assertTrue;
@@ -2340,7 +2362,7 @@ define('negate', '{p. {x. not (p x)}}');
 // Rules (including axiom 4) that take a term as input use A, B to
 //   show where the term goes, not enclosed in square brackets.
 
-var baseRules = {
+var primitives = {
 
   /**
    * The name "assertion" is used in displays to indicate that
@@ -2733,9 +2755,15 @@ var baseRules = {
     action: function() {
       return rules.assert('F = forall {x. x}').justify('defFFromBook');
     }
-  },
+  }
 
-  // Book only.
+};
+addRulesMap(primitives);
+
+// These definitions are alternatives to the definitions by cases.
+const bookDefns = {
+
+  // Book only.  Not actually used even in the book.
   defAnd: {
     statement: '(&) = {x. {y. ({g. (g T T)} = {g. (g x y)})}}',
     axiom: true,
@@ -2754,6 +2782,45 @@ var baseRules = {
               .justify('defImplies'));
     }
   },
+
+  //
+  // OPTIONAL/UNUSED
+  // 
+
+  // Experiment with Andrews' definition of "and".
+  funWithAnd: {
+    statement: ('{x. T} = {x. ((x T T) = (x T F))} == ' +
+                '(forall {x. ((x T T) = (x T F))})'),
+    proof: function() {
+      var f = varify('f');
+      var g = varify('g');
+      var fa = rules.definition('forall');
+      var a2 = rules.axiom2();
+      var a3 = rules.axiom3();
+      var step1 = rules.applyBoth(rules.defAnd(), T);
+      var step2a = rules.apply(step1, '/right');
+      var step2b = rules.applyBoth(step2a, F);
+      var step2c = rules.apply(step2b, '/right');
+      var step3 = rules.instEqn(a3, step2c.get('/right/left'), f);
+      var step4 = rules.instEqn(step3, step2c.get('/right/right'), g);
+      var step5 = rules.apply(step4, '/right/arg/body/left');
+      var step6 = rules.apply(step5, '/right/arg/body/right');
+      var step7 = rules.applyBoth(fa, step6.get('/right/arg'));
+      var step8 = rules.instEqn(a3, step7.get('/right/left'), f);
+      var step9 = rules.instEqn(step8, step7.get('/right/right'), g);
+      var step10 = rules.apply(step9, '/right/arg/body/left');
+      var step11 = rules.apply(step10, '/right/arg/body/right');
+      var step12 = rules.r5218(step11.get('/right/arg/body/right'));
+      return rules.r(step12, step11, '/right/arg/body');
+    }
+  }
+
+};
+if (!useDefnsByCases) {
+  addRulesMap(bookDefns);
+}
+
+const baseRules = {
 
   //
   // Theorems and rules of inference.
@@ -3379,21 +3446,106 @@ var baseRules = {
               ' for a free variable of an equation A = B; C by substituting' +
               ' T, and D by substituting F, proves A = B.'),
     labels: 'primitive'
+  },
+
+  r5211: {
+    statement: 'T & T == T',
+    proof: function() {
+      var step1 = rules.instEqn(rules.axiom1(), '{y. T}', 'g');
+      var step2a = rules.apply(step1, '/right/arg/body');
+      var step2b = rules.apply(step2a, '/left/right');
+      var step2c = rules.apply(step2b, '/left/left');
+      var step3a = rules.eqT(Toy.parse('{x. T}'));
+      var step3b = rules.rRight(rules.definition('forall'), step3a, '/right/fn');
+      return rules.rRight(step3b, step2c, '/right');
+    }
+  },
+
+  // T & T.
+  // Used to prove equationCases.  The "cases" rule
+  // and makeConjunction could treat this as a tautology.
+  r5212: {
+    statement: 'T & T',
+    proof: function() {
+      return rules.rRight(rules.theorem('r5211'),
+                          rules.theorem('t'),
+                          '/');
+    }
   }
+
 };
 addRulesMap(baseRules);
 
 // Now onward to proving a few of the usual truth table facts.
 
-const bookishFacts = {
+const falseDefnFacts = {
 
-  // TODO: Prove 5229, then finish proving r5230FTBook_almost from it.
+  // Bookish: [T & F] = F
+  r5214: {
+    statement: 'T & F == F',
+    proof: function() {
+      var step1 = rules.axiom1();
+      var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
+      var step3 = rules.apply(step2, '/right/arg/body');
+      var step4 = rules.apply(step3, '/left/right');
+      var step5 = rules.apply(step4, '/left/left');
+      var step6 = rules.defFFromBook();
+      return rules.rRight(step6, step5, '/right');
+    }
+  },
 
-  // Prove [F = T] = F.  Number reflects dependencies in the book
-  // proof, but this proof needs only simple rules and axiomPNeqNotP.
+  // 5216: [T & A] = A
+  // TODO: Consider if this could be a theorem rather than a rule.
+  andTBook: {
+    action: function(a) {
+      var step1 = rules.axiom1();
+      var step2 = rules.instEqn(step1, '{x. T & x == x}', 'g');
+      var step3 = rules.apply(step2, '/left/left');
+      var step4 = rules.apply(step3, '/left/right');
+      var step5 = rules.apply(step4, '/right/arg/body');
+      var step7 = rules.r5214();
+      var step8 = rules.r5213(rules.theorem('r5211'), step7);
+      var step9 = rules.r(step5, step8, '/');
+      var step10 = rules.instForall(step9, '', a);
+      return step10.justify('andTBook', arguments);
+    }
+  },
+
+  // r5217 is the same as r5230TF.
+  // [T = F] = F
+  r5217Book: {
+    statement: '(T == F) == F',
+    proof: function() {
+      var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
+      var step2a = rules.apply(step1, '/left/left');
+      var step2b = rules.apply(step2a, '/left/right');
+      var step2c = rules.apply(step2b, '/right/arg/body');
+      var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
+      var step4a = rules.andTBook(equal(T, F));
+      var step4b = rules.r(step4a, step3, '/left');
+      var step5a = rules.instEqn(rules.axiom3(), '{x. T}', 'f');
+      var step5b = rules.instEqn(step5a, '{x. x}', 'g');
+      var step6a = rules.apply(step5b, '/right/arg/body/left');
+      var step6b = rules.apply(step6a, '/right/arg/body/right');
+      var step6c = rules.useDefinition(rules.defFFromBook(),
+                                       '/right/fn');
+      var step6d = rules.rRight(step6c, step6b, '/left');
+      return rules.rRight(step6d, step4b, '/right');
+    }
+  }
+
+};
+if (useFalseDefn) {
+  addRulesMap(falseDefnFacts);
+}
+
+const factsUsingDefImplies = {
+
+  // 5230FT: [F = T] = F.
   //
-  // (Or r5230TF, see the alternate proof further below.)
-  // Bookish: (F = T) = F.
+  // Uses book defn of "=>", requires a fact about "&".
+  //
+  // TODO: Prove 5229, then finish proving r5230FTBook_almost from it.
   r5230FTBook_almost: {
     statement: '(F == T) == F',
     proof: function() {
@@ -3418,100 +3570,19 @@ const bookishFacts = {
       var step15 = rules.instEqn(step14, Toy.parse('F = T'), 'x')
       return rules.r(step15, step13, '/right');
     }
-  },
-
-  // Book version of r5211.
-  r5211Book: {
-    statement: 'T & T == T',
-    proof: function() {
-      var step1 = rules.instEqn(rules.axiom1(), '{y. T}', 'g');
-      var step2a = rules.apply(step1, '/right/arg/body');
-      var step2b = rules.apply(step2a, '/left/right');
-      var step2c = rules.apply(step2b, '/left/left');
-      var step3a = rules.eqT(Toy.parse('{x. T}'));
-      var step3b = rules.rRight(rules.definition('forall'), step3a, '/right/fn');
-      return rules.rRight(step3b, step2c, '/right');
-    }
-  },
-
-  r5212Book: {
-    statement: 'T & T',
-    proof: function() {
-      var step1 = rules.r5211Book();
-      var step2 = rules.theorem('t');
-      return rules.rRight(step1, step2, '');
-    }
-  },
-
-  // Bookish: [T & F] = F
-  r5214: {
-    statement: 'T & F == F',
-    proof: function() {
-      var step1 = rules.axiom1();
-      var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
-      var step3 = rules.apply(step2, '/right/arg/body');
-      var step4 = rules.apply(step3, '/left/right');
-      var step5 = rules.apply(step4, '/left/left');
-      var step6 = rules.defFFromBook();
-      return rules.rRight(step6, step5, '/right');
-    }
-  },
-
-  // 5216 by the book: [T & A] = A
-  andTBook: {
-    action: function(a) {
-      var step1 = rules.axiom1();
-      var step2 = rules.instEqn(step1, '{x. T & x == x}', 'g');
-      var step3 = rules.apply(step2, '/left/left');
-      var step4 = rules.apply(step3, '/left/right');
-      var step5 = rules.apply(step4, '/right/arg/body');
-      var step7 = rules.r5214();
-      var step8 = rules.r5213(rules.theorem('r5211'), step7);
-      var step9 = rules.r(step5, step8, '/');
-      var step10 = rules.instForall(step9, '', a);
-      return step10.justify('andTBook', arguments);
-    }
-  },
-
-  // r5217 is the same as r5230TF.
-  // [T = F] = F
-  r5217Book: {
-    statement: 'T == F == F',
-    proof: function() {
-      var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
-      var step2a = rules.apply(step1, '/left/left');
-      var step2b = rules.apply(step2a, '/left/right');
-      var step2c = rules.apply(step2b, '/right/arg/body');
-      var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
-      var step4a = rules.andTBook(equal(T, F));
-      var step4b = rules.r(step4a, step3, '/left');
-      var step5a = rules.instEqn(rules.axiom3(), '{x. T}', 'f');
-      var step5b = rules.instEqn(step5a, '{x. x}', 'g');
-      var step6a = rules.apply(step5b, '/right/arg/body/left');
-      var step6b = rules.apply(step6a, '/right/arg/body/right');
-      var step6c = rules.useDefinition(rules.defFFromBook(),
-                                       '/right/fn');
-      var step6d = rules.rRight(step6c, step6b, '/left');
-      return rules.rRight(step6d, step4b, '/right');
-    }
   }
 
 };
-addRulesMap(bookishFacts);
+// For a truly bookish development of the theory, properly complete
+// the one proof in this group, factor out all uses of definitions by
+// cases, control the actual definitions with the useDefnsByCases
+// flag, and turn off the flag.
+if (!useDefnsByCases) {
+  addRulesMap(factsUsingDefImplies);
+}
 
 // These are facts that rely on unbookish definitions by cases.
 const unbookishFacts = {
-
-  // [T & T] = T.  Uses no book-specific definitions.
-  // Only used in 5212 and book version of 5216.
-  r5211: {
-    statement: 'T & T == T',
-    proof: function() {
-      var step1 = rules.definition('&', T);
-      var step2 = rules.applyBoth(step1, T);
-      return rules.apply(step2, '/right');
-    }
-  },
 
   // Proves [F = T] = F (r5230FT) from r5217Book (r5230TF).
   // Relies also on facts about "=>", which are not currently
@@ -3537,6 +3608,9 @@ const unbookishFacts = {
       var step4 = rules.rewriteOnly(step3c, '', 'p == (T == p)');
       // We are going to prove the cases of: (x => F) = (x = F)
       // First with x = F.
+      //
+      // TODO: Eliminate uses of the unbookish definition of => in
+      //   this proof.
       var step11 = rules.definition('=>', F);
       var step12 = rules.applyBoth(step11, F);
       var step13 = rules.apply(step12, '/right');
@@ -3556,15 +3630,6 @@ const unbookishFacts = {
       return rules.rewriteOnly(step7, '', '(T == p) == p');
     },
     tooltip: ('[F = T] = F')
-  },
-
-  // 5216, using the definition of "true and".  Not used.
-  andT: {
-    action: function(a) {
-      var step1 = rules.applyBoth(rules.definition('&', T), a);
-      var step2 = rules.apply(step1, '/right');
-      return step2.justify('andT', [a]);
-    }
   }
 
 };
@@ -3573,18 +3638,6 @@ addRulesMap(unbookishFacts);
 // These are not specific to book definitions, but currently may
 // use (non-book) definitions by cases.
 const truthTableFacts = {
-
-  // T & T.  Uses no book-specific definitions.
-  // Used to prove equationCases.  The "cases" rule
-  // and makeConjunction could treat this as a tautology.
-  r5212: {
-    statement: 'T & T',
-    proof: function() {
-      return rules.rRight(rules.theorem('r5211'),
-                          rules.theorem('t'),
-                          '/');
-    }
-  },
 
   // From theorems A = B and C = D, derives theorem
   // [A = B] & [C = D].  Used in andTBook.
@@ -6616,45 +6669,12 @@ const ruleInfo = {
       return (step1.andThen('trueBy', loc1, assumed)
               .rewrite('/right/right', 'if T x y = x'));
     }
-  },
-
-
-  //
-  // OPTIONAL/UNUSED
-  // 
-
-  // Experiment with Andrews' definition of "and".
-  funWithAnd: {
-    statement: ('{x. T} = {x. ((x T T) = (x T F))} == ' +
-                '(forall {x. ((x T T) = (x T F))})'),
-    proof: function() {
-      var f = varify('f');
-      var g = varify('g');
-      var fa = rules.definition('forall');
-      var a2 = rules.axiom2();
-      var a3 = rules.axiom3();
-      var step1 = rules.applyBoth(rules.defAnd(), T);
-      var step2a = rules.apply(step1, '/right');
-      var step2b = rules.applyBoth(step2a, F);
-      var step2c = rules.apply(step2b, '/right');
-      var step3 = rules.instEqn(a3, step2c.get('/right/left'), f);
-      var step4 = rules.instEqn(step3, step2c.get('/right/right'), g);
-      var step5 = rules.apply(step4, '/right/arg/body/left');
-      var step6 = rules.apply(step5, '/right/arg/body/right');
-      var step7 = rules.applyBoth(fa, step6.get('/right/arg'));
-      var step8 = rules.instEqn(a3, step7.get('/right/left'), f);
-      var step9 = rules.instEqn(step8, step7.get('/right/right'), g);
-      var step10 = rules.apply(step9, '/right/arg/body/left');
-      var step11 = rules.apply(step10, '/right/arg/body/right');
-      var step12 = rules.r5218(step11.get('/right/arg/body/right'));
-      return rules.r(step12, step11, '/right/arg/body');
-    }
   }
 
 };  // End of ruleInfo.
 
-
 addRulesMap(ruleInfo);
+
 
 //// LOGIC FACTS
 

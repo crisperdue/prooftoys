@@ -204,13 +204,11 @@ $(function() {
     
     r5211: {},
 
-    r5211Book: {},
+    r5211Unbook: {},
     
     t: {},
     
     r5212: {},
-    
-    r5212Book: {},
     
     toTIsEquation: {
       args: [rules.assert(call('=', p, q))]
@@ -261,7 +259,7 @@ $(function() {
       args: [rules.assert(call('=', T, p))]
     },
     
-    toForall: {
+    toForall0: {
       args: [rules.assert(call(p, y)), y],
       level: 1
     },
