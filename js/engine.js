@@ -6599,6 +6599,18 @@ const ruleInfo = {
     }
   },
 
+  // 5305
+  r5305: {
+    statement: 'exists1 {y. p y} == exists {y. forall {z. p z == z = y}}',
+    proof: function() {
+      const step1 = rules.exists1b();
+      const step2 = rules.rewriteOnly(step1, '/right/arg/body',
+                                      rules.axiom3a());
+      const step3 = rules.apply(step2, '/right/arg/body/arg/body/right')
+      return step3;
+    }
+  },
+
   // From unique existence for p conclude an equivalence with "the"
   // (iota) for all x.
   //
