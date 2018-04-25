@@ -913,6 +913,9 @@ $.extend(StepEditor.prototype, {
                 if (!info.desimplifier) {
                   facts.push(goal);
                 }
+              } else {
+                assert(mode == 'all', 'Invalid mode {1}', mode);
+                facts.push(goal);
               }
             }
         });
