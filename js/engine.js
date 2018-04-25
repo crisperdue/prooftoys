@@ -2031,12 +2031,16 @@ var basicSimpFacts = [
  * Treats each key in the map as a synopsis of a mathematical
  * statement, and treats its value as a function to prove the
  * statement.  Uses addFact to add each statement and its proof
- * function to the internal database of provable facts.
+ * function to the internal database of provable facts.  Applies
+ * mathParse to the statement.
+ *
+ * TODO: Eventually support processing of the synopsis by other than
+ *   mathParse, e.g. based on an additional property in the info.
  */
 function addFactsMap(map) {
   for (var synopsis in map) {
     var info = map[synopsis];
-    info.synopsis = synopsis;
+    info.statement = Toy.mathParse(synopsis);
     addFact(info);
     if (!info.noSwap) {
       addSwappedFact(info);
@@ -2048,7 +2052,7 @@ function addFactsMap(map) {
 // for validation of fact properties.  See addFact.
 var factProperties = {
   goal: true,
-  synopsis: true,
+  statement: true,
   proof: true,
   simplifier: true,
   desimplifier: true,
@@ -2099,9 +2103,8 @@ function addFact(info) {
   info.proved = info.goal && info.goal.isProved() && info.goal;
   // The goal is a rendered Expr just because that makes a complete
   // copy that can be properly annotated with types.
-  info.goal = ((info.goal || mathParse(info.synopsis))
+  info.goal = ((info.goal || mathParse(info.statement))
                .copyForRendering(null));
-  // info.synopsis = info.synopsis || info.goal.toString();
   // Annotate the new goal with type info for type comparison
   // with portions of steps in the UI.
   //
