@@ -6901,6 +6901,16 @@ var logicFacts = {
               .andThen('simpleApply', '/left')
               .andThen('simplifySite', ''));
     }
+  },
+
+  'exists {y. x = y}': {
+    proof: function() {
+      // This could be derived from the previous, but here is a nice
+      // alternative proof.
+      return (rules.eqSelf('x')
+              .andThen('forwardChain', 'p x => exists p')
+              .andThen('rewriteOnly', '/arg', 'p = {x. p x}'));
+    }
   }
 };
 
