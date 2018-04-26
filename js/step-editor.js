@@ -44,6 +44,24 @@ var siteTypes = {
   reducible: true
 };
 
+
+// TODO: Support rules that need multiple selectable inputs by
+//   using a selection and following steps as inputs.  If multiple
+//   selections are needed, the step editor can use "consider"
+//   to pick a term from a step, and if necessary, look back to
+//   the origin site of the term to use it as a selection.
+//   Probably only fill in rule arguments from steps at the end
+//   of the current proof, and remove steps added by copying
+//   or use of "consider"
+//
+//   Another way to collect multiple steps as inputs would be to
+//   (temporarily) create a conjunction of steps and use the
+//   conjunction as a single input.
+//
+//   Also, for rules that do matching, such as rewrite rules,
+//   the editor could scan the current proof for matching steps
+//   and offer the results as suggestions.
+
 /**
  * A ProofDisplay can have only one StepEditor.  It appears at the end
  * of an editable proof.
