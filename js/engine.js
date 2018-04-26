@@ -4484,6 +4484,11 @@ const ruleInfo = {
     description: 'move forall'
   },
 
+  // TODO: Prove this.  It is a bit tedious, but easy.
+  forallAnd: {
+    statement: 'forall {x. p x & q x} == forall {x. p x} & forall {x. q x}',
+  },
+
   // Given a proof step H |- A => B and a variable v, derives
   // H |- (A => forall {v. B}) provided that v is not free in A or H.
   // (5237)  This version implemented via 5235, so much less efficient.
@@ -4670,8 +4675,6 @@ const ruleInfo = {
   },
 
   // General TODOs:
-  //
-  // TODO: Check theorem statements when proving.
   //
   // TODO: Consider asserting theorems until proof is requested.
   //
@@ -6611,6 +6614,46 @@ const ruleInfo = {
                                       rules.axiom3a());
       const step3 = rules.apply(step2, '/right/arg/body/arg/body/right')
       return step3;
+    }
+  },
+
+  // 5306
+  exists1c: {
+    statement: 'exists1 {y. p y} == exists {y. p y & forall {z. p z => z = y}}',
+    proof: function() {
+      const step1 = rules.r5305();
+      const step2 = rules.rewrite(step1, '/right/arg/body/arg/body',
+                                  '(a == b) == (a => b) & (b => a)');
+      const step3 = rules.rewrite(step2, '/right/arg/body', 'forallAnd');
+      // const step4 = rules.rewrite(step3, '/right/arg/body/right', 'existImplies');
+      const step4 = (rules.axiom2a()
+                     .andThen('forwardChain',
+                              '(a => (b == c)) => (a => b == a => c)'));
+      const step5 = rules.rewrite(step3, '/main/right/arg/body/right/arg/body',
+                                  step4);
+      const step6 = rules.axiom4('{y. x = y} y').andThen('eqnSwap');
+      const step7 = rules.replace(step5,
+                                  '/main/right/arg/body/right/arg/body/left',
+                                  step6);
+      const step8 = rules.rewriteOnly(step7,
+                                      '/main/right/arg/body/right',
+                                      'existImplies');
+      const step9 = rules.apply(step8,
+                                '/main/right/arg/body/right/left/arg/body');
+      // TODO: Fix rules.fact to handle this correctly to use y
+      //   as the free variable rather than x.
+      // TODO: The result of step10 through step12 is really a known fact,
+      //   but matching with the existing fact is not working right.
+      //   Fix the problem.
+      const step10 = rules.fact('p y => exists p');
+      const step11 = rules.instMultiVars(step10, {x: 'y', p: '{x. x = y}'});
+      const step12 = (rules.apply(step11, '/left')
+                      .andThen('simplifySite', ''));
+      const step13 = (rules.trueBy(step9, '/main/right/arg/body/right/left',
+                                   step12)
+                      .andThen('simplifyStep'));
+      return rules.rewriteOnly(step13, '/main/right/arg/body',
+                               'a & b == b & a');
     }
   },
 
