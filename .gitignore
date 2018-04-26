@@ -1,4 +1,4 @@
-jsc/
-lib/knockout*
-lib/underscore*
-lib/tooltipster*
+/jsc/
+/lib/knockout*
+/lib/underscore*
+/lib/tooltipster*
