@@ -297,7 +297,11 @@ function ProofEditor() {
   var stepEditor = new Toy.StepEditor(this);
   self.stepEditor = stepEditor;
 
-  clearProof.on('click', function() { self.clear(); });
+  clearProof.on('click', function() {
+      if (window.confirm('Do you really want to clear the proof?')) {
+        self.clear();
+      }
+    });
   // Step editor has state controlling whether to show all rules.
   self.$rulesMode.on('change', function(event) {
       stepEditor.showRuleType = this.value;
