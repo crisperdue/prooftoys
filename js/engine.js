@@ -6617,6 +6617,7 @@ const ruleInfo = {
     }
   },
 
+  // Useful for showing a constant is unique, thus the "c" in the name.
   // 5306
   exists1c: {
     statement: 'exists1 {y. p y} == exists {y. p y & forall {z. p z => z = y}}',
@@ -6634,13 +6635,11 @@ const ruleInfo = {
       const step7 = rules.replace(step5,
                                   '/main/right/arg/body/right/arg/body/left',
                                   step6);
-      const step8 = rules.rewriteOnly(step7,
+      const step8 = rules.rewriteOnly(step5,
                                       '/main/right/arg/body/right',
                                       'existImplies');
-      const step9 = rules.apply(step8,
-                                '/main/right/arg/body/right/left/arg/body');
       const step10 = rules.fact('exists {x. x = y}');
-      const step11 = (rules.trueBy(step9, '/main/right/arg/body/right/left',
+      const step11 = (rules.trueBy(step8, '/main/right/arg/body/right/left',
                                    step10)
                       .andThen('simplifyStep'));
       return rules.rewriteOnly(step11, '/main/right/arg/body',
