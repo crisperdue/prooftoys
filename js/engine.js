@@ -2672,11 +2672,11 @@ var primitives = {
    */
   axiom2a: {
     statement: 'x = y => (p x == p y)',
-    action: function() {
+    proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
       var step2 = rules.eqIsEquiv();
       var result = rules.replace(step1, '/right/binop', step2);
-      return result.justify('axiom2a');
+      return result;
     },
     inputs: {},
     form: '',
