@@ -3347,19 +3347,21 @@ const baseRules = {
   //   a conditional.
   instForall: {
     precheck: function(step, path, expr_arg) {
-      var expr = termify(expr_arg);
-      var target = step.get(path);
-      var pathStr = path.toString();
-      var ok = (target &&
-                target.isCall1('forall') &&
-                target.arg instanceof Toy.Lambda &&
-                // TODO: Handle cases where the target is unconditional.
-                (pathStr === '' ||
-                 (step.wff.isCall2('=>') &&
-                  (pathStr === '/right' ||
-                   pathStr === '/rt' ||
-                   pathStr === '/main' ||
-                   pathStr === '/arg'))));
+      const expr = termify(expr_arg);
+      const target = step.get(path);
+      const pathStr = path.toString();
+      const conditional = step.wff.isCall2('=>');
+      const ok = (target &&
+                  target.isCall1('forall') &&
+                  target.arg instanceof Toy.Lambda &&
+                  // TODO: Handle cases where the target is unconditional.
+                  (conditional
+                   ? (pathStr === '/right' ||
+                      pathStr === '/rt' ||
+                      pathStr === '/main' ||
+                      pathStr === '/arg')
+                   : (pathStr === '' ||
+                      pathStr === '/main')));
       return ok;
     },
     action: function(step, path, expr_arg) {
