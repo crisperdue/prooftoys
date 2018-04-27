@@ -234,9 +234,9 @@ var nextProofEditorId = 1;
  *   read-only.
  * solutions: If any of these expressions (or strings) is an alphaMatch
  *   with a step, announce the step as a solution.
- * standardSolution: If no explicit solutions given, but the result of
- *   a step solves for a variable (equal to a numeral or fraction),
- *   announce that the problem is solved.
+ * standardSolution: Boolean.  If no explicit solutions given, but the
+ *   result of a step solves for a variable (equal to a numeral or
+ *   fraction), announce that the problem is solved.
  */
 function ProofEditor() {
   var self = this;
