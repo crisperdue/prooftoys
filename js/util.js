@@ -738,7 +738,209 @@ NestedTimer.prototype = {
 };
 
 
-//// benchmark -- times repeated calls to a function
+//// JSON
+
+/**
+ * JSON parse function that returns the undefined value
+ * in case of an error during parsing.  Legal JSON includes
+ * null, but not undefined.
+ */
+function jsonParse(string) {
+  try {
+    return JSON.parse(string);
+  } catch(e) {
+    return undefined;
+  }
+}
+
+/**
+ * Convert the given value to a JSON string, with an optional replacer
+ * as in JSON.stringify.  Uses a "space" value of 1 for human
+ * readability.
+ */
+function stringify(object, replacer) {
+  return JSON.stringify(object, replacer, 1);
+}
+
+
+//// LOCAL STORAGE
+
+// TODO: We could build a careful locking scheme, for example using
+//   storage events to acknowledge that all contexts are aware of who
+//   holds the lock.  On the other hand, careful schemes can result in
+//   blocking, which is undesirable.
+
+// TODO: It may be better to notice when other contexts change data
+//   such as a proof, and warn the user in some way rather than
+//   blocking or locking her out.
+
+// The pid distinguishes this JavaScript environment from others
+// that might edit documents in local storage.  Each document has
+// a set of current editing pids.
+//
+// This approach could result in environments with the same pid, but
+// that is still highly unlikely.  Perhaps use of Maekawa's algorithm
+// together with a registry of all pid values in localStorage could be
+// used to reliably generate unique pid values if desired.
+//
+// Currently the decimal representation of a non-negative integer less
+// than 1e15.
+// 
+let pid = '' + Math.floor(Math.random() * 1e15);
+
+// This facility uses localStorage as follows:
+//
+// All key names begin with "Toy:", to distinguish them from any keys
+// potentially used by other packages loaded into the page.
+//
+// This API models a trivial file system with named documents that can
+// be read and written.  A valid document name is currently a sequence
+// of one or more alphanumeric, space, hyphen, and/or underscore
+// characters.
+//
+// A document contains an arbitrary JavaScript string.  The read and
+// write operations work on the entire document as a single atomic
+// operation.
+//
+// Operations that take a document name argument (except checkDocName)
+// return undefined in case the name is invalid, and some other value
+// otherwise.  All such operations do nothing if the name is not
+// valid.
+//
+// A document is held by zero or more "using" pids.  The "hold"
+// operation adds this pid as a holder, and the "isHeld" operation
+// queries whether there is at least one holder.
+//
+// The implementation uses best efforts to remove holds when a context
+// is unloaded.  It is probably not possible to provide ironclad
+// guarantees.
+
+// TODO: Consider supporting event listeners for changes to documents
+//   and held status of documents.
+
+/**
+ * Returns true or false depending on whether the given string is a
+ * valid document name.
+ */
+function checkDocName(name) {
+  const result = name.match(/^([-a-zA-Z_ ])+$/);
+  if (!result) {
+    console.warn('Bad document name:', name);
+  }
+  return !!result;
+}
+
+/**
+ * Returns an array of the names of all stored documents.
+ */
+function lsDocs() {
+  const prefix = 'Toy:doc:';
+  const len = prefix.length;
+  const names = [];
+  for (let i = 0; i < store.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith(prefix)) {
+      names.push(key.slice(len));
+    }
+  }
+  return names;
+}
+
+/**
+ * Returns the contents of the named document as a string of JSON
+ * data, or undefined if there is no such document or the value
+ * is not valid JSON.
+ */
+function readDoc(name) {
+  if (checkDocName(name)) {
+    return jsonParse(localStorage.getItem('Toy:doc:' + name));
+  }
+}
+
+/**
+ * Atomically replaces the content of the named document with a JSON
+ * encoding of the given value, returning true.
+ */
+function writeDoc(name, content) {
+  if (checkDocName(name)) {
+    localStorage.setItem('Toy:doc:' + name, stringify(content));
+    return true;
+  }
+}
+
+/**
+ * Removes the document with the given name, returning true unless the
+ * name is invalid.
+ */
+function rmDoc(name) {
+  if (checkDocName(name)) {
+    localStorage.removeItem('Toy:doc:' + name);
+    return true;
+  }
+}
+
+/**
+ * Returns true if the named document has at least one recorded user
+ * that is not the current pid, otherwise false.
+ */
+function isHeldDoc(name) {
+  if (checkDocName(name)) {
+    const length = localStorage.length;
+    for (let i = 0; i < length; i++) {
+      const key = localStorage.key(i);
+      const pattern = RegExp('^Toy:using:' + name + ':(.+)$');
+      const match = key.match(pattern);
+      if (match && match[1] != pid) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/**
+ * Marks the named document as being in use (by this pid), and returns
+ * true.
+ */
+function holdDoc(name) {
+  if (checkDocName(name)) {
+    localStorage.setItem('Toy:using:' + name + ':' + pid,  '');
+    return true;
+  }
+}
+
+/**
+ * Marks the named document as not in use by this pid, and returns
+ * true.
+ */
+function releaseDoc(name) {
+  if (checkDocName(name)) {
+    localStorage.removeItem('Toy:using:' + name + ':' + pid);
+    return true;
+  }
+}
+
+/**
+ * Removes all indications of documents being in use by this pid.
+ */
+function releaseAllDocs() {
+  const pattern = RegExp('^Toy:using:.*:' + pid + '$');
+  const length = localStorage.length;
+  const keys = [];
+  for (let i = 0; i < length; i++) {
+    const key = localStorage.key(i);
+    if (key.match(pattern)) {
+      keys.push(key);
+    }
+  }
+  // This removes keys only after iteration is complete.
+  keys.forEach(function(k) { localStorage.removeItem(k); });
+}
+
+$(window).on('unload', releaseAllDocs);
+
+
+//// BENCHMARKING
 
 /**
  * Call the function with no arguments "count" times, defaulting to
@@ -1635,6 +1837,21 @@ Toy.catchResult = catchResult;
 Toy.normalReturn = normalReturn;
 
 Toy.NestedTimer = NestedTimer;
+
+Toy.jsonParse = jsonParse;
+Toy.stringify = stringify;
+
+Toy.pid = pid;  // Note: an internal variable is used internally.
+Toy.checkDocName = checkDocName;
+Toy.readDoc = readDoc;
+Toy.writeDoc = writeDoc;
+Toy.rmDoc = rmDoc;
+Toy.isHeldDoc = isHeldDoc;
+Toy.holdDoc = holdDoc;
+Toy.releaseDoc = releaseDoc;
+// For testing:
+Toy._releaseAllDocs = releaseAllDocs;
+
 Toy.benchmark = benchmark;
 Toy.ToySet = ToySet;
 Toy.emptySet = emptySet;
