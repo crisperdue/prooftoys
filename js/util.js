@@ -795,8 +795,8 @@ let pid = '' + Math.floor(Math.random() * 1e15);
 //
 // This API models a trivial file system with named documents that can
 // be read and written.  A valid document name is currently a sequence
-// of one or more alphanumeric, space, hyphen, and/or underscore
-// characters.
+// of one or more alphanumeric, space, hyphen, "/", ".", and/or
+// underscore characters.
 //
 // A document contains an arbitrary JavaScript string.  The read and
 // write operations work on the entire document as a single atomic
@@ -823,7 +823,7 @@ let pid = '' + Math.floor(Math.random() * 1e15);
  * valid document name.
  */
 function checkDocName(name) {
-  const result = name.match(/^([-a-zA-Z_ ])+$/);
+  const result = name.match(/^([-./a-zA-Z0-9_ ])+$/);
   if (!result) {
     console.warn('Bad document name:', name);
   }
