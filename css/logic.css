@@ -601,13 +601,14 @@ span#leftNav {
   visibility: hidden;
 }
 
-.proofStep.hover .deleteStep {
+.proofDisplay.editable .proofStep.hover .deleteStep {
   visibility: visible;
   background-color: #f88;
   color: white;
 }
 
-.proofStep.hover .checkbox, .proofStep.selected .checkbox {
+.proofDisplay.editable .proofStep.hover .checkbox,
+.proofStep.selected .checkbox {
   visibility: visible;
 }
 
@@ -619,11 +620,11 @@ span#leftNav {
 .proofStep.hover .noDeleter {
   color: #aaa;
   visibility: visible;
-} 
+}
 
 /* The step has other steps that depend on it.
    In effect this is the disabled version of the button. */
-.proofStep.hover.hasUsers .deleteStep {
+.proofDisplay.editable .proofStep.hover.hasUsers .deleteStep {
   visibility: visible;
   background-color: white;
   color: silver;
