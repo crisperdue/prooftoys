@@ -157,21 +157,19 @@ function getRightNeighbor(step, term) {
 
 //// APPLICATION DATA STORAGE
 
-var proofToyState = {
+const proofToyState = {
 
   // Global data to store in the hidden field named ToyStore.  Created
   // with an object/slot to hold all data for all ProofEditor objects
-  // on the page.  Completely overwritten by the _load method.
+  // on the page.  Completely overwritten by the init method.
   // The point of proofToyState is to manage this data.
   data: {proofEditors: {}},
 
   // Indicates whether the data slot has been filled in yet.
   loaded: false,
 
-  // Global form element to store proofToyData.
-  _toyStore: null,
-
-  // Storing the state of all proof editors into the hidden textarea.
+  // Storing the state of all proof editors into the local storage
+  // for this page.
 
   /**
    * Save proofToyData into the document's data store so it will persist
@@ -179,9 +177,8 @@ var proofToyState = {
    * element.
    */
   store: function() {
-    if (this._toyStore) {
-      this._toyStore.value = JSON.stringify(this.data, null, 1);
-    }
+    const path = window.location.pathname;
+    Toy.writeDoc(path, this.data);
   },
 
   /**
@@ -192,15 +189,10 @@ var proofToyState = {
       return;
     }
     this.loaded = true;
-    var storage = this._toyStore = $('#ToyStore')[0];
-    if (storage) {
-      var text = storage.value;
-      if (text) {
-        // Non-empty text.
-        this.data = JSON.parse(text);
-      }
-    } else {
-      console.log('No #ToyStore element.');
+    const path = window.location.pathname;
+    const data = Toy.readDoc(path);
+    if (data) {
+      this.data = data;
     }
   }
 };
@@ -658,9 +650,11 @@ ProofDisplay.prototype.getLastStep = function() {
  * Notify that the proof has changed.
  */
 ProofDisplay.prototype.proofChanged = function() {
-  this.proofEditor && this.proofEditor._refresher.activate();
-  // This next only needed on account of rules.given as of 02/2017.
-  this.proofEditor && this.proofEditor.stepEditor.ruleMenu.refresh();
+  if (this.proofEditor) {
+    this.proofEditor._refresher.activate();
+    // This next only needed on account of rules.given as of 02/2017.
+    this.proofEditor.stepEditor.ruleMenu.refresh();
+  }
 };
 
 /**
