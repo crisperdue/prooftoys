@@ -765,23 +765,14 @@ function stringify(object, replacer) {
 
 //// LOCAL STORAGE
 
-// TODO: We could build a careful locking scheme, for example using
-//   storage events to acknowledge that all contexts are aware of who
-//   holds the lock.  On the other hand, careful schemes can result in
-//   blocking, which is undesirable.
-
-// TODO: It may be better to notice when other contexts change data
-//   such as a proof, and warn the user in some way rather than
-//   blocking or locking her out.
-
 // The pid distinguishes this JavaScript environment from others
-// that might edit documents in local storage.  Each document has
-// a set of current editing pids.
+// that might edit documents in local storage.
 //
 // This approach could result in environments with the same pid, but
-// that is still highly unlikely.  Perhaps use of Maekawa's algorithm
-// together with a registry of all pid values in localStorage could be
-// used to reliably generate unique pid values if desired.
+// that is highly unlikely.  We could used IndexedDB generated keys to
+// guarantee uniqueness.  Alternatively, Maekawa's algorithm together
+// with a registry of all pid values in localStorage might be able to
+// reliably generate unique pid values if desired.
 //
 // Currently the decimal representation of a non-negative integer less
 // than 1e15.
@@ -837,7 +828,7 @@ function lsDocs() {
   const prefix = 'Toy:doc:';
   const len = prefix.length;
   const names = [];
-  for (let i = 0; i < store.length; i++) {
+  for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key.startsWith(prefix)) {
       names.push(key.slice(len));
@@ -880,64 +871,101 @@ function rmDoc(name) {
 }
 
 /**
- * Returns true if the named document has at least one recorded user
- * that is not the current pid, otherwise false.
+ * Returns an array of the names of all stored documents.
  */
-function isHeldDoc(name) {
-  if (checkDocName(name)) {
-    const length = localStorage.length;
-    for (let i = 0; i < length; i++) {
-      const key = localStorage.key(i);
-      const pattern = RegExp('^Toy:using:' + name + ':(.+)$');
-      const match = key.match(pattern);
-      if (match && match[1] != pid) {
-        return true;
-      }
-    }
-    return false;
-  }
-}
-
-/**
- * Marks the named document as being in use (by this pid), and returns
- * true.
- */
-function holdDoc(name) {
-  if (checkDocName(name)) {
-    localStorage.setItem('Toy:using:' + name + ':' + pid,  '');
-    return true;
-  }
-}
-
-/**
- * Marks the named document as not in use by this pid, and returns
- * true.
- */
-function releaseDoc(name) {
-  if (checkDocName(name)) {
-    localStorage.removeItem('Toy:using:' + name + ':' + pid);
-    return true;
-  }
-}
-
-/**
- * Removes all indications of documents being in use by this pid.
- */
-function releaseAllDocs() {
-  const pattern = RegExp('^Toy:using:.*:' + pid + '$');
-  const length = localStorage.length;
-  const keys = [];
-  for (let i = 0; i < length; i++) {
+function lsPeds() {
+  const prefix = 'Toy:doc:';
+  const len = prefix.length;
+  const names = [];
+  for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key.match(pattern)) {
+    if (key.startsWith(prefix)) {
+      names.push(key.slice(len));
+    }
+  }
+  return names;
+}
+
+function pedKey(id) {
+  return Toy.format('Toy:ped:{1}:{2}', pid, id);
+}
+
+/**
+ * Returns the contents of the given proof editor as a string of JSON
+ * data, or undefined if there is no such proof editor or the value
+ * is not valid JSON.
+ */
+function readPed(id) {
+  return jsonParse(localStorage.getItem(pedKey(id)));
+}
+
+/**
+ * Atomically replaces the stored information about the given proof
+ * editor with a JSON encoding of the given value, returning true.
+ */
+function writePed(id, content) {
+  localStorage.setItem(pedKey(id), stringify(content));
+}
+
+/**
+ * Removes the proof editor with the given name, returning true unless the
+ * name is invalid.
+ */
+function rmPed(id) {
+  localStorage.removeItem(pedKey(id));
+}
+
+function allPeds() {
+  const prefix = 'Toy:ped:';
+  const len = prefix.length;
+  const results = [];
+  const pattern = /^Toy:ped:([0-9]+):([0-9]+)/;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    const match = key.match(pattern);
+    if (match) {
+      const result = jsonParse(localStorage.getItem(key));
+      Object.assign(result, {pid: match[1], id: match[2]});
+      results.push(result);
+    }
+  }
+  return results;
+}
+
+/**
+ * Returns true if the named document has at least one recorded user
+ * that is not the identified editor in the current context, otherwise
+ * false.
+ */
+function isHeldDoc(name, id) {
+  const editors = allPeds();
+  for (let i = 0; i < editors.length; i++) {
+    const editor = editors[i];
+    if (editor.docName === name &&
+        editor.pid !== pid &&
+        editor.id !== id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Removes all information about proof editors in the current context.
+ */
+function releaseThisPid() {
+  const keys = [];
+  const prefix = 'Toy:pid:' + pid + ':';
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith(prefix)) {
       keys.push(key);
     }
   }
-  // This removes keys only after iteration is complete.
   keys.forEach(function(k) { localStorage.removeItem(k); });
 }
 
-$(window).on('unload', releaseAllDocs);
+$(window).on('unload', releaseThisPid);
 
 
 //// BENCHMARKING
@@ -1841,16 +1869,19 @@ Toy.NestedTimer = NestedTimer;
 Toy.jsonParse = jsonParse;
 Toy.stringify = stringify;
 
-Toy.pid = pid;  // Note: an internal variable is used internally.
+Toy.pid = pid;  // Note: this property does not control the internal variable.
 Toy.checkDocName = checkDocName;
 Toy.readDoc = readDoc;
 Toy.writeDoc = writeDoc;
 Toy.rmDoc = rmDoc;
+Toy.lsPeds = lsPeds;
+Toy.readPed = readPed;
+Toy.writePed = writePed;
+Toy.rmPed = rmPed;
+Toy.allPeds = allPeds;
 Toy.isHeldDoc = isHeldDoc;
-Toy.holdDoc = holdDoc;
-Toy.releaseDoc = releaseDoc;
 // For testing:
-Toy._releaseAllDocs = releaseAllDocs;
+Toy._releaseThisPid = releaseThisPid;
 
 Toy.benchmark = benchmark;
 Toy.ToySet = ToySet;

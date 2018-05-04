@@ -376,15 +376,19 @@ function ProofEditor() {
       const path = window.location.pathname;
       // If another ProofEditor is already holding the document,
       // make it read-only.  Otherwise reserve it for this one.
-      if (Toy.isHeldDoc(path)) {
+      if (Toy.isHeldDoc(path, self.proofEditorId)) {
         self.setEditable(false);
-      } else {
-        Toy.holdDoc(path);
       }
     } else {
       proofToyState.data.proofEditors[self.proofEditorId] = self.data;
     }
   }
+
+  const state = {
+    docName: window.location.pathname
+  };
+  Toy.writePed(self.proofEditorId, state);
+
   // Soon load remembered proof state, but complete the constructor
   // and any following initializations.
   Toy.soonDo(@{. Toy.withErrorReporting(loadData)});
