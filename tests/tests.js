@@ -1787,18 +1787,17 @@ var testCase = {
   },
 
   testInstForall: function() {
-    var result = Toy.rules.instForall(call('forall', lambda(y, call(p, y))),
-                                      '',
-                                      call(f, y))
-    assertEqual('(p (f y))', result);
+    let step = rules.assert('forall {y. p y}');
+    let result1 = rules.instForall(step, '', call(f, y))
+    assertEqual('(p (f y))', result1);
 
     // Hypotheses
-    var hyps = Toy.rules.assume('p y');
-    var step1 = Toy.rules.assert('forall {y. p y}');
-    var step2 = Toy.rules.appendStepHyps(step1, hyps);
-    var result = Toy.rules.instForall(step2, '/right', call(f, y));
-    assertEqual('((p y) => (p (f y)))', result)
-    assert(result.hasHyps);
+    let hyps = rules.assume('p y');
+    let step1 = rules.assert('forall {y. p y}');
+    let step2 = rules.appendStepHyps(step1, hyps);
+    let result2 = rules.instForall(step2, '/right', call(f, y));
+    assertEqual('((p y) => (p (f y)))', result2)
+    assert(result2.isCall2('=>'));
   },
 
   testR5214: function() {
