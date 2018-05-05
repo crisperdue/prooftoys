@@ -955,7 +955,7 @@ function isHeldDoc(name, id) {
  */
 function releaseThisPid() {
   const keys = [];
-  const prefix = 'Toy:pid:' + pid + ':';
+  const prefix = 'Toy:ped:' + pid + ':';
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key.startsWith(prefix)) {
