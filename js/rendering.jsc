@@ -155,48 +155,6 @@ function getRightNeighbor(step, term) {
 }
 
 
-//// APPLICATION DATA STORAGE
-
-const proofToyState = {
-
-  // Global data to store in the hidden field named ToyStore.  Created
-  // with an object/slot to hold all data for all ProofEditor objects
-  // on the page.  Completely overwritten by the init method.
-  // The point of proofToyState is to manage this data.
-  data: {proofEditors: {}},
-
-  // Indicates whether the data slot has been filled in yet.
-  loaded: false,
-
-  // Storing the state of all proof editors into the local storage
-  // for this page.
-
-  /**
-   * Save proofToyData into the document's data store so it will persist
-   * across page load/unload and new visits to the page.
-   */
-  store: function() {
-    const path = window.location.pathname;
-    Toy.writeDoc(path, this.data);
-  },
-
-  /**
-   * Load all application data from the per-page store; runs just once.
-   */
-  init: function() {
-    if (this.loaded) {
-      return;
-    }
-    this.loaded = true;
-    const path = window.location.pathname;
-    const data = Toy.readDoc(path);
-    if (data) {
-      this.data = data;
-    }
-  }
-};
-
-
 //// PROOF EDITOR
 
 // TODO: Use events and event handlers to make cleaner separation
@@ -237,9 +195,9 @@ function ProofEditor() {
   self.standardSolution = true;
   // Set the ID.
   this.proofEditorId = nextProofEditorId++;
-  // Data of this ProofEditor to remember across page load/unload,
-  // representable in JSON.
-  this.data = {};
+  // This determines the name of the document in localStorage
+  // that will track the state of the proof.
+  this._documentName = window.location.pathname;
   @mainDisplay = new ProofDisplay();
   @mainDisplay.proofEditor = self;
   this.proofDisplay = @mainDisplay;
@@ -323,10 +281,36 @@ function ProofEditor() {
     .append(stepEditor.$node);
   this.setEditable(true);
 
+  // Restore editor state.
+  const status = Toy.readPed(self.proofEditorId);
+  if (status) {
+    self._documentName = status.docName;
+  } else {
+    Toy.writePed(self.proofEditorId, {docName: self._documentName});
+  }
+
+  // Restore proof state.
+  const proofData = Toy.readDoc(self._documentName);
+  if (proofData) {
+    @mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
+  }
+  // If another ProofEditor is already holding the document,
+  // make it read-only.  Otherwise reserve it for this one.
+  if (Toy.isHeldDoc(self._documentName, self.proofEditorId)) {
+    self.setEditable(false);
+  }
+
   // If the proof has changed, save its state soon.
+  // Current policy is to write out proof state during refresh,
+  // so basically whenever it changes.
+  //
+  // TODO: We also need to track the name of the document associated
+  //   with this editor even when the editor has been unloaded, which
+  //   should use the current pid/ped info, but add loaded/unloaded
+  //   status to determine if a document is currently being held.
   this._refresher = new Toy.Refresher(function() {
       self._updateGivens();
-      self.saveState();
+      self.saveProofState();
       // Set (or clear) the message in the $status box.
       var steps = self.proofDisplay.steps;
       var $status = self.$status;
@@ -344,11 +328,11 @@ function ProofEditor() {
     });
 
   // Handler for the "restore proof" button.  Restores proof state from
-  // the text area and saves global state.
+  // the text area.
+  // TODO: This also needs to set the editor's document name.
   function restoreProof() {
     Toy.withErrorReporting(function() {
         self.restoreState();
-        proofToyState.store();
         self._stateDisplay.toggleClass('hidden', true);
       });
   }
@@ -358,40 +342,6 @@ function ProofEditor() {
   this._stateDisplay.find('.hideProofState').on('click', function() {
       self._stateDisplay.addClass('hidden');
     });
-
-  // Aliases this ProofEditor's "data" property to the global data
-  // associated with its proofEditorId in proofToyState.  Updates the
-  // state of the proof itself if there is any global data.
-  //
-  // If the global data has no information about this, just links the
-  // existing value into the global data.
-  function loadData() {
-    proofToyState.init();
-    var data = proofToyState.data.proofEditors[self.proofEditorId];
-    if (data) {
-      self.data = data;
-      if (data.proofState) {
-        @mainDisplay.setSteps(Toy.decodeSteps(data.proofState));
-      }
-      const path = window.location.pathname;
-      // If another ProofEditor is already holding the document,
-      // make it read-only.  Otherwise reserve it for this one.
-      if (Toy.isHeldDoc(path, self.proofEditorId)) {
-        self.setEditable(false);
-      }
-    } else {
-      proofToyState.data.proofEditors[self.proofEditorId] = self.data;
-    }
-  }
-
-  const state = {
-    docName: window.location.pathname
-  };
-  Toy.writePed(self.proofEditorId, state);
-
-  // Soon load remembered proof state, but complete the constructor
-  // and any following initializations.
-  Toy.soonDo(@{. Toy.withErrorReporting(loadData)});
 
   // Clicks in arbitrary areas of the document remove any selection.
   // And clear any proof errors field.
@@ -508,6 +458,7 @@ ProofEditor.prototype.getStateString = @() {
  * getStateString.
  */
 ProofEditor.prototype.setStateFromString = @(encoded) {
+  // TODO: Rename to setProofFromString.
   var steps = Toy.decodeSteps(encoded);
   @mainDisplay.setSteps(steps);
 };
@@ -522,13 +473,12 @@ ProofEditor.prototype.setSteps = @(steps) {
 /**
  * Save the proof state to the the proof's text area and the
  * document's data store.  Normally use the proofChanged method rather
- * than calling this directly, avoiding redundant work.
+ * than calling this directly, to avoid redundant work.
  */
-ProofEditor.prototype.saveState = function() {
+ProofEditor.prototype.saveProofState = function() {
   var text = this.getStateString();
   this._stateArea.value = text;
-  this.data.proofState = text;
-  proofToyState.store();
+  Toy.writeDoc(this._documentName, {proofState: text});
 };
 
 /**
@@ -2923,7 +2873,6 @@ Toy.stepPaths = stepPaths;
 Toy.stepSites = stepSites;
 Toy.getRightNeighbor = getRightNeighbor;
 
-Toy.proofToyState = proofToyState;
 Toy.ProofEditor = ProofEditor;
 Toy.ProofDisplay = ProofDisplay;
 Toy.unrenderedDeps = unrenderedDeps;

@@ -39,6 +39,13 @@ var parse = Toy.parse;
 // which is defined with an existential fact.
 Toy.definex('posNum', rules.witnessExists(rules.fact('1 > 0'), '/left'));
 
+// Create a new proof editor with clean state.
+function newProofEditor() {
+  const ed = new Toy.ProofEditor();
+  // The editor might immediately restore an old proof, so clear it.
+  ed.setSteps([]);
+  return ed;
+}
 
 // Assertion utilities:
 
@@ -2550,7 +2557,7 @@ var testCase = {
   },
 
   testProofStatusInfo: function() {
-    var ed = new Toy.ProofEditor();
+    var ed = newProofEditor();
     ed.givens = ['x + y = 5', 'x - y = 3'];
     var formulas = {
       a: 'x + y = 5 & x - y = 3 == x = y - 5 & x - y = 3',
@@ -2610,7 +2617,7 @@ var testCase = {
   },
 
   testSolutionStatus: function() {
-    var ed = new Toy.ProofEditor();
+    var ed = newProofEditor();
     ed.givens = ['x + y = 5', 'x - y = 3'];
     var formulas = {
       a: 'x + y = 5 & x - y = 3 == x = y - 5 & x - y = 3',
@@ -2662,7 +2669,7 @@ var testCase = {
     };
     deepEqual(qUnitCopy(stats), expected);
 
-    ed = new Toy.ProofEditor();
+    ed = newProofEditor();
     ed.givens = ['x = 3', 'y = 5'];
     step = rules.assert(formulas.c);
     // This time don't even add the step to the proof.
@@ -2692,7 +2699,7 @@ var testCase = {
     };
     deepEqual(qUnitCopy(stats), expected);
 
-    ed = new Toy.ProofEditor();
+    ed = newProofEditor();
     ed.givens = ['x - 3 = 2'];
     step = rules.assert('x = 5 => x - 3 = 2');
     stats = ed.solutionStatus(step);
@@ -2710,7 +2717,7 @@ var testCase = {
     deepEqual(qUnitCopy(stats), expected);
 
     // Simultaneous linear equations:
-    ed = new Toy.ProofEditor();
+    ed = newProofEditor();
     ed.givens = ['x = y + 3', 'x + y = 7'];
     var wff = 'x = y + 3 & R y => (x + y = 7 == y = 2)';
     step = rules.assert(wff);
