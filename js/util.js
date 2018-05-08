@@ -784,30 +784,42 @@ let pid = '' + Math.floor(Math.random() * 1e15);
 // All key names begin with "Toy:", to distinguish them from any keys
 // potentially used by other packages loaded into the page.
 //
-// This API models a trivial file system with named documents that can
-// be read and written.  A valid document name is currently a sequence
-// of one or more alphanumeric, space, hyphen, "/", ".", and/or
-// underscore characters.
+// Within the "Toy" namespace, we have a "doc" space, a "pid" space,
+// and a "ped" space, each used as a table of records.
 //
-// A document contains an arbitrary JavaScript string.  The read and
+// The "doc" (document) table models a trivial file system with named
+// documents that can be read and written.  A valid document name is
+// currently a sequence of one or more alphanumeric, space, hyphen,
+// "/", ".", and/or underscore characters.
+//
+// A document contains an arbitrary JSON-encoded object.  The read and
 // write operations work on the entire document as a single atomic
 // operation.
+//
+// The "pid" table stores information for each pid.  For each pid and
+// ID of editable proof editor in that context it has the associated
+// document name.  All "pid" information is removed when the pid's
+// context is unloaded.
+//
+// The "ped" table stores persistent state per proof editor ID,
+// independent of pid.  This is currently an associated document name,
+// which determines the document to load when (re)visiting a page.
 //
 // Operations that take a document name argument (except checkDocName)
 // return undefined in case the name is invalid, and some other value
 // otherwise.  All such operations do nothing if the name is not
 // valid.
 //
-// A document is held by zero or more "using" pids.  The "hold"
-// operation adds this pid as a holder, and the "isHeld" operation
-// queries whether there is at least one holder.
+// A document is held by zero or more "using" prof editors and pids.
+// The document is held iff its name is the document name of an editor
+// in some page whose pid other than the current one.
 //
-// The implementation uses best efforts to remove holds when a context
-// is unloaded.  It is probably not possible to provide ironclad
-// guarantees.
 
 // TODO: Consider supporting event listeners for changes to documents
 //   and held status of documents.
+
+
+//// Documents (by name)
 
 /**
  * Returns true or false depending on whether the given string is a
@@ -819,22 +831,6 @@ function checkDocName(name) {
     console.warn('Bad document name:', name);
   }
   return !!result;
-}
-
-/**
- * Returns an array of the names of all stored documents.
- */
-function lsDocs() {
-  const prefix = 'Toy:doc:';
-  const len = prefix.length;
-  const names = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key.startsWith(prefix)) {
-      names.push(key.slice(len));
-    }
-  }
-  return names;
 }
 
 /**
@@ -873,7 +869,7 @@ function rmDoc(name) {
 /**
  * Returns an array of the names of all stored documents.
  */
-function lsPeds() {
+function lsDocs() {
   const prefix = 'Toy:doc:';
   const len = prefix.length;
   const names = [];
@@ -886,64 +882,60 @@ function lsPeds() {
   return names;
 }
 
-function pedKey(id) {
-  return Toy.format('Toy:ped:{1}:{2}', pid, id);
+//// Proof editor state, by proofEditorId
+
+// This is persistent state, document name per editor ID.
+
+// Internal function.  Here "ped" is short for
+// proof editor.
+function pedKey(ed) {
+  return Toy.format('Toy:ped:{1}', ed.proofEditorId);
 }
 
 /**
- * Returns the contents of the given proof editor as a string of JSON
- * data, or undefined if there is no such proof editor or the value
- * is not valid JSON.
+ * Returns stored state of the given proof editor as JSON-encoded
+ * data, or undefined if there is no such proof editor or the value is
+ * not valid JSON.
  */
-function readPed(id) {
-  return jsonParse(localStorage.getItem(pedKey(id)));
+function getSavedState(ed) {
+  return jsonParse(localStorage.getItem(pedKey(ed)));
 }
 
 /**
- * Atomically replaces the stored information about the given proof
- * editor with a JSON encoding of the given value, returning true.
+ * Replaces the stored information about the given proof editor with a
+ * JSON encoding of the given value, returning true.
  */
-function writePed(id, content) {
-  localStorage.setItem(pedKey(id), stringify(content));
+function saveState(ed, content) {
+  localStorage.setItem(pedKey(ed), stringify(content));
 }
 
-/**
- * Removes the proof editor with the given name, returning true unless the
- * name is invalid.
- */
-function rmPed(id) {
-  localStorage.removeItem(pedKey(id));
-}
 
-function allPeds() {
-  const prefix = 'Toy:ped:';
-  const len = prefix.length;
-  const results = [];
-  const pattern = /^Toy:ped:([0-9]+):([0-9]+)/;
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    const match = key.match(pattern);
-    if (match) {
-      const result = jsonParse(localStorage.getItem(key));
-      Object.assign(result, {pid: match[1], id: match[2]});
-      results.push(result);
-    }
-  }
-  return results;
+//// PID state
+
+// For each pair of pid and editor ID in editable state, records
+// the associated document name.
+
+// This is ephemeral state, destroyed when the relevant JS context
+// is unloaded.
+
+function noteState(ed, content) {
+  const key = Toy.format('Toy:pid:{1}:{2}', pid, ed.proofEditorId);
+  localStorage.setItem(key, stringify(content));
 }
 
 /**
  * Returns true if the named document has at least one recorded user
- * that is not the identified editor in the current context, otherwise
- * false.
+ * in some other context, otherwise false.
  */
-function isHeldDoc(name, id) {
-  const editors = allPeds();
-  for (let i = 0; i < editors.length; i++) {
-    const editor = editors[i];
-    if (editor.docName === name &&
-        editor.pid !== pid &&
-        editor.id !== id) {
+function isDocHeldFrom(name, ped) {
+  const pidPattern = /^Toy:pid:(.*?):(.*)/;
+  const id = ped.proofEditorId;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    const match = key.match(pidPattern);
+    const docName = jsonParse(localStorage.getItem(key)).docName;
+    if (match && name === docName &&
+        (pid !== match[1] || id !== match[2])) {
       return true;
     }
   }
@@ -955,7 +947,7 @@ function isHeldDoc(name, id) {
  */
 function releaseThisPid() {
   const keys = [];
-  const prefix = 'Toy:ped:' + pid + ':';
+  const prefix = 'Toy:pid:' + pid + ':';
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key.startsWith(prefix)) {
@@ -1874,12 +1866,11 @@ Toy.checkDocName = checkDocName;
 Toy.readDoc = readDoc;
 Toy.writeDoc = writeDoc;
 Toy.rmDoc = rmDoc;
-Toy.lsPeds = lsPeds;
-Toy.readPed = readPed;
-Toy.writePed = writePed;
-Toy.rmPed = rmPed;
-Toy.allPeds = allPeds;
-Toy.isHeldDoc = isHeldDoc;
+
+Toy.getSavedState = getSavedState;
+Toy.saveState = saveState;
+Toy.noteState = noteState;
+Toy.isDocHeldFrom = isDocHeldFrom;
 // For testing:
 Toy._releaseThisPid = releaseThisPid;
 

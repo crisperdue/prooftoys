@@ -1,4 +1,4 @@
-// Copyright 2011 - 2017 Crispin Perdue.
+// Copyright 2011 - 2018 Crispin Perdue.
 // All rights reserved.
 
 // This file implements rendering of proofs and proof steps.
@@ -176,6 +176,8 @@ var nextProofEditorId = 1;
  * proofDisplay: ProofDisplay for the proof being edited.
  * containerNode: jQuery object for outermost DOM node for the display.
  * stepEditor: StepEditor for the proof being edited.
+ * proofEditorId: identifies this editor for purposes of restoring
+ *   its operating state across visits / page loads.
  * givens: array of boolean terms defining the problem, often
  *   equations (not steps).  Should only be set when the proof is
  *   empty.  Read it as a TermSet.
@@ -188,16 +190,13 @@ var nextProofEditorId = 1;
  *   fraction), announce that the problem is solved.
  */
 function ProofEditor() {
-  var self = this;
+  const self = this;
   self._givens = new TermSet();
   self.givenVars = {};
   self.solutions = [];
   self.standardSolution = true;
   // Set the ID.
-  this.proofEditorId = nextProofEditorId++;
-  // This determines the name of the document in localStorage
-  // that will track the state of the proof.
-  this._documentName = window.location.pathname;
+  self.proofEditorId = window.location.pathname + '#' + nextProofEditorId++;
   @mainDisplay = new ProofDisplay();
   @mainDisplay.proofEditor = self;
   this.proofDisplay = @mainDisplay;
@@ -282,32 +281,15 @@ function ProofEditor() {
   this.setEditable(true);
 
   // Restore editor state.
-  const status = Toy.readPed(self.proofEditorId);
-  if (status) {
-    self._documentName = status.docName;
-  } else {
-    Toy.writePed(self.proofEditorId, {docName: self._documentName});
-  }
+  const state = Toy.getSavedState(self);
+  self.setDocumentName(state
+                       ? state.docName
+                       // By default set the document name according to the URI path,
+                       // and the editor number if that is greater than one.
+                       : this.proofEditorId.replace(/#1$/, ''));
 
-  // Restore proof state.
-  const proofData = Toy.readDoc(self._documentName);
-  if (proofData) {
-    @mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
-  }
-  // If another ProofEditor is already holding the document,
-  // make it read-only.  Otherwise reserve it for this one.
-  if (Toy.isHeldDoc(self._documentName, self.proofEditorId)) {
-    self.setEditable(false);
-  }
-
-  // If the proof has changed, save its state soon.
-  // Current policy is to write out proof state during refresh,
-  // so basically whenever it changes.
-  //
-  // TODO: We also need to track the name of the document associated
-  //   with this editor even when the editor has been unloaded, which
-  //   should use the current pid/ped info, but add loaded/unloaded
-  //   status to determine if a document is currently being held.
+  // Prepare to write out proof state during refresh, so basically
+  // whenever it changes.
   this._refresher = new Toy.Refresher(function() {
       self._updateGivens();
       self.saveProofState();
@@ -326,6 +308,19 @@ function ProofEditor() {
         $statusDisplay.toggleClass('hidden', true);
       }
     });
+
+  // Restore proof state.
+  const proofData = Toy.readDoc(self._documentName);
+  if (proofData) {
+    @mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
+  }
+  // If another ProofEditor is already holding the document,
+  // make it read-only.  Otherwise reserve it for this one.
+  if (Toy.isDocHeldFrom(self._documentName, self)) {
+    self.setEditable(false);
+  }
+
+  // Set up event handlers.
 
   // Handler for the "restore proof" button.  Restores proof state from
   // the text area.
@@ -353,6 +348,20 @@ function ProofEditor() {
     }
   });
 }
+
+ProofEditor.prototype.setDocumentName = function(name) {
+  const self = this;
+  self._documentName = name;
+  // Remember the state of this editor.
+  // TODO: Replace the following with some form of state observation.
+  if (@mainDisplay.isEditable()) {
+    // Only note the state within this context if editing the proof,
+    // so the document can be edited by other editors.  (See
+    // Toy.isDocHeldFrom.)
+    Toy.noteState(self, {docName: self._documentName});
+  }
+  Toy.saveState(self, {docName: self._documentName});
+};
 
 /**
  * Empties the proof and problem statement for a fresh start.
