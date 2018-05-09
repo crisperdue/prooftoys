@@ -199,25 +199,10 @@ function ProofEditor() {
   self.proofEditorId = window.location.pathname + '#' + nextProofEditorId++;
   @mainDisplay = new ProofDisplay();
   @mainDisplay.proofEditor = self;
-  this.proofDisplay = @mainDisplay;
-  this.steps = @mainDisplay.steps;
-  var stateDisplayHtml =
-    '<div class="proofStateDisplay hidden"\n' +
-    ' style="padding: 1em; border: 2px solid #aaf">\n' +
-    '<p style="margin: 0em">\n' +
-    '<b>Proof state</b>\n' +
-    '<p>\n' +
-    'The text area below contains the current state of the proof in textual\n' +
-    'form.  You can save the state of your work by copying this text into a\n' +
-    'document of your choice.  To restore the state at some time in the\n' +
-    'future, paste it back then press "Restore proof".\n' +
-    '<p>\n' +
-    '<input class=restoreProof type=button value="Restore proof">\n' +
-    '<input class=hideProofState type=button value="Close"><br>\n' +
-    '<textarea class=proofStateArea rows=20></textarea>\n' +
-    '</div>\n';
-  this._stateDisplay = $(stateDisplayHtml);
-  this._stateArea = dom(this._stateDisplay.find('.proofStateArea'));
+  self.proofDisplay = @mainDisplay;
+  self.steps = @mainDisplay.steps;
+  self._stateDisplay = $buildProofStateDisplay();
+  self._stateArea = dom(self._stateDisplay.find('.proofStateArea'));
   // The proofButtons class is used in some examples.
   @proofButtons = $('<div class=proofButtons/>');
   var saveRestore =
@@ -324,7 +309,6 @@ function ProofEditor() {
 
   // Handler for the "restore proof" button.  Restores proof state from
   // the text area.
-  // TODO: This also needs to set the editor's document name.
   function restoreProof() {
     Toy.withErrorReporting(function() {
         self.restoreState();
@@ -347,6 +331,31 @@ function ProofEditor() {
       stepEditor.$proofErrors.hide();
     }
   });
+}
+
+/**
+ * This builds and returns a jQuery object containing
+ * the full content of the proof state display box
+ * for Save/Restore of proofs.
+ */
+function $buildProofStateDisplay() {
+  const stateDisplayHtml =
+    '<div class="proofStateDisplay hidden"\n' +
+    ' style="padding: 1em; border: 2px solid #aaf">\n' +
+    '<p style="margin: 0em">\n' +
+    '<b>Proof state</b>\n' +
+    '<p>\n' +
+    'The text area below contains the current state of the proof in textual\n' +
+    'form.  You can save the state of your work by copying this text into a\n' +
+    'document of your choice.  To restore the state at some time in the\n' +
+    'future, paste it back then press "Restore proof".\n' +
+    '<p>\n' +
+    '<input class=restoreProof type=button value="Restore proof">\n' +
+    '<input class=hideProofState type=button value="Close"><br>\n' +
+    '<textarea class=proofStateArea rows=20></textarea>\n' +
+    '</div>\n';
+  let $html = $(stateDisplayHtml);
+  return $html;
 }
 
 ProofEditor.prototype.setDocumentName = function(name) {
