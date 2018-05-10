@@ -19,11 +19,11 @@ h1 {
 h2 {
   font-size: 1.5em;
   font-weight: bold;
-  margin: .4em 0px 1em;
 }
 
 h2, h3 {
-  margin-bottom: .5em;
+    margin-top: .4em;
+    margin-bottom: .5em;
 }
 
 h4 {
@@ -50,6 +50,26 @@ p {
   margin: 1em 0px;
 }
 
+.center {
+    text-align: center;
+}
+
+input, button, select {
+    font-size: 80%;
+}
+
+input[type=button], button {
+    background-color: #ddf;
+    border-radius: 6px;
+    padding: 3px 12px;
+    margin: 0 5px;
+}
+
+input.saveAs {
+    padding: 4px;
+    border: 1px solid gray;
+}
+
 .italic {
   font-style: italic;
 }
@@ -68,6 +88,7 @@ sub, sup {
   font-size: 70%;
 }
 
+/* Generic table style defaults */
 table {
   border-collapse: separate;
   empty-cells: show;
@@ -93,6 +114,26 @@ code {
   white-space: pre;
 }
 
+.float {
+    float: right;
+}
+
+/* This class with "hidden" provides a cheap way to animate appearance */
+/* and disappearance. */
+/* Customize with a specific max-height. */
+.transHeight {
+    max-height: 1000px;
+    transition: max-height 0.25s ease-in;
+    overflow: hidden;
+}
+
+/* Transitioning "height" would only work with explicit height value. */
+.transHeight.hidden {
+    max-height: 0;
+    display: block;
+    transition: max-height 0.25s ease-out;
+}
+
 /* Math-oriented text */
 .math, .mathColor, s {
   font-family: STIXGeneral, Times, serif;
@@ -100,6 +141,21 @@ code {
      within math text. */
   font-style: normal;
   white-space: nowrap;
+}
+
+/* Transition by fading.  The element always occupies space. */
+/* Use jQuery.fadeToggle to get display: none. */
+.transFade {
+    visibility: visible;
+    opacity: 1;
+    transition: visibility 0s, opacity 0.5s ease;
+}
+
+.transFade.hidden {
+    visibility: hidden;
+    display: block;
+    opacity: 0;
+    transition-delay: .5s, 0s;
 }
 
 /* Math text in documents */
@@ -238,6 +294,10 @@ span#leftNav {
 
 /* Proof displays -- proof.js */
 
+.proofEditor {
+    position: relative;
+}
+
 /* Header line and comments for display. */
 .proofHeader {
   margin: 0em 0em .4em .5em;
@@ -260,7 +320,8 @@ span#leftNav {
 }
 
 .proofDisplay.editable {
-    margin-bottom: .5em;
+    /* This allows room for display of a next-step suggestion. */
+    margin-bottom: 2.5em;
 }
 
 /* The first level of subproof needs extra indent in the case
@@ -549,9 +610,8 @@ span#leftNav {
 /* The box with info about progress toward solution(s)
  */
 .solutionStatus {
-    margin: .2em 0 .2em 2em;
-    min-height: 4em;
-}
+    margin: .2em 0 1em 2em;
+ }
 
 .solutionStatusDisplay {
     display: inline-block;
@@ -830,15 +890,8 @@ span.stepRef {
     position: relative;
 }
 
-/* Hidden rule menu is invisible, but keeps its space. */
-.ruleMenu.hidden {
-    display: block;
-    visibility: hidden;
-}
-
 .ruleMenu .scrollingMenu {
   overflow-y: auto;
-  height: 20em;
   border: 1px solid #eee;
   padding: 2px;
 }
@@ -846,6 +899,16 @@ span.stepRef {
 .ruleMenu .rulesItems {
     display: inline-block;
 }
+
+.proofPreview {
+    position: absolute;
+    left: .5em;
+    right: .2em;
+    padding: 1em;
+    border: 1px solid silver;
+    background-color: AliceBlue;
+}
+
 
 /* Other */
 
@@ -907,19 +970,88 @@ input.varName, input.step, input.equation, input.implication {
   border-color: gray;
 }
 
-/* Proof state display */
+/* Worksheet-related controls */
 
-.proofStateDisplay {
-    padding: 1em;
-    border: 2px solid #aaf;
+/* Outermost of worksheet containers, without border or padding. */
+.wksControlsOuter {
+    z-index: 1;
+    position: absolute;
+    margin-top: 4px;
+    left: 0;
+    right: 0;
+    background-color: AliceBlue;
+}
+
+/* Main sections of the worksheet controls are children of this. */
+.wksControls {
+    position: relative;
+    padding: 0em .5em 1em;
+    border: 1px solid #aaf;
+    box-shadow: 2px 2px 2px #ccc;
+}
+
+.wksControls .previewButton {
+    float: right;
+}
+
+.wksInputs > div {
+    margin-top: 1em;
+}
+
+.wksControlsOuter .openersArea,
+.wksControlsOuter .deletersArea {
+    position: absolute;
+    background-color: AliceBlue;
+    left: 1em;
+    right: 1em;
+    padding: 0 1em;
+    border: 1px solid #aaf;
+}
+
+.wksControlsOuter .docListTitle {
+    font-weight: bold;
+    margin-top: .7em;
+    margin-bottom: .8em;
+}
+
+.wksControlsOuter .docList {
+    vertical-align: top;
+    padding: .5em;
+}
+
+.wksControlsOuter .docName {
+    font-size: 90%;
+    padding: 1px 5px;
+    border: 2px solid skyblue;
+    border-radius: 5px;
+    cursor: default;
+}
+
+.wksControlsOuter .docName.hover {
+    background-color: #eef /* or perhaps AliceBlue */;
+}
+
+.wksTitle {
+    font-weight: bold;
+    margin: .8em 0;
 }
 
 textarea.proofStateArea {
     width: 95%;
-    margin: 1em 0em;
+    margin-top: 1em;
 }
 
-/* At the end to be as potent as possible.  */
+.controlsBottom {
+    /* position relative without offset serves as base for children */
+    /* with absolute position */
+    position: relative;
+}
+
+.proofButtons {
+    margin-top: 1em;
+}
+
+/* At the bottom of the file to be as potent as possible.  */
 
 /* Not displayed */
 .hidden {
