@@ -823,10 +823,11 @@ let pid = '' + Math.floor(Math.random() * 1e15);
 
 /**
  * Returns true or false depending on whether the given string is a
- * valid document name.
+ * valid document name.  Currently an alphanumeric followed by
+ * zero or more of alphanumeric or "-./_ ".
  */
 function checkDocName(name) {
-  const result = name.match(/^([-./a-zA-Z0-9_ ])+$/);
+  const result = name.match(/^([a-zA-Z0-9][-./a-zA-Z0-9_ ]*)$/);
   if (!result) {
     console.warn('Bad document name:', name);
   }
@@ -918,6 +919,7 @@ function saveState(ed, content) {
 // This is ephemeral state, destroyed when the relevant JS context
 // is unloaded.
 
+// TODO: Rename to noteStatus, also saveStatus, etc..
 function noteState(ed, content) {
   const key = Toy.format('Toy:pid:{1}:{2}', pid, ed.proofEditorId);
   localStorage.setItem(key, stringify(content));
