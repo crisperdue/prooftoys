@@ -1866,6 +1866,7 @@ Toy.checkDocName = checkDocName;
 Toy.readDoc = readDoc;
 Toy.writeDoc = writeDoc;
 Toy.rmDoc = rmDoc;
+Toy.lsDocs = lsDocs;
 
 Toy.getSavedState = getSavedState;
 Toy.saveState = saveState;
