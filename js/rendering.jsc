@@ -347,15 +347,49 @@ function ProofEditor() {
       $(self._wksControls).find('.proofPreview').addClass('hidden');
     });
 
-  // Clicks in arbitrary areas of the document remove any selection.
-  // And clear any proof errors field.
+  // Returns a boolean indicating whether the given jQuery node
+  // is within an element matching the selector.
+  function within($node, selector) {
+    return $node.closest(selector).length > 0;
+  }
+  // Click in most areas of the document removes any step or expr
+  // selection.
   $(document).on('click', function(event) {
-    if ($(event.target).closest('.proofEditor').length == 0) {
-      // Not in a ProofDisplay's area.
-      @mainDisplay.deselectStep();
-      stepEditor.$proofErrors.hide();
-    }
-  });
+      const $target = $(event.target);
+      // TODO: Consider setting up click handlers for elements such as
+      //   these so they add information to the event indicating for
+      //   example "<editor> noDeselect" or below "<wksControls>
+      //   noDismiss".  And check that data in code like this here.
+      //
+      // The following areas are intended targets for clicks and have
+      // click handlers, so we prefer not to remove the selection in
+      // these areas at this level.
+      //   .stepAndNum is the main container for all exprs.
+      //   .ruleMenu is the rules menu
+      //   .above is the display of popups for quick access to rewrites
+      //   .ruleName.link pops subproof displays up and down
+      //   .input and .button are typical form controls
+      //   .wksControlsOuter is the main box for worksheet controls
+      const selectors = ('.stepAndNum, .ruleMenu, .above, ' +
+                         '.ruleName.link, .inferenceDisplay, ' +
+                         '.wksControlsOuter, input, button');
+      // Mousedown in most places removes any step or expr selection.
+      if (!within($target, selectors)) {
+        @mainDisplay.deselectStep();
+      }
+    });
+  // Click in most areas of the document hides the workspace controls.
+  $(document).on('click', function(event) {
+      const $target = $(event.target);
+      if (!within($target, '.wksControlsOuter, .proofButtons')) {
+        self._wksControls.addClass('hidden');
+      }
+      if (!within($target, '.proofErrors')) {
+        // Similarly, most clicks hide the proof errors display.
+        // TODO: Toggle "hidden" rather than calling "hide".
+        self.stepEditor.$proofErrors.hide();
+      }
+    });
 }
 
 /**

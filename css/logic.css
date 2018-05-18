@@ -374,11 +374,11 @@ span#leftNav {
 
 .proofStep.stepSuggestion {
     position: absolute;
+    color: #aaa;
     background-color: #eef;
-    border: .5px solid silver;
+    border: .5px solid #bbf;
     /* Try to help situations where this overlaps the menu. */
     z-index: 1;
-    opacity: .75;
     /* This node is transparent to mouse events. */
     pointer-events: none;
 }
@@ -890,6 +890,11 @@ span.stepRef {
     position: relative;
 }
 
+.ruleMenuTitle {
+    font-family: StixGeneral, times, serif;
+    font-weight: bold;
+}
+
 .ruleMenu .scrollingMenu {
   overflow-y: auto;
   border: 1px solid #eee;
@@ -1048,7 +1053,7 @@ textarea.proofStateArea {
 }
 
 .proofButtons {
-    margin-top: 1em;
+    margin-top: .5em;
 }
 
 /* At the bottom of the file to be as potent as possible.  */

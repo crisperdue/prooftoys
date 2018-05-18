@@ -1214,7 +1214,8 @@ function RuleMenu(stepEditor) {
   self.hovering = null;
 
   // Rule chooser:
-  var $node = $('<div class=ruleMenu><b>Actions to try:</b></div>');
+  var $node = ($('<div class=ruleMenu>')
+               .append('<div class=ruleMenuTitle>Actions to try:</div>'));
   self.$node = $node;
   self.$items = $('<div class=rulesItems/>');
   // An intermediate DIV.  This one is set to have vertical scrolling,
