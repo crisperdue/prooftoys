@@ -2987,19 +2987,18 @@ function $buildWksControls(editor) {
   $proofPreview = $(stateDisplayHtml);
   $bottom.append($proofPreview);
 
-  // Any of these that are visible before one of the worksheet
-  // controls buttons is pressed should be hidden at that time.
-  const $exclusives = ($saveAs
+  // Elements to be hidden when the display is reset.
+  const $resettables = ($saveAs
                        .add($copyTo)
                        .add($message)
                        .add($openersArea)
                        .add($deletersArea)
                        .add($proofPreview));
 
-  // Closes all of the "exclusives" and clears the content of the text
+  // Closes all of the "resettables" and clears the content of the text
   // fields in the worksheet control panel.
   function resetDisplay() {
-    $exclusives.toggleClass('hidden', true);
+    $resettables.toggleClass('hidden', true);
     $saveAs.find('.input').val('');
     $copyTo.find('.input').val('');
   }
