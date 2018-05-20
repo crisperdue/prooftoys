@@ -393,249 +393,6 @@ function ProofEditor() {
 }
 
 /**
- * This builds and returns a jQuery object containing
- * the full content of the workspace-related controls.
- */
-function $buildWksControls(editor) {
-  const $outermost = $('<div class="wksControlsOuter transFade hidden">');
-  const $controls = $('<div class="wksControls">');
-  $outermost.append($controls);
-  // This next is just a container for absolutely-positioned
-  // elements.
-  $bottom = $('<div class=controlsBottom>');
-  $outermost.append($bottom);
-
-  $controls.append('<div class=wksTitle>' +
-                   'Current worksheet is "<span class=wksName></span>"</div>');
-  $buttons = $('<div class=wksButtons>');
-  $controls.append($buttons);
-
-  $buttons.append(makeButton('Open ... ', 'openButton'));
-  $buttons.append(makeButton('Save as ... ', 'saveAsButton'));
-  $buttons.append(makeButton('Copy to ... ', 'copyToButton'));
-  $buttons.append(makeButton('Delete ... ', 'deleteButton'));
-  $buttons.append(makeButton('View as text', 'previewButton'));
-
-  $inputs = $('<div class=wksInputs>');
-  $controls.append($inputs);
-
-  function makeEntryField(prefix, classes, action) {
-    const html =
-      '<div class="{2} hidden form">{1} ' +
-      '<input type=text class=input size=30>' +
-      '&nbsp;<input type=button class=go value="Go">' +
-      '</div>';
-    return $(Toy.format(html, prefix, classes));
-  }
-  const $saveAs = makeEntryField('Save worksheet as', 'saveAs');
-  $inputs.append($saveAs);
-  const $copyTo = makeEntryField('Copy worksheet to', 'copyTo');
-  $inputs.append($copyTo);
-  const $message = $('<div class="wksMessage hidden">');
-  $inputs.append($message);
-
-  const $openersArea = $('<div class="openersArea hidden">');
-  $bottom.append($openersArea);
-
-  const $deletersArea = $('<div class="deletersArea hidden">');
-  $bottom.append($deletersArea);
-
-  const stateDisplayHtml =
-    '<div class="proofPreview transFade hidden">\n' +
-    '<p style="text-align:center; margin-top:0">\n' +
-    '<b>Proof State</b>\n' +
-    '<p>\n' +
-    'The text area below contains the current state of the proof in textual\n' +
-    'form.  You can save the state of your work by copying this text into a\n' +
-    'document of your choice.  To restore the state at some time in the\n' +
-    'future, paste it back then press "Restore proof".\n' +
-    '<p style="margin-bottom: 0">\n' +
-    '<input class=restoreProof type=button value="Restore proof">\n' +
-    '<input class=hideProofState type=button value="Close"><br>\n' +
-    '<textarea class=proofStateArea rows=20></textarea>\n' +
-    '</div>\n';
-  $proofPreview = $(stateDisplayHtml);
-  $bottom.append($proofPreview);
-
-  // Any of these that are visible before one of the worksheet
-  // controls buttons is pressed should be hidden at that time.
-  const $exclusives = ($saveAs
-                       .add($copyTo)
-                       .add($message)
-                       .add($openersArea)
-                       .add($deletersArea)
-                       .add($proofPreview));
-
-  // Closes all of the "exclusives" and clears the content of the text
-  // fields in the worksheet control panel.
-  function resetDisplay() {
-    $exclusives.toggleClass('hidden', true);
-    $saveAs.find('.input').val('');
-    $copyTo.find('.input').val('');
-  }
-
-  // Toggles the display in the given area, hiding all of the other
-  // exclusive displays to keep the displays tidy and help keep the
-  // user focused.  This is implemented as a toggle especially to
-  // support the toggling worksheet buttons.  If it unhides an area,
-  // attempts to focus on a node with class "input", for the benefit
-  // of areas with a text field.
-  function toggleControl($area) {
-    const wantHidden = !$area.hasClass('hidden');
-    resetDisplay();
-    $area.toggleClass('hidden', wantHidden);
-    if (!$area.hasClass('hidden')) {
-      // :visible is not needed here, but it would be enough, without
-      // the "hidden" check if we guaranteed that the area would be
-      // hidden using display:none.
-      $area.find('input:text:visible:first').focus();
-    }
-  }
-
-  // Toggles the document list display in the given area,
-  // presumably either $openersArea or $deletersArea,
-  // hiding all the other 
-  function toggleDocs($area) {
-    toggleControl($area);
-    if (!$area.hasClass('hidden')) {
-      showDocs($area);
-    }
-  }
-
-  // Renders a list of all documents within the .docList portion of
-  // the given area, removing any prior content.  Omits the current
-  // document.
-  function showDocs($area) {
-    $area.empty();
-    const $docList = $('<div class=docList>');
-    $area.append($docList);
-    // Then add back names of all documents.
-    Toy.lsDocs().sort().forEach(function(name) {
-        if (name === editor._documentName) {
-          return;
-        }
-        const $div = $('<div class=docName>');
-        $div.append(name);
-        $docList.append($div);
-      });
-  }
-
-  // Checks whether the given name is valid as a worksheet name,
-  // returning a boolean indication.  If the name is not valid,
-  // also sets a message about the issue.
-  function checkName(name) {
-    if (Toy.checkDocName(name)) {
-      return true;
-    } else {
-      $message.toggleClass('hidden', false);
-      $message.text('Invalid worksheet name: "' + name + '"');
-      return false;
-    }
-  }
-
-  // Event handlers
-
-  // Hovers in the openers and deleters areas.
-  $openersArea.on('mouseenter mouseleave', '.docName', function(event) {
-      $(this).toggleClass('hover');
-    });
-   $deletersArea.on('mouseenter mouseleave', '.docName', function(event) {
-       $(this).toggleClass('hover');
-     });
-
-   // Buttons that open up the ultimate action UIs.
-  $controls.find('.openButton').on('click', function() {
-      toggleDocs($openersArea);
-    });
-  $controls.find('.saveAsButton').on('click', function() {
-      toggleControl($saveAs);
-    });
-  $controls.find('.copyToButton').on('click', function() {
-      toggleControl($copyTo);
-    });
-  $controls.find('.deleteButton').on('click', function() {
-      toggleDocs($deletersArea);
-    });
-
-  // This opens up the proof state "preview".
-  $controls.find('.previewButton')
-    .on('click', function() {
-        toggleControl($proofPreview);
-        if ($proofPreview.hasClass('hidden')) {
-          $outermost.find('.proofStateArea').select();
-        }
-      });
-
-  // Main action functions are in this section.
-  $saveAs.on('click', '.go', function() {
-      const name = $($(this).closest('div.form')).find('.input').val();
-      if (checkName(name)) {
-        editor.setDocumentName(name);
-        Toy.writeDoc(name, {proofState: editor.getStateString()});
-        $saveAs.toggleClass('hidden', true);
-        // TODO: Move this line into setDocumentName or an observer.
-        $controls.find('.wksName').text(editor.getDocumentName());
-      }
-    });
-  $copyTo.on('click', '.go', function() {
-      const name = $($(this).closest('div.form')).find('.input').val();
-      if (checkName(name)) {
-        Toy.writeDoc(name, {proofState: editor.getStateString()});
-        $copyTo.toggleClass('hidden', true);
-      }
-    });
-  $openersArea.on('click', '.docName', function() {
-      const text = $(this).text();
-      const success = editor.openDoc(text);
-      if (success) {
-        // In principle this would be triggered by observation of
-        // of the document name.
-        $controls.find('.wksName').text(editor.getDocumentName());
-        $openersArea.toggleClass('hidden', true);
-      } else {
-        window.alert('Could not open worksheet ' + text);
-      }
-    });
-  $deletersArea.on('click', '.docName', function() {
-      const name = $(this).text();
-      if (name === this._documentName) {
-        window.alert('Cannot delete the current document.');
-        return;
-      }
-      const msg = 'Do you really want to delete ' + name + '?';
-      if (window.confirm(msg)) {
-        Toy.rmDoc(name);
-        $deletersArea.toggleClass('hidden', true);
-      }
-    });
-
-  // Responses to pressing "enter" in an action text field:
-  $copyTo.on('keydown', function(event) {
-      if (event.keyCode === 13) {
-        $copyTo.find('.go').trigger('click');
-      }        
-    });
-  $saveAs.on('keydown', function(event) {
-      if (event.keyCode === 13) {
-        $saveAs.find('.go').trigger('click');
-      }        
-    });
-
-  // "Input" handlers to clear the message whenever a
-  // text field with document name changes its value.
-  $copyTo.on('input', function() {
-      $message.toggleClass('hidden', true);
-      $message.empty();
-    });
-  $saveAs.on('input', function() {
-      $message.toggleClass('hidden', true);
-      $message.empty();
-    });
-
-  return $outermost;
-}
-
-/**
  * Sets the name of this editor's worksheet, and does associated
  * bookkeeping.  This does not load or save any proof state.  (In most
  * use cases one or the other should also be done.)
@@ -3161,6 +2918,252 @@ var hoverHandlers = {
                  function(expr) { action(expr.node, 'new'); });
   }
 };
+
+
+//// WORKSHEET MANAGEMENT UI
+
+/**
+ * This builds and returns a jQuery object containing
+ * the full content of the workspace-related controls.
+ */
+function $buildWksControls(editor) {
+  const $outermost = $('<div class="wksControlsOuter transFade hidden">');
+  const $controls = $('<div class="wksControls">');
+  $outermost.append($controls);
+  // This next is just a container for absolutely-positioned
+  // elements.
+  $bottom = $('<div class=controlsBottom>');
+  $outermost.append($bottom);
+
+  $controls.append('<div class=wksTitle>' +
+                   'Current worksheet is "<span class=wksName></span>"</div>');
+  $buttons = $('<div class=wksButtons>');
+  $controls.append($buttons);
+
+  $buttons.append(makeButton('Open ... ', 'openButton'));
+  $buttons.append(makeButton('Save as ... ', 'saveAsButton'));
+  $buttons.append(makeButton('Copy to ... ', 'copyToButton'));
+  $buttons.append(makeButton('Delete ... ', 'deleteButton'));
+  $buttons.append(makeButton('View as text', 'previewButton'));
+
+  $inputs = $('<div class=wksInputs>');
+  $controls.append($inputs);
+
+  function makeEntryField(prefix, classes, action) {
+    const html =
+      '<div class="{2} hidden form">{1} ' +
+      '<input type=text class=input size=30>' +
+      '&nbsp;<input type=button class=go value="Go">' +
+      '</div>';
+    return $(Toy.format(html, prefix, classes));
+  }
+  const $saveAs = makeEntryField('Save worksheet as', 'saveAs');
+  $inputs.append($saveAs);
+  const $copyTo = makeEntryField('Copy worksheet to', 'copyTo');
+  $inputs.append($copyTo);
+  const $message = $('<div class="wksMessage hidden">');
+  $inputs.append($message);
+
+  const $openersArea = $('<div class="openersArea hidden">');
+  $bottom.append($openersArea);
+
+  const $deletersArea = $('<div class="deletersArea hidden">');
+  $bottom.append($deletersArea);
+
+  const stateDisplayHtml =
+    '<div class="proofPreview transFade hidden">\n' +
+    '<p style="text-align:center; margin-top:0">\n' +
+    '<b>Proof State</b>\n' +
+    '<p>\n' +
+    'The text area below contains the current state of the proof in textual\n' +
+    'form.  You can save the state of your work by copying this text into a\n' +
+    'document of your choice.  To restore the state at some time in the\n' +
+    'future, paste it back then press "Restore proof".\n' +
+    '<p style="margin-bottom: 0">\n' +
+    '<input class=restoreProof type=button value="Restore proof">\n' +
+    '<input class=hideProofState type=button value="Close"><br>\n' +
+    '<textarea class=proofStateArea rows=20></textarea>\n' +
+    '</div>\n';
+  $proofPreview = $(stateDisplayHtml);
+  $bottom.append($proofPreview);
+
+  // Any of these that are visible before one of the worksheet
+  // controls buttons is pressed should be hidden at that time.
+  const $exclusives = ($saveAs
+                       .add($copyTo)
+                       .add($message)
+                       .add($openersArea)
+                       .add($deletersArea)
+                       .add($proofPreview));
+
+  // Closes all of the "exclusives" and clears the content of the text
+  // fields in the worksheet control panel.
+  function resetDisplay() {
+    $exclusives.toggleClass('hidden', true);
+    $saveAs.find('.input').val('');
+    $copyTo.find('.input').val('');
+  }
+
+  // Toggles the display in the given area, hiding all of the other
+  // exclusive displays to keep the displays tidy and help keep the
+  // user focused.  This is implemented as a toggle especially to
+  // support the toggling worksheet buttons.  If it unhides an area,
+  // attempts to focus on a node with class "input", for the benefit
+  // of areas with a text field.
+  function toggleControl($area) {
+    const wantHidden = !$area.hasClass('hidden');
+    resetDisplay();
+    $area.toggleClass('hidden', wantHidden);
+    if (!$area.hasClass('hidden')) {
+      // :visible is not needed here, but it would be enough, without
+      // the "hidden" check if we guaranteed that the area would be
+      // hidden using display:none.
+      $area.find('input:text:visible:first').focus();
+    }
+  }
+
+  // Toggles the document list display in the given area,
+  // presumably either $openersArea or $deletersArea,
+  // hiding all the other 
+  function toggleDocs($area) {
+    toggleControl($area);
+    if (!$area.hasClass('hidden')) {
+      showDocs($area);
+    }
+  }
+
+  // Renders a list of all documents within the .docList portion of
+  // the given area, removing any prior content.  Omits the current
+  // document.
+  function showDocs($area) {
+    $area.empty();
+    const $docList = $('<div class=docList>');
+    $area.append($docList);
+    // Then add back names of all documents.
+    Toy.lsDocs().sort().forEach(function(name) {
+        if (name === editor._documentName) {
+          return;
+        }
+        const $div = $('<div class=docName>');
+        $div.append(name);
+        $docList.append($div);
+      });
+  }
+
+  // Checks whether the given name is valid as a worksheet name,
+  // returning a boolean indication.  If the name is not valid,
+  // also sets a message about the issue.
+  function checkName(name) {
+    if (Toy.checkDocName(name)) {
+      return true;
+    } else {
+      $message.toggleClass('hidden', false);
+      $message.text('Invalid worksheet name: "' + name + '"');
+      return false;
+    }
+  }
+
+  // Event handlers
+
+  // Hovers in the openers and deleters areas.
+  $openersArea.on('mouseenter mouseleave', '.docName', function(event) {
+      $(this).toggleClass('hover');
+    });
+   $deletersArea.on('mouseenter mouseleave', '.docName', function(event) {
+       $(this).toggleClass('hover');
+     });
+
+   // Buttons that open up the ultimate action UIs.
+  $controls.find('.openButton').on('click', function() {
+      toggleDocs($openersArea);
+    });
+  $controls.find('.saveAsButton').on('click', function() {
+      toggleControl($saveAs);
+    });
+  $controls.find('.copyToButton').on('click', function() {
+      toggleControl($copyTo);
+    });
+  $controls.find('.deleteButton').on('click', function() {
+      toggleDocs($deletersArea);
+    });
+
+  // This opens up the proof state "preview".
+  $controls.find('.previewButton')
+    .on('click', function() {
+        toggleControl($proofPreview);
+        if ($proofPreview.hasClass('hidden')) {
+          $outermost.find('.proofStateArea').select();
+        }
+      });
+
+  // Main action functions are in this section.
+  $saveAs.on('click', '.go', function() {
+      const name = $($(this).closest('div.form')).find('.input').val();
+      if (checkName(name)) {
+        editor.setDocumentName(name);
+        Toy.writeDoc(name, {proofState: editor.getStateString()});
+        $saveAs.toggleClass('hidden', true);
+        // TODO: Move this line into setDocumentName or an observer.
+        $controls.find('.wksName').text(editor.getDocumentName());
+      }
+    });
+  $copyTo.on('click', '.go', function() {
+      const name = $($(this).closest('div.form')).find('.input').val();
+      if (checkName(name)) {
+        Toy.writeDoc(name, {proofState: editor.getStateString()});
+        $copyTo.toggleClass('hidden', true);
+      }
+    });
+  $openersArea.on('click', '.docName', function() {
+      const text = $(this).text();
+      const success = editor.openDoc(text);
+      if (success) {
+        // In principle this would be triggered by observation of
+        // of the document name.
+        $controls.find('.wksName').text(editor.getDocumentName());
+        $openersArea.toggleClass('hidden', true);
+      } else {
+        window.alert('Could not open worksheet ' + text);
+      }
+    });
+  $deletersArea.on('click', '.docName', function() {
+      const name = $(this).text();
+      if (name === this._documentName) {
+        window.alert('Cannot delete the current document.');
+        return;
+      }
+      const msg = 'Do you really want to delete ' + name + '?';
+      if (window.confirm(msg)) {
+        Toy.rmDoc(name);
+        $deletersArea.toggleClass('hidden', true);
+      }
+    });
+
+  // Responses to pressing "enter" in an action text field:
+  $copyTo.on('keydown', function(event) {
+      if (event.keyCode === 13) {
+        $copyTo.find('.go').trigger('click');
+      }        
+    });
+  $saveAs.on('keydown', function(event) {
+      if (event.keyCode === 13) {
+        $saveAs.find('.go').trigger('click');
+      }        
+    });
+
+  // "Input" handlers to clear the message whenever a
+  // text field with document name changes its value.
+  $copyTo.on('input', function() {
+      $message.toggleClass('hidden', true);
+      $message.empty();
+    });
+  $saveAs.on('input', function() {
+      $message.toggleClass('hidden', true);
+      $message.empty();
+    });
+
+  return $outermost;
+}
 
 
 //// OTHER UTILITY FUNCTIONS
