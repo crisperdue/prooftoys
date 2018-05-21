@@ -3023,7 +3023,7 @@ function $buildWksControls(editor) {
 
   // Toggles the document list display in the given area,
   // presumably either $openersArea or $deletersArea,
-  // hiding all the other 
+  // hiding all the other controls.
   function toggleDocs($area) {
     toggleControl($area);
     if (!$area.hasClass('hidden')) {
@@ -3101,7 +3101,8 @@ function $buildWksControls(editor) {
       if (checkName(name)) {
         editor.setDocumentName(name);
         Toy.writeDoc(name, {proofState: editor.getStateString()});
-        $saveAs.toggleClass('hidden', true);
+        $message.text('Saved worksheet as "' + name + '"');
+        toggleControl($message);
         // TODO: Move this line into setDocumentName or an observer.
         $controls.find('.wksName').text(editor.getDocumentName());
       }
@@ -3110,7 +3111,8 @@ function $buildWksControls(editor) {
       const name = $($(this).closest('div.form')).find('.input').val();
       if (checkName(name)) {
         Toy.writeDoc(name, {proofState: editor.getStateString()});
-        $copyTo.toggleClass('hidden', true);
+        $message.text('Copied worksheet to "' + name + '"');
+        toggleControl($message);
       }
     });
   $openersArea.on('click', '.docName', function() {
@@ -3128,14 +3130,12 @@ function $buildWksControls(editor) {
   $deletersArea.on('click', '.docName', function() {
       const name = $(this).text();
       if (name === this._documentName) {
-        window.alert('Cannot delete the current document.');
-        return;
-      }
-      const msg = 'Do you really want to delete ' + name + '?';
-      if (window.confirm(msg)) {
-        Toy.rmDoc(name);
-        $deletersArea.toggleClass('hidden', true);
-      }
+        $message.text('Cannot delete the current document.');
+      } else {
+          Toy.rmDoc(name);
+          $message.text('Deleted "' + name + '"');
+          toggleControl($message);
+        }
     });
 
   // Responses to pressing "enter" in an action text field:
