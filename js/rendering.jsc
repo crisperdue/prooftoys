@@ -211,8 +211,7 @@ function ProofEditor() {
   @mainDisplay.proofEditor = self;
   self.proofDisplay = @mainDisplay;
   self.steps = @mainDisplay.steps;
-  self._wksControls = $buildWksControls(self);
-  self._stateArea = dom(self._wksControls.find('.proofStateArea'));
+  self._wksControls = buildWksControls(self);
 
   // Add the group of buttons.
   // The proofButtons class is used in some examples.
@@ -231,24 +230,24 @@ function ProofEditor() {
                    '<option value=all>all available' +
                    '</select>');
   const another = '<button class=tryAnother>Try a different problem ... </button>';
-  const wksActions =
+  const $wksButton =
     // Toggling the proof state display visibility with a button.
     $('<input type=button value="Worksheets ... ">');
 
   @proofButtons.append(another);
   @proofButtons.append(options);
-  @proofButtons.append(wksActions);
+  @proofButtons.append($wksButton);
   @proofButtons.append(clearProof);
 
   self.$rulesMode = @proofButtons.find('.rulesToShow');
   var stepEditor = new Toy.StepEditor(this);
   self.stepEditor = stepEditor;
 
-  wksActions.on('click', function() {
-      let $wksControls = self._wksControls;
-      $wksControls.toggleClass('hidden');
-      // TODO: Move this line into setDocumentName or an observer.
-      $wksControls.find('.wksName').text(self.getDocumentName());
+  $wksButton.on('click', function() {
+      let wksControls = self._wksControls;
+      wksControls.toggle();
+      // TODO: Move this action into setDocumentName or an observer.
+      wksControls.setDocName(self.getDocumentName());
     });
   clearProof.on('click', function() {
       if (window.confirm('Do you really want to clear the proof?')) {
@@ -281,7 +280,7 @@ function ProofEditor() {
     .append(self.$status)
     .append(stepEditor.$node)
     .append(@proofButtons)
-    .append(this._wksControls)
+    .append(this._wksControls.node)
     .append(ruleStats);
   this.setEditable(true);
 
@@ -332,21 +331,6 @@ function ProofEditor() {
 
   // Set up event handlers.
 
-  // Handler for the "restore proof" button.  Restores proof state from
-  // the text area.
-  function restoreProof() {
-    Toy.withErrorReporting(function() {
-        self.restoreState();
-        self._wksControls.toggleClass('hidden', true);
-      });
-  }
-  this._wksControls.find('.restoreProof').on('click', restoreProof);
-
-  // Closing the state display:
-  this._wksControls.find('.hideProofState').on('click', function() {
-      $(self._wksControls).find('.proofPreview').addClass('hidden');
-    });
-
   // Returns a boolean indicating whether the given jQuery node
   // is within an element matching the selector.
   function within($node, selector) {
@@ -382,7 +366,7 @@ function ProofEditor() {
   $(document).on('click', function(event) {
       const $target = $(event.target);
       if (!within($target, '.wksControlsOuter, .proofButtons')) {
-        self._wksControls.addClass('hidden');
+        self._wksControls.hide();
       }
       if (!within($target, '.proofErrors')) {
         // Similarly, most clicks hide the proof errors display.
@@ -539,7 +523,7 @@ ProofEditor.prototype.getStateString = @() {
  */
 ProofEditor.prototype.setStateFromString = @(encoded) {
   // TODO: Rename to setProofFromString.
-  var steps = Toy.decodeSteps(encoded);
+  var steps = encoded ? Toy.decodeSteps(encoded) : [];
   @mainDisplay.setSteps(steps);
 };
 
@@ -551,22 +535,22 @@ ProofEditor.prototype.setSteps = @(steps) {
 };
 
 /**
- * Save the proof state to the the proof's text area and the
- * document's data store.  Normally use the proofChanged method rather
- * than calling this directly, to avoid redundant work.
+ * Save the proof state to the the worksheet controls text area and
+ * the document's data store.  Normally use the proofChanged method
+ * rather than calling this directly, to avoid redundant work.
  */
 ProofEditor.prototype.saveProofState = function() {
   var text = this.getStateString();
-  this._stateArea.value = text;
+  this._wksControls.setProofText(text);
   Toy.writeDoc(this._documentName, {proofState: text});
 };
 
 /**
- * Attempts to restore the proof state from the proof's text area.
+ * Attempts to restore the proof state from the worksheet controls
+ * text area.
  */
 ProofEditor.prototype.restoreState = function() {
-  var string = this._stateArea.value;
-  assert(string, 'No proof state recorded');
+  var string = this._wksControls.getProofText();
   this.setStateFromString(string);
 };
 
@@ -2926,7 +2910,7 @@ var hoverHandlers = {
  * This builds and returns a jQuery object containing
  * the full content of the workspace-related controls.
  */
-function $buildWksControls(editor) {
+function buildWksControls(editor) {
   const $outermost = $('<div class="wksControlsOuter transFade hidden">');
   const $controls = $('<div class="wksControls">');
   $outermost.append($controls);
@@ -3068,11 +3052,27 @@ function $buildWksControls(editor) {
   $openersArea.on('mouseenter mouseleave', '.docName', function(event) {
       $(this).toggleClass('hover');
     });
-   $deletersArea.on('mouseenter mouseleave', '.docName', function(event) {
-       $(this).toggleClass('hover');
-     });
+  $deletersArea.on('mouseenter mouseleave', '.docName', function(event) {
+      $(this).toggleClass('hover');
+    });
 
-   // Buttons that open up the ultimate action UIs.
+   
+  // Handler for the "restore proof" button.  Restores proof state from
+  // the text area.
+  function restoreProof() {
+    Toy.withErrorReporting(function() {
+        editor.restoreState();
+        hide();
+      });
+  }
+  $outermost.find('.restoreProof').on('click', restoreProof);
+
+  // Closing the state display:
+  $outermost.find('.hideProofState').on('click', function() {
+      $outermost.find('.proofPreview').addClass('hidden');
+    });
+
+  // Buttons that open up the ultimate action UIs.
   $controls.find('.openButton').on('click', function() {
       toggleDocs($openersArea);
     });
@@ -3132,10 +3132,10 @@ function $buildWksControls(editor) {
       if (name === this._documentName) {
         $message.text('Cannot delete the current document.');
       } else {
-          Toy.rmDoc(name);
-          $message.text('Deleted "' + name + '"');
-          toggleControl($message);
-        }
+        Toy.rmDoc(name);
+        $message.text('Deleted "' + name + '"');
+        toggleControl($message);
+      }
     });
 
   // Responses to pressing "enter" in an action text field:
@@ -3161,7 +3161,37 @@ function $buildWksControls(editor) {
       $message.empty();
     });
 
-  return $outermost;
+  // Methods
+
+  $stateArea = $outermost.find('.proofStateArea');
+
+  function hide() {
+    $outermost.toggleClass('hidden', true);
+  }
+
+  const result = {
+    node: dom($outermost),
+    hide: hide,
+    show: function() {
+      $outermost.toggleClass('hidden', false);
+      resetDisplay();
+    },
+    toggle: function() {
+      $outermost.hasClass('hidden') ? this.show() : this.hide();
+    },
+    getProofText: function() {
+      return $stateArea.val();
+    },
+    setProofText: function(text) {
+      $stateArea.val(text);
+    },
+    setDocName: function(name) {
+      // TODO: Move this line into a method on the worksheet controls.
+      $outermost.find('.wksName').text(editor.getDocumentName());
+    }
+  };
+
+  return result;
 }
 
 
