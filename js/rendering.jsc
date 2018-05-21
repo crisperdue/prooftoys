@@ -234,9 +234,9 @@ function ProofEditor() {
     // Toggling the proof state display visibility with a button.
     $('<input type=button value="Worksheets ... ">');
 
-  @proofButtons.append(another);
-  @proofButtons.append(options);
   @proofButtons.append($wksButton);
+  @proofButtons.append(options);
+  @proofButtons.append(another);
   @proofButtons.append(clearProof);
 
   self.$rulesMode = @proofButtons.find('.rulesToShow');
