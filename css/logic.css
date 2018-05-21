@@ -321,7 +321,7 @@ span#leftNav {
 
 .proofDisplay.editable {
     /* This allows room for display of a next-step suggestion. */
-    margin-bottom: 2.5em;
+    margin-bottom: 3em;
 }
 
 /* The first level of subproof needs extra indent in the case
