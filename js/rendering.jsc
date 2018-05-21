@@ -187,7 +187,9 @@ var nextProofEditorId = 1;
  * containerNode: jQuery object for outermost DOM node for the display.
  * stepEditor: StepEditor for the proof being edited.
  * proofEditorId: identifies this editor for purposes of restoring
- *   its operating state across visits / page loads.
+ *   its operating state across visits / page loads.  Consists of the
+ *   pathname part of the browser "location", "#", and an integer
+ *   sequence number of the editor within the page.
  * givens: array of boolean terms defining the problem, often
  *   equations (not steps).  Should only be set when the proof is
  *   empty.  Read it as a TermSet.
@@ -554,7 +556,28 @@ ProofEditor.prototype.restoreState = function() {
   this.setStateFromString(string);
 };
 
+/**
+ * Returns true iff this is editable.
+ */
+ProofEditor.prototype.isEditable = @() {
+  return @mainDisplay.isEditable();
+};
+
+/**
+ * Turns editability of the proof editor on or off.  If there is
+ * an enclosing node with class proofEditorContainer, also toggles
+ * its "editor" class correspondingly on or off.
+ */
 ProofEditor.prototype.setEditable = @(value) {
+  // This next statement is ineffective when setting editability
+  // before inserting the editor's node intot the DOM.
+  //
+  // TODO: Instead of a public containerNode, add a method to append
+  //   this to a node, and include this action there as well.
+  (this.containerNode.closest('.proofEditorContainer')
+   .toggleClass('editable', value));
+  // The following set the state of the display and hide or show the
+  // step editor.
   @mainDisplay.setEditable(value);
   this.stepEditor.$node.toggle(value);
 };
