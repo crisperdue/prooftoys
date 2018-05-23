@@ -2857,7 +2857,7 @@ Call.prototype.searchMost = function(fn, path, isQuantified) {
           // Try the arg first to help substitutions apply toward the
           // right sides of formulas.
           this.arg.searchMost(fn, new Path('arg', path), isQuantified) ||
-          this.fn.searchMost(fn, new Path('fn', path, isQuantified)));
+          this.fn.searchMost(fn, new Path('fn', path), isQuantified));
 };
 
 
