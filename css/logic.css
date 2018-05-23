@@ -730,7 +730,7 @@ span#leftNav {
 /* New value ("replacement expression") */
 .proofStep .new {
   background-color: #afa;
-  border-color: silver;
+  border-color: #0d0;
 }
 
 /* Must be specific enough to override the silver/gray border. */
@@ -741,7 +741,7 @@ span#leftNav {
 
 /* Old value ("removed"), occurrence of variable to be substituted. */
 .proofStep .old, .proofStep .occur {
-  color: #A0A0A0; /* Between silver and gray */
+  color: #0d0; /* Text color is green here rather than background. */
 }
 
 /* Scope of operation, e.g. function body to substitute into.
