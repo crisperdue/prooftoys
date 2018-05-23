@@ -1486,6 +1486,13 @@ Expr.prototype.pathToBinding = function(pred) {
  * subexpression as an argument.  The rpath is relative to this,
  * though if an rpath is given here, the function receives the
  * concatenation of the one given here and the relative path.
+ *
+ * This is intended for use searching for places to apply
+ * simple rewrites, so for the sake of simplicity it does not
+ * descend into lambdas.
+ *
+ * TODO: Consider replacing traverse and all of its uses with
+ *   Expr.searchMost.
  */
 Expr.prototype.traverse = function(fn, rpath) {
   this._traverse(fn, rpath || path());
@@ -3019,7 +3026,8 @@ Lambda.prototype.matches = function(expr, bindings) {
 
 Lambda.prototype._traverse = function(fn, rpath) {
   fn(this, rpath);
-  this.body._traverse(fn, new Path('body', rpath));
+  // This does not descend into lambdas, though fn could potentially
+  // do so.
 };
 
 Lambda.prototype.search = function(pred, bindings) {

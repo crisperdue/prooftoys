@@ -822,11 +822,10 @@ var testCase = {
     var result = [];
     var x2 = Toy.parse('g {x. T}');
     x2.traverse(f);
-    assertEqual(4, result.length);
+    assertEqual(3, result.length);
     assertEqual(x2, result[0]);
     assertEqual(x2.arg, result[1]);
-    assertEqual(x2.arg.body, result[2]);
-    assertEqual(x2.fn, result[3]);
+    assertEqual(x2.fn, result[2]);
   },
 
   testSearch: function() {
@@ -2837,6 +2836,8 @@ window.setTimeout(function() {
     // Prover is a function and its length is its number of args.
     if (prover.length == 0) {
       runTest(name, function(prover, name) {
+          // Uncomment this line to see all theorem names.
+          // console.log('Testing theorem ' + name);
           var result = prover();
           var stmt = prover.info.statement;
           // Check that the statement of the theorem matches

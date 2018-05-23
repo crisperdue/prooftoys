@@ -1501,6 +1501,8 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
         }
       }
     }
+    // TODO: Consider replacing this use of Expr.traverse with
+    //   Expr.searchMost.
     return Toy.catchResult(schema.traverse.bind(schema, checkTerm));
   }
 }

@@ -1336,7 +1336,8 @@ ProofDisplay.prototype.renderPopups = function(step) {
                    ];
   var distribStmts = (distribKeys.concat(assocKeys)
                       .map(Toy.mathParse));
-  step.traverse(function(term, rpath) {
+  // Search the step for places where some basic facts can be applied.
+  step.wff.traverse(function(term, rpath) {
       if (term.isCall2() && term.node) {
         var rules = Toy.rules;
         // These resulting equations are the result of applying the
