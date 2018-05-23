@@ -2913,16 +2913,17 @@ var hoverHandlers = {
   },
   // TODO: instMultiVars
   instForall: function(step, action) {
-    var args = step.original.ruleArgs;
-    // The top-level call to "forall".
-    var input = args[0].rendering.unHyp();
-    // Name of variable being instantiated.
-    var varName = input.arg.bound.name;
+    const args = step.original.ruleArgs;
+    const input = args[0].rendering;
+    const path = args[1];
     action(input.stepNode, 'dep');
-    var body = input.arg.body;
+    const lambda = input.get(path).arg;
+    // Name of variable being instantiated.
+    const varName = lambda.bound.name;
+    const body = lambda.body;
     body.findAll(varName,
                  function(_var) { action(_var.node, 'occur'); },
-                 step.unHyp(),
+                 step.get(path),
                  function(expr) { action(expr.node, 'new'); });
   }
 };
