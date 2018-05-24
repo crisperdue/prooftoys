@@ -676,8 +676,10 @@ function addDefnFacts(definition) {
     // TODO: Consider adding a fact unconditionally, and treating
     //   it automatically as a desimplifier.
     if (eqn != definition) {
-      addFact({goal: eqn});
-      addSwappedFact({goal: eqn});
+      // Flag the fact as being essentially the same as the definition
+      // of the function or predicate.
+      addFact({goal: eqn, definitional: true});
+      addSwappedFact({goal: eqn, definitional: true});
     }
     // From here on, if the remaining RHS is a "the" or "iota", and
     // there is an appropriate "exists1" fact for its property, we
@@ -2061,6 +2063,7 @@ var factProperties = {
   noSwap: true,
   labels: true,
   description: true,
+  definitional: true,
   converse: true
 };
 
@@ -2086,6 +2089,9 @@ var factProperties = {
  * description: string or function as for a rule description.
  * simplifier: true iff this fact is a simplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
+ * definitional: the fact is "basically" a definition of a
+ *   function or predicate.  Used for presentation of the fact
+ *   in a menu.
  * labels: Object/set of label names, if given as a string, parses
  *   space-separated parts into a set.
  * converse.labels: Like labels, but applies to a "swapped" version
