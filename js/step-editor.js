@@ -1406,7 +1406,7 @@ RuleMenu.prototype._update = function() {
   
   if (!Toy.useStepSuggester) {
     self.stepEditor.offerableFacts().forEach(function(info) {
-        const statement = info.goal;
+        let statement = info.goal;
         var text = statement.toString();
         var resultTerm = statement;
         if (statement.isEquation()) {
