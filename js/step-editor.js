@@ -874,9 +874,9 @@ StepEditor.prototype.offerable = function(ruleName) {
 $.extend(StepEditor.prototype, {
 
   /**
-   * Returns a list of fact statements that are offerable in the UI,
-   * currently all equational facts whose LHS matches the currently
-   * selected term.
+   * Returns a list of fact info objects for facts that are offerable
+   * in the UI, currently all equational facts whose LHS matches the
+   * currently selected term.
    *
    * In algebra mode, if the LHS is atomic, does not offer unless the
    * fact has the "algebra" label.
@@ -921,7 +921,7 @@ $.extend(StepEditor.prototype, {
             if (expr.matchSchema(lhs)) {
               if (mode == 'algebra') {
                 if (info.labels.algebra) {
-                  facts.push(goal);
+                  facts.push(info);
                 }
                 // Otherwise don't show the fact in algebra mode.
               } else if (mode == 'general') {
@@ -929,11 +929,11 @@ $.extend(StepEditor.prototype, {
                 // TODO: Include them as "introducers" in both "general"
                 //   mode and "everything" modes.
                 if (!info.desimplifier) {
-                  facts.push(goal);
+                  facts.push(info);
                 }
               } else {
                 assert(mode == 'all', 'Invalid mode {1}', mode);
-                facts.push(goal);
+                facts.push(info);
               }
             }
         });
@@ -1162,7 +1162,8 @@ var suggesterMethods = {
           }
         });
       factsToOffer = stepEditor.offerableFacts();
-      factsToOffer.forEach(function(statement) {
+      factsToOffer.forEach(function(info) {
+          const statement = info.goal;
           self.length++;
           // TODO: Report or handle error returns.
           sendRule('rewrite',
@@ -1404,7 +1405,8 @@ RuleMenu.prototype._update = function() {
     });
   
   if (!Toy.useStepSuggester) {
-    self.stepEditor.offerableFacts().forEach(function(statement) {
+    self.stepEditor.offerableFacts().forEach(function(info) {
+        const statement = info.goal;
         var text = statement.toString();
         var resultTerm = statement;
         if (statement.isEquation()) {
