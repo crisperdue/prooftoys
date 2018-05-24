@@ -1427,9 +1427,13 @@ RuleMenu.prototype._update = function() {
         }
         var display = '= <span class=menuResult></span>';
         if (subst) {
-          display += (' <span class=description>using ' +
-                      Toy.trimParens(statement.toHtml())
-                      + '</span>');
+          // TODO: Consider using the length of the unicode in deciding
+          //   what message to generate here.
+          // const unicode = statement.toUnicode();
+          const html = (info.definitional
+                        ? 'definition of ' + statement.getLeft().func().name
+                        : 'using ' + Toy.trimParens(statement.toHtml()));
+          display += (' <span class=description>' + html + '</span>');
         }
         // Value of the option; format of "fact <fact text>"
         // indicates that the text defines a fact to use in
