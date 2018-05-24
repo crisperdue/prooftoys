@@ -6589,7 +6589,7 @@ const ruleInfo = {
       var step2 = rules.r(rules.eqnSwap(eqn), step, '');
       var fact = rules.fact('p x => exists p');
       var result = rules.forwardChain(step2, fact);
-      return result.justify('witnessExsits', arguments, [step]);
+      return result.justify('witnessExists', arguments, [step]);
     },
     inputs: {site: 1},
     form: '',
