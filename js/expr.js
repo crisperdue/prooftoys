@@ -303,7 +303,9 @@ Expr.prototype.toUnicode = function() {
  * Like toUnicode, but allows HTML output.  Currently
  * these are one and the same; toUnicode may disappear.
  */
-Expr.prototype.toHtml = Expr.prototype.toUnicode;
+Expr.prototype.toHtml = function() {
+  return Toy.escapeHtml(this.toUnicode());
+};
 
 /**
  * Tests if this is an Atom with name in the given list of strings.
