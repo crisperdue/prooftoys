@@ -354,11 +354,11 @@ function ProofEditor() {
       //   .ruleMenu is the rules menu
       //   .above is the display of popups for quick access to rewrites
       //   .ruleName.link pops subproof displays up and down
-      //   .input and .button are typical form controls
+      //   .input, .button, and .select are typical form controls
       //   .wksControlsOuter is the main box for worksheet controls
       const selectors = ('.stepAndNum, .ruleMenu, .above, ' +
                          '.ruleName.link, .inferenceDisplay, ' +
-                         '.wksControlsOuter, input, button');
+                         '.wksControlsOuter, input, button, select');
       // Mousedown in most places removes any step or expr selection.
       if (!within($target, selectors)) {
         @mainDisplay.deselectStep();
