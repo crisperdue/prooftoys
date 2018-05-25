@@ -235,16 +235,26 @@ function ProofEditor() {
   const $wksButton =
     // Toggling the proof state display visibility with a button.
     $('<input type=button value="Worksheets ... ">');
+  const $copyButton =
+    $('<input type=button class=copyButton disabled value="Copy selection">');
 
   @proofButtons.append($wksButton);
   @proofButtons.append(options);
-  @proofButtons.append(another);
+  @proofButtons.append($copyButton);
   @proofButtons.append(clearProof);
 
   self.$rulesMode = @proofButtons.find('.rulesToShow');
   var stepEditor = new Toy.StepEditor(this);
   self.stepEditor = stepEditor;
 
+  self.$copyButton = $copyButton;
+  $copyButton.on('click', function() {
+      const step = @mainDisplay.selection;
+      if (step) {
+        const selection = step.selection || step.wff;
+        Toy.copyToClipboard(selection.toString());
+      }
+    });
   $wksButton.on('click', function() {
       let wksControls = self._wksControls;
       wksControls.toggle();
@@ -278,6 +288,7 @@ function ProofEditor() {
   // Top-level element of the proof editor display:
   this.containerNode = $('<div class=proofEditor></div>');
   this.containerNode
+    .append(another)
     .append(@mainDisplay.node)
     .append(self.$status)
     .append(stepEditor.$node)
@@ -343,28 +354,28 @@ function ProofEditor() {
   $(document).on('click', function(event) {
       if (!@mainDisplay._selectLock) {
         // When a rule entry form is open, selection is locked.
-      const $target = $(event.target);
-      // TODO: Consider setting up click handlers for elements such as
-      //   these so they add information to the event indicating for
-      //   example "<editor> noDeselect" or below "<wksControls>
-      //   noDismiss".  And check that data in code like this here.
-      //
-      // The following areas are intended targets for clicks and have
-      // click handlers, so we prefer not to remove the selection in
-      // these areas at this level.
-      //   .stepAndNum is the main container for all exprs.
-      //   .ruleMenu is the rules menu
-      //   .above is the display of popups for quick access to rewrites
-      //   .ruleName.link pops subproof displays up and down
-      //   .input, .button, and .select are typical form controls
-      //   .wksControlsOuter is the main box for worksheet controls
-      const selectors = ('.stepAndNum, .ruleMenu, .above, ' +
-                         '.ruleName.link, .inferenceDisplay, ' +
-                         '.wksControlsOuter, input, button, select');
-      // Mousedown in most places removes any step or expr selection.
-      if (!within($target, selectors)) {
-        @mainDisplay.deselectStep();
-      }
+        const $target = $(event.target);
+        // TODO: Consider setting up click handlers for elements such as
+        //   these so they add information to the event indicating for
+        //   example "<editor> noDeselect" or below "<wksControls>
+        //   noDismiss".  And check that data in code like this here.
+        //
+        // The following areas are intended targets for clicks and have
+        // click handlers, so we prefer not to remove the selection in
+        // these areas at this level.
+        //   .stepAndNum is the main container for all exprs.
+        //   .ruleMenu is the rules menu
+        //   .above is the display of popups for quick access to rewrites
+        //   .ruleName.link pops subproof displays up and down
+        //   .input, .button, and .select are typical form controls
+        //   .wksControlsOuter is the main box for worksheet controls
+        const selectors = ('.stepAndNum, .ruleMenu, .above, ' +
+                           '.ruleName.link, .inferenceDisplay, ' +
+                           '.wksControlsOuter, input, button, select');
+        // Mousedown in most places removes any step or expr selection.
+        if (!within($target, selectors)) {
+          @mainDisplay.deselectStep();
+        }
       }
     });
   // Click in most areas of the document hides the workspace controls.
@@ -708,7 +719,11 @@ ProofDisplay.prototype.proofChanged = function() {
  * Notify that the selection has changed.
  */
 ProofDisplay.prototype.selectionChanged = function() {
-  this.proofEditor && this.proofEditor.stepEditor.refresh();
+  const editor = this.proofEditor;
+  if (editor) {
+    editor.stepEditor.refresh();
+    editor.$copyButton.prop('disabled', !this.selection);
+  }
 };
 
 /**

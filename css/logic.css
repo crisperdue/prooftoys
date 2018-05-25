@@ -322,6 +322,7 @@ span#leftNav {
 .proofDisplay.editable {
     /* This allows room for display of a next-step suggestion. */
     margin-bottom: 3em;
+    margin-top: 1em;
 }
 
 /* The first level of subproof needs extra indent in the case
@@ -901,10 +902,6 @@ span.stepRef {
   padding: 2px;
 }
 
-.ruleMenu .rulesItems {
-    display: inline-block;
-}
-
 .proofPreview {
     position: absolute;
     left: .5em;
@@ -1054,6 +1051,10 @@ textarea.proofStateArea {
 
 .proofButtons {
     margin-top: .5em;
+}
+
+.copyButton[disabled] {
+    background-color: #eee;
 }
 
 /* At the bottom of the file to be as potent as possible.  */
