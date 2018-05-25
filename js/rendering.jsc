@@ -231,7 +231,8 @@ function ProofEditor() {
                    '<option value=general>general reasoning' +
                    '<option value=all>all available' +
                    '</select>');
-  const another = '<button class=tryAnother>Try a different problem ... </button>';
+  const $another =
+    $('<button class=tryAnother>Try a different problem ... </button>');
   const $wksButton =
     // Toggling the proof state display visibility with a button.
     $('<input type=button value="Worksheets ... ">');
@@ -288,7 +289,7 @@ function ProofEditor() {
   // Top-level element of the proof editor display:
   this.containerNode = $('<div class=proofEditor></div>');
   this.containerNode
-    .append(another)
+    .append($another)
     .append(@mainDisplay.node)
     .append(self.$status)
     .append(stepEditor.$node)
@@ -312,8 +313,6 @@ function ProofEditor() {
   // whenever it changes.
   this._refresher = new Toy.Refresher(function() {
       self._updateGivens();
-      // Show the "Try another" button iff there are givens.
-      @proofButtons.find('.tryAnother').toggle(!!self._givens);
       self.saveProofState();
       // Set (or clear) the message in the $status box.
       var steps = self.proofDisplay.steps;
