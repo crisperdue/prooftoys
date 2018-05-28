@@ -633,6 +633,33 @@ addRules(facts);
 definition('isAddIdentity 0');
 definition('isMulIdentity 1');
 
+const idFacts =
+  [
+   {statement: 'isAddIdentity x => x = 0',
+    name: 'addIdent',
+    proof: function() {
+       const result1 = (rules.assume('isAddIdentity x')
+                        .andThen('apply', '/right'));
+       const result2 = (result1
+                        .andThen('forwardChain',
+                                 'a => b & c => (a => b)')
+                        .andThen('rewriteOnly', '',
+                                 'a => b == (a & b == a)'));
+       const result3 = (result1
+                        .andThen('forwardChain',
+                                 'a => b & c => (a => c)')
+                        .andThen('instForall', '/right', '0')
+                        .andThen('simplifyStep')
+                        .andThen('rewriteFrom', '/left', result2));
+
+       return result3;
+     }
+   }
+   ];
+
+addRules(idFacts);
+
+
 var divisionInfo = {
 
   // Division is an inverse of multiplication.
