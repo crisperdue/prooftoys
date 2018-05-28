@@ -1846,7 +1846,11 @@ function encodeSteps(steps_arg) {
         if (arg.__index) {
           result.push('(s ' + arg.__index + ')');
         } else {
-          result.push('(t ' + arg + ')');
+          // TODO: Replace this hack with something guaranteed to be
+          //   correct, such as perhaps allowing the dots when parsing
+          //   in this context.
+          const encoded = arg.toString().replace(/[.]([0-9])/g, '_$1');
+          result.push('(t ' + encoded  + ')');
         }
       } else {
         result.push(arg.toString());
