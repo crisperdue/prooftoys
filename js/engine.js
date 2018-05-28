@@ -6696,6 +6696,20 @@ const ruleInfo = {
     }
   },
 
+  // This theorem aids in proving that a constant defined by a
+  // property is unique.
+  uniqueTerm: {
+    statement: 'p x & forall {y. p y => y = x} => exists1 {y. p y}',
+    proof: function() {
+      const eqn = rules.exists1c().andThen('eqnSwap');
+      const map = {p: '{y. p y & forall {x. p x => x = y}}'};
+      return (rules.fact('p x => exists p')
+              .andThen('instMultiVars', map)
+              .andThen('rewriteOnlyFrom', '/right', eqn)
+              .andThen('simpleApply', '/left'));
+    }
+  },
+
   /* TODO: Remove these two as not very useful.
   ifTrue: {
     statement: 'c => if c x y = x',
