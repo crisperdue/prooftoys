@@ -6569,11 +6569,17 @@ const ruleInfo = {
     // with assertFacts == false.
     // simplifier: true,
     description: 'eta conversion'
-  },
+  }
+};
 
-  // Derive exists {x. p x} from a witnessing term.  This only replaces the
-  // selected occurrence, not substituting throughout. (5242)
-  witnessExists: {
+addRulesMap(ruleInfo);
+
+
+const existRules =
+  [
+   // Derive exists {x. p x} from a witnessing term.  This only replaces the
+   // selected occurrence, not substituting throughout. (5242)
+   {name: 'witnessExists',
     precheck: function(step, path) {
       var term = step.get(path);
       var type = Toy.findType(term);
@@ -6602,34 +6608,34 @@ const ruleInfo = {
     menu: "A to &exist; x. A'",
     description: 'existentially quantify',
     labels: 'basic'
-  },
+   },
 
-  // 5304
-  exists1b: {
+   // 5304
+   {name: 'exists1b',
     statement: 'exists1 {y. p y} == exists {y. p = {x. x = y}}',
     proof: function() {
-      var step = (rules.equivSelf('exists1 {y. p y}')
-                  .andThen('useDefinition', '/right/fn')
-                  .andThen('apply', '/right'));
-      return rules.r(rules.eta(), step, '/right/arg/body/left');
-    }
-  },
+       var step = (rules.equivSelf('exists1 {y. p y}')
+                   .andThen('useDefinition', '/right/fn')
+                   .andThen('apply', '/right'));
+       return rules.r(rules.eta(), step, '/right/arg/body/left');
+     }
+   },
 
-  // 5305
-  r5305: {
+   // 5305
+   {name: 'r5305',
     statement: 'exists1 {y. p y} == exists {y. forall {z. p z == z = y}}',
     proof: function() {
-      const step1 = rules.exists1b();
-      const step2 = rules.rewriteOnly(step1, '/right/arg/body',
-                                      rules.axiom3a());
-      const step3 = rules.apply(step2, '/right/arg/body/arg/body/right')
-      return step3;
-    }
-  },
+       const step1 = rules.exists1b();
+       const step2 = rules.rewriteOnly(step1, '/right/arg/body',
+                                       rules.axiom3a());
+       const step3 = rules.apply(step2, '/right/arg/body/arg/body/right')
+       return step3;
+     }
+   },
 
-  // Useful for showing a constant is unique, thus the "c" in the name.
-  // 5306
-  exists1c: {
+   // Useful for showing a constant is unique, thus the "c" in the name.
+   // 5306
+   {name: 'exists1c',
     statement: 'exists1 {y. p y} == exists {y. p y & forall {z. p z => z = y}}',
     proof: function() {
       const step1 = rules.r5305();
@@ -6654,15 +6660,15 @@ const ruleInfo = {
                       .andThen('simplifyStep'));
       return rules.rewriteOnly(step11, '/main/right/arg/body',
                                'a & b == b & a');
-    }
+     }
   },
 
-  // From unique existence for p conclude an equivalence with "the"
-  // (iota) for all x.
-  //
-  // Simplified statement of 5312, using "the" in place of iota.
-  // You can use exists1The to replace "the" with "iota".
-  exists1Forall: {
+   // From unique existence for p conclude an equivalence with "the"
+   // (iota) for all x.
+   //
+   // Simplified statement of 5312, using "the" in place of iota.
+   // You can use exists1The to replace "the" with "iota".
+   {name: 'exists1Forall',
     // TODO: In this example the occurrence of "forall" could be
     // removed, leaving all occurrences of "x" free.  Consider how
     // to do practical matching in such cases.
@@ -6698,7 +6704,7 @@ const ruleInfo = {
 
   // This theorem aids in proving that a constant defined by a
   // property is unique.
-  uniqueTerm: {
+   {name: 'uniqueTerm',
     statement: 'p x & forall {y. p y => y = x} => exists1 {y. p y}',
     proof: function() {
       const eqn = rules.exists1c().andThen('eqnSwap');
@@ -6710,8 +6716,8 @@ const ruleInfo = {
     }
   },
 
-  /* TODO: Remove these two as not very useful.
-  ifTrue: {
+   /* TODO: Remove these two as not very useful.
+   {name: 'ifTrue':
     statement: 'c => if c x y = x',
     proof:function() {
       var assumed = rules.assume('T == c');
@@ -6719,9 +6725,9 @@ const ruleInfo = {
       return (fact.andThen('replace', fact.find('T'), assumed)
               .andThen('rewriteOnly', '/left', 'T == x == x'));
     }
-  },
+   },
 
-  ifFalse: {
+   {name: 'ifFalse',
     statement: 'not c => if c x y = y',
     proof:function() {
       var assumed = rules.assume('F == c');
@@ -6729,10 +6735,10 @@ const ruleInfo = {
       return (fact.andThen('replace', fact.find('F'), assumed)
               .andThen('rewriteOnly', '/left', 'F == x == (not x)'));
     }
-  },
+   },
   */
 
-  exists1The: {
+   {name: 'exists1The',
     statement: 'exists1 p => the p = iota p',
     proof: function() {
       var assumed = rules.assume('exists1 p');
@@ -6742,10 +6748,9 @@ const ruleInfo = {
               .rewrite('/right/right', 'if T x y = x'));
     }
   }
+   ];
 
-};  // End of ruleInfo.
-
-addRulesMap(ruleInfo);
+addRules(existRules);
 
 
 //// LOGIC FACTS
