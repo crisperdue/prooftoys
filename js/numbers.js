@@ -654,6 +654,26 @@ const idFacts =
 
        return result3;
      }
+   },
+   {statement: 'isMulIdentity x => x = 1',
+    name: 'mulIdent',
+    proof: function() {
+       const result1 = (rules.assume('isMulIdentity x')
+                        .andThen('apply', '/right'));
+       const result2 = (result1
+                        .andThen('forwardChain',
+                                 'a => b & c => (a => b)')
+                        .andThen('rewriteOnly', '',
+                                 'a => b == (a & b == a)'));
+       const result3 = (result1
+                        .andThen('forwardChain',
+                                 'a => b & c => (a => c)')
+                        .andThen('instForall', '/right', '1')
+                        .andThen('simplifyStep')
+                        .andThen('rewriteFrom', '/left', result2));
+
+       return result3;
+     }
    }
    ];
 
