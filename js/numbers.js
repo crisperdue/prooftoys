@@ -636,7 +636,7 @@ definition('isMulIdentity 1');
 const idFacts =
   [
    {statement: 'isAddIdentity x => x = 0',
-    name: 'addIdent',
+    name: 'addIdentity',
     proof: function() {
        const result1 = (rules.assume('isAddIdentity x')
                         .andThen('apply', '/right'));
@@ -655,8 +655,9 @@ const idFacts =
        return result3;
      }
    },
+
    {statement: 'isMulIdentity x => x = 1',
-    name: 'mulIdent',
+    name: 'mulIdentity',
     proof: function() {
        const result1 = (rules.assume('isMulIdentity x')
                         .andThen('apply', '/right'));
@@ -674,6 +675,22 @@ const idFacts =
 
        return result3;
      }
+   },
+
+   {statement: 'exists1 {x. isAddIdentity x}',
+    proof: function() {
+       const step1 = rules.addIdentity().andThen('toForall0', 'x');
+       const step2 = rules.and(rules.fact('isAddIdentity 0'), step1);
+       return rules.forwardChain(step2, rules.uniqueTerm());
+    }
+   },
+
+   {statement: 'exists1 {x. isMulIdentity x}',
+    proof: function() {
+       const step1 = rules.mulIdentity().andThen('toForall0', 'x');
+       const step2 = rules.and(rules.fact('isMulIdentity 1'), step1);
+       return rules.forwardChain(step2, rules.uniqueTerm());
+    }
    }
    ];
 
