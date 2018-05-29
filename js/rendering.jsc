@@ -729,8 +729,8 @@ ProofDisplay.prototype.selectionChanged = function() {
     const step = this.selection;
     const selection = step ? (step.selection || step.wff) : null;
     if (selection) {
-    // TODO: Fix this string to avoid variables with ".".
-    editor.$copyText.val(selection.toString());
+      // TODO: Fix this string to avoid variables with ".".
+      editor.$copyText.val(selection.toString());
       editor.$copyText.select();
     }
     // Request an overall refresh of the step editor.
@@ -1160,7 +1160,8 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   $proofStep.append($step);
   // If editable, add deleter.
   if (self.isEditable()) {
-    $step.append('<button class=deleteStep title="Delete step">X</button>');
+    $step.append('<button class="fa fa-times-circle-o deleteStep"' +
+                 ' title="Delete step">');
   }
   // If the UI is configured for it, include the node for "?" or circled a.
   if (Toy.showStepHoverMark) {

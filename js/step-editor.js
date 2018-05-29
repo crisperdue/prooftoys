@@ -104,7 +104,7 @@ function StepEditor(proofEditor) {
 
   // Button to clear rule input, visible when a form is active.
   self.clearer =
-    $('<input class=sted-clear type=button value=x title="Clear the input">');
+    $('<button class="fa fa-times-circle-o sted-clear" title="Clear the input">');
   self.clearer.addClass('hidden');
   self.form = $('<span class=sted-form></span>');
   // Proof errors display.

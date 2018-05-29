@@ -649,11 +649,12 @@ span#leftNav {
 
 /* Step deleter control, only visible when the step is hovered. */
 .proofStep .deleteStep {
-  font-family: sans-serif;
-  font-weight: bold;
-  padding: 0 2px;
-  border-radius: 4px;
-  visibility: hidden;
+    color: #d9534f;
+    background-color: white;
+    padding: 0;
+    border: none;
+    margin: 0;
+    visibility: hidden;
 }
 
 /* Checkbox that selects an entire step.  Visible when the
@@ -664,8 +665,6 @@ span#leftNav {
 
 .proofDisplay.editable .proofStep.hover .deleteStep {
   visibility: visible;
-  background-color: #f88;
-  color: white;
 }
 
 .proofDisplay.editable .proofStep.hover .checkbox,
@@ -923,9 +922,11 @@ span.stepRef {
 
 
 /* Button to clear the current editor input form */
-input.sted-clear {
-  /* Lines it up better with the adjacent text */
-  vertical-align: text-bottom;
+button.sted-clear {
+    color: #d9534f;
+    background-color: white;
+    padding: 0;
+    border: none;
 }
 
 /* Inputs for rule arguments */
