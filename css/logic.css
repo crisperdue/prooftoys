@@ -1053,8 +1053,8 @@ textarea.proofStateArea {
     margin-top: .5em;
 }
 
-.copyButton[disabled] {
-    background-color: #eee;
+input.copyText {
+    text-align: right;
 }
 
 /* At the bottom of the file to be as potent as possible.  */

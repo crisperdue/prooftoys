@@ -234,11 +234,15 @@ function ProofEditor() {
   const $wksButton =
     // Toggling the proof state display visibility with a button.
     $('<input type=button value="Worksheets ... ">');
-  const $copyButton =
-    $('<input type=button class=copyButton disabled value="Copy selection">');
+  const $copyText =
+    $('<input class=copyText readonly>');
+  // The fa and fa-copy classes put a "copy" icon into the
+  // text of the button.
+  const $copyButton = $('<button class="fa fa-copy">');
 
   @proofButtons.append($wksButton);
   @proofButtons.append(options);
+  @proofButtons.append(' ', $copyText);
   @proofButtons.append($copyButton);
   @proofButtons.append(clearProof);
 
@@ -246,14 +250,17 @@ function ProofEditor() {
   var stepEditor = new Toy.StepEditor(this);
   self.stepEditor = stepEditor;
 
-  self.$copyButton = $copyButton;
-  $copyButton.on('click', function() {
-      const step = @mainDisplay.selection;
-      if (step) {
-        const selection = step.selection || step.wff;
-        Toy.copyToClipboard(selection.toString());
-      }
+  self.$copyText = $copyText;
+
+  // Event handlers
+
+  $copyButton.on('click', function(event) {
+      Toy.copyToClipboard($copyText.val());
+      // I tried using the TOUCHDOWN event and event.preventDefault()
+      // in Chrome, without success.
+      $copyText.select();
     });
+
   $wksButton.on('click', function() {
       let wksControls = self._wksControls;
       wksControls.toggle();
@@ -717,8 +724,17 @@ ProofDisplay.prototype.proofChanged = function() {
 ProofDisplay.prototype.selectionChanged = function() {
   const editor = this.proofEditor;
   if (editor) {
+    // If there is now a selected term, put a textual representation
+    // of it into $copyText and select it.
+    const step = this.selection;
+    const selection = step ? (step.selection || step.wff) : null;
+    // TODO: Fix this string to avoid variables with ".".
+    editor.$copyText.val(selection.toString());
+    if (selection) {
+      editor.$copyText.select();
+    }
+    // Request an overall refresh of the step editor.
     editor.stepEditor.refresh();
-    editor.$copyButton.prop('disabled', !this.selection);
   }
 };
 
