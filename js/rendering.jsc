@@ -231,11 +231,12 @@ function ProofEditor() {
                    '<option value=general>general reasoning' +
                    '<option value=all>all available' +
                    '</select>');
-  const $wksButton =
-    // Toggling the proof state display visibility with a button.
-    $('<input type=button value="Worksheets ... ">');
-  const $copyText =
-    $('<input class=copyText readonly>');
+  // Toggling the proof state display visibility with a button.
+  const $wksButton = $('<input type=button value="Worksheets ... ">');
+  // This holds textual representation of the latest selected term.
+  // It is writable so the user can scroll it horizontally (using the
+  // text cursor).
+  const $copyText = $('<input class=copyText>');
   // The fa and fa-copy classes put a "copy" icon into the
   // text of the button.
   const $copyButton = $('<button class="fa fa-copy">');
