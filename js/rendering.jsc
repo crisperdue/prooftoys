@@ -728,9 +728,9 @@ ProofDisplay.prototype.selectionChanged = function() {
     // of it into $copyText and select it.
     const step = this.selection;
     const selection = step ? (step.selection || step.wff) : null;
+    if (selection) {
     // TODO: Fix this string to avoid variables with ".".
     editor.$copyText.val(selection.toString());
-    if (selection) {
       editor.$copyText.select();
     }
     // Request an overall refresh of the step editor.
