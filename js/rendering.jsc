@@ -240,6 +240,7 @@ function ProofEditor() {
   // The fa and fa-copy classes put a "copy" icon into the
   // text of the button.
   const $copyButton = $('<button class="fa fa-copy">');
+  $copyButton.css({fontSize: 'smaller'});
 
   @proofButtons.append($wksButton);
   @proofButtons.append(options);
