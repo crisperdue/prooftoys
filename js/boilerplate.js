@@ -21,6 +21,8 @@
     document.write(html);
   }
 
+  // Fortunately browsers seem to cancel out the prefix and initial
+  // ".." in names.
   function getScript(name) {
     document.write('<script src="' + prefix + name + '"></script>\n');
   }
@@ -28,12 +30,26 @@
   // Include jQuery in all cases.
   getScript('../lib/jquery-3.1.1.js');
 
-  write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.css">');
+  // Include Font Awesome.
+  write('<link rel="stylesheet" href=' +
+        '"https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.css">');
+
+  // Include the application's styles.
   write('<link rel="stylesheet" href="../css/logic.css">');
 
-  // getScript('../lib/jquery.tooltipster.js');
-  // write('<link rel="stylesheet" href="../css/tooltipster-light.css">');
-  // write('<link rel="stylesheet" href="../css/tooltipster.css">');
+  // Behavior can be customized by this global variable.
+  if (!window.noTooltipster) {
+    // These load Tooltipster and the shadow theme from current locations
+    // in the source tree.
+    write('<link rel="stylesheet" href="' + prefix +
+          '../lib/tooltipster-master/dist/css/tooltipster.bundle.css">');
+    write('<link rel="stylesheet" href="' + prefix +
+          '../lib/tooltipster-master/dist/css/plugins/tooltipster/sideTip' +
+          '/themes/tooltipster-sideTip-shadow.min.css">');
+    getScript('../lib/tooltipster-master/dist/js/tooltipster.bundle.js');
+  }
+
+  // Loading of scripts can be customized by this global variable.
   if (!window.noProofScripts) {
     getScript('util.js');
     getScript('prelim.js');
