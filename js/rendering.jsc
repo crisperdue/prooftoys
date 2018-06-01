@@ -322,17 +322,15 @@ function ProofEditor() {
       self.saveProofState();
       // Set (or clear) the message in the $status box.
       var steps = self.proofDisplay.steps;
-      var $status = self.$status;
-      var $statusDisplay = self.$statusDisplay;
       var len = steps.length;
       if (len) {
         var step = steps[len - 1];
         var message = self.progressMessage(step.original);
         $statusDisplay.empty();
         $statusDisplay.append(message);
-        $status.toggleClass('hidden', !message);
+        $status.toggleClass('invisible', !message);
       } else {
-        $status.toggleClass('hidden', true);
+        $status.toggleClass('invisible', true);
       }
     });
 
