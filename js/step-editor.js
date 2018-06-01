@@ -111,8 +111,8 @@ function StepEditor(proofEditor) {
   self.$proofErrors = $('<div class="proofErrors hidden"></div>');
   self.$node = $div;
 
-  self.$advice = $('<div class="advice hidden"><b>Select an expression ' +
-                   'with a click, checkbox selects the step.</b></div>');
+  self.$advice = ($('<div class="advice hidden">')
+                  .append('Select an expression or step.'));
 
   // Attach the "ruleWorking" to the ProofDisplay node so
   // it doesn't move when steps are inserted.
