@@ -9,6 +9,29 @@
   text-indent: 0;
 }
 
+/* You can use <s class=em> to make an em space. */
+/* Character widths may vary by font. */
+s.em {
+    display: inline-block;
+    min-width: 1em;
+    min-height: 1em;
+    vertical-align: text-bottom;
+}
+
+/* You can use <s class=em> to make an en space. */
+/* Character widths may vary by font. */
+s.en {
+    display: inline-block;
+    min-width: .5em;
+    min-height: 1em;
+    vertical-align: text-bottom;
+}
+
+.emphasis {
+    font-family: Georgia;
+    font-style: italic;
+}
+
 h1 {
   font-size: 2em;
   font-weight: bold;
@@ -55,14 +78,14 @@ p {
 }
 
 input, button, select {
-    font-size: 80%;
+    font-size: .8rem;
+    margin: 0 4px;
 }
 
 input[type=button], button {
     background-color: #ddf;
     border-radius: 6px;
     padding: 3px 12px;
-    margin: 0 5px;
 }
 
 input.saveAs {
@@ -321,7 +344,7 @@ span#leftNav {
 
 .proofDisplay.editable {
     /* This allows room for display of a next-step suggestion. */
-    margin-bottom: 3em;
+    margin-bottom: 1em;
     margin-top: 1em;
 }
 
@@ -371,6 +394,13 @@ span#leftNav {
      * a "step suggestion".  The width matters then.
      */
     width: 100%;
+    margin-left: 4em;
+}
+
+/* Override the left margin just above to push the first child to the left. */
+/* Any subsequent rows will be indented more. */
+.proofStep > :first-child {
+    margin-left: -4em;
 }
 
 .proofStep.stepSuggestion {
@@ -507,14 +537,19 @@ span#leftNav {
 
 /* Time and step count statistics for proof or step. */
 .ruleStats {
+  float: right;
   margin-left: 2em;
   font-size: smaller;
+  font-family: Georgia;
   font-style: italic;
   color: gray;
 }
 
 /* Comment that you can select an expression or step. */
 .advice {
+    font-family: Georgia;
+    font-style: italic;
+    margin-left: 1em;
 }
 
 /* Pop-up DIV that says Prooftoys is busy working. */
@@ -550,7 +585,7 @@ span#leftNav {
 .stepAndControls {
     display: flex;
     align-items: center;
-    min-width: 40%
+    min-width: 40%;
 }
 
 /* For basic layout with flexboxes. */
@@ -621,6 +656,10 @@ span#leftNav {
     border: 2px solid #0cf;
     border-radius: 6px;
     padding: 3px .5em;
+}
+
+.solutionStatusDisplay:empty {
+    visibility: hidden;
 }
 
 /* This displays information such as assumptions
@@ -872,7 +911,7 @@ span.stepRef {
   position: relative;
 }
 
-/* Make inputs a bit larger than regular text */
+/* Make inputs a bit smaller than regular text */
 .stepEditor input {
   font-family: STIXGeneral, times;
   font-size: 90%;
@@ -1051,11 +1090,14 @@ textarea.proofStateArea {
 }
 
 .proofButtons {
+    font-size: .9rem;
     margin-top: .5em;
+    margin-bottom: .3em;
 }
 
 input.copyText {
     text-align: right;
+    text-overflow: ellipsis;
 }
 
 /* At the bottom of the file to be as potent as possible.  */
