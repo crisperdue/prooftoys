@@ -319,6 +319,7 @@ span#leftNav {
 
 .proofEditor {
     position: relative;
+    line-height: 1.3;
 }
 
 /* Header line and comments for display. */
