@@ -30,6 +30,10 @@
   // Include jQuery in all cases.
   getScript('../lib/jquery-3.1.1.js');
 
+  write('<link rel=stylesheet href=' +
+        '"https://fonts.googleapis.com/css?family=Source+Sans+Pro' +
+        ':400,400i,700,700i">');
+
   // Include Font Awesome.
   write('<link rel="stylesheet" href=' +
         '"https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.css">');
