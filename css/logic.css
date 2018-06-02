@@ -58,7 +58,7 @@ h4:after {
 }
 
 body {
-  margin: 1em 3em 1em 1em;
+  margin: 0 20px;
   text-align: left;
   font-family: "Source Sans Pro", sans-serif;
   /*
@@ -385,7 +385,6 @@ span#leftNav {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    background-color: white;
     font-family: STIXGeneral, times, serif;
     /* Each proofStep has a 1px border, which is gray when
      * the step is selected in the UI or hovered.
