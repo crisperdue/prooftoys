@@ -259,7 +259,7 @@ function ProofEditor() {
 
   self.$copyText = $copyText;
 
-  // Event handlers
+  // Main and worksheet controls event handlers
 
   $copyButton.on('click', function(event) {
       Toy.copyToClipboard($copyText.val());
@@ -299,9 +299,22 @@ function ProofEditor() {
   self.$status = $status;
   self.$statusDisplay = $statusDisplay;
 
+  // The equations.html page "Try a different problem" button goes
+  // at the end of this $header div.
+  let $header =
+    ($('<div class=proofEditorHeader>')
+     .append('<b style="font-size:larger">Problem work area</b>'));
+  let $readOnly =
+    $('<p class=ifReadOnly><i><b style="color:red">Note:</b>' +
+      ' This display is read-only due to editing' +
+      ' in progress in another window or tab.</i></p>');
+
   // Top-level element of the proof editor display:
+
   this.containerNode = $('<div class=proofEditor></div>');
   this.containerNode
+    .append($header)
+    .append($readOnly)
     .append(@mainDisplay.node)
     .append($status)
     .append(stepEditor.$node)
@@ -363,7 +376,7 @@ function ProofEditor() {
     self.setEditable(false);
   }
 
-  // Set up event handlers.
+  // Document-level event handlers.
 
   // Returns a boolean indicating whether the given jQuery node
   // is within an element matching the selector.
@@ -599,22 +612,15 @@ ProofEditor.prototype.isEditable = @() {
 };
 
 /**
- * Turns editability of the proof editor on or off.  If there is
- * an enclosing node with class proofEditorContainer, also toggles
- * its "editor" class correspondingly on or off.
+ * Turns editability of the proof editor on or off, currently
+ * affecting only the UI.
  */
 ProofEditor.prototype.setEditable = @(value) {
-  // This next statement is ineffective when setting editability
-  // before inserting the editor's node intot the DOM.
-  //
-  // TODO: Instead of a public containerNode, add a method to append
-  //   this to a node, and include this action there as well.
-  (this.containerNode.closest('.proofEditorContainer')
-   .toggleClass('editable', value));
+  this.containerNode.toggleClass('editable', value);
   // The following set the state of the display and hide or show the
   // step editor.
   @mainDisplay.setEditable(value);
-  this.stepEditor.$node.toggle(value);
+  self.stepEditor.$node.toggle(value);
 };
 
 ProofEditor.prototype.showProofButtons = @(value) {
@@ -1034,8 +1040,7 @@ ProofDisplay.prototype.setEditable = function(state) {
   if (state) {
     this.setHoverHighlighting(state);
   }
-  var nodeQ = $(this.node);
-  nodeQ.toggleClass('editable', !!state);
+  $(this.node).toggleClass('editable', !!state);
 };
 
 /**

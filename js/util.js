@@ -1343,7 +1343,7 @@ function soonDo(action) {
 
 /**
  * Returns a promise that resolves after the given number
- * of microseconds.
+ * of milliseconds.
  */
 function wait(millis) {
   return new Promise(function (resolve, reject) {
