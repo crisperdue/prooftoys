@@ -3164,7 +3164,7 @@ function buildWksControls(editor) {
   $controls.find('.previewButton')
     .on('click', function() {
         toggleControl($proofPreview);
-        if ($proofPreview.hasClass('hidden')) {
+        if (!$proofPreview.hasClass('hidden')) {
           $outermost.find('.proofStateArea').select();
         }
       });
