@@ -1097,12 +1097,6 @@ textarea.proofStateArea {
     margin-top: 1em;
 }
 
-.controlsBottom {
-    /* position relative without offset serves as base for children */
-    /* with absolute position */
-    position: relative;
-}
-
 .proofButtons {
     font-size: .9rem;
     margin-top: .5em;

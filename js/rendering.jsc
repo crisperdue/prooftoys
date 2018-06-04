@@ -227,7 +227,7 @@ function ProofEditor() {
   clearProof.css(css);
 
   // Toggling the proof state display visibility with a button.
-  const $wksButton = $('<input type=button value="Worksheet ... ">');
+  const $wksButton = $('<input type=button value="Worksheet... ">');
 
   const $options = $('<select class=rulesToShow>' +
                      '<option value=algebra>algebra' +
@@ -2993,20 +2993,15 @@ function buildWksControls(editor) {
   const $outermost = $('<div class="wksControlsOuter transFade hidden">');
   const $controls = $('<div class="wksControls">');
   $outermost.append($controls);
-  // This next is just a container for absolutely-positioned
-  // elements.
-  $bottom = $('<div class=controlsBottom>');
-  $outermost.append($bottom);
-
   $controls.append('<div class=wksTitle>' +
                    'Current worksheet is "<span class=wksName></span>"</div>');
   $buttons = $('<div class=wksButtons>');
   $controls.append($buttons);
 
-  $buttons.append(makeButton('Open ... ', 'openButton'));
-  $buttons.append(makeButton('Save as ... ', 'saveAsButton'));
-  $buttons.append(makeButton('Copy to ... ', 'copyToButton'));
-  $buttons.append(makeButton('Delete ... ', 'deleteButton'));
+  $buttons.append(makeButton('Open... ', 'openButton'));
+  $buttons.append(makeButton('Save as... ', 'saveAsButton'));
+  $buttons.append(makeButton('Copy to... ', 'copyToButton'));
+  $buttons.append(makeButton('Delete... ', 'deleteButton'));
   $buttons.append(makeButton('View as text', 'previewButton'));
 
   $inputs = $('<div class=wksInputs>');
@@ -3028,10 +3023,10 @@ function buildWksControls(editor) {
   $inputs.append($message);
 
   const $openersArea = $('<div class="openersArea hidden">');
-  $bottom.append($openersArea);
+  $outermost.append($openersArea);
 
   const $deletersArea = $('<div class="deletersArea hidden">');
-  $bottom.append($deletersArea);
+  $outermost.append($deletersArea);
 
   const stateDisplayHtml =
     '<div class="proofPreview transFade hidden">\n' +
@@ -3048,7 +3043,7 @@ function buildWksControls(editor) {
     '<textarea class=proofStateArea rows=20></textarea>\n' +
     '</div>\n';
   $proofPreview = $(stateDisplayHtml);
-  $bottom.append($proofPreview);
+  $outermost.append($proofPreview);
 
   // Elements to be hidden when the display is reset.
   const $resettables = ($saveAs
