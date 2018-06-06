@@ -171,14 +171,18 @@ code {
 .transFade {
     visibility: visible;
     opacity: 1;
-    transition: visibility 0s, opacity 0.5s ease;
+    /* Immediately make it visible, gradually opaque. */
+    transition: visibility 0s, opacity 1s ease;
 }
 
 .transFade.hidden {
     visibility: hidden;
+    /* Override the meaning of hidden = display: none */
     display: block;
     opacity: 0;
-    transition-delay: .5s, 0s;
+    transition: visibility 0s, opacity 0.2s ease;
+    /* Delay making it invisible until it is fully transparent. */
+    transition-delay: .2s, 0s;
 }
 
 /* Math text in documents */

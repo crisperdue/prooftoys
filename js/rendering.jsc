@@ -2986,8 +2986,16 @@ var hoverHandlers = {
 //// WORKSHEET MANAGEMENT UI
 
 /**
- * This builds and returns a jQuery object containing
- * the full content of the workspace-related controls.
+ * This builds and returns an object containing the full content of
+ * the workspace-related controls.  The object has the following
+ * properties and methods:
+ *
+ * node: DOM element for the controls.
+ * hide(): Hides all of the controls.
+ * show(): Shows the controls.
+ * getProofText(): Returns the text content of the proof state area.
+ * setProofText(text): Sets the text content of the proof state area.
+ * setDocName(name): Sets the document name display in the controls area.
  */
 function buildWksControls(editor) {
   const $outermost = $('<div class="wksControlsOuter transFade hidden">');
@@ -3022,10 +3030,10 @@ function buildWksControls(editor) {
   const $message = $('<div class="wksMessage hidden">');
   $inputs.append($message);
 
-  const $openersArea = $('<div class="openersArea hidden">');
+  const $openersArea = $('<div class="openersArea transFade hidden">');
   $outermost.append($openersArea);
 
-  const $deletersArea = $('<div class="deletersArea hidden">');
+  const $deletersArea = $('<div class="deletersArea transFade hidden">');
   $outermost.append($deletersArea);
 
   const stateDisplayHtml =
@@ -3136,7 +3144,7 @@ function buildWksControls(editor) {
   function restoreProof() {
     Toy.withErrorReporting(function() {
         editor.restoreState();
-        hide();
+        result.hide();
       });
   }
   $outermost.find('.restoreProof').on('click', restoreProof);
@@ -3239,16 +3247,14 @@ function buildWksControls(editor) {
 
   $stateArea = $outermost.find('.proofStateArea');
 
-  function hide() {
-    $outermost.toggleClass('hidden', true);
-  }
-
   const result = {
     node: dom($outermost),
-    hide: hide,
+    hide: function() {
+      $outermost.toggleClass('hidden', true);
+      resetDisplay();
+    },
     show: function() {
       $outermost.toggleClass('hidden', false);
-      resetDisplay();
     },
     toggle: function() {
       $outermost.hasClass('hidden') ? this.show() : this.hide();
@@ -3260,7 +3266,6 @@ function buildWksControls(editor) {
       $stateArea.val(text);
     },
     setDocName: function(name) {
-      // TODO: Move this line into a method on the worksheet controls.
       $outermost.find('.wksName').text(editor.getDocumentName());
     }
   };
