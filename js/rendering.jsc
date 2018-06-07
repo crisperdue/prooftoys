@@ -3301,22 +3301,6 @@ function buildWksControls(editor) {
 }
 
 
-//// OTHER UTILITY FUNCTIONS
-
-function contains(array, item) {
-  return array.indexOf(item) >= 0;
-}
-
-function addBottomPanel($node) {
-  $node = $node || $(document.body);
-  var style = ('position: fixed; width: 100%; background-color: white; '
-               + 'bottom:0px; left: 0em; border-top: 1px solid black');
-  var div = $('<div id="bottomPanel" style="' + style + '"></div>');
-  div.append('Path: <span id=hoverPath></span>');
-  $node.append(div);
-}
-
-
 //// Settable parameters
 
 Toy.showOrdinals = false;
@@ -3335,7 +3319,6 @@ Toy.ProofDisplay = ProofDisplay;
 Toy.unrenderedDeps = unrenderedDeps;
 Toy.renderInference = renderInference;
 Toy.renderProof = renderProof;
-Toy.addBottomPanel = addBottomPanel;
 Toy.getStepNode = getStepNode;
 Toy.getProofStep = getProofStep;
 Toy.getStepsNode = getStepsNode;
