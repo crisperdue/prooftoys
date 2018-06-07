@@ -177,6 +177,93 @@ function getRightNeighbor(step, term) {
 var nextProofEditorId = 1;
 
 /**
+ * Builds and returns an object for the proofButtons DIV of the given
+ * proof editor.  This is the block of controls with the "worksheet"
+ * button.  The returned plain object has properties:
+ *
+ * $node: jQuery node of the DIV
+ * $copyText: jQuery of the copyText input field
+ * $rulesMode: jQuery of the rules mode selector
+ */
+function buildProofButtons(editor) {
+  // Add the group of buttons.
+  // The proofButtons class is used in some examples.
+  const $proofButtons = $('<div class=proofButtons/>');
+
+  const $clearProof = $('<input type=button value="Clear work">');
+  const css = {float: 'right',
+               backgroundColor: '#d9534f',
+               color: 'white'
+  };
+  $clearProof.css(css);
+
+  // Toggling the proof state display visibility with a button.
+  const $wksButton = $('<input type=button value="Worksheet... ">');
+
+  const $options = $('<select class=rulesToShow>' +
+                     '<option value=algebra>algebra' +
+                     '<option value=general>general reasoning' +
+                     '<option value=all>all available' +
+                     '</select>');
+
+  // This holds textual representation of the latest selected term.
+  // It is writable so the user can scroll it horizontally (using the
+  // text cursor).
+  const $copyText = $('<input class=copyText>');
+  // The fa and fa-copy classes put a "copy" icon into the
+  // text of the button.
+  const $copyButton = $('<button class="fa fa-copy">');
+  $copyButton.css({fontSize: '.8rem'});
+
+
+  $proofButtons.append($wksButton, $('<s class=em>'));
+  $proofButtons.append('Mode');
+  $proofButtons.append($options, $('<s class=em>'));
+  $proofButtons.append('Selection');
+  $proofButtons.append($copyText);
+  $proofButtons.append($copyButton);
+  $proofButtons.append($clearProof);
+
+  const $rulesMode = $proofButtons.find('.rulesToShow');
+
+  // Main and worksheet controls event handlers
+
+  $copyButton.on('click', function(event) {
+      Toy.copyToClipboard($copyText.val());
+      // I tried using the TOUCHDOWN event and event.preventDefault()
+      // in Chrome, without success.
+      $copyText.select();
+    });
+
+  $wksButton.on('click', function() {
+      let wksControls = editor._wksControls;
+      wksControls.toggle();
+      // TODO: Move this action into setDocumentName or an observer.
+      wksControls.setDocName(editor.getDocumentName());
+    });
+  $clearProof.on('click', function() {
+      if (window.confirm('Do you really want to clear the proof?')) {
+        editor.clear();
+      }
+    });
+  // Step editor has state controlling whether to show all rules.
+  $rulesMode.on('change', function(event) {
+      const stepEditor = editor.stepEditor;
+      stepEditor.showRuleType = this.value;
+      stepEditor.stepSuggester.refresh();
+      stepEditor.ruleMenu.refresh();
+      stepEditor.reset();
+    });
+  $rulesMode.trigger('change');
+  const result = {
+    $node: $proofButtons,
+    $copyText: $copyText,
+    $rulesMode: $rulesMode
+  };
+  return result;
+}
+
+/**
  * Construct a proof displayer/editor, which is a composite made from
  * a ProofDisplay.  User interaction may also create additional
  * subproof ProofDisplay objects within this.
@@ -213,80 +300,16 @@ function ProofEditor() {
   @mainDisplay.proofEditor = self;
   self.proofDisplay = @mainDisplay;
   self.steps = @mainDisplay.steps;
-  self._wksControls = buildWksControls(self);
 
-  // Add the group of buttons.
-  // The proofButtons class is used in some examples.
-  @proofButtons = $('<div class=proofButtons/>');
-
-  var clearProof = $('<input type=button value="Clear work">');
-  const css = {float: 'right',
-               backgroundColor: '#d9534f',
-               color: 'white'
-  };
-  clearProof.css(css);
-
-  // Toggling the proof state display visibility with a button.
-  const $wksButton = $('<input type=button value="Worksheet... ">');
-
-  const $options = $('<select class=rulesToShow>' +
-                     '<option value=algebra>algebra' +
-                     '<option value=general>general reasoning' +
-                     '<option value=all>all available' +
-                     '</select>');
-
-  // This holds textual representation of the latest selected term.
-  // It is writable so the user can scroll it horizontally (using the
-  // text cursor).
-  const $copyText = $('<input class=copyText>');
-  // The fa and fa-copy classes put a "copy" icon into the
-  // text of the button.
-  const $copyButton = $('<button class="fa fa-copy">');
-  $copyButton.css({fontSize: '.8rem'});
-
-
-  @proofButtons.append($wksButton, $('<s class=em>'));
-  @proofButtons.append('Mode');
-  @proofButtons.append($options, $('<s class=em>'));
-  @proofButtons.append('Selection');
-  @proofButtons.append($copyText);
-  @proofButtons.append($copyButton);
-  @proofButtons.append(clearProof);
-
-  self.$rulesMode = @proofButtons.find('.rulesToShow');
-  var stepEditor = new Toy.StepEditor(this);
+  const stepEditor = new Toy.StepEditor(this);
   self.stepEditor = stepEditor;
 
-  self.$copyText = $copyText;
+  const proofButtons = buildProofButtons(self);
+  self.$copyText = proofButtons.$copyText;
+  self.$rulesMode = proofButtons.$rulesMode;
 
-  // Main and worksheet controls event handlers
+  self._wksControls = buildWksControls(self);
 
-  $copyButton.on('click', function(event) {
-      Toy.copyToClipboard($copyText.val());
-      // I tried using the TOUCHDOWN event and event.preventDefault()
-      // in Chrome, without success.
-      $copyText.select();
-    });
-
-  $wksButton.on('click', function() {
-      let wksControls = self._wksControls;
-      wksControls.toggle();
-      // TODO: Move this action into setDocumentName or an observer.
-      wksControls.setDocName(self.getDocumentName());
-    });
-  clearProof.on('click', function() {
-      if (window.confirm('Do you really want to clear the proof?')) {
-        self.clear();
-      }
-    });
-  // Step editor has state controlling whether to show all rules.
-  self.$rulesMode.on('change', function(event) {
-      stepEditor.showRuleType = this.value;
-      stepEditor.stepSuggester.refresh();
-      stepEditor.ruleMenu.refresh();
-      stepEditor.reset();
-    });
-  self.$rulesMode.trigger('change');
   // The ruleStats are visible except when a proof is brand new and
   // there is nothing to show.
   var ruleStats = $('<div class="ruleStats invisible">Last rule ' +
@@ -318,7 +341,7 @@ function ProofEditor() {
     .append(@mainDisplay.node)
     .append($status)
     .append(stepEditor.$node)
-    .append(@proofButtons)
+    .append(proofButtons.$node)
     .append(this._wksControls.node)
     .append(ruleStats);
   this.setEditable(true);
@@ -623,8 +646,12 @@ ProofEditor.prototype.setEditable = @(value) {
   self.stepEditor.$node.toggle(value);
 };
 
+/**
+ * Toggles display of the proof buttons on or off according to the
+ * given value.
+ */
 ProofEditor.prototype.showProofButtons = @(value) {
-  @proofButtons.toggle(value);
+  self.proofButtons.$node.toggle(value);
 };
 
 
