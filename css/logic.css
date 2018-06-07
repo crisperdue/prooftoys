@@ -408,10 +408,6 @@ span#leftNav {
      * the step is selected in the UI or hovered.
      */
     border: 1px solid transparent;
-    /* This kind of element may be given position:absolute as
-     * a "step suggestion".  The width matters then.
-     */
-    width: 100%;
     margin-left: 4em;
 }
 
@@ -423,6 +419,8 @@ span#leftNav {
 
 .proofStep.stepSuggestion {
     position: absolute;
+    left: 0;
+    right: 0;
     color: #aaa;
     background-color: #eef;
     border: .5px solid #bbf;
@@ -434,7 +432,6 @@ span#leftNav {
 
 .proofStep.stepMessage {
     display: block;
-    width: calc(100% - 5em);
     padding-left: 5em;
 }
 
