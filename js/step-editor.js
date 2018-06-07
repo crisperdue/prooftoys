@@ -6,9 +6,796 @@
 (function() {
 
 // Make application assertions available through "assert".
-var assert = Toy.assertTrue;
+const assert = Toy.assertTrue;
+const format = Toy.format;
+const dom = Toy.dom;
+const TermSet = Toy.TermSet;
 
-var format = Toy.format;
+
+//// PROOF EDITOR
+
+// TODO: Use events and event handlers to make cleaner separation
+//   between ProofEditor, ProofDisplay, and StepEditor.  StepEditor
+//   needs some kind of access to the array of proof steps to
+//   translate step numbers to steps.  Perhaps ProofDisplay can notify
+//   when its list of steps changes.
+
+// Each instance has a numeric ID.
+var nextProofEditorId = 1;
+
+/**
+ * Construct a proof displayer/editor, which is a composite made from
+ * a ProofDisplay.  User interaction may also create additional
+ * subproof ProofDisplay objects within this.
+ *
+ * Public properties:
+ *
+ * proofDisplay: ProofDisplay for the proof being edited.
+ * containerNode: jQuery object for outermost DOM node for the display.
+ * stepEditor: StepEditor for the proof being edited.
+ * proofEditorId: identifies this editor for purposes of restoring
+ *   its operating state across visits / page loads.  Consists of the
+ *   pathname part of the browser "location", "#", and an integer
+ *   sequence number of the editor within the page.
+ * givens: array of boolean terms defining the problem, often
+ *   equations (not steps).  Should only be set when the proof is
+ *   empty.  Read it as a TermSet.
+ * givenVars: object/set keyed by names of variables free in the givens;
+ *   read-only.
+ * solutions: If any of these expressions (or strings) is an alphaMatch
+ *   with a step, announce the step as a solution.
+ * standardSolution: Boolean.  If no explicit solutions given, but the
+ *   result of a step solves for a variable (equal to a numeral or
+ *   fraction), announce that the problem is solved.
+ */
+function ProofEditor() {
+  const self = this;
+  self._givens = new TermSet();
+  self.givenVars = {};
+  self.solutions = [];
+  self.standardSolution = true;
+  // Set the ID.
+  self.proofEditorId = window.location.pathname + '#' + nextProofEditorId++;
+  const mainDisplay = new Toy.ProofDisplay();
+  mainDisplay.proofEditor = self;
+  self.proofDisplay = mainDisplay;
+  self.steps = mainDisplay.steps;
+
+  const stepEditor = new Toy.StepEditor(this);
+  self.stepEditor = stepEditor;
+
+  const proofButtons = buildProofButtons(self);
+  self.$copyText = proofButtons.$copyText;
+  self.$rulesMode = proofButtons.$rulesMode;
+
+  self._wksControls = buildWksControls(self);
+
+  // The ruleStats are visible except when a proof is brand new and
+  // there is nothing to show.
+  var ruleStats = $('<div class="ruleStats invisible">Last rule ' +
+                    '<span class=ruleTime></span> msec, ' +
+                    '<span class=ruleSteps></span> steps</div>');
+  // This element is for messages about status of solving the problem.
+  var $status = $('<div class="solutionStatus"/>');
+  var $statusDisplay = $('<div class=solutionStatusDisplay/>');
+  $status.append($statusDisplay);
+  self.$status = $status;
+  self.$statusDisplay = $statusDisplay;
+
+  // The equations.html page "Try a different problem" button goes
+  // at the end of this $header div.
+  let $header =
+    ($('<div class=proofEditorHeader>')
+     .append('<b style="font-size:larger">Problem work area</b>'));
+  let $readOnly =
+    $('<p class=ifReadOnly><i><b style="color:red">Note:</b>' +
+      ' This display is read-only due to editing' +
+      ' in progress in another window or tab.</i></p>');
+
+  // Top-level element of the proof editor display:
+
+  this.containerNode = $('<div class=proofEditor></div>');
+  this.containerNode
+    .append($header)
+    .append($readOnly)
+    .append(mainDisplay.node)
+    .append($status)
+    .append(stepEditor.$node)
+    .append(proofButtons.$node)
+    .append(this._wksControls.node)
+    .append(ruleStats);
+  this.setEditable(true);
+
+  // Also append controls from the step editor object to the
+  // container node, removing them from their initial site in the
+  // step editor.
+  //
+  // TODO: Remove this ugly hack by consolidating the controls here
+  //   and the step editor controls into a ProofControls object, all
+  //   constructed together.  The step editor now seems to be reduced
+  //   to the form for interactively supplying arguments to a rule.
+  stepEditor.$node.find('.advice').appendTo(this.containerNode);
+  stepEditor.$node.find('.nextStepsContainer').appendTo(this.containerNode);
+  stepEditor.$node.find('.ruleMenu').appendTo(this.containerNode);
+
+  // Restore editor state.
+  const state = Toy.getSavedState(self);
+  // The (default) name is the part between the last "/", if any, and
+  // the first following "." or "#".
+  const name = this.proofEditorId.replace(/^(.*[/])?(.*?)[.#]/, '$2');
+  self.setDocumentName(state
+                       ? state.docName
+                       // By default set the document name according to the URI path,
+                       // and the editor number if that is greater than one.
+                       : name);
+
+  // Prepare to write out proof state during refresh, so basically
+  // whenever it changes.
+  this._refresher = new Toy.Refresher(function() {
+      self._updateGivens();
+      self.saveProofState();
+      // Set (or clear) the message in the $status box.
+      var steps = mainDisplay.steps;
+      var len = steps.length;
+      if (len) {
+        var step = steps[len - 1];
+        var message = self.progressMessage(step.original);
+        $statusDisplay.empty();
+        $statusDisplay.append(message);
+        $status.toggleClass('invisible', !message);
+      } else {
+        $status.toggleClass('invisible', true);
+      }
+    });
+
+  // Restore proof state.
+  const proofData = Toy.readDoc(self._documentName);
+  if (proofData) {
+    mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
+  }
+  // If another ProofEditor is already holding the document,
+  // make it read-only.  Otherwise reserve it for this one.
+  if (Toy.isDocHeldFrom(self._documentName, self)) {
+    self.setEditable(false);
+  }
+
+  // Document-level event handlers.
+
+  // Returns a boolean indicating whether the given jQuery node
+  // is within an element matching the selector.
+  function within($node, selector) {
+    return $node.closest(selector).length > 0;
+  }
+  // Click in most areas of the document removes any step or expr
+  // selection.
+  $(document).on('click', function(event) {
+      if (!mainDisplay._selectLock) {
+        // When a rule entry form is open, selection is locked.
+        const $target = $(event.target);
+        // TODO: Consider setting up click handlers for elements such as
+        //   these so they add information to the event indicating for
+        //   example "<editor> noDeselect" or below "<wksControls>
+        //   noDismiss".  And check that data in code like this here.
+        //
+        // The following areas are intended targets for clicks and have
+        // click handlers, so we prefer not to remove the selection in
+        // these areas at this level.
+        //   .stepAndNum is the main container for all exprs.
+        //   .ruleMenu is the rules menu
+        //   .above is the display of popups for quick access to rewrites
+        //   .ruleName.link pops subproof displays up and down
+        //   .input, .button, and .select are typical form controls
+        //   .wksControlsOuter is the main box for worksheet controls
+        const selectors = ('.stepAndNum, .ruleMenu, .above, ' +
+                           '.ruleName.link, .inferenceDisplay, ' +
+                           '.wksControlsOuter, input, button, select');
+        // Mousedown in most places removes any step or expr selection.
+        if (!within($target, selectors)) {
+          mainDisplay.deselectStep();
+        }
+      }
+    });
+  // Click in most areas of the document hides the workspace controls.
+  $(document).on('click', function(event) {
+      const $target = $(event.target);
+      if (!within($target, '.wksControlsOuter, .proofButtons')) {
+        self._wksControls.hide();
+      }
+      if (!within($target, '.proofErrors')) {
+        // Similarly, most clicks hide the proof errors display.
+        // TODO: Toggle "hidden" rather than calling "hide".
+        self.stepEditor.$proofErrors.hide();
+      }
+    });
+}
+
+/**
+ * Builds and returns an object for the proofButtons DIV of the given
+ * proof editor.  This is the block of controls with the "worksheet"
+ * button.  The returned plain object has properties:
+ *
+ * $node: jQuery node of the DIV
+ * $copyText: jQuery of the copyText input field
+ * $rulesMode: jQuery of the rules mode selector
+ */
+function buildProofButtons(editor) {
+  // Add the group of buttons.
+  // The proofButtons class is used in some examples.
+  const $proofButtons = $('<div class=proofButtons/>');
+
+  const $clearProof = $('<input type=button value="Clear work">');
+  const css = {float: 'right',
+               backgroundColor: '#d9534f',
+               color: 'white'
+  };
+  $clearProof.css(css);
+
+  // Toggling the proof state display visibility with a button.
+  const $wksButton = $('<input type=button value="Worksheet... ">');
+
+  const $options = $('<select class=rulesToShow>' +
+                     '<option value=algebra>algebra' +
+                     '<option value=general>general reasoning' +
+                     '<option value=all>all available' +
+                     '</select>');
+
+  // This holds textual representation of the latest selected term.
+  // It is writable so the user can scroll it horizontally (using the
+  // text cursor).
+  const $copyText = $('<input class=copyText>');
+  // The fa and fa-copy classes put a "copy" icon into the
+  // text of the button.
+  const $copyButton = $('<button class="fa fa-copy">');
+  $copyButton.css({fontSize: '.8rem'});
+
+
+  $proofButtons.append($wksButton, $('<s class=em>'));
+  $proofButtons.append('Mode');
+  $proofButtons.append($options, $('<s class=em>'));
+  $proofButtons.append('Selection');
+  $proofButtons.append($copyText);
+  $proofButtons.append($copyButton);
+  $proofButtons.append($clearProof);
+
+  const $rulesMode = $proofButtons.find('.rulesToShow');
+
+  // Main and worksheet controls event handlers
+
+  $copyButton.on('click', function(event) {
+      Toy.copyToClipboard($copyText.val());
+      // I tried using the TOUCHDOWN event and event.preventDefault()
+      // in Chrome, without success.
+      $copyText.select();
+    });
+
+  $wksButton.on('click', function() {
+      let wksControls = editor._wksControls;
+      wksControls.toggle();
+      // TODO: Move this action into setDocumentName or an observer.
+      wksControls.setDocName(editor.getDocumentName());
+    });
+  $clearProof.on('click', function() {
+      if (window.confirm('Do you really want to clear the proof?')) {
+        editor.clear();
+      }
+    });
+  // Step editor has state controlling whether to show all rules.
+  $rulesMode.on('change', function(event) {
+      const stepEditor = editor.stepEditor;
+      stepEditor.showRuleType = this.value;
+      stepEditor.stepSuggester.refresh();
+      stepEditor.ruleMenu.refresh();
+      stepEditor.reset();
+    });
+  $rulesMode.trigger('change');
+  const result = {
+    $node: $proofButtons,
+    $copyText: $copyText,
+    $rulesMode: $rulesMode
+  };
+  return result;
+}
+
+/**
+ * This builds and returns an object containing the full content of
+ * the workspace-related controls.  The object has the following
+ * properties and methods:
+ *
+ * node: DOM element for the controls.
+ * hide(): Hides all of the controls.
+ * show(): Shows the controls.
+ * getProofText(): Returns the text content of the proof state area.
+ * setProofText(text): Sets the text content of the proof state area.
+ * setDocName(name): Sets the document name display in the controls area.
+ */
+function buildWksControls(editor) {
+  const $outermost = $('<div class="wksControlsOuter transFade hidden">');
+  const $controls = $('<div class="wksControls">');
+  $outermost.append($controls);
+  $controls.append('<div class=wksTitle>' +
+                   'Current worksheet is "<span class=wksName></span>"</div>');
+  $buttons = $('<div class=wksButtons>');
+  $controls.append($buttons);
+
+  $buttons.append(makeButton('Open... ', 'openButton'));
+  $buttons.append(makeButton('Save as... ', 'saveAsButton'));
+  $buttons.append(makeButton('Copy to... ', 'copyToButton'));
+  $buttons.append(makeButton('Delete... ', 'deleteButton'));
+  $buttons.append(makeButton('View as text', 'previewButton'));
+
+  $inputs = $('<div class=wksInputs>');
+  $controls.append($inputs);
+
+  function makeEntryField(prefix, classes, action) {
+    const html =
+      '<div class="{2} hidden form">{1} ' +
+      '<input type=text class=input size=30>' +
+      '&nbsp;<input type=button class=go value="Go">' +
+      '</div>';
+    return $(Toy.format(html, prefix, classes));
+  }
+  const $saveAs = makeEntryField('Save worksheet as', 'saveAs');
+  $inputs.append($saveAs);
+  const $copyTo = makeEntryField('Copy worksheet to', 'copyTo');
+  $inputs.append($copyTo);
+  const $message = $('<div class="wksMessage hidden">');
+  $inputs.append($message);
+
+  const $openersArea = $('<div class="openersArea transFade hidden">');
+  $outermost.append($openersArea);
+
+  const $deletersArea = $('<div class="deletersArea transFade hidden">');
+  $outermost.append($deletersArea);
+
+  const stateDisplayHtml =
+    '<div class="proofPreview transFade hidden">\n' +
+    '<p style="text-align:center; margin-top:0">\n' +
+    '<b>Proof State</b>\n' +
+    '<p>\n' +
+    'The text area below contains the current state of the proof in textual\n' +
+    'form.  You can save the state of your work by copying this text into a\n' +
+    'document of your choice.  To restore the state at some time in the\n' +
+    'future, paste it back then press "Restore proof".\n' +
+    '<p style="margin-bottom: 0">\n' +
+    '<input class=restoreProof type=button value="Restore proof">\n' +
+    '<input class=hideProofState type=button value="Close"><br>\n' +
+    '<textarea class=proofStateArea rows=20></textarea>\n' +
+    '</div>\n';
+  $proofPreview = $(stateDisplayHtml);
+  $outermost.append($proofPreview);
+
+  // Elements to be hidden when the display is reset.
+  const $resettables = ($saveAs
+                       .add($copyTo)
+                       .add($message)
+                       .add($openersArea)
+                       .add($deletersArea)
+                       .add($proofPreview));
+
+  // Closes all of the "resettables" and clears the content of the text
+  // fields in the worksheet control panel.
+  function resetDisplay() {
+    $resettables.toggleClass('hidden', true);
+    $saveAs.find('.input').val('');
+    $copyTo.find('.input').val('');
+  }
+
+  // Toggles the display in the given area, hiding all of the other
+  // exclusive displays to keep the displays tidy and help keep the
+  // user focused.  This is implemented as a toggle especially to
+  // support the toggling worksheet buttons.  If it unhides an area,
+  // attempts to focus on a node with class "input", for the benefit
+  // of areas with a text field.
+  function toggleControl($area) {
+    const wantHidden = !$area.hasClass('hidden');
+    resetDisplay();
+    $area.toggleClass('hidden', wantHidden);
+    if (!$area.hasClass('hidden')) {
+      // :visible is not needed here, but it would be enough, without
+      // the "hidden" check if we guaranteed that the area would be
+      // hidden using display:none.
+      $area.find('input:text:visible:first').focus();
+    }
+  }
+
+  // Toggles the document list display in the given area,
+  // presumably either $openersArea or $deletersArea,
+  // hiding all the other controls.
+  function toggleDocs($area) {
+    toggleControl($area);
+    if (!$area.hasClass('hidden')) {
+      showDocs($area);
+    }
+  }
+
+  // Renders a list of all documents within the .docList portion of
+  // the given area, removing any prior content.  Omits the current
+  // document.
+  function showDocs($area) {
+    $area.empty();
+    const $docList = $('<div class=docList>');
+    $area.append($docList);
+    // Then add back names of all documents.
+    Toy.lsDocs().sort().forEach(function(name) {
+        if (name === editor._documentName) {
+          return;
+        }
+        const $div = $('<div class=docName>');
+        $div.append(name);
+        $docList.append($div);
+      });
+  }
+
+  // Checks whether the given name is valid as a worksheet name,
+  // returning a boolean indication.  If the name is not valid,
+  // also sets a message about the issue.
+  function checkName(name) {
+    if (Toy.checkDocName(name)) {
+      return true;
+    } else {
+      $message.toggleClass('hidden', false);
+      $message.text('Invalid worksheet name: "' + name + '"');
+      return false;
+    }
+  }
+
+  // Event handlers
+
+  // Hovers in the openers and deleters areas.
+  $openersArea.on('mouseenter mouseleave', '.docName', function(event) {
+      $(this).toggleClass('hover');
+    });
+  $deletersArea.on('mouseenter mouseleave', '.docName', function(event) {
+      $(this).toggleClass('hover');
+    });
+
+   
+  // Handler for the "restore proof" button.  Restores proof state from
+  // the text area.
+  function restoreProof() {
+    Toy.withErrorReporting(function() {
+        editor.restoreState();
+        result.hide();
+      });
+  }
+  $outermost.find('.restoreProof').on('click', restoreProof);
+
+  // Closing the state display:
+  $outermost.find('.hideProofState').on('click', function() {
+      $outermost.find('.proofPreview').addClass('hidden');
+    });
+
+  // Buttons that open up the ultimate action UIs.
+  $controls.find('.openButton').on('click', function() {
+      toggleDocs($openersArea);
+    });
+  $controls.find('.saveAsButton').on('click', function() {
+      toggleControl($saveAs);
+    });
+  $controls.find('.copyToButton').on('click', function() {
+      toggleControl($copyTo);
+    });
+  $controls.find('.deleteButton').on('click', function() {
+      toggleDocs($deletersArea);
+    });
+
+  // This opens up the proof state "preview".
+  $controls.find('.previewButton')
+    .on('click', function() {
+        toggleControl($proofPreview);
+        if (!$proofPreview.hasClass('hidden')) {
+          $outermost.find('.proofStateArea').select();
+        }
+      });
+
+  // Main action functions are in this section.
+  $saveAs.on('click', '.go', function() {
+      const name = $($(this).closest('div.form')).find('.input').val();
+      if (checkName(name)) {
+        editor.setDocumentName(name);
+        Toy.writeDoc(name, {proofState: editor.getStateString()});
+        $message.text('Saved worksheet as "' + name + '"');
+        toggleControl($message);
+        // TODO: Move this line into setDocumentName or an observer.
+        $controls.find('.wksName').text(editor.getDocumentName());
+      }
+    });
+  $copyTo.on('click', '.go', function() {
+      const name = $($(this).closest('div.form')).find('.input').val();
+      if (checkName(name)) {
+        Toy.writeDoc(name, {proofState: editor.getStateString()});
+        $message.text('Copied worksheet to "' + name + '"');
+        toggleControl($message);
+      }
+    });
+  $openersArea.on('click', '.docName', function() {
+      const text = $(this).text();
+      const success = editor.openDoc(text);
+      if (success) {
+        // In principle this would be triggered by observation of
+        // of the document name.
+        $controls.find('.wksName').text(editor.getDocumentName());
+        $openersArea.toggleClass('hidden', true);
+      } else {
+        window.alert('Could not open worksheet ' + text);
+      }
+    });
+  $deletersArea.on('click', '.docName', function() {
+      const name = $(this).text();
+      if (name === this._documentName) {
+        $message.text('Cannot delete the current document.');
+      } else {
+        Toy.rmDoc(name);
+        $message.text('Deleted "' + name + '"');
+        toggleControl($message);
+      }
+    });
+
+  // Responses to pressing "enter" in an action text field:
+  $copyTo.on('keydown', function(event) {
+      if (event.keyCode === 13) {
+        $copyTo.find('.go').trigger('click');
+      }        
+    });
+  $saveAs.on('keydown', function(event) {
+      if (event.keyCode === 13) {
+        $saveAs.find('.go').trigger('click');
+      }        
+    });
+
+  // "Input" handlers to clear the message whenever a
+  // text field with document name changes its value.
+  $copyTo.on('input', function() {
+      $message.toggleClass('hidden', true);
+      $message.empty();
+    });
+  $saveAs.on('input', function() {
+      $message.toggleClass('hidden', true);
+      $message.empty();
+    });
+
+  // Methods
+
+  $stateArea = $outermost.find('.proofStateArea');
+
+  const result = {
+    node: dom($outermost),
+    hide: function() {
+      $outermost.toggleClass('hidden', true);
+      resetDisplay();
+    },
+    show: function() {
+      $outermost.toggleClass('hidden', false);
+    },
+    toggle: function() {
+      $outermost.hasClass('hidden') ? this.show() : this.hide();
+    },
+    getProofText: function() {
+      return $stateArea.val();
+    },
+    setProofText: function(text) {
+      $stateArea.val(text);
+    },
+    setDocName: function(name) {
+      $outermost.find('.wksName').text(editor.getDocumentName());
+    }
+  };
+
+  return result;
+}
+
+/**
+ * Simple utility that makes HTML text for a button.
+ */
+function makeButton(label, classes) {
+  return Toy.format('<button type=button class="{2}">{1}</button>',
+                    label, classes || '');
+}
+
+/**
+ * Sets the name of this editor's worksheet, and does associated
+ * bookkeeping.  This does not load or save any proof state.  (In most
+ * use cases one or the other should also be done.)
+ */
+ProofEditor.prototype.setDocumentName = function(name) {
+  const self = this;
+  self._documentName = name;
+  // Remember the state of this editor.
+  // TODO: Replace the following with some form of state observation.
+  if (self.proofDisplay.isEditable()) {
+    // Only note the state within this context if editing the proof,
+    // so that otherwise the document can be edited by other editors.
+    // (See Toy.isDocHeldFrom.)
+    Toy.noteState(self, {docName: self._documentName});
+  }
+  Toy.saveState(self, {docName: self._documentName});
+};
+
+/**
+ * Attempts to open the named document in this proof editor, setting
+ * the editor's document name and loading its proof state.  Returns
+ * true iff the document is successfully loaded, else false.
+ */
+ProofEditor.prototype.openDoc = function(name) {
+  const proofData = Toy.readDoc(name);
+  if (proofData) {
+    this.setDocumentName(name);
+    this.setSteps(Toy.decodeSteps(proofData.proofState));
+    return true;
+  } else {
+    return false;
+  }
+};
+
+/**
+ * Returns the name of the editor's current document.
+ */
+ProofEditor.prototype.getDocumentName = function() {
+  return this._documentName;
+};
+
+/**
+ * Empties the proof and problem statement for a fresh start.
+ */
+ProofEditor.prototype.clear = function() {
+  this.stepEditor.showRules = [];
+  this.stepEditor.reset();
+  this.proofDisplay.setSteps([]);
+};
+
+/**
+ * Requests status display on or off.  Regardless of the request,
+ * status is only ever displayed if it contains text.  (Status change
+ * methods modify its visibility directly.)
+ */
+ProofEditor.prototype.requestStatusDisplay = function(vis) {
+  var $display = this.$statusDisplay;
+  var text = $display.text()
+  // $display.toggleClass('hidden', !(text && vis));
+};
+
+/**
+ * Define the "givens" property as a virtual property.  Setting it has
+ * the side effect of modify the "givenVars" property as well, which
+ * should be treated as readonly.  If not set explicitly through the
+ * setter, givens will come from uses of the "given" rule.
+ */
+Object.defineProperty(ProofEditor.prototype, "givens", {
+    get: function() { return this._givens; },
+    set: function(g) {
+      assert(this.proofDisplay.steps.length == 0, 'Proof is not empty');
+      var wff;
+      for (var i = 0; i < g.length; i++) {
+        var g1 = Toy.termify(g[i]);
+        this._givens.add(g1);
+        wff = (wff ? Toy.infixCall(wff, '&', g1) : g1);
+      }
+      if (wff) {
+        this.addStep(Toy.rules.given(wff));
+      }
+      this._updateGivenVars();
+    }
+  });
+
+/**
+ * Recompute the problem givens from the first proof step
+ * if its rule name is "given".
+ */
+ProofEditor.prototype._updateGivens = function() {
+  var self = this;
+  var steps = self.proofDisplay.steps;
+  self._givens.clear();
+  function add(given) { self._givens.add(given); }
+  if (steps.length > 0) {
+    var step = steps[0];
+    if (step.ruleName === 'given') {
+      step.wff.getMain().getRight().scanConjuncts(add);
+    }
+  }
+  self._updateGivenVars();
+};
+
+/**
+ * Update the givenVars to match the (possibly changed) set of givens
+ * of this problem.
+ */
+ProofEditor.prototype._updateGivenVars = function() {
+  // An object/set with names of all variables in any of the
+  // givens:
+  var vars = {};
+  this._givens.each(function(g) { $.extend(vars, g.freeVars()); });
+  this.givenVars = vars;
+};
+
+/**
+ * Public interface to set the rule and fact offerability mode
+ * of this ProofEditor.
+ */
+ProofEditor.prototype.setRulesMode = function(mode) {
+  this.$rulesMode.val(mode);
+  if (this.$rulesMode.val() != mode) {
+    Toy.err('Bad rules mode setting: ' + mode);
+  }
+  this.$rulesMode.trigger('change');
+};
+
+/**
+ * Add a step to the proof.
+ */
+ProofEditor.prototype.addStep = function(step) {
+  this.proofDisplay.addStep(step);
+};
+
+/**
+ * Gets the state of the proof, in string form.
+ */
+ProofEditor.prototype.getStateString = function() {
+  return Toy.encodeSteps(this.proofDisplay.steps)
+};
+
+/**
+ * Sets the state of the proof from a string as returned by
+ * getStateString.
+ */
+ProofEditor.prototype.setStateFromString = function(encoded) {
+  // TODO: Rename to setProofFromString.
+  var steps = encoded ? Toy.decodeSteps(encoded) : [];
+  this.proofDisplay.setSteps(steps);
+};
+
+/**
+ * Sets the steps to the given array of non-renderable steps.
+ */
+ProofEditor.prototype.setSteps = function(steps) {
+  this.proofDisplay.setSteps(steps);
+};
+
+/**
+ * Save the proof state to the the worksheet controls text area and
+ * the document's data store.  Normally use the proofChanged method
+ * rather than calling this directly, to avoid redundant work.
+ */
+ProofEditor.prototype.saveProofState = function() {
+  var text = this.getStateString();
+  this._wksControls.setProofText(text);
+  Toy.writeDoc(this._documentName, {proofState: text});
+};
+
+/**
+ * Attempts to restore the proof state from the worksheet controls
+ * text area.
+ */
+ProofEditor.prototype.restoreState = function() {
+  var string = this._wksControls.getProofText();
+  this.setStateFromString(string);
+};
+
+/**
+ * Returns true iff this is editable.
+ */
+ProofEditor.prototype.isEditable = function() {
+  return this.proofDisplay.isEditable();
+};
+
+/**
+ * Turns editability of the proof editor on or off, currently
+ * affecting only the UI.
+ */
+ProofEditor.prototype.setEditable = function(value) {
+  this.containerNode.toggleClass('editable', value);
+  // The following set the state of the display and hide or show the
+  // step editor.
+  this.proofDisplay.setEditable(value);
+  this.stepEditor.$node.toggle(value);
+};
+
+/**
+ * Toggles display of the proof buttons on or off according to the
+ * given value.
+ */
+ProofEditor.prototype.showProofButtons = function(value) {
+  this.proofButtons.$node.toggle(value);
+};
 
 
 //// PROOF STEP EDITOR
@@ -168,6 +955,12 @@ StepEditor.prototype.selectedExpr = function() {
  * StepEditor.reset.
  */
 StepEditor.prototype._setBusy = function(busy, complete) {
+  // TODO: Consider replacing this entire function with
+  //   something like this or the equivalent:
+  //
+  // complete();
+  // return;
+
   this.$node.toggleClass('busy', busy);
   var $working = $(this.proofDisplay.node).find('.ruleWorking');
   if (busy) {
@@ -1565,6 +2358,7 @@ Toy.autoSimplifyWholeStep = true;
 Toy.stepTypes = stepTypes;
 Toy.siteTypes = siteTypes;
 
+Toy.ProofEditor = ProofEditor;
 Toy.StepEditor = StepEditor;
 
 // Global variable set during execution of a rule from a step editor.

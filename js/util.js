@@ -23,6 +23,24 @@
 //   perhaps all browsers shown in default views in caniuse.com.
 Toy.incompatible = !!navigator.userAgent.match(/ MSIE [1-8][.]/);
 
+/**
+ * Converts a singleton jQuery object to its DOM node,
+ * checking carefully that it is a jQuery singleton.
+ */
+function dom($node) {
+  if ($node instanceof jQuery) {
+    if ($node.length === 0) {
+      throw new Error('No element');
+    } else if ($node.length === 1) {
+      return $node[0];
+    } else {
+      throw new Error('Multiple elements: ' + $node);
+    }
+  } else {
+    throw new Error('Not a jQuery object: ' + $node);
+  }
+}
+
 // JavaScript is defined to use IEEE 64-bit floating point in "round
 // to nearest" mode.  2**53 is confusable with 2**53 + 1, so this is
 // the greatest integer value we "allow".
@@ -1851,6 +1869,8 @@ function copyToClipboard(text) {
 
 
 //// Export public names.
+
+Toy.dom = dom;
 
 Toy.hasOwn = hasOwn;
 Toy.getOwn = getOwn;
