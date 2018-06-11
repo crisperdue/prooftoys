@@ -501,7 +501,9 @@ var methods = {
         }
         var extrasMessage = '';
         if (status.extras.size()) {
-          var asms = status.extras.values().map(x => x.toUnicode()).join(', ');
+          var asms = status.extras.values().map(function (x) {
+              return x.toUnicode();
+            }).join(', ');
           extrasMessage = 'Caution: step has extra assumptions: ' + asms;
         }
         if (fullCount == solutions.length) {
