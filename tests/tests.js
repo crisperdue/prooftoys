@@ -2886,9 +2886,48 @@ window.setTimeout(function() {
     Toy.eachFact(testFact);
   }
   console.log('Queued', nFacts, 'facts to test.');
+
+  // Set up one asynchronous test!
+  asyncTest('testChangeHandlers', function(assert) {
+      const changed = Toy.changed;
+      const onChange = Toy.onChange;
+      const o = {};
+      let updates = 0;
+      let pUpdates = 0;
+
+      function oChanged() {
+        updates++;
+        // Change the 'p' property, which will trigger
+        // an action on the next round.
+        changed(o, 'p');
+        changed(o, 'p');
+      }
+      function oPropChanged() {
+        pUpdates++;
+      }
+
+      onChange({to: o, do: oChanged});
+      onChange({to: o, part: 'p', do: oPropChanged});
+
+      changed(o);
+      changed(o);
+      changed(o, 'p');
+      changed(o, 'p');
+      changed(o, 'p2');
+      changed(o, 'p2');
+
+      setTimeout(function() {
+          assert.equal(updates, 1, 'updates');
+          assert.equal(pUpdates, 2, 'pUpdates');
+          start();
+        }, 200);
+    });
+
   runTest('End of tests', function() {
       assert(true, 'End of tests at ' + new Date());
-      console.log('End of test run at ', new Date());
+      console.log('Test run ended at ', new Date());
+      ($('#qunit-testrunner-toolbar')
+       .append('<br>End of test run at ' + new Date()));
     });
   // When the next lines run, the tests run with profiling.
   // console.log('Running tests with profiling');

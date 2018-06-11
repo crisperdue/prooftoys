@@ -1315,8 +1315,6 @@ function showStacks() {
 };
 
 
-
-
 //// Refresher class and deferred actions
 
 /**
@@ -1386,6 +1384,114 @@ function afterRepaint(action) {
 function allowRepaint() {
   return wait(10);
 }
+
+//// Change handlers
+
+// The functions "changed" and "onChange" support a model in which
+// there are various functions that update state, whose results depend on 
+// the state of objects and/or the values of specific properties of objects.
+// In this model, when an object or property of an object has changed, it
+// is recorded as being changed, and that status continues until the
+// functions dependent on it have run.
+//
+// When an object or one of its properties is flagged as changed by a
+// call to "changed", "onChange" marks all dependent functions as
+// needing to run, and makes sure they run as soon as the system event
+// loop returns to idle.  At that point, each dependent function is run
+// just once, within a try-catch block.
+
+/** Map from object to a set of event handler functions.  The handlers
+ * respond to reported changes to the object by deciding whether to
+ * add an action to run when the system event loop returns to idle.
+ * Private.
+ */
+const changeHandlers = new Map();
+
+/**
+ * Reports a change to the given object, or given property of the
+ * given object.  This has the effect of enqueuing all relevant
+ * registered actions to run when the system event loop returns to
+ * idle.  See onChange for more information.
+ */
+function changed(object, opt_partName) {
+  const handlers = changeHandlers.get(object);
+  handlers && handlers.forEach(function(handler) {
+      handler(object, opt_partName);
+    });
+}
+
+/**
+ * Registers an action to run when a relevant change is made to a
+ * given object, as reported using the "changed" function.  This takes
+ * a single plain object as its argument, with properties:
+ *
+ * action: Arbitrary function to run in response to a change in the
+ *   "source" object.
+ * source: If this object is changed, the action may run in response.
+ * part: A string.  If given, the action is to run in response to
+ *   a change to the source object reported by the "changed" function,
+ *   specifying the same property name.  If not given, the action runs
+ *   in response to a change to the source object reported without
+ *   specifying any property name.
+ *
+ * Calls to "changed" cause relevant registered actions to be enqueued
+ * to run when the event loop returns to idle.  A given action
+ * function only runs at most once per cycle regardless of the number
+ * of relevant calls to "changed".  Each enqueued action runs within a
+ * try-catch block to ensure that all have the opportunity to run.
+ */
+function onChange(properties) {
+  const source = properties.to;
+  const part = properties.part;
+  const action = properties.do;
+  const existing = changeHandlers.get(source);
+  const handlers = existing || new Set();
+  existing || changeHandlers.set(source, handlers);
+  // It does not matter that changeHandlers is a Set (rather than an
+  // array), because each handler function is a distinct object.
+  handlers.add(function(event, propertyName) {
+      if (propertyName === part) {
+        addPendingAction(action);
+      }
+    });
+};
+
+/**
+ * A set of actions registered to run when the system event loop next
+ * returns to idle.  Private.
+ */
+let pendingActions = new Set();
+
+/**
+ * Private.  Adds an action to pendingActions, and makes sure the
+ * actions will run when the event loop returns to idle.
+ */
+function addPendingAction(fn) {
+  if (pendingActions.size === 0) {
+    soonDo(runPendingActions);
+  }
+  pendingActions.add(fn);
+}
+
+/**
+ * Private.  Runs each pending action within a try-catch block,
+ * ensuring that all have opportunity to run.
+ */
+function runPendingActions() {
+  const actions = pendingActions;
+  pendingActions = new Set();
+  actions.forEach(function(fn) {
+      try {
+        fn();
+      } catch(e) {
+        console.error('Error occurred in change handler:', e);
+        debugger;
+      }
+    });
+}
+
+
+//// Graphics
 
 /**
  * Create and return a DIV that renders as a right triangle pointing
@@ -1466,7 +1572,7 @@ function _testTriangle(where, height, color) {
 
 
 //// RPC with message queuing
-//
+
 // This section uses ES6 / ES2015 language features
 
 /**
@@ -1952,6 +2058,10 @@ Toy.soonDo = soonDo;
 Toy.wait = wait;
 Toy.afterRepaint = afterRepaint;
 Toy.allowRepaint = allowRepaint;
+
+Toy.changed = changed;
+Toy.onChange = onChange;
+
 Toy.makeTriangle = makeTriangle;
 
 Toy.rpcLog = rpcLog;
