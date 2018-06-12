@@ -1034,8 +1034,8 @@ input.varName, input.step, input.equation, input.implication {
     z-index: 1;
     position: absolute;
     margin-top: 4px;
-    left: 0;
-    right: 0;
+    left: 1em;
+    right: 1em;
     background-color: AliceBlue;
 }
 
