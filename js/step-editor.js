@@ -1249,9 +1249,6 @@ function tryRuleAsync(stepEditor, rule, args) {
  * if it catches an error.  Reports there was nothing to do if the
  * rule returns its input or a null value.
  *
- * The rule runs with Toy.stepEditor set temporarily to this step
- * editor.
- *
  * Use this only in tryRuleAsync.
  */
 StepEditor.prototype._tryRule = function(rule, args) {
@@ -1264,8 +1261,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
       // Collect CPU profiling information.
       console.profile(Toy.profileName);
     }
-
-    Toy.stepEditor = this;
     // Applies the rule here.
     result = rule.apply(null, args);
   } catch(error) {
@@ -1273,7 +1268,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.report(error);
     return;
   } finally {
-    Toy.stepEditor = null;
     if (Toy.profileName) {
       console.profileEnd();
     }
@@ -2192,9 +2186,6 @@ Toy.siteTypes = siteTypes;
 
 Toy.ProofEditor = ProofEditor;
 Toy.StepEditor = StepEditor;
-
-// Global variable set during execution of a rule from a step editor.
-Toy.stepEditor = null;
 
 Toy.tryRuleAsync = tryRuleAsync;
 
