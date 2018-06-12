@@ -1016,13 +1016,6 @@ StepEditor.prototype.reset = function() {
 };
 
 /**
- * Attempt to take keyboard focus.
- */
-StepEditor.prototype.focus = function() {
-  this.ruleMenu.focus();
-};
-
-/**
  * Handler for ruleMenu selection of a rule name.  Overall purpose is
  * to run the rule from information already available, otherwise to
  * display the input form.
@@ -1335,7 +1328,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
         checkTop(top2);
       });
   }
-  this.focus();
   checkTop(top);
 };
 
@@ -2105,15 +2097,6 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
     }
   }
 }
-
-/**
- * Take keyboard focus if the underlying widget can do so.
- * This is a harmless no-op on known touchscreen devices.
- */
-RuleMenu.prototype.focus = function() {
-  // var $node = this.$node;
-  // window.setTimeout(function() { $node.focus(); }, 0);
-};
 
 /**
  * Ensures that the page's scrollTop (pageYOffset) remains at the
