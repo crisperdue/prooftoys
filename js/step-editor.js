@@ -1761,56 +1761,6 @@ function acceptsSelection(step, ruleName) {
 }
 
 
-/**
- * Produces a rule menu entry from a ruleName, with "axiom"
- * potentially shortened to "xiom".  Called with a (rendered) step if
- * there is a selection, the selected term if a term is selected, and
- * the menu's ProofEditor.
- *
- * This returns either a falsy value (including the empty string),
- * indicating the rule will not be offered, or a string with the menu
- * HTML, or an array of strings, indicating multiple menu items for
- * this rule with the possibly selected step and term.  Returned
- * strings should be HTML text.
- *
- * If there is a selected term, it can be formatted using {term} in
- * the rule's "menu" format string, or {right} for the term's
- * right-hand neighbor when there is one.
- */
-function ruleMenuInfo(ruleName, step, term, proofEditor) {
-  ruleName = ruleName.replace(/^xiom/, 'axiom');
-  var info = Toy.rules[ruleName].info;
-  if (info.menuGen) {
-    var gen = info.menuGen;
-    return gen(ruleName, step, term, proofEditor);
-  }
-  if (Toy.isEmpty(info.inputs)) {
-    // It is an axiom or theorem with no inputs.
-    if (info.menu) {
-      return info.menu;
-    }
-    var thm = Toy.getTheorem(ruleName);
-    var thmText = Toy.trimParens(thm.unHyp().toHtml());
-    if (ruleName.substring(0, 5) === 'axiom') {
-      return 'axiom ' + thmText;
-    } else {
-      return 'theorem ' + thmText;
-    }
-  } else {
-    // If there are inputs uses info.menu or some fallback.  This
-    // defers the rendering work to the RuleMenu code where it is more
-    // convenient and the HTML has been converted to DOM structure.
-    var formatArgs = {term: '<span class=menuSelected></span>',
-                      right: '<span class=menuRightNeighbor></span>'};
-    if (info.menu) {
-      return Toy.format(info.menu, formatArgs);
-    } else {
-      // TODO: Reconcile use of math markup here vs. non-use in menus.
-      return Toy.mathMarkup(info.basicTooltip || 'menu?');
-    }
-  }
-}
-
 
 //// RULEMENU
 
@@ -2105,6 +2055,56 @@ RuleMenu.prototype._update = function() {
   // TODO: Consider updating the advice using Promises.
   stepEditor.$advice.toggleClass('hidden', self.length != 0);
 };
+
+/**
+ * Produces a rule menu entry from a ruleName, with "axiom"
+ * potentially shortened to "xiom".  Called with a (rendered) step if
+ * there is a selection, the selected term if a term is selected, and
+ * the menu's ProofEditor.
+ *
+ * This returns either a falsy value (including the empty string),
+ * indicating the rule will not be offered, or a string with the menu
+ * HTML, or an array of strings, indicating multiple menu items for
+ * this rule with the possibly selected step and term.  Returned
+ * strings should be HTML text.
+ *
+ * If there is a selected term, it can be formatted using {term} in
+ * the rule's "menu" format string, or {right} for the term's
+ * right-hand neighbor when there is one.
+ */
+function ruleMenuInfo(ruleName, step, term, proofEditor) {
+  ruleName = ruleName.replace(/^xiom/, 'axiom');
+  var info = Toy.rules[ruleName].info;
+  if (info.menuGen) {
+    var gen = info.menuGen;
+    return gen(ruleName, step, term, proofEditor);
+  }
+  if (Toy.isEmpty(info.inputs)) {
+    // It is an axiom or theorem with no inputs.
+    if (info.menu) {
+      return info.menu;
+    }
+    var thm = Toy.getTheorem(ruleName);
+    var thmText = Toy.trimParens(thm.unHyp().toHtml());
+    if (ruleName.substring(0, 5) === 'axiom') {
+      return 'axiom ' + thmText;
+    } else {
+      return 'theorem ' + thmText;
+    }
+  } else {
+    // If there are inputs uses info.menu or some fallback.  This
+    // defers the rendering work to the RuleMenu code where it is more
+    // convenient and the HTML has been converted to DOM structure.
+    var formatArgs = {term: '<span class=menuSelected></span>',
+                      right: '<span class=menuRightNeighbor></span>'};
+    if (info.menu) {
+      return Toy.format(info.menu, formatArgs);
+    } else {
+      // TODO: Reconcile use of math markup here vs. non-use in menus.
+      return Toy.mathMarkup(info.basicTooltip || 'menu?');
+    }
+  }
+}
 
 /**
  * Take keyboard focus if the underlying widget can do so.
