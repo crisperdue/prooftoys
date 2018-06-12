@@ -283,7 +283,6 @@ function buildProofButtons(editor) {
   $rulesMode.on('change', function(event) {
       const stepEditor = editor.stepEditor;
       stepEditor.showRuleType = this.value;
-      stepEditor.stepSuggester.refresh();
       stepEditor.ruleMenu.refresh();
       stepEditor.reset();
     });
@@ -862,8 +861,6 @@ var siteTypes = {
  *   information in tryExecuteRule.
  * form: jQuery SPAN to hold the argument input form.
  * proofDisplay: ProofDisplay to edit
- * stepSuggester: StepSuggester used to show possible "next steps" based
- *   on rules applicable to any current selection.
  * lastRuleTime: Milliseconds consumed by last execution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
  *
@@ -915,11 +912,8 @@ function StepEditor(proofEditor) {
   menu.onLeave(function() { proofEditor.requestStatusDisplay(true); });
   self.ruleMenu = menu;
 
-  // This will contain suggestions for next steps.
-  self.stepSuggester = new StepSuggester(self);
   $div.append(self.clearer, self.form, self.$proofErrors,
-              self.$advice, self.stepSuggester.$node, menu.$node);
-
+              self.$advice, menu.$node);
   // Install event handlers.
   self.clearer.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
@@ -938,7 +932,6 @@ function StepEditor(proofEditor) {
 
 StepEditor.prototype.refresh = function() {
   this.ruleMenu.refresh();
-  this.stepSuggester.refresh();
 };
 
 /**
@@ -964,26 +957,15 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   this.$node.toggleClass('busy', busy);
   var $working = $(this.proofDisplay.node).find('.ruleWorking');
   if (busy) {
-    // Temporarily turn on display of the ruleMenu to get its offset.
-    this.ruleMenu.$node.toggleClass('hidden', false);
-    var offset = this.stepSuggester.$node.offset();
     this.ruleMenu.$node.toggleClass('hidden', true);
-    this.stepSuggester.$node.toggleClass('hidden', true);
-    // and similarly for $working to set its offset.
-    $working.toggle(true);
-    $working.offset({left: offset.left + 40, top: offset.top + 5});
-    // Then  turn it off and fade it back in.
-    $working.toggle(false).fadeIn(200, complete);
   } else {
-    // TODO: Consider adding hide / unhide methods to RuleMenu and
-    //   StepSuggester instead of this rather crude dependency on their
+    // TODO: Consider adding hide / unhide methods to RuleMenu
+    //   instead of this rather crude dependency on their
     //   lengths.  The "unhide" would not necessarily remove the
     //   "hidden" style class, just set its visibility to "normal".
     this.ruleMenu.$node.toggleClass('hidden', this.ruleMenu.length === 0);
-    this.stepSuggester.$node.toggleClass('hidden',
-                                         !this.stepSuggester.showable());
-    $working.fadeOut(200, complete);
   }
+  complete && complete();
   // Clear the form.
   // TODO: Make these actions into a function/method, see "reset".
   this.clearer.addClass('hidden');
@@ -1075,7 +1057,6 @@ StepEditor.prototype.ruleChosen = function(ruleName) {
       //   that are sensitive to presence of a form or inference in progress.
       //   Code like this then would just tell them to refresh.
       this.ruleMenu.$node.toggleClass('hidden', true);
-      this.stepSuggester.$node.toggleClass('hidden', true);
       // Template is not empty.  (If there is no template at all, the
       // rule will not be "offerable" and thus not selected.)
       this.clearer.removeClass('hidden');
@@ -1837,146 +1818,6 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
 }
 
 
-//// STEPSUGGESTER
-
-/**
- * Widget that displays suggestions for possible next steps.  Has
- * public properties:
- *
- * stepEditor: StepEditor of which this is part.
- * display: ProofDisplay that holds the suggested steps.
- * $node: jQuery with DOM node of the widget presentation.
- */
-function StepSuggester(stepEditor) {
-  var self = this;
-  self.stepEditor = stepEditor;
-  var nexts = self.display = new Toy.ProofDisplay();
-  $(nexts.node).addClass('nextSteps');
-  var $node = self.$node = $('<div class="nextStepsContainer hidden">');
-  $node.append('<b>Some next step options:</b></div>', nexts.node);
-  // When activated, this will update the display when the event loop
-  // next comes back to idle.
-  self._refresher = new Toy.Refresher(self._update.bind(self));
-  self._suggestions = [];
-
-  // Event handling
-
-  $node.on('click', '.stepSelector', function(event) {
-      var dStep = Toy.getProofStep(event.target);
-      var step = dStep.original;
-      var rule = Toy.rules[step.ruleName];
-      Toy.tryRuleAsync(stepEditor, rule, step.ruleArgs);
-    });
-}
-
-var suggesterMethods = {
-
-  /**
-   * Use this to indicate that some state has changed which may affect
-   * the desired list of step suggestions.
-   */
-  refresh: function() {
-    this._refresher.activate();
-  },
-
-  /**
-   * Returns true if there is data here to show.
-   */
-  showable: function() {
-    return this.display.steps.length > 0;
-  },
-
-  /**
-   * Internal to the StepSuggester; updates the display of suggested
-   * next steps.
-   *
-   * The current policy is to offer all rules that are offerable and
-   * have a "offerExample" property with truthy values, and to offer
-   * all facts that are offerable.
-   */
-  _update: function() {
-    var self = this;
-    var display = self.display;
-    var stepEditor = self.stepEditor;
-    // Hide the nextSteps display temporarily; show it later if not empty.
-    self.$node.addClass('hidden');
-    display.setSteps([]);
-    // If suggestions are disabled, stop here.
-    if (!Toy.useStepSuggester) {
-      return;
-    }
-    var mainDisplay = stepEditor.proofDisplay;
-    var step = mainDisplay.selection;
-    // Stop work on building suggestions.  This only affects ones
-    // not yet displayed.
-    self._suggestions.forEach(function(promise) {
-        promise.cancel();
-      });
-    self._suggestions = [];
-    var factsToOffer = [];
-    if (step) {
-      var term = step.selection;
-      var path = term && step.prettyPathTo(term);
-      var rules = Toy.rules;
-      display.prevStep = step;
-      // Given an RPC result wrapper, this adds its step if appropriate
-      // and possible, and 
-      function addStep(wrapper) {
-        var result = wrapper.result;
-        if (!self._suggestions.find(function(promise) {
-              return promise.id === wrapper.id;
-            })) {
-          Toy.rpcLog('Not adding step for old RPC', wrapper.id);
-        }
-        if (self._suggestions.find(function(promise) {
-              return promise.id === wrapper.id;
-            }) && !result.step.matches(step)) {
-          // A simplifer may return a step identical to its
-          // input, which is intended to be ignored.
-          display.addStep(result.step);
-          if (self.showable()) {
-            self.$node.removeClass('hidden');
-            stepEditor.$advice.addClass('hidden');
-          }
-        }
-      }
-      stepEditor.offerableRuleNames().forEach(function(name) {
-          var info = rules[name].info;
-          if (info.offerExample) {
-            // TODO: Report or handle error returns.
-            sendRule(name, path ? [step.original, path] : [step.original])
-              .addTo(self._suggestions)
-              .then(addStep)
-              .catch(function(wrapper) {
-                  var msg = 'Rule suggestion error {1}: {2}';
-                  console.warn(Toy.format(msg, wrapper.result.type,
-                                          wrapper.result.message));
-                });
-          }
-        });
-      factsToOffer = stepEditor.offerableFacts();
-      factsToOffer.forEach(function(info) {
-          const statement = info.goal;
-          self.length++;
-          // TODO: Report or handle error returns.
-          sendRule('rewrite',
-                   [step.original,
-                    step.prettyPathTo(step.selection),
-                    statement])
-            .addTo(self._suggestions)
-            .then(addStep)
-            .catch(function(wrapper) {
-                var msg = 'Fact suggestion {1}:\n  {2}';
-                console.warn(Toy.format(msg, wrapper.result.type,
-                                        wrapper.result.message));
-              });
-        });
-    }
-  }
-};
-Object.assign(StepSuggester.prototype, suggesterMethods);
-
-
 //// RULEMENU
 
 /**
@@ -2180,63 +2021,59 @@ RuleMenu.prototype._update = function() {
   var itemInfos = [];
   stepEditor.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
-      if (!Toy.useStepSuggester || !Toy.rules[ruleName].info.offerExample) {
-        // Info is a string or array of strings.
-        var info = ruleMenuInfo(ruleName, step, term,
-                                stepEditor._proofEditor);
-        if (Array.isArray(info)) {
-          // An array occurs when a rule may be used in multiple ways,
-          // notably where there are multiple possible replacements of
-          // a term by equal terms.
-          info.forEach(function(msg) {
-              itemInfos.push({ruleName: ruleName, html: msg});
-            });
-        } else if (info) {
-          itemInfos.push({ruleName: ruleName, html: info});
-        }
+      // Info is a string or array of strings.
+      var info = ruleMenuInfo(ruleName, step, term,
+                              stepEditor._proofEditor);
+      if (Array.isArray(info)) {
+        // An array occurs when a rule may be used in multiple ways,
+        // notably where there are multiple possible replacements of
+        // a term by equal terms.
+        info.forEach(function(msg) {
+            itemInfos.push({ruleName: ruleName, html: msg});
+          });
+      } else if (info) {
+        itemInfos.push({ruleName: ruleName, html: info});
       }
     });
   
-  if (!Toy.useStepSuggester) {
-    self.stepEditor.offerableFacts().forEach(function(info) {
-        let statement = info.goal;
-        var text = statement.toString();
-        var resultTerm = statement;
-        if (statement.isEquation()) {
-          if (statement.isCall2('=>')) {
-            // Make the statement be the fact's equation.
-            resultTerm = statement = statement.getRight();
-          }
-          // If as usual the LHS of the equation matches the selection,
-          // set resultTerm to the result of substituting into the RHS.
-          var step = self.stepEditor.proofDisplay.selection;
-          var selection = step && step.selection;
-          if (selection) {
-            var subst = selection.matchSchema(statement.getLeft());
-            if (subst) {
-              resultTerm = statement.getRight().subFree(subst);
-            }
+  self.stepEditor.offerableFacts().forEach(function(info) {
+      let statement = info.goal;
+      var text = statement.toString();
+      var resultTerm = statement;
+      if (statement.isEquation()) {
+        if (statement.isCall2('=>')) {
+          // Make the statement be the fact's equation.
+          resultTerm = statement = statement.getRight();
+        }
+        // If as usual the LHS of the equation matches the selection,
+        // set resultTerm to the result of substituting into the RHS.
+        var step = self.stepEditor.proofDisplay.selection;
+        var selection = step && step.selection;
+        if (selection) {
+          var subst = selection.matchSchema(statement.getLeft());
+          if (subst) {
+            resultTerm = statement.getRight().subFree(subst);
           }
         }
-        var display = '= <span class=menuResult></span>';
-        if (subst) {
-          // TODO: Consider using the length of the unicode in deciding
-          //   what message to generate here.
-          // const unicode = statement.toUnicode();
-          const html = (info.definitional
-                        ? 'definition of ' + statement.getLeft().func().name
-                        : 'using ' + Toy.trimParens(statement.toHtml()));
-          display += (' <span class=description>' + html + '</span>');
-        }
-        // Value of the option; format of "fact <fact text>"
-        // indicates that the text defines a fact to use in
-        // rules.rewrite.
-        var info = {ruleName: 'fact ' + text,
-                    html: display,
-                    result: resultTerm};
-        itemInfos.push(info);
-      });
-  }
+      }
+      var display = '= <span class=menuResult></span>';
+      if (subst) {
+        // TODO: Consider using the length of the unicode in deciding
+        //   what message to generate here.
+        // const unicode = statement.toUnicode();
+        const html = (info.definitional
+                      ? 'definition of ' + statement.getLeft().func().name
+                      : 'using ' + Toy.trimParens(statement.toHtml()));
+        display += (' <span class=description>' + html + '</span>');
+      }
+      // Value of the option; format of "fact <fact text>"
+      // indicates that the text defines a fact to use in
+      // rules.rewrite.
+      var info = {ruleName: 'fact ' + text,
+                  html: display,
+                  result: resultTerm};
+      itemInfos.push(info);
+    });
   itemInfos.sort(function(a, b) {
       return a.html.localeCompare(b.html);
     });
@@ -2272,9 +2109,7 @@ RuleMenu.prototype._update = function() {
   }
 
   // TODO: Consider updating the advice using Promises.
-  var bothEmpty = (self.length == 0 &&
-                   stepEditor.stepSuggester.$node.hasClass('hidden'));
-  stepEditor.$advice.toggleClass('hidden', !bothEmpty);
+  stepEditor.$advice.toggleClass('hidden', self.length != 0);
 };
 
 /**
@@ -2344,9 +2179,6 @@ $(function () {
 
 // For testing:
 Toy.autoSimplify = autoSimplify;
-
-// Global variable to enable use of StepSuggester.
-Toy.useStepSuggester = false;
 
 // Global variable, name to use for CPU profiles, or falsy to disable:
 Toy.profileName = '';
