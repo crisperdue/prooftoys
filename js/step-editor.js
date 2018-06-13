@@ -898,13 +898,6 @@ function StepEditor(proofEditor) {
   self.$advice = ($('<div class="advice hidden">')
                   .append('Select an expression or step.'));
 
-  // Attach the "ruleWorking" to the ProofDisplay node so
-  // it doesn't move when steps are inserted.
-  // TODO: Position the thing relative to the document each time it is
-  //   displayed, removing a dependency on proofDisplay.
-  $(self.proofDisplay.node)
-    .append($('<div class=ruleWorking/>').text('Working . . . '));
-
   var menu = new RuleMenu(self);
   // Suppress solution status display when the mouse is within the
   // menu, leaving more room for step suggestions.
@@ -955,7 +948,6 @@ StepEditor.prototype._setBusy = function(busy, complete) {
   // return;
 
   this.$node.toggleClass('busy', busy);
-  var $working = $(this.proofDisplay.node).find('.ruleWorking');
   if (busy) {
     this.ruleMenu.$node.toggleClass('hidden', true);
   } else {
