@@ -1137,7 +1137,7 @@ StepEditor.prototype.tryExecuteRule = function() {
   var args = this.argsFromSelection(ruleName);
   this.fillFromForm(args);
   if (this.checkArgs(args, minArgs, true)) {
-    tryRuleAsync(this, rule, args);
+    tryRuleSoon(this, rule, args);
   }
 };
 
@@ -1145,7 +1145,7 @@ StepEditor.prototype.tryExecuteRule = function() {
  * Turns on the editor's busy indicator and sets the rule up to run
  * with the given args as soon as the UI has opportunity to repaint.
  */
-function tryRuleAsync(stepEditor, rule, args) {
+function tryRuleSoon(stepEditor, rule, args) {
   args.forEach(function(arg) {
       if (Toy.isProved(arg) && arg.isRendered()) {
         // Really all step arguments to all steps everywhere should be
@@ -1167,7 +1167,7 @@ function tryRuleAsync(stepEditor, rule, args) {
  * if it catches an error.  Reports there was nothing to do if the
  * rule returns its input or a null value.
  *
- * Use this only in tryRuleAsync.
+ * Use this only in tryRuleSoon.
  */
 StepEditor.prototype._tryRule = function(rule, args) {
   var self = this;
@@ -1781,7 +1781,7 @@ function handleMouseClickItem(ruleMenu, node, event) {
   if (rule) {
     var args = stepEditor.argsFromSelection(ruleName);
     if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
-      tryRuleAsync(stepEditor, rule, args);
+      tryRuleSoon(stepEditor, rule, args);
       return;
     }
 
@@ -1827,7 +1827,7 @@ function handleMouseClickItem(ruleMenu, node, event) {
     if (!siteStep || !siteStep.selection) {
       stepEditor.error('No selected site');
     }
-    tryRuleAsync(stepEditor,
+    tryRuleSoon(stepEditor,
                  Toy.rules.rewrite,
                  [siteStep.original,
                   siteStep.prettyPathTo(siteStep.selection),
@@ -2170,6 +2170,6 @@ Toy.siteTypes = siteTypes;
 Toy.ProofEditor = ProofEditor;
 Toy.StepEditor = StepEditor;
 
-Toy.tryRuleAsync = tryRuleAsync;
+Toy.tryRuleSoon = tryRuleSoon;
 
 })();

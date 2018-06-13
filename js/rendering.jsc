@@ -932,7 +932,7 @@ ProofDisplay.prototype.renderPopups = function(step) {
         // Given a statement of a fact, returns a function that will
         // use it in a rewrite when called with no args.
         var actionBuilder =
-          @{stmt. @{Toy.tryRuleAsync(self.proofEditor.stepEditor,
+          @{stmt. @{Toy.tryRuleSoon(self.proofEditor.stepEditor,
                                      rules.rewrite,
                                      [step.original, getPath(), stmt])}};
         var actions = stmts.map(actionBuilder);
@@ -945,7 +945,7 @@ ProofDisplay.prototype.renderPopups = function(step) {
           var result = rules.simplifySite(simpler, '/main/right');
           results.push(result.getMain().getRight());
           var action =
-            @{Toy.tryRuleAsync(self.proofEditor.stepEditor,
+            @{Toy.tryRuleSoon(self.proofEditor.stepEditor,
                                rules.rewrite,
                                [step.original, getPath(), result])};
           actions.push(action);
