@@ -921,7 +921,6 @@ span.stepRef {
 
 /* Overrides styles for .proofDisplay. */
 .stepEditor {
-  background-color: white;
   margin-top: .2em;
   position: relative;
 }
