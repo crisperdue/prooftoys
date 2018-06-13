@@ -1016,81 +1016,6 @@ StepEditor.prototype.reset = function() {
 };
 
 /**
- * Handler for ruleMenu selection of a rule name.  Overall purpose is
- * to run the rule from information already available, otherwise to
- * display the input form.
- */
-StepEditor.prototype.ruleChosen = function(ruleName) {
-  // This method runs from a click, so a suggestion may well
-  // be active.  Make sure it is not displayed.
-  this.proofDisplay.hideSuggestion();
-  this.ruleName = ruleName;
-  var rule = Toy.rules[ruleName];
-  if (rule) {
-    var args = this.argsFromSelection(ruleName);
-    if (this.checkArgs(args, rule.info.minArgs, false)) {
-      tryRuleAsync(this, rule, args);
-      return;
-    }
-
-    // Some args still need to be filled in; just show the rule's
-    // form.
-
-    var template = rule.info.form;
-    // TODO: In the proof editor set up an event handler so the step editor
-    //   can be aware of selections in the proof display (and also suppress
-    //   selections instead of "selectLock").
-    var step = this.proofDisplay.selection;
-    var term = step && step.selection;
-    var formatArgs = {term: (term && term.toHtml()) || '{term}'};
-    if (template) {
-      // These lines rely on reset of the step editor to return the hidden
-      // status back to normal.
-      // TODO: Probably the menu and suggester should have update methods
-      //   that are sensitive to presence of a form or inference in progress.
-      //   Code like this then would just tell them to refresh.
-      this.ruleMenu.$node.toggleClass('hidden', true);
-      // Template is not empty.  (If there is no template at all, the
-      // rule will not be "offerable" and thus not selected.)
-      this.clearer.removeClass('hidden');
-      this.form.html(format(template, formatArgs));
-      this.proofDisplay.setSelectLock(true);
-      this.form.append(' <button>Go</button>');
-      addClassInfo(this.form);
-      if (!usesSite(rule)) {
-	this.addSelectionToForm(rule);
-      }
-      // Focus the first empty text field of the form.
-      this.form.find('input[type=text],input:not([type])').each(function() {
-          if (!this.value) {
-            this.focus();
-            // Abort the loop.
-            return false;
-          }
-        });
-    } else {
-      this.error(format('Rule needs a form: {1}', ruleName));
-    }
-  } else if (ruleName.slice(0, 5) === 'fact ') {
-    // Values "fact etc" indicate use of rules.rewrite, and
-    // the desired fact is indicated by the rest of the value.
-    var siteStep = this.proofDisplay.selection;
-    if (!siteStep || !siteStep.selection) {
-      this.error('No selected site');
-    }
-    tryRuleAsync(this,
-                 Toy.rules.rewrite,
-                 [siteStep.original,
-                  siteStep.prettyPathTo(siteStep.selection),
-                  // Parsing here will cause the wff to be taken literally
-                  // without potential addition of type assumptions.
-                  Toy.parse(ruleName.slice(5))]);
-  } else {
-    assert(false, format('No such rule: {1}', ruleName));
-  }
-};
-
-/**
  * Check that the given args Array is filled in with values that are
  * not instances of Error, and that up to minArgs, the values are not
  * the undefined value.  If reportError is true, report the problem in
@@ -1814,9 +1739,10 @@ function RuleMenu(stepEditor) {
   self._leavers = leavers;
 
   $node.on('click', '.ruleItem', function(event) {
+      handleMouseClickItem(self, this, event);
       // Run the step editor's ruleChosen method with
       // the ruleName of the menu item.
-      self.stepEditor.ruleChosen($(this).data('ruleName'));
+      // self.stepEditor.ruleChosen($(this).data('ruleName'));
     });
 
   // Here are handlers for "enter" and "leave".  This code avoids
@@ -1838,6 +1764,80 @@ function RuleMenu(stepEditor) {
       }
     });
 }
+
+/**
+ * Handler for ruleMenu selection of a rule name.  Overall purpose is
+ * to run the rule from information already available, otherwise to
+ * display the input form.
+ */
+function handleMouseClickItem(ruleMenu, node, event) {
+  const ruleName = $(node).data('ruleName');
+  const stepEditor = ruleMenu.stepEditor;
+  // This code runs from a click, so a suggestion may well
+  // be active.  Make sure it is not displayed.
+  stepEditor.proofDisplay.hideSuggestion();
+  stepEditor.ruleName = ruleName;
+  var rule = Toy.rules[ruleName];
+  if (rule) {
+    var args = stepEditor.argsFromSelection(ruleName);
+    if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
+      tryRuleAsync(stepEditor, rule, args);
+      return;
+    }
+
+    // Some args still need to be filled in; just show the rule's
+    // form.
+
+    var template = rule.info.form;
+    // TODO: In the proof editor set up an event handler so the step editor
+    //   can be aware of selections in the proof display (and also suppress
+    //   selections instead of "selectLock").
+    var step = stepEditor.proofDisplay.selection;
+    var term = step && step.selection;
+    var formatArgs = {term: (term && term.toHtml()) || '{term}'};
+    if (template) {
+      // Make this block of code into a step editor method.
+      // The template is not just an empty string.
+      // Note that reset of the step editor will return the hidden
+      // status back to normal.
+      ruleMenu.$node.toggleClass('hidden', true);
+      stepEditor.clearer.removeClass('hidden');
+      stepEditor.form.html(format(template, formatArgs));
+      stepEditor.proofDisplay.setSelectLock(true);
+      stepEditor.form.append(' <button>Go</button>');
+      addClassInfo(stepEditor.form);
+      if (!usesSite(rule)) {
+	stepEditor.addSelectionToForm(rule);
+      }
+      // Focus the first empty text field of the form.
+      stepEditor.form.find('input[type=text],input:not([type])').each(function() {
+          if (!this.value) {
+            this.focus();
+            // Abort the loop.
+            return false;
+          }
+        });
+    } else {
+      stepEditor.error(format('Rule needs a form: {1}', ruleName));
+    }
+  } else if (ruleName.slice(0, 5) === 'fact ') {
+    // Values "fact etc" indicate use of rules.rewrite, and
+    // the desired fact is indicated by the rest of the value.
+    var siteStep = stepEditor.proofDisplay.selection;
+    if (!siteStep || !siteStep.selection) {
+      stepEditor.error('No selected site');
+    }
+    tryRuleAsync(stepEditor,
+                 Toy.rules.rewrite,
+                 [siteStep.original,
+                  siteStep.prettyPathTo(siteStep.selection),
+                  // Parsing here will cause the wff to be taken literally
+                  // without potential addition of type assumptions.
+                  Toy.parse(ruleName.slice(5))]);
+  } else {
+    assert(false, format('No such rule: {1}', ruleName));
+  }
+};
 
 /**
  * Event handler for mouseenter events on RuleMenu items.
