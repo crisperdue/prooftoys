@@ -940,13 +940,8 @@ StepEditor.prototype.selectedExpr = function() {
  * Marks this StepEditor as busy or not in the UI.  See also
  * StepEditor.reset.
  */
-StepEditor.prototype._setBusy = function(busy, complete) {
-  // TODO: Consider replacing this entire function with
-  //   something like this or the equivalent:
-  //
-  // complete();
-  // return;
-
+StepEditor.prototype._setBusy = function(busy) {
+  // TODO: Consider doing more of this work through CSS rules.
   this.$node.toggleClass('busy', busy);
   if (busy) {
     this.ruleMenu.$node.toggleClass('hidden', true);
@@ -957,7 +952,6 @@ StepEditor.prototype._setBusy = function(busy, complete) {
     //   "hidden" style class, just set its visibility to "normal".
     this.ruleMenu.$node.toggleClass('hidden', this.ruleMenu.length === 0);
   }
-  complete && complete();
   // Clear the form.
   // TODO: Make these actions into a function/method, see "reset".
   this.clearer.addClass('hidden');
@@ -1146,10 +1140,9 @@ function tryRuleSoon(stepEditor, rule, args) {
         Toy.logError('Argument step ' + arg.stepNumber + ' is renderable.');
       }
     });
-  // Flag the step editor as busy via its DOM node.
-  stepEditor._setBusy(true, function() {
-      Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
-    });
+  stepEditor._setBusy(true);
+  // Try running the rule once the UI shows it is working.
+  Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
 }
 
 /**
