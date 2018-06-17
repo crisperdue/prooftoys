@@ -47,6 +47,10 @@ var nextProofEditorId = 1;
  * standardSolution: Boolean.  If no explicit solutions given, but the
  *   result of a step solves for a variable (equal to a numeral or
  *   fraction), announce that the problem is solved.
+ * showRuleType: Selects type of rules to show, as determined by offerApproved.
+ *   Takes effect when this editor is reset.
+ * showRules: List of individual rules to show.  Takes effect when this
+ *   editor is reset.
  */
 function ProofEditor() {
   const self = this;
@@ -54,6 +58,8 @@ function ProofEditor() {
   self.givenVars = {};
   self.solutions = [];
   self.standardSolution = true;
+  self.showRuleType = 'general';
+  self.showRules = [];
   // Set the ID.
   self.proofEditorId = window.location.pathname + '#' + nextProofEditorId++;
   const mainDisplay = new Toy.ProofDisplay();
@@ -69,6 +75,13 @@ function ProofEditor() {
   self.$rulesMode = proofButtons.$rulesMode;
 
   self._wksControls = buildWksControls(self);
+
+  var menu = new RuleMenu(self);
+  // Suppress solution status display when the mouse is within the
+  // menu, leaving more room for step suggestions.
+  menu.onEnter(function() { proofEditor.requestStatusDisplay(false); });
+  menu.onLeave(function() { proofEditor.requestStatusDisplay(true); });
+  self.ruleMenu = menu;
 
   // The ruleStats are visible except when a proof is brand new and
   // there is nothing to show.
@@ -114,9 +127,10 @@ function ProofEditor() {
   //   and the step editor controls into a ProofControls object, all
   //   constructed together.  The step editor now seems to be reduced
   //   to the form for interactively supplying arguments to a rule.
-  stepEditor.$node.find('.advice').appendTo(this.containerNode);
-  stepEditor.$node.find('.nextStepsContainer').appendTo(this.containerNode);
-  stepEditor.$node.find('.ruleMenu').appendTo(this.containerNode);
+  this.$advice = ($('<div class="advice hidden">')
+                  .append('Select an expression or step.'));
+  this.containerNode.append(this.$advice);
+  this.containerNode.append(menu.$node);
 
   // Restore editor state.
   const state = Toy.getSavedState(self);
@@ -282,11 +296,11 @@ function buildProofButtons(editor) {
   // Step editor has state controlling whether to show all rules.
   $rulesMode.on('change', function(event) {
       const stepEditor = editor.stepEditor;
-      stepEditor.showRuleType = this.value;
-      stepEditor.ruleMenu.refresh();
+      editor.showRuleType = this.value;
+      editor.ruleMenu.refresh();
       stepEditor.reset();
     });
-  $rulesMode.trigger('change');
+  Toy.soonDo(function() { $rulesMode.trigger('change'); });
   const result = {
     $node: $proofButtons,
     $copyText: $copyText,
@@ -637,7 +651,7 @@ ProofEditor.prototype.getDocumentName = function() {
  * Empties the proof and problem statement for a fresh start.
  */
 ProofEditor.prototype.clear = function() {
-  this.stepEditor.showRules = [];
+  this.showRules = [];
   this.stepEditor.reset();
   this.proofDisplay.setSteps([]);
 };
@@ -864,10 +878,8 @@ var siteTypes = {
  * lastRuleTime: Milliseconds consumed by last execution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
  *
- * showRuleType: Selects type of rules to show, as determined by offerApproved.
- *   Takes effect when this editor is reset.
- * showRules: List of individual rules to show.  Takes effect when this
- *   editor is reset.
+ * TODO: Continue cleaning up this class, removing detritus and
+ *   moving the proofErrors display into the ProofEditor.
  */
 function StepEditor(proofEditor) {
   // Make this available to all inner functions.
@@ -880,8 +892,6 @@ function StepEditor(proofEditor) {
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
   self.ruleName = '';
-  self.showRuleType = 'general';
-  self.showRules = [];
 
   // Create a DIV with the step editor content.
   var $div = $('<div class=stepEditor/>');
@@ -895,18 +905,7 @@ function StepEditor(proofEditor) {
   self.$proofErrors = $('<div class="proofErrors hidden"></div>');
   self.$node = $div;
 
-  self.$advice = ($('<div class="advice hidden">')
-                  .append('Select an expression or step.'));
-
-  var menu = new RuleMenu(self);
-  // Suppress solution status display when the mouse is within the
-  // menu, leaving more room for step suggestions.
-  menu.onEnter(function() { proofEditor.requestStatusDisplay(false); });
-  menu.onLeave(function() { proofEditor.requestStatusDisplay(true); });
-  self.ruleMenu = menu;
-
-  $div.append(self.clearer, self.form, self.$proofErrors,
-              self.$advice, menu.$node);
+  $div.append(self.clearer, self.form, self.$proofErrors);
   // Install event handlers.
   self.clearer.on('click', function() { self.reset(); });
   // Keyboard events bubble to here from the inputs in the form.
@@ -923,40 +922,34 @@ function StepEditor(proofEditor) {
     });
 }
 
+// TODO: Eliminate this StepEditor refresh method.
 StepEditor.prototype.refresh = function() {
-  this.ruleMenu.refresh();
-};
-
-/**
- * Returns the Expr selected in this StepEditor, or a falsy value if
- * there is none.
- */
-StepEditor.prototype.selectedExpr = function() {
-  var step = this.selection;
-  return step && step.selection;
+  this._proofEditor.ruleMenu.refresh();
 };
 
 /**
  * Marks this StepEditor as busy or not in the UI.  See also
  * StepEditor.reset.
  */
+// TODO: Split this, with a "StepEditor.clear" method.
 StepEditor.prototype._setBusy = function(busy) {
+  const editor = this._proofEditor;
   // TODO: Consider doing more of this work through CSS rules.
   this.$node.toggleClass('busy', busy);
   if (busy) {
-    this.ruleMenu.$node.toggleClass('hidden', true);
+    editor.ruleMenu.$node.toggleClass('hidden', true);
   } else {
     // TODO: Consider adding hide / unhide methods to RuleMenu
     //   instead of this rather crude dependency on their
     //   lengths.  The "unhide" would not necessarily remove the
     //   "hidden" style class, just set its visibility to "normal".
-    this.ruleMenu.$node.toggleClass('hidden', this.ruleMenu.length === 0);
+    editor.ruleMenu.$node.toggleClass('hidden', editor.ruleMenu.length === 0);
   }
   // Clear the form.
   // TODO: Make these actions into a function/method, see "reset".
   this.clearer.addClass('hidden');
   this.form.html('');
-  this.proofDisplay.setSelectLock(false);
+  editor.proofDisplay.setSelectLock(false);
 };
 
 /**
@@ -1434,9 +1427,10 @@ StepEditor.prototype.parseValue = function(value, type) {
  * sense of "offerable" returning true and offerApproved returning true.
  */
 StepEditor.prototype.offerableRuleNames = function() {
+  const editor = this._proofEditor;
   var matches = [];
   for (var name in Toy.rules) {
-    if (this.offerable(name) && this.offerApproved(name)) {
+    if (editor.offerable(name) && editor.offerApproved(name)) {
       matches.push(name);
     }
   }
@@ -1449,16 +1443,17 @@ StepEditor.prototype.offerableRuleNames = function() {
  * and rule labels.  Returns a truthy value iff current policy is to
  * show the rule.
  */
-StepEditor.prototype.offerApproved = function(name) {
+ProofEditor.prototype.offerApproved = function(name) {
   var labels = Toy.rules[name].info.labels;
   if (this.showRules.indexOf(name) >= 0) {
     return true;
   }
+  const selStep = this.proofDisplay.selection;
   switch (this.showRuleType) {
   case 'all':
     return true;
   case 'algebra':
-    var expr = this.selectedExpr();
+    var expr = selStep && selStep.selection;
     return (expr && !expr.isReal()
             ? false
             : labels.algebra || labels.display);
@@ -1483,7 +1478,7 @@ StepEditor.prototype.offerApproved = function(name) {
  *
  * Otherwise only rules that take no step and no site are offerable.
  */
-StepEditor.prototype.offerable = function(ruleName) {
+ProofEditor.prototype.offerable = function(ruleName) {
   var rule = Toy.rules[ruleName];
   var info = rule.info;
   // TODO: Test and then hopefully remove this test, which looks
@@ -1541,77 +1536,74 @@ StepEditor.prototype.offerable = function(ruleName) {
   }
 };
 
-$.extend(StepEditor.prototype, {
-
-  /**
-   * Returns a list of fact info objects for facts that are offerable
-   * in the UI, currently all equational facts whose LHS matches the
-   * currently selected term.
-   *
-   * In algebra mode, if the LHS is atomic, does not offer unless the
-   * fact has the "algebra" label.
-   */
-  offerableFacts: function() {
-    var self = this;
-    var facts = [];
-    var step = this.proofDisplay.selection;
-    if (step) {
-      var expr = step.selection;
-      var TypeConstant = Toy.TypeConstant;
-      // Returns true (a mismatch) iff both Exprs have types that
-      // are type constants (in practice real or boolean), and the
-      // types are not the same.  This is a crude check, but covers
-      // the cases of usual interest.
-      // TODO: Properly unify the types, probably as part of schema
-      //   matching, and eliminate this hack function.
-      function typesMismatch(e1, e2) {
-        var e1Type = e1.hasType();
-        var e2Type = e2.hasType();
-        return (e1Type instanceof TypeConstant &&
-                e2Type instanceof TypeConstant &&
-                // Perhaps compare the names of the type constants?
-                e1Type != e2Type);
-      }
-      if (expr) {
-        var mode = self.showRuleType;
-        Toy.eachFact(function(info) {
-            var goal = info.goal;
-            if (!goal.isRewriter()) {
-              return;
-            }
-            var lhs = goal.eqnLeft();
-            if (typesMismatch(expr, lhs)) {
-              return;
-            }
-            if (info.labels.higherOrder && mode != 'all') {
-              // Do not offer facts with higher-order variables until
-              // we can match them properly when generating the menu.
-              return;
-            }
-            if (expr.matchSchema(lhs)) {
-              if (mode == 'algebra') {
-                if (info.labels.algebra) {
-                  facts.push(info);
-                }
-                // Otherwise don't show the fact in algebra mode.
-              } else if (mode == 'general') {
-                // Only show desimplifiers in "everything" mode.
-                // TODO: Include them as "introducers" in both "general"
-                //   mode and "everything" modes.
-                if (!info.desimplifier) {
-                  facts.push(info);
-                }
-              } else {
-                assert(mode == 'all', 'Invalid mode {1}', mode);
+/**
+ * Returns a list of fact info objects for facts that are offerable
+ * in the UI, currently all equational facts whose LHS matches the
+ * currently selected term.
+ *
+ * In algebra mode, if the LHS is atomic, does not offer unless the
+ * fact has the "algebra" label.
+ */
+ProofEditor.prototype.offerableFacts = function() {
+  var self = this;
+  var facts = [];
+  var step = this.proofDisplay.selection;
+  if (step) {
+    var expr = step.selection;
+    var TypeConstant = Toy.TypeConstant;
+    // Returns true (a mismatch) iff both Exprs have types that
+    // are type constants (in practice real or boolean), and the
+    // types are not the same.  This is a crude check, but covers
+    // the cases of usual interest.
+    // TODO: Properly unify the types, probably as part of schema
+    //   matching, and eliminate this hack function.
+    function typesMismatch(e1, e2) {
+      var e1Type = e1.hasType();
+      var e2Type = e2.hasType();
+      return (e1Type instanceof TypeConstant &&
+              e2Type instanceof TypeConstant &&
+              // Perhaps compare the names of the type constants?
+              e1Type != e2Type);
+    }
+    if (expr) {
+      var mode = self.showRuleType;
+      Toy.eachFact(function(info) {
+          var goal = info.goal;
+          if (!goal.isRewriter()) {
+            return;
+          }
+          var lhs = goal.eqnLeft();
+          if (typesMismatch(expr, lhs)) {
+            return;
+          }
+          if (info.labels.higherOrder && mode != 'all') {
+            // Do not offer facts with higher-order variables until
+            // we can match them properly when generating the menu.
+            return;
+          }
+          if (expr.matchSchema(lhs)) {
+            if (mode == 'algebra') {
+              if (info.labels.algebra) {
                 facts.push(info);
               }
+              // Otherwise don't show the fact in algebra mode.
+            } else if (mode == 'general') {
+              // Only show desimplifiers in "everything" mode.
+              // TODO: Include them as "introducers" in both "general"
+              //   mode and "everything" modes.
+              if (!info.desimplifier) {
+                facts.push(info);
+              }
+            } else {
+              assert(mode == 'all', 'Invalid mode {1}', mode);
+              facts.push(info);
             }
-        });
-      }
+          }
+      });
     }
-    return facts;
   }
-});
+  return facts;
+  }
 
 /**
  * This matches a step against the inputs descriptor of an inference
@@ -1684,9 +1676,9 @@ function acceptsSelection(step, ruleName) {
  * Internal-ish properties:
  * hovering: DOM node under mouse or null.
  */
-function RuleMenu(stepEditor) {
+function RuleMenu(proofEditor) {
   var self = this;
-  self.stepEditor = stepEditor;
+  self.proofEditor = proofEditor;
   self._refresher = new Toy.Refresher(self._update.bind(self));
   self.length = 0;
   self.changed = false;
@@ -1742,7 +1734,7 @@ function RuleMenu(stepEditor) {
   $node.on('mouseleave', '.ruleItem', function(event) {
       self.hovering = null;
       var $this = $(this);
-      stepEditor.proofDisplay.hideSuggestion();
+      proofEditor.proofDisplay.hideSuggestion();
       var promise = $this.data('promise');
       if (promise && promise.dequeue()) {
         $this.removeData('promise');
@@ -1757,11 +1749,12 @@ function RuleMenu(stepEditor) {
  */
 function handleMouseClickItem(ruleMenu, node, event) {
   const ruleName = $(node).data('ruleName');
-  const stepEditor = ruleMenu.stepEditor;
+  const proofEditor = ruleMenu.proofEditor;
+  const stepEditor = proofEditor.stepEditor;
   // This code runs from a click, so a suggestion may well
   // be active.  Make sure it is not displayed.
-  stepEditor.proofDisplay.hideSuggestion();
-  stepEditor.ruleName = ruleName;
+  proofEditor.proofDisplay.hideSuggestion();
+  proofEditor.ruleName = ruleName;
   var rule = Toy.rules[ruleName];
   if (rule) {
     var args = stepEditor.argsFromSelection(ruleName);
@@ -1828,8 +1821,9 @@ function handleMouseClickItem(ruleMenu, node, event) {
  * Event handler for mouseenter events on RuleMenu items.
  */
 function handleMouseEnterItem(ruleMenu, node, event) {
-  var stepEditor = ruleMenu.stepEditor;
-  var display = stepEditor.proofDisplay;
+  const proofEditor = ruleMenu.proofEditor;
+  const stepEditor = proofEditor.stepEditor;
+  var display = proofEditor.proofDisplay;
   // Note that this item is currently hovered.
   ruleMenu.hovering = node;
   var $node = $(node);
@@ -1924,7 +1918,7 @@ RuleMenu.prototype.refresh = function() {
  */
 RuleMenu.prototype._update = function() {
   var self = this;
-  var stepEditor = self.stepEditor;
+  var stepEditor = self.proofEditor.stepEditor;
   // Clear any message displays whenever this changes, as when
   // the user selects an expression or step.
   stepEditor.$proofErrors.hide();
@@ -1957,7 +1951,7 @@ RuleMenu.prototype._update = function() {
       }
     });
   
-  self.stepEditor.offerableFacts().forEach(function(info) {
+  self.proofEditor.offerableFacts().forEach(function(info) {
       let statement = info.goal;
       var text = statement.toString();
       var resultTerm = statement;
@@ -1968,7 +1962,7 @@ RuleMenu.prototype._update = function() {
         }
         // If as usual the LHS of the equation matches the selection,
         // set resultTerm to the result of substituting into the RHS.
-        var step = self.stepEditor.proofDisplay.selection;
+        var step = self.proofEditor.proofDisplay.selection;
         var selection = step && step.selection;
         if (selection) {
           var subst = selection.matchSchema(statement.getLeft());
@@ -2030,7 +2024,7 @@ RuleMenu.prototype._update = function() {
   }
 
   // TODO: Consider updating the advice using Promises.
-  stepEditor.$advice.toggleClass('hidden', self.length != 0);
+  proofEditor.$advice.toggleClass('hidden', self.length != 0);
 };
 
 /**

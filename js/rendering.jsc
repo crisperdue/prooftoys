@@ -252,7 +252,7 @@ ProofDisplay.prototype.proofChanged = function() {
   if (this.proofEditor) {
     this.proofEditor._refresher.activate();
     // This next only needed on account of rules.given as of 02/2017.
-    this.proofEditor.stepEditor.ruleMenu.refresh();
+    this.proofEditor.ruleMenu.refresh();
   }
 };
 

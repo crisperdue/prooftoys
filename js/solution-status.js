@@ -572,9 +572,12 @@ var methods = {
     var varsList = Object.getOwnPropertyNames(this.givenVars).sort();
     // Array of messages.
     var results = [];
+    /* TODO: Figure out if this (currently non-working) coe
+     * can be revived, and perhaps revive it.
     if (type === 'tentative') {
       results.push('Tentatively ');
     }
+    */
     // Array of problem variable names not solved at all.
     var unsolved = []
     // Count of variables fully solved for.
