@@ -474,58 +474,6 @@ span#leftNav {
   visibility: visible;
 }
 
-
-/* Next steps displays */
-
-.nextStepsContainer {
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin-bottom: 1em;
-}
-
-/* Container for next step suggestions */
-.proofDisplay.nextSteps {
-    margin-left: 2em;
-}
-
-.proofDisplay.nextSteps .proofSteps {
-    margin: 10px 0 0 0;
-}
-
-.proofDisplay.nextSteps .proofStep:nth-child(even) {
-    background-color: #eee;
-}
-
-.proofDisplay.nextSteps .stepNumber {
-    display: inline-block;
-    width: 1em;
-    text-align: center;
-}
-
-/* In nextSteps displays the stepNumArea just contains a
-   stepNumPlaceholder, and these rules give it content
-   and style. */
-.proofDisplay.nextSteps .stepAndNum .stepNumPlaceholder::before {
-    color: #ddd;
-    content: "--";
-}
-
-/* When hover is elsewhere over the step, show a question mark. */
-.proofDisplay.nextSteps .proofStep.hover .stepNumPlaceholder::before {
-    color: #0c0;
-    font-weight: bold;
-    content: "?";
-}
-
-/* When hovered, shows a checkmark. */
-.proofDisplay.nextSteps .proofStep .stepAndNum.hover
-  .stepNumPlaceholder::before {
-    color: #00c;
-    font-weight: bold;
-    content: "\002713";
-}
-
-
 /* Others */
 
 /* Adjacent and similar to subproofHider */
