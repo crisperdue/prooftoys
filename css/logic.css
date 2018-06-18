@@ -869,6 +869,43 @@ span.stepRef {
 }
 
 
+
+/* Other */
+
+/* Text used as a hint, as in a text field */
+.hinted {
+  font-style: italic;
+  font-size: 90%;
+  color: #999;
+}
+
+/* Button to clear the current editor input form */
+button.sted-clear {
+    color: #d9534f;
+    background-color: white;
+    padding: 0;
+    border: none;
+}
+
+
+/* Inputs for rule arguments */
+
+/* input.string is currently just used for defined names */
+input.term, input.string, input.bool {
+  font-style: italic;
+  width: 20em;
+}
+
+input.bool {
+  font-style: italic;
+  width: 30em;
+}
+
+input.varName, input.step, input.equation, input.implication {
+  width: 4em;
+}
+
+
 /* Rules menu */
 
 /* Main node for the rule selector, contains the rulesContainer. */
@@ -894,42 +931,6 @@ span.stepRef {
     padding: 1em;
     border: 1px solid silver;
     background-color: AliceBlue;
-}
-
-
-/* Other */
-
-/* Text used as a hint, as in a text field */
-.hinted {
-  font-style: italic;
-  font-size: 90%;
-  color: #999;
-}
-
-
-/* Button to clear the current editor input form */
-button.sted-clear {
-    color: #d9534f;
-    background-color: white;
-    padding: 0;
-    border: none;
-}
-
-/* Inputs for rule arguments */
-
-/* input.string is currently just used for defined names */
-input.term, input.string, input.bool {
-  font-style: italic;
-  width: 20em;
-}
-
-input.bool {
-  font-style: italic;
-  width: 30em;
-}
-
-input.varName, input.step, input.equation, input.implication {
-  width: 4em;
 }
 
 /* Rule selection items */
