@@ -116,6 +116,7 @@ function ProofEditor() {
     .append(stepEditor.$node)
     .append(proofButtons.$node)
     .append(this._wksControls.node)
+    .append(menu.$node)
     .append(ruleStats);
   this.setEditable(true);
 
@@ -130,7 +131,6 @@ function ProofEditor() {
   this.$advice = ($('<div class="advice hidden">')
                   .append('Select an expression or step.'));
   this.containerNode.append(this.$advice);
-  this.containerNode.append(menu.$node);
 
   // Restore editor state.
   const state = Toy.getSavedState(self);

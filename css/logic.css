@@ -910,12 +910,26 @@ input.varName, input.step, input.equation, input.implication {
 
 /* Main node for the rule selector, contains the rulesContainer. */
 .ruleMenu {
-    position: relative;
+    position: absolute;
+    left: .5em;
+    right: .5em;
+    background: AliceBlue;
+    border: 1px solid #aaf;
+    border-radius: 5px;
+    max-height: 20em;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.ruleMenu.hidden {
+    display: block;
+    visibility: hidden;
 }
 
 .ruleMenuTitle {
     font-family: StixGeneral, times, serif;
     font-weight: bold;
+    margin-left: 2px;
 }
 
 .ruleMenu .scrollingMenu {
