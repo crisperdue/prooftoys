@@ -1426,11 +1426,10 @@ StepEditor.prototype.parseValue = function(value, type) {
  * Returns a list of names of rules that are "offerable" in the
  * sense of "offerable" returning true and offerApproved returning true.
  */
-StepEditor.prototype.offerableRuleNames = function() {
-  const editor = this._proofEditor;
+RuleMenu.prototype.offerableRuleNames = function() {
   var matches = [];
   for (var name in Toy.rules) {
-    if (editor.offerable(name) && editor.offerApproved(name)) {
+    if (this.offerable(name) && this.offerApproved(name)) {
       matches.push(name);
     }
   }
@@ -1443,13 +1442,14 @@ StepEditor.prototype.offerableRuleNames = function() {
  * and rule labels.  Returns a truthy value iff current policy is to
  * show the rule.
  */
-ProofEditor.prototype.offerApproved = function(name) {
+RuleMenu.prototype.offerApproved = function(name) {
+  const editor = this.proofEditor;
   var labels = Toy.rules[name].info.labels;
-  if (this.showRules.indexOf(name) >= 0) {
+  if (editor.showRules.indexOf(name) >= 0) {
     return true;
   }
-  const selStep = this.proofDisplay.selection;
-  switch (this.showRuleType) {
+  const selStep = editor.proofDisplay.selection;
+  switch (editor.showRuleType) {
   case 'all':
     return true;
   case 'algebra':
@@ -1460,7 +1460,7 @@ ProofEditor.prototype.offerApproved = function(name) {
   case 'general':
     return labels.general || labels.basic || labels.display || labels.algebra;
   default:
-    throw new Error('Bad rule policy value: ' + this.showRuleType);
+    throw new Error('Bad rule policy value: ' + editor.showRuleType);
   }
 };
 
@@ -1478,7 +1478,7 @@ ProofEditor.prototype.offerApproved = function(name) {
  *
  * Otherwise only rules that take no step and no site are offerable.
  */
-ProofEditor.prototype.offerable = function(ruleName) {
+RuleMenu.prototype.offerable = function(ruleName) {
   var rule = Toy.rules[ruleName];
   var info = rule.info;
   // TODO: Test and then hopefully remove this test, which looks
@@ -1486,7 +1486,8 @@ ProofEditor.prototype.offerable = function(ruleName) {
   if (!('form' in info)) {
     return false;
   }
-  var step = this.proofDisplay.selection;
+  const editor = this.proofEditor;
+  var step = editor.proofDisplay.selection;
   if (step) {
     // Something is selected.
     var precheck = rule.precheck;
@@ -1544,10 +1545,10 @@ ProofEditor.prototype.offerable = function(ruleName) {
  * In algebra mode, if the LHS is atomic, does not offer unless the
  * fact has the "algebra" label.
  */
-ProofEditor.prototype.offerableFacts = function() {
+RuleMenu.prototype.offerableFacts = function() {
   var self = this;
   var facts = [];
-  var step = this.proofDisplay.selection;
+  var step = self.proofEditor.proofDisplay.selection;
   if (step) {
     var expr = step.selection;
     var TypeConstant = Toy.TypeConstant;
@@ -1566,7 +1567,7 @@ ProofEditor.prototype.offerableFacts = function() {
               e1Type != e2Type);
     }
     if (expr) {
-      var mode = self.showRuleType;
+      var mode = self.proofEditor.showRuleType;
       Toy.eachFact(function(info) {
           var goal = info.goal;
           if (!goal.isRewriter()) {
@@ -1934,7 +1935,7 @@ RuleMenu.prototype._update = function() {
   var term = step && step.selection;
   // Plain object describing each menu item.
   var itemInfos = [];
-  stepEditor.offerableRuleNames().forEach(function(name) {
+  self.offerableRuleNames().forEach(function(name) {
       var ruleName = name.replace(/^xiom/, 'axiom');
       // Info is a string or array of strings.
       var info = ruleMenuInfo(ruleName, step, term,
@@ -1951,7 +1952,7 @@ RuleMenu.prototype._update = function() {
       }
     });
   
-  self.proofEditor.offerableFacts().forEach(function(info) {
+  self.offerableFacts().forEach(function(info) {
       let statement = info.goal;
       var text = statement.toString();
       var resultTerm = statement;
