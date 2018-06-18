@@ -1422,239 +1422,6 @@ StepEditor.prototype.parseValue = function(value, type) {
   }
 };
 
-/**
- * Returns a list of names of rules that are "offerable" in the
- * sense of "offerable" returning true and offerApproved returning true.
- */
-RuleMenu.prototype.offerableRuleNames = function() {
-  var matches = [];
-  for (var name in Toy.rules) {
-    if (this.offerable(name) && this.offerApproved(name)) {
-      matches.push(name);
-    }
-  }
-  matches.sort();
-  return matches;
-};
-
-/**
- * Policy-based rule offering policy function based on this.showRules
- * and rule labels.  Returns a truthy value iff current policy is to
- * show the rule.
- */
-RuleMenu.prototype.offerApproved = function(name) {
-  const editor = this.proofEditor;
-  var labels = Toy.rules[name].info.labels;
-  if (editor.showRules.indexOf(name) >= 0) {
-    return true;
-  }
-  const selStep = editor.proofDisplay.selection;
-  switch (editor.showRuleType) {
-  case 'all':
-    return true;
-  case 'algebra':
-    var expr = selStep && selStep.selection;
-    return (expr && !expr.isReal()
-            ? false
-            : labels.algebra || labels.display);
-  case 'general':
-    return labels.general || labels.basic || labels.display || labels.algebra;
-  default:
-    throw new Error('Bad rule policy value: ' + editor.showRuleType);
-  }
-};
-
-/**
- * Returns true iff the rule name can be offered by the UI.
- * Only rules with a "form" property are offerable at all.  If so --
- *
- * If the rule has a precheck and a single "inputs" declaration
- * of a kind that works with a selection, run the precheck and
- * return false if it is falsy.
- *  
- * Else if the proof has a current selection, the rule is offerable if
- * acceptsSelection returns true given the selected step and rule
- * name.
- *
- * Otherwise only rules that take no step and no site are offerable.
- */
-RuleMenu.prototype.offerable = function(ruleName) {
-  var rule = Toy.rules[ruleName];
-  var info = rule.info;
-  // TODO: Test and then hopefully remove this test, which looks
-  //   obsolete.
-  if (!('form' in info)) {
-    return false;
-  }
-  const editor = this.proofEditor;
-  var step = editor.proofDisplay.selection;
-  if (step) {
-    // Something is selected.
-    var precheck = rule.precheck;
-    var term = step.selection;
-    var inputs = info.inputs;
-    // See if the rule has a precheck that can "rule it out".
-    // The rule must have a single input of a site or step type.
-    if (precheck && Toy.mapSize(info.inputs) == 1 &&
-        (term
-         // This list needs to match siteTypes.
-         ? (inputs.site || inputs.bindingSite || inputs.reducible ||
-            inputs.term)
-         // This list needs to match stepTypes.
-         : inputs.step || inputs.equation || inputs.implication)) {
-      var ok = (inputs.term
-                ? precheck(term)
-                : term
-                ? precheck(step, step.pathTo(term))
-                : precheck(step));
-      if (!ok) {
-        return false;
-      }
-    }
-    // Check if the rule accepts the selection.
-    if (acceptsSelection(step, ruleName)) {
-      // If the rule has a "toOffer" property, apply it as a further
-      // test of offerability.
-      var offerTest = info.toOffer;
-      if (info.toOffer) {
-        return offerTest(step, step.selection);
-      }
-      return true;
-    }
-  } else if (!info.form) {
-    // The form property is present, but nothing in it, so
-    // arguments cannot come from the form.
-    return false;
-  } else {
-    // No selection, the rule must not require a step or site.
-    for (type in info.inputs) {
-      // Use "in", the type will not be an object method name.
-      if (type in stepTypes || type in siteTypes) {
-        return false;
-      }
-    }
-    return true;
-  }
-};
-
-/**
- * Returns a list of fact info objects for facts that are offerable
- * in the UI, currently all equational facts whose LHS matches the
- * currently selected term.
- *
- * In algebra mode, if the LHS is atomic, does not offer unless the
- * fact has the "algebra" label.
- */
-RuleMenu.prototype.offerableFacts = function() {
-  var self = this;
-  var facts = [];
-  var step = self.proofEditor.proofDisplay.selection;
-  if (step) {
-    var expr = step.selection;
-    var TypeConstant = Toy.TypeConstant;
-    // Returns true (a mismatch) iff both Exprs have types that
-    // are type constants (in practice real or boolean), and the
-    // types are not the same.  This is a crude check, but covers
-    // the cases of usual interest.
-    // TODO: Properly unify the types, probably as part of schema
-    //   matching, and eliminate this hack function.
-    function typesMismatch(e1, e2) {
-      var e1Type = e1.hasType();
-      var e2Type = e2.hasType();
-      return (e1Type instanceof TypeConstant &&
-              e2Type instanceof TypeConstant &&
-              // Perhaps compare the names of the type constants?
-              e1Type != e2Type);
-    }
-    if (expr) {
-      var mode = self.proofEditor.showRuleType;
-      Toy.eachFact(function(info) {
-          var goal = info.goal;
-          if (!goal.isRewriter()) {
-            return;
-          }
-          var lhs = goal.eqnLeft();
-          if (typesMismatch(expr, lhs)) {
-            return;
-          }
-          if (info.labels.higherOrder && mode != 'all') {
-            // Do not offer facts with higher-order variables until
-            // we can match them properly when generating the menu.
-            return;
-          }
-          if (expr.matchSchema(lhs)) {
-            if (mode == 'algebra') {
-              if (info.labels.algebra) {
-                facts.push(info);
-              }
-              // Otherwise don't show the fact in algebra mode.
-            } else if (mode == 'general') {
-              // Only show desimplifiers in "everything" mode.
-              // TODO: Include them as "introducers" in both "general"
-              //   mode and "everything" modes.
-              if (!info.desimplifier) {
-                facts.push(info);
-              }
-            } else {
-              assert(mode == 'all', 'Invalid mode {1}', mode);
-              facts.push(info);
-            }
-          }
-      });
-    }
-  }
-  return facts;
-  }
-
-/**
- * This matches a step against the inputs descriptor of an inference
- * rule.  The step is the selected proof step, ruleName is the name of
- * the rule to match against.  Only call this if a step or part of a
- * step is selected.
- *
- * If something is selected, this accepts rules that can use that input
- * as an argument.
- */
-function acceptsSelection(step, ruleName) {
-  var info = Toy.rules[ruleName].info;
-  var argInfo = info.inputs;
-  if (!argInfo) {
-    // If there is no information about arguments, fail.
-    return false;
-  }
-  // Selected expression (within a step).
-  var expr = step.selection;
-  if (expr) {
-    if (info.isRewriter && info.using) {
-      // The rule has a "rewriting template", given as the name
-      // of the fact to use in rewriting.
-      assert(typeof argInfo.site === 'number',
-             function() {
-               return 'Rule ' + ruleName + ' must use exactly 1 site.';
-             });
-      // Check that the expression matches the LHS of the template.
-      return !!expr.findSubst(info.using.unHyp().getLeft());
-    } else {
-      // Otherwise OK if it takes a site, or is a proper binding site
-      // or a beta-reducible expression.
-      // 
-      // TODO: prevent selection of bound variables as terms.
-      return (argInfo.site
-              || argInfo.term
-              || (argInfo.bindingSite && expr instanceof Toy.Lambda)
-              || (argInfo.reducible
-                  && expr instanceof Toy.Call
-                  && expr.fn instanceof Toy.Lambda));
-    }
-  } else {
-    // If the rule needs a site, do not accept just a step.
-    return (!argInfo.site &&
-            (argInfo.step
-             || (argInfo.equation && step.unHyp().isCall2('='))
-             || (argInfo.implication && step.unHyp().isCall2('=>'))));
-  }
-}
-
 
 
 //// RULEMENU
@@ -2027,6 +1794,239 @@ RuleMenu.prototype._update = function() {
   // TODO: Consider updating the advice using Promises.
   proofEditor.$advice.toggleClass('hidden', self.length != 0);
 };
+
+/**
+ * Returns a list of names of rules that are "offerable" in the
+ * sense of "offerable" returning true and offerApproved returning true.
+ */
+RuleMenu.prototype.offerableRuleNames = function() {
+  var matches = [];
+  for (var name in Toy.rules) {
+    if (this.offerable(name) && this.offerApproved(name)) {
+      matches.push(name);
+    }
+  }
+  matches.sort();
+  return matches;
+};
+
+/**
+ * Policy-based rule offering policy function based on this.showRules
+ * and rule labels.  Returns a truthy value iff current policy is to
+ * show the rule.
+ */
+RuleMenu.prototype.offerApproved = function(name) {
+  const editor = this.proofEditor;
+  var labels = Toy.rules[name].info.labels;
+  if (editor.showRules.indexOf(name) >= 0) {
+    return true;
+  }
+  const selStep = editor.proofDisplay.selection;
+  switch (editor.showRuleType) {
+  case 'all':
+    return true;
+  case 'algebra':
+    var expr = selStep && selStep.selection;
+    return (expr && !expr.isReal()
+            ? false
+            : labels.algebra || labels.display);
+  case 'general':
+    return labels.general || labels.basic || labels.display || labels.algebra;
+  default:
+    throw new Error('Bad rule policy value: ' + editor.showRuleType);
+  }
+};
+
+/**
+ * Returns true iff the rule name can be offered by the UI.
+ * Only rules with a "form" property are offerable at all.  If so --
+ *
+ * If the rule has a precheck and a single "inputs" declaration
+ * of a kind that works with a selection, run the precheck and
+ * return false if it is falsy.
+ *  
+ * Else if the proof has a current selection, the rule is offerable if
+ * acceptsSelection returns true given the selected step and rule
+ * name.
+ *
+ * Otherwise only rules that take no step and no site are offerable.
+ */
+RuleMenu.prototype.offerable = function(ruleName) {
+  var rule = Toy.rules[ruleName];
+  var info = rule.info;
+  // TODO: Test and then hopefully remove this test, which looks
+  //   obsolete.
+  if (!('form' in info)) {
+    return false;
+  }
+  const editor = this.proofEditor;
+  var step = editor.proofDisplay.selection;
+  if (step) {
+    // Something is selected.
+    var precheck = rule.precheck;
+    var term = step.selection;
+    var inputs = info.inputs;
+    // See if the rule has a precheck that can "rule it out".
+    // The rule must have a single input of a site or step type.
+    if (precheck && Toy.mapSize(info.inputs) == 1 &&
+        (term
+         // This list needs to match siteTypes.
+         ? (inputs.site || inputs.bindingSite || inputs.reducible ||
+            inputs.term)
+         // This list needs to match stepTypes.
+         : inputs.step || inputs.equation || inputs.implication)) {
+      var ok = (inputs.term
+                ? precheck(term)
+                : term
+                ? precheck(step, step.pathTo(term))
+                : precheck(step));
+      if (!ok) {
+        return false;
+      }
+    }
+    // Check if the rule accepts the selection.
+    if (acceptsSelection(step, ruleName)) {
+      // If the rule has a "toOffer" property, apply it as a further
+      // test of offerability.
+      var offerTest = info.toOffer;
+      if (info.toOffer) {
+        return offerTest(step, step.selection);
+      }
+      return true;
+    }
+  } else if (!info.form) {
+    // The form property is present, but nothing in it, so
+    // arguments cannot come from the form.
+    return false;
+  } else {
+    // No selection, the rule must not require a step or site.
+    for (type in info.inputs) {
+      // Use "in", the type will not be an object method name.
+      if (type in stepTypes || type in siteTypes) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+/**
+ * Returns a list of fact info objects for facts that are offerable
+ * in the UI, currently all equational facts whose LHS matches the
+ * currently selected term.
+ *
+ * In algebra mode, if the LHS is atomic, does not offer unless the
+ * fact has the "algebra" label.
+ */
+RuleMenu.prototype.offerableFacts = function() {
+  var self = this;
+  var facts = [];
+  var step = self.proofEditor.proofDisplay.selection;
+  if (step) {
+    var expr = step.selection;
+    var TypeConstant = Toy.TypeConstant;
+    // Returns true (a mismatch) iff both Exprs have types that
+    // are type constants (in practice real or boolean), and the
+    // types are not the same.  This is a crude check, but covers
+    // the cases of usual interest.
+    // TODO: Properly unify the types, probably as part of schema
+    //   matching, and eliminate this hack function.
+    function typesMismatch(e1, e2) {
+      var e1Type = e1.hasType();
+      var e2Type = e2.hasType();
+      return (e1Type instanceof TypeConstant &&
+              e2Type instanceof TypeConstant &&
+              // Perhaps compare the names of the type constants?
+              e1Type != e2Type);
+    }
+    if (expr) {
+      var mode = self.proofEditor.showRuleType;
+      Toy.eachFact(function(info) {
+          var goal = info.goal;
+          if (!goal.isRewriter()) {
+            return;
+          }
+          var lhs = goal.eqnLeft();
+          if (typesMismatch(expr, lhs)) {
+            return;
+          }
+          if (info.labels.higherOrder && mode != 'all') {
+            // Do not offer facts with higher-order variables until
+            // we can match them properly when generating the menu.
+            return;
+          }
+          if (expr.matchSchema(lhs)) {
+            if (mode == 'algebra') {
+              if (info.labels.algebra) {
+                facts.push(info);
+              }
+              // Otherwise don't show the fact in algebra mode.
+            } else if (mode == 'general') {
+              // Only show desimplifiers in "everything" mode.
+              // TODO: Include them as "introducers" in both "general"
+              //   mode and "everything" modes.
+              if (!info.desimplifier) {
+                facts.push(info);
+              }
+            } else {
+              assert(mode == 'all', 'Invalid mode {1}', mode);
+              facts.push(info);
+            }
+          }
+      });
+    }
+  }
+  return facts;
+  }
+
+/**
+ * This matches a step against the inputs descriptor of an inference
+ * rule.  The step is the selected proof step, ruleName is the name of
+ * the rule to match against.  Only call this if a step or part of a
+ * step is selected.
+ *
+ * If something is selected, this accepts rules that can use that input
+ * as an argument.
+ */
+function acceptsSelection(step, ruleName) {
+  var info = Toy.rules[ruleName].info;
+  var argInfo = info.inputs;
+  if (!argInfo) {
+    // If there is no information about arguments, fail.
+    return false;
+  }
+  // Selected expression (within a step).
+  var expr = step.selection;
+  if (expr) {
+    if (info.isRewriter && info.using) {
+      // The rule has a "rewriting template", given as the name
+      // of the fact to use in rewriting.
+      assert(typeof argInfo.site === 'number',
+             function() {
+               return 'Rule ' + ruleName + ' must use exactly 1 site.';
+             });
+      // Check that the expression matches the LHS of the template.
+      return !!expr.findSubst(info.using.unHyp().getLeft());
+    } else {
+      // Otherwise OK if it takes a site, or is a proper binding site
+      // or a beta-reducible expression.
+      // 
+      // TODO: prevent selection of bound variables as terms.
+      return (argInfo.site
+              || argInfo.term
+              || (argInfo.bindingSite && expr instanceof Toy.Lambda)
+              || (argInfo.reducible
+                  && expr instanceof Toy.Call
+                  && expr.fn instanceof Toy.Lambda));
+    }
+  } else {
+    // If the rule needs a site, do not accept just a step.
+    return (!argInfo.site &&
+            (argInfo.step
+             || (argInfo.equation && step.unHyp().isCall2('='))
+             || (argInfo.implication && step.unHyp().isCall2('=>'))));
+  }
+}
 
 /**
  * Produces a rule menu entry from a ruleName, with "axiom"
