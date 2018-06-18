@@ -922,11 +922,6 @@ function StepEditor(proofEditor) {
     });
 }
 
-// TODO: Eliminate this StepEditor refresh method.
-StepEditor.prototype.refresh = function() {
-  this._proofEditor.ruleMenu.refresh();
-};
-
 /**
  * Marks this StepEditor as busy or not in the UI.  See also
  * StepEditor.reset.

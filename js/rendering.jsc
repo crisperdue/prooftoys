@@ -271,8 +271,7 @@ ProofDisplay.prototype.selectionChanged = function() {
       editor.$copyText.val(selection.toString());
       editor.$copyText.select();
     }
-    // Request an overall refresh of the step editor.
-    editor.stepEditor.refresh();
+    editor.ruleMenu.refresh();
   }
 };
 
