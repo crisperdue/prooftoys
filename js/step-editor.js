@@ -113,8 +113,8 @@ function ProofEditor() {
     .append($readOnly)
     .append(mainDisplay.node)
     .append($status)
-    .append(stepEditor.$node)
     .append(proofButtons.$node)
+    .append(stepEditor.$node)
     .append(this._wksControls.node)
     .append(menu.$node)
     .append(ruleStats);
