@@ -1026,6 +1026,9 @@ input.varName, input.step, input.equation, input.implication {
     right: 1em;
     padding: 0 1em;
     border: 1px solid #aaf;
+    max-height: 15em;
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 .wksControlsOuter .docListTitle {
