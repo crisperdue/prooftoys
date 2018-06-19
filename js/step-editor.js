@@ -342,11 +342,11 @@ function buildWksControls(editor) {
   $buttons = $('<div class=wksButtons>');
   $controls.append($buttons);
 
-  $buttons.append(makeButton('Open... ', 'openButton'));
-  $buttons.append(makeButton('Save as... ', 'saveAsButton'));
-  $buttons.append(makeButton('Copy to... ', 'copyToButton'));
-  $buttons.append(makeButton('Delete... ', 'deleteButton'));
-  $buttons.append(makeButton('View as text', 'previewButton'));
+  $buttons.append(makeButton('Open... ', 'openButton'),
+                  makeButton('Save as... ', 'saveAsButton'),
+                  makeButton('Copy to... ', 'copyToButton'),
+                  makeButton('Delete... ', 'deleteButton'),
+                  makeButton('View as text', 'previewButton'));
 
   $inputs = $('<div class=wksInputs>');
   $controls.append($inputs);
