@@ -1487,6 +1487,13 @@ function RuleMenu(proofEditor) {
 
   // Here are handlers for "enter" and "leave".  This code avoids
   // assuming that these events come in pairs.
+  $node.on('mouseenter', '.rulesItems', function(event) {
+      proofEditor.$status.toggleClass('invisible', true);
+    });
+  $node.on('mouseleave', '.rulesItems', function(event) {
+      const visible = proofEditor.$statusDisplay.text().length > 0;
+      proofEditor.$status.toggleClass('invisible', !visible);
+    });
   $node.on('mouseenter', '.ruleItem', function(event) {
       handleMouseEnterItem(self, this, event);
     });
