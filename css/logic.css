@@ -175,14 +175,14 @@ code {
     transition: visibility 0s, opacity 1s ease;
 }
 
-.transFade.hidden {
+.transFade.hidden, .transFade.invisible {
     visibility: hidden;
     /* Override the meaning of hidden = display: none */
     display: block;
     opacity: 0;
-    transition: visibility 0s, opacity 0.2s ease;
-    /* Delay making it invisible until it is fully transparent. */
-    transition-delay: .2s, 0s;
+    /* Only at the end of the transition does it become hidden. *
+    /* Or use transition-delay instead. */
+    transition: visibility .5s, opacity .5s ease;
 }
 
 /* Math text in documents */
@@ -319,6 +319,14 @@ span#leftNav {
   visibility: hidden;
 }
 
+/* This forces an item to be invisible even if not flagged */
+/* as "invisible". Also overrides .transFade visibility. */
+.ultraInvisible, .transFade.ultraInvisible {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility .5s, opacity .5s ease;
+}
+
 /* Proof displays -- proof.js */
 
 .proofEditor {
@@ -422,7 +430,7 @@ span#leftNav {
     left: 0;
     right: 0;
     color: #aaa;
-    background-color: #eef;
+    background-color: AliceBlue;
     border: .5px solid #bbf;
     /* Try to help situations where this overlaps the menu. */
     z-index: 1;
@@ -924,6 +932,8 @@ input.varName, input.step, input.equation, input.implication {
 .ruleMenu.hidden {
     display: block;
     visibility: hidden;
+    /* Same height as when displayed */
+    height: 20em;
 }
 
 .ruleMenuTitle {

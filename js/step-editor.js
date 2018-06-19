@@ -89,7 +89,7 @@ function ProofEditor() {
                     '<span class=ruleTime></span> msec, ' +
                     '<span class=ruleSteps></span> steps</div>');
   // This element is for messages about status of solving the problem.
-  var $status = $('<div class="solutionStatus"/>');
+  var $status = $('<div class="solutionStatus transFade"/>');
   var $statusDisplay = $('<div class=solutionStatusDisplay/>');
   $status.append($statusDisplay);
   self.$status = $status;
@@ -107,7 +107,7 @@ function ProofEditor() {
 
   // Top-level element of the proof editor display:
 
-  this.containerNode = $('<div class=proofEditor></div>');
+  const $node = this.containerNode = $('<div class=proofEditor></div>');
   this.containerNode
     .append($header)
     .append($readOnly)
@@ -172,6 +172,19 @@ function ProofEditor() {
   if (Toy.isDocHeldFrom(self._documentName, self)) {
     self.setEditable(false);
   }
+
+  // Event handlers
+
+  $node.on('mouseenter', function() {
+      // Stop overriding visibility of the rule menu.
+      self.ruleMenu.$node.toggleClass('ultraInvisible', false);
+    });
+  $node.on('mouseleave', function() {
+      // Temporarily override rule menu visibility.
+      self.ruleMenu.$node.toggleClass('ultraInvisible', true);
+      // Hide the worksheet controls.
+      self._wksControls.hide();
+    });
 
   // Document-level event handlers.
 
@@ -261,7 +274,6 @@ function buildProofButtons(editor) {
   // text of the button.
   const $copyButton = $('<button class="fa fa-copy">');
   $copyButton.css({fontSize: '.8rem'});
-
 
   $proofButtons.append($wksButton, $('<s class=em>'));
   $proofButtons.append('Mode');
