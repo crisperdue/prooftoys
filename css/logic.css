@@ -430,12 +430,18 @@ span#leftNav {
     left: 0;
     right: 0;
     color: #aaa;
-    background-color: AliceBlue;
-    border: .5px solid #bbf;
+    background-color: #f8f8f8;
+    /* For some reason border here does not affect stepAndControls. */
+    /* border: .5px solid #bbf; */
     /* Try to help situations where this overlaps the menu. */
     z-index: 1;
     /* This node is transparent to mouse events. */
     pointer-events: none;
+}
+
+.proofStep.stepSuggestion .stepAndControls {
+    /* For some reason this does not inherit from the proofStep */
+    background-color: #f8f8f8;
 }
 
 .proofStep.stepMessage {
