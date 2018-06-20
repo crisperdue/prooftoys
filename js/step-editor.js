@@ -339,7 +339,7 @@ function buildWksControls(editor) {
   $outermost.append($controls);
   $controls.append('<div class=wksTitle>' +
                    'Current worksheet is "<span class=wksName></span>"</div>');
-  $buttons = $('<div class=wksButtons>');
+  const $buttons = $('<div class=wksButtons>');
   $controls.append($buttons);
 
   $buttons.append(makeButton('Open... ', 'openButton'),
@@ -348,7 +348,7 @@ function buildWksControls(editor) {
                   makeButton('Delete... ', 'deleteButton'),
                   makeButton('View as text', 'previewButton'));
 
-  $inputs = $('<div class=wksInputs>');
+  const $inputs = $('<div class=wksInputs>');
   $controls.append($inputs);
 
   function makeEntryField(prefix, classes, action) {
@@ -386,7 +386,7 @@ function buildWksControls(editor) {
     '<input class=hideProofState type=button value="Close"><br>\n' +
     '<textarea class=proofStateArea rows=20></textarea>\n' +
     '</div>\n';
-  $proofPreview = $(stateDisplayHtml);
+  const $proofPreview = $(stateDisplayHtml);
   $outermost.append($proofPreview);
 
   // Elements to be hidden when the display is reset.
@@ -579,9 +579,9 @@ function buildWksControls(editor) {
       $message.empty();
     });
 
-  // Methods
+  const $stateArea = $outermost.find('.proofStateArea');
 
-  $stateArea = $outermost.find('.proofStateArea');
+  // Methods
 
   const result = {
     node: dom($outermost),
@@ -1919,7 +1919,7 @@ RuleMenu.prototype.offerable = function(ruleName) {
     return false;
   } else {
     // No selection, the rule must not require a step or site.
-    for (type in info.inputs) {
+    for (const type in info.inputs) {
       // Use "in", the type will not be an object method name.
       if (type in stepTypes || type in siteTypes) {
         return false;

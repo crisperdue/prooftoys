@@ -716,16 +716,16 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   if (self.isEditable()) {
     $step.append('<input type=checkbox class="stepSelector checkbox">');
   }
-  $numArea = ($('<span class="stepNumArea stepSelector">')
-              .append('[<span class=stepNumber></span>]'));
+  const $numArea = ($('<span class="stepNumArea stepSelector">')
+                    .append('[<span class=stepNumber></span>]'));
   // If the "hover mark" is not configured, put the hoverInfoBox
   // inside the stepNumArea and show it on hover when the shift key is
   // down, see below.
   if (!Toy.showStepHoverMark) {
     $numArea.append('<div class=hoverInfoBox></div>');
   }
-  $stepAndNum = ($('<span class=stepAndNum>')
-                 .append($numArea));
+  const $stepAndNum = ($('<span class=stepAndNum>')
+                       .append($numArea));
   $step.append($stepAndNum);
   $proofStep.append('<span class=stepInfo></span>');
   if (self.isEditable()) {
@@ -1482,7 +1482,7 @@ Step.prototype.copyToRender = function() {
   // great reason.
   var freeVars = this.wff.freeVars();
   var bindings = null;
-  for (key in freeVars) {
+  for (const key in freeVars) {
     bindings = new Bindings(key, key, bindings);
   }
   var wff = this.wff.copyForRendering(bindings);
@@ -1951,7 +1951,7 @@ var stepFormatters = {
   instMultiVars: function(step) {
     var map = step.ruleArgs[1];
     var keys = [];
-    for (key in map) {
+    for (const key in map) {
       key !== '%expansions' && keys.push(key);
     }
     return 'substitute for ' + keys.join(', ') + ';; {in step step}';

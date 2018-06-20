@@ -1,4 +1,4 @@
-// Copyright 2016, 2017 Crispin Perdue.
+// Copyright 2016 - 2018 Crispin Perdue.
 // All rights reserved.
 
 (function() {
@@ -582,7 +582,7 @@ var methods = {
     var unsolved = []
     // Count of variables fully solved for.
     var fullySolvedCount = 0;
-    for (i = 0; i < varsList.length; i++) {
+    for (var i = 0; i < varsList.length; i++) {
       var name = varsList[i];
       var msg = messagesByName[name];
       if (msg) {

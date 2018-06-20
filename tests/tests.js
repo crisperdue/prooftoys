@@ -191,7 +191,7 @@ var testCase = {
   // Utilities
 
   testGcd: function() {
-    gcd = Toy.gcd;
+    const gcd = Toy.gcd;
     assertEqual(12, gcd(60, 24));
     assertEqual(0, gcd(1.5, .5));
     assertEqual(0, gcd(-1.5, -.3));
@@ -1594,7 +1594,7 @@ var testCase = {
 
   testEachArgType: function() {
     var each = Toy.eachArgType;
-    info = [];
+    const info = [];
     each('implyForallGen', function(index, type) {
         info[index] = type;
       });
@@ -1865,7 +1865,7 @@ var testCase = {
     result = Toy.rules.instVar(step1, call(p, x), x);
   },
 
-  testInstiateVar: function() {
+  testInstantiateVar: function() {
     var result =
       Toy.rules.instantiateVar(call(p, y), '/arg', call(f, x));
     assertEqual('(p (f x))', result);
@@ -1947,7 +1947,7 @@ var testCase = {
     assertEqual('((F & T) = F)', inf);
     inf = Toy.rules.evalBool(Toy.parse('(p (F | T))'));
     assertEqual('((p (F | T)) = (p T))', inf);
-    taut = Toy.parse('(p => not p) => not p');
+    const taut = Toy.parse('(p => not p) => not p');
     inf = Toy.rules.evalBool(taut.subFree1(T, p));
     assertEqual('T', inf.getRight());
     inf = Toy.rules.evalBool(taut.subFree1(F, p));

@@ -494,7 +494,7 @@ function mapSize(o) {
  */
 function configure(object, properties) {
   var define = Object.defineProperty;
-  for (key in properties) {
+  for (var key in properties) {
     var value = properties[key];
     if (typeof value === 'object' && value.constructor === Object) {
       define(object, key, value);

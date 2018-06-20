@@ -3934,7 +3934,7 @@ const ruleInfo = {
   // term as the arguments.
   instantiateVar: {
     action: function(step, path, term) {
-      v = step.get(path);
+      const v = step.get(path);
       assert(v.isVariable(), 'Not a variable: {1}', v);
       var map = {};
       map[v.name] = term;
