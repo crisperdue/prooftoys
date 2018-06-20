@@ -79,8 +79,8 @@ function ProofEditor() {
   var menu = new RuleMenu(self);
   // Suppress solution status display when the mouse is within the
   // menu, leaving more room for step suggestions.
-  menu.onEnter(function() { proofEditor.requestStatusDisplay(false); });
-  menu.onLeave(function() { proofEditor.requestStatusDisplay(true); });
+  menu.onEnter(function() { self.requestStatusDisplay(false); });
+  menu.onLeave(function() { self.requestStatusDisplay(true); });
   self.ruleMenu = menu;
 
   // The ruleStats are visible except when a proof is brand new and
@@ -1811,7 +1811,7 @@ RuleMenu.prototype._update = function() {
   }
 
   // TODO: Consider updating the advice using Promises.
-  proofEditor.$advice.toggleClass('hidden', self.length != 0);
+  self.proofEditor.$advice.toggleClass('hidden', self.length != 0);
 };
 
 /**
