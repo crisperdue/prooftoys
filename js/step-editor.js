@@ -1119,8 +1119,7 @@ StepEditor.prototype.tryExecuteRule = function() {
   var rule = Toy.rules[ruleName];
   var minArgs = rule.info.minArgs;
   var args = this.argsFromSelection(ruleName);
-  this.fillFromForm(args);
-  if (this.checkArgs(args, minArgs, true)) {
+  if (this.fillFromForm(args) && this.checkArgs(args, minArgs, true)) {
     tryRuleSoon(this, rule, args);
   }
 };
@@ -1335,11 +1334,13 @@ StepEditor.prototype.argsFromSelection = function(ruleName) {
 };
 
 /**
- * Fills in the arguments array with information from the form.
+ * Tries to fill in the arguments array with information from the form.
+ * Returns true / false for success or failure.
  */
 StepEditor.prototype.fillFromForm = function(args) {
   var self = this;
   var rule = Toy.rules[this.ruleName];
+  let success = true;
   $(this.form).find('input').each(function() {
     // The "name" attribute of the input element should be the name of
     // an input type, possibly followed by some digits indicating
@@ -1357,12 +1358,19 @@ StepEditor.prototype.fillFromForm = function(args) {
       if (!argNum) {
 	throw new Error('Internal error: no input descriptor for type ' + type);
       }
-      // Fill in the actual argument.
+      try {
+        // Try to fill in the actual argument.
       args[argNum - 1] = self.parseValue(this.value, type);
+      } catch(e) {
+        self.report(e.message);
+        success = false;
+        return false;
+      }
     } else {
       Toy.logError('Unrecognized input name: ' + name);
     }
   });
+  return success;
 };
 
 /**
