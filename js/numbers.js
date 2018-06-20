@@ -2135,18 +2135,6 @@ var realAxiomFacts = {
     converse: { labels: 'algebra2' }
 
   },
-  'a + 0 = a': {
-    simplifier: true,
-    proof: function() {
-      return rules.axiomPlusZero();
-    }
-  },
-  'a * 1 = a': {
-    simplifier: true,
-    proof: function() {
-      return rules.axiomTimesOne();
-    }
-  },
   'a * 0 = 0': {
     simplifier: true,
     proof: function() {
