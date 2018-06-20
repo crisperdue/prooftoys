@@ -1360,7 +1360,7 @@ StepEditor.prototype.fillFromForm = function(args) {
       }
       try {
         // Try to fill in the actual argument.
-      args[argNum - 1] = self.parseValue(this.value, type);
+        args[argNum - 1] = self.parseValue(this.value, type);
       } catch(e) {
         self.report(e.message);
         success = false;
@@ -1709,9 +1709,6 @@ RuleMenu.prototype.refresh = function() {
 RuleMenu.prototype._update = function() {
   var self = this;
   var stepEditor = self.proofEditor.stepEditor;
-  // Clear any message displays whenever this changes, as when
-  // the user selects an expression or step.
-  stepEditor.$proofErrors.hide();
   var $items = self.$items;
   // Remove data and event handlers from suggestions.  They have
   // not been previously removed.
