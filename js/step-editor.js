@@ -1530,13 +1530,15 @@ function RuleMenu(proofEditor) {
  * display the input form.
  */
 function handleMouseClickItem(ruleMenu, node, event) {
+  // TODO: Consider generating an event here and moving
+  //   much of this code elsewhere.
   const ruleName = $(node).data('ruleName');
   const proofEditor = ruleMenu.proofEditor;
   const stepEditor = proofEditor.stepEditor;
   // This code runs from a click, so a suggestion may well
   // be active.  Make sure it is not displayed.
   proofEditor.proofDisplay.hideSuggestion();
-  proofEditor.ruleName = ruleName;
+  proofEditor.stepEditor.ruleName = ruleName;
   var rule = Toy.rules[ruleName];
   if (rule) {
     var args = stepEditor.argsFromSelection(ruleName);
