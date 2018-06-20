@@ -228,7 +228,7 @@ function ProofEditor() {
       if (!within($target, '.wksControlsOuter, .proofButtons')) {
         self._wksControls.hide();
       }
-      if (!within($target, '.proofErrors')) {
+      if (!within($target, '.proofErrors, .stepEditor')) {
         // Similarly, most clicks hide the proof errors display.
         // TODO: Toggle "hidden" rather than calling "hide".
         self.stepEditor.$proofErrors.hide();
@@ -973,8 +973,6 @@ StepEditor.prototype.error = function(message) {
  */
 StepEditor.prototype.report = function(error) {
   var $proofErrors = this.$proofErrors;
-  assert($proofErrors.length, 'proofJQ?');
-  // Clicking _anywhere_ will actually clear the message.
   $proofErrors.show();
   $proofErrors.html('<button class=clearer>X</button>');
   if (error instanceof Error) {
