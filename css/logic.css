@@ -430,7 +430,7 @@ span#leftNav {
     left: 0;
     right: 0;
     color: #aaa;
-    background-color: #f8f8f8;
+    background-color: #fcfcfc;
     /* For some reason border here does not affect stepAndControls. */
     /* border: .5px solid #bbf; */
     /* Try to help situations where this overlaps the menu. */
@@ -441,7 +441,7 @@ span#leftNav {
 
 .proofStep.stepSuggestion .stepAndControls {
     /* For some reason this does not inherit from the proofStep */
-    background-color: #f8f8f8;
+    background-color: #fcfcfc;
 }
 
 .proofStep.stepMessage {
@@ -1073,6 +1073,7 @@ textarea.proofStateArea {
 input.copyText {
     text-align: right;
     text-overflow: ellipsis;
+    background: #fcfcfc;
 }
 
 /* At the bottom of the file to be as potent as possible.  */
