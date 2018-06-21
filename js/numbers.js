@@ -273,18 +273,30 @@ var numbersInfo = {
     description: 'distributive law'
   },
 
-  axiomPlusZero: {
+  plusZero: {
     statement: '@R x => x + 0 = x',
     simplifier: true,
     tooltip: 'x + 0 = x',
-    description: 'additive identity'
+    description: 'additive identity',
+    proof: function() {
+      return (rules.fact('isAddIdentity 0')
+              .andThen('apply')
+              .andThen('simplifyStep')
+              .andThen('instForall', '', 'x'));
+    }
   },
 
-  axiomTimesOne: {
+  timesOne: {
     statement: '@R x => x * 1 = x',
     simplifier: true,
     tooltip: 'x * 1 = x',
-    description: 'multiplicative identity'
+    description: 'multiplicative identity',
+    proof: function() {
+      return (rules.fact('isMulIdentity 1')
+              .andThen('apply')
+              .andThen('simplifyStep')
+              .andThen('instForall', '', 'x'));
+    }
   },
 
   // TODO: Prove this.
@@ -2367,7 +2379,7 @@ var identityFacts = {
   /* Omit from UI: somewhat redundant
   'a = 0 + a': {
    proof: function() {
-     var step1 = rules.axiomPlusZero();
+     var step1 = rules.plusZero();
      var step2 = rules.eqnSwap(step1);
      var step3 = rules.rewrite(step2, '/main/right',
                                'a + b = b + a');
@@ -2378,8 +2390,8 @@ var identityFacts = {
   '0 + a = a': {
     simplifier: true,
     proof: function() {
-      var step1 = rules.axiomPlusZero();
-      var step2 = rules.rewrite(step1, '/main/left',
+      var step1 = rules.plusZero();
+      var step2 = rules.rewrite(step1, '/rt/left',
                                 'a + b = b + a');
       return step2;
     }
@@ -2406,8 +2418,8 @@ var identityFacts = {
   '1 * a = a': {
     simplifier: true,
     proof: function() {
-      var step1 = rules.axiomTimesOne();
-      var step2 = rules.rewrite(step1, '/main/left',
+      var step1 = rules.timesOne();
+      var step2 = rules.rewrite(step1, '/rt/left',
                                 'a * b = b * a');
       return step2;
     }
@@ -2663,10 +2675,10 @@ var negationFacts = {
     proof: function() {
       var fact = rules.axiomArithmetic('1 / -1');
       return (rules.consider('a / -1')
-              .rewrite('/main/right/left', 'a = a * 1')
-              .rewrite('/main/right', 'a * b / c = a * (b / c)')
-              .rewrite('/main/right/right', fact)
-              .rewrite('/main/right', 'a * b = b * a'));
+              .rewrite('/rt/right/left', 'a = a * 1')
+              .rewrite('/rt/right', 'a * b / c = a * (b / c)')
+              .rewrite('/rt/right/right', fact)
+              .rewrite('/rt/right', 'a * b = b * a'));
     }
   },
   'b != 0 => neg (a / b) = neg a / b': {
@@ -3137,8 +3149,8 @@ var divisionFacts = {
   'b != 0 & c != 0 => a / (b * c) = 1 / c * (a / b)': {
     proof: function() {
       return (rules.consider('a / (b * c)')
-              .rewrite('/main/right/left', 'a = a * 1')
-              .rewrite('/main/right', 'a * b / (c * d) = (b / d) * (a / c)'));
+              .rewrite('/rt/right/left', 'a = a * 1')
+              .rewrite('/rt/right', 'a * b / (c * d) = (b / d) * (a / c)'));
     }
   },
   // Distributivity:
