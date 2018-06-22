@@ -928,6 +928,7 @@ input.varName, input.step, input.equation, input.implication {
     left: .5em;
     right: .5em;
     background: AliceBlue;
+    opacity: .8;
     border: 1px solid #aaf;
     border-radius: 5px;
     max-height: 20em;
