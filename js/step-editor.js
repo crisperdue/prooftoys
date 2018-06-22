@@ -51,6 +51,8 @@ var nextProofEditorId = 1;
  *   Takes effect when this editor is reset.
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
+ * initialState: String with initial proof state from local storage,
+ *   read-only.
  */
 function ProofEditor() {
   const self = this;
@@ -164,8 +166,11 @@ function ProofEditor() {
 
   // Restore proof state.
   const proofData = Toy.readDoc(self._documentName);
+  self.initialState = proofData ? proofData.proofState : '';
   if (proofData) {
-    mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
+    Toy.soonDo(function() {
+        mainDisplay.setSteps(Toy.decodeSteps(self.initialState));
+      });
   }
   // If another ProofEditor is already holding the document,
   // make it read-only.  Otherwise reserve it for this one.
@@ -235,6 +240,22 @@ function ProofEditor() {
       }
     });
 }
+
+/**
+ * Indicates whether the proof has any steps initially, without
+ * actually parsing them -- in case that might cause an error.
+ */
+ProofEditor.prototype.hasInitialSteps = function() {
+  return this.initialState.length > 12;
+};
+
+/**
+ * Sets the viewable proof text to the initial text.  This is
+ * currently used only from the JS console for development.
+ */
+ProofEditor.prototype.useInitialText = function() {
+  this._wksControls.setProofText(this.initialState);
+};
 
 /**
  * Builds and returns an object for the proofButtons DIV of the given
