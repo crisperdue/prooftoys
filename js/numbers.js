@@ -351,39 +351,13 @@ var numbersInfo = {
     simplifier: true  // Good mainly for simplifying assumptions.
   },
 
-  // Type-related axioms
-
-  // This axiom applies to all normal objects, not just reals.
-  axiomRealNotNull: {
-    statement: '@not (R none)',
-    simplifier: true
-  },
-
-  axiomStrictPlus: {
-    statement: '@strict2 (+)'
-  },
-
-  axiomStrictTimes: {
-    statement: '@strict2 (*)'
-  },
-
   // Closure properties
-
-  axiomRealPlusClosed: {
-    statement: '@R x & R y => R (x + y)',
-    simplifier: true
-  },
-
-  axiomRealTimesClosed: {
-    statement: '@R x & R y => R (x * y)',
-    simplifier: true
-  },
 
   realNegClosed: {
     statement: '@R x => R (neg x)',
     simplifier: true,
     proof: function() {
-      return (rules.axiomRealTimesClosed()
+      return (rules.fact('R (x * y)')
               .andThen('instMultiVars', {x: '-1', y: 'x'})
               .andThen('rewrite', '/right/arg', '@ -1 * x = neg x'));
     }
@@ -393,7 +367,7 @@ var numbersInfo = {
     statement: '@R x & R y => R (x - y)',
     simplifier: true,
     proof: function() {
-      return (rules.axiomRealPlusClosed()
+      return (rules.fact('R (x + y)')
               .andThen('instMultiVars', {y: 'neg y'})
               .andThen('rewrite', '/right/arg', '@ x + neg y = x - y'));
     }
@@ -557,22 +531,39 @@ var numbersInfo = {
 
 };
 
+const strictness =
+  [
+   {statement: '@not (R none)', axiom: true,
+    description: 'null value is not Real'},
+   {statement: '@strict2 (+)', axiom: true,
+    description: 'real addition is strict'},
+   {statement: '@strict2 (*)', axiom: true,
+    description: 'real multiplication is strict'}
+   ];
+addRules(strictness);
+
 define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
 define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
 
 var fieldLaws =
   [
-   {statement: '@isAddIdentity 0', axiom: true,
-    description: 'field axiom: additive identity',
+   {statement: 'R (x + y)', axiom: true,
+    description: 'field axiom: addition is closed'
    },
-   {statement: '@isMulIdentity 1', axiom: true,
-    description: 'field axiom: multiplicative identity',
+   {statement: '@isAddIdentity 0', axiom: true,
+    description: 'field axiom: additive identity'
    },
    {statement: 'R x => exists {y. R y & x + y = 0}', axiom: true,
-    description: 'field axiom: additive inverse exists',
+    description: 'field axiom: additive inverse exists'
+   },
+   {statement: 'R (x * y)', axiom: true,
+    description: 'field axiom: multiplication is closed'
+   },
+   {statement: '@isMulIdentity 1', axiom: true,
+    description: 'field axiom: multiplicative identity'
    },
    {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}', axiom: true,
-    description: 'field axiom: multiplicative inverse exists',
+    description: 'field axiom: multiplicative inverse exists'
    }
    ];
 addRules(fieldLaws);
@@ -2077,7 +2068,7 @@ var fractionsInfo = {
 
 var algebraFacts = {};
 
-var realAxiomFacts = {
+var realAxiomFacts = {  // TODO: Remove these as redundant.
 
   // Axioms
 
@@ -2119,11 +2110,6 @@ var realAxiomFacts = {
     simplifier: true,
     proof: function() {
       return rules.axiomTimesZero();
-    }
-  },
-  'not (R none)': {
-    proof: function() {
-      return rules.axiomRealNotNull();
     }
   }
 };
