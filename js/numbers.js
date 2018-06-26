@@ -557,6 +557,26 @@ var numbersInfo = {
 
 };
 
+define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
+define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
+
+var fieldLaws =
+  [
+   {statement: '@isAddIdentity 0', axiom: true,
+    description: 'field axiom: additive identity',
+   },
+   {statement: '@isMulIdentity 1', axiom: true,
+    description: 'field axiom: multiplicative identity',
+   },
+   {statement: 'R x => exists {y. R y & x + y = 0}', axiom: true,
+    description: 'field axiom: additive inverse exists',
+   },
+   {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}', axiom: true,
+    description: 'field axiom: multiplicative inverse exists',
+   }
+   ];
+addRules(fieldLaws);
+
 var realOrdering =
   [
    {statement: 'not (x < x)',
@@ -593,26 +613,6 @@ var realOrdering =
    }
    ];
 Toy.addRules(realOrdering);
-
-define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
-define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
-
-var fieldLaws =
-  [
-   {statement: '@isAddIdentity 0', axiom: true,
-    description: 'field axiom: additive identity',
-   },
-   {statement: '@isMulIdentity 1', axiom: true,
-    description: 'field axiom: multiplicative identity',
-   },
-   {statement: 'R x => exists {y. R y & x + y = 0}', axiom: true,
-    description: 'field axiom: additive inverse exists',
-   },
-   {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}', axiom: true,
-    description: 'field axiom: multiplicative inverse exists',
-   }
-   ];
-addRules(fieldLaws);
 
 const idFacts =
   [
