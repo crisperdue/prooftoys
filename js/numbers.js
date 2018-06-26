@@ -594,56 +594,25 @@ var realOrdering =
    ];
 Toy.addRules(realOrdering);
 
-var fieldLaws =
-  [
-   // TODO: Try stating these identities with different name
-   //   for bound variable once standardVars can handle it.
-   {statement: '@exists {x. isAddIdentity x}',
-    description: 'field axiom: additive identity exists',
-    axiom: true
-   },
-   {statement: '@exists {x. isMulIdentity x}',
-    description: 'field axiom: multiplicative identity exists',
-    axiom: true
-   },
-   {statement: 'R x => exists {y. R y & x + y = 0}',
-    description: 'field axiom: additive inverse exists',
-    axiom: true
-   },
-   {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}',
-    description: 'field axiom: multiplicative inverse exists',
-    axiom: true
-   }
-   ];
-addRules(fieldLaws);
-
 define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
 define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
 
-var facts =
+var fieldLaws =
   [
-   {statement: 'exists {z. R z & forall {x. R x => x + z = x}}',
-    proof: function() {
-       return (rules.fact('exists {x. isAddIdentity x}')
-               .andThen('apply', '/arg/body'));
-     }
+   {statement: '@isAddIdentity 0', axiom: true,
+    description: 'field axiom: additive identity',
    },
-   {statement: 'exists {z. R z & forall {x. R x => x * z = x}}',
-    proof: function() {
-       return (rules.fact('exists {x. isMulIdentity x}')
-               .andThen('apply', '/arg/body'));
-     }
+   {statement: '@isMulIdentity 1', axiom: true,
+    description: 'field axiom: multiplicative identity',
+   },
+   {statement: 'R x => exists {y. R y & x + y = 0}', axiom: true,
+    description: 'field axiom: additive inverse exists',
+   },
+   {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}', axiom: true,
+    description: 'field axiom: multiplicative inverse exists',
    }
    ];
-addRules(facts);
-
-// Declare 0 and 1 to be the additive and multiplicative identities.
-//
-// For practical reasons, within the range of exact integer
-// literals all instances of these facts are built in, but the
-// general facts are only stated here, and of course justified.
-definition('isAddIdentity 0');
-definition('isMulIdentity 1');
+addRules(fieldLaws);
 
 const idFacts =
   [
@@ -705,7 +674,6 @@ const idFacts =
     }
    }
    ];
-
 addRules(idFacts);
 
 
