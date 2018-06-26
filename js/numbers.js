@@ -44,169 +44,6 @@ var noSimplify = Toy.noSimplify;
 var addFact = Toy.addFact;
 var addFactsMap = Toy.addFactsMap;
 
-// This list may be added onto later.
-var realTypeFacts =
-  [
-   'R (x + y)',
-   'R (x * y)',
-   'R (x - y)',
-   'y != 0 => R (x / y)',
-   'R (neg x)',
-   'x != 0 => R (recip x)',
-   'x != 0 => recip x != 0',
-   'x * y != 0 == x != 0 & y != 0',
-   {apply: function(term, cxt) {
-       return (isArithmetic(term) &&
-               rules.axiomArithmetic(term));
-     }
-   }
-   ];
-
-
-//// Utility functions
-
-// Interactive testing in context of this file.
-window.Numtest = function(x) {
-  setTimeout(function() { console.log(window.Tval = eval(x)); });
-};
-
-/**
- * Returns a truthy value iff the term has the form of an arithmetic
- * expression suitable for rules.axiomArithmetic.  This does not do
- * range checks on the values of numeric inputs.  On the other hand it
- * is faster and does not use exceptions.
- */
-function isArithmetic(term) {
-  if (term.isInfixCall()) {
-    var left = term.getLeft();
-    var right = term.getRight();
-    if (!left.isNumeral() ||
-        !right.isNumeral()) {
-      return false;
-    }
-    var op = term.getBinOp().name;
-    switch(op) {
-    case '+':
-    case '*':
-    case '-':
-    case '=':
-    case '!=':
-    case '>':
-    case '>=':
-    case '<':
-    case '<=':
-      return true;
-    case '/':
-      if (right === 0) {
-        return false;
-      }
-      var value = left / right;
-      // abs(value) <= abs(left) since abs(right) >= 1 so the
-      // magnitude is not a problem.  The fractional part of a
-      // result must have denominator no greater than MAX_INT,
-      // so it should be distinguishable from an integer.
-      return value === Math.floor(value);
-    default:
-      return false;
-    }
-  } else if (term instanceof Toy.Call) {
-    return (term.fn.isConst() && term.arg.isNumeral() &&
-            (term.fn.name == 'neg' || term.fn.name == 'R'));
-  }
-}
-
-/**
- * Has the effect of trying the axiom of arithmetic on the term,
- * returning a falsy value if it does not apply.
- */
-function tryArithmetic(term) {
-  if (isArithmetic(term)) {
-    return Toy.normalReturn(rules.axiomArithmetic, term);
-  }
-  // Implicit falsy return.
-}
-
-/**
- * If the given term (with possible multiplication operator) has
- * a variable "all the way to the right", returns the variable,
- * otherwise null.  Also works with a term of the form (neg <v>).
- *
- * TODO: Consider supporting a term with a denominator.
- */
-function termGetRightVariable(term) {
-  var s;
-  return (term.isVariable()
-          ? term
-          : (s = term.matchSchema('neg v')) && s.v.isVariable()
-          ? s.v
-          : ((s = term.matchSchema('f a v')) && 
-           s.f.isConst('*') &&
-             s.v.isVariable())
-          ? s.v
-          : null);
-}
-
-/**
- * Returns a plain object with a property for each variable name
- * occurring in the given multiplicative term.  The value of each
- * property is the number of occurrences of the variable with that
- * name.  The term must consist entirely of multiplication and
- * negation of variables and constants.  If any other kind of
- * expression occurs in the term, the result is null.
- */
-function varFactorCounts(term) {
-  var info = {};
-  function mustBeVariable(expr, revPath) {
-    if (expr.isVariable()) {
-      var value = info[expr.name] || 0;
-      info[expr.name] = value + 1;
-    } else if (!expr.isConst()) {
-      throw new Toy.Result(false);
-    }
-  }
-  function addCounts(expr, revPath) {
-    expr.walkPatterns([
-      {match: 'a * b', a: addCounts, b: addCounts},
-      {match: 'neg a', a: addCounts},
-      {match: 'a', a: mustBeVariable}
-    ]);
-    return true;
-  }
-  return (Toy.catchResult(addCounts, term, null)
-          ? info
-          : null);
-}
-
-/**
- * Returns true iff the multiplicative term e1 belongs strictly to the
- * left of term e2.  Each term must have varFactorCounts, and one must
- * have more of some variable than the other.  This compares variable
- * counts in lexical order by name, stopping at the first count that
- * differs.
- */
-function termLeftThan(e1, e2) {
-  var counts1 = varFactorCounts(e1);
-  var counts2 = varFactorCounts(e2);
-  var allKeys =
-    Object.keys(jQuery.extend({}, counts1 || {}, counts2 || {})).sort();
-  // If either expression does not have clear counts, don't require
-  // the terms to be ordered.
-  if (counts1 && counts2) {
-    for (var i = 0; i < allKeys.length; i++) {
-      var key = allKeys[i];
-      var count1 = counts1[key] || 0;
-      var count2 = counts2[key] || 0;
-      if (count1 > count2) {
-        return true;
-      }
-      if (count2 > count1) {
-        return false;
-      }
-    }
-  }
-  return false;
-}
-
 
 //// Definitions
 
@@ -236,9 +73,7 @@ define('strict2',
 define('recip', '{x. 1 / x}');
 
 
-////
-//// Real number axioms
-////
+//// Axioms
 
 const strictness =
   [
@@ -911,7 +746,25 @@ var equationOpsInfo = {
 
 };
 
-//// Support code for the equation operations rules above.
+//// Fact lists
+
+// This list may be added onto later.
+var realTypeFacts =
+  [
+   'R (x + y)',
+   'R (x * y)',
+   'R (x - y)',
+   'y != 0 => R (x / y)',
+   'R (neg x)',
+   'x != 0 => R (recip x)',
+   'x != 0 => recip x != 0',
+   'x * y != 0 == x != 0 & y != 0',
+   {apply: function(term, cxt) {
+       return (isArithmetic(term) &&
+               rules.axiomArithmetic(term));
+     }
+   }
+   ];
 
 // Facts that regroup an add/subtract or multiply/divide term
 // out of their standard order.
@@ -3204,6 +3057,151 @@ var algebraIdentities = {
 };
 addFactsMap(algebraIdentities);
 
+
+//// Utility functions
+
+// Interactive testing in context of this file.
+window.Numtest = function(x) {
+  setTimeout(function() { console.log(window.Tval = eval(x)); });
+};
+
+/**
+ * Returns a truthy value iff the term has the form of an arithmetic
+ * expression suitable for rules.axiomArithmetic.  This does not do
+ * range checks on the values of numeric inputs.  On the other hand it
+ * is faster and does not use exceptions.
+ */
+function isArithmetic(term) {
+  if (term.isInfixCall()) {
+    var left = term.getLeft();
+    var right = term.getRight();
+    if (!left.isNumeral() ||
+        !right.isNumeral()) {
+      return false;
+    }
+    var op = term.getBinOp().name;
+    switch(op) {
+    case '+':
+    case '*':
+    case '-':
+    case '=':
+    case '!=':
+    case '>':
+    case '>=':
+    case '<':
+    case '<=':
+      return true;
+    case '/':
+      if (right === 0) {
+        return false;
+      }
+      var value = left / right;
+      // abs(value) <= abs(left) since abs(right) >= 1 so the
+      // magnitude is not a problem.  The fractional part of a
+      // result must have denominator no greater than MAX_INT,
+      // so it should be distinguishable from an integer.
+      return value === Math.floor(value);
+    default:
+      return false;
+    }
+  } else if (term instanceof Toy.Call) {
+    return (term.fn.isConst() && term.arg.isNumeral() &&
+            (term.fn.name == 'neg' || term.fn.name == 'R'));
+  }
+}
+
+/**
+ * Has the effect of trying the axiom of arithmetic on the term,
+ * returning a falsy value if it does not apply.
+ */
+function tryArithmetic(term) {
+  if (isArithmetic(term)) {
+    return Toy.normalReturn(rules.axiomArithmetic, term);
+  }
+  // Implicit falsy return.
+}
+
+/**
+ * If the given term (with possible multiplication operator) has
+ * a variable "all the way to the right", returns the variable,
+ * otherwise null.  Also works with a term of the form (neg <v>).
+ *
+ * TODO: Consider supporting a term with a denominator.
+ */
+function termGetRightVariable(term) {
+  var s;
+  return (term.isVariable()
+          ? term
+          : (s = term.matchSchema('neg v')) && s.v.isVariable()
+          ? s.v
+          : ((s = term.matchSchema('f a v')) && 
+           s.f.isConst('*') &&
+             s.v.isVariable())
+          ? s.v
+          : null);
+}
+
+/**
+ * Returns a plain object with a property for each variable name
+ * occurring in the given multiplicative term.  The value of each
+ * property is the number of occurrences of the variable with that
+ * name.  The term must consist entirely of multiplication and
+ * negation of variables and constants.  If any other kind of
+ * expression occurs in the term, the result is null.
+ */
+function varFactorCounts(term) {
+  var info = {};
+  function mustBeVariable(expr, revPath) {
+    if (expr.isVariable()) {
+      var value = info[expr.name] || 0;
+      info[expr.name] = value + 1;
+    } else if (!expr.isConst()) {
+      throw new Toy.Result(false);
+    }
+  }
+  function addCounts(expr, revPath) {
+    expr.walkPatterns([
+      {match: 'a * b', a: addCounts, b: addCounts},
+      {match: 'neg a', a: addCounts},
+      {match: 'a', a: mustBeVariable}
+    ]);
+    return true;
+  }
+  return (Toy.catchResult(addCounts, term, null)
+          ? info
+          : null);
+}
+
+/**
+ * Returns true iff the multiplicative term e1 belongs strictly to the
+ * left of term e2.  Each term must have varFactorCounts, and one must
+ * have more of some variable than the other.  This compares variable
+ * counts in lexical order by name, stopping at the first count that
+ * differs.
+ */
+function termLeftThan(e1, e2) {
+  var counts1 = varFactorCounts(e1);
+  var counts2 = varFactorCounts(e2);
+  var allKeys =
+    Object.keys(jQuery.extend({}, counts1 || {}, counts2 || {})).sort();
+  // If either expression does not have clear counts, don't require
+  // the terms to be ordered.
+  if (counts1 && counts2) {
+    for (var i = 0; i < allKeys.length; i++) {
+      var key = allKeys[i];
+      var count1 = counts1[key] || 0;
+      var count2 = counts2[key] || 0;
+      if (count1 > count2) {
+        return true;
+      }
+      if (count2 > count1) {
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
 // Internal to arithRight.
 var _arithInfo = [{schema: 'a + b + c = a + (b + c)'},
                   {schema: 'a + b - c = a + (b - c)'},
@@ -3269,6 +3267,7 @@ function arithRight(term, cxt) {
 var ungroupingFacts = regroupingFacts.map(function(fact) {
     return Toy.commuteEqn(Toy.resolveToFact(fact));
   });
+
 
 //// Export public names.
 
