@@ -114,21 +114,17 @@ addRules(fieldLaws);
 
 var realOrdering =
   [
-   {statement: 'not (x < x)',
-    description: 'strict ordering axiom 1',
-    axiom: true
+   {statement: 'not (x < x)', axiom: true,
+    description: 'strict ordering axiom 1'
    },
-   {statement: 'x < y => not (y < x)',
-    description: 'strict ordering axiom 2',
-    axiom: true
+   {statement: 'x < y => not (y < x)', axiom: true,
+    description: 'strict ordering axiom 2'
    },
-   {statement: 'x < y | y < x | x = y',
-    description: 'strict ordering axiom 3',
-    axiom: true
+   {statement: 'x < y | y < x | x = y', axiom: true,
+    description: 'strict ordering axiom 3'
    },
-   {statement: 'x < y & y < z => x < z',
-    description: 'strict ordering transitivity',
-    axiom: true
+   {statement: 'x < y & y < z => x < z', axiom: true,
+    description: 'strict ordering transitivity'
    },
 
    // Completeness:
@@ -138,13 +134,11 @@ var realOrdering =
    // ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
    //          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
 
-   {statement: 'x < y => x + z < y + z',
-    description: 'ordering of reals and addition',
-    axiom: true
+   {statement: 'x < y => x + z < y + z', axiom: true,
+    description: 'ordering of reals and addition'
    },
-   {statement: '0 < x & 0 < y => 0 < x * y',
-    description: 'ordering of reals and multiplication',
-    axiom: true
+   {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
+    description: 'ordering of reals and multiplication'
    }
    ];
 Toy.addRules(realOrdering);
