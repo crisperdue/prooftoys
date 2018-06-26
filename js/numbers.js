@@ -237,6 +237,147 @@ define('recip', '{x. 1 / x}');
 
 
 ////
+//// Real number axioms
+////
+
+const strictness =
+  [
+   {statement: '@not (R none)', axiom: true,
+    description: 'null value is not Real'},
+   {statement: '@strict2 (+)', axiom: true,
+    description: 'real addition is strict'},
+   {statement: '@strict2 (*)', axiom: true,
+    description: 'real multiplication is strict'}
+   ];
+addRules(strictness);
+
+define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
+define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
+
+var fieldLaws =
+  [
+   {statement: 'R (x + y)', axiom: true,
+    description: 'field axiom: addition is closed'
+   },
+   {statement: '@isAddIdentity 0', axiom: true,
+    description: 'field axiom: additive identity'
+   },
+   {statement: 'R x => exists {y. R y & x + y = 0}', axiom: true,
+    description: 'field axiom: additive inverse exists'
+   },
+   {statement: 'R (x * y)', axiom: true,
+    description: 'field axiom: multiplication is closed'
+   },
+   {statement: '@isMulIdentity 1', axiom: true,
+    description: 'field axiom: multiplicative identity'
+   },
+   {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}', axiom: true,
+    description: 'field axiom: multiplicative inverse exists'
+   }
+   ];
+addRules(fieldLaws);
+
+var realOrdering =
+  [
+   {statement: 'not (x < x)',
+    description: 'strict ordering axiom 1',
+    axiom: true
+   },
+   {statement: 'x < y => not (y < x)',
+    description: 'strict ordering axiom 2',
+    axiom: true
+   },
+   {statement: 'x < y | y < x | x = y',
+    description: 'strict ordering axiom 3',
+    axiom: true
+   },
+   {statement: 'x < y & y < z => x < z',
+    description: 'strict ordering transitivity',
+    axiom: true
+   },
+
+   // Completeness:
+   //
+   // infix (x is_ub S)
+   // define is_ub = [x ∈ ℝ, S ⊆ ℝ. ∀ y ∈ S. y ≤ x]
+   // ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
+   //          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
+
+   {statement: 'x < y => x + z < y + z',
+    description: 'ordering of reals and addition',
+    axiom: true
+   },
+   {statement: '0 < x & 0 < y => 0 < x * y',
+    description: 'ordering of reals and multiplication',
+    axiom: true
+   }
+   ];
+Toy.addRules(realOrdering);
+
+const idFacts =
+  [
+   {statement: 'isAddIdentity x => x = 0',
+    name: 'addIdentity',
+    proof: function() {
+       const result1 = (rules.assume('isAddIdentity x')
+                        .andThen('apply', '/right'));
+       const result2 = (result1
+                        .andThen('forwardChain',
+                                 'a => b & c => (a => b)')
+                        .andThen('rewriteOnly', '',
+                                 'a => b == (a & b == a)'));
+       const result3 = (result1
+                        .andThen('forwardChain',
+                                 'a => b & c => (a => c)')
+                        .andThen('instForall', '/right', '0')
+                        .andThen('simplifyStep')
+                        .andThen('rewriteFrom', '/left', result2));
+
+       return result3;
+     }
+   },
+
+   {statement: 'isMulIdentity x => x = 1',
+    name: 'mulIdentity',
+    proof: function() {
+       const result1 = (rules.assume('isMulIdentity x')
+                        .andThen('apply', '/right'));
+       const result2 = (result1
+                        .andThen('forwardChain',
+                                 'a => b & c => (a => b)')
+                        .andThen('rewriteOnly', '',
+                                 'a => b == (a & b == a)'));
+       const result3 = (result1
+                        .andThen('forwardChain',
+                                 'a => b & c => (a => c)')
+                        .andThen('instForall', '/right', '1')
+                        .andThen('simplifyStep')
+                        .andThen('rewriteFrom', '/left', result2));
+
+       return result3;
+     }
+   },
+
+   {statement: 'exists1 {x. isAddIdentity x}',
+    proof: function() {
+       const step1 = rules.addIdentity().andThen('toForall0', 'x');
+       const step2 = rules.and(rules.fact('isAddIdentity 0'), step1);
+       return rules.forwardChain(step2, rules.uniqueTerm());
+    }
+   },
+
+   {statement: 'exists1 {x. isMulIdentity x}',
+    proof: function() {
+       const step1 = rules.mulIdentity().andThen('toForall0', 'x');
+       const step2 = rules.and(rules.fact('isMulIdentity 1'), step1);
+       return rules.forwardChain(step2, rules.uniqueTerm());
+    }
+   }
+   ];
+addRules(idFacts);
+
+
+////
 //// Inference rules
 ////
 
@@ -530,142 +671,6 @@ var numbersInfo = {
   }
 
 };
-
-const strictness =
-  [
-   {statement: '@not (R none)', axiom: true,
-    description: 'null value is not Real'},
-   {statement: '@strict2 (+)', axiom: true,
-    description: 'real addition is strict'},
-   {statement: '@strict2 (*)', axiom: true,
-    description: 'real multiplication is strict'}
-   ];
-addRules(strictness);
-
-define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
-define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
-
-var fieldLaws =
-  [
-   {statement: 'R (x + y)', axiom: true,
-    description: 'field axiom: addition is closed'
-   },
-   {statement: '@isAddIdentity 0', axiom: true,
-    description: 'field axiom: additive identity'
-   },
-   {statement: 'R x => exists {y. R y & x + y = 0}', axiom: true,
-    description: 'field axiom: additive inverse exists'
-   },
-   {statement: 'R (x * y)', axiom: true,
-    description: 'field axiom: multiplication is closed'
-   },
-   {statement: '@isMulIdentity 1', axiom: true,
-    description: 'field axiom: multiplicative identity'
-   },
-   {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}', axiom: true,
-    description: 'field axiom: multiplicative inverse exists'
-   }
-   ];
-addRules(fieldLaws);
-
-var realOrdering =
-  [
-   {statement: 'not (x < x)',
-    description: 'strict ordering axiom 1',
-    axiom: true
-   },
-   {statement: 'x < y => not (y < x)',
-    description: 'strict ordering axiom 2',
-    axiom: true
-   },
-   {statement: 'x < y | y < x | x = y',
-    description: 'strict ordering axiom 3',
-    axiom: true
-   },
-   {statement: 'x < y & y < z => x < z',
-    description: 'strict ordering transitivity',
-    axiom: true
-   },
-
-   // Completeness:
-   //
-   // infix (x is_ub S)
-   // define is_ub = [x ∈ ℝ, S ⊆ ℝ. ∀ y ∈ S. y ≤ x]
-   // ∀ S ⊆ ℝ. (∃ z ∈ ℝ. z is_ub S) ⇒
-   //          (∃ x ∈ ℝ. x is_ub S ∧ ∀ y ∈ ℝ. y is_ub S ⇒ x ≤ y)
-
-   {statement: 'x < y => x + z < y + z',
-    description: 'ordering of reals and addition',
-    axiom: true
-   },
-   {statement: '0 < x & 0 < y => 0 < x * y',
-    description: 'ordering of reals and multiplication',
-    axiom: true
-   }
-   ];
-Toy.addRules(realOrdering);
-
-const idFacts =
-  [
-   {statement: 'isAddIdentity x => x = 0',
-    name: 'addIdentity',
-    proof: function() {
-       const result1 = (rules.assume('isAddIdentity x')
-                        .andThen('apply', '/right'));
-       const result2 = (result1
-                        .andThen('forwardChain',
-                                 'a => b & c => (a => b)')
-                        .andThen('rewriteOnly', '',
-                                 'a => b == (a & b == a)'));
-       const result3 = (result1
-                        .andThen('forwardChain',
-                                 'a => b & c => (a => c)')
-                        .andThen('instForall', '/right', '0')
-                        .andThen('simplifyStep')
-                        .andThen('rewriteFrom', '/left', result2));
-
-       return result3;
-     }
-   },
-
-   {statement: 'isMulIdentity x => x = 1',
-    name: 'mulIdentity',
-    proof: function() {
-       const result1 = (rules.assume('isMulIdentity x')
-                        .andThen('apply', '/right'));
-       const result2 = (result1
-                        .andThen('forwardChain',
-                                 'a => b & c => (a => b)')
-                        .andThen('rewriteOnly', '',
-                                 'a => b == (a & b == a)'));
-       const result3 = (result1
-                        .andThen('forwardChain',
-                                 'a => b & c => (a => c)')
-                        .andThen('instForall', '/right', '1')
-                        .andThen('simplifyStep')
-                        .andThen('rewriteFrom', '/left', result2));
-
-       return result3;
-     }
-   },
-
-   {statement: 'exists1 {x. isAddIdentity x}',
-    proof: function() {
-       const step1 = rules.addIdentity().andThen('toForall0', 'x');
-       const step2 = rules.and(rules.fact('isAddIdentity 0'), step1);
-       return rules.forwardChain(step2, rules.uniqueTerm());
-    }
-   },
-
-   {statement: 'exists1 {x. isMulIdentity x}',
-    proof: function() {
-       const step1 = rules.mulIdentity().andThen('toForall0', 'x');
-       const step2 = rules.and(rules.fact('isMulIdentity 1'), step1);
-       return rules.forwardChain(step2, rules.uniqueTerm());
-    }
-   }
-   ];
-addRules(idFacts);
 
 
 var divisionInfo = {
