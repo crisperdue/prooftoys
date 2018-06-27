@@ -876,9 +876,10 @@ var _factsByKey = new Map();
  * "resInfo" is a "statement resolution information" object and
  * "factInfo" is the object with all the properties of the fact.
  *
- * This could also be used to look up factInfo from a fact goal or equivalent that
- * may have different variable names or order of assumptions, but that
- * is more directly supported through _factsByKey.
+ * This could also be used to look up factInfo from a fact goal or
+ * equivalent that may have different variable names or order of
+ * assumptions, but that is more directly supported through
+ * _factsByKey.
  * 
  * This supports fairly efficient resolution of actual or proposed
  * fact references to facts, and is used to ensure that no fact
@@ -911,7 +912,8 @@ function factsExtending(resInfo) {
 /**
  * Returns the "expansion" of a statement.  The result is a version of
  * the full declared fact of the statement, with free variables as in
- * the given statement rather than the declaration.
+ * the given statement rather than the declaration.  Returns null if
+ * there is no such declared fact.
  */
 function factExpansion(stmt) {
   const factInfo = resolveToFactInfo(stmt);
@@ -920,12 +922,16 @@ function factExpansion(stmt) {
   if (expanded) {
     return expanded;
   }
-  const asStated = factInfo.goal.getMain();
-  const asRequested = resInfo.stmt.getMain();
-  const map = asRequested.matchSchema(asStated);
-  const expansion = factInfo.goal.subFree(map);
-  resInfo._expansion = expansion;
-  return expansion;
+  if (factInfo) {
+    const asStated = factInfo.goal.getMain();
+    const asRequested = resInfo.stmt.getMain();
+    const map = asRequested.matchSchema(asStated);
+    const expansion = factInfo.goal.subFree(map);
+    resInfo._expansion = expansion;
+    return expansion;
+  } else {
+    return null;
+  }
 }
 
 /**
@@ -1304,11 +1310,11 @@ function searchForMatchingFact(term, info) {
  * equation, with no conditions on it.
  * 
  * Each pattern argument can be an argument acceptable to
- * getStatementKey, or:
+ * resolveToFact, or:
  *
  * A plain object with properties as follows:
  *
- * stmt: value acceptable to getStatementKey.  Unless "match" is also
+ * stmt: value acceptable to resolveToFact.  Unless "match" is also
  *   given this will need to be an equation.
  * where: optional string to evaluate, with "subst" 
  *   argument to findMatchingFact available as "$" and cxt and term
@@ -1397,7 +1403,12 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
         // TODO: Change this to match before checking for inProgress,
         //   and warn when a match is rejected due to fact proof in
         //   progress.
-        var fullFact = (resolveToFact(stmt) ||
+        //
+        // Note: resolveToFact for some reason is MUCH faster here
+        // than rules.fact.  The whole test suite runs twice as fast.
+        // Unfortunately resolveToFact returns the goal as stated, not
+        // as requested.
+        var fullFact = (factExpansion(stmt) ||
                         // The "fact" might be a tautology.
                         // Could it even be something else?  Not clear.
                         rules.fact(stmt));
@@ -1717,7 +1728,7 @@ function isAxiom(name) {
  */
 function matchFactPart(step, path, factList, name) {
   return Toy.each(factList, function(fact_arg) {
-    var schema = resolveToFact(fact_arg).getMain().getLeft(); // XXX
+    var schema = factExpansion(fact_arg).getMain().getLeft();
     var info = step.matchSchemaPart(path, schema, name);
     if (info) {
       return function() {
