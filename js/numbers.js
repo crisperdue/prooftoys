@@ -94,6 +94,16 @@ var fieldLaws =
    {statement: 'R (x + y)', axiom: true,
     description: 'field axiom: addition is closed'
    },
+   {statement: '(x + y) + z = x + (y + z)', axiom: true,
+    description: 'associativity of addition',
+    labels: 'algebra',
+    converse: { labels: 'algebra2' }
+   },
+   {statement: 'x + y = y + x', axiom: true,
+    description: 'commutativity of addition',
+    labels: 'algebra',
+    noSwap: true
+   },
    {statement: '@isAddIdentity 0', axiom: true,
     description: 'field axiom: additive identity'
    },
@@ -102,6 +112,16 @@ var fieldLaws =
    },
    {statement: 'R (x * y)', axiom: true,
     description: 'field axiom: multiplication is closed'
+   },
+   {statement: '(x * y) * z = x * (y * z)', axiom: true,
+    description: 'associativity of multiplication',
+    labels: 'algebra',
+    converse: { labels: 'algebra2' }
+   },
+   {statement: 'x * y = y * x', axiom: true,
+    description: 'commutativity of multiplication',
+    labels: 'algebra',
+    noSwap: true
    },
    {statement: '@isMulIdentity 1', axiom: true,
     description: 'field axiom: multiplicative identity'
@@ -142,6 +162,15 @@ var realOrdering =
    }
    ];
 Toy.addRules(realOrdering);
+
+const fakeAxioms =
+  [
+   {statement: 'x * 0 = 0', axiom: true,
+    description: 'multiplication by zero',
+    simplifier: true
+   }
+   ];
+Toy.addRules(fakeAxioms);
 
 const idFacts =
   [
@@ -218,26 +247,6 @@ var numbersInfo = {
   // (A1 => (A2 => <equation>)) to simplify introducing them from
   // the hypotheses.  This is equivalent to A1 & A2 => <equation>.
 
-  axiomCommutativePlus: {
-    statement: '@R x & R y => x + y = y + x',
-    description: 'commutativity'
-  },
-
-  axiomAssociativePlus: {
-    statement: '@R x & R y & R z => x + (y + z) = (x + y) + z',
-    description: 'associativity'
-  },
-
-  axiomCommutativeTimes: {
-    statement: '@R x & R y => x * y = y * x',
-    description: 'commutativity'
-  },
-
-  axiomAssociativeTimes: {
-    statement: '@R x & R y & R z => x * (y * z) = (x * y) * z',
-    description: 'associativity'
-  },
-
   axiomDistributivity: {
     statement: '@R x & R y & R z => x * (y + z) = x * y + x * z',
     description: 'distributive law'
@@ -277,13 +286,6 @@ var numbersInfo = {
     // All others are OK.
     statement: 'y != 0 => exists1 {z. R x & R y & R z & x = y * z}',
     description: 'quotient is unique'
-  },
-
-  axiomTimesZero: {
-    statement: '@R x => x * 0 = 0',
-    simplifier: true,
-    tooltip: 'x * 0 = 0',
-    description: 'multiplication by 0'
   },
 
   // TODO: Make this a theorem someday.
@@ -1914,59 +1916,7 @@ var fractionsInfo = {
 };  // End fractionsInfo.
 
 
-//
-// These are algebra facts.
-//
-
-var algebraFacts = {};
-
-var realAxiomFacts = {  // TODO: Remove these as redundant.
-
-  // Axioms
-
-  // TODO: Many of these carry unnecessary conditions that their
-  // arguments are real numbers, which propagate to unnecessary
-  // nonzero conditions of many facts about division and reciprocal.
-  // Lift the unnecessary conditions all around.
-
-  'a + b = b + a': {
-    proof: function() {
-      return rules.axiomCommutativePlus();
-    },
-    labels: 'algebra',
-    noSwap: true
-  },
-  'a * b = b * a': {
-    proof: function() {
-      return rules.axiomCommutativeTimes();
-    },
-    labels: 'algebra',
-    noSwap: true
-  },
-  'a + (b + c) = a + b + c': {
-    proof: function() {
-      return rules.axiomAssociativePlus();
-    },
-    labels: 'algebra',
-    converse: { labels: 'algebra2' }
-  },
-  'a * (b * c) = a * b * c': {
-    proof: function() {
-      return rules.axiomAssociativeTimes();
-    },
-    labels: 'algebra',
-    converse: { labels: 'algebra2' }
-
-  },
-  'a * 0 = 0': {
-    simplifier: true,
-    proof: function() {
-      return rules.axiomTimesZero();
-    }
-  }
-};
-addFactsMap(realAxiomFacts);
-
+//// Algebra facts
 
 var basicFacts = {
 
@@ -2235,7 +2185,7 @@ var identityFacts = {
   '0 * a = 0': {
     simplifier: true,
     proof: function() {
-      return rules.axiomTimesZero()
+      return rules.fact('x * 0 = 0')
       .rewrite('/main/left', 'a * b = b * a');
     }
   }

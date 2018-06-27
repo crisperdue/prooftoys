@@ -573,7 +573,7 @@ var testCase = {
   testIsIdentifer: function() {
     var ident = Toy.isIdentifier;
     assert(ident('asdf'));
-    assert(ident('axiomCommutativePlus'));
+    assert(ident('axiomFubar'));
     assert(!ident('a+b'));
     assert(!ident('(a)'));
   },
@@ -1259,11 +1259,11 @@ var testCase = {
       var actual = step.getLeft().hypLocater(hyp);
       assertEqual(expected, actual);
     }
-    var step1 = rules.axiomCommutativePlus();
+    var step1 = rules.fact('x + y = y + x');
     check('(h & h1)', step1, 'R x');
     check('(h2 & h)', step1, 'R y');
 
-    var step2 = rules.axiomAssociativePlus();
+    const step2 = rules.fact('x + y + z = x + (y + z)');
     check('((h & h2) & h1)', step2, 'R x');
     check('((h3 & h) & h1)', step2, 'R y');
   },
@@ -1275,7 +1275,7 @@ var testCase = {
       var actual = step.getLeft().hypMover(hyp);
       assertEqual(expected, actual);
     }
-    var step1 = rules.axiomAssociativePlus();
+    const step1 = rules.fact('x + y + z = x + (y + z)');
     check('(((h & h2) & h3) = ((h2 & h3) & h))',
           step1, 'R x');
     check('(((h1 & h) & h3) = ((h1 & h3) & h))',
@@ -1496,7 +1496,8 @@ var testCase = {
   },
 
   testAlreadyProved: function() {
-    assert(Toy._alreadyProved('axiomCommutativePlus'));
+    assert(Toy._alreadyProved('axiom2'));
+    assert(Toy._alreadyProved('axiom2a'));
     // This one is a rule, but not a theorem.
     assert(!Toy._alreadyProved('rplace'));
   },
@@ -2268,7 +2269,7 @@ var testCase = {
 
   testExtractHypothesis2: function() {
     var rules = Toy.rules;
-    var step = rules.axiomCommutativePlus();
+    const step = rules.fact('x + y = y + x');
     var expected =
       '(((R x) & (R y)) => ((R x) => ((x + y) = (y + x))))';
     var result = rules.extractHypothesis2(step, Toy.parse('R x'));
@@ -2280,13 +2281,13 @@ var testCase = {
   },
 
   testIsolateHypAt: function() {
-    var step = rules.axiomCommutativePlus();
+    const step = rules.fact('x + y = y + x');
     var actual = rules.extractHypAt(step, '/left/left');
     assertEqual('((R y) => ((R x) => ((x + y) = (y + x))))', actual);
   },
 
   testIsolateHyp: function() {
-    var step = rules.axiomCommutativePlus();
+    const step = rules.fact('x + y = y + x');
     var actual = rules.extractHyp(step, 'R x');
     assertEqual('((R y) => ((R x) => ((x + y) = (y + x))))', actual);
   },
@@ -2451,7 +2452,7 @@ var testCase = {
     var rules = Toy.rules;
     var bs = Toy._buildHypSchema;
     var map = new Toy.TermMap();
-    var schema = bs(rules.axiomAssociativePlus().getLeft(), map);
+    var schema = bs(rules.fact('x + y + z = x + (y + z)').getLeft(), map);
     assertEqual('((a1 & a2) & a3)', schema);
     assertEqual('a3', map.get(Toy.parse('R z')));
   },
