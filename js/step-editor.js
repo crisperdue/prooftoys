@@ -1489,7 +1489,7 @@ function RuleMenu(proofEditor) {
   self.hovering = null;
 
   // Rule chooser:
-  var $node = ($('<div class=ruleMenu>')
+  var $node = ($('<div class="ruleMenu transFade">')
                .append('<div class=ruleMenuTitle>Actions to try:</div>'));
   self.$node = $node;
   self.$items = $('<div class=rulesItems/>');
