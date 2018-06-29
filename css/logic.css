@@ -171,18 +171,16 @@ code {
 .transFade {
     visibility: visible;
     opacity: 1;
-    /* Immediately make it visible, gradually opaque. */
-    transition: visibility 0s, opacity 1s ease;
+    /* Think of visibility ranging from 0 to 1, with all */
+    /* nonzero values being visible. */
+    transition: visibility .3s, opacity .3s ease;
 }
 
-.transFade.hidden, .transFade.invisible {
+.transFade.hidden, .transFade.invisible, .transFade.ultraInvisible {
     visibility: hidden;
-    /* Override the meaning of hidden = display: none */
+    /* This overrides the meaning of hidden = display: none */
     display: block;
     opacity: 0;
-    /* Only at the end of the transition does it become hidden. *
-    /* Or use transition-delay instead. */
-    transition: visibility .5s, opacity .5s ease;
 }
 
 /* Math text in documents */
@@ -319,13 +317,6 @@ span#leftNav {
   visibility: hidden;
 }
 
-/* This forces an item to be invisible even if not flagged */
-/* as "invisible". Also overrides .transFade visibility. */
-.ultraInvisible, .transFade.ultraInvisible {
-    visibility: hidden;
-    opacity: 0;
-    transition: visibility .5s, opacity .5s ease;
-}
 
 /* Proof displays -- proof.js */
 
