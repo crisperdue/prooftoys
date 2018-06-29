@@ -89,10 +89,10 @@ addRules(strictness);
 define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
 define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
 
-var fieldLaws =
+const fieldLaws =
   [
    {statement: 'R (x + y)', axiom: true,
-    description: 'field axiom: addition is closed'
+    description: 'real addition is closed'
    },
    {statement: '(x + y) + z = x + (y + z)', axiom: true,
     description: 'associativity of addition',
@@ -105,13 +105,14 @@ var fieldLaws =
     noSwap: true
    },
    {statement: '@isAddIdentity 0', axiom: true,
-    description: 'field axiom: additive identity'
+    description: 'additive identity'
    },
-   {statement: 'R x => exists {y. R y & x + y = 0}', axiom: true,
-    description: 'field axiom: additive inverse exists'
+   {statement: 'exists {y. R y & x + y = 0}', axiom: true,
+    description: 'additive inverse exists'
    },
+
    {statement: 'R (x * y)', axiom: true,
-    description: 'field axiom: multiplication is closed'
+    description: 'real multiplication is closed'
    },
    {statement: '(x * y) * z = x * (y * z)', axiom: true,
     description: 'associativity of multiplication',
@@ -124,15 +125,21 @@ var fieldLaws =
     noSwap: true
    },
    {statement: '@isMulIdentity 1', axiom: true,
-    description: 'field axiom: multiplicative identity'
+    description: 'multiplicative identity'
    },
-   {statement: 'R x & x != 0 => exists {y. R y & x * y = 1}', axiom: true,
-    description: 'field axiom: multiplicative inverse exists'
+   {statement: 'x != 0 => exists {y. R y & x * y = 1}', axiom: true,
+    description: 'multiplicative inverse exists'
+   },
+
+   {statement: 'x * (y + z) = x * y + x * z', axiom: true,
+    description: 'distributive law',
+    labels: 'algebra',
+    converse: { labels: 'algebra' }
    }
    ];
 addRules(fieldLaws);
 
-var realOrdering =
+const realOrdering =
   [
    {statement: 'not (x < x)', axiom: true,
     description: 'strict ordering axiom 1'
@@ -168,6 +175,15 @@ const fakeAxioms =
    {statement: 'x * 0 = 0', axiom: true,
     description: 'multiplication by zero',
     simplifier: true
+   },
+   {statement: 'x != 0 => x * recip x = 1', axiom: true,
+    description: 'reciprocal',
+    simplifier: true
+   },
+   {name: 'axiomReciprocal2',
+    // TODO: Eliminate the two uses of this (both by name).
+    statement: '@R (recip x) & recip x != 0 == R x & x != 0',
+    description: 'reciprocals are nonzero'
    }
    ];
 Toy.addRules(fakeAxioms);
@@ -247,11 +263,6 @@ var numbersInfo = {
   // (A1 => (A2 => <equation>)) to simplify introducing them from
   // the hypotheses.  This is equivalent to A1 & A2 => <equation>.
 
-  axiomDistributivity: {
-    statement: '@R x & R y & R z => x * (y + z) = x * y + x * z',
-    description: 'distributive law'
-  },
-
   plusZero: {
     statement: '@R x => x + 0 = x',
     simplifier: true,
@@ -286,20 +297,6 @@ var numbersInfo = {
     // All others are OK.
     statement: 'y != 0 => exists1 {z. R x & R y & R z & x = y * z}',
     description: 'quotient is unique'
-  },
-
-  // TODO: Make this a theorem someday.
-  axiomReciprocal: {
-    statement: '@R x & x != 0 => x * recip x = 1',
-    simplifier: true,
-    tooltip: 'x * recip x = 1 if x is not 0',
-    description: 'recip is inverse to multiplication'
-  },
-
-  // TODO: Prove this as a theorem.
-  axiomReciprocal2: {
-    statement: '@R (recip x) & recip x != 0 == R x & x != 0',
-    description: 'reciprocals are nonzero'
   },
 
   // This implies that 0 ** 0 = 1.  It is also legitimate to define
@@ -1964,11 +1961,6 @@ var basicFacts = {
       .rewrite('/main/right', '0 * a = 0');
     }
   },
-  '@R a & a != 0 => a * recip a = 1': {
-    proof: function() {
-      return rules.axiomReciprocal();
-    }
-  },
   'a = b == b = a': {
     proof: function() {
       return rules.equalitySymmetric();
@@ -2016,13 +2008,6 @@ addFactsMap(basicFacts);
 
 // Distributivity
 var distribFacts = {
-  'a * (b + c) = a * b + a * c': {
-    proof: function() {
-      return rules.axiomDistributivity();
-    },
-    labels: 'algebra',
-    converse: { labels: 'algebra' }
-  },
   '(a + b) * c = a * c + b * c': {
     proof: function() {
       var step = rules.consider('(a + b) * c')
@@ -2646,13 +2631,13 @@ var recipFacts = {
 
   'a != 0 => recip a * a = 1': {
     proof: function() {
-      return rules.axiomReciprocal()
+      return rules.fact('x * recip x = 1')
       .rewrite('/main/left', 'a * b = b * a');
     }
   },
   'a != 0 => recip a != 0': {
     proof: function() {
-      var step1 = rules.axiomReciprocal();
+      var step1 = rules.fact('x * recip x = 1');
       var step2 = rules.fact('1 != 0');
       var step3 = (rules.rRight(step1, step2, '/left')
                    .rewrite('/main', 'a * b != 0 == a != 0 & b != 0'));
