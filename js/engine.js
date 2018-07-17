@@ -4705,6 +4705,8 @@ const ruleInfo = {
   // rule" to use where x is not free in any hypothesis, and since "q"
   // appears with x bound, substituting for it does not result in any
   // new occurrences of x within the "forall".
+  //
+  // TODO: Rename to something like forallIsExists.
   existImplies: {
     statement: 'forall {x. p x => q} == (exists p => q)',
     proof: function() {
@@ -6679,6 +6681,8 @@ const existRules =
    //
    // Simplified statement of 5312, using "the" in place of iota.
    // You can use exists1The to replace "the" with "iota".
+   //
+   // TODO: Rename to exists1Property.
    {name: 'exists1Forall',
     // TODO: In this example the occurrence of "forall" could be
     // removed, leaving all occurrences of "x" free.  Consider how
