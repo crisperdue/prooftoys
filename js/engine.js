@@ -339,7 +339,9 @@ function addRules(ruleList) {
 function addRule(info) {
   var name = info.name;
   if (name && rules[name]) {
-    console.warn('Inference rule with name', name, 'already declared');
+    console.warn('Inference rule with name', name,
+                 'already declared; ignoring.');
+    return;
   }
 
   if (info.definition) {
@@ -376,24 +378,25 @@ function addRule(info) {
     // User-supplied proof function is the main.
     main = proof;
   }
-  if (statement) {
-    if (!proof) {
-      // If there is a statement but no proof, just assert the statement.
-      proof = function() {
-        var result = rules.assert(statement);
-        return (result.isCall2('=>')
-                ? rules.asHypotheses(result)
-                : result);
-      }
-      main = proof;
-      if (!info.axiom) {
-        if (typeof name !== 'string') {
-          console.warn('No proof for', statement.$$);
-        } else if (!name.startsWith('axiom')) {
-          console.warn('No proof for', name);
-        }
+  const isAsserted = statement && !proof;
+  if (isAsserted) {
+    // If there is a statement but no proof, just assert the statement.
+    proof = function() {
+      var result = rules.assert(statement);
+      return (result.isCall2('=>')
+              ? rules.asHypotheses(result)
+              : result);
+    }
+    main = proof;
+    if (!info.axiom) {
+      if (typeof name !== 'string') {
+        console.warn('No proof for', statement.$$);
+      } else if (!name.startsWith('axiom')) {
+        console.warn('No proof for', name);
       }
     }
+  }
+  if (statement) {
     // Add it as a fact also, and potentially "swapped".
     // A fact needs a statement, so we rely here on having a statement given.
     var factProps = {
@@ -585,24 +588,26 @@ function addRule(info) {
  * is available.
  */
 function definition(defn_arg) {
-  var definitions = Toy.definitions;
-  var defn = termify(defn_arg);
+  const definitions = Toy.definitions;
+  const defn = termify(defn_arg);
   // Free occurrences of names of constants that do not have
   // definitions.
-  var undefs = defn.undefNames();
-  var undefList = Object.keys(undefs);
-  assert(undefList.length > 0,
+  const news = defn.newConstants();
+  // This has the values in the set, in insertion order.
+  const newList = Array.from(news);
+  assert(newList.length > 0,
          'Definition {1}\n  needs a fresh constant name.', defn);
-  assert(undefList.length === 1,
+  assert(newList.length === 1,
          'Definition {1} has multiple new constants {2}',
-         defn, undefList.join(', '));
-  var name = undefList[0];
-  var defined = new Atom(name);
+         defn, newList.join(', '));
+  const name = newList[0];
+  const defined = new Atom(name);
   if (defn.isCall2('=') &&
       defn.getLeft().matches(defined) &&
-      Toy.isEmpty(defn.getRight().undefNames())) {
+      Toy.isEmpty(defn.getRight().newConstants())) {
     // It is a classic equational definition.
-    // Add it to the definitions database.
+    // Add it to the facts andthe definitions database.
+    addFact({goal: defn});
     definitions[name] = defn;
     addDefnFacts(defn);
   } else {
@@ -619,8 +624,9 @@ function definition(defn_arg) {
       assert(isRecordedFact(exists),
              'Definition {1} needs an existence fact.', defn);
     }
+    // Assert that the definition is true, and add to the definitions.
+    addFact({goal: defn});
     definitions[name] = defn;
-    addFact({goal: rules.definition(name)});
   }
 }
 
@@ -659,7 +665,8 @@ function definition(defn_arg) {
  * TODO: Implement the <precond> support.  Consider extending this for
  *   additional cases TBD.
  */
-function addDefnFacts(definition) {
+function addDefnFacts(definition_arg) {
+  const definition = rules.fact(definition_arg);
   // This relies on having applyBoth and simpleApply available whenever
   // a function is defined.
   if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
@@ -744,6 +751,9 @@ function addDefnFacts(definition) {
  * make the main part match exactly.
  *
  * Internal to addFact and addSwappedFact.
+ *
+ * TODO: Share common code here and in addFact and addRule and
+ *   addDefinition.
  */
 function asFactProver(prover, goal) {
   assert(!prover || typeof prover === 'function',
@@ -2124,6 +2134,11 @@ function addFact(info) {
   // copy that can be properly annotated with types.
   info.goal = ((info.goal || mathParse(info.statement))
                .copyForRendering(null));
+  // This is the core of adding new constants.  We add them when adding
+  // a new fact, before proving the fact.  Also rules.assert can add
+  // constants in case it is used without registering a fact. (And
+  // Toy.define also adds the defined constant as it bypasses this code.)
+  Toy.addConstants(info.goal.newConstants());
   // Annotate the new goal with type info for type comparison
   // with portions of steps in the UI.
   //
@@ -2387,13 +2402,15 @@ define('negate', '{p. {x. not (p x)}}');
 var primitives = {
 
   /**
-   * The name "assertion" is used in displays to indicate that
-   * the result of the inference is an assertion.  If given a string,
-   * parses it and uses the result as its input.
+   * The name "assertion" is used in displays to indicate that the
+   * result of the inference is asserted without proof.  If given a
+   * string, parses it and uses the result as its input.
    */
   assert: {
     action: function(assertion_arg) {
-      var assertion = termify(assertion_arg);
+      const assertion = termify(assertion_arg);
+      const newConsts = assertion.newConstants();
+      Toy.addConstants(newConsts);
       return assertion.justify('assert', [assertion]);
     },
     inputs: {bool: 1},
@@ -2563,6 +2580,9 @@ var primitives = {
    * Refer to a definition in the definitions database.  If the
    * definition is by cases, takes a second argument of T or F
    * as desired.  Throws an exception if not found.
+   *
+   * Like rules.assert, this creates a proved step that has no
+   * details.
    */
   definition: {
     action: function(name, tOrF) {

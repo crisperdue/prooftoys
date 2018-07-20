@@ -779,6 +779,8 @@ function define(name, definition) {
   constantTypes[name] = findType(definition);
   var defn = equal(Toy.constify(name), definition);
   definitions[name] = defn;
+  // TODO: Also check for other new names in the definition.
+  Toy.namedConstants.add(name);
   return defn;
 }
 
@@ -879,15 +881,6 @@ function findDefinition(name, tOrF) {
     var defnCase = defn[tOrF];
     return defnCase;
   }
-}
-
-/**
- * Returns true iff the name is a constant name that has not occurred
- * in any definition, axiom, or assertion up to the current moment.
- * Literal constants are never considered new.
- */
-function isNewConstant(name) {
-  return !definitions[name];
 }
 
 /**
@@ -1987,7 +1980,6 @@ Toy.definex = definex;
 Toy.isDefinedSimply = isDefinedSimply;
 Toy.isDefinedByCases = isDefinedByCases;
 Toy.isDefined = isDefined;
-Toy.isNewConstant = isNewConstant;
 Toy.isFunDef = isFunDef;
 Toy.findDefinition = findDefinition;
 Toy.getDefinition = getDefinition;

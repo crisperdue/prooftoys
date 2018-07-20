@@ -917,15 +917,31 @@ Expr.prototype.freeVarSet = function() {
 };
 
 /**
- * Finds and returns a plain object/map of free variable and constant
- * names in this expression, from name to true.  Numeric literals other
- * than 0 and 1 are not considered names, but as abbreviations for
- * expressions containing 0 and 1.
+ * Set of all names of constants that are used in any statement
+ * considered true in the theory.  Numeric literals other than 0 and 1
+ * are not considered names, but as abbreviations for expressions
+ * containing 0 and 1.
  */
-Expr.prototype.undefNames = function() {
-  var byName = {};
-  this._addUndefNames(byName, null);
-  return byName;
+const namedConstants = new Set();
+
+/**
+ * Adds the given iterable (e.g. Set or Array) of names to the set of
+ * all named constants.
+ */
+function addConstants(names) {
+  names.forEach(function(name) {
+      namedConstants.add(name);
+    });
+}
+
+/**
+ * Finds and returns a Set of names of constants in this expression
+ * that are not in namedConstants.
+ */
+Expr.prototype.newConstants = function() {
+  const names = new Set();
+  this._addNewConstants(names, null);
+  return names;
 };
 
 /**
@@ -1815,14 +1831,14 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // method.
 //
 //
-// _addUndefNames(map result, Bindings bindings)
+// _addNewConstants(map result, Bindings bindings)
 // 
 // Adds to the object/set all constant names that occur free in this
-// Expr and are not already defined.  Assumes that names in the
-// Bindings object are bound in this expression's lexical context, even
-// if they have the form of named constants (so constant names could
-// be used for bound variables if desired).
-// Private helper for the undefNames method.
+// Expr and are "new" in the sense of isNewConstant.  Assumes that
+// names in the Bindings object are bound in this expression's lexical
+// context, even if they have the form of named constants (so constant
+// names could be used for bound variables if desired).  Private
+// helper for the newConstants method.
 //
 //
 // _boundNames(path, bindings)
@@ -2134,12 +2150,12 @@ Atom.prototype._addFreeVars = function(set, bindings) {
 
 Atom.prototype._addFreeVarSet = Atom.prototype._addFreeVars;
 
-Atom.prototype._addUndefNames = function(map, bindings) {
+Atom.prototype._addNewConstants = function(set, bindings) {
   var name = this.name;
   if (this.isNamedConst() &&
       getBinding(name, bindings) == null &&
-      !Toy.isDefined(name)) {
-    map[this.name] = true;
+      !namedConstants.has(name)) {
+    set.add(this.name);
   }
 };
 
@@ -2485,9 +2501,9 @@ Call.prototype._addFreeVarSet = function(set, bindings) {
   this.arg._addFreeVarSet(set, bindings);
 };
 
-Call.prototype._addUndefNames = function(map, bindings) {
-  this.arg._addUndefNames(map, bindings);
-  this.fn._addUndefNames(map, bindings);
+Call.prototype._addNewConstants = function(set, bindings) {
+  this.arg._addNewConstants(set, bindings);
+  this.fn._addNewConstants(set, bindings);
 };
 
 Call.prototype._boundNames = function(path, bindings) {
@@ -2957,9 +2973,9 @@ Lambda.prototype._addFreeVarSet = function(set, bindings) {
 };
 
 
-Lambda.prototype._addUndefNames = function(map, bindings) {
+Lambda.prototype._addNewConstants = function(set, bindings) {
   var name = this.bound.name;
-  this.body._addUndefNames(map, new Bindings(name, true, bindings));
+  this.body._addNewConstants(set, new Bindings(name, true, bindings));
 };
 
 Lambda.prototype._boundNames = function(path, bindings) {
@@ -3178,6 +3194,9 @@ Toy.unicodeNames = unicodeNames;
 Toy.makeConjunctionSet = makeConjunctionSet;
 
 Toy.genVar = genVar;
+
+Toy.namedConstants = namedConstants;
+Toy.addConstants = addConstants;
 
 // Private to xutil.js:
 Toy._identifierPattern = identifierPattern;
