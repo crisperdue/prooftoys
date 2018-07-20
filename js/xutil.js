@@ -741,7 +741,7 @@ var definitions = {
 };
 
 /**
- * Add a simple abbreviation-like definition, e.g.
+ * Adds a simple abbreviation-like definition to the database, e.g.
  * define('forall', equal(lambda(x, T))).  Returns the equation.
  *
  * TODO: Require that the defining term only have (free) type
@@ -753,8 +753,6 @@ var definitions = {
  *   such as [C = <term>] and [A => C = <term>], and arbitrary WFFs
  *   would also be supported if the apppropriate existence fact is
  *   already established.
- *
- * TODO: Replace this with uses of addDefinition.
  */
 function define(name, definition) {
   assert(Toy.isConstantName(name), 'Not a constant name: {1}', name);
@@ -884,7 +882,18 @@ function findDefinition(name, tOrF) {
 }
 
 /**
- * Returns a truthy value iff the name has a definition.
+ * Returns true iff the name is a constant name that has not occurred
+ * in any definition, axiom, or assertion up to the current moment.
+ * Literal constants are never considered new.
+ */
+function isNewConstant(name) {
+  return !definitions[name];
+}
+
+/**
+ * Returns a truthy value iff the given constant name has a
+ * definition, not just "seen" previously as a constant in some axiom
+ * or assertion.
  */
 function isDefined(name) {
   var def = definitions[name];
@@ -923,7 +932,7 @@ function isFunDef(name) {
  * TODO: Consider supporting definition of multiple constants with one
  *   defining fact (with multiple existentially quantified variables).
  *
- * TODO: Test this.
+ * TODO: Remove this.
  */
 function definex(name_arg, fact) {
   var constant = Toy.constify(name_arg);
@@ -1978,6 +1987,7 @@ Toy.definex = definex;
 Toy.isDefinedSimply = isDefinedSimply;
 Toy.isDefinedByCases = isDefinedByCases;
 Toy.isDefined = isDefined;
+Toy.isNewConstant = isNewConstant;
 Toy.isFunDef = isFunDef;
 Toy.findDefinition = findDefinition;
 Toy.getDefinition = getDefinition;
