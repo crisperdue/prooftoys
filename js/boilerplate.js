@@ -31,7 +31,7 @@
   getScript('../lib/jquery-3.1.1.js');
 
   write('<link rel=stylesheet href=' +
-        '"https://fonts.googleapis.com/css?family=Source+Sans+Pro' +
+        '"https://fonts.googleapis.com/css?family=Roboto' +
         ':400,400i,700,700i">');
 
   // Include Font Awesome.
