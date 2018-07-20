@@ -170,6 +170,10 @@ const realOrdering =
    ];
 Toy.addRules(realOrdering);
 
+// Read as "x is an additive/multiplicative inverse of y".
+definition('isAddInverse = {x. {y. R x & R y & y + x = 0}}');
+definition('isMulInverse = {x. {y. R x & R y & y * x = 1}}');
+
 const fakeAxioms =
   [
    {statement: 'x * 0 = 0', axiom: true,
