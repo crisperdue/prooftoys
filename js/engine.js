@@ -3775,7 +3775,7 @@ const ruleInfo = {
     labels: 'primitive'
   },
 
-  // Replace an occurrence of T at the given path of the given step
+  // Replaces an occurrence of T at the given path of the given step
   // with the entirety of another step.
   replaceT0: {
     action: function(step, path, step2) {
@@ -3788,28 +3788,28 @@ const ruleInfo = {
     inputs: {site: 1, step: 3},
     toOffer: 'return term instanceof Toy.Atom && term.pname == "T"',
     form: ('Replace T with step <input name=step>'),
-    menu: 'replace T with a true statement',
+    menu: 'replace T with a whole true statement',
     tooltip: ('Replaces an occurrence of T with a true statement'),
     description: 'replace T;; {in step siteStep} {with step step}',
     labels: 'basic'
   },
 
-  // Replace an occurrence of T at the given path of the given step
+  // Replaces an occurrence of T at the given path of the given step
   // with the consequent of another step, or just the step if
   // it is not conditional.
   replaceT: {
     action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
-      var tIsA = rules.toTIsA(rules.asImplication(step2));
-      return (rules.r(tIsA, step, path)
+      const eqn = rules.rewrite(step2, '/rt', 'x == (T == x)');
+      return (rules.replace(step, path, eqn)
               .justify('replaceT', arguments, [step, step2]));
     },
     inputs: {site: 1, step: 3},
     toOffer: 'return term instanceof Toy.Atom && term.pname == "T"',
     form: ('Replace T with step <input name=step>'),
-    menu: 'replace T with a true statement',
-    tooltip: ('Replaces an occurrence of T with a true statement'),
+    menu: 'replace T with a true conclusion',
+    tooltip: ('Replaces T with the conclusion of a true statement'),
     description: 'replace T;; {in step siteStep} {with step step}',
     labels: 'basic'
   },
