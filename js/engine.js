@@ -6222,18 +6222,22 @@ const ruleInfo = {
     tooltip: 'extract an assumption'
   },
 
-  // Simplifies hyps => (a => b) to hyps & a => b. 
-  useAsHyp: {
-    action: function(step) {
+  // Converts a => (b => c) to a & b => c.
+  asAssumption: {
+    precheck: function(step, path) {
+      return (step.matchSchema('a => (b => c)') &&
+              step.wff.prettifyPath(path).toString() == '/right/left');
+    },
+    action: function(step, path) {
       var taut = rules.tautology('a => (b => c) == a & b => c');
       var result = rules.rewriteOnly(step, '', taut);
-      return result.justify('useAsHyp', arguments, step);
+      return result.justify('asAssumption', arguments, step);
     },
-    inputs: {step: 1},
-    form: 'step <input name=step>',
-    menu: Toy.mathText('[h => (p => q)] to [h & p => q]'),
-    labels: 'uncommon',
-    description: 'absorb antecedent into the assumptions'
+    inputs: {site: 1},
+    form: '',
+    menu: Toy.mathText('[a => (p => q)] to [a & p => q]'),
+    labels: 'basic',
+    description: 'use as an assumption'
   },
 
   // Efficiently proves that the given chain of conjuncts imply the
