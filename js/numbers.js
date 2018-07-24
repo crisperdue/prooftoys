@@ -235,6 +235,26 @@ const idFacts =
      }
    },
 
+   {statement: 'isMulIdentity y & isMulIdentity x => y = x',
+    name: 'uniqueMulIdentity',
+    proof: function() {
+       const factX1 = (rules.assume('isMulIdentity x')
+                       .andThen('apply', '/right'));
+       const xType = factX1.andThen('forwardChain', 'a => b & c => (a => b)');
+       const factX = (factX1.andThen('forwardChain',
+                                      'a => b & c => (a => c)')
+                      .andThen('instForall', '/rt', 'y')
+                      .andThen('asAssumption', 'R y'));
+       const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
+                      .andThen('rewrite', '/rt/left', 'x * y = y * x'));
+       const yType = xType.andThen('instMultiVars', {x: 'y'});
+       const result = (rules.replace(factY, '/rt/left', factX)
+                       .andThen('trueBy', 'R x', xType)
+                       .andThen('trueBy', 'R y', yType));
+       return result;
+     }
+   },
+
    {statement: 'isMulIdentity x => x = 1',
     name: 'mulIdentity',
     proof: function() {
