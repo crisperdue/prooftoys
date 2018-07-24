@@ -267,44 +267,27 @@ Path.prototype.toString = function() {
 };
 
 /**
+ * Calls expr.asPath(arg), or just asPath(arg) if no expr is given.
+ *
+ * TODO: Call either asPath or Expr.asPath everywhere and remove this.
+ */
+function path(arg, opt_expr) {
+  var expr = opt_expr;
+  return expr ? expr.asPath(arg) : asPath(arg);
+}
+
+/**
  * Pseudo-constructor: returns a Path based on a "/"-separated string
  * or an array of strings, or a Bindings.  The parts become the
  * segments of the path.  Some segments serve as macros that expand
  * into a list of other segments, currently 'left', 'right', and
  * 'binop'.
  *
- * If the optional expr is supplied, adjust any /main path according
- * to whether the expr has hypotheses or not, and any /rt path
- * based on the expr being a conditional.
- *
  * A null input indicates an empty path.
  */
-function path(arg, opt_expr) {
-  var expr = opt_expr;
-
-  // If the initial segment of the path is 'main', and the expression
-  // is given and has hypotheses, return a path to its RHS.
-  // Similarly for 'rt' for a conditional.
-  function adjust(path) {
-    if (expr) {
-      var segment = path.segment;
-      if (segment == 'main') {
-        path = path.rest;
-        if (expr.hasHyps) {
-          path = new Path('right', path);
-        }
-      } else if (segment == 'rt') {
-        path = path.rest;
-        if (expr.isCall2('=>')) {
-          path = new Path('right', path);
-        }
-      }
-    }
-    return path;
-  }
-
+function asPath(arg) {
   if (arg instanceof Path) {
-    return adjust(arg);
+    return arg;
   }
   if (arg == null) {
     arg = '';
@@ -320,6 +303,8 @@ function path(arg, opt_expr) {
   var segments = (typeof arg == 'string')
     ? arg.split('/')
     : arg;
+
+  // We now have an array of segments.
   // Remove the empty first element resulting from an initial "/".
   // Even an empty string splits into an array with one element.
   if (segments[0] == '') {
@@ -334,7 +319,7 @@ function path(arg, opt_expr) {
     var piece = segments.pop();
     result = new Path(piece, result);
   }
-  return adjust(result);
+  return result;
 }
 
 /**
@@ -398,5 +383,6 @@ Toy.getBinding = getBinding;
 
 Toy.Path = Path;
 Toy.path = path;
+Toy.asPath = asPath;
 
 })();

@@ -1273,12 +1273,70 @@ Expr.prototype.repr = function() {
 };
 
 /**
- * Public version of "get", finding a subexpression
- * from its path.  Handles /main in the path.
+ * Public version of "get", finding a subexpression from an argument
+ * convertible to a path using Expr.asPath.
  */
-Expr.prototype.get = function(_path) {
-  return this._get(path(_path, this));
+Expr.prototype.get = function(arg) {
+  const p = this.asPath(arg);
+  assert(p instanceof Path, 'Not a path:', p);
+  return this._get(p);
 };
+
+/**
+ * Converts the argument into a path within this Expr.  Given a Path
+ * or path string, this adjusts leading occurrences of "/main" or
+ * "/rt" based on the structure of this Expr.
+ * 
+ * If the argument is a string either empty or beginning with "/",
+ * parses it into a Path object; otherwise treats a string as an Expr,
+ * parsing it into a term.  Accepts a Bindings object, interpreting it
+ * as a reversed sequence of path segments.
+ *
+ * An Expr or function causes this to search for a match; if an Expr,
+ * a subterm that is sameAs, if a function, a subterm satisfying it.
+ *
+ * Returns the resulting Path object.
+ */
+Expr.prototype.asPath = function(arg) {
+  const self = this;
+
+  // If the initial segment of the path is 'main', and the expression
+  // is given and has hypotheses, return a path to its RHS.
+  // Similarly for 'rt' for a conditional.
+  function adjust(path) {
+    var segment = path.segment;
+    if (segment == 'main') {
+      path = path.rest;
+      if (self.hasHyps) {
+        path = new Path('right', path);
+      }
+    } else if (segment == 'rt') {
+      path = path.rest;
+      if (self.isCall2('=>')) {
+        path = new Path('right', path);
+      }
+    }
+    return path;
+  }
+
+  const type = typeof arg;
+  if (type === 'function') {
+    return this.pathTo(arg);
+  } else if (arg instanceof Expr) {
+    function sameAs(term) {
+      return term.sameAs(arg);
+    }
+    const result = this.pathTo(sameAs);
+    assert(result, 'No term found satisfying {1}', arg);
+    return result;
+  } else if (type === 'string' && arg.length && arg[0] !== '/') {
+    const result = this.asPath(termify(arg));
+    assert(result, 'Term not found: {1}', arg);
+    return result;
+  } else {
+    return adjust(Toy.asPath(arg));
+  }
+}
 
 /**
  * Return the subexpression of this referenced by
