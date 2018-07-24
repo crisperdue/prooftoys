@@ -3740,12 +3740,12 @@ const ruleInfo = {
     description: '(T = A) = A'
   },
 
-  // 5219: [A] to [T == A].  Works with hypotheses.
+  // 5219: [A] to [T == A].
   toTIsA: {
-    action: function(h_a) {
-      var step1 = rules.r5218(h_a.unHyp());
-      var step2 = rules.rRight(step1, h_a, '/main');
-      return step2.justify('toTIsA', arguments, [h_a]);
+    action: function(step) {
+      const step1 = rules.r5218(step);
+      const step2 = rules.rRight(step1, step, '');
+      return step2.justify('toTIsA', arguments, [step]);
     },
     inputs: {step: 1},
     form: 'Introduce "T = " into step <input name=step>',
@@ -4032,19 +4032,16 @@ const ruleInfo = {
     description: '=instMultiVars'
   },
 
-  // Given two theorems a and b, proves a & b.
-  // Handles hypotheses.
-  // 
-  // TODO: hyps -- We could replace this rule with combinations of the
-  //   fact [A == A & T], and replaceT.  That pair
-  //   would cover this rule and handle other situations also.
+  // Given two theorems a1 => a and a2 => b, proves a1 & a2 => a & b.
+  // If either theorem is unconditional, omits a1 or a2 or both
+  // accordingly.  The result will not have hyps.
   makeConjunction: {
     action: function(a, b) {
-      var stepa = rules.toTIsA(a);
-      var stepb = rules.toTIsA(b);
+      var stepa = rules.rewriteOnly(a, '/rt', 'a == (T == a)');
+      var stepb = rules.rewriteOnly(b, '/rt', 'a == (T == a)');
       var step1 = rules.theorem('r5212');
-      var step2 = rules.rplace(stepa, step1, '/left');
-      var step3 = rules.rplace(stepb, step2, '/main/right');
+      var step2 = rules.replace(step1, '/left', stepa);
+      var step3 = rules.replace(step2, '/rt/right', stepb);
       return (step3.andThen('arrangeAsms')
               .justify('makeConjunction', arguments, [a, b]));
     },

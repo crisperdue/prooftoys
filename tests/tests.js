@@ -1653,18 +1653,14 @@ var testCase = {
   },
 
   testAsHypotheses: function() {
-    var step1 = Toy.rules.assert('p = p');
+    const step = Toy.rules.assert('p = p');
     try {
-      Toy.rules.asHypotheses(step1);
+      Toy.rules.asHypotheses(step);
       Y.Assert.fail('Should throw');
     } catch(e) {}
-    var step2 = Toy.rules.assert('p => p');
-    var step3 = Toy.rules.assume('p');
-    var step4 = Toy.rules.assert('p => q');
-    var step5 = Toy.rules.modusPonens(step3, step4);
-    var step6 = Toy.rules.asImplication(step5);
-    var result = Toy.rules.asHypotheses(step6);
-    assertEqual('(p => q)', result);
+    const step1 = Toy.rules.assume('p');
+    const step2  = Toy.rules.asImplication(step1);
+    const result = Toy.rules.asHypotheses(step2);
     assert(result.hasHyps);
   },
 
@@ -1832,12 +1828,12 @@ var testCase = {
   },
 
   testToTIsA: function() {
-    var inf = Toy.rules.toTIsA(p);
-    assertEqual('(T = p)', inf);
+    const step = rules.toTIsA(rules.eqSelf('F'));
+    assertEqual('(T = (F = F))', step);
     // Hyps
-    var step1 = Toy.rules.assume(p);
-    var result = Toy.rules.toTIsA(step1);
-    assertEqual('(p => (T = p))', result);
+    const step1 = Toy.rules.assume(p);
+    const result = Toy.rules.toTIsA(step1);
+    assertEqual('(T = (p => p))', result);
   },
 
   testFromTIsA: function() {
@@ -1905,16 +1901,10 @@ var testCase = {
   },
 
   testModusPonens: function() {
-    var result = Toy.rules.modusPonens(p, implies(p, q));
-    assertEqual('q', result);
-
-    // Hypotheses
-    var step1 = Toy.rules.assume('p => not p');
-    // A tautology, but don't rely on the tautology rule here.
-    var step2 = Toy.rules.assert('(p => not p) => not p');
-    result = Toy.rules.modusPonens(step1, step2);
-    assertEqual('((p => (not p)) => (not p))', result);
-    assert(result.hasHyps);
+    const taut = rules.tautology('T');
+    const taut2 = rules.tautology('T => not (not T)');
+    const result = Toy.rules.modusPonens(taut, taut2);
+    assertEqual('(not (not T))', result);
   },
 
   testTIsXIsX: function() {

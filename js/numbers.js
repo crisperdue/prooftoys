@@ -2198,9 +2198,9 @@ var equivalences = {
 
   'a = b == a + c = b + c': {
     proof: function() {
-      var forward = (rules.assume('a = b')
+      const forward = (rules.assume('a = b')
                      .andThen('applyToBothWith', '+', 'c')
-                     .andThen('asImplication'));
+                       .andThen('rewriteOnly', '', 'a == T => a'));
       var back = (rules.abcPlus()
                   .andThen('extractHyp', 'a + c = b + c'))
       var conj = rules.makeConjunction(forward, back);
@@ -2212,7 +2212,7 @@ var equivalences = {
     proof: function() {
       var forward = (rules.assume('a = b')
                      .andThen('applyToBothWith', '-', 'c')
-                     .andThen('asImplication'));
+                     .andThen('rewriteOnly', '', 'a == T => a'));
       var back = (rules.assume('a - c = b - c')
                   .andThen('applyToBothWith', '+', 'c')
                   .andThen('groupToRight', '/main/left/left/right')
@@ -2245,7 +2245,7 @@ var equivalences = {
     proof: function() {
       var forward = (rules.assume('a = b')
                      .andThen('applyToBothWith', '*', 'c')
-                     .andThen('asImplication'));
+                     .andThen('rewriteOnly', '', 'a == T => a'));
       var back = rules.fact('c != 0 => (a * c = b * c => a = b)');
       var conj = rules.makeConjunction(forward, back);
       var taut = rules.tautology('(a => b) & (b => a) == (a == b)');
@@ -2276,7 +2276,7 @@ var equivalences = {
     proof: function() {
       var forward = (rules.assume('a = b')
                      .andThen('applyToBothWith', '/', 'c')
-                     .andThen('asImplication'));
+                     .andThen('rewriteOnly', '', 'a == T => a'));
       var back = rules.fact('c != 0 => (a / c = b / c => a = b)');
       var conj = rules.makeConjunction(forward, back);
       return rules.rewriteOnly(conj, '/main', '(p => q) & (q => p) == (p == q)');
