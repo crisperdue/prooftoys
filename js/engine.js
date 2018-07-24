@@ -3850,7 +3850,7 @@ const ruleInfo = {
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with proved step <input name=step>'),
     menu: 'replace proved {term} with T',
-    description: ('term is known true;; {in step siteStep} {by step step}'),
+    description: ('{site} is known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
 
@@ -6224,7 +6224,8 @@ const ruleInfo = {
 
   // Converts a => (b => c) to a & b => c.
   asAssumption: {
-    precheck: function(step, path) {
+    precheck: function(step, path_arg) {
+      const path = step.asPath(path_arg);
       return (step.matchSchema('a => (b => c)') &&
               step.wff.prettifyPath(path).toString() == '/right/left');
     },
@@ -6237,7 +6238,7 @@ const ruleInfo = {
     form: '',
     menu: Toy.mathText('[a => (p => q)] to [a & p => q]'),
     labels: 'basic',
-    description: 'use as an assumption'
+    description: 'use {site} as an assumption;; {in step siteStep}'
   },
 
   // Efficiently proves that the given chain of conjuncts imply the
