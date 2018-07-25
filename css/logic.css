@@ -326,6 +326,8 @@ span#leftNav {
     margin: 20px 20px 20px 80px;
     border: 1px solid #ddd;
     padding: 1em;
+    /* This allows extra room for floated ruleStats. */
+    padding-bottom: 1.5em;
     border-radius: 8px;
     background-color: honeydew;
 }
