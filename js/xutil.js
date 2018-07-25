@@ -1885,8 +1885,8 @@ function encodeSteps(steps_arg) {
  * computes and returns an array of steps.
  */
 function decodeSteps(input) {
-  input = typeof input == 'string' ? justParse(input) : input;
-  var descriptions = input.asArray();
+  const parsed = typeof input == 'string' ? justParse(input) : input;
+  var descriptions = parsed.asArray();
   var outSteps = [];
   descriptions.forEach(function(stepTerm, i) {
       if (i == 0) {
