@@ -586,6 +586,8 @@ function addRule(info) {
  * form might do some bookkeeping and report errors, at least for
  * definitions.  These can run at top-level in modules where the logic
  * is available.
+ *
+ * Returns the newly-defined name.
  */
 function definition(defn_arg) {
   const definitions = Toy.definitions;
@@ -596,7 +598,7 @@ function definition(defn_arg) {
   // This has the values in the set, in insertion order.
   const newList = Array.from(news);
   assert(newList.length > 0,
-         'Definition {1}\n  needs a fresh constant name.', defn);
+         'Definition of {1} needs a fresh constant name.', defn);
   assert(newList.length === 1,
          'Definition {1} has multiple new constants {2}',
          defn, newList.join(', '));
@@ -628,6 +630,7 @@ function definition(defn_arg) {
     addFact({goal: defn});
     definitions[name] = defn;
   }
+  return name;
 }
 
 /**
@@ -2134,11 +2137,18 @@ function addFact(info) {
   // copy that can be properly annotated with types.
   info.goal = ((info.goal || mathParse(info.statement))
                .copyForRendering(null));
-  // This is the core of adding new constants.  We add them when adding
-  // a new fact, before proving the fact.  Also rules.assert can add
-  // constants in case it is used without registering a fact. (And
-  // Toy.define also adds the defined constant as it bypasses this code.)
-  Toy.addConstants(info.goal.newConstants());
+  // Adding new constants.  Doing it here adds them before asserting
+  // the fact.  Also rules.assert can add constants in case it is used
+  // without registering a fact. (And Toy.define also adds the defined
+  // constant as it bypasses this code.)
+  // TODO: If there is no proof, assert the fact immediately and skip
+  //   this code.  That will require declaring axioms before uses.
+  const names = info.goal.newConstants();
+  if (names.size > 0) {
+    console.log('In fact', info.goal.toString(), 'introducing constants:',
+                Array.from(names).join(', '));
+    Toy.addConstants(names);
+  }
   // Annotate the new goal with type info for type comparison
   // with portions of steps in the UI.
   //
@@ -2410,7 +2420,11 @@ var primitives = {
     action: function(assertion_arg) {
       const assertion = termify(assertion_arg);
       const newConsts = assertion.newConstants();
+      if (newConsts.size > 0) {
+        console.warn('In', assertion.toString(), 'introducing constants:',
+                     Array.from(newConsts).join(', '));
       Toy.addConstants(newConsts);
+      }
       return assertion.justify('assert', [assertion]);
     },
     inputs: {bool: 1},
@@ -2422,21 +2436,21 @@ var primitives = {
   },
 
   define: {
-    action: function(name, definition) {
-      Toy.define(name, definition);
-      var defn = rules.definition(name);
+    action: function(definition) {
+      const name = Toy.definition(definition);
+      const defn = rules.definition(name);
       addDefnFacts(defn);
-      return defn;
+      return defn.justify('define', [definition]);
     },
-    inputs: {string: 1, term: 2},
-    form: ('Define name <input name=string> as <input name=term>'),
+    inputs: {term: 1},
+    form: ('Enter definition <input name=term> (persists until page reload)'),
     menu: 'define a name',
     // TODO: Consider offering to define a name for the selected term
     //   if circumstances are appropriate.
     // Currently does not offer to define a name if there is any
     // selection.
     toOffer: 'return step == null',
-    description: 'define {string}',
+    description: 'definition',
     tooltip: 'define a name'
   },
 
