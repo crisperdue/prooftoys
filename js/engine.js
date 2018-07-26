@@ -252,7 +252,7 @@ var ruleMethods = {
   andThen: function(name, arg1) {
     var nm = name;
     arguments[0] = this;
-    var rule = Toy.rules[nm];
+    var rule = rules[nm];
     assert(rule, 'No rule with name "{1}"', nm);
     var result = rule.apply(Toy.rules, arguments);
     return result;
@@ -263,7 +263,7 @@ var ruleMethods = {
    * fact to use.
    */
   rewrite: function rewrite_method(path, fact) {
-    return Toy.rules.rewrite(this, path, fact);
+    return rules.rewrite(this, path, fact);
   },
 
   /**
@@ -271,7 +271,7 @@ var ruleMethods = {
    * equation to use.
    */
   rplace: function(path, eqn) {
-    return Toy.rules.rplace(eqn, this, path);
+    return rules.rplace(eqn, this, path);
   }
 };
 Expr.addMethods(ruleMethods);
@@ -6539,7 +6539,7 @@ const ruleInfo = {
         return synopsis;
       }
       // Try named theorems (not available from the UI).
-      var result = Toy.getTheorem(synopsis);
+      var result = getTheorem(synopsis);
       if (result) {
         return result;
       }
@@ -6549,7 +6549,7 @@ const ruleInfo = {
       // Try ordinary proved facts.
       if (factInfo) {
         const factGoal = factInfo.goal;
-        var fact = Toy.getResult(factGoal);
+        var fact = getResult(factGoal);
         const expansion = factExpansion(synopsis);
         // Maps free variables of the fact into ones given here.
         const map = expansion.getMain().matchSchema(fact.getMain());
