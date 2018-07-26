@@ -517,6 +517,7 @@ span#leftNav {
 
 /* Comment that you can select an expression or step. */
 .advice {
+    float: left;
     font-family: Georgia;
     font-style: italic;
     margin-left: 1em;
