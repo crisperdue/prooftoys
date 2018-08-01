@@ -5363,14 +5363,15 @@ const ruleInfo = {
         var boundNames = target.boundNames(path);
         Toy.removeExcept(boundNames, equation.freeVars());
         var hypFreeNames = h.freeVars();
+        const eqFreeNames = eq.freeVars();
         // Quantify over just the variables free in the equation and
         // bound at the target site.
         var quantEqn = equation;
         for (var name in boundNames) {
-          // Check the variable is not free in any hypotheses.
+          // Check the variable is not free in assumptions and equation.
           // TODO: Do appropriate checking in 5235 and impliesForall as well.
-          assert(!(name in hypFreeNames),
-                 'Conflicting binding of {1} in {2}', name, c, h_c_arg);
+          assert(!(name in hypFreeNames && name in eqFreeNames),
+                 'Conflicting binding of {1} in {2}', name, target);
           quantEqn = rules.toForall1(quantEqn, name);
         }
         return quantEqn;
@@ -5383,23 +5384,14 @@ const ruleInfo = {
       var step1 = rules.r5239(target, path, eq);
       var step2a = rules.trueBy(step1, '/right/left', target);
       var step2b = rules.rewriteOnly(step2a, '/right', '(T == p) == p');
-      // Use the equation's assumptions as assumptions in place of
-      // the equation itself.
-      var step3 = rules.p2(equation, step2b,
-                           '(a => b) & (b => c) => (a => c)');
-      var step4 = step3;
       // quantEqn will be [(forall ... eq) => D], where D is the target
       // after replacement, and the quantifier binds no free vars of eq.
-      var quantEqn = quantEquation()
-      // If the replacement site has no variable bindings, then quantEqn
-      // and equation are the same, so skip the chaining.
-      if (!quantEqn.wff.sameAs(equation.wff)) {
-        var conj1 = rules.and(quantEqn, step3);
-        var taut1 = rules.tautology('(p => q) & (q => r) => (p => r)');
-        // This use of forwardChain will not find hypotheses, because
-        // rules.and does not produce statements with hypotheses.
-        step4 = rules.forwardChain(conj1, taut1);
-      }
+      const quantEqn = quantEquation();
+      // Use the equation's assumptions as assumptions in place of
+      // the equation itself.
+      var step3 = rules.p2(quantEqn, step2b,
+                           '(a => b) & (b => c) => (a => c)');
+      var step4 = step3;
       var step5 = (target.isCall2('=>')
                    ? (rules.rewriteOnly(step4, '',
                                         'a => (b => c) == a & b => c')
