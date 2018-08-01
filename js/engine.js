@@ -4535,11 +4535,6 @@ const ruleInfo = {
     description: 'move forall'
   },
 
-  // TODO: Prove this.  It is a bit tedious, but easy.
-  forallAnd: {
-    statement: 'forall {x. p x & q x} == forall {x. p x} & forall {x. q x}',
-  },
-
   // Given a proof step H |- A => B and a variable v, derives
   // H |- (A => forall {v. B}) provided that v is not free in A or H.
   // (5237)  This version implemented via 5235, so much less efficient.
@@ -4678,6 +4673,29 @@ const ruleInfo = {
       return (rules.applyToBoth('not', step1).andThen('simplifyStep'));
     }
   },
+
+  // 2129
+  // TODO: Prove this.  It is a bit tedious, but easy.
+  forallAnd: {
+    statement: 'forall {x. p x & q x} == forall p & forall q',
+  },
+
+  // 2130
+  existsOr: {
+    statement: 'exists {x. p x | q x} == exists p | exists q',
+    proof: function() {
+      return (rules.forallAnd()
+              .andThen('rewrite', '', 'a == b == (not a == not b)')
+              .andThen('rewrite', 'p x & q x', 'a & b == not (not a | not b)')
+              .andThen('rewrite', '/left',
+                       'not (forall {x. not (p x)}) == exists p')
+              .andThen('rewrite', '/right', 'not (a & b) == not a | not b')
+              .andThen('instMultiVars', {p: 'negate p', q: 'negate q'})
+              .andThen('simplifyStep'));
+    }
+  },
+
+  // 2131 is by 2130 and 2128
 
   // 2132
   forallOr: {
