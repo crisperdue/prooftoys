@@ -3923,7 +3923,7 @@ const ruleInfo = {
 
   // 5220 variant, from [A => B] deduces [A => forall {v. B}].
   // The variable v may be given as a string, which it converts
-  // internally to a variable.
+  // internally to a variable.  The step must be a conditional.
   toForall1: {
     precheck: function(step, v_arg) {
       var v = varify(v_arg);
@@ -3936,14 +3936,13 @@ const ruleInfo = {
       }
       return !this.failure;
     },
-    action: function(step, v) {
-      // Step is a conditional.
-      v = varify(v);
-      var step1 = rules.rewriteOnly(step, '/right', 'a == (T == a)');
-      var step2 = rules.theorem('forallXT');
-      var step3 = rules.changeVar(step2, '/arg', v);
-      var step4 = rules.replace(step3, '/main/arg/body', step1);
-      return step4.justify('toForall1', arguments, [step]);
+    action: function(step, v_arg) {
+      v = varify(v_arg);
+      const fact = (rules.implyForall()
+                    .andThen('changeVar', '/right/right/arg', v));
+      const step1 = rules.toForall0(step, v);
+      const step2 = rules.rewriteOnly(step1, '', fact);
+      return step2.justify('toForall1', arguments, [step]);
     },
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable '
