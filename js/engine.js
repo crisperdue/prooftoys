@@ -1534,6 +1534,14 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
 }
 
 /**
+ * Beta-reduces the given term if it is a call to a lambda,
+ * otherwise returns a falsy value.
+ */
+function tryReduce(term) {
+  return term.isLambdaCall() && rules.axiom4(term);
+}
+
+/**
  * Find and apply one of the facts to the part of the step at the
  * given path, returning the result, or the input step if none of the
  * facts apply.  Note: uses rules.rewrite, not rewriteOnly.
@@ -2774,7 +2782,7 @@ var primitives = {
   axiom4: {
     action: function(call) {
       call = typeof call == 'string' ? Toy.parse(call) : call;
-      assert(call.isOpenCall(),
+      assert(call.isLambdaCall(),
              'Axiom 4 needs ({v. B} A), got: {1}', call.toString());
       var lambda = call.fn;
       var result =
@@ -4348,6 +4356,8 @@ const ruleInfo = {
   // hypotheses, and a substitution, derives an instantiation of the
   // tautology using the substitution, with the same hypotheses.
   // The tautology can be given as a parseable string.
+  //
+  // TODO: Automatically detect the relevant tautology. 
   tautInst: {
     action: function(h_tautology_arg, map) {
       // The tautology has hyps if the arg does.
@@ -4610,6 +4620,51 @@ const ruleInfo = {
     labels: 'uncommon'
   },
 
+  // 2121
+  //
+  // NOTE: This and its converse both introduce specific bound variables.
+  //
+  // TODO: Consider extension of matching to associate actual ones
+  //   with matched ones, including renaming of bound variables as
+  //   potential parts of resulting substitutions.
+  forallXY: {
+    statement: 'forall {x. forall {y. p x y}} == forall {y. forall {x. p x y}}',
+    proof: function() {
+      const step1 = (rules.assume('forall {x. forall {y. p x y}}')
+                     .andThen('instForall', '/right', 'x')
+                     .andThen('instForall', '/right', 'y')
+                     .andThen('toForall1', 'x')
+                     .andThen('toForall1', 'y'));
+      return rules.p2(step1, step1, '(a => b) & (b => a) => (a == b)');
+    }
+  },
+
+  // 2122
+  existsXY: {
+    proof: function() {
+      const exAll = 'exists p == not (forall {x. not (p x)})';
+      const step1 = (rules.consider('exists {x. exists {y. p x y}}')
+                     //.andThen('rewrite', '/right', exAll)
+                     .andThen('simplifySite', '/right', [exAll])
+                     .andThen('simpleApply', '/right/arg/arg/body/arg')
+                     .andThen('rewrite', '/right/arg/arg/body',
+                              'not (not p) == p')
+                     // TODO: Remove this use of changeVar when some
+                     //   general mechanism does this kind of renaming
+                     //   automatically.
+                     .andThen('changeVar', '/right/arg/arg/body/arg', 'y')
+                     .andThen('simpleApply', '/right/arg/arg/body/arg/body/arg')
+                     .andThen('rewrite', '/right/arg', rules.forallXY())
+                     .andThen('rewrite', '/right/arg/arg/body',
+                              'a == not (not a)')
+                     .andThen('simplifySite', '/right',
+                              ['not (forall {x. not (p x)}) == exists p'])
+                     );
+      return step1;
+    }
+  },
+
+  // Subsumes 2133
   orForall: {
     statement: 'forall {x. p | q x} == (p | forall {x. q x})',
     proof: function() {
@@ -4717,17 +4772,7 @@ const ruleInfo = {
     statement: 'exists {x. p x & q x} => exists {x. p x} & exists {x. q x}',
     proof: function() {
       var notAll = 'not (forall p) == exists {x. not (p x)}'
-      var reducers = [{pure: true,
-                       apply: function(term, cxt) {
-            var result = term.isReducible();
-            if (result) {
-              result = rules.axiom4(term);
-            }
-            return result;
-            return (term.isReducible() &&
-                    rules.axiom4(term));
-          }
-        },
+      var reducers = [{pure: true, apply: tryReduce},
         'not (not a) = a',
         'not (not a | not b) == a & b'];
       return (rules.forallOr()
@@ -4748,13 +4793,20 @@ const ruleInfo = {
   // TODO: Consider asserting theorems until proof is requested.
   //
 
-  // Counterpart to R2134.  This does almost all the work for the
+  // 2134.  This does almost all the work for the
   // "Exists rule" (2135, 5244).  The LHS quantifier limits the "E
   // rule" to use where x is not free in any hypothesis, and since "q"
   // appears with x bound, substituting for it does not result in any
   // new occurrences of x within the "forall".
   //
   // TODO: Rename to something like forallIsExists.
+  //
+  // NOTE: The converse of this introduces a specific bound variable.
+  //
+  // TODO: For situations like the converse of this identity, when p
+  //   is a lambda, use the name of its bound variable rather than
+  //   the one in the statement here.
+  // TODO: QM: Eta-expand the "p" in the RHS.
   existImplies: {
     statement: 'forall {x. p x => q} == (exists p => q)',
     proof: function() {
@@ -6881,6 +6933,17 @@ var logicFacts = {
     }
   },
 
+  'negate (negate p) = p': {
+    proof: function() {
+      return (rules.consider('(negate (negate p)) x')
+              .andThen('simplifySite', '/right')
+              .andThen('toForall0', 'x')
+              .andThen('rewrite', '',
+                       'forall {x. q x == p x} == (q = p)'));
+    },
+    simplifier: true
+  },
+
   '(negate p) x == not (p x)': {
     proof: function() {
       return (rules.consider('(negate p) x')
@@ -6890,8 +6953,11 @@ var logicFacts = {
   },
 
   // This is the classic definition of the existential quantifier,
-  // proved from a concise definition.  We could have made a
-  // technically correct definition based directly on this.
+  // proved from a concise definition.  We could have based the
+  // definition directly off of this.
+  //
+  // TODO: QM: Eta expand the LHS "p" here to support quantifier
+  //   matching when used in rewrites.
   'exists p == not (forall {x. not (p x)})': {
     proof: function() {
       var all = (rules.axiom3()
@@ -6907,6 +6973,31 @@ var logicFacts = {
     desimplifier: true
   },
 
+  // TODO: QM: Eta expand the LHS use of "p".
+  //
+  // TODO: Consider if uses of "negate" like this might better use
+  //   {x. not (p x)} instead, and if p is a lambda, propagate its
+  //   bound variable upward to the binding of x, thus retaining a
+  //   name that appeared in the use of this fact.
+  'exists p == not (forall (negate p))': {
+    proof: function() {
+      return (rules.fact('exists p == not (forall {x. not (p x)})')
+              .andThen('rewriteOnly', '/right/arg/arg',
+                       '{x. not (p x)} = negate p'));
+    },
+    desimplifier: true
+  },
+
+  // TODO: QM: Eta expand "p".
+  'not (exists p) == forall (negate p)': {
+    proof: function() {
+      return (rules.fact('exists p == not (forall (negate p))')
+              .andThen('rewriteOnly', '',
+                       'a == not b == (not a == b)'));
+    }
+  },
+
+  // TODO: QM: Eta expand "p".
   'exists {x. not (p x)} == not (forall p)': {
     proof: function() {
       var step1 = (rules.fact('exists p == not (forall {x. not (p x)})')
@@ -7071,6 +7162,7 @@ Toy.getTheorem = getTheorem;
 Toy.getResInfo = getResInfo;
 Toy.convert = convert;
 Toy.findMatchingFact = findMatchingFact;
+Toy.tryReduce = tryReduce;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsOnce = applyFactsOnce;

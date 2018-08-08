@@ -105,6 +105,7 @@ const fieldLaws =
     noSwap: true
    },
    {statement: '@isAddIdentity 0', axiom: true,
+   // TODO: {statement: 'exists {x. isAddIdentity x}', axiom: true,
     description: 'additive identity'
    },
    {statement: 'exists {y. R y & x + y = 0}', axiom: true,

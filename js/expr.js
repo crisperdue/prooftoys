@@ -680,10 +680,8 @@ Expr.prototype.matchPattern = function(pattern_arg) {
  * Information about the number of expansions introduced per variable
  * is in the substition under the key "%expansions".
  */
-Expr.prototype.matchSchema = function(schema) {
-  if (typeof schema == 'string') {
-    schema = parse(schema);
-  }
+Expr.prototype.matchSchema = function(schema_arg) {
+  const schema = schema_arg instanceof Expr ? schema_arg : parse(schema_arg);
   var substitution = {};
   var result = schema._matchAsSchema(this, substitution, null);
   return result ? substitution : null;
@@ -1128,7 +1126,7 @@ Expr.prototype.isCall2 = function(name) {
 /**
  * True iff this is a call to a lambda expression.
  */
-Expr.prototype.isOpenCall = function() {
+Expr.prototype.isLambdaCall = function() {
   return this instanceof Call && this.fn instanceof Lambda;
 };
 

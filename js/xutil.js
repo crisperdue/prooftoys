@@ -1936,13 +1936,6 @@ function decodeArg(info, steps) {
   }
 }
 
-/**
- * Returns truthy value if this has the form of a call to a Lambda.
- */
-Expr.prototype.isReducible = function() {
-  return (this instanceof Call && this.fn instanceof Lambda);
-};
-
 
 //// Export public names.
 
