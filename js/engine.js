@@ -6441,6 +6441,21 @@ const ruleInfo = {
     labels: 'uncommon'
   },
 
+  // A simplifier that removes all lambda calls.
+  reduceAll: {
+    precheck: function(step, path) {
+      const result = rules._simplifyMath1(step, path,
+                                          [{apply: tryReduce, pure: true}]);
+      return result !== step;
+    },
+    action: function(step, path) {
+      return rules.simplifySite(step, path, [{apply: tryReduce, pure: true}]);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'beta reduce throughout'
+  },
+
    // Prove an equation asserting that two chains of conjunctions are
    // equal by showing that their schemas are a tautology.
   equalConjunctions: {
