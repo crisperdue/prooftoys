@@ -920,8 +920,9 @@ var simplifiersInfo = {
   },
 
   // Applies simplification repeatedly within the part of the given
-  // step at the given path using basicSimpFacts until no more
-  // simplifications are found.
+  // step at the given path using the given facts until no more
+  // simplifications are found.  By default uses basicSimpFacts
+  // if facts are not supplied.
   simplifySite: {
     action: function(step, path, opt_facts) {
       var result = rules._simplifySite(step, path, opt_facts);
