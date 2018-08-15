@@ -2632,8 +2632,8 @@ var primitives = {
    * a conditional.
    */
   r: {
-    action: function(equation, target, path) {
-      path = Toy.path(path, target);
+    action: function(equation, target, path_arg) {
+      const path = Toy.path(path_arg, target);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
       if (equation.getLeft().sameAs(equation.getRight())) {
         // The equation LHS must "match" the site, but can differ in
@@ -4644,7 +4644,6 @@ const ruleInfo = {
     proof: function() {
       const exAll = 'exists p == not (forall {x. not (p x)})';
       const step1 = (rules.consider('exists {x. exists {y. p x y}}')
-                     //.andThen('rewrite', '/right', exAll)
                      .andThen('simplifySite', '/right', [exAll])
                      .andThen('simpleApply', '/right/arg/arg/body/arg')
                      .andThen('rewrite', '/right/arg/arg/body',
@@ -4741,7 +4740,7 @@ const ruleInfo = {
     proof: function() {
       return (rules.forallAnd()
               .andThen('rewrite', '', 'a == b == (not a == not b)')
-              .andThen('rewrite', 'p x & q x', 'a & b == not (not a | not b)')
+              .andThen('rewrite', '(p x & q x)', 'a & b == not (not a | not b)')
               .andThen('rewrite', '/left',
                        'not (forall {x. not (p x)}) == exists p')
               .andThen('rewrite', '/right', 'not (a & b) == not a | not b')
@@ -6449,7 +6448,8 @@ const ruleInfo = {
       return result !== step;
     },
     action: function(step, path) {
-      return rules.simplifySite(step, path, [{apply: tryReduce, pure: true}]);
+      return (rules.simplifySite(step, path, [{apply: tryReduce, pure: true}])
+              .justify('reduceAll', arguments, [step]));
     },
     inputs: {site: 1},
     form: '',

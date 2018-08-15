@@ -1186,7 +1186,7 @@ var testCase = {
     function matchNeg(term) {
       const subst = term.matchSchema('neg a');
       return (subst && subst.a.isNumeral() &&
-              rules.arithmetic(term));
+              rules.arithmetic(term, ''));
     }
     var facts = (['a + b = b + a', {apply: matchNeg}]);
     var result = Toy.findMatchingFact(facts, undefined,

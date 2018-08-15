@@ -1371,7 +1371,7 @@ function getPrecedence(token) {
 // Unary operators should all be the same.
 // No unary operators exist at this time, but the constant
 // is used in rendering.
-var unaryPower = 200;
+const unaryPower = 200;
 
 // Alphanumeric names have this power unless specified otherwise.
 var namePower = 100;
@@ -1703,7 +1703,7 @@ function isInfixDesired(vbl) {
  * only to Vars.
  */
 Atom.prototype.isUnary = function() {
-  return getPrecedence(this) === 300;
+  return getPrecedence(this) === unaryPower;
 }
 
 /**

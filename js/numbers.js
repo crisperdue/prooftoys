@@ -225,13 +225,13 @@ const idFacts =
        const factX = (factX1.andThen('forwardChain',
                                       'a => b & c => (a => c)')
                        .andThen('instForall', '/rt', 'y')
-                      .andThen('asAssumption', 'R y'));
+                      .andThen('asAssumption', '(R y)'));
        const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
                       .andThen('rewrite', '/rt/left', 'x + y = y + x'));
        const yType = xType.andThen('instMultiVars', {x: 'y'});
        const result = (rules.replace(factY, '/rt/left', factX)
-                       .andThen('trueBy', 'R x', xType)
-                       .andThen('trueBy', 'R y', yType));
+                       .andThen('trueBy', '(R x)', xType)
+                       .andThen('trueBy', '(R y)', yType));
        return result;
      }
    },
@@ -245,13 +245,13 @@ const idFacts =
        const factX = (factX1.andThen('forwardChain',
                                       'a => b & c => (a => c)')
                       .andThen('instForall', '/rt', 'y')
-                      .andThen('asAssumption', 'R y'));
+                      .andThen('asAssumption', '(R y)'));
        const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
                       .andThen('rewrite', '/rt/left', 'x * y = y * x'));
        const yType = xType.andThen('instMultiVars', {x: 'y'});
        const result = (rules.replace(factY, '/rt/left', factX)
-                       .andThen('trueBy', 'R x', xType)
-                       .andThen('trueBy', 'R y', yType));
+                       .andThen('trueBy', '(R x)', xType)
+                       .andThen('trueBy', '(R y)', yType));
        return result;
      }
    },
@@ -276,7 +276,7 @@ const idFacts =
        return result3;
      }
    },
-
+   /*
    {statement: 'exists1 {x. isAddIdentity x}',
     proof: function() {
        const step1 = rules.addIdentity().andThen('toForall0', 'x');
@@ -284,7 +284,7 @@ const idFacts =
        return rules.forwardChain(step2, rules.uniqueTerm());
     }
    },
-
+   */
    {statement: 'exists1 {x. isMulIdentity x}',
     proof: function() {
        const step1 = rules.mulIdentity().andThen('toForall0', 'x');
@@ -315,7 +315,7 @@ var numbersInfo = {
     description: 'additive identity',
     proof: function() {
       return (rules.fact('isAddIdentity 0')
-              .andThen('apply')
+              .andThen('apply', '')
               .andThen('simplifyStep')
               .andThen('instForall', '', 'x'));
     }
@@ -328,7 +328,7 @@ var numbersInfo = {
     description: 'multiplicative identity',
     proof: function() {
       return (rules.fact('isMulIdentity 1')
-              .andThen('apply')
+              .andThen('apply', '')
               .andThen('simplifyStep')
               .andThen('instForall', '', 'x'));
     }
@@ -564,10 +564,10 @@ var divisionInfo = {
       var fml = '@ the {z. R x & R y & R z & x = y * z} = x / y';
       var divDefn = rules.fact(fml);
       var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);
-      var loc7 = Toy.path('/right').concat(step7.getRight().find('R x'));
-      var asm7 = rules.assume('R x');
+      var loc7 = Toy.path('/right').concat(step7.getRight().find('(R x)'));
+      var asm7 = rules.assume('(R x)');
       var step8 = rules.trueBy(step7, loc7, asm7);
-      var loc8 = Toy.path('/right').concat(step8.getRight().find('R y'));
+      var loc8 = Toy.path('/right').concat(step8.getRight().find('(R y)'));
       var asm8 = rules.assume('R y');
       var step9 = rules.trueBy(step8, loc8, asm8);
       var step10 = rules.simplifySite(step9, '/rt/left');
