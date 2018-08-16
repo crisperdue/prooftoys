@@ -1065,8 +1065,9 @@ function justParse(input) {
 
 /**
  * Same as justParse, but throws errors with low-level messages.
+ * The second argument is private to parseMin.
  */
-function justParse1(input) {
+function justParse1(input, aboveToken) {
   var tokens = input;
 
   /**
@@ -1166,7 +1167,7 @@ function justParse1(input) {
         next();
         return t1;
       } else {
-        expr = mustParseAbove(whatever);
+        expr = mustParseAbove(aboveWhat);
         expect(')');
         return expr;
       }
@@ -1174,7 +1175,7 @@ function justParse1(input) {
       var id = next();
       assert(id.isVariable(), 'Expected identifier, got ' + id.name);
       expect('.');
-      var body = mustParseAbove(whatever);
+      var body = mustParseAbove(aboveWhat);
       expr = lambda(id, body);
       expect('}');
       return expr;
@@ -1209,8 +1210,8 @@ function justParse1(input) {
    * expression or an appropriate Call for a sequence of two or more.
    * Throws an error if no expressions are available.
    *
-   * Like parseAbove, always stops before any (top-level) token that
-   * does not bind tighter than the given one.
+   * This always stops before any (top-level) token that does not bind
+   * tighter than the given one.
    */
   function mustParseAbove(lastOp) {
     var left = parse1Above(lastOp);
@@ -1251,15 +1252,25 @@ function justParse1(input) {
     throw new Error('No parser input');
   }
   // A token of precedence 0.
-  var whatever = new Atom('(end)');
+  var aboveWhat = aboveToken || new Atom('(end)');
   // Parse an expression.  A special "(begin)" delimiter does not seem
   // to be required, though note this does not require or even allow a
   // closing paren.
-  var result = mustParseAbove(whatever);
+  var result = mustParseAbove(aboveWhat);
   if (tokens.length) {
     throw new Error('Extra input: "' + tokens[0] + '"');
   }
   return result;
+}
+
+/**
+ * Parses a minimal amount of input, such as a parenthesized
+ * expression, without trying to find any type information.
+ *
+ * TODO: Currently unused; test this.
+ */
+function parseMin(input) {
+  return justParse1(input, new Atom('x'));
 }
 
 /**
@@ -2002,6 +2013,7 @@ Toy.getPrecedence = getPrecedence;
 Toy.tokenize = tokenize;
 Toy.parse = parse;
 Toy.justParse = justParse;
+Toy.parseMin = parseMin;
 Toy.mathParse = mathParse;
 Toy.parseStringContent = parseStringContent;
 
