@@ -172,10 +172,11 @@ function ProofEditor() {
         mainDisplay.setSteps(Toy.decodeSteps(self.initialState));
       });
   }
-  // If another ProofEditor is already holding the document,
-  // make it read-only.  Otherwise reserve it for this one.
   if (Toy.isDocHeldFrom(self._documentName, self)) {
-    self.setEditable(false);
+    // Caution the user.  The isDocHeldFrom test seems to be unreliable,
+    // at least during development, so just caution rather than
+    // setting editable to false.
+    window.alert('Caution: editing may be in progress in another tab/window');
   }
 
   // Event handlers
