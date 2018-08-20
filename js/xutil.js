@@ -1899,6 +1899,9 @@ function decodeSteps(input) {
   const parsed = typeof input == 'string' ? justParse(input) : input;
   var descriptions = parsed.asArray();
   var outSteps = [];
+  let message = '';
+  let ruleName;
+  let args = [];
   descriptions.forEach(function(stepTerm, i) {
       if (i == 0) {
         // Like a "continue" ...
@@ -1908,14 +1911,28 @@ function decodeSteps(input) {
       assert(stepInfo.shift().getNumValue() == i, function() {
           return 'Mismatched step number in: ' + stepInfo;
         });
-      var ruleName = stepInfo.shift().name;
+      ruleName = stepInfo.shift().name;
       // The remainder of the array is arguments to the rule.
-      var args = [];
+      args = [];
       stepInfo.forEach(function(info) {
           args.push(decodeArg(info, outSteps));
         });
-      outSteps.push(Toy.rules[ruleName].apply(Toy.rules, args));
+      try {
+        const rule = Toy.rules[ruleName];
+        if (rule) {
+          outSteps.push(rule.apply(Toy.rules, args));
+        } else {
+          message = 'No such rule: ' + ruleName;
+        }
+      } catch(e) {
+        message = '' + e;
+      }
     });
+  if (message) {
+    window.alert('Decoding steps: ' + message);
+    console.warn('Decoding steps:' + message);
+    console.warn('Applying rule', ruleName.$$, 'to', args.$$);
+  }
   return outSteps;
 }
 
