@@ -1738,7 +1738,7 @@ var testCase = {
     assertEqual('((g (f x)) = c)', inf);
 
     var ff = rules.instEqn(rules.axiom3(), 'f', 'g');
-    assertEqual('((f = f) = (forall {x. ((f x) = (f x))}))', ff);
+    assertEqual('((f = f) == (forall {x. ((f x) = (f x))}))', ff);
   },
 
   testEqT: function() {
@@ -1756,7 +1756,7 @@ var testCase = {
   },
 
   testR5211: function() {
-    assertEqual('((T & T) = T)', Toy.rules.r5211());
+    assertEqual('((T & T) == T)', Toy.rules.r5211());
   },
 
   testRuleT: function() {
@@ -1805,7 +1805,7 @@ var testCase = {
 
   testR5214: function() {
     var inf = Toy.rules.r5214();
-    assertEqual('((T & F) = F)', inf);
+    assertEqual('((T & F) == F)', inf);
   },
 
   testAndTBook: function() {
@@ -1814,7 +1814,7 @@ var testCase = {
   },
 
   testR5217Book: function() {
-    assertEqual('((T = F) = F)', Toy.rules.r5217Book());
+    assertEqual('((T = F) == F)', Toy.rules.r5217Book());
   },
 
   testEquationCases: function() {
@@ -2046,7 +2046,7 @@ var testCase = {
   testR5238a: function() {
     var inf = Toy.rules.r5238a(y, call(p, y), call(q, y));
     var wff =
-      '(({y. (p y)} = {y. (q y)}) = (forall {y. ((p y) = (q y))}))';
+      '(({y. (p y)} = {y. (q y)}) == (forall {y. ((p y) = (q y))}))';
     assertEqual(wff, inf);
   },
 
@@ -2055,7 +2055,7 @@ var testCase = {
                                Toy.parse('p x'),
                                Toy.parse('p y'));
     var wff =
-      ('(({x. {y. (p x)}} = {x. {y. (p y)}}) = '
+      ('(({x. {y. (p x)}} = {x. {y. (p y)}}) == '
        + '(forall {x. (forall {y. ((p x) = (p y))})}))');
     assertEqual(wff, result);
   },

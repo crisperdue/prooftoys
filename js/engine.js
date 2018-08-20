@@ -2037,7 +2037,6 @@ var basicSimpFacts = [
                       'x = x == T',
                       'T => a == a',
                       'not (a = b) == a != b',
-                      '(negate p) x == not (p x)',
                       'if T x y = x',
                       'if F x y = y',
                       {stmt: '@a + neg b = a - b',
@@ -3068,8 +3067,10 @@ const baseRules = {
   // r5201e.  Works with conditionals.
   applyBoth: {
     action: function(eqn, a) {
-      var step1 = rules.eqSelf(call(eqn.eqnLeft(), a));
-      var step2 = rules.replace(step1, '/right/fn', eqn);
+      const step1 = (eqn.isCall2('==')
+                     ? rules.equivSelf(call(eqn.eqnLeft(), a))
+                     : rules.eqSelf(call(eqn.eqnLeft(), a)));
+      const step2 = rules.replace(step1, '/right/fn', eqn);
       return step2.justify('applyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
@@ -3311,8 +3312,10 @@ const baseRules = {
       v = varify(v);
       var eqn = h_eqn.unHyp();
       eqn.assertCall2('=');
-      var step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
-      var step2 = rules.rplace(h_eqn, step1, '/right/body');
+      const step1 = (eqn.isCall2('==')
+                     ? rules.equivSelf(lambda(v, eqn.getLeft()))
+                     : rules.eqSelf(lambda(v, eqn.getLeft())));
+      const step2 = rules.replace(step1, '/right/body', h_eqn);
       return step2.justify('bindEqn', arguments, [h_eqn]);
     },
     inputs: {equation: 1, varName: 2},
@@ -6964,7 +6967,8 @@ var logicFacts = {
       return (rules.consider('(negate p) x')
               .andThen('apply', '/right/fn')
               .andThen('apply', '/right'));
-    }
+    },
+    simplifier: true
   },
 
   // This is the classic definition of the existential quantifier,
