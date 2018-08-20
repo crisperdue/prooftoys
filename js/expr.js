@@ -833,16 +833,13 @@ Expr.prototype.subFree1 = function(replacement, name) {
 };
 
 /**
- * Called with a non-rendered step; returns a rough approximation
- * of a path to the (main) part of the step that should be visible
- * (and ordinarily a reasonable subject for simplification).
- *
- * TODO: Rename to indicate that the result is actually a path to
- *   the "usual" part to be simplified.
+ * Called with a non-rendered step; returns a path to the main
+ * part of the step; or if the main is an equivalence or
+ * equality, returns the RHS of that.
  */
-Expr.prototype.pathToVisiblePart = function() {
+Expr.prototype.pathToFocalPart = function() {
   var main = this.getMain();
-  return path(main.isCall2('==')
+  return path(main.isCall2('=')
               ? '/main/right'
               : '/main');
 };

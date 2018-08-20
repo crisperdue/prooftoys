@@ -1285,7 +1285,7 @@ function autoSimplify(step) {
   if (path && !Toy.autoSimplifyWholeStep) {
     return Toy.rules.simplifySite(step, path) || assert(false);;
   } else {
-    return Toy.rules.simplifyStep(step) || assert(false);
+    return Toy.rules.simplifyFocalPart(step) || assert(false);
   }
 }
 

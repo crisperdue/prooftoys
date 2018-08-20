@@ -1552,18 +1552,11 @@ function applyFactsOnce(step, path, facts) {
 }
 
 /**
- * Apply the list of fact rewrites to the visible part of the step
+ * Apply the list of fact rewrites to the "focal" part of the step
  * until none of them any longer is applicable, returning the result.
- *
- * TODO: Replace uses of this.  Provide interactive commands that are
- *   specific to the visible part.  If not interactive, use commands
- *   not dependent on visibility status.
- *
- * TODO: Consider if perhaps all uses of this are obsolete already,
- *   and remove or modify those commands.
  */
-function applyToVisible(step, facts) {
-  return applyFactsWithinSite(step, step.pathToVisiblePart(), facts);
+function applyToFocalPart(step, facts) {
+  return applyFactsWithinSite(step, step.pathToFocalPart(), facts);
 }
 
 /**
@@ -4727,7 +4720,7 @@ const ruleInfo = {
     converse: {labels: 'higherOrder'},
     proof: function() {
       var step1 = (rules.equivForall().andThen('instVar', 'not p', 'p'));
-      return (rules.applyToBoth('not', step1).andThen('simplifyStep'));
+      return (rules.applyToBoth('not', step1).andThen('simplifySite', ''));
     }
   },
 
@@ -5997,7 +5990,7 @@ const ruleInfo = {
       if (Toy.isDistribFact(stmt)) {
         var step1 = rules.arrangeTerm(step, path.concat('/right'));
         var step2 = rules.arrangeTerm(step1, path.concat('/left'));
-        var step3 = rules.simplifyStep(step2);
+        var step3 = rules.simplifyFocalPart(step2);
         return step3;
       } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
         // The left part may already be transformed,
@@ -6012,7 +6005,7 @@ const ruleInfo = {
         // did nothing.  This is intended to avoid automatically
         // undoing rewrites that "de-simplify".
         // Perhaps this functionality could go in autoSimplifySite.
-        return (simp1 == step) ? step : rules.simplifyStep(simp1);
+        return (simp1 == step) ? step : rules.simplifyFocalPart(simp1);
       }
     },
     inputs: {site: 1, bool: 3},
@@ -6785,7 +6778,7 @@ const existRules =
       const step10 = rules.fact('exists {x. x = y}');
       const step11 = (rules.trueBy(step8, '/main/right/arg/body/right/left',
                                    step10)
-                      .andThen('simplifyStep'));
+                      .andThen('simplifySite', ''));
       return rules.rewriteOnly(step11, '/main/right/arg/body',
                                'a & b == b & a');
      }
@@ -7185,7 +7178,7 @@ Toy.tryReduce = tryReduce;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsOnce = applyFactsOnce;
-Toy.applyToVisible = applyToVisible;
+Toy.applyToFocalPart = applyToFocalPart;
 Toy.whileChanges = whileChanges;
 Toy.arrange = arrange;
 Toy.arrangeRhs = arrangeRhs;

@@ -38,7 +38,7 @@ var T = constify('T');
 var F = constify('F');
 
 var convert = Toy.convert;
-var applyToVisible = Toy.applyToVisible;
+var applyToFocalPart = Toy.applyToFocalPart;
 var noSimplify = Toy.noSimplify;
 
 var addFact = Toy.addFact;
@@ -209,7 +209,7 @@ const idFacts =
                         .andThen('forwardChain',
                                  'a => b & c => (a => c)')
                         .andThen('instForall', '/right', '0')
-                        .andThen('simplifyStep')
+                        .andThen('simplifySite', '')
                         .andThen('rewriteFrom', '/left', result2));
 
        return result3;
@@ -270,7 +270,7 @@ const idFacts =
                         .andThen('forwardChain',
                                  'a => b & c => (a => c)')
                         .andThen('instForall', '/right', '1')
-                        .andThen('simplifyStep')
+                        .andThen('simplifySite', '')
                         .andThen('rewriteFrom', '/left', result2));
 
        return result3;
@@ -316,7 +316,7 @@ var numbersInfo = {
     proof: function() {
       return (rules.fact('isAddIdentity 0')
               .andThen('apply', '')
-              .andThen('simplifyStep')
+              .andThen('simplifySite', '')
               .andThen('instForall', '', 'x'));
     }
   },
@@ -329,7 +329,7 @@ var numbersInfo = {
     proof: function() {
       return (rules.fact('isMulIdentity 1')
               .andThen('apply', '')
-              .andThen('simplifyStep')
+              .andThen('simplifySite', '')
               .andThen('instForall', '', 'x'));
     }
   },
@@ -824,7 +824,7 @@ var regroupingFacts = [
 function simplifyMulDivBoth(step, eqnPath) {
   var rightSimpler = rules.arrangeTerm(step, eqnPath.concat('/right'));
   var leftSimpler = rules.arrangeTerm(rightSimpler, eqnPath.concat('/left'));
-  return rules.simplifyStep(leftSimpler);
+  return rules.simplifyFocalPart(leftSimpler);
 }
 
 /**
@@ -837,7 +837,7 @@ function simplifyAddSubBoth(step, eqnPath) {
   var left = eqnPath.concat('/left');
   var step1 = rules.arrangeSum(step, right);
   var step2 = rules.arrangeSum(step1, left);
-  return rules.simplifyStep(step2);
+  return rules.simplifyFocalPart(step2);
 }
 
 var simplifiersInfo = {
@@ -851,17 +851,11 @@ var simplifiersInfo = {
   // TODO: Refactor this so the rule itself is not dependent on
   //   different possible renderings.  Probably make it accept a
   //   site, which in the UI is determined by the visible part.
-  simplifyStep: {
+  simplifyFocalPart: {
     action: function(step) {
-      var visPath = step.pathToVisiblePart();
-      if (step.get(visPath).isCall2('=')) {
-        // Why this special case?
-        var step1 = rules.simplifySite(step, visPath.concat('/right'))
-        var result = rules.simplifySite(step1, visPath.concat('/left'))
-      } else {
+      var visPath = step.pathToFocalPart();
         var result = rules._simplifySite(step, visPath);
-      }
-      return result.justify('simplifyStep', arguments, [step]);
+      return result.justify('simplifyFocalPart', arguments, [step]);
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
@@ -1004,7 +998,7 @@ var simplifiersInfo = {
                    'neg (a * b) = neg a * b',
                    {apply: tryArithmetic}
                   ];
-      var simpler = applyToVisible(step, facts);
+      var simpler = applyToFocalPart(step, facts);
       return simpler.justify('simplifyNegations', arguments, [step]);
     },
     inputs: {step: 1},
@@ -1021,7 +1015,7 @@ var simplifiersInfo = {
     action: function(step) {
       var facts = ['@a - b = a + neg b'];
       var info = {facts: facts, searchMethod: 'searchTerms'};
-      var converted = applyToVisible(step, info);
+      var converted = applyToFocalPart(step, info);
       var simplified = rules.simplifyNegations(converted);
       return simplified.justify('removeSubtraction', arguments, [step]);
     },
@@ -1044,7 +1038,7 @@ var simplifiersInfo = {
                    {stmt: 'a * b / c = a / c * b',
                     where: '!$.a.hasVars() && !$.c.hasVars()'}
                   ];
-      var result = applyToVisible(step, facts);
+      var result = applyToFocalPart(step, facts);
       return result.justify('cleanUpTerms', arguments, [step]);
     },
     inputs: {step: 1},
@@ -1482,7 +1476,7 @@ var moversInfo = {
                      ];
         return applyTo(eqn2a, facts3);
       }
-      var visPath = step.pathToVisiblePart();
+      var visPath = step.pathToFocalPart();
       if (step.get(visPath).isCall2('=')) {
         var step1 =
           convert(step, visPath.concat('/right'), converter);
@@ -1627,8 +1621,9 @@ var moversInfo = {
       return Toy.matchFactPart(step, step.pathTo(expr), regroupingFacts, 'b');
     },
     autoSimplify: function(step) {
+      // TODO: Consider renaming this flag as "focal part".
       if (Toy.autoSimplifyWholeStep) {
-        return rules.simplifyStep(step);
+        return rules.simplifyFocalPart(step);
       } else {
         var path = getStepSite(step).parent().parent().concat('/right');
         return rules.simplifySite(step, path);
@@ -1766,7 +1761,7 @@ var moversInfo = {
                    {stmt: 'a + b + c = a + c + b',
                     where: '$.b.isNumeral() && !$.c.isNumeral()'}
                   ];
-      var result = applyToVisible(step, facts);
+      var result = applyToFocalPart(step, facts);
       return result.justify('regroup', arguments, [step]);
     },
     inputs: {site: 1, varName: 3},
@@ -1967,12 +1962,12 @@ var basicFacts = {
   'exists R': {
     proof: function() {
       return (rules.fact('p x => exists p')
-              // This line helps simplifyStep to simplify the
+              // This line helps simplifyFocalPart to simplify the
               // assumptions and also helps the display to show
               // the user what is going on.
               .andThen('asImplication')
               .andThen('instMultiVars', {x: '0', 'p': 'R'})
-              .andThen('simplifyStep'));
+              .andThen('simplifyFocalPart'));
     }
   },
   
@@ -2277,7 +2272,7 @@ var equivalences = {
       var s2 = rules.applyToBothWith(s1, '/', 'c');
       var s3 = rewrite(s2, '/main/right', 'a * b / c = a * (b / c)');
       var s6 = rewrite(s3, '/main/left', 'a * b / c = a * (b / c)');
-      var s7 = rules.simplifyStep(s6);
+      var s7 = rules.simplifySite(s6, '/right');
       var s8 = rules.extractHyp(s7, 'a * c = b * c');
       return s8;
     }
@@ -2309,7 +2304,7 @@ var equivalences = {
               .rewrite('/main/right/right', cancel)
               .rewrite('/main/left', regroup)
               .rewrite('/main/left/right', cancel)
-              .andThen('simplifyStep')
+              .andThen('simplifySite', '/right')
               .andThen('extractHyp', 'a / c = b / c'));
     }
   },
@@ -2655,7 +2650,7 @@ var subtractionFacts = {
     proof: function() {
       return (rules.fact('a + b - c = a + (b - c)')
               .andThen('instVar', 'b', 'c')
-              .andThen('simplifyStep'));
+              .andThen('simplifyFocalPart'));
     },
     simplifier: true
   },
@@ -2664,7 +2659,7 @@ var subtractionFacts = {
     proof: function() {
       return (rules.fact('a - b + c = a - (b - c)')
               .andThen('instVar', 'b', 'c')
-              .andThen('simplifyStep'));
+              .andThen('simplifyFocalPart'));
     },
     simplifier: true
   }
@@ -2782,7 +2777,7 @@ var divisionFacts = {
     proof: function() {
       return (rules.fact('a / b * c = a * (c / b)')
               .andThen('instVar', 'b', 'c')
-              .andThen('simplifyStep'));
+              .andThen('simplifyFocalPart'));
     },
     simplifier: true
   },
@@ -2826,7 +2821,7 @@ var divisionFacts = {
     proof: function() {
       return (rules.fact('a / (b * c) = a / b / c')
               .andThen('instVar', 'a', 'b')
-              .andThen('simplifyStep'));
+              .andThen('simplifyFocalPart'));
     },
     simplifier: true
   },
@@ -2851,7 +2846,7 @@ var divisionFacts = {
     proof: function() {
       return (rules.fact('a * b / c = a * (b / c)')
               .andThen('instVar', 'b', 'c')
-              .andThen('simplifyStep'));
+              .andThen('simplifyFocalPart'));
     },
     simplifier: true
   },

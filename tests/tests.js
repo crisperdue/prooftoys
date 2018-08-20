@@ -2343,7 +2343,7 @@ var testCase = {
 
   testSimplifyStep: function() {
     var step1 = rules.consider('2 * 3 * x');
-    var step2 = rules.simplifyStep(step1);
+    var step2 = rules.simplifyFocalPart(step1);
     assertEqual('(6 * x)', step2.get('/main/right'));
   },
 
