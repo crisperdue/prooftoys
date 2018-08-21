@@ -4741,7 +4741,10 @@ const ruleInfo = {
                        'not (forall {x. not (p x)}) == exists p')
               .andThen('rewrite', '/right', 'not (a & b) == not a | not b')
               .andThen('instMultiVars', {p: 'negate p', q: 'negate q'})
-              .andThen('simplifyStep'));
+              .andThen('simplifySite', ''));
+    },
+    afterRewrite: function(step) {
+      return step;
     }
   },
 
