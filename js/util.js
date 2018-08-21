@@ -460,6 +460,13 @@ function debugString(o, specials) {
   }
 }
 
+Toy.alert = function(message) {
+  if (Toy.testing) {
+    console.error('Alert: ' + message);
+  } else {
+    window.alert(message);
+  }
+}
 
 //
 // Data manipulation utilities

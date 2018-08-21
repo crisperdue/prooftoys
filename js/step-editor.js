@@ -176,7 +176,7 @@ function ProofEditor() {
     // Caution the user.  The isDocHeldFrom test seems to be unreliable,
     // at least during development, so just caution rather than
     // setting editable to false.
-    window.alert('Caution: editing may be in progress in another tab/window');
+    Toy.alert('Caution: editing may be in progress in another tab/window');
   }
 
   // Event handlers
@@ -564,7 +564,7 @@ function buildWksControls(editor) {
         $controls.find('.wksName').text(editor.getDocumentName());
         $openersArea.toggleClass('hidden', true);
       } else {
-        window.alert('Could not open worksheet ' + text);
+        Toy.alert('Could not open worksheet ' + text);
       }
     });
   $deletersArea.on('click', '.docName', function() {

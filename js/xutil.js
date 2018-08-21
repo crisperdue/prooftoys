@@ -1929,8 +1929,8 @@ function decodeSteps(input) {
       }
     });
   if (message) {
-    window.alert('Decoding steps: ' + message);
-    console.warn('Decoding steps:' + message);
+    Toy.alert('Decoding steps: ' + message);
+    console.warn('Decoding steps:', message);
     console.warn('Applying rule', ruleName.$$, 'to', args.$$);
   }
   return outSteps;

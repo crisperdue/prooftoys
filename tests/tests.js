@@ -3,6 +3,10 @@
 
 (function() {
 
+// True value during tests, to avoid undesired user interaction
+// such as window.alert.
+Toy.testing = true;
+
 // Run tests with all facts being proved.
 Toy.assertFacts = false;
 
