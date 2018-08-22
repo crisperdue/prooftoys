@@ -2088,6 +2088,8 @@ var factProperties = {
   labels: true,
   description: true,
   definitional: true,
+  autoSimplify: true,
+  afterRewrite: true,
   converse: true
 };
 
@@ -2116,6 +2118,11 @@ var factProperties = {
  * definitional: the fact is "basically" a definition of a
  *   function or predicate.  Used for presentation of the fact
  *   in a menu.
+ * autoSimplify: if given, a simplifier function that takes the
+ *   result of a rewrite with this fact as its input and applies it
+ *   as the interactive auto-simplifier.
+ * afterRewrite: if given, a function that the rewrite rule runs after
+ *   substitution and replacement, interactively or not.
  * labels: Object/set of label names, if given as a string, parses
  *   space-separated parts into a set.
  * converse.labels: Like labels, but applies to a "swapped" version
@@ -5876,6 +5883,10 @@ const ruleInfo = {
   //   that were already in the equation.  Doing so would enable
   //   maximum flexibility in following substitutions, though it raises
   //   issues about access to the potentially new variable(s).
+  //
+  // TODO: Consider supporting afterRewrite properties in the interactive
+  //   access to this functionality, probably by making the interactive
+  //   action invoke exactly the functionality of rewriteOnly, inline.
   rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
@@ -5954,13 +5965,22 @@ const ruleInfo = {
     labels: 'basic'
   },
 
+  // TODO: Consider arranging the rewriting rules so one does not
+  // invoke others.  Instead, put the actions into non-rule functions
+  // and call the appropriate one(s) in each rule, removing some
+  // redundant levels of display in the user interface.
+
   // Primitive rewriter with no simplification; accepts a statement.
   // In the UI, could be used with well-known facts, but probably better
   // to just offer users rewriteOnlyFrom.
   rewriteOnly: {
     action: function(step, path, statement) {
-      return (rules.rewriteOnlyFrom(step, path, rules.fact(statement))
-              .justify('rewriteOnly', arguments, [step]));
+      const rewritten = rules.rewriteOnlyFrom(step, path,
+                                              rules.fact(statement));
+      const info = resolveToFactInfo(statement);
+      const after = info && info.afterRewrite;
+      const result = after ? after(rewritten) : rewritten;
+      return result.justify('rewriteOnly', arguments, [step]);
     },
     inputs: {site: 1, bool: 3},
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
@@ -5990,6 +6010,11 @@ const ruleInfo = {
       var inStep = step.ruleArgs[0];
       var path = step.ruleArgs[1];
       var stmt = step.ruleArgs[2];
+      const info = resolveToFactInfo(stmt);
+      if (info.autoSimplify) {
+        const simp = info.autoSimplify;
+        return simp(step);
+      } else {
       if (Toy.isDistribFact(stmt)) {
         var step1 = rules.arrangeTerm(step, path.concat('/right'));
         var step2 = rules.arrangeTerm(step1, path.concat('/left'));
@@ -6009,6 +6034,7 @@ const ruleInfo = {
         // undoing rewrites that "de-simplify".
         // Perhaps this functionality could go in autoSimplifySite.
         return (simp1 == step) ? step : rules.simplifyFocalPart(simp1);
+      }
       }
     },
     inputs: {site: 1, bool: 3},
