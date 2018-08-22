@@ -865,54 +865,6 @@ var simplifiersInfo = {
     labels: 'algebra'
   },
 
-  // Like simplifySite, but if any simplification result is the same
-  // as the content of the site in refStep, this returns its input
-  // step, thereby doing nothing.  So if the site in refStep was
-  // already simplified, this will not revert to it.  (If the site
-  // was not already simplified, a de-simplification step may
-  // still be re-simplified.)
-  //
-  // An alternative, slightly simpler approach would be to suppress
-  // auto-simplification of the result of a rewrite if it is the
-  // inverse of a simplification.
-  autoSimplifySite: {
-    action: function(step, path, refStep) {
-      var _path = Toy.path;
-      var term = step.get(path);
-      if (!term) {
-        console.trace(Toy.format('No term in {1} at path {2}', step, path));
-        // In some situations the path may need adjustment.  This is
-        // a workaround for cases where the path is totally wrong.
-        // TODO: Improve on this.
-        return step;
-      }
-      var eqn1 = rules.consider(term);
-      var ref = refStep.get(path);
-      var abort = false;
-      var simpler = Toy.whileChanges(eqn1, function(eqn) {
-        var next = rules._simplifyMath1(eqn, _path('/main/right', eqn));
-        // This check relies on _simplifyMath1 trying first to simplify
-        // the whole term.
-        if (next.getMain().getRight().sameAs(ref)) {
-          abort = true;
-          // Returning the input causes simplification to stop.
-          return eqn;
-        } else {
-          return next;
-        }
-      });
-      return abort
-        ? step
-        : (rules.rplace(simpler, step, path)
-           .justify('autoSimplifySite', arguments, [step]));
-    },
-    inputs: {site: 1, step: 3},
-    form: 'Simplify w.r.t. step <input name=step>',
-    menu: 'algebra: auto-simplify {term}',
-    description: 'simplify;; {in siteStep}',
-    labels: 'uncommon'
-  },
-
   // Applies simplification repeatedly within the part of the given
   // step at the given path using the given facts until no more
   // simplifications are found.  By default uses basicSimpFacts
