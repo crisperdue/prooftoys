@@ -7011,6 +7011,9 @@ var logicFacts = {
               .rewrite('/right', 'x != y == not (x = y)')
               .andThen('rewriteOnlyFrom', '/right/arg', all));
     },
+    afterRewrite: function(step) {
+      return rules.reduceAll(step, '/right')
+    },
     desimplifier: true
   },
 
