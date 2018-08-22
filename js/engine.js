@@ -2126,17 +2126,17 @@ var factProperties = {
  * fact lookups, treating the fact as a reference to itself.
  */
 function addFact(info) {
+  info.proved = info.goal && info.goal.isProved() && info.goal;
+  // The goal is a rendered Expr just because that makes a complete
+  // copy that can be properly annotated with types.
+  info.goal = ((info.goal || mathParse(info.statement))
+               .copyForRendering(null));
   for (var key in info) {
     if (!(key in factProperties)) {
       var id = info.goal ? info.goal.$$ : info.synopsis;
       console.warn('In fact', id, 'extra info key:', key);
     }
   }
-  info.proved = info.goal && info.goal.isProved() && info.goal;
-  // The goal is a rendered Expr just because that makes a complete
-  // copy that can be properly annotated with types.
-  info.goal = ((info.goal || mathParse(info.statement))
-               .copyForRendering(null));
   // Adding new constants.  Doing it here adds them before asserting
   // the fact.  Also rules.assert can add constants in case it is used
   // without registering a fact. (And Toy.define also adds the defined
