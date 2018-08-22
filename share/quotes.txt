@@ -68,9 +68,6 @@ because you might not get there. -- Yogi Berra
 
 It's tough to make predictions, especially about the future. -- Yogi Berra
 
-You've got to be very careful if you don't know where you are going
-because you might not get there. -- Yogi Berra
-
 Nearly everything is really interesting if you go into it deeply
 enough. -- Richard Feynman
 
@@ -92,7 +89,7 @@ The smallest natural number not definable by nine words is definable by nine wor
 -- Jules Richard
 
 The scientific man does not aim at an immediate result.  . . .
-His work is like that of the planter — for the future.
+His work is like that of the planter -- for the future.
 His duty is to lay the foundation for those who are to come,
 and point the way. -- Nikola Tesla
 
