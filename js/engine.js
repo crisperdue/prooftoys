@@ -6023,17 +6023,13 @@ const ruleInfo = {
       } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
         // The left part may already be transformed,
         // and the target may not even exist.
-        var simp1 = rules.autoSimplifySite(step,
-                                           // Site of the rewrite.
-                                           step.ruleArgs[1],
-                                           // Input step of the rewrite.
-                                           step.ruleArgs[0]
-                                           );
-        // Don't do even basic simplifications if simplifying the site
-        // did nothing.  This is intended to avoid automatically
-        // undoing rewrites that "de-simplify".
-        // Perhaps this functionality could go in autoSimplifySite.
-        return (simp1 == step) ? step : rules.simplifyFocalPart(simp1);
+
+          // This is the fact statement for the rewrite.
+          const statement = step.ruleArgs[2];
+          const info = resolveToFactInfo(statement);
+          return (info && info.desimplifier
+                  ? step
+                  : rules.simplifyFocalPart(simp1));
       }
       }
     },
