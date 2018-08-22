@@ -178,6 +178,7 @@ code {
 
 .transFade.hidden, .transFade.invisible, .transFade.ultraInvisible {
     visibility: hidden;
+    transition: visibility 1s, opacity 1s ease;
     /* This overrides the meaning of hidden = display: none */
     display: block;
     opacity: 0;
