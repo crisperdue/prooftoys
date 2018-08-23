@@ -4767,8 +4767,10 @@ const ruleInfo = {
               .andThen('instMultiVars', {p: 'negate p', q: 'negate q'})
               .andThen('simplifySite', ''));
     },
-    afterRewrite: function(step) {
-      return step;
+    converse: {
+      afterMatch: function(eqn) {
+        return rules.reduceAll(eqn, '/right');
+      }
     }
   },
 
