@@ -2218,11 +2218,13 @@ function addSwappedFact(info) {
         return rules.fact(stmt).andThen('eqnSwap');
       }
       var labels2 = processLabels(info.converse && info.converse.labels);
+      var after2 = info.converse && info.converse.afterMatch;
       var info2 = {proof: proof,
                    goal: swapped,
                    simplifier: !!info.desimplifier,
                    desimplifier: !!info.simplifier,
                    description: info.description,
+                   afterMatch: after2,
                    labels: labels2
       };
       addFact(info2);
