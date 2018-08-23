@@ -562,12 +562,15 @@ function addRule(info) {
  * constant that is not already defined.  The argument is a WFF that
  * will become true as the definition of the new constant.  The WFF
  * must contain a (free) occurrence of exactly one new constant name.
+ *
  * If it is of the form:
  *
  * <name> = <term>
  *
- * and <name> does not occur free in <term>, the equational definition
- * is accepted.
+ * and <name> does not occur free in <term>, this accepts the
+ * equational definition.  It also adds related facts using
+ * addDefnFacts if the definition is a function or predicate defined
+ * equal to a lambda.
  *
  * If the definition has some other form, then there must be a
  * recorded fact of the form: exists {<var>. <condition2>}, where
@@ -586,6 +589,10 @@ function addRule(info) {
  * form might do some bookkeeping and report errors, at least for
  * definitions.  These can run at top-level in modules where the logic
  * is available.
+ *
+ * TODO: Considering allowing a "properties" argument for properties
+ * for generated facts, or provide a way to declare fact properties
+ * separately from proof of the fact.
  *
  * Returns the newly-defined name.
  */
@@ -638,11 +645,12 @@ function definition(defn_arg) {
  * of the form <atom> = <term>.
  *
  * If it is a function definition (the term is a lambda), it generates
- * basic equational facts.  In other words if f = {x. <term>},
- * generates the fact f x = <term>, and so on if there are multiple
- * arguments.
+ * a basic equational fact for application of the function or
+ * predicate to arguments.  In other words if f = {x. <term>},
+ * generates the fact f x = <term>, and similarly if there are
+ * multiple arguments.
  *
- * After unwrapping any lambdas, lIf the definition has one of the
+ * After unwrapping any lambdas, if the definition has one of the
  * specific forms:
  *
  * <name> = the <condition>; or
@@ -659,7 +667,7 @@ function definition(defn_arg) {
  * through properly once basic logic with facts about quantifiers and
  * unique existence are in place.  This seems a reasonable
  * requirement.  Omitting the accompanying unique existence fact will
- * prevent the system from failing in its automatic proof.
+ * prevent the system from attempting to perform the automatic proof.
  *
  * TODO: Consider supporting "the" better by using available facts
  *   that show when the needed exists1 property does and does not
@@ -2123,8 +2131,9 @@ var factProperties = {
  *   as the interactive auto-simplifier.
  * afterRewrite: if given, a function that the rewrite rule runs after
  *   substitution and replacement, interactively or not.
- * labels: Object/set of label names, if given as a string, parses
- *   space-separated parts into a set.
+ * labels: Object/set of label names.  If given as a string, parses
+ *   space-separated parts into a set.  Currently just "generalMode"
+ *   for desimplifiers to be offered in "general" mode.
  * converse.labels: Like labels, but applies to a "swapped" version
  *   of the fact, if any.
  *
