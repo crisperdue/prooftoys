@@ -6476,7 +6476,8 @@ const ruleInfo = {
 
   // A simplifier that removes all lambda calls.
   reduceAll: {
-    precheck: function(step, path) {
+    // TODO: Consider supporting this, for interactive use only.
+    operative: function(step, path) {
       const result = rules._simplifyMath1(step, path,
                                           [{apply: tryReduce, pure: true}]);
       return result !== step;
@@ -6487,7 +6488,8 @@ const ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'beta reduce throughout'
+    menu: 'beta reduce throughout',
+    labels: 'advanced'
   },
 
    // Prove an equation asserting that two chains of conjunctions are
