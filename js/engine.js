@@ -2097,7 +2097,7 @@ var factProperties = {
   description: true,
   definitional: true,
   autoSimplify: true,
-  afterRewrite: true,
+  afterMatch: true,
   converse: true
 };
 
@@ -2129,8 +2129,9 @@ var factProperties = {
  * autoSimplify: if given, a simplifier function that takes the
  *   result of a rewrite with this fact as its input and applies it
  *   as the interactive auto-simplifier.
- * afterRewrite: if given, a function that the rewrite rule runs after
- *   substitution and replacement, interactively or not.
+ * afterMatch: if given, a function that a rewrite runs after
+ *   substitution, interactively or not, taking the resulting
+ *   equation step as its argument.
  * labels: Object/set of label names.  If given as a string, parses
  *   space-separated parts into a set.  Currently just "generalMode"
  *   for desimplifiers to be offered in "general" mode.
@@ -5897,10 +5898,6 @@ const ruleInfo = {
   //   that were already in the equation.  Doing so would enable
   //   maximum flexibility in following substitutions, though it raises
   //   issues about access to the potentially new variable(s).
-  //
-  // TODO: Consider supporting afterRewrite properties in the interactive
-  //   access to this functionality, probably by making the interactive
-  //   action invoke exactly the functionality of rewriteOnly, inline.
   rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
@@ -5954,8 +5951,11 @@ const ruleInfo = {
           }
         }
       }
+      const info = resolveToFactInfo(eqn_arg);
+      const after = (info && info.afterMatch) || function(x) { return x; };
+      const next = after(simpler);
       // Do the actual replacement.
-      var result = rules.replace(step, path, simpler);
+      const result = rules.replace(step, path, next);
       return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
     },
     inputs: {site: 1, equation: 3},
@@ -5991,10 +5991,7 @@ const ruleInfo = {
     action: function(step, path, statement) {
       const rewritten = rules.rewriteOnlyFrom(step, path,
                                               rules.fact(statement));
-      const info = resolveToFactInfo(statement);
-      const after = info && info.afterRewrite;
-      const result = after ? after(rewritten) : rewritten;
-      return result.justify('rewriteOnly', arguments, [step]);
+      return rewritten.justify('rewriteOnly', arguments, [step]);
     },
     inputs: {site: 1, bool: 3},
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
@@ -7021,8 +7018,24 @@ var logicFacts = {
               .rewrite('/right', 'x != y == not (x = y)')
               .andThen('rewriteOnlyFrom', '/right/arg', all));
     },
-    afterRewrite: function(step) {
-      return rules.reduceAll(step, '/right')
+    afterMatch: function(eqn) {
+      const schema = 'exists p == not (forall q)';
+      const map = eqn.matchSchema(schema);
+      if (map) {
+        const p = map.p;
+        const q = map.q;
+        if (p instanceof Lambda && q instanceof Lambda) {
+          const xformer = function(term) {
+            return (rules.eqSelf(term)
+                    .andThen('changeVar', '/right', p.bound)
+                    .andThen('reduceAll', '/right'));
+          }
+          const qPath = termify(schema).pathTo('q');
+          return convert(eqn, qPath, xformer);
+        }
+      }
+      // else
+      return eqn;
     },
     labels: 'generalMode',
     desimplifier: true
