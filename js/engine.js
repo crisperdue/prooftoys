@@ -4767,8 +4767,10 @@ const ruleInfo = {
               .andThen('instMultiVars', {p: 'negate p', q: 'negate q'})
               .andThen('simplifySite', ''));
     },
-    afterRewrite: function(step) {
-      return step;
+    converse: {
+      afterMatch: function(eqn) {
+        return rules.reduceAll(eqn, '/right');
+      }
     }
   },
 
@@ -6028,14 +6030,14 @@ const ruleInfo = {
         const simp = info.autoSimplify;
         return simp(step);
       } else {
-      if (Toy.isDistribFact(stmt)) {
-        var step1 = rules.arrangeTerm(step, path.concat('/right'));
-        var step2 = rules.arrangeTerm(step1, path.concat('/left'));
-        var step3 = rules.simplifyFocalPart(step2);
-        return step3;
-      } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
-        // The left part may already be transformed,
-        // and the target may not even exist.
+        if (Toy.isDistribFact(stmt)) {
+          var step1 = rules.arrangeTerm(step, path.concat('/right'));
+          var step2 = rules.arrangeTerm(step1, path.concat('/left'));
+          var step3 = rules.simplifyFocalPart(step2);
+          return step3;
+        } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
+          // The left part may already be transformed,
+          // and the target may not even exist.
 
           // This is the fact statement for the rewrite.
           const statement = step.ruleArgs[2];
@@ -6043,7 +6045,7 @@ const ruleInfo = {
           return (info && info.desimplifier
                   ? step
                   : rules.simplifyFocalPart(step));
-      }
+        }
       }
     },
     inputs: {site: 1, bool: 3},
