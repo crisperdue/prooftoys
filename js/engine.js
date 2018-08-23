@@ -6038,7 +6038,7 @@ const ruleInfo = {
           const info = resolveToFactInfo(statement);
           return (info && info.desimplifier
                   ? step
-                  : rules.simplifyFocalPart(simp1));
+                  : rules.simplifyFocalPart(step));
       }
       }
     },
