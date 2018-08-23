@@ -2006,7 +2006,7 @@ RuleMenu.prototype.offerableFacts = function() {
               // Only show desimplifiers in "everything" mode.
               // TODO: Include them as "introducers" in both "general"
               //   mode and "everything" modes.
-              if (!info.desimplifier) {
+              if (!info.desimplifier || info.labels.generalMode) {
                 facts.push(info);
               }
             } else {

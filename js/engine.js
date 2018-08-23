@@ -7019,6 +7019,7 @@ var logicFacts = {
     afterRewrite: function(step) {
       return rules.reduceAll(step, '/right')
     },
+    labels: 'generalMode',
     desimplifier: true
   },
 
