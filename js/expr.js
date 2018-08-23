@@ -1364,18 +1364,20 @@ function isProved(x) {
  * Searches for a subexpression of this that passes the test, given as
  * a boolean function of one argument.  Returns a path from this to
  * the occurrence, or null if none found.  Tests this expression
- * first, followed by the rest in top-down left-to-right order.
- * Does not search for variable bindings, use pathToBinding instead.
- * Alternatively accepts a term to be found.
+ * first, followed by the rest in top-down left-to-right order.  Does
+ * not search for variable bindings, use pathToBinding instead.
+ * Alternatively accepts a term to be matched with sameAs, and this
+ * may be given as a string.
  */
-Expr.prototype.pathTo = function(pred) {
+Expr.prototype.pathTo = function(arg) {
   // TODO: Make a more efficient version that works directly with
   // forward paths.
-  if (pred instanceof Expr) {
-    var target = pred;
-    pred = function(term) { return target == term; };
+  let test = arg;
+  if (typeof arg === 'string' || arg instanceof Expr) {
+    const target = termify(arg);
+    test = function(term) { return target.sameAs(term); };
   }
-  var rpath = this._path(pred, path(''));
+  const rpath = this._path(test, path(''));
   return rpath ? rpath.reverse() : null;
 };
 
