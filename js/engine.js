@@ -3285,17 +3285,22 @@ const baseRules = {
    * subexpression in expr at path with one that binds newName, which
    * may be a string or Atom, and uses it in place of any references to
    * the old bound variable.
+   *
+   * If the subexpression has any occurrence of the given new name,
+   * this modifies the given name to be distinct from all of its free
+   * variables.
    */
   changeVar: {
-    action: function(step, path, newVar) {
-      newVar = varify(newVar);
-      path = Toy.path(path, step);
+    action: function(step, path, arg) {
+      const newName = typeof arg === 'string' ? arg : arg.name;
       var target = step.get(path);
       // Report the step, but not in the message.
       assert(target instanceof Toy.Lambda, 'Not a function: {1}', target, step);
-      assert(!step.freeVars()[newVar.name],
-             'New bound variable {1} must not occur free in {2}', newVar.name,
-             step);
+      if (target.bound.name === newName) {
+        // No need to do anything in this case, so do not rename anything.
+        return step;
+      }
+      const newVar = target.body.freshVar(newName);
       var changed = lambda(newVar,
                            target.body.subFree1(newVar, target.bound));
       var step1 = rules.eqSelf(changed);
