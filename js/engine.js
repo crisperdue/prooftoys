@@ -7063,15 +7063,6 @@ var logicFacts = {
   },
 
   // TODO: QM: Eta expand "p".
-  'not (exists p) == forall (negate p)': {
-    proof: function() {
-      return (rules.fact('exists p == not (forall (negate p))')
-              .andThen('rewriteOnly', '',
-                       'a == not b == (not a == b)'));
-    }
-  },
-
-  // TODO: QM: Eta expand "p".
   'exists {x. not (p x)} == not (forall p)': {
     proof: function() {
       var step1 = (rules.fact('exists p == not (forall {x. not (p x)})')
