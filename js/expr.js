@@ -3043,7 +3043,7 @@ Lambda.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
     return bindings;
   } else {
-    var newBindings = new Bindings(this.bound.name, bindings);
+    var newBindings = new Bindings(this.bound.name, true, bindings);
     var segment = path.segment;
     var rest = path.rest;
     if (segment === 'bound') {
