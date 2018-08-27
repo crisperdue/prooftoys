@@ -1366,8 +1366,8 @@ function isProved(x) {
  * the occurrence, or null if none found.  Tests this expression
  * first, followed by the rest in top-down left-to-right order.  Does
  * not search for variable bindings, use pathToBinding instead.
- * Alternatively accepts a term to be matched with sameAs, and this
- * may be given as a string.
+ * Alternatively accepts a term to be matched with sameAs, which may
+ * be given as a string.
  */
 Expr.prototype.pathTo = function(arg) {
   // TODO: Make a more efficient version that works directly with
@@ -2026,6 +2026,12 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 // using calls to function variables in this to enable substitution in
 // spite of capturing.  Matching here is as defined for the "matches"
 // method.
+//
+// Where needed and possible, this matches (boolean) terms with lambda
+// terms and attaches a %expansion property to the substitution, with
+// the names of each such predicate variable mapped to a count of the
+// number of beta reductions needed to match normally after
+// substitution.
 //
 //
 // _asPattern()
