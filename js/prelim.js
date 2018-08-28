@@ -94,9 +94,9 @@ function getBinding(target, bindings) {
  * is a path with a single segment, and if both are null it is an
  * empty path.
  */
-function Path(segment, rest) {
+function Path(segment, opt_rest) {
   this.segment = segment;
-  this.rest = rest || _end;;
+  this.rest = opt_rest || _end;;
 }
 
 // The chain of Path objects goes on forever.
