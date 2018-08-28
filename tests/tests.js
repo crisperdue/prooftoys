@@ -1608,6 +1608,31 @@ var testCase = {
     assertEqual(info[2], 'bool');
   },
 
+  // FACTS
+
+  // Test properties of fact info objects.
+  testFactInfo: function() {
+    let problems = [];
+    // Confirm that every fact goal is an Expr.
+    function checkExpr(info) {
+      if (!(info.goal instanceof Toy.Expr)) {
+        problems.push(info.goal);
+      }
+    }
+    Toy.eachFact(checkExpr);
+    assertEqual(0, problems.length,
+                problems.length + ' non-Expr fact goals');
+    problems = [];
+    // Confirm that fact goals are never proved.
+    function checkGoal(info) {
+      if (info.goal.isProved()) {
+        problems.push(info.goal);
+      }
+    }
+    Toy.eachFact(checkGoal);
+    assertEqual(0, problems.length,
+                problems.length + ' proved fact goals');
+  },
 
   // PROOFS
 
