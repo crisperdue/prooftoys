@@ -5906,6 +5906,9 @@ const ruleInfo = {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
       var isEqn = eqn_arg.isEquation();
+      // If given an equation or conditional equation, this is its
+      // LHS.  Otherwise if given a conditional, the RHS, otherwise
+      // the argument itself.
       var matchPart = (isEqn
                        ? eqn_arg.eqnLeft()
                        : eqn_arg.isCall2('=>')
@@ -5929,7 +5932,8 @@ const ruleInfo = {
       // occurrences of "expanded" variables on the RHS as well.
       var expansions = map['%expansions'];
       if (expansions) {
-        // The substitution expands one or more variables.
+        // The substitution expands one or more function/predicate
+        // variables.
         for (var name in expansions) {
           // Array of paths to _all_ free occurrences of the variable
           // in the equation, not just those needed to make its LHS

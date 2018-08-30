@@ -278,10 +278,10 @@ function path(arg, opt_expr) {
 
 /**
  * Pseudo-constructor: returns a Path based on a "/"-separated string
- * or an array of strings, or a Bindings.  The parts become the
- * segments of the path.  Some segments serve as macros that expand
- * into a list of other segments, currently 'left', 'right', and
- * 'binop'.
+ * or an array of strings, or a Bindings, or null.  The parts become
+ * the segments of the path.  Some segments serve as macros that
+ * expand into a list of other segments, currently 'left', 'right',
+ * and 'binop'.
  *
  * A null input indicates an empty path.
  */

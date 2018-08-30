@@ -331,7 +331,8 @@ Expr.prototype.isRendered = function() {
 
 /**
  * Find all free occurrences of the given variable name and return
- * reverse paths to all of them as an Array.
+ * reverse paths to all of them as an Array.  The result paths
+ * segments are all "fn", "arg", or "body".
  */
 Expr.prototype.locateFree = function(name) {
   var paths = [];
