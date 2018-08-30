@@ -2015,6 +2015,47 @@ function conjunctionSchema(term) {
 }
 
 /**
+ * Returns a Map with information about the bindings of variables that
+ * are bound in the scope of the given path.  Keys of the map are
+ * variable names, and each value is a path to the site where the
+ * variable of that name is bound.
+ *
+ * The path must only have segments fn, arg, and/or body.
+ */
+Expr.prototype.pathBindings = function(path_arg) {
+  const Path = Toy.Path;
+  const bindings = new Map();
+  let path = Toy.asPath(path_arg);
+  let revPath = Path.empty;
+  let term = this;
+  while (!path.isEnd()) {
+    const segment = path.segment;
+    path = path.rest;
+    switch(segment) {
+    case 'fn':
+      assert(term instanceof Call, 'Not a Call: {1}', term);
+      revPath = new Path('fn', revPath);
+      term = term.fn;
+      break;
+    case 'arg':
+      assert(term instanceof Call, 'Not a Call: {1}', term);
+      revPath = new Path('arg', revPath);
+      term = term.arg;
+      break;
+    case 'body':
+      assert(term instanceof Lambda, 'Not a Lambda: {1}', term);
+      bindings.set(term.bound.name, revPath.reverse());
+      revPath = new Path('body', revPath);
+      term = term.body;
+      break;
+    default:
+      assert(false, 'Bad segment {1} in path {2}', segment, path_arg);
+    }
+  }
+  return bindings;
+}
+
+/**
  * Simplification facts for algebra, used in _simplifyMath1
  * and related places.  During initialization all facts
  * flagged as simplifier: true are added to this list.

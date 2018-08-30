@@ -539,7 +539,7 @@ var testCase = {
   },
 
 
-  // Operations on Exprs.
+  // EXPRS
 
   testNth: function() {
     var term = Toy.parse('(f x (p y))');
@@ -1423,6 +1423,28 @@ var testCase = {
           '(a > b) & (b > c) => (a > c)');
     check('((a1 = ({a2. a2} a1)) & ((a3 + 1) = (a1 - 1)))',
           'x = {x. x} x & y + 1 = x - 1');
+  },
+
+  testPathBindings: function() {
+    const e = parse('forall {z. exists {w. z < w}}');
+    assertEqual(0, e.pathBindings('').size);
+    assertEqual(0, e.pathBindings('/arg').size);
+
+    const p1 = '/arg/body';
+    const b1 = e.pathBindings(p1);
+    assertEqual(1, b1.size);
+    assertEqual('/arg', b1.get('z') + '');
+
+    const p2 = '/arg/body/arg';
+    const b2 = e.pathBindings(p2);
+    assertEqual(1, b2.size);
+    assertEqual('/arg', b2.get('z') + '');
+
+    const p3 = '/arg/body/arg/body';
+    const b3 = e.pathBindings(p3);
+    assertEqual(2, b3.size);
+    assertEqual('/arg', b3.get('z') + '');
+    assertEqual('/arg/body/arg', b3.get('w') + '');
   },
 
   // ALIASES
