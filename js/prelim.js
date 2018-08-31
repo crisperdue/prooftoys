@@ -144,6 +144,58 @@ Path.prototype.getLeft = function() {
 };
 
 /**
+ * Converts a path with fancy segments right, left, binop,
+ * rt, and main into one with just the basic ones.  If the
+ * optional argument is truthy, treat initial /rt and /main
+ * as for a conditional.  (/main with hyps??)
+ *
+ * TODO: Untested, so use with caution.
+ */
+Path.prototype.uglify = function(opt_isImplies) {
+  const segments = [];
+  let tail = this;
+  let first = true;
+  while (!tail.isEnd()) {
+    const tailSeg = tail.segment;
+    switch(tailSeg) {
+    case 'fn':
+    case 'arg':
+    case 'bound':
+    case 'body':
+      segments.push(tailSeg);
+      break;
+    case 'right':
+      segments.push('arg');
+      break;
+    case 'left':
+      segments.push('fn');
+      segments.push('arg');
+      break;
+    case 'binop':
+      segments.push('fn');
+      segments.push('fn');
+      break;
+    case 'rt':
+    case 'main':
+      if (first) {
+        if (opt_isImplies) {
+          segments.push('arg');
+        }
+      } else {
+        assert(false, 'Segment "{1}" not first in path {2}', tailSeg, this);
+      }
+      break;
+    default:
+      assert(false, 'Bad segment "{1}" in path {2}', tailSeg, this);
+    }
+    first = false;
+    tail = tail.rest;
+  }
+  // This uses a private calling convention of asPath.
+  return asPath(segments); 
+};
+
+/**
  * Returns a Path that has all but the last segment of this path.
  * If this path has no segments, throws an error.
  */
