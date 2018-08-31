@@ -6539,6 +6539,69 @@ const ruleInfo = {
     labels: 'advanced'
   },
 
+  // Beta-reduce the call at the given path, if possible.  If the
+  // argument is an occurrence of a variable bound in a containing
+  // scope, rename it to be the same or at least similar to the bound
+  // variable of the lambda of the call before reducing.  The idea is
+  // that this may effectively erase the lambda, retaining its body
+  // as-is or at least looking very similar.  The bound variable of the
+  // enclosing lambda takes its new name from the name of the bound
+  // variable of the lambda in the call.
+  //
+  // If the conditions do not hold, returns the input step.
+  backReduce: {
+    precheck: function(step, path_arg) {
+      const path = Toy.asPath(path_arg).uglify(step.wff.isCall2('=>'));
+      const call = step.get(path);
+      if (call instanceof Call &&
+          call.fn instanceof Lambda &&
+          call.arg.isVariable()) {
+        const argName = call.arg.name;
+        const bindings = step.pathBindings(path);
+        // If non-null, this is the path to the lambda that
+        // binds the variable at term.arg.
+        const bindingPath = bindings.get(argName);
+        if (bindingPath) {
+          const desiredName = call.fn.bound.name;
+          // Rename the bound var in the fact to the name that
+          // was in the source step, then beta reduce.  This
+          // reduction just erases the lambda, in other words
+          // ({v. A} v) reduces to just A.
+          return true;
+        }
+      }
+      return false;
+    },
+    action: function(step, path_arg) {
+      const path = Toy.asPath(path_arg).uglify(step.wff.isCall2('=>'));
+      const call = step.get(path);
+      if (call instanceof Call &&
+          call.fn instanceof Lambda &&
+          call.arg.isVariable()) {
+        const argName = call.arg.name;
+        const bindings = step.pathBindings(path);
+        // If non-null, this is the path to the lambda that
+        // binds the variable at term.arg.
+        const bindingPath = bindings.get(argName);
+        if (bindingPath) {
+          const desiredName = call.fn.bound.name;
+          // Rename the bound var in the fact to the name that
+          // was in the source step, then beta reduce.  This
+          // reduction just erases the lambda, in other words
+          // ({v. A} v) reduces to just A.
+          return (rules.changeVar(step, bindingPath, desiredName)
+                  .andThen('simpleApply', path)
+                  .justify('backReduce', arguments, [step]));
+        }
+      }
+      return step;
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'renaming reduce',
+    description: 'rename and reduce'
+  },
+
    // Prove an equation asserting that two chains of conjunctions are
    // equal by showing that their schemas are a tautology.
   equalConjunctions: {
