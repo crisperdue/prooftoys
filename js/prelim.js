@@ -280,7 +280,7 @@ Path.prototype.last = function() {
 /**
  * Does the path refer to an expression on the right side of an infix
  * operator?  The given path must be applicable to a call to an infix
- * operator.
+ * operator.  This does not handle /main, nor /rt.
  *
  * TODO: Change this when changing the meaning of infix.
  */
