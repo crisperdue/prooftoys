@@ -2393,7 +2393,7 @@ Atom.prototype.searchMost = function(fn, path, bindings) {};
  */
 function varify(v) {
   var v = (typeof v == 'string') ? new Atom(v) : v;
-  if (!v.isVariable() || v.isGeneratedBound()) {
+  if (!v.isVariable()) {
     throw new Error('Bad variable name: ' + v.name);
   }
   return v;
@@ -2432,10 +2432,10 @@ function numify(num) {
  * existingNames set.
  */
 function genName(name, existingNames) {
-  var base = name.replace(/[0-9]+$/, '');
+  var base = name.replace(/[.0-9]+$/, '');
   var candidate = name;
   for (var i = 1; existingNames[candidate]; i++) {
-    candidate = base + i;
+    candidate = base + '_' + i;
   }
   existingNames[candidate] = true;
   return candidate;
