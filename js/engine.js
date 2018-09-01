@@ -229,13 +229,17 @@ function noSimplify(step) {
  * Adjusts a path to account for application of a typical rewrite rule
  * that could prefix the path with /right, given a step that is the
  * input to the rewrite and a step that is the result of the rewrite.
+ * Apply the adjustment to get the corresponding part of the output
+ * given a path into the input step.
  *
  * This could give incorrect results currently in case the first step
  * is conditional but without hyps, but this will be correct when hyps
  * are gone.
+ *
+ * TODO: Caution, currently unused.
  */
-Toy.Path.prototype.adjustForRewrite = function(step1, step2) {
-  return (!step1.isCall2('=>') && step2.isCall2('=>')
+Toy.Path.prototype.adjustForRewrite = function(input, output) {
+  return (!input.isCall2('=>') && output.isCall2('=>')
           ? Toy.path('/right').concat(this)
           : this);
 };
@@ -6524,7 +6528,7 @@ const ruleInfo = {
   // A simplifier that removes all lambda calls.
   reduceAll: {
     // TODO: Consider supporting this, for interactive use only.
-    operative: function(step, path) {
+    menuCheck: function(step, path) {
       const result = rules._simplifyMath1(step, path,
                                           [{apply: tryReduce, pure: true}]);
       return result !== step;
@@ -6550,7 +6554,7 @@ const ruleInfo = {
   //
   // If the conditions do not hold, returns the input step.
   backReduce: {
-    precheck: function(step, path_arg) {
+    menuCheck: function(step, path_arg) {
       const path = Toy.asPath(path_arg).uglify(step.wff.isCall2('=>'));
       const call = step.get(path);
       if (call instanceof Call &&
