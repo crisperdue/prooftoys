@@ -5969,6 +5969,16 @@ const ruleInfo = {
       if (!map) {
         Toy.fail(Toy.format('Fact not applicable: {1}', equation));
       }
+      // Value is true iff at least one Lambda is substituted for a
+      // variable.
+      const hasFunSubst = (function() {
+          for (const key in map) {
+            if (map[key] instanceof Lambda) {
+              return true;
+            }
+          }
+          return false;
+        })();
       var simpler = rules.instMultiVars(equation, map);
 
       // Beta-reduce expansions created during matching.  These must
@@ -5983,20 +5993,21 @@ const ruleInfo = {
           // Array of paths to _all_ free occurrences of the variable
           // in the equation, not just those needed to make its LHS
           // match.
-          var paths = equation.locateFree(name);
+          var paths = equation.eqnLeft().locateFree(name);
+          const prefix = Toy.asPath('/rt/left');
           for (var i = 0; i < paths.length; i++) {
             // Reverse path to one occurrence of the variable.
             var revPath = paths[i];
             // Count of expansions done for this variable.
             var count = expansions[name];
             while (count--) {
-              var p = revPath.rest.reverse();
+              var p = prefix.concat(revPath.rest.reverse());
               var term = simpler.get(p);
               // Do a beta reduction if possible.
               if (term instanceof Call && term.fn instanceof Lambda) {
                 simpler = rules.simpleApply(simpler, p);
                 // If successful go up one level in the parse tree.
-                revPath = revPath.rest;
+              revPath = revPath.rest;
               } else {
                 break;
               }
@@ -6004,11 +6015,27 @@ const ruleInfo = {
           }
         }
       }
-      const info = resolveToFactInfo(eqn_arg);
-      const after = (info && info.afterMatch) || function(x) { return x; };
-      const next = after(simpler);
-      // Do the actual replacement.
-      const result = rules.replace(step, path, next);
+      // Uncomment these lines to restore afterMatch functionality:
+      // const info = resolveToFactInfo(eqn_arg);
+      // const after = (info && info.afterMatch) || function(x) { return x; };
+      // simpler = after(simpler);
+      if (hasFunSubst) {
+        // The approach here is to back reduce everywhere in the RHS
+        // of the schema after substitution.
+        // The usual simplifySite method does not provide access to the
+        // path, which is needed by backReducer.
+        const tryBack = function(term, rpath) {
+          const next = rules.backReduce(simpler,
+                                        (simpler.asPath('/rt/right')
+                                         .concat(rpath.reverse())));
+          if (next !== simpler) {
+            simpler = next;
+            return true;
+          }
+        };
+        while (simpler.get('/rt/right').searchMost(tryBack)) {}
+      }
+      const result = rules.replace(step, path, simpler);
       return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
     },
     inputs: {site: 1, equation: 3},
@@ -6606,8 +6633,8 @@ const ruleInfo = {
     description: 'rename and reduce'
   },
 
-   // Prove an equation asserting that two chains of conjunctions are
-   // equal by showing that their schemas are a tautology.
+  // Prove an equation asserting that two chains of conjunctions are
+  // equal by showing that their schemas are a tautology.
   equalConjunctions: {
     action: function(equation) {
       var termMap = new Toy.TermMap();
