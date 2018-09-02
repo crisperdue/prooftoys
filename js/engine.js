@@ -2176,7 +2176,7 @@ var factProperties = {
  *   as the interactive auto-simplifier.
  * afterMatch: if given, a function that a rewrite runs after
  *   substitution, interactively or not, taking the resulting
- *   equation step as its argument.
+ *   equation step as its argument.  This is currently disabled.
  * labels: Object/set of label names.  If given as a string, parses
  *   space-separated parts into a set.  Currently just "generalMode"
  *   for desimplifiers to be offered in "general" mode.
@@ -4811,11 +4811,6 @@ const ruleInfo = {
               .andThen('rewrite', '/right', 'not (a & b) == not a | not b')
               .andThen('instMultiVars', {p: 'negate p', q: 'negate q'})
               .andThen('simplifySite', ''));
-    },
-    converse: {
-      afterMatch: function(eqn) {
-        return rules.reduceAll(eqn, '/right');
-      }
     }
   },
 
@@ -7162,25 +7157,6 @@ var logicFacts = {
               .andThen('apply', '/right')
               .rewrite('/right', 'x != y == not (x = y)')
               .andThen('rewriteOnlyFrom', '/right/arg', all));
-    },
-    afterMatch: function(eqn) {
-      const schema = 'exists p == not (forall q)';
-      const map = eqn.matchSchema(schema);
-      if (map) {
-        const p = map.p;
-        const q = map.q;
-        if (p instanceof Lambda && q instanceof Lambda) {
-          const xformer = function(term) {
-            return (rules.eqSelf(term)
-                    .andThen('changeVar', '/right', p.bound)
-                    .andThen('reduceAll', '/right'));
-          }
-          const qPath = termify(schema).pathTo('q');
-          return convert(eqn, qPath, xformer);
-        }
-      }
-      // else
-      return eqn;
     },
     labels: 'generalMode',
     desimplifier: true
