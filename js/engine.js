@@ -7097,6 +7097,15 @@ var logicFacts = {
     }
   },
 
+  'not (a != b) == (a = b)': {
+    proof: function() {
+      return (rules.fact('a != b == not (a = b)')
+              .rewrite('a == b == (not a == not b)')
+              .andThen('simplify', '/right'));
+    },
+    simplifier: true
+  },
+
   'x = x == T': {
     proof: function() {
       return (rules.eqSelf('x')
@@ -7160,6 +7169,14 @@ var logicFacts = {
     },
     labels: 'generalMode',
     desimplifier: true
+  },
+
+  'not (exists p) == forall {x. not (p x)}': {
+    proof: function() {
+      return (rules.fact('exists p == not (forall {x. not (p x)})')
+              .andThen('rewriteOnly', '', 'a == b == (not a == not b)')
+              .andThen('simplifySite', '/right'));
+    }
   },
 
   // TODO: QM: Eta expand the LHS use of "p".
