@@ -2259,12 +2259,12 @@ function addSwappedFact(info) {
   if (stmt.isEquation()) {
     var swapped = Toy.commuteEqn(stmt);
     if (!isRecordedFact(swapped)) {
-      function proof() {
+      function proveSwapped() {
         return rules.fact(stmt).andThen('eqnSwap');
       }
       var labels2 = processLabels(info.converse && info.converse.labels);
       var after2 = info.converse && info.converse.afterMatch;
-      var info2 = {proof: proof,
+      var info2 = {proof: proveSwapped,
                    goal: swapped,
                    simplifier: !!info.desimplifier,
                    desimplifier: !!info.simplifier,
@@ -4706,25 +4706,17 @@ const ruleInfo = {
 
   // 2122
   existsXY: {
+    statement: 'exists {x. exists {y. p x y}} == exists {y. exists {x. p x y}}',
     proof: function() {
       const exAll = 'exists p == not (forall {x. not (p x)})';
-      const step1 = (rules.consider('exists {x. exists {y. p x y}}')
-                     .andThen('simplifySite', '/right', [exAll])
-                     .andThen('simpleApply', '/right/arg/arg/body/arg')
-                     .andThen('rewrite', '/right/arg/arg/body',
-                              'not (not p) == p')
-                     // TODO: Remove this use of changeVar when some
-                     //   general mechanism does this kind of renaming
-                     //   automatically.
-                     .andThen('changeVar', '/right/arg/arg/body/arg', 'y')
-                     .andThen('simpleApply', '/right/arg/arg/body/arg/body/arg')
-                     .andThen('rewrite', '/right/arg', rules.forallXY())
-                     .andThen('rewrite', '/right/arg/arg/body',
-                              'a == not (not a)')
-                     .andThen('simplifySite', '/right',
-                              ['not (forall {x. not (p x)}) == exists p'])
-                     );
-      return step1;
+      return (rules.consider('exists {x. exists {y. p x y}}')
+              .andThen('simplifySite', '/right', [exAll])
+              .andThen('rewrite', '/right/arg/arg/body',
+                       'not (not p) == p')
+              .andThen('rewrite', '/right/arg', rules.forallXY())
+              .andThen('rewrite', '/right',
+                       'not (forall p) == exists {x. not (p x)}')
+              .andThen('simplifySite', '/right'));
     }
   },
 
@@ -6925,8 +6917,7 @@ const existRules =
        const step1 = rules.exists1b();
        const step2 = rules.rewriteOnly(step1, '/right/arg/body',
                                        rules.axiom3a());
-       const step3 = rules.apply(step2, '/right/arg/body/arg/body/right')
-       return step3;
+       return step2;
      }
    },
 
@@ -7100,8 +7091,8 @@ var logicFacts = {
   'not (a != b) == (a = b)': {
     proof: function() {
       return (rules.fact('a != b == not (a = b)')
-              .rewrite('a == b == (not a == not b)')
-              .andThen('simplify', '/right'));
+              .rewrite('', 'a == b == (not a == not b)')
+              .andThen('simplifySite', '/right'));
     },
     simplifier: true
   },
