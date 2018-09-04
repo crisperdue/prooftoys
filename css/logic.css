@@ -697,6 +697,12 @@ span#leftNav {
     color: #777;
 }
 
+/* Fact or term within a step description */
+.proofStep .term {
+    font-size: 85%;
+    color: #a8a8a8;
+}
+
 .proofStep .stepNumber {
   /* Like stepInfo */
   color: #777;

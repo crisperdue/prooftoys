@@ -1867,8 +1867,9 @@ function expandMarkup(step, markup) {
  * Returns an HTML display of the given term, as in step descriptions.
  */
 function termDisplay(term) {
-  var text = term.toHtml();
-  return (text[0] === '(') ? text.slice(1, -1) : text;
+  const html = term.toHtml();
+  const text = (html[0] === '(') ? html.slice(1, -1) : html;
+  return '<span class=term>' + text + '</span>'
 }
 
 /**
