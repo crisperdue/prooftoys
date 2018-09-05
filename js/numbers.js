@@ -277,7 +277,7 @@ const idFacts =
      }
    },
    /*
-   {statement: 'exists1 {x. isAddIdentity x}',
+   {statement: 'exists1 isAddIdentity',
     proof: function() {
        const step1 = rules.addIdentity().andThen('toForall0', 'x');
        const step2 = rules.and(rules.fact('isAddIdentity 0'), step1);
@@ -285,7 +285,7 @@ const idFacts =
     }
    },
    */
-   {statement: 'exists1 {x. isMulIdentity x}',
+   {statement: 'exists1 isMulIdentity ',
     proof: function() {
        const step1 = rules.mulIdentity().andThen('toForall0', 'x');
        const step2 = rules.and(rules.fact('isMulIdentity 1'), step1);

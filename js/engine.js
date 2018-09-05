@@ -2287,7 +2287,7 @@ define('not', equal(F));
 define('!=', '{x. {y. not (x = y)}}');
 define('forall', '(=) {x. T}');
 define('exists', '{p. p != {x. F}}');
-define('exists1', '{p. exists {y. p = {x. x = y}}}');
+define('exists1', '{p. exists {x. p = {y. y = x}}}');
 defineCases('&', identity, '{x. F}');
 defineCases('|', allT, identity);
 defineCases('=>', identity, allT);
@@ -6901,18 +6901,16 @@ const existRules =
 
    // 5304
    {name: 'exists1b',
-    statement: 'exists1 {y. p y} == exists {y. p = {x. x = y}}',
+    statement: 'exists1 p == exists {x. p = {y. y = x}}',
     proof: function() {
-       var step = (rules.equivSelf('exists1 {y. p y}')
-                   .andThen('useDefinition', '/right/fn')
-                   .andThen('apply', '/right'));
-       return rules.r(rules.eta(), step, '/right/arg/body/left');
+       return (rules.equivSelf('exists1 p')
+               .andThen('apply', '/right'));
      }
    },
 
    // 5305
    {name: 'r5305',
-    statement: 'exists1 {y. p y} == exists {y. forall {z. p z == z = y}}',
+    statement: 'exists1 p == exists {x. forall {y. p y == y = x}}',
     proof: function() {
        const step1 = rules.exists1b();
        const step2 = rules.rewriteOnly(step1, '/right/arg/body',
@@ -6924,7 +6922,7 @@ const existRules =
    // Useful for showing a constant is unique, thus the "c" in the name.
    // 5306
    {name: 'exists1c',
-    statement: 'exists1 {y. p y} == exists {y. p y & forall {z. p z => z = y}}',
+    statement: 'exists1 p == exists {y. p y & forall {z. p z => z = y}}',
     proof: function() {
       const step1 = rules.r5305();
       const step2 = rules.rewrite(step1, '/right/arg/body/arg/body',
@@ -6935,14 +6933,14 @@ const existRules =
                               '(a => (b == c)) => (a => b == a => c)'));
       const rw = rules.rewriteOnlyFrom;
       const step5 = rw(step3, '/main/right/arg/body/right/arg/body', step4);
-      const step6 = rules.axiom4('{y. x = y} y').andThen('eqnSwap');
+      const step6 = rules.axiom4('{y. y = x} y').andThen('eqnSwap');
       const step7 = rules.replace(step5,
                                   '/main/right/arg/body/right/arg/body/left',
                                   step6);
       const step8 = rules.rewriteOnly(step5,
                                       '/main/right/arg/body/right',
                                       'existImplies');
-      const step10 = rules.fact('exists {x. x = y}');
+      const step10 = rules.fact('exists {y. y = x}');
       const step11 = (rules.trueBy(step8, '/main/right/arg/body/right/left',
                                    step10)
                       .andThen('simplifySite', ''));
@@ -6995,7 +6993,7 @@ const existRules =
   // This theorem aids in proving that a constant defined by a
   // property is unique.
    {name: 'uniqueTerm',
-    statement: 'p x & forall {y. p y => y = x} => exists1 {y. p y}',
+    statement: 'p x & forall {y. p y => y = x} => exists1 p',
     proof: function() {
       const eqn = rules.exists1c().andThen('eqnSwap');
       const map = {p: '{y. p y & forall {x. p x => x = y}}'};
