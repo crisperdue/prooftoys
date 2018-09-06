@@ -4011,10 +4011,8 @@ const ruleInfo = {
     },
     action: function(step, v_arg) {
       v = varify(v_arg);
-      const fact = (rules.implyForall()
-                    .andThen('changeVar', '/right/right/arg', v));
       const step1 = rules.toForall0(step, v);
-      const step2 = rules.rewriteOnly(step1, '', fact);
+      const step2 = rules.rewriteOnly(step1, '', rules.implyForall());
       return step2.justify('toForall1', arguments, [step]);
     },
     inputs: {step: 1, varName: 2},
@@ -4722,15 +4720,15 @@ const ruleInfo = {
 
   // Subsumes 2133
   orForall: {
-    statement: 'forall {x. p | q x} == (p | forall {x. q x})',
+    statement: 'forall {x. p | q x} == (p | forall q)',
     proof: function() {
-      var taut1 = rules.tautology('T | a');
+      var or = rules.tautology('T | a');
       // None of these steps are conditionals, so no hypotheses anywhere.
-      var all = rules.instVar(taut1, 'q x', 'a').andThen('toForall0', 'x');
-      var or = rules.instVar(taut1, 'forall {x. q x}', 'a');
-      var and = rules.and(all, or);
+      var all = or.andThen('instVar', 'q x', 'a').andThen('toForall0', 'x');
+      var and = rules.and(all, or.andThen('instVar', 'forall q', 'a'));
       var trueCase = rules.forwardChain(and, 'a & b => (a == b)');
       var falseCase = (rules.eqSelf('forall {x. q x}')
+                       .andThen('rewrite', '/right/arg', rules.eta())
                        .andThen('rewriteOnly', '/right', 'p == F | p')
                        .andThen('rewriteOnly', '/left/arg/body', 'p == F | p'));
       return rules.casesTF(trueCase, falseCase, 'p');
@@ -4745,7 +4743,7 @@ const ruleInfo = {
   // particular it uses toForall only on an entire step (in orForall),
   // so it could be used to build Rule R'.
   implyForall: {
-    statement: 'forall {x. p => q x} == (p => forall {x. q x})',
+    statement: 'forall {x. p => q x} == (p => forall q)',
     proof: function() {
       var taut = 'not a | b == a => b';
       return (rules.orForall()
@@ -4766,8 +4764,7 @@ const ruleInfo = {
                      .andThen('rewriteOnly', '', 'not a == (a == F)'));
       var step1 = rules.orForall().andThen('instVar', '{x. F}', 'q');
       var step2 = rules.simpleApply(step1, step1.find(term));
-      var step3 = rules.simpleApply(step2, step2.find(term));
-      var step4 = rules.rewriteOnly(step3, '/right/right', falsity);
+      var step4 = rules.rewriteOnly(step2, '/right/right', falsity);
       var step5 = (step4.andThen('simplifySite', '/right')
                    .andThen('simplifySite', '/left/arg/body'));
       return step5;
@@ -4869,7 +4866,6 @@ const ruleInfo = {
       var fact = rules.fact('not (forall {x. not (p x)}) == exists p');
       return (rules.implyForall()
               .andThen('instMultiVars', {p: 'not q', q: '{x. not (p x)}'})
-              .andThen('apply', '/right/right/arg/body')
               .andThen('apply', '/left/arg/body/right')
               .andThen('rewrite', '/right', 'not a => b == not b => a')
               .andThen('rewrite', '/left/arg/body',
@@ -7197,7 +7193,7 @@ var logicFacts = {
   },
 
   // This has the core reasoning for 5242, existential generalization
-  // (EGen / witnessExists).
+  // (EGen / witnessExists / 2126).
   //
   // TODO: Consider adding a rule that converts an arbitrary step with
   //   selected term to an application of a lambda to the selected term.
