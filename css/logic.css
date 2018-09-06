@@ -60,7 +60,7 @@ h4:after {
 body {
   margin: 0 20px;
   text-align: left;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: Roboto, sans-serif;
   /*
    * Allow extra space for math formatting such as subscripts.
    * The plain number is inherited as-is, where a percentage or
@@ -694,13 +694,17 @@ span#leftNav {
      */
     margin: 0 auto 0 1em;
     white-space: nowrap;
-    color: #777;
+    font-family: Roboto, sans-serif;
+    font-size: 90%;
+    color: #aaa;
 }
 
 /* Fact or term within a step description */
 .proofStep .term {
-    font-size: 85%;
-    color: #a8a8a8;
+    font-family: StixGeneral, times;
+    /* Temporary until these terms have internal styling. */
+    font-style: italic;
+    color: #bbb;
 }
 
 .proofStep .stepNumber {
@@ -759,8 +763,8 @@ span.stepReference.referenced {
 }
 
 /* Rule name (or fact used for rewriting) */
-span.ruleName {
-  font-style: italic;
+span.ruleName.link {
+    color: #88f;
 }
 
 /* To prevent clicks in rapid succession from highlighting text
