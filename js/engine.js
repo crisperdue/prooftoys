@@ -4735,6 +4735,20 @@ const ruleInfo = {
     }
   },
 
+  existsEquivAnd: {
+    statement: 'exists {x. p & q x} == p & exists q',
+    proof: function() {
+      const facts = [
+                     'not (forall p) == exists {x. not (p x)}',
+                     'not (a | b) == not a & not b'
+                     ]
+      return (rules.fact('orForall')
+              .andThen('instMultiVars', {p: 'not p', q: 'negate q'})
+              .andThen('rewrite', '', '(a == b) == (not a == not b)')
+              .andThen('simplifySite', '', basicSimpFacts.concat(facts)));
+    }
+  },
+
   // This is probably the most useful form of quantifier remover that
   // requires a variable to be not free.  It does not appear in the
   // book, but the numbered ones are corollaries of it.
@@ -4821,7 +4835,7 @@ const ruleInfo = {
   },
 
   // 2138
-  andExists: {
+  existsAnd: {
     statement: 'exists {x. p x & q x} => exists {x. p x} & exists {x. q x}',
     proof: function() {
       var notAll = 'not (forall p) == exists {x. not (p x)}'
