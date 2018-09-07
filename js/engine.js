@@ -4726,7 +4726,7 @@ const ruleInfo = {
   },
 
   // Subsumes 2133
-  orForall: {
+  forallOrEquiv: {
     statement: 'forall {x. p | q x} == (p | forall q)',
     proof: function() {
       var or = rules.tautology('T | a');
@@ -4749,7 +4749,7 @@ const ruleInfo = {
                      'not (forall p) == exists {x. not (p x)}',
                      'not (a | b) == not a & not b'
                      ]
-      return (rules.fact('orForall')
+      return (rules.fact('forallOrEquiv')
               .andThen('instMultiVars', {p: 'not p', q: 'negate q'})
               .andThen('rewrite', '', '(a == b) == (not a == not b)')
               .andThen('simplifySite', '', basicSimpFacts.concat(facts)));
@@ -4761,13 +4761,13 @@ const ruleInfo = {
   // book, but the numbered ones are corollaries of it.
   //
   // The proof does not use any rules with hypotheses, and in
-  // particular it uses toForall only on an entire step (in orForall),
+  // particular it uses toForall only on an entire step (in forallOrEquiv),
   // so it could be used to build Rule R'.
   implyForall: {
     statement: 'forall {x. p => q x} == (p => forall q)',
     proof: function() {
       var taut = 'not a | b == a => b';
-      return (rules.orForall()
+      return (rules.forallOrEquiv()
               .andThen('instVar', 'not p', 'p')
               .andThen('rewriteOnly', '/right', taut)
               .andThen('rewriteOnly', '/left/arg/body', taut));
@@ -4783,7 +4783,7 @@ const ruleInfo = {
       var term = '{x. F} x';
       var falsity = (rules.forallXF()
                      .andThen('rewriteOnly', '', 'not a == (a == F)'));
-      var step1 = rules.orForall().andThen('instVar', '{x. F}', 'q');
+      var step1 = rules.forallOrEquiv().andThen('instVar', '{x. F}', 'q');
       var step2 = rules.simpleApply(step1, step1.find(term));
       var step4 = rules.rewriteOnly(step2, '/right/right', falsity);
       var step5 = (step4.andThen('simplifySite', '/right')
@@ -4828,6 +4828,8 @@ const ruleInfo = {
 
   // 2132
   forallOr: {
+    // TODO: Modernize statement and probably also proof, removing
+    //   some {x. p x} and similar.
     statement: 'forall {x. p x} | forall {x. q x} => forall {x. p x | q x}',
     proof: function() {
       var step1 = (rules.fact('forall p => p x')
