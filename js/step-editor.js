@@ -1992,8 +1992,9 @@ RuleMenu.prototype.offerableFacts = function() {
             return;
           }
           if (info.labels.higherOrder && mode != 'all') {
-            // Do not offer facts with higher-order variables until
-            // we can match them properly when generating the menu.
+            // Do not offer facts with higher-order variables until we
+            // can match their types properly when generating the
+            // menu.
             return;
           }
           if (expr.matchSchema(lhs)) {

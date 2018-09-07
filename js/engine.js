@@ -2328,10 +2328,12 @@ define('negate', '{p. {x. not (p x)}}');
 // This is structured as a map from the name of an inference rule or
 // theorem to properties of the rule or theorem.
 //
-// Properties here for each name are as follows.  These properties are
-// available directly when calling addRule.  In that case, pass "name"
-// as a property along with the others.  When calling addRule, unnamed
-// facts and definitions are also supported through the properties.
+// The following rule properties are available directly when calling
+// addRule.  In that case, pass "name" as a property along with the
+// others.  When calling addRule, unnamed facts and definitions are
+// also supported through the properties.
+//
+// Properties:
 //
 // action: function implementing the inference rule.
 //
@@ -2444,6 +2446,11 @@ define('negate', '{p. {x. not (p x)}}');
 //   or function to compute it, as in rules.fact.  If beginning with
 //   "=", name of a "step formatter" in stepFormatters follows.
 //   Either sort of function receives the step as argument.
+//
+// labels: space-separated list of words to categorize the rule,
+//   influencing the rules modes in which it will be offered.
+//   Defaults to "basic" if not given.  See processLabels and
+//   RuleMenu.offerApproved for more details.
 //
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
