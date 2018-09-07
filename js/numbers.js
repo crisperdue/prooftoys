@@ -224,7 +224,7 @@ const idFacts =
        const xType = factX1.andThen('forwardChain', 'a => b & c => (a => b)');
        const factX = (factX1.andThen('forwardChain',
                                       'a => b & c => (a => c)')
-                       .andThen('instForall', '/rt', 'y')
+                      .andThen('instForall', '/rt', 'y')
                       .andThen('asAssumption', '(R y)'));
        const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
                       .andThen('rewrite', '/rt/left', 'x + y = y + x'));
@@ -854,7 +854,7 @@ var simplifiersInfo = {
   simplifyFocalPart: {
     action: function(step) {
       var visPath = step.pathToFocalPart();
-        var result = rules._simplifySite(step, visPath);
+      var result = rules._simplifySite(step, visPath);
       return result.justify('simplifyFocalPart', arguments, [step]);
     },
     inputs: {step: 1},
@@ -1908,96 +1908,96 @@ var fractionsInfo = {
 
 //// Algebra facts
 
-var basicFacts = {
-
-  // A real number exists.  Equivalently exists {x. R x}.
-  'exists R': {
+const basicRealFacts =
+  [
+   // A real number exists.  Equivalently exists {x. R x}.
+   {statement: 'exists R',
     proof: function() {
-      return (rules.fact('p x => exists p')
-              // This line helps simplifyFocalPart to simplify the
-              // assumptions and also helps the display to show
-              // the user what is going on.
-              .andThen('asImplication')
-              .andThen('instMultiVars', {x: '0', 'p': 'R'})
-              .andThen('simplifyFocalPart'));
-    }
-  },
+       return (rules.fact('p x => exists p')
+               // This line helps simplifyFocalPart to simplify the
+               // assumptions and also helps the display to show
+               // the user what is going on.
+               .andThen('asImplication')
+               .andThen('instMultiVars', {x: '0', 'p': 'R'})
+               .andThen('simplifyFocalPart'));
+     }
+   },
   
-  '@R a => a != none': {
+   {statement: '@R a => a != none',
     proof: function() {
-      var asm = rules.assume('a = none');
-      return (rules.fact('not (R none)')
-              .rplace('/arg/arg', rules.eqnSwap(asm))
-              // Just to make the display clearer:
-              .andThen('asImplication')
-              .andThen('rewriteOnly', '', 'a => not b == b => not a')
-              .andThen('simplifySite', '/right'));
-    }
-  },
+       var asm = rules.assume('a = none');
+       return (rules.fact('not (R none)')
+               .rplace('/arg/arg', rules.eqnSwap(asm))
+               // Just to make the display clearer:
+               .andThen('asImplication')
+               .andThen('rewriteOnly', '', 'a => not b == b => not a')
+               .andThen('simplifySite', '/right'));
+     }
+   },
 
-  '@neg x = -1 * x': {
+   {statement: '@neg x = -1 * x',
     proof: function() {
-      return (rules.consider('neg x')
-              .andThen('useDefinition', '/right')
-              .andThen('apply', '/right'));
-    }
-  },
+       return (rules.consider('neg x')
+               .andThen('useDefinition', '/right')
+               .andThen('apply', '/right'));
+     }
+   },
 
-  'a + neg a = 0': {
+   {statement: 'a + neg a = 0',
     simplifier: true,
     proof: function() {
-      return rules.eqSelf('a + neg a')
-      .rewrite('/main/right/left', 'a = 1 * a')
-      .rewrite('/main/right/right', '@ neg a = -1 * a')
-      .rewrite('/main/right', 'a * c + b * c = (a + b) * c')
-      .andThen('arithmetic', '/main/right/left')
-      .rewrite('/main/right', '0 * a = 0');
-    }
-  },
-  'a = b == b = a': {
+       return rules.eqSelf('a + neg a')
+       .rewrite('/main/right/left', 'a = 1 * a')
+       .rewrite('/main/right/right', '@ neg a = -1 * a')
+       .rewrite('/main/right', 'a * c + b * c = (a + b) * c')
+       .andThen('arithmetic', '/main/right/left')
+       .rewrite('/main/right', '0 * a = 0');
+     }
+   },
+   {statement: 'a = b == b = a',
     proof: function() {
-      return rules.equalitySymmetric();
-    },
+       return rules.equalitySymmetric();
+     },
     noSwap: true,
     labels: 'algebra'
-  },
+   },
 
   // Addition
-  'a + b + c = a + c + b': {
+   {statement: 'a + b + c = a + c + b',
     proof: function() {
-      var step = rules.consider('a + b + c')
-      .rewrite('/main/right', 'a + b + c = a + (b + c)')
-      .rewrite('/main/right/right', 'a + b = b + a')
-      .rewrite('/main/right', 'a + (b + c) = a + b + c');
-      return step;
-    }
-  },
-  'a + b + c = a + (c + b)': {
+       var step = rules.consider('a + b + c')
+       .rewrite('/main/right', 'a + b + c = a + (b + c)')
+       .rewrite('/main/right/right', 'a + b = b + a')
+       .rewrite('/main/right', 'a + (b + c) = a + b + c');
+       return step;
+     }
+   },
+   {statement: 'a + b + c = a + (c + b)',
     proof: function() {
-      return rules.consider('a + b + c')
-      .rewrite('/main/right', 'a + b + c = a + c + b')
-      .rewrite('/main/right', 'a + b + c = a + (b + c)');
-    }
-  },
+       return rules.consider('a + b + c')
+       .rewrite('/main/right', 'a + b + c = a + c + b')
+       .rewrite('/main/right', 'a + b + c = a + (b + c)');
+     }
+   },
 
-  // Multiplication
-  'a * b * c = a * c * b': {
+   // Multiplication
+   {statement: 'a * b * c = a * c * b',
     proof: function() {
-      var step = rules.consider('a * b * c')
-      .rewrite('/main/right', 'a * b * c = a * (b * c)')
-      .rewrite('/main/right/right', 'a * b = b * a')
-      .rewrite('/main/right', 'a * (b * c) = a * b * c');
-      return step;
-    }
-  },
-  'a * b * c = a * (c * b)': {
+       var step = rules.consider('a * b * c')
+       .rewrite('/main/right', 'a * b * c = a * (b * c)')
+       .rewrite('/main/right/right', 'a * b = b * a')
+       .rewrite('/main/right', 'a * (b * c) = a * b * c');
+       return step;
+     }
+   },
+   {statement: 'a * b * c = a * (c * b)',
     proof: function() {
-      return (rules.fact('a * b * c = a * (b * c)')
-              .rewrite('/main/right/right', 'a * b = b * a'));
-    }
-  }
-};
-addFactsMap(basicFacts);
+       return (rules.fact('a * b * c = a * (b * c)')
+               .rewrite('/main/right/right', 'a * b = b * a'));
+     }
+   }
+   ];
+addRules(basicRealFacts);
 
 // Distributivity
 var distribFacts = {
@@ -2188,7 +2188,7 @@ var equivalences = {
   'a = b == a + c = b + c': {
     proof: function() {
       const forward = (rules.assume('a = b')
-                     .andThen('applyToBothWith', '+', 'c')
+                       .andThen('applyToBothWith', '+', 'c')
                        .andThen('rewriteOnly', '', 'a == T => a'));
       var back = (rules.abcPlus()
                   .andThen('extractHyp', 'a + c = b + c'))
