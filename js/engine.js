@@ -4745,14 +4745,12 @@ const ruleInfo = {
   existsEquivAnd: {
     statement: 'exists {x. p & q x} == p & exists q',
     proof: function() {
-      const facts = [
-                     'not (forall p) == exists {x. not (p x)}',
-                     'not (a | b) == not a & not b'
-                     ]
+      const facts = ['not (a | b) == not a & not b'];
       return (rules.fact('forallOrEquiv')
               .andThen('instMultiVars', {p: 'not p', q: 'negate q'})
               .andThen('rewrite', '', '(a == b) == (not a == not b)')
-              .andThen('simplifySite', '', basicSimpFacts.concat(facts)));
+              .andThen('rewrite', '/left', 'not (forall p) == exists {x. not (p x)}')
+              .andThen('simplifySite', '', facts.concat(basicSimpFacts)));
     }
   },
 
@@ -4830,11 +4828,10 @@ const ruleInfo = {
   forallOr: {
     // TODO: Modernize statement and probably also proof, removing
     //   some {x. p x} and similar.
-    statement: 'forall {x. p x} | forall {x. q x} => forall {x. p x | q x}',
+    // statement: 'forall {x. p x} | forall {x. q x} => forall {x. p x | q x}',
     proof: function() {
-      var step1 = (rules.fact('forall p => p x')
-                   .andThen('rewriteOnly', '/left/arg', 'p = {x. p x}'));
-      var step2 = step1.andThen('instVar', 'q', 'p');
+      var step1 = rules.fact('forall p => p x');
+      var step2 = rules.fact('forall q => q x');
       var step3 = rules.p2(step1, step2,
                            '(a => b) & (c => d) => (a | c => b | d)');
       var step4 = rules.toForall0(step3, 'x');
@@ -4845,22 +4842,17 @@ const ruleInfo = {
 
   // 2138
   existsAnd: {
-    statement: 'exists {x. p x & q x} => exists {x. p x} & exists {x. q x}',
+    statement: 'exists {x. p x & q x} => exists p & exists q',
     proof: function() {
-      var notAll = 'not (forall p) == exists {x. not (p x)}'
-      var reducers = [{pure: true, apply: tryReduce},
-        'not (not a) = a',
-        'not (not a | not b) == a & b'];
+      const facts = [
+       'not (a | b) == not a & not b'
+       ];
       return (rules.forallOr()
               .andThen('instMultiVars', {p: 'negate p', q: 'negate q'})
-              .andThen('simplifySite', '', ['negate p x == not (p x)'])
               .andThen('rewriteOnly', '', 'a => b == not b => not a')
-              .andThen('rewriteOnly', '/left', notAll)
-              .andThen('rewriteOnly', '/right', 'not (a | b) == not a & not b')
-              .andThen('rewriteOnly', '/right/right', notAll)
-              .andThen('rewriteOnly', '/right/left', notAll)
-              .andThen('_simplifySite', '', reducers)
-              );
+              .andThen('rewriteOnly', '/left',
+                       'not (forall p) == exists {x. not (p x)}')
+              .andThen('simplifySite', '', facts.concat(basicSimpFacts)));
     }
   },
 
