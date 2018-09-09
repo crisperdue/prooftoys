@@ -4802,9 +4802,30 @@ const ruleInfo = {
   },
 
   // 2129
-  // TODO: Prove this.  It is a bit tedious, but easy.
   forallAnd: {
     statement: 'forall {x. p x & q x} == forall p & forall q',
+    proof: function() {
+      const andAB = (rules.fact('forall p => p x')
+                     .andThen('instMultiVars', {p: '{x. p x & q x}'})
+                     .andThen('simpleApply', '/right'));
+      const a = rules.forwardChain(andAB, 'a => b & c => (a => b)');
+      const b = rules.forwardChain(andAB, 'a => b & c => (a => c)');
+      const fa = rules.toForall1(a, 'x');
+      const fb = rules.toForall1(b, 'x');
+      const fafb = rules.makeConjunction(fa, fb);
+
+      const px = (rules.fact('a & b => a')
+                  .andThen('instMultiVars', {a: 'forall p', b: 'forall q'})
+                  .andThen('p2', rules.fact('forall p => p x'),
+                           '(a => b) & (b => c) => (a => c)'));
+      const qx = (rules.fact('a & b => b')
+                  .andThen('instMultiVars', {a: 'forall p', b: 'forall q'})
+                  .andThen('p2', rules.fact('forall q => q x'),
+                           '(a => b) & (b => c) => (a => c)'));
+      const fab = (rules.makeConjunction(px, qx)
+                   .andThen('toForall1', 'x'));
+      return rules.p2(fafb, fab, '(a => b) & (b => a) => (a == b)');
+    }
   },
 
   // 2130
