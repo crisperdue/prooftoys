@@ -821,10 +821,10 @@ let pid = '' + Math.floor(Math.random() * 1e15);
 // write operations work on the entire document as a single atomic
 // operation.
 //
-// The "pid" table stores information for each pid.  For each pid and
-// ID of editable proof editor in that context it has the associated
-// document name.  All "pid" information is removed when the pid's
-// context is unloaded.
+// The "pid" table stores information for each pid.  For each pair of
+// pid and ID of editable proof editor in that context it has the
+// associated document name.  All "pid" information is removed when
+// the pid's context is unloaded.
 //
 // The "ped" table stores persistent state per proof editor ID,
 // independent of pid.  This is currently an associated document name,
@@ -835,7 +835,7 @@ let pid = '' + Math.floor(Math.random() * 1e15);
 // otherwise.  All such operations do nothing if the name is not
 // valid.
 //
-// A document is held by zero or more "using" prof editors and pids.
+// A document is held by zero or more "using" proof editors and pids.
 // The document is held iff its name is the document name of an editor
 // in some page whose pid other than the current one.
 //
@@ -952,21 +952,25 @@ function noteState(ed, content) {
 
 /**
  * Returns true if the named document has at least one recorded user
- * in some other context, otherwise false.
+ * in some other pid or proof editor, otherwise false.
  */
 function isDocHeldFrom(name, ped) {
   const pidPattern = /^Toy:pid:(.*?):(.*)/;
   const id = ped.proofEditorId;
+  let found = false;
+  let matches = 0;
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     const match = key.match(pidPattern);
+    match && matches++;
     const docName = jsonParse(localStorage.getItem(key)).docName;
     if (match && name === docName &&
         (pid !== match[1] || id !== match[2])) {
-      return true;
+      found = true;
     }
   }
-  return false;
+  console.log('Found', matches, 'pid entries');
+  return found;
 }
 
 /**
@@ -982,6 +986,7 @@ function releaseThisPid() {
     }
   }
   keys.forEach(function(k) { localStorage.removeItem(k); });
+  localStorage.removeItem('Toy:beat:' + pid);
 }
 
 $(window).on('unload', releaseThisPid);
@@ -1979,6 +1984,81 @@ function copyToClipboard(text) {
     }
   }
 }
+
+
+//// PID heartbeat
+
+/**
+ * Cleans up all localStorage data associated with any pids that
+ * have not issued a heartbeat by updating Toy:pid:<pid> within the
+ * last 30 seconds.
+ *
+ * In theory the unload handler does this, but sometimes that is
+ * insufficient, perhaps when using the debugger.
+ */
+function removeOldPidData() {
+  const store = localStorage;
+  const now = Date.now();
+  // Both of the following map from pid to full key.
+  // The pid values are all strings.
+  const beatKeys = new Map();
+  const statusKeys = new Map();
+  // Set of string pid values with recent heartbeats.
+  const currentPids = new Set();
+  // Iterate over all data, recording everything pid-related
+  // and particularly noting pids that have heartbeats within
+  // the last 30 seconds.
+  for (let i = 0; i < store.length; i++) {
+    const key = store.key(i);
+    const matches = key.match(/^Toy:beat:(.*)/);
+    if (matches) {
+      // This is a heartbeat item.  Add it to beatKeys and potentially
+      // currentPids.
+      const pid = matches[1];
+      beatKeys.set(pid, key);
+      const time = Number(store.getItem(key));
+      if (now < time + 30000) {
+        currentPids.add(pid);
+      }
+    } else {
+      const matches = key.match(/^Toy:pid:(.*?):/);
+      if (matches) {
+        // This is a pid data item; add it to statusKeys.
+        const pid = matches[1];
+        statusKeys.set(pid, key);
+      }
+    }
+  }
+  // Given a full key and pid that came from it, removes it
+  // unless the pid is current.
+  function removeIfOutdated(fullKey, pid) {
+    if (!currentPids.has(pid)) {
+      store.removeItem(fullKey);
+      const value = localStorage.getItem(fullKey);
+      console.log('Removing info for old pid:', fullKey, '=', value)
+      if (fullKey.startsWith('Toy:beat:')) {
+        console.log('Last heartbeat at', new Date(value));
+      }
+    }
+  }
+  // Now we do all modifications in a batch after iterating.
+  statusKeys.forEach(removeIfOutdated);
+  beatKeys.forEach(removeIfOutdated);
+}
+
+/**
+ * Records that this pid is active.
+ */
+function heartbeat() {
+  localStorage.setItem('Toy:beat:' + pid, '' + Date.now());
+}
+
+// Immediately issue a heartbeat and clean up old stuff.
+heartbeat();
+removeOldPidData();
+
+// Then repeat the routine every ten seconds.
+window.setInterval(function() { heartbeat(); removeOldPidData(); }, 10000);
 
 
 //// Export public names.
