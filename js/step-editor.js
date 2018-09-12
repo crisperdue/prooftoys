@@ -101,7 +101,7 @@ function ProofEditor() {
   // at the end of this $header div.
   let $header =
     ($('<div class=proofEditorHeader>')
-     .append('<b style="font-size:larger">Problem work area</b>'));
+     .append('<b>Worksheet "<span class=wksName></span>"</b>'));
   let $readOnly =
     $('<p class=ifReadOnly><i><b style="color:red">Note:</b>' +
       ' This display is read-only due to editing' +
@@ -317,10 +317,7 @@ function buildProofButtons(editor) {
     });
 
   $wksButton.on('click', function() {
-      let wksControls = editor._wksControls;
-      wksControls.toggle();
-      // TODO: Move this action into setDocumentName or an observer.
-      wksControls.setDocName(editor.getDocumentName());
+      editor._wksControls.toggle();
     });
   $clearProof.on('click', function() {
       if (window.confirm('Do you really want to clear the proof?')) {
@@ -353,7 +350,6 @@ function buildProofButtons(editor) {
  * show(): Shows the controls.
  * getProofText(): Returns the text content of the proof state area.
  * setProofText(text): Sets the text content of the proof state area.
- * setDocName(name): Sets the document name display in the controls area.
  */
 function buildWksControls(editor) {
   const $outermost = $('<div class="wksControlsOuter transFade hidden">');
@@ -464,7 +460,7 @@ function buildWksControls(editor) {
     $area.append($docList);
     // Then add back names of all documents.
     Toy.lsDocs().sort().forEach(function(name) {
-        if (name === editor._documentName) {
+        if (name === editor.getDocumentName()) {
           return;
         }
         const $div = $('<div class=docName>');
@@ -543,8 +539,6 @@ function buildWksControls(editor) {
         Toy.writeDoc(name, {proofState: editor.getStateString()});
         $message.text('Saved worksheet as "' + name + '"');
         toggleControl($message);
-        // TODO: Move this line into setDocumentName or an observer.
-        $controls.find('.wksName').text(editor.getDocumentName());
       }
     });
   $copyTo.on('click', '.go', function() {
@@ -559,9 +553,6 @@ function buildWksControls(editor) {
       const text = $(this).text();
       const success = editor.openDoc(text);
       if (success) {
-        // In principle this would be triggered by observation of
-        // of the document name.
-        $controls.find('.wksName').text(editor.getDocumentName());
         $openersArea.toggleClass('hidden', true);
       } else {
         Toy.alert('Could not open worksheet ' + text);
@@ -569,7 +560,7 @@ function buildWksControls(editor) {
     });
   $deletersArea.on('click', '.docName', function() {
       const name = $(this).text();
-      if (name === this._documentName) {
+      if (name === editor.getDocumentName()) {
         $message.text('Cannot delete the current document.');
       } else {
         Toy.rmDoc(name);
@@ -622,9 +613,6 @@ function buildWksControls(editor) {
     },
     setProofText: function(text) {
       $stateArea.val(text);
-    },
-    setDocName: function(name) {
-      $outermost.find('.wksName').text(editor.getDocumentName());
     }
   };
 
@@ -647,6 +635,7 @@ function makeButton(label, classes) {
 ProofEditor.prototype.setDocumentName = function(name) {
   const self = this;
   self._documentName = name;
+  self.containerNode.find('.wksName').text(name);
   // Remember the state of this editor.
   // TODO: Replace the following with some form of state observation.
   if (self.proofDisplay.isEditable()) {
