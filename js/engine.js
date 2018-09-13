@@ -3499,7 +3499,6 @@ const baseRules = {
     },
     action: function(step, path, expr_arg) {
       var expr = termify(expr_arg);
-      var target = step.get(path);
       var step1 = rules.useDefinition(step, path);
       var step2 = rules.applyBoth(step1, expr);
       var step3 = rules.apply(step2, '/rt/left');
@@ -4864,7 +4863,7 @@ const ruleInfo = {
   forallOr: {
     // TODO: Modernize statement and probably also proof, removing
     //   some {x. p x} and similar.
-    // statement: 'forall {x. p x} | forall {x. q x} => forall {x. p x | q x}',
+    statement: 'forall p | forall q => forall {x. p x | q x}',
     proof: function() {
       var step1 = rules.fact('forall p => p x');
       var step2 = rules.fact('forall q => q x');
