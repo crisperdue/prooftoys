@@ -4690,6 +4690,21 @@ const ruleInfo = {
     labels: 'uncommon'
   },
 
+  // 2104
+  r2104: {
+    statement: 'forall {x. p x => q x} => (forall p => forall q)',
+    proof: function() {
+      const fact1 = rules.fact('forall p => p x');
+      const step1 = (fact1.andThen('instMultiVars', {p: '{x. p x => q x}'})
+                     .andThen('simpleApply', '/right'));
+      const step2 = (rules.p2(step1, fact1,
+                              '(a => (b => c)) ∧ (d => b) => (a ∧ d => c)')
+                     .andThen('toForall1', 'x')
+                     .andThen('extractHyp', 'forall p'));
+      return step2;
+    }
+  },
+
   // 2121
   //
   // NOTE: This and its converse both introduce specific bound variables.
