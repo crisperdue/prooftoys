@@ -635,6 +635,7 @@ function makeButton(label, classes) {
 ProofEditor.prototype.setDocumentName = function(name) {
   const self = this;
   self._documentName = name;
+  // Set the document name into all nodes of class wksName.
   self.containerNode.find('.wksName').text(name);
   // Remember the state of this editor.
   // TODO: Replace the following with some form of state observation.

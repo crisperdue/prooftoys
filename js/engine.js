@@ -129,8 +129,17 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
     }
   }
   var step = this;
-  // At this spot we could conditionally run arrangeAsms, but omitting
-  // that automagic behavior for now.
+  // At this spot we could conditionally run arrangeAsms in case the
+  // step being justified is conditional.  Omitting that automagic
+  // behavior for now.
+  //
+  // TODO: Consider modifying arrangeAsms to flag its result as
+  //   "arrangedAsms", and to check on entry if a step's asms are
+  //   flagged.  If so it would immediately return its input
+  //   unmodified.  Presumably arrangeAsms is a pure
+  //   rewriter/simplifier and thus does not introduce conditional
+  //   steps, so calling it here would not result in recursive calls
+  //   to it.
 
   // Allocate a new object to be the new Step.
   var result = (step instanceof Call
@@ -2774,6 +2783,15 @@ var primitives = {
     labels: 'uncommon'
   },
 
+  // TODO: LOGIC: Consider the possibility of instead saying that
+  //     p T & p F => p x
+  //   and defining forall:bool->bool as {p. p T & p F}.
+  //   Most uses of axiom1 are immediately followed by instEqn, and
+  //   use the definition of forall:bool->bool.
+  //   We could prove that any two boolean functions with the same
+  //   definition by cases are equal.  This still assumes that
+  //   definition by cases is at least admissible.  (There exists
+  //   a function as defined.)
   axiom1: {
     statement: 'g T & g F == forall {a. g a}',
     inputs: {},

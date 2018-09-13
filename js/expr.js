@@ -194,8 +194,9 @@ function Expr() {
   // Duplicated in subclass constructors for speed.
   //
   this.sourceStep = null;
-  // TODO: Rendered copies really should share memos with the originals
-  // but they don't.
+  // TODO: Consider whether rendered copies should share memos with
+  //   the originals.
+  // TODO: Make "memos" into a getter method.
   this.memos = {};
   // If part of a proof, has properties set by the "justify" method.
   // If it has a rendered copy, has "rendering" property.
