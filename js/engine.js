@@ -1696,7 +1696,7 @@ function arrangeRhs(eqn_arg, context, facts) {
 function arrange(step, path, context, facts) {
   var eqn = rules.consider(step.get(path));
   var arranged = arrangeRhs(eqn, context, facts);
-  return rules.rplace(arranged, step, path);
+  return rules.replace(step, path, arranged);
 }
 
 /**
@@ -3138,8 +3138,8 @@ const baseRules = {
       var d = cd.getRight();
       var ac = call(a, c);
       var acac = rules.eqSelf(ac);
-      var acbc = rules.rplace(ab, acac, '/right/fn');
-      var acbd = rules.rplace(cd, acbc, '/right/arg');
+      var acbc = rules.replace(acac, '/right/fn', ab);
+      var acbd = rules.replace(acbc, '/right/arg', cd);
       var result = acbd;
       return result.justify('applyBySides', arguments, arguments);
     },
@@ -3243,11 +3243,12 @@ const baseRules = {
       assert(target instanceof Atom, 'Not a symbol: {1}', target);
       if (Toy.isDefinedByCases(target)) {
         assert(parent, 'To use a definition by cases, refer to a call.');
-        result = rules.rplace(rules.definition(target.name, parent.arg),
-                               step, parentPath);
+        result = rules.replace(step, parentPath,
+                               rules.definition(target.name, parent.arg));
       } else {
-        result = rules.rplace(rules.definition(target.name), step,
-                               parentPath ? parentPath.concat('/fn') : path);
+        result = rules.replace(step,
+                              parentPath ? parentPath.concat('/fn') : path,
+                              rules.definition(target.name));
       }
       return result.justify('useDefinition', args, [step]);
     },
@@ -3264,7 +3265,7 @@ const baseRules = {
     action: function(step, path) {
       // Note that axiom 4 checks validity of its argument.
       var equation = rules.axiom4(step.get(path));
-      var result = rules.rplace(equation, step, path);
+      var result = rules.replace(step, path, equation);
       return result.justify('simpleApply', arguments, [step]);
     },
     inputs: {reducible: 1},
@@ -3324,7 +3325,7 @@ const baseRules = {
               var step2 = rules.useDefinition(step1, '/right/fn');
               var step3 = rules.simpleApply(step2, '/right');
               var step4 = rules.eqSelf(expr);
-              var step5 = rules.rplace(step3, step4, '/right/fn');
+              var step5 = rules.replace(step4, '/right/fn', step3);
               return rules.simpleApply(step5, '/right');
             }
           }
@@ -3543,7 +3544,7 @@ const baseRules = {
     action: function(a_b) {
       assertEqn(a_b);
       var step1 = rules.eqT(a_b.get('/left'));
-      var step2 = rules.rplace(a_b, step1, '/right/right');
+      var step2 = rules.replace(step1, '/right/right', a_b);
       return step2.justify('toTIsEquation', arguments, [a_b]);
     },
     inputs: {equation: 1},
@@ -3560,8 +3561,8 @@ const baseRules = {
     action: function(step1, step2) {
       var step3 = rules.toTIsEquation(step1);
       var step4 = rules.toTIsEquation(step2);
-      var step5 = rules.rplace(step3, rules.theorem('r5212'), '/left');
-      var step6 = rules.rplace(step4, step5, '/right');
+      var step5 = rules.replace(rules.theorem('r5212'), '/left', step3);
+      var step6 = rules.replace(step5, '/right', step4);
       return (step6.justify('andEqns', arguments, arguments));
     },
     inputs: {step: [1, 2]},
@@ -4181,7 +4182,7 @@ const ruleInfo = {
       var step2b = rules.rRight(step2a, caseF, '');
       var step4 = rules.and(step1b, step2b);
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), 'g');
-      var step6 = rules.rplace(step5, step4, '');
+      var step6 = rules.replace(step4, '', step5);
       var step7a = rules.instForall(step6, '', v);
       var step7b = rules.apply(step7a, '');
       return step7b.justify('casesTF', arguments, [caseT, caseF]);
@@ -6513,7 +6514,7 @@ const ruleInfo = {
             var left = hyps.getLeft();
             var falsy = falsify(left);
             var eqn = rules.eqSelf(hyps);
-            var step1 = rules.rplace(falsy, eqn, '/right/left');
+            var step1 = rules.replace(eqn, '/right/left', falsy);
             return rules.rewriteOnly(step1, '/right', tautFX)
           }
         } else if (hyps.matches(F)) {
@@ -6606,7 +6607,7 @@ const ruleInfo = {
       }
       var deduper =
         rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
-      var result = rules.rplace(deduper, step, '/left');
+      var result = rules.replace(step, '/left', deduper);
       return result.justify('arrangeAsms', arguments, [step]);
     },
     inputs: {step: 1},
@@ -6723,7 +6724,7 @@ const ruleInfo = {
       var y = varify('y');
       var step1 = rules.assume('x = y');
       var step2 = rules.eqSelf(x);
-      var step3 = rules.rplace(step1, step2, '/left');
+      var step3 = rules.replace(step2, '/left', step1);
       var step4 = rules.asImplication(step3);
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step4, subst);
@@ -6807,8 +6808,8 @@ const ruleInfo = {
       if (term.isCall2('&')) {
         var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
         var stepRight = rules.conjunctsSimplifier(term.getRight(), facts);
-        step1 = (step.rplace('/right/left', stepLeft)
-                 .rplace('/right/right', stepRight));
+        step1 = (rules.replace(step, '/right/left', stepLeft)
+                 .andThen('replace', '/right/right', stepRight));
       } else {
         step1 = step;
       }
