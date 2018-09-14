@@ -6754,45 +6754,6 @@ const ruleInfo = {
     labels: 'basic'
   },
 
-  rewriteInDepth: {
-    action: function(step, path, facts) {
-      var equation = rules.deepTermReplacer(step.get(path), facts);
-      var result = rules.rplace(equation, step.get(path));
-      return result.justify('rewriteInDepth', arguments);
-    },
-  },    
-
-  // Proves an equation that can replace the given term.  Applies the
-  // given List of equational facts recursively, traversing the term
-  // bottom-up, applying the first fact that succeeds to each
-  // subexpression.  Returns an equation with the term on the LHS and
-  // the replacement on the right.  Does not transform results of
-  // transformations.
-  //
-  // TODO: Extend to take a conversion function in place of the facts.
-  // TODO: Unused, consider removing.
-  deepTermReplacer: {
-    action: function(term, facts) {
-      var step = rules.eqSelf(term);
-      var step1;
-      if (term instanceof Call) {
-        var stepFn = rules.deepTermReplacer(term.fn, facts);
-        var stepArg = rules.deepTermReplacer(term.arg, facts);
-        step1 = step.rplace('/right/fn', stepFn)
-          .rplace('/right/arg', stepArg);
-      } else {
-        step1 = step;
-      }
-      var result = Toy.each(facts, function(fact) {
-          try {
-            return rules.rewriteOnly(step, '/right', fact);
-          } catch(e) {}
-        });
-      result = result || step1;
-      return result.justify('deepTermReplacer', arguments);
-    }
-  },
-
   // Proves an equation that can replace the given boolean term.
   // Applies itself recursively to the given List of equational facts,
   // descending into the arguments of conjunctions (a & b), bottom-up,
