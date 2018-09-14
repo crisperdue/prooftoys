@@ -4722,6 +4722,18 @@ const ruleInfo = {
     }
   },
 
+  r2104a: {
+    statement: 'forall {x. p x => q x} => (exists p => exists q)',
+    proof: function() {
+      const contra = 'a => b == not b => not a';
+      return (rules.r2104()
+              .andThen('instMultiVars', {p: 'negate q', q: 'negate p'})
+              .andThen('rewrite', '/left/arg/body', contra)
+              .andThen('rewrite', '/right', contra)
+              .andThen('simplifySite', ''));
+    }
+  },
+
   // 2121
   //
   // NOTE: This and its converse both introduce specific bound variables.
