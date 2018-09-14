@@ -5725,7 +5725,7 @@ const ruleInfo = {
   },
     
   /**
-   * Same as "rplace", but replaces an occurrence in target of the right
+   * Same as "replace", but replaces an occurrence in target of the right
    * side of the equation with its left side.  Accepts hypotheses.
    *
    * TODO: Modify this the target arg comes first, consistent with most
@@ -5735,7 +5735,7 @@ const ruleInfo = {
     action: function(equation, target, path) {
       path = Toy.path(path);
       var rev = rules.eqnSwap(equation);
-      var result = rules.rplace(rev, target, path);
+      var result = rules.replace(target, path, rev);
       return result.justify('rRight', arguments, [target, equation]);
     },
     inputs: {equation: 1, site: 2},
