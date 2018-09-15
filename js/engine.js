@@ -4437,6 +4437,30 @@ const ruleInfo = {
     description: 'tautology'
   },
 
+  /**
+   * The boolean input should be an instance of a tautology.
+   *
+   * TODO: Complete with at least a precheck.  Consider what to do
+   *   in case the argument is not an instance of a tautology.  Something
+   *   like this could be useful as a test.
+   */
+  tautologous: {
+    action: function(wff_arg) {
+      const wff = termify(wff_arg);
+      const info = Toy.boolSchemaInfo(wff);
+      const tautWff = info.schema;
+      const tautology = rules.tautology(tautWff);
+      const proved = rules.instMultiVars(tautology, info.subst);
+      return proved.justify('tautologous', [wff_arg]);
+    },  
+    inputs: {bool: 1},
+    form: 'Enter statement: <input name=bool size=40>',
+    menu: 'prove a tautology instance',
+    tooltip: ('Tautology instantiator'),
+    autoSimplify: noSimplify,
+    description: 'tautology instance'
+  },
+
   // Any instance of a tautology is a theorem.  This is part
   // of the book's Rule P.
   //

@@ -1539,7 +1539,7 @@ function looksBoolean(term) {
  * other terms with boolean variables.  The schema variables are the
  * TermMap variables, in textual order from left to right.
  */
-function boolSchema(term) {
+function boolSchemaInfo(term) {
   var map = new Toy.TermMap();
   var infix = Toy.infixCall;
   function makeSchema(term) {
@@ -1560,7 +1560,14 @@ function boolSchema(term) {
     map.addTerm(term);
     return map.get(term);
   }
-  return makeSchema(term);
+  return {schema: makeSchema(term), subst: map.subst};
+}
+
+/**
+ * Returns just the schema part of the boolean schema info.
+ */
+function boolSchema(term) {
+  return boolSchemaInfo(term).schema;
 }
 
 /**
@@ -1989,6 +1996,7 @@ Toy.termify = termify;
 Toy.namify = namify;
 
 Toy.looksBoolean = looksBoolean;
+Toy.boolSchemaInfo = boolSchemaInfo;
 Toy.boolSchema = boolSchema;
 Toy.standardVars = standardVars;
 Toy.standardSubst = standardSubst;
