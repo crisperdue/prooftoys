@@ -5643,6 +5643,8 @@ const ruleInfo = {
   //   steps and let simplifications clean up the assumptions later.
   rplace: {
     action: function(h_equation_arg, h_c_arg, path) {
+      return rules.replace(h_c_arg, path, h_equation_arg);
+
       var args = [h_equation_arg, h_c_arg, path];
       path = Toy.path(path, h_c_arg);
       var h_c = h_c_arg;
