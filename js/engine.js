@@ -5150,7 +5150,7 @@ const ruleInfo = {
       var schema2 = schema;
       // Variables first in unmapped are quantified first/outermost.
       while (unmapped.length) {
-        schema2 = rules.toForall1(unmapped.pop(), schema2);
+        schema2 = rules.toForall1(schema2, unmapped.pop());
       }
       // Schema2 may have some newly-quantified variables in its RHS.
       var step2 = rules.instMultiVars(schema2, substitution);
