@@ -7345,8 +7345,9 @@ const logicFacts =
    ];
 addRules(logicFacts);
 
-// This is an equivalent formulation of unique existence.
-// The proof is not trivial, see for example eu1 in Metamath.
+// This is an equivalent formulation of unique existence, directly
+// comparable to eu2 in Metamath.  The proof is somewhat lengthy, see
+// the proofs of eu2 and mo in Metamath.
 //
 // TODO: Consider perhaps proving this by showing that either
 //   a collection is the singleton, or empty, or has more than
