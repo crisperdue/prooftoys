@@ -672,15 +672,22 @@ Expr.prototype.matchPattern = function(pattern_arg) {
  * Matches the given "schematic" expression against this. Returns a
  * substitution that yields this expression when given the schema, or
  * null if there is none.  The substitution maps from names to
- * expressions.  Tautologies for example qualify as schemas.
+ * expressions.
  *
- * This is a special case of unification of expressions.
+ * This is a form of unification of expressions.  This and the schema
+ * can be arbitrary terms.
  *
  * In case of substitutions into contexts with bound variables, this
- * may also perform substitutions that yield a result that is
+ * may return a substitution that yields a result that is
  * equivalent to the input only after some beta reductions.
  * Information about the number of expansions introduced per variable
  * is in the substition under the key "%expansions".
+ *
+ * TODO: Consider how to ensure that higher-order matching is not done
+ *   when not appropriate.  Perhaps review code that uses this.  The
+ *   current assumption seems to be that if the schema may need
+ *   higher-order matching and then substitution, it is used within a
+ *   rewrite.
  */
 Expr.prototype.matchSchema = function(schema_arg) {
   const schema = schema_arg instanceof Expr ? schema_arg : parse(schema_arg);
@@ -1932,9 +1939,11 @@ Expr.prototype.walkPatterns = function(patternInfos) {
 //
 // Tests whether all components of this expression and e2 are the same
 // except for names of bound variables.  Names of constants and free
-// variables must match in each component.  The bindings map from
-// names of variables bound in expressions containing this expression
-// to corresponding variable names of the expression containing e2.
+// variables must match in each component.  Names of bound variables
+// may differ if the bindings map the name in this to the name in e2.
+// The bindings map from names of variables bound in expressions
+// containing this expression to corresponding variable names of the
+// expression containing e2.
 //
 //
 // _traverse(fn, rpath)
@@ -2857,8 +2866,6 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
   Object.keys(map).forEach(function(key) { delete map[key]; });
   // and restore the substitution to its previous state.
   Object.assign(map, map2);
-  // The arg is bound in this context, so matching requires it to be
-  // an arg of a free function variable.
   var fn = this.func();
   if (fn && fn.isVariable() && !getBinding(fn.name, bindings)) {
     // If all variables bound at this site, whose counterparts occur

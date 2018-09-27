@@ -6037,6 +6037,11 @@ const ruleInfo = {
   //   that were already in the equation.  Doing so would enable
   //   maximum flexibility in following substitutions, though it raises
   //   issues about access to the potentially new variable(s).
+  //
+  // TODO: Rewriters currently only _match_ the target step and
+  //   substitute into the equation.  The converse is conceivable, but
+  //   perhaps should have a different name, since it could substitute
+  //   for variables throughout the step.
   rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
@@ -6093,12 +6098,14 @@ const ruleInfo = {
             while (count--) {
               var p = prefix.concat(revPath.rest.reverse());
               var term = simpler.get(p);
-              // Do a beta reduction if possible.
+              // Do a beta reduction.
               if (term instanceof Call && term.fn instanceof Lambda) {
                 simpler = rules.simpleApply(simpler, p);
-                // If successful go up one level in the parse tree.
               revPath = revPath.rest;
               } else {
+                // If execution ever reaches here, the upcoming
+                // replacement should fail as a mismatch.  We allow it
+                // to go on and fail later.
                 break;
               }
             }
@@ -6110,10 +6117,10 @@ const ruleInfo = {
       // const after = (info && info.afterMatch) || function(x) { return x; };
       // simpler = after(simpler);
       if (hasFunSubst) {
-        // The approach here is to back reduce everywhere in the RHS
-        // of the schema after substitution.
-        // The usual simplifySite method does not provide access to the
-        // path, which is needed by backReducer.
+        // The approach here is to (back) reduce everywhere in the RHS
+        // of the schema after substitution.  The usual simplifySite
+        // method does not provide access to the path, which is needed
+        // by backReduce.
         const tryBack = function(term, rpath) {
           const next = rules.backReduce(simpler,
                                         (simpler.asPath('/rt/right')
@@ -6694,6 +6701,7 @@ const ruleInfo = {
       return false;
     },
     action: function(step, path_arg) {
+      // This uses uglify to prepare the path for use in pathBindings.
       const path = Toy.asPath(path_arg).uglify(step.wff.isCall2('=>'));
       const call = step.get(path);
       if (call instanceof Call &&
