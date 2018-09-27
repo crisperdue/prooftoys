@@ -2265,7 +2265,7 @@ Atom.prototype.matches = function(expr, bindings) {
   }
   if (expr instanceof Atom) {
     var expectedName = getBinding(this.name, bindings) || this.name;
-    return expr.name == expectedName;
+    return expr.name === expectedName;
   } else {
     return false;
   }
@@ -2363,7 +2363,7 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   // otherwise add a mapping for it into the substitution.
   var mapped = map[name];
   if (mapped) {
-    return expr.matches(mapped);
+    return expr.matches(mapped, bindings);
   } else {
     map[name] = expr;
     return true;
