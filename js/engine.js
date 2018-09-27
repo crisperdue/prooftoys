@@ -6675,7 +6675,7 @@ const ruleInfo = {
   // enclosing lambda takes its new name from the name of the bound
   // variable of the lambda in the call.
   //
-  // If the conditions do not hold, returns the input step.
+  // If reduction is not doable, returns the input step.
   backReduce: {
     menuCheck: function(step, path_arg) {
       const path = Toy.asPath(path_arg).uglify(step.wff.isCall2('=>'));
@@ -6720,8 +6720,12 @@ const ruleInfo = {
           return (rules.changeVar(step, bindingPath, desiredName)
                   .andThen('simpleApply', path)
                   .justify('backReduce', arguments, [step]));
+        } else {
+          return (rules.simpleApply(path)
+                  .justify('backReduce', arguments, [step]));
         }
       }
+      // If not applicable just return the input step.
       return step;
     },
     inputs: {site: 1},
