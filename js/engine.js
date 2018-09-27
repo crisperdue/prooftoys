@@ -3943,15 +3943,17 @@ const ruleInfo = {
   // resulting statement.
   trueBy: {
     action: function(target, path, step) {
-      var term = target.get(path);
-      var map = term.matchSchema(step);
-      if (map) {
-        var step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
-        var result = rules.r(step2, target, path);
+      const term = target.get(path);
+      let result;
+      // Calling matchSchema and then rewrite rules here is redundant
+      // computation, but rewriters have beta reduction code.
+      if (term.matchSchema(step)) {
+        const step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
+        result = rules.rewriteOnlyFrom(target, path, step2);
       } else if (step.isCall2('=>') &&
-                 (map = term.matchSchema(step.getRight()))) {
-        var step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
-        var result = rules.replace(target, path, step2);
+                 term.matchSchema(step.getRight())) {
+        const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
+        result = rules.rewriteOnlyFrom(target, path, step2);
       } else {
         assert(false, 'Term {1} does not match {2}',
                target.get(path), step);
