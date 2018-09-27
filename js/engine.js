@@ -6195,11 +6195,11 @@ const ruleInfo = {
       return arranged.justify('rewrite', arguments, [step]);
     },
     autoSimplify: function(step) {
-      var inStep = step.ruleArgs[0];
-      var path = step.ruleArgs[1];
-      var stmt = step.ruleArgs[2];
+      const inStep = step.ruleArgs[0];
+      const path = step.ruleArgs[1];
+      const stmt = step.ruleArgs[2];
       const info = resolveToFactInfo(stmt);
-      if (info.autoSimplify) {
+      if (info && info.autoSimplify) {
         const simp = info.autoSimplify;
         return simp(step);
       } else {
@@ -6211,10 +6211,7 @@ const ruleInfo = {
         } else if (!(step.wff.isCall2('=>') && path.isLeft())) {
           // The left part may already be transformed,
           // and the target may not even exist.
-
-          // This is the fact statement for the rewrite.
-          const statement = step.ruleArgs[2];
-          const info = resolveToFactInfo(statement);
+          const info = resolveToFactInfo(stmt);
           return (info && info.desimplifier
                   ? step
                   : rules.simplifyFocalPart(step));
