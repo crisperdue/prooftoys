@@ -2422,11 +2422,12 @@ define('negate', '{p. {x. not (p x)}}');
 //   Unless already present, added automatically by addRule when
 //   making a rule with a "varargs" wrapper.
 //
-// toOffer: function of step and optional term, or string containing
-//   expression to return from such a function, with arguments "step",
-//   and "term".  The step and term in this case belong to the
-//   rendering of the step, and have type annotations.  If this
-//   returns a falsy value, the step editor will not offer it.
+// toOffer: function of displayable step and optional term within the
+//   step, or a string containing expression to return from such a
+//   function, with arguments "step", and "term".  The step and term
+//   in this case belong to the rendering of the step, and have type
+//   annotations.  If this returns a falsy value, the step editor will
+//   not offer it.
 //
 // form: HTML template for the rule's input form to be presented by
 //   the step editor, as a template allowing {term} for the selected
@@ -3937,33 +3938,44 @@ const ruleInfo = {
   // conditional, and "trueBy" is readily used in these cases.
 
   // Replace part of a target step with T if it matches a proved step
-  // or the consequent of a proved conditional, taking the proved step
-  // as a schema.  If the target term matches the consequent of the
-  // proved step, the antecedent becomes an assumption of the
-  // resulting statement.
-  trueBy: {
+  // (trueby0) or the consequent of a proved conditional (trueBy1),
+  // taking the proved step as a schema.  If the target term matches
+  // the consequent of the proved step, the antecedent becomes an
+  // assumption of the resulting statement.
+  trueBy0: {
     action: function(target, path, step) {
       const term = target.get(path);
-      let result;
-      // Calling matchSchema and then rewrite rules here is redundant
-      // computation, but rewriters have beta reduction code.
       if (term.matchSchema(step)) {
         const step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
         result = rules.rewriteOnlyFrom(target, path, step2);
-      } else if (step.isCall2('=>') &&
-                 term.matchSchema(step.getRight())) {
-        const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
-        result = rules.rewriteOnlyFrom(target, path, step2);
-      } else {
-        assert(false, 'Term {1} does not match {2}',
-               target.get(path), step);
+        return result.justify('trueBy0', arguments, [target, step]);
       }
-      return result.justify('trueBy', arguments, [target, step]);
+      assert(false, 'Term {1} does not match {2}',
+             target.get(path), step);
     },
     inputs: {site: 1, step: 3},
     toOffer: 'return term.isBoolean()',
-    form: ('Match {term} with proved step <input name=step>'),
+    form: ('Match {term} with step <input name=step>'),
     menu: 'replace proved {term} with T',
+    description: ('{site} is known true;; {in step siteStep} {by step step}'),
+    labels: 'basic'
+  },
+
+  trueBy1: {
+    action: function(target, path, step) {
+      const term = target.get(path);
+      if (step.isCall2('=>') && term.matchSchema(step.getRight())) {
+        const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
+        result = rules.rewriteOnlyFrom(target, path, step2);
+        return result.justify('trueBy1', arguments, [target, step]);
+      }
+        assert(false, 'Term {1} does not match {2}',
+               target.get(path), step);
+    },
+    inputs: {site: 1, step: 3},
+    toOffer: 'return term.isBoolean()',
+    form: ('Match {term} with consequent of step <input name=step>'),
+    menu: 'replace proved A => {term} with T',
     description: ('{site} is known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
@@ -3996,7 +4008,7 @@ const ruleInfo = {
       return (fact.andThen('instVar', '{x. T}', 'p')
               .andThen('apply', fact.find('p x'))
               .andThen('simplifySite', fact.find('not (p x)'))
-              .andThen('trueBy', '/left', rules.existsXT())
+              .andThen('trueBy0', '/left', rules.existsXT())
               .andThen('simplifySite', ''));
     }
   },
@@ -5033,7 +5045,7 @@ const ruleInfo = {
       var step4 = rules.rewriteOnly(step3, '', equiv);
       var exists = (rules.fact('exists {y. y = x}')
                     .andThen('instVar', asm.getRight(), 'x'));
-      var step5 = rules.trueBy(step4, '/left', exists);
+      var step5 = rules.trueBy0(step4, '/left', exists);
       var step6 = rules.rewrite(step5, '', 'T => x == x');
       return step6.justify('removeLet', arguments, [step]);
     },
@@ -5090,7 +5102,7 @@ const ruleInfo = {
       var equiv = rules.fact('forall {x. p x => q} == exists p => q');
       var step4 = rules.rewriteOnly(step3, '', equiv);
       var exists = rules.fact('exists R');
-      var step5 = rules.trueBy(step4, '/left', exists);
+      var step5 = rules.trueBy0(step4, '/left', exists);
       var step6 = rules.rewrite(step5, '', 'T => x == x');
       return step6.justify('removeTypeAsm', arguments, [step]);
     },
@@ -5593,7 +5605,7 @@ const ruleInfo = {
       var eq = equation.getRight();
       var h = equation.getLeft();
       var step1 = rules.r5239(target, path, eq);
-      var step2a = rules.trueBy(step1, '/right/left', target);
+      var step2a = rules.trueBy0(step1, '/right/left', target);
       var step2b = rules.rewriteOnly(step2a, '/right', '(T == p) == p');
       // quantEqn will be [(forall ... eq) => D], where D is the target
       // after replacement, and the quantifier binds no free vars of eq.
@@ -7016,7 +7028,7 @@ const existRules =
                                       '/main/right/arg/body/right',
                                       'existImplies');
       const step10 = rules.fact('exists {y. y = x}');
-      const step11 = (rules.trueBy(step8, '/main/right/arg/body/right/left',
+      const step11 = (rules.trueBy0(step8, '/main/right/arg/body/right/left',
                                    step10)
                       .andThen('simplifySite', ''));
       return rules.rewriteOnly(step11, '/main/right/arg/body',
@@ -7051,7 +7063,7 @@ const existRules =
       var step5 = (rules.existImplies()
                    .andThen('instMultiVars', map)
                    .andThen('simpleApply', '/left/arg/body/left'));
-      var step6 = (rules.trueBy(step5, '/left', step4)
+      var step6 = (rules.trueBy0(step5, '/left', step4)
                    .andThen('rewriteOnly', '', '(T == x) == x'));
       var step7 = (rules.consider('exists1 p')
                    .andThen('useDefinition', '/left/fn')
@@ -7107,7 +7119,7 @@ const existRules =
       var assumed = rules.assume('exists1 p');
       var step1 = rules.fact('the p = if (exists1 p) (iota p) none');
       var loc1 = step1.find('exists1 p');
-      return (step1.andThen('trueBy', loc1, assumed)
+      return (step1.andThen('trueBy1', loc1, assumed)
               .rewrite('/right/right', 'if T x y = x'));
     }
   }
