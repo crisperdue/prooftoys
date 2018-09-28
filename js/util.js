@@ -974,6 +974,18 @@ function isDocHeldFrom(name, ped) {
 }
 
 /**
+ * Calls its functional arg with each key and value of the
+ * localStorage object.
+ */
+function eachStore(fn) {
+  const store = localStorage;
+  for (let i = 0; i < store.length; i++) {
+    const key = store.key(i);
+    fn(key, store.getItem(key));
+  }
+}
+
+/**
  * Removes all information about proof editors in the current context.
  */
 function releaseThisPid() {
@@ -2127,6 +2139,8 @@ Toy.noteState = noteState;
 Toy.isDocHeldFrom = isDocHeldFrom;
 // For testing:
 Toy._releaseThisPid = releaseThisPid;
+
+Toy.eachStore = eachStore;
 
 Toy.benchmark = benchmark;
 Toy.ToySet = ToySet;
