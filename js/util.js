@@ -1313,16 +1313,16 @@ function track(object, property, opt_name) {
 
 Toy.callStacks = new Map();
 
-function noticeStack() {
-  var stack = new Error().stack;
+function noticeStack(msg) {
+  var stack = new Error(msg).stack;
   Toy.callStacks.set(stack, (Toy.callStacks.get(stack) || 0) + 1);
 }
 
 function showStacks() {
-  for (var s of Toy.callStacks.keys()) {
-    if (!(s.match(/rewrite/))) {
-      console.log(s);
-    }
+  const stacks = Toy.callStacks;
+  for (const s of stacks.keys()) {
+    const n = stacks.get(s);
+    console.log('' + n + ' of ' + s);
   }
 };
 
