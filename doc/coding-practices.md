@@ -37,6 +37,9 @@ of functions and methods, which omit the subject of the sentence.
 Also follow my naming practices as far as possible, though they are not
 entirely self-consistent.
 
+Maximum line length is 80 characters.  Line terminators must be linefeed
+only.
+
 ### Modular structure
 
 The system exports exactly one name to the global space, the name "Toy".
