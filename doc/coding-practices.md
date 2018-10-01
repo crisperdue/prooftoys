@@ -6,7 +6,8 @@ The mathtoys and prooftoys repos are designed to be laid out as siblings.
 
 With this layout you can serve a Mathtoys site (and a Prooftoys site)
 immediately, provided that the web server is willing to follow the
-symlinks in your checked out repos.
+symlinks in your checked out repos.  A Mathtoys site has the root
+of the Mathtoys repo as its document root.
 
 There are no absolute external dependencies, though Font Awesome is
 referenced as a remote web site.
@@ -36,6 +37,9 @@ of functions and methods, which omit the subject of the sentence.
 
 Also follow my naming practices as far as possible, though they are not
 entirely self-consistent.
+
+Maximum line length is 80 characters.  Line terminators must be linefeed
+only.
 
 ### Modular structure
 
