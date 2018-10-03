@@ -99,6 +99,12 @@ The changes along the way would need to pass the system test suite, accessed in
 the local "prooftoys" site at /tests/index.html.  These take about 30 seconds to run
 on my MacBook Air.
 
+This project may require significant interaction between the developer doing the
+work and the author of the entire system.  If parts of the restructuring result in
+failures, the developer should push the last working version and the failing version
+as commits on a branch and contact the system author for advice or a fix, to be
+supplied ASAP to minimize the disruption to the work.
+
 #### Consistently naming logic/math variables
 
 In future development Mathtoys will use names of variables in mathematical formulas
