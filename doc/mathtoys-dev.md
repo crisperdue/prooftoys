@@ -75,10 +75,10 @@ with documentation to get users started.  For example the relevant parts of
 the Metamath Proof Explorer (http://us.metamath.org/) are proving straightforward
 to translate into Mathtoys.
 
-### Projects for third parties
+### Projects
 
-These are anticipated projects deemed suitable for contractors or others not highly
-familiar with the Mathtoys/Prooftoys codebase.
+These are anticipated projects deemed suitable for contractors or others not already
+highly familiar with the Mathtoys/Prooftoys codebase.
 
 #### Restructuring engine.js
 
