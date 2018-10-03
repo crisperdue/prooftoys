@@ -1,4 +1,4 @@
-## Mathtoys (and Prooftoys) development standards and practices
+## Mathtoys (and Prooftoys) development practices and projects
 
 ### Setting up development
 
