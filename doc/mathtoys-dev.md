@@ -29,6 +29,8 @@ allowed, though I am open to potential future conversion to TypeScript.
 
 ### Coding practices
 
+
+
 Closely follow my indentation.  I use Java mode in Emacs, specifically
 Aquamacs (for Mac OS).  Also follow my comment style.  Each function, method,
 and public variable or constant requires careful, clear comments describing
@@ -83,9 +85,16 @@ the few theorems they depend on in engine.js, but moving the rest of the
 definitions and theorems into a new file logic.js, structured in a natural order
 with fundamental definitions and theorems first, followed by ones that depend on them.
 
+As theorems (and "facts") are moved (probably before moving them),
+they need to be converted to the current format.
+Names of many theorems are given as keys of object literals.  Use Toy.addRules and
+give the name as a name: property of the rule information object literal.  Similarly,
+many facts have their statements given as object literal keys.  Use Toy.addRules
+and supply the fact statement as a statement: property of the object literal.
+
 The changes along the way would need to pass the system test suite, accessed in
 the local "prooftoys" site at /tests/index.html.  These take about 30 seconds to run
-on a MacBook Air.
+on my MacBook Air.
 
 
 
