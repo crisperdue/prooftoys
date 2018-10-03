@@ -75,7 +75,10 @@ with documentation to get users started.  For example the relevant parts of
 the Metamath Proof Explorer (http://us.metamath.org/) are proving straightforward
 to translate into Mathtoys.
 
-### Jobs for contracts
+### Projects for third parties
+
+These are anticipated projects deemed suitable for contractors or others not highly
+familiar with the Mathtoys/Prooftoys codebase.
 
 #### Restructuring engine.js
 
@@ -95,6 +98,41 @@ and supply the fact statement as a statement: property of the object literal.
 The changes along the way would need to pass the system test suite, accessed in
 the local "prooftoys" site at /tests/index.html.  These take about 30 seconds to run
 on my MacBook Air.
+
+#### Consistently naming logic/math variables
+
+In future development Mathtoys will use names of variables in mathematical formulas
+as a cue to their proper type.  Fundamental types in Mathtoys are booleans, individuals
+including numbers, collections of values of a specific type, and functions from values
+of a specific type to another specific type.  Current use of names is inconsistent
+with this, so variables in logic literals in Mathtoys code need to be made consistent
+with conventions to be specified.
+
+This will be a fairly straightforward project of converting formulas and testing that
+the system still functions and passes tests.
+
+#### Systematizing runtime typechecking and conversions
+
+Mathtoys uses a few JavaScript datatypes in its inference rules, and also has
+string representations for them.  Checking and conversions are currently ad hoc.
+Adding descriptors to each JavaScript inference function indicating the appropriate
+datatype and related information would make the checking more reliable, and should
+enable automated generation of the inputs to Step.justify.
+
+All inference rules (indicated by action: properties in the source code) would need
+to be converted to work this way, provided that the runtime overhead is acceptable.
+
+#### Separating Step objects from Expr objects
+
+Step objects (proved statements) should be a separate datatype from Expr objects,
+but currently are not.  Splitting out a separate datatype would be a useful
+refactoring.
+
+#### Converting system to TypeScript
+
+An experiment of running the TypeScript compiler on Mathtoys resulted in a lot
+of error messages, but also looked like a promising direction.  Converting the
+whole system seems a promising thing to do.
 
 
 
