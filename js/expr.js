@@ -2862,79 +2862,97 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
   //
   // First-order matching failed, so try a higher-order match.
   //
-  // Clear the map to remove any additional substitutions tried.
+  // Clear the map to remove any additional substitutions tried and
+  // restore the substitution to its state on entry to this method.
   Object.keys(map).forEach(function(key) { delete map[key]; });
-  // and restore the substitution to its previous state.
   Object.assign(map, map2);
   var fn = this.func();
   if (fn && fn.isVariable() && !getBinding(fn.name, bindings)) {
-    // If all variables bound at this site, whose counterparts occur
-    // free in expr, appear as actual arguments to the function, we
-    // can still find a substitution.
-    var args = this.args();
-    // These are free in expr, but may be bound in expr's context.
-    var exprVars = expr.freeVars();
-    // If any variable occurring (free) in expr is bound in expr's
-    // context and thus needs to have a bound variable here
-    // substituted for it, but that bound variable is not in the args,
-    // the substitution fails.
-    var findBindingValue = Toy.findBindingValue;
-    for (var name in exprVars) {
-      var b = findBindingValue(name, bindings);
-      if (b) {
-        var argName = b.from;
-        if (!args.find(function(arg) {
-              return arg.isVariable() && arg.name == argName;
-            })) {
-          return false;
-        }
-      }
+    const matched = map[fn.name];
+    if (matched) {
+      // Call "checkBetaMatch".
+      console.warn('Oops!');
+    } else {
+      return findBetaMatch(this, fn, expr, map, bindings);
     }
-    // The function call has the arguments needed to enable the
-    // substitution.  Construct a lambda to substitute for the
-    // function variable.
-    var result = expr;
-    var arg;
-    // Number of beta expansions applied to the substition for fn.
-    var expansions = 0;
+  }
+};
 
-    while (args.length) {
-      // Actual argument.
-      var arg = args.pop();
-      if (arg.isVariable()) {
-        // This is non-null iff bound here.  Iff bound here, it
-        // corresponds to a variable bound in expr.
-        var otherName = getBinding(arg.name, bindings);
-        // If it is a fresh variable, it will be substituted nowhere.
-        var toBind = (otherName
-                      ? new Atom(otherName)
-                      : expr.freshVar(arg.name));
-        result = new Toy.Lambda(toBind, result);
-        expansions++;
-      } else {
+/**
+ * In a function call term whose function is a variable, known to be
+ * free in its context, this seeks a lambda term or nested lambda
+ * terms to substitute for it, that will match the given expr
+ * following beta reduction(s) of the generated lambda(s) with
+ * arguments to this call, returning true and extending the map if
+ * found, as for _matchAsSchema.  Internal to _matchAsSchema.
+ */
+function findBetaMatch(self, fn, expr, map, bindings) {
+  // If all variables bound at this site, whose counterparts occur
+  // free in expr, appear as actual arguments to the function, we
+  // can still find a substitution.
+  var args = self.args();
+  // These are free in expr, but may be bound in expr's context.
+  var exprVars = expr.freeVars();
+  // If any variable occurring (free) in expr is bound in expr's
+  // context and thus needs to have a bound variable here
+  // substituted for it, but that bound variable is not in the args,
+  // the substitution fails.
+  var findBindingValue = Toy.findBindingValue;
+  for (var name in exprVars) {
+    var b = findBindingValue(name, bindings);
+    if (b) {
+      var argName = b.from;
+      if (!args.find(function(arg) {
+            return arg.isVariable() && arg.name == argName;
+          })) {
         return false;
       }
     }
-    var existing = map[fn.name];
-    // Fail if there is an existing substitution and the computed
-    // result does not match it.
-    if (existing && !existing.matches(result)) {
+  }
+  // The function call has the arguments needed to enable the
+  // substitution.  Construct a lambda to substitute for the
+  // function variable.
+  var result = expr;
+  var arg;
+  // Number of beta expansions applied to the substition for fn.
+  var expansions = 0;
+
+  while (args.length) {
+    // Actual argument.
+    var arg = args.pop();
+    if (arg.isVariable()) {
+      // This is non-null iff bound here.  Iff bound here, it
+      // corresponds to a variable bound in expr.
+      var otherName = getBinding(arg.name, bindings);
+      // If it is a fresh variable, it will be substituted nowhere.
+      var toBind = (otherName
+                    ? new Atom(otherName)
+                    : expr.freshVar(arg.name));
+      result = new Toy.Lambda(toBind, result);
+      expansions++;
+    } else {
       return false;
     }
-    
-    if (expansions > 0) {
-      var xpanded = map['%expansions'];
-      if (!xpanded) {
-        xpanded = map['%expansions'] = {};
-      }
-      xpanded[fn.name] = expansions;
-    }
-    // Substitute the lambda term for the function variable.
-    map[fn.name] = result;
-    // Report success without traversing this further.
-    return true;
   }
-};
+  var existing = map[fn.name];
+  // Fail if there is an existing substitution and the computed
+  // result does not match it.
+  if (existing && !existing.matches(result)) {
+    return false;
+  }
+
+  if (expansions > 0) {
+    var xpanded = map['%expansions'];
+    if (!xpanded) {
+      xpanded = map['%expansions'] = {};
+    }
+    xpanded[fn.name] = expansions;
+  }
+  // Substitute the lambda term for the function variable.
+  map[fn.name] = result;
+  // Report success without traversing this further.
+  return true;
+}
 
 Call.prototype._matchAsPattern = function(term, map) {
   return (term instanceof Call &&
