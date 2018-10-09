@@ -1713,16 +1713,14 @@ function eachFact(fn) {
 
 /**
  * Checks that the named rule is a theorem (i.e. takes no arguments),
- * and gets its result.
- *
- * TODO: Use rules.theorem instead, and remove this function.
+ * and gets its result.  Returns null if there is not a theorem
+ * of that name.
  */
 function getTheorem(name) {
   var action = rules[name];
-  if (!action) {
+  if (!action || action.length !== 0) {
     return null;
   }
-  assert(action.length === 0, 'Rule {1} needs parameters', name);
   return action();
 }
 
