@@ -1139,9 +1139,8 @@ Expr.prototype.isLambdaCall = function() {
 var exprMethods = {
 
   /**
-   * If this term is a call to a function variable, return the
-   * variable, otherwise null.  It can be a call with any number of
-   * arguments, minimum of 1.
+   * If this term is a call, returns the first "fn" descendent that
+   * is not a Call (thus an atom or lambda), otherwise returns null.
    */
   func: function() {
     var term = this;
@@ -1154,6 +1153,10 @@ var exprMethods = {
     return term;
   },
 
+  /**
+   * Returns an array of the actual arguments to the function that
+   * would be the result of applying "func" to this Expr.
+   */
   args: function() {
     var term = this;
     var result = [];
