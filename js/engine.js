@@ -6683,42 +6683,55 @@ const ruleInfo = {
     labels: 'advanced'
   },
 
-  // Beta-reduce the call at the given path, if possible.  If the
+  // Beta-reduce the lambda call at the given path.  If the argument
+  // of the call is a variable bound in a containing scope, rename it
+  // using rules.unbind.
+  //
+  // When used with substitution of lambdas for higher-order
+  // variables, this treatment has the effect of preferentially using
+  // the names in the substituted lambda, which tends to keep existing
+  // variables in steps rewritten using quantifier laws.
+  //
+  // If no reduction is available, returns null.
+  backReduce: {
+    toOffer: function(step, term) {
+      return term.isLambdaCall();
+    },
+    action: function(step, path_arg) {
+      // TODO: Perhaps avoid finding the term twice here.
+      const step1 = rules.unbind(step, path_arg);
+      if (step1 !== step) {
+        return step1.justify('backReduce', arguments, [step]);
+      } else {
+        const term = step.get(path_arg);
+        if (term.isLambdaCall() && term.argument.isVariable()) {
+          const step2 = rules.simpleApply(step, path_arg);
+          return step2.justify('backReduce', arguments, [step]);
+        }
+      }
+      return null;
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'reduce with unbind',
+    description: 'reduce or unbind'
+  },
+
+  // If possible, beta reduce the target term by renaming an outer
+  // bound variable and leaving the body of the lambda alone.  If the
   // argument is an occurrence of a variable bound in a containing
   // scope, rename it to be the same or at least similar to the bound
   // variable of the lambda of the call before reducing.  The idea is
   // that this may effectively erase the lambda, retaining its body
-  // as-is or at least looking very similar.  The bound variable of the
-  // enclosing lambda takes its new name from the name of the bound
-  // variable of the lambda in the call.
+  // as-is or at least looking very similar.  The bound variable of
+  // the enclosing lambda takes its new name from the name of the
+  // bound variable of the lambda in the call.
   //
-  // If reduction is not doable, returns the input step.
-  backReduce: {
-    menuCheck: function(step, path_arg) {
-      const path = Toy.asPath(path_arg).uglify(step.wff.isCall2('=>'));
-      const call = step.get(path);
-      if (call instanceof Call &&
-          call.fn instanceof Lambda &&
-          call.arg.isVariable()) {
-        const argName = call.arg.name;
-        const bindings = step.pathBindings(path);
-        // If non-null, this is the path to the lambda that
-        // binds the variable at term.arg.
-        const bindingPath = bindings.get(argName);
-        if (bindingPath) {
-          const desiredName = call.fn.bound.name;
-          // Rename the bound var in the fact to the name that
-          // was in the source step, then beta reduce.  This
-          // reduction just erases the lambda, in other words
-          // ({v. A} v) reduces to just A.
-          return true;
-        }
-      }
-      return false;
-    },
+  // If such a reduction is not available, returns the input step.
+  unbind: {
     action: function(step, path_arg) {
       // This uses uglify to prepare the path for use in pathBindings.
-      const path = Toy.asPath(path_arg).uglify(step.wff.isCall2('=>'));
+      const path = step.wff.asPath(path_arg).uglify();
       const call = step.get(path);
       if (call instanceof Call &&
           call.fn instanceof Lambda &&
@@ -6736,10 +6749,7 @@ const ruleInfo = {
           // ({v. A} v) reduces to just A.
           return (rules.changeVar(step, bindingPath, desiredName)
                   .andThen('simpleApply', path)
-                  .justify('backReduce', arguments, [step]));
-        } else {
-          return (rules.simpleApply(path)
-                  .justify('backReduce', arguments, [step]));
+                  .justify('unbind', arguments, [step]));
         }
       }
       // If not applicable just return the input step.
@@ -6747,8 +6757,8 @@ const ruleInfo = {
     },
     inputs: {site: 1},
     form: '',
-    menu: 'renaming reduce',
-    description: 'rename and reduce'
+    menu: 'unbind',
+    description: 'unbind'
   },
 
   // Prove an equation asserting that two chains of conjunctions are
@@ -6915,7 +6925,7 @@ const ruleInfo = {
                 ? rules.tautology(goalHere)
                 : err(''));
       } catch(err) {}
-      Toy.err('No such fact:' + goalHere + ' (as ' + synopsis + ')');
+      Toy.err('No such fact: ' + goalHere + ' (as ' + synopsis + ')');
     },
     inputs: {string: 1},
     form: ('Look up fact <input name=string size=40>'),
