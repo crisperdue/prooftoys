@@ -2912,8 +2912,10 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
   if (fn && fn.isVariable() && !getBinding(fn.name, bindings)) {
     const matched = map[fn.name];
     if (matched) {
-      // Call "checkBetaMatch".
-      console.warn('Oops!');
+      // TODO: Consider making better use of Expr values computed by
+      //   checkBetaMatch here.
+      const matcher = checkBetaMatch(this, fn, expr, map, bindings);
+      return !!matcher;
     } else {
       return findBetaMatch(this, fn, expr, map, bindings);
     }
@@ -2949,6 +2951,44 @@ function multiReducer(term) {
     x = eqn.getRight().get(path);
   }
   return eqn;
+}
+
+/**
+ * This attempts to confirm that a call to a function variable "self",
+ * with one or more arguments, constitutes a higher-order match with
+ * "expr" using an established substitution into self defined by the
+ * map for the given function variable "fn".  If it does, returns a
+ * proved equation from "self" to a term that "matches" expr in this
+ * binding context, otherwise null.  Internal to _matchAsSchema.
+ *
+ * As currently implemented, this does not beta reduce "expr" in
+ * search of a match.
+ */
+function checkBetaMatch(self, fn, expr, map, bindings) {
+  const name = fn.name;
+  const lambdas = map[name];
+
+  // The path will be built as a reverse path, but all /fn so
+  // it will be the same as its reverse.
+  let path = Path.empty;
+  for (let term = self;
+       term instanceof Call && term.fn instanceof Call;
+       term = term.fn) {
+    path = new Path('fn', path);
+  }
+  let reduced = Toy.rules.consider(self).andThen('instVar', lambdas, name);
+  while (path !== Path.empty) {
+    const reducible = reduced.getRight();
+    if (reducible.matches(expr, bindings)) {
+      return reduced;
+    }
+    if (reducible.isLambdaCall()) {
+      reduced = rules.simpleApply(reduced, '/right');
+    } else {
+      return null;
+    }
+    path = path.rest;
+  }
 }
 
 /**
@@ -3363,6 +3403,9 @@ Toy.namedConstants = namedConstants;
 Toy.addConstants = addConstants;
 
 Toy.multiReducer = multiReducer;
+Toy.findBetaMatch = findBetaMatch;
+Toy.checkBetaMatch = checkBetaMatch;
+
 // Private to xutil.js:
 Toy._identifierPattern = identifierPattern;
 
