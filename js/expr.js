@@ -333,7 +333,7 @@ Expr.prototype.isRendered = function() {
 /**
  * Find all free occurrences of the given variable name and return
  * reverse paths to all of them as an Array.  The result paths
- * segments are all "fn", "arg", or "body".
+ * segments are all "fn", "arg", or "body", i.e. not prettified.
  */
 Expr.prototype.locateFree = function(name) {
   var paths = [];
@@ -1302,7 +1302,8 @@ Expr.prototype.get = function(arg) {
  * An Expr or function causes this to search for a match; if an Expr,
  * a subterm that is sameAs, if a function, a subterm satisfying it.
  *
- * Returns the resulting Path object.
+ * Returns the resulting Path object, which will not start with a
+ * /main or /rt segment.
  */
 Expr.prototype.asPath = function(arg) {
   const self = this;
@@ -1504,6 +1505,9 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
  * the one at the end of the path.  Returns exactly one ancestor per
  * segment in the path, plus this.  Note that the expression at the end
  * of the path is ancestors[ancestors.length - 1].
+ *
+ * This traces through the path exactly as given, so if the path uses
+ * segments such as /left or /binOp, it will skip terms in the result.
  */
 Expr.prototype.ancestors = function(path_arg) {
   var p = path(path_arg, this);

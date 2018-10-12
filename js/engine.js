@@ -6667,6 +6667,7 @@ const ruleInfo = {
   // A simplifier that removes all lambda calls.
   reduceAll: {
     // TODO: Consider supporting this, for interactive use only.
+    // TODO: Convert these to toOffer: properties or combine.
     menuCheck: function(step, path) {
       const result = rules._simplifyMath1(step, path,
                                           [{apply: tryReduce, pure: true}]);
@@ -6966,6 +6967,8 @@ const existRules =
       // The current check merely excludes booleans.
       // TODO: Improve this when types are truly available.  Support
       //   predicates and functions of individuals, et cetera.
+      // TODO: Also screen out terms with locally free occurrences
+      //   of variables bound in an enclosing scope.
       return type !== Toy.boolean;
     },
     action: function(step, path_arg) {

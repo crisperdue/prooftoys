@@ -148,8 +148,6 @@ Path.prototype.getLeft = function() {
  * rt, and main into one with just the basic ones.  If the
  * optional argument is truthy, treat initial /rt and /main
  * as for a conditional.  (/main with hyps??)
- *
- * TODO: Untested, so use with caution.
  */
 Path.prototype.uglify = function(opt_isImplies) {
   const segments = [];
