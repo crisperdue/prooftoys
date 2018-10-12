@@ -6112,16 +6112,6 @@ const ruleInfo = {
       if (!map) {
         Toy.fail(Toy.format('Fact not applicable: {1}', equation));
       }
-      // Value is true iff at least one Lambda is substituted for a
-      // variable.
-      const hasFunSubst = (function() {
-          for (const key in map) {
-            if (map[key] instanceof Lambda) {
-              return true;
-            }
-          }
-          return false;
-        })();
 
       // TODO: Consider moving much of this below here to
       //   rules.match and using that here.
@@ -6148,65 +6138,10 @@ const ruleInfo = {
             });
         });
 
-      // TODO: Factor this out as something like betaReduceForMatch.
-
-      // Beta-reduce expansions created during matching.  These must
-      // make the equation LHS match so the replace rule can apply.
-      // This does not apply beta reduction to occurrences of
-      // "expanded" variables on the RHS.
-      var expansions = map['%expansions'];
-      if (false && expansions) {  // TODO: Remove dead code.
-        // The substitution expands one or more function/predicate
-        // variables.
-        for (var name in expansions) {
-          // Array of paths to free occurrences of the variable
-          // in the equation LHS.
-          var paths = equation.eqnLeft().locateFree(name);
-          // Prepend this to each of those paths.
-          const prefix = Toy.asPath('/rt/left');
-          for (var i = 0; i < paths.length; i++) {
-            // Reverse path to one occurrence of the variable.
-            var revPath = paths[i];
-            // Count of expansions done for this variable.
-            var count = expansions[name];
-            while (count--) {
-              var p = prefix.concat(revPath.rest.reverse());
-              var term = simpler.get(p);
-              // Do a beta reduction.
-              if (term instanceof Call && term.fn instanceof Lambda) {
-                simpler = rules.simpleApply(simpler, p);
-                revPath = revPath.rest;
-              } else {
-                // If execution ever reaches here, the upcoming
-                // replacement should fail as a mismatch.  We allow it
-                // to go on and fail later, though this should not
-                // happen.
-                break;
-              }
-            }
-          }
-        }
-      }
       // Uncomment these lines to restore afterMatch functionality:
       // const info = resolveToFactInfo(eqn_arg);
       // const after = (info && info.afterMatch) || function(x) { return x; };
       // simpler = after(simpler);
-      if (false && hasFunSubst) {  // TODO: Remove dead code.
-        // The approach here is to (back) reduce everywhere in the RHS
-        // of the schema after substitution.  The usual simplifySite
-        // method does not provide access to the path, which is needed
-        // by backReduce.
-        const tryBack = function(term, rpath) {
-          const next = rules.backReduce(simpler,
-                                        (simpler.asPath('/rt/right')
-                                         .concat(rpath.reverse())));
-          if (next) {
-            simpler = next;
-            return true;
-          }
-        };
-        while (simpler.get('/rt/right').searchMost(tryBack)) {}
-      }
       const result = rules.replace(step, path, simpler);
       return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
     },
