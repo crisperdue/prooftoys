@@ -3973,8 +3973,8 @@ const ruleInfo = {
         result = rules.rewriteOnlyFrom(target, path, step2);
         return result.justify('trueBy1', arguments, [target, step]);
       }
-        assert(false, 'Term {1} does not match {2}',
-               target.get(path), step);
+      assert(false, 'Term {1} does not match {2}',
+             target.get(path), step);
     },
     inputs: {site: 1, step: 3},
     toOffer: 'return term.isBoolean()',
@@ -6092,21 +6092,47 @@ const ruleInfo = {
           }
           return false;
         })();
-      var simpler = rules.instMultiVars(equation, map);
+
+      // TODO: Consider moving much of this below here to
+      //   rules.match and using that here.
+      let funSites = new Map();
+      for (const key in map) {
+        if (map[key] instanceof Lambda) {
+          funSites.set(key, equation.locateFree(key));
+        }
+      }
+      let simpler = rules.instMultiVars(equation, map);
+      funSites.forEach(function(rPaths) {
+          rPaths.forEach(function (rPath) {
+              for (let r = rPath; r.segment === 'fn'; r = r.rest) {
+                // First time r refers to the lambda, then successive
+                // parents as this does more reductions.  Could be
+                // done more efficiently.
+                const path = r.rest.reverse();
+                const s = rules.backReduce(simpler, path);
+                if (!s) {
+                  break;
+                }
+                simpler = s;
+              }
+            });
+        });
+
+      // TODO: Factor this out as something like betaReduceForMatch.
 
       // Beta-reduce expansions created during matching.  These must
       // make the equation LHS match so the replace rule can apply.
-      // Where possible, this also applies beta reduction to
-      // occurrences of "expanded" variables on the RHS as well.
+      // This does not apply beta reduction to occurrences of
+      // "expanded" variables on the RHS.
       var expansions = map['%expansions'];
-      if (expansions) {
+      if (false && expansions) {  // TODO: Remove dead code.
         // The substitution expands one or more function/predicate
         // variables.
         for (var name in expansions) {
-          // Array of paths to _all_ free occurrences of the variable
-          // in the equation, not just those needed to make its LHS
-          // match.
+          // Array of paths to free occurrences of the variable
+          // in the equation LHS.
           var paths = equation.eqnLeft().locateFree(name);
+          // Prepend this to each of those paths.
           const prefix = Toy.asPath('/rt/left');
           for (var i = 0; i < paths.length; i++) {
             // Reverse path to one occurrence of the variable.
@@ -6119,11 +6145,12 @@ const ruleInfo = {
               // Do a beta reduction.
               if (term instanceof Call && term.fn instanceof Lambda) {
                 simpler = rules.simpleApply(simpler, p);
-              revPath = revPath.rest;
+                revPath = revPath.rest;
               } else {
                 // If execution ever reaches here, the upcoming
                 // replacement should fail as a mismatch.  We allow it
-                // to go on and fail later.
+                // to go on and fail later, though this should not
+                // happen.
                 break;
               }
             }
@@ -6134,7 +6161,7 @@ const ruleInfo = {
       // const info = resolveToFactInfo(eqn_arg);
       // const after = (info && info.afterMatch) || function(x) { return x; };
       // simpler = after(simpler);
-      if (hasFunSubst) {
+      if (false && hasFunSubst) {  // TODO: Remove dead code.
         // The approach here is to (back) reduce everywhere in the RHS
         // of the schema after substitution.  The usual simplifySite
         // method does not provide access to the path, which is needed
@@ -6143,7 +6170,7 @@ const ruleInfo = {
           const next = rules.backReduce(simpler,
                                         (simpler.asPath('/rt/right')
                                          .concat(rpath.reverse())));
-          if (next !== simpler) {
+          if (next) {
             simpler = next;
             return true;
           }
