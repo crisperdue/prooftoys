@@ -3984,6 +3984,36 @@ const ruleInfo = {
     labels: 'basic'
   },
 
+  // About rules.match: when rewriting we normally treat the equation
+  // as a schema and substitute into it, then use the resulting
+  // instance to replace part of a target step.  In a few cases
+  // though, we need to substitute into the target to make it match
+  // the LHS of the equation.  This rule finds a suitable substitution
+  // in cases where the given term is not in a context with variable bindings,
+  // but in other cases it may fail to create a match.
+  //
+  // TODO: This is not done!! 
+  match: {
+    action: function(target, path, term) {
+      const schema = target.get(path);
+      const map = term.matchSchema(schema);
+      if (map) {
+        return (rules.instMultiVars(target, map)
+                // TODO: Process as in rewriteOnlyFrom.
+                .justify('match', arguments, [target]));
+      } else {
+        return target;
+      }
+    },
+    /* This rule is not done!!
+    inputs: {site: 1, term: 3},
+    form: ('Match with term <input name=term>'),
+    menu: 'make {term} match term',
+    description: ('substitute to match {term};; {in step siteStep}'),
+    */
+    labels: 'basic'
+  },
+
   // Lemma helper for toForall; a pure theorem.
   forallXT: {
     statement: 'forall {x. T}',
