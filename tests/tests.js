@@ -2481,6 +2481,23 @@ var testCase = {
     assertEqual('(exists {x. (x > 0)})', result);
   },
 
+  testMultiReducer: function() {
+    function check(expect, term) {
+      assertEqual(expect, Toy.multiReducer(Toy.parse(term)).getRight());
+    }
+    check('(2 + 3)', '2 + 3');
+    check('x', 'x');
+    check('(f x)', 'f x');
+    check('{x. {y. {z. ((x + y) - z)}}}',
+          '{x. {y. {z. x + y - z}}}');
+    check('{y. {z. ((2 + y) - z)}}',
+          '{x. {y. {z. x + y - z}}} 2');
+    check('{z. ((2 + 3) - z)}',
+          '{x. {y. {z. x + y - z}}} 2 3');
+    check('((2 + 3) - 4)',
+          '{x. {y. {z. x + y - z}}} 2 3 4');
+  },
+
   // END OF RULES AND THEOREMS
 
   // ProofEditor - solution status
@@ -2800,7 +2817,7 @@ window.setTimeout(function() {
   // A null value means "test all".
   var toTest = null;
   // An array of test keys runs all tests.
-  // toTest = ['testSimplifyStep'];
+  // toTest = ['testMultiReducer'];
 
   // Runs the named test case or warns if there is none such.
   function doTestCase(name) {

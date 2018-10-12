@@ -2886,6 +2886,37 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
 };
 
 /**
+ * Returns an equation with term as LHS and RHS having all "head" lambdas
+ * of the LHS beta reduced, just traversing "fn"s.
+ *
+ * TODO: Consider removing this as unused.  It is also an ugly piece
+ *   of code.
+ */
+function multiReducer(term) {
+  const rules = Toy.rules;
+  let eqn = rules.eqSelf(term);
+  if (!(term instanceof Call)) {
+    return eqn;
+  }
+  // The path will be built as a reverse path, but all /fn so
+  // it will be the same as its reverse.
+  let path = Path.empty;
+  let x = term;
+  for (; x.fn instanceof Call; x = x.fn) {
+    path = new Path('fn', path);
+  }
+  while (x.fn instanceof Lambda) {
+    eqn = rules.simpleApply(eqn, new Path('right', path));
+    if (path.isEnd()) {
+      break;
+    }
+    path = path.rest;
+    x = eqn.getRight().get(path);
+  }
+  return eqn;
+}
+
+/**
  * In a function call term whose function is a variable, known to be
  * free in its context, this seeks a lambda term or nested lambda
  * terms to substitute for it, that will match the given expr
@@ -3296,6 +3327,7 @@ Toy.genVar = genVar;
 Toy.namedConstants = namedConstants;
 Toy.addConstants = addConstants;
 
+Toy.multiReducer = multiReducer;
 // Private to xutil.js:
 Toy._identifierPattern = identifierPattern;
 
