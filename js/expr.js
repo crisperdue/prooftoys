@@ -697,6 +697,41 @@ Expr.prototype.matchSchema = function(schema_arg) {
 };
 
 /**
+ * Attempts to find a substitution into the given step that can make
+ * the part of it identified by the path the same as the given term,
+ * up to renaming of bound variables and possible beta reductions
+ * after substituting lambdas for higher-order variables.  Returns
+ * such a substitution, or null if none is found.
+ *
+ * This function finds a suitable substitution even into the target
+ * step for a replacement where the target term is in the scope of one
+ * or more bound variables.  This is the case of preparation for
+ * replacement that is not handled by matchSchema.
+ *
+ * TODO: Use this or consider removing it.
+ */
+Step.prototype.matchPart = function(path, term) {
+  // This is intended as prep for use of rule R or R'.
+  // Note that if wff1 is the "equation" (or will be converted into
+  // such by equating the target term to T), this gives the same result
+  // as an appropriate call to matchSchema.
+  const target = this.get(path);
+  const ancestors = this.ancestors(path);
+  let bindings = null;
+  ancestors.forEach(function(x) {
+      if (x instanceof Lambda) {
+        // Bindings created here limit allowable substitutions, but do
+        // not correspond to bindings in the wff containing the
+        // argument term; thus the use of null.
+        bindings = new Bindings(x.bound.name, null, bindings1);
+      }
+    });
+  const map = {};
+  const result = target._matchAsSchema(term, map, bindings);
+  return result ? map : null;
+}
+
+/**
  * Returns a list (Array) of the names of the free variables of this
  * Expr whose names are not keys in the given map (plain object), in
  * lexicographic order.
