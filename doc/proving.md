@@ -39,13 +39,13 @@ Reduction (advanced)
 
 #### Considering a term
 
-### Tautologies
+#### Tautologies
 
-### Matching
+### Rewriting
 
-### Rewriting using an equation
+#### Rewriting using an equation
 
-### Rewriting using a simple fact
+#### Rewriting without an equation
 
 ### Working with assumptions
 
