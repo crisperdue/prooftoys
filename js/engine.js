@@ -3984,33 +3984,59 @@ const ruleInfo = {
     labels: 'basic'
   },
 
-  // About rules.match: when rewriting we normally treat the equation
-  // as a schema and substitute into it, then use the resulting
-  // instance to replace part of a target step.  In a few cases
-  // though, we need to substitute into the target to make it match
-  // the LHS of the equation.  This rule finds a suitable substitution
-  // in cases where the given term is not in a context with variable bindings,
-  // but in other cases it may fail to create a match.
+  // When rewriting we normally treat the equation as a schema and
+  // substitute into it, then use the resulting instance to replace
+  // part of a target step.  In a few cases though, we need to
+  // substitute into the target to make it match the LHS of the
+  // equation.
   //
-  // TODO: This is not done!! 
-  match: {
+  // This finds a suitable substitution even into the target step for
+  // a replacement where the target term is in the scope of one or
+  // more bound variables.  This is the case of matching in
+  // preparation for replacement that is not handled by matchSchema.
+  //
+  // TODO: Caution, this is poorly tested at present.  Test it better.
+  matchTerm: {
     action: function(target, path, term) {
       const schema = target.get(path);
       const map = term.matchSchema(schema);
       if (map) {
-        return (rules.instMultiVars(target, map)
-                // TODO: Process as in rewriteOnlyFrom.
-                .justify('match', arguments, [target]));
+        let funSites = new Map();
+        for (const key in map) {
+          if (map[key] instanceof Lambda) {
+            funSites.set(key, target.locateFree(key));
+          }
+        }
+        let simpler = rules.instMultiVars(target, map);
+        funSites.forEach(function(rPaths) {
+            rPaths.forEach(function (rPath) {
+                for (let r = rPath; r.segment === 'fn'; r = r.rest) {
+                  // First time r refers to the lambda, then successive
+                  // parents as this does more reductions.  Could be
+                  // done more efficiently.
+                  const path = r.rest.reverse();
+                  const s = rules.backReduce(simpler, path);
+                  if (!s) {
+                    break;
+                  }
+                  simpler = s;
+                }
+              });
+          });
+
+        // Uncomment these lines to restore afterMatch functionality:
+        // const info = resolveToFactInfo(eqn_arg);
+        // const after = (info && info.afterMatch) || function(x) { return x; };
+        // simpler = after(simpler);
+        return (simpler.justify('matchTerm', arguments, [target]));
       } else {
-        return target;
+        return null;
       }
     },
-    /* This rule is not done!!
     inputs: {site: 1, term: 3},
     form: ('Match with term <input name=term>'),
     menu: 'make {term} match term',
     description: ('substitute to match {term};; {in step siteStep}'),
-    */
     labels: 'basic'
   },
 
