@@ -30,6 +30,10 @@ const defineCases = Toy.defineCases;
 const identity = Toy.parse('{x. x}');
 const allT = Toy.parse('{x. T}');
 
+//// Rules needed to support definition
+
+// simpleApply
+// applyBoth
 
 //// Definitions
 
