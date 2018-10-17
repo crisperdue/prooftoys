@@ -2290,15 +2290,6 @@ function addSwappedFact(info) {
 // Adding definitions before use enables type checking to use the
 // known types of the constants.
 
-define('not', equal(F));
-define('!=', '{x. {y. not (x = y)}}');
-define('forall', '(=) {x. T}');
-define('exists', '{p. p != {x. F}}');
-define('exists1', '{p. exists {x. p = {y. y = x}}}');
-defineCases('&', identity, '{x. F}');
-defineCases('|', allT, identity);
-defineCases('=>', identity, allT);
-
 // It would be desirable for the constants in this next group to
 // all have generic types.
 define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
