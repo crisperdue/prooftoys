@@ -2881,15 +2881,6 @@ var primitives = {
     tooltip: ('axiom of description'),
     description: 'axiom of description',
     simplifier: true
-  },
-
-  // Definition of F, for book-style proofs.
-  defFFromBook: {
-    statement: 'F = forall {x. x}',
-    axiom: true,
-    action: function() {
-      return rules.assert('F = forall {x. x}').justify('defFFromBook');
-    }
   }
 
 };
@@ -3625,6 +3616,12 @@ addRulesMap(baseRules);
 // Now onward to proving a few of the usual truth table facts.
 
 const falseDefnFacts = {
+
+  // Definition of F, for book-style proofs.
+  defFFromBook: {
+    statement: 'F = forall {x. x}',
+    axiom: true
+  },
 
   // Bookish: [T & F] = F
   r5214: {
