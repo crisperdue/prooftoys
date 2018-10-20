@@ -3675,57 +3675,19 @@ const falseDefnFacts = {
       var step6d = rules.rRight(step6c, step6b, '/left');
       return rules.rRight(step6d, step4b, '/right');
     }
-  }
+  },
 
-};
-if (useFalseDefn) {
-  addRulesMap(falseDefnFacts);
-}
-
-const factsUsingDefImplies = {
-
-  // 5230FT: [F = T] = F.
-  //
-  // Uses book defn of "=>", requires a fact about "&".
-  //
-  // TODO: Prove 5229, then finish proving r5230FTBook_almost from it.
-  r5230FTBook_almost: {
-    statement: '(F == T) == F',
+  // F => x; bookish
+  r5227: {
+    statement: 'F => x',
     proof: function() {
-      var step1 = rules.axiom2();
-      var map = {h: Toy.parse('{x. x = F}'),
-                 x: F,
-                 y: T};
-      var step2 = rules.instMultiVars(step1, map);
-      var step3 = rules.apply(step2, '/right/right');
-      var step4 = rules.apply(step3, '/right/left');
-      var step5 = rules.r5218(F);
-      var step6 = rules.r(step5, step4, '/right/right');
-      var step7 = rules.eqT(F);
-      var step8 = rules.rRight(step7, step6, '/right/left');
-      var step9 = rules.r(step5, step8, '/right');
-      var step10 = rules.defImplies();
-      var step11 = rules.r(step10, step9, '/binop');
-      var step12 = rules.apply(step11, '/fn');
-      var step13 = rules.apply(step12, '');
-      // TODO: Infer by cases from 5229 (rules about '&').
-      var step14 = rules.tautology('x & F == F');
-      var step15 = rules.instEqn(step14, Toy.parse('F = T'), 'x')
-      return rules.r(step15, step13, '/right');
+      var step1 = rules.theorem('r5225');
+      var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'p');
+      var step3 = rules.defFFromBook();
+      var step4 = rules.rRight(step3, step2, '/left');
+      return rules.apply(step4, '/right');
     }
-  }
-
-};
-// For a truly bookish development of the theory, properly complete
-// the one proof in this group, factor out all uses of definitions by
-// cases, control the actual definitions with the useDefnsByCases
-// flag, and turn off the flag.
-if (!useDefnsByCases) {
-  addRulesMap(factsUsingDefImplies);
-}
-
-// These are facts that rely on unbookish definitions by cases.
-const unbookishFacts = {
+  },
 
   // Proves [F = T] = F (r5230FT) from r5217Book (r5230TF).
   // Relies also on facts about "=>", which are not currently
@@ -3776,7 +3738,51 @@ const unbookishFacts = {
   }
 
 };
-addRulesMap(unbookishFacts);
+if (useFalseDefn) {
+  addRulesMap(falseDefnFacts);
+}
+
+const factsUsingDefImplies = {
+
+  // 5230FT: [F = T] = F.
+  //
+  // Uses book defn of "=>", requires a fact about "&".
+  //
+  // TODO: Prove 5229, then finish proving r5230FTBook_almost from it.
+  r5230FTBook_almost: {
+    statement: '(F == T) == F',
+    proof: function() {
+      var step1 = rules.axiom2();
+      var map = {h: Toy.parse('{x. x = F}'),
+                 x: F,
+                 y: T};
+      var step2 = rules.instMultiVars(step1, map);
+      var step3 = rules.apply(step2, '/right/right');
+      var step4 = rules.apply(step3, '/right/left');
+      var step5 = rules.r5218(F);
+      var step6 = rules.r(step5, step4, '/right/right');
+      var step7 = rules.eqT(F);
+      var step8 = rules.rRight(step7, step6, '/right/left');
+      var step9 = rules.r(step5, step8, '/right');
+      var step10 = rules.defImplies();
+      var step11 = rules.r(step10, step9, '/binop');
+      var step12 = rules.apply(step11, '/fn');
+      var step13 = rules.apply(step12, '');
+      // TODO: Infer by cases from 5229 (rules about '&').
+      var step14 = rules.tautology('x & F == F');
+      var step15 = rules.instEqn(step14, Toy.parse('F = T'), 'x')
+      return rules.r(step15, step13, '/right');
+    }
+  }
+
+};
+// For a truly bookish development of the theory, properly complete
+// the one proof in this group, factor out all uses of definitions by
+// cases, control the actual definitions with the useDefnsByCases
+// flag, and turn off the flag.
+if (!useDefnsByCases) {
+  addRulesMap(factsUsingDefImplies);
+}
 
 // These are not specific to book definitions, but currently may
 // use (non-book) definitions by cases.
@@ -4304,18 +4310,6 @@ const ruleInfo = {
   },
 
   // r5226 is r5225 with "p" and "x" instantiated, then beta conversion.
-
-  // F => x; bookish
-  r5227: {
-    statement: 'F => x',
-    proof: function() {
-      var step1 = rules.theorem('r5225');
-      var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'p');
-      var step3 = rules.defFFromBook();
-      var step4 = rules.rRight(step3, step2, '/left');
-      return rules.apply(step4, '/right');
-    }
-  },
 
   // [not T] = F
   r5231T: {
