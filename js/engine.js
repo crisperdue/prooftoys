@@ -712,6 +712,11 @@ function addDefnFacts(definition_arg) {
       addFact({goal: eqn, definitional: true});
       addSwappedFact({goal: eqn, definitional: true});
     }
+    return;
+
+    // TODO: Move and restructure this code into a rule of inference
+    //   to call when desired.
+    //
     // From here on, if the remaining RHS is a "the" or "iota", and
     // there is an appropriate "exists1" fact for its property, we
     // generate a fact that having the described property is
