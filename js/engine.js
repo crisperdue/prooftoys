@@ -3617,10 +3617,11 @@ addRulesMap(baseRules);
 
 const falseDefnFacts = {
 
-  // Definition of F, for book-style proofs.
   defFFromBook: {
     statement: 'F = forall {x. x}',
-    axiom: true
+    proof: function() {
+      return rules.definition('F');
+    }
   },
 
   // Bookish: [T & F] = F
