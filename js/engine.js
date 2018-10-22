@@ -732,9 +732,7 @@ function addDefnFacts(definition_arg) {
         var step1 = (rhs.isCall1('iota')
                      ? rules.rewriteOnly(step, '/rt/right', 'exists1The')
                      : step);
-        var v = step1.get('/rt/arg/bound');
-        var ex2 = (rules.exists1Forall()
-                   .andThen('instForall', '/right', v));
+        var ex2 = rules.exists1Property();
         var step2 = (step1.wff.isCall2('=>')
                      ? rules.forwardChain2(step1, ex2)
                      : rules.forwardChain(step1, ex2));
@@ -6954,13 +6952,8 @@ const existRules =
    //
    // Simplified statement of 5312, using "the" in place of iota.
    // You can use exists1The to replace "the" with "iota".
-   //
-   // TODO: Rename to exists1Property.
-   {name: 'exists1Forall',
-    // TODO: In this example the occurrence of "forall" could be
-    // removed, leaving all occurrences of "x" free.  Consider how
-    // to do practical matching in such cases.
-    statement: 'exists1 p => forall {x. p x == x = the p}',
+   {name: 'exists1Property',
+    statement: 'exists1 p => (p x == x = the p)',
     proof: function() {
       var a1 = rules.assume('p = {x. x = y}');
       var step1 = (rules.axiom5()
@@ -6970,9 +6963,10 @@ const existRules =
                    .andThen('instMultiVars', {f: 'p', g: '{x. x = iota p}'})
                    .andThen('apply', '/right/arg/body/right'));
       var step4 = (rules.replace(step2, '/right', step3)
+                   .andThen('instForall', '/right', 'x')
                    .andThen('toForall0', 'y'));
       var map = {p: '{y. p = {x. x = y}}',
-                 q: 'forall {x. p x == x = iota p}'};
+                 q: 'p x == x = iota p'};
       var step5 = (rules.existImplies()
                    .andThen('instMultiVars', map)
                    .andThen('simpleApply', '/left/arg/body/left'));

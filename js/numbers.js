@@ -553,14 +553,14 @@ var divisionInfo = {
     statement: '@y != 0 & R x & R y => (R z & x = y * z == z = x / y)',
     proof: function() {
       var step1 = rules.uniqueQuotient();
-      var step2 = rules.exists1Forall();
-      var path = step2.find('p x');
+      var step2 = (rules.exists1Property()
+                   .andThen('instMultiVars', {x: 'z'}));
+      var path = step2.find('p z');
       // TODO: Extend Expr.matchSchema to handle this.  (Rules.p2 uses
       //   matchSchema.
       var step3 = rules.instVar(step2, '{z. R x & R y & R z & x = y * z}', 'p');
       var step4 = rules.p2(step1, step3, '(a => b) & (b => c) => (a => c)');
-      var step5 = rules.simpleApply(step4, path);
-      var step6 = rules.instForall(step5, '/right', Toy.parse('z'));
+      var step6 = rules.simpleApply(step4, path);
       var fml = '@ the {z. R x & R y & R z & x = y * z} = x / y';
       var divDefn = rules.fact(fml);
       var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);
