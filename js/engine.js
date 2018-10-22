@@ -712,52 +712,6 @@ function addDefnFacts(definition_arg) {
       addFact({goal: eqn, definitional: true});
       addSwappedFact({goal: eqn, definitional: true});
     }
-    return;
-
-    // TODO: Move and restructure this code into a rule of inference
-    //   to call when desired.
-    //
-    // From here on, if the remaining RHS is a "the" or "iota", and
-    // there is an appropriate "exists1" fact for its property, we
-    // generate a fact that having the described property is
-    // equivalent to being the value of the RHS.
-    var rhs = eqn.getRight();
-    if (rhs.isCall1('the') || rhs.isCall1('iota')) {
-      // The definition looks like <name> = the . . .
-      // Add the standard fact for definitions of this kind.
-      var condition = rhs.arg;
-      var ex1 = Toy.call('exists1', condition);
-      if (isRecordedFact(ex1)) {
-        var step = rules.fact(ex1);
-        var step1 = (rhs.isCall1('iota')
-                     ? rules.rewriteOnly(step, '/rt/right', 'exists1The')
-                     : step);
-        var ex2 = rules.exists1Property();
-        var step2 = (step1.wff.isCall2('=>')
-                     ? rules.forwardChain2(step1, ex2)
-                     : rules.forwardChain(step1, ex2));
-        var result = (rules.simpleApply(step2, '/right/left')
-                      .rewrite('/rt/right/right', rules.eqnSwap(eqn)));
-        // Add the key fact for this definition, equivalence between being
-        // equal to the new constant and having its property.
-        console.info('For', name, 'adding fact', result.toString());
-        addFact({goal: result});
-      } else {
-        const v = (condition instanceof Lambda
-                   ? condition.bound
-                   : termify('x'));
-        const e1 = rules.consider('v = t == p v');
-        const map = {v: v, t: eqn.getLeft(), p: condition};
-        const e2 = rules.instMultiVars(e1, map);
-        const e3 = (condition instanceof Lambda
-                    ? rules.simpleApply(e2, '/right/right')
-                    : e2);
-        const goal = e3.getRight();
-        console.warn('For definition', definition.toString());
-        console.warn('  no recorded fact', ex1.toString());
-        console.warn('  so not concluding', goal.toString());
-      }
-    }
   }
 }
 
