@@ -31,6 +31,9 @@ const definition = Toy.definition;
 const identity = Toy.parse('{x. x}');
 const allT = Toy.parse('{x. T}');
 
+const rules = Toy.rules;
+const addRulesMap = Toy.addRulesMap;
+
 //// Rules needed to support definition
 
 // simpleApply
@@ -165,7 +168,7 @@ const axioms = {
   }
 
 };
-// addRulesMap(axioms);
+addRulesMap(axioms);
 
 
 }();
