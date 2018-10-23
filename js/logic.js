@@ -67,182 +67,9 @@ const F = constify('F');
 const _factMap = {};
 
 
-//// Rules needed to support definition
+//// Preliminaries to logic
 
-// simpleApply
-// applyBoth
-
-//// Definitions
-
-define('not', '(=) F');
-define('!=', '{x. {y. not (x = y)}}');
-define('forall', '(=) {x. T}');
-define('F', 'forall {x. x}');
-
-// define('forall', '(=) {x. T}');
-// definition('forall = ((=) {x. T})');
-// definition('F = forall {x. x}');
-
-define('exists', '{p. p != {x. F}}');
-define('exists1', '{p. exists {x. p = {y. y = x}}}');
-defineCases('&', identity, '{x. F}');
-defineCases('|', allT, identity);
-defineCases('=>', identity, allT);
-
-const axioms = {
-  // TODO: LOGIC: Consider the possibility of instead saying that
-  //     p T & p F => p x
-  //   and defining forall:bool->bool as {p. p T & p F}.
-  //   Most uses of axiom1 are immediately followed by instEqn, and
-  //   use the definition of forall:bool->bool.
-  //   We could prove that any two boolean functions with the same
-  //   definition by cases are equal.  This still assumes that
-  //   definition by cases is at least admissible.  (There exists
-  //   a function as defined.)
-  axiom1: {
-    statement: 'g T & g F == forall {a. g a}',
-    inputs: {},
-    form: '',
-    description: 'axiom of T & F',
-    tooltip: ('T and F are all the booleans')
-  },
-
-  axiom2: {
-    statement: 'x = y => h x = h y',
-    inputs: {},
-    form: '',
-    description: 'axiom of function application',
-    tooltip: ('functions take equal values to equal values')
-  },
-
-  /**
-   * Axiom 2 specialized for predicates.  This is actually more like
-   * Andrews' axiom 2.
-   */
-  axiom2a: {
-    statement: 'x = y => (p x == p y)',
-    proof: function() {
-      var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
-      var step2 = rules.eqIsEquiv();
-      var result = rules.replace(step1, '/right/binop', step2);
-      return result;
-    },
-    inputs: {},
-    form: '',
-    description: 'axiom of predicate application',
-    tooltip: ('predicates take equal values to the same truth value')
-  },
-
-  axiom3: {
-    statement: '(f = g) == forall {x. f x = g x}',
-    labels: 'higherOrder',
-    converse: {labels: 'higherOrder'},
-    inputs: {},
-    form: '',
-    tooltip: ('extensionality: functions are equal based on equal results'
-              + ' on all inputs.'),
-    description: 'axiom of equal functions'
-  },
-
-  axiom3a: {
-    statement: '(p = q) == forall {x. p x == q x}',
-    proof: function() {
-      const map = {f: 'p', g: 'q'};
-      const step1 = rules.instMultiVars(rules.axiom3(), map);
-      const step2 = rules.eqIsEquiv();
-      const result = rules.replace(step1, '/right/arg/body/binop', step2);
-      return result.justify('axiom3a');
-    },
-    labels: 'higherOrder',
-    converse: {labels: 'higherOrder'},
-    inputs: {},
-    form: '',
-    tooltip: ('extensionality: predicates are equal ' +
-              'based on equal membership.'),
-    description: 'axiom of equal predicates'
-  },
-
-  /**
-   * Generates an instance of Axiom 4 from an application of a lambda
-   * expression to an argument expression, returning a term that
-   * expresses the equality of the input and its beta reduction.
-   */
-  axiom4: {
-    action: function(call) {
-      call = typeof call == 'string' ? Toy.parse(call) : call;
-      assert(call.isLambdaCall(),
-             'Axiom 4 needs ({v. B} A), got: {1}', call.toString());
-      var lambda = call.fn;
-      var result =
-        (call.arg.name === lambda.bound.name
-         // In this case the substitution will have no effect,
-         // though subFree might incidentally rename the bound variable.
-         ? equal(call, lambda.body)
-         : equal(call, lambda.body.subFree1(call.arg, lambda.bound.name)));
-      // Always make sure the call has a type.  It came from elsewhere.
-      Toy.findType(call);
-      return rules.assert(result).justify('axiom4', [call]);
-    },
-    labels: 'primitive',
-    inputs: {term: 1},  // Specifically a Call to a Lambda.
-    form: 'Enter {v. body} expr <input name=term>',
-    menu: 'apply a lambda to its argument',
-    description: 'axiom of substitution',
-    tooltip: ('')
-  },
-
-  axiom5: {
-    statement: 'iota {x. x = y} = y',
-    inputs: {},
-    form: '',
-    tooltip: ('axiom of description'),
-    description: 'axiom of description',
-    simplifier: true
-  }
-
-};
-addRulesMap(axioms);
-
-// Adding definitions before use enables type checking to use the
-// known types of the constants.
-
-// It would be desirable for the constants in this next group to
-// all have generic types.
-define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
-// This is the empty collection.
-define('empty', '{x. F}');
-define('none', 'iota empty');
-define('?', '{p. {x. if p x none}}');
-// The identity function
-define('ident', '{x. x}');
-
-// Collection has multiple elements:
-define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
-// Always either "none" or the member of the singleton set:
-define('the', '{p. if (exists1 p) (iota p) none}');
-// This "negates" a predicate, returning a predicate whose value
-// is the negation of the value of the given predicate.  (Just one
-// argument!)
-define('negate', '{p. {x. not (p x)}}');
-
-// TODO: Use a flag to enable the system to initialize with either a
-// precisely Andrews-style system with just equality and iota as
-// primitives, or alternatively with additional primitives T, F, and
-// "if", plus two axioms for "if".  T and F are currently listed as
-// primitive constants, but F is also "defined" with what amounts to
-// an axiom "defFFromBook", and definition by cases is in the system
-// core, which is much like including "if".
-//
-// The Andrews system has fewer axioms, primitive constants, and
-// concepts, but the extended system results in a quicker and more
-// conventional development of propositional calculus.
-
-// Conventions for menu items (using "menu:")
-// Step templates are in square brackets, such as [T = A].
-// Rules (including axiom 4) that take a term as input use A, B to
-//   show where the term goes, not enclosed in square brackets.
-
-var primitives = {
+const prelogic = {
 
   /**
    * The name "assertion" is used in displays to indicate that the
@@ -285,48 +112,6 @@ var primitives = {
     toOffer: 'return step == null',
     description: 'definition',
     tooltip: 'define a name'
-  },
-
-  /**
-   * Suppose the given statement to be true.  This is the standard
-   * way to introduce hypotheses into proofs.  If given a string,
-   * parses it and uses the result.
-   */
-  assume: {
-    action: function(assumption) {
-      assumption = termify(assumption);
-      var step = rules.tautInst('a => a', {a: assumption});
-      // Flag the step as one with hypotheses, and record this step as
-      // the source of the assumption.
-      var result = rules.asHypotheses(step).justify('assume', arguments);
-      assumption.sourceStep = result;
-      return result;
-    },
-    inputs: {bool: 1},
-    form: ('Assume <input name=bool>'),
-    menu: 'assume',
-    tooltip: 'Statement to assume',
-    description: 'assumption',
-    labels: 'basic'
-  },
-
-  /**
-   * Suppose the given statement to be true.  The UI will display the
-   * statement in each step where it occurs, even though it is among
-   * the assumptions.
-   */
-  assumeExplicitly: {
-    action: function(asm_arg) {
-      var assumption = termify(asm_arg);
-      var step = rules.tautInst('a => a', {a: assumption});
-      return step.justify('assumeExplicitly', arguments);
-    },
-    inputs: {bool: 1},
-    form: ('Assume <input name=bool>'),
-    menu: 'assume temporarily',
-    tooltip: 'Statement to assume (show occurrences)',
-    description: 'temporary assumption',
-    labels: 'basic'
   },
 
   copy: {
@@ -446,6 +231,174 @@ var primitives = {
     description: '=definition'
   },
 
+  // Use the definition of the name at the given location in the given
+  // step.  If the definition is by cases the location should be a
+  // call to the named function, with T or F as the argument.
+  // For the benefit of the UI, if the path is to a call, uses
+  // the definition of the named function of the call, even if there
+  // is more than one argument, by descending into fn parts.
+  //
+  // TODO: Fix bug here that A != B does not become not (A = B).
+  useDefinition: {
+    precheck: function(step, path) {
+      var term = step.get(path);
+      var fn = term.funPart();
+      // The fn could be a Lambda, which is not defined.
+      // This returns falsy if the function is an "unused" constant.
+      return (fn instanceof Atom && Toy.isDefined(fn.name));
+    },
+    action: function(step, path) {
+      var args = [step, path];
+      path = Toy.path(path, step);
+      var result;
+      var target = step.get(path);
+      // Undefined if the path refers to an Atom.
+      var parent;
+      var parentPath;
+      // Descend to the named function, even if multiple arguments.
+      while (target instanceof Call) {
+        parentPath = parentPath ? parentPath.concat('/fn') : path;
+        parent = target;
+        target = target.fn;
+      }
+      // At this point the parent (if defined) is a Call.
+      // The parentPath is path to the parent if any.
+      assert(target instanceof Atom, 'Not a symbol: {1}', target);
+      if (Toy.isDefinedByCases(target)) {
+        assert(parent, 'To use a definition by cases, refer to a call.');
+        result = rules.replace(step, parentPath,
+                               rules.definition(target.name, parent.arg));
+      } else {
+        result = rules.replace(step,
+                              parentPath ? parentPath.concat('/fn') : path,
+                              rules.definition(target.name));
+      }
+      return result.justify('useDefinition', args, [step]);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'replace name with its definition',
+    tooltip: (''),
+    description: 'definition of {site}'
+  }
+
+};
+addRulesMap(prelogic);
+
+
+//// Logical axioms and rule of inference
+
+const axioms = {
+  // TODO: LOGIC: Consider the possibility of instead saying that
+  //     p T & p F => p x
+  //   and defining forall:bool->bool as {p. p T & p F}.
+  //   Most uses of axiom1 are immediately followed by instEqn, and
+  //   use the definition of forall:bool->bool.
+  //   We could prove that any two boolean functions with the same
+  //   definition by cases are equal.  This still assumes that
+  //   definition by cases is at least admissible.  (There exists
+  //   a function as defined.)
+  axiom1: {
+    statement: 'g T & g F == forall {a. g a}',
+    inputs: {},
+    form: '',
+    description: 'axiom of T & F',
+    tooltip: ('T and F are all the booleans')
+  },
+
+  axiom2: {
+    statement: 'x = y => h x = h y',
+    inputs: {},
+    form: '',
+    description: 'axiom of function application',
+    tooltip: ('functions take equal values to equal values')
+  },
+
+  /**
+   * Axiom 2 specialized for predicates.  This is actually more like
+   * Andrews' axiom 2.
+   */
+  axiom2a: {
+    statement: 'x = y => (p x == p y)',
+    proof: function() {
+      var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
+      var step2 = rules.eqIsEquiv();
+      var result = rules.replace(step1, '/right/binop', step2);
+      return result;
+    },
+    inputs: {},
+    form: '',
+    description: 'axiom of predicate application',
+    tooltip: ('predicates take equal values to the same truth value')
+  },
+
+  axiom3: {
+    statement: '(f = g) == forall {x. f x = g x}',
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
+    inputs: {},
+    form: '',
+    tooltip: ('extensionality: functions are equal based on equal results'
+              + ' on all inputs.'),
+    description: 'axiom of equal functions'
+  },
+
+  axiom3a: {
+    statement: '(p = q) == forall {x. p x == q x}',
+    proof: function() {
+      const map = {f: 'p', g: 'q'};
+      const step1 = rules.instMultiVars(rules.axiom3(), map);
+      const step2 = rules.eqIsEquiv();
+      const result = rules.replace(step1, '/right/arg/body/binop', step2);
+      return result.justify('axiom3a');
+    },
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
+    inputs: {},
+    form: '',
+    tooltip: ('extensionality: predicates are equal ' +
+              'based on equal membership.'),
+    description: 'axiom of equal predicates'
+  },
+
+  /**
+   * Generates an instance of Axiom 4 from an application of a lambda
+   * expression to an argument expression, returning a term that
+   * expresses the equality of the input and its beta reduction.
+   */
+  axiom4: {
+    action: function(call) {
+      call = typeof call == 'string' ? Toy.parse(call) : call;
+      assert(call.isLambdaCall(),
+             'Axiom 4 needs ({v. B} A), got: {1}', call.toString());
+      var lambda = call.fn;
+      var result =
+        (call.arg.name === lambda.bound.name
+         // In this case the substitution will have no effect,
+         // though subFree might incidentally rename the bound variable.
+         ? equal(call, lambda.body)
+         : equal(call, lambda.body.subFree1(call.arg, lambda.bound.name)));
+      // Always make sure the call has a type.  It came from elsewhere.
+      Toy.findType(call);
+      return rules.assert(result).justify('axiom4', [call]);
+    },
+    labels: 'primitive',
+    inputs: {term: 1},  // Specifically a Call to a Lambda.
+    form: 'Enter {v. body} expr <input name=term>',
+    menu: 'apply a lambda to its argument',
+    description: 'axiom of substitution',
+    tooltip: ('')
+  },
+
+  axiom5: {
+    statement: 'iota {x. x = y} = y',
+    inputs: {},
+    form: '',
+    tooltip: ('axiom of description'),
+    description: 'axiom of description',
+    simplifier: true
+  },
+
   /**
    * Replace the subexpression of the target at the path with the
    * equation's RHS.  This is rule R.  The subexpression must match
@@ -537,73 +490,17 @@ var primitives = {
   }
 
 };
-addRulesMap(primitives);
+addRulesMap(axioms);
 
-// These definitions are alternatives to the definitions by cases.
-const bookDefns = {
 
-  // Book only.  Not actually used even in the book.
-  defAnd: {
-    statement: '(&) = {x. {y. ({g. (g T T)} = {g. (g x y)})}}',
-    axiom: true,
-    action: function() {
-      return (rules.assert('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
-              .justify('defAnd'));
-    }
-  },
+// Some trivial rules not needing definitions
 
-  // Book only.
-  defImplies: {
-    statement: '(=>) = {x. {y. (x == (x & y))}}',
-    axiom: true,
-    action: function() {
-      return (rules.assert('(=>) = {x. {y. x == x & y}}')
-              .justify('defImplies'));
-    }
-  },
+// These just(?) use axiom4 and Rule R.
 
-  //
-  // OPTIONAL/UNUSED
-  // 
+// Definition rules need simpleApply and applyBoth to be available
+// at the occurrence of Toy.definition.
 
-  // Experiment with Andrews' definition of "and".
-  funWithAnd: {
-    statement: ('{x. T} = {x. ((x T T) = (x T F))} == ' +
-                '(forall {x. ((x T T) = (x T F))})'),
-    proof: function() {
-      var f = varify('f');
-      var g = varify('g');
-      var fa = rules.definition('forall');
-      var a2 = rules.axiom2();
-      var a3 = rules.axiom3();
-      var step1 = rules.applyBoth(rules.defAnd(), T);
-      var step2a = rules.apply(step1, '/right');
-      var step2b = rules.applyBoth(step2a, F);
-      var step2c = rules.apply(step2b, '/right');
-      var step3 = rules.instEqn(a3, step2c.get('/right/left'), f);
-      var step4 = rules.instEqn(step3, step2c.get('/right/right'), g);
-      var step5 = rules.apply(step4, '/right/arg/body/left');
-      var step6 = rules.apply(step5, '/right/arg/body/right');
-      var step7 = rules.applyBoth(fa, step6.get('/right/arg'));
-      var step8 = rules.instEqn(a3, step7.get('/right/left'), f);
-      var step9 = rules.instEqn(step8, step7.get('/right/right'), g);
-      var step10 = rules.apply(step9, '/right/arg/body/left');
-      var step11 = rules.apply(step10, '/right/arg/body/right');
-      var step12 = rules.r5218(step11.get('/right/arg/body/right'));
-      return rules.r(step12, step11, '/right/arg/body');
-    }
-  }
-
-};
-if (!useDefnsByCases) {
-  addRulesMap(bookDefns);
-}
-
-const baseRules = {
-
-  //
-  // Theorems and rules of inference.
-  //
+const equalities = {
 
   // Takes an arbitrary expression A, concluding that it is equal
   // to itself. (5200)
@@ -619,6 +516,36 @@ const baseRules = {
     menu: 'A = A',
     tooltip: 'Derives A = A.',
     description: 'A = A',
+    labels: 'primitive'
+  },
+
+  // The two forms of "=" are interchangeable (other than precedence).
+  eqIsEquiv: {
+    statement: '(=) = (==)',
+    proof: function() {
+      var step1 = rules.eqSelf(Toy.constify('='));
+      var step2 = rules.eqSelf(Toy.constify('=='));
+      return rules.r(step2, step1, '/right');
+    },
+    form: '',
+    tooltip: '= and \u21d4 are the same',
+    labels: 'uncommon'
+  },
+
+  // Given A, proves A == A.  This is intended for use only when
+  // A is boolean.
+  equivSelf: {
+    action: function(a) {
+      var step1 = rules.eqSelf(a);
+      var eqn = rules.theorem('eqIsEquiv');
+      var result = rules.r(eqn, step1, '/binop');
+      return result.justify('equivSelf', []);
+    },
+    inputs: {bool: 1},
+    form: 'Statement to prove equal to itself: <input name=bool>',
+    menu: 'A \u21d4 A',
+    tooltip: 'Derives A \u21d4 A.',
+    description: 'A \u21d4 A',
     labels: 'primitive'
   },
 
@@ -678,51 +605,6 @@ const baseRules = {
     tooltip: ('prepare to transform term'),
     description: 'term equal to itself',
     labels: 'display'
-  },
-
-  // Assume the target boolean term, like considerPart, but making it
-  // an assumption.
-  assumePart: {
-    toOffer: 'return term.isBoolean()',
-    action: function(step, path) {
-      return rules.assume(step.get(path)).justify('assumePart', arguments);
-    },
-    inputs: {site: 1},
-    form: '',
-    menu: 'assume {term}',
-    tooltip: ('assume term'),
-    description: 'assume',
-    labels: 'display'
-  },
-
-  // The two forms of "=" are interchangeable (other than precedence).
-  eqIsEquiv: {
-    statement: '(=) = (==)',
-    proof: function() {
-      var step1 = rules.eqSelf(Toy.constify('='));
-      var step2 = rules.eqSelf(Toy.constify('=='));
-      return rules.r(step2, step1, '/right');
-    },
-    form: '',
-    tooltip: '= and \u21d4 are the same',
-    labels: 'uncommon'
-  },
-
-  // Given A, proves A == A.  This is intended for use only when
-  // A is boolean.
-  equivSelf: {
-    action: function(a) {
-      var step1 = rules.eqSelf(a);
-      var eqn = rules.theorem('eqIsEquiv');
-      var result = rules.r(eqn, step1, '/binop');
-      return result.justify('equivSelf', []);
-    },
-    inputs: {bool: 1},
-    form: 'Statement to prove equal to itself: <input name=bool>',
-    menu: 'A \u21d4 A',
-    tooltip: 'Derives A \u21d4 A.',
-    description: 'A \u21d4 A',
-    labels: 'primitive'
   },
 
   // TODO: Make all forms of r5201 work with conditionals rather
@@ -842,57 +724,6 @@ const baseRules = {
     },
   },
 
-  // Use the definition of the name at the given location in the given
-  // step.  If the definition is by cases the location should be a
-  // call to the named function, with T or F as the argument.
-  // For the benefit of the UI, if the path is to a call, uses
-  // the definition of the named function of the call, even if there
-  // is more than one argument, by descending into fn parts.
-  //
-  // TODO: Fix bug here that A != B does not become not (A = B).
-  useDefinition: {
-    precheck: function(step, path) {
-      var term = step.get(path);
-      var fn = term.funPart();
-      // The fn could be a Lambda, which is not defined.
-      // This returns falsy if the function is an "unused" constant.
-      return (fn instanceof Atom && Toy.isDefined(fn.name));
-    },
-    action: function(step, path) {
-      var args = [step, path];
-      path = Toy.path(path, step);
-      var result;
-      var target = step.get(path);
-      // Undefined if the path refers to an Atom.
-      var parent;
-      var parentPath;
-      // Descend to the named function, even if multiple arguments.
-      while (target instanceof Call) {
-        parentPath = parentPath ? parentPath.concat('/fn') : path;
-        parent = target;
-        target = target.fn;
-      }
-      // At this point the parent (if defined) is a Call.
-      // The parentPath is path to the parent if any.
-      assert(target instanceof Atom, 'Not a symbol: {1}', target);
-      if (Toy.isDefinedByCases(target)) {
-        assert(parent, 'To use a definition by cases, refer to a call.');
-        result = rules.replace(step, parentPath,
-                               rules.definition(target.name, parent.arg));
-      } else {
-        result = rules.replace(step,
-                              parentPath ? parentPath.concat('/fn') : path,
-                              rules.definition(target.name));
-      }
-      return result.justify('useDefinition', args, [step]);
-    },
-    inputs: {site: 1},
-    form: '',
-    menu: 'replace name with its definition',
-    tooltip: (''),
-    description: 'definition of {site}'
-  },
-
   // Just applies an anonymous lambda to an argument at the
   // specified location in a step.
   simpleApply: {
@@ -912,13 +743,200 @@ const baseRules = {
     tooltip: ('Applies a lambda to its argument'),
     description: '=simpleApply',
     labels: 'uncommon'
+  }
+
+};
+addRulesMap(equalities);
+
+
+//// Definitions
+
+define('not', '(=) F');
+define('!=', '{x. {y. not (x = y)}}');
+define('forall', '(=) {x. T}');
+define('F', 'forall {x. x}');
+
+// define('forall', '(=) {x. T}');
+// definition('forall = ((=) {x. T})');
+// definition('F = forall {x. x}');
+
+define('exists', '{p. p != {x. F}}');
+define('exists1', '{p. exists {x. p = {y. y = x}}}');
+defineCases('&', identity, '{x. F}');
+defineCases('|', allT, identity);
+defineCases('=>', identity, allT);
+
+// Adding definitions before use enables type checking to use the
+// known types of the constants.
+
+// It would be desirable for the constants in this next group to
+// all have generic types.
+define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
+// This is the empty collection.
+define('empty', '{x. F}');
+define('none', 'iota empty');
+define('?', '{p. {x. if p x none}}');
+// The identity function
+define('ident', '{x. x}');
+
+// Collection has multiple elements:
+define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
+// Always either "none" or the member of the singleton set:
+define('the', '{p. if (exists1 p) (iota p) none}');
+// This "negates" a predicate, returning a predicate whose value
+// is the negation of the value of the given predicate.  (Just one
+// argument!)
+define('negate', '{p. {x. not (p x)}}');
+
+// TODO: Move these comments.
+// TODO: Use a flag to enable the system to initialize with either a
+// precisely Andrews-style system with just equality and iota as
+// primitives, or alternatively with additional primitives T, F, and
+// "if", plus two axioms for "if".  T and F are currently listed as
+// primitive constants, but F is also "defined" with what amounts to
+// an axiom "defFFromBook", and definition by cases is in the system
+// core, which is much like including "if".
+//
+// The Andrews system has fewer axioms, primitive constants, and
+// concepts, but the extended system results in a quicker and more
+// conventional development of propositional calculus.
+
+// Conventions for menu items (using "menu:")
+// Step templates are in square brackets, such as [T = A].
+// Rules (including axiom 4) that take a term as input use A, B to
+//   show where the term goes, not enclosed in square brackets.
+
+var assumers = {
+
+  /**
+   * Suppose the given statement to be true.  This is the standard
+   * way to introduce hypotheses into proofs.  If given a string,
+   * parses it and uses the result.
+   */
+  assume: {
+    action: function(assumption) {
+      assumption = termify(assumption);
+      var step = rules.tautInst('a => a', {a: assumption});
+      // Flag the step as one with hypotheses, and record this step as
+      // the source of the assumption.
+      var result = rules.asHypotheses(step).justify('assume', arguments);
+      assumption.sourceStep = result;
+      return result;
+    },
+    inputs: {bool: 1},
+    form: ('Assume <input name=bool>'),
+    menu: 'assume',
+    tooltip: 'Statement to assume',
+    description: 'assumption',
+    labels: 'basic'
   },
+
+  // Assume the target boolean term, like considerPart, but making it
+  // an assumption.
+  assumePart: {
+    toOffer: 'return term.isBoolean()',
+    action: function(step, path) {
+      return rules.assume(step.get(path)).justify('assumePart', arguments);
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'assume {term}',
+    tooltip: ('assume term'),
+    description: 'assume',
+    labels: 'display'
+  },
+
+  /**
+   * Suppose the given statement to be true.  The UI will display the
+   * statement in each step where it occurs, even though it is among
+   * the assumptions.
+   */
+  assumeExplicitly: {
+    action: function(asm_arg) {
+      var assumption = termify(asm_arg);
+      var step = rules.tautInst('a => a', {a: assumption});
+      return step.justify('assumeExplicitly', arguments);
+    },
+    inputs: {bool: 1},
+    form: ('Assume <input name=bool>'),
+    menu: 'assume temporarily',
+    tooltip: 'Statement to assume (show occurrences)',
+    description: 'temporary assumption',
+    labels: 'basic'
+  }
+
+};
+addRulesMap(assumers);
+
+// These definitions are alternatives to the definitions by cases.
+const bookDefns = {
+
+  // Book only.  Not actually used even in the book.
+  defAnd: {
+    statement: '(&) = {x. {y. ({g. (g T T)} = {g. (g x y)})}}',
+    axiom: true,
+    action: function() {
+      return (rules.assert('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
+              .justify('defAnd'));
+    }
+  },
+
+  // Book only.
+  defImplies: {
+    statement: '(=>) = {x. {y. (x == (x & y))}}',
+    axiom: true,
+    action: function() {
+      return (rules.assert('(=>) = {x. {y. x == x & y}}')
+              .justify('defImplies'));
+    }
+  },
+
+  //
+  // OPTIONAL/UNUSED
+  // 
+
+  // Experiment with Andrews' definition of "and".
+  funWithAnd: {
+    statement: ('{x. T} = {x. ((x T T) = (x T F))} == ' +
+                '(forall {x. ((x T T) = (x T F))})'),
+    proof: function() {
+      var f = varify('f');
+      var g = varify('g');
+      var fa = rules.definition('forall');
+      var a2 = rules.axiom2();
+      var a3 = rules.axiom3();
+      var step1 = rules.applyBoth(rules.defAnd(), T);
+      var step2a = rules.apply(step1, '/right');
+      var step2b = rules.applyBoth(step2a, F);
+      var step2c = rules.apply(step2b, '/right');
+      var step3 = rules.instEqn(a3, step2c.get('/right/left'), f);
+      var step4 = rules.instEqn(step3, step2c.get('/right/right'), g);
+      var step5 = rules.apply(step4, '/right/arg/body/left');
+      var step6 = rules.apply(step5, '/right/arg/body/right');
+      var step7 = rules.applyBoth(fa, step6.get('/right/arg'));
+      var step8 = rules.instEqn(a3, step7.get('/right/left'), f);
+      var step9 = rules.instEqn(step8, step7.get('/right/right'), g);
+      var step10 = rules.apply(step9, '/right/arg/body/left');
+      var step11 = rules.apply(step10, '/right/arg/body/right');
+      var step12 = rules.r5218(step11.get('/right/arg/body/right'));
+      return rules.r(step12, step11, '/right/arg/body');
+    }
+  }
+
+};
+if (!useDefnsByCases) {
+  addRulesMap(bookDefns);
+}
+
+const baseRules = {
 
   // "Reduces" a call identified by a path within a theorem. If the
   // call is an application of a lambda expression to an argument,
   // beta-reduces it.  If the target expression is a call to a named
   // function supplying one or two arguments, expands the definition
   // and applies the expansions to the argument(s).
+  //
+  // TODO: Consider making this functionality part of useDefinition.
   apply: {
     precheck: function(step, path) {
       var term = step.get(path);
@@ -1051,8 +1069,7 @@ const baseRules = {
 
   /**
    * Substitutes term "a" for variable or name "v" in equation b_c,
-   * with the result a consequence of b_c.  (5209) Does not support
-   * hypotheses.
+   * with the result a consequence of b_c.  (5209)
    */
   instEqn: {
     action: function(b_c_arg, a_arg, v) {
