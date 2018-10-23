@@ -705,11 +705,12 @@ function addRule(info) {
 }
 
 /**
- * Add the given definition to the system.  It must define a named
- * constant that is not already defined.  The argument is a wff that
- * will become true as the definition of the new constant.  The wff
- * must contain a (free) occurrence of exactly one new constant name.
- * If in string form, this parses with termify.
+ * Adds the given definition as a new fact provided it meets the
+ * requirements for definitions.  It must define a named constant that
+ * is not already defined or known as a constant.  The argument is a
+ * wff that will become true as the definition of the new constant.
+ * The new constant name must be the one and only free new name.  If
+ * the wff is in string form, this parses with termify.
  *
  * If it is of the form:
  *
