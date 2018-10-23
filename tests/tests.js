@@ -2051,7 +2051,7 @@ var testCase = {
     var step3 = rules.tautInst(taut, {p: step2, h: step1.getLeft()});
     var step4 = rules.modusPonens(step2, step3);
     var step5 = rules.asHypotheses(step4);
-    Toy._flagHyps(step5, step1);
+    Toy.flagHyps(step5, step1);
     assert(step5.hasHyps);
     assert(step5.getLeft().sourceStep);
     Toy.trackSourceSteps = true;
@@ -2456,7 +2456,7 @@ var testCase = {
 
   testBuildHypSchema: function() {
     var rules = Toy.rules;
-    var bs = Toy._buildHypSchema;
+    var bs = Toy.buildHypSchema;
     var map = new Toy.TermMap();
     var schema = bs(rules.fact('x + y + z = x + (y + z)').getLeft(), map);
     assertEqual('((a1 & a2) & a3)', schema);
@@ -2465,7 +2465,7 @@ var testCase = {
 
   testPathToConjunct: function() {
     function compute(x, f) {
-      return Toy._pathToConjunct(termify(x), f) + '';
+      return Toy.pathToConjunct(termify(x), f) + '';
     }
     assertEqual('/left/left', compute('a & b & c', e => e.name == 'a'));
   },
