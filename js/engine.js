@@ -706,9 +706,10 @@ function addRule(info) {
 
 /**
  * Add the given definition to the system.  It must define a named
- * constant that is not already defined.  The argument is a WFF that
- * will become true as the definition of the new constant.  The WFF
+ * constant that is not already defined.  The argument is a wff that
+ * will become true as the definition of the new constant.  The wff
  * must contain a (free) occurrence of exactly one new constant name.
+ * If in string form, this parses with termify.
  *
  * If it is of the form:
  *
@@ -789,7 +790,7 @@ function definition(defn_arg) {
 
 /**
  * This function only has effect for equational definitions
- * of the form <atom> = <term>.
+ * of the form <atom> = <term>, in Expr form.
  *
  * If it is a function definition (the term is a lambda), it generates
  * a basic equational fact for application of the function or
@@ -823,14 +824,13 @@ function definition(defn_arg) {
  * TODO: Implement the <precond> support.  Consider extending this for
  *   additional cases TBD.
  */
-function addDefnFacts(definition_arg) {
-  const definition = rules.fact(definition_arg);
+function addDefnFacts(definition) {
   // This relies on having applyBoth and simpleApply available whenever
   // a function is defined.
   if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
     var defined = definition.getLeft();
     var name = defined.name;
-    var eqn = definition;
+    var eqn = rules.definition(name);
     var lambda = definition.getRight();
     while (lambda instanceof Lambda) {
       var bound = lambda.bound;
