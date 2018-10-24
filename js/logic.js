@@ -67,6 +67,225 @@ const F = constify('F');
 const _factMap = {};
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+//// Logical axioms and rule of inference
+
+const axioms = {
+  // TODO: LOGIC: Consider the possibility of instead saying that
+  //     p T & p F => p x
+  //   and defining forall:bool->bool as {p. p T & p F}.
+  //   Most uses of axiom1 are immediately followed by instEqn, and
+  //   use the definition of forall:bool->bool.
+  //   We could prove that any two boolean functions with the same
+  //   definition by cases are equal.  This still assumes that
+  //   definition by cases is at least admissible.  (There exists
+  //   a function as defined.)
+  axiom1: {
+    statement: 'g T & g F == forall {a. g a}',
+    inputs: {},
+    form: '',
+    description: 'axiom of T & F',
+    tooltip: ('T and F are all the booleans')
+  },
+
+  axiom2: {
+    statement: 'x = y => h x = h y',
+    inputs: {},
+    form: '',
+    description: 'axiom of function application',
+    tooltip: ('functions take equal values to equal values')
+  },
+
+  /**
+   * Axiom 2 specialized for predicates.  This is actually more like
+   * Andrews' axiom 2.
+   */
+  axiom2a: {
+    statement: 'x = y => (p x == p y)',
+    proof: function() {
+      var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
+      var step2 = rules.eqIsEquiv();
+      var result = rules.replace(step1, '/right/binop', step2);
+      return result;
+    },
+    inputs: {},
+    form: '',
+    description: 'axiom of predicate application',
+    tooltip: ('predicates take equal values to the same truth value')
+  },
+
+  axiom3: {
+    statement: '(f = g) == forall {x. f x = g x}',
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
+    inputs: {},
+    form: '',
+    tooltip: ('extensionality: functions are equal based on equal results'
+              + ' on all inputs.'),
+    description: 'axiom of equal functions'
+  },
+
+  axiom3a: {
+    statement: '(p = q) == forall {x. p x == q x}',
+    proof: function() {
+      const map = {f: 'p', g: 'q'};
+      const step1 = rules.instMultiVars(rules.axiom3(), map);
+      const step2 = rules.eqIsEquiv();
+      const result = rules.replace(step1, '/right/arg/body/binop', step2);
+      return result.justify('axiom3a');
+    },
+    labels: 'higherOrder',
+    converse: {labels: 'higherOrder'},
+    inputs: {},
+    form: '',
+    tooltip: ('extensionality: predicates are equal ' +
+              'based on equal membership.'),
+    description: 'axiom of equal predicates'
+  },
+
+  /**
+   * Generates an instance of Axiom 4 from an application of a lambda
+   * expression to an argument expression, returning a term that
+   * expresses the equality of the input and its beta reduction.
+   */
+  axiom4: {
+    action: function(call) {
+      call = typeof call == 'string' ? Toy.parse(call) : call;
+      assert(call.isLambdaCall(),
+             'Axiom 4 needs ({v. B} A), got: {1}', call.toString());
+      var lambda = call.fn;
+      var result =
+        (call.arg.name === lambda.bound.name
+         // In this case the substitution will have no effect,
+         // though subFree might incidentally rename the bound variable.
+         ? equal(call, lambda.body)
+         : equal(call, lambda.body.subFree1(call.arg, lambda.bound.name)));
+      // Always make sure the call has a type.  It came from elsewhere.
+      Toy.findType(call);
+      return rules.assert(result).justify('axiom4', [call]);
+    },
+    labels: 'primitive',
+    inputs: {term: 1},  // Specifically a Call to a Lambda.
+    form: 'Enter {v. body} expr <input name=term>',
+    menu: 'apply a lambda to its argument',
+    description: 'axiom of substitution',
+    tooltip: ('')
+  },
+
+  axiom5: {
+    statement: 'iota {x. x = y} = y',
+    inputs: {},
+    form: '',
+    tooltip: ('axiom of description'),
+    description: 'axiom of description',
+    simplifier: true
+  },
+
+  /**
+   * Replace the subexpression of the target at the path with the
+   * equation's RHS.  This is rule R.  The subexpression must match
+   * the equation's LHS, meaning they are the same except possibly
+   * in names of vound variables.
+   *
+   * Extended to work with hypotheses by flagging the result with
+   * hypotheses in case the target has them and the result is also
+   * a conditional.
+   */
+  r: {
+    action: function(equation, target, path_arg) {
+      const path = Toy.path(path_arg, target);
+      assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
+      if (equation.getLeft().sameAs(equation.getRight())) {
+        // The equation LHS must "match" the site, but can differ in
+        // bound variables, so the replacement can only be a no-op if
+        // these are identical too.  (This is a cheap but not
+        // complete check for a no-op.)
+        if (target.get(path).sameAs(equation.getLeft())) {
+          // Quick return if the replacement is a no-op.
+          return target.justify('r', [equation, target, path],
+                                [target, equation]);
+        }
+      }
+      // Logs the location of the test where autoAssert is used.
+      function logWhere(term) {
+        var e = new Error();
+        var lines = e.stack.split('\n');
+        // Note that the follwing regex may be Chrome-specific.
+        function test(line) { return line.match(/Object.test/); }
+        var where = lines.find(test) || 'at unknown location';
+        console.warn('Asserting', term.$$, where);
+      }
+      function replacer(expr) {
+        if (expr.matches(equation.getLeft())) {
+          return equation.getRight();
+        } else {
+          assert(false,
+                 'Rule R: subexpression {1}\n of {2}\n must match {3}',
+                 expr, target, equation.getLeft());
+        }
+      }
+      // Auto-justify input steps if requested by the current configuration.
+      if (!equation.isProved()) {
+        if (Toy.autoAssert) {
+          logWhere(equation);
+          equation.assert();
+        } else {
+          assert(false, 'Rule R unproven equation: {1}', equation);
+        }
+      }
+      if (!target.isProved()) {
+        if (Toy.autoAssert) {
+          logWhere(target);
+          target.assert();
+        } else {
+          assert(false, 'Rule R unproven target: {1}', target);
+        }
+      }
+      var result = target.replaceAt(path, replacer);
+      var lvars = equation.getLeft().freeVars();
+      // TODO: Review this assumption.  It appears we really should
+      // compare the set of constraints generated by the two sides.
+      //
+      // If the right side has any free names not in the left side,
+      // the result may have constraints not met by the target, so
+      // typecheck it.
+      var rvars = equation.getRight().freeVars();
+      for (var name in rvars) {
+        if (!(name in lvars)) {
+          Toy.findType(result);
+          break;
+        }
+      }
+      var justified = result.justify('r', [equation, target, path],
+                                     [target, equation], true);
+      justified.hasHyps = target.hasHyps && justified.isCall2('=>');
+      justified.details = null;
+      return justified;
+    },
+    inputs: {equation: 1, site: 2},
+    // Currently not offered in forms; use "replace".
+    // form: ('Replace selection with right side of step <input name=equation>'),
+    tooltip: ('Replace an occurrence of a term with an equal term.'),
+    menu: 'replace {term} with something equal',
+    description: 'replace {site};; {in step siteStep} {using step equation}',
+    labels: 'uncommon'
+  }
+
+};
+addRulesMap(axioms);
+
+
 //// Preliminaries to logic
 
 const prelogic = {
@@ -286,213 +505,6 @@ const prelogic = {
 addRulesMap(prelogic);
 
 
-//// Logical axioms and rule of inference
-
-const axioms = {
-  // TODO: LOGIC: Consider the possibility of instead saying that
-  //     p T & p F => p x
-  //   and defining forall:bool->bool as {p. p T & p F}.
-  //   Most uses of axiom1 are immediately followed by instEqn, and
-  //   use the definition of forall:bool->bool.
-  //   We could prove that any two boolean functions with the same
-  //   definition by cases are equal.  This still assumes that
-  //   definition by cases is at least admissible.  (There exists
-  //   a function as defined.)
-  axiom1: {
-    statement: 'g T & g F == forall {a. g a}',
-    inputs: {},
-    form: '',
-    description: 'axiom of T & F',
-    tooltip: ('T and F are all the booleans')
-  },
-
-  axiom2: {
-    statement: 'x = y => h x = h y',
-    inputs: {},
-    form: '',
-    description: 'axiom of function application',
-    tooltip: ('functions take equal values to equal values')
-  },
-
-  /**
-   * Axiom 2 specialized for predicates.  This is actually more like
-   * Andrews' axiom 2.
-   */
-  axiom2a: {
-    statement: 'x = y => (p x == p y)',
-    proof: function() {
-      var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
-      var step2 = rules.eqIsEquiv();
-      var result = rules.replace(step1, '/right/binop', step2);
-      return result;
-    },
-    inputs: {},
-    form: '',
-    description: 'axiom of predicate application',
-    tooltip: ('predicates take equal values to the same truth value')
-  },
-
-  axiom3: {
-    statement: '(f = g) == forall {x. f x = g x}',
-    labels: 'higherOrder',
-    converse: {labels: 'higherOrder'},
-    inputs: {},
-    form: '',
-    tooltip: ('extensionality: functions are equal based on equal results'
-              + ' on all inputs.'),
-    description: 'axiom of equal functions'
-  },
-
-  axiom3a: {
-    statement: '(p = q) == forall {x. p x == q x}',
-    proof: function() {
-      const map = {f: 'p', g: 'q'};
-      const step1 = rules.instMultiVars(rules.axiom3(), map);
-      const step2 = rules.eqIsEquiv();
-      const result = rules.replace(step1, '/right/arg/body/binop', step2);
-      return result.justify('axiom3a');
-    },
-    labels: 'higherOrder',
-    converse: {labels: 'higherOrder'},
-    inputs: {},
-    form: '',
-    tooltip: ('extensionality: predicates are equal ' +
-              'based on equal membership.'),
-    description: 'axiom of equal predicates'
-  },
-
-  /**
-   * Generates an instance of Axiom 4 from an application of a lambda
-   * expression to an argument expression, returning a term that
-   * expresses the equality of the input and its beta reduction.
-   */
-  axiom4: {
-    action: function(call) {
-      call = typeof call == 'string' ? Toy.parse(call) : call;
-      assert(call.isLambdaCall(),
-             'Axiom 4 needs ({v. B} A), got: {1}', call.toString());
-      var lambda = call.fn;
-      var result =
-        (call.arg.name === lambda.bound.name
-         // In this case the substitution will have no effect,
-         // though subFree might incidentally rename the bound variable.
-         ? equal(call, lambda.body)
-         : equal(call, lambda.body.subFree1(call.arg, lambda.bound.name)));
-      // Always make sure the call has a type.  It came from elsewhere.
-      Toy.findType(call);
-      return rules.assert(result).justify('axiom4', [call]);
-    },
-    labels: 'primitive',
-    inputs: {term: 1},  // Specifically a Call to a Lambda.
-    form: 'Enter {v. body} expr <input name=term>',
-    menu: 'apply a lambda to its argument',
-    description: 'axiom of substitution',
-    tooltip: ('')
-  },
-
-  axiom5: {
-    statement: 'iota {x. x = y} = y',
-    inputs: {},
-    form: '',
-    tooltip: ('axiom of description'),
-    description: 'axiom of description',
-    simplifier: true
-  },
-
-  /**
-   * Replace the subexpression of the target at the path with the
-   * equation's RHS.  This is rule R.  The subexpression must match
-   * the equation's LHS, meaning they are the same except possibly
-   * in names of vound variables.
-   *
-   * Extended to work with hypotheses by flagging the result with
-   * hypotheses in case the target has them and the result is also
-   * a conditional.
-   */
-  r: {
-    action: function(equation, target, path_arg) {
-      const path = Toy.path(path_arg, target);
-      assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
-      if (equation.getLeft().sameAs(equation.getRight())) {
-        // The equation LHS must "match" the site, but can differ in
-        // bound variables, so the replacement can only be a no-op if
-        // these are identical too.  (This is a cheap but not
-        // complete check for a no-op.)
-        if (target.get(path).sameAs(equation.getLeft())) {
-          // Quick return if the replacement is a no-op.
-          return target.justify('r', [equation, target, path],
-                                [target, equation]);
-        }
-      }
-      // Logs the location of the test where autoAssert is used.
-      function logWhere(term) {
-        var e = new Error();
-        var lines = e.stack.split('\n');
-        // Note that the follwing regex may be Chrome-specific.
-        function test(line) { return line.match(/Object.test/); }
-        var where = lines.find(test) || 'at unknown location';
-        console.warn('Asserting', term.$$, where);
-      }
-      function replacer(expr) {
-        if (expr.matches(equation.getLeft())) {
-          return equation.getRight();
-        } else {
-          assert(false,
-                 'Rule R: subexpression {1}\n of {2}\n must match {3}',
-                 expr, target, equation.getLeft());
-        }
-      }
-      // Auto-justify input steps if requested by the current configuration.
-      if (!equation.isProved()) {
-        if (Toy.autoAssert) {
-          logWhere(equation);
-          equation.assert();
-        } else {
-          assert(false, 'Rule R unproven equation: {1}', equation);
-        }
-      }
-      if (!target.isProved()) {
-        if (Toy.autoAssert) {
-          logWhere(target);
-          target.assert();
-        } else {
-          assert(false, 'Rule R unproven target: {1}', target);
-        }
-      }
-      var result = target.replaceAt(path, replacer);
-      var lvars = equation.getLeft().freeVars();
-      // TODO: Review this assumption.  It appears we really should
-      // compare the set of constraints generated by the two sides.
-      //
-      // If the right side has any free names not in the left side,
-      // the result may have constraints not met by the target, so
-      // typecheck it.
-      var rvars = equation.getRight().freeVars();
-      for (var name in rvars) {
-        if (!(name in lvars)) {
-          Toy.findType(result);
-          break;
-        }
-      }
-      var justified = result.justify('r', [equation, target, path],
-                                     [target, equation], true);
-      justified.hasHyps = target.hasHyps && justified.isCall2('=>');
-      justified.details = null;
-      return justified;
-    },
-    inputs: {equation: 1, site: 2},
-    // Currently not offered in forms; use "replace".
-    // form: ('Replace selection with right side of step <input name=equation>'),
-    tooltip: ('Replace an occurrence of a term with an equal term.'),
-    menu: 'replace {term} with something equal',
-    description: 'replace {site};; {in step siteStep} {using step equation}',
-    labels: 'uncommon'
-  }
-
-};
-addRulesMap(axioms);
-
-
 // Some trivial rules not needing definitions
 
 // These just(?) use axiom4 and Rule R.
@@ -662,15 +674,13 @@ const equalities = {
     inputs: {equation: [1, 2]}
   },
 
-  // r5201e.
-  //
-  // TODO: Consider making this work with conditionals.
+  // r5201e.  Works with conditionals.
   applyBoth: {
     action: function(eqn, a) {
       const step1 = (eqn.isCall2('==')
                      ? rules.equivSelf(call(eqn.eqnLeft(), a))
                      : rules.eqSelf(call(eqn.eqnLeft(), a)));
-      const step2 = rules.r(eqn, step1, '/right/fn');
+      const step2 = rules.replace(step1, '/right/fn', eqn);
       return step2.justify('applyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
@@ -750,45 +760,6 @@ const equalities = {
 };
 addRulesMap(equalities);
 
-
-//// Definitions
-
-definition('not == (=) F');
-definition('(!=) = {x. {y. not (x = y)}}');
-definition('forall = (=) {x. T}');
-definition('F == forall {x. x}');
-
-// define('forall', '(=) {x. T}');
-// definition('forall = ((=) {x. T})');
-// definition('F = forall {x. x}');
-
-define('exists', '{p. p != {x. F}}');
-define('exists1', '{p. exists {x. p = {y. y = x}}}');
-defineCases('&', identity, '{x. F}');
-defineCases('|', allT, identity);
-defineCases('=>', identity, allT);
-
-// Adding definitions before use enables type checking to use the
-// known types of the constants.
-
-// It would be desirable for the constants in this next group to
-// all have generic types.
-define('if', '{p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
-// This is the empty collection.
-define('empty', '{x. F}');
-define('none', 'iota empty');
-define('?', '{p. {x. if p x none}}');
-// The identity function
-define('ident', '{x. x}');
-
-// Collection has multiple elements:
-define('multi', '{p. exists {x. exists {y. p x & p y & x != y}}}');
-// Always either "none" or the member of the singleton set:
-define('the', '{p. if (exists1 p) (iota p) none}');
-// This "negates" a predicate, returning a predicate whose value
-// is the negation of the value of the given predicate.  (Just one
-// argument!)
-define('negate', '{p. {x. not (p x)}}');
 
 // TODO: Move these comments.
 // TODO: Use a flag to enable the system to initialize with either a
@@ -5065,6 +5036,12 @@ addRules(logicFacts);
 const
   _e1a = 'exists1 p == exists p & forall {x. forall {y. p x & p y => x = y}}';
 addRule({name: 'exists1a', statement: _e1a});
+
+
+//// Other initializations
+
+// Make defn facts available and stop deferring their proofs.
+Toy.enableDefnFacts();
 
 //// EXPORT NAMES
 
