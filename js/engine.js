@@ -789,6 +789,21 @@ function definition(defn_arg) {
   return name;
 }
 
+// Set to false when defn facts can be proved immediately.
+let deferringDefnFacts = true;
+
+// Functions to compute defnFacts when the needed support is ready.
+const deferredDefnFacts = [];
+
+/**
+ * Call this to prove deferred facts and cease deferrals.
+ */
+function enableDefnFacts() {
+  deferringDefnFacts = false;
+  deferredDefnFacts.forEach(function(f) { f(); });
+  deferredDefnFacts.length = 0;
+}
+
 /**
  * This function only has effect for equational definitions
  * of the form <atom> = <term>, in Expr form.
@@ -826,9 +841,7 @@ function definition(defn_arg) {
  *   additional cases TBD.
  */
 function addDefnFacts(definition) {
-  // This relies on having applyBoth and simpleApply available whenever
-  // a function is defined.
-  if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
+  function addFacts() {
     var defined = definition.getLeft();
     var name = defined.name;
     var eqn = rules.definition(name);
@@ -846,6 +859,15 @@ function addDefnFacts(definition) {
       // of the function or predicate.
       addFact({goal: eqn, definitional: true});
       addSwappedFact({goal: eqn, definitional: true});
+    }
+  }
+  // This relies on having applyBoth and simpleApply available whenever
+  // a function is defined.
+  if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
+    if (deferringDefnFacts) {
+      deferredDefnFacts.push(addFacts);
+    } else {
+      addFacts();
     }
   }
 }
@@ -2421,6 +2443,7 @@ Toy.addRule = addRule;
 Toy.addRulesMap = addRulesMap;
 Toy.addRules = addRules;
 Toy.definition = definition;
+Toy.enableDefnFacts = enableDefnFacts;
 Toy.addDefnFacts = addDefnFacts;
 Toy.resolveToFactInfo = resolveToFactInfo;
 Toy.resolveToFact = resolveToFact;
