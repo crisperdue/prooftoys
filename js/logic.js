@@ -662,13 +662,15 @@ const equalities = {
     inputs: {equation: [1, 2]}
   },
 
-  // r5201e.  Works with conditionals.
+  // r5201e.
+  //
+  // TODO: Consider making this work with conditionals.
   applyBoth: {
     action: function(eqn, a) {
       const step1 = (eqn.isCall2('==')
                      ? rules.equivSelf(call(eqn.eqnLeft(), a))
                      : rules.eqSelf(call(eqn.eqnLeft(), a)));
-      const step2 = rules.replace(step1, '/right/fn', eqn);
+      const step2 = rules.r(eqn, step1, '/right/fn');
       return step2.justify('applyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
@@ -730,7 +732,7 @@ const equalities = {
     action: function(step, path) {
       // Note that axiom 4 checks validity of its argument.
       var equation = rules.axiom4(step.get(path));
-      var result = rules.replace(step, path, equation);
+      var result = rules.r(equation, step, path);
       return result.justify('simpleApply', arguments, [step]);
     },
     inputs: {reducible: 1},
@@ -751,10 +753,10 @@ addRulesMap(equalities);
 
 //// Definitions
 
-define('not', '(=) F');
-define('!=', '{x. {y. not (x = y)}}');
-define('forall', '(=) {x. T}');
-define('F', 'forall {x. x}');
+definition('not == (=) F');
+definition('(!=) = {x. {y. not (x = y)}}');
+definition('forall = (=) {x. T}');
+definition('F == forall {x. x}');
 
 // define('forall', '(=) {x. T}');
 // definition('forall = ((=) {x. T})');
