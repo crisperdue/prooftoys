@@ -67,16 +67,59 @@ const F = constify('F');
 const _factMap = {};
 
 
+//// Primitive constants
+
+Toy.namedConstants.add('=');
+Toy.namedConstants.add('==');
+Toy.namedConstants.add('iota');
+Toy.namedConstants.add('T');
+// Toy.namedConstants.add('F');
 
 
+//// Definitions
 
+definition('forall = (=) {x. T}');
+definition('F == forall {x. x}');
+definition('not = (=) F');
+definition('(!=) = {x. {y. not (x = y)}}');
+definition('exists = {p. p != {x. F}}');
+definition('exists1 = {p. exists {x. p = {y. y = x}}}');
 
+// TODO: Use the new definition mechanism where defineCases
+//   is used now.
+defineCases('&', identity, '{x. F}');
+defineCases('|', allT, identity);
+defineCases('=>', identity, allT);
 
+// Workaround for deficiency in defineCases as used above.
+Toy.namedConstants.add('&');
+Toy.namedConstants.add('|');
+Toy.namedConstants.add('=>');
 
+// Adding definitions before use enables type checking to use the
+// known types of the constants.
 
+// It would be desirable for the constants in this next group to
+// all have generic types.
+definition('if = {p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
 
+definition('empty = {x. F}');
+definition('none = iota empty');
+definition('(?) = {p. {x. if p x none}}');
 
+// The identity function
+definition('ident = {x. x}');
 
+// Collection has multiple elements:
+definition('multi = {p. exists {x. exists {y. p x & p y & x != y}}}');
+
+// Always either "none" or the member of the singleton set:
+definition('the = {p. if (exists1 p) (iota p) none}');
+
+// This "negates" a predicate, returning a predicate whose value
+// is the negation of the value of the given predicate.  (Just one
+// argument!)
+definition('negate = {p. {x. not (p x)}}');
 
 
 //// Logical axioms and rule of inference
