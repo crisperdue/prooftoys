@@ -1272,26 +1272,6 @@ var testCase = {
     check('((h3 & h) & h1)', step2, 'R y');
   },
 
-  testHypMover: function() {
-    var rules = Toy.rules;
-    function check(expected, step, hyp) {
-      hyp = typeof hyp === 'string' ? Toy.parse(hyp) : hyp;
-      var actual = step.getLeft().hypMover(hyp);
-      assertEqual(expected, actual);
-    }
-    const step1 = rules.fact('x + y + z = x + (y + z)');
-    check('(((h & h2) & h3) = ((h2 & h3) & h))',
-          step1, 'R x');
-    check('(((h1 & h) & h3) = ((h1 & h3) & h))',
-          step1, 'R y');
-    var h3 = rules.assume('p');
-    var step2 = rules.appendStepHyps(step1, h3);
-    check('((((h & h2) & h3) & h4) = (((h2 & h3) & h4) & h))',
-          step2, 'R x');
-    check('((((h1 & h) & h3) & h4) = (((h1 & h3) & h4) & h))',
-          step2, 'R y');
-  },
-
   testScanConjuncts: function() {
     function scan(needle, haystack) {
       var x1 = termify(needle);
@@ -1844,14 +1824,6 @@ var testCase = {
     let step = rules.assert('forall {y. p y}');
     let result1 = rules.instForall(step, '', call(f, y))
     assertEqual('(p (f y))', result1);
-
-    // Hypotheses
-    let hyps = rules.assume('p y');
-    let step1 = rules.assert('forall {y. p y}');
-    let step2 = rules.appendStepHyps(step1, hyps);
-    let result2 = rules.instForall(step2, '/right', call(f, y));
-    assertEqual('((p y) => (p (f y)))', result2)
-    assert(result2.isCall2('=>'));
   },
 
   testR5214: function() {

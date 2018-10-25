@@ -431,22 +431,6 @@ $(function() {
       level: 1
     },
 
-    appendStepHyps: {
-      args: function() {
-        var step1 = Toy.rules.assume('p x');
-        var step2 = Toy.rules.assume('q x');
-        return [step1, step2];
-      }
-    },
-
-    prependStepHyps: {
-      args: function() {
-        var step1 = Toy.rules.assume('p x');
-        var step2 = Toy.rules.assume('q x');
-        return [step1, step2];
-      }
-    },
-
     bubbleLeft: {
       args: function() {
         function less(a, b) {

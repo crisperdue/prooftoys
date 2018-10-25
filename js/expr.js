@@ -176,10 +176,6 @@ TermMap.prototype.set = function(term, name) {
 // when necessary.  (Rendered copies are not relied on to maintain the
 // sourceStep property.)
 //
-// Rules.appendStepHyps and rules.prependStepHyps also copy sourceStep
-// properties down to resulting steps from their inputs where they
-// match an input hypothesis and are not already flagged.
-//
 // TODO: Consider recording this property only in rendered proof steps
 // and computing it in the manner of Toy.assumptionsBefore (using
 // Toy.proofOf).
