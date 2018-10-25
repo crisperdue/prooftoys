@@ -1862,7 +1862,7 @@ var fractionsInfo = {
                      .rewrite('/main/left', 'a * b / c = a * (b / c)')
                      .andThen('simplifySite', '/main/left/right')
                      .andThen('simplifySite', '/main/left'));
-        return (rules.rplace(step2, step, path)
+        return (rules.replace(step, path, step2)
                 .justify('asFraction', arguments, [step]));
       } else {
         return step;
@@ -1931,7 +1931,7 @@ const basicRealFacts =
     proof: function() {
        var asm = rules.assume('a = none');
        return (rules.fact('not (R none)')
-               .rplace('/arg/arg', rules.eqnSwap(asm))
+               .replace('/arg/arg', rules.eqnSwap(asm))
                // Just to make the display clearer:
                .andThen('asImplication')
                .andThen('rewriteOnly', '', 'a => not b == b => not a')
@@ -2655,7 +2655,7 @@ var recipFacts = {
       var step3 = rewrite(step2, '/main/right', '1 * a = a');
       var step4 = rewrite(step3, '/main/left', 'a * b * c = a * (b * c)');
       var step5 = rules.instVar(step1, Toy.parse('recip a'), 'a');
-      var step6 = rules.rplace(step5, step4, '/main/left/right');
+      var step6 = rules.replace(step4, '/main/left/right', step5);
       var step7 = rewrite(step6, '/main/left', 'a * 1 = a');
       var step8 = rules.eqnSwap(step7);
       return step8;

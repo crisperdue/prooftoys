@@ -3362,138 +3362,6 @@ const ruleInfo = {
     labels: 'basic'
   },
 
-  // Like Rule R', based on 5240 (the Deduction Theorem).  The
-  // proof here is a subset of the proof of 5240.
-  //
-  // h_equation is an equation implied by hypotheses, i.e. H => A = B.
-  // h_c is a term implied by the same hypotheses, i.e. H => C.
-  // The path is relative to h_c, and may include a special initial
-  // segment 'main', which it interprets as 'right' if h_c has
-  // hypotheses, otherwise ignoring it.
-  //
-  // Accepts a plain equation with no hypotheses, applying rule R.
-  //
-  // Otherwise the equation must have hypotheses, and the result will
-  // have hypotheses.
-  //
-  // Note: When generating a no-op equation, it is desirable to make
-  // the LHS and RHS be the same object (and same as the target),
-  // because rule R will recognize the no-op.
-  //
-  // TODO: Support h_c_arg with assumptions and a leftward path by
-  //   ignoring that there are assumptions.
-  //
-  // TODO: Change this to conjoin any assumptions in the two input
-  //   steps and let simplifications clean up the assumptions later.
-  rplace: {
-    action: function(h_equation_arg, h_c_arg, path) {
-      return rules.replace(h_c_arg, path, h_equation_arg);
-
-      var args = [h_equation_arg, h_c_arg, path];
-      path = Toy.path(path, h_c_arg);
-      var h_c = h_c_arg;
-      var h_equation = h_equation_arg;
-      if (h_equation.isCall2('=')) {
-        // Allow "replace" to be used for situations where "r" is
-        // applicable.  The case with hypotheses in h_c can be
-        // considered as rule RR (5202).
-        var result = rules.r(h_equation, h_c, path);
-        return result.justify('rplace', args,
-                              [h_equation_arg, h_c_arg]);
-      }
-      // h_equation must have the form H => A = B
-      assert(h_equation.isEquation(), 
-             'Not an equation: {1}', h_equation);
-      // Note: If this assertion is removed the rule appears to work
-      // if both inputs are plain conditionals with identical
-      // antecedents.
-      assert(h_equation.hasHyps,
-             'Plain conditional equation in rules.rplace:', h_equation);
-
-      if (h_c.hasHyps && path.isLeft()) {
-        assert(false, 'Not supporting paths into assumptions in rplace');
-      }
-
-      // Give the two WFFs the same hypotheses.  If either
-      // input has hyps, both of these will have hyps.
-      h_c = rules.appendStepHyps(h_c, h_equation);
-      h_equation = rules.prependStepHyps(h_equation, h_c_arg);
-
-      // Normalize the hypotheses, but only if there is really
-      // something to merge.  This detects that both inputs have been
-      // transformed.
-      if (h_c != h_c_arg && h_equation != h_equation_arg) {
-        var merger = rules.conjunctionsMerger(h_c.getLeft());
-        h_c = rules.r(merger, h_c, '/left');
-        h_equation = rules.r(merger, h_equation, '/left');
-      }
-
-      // Now both wffs are implications with the same LHS.  Call it "h".
-      var h = h_equation.getLeft();
-      if (!h_c.hasHyps) {
-        // If there are no hypotheses, we did not attempt to make the
-        // LHS of the two input steps match.
-        assert(h_c.isCall2('=>') && h_c.getLeft().matches(h),
-               'LHS mismatch in "replace" rule',
-               h_c_arg);
-      }
-
-      // equation is A = B
-      var equation = h_equation.getRight();
-      var c = h_c.getRight();
-
-      // Path relative to c.  This is one segment shorter than the
-      // input path, but is the same length if hyps were added to h_c
-      // by appendStepHyps, i.e. h_equation_arg had them but not
-      // h_c_arg.
-      var cpath = (h_equation_arg.hasHyps && !h_c_arg.hasHyps
-                   ? path
-                   : path.getRight());
-
-      // TODO: In case C is an equivalence, apply 5239 to the equation
-      //   and the RHS of C (which is q below), shortening cpath one
-      //   more step, giving [h => (q == r)], where r is the result of
-      //   replacing the target part of the RHS of C using the
-      //   equation.  Apply this tautology to get the desired result:
-      //
-      //   (h => (p == q)) & (h => (q == r)) => (h => (p == r))
-
-      var boundNames = c.boundNames(cpath);
-      Toy.removeExcept(boundNames, equation.freeVars());
-      var hypFreeNames = h.freeVars();
-      var step1 = rules.asImplication(h_equation);
-      for (var name in boundNames) {
-        // Check the variable is not free in any hypotheses.
-        // TODO: Do appropriate checking in 5235 and impliesForall as well.
-        assert(!hypFreeNames.hasOwnProperty(name),
-               'Conflicting binding of {1} in {2}', name, c, h_c_arg);
-        // Make sure each name bound in the target site is wrapped in a
-        // "forall" in the equation.
-        step1 = rules.toForall1(step1, name);
-      }
-      var step2 = rules.r5239(c, cpath, equation);
-      var tautology = rules.tautology('(p => q) & (q => r) => (p => r)');
-      var step4 = rules.p2(step1, step2, tautology);
-      var taut2 = rules.tautology('(h => p) & (h => (p == q)) => (h => q)');
-      var result = rules.p2(h_c, step4, taut2);
-      if (h_c_arg.hasHyps || h_equation_arg.hasHyps) {
-        result = rules.asHypotheses(result);
-      }
-      if (result.matches(h_c_arg)) {
-        // Help the UI eliminate steps that re no-ops.
-        // TODO: Consider if this can be better optimized.
-        result = h_c_arg;
-      }
-      return result.justify('rplace', args, [h_equation_arg, h_c_arg]);
-    },
-    inputs: {equation: 1, site: 2}, // plus constraints.
-    form: ('Replace selection with right side of step <input name=equation>'),
-    menu: 'replace using term like {term} = A',
-    tooltip: 'replace term with something equal',
-    description: 'replace {site};; {in step siteStep} {using step equation}',
-    labels: 'uncommon'
-  },
-    
   /**
    * Same as "replace", but replaces an occurrence in target of the right
    * side of the equation with its left side.  Accepts hypotheses.
@@ -3527,7 +3395,7 @@ const ruleInfo = {
       var rhs = equation.getMain().getRight();
       var expr = target.get(path);
       if (expr.matches(lhs)) {
-        return rules.rplace(equation, target, path)
+        return rules.replace(target, path, equation)
           .justify('rplaceEither', arguments, [target, equation]);
       } else if (expr.matches(equation.getMain().getRight())) {
         return (rules.rRight(equation, target, path)

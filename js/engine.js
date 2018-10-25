@@ -273,8 +273,8 @@ var ruleMethods = {
    * Applies rules.replace to this Expr passing in a path and
    * equation to use.
    */
-  rplace: function(path, eqn) {
-    return rules.rplace(eqn, this, path);
+  replace: function(path, eqn) {
+    return rules.replace(this, path, eqn);
   }
 };
 Expr.addMethods(ruleMethods);
@@ -1703,7 +1703,7 @@ function applyFactsWithinSite(step, path_arg, facts) {
   var path = Toy.path(path_arg);
   var eqn1 = rules.considerPart(step, path);
   var eqn2 = applyFactsWithinRhs(eqn1, facts);
-  return (eqn2 == eqn1 ? step : rules.rplace(eqn2, step, path));
+  return (eqn2 == eqn1 ? step : rules.replace(step, path, eqn2));
 }
 
 /**

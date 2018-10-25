@@ -593,7 +593,7 @@ var testCase = {
   testEncodeSteps: function() {
     var step1 = rules.assume('x = y + 3');
     var step2 = rules.assume('x + y = 5');
-    var step3 = rules.rplace(step1, step2, Toy.path('/main/left/left'));
+    var step3 = rules.replace(step2, Toy.path('/main/left/left'), step1);
     var saved = Toy.encodeSteps([step1, step2, step3]);
     var parsed = Toy.justParse(saved);
     var a = parsed.asArray();
@@ -618,7 +618,7 @@ var testCase = {
   testDecodeSteps: function() {
     var step1 = rules.assume('x = y + 3');
     var step2 = rules.assume('x + y = 5');
-    var step3 = rules.rplace(step1, step2, Toy.path('/main/left/left'));
+    var step3 = rules.replace(step2, Toy.path('/main/left/left'), step1);
     var saved = Toy.encodeSteps([step1, step2, step3]);
     var steps = Toy.decodeSteps(saved);
     assertEqual(3, steps.length);
@@ -1525,7 +1525,7 @@ var testCase = {
     assert(Toy._alreadyProved('axiom2'));
     assert(Toy._alreadyProved('axiom2a'));
     // This one is a rule, but not a theorem.
-    assert(!Toy._alreadyProved('rplace'));
+    assert(!Toy._alreadyProved('replace'));
   },
 
   // Also tests rules.witnessExists.
@@ -2134,16 +2134,6 @@ var testCase = {
                               parse('x = y + 1'));
     var fml = 'x + y = 5 & x = y + 1 == y + 1 + y = 5 & x = y + 1';
     assertEqual(parse(fml).toString(), result);
-  },
-
-  testRplace: function() {
-    var rules = Toy.rules;
-    var rule = (rules.assert('x > 0 => (x = (abs x))')
-                .andThen('asHypotheses'));
-    var target = (rules.assert('x > 0 => ((x + x) > x)')
-                  .andThen('asHypotheses'));
-    var result = rules.rplace(rule, target, '/right/right');
-    assertEqual('((x > 0) => ((x + x) > (abs x)))', result);
   },
 
   testRemoveLet: function() {
