@@ -1918,12 +1918,9 @@ const basicRealFacts =
    {statement: 'exists R',
     proof: function() {
        return (rules.fact('p x => exists p')
-               // This line helps simplifyFocalPart to simplify the
-               // assumptions and also helps the display to show
-               // the user what is going on.
                .andThen('asImplication')
                .andThen('instMultiVars', {x: '0', 'p': 'R'})
-               .andThen('simplifyFocalPart'));
+               .andThen('simplifySite', ''));
      }
    },
   

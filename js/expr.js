@@ -210,16 +210,8 @@ function Expr() {
   // not copy when not needed, so this property carries down through a
   // proof, which helps to support displaying the source step number
   // when displaying hypotheses.
+  //
   // TODO: The sourceStep property is deprecated; remove it.
-  //
-  // The "assume" rule flags its result as "hasHyps" as well as
-  // recording the sourceStep of its input.  The "justify" method
-  // recalculates and records "hasHyps" whenever it runs, unless the
-  // wff already has a hasHyps flag.  This makes it possible to turn
-  // off hypothesis-style display for a specific step in a proof.
-  //
-  // TODO: Reimplement so hypothesis display is controlled in a
-  // rendered step rather than a proof step.
 }
 Toy.extends(Expr, null);
 
@@ -257,7 +249,6 @@ Expr.prototype.toString = function() {
     }
   }
   if (Toy.trackSourceSteps
-      && this.hasHyps
       && this.isCall2('=>')) {
     return (prefix + '(' + this.getLeft()._toString() + ' |- '
             + this.getRight()._toString() + ')');
@@ -1055,9 +1046,6 @@ Expr.prototype.getRight = function() {
  * itself.
  *
  * TODO: Make this available for Step objects.
- *
- * TODO: Hopefully rework the system so this gets used in place
- *   of hasHyps and unHyp.
  */
 Expr.prototype.getMain = function() {
   return this.isCall2('=>') ? this.getRight() : this;
@@ -1083,8 +1071,8 @@ Expr.prototype.nth = function(n) {
  *
  * TODO: Make this available for Step objects.
  */
-Expr.prototype.unHyp = function() {
-  return this.hasHyps ? this.getRight() : this;
+Expr.prototype.unHyp = function() {  // ??
+  return this.isCall2('=>') ? this.getRight() : this;
 };
 
 /**
@@ -1311,7 +1299,7 @@ Expr.prototype.asPath = function(arg) {
     var segment = path.segment;
     if (segment == 'main') {
       path = path.rest;
-      if (self.hasHyps) {
+      if (self.isCall2('=>')) {
         path = new Path('right', path);
       }
     } else if (segment == 'rt') {

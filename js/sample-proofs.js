@@ -313,15 +313,6 @@ $(function() {
       level: 1
     },
     
-    modusPonens: {
-      args: function() {
-        var step1 = Toy.rules.assume('p');
-        var step2 = Toy.rules.assume('p => q');
-        return [step1, step2];
-      },
-      level: 1
-    },
-
     r5225: {},
 
     r5227: {},
@@ -384,17 +375,6 @@ $(function() {
       },
       level: 1
     },
-
-    /*
-    implyForallBookHyps: {
-      ruleName: 'implyForallBook',
-      args: function() {
-	var wff = Toy.parse('y > 0 => (p => q x)');
-        wff.hasHyps = true;
-	return [x, wff];
-      },
-    },
-    */
 
     forwardChain: {
       args: function() {

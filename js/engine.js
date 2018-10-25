@@ -174,10 +174,8 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   // Give this step its own new ordinal.
   result.ordinal = stepCounter++;
   // Carry other information forward.
-  result.hasHyps = step.hasHyps;
   result.ruleArgs = jQuery.makeArray(ruleArgs || []);
   result.ruleDeps = ruleDeps;
-
   return result;
 };
 
@@ -1899,28 +1897,7 @@ function matchFactPart(step, path, factList, name) {
  *
  * TODO: hyps
  */
-function flagHyps(step, dep) {
-  if (step.hasHyps && dep.hasHyps) {
-    function flag(hyp) {
-      if (hyp.sourceStep) {
-        // Already flagged, don't change.
-        return true;
-      }
-      function tryFlag(source) {
-        var step = source.sourceStep;
-        if (step && hyp.matches(source)) {
-          hyp.sourceStep = step;
-          // Flag the hyp, and stop searching.
-          return true;
-        }
-      }
-      // Try to flag the hyp with the source step of one of
-      // the hyps from dep.
-      dep.getLeft().eachHyp(tryFlag);
-    }
-    step.getLeft().eachHyp(flag);
-  }
-}
+function flagHyps(step, dep) {}
 
 /**
  * Build a schema for a conjunction of hypotheses, ensuring all are in

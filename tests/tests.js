@@ -1683,18 +1683,6 @@ var testCase = {
     check('((5 <= 4) = F)', '5 <= 4');
   },
 
-  testAsHypotheses: function() {
-    const step = Toy.rules.assert('p = p');
-    try {
-      Toy.rules.asHypotheses(step);
-      Y.Assert.fail('Should throw');
-    } catch(e) {}
-    const step1 = Toy.rules.assume('p');
-    const step2  = Toy.rules.asImplication(step1);
-    const result = Toy.rules.asHypotheses(step2);
-    assert(result.hasHyps);
-  },
-
   testApplyBoth: function() {
     assertEqual('((f x) = (g x))', Toy.rules.applyBoth(call('=', f, g), x));
   },
@@ -2024,7 +2012,6 @@ var testCase = {
     var step4 = rules.modusPonens(step2, step3);
     var step5 = rules.asHypotheses(step4);
     Toy.flagHyps(step5, step1);
-    assert(step5.hasHyps);
     assert(step5.getLeft().sourceStep);
     Toy.trackSourceSteps = true;
     Toy.trackSourceSteps = false;

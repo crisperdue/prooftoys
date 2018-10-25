@@ -312,7 +312,6 @@ const axioms = {
       }
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation], true);
-      justified.hasHyps = target.hasHyps && justified.isCall2('=>');
       justified.details = null;
       return justified;
     },
@@ -400,7 +399,7 @@ const prelogic = {
       step1.assertCall2('=>');
       // Always make a new step so we can mark it hasHyps.
       var result = step1.justify('asHypotheses', arguments, [step], true);
-      result.hasHyps = true;
+      // result.hasHyps = true;
       return result;
     },
     inputs: {implication: 1},
@@ -421,8 +420,8 @@ const prelogic = {
     action: function(step) {
       // Always make a new step so we can mark it as not hasHyps.
       var result = step.justify('asImplication', arguments, [step], true);
-      // This is the primitive rule that sets hasHyps to false.
-      result.hasHyps = false;
+      // This is the primitive rule that used to set hasHyps to false.
+      // result.hasHyps = false;
       return result;
     },
     inputs: {step: 1},
@@ -1911,7 +1910,7 @@ const ruleInfo = {
     },
     inputs: {step: [1, 2]},
     // An approximation, good enough until we can remove this whole rule.
-    toOffer: 'return step.hasHyps',
+    toOffer: 'return step.isCall2("=>");',
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
     menu: '[h => p] and [h => q] to [h => p & q]',
     tooltip: ('Given a and b, derive a & b'),
@@ -1953,19 +1952,15 @@ const ruleInfo = {
   },
 
   // Given P and P => Q, derive Q. (5224)
-  // Handles hypotheses.
-  //
-  // TODO: hyps -- aim to remove uses of this with hypotheses.
-  //   rules.trueBy and/or forwardChain can serve in its place.
   modusPonens: {
     action: function(a, b) {
       var step1 = rules.toTIsA(a);
       // Replace the "a" in "b" with T.
-      var step2 = rules.rRight(step1, b, '/main/left');
+      var step2 = rules.rRight(step1, b, '/left');
       // Use the definition of =>.
-      var step3 = rules.useDefinition(step2, '/main/fn');
+      var step3 = rules.useDefinition(step2, '/fn');
       // From T => x derive x.
-      var step4 = rules.apply(step3, '/main');
+      var step4 = rules.apply(step3, '');
       return step4.justify('modusPonens', arguments, arguments);
     },
     inputs: {step: 1, implication: 2},
@@ -2787,8 +2782,8 @@ const ruleInfo = {
   },
 
   // Removes an irrelevant type assumption of the form (R v) at the
-  // target site.  Currently only for predicate R, but should be
-  // extended as needed.
+  // target site, where v is a variable.  Currently only for predicate
+  // R, but should be extended as needed.
   removeTypeAsm: {
     precheck: function(step, path_arg) {
       var path = Toy.path(path_arg);
@@ -3893,7 +3888,7 @@ const ruleInfo = {
     // piece together larger tautologies.
     action: function(step, hyp) {
       var infix = Toy.infixCall;
-      assert(step.hasHyps, 'Step has no hypotheses');
+      assert(step.isCall2('=>'), 'Step lacks assumptions');
       var lhs = step.getLeft().hypLocater(hyp);
       var a = varify('a');
       var taut = infix(infix(lhs, '=>', a),

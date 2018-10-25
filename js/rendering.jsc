@@ -1496,7 +1496,6 @@ Step.prototype.copyToRender = function() {
   step.ruleArgs = this.ruleArgs;
   // ruleDeps refers to originals of other steps.
   step.ruleDeps = this.ruleDeps;
-  step.hasHyps = this.hasHyps;
   // Assumption steps in scope for this step, including the step
   // itself.  If an assumption step is in scope, the term it
   // introduces can be abbreviated in this step display.
