@@ -1871,22 +1871,6 @@ function matchFactPart(step, path, factList, name) {
 }
 
 /**
- * For each hypothesis in the given step that matches a hypothesis in
- * the "dep" step that has a sourceStep property, copy the sourceStep
- * property to the hypothesis in the step.
- *
- * This has side effects on the display of Exprs that already exist,
- * so in some contexts it might affect the display of steps you did
- * not intend to affect.
- *
- * TODO: Consider actually importing hypotheses from dep using rule R
- * to avoid the possibility of undesired side effects.
- *
- * TODO: hyps
- */
-function flagHyps(step, dep) {}
-
-/**
  * Build a schema for a conjunction of hypotheses, ensuring all are in
  * the TermMap, with optional exclusions, a TermSet.  The schema is of
  * the form a1 && ... && an, where the "a"s are variables for the
@@ -2445,7 +2429,6 @@ Toy.basicSimpFacts = basicSimpFacts;
 
 Toy.traceRule = traceRule;
 
-Toy.flagHyps = flagHyps;
 Toy.buildHypSchema = buildHypSchema;
 Toy.pathToConjunct = pathToConjunct;
 

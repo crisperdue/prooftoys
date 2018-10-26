@@ -44,7 +44,6 @@ const rules = Toy.rules;
 const addRule = Toy.addRule;
 const addRules = Toy.addRules;
 const addRulesMap = Toy.addRulesMap;
-const flagHyps = Toy.flagHyps;  // TODO: Remove.
 const buildHypSchema = Toy.buildHypSchema;
 
 const noSimplify = Toy.noSimplify;

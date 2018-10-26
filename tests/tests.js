@@ -2010,7 +2010,6 @@ var testCase = {
     var step2 = rules.eqSelf('{x. T} (f x)');
     var step3 = rules.tautInst(taut, {p: step2, h: step1.getLeft()});
     var step5 = rules.modusPonens(step2, step3);
-    Toy.flagHyps(step5, step1);
     assert(step5.getLeft().sourceStep);
     Toy.trackSourceSteps = true;
     Toy.trackSourceSteps = false;
