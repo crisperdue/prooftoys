@@ -384,28 +384,6 @@ Expr.prototype.isNamedConst = function() {
 }
 
 /**
- * If an atom is named starting with "$", it is intended to be
- * an abbreviation.
- *
- * TODO: Remove the abbreviation concept.
- */
-Expr.prototype.isAbbrev = function() {
-  return this instanceof Atom && this.name.startsWith('$');
-};
-
-/**
- * Truthy iff this term has the form of a definition of an
- * abbreviation, in other words (<var> == <term>), where the name of
- * <var> starts with "$".
- *
- * TODO: This is overly specific.  Consider superseding it with
- * mechanisms that properly detect abbreviations.
- */
-Expr.prototype.isAbbrevDef = function() {
-  return this.isCall2('==') && this.getLeft().isAbbrev();
-};
-
-/**
  * True iff this is a var with the given name.
  */
 Expr.prototype.hasName = function(name) {

@@ -744,15 +744,7 @@ var definitions = {
  * Adds a simple abbreviation-like definition to the database, e.g.
  * define('forall', equal(lambda(x, T))).  Returns the equation.
  *
- * TODO: Require that the defining term only have (free) type
- *   variables that are also in the defined name.
- *
- * TODO: Consider replacing this function with one that takes a
- *   defining statement as its argument instead of a name and
- *   "definition".  It would automatically recognize certain forms
- *   such as [C = <term>] and [A => C = <term>], and arbitrary WFFs
- *   would also be supported if the apppropriate existence fact is
- *   already established.
+ * TODO: Remove this.
  */
 function define(name, definition) {
   assert(Toy.isConstantName(name), 'Not a constant name: {1}', name);
@@ -1734,17 +1726,13 @@ function asmLess(e1, e2) {
 
 /**
  * Comparator for Array.sort corresponding to asmLess.  Terms that are
- * calls to "R" come first, then abbreviations, then terms from
- * assumption steps come next, ordered by the step ordinal, and then
- * all others.  Value < 0 means e1 is less than e2.  Value is 0 iff
- * the terms are identical.
+ * calls to "R" come before all others.  Value < 0 means e1 is less
+ * than e2.  Value is 0 iff the terms are identical.
  */
 function asmComparator(e1, e2) {
   function asmScore(e) {
     return (e.isCall1('R')
             ? 4
-            : e.isAbbrevDef()
-            ? 3
             : 1);
   }
   var s1 = asmScore(e1);
@@ -1756,7 +1744,6 @@ function asmComparator(e1, e2) {
   switch (s1) {
   case 4:
     return asmComparator(e1.arg, e2.arg);
-  case 3:
   case 1:
     var x1 = e1.dump();
     var x2 = e2.dump();

@@ -1281,20 +1281,6 @@ function autoSimplify(step) {
 }
 
 /**
- * Returns the 1-based index of the position in the proof display
- * where the next step would be placed.  For automatic generation of
- * abbreviation variable names.
- */
-StepEditor.prototype.slotIndex = function() {
-  // New steps are always appended.
-  return this.proofDisplay.steps.length + 1;
-};
-
-StepEditor.prototype.genAbbrevName = function() {
-  return '$_' + this.slotIndex();
-};
-
-/**
  * Create and fill in part of the args array with the step or step and
  * path of the UI's selection if there is one, using the input
  * descriptor of of the StepEditor's current rule.  Currently not
