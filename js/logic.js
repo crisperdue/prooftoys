@@ -784,7 +784,6 @@ var assumers = {
       assumption = termify(assumption);
       const result = (rules.tautInst('a => a', {a: assumption})
                       .justify('assume', arguments));
-      assumption.sourceStep = result;
       return result;
     },
     inputs: {bool: 1},

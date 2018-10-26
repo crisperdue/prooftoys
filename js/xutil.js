@@ -1745,8 +1745,6 @@ function asmComparator(e1, e2) {
             ? 4
             : e.isAbbrevDef()
             ? 3
-            : e.sourceStep
-            ? 2
             : 1);
   }
   var s1 = asmScore(e1);
@@ -1758,8 +1756,6 @@ function asmComparator(e1, e2) {
   switch (s1) {
   case 4:
     return asmComparator(e1.arg, e2.arg);
-  case 2:
-    return e1.sourceStep.ordinal - e2.sourceStep.ordinal;
   case 3:
   case 1:
     var x1 = e1.dump();

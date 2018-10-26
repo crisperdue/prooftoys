@@ -168,9 +168,6 @@ function runTest(name, fn) {
 
 // Set up some useful constants and functions.
 
-// Do not display source step info in toString.
-Toy.trackSourceSteps = false;
-
 // Example equation: x + x = 2 * x
 var times2 = call('=', call('+', x, x), call('*', '2', x));
 
@@ -1323,8 +1320,8 @@ var testCase = {
     var step1 = Toy.rules.assume('p T');
     var step2 = Toy.rules.assume('p F');
     // Which step came earlier?
-    assert(Toy.asmLess(step1.getLeft(), step2.getLeft()));
-    assert(!Toy.asmLess(step2.getLeft(), step1.getLeft()));
+    assert(!Toy.asmLess(step1.getLeft(), step2.getLeft()));
+    assert(Toy.asmLess(step2.getLeft(), step1.getLeft()));
   },
 
   testAsmComparator: function() {
@@ -1334,11 +1331,11 @@ var testCase = {
     var step2 = Toy.rules.assume('p F');
     var l2 = step2.getLeft();
     // Which step came earlier?
-    assert(compare(l1, l2) < 0);
+    assert(compare(l1, l2) > 0);
     assertEqual(0, compare(l1, l1));
-    assert(compare(l2, l1) > 0);
-    assert(compare(x, l2) < 0);
-    assert(compare(l2, x) > 0);
+    assert(compare(l2, l1) < 0);
+    assert(compare(x, l2) > 0);
+    assert(compare(l2, x) < 0);
   },
 
   testConjunctionsMerger: function() {
@@ -1352,19 +1349,6 @@ var testCase = {
     check('(y & z)', 'y & z & z');
     check('((x & y) & z)', 'x & (y & z)');
     check('((p x) & (p y))', 'p x & p y');
-
-    // With sourceSteps:
-    var h1 = rules.assert('p x');
-    h1.sourceStep = h1;
-    var h2 = rules.assert('p y');
-    h2.sourceStep = h2;
-    var conj = rules.makeConjunction(h1, h2);
-    var h3 = rules.assert('p z');
-    h3.sourceStep = h3;
-    var conj2 = rules.makeConjunction(h2, h3);
-    check('((p x) & (p y))', Toy.infixCall(conj, '&', conj));
-    check('(((p x) & (p y)) & (p z))', Toy.infixCall(conj, '&', conj2));
-    check('(((p x) & (p y)) & (p z))', Toy.infixCall(conj2, '&', conj));
   },
 
   testRepeatedCall: function() {
@@ -2002,17 +1986,6 @@ var testCase = {
     var h_taut = rules.tautology('p => (q => p)');
     var result = Toy.rules.tautInst(h_taut, {p: 'x > 0'});
     assertEqual('((x > 0) => (q => (x > 0)))', result);
-  },
-
-  testSourceStepTracking: function() {
-    var taut = rules.tautology('p => (h => p)');
-    var step1 = rules.assume('forall {y. p y}');
-    var step2 = rules.eqSelf('{x. T} (f x)');
-    var step3 = rules.tautInst(taut, {p: step2, h: step1.getLeft()});
-    var step5 = rules.modusPonens(step2, step3);
-    assert(step5.getLeft().sourceStep);
-    Toy.trackSourceSteps = true;
-    Toy.trackSourceSteps = false;
   },
 
   testR5235: function() {

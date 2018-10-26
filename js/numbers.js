@@ -220,7 +220,7 @@ const idFacts =
      }
    },
 
-   {statement: 'isAddIdentity y & isAddIdentity x => y = x',
+   {statement: 'isAddIdentity x & isAddIdentity y => y = x',
     name: 'uniqueAddIdentity',
     proof: function() {
        const factX1 = (rules.assume('isAddIdentity x')
@@ -240,7 +240,7 @@ const idFacts =
      }
    },
 
-   {statement: 'isMulIdentity y & isMulIdentity x => y = x',
+   {statement: 'isMulIdentity x & isMulIdentity y => y = x',
     name: 'uniqueMulIdentity',
     proof: function() {
        const factX1 = (rules.assume('isMulIdentity x')

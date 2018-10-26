@@ -160,25 +160,10 @@ TermMap.prototype.set = function(term, name) {
 
 //// Expr -- the base class
 
-// Note on the sourceStep property and structure sharing among proof steps.
-//
-// Operations that create new hypotheses (currently only
-// rules.assume), mark the expression with the step of the proof with
-// which it is to be associated in displays.  Inference steps do
-// nothing with these properties, but proper functioning of displays
-// need them to be present in subsequent steps as hypotheses are
-// carried down from one step to the next.
-//
-// The current solution is that all transformations on expressions
-// that leave a given subexpression the same return the identical
-// subexpression object they were given.  This means that all
-// operations that transform expressions must avoid copying except
-// when necessary.  (Rendered copies are not relied on to maintain the
-// sourceStep property.)
-//
-// TODO: Consider recording this property only in rendered proof steps
-// and computing it in the manner of Toy.assumptionsBefore (using
-// Toy.proofOf).
+// Note: Transformations on expressions that leave a given
+// subexpression the same return the identical subexpression object
+// they were given.  This means that all operations that transform
+// expressions must avoid copying except when necessary.
 
 /**
  * Superclass for terms of all kinds: Atom, Call, Lambda.
@@ -189,7 +174,6 @@ function Expr() {
   // since the result is conceptually immutable.
   // Duplicated in subclass constructors for speed.
   //
-  this.sourceStep = null;
   // TODO: Consider whether rendered copies should share memos with
   //   the originals.
   // TODO: Make "memos" into a getter method.
@@ -204,14 +188,6 @@ function Expr() {
   //   stepNode property with the DOM node of the entire step.
   //   ordinal property with its step number in the rendered proof.
   //   stepNumber property with its rendered step number.
-  //
-  // The "assume" rule records its step as the sourceStep of the input
-  // expression.  Transformation methods on expressions carefully do
-  // not copy when not needed, so this property carries down through a
-  // proof, which helps to support displaying the source step number
-  // when displaying hypotheses.
-  //
-  // TODO: The sourceStep property is deprecated; remove it.
 }
 Toy.extends(Expr, null);
 
@@ -225,36 +201,12 @@ Toy.extends(Expr, null);
  */
 var Step = Expr;
 
-// Controls prefixing Calls and Lambdas with sourceStep info.
-// A debugging and perhaps proof development aid when turned on.
-Toy.trackSourceSteps = false;
-
 // Controls generation of Unicode vs. ASCII strings, internal
 // to Expr.toString and Expr.toUnicode.
 var useUnicode = false;
 
 Expr.prototype.toString = function() {
-  if (this instanceof Atom) {
-    return this._toString();
-  }
-  var prefix = '';
-  if (Toy.trackSourceSteps) {
-    if (this.sourceStep) {
-      prefix = '$';
-      var stepNum =
-        this.sourceStep.rendering && this.sourceStep.rendering.stepNumber;
-      if (stepNum) {
-        prefix += stepNum;
-      }
-    }
-  }
-  if (Toy.trackSourceSteps
-      && this.isCall2('=>')) {
-    return (prefix + '(' + this.getLeft()._toString() + ' |- '
-            + this.getRight()._toString() + ')');
-  } else {
-    return prefix + this._toString();
-  }
+  return this._toString();
 };
 
 /**
@@ -434,6 +386,8 @@ Expr.prototype.isNamedConst = function() {
 /**
  * If an atom is named starting with "$", it is intended to be
  * an abbreviation.
+ *
+ * TODO: Remove the abbreviation concept.
  */
 Expr.prototype.isAbbrev = function() {
   return this instanceof Atom && this.name.startsWith('$');
@@ -1613,7 +1567,7 @@ Expr.prototype.hypLocater = function(hyp) {
   function locater(self, pos) {
     if (hyp.matches(self)) {
       return h;
-    } else if (self.sourceStep || !self.isCall2('&')) {
+    } else if (!self.isCall2('&')) {
       return new Atom('h' + pos);
     } else {
       // Self is a conjunction.
@@ -1672,18 +1626,14 @@ Expr.prototype.hypMover = function(toMove) {
 /**
  * Taking this expression as a chain of assumptions, applies the given
  * action function to each conjunct in the chain, going from left to
- * right.  Any element with a sourceStep property stops further
- * descent into the chain, regardless whether it is a conjunction
- * itself.
+ * right.
  *
  * If the action returns a truthy value given any hyp, that value
  * immediately becomes the value of the call.  Otherwise returns
  * the value of the last call to the action.
  */
 Expr.prototype.eachHyp = function(action) {
-  if (this.sourceStep) {
-    return action(this);
-  } else if (this.isCall2('&')) {
+  if (this.isCall2('&')) {
     return (this.getLeft().eachHyp(action) ||
             action(this.getRight()));
   } else {
@@ -1748,15 +1698,13 @@ Expr.prototype.asmSet = function() {
 /**
  * Transforms an expression that is a chain of conjuncts by applying
  * the xform function to each of its conjuncts.  To match eachHyp,
- * Descends into left-hand arguments except any that have a sourceStep
- * property. but does not descend into right-hand arguments of '&'.
+ * Descends into left-hand arguments, but does not descend into
+ * right-hand arguments of '&'.
  *
  * TODO: Use or remove.
  */
 Expr.prototype.transformConjuncts = function(xform) {
-  if (this.sourceStep) {
-    return xform(this);
-  } else if (this.isCall2('&')) {
+  if (this.isCall2('&')) {
     return infixCall(this.getLeft().transformConjuncts(xform),
                      '&',
                      xform(this.getRight()));

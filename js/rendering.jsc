@@ -1333,15 +1333,6 @@ Call.prototype.render = function(info, minPower) {
   var self = this;
   var $expr = exprJq(true);
   this.node = dom($expr);
-  // Step number (string) in case rendering is tracking source steps
-  // and this term has a sourceStep.
-  var stepNum = (Toy.trackSourceSteps
-                 && this.sourceStep
-                 && this.sourceStep.rendering.stepNumber);
-  if (stepNum) {
-    $expr.append('$', stepNum);
-  }
-
   var aStep = findAsmStep(this, info.asmSteps);
   if (aStep) {
     $expr.addClass('stepRef');
@@ -1351,16 +1342,13 @@ Call.prototype.render = function(info, minPower) {
     return $expr;
   }
 
-  // True if reporting the source step, or if the main operator has
-  // precedence less than minPower.
-  var parens = stepNum;
-  if (!parens) {
-    var prec = Toy.getPrecedence;
-    var myPower = self.isCall1()
-      ? prec(self.fn)
-      : (self.isCall2() ? prec(self.getBinOp()) : Toy.namePower - 1);
-    parens = minPower > myPower;
-  }
+  const prec = Toy.getPrecedence;
+  const myPower = (self.isCall1()
+                   ? prec(self.fn)
+                   : self.isCall2()
+                   ? prec(self.getBinOp())
+                   : Toy.namePower - 1);
+  const parens = minPower > myPower;
 
   if (parens) {
     $expr.append('(');
@@ -1448,12 +1436,6 @@ Lambda.prototype.render = function(info, minPower) {
 
   var $expr = exprJq(true);
   this.node = dom($expr);
-  var stepNum = (Toy.trackSourceSteps
-                 && this.sourceStep
-                 && this.sourceStep.rendering.stepNumber);
-  if (stepNum) {
-    $expr.append('$' + stepNum);
-  }
   $expr.append('{');
   $expr.append(this.bound.render(info, 0));
   $expr.append('. ');
@@ -1521,8 +1503,7 @@ Step.prototype.removeUser = function() {
 // Makes and returns a deep copy of this Expr, copying all parts
 // including occurrences of Vars, so rendering can add distinct
 // annotations to each occurrence.  Currently copies only logical
-// structure and the sourceStep property (to help rendering of
-// hypotheses).  Intended only for use in rendering.  Can operate on
+// structure.  Intended only for use in rendering.  Can operate on
 // either renderable or nonrenderable terms.
 //
 //
@@ -1530,7 +1511,6 @@ Atom.prototype.copyForRendering = function(bindings) {
   var name = Toy.getBinding(this.name, bindings) || this.pname;
   var result = new Atom(name);
   result.node = null;
-  result.sourceStep = this.sourceStep;
   return result;
 };
 
@@ -1538,7 +1518,6 @@ Call.prototype.copyForRendering = function(bindings) {
   var result = new Call(this.fn.copyForRendering(bindings),
                         this.arg.copyForRendering(bindings));
   result.node = null;
-  result.sourceStep = this.sourceStep;
   return result;
 };
 
@@ -1572,7 +1551,6 @@ Lambda.prototype.copyForRendering = function(bindings) {
   var result =
     Toy.lambda(Toy.varify(name), this.body.copyForRendering(newBindings));
   result.node = null;
-  result.sourceStep = this.sourceStep;
   return result;
 };
 
