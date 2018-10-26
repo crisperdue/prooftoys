@@ -1903,6 +1903,9 @@ const ruleInfo = {
       // Replace the "a" in "b" with T.
       var step2 = rules.rRight(step1, b, '/left');
       // Use the definition of =>.
+      //
+      // TODO: Implement with tautology rather than use
+      //   a somewhat arbitrary definition.
       var step3 = rules.useDefinition(step2, '/fn');
       // From T => x derive x.
       var step4 = rules.apply(step3, '');
