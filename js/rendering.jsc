@@ -828,9 +828,6 @@ ProofDisplay.prototype.renderStep1 = function(step) {
           if (details && details.ruleName == 'instMultiVars') {
             details = details.ruleArgs[0];
           }
-          if (details && details.ruleName == 'asHypotheses') {
-            details = details.ruleArgs[0];
-          }
           if (details.ruleName == 'assert') {
             // The fact was asserted without a proof.  Substitute an
             // actual proof, creating it if necessary.  First create a

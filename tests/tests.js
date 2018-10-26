@@ -2009,8 +2009,7 @@ var testCase = {
     var step1 = rules.assume('forall {y. p y}');
     var step2 = rules.eqSelf('{x. T} (f x)');
     var step3 = rules.tautInst(taut, {p: step2, h: step1.getLeft()});
-    var step4 = rules.modusPonens(step2, step3);
-    var step5 = rules.asHypotheses(step4);
+    var step5 = rules.modusPonens(step2, step3);
     Toy.flagHyps(step5, step1);
     assert(step5.getLeft().sourceStep);
     Toy.trackSourceSteps = true;

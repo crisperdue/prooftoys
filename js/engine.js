@@ -527,10 +527,7 @@ function addRule(info) {
   if (isAsserted) {
     // If there is a statement but no proof, just assert the statement.
     proof = function() {
-      var result = rules.assert(statement);
-      return (result.isCall2('=>')
-              ? rules.asHypotheses(result)
-              : result);
+      return rules.assert(statement);
     }
     main = proof;
     if (!info.axiom) {
@@ -903,10 +900,7 @@ function asFactProver(prover, goal) {
     } else if (!prover) {
       // The proof is just a stub not yet filled in.
       console.warn('No proof for fact', goal.toUnicode());
-      result = rules.assert(goal);
-      return (result.isCall2('=>')
-              ? rules.asHypotheses(result)
-              : result);
+      return rules.assert(goal);
     }
     var result = prover();
     // Seek a substitution into the result that yields the goal.
@@ -1253,13 +1247,6 @@ function getResult(statement, mustProve) {
   var prover = info.prover;
   if (Toy.assertFacts && !mustProve) {
     var result = rules.assert(info.goal);
-    if (result.isCall2('=>')) {
-      // Treat any conditional as having hypotheses.
-      //
-      // TODO: Skipping this might provide a good test for the system
-      //   working with conditionals directly.
-      result = rules.asHypotheses(result);
-    }
     return result;
   }
   info.inProgress = true;

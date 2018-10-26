@@ -385,31 +385,6 @@ const prelogic = {
   },
 
   /**
-   * From an implication or equivalence, derives a step with the LHS
-   * as its hypotheses, and the same RHS.  Result is always an
-   * implication.
-   */
-  asHypotheses: {
-    action: function(step) {
-      step.assertCall2();
-      var op = step.wff.getBinOp().pname;
-      var step1 = ((op in {'=': true, '==': true})
-                   ? rules.forwardChain(step, '(a == b) => (a => b)')
-                   : step);
-      step1.assertCall2('=>');
-      // Always make a new step so we can mark it hasHyps.
-      var result = step1.justify('asHypotheses', arguments, [step], true);
-      // result.hasHyps = true;
-      return result;
-    },
-    inputs: {implication: 1},
-    form: ('Convert implication to hypotheses in step '
-           + '<input name=implication>'),
-    menu: 'convert to hypotheses',
-    description: 'convert to hypotheses;; {in step implication}',
-  },
-
-  /**
    * Converts a wff with hypotheses to an implication.  If there are
    * no hypotheses, returns its input unchanged.  Rendering displays
    * the result of this in its entirety.
@@ -831,10 +806,8 @@ var assumers = {
   assume: {
     action: function(assumption) {
       assumption = termify(assumption);
-      var step = rules.tautInst('a => a', {a: assumption});
-      // Flag the step as one with hypotheses, and record this step as
-      // the source of the assumption.
-      var result = rules.asHypotheses(step).justify('assume', arguments);
+      const result = (rules.tautInst('a => a', {a: assumption})
+                      .justify('assume', arguments));
       assumption.sourceStep = result;
       return result;
     },
@@ -1857,7 +1830,6 @@ const ruleInfo = {
     action: function(b, map) {
       assert(map && map.constructor && map.constructor === Object,
              'Non-map argument to instMultiVars: {1}', map);
-      var hyps = b.hasHyps;
       var isEqn = b.isCall2('=');
       var step = isEqn ? b : rules.rewriteOnly(b, '', 'a == (T == a)');
       var namesReversed = [];
@@ -1883,9 +1855,6 @@ const ruleInfo = {
         });
       if (!isEqn) {
         step = rules.fromTIsA(step);
-      }
-      if (hyps) {
-        step = rules.asHypotheses(step);
       }
       return step.justify('instMultiVars', arguments, [b]);
     },
@@ -2337,7 +2306,7 @@ const ruleInfo = {
         var step1 = rules.tautInst(taut, map);
         var step2 = rules.modusPonens(step, step1);
       }
-      var step3 = rules.arrangeAsms(rules.asHypotheses(step2));
+      var step3 = rules.arrangeAsms(step2);
       return step3.justify('andAssume', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
@@ -3345,10 +3314,7 @@ const ruleInfo = {
                                         'a => (b => c) == a & b => c')
                       .andThen('arrangeAsms'))
                    : step4);
-      var step6 = (target.hasHyps || equation.hasHyps
-                   ? rules.asHypotheses(step5)
-                   : step5);
-      return step6.justify('replace', arguments, [target, equation]);
+      return step5.justify('replace', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
@@ -3898,8 +3864,7 @@ const ruleInfo = {
                              infix(varify('h'), '=>', a)));
       var step1 = rules.asImplication(step);
       var step2 = rules.forwardChain(step1, rules.tautology(taut));
-      var result = rules.asHypotheses(step2);
-      return result.justify('extractHypothesis2', arguments, [step]);
+      return step2.justify('extractHypothesis2', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
     form: ('Make assumption <input name=bool> explicit '
