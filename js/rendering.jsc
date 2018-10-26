@@ -1031,7 +1031,7 @@ function prevRenderedStep(step) {
  * the LHS.  That would allow the target site to be highlighted.
  */
 function wantLeftElision(step) {
-  if (step.ruleName == 'display' || step.ruleName == 'asImplication') {
+  if (step.ruleName == 'display') {
     return false;
   }
   var prev = prevRenderedStep(step);
@@ -1051,14 +1051,9 @@ function renderWff(step) {
   var info = {asmSteps: []};
   var wff = step.wff;
   var $wff;
-  if (step.ruleName == 'asImplication') {
-    // Display absolutely everything in this case.
-    $wff = wff.render(info, 0);
-    wff.node = dom($wff);
-    return dom($wff);
-  } else if (step.ruleName === 'consider' ||
-             step.ruleName === 'considerPart' ||
-             step.ruleName === 'given') {
+  if (step.ruleName === 'consider' ||
+      step.ruleName === 'considerPart' ||
+      step.ruleName === 'given') {
     // Op is always "=" or "==".
     var op = wff.getBinOp().toUnicode();
     var power = Toy.getPrecedence(wff.getBinOp());

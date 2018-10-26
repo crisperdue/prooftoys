@@ -385,29 +385,6 @@ const prelogic = {
   },
 
   /**
-   * Converts a wff with hypotheses to an implication.  If there are
-   * no hypotheses, returns its input unchanged.  Rendering displays
-   * the result of this in its entirety.
-   *
-   * TODO: Rename to something like displayAll. 
-   */
-  asImplication: {
-    action: function(step) {
-      // Always make a new step so we can mark it as not hasHyps.
-      var result = step.justify('asImplication', arguments, [step], true);
-      // This is the primitive rule that used to set hasHyps to false.
-      // result.hasHyps = false;
-      return result;
-    },
-    inputs: {step: 1},
-    form: ('Convert hypotheses to explicit implication in step '
-           + '<input name=step>'),
-    tooltip: 'assumptions explicit',
-    description: 'assumptions explicit;; {in step step}',
-    labels: 'algebra basic'
-  },
-
-  /**
    * A no-op step that breaks the cycle of displaying with elision.
    */
   display: {
@@ -1548,7 +1525,7 @@ const ruleInfo = {
     action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
-      var tIsA = rules.toTIsA(rules.asImplication(step2));
+      var tIsA = rules.toTIsA(step2);
       return (rules.r(tIsA, step, path)
               .justify('replaceT0', arguments, [step, step2]));
     },
@@ -2290,16 +2267,14 @@ const ruleInfo = {
   },
 
   // Adds an assumption to the given step and deduplicates it.
-  // Oblivious to hypotheses.
   andAssume: {
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
       if (step.isCall2('=>')) {
-        var step0 = rules.asImplication(step);
         var taut = rules.tautology('(p => q) => (p & a => q)');
         var map = {p: step.getLeft(), q: step.getRight(), a: expr};
         var step1 = rules.tautInst(taut, map);
-        var step2 = rules.modusPonens(step0, step1);
+        var step2 = rules.modusPonens(step, step1);
       } else {
         var taut = rules.tautology('p => (a => p)');
         var map = {p: step, a: expr};
@@ -2843,7 +2818,7 @@ const ruleInfo = {
   // TODO: Consider merging this functionality with rules.trueBy.
   forwardChain: {
     action: function(step, schema_arg) {
-      var schema = rules.fact(schema_arg).andThen('asImplication');
+      var schema = rules.fact(schema_arg);
       var mainOp = schema.getBinOp().pname;
       var substitution = step.matchSchema(schema.getLeft());
       if (!substitution && (mainOp === '==' || mainOp === '=')) {
@@ -2862,7 +2837,7 @@ const ruleInfo = {
       // Schema2 may have some newly-quantified variables in its RHS.
       var step2 = rules.instMultiVars(schema2, substitution);
       var step3 = (mainOp === '=>'
-                   ? rules.modusPonens(rules.asImplication(step), step2)
+                   ? rules.modusPonens(step, step2)
                    : mainOp === '=='
                    ? rules.rplaceEither(step, '/main', step2)
                    : assert(false, 'Schema must be like A => B or A == B'));
@@ -3862,8 +3837,7 @@ const ruleInfo = {
                        infix(lhs,
                              '=>',
                              infix(varify('h'), '=>', a)));
-      var step1 = rules.asImplication(step);
-      var step2 = rules.forwardChain(step1, rules.tautology(taut));
+      var step2 = rules.forwardChain(step, rules.tautology(taut));
       return step2.justify('extractHypothesis2', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
@@ -3905,7 +3879,7 @@ const ruleInfo = {
       var hyp = termify(hyp_arg);
       assert(step.isCall2('=>'));
       if (hyp.matches(step.getLeft())) {
-        var result = rules.asImplication(step);
+        var result = step;
       } else {
         var taut = rules.tautology(step.getLeft().hypMover(hyp));
         var step1 = rules.rewriteOnly(step, '/left', taut);
@@ -4192,10 +4166,9 @@ const ruleInfo = {
       var step1 = rules.assume('x = y');
       var step2 = rules.eqSelf(x);
       var step3 = rules.replace(step2, '/left', step1);
-      var step4 = rules.asImplication(step3);
       var subst = {x: y, y: x};
-      var step5 = rules.instMultiVars(step4, subst);
-      var step6 = rules.and(step4, step5);
+      var step5 = rules.instMultiVars(step3, subst);
+      var step6 = rules.and(step3, step5);
       var taut = rules.tautology('(p => q) & (q => p) => (p == q)');
       return rules.forwardChain(step6, taut);
     },

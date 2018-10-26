@@ -1918,7 +1918,6 @@ const basicRealFacts =
    {statement: 'exists R',
     proof: function() {
        return (rules.fact('p x => exists p')
-               .andThen('asImplication')
                .andThen('instMultiVars', {x: '0', 'p': 'R'})
                .andThen('simplifySite', ''));
      }
@@ -1929,8 +1928,6 @@ const basicRealFacts =
        var asm = rules.assume('a = none');
        return (rules.fact('not (R none)')
                .replace('/arg/arg', rules.eqnSwap(asm))
-               // Just to make the display clearer:
-               .andThen('asImplication')
                .andThen('rewriteOnly', '', 'a => not b == b => not a')
                .andThen('simplifySite', '/right'));
      }
