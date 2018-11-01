@@ -156,6 +156,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
     result.details = step;
   } else {
     switch(ruleName) {
+    case 'axiom4':
     case 'assert':
     // TODO: "define" should not have to be a special case here.
     case 'define':

@@ -215,7 +215,7 @@ const axioms = {
          : equal(call, lambda.body.subFree1(call.arg, lambda.bound.name)));
       // Always make sure the call has a type.  It came from elsewhere.
       Toy.findType(call);
-      return rules.assert(result).justify('axiom4', [call]);
+      return result.justify('axiom4', [call]);
     },
     labels: 'primitive',
     inputs: {term: 1},  // Specifically a Call to a Lambda.
