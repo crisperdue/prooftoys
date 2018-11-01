@@ -899,7 +899,6 @@ function asFactProver(prover, goal) {
       result = goal;
     } else if (!prover) {
       // The proof is just a stub not yet filled in.
-      console.warn('No proof for fact', goal.toUnicode());
       return rules.assert(goal);
     }
     var result = prover();
