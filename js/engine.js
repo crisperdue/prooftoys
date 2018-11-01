@@ -441,39 +441,6 @@ var rules = {};
 // that have a swapped version).
 
 /**
- * Given a ruleInfo object, add its information to the "rules" object.
- * The "rules" object maps from rule name to function.  Each function
- * has an "info" property containing all the properties present in the
- * ruleInfo object entry for the name.  If not supplied in the rule
- * definition, the info.inputs is defaulted to an empty object here.
- */
-function addRulesMap(ruleInfo) {
-  for (var key in ruleInfo) {
-    var value = ruleInfo[key];
-    if (value.constructor != Object) {
-      console.warn('Old-style rule action', key);
-    }
-    var info = value.constructor == Object ? value : {action: value};
-    if (info.ruleName) {
-      console.warn('Property "ruleName" found for rule with key', key);
-    }
-    info.name = key;
-    addRule(info);
-  }
-}
-
-/**
- * Adds an array of rules (axioms and theorems/facts, named or not),
- * each in the form of a plain object with properties.  If a fact has
- * a name, the name appears as a "name" property.
- *
- * TODO: Convert addFactsMap to use this internally instead of addFact.
- */
-function addRules(ruleList) {
-  ruleList.forEach(addRule);
-}
-
-/**
  * Process the given info into form for inclusion into Toy.rules and
  * add the resulting rule or rules.  This does not do inference, so it
  * can be called before any theorems are proved.
@@ -697,6 +664,38 @@ function addRule(info) {
     // Finally install the rule into the rules.
     rules[name] = rule;
   }
+}
+
+/**
+ * Given a ruleInfo object, add its information to the "rules" object.
+ * The "rules" object maps from rule name to function.  Each function
+ * has an "info" property containing all the properties present in the
+ * ruleInfo object entry for the name.
+ */
+function addRulesMap(ruleInfo) {
+  for (var key in ruleInfo) {
+    var value = ruleInfo[key];
+    if (value.constructor != Object) {
+      console.warn('Old-style rule action', key);
+    }
+    var info = value.constructor == Object ? value : {action: value};
+    if (info.ruleName) {
+      console.warn('Property "ruleName" found for rule with key', key);
+    }
+    info.name = key;
+    addRule(info);
+  }
+}
+
+/**
+ * Adds an array of rules (axioms and theorems/facts, named or not),
+ * each in the form of a plain object with properties.  If a fact has
+ * a name, the name appears as a "name" property.
+ *
+ * TODO: Convert addFactsMap to use this internally instead of addFact.
+ */
+function addRules(ruleList) {
+  ruleList.forEach(addRule);
 }
 
 /**
