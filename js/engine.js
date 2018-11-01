@@ -750,7 +750,7 @@ function definition(defn_arg) {
       Toy.isEmpty(defn.getRight().newConstants())) {
     // It is a classic equational definition.
     // Add it to the facts andthe definitions database.
-    addFact({goal: defn});
+    addFact({goal: defn, definition: true});
     definitions[name] = defn;
     addDefnFacts(defn);
   } else {
@@ -768,7 +768,7 @@ function definition(defn_arg) {
              'Definition {1} needs an existence fact.', defn);
     }
     // Assert that the definition is true, and add to the definitions.
-    addFact({goal: defn});
+    addFact({goal: defn, definition: true});
     definitions[name] = defn;
   }
   return name;
@@ -2175,6 +2175,7 @@ var factProperties = {
   goal: true,
   statement: true,
   proof: true,
+  definition: true,
   simplifier: true,
   desimplifier: true,
   noSwap: true,
@@ -2208,6 +2209,8 @@ var factProperties = {
  * description: string or function as for a rule description.
  * simplifier: true iff this fact is a simplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
+ * definition: true if this fact is introduced as a definition.
+ *   Currently just affects the message.
  * definitional: the fact is "basically" a definition of a
  *   function or predicate.  Used for presentation of the fact
  *   in a menu.
@@ -2249,8 +2252,13 @@ function addFact(info) {
   //   this code.  That will require declaring axioms before uses.
   const names = info.goal.newConstants();
   if (names.size > 0) {
-    console.log('In fact', info.goal.toString(), 'introducing constants:',
-                Array.from(names).join(', '));
+    if (info.definition) {
+      console.log('Defining',
+                  Array.from(names).join(', '));
+    } else {
+      console.log('In fact', info.goal.toString(), 'introducing constants:',
+                  Array.from(names).join(', '));
+    }
     Toy.addConstants(names);
   }
   // Annotate the new goal with type info for type comparison
