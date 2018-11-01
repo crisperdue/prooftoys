@@ -1485,13 +1485,6 @@ var testCase = {
     assert(!check('posNum'));
   },
 
-  testAlreadyProved: function() {
-    assert(Toy._alreadyProved('axiom2'));
-    assert(Toy._alreadyProved('axiom2a'));
-    // This one is a rule, but not a theorem.
-    assert(!Toy._alreadyProved('replace'));
-  },
-
   // Also tests rules.witnessExists.
   testDefinex: function() {
     assertEqual('(posNum > 0)', Toy.getDefinition('posNum'));

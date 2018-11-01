@@ -1822,24 +1822,6 @@ function getTheorem(name) {
   return action();
 }
 
-/**
- * Returns true iff the named theorem has already been proved.
- */
-function alreadyProved(name) {
-  if (isAxiom(name)) {
-    return true;
-  } else {
-    return !!rules[name].result;
-  }
-}
-
-/**
- * True iff the name is the name of an axiom.
- */
-function isAxiom(name) {
-  return name.substring(0, 5) === 'axiom';
-}
-
 
 //// UTILITY FUNCTIONS
 
@@ -2442,7 +2424,6 @@ Toy.dumpFactResolutions = dumpFactResolutions;
 
 // For testing.
 Toy._tautologies = _tautologies;
-Toy._alreadyProved = alreadyProved;
 Toy._locateMatchingFact = _locateMatchingFact;
 Toy._conjunctionSchema = conjunctionSchema;
 
