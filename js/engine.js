@@ -290,13 +290,8 @@ var rules = {};
 
 //// RULE PROPERTIES
 
-// This is structured as a map from the name of an inference rule or
-// theorem to properties of the rule or theorem.
-//
 // The following rule properties are available directly when calling
-// addRule.  In that case, pass "name" as a property along with the
-// others.  When calling addRule, unnamed facts and definitions are
-// also supported through the properties.
+// addRule.
 //
 // Properties:
 //
@@ -461,9 +456,9 @@ function addRule(info) {
     definition(info.definition);
     return;
   }
-
   var proof = info.proof;
   var statement = info.statement;
+
   // This will become the "rule object":
   var rule;
   // This will become the "main function" -- the action or proof property
@@ -491,22 +486,17 @@ function addRule(info) {
     // User-supplied proof function is the main.
     main = proof;
   }
-  const isAsserted = statement && !proof;
-  if (isAsserted) {
-    // If there is a statement but no proof, just assert the statement.
-    proof = function() {
-      return rules.assert(statement);
-    }
-    main = proof;
-    if (!info.axiom) {
-      if (typeof name !== 'string') {
-        console.warn('No proof for', statement.$$);
-      } else if (!name.startsWith('axiom')) {
-        console.warn('No proof for', name);
+  if (statement) {
+    if (!proof) {
+      // If there is a statement but no proof, just assert the statement.
+      proof = function() {
+        return rules.assert(statement);
+      }
+      main = proof;
+      if (!info.axiom) {
+        console.warn('No proof for', name || statement.toUnicode());
       }
     }
-  }
-  if (statement) {
     // Add it as a fact also, and potentially "swapped".
     // A fact needs a statement, so we rely here on having a statement given.
     var factProps = {
@@ -532,7 +522,11 @@ function addRule(info) {
     }
   }
   if (proof) {
-    // A statement or proof was given.
+    // A proof was given, but no statement.
+    //
+    // TODO: Treat this as an error condition.  There is no good
+    //   reason for this scenario, and it prevents immediately
+    //   generating variants such as swapped facts.
     // 
     // Don't rerun the proof every time, but do re-justify on each
     // call so each use will return a step with its own ordinal.
@@ -2232,6 +2226,8 @@ var factProperties = {
  * The info object is stored in the database with an additional
  * "selfRef" property, in the form of a fact reference as used for
  * fact lookups, treating the fact as a reference to itself.
+ *
+ * For processing of additional metadata properties use addRule.
  */
 function addFact(info) {
   // The goal is a rendered Expr just because that makes a complete
