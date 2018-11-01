@@ -773,6 +773,7 @@ function define(name, definition) {
   definitions[name] = defn;
   // TODO: Also check for other new names in the definition.
   Toy.namedConstants.add(name);
+  console.error('OLD-style define of', name);
   return defn;
 }
 

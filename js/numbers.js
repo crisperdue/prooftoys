@@ -45,32 +45,11 @@ var addFact = Toy.addFact;
 var addFactsMap = Toy.addFactsMap;
 
 
-//// Definitions
+//// Axioms and definitions
 
-define('neg', '{x. -1 * x}');
-define('-', '{x. {y. x + neg y}}');
-// TODO: Rename this to something like realDiv, and define "/"
-//   conditionally for the real numbers, with values for non-real,
-//   non-null inputs not defined.
-// TODO: That will require an implementation of "conditional"
-//   definitions that only specify the value of their "constant"
-//   under certain conditions, such as the arguments having values
-//   among the real numbers.
-//
-//   This definition then can serve as a witness that there exist
-//   functions satisfying the conditional definition.
-define('/', '{x. {y. the {z. R x & R y & R z & x = y * z}}}');
-define('strict', '{f. f none = none}');
-define('strict2',
-       '{f. forall {x. forall {y. f x none = none & f none y = none}}}');
-/**
- * We desire something like this, but it needs some supporting
- * theorems such as probably 5307.
- *
- * definex('quotient',
- * 'exists {q. strict2 q & (R x & R y => q x y = x / y');
- */
-define('recip', '{x. 1 / x}');
+definition('strict = {f. f none = none}');
+definition('strict2 = {f. forall {x. forall {y. ' +
+           'f x none = none & f none y = none}}}');
 
 
 //// Axioms
@@ -86,8 +65,8 @@ const strictness =
    ];
 addRules(strictness);
 
-define('isAddIdentity', '{x. R x & forall {y. R y => y + x = y}}');
-define('isMulIdentity', '{x. R x & forall {y. R y => y * x = y}}');
+definition('isAddIdentity = {x. R x & forall {y. R y => y + x = y}}');
+definition('isMulIdentity = {x. R x & forall {y. R y => y * x = y}}');
 
 const fieldLaws =
   [
@@ -140,6 +119,43 @@ const fieldLaws =
    ];
 addRules(fieldLaws);
 
+
+//// Facts about fields
+
+const fieldFacts =
+  [
+   ];
+
+
+definition('neg = {x. -1 * x}');
+definition('(-) = {x. {y. x + neg y}}');
+
+
+// TODO: Rename "/" to something like realDiv, and define "/"
+//   conditionally for the real numbers, with values for non-real,
+//   non-null inputs not defined.
+// TODO: That will require an implementation of "conditional"
+//   definitions that only specify the value of their "constant"
+//   under certain conditions, such as the arguments having values
+//   among the real numbers.
+//
+//   This definition then can serve as a witness that there exist
+//   functions satisfying the conditional definition.
+
+// TODO: Replace these two definitions, with recip based on
+//   facts about fields and "/" based on recip.
+definition('(/) = {x. {y. the {z. R x & R y & R z & x = y * z}}}');
+definition('recip = {x. 1 / x}');
+
+/**
+ * We desire something like this, but it needs some supporting
+ * theorems such as probably 5307.
+ *
+ * definex('quotient',
+ * 'exists {q. strict2 q & (R x & R y => q x y = x / y');
+ */
+
+
 const realOrdering =
   [
    {statement: 'not (x < x)', axiom: true,
@@ -174,10 +190,6 @@ Toy.addRules(realOrdering);
 // Read as "x is an additive/multiplicative inverse of y".
 definition('isAddInverse = {x. {y. R x & R y & y + x = 0}}');
 definition('isMulInverse = {x. {y. R x & R y & y * x = 1}}');
-
-const realFacts1 =
-  [
-   ];
 
 const fakeAxioms =
   [
