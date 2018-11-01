@@ -134,7 +134,7 @@ const axioms = {
   //   definition by cases is at least admissible.  (There exists
   //   a function as defined.)
   axiom1: {
-    statement: 'g T & g F == forall {a. g a}',
+    statement: 'g T & g F == forall {a. g a}', axiom: true,
     inputs: {},
     form: '',
     description: 'axiom of T & F',
@@ -142,7 +142,7 @@ const axioms = {
   },
 
   axiom2: {
-    statement: 'x = y => h x = h y',
+    statement: 'x = y => h x = h y', axiom: true,
     inputs: {},
     form: '',
     description: 'axiom of function application',
@@ -154,7 +154,7 @@ const axioms = {
    * Andrews' axiom 2.
    */
   axiom2a: {
-    statement: 'x = y => (p x == p y)',
+    statement: 'x = y => (p x == p y)', axiom: true,
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
       var step2 = rules.eqIsEquiv();
@@ -168,7 +168,7 @@ const axioms = {
   },
 
   axiom3: {
-    statement: '(f = g) == forall {x. f x = g x}',
+    statement: '(f = g) == forall {x. f x = g x}', axiom: true,
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
     inputs: {},
@@ -179,7 +179,7 @@ const axioms = {
   },
 
   axiom3a: {
-    statement: '(p = q) == forall {x. p x == q x}',
+    statement: '(p = q) == forall {x. p x == q x}', axiom: true,
     proof: function() {
       const map = {f: 'p', g: 'q'};
       const step1 = rules.instMultiVars(rules.axiom3(), map);
@@ -226,7 +226,7 @@ const axioms = {
   },
 
   axiom5: {
-    statement: 'iota {x. x = y} = y',
+    statement: 'iota {x. x = y} = y', axiom: true,
     inputs: {},
     form: '',
     tooltip: ('axiom of description'),
@@ -836,8 +836,7 @@ const bookDefns = {
 
   // Book only.  Not actually used even in the book.
   defAnd: {
-    statement: '(&) = {x. {y. ({g. (g T T)} = {g. (g x y)})}}',
-    axiom: true,
+    statement: '(&) = {x. {y. ({g. (g T T)} = {g. (g x y)})}}', axiom: true,
     action: function() {
       return (rules.assert('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
               .justify('defAnd'));
@@ -846,8 +845,7 @@ const bookDefns = {
 
   // Book only.
   defImplies: {
-    statement: '(=>) = {x. {y. (x == (x & y))}}',
-    axiom: true,
+    statement: '(=>) = {x. {y. (x == (x & y))}}', axiom: true,
     action: function() {
       return (rules.assert('(=>) = {x. {y. x == x & y}}')
               .justify('defImplies'));

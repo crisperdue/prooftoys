@@ -649,10 +649,6 @@ function addRule(info) {
     // Include the rule name in the tooltip.
     info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), name);
 
-    if (rule && rule.length === 0 && name.slice(0, 5) === 'axiom') {
-      info.labels.axiom = true;
-    }
-
     // Assign a name to the wrapper and main.
     if (rule !== main) {
       Object.defineProperty(rule, 'name',
