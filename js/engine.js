@@ -2151,7 +2151,7 @@ var basicSimpFacts = [
 /**
  * Treats each key in the map as a synopsis of a mathematical
  * statement, and treats its value as a function to prove the
- * statement.  Uses addFact to add each statement and its proof
+ * statement.  Uses addRule to add each statement and its proof
  * function to the internal database of provable facts.  Applies
  * mathParse to the statement.
  *
@@ -2162,10 +2162,7 @@ function addFactsMap(map) {
   for (var synopsis in map) {
     var info = map[synopsis];
     info.statement = Toy.mathParse(synopsis);
-    addFact(info);
-    if (!info.noSwap) {
-      addSwappedFact(info);
-    }
+    addRule(info);
   }
 }
 
