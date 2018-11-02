@@ -2859,7 +2859,7 @@ const ruleInfo = {
   //   addDefnFacts.
 
   // This applies transitivity of the conditional, treating the fact
-  // LHS as a schema when matching with the step RHS.
+  // LHS as a schema when matching with the step consequent.
   forwardChain2: {
     action: function(step, fact_arg) {
       var fact = rules.fact(fact_arg);
@@ -4756,16 +4756,29 @@ const logicFacts =
    ];
 addRules(logicFacts);
 
-// This is an equivalent formulation of unique existence, directly
-// comparable to eu2 in Metamath.  The proof is somewhat lengthy, see
-// the proofs of eu2 and mo in Metamath.
-//
-// TODO: Consider perhaps proving this by showing that either
-//   a collection is the singleton, or empty, or has more than
-//   one member.
-const
-  _e1a = 'exists1 p == exists p & forall {x. forall {y. p x & p y => x = y}}';
-addRule({name: 'exists1a', statement: _e1a});
+const exists1aFacts =
+  [
+   {statement: 'not (multi p) == forall {x. forall {y. p x & p y => x = y}}',
+    name: 'notMulti',
+    proof: function() {
+       const notEx = 'not (exists p) == forall {x. not (p x)}';
+       return (rules.consider('not (multi p)')
+               .andThen('apply', '/right/arg')
+               .andThen('rewrite', '/right', notEx)
+               .andThen('rewrite', '/right/arg/body', notEx)
+               .andThen('rewrite', '/right/arg/body/arg/body',
+                        'not (a & b) == a => not b')
+               .andThen('simplifySite', '/right'));
+     }
+   },
+   // This is an equivalent formulation of unique existence, directly
+   // comparable to eu2 in Metamath.  The proof is somewhat lengthy, see
+   // the proofs of eu2 and mo in Metamath.
+   {name: 'exists1a',  // TODO: Prove this.
+    statement: 'exists1 p == exists p & not (multi p)'
+   }
+   ];
+addRules(exists1aFacts);
 
 
 //// Other initializations
