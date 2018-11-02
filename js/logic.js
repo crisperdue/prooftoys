@@ -4463,7 +4463,16 @@ const existRules =
                                  .andThen('eqnSwap')));
       return step9;
     }
-  },
+   },
+
+   {name: 'exists1IotaLaw',
+    statement: 'exists1 p => (p x == x = iota p)',
+    proof: function() {
+      return (rules.fact('exists1 p => (p x == x = the p)')
+              .andThen('rewriteOnly', '/right/right/right',
+                       'exists1 p => the p = iota p'));
+    }
+   },
 
   // This theorem aids in proving that a constant defined by a
   // property is unique.
