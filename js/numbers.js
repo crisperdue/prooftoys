@@ -68,7 +68,7 @@ addRules(strictness);
 definition('isAddIdentity = {x. R x & forall {y. R y => y + x = y}}');
 definition('isMulIdentity = {x. R x & forall {y. R y => y * x = y}}');
 
-const fieldLaws =
+const fieldLaws1 =
   [
    {statement: 'R (x + y)', axiom: true,
     description: 'real addition is closed'
@@ -83,14 +83,9 @@ const fieldLaws =
     labels: 'algebra',
     noSwap: true
    },
-   {statement: '@isAddIdentity 0', axiom: true,
-   // TODO: {statement: 'exists {x. isAddIdentity x}', axiom: true,
+   {statement: 'exists isAddIdentity', axiom: true,
     description: 'additive identity'
    },
-   {statement: 'exists {y. R y & x + y = 0}', axiom: true,
-    description: 'additive inverse exists'
-   },
-
    {statement: 'R (x * y)', axiom: true,
     description: 'real multiplication is closed'
    },
@@ -104,21 +99,134 @@ const fieldLaws =
     labels: 'algebra',
     noSwap: true
    },
-   {statement: '@isMulIdentity 1', axiom: true,
+   {statement: 'exists isMulIdentity', axiom: true,
     description: 'multiplicative identity'
    },
-   {statement: 'x != 0 => exists {y. R y & x * y = 1}', axiom: true,
-    description: 'multiplicative inverse exists'
-   },
-
    {statement: 'x * (y + z) = x * y + x * z', axiom: true,
     description: 'distributive law',
     labels: 'algebra',
     converse: { labels: 'algebra' }
    }
    ];
-addRules(fieldLaws);
+addRules(fieldLaws1);
 
+const identityFacts =
+  [
+   {statement: 'isAddIdentity x & isAddIdentity y => y = x',
+    name: 'uniqueAddIdentity',
+    proof: function() {
+       const factX1 = (rules.assume('isAddIdentity x')
+                       .andThen('apply', '/right'));
+       const xType = factX1.andThen('forwardChain', 'a => b & c => (a => b)');
+       const factX = (factX1.andThen('forwardChain',
+                                      'a => b & c => (a => c)')
+                      .andThen('instForall', '/rt', 'y')
+                      .andThen('asAssumption', '(R y)'));
+       const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
+                      .andThen('rewrite', '/rt/left', 'x + y = y + x'));
+       const yType = xType.andThen('instMultiVars', {x: 'y'});
+       const result = (rules.replace(factY, '/rt/left', factX)
+                       .andThen('trueBy1', '(R x)', xType)
+                       .andThen('trueBy1', '(R y)', yType));
+       return result;
+     }
+   },
+   {statement: 'isMulIdentity x & isMulIdentity y => y = x',
+    name: 'uniqueMulIdentity',
+    proof: function() {
+       const factX1 = (rules.assume('isMulIdentity x')
+                       .andThen('apply', '/right'));
+       const xType = factX1.andThen('forwardChain', 'a => b & c => (a => b)');
+       const factX = (factX1.andThen('forwardChain',
+                                      'a => b & c => (a => c)')
+                      .andThen('instForall', '/rt', 'y')
+                      .andThen('asAssumption', '(R y)'));
+       const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
+                      .andThen('rewrite', '/rt/left', 'x * y = y * x'));
+       const yType = xType.andThen('instMultiVars', {x: 'y'});
+       const result = (rules.replace(factY, '/rt/left', factX)
+                       .andThen('trueBy1', '(R x)', xType)
+                       .andThen('trueBy1', '(R y)', yType));
+       return result;
+     }
+   },
+   {statement: 'exists1 isAddIdentity',
+   },
+   {statement: 'exists1 isMulIdentity ',
+   }
+   ];
+addRules(identityFacts);
+
+definition('0 = iota isAddIdentity');
+definition('1 = iota isMulIdentity');
+
+const identityFacts2 =
+  [
+   {statement: 'isAddIdentity 0',
+    proof: function() {
+       return (rules.fact('0 = iota isAddIdentity')
+               .andThen('rewrite', '',
+                        'exists1 p => (x = iota p == p x)')
+               .andThen('trueBy0', '/left',
+                        rules.fact('exists1 isAddIdentity'))
+               .andThen('simplifySite', ''));
+     }
+   },
+   {statement: 'isMulIdentity 1',
+    proof: function() {
+       return (rules.fact('1 = iota isMulIdentity')
+               .andThen('rewrite', '',
+                        'exists1 p => (x = iota p == p x)')
+               .andThen('trueBy0', '/left',
+                        rules.fact('exists1 isMulIdentity'))
+               .andThen('simplifySite', ''));
+     }
+   },
+   {statement: 'isAddIdentity x == x = 0',
+    // TODO: Notice that using forwardChain here with step1 causes
+    //   step1 to be displayed as if it were a recorded fact.  This
+    //   issue can also occur with rewrites.  we should probably
+    //   choose display style in such cases based on use of a recorded
+    //   fact given as a statement versus using a proved step.  This
+    //   would also let us eliminate some variants of rewrite rules.
+    proof: function() {
+       const step1 = (rules.fact('exists1 p => (p x == x = the p)')
+                      .andThen('rewrite', '/right/right/right', 'exists1The')
+                      .andThen('instMultiVars', {p: 'isAddIdentity'})
+                      .andThen('rewrite', '/right/right/right',
+                               'iota isAddIdentity = 0'));
+       return (rules.fact('exists1 isAddIdentity')
+               .andThen('forwardChain', step1)
+               .andThen('instForall', '', 'x'));
+     }
+   },
+   {statement: 'isMulIdentity x == x = 1',
+    proof: function() {
+       const step1 = (rules.fact('exists1 p => (p x == x = the p)')
+                      .andThen('rewrite', '/right/right/right', 'exists1The')
+                      .andThen('instMultiVars', {p: 'isMulIdentity'})
+                      .andThen('rewrite', '/right/right/right',
+                               'iota isMulIdentity = 1'));
+       return (rules.fact('exists1 isMulIdentity')
+               .andThen('forwardChain', step1)
+               .andThen('instForall', '', 'x'));
+     }
+   }
+   ];
+addRules(identityFacts2);
+
+const fieldLaws2 =
+  [
+   {statement: '1 != 0', axiom: true},
+   {statement: 'exists {y. R y & x + y = 0}', axiom: true,
+    description: 'additive inverses exist'
+   },
+   {statement: 'x != 0 => exists {y. R y & x * y = 1}', axiom: true,
+    description: 'multiplicative inverses exist'
+   }
+   ];
+
+// definition('neg = {x. iota {y. x + y = 0}}');
 
 //// Facts about fields
 
@@ -208,108 +316,6 @@ const fakeAxioms =
    }
    ];
 Toy.addRules(fakeAxioms);
-
-const idFacts =
-  [
-   {statement: 'isAddIdentity x => x = 0',
-    name: 'addIdentity',
-    proof: function() {
-       const result1 = (rules.assume('isAddIdentity x')
-                        .andThen('apply', '/right'));
-       const result2 = (result1
-                        .andThen('forwardChain',
-                                 'a => b & c => (a => b)')
-                        .andThen('rewriteOnly', '',
-                                 'a => b == (a & b == a)'));
-       const result3 = (result1
-                        .andThen('forwardChain',
-                                 'a => b & c => (a => c)')
-                        .andThen('instForall', '/right', '0')
-                        .andThen('simplifySite', '')
-                        .andThen('rewriteFrom', '/left', result2));
-
-       return result3;
-     }
-   },
-
-   {statement: 'isAddIdentity x & isAddIdentity y => y = x',
-    name: 'uniqueAddIdentity',
-    proof: function() {
-       const factX1 = (rules.assume('isAddIdentity x')
-                       .andThen('apply', '/right'));
-       const xType = factX1.andThen('forwardChain', 'a => b & c => (a => b)');
-       const factX = (factX1.andThen('forwardChain',
-                                      'a => b & c => (a => c)')
-                      .andThen('instForall', '/rt', 'y')
-                      .andThen('asAssumption', '(R y)'));
-       const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
-                      .andThen('rewrite', '/rt/left', 'x + y = y + x'));
-       const yType = xType.andThen('instMultiVars', {x: 'y'});
-       const result = (rules.replace(factY, '/rt/left', factX)
-                       .andThen('trueBy1', '(R x)', xType)
-                       .andThen('trueBy1', '(R y)', yType));
-       return result;
-     }
-   },
-
-   {statement: 'isMulIdentity x & isMulIdentity y => y = x',
-    name: 'uniqueMulIdentity',
-    proof: function() {
-       const factX1 = (rules.assume('isMulIdentity x')
-                       .andThen('apply', '/right'));
-       const xType = factX1.andThen('forwardChain', 'a => b & c => (a => b)');
-       const factX = (factX1.andThen('forwardChain',
-                                      'a => b & c => (a => c)')
-                      .andThen('instForall', '/rt', 'y')
-                      .andThen('asAssumption', '(R y)'));
-       const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
-                      .andThen('rewrite', '/rt/left', 'x * y = y * x'));
-       const yType = xType.andThen('instMultiVars', {x: 'y'});
-       const result = (rules.replace(factY, '/rt/left', factX)
-                       .andThen('trueBy1', '(R x)', xType)
-                       .andThen('trueBy1', '(R y)', yType));
-       return result;
-     }
-   },
-
-   {statement: 'isMulIdentity x => x = 1',
-    name: 'mulIdentity',
-    proof: function() {
-       const result1 = (rules.assume('isMulIdentity x')
-                        .andThen('apply', '/right'));
-       const result2 = (result1
-                        .andThen('forwardChain',
-                                 'a => b & c => (a => b)')
-                        .andThen('rewriteOnly', '',
-                                 'a => b == (a & b == a)'));
-       const result3 = (result1
-                        .andThen('forwardChain',
-                                 'a => b & c => (a => c)')
-                        .andThen('instForall', '/right', '1')
-                        .andThen('simplifySite', '')
-                        .andThen('rewriteFrom', '/left', result2));
-
-       return result3;
-     }
-   },
-   /*
-   {statement: 'exists1 isAddIdentity',
-    proof: function() {
-       const step1 = rules.addIdentity().andThen('toForall0', 'x');
-       const step2 = rules.and(rules.fact('isAddIdentity 0'), step1);
-       return rules.forwardChain(step2, rules.uniqueTerm());
-    }
-   },
-   */
-   {statement: 'exists1 isMulIdentity ',
-    proof: function() {
-       const step1 = rules.mulIdentity().andThen('toForall0', 'x');
-       const step2 = rules.and(rules.fact('isMulIdentity 1'), step1);
-       return rules.forwardChain(step2, rules.uniqueTerm());
-    }
-   }
-   ];
-addRules(idFacts);
 
 
 ////
@@ -2118,7 +2124,7 @@ function isDistribFact(stmt) {
   return _distribFacts.has(Toy.resolveToFact(stmt));
 }
 
-var identityFacts = {
+var identityFacts3 = {
   // Plus zero
   /* Omit from UI: somewhat redundant
   'a = 0 + a': {
@@ -2178,7 +2184,7 @@ var identityFacts = {
     }
   }
 };
-addFactsMap(identityFacts);
+addFactsMap(identityFacts3);
 
 // This fact has the same consequent as transitivity of equality,
 // so we cannot reference it through the usual fact lookup.

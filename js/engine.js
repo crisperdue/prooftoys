@@ -846,8 +846,6 @@ function addDefnFacts(definition) {
       addSwappedFact({goal: eqn, definitional: true});
     }
   }
-  // This relies on having applyBoth and simpleApply available whenever
-  // a function is defined.
   if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
     if (deferringDefnFacts) {
       deferredDefnFacts.push(addFacts);
