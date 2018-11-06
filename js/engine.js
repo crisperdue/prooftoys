@@ -261,6 +261,14 @@ var ruleMethods = {
   },
       
   /**
+   * Swaps the sides of an equational fact.  Mainly useful when the
+   * fact is named.
+   */
+  swap: function swap_method() {
+    return rules.eqnSwap(this);
+  },
+
+  /**
    * Applies rules.rewrite to this Expr passing in a path and
    * fact to use.
    */
