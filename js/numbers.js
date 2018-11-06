@@ -112,7 +112,7 @@ addRules(fieldLaws1);
 
 const identityFacts =
   [
-   {statement: 'isAddIdentity x & isAddIdentity y => y = x',
+   {statement: 'isAddIdentity x & isAddIdentity y => x = y',
     name: 'uniqueAddIdentity',
     proof: function() {
        const factX1 = (rules.assume('isAddIdentity x')
@@ -127,11 +127,12 @@ const identityFacts =
        const yType = xType.andThen('instMultiVars', {x: 'y'});
        const result = (rules.replace(factY, '/rt/left', factX)
                        .andThen('trueBy1', '(R x)', xType)
-                       .andThen('trueBy1', '(R y)', yType));
+                       .andThen('trueBy1', '(R y)', yType)
+                       .andThen('eqnSwap'));
        return result;
      }
    },
-   {statement: 'isMulIdentity x & isMulIdentity y => y = x',
+   {statement: 'isMulIdentity x & isMulIdentity y => x = y',
     name: 'uniqueMulIdentity',
     proof: function() {
        const factX1 = (rules.assume('isMulIdentity x')
@@ -146,13 +147,34 @@ const identityFacts =
        const yType = xType.andThen('instMultiVars', {x: 'y'});
        const result = (rules.replace(factY, '/rt/left', factX)
                        .andThen('trueBy1', '(R x)', xType)
-                       .andThen('trueBy1', '(R y)', yType));
+                       .andThen('trueBy1', '(R y)', yType)
+                       .andThen('eqnSwap'));
        return result;
      }
    },
    {statement: 'exists1 isAddIdentity',
+    proof: function() {
+       const notMulti = (rules.fact('uniqueAddIdentity')
+                         .andThen('toForall0', 'y')
+                         .andThen('toForall0', 'x')
+                         .andThen('rewriteOnly', '', rules.notMulti().swap()));
+       return (rules.fact('exists isAddIdentity')
+               .andThen('and', notMulti)
+               .andThen('rewrite', '', rules.exists1a().swap()));
+                               
+     }
    },
    {statement: 'exists1 isMulIdentity ',
+    proof: function() {
+       const notMulti = (rules.fact('uniqueMulIdentity')
+                         .andThen('toForall0', 'y')
+                         .andThen('toForall0', 'x')
+                         .andThen('rewriteOnly', '', rules.notMulti().swap()));
+       return (rules.fact('exists isMulIdentity')
+               .andThen('and', notMulti)
+               .andThen('rewrite', '', rules.exists1a().swap()));
+                               
+     }
    }
    ];
 addRules(identityFacts);
@@ -228,12 +250,8 @@ const fieldLaws2 =
 
 // definition('neg = {x. iota {y. x + y = 0}}');
 
+
 //// Facts about fields
-
-const fieldFacts =
-  [
-   ];
-
 
 definition('neg = {x. -1 * x}');
 definition('(-) = {x. {y. x + neg y}}');
