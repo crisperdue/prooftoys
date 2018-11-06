@@ -248,6 +248,44 @@ const fieldLaws2 =
    }
    ];
 
+
+const inverseFacts =
+  [
+   {statement: 'x + y = 0 & x + z = 0 => y = z',
+    name: 'no2AddInverses',
+    proof: function() {
+       const a1 = rules.assume('x + y = 0');
+       const a2 = rules.assume('x + z = 0');
+       return (rules.consider('x + y + z')
+               .andThen('rewriteFrom', '/right/left', a1)
+               .andThen('simplifySite', '/right')
+               .andThen('rewrite', '/main/left/left', 'x + y = y + x')
+               .andThen('rewrite', 'y + x + z',
+                        'y + x + z = y + (x + z)')
+               .andThen('rewriteFrom', 'x + z', a2)
+               .andThen('simplifySite', '/right'));
+                        
+     }
+   },
+   {statement: 'x * y = 1 & x * z = 1 => y = z',
+    name: 'no2MulInverses',
+    proof: function() {
+       const a1 = rules.assume('x * y = 1');
+       const a2 = rules.assume('x * z = 1');
+       return (rules.consider('x * y * z')
+               .andThen('rewriteFrom', '/right/left', a1)
+               .andThen('simplifySite', '/right')
+               .andThen('rewrite', '/main/left/left', 'x * y = y * x')
+               .andThen('rewrite', 'y * x * z',
+                        'y * x * z = y * (x * z)')
+               .andThen('rewriteFrom', 'x * z', a2)
+               .andThen('simplifySite', '/right'));
+                        
+     }
+   }
+   ];
+addRules(inverseFacts);
+
 // definition('neg = {x. iota {y. x + y = 0}}');
 
 
