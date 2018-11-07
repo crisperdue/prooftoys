@@ -1719,8 +1719,7 @@ RuleMenu.prototype._update = function() {
   var term = step && step.selection;
   // Plain object describing each menu item.
   var itemInfos = [];
-  self.offerableRuleNames().forEach(function(name) {
-      var ruleName = name.replace(/^xiom/, 'axiom');
+  self.offerableRuleNames().forEach(function(ruleName) {
       // Info is a string or array of strings.
       var info = ruleMenuInfo(ruleName, step, term,
                               stepEditor._proofEditor);
@@ -2047,10 +2046,9 @@ function acceptsSelection(step, ruleName) {
 }
 
 /**
- * Produces a rule menu entry from a ruleName, with "axiom"
- * potentially shortened to "xiom".  Called with a (rendered) step if
- * there is a selection, the selected term if a term is selected, and
- * the menu's ProofEditor.
+ * Produces a rule menu entry from a ruleName.  Called with a
+ * (rendered) step if there is a selection, the selected term if a
+ * term is selected, and the menu's ProofEditor.
  *
  * This returns either a falsy value (including the empty string),
  * indicating the rule will not be offered, or a string with the menu
@@ -2063,7 +2061,6 @@ function acceptsSelection(step, ruleName) {
  * right-hand neighbor when there is one.
  */
 function ruleMenuInfo(ruleName, step, term, proofEditor) {
-  ruleName = ruleName.replace(/^xiom/, 'axiom');
   var info = Toy.rules[ruleName].info;
   if (info.menuGen) {
     var gen = info.menuGen;
@@ -2071,12 +2068,15 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
   }
   if (Toy.isEmpty(info.inputs)) {
     // It is an axiom or theorem with no inputs.
+    // TODO: Consider supporting axioms and theorems only as facts.
+    //   This function only seems to be called when there is a form
+    //   property anyway.
     if (info.menu) {
       return info.menu;
     }
     var thm = Toy.getTheorem(ruleName);
     var thmText = Toy.trimParens(thm.unHyp().toHtml());
-    if (ruleName.substring(0, 5) === 'axiom') {
+    if (info.axiom) {
       return 'axiom ' + thmText;
     } else {
       return 'theorem ' + thmText;
