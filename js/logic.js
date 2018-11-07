@@ -120,6 +120,11 @@ definition('the = {p. if (exists1 p) (iota p) none}');
 // argument!)
 definition('negate = {p. {x. not (p x)}}');
 
+// Strictness
+definition('strict = {f. f none = none}');
+definition('strict2 = {f. forall {x. forall {y. ' +
+           'f x none = none & f none y = none}}}');
+
 
 //// Logical axioms and rule of inference
 

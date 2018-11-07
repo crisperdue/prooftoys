@@ -45,14 +45,7 @@ var addFact = Toy.addFact;
 var addFactsMap = Toy.addFactsMap;
 
 
-//// Axioms and definitions
-
-definition('strict = {f. f none = none}');
-definition('strict2 = {f. forall {x. forall {y. ' +
-           'f x none = none & f none y = none}}}');
-
-
-//// Axioms
+//// Field laws
 
 const strictness =
   [
