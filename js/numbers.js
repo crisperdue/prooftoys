@@ -47,136 +47,88 @@ var addFactsMap = Toy.addFactsMap;
 
 //// Field laws
 
-const strictness =
-  [
-   {statement: '@not (R none)', axiom: true,
-    description: 'null value is not Real'},
-   {statement: '@strict2 (+)', axiom: true,
-    description: 'real addition is strict'},
-   {statement: '@strict2 (*)', axiom: true,
-    description: 'real multiplication is strict'}
-   ];
-addRules(strictness);
+if (!Toy.deeperFieldAxioms) {
 
-definition('isAddIdentity = {x. R x & forall {y. R y => y + x = y}}');
-definition('isMulIdentity = {x. R x & forall {y. R y => y * x = y}}');
+  const strictness =
+    [
+     {statement: '@not (R none)', axiom: true,
+      description: 'null value is not Real'},
+     {statement: '@strict2 (+)', axiom: true,
+      description: 'real addition is strict'},
+     {statement: '@strict2 (*)', axiom: true,
+      description: 'real multiplication is strict'}
+     ];
+  addRules(strictness);
 
-const fieldLaws1 =
-  [
-   {statement: 'R (x + y)', axiom: true,
-    description: 'real addition is closed'
-   },
-   {statement: '(x + y) + z = x + (y + z)', axiom: true,
-    description: 'associativity of addition',
-    labels: 'algebra',
-    converse: { labels: 'algebra2' }
-   },
-   {statement: 'x + y = y + x', axiom: true,
-    description: 'commutativity of addition',
-    labels: 'algebra',
-    noSwap: true
-   },
-   {statement: 'exists isAddIdentity', axiom: true,
-    description: 'additive identity'
-   },
-   {statement: 'R (x * y)', axiom: true,
-    description: 'real multiplication is closed'
-   },
-   {statement: '(x * y) * z = x * (y * z)', axiom: true,
-    description: 'associativity of multiplication',
-    labels: 'algebra',
-    converse: { labels: 'algebra2' }
-   },
-   {statement: 'x * y = y * x', axiom: true,
-    description: 'commutativity of multiplication',
-    labels: 'algebra',
-    noSwap: true
-   },
-   {statement: 'exists isMulIdentity', axiom: true,
-    description: 'multiplicative identity'
-   },
-   {statement: 'x * (y + z) = x * y + x * z', axiom: true,
-    description: 'distributive law',
-    labels: 'algebra',
-    converse: { labels: 'algebra' }
-   }
-   ];
-addRules(fieldLaws1);
+  definition('isAddIdentity = {x. R x & forall {y. R y => y + x = y}}');
+  definition('isMulIdentity = {x. R x & forall {y. R y => y * x = y}}');
+
+  const fieldLaws1 =
+    [
+     {statement: 'R (x + y)', axiom: true,
+      description: 'real addition is closed'
+     },
+     {statement: '(x + y) + z = x + (y + z)', axiom: true,
+      description: 'associativity of addition',
+      labels: 'algebra',
+      converse: { labels: 'algebra2' }
+     },
+     {statement: 'x + y = y + x', axiom: true,
+      description: 'commutativity of addition',
+      labels: 'algebra',
+      noSwap: true
+     },
+     {statement: 'exists1 isAddIdentity', axiom: true,
+      description: 'unique additive identity exists'
+     },
+     {statement: 'R (x * y)', axiom: true,
+      description: 'real multiplication is closed'
+     },
+     {statement: '(x * y) * z = x * (y * z)', axiom: true,
+      description: 'associativity of multiplication',
+      labels: 'algebra',
+      converse: { labels: 'algebra2' }
+     },
+     {statement: 'x * y = y * x', axiom: true,
+      description: 'commutativity of multiplication',
+      labels: 'algebra',
+      noSwap: true
+     },
+     {statement: 'exists1 isMulIdentity', axiom: true,
+      description: 'unique multiplicative identity exists'
+     },
+     {statement: 'x * (y + z) = x * y + x * z', axiom: true,
+      description: 'distributive law',
+      labels: 'algebra',
+      converse: { labels: 'algebra' }
+     }
+     ];
+  addRules(fieldLaws1);
+
+  definition('0 = iota isAddIdentity');
+  definition('1 = iota isMulIdentity');
+
+  const uniqueInverses =
+    [
+     {statement: 'exists1 {y. R y & x + y = 0}', axiom: true,
+      description: 'unique additive inverses exist'
+     },
+     {statement: 'x != 0 => exists1 {y. R y & x * y = 1}', axiom: true,
+      description: 'unique multiplicative inverses exist'
+     },
+     ];
+  addRules(uniqueInverses);
+}
+
+// From here, facts that do not depend on the axiomatization.
 
 const identityFacts =
   [
-   {statement: 'isAddIdentity x & isAddIdentity y => x = y',
-    name: 'uniqueAddIdentity',
-    proof: function() {
-       const factX1 = (rules.assume('isAddIdentity x')
-                       .andThen('apply', '/right'));
-       const xType = factX1.andThen('forwardChain', 'a => b & c => (a => b)');
-       const factX = (factX1.andThen('forwardChain',
-                                      'a => b & c => (a => c)')
-                      .andThen('instForall', '/rt', 'y')
-                      .andThen('asAssumption', '(R y)'));
-       const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
-                      .andThen('rewrite', '/rt/left', 'x + y = y + x'));
-       const yType = xType.andThen('instMultiVars', {x: 'y'});
-       const result = (rules.replace(factY, '/rt/left', factX)
-                       .andThen('trueBy1', '(R x)', xType)
-                       .andThen('trueBy1', '(R y)', yType)
-                       .andThen('eqnSwap'));
-       return result;
-     }
-   },
-   {statement: 'isMulIdentity x & isMulIdentity y => x = y',
-    name: 'uniqueMulIdentity',
-    proof: function() {
-       const factX1 = (rules.assume('isMulIdentity x')
-                       .andThen('apply', '/right'));
-       const xType = factX1.andThen('forwardChain', 'a => b & c => (a => b)');
-       const factX = (factX1.andThen('forwardChain',
-                                      'a => b & c => (a => c)')
-                      .andThen('instForall', '/rt', 'y')
-                      .andThen('asAssumption', '(R y)'));
-       const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
-                      .andThen('rewrite', '/rt/left', 'x * y = y * x'));
-       const yType = xType.andThen('instMultiVars', {x: 'y'});
-       const result = (rules.replace(factY, '/rt/left', factX)
-                       .andThen('trueBy1', '(R x)', xType)
-                       .andThen('trueBy1', '(R y)', yType)
-                       .andThen('eqnSwap'));
-       return result;
-     }
-   },
-   {statement: 'exists1 isAddIdentity',
-    proof: function() {
-       const notMulti = (rules.fact('uniqueAddIdentity')
-                         .andThen('toForall0', 'y')
-                         .andThen('toForall0', 'x')
-                         .andThen('rewriteOnly', '', rules.notMulti().swap()));
-       return (rules.fact('exists isAddIdentity')
-               .andThen('and', notMulti)
-               .andThen('rewrite', '', rules.exists1a().swap()));
-                               
-     }
-   },
-   {statement: 'exists1 isMulIdentity ',
-    proof: function() {
-       const notMulti = (rules.fact('uniqueMulIdentity')
-                         .andThen('toForall0', 'y')
-                         .andThen('toForall0', 'x')
-                         .andThen('rewriteOnly', '', rules.notMulti().swap()));
-       return (rules.fact('exists isMulIdentity')
-               .andThen('and', notMulti)
-               .andThen('rewrite', '', rules.exists1a().swap()));
-                               
-     }
-   }
-   ];
-addRules(identityFacts);
+   // Axioms
+   {statement: '1 != 0', axiom: true,
+    description: '1 and 0 are distinct'},
 
-definition('0 = iota isAddIdentity');
-definition('1 = iota isMulIdentity');
-
-const identityFacts2 =
-  [
+   // Theorems
    {statement: 'isAddIdentity 0',
     proof: function() {
        return (rules.fact('0 = iota isAddIdentity')
@@ -228,56 +180,7 @@ const identityFacts2 =
      }
    }
    ];
-addRules(identityFacts2);
-
-const fieldLaws2 =
-  [
-   {statement: '1 != 0', axiom: true},
-   {statement: 'exists {y. R y & x + y = 0}', axiom: true,
-    description: 'additive inverses exist'
-   },
-   {statement: 'x != 0 => exists {y. R y & x * y = 1}', axiom: true,
-    description: 'multiplicative inverses exist'
-   }
-   ];
-
-
-const inverseFacts =
-  [
-   {statement: 'x + y = 0 & x + z = 0 => y = z',
-    name: 'no2AddInverses',
-    proof: function() {
-       const a1 = rules.assume('x + y = 0');
-       const a2 = rules.assume('x + z = 0');
-       return (rules.consider('x + y + z')
-               .andThen('rewriteFrom', '/right/left', a1)
-               .andThen('simplifySite', '/right')
-               .andThen('rewrite', '/main/left/left', 'x + y = y + x')
-               .andThen('rewrite', 'y + x + z',
-                        'y + x + z = y + (x + z)')
-               .andThen('rewriteFrom', 'x + z', a2)
-               .andThen('simplifySite', '/right'));
-                        
-     }
-   },
-   {statement: 'x * y = 1 & x * z = 1 => y = z',
-    name: 'no2MulInverses',
-    proof: function() {
-       const a1 = rules.assume('x * y = 1');
-       const a2 = rules.assume('x * z = 1');
-       return (rules.consider('x * y * z')
-               .andThen('rewriteFrom', '/right/left', a1)
-               .andThen('simplifySite', '/right')
-               .andThen('rewrite', '/main/left/left', 'x * y = y * x')
-               .andThen('rewrite', 'y * x * z',
-                        'y * x * z = y * (x * z)')
-               .andThen('rewriteFrom', 'x * z', a2)
-               .andThen('simplifySite', '/right'));
-                        
-     }
-   }
-   ];
-addRules(inverseFacts);
+addRules(identityFacts);
 
 // definition('neg = {x. iota {y. x + y = 0}}');
 
