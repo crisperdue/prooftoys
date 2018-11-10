@@ -4252,6 +4252,12 @@ const ruleInfo = {
       // TODO: Consider upgrading _factMap to an actual Map, or using
       //   mathParse and resolveToFactInfo here, then removing it.
       if (typeof synopsis === 'string') {
+        if (Toy.isIdentifier(synopsis)) {
+          const result = Toy.getTheorem(synopsis);
+          if (result) {
+            return result;
+          }
+        }
         var proved = _factMap[synopsis];
         if (proved) {
           return proved.justify('fact', arguments);
@@ -4260,18 +4266,13 @@ const ruleInfo = {
         // It is an already proved statement.
         return synopsis;
       }
-      // Try named theorems (not available from the UI).
-      var result = Toy.getTheorem(synopsis);
-      if (result) {
-        return result;
-      }
       // Currently rules.fact parses any string synopsis
       // with mathParse.
-      const factInfo = resolveToFactInfo(mathParse(synopsis));
+      const wff = mathParse(synopsis);
+      const factInfo = resolveToFactInfo(wff);
       // Try ordinary proved facts.
       if (factInfo) {
-        const factGoal = factInfo.goal;
-        var fact = Toy.getResult(factGoal);
+        var fact = Toy.getResult(factInfo.goal);
         const expansion = Toy.factExpansion(synopsis);
         // Maps free variables of the fact into ones given here.
         const map = expansion.getMain().matchSchema(fact.getMain());
@@ -4282,15 +4283,14 @@ const ruleInfo = {
         return instance.justify('fact', arguments);
       }
       // Next try arithmetic facts.
-      const goalHere = termify(synopsis);
-      if (goalHere.isEquation()) {
-        var result = Toy.tryArithmetic(goalHere.eqnLeft());
-        if (result && result.alphaMatch(goalHere)) {
+      if (wff.isEquation()) {
+        var result = Toy.tryArithmetic(wff.eqnLeft());
+        if (result && result.alphaMatch(wff)) {
           return result.justify('fact', arguments);
         }
       } else {
         // Relational operators can go here.
-        var result = Toy.tryArithmetic(goalHere);
+        var result = Toy.tryArithmetic(wff);
         // x = T is the expected result.
         if (result && result.matchSchema('x = T')) {
           return (rules.rewriteOnly(result, '', '(x = T) = x')
@@ -4301,11 +4301,11 @@ const ruleInfo = {
       try {
         // Inline for tautologies.  Call looksBoolean to avoid ugly
         // and unnecessary errors from rules.tautology.
-        return (Toy.looksBoolean(goalHere)
-                ? rules.tautology(goalHere)
+        return (Toy.looksBoolean(wff)
+                ? rules.tautology(wff)
                 : err(''));
       } catch(err) {}
-      Toy.err('No such fact: ' + goalHere + ' (as ' + synopsis + ')');
+      Toy.err('No such fact: ' + wff + ' (as ' + synopsis + ')');
     },
     inputs: {string: 1},
     form: ('Look up fact <input name=string size=40>'),
