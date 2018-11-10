@@ -3181,15 +3181,6 @@ Toy.addRulesMap(fractionsInfo);
 
 // From here is overall initialization for the complete system.
 
-// Add basic facts for function definitions.
-// TODO: Consider moving this somewhere it will run more
-//   "automatically", perhaps even code that creates definitions.
-for (var name in Toy.definitions) {
-  var defn = Toy.findDefinition(name);
-  if (defn) {
-    Toy.addDefnFacts(rules.definition(name));
-  }
-}
 // This is an easy way to get arithRight into the list of simplifiers.
 basicSimpFacts.push({apply: arithRight});
 
