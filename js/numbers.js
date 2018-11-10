@@ -400,8 +400,8 @@ var numbersInfo = {
 
   // Evaluates arithmetic expressions with operators: +, -, *, /, div,
   // mod, neg, =, !=, >, >=, <, <=, and the type operator "R".  Checks
-  // that inputs are all numeric and that the result can be guaranteed
-  // to be an exact integer.
+  // that inputs are all numeric (exact integers by construction) and
+  // that the result can be guaranteed to be an exact integer.
   //
   // Result is always an equation (or biconditional) with the given
   // term as the LHS.  Throws an error if it cannot obey these

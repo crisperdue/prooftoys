@@ -1045,10 +1045,10 @@ function factsExtending(resInfo) {
 }
 
 /**
- * Returns the "expansion" of a statement.  The result is a version of
- * the full declared fact of the statement, with free variables as in
- * the given statement rather than the declaration.  Returns null if
- * there is no such declared fact.
+ * Returns the "expansion" of a statement, preferably given as a wff.
+ * The result is a version of the full declared fact of the statement,
+ * with free variables as in the given statement rather than the
+ * declaration.  Returns null if there is no such declared fact.
  */
 function factExpansion(stmt) {
   const factInfo = resolveToFactInfo(stmt);
@@ -1282,7 +1282,7 @@ function isInProgress(stmt) {
  * used over and over.  Private to getResInfo.
  *
  * The resInfo is a plain object with properties "key", "asmSet", and
- * "key", all related to a particular fact statement.  Also one
+ * "stmt", all related to a particular fact statement, plus one
  * property internal to factExpansion.  The asmSet is a TermSet of the
  * statement's assumptions, the key is its "fact key", the stmt is the
  * wff statement it comes from.

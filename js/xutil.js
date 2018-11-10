@@ -1583,8 +1583,10 @@ function standardSubst(term) {
 }
 
 /**
- * Convert all variables in the given term to standard names as by
- * TermMap, with those names in text order from left to right.
+ * Returns a term equivalent to (equi-satisfiable with) the input, in
+ * which all variable names are converted to standard names by
+ * internal use of a TermMap, applied to the variables in
+ * left-to-right order.
  */
 function standardVars(term) {
   var map = new Toy.TermMap();
