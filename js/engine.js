@@ -1197,7 +1197,9 @@ function setFactInfo(info) {
       console.error('New fact', info.goal.toString());
       // TODO: Make available info to improve the following message.
       //   Reference to the stated fact reference would be helpful.
-      console.log('  would affect the meaning of', foundRef.resInfo);
+      console.log('  would confound references to',
+                  foundRef.resInfo.stmt.toString(),
+                  'info:', foundRef.resInfo);
       return false;
     }
   }
@@ -2280,14 +2282,6 @@ function addFact(info) {
   if (isRecordedFact(info.goal)) {
     console.info('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
-    const wff = info.goal;
-    // TODO: Factor out this code here and in getResInfo.
-    const wff2 = (wff.isCall2('=>')
-                  // This makes a wff with main first, and also has
-                  // any assumptions, ordered after the main part.  We
-                  // do not expect this to be a theorem.
-                  ? Toy.infixCall(wff.getRight(), '&', wff.getLeft())
-                  : wff);
     if (info.simplifier) {
       // This puts a string onto basicSimpFacts for fast cached
       // lookups, but watch out for cases where toString and parse are
