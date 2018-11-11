@@ -650,10 +650,9 @@ ProofDisplay.prototype.handleStepClick = function(step) {
 };
 
 /**
- * Handles selection of an expression in a step.
- * Deselects any other selected expression in the step,
- * toggles the current one if already selected.  Prevents
- * event bubbling up to the step itself.
+ * Handles selection of an expression in a step.  Deselects any
+ * selected expression in the ProofDisplay, and selects the given one
+ * unless already selected.
  */
 ProofDisplay.prototype.handleExprClick = function(expr) {
   if (this.isSelectAllowed()) {
@@ -754,21 +753,25 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   // ProofDisplay.setEditable.
   //
   // TODO: Consider using delegation more extensively.
-  var exprSelector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
-  $proofStep.on(TOUCHDOWN, exprSelector,
-           // This implements a policy of one selection per proof step.
-           // TODO: Implement such policies in the proof controller.
-           function(event) {
-             var expr = getExpr(this);
-             // Ignore clicks on tooltips, popups and such that may be
-             // descendants of the step's node.
-             if (expr) {
-               self.handleExprClick(expr);
-               // Select only the innermost Expr.
-               // stopImmediatePropagation does not seem to be required here.
-               event.stopPropagation();
-             }
-           });
+
+  const selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
+  function handleExprClick(event) {
+    var $expr = $(event.target).closest(selector) || $(event.target);
+    if ($expr.is('.fn') && !event.shiftKey) {
+      $expr = $expr.parent().closest(selector);
+    }
+    var expr = getExpr(dom($expr));
+    // Ignore clicks on tooltips, popups and such that may be
+    // descendants of the step's node.
+    if (expr) {
+      self.handleExprClick(expr);
+      // Select only the innermost Expr.
+      // stopImmediatePropagation does not seem to be required here.
+      event.stopPropagation();
+    }
+  }
+  $proofStep.on(TOUCHDOWN, selector, handleExprClick);
+
   $proofStep.on('mouseenter mouseleave', '.stepSelector', function(event) {
       hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
@@ -1276,7 +1279,7 @@ Atom.prototype.render = function(info, minPower, isFn) {
 
   // Note that this does not style any subscript differently than
   // the main part of the variable name.
-  var $expr = exprJq(!isFn);
+  var $expr = exprJq(true);
   this.node = dom($expr);
   var aStep = findAsmStep(this, info.asmSteps);
   if (aStep) {
@@ -1292,6 +1295,9 @@ Atom.prototype.render = function(info, minPower, isFn) {
     name = '(' + name + ')';
   }
   specialClasses(this.pname).forEach(function(cl) { $expr.addClass(cl); });
+  if (isFn) {
+    $expr.addClass('fn');
+  }
   $expr.html(name);
   return $expr;
 };
@@ -2183,10 +2189,17 @@ function getExpr(node) {
  * be any part of a proof node.
  */
 function exprHandleOver(event) {
-  var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
-  var target = event.target;
-  var $expr = $(target).closest(selector);
-  // Could be no elements in $expr.
+  const selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
+  const target = event.target;
+  const $target = $(target);
+
+  var $expr = $target.closest(selector);
+  if ($expr.is('.fn') && !event.shiftKey) {
+    // In case the node is for a function name or operator,
+    // go up to the node of the enclosing expression.
+    $expr = $expr.parent().closest(selector);
+  }
+  // Then add a hover to the one desired DOM node.
   $expr.addClass('hover');
   var proofDisplay = getProofDisplay(target);
   if (proofDisplay && !proofDisplay.selection &&
@@ -2213,11 +2226,14 @@ function exprHandleOver(event) {
  * Handle mouseouts on subexpressions.
  */
 function exprHandleOut(event) {
-  var selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
-  var $expr = $(event.target).closest(selector) || $(event.target);
-  $expr.removeClass('hover');
+  // This appears to depend on mouseout events firing before the
+  // related mouseenter event.
+  const $target = $(event.target);
+  // Remove hovers from all nodes of this proof step.
+  $target.closest('.proofStep').find('.expr.hover').removeClass('hover');
+
   // Unmark any "popped" ancestor.  See exprHandleOver.
-  $expr.add($expr.parents('.fullExpr'))
+  $target.add($target.parents('.fullExpr'))
     .filter(@{$(this).children('.above').length})
     .last()
     .toggleClass('popped', false);
