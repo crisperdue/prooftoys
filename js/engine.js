@@ -916,10 +916,8 @@ function asFactProver(prover, goal) {
         if (proved.matches(goal)) {
           return proved;
         }
-        var conjSet = Toy.makeConjunctionSet;
-        var empty = new Toy.TermSet();
-        var goalAsms = goal.isCall2('=>') ? conjSet(goal.getLeft()) : empty;
-        var factAsms = proved.isCall2('=>') ? conjSet(proved.getLeft()) : empty;
+        const goalAsms = goal.asmSet();
+        const factAsms = proved.asmSet();
         if (!goalAsms.superset(factAsms)) {
           console.group('Warning: Fact requires unintended assumptions.');
           console.error('Some results may rely on the incorrect fact.');
