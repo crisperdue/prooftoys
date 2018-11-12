@@ -1106,8 +1106,8 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 	}
       } else {
 	if (fieldType == 'step'
-	    || (fieldType == 'equation' && step.unHyp().isCall2('='))
-	    || (fieldType == 'implication' && step.unHyp().isCall2('=>'))) {
+	    || (fieldType == 'equation' && step.getMain().isCall2('='))
+	    || (fieldType == 'implication' && step.getMain().isCall2('=>'))) {
 	  this.value = n;
           // Stop iteration.
 	  return false;
@@ -2023,7 +2023,7 @@ function acceptsSelection(step, ruleName) {
                return 'Rule ' + ruleName + ' must use exactly 1 site.';
              });
       // Check that the expression matches the LHS of the template.
-      return !!expr.findSubst(info.using.unHyp().getLeft());
+      return !!expr.findSubst(info.using.getMain().getLeft());
     } else {
       // Otherwise OK if it takes a site, or is a proper binding site
       // or a beta-reducible expression.
@@ -2040,8 +2040,8 @@ function acceptsSelection(step, ruleName) {
     // If the rule needs a site, do not accept just a step.
     return (!argInfo.site &&
             (argInfo.step
-             || (argInfo.equation && step.unHyp().isCall2('='))
-             || (argInfo.implication && step.unHyp().isCall2('=>'))));
+             || (argInfo.equation && step.getMain().isCall2('='))
+             || (argInfo.implication && step.getMain().isCall2('=>'))));
   }
 }
 
@@ -2075,7 +2075,7 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
       return info.menu;
     }
     var thm = Toy.getTheorem(ruleName);
-    var thmText = Toy.trimParens(thm.unHyp().toHtml());
+    var thmText = Toy.trimParens(thm.getMain().toHtml());
     if (info.axiom) {
       return 'axiom ' + thmText;
     } else {

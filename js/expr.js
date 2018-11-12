@@ -193,9 +193,9 @@ Toy.extends(Expr, null);
 
 /**
  * TODO: Make Step into a whole new class.  For now, it is just an
- * alias.  There will be some convenience methods such as getMain,
- * getAsms, unHyp, but access to Expr properties and most methods
- * will be through the "wff" property.
+ * alias.  There will be some convenience methods such as getMain and
+ * getAsms, but access to Expr properties and most methods will be
+ * through the "wff" property.
  *
  * Step objects have a "wff" property, but an Expr will not.
  */
@@ -995,16 +995,6 @@ Expr.prototype.nth = function(n) {
   var result = this._nth(n);
   assert(result instanceof Expr, 'Expr {1} has no position {2}', result, n);
   return result;
-};
-
-/**
- * Returns the RHS of the step if it has hypotheses, otherwise the
- * expression itself.
- *
- * TODO: Make this available for Step objects.
- */
-Expr.prototype.unHyp = function() {  // ??
-  return this.isCall2('=>') ? this.getRight() : this;
 };
 
 /**

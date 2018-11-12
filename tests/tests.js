@@ -619,7 +619,7 @@ var testCase = {
     var saved = Toy.encodeSteps([step1, step2, step3]);
     var steps = Toy.decodeSteps(saved);
     assertEqual(3, steps.length);
-    assertEqual('(((y + 3) + y) = 5)', steps[2].unHyp());
+    assertEqual('(((y + 3) + y) = 5)', steps[2].getMain());
   },
 
   testSameAs: function() {

@@ -1016,7 +1016,7 @@ const baseRules = {
   bindEqn: {
     action: function(h_eqn, v) {
       v = varify(v);
-      var eqn = h_eqn.unHyp();
+      var eqn = h_eqn.getMain();
       eqn.assertCall2('=');
       const step1 = (eqn.isCall2('==')
                      ? rules.equivSelf(lambda(v, eqn.getLeft()))
@@ -1506,7 +1506,7 @@ const ruleInfo = {
       return result.justify('fromTIsA', arguments, [step]);
     },
     inputs: {equation: 1, condition: {1: function(h_eqn) {
-      var eqn = h_eqn.unHyp();
+      var eqn = h_eqn.getMain();
       var left = eqn.getLeft();
       return left.isConst('T');
     }}},
@@ -2353,7 +2353,7 @@ const ruleInfo = {
    * that are sensitive to hypotheses in steps.
   implyForallBook: {
     action: function(v, h_a_b) {
-      var a_b = h_a_b.unHyp();
+      var a_b = h_a_b.getMain();
       v = varify(v);
       assert(a_b.isCall2('=>'), 'Must be an implication: {1}', a_b, h_a_b);
       var a = a_b.getLeft();
