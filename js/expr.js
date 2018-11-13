@@ -1322,6 +1322,9 @@ Expr.prototype.find = function(term_arg) {
  * simply adding it, so the path will still be usable if replacements
  * add assumptions to a target step.
  *
+ * Given a term to match against, this searches for an identical
+ * term, not just a sameAs term, unlike pathTo.
+ *
  * TODO: Consider changing to "/rt" rather than "/main".
  */
 Expr.prototype.prettyPathTo = function(pred) {

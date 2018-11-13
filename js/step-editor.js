@@ -1894,7 +1894,8 @@ RuleMenu.prototype.offerable = function(ruleName) {
       var ok = (inputs.term
                 ? precheck(term)
                 : term
-                ? precheck(step, step.pathTo(term))
+                // Use prettyPathTo so behavior matches rule execution.
+                ? precheck(step, step.wff.prettyPathTo(term))
                 : precheck(step));
       if (!ok) {
         return false;
