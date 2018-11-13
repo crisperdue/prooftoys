@@ -2295,6 +2295,37 @@ const ruleInfo = {
     description: 'add assumption {bool};; {in step step}'
   },
 
+  // Given a RHS site that is the same as an assumption of the step,
+  // converts the expression to T and simplifies out the T if it can.
+  assumed: {
+    precheck: function(step, path_arg) {
+      const path = step.asPath(path_arg);
+      if (!(step.isCall2('=>') && path.isRight())) {
+        return false;
+      } else {
+        return step.asmSet().has(step.get(path));
+      }
+    },
+    action: function(step, path_arg) {
+      const path = step.asPath(path_arg);
+      if (step.isCall2('=>') && path.isRight()) {
+        const term = step.get(path);
+        if (step.asmSet().has(term)) {
+          const step1 = rules.assume(term);
+          return (rules.trueBy1(step, path, step1)
+                  // Crudely bludgeon out certain kinds of occurrences of T.
+                  // Improve this with smart simplification.
+                  .andThen('simplifySite', '/right', ['T & a == a', 'a & T == a'])
+                  .justify('assumed', arguments, [step]));
+        }
+      }
+    },
+    inputs: {site: 1},
+    form: '',
+    menu: 'true by assumption',
+    description: 'true by assumption'
+  },
+
   // Given a variable v that is not free in the given wff A, and a wff B, derive
   // ((forall {v. A | B}) => A | (forall {v. B})).  Could run even if
   // the variable is free, but would not give desired result.
