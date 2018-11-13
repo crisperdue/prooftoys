@@ -811,16 +811,16 @@ function enableDefnFacts() {
  * specific forms:
  *
  * <name> = the <condition>; or
- * <name> = iota <condition>
+ * <name> = the1 <condition>
  *
  * and if there is a recorded fact of the form exists1 <condition>, it
  * proves the additional fact that <condition>(<name>).  If there is a
  * recorded fact <precond> => exists1 <condition>, it proves a fact
  * that <precond> => <condition>(<name>).  If the definition uses
- * "the" rather than "iota", it proves [if <precond> then
+ * "the"(?) rather than "the1", it proves [if <precond> then
  * <condition>(<name>) else null].
  *
- * Definitions of this kind using "the", or perhaps iota, will only go
+ * Definitions of this kind using "the", or perhaps the1, will only go
  * through properly once basic logic with facts about quantifiers and
  * unique existence are in place.  This seems a reasonable
  * requirement.  Omitting the accompanying unique existence fact will

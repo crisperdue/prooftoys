@@ -167,8 +167,8 @@ const identityFacts =
    ];
 addRules(identityFacts);
 
-definition('0 = iota isAddIdentity');
-definition('1 = iota isMulIdentity');
+definition('0 = the1 isAddIdentity');
+definition('1 = the1 isMulIdentity');
 
 const inverseFacts =
   [

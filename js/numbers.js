@@ -105,8 +105,8 @@ if (!Toy.deeperFieldAxioms) {
      ];
   addRules(fieldLaws1);
 
-  definition('0 = iota isAddIdentity');
-  definition('1 = iota isMulIdentity');
+  definition('0 = the1 isAddIdentity');
+  definition('1 = the1 isMulIdentity');
 
   const uniqueInverses =
     [
@@ -131,9 +131,9 @@ const identityFacts =
    // Theorems
    {statement: 'isAddIdentity 0',
     proof: function() {
-       return (rules.fact('0 = iota isAddIdentity')
+       return (rules.fact('0 = the1 isAddIdentity')
                .andThen('rewrite', '',
-                        'exists1 p => (x = iota p == p x)')
+                        'exists1 p => (x = the1 p == p x)')
                .andThen('trueBy0', '/left',
                         rules.fact('exists1 isAddIdentity'))
                .andThen('simplifySite', ''));
@@ -141,9 +141,9 @@ const identityFacts =
    },
    {statement: 'isMulIdentity 1',
     proof: function() {
-       return (rules.fact('1 = iota isMulIdentity')
+       return (rules.fact('1 = the1 isMulIdentity')
                .andThen('rewrite', '',
-                        'exists1 p => (x = iota p == p x)')
+                        'exists1 p => (x = the1 p == p x)')
                .andThen('trueBy0', '/left',
                         rules.fact('exists1 isMulIdentity'))
                .andThen('simplifySite', ''));
@@ -161,7 +161,7 @@ const identityFacts =
                       .andThen('rewrite', '/right/right/right', 'exists1The')
                       .andThen('instMultiVars', {p: 'isAddIdentity'})
                       .andThen('rewrite', '/right/right/right',
-                               'iota isAddIdentity = 0'));
+                               'the1 isAddIdentity = 0'));
        return (rules.fact('exists1 isAddIdentity')
                .andThen('forwardChain', step1)
                .andThen('instForall', '', 'x'));
@@ -173,7 +173,7 @@ const identityFacts =
                       .andThen('rewrite', '/right/right/right', 'exists1The')
                       .andThen('instMultiVars', {p: 'isMulIdentity'})
                       .andThen('rewrite', '/right/right/right',
-                               'iota isMulIdentity = 1'));
+                               'the1 isMulIdentity = 1'));
        return (rules.fact('exists1 isMulIdentity')
                .andThen('forwardChain', step1)
                .andThen('instForall', '', 'x'));
@@ -182,14 +182,17 @@ const identityFacts =
    ];
 addRules(identityFacts);
 
-// definition('neg = {x. iota {y. x + y = 0}}');
+// Note that our axiom of arithmetic computes that neg 1 = -1.
+
+definition('neg = {x. -1 * x}');
+
+// TODO: Make this be the definition of neg, and prove the current definition.
+rules.assert('neg = {x. the1 {y. R x & R y & y + x = 0}}');
+
+definition('(-) = {x. {y. x + neg y}}');
 
 
 //// Facts about fields
-
-definition('neg = {x. -1 * x}');
-definition('(-) = {x. {y. x + neg y}}');
-
 
 // TODO: Rename "/" to something like realDiv, and define "/"
 //   conditionally for the real numbers, with values for non-real,
@@ -519,6 +522,7 @@ var numbersInfo = {
 
 };
 
+// definition('isQuotient = {x. {y. {z. R x & R y & R z & x = y * z}}}');
 
 var divisionInfo = {
 

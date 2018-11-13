@@ -70,7 +70,7 @@ const _factMap = {};
 
 Toy.namedConstants.add('=');
 Toy.namedConstants.add('==');
-Toy.namedConstants.add('iota');
+Toy.namedConstants.add('the1');
 Toy.namedConstants.add('T');
 // Toy.namedConstants.add('F');
 
@@ -100,10 +100,10 @@ Toy.namedConstants.add('=>');
 
 // It would be desirable for the constants in this next group to
 // all have generic types.
-definition('if = {p. {x. {y. iota {z. p & z = x | not p & z = y}}}}');
+definition('if = {p. {x. {y. the1 {z. p & z = x | not p & z = y}}}}');
 
 definition('empty = {x. F}');
-definition('none = iota empty');
+definition('none = the1 empty');
 definition('(?) = {p. {x. if p x none}}');
 
 // The identity function
@@ -113,7 +113,7 @@ definition('ident = {x. x}');
 definition('multi = {p. exists {x. exists {y. p x & p y & x != y}}}');
 
 // Always either "none" or the member of the singleton set:
-definition('the = {p. if (exists1 p) (iota p) none}');
+definition('the = {p. if (exists1 p) (the1 p) none}');
 
 // This "negates" a predicate, returning a predicate whose value
 // is the negation of the value of the given predicate.  (Just one
@@ -231,7 +231,8 @@ const axioms = {
   },
 
   axiom5: {
-    statement: 'iota {x. x = y} = y', axiom: true,
+    // Traditionally (upside-down) iota, as in Andrews' text.
+    statement: 'the1 {x. x = y} = y', axiom: true,
     inputs: {},
     form: '',
     tooltip: ('axiom of description'),
@@ -761,7 +762,7 @@ addRulesMap(equalities);
 
 // TODO: Move these comments.
 // TODO: Use a flag to enable the system to initialize with either a
-// precisely Andrews-style system with just equality and iota as
+// precisely Andrews-style system with just equality and the1 as
 // primitives, or alternatively with additional primitives T, F, and
 // "if", plus two axioms for "if".  T and F are currently listed as
 // primitive constants, but F is also "defined" with what amounts to
@@ -4465,10 +4466,10 @@ const existRules =
   },
 
    // From unique existence for p conclude an equivalence with "the"
-   // (iota) for all x.
+   // (the1) for all x.
    //
-   // Simplified statement of 5312, using "the" in place of iota.
-   // You can use exists1The to replace "the" with "iota".
+   // Simplified statement of 5312, using "the" in place of the1.
+   // You can use exists1The to replace "the" with "the1".
    {name: 'exists1Property',
     statement: 'exists1 p => (p x == x = the p)',
     proof: function() {
@@ -4477,13 +4478,13 @@ const existRules =
                    .andThen('replaceEither', '/left/arg', a1));
       var step2 = rules.replaceEither(a1, '/right/right/body/right', step1);
       var step3 = (rules.axiom3()
-                   .andThen('instMultiVars', {f: 'p', g: '{x. x = iota p}'})
+                   .andThen('instMultiVars', {f: 'p', g: '{x. x = the1 p}'})
                    .andThen('apply', '/right/arg/body/right'));
       var step4 = (rules.replace(step2, '/right', step3)
                    .andThen('instForall', '/right', 'x')
                    .andThen('toForall0', 'y'));
       var map = {p: '{y. p = {x. x = y}}',
-                 q: 'p x == x = iota p'};
+                 q: 'p x == x = the1 p'};
       var step5 = (rules.existImplies()
                    .andThen('instMultiVars', map)
                    .andThen('simpleApply', '/left/arg/body/left'));
@@ -4493,7 +4494,8 @@ const existRules =
                    .andThen('useDefinition', '/left/fn')
                    .andThen('simpleApply', '/left'));
       var step8 = rules.rewrite(step6, '/left', step7);
-      var loc8 = step8.find('iota p');
+      // TODO: Return step8.
+      var loc8 = step8.find('the1 p');
       var step9 = rules.replace(step8, loc8,
                                 (rules.exists1The()
                                  .andThen('eqnSwap')));
@@ -4501,12 +4503,12 @@ const existRules =
     }
    },
 
-   {name: 'exists1IotaLaw',
-    statement: 'exists1 p => (p x == x = iota p)',
+   {name: 'exists1The1Law',
+    statement: 'exists1 p => (p x == x = the1 p)',
     proof: function() {
       return (rules.fact('exists1 p => (p x == x = the p)')
               .andThen('rewriteOnly', '/right/right/right',
-                       'exists1 p => the p = iota p'));
+                       'exists1 p => the p = the1 p'));
     }
    },
 
@@ -4547,10 +4549,10 @@ const existRules =
   */
 
    {name: 'exists1The',
-    statement: 'exists1 p => the p = iota p',
+    statement: 'exists1 p => the p = the1 p',
     proof: function() {
       var assumed = rules.assume('exists1 p');
-      var step1 = rules.fact('the p = if (exists1 p) (iota p) none');
+      var step1 = rules.fact('the p = if (exists1 p) (the1 p) none');
       var loc1 = step1.find('exists1 p');
       return (step1.andThen('trueBy1', loc1, assumed)
               .rewrite('/right/right', 'if T x y = x'));
@@ -4746,7 +4748,7 @@ const logicFacts =
                .andThen('apply', '/right')
                .andThen('simplifySite', '/right/body/body/arg/body')
                .andThen('rewriteOnly',
-                        '/right/body/body', 'iota {x. x = y} = y'));
+                        '/right/body/body', 'the1 {x. x = y} = y'));
      }
    },
 
@@ -4766,7 +4768,7 @@ const logicFacts =
                .andThen('apply', '/right')
                .andThen('simplifySite', '/main/right/body/body/arg/body')
                .andThen('rewriteOnly',
-                        '/right/body/body', 'iota {x. x = y} = y'));
+                        '/right/body/body', 'the1 {x. x = y} = y'));
      }
    },
 

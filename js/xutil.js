@@ -663,7 +663,7 @@ function theType() {
 }
 
 // Primitive constants.  Unlike textbook, these include T and F.
-var _primitives = {T: true, F: true, '=': true, iota: true};
+var _primitives = {T: true, F: true, '=': true, the1: true};
 
 Atom.prototype.isPrimitive = function() {
   return _primitives.hasOwnProperty(this.name);
@@ -679,7 +679,7 @@ var constantTypes = {
   T: boolean,
   F: boolean,
   '=': equalityType(),
-  iota: theType(),
+  the1: theType(),
 
   // The real numbers.
   R: new FunctionType(individual, boolean),
@@ -737,7 +737,7 @@ var definitions = {
   T: true,
   F: true,
   '=': true,
-  iota: true
+  the1: true
 };
 
 /**

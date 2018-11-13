@@ -1546,7 +1546,7 @@ var testCase = {
     // From set to individual:
     check('(i (o i))',
           // Max of a set having at least one positive number.
-          '{p. iota {x. p x & x > 0 & forall {y. p y => x >= y}}}');
+          '{p. the1 {x. p x & x > 0 & forall {y. p y => x >= y}}}');
     // From set and individual to boolean, note how the
     // first argument type appears last when written out.
     //         y  x
@@ -1636,7 +1636,7 @@ var testCase = {
                 Toy.rules.axiom2());
     assertEqual('((f = g) == (forall {x. ((f x) = (g x))}))',
                 Toy.rules.axiom3());
-    assertEqual('((iota {x. (x = y)}) = y)',
+    assertEqual('((the1 {x. (x = y)}) = y)',
                 Toy.rules.axiom5());
   },
 
