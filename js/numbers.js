@@ -539,11 +539,9 @@ var divisionInfo = {
       var divDefn = rules.fact(fml);
       var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);
       var loc7 = Toy.path('/right').concat(step7.getRight().find('(R x)'));
-      var asm7 = rules.assume('(R x)');
-      var step8 = rules.trueBy1(step7, loc7, asm7);
+      var step8 = rules.assumed(step7, loc7);
       var loc8 = Toy.path('/right').concat(step8.getRight().find('(R y)'));
-      var asm8 = rules.assume('R y');
-      var step9 = rules.trueBy1(step8, loc8, asm8);
+      var step9 = rules.assumed(step8, loc8);
       var step10 = rules.simplifySite(step9, '/rt/left');
       return step10;
     }
