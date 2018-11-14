@@ -4468,10 +4468,10 @@ const existRules =
    // From unique existence for p conclude an equivalence with "the"
    // (the1) for all x.
    //
-   // Simplified statement of 5312, using "the" in place of the1.
-   // You can use exists1The to replace "the" with "the1".
-   {name: 'exists1Property',
-    statement: 'exists1 p => (p x == x = the p)',
+   // Simplified statement of 5312.
+   // You can use exists1The to replace "the1" with "the".
+   {name: 'exists1Law',
+    statement: 'exists1 p => (p x == x = the1 p)',
     proof: function() {
       var a1 = rules.assume('p = {x. x = y}');
       var step1 = (rules.axiom5()
@@ -4494,21 +4494,16 @@ const existRules =
                    .andThen('useDefinition', '/left/fn')
                    .andThen('simpleApply', '/left'));
       var step8 = rules.rewrite(step6, '/left', step7);
-      // TODO: Return step8.
-      var loc8 = step8.find('the1 p');
-      var step9 = rules.replace(step8, loc8,
-                                (rules.exists1The()
-                                 .andThen('eqnSwap')));
-      return step9;
+      return step8;
     }
    },
 
-   {name: 'exists1The1Law',
-    statement: 'exists1 p => (p x == x = the1 p)',
+   {name: 'exists1TheLaw',
+    statement: 'exists1 p => (p x == x = the p)',
     proof: function() {
-      return (rules.fact('exists1 p => (p x == x = the p)')
+      return (rules.fact('exists1 p => (p x == x = the1 p)')
               .andThen('rewriteOnly', '/right/right/right',
-                       'exists1 p => the p = the1 p'));
+                       'exists1 p => the1 p = the p'));
     }
    },
 
@@ -4549,15 +4544,16 @@ const existRules =
   */
 
    {name: 'exists1The',
-    statement: 'exists1 p => the p = the1 p',
+    statement: 'exists1 p => the1 p = the p',
     proof: function() {
-      var assumed = rules.assume('exists1 p');
-      var step1 = rules.fact('the p = if (exists1 p) (the1 p) none');
-      var loc1 = step1.find('exists1 p');
-      return (step1.andThen('trueBy1', loc1, assumed)
-              .rewrite('/right/right', 'if T x y = x'));
-    }
-  }
+       var assumed = rules.assume('exists1 p');
+       var step1 = rules.fact('the p = if (exists1 p) (the1 p) none');
+       var loc1 = step1.find('exists1 p');
+       return (step1.andThen('trueBy1', loc1, assumed)
+               .rewrite('/right/right', 'if T x y = x')
+               .andThen('eqnSwap'));
+     }
+   }
    ];
 
 addRules(existRules);

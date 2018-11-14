@@ -157,8 +157,7 @@ const identityFacts =
     //   fact given as a statement versus using a proved step.  This
     //   would also let us eliminate some variants of rewrite rules.
     proof: function() {
-       const step1 = (rules.fact('exists1 p => (p x == x = the p)')
-                      .andThen('rewrite', '/right/right/right', 'exists1The')
+       const step1 = (rules.fact('exists1 p => (p x == x = the1 p)')
                       .andThen('instMultiVars', {p: 'isAddIdentity'})
                       .andThen('rewrite', '/right/right/right',
                                'the1 isAddIdentity = 0'));
@@ -169,8 +168,7 @@ const identityFacts =
    },
    {statement: 'isMulIdentity x == x = 1',
     proof: function() {
-       const step1 = (rules.fact('exists1 p => (p x == x = the p)')
-                      .andThen('rewrite', '/right/right/right', 'exists1The')
+       const step1 = (rules.fact('exists1 p => (p x == x = the1 p)')
                       .andThen('instMultiVars', {p: 'isMulIdentity'})
                       .andThen('rewrite', '/right/right/right',
                                'the1 isMulIdentity = 1'));
@@ -207,7 +205,7 @@ definition('(-) = {x. {y. x + neg y}}');
 
 // TODO: Replace these two definitions, with recip based on
 //   facts about fields and "/" based on recip.
-definition('(/) = {x. {y. the {z. R x & R y & R z & x = y * z}}}');
+definition('(/) = {x. {y. the1 {z. R x & R y & R z & x = y * z}}}');
 definition('recip = {x. 1 / x}');
 
 /**
@@ -531,7 +529,7 @@ var divisionInfo = {
     statement: '@y != 0 & R x & R y => (R z & x = y * z == z = x / y)',
     proof: function() {
       var step1 = rules.uniqueQuotient();
-      var step2 = (rules.exists1Property()
+      var step2 = (rules.exists1Law()
                    .andThen('instMultiVars', {x: 'z'}));
       var path = step2.find('p z');
       // TODO: Extend Expr.matchSchema to handle this.  (Rules.p2 uses
@@ -539,7 +537,7 @@ var divisionInfo = {
       var step3 = rules.instVar(step2, '{z. R x & R y & R z & x = y * z}', 'p');
       var step4 = rules.p2(step1, step3, '(a => b) & (b => c) => (a => c)');
       var step6 = rules.simpleApply(step4, path);
-      var fml = '@ the {z. R x & R y & R z & x = y * z} = x / y';
+      var fml = '@ the1 {z. R x & R y & R z & x = y * z} = x / y';
       var divDefn = rules.fact(fml);
       var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);
       var loc7 = Toy.path('/right').concat(step7.getRight().find('(R x)'));
