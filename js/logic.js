@@ -4469,7 +4469,7 @@ const existRules =
    // (the1) for all x.
    //
    // Simplified statement of 5312.
-   // You can use exists1The to replace "the1" with "the".
+   // Or use exists1TheLaw, which uses "the" in place of "the1".
    {name: 'exists1Law',
     statement: 'exists1 p => (p x == x = the1 p)',
     proof: function() {
