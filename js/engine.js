@@ -1966,28 +1966,6 @@ function proofOf(step) {
 }
 
 /**
- * Returns an array of steps preceding this one that establish
- * assumptions that later steps might not display, currently "assume"
- * and "replaceIsEquiv" steps; in the future perhaps other similar
- * kinds.  The result is selected steps from the result of
- * proofOf(step), based on the ruleName for the step.
- */
-function assumptionsBefore(step_arg) {
-  var steps = [];
-  /* When this is gone, all occurrences of asmSteps should also go.
-  var proofSteps = proofOf(step_arg);
-  proofSteps.forEach(function (step) {
-      var ruleName = step.ruleName;
-      if (ruleName === 'assume' ||
-          ruleName === 'replaceIsEquiv') {
-        steps.push(step);
-      }
-    });
-  */
-  return steps;
-}
-
-/**
  * Returns an array of "assume" steps in the proof of the given step
  * (see Toy.proofOf) that create an assumption of the step.  Assumes
  * that the assumptions are a chain of conjuncts, which is true of
@@ -2398,7 +2376,6 @@ Toy.searchForMatchingFact = searchForMatchingFact;
 Toy.getRuleInfo = getRuleInfo;
 Toy.getStepSite = getStepSite;
 Toy.proofOf = proofOf;
-Toy.assumptionsBefore = assumptionsBefore;
 Toy.assumptionsUsed = assumptionsUsed;
 
 Toy.definition = definition;

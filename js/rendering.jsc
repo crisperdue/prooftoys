@@ -734,9 +734,6 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   var elide = wantLeftElision(step, self);
   // This initializes hasLeftElision.
   step.hasLeftElision = elide;
-  // Remember this value for future use.  Could be computed from
-  // previous step if preferred.
-  step.asmSteps = Toy.assumptionsBefore(step);
   var $wff = $(renderWff(step));
   hackOnRendering($wff);
   $stepAndNum.append($wff);
@@ -1051,7 +1048,6 @@ function wantLeftElision(step) {
  * parentheses.
  */
 function renderWff(step) {
-  var info = {asmSteps: []};
   var wff = step.wff;
   var $wff;
   if (step.ruleName === 'assume' ||
@@ -1069,7 +1065,7 @@ function renderWff(step) {
     //
     // Note that levels of nesting here are as in " ... == <rhs>"
     // renderings, so the same levels of flexbox nesting works for both.
-    wff.node = dom(exprJq().append(wff.getRight().renderTopConj(info, 0)));
+    wff.node = dom(exprJq().append(wff.getRight().renderTopConj(0)));
     return wff.node;
   } else if (wff.isCall2('=>')) {
     var asmPart = wff.getLeft();
@@ -1079,7 +1075,7 @@ function renderWff(step) {
     // Render the RHS (consequent) as the main.
     mainPart.node = (step.hasLeftElision
                      ? renderWithElision(mainPart)
-                     : dom(mainPart.renderTopConj(info, power)));
+                     : dom(mainPart.renderTopConj(power)));
 
     if (mainOnly) {
       // All assumptions are implicit, so the rendering is just the
@@ -1097,17 +1093,16 @@ function renderWff(step) {
     // right side argument is explicit or only one member left in the
     // chain.  The resulting chain will contain only explicit assumptions.
     while (explicit.isCall2('&') &&
-           (explicit.getRight().isTypeCond() ||
-            findAsmStep(explicit.getRight(), step.asmSteps))) {
+           (explicit.getRight().isTypeCond())) {
       explicit = explicit.getLeft();
     }
     // When rendering the step as a whole, take the rendering of the
     // explicit part as the rendering for the whole LHS of the
     // conditional.
-    asmPart.node = dom(explicit.render(info, power));
+    asmPart.node = dom(explicit.render(power));
     // Now render the entire wff into a node.  The renderer will stop
     // when it reaches the asmPart, because that already has a node.
-    $wff = step.wff.render(info, 0);
+    $wff = step.wff.render(0);
     // But in the end we want the explicit part to be properly
     // associated with its own display, so fix up the assignments of
     // nodes.
@@ -1121,7 +1116,7 @@ function renderWff(step) {
     // The step is not a conditional.  Render it as the main.
     return wff.node = (step.hasLeftElision
                        ? renderWithElision(wff)
-                       : dom(wff.renderTopConj(info, 0)));
+                       : dom(wff.renderTopConj(0)));
   }
 };
 
@@ -1135,7 +1130,6 @@ function renderWff(step) {
  * rendering.
  */
 function renderWithElision(expr) {
-  var info = {asmSteps: []};
   expr.assertCall2();
   var $expr = exprJq(true);
   expr.node = dom($expr);
@@ -1143,12 +1137,12 @@ function renderWithElision(expr) {
                // Display equivalences as equivs.  This eventually
                // calls toUnicode, and if there is a type, displays
                // appropriately.
-               expr.getBinOp().render(info, 0, true), ' ',
-               expr.getRight().renderTopConj(info, 0));
+               expr.getBinOp().render(0, true), ' ',
+               expr.getRight().renderTopConj(0));
   return dom($expr);
 }
 
-Expr.prototype.renderTopConj = function(info, minPower) {
+Expr.prototype.renderTopConj = function(minPower) {
   function annotateTopConj(expr) {
     if (expr.isCall2('&')) {
       expr.getBinOp().breakAfter = true;
@@ -1156,31 +1150,15 @@ Expr.prototype.renderTopConj = function(info, minPower) {
     }
   }
   annotateTopConj(this);
-  return this.render(info, minPower);
+  return this.render(minPower);
 };
 
 /**
- * Returns the first assumption step in the list such that asm matches
- * the assumption, if there is one, else a falsy value.
- */
-function findAsmStep(asm, asmSteps) {
-  return Toy.each(asmSteps, function(step) {
-      // Note that members of asmSteps have the form a => b.
-      var lhs = step.wff.getLeft();
-      if (lhs.matches(asm)) {
-        return step;
-      }
-    });
-}
-
-/**
- * Truthy iff the given term is an assumption that is "in scope"
- * for the step, or is a conjunction of allImplicit terms.
+ * Truthy iff the given term is a conjunction of allImplicit terms.
  * (This makes the whole term implicit.)
  */
 function allImplicit(expr, step) {
   return (expr.isTypeCond() ||
-          findAsmStep(expr, step.asmSteps) ||
           (expr.isCall2('&') &&
            allImplicit(expr.getLeft(), step) && 
            allImplicit(expr.getRight(), step)));
@@ -1243,11 +1221,11 @@ function textNode(text) {
 
 Expr.prototype.renderTerm = function() {
   var copy = this.copyForRendering(null);
-  var jq = copy.render({asmSteps: []}, 0);
+  var jq = copy.render(0);
   return jq[0];
 };
 
-// render(info, minPower)
+// render(minPower)
 //
 // Render this expression into a new DOM node, returning a jQuery
 // object for the node.  Sets the expression's "node" property to
@@ -1257,22 +1235,15 @@ Expr.prototype.renderTerm = function() {
 // If the expr already has a node, just return a jQuery for the node,
 // to enable special rendering of certain exprs beforehand.
 //
-// The rendering is in the context of the given "info" step
-// information, which must have property asmSteps as in a step.
-//
-// TODO: This property is currently unused because assumptions are
-// either rendered normally or not at all.  Consider removing the
-// argument.
-//
 // Omits parentheses around an expression that uses an operator
 // if the operator's precedence is at least minPower.
 //
-// The optional third argument is used only by Atom rendering, and if
+// The optional second argument is used only by Atom rendering, and if
 // truthy indicates that the expression represents a function (or
 // syntactically an operator).
 //
 
-Atom.prototype.render = function(info, minPower, isFn) {
+Atom.prototype.render = function(minPower, isFn) {
   if (this.node) {
     return $(this.node);
   }
@@ -1281,14 +1252,6 @@ Atom.prototype.render = function(info, minPower, isFn) {
   // the main part of the variable name.
   var $expr = exprJq(true);
   this.node = dom($expr);
-  var aStep = findAsmStep(this, info.asmSteps);
-  if (aStep) {
-    $expr.addClass('stepRef');
-    // Note that this requires the unrendered proof step to be already
-    // linked to a rendering with proper stepNumber:
-    $expr.append(aStep.rendering.stepNumber);
-    return $expr;
-  }
 
   var name = this.toHtml();
   if (!isFn && this.isOperator()) {
@@ -1331,7 +1294,7 @@ function effectivePower(op, inner) {
 }
 
 // minPower is the precedence required to do without parentheses.
-Call.prototype.render = function(info, minPower) {
+Call.prototype.render = function(minPower) {
   if (this.node) {
     return $(this.node);
   }
@@ -1339,14 +1302,6 @@ Call.prototype.render = function(info, minPower) {
   var self = this;
   var $expr = exprJq(true);
   this.node = dom($expr);
-  var aStep = findAsmStep(this, info.asmSteps);
-  if (aStep) {
-    $expr.addClass('stepRef');
-    // Note that this requires the unrendered proof step to be already
-    // linked to a rendering with proper stepNumber:
-    $expr.append(aStep.rendering ? aStep.rendering.stepNumber : '?');
-    return $expr;
-  }
 
   const prec = Toy.getPrecedence;
   const myPower = (self.isCall1()
@@ -1373,24 +1328,24 @@ Call.prototype.render = function(info, minPower) {
       var right = this.getRight();
       if (op.name in {'*': true, '/': true}) {
         // Render these without extra whitespace.
-        var $fn = exprJq().append(left.render(info, thisPower(left)),
-                                  op.render(info, 0, true));
+        var $fn = exprJq().append(left.render(thisPower(left)),
+                                  op.render(0, true));
         this.fn.node = dom($fn);
-        $expr.append($fn, right.render(info, thisPower(right) + 1));
+        $expr.append($fn, right.render(thisPower(right) + 1));
       } else if (op.name == '**' && right.isNumeral()) {
         // Integer exponent: display as superscript without making
         // the exponent selectable by itself.  This makes it practical
         // to select the entire expression.
-        var $left = exprJq().append(left.render(info, thisPower(left)));
+        var $left = exprJq().append(left.render(thisPower(left)));
         $expr.append($left,
                      $('<sup>').append(right.getNumValue()));
       } else {
         // A typical binary operator invocation, e.g. x + y.
-        var $fn = exprJq().append(left.render(info, thisPower(left)), ' ',
-                                  op.render(info, 0, true));
+        var $fn = exprJq().append(left.render(thisPower(left)), ' ',
+                                  op.render(0, true));
         this.fn.node = dom($fn);
         var afterOp = op.breakAfter ? '<br>\n' : ' ';
-        $expr.append($fn, afterOp, right.render(info, thisPower(right) + 1));
+        $expr.append($fn, afterOp, right.render(thisPower(right) + 1));
       }
     } else {
       // Anything else render like "f x y".
@@ -1398,16 +1353,16 @@ Call.prototype.render = function(info, minPower) {
       // reducing the required power by 1 here, but then we might want
       // to reorganize the code for rendering ordinary function calls.
       var $fn = exprJq()
-        .append(this.fn.fn.render(info, Toy.namePower + 1, true), ' ',
-                this.fn.arg.render(info, Toy.namePower + 1));
+        .append(this.fn.fn.render(Toy.namePower + 1, true), ' ',
+                this.fn.arg.render(Toy.namePower + 1));
       this.fn.node = dom($fn);
-      $expr.append($fn, ' ', this.arg.render(info, Toy.namePower + 1));
+      $expr.append($fn, ' ', this.arg.render(Toy.namePower + 1));
     }
   } else if (Toy.isInfixDesired(this.fn)) {
     // Infix operator, but only one argument: render like "(+) x"
     // Parenthesize both function and argument if they are calls.
-    $expr.append('(', this.fn.render(info, 0), ') ',
-                 this.arg.render(info, Toy.namePower + 1));
+    $expr.append('(', this.fn.render(0), ') ',
+                 this.arg.render(Toy.namePower + 1));
   } else if (!this.fn.displaysIdentifier()) {
     // Function call with non-identifier operator, or lambda.
     // Display the function adjacent to its argument, but precede both
@@ -1417,17 +1372,17 @@ Call.prototype.render = function(info, minPower) {
     if (this.fn.name === 'neg' && this.arg.isNumeral()) {
       // Render e.g. neg 7 as -(7) to distinguish from a negative
       // number.
-      $expr.append(this.fn.render(info, 0, true),
-                   '(', this.arg.render(info, Toy.unaryPower), ')');
+      $expr.append(this.fn.render(0, true),
+                   '(', this.arg.render(Toy.unaryPower), ')');
     } else {
       // Unary operator; ensure space before, then op and arg.
-      $expr.append('&nbsp;', this.fn.render(info, 0, true),
-                   this.arg.render(info, Toy.unaryPower));
+      $expr.append('&nbsp;', this.fn.render(0, true),
+                   this.arg.render(Toy.unaryPower));
     }
   } else {
     // Normal function call: "f x" or " ... x".
-    $expr.append(this.fn.render(info, Toy.namePower + 1, true), ' ',
-                 this.arg.render(info, Toy.unaryPower));
+    $expr.append(this.fn.render(Toy.namePower + 1, true), ' ',
+                 this.arg.render(Toy.unaryPower));
   }
   if (parens) {
     $expr.append(')');
@@ -1435,7 +1390,7 @@ Call.prototype.render = function(info, minPower) {
   return $expr;
 };
 
-Lambda.prototype.render = function(info, minPower) {
+Lambda.prototype.render = function(minPower) {
   if (this.node) {
     return $(this.node);
   }
@@ -1443,9 +1398,9 @@ Lambda.prototype.render = function(info, minPower) {
   var $expr = exprJq(true);
   this.node = dom($expr);
   $expr.append('{');
-  $expr.append(this.bound.render(info, 0));
+  $expr.append(this.bound.render(0));
   $expr.append('. ');
-  var $body = this.body.render(info, 0);
+  var $body = this.body.render(0);
   $expr.append($body);
   $expr.append('}');
   return $expr;
@@ -1476,11 +1431,6 @@ Step.prototype.copyToRender = function() {
   step.ruleArgs = this.ruleArgs;
   // ruleDeps refers to originals of other steps.
   step.ruleDeps = this.ruleDeps;
-  // Assumption steps in scope for this step, including the step
-  // itself.  If an assumption step is in scope, the term it
-  // introduces can be abbreviated in this step display.
-  // Initialized when the step is connected with the proof display.
-  step.asmSteps = null;
   // If truthy, this term will render as an ellipsis.
   return step;
 };
@@ -2304,7 +2254,6 @@ function hoverStep(step, direction, event) {
 function fillHoverInfoBox(proofEditor, step) {
   var $box = $(step.stepNode).find('.hoverInfoBox');
   if ($box.children().length == 0) {
-    var info = {asmSteps: []};
     var copy = step.original.copyToRender();
     copy.annotateWithTypes();
     var message = proofEditor ? proofEditor.progressMessage(step) : '';
@@ -2312,7 +2261,7 @@ function fillHoverInfoBox(proofEditor, step) {
     var $step = $('<div class=flex>');
     // TODO: The hack does not really help flex layout here, but with
     //   more work it should be able to help.
-    $step.append(hackOnRendering(copy.wff.render(info, 0)));
+    $step.append(hackOnRendering(copy.wff.render(0)));
     $box.append($step, $msgs);
   }
   $box.toggle(true);
