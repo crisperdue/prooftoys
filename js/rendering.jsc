@@ -741,7 +741,8 @@ ProofDisplay.prototype.renderStep1 = function(step) {
 
   // Annotate subexpressions with popups as appropriate.
   if (this.isEditable()) {
-    this.renderPopups(step);
+    // TODO: Remove this block and renderPopups and associated styles.
+    // this.renderPopups(step);
   }
 
   // Event handling:
