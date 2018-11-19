@@ -399,7 +399,6 @@ ProofDisplay.prototype.renderStep = function(step) {
   assert(!step.rendering, 'Already rendered', step);
   var copy = step.copyToRender();
   copy.users = 0;
-  copy.hasLeftElision = false;
   copy.ordinal = step.ordinal;
   step.rendering = copy;
   copy.rendering = copy;
@@ -733,6 +732,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   $proofStep.data('proofStep', step);
   step.stepNode = dom($proofStep);
   var elide = wantLeftElision(step, self);
+  // This initializes hasLeftElision.
   step.hasLeftElision = elide;
   // Remember this value for future use.  Could be computed from
   // previous step if preferred.
@@ -1054,10 +1054,10 @@ function renderWff(step) {
   var info = {asmSteps: []};
   var wff = step.wff;
   var $wff;
-  if (step.ruleName === 'consider' ||
+  if (step.ruleName === 'assume' ||
+      step.ruleName === 'consider' ||
       step.ruleName === 'considerPart' ||
       step.ruleName === 'given') {
-    // Op is always "=" or "==".
     var op = wff.getBinOp().toUnicode();
     var power = Toy.getPrecedence(wff.getBinOp());
     // The right side renders on the left here so any changes to it appear
@@ -1077,8 +1077,9 @@ function renderWff(step) {
     var mainOnly = allImplicit(asmPart, step);
     var power = mainOnly ? 0 : Toy.getPrecedence(wff.getBinOp());
     // Render the RHS (consequent) as the main.
-    mainPart.node = (renderWithElision(mainPart, step) ||
-                     dom(mainPart.renderTopConj(info, power)));
+    mainPart.node = (step.hasLeftElision
+                     ? renderWithElision(mainPart)
+                     : dom(mainPart.renderTopConj(info, power)));
 
     if (mainOnly) {
       // All assumptions are implicit, so the rendering is just the
@@ -1118,34 +1119,33 @@ function renderWff(step) {
     return wff.node;
   } else {
     // The step is not a conditional.  Render it as the main.
-    return wff.node = renderWithElision(wff, step) || dom(wff.renderTopConj(info, 0));
+    return wff.node = (step.hasLeftElision
+                       ? renderWithElision(wff)
+                       : dom(wff.renderTopConj(info, 0)));
   }
 };
 
 /**
- * Renders the given expr of the given step with left elision if the
- * step has left elision, returning the DOM node result, otherwise
- * just returns a falsy value.  The result is a "fullExpr" node with
- * the ellipsis display, the operator, and the RHS of the equality.
+ * Renders the given expr of the given step with left elision.  The
+ * expr must be a call2, and this will treat the function/operator as
+ * infix.  The result is a "fullExpr" node with the ellipsis display,
+ * the operator, and the RHS of operator.
  *
  * TODO: Consider changing this and its uses to precompute any special
  * rendering.
  */
-function renderWithElision(expr, step) {
+function renderWithElision(expr) {
   var info = {asmSteps: []};
-  if (expr.isCall2('=') && step.hasLeftElision) {
-    var $expr = exprJq(true);
-    expr.node = dom($expr);
-    $expr.append('<span class=ellipsis>&hellip;</span> ',
-                 // Display equivalences as equivs.  This eventually
-                 // calls toUnicode, and if there is a type, displays
-                 // appropriately.
-                 expr.getBinOp().render(info, 0, true), ' ',
-                 expr.getRight().renderTopConj(info, 0));
-    return dom($expr);
-  } else {
-    return null;
-  }
+  expr.assertCall2();
+  var $expr = exprJq(true);
+  expr.node = dom($expr);
+  $expr.append('<span class=ellipsis>&hellip;</span> ',
+               // Display equivalences as equivs.  This eventually
+               // calls toUnicode, and if there is a type, displays
+               // appropriately.
+               expr.getBinOp().render(info, 0, true), ' ',
+               expr.getRight().renderTopConj(info, 0));
+  return dom($expr);
 }
 
 Expr.prototype.renderTopConj = function(info, minPower) {

@@ -1974,6 +1974,7 @@ function proofOf(step) {
  */
 function assumptionsBefore(step_arg) {
   var steps = [];
+  /* When this is gone, all occurrences of asmSteps should also go.
   var proofSteps = proofOf(step_arg);
   proofSteps.forEach(function (step) {
       var ruleName = step.ruleName;
@@ -1982,6 +1983,7 @@ function assumptionsBefore(step_arg) {
         steps.push(step);
       }
     });
+  */
   return steps;
 }
 
