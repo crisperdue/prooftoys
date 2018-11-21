@@ -1021,6 +1021,21 @@ function prevRenderedStep(step) {
 }
 
 /**
+ * Returns boolean value, true iff the given step has a
+ * prevRenderedStep with assumptions that are sameAs
+ * the assumptions of the given step.
+ */
+function sameAsPrevAsms(step) {
+  if (step.isCall2('=>')) {
+    const prev = prevRenderedStep(step);
+    return (prev && prev.isCall2('=>') &&
+            step.getLeft().sameAs(prev.getLeft()));
+  } else {
+    return false;
+  }
+}
+
+/**
  * Returns true iff policy is to elide the LHS of the formula of the
  * given rendered step.  Current policy calls for elision if the main
  * parts of the given rendered step and the preceding rendered step
@@ -1051,10 +1066,17 @@ function wantLeftElision(step) {
 function renderWff(step) {
   var wff = step.wff;
   var $wff;
-  if (step.ruleName === 'assume' ||
+  if (step.ruleName === 'display') {
+    // Just render everything in case of a "display" step.
+    return dom(wff.renderTopConj(0));
+
+  } else if (step.ruleName === 'assume' ||
       step.ruleName === 'consider' ||
       step.ruleName === 'considerPart' ||
       step.ruleName === 'given') {
+
+    // All of these omit some unnecessary part of the display for
+    // readability.
     var op = wff.getBinOp().toUnicode();
     var power = Toy.getPrecedence(wff.getBinOp());
     // The right side renders on the left here so any changes to it appear
@@ -1066,55 +1088,45 @@ function renderWff(step) {
     //
     // Note that levels of nesting here are as in " ... == <rhs>"
     // renderings, so the same levels of flexbox nesting works for both.
-    wff.node = dom(exprJq().append(wff.getRight().renderTopConj(0)));
+    wff.node = renderWithElisionSpace(wff);
     return wff.node;
   } else if (wff.isCall2('=>')) {
-    var asmPart = wff.getLeft();
-    var mainPart = wff.getRight();
-    var mainOnly = allImplicit(asmPart, step);
-    var power = mainOnly ? 0 : Toy.getPrecedence(wff.getBinOp());
-    // Render the RHS (consequent) as the main.
-    mainPart.node = (step.hasLeftElision
-                     ? renderWithElision(mainPart)
-                     : dom(mainPart.renderTopConj(power)));
 
-    if (mainOnly) {
-      // All assumptions are implicit, so the rendering is just the
-      // main part.
-      return mainPart.node;
-    }
+    // There are assumptions.
+    const asmPart = wff.getLeft();
+    const mainPart = wff.getRight();
+
+    const power = Toy.getPrecedence(wff.getBinOp());
+    // Render the main part.
+    const node = (step.hasLeftElision
+                  ? renderWithElision(mainPart)
+                  : dom(mainPart.renderTopConj(power)));
+
     // In this case we want one more level of flexbox to ensure the
     // mainPart is a flexbox.  Specify it with a class.
     if (mainPart.isCall2('==')) {
       $(mainPart.node).addClass('flexBox');
     }
-    // There is at least one explicit assumption.
-    var explicit = asmPart;
-    // Descend into left parts of a chain of assumptions until the
-    // right side argument is explicit or only one member left in the
-    // chain.  The resulting chain will contain only explicit assumptions.
-    while (explicit.isCall2('&') &&
-           (explicit.getRight().isTypeCond())) {
-      explicit = explicit.getLeft();
+    if (sameAsPrevAsms(step)) {
+      if (step.hasLeftElision) {
+        // Don't even render an ellipsis for the assumptions in this case.
+        return wff.node = node;
+      } else {
+        // Render the assumptions as an ellipsis.
+        asmPart.node = dom(exprJq()
+                           .append('<span class=ellipsis>&hellip;</span>'));
+      }
     }
-    // When rendering the step as a whole, take the rendering of the
-    // explicit part as the rendering for the whole LHS of the
-    // conditional.
-    asmPart.node = dom(explicit.render(power));
+    mainPart.node = node;
     // Now render the entire wff into a node.  The renderer will stop
-    // when it reaches the asmPart, because that already has a node.
+    // when it reaches the asmPart and when it reaches the mainPart,
+    // because they already have nodes.
     $wff = step.wff.render(0);
-    // But in the end we want the explicit part to be properly
-    // associated with its own display, so fix up the assignments of
-    // nodes.
-    if (explicit != asmPart) {
-      explicit.node = asmPart.node;
-      asmPart.node = null;
-    }
     wff.node = dom($wff);
     return wff.node;
   } else {
-    // The step is not a conditional.  Render it as the main.
+
+    // The step is not a conditional.
     return wff.node = (step.hasLeftElision
                        ? renderWithElision(wff)
                        : dom(wff.renderTopConj(0)));
@@ -1140,6 +1152,21 @@ function renderWithElision(expr) {
                // appropriately.
                expr.getBinOp().render(0, true), ' ',
                expr.getRight().renderTopConj(0));
+  return dom($expr);
+}
+
+/**
+ * Somewhat like renderWithElision, but with the ellipsis not visible,
+ * just occupying space.
+ */
+function renderWithElisionSpace(expr) {
+  expr.assertCall2();
+  var $expr = exprJq();
+  expr.node = dom($expr);
+  const $op = expr.getBinOp().render(0, true);
+  $op.addClass('invisible');
+  $expr.append('<span class="ellipsis invisible">&hellip;</span> ',
+               ' ', expr.getRight().renderTopConj(0));
   return dom($expr);
 }
 
@@ -2178,7 +2205,8 @@ function exprHandleOver(event) {
  */
 function exprHandleOut(event) {
   // This appears to depend on mouseout events firing before the
-  // related mouseenter event.
+  // related mouseenter event as described at
+  // https://www.w3.org/TR/DOM-Level-3-Events/#events-mouseevent-event-order.
   const $target = $(event.target);
   // Remove hovers from all nodes of this proof step.
   $target.closest('.proofStep').find('.expr.hover').removeClass('hover');
