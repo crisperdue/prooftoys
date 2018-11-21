@@ -739,12 +739,6 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   $stepAndNum.append($wff);
   $proofStep.find('.stepInfo').html(formattedStepInfo(step));
 
-  // Annotate subexpressions with popups as appropriate.
-  if (this.isEditable()) {
-    // TODO: Remove this block and renderPopups and associated styles.
-    // this.renderPopups(step);
-  }
-
   // Event handling:
 
   // Expr hovering is already handled by delegation in
@@ -880,112 +874,6 @@ function hackOnRendering($wff) {
   $exprs.replaceWith(function() { return $(this).contents(); });
   return $wff;
 }
-
-/**
- * Renders the expression popups for a steps in a ProofDisplay.  The
- * proof should be editable.
- */
-ProofDisplay.prototype.renderPopups = function(step) {
-  if (Toy.profileName.match(/^popups/)) {
-    console.profile(Toy.profileName);
-  }
-  var self = this;
-  // Include only "forward" distributive facts (ones that distribute
-  // "*" across "+").
-  var distribKeys = Toy.listFacts(Toy.distribFacts);
-  // Also include the very simplest of associative facts.
-  var assocKeys = ['a + b + c = a + (b + c)',
-                   'a + b - c = a + (b - c)',
-                   'a * b * c = a * (b * c)',
-                   'a * b / c = a * (b / c)'
-                   ];
-  var distribStmts = (distribKeys.concat(assocKeys)
-                      .map(Toy.mathParse));
-  // Search the step for places where some basic facts can be applied.
-  step.wff.traverse(function(term, rpath) {
-      if (term.isCall2() && term.node) {
-        var rules = Toy.rules;
-        // These resulting equations are the result of applying the
-        // distributive law and similar ones for subtraction to the
-        // term.
-        var eqn = rules.consider(term);
-        // Use prettyPathTo so the path will be flexible regarding
-        // assumptions.
-        var getPath = Toy.memo(@{step.prettyPathTo(term)});
-        var stmts = distribStmts
-          .filter(@{eqn. term.matchSchema(eqn.getMain().getLeft())});
-
-        // Build results of relevant distributive law rewriters and
-        // actions to run them later.
-        function substituter(eqn) {
-          // This does the substitution, but leaves the proof (and
-          // creation of side conditions) until later.
-          var subst = term.matchSchema(eqn.getMain().getLeft());
-          return eqn.getMain().getRight().subFree(subst);
-        }
-        // This is a list of replacement terms, one for each action
-        // in actions.
-        var results = stmts.map(substituter);
-        // Given a statement of a fact, returns a function that will
-        // use it in a rewrite when called with no args.
-        var actionBuilder =
-          @{stmt. @{Toy.tryRuleSoon(self.proofEditor.stepEditor,
-                                     rules.rewrite,
-                                     [step.original, getPath(), stmt])}};
-        var actions = stmts.map(actionBuilder);
-
-        // Add a result and an action for a local simplifier if one is
-        // found.
-        var simpler = Toy.applyFactsOnce(eqn, '/main/right',
-                                         Toy.basicSimpFacts);
-        if (simpler != eqn) {
-          var result = rules.simplifySite(simpler, '/main/right');
-          results.push(result.getMain().getRight());
-          var action =
-            @{Toy.tryRuleSoon(self.proofEditor.stepEditor,
-                               rules.rewrite,
-                               [step.original, getPath(), result])};
-          actions.push(action);
-        }
-        if (results.length) {
-          var $term = $(term.node);
-          results.forEach(function(result, i) {
-              var $div = $('<div class=above></div>');
-              $div.text(' = ' +
-                        result.toHtml()
-                        // Strip any outermost parens.
-                        .replace(/^\((.*)\)$/, '$1'));
-              // The node's data.result will be an equation that can
-              // be used to replace the term.
-              $div.data('action', actions[i]);
-              $term.append($div);
-            });
-        }
-      }
-    });
-
-  // Event handling:
-
-  // Notice hovering in events with class "above".
-  $(step.stepNode).on('mouseenter mouseleave', '.above',
-                      @{void $(this).toggleClass('hover')});
-  // Handle click events on "above" nodes.  Note that the control
-  // must be editable.
-  $(step.stepNode).on(TOUCHDOWN, '.above', function(event) {
-      // Prevent the containing .expr node from handling this touch,
-      // which would select the term.
-      event.stopImmediatePropagation();
-    });
-  $(step.stepNode).on('click', '.above', function(event) {
-      // Run the action.
-      var action = $(this).data('action');
-      action();
-    });
-
-  if (Toy.profileName.match(/^popups/)) {
-    console.profileEnd();
-  }
-};
 
 /**
  * Returns the rendered step immediately previous to this one

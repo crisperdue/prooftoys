@@ -801,32 +801,6 @@ span.stepRef {
   color: #aaa;
 }
 
-/* Holder for information shown "above" an expression. */
-.above {
-  position: absolute;
-  visibility: hidden;
-  cursor: pointer;
-  left: -1px;
-  bottom: 1.5em;
-  min-width: 100%;
-  padding: 2px 2px;
-  border: 1px solid gray;
-  white-space: nowrap;
-  background-color: lightyellow;
-  /* Overrides .proofStep: */
-  text-indent: 0em;
-  box-shadow: 2px 2px 2px #aaa;
-}
-
-.above.hover {
-  opacity: 1;
-}
-
-/* The element is visible when its expression is hovered. */
-.fullExpr.popped > .above {
-  visibility: visible;
-}
-
 /* When hovering over an expression in an editable proof.
    See also .stepAndNum .hover.
  */
