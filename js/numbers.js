@@ -908,8 +908,10 @@ var simplifiersInfo = {
       return (rules.replace(step, '/left', simpler2)
               .justify('simplifyAsms', arguments, [step]));
     }
-  },
+  }
+};  // End of simplifiersInfo.
 
+const mathSimplifiers = {
   // Move all negations in past additions and multiplications;
   // eliminate double negations.
   // TODO: Consider removing this as redundant.
@@ -1001,8 +1003,8 @@ var simplifiersInfo = {
     description: 'simplify numeric assumptions',
     labels: 'general'
   }
+};  // End of mathSimplifiers.
 
-};  // End of simplifiersInfo.
 
 var moversInfo = {
 
@@ -3172,6 +3174,7 @@ Toy.addRulesMap(numbersInfo);
 Toy.addRulesMap(divisionInfo);
 Toy.addRulesMap(equationOpsInfo);
 Toy.addRulesMap(simplifiersInfo);
+Toy.addRulesMap(mathSimplifiers);
 Toy.addRulesMap(moversInfo);
 Toy.addRulesMap(fractionsInfo);
 
