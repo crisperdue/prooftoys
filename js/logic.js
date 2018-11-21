@@ -4082,7 +4082,7 @@ const ruleInfo = {
     // TODO: Consider supporting this, for interactive use only.
     // TODO: Convert these to toOffer: properties or combine.
     menuCheck: function(step, path) {
-      const result = rules._simplifyMath1(step, path,
+      const result = rules._simplifyOnce(step, path,
                                           [{apply: tryReduce, pure: true}]);
       return result !== step;
     },
@@ -4374,7 +4374,6 @@ const ruleInfo = {
     description: 'eta conversion'
   }
 };
-
 addRulesMap(ruleInfo);
 
 

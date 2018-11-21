@@ -2086,9 +2086,8 @@ Expr.prototype.pathBindings = function(path_arg) {
 }
 
 /**
- * Simplification facts for algebra, used in _simplifyMath1
- * and related places.  During initialization all facts
- * flagged as simplifier: true are added to this list.
+ * Simplification facts for algebra, used in _simplifyOnce
+ * simplifier: true are added to this list.
  *
  * TODO: Consider whether x - 7 is simpler than x + -7.
  * TODO: Declare number facts as simplifiers rather than adding here.

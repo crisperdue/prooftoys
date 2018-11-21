@@ -864,7 +864,7 @@ var simplifiersInfo = {
       var simpler = Toy.whileChanges(eqn, function(eqn) {
           // This usage of /rt is kind of cool in that it automatically
           // adapts in case some versions of eqn have assumptions.
-          return rules._simplifyMath1(eqn, _path('/rt/right', eqn), opt_facts);
+          return rules._simplifyOnce(eqn, _path('/rt/right', eqn), opt_facts);
         });
       return rules.replace(step, path, simpler);
     }
@@ -876,7 +876,7 @@ var simplifiersInfo = {
   // there is nothing to do.
   //
   // From the UI use a rule that calls this one.
-  _simplifyMath1: {
+  _simplifyOnce: {
     action: function(step, _path, opt_facts) {
       var facts = opt_facts || basicSimpFacts;
       var info = Toy.searchForMatchingFact(step.get(_path), facts);
@@ -900,7 +900,7 @@ var simplifiersInfo = {
       var simpler = Toy.whileChanges(eqn, function(eqn) {
           // This usage of /rt is kind of cool in that it automatically
           // adapts in case some versions of eqn have assumptions.
-          return rules._simplifyMath1(eqn, Toy.path('/rt/right', eqn), facts);
+          return rules._simplifyOnce(eqn, Toy.path('/rt/right', eqn), facts);
         });
       // The original eqn has no assumptions, but "simpler" may have
       // some.  Simplify those in turn.
