@@ -1451,6 +1451,105 @@ addRulesMap(truthTableFacts);
 
 // This might be treated as the end of the subcore.
 
+var simplifiersInfo = {
+
+  // Managing numeric type hypotheses
+
+  // Simplifies repeatedly using basicSimpFacts.  If the visible part
+  // of the step is an equation, simplify each side, otherwise the
+  // entire expression.
+  simplifyFocalPart: {
+    action: function(step) {
+      var visPath = step.pathToFocalPart();
+      var result = rules._simplifySite(step, visPath);
+      return result.justify('simplifyFocalPart', arguments, [step]);
+    },
+    inputs: {step: 1},
+    form: ('Simplify step <input name=step>'),
+    menu: 'algebra: simplify',
+    offerExample: true,
+    description: 'simplify;; {step step}',
+    labels: 'algebra'
+  },
+
+  // Applies simplification repeatedly within the part of the given
+  // step at the given path using the given facts until no more
+  // simplifications are found.  By default uses basicSimpFacts
+  // if facts are not supplied.
+  simplifySite: {
+    action: function(step, path, opt_facts) {
+      var result = rules._simplifySite(step, path, opt_facts);
+      return result.justify('simplifySite', arguments, [step]);
+    },
+    inputs: {site: 1},
+    minArgs: 2,
+    form: '',
+    menu: 'algebra: simplify {term}',
+    offerExample: true,
+    description: 'simplify;; {in step siteStep}',
+    labels: 'algebra'
+  },
+
+  // TODO: Create a "rules.simplifier" that takes a term argument
+  //   and proves it equal to some (hopefully) simpler term.
+
+  // Inline version of simplifySite.
+  _simplifySite: {
+    action: function(step, path, opt_facts) {
+      var _path = Toy.path;
+      var eqn = rules.consider(step.get(path));
+      var simpler = Toy.whileChanges(eqn, function(eqn) {
+          // This usage of /rt is kind of cool in that it automatically
+          // adapts in case some versions of eqn have assumptions.
+          return rules._simplifyOnce(eqn, _path('/rt/right', eqn), opt_facts);
+        });
+      return rules.replace(step, path, simpler);
+    }
+  },
+
+  // Applies up to one simplification within the part of the given
+  // step at _path using the given facts, or basicSimpFacts if facts
+  // are not given.  Returns its result inline, just the input step if
+  // there is nothing to do.
+  //
+  // From the UI use a rule that calls this one.
+  _simplifyOnce: {
+    action: function(step, _path, opt_facts) {
+      var facts = opt_facts || basicSimpFacts;
+      var info = Toy.searchForMatchingFact(step.get(_path), facts);
+      return (info
+              ? rules.rewrite(step, _path.concat(info.path), info.stmt)
+              : step);
+    }
+  },
+
+  // Uses the given facts to simplify the assumptions of the given
+  // step.  This is not intended to do any of the work of arrangeAsms.
+  // For steps involving real numbers see reduceRealAsms.  This
+  // differs from simplifySite in that it also simplifies any
+  // assumptions introduced by conditional facts in the facts list.
+  simplifyAsms: {
+    action: function(step, facts) {
+      if (!step.wff.isCall2('=>')) {
+        return step;
+      }
+      var eqn = rules.consider(step.get('/left'));
+      var simpler = Toy.whileChanges(eqn, function(eqn) {
+          // This usage of /rt is kind of cool in that it automatically
+          // adapts in case some versions of eqn have assumptions.
+          return rules._simplifyOnce(eqn, Toy.path('/rt/right', eqn), facts);
+        });
+      // The original eqn has no assumptions, but "simpler" may have
+      // some.  Simplify those in turn.
+      var simpler2 = rules.simplifyAsms(simpler, facts);
+      return (rules.replace(step, '/left', simpler2)
+              .justify('simplifyAsms', arguments, [step]));
+    }
+  }
+};
+addRulesMap(simplifiersInfo);
+
+
 const ruleInfo = {
 
   // [T = x] = x
