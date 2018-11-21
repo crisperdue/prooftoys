@@ -821,10 +821,6 @@ var simplifiersInfo = {
   // Simplifies repeatedly using basicSimpFacts.  If the visible part
   // of the step is an equation, simplify each side, otherwise the
   // entire expression.
-  //
-  // TODO: Refactor this so the rule itself is not dependent on
-  //   different possible renderings.  Probably make it accept a
-  //   site, which in the UI is determined by the visible part.
   simplifyFocalPart: {
     action: function(step) {
       var visPath = step.pathToFocalPart();
