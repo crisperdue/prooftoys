@@ -767,6 +767,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   $proofStep.on('mouseenter mouseleave', '.stepSelector', function(event) {
       hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
     });
+
   $proofStep.on('mouseenter', '.stepNumArea', function(event) {
       if (!Toy.showStepHoverMark && event.shiftKey) {
         fillHoverInfoBox(self.proofEditor, step);
@@ -775,6 +776,13 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   $proofStep.on('mouseleave', '.stepNumArea', function(event) {
       $step.find('.hoverInfoBox').toggle(false);
     });
+  $proofStep.on('mouseenter', '.ellipsis', function(event) {
+      fillHoverInfoBox(self.proofEditor, step);
+    });
+  $proofStep.on('mouseleave', '.ellipsis', function(event) {
+      $step.find('.hoverInfoBox').toggle(false);
+    });
+
   $proofStep.on('mouseenter', '.stepHoverMark', function(event) {
       // If the stepHoverMark is not configured "in", this will not
       // happen.
@@ -1053,7 +1061,8 @@ function renderWithElisionSpace(expr) {
   expr.node = dom($expr);
   const $op = expr.getBinOp().render(0, true);
   $op.addClass('invisible');
-  $expr.append('<span class="ellipsis invisible">&hellip;</span> ',
+  $expr.append($('<span class=ellipsis>')
+               .append('<span class=invisible>&hellip;</span>'),
                ' ', expr.getRight().renderTopConj(0));
   return dom($expr);
 }

@@ -627,8 +627,8 @@ span#leftNav {
     display: none;
     position: absolute;
     z-index: 1;
-    left: .9em;
-    top: 1em;
+    left: 1.7em;
+    top: 1.3em;
     width: 600px;
     /* Override inherited value from proofStep */
     text-indent: 0;
@@ -636,7 +636,7 @@ span#leftNav {
     line-height: 1.2;
     color: black;
     background-color: ivory;
-    opacity: .9;
+    opacity: .85;
     padding: 2px;
     padding-left: 10px;
     border: 1px solid silver;
