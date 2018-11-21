@@ -2031,7 +2031,15 @@ function acceptsSelection(step, ruleName) {
       // 
       // TODO: prevent selection of bound variables as terms.
       return (argInfo.site
-              || argInfo.term
+              || (argInfo.term &&
+                  // These checks mean that the selection cannot be
+                  // used as a mere term if the rule needs some kind
+                  // of step as an input.  The user must select the
+                  // step and then enter a term, or copy it from the
+                  // clipboard.
+                  //
+                  // This list must match stepTypes.
+                  !argInfo.step && !argInfo.equation && !argInfo.implication)
               || (argInfo.bindingSite && expr instanceof Toy.Lambda)
               || (argInfo.reducible
                   && expr instanceof Toy.Call
