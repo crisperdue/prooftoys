@@ -450,6 +450,37 @@ const prelogic = {
     description: '=definition'
   },
 
+  /**
+   * Gets the "expanded" definition of the given defined name.  If the
+   * definition is a simple equation of the usual kind, and the RHS is
+   * one or more nested lambdas, this equates a call to the named
+   * function/predicate with argument variables named after the bound
+   * variables of the lambda(s).
+   */
+  expDefinition: {
+    action: function(name) {
+      let defn = rules.definition(name);
+      if (!defn) {
+        return null;
+      }
+      defn.wff.assertCall2('=');
+      let lambda = defn.getRight();
+      while (lambda instanceof Lambda) {
+        const bound = lambda.bound;
+        defn = (rules.applyBoth(defn, bound)
+                .andThen('simpleApply', '/right'));
+        lambda = defn.getRight();
+      }
+      return defn.justify('expDefinition', arguments);
+    },
+    inputs: {string: 1},
+    autoSimplify: noSimplify,
+    form: ('Get expanded definition of <input name=string>'),
+    menu: 'look up an expanded definition',
+    tooltip: 'look up an expanded definition',
+    description: '=definition'
+  },
+
   // Use the definition of the name at the given location in the given
   // step.  If the definition is by cases the location should be a
   // call to the named function, with T or F as the argument.
