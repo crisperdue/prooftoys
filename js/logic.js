@@ -429,7 +429,7 @@ const prelogic = {
   /**
    * Refer to a definition in the definitions database.  If the
    * definition is by cases, takes a second argument of T or F
-   * as desired.  Throws an exception if not found.
+   * as desired.  Returns null if no definition is found.
    *
    * Like rules.assert, this creates a proved step that has no
    * details.
@@ -438,8 +438,9 @@ const prelogic = {
     action: function(name, tOrF) {
       // The derivations are computed in advance, and have the name or
       // name and true/false as the argument(s).
-      var args = arguments.length == 1 ? [name] : [name, tOrF];
-      return Toy.getDefinition(name, tOrF).justify('definition', args);
+      const args = arguments.length == 1 ? [name] : [name, tOrF];
+      const defn = Toy.findDefinition(name, tOrF);
+      return defn && defn.justify('definition', args);
     },
     inputs: {string: 1, optString: 2},
     form: ('Definition of <input name=string> '
