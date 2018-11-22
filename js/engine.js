@@ -807,31 +807,8 @@ function enableDefnFacts() {
  * generates the fact f x = <term>, and similarly if there are
  * multiple arguments.
  *
- * After unwrapping any lambdas, if the definition has one of the
- * specific forms:
- *
- * <name> = the <condition>; or
- * <name> = the1 <condition>
- *
- * and if there is a recorded fact of the form exists1 <condition>, it
- * proves the additional fact that <condition>(<name>).  If there is a
- * recorded fact <precond> => exists1 <condition>, it proves a fact
- * that <precond> => <condition>(<name>).  If the definition uses
- * "the"(?) rather than "the1", it proves [if <precond> then
- * <condition>(<name>) else null].
- *
- * Definitions of this kind using "the", or perhaps the1, will only go
- * through properly once basic logic with facts about quantifiers and
- * unique existence are in place.  This seems a reasonable
- * requirement.  Omitting the accompanying unique existence fact will
- * prevent the system from attempting to perform the automatic proof.
- *
- * TODO: Consider supporting "the" better by using available facts
- *   that show when the needed exists1 property does and does not
- *   apply.
- *
- * TODO: Implement the <precond> support.  Consider extending this for
- *   additional cases TBD.
+ * TODO: Remove this and just use a rule to get the "expanded" definition
+ *   of a name as needed instead.
  */
 function addDefnFacts(definition) {
   function addFacts() {
