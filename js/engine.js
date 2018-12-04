@@ -362,7 +362,7 @@ var rules = {};
 //     optString: Optional arbitrary string.
 //     site: Term in a step; the rule expects the term's step and path
 //       to the term as inputs.
-//     bindingSite: Matches a variable binding in a step (as in "changeVar").
+//     bindingSite: Matches a variable binding in a step (as in "renameBound").
 //
 // TODO: Consider defining a new form of input descriptor.  Every rule
 //   with the new property would be a "fancy" rule whose action

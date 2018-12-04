@@ -1015,7 +1015,7 @@ const baseRules = {
    * this modifies the given name to be distinct from all of its free
    * variables.
    */
-  changeVar: {
+  renameBound: {
     action: function(step, path, arg) {
       const newName = typeof arg === 'string' ? arg : arg.name;
       var target = step.get(path);
@@ -1030,7 +1030,7 @@ const baseRules = {
                            target.body.subFree1(newVar, target.bound));
       var step1 = rules.eqSelf(changed);
       var step2 = rules.r(step1, step, path);
-      return step2.justify('changeVar', arguments, [step]);
+      return step2.justify('renameBound', arguments, [step]);
     },
     inputs: {bindingSite: 1, varName: 3},
     form: ('Rename to <input name=varName>'),
@@ -1039,7 +1039,7 @@ const baseRules = {
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
               + 'the one with changed bound variable.'),
-    description: '=changeVar'
+    description: '=renameBound'
   },
 
   /**
@@ -1844,7 +1844,7 @@ const ruleInfo = {
       v = varify(v);
       var step1 = rules.rewriteOnly(step, '', 'a == (T == a)');
       var step2 = rules.theorem('forallXT');
-      var step3 = rules.changeVar(step2, '/arg', v);
+      var step3 = rules.renameBound(step2, '/arg', v);
       var step4 = rules.r(step1, step3, '/arg/body');
       return step4.justify('toForall0', arguments, [step]);
     },
@@ -3124,7 +3124,7 @@ const ruleInfo = {
                                  g: lambda(v, b)}));
       var step4 = rules.apply(step3, '/right/arg/body/left');
       var step5 = rules.apply(step4, '/right/arg/body/right');
-      var step6 = rules.changeVar(step5, '/right/arg', v);
+      var step6 = rules.renameBound(step5, '/right/arg', v);
       // Do not "derive", leave this inline.
       return step6;
     },
@@ -4291,7 +4291,7 @@ const ruleInfo = {
           // was in the source step, then beta reduce.  This
           // reduction just erases the lambda, in other words
           // ({v. A} v) reduces to just A.
-          return (rules.changeVar(step, bindingPath, desiredName)
+          return (rules.renameBound(step, bindingPath, desiredName)
                   .andThen('simpleApply', path)
                   .justify('unbind', arguments, [step]));
         }

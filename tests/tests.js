@@ -1774,9 +1774,9 @@ var testCase = {
     assertEqual('((p = q) & (q = r))', inf);
   },
 
-  testChangeVar: function() {
+  testRenameBound: function() {
     var expr = equal(lambda(z, z), lambda(y, y));
-    var result = Toy.rules.changeVar(expr, '/left', x);
+    var result = Toy.rules.renameBound(expr, '/left', x);
     assertEqual('({x. x} = {y. y})', result);
   },
 

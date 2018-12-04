@@ -1767,7 +1767,7 @@ var stepFormatters = {
     }
     return result;
   },
-  changeVar: function(step) {
+  renameBound: function(step) {
     var step0 = step.ruleArgs[0];
     var path = step.ruleArgs[1];
     var target = step0.get(path);

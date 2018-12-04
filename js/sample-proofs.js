@@ -185,7 +185,7 @@ $(function() {
       level: 1
     },
 
-    changeVar: {
+    renameBound: {
       args: [rules.assert(equal(lambda(z, z), lambda(z, z))), '/right', y],
       level: 1
     },
