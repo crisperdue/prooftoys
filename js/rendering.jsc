@@ -1381,7 +1381,7 @@ Step.prototype.removeUser = function() {
   }
 };
 
-// copyForRendering()
+// copyForRendering(bindings)
 //
 // Makes and returns a deep copy of this Expr, copying all parts
 // including occurrences of Vars, so rendering can add distinct
