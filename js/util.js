@@ -908,6 +908,18 @@ function lsDocs() {
   return names;
 }
 
+/**
+ * Developer tool that searches through all Mathtoys docs in localStorage,
+ * searching for the given regex pattern in the document proof state.
+ * Returns an array of names of docs containing the pattern.
+ */
+function grepDocs(pattern) {
+  return lsDocs().filter(function(name) {
+      const str = readDoc(name).proofState;
+      return str.match(pattern);
+    });
+}
+
 //// Proof editor state, by proofEditorId
 
 // This is persistent state, document name per editor ID.
@@ -2132,6 +2144,7 @@ Toy.readDoc = readDoc;
 Toy.writeDoc = writeDoc;
 Toy.rmDoc = rmDoc;
 Toy.lsDocs = lsDocs;
+Toy.grepDocs = grepDocs;
 
 Toy.getSavedState = getSavedState;
 Toy.saveState = saveState;
