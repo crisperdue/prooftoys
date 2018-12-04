@@ -1139,35 +1139,37 @@ function textNode(text) {
 
 // NOTE that some methods on Expr and its subclasses appear here.
 
-// renderTerm()
-//
-// Copies this non-rendered term and renders the result, returning a
-// DOM node containing the rendering.
-
+/**
+ * Copies this non-rendered term and renders the result, returning a
+ * DOM node containing the rendering.  This is called by the step editor
+ * to render terms and their replacements into the menu display.
+ *
+ * TODO: Consider trying to make the rendering of variable names here
+ *   consistent with the the names presented in the actual step
+ *   renderings.
+ */
 Expr.prototype.renderTerm = function() {
   var copy = this.copyForRendering(null);
   var jq = copy.render(0);
   return jq[0];
 };
 
-// render(minPower)
-//
-// Render this expression into a new DOM node, returning a jQuery
-// object for the node.  Sets the expression's "node" property to
-// refer to the DOM node created to enclose this expression.  Should
-// be done only once to any given expression.
-//
-// If the expr already has a node, just return a jQuery for the node,
-// to enable special rendering of certain exprs beforehand.
-//
-// Omits parentheses around an expression that uses an operator
-// if the operator's precedence is at least minPower.
-//
-// The optional second argument is used only by Atom rendering, and if
-// truthy indicates that the expression represents a function (or
-// syntactically an operator).
-//
-
+/**
+ * Render this expression into a new DOM node, returning a jQuery
+ * object for the node.  Sets the expression's "node" property to
+ * refer to the DOM node created to enclose this expression.  Should
+ * be done only once to any given expression.
+ *
+ * If the expr already has a node, just return a jQuery for the node,
+ * to enable special rendering of certain exprs beforehand.
+ *
+ * Omits parentheses around an expression that uses an operator
+ * if the operator's precedence is at least minPower.
+ *
+ * The optional second argument is used only by Atom rendering, and if
+ * truthy indicates that the expression represents a function (or
+ * syntactically an operator).
+ */
 Atom.prototype.render = function(minPower, isFn) {
   if (this.node) {
     return $(this.node);

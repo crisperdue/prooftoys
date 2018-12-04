@@ -1789,8 +1789,9 @@ RuleMenu.prototype._update = function() {
   self.changed = false;
   $items.append(items);
   if (term) {
-    // If there is a selected term, render it and any right neighbor term,
-    // and insert the renderings into their slots in menu items.
+    // If there is a selected term, render it and any right neighbor
+    // term, and insert the renderings into all menu items that have
+    // slots for them.
     var $term = $(term.copyForRendering().renderTerm());
     $items.find('.menuSelected').append($term);
     var rightTerm = Toy.getRightNeighbor(step, term);
@@ -2091,12 +2092,15 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
       return 'theorem ' + thmText;
     }
   } else {
-    // If there are inputs uses info.menu or some fallback.  This
-    // defers the rendering work to the RuleMenu code where it is more
-    // convenient and the HTML has been converted to DOM structure.
-    var formatArgs = {term: '<span class=menuSelected></span>',
-                      right: '<span class=menuRightNeighbor></span>'};
+    // The rule takes inputs.
     if (info.menu) {
+      // Use info.menu as the HTML, substituting suitable empty spans
+      // for occurrences of {term} and {right} there.  This defers the
+      // rendering and insertion of the rendering of the term and
+      // right neighbor to the RuleMenu code where it is more
+      // convenient and the HTML has been converted to DOM structure.
+      var formatArgs = {term: '<span class=menuSelected></span>',
+                        right: '<span class=menuRightNeighbor></span>'};
       return Toy.format(info.menu, formatArgs);
     } else {
       // TODO: Reconcile use of math markup here vs. non-use in menus.
