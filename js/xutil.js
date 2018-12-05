@@ -1822,6 +1822,36 @@ function commuteEqn(eqn) {
 }
 
 /**
+ * Given a string naming a rule, returns an array of input types for
+ * the rule, decoding the "inputs" property of the rule info.  This
+ * fails if the string does not name a rule, but does not validate the
+ * inputs.  For any property in siteTypes, sets the next type to "_",
+ * indicating an implied path following the step argument for the site,
+ * e.g. {reducible: 1} gives the result ['reducible', '_'].
+ */
+function inputTypes(ruleName) {
+  assert(typeof ruleName === 'string' && Toy.rules[ruleName],
+         'Bad rule name {1}', ruleName);
+  const inputs = Toy.rules[ruleName].info.inputs;
+  if (!inputs) {
+    return null;
+  }
+  const result = [];
+  for (let type in inputs) {
+    const arg = inputs[type];
+    const indexes = typeof arg === 'number' ? [arg] : arg;
+    indexes.forEach(function(index) {
+        const i = index - 1;
+        result[i] = type;
+        if (type in Toy.siteTypes) {
+          result[i + 1] = '_';
+        }
+      });
+  }
+  return result;
+}
+
+/**
  * Compute and return a string representing the given proof steps,
  * which may be either rendered or originals.  Treating expressions
  * with "multiple arguments" as lists, the format is an expression
@@ -1972,6 +2002,7 @@ Toy.asmComparator = asmComparator;
 Toy.repeatedCall = repeatedCall;
 Toy.chainCall = chainCall;
 Toy.commuteEqn = commuteEqn;
+Toy.inputTypes = inputTypes;
 
 Toy.encodeSteps = encodeSteps;
 Toy.decodeSteps = decodeSteps;

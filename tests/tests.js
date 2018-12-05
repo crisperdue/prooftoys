@@ -587,6 +587,14 @@ var testCase = {
     assertEqual('"asdf\\n"', ups('asdf\n'));
   },
 
+  testInputTypes: function() {
+    const types = Toy.inputTypes;
+    assertFails(function() { types('fubar')});
+    assertEqual([], types('axiom1'));
+    assertEqual(['step', 'step'], types('and'));
+    assertEqual(['site', '_', 'equation'], types('rewriteFrom'));
+  },
+
   testEncodeSteps: function() {
     var step1 = rules.assume('x = y + 3');
     var step2 = rules.assume('x + y = 5');
@@ -2730,7 +2738,7 @@ window.setTimeout(function() {
   // A null value means "test all".
   var toTest = null;
   // An array of test keys runs all tests.
-  // toTest = ['testMultiReducer'];
+  // toTest = ['testInputTypes'];
 
   // Runs the named test case or warns if there is none such.
   function doTestCase(name) {
