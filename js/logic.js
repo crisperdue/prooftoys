@@ -1615,6 +1615,7 @@ const ruleInfo = {
   },
 
   // 5219: [A] to [T == A].
+  // TODO: Replace all uses of this with rewrites.
   toTIsA: {
     action: function(step) {
       const step1 = rules.r5218(step);
@@ -1629,19 +1630,17 @@ const ruleInfo = {
     labels: 'primitive'
   },
 
-  // also 5219: [opt_asm => (T == A)] to [opt_asm => A].  Works with conditionals.
+  // also 5219: [T == A] to [A].
+  // TODO: Replace all uses of this with rewrites.
   fromTIsA: {
+    precheck: function(step) {
+      return step.getLeft().isConst('T');
+    },
     action: function(step) {
-      assert(step.wff.eqnLeft().isConst('T'),
-             'Input should be [opt_asm => (T == A)]:\n  {1}', step);
-      var result = rules.replace(step, '/rt', rules.r5218(step.eqnRight()));
+      var result = rules.replace(step, '', rules.r5218(step.getRight()));
       return result.justify('fromTIsA', arguments, [step]);
     },
-    inputs: {equation: 1, condition: {1: function(h_eqn) {
-      var eqn = h_eqn.getMain();
-      var left = eqn.getLeft();
-      return left.isConst('T');
-    }}},
+    inputs: {equation: 1},
     form: 'Eliminate "T = " from step <input name=equation>',
     description: '[T = a] to [a]',
     menu: '[T = a] to [a]',
