@@ -75,10 +75,6 @@ jQuery.event.special.destroyed = {
 function eachArgType(ruleName, action) {
   var inputs = Toy.rules[ruleName].info.inputs;
   for (var type in inputs) {
-    if (type === 'condition') {
-      // Value is not a position or position list.
-      continue;
-    }
     var where = inputs[type];
     if (typeof where == 'number') {
       action(where - 1, type);
