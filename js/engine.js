@@ -359,7 +359,7 @@ var rules = {};
 //     reducible: Matches a call to anonymous function (lambda)
 //     varName: Name suitable for a variable.
 //     string: Arbitrary nonempty string.
-//     optString: Optional arbitrary string.
+//     optString: Optionally empty arbitrary string.
 //     site: Term in a step; the rule expects the term's step and path
 //       to the term as inputs.
 //     bindingSite: Matches a variable binding in a step (as in "renameBound").

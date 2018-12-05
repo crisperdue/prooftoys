@@ -843,11 +843,12 @@ ProofEditor.prototype.showProofButtons = function(value) {
 
 // All types that can be entered in a form.  Omits site, bindingSite,
 // and reducible, which are currently not supported in forms.  See
-// See comments for ruleInfo in engine.js for details on the types.
+// See comments above addRule in engine.js for details on the types.
 var formTypes = {
   term: true,
   varName: true,
   string: true,
+  optString: true,
   step: true,
   equation: true,
   implication: true
