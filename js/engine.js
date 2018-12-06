@@ -2062,6 +2062,69 @@ Expr.prototype.pathBindings = function(path_arg) {
   return bindings;
 }
 
+//// Fixing up bound variables
+
+/**
+ * Generates an equivalent ("matches") term with generated bound
+ * variables renamed with similar names, but in a parseable syntax.
+ * Used for presentation and serialization of statements.  The
+ * result can be used anywhere in place of the input.
+ */
+Expr.prototype.fixupBoundNames = function() {
+  const free = this.freeVars();
+  let bindings = null;
+  // Returns a truthy value iff a free variable has the given name or
+  // some variable of the input is mapped to it in the given binding
+  // context.
+  function isReserved(name, bindings) {
+    if (name in free) {
+      return true;
+    }
+    while (bindings) {
+      if (name === bindings.to.name) {
+        return true;
+      }
+      bindings = bindings.more;
+    }
+    return false;
+  }
+  // Returns the replacement for the given variable (atom) established
+  // by the bindings, or the given variable itself if there is none.
+  function replacement(vbl, bindings) {
+    return Toy.getBinding(vbl.name, bindings) || vbl;
+  }
+  function fixup(term, bindings) {
+    const type = term.constructor;
+    switch(type) {
+    case Atom:
+      return replacement(term, bindings);
+    case Call:
+      return new Call(fixup(term.fn, bindings), fixup(term.arg, bindings));
+    case Lambda:
+      const bound = term.bound;
+      // Variable names currently are a single letter followed
+      // by possible underscore and digits.
+      const base = bound.name[0];
+      let name = base;
+      let counter = 1;
+      while (isReserved(name, bindings)) {
+        name = base + '_' + counter;
+        counter++;
+      }
+      const vbl = varify(name);
+      return new Lambda(vbl,
+                        fixup(term.body,
+                              new Toy.Bindings(bound.name, vbl, bindings)));
+    default:
+      Toy.fail('Bad argument to fixupBoundNames:', term);
+    }
+  }
+  return fixup(this, null);
+};
+
+
+//// Simplification facts
+
 /**
  * Simplification facts for algebra, used in _simplifyOnce
  * simplifier: true are added to this list.

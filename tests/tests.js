@@ -1419,6 +1419,18 @@ var testCase = {
     assertEqual('/arg/body/arg', b3.get('w') + '');
   },
 
+  testFixupBoundNames: function() {
+    const unfixed = (rules.forallAnd()
+                     .andThen('instVar', '{y. x < y}', 'p'));
+    assert(unfixed.toString().match(/x\.\d/));
+    const fixed = unfixed.wff.fixupBoundNames();
+    console.log(fixed.$$);
+    assert(!fixed.toString().match(/x\.\d/));
+    // TODO: Add test case(s) for situation where a _bound_ variable
+    //   is already mapped to the first-choice mapping of a generated
+    //   bound variable.
+  },
+
   // ALIASES
 
   testAliases: function() {
@@ -2738,7 +2750,7 @@ window.setTimeout(function() {
   // A null value means "test all".
   var toTest = null;
   // An array of test keys runs all tests.
-  // toTest = ['testInputTypes'];
+  // toTest = ['testFixupBoundNames'];
 
   // Runs the named test case or warns if there is none such.
   function doTestCase(name) {
