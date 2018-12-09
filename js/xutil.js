@@ -1866,8 +1866,10 @@ function inputTypes(ruleName) {
  * step).
  */
 function encodeSteps(steps_arg) {
+  const indexes = new WeakMap();
+
   function rep(step) {
-    var index = step.__index;
+    var index = indexes.get(step)
     var result = [];
     result.push(index);
     result.push(step.ruleName);
@@ -1879,8 +1881,8 @@ function encodeSteps(steps_arg) {
       } else if (typeof arg === 'string') {
         result.push(unparseString(arg));
       } else if (arg instanceof Expr) {
-        if (arg.__index) {
-          result.push('(s ' + arg.__index + ')');
+        if (indexes.has(arg)) {
+          result.push('(s ' + indexes.get(arg) + ')');
         } else {
           // TODO: Replace this hack with something guaranteed to be
           //   correct, such as perhaps allowing the dots when parsing
@@ -1904,11 +1906,8 @@ function encodeSteps(steps_arg) {
   for (var i = 0; i < steps.length; i++) {
     var step = steps[i];
     // Indexes are 1-based.
-    step.__index = i + 1;
+    indexes.set(step, i + 1);
     reps.push(rep(step));
-  }
-  for (var i = 0; i < steps.length; i++) {
-    delete steps[i].__index;
   }
   reps.push(')\n');
   return reps.join('\n');
