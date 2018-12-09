@@ -1385,6 +1385,12 @@ Step.prototype.removeUser = function() {
 // structure.  Intended only for use in rendering.  Can operate on
 // either renderable or nonrenderable terms.
 //
+// This also renames generated bound variables for presentation with
+// subscripts and to help prevent large numbers in those subscripts.
+// Call this with bindings that include all free variables, mapping
+// name in the original to name in the copy, so the renaming will be
+// able to avoid reusing any of these in-scope names as the new name
+// of a bound variable.
 //
 Atom.prototype.copyForRendering = function(bindings) {
   var name = Toy.getBinding(this.name, bindings) || this.pname;
@@ -1414,13 +1420,9 @@ Lambda.prototype.copyForRendering = function(bindings) {
     // one with no binding in this scope.
     var base = bound.parseName().name;
     name = base;
-    var counter = 0;
-    while (true) {
-      if (!Toy.findBindingValue(name, bindings)) {
-        break;
-      }
-      counter++;
-      name = base + '_' + counter;
+    let counter = 1;
+    while (Toy.findBindingValue(name, bindings)) {
+      name = base + '_' + counter++;
     }
   }
 
