@@ -2387,8 +2387,17 @@ function _genBoundVar(name) {
  * variable.
  */
 Atom.prototype.isGeneratedBound = function() {
-  return this.name.indexOf('.') > -1;
+  return isGeneratedBoundName(this.name);
 };
+
+/**
+ * Returns true iff the (valid) atom name has the form of a
+ * generated bound variable.
+ */
+function isGeneratedBoundName(name) {
+  // This assumes "." is not allowed in atom names.
+  return name.indexOf('.') > -1;
+}
 
 /**
  * Parses the Atom's name into the base name (e.g. "x"), subscript if
@@ -3272,6 +3281,8 @@ Toy.addConstants = addConstants;
 Toy.multiReducer = multiReducer;
 Toy.findBetaMatch = findBetaMatch;
 Toy.checkBetaMatch = checkBetaMatch;
+
+Toy.isGeneratedBoundName = isGeneratedBoundName;
 
 // Private to xutil.js:
 Toy._identifierPattern = identifierPattern;

@@ -1424,8 +1424,10 @@ var testCase = {
                      .andThen('instVar', '{y. x < y}', 'p'));
     assert(unfixed.toString().match(/x\.\d/));
     const fixed = unfixed.wff.fixupBoundNames();
-    console.log(fixed.$$);
     assert(!fixed.toString().match(/x\.\d/));
+    const unfixed2 = unfixed.wff.get('/left/arg/body');
+    const fixed2 = unfixed2.fixupBoundNames();
+    assert(!fixed2.toString().match(/x\.\d/));
     // TODO: Add test case(s) for situation where a _bound_ variable
     //   is already mapped to the first-choice mapping of a generated
     //   bound variable.
