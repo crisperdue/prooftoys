@@ -1864,6 +1864,10 @@ function inputTypes(ruleName) {
  * "path" for a path (followed by the path as a string), or "s" for a
  * reference to another step (followed by the index of the referenced
  * step).
+ *
+ * The need to use fixupBoundNames here means that proofs cannot in
+ * general rely on bound names to remain the same from one step
+ * to the next!
  */
 function encodeSteps(steps_arg) {
   const indexes = new WeakMap();
@@ -1881,14 +1885,11 @@ function encodeSteps(steps_arg) {
       } else if (typeof arg === 'string') {
         result.push(unparseString(arg));
       } else if (arg instanceof Expr) {
-        if (indexes.has(arg)) {
-          result.push('(s ' + indexes.get(arg) + ')');
+        const type = Toy.inputTypes(step.ruleName)[i];
+        if (type === 'term' || type === 'bool') {
+          result.push('(t ' + arg.fixupBoundNames()  + ')');
         } else {
-          // TODO: Replace this hack with something guaranteed to be
-          //   correct, such as perhaps allowing the dots when parsing
-          //   in this context.
-          const encoded = arg.toString().replace(/[.]([0-9])/g, '_$1');
-          result.push('(t ' + encoded  + ')');
+          result.push('(s ' + indexes.get(arg) + ')');
         }
       } else {
         result.push(arg.toString());
@@ -1970,6 +1971,11 @@ function decodeArg(info, steps) {
     var key = info.nth(0).name;
     var value = info.nth(1);
     switch(key) {
+      // At present (2018-12-08) a term argument will be encoded as
+      // a step if it constitutes the entire wff, so in the future
+      // decoding may need to convert occurrences of 's' to the
+      // wff of the step if the argument type required by
+      // the rule is a term or close kin.
       case 's':
         // Step indexes are 1-based.
         return (steps[value.getNumValue() - 1]);
