@@ -846,6 +846,8 @@ ProofEditor.prototype.showProofButtons = function(value) {
 // See comments above addRule in engine.js for details on the types.
 var formTypes = {
   term: true,
+  bool: true,
+  path: true,
   varName: true,
   string: true,
   optString: true,
