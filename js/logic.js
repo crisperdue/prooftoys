@@ -640,7 +640,8 @@ const equalities = {
   // Similar to "consider", but uses a selected term.
   considerPart: {
     action: function(step, path) {
-      return rules.consider(step.get(path)).justify('considerPart', arguments);
+      return (rules.consider(step.get(path))
+              .justify('considerPart', arguments, [step]));
     },
     inputs: {site: 1},
     form: '',
