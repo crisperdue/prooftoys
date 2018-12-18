@@ -1872,11 +1872,10 @@ RuleMenu.prototype.offerApproved = function(name) {
  * Otherwise only rules that take no step and no site are offerable.
  */
 RuleMenu.prototype.offerable = function(ruleName) {
-  var rule = Toy.rules[ruleName];
-  var info = rule.info;
-  // TODO: Test and then hopefully remove this test, which looks
-  //   obsolete.
-  if (!('form' in info)) {
+  const rule = Toy.rules[ruleName];
+  const info = rule.info;
+  const inputs = info.inputs;
+  if (!inputs || Toy.isEmpty(inputs)) {
     return false;
   }
   const editor = this.proofEditor;
@@ -1885,7 +1884,6 @@ RuleMenu.prototype.offerable = function(ruleName) {
     // Something is selected.
     var precheck = rule.precheck;
     var term = step.selection;
-    var inputs = info.inputs;
     // See if the rule has a precheck that can "rule it out".
     // The rule must have a single input of a site or step type.
     if (precheck && Toy.mapSize(info.inputs) == 1 &&
@@ -1920,9 +1918,11 @@ RuleMenu.prototype.offerable = function(ruleName) {
     // arguments cannot come from the form.
     return false;
   } else {
-    // No selection, the rule must not require a step or site.
+    // There is no selection, so the rule must not require a step or
+    // site.
     for (const type in info.inputs) {
-      // Use "in", the type will not be an object method name.
+      // It is OK to use "in", since the type will not be the name of
+      // a method on Objects.
       if (type in stepTypes || type in siteTypes) {
         return false;
       }
