@@ -513,7 +513,6 @@ var numbersInfo = {
     isRewriter: true,
     inputs: {site: 1},
     toOffer: 'return Toy.isArithmetic(term);',
-    form: '',
     tooltip: 'arithmetic',
     labels: 'algebra'
   }
@@ -661,7 +660,6 @@ var equationOpsInfo = {
       return simplifyAddSubBoth(step, step.wff.parentEqn(path)); 
     },
     toOffer: 'return term.isReal();',
-    form: '',
     menu: ' algebra: add {term} to both sides',
     description: 'add {site};; {in step siteStep}',
     labels: 'algebra'
@@ -680,7 +678,6 @@ var equationOpsInfo = {
       return simplifyAddSubBoth(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
-    form: '',
     menu: ' algebra: subtract {term} from both sides',
     description: 'subtract {site};; {in step siteStep}',
     labels: 'algebra'
@@ -699,7 +696,6 @@ var equationOpsInfo = {
       return simplifyMulDivBoth(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
-    form: '',
     menu: ' algebra: multiply both sides by {term}',
     description: 'multiply by {site};; {in step siteStep}',
     labels: 'algebra'
@@ -718,7 +714,6 @@ var equationOpsInfo = {
       return simplifyMulDivBoth(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
-    form: '',
     menu: ' algebra: divide both sides by {term}',
     description: 'divide by {site};; {in step siteStep}',
     labels: 'algebra'
@@ -901,7 +896,6 @@ const mathSimplifiers = {
       return (deduped.justify('reduceRealAsms', arguments, [step]));
     },
     inputs: {step: 1},
-    form: '',
     menu: 'simplify real number assumptions',
     description: 'simplify numeric assumptions',
     labels: 'general'
@@ -940,7 +934,6 @@ var moversInfo = {
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
     offerExample: true,
-    form: '',
     menu: 'algebra: flatten {term}',
     description: 'flatten term {site};; {in step siteStep}',
     labels: 'algebra'
@@ -982,7 +975,6 @@ var moversInfo = {
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
     offerExample: true,
-    form: '',
     menu: 'algebra: collect like terms in {term}',
     description: 'collect like terms in {site};; {in step siteStep}',
     labels: 'algebra'
@@ -1032,7 +1024,6 @@ var moversInfo = {
     },
     inputs: {site: 1},
     offerExample: true,
-    form: '',
     menu: 'algebra: flatten {term}',
     description: 'flatten term {site};; {in step siteStep}',
     labels: 'algebra'
@@ -1211,7 +1202,6 @@ var moversInfo = {
     inputs: {site: 1},
     offerExample: true,
     toOffer: 'return term.isReal()',
-    form: '',
     menu: 'algebra: to standard ratio form',
     description: 'standard ratio form for term {site};; {in step siteStep}',
     labels: 'algebra'
@@ -1251,7 +1241,6 @@ var moversInfo = {
     inputs: {site: 1},
     offerExample: true,
     toOffer: 'return term.isReal()',
-    form: '',
     menu: 'algebra: to standard form for term in sum',
     description: 'standard form for term {site};; {in step siteStep}',
     labels: 'algebra'
@@ -1389,7 +1378,6 @@ var moversInfo = {
       return result.justify('moveTermRight', arguments, [step]);
     },
     inputs: {site: 1},
-    form: '',
     menu: 'algebra: move {term} to the right',
     description: 'move term right',
     labels: 'algebra'
@@ -1433,7 +1421,6 @@ var moversInfo = {
       return (result || step).justify('moveTermLeft', arguments, [step]);
     },
     inputs: {site: 1},
-    form: '',
     menu: 'algebra: move {term} to the left',
     description: 'move term left',
     labels: 'algebra'
@@ -1463,7 +1450,6 @@ var moversInfo = {
         : step;
     },
     inputs: {site: 1},
-    form: '',
     menu: 'algebra: group {term} with {right}',
     description: 'group to the right',
     labels: 'algebra'
@@ -1489,7 +1475,6 @@ var moversInfo = {
               .justify('ungroup', arguments, [step]));
     },
     inputs: {site: 1},
-    form: '',
     menu: 'algebra: ungroup {term}',
     description: 'ungroup',
     labels: 'algebra'
@@ -1521,7 +1506,6 @@ var moversInfo = {
       }
     },
     inputs: {site: 1},
-    form: '',
     menu: 'algebra: move term left as needed',
     description: 'move term left as needed',
     // Could be algebra, but this rule seems better for more advanced
@@ -1572,7 +1556,6 @@ var moversInfo = {
       }
     },
     inputs: {site: 1},
-    form: '',
     menu: 'move term to the other side',
     description: 'move term to the other side',
     labels: 'algebra'
@@ -1740,7 +1723,6 @@ var fractionsInfo = {
       }
     },
     inputs: {site: 1},
-    form: '',
     menu: 'to fraction form',
     description: 'convert to fraction form',
     labels: 'algebra'
@@ -1768,7 +1750,6 @@ var fractionsInfo = {
               .justify('primeFactors', [term]));
     },
     inputs: {term: 1},
-    form: '',
     menu: 'prime factors of {term}',
     description: 'prime factors of {term}',
     labels: 'algebra',

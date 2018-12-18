@@ -141,7 +141,6 @@ const axioms = {
   axiom1: {
     statement: 'g T & g F == forall {a. g a}', axiom: true,
     inputs: {},
-    form: '',
     description: 'axiom of T & F',
     tooltip: ('T and F are all the booleans')
   },
@@ -149,7 +148,6 @@ const axioms = {
   axiom2: {
     statement: 'x = y => h x = h y', axiom: true,
     inputs: {},
-    form: '',
     description: 'axiom of function application',
     tooltip: ('functions take equal values to equal values')
   },
@@ -167,7 +165,6 @@ const axioms = {
       return result;
     },
     inputs: {},
-    form: '',
     description: 'axiom of predicate application',
     tooltip: ('predicates take equal values to the same truth value')
   },
@@ -177,7 +174,6 @@ const axioms = {
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
     inputs: {},
-    form: '',
     tooltip: ('extensionality: functions are equal based on equal results'
               + ' on all inputs.'),
     description: 'axiom of equal functions'
@@ -195,7 +191,6 @@ const axioms = {
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
     inputs: {},
-    form: '',
     tooltip: ('extensionality: predicates are equal ' +
               'based on equal membership.'),
     description: 'axiom of equal predicates'
@@ -234,7 +229,6 @@ const axioms = {
     // Traditionally (upside-down) iota, as in Andrews' text.
     statement: 'the1 {x. x = y} = y', axiom: true,
     inputs: {},
-    form: '',
     tooltip: ('axiom of description'),
     description: 'axiom of description',
     simplifier: true
@@ -526,7 +520,6 @@ const prelogic = {
       return result.justify('useDefinition', args, [step]);
     },
     inputs: {site: 1},
-    form: '',
     menu: 'replace name with its definition',
     tooltip: (''),
     description: 'definition of {site}'
@@ -570,7 +563,6 @@ const equalities = {
       var step2 = rules.eqSelf(Toy.constify('=='));
       return rules.r(step2, step1, '/right');
     },
-    form: '',
     tooltip: '= and \u21d4 are the same',
     labels: 'uncommon'
   },
@@ -644,7 +636,6 @@ const equalities = {
               .justify('considerPart', arguments, [step]));
     },
     inputs: {site: 1},
-    form: '',
     menu: 'consider {term} in isolation',
     tooltip: ('prepare to transform term'),
     description: 'term equal to itself',
@@ -777,10 +768,9 @@ const equalities = {
       var result = rules.r(equation, step, path);
       return result.justify('simpleApply', arguments, [step]);
     },
-    inputs: {reducible: 1},
-    isRewriter: true,
     // Not offered interactively.
-    // form: '',
+    // inputs: {reducible: 1},
+    isRewriter: true,
     menuGen: function(ruleName, step, term) {
       return Toy.format('apply function of {1}', term.fn.bound);
     },
@@ -841,7 +831,6 @@ var assumers = {
       return rules.assume(step.get(path)).justify('assumePart', arguments);
     },
     inputs: {site: 1},
-    form: '',
     menu: 'assume {term}',
     tooltip: ('assume term'),
     description: 'assume',
@@ -990,7 +979,6 @@ const baseRules = {
     },
     isRewriter: true,
     inputs: {site: 1},
-    form: '',
     menuGen: function(ruleName, step, term) {
       var format = Toy.format;
       if (!(term instanceof Call)) {
@@ -1516,7 +1504,6 @@ var simplifiersInfo = {
     },
     inputs: {site: 1},
     minArgs: 2,
-    form: '',
     menu: 'algebra: simplify {term}',
     offerExample: true,
     description: 'simplify;; {in step siteStep}',
@@ -2453,7 +2440,6 @@ const ruleInfo = {
       }
     },
     inputs: {site: 1},
-    form: '',
     menu: 'true by assumption',
     description: 'true by assumption'
   },
@@ -3350,7 +3336,6 @@ const ruleInfo = {
       return result.justify('replaceConjunct', arguments, [step]);
     },
     inputs: {site: 1},
-    form: '',
     menuGen: function(ruleName, step, term) {
       if (step && term && term.isVariable()) {
         var wff = step.wff;
@@ -3837,7 +3822,6 @@ const ruleInfo = {
       return rules.eRule(step, name);
     },
     inputs: {site: 1},
-    form: '',
     menu: ('[A => B] to [&exist; A => B]'),
     tooltip: 'Existentially quantify antecedent',
     description: '&exist; {site};; {in step step}',
@@ -4030,7 +4014,6 @@ const ruleInfo = {
       return result.justify('extractHypAt', arguments, [step]);
     },
     inputs: {site: 1},
-    form: '',
     menu: 'move to conclusions',
     tooltip: 'move assumption to the conclusions',
     labels: 'uncommon'
@@ -4077,7 +4060,6 @@ const ruleInfo = {
       return result.justify('asAssumption', arguments, step);
     },
     inputs: {site: 1},
-    form: '',
     menu: Toy.mathText('[a => (p => q)] to [a & p => q]'),
     labels: 'basic',
     description: 'use {site} as an assumption;; {in step siteStep}'
@@ -4222,7 +4204,6 @@ const ruleInfo = {
               .justify('reduceAll', arguments, [step]));
     },
     inputs: {site: 1},
-    form: '',
     menu: 'beta reduce throughout',
     labels: 'advanced'
   },
@@ -4256,7 +4237,6 @@ const ruleInfo = {
       return null;
     },
     inputs: {site: 1},
-    form: '',
     menu: 'reduce with unbind',
     description: 'reduce or unbind'
   },
@@ -4300,7 +4280,6 @@ const ruleInfo = {
       return step;
     },
     inputs: {site: 1},
-    form: '',
     menu: 'unbind',
     description: 'unbind'
   },
@@ -4340,7 +4319,6 @@ const ruleInfo = {
       return rules.forwardChain(step6, taut);
     },
     inputs: {},
-    form: '',
     description: 'symmetry of equality',
     labels: 'algebra'
   },
@@ -4356,7 +4334,6 @@ const ruleInfo = {
       return rules.forwardChain(step4, taut);
     },
     inputs: {},
-    form: '',
     description: 'transitivity of equality',
     labels: 'basic'
   },
@@ -4539,7 +4516,6 @@ const existRules =
       return result.justify('witnessExists', arguments, [step]);
     },
     inputs: {site: 1},
-    form: '',
     menu: "A to &exist; x. A'",
     description: 'existentially quantify',
     labels: 'basic'
