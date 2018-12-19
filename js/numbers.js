@@ -120,8 +120,6 @@ if (!Toy.deeperFieldAxioms) {
   addRules(uniqueInverses);
 }
 
-// From here, facts that do not depend on the axiomatization.
-
 const identityFacts =
   [
    // Axioms
@@ -185,7 +183,40 @@ addRules(identityFacts);
 definition('neg = {x. -1 * x}');
 
 // TODO: Make this be the definition of neg, and prove the current definition.
-rules.assert('neg = {x. the1 {y. R x & R y & y + x = 0}}');
+definition('negg = {x. the1 {y. R x & R y & x + y = 0}}');
+
+addRule({name: 'negdef',
+      statement: 'neg = {x. the1 {y. R x & R y & x + y = 0}}'});
+
+const inverses =
+  [
+   {name: 'negFact',
+    statement: '@ R x & R y & x + y = 0 == R x & negg x = y',
+    proof: function() {
+       const steps =
+       [
+        '(1 exists1Law)',
+        '(2 fact "exists1 {y. R y & x + y = 0}")',
+        '(3 instantiateVar (s 1) (path "/right/left/arg") (t z))',
+        '(4 instantiateVar (s 3) (path "/right/right/right/arg") (t {y. ((R y) & ((x + y) = 0))}))',
+        '(5 apply (s 4) (path "/right/left"))',
+        '(6 p2 (s 2) (s 5) (t (((a => b) & (b => c)) => (a => c))))',
+        '(7 instantiateVar (s 6) (path "/right/right/left") (t y))',
+        '(8 rewrite (s 7) (path "/right/right/right/arg/body/left") (t (a == (T & a))))',
+        '(9 assume (t (R x)))',
+        '(10 replaceT (s 8) (path "/right/right/right/arg/body/left/left") (s 9))',
+        '(11 expDefinition "negg")',
+        '(12 rewrite (s 11) (path "/main") (t ((x = y) == (y = x))))',
+        '(13 rewriteOnlyFrom (s 10) (path "/right/right/right") (s 12))',
+        '(14 rewrite (s 13) (path "") (t ((a => (b == c)) == ((a & b) == (a & c)))))',
+        '(15 rewrite (s 14) (path "/main/left") (t ((a & (b & c)) == ((a & b) & c))))',
+        '(16 rewrite (s 15) (path "/main/right/right") (t ((x = y) == (y = x))))'
+        ];
+       return Toy.decodeProof(steps);
+     }
+   }
+   ];
+addRules(inverses);
 
 definition('(-) = {x. {y. x + neg y}}');
 
