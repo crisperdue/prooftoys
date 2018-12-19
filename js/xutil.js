@@ -1992,6 +1992,44 @@ function decodeArg(info, steps) {
   }
 }
 
+/**
+ * Returns a string with all the key information for recreating a
+ * proof in the step editor as JavaScript code that proves the last
+ * step as a fact.  The first line of the string is a statement of the
+ * fact, and the the remaining lines are suitable for use as the
+ * elements of an array to pass to Toy.decodeProof, which proves the
+ * last of the steps from the preceding ones.
+ *
+ * This is for use by developers in transferring proofs from the step
+ * editor into the system source code.  Call it interactively from the
+ * browser console, then cut and paste the two parts of the output
+ * string.
+ */
+function dumpProof(proofEditor) {
+  const ed = proofEditor || window.proofEditor;
+  const step = ed.steps[ed.steps.length - 1].original;
+  const steps = Toy.proofOf(step);
+  const encoded = encodeSteps(steps);
+  const split = encoded.split('\n');
+  split.pop();
+  split.pop();
+  split.shift();
+  const quoted = split.map(function(line) { return "  '" + line + "'"; });
+  return "stmt: '" + step.wff.toString() + "',\n" + quoted.join(',\n');
+}
+
+/**
+ * Given an array of step descriptions, each in the serialized form as
+ * from encodeSteps, builds a proof consisting of those steps, and
+ * returns the proved result (last step).
+ */
+function decodeProof(steps) {
+  steps.unshift('(steps ');
+  steps.push(')');
+  const decoded = decodeSteps(steps.join('\n'));
+  return decoded[decoded.length - 1];
+}
+
 
 //// Export public names.
 
@@ -2011,6 +2049,9 @@ Toy.inputTypes = inputTypes;
 
 Toy.encodeSteps = encodeSteps;
 Toy.decodeSteps = decodeSteps;
+
+Toy.dumpProof = dumpProof;
+Toy.decodeProof = decodeProof;
 
 Toy.unicodify = unicodify;
 
