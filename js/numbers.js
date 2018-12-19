@@ -182,11 +182,8 @@ addRules(identityFacts);
 
 definition('neg = {x. -1 * x}');
 
-// TODO: Make this be the definition of neg, and prove the current definition.
+// TODO: Make this be the definition of neg.
 definition('negg = {x. the1 {y. R x & R y & x + y = 0}}');
-
-addRule({name: 'negdef',
-      statement: 'neg = {x. the1 {y. R x & R y & x + y = 0}}'});
 
 const inverses =
   [

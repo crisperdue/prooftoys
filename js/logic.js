@@ -1681,6 +1681,8 @@ const ruleInfo = {
     labels: 'basic'
   },
 
+  // TODO: trueAs0:, trueAs1: ??
+
   // We could consider making a rule, something like "trueInFact",
   // that generalizes forwardChain to use a proved value anywhere in a
   // fact, not just as the antecedent in a conditional.  Looking at
@@ -4196,7 +4198,7 @@ const ruleInfo = {
     // TODO: Convert these to toOffer: properties or combine.
     menuCheck: function(step, path) {
       const result = rules._simplifyOnce(step, path,
-                                          [{apply: tryReduce, pure: true}]);
+                                         [{apply: tryReduce, pure: true}]);
       return result !== step;
     },
     action: function(step, path) {
