@@ -507,7 +507,8 @@ function addRule(info) {
     }
     // Add it as a fact also, and potentially "swapped".
     // A fact needs a statement, so we rely here on having a statement given.
-    var factProps = {
+    var factXferProps = {
+      axiom: true,
       description: true,
       simplifier: true,
       desimplifier: true,
@@ -517,7 +518,7 @@ function addRule(info) {
     };
     // Accept selected fact properties in the rule metadata.
     var properties = {goal: statement, proof: proof};
-    for (var k in factProps) {
+    for (var k in factXferProps) {
       if (k in info) {
         // Uncomment this for detailed tracing.
         // console.warn('Adding', k, 'to', name);
@@ -2220,6 +2221,8 @@ function addFactsMap(map) {
 // for validation of fact properties.  See addFact.
 var factProperties = {
   goal: true,
+  proved: true,
+  axiom: true,
   statement: true,
   proof: true,
   definition: true,
@@ -2249,6 +2252,7 @@ var factProperties = {
  * goal: if present, can generate the synopsis; if proved, becomes
  *   the proved result, and any proof function will be ignored,
  *   otherwise a WFF.
+ * axiom: true if this is an axiom.
  * synopsis:  string for input to mathParse.  Must parse to a
  *   complete statement of the fact, to be used as the goal.
  * proof: function to return the proved fact, matching the goal.
@@ -2280,8 +2284,14 @@ var factProperties = {
  * For processing of additional metadata properties use addRule.
  */
 function addFact(info) {
+  // This function adds to the info and supplies it to setFactInfo.
+
+  // This will be the same as the goal if the goal is proved.
+  info.proved = info.goal && info.goal.isProved() && info.goal;
+
   // The goal is a rendered Expr just because that makes a complete
-  // copy that can be properly annotated with types.
+  // copy that can be properly annotated with types.  Copying
+  // makes it not proved.
   info.goal = ((info.goal || mathParse(info.statement))
                .copyForRendering(null));
   for (var key in info) {
@@ -2290,7 +2300,6 @@ function addFact(info) {
       console.warn('In fact', id, 'extra info key:', key);
     }
   }
-  info.proved = info.goal.isProved() && info.goal;
   // Adding new constants.  Doing it here adds them before asserting
   // the fact.  Also rules.assert can add constants in case it is used
   // without registering a fact. (And Toy.define also adds the defined
@@ -2315,6 +2324,9 @@ function addFact(info) {
   // shared as part of any other steps or Exprs.
   info.goal.annotateWithTypes();
   if (!info.proved) {
+    if (!info.axiom && !info.definition && !info.proof) {
+      console.warn('No proof for', info.goal.toUnicode());
+    }
     info.prover = asFactProver(info.proof, info.goal);
   }
   // Set to true when starting to attempt a proof, then
