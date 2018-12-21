@@ -1813,14 +1813,6 @@ const basicRealFacts =
      }
    },
 
-   {statement: '@neg x = -1 * x',
-    proof: function() {
-       return (rules.consider('neg x')
-               .andThen('useDefinition', '/right')
-               .andThen('apply', '/right'));
-     }
-   },
-
    {statement: 'a + neg a = 0',
     simplifier: true,
     proof: function() {
