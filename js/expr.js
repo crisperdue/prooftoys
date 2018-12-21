@@ -2819,7 +2819,7 @@ function multiReducer(term) {
     path = new Path('fn', path);
   }
   while (x.fn instanceof Lambda) {
-    eqn = rules.simpleApply(eqn, new Path('right', path));
+    eqn = rules.reduce(eqn, new Path('right', path));
     if (path.isEnd()) {
       break;
     }
@@ -2859,7 +2859,7 @@ function checkBetaMatch(self, fn, expr, map, bindings) {
       return reduced;
     }
     if (reducible.isLambdaCall()) {
-      reduced = rules.simpleApply(reduced, '/right');
+      reduced = rules.reduce(reduced, '/right');
     } else {
       return null;
     }

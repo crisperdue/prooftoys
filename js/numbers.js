@@ -563,7 +563,7 @@ var divisionInfo = {
       //   matchSchema.
       var step3 = rules.instVar(step2, '{z. R x & R y & R z & x = y * z}', 'p');
       var step4 = rules.p2(step1, step3, '(a => b) & (b => c) => (a => c)');
-      var step6 = rules.simpleApply(step4, path);
+      var step6 = rules.reduce(step4, path);
       var fml = '@ the1 {z. R x & R y & R z & x = y * z} = x / y';
       var divDefn = rules.fact(fml);
       var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);

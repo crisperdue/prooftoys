@@ -1771,7 +1771,7 @@ var stepFormatters = {
     var target = step0.get(path);
     return 'rename ' + target.bound;
   },
-  simpleApply: function(step) {
+  reduce: function(step) {
     var step0 = step.ruleArgs[0];
     step0 = step0.rendering || step0;
     var path = step.ruleArgs[1];

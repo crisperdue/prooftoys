@@ -820,7 +820,7 @@ function addDefnFacts(definition) {
     while (lambda instanceof Lambda) {
       var bound = lambda.bound;
       eqn = (rules.applyBoth(eqn, bound)
-             .andThen('simpleApply', '/right'));
+             .andThen('reduce', '/right'));
       lambda = eqn.getRight();
     }
     // TODO: Consider adding a fact unconditionally, and treating

@@ -462,7 +462,7 @@ const prelogic = {
       while (lambda instanceof Lambda) {
         const bound = lambda.bound;
         defn = (rules.applyBoth(defn, bound)
-                .andThen('simpleApply', '/right'));
+                .andThen('reduce', '/right'));
         lambda = defn.getRight();
       }
       return defn.justify('expDefinition', arguments);
@@ -533,7 +533,7 @@ addRulesMap(prelogic);
 
 // These just(?) use axiom4 and Rule R.
 
-// Definition rules need simpleApply and applyBoth to be available
+// Definition rules need reduce and applyBoth to be available
 // at the occurrence of Toy.definition.
 
 const equalities = {
@@ -749,24 +749,24 @@ const equalities = {
       var c = termify(c_arg);
       var fn = call(call(termify('{f. {y. {x. f x y}}}'), f), c);
       return (rules.applyToBoth(fn, a_b)
-              .andThen('simpleApply', '/rt/right/fn/fn')
-              .andThen('simpleApply', '/rt/right/fn')
-              .andThen('simpleApply', '/rt/right')
-              .andThen('simpleApply', '/rt/left/fn/fn')
-              .andThen('simpleApply', '/rt/left/fn')
-              .andThen('simpleApply', '/rt/left')
+              .andThen('reduce', '/rt/right/fn/fn')
+              .andThen('reduce', '/rt/right/fn')
+              .andThen('reduce', '/rt/right')
+              .andThen('reduce', '/rt/left/fn/fn')
+              .andThen('reduce', '/rt/left/fn')
+              .andThen('reduce', '/rt/left')
               .justify('applyToBothWith', arguments, [a_b]));
     },
   },
 
-  // Just applies an anonymous lambda to an argument at the
-  // specified location in a step.
-  simpleApply: {
+  // Just applies an anonymous lambda to an argument at the specified
+  // location in a step.  (This is beta reduction.)
+  reduce: {
     action: function(step, path) {
       // Note that axiom 4 checks validity of its argument.
       var equation = rules.axiom4(step.get(path));
       var result = rules.r(equation, step, path);
-      return result.justify('simpleApply', arguments, [step]);
+      return result.justify('reduce', arguments, [step]);
     },
     // Not offered interactively.
     // inputs: {reducible: 1},
@@ -775,7 +775,7 @@ const equalities = {
       return Toy.format('apply function of {1}', term.fn.bound);
     },
     tooltip: ('Applies a lambda to its argument'),
-    description: '=simpleApply',
+    description: '=reduce',
     labels: 'uncommon'
   }
 
@@ -951,7 +951,7 @@ const baseRules = {
           if (defn) {
             return (rules.eqSelf(expr)
                     .andThen('useDefinition', '/right/fn')
-                    .andThen('simpleApply', '/right'));
+                    .andThen('reduce', '/right'));
           }
         }
         // Call that looks like (<left> <constant> <right>) or
@@ -964,10 +964,10 @@ const baseRules = {
             if (defn) {
               var step1 = rules.eqSelf(call);
               var step2 = rules.useDefinition(step1, '/right/fn');
-              var step3 = rules.simpleApply(step2, '/right');
+              var step3 = rules.reduce(step2, '/right');
               var step4 = rules.eqSelf(expr);
               var step5 = rules.replace(step4, '/right/fn', step3);
-              return rules.simpleApply(step5, '/right');
+              return rules.reduce(step5, '/right');
             }
           }
         }
@@ -1807,7 +1807,7 @@ const ruleInfo = {
     proof: function() {
       return (rules.fact('p x => exists p')
               .andThen('instVar', '{x. T}', 'p')
-              .andThen('simpleApply', '/left')
+              .andThen('reduce', '/left')
               .andThen('simplifySite', ''));
     }
   },
@@ -2554,8 +2554,8 @@ const ruleInfo = {
       var q = lambda(v, termify(b_arg));
       var step1 = rules.implyForall();
       var step2 = (rules.instMultiVars(step1, {p: p, q: q})
-                   .andThen('simpleApply', '/left/arg/body/right')
-                   .andThen('simpleApply', '/right/right/arg/body'));
+                   .andThen('reduce', '/left/arg/body/right')
+                   .andThen('reduce', '/right/right/arg/body'));
       return step2.justify('implyForallGen', arguments);
     },
     inputs: {varName: 1, bool: [2, 3]},
@@ -2575,7 +2575,7 @@ const ruleInfo = {
     proof: function() {
       const fact1 = rules.fact('forall p => p x');
       const step1 = (fact1.andThen('instMultiVars', {p: '{x. p x => q x}'})
-                     .andThen('simpleApply', '/right'));
+                     .andThen('reduce', '/right'));
       const step2 = (rules.p2(step1, fact1,
                               '(a => (b => c)) ∧ (d => b) => (a ∧ d => c)')
                      .andThen('toForall1', 'x')
@@ -2688,7 +2688,7 @@ const ruleInfo = {
       var falsity = (rules.forallXF()
                      .andThen('rewriteOnly', '', 'not a == (a == F)'));
       var step1 = rules.forallOrEquiv().andThen('instVar', '{x. F}', 'q');
-      var step2 = rules.simpleApply(step1, step1.find(term));
+      var step2 = rules.reduce(step1, step1.find(term));
       var step4 = rules.rewriteOnly(step2, '/right/right', falsity);
       var step5 = (step4.andThen('simplifySite', '/right')
                    .andThen('simplifySite', '/left/arg/body'));
@@ -2713,7 +2713,7 @@ const ruleInfo = {
     proof: function() {
       const andAB = (rules.fact('forall p => p x')
                      .andThen('instMultiVars', {p: '{x. p x & q x}'})
-                     .andThen('simpleApply', '/right'));
+                     .andThen('reduce', '/right'));
       const a = rules.forwardChain(andAB, 'a => b & c => (a => b)');
       const b = rules.forwardChain(andAB, 'a => b & c => (a => c)');
       const fa = rules.toForall1(a, 'x');
@@ -4232,7 +4232,7 @@ const ruleInfo = {
       } else {
         const term = step.get(path_arg);
         if (term.isLambdaCall() && term.argument.isVariable()) {
-          const step2 = rules.simpleApply(step, path_arg);
+          const step2 = rules.reduce(step, path_arg);
           return step2.justify('backReduce', arguments, [step]);
         }
       }
@@ -4274,7 +4274,7 @@ const ruleInfo = {
           // reduction just erases the lambda, in other words
           // ({v. A} v) reduces to just A.
           return (rules.renameBound(step, bindingPath, desiredName)
-                  .andThen('simpleApply', path)
+                  .andThen('reduce', path)
                   .justify('unbind', arguments, [step]));
         }
       }
@@ -4595,12 +4595,12 @@ const existRules =
                  q: 'p x == x = the1 p'};
       var step5 = (rules.existImplies()
                    .andThen('instMultiVars', map)
-                   .andThen('simpleApply', '/left/arg/body/left'));
+                   .andThen('reduce', '/left/arg/body/left'));
       var step6 = (rules.trueBy0(step5, '/left', step4)
                    .andThen('rewriteOnly', '', '(T == x) == x'));
       var step7 = (rules.consider('exists1 p')
                    .andThen('useDefinition', '/left/fn')
-                   .andThen('simpleApply', '/left'));
+                   .andThen('reduce', '/left'));
       var step8 = rules.rewrite(step6, '/left', step7);
       return step8;
     }
@@ -4625,7 +4625,7 @@ const existRules =
       return (rules.fact('p x => exists p')
               .andThen('instMultiVars', map)
               .andThen('rewriteOnlyFrom', '/right', eqn)
-              .andThen('simpleApply', '/left'));
+              .andThen('reduce', '/left'));
     }
   },
 
@@ -4733,7 +4733,7 @@ const logicFacts =
     proof: function() {
        return (rules.eqSelf('ident x')
                .andThen('useDefinition', '/right/fn')
-               .andThen('simpleApply', '/right'));
+               .andThen('reduce', '/right'));
      },
     simplifier: true
    },
@@ -4890,7 +4890,7 @@ const logicFacts =
     proof: function() {
        return (rules.fact('p x => exists p')
                .andThen('instVar', '{y. y = x}', 'p')
-               .andThen('simpleApply', '/left')
+               .andThen('reduce', '/left')
                .andThen('simplifySite', ''));
      }
    },

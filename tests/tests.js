@@ -2114,7 +2114,7 @@ var testCase = {
   testRewriteExpansion: function() {
     var step = (rules.fact('p x => exists p')
                 .andThen('instVar', '{x. x > 0}', 'p')
-                .andThen('simpleApply', '/left')
+                .andThen('reduce', '/left')
                 .andThen('toForall0', 'x'));
     var result = rules.rewriteOnly(step, '', 'existImplies');
     assertEqual('((exists {x. (x > 0)}) => (exists {x. (x > 0)}))',
