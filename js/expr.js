@@ -2351,7 +2351,7 @@ function numify(num) {
  * existingNames set.
  */
 function genName(name, existingNames) {
-  var base = name.replace(/[.0-9]+$/, '');
+  var base = name[0];
   var candidate = name;
   for (var i = 1; existingNames[candidate]; i++) {
     candidate = base + '_' + i;
