@@ -1138,7 +1138,6 @@ const baseRules = {
   //   a conditional.
   instForall: {
     precheck: function(step, path, expr_arg) {
-      const expr = termify(expr_arg);
       const target = step.get(path);
       const pathStr = path.toString();
       const conditional = step.wff.isCall2('=>');
@@ -1622,7 +1621,7 @@ const ruleInfo = {
   // TODO: Replace all uses of this with rewrites.
   fromTIsA: {
     precheck: function(step) {
-      return step.getLeft().isConst('T');
+      return step.matchSchema('T = p');
     },
     action: function(step) {
       var result = rules.replace(step, '', rules.r5218(step.getRight()));
@@ -1829,8 +1828,8 @@ const ruleInfo = {
   // hypotheses.  The variable v may be given as a string, which it
   // converts internally to a variable.
   toForall0: {
-    action: function(step, v) {
-      v = varify(v);
+    action: function(step, v_arg) {
+      const v = varify(v_arg);
       var step1 = rules.rewriteOnly(step, '', 'a == (T == a)');
       var step2 = rules.theorem('forallXT');
       var step3 = rules.renameBound(step2, '/arg', v);
@@ -4240,7 +4239,7 @@ const ruleInfo = {
     },
     inputs: {site: 1},
     menu: 'reduce with unbind',
-    description: 'reduce or unbind'
+    description: 'smart reduce'
   },
 
   // If possible, beta reduce the target term by renaming an outer
