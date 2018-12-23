@@ -445,6 +445,38 @@ const prelogic = {
   },
 
   /**
+   * Converts an equality of two functions / predicates into equality
+   * of the result of applying each to a variable, as for converting
+   * a function definition to the traditional form [f x = ... ].
+   *
+   * TODO: Consider obsoleting this rule when Axiom 3 becomes
+   *   available to use as a rewrite in the UI.  Further consider
+   *   obsoleting this if unForall or similar rule removes forall from
+   *   deeper subexpressions (that do not involve ==).
+   */
+  reduceEqn: {
+    action: function(equation) {
+      assertEqn(equation);
+      const inputs = [equation];
+      if (equation.isCall2('=>')) {
+        // const bound = equation.get('/rt/right/arg/bound');
+        return (equation.andThen('rewriteOnly', '/right', rules.axiom3())
+                .andThen('unForall', '/right')
+                .justify('reduceEqn', inputs, inputs));
+      } else {
+        // const bound = equation.get('/right/arg/bound');
+        return (equation.andThen('rewriteOnly', '', rules.axiom3())
+                .andThen('unForall', '')
+                .justify('reduceEqn', inputs, inputs));
+      }
+    },
+    inputs: {step: 1},
+    labels: 'basic',
+    menu: '[f = {x. p x}] to [f x = p x]',
+    description: 'reduce equation'
+  },
+
+  /**
    * Gets the "expanded" definition of the given defined name.  If the
    * definition is a simple equation of the usual kind, and the RHS is
    * one or more nested lambdas, this equates a call to the named
@@ -1124,6 +1156,47 @@ const baseRules = {
       var step2 = rules.eqT(T);
       return rules.rRight(step2, step1, '');
     }
+  },
+
+  /**
+   * Extract the body term from a select use of forall, renaming the
+   * bound variable if necessary to keep it distinct from all (other)
+   * free variables.  This is a useful special case of instForall that
+   * does not need the user to enter data through a form.
+   */
+  unForall: {
+    precheck: function(step, path) {
+      const target = step.get(path);
+      const pathStr = path.toString();
+      const conditional = step.wff.isCall2('=>');
+      const ok = (target &&
+                  target.isCall1('forall') &&
+                  target.arg instanceof Toy.Lambda &&
+                  // TODO: Handle cases where the target is unconditional.
+                  (conditional
+                   ? (pathStr === '/right' ||
+                      pathStr === '/rt' ||
+                      pathStr === '/main' ||
+                      pathStr === '/arg')
+                   : (pathStr === '' ||
+                      pathStr === '/main')));
+      return ok;
+    },
+    action: function(step, path) {
+      const bound = step.get(path).arg.bound;
+      const name = step.wff.freshVar(bound.name);
+      return (rules.instForall(step, path, name)
+              .justify('unForall', arguments, [step]));
+    },
+    toOffer: function(step, term) {
+      var path = step.prettyPathTo(term);
+      return rules.instForall.precheck(step, path);
+    },
+    inputs: {site: 1},
+    labels: 'basic',
+    menu: 'remove &forall;',
+    tooltip: ('In &forall;, instantiates the bound variable.'),
+    description: 'remove &forall;'
   },
 
   // Target is a step of the form forall {x. B}, expr is A, which will
