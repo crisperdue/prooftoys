@@ -4303,7 +4303,7 @@ const ruleInfo = {
         return step1.justify('backReduce', arguments, [step]);
       } else {
         const term = step.get(path_arg);
-        if (term.isLambdaCall() && term.argument.isVariable()) {
+        if (term.isLambdaCall() && term.arg.isVariable()) {
           const step2 = rules.reduce(step, path_arg);
           return step2.justify('backReduce', arguments, [step]);
         }
