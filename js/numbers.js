@@ -178,16 +178,33 @@ const identityFacts =
    ];
 addRules(identityFacts);
 
-// Note that our axiom of arithmetic computes that neg 1 = -1.
+// Note that our axiom of arithmetic computes that neg 1 = -1, which
+//   gives ability to prove things we prefer to prove from axioms.
 
-definition('neg = {x. -1 * x}');
+// Facts to replace the previous definition of negative.
+//
+// TODO: Replace these with facts that assume R x, then prove from
+//   field axioms.
+const negDefFacts =
+  [
+   {statement: '@ neg = {x. -1 * x}'},
+   {
+     statement: '@ neg x = -1 * x',
+     proof: function() {
+       return (rules.fact('@ neg = {x. -1 * x}')
+               .andThen('reduceEqn'));
+     }
+   },
+   ];
+addRules(negDefFacts);
+
 
 // TODO: Make this be the definition of neg.
 definition('negg = {x. the1 {y. R x & R y & x + y = 0}}');
 
 const inverses =
   [
-   {name: 'negFact',
+   {name: 'neggFact',
     statement: '@ R x & R y & x + y = 0 == R x & negg x = y',
     proof: function() {
        const steps =
@@ -2202,7 +2219,7 @@ var negationFacts = {
   '@a - b = a + -1 * b': {
     proof: function() {
       return (rules.fact('@a - b = a + neg b')
-              .andThen('apply', '/main/right/right'));
+              .andThen('rewrite', '/main/right/right', '@ neg x = -1 * x'));
     }
   },
   '@R b => a - neg b = a + b': {

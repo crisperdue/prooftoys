@@ -1503,7 +1503,7 @@ var testCase = {
     const check = Toy.isFunDef;
     assert(!check('T'));
     assert(!check('&'));
-    assert(check('neg'));
+    assert(check('ident'));
     assert(!check('posNum'));
   },
 
@@ -1733,9 +1733,9 @@ var testCase = {
     var result = rules.apply(step1, '/left');
     assertEqual('(2 = 2)', result);
     // Apply a call to 1-arg function:
-    var step1 = rules.eqSelf('neg x');
+    var step1 = rules.eqSelf('ident x');
     var result = rules.apply(step1, '/right');
-    assertEqual('((neg x) = (-1 * x))', result);
+    assertEqual('((ident x) = x)', result);
     // Apply a call to a 2-arg function:
     var step1 = rules.assume('x != y');
     var result = rules.apply(step1, '/right');
