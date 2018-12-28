@@ -187,11 +187,11 @@ addRules(identityFacts);
 //   field axioms.
 const negDefFacts =
   [
-   {statement: '@ neg = {x. -1 * x}'},
+   {statement: '@ neg = [x. -1 * x]'},
    {
      statement: '@ neg x = -1 * x',
      proof: function() {
-       return (rules.fact('@ neg = {x. -1 * x}')
+       return (rules.fact('@ neg = [x. -1 * x]')
                .andThen('reduceEqn'));
      }
    },

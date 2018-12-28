@@ -1089,7 +1089,7 @@ function justParse1(input, aboveToken) {
 
   /**
    * Consumes the next token as returned by next(), throwing an Error
-   * if it is not euqal to the one expected.
+   * if it is not equal to the one expected.
    */
   function expect(expected) {
     var token = next();
@@ -1164,13 +1164,13 @@ function justParse1(input, aboveToken) {
         expect(')');
         return expr;
       }
-    } else if (name === '{') {
+    } else if (name === '{' || name === '[') {
       var id = next();
       assert(id.isVariable(), 'Expected identifier, got ' + id.name);
       expect('.');
       var body = mustParseAbove(aboveWhat);
       expr = lambda(id, body);
-      expect('}');
+      expect(name === '{' ? '}' : ']');
       return expr;
     }
     var power = getPrecedence(token);
@@ -1385,6 +1385,7 @@ var precedence = {
   // Closing tokens have power 0 to make infix parsing return.
   '(end)': 0,
   ')': 0,
+  ']': 0,
   '}': 0,
   // Alias for '=', with lower precedence.
   // TODO: Use this for boolean equivalence when all terms are
@@ -1412,6 +1413,7 @@ var precedence = {
   '**': 50,
   // Specials
   '(': 1000,
+  '[': 1000,
   '{': 1000
 };
 
