@@ -295,6 +295,19 @@ Toy.addRules(realOrdering);
 definition('isAddInverse = {x. {y. R x & R y & y + x = 0}}');
 definition('isMulInverse = {x. {y. R x & R y & y * x = 1}}');
 
+// Lay 11.1a
+addRule({name: 'abcPlus',
+         statement: '@a + c = b + c & R a & R b & R c => a = b',
+         proof: function() {
+             return (rules.assume('a + c = b + c')
+                     .andThen('applyToBothWith', '-', 'c')
+                     .andThen('groupToRight', '/main/left/left/right')
+                     .andThen('simplifySite', '/main/left')
+                     .andThen('groupToRight', '/main/right/left/right')
+                     .andThen('simplifySite', '/main/right'));
+         }});
+
+
 const fakeAxioms =
   [
    {statement: 'x * 0 = 0', axiom: true,
@@ -2054,19 +2067,6 @@ var identityFacts3 = {
   }
 };
 addFactsMap(identityFacts3);
-
-// This fact has the same consequent as transitivity of equality,
-// so we cannot reference it through the usual fact lookup.
-addRule({name: 'abcPlus',
-         statement: '@a + c = b + c & R a & R b & R c => a = b',
-         proof: function() {
-             return (rules.assume('a + c = b + c')
-                     .andThen('applyToBothWith', '-', 'c')
-                     .andThen('groupToRight', '/main/left/left/right')
-                     .andThen('simplifySite', '/main/left')
-                     .andThen('groupToRight', '/main/right/left/right')
-                     .andThen('simplifySite', '/main/right'));
-         }});
 
 var equivalences = {
 
