@@ -178,6 +178,8 @@ const identityFacts =
    ];
 addRules(identityFacts);
 
+definition('neg = {x. the1 {y. R x & R y & x + y = 0}}');
+
 // Note that our axiom of arithmetic computes that neg 1 = -1, which
 //   gives ability to prove things we prefer to prove from axioms.
 
@@ -198,14 +200,10 @@ const negDefFacts =
    ];
 addRules(negDefFacts);
 
-
-// TODO: Make this be the definition of neg.
-definition('negg = {x. the1 {y. R x & R y & x + y = 0}}');
-
 const inverses =
   [
-   {name: 'neggFact',
-    statement: '@ R x & R y & x + y = 0 == R x & negg x = y',
+   {name: 'negFact',
+    statement: '@ R x & R y & x + y = 0 == R x & neg x = y',
     proof: function() {
        const steps =
        [
@@ -219,7 +217,7 @@ const inverses =
         '(8 rewrite (s 7) (path "/right/right/right/arg/body/left") (t (a == (T & a))))',
         '(9 assume (t (R x)))',
         '(10 replaceT (s 8) (path "/right/right/right/arg/body/left/left") (s 9))',
-        '(11 expDefinition "negg")',
+        '(11 expDefinition "neg")',
         '(12 rewrite (s 11) (path "/main") (t ((x = y) == (y = x))))',
         '(13 rewriteOnlyFrom (s 10) (path "/right/right/right") (s 12))',
         '(14 rewrite (s 13) (path "") (t ((a => (b == c)) == ((a & b) == (a & c)))))',
