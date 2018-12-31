@@ -4255,7 +4255,10 @@ const ruleInfo = {
       }
       var deduper =
         rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
-      var result = rules.replace(step, '/left', deduper);
+      const deduped = rules.replace(step, '/left', deduper);
+      const result = (deduped.getLeft().isConst('T')
+                      ? rules.rewrite(step, '', 'T => a == a')
+                      : deduped);
       return result.justify('arrangeAsms', arguments, [step]);
     },
     inputs: {step: 1},
