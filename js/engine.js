@@ -2300,6 +2300,14 @@ function addFact(info) {
       console.warn('In fact', id, 'extra info key:', key);
     }
   }
+
+  if (info.proof) {
+    // Give the proof function a useful and pretty name for stack
+    // traces.
+    const stmt = info.statement || info.goal.toUnicode();
+    Object.defineProperty(info.proof, 'name', {value: 'proof of ' + stmt});
+  }
+
   // Adding new constants.  Doing it here adds them before asserting
   // the fact.  Also rules.assert can add constants in case it is used
   // without registering a fact. (And Toy.define also adds the defined
