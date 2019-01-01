@@ -1927,36 +1927,35 @@ function decodeSteps(input) {
   let message = '';
   let ruleName;
   let args = [];
-  descriptions.forEach(function(stepTerm, i) {
-      if (i == 0) {
-        // Like a "continue" ...
-        return;
+  for (let i = 1; i < descriptions.length; i++) {
+    // Ignore the first "description" by starting at 1.
+    const stepTerm = descriptions[i];
+    var stepInfo = stepTerm.asArray();
+    assert(stepInfo.shift().getNumValue() == i, function() {
+        return 'Mismatched step number in: ' + stepInfo;
+      });
+    ruleName = stepInfo.shift().name;
+    // The remainder of the array is arguments to the rule.
+    args = [];
+    stepInfo.forEach(function(info) {
+        args.push(decodeArg(info, outSteps));
+      });
+    try {
+      const rule = Toy.rules[ruleName];
+      if (rule) {
+        outSteps.push(rule.apply(Toy.rules, args));
+      } else {
+        message = 'No such rule: ' + ruleName;
       }
-      var stepInfo = stepTerm.asArray();
-      assert(stepInfo.shift().getNumValue() == i, function() {
-          return 'Mismatched step number in: ' + stepInfo;
-        });
-      ruleName = stepInfo.shift().name;
-      // The remainder of the array is arguments to the rule.
-      args = [];
-      stepInfo.forEach(function(info) {
-          args.push(decodeArg(info, outSteps));
-        });
-      try {
-        const rule = Toy.rules[ruleName];
-        if (rule) {
-          outSteps.push(rule.apply(Toy.rules, args));
-        } else {
-          message = 'No such rule: ' + ruleName;
-        }
-      } catch(e) {
-        message = '' + e;
-      }
-    });
-  if (message) {
-    Toy.alert('Decoding steps: ' + message);
-    console.warn('Decoding steps:', message);
-    console.warn('Applying rule', ruleName.$$, 'to', args.$$);
+    } catch(e) {
+      message = '' + e;
+    }
+    if (message) {
+      Toy.alert('Error decoding steps: ' + message);
+      console.warn('Decoding steps:', message);
+      console.warn('Applying rule', ruleName.$$, 'to', args.$$);
+      break;
+    }
   }
   return outSteps;
 }
