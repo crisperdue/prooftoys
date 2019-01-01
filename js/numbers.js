@@ -134,7 +134,7 @@ const identityFacts =
                         'exists1 p => (x = the1 p == p x)')
                .andThen('trueBy0', '/left',
                         rules.fact('exists1 isAddIdentity'))
-               .andThen('simplifySite', ''));
+               .andThen('arrangeAsms'));
      }
    },
    {statement: 'isMulIdentity 1',
@@ -296,24 +296,51 @@ definition('isAddInverse = {x. {y. R x & R y & y + x = 0}}');
 definition('isMulInverse = {x. {y. R x & R y & y * x = 1}}');
 
 // Lay 11.1a
-addRule({name: 'abcPlus',
-         statement: '@a + c = b + c & R a & R b & R c => a = b',
-         proof: function() {
-             return (rules.assume('a + c = b + c')
-                     .andThen('applyToBothWith', '-', 'c')
-                     .andThen('groupToRight', '/main/left/left/right')
-                     .andThen('simplifySite', '/main/left')
-                     .andThen('groupToRight', '/main/right/left/right')
-                     .andThen('simplifySite', '/main/right'));
-         }});
+{
+  const infos =
+    [
+     {name: 'abcPlus',
+      statement: '@a + c = b + c & R a & R b & R c => a = b',
+      proof: function() {
+         return (rules.assume('a + c = b + c')
+                 .andThen('applyToBothWith', '-', 'c')
+                 .andThen('groupToRight', '/main/left/left/right')
+                 .andThen('simplifySite', '/main/left')
+                 .andThen('groupToRight', '/main/right/left/right')
+                 .andThen('simplifySite', '/main/right'));
+       }
+     },
 
+     // Lay 11.1b
+     {statement: 'x * 0 = 0',
+      proof: function() {
+         const steps =
+         [
+          '(1 consider (t (x * 0)))',
+          '(2 rewrite (s 1) (path "/main/right/right") (t (x = (x + 0))))',
+          '(3 rewrite (s 2) (path "/main/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y + z)) = ((x * y) + (x * z))))))',
+          '(4 display (s 3))',
+          '(5 rewrite (s 4) (path "/right/left") (t (x = (0 + x))))',
+          '(6 abcPlus)',
+          '(7 instantiateVar (s 6) (path "/left/left/left/left/left/left") (t 0))',
+          '(8 instantiateVar (s 7) (path "/left/left/left/left/left/right") (t (x * 0)))',
+          '(9 instantiateVar (s 8) (path "/left/left/left/left/right/left") (t (x * 0)))',
+          '(10 extractHypAt (s 9) (path "/left/left/left/left"))',
+          '(11 reduceRealAsms (s 10))',
+          '(12 p2 (s 5) (s 11) (t (((a => b) & (a => (b => c))) => (a => c))))',
+          '(13 rewrite (s 12) (path "/right") (t ((x = y) == (y = x))))'
+          ];
+         return Toy.decodeProof(steps);
+       },
+      description: 'multiplication by zero',
+      simplifier: true
+     }
+     ];
+  addRules(infos);
+}
 
 const fakeAxioms =
   [
-   {statement: 'x * 0 = 0', axiom: true,
-    description: 'multiplication by zero',
-    simplifier: true
-   },
    {statement: 'x != 0 => x * recip x = 1', axiom: true,
     description: 'reciprocal',
     simplifier: true
@@ -1841,17 +1868,23 @@ const basicRealFacts =
      }
    },
 
-   {statement: 'a + neg a = 0',
+   {statement: 'x + neg x = 0',
     simplifier: true,
     proof: function() {
-       return rules.eqSelf('a + neg a')
-       .rewrite('/main/right/left', 'a = 1 * a')
-       .rewrite('/main/right/right', '@ neg a = -1 * a')
-       .rewrite('/main/right', 'a * c + b * c = (a + b) * c')
-       .andThen('arithmetic', '/main/right/left')
-       .rewrite('/main/right', '0 * a = 0');
+       const steps =
+       ['(1 negFact)',
+        '(2 forwardChain (s 1) (t ((((a & b) & c) == d) => (d => c))))',
+        '(3 rewrite (s 2) (path "/left/right") (t ((x = y) == (y = x))))',
+        '(4 assume (t (y = (neg x))))',
+        '(5 display (s 3))',
+        '(6 replace (s 5) (path "/right/left/right") (s 4))',
+        '(7 display (s 6))',
+        '(8 removeLet (s 7) (path "/left/left"))'
+        ];
+       return Toy.decodeProof(steps);
      }
    },
+
    {statement: 'a = b == b = a',
     proof: function() {
        return rules.equalitySymmetric();
