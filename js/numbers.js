@@ -137,6 +137,15 @@ const identityFacts =
                .andThen('arrangeAsms'));
      }
    },
+
+   {statement: 'R 0',
+    proof: function() {
+       return (rules.fact('(isAddIdentity 0)')
+               .andThen('apply', '')
+               .andThen('forwardChain', 'a & b => a'));
+     }
+   },
+
    {statement: 'isMulIdentity 1',
     proof: function() {
        return (rules.fact('1 = the1 isMulIdentity')
@@ -147,6 +156,15 @@ const identityFacts =
                .andThen('simplifySite', ''));
      }
    },
+
+   {statement: 'R 1',
+    proof: function() {
+       return (rules.fact('(isMulIdentity 1)')
+               .andThen('apply', '')
+               .andThen('forwardChain', 'a & b => a'));
+     }
+   },
+   
    {statement: 'isAddIdentity x == x = 0',
     // TODO: Notice that using forwardChain here with step1 causes
     //   step1 to be displayed as if it were a recorded fact.  This
