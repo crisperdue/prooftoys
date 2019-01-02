@@ -858,8 +858,10 @@ var equationOpsInfo = {
 //// Fact lists
 
 // This list may be added onto later.
-var realTypeFacts =
+const realTypeFacts =
   [
+   'R 0',  // Include R 0 and R 1 for direct use where applicable.
+   'R 1',
    'R (x + y)',
    'R (x * y)',
    'R (x - y)',
