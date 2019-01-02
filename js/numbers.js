@@ -353,6 +353,32 @@ definition('isMulInverse = {x. {y. R x & R y & y * x = 1}}');
        },
       description: 'multiplication by zero',
       simplifier: true
+     },
+
+     // Lay 11.1c
+     {statement: '(neg 1) * x = neg x',
+      simplifier: true,
+      proof: function() {
+         const steps =
+         ['(1 consider (t (x + ((neg 1) * x))))',
+          '(2 rewrite (s 1) (path "/main/right/right") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
+          '(3 rewrite (s 2) (path "/right/right/left") (t (x = (x * 1))))',
+          '(4 rewrite (s 3) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => (((x * y) + (x * z)) = (x * (y + z))))))',
+          '(5 rewrite (s 4) (path "/right/right/right") (t ((x + (neg x)) = 0)))',
+          '(6 simplifyFocalPart (s 5))',
+          '(7 display (s 6))',
+          '(8 negFact)',
+          '(9 rewrite (s 8) (path "/main") (t ((((a & b) & c) == (a & d)) == (a => ((b & c) == d)))))',
+          '(10 assumeExplicitly (t (R ((neg 1) * x))))',
+          '(11 reduceRealTypes (s 10) (path "/left"))',
+          '(12 rewrite (s 7) (path "/right") (t (a == (T & a))))',
+          '(13 replaceT (s 12) (path "/right/left") (s 11))',
+          '(14 display (s 13))',
+          '(15 rewriteOnlyFrom (s 14) (path "/right") (s 9))',
+          '(16 rewrite (s 15) (path "/right") (t ((x = y) == (y = x))))'
+          ];
+         return Toy.decodeProof(steps);
+       }
      }
      ];
   addRules(infos);
