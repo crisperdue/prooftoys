@@ -974,6 +974,17 @@ const mathSimplifiers = {
     labels: 'algebra'
   },
 
+  // Direct access to simplification of statements about type R.
+  reduceRealTypes: {
+    toOffer: 'return term.isCall1("R");',
+    action: function(step, path) {
+      return (rules.simplifySite(step, path, realTypeFacts)
+              .justify('reduceRealTypes', arguments, [step]));
+    },
+    inputs: {site: 1},
+    menu: 'simplify real type',
+  },
+
    // Uses the standard closure properties of operations on the real
    // numbers to simplify the "real" type assumptions in the given
    // step, returning a proved step in which the type assumptions
