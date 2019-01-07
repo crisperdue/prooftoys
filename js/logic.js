@@ -391,11 +391,13 @@ const prelogic = {
       // Force "justify" to not ignore this step.
       return step.justify('display', arguments, [step], true);
     },
+    autoSimplify: noSimplify,
     inputs: {step: 1},
     form: ('Does nothing, but result will display in full. '
            + '<input name=step>'),
-    tooltip: 'show full equation',
-    description: 'show full equation;; {in step step}',
+    menu: 'display in full',
+    tooltip: 'display fully',
+    description: 'display fully;; {step step}',
     labels: 'display basic'
   },
       
