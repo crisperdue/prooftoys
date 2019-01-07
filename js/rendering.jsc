@@ -815,6 +815,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
       if (step.subproofDisplay) {
         clearSubproof(step);
       } else {
+        const original = step.original;
         // This code knows the structure of results produced by
         // asserted facts, either in getResult (when the proof is not
         // invoked), or in asFactProver (when there is no proof).
@@ -822,22 +823,22 @@ ProofDisplay.prototype.renderStep1 = function(step) {
         // TODO: This will be the place to handle omission of details
         //   in a proof sent back by a worker thread, when the full
         //   proof is overly long.
-        if (step.ruleName == 'fact') {
-          var details = step.details;
+        if (original.ruleName == 'fact') {
+          var details = original.details;
+          // Even a fact asserted with its proof deferred may have
+          // a step to change the names of free variables.
+          // Dig down beyond that step.
           if (details && details.ruleName == 'instMultiVars') {
             details = details.ruleArgs[0];
           }
           if (details.ruleName == 'assert') {
-            // The fact was asserted without a proof.  Substitute an
-            // actual proof, creating it if necessary.  First create a
-            // new Step object.
-            //
-            // TODO: This should be a copy of the original, not the
-            // rendering, eh?
-            var copy = (step instanceof Call
-                        ? new Call(step.fn, step.arg)
-                        : step instanceof Atom
-                        ? new Atom(step.pname)
+            // The fact was asserted based on its statement, deferring
+            // the proof.  Substitute an actual proof, creating it if
+            // necessary.  First create a new Step object.
+            var copy = (original instanceof Call
+                        ? new Call(original.fn, original.arg)
+                        : original instanceof Atom
+                        ? new Atom(original.pname)
                         // Impossible for a step!
                         : null);
             // Get a real proof.
@@ -848,6 +849,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
             // If for some reason there is no mapping, proceed without it,
             // ignoring the issue.
             result0 = map ? Toy.rules.instMultiVars(result0, map) : result0;
+            // Caution!! This modifies the details of the input step.
             step.details = result0;
           }
         }
