@@ -815,50 +815,59 @@ ProofDisplay.prototype.renderStep1 = function(step) {
       if (step.subproofDisplay) {
         clearSubproof(step);
       } else {
-        const original = step.original;
-        // This code knows the structure of results produced by
-        // asserted facts, either in getResult (when the proof is not
-        // invoked), or in asFactProver (when there is no proof).
-        //
-        // TODO: This will be the place to handle omission of details
-        //   in a proof sent back by a worker thread, when the full
-        //   proof is overly long.
-        if (original.ruleName == 'fact') {
-          var details = original.details;
-          // Even a fact asserted with its proof deferred may have
-          // a step to change the names of free variables.
-          // Dig down beyond that step.
-          if (details && details.ruleName == 'instMultiVars') {
-            details = details.ruleArgs[0];
-          }
-          if (details.ruleName == 'assert') {
-            // The fact was asserted based on its statement, deferring
-            // the proof.  Substitute an actual proof, creating it if
-            // necessary.  First create a new Step object.
-            var copy = (original instanceof Call
-                        ? new Call(original.fn, original.arg)
-                        : original instanceof Atom
-                        ? new Atom(original.pname)
-                        // Impossible for a step!
-                        : null);
-            // Get a real proof.
-            var result0 = Toy.proveResult(copy);
-            // Convert the variable names in the actual proof to the
-            // ones mentioned in the usage of the fact.
-            var map = copy.matchSchema(result0);
-            // If for some reason there is no mapping, proceed without it,
-            // ignoring the issue.
-            result0 = map ? Toy.rules.instMultiVars(result0, map) : result0;
-            // Caution!! This modifies the details of the input step.
-            step.details = result0;
-          }
-        }
+        fillDetails(step);
         renderSubproof(step);
       }
     });
   }
   return dom($proofStep);
 };
+
+/**
+ * Fills in the details of a renderable step.  A no-op unless the step
+ * is a use of rules.fact in which the proof of the fact was deferred,
+ * in which case this may set the step's details.
+ */
+function fillDetails(step) {
+  const original = step.original;
+  // This code knows the structure of results produced by
+  // asserted facts, either in getResult (when the proof is not
+  // invoked), or in asFactProver (when there is no proof).
+  //
+  // TODO: This will be the place to handle omission of details
+  //   in a proof sent back by a worker thread, when the full
+  //   proof is overly long.
+  if (original.ruleName == 'fact') {
+    var details = original.details;
+    // Even a fact asserted with its proof deferred may have
+    // a step to change the names of free variables.
+    // Dig down beyond that step.
+    if (details && details.ruleName == 'instMultiVars') {
+      details = details.ruleArgs[0];
+    }
+    if (details.ruleName == 'assert') {
+      // The fact was asserted based on its statement, deferring
+      // the proof.  Substitute an actual proof, creating it if
+      // necessary.  First create a new Step object.
+      var copy = (original instanceof Call
+                  ? new Call(original.fn, original.arg)
+                  : original instanceof Atom
+                  ? new Atom(original.pname)
+                  // Impossible for a step!
+                  : null);
+      // Get a real proof.
+      var result0 = Toy.proveResult(copy);
+      // Convert the variable names in the actual proof to the
+      // ones mentioned in the usage of the fact.
+      var map = copy.matchSchema(result0);
+      // If for some reason there is no mapping, proceed without it,
+      // ignoring the issue.
+      result0 = map ? Toy.rules.instMultiVars(result0, map) : result0;
+      // Caution!! This modifies the details of the input step.
+      step.details = result0;
+    }
+  }
+}
 
 /**
  * This is a postprocessing hack to simplify the DOM tree for a term
