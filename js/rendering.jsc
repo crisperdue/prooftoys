@@ -1448,13 +1448,18 @@ Lambda.prototype.copyForRendering = function(bindings) {
 };
 
 /**
- * Returns an array of the renderable steps leading up to and
- * including the given step, sorted by ordinal.  The "unrendered"
- * aspect is helpful for rendering subproofs, furthermore currently a
- * step only remembers one rendering, and removal of the rendering
- * from the display deletes the association with the underlying step.
+ * Returns an array of the plain steps leading up to and including the
+ * given step, sorted by ordinal.  The "unrendered" aspect provides
+ * support for rules that are "inline", adding zero or more steps to
+ * the displayed proof.  It is also helpful for rendering subproofs,
+ * furthermore currently a step only remembers one rendering, and
+ * removal of the rendering from the display deletes the association
+ * with the underlying step.
  */
 function unrenderedDeps(step) {
+  // TODO: Consider defining a function "subProofOf" that returns an
+  // array of plain steps back to any step arguments to the rule that
+  // produced the step.  That might be used in place of this one.
   var result = [];
   // Traverses the dependency graph, recording a copy of every step
   // and building an array of all of the original steps.  In Java
@@ -2035,15 +2040,16 @@ function getTopProofContainer(step) {
 }
 
 /**
- * Gets the ProofDisplay of a rendered term or step, or the node of
- * one.  Returns null if the term or step is not rendered.
+ * Gets the ProofDisplay of a rendered term or either kind of step, or
+ * the node of one.  Returns null if the term or step is not rendered.
  *
  * TODO: Split this into at least two different things when there is
  * an actual Step class.
  */
 function getProofDisplay(expr) {
   if (expr instanceof Expr && expr.isProved()) {
-    return expr.proofDisplay;
+    return (expr.proofDisplay ||
+            (expr.rendering && expr.rendering.proofDisplay));
   } else {
     var node = expr instanceof Toy.Expr ? expr.node : expr;
     if (!node) {
