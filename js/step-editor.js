@@ -1659,6 +1659,17 @@ function handleMouseEnterItem(ruleMenu, node, event) {
       console.warn('No such rule:', ruleName);
     }
     if (promise) {
+      // TODO: Support "real" RPCs that cross address spaces by
+      //   additional encoding in the call and return.  In the call,
+      //   encode step arguments to each rule as an "exact" reference
+      //   to a fact, namely a string that must parse to the entirety
+      //   of the fact.  In the return, encode references to these
+      //   steps with an indication that the value is a reference to a
+      //   step argument, and which one.  Perhaps this could be
+      //   accomplished by returning the step arguments as initial
+      //   steps in the proof, each using a rule such as "assert".
+      //   References to these steps within the proof would decode as
+      //   references to the appropriate rule argument.
       $node.data('promise', promise);
       promise.then(function(info) {
           // The rule has successfully run.
