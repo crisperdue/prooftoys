@@ -826,7 +826,8 @@ ProofDisplay.prototype.renderStep1 = function(step) {
 /**
  * Fills in the details of a renderable step.  A no-op unless the step
  * is a use of rules.fact in which the proof of the fact was deferred,
- * in which case this may set the step's details.
+ * in which case this may set the details of the step and its
+ * original.
  */
 function fillDetails(step) {
   const original = step.original;
@@ -864,7 +865,7 @@ function fillDetails(step) {
       // ignoring the issue.
       result0 = map ? Toy.rules.instMultiVars(result0, map) : result0;
       // Caution!! This modifies the details of the input step.
-      step.details = result0;
+      step.details = original.details = result0;
     }
   }
 }
