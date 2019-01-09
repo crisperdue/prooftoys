@@ -1918,25 +1918,23 @@ function getStepSite(step) {
 }
 
 /**
- * Returns an array of the steps leading up to and including the given
- * step, sorted by ordinal, not including the details of any step.
+ * Returns an array of the (regular) steps leading up to and including
+ * the given plain / unrendered step, sorted by ordinal.
  */
 function proofOf(step) {
   // See also the nearly identical Toy.unrenderedDeps.
+  const visited = new Set();
   var result = [];
-  // Traverses the dependency graph, recording a copy of every step
-  // and building an array of all of the original steps.  In Java
-  // one might use HashSets to identify already-visited steps,
-  // avoiding temporary modifications to the originals.
+  // Traverses the dependencies graph, recording each step found
+  // and building an array of them.
   function visitWithDeps(step) {
-    if (!step.__visited) {
+    if (!visited.has(step)) {
       result.push(step);
-      step.__visited = true;
+      visited.add(step);
       step.ruleDeps.forEach(function(dep) { visitWithDeps(dep); });
     }
   }
   visitWithDeps(step);
-  result.forEach(function(step) { step.__visited = false; });
   result.sort(function(s1, s2) {
       return s1.ordinal - s2.ordinal;
     });
