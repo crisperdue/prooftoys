@@ -899,7 +899,7 @@ var siteTypes = {
  * Fields:
  * $node: DIV with the step editor's HTML, has class stepEditor.
  * ruleName: name of rule selected from the RuleMenu; used with form
- *   information in tryExecuteRule.
+ *   information in tryRuleFromForm.
  * form: jQuery SPAN to hold the argument input form.
  * proofDisplay: ProofDisplay to edit
  * lastRuleTime: Milliseconds consumed by last execution of tryRule.
@@ -939,10 +939,10 @@ function StepEditor(proofEditor) {
   self.form.on('keydown', function(event) {
     if (event.keyCode == 13) {
       // <enter> key was hit
-      self.tryExecuteRule(true);
+      self.tryRuleFromForm();
     }
   });
-  self.form.on('click', 'button', function() { self.tryExecuteRule(true); });
+  self.form.on('click', 'button', function() { self.tryRuleFromForm(); });
   // Always clear the errors when clicked.
   self.$proofErrors.on('click', '.clearer', function() {
       self.$proofErrors.hide();
@@ -1128,13 +1128,13 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
  * user any error message from calling fillFromForm.  Otherwise
  * just leaves the form up for the user to complete.
  */
-StepEditor.prototype.tryExecuteRule = function() {
+StepEditor.prototype.tryRuleFromForm = function() {
   // TODO: Get it together on failure reporting here.
   var ruleName = this.ruleName;
   var rule = Toy.rules[ruleName];
   var minArgs = rule.info.minArgs;
   var args = this.argsFromSelection(ruleName);
-  if (this.fillFromForm(args) && this.checkArgs(args, minArgs, true)) {
+  if (this.fillFromForm(ruleName, args) && this.checkArgs(args, minArgs, true)) {
     tryRuleSoon(this, rule, args);
   }
 };
@@ -1338,9 +1338,9 @@ StepEditor.prototype.argsFromSelection = function(ruleName) {
  * Tries to fill in the arguments array with information from the form.
  * Returns true / false for success or failure.
  */
-StepEditor.prototype.fillFromForm = function(args) {
+StepEditor.prototype.fillFromForm = function(ruleName, args) {
   var self = this;
-  var rule = Toy.rules[this.ruleName];
+  var rule = Toy.rules[ruleName];
   let success = true;
   $(this.form).find('input').each(function() {
     // The "name" attribute of the input element should be the name of
@@ -1462,8 +1462,8 @@ function RuleMenu(proofEditor) {
   var self = this;
   self.proofEditor = proofEditor;
   self._refresher = new Toy.Refresher(self._update.bind(self));
+  // Total number of menu items.
   self.length = 0;
-  self.changed = false;
   // A rule menu item node or null.  If the mouse is hovering over an
   // item at any given time, this will be it.
   self.hovering = null;
@@ -1471,8 +1471,11 @@ function RuleMenu(proofEditor) {
   // Rule chooser:
   var $node = ($('<div class="ruleMenu transFade">')
                .append('<div class=ruleMenuTitle>Actions to try:</div>'));
+  // Top node of the rule menu display.
   self.$node = $node;
+  // Container node for menu items.
   self.$items = $('<div class=rulesItems/>');
+
   // An intermediate DIV.  This one is set to have vertical scrolling,
   // and the rulesItems div can be inline-block to shrink-wrap itself
   // around the individual items.
@@ -1496,6 +1499,8 @@ function RuleMenu(proofEditor) {
     });
   // Make the leavers available from methods.
   self._leavers = leavers;
+
+  // Set up event handlers.
 
   $node.on('click', '.ruleItem', function(event) {
       handleMouseClickItem(self, this, event);
@@ -1710,7 +1715,6 @@ function handleMouseEnterItem(ruleMenu, node, event) {
  * The display update will occur when the event loop becomes idle.
  */
 RuleMenu.prototype.refresh = function() {
-  this.changed = true;
   this._refresher.activate();
 };
 
@@ -1800,7 +1804,6 @@ RuleMenu.prototype._update = function() {
       return $item
     });
   self.length = items.length
-  self.changed = false;
   $items.append(items);
   if (term) {
     // If there is a selected term, render it and any right neighbor
