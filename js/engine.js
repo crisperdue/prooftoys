@@ -1922,7 +1922,7 @@ function getStepSite(step) {
  * the given plain / unrendered step, sorted by ordinal.
  */
 function proofOf(step) {
-  // See also the nearly identical Toy.unrenderedDeps.
+  // See also the similar Toy.unrenderedDeps.
   const visited = new Set();
   var result = [];
   // Traverses the dependencies graph, recording each step found
