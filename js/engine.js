@@ -438,6 +438,11 @@ var rules = {};
 //   suggester will run it to generate a sample next step and the
 //   ruleMenu will not include it in the menu.
 //
+// noSuggest: pseudo-rules may have side effects and return true on
+//   success rather than a new step.  Such should have this property
+//   with value true, and the rule itself should return true.  This
+//   property prevents the rule from running to produce a suggestion.
+//
 
 // Rule definitions that have statements (and are thus theorems)
 // support the same properties as facts, specifically: simplifier,
@@ -448,9 +453,6 @@ var rules = {};
  * Process the given info into form for inclusion into Toy.rules and
  * add the resulting rule or rules.  This does not do inference, so it
  * can be called before any theorems are proved.
- *
- * For details of the structure of the argument see the comments for
- * ruleInfo.
  */
 function addRule(info) {
   var name = info.name;

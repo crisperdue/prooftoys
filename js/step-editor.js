@@ -1160,9 +1160,10 @@ function tryRuleSoon(stepEditor, rule, args) {
 /**
  * Tries to run the given rule (function) with the given rule
  * arguments, adding the result to this step editor's proof.  Catches
- * and reports any errors.  Returns true if the rule succeeded, false
- * if it catches an error.  Reports there was nothing to do if the
- * rule returns its input or a null value.
+ * and reports any errors.  Reports there was nothing to do if the
+ * rule returns its input, or that the "rule failed" if it returns
+ * null.  If the rule returns exactly true, this succeeds although
+ * there is no step to insert.
  *
  * Use this only in tryRuleSoon.
  */
@@ -1205,6 +1206,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // The work is done, show that the prover is not busy.
     this._setBusy(false);
     this.report('Rule failed');
+  } else if (result === true) {
+    this._setBusy(false);
   } else if (result.rendering) {
       // The work is done, show that the prover is not busy.
       this._setBusy(false);
@@ -1621,7 +1624,7 @@ RuleMenu.prototype._update = function() {
       $item.data('ruleName', info.ruleName);
       return $item
     });
-  self.length = items.length
+  self.length = items.length;
   $items.append(items);
   if (term) {
     // If there is a selected term, render it and any right neighbor
@@ -1728,17 +1731,28 @@ function handleMouseClickItem(ruleMenu, node, event) {
  * Event handler for mouseenter events on RuleMenu items.
  */
 function handleMouseEnterItem(ruleMenu, node, event) {
+  const $node = $(node);
   const proofEditor = ruleMenu.proofEditor;
   const stepEditor = proofEditor.stepEditor;
+  const ruleName = $node.data('ruleName');
+  // The rule may be undefined if the ruleName describes a fact.
+  const rule = Toy.rules[ruleName];
   var display = proofEditor.proofDisplay;
   // Note that this item is currently hovered.
   ruleMenu.hovering = node;
-  var $node = $(node);
   // The "suggestion" data property indicates that a suggestion has
   // been computed for this menu item.  It is a DOM node that may
   // have a proofStep in it.
   var working = display.suggestionMessage('Working . . . ');
   display.suggest(working);
+  // noSuggest means "no suggestion action".  We still need a message,
+  // so reuse the menu message.
+  const noSuggest = rule && rule.info.noSuggest;
+  if (noSuggest) {
+    const suggested = display.suggestionMessage($node.clone().contents());
+    console.log('Suggesting', suggested);
+    $node.data('suggestion', suggested);
+  }
   var suggestion = $node.data('suggestion');
   if (suggestion) {
     // A suggestion is already computed; show it.
@@ -1746,7 +1760,6 @@ function handleMouseEnterItem(ruleMenu, node, event) {
   } else if (!$node.data('promise')) {
     // The "promise" data property indicates that a request for a
     // step has been issued.
-    var ruleName = $node.data('ruleName');
     var promise;
     if (ruleName.slice(0, 5) === 'fact ') {
       // See StepEditor.ruleChosen for essentially the same code.
@@ -1762,9 +1775,8 @@ function handleMouseEnterItem(ruleMenu, node, event) {
                           // Parsing here prevents the goal from being
                           // expanded during later parsing.
                           Toy.parse(ruleName.slice(5))]);
-    } else if (Toy.rules[ruleName]) {
+    } else if (rule) {
       // It is a rule other than a rewrite with fact.
-      var rule = Toy.rules[ruleName];
       var args = stepEditor.argsFromSelection(ruleName);
       if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
         promise = sendRule(ruleName, args);
