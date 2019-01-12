@@ -1537,6 +1537,117 @@ function RuleMenu(proofEditor) {
 }
 
 /**
+ * Updates the step suggestions and rule menu to offer items
+ * reflecting the currently-selected step or term, if any.
+ */
+RuleMenu.prototype._update = function() {
+  var self = this;
+  var stepEditor = self.proofEditor.stepEditor;
+  var $items = self.$items;
+  // Remove data and event handlers from suggestions.  They have
+  // not been previously removed.
+  $items.find('.ruleItem').each(function() {
+      var suggestion = $(this).data('suggestion');
+      suggestion && $(suggestion).remove();
+    });
+  $items.empty();
+  var step = stepEditor.proofDisplay.selection;
+  var term = step && step.selection;
+  // Plain object describing each menu item.
+  var itemInfos = [];
+  self.offerableRuleNames().forEach(function(ruleName) {
+      // Info is a string or array of strings.
+      var info = ruleMenuInfo(ruleName, step, term,
+                              stepEditor._proofEditor);
+      if (Array.isArray(info)) {
+        // An array occurs when a rule may be used in multiple ways,
+        // notably where there are multiple possible replacements of
+        // a term by equal terms.
+        info.forEach(function(msg) {
+            itemInfos.push({ruleName: ruleName, html: msg});
+          });
+      } else if (info) {
+        itemInfos.push({ruleName: ruleName, html: info});
+      }
+    });
+  
+  self.offerableFacts().forEach(function(info) {
+      let statement = info.goal;
+      var text = statement.toString();
+      var resultTerm = statement;
+      if (statement.isEquation()) {
+        if (statement.isCall2('=>')) {
+          // Make the statement be the fact's equation.
+          resultTerm = statement = statement.getRight();
+        }
+        // If as usual the LHS of the equation matches the selection,
+        // set resultTerm to the result of substituting into the RHS.
+        var step = self.proofEditor.proofDisplay.selection;
+        var selection = step && step.selection;
+        if (selection) {
+          var subst = selection.matchSchema(statement.getLeft());
+          if (subst) {
+            resultTerm = statement.getRight().subFree(subst);
+          }
+        }
+      }
+      var display = '= <span class=menuResult></span>';
+      if (subst) {
+        // TODO: Consider using the length of the unicode in deciding
+        //   what message to generate here.
+        // const unicode = statement.toUnicode();
+        const html = (info.definitional
+                      ? 'definition of ' + statement.getLeft().func().name
+                      : 'using ' + Toy.trimParens(statement.toHtml()));
+        display += (' <span class=description>' + html + '</span>');
+      }
+      // Value of the option; format of "fact <fact text>"
+      // indicates that the text defines a fact to use in
+      // rules.rewrite.
+      var info = {ruleName: 'fact ' + text,
+                  html: display,
+                  result: resultTerm};
+      itemInfos.push(info);
+    });
+  itemInfos.sort(function(a, b) {
+      return a.html.localeCompare(b.html);
+    });
+  var items = itemInfos.map(function(info) {
+      var $item = $('<div class="ruleItem noselect"/>');
+      $item.html(info.html);
+      if (info.result) {
+        $item.find('.menuResult').append(info.result.renderTerm());
+      }
+      $item.data('ruleName', info.ruleName);
+      return $item
+    });
+  self.length = items.length
+  $items.append(items);
+  if (term) {
+    // If there is a selected term, render it and any right neighbor
+    // term, and insert the renderings into all menu items that have
+    // slots for them.
+    var $term = $(term.copyForRendering().renderTerm());
+    $items.find('.menuSelected').append($term);
+    var rightTerm = Toy.getRightNeighbor(step, term);
+    var $right = '?';
+    if (rightTerm) {
+      var $right = $(rightTerm.copyForRendering().renderTerm());
+    }
+    $items.find('.menuRightNeighbor').append($right);
+  }
+  self.$node.toggleClass('hidden', items.length === 0);
+  if (items.length === 0) {
+    // The menu can be hidden by clicks within it, and that does not
+    // trigger a mouse leave event.
+    self._leavers.fire();
+  }
+
+  // TODO: Consider updating the advice using Promises.
+  self.proofEditor.$advice.toggleClass('hidden', self.length != 0);
+};
+
+/**
  * Handler for ruleMenu selection of a rule name.  Overall purpose is
  * to run the rule from information already available, otherwise to
  * display the input form.
@@ -1716,117 +1827,6 @@ function handleMouseEnterItem(ruleMenu, node, event) {
  */
 RuleMenu.prototype.refresh = function() {
   this._refresher.activate();
-};
-
-/**
- * Updates the step suggestions and rule menu to offer items
- * reflecting the currently-selected step or term, if any.
- */
-RuleMenu.prototype._update = function() {
-  var self = this;
-  var stepEditor = self.proofEditor.stepEditor;
-  var $items = self.$items;
-  // Remove data and event handlers from suggestions.  They have
-  // not been previously removed.
-  $items.find('.ruleItem').each(function() {
-      var suggestion = $(this).data('suggestion');
-      suggestion && $(suggestion).remove();
-    });
-  $items.empty();
-  var step = stepEditor.proofDisplay.selection;
-  var term = step && step.selection;
-  // Plain object describing each menu item.
-  var itemInfos = [];
-  self.offerableRuleNames().forEach(function(ruleName) {
-      // Info is a string or array of strings.
-      var info = ruleMenuInfo(ruleName, step, term,
-                              stepEditor._proofEditor);
-      if (Array.isArray(info)) {
-        // An array occurs when a rule may be used in multiple ways,
-        // notably where there are multiple possible replacements of
-        // a term by equal terms.
-        info.forEach(function(msg) {
-            itemInfos.push({ruleName: ruleName, html: msg});
-          });
-      } else if (info) {
-        itemInfos.push({ruleName: ruleName, html: info});
-      }
-    });
-  
-  self.offerableFacts().forEach(function(info) {
-      let statement = info.goal;
-      var text = statement.toString();
-      var resultTerm = statement;
-      if (statement.isEquation()) {
-        if (statement.isCall2('=>')) {
-          // Make the statement be the fact's equation.
-          resultTerm = statement = statement.getRight();
-        }
-        // If as usual the LHS of the equation matches the selection,
-        // set resultTerm to the result of substituting into the RHS.
-        var step = self.proofEditor.proofDisplay.selection;
-        var selection = step && step.selection;
-        if (selection) {
-          var subst = selection.matchSchema(statement.getLeft());
-          if (subst) {
-            resultTerm = statement.getRight().subFree(subst);
-          }
-        }
-      }
-      var display = '= <span class=menuResult></span>';
-      if (subst) {
-        // TODO: Consider using the length of the unicode in deciding
-        //   what message to generate here.
-        // const unicode = statement.toUnicode();
-        const html = (info.definitional
-                      ? 'definition of ' + statement.getLeft().func().name
-                      : 'using ' + Toy.trimParens(statement.toHtml()));
-        display += (' <span class=description>' + html + '</span>');
-      }
-      // Value of the option; format of "fact <fact text>"
-      // indicates that the text defines a fact to use in
-      // rules.rewrite.
-      var info = {ruleName: 'fact ' + text,
-                  html: display,
-                  result: resultTerm};
-      itemInfos.push(info);
-    });
-  itemInfos.sort(function(a, b) {
-      return a.html.localeCompare(b.html);
-    });
-  var items = itemInfos.map(function(info) {
-      var $item = $('<div class="ruleItem noselect"/>');
-      $item.html(info.html);
-      if (info.result) {
-        $item.find('.menuResult').append(info.result.renderTerm());
-      }
-      $item.data('ruleName', info.ruleName);
-      return $item
-    });
-  self.length = items.length
-  $items.append(items);
-  if (term) {
-    // If there is a selected term, render it and any right neighbor
-    // term, and insert the renderings into all menu items that have
-    // slots for them.
-    var $term = $(term.copyForRendering().renderTerm());
-    $items.find('.menuSelected').append($term);
-    var rightTerm = Toy.getRightNeighbor(step, term);
-    var $right = '?';
-    if (rightTerm) {
-      var $right = $(rightTerm.copyForRendering().renderTerm());
-    }
-    $items.find('.menuRightNeighbor').append($right);
-  }
-  self.$node.toggleClass('hidden', items.length === 0);
-  if (items.length === 0) {
-    // The menu can be hidden by clicks within it, and that does not
-    // trigger a mouse leave event.
-    self._leavers.fire();
-  }
-
-  // TODO: Consider updating the advice using Promises.
-  self.proofEditor.$advice.toggleClass('hidden', self.length != 0);
 };
 
 /**
