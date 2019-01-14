@@ -4474,15 +4474,20 @@ const ruleInfo = {
         if (Toy.isIdentifier(synopsis)) {
           const result = Toy.getTheorem(synopsis);
           if (result) {
+            // Behavior is inline.
             return result;
           }
         }
         var proved = _factMap[synopsis];
         if (proved) {
+          // In this case the the argument is the statement
+          // and the result is the proved step.
           return proved.justify('fact', arguments);
         }
-      } else if (Toy.isProved(synopsis)) {
-        // It is an already proved statement.
+      }
+      if (Toy.isProved(synopsis)) {
+        // Argument is an already proved statement.
+        // Behavior of "fact" is inline.
         return synopsis;
       }
       // Currently rules.fact parses any string synopsis
@@ -4526,6 +4531,8 @@ const ruleInfo = {
       } catch(err) {}
       Toy.err('No such fact: ' + wff + ' (as ' + synopsis + ')');
     },
+    // The "fact" rule does not accept a selection, and converts its
+    // form input as needed.  
     inputs: {string: 1},
     form: ('Look up fact <input name=string size=40>'),
     autoSimplify: noSimplify,

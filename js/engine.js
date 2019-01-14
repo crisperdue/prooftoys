@@ -349,8 +349,12 @@ var rules = {};
 //   action will run with access to the same arguments and access
 //   to the rule object as "this".
 //
-// inputs: map from type to argument number(s), either a single
-//   number or an array if more than one such argument.
+// inputs: map from type to argument number(s), either a single number
+//   or an array if more than one such argument.  These currently
+//   determine whether a step accepts a selected step or site, also
+//   parsing of items in forms.  Most rules accept arguments in string
+//   form and convert them as needed internally.
+//
 //   The supported types are:
 //     step: Matches any proof step.
 //     equation: Matches a proof step that is an equation.

@@ -844,6 +844,8 @@ ProofEditor.prototype.showProofButtons = function(value) {
 // All types that can be entered in a form.  Omits site, bindingSite,
 // and reducible, which are currently not supported in forms.  See
 // See comments above addRule in engine.js for details on the types.
+//
+// TODO: Make this a Set.
 var formTypes = {
   term: true,
   bool: true,
@@ -857,6 +859,8 @@ var formTypes = {
 };
 
 // Datatypes that refer to proof steps.
+//
+// TODO: Make this a Set.
 var stepTypes = {
   step: true,
   equation: true,
@@ -1750,7 +1754,6 @@ function handleMouseEnterItem(ruleMenu, node, event) {
   const noSuggest = rule && rule.info.noSuggest;
   if (noSuggest) {
     const suggested = display.suggestionMessage($node.clone().contents());
-    console.log('Suggesting', suggested);
     $node.data('suggestion', suggested);
   }
   var suggestion = $node.data('suggestion');
