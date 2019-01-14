@@ -584,7 +584,6 @@ var testCase = {
     assertEqual('"asdf"', ups('asdf'));
     assertEqual('"\\\\asdf"', ups('\\asdf'));
     assertEqual('"asdf\\""', ups('asdf"'));
-    assertEqual('"asdf\\n"', ups('asdf\n'));
   },
 
   testInputTypes: function() {

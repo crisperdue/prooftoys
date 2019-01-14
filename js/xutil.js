@@ -1276,8 +1276,10 @@ function nParsed() {
 };
 
 /**
- * Extracts and returns the actual string content
- * from the external representation of a string.
+ * Extracts and returns the actual string content from the external
+ * representation of a string, replacing occurrences of backslash
+ * followed by another character (except newline) with just the
+ * following character.
  */
 function parseStringContent(name) {
   var content = name.substring(1, name.length - 1);
@@ -1286,12 +1288,15 @@ function parseStringContent(name) {
 
 /**
  * Creates and returns a parseable external representation for a
- * string.
+ * string.  This quotes backslash and double quote by preceding them
+ * with a backslash.  Everything else remains the same.
+ *
+ * TODO: Consider replacing this and parseString with JSON.stringify
+ * and JSON.parse applied to strings.
  */
 function unparseString(content) {
   var s1 = content.replace(/["\\]/g, '\\$&');  // For emacs: "]);
-  var s2 = s1.replace(/\n/g, '\\n');
-  return '"' + s2 + '"';
+  return '"' + s1 + '"';
 }
 
 var _mathParsed = new Map();
@@ -1887,14 +1892,47 @@ function encodeSteps(steps_arg) {
       } else if (typeof arg === 'string') {
         result.push(unparseString(arg));
       } else if (arg instanceof Expr) {
-        const type = Toy.inputTypes(step.ruleName)[i];
-        if (type === 'term' || type === 'bool') {
-          result.push('(t ' + arg.fixupBoundNames()  + ')');
-        } else {
+        const i = indexes.get(arg);
+        // Note: This finesses the question of whether the step might
+        // improperly refer to a step not part of the current proof.
+        if (i) {
           result.push('(s ' + indexes.get(arg) + ')');
+        } else {  
+          result.push('(t ' + arg.fixupBoundNames()  + ')');
         }
+      } else if (arg.constructor === Object) {
+        // Treat this as a substitution
+        const map = {};
+        for (const key in arg) {
+          const v = arg[key];
+          if (v instanceof Expr) {
+            map[key] = v.toString();
+          } else if (typeof v === 'string') {
+            map[key] = v;
+          } else {
+            console.warn('Substitution not term:', v, 'in', arg);
+          }
+        }
+        result.push('(subst ' + unparseString(JSON.stringify(map)) + ')');
+      } else if (Array.isArray(arg)) {
+        // An array currently is always a list of facts.
+        let ok = true;
+        const a = arg.map(function(v) {
+            return (v instanceof Expr
+                    // A fact will be parsed with mathParse, so make
+                    // sure that adds no assumptions.
+                    ? '@ ' + v.toString()
+                    : typeof v === 'string'
+                    ? v
+                    : (console.warn('Bad fact list item:', v),
+                       ok = false,
+                       undefined));
+          });
+        assert(ok, 'Failed to encode steps');
+        result.push('(facts ' + unparseString(JSON.stringify(a)) + ')');
       } else {
-        result.push(arg.toString());
+        console.warn('Bad rule argument:', arg);
+        assert(false, 'Bad rule argument in encodeSteps');
       }
     }
     return '(' + result.join(' ') + ')';
@@ -1977,19 +2015,19 @@ function decodeArg(info, steps) {
       // decoding may need to convert occurrences of 's' to the
       // wff of the step if the argument type required by
       // the rule is a term or close kin.
-      case 's':
-        // Step indexes are 1-based.
-        return (steps[value.getNumValue() - 1]);
-        break;
-      case 't':
-        return (value);
-        break;
-      case 'path':
-        return (Toy.path(value._value));
-        break;
-      default:
-        assert(false, 'Unknown encoding key: ' + key);
-      }
+    case 's':
+      // Step indexes are 1-based.
+      return (steps[value.getNumValue() - 1]);
+    case 't':
+      return (value);
+    case 'path':
+      return (Toy.path(value._value));
+    case 'subst':
+    case 'facts':
+      return JSON.parse(value.getStringValue());
+    default:
+      assert(false, 'Unknown encoding key: ' + key);
+    }
   }
 }
 
