@@ -403,6 +403,9 @@ const prelogic = {
       
   // TODO: Consider making this a command rather than a rule,
   //   available through the rule menu when a step is selected.
+  // TODO: Modify this to encode the steps to be inlined before
+  //   committing to the inlining, and if encoding fails, abort the
+  //   inlining.
   inline: {
     // Caution: this rule can ONLY be used interactively.
     action: function(step) {
