@@ -401,6 +401,56 @@ const prelogic = {
     labels: 'display basic'
   },
       
+  // TODO: Consider making this a command rather than a rule,
+  //   available through the rule menu when a step is selected.
+  inline: {
+    // Caution: this rule can ONLY be used interactively.
+    action: function(step) {
+      const inlined = step;
+      const rendered = step.rendering;
+      assert(rendered, 'For interactive use only');
+      const display = Toy.getProofDisplay(rendered);
+
+      Toy.fillDetails(rendered);
+      const insertions = Toy.unrenderedDeps(rendered.details);
+
+      const steps = display.steps;
+      const index = steps.indexOf(rendered);
+      const followers = (steps.slice(index + 1)
+                         .map(function(step) { return step.original; }));
+      display.removeStepAndFollowing(rendered);
+      insertions.forEach(function(step) { display.addStep(step); });
+
+      // Re-create the followers from their rule info, replacing
+      // occurrences of the input step in their arguments with the
+      // conclusion of the inline proof.
+      const updated = insertions[insertions.length - 1];
+      function rerun(step) {
+        const args = step.ruleArgs;
+        const index = args.indexOf(inlined);
+        let args2 = args;
+        if (index >= 0) {
+          args2 = args.slice();
+          args2[index] = updated;
+        }
+        display.addStep(rules[step.ruleName].apply(rules, args2));
+      }
+      followers.forEach(rerun);
+      // Do not return a step, but make the step editor accept the
+      // result as a success.
+      return true;
+    },
+    autoSimplify: noSimplify,
+    inputs: {step: 1},
+    menu: 'make inline',
+    tooltip: 'make inline',
+    // Rare property, indicates that this has side effects, so do
+    // not run the rule to find a suggested step.
+    noSuggest: true,
+    // description: 'display fully;; {step step}',
+    labels: 'display'
+  },
+
   /**
    * Refer to a theorem by name, for the UI.  Inline.
    *

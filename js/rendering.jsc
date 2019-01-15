@@ -2390,10 +2390,13 @@ Toy.ProofDisplay = ProofDisplay;
 Toy.unrenderedDeps = unrenderedDeps;
 Toy.renderInference = renderInference;
 Toy.renderProof = renderProof;
+Toy.fillDetails = fillDetails;
+
 Toy.getStepNode = getStepNode;
 Toy.getProofStep = getProofStep;
 Toy.getStepsNode = getStepsNode;
 Toy.getExpr = getExpr;
+Toy.getProofDisplay = getProofDisplay;
 
 // For debugging
 Toy._adjacentSteps = adjacentSteps;
