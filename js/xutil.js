@@ -1859,12 +1859,12 @@ function inputTypes(ruleName) {
 }
 
 /**
- * Compute and return a string representing the given proof steps,
- * which may be either rendered or originals.  Treating expressions
- * with "multiple arguments" as lists, the format is an expression
- * starting with "steps", followed list of proof steps, each
- * represented as a list having first, the step's index, then the rule
- * name followed by all of the arguments.
+ * Compute and return a string representing the given array of proof
+ * steps, which may be either rendered or originals.  Treating
+ * expressions with "multiple arguments" as lists, the format is an
+ * expression starting with "steps", followed list of proof steps,
+ * each represented as a list having first, the step's index, then the
+ * rule name followed by all of the arguments.
  *
  * Each rule argument is represented as a list or string.  If a list,
  * the first element is "t" for a term (followed by the term itself),
@@ -1917,6 +1917,9 @@ function encodeSteps(steps_arg) {
       } else if (Array.isArray(arg)) {
         // An array currently is always a list of facts.
         let ok = true;
+        // A fact may be an Expr, a string, or a plain object.  The
+        // plain objects usually contain functions, so we do not try
+        // to encode them.
         const a = arg.map(function(v) {
             return (v instanceof Expr
                     // A fact will be parsed with mathParse, so make

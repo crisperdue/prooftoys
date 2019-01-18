@@ -415,30 +415,47 @@ const prelogic = {
       const display = Toy.getProofDisplay(rendered);
 
       Toy.fillDetails(rendered);
-      const insertions = Toy.unrenderedDeps(rendered.details);
+      const insertions = Toy.unrenderedDeps(step.details);
+      // Steps with an array (list of facts) where some entry is
+      // neither a term nor a string cannot currently be inlined.
+      const noEncode = insertions.some(function(step) {
+          return step.ruleArgs.some(function(arg) {
+              return (Array.isArray(arg) &&
+                      arg.some(function(fact) {
+                          return (!(typeof fact === 'string') &&
+                                  !(fact instanceof Expr));
+                        }));
+            });
+        });
+      if (noEncode) {
+        throw new Error('Inlining not supported for ' + step.toString());
+      }
 
       const steps = display.steps;
       const index = steps.indexOf(rendered);
-      const followers = (steps.slice(index + 1)
+      // These steps will be replaced with near-duplicates.
+      const replaced = (steps.slice(index)
                          .map(function(step) { return step.original; }));
       display.removeStepAndFollowing(rendered);
       insertions.forEach(function(step) { display.addStep(step); });
 
-      // Re-create the followers from their rule info, replacing
-      // occurrences of the input step in their arguments with the
-      // conclusion of the inline proof.
-      const updated = insertions[insertions.length - 1];
-      function rerun(step) {
-        const args = step.ruleArgs;
-        const index = args.indexOf(inlined);
-        let args2 = args;
-        if (index >= 0) {
-          args2 = args.slice();
-          args2[index] = updated;
+      // Re-create the replaced steps except the first from their rule
+      // info, replacing occurrences of replaced steps in their
+      // arguments with the conclusion of the inline proof.
+      const fixups = new Map();
+      fixups.set(step, insertions[insertions.length - 1]);
+      function rerun(step, index) {
+        // The inlined (first) step is already replaced by the last insertion
+        if (index > 0) {
+          const args2 = step.ruleArgs.map(function(arg) {
+              return fixups.get(arg) || arg;
+            });
+          const replacement = rules[step.ruleName].apply(rules, args2);
+          display.addStep(replacement);
+          fixups.set(step, replacement);
         }
-        display.addStep(rules[step.ruleName].apply(rules, args2));
       }
-      followers.forEach(rerun);
+      replaced.forEach(rerun);
       // Do not return a step, but make the step editor accept the
       // result as a success.
       return true;
