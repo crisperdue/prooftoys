@@ -122,8 +122,8 @@ definition('negate = {p. {x. not (p x)}}');
 
 // Strictness
 definition('strict = {f. f none = none}');
-definition('strict2 = {f. forall {x. forall {y. ' +
-           'f x none = none & f none y = none}}}');
+definition('strict2 = {f. forall {x. f x none = none} & ' +
+           'forall {x. f none x = none}}');
 
 
 //// Logical axioms and rule of inference
@@ -435,7 +435,7 @@ const prelogic = {
       const index = steps.indexOf(rendered);
       // These steps will be replaced with near-duplicates.
       const replaced = (steps.slice(index)
-                         .map(function(step) { return step.original; }));
+                        .map(function(step) { return step.original; }));
       display.removeStepAndFollowing(rendered);
       insertions.forEach(function(step) { display.addStep(step); });
 
