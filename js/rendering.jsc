@@ -400,11 +400,6 @@ ProofDisplay.prototype.renderStep = function(step) {
   copy.rendering = copy;
   step.original = step;
   copy.original = step;
-  step.ruleDeps.forEach(function(s) {
-      if (self == getProofDisplay(s.rendering)) {
-        s.rendering.addUser();
-      }
-    });
   copy.proofDisplay = this;
   var node = this.renderStep1(copy);
   return $(node).data('proofStep');
@@ -431,6 +426,11 @@ ProofDisplay.prototype.addStep = function(step) {
                                ? step.ordinal
                                : this.stepPrefix + this.steps.length));
     renderStepNumber(rendered);
+    step.ruleDeps.forEach(function(s) {
+        if (self == getProofDisplay(s.rendering)) {
+          s.rendering.addUser();
+        }
+      });
     this.proofChanged();
     return rendered;
   } catch(e) {
