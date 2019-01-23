@@ -372,9 +372,12 @@ ProofDisplay.prototype.suggest = function(node) {
  * - A rendered step has a "proofDisplay" property referring to
  *   the ProofDisplay it belongs to.
  *
- * - When a rendered step has a subproof display open, it has a
- *   "subproofDisplay" property referring to the subproof's
- *   ProofDisplay.
+ * - A rendered step has a set of "users", which are other rendered
+ *   steps that depend directly on the step via a single possibly
+ *   derived inference step.
+ *
+ * - When a rendered step has a subproof display open, its
+ *   "subproofDisplay" property refers to the subproof's ProofDisplay.
  *
  * - Creation of a rendered step adds a "rendering" property to the
  *   original, so original proof steps can currently have only one
@@ -391,16 +394,16 @@ ProofDisplay.prototype.suggest = function(node) {
  */
 ProofDisplay.prototype.renderStep = function(step) {
   var self = this;
-  // TODO: Move most of this logic into renderStep.
   assert(!step.rendering, 'Already rendered', step);
   var copy = step.copyToRender();
-  copy.users = 0;
+  copy.users = new Set();
   copy.ordinal = step.ordinal;
   step.rendering = copy;
   copy.rendering = copy;
   step.original = step;
   copy.original = step;
   copy.proofDisplay = this;
+  copy.subproofDisplay = null;
   var node = this.renderStep1(copy);
   return $(node).data('proofStep');
 };
@@ -428,7 +431,7 @@ ProofDisplay.prototype.addStep = function(step) {
     renderStepNumber(rendered);
     step.ruleDeps.forEach(function(s) {
         if (self == getProofDisplay(s.rendering)) {
-          s.rendering.addUser();
+          s.rendering.addUser(rendered);
         }
       });
     this.proofChanged();
@@ -477,7 +480,7 @@ ProofDisplay.prototype.removeLastStep = function() {
   var display = getProofDisplay(step);
   step.ruleDeps.forEach(function(s) {
       if (getProofDisplay(s.rendering) == display) {
-        s.rendering.removeUser();
+        s.rendering.removeUser(step);
       }
     });
   steps.length = index;
@@ -503,7 +506,7 @@ ProofDisplay.prototype.removeStepAndFollowing = function(toRemove) {
  * The step must not have any rendered steps that depend on it.
  */
 ProofDisplay.prototype.removeStep = function(step) {
-  assert(step.users === 0, 'Cannot remove used step {1}', step);
+  assert(step.users.size === 0, 'Cannot remove used step {1}', step);
   // Works by removing from here down, then re-inserting.
   var self = this;
   var index = self.steps.indexOf(step);
@@ -799,7 +802,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   // Deleter events
   // If there is no deleter, this sets nothing up.
   $proofStep.on('click', '.deleteStep', function(event) {
-    if (step.users == 0) {
+    if (step.users.size === 0) {
       // If the step has users the button is effectively disabled.
       self.removeStep(step);
     }
@@ -1371,17 +1374,18 @@ Step.prototype.copyToRender = function() {
 };
 
 // In fact, this method is really for StepDisplay objects.
-Step.prototype.addUser = function() {
-  this.users++;
+Step.prototype.addUser = function(user) {
+  this.users.add(user);
   $(this.stepNode).addClass('hasUsers');
   // It would be nice to do this, but in Chrome hover events
   // don't work right with this code.
   // $(this.stepNode).find('.deleteStep').prop('disabled', true);
 };
 
-Step.prototype.removeUser = function() {
-  this.users--;
-  if (this.users <= 0) {
+Step.prototype.removeUser = function(user) {
+  assert(this.users.has(user), 'Step {1} does not have user {2}', this, user);
+  this.users.delete(user);
+  if (this.users.size === 0) {
     $(this.stepNode).removeClass('hasUsers');
     // It would be nice to do this, but in Chrome hover events
     // don't work right with this code.
@@ -1514,7 +1518,7 @@ function clearSubproof(step, internal) {
   // TODO: Consider ways to clean up this whole function.
   var controller = step.subproofDisplay;
   if (controller) {
-    delete step.subproofDisplay;
+    step.subproofDisplay = null;
     controller.steps.forEach(function(step) {
         // Record that the rendering is gone.
         step.original.rendering = null;
