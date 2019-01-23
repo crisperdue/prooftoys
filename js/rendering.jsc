@@ -1457,23 +1457,20 @@ Lambda.prototype.copyForRendering = function(bindings) {
  * with the underlying step.
  */
 function unrenderedDeps(step) {
-  // TODO: Consider defining a function "subProofOf" that returns an
-  // array of plain steps back to any step arguments to the rule that
-  // produced the step.  That might be used in place of this one.
   var result = [];
+  const visited = new Set();
   // Traverses the dependency graph, recording a copy of every step
   // and building an array of all of the original steps.  In Java
   // one might use HashSets to identify already-visited steps,
   // avoiding temporary modifications to the originals.
   function visitWithDeps(step) {
-    if (!step.rendering && !step.__visited) {
+    if (!step.rendering && !visited.has(step)) {
       result.push(step);
-      step.__visited = true;
+      visited.add(step);
       step.ruleDeps.forEach(function(dep) { visitWithDeps(dep); });
     }
   }
   visitWithDeps(step);
-  result.forEach(function(step) { delete step.__visited; });
   result.sort(function(s1, s2) {
       return s1.ordinal - s2.ordinal;
     });
