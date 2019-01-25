@@ -763,6 +763,10 @@ ProofEditor.prototype.addStep = function(step) {
   this.proofDisplay.addStep(step);
 };
 
+ProofEditor.prototype.getLastStep = function() {
+  return this.proofDisplay.getLastStep();
+};
+
 /**
  * Gets the state of the proof, in string form.
  */
