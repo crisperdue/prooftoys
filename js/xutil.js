@@ -2053,6 +2053,10 @@ function dumpProof(proofEditor) {
   const steps = Toy.proofOf(step);
   const encoded = encodeSteps(steps);
   const split = encoded.split('\n');
+  // TODO: Consider a different format that uses:
+  // JSON.stringify(split, null, 1)
+  // to produce multiline output that can be read back with
+  // Array.join.
   split.pop();
   split.pop();
   split.shift();
