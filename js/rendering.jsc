@@ -1393,6 +1393,27 @@ Step.prototype.removeUser = function(user) {
   }
 };
 
+Step.prototype.isRendered = function() { return this == this.rendering; }
+
+/**
+ * Given a rendered step, returns it and all rendered steps derived from
+ * it, recursively, not including the given step.
+ */
+Step.prototype.descendants = function() {
+  assert(this.isRendered(), 'Not a rendered step: {1}', this);
+  const result = new Set();
+  function traverse(step) {
+    // Dependencies are never circular, so the membership test is
+    // optional.
+    if (!result.has(step)) {
+      result.add(step);
+      step.users.forEach(traverse);
+    }
+  }
+  this.users.forEach(traverse);
+  return result;
+}
+
 // copyForRendering(bindings)
 //
 // Makes and returns a deep copy of this Expr, copying all parts
