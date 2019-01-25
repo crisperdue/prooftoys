@@ -467,7 +467,76 @@ const prelogic = {
     // Rare property, indicates that this has side effects, so do
     // not run the rule to find a suggested step.
     noSuggest: true,
-    // description: 'display fully;; {step step}',
+    labels: 'display'
+  },
+
+  // This is another high-level function that edits a proof.  This
+  // supports replacing the derivation of a step in the proof with a
+  // different derivation.  Selecting a step that is the same as (a
+  // new) one at the end of the proof display enables this command,
+  // which replaces all steps in the proof derived from the selected
+  // one with identical steps derived from its twin.  No proof steps
+  // are modified; they are only replaced with counterparts.
+  //
+  // This inserts the replacement steps at the end of the proof.
+  replaceStep: {
+    precheck: function(step) {
+      const rendered = step.rendering;
+      const last = Toy.getProofDisplay(rendered).getLastStep();
+      if (last == rendered || !last.matches(rendered)) {
+        // The last step must match the selected one, but must
+        // be a different step.
+        return false;
+      }
+      const derived = rendered.descendants();
+      // The last step cannot be derived from the selected one.
+      return derived.has(last) ? null : derived;
+    },
+    action: function(step) {
+      const derived = Toy._actionInfo;
+      const rendered = step.rendering;
+      const display = Toy.getProofDisplay(rendered);
+      // This is the step to use as a replacement.
+      const alt = display.getLastStep().original;
+      const dSteps = display.steps; 
+      const index = dSteps.indexOf(rendered);
+      assert(index >= 0, 'Step {1} not found', step);
+      const fixups = new Map();
+      fixups.set(step, alt);
+      // This will have originals of the steps to be retained in the proof.
+      const oldSteps = [];
+      // This will have the real steps to replace ones derived from
+      // the replaced step.
+      const newSteps = [];
+      for (let i = index; i < dSteps.length; i++) {
+        const d = dSteps[i];
+        if (derived.has(d)) {
+          // Step d is derived from the replaced step, so re-run the
+          // rule that made it, replacing input step(s) as needed
+          // using the fixups Map.
+          const s = d.original;
+          const args2 = s.ruleArgs.map(function(arg) {
+              return fixups.get(arg) || arg;
+            });
+          const replacement = rules[s.ruleName].apply(rules, args2);
+          newSteps.push(replacement);
+          fixups.set(s, replacement);
+        } else {
+          oldSteps.push(d.original);
+        }
+      }
+      display.removeStepAndFollowing(rendered);
+      oldSteps.concat(newSteps).forEach(function(s) { display.addStep(s); });
+      return true;
+    },
+    noSuggest: true,
+    autoSimplify: noSimplify,
+    inputs: {step: 1},
+    menu: 'derive consequences from alternate step',
+    tooltip: 'derive consequences from alternate step',
+    // Rare property, indicates that this has side effects, so do
+    // not run the rule to find a suggested step.
+    noSuggest: true,
     labels: 'display'
   },
 
