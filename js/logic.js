@@ -540,6 +540,32 @@ const prelogic = {
     labels: 'display'
   },
 
+  // Removes the selected step and any following steps from the proof.
+  // Prompts before actually removing.
+  removeFromHere: {
+    precheck: function(step) {
+      const rendered = step.rendering;
+      const last = Toy.getProofDisplay(rendered).getLastStep();
+      return rendered != last;
+    },
+    action: function(step) {
+      if (window.confirm('Remove selected step and all following?')) {
+        const rendered = step.rendering;
+        const display = Toy.getProofDisplay(rendered);
+        display.removeStepAndFollowing(rendered);
+      }
+      return true;
+    },
+    noSuggest: true,
+    autoSimplify: noSimplify,
+    inputs: {step: 1},
+    menu: 'remove step and all following',
+    // Rare property, indicates that this has side effects, so do
+    // not run the rule to find a suggested step.
+    noSuggest: true,
+    labels: 'display'
+  },
+
   /**
    * Refer to a theorem by name, for the UI.  Inline.
    *
@@ -1944,7 +1970,7 @@ const ruleInfo = {
     inputs: {site: 1, step: 3},
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with consequent of step <input name=step>'),
-    menu: 'replace proved A => {term} with T',
+    menu: 'replace conclusion of proved A => B with T',
     description: ('{site} is known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
