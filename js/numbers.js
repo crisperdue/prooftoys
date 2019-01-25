@@ -53,9 +53,9 @@ if (!Toy.deeperFieldAxioms) {
     [
      {statement: '@not (R none)', axiom: true,
       description: 'null value is not Real'},
-     {statement: '@strict2 (+)', axiom: true,
+     {statement: '@ strict2 (+)', axiom: true,
       description: 'real addition is strict'},
-     {statement: '@strict2 (*)', axiom: true,
+     {statement: '@ strict2 (*)', axiom: true,
       description: 'real multiplication is strict'}
      ];
   addRules(strictness);
@@ -108,14 +108,18 @@ if (!Toy.deeperFieldAxioms) {
   definition('0 = the1 isAddIdentity');
   definition('1 = the1 isMulIdentity');
 
+  // These return a collection of inverses of a given value.
+  definition('addInverses = [x. {y. R x & R y & x + y = 0}]');
+  definition('mulInverses = [x. {y. R x & R y & x * y = 1}]');
+
   const uniqueInverses =
     [
-     {statement: 'exists1 {y. R y & x + y = 0}', axiom: true,
+     {statement: '@ R x => exists1 (addInverses x)',
       description: 'unique additive inverses exist'
      },
-     {statement: 'x != 0 => exists1 {y. R y & x * y = 1}', axiom: true,
+     {statement: '@ R x & x != 0 => exists1 (mulInverses x)',
       description: 'unique multiplicative inverses exist'
-     },
+     }
      ];
   addRules(uniqueInverses);
 }
@@ -226,21 +230,25 @@ const inverses =
        const steps =
        [
         '(1 exists1Law)',
-        '(2 fact "exists1 {y. R y & x + y = 0}")',
-        '(3 instantiateVar (s 1) (path "/right/left/arg") (t z))',
-        '(4 instantiateVar (s 3) (path "/right/right/right/arg") (t {y. ((R y) & ((x + y) = 0))}))',
-        '(5 apply (s 4) (path "/right/left"))',
-        '(6 p2 (s 2) (s 5) (t (((a => b) & (b => c)) => (a => c))))',
-        '(7 instantiateVar (s 6) (path "/right/right/left") (t y))',
-        '(8 rewrite (s 7) (path "/right/right/right/arg/body/left") (t (a == (T & a))))',
-        '(9 assume (t (R x)))',
-        '(10 replaceT (s 8) (path "/right/right/right/arg/body/left/left") (s 9))',
-        '(11 expDefinition "neg")',
-        '(12 rewrite (s 11) (path "/main") (t ((x = y) == (y = x))))',
-        '(13 rewriteOnlyFrom (s 10) (path "/right/right/right") (s 12))',
-        '(14 rewrite (s 13) (path "") (t ((a => (b == c)) == ((a & b) == (a & c)))))',
-        '(15 rewrite (s 14) (path "/main/left") (t ((a & (b & c)) == ((a & b) & c))))',
-        '(16 rewrite (s 15) (path "/main/right/right") (t ((x = y) == (y = x))))'
+        '(2 instantiateVar (s 1) (path "/right/left/arg") (t z))',
+        '(3 instantiateVar (s 2) (path "/right/right/right/arg") (t {y. ((R y) & ((x + y) = 0))}))',
+        '(4 apply (s 3) (path "/right/left"))',
+        '(5 assume (t (R x)))',
+        '(6 expDefinition "neg")',
+        '(7 rewrite (s 6) (path "/main") (t ((x = y) == (y = x))))',
+        '(8 fact "exists1 (addInverses x)")',
+        '(9 apply (s 8) (path "/right/arg"))',
+        '(10 assume (t (R x)))',
+        '(11 trueBy1 (s 9) (path "/right/arg/body/left/left") (s 10))',
+        '(12 simplifyFocalPart (s 11))',
+        '(13 p2 (s 12) (s 4) (t (((a => b) & (b => c)) => (a => c))))',
+        '(14 instantiateVar (s 13) (path "/right/right/left") (t y))',
+        '(15 rewrite (s 14) (path "/right/right/right/arg/body/left") (t (a == (T & a))))',
+        '(16 replaceT (s 15) (path "/right/right/right/arg/body/left/left") (s 5))',
+        '(17 rewriteOnlyFrom (s 16) (path "/right/right/right") (s 7))',
+        '(18 rewrite (s 17) (path "") (t ((a => (b == c)) == ((a & b) == (a & c)))))',
+        '(19 rewrite (s 18) (path "/main/left") (t ((a & (b & c)) == ((a & b) & c))))',
+        '(20 rewrite (s 19) (path "/main/right/right") (t ((x = y) == (y = x))))'
         ];
        return Toy.decodeProof(steps);
      }
@@ -308,10 +316,6 @@ const realOrdering =
    }
    ];
 Toy.addRules(realOrdering);
-
-// Read as "x is an additive/multiplicative inverse of y".
-definition('isAddInverse = {x. {y. R x & R y & y + x = 0}}');
-definition('isMulInverse = {x. {y. R x & R y & y * x = 1}}');
 
 // Lay 11.1a
 {
