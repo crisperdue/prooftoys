@@ -200,7 +200,7 @@ const identityFacts =
    ];
 addRules(identityFacts);
 
-definition('neg = {x. the1 {y. R x & R y & x + y = 0}}');
+definition('neg = {x. the1 (addInverses x)}');
 
 // Note that our axiom of arithmetic computes that neg 1 = -1, which
 //   gives ability to prove things we prefer to prove from axioms.
@@ -230,25 +230,21 @@ const inverses =
        const steps =
        [
         '(1 exists1Law)',
-        '(2 instantiateVar (s 1) (path "/right/left/arg") (t z))',
-        '(3 instantiateVar (s 2) (path "/right/right/right/arg") (t {y. ((R y) & ((x + y) = 0))}))',
-        '(4 apply (s 3) (path "/right/left"))',
-        '(5 assume (t (R x)))',
-        '(6 expDefinition "neg")',
-        '(7 rewrite (s 6) (path "/main") (t ((x = y) == (y = x))))',
-        '(8 fact "exists1 (addInverses x)")',
-        '(9 apply (s 8) (path "/right/arg"))',
-        '(10 assume (t (R x)))',
-        '(11 trueBy1 (s 9) (path "/right/arg/body/left/left") (s 10))',
-        '(12 simplifyFocalPart (s 11))',
-        '(13 p2 (s 12) (s 4) (t (((a => b) & (b => c)) => (a => c))))',
-        '(14 instantiateVar (s 13) (path "/right/right/left") (t y))',
-        '(15 rewrite (s 14) (path "/right/right/right/arg/body/left") (t (a == (T & a))))',
-        '(16 replaceT (s 15) (path "/right/right/right/arg/body/left/left") (s 5))',
-        '(17 rewriteOnlyFrom (s 16) (path "/right/right/right") (s 7))',
-        '(18 rewrite (s 17) (path "") (t ((a => (b == c)) == ((a & b) == (a & c)))))',
-        '(19 rewrite (s 18) (path "/main/left") (t ((a & (b & c)) == ((a & b) & c))))',
-        '(20 rewrite (s 19) (path "/main/right/right") (t ((x = y) == (y = x))))'
+        '(2 instantiateVar (s 1) (path "/right/right/left") (t y))',
+        '(3 assume (t ((the1 p) = (f x))))',
+        '(4 replace (s 2) (path "/right/right/right") (s 3))',
+        '(5 rewrite (s 4) (path "/left/left") (t ((x = y) == (y = x))))',
+        '(6 definition "neg" "")',
+        '(7 reduceEqn (s 6))',
+        '(8 instantiateVar (s 5) (path "/left/left/left/fn") (t neg))',
+        '(9 instantiateVar (s 8) (path "/left/left/right/arg") (t (addInverses x)))',
+        '(10 trueBy0 (s 9) (path "/left/left") (s 7))',
+        '(11 simplifySite (s 10) (path "/left"))',
+        '(12 fact "exists1 (addInverses x)")',
+        '(13 trueBy1 (s 11) (path "/left") (s 12))',
+        '(14 rewrite (s 13) (path "/right/left") (t ((addInverses x y) = (((R x) & (R y)) & ((x + y) = 0)))))',
+        '(15 rewrite (s 14) (path "") (t ((a => (((a & b) & c) == d)) == (((a & b) & c) == (a & d)))))',
+        '(16 rewrite (s 15) (path "/main/right/right") (t ((x = y) == (y = x))))'
         ];
        return Toy.decodeProof(steps);
      }
