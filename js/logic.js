@@ -1808,6 +1808,13 @@ var simplifiersInfo = {
 };
 addRulesMap(simplifiersInfo);
 
+/**
+ * Function callable to simplify an entire step.  Useful
+ * as an autoSimplify function.
+ */
+function simplifyStep(step) {
+  return rules.simplifySite(step, '');
+}
 
 const ruleInfo = {
 
@@ -1949,6 +1956,7 @@ const ruleInfo = {
              target.get(path), step);
     },
     inputs: {site: 1, step: 3},
+    autoSimplify: simplifyStep,
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with step <input name=step>'),
     menu: 'replace proved {term} with T',
@@ -1968,6 +1976,7 @@ const ruleInfo = {
              target.get(path), step);
     },
     inputs: {site: 1, step: 3},
+    autoSimplify: simplifyStep,
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with consequent of step <input name=step>'),
     menu: 'replace conclusion of proved A => B with T',
@@ -5190,5 +5199,7 @@ Toy.enableDefnFacts();
 
 Toy.ruleInfo = ruleInfo;
 Toy.logicFacts = logicFacts;
+
+Toy.simplifyStep = simplifyStep;
 
 }();
