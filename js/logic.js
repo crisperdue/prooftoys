@@ -4873,6 +4873,29 @@ const existRules =
     }
    },
 
+   // Convenient corollary that uses a typical definition of an inverse
+   // function and a suitable unique existence predicate to show the
+   // usual property of the inverse function.  The E! predicate is
+   // generally conditional on some assumptions that limit is
+   // applicability.
+   {name: 'inverseFunLaw',
+    statement: 'f x = the1 (Q x) & exists1 (Q x) => (Q x y == f x = y)',
+    proof: function() {
+       const steps =
+       [
+        '(1 exists1Law)',
+        '(2 instantiateVar (s 1) (path "/right/right/left") (t y))',
+        '(3 assume (t ((the1 p) = (f x))))',
+        '(4 replace (s 2) (path "/right/right/right") (s 3))',
+        '(5 rewrite (s 4) (path "/left/left") (t ((x = y) == (y = x))))',
+        '(6 rewrite (s 5) (path "/right/right") (t ((x = y) == (y = x))))',
+        '(7 display (s 6))',
+        '(8 instantiateVar (s 7) (path "/left/left/right/arg") (t (Q x)))'
+        ];
+       return Toy.decodeProof(steps);
+     }
+   },
+
   // This theorem aids in proving that a constant defined by a
   // property is unique.
    {name: 'uniqueTerm',

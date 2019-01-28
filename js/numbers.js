@@ -227,6 +227,7 @@ const inverses =
    {name: 'negFact',
     statement: '@ R x & R y & x + y = 0 == R x & neg x = y',
     proof: function() {
+       // TODO: Derive from inverseFunLaw.
        const steps =
        [
         '(1 exists1Law)',
