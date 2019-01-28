@@ -329,10 +329,17 @@ var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
 // TODO: Make variable naming and subscripting consistent and
 // rational!  Currently variable names of a single alphabetic
 // character.
-var variableRegex = /^[a-z][0-9_]*([.:]|$)|^_/;
+var variableRegex = /^[a-zA-Z][0-9_]*([.:]|$)|^_/;
 
 // Numeric literals.
 var numeralRegex = /^-?[0-9]+$/;
+
+// Constant names having the same form as a usual variable name.
+// TODO: Consider handling of other constants such as C, Q, Z, N,
+//   pi, and the imaginary unit.  Perhaps in context, R and
+//   potentially "i" can be treated as parse-level abbreviations
+//   for constants such as RR and ii with normal constant names.
+const specialConsts = new Set(['T', 'F', 'R', 'e']);
 
 /**
  * Is the given string a legal variable name?  Only names with a
@@ -346,7 +353,7 @@ var numeralRegex = /^-?[0-9]+$/;
 function isVariableName(name) {
   assert(typeof name == 'string', 
          'isVariable - name must be a string: {1}', name);
-  return name.match(variableRegex);
+  return !specialConsts.has(name) && name.match(variableRegex);
 }
 
 /**
