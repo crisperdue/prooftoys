@@ -230,22 +230,17 @@ const inverses =
        // TODO: Derive from inverseFunLaw.
        const steps =
        [
-        '(1 exists1Law)',
-        '(2 instantiateVar (s 1) (path "/right/right/left") (t y))',
-        '(3 assume (t ((the1 p) = (f x))))',
-        '(4 replace (s 2) (path "/right/right/right") (s 3))',
-        '(5 rewrite (s 4) (path "/left/left") (t ((x = y) == (y = x))))',
-        '(6 definition "neg" "")',
-        '(7 reduceEqn (s 6))',
-        '(8 instantiateVar (s 5) (path "/left/left/left/fn") (t neg))',
-        '(9 instantiateVar (s 8) (path "/left/left/right/arg") (t (addInverses x)))',
-        '(10 trueBy0 (s 9) (path "/left/left") (s 7))',
-        '(11 simplifySite (s 10) (path "/left"))',
-        '(12 fact "exists1 (addInverses x)")',
-        '(13 trueBy1 (s 11) (path "/left") (s 12))',
-        '(14 rewrite (s 13) (path "/right/left") (t ((addInverses x y) = (((R x) & (R y)) & ((x + y) = 0)))))',
-        '(15 rewrite (s 14) (path "") (t ((a => (((a & b) & c) == d)) == (((a & b) & c) == (a & d)))))',
-        '(16 rewrite (s 15) (path "/main/right/right") (t ((x = y) == (y = x))))'
+        '(1 fact "exists1 (addInverses x)")',
+        '(2 inverseFunLaw)',
+        '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t addInverses))',
+        '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t neg))',
+        '(5 fact "@ neg x = the1 (addInverses x)")',
+        '(6 trueBy0 (s 4) (path "/left/left") (s 5))',
+        '(7 rewrite (s 6) (path "/left") (t ((T & a) == a)))',
+        '(8 trueBy1 (s 7) (path "/left") (s 1))',
+        '(9 display (s 8))',
+        '(10 rewrite (s 9) (path "/right/left") (t ((addInverses x y) = (((R x) & (R y)) & ((x + y) = 0)))))',
+        '(11 rewrite (s 10) (path "") (t ((a => (((a & b) & c) == d)) == (((a & b) & c) == (a & d)))))'
         ];
        return Toy.decodeProof(steps);
      }
