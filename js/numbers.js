@@ -201,6 +201,7 @@ const identityFacts =
 addRules(identityFacts);
 
 definition('neg = {x. the1 (addInverses x)}');
+definition('minv = {x. the1 (mulInverses x)}');
 
 // Note that our axiom of arithmetic computes that neg 1 = -1, which
 //   gives ability to prove things we prefer to prove from axioms.
@@ -227,7 +228,6 @@ const inverses =
    {name: 'negFact',
     statement: '@ R x & R y & x + y = 0 == R x & neg x = y',
     proof: function() {
-       // TODO: Derive from inverseFunLaw.
        const steps =
        [
         '(1 fact "exists1 (addInverses x)")',
@@ -241,6 +241,26 @@ const inverses =
         '(9 display (s 8))',
         '(10 rewrite (s 9) (path "/right/left") (t ((addInverses x y) = (((R x) & (R y)) & ((x + y) = 0)))))',
         '(11 rewrite (s 10) (path "") (t ((a => (((a & b) & c) == d)) == (((a & b) & c) == (a & d)))))'
+        ];
+       return Toy.decodeProof(steps);
+     }
+   },
+   {name: 'minvFact',
+    statement: '@ x != 0 & R x & R y & x * y = 1 == x != 0 & R x & minv x = y',
+    proof: function() {
+       const steps =
+       [
+        '(1 fact "exists1 (mulInverses x)")',
+        '(2 inverseFunLaw)',
+        '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t mulInverses))',
+        '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t minv))',
+        '(5 fact "@ minv x = the1 (mulInverses x)")',
+        '(6 trueBy0 (s 4) (path "/left/left") (s 5))',
+        '(7 rewrite (s 6) (path "/left") (t ((T & a) == a)))',
+        '(8 trueBy1 (s 7) (path "/left") (s 1))',
+        '(9 display (s 8))',
+        '(10 rewrite (s 9) (path "/right/left") (t ((mulInverses x y) = (((R x) & (R y)) & ((x * y) = 1)))))',
+        '(11 rewrite (s 10) (path "") (t (((a & b) => (((b & c) & d) == m)) == ((((a & b) & c) & d) == ((a & b) & m)))))'
         ];
        return Toy.decodeProof(steps);
      }
