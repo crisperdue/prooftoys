@@ -1959,7 +1959,7 @@ const ruleInfo = {
     autoSimplify: simplifyStep,
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with step <input name=step>'),
-    menu: 'replace proved {term} with T',
+    menu: 'replace with T, proved unconditionally',
     description: ('{site} is known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
@@ -1979,7 +1979,7 @@ const ruleInfo = {
     autoSimplify: simplifyStep,
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with consequent of step <input name=step>'),
-    menu: 'replace conclusion of proved A => B with T',
+    menu: 'replace with T, proved under assumptions',
     description: ('{site} is known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
