@@ -1959,14 +1959,6 @@ const basicRealFacts =
      }
    },
 
-   {statement: 'a = b == b = a',
-    proof: function() {
-       return rules.equalitySymmetric();
-     },
-    noSwap: true,
-    labels: 'algebra'
-   },
-
   // Addition
    {statement: 'a + b + c = a + c + b',
     proof: function() {
