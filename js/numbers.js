@@ -206,23 +206,6 @@ definition('minv = {x. the1 (mulInverses x)}');
 // Note that our axiom of arithmetic computes that neg 1 = -1, which
 //   gives ability to prove things we prefer to prove from axioms.
 
-// Facts to replace the previous definition of negative.
-//
-// TODO: Replace these with facts that assume R x, then prove from
-//   field axioms.
-const negDefFacts =
-  [
-   {statement: '@ neg = [x. -1 * x]'},
-   {
-     statement: '@ neg x = -1 * x',
-     proof: function() {
-       return (rules.fact('@ neg = [x. -1 * x]')
-               .andThen('reduceEqn'));
-     }
-   },
-   ];
-addRules(negDefFacts);
-
 const inverses =
   [
    {name: 'negFact',
@@ -329,20 +312,26 @@ const realOrdering =
    ];
 Toy.addRules(realOrdering);
 
-// Lay 11.1a
+// Lay 11.1
 {
   const infos =
     [
      // Lay 11.1a
      {name: 'abcPlus',
-      statement: '@a + c = b + c & R a & R b & R c => a = b',
+      statement: '@x + z = y + z & R x & R y & R z => x = y',
       proof: function() {
-         return (rules.assume('a + c = b + c')
-                 .andThen('applyToBothWith', '-', 'c')
-                 .andThen('groupToRight', '/main/left/left/right')
-                 .andThen('simplifySite', '/main/left')
-                 .andThen('groupToRight', '/main/right/left/right')
-                 .andThen('simplifySite', '/main/right'));
+         const steps =
+         [
+          '(1 assume (t ((x + z) = (y + z))))',
+          '(2 applyToBoth (t {w. (w + (neg z))}) (s 1))',
+          '(3 rewrite (s 2) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => (((x + y) + z) = (x + (y + z))))))',
+          '(4 rewrite (s 3) (path "/right/left/right") (t ((R x) => ((x + (neg x)) = 0))))',
+          '(5 rewrite (s 4) (path "/right/left") (t ((R x) => ((x + 0) = x))))',
+          '(6 rewrite (s 5) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => (((x + y) + z) = (x + (y + z))))))',
+          '(7 rewrite (s 6) (path "/right/right/right") (t ((R x) => ((x + (neg x)) = 0))))',
+          '(8 rewrite (s 7) (path "/right/right") (t ((R x) => ((x + 0) = x))))'
+          ];
+         return Toy.decodeProof(steps);
        }
      },
 
@@ -394,6 +383,16 @@ Toy.addRules(realOrdering);
           '(16 rewrite (s 15) (path "/right") (t ((x = y) == (y = x))))'
           ];
          return Toy.decodeProof(steps);
+       }
+     },
+     // This uses the arithmetic fact that -1 is neg 1.  In principle
+     // -1 is just an abbreviation for (neg 1), so it would not be
+     // appropriate to define neg x = -1 * x, as "neg" appears in the
+     // RHS of the definition.
+     {statement: '-1 * x = neg x',
+      proof: function() {
+         return (rules.fact('(neg 1) * x = neg x')
+                 .andThen('rewrite', '/main/left/left', 'neg 1 = -1'));
        }
      }
      ];
@@ -487,12 +486,22 @@ var numbersInfo = {
   // Closure properties
 
   realNegClosed: {
-    statement: '@R x => R (neg x)',
+    statement: '@ R x => R (neg x)',
     simplifier: true,
     proof: function() {
-      return (rules.fact('R (x * y)')
-              .andThen('instMultiVars', {x: '-1', y: 'x'})
-              .andThen('rewrite', '/right/arg', '@ -1 * x = neg x'));
+      const steps =
+      [
+       '(1 negFact)',
+       '(2 forwardChain (s 1) (t ((a == b) => (b => a))))',
+       '(3 instantiateVar (s 2) (path "/left/right/right") (t (neg x)))',
+       '(4 rewrite (s 3) (path "/left/right") (t ((x = x) == T)))',
+       '(5 fact "x+neg x = 0")',
+       '(6 trueBy1 (s 4) (path "/right/right") (s 5))',
+       '(7 assume (t (R x)))',
+       '(8 trueBy1 (s 6) (path "/right/left/left") (s 7))',
+       '(9 rewrite (s 8) (path "/right") (t (((T & a) & T) == a)))'
+       ];
+      return Toy.decodeProof(steps);
     }
   },
 
@@ -1159,7 +1168,7 @@ var moversInfo = {
          {schema: 'a / b',
           parts: {a: 'flatteners'}}}
     ], denegaters: [
-        {stmt: '@ neg a = -1 * a'},
+        {stmt: 'neg a = -1 * a'},
         {descend:
          {schema: 'a * b',
           parts: {a: 'denegaters', b: 'denegaters'}}},
@@ -2171,13 +2180,19 @@ var equivalences = {
 
   'a = b == a + c = b + c': {
     proof: function() {
-      const forward = (rules.assume('a = b')
-                       .andThen('applyToBothWith', '+', 'c')
-                       .andThen('rewriteOnly', '', 'a == T => a'));
-      var back = (rules.abcPlus()
-                  .andThen('extractHyp', 'a + c = b + c'))
-      var conj = rules.makeConjunction(forward, back);
-      return rules.rewriteOnly(conj, '/main', '(p => q) & (q => p) == (p == q)');
+      const steps =
+      [
+       '(1 abcPlus)',
+       '(2 assume (t (x = y)))',
+       '(3 applyToBoth (t {w. (w + z)}) (s 2))',
+       '(4 andAssume (s 3) (t (((R x) & (R y)) & (R z))))',
+       '(5 extractHypAt (s 4) (path "/left/left/left/left"))',
+       '(6 extractHypAt (s 1) (path "/left/left/left/left"))',
+       '(7 rewrite (s 6) (path "/right") (t (a == (a & T))))',
+       '(8 replaceT (s 7) (path "/right/right") (s 5))',
+       '(9 rewrite (s 8) (path "/right") (t (((a => b) & (b => a)) == (b == a))))'
+       ];
+      return Toy.decodeProof(steps);
     }
   },
 
@@ -2316,7 +2331,7 @@ var negationFacts = {
   '@a - b = a + -1 * b': {
     proof: function() {
       return (rules.fact('@a - b = a + neg b')
-              .andThen('rewrite', '/main/right/right', '@ neg x = -1 * x'));
+              .andThen('rewrite', '/main/right/right', 'neg x = -1 * x'));
     }
   },
   '@R b => a - neg b = a + b': {
@@ -2366,19 +2381,19 @@ var negationFacts = {
   'neg (a * b) = neg a * b': {
     proof: function() {
       return rules.consider('neg (a * b)')
-      .rewrite('/main/right', '@ neg a = -1 * a')
+      .rewrite('/main/right', 'neg a = -1 * a')
       .rewrite('/main/right', 'a * (b * c) = (a * b) * c')
-      .rewrite('/main/right/left', '@ -1 * a = neg a');
+      .rewrite('/main/right/left', '-1 * a = neg a');
     }
   },
   'a * neg b = neg (a * b)': {
     proof: function() {
       return rules.consider('a * neg b')
-      .rewrite('/main/right/right', '@ neg a = -1 * a')
+      .rewrite('/main/right/right', 'neg a = -1 * a')
       .rewrite('/main/right', 'a * (b * c) = a * b * c')
       .rewrite('/main/right/left', 'a * b = b * a')
       .rewrite('/main/right', 'a * b * c = a * (b * c)')
-      .rewrite('/main/right', '@ -1 * a = neg a');
+      .rewrite('/main/right', '-1 * a = neg a');
     }
   },
   'a * neg b = neg a * b': {
@@ -2402,9 +2417,9 @@ var negationFacts = {
   'b != 0 => neg (a / b) = neg a / b': {
     proof: function() {
       return (rules.consider('neg (a / b)')
-              .rewrite('/main/right', '@ neg a = -1 * a')
+              .rewrite('/main/right', 'neg a = -1 * a')
               .rewrite('/main/right', 'a * (b / c) = a * b / c')
-              .rewrite('/main/right/left', '@ -1 * a = neg a'));
+              .rewrite('/main/right/left', '-1 * a = neg a'));
     }
   },
 
@@ -2451,8 +2466,8 @@ var negationFacts = {
   'b != 0 => neg a / neg b = a / b': {
     proof: function() {
       return rules.consider('neg a / neg b')
-      .rewrite('/main/right/left', '@ neg a = -1 * a')
-      .rewrite('/main/right/right', '@ neg a = -1 * a')
+      .rewrite('/main/right/left', 'neg a = -1 * a')
+      .rewrite('/main/right/right', 'neg a = -1 * a')
       .rewrite('/main/right', 'a / (b * c) = a / b / c')
       .rewrite('/main/right/left', 'a * b / c = a / c * b')
       .andThen('arithmetic', '/main/right/left/left')
