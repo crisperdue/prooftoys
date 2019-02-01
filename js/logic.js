@@ -4218,31 +4218,32 @@ const ruleInfo = {
     tooltip: 'copy an assumption to the consequent'
   },
 
-  // Given a proof step of the form [h => a] and a path that refers to
-  // an element "e" of h taken as a conjunction chain, derives a step
-  // of the form [h' => (e => a)] where e is the referenced element,
-  // and h' is h with all occurrences of "e" removed.  The result
-  // has hypotheses iff the input proof step has hypotheses.
+  // Given a proof step of the form [a => b] and a path that refers to
+  // an element "e" of a taken as a conjunction chain, derives a step
+  // of the form [a' => (e => b)] where e is the referenced element,
+  // and h' is h with all occurrences of "e" removed.
   //
-  // If e is h, returns [h => a] without hypotheses.
-  //
-  // TODO: Specify what to do if h does not satisfy the preconditions.
+  // If e is a, returns its input (or a copy?).
   extractHypAt: {
+    precheck: function(step, path_arg) {
+      const path = Toy.path(path_arg);
+      return step.wff.isCall2('=>') && path.isLeft();
+    },
     action: function(step, path) {
       var result = rules.extractHyp(step, step.get(path));
       return result.justify('extractHypAt', arguments, [step]);
     },
     inputs: {site: 1},
-    menu: 'move to conclusions',
-    tooltip: 'move assumption to the conclusions',
-    labels: 'uncommon'
+    menu: 'extract the assumption',
+    description: 'extract assumption;; {in step siteStep}',
+    labels: 'basic'
   },
 
   // Like extractHypAt, taking its hypotheses as a term to be matched.
   // Useful for pulling out implicit assumptions such as variable
   // types.
   //
-  // TODO: Specify what to do if h does not satisfy the preconditions.
+  // TODO: Decide what to do if there is no such assumption.
   extractHyp: {
     action: function(step, hyp_arg) {
       var hyp = termify(hyp_arg);
@@ -4262,7 +4263,7 @@ const ruleInfo = {
     menu: 'extract an assumption',
     form: 'extract assumption <input name=bool> from step <input name=step>',
     description: 'extract assumption {bool};; {in step step}',
-    labels: 'basic',
+    labels: 'uncommon',
     tooltip: 'extract an assumption'
   },
 
