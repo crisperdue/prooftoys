@@ -306,9 +306,16 @@ const realOrdering =
    {statement: 'x < y => x + z < y + z', axiom: true,
     description: 'ordering of reals and addition'
    },
-   {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
+   // Steven Lay, Axiom O4.
+   // Also like Wikibooks Real Analysis axiom.
+   {statement: 'x < y & 0 < z => x * z < y * z', axiom: true,
     description: 'ordering of reals and multiplication'
    }
+   // Similar to Wikipedia: "Real number"
+   //
+   // {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
+   //  description: 'ordering of reals and multiplication'
+   // }
    ];
 Toy.addRules(realOrdering);
 
