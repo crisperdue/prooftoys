@@ -114,10 +114,10 @@ if (!Toy.deeperFieldAxioms) {
 
   const uniqueInverses =
     [
-     {statement: '@ R x => exists1 (addInverses x)',
+     {statement: '@ R x => exists1 (addInverses x)', axiom: true,
       description: 'unique additive inverses exist'
      },
-     {statement: '@ R x & x != 0 => exists1 (mulInverses x)',
+     {statement: '@ R x & x != 0 => exists1 (mulInverses x)', axiom: true,
       description: 'unique multiplicative inverses exist'
      }
      ];
