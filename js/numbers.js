@@ -510,6 +510,19 @@ Toy.addRules(realOrdering);
           ];
          return Toy.decodeProof(steps);
        }
+     },
+
+     {statement: '@ neg 0 = 0',
+      proof: function() {
+         const steps =
+         [
+          '(1 fact "x + neg x = 0")',
+          '(2 instantiateVar (s 1) (path "/right/left/left") (t 0))',
+          '(3 rewrite (s 2) (path "/right/left") (t ((R a) => ((0 + a) = a))))'
+          ];
+         return Toy.decodeProof(steps);
+       },
+      simplifier: true
      }
      ];
   addRules(infos);
