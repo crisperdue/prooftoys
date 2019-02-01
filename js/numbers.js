@@ -228,6 +228,7 @@ const inverses =
        return Toy.decodeProof(steps);
      }
    },
+
    {name: 'minvFact',
     statement: '@ x != 0 & R x & R y & x * y = 1 == x != 0 & R x & minv x = y',
     proof: function() {
@@ -244,6 +245,38 @@ const inverses =
         '(9 display (s 8))',
         '(10 rewrite (s 9) (path "/right/left") (t ((mulInverses x y) = (((R x) & (R y)) & ((x * y) = 1)))))',
         '(11 rewrite (s 10) (path "") (t (((a & b) => (((b & c) & d) == m)) == ((((a & b) & c) & d) == ((a & b) & m)))))'
+        ];
+       return Toy.decodeProof(steps);
+     }
+   },
+
+   {statement: '@ x != 0 & R x => R (minv x)',
+    proof: function() {
+       const steps =
+       [
+        '(1 minvFact)',
+        '(2 forwardChain (s 1) (t (((((a & b) & c) & d) == g) => (g => c))))',
+        '(3 assume (t (y = (minv x))))',
+        '(4 replace (s 2) (path "/right/arg") (s 3))',
+        '(5 rewrite (s 4) (path "/left/left/left/right") (t ((x = y) == (y = x))))',
+        '(6 removeLet (s 5) (path "/left/left/right"))'
+        ];
+       return Toy.decodeProof(steps);
+     }
+   },
+
+   {statement: '@ x != 0 & R x => x * minv x = 1',
+    proof: function() {
+       const steps =
+       [
+        '(1 minvFact)',
+        '(2 forwardChain (s 1) (t (((((a & b) & c) & d) == g) => (g => d))))',
+        '(3 rewrite (s 2) (path "/left/right") (t ((x = y) == (y = x))))',
+        '(4 assume (t (y = (minv x))))',
+        '(5 display (s 3))',
+        '(6 replace (s 5) (path "/right/left/right") (s 4))',
+        '(7 display (s 6))',
+        '(8 removeLet (s 7) (path "/left/left/right"))'
         ];
        return Toy.decodeProof(steps);
      }
