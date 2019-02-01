@@ -434,6 +434,47 @@ Toy.addRules(realOrdering);
          return (rules.fact('(neg 1) * x = neg x')
                  .andThen('rewrite', '/main/left/left', 'neg 1 = -1'));
        }
+     },
+
+     {statement: '@ R x & R y => (x * y = 0 == x = 0 | y = 0)',
+      proof: function() {
+         const steps =
+         [
+          '(1 fact "0=x*0")',
+          '(2 instantiateVar (s 1) (path "/right/right/left") (t (minv x)))',
+          '(3 fact "x!=0=>R(minv x)")',
+          '(4 trueBy1 (s 2) (path "/left") (s 3))',
+          '(5 assume (t (0 = (x * y))))',
+          '(6 replace (s 4) (path "/right/right/right") (s 5))',
+          '(7 rewrite (s 6) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z)))))',
+          '(8 rewrite (s 7) (path "/right/right/left") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
+          '(9 rewrite (s 8) (path "/right/right/left") (t (((x != 0) & (R x)) => ((x * (minv x)) = 1))))',
+          '(10 rewrite (s 9) (path "/right/right") (t ((R a) => ((1 * a) = a))))',
+          '(11 display (s 10))',
+          '(12 trueBy1 (s 11) (path "/left/left/left/right") (s 3))',
+          '(13 rewrite (s 12) (path "/left/left/left/left") (t ((x != y) == (not (x = y)))))',
+          '(14 rewrite (s 13) (path "") (t (((((p & (not q)) & a) & b) => r) == (((p & a) & b) => (q | r)))))',
+          '(15 rewrite (s 14) (path "/left/left/left") (t ((x = y) == (y = x))))',
+          '(16 assume (t (x = 0)))',
+          '(17 rewrite (s 16) (path "/right") (t ((x = y) == (y = x))))',
+          '(18 fact "0*y=0")',
+          '(19 replace (s 18) (path "/right/left/left") (s 17))',
+          '(20 assume (t (y = 0)))',
+          '(21 rewrite (s 20) (path "/right") (t ((x = y) == (y = x))))',
+          '(22 fact "x*0=0")',
+          '(23 replace (s 22) (path "/right/left/right") (s 21))',
+          '(24 extractHypAt (s 19) (path "/left/left"))',
+          '(25 extractHypAt (s 23) (path "/left/left"))',
+          '(26 p2 (s 24) (s 25) (t (((a => (p => r)) & (b => (q => r))) => ((a & b) => ((p | q) => r)))))',
+          '(27 extractHypAt (s 15) (path "/left/left/left"))',
+          '(28 rewrite (s 27) (path "/right/right/right") (t ((x = y) == (y = x))))',
+          '(29 rewrite (s 26) (path "/left") (t ((a & b) == (b & a))))',
+          '(30 p2 (s 28) (s 29) (t (((a => (p => q)) & (a => (q => p))) => (a => (q == p)))))',
+          '(31 rewrite (s 30) (path "/right") (t ((a == b) == (b == a))))',
+          '(32 display (s 31))'
+          ];
+         return Toy.decodeProof(steps);
+       }
      }
      ];
   addRules(infos);
