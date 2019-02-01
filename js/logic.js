@@ -5177,6 +5177,18 @@ const exists1aFacts =
    // the proofs of eu2 and mo in Metamath.
    {name: 'exists1a',  // TODO: Prove this.
     statement: 'exists1 p == exists p & not (multi p)'
+   },
+   {statement: 'exists1 p => exists p',
+    proof: function() {
+       return (rules.theorem('exists1a')
+               .andThen('forwardChain', '(a == b & c) => (a => b)'));
+     }
+   },
+   {statement: 'exists1 p => not (multi p)',
+    proof: function() {
+       return (rules.theorem('exists1a')
+               .andThen('forwardChain', '(a == b & c) => (a => c)'));
+     }
    }
    ];
 addRules(exists1aFacts);
