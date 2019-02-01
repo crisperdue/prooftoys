@@ -479,11 +479,11 @@ Toy.addRules(realOrdering);
      },
 
      // Lay 11.1e
-     {statement: '@ R x & R y & x < y => neg y < neg x',
+     {statement: '@ R x & R y => (x < y == neg y < neg x)',
       proof: function() {
          const steps =
          [
-          '(1 fact "x < y => x + z < y + z")',
+          '(1 fact "x<y=>x+z<y+z")',
           '(2 instantiateVar (s 1) (path "/right/left/right") (t ((neg x) + (neg y))))',
           '(3 rewrite (s 2) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => ((x + (y + z)) = ((x + y) + z)))))',
           '(4 rewrite (s 3) (path "/right/right/right") (t (((R x) & (R y)) => ((x + y) = (y + x)))))',
@@ -491,7 +491,22 @@ Toy.addRules(realOrdering);
           '(6 rewrite (s 5) (path "/right/left/left") (t ((R x) => ((x + (neg x)) = 0))))',
           '(7 rewrite (s 6) (path "/right/right/left") (t ((R x) => ((x + (neg x)) = 0))))',
           '(8 rewrite (s 7) (path "/right/right") (t ((R a) => ((0 + a) = a))))',
-          '(9 rewrite (s 8) (path "/right/left") (t ((R a) => ((0 + a) = a))))'
+          '(9 rewrite (s 8) (path "/right/left") (t ((R a) => ((0 + a) = a))))',
+          '(10 display (s 9))',
+          '(11 tautology (t (((a & b) & c) == ((b & c) & a))))',
+          '(12 rewriteOnlyFrom (s 10) (path "/left") (s 11))',
+          '(13 instantiateVar (s 12) (path "/left/right/left") (t (neg x)))',
+          '(14 instantiateVar (s 13) (path "/left/right/right") (t (neg y)))',
+          '(15 rewrite (s 14) (path "/right/left") (t ((R a) => ((neg (neg a)) = a))))',
+          '(16 rewrite (s 15) (path "/right/right") (t ((R a) => ((neg (neg a)) = a))))',
+          '(17 display (s 16))',
+          '(18 extractHypAt (s 17) (path "/left/left/left"))',
+          '(19 extractHypAt (s 12) (path "/left/right"))',
+          '(20 instantiateVar (s 18) (path "/right/left/left/arg") (t z))',
+          '(21 instantiateVar (s 20) (path "/right/left/right/arg") (t x))',
+          '(22 instantiateVar (s 21) (path "/right/left/left/arg") (t y))',
+          '(23 rewrite (s 22) (path "/left") (t ((a & b) == (b & a))))',
+          '(24 p2 (s 19) (s 23) (t (((a => (p => q)) & (a => (q => p))) => (a => (p == q)))))'
           ];
          return Toy.decodeProof(steps);
        }
