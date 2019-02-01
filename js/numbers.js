@@ -436,6 +436,7 @@ Toy.addRules(realOrdering);
        }
      },
 
+     // Lay 11.1d
      {statement: '@ R x & R y => (x * y = 0 == x = 0 | y = 0)',
       proof: function() {
          const steps =
@@ -472,6 +473,25 @@ Toy.addRules(realOrdering);
           '(30 p2 (s 28) (s 29) (t (((a => (p => q)) & (a => (q => p))) => (a => (q == p)))))',
           '(31 rewrite (s 30) (path "/right") (t ((a == b) == (b == a))))',
           '(32 display (s 31))'
+          ];
+         return Toy.decodeProof(steps);
+       }
+     },
+
+     // Lay 11.1e
+     {statement: '@ R x & R y & x < y => neg y < neg x',
+      proof: function() {
+         const steps =
+         [
+          '(1 fact "x < y => x + z < y + z")',
+          '(2 instantiateVar (s 1) (path "/right/left/right") (t ((neg x) + (neg y))))',
+          '(3 rewrite (s 2) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => ((x + (y + z)) = ((x + y) + z)))))',
+          '(4 rewrite (s 3) (path "/right/right/right") (t (((R x) & (R y)) => ((x + y) = (y + x)))))',
+          '(5 rewrite (s 4) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x + (y + z)) = ((x + y) + z)))))',
+          '(6 rewrite (s 5) (path "/right/left/left") (t ((R x) => ((x + (neg x)) = 0))))',
+          '(7 rewrite (s 6) (path "/right/right/left") (t ((R x) => ((x + (neg x)) = 0))))',
+          '(8 rewrite (s 7) (path "/right/right") (t ((R a) => ((0 + a) = a))))',
+          '(9 rewrite (s 8) (path "/right/left") (t ((R a) => ((0 + a) = a))))'
           ];
          return Toy.decodeProof(steps);
        }
