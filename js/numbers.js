@@ -523,7 +523,33 @@ Toy.addRules(realOrdering);
          return Toy.decodeProof(steps);
        },
       simplifier: true
+     },
+
+     {statement: '@ R x => (x < 0 == 0 < neg x)',
+      proof: function() {
+         const steps =
+         [
+          '(1 fact "x<y==neg y < neg x")',
+          '(2 instantiateVar (s 1) (path "/right/left/right") (t 0))',
+          '(3 rewrite (s 2) (path "/right/right/left") (t ((neg 0) = 0)))'
+          ];
+         return Toy.decodeProof(steps);
+       }
+     },
+
+     {statement: '@ R x => (0 < x == neg x < 0)',
+      proof: function() {
+         const steps =
+         [
+          '(1 fact "x<y==neg y < neg x")',
+          '(2 instantiateVar (s 1) (path "/right/left/left") (t 0))',
+          '(3 rewrite (s 2) (path "/right/right/right") (t ((neg 0) = 0)))',
+          '(4 instantiateVar (s 3) (path "/right/right/left/arg") (t x))'
+          ];
+         return Toy.decodeProof(steps);
+       }
      }
+     
      ];
   addRules(infos);
 }
