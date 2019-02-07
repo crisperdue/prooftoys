@@ -457,6 +457,9 @@ var rules = {};
  * Process the given info into form for inclusion into Toy.rules and
  * add the resulting rule or rules.  This does not do inference, so it
  * can be called before any theorems are proved.
+ *
+ * TODO: Consider supporting definitions here, renaming to just "add",
+ *   and merging functionality with addRules.
  */
 function addRule(info) {
   var name = info.name;
@@ -698,7 +701,7 @@ function addRulesMap(ruleInfo) {
  * each in the form of a plain object with properties.  If a fact has
  * a name, the name appears as a "name" property.
  *
- * TODO: Convert addFactsMap to use this internally instead of addFact.
+ * TODO: Consider merging with addRule.
  */
 function addRules(ruleList) {
   ruleList.forEach(addRule);
@@ -2246,7 +2249,10 @@ var factProperties = {
  * of fact entries in facts maps, assuming here that the synopsis is
  * already added to the info as a synopsis property.  Can use the
  * synopsis property to generate a goal and the proof property as the
- * prover.
+ * prover.  Top-level code, as in files of theorems, definitions, and
+ * inference rules, should use addRule (or addFactsMap) as they
+ * support rules of inference,and do additional useful work such as
+ * automatically add appropriate swapped facts.
  *
  * This does no inference, so it can be called before proving any
  * theorems.
