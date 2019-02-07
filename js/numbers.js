@@ -126,7 +126,9 @@ if (!Toy.deeperFieldAxioms) {
 
 const identityFacts =
   [
-   // Axioms
+   // Identity axioms
+
+   // In Lay, this is part of axiom M4.
    {statement: '1 != 0', axiom: true,
     description: '1 and 0 are distinct'},
 

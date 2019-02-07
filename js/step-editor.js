@@ -1074,17 +1074,20 @@ function usesSite(rule) {
 }
 
 /**
- * Adds class=step, class=term, etc. to each form element according
- * to its name -- same as the name, but stripping off any numeric suffix,
- * e.g. step2 => step.  Also prevents autocompletion, basically because
- * some sites add autosuggest entries to fields named "term".
+ * Adds class=step, class=term, etc. to each form element according to
+ * its name -- same as the name, but stripping off any numeric suffix,
+ * e.g. step2 => step.  Also prevents autocompletion of fields named
+ * "term" because various sites add autosuggest entries to such
+ * fields.
+ *
+ * TODO: Be smarter about autocompletion.
  */
 function addClassInfo(form) {
   form.find('input').each(function() {
       // Note: the pattern matches any string.
       var className = this.name.match(/^(.*?)\d*$/)[1];
       $(this).addClass(className);
-      $(this).attr('autocomplete', 'off');
+        $(this).attr('autocomplete', 'off');
     });
 }
 

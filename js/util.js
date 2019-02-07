@@ -321,7 +321,7 @@ function logError(err) {
  * For debugging: Logs all facts containing the given pattern of
  * operator characters in the given order.  Operates by "squishing"
  * the keys of _factsByKey into just the occurrences of the characters
- * +, -, *, /, =, >, <, !, and checking for ocurrences of the given
+ * +, -, *, /, =, >, <, !, and checking for occurrences of the given
  * pattern string among these squished representations of the facts.
  */
 function factSquish(pattern) {
