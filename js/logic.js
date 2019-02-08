@@ -2038,7 +2038,7 @@ const ruleInfo = {
               .andThen('apply', fact.find('p x'))
               .andThen('simplifySite', fact.find('not (p x)'))
               .andThen('trueBy0', '/left', rules.existsXT())
-              .andThen('simplifySite', ''));
+              .andThen('rewriteOnly', '', 'T == a == a'));
     }
   },
 
