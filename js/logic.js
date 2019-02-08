@@ -359,7 +359,6 @@ const prelogic = {
     action: function(definition) {
       const name = Toy.definition(definition);
       const defn = rules.definition(name);
-      addDefnFacts(defn);
       return defn.justify('define', [definition]);
     },
     inputs: {term: 1},
