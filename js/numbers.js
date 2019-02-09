@@ -212,76 +212,64 @@ const inverses =
   [
    {name: 'negFact',
     statement: '@ R x & R y & x + y = 0 == R x & neg x = y',
-    proof: function() {
-       const steps =
-       [
-        '(1 fact "exists1 (addInverses x)")',
-        '(2 inverseFunLaw)',
-        '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t addInverses))',
-        '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t neg))',
-        '(5 fact "@ neg x = the1 (addInverses x)")',
-        '(6 trueBy0 (s 4) (path "/left/left") (s 5))',
-        '(7 rewrite (s 6) (path "/left") (t ((T & a) == a)))',
-        '(8 trueBy1 (s 7) (path "/left") (s 1))',
-        '(9 display (s 8))',
-        '(10 rewrite (s 9) (path "/right/left") (t ((addInverses x y) = (((R x) & (R y)) & ((x + y) = 0)))))',
-        '(11 rewrite (s 10) (path "") (t ((a => (((a & b) & c) == d)) == (((a & b) & c) == (a & d)))))'
-        ];
-       return Toy.decodeProof(steps);
-     }
+    proof:
+    [
+     '(1 fact "exists1 (addInverses x)")',
+     '(2 inverseFunLaw)',
+     '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t addInverses))',
+     '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t neg))',
+     '(5 fact "@ neg x = the1 (addInverses x)")',
+     '(6 trueBy0 (s 4) (path "/left/left") (s 5))',
+     '(7 rewrite (s 6) (path "/left") (t ((T & a) == a)))',
+     '(8 trueBy1 (s 7) (path "/left") (s 1))',
+     '(9 display (s 8))',
+     '(10 rewrite (s 9) (path "/right/left") (t ((addInverses x y) = (((R x) & (R y)) & ((x + y) = 0)))))',
+     '(11 rewrite (s 10) (path "") (t ((a => (((a & b) & c) == d)) == (((a & b) & c) == (a & d)))))'
+     ]
    },
 
    {name: 'minvFact',
     statement: '@ x != 0 & R x & R y & x * y = 1 == x != 0 & R x & minv x = y',
-    proof: function() {
-       const steps =
-       [
-        '(1 fact "exists1 (mulInverses x)")',
-        '(2 inverseFunLaw)',
-        '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t mulInverses))',
-        '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t minv))',
-        '(5 fact "@ minv x = the1 (mulInverses x)")',
-        '(6 trueBy0 (s 4) (path "/left/left") (s 5))',
-        '(7 rewrite (s 6) (path "/left") (t ((T & a) == a)))',
-        '(8 trueBy1 (s 7) (path "/left") (s 1))',
-        '(9 display (s 8))',
-        '(10 rewrite (s 9) (path "/right/left") (t ((mulInverses x y) = (((R x) & (R y)) & ((x * y) = 1)))))',
-        '(11 rewrite (s 10) (path "") (t (((a & b) => (((b & c) & d) == m)) == ((((a & b) & c) & d) == ((a & b) & m)))))'
-        ];
-       return Toy.decodeProof(steps);
-     }
+    proof:
+    [
+     '(1 fact "exists1 (mulInverses x)")',
+     '(2 inverseFunLaw)',
+     '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t mulInverses))',
+     '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t minv))',
+     '(5 fact "@ minv x = the1 (mulInverses x)")',
+     '(6 trueBy0 (s 4) (path "/left/left") (s 5))',
+     '(7 rewrite (s 6) (path "/left") (t ((T & a) == a)))',
+     '(8 trueBy1 (s 7) (path "/left") (s 1))',
+     '(9 display (s 8))',
+     '(10 rewrite (s 9) (path "/right/left") (t ((mulInverses x y) = (((R x) & (R y)) & ((x * y) = 1)))))',
+     '(11 rewrite (s 10) (path "") (t (((a & b) => (((b & c) & d) == m)) == ((((a & b) & c) & d) == ((a & b) & m)))))'
+     ]
    },
 
    {statement: '@ x != 0 & R x => R (minv x)',
-    proof: function() {
-       const steps =
-       [
-        '(1 minvFact)',
-        '(2 forwardChain (s 1) (t (((((a & b) & c) & d) == g) => (g => c))))',
-        '(3 assume (t (y = (minv x))))',
-        '(4 replace (s 2) (path "/right/arg") (s 3))',
-        '(5 rewrite (s 4) (path "/left/left/left/right") (t ((x = y) == (y = x))))',
-        '(6 removeLet (s 5) (path "/left/left/right"))'
-        ];
-       return Toy.decodeProof(steps);
-     }
+    proof: 
+    [
+     '(1 minvFact)',
+     '(2 forwardChain (s 1) (t (((((a & b) & c) & d) == g) => (g => c))))',
+     '(3 assume (t (y = (minv x))))',
+     '(4 replace (s 2) (path "/right/arg") (s 3))',
+     '(5 rewrite (s 4) (path "/left/left/left/right") (t ((x = y) == (y = x))))',
+     '(6 removeLet (s 5) (path "/left/left/right"))'
+     ]
    },
 
    {statement: '@ x != 0 & R x => x * minv x = 1',
-    proof: function() {
-       const steps =
-       [
-        '(1 minvFact)',
-        '(2 forwardChain (s 1) (t (((((a & b) & c) & d) == g) => (g => d))))',
-        '(3 rewrite (s 2) (path "/left/right") (t ((x = y) == (y = x))))',
-        '(4 assume (t (y = (minv x))))',
-        '(5 display (s 3))',
-        '(6 replace (s 5) (path "/right/left/right") (s 4))',
-        '(7 display (s 6))',
-        '(8 removeLet (s 7) (path "/left/left/right"))'
-        ];
-       return Toy.decodeProof(steps);
-     }
+    proof:
+    [
+     '(1 minvFact)',
+     '(2 forwardChain (s 1) (t (((((a & b) & c) & d) == g) => (g => d))))',
+     '(3 rewrite (s 2) (path "/left/right") (t ((x = y) == (y = x))))',
+     '(4 assume (t (y = (minv x))))',
+     '(5 display (s 3))',
+     '(6 replace (s 5) (path "/right/left/right") (s 4))',
+     '(7 display (s 6))',
+     '(8 removeLet (s 7) (path "/left/left/right"))'
+     ]
    }
    ];
 addRules(inverses);
@@ -361,43 +349,37 @@ Toy.addRules(realOrdering);
      // Lay 11.1a
      {name: 'abcPlus',
       statement: '@x + z = y + z & R x & R y & R z => x = y',
-      proof: function() {
-         const steps =
-         [
-          '(1 assume (t ((x + z) = (y + z))))',
-          '(2 applyToBoth (t {w. (w + (neg z))}) (s 1))',
-          '(3 rewrite (s 2) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => (((x + y) + z) = (x + (y + z))))))',
-          '(4 rewrite (s 3) (path "/right/left/right") (t ((R x) => ((x + (neg x)) = 0))))',
-          '(5 rewrite (s 4) (path "/right/left") (t ((R x) => ((x + 0) = x))))',
-          '(6 rewrite (s 5) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => (((x + y) + z) = (x + (y + z))))))',
-          '(7 rewrite (s 6) (path "/right/right/right") (t ((R x) => ((x + (neg x)) = 0))))',
-          '(8 rewrite (s 7) (path "/right/right") (t ((R x) => ((x + 0) = x))))'
-          ];
-         return Toy.decodeProof(steps);
-       }
+      proof:
+      [
+       '(1 assume (t ((x + z) = (y + z))))',
+       '(2 applyToBoth (t {w. (w + (neg z))}) (s 1))',
+       '(3 rewrite (s 2) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => (((x + y) + z) = (x + (y + z))))))',
+       '(4 rewrite (s 3) (path "/right/left/right") (t ((R x) => ((x + (neg x)) = 0))))',
+       '(5 rewrite (s 4) (path "/right/left") (t ((R x) => ((x + 0) = x))))',
+       '(6 rewrite (s 5) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => (((x + y) + z) = (x + (y + z))))))',
+       '(7 rewrite (s 6) (path "/right/right/right") (t ((R x) => ((x + (neg x)) = 0))))',
+       '(8 rewrite (s 7) (path "/right/right") (t ((R x) => ((x + 0) = x))))'
+       ]
      },
 
      // Lay 11.1b
      {statement: 'x * 0 = 0',
-      proof: function() {
-         const steps =
-         [
-          '(1 consider (t (x * 0)))',
-          '(2 rewrite (s 1) (path "/main/right/right") (t (x = (x + 0))))',
-          '(3 rewrite (s 2) (path "/main/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y + z)) = ((x * y) + (x * z))))))',
-          '(4 display (s 3))',
-          '(5 rewrite (s 4) (path "/right/left") (t (x = (0 + x))))',
-          '(6 abcPlus)',
-          '(7 instantiateVar (s 6) (path "/left/left/left/left/left/left") (t 0))',
-          '(8 instantiateVar (s 7) (path "/left/left/left/left/left/right") (t (x * 0)))',
-          '(9 instantiateVar (s 8) (path "/left/left/left/left/right/left") (t (x * 0)))',
-          '(10 extractHypAt (s 9) (path "/left/left/left/left"))',
-          '(11 reduceRealAsms (s 10))',
-          '(12 p2 (s 5) (s 11) (t (((a => b) & (a => (b => c))) => (a => c))))',
-          '(13 rewrite (s 12) (path "/right") (t ((x = y) == (y = x))))'
-          ];
-         return Toy.decodeProof(steps);
-       },
+      proof:
+      [
+       '(1 consider (t (x * 0)))',
+       '(2 rewrite (s 1) (path "/main/right/right") (t (x = (x + 0))))',
+       '(3 rewrite (s 2) (path "/main/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y + z)) = ((x * y) + (x * z))))))',
+       '(4 display (s 3))',
+       '(5 rewrite (s 4) (path "/right/left") (t (x = (0 + x))))',
+       '(6 abcPlus)',
+       '(7 instantiateVar (s 6) (path "/left/left/left/left/left/left") (t 0))',
+       '(8 instantiateVar (s 7) (path "/left/left/left/left/left/right") (t (x * 0)))',
+       '(9 instantiateVar (s 8) (path "/left/left/left/left/right/left") (t (x * 0)))',
+       '(10 extractHypAt (s 9) (path "/left/left/left/left"))',
+       '(11 reduceRealAsms (s 10))',
+       '(12 p2 (s 5) (s 11) (t (((a => b) & (a => (b => c))) => (a => c))))',
+       '(13 rewrite (s 12) (path "/right") (t ((x = y) == (y = x))))'
+       ],
       description: 'multiplication by zero',
       simplifier: true
      },
@@ -405,27 +387,24 @@ Toy.addRules(realOrdering);
      // Lay 11.1c
      {statement: '(neg 1) * x = neg x',
       simplifier: true,
-      proof: function() {
-         const steps =
-         ['(1 consider (t (x + ((neg 1) * x))))',
-          '(2 rewrite (s 1) (path "/main/right/right") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
-          '(3 rewrite (s 2) (path "/right/right/left") (t (x = (x * 1))))',
-          '(4 rewrite (s 3) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => (((x * y) + (x * z)) = (x * (y + z))))))',
-          '(5 rewrite (s 4) (path "/right/right/right") (t ((x + (neg x)) = 0)))',
-          '(6 simplifyFocalPart (s 5))',
-          '(7 display (s 6))',
-          '(8 negFact)',
-          '(9 rewrite (s 8) (path "/main") (t ((((a & b) & c) == (a & d)) == (a => ((b & c) == d)))))',
-          '(10 assumeExplicitly (t (R ((neg 1) * x))))',
-          '(11 reduceRealTypes (s 10) (path "/left"))',
-          '(12 rewrite (s 7) (path "/right") (t (a == (T & a))))',
-          '(13 replaceT (s 12) (path "/right/left") (s 11))',
-          '(14 display (s 13))',
-          '(15 rewriteOnlyFrom (s 14) (path "/right") (s 9))',
-          '(16 rewrite (s 15) (path "/right") (t ((x = y) == (y = x))))'
-          ];
-         return Toy.decodeProof(steps);
-       }
+      proof:
+      ['(1 consider (t (x + ((neg 1) * x))))',
+       '(2 rewrite (s 1) (path "/main/right/right") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
+       '(3 rewrite (s 2) (path "/right/right/left") (t (x = (x * 1))))',
+       '(4 rewrite (s 3) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => (((x * y) + (x * z)) = (x * (y + z))))))',
+       '(5 rewrite (s 4) (path "/right/right/right") (t ((x + (neg x)) = 0)))',
+       '(6 simplifyFocalPart (s 5))',
+       '(7 display (s 6))',
+       '(8 negFact)',
+       '(9 rewrite (s 8) (path "/main") (t ((((a & b) & c) == (a & d)) == (a => ((b & c) == d)))))',
+       '(10 assumeExplicitly (t (R ((neg 1) * x))))',
+       '(11 reduceRealTypes (s 10) (path "/left"))',
+       '(12 rewrite (s 7) (path "/right") (t (a == (T & a))))',
+       '(13 replaceT (s 12) (path "/right/left") (s 11))',
+       '(14 display (s 13))',
+       '(15 rewriteOnlyFrom (s 14) (path "/right") (s 9))',
+       '(16 rewrite (s 15) (path "/right") (t ((x = y) == (y = x))))'
+       ]
      },
      // This uses the arithmetic fact that -1 is neg 1.  In principle
      // -1 is just an abbreviation for (neg 1), so it would not be
@@ -440,143 +419,125 @@ Toy.addRules(realOrdering);
 
      // Lay 11.1d
      {statement: '@ R x & R y => (x * y = 0 == x = 0 | y = 0)',
-      proof: function() {
-         const steps =
-         [
-          '(1 fact "0=x*0")',
-          '(2 instantiateVar (s 1) (path "/right/right/left") (t (minv x)))',
-          '(3 fact "x!=0=>R(minv x)")',
-          '(4 trueBy1 (s 2) (path "/left") (s 3))',
-          '(5 assume (t (0 = (x * y))))',
-          '(6 replace (s 4) (path "/right/right/right") (s 5))',
-          '(7 rewrite (s 6) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z)))))',
-          '(8 rewrite (s 7) (path "/right/right/left") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
-          '(9 rewrite (s 8) (path "/right/right/left") (t (((x != 0) & (R x)) => ((x * (minv x)) = 1))))',
-          '(10 rewrite (s 9) (path "/right/right") (t ((R a) => ((1 * a) = a))))',
-          '(11 display (s 10))',
-          '(12 trueBy1 (s 11) (path "/left/left/left/right") (s 3))',
-          '(13 rewrite (s 12) (path "/left/left/left/left") (t ((x != y) == (not (x = y)))))',
-          '(14 rewrite (s 13) (path "") (t (((((p & (not q)) & a) & b) => r) == (((p & a) & b) => (q | r)))))',
-          '(15 rewrite (s 14) (path "/left/left/left") (t ((x = y) == (y = x))))',
-          '(16 assume (t (x = 0)))',
-          '(17 rewrite (s 16) (path "/right") (t ((x = y) == (y = x))))',
-          '(18 fact "0*y=0")',
-          '(19 replace (s 18) (path "/right/left/left") (s 17))',
-          '(20 assume (t (y = 0)))',
-          '(21 rewrite (s 20) (path "/right") (t ((x = y) == (y = x))))',
-          '(22 fact "x*0=0")',
-          '(23 replace (s 22) (path "/right/left/right") (s 21))',
-          '(24 extractHypAt (s 19) (path "/left/left"))',
-          '(25 extractHypAt (s 23) (path "/left/left"))',
-          '(26 p2 (s 24) (s 25) (t (((a => (p => r)) & (b => (q => r))) => ((a & b) => ((p | q) => r)))))',
-          '(27 extractHypAt (s 15) (path "/left/left/left"))',
-          '(28 rewrite (s 27) (path "/right/right/right") (t ((x = y) == (y = x))))',
-          '(29 rewrite (s 26) (path "/left") (t ((a & b) == (b & a))))',
-          '(30 p2 (s 28) (s 29) (t (((a => (p => q)) & (a => (q => p))) => (a => (q == p)))))',
-          '(31 rewrite (s 30) (path "/right") (t ((a == b) == (b == a))))',
-          '(32 display (s 31))'
-          ];
-         return Toy.decodeProof(steps);
-       }
+      proof:
+      [
+       '(1 fact "0=x*0")',
+       '(2 instantiateVar (s 1) (path "/right/right/left") (t (minv x)))',
+       '(3 fact "x!=0=>R(minv x)")',
+       '(4 trueBy1 (s 2) (path "/left") (s 3))',
+       '(5 assume (t (0 = (x * y))))',
+       '(6 replace (s 4) (path "/right/right/right") (s 5))',
+       '(7 rewrite (s 6) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z)))))',
+       '(8 rewrite (s 7) (path "/right/right/left") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
+       '(9 rewrite (s 8) (path "/right/right/left") (t (((x != 0) & (R x)) => ((x * (minv x)) = 1))))',
+       '(10 rewrite (s 9) (path "/right/right") (t ((R a) => ((1 * a) = a))))',
+       '(11 display (s 10))',
+       '(12 trueBy1 (s 11) (path "/left/left/left/right") (s 3))',
+       '(13 rewrite (s 12) (path "/left/left/left/left") (t ((x != y) == (not (x = y)))))',
+       '(14 rewrite (s 13) (path "") (t (((((p & (not q)) & a) & b) => r) == (((p & a) & b) => (q | r)))))',
+       '(15 rewrite (s 14) (path "/left/left/left") (t ((x = y) == (y = x))))',
+       '(16 assume (t (x = 0)))',
+       '(17 rewrite (s 16) (path "/right") (t ((x = y) == (y = x))))',
+       '(18 fact "0*y=0")',
+       '(19 replace (s 18) (path "/right/left/left") (s 17))',
+       '(20 assume (t (y = 0)))',
+       '(21 rewrite (s 20) (path "/right") (t ((x = y) == (y = x))))',
+       '(22 fact "x*0=0")',
+       '(23 replace (s 22) (path "/right/left/right") (s 21))',
+       '(24 extractHypAt (s 19) (path "/left/left"))',
+       '(25 extractHypAt (s 23) (path "/left/left"))',
+       '(26 p2 (s 24) (s 25) (t (((a => (p => r)) & (b => (q => r))) => ((a & b) => ((p | q) => r)))))',
+       '(27 extractHypAt (s 15) (path "/left/left/left"))',
+       '(28 rewrite (s 27) (path "/right/right/right") (t ((x = y) == (y = x))))',
+       '(29 rewrite (s 26) (path "/left") (t ((a & b) == (b & a))))',
+       '(30 p2 (s 28) (s 29) (t (((a => (p => q)) & (a => (q => p))) => (a => (q == p)))))',
+       '(31 rewrite (s 30) (path "/right") (t ((a == b) == (b == a))))',
+       '(32 display (s 31))'
+       ]
      },
 
      // Lay 11.1e
      {statement: '@ R x & R y => (x < y == neg y < neg x)',
-      proof: function() {
-         const steps =
-         [
-          '(1 fact "x<y=>x+z<y+z")',
-          '(2 instantiateVar (s 1) (path "/right/left/right") (t ((neg x) + (neg y))))',
-          '(3 rewrite (s 2) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => ((x + (y + z)) = ((x + y) + z)))))',
-          '(4 rewrite (s 3) (path "/right/right/right") (t (((R x) & (R y)) => ((x + y) = (y + x)))))',
-          '(5 rewrite (s 4) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x + (y + z)) = ((x + y) + z)))))',
-          '(6 rewrite (s 5) (path "/right/left/left") (t ((R x) => ((x + (neg x)) = 0))))',
-          '(7 rewrite (s 6) (path "/right/right/left") (t ((R x) => ((x + (neg x)) = 0))))',
-          '(8 rewrite (s 7) (path "/right/right") (t ((R a) => ((0 + a) = a))))',
-          '(9 rewrite (s 8) (path "/right/left") (t ((R a) => ((0 + a) = a))))',
-          '(10 display (s 9))',
-          '(11 tautology (t (((a & b) & c) == ((b & c) & a))))',
-          '(12 rewriteOnlyFrom (s 10) (path "/left") (s 11))',
-          '(13 instantiateVar (s 12) (path "/left/right/left") (t (neg x)))',
-          '(14 instantiateVar (s 13) (path "/left/right/right") (t (neg y)))',
-          '(15 rewrite (s 14) (path "/right/left") (t ((R a) => ((neg (neg a)) = a))))',
-          '(16 rewrite (s 15) (path "/right/right") (t ((R a) => ((neg (neg a)) = a))))',
-          '(17 display (s 16))',
-          '(18 extractHypAt (s 17) (path "/left/left/left"))',
-          '(19 extractHypAt (s 12) (path "/left/right"))',
-          '(20 instantiateVar (s 18) (path "/right/left/left/arg") (t z))',
-          '(21 instantiateVar (s 20) (path "/right/left/right/arg") (t x))',
-          '(22 instantiateVar (s 21) (path "/right/left/left/arg") (t y))',
-          '(23 rewrite (s 22) (path "/left") (t ((a & b) == (b & a))))',
-          '(24 p2 (s 19) (s 23) (t (((a => (p => q)) & (a => (q => p))) => (a => (p == q)))))'
-          ];
-         return Toy.decodeProof(steps);
-       }
+      proof:
+      [
+       '(1 fact "x<y=>x+z<y+z")',
+       '(2 instantiateVar (s 1) (path "/right/left/right") (t ((neg x) + (neg y))))',
+       '(3 rewrite (s 2) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => ((x + (y + z)) = ((x + y) + z)))))',
+       '(4 rewrite (s 3) (path "/right/right/right") (t (((R x) & (R y)) => ((x + y) = (y + x)))))',
+       '(5 rewrite (s 4) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x + (y + z)) = ((x + y) + z)))))',
+       '(6 rewrite (s 5) (path "/right/left/left") (t ((R x) => ((x + (neg x)) = 0))))',
+       '(7 rewrite (s 6) (path "/right/right/left") (t ((R x) => ((x + (neg x)) = 0))))',
+       '(8 rewrite (s 7) (path "/right/right") (t ((R a) => ((0 + a) = a))))',
+       '(9 rewrite (s 8) (path "/right/left") (t ((R a) => ((0 + a) = a))))',
+       '(10 display (s 9))',
+       '(11 tautology (t (((a & b) & c) == ((b & c) & a))))',
+       '(12 rewriteOnlyFrom (s 10) (path "/left") (s 11))',
+       '(13 instantiateVar (s 12) (path "/left/right/left") (t (neg x)))',
+       '(14 instantiateVar (s 13) (path "/left/right/right") (t (neg y)))',
+       '(15 rewrite (s 14) (path "/right/left") (t ((R a) => ((neg (neg a)) = a))))',
+       '(16 rewrite (s 15) (path "/right/right") (t ((R a) => ((neg (neg a)) = a))))',
+       '(17 display (s 16))',
+       '(18 extractHypAt (s 17) (path "/left/left/left"))',
+       '(19 extractHypAt (s 12) (path "/left/right"))',
+       '(20 instantiateVar (s 18) (path "/right/left/left/arg") (t z))',
+       '(21 instantiateVar (s 20) (path "/right/left/right/arg") (t x))',
+       '(22 instantiateVar (s 21) (path "/right/left/left/arg") (t y))',
+       '(23 rewrite (s 22) (path "/left") (t ((a & b) == (b & a))))',
+       '(24 p2 (s 19) (s 23) (t (((a => (p => q)) & (a => (q => p))) => (a => (p == q)))))'
+       ]
      },
 
      {statement: '@ neg 0 = 0',
-      proof: function() {
-         const steps =
-         [
-          '(1 fact "x + neg x = 0")',
-          '(2 instantiateVar (s 1) (path "/right/left/left") (t 0))',
-          '(3 rewrite (s 2) (path "/right/left") (t ((R a) => ((0 + a) = a))))'
-          ];
-         return Toy.decodeProof(steps);
-       },
+      proof:
+      [
+       '(1 fact "x + neg x = 0")',
+       '(2 instantiateVar (s 1) (path "/right/left/left") (t 0))',
+       '(3 rewrite (s 2) (path "/right/left") (t ((R a) => ((0 + a) = a))))'
+       ],
       simplifier: true
      },
 
      {statement: '@ R x => (x < 0 == 0 < neg x)',
-      proof: function() {
-         const steps =
-         [
-          '(1 fact "x<y==neg y < neg x")',
-          '(2 instantiateVar (s 1) (path "/right/left/right") (t 0))',
-          '(3 rewrite (s 2) (path "/right/right/left") (t ((neg 0) = 0)))'
-          ];
-         return Toy.decodeProof(steps);
-       }
+      proof:
+      [
+       '(1 fact "x<y==neg y < neg x")',
+       '(2 instantiateVar (s 1) (path "/right/left/right") (t 0))',
+       '(3 rewrite (s 2) (path "/right/right/left") (t ((neg 0) = 0)))'
+       ]
      },
 
      {statement: '@ R x => (0 < x == neg x < 0)',
-      proof: function() {
-         const steps =
-         [
-          '(1 fact "x<y==neg y < neg x")',
-          '(2 instantiateVar (s 1) (path "/right/left/left") (t 0))',
-          '(3 rewrite (s 2) (path "/right/right/right") (t ((neg 0) = 0)))',
-          '(4 instantiateVar (s 3) (path "/right/right/left/arg") (t x))'
-          ];
-         return Toy.decodeProof(steps);
-       }
+      proof:
+      [
+       '(1 fact "x<y==neg y < neg x")',
+       '(2 instantiateVar (s 1) (path "/right/left/left") (t 0))',
+       '(3 rewrite (s 2) (path "/right/right/right") (t ((neg 0) = 0)))',
+       '(4 instantiateVar (s 3) (path "/right/right/left/arg") (t x))'
+       ]
      },
 
      // Lay 11.1f
      {statement: '@ R x & R y & R z => (x < y & z < 0 => y * z < x * z)',
-      proof: function() {
-         const steps =
-         [
-          '(1 fact "x < y & 0 < z => x * z < y * z")',
-          '(2 instantiateVar (s 1) (path "/right/left/right") (t (neg z)))',
-          '(3 rewrite (s 2) (path "/left/left/left/left/right") (t ((R x) => ((0 < (neg x)) == (x < 0)))))',
-          '(4 rewrite (s 3) (path "/right/left/right") (t ((R x) => ((neg x) = (-1 * x)))))',
-          '(5 rewrite (s 4) (path "/right/right/right") (t ((R x) => ((neg x) = (-1 * x)))))',
-          '(6 rewrite (s 5) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z)))))',
-          '(7 rewrite (s 6) (path "/right/right/left") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
-          '(8 rewrite (s 7) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => (((x * y) * z) = (x * (y * z))))))',
-          '(9 rewrite (s 8) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z)))))',
-          '(10 rewrite (s 9) (path "/right/left/left") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
-          '(11 rewrite (s 10) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => (((x * y) * z) = (x * (y * z))))))',
-          '(12 rewrite (s 11) (path "/right/right") (t ((R x) => ((-1 * x) = (neg x)))))',
-          '(13 rewrite (s 12) (path "/right/left") (t ((R x) => ((-1 * x) = (neg x)))))',
-          '(14 rewrite (s 13) (path "/right") (t (((R x) & (R y)) => (((neg y) < (neg x)) == (x < y)))))',
-          '(15 display (s 14))',
-          '(16 tautology (t (((((a & b) & c) & d) => p) == (((b & c) & d) => (a => p)))))',
-          '(17 rewriteOnlyFrom (s 15) (path "") (s 16))'
-          ];
-         return Toy.decodeProof(steps);
-       }
+      proof:
+      [
+       '(1 fact "x < y & 0 < z => x * z < y * z")',
+       '(2 instantiateVar (s 1) (path "/right/left/right") (t (neg z)))',
+       '(3 rewrite (s 2) (path "/left/left/left/left/right") (t ((R x) => ((0 < (neg x)) == (x < 0)))))',
+       '(4 rewrite (s 3) (path "/right/left/right") (t ((R x) => ((neg x) = (-1 * x)))))',
+       '(5 rewrite (s 4) (path "/right/right/right") (t ((R x) => ((neg x) = (-1 * x)))))',
+       '(6 rewrite (s 5) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z)))))',
+       '(7 rewrite (s 6) (path "/right/right/left") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
+       '(8 rewrite (s 7) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => (((x * y) * z) = (x * (y * z))))))',
+       '(9 rewrite (s 8) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z)))))',
+       '(10 rewrite (s 9) (path "/right/left/left") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
+       '(11 rewrite (s 10) (path "/right/left") (t ((((R x) & (R y)) & (R z)) => (((x * y) * z) = (x * (y * z))))))',
+       '(12 rewrite (s 11) (path "/right/right") (t ((R x) => ((-1 * x) = (neg x)))))',
+       '(13 rewrite (s 12) (path "/right/left") (t ((R x) => ((-1 * x) = (neg x)))))',
+       '(14 rewrite (s 13) (path "/right") (t (((R x) & (R y)) => (((neg y) < (neg x)) == (x < y)))))',
+       '(15 display (s 14))',
+       '(16 tautology (t (((((a & b) & c) & d) => p) == (((b & c) & d) => (a => p)))))',
+       '(17 rewriteOnlyFrom (s 15) (path "") (s 16))'
+       ]
      }
      ];
   addRules(infos);
@@ -671,21 +632,18 @@ var numbersInfo = {
   realNegClosed: {
     statement: '@ R x => R (neg x)',
     simplifier: true,
-    proof: function() {
-      const steps =
-      [
-       '(1 negFact)',
-       '(2 forwardChain (s 1) (t ((a == b) => (b => a))))',
-       '(3 instantiateVar (s 2) (path "/left/right/right") (t (neg x)))',
-       '(4 rewrite (s 3) (path "/left/right") (t ((x = x) == T)))',
-       '(5 fact "x+neg x = 0")',
-       '(6 trueBy1 (s 4) (path "/right/right") (s 5))',
-       '(7 assume (t (R x)))',
-       '(8 trueBy1 (s 6) (path "/right/left/left") (s 7))',
-       '(9 rewrite (s 8) (path "/right") (t (((T & a) & T) == a)))'
-       ];
-      return Toy.decodeProof(steps);
-    }
+    proof:
+    [
+     '(1 negFact)',
+     '(2 forwardChain (s 1) (t ((a == b) => (b => a))))',
+     '(3 instantiateVar (s 2) (path "/left/right/right") (t (neg x)))',
+     '(4 rewrite (s 3) (path "/left/right") (t ((x = x) == T)))',
+     '(5 fact "x+neg x = 0")',
+     '(6 trueBy1 (s 4) (path "/right/right") (s 5))',
+     '(7 assume (t (R x)))',
+     '(8 trueBy1 (s 6) (path "/right/left/left") (s 7))',
+     '(9 rewrite (s 8) (path "/right") (t (((T & a) & T) == a)))'
+     ]
   },
 
   realSubClosed: {
@@ -2136,19 +2094,16 @@ const basicRealFacts =
 
    {statement: 'x + neg x = 0',
     simplifier: true,
-    proof: function() {
-       const steps =
-       ['(1 negFact)',
-        '(2 forwardChain (s 1) (t ((((a & b) & c) == d) => (d => c))))',
-        '(3 rewrite (s 2) (path "/left/right") (t ((x = y) == (y = x))))',
-        '(4 assume (t (y = (neg x))))',
-        '(5 display (s 3))',
-        '(6 replace (s 5) (path "/right/left/right") (s 4))',
-        '(7 display (s 6))',
-        '(8 removeLet (s 7) (path "/left/left"))'
-        ];
-       return Toy.decodeProof(steps);
-     }
+    proof:
+    ['(1 negFact)',
+     '(2 forwardChain (s 1) (t ((((a & b) & c) == d) => (d => c))))',
+     '(3 rewrite (s 2) (path "/left/right") (t ((x = y) == (y = x))))',
+     '(4 assume (t (y = (neg x))))',
+     '(5 display (s 3))',
+     '(6 replace (s 5) (path "/right/left/right") (s 4))',
+     '(7 display (s 6))',
+     '(8 removeLet (s 7) (path "/left/left"))'
+     ]
    },
 
   // Addition
@@ -2362,21 +2317,18 @@ addFactsMap(identityFacts3);
 var equivalences = {
 
   'a = b == a + c = b + c': {
-    proof: function() {
-      const steps =
-      [
-       '(1 abcPlus)',
-       '(2 assume (t (x = y)))',
-       '(3 applyToBoth (t {w. (w + z)}) (s 2))',
-       '(4 andAssume (s 3) (t (((R x) & (R y)) & (R z))))',
-       '(5 extractHypAt (s 4) (path "/left/left/left/left"))',
-       '(6 extractHypAt (s 1) (path "/left/left/left/left"))',
-       '(7 rewrite (s 6) (path "/right") (t (a == (a & T))))',
-       '(8 replaceT (s 7) (path "/right/right") (s 5))',
-       '(9 rewrite (s 8) (path "/right") (t (((a => b) & (b => a)) == (b == a))))'
-       ];
-      return Toy.decodeProof(steps);
-    }
+    proof:
+    [
+     '(1 abcPlus)',
+     '(2 assume (t (x = y)))',
+     '(3 applyToBoth (t {w. (w + z)}) (s 2))',
+     '(4 andAssume (s 3) (t (((R x) & (R y)) & (R z))))',
+     '(5 extractHypAt (s 4) (path "/left/left/left/left"))',
+     '(6 extractHypAt (s 1) (path "/left/left/left/left"))',
+     '(7 rewrite (s 6) (path "/right") (t (a == (a & T))))',
+     '(8 replaceT (s 7) (path "/right/right") (s 5))',
+     '(9 rewrite (s 8) (path "/right") (t (((a => b) & (b => a)) == (b == a))))'
+     ]
   },
 
   'a = b == a - c = b - c': {
