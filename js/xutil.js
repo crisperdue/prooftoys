@@ -1709,6 +1709,8 @@ function lambda(bound, body) {
 /**
  * This controls the policy over which function names are
  * to be rendered as infix.
+ *
+ * TODO: Rename this to isInfixOp.
  */
 function isInfixDesired(vbl) {
   if (!(vbl instanceof Atom)) {

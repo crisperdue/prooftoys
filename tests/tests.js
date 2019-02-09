@@ -923,7 +923,7 @@ var testCase = {
     assertEqual('(a + (neg (b * c)))', parents[0]);
     assertEqual('(neg (b * c))', parents[1]);
     assertEqual('(b * c)', parents[2]);
-    assertEqual('(b *)', parents[3]);
+    assertEqual('((*) b)', parents[3]);
     assertEqual('b', parents[4]);
   },
 
@@ -1933,11 +1933,11 @@ var testCase = {
   },
 
   testFalseEquals: function() {
-    assertEqual('((F =) = not)', Toy.rules.falseEquals());
+    assertEqual('(((=) F) = not)', Toy.rules.falseEquals());
   },
 
   testTrueEquals: function() {
-    assertEqual('((T =) = {x. x})', Toy.rules.trueEquals());
+    assertEqual('(((=) T) = {x. x})', Toy.rules.trueEquals());
   },
 
   testEvalBool: function() {

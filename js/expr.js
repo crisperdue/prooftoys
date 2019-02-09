@@ -2435,6 +2435,9 @@ Call.prototype._toString = function() {
   if (this._string) {
     return this._string;
   }
+  // TODO: Consider making this the default presentation for an atom,
+  //   and occurrences of infix ops in standard position just display
+  //   the name.
   function asArg(expr) {
     if (expr instanceof Atom && isInfixDesired(expr)) {
       return '(' + expr + ')';
@@ -2450,14 +2453,15 @@ Call.prototype._toString = function() {
         // currently a misnomer.
         return this.getLeft() + '<sup>' + this.getRight() + '</sup>';
       } else {
-        return '(' + this.getLeft() + ' ' + op + ' ' + this.getRight() + ')';
+        return ('(' + asArg(this.getLeft()) + ' ' + op +
+                ' ' + asArg(this.getRight()) + ')');
       }
     } else {
-      return '(' + op + ' ' + asArg(this.getLeft()) + ' ' + this.getRight() + ')';
+      return ('(' + op + ' ' + asArg(this.getLeft()) +
+              ' ' + asArg(this.getRight()) + ')');
     }
   } else if (this.fn instanceof Atom && Toy.isInfixDesired(this.fn)) {
-    // TODO: Modify this output to be parseable -- ((op) arg)
-    return '(' + this.arg + ' ' + this.fn + ')';
+    return '((' + this.fn + ') ' + asArg(this.arg) + ')';
   } else {
     return '(' + this.fn + ' ' + asArg(this.arg) + ')';
   }
