@@ -768,8 +768,10 @@ function definition(defn_arg) {
       Toy.isEmpty(defn.getRight().newConstants())) {
     // It is a classic equational definition.
     // Add it to the facts andthe definitions database.
+    // TODO: Consider flagging it as a desimplifier.
     addFact({goal: defn, definition: true});
     definitions[name] = defn;
+    // This could add the rest of the facts later.
     addDefnFacts(defn);
   } else {
     // It is not a classic equational definition.
@@ -817,12 +819,16 @@ function enableDefnFacts() {
  * generates the fact f x = <term>, and similarly if there are
  * multiple arguments.
  *
- * TODO: Remove this and just use a rule to get the "expanded" definition
- *   of a name as needed instead.
+ * This is intended just for use from Toy.definition.
+ *
+ * End users may choose to look up such facts using rules.definition
+ * and reduceEqn via the user interface.
  */
 function addDefnFacts(definition) {
   function addFacts() {
     var defined = definition.getLeft();
+    // Add the converse as a simplifier.
+    addSwappedFact({goal: definition, desimplifier: true, definitional: true});
     var name = defined.name;
     var eqn = rules.definition(name);
     var lambda = definition.getRight();
