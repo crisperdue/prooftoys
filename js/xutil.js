@@ -2071,9 +2071,8 @@ function dumpProof(proofEditor) {
  * from encodeSteps, builds a proof consisting of those steps, and
  * returns the proved result (last step).
  */
-function decodeProof(steps) {
-  steps.unshift('(steps ');
-  steps.push(')');
+function decodeProof(steps_arg) {
+  const steps = ['(steps '].concat(steps_arg, ')');
   const decoded = decodeSteps(steps.join('\n'));
   return decoded[decoded.length - 1];
 }

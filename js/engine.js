@@ -305,9 +305,10 @@ var rules = {};
 //
 // action: function implementing the inference rule.
 //
-// proof: for a theorem (no args), use this instead of "action".
-//   Do not call "justify", that is done automatically and
-//   the proof is memoized.
+// proof: for a theorem (no args), use this instead of "action".  Do
+//   not call "justify", that is done automatically and the proof is
+//   memoized.  For a theorem, this may be given as an array of steps
+//   encoded as text in the usual manner.
 //
 // name: name of the rule, axiom or theorem; required if it is a rule
 //   of inference with one or more arguments (see below).  Used to
@@ -500,12 +501,19 @@ function addRule(info) {
     // TODO: In the future, allow type parameters and memoize
     //   as appropriate.
     // TODO: Consider checking that "actions" _do_ have parameters.
-    assert(typeof proof === 'function',
-           'Proof of {1} should be a function', name);
-    assert(proof.length == 0, 'Proof of {1} requires parameters', name);
-    assert(!info.action, 'Both proof and action for {1}', name);
-    // User-supplied proof function is the main.
-    main = proof;
+    if (typeof proof === 'function') {
+      assert(proof.length == 0, 'Proof of {1} requires parameters', name);
+      assert(!info.action, 'Both proof and action for {1}', name);
+      // User-supplied proof function is the main.
+      main = proof;
+    } else if (Array.isArray(proof)) {
+      const steps = proof;
+      proof = function() { return Toy.decodeProof(steps); }
+      main = proof;
+    } else {
+      assert(false,
+             'Proof of {1} should be a function or array of steps', name);
+    }
   }
   if (statement) {
     if (!proof) {
