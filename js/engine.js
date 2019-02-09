@@ -320,6 +320,8 @@ var rules = {};
 //   converse will be added as a fact.  Also used by tests.  TODO:
 //   Consider checking during actual proof of the theorem.
 //
+// goal: synonym for statement.
+//
 // definition: for a definition, this is a statement, often of the
 //   form <name> = <term>, that defines the new constant name.  Once
 //   the definition is made, this statement is taken as true, as if it
@@ -458,8 +460,7 @@ var rules = {};
  * add the resulting rule or rules.  This does not do inference, so it
  * can be called before any theorems are proved.
  *
- * TODO: Consider supporting definitions here, renaming to just "add",
- *   and merging functionality with addRules.
+ * TODO: Consider renaming this, perhaps to "prove".
  */
 function addRule(info) {
   var name = info.name;
@@ -474,7 +475,10 @@ function addRule(info) {
     return;
   }
   var proof = info.proof;
-  var statement = info.statement;
+  var statement = info.statement || info.goal;
+  if (info.statement && info.goal) {
+    console.warn('Fact has both statement and goal', info.goal.toString());
+  }
 
   // This will become the "rule object":
   var rule;
