@@ -741,43 +741,6 @@ var definitions = {
 };
 
 /**
- * Adds a simple abbreviation-like definition to the database, e.g.
- * define('forall', equal(lambda(x, T))).  Returns the equation.
- *
- * TODO: Remove this.
- */
-function define(name, definition) {
-  assert(Toy.isConstantName(name), 'Not a constant name: {1}', name);
-  definition = termify(definition);
-  assert(definition instanceof Expr,
-         'Definition must be a term: ' + definition);
-  if (isDefined(name)) {
-    assert(definition.matches(getDefinition(name)),
-           'Already defined: ' + name);
-    // Benign redefinition, do nothing.
-    return;
-  }
-  var freeSet = definition.freeVars();
-  if (!Toy.isEmpty(freeSet)) {
-    var freeList = [];
-    for (var nm in freeSet) {
-      freeList.push(nm);
-    }
-    var names = freeList.join(', ');
-    assert(false, 'Definition of {1} has free variable(s) {2}',
-           name, names);
-    return null;
-  }
-  constantTypes[name] = findType(definition);
-  var defn = equal(Toy.constify(name), definition);
-  definitions[name] = defn;
-  // TODO: Also check for other new names in the definition.
-  Toy.namedConstants.add(name);
-  console.error('OLD-style define of', name);
-  return defn;
-}
-
-/**
  * Add a simple definition with true/false cases.  A call could
  * be something like defineCases('not', F, T).
  *
@@ -2113,7 +2076,6 @@ Toy.standardSubst = standardSubst;
 
 // Definitions
 
-Toy.define = define;
 Toy.defineCases = defineCases;
 Toy.definex = definex;
 Toy.isDefinedSimply = isDefinedSimply;
