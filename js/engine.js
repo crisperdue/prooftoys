@@ -871,84 +871,6 @@ function addDefnFacts(definition) {
 
 //// FACTS
 
-/**
- * Accepts a "prover" function of no arguments and a goal statement
- * (Expr).  The prover may be null, in which case this generates
- * a trivial prover that asserts the goal.
- *
- * Returns a function to construct and return a proved statement from
- * the arguments.  The returned function runs the prover to prove the
- * goal.  When running the prover, the returned function also attempts
- * to use exactly the free variables in the goal, and arranges the
- * assumptions accordingly.  It warns if assumptions do not match up
- * with the goal, and raises an error if it cannot make the main part
- * match exactly.
- *
- * Internal to addFact.
- *
- * TODO: Move near addFact.
- */
-function asFactProver(prover, goal) {
-  assert(!prover || typeof prover === 'function',
-         'Not a function: {1}', prover);
-  // This function wraps around the user-supplied fact prover
-  // to do the generic parts of the work.
-  function factProverWrapper() {
-    var result;
-    if (goal.isProved()) {
-      result = goal;
-    } else if (!prover) {
-      // The proof is just a stub not yet filled in.
-      return rules.assert(goal);
-    }
-    var result = prover();
-    // Seek a substitution into the result that yields the goal.
-    var subst = result.alphaMatch(goal);
-    // TODO: Check that substitutions exist, but don't actually do
-    //   substitutions here.  Now rules.fact substitutes as needed to
-    //   use the variables desired at each use.
-    if (subst) {
-      return rules.instMultiVars(result, subst);
-    } else {
-      // Try matching the main parts of the result and goal.
-      // Reorder any assumptions as needed.
-      var subst2 = result.getMain().alphaMatch(goal.getMain());
-      if (subst2) {
-        // The main parts match up to change of variables.
-        var proved = (rules.instMultiVars(result, subst2)
-                       .andThen('arrangeAsms'));
-        if (proved.matches(goal)) {
-          return proved;
-        }
-        const goalAsms = goal.asmSet();
-        const factAsms = proved.asmSet();
-        if (!goalAsms.superset(factAsms)) {
-          console.group('Warning: Fact requires unintended assumptions.');
-          console.error('Some results may rely on the incorrect fact.');
-          console.error('Proved:', proved.toString());
-          console.error('Stated:', goal.toString());
-          console.groupEnd();
-          // This is a serious issue, so if the debugger is open,
-          // pause here.  This also allows work to continue, so the
-          // proof can be reviewed in the user interface.
-          debugger;
-        }
-        if (!factAsms.superset(goalAsms)) {
-          console.group('Note: Fact statement has unneeded assumptions.');
-          console.info('Proved:', proved.toString());
-          console.info('Stated:', goal.toString());
-          console.groupEnd();
-        }
-        return proved;
-      } else {
-        assert(false, 'Instead of {1} proved {2}', goal, result);
-      }
-    }
-  }
-  return factProverWrapper;
-}
-
-
 //// About fact info objects.  These are plain objects with properties:
 //
 // synopsis (optional): synopsis string
@@ -2411,6 +2333,81 @@ function addSwappedFact(info) {
       addFact(info2);
     }
   }
+}
+
+/**
+ * Accepts a "prover" function of no arguments and a goal statement
+ * (Expr).  The prover may be null, in which case this generates
+ * a trivial prover that asserts the goal.
+ *
+ * Returns a function to construct and return a proved statement from
+ * the arguments.  The returned function runs the prover to prove the
+ * goal.  When running the prover, the returned function also attempts
+ * to use exactly the free variables in the goal, and arranges the
+ * assumptions accordingly.  It warns if assumptions do not match up
+ * with the goal, and raises an error if it cannot make the main part
+ * match exactly.
+ *
+ * Internal to addFact.
+ */
+function asFactProver(prover, goal) {
+  assert(!prover || typeof prover === 'function',
+         'Not a function: {1}', prover);
+  // This function wraps around the user-supplied fact prover
+  // to do the generic parts of the work.
+  function factProverWrapper() {
+    var result;
+    if (goal.isProved()) {
+      result = goal;
+    } else if (!prover) {
+      // The proof is just a stub not yet filled in.
+      return rules.assert(goal);
+    }
+    var result = prover();
+    // Seek a substitution into the result that yields the goal.
+    var subst = result.alphaMatch(goal);
+    // TODO: Check that substitutions exist, but don't actually do
+    //   substitutions here.  Now rules.fact substitutes as needed to
+    //   use the variables desired at each use.
+    if (subst) {
+      return rules.instMultiVars(result, subst);
+    } else {
+      // Try matching the main parts of the result and goal.
+      // Reorder any assumptions as needed.
+      var subst2 = result.getMain().alphaMatch(goal.getMain());
+      if (subst2) {
+        // The main parts match up to change of variables.
+        var proved = (rules.instMultiVars(result, subst2)
+                       .andThen('arrangeAsms'));
+        if (proved.matches(goal)) {
+          return proved;
+        }
+        const goalAsms = goal.asmSet();
+        const factAsms = proved.asmSet();
+        if (!goalAsms.superset(factAsms)) {
+          console.group('Warning: Fact requires unintended assumptions.');
+          console.error('Some results may rely on the incorrect fact.');
+          console.error('Proved:', proved.toString());
+          console.error('Stated:', goal.toString());
+          console.groupEnd();
+          // This is a serious issue, so if the debugger is open,
+          // pause here.  This also allows work to continue, so the
+          // proof can be reviewed in the user interface.
+          debugger;
+        }
+        if (!factAsms.superset(goalAsms)) {
+          console.group('Note: Fact statement has unneeded assumptions.');
+          console.info('Proved:', proved.toString());
+          console.info('Stated:', goal.toString());
+          console.groupEnd();
+        }
+        return proved;
+      } else {
+        assert(false, 'Instead of {1} proved {2}', goal, result);
+      }
+    }
+  }
+  return factProverWrapper;
 }
 
 
