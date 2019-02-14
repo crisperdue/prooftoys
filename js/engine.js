@@ -881,13 +881,12 @@ function addDefnFacts(definition) {
  * goal.  When running the prover, the returned function also attempts
  * to use exactly the free variables in the goal, and arranges the
  * assumptions accordingly.  It warns if assumptions do not match up
- * with the goal, and raises an error if the main part if it cannot
- * make the main part match exactly.
+ * with the goal, and raises an error if it cannot make the main part
+ * match exactly.
  *
- * Internal to addFact and addSwappedFact.
+ * Internal to addFact.
  *
- * TODO: Share common code here and in addFact and addRule and
- *   addDefinition.
+ * TODO: Move near addFact.
  */
 function asFactProver(prover, goal) {
   assert(!prover || typeof prover === 'function',
