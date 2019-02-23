@@ -5193,6 +5193,31 @@ const exists1aFacts =
    ];
 addRules(exists1aFacts);
 
+demoFacts =
+  [
+   {statement: '((subset p q) == (p = (intersect p q)))',
+    name: 'SubsetInter',
+    proof: [
+            '(1 define (t (intersect = {p. {q. {x. ((p x) & (q x))}}})))',
+            '(2 reduceEqn (s 1))',
+            '(3 reduceEqn (s 2))',
+            '(4 define (t (subset = {p. {q. (forall {x. ((p x) => (q x))})}})))',
+            '(5 reduceEqn (s 4))',
+            '(6 reduceEqn (s 5))',
+            '(7 rewrite (s 6) (path "/main/right/arg/body") (t ((a => b) == (a == (a & b)))))',
+            '(8 reduceEqn (s 3))',
+            '(9 rewrite (s 8) (path "/main") (t ((x = y) == (y = x))))',
+            '(10 rewriteOnlyFrom (s 7) (path "/main/right/arg/body/right") (s 9))',
+            '(11 axiom3a)',
+            '(12 instantiateVar (s 11) (path "/main/left/right") (t (inter p q)))',
+            '(13 rewrite (s 12) (path "/main") (t ((x = y) == (y = x))))',
+            '(14 rewriteOnlyFrom (s 10) (path "/main/right") (s 13))',
+            '(15 rewrite (s 14) (path "/main/binop") (t ((=) = (==))))',
+            '(16 display (s 15))'
+            ]
+   }
+   ];
+addRules(demoFacts);
 
 //// Other initializations
 
