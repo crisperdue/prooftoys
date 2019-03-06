@@ -2253,21 +2253,28 @@ function hoverStepSelector(step, direction, event) {
     }
   });
 
-  // Highlight steps that provide inputs to this one.
-  // Use rule-specific hover actions, or default.
-  var handler = getHoverHandler(step);
   // TODO: pass a boolean instead of an action.
-  var action = entering ? addClass : removeClass;
-  if (handler) {
-    // If there is a hover handler for this type of inference, apply it.
-    handler(step, action);
-  } else {
-    // If no handler apply or remove default highlighting.
-    step.ruleDeps.forEach(function(dep) {
+  const action = entering ? addClass : removeClass;
+  // Highlight steps that provide inputs to this one.
+  step.ruleDeps.forEach(function(dep) {
       if (dep.rendering) {
         action(dep.rendering.stepNode, 'dep');
       }
     });
+  // Rule instantiateVar uses a path to identify a variable.
+  if (step.ruleName != 'instantiateVar') {
+    // These are selections in the input step.
+    const selections = Toy.stepSites(step);
+    // Highlight the input sites expressions for the step while hovered.
+    selections.forEach(function(expr) {
+        action(expr.node, 'site');
+      });
+  }
+  // Also use any rule-specific hover actions.
+  var handler = getHoverHandler(step);
+  if (handler) {
+    // If there is a hover handler for this type of inference, apply it.
+    handler(step, action);
   }
 }
 
@@ -2286,18 +2293,16 @@ function getHoverHandler(step) {
 }
 
 /**
- * Highlights input sites as usual for rewrite rules.
+ * For rewrite rules also highlight the part of the result step
+ * that is the replacement.  This assumes that the second ruleDep
+ * supplies the equation, which may be implicit in case of
+ * rules that replace T with a step or a step's consequent.
  */
 function hoverAsRewriter(step, action) {
-  // These are selections in the input step.
-  var selections = Toy.stepSites(step);
-  // Highlight the input sites expressions for the step while hovered.
-  selections.forEach(function(expr) {
-    action(expr.node, 'site');
-  });
-
-  var deeper = step.wff.isCall2('=>') && step.ruleDeps[0].wff.isCall2('=');
-  var right = Toy.path('/right');
+  // This becomes the first ("target") dep or undefined if nonexistent.
+  const target = step.ruleDeps[0];
+  // True iff this step is conditional, but the target was not.
+  const deeper = step.wff.isCall2('=>') && target && !target.isCall2('=>');
 
   // Show the corresponding subexpressions of this step if possible.
   // Note: this is likely to require overrides in some rules.
@@ -2361,6 +2366,18 @@ var hoverHandlers = {
                 function(_var) { action(_var.node, 'occur'); },
                 step,
                 function(expr) { action(expr.node, 'new'); });
+  },
+  instantiateVar: function(step, action) {
+    var args = step.original.ruleArgs;
+    // Input step.
+    var input = args[0].rendering;
+    // Name of variable being instantiated.
+    var varName = args[0].get(args[1]).name;
+    action(input.stepNode, 'dep');
+    input.findAll(varName,
+                  function(_var) { action(_var.node, 'occur'); },
+                  step,
+                  function(expr) { action(expr.node, 'new'); });
   },
   instVar: function(step, action) {
     var args = step.original.ruleArgs;
