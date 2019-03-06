@@ -3320,6 +3320,8 @@ const ruleInfo = {
   },
 
   // "Base case" of 5238, with just a single variable.
+  // TODO: Consider whether it may make sense to replace usage of
+  //   this with uses of r5238b.
   r5238a: {
     action: function(v, a, b) {
       v = varify(v);
@@ -3334,6 +3336,19 @@ const ruleInfo = {
       return step6;
     },
     tooltip: ('')
+  },
+
+  // Base case of 5238 as a theorem.
+  r5238b: {
+    statement: '{x. f x} = {x. g x} == forall {x. f x = g x}',
+    proof: function() {
+      const eta2 = rules.eta().andThen('eqnSwap');
+      return (rules.fact('f = g == forall {x. f x = g x}')
+              .andThen('rewriteOnly', '/left/left', eta2)
+              .andThen('rewriteOnly', '/left/right', eta2));
+      //.andThen('instMultiVars', {f: '{x. f x}', g: '{x. g x}'})
+      // .andThen('reduceAll', '/right'));
+    }
   },
 
   // 5239, closely following the description and names in the book.
