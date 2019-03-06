@@ -45,6 +45,7 @@ const addRule = Toy.addRule;
 const addRules = Toy.addRules;
 const addRulesMap = Toy.addRulesMap;
 const buildHypSchema = Toy.buildHypSchema;
+const tryReduce = Toy.tryReduce;
 
 const noSimplify = Toy.noSimplify;
 
