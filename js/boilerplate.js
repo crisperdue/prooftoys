@@ -43,13 +43,13 @@
 
   // Behavior can be customized by this global variable.
   if (!window.noTooltipster) {
-    // These load Tooltipster and the shadow theme from current locations
+    // These load Tooltipster and the light theme from current locations
     // in the source tree.
     write('<link rel="stylesheet" href="' + prefix +
           '../lib/tooltipster-master/dist/css/tooltipster.bundle.css">');
     write('<link rel="stylesheet" href="' + prefix +
           '../lib/tooltipster-master/dist/css/plugins/tooltipster/sideTip' +
-          '/themes/tooltipster-sideTip-shadow.min.css">');
+          '/themes/tooltipster-sideTip-light.min.css">');
     getScript('../lib/tooltipster-master/dist/js/tooltipster.bundle.js');
   }
 
