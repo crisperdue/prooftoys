@@ -22,15 +22,16 @@ of both steps combined.
 
 ### Mathtoys concepts
 
-#### Things
+#### Values
 
 Mathtoys starts with boolean values (true and false written as T and
-F), and individuals such as numbers.  Beyond this, given any two
-types, functions from one to the other also constitute a type.
-This results in types for concepts found in most of mathematics,
-Including the usual predicates, sets, and relations.
+F), and individuals such as numbers, which you may enter as integers
+with an optional minus sign.  Beyond this, given any two types,
+functions from one to the other also constitute a type.  This results
+in types for concepts found in most of mathematics, Including the
+usual predicates, sets, and relations.
 
-The boolean operator "not", for example, is a fucntion that maps from
+The boolean operator "not", for example, is a function that maps from
 a boolean value to a boolean value.  The boolean operator "and" maps
 from a pair of boolean values to a boolean value.  The function that
 maps a number x to x*x maps from individuals (specifically numbers) to
@@ -40,7 +41,30 @@ A set of numbers is a function from individuals to booleans.  A
 sequence of numbers is a function from individuals to integers
 (individuals), and so on.
 
-#### Actions
+#### Constants and variables
+
+Variable names are a letter, optionally followed by an underscore and
+one or more digits.  Any digits display as a subscript on the
+identifier.  The names "T", "F", "R", and "e" are specially reserved
+for constants.
+
+Aside from the reserved special names, a constant is named by an
+identifier, or by a sequence of printing (currently ASCII) characters
+not including any alphanumerics, brackets, braces, parentheses, or
+"-".  Identifiers begin with an alphabetic character which must be
+followed by at least one alphanumeric.
+
+#### Expressions (terms)
+
+Everything in Mathtoys is an individual, such as a number, a boolean,
+or a function.  Functions with boolean values are usually known as
+predicates and relations.
+
+Mathtoys has variables of all types, including functions and
+relations.  You do not write down the types, but it parses expressions
+into terms, and each term has a type.
+
+#### Reasoning
 
 Substitution
 
