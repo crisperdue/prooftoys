@@ -742,7 +742,7 @@ const equalities = {
       var step1 = rules.eqSelf(a);
       var eqn = rules.theorem('eqIsEquiv');
       var result = rules.r(eqn, step1, '/binop');
-      return result.justify('equivSelf', []);
+      return result.justify('equivSelf', arguments);
     },
     inputs: {bool: 1},
     form: 'Statement to prove equal to itself: <input name=bool>',
