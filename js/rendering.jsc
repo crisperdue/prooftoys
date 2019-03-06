@@ -273,11 +273,7 @@ ProofDisplay.prototype.selectionChanged = function() {
 
 /**
  * Sets the steps of this proof control to be renderings of the ones
- * in the given array of nonrenderable steps, with
- * stepNumber properties running from 1 to N.
- *
- * TODO: Make a sensible policy for accepting renderable versus
- * nonrenderable steps.
+ * in the given array of nonrenderable steps.
  */
 ProofDisplay.prototype.setSteps = function(steps) {
   if (this.steps.length > 0) {

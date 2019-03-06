@@ -44,8 +44,8 @@ $(function() {
   }
 
   /**
-   * Runs and displays a proof of the named rule (or theorem).
-   * If there is no such rule, notifies the user that there is none.
+   * Given a name, runs and displays a proof of sampleProofs[name].
+   * If there is no such sample, notifies the user that there is none.
    */
   function displayProof(name) {
     var ruleInfo = sampleProofs[name];
