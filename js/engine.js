@@ -763,6 +763,16 @@ function addRules(ruleList) {
 function definition(defn_arg) {
   const definitions = Toy.definitions;
   const defn = termify(defn_arg);
+  if (defn.isCall2('=') && defn.getLeft().isConst()) {
+    // Allow benign redefinition same as an existing one.
+    const name = defn.getLeft().name;
+    const prev = definitions[name];
+    if (prev instanceof Expr && prev.matches(defn)) {
+      // If it does not match, later checks will flunk it.
+      console.log('Benign redefinition of', name);
+      return name;
+    }
+  }
   // Free occurrences of names of constants that do not have
   // definitions.
   const news = defn.newConstants();
