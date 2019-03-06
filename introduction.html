@@ -44,7 +44,7 @@ builder.
 <h2>The language</h2>
 <p>
 For more complete information see the
-<a href="http://code.google.com/p/prooftoys/wiki/LanguageSummary">
+<a href="https://github.com/crisperdue/prooftoys/wiki/Language-Summary">
 language documentation</a> in the project Wiki.
 <p>
 Aside from variables and constants, the language has only function
@@ -140,7 +140,10 @@ To see how a rule operates internally, click on its name in the proof
 line that uses it.
 <p>
 Note: <i>Proof displays are supported in modern browsers such as
-Chrome, Firefox, Safari, and Internet Explorer 9.</i>
+Chrome, Firefox, Safari, and Microsoft Edge.</i>  Internet Explorer is
+not being updated to current Web technologies and is no longer
+supported by Prooftoys.
+
 
 <p style="margin: 1.5em 1.5em .5em">
 <b>Select a rule or theorem to prove:</b><span id=selectHolder></span>
@@ -167,34 +170,6 @@ Chrome, Firefox, Safari, and Internet Explorer 9.</i>
  />
  Unable to display content. Adobe Flash is required.
 </object>
-
-<p>
-<b>Assumptions.</b>
-Most math problems start with assumptions, and whethere the
-assumptions are stated explicitly or not, the assumptions are often
-required to properly justify many of the steps in a problem
-solution.
-<p>
-The Prooftoys language has a compact notation for referring to
-assumptions.  For example if an assumption is made in line 1 of a
-proof, later steps can refer to that assumption using the number 1,
-something like this:
-<blockquote>
-1. <s>x / 4 = y</s> (assumption)<br>
-2. <s>1: x = 4 * y</s><br>
-3. <s>y = 5</s> (assumption)<br>
-4. <s>1, 3: x = 20</s>
-</blockquote>
-Here Line 2 refers to the assumption on line 1, and
-line 4 refers to the assumptions on lines 1 and 3.
-Line 2 is a shorthand for:
-<blockquote>
-2. <s>x / 4 = y => x = 4 * y</s>
-</blockquote>
-and line 4 similarly is just a shorthand for:
-<blockquote>
-4. <s>(x / 4 = y & y = 5) => x = 20</s>
-</blockquote>
 
 <h2>Using the proof builder</h2>
 <p>
@@ -226,54 +201,6 @@ must <i>select the subexpression</i> to operate on.  For example
 rules <s>r</s> and <s>replace</s> require you to select
 the subexpression you want to replace.  Click again on a step to
 deselect it, to enter an axiom or theorem.
-
-<h3>Building a simple proof</h3>
-<p>
-Let us consider a very simple example applying forward reasoning with
-implications ("modus ponens") to a pair of assumptions.  Here is a
-display of the proof you are going to build.
-<p>
-<div id=modusPonens></div>
-<p>
-In the Proof Builder area below, you can create the same proof.  To
-enter an assumption click in the text entry field and select the rule
-<s>assume hypothetically</s>.  Type in <code>p</code>, and press
-<code>&lt;Enter&gt;</code>.  You will see the first line of your proof.
-<p>
-Next use the rule <s>assume hypothetically</s> again, typing in
-<code>p => q</code> as your second assumption.
-<p>
-For the inference step, click on the step number "1" at the <i>very
-beginning</i> in the first line of the proof display.  The whole line
-will highlight itself (in yellow) and stay highlighted as you move the
-mouse away.  Now use the dropdown list control to select a rule of
-inference to use.  When you select <s>[p] and [p => q] to [q]</s> from the
-list, a small form will appear with "1" as the hypothesis step.  Enter
-<code>2</code> as the number of the implication step to apply the rule
-to.  Press <code>&lt;Enter&gt;</code>.  You should see the conclusion
-<s>q</s> added to the proof.
-<p>
-Note that in this rule <s>[p]</s>, <s>[p => q]</s>, and <s>[q]</s> are
-patterns.  The rule needs two steps as its inputs, which must match
-the patterns <s>[p]</s> and <s>[p => q]</s>.  <s>p</s> can be any
-expression, but it must be the same in both of the input steps.  The
-result of the inference will be the expression that matches with
-<s>q</s> in the second input step.  The brackets just indicate the
-boundaries of each of the patterns.
-<p>
-To make the assumptions explicit, you might wish to select the
-last line of the proof and choose the <s>assumptions explicit</s>
-rule, which causes the hypotheses to be displayed explicitly as
-preconditions.  Again, select the entire step by clicking on the step
-number.
-<p>
-Going beyond what is displayed in the sample, you could choose
-<s>add forall</s> to add universal quantifiers to the formula.
-Do this twice to quantify over both <s>p</s> and <s>q</s>.
-<p>
-<a href="javascript:void jQuery('#proofbuilder-video').toggleClass('hidden')">
- Proof Builder demo screencast
-</a>
 <p>
 <!-- copy and paste. Modify height and width if desired. -->
 <object id="proofbuilder-video"  width="932" height="228"
@@ -326,11 +253,12 @@ jQuery(function() {
   var rules = Toy.rules;
 
   // Modus ponens
+/*
   var mp1 = rules.assume('p');
   var mp2 = rules.assume('p => q');
   var mp3 = rules.modusPonens(mp1, mp2);
-  var mp4 = rules.asImplication(mp3);
-  Toy.renderProof(mp4, $('#modusPonens'));
+  Toy.renderProof(mp3, $('#modusPonens'));
+*/
 
   Toy.setUpSampleProofs('#selectHolder', '#proofDisplay', false);
 
