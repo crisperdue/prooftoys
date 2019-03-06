@@ -880,6 +880,14 @@ button.sted-clear {
     border: none;
 }
 
+/* Special rendering of info-circles used as tooltips */
+.fa-info-circle.tooltip {
+    color: blue;
+    font-size: smaller;
+    padding: 0 3px;
+    vertical-align: super;
+}
+
 
 /* Inputs for rule arguments */
 

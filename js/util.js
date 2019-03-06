@@ -655,6 +655,27 @@ function format(fmt, map_arg) {
 }
 
 /**
+ * Returns a string based on the given format string, with
+ * sequences of the form {{<text>}} replaced by the result
+ * of "eval"ing 'Toy.' + <text> (at top level).
+ */
+function interpolate(fmt) {
+  "use strict";
+  return fmt.replace(/\{\{.*\}\}/g, function(matched) {
+      return eval('Toy.' + matched.slice(2, -2));
+    });
+}
+
+/**
+ * Call this to render an info-circle tooltip.  It will automatically
+ * refer to the element with the given ID.
+ */
+function infoTip(id) {
+  return ('<i class="fa fa-info-circle tooltip" data-tooltip-content="#' +
+          id + '"></i>');
+}
+
+/**
  * If text begins and ends with left and right parens, trims them off.
  */
 function trimParens(text) {
@@ -2125,6 +2146,8 @@ Toy.removeExcept = removeExcept;
 Toy.each = each;
 Toy.memo = memo;
 Toy.format = format;
+Toy.interpolate = interpolate;
+Toy.infoTip = infoTip;
 Toy.trimParens = trimParens;
 Toy.sortMap = sortMap;
 
