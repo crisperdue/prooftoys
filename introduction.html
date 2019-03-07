@@ -266,6 +266,8 @@ jQuery(function() {
   var editor = new Toy.ProofEditor();
   window.proofEditor = editor;  // debugging
   editor.setEditable(true);
+  editor.setRulesMode('general');
+  editor.setDocumentName('introduction');
   $('#proofEditor').append(editor.containerNode);
 
 });
