@@ -39,8 +39,31 @@ of facts about the real numbers, but these are being reorganized to
 derive everything from an axiomatization of the real numbers as the
 complete ordered field, the classic characterization of the reals.
 <p>
-Here is a partial list of number facts proved from those axioms.  See
-below for the specific axioms and definitions used.
+Here is a partial list of the number facts that have been proved from
+the axioms for the real numbers.  See below for the specific axioms
+and definitions used.
+
+<h4>How to view the proofs</h4>
+<p>
+To see the proof of any of these facts to any desired level of
+detail, click on the text in blue following the statement of
+the fact.  Most of these are just the word "fact".  You can drill
+down to any level of detail in the same way.
+
+<h4>Understanding the proofs</h4>
+<p>
+The <a target=_blank href=
+"https://github.com/crisperdue/prooftoys/wiki/4-Introduction-to-Mathtoys-proofs">
+introduction</a> in the Prooftoys wiki should be your best starting
+point for understanding these proofs.  Other Wiki pages may also be
+useful in understanding the logic and how it is used.
+<p>
+Feel free to contact the author with any questions.  Ideally you
+would <a target=_blank href=
+"https://github.com/crisperdue/prooftoys/issues/new">
+create an issue</a> with the question on GitHub.  Or use email directly
+to <a href="javascript:window.location = 'mailto:cris' + '@' + 'perdues.com'">
+the author</a>.
 
 <div id=proofDisplay style="margin-bottom: 1em"></div>
 
@@ -106,6 +129,9 @@ jQuery(function() {
   // Proof display
   const editor = new Toy.ProofEditor();
   window.proofEditor = editor;  // debugging
+  // Remove memory of any old version.  It could replace
+  // the additions made here due to timing issues.
+  Toy.rmDoc('NumberFactsList');
   editor.setDocumentName('NumberFactsList');
   // The "general" mode is nice for proofs, but currently causes
   // the menu to cover some of the text below the proof display
@@ -135,6 +161,7 @@ jQuery(function() {
   fact('@ isAddIdentity x == x = 0');
   fact('@ isMulIdentity x == x = 1');
   fact('@ R x & R y & x + y = 0 == R x & neg x = y');
+  console.log('Completed real facts');
 });
 
 </script>
