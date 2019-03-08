@@ -1,0 +1,144 @@
+<!DOCTYPE HTML>
+<!-- Copyright 2019 Crispin Perdue.  All rights reserved. -->
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Prooftoys real number facts</title>
+
+<style type="text/css">
+#content {
+  margin-top: 1em
+}
+
+pre {
+  margin-left: 2em;
+  background: #eef;
+  padding: 1em;
+  border-radius: 1em;
+  font-size: 90%;
+}
+
+h4 {
+  margin-bottom: .3em;
+}
+</style>
+<script src="js/boilerplate.js"></script>
+</head>
+
+<body>
+
+<h1>Prooftoys real number facts</h1>
+
+<div id=slogans>
+<!-- slogans here -->
+</div>
+
+<span id=leftNav>
+<!-- Boilerplate HTML goes here -->
+</span>
+
+<div id=content>
+Proving properties of the real numbers in Prooftoys is
+a work currently in progress.  Here is a partial list
+of such theorems proved to date.
+<p>
+See below for the axioms and definitions these are based on.
+
+<div id=proofDisplay style="margin-bottom: 1em"></div>
+
+<h3>Background information</h3>
+
+<h4>Field axioms</h4>
+These are as stated in the book "Analysis with an Introduction
+to Proof" by Steven R. Lay (third edition).  There are other
+equivalent axiomatizations.
+
+In all cases these assume that the variables are real numbers.
+<pre>
+R (x + y)
+(x + y) + z = x + (y + z)
+x + y = y + x
+exists1 isAddIdentity
+R (x * y)
+(x * y) * z = x * (y * z)
+x * y = y * x
+exists1 isMulIdentity
+x * (y + z) = x * y + x * z
+R x => exists1 (addInverses x)
+R x & x != 0 => exists1 (mulInverses x)
+1 != 0
+</pre>
+
+<h4>Ordering axioms for real numbers</h4>
+In all cases these assume that the variables are real numbers.
+<pre>
+not (x < x)
+x < y => not (y < x)
+x < y | y < x | x = y
+x < y & y < z => x < z
+x < y => x + z < y + z
+x < y & 0 < z => x * z < y * z
+0 < x & 0 < y => 0 < x * y
+</pre>
+
+<h4>Definitions</h4>
+<pre>
+isAddIdentity = {x. R x & forall {y. R y => y + x = y}}
+isMulIdentity = {x. R x & forall {y. R y => y * x = y}}
+0 = the1 isAddIdentity
+1 = the1 isMulIdentity
+addInverses = [x. {y. R x & R y & x + y = 0}]
+mulInverses = [x. {y. R x & R y & x * y = 1}]
+neg = {x. the1 (addInverses x)}
+</pre>
+
+<!-- END OF HTML -->
+
+<script src=js/sample-proofs.js></script>
+<script>
+// For emacs: '
+
+// Insert boilerplate.
+Toy.insertNav();
+Toy.insertSlogans();
+Toy.mathifyAll();
+
+// On DOM ready:
+jQuery(function() {
+  // Proof display
+  const editor = new Toy.ProofEditor();
+  window.proofEditor = editor;  // debugging
+  editor.setDocumentName('NumberFactsList');
+  // The "general" mode is nice for proofs, but currently causes
+  // the menu to cover some of the text below the proof display
+  // until the mouse moves in and out of the display area,
+  // so it is commented out for now.
+  // editor.setRulesMode('general');
+  // editor.setEditable(false);
+  $('#proofDisplay').append(editor.containerNode);
+
+  function fact(statement) {
+    editor.addStep(Toy.rules.fact(statement));
+  }
+  fact('@ x + z = y + z & R x & R y & R z => x = y');
+  fact('@ R x => x * 0 = 0');
+  fact('@ R x => (neg 1) * x = neg x');
+  fact('@ R x => -1 * x = neg x');
+  fact('@ R x & R y => (x * y = 0 == x = 0 | y = 0)');
+  fact('@ R x & R y => (x < y == neg y < neg x)');
+  fact('@ neg 0 = 0');
+  fact('@ R x => (x < 0 == 0 < neg x)');
+  fact('@ R x => (0 < x == neg x < 0)');
+  fact('@ R x & R y & R z => (x < y & z < 0 => y * z < x * z)');
+  fact('@ isAddIdentity 0');
+  fact('@ R 0');
+  fact('@ isMulIdentity 1');
+  fact('@ R 1');
+  fact('@ isAddIdentity x == x = 0');
+  fact('@ isMulIdentity x == x = 1');
+  fact('@ R x & R y & x + y = 0 == R x & neg x = y');
+});
+
+</script>
+</body>
+</html>
