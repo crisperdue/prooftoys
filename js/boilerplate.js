@@ -36,7 +36,7 @@
 
   // Include Font Awesome.
   write('<link rel="stylesheet" href=' +
-        '"https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.css">');
+        '"https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css">');
 
   // Include the application's styles.
   write('<link rel="stylesheet" href="../css/logic.css">');
