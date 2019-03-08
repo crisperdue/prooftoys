@@ -49,14 +49,6 @@ h2, h3 {
     margin-bottom: .5em;
 }
 
-h4 {
-  display: run-in;
-}
-
-h4:after {
-  content: '. ';
-}
-
 body {
   margin: 0 20px;
   text-align: left;
