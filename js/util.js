@@ -870,10 +870,10 @@ let pid = '' + Math.floor(Math.random() * 1e15);
 /**
  * Returns true or false depending on whether the given string is a
  * valid document name.  Currently an alphanumeric followed by
- * zero or more of alphanumeric or "-./_ ".
+ * zero or more of alphanumeric or "-./_ #".
  */
 function checkDocName(name) {
-  const result = name.match(/^([a-zA-Z0-9][-./a-zA-Z0-9_ ]*)$/);
+  const result = name.match(/^([a-zA-Z0-9_ /.#-]+)$/);
   if (!result) {
     console.warn('Bad document name:', name);
   }
