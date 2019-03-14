@@ -33,10 +33,12 @@ var nextProofEditorId = 1;
  * proofDisplay: ProofDisplay for the proof being edited.
  * containerNode: jQuery object for outermost DOM node for the display.
  * stepEditor: StepEditor for the proof being edited.
- * proofEditorId: identifies this editor for purposes of restoring
- *   its operating state across visits / page loads.  Consists of the
- *   pathname part of the browser "location", "#", and an integer
- *   sequence number of the editor within the page.
+ * proofEditorId: identifies this editor for purposes of restoring its
+ *   operating state from localstorage across visits / page loads.
+ *   Consists of the pathname part of the browser "location", "#", and
+ *   an integer sequence number of the editor within the page.  In
+ *   principle an editor could also be assigned an ID explicitly during
+ *   editor initialization immediately after creation.
  * givens: array of boolean terms defining the problem, often
  *   equations (not steps).  Should only be set when the proof is
  *   empty.  Read it as a TermSet.
@@ -51,8 +53,6 @@ var nextProofEditorId = 1;
  *   Takes effect when this editor is reset.
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
- * initialState: String with initial proof state from local storage,
- *   read-only.
  */
 function ProofEditor() {
   const self = this;
@@ -136,14 +136,12 @@ function ProofEditor() {
 
   // Restore editor state.
   const state = Toy.getSavedState(self);
-  // The (default) name is the part between the last "/", if any, and
-  // the first following "." or "#".
-  const name = this.proofEditorId.replace(/^(.*[/])?(.*?)[.#]/, '$2');
+  // The (default) document name is the proofEditorId.
   self.setDocumentName(state
                        ? state.docName
                        // By default set the document name according to the URI path,
                        // and the editor number if that is greater than one.
-                       : name);
+                       : this.proofEditorId);
 
   // Prepare to write out proof state during refresh, so basically
   // whenever it changes.
@@ -164,20 +162,24 @@ function ProofEditor() {
       }
     });
 
-  // Restore proof state.
-  const proofData = Toy.readDoc(self._documentName);
-  self.initialState = proofData ? proofData.proofState : '';
-  if (proofData) {
-    Toy.soonDo(function() {
-        mainDisplay.setSteps(Toy.decodeSteps(self.initialState));
-      });
-  }
-  if (Toy.isDocHeldFrom(self._documentName, self)) {
-    // Caution the user.  The isDocHeldFrom test seems to be unreliable,
-    // at least during development, so just caution rather than
-    // setting editable to false.
-    Toy.alert('Caution: editing may be in progress in another tab/window');
-  }
+  // Restores proof state if possible from the recorded document name,
+  // but only after a short delay.  The delay causes this to honor
+  // any setting of the editor document name, and is conceptually compatible
+  // with data stores that may return data asynchronously.
+  Toy.soonDo(function() {
+      if (Toy.isDocHeldFrom(self._documentName, self)) {
+        // Caution the user.  The isDocHeldFrom test seems to be unreliable,
+        // at least during development, so just caution rather than
+        // setting editable to false.
+        Toy.alert('Caution: editing may be in progress in another tab/window');
+      }
+      // Restore proof state if available.
+      const proofData = Toy.readDoc(self._documentName);
+      if (proofData) {
+        mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
+      }
+    });
+
 
   // Event handlers
 
@@ -639,6 +641,7 @@ ProofEditor.prototype.setDocumentName = function(name) {
  */
 ProofEditor.prototype.openDoc = function(name) {
   const proofData = Toy.readDoc(name);
+  // TODO: Check for possible active editing in another tab/window.
   if (proofData) {
     this.setDocumentName(name);
     this.setSteps(Toy.decodeSteps(proofData.proofState));
