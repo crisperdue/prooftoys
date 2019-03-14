@@ -243,22 +243,6 @@ function ProofEditor() {
 }
 
 /**
- * Indicates whether the proof has any steps initially, without
- * actually parsing them -- in case that might cause an error.
- */
-ProofEditor.prototype.hasInitialSteps = function() {
-  return this.initialState.length > 12;
-};
-
-/**
- * Sets the viewable proof text to the initial text.  This is
- * currently used only from the JS console for development.
- */
-ProofEditor.prototype.useInitialText = function() {
-  this._wksControls.setProofText(this.initialState);
-};
-
-/**
  * Builds and returns an object for the proofButtons DIV of the given
  * proof editor.  This is the block of controls with the "worksheet"
  * button.  The returned plain object has properties:
