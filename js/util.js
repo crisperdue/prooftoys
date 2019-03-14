@@ -1415,8 +1415,8 @@ function soonDo(action) {
 }
 
 /**
- * Returns a promise that resolves after the given number
- * of milliseconds.
+ * Returns a promise that resolves to null after the given number of
+ * milliseconds.
  */
 function wait(millis) {
   return new Promise(function (resolve, reject) {

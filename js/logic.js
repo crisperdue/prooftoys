@@ -407,7 +407,7 @@ const prelogic = {
   //   committing to the inlining, and if encoding fails, abort the
   //   inlining.
   inline: {
-    // Caution: this rule can ONLY be used interactively.
+    // Caution: this rule can ONLY be used on a step that has a rendering.
     action: function(step) {
       const inlined = step;
       const rendered = step.rendering;
