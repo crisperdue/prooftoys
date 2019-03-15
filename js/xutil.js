@@ -969,6 +969,10 @@ var _altTokens = _buildAltTokens();
  * "(end)" token, omitting whitespace.  All tokens are Atom objects
  * with the text of the token as its name and its index in the input
  * as its "pos" property.
+ *
+ * Unicode names in the unicodeNames table (non-ASCII characters) are
+ * tokenized here as the "ASCII" equivalent, so those characters get
+ * parsed as if the usual textual form were seen.
  */
 function tokenize(str) {
   var match;
