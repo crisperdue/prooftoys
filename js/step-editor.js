@@ -28,6 +28,11 @@ var nextProofEditorId = 1;
  * a ProofDisplay.  User interaction may also create additional
  * subproof ProofDisplay objects within this.
  *
+ * Optional argument "options", plain object with properties:
+ * 
+ * docName: if given, overrides the default document name.
+ * loadDoc: if false, suppresses initial loading of the document.
+ *
  * Public properties:
  *
  * proofDisplay: ProofDisplay for the proof being edited.
@@ -54,14 +59,16 @@ var nextProofEditorId = 1;
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
  */
-function ProofEditor() {
+function ProofEditor(options_arg) {
   const self = this;
+  const options = Object.assign({loadDoc: true}, options_arg);
   self._givens = new TermSet();
   self.givenVars = {};
   self.solutions = [];
   self.standardSolution = true;
   self.showRuleType = 'general';
   self.showRules = [];
+
   // Set the ID.
   self.proofEditorId = window.location.pathname + '#' + nextProofEditorId++;
   const mainDisplay = new Toy.ProofDisplay();
@@ -137,11 +144,12 @@ function ProofEditor() {
   // Restore editor state.
   const state = Toy.getSavedState(self);
   // The (default) document name is the proofEditorId.
-  self.setDocumentName(state
-                       ? state.docName
-                       // By default set the document name according to the URI path,
-                       // and the editor number if that is greater than one.
-                       : this.proofEditorId);
+  self.setDocumentName(options.docName ||
+                       (state
+                        ? state.docName
+                        // By default set the document name according to the URI path,
+                        // and the editor number if that is greater than one.
+                        : this.proofEditorId));
 
   // Prepare to write out proof state during refresh, so basically
   // whenever it changes.
@@ -166,20 +174,19 @@ function ProofEditor() {
   // but only after a short delay.  The delay causes this to honor
   // any setting of the editor document name, and is conceptually compatible
   // with data stores that may return data asynchronously.
-  Toy.soonDo(function() {
-      if (Toy.isDocHeldFrom(self._documentName, self)) {
-        // Caution the user.  The isDocHeldFrom test seems to be unreliable,
-        // at least during development, so just caution rather than
-        // setting editable to false.
-        Toy.alert('Caution: editing may be in progress in another tab/window');
-      }
-      // Restore proof state if available.
-      const proofData = Toy.readDoc(self._documentName);
-      if (proofData) {
-        mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
-      }
-    });
-
+  if (Toy.isDocHeldFrom(self._documentName, self)) {
+    // Caution the user.  The isDocHeldFrom test seems to be unreliable,
+    // at least during development, so just caution rather than
+    // setting editable to false.
+    Toy.alert('Caution: editing may be in progress in another tab/window');
+  }
+  if (options.loadDoc) {
+    // Restore proof state if available.
+    const proofData = Toy.readDoc(self._documentName);
+    if (proofData) {
+      mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
+    }
+  }
 
   // Event handlers
 
@@ -631,6 +638,8 @@ ProofEditor.prototype.setDocumentName = function(name) {
     // (See Toy.isDocHeldFrom.)
     Toy.noteState(self, {docName: self._documentName});
   }
+  // Visiting the same page in another tab then will cause its proof
+  // editor to visit the same document as this one.
   Toy.saveState(self, {docName: self._documentName});
 };
 
