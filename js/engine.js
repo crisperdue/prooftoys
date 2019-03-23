@@ -460,41 +460,33 @@ var rules = {};
  * Process the given info into form for inclusion into Toy.rules and
  * add the resulting rule or rules.  This does not do inference, so it
  * can be called before any theorems are proved.
- *
- * TODO: Consider renaming this, perhaps to "prove".
  */
-function addRule(info) {
-  var name = info.name;
+function fact(arg1, arg2) {
+  const info = arg2 ? Object.assign({statement: arg1}, arg2) : arg1;
+  const name = info.name;
+  const statement = info.statement;
+
   if (name && rules[name]) {
-    console.warn('Inference rule with name', name,
-                 'already declared; ignoring.');
+    console.warn('Fact or rule with name', name, 'already declared; ignoring.');
     return;
   }
 
-  if (info.definition) {
-    definition(info.definition);
-    return;
-  }
-  var proof = info.proof;
-  var statement = info.statement || info.goal;
-  if (info.statement && info.goal) {
-    console.warn('Fact has both statement and goal', info.goal.toString());
-  }
-
-  // This will become the "rule object":
-  var rule;
   // This will become the "main function" -- the action or proof property
   // with user-written code.
   var main;
   // True iff the main function has access to the rule object as "this".
   var mainHasThis = false;
+
+  assert(statement, 'Fact has no statement:', info);
+
   // If the rule (theorem) has an explicit statement (which should be
   // provably true), coerce the statement to an Expr if given as a
   // string.
   if (typeof statement === 'string') {
     statement = info.statement = Toy.mathParse(statement);
   }
-  if (proof) {
+  if (info.proof) {
+    const proof = info.proof;
     // The proof should have no arguments, and should not do its
     // own call to "justify".
     //
@@ -504,63 +496,50 @@ function addRule(info) {
     if (typeof proof === 'function') {
       assert(proof.length == 0, 'Proof of {1} requires parameters', name);
       assert(!info.action, 'Both proof and action for {1}', name);
-      // User-supplied proof function is the main.
-      main = proof;
     } else if (Array.isArray(proof)) {
       const steps = proof;
-      proof = function() { return Toy.decodeProof(steps); }
-      main = proof;
+      info.proof = function proofDecoder() {
+        return Toy.decodeProof(steps);
+      }
     } else {
       assert(false,
              'Proof of {1} should be a function or array of steps', name);
     }
   }
-  if (statement) {
-    if (!proof) {
-      // If there is a statement but no proof, just assert the statement.
-      proof = function() {
-        return rules.assert(statement);
-      }
-      main = proof;
-      if (!info.axiom) {
-        console.warn('No proof for', name || statement.toUnicode());
-      }
-    }
-    // Add it as a fact also, and potentially "swapped".
-    // A fact needs a statement, so we rely here on having a statement given.
-    var factXferProps = {
-      axiom: true,
-      description: true,
-      simplifier: true,
-      desimplifier: true,
-      noSwap: true,
-      labels: true,
-      converse: true
-    };
-    // Accept selected fact properties in the rule metadata.
-    var properties = {goal: statement, proof: proof};
-    for (var k in factXferProps) {
-      if (k in info) {
-        // Uncomment this for detailed tracing.
-        // console.warn('Adding', k, 'to', name);
-        properties[k] = info[k];
-      }
-    }
-    addFact(properties);
-    if (!properties.noSwap) {
-      addSwappedFact(properties);
+  // Add it as a fact, and potentially "swapped".
+  // A fact needs a statement, so we rely here on having a statement given.
+  var factXferProps = {
+    proof: true,
+    axiom: true,
+    description: true,
+    simplifier: true,
+    desimplifier: true,
+    noSwap: true,
+    labels: true,
+    converse: true
+  };
+  // Accept selected fact properties in the rule metadata.
+  var properties = {goal: statement};
+  for (var k in factXferProps) {
+    if (k in info) {
+      // Uncomment this for detailed tracing.
+      // console.warn('Adding', k, 'to', name);
+      properties[k] = info[k];
     }
   }
-  if (proof) {
-    // A proof was given, but no statement.
-    //
-    // TODO: Treat this as an error condition.  There is no good
-    //   reason for this scenario, and it prevents immediately
-    //   generating variants such as swapped facts.
-    // 
-    // Don't rerun the proof every time, but do re-justify on each
-    // call so each use will return a step with its own ordinal.
-    rule = function() { 
+  // Note this will set up info.proof if not already set.
+  addFact(properties);
+  if (!properties.noSwap) {
+    addSwappedFact(properties);
+  }
+
+  if (name) {
+    // This fact is also a named theorem and thus a named rule that
+    // takes no arguments.  Do the setup for using it through its
+    // name.
+    const rule = function() {
+      // Don't rerun the proof every time, but do re-justify on each
+      // call so each use will return a step with its own ordinal.
       if (rule.result === undefined) {
         rule.result = proof();
         if (statement) {
@@ -571,47 +550,56 @@ function addRule(info) {
       }
       return rule.result.justify(name, []);
     };
-    // Describe theorems as "theorem" by default.
-    // The theorem name will be added as ruleName into the tooltip.
-    if (!('description' in info)) {
-      info.description = 'theorem'
-    }
-  } else {
-    // It is a rule of inference, not an axiom or theorem.
-    assert(name, 'Inference rule must have a name', info);
-    // The action property is the user code to run it.
-    main = info.action;
-    assert(typeof main === 'function',
-           'Rule action must be a function: {1}', name);
+    // Remember the basic tooltip
+    info.basicTooltip = info.tooltip;
+    // Include the rule name in the tooltip.
+    info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), name);
 
-    if (info.precheck) {
-      // There is a precheck.
-      var checker = function(_args) {
-        return Toy._actionInfo = info.precheck.apply(main, arguments);
-      }
-      rule = function(_args) {
-        checker.apply(null, arguments);
-        return (Toy._actionInfo
-                ? main.apply(rule, arguments)
-                : info.onFail
-                ? info.onFail.call(rule)
-                : Toy.fail(Toy.format('Rule {1} not applicable', name)));
-      }
-      if (info.maxArgs == null) {
-        info.maxArgs = main.length;
-      }
-      // Set properties on the outer action to give access to the
-      // main from the the precheck.
-      rule.precheck = checker;
-      rule.main = main;
-      // Assert that the main code has access to data and metadata
-      // through "this".
-      mainHasThis = true;
-    }
+    // Add all metadata as the function's "info" property.
+    rule.info = info;
+    // Finally install the rule into the rules.
+    rules[name] = rule;
+  }
+}
+
+function rule(info) {
+  const name = info.name;
+  // It is a rule of inference, not an axiom or theorem.
+  assert(name, 'Inference rule must have a name', info);
+  if (name && rules[name]) {
+    console.warn('Rule with name', name, 'already declared; ignoring.');
+    return;
   }
 
-  // The following code applies to all rules, axioms, theorems and
-  // inference rules.
+  // The action property is the user code to run it.
+  main = info.action;
+  assert(typeof main === 'function',
+         'Rule action must be a function: {1}', name);
+
+  if (info.precheck) {
+    // There is a precheck.
+    var checker = function(_args) {
+      return Toy._actionInfo = info.precheck.apply(main, arguments);
+    }
+    rule = function(_args) {
+      checker.apply(null, arguments);
+      return (Toy._actionInfo
+              ? main.apply(rule, arguments)
+              : info.onFail
+              ? info.onFail.call(rule)
+              : Toy.fail(Toy.format('Rule {1} not applicable', name)));
+    }
+    if (info.maxArgs == null) {
+      info.maxArgs = main.length;
+    }
+    // Set properties on the outer action to give access to the
+    // main from the the precheck.
+    rule.precheck = checker;
+    rule.main = main;
+    // Assert that the main code has access to data and metadata
+    // through "this".
+    mainHasThis = true;
+  }
 
   if (info.data) {
     // Set the "data" property of the outer action so the main
@@ -636,18 +624,14 @@ function addRule(info) {
 
   // Set up remaining metatadata.
 
-  // Give every info "inputs".
-  if (!info.inputs) {
-    info.inputs = {};
-  }
+  // Add all metadata as the function's "info" property.
+  rule.info = info;
 
   // Default the description to the marked up formula or the ruleName.
   if (!('description' in info)) {
     // The name could be undefined.
     info.description = name;
   }
-  // Remember the basic tooltip
-  info.basicTooltip = info.tooltip;
 
   // If there is a toOffer property with string value, coerce it
   // to a function of step and path.
@@ -666,9 +650,13 @@ function addRule(info) {
     info.labels.basic = true;
   }
 
-  // Add all metadata as the function's "info" property.
-  rule.info = info;
-  
+  // Give every rule's info "inputs".
+  if (!info.inputs) {
+    info.inputs = {};
+  }
+
+  // Remember the basic tooltip
+  info.basicTooltip = info.tooltip;
   if (name) {
     // Include the rule name in the tooltip.
     info.tooltip = Toy.format('{1} ({2})', (info.tooltip || ''), name);
@@ -686,6 +674,9 @@ function addRule(info) {
     rules[name] = rule;
   }
 }
+
+// TODO: Replace addRule everywhere with "rule" and remove this alias.
+const addRule = rule;
 
 /**
  * Given a ruleInfo object, add its information to the "rules" object.
@@ -2200,11 +2191,16 @@ var factProperties = {
  * synopsis property to generate a goal and the proof property as the
  * prover.  Top-level code, as in files of theorems, definitions, and
  * inference rules, should use addRule (or addFactsMap) as they
- * support rules of inference,and do additional useful work such as
- * automatically add appropriate swapped facts.
+ * support rules of inference and do additional useful work such as
+ * automatically adding appropriate swapped facts.
  *
- * This does no inference, so it can be called before proving any
- * theorems.
+ * This does the common work for accessing the fact through rules.fact
+ * with a statement of it (potentially omitting some assumptions), or
+ * as a named theorem if it has a name.
+ *
+ * It may provide default values for some properties such as
+ * description.  It does no inference, so it can be called before
+ * proving any theorems.
  *
  * Currently recognizes input properties as follows:
  *
@@ -2215,8 +2211,9 @@ var factProperties = {
  * synopsis:  string for input to mathParse.  Must parse to a
  *   complete statement of the fact, to be used as the goal.
  * proof: function to return the proved fact, matching the goal.
- *   If not present, one will be generated to assert the goal.
+ *   If not present, sets up one that asserts the goal.
  * description: string or function as for a rule description.
+ *   Defaults to "theorem".
  * simplifier: true iff this fact is a simplifier.
  * desimplifier: true iff this fact is the "converse" of a simplifier.
  * definition: true if this fact is introduced as a definition.
@@ -2249,10 +2246,15 @@ function addFact(info) {
   info.proved = info.goal && info.goal.isProved() && info.goal;
 
   // The goal is a rendered Expr just because that makes a complete
-  // copy that can be properly annotated with types.  Copying
-  // makes it not proved.
+  // copy that can be properly annotated with types.  The copy is not
+  // proved.
   info.goal = ((info.goal || mathParse(info.statement))
                .copyForRendering(null));
+  if (isRecordedFact(info.goal)) {
+    console.info('Fact', info.goal.$$, 'already recorded, skipping.');
+    return;
+  }
+
   for (var key in info) {
     if (!(key in factProperties)) {
       var id = info.goal ? info.goal.$$ : info.synopsis;
@@ -2260,12 +2262,19 @@ function addFact(info) {
     }
   }
 
-  if (info.proof) {
-    // Give the proof function a useful and pretty name for stack
-    // traces.
-    const stmt = info.statement || info.goal.toUnicode();
-    Object.defineProperty(info.proof, 'name', {value: 'proof of ' + stmt});
+  const stmt = info.statement || info.goal.toUnicode();
+  if (!info.proof) {
+    if (!info.axiom) {
+      console.warn('No proof for', info.name || stmt);
+    }
+    info.proof = function() {
+      return rules.assert(info.goal);
+    }
   }
+
+  // Give the proof function a useful and pretty name for stack
+  // traces.
+  Object.defineProperty(info.proof, 'name', {value: 'proof of ' + stmt});
 
   // Adding new constants.  Doing it here adds them before asserting
   // the fact.  Also rules.assert can add constants in case it is used
@@ -2309,6 +2318,11 @@ function addFact(info) {
       // not inverses.
       basicSimpFacts.push('@' + info.goal.toString());
     }
+    // Describe theorems as "theorem" by default.
+    // The theorem name will be added as ruleName into the tooltip.
+    if (!('description' in info)) {
+      info.description = 'theorem'
+    }
     setFactInfo(info);
   }
   return info;
@@ -2347,16 +2361,17 @@ function addSwappedFact(info) {
 
 /**
  * Accepts a "prover" function of no arguments and a goal statement
- * (Expr).  The prover may be null, in which case this generates
- * a trivial prover that asserts the goal.
+ * (Expr).  The prover may be null, in which case this supplies a
+ * trivial prover that asserts the goal.
  *
  * Returns a function to construct and return a proved statement from
- * the arguments.  The returned function runs the prover to prove the
- * goal.  When running the prover, the returned function also attempts
- * to use exactly the free variables in the goal, and arranges the
- * assumptions accordingly.  It warns if assumptions do not match up
- * with the goal, and raises an error if it cannot make the main part
- * match exactly.
+ * the arguments, running the prover to generate the proof.  The
+ * returned function also attempts to rename free variables in the
+ * result of the prover to have the same names as free variables of
+ * the goal, and arranges the assumptions accordingly.  It warns if
+ * assumptions in the result do not match assumptions in the goal, and
+ * raises an error if it cannot make the main part (consequent) match
+ * exactly.
  *
  * Internal to addFact.
  */

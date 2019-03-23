@@ -239,11 +239,7 @@ const axioms = {
    * Replace the subexpression of the target at the path with the
    * equation's RHS.  This is rule R.  The subexpression must match
    * the equation's LHS, meaning they are the same except possibly
-   * in names of vound variables.
-   *
-   * Extended to work with hypotheses by flagging the result with
-   * hypotheses in case the target has them and the result is also
-   * a conditional.
+   * in names of bound variables.
    */
   r: {
     action: function(equation, target, path_arg) {
@@ -4002,7 +3998,8 @@ const ruleInfo = {
       }
     },
     inputs: {site: 1, bool: 3},
-    form: ('Rewrite {term} using fact <input name=bool>'),
+    form: ('Rewrite {term} using fact ' +
+           '<input name=bool placeholder="fact or step #">'),
     menu: 'rewrite using a fact',
     isRewriter: true,
     description: 'use;; {shortFact} {&nbsp;in step siteStep}'
