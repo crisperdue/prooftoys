@@ -272,6 +272,12 @@ Toy.mathifyAll = function() {
 // This will contain a map of query string parameter names
 // to their values.  Does not handle repeated parameters.
 Toy.queryParams = {};
+
+// The "raw" params is similar, using the same parameter splitting,
+// but without decoding parameter values or replacing "+"
+// with space.
+Toy.rawQueryParams = {};
+
 (function () {
   function decode(s) {
     return decodeURIComponent(s.replace(/\+/g, " "));
@@ -282,6 +288,7 @@ Toy.queryParams = {};
   var pattern = /([^&=]+)=?([^&]*)/g;
   while (match = pattern.exec(query)) {
     Toy.queryParams[decode(match[1])] = decode(match[2]);
+    Toy.rawQueryParams[decode(match[1])] = match[2];
   }
 })();
 
