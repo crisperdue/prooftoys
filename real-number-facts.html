@@ -131,31 +131,21 @@ Toy.mathifyAll();
 // On DOM ready:
 jQuery(function() {
   // Proof display
-  const editor = new Toy.ProofEditor();
-  window.proofEditor = editor;  // debugging
-  // Remove memory of any old version.  It could replace
-  // the additions made here due to timing issues.
-  Toy.rmDoc('NumberFactsList');
-  editor.setDocumentName('NumberFactsList');
-  // The "general" mode is nice for proofs, but currently causes
-  // the menu to cover some of the text below the proof display
-  // until the mouse moves in and out of the display area,
-  // so it is commented out for now.
-  // editor.setRulesMode('general');
-  // editor.setEditable(false);
-  $('#proofDisplay').append(editor.containerNode);
+  const display = new Toy.ProofDisplay();
+  window.proofDisplay = display;  // debugging
+  $('#proofDisplay').append(display.node);
 
   function fact(statement) {
-    editor.addStep(Toy.rules.fact(statement));
+    display.addStep(Toy.rules.fact(statement));
   }
-  fact('@ x + z = y + z & R x & R y & R z => x = y');
   fact('@ R x => x * 0 = 0');
   fact('@ R x => (neg 1) * x = neg x');
   fact('@ R x => -1 * x = neg x');
+  fact('x = y == x + z = y + z');
   fact('@ R x & R y => (x * y = 0 == x = 0 | y = 0)');
-  fact('@ R x & R y => (x < y == neg y < neg x)');
   fact('@ neg 0 = 0');
   fact('@ R x => (x < 0 == 0 < neg x)');
+  fact('@ R x & R y => (x < y == neg y < neg x)');
   fact('@ R x => (0 < x == neg x < 0)');
   fact('@ R x & R y & R z => (x < y & z < 0 => y * z < x * z)');
   fact('@ isAddIdentity 0');
