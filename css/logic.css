@@ -341,6 +341,20 @@ span#leftNav {
   line-height: 120%;
 }
 
+.proofDisplay {
+    background-color: honeydew;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1em;
+}
+
+/* Override some of the styles above within a ProofEditor */
+.proofEditor .proofDisplay {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+}
+
 /* Indent most subproofs. */
 .proofDisplay .inferenceDisplay {
   margin: 5px 5px 5px 5px;
