@@ -60,9 +60,9 @@ Toy.insertSlogans();
 
 // On DOM ready:
 jQuery(function() {
-  const fact = Toy.queryParams.fact;
+  const fact_arg = Toy.rawQueryParams.fact;
   // Proof editor node
-  const options = fact && {docName: 'proofbuilder', loadDoc: false};
+  const options = fact_arg && {docName: 'proofbuilder', loadDoc: false};
   var editor = new Toy.ProofEditor(options);
   window.proofEditor = editor;
   editor.setEditable(true);
@@ -70,7 +70,10 @@ jQuery(function() {
   $('#proofEditor').append(editor.containerNode);
 
   const rules = Toy.rules;
-  if (fact) {
+  if (fact_arg) {
+    // Convert "^" in the query string to '&' to support
+    // facts with conjunctions in them.
+    const fact = fact_arg.replace(/\^/g, '&');
     // If there is a "fact" query parameter, force the editor to
     // load the fact and ignore any existing "proofbuilder" document.
     // If "details" is also supplied, this forces the editor to
