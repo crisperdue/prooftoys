@@ -38,20 +38,25 @@
   write('<link rel="stylesheet" href=' +
         '"https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css">');
 
-  // Include the application's styles.
-  write('<link rel="stylesheet" href="../css/logic.css">');
-
   // Behavior can be customized by this global variable.
   if (!window.noTooltipster) {
+
+    const tipster = 'https://static-prooftoys.netlify.com/tipster-4.2.5/';
+
     // These load Tooltipster and the light theme from current locations
     // in the source tree.
-    write('<link rel="stylesheet" href="' + prefix +
-          '../lib/tooltipster-master/dist/css/tooltipster.bundle.css">');
-    write('<link rel="stylesheet" href="' + prefix +
-          '../lib/tooltipster-master/dist/css/plugins/tooltipster/sideTip' +
-          '/themes/tooltipster-sideTip-light.min.css">');
-    getScript('../lib/tooltipster-master/dist/js/tooltipster.bundle.js');
+    write('<link rel="stylesheet" href="' + tipster +
+          'css/tooltipster.bundle.css">');
+    write('<link rel="stylesheet" href="' + tipster +
+          'css/plugins/tooltipster/sideTip' +
+          '/themes/tooltipster-sideTip-shadow.min.css">');
+    write('<script src="' + tipster + 'js/tooltipster.bundle.js' +
+          '"></script>');
   }
+
+  // Include the application's styles _after_ tooltipster so its
+  // styles override tooltipster.
+  write('<link rel="stylesheet" href="../css/logic.css">');
 
   // Loading of scripts can be customized by this global variable.
   if (!window.noProofScripts) {
