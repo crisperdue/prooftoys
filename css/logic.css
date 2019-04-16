@@ -894,6 +894,10 @@ button.sted-clear {
     vertical-align: super;
 }
 
+/* Tooltipster customization */
+.tooltipster-sidetip.tooltipster-shadow .tooltipster-content {
+	color: #00c;
+}
 
 /* Inputs for rule arguments */
 
