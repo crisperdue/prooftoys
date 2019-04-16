@@ -24,7 +24,7 @@
   // Fortunately browsers seem to cancel out the prefix and initial
   // ".." in names.
   function getScript(name) {
-    document.write('<script src="' + prefix + name + '"></script>\n');
+    document.write('<script src="' + prefix + name + '"></script>');
   }
 
   // Include jQuery in all cases.
