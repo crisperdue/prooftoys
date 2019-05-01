@@ -60,6 +60,9 @@ function withClipping(cxt, info, clipPaths_) {
  * the perimeter of the clipping region.
  */
 function withinCircle (cxt, fn) {
+  if (!cxt) {
+    return;
+  }
   cxt.save();
   cxt.beginPath();
   makeCircle(cxt, cx, cy, r);

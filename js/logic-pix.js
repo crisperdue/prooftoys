@@ -84,9 +84,7 @@ function initCxt(canvas) {
     canvas = document.getElementById(canvas);
   }
   if (!canvas) {
-    var error = 'initCxt: No canvas';
-    console.log(error);
-    throw new Error(error);
+    return null;
   }
   var cxt = canvas.getContext('2d');
   // Light blue:
@@ -249,53 +247,67 @@ function drawBooleans() {
   var outsideOrange = {outside: true, fillStyle: {image: shadeOrange}};
 
   var cxtNotA = initCxt('canvasNotA');
-  withinCircle(cxtNotA, function() {
-      render(cxtNotA, merge(greenCircle, {fillStyle: 'white'}));
-      render(cxtNotA, merge(greenCircle, outsideOrange));
-    });
-  var table = $('#negationTable');
-  installCircleHighlighting(table, cxtNotA.canvas, greenCircle);
+  if (cxtNotA) {
+    withinCircle(cxtNotA, function() {
+        render(cxtNotA, merge(greenCircle, {fillStyle: 'white'}));
+        render(cxtNotA, merge(greenCircle, outsideOrange));
+      });
+    var table = $('#negationTable');
+    installCircleHighlighting(table, cxtNotA.canvas, greenCircle);
+  }
 
   var cxtNotB = initCxt('canvasNotB');
-  withinCircle(cxtNotB, function() {
-      render(cxtNotB, merge(blueCircle, {fillStyle: 'white'}));
-      render(cxtNotB, merge(blueCircle, outsideOrange));
-    });
-  installCircleHighlighting(table, cxtNotB.canvas, blueCircle);
+  if (cxtNotB) {
+    withinCircle(cxtNotB, function() {
+        render(cxtNotB, merge(blueCircle, {fillStyle: 'white'}));
+        render(cxtNotB, merge(blueCircle, outsideOrange));
+      });
+    installCircleHighlighting(table, cxtNotB.canvas, blueCircle);
+  }
 
   var cxtNotC = initCxt('canvasNotC');
-  withinCircle(cxtNotC, function() {
-      render(cxtNotC, merge(yellowCircle, {fillStyle: 'white'}));
-      render(cxtNotC, merge(yellowCircle, outsideOrange));
-    });
-  installCircleHighlighting(table, cxtNotC.canvas, yellowCircle);
+  if (cxtNotC) {
+    withinCircle(cxtNotC, function() {
+        render(cxtNotC, merge(yellowCircle, {fillStyle: 'white'}));
+        render(cxtNotC, merge(yellowCircle, outsideOrange));
+      });
+    installCircleHighlighting(table, cxtNotC.canvas, yellowCircle);
+  }
 
   var cxtOrDE = initCxt('canvasOrDE');
-  withinCircle(cxtOrDE, function() {
-      render(cxtOrDE, circleD);
-      render(cxtOrDE, circleE);
-    });
-  var table = $('#disjunctionTable');
-  installCircleHighlighting(table, cxtOrDE.canvas, circleD, circleE);
+  if (cxtOrDE) {
+    withinCircle(cxtOrDE, function() {
+        render(cxtOrDE, circleD);
+        render(cxtOrDE, circleE);
+      });
+    var table = $('#disjunctionTable');
+    installCircleHighlighting(table, cxtOrDE.canvas, circleD, circleE);
+  }
 
   var cxtOrDE2 = initCxt('canvasOrDE2');
-  withinCircle(cxtOrDE2, function() {
-      render(cxtOrDE2, merge(circleD, {fillStyle: {image: shadeBlue}}));
-      render(cxtOrDE2, merge(circleE, {fillStyle: {image: shadeBlue}}));
-    });
-  installCircleHighlighting(table, cxtOrDE2.canvas, circleD, circleE);
+  if (cxtOrDE2) {
+    withinCircle(cxtOrDE2, function() {
+        render(cxtOrDE2, merge(circleD, {fillStyle: {image: shadeBlue}}));
+        render(cxtOrDE2, merge(circleE, {fillStyle: {image: shadeBlue}}));
+      });
+    installCircleHighlighting(table, cxtOrDE2.canvas, circleD, circleE);
+  }
 
   var cxtAndDE = initCxt('canvasAndDE');
-  drawAnd(cxtAndDE,
-	  merge(circleD, {fillStyle: {image: shadeBlue}}),
-	  merge(circleE, {fillStyle: {image: shadeBlue}}));
-  installCircleHighlighting($('#conjunctionTable'),
-                            cxtAndDE.canvas, circleD, circleE);
+  if (cxtAndDE) {
+    drawAnd(cxtAndDE,
+            merge(circleD, {fillStyle: {image: shadeBlue}}),
+            merge(circleE, {fillStyle: {image: shadeBlue}}));
+    installCircleHighlighting($('#conjunctionTable'),
+                              cxtAndDE.canvas, circleD, circleE);
+  }
 
   var cxtAndDE2 = initCxt('canvasAndDE2');
-  drawAnd(cxtAndDE2, circleD2, circleE2);
-  installCircleHighlighting($('#conjunctionTable'),
-                            cxtAndDE2.canvas, circleD2, circleE2);
+  if (cxtAndDE2) {
+    drawAnd(cxtAndDE2, circleD2, circleE2);
+    installCircleHighlighting($('#conjunctionTable'),
+                              cxtAndDE2.canvas, circleD2, circleE2);
+  }
 }
 
 var birds = {
@@ -318,6 +330,9 @@ var wings = {
 function twoArrowsAndNumberLine() {
   // Picture with two arrows and a number line:
   var c = initCxt('canvasArrow');
+  if (!c) {
+    return;
+  }
   var originX = 150;
   var originY = 60;
   var style1 = {
@@ -408,8 +423,8 @@ function drawStatements() {
       render(c, merge(birds, {outside: true}));
       render(c, wings);
     });
-  installCircleHighlighting($('#implicationTable'),
-                            c.canvas, birds, wings);
+  c && installCircleHighlighting($('#implicationTable'),
+                                 c.canvas, birds, wings);
 
   // Picture where bird => wings is not true everywhere, with normal shading.
   c = initCxt('birdWingsFalse');
@@ -417,8 +432,8 @@ function drawStatements() {
       render(c, merge(birds2, {outside: true}));
       render(c, merge(wings, {labelX: 160}));
     });
-  installCircleHighlighting($('#implicationTable'),
-                            c.canvas, birds2, wings);
+  c && installCircleHighlighting($('#implicationTable'),
+                                 c.canvas, birds2, wings);
 }
 
 function drawCombinations() {
@@ -427,14 +442,14 @@ function drawCombinations() {
       render(c, merge(circleD, {outside: true, fillStyle: {image: shadeBlue}}));
       render(c, merge(circleE, {outside: true, fillStyle: {image: shadeBlue}}));
     });
-  installCircleHighlighting($('#nandTable'),
-                            c.canvas, circleD, circleE);
+  c && installCircleHighlighting($('#nandTable'),
+                                 c.canvas, circleD, circleE);
   c = initCxt('DnorE');
   withinCircle(c, function() {
       drawAnd(c,
               merge(circleD, {outside: true}, blueShading),
               merge(circleE, {outside: true}, blueShading));
     });
-  installCircleHighlighting($('#norTable'),
-                            c.canvas, circleD, circleE);
+  c && installCircleHighlighting($('#norTable'),
+                                 c.canvas, circleD, circleE);
 }
