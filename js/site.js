@@ -67,7 +67,7 @@ if (!location.pathname.match(/\/tests.html$/)) {
  * Replaces ASCII math symbols in the given HTML text with HTML
  * entities for math, and with alphanumeric names in italics.
  */
-Toy.mathMarkup = function(text) {
+Toy.mathMarkup0 = function(text) {
   // Substitutions for "forall" and "exists" consume a trailing blank,
   // helping to push them up next to following text.
   var rex =
@@ -144,6 +144,15 @@ Toy.mathMarkup = function(text) {
 };
 
 /**
+ * Postprocess basic results of mathMarkup to keep operands of
+ * multiplication visually near the "center dot".
+ */
+Toy.mathMarkup = function(text) {
+  const text0 = Toy.mathMarkup0(text);
+  return text0.replace(/ &sdot; /g, '&sdot;');
+};
+
+/**
  * Convert the text to text using mathMarkup.  Implemented
  * by building DOM elements and getting their text, so probably
  * not the fastest thing in the world.
@@ -153,21 +162,18 @@ Toy.mathText = function(text) {
 };
 
 /**
- * Converts all <S> element contents into math-oriented HTML.
- * Ignores all HTML markup within each element, though HTML
+ * Converts all <s> and <code> element contents into math-oriented
+ * HTML.  Ignores all HTML markup within each element, though HTML
  * entities are OK.
+ *
+ * Also converts <del> within .preBlock because the Hugo
+ * markdown engine ("Black Friday") over-protects <code>
+ * within HTML tags.
  */
 Toy.mathifyAll = function() {
-  jQuery('s').replaceWith(function() {
-    return '<span>' +
-      Toy.mathMarkup($(this).text()) +
-      '</span>';
-  });
-  jQuery('code').replaceWith(function() {
-    return '<code>' +
-      Toy.mathMarkup($(this).text()) +
-      '</code>';
-  });
+  jQuery('s, code, .preBlock del').replaceWith(function() {
+      return '<code>' + Toy.mathMarkup($(this).text()) + '</code>';
+    });
 };
 
 //// URL query parameters
