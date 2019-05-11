@@ -1,7 +1,7 @@
 (function ($) {
 
   $.fn.tableofcontents = function (options) {
-    settings = $.extend({
+    const settings = $.extend({
       // Elements to exclude
       exclude: $(),
     }, options);
@@ -49,7 +49,7 @@
       // Increment the counter in every case.
       anchor_counter++;
     });
-    while (current_level > base_level) {
+    while (current_level-- > base_level) {
       toc_html += '</ul>';
     }
     // Add the TOC.
