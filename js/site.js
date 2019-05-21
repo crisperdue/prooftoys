@@ -226,6 +226,20 @@ Toy.escapeHtml = function(str) {
                      function(match) { return _HTML_MAP[match]; });
 };
 
+//// For mobile site "hamburgers":
+
+const menuTrigger = document.querySelector('#toggle-main-menu-mobile');
+
+menuTrigger.onclick = function() {
+  // This code will err out if the elements do not exist.
+  const sidebar = document.querySelector('div.sidebar');
+  const hidden = getComputedStyle(sidebar).display == 'none';
+  sidebar.style.display = hidden ? 'block' : 'none';
+  menuTrigger.classList.toggle('is-active');
+  // const body = document.querySelector('body')
+  // body.classList.toggle('lock-scroll');
+}
+
 }();
 
 
@@ -250,3 +264,4 @@ if (!Object.prototype.$$) {
                         '$$',
                         {get: function() { return str(this); }});
 }
+
