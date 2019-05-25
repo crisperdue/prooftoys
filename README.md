@@ -19,6 +19,10 @@ to users through the Web, so they can play with it instantly.
 Prooftoys has a web site with pages for interacting with it
 at http://prooftoys.org/.
 
+This repo used to have the assets for the prooftoys.org website, but
+files related to the webiste are now at
+http://github.com/crisperdue/prooftoys-site/.
+
 [Mathtoys](http://mathtoys.org) is an interface to Prooftoys tuned for
 working high school algebra problems.  Its unique HTML and code is also
 on GitHub at http://github.com/crisperdue/mathtoys.
