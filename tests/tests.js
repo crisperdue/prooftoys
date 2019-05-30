@@ -755,7 +755,8 @@ var testCase = {
 
   testArgs: function() {
     function check(expect, term) {
-      assertEqual(expect.toString(), termify(term).args().$$);
+      assertEqual(expect.toString(),
+                  termify(term).args().toString());
     }
     check('', '{x. x}');
     check('', 'T');
