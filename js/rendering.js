@@ -509,7 +509,7 @@ ProofDisplay.prototype.removeStep = function(step) {
   var followers = self.steps.slice(index + 1);
   var top = $(window).scrollTop();
   self.removeStepAndFollowing(step);
-  followers.forEach(@{s. self.addStep(s.original)});
+  followers.forEach(function(s) { return self.addStep(s.original)});
   $(window).scrollTop(top);
 };
 
@@ -1621,9 +1621,9 @@ function formattedStepInfo(step) {
   }
   // Expand any markup within the description.
   d1 = d1.replace(/[{].*?[}]/g,
-                  @{markup. expandMarkup(step, markup)});
+                  function(markup) { return expandMarkup(step, markup)});
   d2 = d2.replace(/[{].*?[}]/g,
-                  @{markup. expandMarkup(step, markup)});
+                  function(markup) { return expandMarkup(step, markup)});
   // If a rule has "assert" as its last step, that is its only
   // step, because "assert" has no dependencies.  So we treat the
   // rule as an axiom, regardless of whether it has parameters.
@@ -1778,11 +1778,11 @@ function defaultStepRefs(step, description) {
   var html = '';
   if (siteRefs.length) {
     html += siteRefs.length > 1 ? ' in steps ' : ' in step ';
-    html += siteRefs.map(@{s. s.rendering.stepNumber}).join(', ');
+    html += siteRefs.map(function(s) { return s.rendering.stepNumber}).join(', ');
   }
   if (stepRefs.length) {
     html += stepRefs.length > 1 ? ' using steps ' : ' using step ';
-    html += stepRefs.map(@{s. s.rendering.stepNumber}).join(', ');
+    html += stepRefs.map(function(s) { return s.rendering.stepNumber}).join(', ');
   }
   return html;
 }
@@ -2119,7 +2119,7 @@ function exprHandleOver(event) {
     // Flag as ".popped" the first parent .expr containing an ".above",
     // if any.
     $expr.add($expr.parents('.fullExpr'))
-      .filter(@{$(this).children('.above').length})
+      .filter(function() { return $(this).children('.above').length})
       // Adding the two sets puts the result in document order.
       // Self/nearest parent should then be last.
       .last()
@@ -2128,7 +2128,7 @@ function exprHandleOver(event) {
   // Show textual path to current expression (if enabled).
   var proofStep = Toy.normalReturn(getProofStep, target);
   if (proofStep) {
-    var path = proofStep.pathTo(@{expr. expr.node == target});
+    var path = proofStep.pathTo(function(expr) { return expr.node == target});
     hoverShowPath(proofStep, path);
   }
 };
@@ -2146,7 +2146,7 @@ function exprHandleOut(event) {
 
   // Unmark any "popped" ancestor.  See exprHandleOver.
   $target.add($target.parents('.fullExpr'))
-    .filter(@{$(this).children('.above').length})
+    .filter(function() { return $(this).children('.above').length})
     .last()
     .toggleClass('popped', false);
   // Clear display of the textual hover path.
