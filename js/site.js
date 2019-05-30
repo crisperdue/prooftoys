@@ -230,7 +230,7 @@ Toy.escapeHtml = function(str) {
 
 const menuTrigger = document.querySelector('#toggle-main-menu-mobile');
 
-menuTrigger.onclick = function() {
+menuTrigger && (menuTrigger.onclick = function() {
   // This code will err out if the elements do not exist.
   const sidebar = document.querySelector('div.sidebar');
   const hidden = getComputedStyle(sidebar).display == 'none';
@@ -238,7 +238,7 @@ menuTrigger.onclick = function() {
   menuTrigger.classList.toggle('is-active');
   // const body = document.querySelector('body')
   // body.classList.toggle('lock-scroll');
-}
+  });
 
 }();
 
