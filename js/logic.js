@@ -222,7 +222,7 @@ const axioms = {
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
     menu: 'apply a lambda to its argument',
-    description: 'axiom of substitution',
+    description: 'function call substitution axiom',
     tooltip: ('')
   },
 
@@ -2866,11 +2866,11 @@ const ruleInfo = {
   },
 
   existsEquivAnd: {
-    statement: 'exists {x. p & q x} == p & exists q',
+    statement: 'exists {x. a & q x} == a & exists q',
     proof: function() {
       const facts = ['not (a | b) == not a & not b'];
       return (rules.fact('forallOrEquiv')
-              .andThen('instMultiVars', {p: 'not p', q: 'negate q'})
+              .andThen('instMultiVars', {p: 'not a', q: 'negate q'})
               .andThen('rewrite', '', '(a == b) == (not a == not b)')
               .andThen('rewrite', '/left', 'not (forall p) == exists {x. not (p x)}')
               .andThen('simplifySite', '', facts.concat(basicSimpFacts)));
@@ -2915,11 +2915,11 @@ const ruleInfo = {
 
   // 2128
   equivExists: {
-    statement: 'exists {x. p} == p',
+    statement: 'exists {x. a} == a',
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
     proof: function() {
-      var step1 = (rules.equivForall().andThen('instVar', 'not p', 'p'));
+      var step1 = (rules.equivForall().andThen('instVar', 'not a', 'p'));
       return (rules.applyToBoth('not', step1).andThen('simplifySite', ''));
     }
   },
