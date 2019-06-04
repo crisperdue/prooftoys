@@ -233,8 +233,7 @@ const menuTrigger = document.querySelector('#toggle-main-menu-mobile');
 menuTrigger && (menuTrigger.onclick = function() {
   // This code will err out if the elements do not exist.
   const sidebar = document.querySelector('div.sidebar');
-  const hidden = getComputedStyle(sidebar).display == 'none';
-  sidebar.style.display = hidden ? 'block' : 'none';
+  sidebar.classList.toggle('displayed');
   menuTrigger.classList.toggle('is-active');
   // const body = document.querySelector('body')
   // body.classList.toggle('lock-scroll');
