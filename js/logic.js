@@ -3929,6 +3929,7 @@ const ruleInfo = {
     inputs: {site: 1, equation: 3},
     form: ('Primitive rewrite using equation step <input name=equation>'),
     menu: 'primitive rewrite',
+    isRewriter: true,
     description: 'rewrite {site};; {in step siteStep} {using step equation}',
   },
 
@@ -3943,6 +3944,7 @@ const ruleInfo = {
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using step <input name=equation>'),
     menu: 'rewrite',
+    isRewriter: true,
     description: 'rewrite {site};; {in step siteStep} {using step equation}',
     labels: 'basic'
   },

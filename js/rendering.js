@@ -2301,24 +2301,42 @@ function getHoverHandler(step) {
 function hoverAsRewriter(step, action) {
   // This becomes the first ("target") dep or undefined if nonexistent.
   const target = step.ruleDeps[0];
+  if (!target) {
+    debugger;
+    return;
+  }
+
+  const targetIsCond = target.isCall2('=>');
+  const stepIsCond = step.isCall2('=>');
   // True iff this step is conditional, but the target was not.
-  const deeper = step.wff.isCall2('=>') && target && !target.isCall2('=>');
+  // The replacement term ends up deeper in the formula.
+  const deeper = stepIsCond && !targetIsCond;
+  // True iff the target is conditional, but this step is not.
+  // The replacement term ends up shallower in the formula.
+  const shallower = targetIsCond && !stepIsCond;
 
   // Show the corresponding subexpressions of this step if possible.
   // Note: this is likely to require overrides in some rules.
-  Toy.stepPaths(step).forEach(function(path) {
-    try {
-      var main = deeper ? step.wff.getRight() : step.wff;
-      action(main.get(path).node, 'site');
-    } catch(err) {
-      console.warn('Cannot hover in step', step.$$);
-      console.warn('Hover got error', err.message);
-    }
-  });
+  Toy.stepPaths(step).forEach(function(target_path) {
+      const asPath = target.asPath(target_path);
+      try {
+        // This function does not attempt to highlight part of
+        // the step if the rewrite target is on the left of
+        // a conditional.
+        if (!(targetIsCond && asPath.isLeft())) {
+          const path = shallower ? asPath.rest : asPath;
+          const main = deeper ? step.wff.getRight() : step.wff;
+          action(main.get(path).node, 'site');
+        }
+      } catch(err) {
+        console.warn('Cannot hover in step', step.$$);
+        console.warn('Hover got error', err.message);
+      }
+    });
 }
 
 /**
- * Hover handler for "r" and "replace".
+ * Hover handler for "r" and "rRight".
  */
 function hoverReplace(step, action) {
   hoverAsRewriter(step, action);
