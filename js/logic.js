@@ -2397,10 +2397,22 @@ const ruleInfo = {
   //
   // Accepts a parseable string as the wff.
   tautology: {
+    action: function(wff_arg) {
+      const wff = termify(wff_arg);
+      const result = rules.tautology0(wff);
+      const str = wff.toString();
+      const count = tautologyCounts.get(str);
+      tautologyCounts.set(str, (count || 0) + 1);
+      return result;
+    },
+    inputs: {bool: 1},
+    menu: 'prove a tautology',
+    form: 'Enter tautology: <input name=bool size=40>',
+    autoSimplify: noSimplify,
+  },
+
+  tautology0: {
     action: function(wff) {
-      if (typeof wff == 'string') {
-        wff = Toy.parse(wff);
-      }
       // TODO: Right here check for patterns such as -
       //   p | T == T, p & F == F, p => T == T, and negations such as
       //   p | not F = T and so on.
@@ -2426,21 +2438,21 @@ const ruleInfo = {
           if (wff instanceof Toy.Call && wff.fn instanceof Toy.Call
               && wff.fn.fn.isConst('=')) {
             // WFF is already an equation.
-            var step1 = rules.tautology(wff.subFree1(T, name));
-            var step2 = rules.tautology(wff.subFree1(F, name));
+            var step1 = rules.tautology0(wff.subFree1(T, name));
+            var step2 = rules.tautology0(wff.subFree1(F, name));
             var step3 = rules.equationCases(step1, step2, name);
             // Record before the final justification, so all occurrences
             // look the same when displayed.
             _tautologies[key] = step3;
-            var result = step3.justify('tautology', arguments);
+            var result = step3.justify('tautology0', arguments);
             return result;
           } else {
-            var step1 = rules.tautology(equal(T, wff.subFree1(T, name)));
-            var step2 = rules.tautology(equal(T, wff.subFree1(F, name)));
+            var step1 = rules.tautology0(equal(T, wff.subFree1(T, name)));
+            var step2 = rules.tautology0(equal(T, wff.subFree1(F, name)));
             var step3 = rules.equationCases(step1, step2, name);
             var step4 = rules.fromTIsA(step3);
             _tautologies[key] = step4;
-            var result = step4.justify('tautology', arguments);
+            var result = step4.justify('tautology0', arguments);
             return result;
           }
         }
@@ -2451,15 +2463,11 @@ const ruleInfo = {
                step11);
         var step12 = rules.rRight(step11, rules.theorem('t'), '');
         _tautologies[key] = step12;
-        var result = step12.justify('tautology', arguments);
+        var result = step12.justify('tautology0', arguments);
         return result;
       }
     },
-    inputs: {bool: 1},
-    form: 'Enter tautology: <input name=bool size=40>',
-    menu: 'prove a tautology',
     tooltip: ('Tautology decider.'),
-    autoSimplify: noSimplify,
     description: 'tautology'
   },
 
@@ -5235,6 +5243,8 @@ addRules(demoFacts);
 Toy.enableDefnFacts();
 
 //// EXPORT NAMES
+
+const tautologyCounts = Toy.tautologyCounts = new Map();
 
 Toy.ruleInfo = ruleInfo;
 Toy.logicFacts = logicFacts;
