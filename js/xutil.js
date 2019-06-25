@@ -346,6 +346,7 @@ function findType(expr, annotate) {
   if (expr._type) {
     return dereference(expr._type);
   }
+  Toy.ft++;
 
   // In this code types[i] will be the type of vars[i].
   // The vars are names of variables.  Bound variables and their types
@@ -2105,6 +2106,9 @@ Toy.parseType = parseType;
 Toy.findType = findType;
 Toy.isBooleanBinOp = isBooleanBinOp;
 Toy.lookupType = lookupType;
+
+// Counter for the number of nontrivial calls to findType.
+Toy.ft = 0;
 
 // Expression parsing
 
