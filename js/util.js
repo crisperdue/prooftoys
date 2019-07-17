@@ -996,7 +996,9 @@ function isDocHeldFrom(name, ped) {
     const key = localStorage.key(i);
     const match = key.match(pidPattern);
     match && matches++;
-    const docName = jsonParse(localStorage.getItem(key)).docName;
+    // The value can be undefined if the value is not JSON.
+    const value = jsonParse(localStorage.getItem(key));
+    const docName = value && value.docName;
     if (match && name === docName &&
         (pid !== match[1] || id !== match[2])) {
       found = true;
