@@ -4,6 +4,7 @@
 var Toy = {};
 
 +function() {
+
 Toy.insertSlogans = function() {
   var slogan = 'Power tools for your math mind';
   var elt = document.getElementById('slogans');
@@ -225,6 +226,11 @@ menuTrigger && (menuTrigger.onclick = function() {
   // const body = document.querySelector('body')
   // body.classList.toggle('lock-scroll');
   });
+
+$('#startButton').on('click', function() {
+    $('#start-playing').each(function() {
+        this.scrollIntoView({behavior: 'smooth', block: 'start'});
+      })});
 
 }();
 
