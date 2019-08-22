@@ -138,7 +138,7 @@ function qUnitCopy(obj) {
 
 // Customize copying of Exprs.
 Toy.Expr.prototype.qUnitCopy = function() {
-  return 'Expr ' + this.toUnicode();
+  return 'Expr ' + this.toString();
 };
 
 // Customize copying of TermSets.
@@ -2486,14 +2486,14 @@ var testCase = {
     var expected = [{
         byVar: {
           x: {
-            eqn: 'Expr (x = (1 ∕ y))',
+            eqn: 'Expr (x = (1 / y))',
             swapped: false,
             using: {
               y: true
             }
           }
         },
-        eqns: ['Expr (x = (1 ∕ y))'],
+        eqns: ['Expr (x = (1 / y))'],
         others: [],
         overages: {},
         tcs: []
@@ -2529,23 +2529,23 @@ var testCase = {
       tcInfo: null,
       givensInfo: {
         tcs: [],
-        givens: ["((x + y) = 5)", "((x − y) = 3)"],
+        givens: ["((x + y) = 5)", "((x - y) = 3)"],
         others: []
       },
       solutionsInfo: [{
           byVar: {
             x: {
-              eqn: "Expr (x = (y − 5))",
+              eqn: "Expr (x = (y - 5))",
               swapped: false,
               using: {
                 y: true
               }
             }
           },
-          eqns: ['Expr (x = (y − 5))'],
+          eqns: ['Expr (x = (y - 5))'],
           overages: {},
           tcs: [],
-          others: ["((x − y) = 3)"]
+          others: ["((x - y) = 3)"]
         }
         ]
     };
@@ -2591,15 +2591,15 @@ var testCase = {
       solutions: [{
           byVar: {
             x: {
-              eqn: 'Expr (x = (y − 5))',
+              eqn: 'Expr (x = (y - 5))',
               swapped: false,
               using: {y: true}
             }
           },
-          eqns: ['Expr (x = (y − 5))'],
+          eqns: ['Expr (x = (y - 5))'],
           overages: {},
           tcs: [],
-          others: ['((x − y) = 3)']
+          others: ['((x - y) = 3)']
         }],
       absentGivens: []
     };
@@ -2621,7 +2621,7 @@ var testCase = {
           eqns: ['Expr (x = 4)'],
           overages: {},
           tcs: [],
-          others: ["((x − y) = 3)"]
+          others: ["((x - y) = 3)"]
         }],
       absentGivens: []
     };
@@ -2663,7 +2663,7 @@ var testCase = {
     stats = ed.solutionStatus(step);
     expected = {
       type: "confirmation",
-      givens: ["((x − 3) = 2)"],
+      givens: ["((x - 3) = 2)"],
       solution: {
         x: {
           eqn: "Expr (x = 5)",
