@@ -481,11 +481,11 @@ var testCase = {
     var result = Toy.tokenize('a');
     assertEqual('a,(end)', result.toString());
     result = Toy.tokenize('(a > b)');
-    assertEqual('(,a,>,b,),(end)', result.toString());
+    assertEqual('(,a,(>),b,),(end)', result.toString());
     result = Toy.tokenize('{x. x}');
-    assertEqual('{,x,.,x,},(end)', result.toString());
+    assertEqual('{,x,(.),x,},(end)', result.toString());
     result = Toy.tokenize('(=>x*)');
-    assertEqual('(,=>,x,*,),(end)', result.toString());
+    assertEqual('(,(=>),x,(*),),(end)', result.toString());
     result = Toy.tokenize('f "as\\"df" 2');
     assertEqual('f,"as\\"df",2,(end)', result.toString());
     assertEqual('as"df', result[1].getStringValue());
@@ -749,7 +749,7 @@ var testCase = {
     check(null, '{x. x}');
     check(null, 'T');
     check('f', '(f x)');
-    check('=', '0 = 1');
+    check('(=)', '0 = 1');
     check('g', 'g 1 2 3 4 5')
   },
 

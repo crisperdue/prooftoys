@@ -206,7 +206,12 @@ var Step = Expr;
 var useUnicode = false;
 
 Expr.prototype.toString = function() {
-  return this._toString();
+  // Parsing is generally strict about use of infix operators in other
+  // contexts, so be sure to display them in parentheses by default.
+  // Calls to functions that are infix operators can display as infix.
+  const isInfix = Toy.isInfixDesired(this);
+  const str = this._toString();
+  return isInfix ? '(' + str + ')' : str;
 };
 
 /**
@@ -2037,7 +2042,7 @@ Toy.extends(Atom, Expr);
  * counterpart, otherwise just the pname.
  */
 Atom.prototype._toString = function() {
-  var output = (useUnicode ? this.toUnicode() : this.pname);
+  const output = (useUnicode ? this.toUnicode() : this.pname);
   return (Toy.showTypes && this._type
           ? output + ":" + this._type.toString()
           : output);
@@ -2435,35 +2440,23 @@ Call.prototype._toString = function() {
   if (this._string) {
     return this._string;
   }
-  // TODO: Consider making this the default presentation for an atom,
-  //   and occurrences of infix ops in standard position just display
-  //   the name.
-  function asArg(expr) {
-    if (expr instanceof Atom && isInfixDesired(expr)) {
-      return '(' + expr + ')';
-    } else {
-      return expr.toString();
-    }
-  }
-  if (this.fn instanceof Call && this.fn.fn instanceof Atom) {
-    var op = this.fn.fn;
+  if (this.isCall2()) {
+    const op = this.getBinOp();
     if (isInfixDesired(op)) {
       if (useUnicode && op.name == '**') {
         // Use HTML for exponentiation.  So "Unicode" here is
         // currently a misnomer.
         return this.getLeft() + '<sup>' + this.getRight() + '</sup>';
       } else {
-        return ('(' + asArg(this.getLeft()) + ' ' + op +
-                ' ' + asArg(this.getRight()) + ')');
+        return ('(' + this.getLeft() + ' ' + op.pname +
+                ' ' + this.getRight() + ')');
       }
     } else {
-      return ('(' + op + ' ' + asArg(this.getLeft()) +
-              ' ' + asArg(this.getRight()) + ')');
+      return ('(' + op + ' ' + this.getLeft() +
+              ' ' + this.getRight() + ')');
     }
-  } else if (this.fn instanceof Atom && Toy.isInfixDesired(this.fn)) {
-    return '((' + this.fn + ') ' + asArg(this.arg) + ')';
   } else {
-    return '(' + this.fn + ' ' + asArg(this.arg) + ')';
+    return '(' + this.fn + ' ' + this.arg + ')';
   }
 };
 
