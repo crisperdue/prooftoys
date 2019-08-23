@@ -130,7 +130,7 @@ Toy.extends = function(constructor, parent) {
     throw new Error('Toy.extends requires functions as arguments.');
   }
   constructor.addMethods = function(properties) {
-    $.extend(constructor.prototype, properties);
+    jQuery.extend(constructor.prototype, properties);
   };
 };
 
