@@ -227,10 +227,13 @@ menuTrigger && (menuTrigger.onclick = function() {
   // body.classList.toggle('lock-scroll');
   });
 
-$('#startButton').on('click', function() {
-    $('#start-playing').each(function() {
-        this.scrollIntoView({behavior: 'smooth', block: 'start'});
-      })});
+$(function() {
+    $('#startButton').on('click', function() {
+        $('#start-playing').each(function() {
+            this.scrollIntoView({behavior: 'smooth', block: 'start'});
+          })}
+      )}
+  );
 
 }();
 
