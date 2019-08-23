@@ -1392,7 +1392,6 @@ var moversInfo = {
         }
       ];
       var numeralBeforeVar = '$.b.isNumeral() && $.c.isVariable()';
-      // Moves numerals to the right.  Currently unused.
       var numRightMovers = [
         {stmt: 'a * b = b * a',
          where: '$.a.isNumeral() && $.b.isVariable()'},
@@ -1517,10 +1516,8 @@ var moversInfo = {
   },
 
   /**
-   * Arrange a rational expression with numeric coefficents on the
-   * left.  This is useful, but if there is a denominator or more than
-   * two factors in the numerator, the result will need to be
-   * converted to coefficient form.
+   * Arrange a rational expression into "ratio form", [a / b], with
+   * numeric coefficents on the left of "a" and "b".
    */
   arrangeRatio: {
     action: function arrangeRatio(step, path) {
@@ -2012,47 +2009,6 @@ var fractionsInfo = {
     inputs: {site: 1, term: 3},
     form: 'Use denominator <input name=term>',
     menu: 'use common denominator',
-    labels: 'algebra'
-  },
-
-  /**
-   * Convert the target term from "coefficient" form to "fraction"
-   * form.  The coefficient is the leftmost factor of the term, and if
-   * it has a (numeric) denominator, this moves it to be the
-   * denominator of the entire term.  If this rule fails for any
-   * reason, it returns the given step unchanged.
-   */
-  asFraction: {
-    toOffer: function(step, target) {
-      var path = step.pathTo(target);
-      return this(step, path) !== step;
-    },
-    action: function(step, path) {
-      var infix = Toy.infixCall;
-      var target = step.get(path);
-      var coefficient = target;
-      // Get the "coefficient" part (leftmost call to "*").
-      while (coefficient.isCall2('*') && coefficient.getLeft().isCall2()) {
-        coefficient = coefficient.getLeft();
-      }
-      if (coefficient.isCall2('/') && coefficient.getRight().isNumeral()) {
-        var divisor = coefficient.getRight();
-        var step1 = rules.eqSelf(target);
-        var step2 = (rules.multiplyBoth(step1, '', divisor)
-                     .andThen('arrangeTerm', '/main/right')
-                     .andThen('divideBoth', '/main', divisor)
-                     .rewrite('/main/left', 'a * b / c = a * (b / c)')
-                     .andThen('simplifySite', '/main/left/right')
-                     .andThen('simplifySite', '/main/left'));
-        return (rules.replace(step, path, step2)
-                .justify('asFraction', arguments, [step]));
-      } else {
-        return step;
-      }
-    },
-    inputs: {site: 1},
-    menu: 'to fraction form',
-    description: 'convert to fraction form',
     labels: 'algebra'
   },
 
@@ -3300,7 +3256,7 @@ var _arithOps = {'+': true, '-': true, '*': true, '/': true};
  * If the given term has the form [a op1 b op2 c] where op1 and op2
  * are among the basic four math operations, and an associative law
  * can be applied, followed by an arithmetic simplification on b and c
- * (with their new operator), then this does so, and returns an
+ * (with their new operator), then this does so, and returns a proved
  * equation with LHS matching the term and RHS in reduced form.
  */
 function arithRight(term, cxt) {
