@@ -44,6 +44,7 @@ var nextProofEditorId = 1;
  *   an integer sequence number of the editor within the page.  In
  *   principle an editor could also be assigned an ID explicitly during
  *   editor initialization immediately after creation.
+ * fromDoc: boolean, true if state loaded from a document in constructor.
  * givens: array of boolean terms defining the problem, often
  *   equations (not steps).  Should only be set when the proof is
  *   empty.  Read it as a TermSet.
@@ -147,8 +148,9 @@ function ProofEditor(options_arg) {
   self.setDocumentName(options.docName ||
                        (state
                         ? state.docName
-                        // By default set the document name according to the URI path,
-                        // and the editor number if that is greater than one.
+                        // By default set the document name according
+                        // to the URI path, and the editor number if
+                        // that is greater than one.
                         : this.proofEditorId));
 
   // Prepare to write out proof state during refresh, so basically
@@ -185,6 +187,7 @@ function ProofEditor(options_arg) {
     const proofData = Toy.readDoc(self._documentName);
     if (proofData) {
       mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
+      self.fromDoc = true;
     }
   }
 
