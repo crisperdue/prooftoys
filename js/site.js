@@ -227,13 +227,37 @@ menuTrigger && (menuTrigger.onclick = function() {
   // body.classList.toggle('lock-scroll');
   });
 
+// Initializations on DOM ready.
 $(function() {
-    $('#startButton').on('click', function() {
-        $('#start-playing').each(function() {
-            this.scrollIntoView({behavior: 'smooth', block: 'start'});
-          })}
-      )}
-  );
+    // Find all div.proof-editor nodes that have not been populated at
+    // DOM ready time and create a proof editor for each one,
+    // initializing its steps from a data-steps attribute if the
+    // constructor did not load steps from a document.
+    Toy.soonDo(function() {
+        // Do all of this only after other actions
+        // responding to the DOM ready event.
+        $('div.proof-editor').each(function() {
+            if (!this.hasChildNodes()) {
+              // If the div.proof-editor node has children,
+              // take it as being already initialized, so
+              // don't initialize here.
+              const editor = new Toy.ProofEditor();
+              window.proofEditor = editor;
+              if (!editor.fromDoc) {
+                // Editor not loaded from a document, so load it
+                // from any data-steps property.
+                const data = this.dataset;
+                editor.setRulesMode(data.rulesMode || 'general');
+                const stepsInfo = data.steps;
+                if (stepsInfo) {
+                  editor.setSteps(Toy.decodeSteps(stepsInfo));
+                }
+              }
+              $(this).append(editor.containerNode);
+            }
+          });
+      });
+  });
 
 }();
 
