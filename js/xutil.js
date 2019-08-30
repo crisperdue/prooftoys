@@ -1019,8 +1019,9 @@ function justParse(input) {
   try {
     return justParse1(input);
   } catch(e) {
-    err({cause: e,
-         message: 'Could not parse "' + input + '": ' + e.message});
+    const e2 = new Error('Could not parse "' + input + '": ' + e.message);
+    e2.cause = e;
+    throw e2;
   }
 }
 
@@ -1928,17 +1929,25 @@ function encodeSteps(steps_arg) {
 }
 
 /**
- * From the given input expression or string to be parsed,
- * computes and returns an array of steps.
+ * From the given input expression or string to be parsed, computes
+ * and returns an array of steps, empty in case of failure.
+ *
+ * TODO: Consider possibly returning null for failure.
  */
 function decodeSteps(input) {
-  const parsed = typeof input == 'string' ? justParse(input) : input;
+  let parsed;
+  try {
+    parsed = typeof input == 'string' ? justParse(input) : input;
+  } catch(e) {
+    console.warn('Parse failed decoding ' + input);
+    return [];
+  }
   var descriptions = parsed.asArray();
   var outSteps = [];
-  let message = '';
-  let ruleName;
   let args = [];
   for (let i = 1; i < descriptions.length; i++) {
+    let message = '';
+    let ruleName;
     // Ignore the first "description" by starting at 1.
     const stepTerm = descriptions[i];
     var stepInfo = stepTerm.asArray();
@@ -1962,7 +1971,7 @@ function decodeSteps(input) {
       message = '' + e;
     }
     if (message) {
-      Toy.alert('Error decoding steps: ' + message);
+      // Desirable? -- Toy.alert('Error decoding steps: ' + message);
       console.warn('Decoding steps:', message);
       console.warn('Applying rule', ruleName.$$, 'to', args.$$);
       break;
