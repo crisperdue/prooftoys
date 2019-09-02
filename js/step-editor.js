@@ -45,6 +45,7 @@ var nextProofEditorId = 1;
  *   principle an editor could also be assigned an ID explicitly during
  *   editor initialization immediately after creation.
  * fromDoc: boolean, true if state loaded from a document in constructor.
+ * initialSteps: string with initial steps to reset to on "clear proof".
  * givens: array of boolean terms defining the problem, often
  *   equations (not steps).  Should only be set when the proof is
  *   empty.  Read it as a TermSet.
@@ -316,7 +317,7 @@ function buildProofButtons(editor) {
       editor._wksControls.toggle();
     });
   $clearProof.on('click', function() {
-      if (window.confirm('Do you really want to clear the proof?')) {
+      if (window.confirm('Do you really want to clear your work?')) {
         editor.clear();
       }
     });
@@ -676,7 +677,9 @@ ProofEditor.prototype.getDocumentName = function() {
 ProofEditor.prototype.clear = function() {
   this.showRules = [];
   this.stepEditor.reset();
-  this.proofDisplay.setSteps([]);
+  const stepsInfo = this.initialSteps;
+  const steps = (stepsInfo ? Toy.decodeSteps(stepsInfo) : []);
+  this.proofDisplay.setSteps(steps);
 };
 
 /**
