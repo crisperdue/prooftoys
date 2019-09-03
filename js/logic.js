@@ -1746,7 +1746,15 @@ var simplifiersInfo = {
       var facts = opt_facts || basicSimpFacts;
       var info = Toy.searchForMatchingFact(step.get(_path), facts);
       return (info
-              ? rules.rewrite(step, _path.concat(info.path), info.stmt)
+              ? (Toy.isEmpty(info.subst)
+                 // If there is no substitution, don't display the
+                 // step as if it uses a well-known fact, because it
+                 // almost certainly does not.  Perhaps such cases
+                 // should display with the word "replace" rather than
+                 // "rewrite", but we need the fancier functionality
+                 // of rewrite rules.
+                 ? rules.rewriteFrom(step, _path.concat(info.path), info.stmt)
+                 : rules.rewrite(step, _path.concat(info.path), info.stmt))
               : step);
     }
   },
@@ -3945,6 +3953,9 @@ const ruleInfo = {
     form: ('Rewrite the site using step <input name=equation>'),
     menu: 'rewrite',
     isRewriter: true,
+    // TODO: Consider modifying descriptions of rewrite rules to
+    //   say "replace" rather than "rewrite" when the substitution
+    //   is empty, perhaps with a new {rewrite} directive.
     description: 'rewrite {site};; {in step siteStep} {using step equation}',
     labels: 'basic'
   },
