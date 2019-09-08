@@ -347,10 +347,9 @@ var rules = {};
 //   precheck's result information if called before any other rule or
 //   precheck.
 //
-// onFail: if a rule's action function is called in the ordinary manner,
-//   and it has precheck, and the precheck fails, then its onFail
-//   action will run with access to the same arguments and access
-//   to the rule object as "this".
+// onFail: if a rule's action function is called in the ordinary
+//   manner, and it has precheck, and the precheck fails, then its
+//   onFail action will run with access to the rule object as "this".
 //
 // inputs: map from type to argument number(s), either a single number
 //   or an array if more than one such argument.  These currently

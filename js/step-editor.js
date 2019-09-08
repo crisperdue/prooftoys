@@ -2045,8 +2045,9 @@ RuleMenu.prototype.offerableFacts = function() {
  * the rule to match against.  Only call this if a step or part of a
  * step is selected.
  *
- * If something is selected, this accepts rules that can use that input
- * as an argument.
+ * If something is selected, this accepts rules whose inputs descriptor
+ * is compatible with the selection.  This implements some UI policy
+ * as well as screening out impossibilities.
  */
 function acceptsSelection(step, ruleName) {
   var info = Toy.rules[ruleName].info;

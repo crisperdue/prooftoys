@@ -740,7 +740,9 @@ var numbersInfo = {
         case '-': value = left - right; break;
         case '/':
           // TODO: Consider evaluating these to the null value.
-          assert(right !== 0, 'Cannot divide by zero');
+          if (right === 0) {
+            Toy.fail('Division by zero');
+          }
           value = left / right;
           // abs(value) <= abs(left) since abs(right) >= 1 so the
           // magnitude is not a problem.  The fractional part of a
