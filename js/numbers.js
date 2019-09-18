@@ -723,6 +723,7 @@ var numbersInfo = {
   // term as the LHS.  Throws an error if it cannot obey these
   // specifications.
   axiomArithmetic: {
+    // This precheck does not guarantee success if it passes.
     precheck: function(term_arg) {
       var term = termify(term_arg);
       return Toy.isArithmetic(term);
@@ -801,6 +802,9 @@ var numbersInfo = {
   //
 
   // Rewrites a simple arithmetic expression to its value.
+  // Handles !=.
+  // TODO: Handle other inequalities here also, except "<",
+  //   in terms of "<".
   arithmetic: {
     action: function(step, path) {
       var term = step.get(path);
@@ -810,10 +814,11 @@ var numbersInfo = {
           term.getRight().isNumeral()) {
         var step1 = rules.eqSelf(term);
         var step2 = rules.apply(step1, '/right');
+        // Evaluate m = n recursively.
         var step3 = rules.arithmetic(step2, '/right/arg');
-        // Derive "<n> != 0 == T"
+        // Evaluate (not a) where a is literally T or F.
         var step4 = rules.evalBool(step3.getRight());
-        // RHS of step4 becomes "T".
+        // RHS of step4 becomes T or F.
         var step5 = rules.r(step4, step3, '/right');
         // Replace the original expression.
         result = rules.r(step5, step, path);
