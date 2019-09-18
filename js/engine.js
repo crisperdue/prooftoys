@@ -256,7 +256,7 @@ var ruleMethods = {
     arguments[0] = this;
     var rule = rules[nm];
     assert(rule, 'No rule with name "{1}"', nm);
-    var result = rule.apply(Toy.rules, arguments);
+    var result = rule.apply(null, arguments);
     return result;
   },
       
@@ -1454,8 +1454,9 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
     facts = cxt.factLists && cxt.factLists[facts_arg];
   }
-  assert(facts && facts[Symbol.iterator], 'No facts: {1}', facts_arg);
-  for (var it = facts[Symbol.iterator](), v = it.next(); !v.done; v = it.next()) {
+  let it = facts && facts[Symbol.iterator]();
+  assert(it, 'No facts: {1}', facts_arg);
+  for (let v = it.next(); !v.done; v = it.next()) {
     var factMatcher = v.value;
     if (factMatcher.constructor !== Object) {
       // The factMatcher is a string or wff.
