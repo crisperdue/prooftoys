@@ -717,12 +717,19 @@ var numbersInfo = {
   // Evaluates arithmetic expressions with operators: +, -, *, /, div,
   // mod, neg, =, !=, >, >=, <, <=, and the type operator "R".  Checks
   // that inputs are all numeric (exact integers by construction) and
-  // that the result can be guaranteed to be an exact integer.
+  // that the result can be guaranteed to be a boolean or an exact
+  // integer.
+  //
+  // Prefer rules.arithmetic to this in client code.
   //
   // Result is always an equation (or biconditional) with the given
-  // term as the LHS.  Throws an error if it cannot obey these
-  // specifications.
-  axiomArithmetic: {
+  // term as the LHS, and the boolean or integer result as the RHS.
+  // Returns null if the result is not boolean or an integer.
+  //
+  // TODO: Move handling of inequalities from here to rules.arithmetic
+  // except "<", so others can be defined in terms of it; and division
+  // by zero there also, to return "none".
+axiomArithmetic: {
     // This precheck does not guarantee success if it passes.
     precheck: function(term_arg) {
       var term = termify(term_arg);
@@ -740,9 +747,8 @@ var numbersInfo = {
         case '*': value = left * right; break;
         case '-': value = left - right; break;
         case '/':
-          // TODO: Consider evaluating these to the null value.
           if (right === 0) {
-            Toy.fail('Division by zero');
+            return null;
           }
           value = left / right;
           // abs(value) <= abs(left) since abs(right) >= 1 so the
@@ -750,7 +756,7 @@ var numbersInfo = {
           // result must have denominator no greater than MAX_INT,
           // so it should be distinguishable from an integer.
           if (value !== Math.floor(value)) {
-            Toy.fail('Inexact division');
+            return null;
           }
           break;
         case 'div': value = Toy.div(left, right); break;
@@ -781,11 +787,13 @@ var numbersInfo = {
         } else if (op.name == 'R') {
           var rhs = T;
         } else {
+        // A programming error has occurred.
           err('Not an arithmetic expression: ' + term);
         }
         return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else {
+        // A programming error has occurred.
 	err('Not an arithmetic expression: ' + term);
       }
     },
