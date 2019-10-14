@@ -4844,30 +4844,21 @@ const existRules =
    // Or use exists1TheLaw, which uses "the" in place of "the1".
    {name: 'exists1Law',
     statement: 'exists1 p => (p x == x = the1 p)',
-    proof: function() {
-      var a1 = rules.assume('p = {x. x = y}');
-      var step1 = (rules.axiom5()
-                   .andThen('replaceEither', '/left/arg', a1));
-      var step2 = rules.replaceEither(a1, '/right/right/body/right', step1);
-      var step3 = (rules.axiom3()
-                   .andThen('instMultiVars', {f: 'p', g: '{x. x = the1 p}'})
-                   .andThen('apply', '/right/arg/body/right'));
-      var step4 = (rules.replace(step2, '/right', step3)
-                   .andThen('instForall', '/right', 'x')
-                   .andThen('toForall0', 'y'));
-      var map = {p: '{y. p = {x. x = y}}',
-                 q: 'p x == x = the1 p'};
-      var step5 = (rules.existImplies()
-                   .andThen('instMultiVars', map)
-                   .andThen('reduce', '/left/arg/body/left'));
-      var step6 = (rules.trueBy0(step5, '/left', step4)
-                   .andThen('rewriteOnly', '', '(T == x) == x'));
-      var step7 = (rules.consider('exists1 p')
-                   .andThen('useDefinition', '/left/fn')
-                   .andThen('reduce', '/left'));
-      var step8 = rules.rewrite(step6, '/left', step7);
-      return step8;
-    }
+    proof:
+    [ 
+     '(1 assume (t (p = {x. (x = y)})))',
+     '(2 axiom5)',
+     '(3 replaceEither (s 2) "/left/arg" (s 1))',
+     '(4 replaceEither (s 1) "/right/right/body/right" (s 3))',
+     '(5 rewrite (s 4) (path "/right") ' +
+         '(t ((p = q) == (forall {x. ((p x) == (q x))}))))',
+     '(6 instForall (s 5) (path "/right") (t x))',
+     '(7 toForall0 (s 6) "y")',
+     '(8 rewrite (s 7) (path "/main") ' +
+         '(t ((forall {x. ((p x) => q)}) == ((exists p) => q))))',
+     '(9 rewrite (s 8) (path "/left") ' +
+         '(t ((exists {x. (p = {y. (y = x)})}) = (exists1 p))))'
+      ]
    },
 
    {name: 'exists1TheLaw',
