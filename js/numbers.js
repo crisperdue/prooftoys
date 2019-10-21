@@ -3308,6 +3308,25 @@ var ungroupingFacts = regroupingFacts.map(function(fact) {
     return Toy.commuteEqn(Toy.resolveToFact(fact));
   });
 
+//// Inequalities
+
+// Define further inequalities in terms of "<".
+//
+// These definitions are universal, for variables of all types.
+//
+// TODO: At some point work out definitions that apply only
+//   to certain sorts.
+
+definition('(>) = {x. {y. y < x}}');
+definition('(<=) = {x. {y. x < y | x = y}}');
+definition('(>=) = {x. {y. x > y | x = y}}');
+
+
+//// Misc utilities
+
+// A function that takes a boolean term as input and returns 1 if it
+// is true, otherwise 0.
+definition('true1 = {a. if a 1 0}');
 
 //// Export public names.
 
