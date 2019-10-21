@@ -78,6 +78,11 @@ if (!Toy.deeperFieldAxioms) {
       labels: 'algebra',
       noSwap: true
      },
+     // TODO: Prove uniqueness from just existence.  Sketch is that if
+     //   m and n are identities, then m + n = m and n + m = n.  By
+     //   commutativity, m = n.  For non-commutative groups, the
+     //   identity must be two-sided ("commutative"), so the proof
+     //   still goes through.
      {statement: 'exists1 isAddIdentity', axiom: true,
       description: 'unique additive identity exists'
      },

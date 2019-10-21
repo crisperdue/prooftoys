@@ -1931,6 +1931,8 @@ RuleMenu.prototype.offerable = function(ruleName) {
             inputs.term)
          // This list needs to match stepTypes.
          : inputs.step || inputs.equation || inputs.implication)) {
+      // TODO: Consider if all of this is buggy??
+      //   Will the rule really always take these arguments?
       var ok = (inputs.term
                 ? precheck(term)
                 : term
@@ -1945,6 +1947,9 @@ RuleMenu.prototype.offerable = function(ruleName) {
     if (acceptsSelection(step, ruleName)) {
       // If the rule has a "toOffer" property, apply it as a further
       // test of offerability.
+      //
+      // TODO: Consider using the precheck if available and there is
+      // no toOffer.
       var offerTest = info.toOffer;
       if (info.toOffer) {
         return offerTest(step, step.selection);
