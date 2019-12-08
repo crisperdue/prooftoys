@@ -718,6 +718,19 @@ function addRules(ruleList) {
   ruleList.forEach(addRule);
 }
 
+// Essentially unique
+
+// This concept applies to a carrier set and one or more functions of
+// one or more arguments from that set, a.k.a. a "structure".
+//
+// The objects satisfying some property, or wlog some conjunction of
+// properties, are essentially unique iff all such structures
+// associated with those properties are isomorphic to each other.
+//
+// A structure is associated with a conjunction of properties iff the
+// properties are true of its carrier set, functions, and predicates.
+
+
 /**
  * Adds the given definition as a new fact provided it meets the
  * requirements for definitions.  It must define a named constant that
@@ -743,8 +756,17 @@ function addRules(ruleList) {
  * place of exists.
  *
  * TODO: If there is an "exists1" fact, this should automatically
- * generate a fact, with proof, that anything having the property is equal
- * to the new constant.
+ * generate a fact, with proof, that anything having the property is
+ * equal to the new constant.
+ *
+ * TODO: Just existence does not seem to be enough to make such a
+ * "constant" worth defining, so scratch that.
+ *
+ * TODO: Support pseudo-constants based on structures, where a
+ * structure is a carrier set and a set of functions from the set to
+ * itself, of one or more arguments.  If the structure is "essentially
+ * unique", meaning all such structures are isomorphic, define a
+ * new constant.
  *
  * TODO: Perhaps appropriate top-level forms might be: "fact", "rule",
  * and "definition".  Each would just add its item to a global list,
