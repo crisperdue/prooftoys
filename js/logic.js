@@ -3176,12 +3176,12 @@ const ruleInfo = {
   // matches the step against A in the schema, and deduces the
   // appropriate instance of B, or vice-versa in the case (A == B).
   //
-  // This version extends Andrews' version in that any (free)
-  // variables of B not also (free) in A are universally quantified
-  // in the result, with the quantified variables in lexicographic
-  // order by name.  This way, instantiating these variables later
-  // affects exactly the sites in the schema where the variable
-  // originally occurred, and the order is predictable.
+  // This version extends Andrews' version in that it universally
+  // quantifies any (free) variables of B not also (free) in A, with
+  // the quantified variables in lexicographic order by name, so the
+  // instantiation always affects exactly the sites in the schema
+  // where the variable originally occurred, and any renaming can be
+  // recovered from the order of the quantifiers.
   //
   // Unlike Andrews' rule, there is no special handling here for
   // hypotheses.  Include them as antecedent of a conditional
@@ -3189,13 +3189,8 @@ const ruleInfo = {
   // 
   // For tautologies with a conjunction on the LHS as shown in the
   // book, use rule P2.  If there are more than two conjuncts, combine
-  // one or both with rules.and.
-  //
-  // Andrews calls his enhanced version of forward chaining "Rule P".
-  // (This system currently only provides for one or two conjuncts in
-  // the antecedent, through this forwardChain rule, and rule P2.  If
-  // there are more than two conjuncts, use rules.and to collect them
-  // together.)
+  // combine them with rules.and before applying this rule to get
+  // the full generality of Rule P.
   //
   // TODO: Apply a similar quantification strategy to rewriting, since
   // the same issues apply to rewrites.

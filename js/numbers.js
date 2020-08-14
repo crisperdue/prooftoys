@@ -211,7 +211,8 @@ definition('neg = {x. the1 (addInverses x)}');
 definition('minv = {x. the1 (mulInverses x)}');
 
 // Note that our axiom of arithmetic computes that neg 1 = -1, which
-//   gives ability to prove things we prefer to prove from axioms.
+//   gives ability to prove things we prefer to prove from (other)
+//   axioms.
 
 const inverses =
   [
@@ -367,6 +368,26 @@ const realOrdering =
    // }
    ];
 Toy.addRules(realOrdering);
+
+const realOrdFacts = [
+  {statement: '@(((x = y) & (R x)) => (not (x < y)))',
+   proof:
+   [
+    '(1 assumeExplicitly (t (x = y)))',
+    '(2 fact "not (x < x)")',
+    '(3 rewriteFrom (s 2) (path "/right/arg/right") (s 1))'
+    ]
+  },
+  {statement: '@x < y & R x => not (x = y)',
+   proof:
+   [
+    '(1 fact "@x = y => not (x < y)")',
+    '(2 rewrite (s 1) (path "") (t (((a & b) => (not c)) == ' +
+    '   ((b & c) => (not a)))))'
+    ]
+  }
+];
+Toy.addRules(realOrdFacts);
 
 // Lay 11.1
 {
