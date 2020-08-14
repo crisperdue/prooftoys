@@ -3222,7 +3222,7 @@ const ruleInfo = {
       var step3 = (mainOp === '=>'
                    ? rules.modusPonens(step, step2)
                    : mainOp === '=='
-                   ? rules.rplaceEither(step, '/main', step2)
+                   ? rules.replaceEither(step, '/main', step2)
                    : assert(false, 'Schema must be like A => B or A == B'));
       // Schema is listed as a dependency here so it can be recognized
       // as a dependency, e.g. when rendering a proof.
@@ -3721,7 +3721,7 @@ const ruleInfo = {
   // Ambidextrous "rplace" that tries matching the equation LHS, but
   // can also replace right-to-left.  Applies rules.replaceIsEquiv if
   // these do not match.
-  rplaceEither: {
+  replaceEither: {
     action: function(target, _path, equation) {
       var path = Toy.path(_path);
       var lhs = equation.getMain().getLeft();
@@ -3729,10 +3729,10 @@ const ruleInfo = {
       var expr = target.get(path);
       if (expr.matches(lhs)) {
         return rules.replace(target, path, equation)
-          .justify('rplaceEither', arguments, [target, equation]);
+          .justify('replaceEither', arguments, [target, equation]);
       } else if (expr.matches(equation.getMain().getRight())) {
         return (rules.rRight(equation, target, path)
-                .justify('rplaceEither', arguments, [target, equation]));
+                .justify('replaceEither', arguments, [target, equation]));
       } else if (rhs.isCall2('=') && expr.matches(rhs.getLeft())) {
         // Apply the more complex rule "inline", so it displays and
         // not this rule.
