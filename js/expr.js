@@ -2793,11 +2793,11 @@ Call.prototype._matchAsSchema = function(expr, map, bindings) {
     const matched = map[fn.name];
     if (matched) {
       // TODO: Consider making better use of Expr values computed by
-      //   checkBetaMatch here.
-      const matcher = checkBetaMatch(this, fn, expr, map, bindings);
+      //   checkFnMatch here.
+      const matcher = checkFnMatch(this, fn, expr, map, bindings);
       return !!matcher;
     } else {
-      return findBetaMatch(this, fn, expr, map, bindings);
+      return addFnMatch(this, fn, expr, map, bindings);
     }
   }
 };
@@ -2844,7 +2844,7 @@ function multiReducer(term) {
  * As currently implemented, this does not beta reduce "expr" in
  * search of a match.
  */
-function checkBetaMatch(self, fn, expr, map, bindings) {
+function checkFnMatch(self, fn, expr, map, bindings) {
   const name = fn.name;
   const lambdas = map[name];
 
@@ -2879,7 +2879,7 @@ function checkBetaMatch(self, fn, expr, map, bindings) {
  * arguments to this call, returning true and extending the map if
  * found, as for _matchAsSchema.  Internal to _matchAsSchema.
  */
-function findBetaMatch(self, fn, expr, map, bindings) {
+function addFnMatch(self, fn, expr, map, bindings) {
   // If all variables bound at this site, whose counterparts occur
   // free in expr, appear as actual arguments to the function, we
   // can still find a substitution.
@@ -3283,8 +3283,8 @@ Toy.namedConstants = namedConstants;
 Toy.addConstants = addConstants;
 
 Toy.multiReducer = multiReducer;
-Toy.findBetaMatch = findBetaMatch;
-Toy.checkBetaMatch = checkBetaMatch;
+Toy.addFnMatch = addFnMatch;
+Toy.checkFnMatch = checkFnMatch;
 
 Toy.isGeneratedBoundName = isGeneratedBoundName;
 
