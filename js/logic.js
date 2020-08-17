@@ -3242,8 +3242,9 @@ const ruleInfo = {
   //   unification, it could replace uses of this rule.  See for example
   //   addDefnFacts.
 
-  // This applies transitivity of the conditional, treating the fact
-  // LHS as a schema when matching with the step consequent.
+  // The step and fact arguments must both be conditional.  This
+  // applies transitivity of the conditional operator, treating the
+  // fact LHS as a schema to be matched with the step consequent.
   forwardChain2: {
     action: function(step, fact_arg) {
       var fact = rules.fact(fact_arg);
