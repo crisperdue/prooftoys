@@ -4,6 +4,8 @@
 // This file implements rendering of proofs and proof steps.
 // For the deductive system itself see theorems.js.
 
+//// Initialization and utilities
+
 /**
  * Version of the jQuery $ function that type checks its input.
  */
@@ -63,6 +65,18 @@ jQuery.event.special.destroyed = {
       o.handler.apply(this, arguments);
     }
   }
+}
+
+/**
+ * Calls the given function, remembering and restoring the jQuery
+ * scrollTop on completion.  Use this to stabilize the scrolling
+ * position around code that may make it jump.
+ */
+function keepScroll(fn) {
+  let top = $('html').scrollTop();
+  let result = fn();
+  $('html').scrollTop(top);
+  return result;
 }
 
 /**
@@ -2434,6 +2448,7 @@ Toy.showOrdinals = false;
 
 //// Export public names.
 
+Toy.keepScroll = keepScroll;
 Toy.eachArgType = eachArgType;
 Toy.stepPaths = stepPaths;
 Toy.stepSites = stepSites;
