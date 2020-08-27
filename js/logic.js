@@ -187,7 +187,7 @@ const axioms = {
       const step1 = rules.instMultiVars(rules.axiom3(), map);
       const step2 = rules.eqIsEquiv();
       const result = rules.replace(step1, '/right/arg/body/binop', step2);
-      return result.justify('axiom3a');
+      return result.justify('axiom3a', []);
     },
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
