@@ -1,4 +1,4 @@
-// Copyright 2011 - 2018 Crispin Perdue.
+// Copyright Crispin Perdue.
 // All rights reserved.
 
 ////
@@ -12,6 +12,8 @@
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
 (function() {
+
+'use strict';
 
 /**
  * Toy.incompatible - true iff browser is an old MSIE not compatible
@@ -468,9 +470,28 @@ Toy.alert = function(message) {
   }
 }
 
-//
-// Data manipulation utilities
-//
+/*
+ * Constructs and returns a proxy that enters the debugger
+ * in case of access to a nonexistent object property.
+ */ 
+function makeGetterProxy(obj) {
+  let handler = {
+    get: function(obj, prop) {
+      if (prop in obj) {
+        return obj[prop];
+      } else {
+        console.log(obj);
+        console.log('no property "' + prop + '"')
+        debugger;
+      }
+    }
+  };
+  return new Proxy(obj, handler);
+}
+
+////
+//// Data manipulation utilities
+////
 
 /**
  * Is the given object empty, i.e. has it any enumerable properties?
@@ -2136,6 +2157,7 @@ Toy.assertTrue = assertTrue;
 Toy.debugAssertions = true;
 Toy.assert = assert;
 Toy.debugString = debugString;
+Toy.makeGetterProxy = makeGetterProxy;
 
 Toy.isEmpty = isEmpty;
 Toy.mapSize = mapSize;

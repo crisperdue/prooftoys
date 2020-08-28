@@ -1,5 +1,4 @@
-// Copyright 2011 - 2018 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 // This file implements rendering of proofs and proof steps.
 // For the deductive system itself see theorems.js.
@@ -27,6 +26,8 @@ jQuery.extend($, jQuery);
 // Set all of this up immediately on load, but avoiding changes
 // to the global environment except in namespace "Toy".
 (function() {
+
+'use strict';
 
 // Use the application's assert function.
 var assert = Toy.assertTrue;

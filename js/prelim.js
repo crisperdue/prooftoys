@@ -1,5 +1,4 @@
-// Copyright 2011 - 2017 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 ////
 //// Support utilities for expr.js
@@ -9,6 +8,8 @@
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
 (function() {
+
+'use strict';
 
 // Make some names available without "Toy" prefix.
 var assert = Toy.assertTrue;

@@ -1,5 +1,6 @@
-// Copyright 2011 - 2018 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
+
+'use strict';
 
 // Utilities for types, parsing, and definitions, building
 // on expressions.
@@ -7,6 +8,8 @@
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
 (function() {
+
+'use strict';
 
 // Make some names available without prefix.
 var Expr = Toy.Expr;

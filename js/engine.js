@@ -1,5 +1,4 @@
-// Copyright 2011 - 2018 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 //
 // This file implements the logic, its axioms, basic theorems,
 // inference rules and other machinery that is relatively
@@ -21,6 +20,8 @@
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
 (function() {
+
+'use strict';
 
 // Set Toy.bookish to true before loading this file to use definitions
 // from Andrews' book and no others.  Will be usable only after

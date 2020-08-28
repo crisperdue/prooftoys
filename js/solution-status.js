@@ -1,7 +1,8 @@
-// Copyright 2016 - 2018 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 (function() {
+
+'use strict';
 
 var isEmpty = Toy.isEmpty;  
 var ProofEditor = Toy.ProofEditor;

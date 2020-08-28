@@ -1,9 +1,10 @@
-// Copyright 2018 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 //
 // Definitions and theorems of pure logic
 
 +function() {
+
+'use strict';
 
 var assert = Toy.assertTrue;
 
@@ -756,8 +757,8 @@ const equalities = {
   // the same as eqSelf, but display is handled specially.
   consider: {
     action: function(term_arg) {
-      term = termify(term_arg);
-      var copy = term.copyForRendering(null);
+      const term = termify(term_arg);
+      const copy = term.copyForRendering(null);
       copy.annotateWithTypes();
       if (copy.isBoolean()) {
         var step = rules.equivSelf(term);
@@ -1926,7 +1927,7 @@ const ruleInfo = {
       const term = target.get(path);
       if (term.matchSchema(step)) {
         const step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
-        result = rules.rewriteOnlyFrom(target, path, step2);
+        let result = rules.rewriteOnlyFrom(target, path, step2);
         return result.justify('trueBy0', arguments, [target, step]);
       }
       assert(false, 'Term {1} does not match {2}',
@@ -1946,7 +1947,7 @@ const ruleInfo = {
       const term = target.get(path);
       if (step.isCall2('=>') && term.matchSchema(step.getRight())) {
         const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
-        result = rules.rewriteOnlyFrom(target, path, step2);
+        const result = rules.rewriteOnlyFrom(target, path, step2);
         return result.justify('trueBy1', arguments, [target, step]);
       }
       assert(false, 'Term {1} does not match {2}',
@@ -2086,7 +2087,7 @@ const ruleInfo = {
       return !this.failure;
     },
     action: function(step, v_arg) {
-      v = varify(v_arg);
+      const v = varify(v_arg);
       const step1 = rules.toForall0(step, v);
       const step2 = rules.rewriteOnly(step1, '', rules.implyForall());
       return step2.justify('toForall1', arguments, [step]);
@@ -5220,7 +5221,7 @@ addRules(exists1aFacts);
 definition('intersect = {p. {q. {x. ((p x) & (q x))}}}');
 definition('subclass = {p. {q. (forall {x. ((p x) => (q x))})}}');
 
-demoFacts =
+var demoFacts =
   [
    {statement: '((subclass p q) = (p = (intersect p q)))',
     name: 'SubclassInter',

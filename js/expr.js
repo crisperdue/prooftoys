@@ -1,9 +1,10 @@
-// Copyright 2011 - 2018 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
 (function() {
+
+'use strict';
 
 var Path = Toy.Path;
 var path = Toy.path;

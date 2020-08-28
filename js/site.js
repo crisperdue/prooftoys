@@ -1,9 +1,10 @@
-// Copyright 2011-2019 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 var Toy = {};
 
 +function() {
+
+'use strict';
 
 Toy.insertSlogans = function() {
   var slogan = 'Power tools for your math mind';
