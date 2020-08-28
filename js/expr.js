@@ -2250,14 +2250,9 @@ Atom.prototype.findAll = function(name, action1, expr2, action2) {
 };
 
 Atom.prototype._matchAsSchema = function(expr, map, bindings) {
-  // TODO: Make sure that when a variable occurs in the schema with an
-  //   already-established substitution, it not only matches this term
-  //   against the expansion, but treats variables in the established
-  //   expansion as potential targets for substitution as well.
-  //   
-  // This method does not return true when matching a defined name with an
-  // expression that matches its definition.  It is a stricter criterion than
-  // would be treating definitions exactly as abbreviations.
+  // This method does not return true when matching a defined name
+  // with an expression that matches its definition; thus it does not
+  // treat definitions exactly as abbreviations.
   if (this.isConst()) {
     // Expr must be an Atom with the same name.
     return this.matches(expr);
@@ -2265,23 +2260,23 @@ Atom.prototype._matchAsSchema = function(expr, map, bindings) {
   var name = this.name;
   var boundTo = getBinding(name, bindings);
   if (boundTo) {
-    // TODO: This check only works when descending into parallel lambdas
-    //   on each side.  Make it do that properly.
     // This is a bound variable.  It matches iff the argument is the
     // corresponding bound variable in expr.
     return expr.name == boundTo;
   }
-  // If this is within the scope of any bound variables, make sure the
-  // substitution would not have to rename any of them, violating the
-  // requirements for matching.
+  // When within the scope of any bound variables, check that the
+  // candidate substitution would not have to rename any (in expr), as
+  // that would violate the specifications for this kind of matching
+  // by requiring substitution into expr.
   var frees = bindings && expr.freeVars();
   for (var binding = bindings; binding; binding = binding.more) {
     if (frees[binding.to]) {
       return false;
     }
   }
-  // This is a free variable.  If it is being substituted, check it,
-  // otherwise add a mapping for it into the substitution.
+  // This is a free variable.  If it already has a defined substitute,
+  // check that it matches expr; otherwise add a mapping for it into
+  // the substitution.
   var mapped = map[name];
   if (mapped) {
     return expr.matches(mapped, bindings);
