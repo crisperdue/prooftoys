@@ -1,5 +1,7 @@
 (function ($) {
 
+  'use strict';
+
   $.fn.tableofcontents = function (options) {
     const settings = $.extend({
       // Elements to exclude
@@ -16,7 +18,7 @@
       
     // Get the desired header elements.
     $('h1, h2, h3, h4, h5, h6').not(settings.exclude).each (function () {
-      header_level = Number(this.tagName.substr(1,1));
+      const header_level = Number(this.tagName.substr(1,1));
       // Establish the base level from the first seen heading.
       if (!base_level) {
         base_level = header_level;
@@ -37,7 +39,7 @@
       }
 
       // Get the HTML contents of the heading.
-      header_html = $(this).html();
+      const header_html = $(this).html();
       // Use the ID as the name if it has one, otherwise generate one.
       var toc_name = $(this).attr('id') || 'toc_' + anchor_counter;
       // Add a list item with that text and a link to the named anchor.
