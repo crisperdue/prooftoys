@@ -1983,7 +1983,7 @@ function computeHeaderArgInfo(step) {
     var arg = step.ruleArgs[i];
     var argText;
     if (arg instanceof Toy.Expr) {
-      translated = arg.rendering || arg;
+      const translated = arg.rendering || arg;
       argText = mathSpan(translated.toHtml());
     } else if (typeof arg == 'string' && arg.match(/^(\(|T$|F$)/)) {
       // Is 'T' or 'F' or '(.*'
