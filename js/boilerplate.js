@@ -65,7 +65,7 @@
     getScript('expr.js');
     getScript('xutil.js');
     getScript('step-editor.js');
-    getScript('../jsc/rendering.js');
+    getScript('rendering.js');
     getScript('solution-status.js');
     getScript('engine.js');
     getScript('logic.js');
