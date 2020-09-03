@@ -41,7 +41,7 @@
   // Behavior can be customized by this global variable.
   if (!window.noTooltipster) {
 
-    const tipster = 'https://static-prooftoys.netlify.com/tipster-4.2.5/';
+    const tipster = 'https://static-prooftoys.netlify.app/tipster-4.2.5/';
 
     // These load Tooltipster and the light theme from current locations
     // in the source tree.
