@@ -251,6 +251,19 @@ $(function() {
         }
         $(this).append(editor.containerNode);
       });
+    // Similarly create a proof display for each div.proof-display node.
+    // These are read-only.
+    $('div.proof-display').each(function() {
+        const data = this.dataset;
+        const stepsInfo = data.steps;
+        if (!stepsInfo) {
+          console.error('No steps for proof display', this);
+        }
+        const display = new Toy.ProofDisplay();
+        window.proofDisplay = display;
+        display.setSteps(Toy.decodeSteps(stepsInfo));
+        $(this).append(display.node);
+      });
   });
 
 }();
