@@ -18,7 +18,7 @@
       
     // Get the desired header elements.
     $('h1, h2, h3, h4, h5, h6').not(settings.exclude).each (function () {
-      const header_level = Number(this.tagName.substr(1,1));
+      let header_level = Number(this.tagName.substr(1,1));
       // Establish the base level from the first seen heading.
       if (!base_level) {
         base_level = header_level;
