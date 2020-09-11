@@ -6,6 +6,14 @@ var Toy = {};
 
 'use strict';
 
+// At this point in time, specific to Mathtoys.
+Toy.insertNav = function() {
+  var nav = document.getElementById('leftNav');
+  if (nav) {
+    nav.innerHTML = Toy.navText;
+  }
+};
+
 Toy.insertSlogans = function() {
   var slogan = 'Power tools for your math mind';
   var elt = document.getElementById('slogans');
@@ -160,7 +168,7 @@ Toy.mathText = function(text) {
  * within HTML tags.
  */
 Toy.mathifyAll = function() {
-  jQuery('s, code, .preBlock del').replaceWith(function() {
+  jQuery('s, .preBlock del').replaceWith(function() {
       return '<code>' + Toy.mathMarkup($(this).text()) + '</code>';
     });
 };
