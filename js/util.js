@@ -1650,6 +1650,28 @@ function _testTriangle(where, height, color) {
   $('body').prepend(tt);
 };
 
+//// Same origin policy
+
+/**
+ * Set document.domain to its parent (if possible).  This is useful
+ * for enabling actions such as XHR across sudomains of the same
+ * domain.  The assignment fails if the browser deems the current
+ * domain "top level" such as co.uk or herokuapp.com.  Returns true
+ * iff it shortens the domain, else false.
+ */
+function useParentOrigin() {
+  const domain = document.domain;
+  const a = domain.split('.');
+  try {
+    document.domain = a.slice(1).join('.');
+  } catch(err) {
+    // Ensure it is set, even if to the same value.
+    document.domain = document.domain;
+    return false;
+  }
+  return true;
+}
+
 
 //// RPC with message queuing
 
@@ -2224,6 +2246,8 @@ Toy.changed = changed;
 Toy.onChange = onChange;
 
 Toy.makeTriangle = makeTriangle;
+
+Toy.useParentOrigin = useParentOrigin;
 
 Toy.rpcLog = rpcLog;
 Toy.logRpc = false;
