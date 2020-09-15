@@ -274,8 +274,48 @@ $(function() {
       });
   });
 
-}();
+//// Managing the footer to account for (invisible) absolute DIVs
 
+let resizer = null;
+
+/**
+ * Ensures that any div.pageFooter is positioned below all other
+ * content on the page.  Prooftoys uses often-invisble absolutely
+ * positioned popup elements that can extend below all other content,
+ * and that can let the user scroll beyond the footer if we don't
+ * do this.
+ *
+ * Use padding-top as needed to maintain some vertical whitespace.
+ */
+function footerOnResize() {
+  // If another resize action is pending, clear it to reduce
+  // potentially excessive repainting.
+  if (resizer != null) {
+    clearTimeout(resizer);
+  }
+  const f = $('div.pageFooter');
+  f.css({visibility: 'visible'});
+  // Position the footer up top, then give it a short interval
+  // for the browser to recompute scrollHeight.
+  f.offset({top: 0});
+  resizer = setTimeout(function() {
+      // The offset and scrollHeight measure what we want.
+      f.offset({top: document.body.scrollHeight});
+    }, 100);
+}
+
+/**
+ * If there is at least one footer element, this sets up
+ * repositioning it any time the window resizes.
+ */
+$(function() {
+    if ($('div.pageFooter').length > 0) {
+      footerOnResize();
+      $(window).on('resize', footerOnResize);
+    }
+  });
+
+}();
 
 //// The following are GLOBAL!
 
