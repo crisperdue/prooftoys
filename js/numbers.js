@@ -1561,8 +1561,8 @@ var moversInfo = {
     inputs: {site: 1},
     offerExample: true,
     toOffer: 'return term.isReal()',
-    menu: 'algebra: to standard ratio form',
-    description: 'standard ratio form for term {site};; {in step siteStep}',
+    menu: 'algebra: term to form a / b',
+    description: 'ratio form for term;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1600,8 +1600,8 @@ var moversInfo = {
     inputs: {site: 1},
     offerExample: true,
     toOffer: 'return term.isReal()',
-    menu: 'algebra: to standard form for term in sum',
-    description: 'standard form for term {site};; {in step siteStep}',
+    menu: 'algebra: term to form a / b * x',
+    description: 'term to form a / b * x;; {in step siteStep}',
     labels: 'algebra'
   },
 
