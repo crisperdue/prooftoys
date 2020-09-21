@@ -1343,10 +1343,34 @@ var moversInfo = {
   },
 
   /**
+   * Inline rule that converts negations into -1 * x within
+   * a term of * and /.
+   */
+  denegateTerm: {
+      data:
+      {context:
+       {factLists:
+	{denegaters:
+         [{stmt: 'neg a = -1 * a'},
+	  {descend:
+           {schema: 'a * b',
+            parts: {a: 'denegaters', b: 'denegaters'}}},
+          {descend:
+           {schema: 'a / b',
+            parts: {a: 'denegaters', b: 'denegaters'}}}
+	 ]}
+       }
+      },
+      action: function denegateTerm(step, path) {
+        let eqn = rules.consider(step.get(path));
+        return Toy.arrangeRhs(eqn, this.data.context, 'denegaters');
+      }
+  },
+
+  /**
    * "Flattens" a term made up of "*", "/", and "neg".  Converts
    * uses of "neg" into multiplication by -1, then removes
-   * parentheses, traversing uses of "*" and "/".  Simplfies
-   * the resulting RHS.
+   * parentheses, traversing uses of "*" and "/".
    */
   flattenTerm: {
     data: {flatteners: [
@@ -1363,23 +1387,13 @@ var moversInfo = {
         {descend:
          {schema: 'a / b',
           parts: {a: 'flatteners'}}}
-    ], denegaters: [
-        {stmt: 'neg a = -1 * a'},
-        {descend:
-         {schema: 'a * b',
-          parts: {a: 'denegaters', b: 'denegaters'}}},
-        {descend:
-         {schema: 'a / b',
-          parts: {a: 'denegaters', b: 'denegaters'}}}
     ]},
     action: function flattenTerm(step, path) {
-      var context = {factLists:
-                     {denegaters: this.data.denegaters,
-                      flatteners: this.data.flatteners}};
+      var context = {factLists: {flatteners: this.data.flatteners}};
       return convert(step, path, function(expr) {
           var arrangeRhs = Toy.arrangeRhs;
           var eqn = rules.consider(step.get(path));
-          var noneg = arrangeRhs(eqn, context, 'denegaters');
+          var noneg = rules.denegateTerm(eqn, '/main/right');
           var flat = arrangeRhs(noneg, context, 'flatteners');
           return flat;
         }).justify('flattenTerm', arguments, [step]);
@@ -1529,7 +1543,8 @@ var moversInfo = {
                 product.c.getNumValue() < 0) {
               var fact1 = rules.arithmetic('-1 / -1').andThen('eqnSwap');
               var quotient = rules.consider(infix(div.a, '/', div.b));
-              resulted = (rules.rewrite(arithmetized, '/main/right', 'a = a * 1')
+              resulted = (rules.rewrite(arithmetized, '/main/right',
+                                        'a = a * 1')
                           .rewrite('/main/right/right', fact1)
                           // CAUTION: recursive call.  There will be
                           // trouble if recursion reaches here.
@@ -1544,7 +1559,8 @@ var moversInfo = {
             resulted = arithmetized;
           }
           // Perhaps this just applies 1 * x = x and -1 * x = neg x.
-          return rules.simplifySite(resulted, '/main/right');
+          return rules.simplifySite(resulted, '/main/right')
+            .justify('arrangeRational', arguments, step);
         });
     },
   },
