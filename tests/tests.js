@@ -1,5 +1,4 @@
-// Copyright 2011 - 2017 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 (function() {
 
@@ -2206,19 +2205,6 @@ var testCase = {
     assertEqual('((a & b) & c)', result);
     var result = merge('(b & b & a) & (a & b & c)');
     assertEqual('((a & b) & c)', result);
-  },
-
-  testExtractHypothesis2: function() {
-    var rules = Toy.rules;
-    const step = rules.fact('x + y = y + x');
-    var expected =
-      '(((R x) & (R y)) => ((R x) => ((x + y) = (y + x))))';
-    var result = rules.extractHypothesis2(step, Toy.parse('R x'));
-    assertEqual(expected, result);
-    expected =
-      '(((R x) & (R y)) => ((R y) => ((x + y) = (y + x))))';
-    result = rules.extractHypothesis2(step, Toy.parse('R y'));
-    assertEqual(expected, result);
   },
 
   testIsolateHypAt: function() {

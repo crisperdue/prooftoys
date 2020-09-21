@@ -4218,39 +4218,6 @@ const ruleInfo = {
     description: 'merge conjunctions in {bool}'
   },    
 
-  // Extract the given hypothesis from the given step.  The hypothesis
-  // need only match one of the step's hypotheses.  Relies on the step
-  // to have normalized (flattened) hypotheses.  If the step is of the
-  // form h1 ... hn => A, and h is one of the hypotheses, this
-  // derives h1 ... hn => (h => A).
-  //
-  // TODO: Consider removing this. 
-  extractHypothesis2: {
-    // TODO: Make a version that runs in much less than exponential
-    // time.  You can use the same tautology down to some depth and
-    // combine it with ones resembling (h & h1) = (h & h1 & h) to
-    // piece together larger tautologies.
-    action: function(step, hyp) {
-      var infix = Toy.infixCall;
-      assert(step.isCall2('=>'), 'Step lacks assumptions');
-      var lhs = step.getLeft().hypLocater(hyp);
-      var a = varify('a');
-      var taut = infix(infix(lhs, '=>', a),
-                       '=>',
-                       infix(lhs,
-                             '=>',
-                             infix(varify('h'), '=>', a)));
-      var step2 = rules.forwardChain(step, rules.tautology(taut));
-      return step2.justify('extractHypothesis2', arguments, [step]);
-    },
-    inputs: {step: 1, bool: 2},
-    form: ('Make assumption <input name=bool> explicit '
-           + 'in step <input name=step>'),
-    description: 'make assumption {bool} explicit;; {in step step}',
-    labels: 'deprecated',
-    tooltip: 'copy an assumption to the consequent'
-  },
-
   // Given a proof step of the form [a => b] and a path that refers to
   // an element "e" of a taken as a conjunction chain, derives a step
   // of the form [a' => (e => b)] where e is the referenced element,
