@@ -326,8 +326,8 @@ function str(x) {
       Toy.debugString) {
     return Toy.debugString(x);
   } else if (Toy.Expr && x instanceof Toy.Expr) {
-    var prefix = (x.hasHyps ? '|' : '') + (x.wff ? '|-' : '');
-    return (prefix ? prefix + ' ' + x.toString() : x.toString());
+    const prefix = x.wff ? '|- ' : '';
+    return prefix + x.toString();
   } else {
     return x.toString();
   }
