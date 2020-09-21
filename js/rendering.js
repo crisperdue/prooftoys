@@ -2174,8 +2174,8 @@ function exprHandleOut(event) {
 
 /**
  * Adds the named CSS class to the DOM node.  For use in hover
- * handlers.  Currently does nothing if node is null, which occurs in
- * hypotheses.
+ * handlers.  Currently does nothing if node is null, which can occur
+ * when terms are not visible.
  */
 function addClass(node, className) {
   node && $(node).addClass(className);
@@ -2478,7 +2478,8 @@ Toy._specialClasses = specialClasses;
 // Global parameter to enable hover highlighting everywhere.
 Toy.highlightAllHovers = true;
 
-// Global parameter to suppress displaying hypotheses such as "(R x)".
+// Global parameter to suppress displaying assumptions such as "(R x)".
+// Not yet in use.
 Toy.suppressRealTypeDisplays = true;
 
 // UI config parameter, see its usage.

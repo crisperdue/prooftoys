@@ -614,9 +614,6 @@ var numbersInfo = {
   //
   // Real numbers
   // 
-  // Assumptions (R x) & (R y), etc. are in the form:
-  // (A1 => (A2 => <equation>)) to simplify introducing them from
-  // the hypotheses.  This is equivalent to A1 & A2 => <equation>.
 
   plusZero: {
     statement: '@R x => x + 0 = x',

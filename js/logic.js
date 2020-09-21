@@ -240,11 +240,7 @@ const axioms = {
    * Replace the subexpression of the target at the path with the
    * equation's RHS.  This is rule R.  The subexpression must match
    * the equation's LHS, meaning they are the same except possibly
-   * in names of vound variables.
-   *
-   * Extended to work with hypotheses by flagging the result with
-   * hypotheses in case the target has them and the result is also
-   * a conditional.
+   * in names of bound variables.
    */
   r: {
     action: function(equation, target, path_arg) {
@@ -811,9 +807,6 @@ const equalities = {
     labels: 'display'
   },
 
-  // TODO: Make all forms of r5201 work with conditionals rather
-  //   than hypotheses.
-
   // r5201a is not implemented.  It would be ambiguous in case the
   // "whole" is a conditional.  Use rules.replaceT0 instead.
 
@@ -973,8 +966,8 @@ addRulesMap(equalities);
 var assumers = {
 
   /**
-   * Suppose the given statement to be true.  This is the standard
-   * way to introduce hypotheses into proofs.  If given a string,
+   * Suppose the given statement to be true.  This is the standard way
+   * to introduce an assumption into a proof.  If given a string,
    * parses it and uses the result.
    */
   assume: {
@@ -1372,7 +1365,7 @@ const baseRules = {
       var step4 = rules.apply(step3, '/rt/right');
       // Rule fromTIsA depends on instForall via tIsXIsX and
       // equationCases.  So fromTIsA is not usable here, though this
-      // next step is a simplified fromTIsA without hypotheses.
+      // next step is a simplified fromTIsA.
       var step5 = rules.replace(rules.theorem('t'), '', step4);
       return step5.justify('instForall', arguments, [step]);
     },
@@ -1403,7 +1396,7 @@ const baseRules = {
     labels: 'primitive'
   },
 
-  // Deduces the conjunction of two proved equations without hypotheses.
+  // Deduces the conjunction of two proved unconditional equations.
   // Helper for equationCases.
   andEqns: {
     action: function(step1, step2) {
@@ -1424,7 +1417,7 @@ const baseRules = {
 
   // Given two WFFs each of the form A = B that are the result of
   // substituting T and F respectively for a variable, proves the WFF
-  // with the variable.  Does not work with hypotheses.
+  // with the variable.
   equationCases: {
     action: function(caseT, caseF, v) {
       v = varify(v);
@@ -1683,7 +1676,7 @@ addRulesMap(truthTableFacts);
 
 var simplifiersInfo = {
 
-  // Managing numeric type hypotheses
+  // Managing numeric type assumptions
 
   // Simplifies repeatedly using basicSimpFacts.  If the visible part
   // of the step is an equation, simplify each side, otherwise the
@@ -2051,9 +2044,9 @@ const ruleInfo = {
     }
   },
 
-  // 5220 variant that from A deduces forall {v. A} disregarding
-  // hypotheses.  The variable v may be given as a string, which it
-  // converts internally to a variable.
+  // 5220 variant that from A deduces forall {v. A}.  The variable v
+  // may be given as a string, which it converts internally to a
+  // variable.
   toForall0: {
     action: function(step, v_arg) {
       const v = varify(v_arg);
@@ -2073,7 +2066,8 @@ const ruleInfo = {
 
   // 5220 variant, from [A => B] deduces [A => forall {v. B}].
   // The variable v may be given as a string, which it converts
-  // internally to a variable.  The step must be a conditional.
+  // internally to a variable.  The step must be a conditional,
+  // and v cannot be free in A.
   toForall1: {
     precheck: function(step, v_arg) {
       var v = varify(v_arg);
@@ -2101,9 +2095,7 @@ const ruleInfo = {
   },
 
   // 5221 (one variable), in the given step substitute term A for free
-  // variable v, which may also be a string, which will be converted
-  // to a variable.  In case the step has hypotheses, allows
-  // substitution for a variable even if free in the hypotheses.
+  // variable v, which may also be given as a string.
   instVar: {
     action: function(step, a, v) {
       a = termify(a);
@@ -2145,9 +2137,7 @@ const ruleInfo = {
 
   // More like the book's 5221.  For each name in the map (a string),
   // substitutes the expression associated with it in the map, using
-  // simultaneous substitution.  Handles hypotheses, allowing
-  // substitution for variables that are free in the hypotheses.
-  // Parses string values in the map.
+  // simultaneous substitution.  Parses string values in the map.
   //
   // Optimized to avoid substitutions that have no effect, returning
   // its input, justified as "instMultiVars".
@@ -2191,7 +2181,7 @@ const ruleInfo = {
 
   // Given two theorems a1 => a and a2 => b, proves a1 & a2 => a & b.
   // If either theorem is unconditional, omits a1 or a2 or both
-  // accordingly.  The result will not have hyps.
+  // accordingly.
   makeConjunction: {
     action: function(a, b) {
       var stepa = rules.rewriteOnly(a, '/rt', 'a == (T == a)');
@@ -2213,10 +2203,9 @@ const ruleInfo = {
 
   // (5222) Given two theorems that are substitutions of T and
   // F respectively into a WFF; and a variable or variable name,
-  // proves the WFF.  No automatic management of hypotheses.
-  // TODO: Consider deriving this from equationCases.  Unlike
-  //   5222 in the book, this does not allow the variable to appear
-  //   in any assumptions, so equationCases could be used.
+  // proves the WFF.
+  //
+  // TODO: Consider deriving this from equationCases.
   casesTF: {
     action: function(caseT, caseF, v) {
       v = varify(v);
@@ -2261,7 +2250,7 @@ const ruleInfo = {
       return step4.justify('modusPonens', arguments, arguments);
     },
     inputs: {step: 1, implication: 2},
-    form: ('Modus ponens: hypothesis step <input name=step>,'
+    form: ('Modus ponens: premise step <input name=step>,'
            + ' implication in step <input name=implication>'),
     menu: 'modus ponens',
     tooltip: ('Modus Ponens.  Given A and A => B derives B.'),
@@ -2507,18 +2496,16 @@ const ruleInfo = {
   // Any instance of a tautology is a theorem.  This is part
   // of the book's Rule P.
   //
-  // Given an expression that is a tautology, possibly with
-  // hypotheses, and a substitution, derives an instantiation of the
-  // tautology using the substitution, with the same hypotheses.
+  // Given an expression that is a tautology and a substitution,
+  // derives an instantiation of the tautology using the substitution.
   // The tautology can be given as a parseable string.
   //
   // TODO: Automatically detect the relevant tautology. 
   tautInst: {
     action: function(h_tautology_arg, map) {
-      // The tautology has hyps if the arg does.
       var tautology = termify(h_tautology_arg);
       var step1 = rules.tautology(tautology);
-      return rules.instMultiVars(step1, map).justify('tautInst', arguments);;
+      return rules.instMultiVars(step1, map).justify('tautInst', arguments);
     },
     tooltip: ('substitute into tautology'),
     description: '=tautInst'
@@ -2589,7 +2576,8 @@ const ruleInfo = {
     }
   },
 
-  // Deduces the conjunction of two proved steps; ignores hypotheses.
+  // Deduces the conjunction of two proved steps.
+  //
   // Introducing a T wherever desired, then substituting a theorem,
   // with or without assumptions, may be a more effective approach.
   and: {
@@ -2607,7 +2595,7 @@ const ruleInfo = {
     labels: 'basic'
   },
 
-  // Andrews' Rule P with two conjuncts; ignores hypotheses.
+  // Andrews' Rule P with two conjuncts.
   p2: {
     action: function(step1, step2, schema_arg) {
       var schema = rules.fact(schema_arg);
@@ -2823,7 +2811,6 @@ const ruleInfo = {
     statement: 'forall {x. p | q x} == (p | forall q)',
     proof: function() {
       var or = rules.tautology('T | a');
-      // None of these steps are conditionals, so no hypotheses anywhere.
       var all = or.andThen('instVar', 'q x', 'a').andThen('toForall0', 'x');
       var and = rules.and(all, or.andThen('instVar', 'forall q', 'a'));
       var trueCase = rules.forwardChain(and, 'a & b => (a == b)');
@@ -2850,11 +2837,8 @@ const ruleInfo = {
   // This is probably the most useful form of quantifier remover that
   // requires a variable to be not free.  It does not appear in the
   // book, but the numbered ones are corollaries of it.
-  //
-  // The proof does not use any rules with hypotheses, and in
-  // particular it uses toForall only on an entire step (in forallOrEquiv),
-  // so it could be used to build Rule R'.
   implyForall: {
+    // Could this fact be used to help build Rule R'?
     statement: 'forall {x. p => q x} == (p => forall q)',
     proof: function() {
       var taut = 'not a | b == a => b';
@@ -2976,10 +2960,12 @@ const ruleInfo = {
   //
 
   // 2134.  This does almost all the work for the
-  // "Exists rule" (2135, 5244).  The LHS quantifier limits the "E
-  // rule" to use where x is not free in any hypothesis, and since "q"
-  // appears with x bound, substituting for it does not result in any
-  // new occurrences of x within the "forall".
+  // "Exists rule" (2135, 5244).
+  //
+  // The LHS quantifier limits the "E rule" to usage where x is not
+  // free in any assumptions, and since "q" appears with x bound,
+  // substituting for it does not result in any new occurrences of x
+  // within the "forall".
   //
   // TODO: Rename to something like forallIsExists.
   //
@@ -2988,6 +2974,7 @@ const ruleInfo = {
   // TODO: For situations like the converse of this identity, when p
   //   is a lambda, use the name of its bound variable rather than
   //   the one in the statement here.
+  //
   // TODO: QM: Eta-expand the "p" in the RHS.
   existImplies: {
     statement: 'forall {x. p x => q} == (exists p => q)',
@@ -3588,13 +3575,8 @@ const ruleInfo = {
   // Version of Andrews Rule R' that uses a conditional rather than
   // hypotheses.  Uses a potentially conditional equation to replace a
   // term in a target step.  If both input steps are conditional,
-  // collapses the result [a1 => (a2 => q)] into [a1 & a2 => q].
-  //
-  // For backward compatibility, if either input has hypotheses,
-  // the result has hypotheses.
-  //
-  // Takes its arguments in the usual order with the target first,
-  // unlike rules.r and rules.rplace.
+  // collapses the result [a1 => (a2 => q)] into [a1 & a2 => q] and
+  // calls arrangeAsms on the result.
   replace: {
     action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
@@ -3652,7 +3634,7 @@ const ruleInfo = {
 
   /**
    * Same as "replace", but replaces an occurrence in target of the right
-   * side of the equation with its left side.  Accepts hypotheses.
+   * side of the equation with its left side.
    *
    * TODO: Modify this the target arg comes first, consistent with most
    * other rules.
@@ -3812,23 +3794,22 @@ const ruleInfo = {
   // Takes a proof step, a path, and a proved step, typically an
   // equation.  The part of the step at the given path must match the
   // LHS of the equation.  Replaces that part of the step with the
-  // appropriate instance of the equation.  The step and equation may
-  // have hypotheses.  Suitable for use from the UI when needed.
+  // appropriate instance of the equation.
   //
-  // If the equation argument is not an equation according to
-  // isEquation, rewrites its main part to <main> = T and operates on
-  // that as the equation.
+  // If  the  equation  argument  is  not  an  equation  according  to
+  // isEquation, rewrites its main part to <main> = T and uses that as
+  // the equation.
   //
   // TODO: Consider renaming _free_ variables introduced into the step
   //   by the equation so they are distinct from all free variables
   //   that were already in the equation.  Doing so would enable
-  //   maximum flexibility in following substitutions, though it raises
-  //   issues about access to the potentially new variable(s).
+  //   maximum flexibility in following substitutions, but can we
+  //   then refer to the new variable(s) by some name?  Potentially
+  //   add a utility to get the new name by referring to the step where
+  //   it was introduced and the formula (e.g. step) it came from.
   //
-  // TODO: Rewriters currently only _match_ the target step and
-  //   substitute into the equation.  The converse is conceivable, but
-  //   perhaps should have a different name, since it could substitute
-  //   for variables throughout the step.
+  // TODO: Rewriters currently only substitute into the equation.
+  //   Some form of full unification would be desirable.
   rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
@@ -4054,7 +4035,6 @@ const ruleInfo = {
     action: function(chain, less) {
       // This does all the work except the justification of the subproof.
       function bubble(eqn) {
-        // TODO: Specialize the code slightly to work with hypotheses.
         var expr = eqn.getRight();
         var a = expr.getLeft();
         var b = expr.getRight();
@@ -4192,9 +4172,9 @@ const ruleInfo = {
     labels: 'basic'
   },
 
-  // Like extractHypAt, taking its hypotheses as a term to be matched.
-  // Useful for pulling out implicit assumptions such as variable
-  // types.
+  // Like extractHypAt, accepting a term to be matched against the
+  // assumptions Useful for pulling out implicit assumptions such as
+  // variable types.
   //
   // TODO: Decide what to do if there is no such assumption.
   extractHyp: {
@@ -4207,7 +4187,6 @@ const ruleInfo = {
         var taut = rules.tautology(step.getLeft().hypMover(hyp));
         var step1 = rules.rewriteOnly(step, '/left', taut);
         var taut2 = rules.tautology('a & b => c == a => (b => c)');
-        // Result has hyps iff input step has hyps.
         var result = rules.rewriteOnly(step1, '', taut2);
       }
       return result.justify('extractHyp', arguments, [step]);
@@ -4251,7 +4230,7 @@ const ruleInfo = {
     action: function(conjuncts, c) {
       var infix = Toy.infixCall;
       var tautFX = rules.tautology('F & x == F');
-      // Prove that "hyps = F", where hyps is a chain of conjuncts.
+      // Prove that "chain = F", where "chain" is a chain of conjuncts.
       // One conjunct must be "F".
       function falsify(hyps) {
         if (hyps.isCall2('&')) {
@@ -4341,9 +4320,9 @@ const ruleInfo = {
     }
   },
 
-  // Derives a step with hypotheses deduplicated and ordered as by
+  // Derives a step with assumptions deduplicated and ordered as by
   // asmComparator, including removal of occurrences of T.
-  // Works with hypotheses and with plain implications.
+  //
   // TODO: Make this much faster by using sets of tautologies that
   //   show conjuncts imply a single one of its conjuncts, and using
   //   those to build the rearranged conjunction.
@@ -4362,7 +4341,7 @@ const ruleInfo = {
     },
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
-    tooltip: 'remove redundant hypotheses',
+    tooltip: 'remove redundant assumptions',
     labels: 'uncommon'
   },
 

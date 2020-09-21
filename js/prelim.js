@@ -148,7 +148,7 @@ Path.prototype.getLeft = function() {
  * Converts a path with fancy segments right, left, binop,
  * rt, and main into one with just the basic ones.  If the
  * optional argument is truthy, treat initial /rt and /main
- * as for a conditional.  (/main with hyps??)
+ * as for a conditional.
  */
 Path.prototype.uglify = function(opt_isImplies) {
   const segments = [];

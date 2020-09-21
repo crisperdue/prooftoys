@@ -1839,7 +1839,7 @@ var testCase = {
   testToTIsA: function() {
     const step = rules.toTIsA(rules.eqSelf('F'));
     assertEqual('(T = (F = F))', step);
-    // Hyps
+    // Assumptions
     const step1 = Toy.rules.assume(p);
     const result = Toy.rules.toTIsA(step1);
     assertEqual('(T = (p => p))', result);
@@ -1864,9 +1864,6 @@ var testCase = {
   testInstVar: function() {
     var result = Toy.rules.instVar(call(p, y), call(f, x), y);
     assertEqual('(p (f x))', result);
-
-    // Hypotheses
-    // TODO: Make this really test with hypotheses.
     var step1 = Toy.rules.axiom2();
     result = Toy.rules.instVar(step1, call(p, x), x);
   },
@@ -1875,9 +1872,6 @@ var testCase = {
     var result =
       Toy.rules.instantiateVar(call(p, y), '/arg', call(f, x));
     assertEqual('(p (f x))', result);
-
-    // Hypotheses
-    // TODO: Make this really test with hypotheses.
     var step1 = Toy.rules.axiom2();
     result = Toy.rules.instVar(step1, call(p, x), x);
   },
@@ -1889,9 +1883,6 @@ var testCase = {
     var result = Toy.rules.instMultiVars(implies(p, call('|', T, q)), map);
     assertEqual('((forall {x. (T | b)}) => (T | (forall {x. b})))',
                 result);
-
-    // Hypotheses
-    // TODO: Make this really test with hypotheses.
     var step = Toy.rules.axiom2();
     var map2 = {x: call(p, x),
                 y: call(p, y)};
@@ -1982,7 +1973,7 @@ var testCase = {
     var result = Toy.rules.makeConjunction(p, q);
     assertEqual('(p & q)', result);
 
-    // With hypotheses:
+    // With assumptions:
     var step1 = Toy.rules.assume(p);
     var step2 = Toy.rules.assume(q);
     result = Toy.rules.makeConjunction(step1, step2);

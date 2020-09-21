@@ -1226,9 +1226,8 @@ Expr.prototype.get = function(arg) {
 Expr.prototype.asPath = function(arg) {
   const self = this;
 
-  // If the initial segment of the path is 'main', and the expression
-  // is given and has hypotheses, return a path to its RHS.
-  // Similarly for 'rt' for a conditional.
+  // If the initial segment of the path is 'main' or 'rt'
+  // and the term is conditional, return a path to its RHS.
   function adjust(path) {
     var segment = path.segment;
     if (segment == 'main') {
@@ -1329,15 +1328,8 @@ Expr.prototype.find = function(term_arg) {
  * Like Expr.pathTo, but for infix calls produces a path with /left,
  * /right, or /binop rather than combinations of /fn and /arg.
  *
- * Furthermore, if this is a Step, it makes the path a "main" path,
- * replacing an initial /right if there are hyps, otherwise
- * simply adding it, so the path will still be usable if replacements
- * add assumptions to a target step.
- *
  * Given a term to match against, this searches for an identical
  * term, not just a sameAs term, unlike pathTo.
- *
- * TODO: Consider changing to "/rt" rather than "/main".
  */
 Expr.prototype.prettyPathTo = function(pred) {
   if (pred instanceof Expr) {
@@ -1538,11 +1530,11 @@ Expr.prototype.funPart = function() {
 };
 
 /**
- * Treating this as a chain of hypotheses hk & h(k-1) & ... h1,
- * given an expression that matches one of the hypotheses in the set,
- * builds an expression where "h" is in the position of the matched
- * hypotheses, and the rest are labeled hk ... h1 according to their
- * position from the right.  Helper for rules.extractHypothesis.
+ * Treating this as a chain of assumptions hk & h(k-1) & ... h1, and
+ * given an expression that matches one of the assumptions, builds an
+ * expression where "h" is in the position of the matched assumption,
+ * and the rest are labeled hk ... h1 according to their position from
+ * the right.
  */
 Expr.prototype.hypLocater = function(hyp) {
   var h = new Atom('h');
@@ -1567,7 +1559,7 @@ Expr.prototype.hypLocater = function(hyp) {
 };
 
 /**
- * Treating this as a conjunctive chain of hypotheses, returns an
+ * Treating this as a conjunctive chain of assumptions, returns an
  * equation with LHS and RHS both chains.  The LHS has 'h' wherever
  * this chain has an element matching toMove, otherwise hk where k is
  * the 1-based index of the chain element in this chain.  The RHS has
@@ -1611,7 +1603,7 @@ Expr.prototype.hypMover = function(toMove) {
  * action function to each conjunct in the chain, going from left to
  * right.
  *
- * If the action returns a truthy value given any hyp, that value
+ * If the action returns a truthy value given any asm, that value
  * immediately becomes the value of the call.  Otherwise returns
  * the value of the last call to the action.
  */
