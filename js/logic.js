@@ -2728,53 +2728,6 @@ const ruleInfo = {
     description: 'move forall'
   },
 
-  // Given a proof step H |- A => B and a variable v, derives
-  // H |- (A => forall {v. B}) provided that v is not free in A or H.
-  // (5237)  This version implemented via 5235, so much less efficient.
-  //
-  // Handles hypotheses.
-  // TODO: hyps (can remove /main by moving A into assumptions, then back)
-  /* Commented out as part of campaign to eliminate toForall and rules
-   * that are sensitive to hypotheses in steps.
-  implyForallBook: {
-    action: function(v, h_a_b) {
-      var a_b = h_a_b.getMain();
-      v = varify(v);
-      assert(a_b.isCall2('=>'), 'Must be an implication: {1}', a_b, h_a_b);
-      var a = a_b.getLeft();
-      var b = a_b.getRight();
-      // Restriction to ensure the desired result.
-      assert(!a.hasFreeName(v.name),
-             'implyForall: variable {1} cannot occur free in {2}', v, a, h_a_b);
-      if (h_a_b.hasHyps) {
-        var h = h_a_b.getLeft();
-        assert(!h.hasFreeName(v.name),
-               'implyForall: variable {1} cannot occur free in {2}', v, h,
-               h_a_b);
-      }
-      var map1 = {a: a, b: b};
-      var step1 = rules.tautInst('(a => b) => not a | b', map1);
-      var step2 = rules.modusPonens(h_a_b, step1);
-      var step3 = rules.toForall(step2, v);  // Whole rule is commented out.
-      var step4 = rules.r5235(v, call('not', a), b);
-      var step5 = rules.modusPonens(step3, step4);
-      var map6 = {a: a, b: step5.get('/main/right')};
-      var step6 = rules.tautInst('not a | b => (a => b)', map6);
-      var step7 = rules.modusPonens(step5, step6);
-      return step7.justify('implyForallBook', arguments, [h_a_b]);
-    },
-    inputs: {varName: 1, implication: 2},
-    // Do not offer at this time, use something like rewriting
-    // with implyForall instead.
-    formX: ('Move forall inside "implies" binding '
-           + 'variable <input name=varName> '
-           + 'implication <input name=implication>'),
-    tooltip: ('Move "forall" inside "implies" provided the variable '
-              + 'is not free in the first argument.'),
-    description: 'move forall'
-  },
-  */
-
   // Given a variable v that is not free in the given wff A, and a wff
   // B, derives ((forall {v. A => B}) == (A => forall {v. B})).  Could
   // run even if the variable is free, but would not give desired
