@@ -23,7 +23,7 @@
 // TODO: Support only "modern" browsers based on caniuse.com and
 //   similar.  In particular MSIE 11+, but other requirements TBD,
 //   perhaps all browsers shown in default views in caniuse.com.
-Toy.incompatible = !!navigator.userAgent.match(/ MSIE [1-8][.]/);
+Toy.incompatible = !!navigator.userAgent.match(/ MSIE /);
 
 /**
  * Converts a singleton jQuery object to its DOM node,
@@ -394,7 +394,7 @@ function assertTrue(condition, message_arg) {
     e.isAssert = true;
     if (Toy.debugAssertions) {
       console.error(e.message);
-      debugger;
+      // debugger;
     }
     throw e;
   }
