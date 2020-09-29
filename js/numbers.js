@@ -1229,11 +1229,14 @@ const mathSimplifiers = {
     menu: 'simplify real type',
   },
 
-   // Uses the standard closure properties of operations on the real
+   // Uses closure and other properties of operations on the real
    // numbers to simplify the "real" type assumptions in the given
    // step, returning a proved step in which the type assumptions
    // apply to variables rather than complex terms.  It may return the
    // given step itself if it does no reductions.
+   //
+   // This is currently part of rules.rewrite, but not of rewriting
+   // primitives.
   reduceRealAsms: {
     action: function(step) {
       if (!step.isCall2('=>')) {
@@ -1247,11 +1250,12 @@ const mathSimplifiers = {
       // those further-reduced assumptions.  Replacement keeps
       // assumptions together on one level.
       //
-      // If Step.justify (or "replace") arranges assumptions, it is
-      // not necessary to do that here.
+      // TODO: Replace this deduping with a call to arrangeAsms.
       var deduper = rules.conjunctionArranger(reduced.getLeft(),
                                               Toy.asmComparator);
       var deduped = rules.replace(reduced, '/left', deduper);
+      // TODO: Check if deduped is ever different from reduced.
+      //   They ought to be the same.
       return (deduped.justify('reduceRealAsms', arguments, [step]));
     },
     inputs: {step: 1},

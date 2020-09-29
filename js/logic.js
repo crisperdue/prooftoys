@@ -1725,14 +1725,15 @@ var simplifiersInfo = {
           // adapts in case some versions of eqn have assumptions.
           return rules._simplifyOnce(eqn, _path('/rt/right', eqn), opt_facts);
         });
+      // TODO: const reduced = rules.simplifyAsms(simpler);
       return rules.replace(step, path, simpler);
     }
   },
 
-  // Applies up to one simplification within the part of the given
-  // step at _path using the given facts, or basicSimpFacts if facts
-  // are not given.  Returns its result inline, just the input step if
-  // there is nothing to do.
+  // Applies up to one simplification (using rewriting on facts)
+  // within the part of the given step at _path using the given facts,
+  // or basicSimpFacts if facts are not given.  Returns its result
+  // inline, just the input step if there is nothing to do.
   //
   // From the UI use a rule that calls this one.
   _simplifyOnce: {
@@ -1747,6 +1748,9 @@ var simplifiersInfo = {
                  // should display with the word "replace" rather than
                  // "rewrite", but we need the fancier functionality
                  // of rewrite rules.
+                 //
+                 // Caution: rewriteFrom accepts a statement, as occurs
+                 // here, though you might think it would require a step.
                  ? rules.rewriteFrom(step, _path.concat(info.path), info.stmt)
                  : rules.rewrite(step, _path.concat(info.path), info.stmt))
               : step);
@@ -1754,10 +1758,9 @@ var simplifiersInfo = {
   },
 
   // Uses the given facts to simplify the assumptions of the given
-  // step.  This is not intended to do any of the work of arrangeAsms.
-  // For steps involving real numbers see reduceRealAsms.  This
-  // differs from simplifySite in that it also simplifies any
-  // assumptions introduced by conditional facts in the facts list.
+  // step.  This differs from simplifySite in that it also simplifies
+  // any assumptions introduced by conditional facts in the facts
+  // list.  Ensures the result has its assumptions arranged.
   simplifyAsms: {
     action: function(step, facts) {
       if (!step.wff.isCall2('=>')) {
@@ -1770,7 +1773,7 @@ var simplifiersInfo = {
           return rules._simplifyOnce(eqn, Toy.path('/rt/right', eqn), facts);
         });
       // The original eqn has no assumptions, but "simpler" may have
-      // some.  Simplify those in turn.
+      // some.  Simplify those recursively in turn.
       var simpler2 = rules.simplifyAsms(simpler, facts);
       return (rules.replace(step, '/left', simpler2)
               .justify('simplifyAsms', arguments, [step]));
@@ -1935,6 +1938,8 @@ const ruleInfo = {
     labels: 'basic'
   },
 
+  // Requires a conditional step, matching its consequent with
+  // the target site and adding assumptions to the target.
   trueBy1: {
     action: function(target, path, step) {
       const term = target.get(path);
@@ -2050,6 +2055,7 @@ const ruleInfo = {
   toForall0: {
     action: function(step, v_arg) {
       const v = varify(v_arg);
+      // TODO: Use rewrite0 here when available.
       var step1 = rules.rewriteOnly(step, '', 'a == (T == a)');
       var step2 = rules.theorem('forallXT');
       var step3 = rules.renameBound(step2, '/arg', v);
@@ -2993,6 +2999,8 @@ const ruleInfo = {
   // This removes an irrelevant assumption of the form <vbl> = <term>,
   // where the variable does not occur in the term nor elsewhere in
   // the step.  The arguments are a step and path to the assumption.
+  //
+  // TODO: Require an instance of the asm rather than a path.
   removeLet: {
     precheck: function(step, path_arg) {
       var path = Toy.path(path_arg);
@@ -3810,6 +3818,12 @@ const ruleInfo = {
   //
   // TODO: Rewriters currently only substitute into the equation.
   //   Some form of full unification would be desirable.
+  //
+  // TODO: For clarity put the implementation in rewriteOnly and
+  //   make this rule basically a synonym, as in rewriteFrom.
+  //
+  // TODO: Define a rewrite0 that does nothing but match and replace.
+  //   (Replace should leave simplification to the rewriters.)
   rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
@@ -3875,9 +3889,14 @@ const ruleInfo = {
   // Variant of rules.rewrite for use from the UI, when the equation
   // is a proof step, not a well-known fact; otherwise the same as
   // rules.rewrite.
+  //
+  // TODO: Render (programmatic) calls to this and "rewrite" according to
+  //   whether the equation is a statement or a step.
   rewriteFrom: {
     action: function(step, path, equation) {
       return (rules.rewrite(step, path, equation)
+              // TODO: consider justifying as "rewrite" if given
+              //   an unproved statement as the equation.
               .justify('rewriteFrom', arguments, [step, equation]));
     },
     inputs: {site: 1, equation: 3},
@@ -3915,9 +3934,9 @@ const ruleInfo = {
 
   // Version of the rewrite rule good for general use in code and for
   // indirect use in the UI with well-known facts.  (In the display
-  // this does not give access to the proof of the fact.)  This
-  // simplifies assumptions including numeric type assumptions after
-  // rewriting.
+  // this does not give access to the proof of the fact.)  This does
+  // trivial simplification of assumptions including numeric type
+  // assumptions after rewriting.
   rewrite: {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
@@ -4157,6 +4176,8 @@ const ruleInfo = {
   // and h' is h with all occurrences of "e" removed.
   //
   // If e is a, returns its input (or a copy?).
+  //
+  // TODO: Disallow this as unreliable.  Refer to it by its content.
   extractHypAt: {
     precheck: function(step, path_arg) {
       const path = Toy.path(path_arg);
