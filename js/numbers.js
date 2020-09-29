@@ -424,7 +424,8 @@ Toy.addRules(realOrdFacts);
        '(8 instantiateVar (s 7) (path "/left/left/left/left/left/right") (t (x * 0)))',
        '(9 instantiateVar (s 8) (path "/left/left/left/left/right/left") (t (x * 0)))',
        '(10 extractHypAt (s 9) (path "/left/left/left/left"))',
-       '(11 reduceRealAsms (s 10))',
+       '(11 simplifyAsms (s 10))',
+       // TODO: avoid dependence on order of assumptions.
        '(12 p2 (s 5) (s 11) (t (((a => b) & (a => (b => c))) => (a => c))))',
        '(13 rewrite (s 12) (path "/right") (t ((x = y) == (y = x))))'
        ],
@@ -446,7 +447,7 @@ Toy.addRules(realOrdFacts);
        '(8 negFact)',
        '(9 rewrite (s 8) (path "/main") (t ((((a & b) & c) == (a & d)) == (a => ((b & c) == d)))))',
        '(10 assumeExplicitly (t (R ((neg 1) * x))))',
-       '(11 reduceRealTypes (s 10) (path "/left"))',
+       '(11 simplifyAsms (s 10))',
        '(12 rewrite (s 7) (path "/right") (t (a == (T & a))))',
        '(13 replaceT (s 12) (path "/right/left") (s 11))',
        '(14 display (s 13))',
@@ -482,6 +483,7 @@ Toy.addRules(realOrdFacts);
        '(11 display (s 10))',
        '(12 trueBy1 (s 11) (path "/left/left/left/right") (s 3))',
        '(13 rewrite (s 12) (path "/left/left/left/left") (t ((x != y) == (not (x = y)))))',
+       // TODO: Disallow selection of asms by their location.
        '(14 rewrite (s 13) (path "") (t (((((p & (not q)) & a) & b) => r) == (((p & a) & b) => (q | r)))))',
        '(15 rewrite (s 14) (path "/left/left/left") (t ((x = y) == (y = x))))',
        '(16 assume (t (x = 0)))',
@@ -1102,8 +1104,8 @@ var equationOpsInfo = {
 //// Fact lists
 
 // This list may be added onto later.
-const realTypeFacts =
-  [
+Toy.asmSimplifiers.push
+  (
    'R 0',  // Include R 0 and R 1 for direct use where applicable.
    'R 1',
    'R (x + y)',
@@ -1119,7 +1121,7 @@ const realTypeFacts =
                rules.axiomArithmetic(term));
      }
    }
-   ];
+   );
 
 // Facts that regroup an add/subtract or multiply/divide term
 // out of their standard order.
@@ -1218,51 +1220,6 @@ const mathSimplifiers = {
     labels: 'algebra'
   },
 
-  // Direct access to simplification of statements about type R.
-  reduceRealTypes: {
-    toOffer: 'return term.isCall1("R");',
-    action: function(step, path) {
-      return (rules.simplifySite(step, path, realTypeFacts)
-              .justify('reduceRealTypes', arguments, [step]));
-    },
-    inputs: {site: 1},
-    menu: 'simplify real type',
-  },
-
-   // Uses closure and other properties of operations on the real
-   // numbers to simplify the "real" type assumptions in the given
-   // step, returning a proved step in which the type assumptions
-   // apply to variables rather than complex terms.  It may return the
-   // given step itself if it does no reductions.
-   //
-   // This is currently part of rules.rewrite, but not of rewriting
-   // primitives.
-  reduceRealAsms: {
-    action: function(step) {
-      if (!step.isCall2('=>')) {
-        return step;
-      }
-
-      var reduced = rules.simplifyAsms(step, realTypeFacts);
-      // In the reduced term, real constants disappear and composite
-      // terms either reduce to (R <vbl>) or <asms> => ( ... == T).
-      // In the last case, the reducing rewrite rule runs this rule on
-      // those further-reduced assumptions.  Replacement keeps
-      // assumptions together on one level.
-      //
-      // TODO: Replace this deduping with a call to arrangeAsms.
-      var deduper = rules.conjunctionArranger(reduced.getLeft(),
-                                              Toy.asmComparator);
-      var deduped = rules.replace(reduced, '/left', deduper);
-      // TODO: Check if deduped is ever different from reduced.
-      //   They ought to be the same.
-      return (deduped.justify('reduceRealAsms', arguments, [step]));
-    },
-    inputs: {step: 1},
-    menu: 'simplify real number assumptions',
-    description: 'simplify numeric assumptions',
-    labels: 'general'
-  }
 };  // End of mathSimplifiers.
 
 
@@ -3399,6 +3356,5 @@ basicSimpFacts.push({apply: arithRight});
 
 // For testing (computed value).
 Toy._ungroupingFacts = ungroupingFacts;
-Toy._realTypeFacts = realTypeFacts;
 
 })();

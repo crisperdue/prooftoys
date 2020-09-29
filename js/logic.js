@@ -1762,7 +1762,8 @@ var simplifiersInfo = {
   // any assumptions introduced by conditional facts in the facts
   // list.  Ensures the result has its assumptions arranged.
   simplifyAsms: {
-    action: function(step, facts) {
+    action: function(step, facts_arg) {
+      const facts = facts_arg || Toy.asmSimplifiers;
       if (!step.wff.isCall2('=>')) {
         return step;
       }
@@ -1776,11 +1777,19 @@ var simplifiersInfo = {
       // some.  Simplify those recursively in turn.
       var simpler2 = rules.simplifyAsms(simpler, facts);
       return (rules.replace(step, '/left', simpler2)
+              .andThen('arrangeAsms')
               .justify('simplifyAsms', arguments, [step]));
-    }
+    },
+    inputs: {step: 1},
+    menu: 'simplify assumptions',
+    description: 'simplify assumptions',
+    labels: 'general'
   }
 };
 addRulesMap(simplifiersInfo);
+
+// Added to in numbers.js.
+let asmSimplifers = [];
 
 /**
  * Function callable to simplify an entire step.  Useful
@@ -5170,6 +5179,7 @@ const tautologyCounts = Toy.tautologyCounts = new Map();
 Toy.ruleInfo = ruleInfo;
 Toy.logicFacts = logicFacts;
 
+Toy.asmSimplifiers = [];
 Toy.simplifyStep = simplifyStep;
 
 }();
