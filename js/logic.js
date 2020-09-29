@@ -319,6 +319,13 @@ const axioms = {
     menu: 'replace {term} with something equal',
     description: 'replace {site};; {in step siteStep} {using step equation}',
     labels: 'uncommon'
+  },
+
+  /* Rule R with arguments in the standard order */
+  r1: {
+    action: function(target, path, equation) {
+      return rules.r(equation, target, path);
+    }
   }
 
 };
@@ -675,12 +682,12 @@ const prelogic = {
       assert(target instanceof Atom, 'Not a symbol: {1}', target);
       if (Toy.isDefinedByCases(target)) {
         assert(parent, 'To use a definition by cases, refer to a call.');
-        result = rules.replace(step, parentPath,
-                               rules.definition(target.name, parent.arg));
+        result = rules.r1(step, parentPath,
+                          rules.definition(target.name, parent.arg));
       } else {
-        result = rules.replace(step,
-                              parentPath ? parentPath.concat('/fn') : path,
-                              rules.definition(target.name));
+        result = rules.r1(step,
+                          parentPath ? parentPath.concat('/fn') : path,
+                          rules.definition(target.name));
       }
       return result.justify('useDefinition', args, [step]);
     },
@@ -859,7 +866,7 @@ const equalities = {
     inputs: {equation: [1, 2]}
   },
 
-  // r5201e.  Works with conditionals.
+  // r5201e, with eqn potentially conditional.
   applyBoth: {
     action: function(eqn, a) {
       const step1 = (eqn.isCall2('==')
@@ -1199,13 +1206,18 @@ const baseRules = {
    */
   bindEqn: {
     action: function(h_eqn, v) {
+      if (h_eqn.isCall2('=>')) {
+        debugger;
+      }
+      // TODO: Simplify the rest of the code based on it just being
+      //   an equation.
       v = varify(v);
       var eqn = h_eqn.getMain();
       eqn.assertCall2('=');
       const step1 = (eqn.isCall2('==')
                      ? rules.equivSelf(lambda(v, eqn.getLeft()))
                      : rules.eqSelf(lambda(v, eqn.getLeft())));
-      const step2 = rules.replace(step1, '/right/body', h_eqn);
+      const step2 = rules.r1(step1, '/right/body', h_eqn);
       return step2.justify('bindEqn', arguments, [h_eqn]);
     },
     inputs: {equation: 1, varName: 2},
@@ -1227,8 +1239,8 @@ const baseRules = {
       var a = termify(a_arg);
       var bound = rules.bindEqn(b_c, v);
       var step2 = rules.applyBoth(bound, a);
-      var step3 = rules.apply(step2, '/left');
-      var step4 = rules.apply(step3, '/right');
+      var step3 = rules.reduce(step2, '/left');
+      var step4 = rules.reduce(step3, '/right');
       return step4.justify('instEqn', arguments, [b_c]);
     },
     inputs: {equation: 1, term: 2, varName: 3},
@@ -1250,8 +1262,8 @@ const baseRules = {
       var a3 = rules.axiom3();
       var step1 = rules.instEqn(a3, 'f', 'g');
       var step2 = rules.instEqn(step1, '{y. y}', 'f');
-      var step3 = rules.apply(step2, '/right/arg/body/right');
-      var step4 = rules.apply(step3, '/right/arg/body/left');
+      var step3 = rules.reduce(step2, '/right/arg/body/right');
+      var step4 = rules.reduce(step3, '/right/arg/body/left');
       var step5 = rules.eqSelf(Toy.parse('{y. y}'));
       return rules.r(step4, step5, '');
     }
@@ -1263,8 +1275,8 @@ const baseRules = {
       var lemma = rules.theorem('xAlwaysX');
       var step0 = rules.useDefinition(lemma, '/fn')
       var step1 = rules.applyBoth(step0, b);
-      var step2 = rules.apply(step1, '/right');
-      var step3 = rules.apply(step2, '/left');
+      var step2 = rules.reduce(step1, '/right');
+      var step3 = rules.reduce(step2, '/left');
       return step3.justify('eqT', arguments, []);
     },
     inputs: {term: 1},
@@ -1361,8 +1373,8 @@ const baseRules = {
       var expr = termify(expr_arg);
       var step1 = rules.useDefinition(step, path);
       var step2 = rules.applyBoth(step1, expr);
-      var step3 = rules.apply(step2, '/rt/left');
-      var step4 = rules.apply(step3, '/rt/right');
+      var step3 = rules.reduce(step2, '/rt/left');
+      var step4 = rules.reduce(step3, '/rt/right');
       // Rule fromTIsA depends on instForall via tIsXIsX and
       // equationCases.  So fromTIsA is not usable here, though this
       // next step is a simplified fromTIsA.
@@ -1385,7 +1397,7 @@ const baseRules = {
     action: function(a_b) {
       assertEqn(a_b);
       var step1 = rules.eqT(a_b.get('/left'));
-      var step2 = rules.replace(step1, '/right/right', a_b);
+      var step2 = rules.r1(step1, '/right/right', a_b);
       return step2.justify('toTIsEquation', arguments, [a_b]);
     },
     inputs: {equation: 1},
@@ -1402,8 +1414,8 @@ const baseRules = {
     action: function(step1, step2) {
       var step3 = rules.toTIsEquation(step1);
       var step4 = rules.toTIsEquation(step2);
-      var step5 = rules.replace(rules.theorem('r5212'), '/left', step3);
-      var step6 = rules.replace(step5, '/right', step4);
+      var step5 = rules.r1(rules.theorem('r5212'), '/left', step3);
+      var step6 = rules.r1(step5, '/right', step4);
       return (step6.justify('andEqns', arguments, arguments));
     },
     inputs: {step: [1, 2]},
@@ -1427,9 +1439,9 @@ const baseRules = {
       var gen = caseT.generalizeTF(caseF, newVar);
       var lexpr = lambda(newVar, gen);
       var step4 = rules.instEqn(rules.axiom1(), lexpr, 'g');
-      var step5 = rules.apply(step4, '/right/arg/body');
-      var step6 = rules.apply(step5, '/left/right');
-      var step7 = rules.apply(step6, '/left/left');
+      var step5 = rules.reduce(step4, '/right/arg/body');
+      var step6 = rules.reduce(step5, '/left/right');
+      var step7 = rules.reduce(step6, '/left/left');
       var step8 = rules.r(step7, step1, '');
       var step9 = rules.instForall(step8, '', v);
       return step9.justify('equationCases', arguments, [caseT, caseF]);
@@ -1490,9 +1502,9 @@ const falseDefnFacts = {
     proof: function() {
       var step1 = rules.axiom1();
       var step2 = rules.instEqn(step1, Toy.parse('{x. x}'), 'g');
-      var step3 = rules.apply(step2, '/right/arg/body');
-      var step4 = rules.apply(step3, '/left/right');
-      var step5 = rules.apply(step4, '/left/left');
+      var step3 = rules.reduce(step2, '/right/arg/body');
+      var step4 = rules.reduce(step3, '/left/right');
+      var step5 = rules.reduce(step4, '/left/left');
       var step6 = rules.defFFromBook();
       return rules.rRight(step6, step5, '/right');
     }
@@ -1504,9 +1516,9 @@ const falseDefnFacts = {
     action: function(a) {
       var step1 = rules.axiom1();
       var step2 = rules.instEqn(step1, '{x. T & x == x}', 'g');
-      var step3 = rules.apply(step2, '/left/left');
-      var step4 = rules.apply(step3, '/left/right');
-      var step5 = rules.apply(step4, '/right/arg/body');
+      var step3 = rules.reduce(step2, '/left/left');
+      var step4 = rules.reduce(step3, '/left/right');
+      var step5 = rules.reduce(step4, '/right/arg/body');
       var step7 = rules.r5214();
       var step8 = rules.r5213(rules.theorem('r5211'), step7);
       var step9 = rules.r(step5, step8, '/');
@@ -1521,16 +1533,16 @@ const falseDefnFacts = {
     statement: '(T == F) == F',
     proof: function() {
       var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
-      var step2a = rules.apply(step1, '/left/left');
-      var step2b = rules.apply(step2a, '/left/right');
-      var step2c = rules.apply(step2b, '/right/arg/body');
+      var step2a = rules.reduce(step1, '/left/left');
+      var step2b = rules.reduce(step2a, '/left/right');
+      var step2c = rules.reduce(step2b, '/right/arg/body');
       var step3 = rules.rRight(rules.eqT(T), step2c, '/left/left');
       var step4a = rules.andTBook(equal(T, F));
       var step4b = rules.r(step4a, step3, '/left');
       var step5a = rules.instEqn(rules.axiom3(), '{x. T}', 'f');
       var step5b = rules.instEqn(step5a, '{x. x}', 'g');
-      var step6a = rules.apply(step5b, '/right/arg/body/left');
-      var step6b = rules.apply(step6a, '/right/arg/body/right');
+      var step6a = rules.reduce(step5b, '/right/arg/body/left');
+      var step6b = rules.reduce(step6a, '/right/arg/body/right');
       var step6c = rules.useDefinition(rules.defFFromBook(),
                                        '/right/fn');
       var step6d = rules.rRight(step6c, step6b, '/left');
@@ -1546,7 +1558,7 @@ const falseDefnFacts = {
       var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'p');
       var step3 = rules.defFFromBook();
       var step4 = rules.rRight(step3, step2, '/left');
-      return rules.apply(step4, '/right');
+      return rules.reduce(step4, '/right');
     }
   },
 
@@ -1562,10 +1574,11 @@ const falseDefnFacts = {
       var step1a = rules.instVar(rules.axiom2(), F, x);
       var step1b = rules.instVar(step1a, T, 'y');
       var step1c = rules.instVar(step1b, '{x. x = F}', 'h');
-      var step2a = rules.apply(step1c, '/right/left');
-      var step2b = rules.apply(step2a, '/right/right');
-      var step3aa = rules.eqT(F);
-      var step3a = rules.rRight(step3aa, step2b, '/right/left');
+      var step2a = rules.reduce(step1c, '/right/left');
+      var step2b = rules.reduce(step2a, '/right/right');
+      var step3a1 = rules.eqT(F);
+      const step3a2 = rules.eqnSwap(step3a1);
+      var step3a = rules.r(step3a2, step2b, '/right/left');
       var step3bb = rules.r5218(F);
       var step3b = rules.r(step3bb, step3a, '/right/right');
       var step3c = rules.r(step3bb, step3b, '/right');
@@ -1579,12 +1592,12 @@ const falseDefnFacts = {
       //   this proof.
       var step11 = rules.definition('=>', F);
       var step12 = rules.applyBoth(step11, F);
-      var step13 = rules.apply(step12, '/right');
-      var step14 = rules.r(step3aa, step13, '/right');
+      var step13 = rules.reduce(step12, '/right');
+      var step14 = rules.r(step3a1, step13, '/right');
       // Then with x = T.
       var step21 = rules.definition('=>', T);
       var step22 = rules.applyBoth(step21, F);
-      var step23 = rules.apply(step22, '/right');
+      var step23 = rules.reduce(step22, '/right');
       var step24 = rules.r5217Book();
       var step25 = rules.rRight(step24, step23, '/right');
       // Now use the cases rule:
@@ -1854,7 +1867,7 @@ const ruleInfo = {
       return step.matchSchema('T = p');
     },
     action: function(step) {
-      var result = rules.replace(step, '', rules.r5218(step.getRight()));
+      var result = rules.r1(step, '', rules.r5218(step.getRight()));
       return result.justify('fromTIsA', arguments, [step]);
     },
     inputs: {equation: 1},
@@ -2180,8 +2193,8 @@ const ruleInfo = {
       // Then substitute for the renamed variables.
       namesReversed.forEach(function(name) {
           var step2 = rules.applyBoth(step, map[name]);
-          var step3 = rules.apply(step2, '/right');
-          step = rules.apply(step3, '/left');
+          var step3 = rules.reduce(step2, '/right');
+          step = rules.reduce(step3, '/left');
         });
       if (!isEqn) {
         step = rules.fromTIsA(step);
@@ -2252,16 +2265,16 @@ const ruleInfo = {
   // Given P and P => Q, derive Q. (5224)
   modusPonens: {
     action: function(a, b) {
-      var step1 = rules.toTIsA(a);
+      var step1 = rules.eqnSwap(rules.toTIsA(a));
       // Replace the "a" in "b" with T.
-      var step2 = rules.rRight(step1, b, '/left');
+      var step2 = rules.r(step1, b, '/left');
       // Use the definition of =>.
       //
       // TODO: Implement with tautology rather than use
       //   a somewhat arbitrary definition.
       var step3 = rules.useDefinition(step2, '/fn');
       // From T => x derive x.
-      var step4 = rules.apply(step3, '');
+      var step4 = rules.reduce(step3, '');
       return step4.justify('modusPonens', arguments, arguments);
     },
     inputs: {step: 1, implication: 2},
@@ -2284,10 +2297,11 @@ const ruleInfo = {
                  x: Toy.parse('{x. T}'),
                  y: Toy.parse('p')};
       var step2 = rules.instMultiVars(step1, map);
-      var step3 = rules.rRight(rules.definition('forall'), step2, '/left/fn');
-      var step4 = rules.apply(step3, '/right/left');
-      var step5 = rules.apply(step4, '/right/left');
-      var step6 = rules.apply(step5, '/right/right');
+      var step2a = rules.eqnSwap(rules.definition('forall'));
+      var step3 = rules.r(step2a, step2, '/left/fn');
+      var step4 = rules.reduce(step3, '/right/left');
+      var step5 = rules.reduce(step4, '/right/left');
+      var step6 = rules.reduce(step5, '/right/right');
       return rules.r(rules.r5218(Toy.parse('p x')), step6, '/right');
     }
   },
@@ -2391,7 +2405,7 @@ const ruleInfo = {
             result = rules.useDefinition(result, '/right' + _path);
           }
         } else if (fn instanceof Toy.Lambda) {
-          result = rules.apply(result, '/right' + _path);
+          result = rules.reduce(result, '/right' + _path);
         } else {
           assert(false, 'Unexpected expression: {1}', target);
         }
@@ -3060,7 +3074,7 @@ const ruleInfo = {
       var exists = (rules.fact('exists {y. y = x}')
                     .andThen('instVar', asm.getRight(), 'x'));
       var step5 = rules.trueBy0(step4, '/left', exists);
-      var step6 = rules.rewrite(step5, '', 'T => x == x');
+      var step6 = rules.arrangeAsms(step5);
       return step6.justify('removeLet', arguments, [step]);
     },
     inputs: {site: 1},
@@ -3951,11 +3965,10 @@ const ruleInfo = {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
       var step2 = rules.rewriteOnly(step, path, fact);
-      var reduced = rules.reduceRealAsms(step2);
-      var arranged = rules.arrangeAsms(reduced);
+      var simpler = rules.simplifyAsms(step2);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
-      return arranged.justify('rewrite', arguments, [step]);
+      return simpler.justify('rewrite', arguments, [step]);
     },
     autoSimplify: function(step) {
       const inStep = step.ruleArgs[0];
@@ -4365,7 +4378,7 @@ const ruleInfo = {
         rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
       const deduped = rules.replace(step, '/left', deduper);
       const result = (deduped.getLeft().isConst('T')
-                      ? rules.rewrite(step, '', 'T => a == a')
+                      ? rules.rewriteOnly(deduped, '', '(T => a) == a')
                       : deduped);
       return result.justify('arrangeAsms', arguments, [step]);
     },
@@ -5042,7 +5055,7 @@ const logicFacts =
     proof: function() {
        return (rules.r5225()
                .andThen('instVar', '{x. not (p x)}', 'p')
-               .andThen('apply', '/right')
+               .andThen('reduce', '/right')
                .andThen('rewriteOnly', '',
                         'a => not b == b => not a')
                .andThen('rewriteOnly', '/right',
