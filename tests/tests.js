@@ -2078,7 +2078,7 @@ var testCase = {
     assertEqual(given.toString(), removed);
 
     var given = (rules.given('x + 2 = 5')
-                 .andThen('rewriteOnly', '/right/left', 'x + y = y + x'));
+                 .andThen('rewrite', '/right/left', 'x + y = y + x'));
     var added = rules.andAssume(given, 'y = 8');
     var p = added.wff.pathTo(termify('y = 8'));
     var removed = rules.removeLet(added, p);
@@ -2092,7 +2092,7 @@ var testCase = {
     assertEqual(given.toString(), removed);
 
     var given = (rules.given('x + 2 = 5')
-                 .andThen('rewriteOnly', '/right/left', 'x + y = y + x'));
+                 .andThen('rewrite', '/right/left', 'x + y = y + x'));
     var added = rules.andAssume(given, 'R y');
     var p = added.wff.pathTo(termify('R y'));
     var removed = rules.removeTypeAsm(added, p);
@@ -2803,10 +2803,11 @@ window.setTimeout(function() {
   console.log('Queued', nTheorems, 'theorems to test.');
   // Tests one fact given its fact info.
   function testFact(info) {
-      runTest(info.synopsis, function() {
-          assert(Toy.getResult(info.goal).ruleName);
-        });
-      nFacts++;
+    const goal = info.goal.toString();
+    runTest(goal, function() {
+        assert(Toy.getResult(info.goal).ruleName);
+      });
+    nFacts++;
   }
   var nFacts = 0;
   if (toTest) {
