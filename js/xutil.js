@@ -1938,46 +1938,34 @@ function encodeSteps(steps_arg) {
  * TODO: Consider possibly returning null for failure.
  */
 function decodeSteps(input) {
-  let parsed;
-  try {
-    parsed = typeof input == 'string' ? justParse(input) : input;
-  } catch(e) {
-    console.warn('Parse failed decoding ' + input);
-    return [];
-  }
-  var descriptions = parsed.asArray();
-  var outSteps = [];
-  let args = [];
+  const parsed = typeof input == 'string' ? justParse(input) : input;
+  const descriptions = parsed.asArray();
+  const outSteps = [];
   for (let i = 1; i < descriptions.length; i++) {
     let message = '';
-    let ruleName;
     // Ignore the first "description" by starting at 1.
     const stepTerm = descriptions[i];
-    var stepInfo = stepTerm.asArray();
+    const stepInfo = stepTerm.asArray();
     assert(stepInfo.shift().getNumValue() == i, function() {
         return 'Mismatched step number in: ' + stepInfo;
       });
-    ruleName = stepInfo.shift().name;
+    const ruleName = stepInfo.shift().name;
     // The remainder of the array is arguments to the rule.
-    args = [];
+    const args = [];
     stepInfo.forEach(function(info) {
         args.push(decodeArg(info, outSteps));
       });
-    try {
-      const rule = Toy.rules[ruleName];
-      if (rule) {
-        outSteps.push(rule.apply(Toy.rules, args));
+    const rule = Toy.rules[ruleName];
+    if (rule) {
+      const result = rule.apply(Toy.rules, args);
+      if (result) {
+        outSteps.push(result);
       } else {
-        message = 'No such rule: ' + ruleName;
+        Toy.fail('No result from rule {1} with args {2}',
+                 ruleName, args);
       }
-    } catch(e) {
-      message = '' + e;
-    }
-    if (message) {
-      // Desirable? -- Toy.alert('Error decoding steps: ' + message);
-      console.warn('Decoding steps:', message);
-      console.warn('Applying rule', ruleName.$$, 'to', args.$$);
-      break;
+    } else {
+      Toy.fail('No such rule: {1}', ruleName);
     }
   }
   return outSteps;
@@ -2011,7 +1999,7 @@ function decodeArg(info, steps) {
     case 'facts':
       return JSON.parse(value.getStringValue());
     default:
-      assert(false, 'Unknown encoding key: ' + key);
+      Toy.fail('Unknown encoding key: {1}', key);
     }
   }
 }
