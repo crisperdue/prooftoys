@@ -172,7 +172,7 @@ const axioms = {
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
       var step2 = rules.eqIsEquiv();
-      var result = rules.replace(step1, '/right/binop', step2);
+      var result = rules.r1(step1, '/right/binop', step2);
       return result;
     },
     inputs: {},
@@ -196,7 +196,7 @@ const axioms = {
       const map = {f: 'p', g: 'q'};
       const step1 = rules.instMultiVars(rules.axiom3(), map);
       const step2 = rules.eqIsEquiv();
-      const result = rules.replace(step1, '/right/arg/body/binop', step2);
+      const result = rules.r1(step1, '/right/arg/body/binop', step2);
       return result.justify('axiom3a', []);
     },
     labels: 'higherOrder',
@@ -867,8 +867,8 @@ const equalities = {
       var d = cd.getRight();
       var ac = call(a, c);
       var acac = rules.eqSelf(ac);
-      var acbc = rules.replace(acac, '/right/fn', ab);
-      var acbd = rules.replace(acbc, '/right/arg', cd);
+      var acbc = rules.r1(acac, '/right/fn', ab);
+      var acbd = rules.r1(acbc, '/right/arg', cd);
       var result = acbd;
       return result.justify('applyBySides', arguments, arguments);
     },
@@ -1072,7 +1072,7 @@ const baseRules = {
               var step2 = rules.useDefinition(step1, '/right/fn');
               var step3 = rules.reduce(step2, '/right');
               var step4 = rules.eqSelf(expr);
-              var step5 = rules.replace(step4, '/right/fn', step3);
+              var step5 = rules.r1(step4, '/right/fn', step3);
               return rules.reduce(step5, '/right');
             }
           }
@@ -1655,8 +1655,9 @@ var simplifiersInfo = {
 
   // Applies simplification repeatedly within the part of the given
   // step at the given path using the given facts until no more
-  // simplifications are found.  By default uses basicSimpFacts
-  // if facts are not supplied.
+  // simplifications are found.  The simplifiers can be conditional
+  // and thus generate assumptions.  By default uses basicSimpFacts if
+  // facts are not supplied.
   simplifySite: {
     action: function(step, path, opt_facts) {
       var result = rules._simplifySite(step, path, opt_facts);
@@ -1879,6 +1880,9 @@ const booleanRules = {
   // and F in the same columns, it is equivalent to a formula with
   // just one variable.  Otherwise it is an equivalence or a
   // conditional, and "trueBy" is readily used in these cases.
+
+  // These trueBy rules are similar to rewriteOnlyFrom, but that one
+  // creates an equation or conditional equation based on its policy.
 
   // Replace part of a target step with T if it matches a proved step
   // (trueby0) or the consequent of a proved conditional (trueBy1),
@@ -2175,7 +2179,7 @@ const booleanRules = {
   },
 
   // (5222) Given two theorems that are substitutions of T and
-  // F respectively into a WFF; and a variable or variable name,
+  // F respectively into a WFF, and a variable or variable name,
   // proves the WFF.
   //
   // TODO: Consider deriving this from equationCases.
@@ -2192,7 +2196,7 @@ const booleanRules = {
       var step2b = rules.rRight(step2a, caseF, '');
       var step4 = rules.and(step1b, step2b);
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), 'g');
-      var step6 = rules.replace(step4, '', step5);
+      var step6 = rules.r1(step4, '', step5);
       var step7a = rules.instForall(step6, '', v);
       var step7b = rules.apply(step7a, '');
       return step7b.justify('casesTF', arguments, [caseT, caseF]);
@@ -2864,7 +2868,8 @@ const ruleInfo = {
       return (rules.fact('forallOrEquiv')
               .andThen('instMultiVars', {p: 'not a', q: 'negate q'})
               .andThen('rewrite', '', '(a == b) == (not a == not b)')
-              .andThen('rewrite', '/left', 'not (forall p) == exists {x. not (p x)}')
+              .andThen('rewrite', '/left',
+                       'not (forall p) == exists {x. not (p x)}')
               .andThen('simplifySite', '', facts.concat(basicSimpFacts)));
     }
   },
@@ -3419,7 +3424,7 @@ const ruleInfo = {
       var taut = rules.tautology('a => (b == c) == (b & a == c & a)');
       var subst = step.wff.matchSchema(taut.getLeft());
       var inst = rules.instMultiVars(taut, subst);
-      var result = rules.replace(step, '', inst);
+      var result = rules.r1(step, '', inst);
       return result.justify('r5239a', arguments);
     },
     // First arg is any equation, need not be proved.
@@ -3520,7 +3525,7 @@ const ruleInfo = {
         var equiv = rules.r5239a(conjunction.getLeft(),
                                  path.nth(i + 1), eqn);
         // Replaces the conjunction with a new conjunction.
-        var result = rules.replace(step, toConjunction, equiv);
+        var result = rules.r1(step, toConjunction, equiv);
         // Done.
         return result.justify('replaceConjunct', arguments, [step]);
       }
@@ -3551,12 +3556,12 @@ const ruleInfo = {
       // Prepare to replace the base part of the right side.
       var replacer1 = rules.r5239a(base, fromBase, eqn);
       // Conjunction is equivalent to its transform with target replaced.
-      var equiv2 = rules.replace(equiv1, Toy.path('/right').concat(toBase),
+      var equiv2 = rules.r1(equiv1, Toy.path('/right').concat(toBase),
                                  replacer1);
       // Reverse the transform on the RHS.
       var equiv3 = rules.rewriteOnly(equiv2, '/right',
                                      infixCall(rhs, '==', schema));
-      var result = rules.replace(step, toConjunction, equiv3);
+      var result = rules.r1(step, toConjunction, equiv3);
       return result.justify('replaceConjunct', arguments, [step]);
     },
     inputs: {site: 1},
@@ -3692,42 +3697,9 @@ const ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Ambidextrous "rplace" that tries matching the equation LHS, but
+  // Ambidextrous replace that tries matching the equation LHS, but
   // can also replace right-to-left.  Applies rules.replaceIsEquiv if
   // these do not match.
-  replaceEither: {
-    action: function(target, _path, equation) {
-      var path = Toy.path(_path);
-      var lhs = equation.getMain().getLeft();
-      var rhs = equation.getMain().getRight();
-      var expr = target.get(path);
-      if (expr.matches(lhs)) {
-        return rules.replace(target, path, equation)
-          .justify('replaceEither', arguments, [target, equation]);
-      } else if (expr.matches(equation.getMain().getRight())) {
-        return (rules.rRight(equation, target, path)
-                .justify('replaceEither', arguments, [target, equation]));
-      } else if (rhs.isCall2('=') && expr.matches(rhs.getLeft())) {
-        // Apply the more complex rule "inline", so it displays and
-        // not this rule.
-        return rules.replaceIsEquiv(target, path, equation);
-      } else {
-        Toy.err('Expression ' + expr + ' matches neither side of ' +
-                equation);
-      }
-    },
-    inputs: {site: 1, equation: 3},
-    form: ('Replace this using equation step <input name=equation>'),
-    menu: 'Replace {term} with equal term (old-style)',
-    tooltip: ('Replaces an occurrence of a term with an equal term'),
-    description: 'replace {site};; {in step siteStep} {using step equation}',
-    // TODO: Do offer this rule, like replaceConjunct, when there is a
-    //   suitable equation(s) to use with it.
-    labels: ''
-  },
-
-  // Ambidextrous replace that tries matching the equation LHS, but
-  // can also replace right-to-left.
   replaceEither: {
     action: function(target, _path, equation) {
       // TODO: Figure out what to do about Toy.path!
@@ -4382,7 +4354,7 @@ const ruleInfo = {
       }
       var deduper =
         rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
-      const deduped = rules.replace(step, '/left', deduper);
+      const deduped = rules.r1(step, '/left', deduper);
       const result = (deduped.getLeft().isConst('T')
                       ? rules.rewriteOnly(deduped, '', '(T => a) == a')
                       : deduped);
