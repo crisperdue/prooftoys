@@ -80,6 +80,8 @@ Toy.namedConstants.add('T');
 //// Definitions
 
 definition('forall = (=) {x. T}');
+// Note that if the truth table for == is given as an axiom,
+// F need not be defined.
 definition('F == forall {x. x}');
 definition('not = (=) F');
 definition('(!=) = {x. {y. not (x = y)}}');
@@ -127,6 +129,13 @@ definition('strict = {f. f none = none}');
 definition('strict2 = {f. forall {x. f x none = none} & ' +
            'forall {x. f none x = none}}');
 
+
+//// FACTS AND RULES
+
+// Conventions for menu items (using "menu:")
+// Step templates are in square brackets, such as [T = A].
+// Rules (including axiom 4) that take a term as input use A, B to
+//   show where the term goes, not enclosed in square brackets.
 
 //// Logical axioms and rule of inference
 
@@ -952,83 +961,11 @@ const equalities = {
 addRulesMap(equalities);
 
 
-// TODO: Move these comments.
-// TODO: Use a flag to enable the system to initialize with either a
-// precisely Andrews-style system with just equality and the1 as
-// primitives, or alternatively with additional primitives T, F, and
-// "if", plus two axioms for "if".  T and F are currently listed as
-// primitive constants, but F is also "defined" with what amounts to
-// an axiom "defFFromBook", and definition by cases is in the system
-// core, which is much like including "if".
-//
-// The Andrews system has fewer axioms, primitive constants, and
-// concepts, but the extended system results in a quicker and more
-// conventional development of propositional calculus.
+// TODO: Consider a flag to enable the system to initialize with
+// either a precisely Andrews-style system.
 
-// Conventions for menu items (using "menu:")
-// Step templates are in square brackets, such as [T = A].
-// Rules (including axiom 4) that take a term as input use A, B to
-//   show where the term goes, not enclosed in square brackets.
-
-var assumers = {
-
-  /**
-   * Suppose the given statement to be true.  This is the standard way
-   * to introduce an assumption into a proof.  If given a string,
-   * parses it and uses the result.
-   */
-  assume: {
-    action: function(assumption) {
-      assumption = termify(assumption);
-      const result = (rules.tautInst('a => a', {a: assumption})
-                      .justify('assume', arguments));
-      return result;
-    },
-    inputs: {bool: 1},
-    form: ('Assume <input name=bool>'),
-    menu: 'assume',
-    tooltip: 'Statement to assume',
-    description: 'assumption',
-    labels: 'basic'
-  },
-
-  // Assume the target boolean term, like considerPart, but making it
-  // an assumption.
-  assumePart: {
-    toOffer: 'return term.isBoolean()',
-    action: function(step, path) {
-      return rules.assume(step.get(path)).justify('assumePart', arguments);
-    },
-    inputs: {site: 1},
-    menu: 'assume {term}',
-    tooltip: ('assume term'),
-    description: 'assume',
-    labels: 'display'
-  },
-
-  /**
-   * Suppose the given statement to be true.  The UI will display the
-   * statement in each step where it occurs, even though it is among
-   * the assumptions.
-   */
-  assumeExplicitly: {
-    action: function(asm_arg) {
-      var assumption = termify(asm_arg);
-      var step = rules.tautInst('a => a', {a: assumption});
-      return step.justify('assumeExplicitly', arguments);
-    },
-    inputs: {bool: 1},
-    form: ('Assume <input name=bool>'),
-    menu: 'assume temporarily',
-    tooltip: 'Statement to assume (show occurrences)',
-    description: 'temporary assumption',
-    labels: 'basic'
-  }
-
-};
-addRulesMap(assumers);
-
-// These definitions are alternatives to the definitions by cases.
+// These definitions are alternatives to the definitions by cases,
+// and are not used in any live code.
 const bookDefns = {
 
   // Book only.  Not actually used even in the book.
@@ -1178,7 +1115,8 @@ const baseRules = {
       const newName = typeof arg === 'string' ? arg : arg.name;
       var target = step.get(path);
       // Report the step, but not in the message.
-      assert(target instanceof Toy.Lambda, 'Not a function: {1}', target, step);
+      assert(target instanceof Toy.Lambda,
+             'Not a function: {1}', target, step);
       if (target.bound.name === newName) {
         // No need to do anything in this case, so do not rename anything.
         return step;
@@ -1378,6 +1316,9 @@ const baseRules = {
       // Rule fromTIsA depends on instForall via tIsXIsX and
       // equationCases.  So fromTIsA is not usable here, though this
       // next step is a simplified fromTIsA.
+      //
+      // The conditional form of this rule uses the conditional
+      // form of rules.replace.
       var step5 = rules.replace(rules.theorem('t'), '', step4);
       return step5.justify('instForall', arguments, [step]);
     },
@@ -1511,7 +1452,8 @@ const falseDefnFacts = {
   },
 
   // 5216: [T & A] = A
-  // TODO: Consider if this could be a theorem rather than a rule.
+  // TODO: A theorem T & x == x would be adequate since it is an
+  //   equation.  Then apply instEqn as needed.
   andTBook: {
     action: function(a) {
       var step1 = rules.axiom1();
@@ -1529,6 +1471,7 @@ const falseDefnFacts = {
 
   // r5217 is the same as r5230TF.
   // [T = F] = F
+  // Relies on F == forall {x. x} (defn of F).
   r5217Book: {
     statement: '(T == F) == F',
     proof: function() {
@@ -1566,6 +1509,9 @@ const falseDefnFacts = {
   // Relies also on facts about "=>", which are not currently
   // proven from "book" definitions.
   //
+  // With r5217Book and this, and the book definition of false,
+  // and some sort of truth table definition of =>, 
+  //
   // TODO: Is there a more elegant proof of this?
   r5230FT_alternate: {
     statement: '(F = T) = F',
@@ -1588,8 +1534,7 @@ const falseDefnFacts = {
       // We are going to prove the cases of: (x => F) = (x = F)
       // First with x = F.
       //
-      // TODO: Eliminate uses of the unbookish definition of => in
-      //   this proof.
+      // Note uses of the unbookish definition of => in this proof.
       var step11 = rules.definition('=>', F);
       var step12 = rules.applyBoth(step11, F);
       var step13 = rules.reduce(step12, '/right');
@@ -1812,7 +1757,7 @@ function simplifyStep(step) {
   return rules.simplifySite(step, '');
 }
 
-const ruleInfo = {
+const booleanRules = {
 
   // [T = x] = x
   // Note that this or 5230TF or symmetry of equality of booleans
@@ -2603,8 +2548,69 @@ const ruleInfo = {
         }
       }
     }
+  }
+};
+addRulesMap(booleanRules);
+
+var assumers = {
+
+  /**
+   * Suppose the given statement to be true.  This is the standard way
+   * to introduce an assumption into a proof.  If given a string,
+   * parses it and uses the result.
+   */
+  assume: {
+    action: function(assumption) {
+      assumption = termify(assumption);
+      const result = (rules.tautInst('a => a', {a: assumption})
+                      .justify('assume', arguments));
+      return result;
+    },
+    inputs: {bool: 1},
+    form: ('Assume <input name=bool>'),
+    menu: 'assume',
+    tooltip: 'Statement to assume',
+    description: 'assumption',
+    labels: 'basic'
   },
 
+  // Assume the target boolean term, like considerPart, but making it
+  // an assumption.
+  assumePart: {
+    toOffer: 'return term.isBoolean()',
+    action: function(step, path) {
+      return rules.assume(step.get(path)).justify('assumePart', arguments);
+    },
+    inputs: {site: 1},
+    menu: 'assume {term}',
+    tooltip: ('assume term'),
+    description: 'assume',
+    labels: 'display'
+  },
+
+  /**
+   * Suppose the given statement to be true.  The UI will display the
+   * statement in each step where it occurs, even though it is among
+   * the assumptions.
+   */
+  assumeExplicitly: {
+    action: function(asm_arg) {
+      var assumption = termify(asm_arg);
+      var step = rules.tautInst('a => a', {a: assumption});
+      return step.justify('assumeExplicitly', arguments);
+    },
+    inputs: {bool: 1},
+    form: ('Assume <input name=bool>'),
+    menu: 'assume temporarily',
+    tooltip: 'Statement to assume (show occurrences)',
+    description: 'temporary assumption',
+    labels: 'basic'
+  }
+
+};
+addRulesMap(assumers);
+
+const ruleInfo = {
   // Deduces the conjunction of two proved steps.
   //
   // Introducing a T wherever desired, then substituting a theorem,
