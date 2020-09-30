@@ -306,7 +306,9 @@ function err(info, type) {
  * a coding error.
  */
 function fail(msg, _args) {
-  throw new Error(Toy.format.apply(null, arguments));
+  const e = new Error(Toy.format.apply(null, arguments));
+  console.error(e);
+  throw e;
 }
 
 /**
@@ -392,8 +394,10 @@ function assertTrue(condition, message_arg) {
     var e = new Error(message);
     e.step = step;
     e.isAssert = true;
+    console.error(e);
     if (Toy.debugAssertions) {
-      console.error(e.message);
+      // Uncomment this line to always debug even if the
+      // error will be caught.
       // debugger;
     }
     throw e;
@@ -2152,6 +2156,8 @@ window.setInterval(function() { heartbeat(); removeOldPidData(); }, 10000);
 
 
 //// Export public names.
+
+Toy.errors = errors;
 
 Toy.dom = dom;
 
