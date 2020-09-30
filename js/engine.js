@@ -1206,7 +1206,7 @@ function getResult(statement, mustProve) {
     info.inProgress = false;
   } finally {
     if (info.inProgress) {
-      console.error('Proof of fact failed', '' + statement);
+      console.error(new Error('Proof of fact failed' + statement));
     }
   }
   return info.proved;
@@ -1268,7 +1268,7 @@ function getResInfo(stmt) {
   // association in _statementResInfos.
   function computeStatementInfo(stmt) {
     if (typeof stmt == 'string') {
-      console.error('Deprecated: resInfo of string:', stmt);
+      console.warn('Deprecated: resInfo of string:', stmt);
     }
     // TODO: Fix higher-level code to do the parsing, so different
     //   type assumptions and such can be inserted at that level.
