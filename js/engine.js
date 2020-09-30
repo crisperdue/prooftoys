@@ -71,11 +71,6 @@ var F = constify('F');
 // for proved tautologies.  Private to the tautology rule.
 var _tautologies = {};
 
-// Interactive testing support.
-window.Thtest = function(x) {
-  setTimeout(function() { console.log(window.Tval = eval(x)); });
-};
-
 
 //
 // Expr methods for inference
