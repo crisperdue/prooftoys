@@ -1451,7 +1451,7 @@ const falseDefnFacts = {
   //
   // TODO: Is there a more elegant proof of this?
   r5230FT_alternate: {
-    statement: '(F = T) = F',
+    statement: '(F == T) == F',
     proof: function() {
       var x = Toy.parse('x');
       var step1a = rules.instVar(rules.axiom2(), F, x);
@@ -4429,16 +4429,12 @@ const ruleInfo = {
       } else {
         step1 = step;
       }
-      var result = Toy.each(facts, function(fact) {
-          try {
-            return rules.rewriteOnly(step1, '/right', fact);
-          } catch(e) {}
-        }) || step1;
-      try {
-        var taut = rules.tautology('a & (b & c) == a & b & c');
-        result = rules.rewriteOnly(result, '/right', taut);
-      } catch(e) {}
-      return result.justify('conjunctsSimplifier', arguments);
+      const result1 = Toy.applyFactsOnce(step1, '/right', facts,
+                                         'rewriteOnly');
+      const taut = 'a & (b & c) == a & b & c';
+      const result2 = Toy.applyFactsOnce(result1, '/right', [taut],
+                                         'rewriteOnly');
+      return result2.justify('conjunctsSimplifier', arguments);
     }
   },
 

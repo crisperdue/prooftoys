@@ -2448,7 +2448,7 @@ var negationFacts = {
       return step2;
     }
   },
-  '@a - b = a + -1 * b': {
+  'a - b = a + -1 * b': {
     proof: function() {
       return (rules.fact('@a - b = a + neg b')
               .andThen('rewrite', '/main/right/right', 'neg x = -1 * x'));
@@ -3321,6 +3321,15 @@ var ungroupingFacts = regroupingFacts.map(function(fact) {
 definition('(>) = {x. {y. y < x}}');
 definition('(<=) = {x. {y. x < y | x = y}}');
 definition('(>=) = {x. {y. x > y | x = y}}');
+
+let piFacts =
+  [
+   {statement: 'R pi', axiom: true,
+    description: 'Pi is a real number'},
+   {statement: 'pi > 0', axiom: true,
+    description: 'Pi is a positive number'}
+   ];
+addRules(piFacts);
 
 
 //// Misc utilities

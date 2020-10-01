@@ -1601,11 +1601,13 @@ function tryReduce(term) {
 /**
  * Find and apply one of the facts to the part of the step at the
  * given path, returning the result, or the input step if none of the
- * facts apply.  Note: uses rules.rewrite, not rewriteOnly.
+ * facts apply.  Note: uses rules.rewrite by default; supply
+ * a ruleName (fourth arg) if desired.
  */
-function applyFactsOnce(step, path, facts) {
-  var info = findMatchingFact(facts, null, step.get(path));
-  return info ? rules.rewrite(step, path, info.stmt) : step;
+function applyFactsOnce(step, path, facts, rule_arg) {
+  const ruleName = rule_arg || 'rewrite';
+  const info = findMatchingFact(facts, null, step.get(path));
+  return info ? rules[ruleName](step, path, info.stmt) : step;
 }
 
 /**
