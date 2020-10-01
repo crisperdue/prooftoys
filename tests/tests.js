@@ -2694,16 +2694,6 @@ var testCase = {
     assertEqual(expect, result);
   },
 
-  // Looking at what can be done with Andrews' definition of "and".
-  // From here you can get counterexamples to the possibilities
-  // that ordered pairs other than TT satisfy the definition.
-  testFunWithAnd: function() {
-    expect(0);
-    if (!Toy.useDefnsByCases) {
-      const result = Toy.rules.funWithAnd();
-    }
-  },
-
   // Tell the profiler we are done profiling the tests.
   testDoneTesting: function() {
     expect(0);

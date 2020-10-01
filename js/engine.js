@@ -23,17 +23,6 @@
 
 'use strict';
 
-// Set Toy.bookish to true before loading this file to use definitions
-// from Andrews' book and no others.  Will be usable only after
-// completion of r5230FTBook_almost and full implementation of the
-// useDefnsByCases flag.
-const bookish = Toy.bookish || false;
-
-if (Toy.useDefnsByCases == null) {
-  // TODO: Complete the support for this flag, as discussed where
-  //   it is currently used.
-  Toy.useDefnsByCases = !bookish;
-}
 
 //// THEOREMS AND RULES
 

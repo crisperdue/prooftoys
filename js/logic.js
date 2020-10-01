@@ -36,7 +36,6 @@ const definition = Toy.definition;
 // into a flag to toggle between use of the definition and use of the
 // two extra axioms.
 const useFalseDefn = true;
-const useDefnsByCases = Toy.useDefnsByCases;
 
 const identity = Toy.parse('{x. x}');
 const allT = Toy.parse('{x. T}');
@@ -961,68 +960,6 @@ const equalities = {
 addRulesMap(equalities);
 
 
-// TODO: Consider a flag to enable the system to initialize with
-// either a precisely Andrews-style system.
-
-// These definitions are alternatives to the definitions by cases,
-// and are not used in any live code.
-const bookDefns = {
-
-  // Book only.  Not actually used even in the book.
-  defAnd: {
-    statement: '(&) = {x. {y. ({g. (g T T)} = {g. (g x y)})}}', axiom: true,
-    action: function() {
-      return (rules.assert('(&) = {x. {y. {g. g T T} = {g. g x y}}}')
-              .justify('defAnd'));
-    }
-  },
-
-  // Book only.
-  defImplies: {
-    statement: '(=>) = {x. {y. (x == (x & y))}}', axiom: true,
-    action: function() {
-      return (rules.assert('(=>) = {x. {y. x == x & y}}')
-              .justify('defImplies'));
-    }
-  },
-
-  //
-  // OPTIONAL/UNUSED
-  // 
-
-  // Experiment with Andrews' definition of "and".
-  funWithAnd: {
-    statement: ('{x. T} = {x. ((x T T) = (x T F))} == ' +
-                '(forall {x. ((x T T) = (x T F))})'),
-    proof: function() {
-      var f = varify('f');
-      var g = varify('g');
-      var fa = rules.definition('forall');
-      var a2 = rules.axiom2();
-      var a3 = rules.axiom3();
-      var step1 = rules.applyBoth(rules.defAnd(), T);
-      var step2a = rules.apply(step1, '/right');
-      var step2b = rules.applyBoth(step2a, F);
-      var step2c = rules.apply(step2b, '/right');
-      var step3 = rules.instEqn(a3, step2c.get('/right/left'), f);
-      var step4 = rules.instEqn(step3, step2c.get('/right/right'), g);
-      var step5 = rules.apply(step4, '/right/arg/body/left');
-      var step6 = rules.apply(step5, '/right/arg/body/right');
-      var step7 = rules.applyBoth(fa, step6.get('/right/arg'));
-      var step8 = rules.instEqn(a3, step7.get('/right/left'), f);
-      var step9 = rules.instEqn(step8, step7.get('/right/right'), g);
-      var step10 = rules.apply(step9, '/right/arg/body/left');
-      var step11 = rules.apply(step10, '/right/arg/body/right');
-      var step12 = rules.r5218(step11.get('/right/arg/body/right'));
-      return rules.r(step12, step11, '/right/arg/body');
-    }
-  }
-
-};
-if (!useDefnsByCases) {
-  addRulesMap(bookDefns);
-}
-
 const baseRules = {
 
   // "Reduces" a call identified by a path within a theorem. If the
@@ -1559,48 +1496,6 @@ const falseDefnFacts = {
 };
 if (useFalseDefn) {
   addRulesMap(falseDefnFacts);
-}
-
-const factsUsingDefImplies = {
-
-  // 5230FT: [F = T] = F.
-  //
-  // Uses book defn of "=>", requires a fact about "&".
-  //
-  // TODO: Prove 5229, then finish proving r5230FTBook_almost from it.
-  r5230FTBook_almost: {
-    statement: '(F == T) == F',
-    proof: function() {
-      var step1 = rules.axiom2();
-      var map = {h: Toy.parse('{x. x = F}'),
-                 x: F,
-                 y: T};
-      var step2 = rules.instMultiVars(step1, map);
-      var step3 = rules.apply(step2, '/right/right');
-      var step4 = rules.apply(step3, '/right/left');
-      var step5 = rules.r5218(F);
-      var step6 = rules.r(step5, step4, '/right/right');
-      var step7 = rules.eqT(F);
-      var step8 = rules.rRight(step7, step6, '/right/left');
-      var step9 = rules.r(step5, step8, '/right');
-      var step10 = rules.defImplies();
-      var step11 = rules.r(step10, step9, '/binop');
-      var step12 = rules.apply(step11, '/fn');
-      var step13 = rules.apply(step12, '');
-      // TODO: Infer by cases from 5229 (rules about '&').
-      var step14 = rules.tautology('x & F == F');
-      var step15 = rules.instEqn(step14, Toy.parse('F = T'), 'x')
-      return rules.r(step15, step13, '/right');
-    }
-  }
-
-};
-// For a truly bookish development of the theory, properly complete
-// the one proof in this group, factor out all uses of definitions by
-// cases, control the actual definitions with the useDefnsByCases
-// flag, and turn off the flag.
-if (!useDefnsByCases) {
-  addRulesMap(factsUsingDefImplies);
 }
 
 // These are not specific to book definitions, but currently may
