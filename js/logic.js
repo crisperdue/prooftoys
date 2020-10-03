@@ -329,7 +329,7 @@ const axioms = {
     labels: 'uncommon'
   },
 
-  /* Rule R with arguments in the standard order */
+  /* Rule R with arguments in the standard order; currently inline. */
   r1: {
     action: function(target, path, equation) {
       return rules.r(equation, target, path);
@@ -1223,9 +1223,10 @@ const baseRules = {
   // Accepts a string for the expr, and supports a target that is the
   // RHS of a conditional.
   //
-  // TODO: Consider splitting this into two forms, one where the
-  //   target term is at top level, one where it is the conclusion of
-  //   a conditional.
+  // TODO: Consider cleaning up the conditions on the path.
+  //
+  // Careful: The conditional form has more dependencies because
+  // it uses rules.replace with a conditional equation.
   instForall: {
     precheck: function(step, path, expr_arg) {
       const target = step.get(path);
@@ -1245,18 +1246,16 @@ const baseRules = {
       return ok;
     },
     action: function(step, path, expr_arg) {
-      var expr = termify(expr_arg);
-      var step1 = rules.useDefinition(step, path);
-      var step2 = rules.applyBoth(step1, expr);
+      const expr = termify(expr_arg);
+      const eqn1 = rules.useDefinition(step, path);
+      var step2 = rules.applyBoth(eqn1, expr);
       var step3 = rules.reduce(step2, '/rt/left');
       var step4 = rules.reduce(step3, '/rt/right');
-      // Rule fromTIsA depends on instForall via tIsXIsX and
-      // equationCases.  So fromTIsA is not usable here, though this
-      // next step is a simplified fromTIsA.
-      //
       // The conditional form of this rule uses the conditional
       // form of rules.replace.
-      var step5 = rules.replace(rules.theorem('t'), '', step4);
+      var step5 = (step.isCall2('=>')
+                   ? rules.rewriteOnly(step4, '/rt', '(T == a) == a')
+                   : rules.fromTIsA(step4));
       return step5.justify('instForall', arguments, [step]);
     },
     toOffer: function(step, term) {
@@ -1671,6 +1670,7 @@ const booleanRules = {
 
   // 5218: [T == A] == A
   // Stepping stone to universal generalization.
+  // TODO: Replace all uses of this with rewrites.
   r5218: {
     action: function(a) {
       var step1 = rules.theorem('tIsXIsX');
@@ -1686,7 +1686,7 @@ const booleanRules = {
   },
 
   // 5219: [A] to [T == A].
-  // TODO: Replace all uses of this with rewrites.
+  // TODO: Consider replacing all uses of this with rewrites.
   toTIsA: {
     action: function(step) {
       const step1 = rules.r5218(step);
@@ -1702,13 +1702,15 @@ const booleanRules = {
   },
 
   // also 5219: [T == A] to [A].
-  // TODO: Replace all uses of this with rewrites.
+  // Nice to have for proving instForall.  Using low-level
+  // primitives here prevents dependency problems there.
   fromTIsA: {
     precheck: function(step) {
       return step.matchSchema('T = p');
     },
     action: function(step) {
-      var result = rules.r1(step, '', rules.r5218(step.getRight()));
+      const step1 = rules.theorem('t');
+      const result = rules.r1(step1, '', step);
       return result.justify('fromTIsA', arguments, [step]);
     },
     inputs: {equation: 1},
@@ -2146,6 +2148,7 @@ const booleanRules = {
       var step4 = rules.reduce(step3, '/right/left');
       var step5 = rules.reduce(step4, '/right/left');
       var step6 = rules.reduce(step5, '/right/right');
+      // TODO: Try changing this to a rewrite.
       return rules.r(rules.r5218(Toy.parse('p x')), step6, '/right');
     }
   },
