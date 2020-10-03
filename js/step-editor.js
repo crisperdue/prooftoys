@@ -1454,7 +1454,6 @@ StepEditor.prototype.parseValue = function(value, type) {
 };
 
 
-
 //// RULEMENU
 
 /**
@@ -1897,18 +1896,22 @@ RuleMenu.prototype.offerApproved = function(name) {
 };
 
 /**
- * Returns true iff the rule name can be offered by the UI.
- * Only rules with a "form" property are offerable at all.  If so --
+ * Returns true iff the rule name can be offered by the UI, based on
+ * status of step and/or term selection, declared inputs, and
+ * availability of a data entry form for it.
  *
- * If the rule has a precheck and a single "inputs" declaration
- * of a kind that works with a selection, run the precheck and
- * return false if it is falsy.
+ * If there is a selection, and the rule has a precheck, and it has a
+ * single "inputs" declaration that can be checked by a precheck,
+ * returns false if the precheck fails.
  *  
- * Else if the proof has a current selection, the rule is offerable if
- * acceptsSelection returns true given the selected step and rule
- * name.
+ * Unless the precheck runs and fails, if the proof has a current
+ * selection, the rule is offerable if acceptsSelection returns true
+ * given the selected step and rule name, and in case the rule has a
+ * toOffer property, that check also passes.  This screens rules not
+ * screened by a precheck.
  *
- * Otherwise only rules that take no step and no site are offerable.
+ * Otherwise rules that take no step and no site and do have a form
+ * are offerable.
  */
 RuleMenu.prototype.offerable = function(ruleName) {
   const rule = Toy.rules[ruleName];
@@ -1924,7 +1927,7 @@ RuleMenu.prototype.offerable = function(ruleName) {
     var precheck = rule.precheck;
     var term = step.selection;
     // See if the rule has a precheck that can "rule it out".
-    // The rule must have a single input of a site or step type.
+    // Precheck only works on rules with a single input of a site or step type.
     if (precheck && Toy.mapSize(info.inputs) == 1 &&
         (term
          // This list needs to match siteTypes.
@@ -1937,7 +1940,7 @@ RuleMenu.prototype.offerable = function(ruleName) {
       var ok = (inputs.term
                 ? precheck(term)
                 : term
-                // Use prettyPathTo so behavior matches rule execution.
+                // Uses prettyPathTo so behavior matches rule execution.
                 ? precheck(step, step.wff.prettyPathTo(term))
                 : precheck(step));
       if (!ok) {
@@ -1949,17 +1952,18 @@ RuleMenu.prototype.offerable = function(ruleName) {
       // If the rule has a "toOffer" property, apply it as a further
       // test of offerability.
       //
-      // TODO: Consider using the precheck if available and there is
-      // no toOffer.
+      // TODO: Consider moving this to the "policy" section
+      //   (offerApproved).
       var offerTest = info.toOffer;
       if (info.toOffer) {
         return offerTest(step, step.selection);
       }
       return true;
+    } else {
+      return false;
     }
   } else if (!info.form) {
-    // The form property is present, but nothing in it, so
-    // arguments cannot come from the form.
+    // There is no form, so arguments cannot come from the form.
     return false;
   } else {
     // There is no selection, so the rule must not require a step or
@@ -1971,6 +1975,7 @@ RuleMenu.prototype.offerable = function(ruleName) {
         return false;
       }
     }
+    // All the above checks pass, so we can offer the rule.
     return true;
   }
 };
@@ -2052,8 +2057,9 @@ RuleMenu.prototype.offerableFacts = function() {
  * step is selected.
  *
  * If something is selected, this accepts rules whose inputs descriptor
- * is compatible with the selection.  This implements some UI policy
- * as well as screening out impossibilities.
+ * is compatible with the selection.  See the code for details.
+ *
+ * The rule can also require additional inputs.
  */
 function acceptsSelection(step, ruleName) {
   var info = Toy.rules[ruleName].info;
