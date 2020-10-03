@@ -2365,7 +2365,9 @@ function hoverReplace(step, action) {
 var hoverHandlers = {
   r: hoverReplace,
   rRight: hoverReplace,
+  useDefinition: hoverReplace,
   replace: hoverAsRewriter,
+  r1: hoverAsRewriter,
   replaceEither: function(step, action) {
     // Same as hoverReplace, but the equation is args[2].
     // TODO: Calling hoverAsRewriter does not work when this replaces
@@ -2387,7 +2389,18 @@ var hoverHandlers = {
                    step.getRight(),
                    function(expr) { action(expr.node, 'new'); });
   },
-  useDefinition: hoverReplace,
+  reduce: function(step, action) {
+    const args = step.original.ruleArgs;
+    const input = args[0];
+    const path = args[1];
+    const call = input.rendering.get(path);
+    const body = call.fn.body;
+    const varName = call.fn.bound.name;
+    body.findAll(varName,
+                   function(v) { action(v.node, 'occur'); },
+                   step.get(path),
+                   function(expr) { action(expr.node, 'new'); });
+  },
   instEqn: function(step, action) {
     var args = step.original.ruleArgs;
     // Input equation.

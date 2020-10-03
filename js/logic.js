@@ -945,8 +945,8 @@ const equalities = {
       var result = rules.r(equation, step, path);
       return result.justify('reduce', arguments, [step]);
     },
-    // Not offered interactively.
-    // inputs: {reducible: 1},
+    // TODO: Check that we do want to offer this interactively.
+    inputs: {reducible: 1},
     isRewriter: true,
     menuGen: function(ruleName, step, term) {
       return Toy.format('apply function of {1}', term.fn.bound);
