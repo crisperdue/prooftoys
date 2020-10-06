@@ -1374,6 +1374,7 @@ const falseDefnFacts = {
   },
 
   // Bookish: [T & F] = F
+  // Uses defFFromBook.
   r5214: {
     statement: 'T & F == F',
     proof: function() {
@@ -1920,6 +1921,8 @@ const booleanRules = {
   // 5220 variant that from A deduces forall {v. A}.  The variable v
   // may be given as a string, which it converts internally to a
   // variable.
+  //
+  // TODO: Rename to just toForall.
   toForall0: {
     action: function(step, v_arg) {
       const v = varify(v_arg);
@@ -2132,9 +2135,10 @@ const booleanRules = {
     labels: 'primitive'
   },
 
-  // Note: With substitution for p, this can take the place of 5215
-  // (universal instantiation).  To apply, match "forall p" with an
-  // existing statement. Then "apply" p to user's choice of x.
+  // Note: Combined with substitution for x (and potentially p), this
+  // can take the place of 5215 (universal instantiation) and
+  // unForall.  To apply, match "forall p" with an existing
+  // statement. Then "apply" p to user's choice of term.
   r5225: {
     statement: 'forall p => p x',
     proof: function() {
@@ -2933,6 +2937,12 @@ const ruleInfo = {
   // the step.  The arguments are a step and path to the assumption.
   //
   // TODO: Require an instance of the asm rather than a path.
+  //
+  // TODO: Generalize this into a rule for removal of irrelevant
+  //   assumptions, based on a collection of predicates that "exist"
+  //   and patterns for such predicates, e.g. {x. x = <term>} being
+  //   such a predicate and x = <term> serving as the patten.
+  //   Subsume removeLet and removeTypeAsm with that rule.
   removeLet: {
     precheck: function(step, path_arg) {
       var path = Toy.path(path_arg);
