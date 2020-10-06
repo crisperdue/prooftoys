@@ -4178,7 +4178,7 @@ const ruleInfo = {
         assert(false, 'Bad input to falsify!');
       }
       var map = new Toy.TermMap();
-      conjuncts.eachHyp(function (h) { map.addTerm(h); });
+      conjuncts.scanConj(function (h) { map.addTerm(h); });
       assert(map.has(c), 
              'Must be one of the conjuncts: {1}', c);
       var cVar = map.get(c);

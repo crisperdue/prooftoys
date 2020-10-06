@@ -1797,7 +1797,7 @@ function matchFactPart(step, path, factList, name) {
  */
 function buildHypSchema(hyps, map, exclusions) {
   var schema = null;
-  hyps.eachHyp(function(hyp) {
+  hyps.scanConj(function(hyp) {
       var v = map.addTerm(hyp);
       if (!exclusions || !exclusions.has(hyp)) {
         schema = schema ? Toy.infixCall(schema, '&', v) : v;
@@ -1813,7 +1813,7 @@ function buildHypSchema(hyps, map, exclusions) {
  */
 function hypsExcept(hyps, exclusions) {
   var result = null;
-  hyps.eachHyp(function(hyp) {
+  hyps.scanConj(function(hyp) {
       if (!exclusions.has(hyp)) {
         result = result ? Toy.infixCall(result, '&', hyp) : hyp;
       }
@@ -1918,7 +1918,7 @@ function assumptionsUsed(step) {
     return [];
   }
   var asmList = [];
-  asms.eachHyp(function (expr) { asmList.push(expr); });
+  asms.scanConj(function (expr) { asmList.push(expr); });
 
   var steps = proofOf(step);
   var result = [];

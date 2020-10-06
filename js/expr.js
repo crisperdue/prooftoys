@@ -1580,7 +1580,7 @@ Expr.prototype.hypMover = function(toMove) {
   var lhs = null;
   var rhs = null;
   var found = false;
-  this.eachHyp(function(term) {
+  this.scanConj(function(term) {
       var h;
       if (term.matches(toMove)) {
         h = new Atom('h');
@@ -1607,9 +1607,9 @@ Expr.prototype.hypMover = function(toMove) {
  * immediately becomes the value of the call.  Otherwise returns
  * the value of the last call to the action.
  */
-Expr.prototype.eachHyp = function(action) {
+Expr.prototype.scanConj = function(action) {
   if (this.isCall2('&')) {
-    return (this.getLeft().eachHyp(action) ||
+    return (this.getLeft().scanConj(action) ||
             action(this.getRight()));
   } else {
     return action(this);
@@ -1672,8 +1672,8 @@ Expr.prototype.asmSet = function() {
 
 /**
  * Transforms an expression that is a chain of conjuncts by applying
- * the xform function to each of its conjuncts.  To match eachHyp,
- * Descends into left-hand arguments, but does not descend into
+ * the xform function to each of its conjuncts.  To match scanConj,
+ * descends into left-hand arguments, but does not descend into
  * right-hand arguments of '&'.
  *
  * TODO: Use or remove.
