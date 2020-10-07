@@ -195,7 +195,7 @@ Toy.extends(Expr, null);
 /**
  * TODO: Make Step into a whole new class.  For now, it is just an
  * alias.  There will be some convenience methods such as getMain and
- * getAsms, but access to Expr properties and most methods will be
+ * asmPart, but access to Expr properties and most methods will be
  * through the "wff" property.
  *
  * Step objects have a "wff" property, but an Expr will not.
@@ -1012,7 +1012,7 @@ Expr.prototype.nth = function(n) {
 /**
  * Get the assumptions of this step if it has any, else null.
  */
-Step.prototype.getAsms = function() {
+Step.prototype.asmPart = function() {
   var wff = this.wff;
   return wff.isCall2('=>') ? wff.getLeft() : null;
 };
@@ -1614,6 +1614,26 @@ Expr.prototype.scanConj = function(action) {
   } else {
     return action(this);
   }
+};
+
+/**
+ * Returns a map from path string to term, containing all terms of the
+ * step that are assumptions; empty if there are no assumptions.
+ */
+Step.prototype.asmMap = function() {
+  const scan = function(expr, pathStr) {
+    if (expr.isCall2('&')) {
+      scan(expr.getLeft(), pathStr + '/left');
+      asms.set(pathStr + '/right', expr.getRight());
+    } else {
+      asms.set(pathStr, expr);
+    }
+  };
+  const asms = new Map();
+  if (this.wff.isCall2('=>')) {
+    scan(this.getLeft(), '/left');
+  }
+  return asms;
 };
 
 /**

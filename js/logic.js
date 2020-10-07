@@ -2946,10 +2946,13 @@ const ruleInfo = {
   removeLet: {
     precheck: function(step, path_arg) {
       var path = Toy.path(path_arg);
-      if (!(step.isCall2('=>') && path.isLeft())) {
+      const term = step.get(path);
+      // This check is a little loose because it does not compare
+      // the paths.  To do that, use prettyPathTo and compare strings.
+      // But it is not clear just how useful that extra check is.
+      if (!Array.from(step.asmMap().values()).includes(term)) {
         return false;
       }
-      var term = step.get(path);
       if (!term.isCall2('=')) {
         return false;
       }

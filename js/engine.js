@@ -1913,7 +1913,7 @@ function proofOf(step) {
  * of assumptions.
  */
 function assumptionsUsed(step) {
-  var asms = step.getAsms();
+  var asms = step.asmPart();
   if (!asms) {
     return [];
   }
