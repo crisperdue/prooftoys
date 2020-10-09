@@ -1595,18 +1595,7 @@ var simplifiersInfo = {
       var facts = opt_facts || basicSimpFacts;
       var info = Toy.searchForMatchingFact(step.get(_path), facts);
       return (info
-              ? (Toy.isEmpty(info.subst)
-                 // If there is no substitution, don't display the
-                 // step as if it uses a well-known fact, because it
-                 // almost certainly does not.  Perhaps such cases
-                 // should display with the word "replace" rather than
-                 // "rewrite", but we need the fancier functionality
-                 // of rewrite rules.
-                 //
-                 // Caution: rewriteFrom accepts a statement, as occurs
-                 // here, though you might think it would require a step.
-                 ? rules.rewriteFrom(step, _path.concat(info.path), info.stmt)
-                 : rules.rewrite(step, _path.concat(info.path), info.stmt))
+              ? rules.rewrite(step, _path.concat(info.path), info.stmt)
               : step);
     }
   },
