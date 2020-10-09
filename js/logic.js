@@ -238,10 +238,10 @@ const axioms = {
   axiom5: {
     // Traditionally (upside-down) iota, as in Andrews' text.
     statement: 'the1 {x. x = y} = y', axiom: true,
+    simplifier: true,
     inputs: {},
     tooltip: ('axiom of description'),
-    description: 'axiom of description',
-    simplifier: true
+    description: 'axiom of description'
   },
 
   /**
@@ -1665,8 +1665,7 @@ const booleanRules = {
       var step2 = rules.eqT(T);
       var step3 = rules.eqnSwap(step2);
       return rules.equationCases(step3, step1, 'x');
-    },
-    simplifier: true
+    }
   },
 
   // 5218: [T == A] == A
@@ -4778,17 +4777,17 @@ addRules(existRules);
 const logicFacts =
   [
    {statement: '(T = a) == a',
+    simplifier: true,
     proof: function() {
        return rules.theorem('tIsXIsX');
-     },
-    simplifier: true
+     }
    },
    {statement: '(a = T) == a',
+    simplifier: true,
     proof: function() {
        return rules.theorem('tIsXIsX')
        .andThen('rewriteOnly', '/left', 'equalitySymmetric');
-     },
-    simplifier: true
+     }
    },
 
    // Somewhat useful fact to stick at the end of the list.
@@ -4799,10 +4798,10 @@ const logicFacts =
    },
 
    {statement: '(T => a) == a',
+    simplifier: true,
     proof: function() {
        return rules.tautology('(T => a) == a');
-     },
-    simplifier: true
+     }
    },
 
    {statement: '(a != b) == not (a = b)',
@@ -4815,29 +4814,29 @@ const logicFacts =
    },
 
    {statement: 'not (a != b) == (a = b)',
+    simplifier: true,
     proof: function() {
        return (rules.fact('a != b == not (a = b)')
                .rewrite('', 'a == b == (not a == not b)')
                .andThen('simplifySite', '/right'));
-     },
-    simplifier: true
+     }
    },
 
    {statement: 'x = x == T',
+    simplifier: true,
     proof: function() {
        return (rules.eqSelf('x')
                .andThen('rewriteOnly', '', 'a == (a == T)'));
-     },
-    simplifier: true
+     }
    },
 
    {statement: 'ident x = x',
+    simplifier: true,
     proof: function() {
        return (rules.eqSelf('ident x')
                .andThen('useDefinition', '/right/fn')
                .andThen('reduce', '/right'));
-     },
-    simplifier: true
+     }
    },
 
    {statement: 'negate p = {x. not (p x)}',
@@ -4847,23 +4846,23 @@ const logicFacts =
    },
 
    {statement: 'negate (negate p) = p',
+    simplifier: true,
     proof: function() {
        return (rules.consider('(negate (negate p)) x')
                .andThen('simplifySite', '/right')
                .andThen('toForall0', 'x')
                .andThen('rewrite', '',
                         'forall {x. q x == p x} == (q = p)'));
-     },
-    simplifier: true
+     }
    },
 
    {statement: '(negate p) x == not (p x)',
+    simplifier: true,
     proof: function() {
        return (rules.consider('(negate p) x')
                .andThen('apply', '/right/fn')
                .andThen('apply', '/right'));
-     },
-    simplifier: true
+     }
    },
 
    // This is the classic definition of the existential quantifier,
@@ -4959,13 +4958,13 @@ const logicFacts =
    },
 
    {statement: 'if T x y = x',
+    simplifier: true,
     proof: function() {
        return (rules.consider('if T x y')
                .andThen('rewriteOnly', '/right/fn/fn', 'if T = {x. {y. x}}')
                .andThen('apply', '/right/fn')
                .andThen('apply', '/right'));
-     },
-    simplifier: true
+     }
    },
 
    {statement: 'if F = {x. {y. y}}',
@@ -4979,13 +4978,13 @@ const logicFacts =
    },
 
    {statement: 'if F x y = y',
+    simplifier: true,
     proof: function() {
        return (rules.consider('if F x y')
                .andThen('rewriteOnly', '/right/fn/fn', 'if F = {x. {y. y}}')
                .andThen('apply', '/right/fn')
                .andThen('apply', '/right'));
-     },
-    simplifier: true
+     }
    },
 
    {statement: 'exists {y. y = x}',

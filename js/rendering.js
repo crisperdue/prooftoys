@@ -1496,9 +1496,7 @@ function unrenderedDeps(step) {
   var result = [];
   const visited = new Set();
   // Traverses the dependency graph, recording a copy of every step
-  // and building an array of all of the original steps.  In Java
-  // one might use HashSets to identify already-visited steps,
-  // avoiding temporary modifications to the originals.
+  // and building an array of all of the original steps.
   function visitWithDeps(step) {
     if (!step.rendering && !visited.has(step)) {
       result.push(step);

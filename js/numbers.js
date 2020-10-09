@@ -412,6 +412,7 @@ Toy.addRules(realOrdFacts);
 
      // Lay 11.1b
      {statement: 'x * 0 = 0',
+      simplifier: true,
       proof:
       [
        '(1 consider (t (x * 0)))',
@@ -429,8 +430,7 @@ Toy.addRules(realOrdFacts);
        '(12 p2 (s 5) (s 11) (t (((a => b) & (a => (b => c))) => (a => c))))',
        '(13 rewrite (s 12) (path "/right") (t ((x = y) == (y = x))))'
        ],
-      description: 'multiplication by zero',
-      simplifier: true
+      description: 'multiplication by zero'
      },
 
      // Lay 11.1c
@@ -538,13 +538,13 @@ Toy.addRules(realOrdFacts);
      },
 
      {statement: '@ neg 0 = 0',
+      simplifier: true,
       proof:
       [
        '(1 fact "x + neg x = 0")',
        '(2 instantiateVar (s 1) (path "/right/left/left") (t 0))',
        '(3 rewrite (s 2) (path "/right/left") (t ((R a) => ((0 + a) = a))))'
-       ],
-      simplifier: true
+       ]
      },
 
      {statement: '@ R x => (x < 0 == 0 < neg x)',
@@ -596,8 +596,8 @@ Toy.addRules(realOrdFacts);
 const fakeAxioms =
   [
    {statement: 'x != 0 => x * recip x = 1', axiom: true,
-    description: 'reciprocal',
-    simplifier: true
+    simplifier: true,
+    description: 'reciprocal'
    },
    {name: 'axiomReciprocal2',
     // TODO: Eliminate the two uses of this (both by name).
@@ -668,7 +668,7 @@ var numbersInfo = {
     description: 'real number to the next power'
   },
 
-  // TODO: Prove this as a consequnce of field axioms.
+  // TODO: Prove this from x * y = 0 etc by deMorgan's Law.
   factNonzeroProduct: {
     statement: '@R x & R y => (x * y != 0 == x != 0 & y != 0)',
     simplifier: true  // Good mainly for simplifying assumptions.
@@ -2462,11 +2462,11 @@ var negationFacts = {
     }
   },
   'neg a + b = b - a': {
+    simplifier: true,
     proof: function() {
       return rules.fact('@a + neg b = a - b')
         .rewrite('/main/left', 'a + b = b + a');
-    },
-    simplifier: true
+    }
   },
   '@a - b = neg b + a': {
     proof: function() {
@@ -2718,21 +2718,21 @@ var subtractionFacts = {
   },
 
   'a + b - b = a': {
+    simplifier: true,
     proof: function() {
       return (rules.fact('a + b - c = a + (b - c)')
               .andThen('instVar', 'b', 'c')
               .andThen('simplifyFocalPart'));
-    },
-    simplifier: true
+    }
   },
 
   'a - b + b = a': {
+    simplifier: true,
     proof: function() {
       return (rules.fact('a - b + c = a - (b - c)')
               .andThen('instVar', 'b', 'c')
               .andThen('simplifyFocalPart'));
-    },
-    simplifier: true
+    }
   }
 
 };
@@ -2844,13 +2844,13 @@ var divisionFacts = {
               .rewrite('/main/left/left', divFact));
     }
   },
-  'b != 0 => a / b * b  = a': {
+  'b != 0 => a / b * b = a': {
+    simplifier: true,
     proof: function() {
       return (rules.fact('a / b * c = a * (c / b)')
               .andThen('instVar', 'b', 'c')
               .andThen('simplifyFocalPart'));
-    },
-    simplifier: true
+    }
   },
   'b != 0 & c != 0 => a / (b * c) = a / b / c': {
     proof: function() {
@@ -2889,12 +2889,12 @@ var divisionFacts = {
     }
   },
   'a != 0 & b != 0 => a / (a * b) = 1 / b': {
+    simplifier: true,
     proof: function() {
       return (rules.fact('a / (b * c) = a / b / c')
               .andThen('instVar', 'a', 'b')
               .andThen('simplifyFocalPart'));
-    },
-    simplifier: true
+    }
   },
   'c != 0 => a * (b / c) = a * b / c': {
     proof: function() {
@@ -2914,12 +2914,12 @@ var divisionFacts = {
     }
   },
   'b != 0 => a * b / b = a': {
+    simplifier: true,
     proof: function() {
       return (rules.fact('a * b / c = a * (b / c)')
               .andThen('instVar', 'b', 'c')
               .andThen('simplifyFocalPart'));
-    },
-    simplifier: true
+    }
   },
   // This is useful for converting a summand to a fraction like
   // its neighbor.
