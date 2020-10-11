@@ -4562,7 +4562,46 @@ const ruleInfo = {
 };
 addRulesMap(ruleInfo);
 
-
+// This fact states the truth table for ==.  At present the
+// proof display for it shows proofs of facts for rows in the truth
+// table that use tautologies, but all of those facts are proved
+// in this file without using truth tables.
+addRule
+    ({statement: '(==) = {a. {b. if a b (not b)}}',
+      proof:
+      [`(1 given
+           (t (forall {a. (forall {b. ((a == b) == ((if a b) (not b)))})})))`,
+       `(2 rewrite (s 1) (path "/main/right/arg/body")
+           (t ((forall {a. (g a)}) == ((g T) & (g F)))))`,
+       `(3 rewrite (s 2) (path "/main/right")
+           (t ((forall {a. (g a)}) == ((g T) & (g F)))))`,
+       `(4 reduceAll (s 3) (path "/main/right"))`,
+       `(5 rewrite (s 4) (path "/main/right/right/right/right")
+           (t (((if F x) y) = y)))`,
+       `(6 rewrite (s 5) (path "/main/right/right/right/right")
+           (t ((not F) == T)))`,
+       `(7 rewrite (s 6) (path "/main/right/right/left/right")
+           (t (((if F x) y) = y)))`,
+       `(8 rewrite (s 7) (path "/main/right/right/left/right")
+           (t ((not T) == F)))`,
+       `(9 rewrite (s 8) (path "/main/right/left/right/right")
+           (t (((if T x) y) = x)))`,
+       `(10 rewrite (s 9) (path "/main/right/left/left/right")
+            (t (((if T x) y) = x)))`,
+       `(11 fact "x = x == T")`,
+       `(12 fact "T==F==F")`,
+       `(13 fact "F==T==F")`,
+       `(14 trueBy0 (s 10) (path "/main/right/right/right") (s 11))`,
+       `(15 trueBy0 (s 14) (path "/main/right/right/left") (s 13))`,
+       `(16 trueBy0 (s 15) (path "/main/right/left/right") (s 12))`,
+       `(17 trueBy0 (s 16) (path "/main/right/left/left") (s 11))`,
+       `(18 simplifySite (s 17) "")`,
+       `(19 rewrite (s 18) (path "/main/arg/body")
+           (t ((forall {x. ((f x) = (g x))}) == (f = g))))`,
+       `(20 rewrite (s 19) (path "/main")
+            (t ((forall {x. ((f x) = (g x))}) == (f = g))))`
+      ]});
+  
 const existRules =
   [
    // Derive exists {x. p x} from a witnessing term.  This only replaces the
