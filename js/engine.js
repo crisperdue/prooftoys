@@ -846,7 +846,7 @@ function enableDefnFacts() {
  * generates the fact f x = <term>, and similarly if there are
  * multiple arguments.
  *
- * This is intended just for use from Toy.definition.
+ * This is intended mainly for use from Toy.definition.
  *
  * End users may choose to look up such facts using rules.definition
  * and reduceEqn via the user interface.
@@ -856,9 +856,9 @@ function addDefnFacts(definition) {
     var defined = definition.getLeft();
     // Add the converse as a simplifier.
     addSwappedFact({goal: definition, desimplifier: true, definitional: true});
-    var name = defined.name;
-    var eqn = rules.definition(name);
-    var lambda = definition.getRight();
+    const eqn0 = rules.fact(definition);
+    let eqn = eqn0;
+    var lambda = eqn.getRight();
     while (lambda instanceof Lambda) {
       var bound = lambda.bound;
       eqn = (rules.applyBoth(eqn, bound)
@@ -867,7 +867,7 @@ function addDefnFacts(definition) {
     }
     // TODO: Consider adding a fact unconditionally, and treating
     //   it automatically as a desimplifier.
-    if (eqn != definition) {
+    if (eqn != eqn0) {
       // Flag the fact as being essentially the same as the definition
       // of the function or predicate.
       addFact({goal: eqn, definitional: true});
