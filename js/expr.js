@@ -2319,7 +2319,9 @@ Atom.prototype._asPattern = function(term) {
   return this.__var || this;
 };
 
-Atom.prototype.searchMost = function(fn, path, bindings) {};
+Atom.prototype.searchMost = function(fn, path, bindings) {
+  return fn(this, path, bindings);
+};
 
 
 
