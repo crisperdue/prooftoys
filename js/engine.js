@@ -357,12 +357,12 @@ var rules = {};
 //   its inputs based on its input descriptor.  For each of these
 //   define a rule 'fast_' + name to be the simplest form.
 //
-// data: If a rule has a "data" property, set rules[ruleName] to a new
-//   function that binds "this" to the rule's action function, and set
-//   up the "data" object as the "data" property of the action
-//   function.  If the value of the rule data property is a function,
-//   the data property of the action function becomes the result of
-//   applying it to no arguments.
+// data: If a rule has a "data" property, set rules[ruleName] to a
+//   wrapper function that runs the user-written action function with
+//   "this" bound to the wrapper and the "data" object as the "data"
+//   property of "this".  If the value of the info data property is a
+//   function, this.data will the result of applying it to no
+//   arguments once during rule setup.
 //
 // minArgs: Number of required args for the action.  Supply a
 //   value here to make trailing arguments optional in the step editor.
