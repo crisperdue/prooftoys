@@ -1158,7 +1158,7 @@ const baseRules = {
     }
   },
 
-  // T = [B = B] (5210)
+  // T == [B = B] (5210)
   eqT: {
     action: function(b) {
       var lemma = rules.theorem('xAlwaysX');
@@ -1507,6 +1507,7 @@ if (useFalseDefn) {
   addRulesMap(falseDefnFacts);
 }
 
+
 // These are not specific to book definitions, but currently may
 // use (non-book) definitions by cases.
 const truthTableFacts = {
@@ -1575,6 +1576,18 @@ var simplifiersInfo = {
     labels: 'algebra'
   },
 
+  simplifySiteWith: {
+    action: function(step, path, fact_arg) {
+      var result = rules._simplifySite(step, path, [fact_arg]);
+      return result.justify('simplifySiteWith', arguments, [step]);
+    },
+    inputs: {site: 1, term: 3},
+    menu: 'algebra: simplify {term} with fact',
+    form: 'Simplify using term <input name=term>',
+    description: 'simplify using {term};; {in step siteStep}',
+    labels: 'algebra'
+  },
+
   // TODO: Create a "rules.simplifier" that takes a term argument
   //   and proves it equal to some (hopefully) simpler term.
 
@@ -1599,6 +1612,8 @@ var simplifiersInfo = {
   // inline, just the input step if there is nothing to do.
   //
   // From the UI use a rule that calls this one.
+  //
+  // TODO: parameterize the rewriting/simplifying.
   _simplifyOnce: {
     action: function(step, _path, opt_facts) {
       var facts = opt_facts || basicSimpFacts;
@@ -2213,6 +2228,37 @@ const booleanRules = {
   //
   // TODO: Implement this recursively for cleaner presentation of
   // results and greater efficiency.
+  boolSimp: {
+    data: {simpFacts: ['if T x y = x',
+                       'if F x y = y',
+                       'not F == T',
+                       'not T == F',
+                       // Fast simp facts for &, |, => perhaps right here.
+                       {apply: tryReduce},
+                       // It might be possible to get some speedup
+                       // by precomputing ground terms with these ops.
+                       '(==) = {x. {y. if x y (not y)}}',
+                       '(&) = {x. {y. if x y F}}',
+                       '(|) = {x. {y. if x T y}}',
+                       '(=>) = {x. {y. if x y T}}']},
+    action: function(expr) {
+      // alert(rules.boolSimp('T == T'));
+      // rules.tautology('T == T');
+      
+      const simpFacts = this.data.simpFacts;
+      const eqn = rules.equivSelf(expr);
+      return (rules._simplifySite(eqn, '/right', simpFacts)
+              .justify('boolSimp', [expr]));
+    },
+    // TODO: should be bool:.
+    inputs: {term: 1},
+    menu: 'bool simp',  
+    form: 'Boolean term to simplify: <input name=term>',
+    labels: 'basic',
+    tooltip: ('simplify boolean'),
+    description: 'simplify boolean value'
+  },
+
   evalBool: {
     action: function(expr) {
       var boolOps = {'&': true, '|': true, '=>': true, '=': true, not: true};
@@ -2260,9 +2306,9 @@ const booleanRules = {
       }
     },
     inputs: {bool: 1},
-    form: 'Boolean term to simplify: <input name=bool>',
+    form: 'Boolean term to evaluate: <input name=bool>',
     labels: 'uncommon',
-    tooltip: ('simplify a boolean term'),
+    tooltip: ('evaluate a boolean term'),
     description: 'calculate boolean value'
   },
 
@@ -2322,8 +2368,8 @@ const booleanRules = {
             var result = step3.justify('tautology0', arguments);
             return result;
           } else {
-            var step1 = rules.tautology0(equal(T, wff.subFree1(T, name)));
-            var step2 = rules.tautology0(equal(T, wff.subFree1(F, name)));
+            var step1 = rules.tautology0(call('==', T, wff.subFree1(T, name)));
+            var step2 = rules.tautology0(call('==', T, wff.subFree1(F, name)));
             var step3 = rules.equationCases(step1, step2, name);
             var step4 = rules.fromTIsA(step3);
             _tautologies[key] = step4;
@@ -2332,7 +2378,7 @@ const booleanRules = {
           }
         }
         // There are no free variables, evaluate the expression.
-        var step11 = rules.evalBool(wff);
+        var step11 = rules.boolSimp(wff);
         assert(step11.isCall2('=') && step11.getRight().isConst('T'),
                'Not a tautology: {1}', step11.getLeft(),
                step11);
@@ -4598,16 +4644,17 @@ addRule
        `(10 rewrite (s 9) (path "/main/right/left/left/right")
             (t (((if T x) y) = x)))`,
        `(11 fact "x = x == T")`,
-       `(12 fact "T==F==F")`,
-       `(13 fact "F==T==F")`,
+       `(12 fact "T == F == F")`,
+       `(13 fact "F == T == F")`,
        `(14 trueBy0 (s 10) (path "/main/right/right/right") (s 11))`,
        `(15 trueBy0 (s 14) (path "/main/right/right/left") (s 13))`,
        `(16 trueBy0 (s 15) (path "/main/right/left/right") (s 12))`,
        `(17 trueBy0 (s 16) (path "/main/right/left/left") (s 11))`,
-       `(18 simplifySite (s 17) "")`,
-       `(19 rewrite (s 18) (path "/main/arg/body")
+       `(18 simplifySiteWith (s 17) (path "/right") (t ((T & T) == T)))`,
+       `(19 rewrite (s 18) (path "") (t ((x == T) == x)))`,
+       `(20 rewrite (s 19) (path "/main/arg/body")
            (t ((forall {x. ((f x) = (g x))}) == (f = g))))`,
-       `(20 rewrite (s 19) (path "/main")
+       `(21 rewrite (s 20) (path "/main")
             (t ((forall {x. ((f x) = (g x))}) == (f = g))))`
       ]});
   
@@ -4813,17 +4860,19 @@ addRules(existRules);
 
 const logicFacts =
   [
-   {statement: '(T = a) == a',
+   {statement: '(T == a) == a',
     simplifier: true,
     proof: function() {
        return rules.theorem('tIsXIsX');
      }
    },
-   {statement: '(a = T) == a',
+   {statement: '(a == T) == a',
     simplifier: true,
     proof: function() {
-       return rules.theorem('tIsXIsX')
-       .andThen('rewriteOnly', '/left', 'equalitySymmetric');
+      var step1 = rules.theorem('r5230FT_alternate');
+      var step2 = rules.eqT(T);
+      var step3 = rules.eqnSwap(step2);
+      return rules.equationCases(step3, step1, 'x');
      }
    },
 
@@ -4859,11 +4908,10 @@ const logicFacts =
      }
    },
 
-   {statement: 'x = x == T',
-    simplifier: true,
+   {statement: 'T == (x = x)',
+    desimplifier: true,
     proof: function() {
-       return (rules.eqSelf('x')
-               .andThen('rewriteOnly', '', 'a == (a == T)'));
+       return rules.eqT('x');
      }
    },
 
@@ -5065,6 +5113,7 @@ addRules(demoFacts);
 
 // Make defn facts available and stop deferring their proofs.
 Toy.enableDefnFacts();
+
 
 //// EXPORT NAMES
 
