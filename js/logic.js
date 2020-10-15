@@ -87,8 +87,7 @@ definition('(!=) = {x. {y. not (x = y)}}');
 definition('exists = {p. p != {x. F}}');
 definition('exists1 = {p. exists {x. p = {y. y = x}}}');
 
-// TODO: Use the new definition mechanism where defineCases
-//   is used now.
+// TODO: Define these using "if" as stated a few lines below.
 defineCases('&', identity, '{x. F}');
 defineCases('|', allT, identity);
 defineCases('=>', identity, allT);
@@ -103,7 +102,22 @@ Toy.namedConstants.add('=>');
 
 // It would be desirable for the constants in this next group to
 // all have generic types.
-definition('if = {p. {x. {y. the1 {z. p & z = x | not p & z = y}}}}');
+// definition('if = {p. {x. {y. the1 {z. p & z = x | not p & z = y}}}}');
+
+addRules(
+    [{statement: 'if T x y = x', axiom: true},
+     {statement: 'if F x y = y', axiom: true},
+     // TODO: Convert these into definitions.
+     {statement: '(&) = {x. {y. if x y F}}', axiom: true},
+     {statement: '(|) = {x. {y. if x T y}}', axiom: true},
+     {statement: '(=>) = {x. {y. if x y T}}', axiom: true}
+    ]);
+
+// TODO: Remove these temporary shims when the above statements become
+//   definitions.
+Toy.addDefnFacts(Toy.parse('(&) = {x. {y. if x y F}}'));
+Toy.addDefnFacts(Toy.parse('(|) = {x. {y. if x T y}}'));
+Toy.addDefnFacts(Toy.parse('(=>) = {x. {y. if x y T}}'));
 
 definition('empty = {x. F}');
 definition('none = the1 empty');
@@ -1453,42 +1467,37 @@ const falseDefnFacts = {
   r5230FT_alternate: {
     statement: '(F == T) == F',
     proof: function() {
-      var x = Toy.parse('x');
-      var step1a = rules.instVar(rules.axiom2(), F, x);
-      var step1b = rules.instVar(step1a, T, 'y');
-      var step1c = rules.instVar(step1b, '{x. x = F}', 'h');
-      var step2a = rules.reduce(step1c, '/right/left');
-      var step2b = rules.reduce(step2a, '/right/right');
-      var step3a1 = rules.eqT(F);
-      const step3a2 = rules.eqnSwap(step3a1);
-      var step3a = rules.r(step3a2, step2b, '/right/left');
-      var step3bb = rules.r5218(F);
-      var step3b = rules.r(step3bb, step3a, '/right/right');
-      var step3c = rules.r(step3bb, step3b, '/right');
-      // From this point most of the work is basically a proof
-      // that [A => F] => not A, a tautology.
-      var step4 = rules.rewriteOnly(step3c, '', 'p == (T == p)');
-      // We are going to prove the cases of: (x => F) = (x = F)
-      // First with x = F.
-      //
-      // Note uses of the unbookish definition of => in this proof.
-      var step11 = rules.definition('=>', F);
-      var step12 = rules.applyBoth(step11, F);
-      var step13 = rules.reduce(step12, '/right');
-      var step14 = rules.r(step3a1, step13, '/right');
-      // Then with x = T.
-      var step21 = rules.definition('=>', T);
-      var step22 = rules.applyBoth(step21, F);
-      var step23 = rules.reduce(step22, '/right');
-      var step24 = rules.r5217Book();
-      var step25 = rules.rRight(step24, step23, '/right');
-      // Now use the cases rule:
-      var step5 = rules.equationCases(step25, step14, x);
-      // Then instantiate [F = T] for x.
-      var step6 = rules.instEqn(step5, equal(F, T), x);
-      // And use the fact that [F = T] => F
-      var step7 = rules.rRight(step4, step6, '/left');
-      return rules.rewriteOnly(step7, '', '(T == p) == p');
+	const map1 = {x: 'F', y: 'T', h: '{x. x = F}'};
+	const step1c = rules.instMultiVars(rules.axiom2(), map1);
+	const step2b = rules.reduceAll(step1c, '/right');
+	const step3a1 = rules.eqT(F);
+	const step3a2 = rules.eqnSwap(step3a1);
+	const step3a = rules.r1(step2b, '/right/left', step3a2);
+	const step3bb = rules.r5218(F);
+	const step3b = rules.r1(step3a, '/right/right', step3bb);
+	const step3c = rules.r1(step3b, '/right', step3bb);
+	// From this point most of the work is basically a proof
+	// that [A => F] => not A, a tautology.
+	const step4 = rules.rewriteOnly(step3c, '', 'p == (T == p)');
+	// We are going to prove the cases of: (x => F) = (x = F)
+	// First with x = F.
+	const step11 = rules.fact('(a => b) = if a b T');
+	const step12 = rules.instMultiVars(step11, {a: 'F', b: 'F'});
+	const step13 = rules.rewriteOnly(step12, '/right', 'if F x y = y');
+	const step14 = rules.r1(step13, '/right', step3a1);
+	// Then with x = T.
+	const step21 = rules.fact('(a => b) = if a b T');
+	const step22 = rules.instMultiVars(step21, {a: 'T', b: 'F'});
+	const step23 = rules.rewriteOnly(step22, '/right', 'if T x y = x');
+	const step24 = rules.r5217Book();
+	const step25 = rules.rRight(step24, step23, '/right');
+	// Now use the cases rule:
+	const step5 = rules.equationCases(step25, step14, 'x');
+	// Then instantiate [F = T] for x.
+	const step6 = rules.instEqn(step5, equal(F, T), 'x');
+	// And use the fact that [F = T] => F
+	const step7 = rules.rRight(step4, step6, '/left');
+	return rules.rewriteOnly(step7, '', '(T == p) == p');
     },
     tooltip: ('[F = T] = F')
   }
@@ -4972,46 +4981,6 @@ const logicFacts =
                         'a => not b == b => not a')
                .andThen('rewriteOnly', '/right',
                         'not (forall {x. not (p x)}) == exists p'));
-     }
-   },
-
-   {statement: 'if T = {x. {y. x}}',
-    proof: function() {
-       return (rules.consider('if T')
-               .andThen('apply', '/right')
-               .andThen('simplifySite', '/right/body/body/arg/body')
-               .andThen('rewriteOnly',
-                        '/right/body/body', 'the1 {x. x = y} = y'));
-     }
-   },
-
-   {statement: 'if T x y = x',
-    simplifier: true,
-    proof: function() {
-       return (rules.consider('if T x y')
-               .andThen('rewriteOnly', '/right/fn/fn', 'if T = {x. {y. x}}')
-               .andThen('apply', '/right/fn')
-               .andThen('apply', '/right'));
-     }
-   },
-
-   {statement: 'if F = {x. {y. y}}',
-    proof: function() {
-       return (rules.consider('if F')
-               .andThen('apply', '/right')
-               .andThen('simplifySite', '/main/right/body/body/arg/body')
-               .andThen('rewriteOnly',
-                        '/right/body/body', 'the1 {x. x = y} = y'));
-     }
-   },
-
-   {statement: 'if F x y = y',
-    simplifier: true,
-    proof: function() {
-       return (rules.consider('if F x y')
-               .andThen('rewriteOnly', '/right/fn/fn', 'if F = {x. {y. y}}')
-               .andThen('apply', '/right/fn')
-               .andThen('apply', '/right'));
      }
    },
 
