@@ -25,7 +25,6 @@ const Atom = Toy.Atom;
 const Call = Toy.Call;
 const Lambda = Toy.Lambda;
 
-const defineCases = Toy.defineCases;
 const definition = Toy.definition;
 
 // The book definition of F is just fine, and can be presented either
@@ -86,16 +85,6 @@ definition('(!=) = {x. {y. not (x = y)}}');
 definition('exists = {p. p != {x. F}}');
 definition('exists1 = {p. exists {x. p = {y. y = x}}}');
 
-// TODO: Define these using "if" as stated a few lines below.
-defineCases('&', identity, '{x. F}');
-defineCases('|', allT, identity);
-defineCases('=>', identity, allT);
-
-// Workaround for deficiency in defineCases as used above.
-Toy.namedConstants.add('&');
-Toy.namedConstants.add('|');
-Toy.namedConstants.add('=>');
-
 // Adding definitions before use enables type checking to use the
 // known types of the constants.
 
@@ -105,18 +94,42 @@ Toy.namedConstants.add('=>');
 
 addRules(
     [{statement: 'if T x y = x', axiom: true},
-     {statement: 'if F x y = y', axiom: true},
-     // TODO: Convert these into definitions.
-     {statement: '(&) = {x. {y. if x y F}}', axiom: true},
-     {statement: '(|) = {x. {y. if x T y}}', axiom: true},
-     {statement: '(=>) = {x. {y. if x y T}}', axiom: true}
-    ]);
+     {statement: 'if F x y = y', axiom: true}
+     ]);
 
-// TODO: Remove these temporary shims when the above statements become
-//   definitions.
-Toy.addDefnFacts(Toy.parse('(&) = {x. {y. if x y F}}'));
-Toy.addDefnFacts(Toy.parse('(|) = {x. {y. if x T y}}'));
-Toy.addDefnFacts(Toy.parse('(=>) = {x. {y. if x y T}}'));
+// We will derive the T/F cases facts after defining some inference rules.
+definition('(&) = {x. {y. if x y F}}');
+definition('(|) = {x. {y. if x T y}}');
+definition('(=>) = {x. {y. if x y T}}');
+
+/**
+ * This derives two facts for a defined boolean operator or function,
+ * one for the true case and one for the false case, reducing the
+ * outer lambda and simplifying any conditional within it.
+ */
+function deriveCases(op) {
+  const eqn = rules.definition(op);
+
+  const t1 = rules.applyBoth(eqn, T);
+  const t2 = rules.reduce(t1, '/right');
+  const t3 = rules.simplifySiteWith(t2, '/right', 'if T y z = y');
+  console.log('Derived', t3.$$);
+  Toy.addFact({goal: t3, desimplifier: true});
+
+  const f1 = rules.applyBoth(eqn, F);
+  const f2 = rules.reduce(f1, '/right');
+  const f3 = rules.simplifySiteWith(f2, '/right', 'if F y z = z');
+  console.log('Derived', f3.$$);
+  Toy.addFact({goal: f3, desimplifier: true});
+}
+
+// Once all code is loaded we can derive the cases.
+$(function() {
+    deriveCases('&');
+    deriveCases('|');
+    deriveCases('=>');
+  });
+
 
 definition('empty = {x. F}');
 definition('none = the1 empty');
@@ -701,15 +714,9 @@ const prelogic = {
       // At this point the parent (if defined) is a Call.
       // The parentPath is path to the parent if any.
       assert(target instanceof Atom, 'Not a symbol: {1}', target);
-      if (Toy.isDefinedByCases(target)) {
-        assert(parent, 'To use a definition by cases, refer to a call.');
-        result = rules.r1(step, parentPath,
-                          rules.definition(target.name, parent.arg));
-      } else {
-        result = rules.r1(step,
-                          parentPath ? parentPath.concat('/fn') : path,
-                          rules.definition(target.name));
-      }
+      result = rules.r1(step,
+                        parentPath ? parentPath.concat('/fn') : path,
+                        rules.definition(target.name));
       return result.justify('useDefinition', args, [step]);
     },
     inputs: {site: 1},
@@ -2132,7 +2139,7 @@ const booleanRules = {
       //
       // TODO: Implement with tautology rather than use
       //   a somewhat arbitrary definition.
-      var step3 = rules.useDefinition(step2, '/fn');
+      var step3 = rules.rewriteOnly(step2, '/fn', '(=>) T = {y. y}');
       // From T => x derive x.
       var step4 = rules.reduce(step3, '');
       return step4.justify('modusPonens', arguments, arguments);
@@ -5123,5 +5130,9 @@ Toy.logicFacts = logicFacts;
 
 Toy.asmSimplifiers = [];
 Toy.simplifyStep = simplifyStep;
+
+// For testing
+
+Toy._deriveCases = deriveCases;
 
 }();

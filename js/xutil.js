@@ -525,8 +525,6 @@ function findType(expr, annotate) {
 function lookupType(name) {
   if (constantTypes.hasOwnProperty(name)) {
     return constantTypes[name];
-  } else if (isDefinedByCases(name)) {
-    return definedTypes[name];
   } else if (isDefinedSimply(name)) {
     console.warn(name, 'is defined but type is not recorded.');
     return findType(getDefinition(name).getRight());
@@ -722,125 +720,43 @@ var constantTypes = {
   log10: funType()
 };
 
-// Types of operations defined by cases.
-// TODO: Consider inferring these instead from the definitions.
-var definedTypes = {
-  '&': booleanBinOpType(),
-  '|': booleanBinOpType(),
-  '=>': booleanBinOpType()
-};
-
-// Indexed by the name defined.  Value is an Expr (not a step) if the
-// definition is simple.  If by cases, the value is a map from 'T' and
-// 'F' to the definition for each case.  The "definition" rule justifies
-// the defining WFF on each access.
+// Indexed by the name defined.  Value is an Expr (not a step).  The
+// "definition" rule justifies the defining WFF on each access.
 //
 // Primitive constants are here, but the definitions are truthy fakes.
 // This prevents them from being defined later.
 var definitions = {
   T: true,
+  // TODO: try removing this, since F is defined.
   F: true,
   '=': true,
   the1: true
 };
 
 /**
- * Add a simple definition with true/false cases.  A call could
- * be something like defineCases('not', F, T).
- *
- * TODO: Consider replacing this with definitions whose statement
- *   includes "if-then-else".
+ * Fetches a definition from the definitions database.  Throws an
+ * exception if an appropriate definition is not found.
  */
-function defineCases(name, ifTrue, ifFalse) {
-  assert(Toy.isConstantName(name), 'Not a constant name: ' + name);
-  assert(!definitions.hasOwnProperty(name), 'Already defined: ' + name);
-  ifTrue = termify(ifTrue);
-  ifFalse = termify(ifFalse);
-  for (var n in ifTrue.freeVars()) {
-    assert(false, 'Definition has free variables: ' + name);
-  }
-  for (var n in ifFalse.freeVars()) {
-    assert(false, 'Definition has free variables: ' + name);
-  }
-  // Procedurally unify the type of the true branch and the false
-  // branch, and add a boolean input.
-  var type1 = findType(ifTrue);
-  unifyTypes(type1, findType(ifFalse));
-  var type = new FunctionType(boolean, dereference(type1));
-  constantTypes[name] = type;
-  definitions[name] = {T: equal(call(name, 'T'), ifTrue),
-                       F: equal(call(name, 'F'), ifFalse)};
-}
-
-/**
- * Returns whether the name (or Atom) currently has a simple
- * definition.
- */
-function isDefinedSimply(name) {
-  if (name instanceof Atom) {
-    name = name.name;
-  }
-  assert(typeof name == 'string', function() {
-      return 'Non-string name: ' + name;
-    });
-  return definitions[name] instanceof Expr;
-}
-
-/**
- * Returns whether the name (or Atom) currently has a definition by
- * cases.
- */
-function isDefinedByCases(name) {
-  if (name instanceof Atom) {
-    name = name.name;
-  }
-  assert(typeof name == 'string', function() {
-      return 'Non-string name: ' + name;
-    });
-  return (definitions.hasOwnProperty(name)
-	  && !!definitions[name].T);
-}
-
-/**
- * Fetch a simple or by-cases definition from the definitions
- * database.  Throws an exception if an appropriate definition is not
- * found.  Pass true or false or T or F or 'T' or 'F' to get the
- * appropriate part of a definition by cases.
- */
-function getDefinition(name, tOrF) {
-  var defn = findDefinition(name, tOrF);
+function getDefinition(name) {
+  var defn = findDefinition(name);
   assert(defn, 'Not defined: ' + name);
   return defn;
 }
 
 /**
- * Finds a definition or by-cases definition in the definitions
- * database.  If the tOrF argument is present, the definition must be
- * by cases, otherwise simple.  Also accepts an Atom.
+ * Finds a definition in the definitions database.  Also accepts an
+ * Atom.
  *
- * Returns null if the given name has no definition; false if
- * it is a primitive constant.
+ * Returns null if the given name has no definition; false if it is a
+ * primitive constant.
  */
-function findDefinition(name, tOrF) {
+function findDefinition(name) {
   name = name instanceof Atom ? name.name : name;
   var defn = definitions[name];
   if (!defn) {
     return null;
   }
-  if (!tOrF) {
-    return defn instanceof Expr && defn;
-  } else {
-    if (tOrF == true || (tOrF instanceof Atom && tOrF.name == 'T')) {
-      tOrF = 'T';
-    } else if (tOrF == false || (tOrF instanceof Atom && tOrF.name == 'F')) {
-      tOrF = 'F';
-    }
-    if (defn instanceof Expr) {
-      return null;
-    }
-    var defnCase = defn[tOrF];
-    return defnCase;
-  }
+  return defn instanceof Expr && defn;
 }
 
 /**
@@ -2081,10 +1997,7 @@ Toy.standardSubst = standardSubst;
 
 // Definitions
 
-Toy.defineCases = defineCases;
 Toy.definex = definex;
-Toy.isDefinedSimply = isDefinedSimply;
-Toy.isDefinedByCases = isDefinedByCases;
 Toy.isDefined = isDefined;
 Toy.isFunDef = isFunDef;
 Toy.findDefinition = findDefinition;

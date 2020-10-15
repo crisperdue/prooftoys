@@ -38,10 +38,6 @@ var F = constify('F');
 
 var parse = Toy.parse;
 
-// Define a constant 'posNum', known to be a number greater than 0,
-// which is defined with an existential fact.
-Toy.definex('posNum', rules.witnessExists(rules.fact('1 > 0'), '/left'));
-
 // Create a new proof editor with clean state.
 function newProofEditor() {
   const ed = new Toy.ProofEditor();
@@ -1487,10 +1483,8 @@ var testCase = {
   testIsDefined: function() {
     assert(!Toy.isDefined('T'));
     assert(!Toy.isDefined(T));
-    assert(!Toy.isDefinedSimply('=>'));
     assert(Toy.isDefined('=>'));
     assert(Toy.isDefined('forall'));
-    assert(Toy.isDefinedSimply('forall'));
     assert(Toy.isDefined(Toy.constify('forall')));
     try {
       Toy.isDefined(equal(x, x));
@@ -1501,7 +1495,7 @@ var testCase = {
   testIsFunDef: function() {
     const check = Toy.isFunDef;
     assert(!check('T'));
-    assert(!check('&'));
+    assert(check('&'));
     assert(check('ident'));
     assert(!check('posNum'));
   },
@@ -1931,6 +1925,7 @@ var testCase = {
     assertEqual('(((=) T) = {x. x})', Toy.rules.trueEquals());
   },
 
+  /*
   testEvalBool: function() {
     var inf = Toy.rules.evalBool(call('not', T));
     assertEqual('((not T) = F)', inf);
@@ -1944,6 +1939,7 @@ var testCase = {
     inf = Toy.rules.evalBool(taut.subFree1(F, p));
     assertEqual('T', inf.getRight());
   },
+  */
 
   testTautology: function() {
     var wff = T;
@@ -2711,7 +2707,11 @@ Toy.testCase = testCase;
 // allowing Prooftoys initializations to complete.  In jQuery 3.1.1
 // the initializations seem to run only after the event loop has
 // returned to idle, at least when running tests.
-window.setTimeout(function() {
+$(function() {
+
+  // Define a constant 'posNum', known to be a number greater than 0,
+  // which is defined with an existential fact.
+  Toy.definex('posNum', rules.witnessExists(rules.fact('1 > 0'), '/left'));
 
   // Set this to an array of theorem names, test case names, and fact
   // statements to be specifically tested.  Fact statements usually
@@ -2743,7 +2743,6 @@ window.setTimeout(function() {
       doTestCase(name);
     }
   }
-  var rules = Toy.rules;
   var nTheorems = 0;
   // Set up an object/map of rules to test; the elements of toTest
   // that name rules, if toTest is an array, otherwise all rules.
@@ -2861,6 +2860,6 @@ window.setTimeout(function() {
   // console.profile('Tests');
   // If the delay is much longer the web page display will initially
   // show a very short run with no tests, then correct itself later.
-  }, 10);
+  });
 
 })();
