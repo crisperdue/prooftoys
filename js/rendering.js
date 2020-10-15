@@ -2484,6 +2484,7 @@ Toy._effectivePower = effectivePower;
 
 // For testing:
 Toy._formattedStepInfo = formattedStepInfo;
+Toy._expandMarkup = expandMarkup;
 Toy._specialClasses = specialClasses;
 
 // Global parameter to enable hover highlighting everywhere.
