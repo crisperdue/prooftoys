@@ -664,6 +664,12 @@ function theType() {
   return new FunctionType(new FunctionType(v, boolean), v);
 }
 
+function ifType() {
+  const fn = (from, to) => new FunctionType(from, to);
+  const v = new TypeVariable();
+  return fn(boolean, fn(v, fn(v, v)));
+}
+
 // Primitive constants.  Unlike textbook, these include T and F.
 var _primitives = {T: true, F: true, '=': true, the1: true};
 
@@ -680,6 +686,7 @@ var constantTypes = {
   // Primitive constants
   T: boolean,
   F: boolean,
+  'if': ifType(),
   '=': equalityType(),
   the1: theType(),
 
