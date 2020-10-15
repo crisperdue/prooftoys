@@ -25,7 +25,6 @@ const Atom = Toy.Atom;
 const Call = Toy.Call;
 const Lambda = Toy.Lambda;
 
-const define = Toy.define;
 const defineCases = Toy.defineCases;
 const definition = Toy.definition;
 

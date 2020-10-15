@@ -46,7 +46,6 @@ var Lambda = Toy.Lambda;
 
 var memo = Toy.memo;
 
-var define = Toy.define;
 var defineCases = Toy.defineCases;
 
 var identity = Toy.parse('{x. x}');

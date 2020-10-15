@@ -11,7 +11,6 @@
 var rules = Toy.rules;
 var addRule = Toy.addRule;
 var addRules = Toy.addRules;
-var define = Toy.define;
 var definex = Toy.definex;
 const definition = Toy.definition;
 var basicSimpFacts = Toy.basicSimpFacts;
