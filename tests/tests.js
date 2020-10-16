@@ -1925,7 +1925,6 @@ var testCase = {
     assertEqual('(((=) T) = {x. x})', Toy.rules.trueEquals());
   },
 
-  /*
   testEvalBool: function() {
     var inf = Toy.rules.evalBool(call('not', T));
     assertEqual('((not T) = F)', inf);
@@ -1939,7 +1938,6 @@ var testCase = {
     inf = Toy.rules.evalBool(taut.subFree1(F, p));
     assertEqual('T', inf.getRight());
   },
-  */
 
   testTautology: function() {
     var wff = T;

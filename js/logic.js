@@ -102,35 +102,6 @@ definition('(&) = {x. {y. if x y F}}');
 definition('(|) = {x. {y. if x T y}}');
 definition('(=>) = {x. {y. if x y T}}');
 
-/**
- * This derives two facts for a defined boolean operator or function,
- * one for the true case and one for the false case, reducing the
- * outer lambda and simplifying any conditional within it.
- */
-function deriveCases(op) {
-  const eqn = rules.definition(op);
-
-  const t1 = rules.applyBoth(eqn, T);
-  const t2 = rules.reduce(t1, '/right');
-  const t3 = rules.simplifySiteWith(t2, '/right', 'if T y z = y');
-  console.log('Derived', t3.$$);
-  Toy.addFact({goal: t3, desimplifier: true});
-
-  const f1 = rules.applyBoth(eqn, F);
-  const f2 = rules.reduce(f1, '/right');
-  const f3 = rules.simplifySiteWith(f2, '/right', 'if F y z = z');
-  console.log('Derived', f3.$$);
-  Toy.addFact({goal: f3, desimplifier: true});
-}
-
-// Once all code is loaded we can derive the cases.
-$(function() {
-    deriveCases('&');
-    deriveCases('|');
-    deriveCases('=>');
-  });
-
-
 definition('empty = {x. F}');
 definition('none = the1 empty');
 definition('(?) = {p. {x. if p x none}}');
@@ -2287,22 +2258,24 @@ const booleanRules = {
         var fn = target.fn;
         if (fn.isConst()) {
           var defn;
-          if (fn.name == 'not') {
-            defn = rules.theorem(target.arg.name == 'T'
+          const op = fn.name;
+          const argName = target.arg.name;
+          if (op == 'not') {
+            defn = rules.theorem(argName == 'T'
                                  ? 'r5231T'
                                  : 'r5231F');
             result = rules.r(defn, result, '/right' + _path);
-          } else if (fn.name == '=') {
+          } else if (op == '=') {
             // TODO: To avoid dependencies on trueEquals and
             //   falseEquals, we could break this down into
             //   all 4 cases.
-            defn = rules.theorem(target.arg.name == 'T'
+            defn = rules.theorem(argName == 'T'
                                  ? 'trueEquals'
                                  : 'falseEquals');
             result = rules.r(defn, result, '/right' + _path);
           } else {
-            // &, |, =>
-            result = rules.useDefinition(result, '/right' + _path);
+            const fact = factForCase(op, argName);
+            result = rules.rewriteOnly(result, '/right' + _path, fact);
           }
         } else if (fn instanceof Toy.Lambda) {
           result = rules.reduce(result, '/right' + _path);
@@ -2384,7 +2357,7 @@ const booleanRules = {
           }
         }
         // There are no free variables, evaluate the expression.
-        var step11 = rules.boolSimp(wff);
+        var step11 = rules.evalBool(wff);
         assert(step11.isCall2('=') && step11.getRight().isConst('T'),
                'Not a tautology: {1}', step11.getLeft(),
                step11);
@@ -2506,6 +2479,47 @@ const booleanRules = {
   }
 };
 addRulesMap(booleanRules);
+
+/**
+ * Supporting function for evalBool.  Given the name of a defined
+ * boolean operator "&", "|", or "=>" and a string T or F, returns the
+ * relevant fact for simplifying a call with that first argument by
+ * simplifying an "if".
+ */
+function factForCase0(trueCases, falseCases, op, tf) {
+
+  /**
+   * This derives two facts for "&", "|", or "=>",
+   * one for the true case and one for the false case, reducing the
+   * outer lambda and simplifying any conditional within it.
+   */
+  function deriveCases(op) {
+    const eqn = rules.definition(op);
+
+    const t1 = rules.applyBoth(eqn, T);
+    const t2 = rules.reduce(t1, '/right');
+    const t3 = rules.simplifySiteWith(t2, '/right', 'if T y z = y');
+    console.log('Derived', t3.$$);
+    Toy.addFact({goal: t3, desimplifier: true});
+    trueCases.set(op, rules.fact(t3));
+
+    const f1 = rules.applyBoth(eqn, F);
+    const f2 = rules.reduce(f1, '/right');
+    const f3 = rules.simplifySiteWith(f2, '/right', 'if F y z = z');
+    console.log('Derived', f3.$$);
+    Toy.addFact({goal: f3, desimplifier: true});
+    falseCases.set(op, rules.fact(f3));
+  }
+
+  if (trueCases.size == 0) {
+    deriveCases('&');
+    deriveCases('|');
+    deriveCases('=>');
+  }
+
+  return tf == 'T' ? trueCases.get(op) : falseCases.get(op);
+}
+const factForCase = factForCase0.bind(null, new Map(), new Map());
 
 var assumers = {
 
@@ -5130,9 +5144,5 @@ Toy.logicFacts = logicFacts;
 
 Toy.asmSimplifiers = [];
 Toy.simplifyStep = simplifyStep;
-
-// For testing
-
-Toy._deriveCases = deriveCases;
 
 }();
