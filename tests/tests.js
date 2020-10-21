@@ -1704,16 +1704,6 @@ var testCase = {
     assertEqual('(q = p)', inf);
   },
 
-  testR5201c: function() {
-    var inf = Toy.rules.eqnChain(call('=', p, q), call('=', q, r));
-    assertEqual('(p = r)', inf);
-  },
-
-  testR5201d: function() {
-    var inf = Toy.rules.applyBySides(call('=', p, q), call('=', 'a', 'b'));
-    assertEqual('((p a) = (q b))', inf);
-  },
-
   testR5201e: function() {
     var inf = Toy.rules.applyBoth(call('=', p, q), r);
     assertEqual('((p r) = (q r))', inf);
@@ -2108,12 +2098,12 @@ var testCase = {
   testConjunctsSimplifier: function() {
     // First a no-op transformation.
     var taut = rules.tautology('a | not a == T');
-    assertEqual('(((a & b) & c) = ((a & b) & c))',
+    assertEqual('(((a & b) & c) == ((a & b) & c))',
                 rules.conjunctsSimplifier(Toy.parse('a & b & c'),
                                           [taut]));
     // A simple transformation
     var expected =
-      '(((((x | (not x)) & (y | (not y))) & z) & w) = (((T & T) & z) & w))';
+      '(((((x | (not x)) & (y | (not y))) & z) & w) == (((T & T) & z) & w))';
     var term = Toy.parse('(x | not x) & (y | not y) & z & w');
     assertEqual(expected,
                 rules.conjunctsSimplifier(term,
@@ -2121,13 +2111,13 @@ var testCase = {
     // Transformation, with transform of the results of
     // transforming the subexpressions.
     expected =
-      '(((((x | (not x)) & (y | (not y))) & z) & w) = ((T & z) & w))';
+      '(((((x | (not x)) & (y | (not y))) & z) & w) == ((T & z) & w))';
     var taut2 = rules.tautology('T & T == T');
     assertEqual(expected,
                 rules.conjunctsSimplifier(term,
                                           [taut, taut2]));
     var expected =
-      '(((R x) & (R y)) => (((x * y) != 0) = ((x != 0) & (y != 0))))'
+      '(((R x) & (R y)) => (((x * y) != 0) == ((x != 0) & (y != 0))))'
     assertEqual(expected,
                 rules.conjunctsSimplifier(Toy.parse('x * y != 0'),
                                           [rules.factNonzeroProduct()]));

@@ -837,35 +837,12 @@ const equalities = {
     labels: 'basic algebra'
   },
 
-  // r5201c.  Works with conditionals.
-  eqnChain: {
-    action: function(ab, bc) {
-      var ac = rules.replace(ab, '/rt/right', bc);
-      return ac.justify('eqnChain', arguments, arguments);
-    },
-    description: '[a = b] and [b = c] to [a = c]',
-    menu: '[a = b] and [b = c] to [a = c]',
-    tooltip: 'from a = b and b = c deduce a = c'
-  },
-
-  // r5201d, not used.  The current form only works with plain equations.
-  applyBySides: {
-    action: function(ab, cd) {
-      var a = ab.getLeft();
-      var b = ab.getRight();
-      var c = cd.getLeft();
-      var d = cd.getRight();
-      var ac = call(a, c);
-      var acac = rules.eqSelf(ac);
-      var acbc = rules.r1(acac, '/right/fn', ab);
-      var acbd = rules.r1(acbc, '/right/arg', cd);
-      var result = acbd;
-      return result.justify('applyBySides', arguments, arguments);
-    },
-    inputs: {equation: [1, 2]}
-  },
-
+  // r5201c is unused.
+  // r5201d is not used.
   // r5201e, with eqn potentially conditional.
+  //
+  // TODO: Consider offering this less often, perhaps only
+  //   with unconditional equation as input.
   applyBoth: {
     action: function(eqn, a) {
       const step1 = (eqn.isCall2('==')
@@ -1734,11 +1711,10 @@ const booleanRules = {
   },
 
   // Replaces an occurrence of T at the given path of the given step
-  // with the consequent of another step, or just the step if
-  // it is not conditional.
+  // with the consequent of another step, which must be conditional.
   replaceT: {
     precheck: function(step, path, step2) {
-      return step.get(path).isConst('T');
+      return step.get(path).isConst('T') && step2.isCall2('=>');
     },
     action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),
@@ -1773,9 +1749,8 @@ const booleanRules = {
 
   // Replace part of a target step with T if it matches a proved step
   // (trueby0) or the consequent of a proved conditional (trueBy1),
-  // taking the proved step as a schema.  If the target term matches
-  // the consequent of the proved step, the antecedent becomes an
-  // assumption of the resulting statement.
+  // taking the proved step as a schema.  These do not simplify
+  // assumptions.
   trueBy0: {
     action: function(target, path, step) {
       const term = target.get(path);
@@ -1797,7 +1772,7 @@ const booleanRules = {
   },
 
   // Requires a conditional step, matching its consequent with
-  // the target site and adding assumptions to the target.
+  // the target site and adding assumptions to the target step.
   trueBy1: {
     action: function(target, path, step) {
       const term = target.get(path);
@@ -1915,7 +1890,6 @@ const booleanRules = {
   toForall0: {
     action: function(step, v_arg) {
       const v = varify(v_arg);
-      // TODO: Use rewrite0 here when available.
       var step1 = rules.rewriteOnly(step, '', 'a == (T == a)');
       var step2 = rules.theorem('forallXT');
       var step3 = rules.renameBound(step2, '/arg', v);
@@ -1949,6 +1923,8 @@ const booleanRules = {
     action: function(step, v_arg) {
       const v = varify(v_arg);
       const step1 = rules.toForall0(step, v);
+      // This will never need simplification of assumptions,
+      // because in the end it leaves the assumptions unchanged.
       const step2 = rules.rewriteOnly(step1, '', rules.implyForall());
       return step2.justify('toForall1', arguments, [step]);
     },
@@ -2055,6 +2031,8 @@ const booleanRules = {
       var step1 = rules.theorem('r5212');
       var step2 = rules.replace(step1, '/left', stepa);
       var step3 = rules.replace(step2, '/rt/right', stepb);
+      // TODO: Consider whether this really needs to arrangeAsms
+      //   explicitly.
       return (step3.andThen('arrangeAsms')
               .justify('makeConjunction', arguments, [a, b]));
     },
@@ -2101,15 +2079,15 @@ const booleanRules = {
   },
 
   // Given P and P => Q, derive Q. (5224)
+  // TODO: Consider replacing all uses of this with trueBy0
+  //   followed by removal of the "T".
   modusPonens: {
     action: function(a, b) {
       var step1 = rules.eqnSwap(rules.toTIsA(a));
       // Replace the "a" in "b" with T.
       var step2 = rules.r(step1, b, '/left');
-      // Use the definition of =>.
-      //
-      // TODO: Implement with tautology rather than use
-      //   a somewhat arbitrary definition.
+      // Use a property of =>; carefully because this is used
+      // before tautologies are available.
       var step3 = rules.rewriteOnly(step2, '/fn', '(=>) T = {y. y}');
       // From T => x derive x.
       var step4 = rules.reduce(step3, '');
@@ -2128,6 +2106,10 @@ const booleanRules = {
   // can take the place of 5215 (universal instantiation) and
   // unForall.  To apply, match "forall p" with an existing
   // statement. Then "apply" p to user's choice of term.
+  //
+  // TODO: Move this proof near to its one use.  (It's hard to see
+  //   how this fact is useful standing on its own given the way
+  //   matching is done.)
   r5225: {
     statement: 'forall p => p x',
     proof: function() {
@@ -2141,7 +2123,7 @@ const booleanRules = {
       var step4 = rules.reduce(step3, '/right/left');
       var step5 = rules.reduce(step4, '/right/left');
       var step6 = rules.reduce(step5, '/right/right');
-      // TODO: Try changing this to a rewrite.
+      // This could be changed into a rewrite.
       return rules.r(rules.r5218(Toy.parse('p x')), step6, '/right');
     }
   },
@@ -2274,7 +2256,11 @@ const booleanRules = {
                                  : 'falseEquals');
             result = rules.r(defn, result, '/right' + _path);
           } else {
+            // The op is "&", "|", or "=>".
             const fact = factForCase(op, argName);
+            // No simplification can be needed here. These facts are
+            // unconditional and applied on the RHS, so they don't
+            // affect any assumptions.
             result = rules.rewriteOnly(result, '/right' + _path, fact);
           }
         } else if (fn instanceof Toy.Lambda) {
@@ -2769,8 +2755,11 @@ const ruleInfo = {
       const contra = 'a => b == not b => not a';
       return (rules.r2104()
               .andThen('instMultiVars', {p: 'negate q', q: 'negate p'})
+              // This is an interesting case of a rewrite in the
+              // assumption, within a quantifier.
               .andThen('rewrite', '/left/arg/body', contra)
               .andThen('rewrite', '/right', contra)
+              // TODO: Simplify with specific facts.
               .andThen('simplifySite', ''));
     }
   },
@@ -2953,8 +2942,10 @@ const ruleInfo = {
       return (rules.forallOr()
               .andThen('instMultiVars', {p: 'negate p', q: 'negate q'})
               .andThen('rewriteOnly', '', 'a => b == not b => not a')
+              // Note that this rewrites the assumption.
               .andThen('rewriteOnly', '/left',
                        'not (forall p) == exists {x. not (p x)}')
+              // TODO: Simplify with a more specific set of facts,
               .andThen('simplifySite', '', facts.concat(basicSimpFacts)));
     }
   },
@@ -2979,8 +2970,6 @@ const ruleInfo = {
   // TODO: For situations like the converse of this identity, when p
   //   is a lambda, use the name of its bound variable rather than
   //   the one in the statement here.
-  //
-  // TODO: QM: Eta-expand the "p" in the RHS.
   existImplies: {
     statement: 'forall {x. p x => q} == (exists p => q)',
     proof: function() {
@@ -3797,8 +3786,8 @@ const ruleInfo = {
   // TODO: For clarity put the implementation in rewriteOnly and
   //   make this rule basically a synonym, as in rewriteFrom.
   //
-  // TODO: Define a rewrite0 that does nothing but match and replace.
-  //   (Replace should leave simplification to the rewriters.)
+  // TODO: Consider creating a rewrite0 that matches and replaces
+  //   without ever arranging assumptions.
   rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
@@ -4203,6 +4192,7 @@ const ruleInfo = {
     },
     action: function(step, path) {
       var taut = rules.tautology('a => (b => c) == a & b => c');
+      // TODO: Consider whether this code should "arrange" assumptions.
       var result = rules.rewriteOnly(step, '', taut);
       return result.justify('asAssumption', arguments, step);
     },
@@ -4461,6 +4451,7 @@ const ruleInfo = {
       var y = varify('y');
       var step1 = rules.assume('x = y');
       var step2 = rules.eqSelf(x);
+      // This use of replace is necessary and safe.
       var step3 = rules.replace(step2, '/left', step1);
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step3, subst);
@@ -4489,16 +4480,19 @@ const ruleInfo = {
   },
 
   // Proves an equation that can replace the given boolean term.
-  // Applies itself recursively to the given List of equational facts,
+  // Applies itself recursively to the given list of equational facts,
   // descending into the arguments of conjunctions (a & b), bottom-up,
-  // applying the first fact (if any) that succeeds to each subexpression.
-  // Returns an equation with the term on the LHS and the replacement
-  // on the right.
+  // applying the first fact (if any) that succeeds to each
+  // subexpression.  Returns an equation with the given term on the
+  // LHS and the replacement on the right.
   //
+  // TODO: This is unused; remove?
+  // TODO: Consider whether the facts must be pure equations.
   // TODO: Extend to take a conversion function in place of the facts.
   conjunctsSimplifier: {
     action: function(term, facts) {
-      var step = rules.eqSelf(term);
+      // A pure equation. 
+      var step = rules.equivSelf(term);
       var step1;
       if (term.isCall2('&')) {
         var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
@@ -4747,8 +4741,10 @@ const existRules =
                      .andThen('forwardChain',
                               '(a => (b == c)) => (a => b == a => c)'));
       const rw = rules.rewriteOnlyFrom;
+      // Note that the result has no assumptions for rw to change.
       const step5 = rw(step3, '/main/right/arg/body/right/arg/body', step4);
       const step6 = rules.axiom4('{y. y = x} y').andThen('eqnSwap');
+      // Note: no assumptions in the equation.
       const step7 = rules.replace(step5,
                                   '/main/right/arg/body/right/arg/body/left',
                                   step6);
@@ -4792,6 +4788,7 @@ const existRules =
     statement: 'exists1 p => (p x == x = the p)',
     proof: function() {
       return (rules.fact('exists1 p => (p x == x = the1 p)')
+              // This rewrite does merge the assumptions.
               .andThen('rewriteOnly', '/right/right/right',
                        'exists1 p => the1 p = the p'));
     }
@@ -4973,10 +4970,8 @@ const logicFacts =
    // This is the classic definition of the existential quantifier,
    // proved from a concise definition.  We could have based the
    // definition directly off of this.
-   //
-   // TODO: QM: Eta expand the LHS "p" here to support quantifier
-   //   matching when used in rewrites.
-   {statement: 'exists p == not (forall {x. not (p x)})',
+   {name: 'existDef',
+    statement: 'exists p == not (forall {x. not (p x)})',
     proof: function() {
        var all = (rules.axiom3()
                   .andThen('instMultiVars', {f: 'p', g: '{x. F}'})
@@ -5000,8 +4995,6 @@ const logicFacts =
      }
    },
 
-   // TODO: QM: Eta expand the LHS use of "p".
-   //
    // TODO: Consider if uses of "negate" like this might better use
    //   {x. not (p x)} instead, and if p is a lambda, propagate its
    //   bound variable upward to the binding of x, thus retaining a

@@ -156,16 +156,6 @@ $(function() {
       level: 1
     },
 
-    eqnChain: {
-      args: [rules.assert(call('=', p, q)),
-             rules.assert(call('=', q, r))],
-    },
-
-    applyBySides: {
-      args: [rules.assert(call('=', p, q)),
-             rules.assert(call('=', 'a', 'b'))]
-    },
-    
     applyBoth: {
       args: [rules.assert(call('=', p, q)), r],
       level: 1
