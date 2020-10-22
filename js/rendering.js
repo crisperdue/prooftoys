@@ -996,7 +996,6 @@ function renderWff(step) {
     // All of these omit some unnecessary part of the display for
     // readability.
     var op = wff.getBinOp().toUnicode();
-    var power = Toy.getPrecedence(wff.getBinOp());
     // The right side renders on the left here so any changes to it appear
     // on the right side in following steps.
     //
@@ -1018,7 +1017,7 @@ function renderWff(step) {
     // Render the main part.
     const node = (step.hasLeftElision
                   ? renderWithElision(mainPart)
-                  : dom(mainPart.renderTopConj(power)));
+                  : dom(mainPart.renderTopConj(power + 1)));
 
     // In this case we want one more level of flexbox to ensure the
     // mainPart is a flexbox.  Specify it with a class.
@@ -1229,7 +1228,7 @@ var useParens = {
  * the useParens table.
  *
  * The effect is to force parentheses around the inner expression if
- * it is an of an operand of the outer operator.
+ * it is an operand of the outer operator.
  */
 function effectivePower(op, inner) {
   if (inner.isCall2()) {
