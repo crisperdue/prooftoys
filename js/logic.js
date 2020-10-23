@@ -4339,6 +4339,7 @@ const ruleInfo = {
     inputs: {step: 1},
     form: 'Step to simplify: <input name=step>',
     tooltip: 'remove redundant assumptions',
+    description: 'arrange assumptions;; in step {step}',
     labels: 'uncommon'
   },
 
