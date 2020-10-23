@@ -2497,15 +2497,13 @@ function factForCase0(trueCases, falseCases, op, tf) {
 
     const t1 = rules.applyBoth(eqn, T);
     const t2 = rules.reduce(t1, '/right');
-    const t3 = rules.simplifySiteWith(t2, '/right', 'if T y z = y');
-    console.log('Derived', t3.$$);
+    const t3 = rules.rewriteOnly(t2, '/right/body', 'if T y z = y');
     Toy.addFact({goal: t3, desimplifier: true});
     trueCases.set(op, rules.fact(t3));
 
     const f1 = rules.applyBoth(eqn, F);
     const f2 = rules.reduce(f1, '/right');
-    const f3 = rules.simplifySiteWith(f2, '/right', 'if F y z = z');
-    console.log('Derived', f3.$$);
+    const f3 = rules.rewriteOnly(f2, '/right/body', 'if F y z = z');
     Toy.addFact({goal: f3, desimplifier: true});
     falseCases.set(op, rules.fact(f3));
   }
