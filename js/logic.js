@@ -1517,6 +1517,9 @@ var simplifiersInfo = {
   // simplifications are found.  The simplifiers can be conditional
   // and thus generate assumptions.  By default uses basicSimpFacts if
   // facts are not supplied.
+  //
+  // Simplifiers ultimately use rules.rewrite, which uses
+  // rules.simplifyAsms, which might not always be desirable.
   simplifySite: {
     action: function(step, path, opt_facts) {
       var result = rules._simplifySite(step, path, opt_facts);
@@ -1530,6 +1533,11 @@ var simplifiersInfo = {
     labels: 'algebra'
   },
 
+  // Repeatedly apply the one fact as in simplifySite, to
+  // simplify the target site.
+  // 
+  // TODO: Consider supporting a conjunction as equivalent to a list
+  //   of its conjuncts.  Maybe merge with simplifySite.
   simplifySiteWith: {
     action: function(step, path, fact_arg) {
       var result = rules._simplifySite(step, path, [fact_arg]);
@@ -1555,7 +1563,6 @@ var simplifiersInfo = {
           // adapts in case some versions of eqn have assumptions.
           return rules._simplifyOnce(eqn, _path('/rt/right', eqn), opt_facts);
         });
-      // TODO: const reduced = rules.simplifyAsms(simpler);
       return rules.replace(step, path, simpler);
     }
   },
@@ -1563,11 +1570,15 @@ var simplifiersInfo = {
   // Applies up to one simplification (using rewriting on facts)
   // within the part of the given step at _path using the given facts,
   // or basicSimpFacts if facts are not given.  Returns its result
-  // inline, just the input step if there is nothing to do.
+  // inline, just the input step if there is nothing to do.  This
+  // common support code uses rules.rewrite, which is generally
+  // appropriate, but see the TODO.
   //
   // From the UI use a rule that calls this one.
   //
-  // TODO: parameterize the rewriting/simplifying.
+  // TODO: Support the user in breaking UI steps into parts to
+  //   remove the implicit call to simplifyAsms after the fact
+  //   if needed.
   _simplifyOnce: {
     action: function(step, _path, opt_facts) {
       var facts = opt_facts || basicSimpFacts;
@@ -1579,9 +1590,11 @@ var simplifiersInfo = {
   },
 
   // Uses the given facts to simplify the assumptions of the given
-  // step.  This differs from simplifySite in that it also simplifies
-  // any assumptions introduced by conditional facts in the facts
-  // list.  Ensures the result has its assumptions arranged.
+  // step, by default using asmSimplifiers, to manage type
+  // assumptions, e.g. "is real", "is integer", etc..  This also
+  // differs from other simplifiers in that it also simplifies any
+  // assumptions introduced by conditional facts in the facts list.
+  // Ensures the result has its assumptions arranged.
   simplifyAsms: {
     action: function(step, facts_arg) {
       const facts = facts_arg || Toy.asmSimplifiers;
@@ -3404,8 +3417,9 @@ const ruleInfo = {
   // This is the core rule for replacing terms in simultaneous equations.
   //
   // The target term must be part of a tree of conjuncts in the step
-  // and the tree must also contain an equation with one side equal to the target.
-  // This replaces the target with the other side of that equation.
+  // and the tree must also contain an equation with one side equal to
+  // the target.  This replaces the target with the other side of that
+  // equation.
   replaceConjunct: {
     // The basic idea of this rule is to apply the equivalence:
     // (t1 = t2 & A == t1 = t2 & A[t1 :1= t2]),
