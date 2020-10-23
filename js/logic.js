@@ -3802,6 +3802,20 @@ const ruleInfo = {
   //   without ever arranging assumptions.
   rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
+      const result = rules._rewriteOnlyFrom(step, path, eqn_arg);
+      return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
+    },
+    inputs: {site: 1, equation: 3},
+    form: ('Primitive rewrite using equation step <input name=equation>'),
+    menu: 'primitive rewrite',
+    isRewriter: true,
+    description: 'rewrite term;; {in step siteStep} {using step equation}'
+  },
+
+  // Inline form of rewriteOnlyFrom.
+  // TODO: Use this internally in its place.
+  _rewriteOnlyFrom: {
+    action: function(step, path, eqn_arg) {
       var expr = step.get(path);
       var isEqn = eqn_arg.isEquation();
       // If given an equation or conditional equation, this is its
@@ -3852,14 +3866,8 @@ const ruleInfo = {
       // const info = resolveToFactInfo(eqn_arg);
       // const after = (info && info.afterMatch) || function(x) { return x; };
       // simpler = after(simpler);
-      const result = rules.replace(step, path, simpler);
-      return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
+      return rules.replace(step, path, simpler);
     },
-    inputs: {site: 1, equation: 3},
-    form: ('Primitive rewrite using equation step <input name=equation>'),
-    menu: 'primitive rewrite',
-    isRewriter: true,
-    description: 'rewrite {site};; {in step siteStep} {using step equation}',
   },
 
   // Variant of rules.rewrite for use from the UI, when the equation
@@ -3896,8 +3904,8 @@ const ruleInfo = {
   // to just offer users rewriteOnlyFrom.
   rewriteOnly: {
     action: function(step, path, statement) {
-      const rewritten = rules.rewriteOnlyFrom(step, path,
-                                              rules.fact(statement));
+      const rewritten = rules._rewriteOnlyFrom(step, path,
+                                               rules.fact(statement));
       return rewritten.justify('rewriteOnly', arguments, [step]);
     },
     inputs: {site: 1, bool: 3},
@@ -3917,7 +3925,7 @@ const ruleInfo = {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
-      var step2 = rules.rewriteOnly(step, path, fact);
+      var step2 = rules._rewriteOnlyFrom(step, path, fact);
       var simpler = rules.simplifyAsms(step2);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
