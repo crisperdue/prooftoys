@@ -1254,7 +1254,7 @@ var moversInfo = {
     },
     offerExample: true,
     menu: 'algebra: flatten {term}',
-    description: 'flatten term {site};; {in step siteStep}',
+    description: 'flatten term;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1295,7 +1295,7 @@ var moversInfo = {
     },
     offerExample: true,
     menu: 'algebra: collect like terms in {term}',
-    description: 'collect like terms in {site};; {in step siteStep}',
+    description: 'collect like terms;; {in step siteStep}',
     labels: 'algebra'
   },
 
@@ -1358,7 +1358,7 @@ var moversInfo = {
     inputs: {site: 1},
     offerExample: true,
     menu: 'algebra: flatten {term}',
-    description: 'flatten term {site};; {in step siteStep}',
+    description: 'flatten term;; {in step siteStep}',
     labels: 'algebra'
   },
 

@@ -322,7 +322,7 @@ const axioms = {
     // form: ('Replace selection with right side of step <input name=equation>'),
     tooltip: ('Replace an occurrence of a term with an equal term.'),
     menu: 'replace {term} with something equal',
-    description: 'replace {site};; {in step siteStep} {using step equation}',
+    description: 'replace term;; {in step siteStep} {using step equation}',
     labels: 'uncommon'
   },
 
@@ -1767,7 +1767,7 @@ const booleanRules = {
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with step <input name=step>'),
     menu: 'replace with T, proved unconditionally',
-    description: ('{site} is known true;; {in step siteStep} {by step step}'),
+    description: ('term known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
 
@@ -1789,7 +1789,7 @@ const booleanRules = {
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with consequent of step <input name=step>'),
     menu: 'replace with T, proved under assumptions',
-    description: ('{site} is known true;; {in step siteStep} {by step step}'),
+    description: ('term known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
 
@@ -3633,7 +3633,7 @@ const ruleInfo = {
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
     menu: 'replace using a step like {term} = . . .',
-    description: 'replace {site};; {in step siteStep} {using step equation}',
+    description: 'replace term;; {in step siteStep} {using step equation}',
     labels: 'basic'
   },
 
@@ -3656,7 +3656,7 @@ const ruleInfo = {
     menu: 'replace using term like A = {term}',
     tooltip: ('Replaces an occurrence of a term with an equal term,'
               + ' replacing right side with left side.'),
-    description: 'replace {site};; {in step siteStep} {using step equation}',
+    description: 'replace term;; {in step siteStep} {using step equation}',
     labels: 'uncommon'
   },
 
@@ -3698,7 +3698,7 @@ const ruleInfo = {
       }
     },
     tooltip: ('Replaces an occurrence of a term with an equal term'),
-    description: 'replace {site};; {in step siteStep} {using step equation}',
+    description: 'replace term;; {in step siteStep} {using step equation}',
     labels: 'basic'
   },
 
@@ -3870,7 +3870,7 @@ const ruleInfo = {
     // TODO: Consider modifying descriptions of rewrite rules to
     //   say "replace" rather than "rewrite" when the substitution
     //   is empty, perhaps with a new {rewrite} directive.
-    description: 'rewrite {site};; {in step siteStep} {using step equation}',
+    description: 'rewrite term;; {in step siteStep} {using step equation}',
     labels: 'basic'
   },
 
