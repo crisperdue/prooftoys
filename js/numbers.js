@@ -2750,7 +2750,7 @@ var recipFacts = {
     proof: function() {
       var step1 = rules.fact('x * recip x = 1');
       var step2 = rules.fact('1 != 0');
-      var step3 = (rules.rRight(step1, step2, '/left')
+      var step3 = (rules.replaceRight(step2, '/left', step1)
                    .rewrite('/main', 'a * b != 0 == a != 0 & b != 0'));
       var step4 = rules.tautology('a => (b & c) => (a => c)');
       var step5 = rules.forwardChain(step3, step4);

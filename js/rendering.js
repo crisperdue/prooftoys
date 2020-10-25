@@ -2348,7 +2348,7 @@ function hoverAsRewriter(step, action) {
 }
 
 /**
- * Hover handler for "r" and "rRight".
+ * Hover handler for "r".
  */
 function hoverReplace(step, action) {
   hoverAsRewriter(step, action);
@@ -2361,7 +2361,7 @@ function hoverReplace(step, action) {
 // and the operation is "addClass" or "removeClass".
 var hoverHandlers = {
   r: hoverReplace,
-  rRight: hoverReplace,
+  replaceRight: hoverAsRewriter,
   useDefinition: hoverReplace,
   replace: hoverAsRewriter,
   r1: hoverAsRewriter,
