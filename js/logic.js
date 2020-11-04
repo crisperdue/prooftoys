@@ -3132,10 +3132,9 @@ const ruleInfo = {
   },
 
   // Rule P/Q for a single antecedent (5234).  The schema step must
-  // have the form (A => B), where A matches the given input step, or
-  // the form (A == B), which implies (A => B) and (B => A).  This
-  // matches the step against A in the schema, and deduces the
-  // appropriate instance of B, or vice-versa in the case (A == B).
+  // have the form (A => B), where A matches the given input step.
+  // This matches the step against A in the schema, and deduces the
+  // appropriate instance of B.
   //
   // This version extends Andrews' version in that it universally
   // quantifies any (free) variables of B not also (free) in A, with
@@ -3182,8 +3181,6 @@ const ruleInfo = {
       var step2 = rules.instMultiVars(schema2, substitution);
       var step3 = (mainOp === '=>'
                    ? rules.modusPonens(step, step2)
-                   : mainOp === '=='
-                   ? rules.replaceEither(step, '/main', step2)
                    : assert(false, 'Schema must be like A => B or A == B'));
       // Schema is listed as a dependency here so it can be recognized
       // as a dependency, e.g. when rendering a proof.
@@ -4775,8 +4772,8 @@ const existRules =
       const step6 = rules.axiom4('{y. y = x} y').andThen('eqnSwap');
       // Note: no assumptions in the equation.
       const step7 = rules.r1(step5,
-                                  '/main/right/arg/body/right/arg/body/left',
-                                  step6);
+                             '/main/right/arg/body/right/arg/body/left',
+                             step6);
       const step8 = rules.rewriteOnly(step5,
                                       '/main/right/arg/body/right',
                                       'existImplies');
@@ -4797,20 +4794,22 @@ const existRules =
    {name: 'exists1Law',
     statement: 'exists1 p => (p x == x = the1 p)',
     proof:
-    [ 
-     '(1 assume (t (p = {x. (x = y)})))',
-     '(2 axiom5)',
-     '(3 replaceEither (s 2) "/left/arg" (s 1))',
-     '(4 replaceEither (s 1) "/right/right/body/right" (s 3))',
-     '(5 rewrite (s 4) (path "/right") ' +
-         '(t ((p = q) == (forall {x. ((p x) == (q x))}))))',
-     '(6 instForall (s 5) (path "/right") (t x))',
-     '(7 toForall0 (s 6) "y")',
-     '(8 rewrite (s 7) (path "/main") ' +
-         '(t ((forall {x. ((p x) => q)}) == ((exists p) => q))))',
-     '(9 rewrite (s 8) (path "/left") ' +
-         '(t ((exists {x. (p = {y. (y = x)})}) = (exists1 p))))'
-      ]
+    [
+     `(1 assume (t (p = {x. (x = y)})))
+     (2 axiom5)
+     (3 rewrite (s 1) (path "/right") (t ((x = y) == (y = x))))
+     (4 rewriteFrom (s 2) (path "/main/left/arg") (s 3))
+     (5 rewrite (s 4) (path "/right") (t ((x = y) == (y = x))))
+     (6 rewriteFrom (s 1) (path "/right/right/body/right") (s 5))
+     (7 rewrite (s 6) (path "/right")
+        (t ((p = q) == (forall {x. ((p x) == (q x))}))))
+     (8 instForall (s 7) (path "/right") (t x))
+     (9 toForall0 (s 8) "y")
+     (10 rewrite (s 9) (path "/main")
+         (t ((forall {x. ((p x) => q)}) == ((exists p) => q))))
+     (11 rewrite (s 10) (path "/left")
+         (t ((exists {x. (p = {y. (y = x)})}) = (exists1 p))))`
+     ]
    },
 
    {name: 'exists1TheLaw',
