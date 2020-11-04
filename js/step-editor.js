@@ -2021,7 +2021,7 @@ RuleMenu.prototype.offerableFacts = function() {
             return;
           }
           if (info.labels.higherOrder && mode != 'all') {
-            // Do not offer facts with higher-order variables until we
+            // TODO: Offer facts with higher-order variables when we
             // can match their types properly when generating the
             // menu.
             return;

@@ -1613,9 +1613,10 @@ var simplifiersInfo = {
       // The original eqn has no assumptions, but "simpler" may have
       // some.  Simplify those recursively in turn.
       var simpler2 = rules.simplifyAsms(simpler, facts);
-      return (rules.replace(step, '/left', simpler2)
-              .andThen('arrangeAsms')
-              .justify('simplifyAsms', arguments, [step]));
+      const result1 = rules.replace(step, '/left', simpler2);
+      // This will be needed more often if not also done in rules.replace.
+      const result2 = rules.arrangeAsms(result1);
+      return result2.justify('simplifyAsms', arguments, [step]);
     },
     inputs: {step: 1},
     menu: 'simplify assumptions',
@@ -3597,6 +3598,10 @@ const ruleInfo = {
   // term in a target step.  If both input steps are conditional,
   // collapses the result [a1 => (a2 => q)] into [a1 & a2 => q] and
   // calls arrangeAsms on the result.
+  //
+  // TODO: Instead of calling arrangeAsms here, leave the equation's
+  //   assumptions alone, and effectively perform arrangeAsms as part
+  //   of rewriting.  (Check all uses of arrangeAsms elsewhere.)
   replace: {
     action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
