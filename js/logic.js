@@ -3655,14 +3655,14 @@ const ruleInfo = {
   },
 
   /**
-   * Same as "replace", but replaces an occurrence in target of the right
+   * Same as r1, but replaces an occurrence in target of the right
    * side of the equation with its left side.
    */
   replaceRight: {
     action: function(target, path, equation) {
       path = Toy.path(path);
       var rev = rules.eqnSwap(equation);
-      var result = rules.replace(target, path, rev);
+      var result = rules.r1(target, path, rev);
       return result.justify('replaceRight', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3},
