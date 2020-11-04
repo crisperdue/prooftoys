@@ -258,7 +258,7 @@ const inverses =
      '(1 minvFact)',
      '(2 forwardChain (s 1) (t (((((a & b) & c) & d) == g) => (g => c))))',
      '(3 assume (t (y = (minv x))))',
-     '(4 replace (s 2) (path "/right/arg") (s 3))',
+     '(4 rewriteFrom (s 2) (path "/right/arg") (s 3))',
      '(5 rewrite (s 4) (path "/left/left/left/right") (t ((x = y) == (y = x))))',
      '(6 removeLet (s 5) (path "/left/left/right"))'
      ]
@@ -272,7 +272,7 @@ const inverses =
      '(3 rewrite (s 2) (path "/left/right") (t ((x = y) == (y = x))))',
      '(4 assume (t (y = (minv x))))',
      '(5 display (s 3))',
-     '(6 replace (s 5) (path "/right/left/right") (s 4))',
+     '(6 rewriteFrom (s 5) (path "/right/left/right") (s 4))',
      '(7 display (s 6))',
      '(8 removeLet (s 7) (path "/left/left/right"))'
      ]
@@ -286,7 +286,7 @@ const inverses =
      '(3 apply (s 2) (path "/main/right"))',
      '(4 fact "0 != 1")',
      '(5 fact "0=0*x")',
-     '(6 replace (s 4) (path "/main/left") (s 5))',
+     '(6 rewriteFrom (s 4) (path "/main/left") (s 5))',
      '(7 rewrite (s 6) (path "/right") (t ((a != b) == (not (a = b)))))',
      '(8 rewrite (s 7) (path "") (t ((a => (not b)) == ((a & b) == F))))',
      '(9 rewrite (s 3) (path "/main/right/body") (t (((a & b) & c) == (a & (b & c)))))',
@@ -474,7 +474,7 @@ Toy.addRules(realOrdFacts);
        '(3 fact "x!=0=>R(minv x)")',
        '(4 trueBy1 (s 2) (path "/left") (s 3))',
        '(5 assume (t (0 = (x * y))))',
-       '(6 replace (s 4) (path "/right/right/right") (s 5))',
+       '(6 rewriteFrom (s 4) (path "/right/right/right") (s 5))',
        '(7 rewrite (s 6) (path "/right/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y * z)) = ((x * y) * z)))))',
        '(8 rewrite (s 7) (path "/right/right/left") (t (((R x) & (R y)) => ((x * y) = (y * x)))))',
        '(9 rewrite (s 8) (path "/right/right/left") (t (((x != 0) & (R x)) => ((x * (minv x)) = 1))))',
@@ -488,11 +488,11 @@ Toy.addRules(realOrdFacts);
        '(16 assume (t (x = 0)))',
        '(17 rewrite (s 16) (path "/right") (t ((x = y) == (y = x))))',
        '(18 fact "0*y=0")',
-       '(19 replace (s 18) (path "/right/left/left") (s 17))',
+       '(19 rewriteFrom (s 18) (path "/right/left/left") (s 17))',
        '(20 assume (t (y = 0)))',
        '(21 rewrite (s 20) (path "/right") (t ((x = y) == (y = x))))',
        '(22 fact "x*0=0")',
-       '(23 replace (s 22) (path "/right/left/right") (s 21))',
+       '(23 rewriteFrom (s 22) (path "/right/left/right") (s 21))',
        '(24 extractHypAt (s 19) (path "/left/left"))',
        '(25 extractHypAt (s 23) (path "/left/left"))',
        '(26 p2 (s 24) (s 25) (t (((a => (p => r)) & (b => (q => r))) => ((a & b) => ((p | q) => r)))))',
@@ -1070,7 +1070,7 @@ var equationOpsInfo = {
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
       var step1 = rules.applyToBothWith(eqn1, '+', lhs);
-      var step3 = rules.replaceEither(step1, '/main/right/right', eqn2);
+      var step3 = rules.rewriteFrom(step1, '/main/right/right', eqn2);
       return step3.justify('addEquationToThis', arguments, arguments);
     },
     inputs: {equation: [1, 2]},
@@ -1086,7 +1086,7 @@ var equationOpsInfo = {
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
       var step1 = rules.applyToBothWith(eqn1, '-', lhs);
-      var step3 = rules.replaceEither(step1, '/main/right/right', eqn2);
+      var step3 = rules.rewriteFrom(step1, '/main/right/right', eqn2);
       return step3.justify('subtractEquationFromThis', arguments, arguments);
     },
     inputs: {equation: [1, 2]},
@@ -2070,7 +2070,7 @@ const basicRealFacts =
     proof: function() {
        var asm = rules.assume('a = none');
        return (rules.fact('not (R none)')
-               .replace('/arg/arg', rules.eqnSwap(asm))
+               .andThen('rewriteFrom', '/arg/arg', rules.eqnSwap(asm))
                .andThen('rewriteOnly', '', 'a => not b == b => not a')
                .andThen('simplifySite', '/right'));
      }
@@ -2084,7 +2084,7 @@ const basicRealFacts =
      '(3 rewrite (s 2) (path "/left/right") (t ((x = y) == (y = x))))',
      '(4 assume (t (y = (neg x))))',
      '(5 display (s 3))',
-     '(6 replace (s 5) (path "/right/left/right") (s 4))',
+     '(6 rewriteFrom (s 5) (path "/right/left/right") (s 4))',
      '(7 display (s 6))',
      '(8 removeLet (s 7) (path "/left/left"))'
      ]
@@ -2746,11 +2746,10 @@ var recipFacts = {
       .rewrite('/main/left', 'a * b = b * a');
     }
   },
-  'a != 0 => recip a != 0': {
+  'x != 0 => recip x != 0': {
     proof: function() {
-      var step1 = rules.fact('x * recip x = 1');
       var step2 = rules.fact('1 != 0');
-      var step3 = (rules.replaceRight(step2, '/left', step1)
+      var step3 = (rules.rewrite(step2, '/left', '1 = x * recip x')
                    .rewrite('/main', 'a * b != 0 == a != 0 & b != 0'));
       var step4 = rules.tautology('a => (b & c) => (a => c)');
       var step5 = rules.forwardChain(step3, step4);
@@ -2768,8 +2767,7 @@ var recipFacts = {
       var step2 = rules.applyToBothWith(step1, '*', Toy.parse('recip (recip a)'));
       var step3 = rewrite(step2, '/main/right', '1 * a = a');
       var step4 = rewrite(step3, '/main/left', 'a * b * c = a * (b * c)');
-      var step5 = rules.instVar(step1, Toy.parse('recip a'), 'a');
-      var step6 = rules.replace(step4, '/main/left/right', step5);
+      var step6 = rules.rewrite(step4, '/main/left/right', 'a * recip a = 1');
       var step7 = rewrite(step6, '/main/left', 'a * 1 = a');
       var step8 = rules.eqnSwap(step7);
       return step8;
@@ -3294,7 +3292,7 @@ function arithRight(term, cxt) {
           var step2 = rules.rewrite(step1, '/right', item.schema);
           var eqn = Toy.tryArithmetic(step2.get('/main/right/right'));
           if (eqn) {
-            var step3 = rules.replace(step2, '/main/right/right', eqn);
+            var step3 = rules.rewriteFrom(step2, '/main/right/right', eqn);
             return step3;
           }
         }

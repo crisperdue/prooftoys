@@ -1737,7 +1737,7 @@ const booleanRules = {
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
       const eqn = rules.rewrite(step2, '/rt', 'x == (T == x)');
-      return (rules.replace(step, path, eqn)
+      return (rules.rewriteFrom(step, path, eqn)
               .justify('replaceT', arguments, [step, step2]));
     },
     inputs: {site: 1, step: 3},
@@ -2046,8 +2046,8 @@ const booleanRules = {
       var stepa = rules.rewriteOnly(a, '/rt', 'a == (T == a)');
       var stepb = rules.rewriteOnly(b, '/rt', 'a == (T == a)');
       var step1 = rules.theorem('r5212');
-      var step2 = rules.replace(step1, '/left', stepa);
-      var step3 = rules.replace(step2, '/rt/right', stepb);
+      var step2 = rules.rewriteFrom(step1, '/left', stepa);
+      var step3 = rules.rewriteFrom(step2, '/rt/right', stepb);
       // TODO: Consider whether this really needs to arrangeAsms
       //   explicitly.
       return (step3.andThen('arrangeAsms')
@@ -2988,14 +2988,14 @@ const ruleInfo = {
   existImplies: {
     statement: 'forall {x. p x => q} == (exists p => q)',
     proof: function() {
-      var fact = rules.fact('not (forall {x. not (p x)}) == exists p');
+      var fact = 'not (forall {x. not (p x)}) == exists p';
       return (rules.implyForall()
               .andThen('instMultiVars', {p: 'not q', q: '{x. not (p x)}'})
               .andThen('apply', '/left/arg/body/right')
               .andThen('rewrite', '/right', 'not a => b == not b => a')
               .andThen('rewrite', '/left/arg/body',
                        'not a => not b == b => a')
-              .andThen('replace', '/right/left', fact));
+              .andThen('rewrite', '/right/left', fact));
     }
   },
 
@@ -4253,7 +4253,7 @@ const ruleInfo = {
             var left = hyps.getLeft();
             var falsy = falsify(left);
             var eqn = rules.eqSelf(hyps);
-            var step1 = rules.replace(eqn, '/right/left', falsy);
+            var step1 = rules.r1(eqn, '/right/left', falsy);
             return rules.rewriteOnly(step1, '/right', tautFX)
           }
         } else if (hyps.matches(F)) {
@@ -4480,7 +4480,7 @@ const ruleInfo = {
       var y = varify('y');
       var step1 = rules.assume('x = y');
       var step2 = rules.eqSelf(x);
-      // This use of replace is necessary and safe.
+      // This use of replace is safe.
       var step3 = rules.replace(step2, '/left', step1);
       var subst = {x: y, y: x};
       var step5 = rules.instMultiVars(step3, subst);
@@ -4513,10 +4513,10 @@ const ruleInfo = {
   // descending into the arguments of conjunctions (a & b), bottom-up,
   // applying the first fact (if any) that succeeds to each
   // subexpression.  Returns an equation with the given term on the
-  // LHS and the replacement on the right.
+  // LHS and the replacement on the right.  The facts currently must
+  // be pure equations.
   //
   // TODO: This is unused; remove?
-  // TODO: Consider whether the facts must be pure equations.
   // TODO: Extend to take a conversion function in place of the facts.
   conjunctsSimplifier: {
     action: function(term, facts) {
@@ -4526,8 +4526,8 @@ const ruleInfo = {
       if (term.isCall2('&')) {
         var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
         var stepRight = rules.conjunctsSimplifier(term.getRight(), facts);
-        step1 = (rules.replace(step, '/right/left', stepLeft)
-                 .andThen('replace', '/right/right', stepRight));
+        step1 = (rules.r1(step, '/right/left', stepLeft)
+                 .andThen('r1', '/right/right', stepRight));
       } else {
         step1 = step;
       }
@@ -4774,7 +4774,7 @@ const existRules =
       const step5 = rw(step3, '/main/right/arg/body/right/arg/body', step4);
       const step6 = rules.axiom4('{y. y = x} y').andThen('eqnSwap');
       // Note: no assumptions in the equation.
-      const step7 = rules.replace(step5,
+      const step7 = rules.r1(step5,
                                   '/main/right/arg/body/right/arg/body/left',
                                   step6);
       const step8 = rules.rewriteOnly(step5,
@@ -4861,12 +4861,12 @@ const existRules =
   },
 
    /* TODO: Remove these two as not very useful.
-   {name: 'ifTrue':
+   {name: 'ifTrue',
     statement: 'c => if c x y = x',
     proof:function() {
       var assumed = rules.assume('T == c');
       var fact = rules.fact('if T x y = x');
-      return (fact.andThen('replace', fact.find('T'), assumed)
+      return (fact.andThen('r1', fact.find('T'), assumed)
               .andThen('rewriteOnly', '/left', 'T == x == x'));
     }
    },
@@ -4876,7 +4876,7 @@ const existRules =
     proof:function() {
       var assumed = rules.assume('F == c');
       var fact = rules.fact('if F x y = y');
-      return (fact.andThen('replace', fact.find('F'), assumed)
+      return (fact.andThen('r1', fact.find('F'), assumed)
               .andThen('rewriteOnly', '/left', 'F == x == (not x)'));
     }
    },
