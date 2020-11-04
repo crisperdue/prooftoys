@@ -841,8 +841,6 @@ const equalities = {
   // r5201d is not used.
   // r5201e, with eqn potentially conditional.
   //
-  // TODO: Consider offering this less often, perhaps only
-  //   with unconditional equation as input.
   applyBoth: {
     action: function(eqn, a) {
       const step1 = (eqn.isCall2('==')
@@ -852,11 +850,14 @@ const equalities = {
       return step2.justify('applyBoth', arguments, [eqn]);
     },
     inputs: {equation: 1, term: 2},
+    toOffer: ((step, term) =>
+              step.wff.getLeft().hasType() instanceof Toy.FunctionType),
     form: ('Apply both sides of step <input name=equation>'
            + ' to term <input name=term>'),
-    menu: '[f = g] to [f x = g x]',
-    tooltip: 'given f = g, deduce (f x) = (g x)',
-    description: '[f = g] to [f x = g x]',
+    menu: '[f = g] to [f val = g val]',
+    tooltip: 'given f = g, deduce (f term) = (g term)',
+    description: '[f = g] to [f val = g val]',
+    labels: 'primitive'
   },
 
   // r5201f.  Works with a conditional equation.
@@ -878,7 +879,8 @@ const equalities = {
            + ' to both sides of step <input name=equation>'),
     menu: '[a = b] to [f a = f b]',
     tooltip: 'given a = b deduce (f a) = (f b)',
-    description: 'from a = b to (f a) = (f b)'
+    description: 'from a = b to (f a) = (f b)',
+    labels: 'primitive'
   },
 
   // Apply a function of 2 args to each side of the given equation,
@@ -3780,7 +3782,10 @@ const ruleInfo = {
   //
   // If the equation argument is not an equation according to
   // isEquation, rewrites its main part to <main> = T and uses that as
-  // the equation.
+  // the equation.  To rewrite using an entire conditional "A => B"
+  // (not just its main part), rewrite with the fact "(A => B) == T".
+  // Similarly, to rewrite an equation or conditional equation, use a
+  // fact of the form "(A == B) == T" or "A => (B == C) == T".
   //
   // TODO: Consider renaming _free_ variables introduced into the step
   //   by the equation so they are distinct from all free variables
