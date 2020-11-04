@@ -1313,9 +1313,9 @@ const baseRules = {
       var step2b = rules.apply(step2a, '/left/right');
       var step2c = rules.apply(step2b, '/left/left');
       var step3a = rules.eqT(Toy.parse('{x. T}'));
-      var step3b = rules.replaceRight(step3a, '/right/fn',
+      var step3b = rules.rRight(step3a, '/right/fn',
                                       rules.definition('forall'));
-      return rules.replaceRight(step2c, '/right', step3b);
+      return rules.rRight(step2c, '/right', step3b);
     }
   },
 
@@ -1325,8 +1325,7 @@ const baseRules = {
   r5212: {
     statement: 'T & T',
     proof: function() {
-      return rules.replaceRight(rules.theorem('t'), '',
-                                rules.theorem('r5211'));
+      return rules.rRight(rules.theorem('t'), '', rules.theorem('r5211'));
     }
   }
 
@@ -1355,7 +1354,7 @@ const falseDefnFacts = {
       var step4 = rules.reduce(step3, '/left/right');
       var step5 = rules.reduce(step4, '/left/left');
       var step6 = rules.defFFromBook();
-      return rules.replaceRight(step5, '/right', step6);
+      return rules.rRight(step5, '/right', step6);
     }
   },
 
@@ -1387,7 +1386,7 @@ const falseDefnFacts = {
       var step2a = rules.reduce(step1, '/left/left');
       var step2b = rules.reduce(step2a, '/left/right');
       var step2c = rules.reduce(step2b, '/right/arg/body');
-      var step3 = rules.replaceRight(step2c, '/left/left', rules.eqT(T));
+      var step3 = rules.rRight(step2c, '/left/left', rules.eqT(T));
       var step4a = rules.andTBook(equal(T, F));
       var step4b = rules.r(step4a, step3, '/left');
       var step5a = rules.instEqn(rules.axiom3(), '{x. T}', 'f');
@@ -1396,8 +1395,8 @@ const falseDefnFacts = {
       var step6b = rules.reduce(step6a, '/right/arg/body/right');
       var step6c = rules.useDefinition(rules.defFFromBook(),
                                        '/right/fn');
-      var step6d = rules.replaceRight(step6b, '/left', step6c);
-      return rules.replaceRight(step4b, '/right', step6d);
+      var step6d = rules.rRight(step6b, '/left', step6c);
+      return rules.rRight(step4b, '/right', step6d);
     }
   },
 
@@ -1408,7 +1407,7 @@ const falseDefnFacts = {
       var step1 = rules.theorem('r5225');
       var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'p');
       var step3 = rules.defFFromBook();
-      var step4 = rules.replaceRight(step2, '/left', step3);
+      var step4 = rules.rRight(step2, '/left', step3);
       return rules.reduce(step4, '/right');
     }
   },
@@ -1447,13 +1446,13 @@ const falseDefnFacts = {
 	const step22 = rules.instMultiVars(step21, {a: 'T', b: 'F'});
 	const step23 = rules.rewriteOnly(step22, '/right', 'if T x y = x');
 	const step24 = rules.r5217Book();
-	const step25 = rules.replaceRight(step23, '/right', step24);
+	const step25 = rules.rRight(step23, '/right', step24);
 	// Now use the cases rule:
 	const step5 = rules.equationCases(step25, step14, 'x');
 	// Then instantiate [F = T] for x.
 	const step6 = rules.instEqn(step5, equal(F, T), 'x');
 	// And use the fact that [F = T] => F
-	const step7 = rules.replaceRight(step6, '/left', step4);
+	const step7 = rules.rRight(step6, '/left', step4);
 	return rules.rewriteOnly(step7, '', '(T == p) == p');
     },
     tooltip: ('[F = T] = F')
@@ -1674,7 +1673,7 @@ const booleanRules = {
   toTIsA: {
     action: function(step) {
       const step1 = rules.r5218(step);
-      const step2 = rules.replaceRight(step, '', step1);
+      const step2 = rules.rRight(step, '', step1);
       return step2.justify('toTIsA', arguments, [step]);
     },
     inputs: {step: 1},
@@ -1872,7 +1871,7 @@ const booleanRules = {
     proof: function() {
       var step1 = rules.eqSelf(Toy.parse('{x. T}'));
       var fa = rules.definition('forall');
-      return rules.replaceRight(step1, '/fn', fa);
+      return rules.rRight(step1, '/fn', fa);
     }
   },
 
@@ -2075,9 +2074,9 @@ const booleanRules = {
       var newVar = Toy.genVar('v', caseT.allNames());
       var gen = caseT.generalizeTF(caseF, newVar);
       var step1a = rules.axiom4(call(lambda(newVar, gen), T));
-      var step1b = rules.replaceRight(caseT, '', step1a);
+      var step1b = rules.rRight(caseT, '', step1a);
       var step2a = rules.axiom4(call(lambda(newVar, gen), F));
-      var step2b = rules.replaceRight(caseF, '', step2a);
+      var step2b = rules.rRight(caseF, '', step2a);
       var step4 = rules.and(step1b, step2b);
       var step5 = rules.instVar(rules.axiom1(), lambda(newVar, gen), 'g');
       var step6 = rules.r1(step4, '', step5);
@@ -2165,7 +2164,7 @@ const booleanRules = {
       var step1 = rules.eqSelf(call('not', F));
       var step2 = rules.r(rules.definition('not'), step1, '/right/fn');
       var step3 = rules.eqT(F);
-      return rules.replaceRight(step2, '/right', step3);
+      return rules.rRight(step2, '/right', step3);
     }
   },
 
@@ -2191,7 +2190,7 @@ const booleanRules = {
       var step5 = rules.toForall0(step4, x);
       var step6 = rules.instVar(rules.axiom3(), equal(T), 'f');
       var step7 = rules.instVar(step6, '{x. x}', 'g');
-      return rules.replaceRight(step5, '', step7);
+      return rules.rRight(step5, '', step7);
     }
   },
 
@@ -2364,7 +2363,7 @@ const booleanRules = {
         assert(step11.isCall2('=') && step11.getRight().isConst('T'),
                'Not a tautology: {1}', step11.getLeft(),
                step11);
-        var step12 = rules.replaceRight(rules.theorem('t'), '', step11);
+        var step12 = rules.rRight(rules.theorem('t'), '', step11);
         _tautologies[key] = step12;
         var result = step12.justify('tautology0', arguments);
         return result;
@@ -3658,12 +3657,12 @@ const ruleInfo = {
    * Same as r1, but replaces an occurrence in target of the right
    * side of the equation with its left side.
    */
-  replaceRight: {
+  rRight: {
     action: function(target, path, equation) {
       path = Toy.path(path);
       var rev = rules.eqnSwap(equation);
       var result = rules.r1(target, path, rev);
-      return result.justify('replaceRight', arguments, [target, equation]);
+      return result.justify('rRight', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Replace with left side of step <input name=equation>'),
