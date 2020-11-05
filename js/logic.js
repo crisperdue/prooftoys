@@ -4838,7 +4838,7 @@ const existRules =
         '(1 exists1Law)',
         '(2 instantiateVar (s 1) (path "/right/right/left") (t y))',
         '(3 assume (t ((the1 p) = (f x))))',
-        '(4 replace (s 2) (path "/right/right/right") (s 3))',
+        '(4 rewriteFrom (s 2) (path "/right/right/right") (s 3))',
         '(5 rewrite (s 4) (path "/left/left") (t ((x = y) == (y = x))))',
         '(6 rewrite (s 5) (path "/right/right") (t ((x = y) == (y = x))))',
         '(7 display (s 6))',
