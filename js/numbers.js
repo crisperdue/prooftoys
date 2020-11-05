@@ -611,12 +611,13 @@ Toy.addRules(fakeAxioms);
 //// Inference rules
 ////
 
-var numbersInfo = {
-  //
-  // Real numbers
-  // 
+//
+// Real numbers
+// 
 
-  plusZero: {
+const numbersInfo =
+  [
+   {name: 'plusZero',
     statement: '@R x => x + 0 = x',
     simplifier: true,
     tooltip: 'x + 0 = x',
@@ -627,9 +628,9 @@ var numbersInfo = {
               .andThen('simplifySite', '')
               .andThen('instForall', '', 'x'));
     }
-  },
+   },
 
-  timesOne: {
+  {name: 'timesOne',
     statement: '@R x => x * 1 = x',
     simplifier: true,
     tooltip: 'x * 1 = x',
@@ -643,7 +644,7 @@ var numbersInfo = {
   },
 
   // TODO: Prove this.
-  uniqueQuotient: {
+  {name: 'uniqueQuotient',
     // This is provable:
     // If y = 0 and x = 0, z can be any real number.
     // If y = 0 and x != 0 there is no solution.
@@ -655,27 +656,27 @@ var numbersInfo = {
   // This implies that 0 ** 0 = 1.  It is also legitimate to define
   // that 0 ** 0 is undefined.
   // TODO: Eventually prove these laws of powers as theorems.
-  axiomPower0: {
+  {name: 'axiomPower0',
     statement: '@R x => x ** 0 = 1',
     simplifier: true,
     description: 'real number to the zeroth power is 1'
   },
 
   // TODO: Eventually prove these laws of powers as theorems.
-  axiomNextPower: {
-    statement: '@x ** (y + 1) = (x ** y) * x',
+  {name: 'axiomNextPower',
+    statement: '@R x & R y => x ** (y + 1) = (x ** y) * x',
     description: 'real number to the next power'
   },
 
   // TODO: Prove this from x * y = 0 etc by deMorgan's Law.
-  factNonzeroProduct: {
+  {name: 'factNonzeroProduct',
     statement: '@R x & R y => (x * y != 0 == x != 0 & y != 0)',
     simplifier: true  // Good mainly for simplifying assumptions.
   },
 
   // Closure properties
 
-  realNegClosed: {
+  {name: 'realNegClosed',
     statement: '@ R x => R (neg x)',
     simplifier: true,
     proof:
@@ -692,7 +693,7 @@ var numbersInfo = {
      ]
   },
 
-  realSubClosed: {
+  {name: 'realSubClosed',
     statement: '@R x & R y => R (x - y)',
     simplifier: true,
     proof: function() {
@@ -702,7 +703,7 @@ var numbersInfo = {
     }
   },
 
-  realDivClosed: {
+  {name: 'realDivClosed',
     statement: 'y != 0 => R (x / y)',
     simplifier: true,
     // TODO: Prove this.  We need to:
@@ -711,7 +712,7 @@ var numbersInfo = {
     // ordering laws.
   },
 
-  realRecipClosed: {
+  {name: 'realRecipClosed',
     statement: '@ x != 0 & R x => R (recip x)',
     simplifier: true,
     proof: function() {
@@ -722,7 +723,7 @@ var numbersInfo = {
     }
   },
 
-  divByZero: {
+  {name: 'divByZero',
     statement: '@R x => x / 0 = none',
     simplifier: true,
     // We know that:
@@ -754,7 +755,7 @@ var numbersInfo = {
   // TODO: Move handling of inequalities from here to rules.arithmetic
   // except "<", so others can be defined in terms of it; and division
   // by zero there also, to return "none".
-axiomArithmetic: {
+  {name: 'axiomArithmetic',
     // This precheck does not guarantee success if it passes.
     precheck: function(term_arg) {
       var term = termify(term_arg);
@@ -838,7 +839,7 @@ axiomArithmetic: {
   // Handles !=.
   // TODO: Handle other inequalities here also, except "<",
   //   in terms of "<".
-  arithmetic: {
+  {name: 'arithmetic',
     action: function(step, path) {
       var term = step.get(path);
       var result;
@@ -863,15 +864,15 @@ axiomArithmetic: {
     tooltip: 'arithmetic',
     labels: 'algebra'
   }
+  ];
 
-};
 
 // definition('isQuotient = {x. {y. {z. R x & R y & R z & x = y * z}}}');
 
-var divisionInfo = {
-
+var divisionInfo =
+  [
   // Division is an inverse of multiplication.
-  divisionIsInverse: {
+  {name: 'divisionIsInverse',
     statement: '@y != 0 & R x & R y => (R z & x = y * z == z = x / y)',
     proof: function() {
       var step1 = rules.uniqueQuotient();
@@ -894,14 +895,14 @@ var divisionInfo = {
       return step10;
     }
   }
+   ];
 
-};
-
-var equationOpsInfo = {
+var equationOpsInfo =
+  [
 
   // Add the given term to the equation in the step at the given path,
   // typically /right/right.
-  addToBoth: {
+   {name: 'addToBoth',
     action: function(step, eqnPath, term_arg) {
       var fact = rules.fact('a = b == a + c = b + c');
       var c1 = step.wff.freshVar('c');
@@ -926,7 +927,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   },
 
-  subtractFromBoth: {
+   {name: 'subtractFromBoth',
     action: function(step, eqnPath, term_arg) {
       var fact = rules.fact('a = b == a - c = b - c');
       var c1 = step.wff.freshVar('c');
@@ -948,7 +949,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   },
 
-  multiplyBoth: {
+   {name: 'multiplyBoth',
     action: function(step, eqnPath, term_arg) {
       var fact = rules.fact('c != 0 => (a = b == a * c = b * c)');
       var c1 = step.wff.freshVar('c');
@@ -970,7 +971,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   },
 
-  divideBoth: {
+   {name: 'divideBoth',
     action: function(step, eqnPath, term_arg) {
       var fact = rules.fact('c != 0 => (a = b == a / c = b / c)');
       var c1 = step.wff.freshVar('c');
@@ -994,7 +995,7 @@ var equationOpsInfo = {
 
   // Add the term at the given site to both sides of the (innermost)
   // equation containing it.
-  addThisToBoth: {
+   {name: 'addThisToBoth',
     action: function(step, path) {
       var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
@@ -1012,7 +1013,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   },
 
-  subtractThisFromBoth: {
+   {name: 'subtractThisFromBoth',
     action: function(step, path) {
       var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
@@ -1030,7 +1031,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   },
 
-  multiplyBothByThis: {
+   {name: 'multiplyBothByThis',
     action: function(step, path) {
       var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
@@ -1048,7 +1049,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   },
 
-  divideBothByThis: {
+   {name: 'divideBothByThis',
     action: function(step, path) {
       var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
@@ -1066,7 +1067,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   },
 
-  addEquationToThis: {
+   {name: 'addEquationToThis',
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
       var step1 = rules.applyToBothWith(eqn1, '+', lhs);
@@ -1082,7 +1083,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   },
 
-  subtractEquationFromThis: {
+   {name: 'subtractEquationFromThis',
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
       var step1 = rules.applyToBothWith(eqn1, '-', lhs);
@@ -1098,7 +1099,7 @@ var equationOpsInfo = {
     labels: 'algebra'
   }
 
-};
+   ];
 
 //// Fact lists
 
@@ -1222,11 +1223,12 @@ const mathSimplifiers = {
 };  // End of mathSimplifiers.
 
 
-var moversInfo = {
+var moversInfo =
+  [
 
   // Uses the associative law to "flatten" an expression made
   // up of additions and subtractions.
-  flattenSum: {
+   {name: 'flattenSum',
     data: {flatteners: [
            {stmt: 'a + (b + c) = a + b + c'},
            {stmt: 'a + (b - c) = a + b - c'},
@@ -1260,7 +1262,7 @@ var moversInfo = {
 
   // In a flattened sequence of additions and subtractions, this
   // moves all the numeric terms to the end.
-  arrangeSum: {
+   {name: 'arrangeSum',
     action: function(step, path) {
       var numeralBefore = '$.b.isNumeral() && !$.c.isNumeral()';
       var numRightMovers = [
@@ -1303,7 +1305,7 @@ var moversInfo = {
    * Inline rule that converts negations into -1 * x within
    * a term of * and /.
    */
-  denegateTerm: {
+   {name: 'denegateTerm',
       data:
       {context:
        {factLists:
@@ -1329,7 +1331,7 @@ var moversInfo = {
    * uses of "neg" into multiplication by -1, then removes
    * parentheses, traversing uses of "*" and "/".
    */
-  flattenTerm: {
+   {name: 'flattenTerm',
     data: {flatteners: [
         {stmt: 'a * (b * c) = a * b * c'},
         {stmt: 'a * (b / c) = a * b / c'},
@@ -1372,7 +1374,7 @@ var moversInfo = {
    *
    * Inline, for internal use.
    */
-  arrangeRational: {
+   {name: 'arrangeRational',
     data: function() {
       // TODO: For terms containing composite terms e.g. 2*(x + y),
       //   consider changing "isVariable" in these tests to
@@ -1526,7 +1528,7 @@ var moversInfo = {
    * Arrange a rational expression into "ratio form", [a / b], with
    * numeric coefficents on the left of "a" and "b".
    */
-  arrangeRatio: {
+   {name: 'arrangeRatio',
     action: function arrangeRatio(step, path) {
       return (rules.arrangeRational(step, path, true)
               .justify('arrangeRatio', arguments, step));
@@ -1551,7 +1553,7 @@ var moversInfo = {
    *   out of both numerator and denominator, then do arithmetic.
    *   
    */
-  arrangeTerm: {
+   {name: 'arrangeTerm',
     action: function arrangeTerm(step, path) {
       var step1 = rules.arrangeRational(step, path, false);
       var step2 = rules.simplifySite(step1, path);
@@ -1580,7 +1582,7 @@ var moversInfo = {
 
   // Regrouping, but just for additions.
   // TODO: When there is a more suitable regrouping rule, remove this.
-  regroupAdditions: {
+   {name: 'regroupAdditions',
     action: function(step) {
       function applyTo(eqn, facts) {
         return Toy.applyFactsWithinRhs(eqn, {facts: facts,
@@ -1648,7 +1650,7 @@ var moversInfo = {
    * TODO: make something like this that doesn't remove all
    *   subtraction.
    */
-  regroup: {
+   {name: 'regroup',
     action: function(step) {
       return rules.removeSubtraction(step)
       .andThen('regroupAdditions')
@@ -1665,7 +1667,7 @@ var moversInfo = {
    * Moves a term to the right in a sequence of summed terms.
    * The sequence must be "flat", associated to the left.
    */
-  moveTermRight: {
+   {name: 'moveTermRight',
     data: {
       factsA: [
         'neg a + b = b - a',
@@ -1719,7 +1721,7 @@ var moversInfo = {
    * Moves a term to the left in a sequence of summed terms.
    * The sequence must be "flat" (associated to the left).
    */
-  moveTermLeft: {
+   {name: 'moveTermLeft',
     toOffer: function(step, expr) {
       var path = step.prettyPathTo(expr);
       var lastSegment = path.last();
@@ -1762,7 +1764,7 @@ var moversInfo = {
    * Rule to force association to the right for addition, subtraction,
    * multiplication, and division.  Does nothing if not applicable.
    */
-  groupToRight: {
+   {name: 'groupToRight',
     toOffer: function(step, expr) {
       return Toy.matchFactPart(step, step.pathTo(expr), regroupingFacts, 'b');
     },
@@ -1792,7 +1794,7 @@ var moversInfo = {
    * needs them to force association to the right.  Uses converses
    * of regroupingFacts.
    */
-  ungroup: {
+   {name: 'ungroup',
     toOffer: function(step, expr) {
       var path = step.prettyPathTo(expr).upTo('/right');
       if (!path) {
@@ -1817,7 +1819,7 @@ var moversInfo = {
    * belong to the left of its left neighbor.
    * 
    */
-  placeTermLeftward: {
+   {name: 'placeTermLeftward',
     toOffer: function(step, expr) {
       var path = step.prettyPathTo(expr);
       var leftPath = step.leftNeighborPath(path, ['+', '-']);
@@ -1846,7 +1848,7 @@ var moversInfo = {
   },
 
   /** TODO: Decide whether to keep or remove this rule.
-  removeRightTerm: {
+      {name: 'removeRightTerm',
     action: function(step, path) {
       // This rule assumes that the step has the form
       // H => lhs = rhs
@@ -1896,7 +1898,7 @@ var moversInfo = {
 
   /* TODO: Choose a way to get varName into the "where" clauses,
    *   then finish this.
-  regroupBy: {
+   {name: 'regroupBy',
     action: function(step, path, varName) {
       var facts = [{stmt: 'a + b = b + a',
                     where: '$.a.isNumeral() && !$.b.isNumeral()'},
@@ -1913,17 +1915,18 @@ var moversInfo = {
   },
   */
 
-};  // End of moversInfo.
+   ];  // End of moversInfo.
 
 
-var fractionsInfo = {
+var fractionsInfo =
+  [
 
   /**
    * Reduces the selected fraction to lower terms using their least
    * common divisor (via Toy.npd).  No, not the greatest common
    * divisor, for pedagogical reasons.
    */
-  reduceFraction: {
+   {name: 'reduceFraction',
     action: function(step, path) {
       var expr = step.get(path);
       var lv = expr.getLeft().getNumValue();
@@ -1957,7 +1960,7 @@ var fractionsInfo = {
    * Reduces the selected fraction to the form 1/k in the case where
    * the numerator exactly divides the denominator.
    */
-  reduceFraction1: {
+   {name: 'reduceFraction1',
     action: function(step, path) {
       var expr = step.get(path);
       var lv = expr.getLeft().getNumValue();
@@ -1991,7 +1994,7 @@ var fractionsInfo = {
    * produces a result with the fraction denominators changed to the
    * specified value, which must be an exact multiple of both.
    */
-  commonDenominator: {
+   {name: 'commonDenominator',
     action: function(step, path, num) {
       var n = num.getNumValue();
       var expr = step.get(path);
@@ -2025,7 +2028,7 @@ var fractionsInfo = {
    * Given a numeric term (integer) that has prime factors, produce a
    * step that equates it to its prime factors.
    */
-  primeFactors: {
+   {name: 'primeFactors',
     action: function(term_arg) {
       var term = termify(term_arg);
       var factors = [];
@@ -2052,7 +2055,7 @@ var fractionsInfo = {
     autoSimplify: noSimplify
   }
 
-};  // End fractionsInfo.
+   ];  // End fractionsInfo.
 
 
 //// Algebra facts
@@ -3350,12 +3353,12 @@ Toy.isArithmetic = isArithmetic;
 
 //// INITIALIZATION CODE
 
-Toy.addRulesMap(numbersInfo);
-Toy.addRulesMap(divisionInfo);
-Toy.addRulesMap(equationOpsInfo);
-Toy.addRulesMap(mathSimplifiers);
-Toy.addRulesMap(moversInfo);
-Toy.addRulesMap(fractionsInfo);
+Toy.addRules(numbersInfo);
+Toy.addRules(divisionInfo);
+Toy.addRules(equationOpsInfo);
+Toy.addRules(mathSimplifiers);
+Toy.addRules(moversInfo);
+Toy.addRules(fractionsInfo);
 
 // From here is overall initialization for the complete system.
 
