@@ -4778,7 +4778,7 @@ const existRules =
     proof: function() {
       return (rules.fact('exists1 p => (p x == x = the1 p)')
               // This rewrite does merge the assumptions.
-              .andThen('rewriteOnly', '/right/right/right',
+              .andThen('rewrite', '/right/right/right',
                        'exists1 p => the1 p = the p'));
     }
    },

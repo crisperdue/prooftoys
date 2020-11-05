@@ -450,7 +450,7 @@ Toy.addRules(realOrdFacts);
        '(12 rewrite (s 7) (path "/right") (t (a == (T & a))))',
        '(13 replaceT (s 12) (path "/right/left") (s 11))',
        '(14 display (s 13))',
-       '(15 rewriteOnlyFrom (s 14) (path "/right") (s 9))',
+       '(15 rewriteFrom (s 14) (path "/right") (s 9))',
        '(16 rewrite (s 15) (path "/right") (t ((x = y) == (y = x))))'
        ]
      },
@@ -1952,6 +1952,8 @@ var fractionsInfo = {
   },
 
   /**
+   * TODO: This is not working.  Debug, or remove, or whatever.
+   * 
    * Reduces the selected fraction to the form 1/k in the case where
    * the numerator exactly divides the denominator.
    */
