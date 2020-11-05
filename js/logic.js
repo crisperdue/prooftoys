@@ -3677,48 +3677,6 @@ const ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Ambidextrous replace that tries matching the equation LHS, but
-  // can also replace right-to-left.  Applies rules.replaceIsEquiv if
-  // these do not match.
-  replaceEither: {
-    action: function(target, _path, equation) {
-      // TODO: Figure out what to do about Toy.path!
-      var path = Toy.path(_path);
-      var lhs = equation.getMain().getLeft();
-      var rhs = equation.getMain().getRight();
-      var expr = target.get(path);
-      assert(expr, 'Target {1} has no path {2}', target, path);
-      if (expr.matches(lhs)) {
-        return rules.replace(target, path, equation)
-          .justify('replaceEither', arguments, [target, equation]);
-      } else if (expr.matches(equation.getMain().getRight())) {
-        var step1 = rules.eqnSwap(equation);
-        return (rules.replace(target, path, step1)
-                .justify('replaceEither', arguments, [target, equation]));
-      } else if (rhs.isCall2('=') && expr.matches(rhs.getLeft())) {
-        // Apply the more complex rule "inline", so it displays and
-        // not this rule.
-        return rules.replaceIsEquiv(target, path, equation);
-      } else {
-        Toy.err('Expression ' + expr + ' matches neither side of ' +
-                equation);
-      }
-    },
-    inputs: {site: 1, equation: 3},
-    form: ('Replace this using equation step <input name=equation>'),
-    menuGen: function(ruleName, step, term, proofEditor) {
-      return Toy.format('replace {1} with equal term (old-style)', term);
-      // TODO: Finish this.
-      var ed = proofEditor;
-      var result;
-      for (var i = 0; i < ed.steps.length; i++) {
-      }
-    },
-    tooltip: ('Replaces an occurrence of a term with an equal term'),
-    description: 'replace term;; {in step siteStep} {using step equation}',
-    labels: 'basic'
-  },
-
   // Given a step A, a path to its selected subexpression b, and an
   // equation step containing an equation of the form (b = c), this
   // proves (b = c => (B = B')), where B is either A, or if A is a

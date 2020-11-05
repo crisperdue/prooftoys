@@ -2365,15 +2365,6 @@ var hoverHandlers = {
   useDefinition: hoverReplace,
   replace: hoverAsRewriter,
   r1: hoverAsRewriter,
-  replaceEither: function(step, action) {
-    // Same as hoverReplace, but the equation is args[2].
-    // TODO: Calling hoverAsRewriter does not work when this replaces
-    //   a right side.  Fix so it does work.
-    hoverAsRewriter(step, action);
-    var args = step.original.ruleArgs;
-    var eqnStep = args[2].rendering;
-    action(eqnStep.stepNode, 'dep');
-  },
   axiom4: function(step, action) {
     var call = step.getLeft();
     action(call.arg.node, 'new');
