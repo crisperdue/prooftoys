@@ -1048,6 +1048,13 @@ Expr.prototype.isCall2 = function(name) {
 };
 
 /**
+ * Tests whether this Expr is conditional.
+ */
+Expr.prototype.implies = function() {
+  return this.isCall2('=>');
+};
+
+/**
  * True iff this is a call to a lambda expression.
  */
 Expr.prototype.isLambdaCall = function() {
