@@ -816,7 +816,7 @@ const equalities = {
   // r5201a is not implemented.  It would be ambiguous in case the
   // "whole" is a conditional.  Use rules.replaceT0 instead.
 
-  // r5201b, works with conditionals.
+  // r5201b, works with a conditional equation.
   eqnSwap: {
     action: function(h_ab) {
       var ab = h_ab.getMain();
@@ -826,6 +826,8 @@ const equalities = {
                 : op === '='
                 ? rules.eqSelf(ab.getLeft())
                 : assert(false, 'Must be an equiv/equation: {1}', ab));
+      // Plain replace is suitable here.  If h_ab is a pure equation
+      // it is the same as r1.
       var ba = rules.replace(aa, '/main/left', h_ab);
       return ba.justify('eqnSwap', arguments, arguments);
     },
@@ -846,6 +848,7 @@ const equalities = {
       const step1 = (eqn.isCall2('==')
                      ? rules.equivSelf(call(eqn.eqnLeft(), a))
                      : rules.eqSelf(call(eqn.eqnLeft(), a)));
+      // Plain replace is OK here, and becomes r1 if eqn is pure.
       const step2 = rules.replace(step1, '/right/fn', eqn);
       return step2.justify('applyBoth', arguments, [eqn]);
     },
@@ -860,12 +863,13 @@ const equalities = {
     labels: 'primitive'
   },
 
-  // r5201f.  Works with a conditional equation.
+  // r5201f.  Works with a conditional equation "ab".
   // If f is a lambda expression, also applies it to both sides.
   applyToBoth: {
     action: function(f_arg, ab) {
       var f = termify(f_arg);
       var fafa = rules.eqSelf(call(f, ab.eqnLeft()));
+      // Plain replace is OK here, and becomes r1 if ab is pure.
       var fafb = rules.replace(fafa, '/right/arg', ab);
       var result = fafb;
       if (f instanceof Toy.Lambda) {

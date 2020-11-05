@@ -112,7 +112,7 @@ const identityFacts =
        const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
                       .andThen('rewrite', '/rt/left', 'x + y = y + x'));
        const yType = xType.andThen('instMultiVars', {x: 'y'});
-       const result = (rules.replace(factY, '/rt/left', factX)
+       const result = (rules.rewriteFrom(factY, '/rt/left', factX)
                        .andThen('trueBy1', '(R x)', xType)
                        .andThen('trueBy1', '(R y)', yType)
                        .andThen('eqnSwap'));
@@ -132,7 +132,7 @@ const identityFacts =
        const factY = (factX.andThen('instMultiVars', {x: 'y', y: 'x'})
                       .andThen('rewrite', '/rt/left', 'x * y = y * x'));
        const yType = xType.andThen('instMultiVars', {x: 'y'});
-       const result = (rules.replace(factY, '/rt/left', factX)
+       const result = (rules.rewriteFrom(factY, '/rt/left', factX)
                        .andThen('trueBy1', '(R x)', xType)
                        .andThen('trueBy1', '(R y)', yType)
                        .andThen('eqnSwap'));
