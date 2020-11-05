@@ -252,14 +252,6 @@ var ruleMethods = {
    */
   rewrite: function rewrite_method(path, fact) {
     return rules.rewrite(this, path, fact);
-  },
-
-  /**
-   * Applies rules.replace to this Expr passing in a path and
-   * equation to use.
-   */
-  replace: function(path, eqn) {
-    return rules.replace(this, path, eqn);
   }
 };
 Expr.addMethods(ruleMethods);
