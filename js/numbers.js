@@ -1159,11 +1159,12 @@ function simplifyAddSubBoth(step, eqnPath) {
   return rules.simplifyFocalPart(step2);
 }
 
-const mathSimplifiers = {
+const mathSimplifiers =
+  [
   // Move all negations in past additions and multiplications;
   // eliminate double negations.
   // TODO: Consider removing this as redundant.
-  simplifyNegations: {
+   {name: 'simplifyNegations',
     action: function(step) {
       var facts = ['neg (a + b) = neg a + neg b',
                    'neg (neg a) = a',
@@ -1183,7 +1184,7 @@ const mathSimplifiers = {
 
   // Remove occurrences of subtraction by adding the negative,
   // and simplifies negations.
-  removeSubtraction: {
+   {name: 'removeSubtraction',
     action: function(step) {
       var facts = ['@a - b = a + neg b'];
       var info = {facts: facts, searchMethod: 'searchTerms'};
@@ -1199,7 +1200,7 @@ const mathSimplifiers = {
   },
 
   // TODO: Review the usefulness of this and possibly remove it.
-  cleanUpTerms: {
+   {name: 'cleanUpTerms',
     action: function(step) {
       var facts = ['a * (b * c) = a * b * c',
                    {stmt: 'a * b = b * a',
@@ -1220,7 +1221,7 @@ const mathSimplifiers = {
     labels: 'algebra'
   },
 
-};  // End of mathSimplifiers.
+   ];  // End of mathSimplifiers.
 
 
 var moversInfo =
