@@ -3602,7 +3602,7 @@ const ruleInfo = {
   // TODO: Instead of calling arrangeAsms here, leave the equation's
   //   assumptions alone, and effectively perform arrangeAsms as part
   //   of rewriting.  (Check all uses of arrangeAsms elsewhere.)
-  replace: {
+  r2: {
     action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
       if (equation.isCall2('=')) {
@@ -3642,13 +3642,24 @@ const ruleInfo = {
       // the equation itself.
       var step3 = rules.p2(quantEqn, step2b,
                            '(a => b) & (b => c) => (a => c)');
-      var step4 = step3;
-      var step5 = (target.isCall2('=>')
-                   ? (rules.rewriteOnly(step4, '',
+      return step3.justify('r2', arguments, [target, equation]);
+    },
+    inputs: {site: 1, equation: 3}, // plus further constraints
+    form: ('Replace site with right side of equation <input name=equation>'),
+    menu: 'replace using a step like {term} = . . .',
+    description: 'replace term;; {in step siteStep} {using step equation}',
+    labels: 'basic'
+  },
+
+  replace: {
+    action: function(target, path, equation) {
+      const step1 = rules.r2(target, path, equation);
+      const step2 = (target.isCall2('=>') && equation.isCall2('=>')
+                     ? (rules.rewriteOnly(step1, '',
                                         'a => (b => c) == a & b => c')
                       .andThen('arrangeAsms'))
-                   : step4);
-      return step5.justify('replace', arguments, [target, equation]);
+                     : step1);
+      return step2.justify('replace', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
     form: ('Replace site with right side of equation <input name=equation>'),
