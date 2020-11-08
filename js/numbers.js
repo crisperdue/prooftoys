@@ -369,23 +369,26 @@ const realOrdering =
    ];
 Toy.addRules(realOrdering);
 
-const realOrdFacts = [
-   {statement: '@(((x = y) & (R x)) => (not (x < y)))',
-    proof:
+const realOrdFacts =
     [
-     '(1 assumeExplicitly (t (x = y)))',
-     '(2 fact "not (x < x)")',
-     '(3 rewriteFrom (s 2) (path "/right/arg/right") (s 1))'
-     ]
-   },
-   {statement: '@x < y & R x => not (x = y)',
-    proof:
-    [
-     '(1 fact "@x = y => not (x < y)")',
-     '(2 rewrite (s 1) (path "") (t (((a & b) => (not c)) == ' +
-     '   ((b & c) => (not a)))))'
-     ]
+   {statement: 'x = y => not (x < y)',
+    proof: function() {
+       const asm = rules.assume('x = y');
+       return (rules.fact('not (x < x)')
+               .andThen('replace', '/main/arg/right', asm));
      }
+   },
+
+   {statement: '@R x & x < y => x != y',
+    proof: function() {
+       return (rules.fact('x = y => not (x < y)')
+               .andThen('extractHyp', 'x = y')
+               .andThen('rewrite', '/main', 'a => not b == b => not a')
+               .andThen('rewrite', 'not (x = y)', 'not (x = y) == x != y')
+               .andThen('rewrite', '', 'a => (b => c) == a & b => c'));
+     }
+   }
+
 ];
 Toy.addRules(realOrdFacts);
 
@@ -1108,6 +1111,7 @@ Toy.asmSimplifiers.push
   (
    'R 0',  // Include R 0 and R 1 for direct use where applicable.
    'R 1',
+   'R pi',
    'R (x + y)',
    'R (x * y)',
    'R (x - y)',
@@ -3408,7 +3412,7 @@ let piFacts =
   [
    {statement: 'R pi', axiom: true,
     description: 'Pi is a real number'},
-   {statement: 'pi > 0', axiom: true,
+   {statement: '0 < pi', axiom: true,
     description: 'Pi is a positive number'}
    ];
 addRules(piFacts);
