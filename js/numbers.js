@@ -370,22 +370,22 @@ const realOrdering =
 Toy.addRules(realOrdering);
 
 const realOrdFacts = [
-  {statement: '@(((x = y) & (R x)) => (not (x < y)))',
-   proof:
-   [
-    '(1 assumeExplicitly (t (x = y)))',
-    '(2 fact "not (x < x)")',
-    '(3 rewriteFrom (s 2) (path "/right/arg/right") (s 1))'
-    ]
-  },
-  {statement: '@x < y & R x => not (x = y)',
-   proof:
-   [
-    '(1 fact "@x = y => not (x < y)")',
-    '(2 rewrite (s 1) (path "") (t (((a & b) => (not c)) == ' +
-    '   ((b & c) => (not a)))))'
-    ]
-  }
+   {statement: '@(((x = y) & (R x)) => (not (x < y)))',
+    proof:
+    [
+     '(1 assumeExplicitly (t (x = y)))',
+     '(2 fact "not (x < x)")',
+     '(3 rewriteFrom (s 2) (path "/right/arg/right") (s 1))'
+     ]
+   },
+   {statement: '@x < y & R x => not (x = y)',
+    proof:
+    [
+     '(1 fact "@x = y => not (x < y)")',
+     '(2 rewrite (s 1) (path "") (t (((a & b) => (not c)) == ' +
+     '   ((b & c) => (not a)))))'
+     ]
+     }
 ];
 Toy.addRules(realOrdFacts);
 
@@ -1113,6 +1113,10 @@ Toy.asmSimplifiers.push
    'R (x - y)',
    'y != 0 => R (x / y)',
    'R (neg x)',
+   'R (x ** 2)',
+   'R (x ** 3)',
+   'R (x ** 4)',
+   'R (x ** 5)',
    'x != 0 => R (recip x)',
    'x != 0 => recip x != 0',
    'x * y != 0 == x != 0 & y != 0',
@@ -3036,36 +3040,111 @@ var divisionFacts = {
 };
 addFactsMap(divisionFacts);
 
-var powerFacts = {
-  'a ** 1 = a': {
+var powerFacts =
+  [
+   {statement: 'x ** 1 = x',
     proof: function() {
-      return rules.axiomNextPower()
-      .andThen('instMultiVars', {x: Toy.parse('a'), y: Toy.parse('0')})
-      .andThen('arithmetic', '/main/left/right')
-      .rewrite('/main/right/left', rules.axiomPower0())
-      .rewrite('/main/right', '1 * a = a');
-    }
-  },
-  'a ** 2 = a * a': {
+       return (rules.axiomNextPower()
+               .andThen('instVar', '0', 'y')
+               .andThen('rewrite', 'x ** 0', 'x ** 0 = 1')
+               .andThen('rewrite', '1 * x', '1 * x = x')
+               .andThen('rewrite', '0 + 1', '0 + x = x'));
+     }
+   },
+
+   {statement: 'x ** 2 = x * x',
     proof: function() {
-      return rules.axiomNextPower()
-      .andThen('instVar', '1', 'y')
-      .rewrite('/main/right/left', 'a ** 1 = a')
-      .andThen('arithmetic', '/main/left/right');
-    }
-  },
-  // TODO: Add a rule to convert a ** n to multiplication for any
-  // non-negative integer n.
-  'a ** 3 = a * a * a': {
+       return (rules.axiomNextPower()
+               .andThen('instVar', '1', 'y')
+               .andThen('rewrite', 'x ** 1', 'x ** 1 = x')
+               .andThen('rewrite', '1 + 1', '1 + 1 = 2'));
+     }
+   },
+
+   {statement: 'x ** 3 = x ** 2 * x',
     proof: function() {
-      return rules.axiomNextPower()
-      .andThen('instVar', '2', 'y')
-      .rewrite('/main/right/left', 'a ** 2 = a * a')
-      .andThen('arithmetic', '/main/left/right');
-    }
-  }
-};
-addFactsMap(powerFacts);
+       return (rules.axiomNextPower()
+               .andThen('instVar', '2', 'y')
+               .andThen('rewrite', '2 + 1', '2 + 1 = 3'));
+     }
+   },
+
+   {statement: 'x ** 4 = x ** 3 * x',
+    proof: function() {
+       return (rules.axiomNextPower()
+               .andThen('instVar', '3', 'y')
+               .andThen('rewrite', '3 + 1', '3 + 1 = 4'));
+     }
+   },
+
+   {statement: 'x ** 5 = x ** 4 * x',
+    proof: function() {
+       return (rules.axiomNextPower()
+               .andThen('instVar', '4', 'y')
+               .andThen('rewrite', '4 + 1', '4 + 1 = 5'));
+     }
+   },
+
+   {statement: 'x ** 3 = x * x * x',
+    proof: function() {
+       return (rules.axiomNextPower()
+               .andThen('instVar', '2', 'y')
+               .andThen('rewrite', 'x ** 2', 'x ** 2 = x * x')
+               .andThen('rewrite', '2 + 1', '2 + 1 = 3'));
+     }
+   },
+
+   {statement: 'x ** 4 = x * x * x * x',
+    proof: function() {
+       return (rules.axiomNextPower()
+               .andThen('instVar', '3', 'y')
+               .andThen('rewrite', 'x ** 3', 'x ** 3 = x * x * x')
+               .andThen('rewrite', '3 + 1', '3 + 1 = 4'));
+     }
+   },
+
+   {statement: 'x ** 5 = x * x * x * x * x',
+    proof: function() {
+       return (rules.axiomNextPower()
+               .andThen('instVar', '4', 'y')
+               .andThen('rewrite', 'x ** 4', 'x ** 4 = x * x * x * x')
+               .andThen('rewrite', '4 + 1', '4 + 1 = 5'));
+     }
+   },
+
+   {statement: 'R (x ** 2)',
+    proof: function() {
+       return (rules.fact('R (x * y)')
+               .andThen('instVar', 'x', 'y')
+               .andThen('rewrite', 'x * x', 'x * x = x ** 2'));
+     }
+   },
+
+   {statement: 'R (x ** 3)',
+    proof: function() {
+       return (rules.fact('R (x * y)')
+               .andThen('instMultiVars', {x: 'x ** 2', y: 'x'})
+               .andThen('rewrite', 'x ** 2 * x', 'x ** 2 * x = x ** 3'));
+     }
+   },
+
+   {statement: 'R (x ** 4)',
+    proof: function() {
+       return (rules.fact('R (x * y)')
+               .andThen('instMultiVars', {x: 'x ** 3', y: 'x'})
+               .andThen('rewrite', 'x ** 3 * x', 'x ** 3 * x = x ** 4'));
+     }
+   },
+
+   {statement: 'R (x ** 5)',
+    proof: function() {
+       return (rules.fact('R (x * y)')
+               .andThen('instMultiVars', {x: 'x ** 4', y: 'x'})
+               .andThen('rewrite', 'x ** 4 * x', 'x ** 4 * x = x ** 5'));
+     }
+   }
+   ];
+addRules(powerFacts);
 
 
 // MOVING EXPRESSIONS AROUND
