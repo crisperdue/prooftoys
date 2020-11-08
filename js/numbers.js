@@ -1112,6 +1112,7 @@ Toy.asmSimplifiers.push
    'R 0',  // Include R 0 and R 1 for direct use where applicable.
    'R 1',
    'R pi',
+   'pi != 0',
    'R (x + y)',
    'R (x * y)',
    'R (x - y)',
@@ -3412,8 +3413,24 @@ let piFacts =
   [
    {statement: 'R pi', axiom: true,
     description: 'Pi is a real number'},
+
    {statement: '0 < pi', axiom: true,
-    description: 'Pi is a positive number'}
+    description: 'Pi is a positive number'},
+
+   {statement: '0 != pi',
+    proof: function() {
+       return (rules.fact('@R x & x < y => x != y')
+               .andThen('instMultiVars', {x: '0', y: 'pi'})
+               .andThen('rewrite', '0 < pi', '0 < pi'));
+     }
+   },
+
+   {statement: 'pi != 0',
+    proof: function() {
+       return (rules.fact('0 != pi')
+               .andThen('rewrite', '0 != pi', 'x != y == y != x'));
+     }
+   }
    ];
 addRules(piFacts);
 
