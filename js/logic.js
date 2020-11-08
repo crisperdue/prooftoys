@@ -4916,6 +4916,15 @@ const logicFacts =
      }
    },
 
+   {statement: 'x != y == y != x',
+    proof: function() {
+       return (rules.equivSelf('x != y')
+               .andThen('rewrite', '/right', '(a != b) == not (a = b)')
+               .andThen('rewrite', 'x = y', 'x = y == y = x')
+               .andThen('rewrite', '/right', 'not (a = b) == a != b'));
+     }
+   },
+
    {statement: 'not (a != b) == (a = b)',
     simplifier: true,
     proof: function() {
