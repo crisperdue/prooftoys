@@ -370,7 +370,7 @@ const realOrdering =
 Toy.addRules(realOrdering);
 
 const realOrdFacts =
-    [
+  [
    {statement: 'x = y => not (x < y)',
     proof: function() {
        const asm = rules.assume('x = y');
