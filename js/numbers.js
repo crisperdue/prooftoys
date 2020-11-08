@@ -1574,13 +1574,15 @@ var moversInfo =
            where: '$.b.isNumeral()'},
           {stmt: 'a * b / (c * d) = b / d * (a / c)',
            where: '$.b.isNumeral() && $.d.isNumeral()'},
+	  {stmt: 'a * b / c = a / c * b',
+	   where: '$.a.isNumeral() && $.c.isNumeral()'},
           {stmt: 'a * b / c = b * (a / c)',
            where: '$.b.isNumeral()'},
           {stmt: 'a / (b * c) = 1 / c * (a / b)',
            where: '$.c.isNumeral()'}
       ];
       return (Toy.applyFactsOnce(step2, path, facts)
-              .justify('arrangeTerm', arguments, step));
+              .justify('arrangeTerm', arguments, [step]));
     },
     inputs: {site: 1},
     offerExample: true,
