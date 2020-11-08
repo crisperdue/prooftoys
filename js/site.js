@@ -238,6 +238,11 @@ menuTrigger && (menuTrigger.onclick = function() {
 
 // Initializations on DOM ready.
 $(function() {
+    Promise.resolve().then
+      // Initializing after promise resolution takes this code
+      // out of the jQuery "ready" handler try-catch, so it is
+      // easier to debug.
+      (function() {
     // Create a proof editor for each div.proof-editor node,
     // initializing its steps from a data-steps attribute if the
     // constructor does not load steps from a document.  Re-visiting a
@@ -272,7 +277,7 @@ $(function() {
         display.setSteps(Toy.decodeSteps(stepsInfo));
         $(this).append(display.node);
       });
-  });
+      })});
 
 //// Managing the footer to account for (invisible) absolute DIVs
 
