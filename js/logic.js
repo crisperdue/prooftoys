@@ -1381,7 +1381,7 @@ const falseDefnFacts = {
       var step5 = rules.reduce(step4, '/right/arg/body');
       var step7 = rules.r5214();
       var step8 = rules.r5213(rules.theorem('r5211'), step7);
-      var step9 = rules.r(step5, step8, '/');
+      var step9 = rules.r(step5, step8, '');
       var step10 = rules.instForall(step9, '', a);
       return step10.justify('andTBook', arguments);
     }

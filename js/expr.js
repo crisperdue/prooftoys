@@ -1485,7 +1485,7 @@ Expr.prototype.pathToBinding = function(pred) {
     var target = pred;
     pred = function(term) { return target.matches(term); };
   }
-  var revPath = this._bindingPath(pred, path('/'));
+  var revPath = this._bindingPath(pred, path(''));
   return revPath ? revPath.reverse() : null;
 };
 

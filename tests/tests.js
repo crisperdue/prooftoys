@@ -789,7 +789,7 @@ var testCase = {
     var path = Toy.path(p);
     assertEqual(p, path.toString());
     assertEqual('a', path.segment);
-    assert(Toy.path('/').isMatch());
+    assert(Toy.path('').isMatch());
     var p2 = '/left/binop';
     assertEqual('/left/binop', Toy.path(p2).toString());
     var p3 = '/arg/fn';

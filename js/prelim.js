@@ -328,42 +328,37 @@ function path(arg, opt_expr) {
 }
 
 /**
- * Pseudo-constructor: returns a Path based on a "/"-separated string
- * or an array of strings, or a Bindings, or null.  The parts become
- * the segments of the path.  Some segments serve as macros that
- * expand into a list of other segments, currently 'left', 'right',
- * and 'binop'.
+ * Pseudo-constructor: coerces its argument to a Path given a string
+ * consisting of segments starting with "/", or an array of strings,
+ * or a Bindings, or null.  The parts become the segments of the path.
+ * Bindings are reversed, with the first binding ("from" part)
+ * becoming the last segment of the path.
  *
- * A null input indicates an empty path.
+ * A null input or no arg given indicates an empty path; passes
+ * through a Path argument.
  */
 function asPath(arg) {
   if (arg instanceof Path) {
     return arg;
   }
+  let segments;
   if (arg == null) {
-    arg = '';
-  }
-  // If a Bindings, reverse it into an array and go from there.
-  if (arg instanceof Bindings) {
-    var array = [];
-    while (bindings != null) {
-      array.unshift(bindings.from);
-    }
-    arg = array;
-  }
-  var segments = (typeof arg == 'string')
-    ? arg.split('/')
-    : arg;
-
-  // We now have an array of segments.
-  // Remove the empty first element resulting from an initial "/".
-  // Even an empty string splits into an array with one element.
-  if (segments[0] == '') {
-    segments.splice(0, 1);
-  }
-  // Handle the result of splitting '/' => ['', '']:
-  if (segments.length == 1 && segments[0] == '') {
     segments = [];
+  } else if (Array.isArray(arg)) {
+    segments = arg;
+  } else if (arg instanceof Bindings) {
+    // If a Bindings, reverse it into an array and go from there.
+    segments = [];
+    while (bindings != null) {
+      segments.unshift(bindings.from);
+    }
+  } else if (typeof arg === 'string') {
+    segments = arg.split('/');
+    assert(segments[0] === '', 'Not a path: {1}', arg);
+    // Ignore the first element of the result of the split.
+    segments.splice(0, 1);
+  } else {
+    assert(false, 'Bad arg to asPath: {1}', arg);
   }
   var result = _end;
   while (segments.length) {
