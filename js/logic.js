@@ -2655,6 +2655,10 @@ const ruleInfo = {
 
   // Given a RHS site that is the same as an assumption of the step,
   // converts the expression to T and simplifies out the T if it can.
+  //
+  // TODO: Consider whether we may want to detect and offer opportunities
+  //   to use this rule in situations where an occurrence of the assumption
+  //   is not explicitly selected.
   assumed: {
     precheck: function(step, path_arg) {
       const path = step.asPath(path_arg);
@@ -3793,7 +3797,7 @@ const ruleInfo = {
     form: ('Primitive rewrite using equation step <input name=equation>'),
     menu: 'primitive rewrite',
     isRewriter: true,
-    description: 'rewrite term;; {in step siteStep} {using step equation}'
+    description: 'rewrite;; {in step siteStep} {using step equation}'
   },
 
   // Inline form of rewriteOnlyFrom.
@@ -3874,7 +3878,7 @@ const ruleInfo = {
     // TODO: Consider modifying descriptions of rewrite rules to
     //   say "replace" rather than "rewrite" when the substitution
     //   is empty, perhaps with a new {rewrite} directive.
-    description: 'rewrite term;; {in step siteStep} {using step equation}',
+    description: 'rewrite;; {in step siteStep} {using step equation}',
     labels: 'basic'
   },
 
@@ -4349,7 +4353,7 @@ const ruleInfo = {
               .justify('reduceAll', arguments, [step]));
     },
     inputs: {site: 1},
-    menu: 'beta reduce throughout',
+    menu: 'reduce functions throughout',
     labels: 'advanced'
   },
 
