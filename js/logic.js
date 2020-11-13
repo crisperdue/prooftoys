@@ -92,9 +92,12 @@ definition('exists1 = {p. exists {x. p = {y. y = x}}}');
 // all have generic types.
 // definition('if = {p. {x. {y. the1 {z. p & z = x | not p & z = y}}}}');
 
-addRules(
-    [{statement: 'if T x y = x', axiom: true},
-     {statement: 'if F x y = y', axiom: true}
+
+ addRules
+   ([{statement: 'if T x y = x', axiom: true,
+         simplifier: true},
+     {statement: 'if F x y = y', axiom: true,
+         simplifier: true}
      ]);
 
 // We will derive the T/F cases facts after defining some inference rules.
