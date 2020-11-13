@@ -218,10 +218,11 @@ const inverses =
   [
    {name: 'negFact',
     statement: '@ R x & R y & x + y = 0 == R x & neg x = y',
+    // TODO: Replace this proof as shown below.
     proof:
     [
      '(1 fact "exists1 (addInverses x)")',
-     '(2 inverseFunLaw)',
+     '(2 inverseFunLaw_old)',
      '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t addInverses))',
      '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t neg))',
      '(5 fact "@ neg x = the1 (addInverses x)")',
@@ -234,12 +235,28 @@ const inverses =
      ]
    },
 
+   /* TODO: Replace the proof of negFact with this or very similar:
+(55 inverseFunLaw)
+(56 instantiateVar (s 55) (path "/left/left/left") (t (neg y)))
+(57 instantiateVar (s 56) (path "/left/left/right/arg") (t (addInverses y)))
+(58 fact "@neg x = the1 (addInverses x)")
+(59 trueBy0 (s 57) (path "/left/left") (s 58))
+(60 simplifySite (s 59) "")
+(61 fact "@(exists1 (addInverses y))")
+(62 trueBy1 (s 59) (path "/left/right") (s 61))
+(63 rewrite (s 62) (path "/right/left") (t ((addInverses x y) = (((R x) & (R y)) & ((x + y) = 0)))))
+(64 assumed (s 63) (path "/right/left/left/left"))
+(65 rewrite (s 64) (path "") (t ((a => (c == d)) == ((c & a) == (a & d)))))
+(66 rewrite (s 65) (path "/main/left") (t (((a & b) & c) == ((a & c) & b))))
+   */
+
    {name: 'minvFact',
     statement: '@ x != 0 & R x & R y & x * y = 1 == x != 0 & R x & minv x = y',
+    // TODO: Replace this proof as shown above for negFact.
     proof:
     [
      '(1 fact "exists1 (mulInverses x)")',
-     '(2 inverseFunLaw)',
+     '(2 inverseFunLaw_old)',
      '(3 instantiateVar (s 2) (path "/left/left/right/arg/fn") (t mulInverses))',
      '(4 instantiateVar (s 3) (path "/left/left/left/fn") (t minv))',
      '(5 fact "@ minv x = the1 (mulInverses x)")',
@@ -876,8 +893,10 @@ var divisionInfo =
   [
   // Division is an inverse of multiplication.
   {name: 'divisionIsInverse',
-    statement: '@y != 0 & R x & R y => (R z & x = y * z == z = x / y)',
-    proof: function() {
+   statement: '@y != 0 & R x & R y => (R z & x = y * z == z = x / y)',
+   // TODO: Consider using inverseFunLaw in the proof, especially once
+   //   rewrites work with non-equational facts.
+   proof: function() {
       var step1 = rules.uniqueQuotient();
       var step2 = (rules.exists1Law()
                    .andThen('instMultiVars', {x: 'z'}));

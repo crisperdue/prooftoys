@@ -4805,12 +4805,22 @@ const existRules =
     }
    },
 
+   {name: 'inverseFunLaw',
+    statement: 'v = the1 p & exists1 p => (p x == x = v)',
+    proof: function() {
+       const asm = rules.assume('the1 p = v');
+       return (rules.fact('exists1 p => (p x == x = the1 p)')
+               .andThen('rewriteFrom', 'the1 p', asm)
+               .andThen('rewrite', 'the1 p = v', 'x = y == y = x'));
+     }
+   },
+
    // Convenient corollary that uses a typical definition of an inverse
    // function and a suitable unique existence predicate to show the
    // usual property of the inverse function.  The E! predicate is
-   // generally conditional on some assumptions that limit is
+   // generally conditional on some assumptions that limit its
    // applicability.
-   {name: 'inverseFunLaw',
+   {name: 'inverseFunLaw_old',
     statement: 'f x = the1 (Q x) & exists1 (Q x) => (Q x y == f x = y)',
     proof: function() {
        const steps =
