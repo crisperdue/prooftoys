@@ -600,24 +600,28 @@ const prelogic = {
   },
 
   /**
-   * Refer to a definition in the definitions database.  If the
-   * definition is by cases, takes a second argument of T or F
-   * as desired.  Returns null if no definition is found.
+   * Refer to a definition in the definitions database.  Returns null
+   * if no definition is found.
    *
    * Like rules.assert, this creates a proved step that has no
    * details.
+   *
+   * Note: Going forward we should probably expect at least
+   * interactive users to use the "consider" rule followed by use of
+   * the core definition fact.  That approach would also give access
+   * to the traditional "forall" form as well as substitution
+   * instances of definitions.
    */
   definition: {
-    action: function(name, tOrF) {
-      // The derivations are computed in advance, and have the name or
-      // name and true/false as the argument(s).
-      const args = arguments.length == 1 ? [name] : [name, tOrF];
-      const defn = Toy.findDefinition(name, tOrF);
-      return defn && defn.justify('definition', args);
+    action: function(name) {
+      // The derivations are computed in advance, and have the name as
+      // the argument.
+      const defn = Toy.findDefinition(name);
+      return defn && defn.justify('definition', [name]);
     },
-    inputs: {string: 1, optString: 2},
-    form: ('Definition of <input name=string> '
-           + 'if by cases enter T or F <input name=optString>'),
+    inputs: {string: 1},
+    labels: 'advanced',
+    form: ('Definition of <input name=string>'),
     menu: 'look up a definition',
     tooltip: 'look up a definition',
     description: '=definition'
