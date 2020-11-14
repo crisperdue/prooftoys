@@ -3807,7 +3807,6 @@ const ruleInfo = {
   },
 
   // Inline form of rewriteOnlyFrom.
-  // TODO: Use this internally in its place.
   _rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
@@ -3872,10 +3871,10 @@ const ruleInfo = {
   //   whether the equation is a statement or a step.
   rewriteFrom: {
     action: function(step, path, equation) {
-      return (rules.rewrite(step, path, equation)
-              // TODO: consider justifying as "rewrite" if given
-              //   an unproved statement as the equation.
-              .justify('rewriteFrom', arguments, [step, equation]));
+      // Can throw; tryRule will report any problem.
+      var step2 = rules._rewriteOnlyFrom(step, path, equation);
+      var simpler = rules.simplifyAsms(step2);
+      return simpler.justify('rewrite', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using step <input name=equation>'),
