@@ -392,6 +392,7 @@ const realOrdFacts =
     proof: function() {
        const asm = rules.assume('x = y');
        return (rules.fact('not (x < x)')
+               // OK to use replace here.  It merges assumptions.
                .andThen('replace', '/main/arg/right', asm));
      }
    },

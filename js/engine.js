@@ -1609,8 +1609,9 @@ function applyToFocalPart(step, facts) {
 
 /**
  * Apply the list of facts as rewrites to the given part of the step
- * until none of them any longer is applicable, returning the result.
- * Returns its input step if no matches are found.
+ * until none of them any longer is applicable, returning the result,
+ * with asms deduped but not simplified. (?)  Returns its input step
+ * if no matches are found.
  */
 function applyFactsWithinSite(step, path_arg, facts) {
   var path = Toy.path(path_arg);
@@ -1639,12 +1640,11 @@ function applyFactsWithinRhs(step, facts) {
 
 /**
  * Apply the function to the subexpression of step at path.  The
- * function should return an equation that equates the original
- * subexpression to something else.  This replaces the subexpression
- * using the returned equation.
+ * function should return a possibly conditional equation whose LHS is
+ * the same as the target subexpression.  This replaces the
+ * subexpression using the returned equation.
  *
- * Allows the function to return a falsy value, returning the same
- * value itself.
+ * If the function returns a falsy value, this returns that.
  */ 
 function convert(step, path, fn) {
   var expr = step.get(path);

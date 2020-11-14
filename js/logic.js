@@ -3662,10 +3662,16 @@ const ruleInfo = {
     labels: 'basic'
   },
 
+  /**
+   * Replaces the target term using the given equation.  If both
+   * inputs are conditionals, merges the resulting assumptions with
+   * arrangeAsms.
+   */
   replace: {
     action: function(target, path, equation) {
       const step1 = rules.r2(target, path, equation);
-      const step2 = (target.isCall2('=>') && equation.isCall2('=>')
+      const step2 = (target.implies() && equation.implies() &&
+                     step1.matchSchema('a => (b => c)')
                      ? (rules.rewriteOnly(step1, '',
                                         'a => (b => c) == a & b => c')
                       .andThen('arrangeAsms'))
@@ -4315,6 +4321,9 @@ const ruleInfo = {
 
   // Derives a step with assumptions deduplicated and ordered as by
   // asmComparator, including removal of occurrences of T.
+  //
+  // TODO: Attempt to eliminate T by some other means where
+  //   appropriate.
   //
   // TODO: Make this much faster by using sets of tautologies that
   //   show conjuncts imply a single one of its conjuncts, and using
