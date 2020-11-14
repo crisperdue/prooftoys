@@ -1805,7 +1805,7 @@ const booleanRules = {
       const term = target.get(path);
       if (step.isCall2('=>') && term.matchSchema(step.getRight())) {
         const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
-        const result = rules.rewriteOnlyFrom(target, path, step2);
+        const result = rules.rewriteFrom(target, path, step2);
         return result.justify('trueBy1', arguments, [target, step]);
       }
       assert(false, 'Term {1} does not match {2}',
