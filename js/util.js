@@ -274,6 +274,20 @@ function primeFactors(n) {
 ////
 
 /**
+ * Calls the debugger, and when continued, returns the value passed to
+ * it.  Useful for debugging values of expressions in arbitrary
+ * contexts including expressions in return statements.
+ */
+function debug(value) {
+  console.log('Value:', value);
+  if (value) {
+    console.log(' =', value.toString());
+  }
+  debugger;
+  return value;
+}
+
+/**
  * Signals an error, which should be a programming error.
  * Enters the debugger if available, and then throws an error.
  * 
@@ -2176,6 +2190,7 @@ Toy.getPrimes = getPrimes;
 Toy.nextPrimeFactor = nextPrimeFactor;
 Toy.primeFactors = primeFactors;
 
+Toy.debug = debug;
 Toy.err = err;
 Toy.fail = fail;
 Toy.logError = logError;
