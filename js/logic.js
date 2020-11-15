@@ -3606,9 +3606,7 @@ const ruleInfo = {
 
   // Version of Andrews Rule R' that uses a conditional rather than
   // hypotheses.  Uses a potentially conditional equation to replace a
-  // term in a target step.  If both input steps are conditional,
-  // collapses the result [a1 => (a2 => q)] into [a1 & a2 => q] and
-  // calls arrangeAsms on the result.
+  // term in a target step.
   //
   // TODO: Instead of calling arrangeAsms here, leave the equation's
   //   assumptions alone, and effectively perform arrangeAsms as part
@@ -3656,22 +3654,22 @@ const ruleInfo = {
       return step3.justify('r2', arguments, [target, equation]);
     },
     inputs: {site: 1, equation: 3}, // plus further constraints
-    form: ('Replace site with right side of equation <input name=equation>'),
-    menu: 'replace using a step like {term} = . . .',
+    form: ('Replace using equation <input name=equation>'),
+    menu: 'replace minimally using a step like {term} = . . .',
     description: 'replace term;; {in step siteStep} {using step equation}',
-    labels: 'basic'
+    labels: 'primitive'
   },
 
   /**
    * Replaces the target term using the given equation.  If both
-   * inputs are conditionals, merges the resulting assumptions with
-   * arrangeAsms.
+   * inputs are conditionals and this does not replace the entire
+   * step, merges the resulting assumptions with arrangeAsms.
    */
   replace: {
     action: function(target, path, equation) {
       const step1 = rules.r2(target, path, equation);
       const step2 = (target.implies() && equation.implies() &&
-                     step1.matchSchema('a => (b => c)')
+                     !target.wff.asPath(path).isEnd()
                      ? (rules.rewriteOnly(step1, '',
                                         'a => (b => c) == a & b => c')
                       .andThen('arrangeAsms'))
