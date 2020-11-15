@@ -4283,11 +4283,12 @@ const ruleInfo = {
     // Implemented by building an appropriate equivalence tautology,
     // proving it with rules.tautology, and instantiating.
     //
-    // TODO: The tautology could be proved in a linear number of proof
-    // steps.  For a list A of conjunctions, pre-prove [A => Ai] for
-    // each member of A.  Use these to prove each conjunct separately,
-    // then build the equal list with rules.and.  Also prove in the
-    // opposite direction if desired.
+    // TODO: The tautology could be proved in a number of proof steps
+    // quadratic in length of A.  For a list A of conjunctions,
+    // pre-prove [A => Ai] for each member of A, each taking time
+    // linear in length of A.  Use these to prove each conjunct
+    // separately, then build the equal list with rules.and.  Also
+    // prove in the opposite direction if desired.
     action: function(conj, comparator) {
       var map = new Toy.TermMap();
       var infix = Toy.infixCall;
@@ -5176,7 +5177,7 @@ const tautologyCounts = Toy.tautologyCounts = new Map();
 Toy.ruleInfo = ruleInfo;
 Toy.logicFacts = logicFacts;
 
-Toy.asmSimplifiers = [];
+Toy.asmSimplifiers = ['a & T == a', 'T & a == a'];
 Toy.simplifyStep = simplifyStep;
 
 }();
