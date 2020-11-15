@@ -3797,7 +3797,7 @@ const ruleInfo = {
   rewriteOnlyFrom: {
     action: function(step, path, eqn_arg) {
       const rewriter = rules._rewriterFor(step, path, eqn_arg);
-      const result = rules.replace(step, path, rewriter);
+      const result = rules.r2(step, path, rewriter);
       return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
     },
     inputs: {site: 1, equation: 3},
@@ -3902,7 +3902,7 @@ const ruleInfo = {
   rewriteOnly: {
     action: function(step, path, statement) {
       const rewriter = rules._rewriterFor(step, path, rules.fact(statement));
-      const rewritten = rules.replace(step, path, rewriter);
+      const rewritten = rules.r2(step, path, rewriter);
       return rewritten.justify('rewriteOnly', arguments, [step]);
     },
     inputs: {site: 1, bool: 3},
