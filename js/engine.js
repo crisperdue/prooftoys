@@ -1353,9 +1353,12 @@ function searchForMatchingFact(term, info) {
 }
 
 /**
- * Searches the given pattern list for one that matches the given
- * term.  If it finds one, returns info about it in a plain object
- * in the format described below.
+ * Searches the given pattern list for one whose "schema part" matches
+ * the given term.  If it finds one, returns info about it in a plain
+ * object in the format described below.  The schema part of a
+ * (possibly conditional) equational fact is the LHS of the equation.
+ * Otherwise it is the main part: the consequent if conditional,
+ * otherwise the entire fact.
  *
  * The context argument is available to "where" arguments as "cxt",
  * and any "factLists" property of the context defines lists of named
@@ -1364,9 +1367,6 @@ function searchForMatchingFact(term, info) {
  * list name to a list (array) value.  In this way lists can be
  * reused, and also enables them to be effectively recursive.
  *
- * If pureOnly is true, this only accepts a fact that is a pure
- * equation, with no conditions on it.
- * 
  * Each pattern argument can be an argument acceptable to
  * resolveToFact, or:
  *
@@ -1413,9 +1413,13 @@ function searchForMatchingFact(term, info) {
  *   "apply" patterns).
  * path: path to the portion of the given term that matched some pattern.
  *
+ * If pureOnly is true, this only accepts a fact that is a pure
+ * equation, with no conditions on it.
+ * 
  * TODO: Consider changing this to something like "applyMatchingFact",
  *   attempting to apply the first fact that appears to match, and
- *   continuing the search if the application fails.
+ *   continuing the search if the application fails.  See
+ *   Toy.applyFactsOnce.
  */
 function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   // This function interprets a fact statement as a wff.

@@ -409,11 +409,8 @@ function assertTrue(condition, message_arg) {
     e.step = step;
     e.isAssert = true;
     console.error(e);
-    if (Toy.debugAssertions) {
-      // Uncomment this line to always debug even if the
-      // error will be caught.
-      // debugger;
-    }
+    // Set a breakpoint on this line to debug even when
+    // the error will be caught.
     throw e;
   }
 }

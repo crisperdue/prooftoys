@@ -3859,7 +3859,6 @@ const ruleInfo = {
       // const info = resolveToFactInfo(eqn_arg);
       // const after = (info && info.afterMatch) || function(x) { return x; };
       // simpler = after(simpler);
-      // XXX: Policy here? r2
       return simpler;
     },
   },
@@ -3889,14 +3888,9 @@ const ruleInfo = {
     labels: 'basic'
   },
 
-  // TODO: Consider arranging the rewriting rules so one does not
-  // invoke others.  Instead, put the actions into non-rule functions
-  // and call the appropriate one(s) in each rule, removing some
-  // redundant levels of display in the user interface.
-
-  // Primitive rewriter with no simplification; accepts a statement.
-  // In the UI, could be used with well-known facts, but probably better
-  // to just offer users rewriteOnlyFrom.
+  // Primitive rewriter with no simplification; accepts a fact statement.
+  // Substitutes into the fact and uses r2 to replace the target part
+  // of the step.
   rewriteOnly: {
     action: function(step, path, statement) {
       const rewriter = rules._rewriterFor(step, path, rules.fact(statement));
