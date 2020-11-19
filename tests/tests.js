@@ -1846,26 +1846,26 @@ var testCase = {
   },
 
   testInstVar: function() {
-    var result = Toy.rules.instVar(call(p, y), call(f, x), y);
-    assertEqual('(p (f x))', result);
+    var result = Toy.rules.instVar(rules.axiom2(), call(f, x), y);
+    assertEqual('((x = (f x)) => ((h x) = (h (f x))))', result);
     var step1 = Toy.rules.axiom2();
     result = Toy.rules.instVar(step1, call(p, x), x);
   },
 
   testInstantiateVar: function() {
-    var result =
-      Toy.rules.instantiateVar(call(p, y), '/arg', call(f, x));
-    assertEqual('(p (f x))', result);
-    var step1 = Toy.rules.axiom2();
-    result = Toy.rules.instVar(step1, call(p, x), x);
+    const axiom2 = Toy.rules.axiom2();
+    const result = Toy.rules.instantiateVar(axiom2, '/left/arg', call(f, x));
+    assertEqual('((x = (f x)) => ((h x) = (h (f x))))', result);
   },
 
   testInstMultiVars: function() {
-    var map = {p: Toy.parse('forall {x. T | b}'),
-               q: Toy.parse('forall {x. b}')
+    const axiom2 = Toy.rules.axiom2();
+    var map = {x: Toy.parse('forall {x. T | b}'),
+               y: Toy.parse('forall {x. b}')
     };
-    var result = Toy.rules.instMultiVars(implies(p, call('|', T, q)), map);
-    assertEqual('((forall {x. (T | b)}) => (T | (forall {x. b})))',
+    var result = Toy.rules.instMultiVars(axiom2, map);
+    assertEqual('(((forall {x. (T | b)}) = (forall {x. b})) => ' +
+		'((h (forall {x. (T | b)})) = (h (forall {x. b}))))',
                 result);
     var step = Toy.rules.axiom2();
     var map2 = {x: call(p, x),
@@ -1954,8 +1954,9 @@ var testCase = {
   },
 
   testMakeConjunction: function() {
-    var result = Toy.rules.makeConjunction(p, q);
-    assertEqual('(p & q)', result);
+    const truly = Toy.rules.t();
+    var result = Toy.rules.makeConjunction(truly, truly);
+    assertEqual('(T & T)', result);
 
     // With assumptions:
     var step1 = Toy.rules.assume(p);
@@ -2159,10 +2160,10 @@ var testCase = {
   },
 
   testMergeRight: function() {
-    var result = Toy.rules.mergeRight(Toy.parse('l == (a & b) & (c & d)'));
-    assertEqual('(l == (a & ((c & d) & b)))', result);
-    var result = Toy.rules.mergeRight(Toy.parse('l == a & (b & c & d)'));
-    assertEqual('(l == (((b & c) & d) & a))', result);
+    var result = Toy.rules.mergeRight(rules.consider('(a & b) & (c & d)'));
+    assertEqual('(a & ((c & d) & b))', result.getRight());
+    var result = Toy.rules.mergeRight(rules.consider('a & (b & c & d)'));
+    assertEqual('(((b & c) & d) & a)', result.getRight());
   },
 
   testMergeConj: function() {
