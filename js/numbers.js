@@ -444,9 +444,9 @@ Toy.addRules(realOrdFacts);
        '(7 instantiateVar (s 6) (path "/left/left/left/left/left/left") (t 0))',
        '(8 instantiateVar (s 7) (path "/left/left/left/left/left/right") (t (x * 0)))',
        '(9 instantiateVar (s 8) (path "/left/left/left/left/right/left") (t (x * 0)))',
+       // TODO: avoid dependence on order of assumptions.
        '(10 extractHypAt (s 9) (path "/left/left/left/left"))',
        '(11 simplifyAsms (s 10))',
-       // TODO: avoid dependence on order of assumptions.
        '(12 p2 (s 5) (s 11) (t (((a => b) & (a => (b => c))) => (a => c))))',
        '(13 rewrite (s 12) (path "/right") (t ((x = y) == (y = x))))'
        ],
