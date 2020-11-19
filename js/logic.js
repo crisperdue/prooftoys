@@ -1325,7 +1325,7 @@ const baseRules = {
       var step2c = rules.apply(step2b, '/left/left');
       var step3a = rules.eqT(Toy.parse('{x. T}'));
       var step3b = rules.rRight(step3a, '/right/fn',
-                                      rules.definition('forall'));
+                                rules.definition('forall'));
       return rules.rRight(step2c, '/right', step3b);
     }
   },
@@ -1603,41 +1603,55 @@ var simplifiersInfo = {
   },
 
   // Uses the given facts to simplify the assumptions of the given
-  // step, by default using asmSimplifiers, to manage type
+  // step, by default using asmSimplifiers, for example to manage type
   // assumptions, e.g. "is real", "is integer", etc..  This also
   // differs from other simplifiers in that it also simplifies any
   // assumptions introduced by conditional facts in the facts list.
-  // Ensures the result has its assumptions arranged.
+  // Ensures the result has its assumptions arranged, and if the
+  // assumptions reduce to T, removes the assumptions entirely.
   simplifyAsms: {
     action: function(step, facts_arg) {
       const facts = facts_arg || Toy.asmSimplifiers;
       if (!step.wff.isCall2('=>')) {
         return step;
       }
-      var eqn = rules.consider(step.get('/left'));
-      var simpler = Toy.whileChanges(eqn, function(eqn) {
-          // This usage of /rt is kind of cool in that it automatically
-          // adapts in case some versions of eqn have assumptions.
-          return rules._simplifyOnce(eqn, Toy.path('/rt/right', eqn), facts);
-        });
-      // The original eqn has no assumptions, but "simpler" may have
-      // some.  Simplify those recursively in turn.
-      var simpler2 = rules.simplifyAsms(simpler, facts);
-      const result1 = rules.replace(step, '/left', simpler2);
-      // This will be needed more often if not also done in rules.replace.
-      const result2 = rules.arrangeAsms(result1);
-      return result2.justify('simplifyAsms', arguments, [step]);
+      let simpler = step;
+      const once = Toy.applyFactsOnce;
+      const rw = rules.rewriteOnly;
+      // Repeatedly apply simplifying facts, each time removing T from
+      // the assumptions.  Note that rewriteOnly adds any new
+      // assumptions, making them available on the next iteration.
+      const search = Toy.searchForMatchingFact;
+      const left = Toy.asPath('/left');
+      while (true) {
+        const info = search(simpler.get('/left'), facts);
+        if (info) {
+          simpler = (rw(simpler, left.concat(info.path),
+                        info.stmt));
+          const info2 = search(simpler.get('/left'),
+                              ['a & T == a', 'T & a == a']);
+          if (info2) {
+            simpler = rw(simpler, left.concat(info2.path), info2.stmt);
+          }
+        } else {
+          // Dedupe and normalize order of asms.
+          simpler = rules.arrangeAsms(simpler);
+          
+          simpler = Toy.applyFactsOnce(simpler, '', ['T => a == a'],
+                                       'rewriteOnly');
+          // And we are done.
+          return simpler.justify('simplifyAsms', arguments, [step]);
+        }
+      }
     },
     inputs: {step: 1},
+    minArgs: 1,
     menu: 'simplify assumptions',
-    description: 'simplify assumptions',
+    description: 'simplify assumptions;; {in step step}',
     labels: 'general'
   }
 };
 addRulesMap(simplifiersInfo);
-
-// Added to in numbers.js.
-let asmSimplifers = [];
 
 /**
  * Function callable to simplify an entire step.  Useful
@@ -3671,8 +3685,8 @@ const ruleInfo = {
       const step2 = (target.implies() && equation.implies() &&
                      !target.wff.asPath(path).isEnd()
                      ? (rules.rewriteOnly(step1, '',
-                                        'a => (b => c) == a & b => c')
-                      .andThen('arrangeAsms'))
+                                          'a => (b => c) == a & b => c')
+                        .andThen('arrangeAsms'))
                      : step1);
       return step2.justify('replace', arguments, [target, equation]);
     },
@@ -3764,6 +3778,30 @@ const ruleInfo = {
   //// Rewriting -- beyond Andrews' textbook
   ////
 
+  // Inline helper for rewriteOnly*.
+  // If the step has the form a => (b => c), moves all conjuncts
+  // of a to the inner level, erasing one level of "=>".
+  flattenAsms: {
+    action: function(step) {
+      let flatter = step;
+      const once = Toy.applyFactsOnce;
+      const rw = rules.rewriteOnly;
+      const mover = ['a1 & a2 => (b => c) == (a1 => (b & a2 => c))'];
+      // This loop flattens out the assumptions.
+      while (true) {
+        let next = once(flatter, '', mover, 'rewriteOnly');
+        if (next == flatter) {
+          // Mover made no progress. Remove a "=>" and quit.
+          flatter = once(flatter, '',
+		         ['a => (b => c) == (b & a => c)'],
+		         'rewriteOnly');
+          return flatter.justify('flattenAsms', arguments, [step]);
+        }
+        flatter = next;
+      }
+    }
+  },
+
   // Takes a proof step, a path, and a proved step, typically an
   // equation.  The part of the step at the given path must match the
   // LHS of the equation.  Replaces that part of the step with the
@@ -3793,10 +3831,15 @@ const ruleInfo = {
   // TODO: Consider creating a rewrite0 that matches and replaces
   //   without ever arranging assumptions.
   rewriteOnlyFrom: {
-    action: function(step, path, eqn_arg) {
-      const rewriter = rules._rewriterFor(step, path, eqn_arg);
-      const result = rules.r2(step, path, rewriter);
-      return result.justify('rewriteOnlyFrom', arguments, [step, eqn_arg]);
+    action: function(step, path_arg, eqn) {
+      const path = step.wff.asPath(path_arg);
+      const rewriter = rules._rewriterFor(step, path, eqn);
+      const rewritten = rules.r2(step, path, rewriter);
+      let flatter = rewritten;
+      if (step.implies() && eqn.implies() && !path.isEnd()) {
+	flatter = rules.flattenAsms(rewritten);
+      }
+      return flatter.justify('rewriteOnlyFrom', arguments, [step, eqn]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Primitive rewrite using equation step <input name=equation>'),
@@ -3860,7 +3903,24 @@ const ruleInfo = {
       // const after = (info && info.afterMatch) || function(x) { return x; };
       // simpler = after(simpler);
       return simpler;
+    }
+  },
+
+  // Out of line version of _rewriterFor.
+  //
+  // TODO: Tentatively replace _rewriterFor with this, otherwise
+  //   perhaps remove this.
+  substForRewrite: {
+    action: function(step, path, eqn) {
+      return (rules._rewriterFor(step, path, eqn)
+              .justify('substForRewrite', arguments, [step, eqn]));
     },
+    inputs: {site: 1, equation: 3},
+    form: ('Equation to rewrite the site using step <input name=equation>'),
+    menu: 'rewriter for site',
+    isRewriter: true,
+    description: 'substitute;; {into step equation} {to rewrite step siteStep}',
+    labels: 'uncommon'
   },
 
   // Variant of rules.rewrite for use from the UI, when the equation
@@ -3892,10 +3952,16 @@ const ruleInfo = {
   // Substitutes into the fact and uses r2 to replace the target part
   // of the step.
   rewriteOnly: {
-    action: function(step, path, statement) {
-      const rewriter = rules._rewriterFor(step, path, rules.fact(statement));
+    action: function(step, path_arg, stmt_arg) {
+      const path = step.wff.asPath(path_arg);
+      const statement = rules.fact(stmt_arg);
+      const rewriter = rules._rewriterFor(step, path, statement);
       const rewritten = rules.r2(step, path, rewriter);
-      return rewritten.justify('rewriteOnly', arguments, [step]);
+      let flatter = rewritten;
+      if (step.implies() && statement.implies() && !path.isEnd()) {
+	flatter = rules.flattenAsms(rewritten);
+      }
+      return flatter.justify('rewriteOnly', arguments, [step]);
     },
     inputs: {site: 1, bool: 3},
     form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
@@ -3914,7 +3980,8 @@ const ruleInfo = {
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
-      const rewriter = rules._rewriterFor(step, path, fact);
+      const rewriter0 = rules._rewriterFor(step, path, fact);
+      const rewriter = rules.simplifyAsms(rewriter0);
       const step2 = rules.replace(step, path, rewriter);
       var simpler = rules.simplifyAsms(step2);
       // Does not include the fact as a dependency, so it will not
