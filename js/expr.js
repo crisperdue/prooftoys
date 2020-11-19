@@ -1210,7 +1210,6 @@ Expr.prototype.repr = function() {
  */
 Expr.prototype.get = function(arg) {
   const p = this.asPath(arg);
-  assert(p instanceof Path, 'Not a path:', p);
   return this._get(p);
 };
 
