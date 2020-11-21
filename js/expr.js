@@ -1697,6 +1697,22 @@ Expr.prototype.asmSet = function() {
 };
 
 /**
+ * Applies the given action to each conjunct in a chain of conjuncts,
+ * from left to right.  If any action returns a truthy value,
+ * immediately returns that value.
+ */
+Expr.prototype.eachConjunct = function(action, rpath_arg) {
+  const rpath = rpath_arg || Path.empty;
+  if (this.isCall2('&')) {
+    return this.getLeft()
+      .eachConjunct(action, new Path('/left', rpath)) ||
+      action(this.getRight(), new Path('/right', rpath));
+  } else {
+    return action(this, rpath);
+  }
+};
+
+/**
  * Transforms an expression that is a chain of conjuncts by applying
  * the xform function to each of its conjuncts.  To match scanConj,
  * descends into left-hand arguments, but does not descend into
