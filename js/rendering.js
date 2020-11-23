@@ -2318,7 +2318,8 @@ function hoverAsRewriter(step, action) {
     return;
   }
 
-  const targetIsCond = target.isCall2('=>');
+  const twff = target.wff;
+  const targetIsCond = twff.isCall2('=>');
   const stepIsCond = step.isCall2('=>');
   // True iff this step is conditional, but the target was not.
   // The replacement term ends up deeper in the formula.
@@ -2329,13 +2330,28 @@ function hoverAsRewriter(step, action) {
 
   // Show the corresponding subexpressions of this step if possible.
   // Note: this is likely to require overrides in some rules.
+  // This is almost always a single path.
   Toy.stepPaths(step).forEach(function(target_path) {
-      const asPath = target.asPath(target_path);
+      const tPath = twff.asPath(target_path);
       try {
-        // This function does not attempt to highlight part of
-        // the step if the rewrite target is on the left of
-        // a conditional.
-        if (!(targetIsCond && asPath.isLeft())) {
+        if (targetIsCond && tPath.isLeft()) {
+          // Without special support we do not have a reasonable
+          // way to find the replacement, but can get a good guess
+          // when the replacement is (implicitly) T.
+          //
+          // TODO: Consider recording the replacement term in the
+          //   implementation of each rewriting rule, and accessing
+          //   it here to highlight it.
+          //
+          // TODO: Also consider removing newly-introduced T from
+          //   conjunctions within the rewriter code, and rendering
+          //   the replaced term with a strikeout or similar to
+          //   indicate that it is removed.
+          const tee = Toy.parse('T');
+          const found = step.getLeft()
+            .eachConjunct(term => term.sameAs(tee) && term);
+          found && action(found.node, 'site');;
+        } else {
           const path = shallower ? asPath.rest : asPath;
           const main = deeper ? step.wff.getRight() : step.wff;
           action(main.get(path).node, 'site');
