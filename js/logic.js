@@ -1531,8 +1531,8 @@ var simplifiersInfo = {
   // and thus generate assumptions.  By default uses basicSimpFacts if
   // facts are not supplied.
   //
-  // Simplifiers ultimately use rules.rewrite, which uses
-  // rules.simplifyAsms, which might not always be desirable.
+  // Ultimately uses rules.rewrite and rules.replace, so resulting
+  // assumptions will be simplified and arranged.
   simplifySite: {
     action: function(step, path, opt_facts) {
       var result = rules._simplifySite(step, path, opt_facts);
@@ -1566,7 +1566,8 @@ var simplifiersInfo = {
   // TODO: Create a "rules.simplifier" that takes a term argument
   //   and proves it equal to some (hopefully) simpler term.
 
-  // Inline version of simplifySite.
+  // Inline version of simplifySite.  Uses full rewriting and replace,
+  // so resulting assumptions are simplified.
   _simplifySite: {
     action: function(step, path, opt_facts) {
       var _path = Toy.path;
@@ -1585,13 +1586,11 @@ var simplifiersInfo = {
   // or basicSimpFacts if facts are not given.  Returns its result
   // inline, just the input step if there is nothing to do.  This
   // common support code uses rules.rewrite, which is generally
-  // appropriate, but see the TODO.
+  // appropriate, but not always.
+  //
+  // Uses rules.rewrite, so simplifies resulting assumptions.
   //
   // From the UI use a rule that calls this one.
-  //
-  // TODO: Support the user in breaking UI steps into parts to
-  //   remove the implicit call to simplifyAsms after the fact
-  //   if needed.
   _simplifyOnce: {
     action: function(step, _path, opt_facts) {
       var facts = opt_facts || basicSimpFacts;
@@ -1617,6 +1616,9 @@ var simplifiersInfo = {
       }
       let simpler = step;
       const once = Toy.applyFactsOnce;
+      // Uses rewriteOnly, avoiding recursive calls to simplifyAsms
+      // which could be problematic or simply result in unintuitive
+      // displays of the process.
       const rw = rules.rewriteOnly;
       // Repeatedly apply simplifying facts, each time removing T from
       // the assumptions.  Note that rewriteOnly adds any new
@@ -1628,15 +1630,17 @@ var simplifiersInfo = {
         if (info) {
           simpler = (rw(simpler, left.concat(info.path),
                         info.stmt));
+          // Immediately remove T if possible, partly for clean displays.
           const info2 = search(simpler.get('/left'),
                               ['a & T == a', 'T & a == a']);
           if (info2) {
             simpler = rw(simpler, left.concat(info2.path), info2.stmt);
           }
         } else {
+          // No applicable fact found.
           // Dedupe and normalize order of asms.
           simpler = rules.arrangeAsms(simpler);
-          
+          // If only T remains, remove it.
           simpler = Toy.applyFactsOnce(simpler, '', ['T => a == a'],
                                        'rewriteOnly');
           // And we are done.
@@ -3802,17 +3806,18 @@ const ruleInfo = {
     }
   },
 
-  // Takes a proof step, a path, and a proved step, typically an
-  // equation.  The part of the step at the given path must match the
-  // LHS of the equation.  Replaces that part of the step with the
-  // appropriate instance of the equation.
+  //// Rewriting
+
+  // Rewriters take a proof step, a path, and a proved step, typically
+  // an equation.  Seeks a substitution into the equation that makes
+  // the part of the step at the given path match to the LHS of the
+  // equation.  Replaces that part of the step with the appropriate
+  // instance of the equation.
   //
   // If the equation argument is not an equation according to
-  // isEquation, rewrites its main part to <main> = T and uses that as
-  // the equation.  To rewrite using an entire conditional "A => B"
+  // isEquation, they convert its main part to <main> = T and use that
+  // as the equation.  To rewrite using an entire conditional "A => B"
   // (not just its main part), rewrite with the fact "(A => B) == T".
-  // Similarly, to rewrite an equation or conditional equation, use a
-  // fact of the form "(A == B) == T" or "A => (B == C) == T".
   //
   // TODO: Consider renaming _free_ variables introduced into the step
   //   by the equation so they are distinct from all free variables
@@ -3822,14 +3827,11 @@ const ruleInfo = {
   //   add a utility to get the new name by referring to the step where
   //   it was introduced and the formula (e.g. step) it came from.
   //
-  // TODO: Rewriters currently only substitute into the equation.
-  //   Some form of full unification would be desirable.
-  //
-  // TODO: For clarity put the implementation in rewriteOnly and
-  //   make this rule basically a synonym, as in rewriteFrom.
-  //
-  // TODO: Consider creating a rewrite0 that matches and replaces
-  //   without ever arranging assumptions.
+
+  // Minimal rewriter that does not simplify the assumptions resulting
+  // from the substitution and replacement.  Only appends new
+  // assumptions to existing ones; does not deduplicate or arrange
+  // them.
   rewriteOnlyFrom: {
     action: function(step, path_arg, eqn) {
       const path = step.wff.asPath(path_arg);
@@ -3842,14 +3844,14 @@ const ruleInfo = {
       return flatter.justify('rewriteOnlyFrom', arguments, [step, eqn]);
     },
     inputs: {site: 1, equation: 3},
-    form: ('Primitive rewrite using equation step <input name=equation>'),
-    menu: 'primitive rewrite',
+    form: ('Rewrite using equation step <input name=equation>'),
+    menu: 'minimal rewrite',
     isRewriter: true,
     description: 'rewrite;; {in step siteStep} {using step equation}'
   },
 
   // Inline utility for all of the rewriters; proves an equation
-  // to apply to the part of step at path.
+  // whose LHS is the same as the part of step at path.
   _rewriterFor: {
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
@@ -3874,7 +3876,7 @@ const ruleInfo = {
       }
 
       // TODO: Consider moving much of this below here to
-      //   rules.match and using that here.
+      //   rules.matchTerm and using that here.
       let funSites = new Map();
       for (const key in map) {
         if (map[key] instanceof Lambda) {
@@ -3882,6 +3884,8 @@ const ruleInfo = {
         }
       }
       let simpler = rules.instMultiVars(equation, map);
+      // Now (back)reduce applications of newly-substituted Lambda terms,
+      // normally to just a variable, simplifying the result.
       funSites.forEach(function(rPaths) {
           rPaths.forEach(function (rPath) {
               for (let r = rPath; r.segment === 'fn'; r = r.rest) {
@@ -3923,7 +3927,7 @@ const ruleInfo = {
     labels: 'uncommon'
   },
 
-  // Variant of rules.rewrite for use from the UI, when the equation
+  // Variant of rules.rewrite for use from the UI when the equation
   // is a proof step, not a well-known fact; otherwise the same as
   // rules.rewrite.
   //
@@ -3948,9 +3952,8 @@ const ruleInfo = {
     labels: 'basic'
   },
 
-  // Primitive rewriter with no simplification; accepts a fact statement.
-  // Substitutes into the fact and uses r2 to replace the target part
-  // of the step.
+  // Minimal rewriter with no simplification; like rewriteOnlyFrom
+  // except takes a fact statement rather than a step.
   rewriteOnly: {
     action: function(step, path_arg, stmt_arg) {
       const path = step.wff.asPath(path_arg);
@@ -4345,11 +4348,18 @@ const ruleInfo = {
     // proving it with rules.tautology, and instantiating.
     //
     // TODO: The tautology could be proved in a number of proof steps
-    // quadratic in length of A.  For a list A of conjunctions,
-    // pre-prove [A => Ai] for each member of A, each taking time
-    // linear in length of A.  Use these to prove each conjunct
-    // separately, then build the equal list with rules.and.  Also
-    // prove in the opposite direction if desired.
+    //   quadratic in length of A.  For a list A of conjunctions,
+    //   pre-prove [A => Ai] for each member of A, each taking time
+    //   linear in length of A.  Use these to prove each conjunct
+    //   separately, then build the equal list with rules.and.  Also
+    //   prove in the opposite direction if desired.
+    //
+    //   Or perhaps even better, prove the desired tautology by by
+    //   considering k+1 cases where k is the number of variables in
+    //   the desired consequent.  The cases are those with one
+    //   variable in the consequent being false, and one with them all
+    //   true.  These cases each trivially simplify to true, and case
+    //   analysis proves the whole thing true.
     action: function(conj, comparator) {
       var map = new Toy.TermMap();
       var infix = Toy.infixCall;
@@ -4397,6 +4407,10 @@ const ruleInfo = {
       if (!step.isCall2('=>')) {
         return step;
       }
+      // conjunctionArranger also sorts assumptions, which we
+      // currently expect to be done, and removes occurrences of T,
+      // which is not exactly desired, but convenient to do there.
+      // See TODOs there for some ideas.
       var deduper =
         rules.conjunctionArranger(step.getLeft(), Toy.asmComparator);
       const deduped = rules.r1(step, '/left', deduper);
