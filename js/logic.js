@@ -3828,28 +3828,6 @@ const ruleInfo = {
   //   it was introduced and the formula (e.g. step) it came from.
   //
 
-  // Minimal rewriter that does not simplify the assumptions resulting
-  // from the substitution and replacement.  Only appends new
-  // assumptions to existing ones; does not deduplicate or arrange
-  // them.
-  rewriteOnlyFrom: {
-    action: function(step, path_arg, eqn) {
-      const path = step.wff.asPath(path_arg);
-      const rewriter = rules._rewriterFor(step, path, eqn);
-      const rewritten = rules.r2(step, path, rewriter);
-      let flatter = rewritten;
-      if (step.implies() && eqn.implies() && !path.isEnd()) {
-	flatter = rules.flattenAsms(rewritten);
-      }
-      return flatter.justify('rewriteOnlyFrom', arguments, [step, eqn]);
-    },
-    inputs: {site: 1, equation: 3},
-    form: ('Rewrite using equation step <input name=equation>'),
-    menu: 'minimal rewrite',
-    isRewriter: true,
-    description: 'rewrite;; {in step siteStep} {using step equation}'
-  },
-
   // Inline utility for all of the rewriters; proves an equation
   // whose LHS is the same as the part of step at path.
   _rewriterFor: {
@@ -3927,6 +3905,50 @@ const ruleInfo = {
     labels: 'uncommon'
   },
 
+  // Minimal rewriter that does not simplify the assumptions resulting
+  // from the substitution and replacement.  Only appends new
+  // assumptions to existing ones; does not deduplicate or arrange
+  // them.
+  rewriteOnlyFrom: {
+    action: function(step, path_arg, eqn) {
+      const path = step.wff.asPath(path_arg);
+      const rewriter = rules._rewriterFor(step, path, eqn);
+      const rewritten = rules.r2(step, path, rewriter);
+      let flatter = rewritten;
+      if (step.implies() && eqn.implies() && !path.isEnd()) {
+	flatter = rules.flattenAsms(rewritten);
+      }
+      return flatter.justify('rewriteOnlyFrom', arguments, [step, eqn]);
+    },
+    inputs: {site: 1, equation: 3},
+    form: ('Rewrite using equation step <input name=equation>'),
+    menu: 'minimal rewrite',
+    isRewriter: true,
+    description: 'rewrite;; {in step siteStep} {using step equation}'
+  },
+
+  // Minimal rewriter with no simplification; like rewriteOnlyFrom
+  // except takes a fact statement rather than a step.
+  rewriteOnly: {
+    action: function(step, path_arg, stmt_arg) {
+      const path = step.wff.asPath(path_arg);
+      const statement = rules.fact(stmt_arg);
+      const rewriter = rules._rewriterFor(step, path, statement);
+      const rewritten = rules.r2(step, path, rewriter);
+      let flatter = rewritten;
+      if (step.implies() && statement.implies() && !path.isEnd()) {
+	flatter = rules.flattenAsms(rewritten);
+      }
+      return flatter.justify('rewriteOnly', arguments, [step]);
+    },
+    inputs: {site: 1, bool: 3},
+    form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
+    menu: 'primitive rewrite using a fact',
+    isRewriter: true,
+    description: 'use;; {shortFact} {&nbsp;in step siteStep}',
+    labels: 'primitive'
+  },
+
   // Variant of rules.rewrite for use from the UI when the equation
   // is a proof step, not a well-known fact; otherwise the same as
   // rules.rewrite.
@@ -3950,28 +3972,6 @@ const ruleInfo = {
     //   is empty, perhaps with a new {rewrite} directive.
     description: 'rewrite;; {in step siteStep} {using step equation}',
     labels: 'basic'
-  },
-
-  // Minimal rewriter with no simplification; like rewriteOnlyFrom
-  // except takes a fact statement rather than a step.
-  rewriteOnly: {
-    action: function(step, path_arg, stmt_arg) {
-      const path = step.wff.asPath(path_arg);
-      const statement = rules.fact(stmt_arg);
-      const rewriter = rules._rewriterFor(step, path, statement);
-      const rewritten = rules.r2(step, path, rewriter);
-      let flatter = rewritten;
-      if (step.implies() && statement.implies() && !path.isEnd()) {
-	flatter = rules.flattenAsms(rewritten);
-      }
-      return flatter.justify('rewriteOnly', arguments, [step]);
-    },
-    inputs: {site: 1, bool: 3},
-    form: ('(Primitive) rewrite {term} using fact <input name=bool>'),
-    menu: 'primitive rewrite using a fact',
-    isRewriter: true,
-    description: 'use;; {shortFact} {&nbsp;in step siteStep}',
-    labels: 'primitive'
   },
 
   // Version of the rewrite rule good for general use in code and for
