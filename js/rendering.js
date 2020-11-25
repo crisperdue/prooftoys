@@ -2352,7 +2352,7 @@ function hoverAsRewriter(step, action) {
             .eachConjunct(term => term.sameAs(tee) && term);
           found && action(found.node, 'site');;
         } else {
-          const path = shallower ? asPath.rest : asPath;
+          const path = shallower ? tPath.rest : tPath;
           const main = deeper ? step.wff.getRight() : step.wff;
           action(main.get(path).node, 'site');
         }
