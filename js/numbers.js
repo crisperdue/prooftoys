@@ -1171,9 +1171,16 @@ var regroupingFacts = [
  * appropriate when dividing.
  */
 function simplifyMulDivBoth(step, eqnPath) {
-  var rightSimpler = rules.arrangeTerm(step, eqnPath.concat('/right'));
-  var leftSimpler = rules.arrangeTerm(rightSimpler, eqnPath.concat('/left'));
-  return rules.simplifyFocalPart(leftSimpler);
+  // This and the next function avoid simplifying the entire
+  // equation because that is liable to simply undo an inentional
+  // addition or multiplication "to both".
+  const right = eqnPath.concat('/right');
+  const left = eqnPath.concat('/left');
+  const step1 = (rules.arrangeTerm(step, right)
+                 .andThen('simplifySite', right));
+  const step2 = (rules.arrangeTerm(step1, left)
+                 .andThen('simplifySite', left));
+  return step2;
 }
 
 /**
@@ -1182,11 +1189,14 @@ function simplifyMulDivBoth(step, eqnPath) {
  *
  */
 function simplifyAddSubBoth(step, eqnPath) {
-  var right = eqnPath.concat('/right');
-  var left = eqnPath.concat('/left');
-  var step1 = rules.arrangeSum(step, right);
-  var step2 = rules.arrangeSum(step1, left);
-  return rules.simplifyFocalPart(step2);
+  // See above.
+  const right = eqnPath.concat('/right');
+  const left = eqnPath.concat('/left');
+  const step1 = (rules.arrangeSum(step, right)
+                 .andThen('simplifySite', right));
+  const step2 = (rules.arrangeSum(step1, left)
+                 .andThen('simplifySite', left));
+  return step2;
 }
 
 const mathSimplifiers =
@@ -2264,7 +2274,7 @@ addRules(distribFacts);
 // that is truthy iff the statement is in distribFacts.
 const _distribFacts = new Set();
 for (const obj of distribFacts) {
-  _distribFacts.add(obj.statement);
+  _distribFacts.add(Toy.resolveToFact(obj.statement));
 }
 
 /**
@@ -2341,6 +2351,7 @@ addRules(identityFacts3);
 var equivalences =
   [
    {statement: 'a = b == a + c = b + c',
+    desimplifier: true,
     proof:
     [
      '(1 abcPlus)',
@@ -2356,6 +2367,7 @@ var equivalences =
   },
 
    {statement: 'a = b == a - c = b - c',
+    desimplifier: true,
     proof: function() {
       var forward = (rules.assume('a = b')
                      .andThen('applyToBothWith', '-', 'c')
@@ -2389,6 +2401,7 @@ var equivalences =
   },
 
    {statement: 'c != 0 => (a = b == a * c = b * c)',
+    desimplifier: true,
     proof: function() {
       var forward = (rules.assume('a = b')
                      .andThen('applyToBothWith', '*', 'c')
@@ -2420,6 +2433,7 @@ var equivalences =
   },
 
    {statement: 'c != 0 => (a = b == a / c = b / c)',
+    desimplifier: true,
     proof: function() {
       var forward = (rules.assume('a = b')
                      .andThen('applyToBothWith', '/', 'c')
@@ -3209,8 +3223,9 @@ var algebraIdentities =
       .andThen('instVar', 'neg b', 'b')
       .rewrite('/main/left/right', 'neg (neg a) = a')
       .rewrite('/main/right/left', '@a + neg b = a - b');
-    }
-  }
+     },
+    desimplifier: true
+   }
    ];
 addRules(algebraIdentities);
 
