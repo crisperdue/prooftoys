@@ -1513,32 +1513,20 @@ function standardVars(term) {
 }
 
 /**
- * True iff this expression has the form of a rewrite rule, being an
- * equation, possibly with assumptions, and all free variables in
- * assumptions appearing also in the LHS of the equation.  (This
- * eliminates facts such as transitivity of equality.)
+ * Returns the appropriate subexpression of this to match against a
+ * target site if this Expr is to be used as a rewriter.  Notice that
+ * it is completely determined by the form of this Expr.
  */
-Expr.prototype.isRewriter = function() {
-  var stmt = this;
-  if (!stmt.isEquation()) {
-    return false;
-  }
-  // Should statements like [R a & R b => (a = b == a + c = b + c)] be
-  // treated differently?  (It introduces a new var in the RHS.)
-  // This seems OK as it is.
-  if (stmt.isCall2('=>')) {
-    var asms = stmt.getLeft();
-    var lhs = stmt.eqnLeft();
-    var aFree = asms.freeVars();
-    var lFree = lhs.freeVars();
-    for (var name in aFree) {
-      if (!(name in lFree)) {
-        // Some free var in the assumptions is not free in the LHS.
-        return false;
-      }
-    }
-  }
-  return true;
+Expr.prototype.matchPart = function() {
+  const self = this;
+  // If given an equation or conditional equation, this is its
+  // LHS.  Otherwise if given a conditional, the RHS, otherwise
+  // the argument itself.
+  return (self.isEquation()
+          ? self.eqnLeft()
+          : self.isCall2('=>')
+          ? self.getRight()
+          : self);
 };
   
 

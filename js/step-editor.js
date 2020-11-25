@@ -2012,12 +2012,13 @@ RuleMenu.prototype.offerableFacts = function() {
     if (expr) {
       var mode = self.proofEditor.showRuleType;
       Toy.eachFact(function(info) {
-          var goal = info.goal;
-          if (!goal.isRewriter()) {
+          const goal = info.goal;
+          const matchTerm = goal.matchPart()
+          if (matchTerm.isVariable()) {
+            // A variable matches way too many things, so give up.
             return;
           }
-          var lhs = goal.eqnLeft();
-          if (typesMismatch(expr, lhs)) {
+          if (typesMismatch(expr, matchTerm)) {
             return;
           }
           if (info.labels.higherOrder && mode != 'all') {
@@ -2026,17 +2027,40 @@ RuleMenu.prototype.offerableFacts = function() {
             // menu.
             return;
           }
-          if (expr.matchSchema(lhs)) {
+          if (expr.matchSchema(matchTerm)) {
             if (mode == 'algebra') {
               if (info.labels.algebra) {
                 facts.push(info);
               }
               // Otherwise don't show the fact in algebra mode.
             } else if (mode == 'general') {
-              // Only show desimplifiers in "everything" mode.
-              // TODO: Include them as "introducers" in both "general"
-              //   mode and "everything" modes.
-              if (!info.desimplifier || info.labels.generalMode) {
+              function okGeneral() {
+                if (info.labels.generalMode) {
+                  return true;
+                }
+                // Only show desimplifiers in "everything" mode.
+                if (info.desimplifier) {
+                  return false;
+                }
+                if (goal.implies()) {
+                  const asms = goal.getLeft();
+                  // TODO: Systematize handling of facts that may add
+                  //   assumptions.
+                  //
+                  // In general mode, if a rule adds assumptions they
+                  // must be of just a couple of sorts.  This is just
+                  // a quick fix.
+                  if (asms.scanConj
+                      (x =>
+                       !x.matchSchema('R x') &&
+                       !x.matchSchema('not (x = y)') &&
+                       !x.matchSchema('x != y'))) {
+                    return false;
+                  }
+                }
+                return true;
+              }
+              if (okGeneral()) {
                 facts.push(info);
               }
             } else {
