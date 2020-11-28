@@ -685,11 +685,25 @@ function addRulesMap(ruleInfo) {
  * each in the form of a plain object with properties.  If a fact has
  * a name, the name appears as a "name" property.
  *
- * TODO: Consider merging with addRule.
+ * TODO: Deprecated, remove.
  */
 function addRules(ruleList) {
   ruleList.forEach(addRule);
 }
+
+/**
+ * Takes an arbitrary number of arguments, each in the form
+ * accepted by addRule, and performs addRule on each.
+ *
+ * Prefer this over addRule, addRules, addFact, or addFactsMap for
+ * adding new facts, rules, and definitions.
+ */
+function declare(_declarations) {
+  for (const decl of arguments) {
+    addRule(decl);
+  }
+}
+
 
 // Essentially unique
 
@@ -2460,6 +2474,7 @@ Toy.assertFacts = true;
 Toy.getStepCounter = getStepCounter;
 Toy.noSimplify = noSimplify;
 
+Toy.declare = declare;
 Toy.addRule = addRule;
 Toy.addRulesMap = addRulesMap;
 Toy.addRules = addRules;
