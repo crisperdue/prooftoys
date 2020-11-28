@@ -9,8 +9,7 @@
 //// THEOREMS AND RULES
 
 var rules = Toy.rules;
-var addRule = Toy.addRule;
-var addRules = Toy.addRules;
+var declare = Toy.declare;
 var definex = Toy.definex;
 const definition = Toy.definition;
 var basicSimpFacts = Toy.basicSimpFacts;
@@ -41,30 +40,26 @@ var convert = Toy.convert;
 var applyToFocalPart = Toy.applyToFocalPart;
 var noSimplify = Toy.noSimplify;
 
-var addFact = Toy.addFact;
-var addFactsMap = Toy.addFactsMap;
-
 
 //// Field laws
 
 if (!Toy.deeperFieldAxioms) {
 
-  const strictness =
-    [
+  declare
+  (
      {statement: '@not (R none)', axiom: true,
       description: 'null value is not Real'},
      {statement: '@ strict2 (+)', axiom: true,
       description: 'real addition is strict'},
      {statement: '@ strict2 (*)', axiom: true,
       description: 'real multiplication is strict'}
-     ];
-  addRules(strictness);
+  );
 
   definition('isAddIdentity = {x. R x & forall {y. R y => y + x = y}}');
   definition('isMulIdentity = {x. R x & forall {y. R y => y * x = y}}');
 
-  const fieldLaws1 =
-    [
+  declare
+  (
      {statement: 'R (x + y)', axiom: true,
       description: 'real addition is closed'
      },
@@ -107,8 +102,7 @@ if (!Toy.deeperFieldAxioms) {
       labels: 'algebra',
       converse: { labels: 'algebra' }
      }
-     ];
-  addRules(fieldLaws1);
+  );
 
   definition('0 = the1 isAddIdentity');
   definition('1 = the1 isMulIdentity');
@@ -117,20 +111,17 @@ if (!Toy.deeperFieldAxioms) {
   definition('addInverses = [x. {y. R x & R y & x + y = 0}]');
   definition('mulInverses = [x. {y. R x & R y & x * y = 1}]');
 
-  const uniqueInverses =
-    [
+  declare(
      {statement: '@ R x => exists1 (addInverses x)', axiom: true,
       description: 'unique additive inverses exist'
      },
      {statement: '@ R x & x != 0 => exists1 (mulInverses x)', axiom: true,
       description: 'unique multiplicative inverses exist'
      }
-     ];
-  addRules(uniqueInverses);
+  );
 }
 
-const identityFacts =
-  [
+declare(
    // Identity axioms
 
    // In Lay, this is part of axiom M4.
@@ -204,8 +195,7 @@ const identityFacts =
                .andThen('instForall', '', 'x'));
      }
    }
-   ];
-addRules(identityFacts);
+);
 
 definition('neg = {x. the1 (addInverses x)}');
 definition('minv = {x. the1 (mulInverses x)}');
@@ -214,8 +204,7 @@ definition('minv = {x. the1 (mulInverses x)}');
 //   gives ability to prove things we prefer to prove from (other)
 //   axioms.
 
-const inverses =
-  [
+declare(
    {name: 'negFact',
     statement: '@ R x & R y & x + y = 0 == R x & neg x = y',
     // TODO: Replace this proof as shown below.
@@ -315,8 +304,7 @@ const inverses =
      '(15 rewrite (s 14) (path "/main/right") (t ((the1 empty) = none)))'
      ]
    }
-   ];
-addRules(inverses);
+);
 
 definition('(-) = {x. {y. x + neg y}}');
 
@@ -348,8 +336,7 @@ definition('recip = {x. 1 / x}');
  */
 
 
-const realOrdering =
-  [
+declare(
    {statement: 'not (x < x)', axiom: true,
     description: 'strict ordering axiom 1'
    },
@@ -383,11 +370,9 @@ const realOrdering =
    // {statement: '0 < x & 0 < y => 0 < x * y', axiom: true,
    //  description: 'ordering of reals and multiplication'
    // }
-   ];
-Toy.addRules(realOrdering);
+);
 
-const realOrdFacts =
-  [
+declare(
    {statement: 'x = y => not (x < y)',
     proof: function() {
        const asm = rules.assume('x = y');
@@ -407,13 +392,10 @@ const realOrdFacts =
      }
    }
 
-];
-Toy.addRules(realOrdFacts);
+);
 
 // Lay 11.1
-{
-  const infos =
-    [
+declare(
      // Lay 11.1a
      {name: 'abcPlus',
       statement: '@x + z = y + z & R x & R y & R z => x = y',
@@ -609,12 +591,10 @@ Toy.addRules(realOrdFacts);
        '(17 rewriteOnlyFrom (s 15) (path "") (s 16))'
        ]
      }
-     ];
-  addRules(infos);
-}
+);
 
-const fakeAxioms =
-  [
+declare(
+  // Fake axioms.
    {statement: 'x != 0 => x * recip x = 1', axiom: true,
     simplifier: true,
     description: 'reciprocal'
@@ -624,8 +604,7 @@ const fakeAxioms =
     statement: '@R (recip x) & recip x != 0 == R x & x != 0',
     description: 'reciprocals are nonzero'
    }
-   ];
-Toy.addRules(fakeAxioms);
+);
 
 
 ////
@@ -636,8 +615,8 @@ Toy.addRules(fakeAxioms);
 // Real numbers
 // 
 
-const numbersInfo =
-  [
+declare
+  (
    {name: 'plusZero',
     statement: '@R x => x + 0 = x',
     simplifier: true,
@@ -885,13 +864,13 @@ const numbersInfo =
     tooltip: 'arithmetic',
     labels: 'algebra'
   }
-  ];
+  );
 
 
 // definition('isQuotient = {x. {y. {z. R x & R y & R z & x = y * z}}}');
 
-var divisionInfo =
-  [
+declare
+  (  
   // Division is an inverse of multiplication.
   {name: 'divisionIsInverse',
    statement: '@y != 0 & R x & R y => (R z & x = y * z == z = x / y)',
@@ -918,11 +897,10 @@ var divisionInfo =
       return step10;
     }
   }
-   ];
+  );
 
-var equationOpsInfo =
-  [
-
+declare
+  (
   // Add the given term to the equation in the step at the given path,
   // typically /right/right.
    {name: 'addToBoth',
@@ -1122,7 +1100,7 @@ var equationOpsInfo =
     labels: 'algebra'
   }
 
-   ];
+  );
 
 //// Fact lists
 
@@ -1264,9 +1242,8 @@ const mathSimplifiers =
    ];  // End of mathSimplifiers.
 
 
-var moversInfo =
-  [
-
+declare
+  (
   // Uses the associative law to "flatten" an expression made
   // up of additions and subtractions.
    {name: 'flattenSum',
@@ -1958,12 +1935,11 @@ var moversInfo =
   },
   */
 
-   ];  // End of moversInfo.
+  );
 
 
-var fractionsInfo =
-  [
-
+declare
+  (
   /**
    * Reduces the selected fraction to lower terms using their least
    * common divisor (via Toy.npd).  No, not the greatest common
@@ -2098,13 +2074,12 @@ var fractionsInfo =
     autoSimplify: noSimplify
   }
 
-   ];  // End fractionsInfo.
+  );
 
 
 //// Algebra facts
 
-const basicRealFacts =
-  [
+declare(
    // A real number exists.  Equivalently exists {x. R x}.
    {statement: 'exists R',
     proof: function() {
@@ -2172,8 +2147,7 @@ const basicRealFacts =
                .rewrite('/main/right/right', 'a * b = b * a'));
      }
    }
-   ];
-addRules(basicRealFacts);
+);
 
 // Distributivity
 var distribFacts =
@@ -2265,7 +2239,7 @@ var distribFacts =
     converse: { labels: 'algebra' }
   }
    ];
-addRules(distribFacts);
+declare.apply(null, distribFacts);
 
 // TODO: Need distributivity of division over addition and subtraction.
 
@@ -2285,8 +2259,7 @@ function isDistribFact(stmt) {
   return _distribFacts.has(Toy.resolveToFact(stmt));
 }
 
-var identityFacts3 =
-  [
+declare(
   // Plus zero
   /* Omit from UI: somewhat redundant
      {statement: 'a = 0 + a',
@@ -2345,11 +2318,9 @@ var identityFacts3 =
       .rewrite('/main/left', 'a * b = b * a');
     }
   }
-   ];
-addRules(identityFacts3);
+);
 
-var equivalences =
-  [
+declare(
    {statement: 'a = b == a + c = b + c',
     desimplifier: true,
     proof:
@@ -2443,9 +2414,7 @@ var equivalences =
       return rules.rewriteOnly(conj, '/main', '(p => q) & (q => p) == (p == q)');
     }
   }
-   ];
-addRules(equivalences);
-
+);
 
 /*
   // Since functions are total, an operation such as x / 0 has a value,
@@ -2490,8 +2459,7 @@ addRules(equivalences);
   //
   */
 
-var negationFacts =
-  [
+declare(
   // With addition and subtraction
 
    {statement: '@a - b = a + neg b',
@@ -2647,11 +2615,9 @@ var negationFacts =
       .rewrite('/main/right/left', '1 * a = a');
     }
   }
-   ];
-addRules(negationFacts);
+);
 
-var subtractionFacts =
-  [
+declare(
   // Subtraction facts
 
   // Moving terms to the left
@@ -2789,11 +2755,9 @@ var subtractionFacts =
     }
   }
 
-   ];
-addRules(subtractionFacts);
+);
 
-var recipFacts =
-  [
+declare(
   // Reciprocal facts
 
    {statement: 'a != 0 => recip a * a = 1',
@@ -2863,12 +2827,9 @@ var recipFacts =
       return step14;
     }
   }
-   ];
-addRules(recipFacts);
+);
 
-var divisionFacts =
-  [
-
+declare(
   // Division rules
 
   {statement: 'c != 0 => a * b / c = a / c * b',
@@ -3084,11 +3045,9 @@ var divisionFacts =
     labels: 'algebra',
     converse: { labels: 'algebra' }
   }
-  ];
-addRules(divisionFacts);
+);
 
-var powerFacts =
-  [
+declare(
    {statement: 'x ** 1 = x',
     proof: function() {
        return (rules.axiomNextPower()
@@ -3190,14 +3149,11 @@ var powerFacts =
                .andThen('rewrite', 'x ** 4 * x', 'x ** 4 * x = x ** 5'));
      }
    }
-   ];
-addRules(powerFacts);
-
+);
 
 // MOVING EXPRESSIONS AROUND
 
-var algebraIdentities =
-  [
+declare(
    {statement: 'a = neg b == a + b = 0',
     proof: function() {
       var step = rules.assume('a = neg b')
@@ -3226,8 +3182,7 @@ var algebraIdentities =
      },
     desimplifier: true
    }
-   ];
-addRules(algebraIdentities);
+);
 
 
 //// Utility functions
@@ -3453,8 +3408,8 @@ definition('(>) = {x. {y. y < x}}');
 definition('(<=) = {x. {y. x < y | x = y}}');
 definition('(>=) = {x. {y. x > y | x = y}}');
 
-let piFacts =
-  [
+declare
+  (
    {statement: 'R pi', axiom: true,
     description: 'Pi is a real number'},
 
@@ -3475,8 +3430,7 @@ let piFacts =
                .andThen('rewrite', '0 != pi', 'x != y == y != x'));
      }
    }
-   ];
-addRules(piFacts);
+  );
 
 
 //// Misc utilities
@@ -3495,15 +3449,6 @@ Toy.termLeftThan = termLeftThan;
 Toy.tryArithmetic = tryArithmetic;
 Toy.isArithmetic = isArithmetic;
 
-
-//// INITIALIZATION CODE
-
-Toy.addRules(numbersInfo);
-Toy.addRules(divisionInfo);
-Toy.addRules(equationOpsInfo);
-Toy.addRules(mathSimplifiers);
-Toy.addRules(moversInfo);
-Toy.addRules(fractionsInfo);
 
 // From here is overall initialization for the complete system.
 
