@@ -41,22 +41,19 @@ const Lambda = Toy.lambda;
 // Indicate that the "deeper" axioms are in use.
 Toy.deeperFieldAxioms = true;
 
-const strictness =
-  [
+declare(
    {statement: '@not (R none)', axiom: true,
     description: 'null value is not Real'},
    {statement: '@strict2 (+)', axiom: true,
     description: 'real addition is strict'},
    {statement: '@strict2 (*)', axiom: true,
     description: 'real multiplication is strict'}
-   ];
-addRules(strictness);
+);
 
 definition('isAddIdentity = {x. R x & forall {y. R y => y + x = y}}');
 definition('isMulIdentity = {x. R x & forall {y. R y => y * x = y}}');
 
-const fieldLaws1 =
-  [
+declare(
    {statement: 'R (x + y)', axiom: true,
     description: 'real addition is closed'
    },
@@ -94,11 +91,9 @@ const fieldLaws1 =
     labels: 'algebra',
     converse: { labels: 'algebra' }
    }
-   ];
-addRules(fieldLaws1);
+);
 
-const identityFacts =
-  [
+declare(
    {statement: 'isAddIdentity x & isAddIdentity y => x = y',
     name: 'uniqueAddIdentity',
     proof: function() {
@@ -163,14 +158,12 @@ const identityFacts =
                                
      }
    }
-   ];
-addRules(identityFacts);
+);
 
 definition('0 = the1 isAddIdentity');
 definition('1 = the1 isMulIdentity');
 
-const inverseFacts =
-  [
+declare(
    {statement: 'exists {y. R y & x + y = 0}', axiom: true,
     description: 'additive inverses exist'
    },
@@ -213,7 +206,6 @@ const inverseFacts =
    // TODO: Prove the actual unique existence properties (easy from
    // here).
 
-   ];
-addRules(inverseFacts);
+);
 
 }();

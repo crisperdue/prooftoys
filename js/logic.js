@@ -39,9 +39,7 @@ const identity = Toy.parse('{x. x}');
 const allT = Toy.parse('{x. T}');
 
 const rules = Toy.rules;
-const addRule = Toy.addRule;
-const addRules = Toy.addRules;
-const addRulesMap = Toy.addRulesMap;
+const declare = Toy.declare;
 const buildHypSchema = Toy.buildHypSchema;
 const tryReduce = Toy.tryReduce;
 
@@ -92,13 +90,12 @@ definition('exists1 = {p. exists {x. p = {y. y = x}}}');
 // all have generic types.
 // definition('if = {p. {x. {y. the1 {z. p & z = x | not p & z = y}}}}');
 
-
- addRules
-   ([{statement: 'if T x y = x', axiom: true,
-         simplifier: true},
-     {statement: 'if F x y = y', axiom: true,
-         simplifier: true}
-     ]);
+declare(
+  {statement: 'if T x y = x', axiom: true,
+   simplifier: true},
+  {statement: 'if F x y = y', axiom: true,
+   simplifier: true}
+);
 
 // We will derive the T/F cases facts after defining some inference rules.
 definition('(&) = {x. {y. if x y F}}');
@@ -138,7 +135,7 @@ definition('strict2 = {f. forall {x. f x none = none} & ' +
 
 //// Logical axioms and rule of inference
 
-const axioms = {
+declare(
   // TODO: LOGIC: Consider the possibility of instead saying that
   //     p T & p F => p x
   //   and defining forall:bool->bool as {p. p T & p F}.
@@ -148,14 +145,14 @@ const axioms = {
   //   definition by cases are equal.  This still assumes that
   //   definition by cases is at least admissible.  (There exists
   //   a function as defined.)
-  axiom1: {
+  {name: 'axiom1',
     statement: 'g T & g F == forall {a. g a}', axiom: true,
     inputs: {},
     description: 'axiom of T & F',
     tooltip: ('T and F are all the booleans')
   },
 
-  axiom2: {
+  {name: 'axiom2',
     statement: 'x = y => h x = h y', axiom: true,
     inputs: {},
     description: 'axiom of function application',
@@ -166,7 +163,7 @@ const axioms = {
    * Axiom 2 specialized for predicates.  This is actually more like
    * Andrews' axiom 2.
    */
-  axiom2a: {
+  {name: 'axiom2a',
     statement: 'x = y => (p x == p y)', axiom: true,
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
@@ -179,7 +176,7 @@ const axioms = {
     tooltip: ('predicates take equal values to the same truth value')
   },
 
-  axiom3: {
+  {name: 'axiom3',
     statement: '(f = g) == forall {x. f x = g x}', axiom: true,
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
@@ -189,7 +186,7 @@ const axioms = {
     description: 'axiom of equal functions'
   },
 
-  axiom3a: {
+  {name: 'axiom3a',
     statement: '(p = q) == forall {x. p x == q x}', axiom: true,
     proof: function() {
       const map = {f: 'p', g: 'q'};
@@ -211,7 +208,7 @@ const axioms = {
    * expression to an argument expression, returning a term that
    * expresses the equality of the input and its beta reduction.
    */
-  axiom4: {
+  {name: 'axiom4',
     action: function(call) {
       call = typeof call == 'string' ? Toy.parse(call) : call;
       assert(call.isLambdaCall(),
@@ -235,7 +232,7 @@ const axioms = {
     tooltip: ('')
   },
 
-  axiom5: {
+  {name: 'axiom5',
     // Traditionally (upside-down) iota, as in Andrews' text.
     statement: 'the1 {x. x = y} = y', axiom: true,
     simplifier: true,
@@ -250,7 +247,7 @@ const axioms = {
    * the equation's LHS, meaning they are the same except possibly
    * in names of bound variables.
    */
-  r: {
+  {name: 'r',
     action: function(equation, target, path_arg) {
       const path = Toy.path(path_arg, target);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
@@ -330,26 +327,24 @@ const axioms = {
   },
 
   /* Rule R with arguments in the standard order; currently inline. */
-  r1: {
+  {name: 'r1',
     action: function(target, path, equation) {
       return rules.r(equation, target, path);
     }
   }
 
-};
-addRulesMap(axioms);
+);
 
 
 //// Preliminaries to logic
 
-const prelogic = {
-
+declare(
   /**
    * The name "assertion" is used in displays to indicate that the
    * result of the inference is asserted without proof.  If given a
    * string, parses it and uses the result as its input.
    */
-  assert: {
+  {name: 'assert',
     action: function(assertion_arg) {
       const assertion = termify(assertion_arg);
       const newConsts = assertion.newConstants();
@@ -368,7 +363,7 @@ const prelogic = {
     tooltip: 'WFF to assert (possibly to prove later)'
   },
 
-  define: {
+  {name: 'define',
     action: function(definition) {
       const name = Toy.definition(definition);
       const defn = rules.definition(name);
@@ -386,7 +381,7 @@ const prelogic = {
     tooltip: 'define a name'
   },
 
-  copy: {
+  {name: 'copy',
     action: function(step) {
       // Always make a new step, that is the point.
       return step.justify('copy', arguments, [step], true);
@@ -398,7 +393,7 @@ const prelogic = {
   /**
    * A no-op step that breaks the cycle of displaying with elision.
    */
-  display: {
+  {name: 'display',
     action: function(step) {
       // Force "justify" to not ignore this step.
       return step.justify('display', arguments, [step], true);
@@ -418,7 +413,7 @@ const prelogic = {
   // TODO: Modify this to encode the steps to be inlined before
   //   committing to the inlining, and if encoding fails, abort the
   //   inlining.
-  inline: {
+  {name: 'inline',
     // Caution: this rule can ONLY be used on a step that has a rendering.
     action: function(step) {
       const inlined = step;
@@ -491,7 +486,7 @@ const prelogic = {
   // are modified; they are only replaced with counterparts.
   //
   // This inserts the replacement steps at the end of the proof.
-  replaceStep: {
+  {name: 'replaceStep',
     precheck: function(step) {
       const rendered = step.rendering;
       const last = Toy.getProofDisplay(rendered).getLastStep();
@@ -554,7 +549,7 @@ const prelogic = {
 
   // Removes the selected step and any following steps from the proof.
   // Prompts before actually removing.
-  removeFromHere: {
+  {name: 'removeFromHere',
     precheck: function(step) {
       const rendered = step.rendering;
       const last = Toy.getProofDisplay(rendered).getLastStep();
@@ -584,7 +579,7 @@ const prelogic = {
    * TODO: Consider adding a rule that takes a ruleName as an
    *   argument, also for the UI.
    */
-  theorem: {
+  {name: 'theorem',
     action: function(name) {
       assert(rules[name], 'No theorem named {1}', name);
       assert(rules[name].length == 0,
@@ -612,7 +607,7 @@ const prelogic = {
    * to the traditional "forall" form as well as substitution
    * instances of definitions.
    */
-  definition: {
+  {name: 'definition',
     action: function(name) {
       // The derivations are computed in advance, and have the name as
       // the argument.
@@ -637,7 +632,7 @@ const prelogic = {
    *   obsoleting this if unForall or similar rule removes forall from
    *   deeper subexpressions (that do not involve ==).
    */
-  reduceEqn: {
+  {name: 'reduceEqn',
     action: function(equation) {
       assertEqn(equation);
       const inputs = [equation];
@@ -667,7 +662,7 @@ const prelogic = {
   // is more than one argument, by descending into fn parts.
   //
   // TODO: Fix bug here that A != B does not become not (A = B).
-  useDefinition: {
+  {name: 'useDefinition',
     precheck: function(step, path) {
       var term = step.get(path);
       var fn = term.funPart();
@@ -703,8 +698,7 @@ const prelogic = {
     description: 'definition of {site}'
   }
 
-};
-addRulesMap(prelogic);
+);
 
 
 // Some trivial rules not needing definitions
@@ -714,11 +708,10 @@ addRulesMap(prelogic);
 // Definition rules need reduce and applyBoth to be available
 // at the occurrence of Toy.definition.
 
-const equalities = {
-
+declare(
   // Takes an arbitrary expression A, concluding that it is equal
   // to itself. (5200)
-  eqSelf: {
+  {name: 'eqSelf',
     action: function(a) {
       a = termify(a);
       var step1 = rules.axiom4(call(Toy.parse('{x. x}'), a));
@@ -734,7 +727,7 @@ const equalities = {
   },
 
   // The two forms of "=" are interchangeable (other than precedence).
-  eqIsEquiv: {
+  {name: 'eqIsEquiv',
     statement: '(=) = (==)',
     proof: function() {
       var step1 = rules.eqSelf(Toy.constify('='));
@@ -747,7 +740,7 @@ const equalities = {
 
   // Given A, proves A == A.  This is intended for use only when
   // A is boolean.
-  equivSelf: {
+  {name: 'equivSelf',
     action: function(a) {
       var step1 = rules.eqSelf(a);
       var eqn = rules.theorem('eqIsEquiv');
@@ -764,7 +757,7 @@ const equalities = {
 
   // Consider a term that we may wish to rewrite.  Functionally
   // the same as eqSelf, but display is handled specially.
-  consider: {
+  {name: 'consider',
     action: function(term_arg) {
       const term = termify(term_arg);
       const copy = term.copyForRendering(null);
@@ -788,7 +781,7 @@ const equalities = {
   // Like "consider", but for formulas (boolean-valued terms)
   // Special case: this is only offerable if there are no steps
   // already in a proof.
-  given: {
+  {name: 'given',
     action: function(term) {
       term = termify(term);
       var step = rules.equivSelf(term);
@@ -808,7 +801,7 @@ const equalities = {
   },
 
   // Similar to "consider", but uses a selected term.
-  considerPart: {
+  {name: 'considerPart',
     action: function(step, path) {
       return (rules.consider(step.get(path))
               .justify('considerPart', arguments, [step]));
@@ -824,7 +817,7 @@ const equalities = {
   // "whole" is a conditional.  Use rules.replaceT0 instead.
 
   // r5201b, works with a conditional equation.
-  eqnSwap: {
+  {name: 'eqnSwap',
     action: function(h_ab) {
       var ab = h_ab.getMain();
       var op = ab.getBinOp().pname;
@@ -850,7 +843,7 @@ const equalities = {
   // r5201d is not used.
   // r5201e, with eqn potentially conditional.
   //
-  applyBoth: {
+  {name: 'applyBoth',
     action: function(eqn, a) {
       const step1 = (eqn.isCall2('==')
                      ? rules.equivSelf(call(eqn.eqnLeft(), a))
@@ -872,7 +865,7 @@ const equalities = {
 
   // r5201f.  Works with a conditional equation "ab".
   // If f is a lambda expression, also applies it to both sides.
-  applyToBoth: {
+  {name: 'applyToBoth',
     action: function(f_arg, ab) {
       var f = termify(f_arg);
       var fafa = rules.eqSelf(call(f, ab.eqnLeft()));
@@ -901,7 +894,7 @@ const equalities = {
   // second argument.
   // 
   // Works with a conditional equation.
-  applyToBothWith: {
+  {name: 'applyToBothWith',
     action: function(a_b, f_arg, c_arg) {
       var f = Toy.constify(f_arg);
       var c = termify(c_arg);
@@ -919,7 +912,7 @@ const equalities = {
 
   // Just applies an anonymous lambda to an argument at the specified
   // location in a step.  (This is beta reduction.)
-  reduce: {
+  {name: 'reduce',
     action: function(step, path) {
       // Note that axiom 4 checks validity of its argument.
       var equation = rules.axiom4(step.get(path));
@@ -937,12 +930,10 @@ const equalities = {
     labels: 'uncommon'
   }
 
-};
-addRulesMap(equalities);
+);
 
 
-const baseRules = {
-
+declare(
   // "Reduces" a call identified by a path within a theorem. If the
   // call is an application of a lambda expression to an argument,
   // beta-reduces it.  If the target expression is a call to a named
@@ -950,7 +941,7 @@ const baseRules = {
   // and applies the expansions to the argument(s).
   //
   // TODO: Consider making this functionality part of useDefinition.
-  apply: {
+  {name: 'apply',
     precheck: function(step, path) {
       var term = step.get(path);
       var fn = term.funPart();
@@ -1028,7 +1019,7 @@ const baseRules = {
    * this modifies the given name to be distinct from all of its free
    * variables.
    */
-  renameBound: {
+  {name: 'renameBound',
     action: function(step, path, arg) {
       const newName = typeof arg === 'string' ? arg : arg.name;
       var target = step.get(path);
@@ -1060,7 +1051,7 @@ const baseRules = {
    * From an equation, infers a similar equation with each
    * side wrapped in a binding of the given variable or variable name.
    */
-  bindEqn: {
+  {name: 'bindEqn',
     action: function(h_eqn, v) {
       if (h_eqn.isCall2('=>')) {
         debugger;
@@ -1089,7 +1080,7 @@ const baseRules = {
    * Substitutes term "a" for variable or name "v" in equation b_c,
    * with the result a consequence of b_c.  (5209)
    */
-  instEqn: {
+  {name: 'instEqn',
     action: function(b_c_arg, a_arg, v) {
       var b_c = termify(b_c_arg);
       var a = termify(a_arg);
@@ -1112,7 +1103,7 @@ const baseRules = {
    * forall {x. x = x}
    * Helper lemma for eqT.
    */
-  xAlwaysX: {
+  {name: 'xAlwaysX',
     statement: 'forall {x. x = x}',
     proof: function() {
       var a3 = rules.axiom3();
@@ -1126,7 +1117,7 @@ const baseRules = {
   },
 
   // T == [B = B] (5210)
-  eqT: {
+  {name: 'eqT',
     action: function(b) {
       var lemma = rules.theorem('xAlwaysX');
       var step0 = rules.useDefinition(lemma, '/fn')
@@ -1147,7 +1138,7 @@ const baseRules = {
    * "T" is a theorem.  In the book, T is defined as an instance of
    * eqSelf.
    */
-  t: {
+  {name: 't',
     statement: 'T',
     proof: function() {
       const step1 = rules.eqSelf(T);
@@ -1163,7 +1154,7 @@ const baseRules = {
    * free variables.  This is a useful special case of instForall that
    * does not need the user to enter data through a form.
    */
-  unForall: {
+  {name: 'unForall',
     precheck: function(step, path) {
       const target = step.get(path);
       const pathStr = path.toString();
@@ -1209,7 +1200,7 @@ const baseRules = {
   //
   // Careful: The conditional form has more dependencies because
   // it uses rules.replace with a conditional equation.
-  instForall: {
+  {name: 'instForall',
     precheck: function(step, path, expr_arg) {
       const target = step.get(path);
       const pathStr = path.toString();
@@ -1252,7 +1243,7 @@ const baseRules = {
   },
 
   // From [A = B] deduce T = [A = B].
-  toTIsEquation: {
+  {name: 'toTIsEquation',
     action: function(a_b) {
       assertEqn(a_b);
       var step1 = rules.eqT(a_b.get('/left'));
@@ -1269,7 +1260,7 @@ const baseRules = {
 
   // Deduces the conjunction of two proved unconditional equations.
   // Helper for equationCases.
-  andEqns: {
+  {name: 'andEqns',
     action: function(step1, step2) {
       var step3 = rules.toTIsEquation(step1);
       var step4 = rules.toTIsEquation(step2);
@@ -1289,7 +1280,7 @@ const baseRules = {
   // Given two WFFs each of the form A = B that are the result of
   // substituting T and F respectively for a variable, proves the WFF
   // with the variable.
-  equationCases: {
+  {name: 'equationCases',
     action: function(caseT, caseF, v) {
       v = varify(v);
       var step1 = rules.andEqns(caseT, caseF);
@@ -1316,7 +1307,7 @@ const baseRules = {
     labels: 'primitive'
   },
 
-  r5211: {
+  {name: 'r5211',
     statement: 'T & T == T',
     proof: function() {
       var step1 = rules.instEqn(rules.axiom1(), '{y. T}', 'g');
@@ -1333,21 +1324,20 @@ const baseRules = {
   // T & T.
   // Used to prove equationCases.  The "cases" rule
   // and makeConjunction could treat this as a tautology.
-  r5212: {
+  {name: 'r5212',
     statement: 'T & T',
     proof: function() {
       return rules.rRight(rules.theorem('t'), '', rules.theorem('r5211'));
     }
   }
 
-};
-addRulesMap(baseRules);
+);
 
 // Now onward to proving a few of the usual truth table facts.
 
-const falseDefnFacts = {
-
-  defFFromBook: {
+if (useFalseDefn) {
+declare(
+  {name: 'defFFromBook',
     statement: 'F = forall {x. x}',
     proof: function() {
       return rules.definition('F');
@@ -1356,7 +1346,7 @@ const falseDefnFacts = {
 
   // Bookish: [T & F] = F
   // Uses defFFromBook.
-  r5214: {
+  {name: 'r5214',
     statement: 'T & F == F',
     proof: function() {
       var step1 = rules.axiom1();
@@ -1372,7 +1362,7 @@ const falseDefnFacts = {
   // 5216: [T & A] = A
   // TODO: A theorem T & x == x would be adequate since it is an
   //   equation.  Then apply instEqn as needed.
-  andTBook: {
+  {name: 'andTBook',
     action: function(a) {
       var step1 = rules.axiom1();
       var step2 = rules.instEqn(step1, '{x. T & x == x}', 'g');
@@ -1390,7 +1380,7 @@ const falseDefnFacts = {
   // r5217 is the same as r5230TF.
   // [T = F] = F
   // Relies on F == forall {x. x} (defn of F).
-  r5217Book: {
+  {name: 'r5217Book',
     statement: '(T == F) == F',
     proof: function() {
       var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
@@ -1412,7 +1402,7 @@ const falseDefnFacts = {
   },
 
   // F => x; bookish
-  r5227: {
+  {name: 'r5227',
     statement: 'F => x',
     proof: function() {
       var step1 = rules.theorem('r5225');
@@ -1431,7 +1421,7 @@ const falseDefnFacts = {
   // and some sort of truth table definition of =>, 
   //
   // TODO: Is there a more elegant proof of this?
-  r5230FT_alternate: {
+  {name: 'r5230FT_alternate',
     statement: '(F == T) == F',
     proof: function() {
 	const map1 = {x: 'F', y: 'T', h: '{x. x = F}'};
@@ -1469,19 +1459,17 @@ const falseDefnFacts = {
     tooltip: ('[F = T] = F')
   }
 
-};
-if (useFalseDefn) {
-  addRulesMap(falseDefnFacts);
-}
+)};
+
 
 
 // These are not specific to book definitions, but currently may
 // use (non-book) definitions by cases.
-const truthTableFacts = {
 
+declare(
   // From theorems A = B and C = D, derives theorem
   // [A = B] & [C = D].  Used in andTBook.
-  r5213: {
+  {name: 'r5213',
     action: function(a_b, c_d) {
       assertEqn(a_b);
       var a = a_b.get('/left');
@@ -1499,19 +1487,16 @@ const truthTableFacts = {
     }
   }
 
-};
-addRulesMap(truthTableFacts);
+);
 
 // This might be treated as the end of the subcore.
+// Managing numeric type assumptions
 
-var simplifiersInfo = {
-
-  // Managing numeric type assumptions
-
+declare(
   // Simplifies repeatedly using basicSimpFacts.  If the visible part
   // of the step is an equation, simplify each side, otherwise the
   // entire expression.
-  simplifyFocalPart: {
+  {name: 'simplifyFocalPart',
     action: function(step) {
       var visPath = step.pathToFocalPart();
       var result = rules._simplifySite(step, visPath);
@@ -1533,7 +1518,7 @@ var simplifiersInfo = {
   //
   // Ultimately uses rules.rewrite and rules.replace, so resulting
   // assumptions will be simplified and arranged.
-  simplifySite: {
+  {name: 'simplifySite',
     action: function(step, path, opt_facts) {
       var result = rules._simplifySite(step, path, opt_facts);
       return result.justify('simplifySite', arguments, [step]);
@@ -1551,7 +1536,7 @@ var simplifiersInfo = {
   // 
   // TODO: Consider supporting a conjunction as equivalent to a list
   //   of its conjuncts.  Maybe merge with simplifySite.
-  simplifySiteWith: {
+  {name: 'simplifySiteWith',
     action: function(step, path, fact_arg) {
       var result = rules._simplifySite(step, path, [fact_arg]);
       return result.justify('simplifySiteWith', arguments, [step]);
@@ -1568,7 +1553,7 @@ var simplifiersInfo = {
 
   // Inline version of simplifySite.  Uses full rewriting and replace,
   // so resulting assumptions are simplified.
-  _simplifySite: {
+  {name: '_simplifySite',
     action: function(step, path, opt_facts) {
       var _path = Toy.path;
       var eqn = rules.consider(step.get(path));
@@ -1591,7 +1576,7 @@ var simplifiersInfo = {
   // Uses rules.rewrite, so simplifies resulting assumptions.
   //
   // From the UI use a rule that calls this one.
-  _simplifyOnce: {
+  {name: '_simplifyOnce',
     action: function(step, _path, opt_facts) {
       var facts = opt_facts || basicSimpFacts;
       var info = Toy.searchForMatchingFact(step.get(_path), facts);
@@ -1608,7 +1593,7 @@ var simplifiersInfo = {
   // assumptions introduced by conditional facts in the facts list.
   // Ensures the result has its assumptions arranged, and if the
   // assumptions reduce to T, removes the assumptions entirely.
-  simplifyAsms: {
+  {name: 'simplifyAsms',
     action: function(step, facts_arg) {
       const facts = facts_arg || Toy.asmSimplifiers;
       if (!step.wff.isCall2('=>')) {
@@ -1654,8 +1639,7 @@ var simplifiersInfo = {
     description: 'simplify assumptions;; {in step step}',
     labels: 'general'
   }
-};
-addRulesMap(simplifiersInfo);
+);
 
 /**
  * Function callable to simplify an entire step.  Useful
@@ -1665,12 +1649,11 @@ function simplifyStep(step) {
   return rules.simplifySite(step, '');
 }
 
-const booleanRules = {
-
+declare(
   // [T = x] = x
   // Note that this or 5230TF or symmetry of equality of booleans
   // might be taken as an axiom given r5230FT_alternate.
-  tIsXIsX: {
+  {name: 'tIsXIsX',
     statement: '(T == x) == x',
     proof: function() {
       var step1 = rules.theorem('r5217Book');
@@ -1683,7 +1666,7 @@ const booleanRules = {
   // 5218: [T == A] == A
   // Stepping stone to universal generalization.
   // TODO: Replace all uses of this with rewrites.
-  r5218: {
+  {name: 'r5218',
     action: function(a) {
       var step1 = rules.theorem('tIsXIsX');
       var step2 = rules.instEqn(step1, a, 'x');
@@ -1699,7 +1682,7 @@ const booleanRules = {
 
   // 5219: [A] to [T == A].
   // TODO: Consider replacing all uses of this with rewrites.
-  toTIsA: {
+  {name: 'toTIsA',
     action: function(step) {
       const step1 = rules.r5218(step);
       const step2 = rules.rRight(step, '', step1);
@@ -1716,7 +1699,7 @@ const booleanRules = {
   // also 5219: [T == A] to [A].
   // Nice to have for proving instForall.  Using low-level
   // primitives here prevents dependency problems there.
-  fromTIsA: {
+  {name: 'fromTIsA',
     precheck: function(step) {
       return step.matchSchema('T = p');
     },
@@ -1735,7 +1718,7 @@ const booleanRules = {
 
   // Replaces an occurrence of T at the given path of the given step
   // with the entirety of another step.
-  replaceT0: {
+  {name: 'replaceT0',
     precheck: function(step, path, step2) {
       return step.get(path).isConst('T');
     },
@@ -1757,7 +1740,7 @@ const booleanRules = {
 
   // Replaces an occurrence of T at the given path of the given step
   // with the consequent of another step, which must be conditional.
-  replaceT: {
+  {name: 'replaceT',
     precheck: function(step, path, step2) {
       return step.get(path).isConst('T') && step2.isCall2('=>');
     },
@@ -1796,7 +1779,7 @@ const booleanRules = {
   // (trueby0) or the consequent of a proved conditional (trueBy1),
   // taking the proved step as a schema.  These do not simplify
   // assumptions.
-  trueBy0: {
+  {name: 'trueBy0',
     action: function(target, path, step) {
       const term = target.get(path);
       if (term.matchSchema(step)) {
@@ -1818,7 +1801,7 @@ const booleanRules = {
 
   // Requires a conditional step, matching its consequent with
   // the target site and adding assumptions to the target step.
-  trueBy1: {
+  {name: 'trueBy1',
     action: function(target, path, step) {
       const term = target.get(path);
       if (step.isCall2('=>') && term.matchSchema(step.getRight())) {
@@ -1850,7 +1833,7 @@ const booleanRules = {
   // preparation for replacement that is not handled by matchSchema.
   //
   // TODO: Caution, this is poorly tested at present.  Test it better.
-  matchTerm: {
+  {name: 'matchTerm',
     action: function(target, path, term) {
       const schema = target.get(path);
       const map = term.matchSchema(schema);
@@ -1895,7 +1878,7 @@ const booleanRules = {
   },
 
   // Lemma helper for toForall; a pure theorem.
-  forallXT: {
+  {name: 'forallXT',
     statement: 'forall {x. T}',
     proof: function() {
       var step1 = rules.eqSelf(Toy.parse('{x. T}'));
@@ -1904,7 +1887,7 @@ const booleanRules = {
     }
   },
 
-  existsXT: {
+  {name: 'existsXT',
     statement: 'exists {x. T}',
     proof: function() {
       return (rules.fact('p x => exists p')
@@ -1915,7 +1898,7 @@ const booleanRules = {
   },
 
   // This actually says NOT (forall {x. F}).
-  forallXF: {
+  {name: 'forallXF',
     statement: 'not (forall {x. F})',
     proof: function() {
       var fact = rules.fact('exists p == not (forall {x. not (p x)})');
@@ -1932,7 +1915,7 @@ const booleanRules = {
   // variable.
   //
   // TODO: Rename to just toForall.
-  toForall0: {
+  {name: 'toForall0',
     action: function(step, v_arg) {
       const v = varify(v_arg);
       var step1 = rules.rewriteOnly(step, '', 'a == (T == a)');
@@ -1953,7 +1936,7 @@ const booleanRules = {
   // The variable v may be given as a string, which it converts
   // internally to a variable.  The step must be a conditional,
   // and v cannot be free in A.
-  toForall1: {
+  {name: 'toForall1',
     precheck: function(step, v_arg) {
       var v = varify(v_arg);
       var format = Toy.format;
@@ -1983,7 +1966,7 @@ const booleanRules = {
 
   // 5221 (one variable), in the given step substitute term A for free
   // variable v, which may also be given as a string.
-  instVar: {
+  {name: 'instVar',
     action: function(step, a, v) {
       a = termify(a);
       v = varify(v);
@@ -2003,7 +1986,7 @@ const booleanRules = {
 
   // Same functionality as instVar, but with a site (step+path) and a
   // term as the arguments.
-  instantiateVar: {
+  {name: 'instantiateVar',
     action: function(step, path, term) {
       const v = step.get(path);
       assert(v.isVariable(), 'Not a variable: {1}', v);
@@ -2028,7 +2011,7 @@ const booleanRules = {
   //
   // Optimized to avoid substitutions that have no effect, returning
   // its input, justified as "instMultiVars".
-  instMultiVars: {
+  {name: 'instMultiVars',
     action: function(b, map) {
       assert(map && map.constructor && map.constructor === Object,
              'Non-map argument to instMultiVars: {1}', map);
@@ -2069,7 +2052,7 @@ const booleanRules = {
   // Given two theorems a1 => a and a2 => b, proves a1 & a2 => a & b.
   // If either theorem is unconditional, omits a1 or a2 or both
   // accordingly.
-  makeConjunction: {
+  {name: 'makeConjunction',
     action: function(a, b) {
       var stepa = rules.rewriteOnly(a, '/rt', 'a == (T == a)');
       var stepb = rules.rewriteOnly(b, '/rt', 'a == (T == a)');
@@ -2095,7 +2078,7 @@ const booleanRules = {
   // proves the WFF.
   //
   // TODO: Consider deriving this from equationCases.
-  casesTF: {
+  {name: 'casesTF',
     action: function(caseT, caseF, v) {
       v = varify(v);
       // Note: caseF has no variables not in caseT, so no need to
@@ -2126,7 +2109,7 @@ const booleanRules = {
   // Given P and P => Q, derive Q. (5224)
   // TODO: Consider replacing all uses of this with trueBy0
   //   followed by removal of the "T".
-  modusPonens: {
+  {name: 'modusPonens',
     action: function(a, b) {
       var step1 = rules.eqnSwap(rules.toTIsA(a));
       // Replace the "a" in "b" with T.
@@ -2155,7 +2138,7 @@ const booleanRules = {
   // TODO: Move this proof near to its one use.  (It's hard to see
   //   how this fact is useful standing on its own given the way
   //   matching is done.)
-  r5225: {
+  {name: 'r5225',
     statement: 'forall p => p x',
     proof: function() {
       var step1 = rules.axiom2();
@@ -2176,7 +2159,7 @@ const booleanRules = {
   // r5226 is r5225 with "p" and "x" instantiated, then beta conversion.
 
   // [not T] = F
-  r5231T: {
+  {name: 'r5231T',
     statement: 'not T == F',
     proof: function() {
       var step1 = rules.eqSelf(call('not', T));
@@ -2187,7 +2170,7 @@ const booleanRules = {
   },
 
   // [not F] = T
-  r5231F: {
+  {name: 'r5231F',
     statement: 'not F == T',
     proof: function() {
       var step1 = rules.eqSelf(call('not', F));
@@ -2199,7 +2182,7 @@ const booleanRules = {
 
   // Helper for evalBool, not in book.
   // [[F =] = not].
-  falseEquals: {
+  {name: 'falseEquals',
     statement: '((==) F) == (not)',
     proof: function() {
       return rules.eqnSwap(rules.definition('not'));
@@ -2208,7 +2191,7 @@ const booleanRules = {
 
   // Another helper for evalBool, not in book.
   // [[T =] = {x. x}].
-  trueEquals: {
+  {name: 'trueEquals',
     statement: '((==) T) == {x. x}',
     proof: function() {
       var x = varify('x');
@@ -2232,7 +2215,7 @@ const booleanRules = {
   //
   // TODO: Implement this recursively for cleaner presentation of
   // results and greater efficiency.
-  boolSimp: {
+  {name: 'boolSimp',
     data: {simpFacts: ['if T x y = x',
                        'if F x y = y',
                        'not F == T',
@@ -2263,7 +2246,7 @@ const booleanRules = {
     description: 'simplify boolean value'
   },
 
-  evalBool: {
+  {name: 'evalBool',
     action: function(expr) {
       var boolOps = {'&': true, '|': true, '=>': true, '=': true, not: true};
       function isReducible(expr) {
@@ -2327,7 +2310,7 @@ const booleanRules = {
   // tautology.  (5233)
   //
   // Accepts a parseable string as the wff.
-  tautology: {
+  {name: 'tautology',
     action: function(wff_arg) {
       const wff = termify(wff_arg);
       const result = rules.tautology0(wff);
@@ -2342,7 +2325,7 @@ const booleanRules = {
     autoSimplify: noSimplify,
   },
 
-  tautology0: {
+  {name: 'tautology0',
     action: function(wff) {
       // TODO: Right here check for patterns such as -
       //   p | T == T, p & F == F, p => T == T, and negations such as
@@ -2409,7 +2392,7 @@ const booleanRules = {
    *   in case the argument is not an instance of a tautology.  Something
    *   like this could be useful as a test.
    */
-  tautologous: {
+  {name: 'tautologous',
     action: function(wff_arg) {
       const wff = termify(wff_arg);
       const info = Toy.boolSchemaInfo(wff);
@@ -2434,7 +2417,7 @@ const booleanRules = {
   // The tautology can be given as a parseable string.
   //
   // TODO: Automatically detect the relevant tautology. 
-  tautInst: {
+  {name: 'tautInst',
     action: function(h_tautology_arg, map) {
       var tautology = termify(h_tautology_arg);
       var step1 = rules.tautology(tautology);
@@ -2445,7 +2428,7 @@ const booleanRules = {
   },
 
   // TODO: Complete this.
-  simplifyBool: {
+  {name: 'simplifyBool',
     action: function(term) {
       if (term.findSubst('not x')) {
         if (term.arg.isBoolConst()) {
@@ -2508,8 +2491,7 @@ const booleanRules = {
       }
     }
   }
-};
-addRulesMap(booleanRules);
+);
 
 /**
  * Supporting function for evalBool.  Given the name of a defined
@@ -2550,14 +2532,13 @@ function factForCase0(trueCases, falseCases, op, tf) {
 }
 const factForCase = factForCase0.bind(null, new Map(), new Map());
 
-var assumers = {
-
+declare(
   /**
    * Suppose the given statement to be true.  This is the standard way
    * to introduce an assumption into a proof.  If given a string,
    * parses it and uses the result.
    */
-  assume: {
+  {name: 'assume',
     action: function(assumption) {
       assumption = termify(assumption);
       const result = (rules.tautInst('a => a', {a: assumption})
@@ -2574,7 +2555,7 @@ var assumers = {
 
   // Assume the target boolean term, like considerPart, but making it
   // an assumption.
-  assumePart: {
+  {name: 'assumePart',
     toOffer: 'return term.isBoolean()',
     action: function(step, path) {
       return rules.assume(step.get(path)).justify('assumePart', arguments);
@@ -2591,7 +2572,7 @@ var assumers = {
    * statement in each step where it occurs, even though it is among
    * the assumptions.
    */
-  assumeExplicitly: {
+  {name: 'assumeExplicitly',
     action: function(asm_arg) {
       var assumption = termify(asm_arg);
       var step = rules.tautInst('a => a', {a: assumption});
@@ -2605,15 +2586,14 @@ var assumers = {
     labels: 'basic'
   }
 
-};
-addRulesMap(assumers);
+);
 
-const ruleInfo = {
+declare(
   // Deduces the conjunction of two proved steps.
   //
   // Introducing a T wherever desired, then substituting a theorem,
   // with or without assumptions, may be a more effective approach.
-  and: {
+  {name: 'and',
     action: function(step1, step2) {
       return (rules.replaceT0(rules.tautology('T & T'), '/right', step2)
               .andThen('replaceT0', '/left', step1)
@@ -2629,7 +2609,7 @@ const ruleInfo = {
   },
 
   // Andrews' Rule P with two conjuncts.
-  p2: {
+  {name: 'p2',
     action: function(step1, step2, schema_arg) {
       var schema = rules.fact(schema_arg);
       var conj = rules.and(step1, step2);
@@ -2647,7 +2627,7 @@ const ruleInfo = {
   },
 
   // Adds an assumption to the given step and deduplicates it.
-  andAssume: {
+  {name: 'andAssume',
     action: function(step, expr_arg) {
       var expr = termify(expr_arg);
       if (step.isCall2('=>')) {
@@ -2677,7 +2657,7 @@ const ruleInfo = {
   // TODO: Consider whether we may want to detect and offer opportunities
   //   to use this rule in situations where an occurrence of the assumption
   //   is not explicitly selected.
-  assumed: {
+  {name: 'assumed',
     precheck: function(step, path_arg) {
       const path = step.asPath(path_arg);
       if (!(step.isCall2('=>') && path.isRight())) {
@@ -2716,7 +2696,7 @@ const ruleInfo = {
   // TODO: Prove a theorem schema for removing quantification over terms
   // that do not depend on the bound variable.  Something like:
   // {v. f A B} c = f A ({v. B} c) where v is not free in f or a.
-  r5235: {
+  {name: 'r5235',
     action: function(v, a, b) {
       v = varify(v);
       var aFree = a.freeVars();
@@ -2760,7 +2740,7 @@ const ruleInfo = {
   //
   // When rewriting with implyForall does the beta reductions that are
   // here, this can probably go away.
-  implyForallGen: {
+  {name: 'implyForallGen',
     action: function(v, a_arg, b_arg) {
       var p = termify(a_arg);
       var q = lambda(v, termify(b_arg));
@@ -2782,7 +2762,7 @@ const ruleInfo = {
   },
 
   // 2104
-  r2104: {
+  {name: 'r2104',
     statement: 'forall {x. p x => q x} => (forall p => forall q)',
     proof: function() {
       const fact1 = rules.fact('forall p => p x');
@@ -2796,7 +2776,7 @@ const ruleInfo = {
     }
   },
 
-  r2104a: {
+  {name: 'r2104a',
     statement: 'forall {x. p x => q x} => (exists p => exists q)',
     proof: function() {
       const contra = 'a => b == not b => not a';
@@ -2818,7 +2798,7 @@ const ruleInfo = {
   // TODO: Consider extension of matching to associate actual ones
   //   with matched ones, including renaming of bound variables as
   //   potential parts of resulting substitutions.
-  forallXY: {
+  {name: 'forallXY',
     statement: 'forall {x. forall {y. p x y}} == forall {y. forall {x. p x y}}',
     proof: function() {
       const step1 = (rules.assume('forall {x. forall {y. p x y}}')
@@ -2831,7 +2811,7 @@ const ruleInfo = {
   },
 
   // 2122
-  existsXY: {
+  {name: 'existsXY',
     statement: 'exists {x. exists {y. p x y}} == exists {y. exists {x. p x y}}',
     proof: function() {
       const exAll = 'exists p == not (forall {x. not (p x)})';
@@ -2847,7 +2827,7 @@ const ruleInfo = {
   },
 
   // Subsumes 2133
-  forallOrEquiv: {
+  {name: 'forallOrEquiv',
     statement: 'forall {x. p | q x} == (p | forall q)',
     proof: function() {
       var or = rules.tautology('T | a');
@@ -2862,7 +2842,7 @@ const ruleInfo = {
     }
   },
 
-  existsEquivAnd: {
+  {name: 'existsEquivAnd',
     statement: 'exists {x. a & q x} == a & exists q',
     proof: function() {
       const facts = ['not (a | b) == not a & not b'];
@@ -2878,7 +2858,7 @@ const ruleInfo = {
   // This is probably the most useful form of quantifier remover that
   // requires a variable to be not free.  It does not appear in the
   // book, but the numbered ones are corollaries of it.
-  implyForall: {
+  {name: 'implyForall',
     // Could this fact be used to help build Rule R'?
     statement: 'forall {x. p => q x} == (p => forall q)',
     proof: function() {
@@ -2891,7 +2871,7 @@ const ruleInfo = {
   },
 
   // 2127
-  equivForall: {
+  {name: 'equivForall',
     statement: 'forall {x. p} == p',
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
@@ -2909,7 +2889,7 @@ const ruleInfo = {
   },
 
   // 2128
-  equivExists: {
+  {name: 'equivExists',
     statement: 'exists {x. a} == a',
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
@@ -2920,7 +2900,7 @@ const ruleInfo = {
   },
 
   // 2129
-  forallAnd: {
+  {name: 'forallAnd',
     statement: 'forall {x. p x & q x} == forall p & forall q',
     proof: function() {
       const andAB = (rules.fact('forall p => p x')
@@ -2947,7 +2927,7 @@ const ruleInfo = {
   },
 
   // 2130
-  existsOr: {
+  {name: 'existsOr',
     statement: 'exists {x. p x | q x} == exists p | exists q',
     proof: function() {
       return (rules.forallAnd()
@@ -2964,7 +2944,7 @@ const ruleInfo = {
   // 2131 is by 2130 and 2128
 
   // 2132
-  forallOr: {
+  {name: 'forallOr',
     // TODO: Modernize statement and probably also proof, removing
     //   some {x. p x} and similar.
     statement: 'forall p | forall q => forall {x. p x | q x}',
@@ -2980,7 +2960,7 @@ const ruleInfo = {
   },
 
   // 2138
-  existsAnd: {
+  {name: 'existsAnd',
     statement: 'exists {x. p x & q x} => exists p & exists q',
     proof: function() {
       const facts = [
@@ -3017,7 +2997,7 @@ const ruleInfo = {
   // TODO: For situations like the converse of this identity, when p
   //   is a lambda, use the name of its bound variable rather than
   //   the one in the statement here.
-  existImplies: {
+  {name: 'existImplies',
     statement: 'forall {x. p x => q} == (exists p => q)',
     proof: function() {
       var fact = 'not (forall {x. not (p x)}) == exists p';
@@ -3042,7 +3022,7 @@ const ruleInfo = {
   //   and patterns for such predicates, e.g. {x. x = <term>} being
   //   such a predicate and x = <term> serving as the patten.
   //   Subsume removeLet and removeTypeAsm with that rule.
-  removeLet: {
+  {name: 'removeLet',
     precheck: function(step, path_arg) {
       var path = Toy.path(path_arg);
       const term = step.get(path);
@@ -3109,7 +3089,7 @@ const ruleInfo = {
   // Removes an irrelevant type assumption of the form (R v) at the
   // target site, where v is a variable.  Currently only for predicate
   // R, but should be extended as needed.
-  removeTypeAsm: {
+  {name: 'removeTypeAsm',
     precheck: function(step, path_arg) {
       var path = Toy.path(path_arg);
       if (!(step.isCall2('=>') && path.isLeft())) {
@@ -3191,7 +3171,7 @@ const ruleInfo = {
   // relevant occurrences of this rule with uses of rewriting.
   //
   // TODO: Consider merging this functionality with rules.trueBy.
-  forwardChain: {
+  {name: 'forwardChain',
     action: function(step, schema_arg) {
       var schema = rules.fact(schema_arg);
       var mainOp = schema.getBinOp().pname;
@@ -3235,7 +3215,7 @@ const ruleInfo = {
   // The step and fact arguments must both be conditional.  This
   // applies transitivity of the conditional operator, treating the
   // fact LHS as a schema to be matched with the step consequent.
-  forwardChain2: {
+  {name: 'forwardChain2',
     action: function(step, fact_arg) {
       var fact = rules.fact(fact_arg);
       var map1 = step.matchSchema('p => q0');
@@ -3260,7 +3240,7 @@ const ruleInfo = {
   },
 
   /*
-  cases: {
+  {name: 'cases',
 
   },
   */
@@ -3269,7 +3249,7 @@ const ruleInfo = {
   // path is identical to the given term.
   //
   // TODO: Change "subgoal" to "expandRight"; create similar "expandLeft".
-  instantiate: {
+  {name: 'instantiate',
     action: function(schema, path, term) {
       var expr = schema.get(path);
       var subst = term.matchSchema(expr);
@@ -3284,7 +3264,7 @@ const ruleInfo = {
   // Instantiates the theorem by matching the goal against the theorem
   // RHS, returning the instantiated theorem.  Returns null if the
   // theorem does not match the goal.
-  subgoal: {
+  {name: 'subgoal',
     action: function(goal, theorem) {
       theorem.assertCall2('=>');
       var subst = goal.matchSchema(theorem.getRight());
@@ -3298,7 +3278,7 @@ const ruleInfo = {
   },
 
   // Relates equal functions to equality at all input data points.
-  r5238: {
+  {name: 'r5238',
     action: function(vars, a, b) {
       assert(Array.isArray(vars), 'Variables must be an array: {1}', vars);
       var result;
@@ -3324,7 +3304,7 @@ const ruleInfo = {
   // "Base case" of 5238, with just a single variable.
   // TODO: Consider whether it may make sense to replace usage of
   //   this with uses of r5238b.
-  r5238a: {
+  {name: 'r5238a',
     action: function(v, a, b) {
       v = varify(v);
       var step2 = rules.axiom3();
@@ -3341,7 +3321,7 @@ const ruleInfo = {
   },
 
   // Base case of 5238 as a theorem.
-  r5238b: {
+  {name: 'r5238b',
     statement: '{x. f x} = {x. g x} == forall {x. f x = g x}',
     proof: function() {
       const eta2 = rules.eta().andThen('eqnSwap');
@@ -3364,7 +3344,7 @@ const ruleInfo = {
   //
   // Note that the target and the equation are merely formulas.  They
   // need not be proved or true statements.
-  r5239: {
+  {name: 'r5239',
     action: function(target, path, equation) {
       path = Toy.path(path, target);
       assert(equation.isCall2('='),
@@ -3425,7 +3405,7 @@ const ruleInfo = {
   // where D is like C, but with an occurrence of "a" replaced, and
   // "(forall)" here indicates potential universal quantification of
   // some variables of (a = b).
-  r5239a: {
+  {name: 'r5239a',
     action: function r5239a(base, path, equation) {
       var step = rules.r5239(base, path, equation);
       var taut = rules.tautology('a => (b == c) == (b & a == c & a)');
@@ -3451,7 +3431,7 @@ const ruleInfo = {
   // and the tree must also contain an equation with one side equal to
   // the target.  This replaces the target with the other side of that
   // equation.
-  replaceConjunct: {
+  {name: 'replaceConjunct',
     // The basic idea of this rule is to apply the equivalence:
     // (t1 = t2 & A == t1 = t2 & A[t1 :1= t2]),
     // where t1 and t2 are terms, and t1 occurs in A with all of its
@@ -3629,7 +3609,7 @@ const ruleInfo = {
   // TODO: Instead of calling arrangeAsms here, leave the equation's
   //   assumptions alone, and effectively perform arrangeAsms as part
   //   of rewriting.  (Check all uses of arrangeAsms elsewhere.)
-  r2: {
+  {name: 'r2',
     action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
       if (equation.isCall2('=')) {
@@ -3683,7 +3663,7 @@ const ruleInfo = {
    * inputs are conditionals and this does not replace the entire
    * step, merges the resulting assumptions with arrangeAsms.
    */
-  replace: {
+  {name: 'replace',
     action: function(target, path, equation) {
       const step1 = rules.r2(target, path, equation);
       const step2 = (target.implies() && equation.implies() &&
@@ -3705,7 +3685,7 @@ const ruleInfo = {
    * Same as r1, but replaces an occurrence in target of the right
    * side of the equation with its left side.
    */
-  rRight: {
+  {name: 'rRight',
     action: function(target, path, equation) {
       path = Toy.path(path);
       var rev = rules.eqnSwap(equation);
@@ -3739,7 +3719,7 @@ const ruleInfo = {
   // in which the equations are in separate steps rather than
   // being conjoined.  Generally preferred now for practical
   // reasons is replaceConjunct.
-  replaceIsEquiv: {
+  {name: 'replaceIsEquiv',
     action: function(step, path_arg, eqnStep) {
       var path = Toy.path(path_arg);
       var wff = step.wff;
@@ -3785,7 +3765,7 @@ const ruleInfo = {
   // Inline helper for rewriteOnly*.
   // If the step has the form a => (b => c), moves all conjuncts
   // of a to the inner level, erasing one level of "=>".
-  flattenAsms: {
+  {name: 'flattenAsms',
     action: function(step) {
       let flatter = step;
       const once = Toy.applyFactsOnce;
@@ -3830,7 +3810,7 @@ const ruleInfo = {
 
   // Inline utility for all of the rewriters; proves an equation
   // whose LHS is the same as the part of step at path.
-  _rewriterFor: {
+  {name: '_rewriterFor',
     action: function(step, path, eqn_arg) {
       var expr = step.get(path);
       var isEqn = eqn_arg.isEquation();
@@ -3892,7 +3872,7 @@ const ruleInfo = {
   //
   // TODO: Tentatively replace _rewriterFor with this, otherwise
   //   perhaps remove this.
-  substForRewrite: {
+  {name: 'substForRewrite',
     action: function(step, path, eqn) {
       return (rules._rewriterFor(step, path, eqn)
               .justify('substForRewrite', arguments, [step, eqn]));
@@ -3909,7 +3889,7 @@ const ruleInfo = {
   // from the substitution and replacement.  Only appends new
   // assumptions to existing ones; does not deduplicate or arrange
   // them.
-  rewriteOnlyFrom: {
+  {name: 'rewriteOnlyFrom',
     action: function(step, path_arg, eqn) {
       const path = step.wff.asPath(path_arg);
       const rewriter = rules._rewriterFor(step, path, eqn);
@@ -3929,7 +3909,7 @@ const ruleInfo = {
 
   // Minimal rewriter with no simplification; like rewriteOnlyFrom
   // except takes a fact statement rather than a step.
-  rewriteOnly: {
+  {name: 'rewriteOnly',
     action: function(step, path_arg, stmt_arg) {
       const path = step.wff.asPath(path_arg);
       const statement = rules.fact(stmt_arg);
@@ -3955,7 +3935,7 @@ const ruleInfo = {
   //
   // TODO: Render (programmatic) calls to this and "rewrite" according to
   //   whether the equation is a statement or a step.
-  rewriteFrom: {
+  {name: 'rewriteFrom',
     action: function(step, path, equation) {
       // Can throw; tryRule will report any problem.
       const step2 = rules._rewriterFor(step, path, equation);
@@ -3979,7 +3959,7 @@ const ruleInfo = {
   // this does not give access to the proof of the fact.)  This does
   // trivial simplification of assumptions including numeric type
   // assumptions after rewriting.
-  rewrite: {
+  {name: 'rewrite',
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
@@ -4025,7 +4005,7 @@ const ruleInfo = {
   // E-Rule (5244), specified by a step and name.  Checks first for
   // assumptions preceding a boolean term containing the variable,
   // then for a simple conditional with it in the antecedent.
-  eRule: {
+  {name: 'eRule',
     precheck: function(step, name) {
       var map = (step.matchPattern('a => (p => q)')
                  || step.matchPattern('p => q'));
@@ -4058,7 +4038,7 @@ const ruleInfo = {
   // E-Rule (5244), specified by a step and a path to an occurrence of
   // a free variable.  The variable must occur free in a suitable part
   // of the step.
-  eRule2: {
+  {name: 'eRule2',
     precheck: function(step, path) {
       var v = step.get(path);
       var name = v.isVariable() && v.name;
@@ -4093,7 +4073,7 @@ const ruleInfo = {
   // the second.
   //
   // While bubbling left, removes duplicates.
-  bubbleLeft: {
+  {name: 'bubbleLeft',
     action: function(chain, less) {
       // This does all the work except the justification of the subproof.
       function bubble(eqn) {
@@ -4155,7 +4135,7 @@ const ruleInfo = {
   // last expression of the first chain moved to the end of the
   // second.  If the first chain has only one element, the result is
   // just the new second chain.
-  mergeRight: {
+  {name: 'mergeRight',
     action: function(eqn) {
       var expr = eqn.getRight();
       // The merge step moves the last element of the left chain to
@@ -4170,7 +4150,7 @@ const ruleInfo = {
   },
 
   // Internal rule for conjunctionsMerger, with a comparator parameter.
-  mergeConj: {
+  {name: 'mergeConj',
     action: function(expr, less) {
       expr.assertCall2('&');
       var eqn = rules.eqSelf(expr);
@@ -4200,7 +4180,7 @@ const ruleInfo = {
   // conjunctions, derive an equation that has the input as its LHS
   // and as its RHS has conjuncts ordered by asmLess, with
   // duplicates eliminated.
-  conjunctionsMerger: {
+  {name: 'conjunctionsMerger',
     action: function(expr) {
       // TODO: Consider whether this line needs to use Toy.hypIsless.
       var result = rules.mergeConj(expr, Toy.asmLess);
@@ -4221,7 +4201,7 @@ const ruleInfo = {
   // If e is a, returns its input (or a copy?).
   //
   // TODO: Disallow this as unreliable.  Refer to it by its content.
-  extractHypAt: {
+  {name: 'extractHypAt',
     precheck: function(step, path_arg) {
       const path = Toy.path(path_arg);
       return step.wff.isCall2('=>') && path.isLeft();
@@ -4241,7 +4221,7 @@ const ruleInfo = {
   // variable types.
   //
   // TODO: Decide what to do if there is no such assumption.
-  extractHyp: {
+  {name: 'extractHyp',
     action: function(step, hyp_arg) {
       var hyp = termify(hyp_arg);
       assert(step.isCall2('=>'));
@@ -4264,7 +4244,7 @@ const ruleInfo = {
   },
 
   // Converts a => (b => c) to a & b => c.
-  asAssumption: {
+  {name: 'asAssumption',
     precheck: function(step, path_arg) {
       const path = step.asPath(path_arg);
       return (step.matchSchema('a => (b => c)') &&
@@ -4291,7 +4271,7 @@ const ruleInfo = {
   // TODO: At least simplify this to prove (and remember?) the
   // underlying tautology, and apply the tautology using tautInst.
   // Or generalize to lists of optionally negated disjuncts.
-  conjunctsImplyConjunct: {
+  {name: 'conjunctsImplyConjunct',
     action: function(conjuncts, c) {
       var infix = Toy.infixCall;
       var tautFX = rules.tautology('F & x == F');
@@ -4343,7 +4323,7 @@ const ruleInfo = {
   // deduplicated and "linearized" version, omitting occurrences of T.
   // The result will conform to the ordering of terms defined by the
   // Array.sort comparator.
-  conjunctionArranger: {
+  {name: 'conjunctionArranger',
     // Implemented by building an appropriate equivalence tautology,
     // proving it with rules.tautology, and instantiating.
     //
@@ -4402,7 +4382,7 @@ const ruleInfo = {
   // TODO: Make this much faster by using sets of tautologies that
   //   show conjuncts imply a single one of its conjuncts, and using
   //   those to build the rearranged conjunction.
-  arrangeAsms: {
+  {name: 'arrangeAsms',
     action: function(step) {
       if (!step.isCall2('=>')) {
         return step;
@@ -4427,7 +4407,7 @@ const ruleInfo = {
   },
 
   // A simplifier that removes all lambda calls.
-  reduceAll: {
+  {name: 'reduceAll',
     // TODO: Consider supporting this, for interactive use only.
     // TODO: Convert these to toOffer: properties or combine.
     menuCheck: function(step, path) {
@@ -4454,7 +4434,7 @@ const ruleInfo = {
   // variables in steps rewritten using quantifier laws.
   //
   // If no reduction is available, returns null.
-  backReduce: {
+  {name: 'backReduce',
     toOffer: function(step, term) {
       return term.isLambdaCall();
     },
@@ -4488,7 +4468,7 @@ const ruleInfo = {
   // bound variable of the lambda in the call.
   //
   // If such a reduction is not available, returns the input step.
-  unbind: {
+  {name: 'unbind',
     action: function(step, path_arg) {
       // This uses uglify to prepare the path for use in pathBindings.
       const path = step.wff.asPath(path_arg).uglify();
@@ -4522,7 +4502,7 @@ const ruleInfo = {
 
   // Prove an equation asserting that two chains of conjunctions are
   // equal by showing that their schemas are a tautology.
-  equalConjunctions: {
+  {name: 'equalConjunctions',
     action: function(equation) {
       var termMap = new Toy.TermMap();
       var lhs = buildHypSchema(equation.getLeft(), termMap);
@@ -4540,7 +4520,7 @@ const ruleInfo = {
   //// From the section "Equality and descriptions" in the book.
   ////
 
-  equalitySymmetric: {
+  {name: 'equalitySymmetric',
     statement: '(x = y) == (y = x)',
     proof: function() {
       var x = varify('x');
@@ -4560,7 +4540,7 @@ const ruleInfo = {
     labels: 'algebra'
   },
 
-  equalityTransitive: {
+  {name: 'equalityTransitive',
     statement: 'x = y & y = z => x = z',
     proof: function() {
       var step1 = rules.axiom2();
@@ -4585,7 +4565,7 @@ const ruleInfo = {
   //
   // TODO: This is unused; remove?
   // TODO: Extend to take a conversion function in place of the facts.
-  conjunctsSimplifier: {
+  {name: 'conjunctsSimplifier',
     action: function(term, facts) {
       // A pure equation. 
       var step = rules.equivSelf(term);
@@ -4620,7 +4600,7 @@ const ruleInfo = {
   //
   // For tautologies, proved statements, and theorems in particular,
   // this rule is inline.
-  fact: {
+  {name: 'fact',
     action: function(synopsis) {
       // Check if the synopsis string has already resulted in a proved
       // fact with suitable variable names.
@@ -4705,7 +4685,7 @@ const ruleInfo = {
 
   // Traditionally in lambda calculus (use of) this is referred to as
   // "eta conversion".
-  eta: {
+  {name: 'eta',
     statement: '{x. p x} = p',
     labels: 'higherOrder',
     converse: {labels: 'higherOrder'},
@@ -4724,14 +4704,13 @@ const ruleInfo = {
     // simplifier: true,
     description: 'eta conversion'
   }
-};
-addRulesMap(ruleInfo);
+);
 
 // This fact states the truth table for ==.  At present the
 // proof display for it shows proofs of facts for rows in the truth
 // table that use tautologies, but all of those facts are proved
 // in this file without using truth tables.
-addRule
+declare
     ({statement: '(==) = {a. {b. if a b (not b)}}',
       proof:
       [`(1 given
@@ -4768,8 +4747,7 @@ addRule
             (t ((forall {x. ((f x) = (g x))}) == (f = g))))`
       ]});
   
-const existRules =
-  [
+declare(
    // Derive exists {x. p x} from a witnessing term.  This only replaces the
    // selected occurrence, not substituting throughout. (5242)
    {name: 'witnessExists',
@@ -4972,9 +4950,7 @@ const existRules =
                .andThen('eqnSwap'));
      }
    }
-   ];
-
-addRules(existRules);
+);
 
 
 //// LOGIC FACTS
@@ -4983,8 +4959,7 @@ addRules(existRules);
 // a map key to take advantage of debug printing of the functions
 // in the Chrome debugger.
 
-const logicFacts =
-  [
+declare(
    {statement: '(T == a) == a',
     simplifier: true,
     proof: function() {
@@ -5180,11 +5155,9 @@ const logicFacts =
                .andThen('rewriteOnly', '/arg', 'p = {x. p x}'));
      }
    }
-   ];
-addRules(logicFacts);
+);
 
-const exists1aFacts =
-  [
+declare(
    {statement: 'not (multi p) == forall {x. forall {y. p x & p y => x = y}}',
     name: 'notMulti',
     proof: function() {
@@ -5216,14 +5189,12 @@ const exists1aFacts =
                .andThen('forwardChain', '(a == b & c) => (a => c)'));
      }
    }
-   ];
-addRules(exists1aFacts);
+);
 
 definition('intersect = {p. {q. {x. ((p x) & (q x))}}}');
 definition('subclass = {p. {q. (forall {x. ((p x) => (q x))})}}');
 
-var demoFacts =
-  [
+declare(
    {statement: '((subclass p q) = (p = (intersect p q)))',
     name: 'SubclassInter',
     proof: [
@@ -5236,8 +5207,7 @@ var demoFacts =
             '(7 rewriteOnlyFrom (s 4) (path "/main/right") (s 6))'
             ]
    }
-   ];
-addRules(demoFacts);
+);
 
 //// Other initializations
 
@@ -5248,9 +5218,6 @@ Toy.enableDefnFacts();
 //// EXPORT NAMES
 
 const tautologyCounts = Toy.tautologyCounts = new Map();
-
-Toy.ruleInfo = ruleInfo;
-Toy.logicFacts = logicFacts;
 
 Toy.asmSimplifiers = ['a & T == a', 'T & a == a'];
 Toy.simplifyStep = simplifyStep;
