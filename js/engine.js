@@ -1411,6 +1411,10 @@ function searchForMatchingFact(term, info) {
  *   variable's list of facts to the part of the term matching that
  *   schema variable.
  *
+ * TODO: Consider replacing "schema" and "parts" with "match"
+ *   and additional properties named after some of the variables
+ *   in the schema, as in walkPatterns.
+ *
  * apply: a function to apply to the input term and context, which
  *   must return an equation whose LHS is the same as the term except
  *   for possible changes of bound variables, or a falsy value if it

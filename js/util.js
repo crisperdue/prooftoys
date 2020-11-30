@@ -766,10 +766,10 @@ function normalReturn(fn, _args) {
 }
 
 /**
- * Call the given function, passing it any additional arguments given.
- * If it throws a Result object, return its "value".  Rethrow any
- * other thrown value, and return the function value if it does not
- * throw.
+ * Calls the given function, passing it any additional arguments
+ * given.  If the function throws a Result object, returns its
+ * "value".  Rethrows any other thrown value, and returns the value
+ * returned by the function if it does not throw.
  */
 function catchResult(fn, _args) {
   var args = jQuery.makeArray(arguments);

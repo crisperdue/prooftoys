@@ -1750,16 +1750,18 @@ Expr.prototype.searchTerms = function(test, path) {
 };
 
 /**
- * Searches for a pattern that matches this.  If it finds one, calls
- * any action function for each schema variable at each of the
+ * Searches for a patternInfo whose "match" property matches this
+ * term.  If it finds one, then for each schema variable that has a
+ * specified action function, applies the function at each of the
  * variable's occurrences in the matching schema, passing it the
- * subexpression of this that matches and reverse path to the
- * occurrence.
+ * subexpression of this that matches and a reverse path from this to
+ * the occurrence.  Does not return a value, but see Toy.catchResult
+ * for options.
  *
- * The patternInfo is a plain object with property "match" having the
- * schema to match, and properties with names of schema variables
- * having values that are the action function for the schema variable
- * with that name.
+ * The patternInfo is a plain object with property "match" being the
+ * schema to match, and (usually) properties named after variables in
+ * the schema, the value of each being the action function for that
+ * schema variable.
  */
 Expr.prototype.walkPatterns = function(patternInfos) {
   var self = this;
