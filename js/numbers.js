@@ -2903,6 +2903,21 @@ declare(
       return result;
     }
   },
+  {statement: 'b != 0 & c != 0 => a / (b / c) = a * c / b',
+   proof: function() {
+     const s1 = (rules.consider('a / (b / c)')
+		 .andThen('simplifySite', '/right',
+			  ['a / b = a * recip b',
+			   'recip (a * b) = recip a * recip b',
+			   'recip (recip a) = a',
+			  ])
+		 .rewrite('(recip b * c)', 'a * b = b * a')
+		 .rewrite('/main/right', 'a * (b * c) = a * b * c')
+		 .rewrite('/main/right', 'a * recip b = a / b')
+		);
+     return s1;
+   }
+  },
   {statement: 'a != 0 & b != 0 => a / (a * b) = 1 / b',
     simplifier: true,
     proof: function() {
