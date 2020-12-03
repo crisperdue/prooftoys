@@ -757,7 +757,7 @@ function throwResult(value) {
  */
 function normalReturn(fn, _args) {
   var result;
-  var args = jQuery.makeArray(arguments);
+  var args = Array.from(arguments);
   args.shift();
   try {
     return fn.apply(undefined, args);
