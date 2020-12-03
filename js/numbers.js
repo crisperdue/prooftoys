@@ -3283,7 +3283,7 @@ function varFactorCounts(term) {
       var value = info[expr.name] || 0;
       info[expr.name] = value + 1;
     } else if (!expr.isConst()) {
-      throw new Toy.Result(false);
+      Toy.throwResult(false);
     }
   }
   function addCounts(expr, revPath) {

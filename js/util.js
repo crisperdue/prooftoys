@@ -746,7 +746,8 @@ function Result(value) {
  * Throws a Result object with the given value as its value.
  */
 function throwResult(value) {
-  throw new Result(value);
+  Toy.result = new Result(value);
+  throw Toy.result;
 }
 
 /**
@@ -772,15 +773,16 @@ function normalReturn(fn, _args) {
  * returned by the function if it does not throw.
  */
 function catchResult(fn, _args) {
-  var args = jQuery.makeArray(arguments);
+  var args = Array.from(arguments);
   args.shift();
+  Toy.result = null;
   try {
     return fn.apply(undefined, args);
-  } catch(e) {
+  } finally {
+    const e = Toy.result;
     if (e instanceof Result) {
+      Toy.result = null;
       return e.value;
-    } else {
-      throw e;
     }
   }
 }

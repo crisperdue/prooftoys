@@ -1590,7 +1590,7 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
             findMatchingFact(list, context, expr.get(revPath.reverse()));
           if (result) {
             result.path = revPath.reverse().concat(result.path);
-            throw new Toy.Result(result);
+            Toy.throwResult(result);
           }
         }
       }
