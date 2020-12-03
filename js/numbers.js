@@ -1537,7 +1537,7 @@ declare
           }
           // Perhaps this just applies 1 * x = x and -1 * x = neg x.
           return rules.simplifySite(resulted, '/main/right')
-            .justify('arrangeRational', arguments, step);
+            .justify('arrangeRational', arguments, [step]);
         });
     },
   },
@@ -1549,7 +1549,7 @@ declare
    {name: 'arrangeRatio',
     action: function arrangeRatio(step, path) {
       return (rules.arrangeRational(step, path, true)
-              .justify('arrangeRatio', arguments, step));
+              .justify('arrangeRatio', arguments, [step]));
     },
     inputs: {site: 1},
     offerExample: true,

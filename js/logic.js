@@ -4254,7 +4254,7 @@ declare(
       var taut = rules.tautology('a => (b => c) == a & b => c');
       // TODO: Consider whether this code should "arrange" assumptions.
       var result = rules.rewriteOnly(step, '', taut);
-      return result.justify('asAssumption', arguments, step);
+      return result.justify('asAssumption', arguments, [step]);
     },
     inputs: {site: 1},
     menu: Toy.mathText('[a => (p => q)] to [a & p => q]'),
