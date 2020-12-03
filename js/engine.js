@@ -1698,17 +1698,17 @@ function transformApplyInvert(term_arg, eqn_arg, fact) {
 }
 
 /**
- * Apply the given simplification function to the equation repeatedly
- * until the result of the call is identical to its input.  Return
- * the result of the last call.
+ * Apply the given simplification function to the step repeatedly
+ * until the result of the call is falsy or identical to its input.
+ * Return the result of the last call that was not falsy or same.
  */
-function whileChanges(eqn, fn) {
-  var simpler = eqn;
+function whileChanges(step, fn) {
+  var simpler = step;
   var next;
   while (true) {
     next = fn(simpler);
-    if (next.matches(simpler)) {
-      return next;
+    if (!next || next.matches(simpler)) {
+      return simpler;
     }
     simpler = next;
   }
