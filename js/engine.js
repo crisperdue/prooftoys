@@ -1312,7 +1312,7 @@ function getResInfo(stmt) {
  *      detailed information, to indicate enclosing bound variables.
  * searchMethod: Name of method to apply to the term to control
  *   which subexpressions of the term to apply findMatchingFact to;
- *   defaults to 'searchCalls', which searches through calls.
+ *   defaults to 'searchMost', which searches through calls.
  *
  * If the info is an array, it must be the list of facts.
  *

@@ -1762,9 +1762,14 @@ Expr.prototype.searchTerms = function(test, path) {
  * schema to match, and (usually) properties named after variables in
  * the schema, the value of each being the action function for that
  * schema variable.
+ *
+ * The optional path argument is a path that will be prepended to the
+ * path passed to the path passed to any patternInfo function that may
+ * be called.
  */
-Expr.prototype.walkPatterns = function(patternInfos) {
+Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
   var self = this;
+  const cxtPath = path_arg || Path.empty;
   function handleTerm(schemaTerm, revPath) {
     // Note this is defined outside the loop, but it uses patternInfo
     // and map, which are in scope in JavaScript.
@@ -1773,7 +1778,8 @@ Expr.prototype.walkPatterns = function(patternInfos) {
       if (name && patternInfo[name]) {
         // Call the function associated with the name of this
         // variable in the schema.
-        patternInfo[name].call(null, map[name], revPath);
+        patternInfo[name].call(null, map[name],
+                               cxtPath.concat(revPath.reverse()));
       }
     }
   }

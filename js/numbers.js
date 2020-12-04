@@ -1380,7 +1380,59 @@ declare
     menu: 'algebra: flatten {term}',
     description: 'flatten term;; {in step siteStep}',
     labels: 'algebra'
-  },
+   },
+
+    // This expects a reference to a "term", a composite of
+    // multiplications and divisions.  It puts them in a form
+    // with at most one division, and that at the top level of
+    // of the tree.  Also flattens multiplications.
+    {name: 'makeRatio',
+     action: function(step_arg, path_arg) {
+       const facts = [
+         // These two reduce the number of divisions.
+         '(x / y) / z = x / (y * z)',
+         'x / (y / z) = (x * z) / y',
+         // The next two move divisions toward the root of the
+         // expression tree.
+         'x * (y / z) = (x * y) / z',
+         '(x / y) * z = (x * z) / y',
+         // This one flattens multiplication, which is conceptually
+         // distinct.
+         'x * (y * z) = x * y * z',
+       ];
+       function action(path) {
+         const result = Toy.applyFactsOnce(step, path, facts);
+         if (result != step) {
+           Toy.throwResult(result);
+         }
+       }
+       function walkMulDiv(term, path) {
+         action(path);
+         const mulDiv = [
+           {match: 'a * b', a: walkMulDiv, b: walkMulDiv},
+           {match: 'a / b', a: walkMulDiv, b: walkMulDiv}
+         ];
+         term.walkPatterns(mulDiv, path);
+       }
+       let step = step_arg;
+       while (true) {
+         const next = Toy.catchResult(
+           walkMulDiv, step.get(path_arg), path_arg
+         );
+         if (next) {
+           step = next;
+         } else {
+           return step.justify('makeRatio', arguments, [step_arg]);
+         }
+       }
+     },
+     inputs: {site: 1},
+     offerExample: true,
+     menu: 'algebra: put in ratio form',
+     description: 'to ratio form',
+     labels: 'algebra'
+    },
+     
 
   /**
    * Organize the factors in a term.  Processes multiplication,
