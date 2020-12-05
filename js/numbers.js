@@ -1400,31 +1400,23 @@ declare
          // distinct.
          'x * (y * z) = x * y * z',
        ];
-       function action(path) {
-         const result = Toy.applyFactsOnce(step, path, facts);
-         if (result != step) {
-           Toy.throwResult(result);
-         }
-       }
+       let result = Toy.repeatedly(step_arg, step => {
        function walkMulDiv(term, path) {
-         action(path);
+           const next = Toy.applyFactsOnce(step, path, facts);
+           if (next != step) {
+             Toy.throwResult(next);
+           }
          const mulDiv = [
            {match: 'a * b', a: walkMulDiv, b: walkMulDiv},
            {match: 'a / b', a: walkMulDiv, b: walkMulDiv}
          ];
          term.walkPatterns(mulDiv, path);
        }
-       let step = step_arg;
-       while (true) {
-         const next = Toy.catchResult(
+         return Toy.catchResult(
            walkMulDiv, step.get(path_arg), path_arg
          );
-         if (next) {
-           step = next;
-         } else {
-           return step.justify('makeRatio', arguments, [step_arg]);
-         }
-       }
+       });
+       return result.justify('makeRatio', arguments, [step_arg]);
      },
      inputs: {site: 1},
      offerExample: true,

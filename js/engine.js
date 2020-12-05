@@ -1702,7 +1702,7 @@ function transformApplyInvert(term_arg, eqn_arg, fact) {
  * until the result of the call is falsy or identical to its input.
  * Return the result of the last call that was not falsy or same.
  */
-function whileChanges(step, fn) {
+function repeatedly(step, fn) {
   var simpler = step;
   var next;
   while (true) {
@@ -2502,7 +2502,7 @@ Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
 Toy.applyFactsOnce = applyFactsOnce;
 Toy.applyToFocalPart = applyToFocalPart;
-Toy.whileChanges = whileChanges;
+Toy.repeatedly = repeatedly;
 Toy.arrange = arrange;
 Toy.arrangeRhs = arrangeRhs;
 Toy.listFacts = listFacts;
