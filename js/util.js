@@ -787,6 +787,45 @@ function catchResult(fn, _args) {
   }
 }
 
+// Trival constructor for a return target.
+function ReturnTarget() {
+  this.id = targetID++;
+};
+
+let targetID = 1;
+let activeTargets = [];
+let returnTarget = null;
+let returnValue = undefined;
+
+function returnFrom(target, value) {
+  if (activeTargets.includes(target)) {
+    returnTarget = target;
+    returnValue = value;
+    throw target;
+  } else {
+    console.error('Return target', target.id, 'is not active');
+    debugger;
+    // Throw something to abort computation.
+    throw target;
+  }
+}
+
+function returner(fn) {
+  const target = new ReturnTarget();
+  activeTargets.push(target);
+  try {
+    return fn(target);
+  } finally {
+    activeTargets.pop();
+    if (returnTarget === target) {
+      // Tidy up and return;
+      returnTarget = null;
+      const val = returnValue;
+      returnValue = undefined;
+      return val;
+    }
+  }
+}
 
 //// NestedTimer -- timer that excludes time in other timers
 
@@ -2221,6 +2260,8 @@ Toy.Result = Result;
 Toy.throwResult = throwResult;
 Toy.catchResult = catchResult;
 Toy.normalReturn = normalReturn;
+Toy.returnFrom = returnFrom;
+Toy.returner = returner;
 
 Toy.NestedTimer = NestedTimer;
 

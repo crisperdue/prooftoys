@@ -260,8 +260,6 @@ var testCase = {
     assertEqual(1, a.length);
   },
 
-  // configure
-
   testConfigure: function() {
     var o = Toy.configure({}, {
         add: function(x) { this[x] = true; },
@@ -295,6 +293,34 @@ var testCase = {
     var map = {a: 3, b: 2, c: 0, d: 1};
     var pairs = Toy.sortMap(map, function(a, b) { return a.value - b.value; });
     assertEqual('cdba', pairs.map(function(v) { return v.key; }).join(''));
+  },
+
+  // Control flow
+
+  testReturnFrom: function() {
+    assertEqual(6, Toy.returner(target => 6));
+    const items = [];
+    const result = Toy.returner(target => {
+        function inflate(n) {
+          if (n >= 10) {
+            Toy.returnFrom(target, n);
+          } else {
+            items.push(n);
+            inflate(n+1);
+          }
+        }
+        inflate(7);
+      });
+    assertEqual(10, result);
+    assertEqual([7, 8, 9], items);
+    const target = Toy.returner(target => target);
+    try {
+      Toy.returnFrom(target, 22);
+      assert(false);
+    } catch(e) {
+      // Check that e looks like a ReturnTarget.
+      assert(typeof e.id == 'number');
+    }
   },
 
   // ToySet, TermSet
