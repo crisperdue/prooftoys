@@ -1400,11 +1400,14 @@ declare
          // distinct.
          'x * (y * z) = x * y * z',
        ];
-       let result = Toy.repeatedly(step_arg, step => {
+       let result = Toy.repeatedly
+       (step_arg, step => 
+        Toy.returner(
+          target => {
        function walkMulDiv(term, path) {
            const next = Toy.applyFactsOnce(step, path, facts);
            if (next != step) {
-             Toy.throwResult(next);
+                Toy.returnFrom(target, next);
            }
          const mulDiv = [
            {match: 'a * b', a: walkMulDiv, b: walkMulDiv},
@@ -1412,10 +1415,9 @@ declare
          ];
          term.walkPatterns(mulDiv, path);
        }
-         return Toy.catchResult(
-           walkMulDiv, step.get(path_arg), path_arg
+            walkMulDiv(step.get(path_arg), path_arg);
+          })
          );
-       });
        return result.justify('makeRatio', arguments, [step_arg]);
      },
      inputs: {site: 1},
