@@ -1600,7 +1600,6 @@ declare(
         return step;
       }
       let simpler = step;
-      const once = Toy.applyFactsOnce;
       // Uses rewriteOnly, avoiding recursive calls to simplifyAsms
       // which could be problematic or simply result in unintuitive
       // displays of the process.
@@ -1626,8 +1625,9 @@ declare(
           // Dedupe and normalize order of asms.
           simpler = rules.arrangeAsms(simpler);
           // If only T remains, remove it.
-          simpler = Toy.applyFactsOnce(simpler, '', ['T => a == a'],
-                                       'rewriteOnly');
+          simpler = (Toy.applyMatchingFact(simpler, '', ['T => a == a'],
+                                           'rewriteOnly') ||
+                     simpler);
           // And we are done.
           return simpler.justify('simplifyAsms', arguments, [step]);
         }
@@ -3768,13 +3768,13 @@ declare(
   {name: 'flattenAsms',
     action: function(step) {
       let flatter = step;
-      const once = Toy.applyFactsOnce;
+      const once = Toy.applyMatchingFact;
       const rw = rules.rewriteOnly;
       const mover = ['a1 & a2 => (b => c) == (a1 => (b & a2 => c))'];
       // This loop flattens out the assumptions.
       while (true) {
         let next = once(flatter, '', mover, 'rewriteOnly');
-        if (next == flatter) {
+        if (!next) {
           // Mover made no progress. Remove a "=>" and quit.
           flatter = once(flatter, '',
 		         ['a => (b => c) == (b & a => c)'],
@@ -4578,11 +4578,13 @@ declare(
       } else {
         step1 = step;
       }
-      const result1 = Toy.applyFactsOnce(step1, '/right', facts,
-                                         'rewriteOnly');
+      const result1 = (Toy.applyMatchingFact(step1, '/right', facts,
+                                             'rewriteOnly') ||
+                       step1);
       const taut = 'a & (b & c) == a & b & c';
-      const result2 = Toy.applyFactsOnce(result1, '/right', [taut],
-                                         'rewriteOnly');
+      const result2 = (Toy.applyMatchingFact(result1, '/right', [taut],
+                                             'rewriteOnly') ||
+                       result1);
       return result2.justify('conjunctsSimplifier', arguments);
     }
   },

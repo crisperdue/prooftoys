@@ -1433,11 +1433,6 @@ function searchForMatchingFact(term, info) {
  *
  * If pureOnly is true, this only accepts a fact that is a pure
  * equation, with no conditions on it.
- * 
- * TODO: Consider changing this to something like "applyMatchingFact",
- *   attempting to apply the first fact that appears to match, and
- *   continuing the search if the application fails.  See
- *   Toy.applyFactsOnce.
  */
 function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   // This function interprets a fact statement as a wff.
@@ -1611,14 +1606,14 @@ function tryReduce(term) {
 
 /**
  * Find and apply one of the facts to the part of the step at the
- * given path, returning the result, or the input step if none of the
+ * given path, returning the result, or null if none of the
  * facts apply.  Note: uses rules.rewrite by default; supply
  * a ruleName (fourth arg) if desired.
  */
-function applyFactsOnce(step, path, facts, rule_arg) {
+function applyMatchingFact(step, path, facts, rule_arg) {
   const ruleName = rule_arg || 'rewrite';
   const info = findMatchingFact(facts, null, step.get(path));
-  return info ? rules[ruleName](step, path, info.stmt) : step;
+  return info && rules[ruleName](step, path, info.stmt);
 }
 
 /**
@@ -2500,7 +2495,7 @@ Toy.findMatchingFact = findMatchingFact;
 Toy.tryReduce = tryReduce;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
 Toy.applyFactsWithinRhs = applyFactsWithinRhs;
-Toy.applyFactsOnce = applyFactsOnce;
+Toy.applyMatchingFact = applyMatchingFact;
 Toy.applyToFocalPart = applyToFocalPart;
 Toy.repeatedly = repeatedly;
 Toy.arrange = arrange;

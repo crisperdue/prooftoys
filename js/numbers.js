@@ -1405,8 +1405,8 @@ declare
         Toy.returner(
           target => {
        function walkMulDiv(term, path) {
-           const next = Toy.applyFactsOnce(step, path, facts);
-           if (next != step) {
+              const next = Toy.applyMatchingFact(step, path, facts);
+              if (next) {
                 Toy.returnFrom(target, next);
            }
          const mulDiv = [
@@ -1635,7 +1635,7 @@ declare
           {stmt: 'a / (b * c) = 1 / c * (a / b)',
            where: '$.c.isNumeral()'}
       ];
-      return (Toy.applyFactsOnce(step2, path, facts)
+      return ((Toy.applyMatchingFact(step2, path, facts) || step2)
               .justify('arrangeTerm', arguments, [step]));
     },
     inputs: {site: 1},
@@ -1871,7 +1871,7 @@ declare
     },
     action: function(step, path_arg) {
       var path = step.prettifyPath(path_arg).upTo('/right');
-      return (Toy.applyFactsOnce(step, path, ungroupingFacts)
+      return ((Toy.applyMatchingFact(step, path, ungroupingFacts) || step)
               .justify('ungroup', arguments, [step]));
     },
     inputs: {site: 1},
