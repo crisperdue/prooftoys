@@ -1570,10 +1570,10 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
   var factLists = context.factLists;
   var subst;
   if ((subst = expr.matchSchema(schema))) {
-    // Checks if the given term of the schema matches some fact
-    // in the appropriate factsList, throwing information about
-    // the match if found to Toy.catchResult.
-    // Only schema variables are eligible to match.
+    return Toy.returner(target => {
+        // Checks if the given term of the schema matches some fact in
+        // the appropriate factsList.  Only schema variables are
+        // eligible to match.
     function checkTerm(schemaTerm, revPath) {
       if (schemaTerm.isVariable()) {
         var list = varsMap[schemaTerm.name];
@@ -1585,14 +1585,15 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
             findMatchingFact(list, context, expr.get(revPath.reverse()));
           if (result) {
             result.path = revPath.reverse().concat(result.path);
-            Toy.throwResult(result);
+                Toy.returnFrom(target, result);
           }
         }
       }
     }
     // TODO: Consider replacing this use of Expr.traverse with
     //   Expr.searchMost.
-    return Toy.catchResult(schema.traverse.bind(schema, checkTerm));
+        schema.traverse(checkTerm);
+      });
   }
 }
 

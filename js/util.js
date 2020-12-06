@@ -743,14 +743,6 @@ function Result(value) {
 }
 
 /**
- * Throws a Result object with the given value as its value.
- */
-function throwResult(value) {
-  Toy.result = new Result(value);
-  throw Toy.result;
-}
-
-/**
  * Call the given function with the given arguments, returning the
  * undefined value if the function throws, else the value returned
  * from the function call.
@@ -763,27 +755,6 @@ function normalReturn(fn, _args) {
     return fn.apply(undefined, args);
   } catch(e) {
     return;
-  }
-}
-
-/**
- * Calls the given function, passing it any additional arguments
- * given.  If the function throws a Result object, returns its
- * "value".  Rethrows any other thrown value, and returns the value
- * returned by the function if it does not throw.
- */
-function catchResult(fn, _args) {
-  var args = Array.from(arguments);
-  args.shift();
-  Toy.result = null;
-  try {
-    return fn.apply(undefined, args);
-  } finally {
-    const e = Toy.result;
-    if (e instanceof Result) {
-      Toy.result = null;
-      return e.value;
-    }
   }
 }
 
@@ -2257,8 +2228,6 @@ Toy.trimParens = trimParens;
 Toy.sortMap = sortMap;
 
 Toy.Result = Result;
-Toy.throwResult = throwResult;
-Toy.catchResult = catchResult;
 Toy.normalReturn = normalReturn;
 Toy.returnFrom = returnFrom;
 Toy.returner = returner;

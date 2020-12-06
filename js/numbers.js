@@ -3339,12 +3339,13 @@ function termGetRightVariable(term) {
  */
 function varFactorCounts(term) {
   var info = {};
+  const status = Toy.returner(target => {
   function mustBeVariable(expr, revPath) {
     if (expr.isVariable()) {
       var value = info[expr.name] || 0;
       info[expr.name] = value + 1;
     } else if (!expr.isConst()) {
-      Toy.throwResult(false);
+        Toy.returnFrom(target, false);
     }
   }
   function addCounts(expr, revPath) {
@@ -3355,9 +3356,9 @@ function varFactorCounts(term) {
     ]);
     return true;
   }
-  return (Toy.catchResult(addCounts, term, null)
-          ? info
-          : null);
+    return addCounts(term, Toy.Path.empty);
+  });
+  return status ? info : null;
 }
 
 /**

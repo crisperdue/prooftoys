@@ -1755,7 +1755,7 @@ Expr.prototype.searchTerms = function(test, path) {
  * specified action function, applies the function at each of the
  * variable's occurrences in the matching schema, passing it the
  * subexpression of this that matches and a reverse path from this to
- * the occurrence.  Does not return a value, but see Toy.catchResult
+ * the occurrence.  Does not return a value, but see Toy.returnFrom
  * for options.
  *
  * The patternInfo is a plain object with property "match" being the
