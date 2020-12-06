@@ -745,7 +745,14 @@ function Result(value) {
 /**
  * Call the given function with the given arguments, returning the
  * undefined value if the function throws, else the value returned
- * from the function call.
+ * from the function call.  Does not interfere with returnFrom
+ * and returner.
+ *
+ * Intended for enforcing planned control flow even when unknown
+ * problems may occur.  For recovery from specific problems consider
+ * using dynamically bound recovery functions.
+ *
+ * TODO: Consider whether this is really a good idea.
  */
 function normalReturn(fn, _args) {
   var result;
@@ -754,6 +761,12 @@ function normalReturn(fn, _args) {
   try {
     return fn.apply(undefined, args);
   } catch(e) {
+    // Respect returnFrom.
+    if (e instanceof ReturnTarget) {
+      throw e;
+    }
+    // Report to the developer that something went wrong.
+    console.error('normalReturn:', e);
     return;
   }
 }
