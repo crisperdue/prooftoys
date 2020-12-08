@@ -1300,7 +1300,7 @@ function isProved(x) {
  * Searches for a subexpression of this that passes the test, given as
  * a boolean function of one argument.  Returns a path from this to
  * the occurrence, or null if none found.  Tests this expression
- * first, followed by the rest in top-down left-to-right order.  Does
+ * first, followed by the rest in top-down right-to-left order.  Does
  * not search for variable bindings, use pathToBinding instead.
  * Alternatively accepts a term to be matched with sameAs, which may
  * be given as a string.
@@ -1934,7 +1934,8 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // Searches for a subexpression of this that passes the test and is
 // NOT a variable binding.  Returns the "reverse path" to it from
 // this, with the last path segment first, added to the given revPath.
-//
+// Search order is right to left (arg before fn in calls), but parents
+// before children.
 //
 // _prettyPath(pred, path)
 //
@@ -2729,8 +2730,8 @@ Call.prototype.generalizeTF = function(expr2, newVar, bindings) {
 Call.prototype._path = function(pred, revPath) {
   return pred(this)
     ? revPath
-    : this.fn._path(pred, new Path('fn', revPath))
-      || this.arg._path(pred, new Path('arg', revPath));
+    : this.arg._path(pred, new Path('arg', revPath))
+      || this.fn._path(pred, new Path('fn', revPath));
 };
 
 Call.prototype._prettyPath = function(pred, pth) {
