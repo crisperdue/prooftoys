@@ -1195,7 +1195,6 @@ const mathSimplifiers =
     inputs: {step: 1},
     form: ('Simplify negations in <input name=step>'),
     menu: 'algebra: simplify negations',
-    offerExample: true,
     description: 'simplify negations',
     labels: 'algebra'
   },
@@ -1272,7 +1271,6 @@ declare
     toOffer: function(step, term) {
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
-    offerExample: true,
     menu: 'algebra: flatten {term}',
     description: 'flatten term;; {in step siteStep}',
     labels: 'algebra'
@@ -1313,7 +1311,6 @@ declare
     toOffer: function(step, term) {
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
-    offerExample: true,
     menu: 'algebra: collect like terms in {term}',
     description: 'collect like terms;; {in step siteStep}',
     labels: 'algebra'
@@ -1376,7 +1373,6 @@ declare
         }).justify('flattenTerm', arguments, [step]);
     },
     inputs: {site: 1},
-    offerExample: true,
     menu: 'algebra: flatten {term}',
     description: 'flatten term;; {in step siteStep}',
     labels: 'algebra'
@@ -1421,7 +1417,6 @@ declare
        return result.justify('makeRatio', arguments, [step_arg]);
      },
      inputs: {site: 1},
-     offerExample: true,
      menu: 'algebra: put in ratio form',
      description: 'to ratio form',
      labels: 'algebra'
@@ -1598,7 +1593,6 @@ declare
               .justify('arrangeRatio', arguments, [step]));
     },
     inputs: {site: 1},
-    offerExample: true,
     toOffer: 'return term.isReal()',
     menu: 'algebra: term to form a / b',
     description: 'ratio form for term;; {in step siteStep}',

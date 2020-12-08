@@ -412,11 +412,6 @@ var rules = {};
 //   the converse equality (rewrites matching the right side of the
 //   equation rather than the left side).
 //
-// offerExample: applies to rules only, not facts.  If true and the
-//   rule needs only some sort of selection as input, the step
-//   suggester will run it to generate a sample next step and the
-//   ruleMenu will not include it in the menu.
-//
 // noSuggest: pseudo-rules may have side effects and return true on
 //   success rather than a new step.  Such should have this property
 //   with value true, and the rule itself should return true.  This

@@ -1505,7 +1505,6 @@ declare(
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
     menu: 'algebra: simplify',
-    offerExample: true,
     description: 'simplify;; {step step}',
     labels: 'algebra'
   },
@@ -1526,7 +1525,6 @@ declare(
     inputs: {site: 1},
     minArgs: 2,
     menu: 'algebra: simplify {term}',
-    offerExample: true,
     description: 'simplify;; {in step siteStep}',
     labels: 'algebra'
   },
