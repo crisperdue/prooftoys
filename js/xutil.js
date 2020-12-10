@@ -1899,8 +1899,8 @@ function decodeArg(info, steps) {
   if (info.isString()) {
     return (info._value);
   } else {
-    var key = info.nth(0).name;
-    var value = info.nth(1);
+    var key = info.nthArg(0).name;
+    var value = info.nthArg(1);
     switch(key) {
       // At present (2018-12-08) a term argument will be encoded as
       // a step if it constitutes the entire wff, so in the future

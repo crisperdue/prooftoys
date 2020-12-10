@@ -559,12 +559,12 @@ var testCase = {
 
   // EXPRS
 
-  testNth: function() {
+  testNthArg: function() {
     var term = Toy.parse('(f x (p y))');
-    assertEqual('f', term.nth(0));
-    assertEqual('x', term.nth(1));
-    assertEqual('(p y)', term.nth(2));
-    assertEqual('x', x.nth(0));
+    assertEqual('f', term.nthArg(0));
+    assertEqual('x', term.nthArg(1));
+    assertEqual('(p y)', term.nthArg(2));
+    assertEqual('x', x.nthArg(0));
   },
 
   testAsArray: function() {

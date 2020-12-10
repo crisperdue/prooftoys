@@ -1003,8 +1003,8 @@ Expr.prototype.getMain = function() {
  * call written as (f a b c) gives the Atom "f" as element 0, "a"
  * as element 1, "b" as element 2, and "c" as element 3.
  */
-Expr.prototype.nth = function(n) {
-  var result = this._nth(n);
+Expr.prototype.nthArg = function(n) {
+  var result = this._nthArg(n);
   assert(result instanceof Expr, 'Expr {1} has no position {2}', result, n);
   return result;
 };
@@ -3270,12 +3270,12 @@ Lambda.prototype.searchMost = function(fn, path, bindings) {
  * Returns the term found inside here, or if not found, the first
  * index not seen.
  */
-Atom.prototype._nth = function(n) {
+Atom.prototype._nthArg = function(n) {
   return n == 0 ? this : 1;
 };
 
-Call.prototype._nth = function(n) {
-  var here = this.fn._nth(n);
+Call.prototype._nthArg = function(n) {
+  var here = this.fn._nthArg(n);
   if (here instanceof Expr) {
     return here;
   } else if (n == here) {
@@ -3285,7 +3285,7 @@ Call.prototype._nth = function(n) {
   }
 };
 
-Lambda.prototype._nth = function(n) {
+Lambda.prototype._nthArg = function(n) {
   assert(false, 'Nth not relevant in lambdas');
 };
 
