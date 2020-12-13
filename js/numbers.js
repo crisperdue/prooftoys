@@ -1596,7 +1596,7 @@ declare
     toOffer: 'return term.isReal()',
     menu: 'algebra: term to form a / b',
     description: 'ratio form for term;; {in step siteStep}',
-    labels: 'algebra'
+    labels: 'obsolete'
   },
 
   /**
@@ -1633,7 +1633,6 @@ declare
               .justify('arrangeTerm', arguments, [step]));
     },
     inputs: {site: 1},
-    offerExample: true,
     toOffer: 'return term.isReal()',
     menu: 'algebra: term to form a / b * x',
     description: 'term to form a / b * x;; {in step siteStep}',

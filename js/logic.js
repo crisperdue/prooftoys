@@ -3461,10 +3461,9 @@ declare(
     // TODO: Currently the equation's LHS must match the target.
     // Extend this rule to handle an equation with RHS matching the target.
     action: function replaceConjunct(step, path_arg) {
-      var Path = Toy.Path;
       var infixCall = Toy.infixCall;
       var wff = step.wff;
-      var path = Toy.path(path_arg, wff);
+      var path = wff.asPath(path_arg);
       var prettyPath = wff.prettifyPath(path);
       // This will become the nearest ancestor of the target that is a
       // conjunction and has a suitable equation among its direct or
