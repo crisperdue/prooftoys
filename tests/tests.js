@@ -883,6 +883,12 @@ var testCase = {
     assertEqual('(p x)', body.toString());
   },
 
+  testRevGet: function() {
+    var expr = call('forall', lambda(x, call(p, x)));
+    var body = expr.revGet(Toy.path('/body/arg'));
+    assertEqual('(p x)', body.toString());
+  },
+
   testPathTo: function() {
     function findX(expr) {
       return expr == x;

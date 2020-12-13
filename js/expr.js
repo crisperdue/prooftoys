@@ -1214,6 +1214,20 @@ Expr.prototype.get = function(arg) {
 };
 
 /**
+ * Returns the subterm at the given reverse path.  If the path does
+ * not refer to a term, it is an error.
+ */
+Expr.prototype.revGet = function(rpath) {
+  if (rpath.isEnd()) {
+    return this;
+  } else {
+    const term = this.revGet(rpath.rest);
+    return term.descend(rpath.segment);
+  }
+};
+    
+
+/**
  * Converts the argument into a path within this Expr.  Given a Path
  * or path string, this adjusts leading occurrences of "/main" or
  * "/rt" based on the structure of this Expr.
@@ -1274,6 +1288,7 @@ Expr.prototype.asPath = function(arg) {
  * the given segment string.
  */
 Expr.prototype.descend = function(segment) {
+  // TODO: Make this the primitive and have Expr.get call this.
   var p = new Toy.Path(segment);
   this._checkSegment(p);
   return this.get(p);
