@@ -1773,11 +1773,15 @@ function getTheorem(name) {
  * fact's LHS.
  *
  * If this finds such a fact it returns a function of no arguments
- * that applies the fact to the step using rules.rewrite and returning
+ * that applies the fact to the step using rules.rewrite and returns
  * the result of the rewrite.
  *
  * TODO: Consider how to make sure the facts in factList are
  *   interpreted appropriately.
+ *
+ * TODO: If useful, extend to facts that are not equations.  Probably
+ *   rethink and rewrite along with all or most uses of
+ *   matchSchemaPart.
  */
 function matchFactPart(step, path, factList, name) {
   return Toy.each(factList, function(fact_arg) {
