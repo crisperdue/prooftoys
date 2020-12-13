@@ -1755,8 +1755,9 @@ Expr.prototype.searchTerms = function(test, path) {
  * specified action function, applies the function at each of the
  * variable's occurrences in the matching schema, passing it the
  * subexpression of this that matches and a reverse path from this to
- * the occurrence.  Does not return a value, but see Toy.returnFrom
- * for options.
+ * the occurrence.  Does not return a value, but Toy.returnFrom can be
+ * useful for returning a value.  The search through patterns proceeds
+ * left to right.
  *
  * The patternInfo is a plain object with property "match" being the
  * schema to match, and (usually) properties named after variables in
@@ -2499,6 +2500,59 @@ Call.prototype._toString = function() {
   } else {
     return '(' + this.fn + ' ' + this.arg + ')';
   }
+};
+
+/**
+ * TODO: Return a reverse path instead of the item, so we can find
+ * the place to rewrite.
+ *
+ */
+Call.prototype.pathIntoChain = function(n, ops_arg) {
+  // Every "chain" consists of at least one binary operator and at
+  // least two operands, numbered starting from 0 on the right.  So n
+  // operators support up to n+1 operands, but if there are n+1
+  // operands, the last segment of the path is left rather than right.
+  const ops = (typeof ops_arg == 'string'
+               ? [ops_arg]
+               : Array.isArray(ops_arg)
+               ? ops_arg
+               : assert(false, 'Bad argument'));
+  const inChain = term => term.isCall2() && ops.includes(term.getBinOp().name);
+  // assert(inChain(this), 'No chain of operators');
+  if (!inChain(this)) {
+    return null;
+  }
+  for (let i = 0,
+         // In each iteration revPath will lead to opTerm.
+         revPath = Path.empty,
+         // In each iteration, opTerm provides access to operand i,
+         // and if it is the last of the chain, to operand i+1.
+         opTerm = this;
+
+       // Iterate up to n+1 times.
+       i <= n;
+
+       i++,
+         opTerm = opTerm.getLeft(),
+         revPath = new Path('left', revPath)) {
+    if (inChain(opTerm)) {
+      if (i == n) {
+        // There are at least n + 1 suitable operators in the chain, so
+        // the last segment is rightward, e.g. one operator and n = 0.
+        return new Path('right', revPath);
+      }
+      // i has not reached n yet, so continue down the chain.
+    } else if (i == n) {
+      // If there are exactly n operators in the chain, revPath leads
+      // to the element.
+      return revPath;
+    } else {
+      // There are not enough operators in the chain.
+      // assert(false, 'No chain element #{1}', n);
+      return null;
+    }
+  }
+  return null;
 };
 
 Call.prototype.dump = function() {

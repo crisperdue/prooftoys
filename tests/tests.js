@@ -567,6 +567,18 @@ var testCase = {
     assertEqual('x', x.nthArg(0));
   },
 
+  testPathIntoChain: function() {
+    const term = Toy.parse('(x+2)*y*z');
+    function check(val, n) {
+      assertEqual(val, (term.get(term.pathIntoChain(n, '*')
+                                .reverse())
+                        .toString()));
+    }
+    check('z', 0);
+    check('y', 1);
+    check('(x + 2)', 2);
+  },
+
   testAsArray: function() {
     var term = Toy.parse('(f x (p y))');
     var array = term.asArray();
