@@ -3781,10 +3781,29 @@ declare(
         flatter = next;
       }
     }
-  },
+  }
+);
 
-  //// Rewriting
+//// Rewriting
 
+// Interprets the equation argument as a potential rewriter for the
+// part of the step at the given path, and determines a substitution
+// to match it with that part of the step.  Returns the substitution,
+// or null if it finds none.
+function canRewrite(step, path, eqn_arg) {
+  const expr = step.get(path);
+  // If given an equation or conditional equation, this is its
+  // LHS.  Otherwise if given a conditional, the RHS, otherwise
+  // the argument itself.
+  const matchPart = (eqn_arg.isEquation()
+                     ? eqn_arg.eqnLeft()
+                     : eqn_arg.isCall2('=>')
+                     ? eqn_arg.getRight()
+                     : eqn_arg);
+  return expr.findSubst(matchPart);
+}
+
+declare(
   // Rewriters take a proof step, a path, and a proved step, typically
   // an equation.  Seeks a substitution into the equation that makes
   // the part of the step at the given path match to the LHS of the
@@ -3809,26 +3828,16 @@ declare(
   // whose LHS is the same as the part of step at path.
   {name: '_rewriterFor',
     action: function(step, path, eqn_arg) {
-      var expr = step.get(path);
-      var isEqn = eqn_arg.isEquation();
-      // If given an equation or conditional equation, this is its
-      // LHS.  Otherwise if given a conditional, the RHS, otherwise
-      // the argument itself.
-      var matchPart = (isEqn
-                       ? eqn_arg.eqnLeft()
-                       : eqn_arg.isCall2('=>')
-                       ? eqn_arg.getRight()
-                       : eqn_arg);
+      const map = canRewrite(step, path, eqn_arg);
+      if (!map) {
+        Toy.fail(Toy.format('Fact not applicable: {1}', equation));
+      }
       // Convert to an actual equation if necessary.
-      var equation = (isEqn
+      var equation = (eqn_arg.isEquation()
                       ? eqn_arg
                       // Coerce to an equation.
                       : eqn_arg.andThen('rewriteOnly',
                                         '/rt', 'a == (a == T)'));
-      var map = expr.findSubst(matchPart);
-      if (!map) {
-        Toy.fail(Toy.format('Fact not applicable: {1}', equation));
-      }
 
       // TODO: Consider moving much of this below here to
       //   rules.matchTerm and using that here.
@@ -4371,7 +4380,11 @@ declare(
   },
 
   // Derives a step with assumptions deduplicated and ordered as by
-  // asmComparator, including removal of occurrences of T.
+  // asmComparator, including removal of occurrences of T.  In some
+  // cases this can remove all assumptions and a top-level
+  // conditional, and in that case the meanings of /main paths into
+  // the step may not be as expected if the resulting step remains
+  // conditional, though this is an exceptional case.
   //
   // TODO: Attempt to eliminate T by some other means where
   //   appropriate.
@@ -5220,5 +5233,6 @@ const tautologyCounts = Toy.tautologyCounts = new Map();
 
 Toy.asmSimplifiers = ['a & T == a', 'T & a == a'];
 Toy.simplifyStep = simplifyStep;
+Toy.canRewrite = canRewrite;
 
 }();
