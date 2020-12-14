@@ -376,8 +376,9 @@ var errors = [];
  * optional step is supplied it should be the most recent available
  * completed proof step.
  *
- * If the message is a string, it may be a format string, and all
- * arguments following it are accessible as {1}, {2}, and so on.
+ * If the (optional) message is a string, it may be a format string,
+ * and all arguments following it are accessible as {1}, {2}, and so
+ * on.
  *
  * Logs the message and step into the errors list by appending an
  * object with properties 'message' and 'step'.
@@ -390,9 +391,9 @@ function assertTrue(condition, message_arg) {
       message = message_arg();
     } else {
       var args = arguments;
-      message = message_arg.replace(/\{.*?\}/g, function(matched) {
-          return args[matched.slice(1, -1) - -1];
-        });
+      message = ((message_arg || 'Assertion failure')
+                 .replace(/\{.*?\}/g,
+                   matched => args[matched.slice(1, -1) - -1]));
       var isProved = Toy.isProved;
       // Find a step argument if there is one.
       for (var i = 0; i < args.length; i++) {
