@@ -11,6 +11,7 @@ var path = Toy.path;
 var Bindings = Toy.Bindings;
 var getBinding = Toy.getBinding;
 var assert = Toy.assertTrue;
+var check = Toy.check;
 var ToySet = Toy.ToySet;
 var ToyMap = Toy.ToyMap;
 
@@ -711,6 +712,9 @@ Expr.prototype.findSubst = Expr.prototype.matchSchema;
  * The same task could be done by passing a (pretty) path from the
  * schema to the part of interest, rather than the part itself, but
  * this way seems to result in more readable code.
+ *
+ * TODO: Consider merging this with matchFactPart, creating something
+ *   like applyMatchingFact.
  */
 Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
   var schema = termify(schema_arg);
@@ -1301,6 +1305,22 @@ Expr.prototype.descend = function(segment) {
 };
 
 /**
+ * Really for a top-level Expr, i.e. wff.  This ensures an initial
+ * /main, leaving it to refer to the same place.  Rightward paths into
+ * a conditional replace /right or /arg with /main.  Otherwise it
+ * prepends /main.
+ */
+Expr.prototype.mainify = function(path) {
+  if (path.segment == 'main') {
+    return path;
+  } else if (path.isRight() && this.implies()) {
+    return new Path('main', path.rest);
+  } else {
+    return new Path('main', path);
+  }
+};
+
+/**
  * Returns true iff this expression is a proof step.
  *
  * TODO: Remove this when there is a Step class.
@@ -1354,9 +1374,13 @@ Expr.prototype.find = function(term_arg) {
 /**
  * Like Expr.pathTo, but for infix calls produces a path with /left,
  * /right, or /binop rather than combinations of /fn and /arg.
+ * If given a Step that is not conditional, prepends /main.
  *
  * Given a term to match against, this searches for an identical
  * term, not just a sameAs term, unlike pathTo.
+ *
+ * TODO: Consider also converting initial /right to /main
+ *   and removing mainify.
  */
 Expr.prototype.prettyPathTo = function(pred) {
   if (pred instanceof Expr) {
@@ -1490,6 +1514,82 @@ Expr.prototype.findParent = function(path_arg, test) {
  */
 Expr.prototype.parentEqn = function(path) {
   return this.findParent(path, function(term) { return term.isCall2('='); });
+};
+
+/**
+ * Returns an array of all of the operands of a chain of calls to a
+ * binary operator.  If the current term is not a call to a binary
+ * operator there are no such operands and this returns null.
+ *
+ * If it is a binop call, this returns all operands of the chain of
+ * calls to the same operator, from right to left, so always at least
+ * two values.  (All but the last will be accessed with a final
+ * rightward path segment, and the last one with a leftward path
+ * segment.)
+ */
+Expr.prototype.chainTerms = function(chainOp) {
+  const result = [];
+  let node = this;
+  if (node.isCall2(chainOp)) {
+    while (true) {
+      result.push(node.getRight());
+      let next = node.getLeft();
+      if (next.isCall2(chainOp)) {
+        node = next;
+        continue;
+      } else {
+        result.push(next);
+        break;
+      }
+    }
+  } else {
+    result.push(this);
+  }
+  return result;
+};
+
+Expr.prototype.chainPaths = function(chainOp) {
+  const result = [];
+  let node = this;
+  if (node.isCall2(chainOp)) {
+    let chainPath = Path.empty;
+    while (true) {
+      result.push(new Path('right', chainPath));
+      let next = node.getLeft();
+      let nextPath = new Path('left', chainPath);
+      if (next.isCall2(chainOp)) {
+        node = next;
+        chainPath = nextPath;
+        continue;
+      } else {
+        result.push(new Path('left', chainPath));
+        break;
+      }
+    }
+  } else {
+    result.push(Path.empty);
+  }
+  return result;
+};
+
+/**
+ * Returns a description of the movement of a variable in this
+ * equational Expr, which may be conditional.  Each side of the
+ * equation should contain the variable exactly once, and the
+ * returned value is a plain object with:
+ *
+ * left: pretty path to vbl from the LHS
+ * right: pretty path to vbl from the RHS
+ *
+ * The variable may be given as a string.  It could also be a term.
+ */
+Expr.prototype.movement = function(vbl_arg) {
+  const vbl = termify(vbl_arg);
+  const left = this.eqnLeft();
+  const right = this.eqnRight();
+  const lPath = check(left.prettyPathTo(term => term.matches(vbl)))
+  const rPath = check(right.prettyPathTo(term => term.matches(vbl)));
+  return {from: lPath, to: rPath};
 };
 
 /**

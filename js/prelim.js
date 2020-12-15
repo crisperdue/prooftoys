@@ -419,6 +419,22 @@ Path.prototype.reverse = function() {
   return result;
 };
 
+/**
+ * Under the precondition that the given path is equal to an initial
+ * portion of this path, returns the tail of this path following the
+ * argument path.
+ */
+Path.prototype.remainder = function(path) {
+  let self = this;
+  let that = path;
+  while (!that.isEnd()) {
+    assert(self.segment === that.segment);
+    self = self.rest;
+    that = that.rest;
+  }
+  return self;
+};
+
 //// Export public names.
 
 Toy.Bindings = Bindings;

@@ -336,6 +336,15 @@ function logError(err) {
 }
 
 /**
+ * Checks for nullish values, which are assertion failures.
+ * If non-null, returns its input.
+ */
+function check(value) {
+  assert(value != null, 'Null value');
+  return value;
+}
+
+/**
  * For debugging: Logs all facts containing the given pattern of
  * operator characters in the given order.  Operates by "squishing"
  * the keys of _factsByKey into just the occurrences of the characters
@@ -2217,6 +2226,7 @@ Toy.debug = debug;
 Toy.err = err;
 Toy.fail = fail;
 Toy.logError = logError;
+Toy.check = check;
 Toy.factSquish = factSquish;
 Toy.withErrorReporting = withErrorReporting;
 Toy.assertTrue = assertTrue;

@@ -28,6 +28,7 @@ var equal = Toy.equal;
 var implies = Toy.implies;
 var lambda = Toy.lambda;
 
+var Path = Toy.Path;
 var Expr = Toy.Expr;
 var Call = Toy.Call;
 var Lambda = Toy.lambda;
@@ -1339,7 +1340,7 @@ declare
         let eqn = rules.consider(step.get(path));
         return Toy.arrangeRhs(eqn, this.data.context, 'denegaters');
       }
-  },
+   },
 
   /**
    * "Flattens" a term made up of "*", "/", and "neg".  Converts
@@ -1400,20 +1401,20 @@ declare
        (step_arg, step => 
         Toy.returner(
           target => {
-       function walkMulDiv(term, path) {
+            function walkMulDiv(term, path) {
               const next = Toy.applyMatchingFact(step, path, facts);
               if (next) {
                 Toy.returnFrom(target, next);
-           }
-         const mulDiv = [
-           {match: 'a * b', a: walkMulDiv, b: walkMulDiv},
-           {match: 'a / b', a: walkMulDiv, b: walkMulDiv}
-         ];
-         term.walkPatterns(mulDiv, path);
-       }
+              }
+              const mulDiv = [
+                {match: 'a * b', a: walkMulDiv, b: walkMulDiv},
+                {match: 'a / b', a: walkMulDiv, b: walkMulDiv}
+              ];
+              term.walkPatterns(mulDiv, path);
+            }
             walkMulDiv(step.get(path_arg), path_arg);
           })
-         );
+       );
        return result.justify('makeRatio', arguments, [step_arg]);
      },
      inputs: {site: 1},
@@ -1421,6 +1422,94 @@ declare
      description: 'to ratio form',
      labels: 'algebra'
     },
+
+    {name: 'factorToRightmost',
+     action: function(step_arg, path_arg) {
+       const wff = step_arg.wff;
+       const commute = rules.fact('x * y = y * x');
+       const commove = 
+             Object.assign({}, commute.wff.movement('x'), {fact: commute});
+       const assoc = rules.fact('z * x * y = z * y * x');
+       const assmove = 
+             Object.assign({}, assoc.wff.movement('x'), {fact: assoc});
+       const xformers = [commove, assmove];
+
+       let nextPath = wff.mainify(wff.prettifyPath(path_arg));
+       function xform(step) {
+         for (const info of xformers) {
+           const path = nextPath.upTo(info.from);
+           if (path) {
+             if (Toy.canRewrite(step, path, info.fact)) {
+               nextPath = path.concat(info.to);
+               return step.rewrite(path, info.fact);
+             }
+           }
+         }
+       }
+       const result = Toy.repeatedly(step_arg, xform);
+       return (result &&
+               result.justify('factorToRightmost', arguments, [step_arg]));
+     },
+     inputs: {site: 1},
+     menu: 'algebra: make rightmost',
+     description: 'make rightmost',
+     labels: 'algebra'
+    },
+
+    {name: 'cancelFactor',
+     action: function(step, path) {
+       const wff = step.wff;
+       const basePart = term => term.isCall2('**') ? term.getLeft() : term;
+       const ppath = wff.mainify(wff.prettifyPath(path));
+       const term = step.get(ppath);
+       const termBase = basePart(term);
+       // This is the path to the nearest enclosing division.
+       const divPath =
+             wff.mainify(wff.findParent(ppath, term => term.isCall2('/')));
+       if (divPath) {
+         const fromDiv = ppath.remainder(divPath);
+         const thisSeg = fromDiv.segment;
+         const thatChainStart = new Path(thisSeg == 'left' ? 'right' : 'left');
+         const moved1 = rules.factorToRightmost(step, path);
+         // Division node after first phase of movement.
+         const div1 = moved1.get(divPath);
+         // Root node of a chain on the side of the target term.
+         const thisChain = div1.descend(thisSeg);
+         const theseTerms = thisChain.chainTerms('*');
+         if (theseTerms[0].sameAs(term)) {
+           const thatChain = div1.get(thatChainStart);
+           const thoseTerms = thatChain.chainTerms('*');
+           const thosePaths = thatChain.chainPaths('*');
+           const sameBase =
+                 path => basePart(thatChain.revGet(path)).sameAs(termBase);
+           const thatIndex = thosePaths.findIndex(sameBase);
+           if (thatIndex >= 0) {
+             const thatChainPath = thosePaths[thatIndex].reverse();
+             const moved2 = rules.factorToRightmost(
+               moved1,
+               divPath.concat(thatChainStart.concat(thatChainPath))
+             );
+             // Found a similar term to cancel with it.
+             return moved2.justify('cancelFactor', arguments, [step]);
+
+           // Move that one all the way to the right.
+           // Use (a * b) / (c * d) = (a / c) * (b / d).
+           // Cancel, reducing power(s).
+           // Put any remaining term back in numerator or denominator.
+           // Final facts:
+           // (a / c) * b = a * b / c
+           // (a / c) * (1 / d ) = a / (c * d)
+           // (a / c) * 1 = a / c
+           // Interconvert powers and multiplication.
+           }
+         }
+       }
+     },
+     inputs: {site: 1},
+     menu: 'algebra: cancel with numerator/denominator',
+     description: 'cancel through division',
+     labels: 'algebra'
+    },     
      
 
   /**
@@ -1904,10 +1993,10 @@ declare
     // Could be algebra, but this rule seems better for more advanced
     // students.
     labels: ''
-  },
+   },
 
-  /** TODO: Decide whether to keep or remove this rule.
-      {name: 'removeRightTerm',
+    /** TODO: Decide whether to keep or remove this rule.
+   {name: 'removeRightTerm',
     action: function(step, path) {
       // This rule assumes that the step has the form
       // H => lhs = rhs
@@ -3333,22 +3422,22 @@ function termGetRightVariable(term) {
 function varFactorCounts(term) {
   var info = {};
   const status = Toy.returner(target => {
-  function mustBeVariable(expr, revPath) {
-    if (expr.isVariable()) {
-      var value = info[expr.name] || 0;
-      info[expr.name] = value + 1;
-    } else if (!expr.isConst()) {
+    function mustBeVariable(expr, revPath) {
+      if (expr.isVariable()) {
+        var value = info[expr.name] || 0;
+        info[expr.name] = value + 1;
+      } else if (!expr.isConst()) {
         Toy.returnFrom(target, false);
+      }
     }
-  }
-  function addCounts(expr, revPath) {
-    expr.walkPatterns([
-      {match: 'a * b', a: addCounts, b: addCounts},
-      {match: 'neg a', a: addCounts},
-      {match: 'a', a: mustBeVariable}
-    ]);
-    return true;
-  }
+    function addCounts(expr, revPath) {
+      expr.walkPatterns([
+        {match: 'a * b', a: addCounts, b: addCounts},
+        {match: 'neg a', a: addCounts},
+        {match: 'a', a: mustBeVariable}
+      ]);
+      return true;
+    }
     return addCounts(term, Toy.Path.empty);
   });
   return status ? info : null;

@@ -579,6 +579,29 @@ var testCase = {
     check('(x + 2)', 2);
   },
 
+  testChainTerms: function() {
+    const e0 = Toy.parse('not a');
+    const t0 = e0.chainTerms('*');
+    assert(Array.isArray(t0));
+    assertEqual(['(not a)'], t0.map(t => t.toString()));
+    const ee = Toy.parse('(x+2)*y*z');
+    const tt = ee.chainTerms('*');
+    assert(Array.isArray(tt));
+    assertEqual(['z', 'y', '(x + 2)'], tt.map(t => t.toString()));
+  },
+
+  testChainPaths: function() {
+    const e0 = Toy.parse('not a');
+    const p0 = e0.chainPaths('*');
+    assertEqual(['(not a)'],
+                p0.map(p => e0.revGet(p).toString()));
+    const ee = Toy.parse('(x+2)*y*z');
+    const pp = ee.chainPaths('*');
+    assert(Array.isArray(pp));
+    assertEqual(['z', 'y', '(x + 2)'],
+                pp.map(p => ee.revGet(p).toString()));
+  },
+
   testAsArray: function() {
     var term = Toy.parse('(f x (p y))');
     var array = term.asArray();
