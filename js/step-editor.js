@@ -998,6 +998,7 @@ StepEditor.prototype.error = function(message) {
  * an HTML string.
  */
 StepEditor.prototype.report = function(error) {
+  console.error(error);
   var $proofErrors = this.$proofErrors;
   $proofErrors.show();
   $proofErrors.html('<button class=clearer>X</button>');
