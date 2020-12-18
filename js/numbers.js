@@ -3075,7 +3075,8 @@ declare(
       return (rules.fact('a * b / c = a * (b / c)')
               .andThen('instVar', 'b', 'c')
               .andThen('simplifyFocalPart'));
-    }
+   },
+   simplifier: true,
   },
   // This is useful for converting a summand to a fraction like
   // its neighbor.
@@ -3126,7 +3127,7 @@ declare(
               .rewrite('/right/right', 'b != 0 & c != 0 => a / b / c = a / (b * c)')
               .rewrite('/right/right/right', 'a * b = b * a'))
     },
-    labels: 'algebra'
+   desimplifier: true,
   },
   {statement: 'b != 0 & c != 0 => a / b = (a / c) / (b / c)',
     proof: function() {
