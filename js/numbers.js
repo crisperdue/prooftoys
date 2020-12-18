@@ -1178,8 +1178,7 @@ function simplifyAddSubBoth(step, eqnPath) {
   return step2;
 }
 
-const mathSimplifiers =
-  [
+declare(
   // Move all negations in past additions and multiplications;
   // eliminate double negations.
   // TODO: Consider removing this as redundant.
@@ -1237,9 +1236,8 @@ const mathSimplifiers =
     menu: 'algebra: clean up terms',
     description: 'clean up each term',
     labels: 'algebra'
-  },
-
-   ];  // End of mathSimplifiers.
+  }
+);
 
 
 declare
