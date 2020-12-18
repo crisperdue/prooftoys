@@ -1219,8 +1219,14 @@ Expr.prototype.repr = function() {
  * convertible to a path using Expr.asPath.
  */
 Expr.prototype.get = function(arg) {
-  const p = this.asPath(arg);
-  return this._get(p);
+  let p = this.asPath(arg);
+  let next = this;
+  while (p !== Path.empty) {
+    const seg = p.segment;
+    p = p.rest;
+    next = next.descend(seg);
+  }
+  return next;
 };
 
 /**
@@ -1298,10 +1304,31 @@ Expr.prototype.asPath = function(arg) {
  * the given segment string.
  */
 Expr.prototype.descend = function(segment) {
-  // TODO: Make this the primitive and have Expr.get call this.
-  var p = new Toy.Path(segment);
-  this._checkSegment(p);
-  return this.get(p);
+  assert(this !== Path.empty, 'Path is empty');
+  const rest = path.rest;
+  if (this instanceof Call) {
+    if (this.fn instanceof Call) {
+      if (segment === 'left') {
+        return this.getLeft();
+      } else if (segment === 'binop') {
+        return this.getBinOp();
+      } else if (segment === 'right') {
+        return this.getRight();
+      }
+    }
+    if (segment === 'fn') {
+      return this.fn;
+    } else if (segment === 'arg') {
+      return this.arg;
+    }
+  } else if (this instanceof Lambda) {
+    if (segment === 'bound') {
+      return this.bound;
+    } else if (segment === 'body') {
+      return this.body;
+    }
+  }
+  this._checkSegment(new Path(segment));
 };
 
 /**
@@ -2336,10 +2363,6 @@ Atom.prototype.replaceAt = function(path, xformer) {
   return path.isMatch() ? xformer(this) : this;
 };
 
-Atom.prototype._get = function(path) {
-  return path.isMatch() ? this : null;
-};
-
 Atom.prototype.sameAs = function(expr) {
   return expr instanceof Atom && this.pname === expr.pname;
 };
@@ -2402,10 +2425,8 @@ Atom.prototype._bindingPath = function(pred, revPath) {
 };
 
 Atom.prototype._checkSegment = function(path) {
-  if (!path.isMatch()) {
-    throw new Error('Path ' + path +
-                    ' is not applicable to an Atom: ' + this);
-  }
+  assert(path === Path.empty,
+         'Path {1} is not applicable to an Atom: {2}', path, this);
 };
 
 Atom.prototype.findAll = function(name, action1, expr2, action2) {
@@ -2833,30 +2854,6 @@ Call.prototype.replaceAt = function(path, xformer) {
       return new Call(this.fn.replaceAt(path.rest, xformer), this.arg);
     } else if (segment === 'arg') {
       return new Call(this.fn, this.arg.replaceAt(path.rest, xformer));
-    }
-    this._checkSegment(path);
-  }
-};
-
-Call.prototype._get = function(path) {
-  if (path.isMatch()) {
-    return this;
-  } else {
-    var segment = path.segment;
-    var rest = path.rest;
-    if (this.fn instanceof Call) {
-      if (segment === 'left') {
-        return this.getLeft()._get(rest);
-      } else if (segment === 'binop') {
-        return this.getBinOp()._get(rest);
-      } else if (segment === 'right') {
-        return this.getRight()._get(rest);
-      }
-    }
-    if (segment === 'fn') {
-      return this.fn._get(rest);
-    } else if (segment === 'arg') {
-      return this.arg._get(rest);
     }
     this._checkSegment(path);
   }
@@ -3310,19 +3307,6 @@ Lambda.prototype.replaceAt = function(path, xformer) {
   this._checkSegment(path);
 };
 
-Lambda.prototype._get = function(path) {
-  if (path.isMatch()) {
-    return this;
-  }
-  var segment = path.segment;
-  if (segment === 'bound') {
-    return this.bound._get(path.rest);
-  } else {
-    return this.body._get(path.rest);
-  }
-  this._checkSegment(path);
-};
-
 Lambda.prototype.sameAs = function(expr) {
   return (expr instanceof Lambda &&
           this.bound.sameAs(expr.bound) &&
@@ -3399,10 +3383,9 @@ Lambda.prototype._bindingPath = function(pred, revPath) {
 
 Lambda.prototype._checkSegment = function(path) {
   var segment = path.segment;
-  if (segment !== 'bound' && segment !== 'body') {
-    throw new Error('Path segment ' + segment +
-                    ' is not applicable to a Lambda: ' + this);
-  }
+  assert(segment === 'bound' || segment === 'body',
+         'Path segment {1} is not applicable to a Lambda: {2}',
+         segment, this);
 };
 
 Lambda.prototype.findAll = function(name, action1, expr2, action2) {

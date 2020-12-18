@@ -73,7 +73,7 @@ function assertFails(fn) {
   } catch(e) {
     assert(e.isAssert, "Test threw, but not an assertion failure");
   } finally {
-    Toy.debugAssertionss = debug;
+    Toy.debugAssertions = debug;
   }
 }
 
@@ -867,7 +867,7 @@ var testCase = {
     assertEqual('a', e.get(path));
 
     var right2 = new Path('right', new Path('right'));
-    assertEqual(null, e.get(right2));
+    assertFails(() => e.get(right2));
   },
 
   testTraverse: function() {
