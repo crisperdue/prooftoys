@@ -251,7 +251,10 @@ Expr.prototype.toUnicode = function() {
  * these are one and the same; toUnicode may disappear.
  */
 Expr.prototype.toHtml = function() {
-  return Toy.escapeHtml(this.toUnicode());
+  // Really toUnicode does produce marked-up HTML for
+  // e.g. exponentiation.  Since <, >, and & are separated by spaces,
+  // this is adequate in practice.
+  return this.toUnicode();
 };
 
 /**
