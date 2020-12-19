@@ -1455,6 +1455,37 @@ declare
     },
 
     {name: 'cancelFactor',
+     precheck: function(step, path_arg) {
+       const ppath = step.prettifyPath(step.asPath(path_arg));
+       const target = step.get(ppath);
+       let firstStar = true;
+       let p = ppath;
+       let term = step.wff;
+       while (p != Path.empty) {
+         if (term.isCall2('/')) {
+           while (p != Path.empty) {
+             term = term.descend(p.segment);
+             // The target term can be on the left or right.
+             if (term === target) {
+               return true;
+             } else if (term.isCall2('*') &&
+                        (firstStar || p.segment === 'left')) {
+               // Continue looking for the target.
+               firstStar = false;
+               p = p.rest;
+             } else {
+               // Requirements are not met.
+               return false;
+             }
+           }
+           return false;
+         }
+         // Continue looking for "/".
+         term = term.descend(p.segment);
+         p = p.rest;
+       }
+       return false;
+     },
      action: function(step, path) {
        const wff = step.wff;
        const basePart = term => term.isCall2('**') ? term.getLeft() : term;
