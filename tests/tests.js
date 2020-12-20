@@ -139,7 +139,7 @@ Toy.Expr.prototype.qUnitCopy = function() {
 // Customize copying of TermSets.
 Toy.TermSet.prototype.qUnitCopy = function() {
   var members = [];
-  this.each(x => void members.push(x.toUnicode()));
+  this.each(x => void members.push(x.toString()));
   return members.sort();
 };
 

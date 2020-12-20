@@ -238,11 +238,12 @@ Expr.prototype.show = function () {
  * This is a bit of a misnomer right now.
  */
 Expr.prototype.toUnicode = function() {
+  const saved = useUnicode;
   useUnicode = true;
   try {
     return this.toString();
   } finally {
-    useUnicode = false;
+    useUnicode = saved;
   }
 }
 
@@ -2635,7 +2636,8 @@ Call.prototype._toString = function() {
         // currently a misnomer.
         return this.getLeft() + '<sup>' + this.getRight() + '</sup>';
       } else {
-        return ('(' + this.getLeft() + ' ' + op.pname +
+        const opStr = useUnicode ? op._toString() : op.pname;
+        return ('(' + this.getLeft() + ' ' + opStr +
                 ' ' + this.getRight() + ')');
       }
     } else {
