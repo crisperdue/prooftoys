@@ -212,7 +212,7 @@ declare(
     action: function(call) {
       call = typeof call == 'string' ? Toy.parse(call) : call;
       assert(call.isLambdaCall(),
-             'Axiom 4 needs ({v. B} A), got: {1}', call.toString());
+             'Axiom 4 needs ({v. B} A), got: {1}', call);
       var lambda = call.fn;
       var result =
         (call.arg.name === lambda.bound.name
