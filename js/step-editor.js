@@ -1187,40 +1187,40 @@ StepEditor.prototype._tryRule = function(rule, args) {
   var result = null;
   var startTime = Date.now();
   var startSteps = Toy.getStepCounter();
-  try {
+
+  Toy.catchAll(() => {
     if (Toy.profileName) {
       // Collect CPU profiling information.
       console.profile(Toy.profileName);
     }
     // Applies the rule here.
     result = rule.apply(null, args);
-  } catch(error) {
-    this._setBusy(false);
-    this.report(error);
-    return;
-  } finally {
-    if (Toy.profileName) {
-      console.profileEnd();
-    }
-    // Update the rule stats and show them.
-    this.lastRuleTime = Date.now() - startTime;
-    this.lastRuleSteps = Toy.getStepCounter() - startSteps;
-    // TODO: Consider providing an event with info the ProofEditor can
-    //   use to display this info -- and move this code into handler.
-    this._proofEditor.containerNode
-      .find('.ruleTime').text(Math.ceil(this.lastRuleTime));
-    this._proofEditor.containerNode
-      .find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
-    // Clear the initial invisible state.
-    this._proofEditor.containerNode
-      .find('.ruleStats').toggleClass('invisible', false);
+    });
+  
+  if (Toy.profileName) {
+    console.profileEnd();
   }
+  // Update the rule stats and show them.
+  this.lastRuleTime = Date.now() - startTime;
+  this.lastRuleSteps = Toy.getStepCounter() - startSteps;
+  // TODO: Consider providing an event with info the ProofEditor can
+  //   use to display this info -- and move this code into handler.
+  this._proofEditor.containerNode
+    .find('.ruleTime').text(Math.ceil(this.lastRuleTime));
+  this._proofEditor.containerNode
+    .find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
+  // Clear the initial invisible state.
+  this._proofEditor.containerNode
+    .find('.ruleStats').toggleClass('invisible', false);
+
   if (!result) {
-    // Certain rules may return null indicating failure, such
-    // as a rule that attempts to prove a statement.
-    // The work is done, show that the prover is not busy.
+    // A rule may abort (throw), or certain rules may return null
+    // indicating failure, such as a rule that attempts to prove a
+    // statement.  The work is done, show that the prover is not busy.
     this._setBusy(false);
-    this.report('Rule failed');
+    // TODO: Report the nature of the error more clearly, e.g.
+    //   cooperating with Toy.assert.
+    this.report('Rule does not apply');
   } else if (result === true) {
     this._setBusy(false);
   } else if (result.rendering) {
@@ -1232,21 +1232,25 @@ StepEditor.prototype._tryRule = function(rule, args) {
       // supports one render per step anyway.
       this.report('nothing done');
   } else {
+    // Success!
+    var top = $(window).scrollTop();
     // TODO: Trigger an event and let the proofDisplay show the step,
     //   removing most of this code.  It may be desirable for the
     //   proof display to trigger another event after the step is
     //   successfully rendered, triggering auto-simplification.
-    try {
-      var top = $(window).scrollTop();
+    const error = Toy.catchAll(() => {
       this.proofDisplay.addStep(result);
-    } catch(error) {
+    });
+    if (error) {
       this._setBusy(false);
-      Toy.logError(error);
-      error.message = 'Error rendering step ' + result + ': ' + error.message;
-      this.report(error);
-      debugger;
+      if (error instanceof Error) {
+        Toy.logError(error);
+        error.message = 'Error rendering step ' + result + ': ' + error.message;
+        this.report(error);
+      }
       return;
     }
+    // The new step is successfully rendered.
     this.proofDisplay.deselectStep();
     // Make sure the proof errors field is cleared.
     this.$proofErrors.hide();
@@ -1268,7 +1272,9 @@ StepEditor.prototype._tryRule = function(rule, args) {
         checkTop(top2);
       });
   }
-  checkTop(top);
+  if (typeof top == 'number') {
+    checkTop(top);
+  }
 };
 
 /**
