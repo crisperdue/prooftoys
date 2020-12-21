@@ -1496,30 +1496,46 @@ declare
        const divPath =
              wff.mainify(wff.findParent(ppath, term => term.isCall2('/')));
        if (divPath) {
-         const fromDiv = ppath.remainder(divPath);
-         const thisSeg = fromDiv.segment;
-         const thatChainStart = new Path(thisSeg == 'left' ? 'right' : 'left');
-         const moved1 = rules.factorToRightmost(step, path);
+         // Flatten both sides of the ratio.
+         const flattened = (step.andThen('flattenTerm',
+                                         divPath.concat('/right'))
+                            .andThen('flattenTerm',
+                                     divPath.concat('/left')));
+         // Get the ratio with the flattened parts (~same path)
+         const div = step.get(divPath);
+         // First segment toward the selected term.
+         const thisSeg = ppath.remainder(divPath).segment;
+         const thatSeg = thisSeg == 'left' ? 'right' : 'left';
+         const thisChainPath = divPath.concat(new Path(thisSeg));
+         const thisChain = flattened.get(thisChainPath);
+         // Find term identical to the selected one on "this" side.
+         const pathInChain = thisChain.prettyPathTo(term);
+         const thisPath = thisChainPath.concat(pathInChain);
+         // Move the selected term moved to rightmost position.
+         const moved1 = rules.factorToRightmost(flattened, thisPath);
+
          // Division node after first phase of movement.
          const div1 = moved1.get(divPath);
-         // Root node of a chain on the side of the target term.
-         const thisChain = div1.descend(thisSeg);
-         const theseTerms = thisChain.chainTerms('*');
-         if (theseTerms[0].sameAs(term)) {
-           const thatChain = div1.get(thatChainStart);
-           const thoseTerms = thatChain.chainTerms('*');
-           const thosePaths = thatChain.chainPaths('*');
-           const sameBase =
-                 path => basePart(thatChain.revGet(path)).sameAs(termBase);
-           const thatIndex = thosePaths.findIndex(sameBase);
-           if (thatIndex >= 0) {
-             const thatChainPath = thosePaths[thatIndex].reverse();
-             const moved2 = rules.factorToRightmost(
-               moved1,
-               divPath.concat(thatChainStart.concat(thatChainPath))
-             );
-             // Found a similar term to cancel with it.
-             return moved2.justify('cancelFactor', arguments, [step]);
+         // Now find a path to a corresponding term on the other side.
+         const thatChain = div.descend(thatSeg);
+         const thoseTerms = thatChain.chainTerms('*');
+         const thosePaths = thatChain.chainPaths('*');
+         const thatIndex = thosePaths.findIndex(
+           path => basePart(thatChain.revGet(path)).sameAs(termBase)
+         );
+         if (thatIndex >= 0) {
+           // Path in other side chain, to a corresponding term.
+           const thatChainPath = thosePaths[thatIndex].reverse();
+           const moved2 = rules.factorToRightmost(
+             moved1,
+             divPath.concat(new Path(thatSeg).concat(thatChainPath))
+           );
+           // Found a similar term to cancel with it.
+           const simplifiers = [
+             '(a * c) / (b * d) = (a / b) * (c / d)'
+           ];
+           const simpler = rules.simplifySite(moved2, divPath, simplifiers);
+           return simpler.justify('cancelFactor', arguments, [step]);
 
            // Move that one all the way to the right.
            // Use (a * b) / (c * d) = (a / c) * (b / d).
@@ -1530,7 +1546,6 @@ declare
            // (a / c) * (1 / d ) = a / (c * d)
            // (a / c) * 1 = a / c
            // Interconvert powers and multiplication.
-           }
          }
        }
      },
@@ -1538,9 +1553,9 @@ declare
      menu: 'algebra: cancel with numerator/denominator',
      description: 'cancel through division',
      labels: 'algebra'
-    },     
-     
+    },
 
+     
   /**
    * Organize the factors in a term.  Processes multiplication,
    * division, negation, reciprocal, and does arithmetic.  Works by
@@ -3101,11 +3116,11 @@ declare(
     }
   },
   {statement: 'b != 0 => a * b / b = a',
-    simplifier: true,
-    proof: function() {
-      return (rules.fact('a * b / c = a * (b / c)')
-              .andThen('instVar', 'b', 'c')
-              .andThen('simplifyFocalPart'));
+   simplifier: true,
+   proof: function() {
+     return (rules.fact('a * b / c = a * (b / c)')
+             .andThen('instVar', 'b', 'c')
+             .andThen('simplifyFocalPart'));
    },
    simplifier: true,
   },
@@ -3148,16 +3163,16 @@ declare(
     labels: 'algebra'
   },
   {statement: 'b != 0 & c != 0 => a / b = (a * c) / (b * c)',
-    proof: function() {
-      var fact = rules.fact('1 = (a / a)').andThen('instVar', 'c', 'a');
-      return (rules.consider('a / b')
-              .rewrite('/right', 'a = (a * 1)')
-              .rewrite('/right/right/right', fact)
-              .rewrite('/right/right', 'c != 0 => a / c * b = a * b / c')
-              .rewrite('/right/right/left', 'c != 0 => a * (b / c) = a * b / c')
-              .rewrite('/right/right', 'b != 0 & c != 0 => a / b / c = a / (b * c)')
-              .rewrite('/right/right/right', 'a * b = b * a'))
-    },
+   proof: function() {
+     var fact = rules.fact('1 = (a / a)').andThen('instVar', 'c', 'a');
+     return (rules.consider('a / b')
+             .rewrite('/right', 'a = (a * 1)')
+             .rewrite('/right/right/right', fact)
+             .rewrite('/right/right', 'c != 0 => a / c * b = a * b / c')
+             .rewrite('/right/right/left', 'c != 0 => a * (b / c) = a * b / c')
+             .rewrite('/right/right', 'b != 0 & c != 0 => a / b / c = a / (b * c)')
+             .rewrite('/right/right/right', 'a * b = b * a'))
+   },
    desimplifier: true,
   },
   {statement: 'b != 0 & c != 0 => a / b = (a / c) / (b / c)',
@@ -3168,13 +3183,18 @@ declare(
               .rewrite('/right/right/right', 'a * (recip b) = a / b'));
     }
   },
-  // Used in arrangeTerm.
-  {statement: 'c != 0 & d != 0 => (a * b) / (c * d) = (b / d) * (a / c)',
+  {statement: 'c != 0 & d != 0 => (a * b) / (c * d) = (a / c) * (b / d)',
     proof: function() {
       return (rules.consider('a * b / (c * d)')
               .andThen('flattenTerm', '/main/right')
               .rewrite('/main/right/left', 'a * b / c = a / c * b')
-              .rewrite('/main/right', 'a * b / c = a * (b / c)')
+              .rewrite('/main/right', 'a * b / c = a * (b / c)'));
+    }
+  },
+  // Used in arrangeTerm.
+  {statement: 'c != 0 & d != 0 => (a * b) / (c * d) = (b / d) * (a / c)',
+    proof: function() {
+      return (rules.fact('(a * b) / (c * d) = (a / c) * (b / d)')
               .rewrite('/main/right', 'a * b = b * a'));
     }
   },

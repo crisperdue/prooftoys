@@ -418,6 +418,7 @@ function assertTrue(condition, message_arg) {
     var e = new Error(message);
     e.step = step;
     e.isAssert = true;
+    Toy.thrown = e;
     console.error(e);
     // Set a breakpoint on this line to debug even when
     // the error will be caught.
@@ -791,6 +792,11 @@ let activeTargets = [];
 let returnTarget = null;
 let returnValue = undefined;
 
+/**
+ * Return the given value from the given return target, created by a
+ * call to Toy.returner.  The computation started by the returner must
+ * still be in progress.
+ */
 function returnFrom(target, value) {
   if (activeTargets.includes(target)) {
     returnTarget = target;
@@ -804,6 +810,12 @@ function returnFrom(target, value) {
   }
 }
 
+/**
+ * Starts a computation that can be aborted by a call to returnFrom.
+ * Calls the given function, passing it a return Target object.
+ * During the computation, if that Target object is passed to
+ * returnFrom, returner returns the value passed to returnFrom.
+ */
 function returner(fn) {
   const target = new ReturnTarget();
   activeTargets.push(target);
@@ -817,6 +829,38 @@ function returner(fn) {
       const val = returnValue;
       returnValue = undefined;
       return val;
+    }
+  }
+}
+
+/**
+ * Stops stack unwinding from any throw (or returnFrom) done during
+ * the execution of the given fn.  This calls fn, passing no
+ * arguments, and returning a truthy value iff the function throws,
+ * else the undefined value.  If the thrown value is truthy, this
+ * returns that value.
+ *
+ * This design has an advantage over passing a "catcher" function in that
+ * the actions here can do local flow of control actions such
+ * as "return" or "break" right in the block.
+ *
+ * For example this can be used in a form such as if (catchAll(...)) {
+ * <actions> }.
+ */
+function catchAll(fn) {
+  let success = false;
+  // For good measure:
+  Toy.thrown = null;
+  try {
+    fn();
+    success = true
+  } finally {
+    if (success) {
+      return false;
+    } else if (returnTarget) {
+      throw returnTarget;
+    } else {
+      return Toy.thrown || true;
     }
   }
 }
@@ -2255,6 +2299,8 @@ Toy.Result = Result;
 Toy.normalReturn = normalReturn;
 Toy.returnFrom = returnFrom;
 Toy.returner = returner;
+Toy.catchAll = catchAll;
+Toy.thrown = null;
 
 Toy.NestedTimer = NestedTimer;
 
