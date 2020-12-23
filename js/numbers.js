@@ -2023,55 +2023,6 @@ declare
     labels: ''
    },
 
-    /** TODO: Decide whether to keep or remove this rule.
-   {name: 'removeRightTerm',
-    action: function(step, path) {
-      // This rule assumes that the step has the form
-      // H => lhs = rhs
-      //
-      var term = step.get(path);
-      assert(!step.rendering.hasLeftElision,
-             'Not supported: would modify hidden equation left side');
-      var xp = path.expand().toString();
-      // Path to outer term of the form (A + <term>)
-      var outPath;
-      if (xp === '/arg/fn/arg/arg') {
-        // Path is /main/left/right.
-        var op = step.get('/main/left/binop');
-        assert(op.name === '+' || op.name === '-',
-               'Operator needs to be + or -');
-        outPath = Toy.path('/main/left');
-      } else if (xp === '/arg/arg/arg') {
-        // Path is /main/right/right.
-        var op = step.get('/main/right/binop');
-        assert(op.name === '+' || op.name === '-',
-               'Operator needs to be + or -');
-               outPath = Toy.path('/main/right');
-      } else {
-        assert(false,
-               'Term needs to be on the right outside parentheses: {1}', term);
-      }
-      if (op.name === '+') {
-        var result = rules.applyToBothWith(step, '-', term)
-        .rewrite(outPath, 'a + b - c = a + (b - c)')
-        .rewrite(outPath.concat('/right'), 'a - a = 0')
-        .rewrite(outPath, 'a + 0 = a');
-        return result.justify('removeRightTerm', arguments, [step]);
-      } else {
-        var result = rules.applyToBothWith(step, '+', term)
-        .rewrite(outPath, 'a - b + c = a + (c - b)')
-        .rewrite(outPath.concat('/right'), 'a - a = 0')
-        .rewrite(outPath, 'a + 0 = a');
-        return result.justify('removeRightTerm', arguments, [step]);
-      }
-    },
-    inputs: {site: 1},
-    menu: 'move term to the other side',
-    description: 'move term to the other side',
-    labels: 'algebra'
-  },
-  */
-
   /* TODO: Choose a way to get varName into the "where" clauses,
    *   then finish this.
    {name: 'regroupBy',
