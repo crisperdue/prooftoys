@@ -665,8 +665,8 @@ declare
 
   // TODO: Eventually prove these laws of powers as theorems.
   {name: 'axiomNextPower',
-    statement: '@R x & R y => x ** (y + 1) = (x ** y) * x',
-    description: 'real number to the next power'
+   statement: '@R x & R y => x ** (y + 1) = (x ** y) * x', axiom: true,
+   description: 'real number to the next power'
   },
 
   // TODO: Prove this from x * y = 0 etc by deMorgan's Law.
@@ -1457,32 +1457,15 @@ declare
     {name: 'cancelFactor',
      precheck: function(step, path_arg) {
        const ppath = step.prettifyPath(step.asPath(path_arg));
-       const target = step.get(ppath);
-       let firstStar = true;
-       let p = ppath;
-       let term = step.wff;
-       while (p != Path.empty) {
+       const ancestors = step.wff.ancestors(ppath).reverse();
+       const target = ancestors[0];
+       for (let i = 1; i < ancestors.length; i++) {
+         const term = ancestors[i];
          if (term.isCall2('/')) {
-           while (p != Path.empty) {
-             term = term.descend(p.segment);
-             // The target term can be on the left or right.
-             if (term === target) {
-               return true;
-             } else if (term.isCall2('*') &&
-                        (firstStar || p.segment === 'left')) {
-               // Continue looking for the target.
-               firstStar = false;
-               p = p.rest;
-             } else {
-               // Requirements are not met.
-               return false;
-             }
-           }
+           return true;
+         } else if (!term.isCall2('*')) {
            return false;
          }
-         // Continue looking for "/".
-         term = term.descend(p.segment);
-         p = p.rest;
        }
        return false;
      },
@@ -1524,13 +1507,14 @@ declare
            path => basePart(thatChain.revGet(path)).sameAs(termBase)
          );
          if (thatIndex >= 0) {
+           // Found a similar term to cancel with it.
+           //
            // Path in other side chain, to a corresponding term.
            const thatChainPath = thosePaths[thatIndex].reverse();
            const moved2 = rules.factorToRightmost(
              moved1,
              divPath.concat(new Path(thatSeg).concat(thatChainPath))
            );
-           // Found a similar term to cancel with it.
            const simplifiers = [
              '(a * c) / (b * d) = (a / b) * (c / d)'
            ];
@@ -1550,11 +1534,11 @@ declare
        }
      },
      inputs: {site: 1},
-     menu: 'algebra: cancel with numerator/denominator',
-     description: 'cancel through division',
+     menu: 'algebra: cancel by division',
+     description: 'cancel by division',
      labels: 'algebra'
     },
-
+       
      
   /**
    * Organize the factors in a term.  Processes multiplication,
@@ -2098,7 +2082,7 @@ declare
                     where: '$.b.isNumeral() && !$.c.isNumeral()'}
                   ];
       var result = applyToFocalPart(step, facts);
-      return result.justify('regroup', arguments, [step]);
+      return result.justify('regroupBy', arguments, [step]);
     },
     inputs: {site: 1, varName: 3},
     form: 'Group terms with variable <input name=varName>',
