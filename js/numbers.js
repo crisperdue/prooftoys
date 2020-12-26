@@ -3308,7 +3308,6 @@ declare(
       .rewrite('/main/left/right', 'neg (neg a) = a')
       .rewrite('/main/right/left', '@a + neg b = a - b');
      },
-    desimplifier: true
    }
 );
 
