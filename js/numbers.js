@@ -471,6 +471,7 @@ declare(
 
      // Lay 11.1d
      {statement: '@ R x & R y => (x * y = 0 == x = 0 | y = 0)',
+      name: 'zeroProduct',
       proof:
       [
        '(1 fact "0=x*0")',
@@ -667,6 +668,17 @@ declare
   {name: 'axiomNextPower',
    statement: '@R x & R y => x ** (y + 1) = (x ** y) * x', axiom: true,
    description: 'real number to the next power'
+  },
+
+  {statement: 'x ** y = x ** (y - 1) * x',
+   name: 'prevPower',
+   proof: function() {
+     return (rules.axiomNextPower()
+             .andThen('instVar', 'y - 1', 'y')
+             .andThen('simplifyAsms')
+             .andThen('simplifySite', 'y - 1 + 1')
+            );
+   }
   },
 
   // TODO: Prove this from x * y = 0 etc by deMorgan's Law.
@@ -1275,8 +1287,9 @@ declare
     labels: 'algebra'
   },
 
-  // In a flattened sequence of additions and subtractions, this
-  // moves all the numeric terms to the end.
+  // In a flattened sequence of additions and subtractions, this moves
+  // all the numeric terms to the end.  This might readily be extended
+  // to organize terms according to the powers of variables in each.
    {name: 'arrangeSum',
     action: function(step, path) {
       var numeralBefore = '$.b.isNumeral() && !$.c.isNumeral()';
@@ -3277,6 +3290,66 @@ declare(
                .andThen('rewrite', 'x ** 4 * x', 'x ** 4 * x = x ** 5'));
      }
    }
+);
+
+declare(
+
+  // TODO: These are all simplifiers, and can be applied to
+  //   their own /right (consequent).  Consequently, . . .
+  //   the simplification must only be applied to /right/right.
+  //   Facts (such as these) need to be marked as inProgress
+  //   when their proof begins, but are currently not.
+    
+  {statement: 'x ** 2 = 0 == x = 0',
+   proof: function() {
+     return (rules.consider('x ** 2 = 0')
+             .rewrite('x ** 2', 'x ** 2 = x * x')
+             .rewrite('x * x = 0', 'x * y = 0 == x = 0 | y = 0')
+             .andThen('simplifySite', '/right/right')
+            );
+   },
+   simplifier: true,
+  },
+
+  {statement: '@R x => (x ** 3 = 0 == x = 0)',
+   name: 'x3',
+   proof: function() {
+     return (rules.consider('x ** 3 = 0')
+             .rewrite('x ** 3', rules.fact('prevPower'))
+             .andThen('simplifySite', '3 - 1')
+             .rewrite('x ** 2 * x = 0', 'zeroProduct')
+             .andThen('simplifySite', '/right/right')
+            );
+   },
+   simplifier: true,
+  },
+
+  {statement: 'x ** 4 = 0 == x = 0',
+   name: 'x4',
+   proof: function() {
+     return (rules.consider('x ** 4 = 0')
+             .rewrite('x ** 4', rules.fact('prevPower'))
+             .andThen('simplifySite', '4 - 1')
+             .rewrite('x ** 3 * x = 0', 'zeroProduct')
+             .andThen('simplifySite', '/right/right')
+            );
+   },
+   simplifier: true,
+  },
+
+  {statement: 'x ** 5 = 0 == x = 0',
+   name: 'x5',
+   proof: function() {
+     return (rules.consider('x ** 5 = 0')
+             .rewrite('x ** 5', rules.fact('prevPower'))
+             .andThen('simplifySite', '5 - 1')
+             .rewrite('x ** 4 * x = 0', 'zeroProduct')
+             .andThen('simplifySite', '/right/right')
+            );
+   },
+   simplifier: true,
+  },
+
 );
 
 // MOVING EXPRESSIONS AROUND
