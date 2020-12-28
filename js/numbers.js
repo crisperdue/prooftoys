@@ -1137,6 +1137,11 @@ Toy.asmSimplifiers.push
    'x != 0 => R (recip x)',
    'x != 0 => recip x != 0',
    'x * y != 0 == x != 0 & y != 0',
+   'x ** 1 = x',
+   'x ** 2 != 0 == x != 0',
+   'x ** 3 != 0 == x != 0',
+   'x ** 4 != 0 == x != 0',
+   'x ** 5 != 0 == x != 0',
    {apply: function(term, cxt) {
        return (isArithmetic(term) &&
                rules.axiomArithmetic(term));
@@ -3294,6 +3299,19 @@ declare(
 
 declare(
 
+  {statement: '(x = y == u = v) == (x != y == u != v)',
+   name: 'neqEquiv',
+   proof: function() {
+     return (rules.consider('x = y == u = v')
+             .rewrite('/right', 'a == b == (not a == not b)')
+             .andThen('simplifySite', '/right'));
+   }
+  },
+
+);
+
+declare(
+
   // TODO: These are all simplifiers, and can be applied to
   //   their own /right (consequent).  Consequently, . . .
   //   the simplification must only be applied to /right/right.
@@ -3301,6 +3319,7 @@ declare(
   //   when their proof begins, but are currently not.
     
   {statement: 'x ** 2 = 0 == x = 0',
+   name: 'x2',
    proof: function() {
      return (rules.consider('x ** 2 = 0')
              .rewrite('x ** 2', 'x ** 2 = x * x')
@@ -3311,7 +3330,14 @@ declare(
    simplifier: true,
   },
 
-  {statement: '@R x => (x ** 3 = 0 == x = 0)',
+  {statement: 'x ** 2 != 0 == x != 0',
+   proof: function() {
+     return rules.fact('x2').rewrite('/main', 'neqEquiv');
+   },
+   simplifier: true,
+  },
+
+  {statement: 'x ** 3 = 0 == x = 0',
    name: 'x3',
    proof: function() {
      return (rules.consider('x ** 3 = 0')
@@ -3320,6 +3346,13 @@ declare(
              .rewrite('x ** 2 * x = 0', 'zeroProduct')
              .andThen('simplifySite', '/right/right')
             );
+   },
+   simplifier: true,
+  },
+
+  {statement: 'x ** 3 != 0 == x != 0',
+   proof: function() {
+     return rules.fact('x3').rewrite('/main', 'neqEquiv');
    },
    simplifier: true,
   },
@@ -3337,6 +3370,13 @@ declare(
    simplifier: true,
   },
 
+  {statement: 'x ** 4 != 0 == x != 0',
+   proof: function() {
+     return rules.fact('x4').rewrite('/main', 'neqEquiv');
+   },
+   simplifier: true,
+  },
+
   {statement: 'x ** 5 = 0 == x = 0',
    name: 'x5',
    proof: function() {
@@ -3346,6 +3386,13 @@ declare(
              .rewrite('x ** 4 * x = 0', 'zeroProduct')
              .andThen('simplifySite', '/right/right')
             );
+   },
+   simplifier: true,
+  },
+
+  {statement: 'x ** 5 != 0 == x != 0',
+   proof: function() {
+     return rules.fact('x5').rewrite('/main', 'neqEquiv');
    },
    simplifier: true,
   },
