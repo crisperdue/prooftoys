@@ -1472,6 +1472,15 @@ declare
      labels: 'algebra'
     },
 
+    {statement: 'x / (b * x) = 1 / b',
+     proof: function() {
+       return (rules.consider('x / (b * x)')
+               .rewrite('b * x', 'x * y = y * x')
+               .rewrite('x / (x * b)', 'x / (x * b) = 1 / b'));
+     },
+     simplifier: true,
+    },
+
     {name: 'cancelFactor',
      precheck: function(step, path_arg) {
        const ppath = step.prettifyPath(step.asPath(path_arg));
