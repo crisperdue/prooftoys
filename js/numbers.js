@@ -2077,8 +2077,14 @@ declare
       var rv = expr.getRight().getNumValue();
       var divisor = Toy.npd(lv, rv, 0);
       var fact = rules.fact('b != 0 & c != 0 => a / b = (a / c) / (b / c)');
-      var step1 = rules.instVar(fact, Toy.numify(divisor), 'c');
-      var result = rules.rewriteOnlyFrom(step, path, step1);
+      const map = {a: expr.getLeft(),
+                   b: expr.getRight(),
+                   c: Toy.numify(divisor)};
+      const fact2 = rules.instMultiVars(fact, map);
+      const fact3 = rules.arithmetic(fact2, '/main/right/right');
+      const fact4 = rules.arithmetic(fact3, '/main/right/left');
+      const replaced = rules.replace(step, path, fact4);
+      const result = rules.simplifyAsms(replaced);
       return result.justify('reduceFraction', arguments, [step]);
     },
     toOffer: function(step, expr) {
@@ -2093,27 +2099,32 @@ declare
       }
     },
     inputs: {site: 1},
-    form: (''),
     menu: 'reduce fraction {term}',
+    description: 'reduce fraction',
     labels: 'algebra'
   },
 
   /**
-   * TODO: This is not working.  Debug, or remove, or whatever.
-   * 
    * Reduces the selected fraction to the form 1/k in the case where
    * the numerator exactly divides the denominator.
    */
-   {name: 'reduceFraction1',
+   {name: 'divideOutFraction',
+    // TODO: Use the reciprocal if needed, then just rules.arithmetic.
     action: function(step, path) {
       var expr = step.get(path);
       var lv = expr.getLeft().getNumValue();
       var rv = expr.getRight().getNumValue();
       var divisor = Math.min(lv, rv);
       var fact = rules.fact('b != 0 & c != 0 => a / b = (a / c) / (b / c)');
-      var step1 = rules.instVar(fact, Toy.numify(divisor), 'c');
-      var result = rules.rewriteOnlyFrom(step, path, step1);
-      return result.justify('reduceFraction1', arguments, [step]);
+      const map = {a: expr.getLeft(),
+                   b: expr.getRight(),
+                   c: Toy.numify(divisor)};
+      const fact2 = rules.instMultiVars(fact, map);
+      const fact3 = rules.arithmetic(fact2, '/main/right/right');
+      const fact4 = rules.arithmetic(fact3, '/main/right/left');
+      const replaced = rules.replace(step, path, fact4);
+      const result = rules.simplifyAsms(replaced);
+      return result.justify('divideOutFraction', arguments, [step]);
     },
     toOffer: function(step, expr) {
       if (expr.isCall2('/')) {
@@ -2122,13 +2133,14 @@ declare
         if (l.isNumeral() && r.isNumeral()) {
           var lv = l.getNumValue();
           var rv = r.getNumValue();
-          return lv % rv === 0 || rv % lv === 0;
+          // This enusres that lv and rv are both nonzero.
+          return lv != 1 && rv != 1 && (lv % rv === 0 || rv % lv === 0);
         }
       }
     },
     inputs: {site: 1},
-    form: (''),
-    menu: 'fully reduce {term}',
+    description: 'divide out fraction',
+    menu: 'divide out {term}',
     labels: 'algebra'
   },
 
