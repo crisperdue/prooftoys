@@ -1542,18 +1542,73 @@ declare
            path => basePart(thatChain.revGet(path)).sameAs(termBase)
          );
          if (thatIndex >= 0) {
+           //
            // Found a similar term to cancel with it.
            //
+           const apply = Toy.applyMatchingFact;
            // Path in other side chain, to a corresponding term.
            const thatChainPath = thosePaths[thatIndex].reverse();
            const moved2 = rules.factorToRightmost(
              moved1,
              divPath.concat(new Path(thatSeg).concat(thatChainPath))
            );
-           const simplifiers = [
-             '(a * c) / (b * d) = (a / b) * (c / d)'
+           const arrangers = [
+             '(a * c) / (b * d) = (a / b) * (c / d)',
+             'c / (b * d) = (1 / b) * (c / d)',
+             '(a * c) / d = a * (c / d)',
+             '(a * c) / (b * d) = (a / b) * (c / d)',
            ];
-           const simpler = rules.simplifySite(moved2, divPath, simplifiers);
+           let simpler = apply(moved2, divPath, arrangers) || moved2;
+           const solo = simpler == moved2;
+
+           // Factors to cancel are now c and d.
+           const cdPath = solo ? divPath : divPath.concat('/right');
+           // Now convert powers (up to 5) into multiplication.
+           const powers = [
+             'x ** 1 = x',
+             'x ** 2 = x * x',
+             'x ** 3 = x * x * x',
+             'x ** 4 = x * x * x * x',
+             'x ** 5 = x * x * x * x * x',
+           ];
+           for (const p1 of ['/left', '/right']) {
+             const p = cdPath.concat(p1);
+             simpler = apply(simpler, p, powers) || simpler;
+           }
+
+           // Cancel out common factors.
+           const cancelers = [
+             'a * x / (b * x) = a / b',
+             'x / (b * x) = 1 / b',
+             'a * x / x = a',
+             'x / x = 1',
+           ];
+           simpler = Toy.repeatedly(simpler, step =>
+                                    apply(step, cdPath, cancelers));
+
+           // Now convert x * x etc. back into exponents.
+           const mults = [
+             'x * x = x ** 2',
+             'x * x * x = x ** 3',
+             'x * x * x * x = x ** 4',
+             'x * x * x * x * x = x ** 5',
+           ];
+           if (simpler.get(cdPath).isCall2('/')) {
+             for (const p1 of ['/left', '/right']) {
+               const p = cdPath.concat(p1);
+               simpler = apply(simpler, p, mults) || simpler;
+             }
+           } else {
+             simpler = apply(simpler, cdPath, mults) || simpler;
+           }
+
+           if (!solo) {
+             simpler = rules.makeRatio(simpler, divPath);
+             simpler = (apply(simpler, divPath.concat('/left'),
+                              [{apply: tryArithmetic}]) ||
+                        simpler);
+           }
+
            return simpler.justify('cancelFactor', arguments, [step]);
 
            // Move that one all the way to the right.
