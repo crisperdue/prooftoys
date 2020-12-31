@@ -1472,7 +1472,15 @@ declare
      labels: 'algebra'
     },
 
-    {statement: 'x / (b * x) = 1 / b',
+    {statement: 'b != 0 & d != 0 => c / (b * d) = 1 / b * (c / d)',
+     proof: function() {
+       return (rules.consider('c / (b * d)')
+               .rewrite('c', 'x = 1 * x')
+               .rewrite('/main/right', 'a * c / (b * d) = a / b * (c / d)'));
+     }
+    },
+
+    {statement: 'x != 0 & b != 0 => x / (b * x) = 1 / b',
      proof: function() {
        return (rules.consider('x / (b * x)')
                .rewrite('b * x', 'x * y = y * x')
