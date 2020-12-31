@@ -1556,7 +1556,6 @@ declare
              '(a * c) / (b * d) = (a / b) * (c / d)',
              'c / (b * d) = (1 / b) * (c / d)',
              '(a * c) / d = a * (c / d)',
-             '(a * c) / (b * d) = (a / b) * (c / d)',
            ];
            let simpler = apply(moved2, divPath, arrangers) || moved2;
            const solo = simpler == moved2;
@@ -2969,12 +2968,6 @@ declare(
 declare(
   // Reciprocal facts
 
-   {statement: 'a != 0 => recip a * a = 1',
-    proof: function() {
-      return rules.fact('x * recip x = 1')
-      .rewrite('/main/left', 'a * b = b * a');
-    }
-  },
    {statement: 'x != 0 => recip x != 0',
     proof: function() {
       var step2 = rules.fact('1 != 0');
