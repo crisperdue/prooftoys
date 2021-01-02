@@ -725,6 +725,11 @@ declare
     // ordering laws.
   },
 
+   {name: 'realDivNonzero',
+    statement: '@R x & x !=0 => x / y != 0',
+    // TODO: Prove this.
+   },
+
   {name: 'realRecipClosed',
     statement: '@ x != 0 & R x => R (recip x)',
     simplifier: true,
@@ -1128,6 +1133,8 @@ Toy.asmSimplifiers.push
    'R (x * y)',
    'R (x - y)',
    'y != 0 => R (x / y)',
+   'R x & R y & y != 0 => R (x / y)',
+   '@R x & x != 0 => x / y != 0',
    'x != 0 => x / x = 1',
    'R (neg x)',
    'R (x ** 2)',
