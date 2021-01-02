@@ -1776,7 +1776,7 @@ declare(
   // Replace part of a target step with T if it matches a proved step
   // (trueby0) or the consequent of a proved conditional (trueBy1),
   // taking the proved step as a schema.  These do not simplify
-  // assumptions.
+  // assumptions.  TODO: Really? Check on this for trueBy1.
   {name: 'trueBy0',
     action: function(target, path, step) {
       const term = target.get(path);
@@ -2050,6 +2050,7 @@ declare(
   // Given two theorems a1 => a and a2 => b, proves a1 & a2 => a & b.
   // If either theorem is unconditional, omits a1 or a2 or both
   // accordingly.
+  // TODO: Replace usage with trueBy1, and remove this.
   {name: 'makeConjunction',
     action: function(a, b) {
       var stepa = rules.rewriteOnly(a, '/rt', 'a == (T == a)');
@@ -2591,6 +2592,7 @@ declare(
   //
   // Introducing a T wherever desired, then substituting a theorem,
   // with or without assumptions, may be a more effective approach.
+  // That appears to be to introduce T then use trueBy0.
   {name: 'and',
     action: function(step1, step2) {
       return (rules.replaceT0(rules.tautology('T & T'), '/right', step2)
