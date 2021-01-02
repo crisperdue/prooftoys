@@ -4727,38 +4727,41 @@ declare(
 declare
     ({statement: '(==) = {a. {b. if a b (not b)}}',
       proof:
-      [`(1 given
-           (t (forall {a. (forall {b. ((a == b) == ((if a b) (not b)))})})))`,
+      [
+       `(1 given
+         (t (forall {a. (forall {b. ((a == b) == ((if a b) (not b)))})})))`,
        `(2 rewrite (s 1) (path "/main/right/arg/body")
-           (t ((forall {a. (g a)}) == ((g T) & (g F)))))`,
+         (t ((forall {a. (g a)}) == ((g T) & (g F)))))`,
        `(3 rewrite (s 2) (path "/main/right")
-           (t ((forall {a. (g a)}) == ((g T) & (g F)))))`,
+         (t ((forall {a. (g a)}) == ((g T) & (g F)))))`,
        `(4 reduceAll (s 3) (path "/main/right"))`,
        `(5 rewrite (s 4) (path "/main/right/right/right/right")
-           (t (((if F x) y) = y)))`,
+         (t (((if F x) y) = y)))`,
        `(6 rewrite (s 5) (path "/main/right/right/right/right")
-           (t ((not F) == T)))`,
+         (t ((not F) == T)))`,
        `(7 rewrite (s 6) (path "/main/right/right/left/right")
-           (t (((if F x) y) = y)))`,
+         (t (((if F x) y) = y)))`,
        `(8 rewrite (s 7) (path "/main/right/right/left/right")
-           (t ((not T) == F)))`,
+         (t ((not T) == F)))`,
        `(9 rewrite (s 8) (path "/main/right/left/right/right")
-           (t (((if T x) y) = x)))`,
+         (t (((if T x) y) = x)))`,
        `(10 rewrite (s 9) (path "/main/right/left/left/right")
-            (t (((if T x) y) = x)))`,
+         (t (((if T x) y) = x)))`,
        `(11 fact "x = x == T")`,
        `(12 fact "T == F == F")`,
        `(13 fact "F == T == F")`,
-       `(14 trueBy0 (s 10) (path "/main/right/right/right") (s 11))`,
-       `(15 trueBy0 (s 14) (path "/main/right/right/left") (s 13))`,
-       `(16 trueBy0 (s 15) (path "/main/right/left/right") (s 12))`,
-       `(17 trueBy0 (s 16) (path "/main/right/left/left") (s 11))`,
-       `(18 simplifySiteWith (s 17) (path "/right") (t ((T & T) == T)))`,
-       `(19 rewrite (s 18) (path "") (t ((x == T) == x)))`,
-       `(20 rewrite (s 19) (path "/main/arg/body")
-           (t ((forall {x. ((f x) = (g x))}) == (f = g))))`,
-       `(21 rewrite (s 20) (path "/main")
-            (t ((forall {x. ((f x) = (g x))}) == (f = g))))`
+       `(14 instantiateVar (s 11) (path "/main/left/left") (t T))`,
+       `(15 instantiateVar (s 11) (path "/main/left/left") (t F))`,
+       `(16 trueBy0 (s 10) (path "/main/right/right/right") (s 15))`,
+       `(17 trueBy0 (s 16) (path "/main/right/right/left") (s 13))`,
+       `(18 trueBy0 (s 17) (path "/main/right/left/right") (s 12))`,
+       `(19 trueBy0 (s 18) (path "/main/right/left/left") (s 14))`,
+       `(20 simplifySiteWith (s 19) (path "/main/right") (t ((T & T) == T)))`,
+       `(21 rewrite (s 20) (path "") (t ((x == T) == x)))`,
+       `(22 rewrite (s 21) (path "/main/arg/body")
+         (t ((forall {x. ((f x) = (g x))}) == (f = g))))`,
+       `(23 rewrite (s 22) (path "/main")
+         (t ((forall {x. ((f x) = (g x))}) == (f = g))))`
       ]});
   
 declare(
