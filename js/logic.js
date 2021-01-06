@@ -1776,13 +1776,19 @@ declare(
   // Replace part of a target step with T if it matches a proved step
   // (trueby0) or the consequent of a proved conditional (trueBy1),
   // taking the proved step as a schema.  These do not simplify
-  // assumptions.  TODO: Really? Check on this for trueBy1.
+  // assumptions.
+  //
+  // The target term is the schema!
   {name: 'trueBy0',
     action: function(target, path, step) {
       const term = target.get(path);
-      if (term.matchSchema(step)) {
+      const map = step.wff.matchSchema(term);
+      if (map) {
         const step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
-        let result = rules.rewriteOnlyFrom(target, path, step2);
+        // TODO: Change this use of r1 to a new form of rewrite
+        //   that substitutes into "step", using something like
+        //   rules.matchTerm in the process.
+        let result = rules.r1(target, path, step2);
         return result.justify('trueBy0', arguments, [target, step]);
       }
       assert(false, 'Term {1} does not match {2}',
@@ -1799,13 +1805,21 @@ declare(
 
   // Requires a conditional step, matching its consequent with
   // the target site and adding assumptions to the target step.
+  //
+  // The target term is the schema!
   {name: 'trueBy1',
     action: function(target, path, step) {
-      const term = target.get(path);
-      if (step.isCall2('=>') && term.matchSchema(step.getRight())) {
-        const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
-        const result = rules.rewriteFrom(target, path, step2);
-        return result.justify('trueBy1', arguments, [target, step]);
+      if (step.isCall2('=>')) {
+        const term = target.get(path);
+        const map = step.getRight().matchSchema(term);
+        if (map) {
+          const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
+          // TODO: Change this "replace" basically as described for
+          //   trueBy0, with the additional possibility that variable
+          //   bindings may prevent the substitution.
+          const result = rules.replace(target, path, step2);
+          return result.justify('trueBy1', arguments, [target, step]);
+        }
       }
       assert(false, 'Term {1} does not match {2}',
              target.get(path), step);
@@ -3603,11 +3617,13 @@ declare(
 
   // Version of Andrews Rule R' that uses a conditional rather than
   // hypotheses.  Uses a potentially conditional equation to replace a
-  // term in a target step.
+  // term in a target step.  Replaces the target as done by r1, and
+  // describing the inputs as A => B = C, and D, produces a result
+  // that is schematically A => D', where D' is like D, with an
+  // occurrence of B replaced by C.
   //
-  // TODO: Instead of calling arrangeAsms here, leave the equation's
-  //   assumptions alone, and effectively perform arrangeAsms as part
-  //   of rewriting.  (Check all uses of arrangeAsms elsewhere.)
+  // The "replace" rule (below) also merges any assumptions of D with
+  // the new assumptions A using arrangeAsms.
   {name: 'r2',
     action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
@@ -3797,12 +3813,12 @@ function canRewrite(step, path, eqn_arg) {
   // If given an equation or conditional equation, this is its
   // LHS.  Otherwise if given a conditional, the RHS, otherwise
   // the argument itself.
-  const matchPart = (eqn_arg.isEquation()
-                     ? eqn_arg.eqnLeft()
-                     : eqn_arg.isCall2('=>')
-                     ? eqn_arg.getRight()
-                     : eqn_arg);
-  return expr.findSubst(matchPart);
+  const schemaPart = (eqn_arg.isEquation()
+                      ? eqn_arg.eqnLeft()
+                      : eqn_arg.isCall2('=>')
+                      ? eqn_arg.getRight()
+                      : eqn_arg);
+  return expr.findSubst(schemaPart);
 }
 
 declare(
@@ -3852,6 +3868,9 @@ declare(
       let simpler = rules.instMultiVars(equation, map);
       // Now (back)reduce applications of newly-substituted Lambda terms,
       // normally to just a variable, simplifying the result.
+      //
+      // TODO: Consider making this computation sensitive to
+      // %expansions (in the map).
       funSites.forEach(function(rPaths) {
           rPaths.forEach(function (rPath) {
               for (let r = rPath; r.segment === 'fn'; r = r.rest) {
