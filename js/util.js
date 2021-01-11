@@ -631,7 +631,8 @@ function removeAll(map1, map2) {
 
 /**
  * Removes from the first map (plain object) all entries that are not
- * "own" properties of the second map.
+ * "own" properties of the second map, keeping only entries for keys
+ * that appear in both.
  */
 function removeExcept(map1, map2) {
   for (var k in map1) {

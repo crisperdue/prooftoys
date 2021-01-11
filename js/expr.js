@@ -623,7 +623,12 @@ Expr.prototype.matchPattern = function(pattern_arg) {
  *   when not appropriate.  Perhaps review code that uses this.  The
  *   current assumption seems to be that if the schema may need
  *   higher-order matching and then substitution, it is used within a
- *   rewrite.
+ *   rewrite, and rewrites do any reductions that may be needed
+ *   following the substitution.
+ *
+ *   Perhaps a better option would be to include the reductions as
+ *   part of the substitution operation, as indicated by the extended
+ *   information (%expansions) in the computed substitution.
  */
 Expr.prototype.matchSchema = function(schema_arg) {
   const schema = schema_arg instanceof Expr ? schema_arg : parse(schema_arg);
@@ -2748,6 +2753,7 @@ Call.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
     return bindings;
   } else {
+    // TODO: Use Expr.descend.
     var segment = path.segment;
     var rest = path.rest;
     if (this.fn instanceof Call) {

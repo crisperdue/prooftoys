@@ -1778,7 +1778,7 @@ declare(
   // taking the proved step as a schema.  These do not simplify
   // assumptions.
   //
-  // The target term is the schema!
+  // The target term is the schema here.
   {name: 'trueBy0',
     action: function(target, path, step) {
       const term = target.get(path);
@@ -3869,8 +3869,9 @@ declare(
       // Now (back)reduce applications of newly-substituted Lambda terms,
       // normally to just a variable, simplifying the result.
       //
-      // TODO: Consider making this computation sensitive to
-      // %expansions (in the map).
+      // TODO: Generate fixups while generating the substitution they
+      //   are to follow; e.g. list of paths to backReduce, each with
+      //   a count.
       funSites.forEach(function(rPaths) {
           rPaths.forEach(function (rPath) {
               for (let r = rPath; r.segment === 'fn'; r = r.rest) {
