@@ -1254,8 +1254,8 @@ Expr.prototype.revGet = function(rpath) {
 
 /**
  * Converts the argument into a path within this Expr.  Given a Path
- * or path string, this adjusts leading occurrences of "/main" or
- * "/rt" based on the structure of this Expr.
+ * or path string, this adjusts leading occurrences of "/main" based
+ * on the structure of this Expr.
  * 
  * If the argument is a string either empty or beginning with "/",
  * parses it into a Path object; otherwise treats a string as an Expr,
@@ -1266,7 +1266,7 @@ Expr.prototype.revGet = function(rpath) {
  * a subterm that is sameAs, if a function, a subterm satisfying it.
  *
  * Returns the resulting Path object, which will not start with a
- * /main or /rt segment.
+ * /main segment.
  */
 Expr.prototype.asPath = function(arg) {
   const self = this;

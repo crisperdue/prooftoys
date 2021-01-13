@@ -637,12 +637,10 @@ declare(
       assertEqn(equation);
       const inputs = [equation];
       if (equation.isCall2('=>')) {
-        // const bound = equation.get('/rt/right/arg/bound');
         return (equation.andThen('rewriteOnly', '/right', rules.axiom3())
                 .andThen('unForall', '/right')
                 .justify('reduceEqn', inputs, inputs));
       } else {
-        // const bound = equation.get('/right/arg/bound');
         return (equation.andThen('rewriteOnly', '', rules.axiom3())
                 .andThen('unForall', '')
                 .justify('reduceEqn', inputs, inputs));
@@ -900,12 +898,12 @@ declare(
       var c = termify(c_arg);
       var fn = call(call(termify('{f. {y. {x. f x y}}}'), f), c);
       return (rules.applyToBoth(fn, a_b)
-              .andThen('reduce', '/rt/right/fn/fn')
-              .andThen('reduce', '/rt/right/fn')
-              .andThen('reduce', '/rt/right')
-              .andThen('reduce', '/rt/left/fn/fn')
-              .andThen('reduce', '/rt/left/fn')
-              .andThen('reduce', '/rt/left')
+              .andThen('reduce', '/main/right/fn/fn')
+              .andThen('reduce', '/main/right/fn')
+              .andThen('reduce', '/main/right')
+              .andThen('reduce', '/main/left/fn/fn')
+              .andThen('reduce', '/main/left/fn')
+              .andThen('reduce', '/main/left')
               .justify('applyToBothWith', arguments, [a_b]));
     },
   },
@@ -1165,7 +1163,6 @@ declare(
                   // TODO: Handle cases where the target is unconditional.
                   (conditional
                    ? (pathStr === '/right' ||
-                      pathStr === '/rt' ||
                       pathStr === '/main' ||
                       pathStr === '/arg')
                    : (pathStr === '' ||
@@ -1211,7 +1208,6 @@ declare(
                   // TODO: Handle cases where the target is unconditional.
                   (conditional
                    ? (pathStr === '/right' ||
-                      pathStr === '/rt' ||
                       pathStr === '/main' ||
                       pathStr === '/arg')
                    : (pathStr === '' ||
@@ -1222,12 +1218,12 @@ declare(
       const expr = termify(expr_arg);
       const eqn1 = rules.useDefinition(step, path);
       var step2 = rules.applyBoth(eqn1, expr);
-      var step3 = rules.reduce(step2, '/rt/left');
-      var step4 = rules.reduce(step3, '/rt/right');
+      var step3 = rules.reduce(step2, '/main/left');
+      var step4 = rules.reduce(step3, '/main/right');
       // The conditional form of this rule uses the conditional
       // form of rules.replace.
       var step5 = (step.isCall2('=>')
-                   ? rules.rewriteOnly(step4, '/rt', '(T == a) == a')
+                   ? rules.rewriteOnly(step4, '/main', '(T == a) == a')
                    : rules.fromTIsA(step4));
       return step5.justify('instForall', arguments, [step]);
     },
@@ -1556,9 +1552,9 @@ declare(
       var _path = Toy.path;
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.repeatedly(eqn, function(eqn) {
-          // This usage of /rt is kind of cool in that it automatically
+          // This usage of /main is kind of cool in that it automatically
           // adapts in case some versions of eqn have assumptions.
-          return rules._simplifyOnce(eqn, _path('/rt/right', eqn), opt_facts);
+          return rules._simplifyOnce(eqn, _path('/main/right', eqn), opt_facts);
         });
       return rules.replace(step, path, simpler);
     }
@@ -1745,7 +1741,7 @@ declare(
     action: function(step, path, step2) {
       assert(step.get(path).isConst('T'),
              'Site should be T, not {1}', step.get(path));
-      const eqn = rules.rewrite(step2, '/rt', 'x == (T == x)');
+      const eqn = rules.rewrite(step2, '/main', 'x == (T == x)');
       return (rules.rewriteFrom(step, path, eqn)
               .justify('replaceT', arguments, [step, step2]));
     },
@@ -2067,11 +2063,11 @@ declare(
   // TODO: Replace usage with trueBy1, and remove this.
   {name: 'makeConjunction',
     action: function(a, b) {
-      var stepa = rules.rewriteOnly(a, '/rt', 'a == (T == a)');
-      var stepb = rules.rewriteOnly(b, '/rt', 'a == (T == a)');
+      var stepa = rules.rewriteOnly(a, '/main', 'a == (T == a)');
+      var stepb = rules.rewriteOnly(b, '/main', 'a == (T == a)');
       var step1 = rules.theorem('r5212');
       var step2 = rules.rewriteFrom(step1, '/left', stepa);
-      var step3 = rules.rewriteFrom(step2, '/rt/right', stepb);
+      var step3 = rules.rewriteFrom(step2, '/main/right', stepb);
       // TODO: Consider whether this really needs to arrangeAsms
       //   explicitly.
       return (step3.andThen('arrangeAsms')
@@ -3855,7 +3851,7 @@ declare(
                       ? eqn_arg
                       // Coerce to an equation.
                       : eqn_arg.andThen('rewriteOnly',
-                                        '/rt', 'a == (a == T)'));
+                                        '/main', 'a == (a == T)'));
 
       // TODO: Consider moving much of this below here to
       //   rules.matchTerm and using that here.

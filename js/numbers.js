@@ -911,7 +911,7 @@ declare
       var step8 = rules.assumed(step7, loc7);
       var loc8 = Toy.path('/right').concat(step8.getRight().find('(R y)'));
       var step9 = rules.assumed(step8, loc8);
-      var step10 = rules.simplifySite(step9, '/rt/left');
+      var step10 = rules.simplifySite(step9, '/main/left');
       return step10;
     }
   }
@@ -2491,7 +2491,7 @@ declare(
     simplifier: true,
     proof: function() {
       var step1 = rules.plusZero();
-      var step2 = rules.rewrite(step1, '/rt/left',
+      var step2 = rules.rewrite(step1, '/main/left',
                                 'a + b = b + a');
       return step2;
     }
@@ -2519,7 +2519,7 @@ declare(
     simplifier: true,
     proof: function() {
       var step1 = rules.timesOne();
-      var step2 = rules.rewrite(step1, '/rt/left',
+      var step2 = rules.rewrite(step1, '/main/left',
                                 'a * b = b * a');
       return step2;
     }
@@ -2764,10 +2764,10 @@ declare(
     proof: function() {
       var fact = rules.axiomArithmetic('1 / -1');
       return (rules.consider('a / -1')
-              .rewrite('/rt/right/left', 'a = a * 1')
-              .rewrite('/rt/right', 'a * b / c = a * (b / c)')
-              .rewrite('/rt/right/right', fact)
-              .rewrite('/rt/right', 'a * b = b * a'));
+              .rewrite('/main/right/left', 'a = a * 1')
+              .rewrite('/main/right', 'a * b / c = a * (b / c)')
+              .rewrite('/main/right/right', fact)
+              .rewrite('/main/right', 'a * b = b * a'));
     }
   },
    {statement: 'b != 0 => neg (a / b) = neg a / b',
@@ -3247,8 +3247,8 @@ declare(
   {statement: 'b != 0 & c != 0 => a / (b * c) = 1 / c * (a / b)',
     proof: function() {
       return (rules.consider('a / (b * c)')
-              .rewrite('/rt/right/left', 'a = a * 1')
-              .rewrite('/rt/right', 'a * b / (c * d) = (b / d) * (a / c)'));
+              .rewrite('/main/right/left', 'a = a * 1')
+              .rewrite('/main/right', 'a * b / (c * d) = (b / d) * (a / c)'));
     }
   },
   // Distributivity:

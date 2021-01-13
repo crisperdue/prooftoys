@@ -145,10 +145,9 @@ Path.prototype.getLeft = function() {
 };
 
 /**
- * Converts a path with fancy segments right, left, binop,
- * rt, and main into one with just the basic ones.  If the
- * optional argument is truthy, treat initial /rt and /main
- * as for a conditional.
+ * Converts a path with fancy segments right, left, binop, rt, and
+ * main into one with just the basic ones.  If the optional argument
+ * is truthy, treat initial /main as for a conditional.
  */
 Path.prototype.uglify = function(opt_isImplies) {
   const segments = [];
@@ -279,9 +278,7 @@ Path.prototype.last = function() {
 /**
  * Does the path refer to an expression on the right side of an infix
  * operator?  The given path must be applicable to a call to an infix
- * operator.  This does not handle /main, nor /rt.
- *
- * TODO: Change this when changing the meaning of infix.
+ * operator.  This does not handle /main.
  */
 Path.prototype.isRight = function() {
   return this.segment == 'right' || this.segment == 'arg';
