@@ -1508,6 +1508,9 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
  *
  * This traces through the path exactly as given, so if the path uses
  * segments such as /left or /binOp, it will skip terms in the result.
+ *
+ * TODO: Use Expr.descend to traverse the path rather than recursive
+ *   calls to Expr._ancestors.
  */
 Expr.prototype.ancestors = function(path_arg) {
   var p = path(path_arg, this);
