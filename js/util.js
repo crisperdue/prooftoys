@@ -496,9 +496,39 @@ Toy.alert = function(message) {
   }
 }
 
+/**
+ * Creates a proxy for the given object that allows no access to
+ * properties; no getting, setting, deleting, or defining properties,
+ * and no method calls.  Only <proxy>.$locked$ is available, which
+ * retrieves the locked object.
+ * 
+ * Useful for constructing "error objects" that can be returned in
+ * error situations, that resist any use as a normally returned
+ * object.
+ */
+function locked(obj) {
+  const toss = (..._) => { throw new Error('Locked'); };
+  const handler = {
+    get: function(target, key, receiver) {
+      if (key==='$locked$') {
+        return obj;
+      } else {
+        toss();
+      }
+    },
+    set: toss,
+    defineProperty: toss,
+    deleteProperty: toss
+  };
+  return new Proxy(obj, handler);
+}
+
 /*
  * Constructs and returns a proxy that enters the debugger
  * in case of access to a nonexistent object property.
+ *
+ * TODO: Can't work 100%, and method calls need additional
+ *   support, returning a function with obj "baked in".
  */ 
 function makeGetterProxy(obj) {
   let handler = {
@@ -2278,6 +2308,7 @@ Toy.assertTrue = assertTrue;
 Toy.debugAssertions = true;
 Toy.assert = assert;
 Toy.debugString = debugString;
+Toy.locked = locked;
 Toy.makeGetterProxy = makeGetterProxy;
 
 Toy.isEmpty = isEmpty;
