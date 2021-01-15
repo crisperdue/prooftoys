@@ -297,13 +297,13 @@ var testCase = {
 
   // Control flow
 
-  testReturnFrom: function() {
-    assertEqual(6, Toy.returner(target => 6));
+  testExits: function() {
+    assertEqual(6, Toy.withExit(target => 6));
     const items = [];
-    const result = Toy.returner(target => {
+    const result = Toy.withExit(target => {
         function inflate(n) {
           if (n >= 10) {
-            Toy.returnFrom(target, n);
+            Toy.exitFrom(target, n);
           } else {
             items.push(n);
             inflate(n+1);
@@ -313,9 +313,9 @@ var testCase = {
       });
     assertEqual(10, result);
     assertEqual([7, 8, 9], items);
-    const target = Toy.returner(target => target);
+    const target = Toy.withExit(target => target);
     try {
-      Toy.returnFrom(target, 22);
+      Toy.exitFrom(target, 22);
       assert(false);
     } catch(e) {
       // Check that e looks like a ReturnTarget.

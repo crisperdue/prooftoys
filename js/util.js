@@ -787,8 +787,8 @@ function Result(value) {
 /**
  * Call the given function with the given arguments, returning the
  * undefined value if the function throws, else the value returned
- * from the function call.  Does not interfere with returnFrom
- * and returner.
+ * from the function call.  Does not interfere with exitFrom
+ * and withExit.
  *
  * Intended for enforcing planned control flow even when unknown
  * problems may occur.  For recovery from specific problems consider
@@ -825,10 +825,10 @@ let returnValue = undefined;
 
 /**
  * Return the given value from the given return target, created by a
- * call to Toy.returner.  The computation started by the returner must
+ * call to Toy.withExit.  The computation started by withExit must
  * still be in progress.
  */
-function returnFrom(target, value) {
+function exitFrom(target, value) {
   if (activeTargets.includes(target)) {
     returnTarget = target;
     returnValue = value;
@@ -842,12 +842,12 @@ function returnFrom(target, value) {
 }
 
 /**
- * Starts a computation that can be aborted by a call to returnFrom.
+ * Starts a computation that can be aborted by a call to exitFrom.
  * Calls the given function, passing it a return Target object.
  * During the computation, if that Target object is passed to
- * returnFrom, returner returns the value passed to returnFrom.
+ * exitFrom, withExit returns the value passed to exitFrom.
  */
-function returner(fn) {
+function withExit(fn) {
   const target = new ReturnTarget();
   activeTargets.push(target);
   try {
@@ -2329,8 +2329,8 @@ Toy.sortMap = sortMap;
 
 Toy.Result = Result;
 Toy.normalReturn = normalReturn;
-Toy.returnFrom = returnFrom;
-Toy.returner = returner;
+Toy.exitFrom = exitFrom;
+Toy.withExit = withExit;
 Toy.catchAll = catchAll;
 Toy.thrown = null;
 

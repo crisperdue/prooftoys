@@ -1422,12 +1422,12 @@ declare
        ];
        let result = Toy.repeatedly
        (step_arg, step => 
-        Toy.returner(
-          target => {
+        Toy.withExit(
+          exit => {
             function walkMulDiv(term, path) {
               const next = Toy.applyMatchingFact(step, path, facts);
               if (next) {
-                Toy.returnFrom(target, next);
+                Toy.exitFrom(exit, next);
               }
               const mulDiv = [
                 {match: 'a * b', a: walkMulDiv, b: walkMulDiv},
@@ -3609,13 +3609,13 @@ function termGetRightVariable(term) {
  */
 function varFactorCounts(term) {
   var info = {};
-  const status = Toy.returner(target => {
+  const status = Toy.withExit(exit => {
     function mustBeVariable(expr, revPath) {
       if (expr.isVariable()) {
         var value = info[expr.name] || 0;
         info[expr.name] = value + 1;
       } else if (!expr.isConst()) {
-        Toy.returnFrom(target, false);
+        Toy.exitFrom(exit, false);
       }
     }
     function addCounts(expr, revPath) {

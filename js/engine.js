@@ -1565,7 +1565,7 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
   var factLists = context.factLists;
   var subst;
   if ((subst = expr.matchSchema(schema))) {
-    return Toy.returner(target => {
+    return Toy.withExit(exit => {
         // Checks if the given term of the schema matches some fact in
         // the appropriate factsList.  Only schema variables are
         // eligible to match.
@@ -1580,7 +1580,7 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
             findMatchingFact(list, context, expr.get(revPath.reverse()));
           if (result) {
             result.path = revPath.reverse().concat(result.path);
-                Toy.returnFrom(target, result);
+                Toy.exitFrom(exit, result);
           }
         }
       }
