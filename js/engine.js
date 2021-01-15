@@ -234,7 +234,7 @@ var ruleMethods = {
     arguments[0] = this;
     var rule = rules[nm];
     assert(rule, 'No rule with name "{1}"', nm);
-    var result = rule.apply(null, arguments);
+    var result = rule.apply(rules, arguments);
     return result;
   },
       
