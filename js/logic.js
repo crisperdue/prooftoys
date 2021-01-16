@@ -1948,13 +1948,7 @@ declare(
     precheck: function(step, v_arg) {
       var v = varify(v_arg);
       var format = Toy.format;
-      if (!step.isCall2('=>')) {
-        this.failure = format('Not a conditional: {1}', step);
-      }
-      if (step.getLeft().hasFreeName(v.name)) {
-        this.failure = format('{1} occurs free in LHS of {2}', v.name, step);
-      }
-      return !this.failure;
+      return (step.isCall2('=>') && !(step.getLeft().hasFreeName(v.name)));
     },
     action: function(step, v_arg) {
       const v = varify(v_arg);
