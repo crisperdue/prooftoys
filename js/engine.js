@@ -346,7 +346,8 @@ var rules = {};
 //   its inputs based on its input descriptor.  For each of these
 //   define a rule 'fast_' + name to be the simplest form.
 //
-// data: If a rule has a "data" property, set rules[ruleName] to a
+// data: TODO: obsolete, remove this.
+//   If a rule has a "data" property, set rules[ruleName] to a
 //   wrapper function that runs the user-written action function with
 //   "this" bound to the wrapper and the "data" object as the "data"
 //   property of "this".  If the value of the info data property is a

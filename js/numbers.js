@@ -1269,27 +1269,27 @@ declare
   // Uses the associative law to "flatten" an expression made
   // up of additions and subtractions.
    {name: 'flattenSum',
-    data: {flatteners: [
-           {stmt: 'a + (b + c) = a + b + c'},
-           {stmt: 'a + (b - c) = a + b - c'},
-           {stmt: 'a - (b + c) = a - b - c'},
-           {stmt: 'a - (b - c) = a - b + c'},
-           {descend:
-            {schema: 'a + b',
-             parts: {a: 'flatteners', b: 'flatteners'}}},
-           {descend:
-            {schema: 'a - b',
-             parts: {a: 'flatteners', b: 'flatteners'}}}]
-    },
-    action: function(step, path) {
-      var context = {factLists: {flatteners: this.data.flatteners}};
+    action: function(data, step, path) {
+      var context = {factLists: {flatteners: data.flatteners}};
       return convert(step, path, function(expr) {
           var arrangeRhs = Toy.arrangeRhs;
           var eqn = rules.consider(step.get(path));
           var flat = arrangeRhs(eqn, context, 'flatteners');
           return flat;
         }).justify('flattenSum', arguments, [step]);
-    },
+    }.bind(null,
+           {flatteners: [
+             {stmt: 'a + (b + c) = a + b + c'},
+             {stmt: 'a + (b - c) = a + b - c'},
+             {stmt: 'a - (b + c) = a - b - c'},
+             {stmt: 'a - (b - c) = a - b + c'},
+             {descend:
+              {schema: 'a + b',
+               parts: {a: 'flatteners', b: 'flatteners'}}},
+             {descend:
+              {schema: 'a - b',
+               parts: {a: 'flatteners', b: 'flatteners'}}}]
+           }),
     inputs: {site: 1},
     toOffer: function(step, term) {
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
@@ -1345,24 +1345,23 @@ declare
    * a term of * and /.
    */
    {name: 'denegateTerm',
-      data:
-      {context:
-       {factLists:
-	{denegaters:
-         [{stmt: 'neg a = -1 * a'},
-	  {descend:
-           {schema: 'a * b',
-            parts: {a: 'denegaters', b: 'denegaters'}}},
-          {descend:
-           {schema: 'a / b',
-            parts: {a: 'denegaters', b: 'denegaters'}}}
-	 ]}
-       }
-      },
-      action: function denegateTerm(step, path) {
+      action: function denegateTerm(data, step, path) {
         let eqn = rules.consider(step.get(path));
-        return Toy.arrangeRhs(eqn, this.data.context, 'denegaters');
-      }
+        return Toy.arrangeRhs(eqn, data.context, 'denegaters');
+      }.bind(null,
+             {context:
+              {factLists:
+	       {denegaters:
+                [{stmt: 'neg a = -1 * a'},
+	         {descend:
+                  {schema: 'a * b',
+                   parts: {a: 'denegaters', b: 'denegaters'}}},
+                 {descend:
+                  {schema: 'a / b',
+                   parts: {a: 'denegaters', b: 'denegaters'}}}
+	        ]}
+              }
+             })
    },
 
   /**
@@ -1371,23 +1370,8 @@ declare
    * parentheses, traversing uses of "*" and "/".
    */
    {name: 'flattenTerm',
-    data: {flatteners: [
-        {stmt: 'a * (b * c) = a * b * c'},
-        {stmt: 'a * (b / c) = a * b / c'},
-        {stmt: 'a / (b * c) = a / b / c'},
-        {stmt: 'a / (b / c) = a / b * c'},
-        // TODO: Support the following style, like in walkPatterns,
-        //   and convert uses of "descend" to it.
-        // {match: 'a * b', a: 'flatteners'},
-        {descend:
-         {schema: 'a * b',
-          parts: {a: 'flatteners', b: 'flatteners'}}},
-        {descend:
-         {schema: 'a / b',
-          parts: {a: 'flatteners'}}}
-    ]},
-    action: function flattenTerm(step, path) {
-      var context = {factLists: {flatteners: this.data.flatteners}};
+    action: function flattenTerm(data, step, path) {
+      var context = {factLists: {flatteners: data.flatteners}};
       return convert(step, path, function(expr) {
           var arrangeRhs = Toy.arrangeRhs;
           var eqn = rules.consider(step.get(path));
@@ -1395,7 +1379,22 @@ declare
           var flat = arrangeRhs(noneg, context, 'flatteners');
           return flat;
         }).justify('flattenTerm', arguments, [step]);
-    },
+    }.bind(null,
+           {flatteners: [
+             {stmt: 'a * (b * c) = a * b * c'},
+             {stmt: 'a * (b / c) = a * b / c'},
+             {stmt: 'a / (b * c) = a / b / c'},
+             {stmt: 'a / (b / c) = a / b * c'},
+             // TODO: Support the following style, like in walkPatterns,
+             //   and convert uses of "descend" to it.
+             // {match: 'a * b', a: 'flatteners'},
+             {descend:
+              {schema: 'a * b',
+               parts: {a: 'flatteners', b: 'flatteners'}}},
+             {descend:
+              {schema: 'a / b',
+               parts: {a: 'flatteners'}}}
+           ]}),
     inputs: {site: 1},
     menu: 'algebra: flatten {term}',
     description: 'flatten term;; {in step siteStep}',
@@ -1647,7 +1646,57 @@ declare
    * Inline, for internal use.
    */
    {name: 'arrangeRational',
-    data: function() {
+    toOffer: function(step, expr) {
+      return (expr.matchSchema('a * b') ||
+              expr.matchSchema('a / b') ||
+              expr.matchSchema('neg (a * b)') ||
+              expr.matchSchema('neg (a / b)'));
+    },
+    action: function arrangeRational(data, step, path, numsLeft) {
+      var context = data.context;
+      var arrangeRhs = Toy.arrangeRhs;
+      var numMovers = numsLeft ? 'numLeftMovers' : 'numRightMovers';
+      return convert(step, path, function(expr) {
+          var infix = Toy.infixCall;
+          var eqn = rules.consider(expr);
+          var flat = rules.flattenTerm(eqn, '/main/right');
+          // TODO: For large terms consider separating numerator
+          //   and denominator first, then move numerals within each.
+          var ordered = arrangeRhs(flat, context, numMovers);
+          var numerated = arrangeRhs(ordered, context, 'numerators');
+          var denominated = arrangeRhs(numerated, context, 'denominators');
+          var arithmetized = arrangeRhs(denominated, context, 'arithmetizers');
+          var div = arithmetized.getMain().matchSchema('l = a / b');
+          var resulted;
+          if (div) {
+            // TODO: Debug this branch of the code, including the
+            // recursive call.
+            var b = div.b;
+            var product = b.matchSchema('c * d');
+            if (product && product.c.isNumeral() &&
+                product.c.getNumValue() < 0) {
+              var fact1 = rules.arithmetic('-1 / -1').andThen('eqnSwap');
+              var quotient = rules.consider(infix(div.a, '/', div.b));
+              resulted = (rules.rewrite(arithmetized, '/main/right',
+                                        'a = a * 1')
+                          .rewrite('/main/right/right', fact1)
+                          // CAUTION: recursive call.  There will be
+                          // trouble if recursion reaches here.
+                          // TODO: Decide at the start whether to multiply
+                          //   by -1 / -1 and skip this whole condition.
+                          .andThen('arrangeRational', path));
+            } else {
+              // Flatten the denominator.
+              resulted = rules.flattenTerm(arithmetized, '/main/right/right');
+            }
+          } else {
+            resulted = arithmetized;
+          }
+          // Perhaps this just applies 1 * x = x and -1 * x = neg x.
+          return rules.simplifySite(resulted, '/main/right')
+            .justify('arrangeRational', arguments, [step]);
+        });
+    }.bind(null, (() => {
       // TODO: For terms containing composite terms e.g. 2*(x + y),
       //   consider changing "isVariable" in these tests to
       //   just "not a numeral".
@@ -1742,59 +1791,8 @@ declare
                arithmetizers: arithmetizers
               }}};
       return data;
-    },
-    toOffer: function(step, expr) {
-      return (expr.matchSchema('a * b') ||
-              expr.matchSchema('a / b') ||
-              expr.matchSchema('neg (a * b)') ||
-              expr.matchSchema('neg (a / b)'));
-    },
-    action: function arrangeRational(step, path, numsLeft) {
-      var context = this.data.context;
-      var arrangeRhs = Toy.arrangeRhs;
-      var numMovers = numsLeft ? 'numLeftMovers' : 'numRightMovers';
-      return convert(step, path, function(expr) {
-          var infix = Toy.infixCall;
-          var eqn = rules.consider(expr);
-          var flat = rules.flattenTerm(eqn, '/main/right');
-          // TODO: For large terms consider separating numerator
-          //   and denominator first, then move numerals within each.
-          var ordered = arrangeRhs(flat, context, numMovers);
-          var numerated = arrangeRhs(ordered, context, 'numerators');
-          var denominated = arrangeRhs(numerated, context, 'denominators');
-          var arithmetized = arrangeRhs(denominated, context, 'arithmetizers');
-          var div = arithmetized.getMain().matchSchema('l = a / b');
-          var resulted;
-          if (div) {
-            // TODO: Debug this branch of the code, including the
-            // recursive call.
-            var b = div.b;
-            var product = b.matchSchema('c * d');
-            if (product && product.c.isNumeral() &&
-                product.c.getNumValue() < 0) {
-              var fact1 = rules.arithmetic('-1 / -1').andThen('eqnSwap');
-              var quotient = rules.consider(infix(div.a, '/', div.b));
-              resulted = (rules.rewrite(arithmetized, '/main/right',
-                                        'a = a * 1')
-                          .rewrite('/main/right/right', fact1)
-                          // CAUTION: recursive call.  There will be
-                          // trouble if recursion reaches here.
-                          // TODO: Decide at the start whether to multiply
-                          //   by -1 / -1 and skip this whole condition.
-                          .andThen('arrangeRational', path));
-            } else {
-              // Flatten the denominator.
-              resulted = rules.flattenTerm(arithmetized, '/main/right/right');
-            }
-          } else {
-            resulted = arithmetized;
-          }
-          // Perhaps this just applies 1 * x = x and -1 * x = neg x.
-          return rules.simplifySite(resulted, '/main/right')
-            .justify('arrangeRational', arguments, [step]);
-        });
-    },
-  },
+    })())
+   },
 
   /**
    * Arrange a rational expression into "ratio form", [a / b], with
@@ -1933,14 +1931,12 @@ declare
     menu: 'algebra: regroup terms',
     description: 'regroup terms',
     labels: 'algebra'
-  },
+   }
+);
 
-  /**
-   * Moves a term to the right in a sequence of summed terms.
-   * The sequence must be "flat", associated to the left.
-   */
-   {name: 'moveTermRight',
-    data: {
+
+let termRightData =
+    {
       factsA: [
         'neg a + b = b - a',
         'a + b = b + a',
@@ -1951,12 +1947,19 @@ declare
         'a + b - c = a - c + b',
         'a - b + c = a + c - b',
         'a - b - c = a - c - b'
-      ]},
+      ]};
+
+
+declare(
+  /**
+   * Moves a term to the right in a sequence of summed terms.
+   * The sequence must be "flat", associated to the left.
+   */
+   {name: 'moveTermRight',
     toOffer: function(step, expr) {
       var path = step.pathTo(expr);
-      var data = this.data;
-      var factsA = data.factsA;
-      var factsB = data.factsB;
+      var factsA = termRightData.factsA;
+      var factsB = termRightData.factsB;
       // Truthy value if the given name in the LHS of the fact can
       // match the part of this at the selected path.
       function testFact(name, fact_arg) {
@@ -1968,9 +1971,8 @@ declare
               Toy.each(factsA, testFact.bind(null, 'a')));
     },
     action: function(step, path_arg) {
-      var data = this.data;
-      var factsB = data.factsB;
-      var factsA = data.factsA;
+      var factsB = termRightData.factsB;
+      var factsA = termRightData.factsA;
       function tryFact(name, fact_arg) {
         var schema = Toy.getResult(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);

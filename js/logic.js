@@ -2219,7 +2219,13 @@ declare(
   // TODO: Implement this recursively for cleaner presentation of
   // results and greater efficiency.
   {name: 'boolSimp',
-    data: {simpFacts: ['if T x y = x',
+    action: function(data, expr) {
+      const eqn = rules.equivSelf(expr);
+      return (rules._simplifySite(eqn, '/right', data.simpFacts)
+              .justify('boolSimp', [expr]));
+    }.bind(null,
+           {simpFacts: [
+             'if T x y = x',
                        'if F x y = y',
                        'not F == T',
                        'not T == F',
@@ -2230,16 +2236,8 @@ declare(
                        '(==) = {x. {y. if x y (not y)}}',
                        '(&) = {x. {y. if x y F}}',
                        '(|) = {x. {y. if x T y}}',
-                       '(=>) = {x. {y. if x y T}}']},
-    action: function(expr) {
-      // alert(rules.boolSimp('T == T'));
-      // rules.tautology('T == T');
-      
-      const simpFacts = this.data.simpFacts;
-      const eqn = rules.equivSelf(expr);
-      return (rules._simplifySite(eqn, '/right', simpFacts)
-              .justify('boolSimp', [expr]));
-    },
+             '(=>) = {x. {y. if x y T}}'
+           ]}),
     // TODO: should be bool:.
     inputs: {term: 1},
     menu: 'bool simp',  
