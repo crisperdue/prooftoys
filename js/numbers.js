@@ -1276,7 +1276,7 @@ declare
           var eqn = rules.consider(step.get(path));
           var flat = arrangeRhs(eqn, context, 'flatteners');
           return flat;
-        }).justify('flattenSum', arguments, [step]);
+      }).justify('flattenSum', [step, path], [step]);  // Uses .bind.
     }.bind(null,
            {flatteners: [
              {stmt: 'a + (b + c) = a + b + c'},
@@ -1378,7 +1378,7 @@ declare
           var noneg = rules.denegateTerm(eqn, '/main/right');
           var flat = arrangeRhs(noneg, context, 'flatteners');
           return flat;
-        }).justify('flattenTerm', arguments, [step]);
+      }).justify('flattenTerm', [step, path], [step]);  // Uses .bind.
     }.bind(null,
            {flatteners: [
              {stmt: 'a * (b * c) = a * b * c'},
@@ -1694,7 +1694,7 @@ declare
           }
           // Perhaps this just applies 1 * x = x and -1 * x = neg x.
           return rules.simplifySite(resulted, '/main/right')
-            .justify('arrangeRational', arguments, [step]);
+          .justify('arrangeRational', [step, path, numsLeft], [step]);  // .bind
         });
     }.bind(null, (() => {
       // TODO: For terms containing composite terms e.g. 2*(x + y),
