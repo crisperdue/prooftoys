@@ -494,10 +494,13 @@ function buildWksControls(editor) {
   // Handler for the "restore proof" button.  Restores proof state from
   // the text area.
   function restoreProof() {
-    Toy.withErrorReporting(function() {
+    if (Toy.catchAll(() => {
         editor.restoreState();
         result.hide();
-      });
+        })) {
+      // For some reason the reporting gets undone unless deferred.
+      Toy.soonDo(() => editor.stepEditor.report(Toy.thrown));
+    }
   }
   $outermost.find('.restoreProof').on('click', restoreProof);
 

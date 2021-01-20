@@ -370,22 +370,6 @@ function factSquish(pattern) {
 }
 
 /**
- * Call the given function passing no arguments.  Report any errors to
- * the user and to the console, then rethrow.
- *
- * TODO: Delete this.
- */
-function withErrorReporting(fn) {
-  try {
-    return fn();
-  } catch(err) {
-    logError(err);
-    window.alert(err.message);
-    throw err;
-  }
-}
-
-/**
  * Asserts that the condition is true, throwing an exception if it is
  * not.  The message may be either a string or a function of no
  * arguments that returns something that can be logged.  If the
