@@ -495,8 +495,8 @@ function buildWksControls(editor) {
   // the text area.
   function restoreProof() {
     if (Toy.catchAll(() => {
-        editor.restoreState();
-        result.hide();
+          editor.restoreState();
+          result.hide();
         })) {
       // For some reason the reporting gets undone unless deferred.
       Toy.soonDo(() => editor.stepEditor.report(Toy.thrown));
@@ -1001,7 +1001,6 @@ StepEditor.prototype.error = function(message) {
  * an HTML string.
  */
 StepEditor.prototype.report = function(error) {
-  console.error(error);
   var $proofErrors = this.$proofErrors;
   $proofErrors.show();
   $proofErrors.html('<button class=clearer>X</button>');
@@ -1167,7 +1166,7 @@ function tryRuleSoon(stepEditor, rule, args) {
         // Really all step arguments to all steps everywhere should be
         // non-renderable in the current implementation, but this situation
         // is arguably a greater risk than others.
-        Toy.logError('Argument step ' + arg.stepNumber + ' is renderable.');
+        console.error('Argument step ' + arg.stepNumber + ' is renderable.');
       }
     });
   stepEditor._setBusy(true);
@@ -1223,7 +1222,9 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this._setBusy(false);
     // TODO: Report the nature of the error more clearly, e.g.
     //   cooperating with Toy.assert.
-    this.report('Rule does not apply');
+    const e = Toy.thrown;
+    const message = e && e.isAssert ? e.message : 'Rule does not apply';
+    this.report(message);
   } else if (result === true) {
     this._setBusy(false);
   } else if (result.rendering) {
@@ -1247,7 +1248,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     if (error) {
       this._setBusy(false);
       if (error instanceof Error) {
-        Toy.logError(error);
+        console.error(error);
         error.message = 'Error rendering step ' + result + ': ' + error.message;
         this.report(error);
       }
@@ -1395,7 +1396,7 @@ StepEditor.prototype.fillFromForm = function(ruleName, args) {
         return false;
       }
     } else {
-      Toy.logError('Unrecognized input name: ' + name);
+      console.error('Unrecognized input name: ' + name);
     }
   });
   return success;

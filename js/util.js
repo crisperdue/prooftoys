@@ -337,16 +337,6 @@ function fail(msg, ...args) {
 }
 
 /**
- * Logs an error; the message property if that is truthy, otherwise
- * the argument itself.
- */
-function logError(err) {
-  if (window.console) {
-    window.console.error(err.stack);
-  }
-}
-
-/**
  * Checks for nullish values, which are assertion failures.
  * If non-null, returns its input.
  */
@@ -766,7 +756,7 @@ function normalReturn(fn, ...args) {
   let result;
   if (catchAll(() => result = fn.apply(undefined, args))) {
     // Report to the developer that something went wrong.
-    console.error('normalReturn:', e);
+    console.error('normalReturn:', Toy.thrown);
     return undefined;
   }
   return result;
@@ -1598,7 +1588,7 @@ function changed(object, opt_partName) {
  * to run when the event loop returns to idle.  A given action
  * function only runs at most once per cycle regardless of the number
  * of relevant calls to "changed".  Each enqueued action runs within a
- * try-catch block to ensure that all have the opportunity to run.
+ * catchAll block to ensure that all have the opportunity to run.
  */
 function onChange(properties) {
   const source = properties.to;
@@ -2253,7 +2243,6 @@ Toy.primeFactors = primeFactors;
 Toy.debug = debug;
 Toy.err = err;
 Toy.fail = fail;
-Toy.logError = logError;
 Toy.check = check;
 Toy.factSquish = factSquish;
 Toy.assertTrue = assertTrue;
