@@ -795,16 +795,12 @@ let returnValue = undefined;
  * still be in progress.
  */
 function exitFrom(target, value) {
-  if (activeTargets.includes(target)) {
+  assert(activeTargets.includes(target),
+         'Return target {1} is not active', target.id);
   returnTarget = target;
   returnValue = value;
+  // You may want to tell the debugger to "Never Pause" here:
     throw target;
-  } else {
-    console.error('Return target', target.id, 'is not active');
-    debugger;
-    // Throw something to abort computation.
-  throw target;
-}
 }
 
 /**
