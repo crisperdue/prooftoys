@@ -315,13 +315,24 @@ function err(info, type) {
 }
 
 /**
- * Intended to be like an assertion failure, but without entering the
- * debugger For situations where the problem is not considered to be
- * a coding error.
+ * Unconditional failure, used by assert.
  */
-function fail(msg, _args) {
+function fail(msg, ...args) {
   const e = new Error(Toy.format.apply(null, arguments));
   console.error(e);
+  let step;
+  // Find a step argument if there is one.
+  for (var i = 0; i < args.length; i++) {
+    var arg = args[i];
+    if (Toy.isProved(arg)) {
+      // TODO: Handle multiple "step" arguments.
+      step = arg;
+      break;
+    }
+  }
+  e.step = step;
+  e.isAssert = true;
+  Toy.thrown = e;
   throw e;
 }
 
@@ -374,10 +385,6 @@ function withErrorReporting(fn) {
   }
 }
 
-// Accumulation of assertion failures and potentially information
-// about other errors that have occurred.
-var errors = [];
-
 /**
  * Asserts that the condition is true, throwing an exception if it is
  * not.  The message may be either a string or a function of no
@@ -388,42 +395,17 @@ var errors = [];
  * If the (optional) message is a string, it may be a format string,
  * and all arguments following it are accessible as {1}, {2}, and so
  * on.
- *
- * Logs the message and step into the errors list by appending an
- * object with properties 'message' and 'step'.
  */
-function assertTrue(condition, message_arg) {
+function assertTrue(condition, message, ...args) {
   if (!condition) {
     var step;
-    var message;
-    if (typeof message_arg == 'function') {
-      message = message_arg();
+    if (typeof message === 'function') {
+      fail( ...message(args));
     } else {
-      var args = arguments;
-      message = ((message_arg || 'Assertion failure')
-                 .replace(/\{.*?\}/g,
-                   matched => args[matched.slice(1, -1) - -1]));
-      var isProved = Toy.isProved;
-      // Find a step argument if there is one.
-      for (var i = 0; i < args.length; i++) {
-        var arg = args[i];
-        if (isProved(arg)) {
-          // TODO: Handle multiple "step" arguments.
-          step = arg;
-          break;
-        }
+      message = message || 'Assertion failure';
+      fail(message, ...args);
       }
     }
-    errors.push({message: message, step: step});
-    var e = new Error(message);
-    e.step = step;
-    e.isAssert = true;
-    Toy.thrown = e;
-    console.error(e);
-    // Set a breakpoint on this line to debug even when
-    // the error will be caught.
-    throw e;
-  }
 }
 
 // Use the application's assertTrue function for assertions.
@@ -830,15 +812,15 @@ let returnValue = undefined;
  */
 function exitFrom(target, value) {
   if (activeTargets.includes(target)) {
-    returnTarget = target;
-    returnValue = value;
+  returnTarget = target;
+  returnValue = value;
     throw target;
   } else {
     console.error('Return target', target.id, 'is not active');
     debugger;
     // Throw something to abort computation.
-    throw target;
-  }
+  throw target;
+}
 }
 
 /**
@@ -2278,8 +2260,6 @@ window.setInterval(function() { heartbeat(); removeOldPidData(); }, 10000);
 
 //// Export public names.
 
-Toy.errors = errors;
-
 Toy.dom = dom;
 
 Toy.hasOwn = hasOwn;
@@ -2303,7 +2283,6 @@ Toy.fail = fail;
 Toy.logError = logError;
 Toy.check = check;
 Toy.factSquish = factSquish;
-Toy.withErrorReporting = withErrorReporting;
 Toy.assertTrue = assertTrue;
 Toy.debugAssertions = true;
 Toy.assert = assert;
