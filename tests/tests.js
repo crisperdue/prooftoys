@@ -318,8 +318,8 @@ var testCase = {
       Toy.exitFrom(target, 22);
       assert(false);
     } catch(e) {
-      // Check that e looks like a ReturnTarget.
-      assert(typeof e.id == 'number');
+      // Check that the error looks appropriate.
+      assert(e.message.match(/not active/));
     }
   },
 
