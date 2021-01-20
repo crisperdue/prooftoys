@@ -388,8 +388,8 @@ function assertTrue(condition, message, ...args) {
     } else {
       message = message || 'Assertion failure';
       fail(message, ...args);
-      }
     }
+  }
 }
 
 // Use the application's assertTrue function for assertions.
@@ -762,21 +762,14 @@ function Result(value) {
  *
  * TODO: Consider whether this is really a good idea.
  */
-function normalReturn(fn, _args) {
-  var result;
-  var args = Array.from(arguments);
-  args.shift();
-  try {
-    return fn.apply(undefined, args);
-  } catch(e) {
-    // Respect returnFrom.
-    if (e instanceof ReturnTarget) {
-      throw e;
-    }
+function normalReturn(fn, ...args) {
+  let result;
+  if (catchAll(() => result = fn.apply(undefined, args))) {
     // Report to the developer that something went wrong.
     console.error('normalReturn:', e);
-    return;
+    return undefined;
   }
+  return result;
 }
 
 // Trival constructor for a return target.
@@ -800,7 +793,7 @@ function exitFrom(target, value) {
   returnTarget = target;
   returnValue = value;
   // You may want to tell the debugger to "Never Pause" here:
-    throw target;
+  throw target;
 }
 
 /**

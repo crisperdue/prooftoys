@@ -1869,13 +1869,10 @@ function decodeSteps(input) {
     const rule = Toy.rules[ruleName];
     if (rule) {
       let result;
-      try {
-        result = rule.apply(Toy.rules, args);
-      } catch(e) {
-        console.error(e);
+      if (Toy.catchAll(() => { result = rule.apply(Toy.rules, args); })) {
         console.log('Proof failed on step', i+',', 'status:');
         outSteps.forEach((s, i) => console.log((i+1)+':', s.toString()));
-        throw e;
+        throw Toy.thrown;
       }
       if (result) {
         outSteps.push(result);
