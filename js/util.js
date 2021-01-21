@@ -1631,11 +1631,8 @@ function runPendingActions() {
   const actions = pendingActions;
   pendingActions = new Set();
   actions.forEach(function(fn) {
-      try {
-        fn();
-      } catch(e) {
+    if (Toy.catchAll(fn)) {
         console.error('Error occurred in change handler:', e);
-        debugger;
       }
     });
 }

@@ -431,27 +431,21 @@ ProofDisplay.prototype.addStep = function(step) {
   var self = this;
   var rendered = self.renderStep(step);
   $(self.stepsNode).append(rendered.stepNode);
-  try {
-    rendered.annotateWithTypes();
-    this.steps.push(rendered);
-    rendered.stepNumber =  (this.prevStep
-                            ? '<span class=stepNumPlaceholder/>'
-                            : (Toy.showOrdinals
-                               ? step.ordinal
-                               : this.stepPrefix + this.steps.length));
-    renderStepNumber(rendered);
-    step.ruleDeps.forEach(function(s) {
-        if (self == getProofDisplay(s.rendering)) {
-          s.rendering.addUser(rendered);
-        }
-      });
-    this.proofChanged();
-    return rendered;
-  } catch(e) {
-    // Warn about the problem, usually type annotation.
-    console.warn('Failed to add step', step.$$);
-    console.warn(e);
-  }
+  rendered.annotateWithTypes();
+  this.steps.push(rendered);
+  rendered.stepNumber =  (this.prevStep
+                          ? '<span class=stepNumPlaceholder/>'
+                          : (Toy.showOrdinals
+                             ? step.ordinal
+                             : this.stepPrefix + this.steps.length));
+  renderStepNumber(rendered);
+  step.ruleDeps.forEach(function(s) {
+    if (self == getProofDisplay(s.rendering)) {
+      s.rendering.addUser(rendered);
+    }
+  });
+  this.proofChanged();
+  return rendered;
 };
 
 /**
@@ -2332,35 +2326,32 @@ function hoverAsRewriter(step, action) {
   // Note: this is likely to require overrides in some rules.
   // This is almost always a single path.
   Toy.stepPaths(step).forEach(function(target_path) {
-      const tPath = twff.asPath(target_path);
-      try {
-        if (targetIsCond && tPath.isLeft()) {
-          // Without special support we do not have a reasonable
-          // way to find the replacement, but can get a good guess
-          // when the replacement is (implicitly) T.
-          //
-          // TODO: Consider recording the replacement term in the
-          //   implementation of each rewriting rule, and accessing
-          //   it here to highlight it.
-          //
-          // TODO: Also consider removing newly-introduced T from
-          //   conjunctions within the rewriter code, and rendering
-          //   the replaced term with a strikeout or similar to
-          //   indicate that it is removed.
-          const tee = Toy.parse('T');
-          const found = step.getLeft()
-            .eachConjunct(term => term.sameAs(tee) && term);
-          found && action(found.node, 'site');;
-        } else {
-          const path = shallower ? tPath.rest : tPath;
-          const main = deeper ? step.wff.getRight() : step.wff;
-          action(main.get(path).node, 'site');
-        }
-      } catch(err) {
-        console.warn('Cannot hover in step', step.$$);
-        console.warn('Hover got error', err.message);
+    const tPath = twff.asPath(target_path);
+    Toy.catchAll(() => {
+      if (targetIsCond && tPath.isLeft()) {
+        // Without special support we do not have a reasonable
+        // way to find the replacement, but can get a good guess
+        // when the replacement is (implicitly) T.
+        //
+        // TODO: Consider recording the replacement term in the
+        //   implementation of each rewriting rule, and accessing
+        //   it here to highlight it.
+        //
+        // TODO: Also consider removing newly-introduced T from
+        //   conjunctions within the rewriter code, and rendering
+        //   the replaced term with a strikeout or similar to
+        //   indicate that it is removed.
+        const tee = Toy.parse('T');
+        const found = step.getLeft()
+              .eachConjunct(term => term.sameAs(tee) && term);
+        found && action(found.node, 'site');;
+      } else {
+        const path = shallower ? tPath.rest : tPath;
+        const main = deeper ? step.wff.getRight() : step.wff;
+        action(main.get(path).node, 'site');
       }
     });
+  });
 }
 
 /**
