@@ -870,7 +870,7 @@ declare
         try {
           var equation = rules.axiomArithmetic(term);
           result = rules.r(equation, step, path);
-        } catch(e) {
+        } catch(e) {  // Probably OK, scope is fairly narrow.
           Toy.fail('Not an arithmetic expression: {1}', term);
         }
       }

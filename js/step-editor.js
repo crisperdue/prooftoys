@@ -1390,7 +1390,7 @@ StepEditor.prototype.fillFromForm = function(ruleName, args) {
       try {
         // Try to fill in the actual argument.
         args[argNum - 1] = self.parseValue(this.value, type);
-      } catch(e) {
+      } catch(e) {  // Not awful, only hides errors in parseValue.
         self.report(e.message);
         success = false;
         return false;

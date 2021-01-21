@@ -4687,7 +4687,8 @@ declare(
         return (Toy.looksBoolean(wff)
                 ? rules.tautology(wff)
                 : err(''));
-      } catch(err) {}
+      } catch(err) {}  // TODO: Consider returning a strict error
+      //                    from rules.tautology.
       Toy.err('No such fact: ' + wff + ' (as ' + synopsis + ')');
     },
     // The "fact" rule does not accept a selection, and converts its

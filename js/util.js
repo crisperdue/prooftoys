@@ -885,7 +885,7 @@ NestedTimer.prototype = {
 function jsonParse(string) {
   try {
     return JSON.parse(string);
-  } catch(e) {
+  } catch(e) {  // OK here, only catches error from JSON.parse.
     return undefined;
   }
 }
@@ -1731,7 +1731,7 @@ function useParentOrigin() {
   const a = domain.split('.');
   try {
     document.domain = a.slice(1).join('.');
-  } catch(err) {
+  } catch(err) {  // OK here, only catches from 1 line of code.
     // Ensure it is set, even if to the same value.
     document.domain = document.domain;
     return false;
@@ -2133,7 +2133,7 @@ function copyToClipboard(text) {
     try {
       // Security exception may be thrown by some browsers.
       return document.execCommand("copy");
-    } catch (ex) {
+    } catch (ex) {  // OK, only catches from 1 line of code.
       console.warn("Copy to clipboard failed.", ex);
       return false;
     } finally {

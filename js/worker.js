@@ -37,7 +37,7 @@ function initRpc(receiver) {
         var fn = actions[action].bind(receiver);
         var result = fn(message, wrapper);
         self.postMessage({channelType: 'RPC', id: id, result: result});
-      } catch(error) {
+      } catch(error) {  // TODO: Consider converting this to catchAll.
         var e = (receiver.encodeError
                  ? receiver.encodeError(error)
                  : error instanceof Error

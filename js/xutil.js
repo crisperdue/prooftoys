@@ -505,7 +505,7 @@ function findType(expr, annotate) {
       }
     }
     return result;
-  } catch(e) {
+  } catch(e) {  // TODO: Convert findType to use exits, including error exits.
     if (e instanceof TypeCheckError) {
       var e2 = new TypeCheckError('Cannot find type for ' + expr.toUnicode());
       e2.cause = e;
@@ -944,7 +944,7 @@ function parse(input) {
 function justParse(input) {
   try {
     return justParse1(input);
-  } catch(e) {
+  } catch(e) {  // TODO: Consider converting to use exits.
     const e2 = new Error('Could not parse "' + input + '": ' + e.message);
     e2.cause = e;
     throw e2;
