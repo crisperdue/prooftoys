@@ -457,17 +457,23 @@ Toy.alert = function(message) {
  * properties; no getting, setting, deleting, or defining properties,
  * and no method calls.  Only <proxy>.$locked$ is available, which
  * retrieves the locked object.
+ *
+ * The result of (obj instanceof Error) is true for these objects.
  * 
  * Useful for constructing "error objects" that can be returned in
- * error situations, that resist any use as a normally returned
+ * error situations, that resist most uses as a normally returned
  * object.
  */
 function locked(obj) {
-  const toss = (..._) => { throw new Error('Locked'); };
+  const toss = () => { throw new Error('Locked'); };
   const handler = {
     get: function(target, key, receiver) {
-      if (key==='$locked$') {
+      if (key === '$locked$') {
         return obj;
+      } else if (key === 'toString') {
+        return target.toString.bind(target);
+      } else if (key === Symbol.toPrimitive) {
+        return function(hint) { return target.toString(); }.bind(target);
       } else {
         toss();
       }
@@ -479,22 +485,30 @@ function locked(obj) {
   return new Proxy(obj, handler);
 }
 
+/**
+ * Returns the locked object, or if not locked, the object
+ * you passed in, which cannot be null or undefined.
+ */
+function unlock(obj) {
+  return obj.$locked$ || obj;
+}
+
 /*
- * Constructs and returns a proxy that enters the debugger
- * in case of access to a nonexistent object property.
+ * Constructs and returns a proxy that throws a TypeError in case of
+ * access to a nonexistent object property.
  *
- * TODO: Can't work 100%, and method calls need additional
- *   support, returning a function with obj "baked in".
+ * TODO: Probably doesn't work for methods in Safari, where method
+ *   calls need additional support, returning a function with obj
+ *   "baked in".  The magic for that is fairly black in Chrome.
+ *   See "locked" above for code that should work in Safari.
  */ 
-function makeGetterProxy(obj) {
+function strict(obj) {
   let handler = {
     get: function(obj, prop) {
-      if (prop in obj) {
+      if (prop in obj || typeof prop === 'symbol') {
         return obj[prop];
       } else {
-        console.log(obj);
-        console.log('no property "' + prop + '"')
-        debugger;
+        throw new TypeError('No property ' + prop);
       }
     }
   };
@@ -1632,9 +1646,9 @@ function runPendingActions() {
   pendingActions = new Set();
   actions.forEach(function(fn) {
     if (Toy.catchAll(fn)) {
-        console.error('Error occurred in change handler:', e);
-      }
-    });
+      console.error('Error occurred in change handler:', e);
+    }
+  });
 }
 
 
@@ -2247,7 +2261,8 @@ Toy.debugAssertions = true;
 Toy.assert = assert;
 Toy.debugString = debugString;
 Toy.locked = locked;
-Toy.makeGetterProxy = makeGetterProxy;
+Toy.unlock = unlock;
+Toy.strict = strict;
 
 Toy.isEmpty = isEmpty;
 Toy.mapSize = mapSize;
