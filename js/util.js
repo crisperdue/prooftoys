@@ -32,14 +32,14 @@ Toy.incompatible = !!navigator.userAgent.match(/ MSIE /);
 function dom($node) {
   if ($node instanceof jQuery) {
     if ($node.length === 0) {
-      fail('No element');
+      abort('No element');
     } else if ($node.length === 1) {
       return $node[0];
     } else {
-      fail('Multiple elements: ' + $node);
+      abort('Multiple elements: ' + $node);
     }
   } else {
-    fail('Not a jQuery object: ' + $node);
+    abort('Not a jQuery object: ' + $node);
   }
 }
 
@@ -129,7 +129,7 @@ Toy.extends = function(constructor, parent) {
   } else if (typeof constructor === 'function' && parent == null) {
     // Do nothing.
   } else {
-    fail('Toy.extends requires functions as arguments.');
+    abort('Toy.extends requires functions as arguments.');
   }
   constructor.addMethods = function(properties) {
     jQuery.extend(constructor.prototype, properties);
@@ -291,17 +291,17 @@ function debug(value) {
  * Unconditional failure, used by assert.  Convenient, and cooperates
  * with catchAll by setting Toy.thrown.
  */
-function fail(msg, ...args) {
+function abort(msg, ...args) {
   if (typeof msg === 'string') {
-    _fail({}, msg, ...args);
+    _abort({}, msg, ...args);
   } else {
-    _fail(...arguments);
+    _abort(...arguments);
   }
 }
 
 const levels = new Set(['error', 'warn', 'info', 'log', 'none']);
 
-function _fail(options, msg, ...args) {
+function _abort(options, msg, ...args) {
   let level = 'error';
   if ('level' in options) {
     level = options.level;
@@ -367,10 +367,10 @@ function assertTrue(condition, message, ...args) {
   if (!condition) {
     var step;
     if (typeof message === 'function') {
-      fail( ...message(args));
+      abort( ...message(args));
     } else {
       message = message || 'Assertion failure';
-      fail({isAssert: true}, message, ...args);
+      abort({isAssert: true}, message, ...args);
     }
   }
 }
@@ -458,7 +458,7 @@ Toy.alert = function(message) {
  * object.
  */
 function locked(obj) {
-  const toss = () => { fail('Locked'); };
+  const toss = () => { abort('Locked'); };
   const handler = {
     get: function(target, key, receiver) {
       if (key === '$locked$') {
@@ -604,7 +604,7 @@ function object0(_args) {
   var result = Object.create(null);
   var nargs = arguments.length;
   if (nargs % 2) {
-    fail('object0 bad arguments list');
+    abort('object0 bad arguments list');
   }
   for (var i = 0; i < nargs; i += 2) {
     result[arguments[i]] = arguments[i + 1];
@@ -1440,7 +1440,7 @@ var trackingData = {};
 function tracked(fn, opt_name) {
   var name = opt_name || fn.name;
   if (typeof fn !== 'function' || !name) {
-    fail('Not a named function');
+    abort('Not a named function');
   }
   var data = trackingData[name];
   if (!data) {
@@ -1715,7 +1715,7 @@ function makeTriangle(where, height, color) {
   };
   var properties = mapping[where];
   if (!properties) {
-    fail('Triangle direction must be up, down, right, or left');
+    abort('Triangle direction must be up, down, right, or left');
   }
   var zeroProp = {
     'up': 'borderTopWidth',
@@ -2093,7 +2093,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
       var action = message.action;
       var actions = receiver.actions;
       if (!actions.hasOwnProperty(action)) {
-        fail('Unknown RPC action', action);
+        abort('Unknown RPC action', action);
       }
       var fn = actions[action].bind(receiver);
       var result = fn(message, wrapper);
@@ -2258,7 +2258,7 @@ Toy.nextPrimeFactor = nextPrimeFactor;
 Toy.primeFactors = primeFactors;
 
 Toy.debug = debug;
-Toy.fail = fail;
+Toy.abort = abort;
 Toy.check = check;
 Toy.factSquish = factSquish;
 Toy.assertTrue = assertTrue;

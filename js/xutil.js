@@ -17,7 +17,7 @@ var Atom = Toy.Atom;
 var Call = Toy.Call;
 var Lambda = Toy.Lambda;
 var assert = Toy.assertTrue;
-var fail = Toy.fail;
+var abort = Toy.abort;
 var Path = Toy.Path;
 var path = Toy.path;
 
@@ -274,7 +274,7 @@ function parseType(input) {
  * an error.
  */
 Expr.prototype.getType = function() {
-  return dereference(this._type) || Toy.fail('Type not available: ' + this);
+  return dereference(this._type) || abort('Type not available: ' + this);
 };
 
 /**
@@ -1646,7 +1646,7 @@ function asmComparator(e1, e2) {
             ? 0
             : (x1 < x2 ? -1 : 1));
   }
-  fail('Internal error');
+  abort('Internal error');
 }
 
 /**
@@ -1709,7 +1709,7 @@ function commuteEqn(eqn) {
     var op = eqn.getRight().getBinOp();
     return infix(subst.h, '=>', infix(subst.b, op, subst.a))
   } else {
-    fail(Toy.format('Not an equation: {1}', eqn));
+    abort(Toy.format('Not an equation: {1}', eqn));
   }
 }
 
@@ -1877,11 +1877,11 @@ function decodeSteps(input) {
       if (result) {
         outSteps.push(result);
       } else {
-        Toy.fail('No result from rule {1} with args {2}',
+        Toy.abort('No result from rule {1} with args {2}',
                  ruleName, args);
       }
     } else {
-      Toy.fail('No such rule: {1}', ruleName);
+      abort('No such rule: {1}', ruleName);
     }
   }
   return outSteps;
@@ -1915,7 +1915,7 @@ function decodeArg(info, steps) {
     case 'facts':
       return JSON.parse(value.getStringValue());
     default:
-      Toy.fail('Unknown encoding key: {1}', key);
+      abort('Unknown encoding key: {1}', key);
     }
   }
 }

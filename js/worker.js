@@ -66,7 +66,7 @@ var receiver = {
     plus1: function(message) {
       return message.input + 1;
     },
-    fail: function(message) {
+    abort: function(message) {
       throw new Error('Failure!');
     }
   }

@@ -27,6 +27,7 @@
 //// THEOREMS AND RULES
 
 var assert = Toy.assertTrue;
+const abort = Toy.abort;
 
 //  Make some useful names available here.
 var assertEqn = Toy.assertEqn;
@@ -308,7 +309,7 @@ var rules = {};
 //
 //   This is expected to return a falsy value if the rule is not
 //   applicable to the arguments, in which case the rule will fail
-//   with Toy.fail.  Otherwise it should return any data useful to the
+//   with Toy.abort.  Otherwise it should return any data useful to the
 //   main action function, which will have access to that result
 //   through the global temporary Toy._actionInfo.
 //
@@ -563,7 +564,7 @@ function addRule(info) {
                 ? main.apply(rule, arguments)
                 : info.onFail
                 ? info.onFail.call(rule)
-                : Toy.fail(Toy.format('Rule {1} not applicable', name)));
+                : abort('Rule {1} not applicable', name));
       }
       if (info.maxArgs == null) {
         info.maxArgs = main.length;
@@ -1570,24 +1571,24 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
         // Checks if the given term of the schema matches some fact in
         // the appropriate factsList.  Only schema variables are
         // eligible to match.
-    function checkTerm(schemaTerm, revPath) {
-      if (schemaTerm.isVariable()) {
-        var list = varsMap[schemaTerm.name];
-        if (typeof list == 'string' && Toy.isIdentifier(list)) {
-          list = factLists[list];
-        }
-        if (list) {
-          var result =
-            findMatchingFact(list, context, expr.get(revPath.reverse()));
-          if (result) {
-            result.path = revPath.reverse().concat(result.path);
+        function checkTerm(schemaTerm, revPath) {
+          if (schemaTerm.isVariable()) {
+            var list = varsMap[schemaTerm.name];
+            if (typeof list == 'string' && Toy.isIdentifier(list)) {
+              list = factLists[list];
+            }
+            if (list) {
+              var result =
+                findMatchingFact(list, context, expr.get(revPath.reverse()));
+              if (result) {
+                result.path = revPath.reverse().concat(result.path);
                 Toy.exitFrom(exit, result);
+              }
+            }
           }
         }
-      }
-    }
-    // TODO: Consider replacing this use of Expr.traverse with
-    //   Expr.searchMost.
+        // TODO: Consider replacing this use of Expr.traverse with
+        //   Expr.searchMost.
         schema.traverse(checkTerm);
       });
   }
@@ -2100,7 +2101,7 @@ Expr.prototype.fixupBoundNames = function() {
                         fixTerm(term.body,
                                 new Toy.Bindings(bound, vbl, bindings)));
     default:
-      Toy.fail('Bad argument to fixupBoundNames:', term);
+      abort('Bad argument to fixupBoundNames:', term);
     }
   }
   // Function body is here.

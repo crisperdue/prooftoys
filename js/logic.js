@@ -10,7 +10,7 @@
 //// Import names
 
 const assert = Toy.assertTrue;
-const fail = Toy.fail;
+const abort = Toy.abort;
 const assertEqn = Toy.assertEqn;
 
 const varify = Toy.varify;
@@ -986,7 +986,7 @@ declare(
             }
           }
         }
-        Toy.fail('Cannot apply at {1} in {2}', step.get(path), step);
+        abort('Cannot apply at {1} in {2}', step.get(path), step);
       }
 
       return Toy.convert(step, path, applier)
@@ -3838,7 +3838,7 @@ declare(
     action: function(step, path, eqn_arg) {
       const map = canRewrite(step, path, eqn_arg);
       if (!map) {
-        Toy.fail(Toy.format('Fact not applicable: {1}', equation));
+        abort('Fact not applicable: {1}', equation);
       }
       // Convert to an actual equation if necessary.
       var equation = (eqn_arg.isEquation()
@@ -4688,10 +4688,10 @@ declare(
         // and unnecessary errors from rules.tautology.
         return (Toy.looksBoolean(wff)
                 ? rules.tautology(wff)
-                : fail(''));
+                : abort(''));
       } catch(err) {}  // TODO: Consider returning a strict error
       //                    from rules.tautology.
-      fail('No such fact: ' + wff + ' (as ' + synopsis + ')');
+      abort('No such fact: ' + wff + ' (as ' + synopsis + ')');
     },
     // The "fact" rule does not accept a selection, and converts its
     // form input as needed.  

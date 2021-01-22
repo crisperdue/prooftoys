@@ -2838,7 +2838,7 @@ $(function() {
             if (result) {
               console.warn('No statement for', name, '- proved', result.$$);
             } else {
-              Toy.fail('Proof of ' + name + ' failed.');
+              Toy.abort('Proof of ' + name + ' failed.');
             }
           }
         }.bind(null, prover, name));
