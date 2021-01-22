@@ -17,7 +17,7 @@ var Atom = Toy.Atom;
 var Call = Toy.Call;
 var Lambda = Toy.Lambda;
 var assert = Toy.assertTrue;
-var err = Toy.err;
+var fail = Toy.fail;
 var Path = Toy.Path;
 var path = Toy.path;
 
@@ -1646,7 +1646,7 @@ function asmComparator(e1, e2) {
             ? 0
             : (x1 < x2 ? -1 : 1));
   }
-  Toy.err('Internal error');
+  fail('Internal error');
 }
 
 /**
@@ -1709,7 +1709,7 @@ function commuteEqn(eqn) {
     var op = eqn.getRight().getBinOp();
     return infix(subst.h, '=>', infix(subst.b, op, subst.a))
   } else {
-    err(Toy.format('Not an equation: {1}', eqn));
+    fail(Toy.format('Not an equation: {1}', eqn));
   }
 }
 

@@ -13,7 +13,7 @@
 
 // Make some names available without "Toy" prefix.
 var assert = Toy.assertTrue;
-var err = Toy.err;
+var fail = Toy.fail;
 
 ////
 //// Bindings -- variable binding contexts and bookkeeping for
@@ -201,7 +201,7 @@ Path.prototype.parent = function() {
   var segment = this.segment;
   if (!segment) {
     // Also includes the case where we are past the end.
-    err('Empty path can have no parent.');
+    fail('Empty path can have no parent.');
   }
   var rest = this.rest;
   if (rest.isEnd()) {

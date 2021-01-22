@@ -15,11 +15,11 @@ const definition = Toy.definition;
 var basicSimpFacts = Toy.basicSimpFacts;
 
 var assert = Toy.assertTrue;
+var fail = Toy.fail;
 var memo = Toy.memo;
 
 //  Make some useful names available here.
 var assertEqn = Toy.assertEqn;
-var err = Toy.err;
 var varify = Toy.varify;
 var constify = Toy.constify;
 var termify = Toy.termify;
@@ -812,7 +812,7 @@ declare
         case '<': value = left < right; break;
         case '<=': value = left <= right; break;
         default:
-          err('Unsupported operator: ' + op);
+          fail('Unsupported operator: ' + op);
 	}
         if (typeof value == 'boolean') {
           var rhs = value ? T : F;
@@ -832,13 +832,13 @@ declare
           var rhs = T;
         } else {
         // A programming error has occurred.
-          err('Not an arithmetic expression: ' + term);
+          fail('Not an arithmetic expression: ' + term);
         }
         return rules.assert(Toy.infixCall(term, '=', rhs))
           .justify('axiomArithmetic', arguments);
       } else {
         // A programming error has occurred.
-	err('Not an arithmetic expression: ' + term);
+	fail('Not an arithmetic expression: ' + term);
       }
     },
     inputs: {term: 1},

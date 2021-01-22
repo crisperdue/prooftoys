@@ -6,11 +6,13 @@
 
 'use strict';
 
-var assert = Toy.assertTrue;
 
 //// Import names
 
+const assert = Toy.assertTrue;
+const fail = Toy.fail;
 const assertEqn = Toy.assertEqn;
+
 const varify = Toy.varify;
 const constify = Toy.constify;
 const termify = Toy.termify;
@@ -4686,10 +4688,10 @@ declare(
         // and unnecessary errors from rules.tautology.
         return (Toy.looksBoolean(wff)
                 ? rules.tautology(wff)
-                : err(''));
+                : fail(''));
       } catch(err) {}  // TODO: Consider returning a strict error
       //                    from rules.tautology.
-      Toy.err('No such fact: ' + wff + ' (as ' + synopsis + ')');
+      fail('No such fact: ' + wff + ' (as ' + synopsis + ')');
     },
     // The "fact" rule does not accept a selection, and converts its
     // form input as needed.  

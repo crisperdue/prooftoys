@@ -8,6 +8,7 @@
 
 // Make application assertions available through "assert".
 const assert = Toy.assertTrue;
+const fail = Toy.fail;
 const format = Toy.format;
 const dom = Toy.dom;
 const TermSet = Toy.TermSet;
@@ -757,7 +758,7 @@ ProofEditor.prototype._updateGivenVars = function() {
 ProofEditor.prototype.setRulesMode = function(mode) {
   this.$rulesMode.val(mode);
   if (this.$rulesMode.val() != mode) {
-    Toy.err('Bad rules mode setting: ' + mode);
+    fail('Bad rules mode setting: ' + mode);
   }
   this.$rulesMode.trigger('change');
 };

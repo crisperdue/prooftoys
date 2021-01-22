@@ -32,14 +32,14 @@ Toy.incompatible = !!navigator.userAgent.match(/ MSIE /);
 function dom($node) {
   if ($node instanceof jQuery) {
     if ($node.length === 0) {
-      throw new Error('No element');
+      fail('No element');
     } else if ($node.length === 1) {
       return $node[0];
     } else {
-      throw new Error('Multiple elements: ' + $node);
+      fail('Multiple elements: ' + $node);
     }
   } else {
-    throw new Error('Not a jQuery object: ' + $node);
+    fail('Not a jQuery object: ' + $node);
   }
 }
 
@@ -129,7 +129,7 @@ Toy.extends = function(constructor, parent) {
   } else if (typeof constructor === 'function' && parent == null) {
     // Do nothing.
   } else {
-    throw new Error('Toy.extends requires functions as arguments.');
+    fail('Toy.extends requires functions as arguments.');
   }
   constructor.addMethods = function(properties) {
     jQuery.extend(constructor.prototype, properties);
@@ -288,38 +288,32 @@ function debug(value) {
 }
 
 /**
- * Signals an error, which should be a programming error.
- * Enters the debugger if available, and then throws an error.
- * 
- * The "info" argument can be either a string or object.  If a string,
- * it becomes the message property of the error.  If an object, adds
- * its properties to the new error object.  If a type argument is
- * given, that becomes the type of the new error.
- *
- * The optional type if given is the error constructor, defaulting to
- * Error.
- *
- * TODO: remove the "type" parameter, but if the info is neither a
- * string nor a plain object, throw it as the error object.
- */
-function err(info, type) {
-  var error = new (type || Error)();
-  if (typeof info === 'string') {
-    error.message = info;
-  } else {
-    jQuery.extend(error, info);
-  }
-  console.error(error.message);
-  debugger;
-  throw error;
-}
-
-/**
- * Unconditional failure, used by assert.
+ * Unconditional failure, used by assert.  Convenient, and cooperates
+ * with catchAll by setting Toy.thrown.
  */
 function fail(msg, ...args) {
-  const e = new Error(Toy.format.apply(null, arguments));
-  console.error(e);
+  if (typeof msg === 'string') {
+    _fail({}, msg, ...args);
+  } else {
+    _fail(...arguments);
+  }
+}
+
+const levels = new Set(['error', 'warn', 'info', 'log', 'none']);
+
+function _fail(options, msg, ...args) {
+  let level = 'error';
+  if ('level' in options) {
+    level = options.level;
+  }
+  const props = 'with' in options ? options.with : {};
+    
+
+  const e = new Error(Toy.format(msg, ...args));
+  if (level !== 'none') {
+    console[level](e.message);
+  }
+
   let step;
   // Find a step argument if there is one.
   for (var i = 0; i < args.length; i++) {
@@ -331,9 +325,8 @@ function fail(msg, ...args) {
     }
   }
   e.step = step;
-  e.isAssert = true;
-  Toy.thrown = e;
-  throw e;
+  Object.assign(e, props);
+  Toy.throw(e);
 }
 
 /**
@@ -377,7 +370,7 @@ function assertTrue(condition, message, ...args) {
       fail( ...message(args));
     } else {
       message = message || 'Assertion failure';
-      fail(message, ...args);
+      fail({isAssert: true}, message, ...args);
     }
   }
 }
@@ -465,7 +458,7 @@ Toy.alert = function(message) {
  * object.
  */
 function locked(obj) {
-  const toss = () => { throw new Error('Locked'); };
+  const toss = () => { fail('Locked'); };
   const handler = {
     get: function(target, key, receiver) {
       if (key === '$locked$') {
@@ -508,7 +501,7 @@ function strict(obj) {
       if (prop in obj || typeof prop === 'symbol') {
         return obj[prop];
       } else {
-        throw new TypeError('No property ' + prop);
+        Toy.throw(new TypeError('No property ' + prop));
       }
     }
   };
@@ -611,7 +604,7 @@ function object0(_args) {
   var result = Object.create(null);
   var nargs = arguments.length;
   if (nargs % 2) {
-    throw new Error('object0 bad arguments list');
+    fail('object0 bad arguments list');
   }
   for (var i = 0; i < nargs; i += 2) {
     result[arguments[i]] = arguments[i + 1];
@@ -764,21 +757,35 @@ function Result(value) {
  * problems may occur.  For recovery from specific problems consider
  * using dynamically bound recovery functions.
  *
- * TODO: Consider whether this is really a good idea.
+ * Be aware that this suppresses debugging during its execution.
  */
 function normalReturn(fn, ...args) {
-  let result;
-  if (catchAll(() => result = fn.apply(undefined, args))) {
-    // Report to the developer that something went wrong.
-    console.error('normalReturn:', Toy.thrown);
-    return undefined;
+  try {
+    return fn.apply(undefined, args);
+  } catch(e) {
+    // Respect returnFrom.
+    if (e instanceof ReturnTarget) {
+      Toy.throw(e);
+    }
+    // Uncomment to get a message.
+    // console.warn('normalReturn caught', e);
   }
-  return result;
 }
 
 // Trival constructor for a return target.
 function ReturnTarget() {
   this.id = targetID++;
+};
+
+/**
+ * Invoke "throw" via function call.  Cooperates with catchAll.  Use
+ * this throughout the Prooftoys application.  Public name is
+ * "Toy.throw".
+ */
+function toyThrow(value) {
+  Toy.thrown = value;
+  // You may want to tell the debugger to "Never Pause" here:
+  throw value;
 };
 
 let targetID = 1;
@@ -796,8 +803,7 @@ function exitFrom(target, value) {
          'Return target {1} is not active', target.id);
   returnTarget = target;
   returnValue = value;
-  // You may want to tell the debugger to "Never Pause" here:
-  throw target;
+  Toy.throw(target);
 }
 
 /**
@@ -1434,7 +1440,7 @@ var trackingData = {};
 function tracked(fn, opt_name) {
   var name = opt_name || fn.name;
   if (typeof fn !== 'function' || !name) {
-    throw new Error('Not a named function');
+    fail('Not a named function');
   }
   var data = trackingData[name];
   if (!data) {
@@ -1709,7 +1715,7 @@ function makeTriangle(where, height, color) {
   };
   var properties = mapping[where];
   if (!properties) {
-    throw new Error('Triangle direction must be up, down, right, or left');
+    fail('Triangle direction must be up, down, right, or left');
   }
   var zeroProp = {
     'up': 'borderTopWidth',
@@ -2087,7 +2093,7 @@ FakeRpcWorker.prototype.postMessage = function(wrapper) {
       var action = message.action;
       var actions = receiver.actions;
       if (!actions.hasOwnProperty(action)) {
-        throw new Error('Unknown RPC action', action);
+        fail('Unknown RPC action', action);
       }
       var fn = actions[action].bind(receiver);
       var result = fn(message, wrapper);
@@ -2252,7 +2258,6 @@ Toy.nextPrimeFactor = nextPrimeFactor;
 Toy.primeFactors = primeFactors;
 
 Toy.debug = debug;
-Toy.err = err;
 Toy.fail = fail;
 Toy.check = check;
 Toy.factSquish = factSquish;
@@ -2282,6 +2287,7 @@ Toy.sortMap = sortMap;
 
 Toy.Result = Result;
 Toy.normalReturn = normalReturn;
+Toy.throw = toyThrow;
 Toy.exitFrom = exitFrom;
 Toy.withExit = withExit;
 Toy.catchAll = catchAll;
