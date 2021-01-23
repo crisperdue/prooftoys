@@ -15,6 +15,8 @@
 
 'use strict';
 
+//// General use
+
 /**
  * Toy.incompatible - true iff browser is an old MSIE not compatible
  * with Prooftoys + jQuery 2 and similar JavaScript.
@@ -24,6 +26,39 @@
 //   similar.  In particular MSIE 11+, but other requirements TBD,
 //   perhaps all browsers shown in default views in caniuse.com.
 Toy.incompatible = !!navigator.userAgent.match(/ MSIE /);
+
+/**
+ * The arguments are a child class constructor and parent class
+ * constructor (or null); both should be functions.  If the parent is
+ * given, makes the child a subclass of the parent, making the
+ * parent's prototype be the prototype for the child's prototype and
+ * instances of the child be instances of the parent class.
+ *
+ * This adds to the child constructor a property "methods", so that
+ * MyConstructor.addMethods(properties) adds the properties to its
+ * prototype.
+ *
+ * It adds a setter property "$" that does the same thing as
+ * "methods".  This is semantically strange, but works well with the
+ * Emacs indenter for Java mode, unlike the alternatives, and makes
+ * calls on the methods look nice in Chrome debugger stack traces.
+ */
+Toy.extends = function(constructor, parent) {
+  if (typeof constructor === 'function' && typeof parent === 'function') {
+    // Set up the prototype for the child class.
+    // Instances will see this as their constructor.
+    constructor.prototype = Object.create(parent.prototype, {
+        constructor: {value: constructor}
+      });
+  } else if (typeof constructor === 'function' && parent == null) {
+    // Do nothing.
+  } else {
+    abort('Toy.extends requires functions as arguments.');
+  }
+  constructor.addMethods = function(properties) {
+    jQuery.extend(constructor.prototype, properties);
+  };
+};
 
 /**
  * Converts a singleton jQuery object to its DOM node,
@@ -42,6 +77,157 @@ function dom($node) {
     abort('Not a jQuery object: ' + $node);
   }
 }
+
+//// Property access
+
+var ownProperty = Object.prototype.hasOwnProperty;
+
+/**
+ * Version of hasOwnProperty that is not accessed through the
+ * prototype chain, so it works even if the object has a
+ * "hasOwnProperty" property.
+ * 
+ */
+function hasOwn(thing, name) {
+  return ownProperty.call(thing, name);
+};
+
+/**
+ * Gets the named property if it is an own property, otherwise
+ * returns "undefined".
+ */
+function getOwn(thing, name) {
+  return (hasOwn(thing, name) ? thing[name] : undefined);
+};
+
+/**
+ * Returns an object with no prototype, having the own properties
+ * of the input object as its properties.
+ */
+function ownProperties(object) {
+  // If it has no prototype just return it.
+  if (Object.getPrototypeOf(object) === null) {
+    return object;
+  }
+  var result = Object.create(null);
+  Object.getOwnPropertyNames(object).forEach(function(name) {
+      result[name] = object[name];
+    });
+  return result;
+}
+
+/**
+ * Synonym for ownProperties.
+ */
+function asMap(object) {
+  return ownProperties(object);
+}
+
+/**
+ * Builds and returns an object with no prototype and properties taken
+ * from the arguments, an alternating sequence of string keys and
+ * values.  The argument list length must be even.
+ */
+function object0(_args) {
+  var result = Object.create(null);
+  var nargs = arguments.length;
+  if (nargs % 2) {
+    abort('object0 bad arguments list');
+  }
+  for (var i = 0; i < nargs; i += 2) {
+    result[arguments[i]] = arguments[i + 1];
+  }
+  return result;
+}
+
+/**
+ * Removes from the first map (plain object) all entries having keys
+ * enumerable in the second map
+ */
+function removeAll(map1, map2) {
+  for (var k in map2) {
+    delete map1[k];
+  }
+}
+
+/**
+ * Removes from the first map (plain object) all entries that are not
+ * "own" properties of the second map, keeping only entries for keys
+ * that appear in both.
+ */
+function removeExcept(map1, map2) {
+  for (var k in map1) {
+    if (!hasOwn(map2, k)) {
+      delete map1[k];
+    }
+  }
+}
+
+/**
+ * Creates a proxy for the given object that allows no access to
+ * properties; no getting, setting, deleting, or defining properties,
+ * and no method calls.  Only <proxy>.$locked$ is available, which
+ * retrieves the locked object.
+ *
+ * The result of (obj instanceof Error) is true for these objects.
+ * 
+ * Useful for constructing "error objects" that can be returned in
+ * error situations, that resist most uses as a normally returned
+ * object.
+ */
+function locked(obj) {
+  const toss = () => { abort('Locked'); };
+  const handler = {
+    get: function(target, key, receiver) {
+      if (key === '$locked$') {
+        return obj;
+      } else if (key === 'toString') {
+        return target.toString.bind(target);
+      } else if (key === Symbol.toPrimitive) {
+        return function(hint) { return target.toString(); }.bind(target);
+      } else {
+        toss();
+      }
+    },
+    set: toss,
+    defineProperty: toss,
+    deleteProperty: toss
+  };
+  return new Proxy(obj, handler);
+}
+
+/**
+ * Returns the locked object, or if not locked, the object
+ * you passed in, which cannot be null or undefined.
+ */
+function unlock(obj) {
+  return obj.$locked$ || obj;
+}
+
+/*
+ * Constructs and returns a proxy that throws a TypeError in case of
+ * access to a nonexistent object property.
+ *
+ * TODO: Probably doesn't work for methods in Safari, where method
+ *   calls need additional support, returning a function with obj
+ *   "baked in".  The magic for that is fairly black in Chrome.
+ *   See "locked" above for code that should work in Safari.
+ */ 
+function strict(obj) {
+  let handler = {
+    get: function(obj, prop) {
+      if (prop in obj || typeof prop === 'symbol') {
+        return obj[prop];
+      } else {
+        Toy.throw(new TypeError('No property ' + prop));
+      }
+    }
+  };
+  return new Proxy(obj, handler);
+}
+
+////
+//// Math calculation
 
 // JavaScript is defined to use IEEE 64-bit floating point in "round
 // to nearest" mode.  2**53 is confusable with 2**53 + 1, so this is
@@ -82,59 +268,6 @@ function div(n, divisor) {
 function mod(n, divisor) {
   return n - divisor * div(n, divisor);
 }
-
-var ownProperty = Object.prototype.hasOwnProperty;
-
-/**
- * Version of hasOwnProperty that is not accessed through the
- * prototype chain, so it works even if the object has a
- * "hasOwnProperty" property.
- * 
- */
-function hasOwn(thing, name) {
-  return ownProperty.call(thing, name);
-};
-
-/**
- * Gets the named property if it is an own property, otherwise
- * returns "undefined".
- */
-function getOwn(thing, name) {
-  return (hasOwn(thing, name) ? thing[name] : undefined);
-};
-
-/**
- * The arguments are a child class constructor and parent class
- * constructor (or null); both should be functions.  If the parent is
- * given, makes the child a subclass of the parent, making the
- * parent's prototype be the prototype for the child's prototype and
- * instances of the child be instances of the parent class.
- *
- * This adds to the child constructor a property "methods", so that
- * MyConstructor.addMethods(properties) adds the properties to its
- * prototype.
- *
- * It adds a setter property "$" that does the same thing as
- * "methods".  This is semantically strange, but works well with the
- * Emacs indenter for Java mode, unlike the alternatives, and makes
- * calls on the methods look nice in Chrome debugger stack traces.
- */
-Toy.extends = function(constructor, parent) {
-  if (typeof constructor === 'function' && typeof parent === 'function') {
-    // Set up the prototype for the child class.
-    // Instances will see this as their constructor.
-    constructor.prototype = Object.create(parent.prototype, {
-        constructor: {value: constructor}
-      });
-  } else if (typeof constructor === 'function' && parent == null) {
-    // Do nothing.
-  } else {
-    abort('Toy.extends requires functions as arguments.');
-  }
-  constructor.addMethods = function(properties) {
-    jQuery.extend(constructor.prototype, properties);
-  };
-};
 
 /**
  * Returns the GCD of two positive integers using Euclid's algorithm;
@@ -269,9 +402,7 @@ function primeFactors(n) {
   return result;
 }
 
-////
 //// Assertions, error reporting and debugging
-////
 
 /**
  * Calls the debugger, and when continued, returns the value passed to
@@ -445,72 +576,7 @@ Toy.alert = function(message) {
   }
 }
 
-/**
- * Creates a proxy for the given object that allows no access to
- * properties; no getting, setting, deleting, or defining properties,
- * and no method calls.  Only <proxy>.$locked$ is available, which
- * retrieves the locked object.
- *
- * The result of (obj instanceof Error) is true for these objects.
- * 
- * Useful for constructing "error objects" that can be returned in
- * error situations, that resist most uses as a normally returned
- * object.
- */
-function locked(obj) {
-  const toss = () => { abort('Locked'); };
-  const handler = {
-    get: function(target, key, receiver) {
-      if (key === '$locked$') {
-        return obj;
-      } else if (key === 'toString') {
-        return target.toString.bind(target);
-      } else if (key === Symbol.toPrimitive) {
-        return function(hint) { return target.toString(); }.bind(target);
-      } else {
-        toss();
-      }
-    },
-    set: toss,
-    defineProperty: toss,
-    deleteProperty: toss
-  };
-  return new Proxy(obj, handler);
-}
-
-/**
- * Returns the locked object, or if not locked, the object
- * you passed in, which cannot be null or undefined.
- */
-function unlock(obj) {
-  return obj.$locked$ || obj;
-}
-
-/*
- * Constructs and returns a proxy that throws a TypeError in case of
- * access to a nonexistent object property.
- *
- * TODO: Probably doesn't work for methods in Safari, where method
- *   calls need additional support, returning a function with obj
- *   "baked in".  The magic for that is fairly black in Chrome.
- *   See "locked" above for code that should work in Safari.
- */ 
-function strict(obj) {
-  let handler = {
-    get: function(obj, prop) {
-      if (prop in obj || typeof prop === 'symbol') {
-        return obj[prop];
-      } else {
-        Toy.throw(new TypeError('No property ' + prop));
-      }
-    }
-  };
-  return new Proxy(obj, handler);
-}
-
-////
-//// Data manipulation utilities
-////
+//// Data structure operations
 
 /**
  * Is the given object empty, i.e. has it any enumerable properties?
@@ -571,69 +637,6 @@ Array.equals = function(a1, a2) {
   }
   return true;
 };
-
-/**
- * Returns an object with no prototype, having the own properties
- * of the input object as its properties.
- */
-function ownProperties(object) {
-  // If it has no prototype just return it.
-  if (Object.getPrototypeOf(object) === null) {
-    return object;
-  }
-  var result = Object.create(null);
-  Object.getOwnPropertyNames(object).forEach(function(name) {
-      result[name] = object[name];
-    });
-  return result;
-}
-
-/**
- * Synonym for ownProperties.
- */
-function asMap(object) {
-  return ownProperties(object);
-}
-
-/**
- * Builds and returns an object with no prototype and properties taken
- * from the arguments, an alternating sequence of string keys and
- * values.  The argument list length must be even.
- */
-function object0(_args) {
-  var result = Object.create(null);
-  var nargs = arguments.length;
-  if (nargs % 2) {
-    abort('object0 bad arguments list');
-  }
-  for (var i = 0; i < nargs; i += 2) {
-    result[arguments[i]] = arguments[i + 1];
-  }
-  return result;
-}
-
-/**
- * Removes from the first map (plain object) all entries having keys
- * enumerable in the second map
- */
-function removeAll(map1, map2) {
-  for (var k in map2) {
-    delete map1[k];
-  }
-}
-
-/**
- * Removes from the first map (plain object) all entries that are not
- * "own" properties of the second map, keeping only entries for keys
- * that appear in both.
- */
-function removeExcept(map1, map2) {
-  for (var k in map1) {
-    if (!hasOwn(map2, k)) {
-      delete map1[k];
-    }
-  }
-}
 
 /**
  * Calls the given function on each element of the array, passing it
@@ -737,40 +740,7 @@ function sortMap(object, comparator) {
   return list.sort(comparator);
 }
 
-//// Result -- returning values using catch/throw.
-
-/**
- * Throw one of these to return an arbitrary value
- * from a recursive function.
- */
-function Result(value) {
-  this.value = value;
-}
-
-/**
- * Call the given function with the given arguments, returning the
- * undefined value if the function throws, else the value returned
- * from the function call.  Does not interfere with exitFrom
- * and withExit.
- *
- * Intended for enforcing planned control flow even when unknown
- * problems may occur.  For recovery from specific problems consider
- * using dynamically bound recovery functions.
- *
- * Be aware that this suppresses debugging during its execution.
- */
-function normalReturn(fn, ...args) {
-  try {
-    return fn.apply(undefined, args);
-  } catch(e) {
-    // Respect returnFrom.
-    if (e instanceof ReturnTarget) {
-      Toy.throw(e);
-    }
-    // Uncomment to get a message.
-    // console.warn('normalReturn caught', e);
-  }
-}
+//// Control flow
 
 // Trival constructor for a return target.
 function ReturnTarget() {
@@ -858,6 +828,39 @@ function catchAll(fn) {
     } else {
       return Toy.thrown || true;
     }
+  }
+}
+
+/**
+ * Throw one of these to return an arbitrary value
+ * from a recursive function.
+ */
+function Result(value) {
+  this.value = value;
+}
+
+/**
+ * Call the given function with the given arguments, returning the
+ * undefined value if the function throws, else the value returned
+ * from the function call.  Does not interfere with exitFrom
+ * and withExit.
+ *
+ * Intended for enforcing planned control flow even when unknown
+ * problems may occur.  For recovery from specific problems consider
+ * using dynamically bound recovery functions.
+ *
+ * Be aware that this suppresses debugging during its execution.
+ */
+function normalReturn(fn, ...args) {
+  try {
+    return fn.apply(undefined, args);
+  } catch(e) {
+    // Respect returnFrom.
+    if (e instanceof ReturnTarget) {
+      Toy.throw(e);
+    }
+    // Uncomment to get a message.
+    // console.warn('normalReturn caught', e);
   }
 }
 
@@ -1150,7 +1153,7 @@ function releaseThisPid() {
 $(window).on('unload', releaseThisPid);
 
 
-//// BENCHMARKING
+//// Benchmarking
 
 /**
  * Call the function with no arguments "count" times, defaulting to
@@ -1176,7 +1179,7 @@ function benchmark(fn, count) {
 Toy.loaded = jQuery({});
 
 
-//// SET
+//// ToySet
 
 function ToySet(stringifier) {
   this.map = {};
