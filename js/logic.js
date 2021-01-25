@@ -3800,15 +3800,7 @@ declare(
 // or null if it finds none.
 function canRewrite(step, path, eqn_arg) {
   const expr = step.get(path);
-  // If given an equation or conditional equation, this is its
-  // LHS.  Otherwise if given a conditional, the RHS, otherwise
-  // the argument itself.
-  const schemaPart = (eqn_arg.isEquation()
-                      ? eqn_arg.eqnLeft()
-                      : eqn_arg.isCall2('=>')
-                      ? eqn_arg.getRight()
-                      : eqn_arg);
-  return expr.findSubst(schemaPart);
+  return expr.findSubst(Toy.schemaPart(eqn_arg));
 }
 
 declare(

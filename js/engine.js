@@ -1363,6 +1363,15 @@ function searchForMatchingFact(term, info) {
   return term[searchMethod](factFinder);
 }
 
+// This finds the fact part to match.  If the fact is not an equation,
+// uses the main part instead of the LHS.
+function schemaPart(fact) {
+  var main = fact.getMain();
+  return (main.isCall2('=')
+          ? main.getLeft()
+          : main);
+}
+
 /**
  * Searches the given pattern list for one whose "schema part" matches
  * the given term.  If it finds one, returns info about it in a plain
@@ -1441,14 +1450,6 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   function interpret(stmt) {
     return mathParse(stmt);
   }
-  // This finds the fact part to match.  If the fact is not an equation,
-  // uses the main part instead of the LHS.
-  function schemaPart(fact) {
-    var main = fact.getMain();
-    return (main.isCall2('=')
-            ? main.getLeft()
-            : main);
-  }
   function apply$(expr, $) {
     if (typeof expr === 'function') {
       return expr($, cxt, term);
@@ -1476,11 +1477,6 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
         // TODO: Change this to match before checking for inProgress,
         //   and warn when a match is rejected due to fact proof in
         //   progress.
-        //
-        // Note: resolveToFact for some reason is MUCH faster here
-        // than rules.fact.  The whole test suite runs twice as fast.
-        // Unfortunately resolveToFact returns the goal as stated, not
-        // as requested.
         var fullFact = (factExpansion(stmt) ||
                         // The "fact" might be a tautology.
                         // Could it even be something else?  Not clear.
@@ -2495,6 +2491,7 @@ Toy.eachFact = eachFact;
 Toy.getTheorem = getTheorem;
 Toy.getResInfo = getResInfo;
 Toy.convert = convert;
+Toy.schemaPart = schemaPart;
 Toy.findMatchingFact = findMatchingFact;
 Toy.tryReduce = tryReduce;
 Toy.applyFactsWithinSite = applyFactsWithinSite;
