@@ -3027,7 +3027,7 @@ declare(
   //   Subsume removeLet and removeTypeAsm with that rule.
   {name: 'removeLet',
     precheck: function(step, path_arg) {
-      var path = Toy.path(path_arg);
+      var path = Toy.asPath(path_arg);
       const term = step.get(path);
       // This check is a little loose because it does not compare
       // the paths.  To do that, use prettyPathTo and compare strings.
@@ -3065,7 +3065,7 @@ declare(
     },
     action: function(step, path_arg) {
       var info = Toy._actionInfo;
-      var path = Toy.path(path_arg);
+      var path = Toy.asPath(path_arg);
       var step1 = info.extracted;
       var vName = info.vName;
       var asm = step.get(path);
@@ -3094,7 +3094,7 @@ declare(
   // R, but should be extended as needed.
   {name: 'removeTypeAsm',
     precheck: function(step, path_arg) {
-      var path = Toy.path(path_arg);
+      var path = Toy.asPath(path_arg);
       if (!(step.isCall2('=>') && path.isLeft())) {
         return false;
       }
@@ -3122,7 +3122,7 @@ declare(
       return false;
     },
     action: function(step, path_arg) {
-      var path = Toy.path(path_arg);
+      var path = Toy.asPath(path_arg);
       var info = Toy._actionInfo;
       var step1 = info.extracted;
       var vName = info.vName;
@@ -3381,12 +3381,12 @@ declare(
       var step3 = rules.apply(step2, '/right/left');
       var step4 = step3;
       for (var i = 0; i < boundNameList.length; i++) {
-        step4 = rules.apply(step4, Toy.path('/right/left').concat(path));
+        step4 = rules.apply(step4, Toy.asPath('/right/left').concat(path));
       }
       var step5 = rules.apply(step4, '/right/right');
       var step6 = step5;
       for (var i = 0; i < boundNameList.length; i++) {
-        step6 = rules.apply(step6, Toy.path('/right/right').concat(path));
+        step6 = rules.apply(step6, Toy.asPath('/right/right').concat(path));
       }
       if (boundNameList.length == 0) {
         return step6.justify('r5239', arguments);
@@ -3546,7 +3546,7 @@ declare(
       // Prepare to replace the base part of the right side.
       var replacer1 = rules.r5239a(base, fromBase, eqn);
       // Conjunction is equivalent to its transform with target replaced.
-      var equiv2 = rules.r1(equiv1, Toy.path('/right').concat(toBase),
+      var equiv2 = rules.r1(equiv1, Toy.asPath('/right').concat(toBase),
                                  replacer1);
       // Reverse the transform on the RHS.
       var equiv3 = rules.rewriteOnly(equiv2, '/right',
@@ -3691,7 +3691,7 @@ declare(
    */
   {name: 'rRight',
     action: function(target, path, equation) {
-      path = Toy.path(path);
+      path = Toy.asPath(path);
       var rev = rules.eqnSwap(equation);
       var result = rules.r1(target, path, rev);
       return result.justify('rRight', arguments, [target, equation]);
@@ -3725,7 +3725,7 @@ declare(
   // reasons is replaceConjunct.
   {name: 'replaceIsEquiv',
     action: function(step, path_arg, eqnStep) {
-      var path = Toy.path(path_arg);
+      var path = Toy.asPath(path_arg);
       var wff = step.wff;
 
       // A boolean part of the step:
@@ -4212,7 +4212,7 @@ declare(
   // TODO: Disallow this as unreliable.  Refer to it by its content.
   {name: 'extractHypAt',
     precheck: function(step, path_arg) {
-      const path = Toy.path(path_arg);
+      const path = Toy.asPath(path_arg);
       return step.wff.isCall2('=>') && path.isLeft();
     },
     action: function(step, path) {

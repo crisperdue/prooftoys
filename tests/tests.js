@@ -653,7 +653,7 @@ var testCase = {
   testEncodeSteps: function() {
     var step1 = rules.assume('x = y + 3');
     var step2 = rules.assume('x + y = 5');
-    var step3 = rules.replace(step2, Toy.path('/main/left/left'), step1);
+    var step3 = rules.replace(step2, Toy.asPath('/main/left/left'), step1);
     var saved = Toy.encodeSteps([step1, step2, step3]);
     var parsed = Toy.justParse(saved);
     var a = parsed.asArray();
@@ -678,7 +678,7 @@ var testCase = {
   testDecodeSteps: function() {
     var step1 = rules.assume('x = y + 3');
     var step2 = rules.assume('x + y = 5');
-    var step3 = rules.replace(step2, Toy.path('/main/left/left'), step1);
+    var step3 = rules.replace(step2, Toy.asPath('/main/left/left'), step1);
     var saved = Toy.encodeSteps([step1, step2, step3]);
     var steps = Toy.decodeSteps(saved);
     assertEqual(3, steps.length);
@@ -835,11 +835,11 @@ var testCase = {
   testReplaceAt: function() {
     var y = varify('y');
     var e1 = call(lambda(x, call(f, x)), y);
-    var path = Toy.path('/fn/body/arg');
+    var path = Toy.asPath('/fn/body/arg');
     var result = e1.replaceAt(path, function(expr) { return call(f, x); });
     assertEqual('({x. (f (f x))} y)', result.toString());
     var target = Toy.parse('f x = y');
-    result = target.replaceAt(Toy.path('/right'), function(expr) { return z; });
+    result = target.replaceAt(Toy.asPath('/right'), function(expr) { return z; });
     assert(target.getLeft() === result.getLeft());
   },
 
@@ -847,14 +847,14 @@ var testCase = {
     var Path = Toy.Path;
 
     var p = '/a/b';
-    var path = Toy.path(p);
+    var path = Toy.asPath(p);
     assertEqual(p, path.toString());
     assertEqual('a', path.segment);
-    assert(Toy.path('').isMatch());
+    assert(Toy.asPath('').isMatch());
     var p2 = '/left/binop';
-    assertEqual('/left/binop', Toy.path(p2).toString());
+    assertEqual('/left/binop', Toy.asPath(p2).toString());
     var p3 = '/arg/fn';
-    assertEqual(p3 + p3, Toy.path(p3).concat(p3).toString());
+    assertEqual(p3 + p3, Toy.asPath(p3).concat(p3).toString());
 
     assertEqual('/fn', new Path('fn').toString());
     assertEqual('/left', new Path('left').toString());
@@ -902,13 +902,13 @@ var testCase = {
 
   testGet: function() {
     var expr = call('forall', lambda(x, call(p, x)));
-    var body = expr.get(Toy.path('/arg/body'));
+    var body = expr.get(Toy.asPath('/arg/body'));
     assertEqual('(p x)', body.toString());
   },
 
   testRevGet: function() {
     var expr = call('forall', lambda(x, call(p, x)));
-    var body = expr.revGet(Toy.path('/body/arg'));
+    var body = expr.revGet(Toy.asPath('/body/arg'));
     assertEqual('(p x)', body.toString());
   },
 
@@ -978,7 +978,7 @@ var testCase = {
 
   testAncestors: function() {
     var expr = Toy.parse('a + neg (b * c)');
-    var path = Toy.path('/right/arg/fn/arg');
+    var path = Toy.asPath('/right/arg/fn/arg');
     assertEqual('b', expr.get(path));
 
     var parents = expr.ancestors(path);
@@ -992,7 +992,7 @@ var testCase = {
 
   testFindParent: function() {
     var expr = Toy.parse('a + neg (b * c)');
-    var path = Toy.path('/right/arg/left');
+    var path = Toy.asPath('/right/arg/left');
     assertEqual('b', expr.get(path));
 
     function test(term) { return term.isCall2('*'); }
@@ -1022,7 +1022,7 @@ var testCase = {
 
   testPrettifyPath: function() {
     var expr = Toy.parse('a + neg (b * c)');
-    var p = Toy.path('/arg/arg/fn/arg');
+    var p = Toy.asPath('/arg/arg/fn/arg');
     assertEqual('/right/arg/left', expr.prettifyPath(p).toString());
   },
 
@@ -1054,17 +1054,17 @@ var testCase = {
   },
 
   testPathParent: function() {
-    var p = Toy.path('/left/right/fn/arg/body');
+    var p = Toy.asPath('/left/right/fn/arg/body');
     var p1 = p.parent();
     assertEqual('/left/right/fn/arg', p1.toString());
     assertEqual('/left/right/fn', p1.parent().toString());
-    assertEqual('', Toy.path('/arg').parent().toString());
+    assertEqual('', Toy.asPath('/arg').parent().toString());
   },
 
   testPathUpTo: function() {
     function check(expected, path, tail) {
       assertEqual(expected.toString(),
-                  '' + Toy.path(path).upTo(Toy.path(tail)));
+                  '' + Toy.asPath(path).upTo(Toy.asPath(tail)));
     }
     check('/left', '/left', '');
     check('/left/right', '/left/right', '');
@@ -1075,7 +1075,7 @@ var testCase = {
   },
 
   testPathLast: function() {
-    var p = Toy.path('/left/right/fn/arg/body');
+    var p = Toy.asPath('/left/right/fn/arg/body');
     assertEqual('body', p.last());
     var parent = p.parent();
     assertEqual('arg', parent.last());
@@ -1698,7 +1698,7 @@ var testCase = {
   // PROOFS
 
   testRuleR: function() {
-    var path = Toy.path('/right/left');
+    var path = Toy.asPath('/right/left');
     var result = Toy.rules.r(times2, bigger, path);
     assertEqual('((x > 0) => ((2 * x) > x))', result);
   },
@@ -2117,7 +2117,7 @@ var testCase = {
 
   testR5239a: function() {
     var result = rules.r5239a(parse('x + y = 5'),
-                              Toy.path('/left/left'),
+                              Toy.asPath('/left/left'),
                               parse('x = y + 1'));
     var fml = 'x + y = 5 & x = y + 1 == y + 1 + y = 5 & x = y + 1';
     assertEqual(parse(fml).toString(), result);
@@ -2353,7 +2353,7 @@ var testCase = {
   testFlattenTerm: function() {
     function check(expected, input) {
       var step = rules.consider(input);
-      var right = Toy.path('/main/right');
+      var right = Toy.asPath('/main/right');
       var result = rules.flattenTerm(step, right);
       assertEqual(expected, result.getMain().getRight());
     }
@@ -2735,12 +2735,12 @@ var testCase = {
 
   testReplaceConjunct: function() {
     var step = rules.given('x + y = 5 & x = y + 3');
-    var result = rules.replaceConjunct(step, Toy.path('/right/left/left/left'));
+    var result = rules.replaceConjunct(step, Toy.asPath('/right/left/left/left'));
     var expect = ('((((x + y) = 5) & (x = (y + 3))) == ' +
                   '((((y + 3) + y) = 5) & (x = (y + 3))))');
     assertEqual(expect, result)
     step = rules.given('x = y + 3 & x + y = 5');
-    result = rules.replaceConjunct(step, Toy.path('/right/right/left/left'));
+    result = rules.replaceConjunct(step, Toy.asPath('/right/right/left/left'));
     expect = ('(((x = (y + 3)) & ((x + y) = 5)) == ' +
               '((x = (y + 3)) & (((y + 3) + y) = 5)))');
     assertEqual(expect, result);

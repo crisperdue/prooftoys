@@ -315,19 +315,6 @@ Path.prototype.toString = function() {
 };
 
 /**
- * Calls expr.asPath(arg), or just asPath(arg) if no expr is given.
- *
- * TODO: Call either asPath or Expr.asPath everywhere and remove this.
- */
-function path(arg, opt_expr) {
-  if (arguments.length > 1) {
-    abort('Bad usage of path(...)');
-  }
-  var expr = opt_expr;
-  return expr ? expr.asPath(arg) : asPath(arg);
-}
-
-/**
  * Pseudo-constructor: coerces its argument to a Path given a string
  * consisting of segments starting with "/", or an array of strings,
  * or a Bindings, or null.  The parts become the segments of the path.
@@ -444,7 +431,6 @@ Toy.findBindingValue = findBindingValue;
 Toy.getBinding = getBinding;
 
 Toy.Path = Path;
-Toy.path = path;
 Toy.asPath = asPath;
 
 })();

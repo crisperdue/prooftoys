@@ -1909,7 +1909,7 @@ function decodeArg(info, steps) {
     case 't':
       return (value);
     case 'path':
-      return (Toy.path(value._value));
+      return (Toy.asPath(value._value));
     case 'subst':
     case 'facts':
       return JSON.parse(value.getStringValue());

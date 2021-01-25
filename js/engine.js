@@ -217,7 +217,7 @@ function noSimplify(step) {
  */
 Toy.Path.prototype.adjustForRewrite = function(input, output) {
   return (!input.isCall2('=>') && output.isCall2('=>')
-          ? Toy.path('/right').concat(this)
+          ? Toy.asPath('/right').concat(this)
           : this);
 };
 
@@ -1625,7 +1625,7 @@ function applyToFocalPart(step, facts) {
  * if no matches are found.
  */
 function applyFactsWithinSite(step, path_arg, facts) {
-  var path = Toy.path(path_arg);
+  var path = Toy.asPath(path_arg);
   var eqn1 = rules.considerPart(step, path);
   var eqn2 = applyFactsWithinRhs(eqn1, facts);
   return (eqn2 == eqn1 ? step : rules.replace(step, path, eqn2));

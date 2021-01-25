@@ -907,9 +907,9 @@ declare
       var fml = '@ the1 {z. R x & R y & R z & x = y * z} = x / y';
       var divDefn = rules.fact(fml);
       var step7 = rules.rewriteFrom(step6, '/right/right/right', divDefn);
-      var loc7 = Toy.path('/right').concat(step7.getRight().find('(R x)'));
+      var loc7 = Toy.asPath('/right').concat(step7.getRight().find('(R x)'));
       var step8 = rules.assumed(step7, loc7);
-      var loc8 = Toy.path('/right').concat(step8.getRight().find('(R y)'));
+      var loc8 = Toy.asPath('/right').concat(step8.getRight().find('(R y)'));
       var step9 = rules.assumed(step8, loc8);
       var step10 = rules.simplifySite(step9, '/main/left');
       return step10;

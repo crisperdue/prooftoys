@@ -1450,7 +1450,7 @@ StepEditor.prototype.parseValue = function(value, type) {
       return new Error('Illegal variable name: ' + value);
     }
   case 'path':
-    return Toy.path(value);
+    return Toy.asPath(value);
   case 'string':
     if (value.length) {
       return value;

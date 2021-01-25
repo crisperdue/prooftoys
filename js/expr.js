@@ -1439,7 +1439,7 @@ Expr.prototype.prettyPathTo = function(pred) {
  * such left neighbor.
  */
 Expr.prototype.leftNeighborPath = function(path_arg, operators) {
-  var path = Toy.path(path_arg);
+  var path = Toy.asPath(path_arg);
   if (path.isEnd()) {
     return null;
   }
@@ -1454,10 +1454,10 @@ Expr.prototype.leftNeighborPath = function(path_arg, operators) {
   var left = parent.getLeft();
   if (left.isCall2() && left.getBinOp().in(operators)) {
     // Left operand is a call to another binop.
-    return parentPath.concat(Toy.path('/left/right'));
+    return parentPath.concat(Toy.asPath('/left/right'));
   } else {
     // Left operand is something else.
-    return parentPath.concat(Toy.path('/left'));
+    return parentPath.concat(Toy.asPath('/left'));
   }
 };
 
@@ -1466,7 +1466,7 @@ Expr.prototype.leftNeighborPath = function(path_arg, operators) {
  * there is one, or null if not.
  */
 Expr.prototype.rightNeighborPath = function(path_arg, operators) {
-  var path = Toy.path(path_arg);
+  var path = Toy.asPath(path_arg);
   if (path.isEnd()) {
     return null;
   }
@@ -1492,7 +1492,7 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
   if (parent2.isCall2() && parent2.getBinOp().in(operators)) {
     // Grandparent expression is a call to another binop.
     // Return a path to its right operand.
-    return parentPath2.concat(Toy.path('/right'));
+    return parentPath2.concat(Toy.asPath('/right'));
   }
   return null;
 };
