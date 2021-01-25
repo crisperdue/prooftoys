@@ -419,8 +419,14 @@ function debug(value) {
 }
 
 /**
- * Unconditional failure, used by assert.  Convenient, and cooperates
- * with catchAll by setting Toy.thrown.
+ * Unconditionally throws an Error; used by assert.  Convenient, and
+ * cooperates with catchAll by using Toy.throw.  If the first argument
+ * is not a string, it is treated as a pure object with properties
+ * controlling details of the abort:
+ *
+ * with: value is a map of properties to attach to the Error object.
+ *
+ * The remaining arguments then are as for a call without options.
  */
 function abort(msg, ...args) {
   if (typeof msg === 'string') {
@@ -433,18 +439,7 @@ function abort(msg, ...args) {
 const levels = new Set(['error', 'warn', 'info', 'log', 'none']);
 
 function _abort(options, msg, ...args) {
-  let level = 'error';
-  if ('level' in options) {
-    level = options.level;
-  }
-  const props = 'with' in options ? options.with : {};
-    
-
   const e = new Error(Toy.format(msg, ...args));
-  if (level !== 'none') {
-    console[level](e.message);
-  }
-
   let step;
   // Find a step argument if there is one.
   for (var i = 0; i < args.length; i++) {
@@ -456,7 +451,11 @@ function _abort(options, msg, ...args) {
     }
   }
   e.step = step;
+  const props = 'with' in options ? options.with : {};
   Object.assign(e, props);
+  if ('from' in options) {
+    e.from = options.from;
+  }
   Toy.throw(e);
 }
 
