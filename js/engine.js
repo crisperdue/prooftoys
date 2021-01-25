@@ -1487,7 +1487,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
           if (subst) {
             var result = {stmt: fullFact,
                           term: term,
-                          path: Toy.path(),
+                          path: Toy.asPath(''),
                           subst: subst};
             return result;
           }
@@ -1500,7 +1500,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
         var result = {
           stmt: eqn,
           term: term,
-          path: Toy.path(),
+          path: Toy.asPath(''),
           subst: {}
         };
         return result;
@@ -1541,7 +1541,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
       if (subst && (!where || apply$(where, subst))) {
         var result = {stmt: expansion,
                       term: term,
-                      path: Toy.path(),
+                      path: Toy.asPath(''),
                       subst: subst};
         return result;
       }

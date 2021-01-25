@@ -205,7 +205,7 @@ Path.prototype.parent = function() {
   }
   var rest = this.rest;
   if (rest.isEnd()) {
-    return path();
+    return Path.empty;
   } else {
     return new Path(segment, this.rest.parent());
   }
@@ -245,7 +245,7 @@ Path.prototype.firstN = function(n) {
  * If the tail is given as a string it will be converted to a path.
  */
 Path.prototype.upTo = function(tail) {
-  var revTail = path(tail).reverse();
+  var revTail = Toy.asPath(tail).reverse();
   var revPath = this.reverse();
   while (true) {
     if (revTail.isEnd()) {
@@ -370,7 +370,7 @@ function asPath(arg) {
  * by all the segments of the path argument.
  */
 Path.prototype.concat = function(p) {
-  p = path(p);
+  p = Toy.asPath(p);
   if (this == _end) {
     return p;
   } else {
@@ -408,7 +408,7 @@ Path.prototype.expand = function() {
  */
 Path.prototype.reverse = function() {
   var revPath = this;
-  var result = path();
+  var result = Toy.asPath('');
   while (!revPath.isEnd()) {
     result = new Path(revPath.segment, result);
     revPath = revPath.tail();

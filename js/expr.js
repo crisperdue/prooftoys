@@ -7,7 +7,6 @@
 'use strict';
 
 var Path = Toy.Path;
-var path = Toy.path;
 var Bindings = Toy.Bindings;
 var getBinding = Toy.getBinding;
 var assert = Toy.assertTrue;
@@ -798,9 +797,9 @@ Expr.prototype.subFree1 = function(replacement, name) {
  */
 Expr.prototype.pathToFocalPart = function() {
   var main = this.getMain();
-  return path(main.isCall2('=')
-              ? '/main/right'
-              : '/main');
+  return Toy.asPath(main.isCall2('=')
+                    ? '/main/right'
+                    : '/main');
 };
 
 var _assertionCounter = 1;
@@ -1314,7 +1313,6 @@ Expr.prototype.asPath = function(arg) {
  */
 Expr.prototype.descend = function(segment) {
   assert(this !== Path.empty, 'Path is empty');
-  const rest = path.rest;
   if (this instanceof Call) {
     if (this.fn instanceof Call) {
       if (segment === 'left') {
@@ -1390,7 +1388,7 @@ Expr.prototype.pathTo = function(arg) {
     const target = termify(arg);
     test = function(term) { return target.sameAs(term); };
   }
-  const rpath = this._path(test, path(''));
+  const rpath = this._path(test, Toy.asPath(''));
   return rpath ? rpath.reverse() : null;
 };
 
@@ -1423,7 +1421,7 @@ Expr.prototype.prettyPathTo = function(pred) {
     var target = pred;
     pred = function(term) { return target == term; };
   }
-  var p = this._prettyPath(pred, path(''));
+  var p = this._prettyPath(pred, Toy.asPath(''));
   return (this.isProved() && !this.isCall2('=>')
           ? new Path('main', p)
           : p);
@@ -1513,7 +1511,7 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
  *   calls to Expr._ancestors.
  */
 Expr.prototype.ancestors = function(path_arg) {
-  var p = path(path_arg, this);
+  var p = this.asPath(path_arg);
   var result = [];
   this._ancestors(p, result);
   return result;
@@ -1644,7 +1642,7 @@ Expr.prototype.pathToBinding = function(pred) {
     var target = pred;
     pred = function(term) { return target.matches(term); };
   }
-  var revPath = this._bindingPath(pred, path(''));
+  var revPath = this._bindingPath(pred, Toy.asPath(''));
   return revPath ? revPath.reverse() : null;
 };
 
@@ -1663,7 +1661,7 @@ Expr.prototype.pathToBinding = function(pred) {
  *   Expr.searchMost.
  */
 Expr.prototype.traverse = function(fn, rpath) {
-  this._traverse(fn, rpath || path());
+  this._traverse(fn, rpath || Path.empty);
 };
 
 /**
@@ -1900,7 +1898,7 @@ var _searchTermsOps = Toy.ownProperties({'+': true, '-': true, '=': true});
  */
 Expr.prototype.searchTerms = function(test, path) {
   if (!path) {
-    path = Toy.path();
+    path = Toy.asPath('');
   }
   var op = this.isCall2() && this.getBinOp().name;
   return (test(this, path) ||
@@ -3186,7 +3184,7 @@ Call.prototype._asPattern = function(term) {
 
 Call.prototype.searchMost = function(fn, path, bindings) {
   if (!path) {
-    path = Toy.path();
+    path = Toy.asPath('');
   }
   return (fn(this, path, bindings) ||
           // Try the arg first to help substitutions apply toward the

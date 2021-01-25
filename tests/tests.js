@@ -1079,7 +1079,7 @@ var testCase = {
     assertEqual('body', p.last());
     var parent = p.parent();
     assertEqual('arg', parent.last());
-    assertEqual(null, Toy.path().last());
+    assertEqual(null, Toy.asPath('').last());
   },
 
   testMatchPattern: function() {
