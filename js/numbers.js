@@ -1963,7 +1963,7 @@ declare(
       // Truthy value if the given name in the LHS of the fact can
       // match the part of this at the selected path.
       function testFact(name, fact_arg) {
-        var schema = Toy.resolveToFact(fact_arg).getMain().getLeft();
+        var schema = Toy.factExpansion(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path, schema, name);
         return info || undefined;
       }
@@ -1974,7 +1974,7 @@ declare(
       var factsB = termRightData.factsB;
       var factsA = termRightData.factsA;
       function tryFact(name, fact_arg) {
-        var schema = Toy.getResult(fact_arg).getMain().getLeft();
+        var schema = Toy.factExpansion(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
         if (info) {
           return rules.rewrite(step, info.path, fact_arg);
@@ -2017,8 +2017,10 @@ declare(
         'a + b = b + a',
         '@a - b = neg b + a'
       ];
+      // TODO: Factor this out, see also moveTermRight.
+      //   Consider extending to be somewhat like findMatchingFact.
       function tryFact(name, fact_arg) {
-        var schema = termify(fact_arg).getLeft();
+        var schema = Toy.factExpansion(fact_arg).getMain().getLeft();
         var info = step.matchSchemaPart(path_arg, schema, name);
         if (info) {
           return rules.rewrite(step, info.path, fact_arg);
