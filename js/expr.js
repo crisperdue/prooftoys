@@ -954,7 +954,7 @@ Expr.prototype.mathVarConditions = function(expr) {
  * from names to true.
  */
 Expr.prototype.boundNames = function(path) {
-  path = Toy.path(path, this);
+  path = this.asPath(path);
   var bindings = this._boundNames(path, null);
   var map = {};
   for (var more = bindings; more; more = more.more) {
@@ -1524,7 +1524,7 @@ Expr.prototype.ancestors = function(path_arg) {
  * found.
  */
 Expr.prototype.findParent = function(path_arg, test) {
-  var p = Toy.path(path_arg, this);
+  var p = this.asPath(path_arg);
   // Expression descended to so far.
   var term = this;
   // Portion of path not yet traversed.

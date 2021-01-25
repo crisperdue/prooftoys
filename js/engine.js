@@ -1641,7 +1641,7 @@ function applyFactsWithinRhs(step, facts) {
   var rhs;
   var info;
   var eqn = step;
-  while (rhs = Toy.path('/main/right', eqn),
+  while (rhs = eqn.asPath('/main/right'),
          info = searchForMatchingFact(eqn.get(rhs), facts)) {
     var fullPath = rhs.concat(info.path);
     eqn = rules.rewrite(eqn, fullPath, info.stmt);
@@ -1712,7 +1712,7 @@ function arrangeRhs(eqn_arg, context, facts) {
   var rhsPath;
   var info;
   var eqn = eqn_arg;
-  while (rhsPath = Toy.path('/main/right', eqn),
+  while (rhsPath = eqn.asPath('/main/right'),
          info = findMatchingFact(facts, context, eqn.get(rhsPath))) {
     var fullPath = rhsPath.concat(info.path);
     const next = rules.rewrite(eqn, fullPath, info.stmt);

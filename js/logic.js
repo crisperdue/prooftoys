@@ -251,7 +251,7 @@ declare(
    */
   {name: 'r',
     action: function(equation, target, path_arg) {
-      const path = Toy.path(path_arg, target);
+      const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
       if (equation.getLeft().sameAs(equation.getRight())) {
         // The equation LHS must "match" the site, but can differ in
@@ -672,7 +672,7 @@ declare(
     },
     action: function(step, path) {
       var args = [step, path];
-      path = Toy.path(path, step);
+      path = step.asPath(path);
       var result;
       var target = step.get(path);
       // Undefined if the path refers to an Atom.
@@ -1551,12 +1551,11 @@ declare(
   // so resulting assumptions are simplified.
   {name: '_simplifySite',
     action: function(step, path, opt_facts) {
-      var _path = Toy.path;
       var eqn = rules.consider(step.get(path));
       var simpler = Toy.repeatedly(eqn, function(eqn) {
           // This usage of /main is kind of cool in that it automatically
           // adapts in case some versions of eqn have assumptions.
-          return rules._simplifyOnce(eqn, _path('/main/right', eqn), opt_facts);
+          return rules._simplifyOnce(eqn, eqn.asPath('/main/right'), opt_facts);
         });
       return rules.replace(step, path, simpler);
     }
@@ -3350,7 +3349,7 @@ declare(
   // need not be proved or true statements.
   {name: 'r5239',
     action: function(target, path, equation) {
-      path = Toy.path(path, target);
+      path = target.asPath(path);
       assert(equation.isCall2('='),
              'Expecting an equation, got: {1}',
              equation);
@@ -4782,7 +4781,7 @@ declare(
       return type !== Toy.boolean;
     },
     action: function(step, path_arg) {
-      var path = Toy.path(path_arg, step);
+      var path = step.asPath(path_arg);
       var term = step.get(path);
       var v = step.wff.freshVar('x');
       function replacer(term) { return v; }

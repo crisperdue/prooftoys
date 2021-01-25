@@ -320,6 +320,9 @@ Path.prototype.toString = function() {
  * TODO: Call either asPath or Expr.asPath everywhere and remove this.
  */
 function path(arg, opt_expr) {
+  if (arguments.length > 1) {
+    abort('Bad usage of path(...)');
+  }
   var expr = opt_expr;
   return expr ? expr.asPath(arg) : asPath(arg);
 }

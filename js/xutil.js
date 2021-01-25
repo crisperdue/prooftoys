@@ -19,7 +19,6 @@ var Lambda = Toy.Lambda;
 var assert = Toy.assertTrue;
 var abort = Toy.abort;
 var Path = Toy.Path;
-var path = Toy.path;
 
 ////
 //// Extended Utilities that may depend on expr.js.
