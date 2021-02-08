@@ -163,6 +163,77 @@ function removeExcept(map1, map2) {
   }
 }
 
+function isIterable (value) {
+  // Note that Object is the identity function if value is an Object.
+  return Symbol.iterator in Object(value);
+}
+
+//// JavaScript Maps and Sets
+
+/**
+ * Coerces the given plain object to a Set, or if it is a Set, just
+ * returns it.  Accepts any Iterable as input, or a plain object,
+ * converted to the set of its keys with Object.keys, or a Set.
+ */
+function asSet(object) {
+  return (object instanceof Set
+          ? object
+          : object.constructor === Object
+          ? new Set(Object.keys(object))
+          : isIterable(object)
+          ? new Set(object)
+          : abort('Not coercible to a Set: {1}', object));
+}
+
+/**
+ * Returns a new Set containing all the elements of each of its zero
+ * or more arguments, coerced to Sets with asSet.
+ */
+function union(...args) {
+  const result = new Set();
+  args.forEach(setLike => asSet(setLike).forEach(x => result.add(x)));
+  return result;
+}
+
+/**
+ * Returns a new Set containing all values that are elements of each
+ * of its arguments, each coerced to a Set with asSet.
+ */
+function intersection(arg1, ...rest) {
+  const result = union(arg1);
+  const sets = rest.map(asSet);
+  result.forEach(x => {
+    for (const set of sets) {
+      if (!set.has(x)) {
+        result.delete(x);
+        return;
+      }
+    }
+  });
+  return result;
+}
+
+/**
+ * True if both arguments are sets and each "has"
+ * the same elements.
+ */
+function equalSets(arg1, arg2) {
+  assert(arg1 instanceof Set, 'Not a Set: {1}', arg1);
+  assert(arg2 instanceof Set, 'Not a Set: {1}', arg2);
+  if (arg1.size !== arg2.size) {
+    return false;
+  }
+  for (const v of arg1) {
+    if (!arg2.has(v)) {
+      return false;
+    }
+  }
+  return true
+}
+
+
+//// Stricter property access
+
 /**
  * Creates a proxy for the given object that allows no access to
  * properties; no getting, setting, deleting, or defining properties,
@@ -2279,6 +2350,11 @@ Toy.ownProperties = ownProperties;
 Toy.object0 = object0;
 Toy.removeAll = removeAll;
 Toy.removeExcept = removeExcept;
+Toy.isIterable = isIterable;
+Toy.asSet = asSet;
+Toy.union = union;
+Toy.intersection = intersection;
+Toy.equalSets = equalSets;
 Toy.each = each;
 Toy.memo = memo;
 Toy.format = format;

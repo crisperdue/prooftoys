@@ -49,6 +49,9 @@ function newProofEditor() {
 // Assertion utilities:
 
 function assertEqual(a, b) {
+  if (a instanceof Set) {
+    return assert(Toy.equalSets(a, b), 'Sets not equal');
+  }
   if (typeof a === 'string' && b instanceof Toy.Expr) {
     // Crudely remove indications of bound variable IDs.
     // This could be done carefully on the structure of
@@ -105,6 +108,9 @@ function checkRewriter(expected, input, rule) {
   }
 }
 
+// Map from constructor to copier for its instances.
+const qUnitCopiers = new Map();
+
 /**
  * Copy a value for presentation to QUnit.deepEqual, which looks in
  * too many places.
@@ -119,10 +125,15 @@ function qUnitCopy(obj) {
   if (obj.qUnitCopy) {
     return obj.qUnitCopy();
   }
+  const constructor = obj.constructor;
+  const copier = qUnitCopiers.get(constructor);
+  if (copier) {
+    return copier(obj);
+  }
   if (Array.isArray(obj)) {
     return obj.map(x => qUnitCopy(x));
   }
-  if (obj.constructor === Object) {
+  if (constructor === Object) {
     var keys = Object.keys(obj);
     var copy = {};
     keys.forEach(k => copy[k] = qUnitCopy(obj[k]));
@@ -184,7 +195,58 @@ var testCase = {
     assertEqual(1, 1);
   },
 
-  // Utilities
+  // General
+
+  testIsIterable: function() {
+    const iter = Toy.isIterable;
+    assert(iter('asdf'));
+    assert(!iter(3));
+    assert(iter(new Set()));
+    assert(iter(new Map()));
+    assert(iter([]));
+  },
+
+  testAsSet: function() {
+    const set = Toy.asSet;
+    const three = [1, 2, 3];
+    assert(set(three).constructor === Set);
+    assertEqual(3, set(three).size);
+    assertEqual(set(three), set(set(three)));
+    assert(set(three) != set(set(three)));
+  },
+
+  testUnion: function() {
+    const union = Toy.union;
+    assertEqual(new Set(), union(new Set(), new Set()));
+    assertEqual(new Set([1, 2]), union(new Set(), new Set([2, 1])));
+    assertEqual(new Set([1, 2]), union(new Set([1]), new Set([2, 1])));
+    assertEqual(new Set([1, 2]), union(new Set([2]), new Set([1])));
+    assertEqual(new Set([1, 2]), union(new Set([2, 1]), new Set()));
+    assertEqual(2, union(new Set([{}]), new Set([{}])).size);
+    assertEqual(new Set(), union());
+    const s1 = new Set([{}]);
+    assert(s1 !== union(s1, s1));
+    assert(s1 !== union(s1, new Set()));
+    assertEqual(new Set(['a', 'b']), union(['a', 'b']));
+    assertEqual(new Set(['a', 'b']), union({a: 1, b: true}));
+  },
+
+  testIntersection: function() {
+    const join = Toy.intersection;
+    assertEqual(new Set(), join(new Set(), new Set()));
+    assertEqual(new Set(), join(new Set(), new Set([2, 1])));
+    assertEqual(new Set([1]), join(new Set([1]), new Set([2, 1])));
+    assertEqual(new Set([]), join(new Set([2]), new Set([1])));
+    assertEqual(new Set([1, 2]), join(new Set([2, 1]), new Set([1, 2])));
+    assertEqual(0, join(new Set([{}]), new Set([{}])).size);
+    const s1 = new Set([{}]);
+    assert(s1 !== join(s1, s1));
+    assertEqual(s1, join(s1, s1));
+    assertEqual(new Set(['a', 'b']), join(['a', 'b']));
+    assertEqual(new Set(['a', 'b']), join({a: 1, b: true}));
+  },
+
+  // Arithmetic
 
   testGcd: function() {
     const gcd = Toy.gcd;
@@ -213,7 +275,7 @@ var testCase = {
   },
 
   testGetPrimes: function() {
-    var primes = Toy.getPrimes()
+    var primes = Toy.getPrimes();
     assertEqual(2, primes[0]);
     assertEqual(3432, primes.length);
     assertEqual(31991, primes[primes.length - 1]);
