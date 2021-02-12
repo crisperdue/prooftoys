@@ -2573,19 +2573,19 @@ function genVar(name, existingNames) {
   return new Atom(genName(name, existingNames));
 }
 
-// Last value used to uniquely (re!)name a bound variable.
-// Private to _genBoundVar
-var _boundVarCounter = 1;
 
 /**
  * Generates a new bound variable with new name; private to
  * Expr.subFree, which guarantees that the variable will never
  * appear free.  Private to Expr.subFree.
  */
-function _genBoundVar(name) {
+function _genBoundVar(name, freeVars) {
   // Use only the first letter of the previous name to
   // avoid names with multiple numeric parts.
-  return new Atom(name[0] + '.' + _boundVarCounter++);
+  let newName;
+  let counter = 10;
+  while ((newName = name[0] + '_' + counter++) in freeVars) {}
+  return new Atom(newName);
 }
 
 /**
@@ -3241,7 +3241,7 @@ Lambda.prototype._subFree = function(map, freeVars) {
     // Rename the bound variable without checking whether capturing
     // actually would occur.  Replacing the bound variable with a new one
     // may reduce likelihood of future name collisions.
-    var newVar = _genBoundVar(boundName);
+    var newVar = _genBoundVar(boundName, freeVars);
     var newBody = this.body._subFree(Toy.object0(boundName, newVar), {});
     var renamed = new Lambda(newVar, newBody);
     // Substitute into the modified Lambda term.

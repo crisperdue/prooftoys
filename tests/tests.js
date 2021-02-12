@@ -53,10 +53,7 @@ function assertEqual(a, b) {
     return assert(Toy.equalSets(a, b), 'Sets not equal');
   }
   if (typeof a === 'string' && b instanceof Toy.Expr) {
-    // Crudely remove indications of bound variable IDs.
-    // This could be done carefully on the structure of
-    // b if necessary, or with a flag for toString.
-    b = b.toString().replace(/[.][0-9]+/g, '');
+    b = b.toString();
   }
   return deepEqual(b, a);
 }
@@ -790,14 +787,17 @@ var testCase = {
     var target = call(lambda(v, v), x);
     // Now substitute in 'a different v':
     var result = target.subFree({x: varify('v')});
-    // We see that it replaces just the free occurrence.
-    assertEqual('({v. v} v)', result);
+    // We see that it replaces just the free occurrence,
+    // but the current implementation renames all bindings of
+    // "v" to be on the safe side.
+    assertEqual('({v_10. v_10} v)', result);
     // A case where decapturing is needed.
     result = Toy.parse('{y. x} x').subFree({x: y});
-    assertEqual('({y. y} y)', result);
-    // A very similar case where it is not needed.
+    assertEqual('({y_10. y} y)', result);
+    // A very similar case where it is not needed,
     result = Toy.parse('{y. T} x').subFree({x: y});
-    assertEqual('({y. T} y)', result);
+    // but our algorithm renames anyway rather than checking precisely.
+    assertEqual('({y_10. T} y)', result);
     // Multiple substitution.
     result = Toy.parse('x + y').subFree({y: x, x: y});
     assertEqual('(y + x)', result);
@@ -1546,7 +1546,7 @@ var testCase = {
   testFixupBoundNames: function() {
     const unfixed = (rules.forallAnd()
                      .andThen('instVar', '{y. x < y}', 'p'));
-    assert(unfixed.toString().match(/x\.\d/));
+    assert(unfixed.toString().match(/x\_\d/));
     const fixed = unfixed.wff.fixupBoundNames();
     assert(!fixed.toString().match(/x\.\d/));
     const unfixed2 = unfixed.wff.get('/left/arg/body');
@@ -2010,7 +2010,7 @@ var testCase = {
     var result = Toy.rules.casesTF(trueCase,
                                    falseCase,
                                    x);
-    assertEqual('(({x. x} x) = x)', result);
+    assertEqual('(({x_10. x_10} x) = x)', result);
   },
 
   testModusPonens: function() {
