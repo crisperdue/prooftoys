@@ -2589,23 +2589,6 @@ function _genBoundVar(name, freeVars) {
 }
 
 /**
- * True iff this variable was generated specifically as a bound
- * variable.
- */
-Atom.prototype.isGeneratedBound = function() {
-  return isGeneratedBoundName(this.name);
-};
-
-/**
- * Returns true iff the (valid) atom name has the form of a
- * generated bound variable.
- */
-function isGeneratedBoundName(name) {
-  // This assumes "." is not allowed in atom names.
-  return name.indexOf('.') > -1;
-}
-
-/**
  * Parses the Atom's name into the base name (e.g. "x"), subscript if
  * any (digits), and a type expression, returning information as an
  * object with properties "name", "sub", and "type", which are
@@ -3479,8 +3462,6 @@ Toy.addConstants = addConstants;
 Toy.multiReducer = multiReducer;
 Toy.addFnMatch = addFnMatch;
 Toy.checkFnMatch = checkFnMatch;
-
-Toy.isGeneratedBoundName = isGeneratedBoundName;
 
 // Private to xutil.js:
 Toy._identifierPattern = identifierPattern;

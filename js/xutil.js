@@ -1755,12 +1755,9 @@ function inputTypes(ruleName) {
  * "path" for a path (followed by the path as a string), or "s" for a
  * reference to another step (followed by the index of the referenced
  * step).
- *
- * The need to use fixupBoundNames here means that proofs cannot in
- * general rely on bound names to remain the same from one step
- * to the next!
  */
 function encodeSteps(steps_arg) {
+  // This maps from step to its index within the proof.
   const indexes = new WeakMap();
 
   function rep(step) {
@@ -1782,7 +1779,7 @@ function encodeSteps(steps_arg) {
         if (i) {
           result.push('(s ' + indexes.get(arg) + ')');
         } else {  
-          result.push('(t ' + arg.fixupBoundNames()  + ')');
+          result.push('(t ' + arg  + ')');
         }
       } else if (arg.constructor === Object) {
         // Treat this as a substitution

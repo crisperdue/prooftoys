@@ -1164,8 +1164,8 @@ function textNode(text) {
  *   renderings.
  */
 Expr.prototype.renderTerm = function() {
-  var copy = this.copyForRendering(null);
-  var jq = copy.render(0);
+  const copy = this.copyForRendering();
+  const jq = copy.render(0);
   return jq[0];
 };
 
@@ -1357,12 +1357,7 @@ Lambda.prototype.render = function(minPower) {
 Step.prototype.copyToRender = function() {
   // Note: does not copy the "ordinal" property, for no
   // great reason.
-  var freeVars = this.wff.freeVars();
-  var bindings = null;
-  for (const key in freeVars) {
-    bindings = new Bindings(key, key, bindings);
-  }
-  var wff = this.wff.copyForRendering(bindings);
+  const wff = this.wff.copyForRendering();
   // TODO: Make the step be a StepDisplay.
   var step = wff;
   // Flag it as a Step (actually StepDisplay)
@@ -1418,7 +1413,7 @@ Step.prototype.descendants = function() {
   return result;
 }
 
-// copyForRendering(bindings)
+// copyForRendering()
 //
 // Makes and returns a deep copy of this Expr, copying all parts
 // including occurrences of Vars, so rendering can add distinct
@@ -1426,52 +1421,29 @@ Step.prototype.descendants = function() {
 // structure.  Intended only for use in rendering.  Can operate on
 // either renderable or nonrenderable terms.
 //
-// This also renames generated bound variables for presentation with
-// subscripts and to help prevent large numbers in those subscripts.
 // Call this with bindings that include all free variables, mapping
 // name in the original to name in the copy, so the renaming will be
 // able to avoid reusing any of these in-scope names as the new name
 // of a bound variable.
 //
-Atom.prototype.copyForRendering = function(bindings) {
-  var name = Toy.getBinding(this.name, bindings) || this.pname;
-  var result = new Atom(name);
+Atom.prototype.copyForRendering = function() {
+  // TODO: Consider whether it is best to use the pname here.
+  const result = new Atom(this.pname);
   result.node = null;
   return result;
 };
 
-Call.prototype.copyForRendering = function(bindings) {
-  var result = new Call(this.fn.copyForRendering(bindings),
-                        this.arg.copyForRendering(bindings));
+Call.prototype.copyForRendering = function() {
+  const result = new Call(this.fn.copyForRendering(),
+                        this.arg.copyForRendering());
   result.node = null;
   return result;
 };
 
-Lambda.prototype.copyForRendering = function(bindings) {
-  var findBinding = Toy.findBinding;
-  var bound = this.bound;
-  var name = this.bound.name;
-  var origName = name;
-  if (this.bound.isGeneratedBound()) {
-    // When copying a binding of the generatedBound kind, the copy
-    // tries to replace it with a variable that has a simpler name
-    // different than any name bound in this context (or free in the
-    // entire wff).  It retains the base part (with no numeric suffix),
-    // trying first just the base, then successive suffixes until finding
-    // one with no binding in this scope.
-    var base = bound.parseName().name;
-    name = base;
-    let counter = 1;
-    while (Toy.findBindingValue(name, bindings)) {
-      name = base + '_' + counter++;
-    }
-  }
-
-  var newBindings = (name == origName
-                     ? bindings
-                     : new Bindings(origName, name, bindings));
-  var result =
-    Toy.lambda(Toy.varify(name), this.body.copyForRendering(newBindings));
+Lambda.prototype.copyForRendering = function() {
+  const result =
+        Toy.lambda(this.bound.copyForRendering(),
+                   this.body.copyForRendering());
   result.node = null;
   return result;
 };

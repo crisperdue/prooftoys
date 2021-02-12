@@ -2030,91 +2030,6 @@ Expr.prototype.pathBindings = function(path_arg) {
 }
 
 
-//// Fixing up bound variables
-
-/**
- * Generates an equivalent ("matches") term with generated bound
- * variables renamed with similar names, but in a parseable syntax.
- * Used for presentation and serialization of statements.
- *
- * The result can be used anywhere in place of the input, though if
- * this term is a subexpression with variables that are free in it,
- * but are generated bound variables in an enclosing term, this
- * will change their names so they can be read back in.
- */
-Expr.prototype.fixupBoundNames = function() {
-  const free = this.freeVars();
-
-  // Returns a truthy value iff a free variable has the given name or
-  // some variable of the input is mapped to it in the given binding
-  // context.
-  function isReserved(name, bindings) {
-    // This test is necessary when scanning the free variables before
-    // calling fixTerm.
-    if (name in free) {
-      return true;
-    }
-    while (bindings) {
-      if (name === bindings.to.name) {
-        return true;
-      }
-      bindings = bindings.more;
-    }
-    return false;
-  }
-
-  // Returns the given name if it is not a generated bound name.
-  // Otherwise returns a normal name that has the same base letter and
-  // that does not conflict with any other name that is not "reserved"
-  // in the context of the bindings.
-  function fixVarName(name_arg, bindings) {
-    if (Toy.isGeneratedBoundName(name_arg)) {
-      const base = name_arg[0];
-      let name = base;
-      let counter = 1;
-      while (isReserved(name, bindings)) {
-        name = base + '_' + counter;
-        counter++;
-      }
-      return name;
-    }
-    return name_arg;
-  }
-
-  // Recursive function that fixes up the variable names in the term
-  // in the context of the given bindings, 
-  function fixTerm(term, bindings) {
-    const type = term.constructor;
-    switch(type) {
-    case Atom:
-      return Toy.getBinding(term.name, bindings) || term;
-    case Call:
-      return new Call(fixTerm(term.fn, bindings), fixTerm(term.arg, bindings));
-    case Lambda:
-      const bound = term.bound.name;
-      const vbl = varify(fixVarName(bound, bindings));
-      return new Lambda(vbl,
-                        fixTerm(term.body,
-                                new Toy.Bindings(bound, vbl, bindings)));
-    default:
-      abort('Bad argument to fixupBoundNames:', term);
-    }
-  }
-  // Function body is here.
-  //
-  // Null or a Bindings object that maps input variable names
-  // to output variable objects.
-  let bindings = null;
-  for (let name in free) {
-    if (Toy.isGeneratedBoundName(name)) {
-      const vbl = varify(fixVarName(name, bindings));
-      bindings = new Toy.Bindings(name, vbl, bindings);
-    }
-  }
-  return fixTerm(this, bindings);
-};
-
-
 //// Simplification facts
 
 /**
@@ -2264,7 +2179,7 @@ function addFact(info) {
   // copy that can be properly annotated with types.  Copying
   // makes it not proved.
   info.goal = ((info.goal || mathParse(info.statement))
-               .copyForRendering(null));
+               .copyForRendering());
   for (var key in info) {
     if (!(key in factProperties)) {
       var id = info.goal ? info.goal.$$ : info.synopsis;
