@@ -848,6 +848,8 @@ Step.prototype.getBase = function() {
  * iteration over the map will get variables in right-to-left order
  * for the potential benefit of performance in things like tautology
  * checking.  For guaranteed ordering, see Expr.freeVarSet.
+ *
+ * TODO: Someday return a Set of variable names.
  */
 Expr.prototype.freeVars = function() {
   var byName = new Set();

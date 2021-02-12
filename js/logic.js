@@ -208,7 +208,8 @@ declare(
   /**
    * Generates an instance of Axiom 4 from an application of a lambda
    * expression to an argument expression, returning a term that
-   * expresses the equality of the input and its beta reduction.
+   * expresses the equality of the input and its beta reduction,
+   * in other words, a substitution.
    */
   {name: 'axiom4',
     action: function(call) {
@@ -1775,7 +1776,8 @@ declare(
   // taking the proved step as a schema.  These do not simplify
   // assumptions.
   //
-  // The target term is the schema here.
+  // This rule applies the substitution to the target term, not to
+  // the "step" argument.
   {name: 'trueBy0',
     action: function(target, path, step) {
       const term = target.get(path);
@@ -1784,7 +1786,7 @@ declare(
         const step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
         // TODO: Change this use of r1 to a new form of rewrite
         //   that substitutes into "step", using something like
-        //   rules.matchTerm in the process.
+        //   matchToRule / matchRuleTo in the process.
         let result = rules.r1(target, path, step2);
         return result.justify('trueBy0', arguments, [target, step]);
       }
@@ -1842,6 +1844,8 @@ declare(
   // preparation for replacement that is not handled by matchSchema.
   //
   // TODO: Caution, this is poorly tested at present.  Test it better.
+  //
+  // TODO: Consider replacing with matchToRule and friends.
   {name: 'matchTerm',
     action: function(target, path, term) {
       const schema = target.get(path);
@@ -2019,6 +2023,7 @@ declare(
       assert(map && map.constructor && map.constructor === Object,
              'Non-map argument to instMultiVars: {1}', map);
       var isEqn = b.isCall2('=');
+      // Ensure that the step is a (pure) equation.
       var step = isEqn ? b : rules.rewriteOnly(b, '', 'a == (T == a)');
       var namesReversed = [];
       for (var name in map) {
@@ -2027,6 +2032,7 @@ declare(
         }
         var value = termify(map[name]);
         if (value.isVariable() && value.name === name) {
+          // If the variable maps to itself, do nothing.
           continue;
         }
         step = rules.bindEqn(step, name);
@@ -2035,8 +2041,11 @@ declare(
       if (namesReversed.length === 0) {
         return b.justify('instMultiVars', arguments, [b]);
       }
-      // Then substitute for the renamed variables.
+      // Then substitute for the variables, outermost binding first.
       namesReversed.forEach(function(name) {
+        // The step is now an equation between two functions,
+        // apply both to sides to the appropriate term
+        // and reduce the result in both sides, substituting.
           var step2 = rules.applyBoth(step, map[name]);
           var step3 = rules.reduce(step2, '/right');
           step = rules.reduce(step3, '/left');
@@ -4649,6 +4658,8 @@ declare(
       // Try ordinary proved facts.
       if (factInfo) {
         var fact = Toy.getResult(factInfo.goal);
+        // TODO: Try to compute the map more efficiently by
+        //   factoring out computation of the map from factExpansion.
         const expansion = Toy.factExpansion(synopsis);
         // Maps free variables of the fact into ones given here.
         const map = expansion.getMain().matchSchema(fact.getMain());

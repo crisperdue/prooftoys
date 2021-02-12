@@ -1224,6 +1224,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // TODO: Report the nature of the error more clearly, e.g.
     //   cooperating with Toy.assert.
     const e = Toy.thrown;
+    // TODO: Fix this.  Report preconditions as such, and specific
+    //   messages based on e.from rather than isAssert.
     const message = e && e.isAssert ? e.message : 'Rule does not apply';
     this.report(message);
   } else if (result === true) {
@@ -1408,6 +1410,9 @@ StepEditor.prototype.fillFromForm = function(ruleName, args) {
  * be any of the formTypes.  Returns an Expr for step or term
  * types.  Returns an Error if it detects the input is not valid.
  * (Does not throw.)
+ *
+ * TODO: Make this behave consistently, e.g. for parsing terms,
+ *   and make fillFromForm behave gracefully with it.
  */
 StepEditor.prototype.parseValue = function(value, type) {
   switch (type) {
