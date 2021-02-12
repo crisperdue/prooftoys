@@ -2754,24 +2754,7 @@ Call.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
     return bindings;
   } else {
-    // TODO: Use Expr.descend.
-    var segment = path.segment;
-    var rest = path.rest;
-    if (this.fn instanceof Call) {
-      if (segment === 'left') {
-        return this.getLeft()._boundNames(rest, bindings);
-      } else if (segment === 'binop') {
-        return this.getBinOp()._boundNames(rest, bindings);
-      } else if (segment === 'right') {
-        return this.getRight()._boundNames(rest, bindings);
-      }
-    }
-    if (segment === 'fn') {
-      return this.fn._boundNames(rest, bindings);
-    } else if (segment === 'arg') {
-      return this.arg._boundNames(rest, bindings);
-    }
-    this._checkSegment(path);
+    return this.descend(path.segment)._boundNames(path.rest, bindings);
   }
 };
 
