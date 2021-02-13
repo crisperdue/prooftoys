@@ -3802,6 +3802,76 @@ declare(
 
 //// Rewriting
 
+/** Currently commented out!
+
+// TODO: Implement these, which refactor and extend existing
+//   functionality.
+//
+// Write code to perform the operations implied by the return values.
+// Use all of it for rewriting.
+
+// Seeks a substitution into the given "rule" step, to potentially
+// be followed by one or more beta reductions, that together make it
+// match the target term so replacement can be applied to them using
+// rules.replace.
+//
+// The target term is an arbitrary term at the given path within the
+// WFF.  The rule term is a part of the rule argument as determined
+// by our conventions for interpreting a fact as a rewrite rule.  If
+// the rule is a (potentially conditional) equation or equivalence
+// (often conditional), it is the LHS part.  Otherwise if the rule
+// is conditional, it is the conclusion part, and in all other cases
+// it is the entire step.  (In the last two cases, the target is
+// rewritten to "T".)
+//
+// Note that the inputs are WFFs, not steps.
+//
+// If the match is unsuccessful this returns null.  If it finds
+// suitable operations to make the match, this returns a plain
+// object with properties:
+//
+// map: a substitution in the usual form.
+//
+// reduce: a Map with keys that are paths or path strings and values
+// that are positive integers indicating the number of reductions to
+// apply at that location.
+//
+function matchRuleTo(ruleWff, wff, path) {
+
+}
+
+// Like matchRuleTo, above, this seeks a substitution to match the
+// target term and rule term (determined as above), but this one
+// seeks a substitution into the target term rather than the rule
+// term.  It also may do beta reduction after substitution as in
+// matchRuleTo.
+// 
+// The target term may be within the scope of bound variables, and
+// these constrain allowable substitutions in ways that never apply
+// to the companion rule.  Such bound variables can also limit
+// applicability of rules.replace.  The match process for this rule
+// can include renaming of variables bound in the target.
+//
+// Note that the inputs are WFFs, not steps.
+//
+// Returns null if matching is unsuccessful.  On success returns a
+// plain object with properties:
+//
+// map: a substitution in the usual form.
+//
+// reduce: a Map with keys that are paths or path strings and values
+// that are positive integers indicating the number of reductions to
+// apply at that location.
+//
+// rename: a Map with keys that are paths or path strings
+// identifying locations of Lambda terms and values that are
+// variables (Atoms) to rename the bound variable of the Lambda.
+//
+function matchToRule(wff, path, ruleWff) {
+
+}
+*/
+
 // Interprets the equation argument as a potential rewriter for the
 // part of the step at the given path, and determines a substitution
 // to match it with that part of the step.  Returns the substitution,
