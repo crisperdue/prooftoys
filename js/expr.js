@@ -1508,14 +1508,19 @@ Expr.prototype.rightNeighborPath = function(path_arg, operators) {
  *
  * This traces through the path exactly as given, so if the path uses
  * segments such as /left or /binOp, it will skip terms in the result.
- *
- * TODO: Use Expr.descend to traverse the path rather than recursive
- *   calls to Expr._ancestors.
  */
 Expr.prototype.ancestors = function(path_arg) {
-  var p = this.asPath(path_arg);
-  var result = [];
-  this._ancestors(p, result);
+  let p = this.asPath(path_arg);
+  let term = this;
+  const result = [];
+  while (true) {
+    result.push(term);
+    if (p.isEnd()) {
+      break;
+    }
+    term = term.descend(p.segment);
+    p = p.rest;
+  }
   return result;
 };
 
@@ -2098,17 +2103,12 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // Search order is right to left (arg before fn in calls), but parents
 // before children.
 //
+//
 // _prettyPath(pred, path)
 //
 // Like _path, but for infix expressions produces /left, /right, etc.
 // rather than combinations of /fn and /arg; and returns a forward
 // path.
-//
-//
-// _ancestors(path, array)
-//
-// Adds this to the array and descends further if the path has
-// more segments.
 //
 //
 // _bindingPath(pred, revPath)
@@ -2123,6 +2123,7 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 //
 // Throws an error if the next segment of the path is not appropriate
 // to this type of Expr.
+//
 //
 // generalizeTF(expr2, newVar, bindings)
 //
@@ -2425,11 +2426,6 @@ Atom.prototype._path = function(pred, revPath) {
 
 Atom.prototype._prettyPath = function(pred, pth) {
   return pred(this) ? pth : null;
-};
-
-Atom.prototype._ancestors = function(path, result) {
-  result.push(this);
-  this._checkSegment(path);
 };
 
 Atom.prototype._bindingPath = function(pred, revPath) {
@@ -2918,28 +2914,6 @@ Call.prototype._prettyPath = function(pred, pth) {
   }
 };
 
-Call.prototype._ancestors = function(path, result) {
-  result.push(this);
-  if (path.isEnd()) {
-    return;
-  }
-  var segment = path.segment;
-  var rest = path.rest;
-  switch (segment) {
-  case 'left':
-    return this.getLeft()._ancestors(rest, result);
-  case 'right':
-    return this.getRight()._ancestors(rest, result);
-  case 'binop':
-    return this.getBinOp()._ancestors(rest, result);
-  case 'fn':
-    return this.fn._ancestors(rest, result);
-  case 'arg':
-    return this.arg._ancestors(rest, result);
-  }
-  this._checkSegment(path);
-};
-
 Call.prototype._bindingPath = function(pred, revPath) {
   return (this.fn._bindingPath(pred, new Path('fn', revPath))
           || this.arg._bindingPath(pred, new Path('arg', revPath)));
@@ -3338,18 +3312,6 @@ Lambda.prototype._prettyPath = function(pred, pth) {
     var p = this.body._prettyPath(pred, pth);
     return p ? new Path('body', p) : null;
   }
-};
-
-Lambda.prototype._ancestors = function(path, result) {
-  result.push(this);
-  var segment = path.segment;
-  var rest = path.rest;
-  if (segment === 'bound') {
-    return this.bound._ancestors(rest, result);
-  } else if (segment === 'body') {
-    return this.body._ancestors(rest, result);
-  }
-  this._checkSegment(path);
 };
 
 Lambda.prototype._bindingPath = function(pred, revPath) {
