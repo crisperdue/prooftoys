@@ -1360,7 +1360,10 @@ function searchForMatchingFact(term, info) {
     }
     return result;
   }
-  return term[searchMethod](factFinder);
+  // TODO: Accurately determine quantification of the term,
+  //   and use the proper information rather than a boolean
+  //   to control "purity" of facts in each context.
+  return term[searchMethod](factFinder, Toy.Path.empty, false);
 }
 
 // This finds the fact part to match.  If the fact is not an equation,

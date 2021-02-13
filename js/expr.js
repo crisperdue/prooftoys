@@ -3151,9 +3151,6 @@ Call.prototype._asPattern = function(term) {
 };
 
 Call.prototype.searchMost = function(fn, path, bindings) {
-  if (!path) {
-    path = Toy.asPath('');
-  }
   return (fn(this, path, bindings) ||
           // Try the arg first to help substitutions apply toward the
           // right sides of formulas.

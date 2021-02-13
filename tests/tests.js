@@ -1302,7 +1302,7 @@ var testCase = {
         terms.push(term);
       }
     }
-    Toy.parse('2 * x + neg y = 12 == T').searchMost(foo);
+    Toy.parse('2 * x + neg y = 12 == T').searchMost(foo, Toy.Path.empty, false);
     assertEqual(["==", "=", "neg", "+", "*"], names);
     assertEqual(["/fn",
                  "/fn/arg/fn",
