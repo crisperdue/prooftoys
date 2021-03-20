@@ -550,9 +550,9 @@ Expr.prototype.isInfixCall = function() {
 };
 
 /**
- * Returns a new Atom with a name that does not occur free
- * in this expression.  If a name is given, uses that name
- * as the starting point for the name of the new variable.
+ * Returns a new variable Atom with a name that does not occur free in
+ * this expression.  If a name is given, uses that name as the
+ * starting point for the name of the new variable, otherwise "x".
  */
 Expr.prototype.freshVar = function(name) {
   name = name || 'x';

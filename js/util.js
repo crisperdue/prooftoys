@@ -820,11 +820,10 @@ function ReturnTarget() {
 /**
  * Invoke "throw" via function call.  Cooperates with catchAll.  Use
  * this throughout the Prooftoys application.  Public name is
- * "Toy.throw".
+ * "Toy.throw".  TODO: rename to "unwind"?
  */
 function toyThrow(value) {
   Toy.thrown = value;
-  // You may want to tell the debugger to "Never Pause" here:
   throw value;
 };
 
@@ -870,11 +869,10 @@ function withExit(fn) {
 }
 
 /**
- * Stops stack unwinding from any throw (or returnFrom) done during
- * the execution of the given fn.  This calls fn, passing no
- * arguments, and returning a truthy value iff the function throws,
- * else the undefined value.  If the thrown value is truthy, this
- * returns that value.
+ * Stops stack unwinding from any abort during the execution of the
+ * given fn.  This calls fn, passing no arguments, and returning the
+ * thrown value iff the function throws, except if the thrown value is
+ * falsy, e.g. undefined, returns true.
  *
  * This design has an advantage over passing a "catcher" function in that
  * the actions here can do local flow of control actions such
@@ -894,6 +892,7 @@ function catchAll(fn) {
     if (success) {
       return false;
     } else if (returnTarget) {
+      // This is an exit, not an abort, so use "throw" directly.
       throw returnTarget;
     } else {
       return Toy.thrown || true;
