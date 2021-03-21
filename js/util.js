@@ -842,7 +842,9 @@ function exitFrom(target, value) {
          'Return target {1} is not active', target.id);
   returnTarget = target;
   returnValue = value;
-  Toy.throw(target);
+  Toy.thrown = target;
+  // You may want to tell the debugger to "Never Pause" here:
+  throw target;
 }
 
 /**

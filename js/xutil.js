@@ -1868,7 +1868,8 @@ function decodeSteps(input) {
       if (Toy.catchAll(() => { result = rule.apply(Toy.rules, args); })) {
         console.log('Proof failed on step', i+',', 'status:');
         outSteps.forEach((s, i) => console.log((i+1)+':', s.toString()));
-        throw Toy.thrown;
+        // This can be a good point to stop and debug.
+        Toy.throw(Toy.thrown);
       }
       if (result) {
         outSteps.push(result);
