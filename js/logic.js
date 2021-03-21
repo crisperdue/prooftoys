@@ -1016,13 +1016,13 @@ declare(
    * may be a string or Atom, and uses it in place of any references to
    * the old bound variable.
    *
-   * If the subexpression has any occurrence of the given new name,
-   * this modifies the given name to be distinct from all of its free
-   * variables.
+   * In case the body of the lambda has any free occurrence of the
+   * given new name, this uses a name with the same initial letter as
+   * the given name, but distinct from all of its free variables.
    */
   {name: 'renameBound',
-    action: function(step, path, arg) {
-      const newName = typeof arg === 'string' ? arg : arg.name;
+   action: function(step, path, name_arg, map) {
+      const newName = typeof name_arg === 'string' ? name_arg : name_arg.name;
       var target = step.get(path);
       // Report the step, but not in the message.
       assert(target instanceof Toy.Lambda,
@@ -1038,9 +1038,10 @@ declare(
       var step2 = rules.r(step1, step, path);
       return step2.justify('renameBound', arguments, [step]);
     },
+   labels: 'advanced',
     inputs: {bindingSite: 1, varName: 3},
     form: ('Rename to <input name=varName>'),
-    menu: 'rename a bound variable',
+   menu: 'rename bound variable',
     tooltip: ('Change the name of a bound variable.  The new name '
               + 'must not occur free in the target expression.  '
               + 'Uses the fact that the original expression matches '
