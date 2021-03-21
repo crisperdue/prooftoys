@@ -746,22 +746,19 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
 };
 
 /**
- * Returns a new expression resulting from applying the given
- * substitution to all free occurrences of variables named in it.
+ * Returns an expression that is the result of applying the given
+ * substitution to all free occurrences of its named variables.
  * The substitution is an object/map from name to Expr.
  *
- * Renames enough bound variables in the target to ensure that they
- * are all distinct from variables in the replacement, possibly more
- * than necessary, so don't count on bound variables to keep their
- * names after a substitution.
- *
- * Automatically-renamed bound variables are not permitted as free
- * variables in the replacement terms -- they must be contained in
- * their bindings (lambda expressions).  This is enforced by an
- * assertion.
+ * All substitutions are legal.  This renames enough bound variables
+ * in the target to ensure that they are all distinct from variables
+ * in the replacement, possibly more than necessary, so don't count on
+ * bound variables keeping their names after a substitution.
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
+  // Object / set of names of variables that are free in some
+  // term of the substitution.
   var freeVars = {};
   for (var name in map_arg) {
     if (name === '%expansions') {
@@ -769,13 +766,25 @@ Expr.prototype.subFree = function(map_arg) {
     }
     var replacement = map_arg[name];
     if (!(replacement instanceof Atom && replacement.name == name)) {
-      // Include only substitutions that actually change the name.
+      // Omit no-op substitutions.
       map[name] = replacement;
       Object.assign(freeVars, replacement.freeVars());
     }
   }
-  var result = Toy.isEmpty(map) ? this : this._subFree(map, freeVars);
-  return result;
+  // The implementation strategy is to rename bound variables whose
+  // names are free in any of the substitution terms.  We choose to
+  // give them names distinct from all names appearing anywhere in
+  // this Expr, distinct from all free names in the values of the
+  // substitution map, and also distinct from each other, eliminating
+  // potential for capturing.
+  //
+  // We pass the set of all var names recursively, adding new names to
+  // it when binding points are found and the new name is generated.
+  // As the traversal encounters lambdas we also update the map to
+  // reflect current bound variable renamings and revert the mappings
+  // on exit from the scope.
+  const allNames = Object.assign(this.allNames(), freeVars);
+  return Toy.isEmpty(map) ? this : this._subFree(map, freeVars, allNames);
 };
 
 /**
@@ -852,10 +861,13 @@ Step.prototype.getBase = function() {
  * TODO: Someday return a Set of variable names.
  */
 Expr.prototype.freeVars = function() {
+  // This method gets called a lot for substitutions.
   var byName = new Set();
   this._addFreeVars(byName, null);
   var result = {};
-  byName.forEach(function(name) { result[name] = true; });
+  for (const name of byName) {
+    result[name] = true;
+  }
   return result;
 };
 
@@ -1981,13 +1993,13 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // in the replacement.
 //
 //
-// _subFree(Object map, Object freeVars)
+// _subFree(Object map, Object newFreeVars)
 //
 // The map argument is an object mapping variable names to replacement
 // expressions.  Substitutes the corresponding replacement expression
 // for each free occurrence of each name in this Expr.
 //
-// freeVars must be given as an object / set of all names free in any
+// newFreeVars must be given as an object / set of all names free in any
 // of the replacement expressions.
 //
 // To ensure no names are captured, renames all bound variables in
@@ -2325,7 +2337,7 @@ Atom.prototype.dump = function() {
   return this.name;
 };
 
-Atom.prototype._subFree = function(map, freeVars) {
+Atom.prototype._subFree = function(map, freeVars, allNames) {
   // Note that this assumes the map has no prototype.
   return map[this.name] || this;
 };
@@ -2551,16 +2563,20 @@ function numify(num) {
  * generated name with the same "base" as the one given, and not in
  * existingNames.  The base is the name with any trailing digits
  * removed.  The generated suffix will be the lowest-numbered one not
- * yet in use, starting with "1".  Adds the returned name to the
- * existingNames set.
+ * yet in use, starting with "10".
  */
 function genName(name, existingNames) {
   var base = name[0];
   var candidate = name;
-  for (var i = 1; existingNames[candidate]; i++) {
-    candidate = base + '_' + i;
+  if (existingNames instanceof Set) {
+    for (var i = 10; existingNames.has(candidate); i++) {
+      candidate = base + '_' + i;
+    }
+  } else {
+    for (var i = 1; existingNames[candidate]; i++) {
+      candidate = base + '_' + i;
+    }
   }
-  existingNames[candidate] = true;
   return candidate;
 }
 
@@ -2693,9 +2709,9 @@ Call.prototype.dump = function() {
   return '(' + this.fn.dump() + ' ' + this.arg.dump() + ')';
 };
 
-Call.prototype._subFree = function(map, freeVars) {
-  var fn = this.fn._subFree(map, freeVars);
-  var arg = this.arg._subFree(map, freeVars);
+Call.prototype._subFree = function(map, freeVars, allNames) {
+  var fn = this.fn._subFree(map, freeVars, allNames);
+  var arg = this.arg._subFree(map, freeVars, allNames);
   return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
 };
 
@@ -3159,34 +3175,37 @@ Lambda.prototype.dump = function() {
   return '{' + this.bound.dump() + '. ' + this.body.dump() + '}';
 };
 
-Lambda.prototype._subFree = function(map, freeVars) {
-  var boundName = this.bound.name;
-  var savedRebinding = map[boundName];
+Lambda.prototype._subFree = function(map, freeVars, allNames) {
+  const boundName = this.bound.name;
+  const savedRebinding = map[boundName];
   if (savedRebinding) {
-    // A variable to be substituted is bound here.
-    // Remove it from the map during substitution in this scope,
-    // and if there are no others, return this immediately.
+    // A variable to be substituted is bound here.  Remove it from the
+    // map during substitution in this scope.
     delete map[boundName];
+    // If there are no other entries in the map, restore the binding
+    // and return this immediately.
     if (Toy.isEmpty(map)) {
       map[boundName] = savedRebinding;
       return this;
     }
   }
-  var result;
+  let result;
   if (boundName in freeVars) {
-    // The bound name here appears as a free variable in some replacement
-    // expression.
-    //
-    // Rename the bound variable without checking whether capturing
-    // actually would occur.  Replacing the bound variable with a new one
-    // may reduce likelihood of future name collisions.
-    var newVar = _genBoundVar(boundName, freeVars);
-    var newBody = this.body._subFree(Toy.object0(boundName, newVar), {});
-    var renamed = new Lambda(newVar, newBody);
+    // The bound name here appears as a free variable in some
+    // replacement expression.  Rename the bound variable to ensure
+    // there will be no capturing. We do this without checking whether
+    // capturing actually would occur.
+    const newVar = genVar(boundName, allNames);
+    allNames[newVar.name] = true;
+    // TODO: Consider updating the map and doing one substitution
+    //   rather than two.
+    const newBody = this.body._subFree(Toy.object0(boundName, newVar),
+                                       freeVars, allNames);
+    const renamed = new Lambda(newVar, newBody);
     // Substitute into the modified Lambda term.
-    result = renamed._subFree(map, freeVars);
+    result = renamed._subFree(map, freeVars, allNames);
   } else {
-    var newBody = this.body._subFree(map, freeVars);
+    const newBody = this.body._subFree(map, freeVars, allNames);
     // Don't copy anything if no substitution is actually done.
     result = (newBody === this.body) ? this : new Lambda(this.bound, newBody);
   }
@@ -3415,6 +3434,7 @@ Toy.showTypes = false;
 Toy.unicodeNames = unicodeNames;
 Toy.makeConjunctionSet = makeConjunctionSet;
 
+Toy.genName = genName;
 Toy.genVar = genVar;
 
 Toy.namedConstants = namedConstants;

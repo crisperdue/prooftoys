@@ -790,14 +790,14 @@ var testCase = {
     // We see that it replaces just the free occurrence,
     // but the current implementation renames all bindings of
     // "v" to be on the safe side.
-    assertEqual('({v_10. v_10} v)', result);
+    assertEqual('({v_1. v_1} v)', result);
     // A case where decapturing is needed.
     result = Toy.parse('{y. x} x').subFree({x: y});
-    assertEqual('({y_10. y} y)', result);
+    assertEqual('({y_1. y} y)', result);
     // A very similar case where it is not needed,
     result = Toy.parse('{y. T} x').subFree({x: y});
     // but our algorithm renames anyway rather than checking precisely.
-    assertEqual('({y_10. T} y)', result);
+    assertEqual('({y_1. T} y)', result);
     // Multiple substitution.
     result = Toy.parse('x + y').subFree({y: x, x: y});
     assertEqual('(y + x)', result);
@@ -1996,7 +1996,7 @@ var testCase = {
     var result = Toy.rules.casesTF(trueCase,
                                    falseCase,
                                    x);
-    assertEqual('(({x_10. x_10} x) = x)', result);
+    assertEqual('(({x_1. x_1} x) = x)', result);
   },
 
   testModusPonens: function() {
