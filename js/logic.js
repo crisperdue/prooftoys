@@ -3369,8 +3369,9 @@ declare(
       var boundNames = target.boundNames(path);
       Toy.removeExcept(boundNames, equation.freeVars());
       // Is this the full set of names?
-      var t =
-        Toy.genVar('t', $.extend({}, target.allNames(), equation.allNames()));
+      var t = Toy.genVar('t', Object.assign({},
+                                            target.allNames(),
+                                            equation.allNames()));
       var texpr = t;
       for (var name in boundNames) {
         texpr = call(texpr, varify(name));
@@ -3909,7 +3910,7 @@ declare(
     action: function(step, path, eqn_arg) {
       const map = canRewrite(step, path, eqn_arg);
       if (!map) {
-        abort('Fact not applicable: {1}', equation);
+        abort('Fact not applicable: {1}', eqn_arg);
       }
       // Convert to an actual equation if necessary.
       var equation = (eqn_arg.isEquation()
