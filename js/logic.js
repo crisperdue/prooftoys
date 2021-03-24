@@ -1039,14 +1039,14 @@ declare(
       return step2.justify('renameBound', arguments, [step]);
     },
    labels: 'advanced',
-    inputs: {bindingSite: 1, varName: 3},
-    form: ('Rename to <input name=varName>'),
+   inputs: {bindingSite: 1, varName: 3},
+   form: ('Rename to <input name=varName>'),
    menu: 'rename bound variable',
-    tooltip: ('Change the name of a bound variable.  The new name '
-              + 'must not occur free in the target expression.  '
-              + 'Uses the fact that the original expression matches '
-              + 'the one with changed bound variable.'),
-    description: '=renameBound'
+   tooltip: ('Change the name of a bound variable.  The new name '
+             + 'must not occur free in the target expression.  '
+             + 'Uses the fact that the original expression matches '
+             + 'the one with changed bound variable.'),
+   description: '=renameBound'
   },
 
   /**
@@ -1758,32 +1758,82 @@ declare(
   },
 
 
-  // We could consider making a rule, something like "trueInFact",
-  // that generalizes forwardChain to use a proved value anywhere in a
-  // fact, not just as the antecedent in a conditional.  Looking at
-  // truth tables with a row containing a T and an F, if the other row
-  // contains only F, the formula is a conjunction, and implies a
-  // formula with just one variable; similarly if the other row has T
-  // and F in the same columns, it is equivalent to a formula with
-  // just one variable.  Otherwise it is an equivalence or a
-  // conditional, and "trueBy" is readily used in these cases.
 
-  // These trueBy rules are similar to rewriteOnlyFrom, but that one
-  // creates an equation or conditional equation based on its policy.
+// These trueBy rules are similar to rewriteOnlyFrom, but that one
+// creates an equation or conditional equation based on its policy.
 
   // Replace part of a target step with T if it matches a proved step
   // (trueby0) or the consequent of a proved conditional (trueBy1),
   // taking the proved step as a schema.  These do not simplify
   // assumptions.
   //
-  // This rule applies the substitution to the target term, not to
-  // the "step" argument.
+  // Unlike the somewhat similar "rewrite" rules, this rule applies
+  // the substitution to the target term, not to the "step" argument.
   {name: 'trueBy0',
     action: function(target, path, step) {
       const term = target.get(path);
+      // Note that the keys of the map are precisely the names of the
+      // free variables of the term.
       const map = step.wff.matchSchema(term);
-      if (map) {
+      // Returns a possibly empty object/map substitution to rename
+      // variables in the step to match target term variable names,
+      // or null if it cannot match the term to the step.
+      function precheck() {
+        if (map == null) {
+          return null;
+        }
+        const bound = target.wff.boundNames(path);
+        // The following code seeks renamings of variables in the step
+        // that match them with free variables of the target term that
+        // are bound in context.
+        //
+        // This object will map from names in the step to names in the
+        // target term that are bound in the term's context.  If the
+        // search her is successful, it defines a substitution that
+        // completes the matching done by matchSchema.
+        const renamings = {};
+        for (const name in bound) {
+          if (name in map) {
+            // This bound name is in the map, so it occurs free in the
+            // target term.  Check if a free variable in the step can
+            // be renamed to match it.
+            const stepTerm = map[name];
+            if (stepTerm.isVariable()) {
+              const n = stepTerm.name;
+              const renamed = renamings[n];
+              if (renamed) {
+                if (renamed !== name) {
+                  return null;
+                } else {
+                  continue;
+                }
+              } else {
+                // This can be an identity renaming, still needed
+                // as indication that the name must remain the same.
+                renamings[n] = name;
+              }
+            } else {
+              // stepTerm is not a variable, so fail.
+              return null;
+            }
+          }
+        }
+        const subst = {};
+        // We have found suitable renamings.
+        for (const name in renamings) {
+          const renamed = renamings[name];
+          if (renamed !== name) {
+            subst[name] = varify(renamed);
+          }
+        }
+        return subst;
+      }
+      const renames = precheck();
+      if (renames) {
+        // Now do the rest of the substitution.
         const step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
+        // console.log('Subst:', Toy.debugString(map));
+        // console.log('Renaming:', Toy.debugString(renames));
         // TODO: Change this use of r1 to a new form of rewrite
         //   that substitutes into "step", using something like
         //   matchToRule / matchRuleTo in the process.
@@ -2046,10 +2096,10 @@ declare(
         // The step is now an equation between two functions,
         // apply both to sides to the appropriate term
         // and reduce the result in both sides, substituting.
-          var step2 = rules.applyBoth(step, map[name]);
-          var step3 = rules.reduce(step2, '/right');
-          step = rules.reduce(step3, '/left');
-        });
+        var step2 = rules.applyBoth(step, map[name]);
+        var step3 = rules.reduce(step2, '/right');
+        step = rules.reduce(step3, '/left');
+      });
       if (!isEqn) {
         step = rules.fromTIsA(step);
       }
@@ -2236,16 +2286,16 @@ declare(
     }.bind(null,
            {simpFacts: [
              'if T x y = x',
-                       'if F x y = y',
-                       'not F == T',
-                       'not T == F',
-                       // Fast simp facts for &, |, => perhaps right here.
-                       {apply: tryReduce},
-                       // It might be possible to get some speedup
-                       // by precomputing ground terms with these ops.
-                       '(==) = {x. {y. if x y (not y)}}',
-                       '(&) = {x. {y. if x y F}}',
-                       '(|) = {x. {y. if x T y}}',
+             'if F x y = y',
+             'not F == T',
+             'not T == F',
+             // Fast simp facts for &, |, => perhaps right here.
+             {apply: tryReduce},
+             // It might be possible to get some speedup
+             // by precomputing ground terms with these ops.
+             '(==) = {x. {y. if x y (not y)}}',
+             '(&) = {x. {y. if x y F}}',
+             '(|) = {x. {y. if x T y}}',
              '(=>) = {x. {y. if x y T}}'
            ]}),
     // TODO: should be bool:.
