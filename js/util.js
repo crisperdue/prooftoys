@@ -775,7 +775,7 @@ function format(fmt, map_arg) {
  */
 function interpolate(fmt) {
   "use strict";
-  return fmt.replace(/\{\{.*\}\}/g, function(matched) {
+  return fmt.replace(/\{\{.*?\}\}/g, function(matched) {
       return eval('Toy.' + matched.slice(2, -2));
     });
 }
