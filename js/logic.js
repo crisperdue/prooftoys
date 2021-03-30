@@ -1757,7 +1757,6 @@ declare(
     labels: 'basic'
   },
 
-  // TODO: trueAs0:, trueAs1: ??
 
   // We could consider making a rule, something like "trueInFact",
   // that generalizes forwardChain to use a proved value anywhere in a
@@ -3849,8 +3848,7 @@ function matchRuleTo(ruleWff, wff, path) {
 // matchRuleTo.
 // 
 // The target term may be within the scope of bound variables, and
-// these constrain allowable substitutions in ways that never apply
-// to the companion rule.  Such bound variables can also limit
+// these constrain allowable substitutions here and also limit
 // applicability of rules.replace.  The match process for this rule
 // can include renaming of variables bound in the target.
 //
@@ -3859,15 +3857,16 @@ function matchRuleTo(ruleWff, wff, path) {
 // Returns null if matching is unsuccessful.  On success returns a
 // plain object with properties:
 //
-// map: a substitution in the usual form.
+// map: a substitution in the usual form to be applied to the step
+// containing the target term.
 //
 // reduce: a Map with keys that are paths or path strings and values
 // that are positive integers indicating the number of reductions to
 // apply at that location.
 //
-// rename: a Map with keys that are paths or path strings
-// identifying locations of Lambda terms and values that are
-// variables (Atoms) to rename the bound variable of the Lambda.
+// rename: a substitution, possibly empty, that renames free variables
+// of the rule to match names of bound variables of the wff, if needed
+// to make the key terms match.
 //
 function matchToRule(wff, path, ruleWff) {
 
