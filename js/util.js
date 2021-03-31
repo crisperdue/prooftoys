@@ -2257,8 +2257,7 @@ function removeOldPidData() {
   // Set of string pid values with recent heartbeats.
   const currentPids = new Set();
   // Iterate over all data, recording everything pid-related
-  // and particularly noting pids that have heartbeats within
-  // the last 30 seconds.
+  // and particularly noting pids that have "recent" heartbeats.
   for (let i = 0; i < store.length; i++) {
     const key = store.key(i);
     const matches = key.match(/^Toy:beat:(.*)/);
@@ -2268,7 +2267,11 @@ function removeOldPidData() {
       const pid = matches[1];
       beatKeys.set(pid, key);
       const time = Number(store.getItem(key));
-      if (now < time + 30000) {
+      // The number here is empirical based on Chrome / MacOS behavior
+      // when tab is not visible.  Recent releases of Chrome stretch
+      // the 10 second heartbeat out to ~60 seconds in non-visible
+      // tabs / windows.
+      if (now < time + 150_000) {
         currentPids.add(pid);
       }
     } else {
@@ -2284,11 +2287,11 @@ function removeOldPidData() {
   // unless the pid is current.
   function removeIfOutdated(fullKey, pid) {
     if (!currentPids.has(pid)) {
+      const value = store.getItem(fullKey);
       store.removeItem(fullKey);
-      const value = localStorage.getItem(fullKey);
       console.log('Removing info for old pid:', fullKey, '=', value)
       if (fullKey.startsWith('Toy:beat:')) {
-        console.log('Last heartbeat at', new Date(value));
+        console.log('Last heartbeat at', new Date(Number(value)));
       }
     }
   }
