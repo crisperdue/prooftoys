@@ -314,12 +314,17 @@ Path.prototype.toString = function() {
   return content;
 };
 
+// Maps from string to Path.  Private to asPath.
+// This exists to accelerate conversions from strings.
+const pathCache = new Map();
+
 /**
  * Pseudo-constructor: coerces its argument to a Path given a string
  * consisting of segments starting with "/", or an array of strings,
  * or a Bindings, or null.  The parts become the segments of the path.
  * Bindings are reversed, with the first binding ("from" part)
- * becoming the last segment of the path.
+ * becoming the last segment of the path.  Caches the result if given
+ * a string argument.
  *
  * A null input or no arg given indicates an empty path; passes
  * through a Path argument.
@@ -340,6 +345,10 @@ function asPath(arg) {
       segments.unshift(bindings.from);
     }
   } else if (typeof arg === 'string') {
+    const cached = pathCache.get(arg);
+    if (cached !== undefined) {
+      return cached;
+    }
     segments = arg.split('/');
     assert(segments[0] === '', 'Not a path: {1}', arg);
     // Ignore the first element of the result of the split.
@@ -351,6 +360,9 @@ function asPath(arg) {
   while (segments.length) {
     var piece = segments.pop();
     result = new Path(piece, result);
+  }
+  if (typeof arg === 'string') {
+    pathCache.set(arg, result);
   }
   return result;
 }
@@ -432,5 +444,9 @@ Toy.getBinding = getBinding;
 
 Toy.Path = Path;
 Toy.asPath = asPath;
+
+//// For debugging, analysis
+
+Toy._pathCache = pathCache;
 
 })();
