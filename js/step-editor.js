@@ -183,6 +183,21 @@ function ProofEditor(options_arg) {
     // Caution the user.  The isDocHeldFrom test seems to be unreliable,
     // at least during development, so just caution rather than
     // setting editable to false.
+    //
+    // TODO: Consider actively helping the user avoid problems instead of
+    //   cautioning.  Probably use IndexedDB via idb or idb-keyval to
+    //   store editor state; and either auto-update proofs as needed
+    //   on window focus, or perhaps auto-create new "branches" if
+    //   inconsistent changes are detected, e.g. append -1, -2, ...
+    //   to the document name.
+    //
+    //   All of this would imply ditching the heartbeat mechanism, which
+    //   is inherently unreliable anyway.
+    //
+    //   In the future when there are remote stores it probably makes
+    //   sense to check if a document has changed before writing it
+    //   remotely.  And writing remotely would probably be explicit,
+    //   e.g.  with a "Save" command.
     Toy.alert('Caution: editing may be in progress in another tab/window');
   }
   if (options.loadDoc) {
