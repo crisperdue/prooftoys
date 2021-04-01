@@ -1172,6 +1172,17 @@ var testCase = {
           'forall {x. forall {y. x > y == y < x}}');
   },
 
+  testPathToSchema: function() {
+    function check(expected, wff) {
+      const actual = termify(wff).pathToSchema();
+      assertEqual(expected, '' + actual);
+    }
+    check('', 'T');
+    check('/left', 'x == x');
+    check('/right', 'p => p');
+    check('/right/left', 'R x & R y => x + y = y + x');
+  },
+
   testMatchSchema: function() {
     function check(expected, schema, term, expectedExpansions) {
       term = typeof term == 'string' ? Toy.parse(term) : term;

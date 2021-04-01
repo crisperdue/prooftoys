@@ -604,6 +604,26 @@ Expr.prototype.matchPattern = function(pattern_arg) {
 };
 
 /**
+ * Treats this as a wff serving as a rewrite rule, and returns a path
+ * to the part that is the part that will need to match when finding a
+ * substitution into this.  Specifically, if this is an equation,
+ * use its LHS.  Otherwise if it is a conditional, apply the policy
+ * to its consequent.  If neither, use the whole term.
+ *
+ * This embodies a policy for rewriting.
+ */
+Expr.prototype.pathToSchema = function() {
+  const self = this;
+  const p = Toy.asPath;
+  if (self.implies()) {
+    return self.getRight().isCall2('=') ?  p('/right/left') : p('/right');
+  } else {
+    return self.isCall2('=') ? p('/left') : Path.empty;
+  }
+};
+  
+
+/**
  * Matches the given "schematic" expression against this. Returns a
  * substitution that yields this expression when given the schema, or
  * null if there is none.  The substitution maps from names to
