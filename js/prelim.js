@@ -1,7 +1,7 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
 ////
-//// Support utilities for expr.js
+//// Support utilities for expr.js: bindings and paths
 ////
 
 
@@ -22,12 +22,10 @@ var abort = Toy.abort;
 
 /**
  * Binding (for a set of variables).  From is usually a variable name,
- * "to" is an Expr it is bound to.  "More" refers to another bindings
- * unless it is null, so this can represent a set of bindings rather
- * than just one.  Used in copying to replace occurrences of variables
- * with replacements.
- *
- * In _addFreeVars, bindings simply have the value "true".
+ * "to" is some information about its binding in some scope.  "More"
+ * refers to another bindings unless it is null, so this can represent
+ * a set of bindings rather than just one.  Used in copying to replace
+ * occurrences of variables with replacements.
  */
 function Bindings(from, to, more) {
   this.from = from;
@@ -48,7 +46,7 @@ function numBindings(bindings) {
 }
 
 /**
- * Finds and returns the binding in bindings with "from" equal
+ * Finds and returns the Binding object in bindings with "from" equal
  * to the target, or null if it finds no such binding.
  */
 function findBinding(target, bindings) {
