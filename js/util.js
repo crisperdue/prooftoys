@@ -214,6 +214,17 @@ function intersection(arg1, ...rest) {
 }
 
 /**
+ * Returns the items in the first argument that are not also
+ * in the second argument, taking each as a set.
+ */
+function setDiff(big_arg, small_arg) {
+  const result = union(big_arg);
+  const small = asSet(small_arg);
+  result.forEach(x => { if (small.has(x)) { result.delete(x); }});
+  return result;
+}
+
+/**
  * True if both arguments are sets and each "has"
  * the same elements.
  */
@@ -2358,6 +2369,7 @@ Toy.isIterable = isIterable;
 Toy.asSet = asSet;
 Toy.union = union;
 Toy.intersection = intersection;
+Toy.setDiff = setDiff;
 Toy.equalSets = equalSets;
 Toy.each = each;
 Toy.memo = memo;

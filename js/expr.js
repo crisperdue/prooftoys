@@ -3425,6 +3425,30 @@ Lambda.prototype._nthArg = function(n) {
   assert(false, 'Nth not relevant in lambdas');
 };
 
+/**
+ * Given the wff of a rewrite rule, this returns true iff
+ * the rule is conditional and every free variable of the RHS
+ * also appears free in the LHS of the equation.  (If there
+ * is no equation, this takes it as LHS == T.
+ */
+function neverWhenBound(rule) {
+  // Consider the locally free variables in the term to be matched,
+  // and a substitution that generates that term from some rewrite
+  // rule.  Each of those free variables was either free in the
+  // rewrite rule (and not replaced), or it was free in a replacement
+  // term of the substitution.  Thus if every free variable of the
+  // rule LHS also appears in its assumptions, then every free
+  // variable of the result of the substitution into the LHS also
+  // appears in the result of the substitution into the assumptions,
+  // and the rule cannot apply if any of them are bound in that
+  // context.
+  // 
+  return (rule.implies() &&
+          (!rule.getRight().isCall2('=') ||
+           Toy.setDiff(rule.getRight().freeVars(),
+                       rule.getLeft().freeVars()).size === 0));
+};
+
 
 //// Export public names.
 
@@ -3463,6 +3487,8 @@ Toy.addConstants = addConstants;
 Toy.multiReducer = multiReducer;
 Toy.addFnMatch = addFnMatch;
 Toy.checkFnMatch = checkFnMatch;
+
+Toy.neverWhenBound = neverWhenBound;
 
 // Private to xutil.js:
 Toy._identifierPattern = identifierPattern;
