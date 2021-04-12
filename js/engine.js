@@ -1351,7 +1351,8 @@ function searchForMatchingFact(term, info) {
       pureFacts = pureFacts || allFacts.filter(isPureFact);
     }
     // If some free variables of a conditional fact do not appear in
-    // its condition(s), this may exclude it unnecessarily.
+    // the assumptions, this may exclude it unnecessarily.
+    //
     // TODO: Consider a more precise check here.
     var facts = isQuantified ? pureFacts : allFacts;
     var result = findMatchingFact(facts, cxt, term, isQuantified);

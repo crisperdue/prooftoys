@@ -1882,16 +1882,14 @@ declare(
     labels: 'basic'
   },
 
-  // When rewriting we normally treat the equation as a schema and
-  // substitute into it, then use the resulting instance to replace
-  // part of a target step.  In a few cases though, we need to
-  // substitute into the target to make it match the LHS of the
-  // equation.
+  // This finds a substitution into the schema to make it match the
+  // part of the target at the given path. The substitution may need
+  // to be followed by beta reduction(s) and/or renaming of bound
+  // variables.  Names of variables bound within the match may differ
+  // between the two terms, but names free relative to that context
+  // must match exactly.
   //
-  // This finds a suitable substitution even into the target step for
-  // a replacement where the target term is in the scope of one or
-  // more bound variables.  This is the case of matching in
-  // preparation for replacement that is not handled by matchSchema.
+  // The schema and target 
   //
   // TODO: Caution, this is poorly tested at present.  Test it better.
   //
