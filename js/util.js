@@ -301,7 +301,7 @@ function strict(obj) {
       if (prop in obj || typeof prop === 'symbol') {
         return obj[prop];
       } else {
-        Toy.throw(new TypeError('No property ' + prop));
+        Toy.abort(new TypeError('No property ' + prop));
       }
     }
   };
@@ -498,47 +498,6 @@ function debug(value) {
   }
   debugger;
   return value;
-}
-
-/**
- * Unconditionally throws an Error; used by assert.  Convenient, and
- * cooperates with catchAll by using Toy.throw.  If the first argument
- * is not a string, it is treated as a pure object with properties
- * controlling details of the abort:
- *
- * with: value is a map of properties to attach to the Error object.
- *
- * The remaining arguments then are as for a call without options.
- */
-function abort(msg, ...args) {
-  if (typeof msg === 'string') {
-    _abort({}, msg, ...args);
-  } else {
-    _abort(...arguments);
-  }
-}
-
-const levels = new Set(['error', 'warn', 'info', 'log', 'none']);
-
-function _abort(options, msg, ...args) {
-  const e = new Error(Toy.format(msg, ...args));
-  let step;
-  // Find a step argument if there is one.
-  for (var i = 0; i < args.length; i++) {
-    var arg = args[i];
-    if (Toy.isProved(arg)) {
-      // TODO: Handle multiple "step" arguments.
-      step = arg;
-      break;
-    }
-  }
-  e.step = step;
-  const props = 'with' in options ? options.with : {};
-  Object.assign(e, props);
-  if ('from' in options) {
-    e.from = options.from;
-  }
-  Toy.throw(e);
 }
 
 /**
@@ -823,19 +782,60 @@ function sortMap(object, comparator) {
 
 //// Control flow
 
-// Trival constructor for a return target.
-function ReturnTarget() {
-  this.id = targetID++;
-};
-
 /**
- * Invoke "throw" via function call.  Cooperates with catchAll.  Use
- * this throughout the Prooftoys application.  Public name is
- * "Toy.throw".  TODO: rename to "unwind"?
+ * Unconditionally throws an Error (used by assert).  Convenient, and
+ * works properly with catchAborts.  If the first argument is an Error,
+ * aborts (throws) with that Error object.  If a string, treats the
+ * string as a "format" template and passes it with any addditional
+ * arguments to Toy.format.
+ *
+ * If the first argument is not an Error or string, it is treated as a
+ * pure object with properties controlling details of the abort:
+ *
+ *   with: value is a map of properties to attach to the Error object.
+ *
+ * In this case the remaining arguments then are as for a call without
+ * options.
  */
-function toyThrow(value) {
-  Toy.thrown = value;
-  throw value;
+function abort(msg, ...args) {
+  if (msg instanceof Error) {
+    const error = msg;
+    Toy.thrown = error;
+    throw error;
+  } else if (typeof msg === 'string') {
+    _abort({}, msg, ...args);
+  } else {
+    _abort(...arguments);
+  }
+}
+
+function _abort(options, msg, ...args) {
+  const e = new Error(Toy.format(msg, ...args));
+  let step;
+  // Find a step argument if there is one.
+  for (var i = 0; i < args.length; i++) {
+    var arg = args[i];
+    if (Toy.isProved(arg)) {
+      // TODO: Handle multiple "step" arguments.
+      step = arg;
+      break;
+    }
+  }
+  e.step = step;
+  const props = 'with' in options ? options.with : {};
+  Object.assign(e, props);
+  if ('from' in options) {
+    e.from = options.from;
+  }
+  Toy.thrown = e;
+  throw e;
+}
+
+// Constructor for a return target.  Private to withExit.
+function ReturnTarget() {
+  // catchAborts interprets Toy.thrown of this type as an exit, not an
+  // abort.
+  this.id = targetID++;
 };
 
 let targetID = 1;
@@ -885,16 +885,17 @@ function withExit(fn) {
  * Stops stack unwinding from any abort during the execution of the
  * given fn.  This calls fn, passing no arguments, and returning the
  * thrown value iff the function throws, except if the thrown value is
- * falsy, e.g. undefined, returns true.
+ * falsy, e.g. undefined, returns true.  This catches aborts, but not
+ * exits.  (See exitFrom.)
  *
  * This design has an advantage over passing a "catcher" function in that
  * the actions here can do local flow of control actions such
  * as "return" or "break" right in the block.
  *
- * For example this can be used in a form such as if (catchAll(...)) {
- * <actions> }.
+ * For example this can be used in a form such as if (catchAborts(...)) {
+ * <actions> }, where the actions execute in case of an abort.
  */
-function catchAll(fn) {
+function catchAborts(fn) {
   let success = false;
   // For good measure:
   Toy.thrown = null;
@@ -905,7 +906,8 @@ function catchAll(fn) {
     if (success) {
       return false;
     } else if (returnTarget) {
-      // This is an exit, not an abort, so use "throw" directly.
+      // An exit is in progress, not an abort, so use "throw" directly
+      // to continue unwinding the stack.
       throw returnTarget;
     } else {
       return Toy.thrown || true;
@@ -1693,7 +1695,7 @@ function changed(object, opt_partName) {
  * to run when the event loop returns to idle.  A given action
  * function only runs at most once per cycle regardless of the number
  * of relevant calls to "changed".  Each enqueued action runs within a
- * catchAll block to ensure that all have the opportunity to run.
+ * catchAborts block to ensure that all have the opportunity to run.
  */
 function onChange(properties) {
   const source = properties.to;
@@ -1736,7 +1738,7 @@ function runPendingActions() {
   const actions = pendingActions;
   pendingActions = new Set();
   actions.forEach(function(fn) {
-    if (Toy.catchAll(fn)) {
+    if (Toy.catchAborts(fn)) {
       console.error('Error occurred in change handler:', e);
     }
   });
@@ -2346,7 +2348,6 @@ Toy.nextPrimeFactor = nextPrimeFactor;
 Toy.primeFactors = primeFactors;
 
 Toy.debug = debug;
-Toy.abort = abort;
 Toy.check = check;
 Toy.factSquish = factSquish;
 Toy.assertTrue = assertTrue;
@@ -2379,12 +2380,12 @@ Toy.infoTip = infoTip;
 Toy.trimParens = trimParens;
 Toy.sortMap = sortMap;
 
+Toy.abort = abort;
 Toy.Result = Result;
 Toy.normalReturn = normalReturn;
-Toy.throw = toyThrow;
 Toy.exitFrom = exitFrom;
 Toy.withExit = withExit;
-Toy.catchAll = catchAll;
+Toy.catchAborts = catchAborts;
 Toy.thrown = null;
 
 Toy.NestedTimer = NestedTimer;

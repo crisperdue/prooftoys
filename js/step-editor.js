@@ -510,7 +510,7 @@ function buildWksControls(editor) {
   // Handler for the "restore proof" button.  Restores proof state from
   // the text area.
   function restoreProof() {
-    if (Toy.catchAll(() => {
+    if (Toy.catchAborts(() => {
           editor.restoreState();
           result.hide();
         })) {
@@ -1206,7 +1206,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
   var startTime = Date.now();
   var startSteps = Toy.getStepCounter();
 
-  Toy.catchAll(() => {
+  Toy.catchAborts(() => {
     if (Toy.profileName) {
       // Collect CPU profiling information.
       console.profile(Toy.profileName);
@@ -1260,7 +1260,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     //   removing most of this code.  It may be desirable for the
     //   proof display to trigger another event after the step is
     //   successfully rendered, triggering auto-simplification.
-    const error = Toy.catchAll(() => {
+    const error = Toy.catchAborts(() => {
       this.proofDisplay.addStep(result);
     });
     if (error) {

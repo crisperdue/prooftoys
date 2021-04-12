@@ -2299,7 +2299,7 @@ function hoverAsRewriter(step, action) {
   // This is almost always a single path.
   Toy.stepPaths(step).forEach(function(target_path) {
     const tPath = twff.asPath(target_path);
-    Toy.catchAll(() => {
+    Toy.catchAborts(() => {
       if (targetIsCond && tPath.isLeft()) {
         // Without special support we do not have a reasonable
         // way to find the replacement, but can get a good guess
