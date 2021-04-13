@@ -855,17 +855,6 @@ let exitValue = undefined;
 // targets.
 let targetID = 1;
 
-/**
- * Return the given value from the given return target, created by a
- * call to Toy.withExit.  The computation started by withExit must
- * still be in progress.
- *
- * TODO: Remove this and its uses as obsolete.
- */
-function exitFrom(target, value) {
-  target(value);
-}
-
 // Unwind the stack (for exits). This is not an error situation, so
 // you may want to tell the debugger to "Never Pause" here:
 function unwind() {
@@ -873,10 +862,13 @@ function unwind() {
 }
 
 /**
- * Starts a computation that can be aborted by a call to exitFrom.
- * Calls the given function, passing it a return Target object.
- * During the computation, if that Target object is passed to
- * exitFrom, withExit returns the value passed to exitFrom.
+ * Starts a computation that can be aborted by a call to an exit
+ * function.  Calls the given function, passing it an exit function.
+ * During the computation, if the exit function is called, withExit
+ * returns the value passed to the exit function.  If the exit
+ * function is called after completion of the call to "fn", the result
+ * is an assertion failure.  This is a limited form of
+ * call-with-current-continuation.
  */
 function withExit(fn) {
   const id = targetID++;

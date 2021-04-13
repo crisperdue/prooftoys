@@ -1426,7 +1426,7 @@ declare
             function walkMulDiv(term, path) {
               const next = Toy.applyMatchingFact(step, path, facts);
               if (next) {
-                Toy.exitFrom(exit, next);
+                exit(next);
               }
               const mulDiv = [
                 {match: 'a * b', a: walkMulDiv, b: walkMulDiv},
@@ -3619,7 +3619,7 @@ function varFactorCounts(term) {
         var value = info[expr.name] || 0;
         info[expr.name] = value + 1;
       } else if (!expr.isConst()) {
-        Toy.exitFrom(exit, false);
+        exit(false);
       }
     }
     function addCounts(expr, revPath) {

@@ -357,12 +357,12 @@ var testCase = {
   // Control flow
 
   testExits: function() {
-    assertEqual(6, Toy.withExit(target => 6));
+    assertEqual(6, Toy.withExit(exit => 6));
     const items = [];
-    const result = Toy.withExit(target => {
+    const result = Toy.withExit(exit => {
         function inflate(n) {
           if (n >= 10) {
-            Toy.exitFrom(target, n);
+            exit(n);
           } else {
             items.push(n);
             inflate(n+1);
@@ -372,9 +372,9 @@ var testCase = {
       });
     assertEqual(10, result);
     assertEqual([7, 8, 9], items);
-    const target = Toy.withExit(target => target);
+    const exit = Toy.withExit(exit => exit);
     try {
-      Toy.exitFrom(target, 22);
+      exit(22);
       assert(false);
     } catch(e) {
       // Check that the error looks appropriate.
