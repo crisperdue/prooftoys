@@ -809,6 +809,12 @@ function abort(msg, ...args) {
   }
 }
 
+// For uncaught exceptions, indicate that no abort is in progress.
+// This listener is pretty innocuous, so we install it early.  
+window.addEventListener('error', event => {
+  Toy.exitTarget = Toy.exitValue = Toy.thrown = undefined;
+});
+
 function _abort(options, msg, ...args) {
   const e = new Error(Toy.format(msg, ...args));
   let step;
@@ -831,31 +837,39 @@ function _abort(options, msg, ...args) {
   throw e;
 }
 
-// Constructor for a return target.  Private to withExit.
-function ReturnTarget() {
-  // catchAborts interprets Toy.thrown of this type as an exit, not an
-  // abort.
-  this.id = targetID++;
-};
+// Exit target information.
 
-let targetID = 1;
+// A stack of "exit target" objects currently available for use.
+// Entry to withExit pushes one onto the stack, and exit from it
+// pops it off.
 let activeTargets = [];
-let returnTarget = null;
-let returnValue = undefined;
+
+// Exit object (function) identifying the stack level we want to
+// unwind to.
+let exitTarget = null;
+
+// Value to return from the exit.
+let exitValue = undefined;
+
+// A counter for debugging, helps the developer distinguish different
+// targets.
+let targetID = 1;
 
 /**
  * Return the given value from the given return target, created by a
  * call to Toy.withExit.  The computation started by withExit must
  * still be in progress.
+ *
+ * TODO: Remove this and its uses as obsolete.
  */
 function exitFrom(target, value) {
-  assert(activeTargets.includes(target),
-         'Return target {1} is not active', target.id);
-  returnTarget = target;
-  returnValue = value;
-  Toy.thrown = target;
-  // You may want to tell the debugger to "Never Pause" here:
-  throw target;
+  target(value);
+}
+
+// Unwind the stack (for exits). This is not an error situation, so
+// you may want to tell the debugger to "Never Pause" here:
+function unwind() {
+  throw undefined;
 }
 
 /**
@@ -865,18 +879,33 @@ function exitFrom(target, value) {
  * exitFrom, withExit returns the value passed to exitFrom.
  */
 function withExit(fn) {
-  const target = new ReturnTarget();
-  activeTargets.push(target);
+  const id = targetID++;
+  const exitFn = value => {
+    // If the exit will fail, notice it before unwinding the stack.
+    assert(activeTargets.includes(exitFn),
+           '{1} is not active', exitFn);
+    // Store this function to identify where to stop unwinding.
+    exitTarget = exitFn;
+    // Store the value in a global and start unwinding the stack.
+    exitValue = value;
+    unwind();
+  };
+  // For debugging.
+  exitFn.toString = () => 'Exit function ' + id;
+
+  // There is an entry in activeTargets for each invocation of
+  // withExit currently in progress.
+  activeTargets.push(exitFn);
   try {
-    return fn(target);
+    return fn(exitFn);
   } finally {
     activeTargets.pop();
-    if (returnTarget === target) {
-      // Tidy up and return;
-      returnTarget = null;
-      const val = returnValue;
-      returnValue = undefined;
-      return val;
+    if (exitTarget === exitFn) {
+      // The exit created here is the "target", so return the
+      // requested value and stop unwinding the stack.
+      const v = exitValue;
+      exitTarget = exitValue = undefined;
+      return v;
     }
   }
 }
@@ -886,14 +915,13 @@ function withExit(fn) {
  * given fn.  This calls fn, passing no arguments, and returning the
  * thrown value iff the function throws, except if the thrown value is
  * falsy, e.g. undefined, returns true.  This catches aborts, but not
- * exits.  (See exitFrom.)
+ * exits.
  *
- * This design has an advantage over passing a "catcher" function in that
- * the actions here can do local flow of control actions such
- * as "return" or "break" right in the block.
- *
- * For example this can be used in a form such as if (catchAborts(...)) {
- * <actions> }, where the actions execute in case of an abort.
+ * This design has an advantage over passing a "catcher" function in
+ * that the actions here can do local flow of control actions such as
+ * "return" or "break" right in the block.  For example this can be
+ * used in a form such as if (catchAborts(...)) { <actions> }, where
+ * the actions execute in case of an abort.
  */
 function catchAborts(fn) {
   let success = false;
@@ -905,10 +933,10 @@ function catchAborts(fn) {
   } finally {
     if (success) {
       return false;
-    } else if (returnTarget) {
-      // An exit is in progress, not an abort, so use "throw" directly
-      // to continue unwinding the stack.
-      throw returnTarget;
+    } else if (exitTarget) {
+      // An exit is in progress, not an abort, so continue unwinding
+      // the stack.
+      unwind();
     } else {
       return Toy.thrown || true;
     }
@@ -916,16 +944,8 @@ function catchAborts(fn) {
 }
 
 /**
- * Throw one of these to return an arbitrary value
- * from a recursive function.
- */
-function Result(value) {
-  this.value = value;
-}
-
-/**
  * Call the given function with the given arguments, returning the
- * undefined value if the function throws, else the value returned
+ * undefined value if the function aborts, else the value returned
  * from the function call.  Does not interfere with exitFrom
  * and withExit.
  *
@@ -936,17 +956,14 @@ function Result(value) {
  * Be aware that this suppresses debugging during its execution.
  */
 function normalReturn(fn, ...args) {
-  try {
-    return fn.apply(undefined, args);
-  } catch(e) {
-    // Respect returnFrom.
-    if (e instanceof ReturnTarget) {
-      Toy.throw(e);
-    }
-    // Uncomment to get a message.
-    // console.warn('normalReturn caught', e);
+  let normalValue;
+  if (catchAborts(() => normalValue = fn.apply(undefined, args))) {
+    return undefined;
+  } else {
+    return normalValue;
   }
 }
+
 
 //// NestedTimer -- timer that excludes time in other timers
 
@@ -2381,7 +2398,6 @@ Toy.trimParens = trimParens;
 Toy.sortMap = sortMap;
 
 Toy.abort = abort;
-Toy.Result = Result;
 Toy.normalReturn = normalReturn;
 Toy.exitFrom = exitFrom;
 Toy.withExit = withExit;
