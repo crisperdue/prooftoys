@@ -2391,7 +2391,6 @@ Toy.sortMap = sortMap;
 
 Toy.abort = abort;
 Toy.normalReturn = normalReturn;
-Toy.exitFrom = exitFrom;
 Toy.withExit = withExit;
 Toy.catchAborts = catchAborts;
 Toy.thrown = null;
