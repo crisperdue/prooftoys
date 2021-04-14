@@ -1395,7 +1395,7 @@ Expr.prototype.mainify = function(path) {
  */
 Expr.prototype.isProved = function() {
   // A property only proof steps have.
-  return !!this.wff;
+  return !!this.ruleName;
 };
 
 /**
