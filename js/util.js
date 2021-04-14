@@ -308,6 +308,19 @@ function strict(obj) {
   return new Proxy(obj, handler);
 }
 
+// Make a custom subclass of Error.
+class LogicError extends Error {}
+
+/**
+ * Returns an Error with the given message, and attempts to access
+ * nonexistent properties of it will throw.  The error supports
+ * testing of its ruleName property, with value false.
+ */
+function logicError(message) {
+  const e = new LogicError(message);
+  return strict(e);
+}
+
 ////
 //// Math calculation
 
@@ -2366,6 +2379,8 @@ Toy.debugString = debugString;
 Toy.locked = locked;
 Toy.unlock = unlock;
 Toy.strict = strict;
+Toy.LogicError = LogicError;
+Toy.logicError = logicError;
 
 Toy.isEmpty = isEmpty;
 Toy.mapSize = mapSize;
