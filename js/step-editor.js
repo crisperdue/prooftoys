@@ -1231,17 +1231,12 @@ StepEditor.prototype._tryRule = function(rule, args) {
   this._proofEditor.containerNode
     .find('.ruleStats').toggleClass('invisible', false);
 
-  if (!result) {
+  if (result instanceof Error || !result) {
     // A rule may abort (throw), or certain rules may return null
     // indicating failure, such as a rule that attempts to prove a
     // statement.  The work is done, show that the prover is not busy.
     this._setBusy(false);
-    // TODO: Report the nature of the error more clearly, e.g.
-    //   cooperating with Toy.assert.
-    const e = Toy.thrown;
-    // TODO: Fix this.  Report preconditions as such, and specific
-    //   messages based on e.from rather than isAssert.
-    const message = e && e.isAssert ? e.message : 'Rule does not apply';
+    const message = result ? result.message : 'Rule does not apply';
     this.report(message);
   } else if (result === true) {
     this._setBusy(false);

@@ -249,9 +249,16 @@ declare(
    * equation's RHS.  This is rule R.  The subexpression must match
    * the equation's LHS, meaning they are the same except possibly
    * in names of bound variables.
+   *
+   * If either the target or the equation are Error objects,
+   * returns a LogicError.
    */
   {name: 'r',
     action: function(equation, target, path_arg) {
+      if ((equation instanceof Error || target instanceof Error) &&
+          !Toy.autoAssert) {
+        return Toy.logicError('Not proved');
+      }
       const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
       if (equation.getLeft().sameAs(equation.getRight())) {
@@ -2364,18 +2371,23 @@ declare(
     description: 'calculate boolean value'
   },
 
-  // Proves an inference that the wff is a tautology and
-  // returns it.  Checks that it is indeed proven to be a
-  // tautology.  (5233)
+  // Proves that the wff is a tautology and returns the proved
+  // statement, else returns a LogicError.
+  // (5233)
   //
   // Accepts a parseable string as the wff.
   {name: 'tautology',
     action: function(wff_arg) {
       const wff = termify(wff_arg);
-      const result = rules.tautology0(wff);
+      const result = Toy.withExit(exit => {
+        return Toy.rebind('tautExit', exit,
+                          () => rules.tautology0(wff));
+      });
+      if (!result instanceof Error) {
       const str = wff.toString();
       const count = tautologyCounts.get(str);
       tautologyCounts.set(str, (count || 0) + 1);
+      }
       return result;
     },
     inputs: {bool: 1},
@@ -2431,9 +2443,15 @@ declare(
         }
         // There are no free variables, evaluate the expression.
         var step11 = rules.evalBool(wff);
-        assert(step11.isCall2('=') && step11.getRight().isConst('T'),
-               'Not a tautology: {1}', step11.getLeft(),
+        const success = step11.isCall2('=') && step11.getRight().isConst('T');
+        if (!success) {
+          if (Toy.tautExit) {
+            Toy.tautExit(Toy.logicError('Not a tautology'));
+          } else {
+            abort('Not a tautology: {1}', step11.getLeft(),
                step11);
+          }
+        }
         var step12 = rules.rRight(rules.theorem('t'), '', step11);
         _tautologies[key] = step12;
         var result = step12.justify('tautology0', arguments);

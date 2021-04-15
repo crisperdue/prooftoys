@@ -360,7 +360,8 @@ var rules = {};
 //
 // maxArgs: Optional maximum number of args to pass to the rule.
 //   Unless already present, added automatically by addRule when
-//   making a rule with a "varargs" wrapper.
+//   making a rule, based on the number of declared function
+//   arguments.
 //
 // toOffer: function of displayable step and optional term within the
 //   step, or a string containing expression to return from such a

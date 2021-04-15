@@ -850,7 +850,24 @@ function _abort(options, msg, ...args) {
   throw e;
 }
 
-// Exit target information.
+// Calls the function with no arguments in a context where the given
+// property of Toy has the given value and returns its value if it
+// returns at all.  Guarantees restoration of the old value on exit
+// from the function.  If the property was not previously present,
+// adds it, restoring it afterward to undefined.
+function rebind(name, value, fn) {
+  assert(typeof name === 'string',
+         'Property name must be a string: {1}', name);
+  try {
+    var oldValue = Toy[name];
+    Toy[name] = value;
+    return fn();
+  } finally {
+    Toy[name] = oldValue;
+  }
+}
+
+//// Exit target information.
 
 // A stack of "exit target" objects currently available for use.
 // Entry to withExit pushes one onto the stack, and exit from it
@@ -2404,6 +2421,7 @@ Toy.infoTip = infoTip;
 Toy.trimParens = trimParens;
 Toy.sortMap = sortMap;
 
+Toy.rebind = rebind;
 Toy.abort = abort;
 Toy.normalReturn = normalReturn;
 Toy.withExit = withExit;
