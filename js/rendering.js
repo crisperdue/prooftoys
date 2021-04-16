@@ -2001,11 +2001,11 @@ function computeFirstOrdinal(steps) {
 
 /**
  * Gets the DOM node associated with the step, given a rendered Expr
- * within the step or its DOM node.
+ * within the step or its DOM node.  If no such, returns a nullish.
  */
 function getStepNode(expr) {
-  var node = $(expr instanceof Toy.Expr ? expr.node : expr);
-  return dom(node.closest('.proofStep'));
+  const node = expr instanceof Toy.Expr ? expr.node : expr;
+  return node.closest('.proofStep');
 }
 
 /**
@@ -2014,7 +2014,8 @@ function getStepNode(expr) {
  * a rendered proof.  Returns null if there is none.
  */
 function getProofStep(node) {
-  return $(getStepNode(node)).data('proofStep');
+  const stepNode = getStepNode(node);
+  return stepNode && $(stepNode).data('proofStep');
 }
 
 /**
