@@ -966,6 +966,14 @@ function catchAborts(fn) {
 }
 
 /**
+ * Truthy iff x is nullish or an Error object.  Use this to
+ * test the results of inference steps.
+ */
+function isError(x) {
+  return x == null || x instanceof Error;
+}
+
+/**
  * Call the given function with the given arguments, returning the
  * undefined value if the function aborts, else the value returned
  * from the function call.  Does not interfere with exitFrom
@@ -2423,6 +2431,7 @@ Toy.sortMap = sortMap;
 
 Toy.rebind = rebind;
 Toy.abort = abort;
+Toy.isError = isError;
 Toy.normalReturn = normalReturn;
 Toy.withExit = withExit;
 Toy.catchAborts = catchAborts;

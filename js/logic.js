@@ -2383,7 +2383,10 @@ declare(
         return Toy.rebind('tautExit', exit,
                           () => rules.tautology0(wff));
       });
-      if (!result instanceof Error) {
+      if (Toy.isError(result)) {
+        return new Error('Not a tautology: ' + wff_arg +
+                         ' -- ' + result.message);
+      } else {
       const str = wff.toString();
       const count = tautologyCounts.get(str);
       tautologyCounts.set(str, (count || 0) + 1);
@@ -2445,11 +2448,12 @@ declare(
         var step11 = rules.evalBool(wff);
         const success = step11.isCall2('=') && step11.getRight().isConst('T');
         if (!success) {
+          const message = Toy.format('Not true: {1}',
+                                     step11.getLeft(), step11);
           if (Toy.tautExit) {
-            Toy.tautExit(Toy.logicError('Not a tautology'));
+            Toy.tautExit(Toy.logicError(message));
           } else {
-            abort('Not a tautology: {1}', step11.getLeft(),
-               step11);
+            abort(message);
           }
         }
         var step12 = rules.rRight(rules.theorem('t'), '', step11);
@@ -2475,8 +2479,12 @@ declare(
       const info = Toy.boolSchemaInfo(wff);
       const tautWff = info.schema;
       const tautology = rules.tautology(tautWff);
+      if (Toy.isError(tautology)) {
+        return tautology;
+      } else {
       const proved = rules.instMultiVars(tautology, info.subst);
       return proved.justify('tautologous', [wff_arg]);
+      }
     },  
     inputs: {bool: 1},
     form: 'Enter statement: <input name=bool size=40>',
