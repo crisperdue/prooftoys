@@ -559,13 +559,16 @@ function addRule(info) {
       var checker = function(_args) {
         return Toy._actionInfo = info.precheck.apply(main, arguments);
       }
+      // TODO: Consider communicating through the "this" argument
+      //   to the main rule instead of the global variable, e.g.
+      //   this.precheck.
       rule = function(_args) {
         checker.apply(null, arguments);
         return (Toy._actionInfo
                 ? main.apply(rule, arguments)
                 : info.onFail
                 ? info.onFail.call(rule)
-                : abort('Rule {1} not applicable', name));
+                : Toy.newError('Rule {1} not applicable', name));
       }
       if (info.maxArgs == null) {
         info.maxArgs = main.length;

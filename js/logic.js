@@ -4838,7 +4838,7 @@ declare(
                 : abort(''));
       } catch(err) {}  // TODO: Consider returning a strict error
       //                    from rules.tautology.
-      abort('No such fact: ' + wff + ' (as ' + synopsis + ')');
+      return Toy.newError('No such fact: ' + wff + ' (as ' + synopsis + ')');
     },
     // The "fact" rule does not accept a selection, and converts its
     // form input as needed.  

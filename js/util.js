@@ -828,8 +828,12 @@ window.addEventListener('error', event => {
   Toy.exitTarget = Toy.exitValue = Toy.thrown = undefined;
 });
 
+function newError(template, ...args) {
+  return new Error(Toy.format(template, ...args));
+}
+
 function _abort(options, msg, ...args) {
-  const e = new Error(Toy.format(msg, ...args));
+  const e = newError(msg, ...args);
   let step;
   // Find a step argument if there is one.
   for (var i = 0; i < args.length; i++) {
@@ -2431,6 +2435,7 @@ Toy.sortMap = sortMap;
 
 Toy.rebind = rebind;
 Toy.abort = abort;
+Toy.newError = newError;
 Toy.isError = isError;
 Toy.normalReturn = normalReturn;
 Toy.withExit = withExit;
