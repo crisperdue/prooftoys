@@ -1015,6 +1015,9 @@ declare
   // Add the term at the given site to both sides of the (innermost)
   // equation containing it.
    {name: 'addThisToBoth',
+    precheck: function(step, path) {
+      return step.wff.parentEqn(path);
+    },
     action: function(step, path) {
       var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
@@ -1033,6 +1036,9 @@ declare
   },
 
    {name: 'subtractThisFromBoth',
+    precheck: function(step, path) {
+      return step.wff.parentEqn(path);
+    },
     action: function(step, path) {
       var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
@@ -1051,6 +1057,9 @@ declare
   },
 
    {name: 'multiplyBothByThis',
+    precheck: function(step, path) {
+      return step.wff.parentEqn(path);
+    },
     action: function(step, path) {
       var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
@@ -1069,6 +1078,9 @@ declare
   },
 
    {name: 'divideBothByThis',
+    precheck: function(step, path) {
+      return step.wff.parentEqn(path);
+    },
     action: function(step, path) {
       var eqnPath = step.wff.parentEqn(path);
       assert(eqnPath, 'No equation found in {1}', step.wff);
@@ -1445,7 +1457,14 @@ declare
      labels: 'algebra'
     },
 
+    // This moves a factor to the right within a chain of multiplications.
     {name: 'factorToRightmost',
+     precheck: function(step_arg, path_arg) {
+       const wff = step_arg.wff;
+       const parentPath = wff.prettifyPath(path_arg).parent();
+       const parent = wff.get(parentPath);
+       return parent.isCall2('*');
+     },
      action: function(step_arg, path_arg) {
        const wff = step_arg.wff;
        const commute = rules.fact('x * y = y * x');
@@ -2233,6 +2252,11 @@ declare
    * specified value, which must be an exact multiple of both.
    */
    {name: 'commonDenominator',
+    toOffer: function(step, expr) {
+      var map = (expr.matchSchema('a / d1 + b / d2') ||
+                 expr.matchSchema('a / d1 - b / d2'));
+      return (map && map.d1.isNumeral() && map.d2.isNumeral());
+    },
     action: function(step, path, num) {
       var n = num.getNumValue();
       var expr = step.get(path);
@@ -2251,11 +2275,6 @@ declare
       return (step1.rewrite(path.concat('/right'), fact2)
               .justify('commonDenominator', arguments, [step]));
     },
-    toOffer: function(step, expr) {
-      var map = (expr.matchSchema('a / d1 + b / d2') ||
-                 expr.matchSchema('a / d1 - b / d2'));
-      return (map && map.d1.isNumeral() && map.d2.isNumeral());
-    },
     inputs: {site: 1, term: 3},
     form: 'Use denominator <input name=term>',
     menu: 'use common denominator',
@@ -2267,6 +2286,9 @@ declare
    * step that equates it to its prime factors.
    */
    {name: 'primeFactors',
+    toOffer: function(step, expr) {
+      return expr && expr.isNumeral();
+    },
     action: function(term_arg) {
       var term = termify(term_arg);
       var factors = [];
@@ -2287,9 +2309,6 @@ declare
     menu: 'prime factors of {term}',
     description: 'prime factors of {term}',
     labels: 'algebra',
-    toOffer: function(step, expr) {
-      return expr && expr.isNumeral();
-    },
     autoSimplify: noSimplify
   }
 
