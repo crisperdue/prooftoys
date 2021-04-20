@@ -1374,15 +1374,18 @@ Expr.prototype.descend = function(segment) {
 
 /**
  * Really for a top-level Expr, i.e. wff.  This ensures an initial
- * /main, leaving it to refer to the same place.  Rightward paths into
- * a conditional replace /right or /arg with /main.  Otherwise it
- * prepends /main.
+ * /main wherever possible, giving a result that refers to the same
+ * place.  Rightward paths into a conditional replace /right or /arg
+ * with /main.  Otherwise it prepends /main.
  */
 Expr.prototype.mainify = function(path) {
   if (path.segment == 'main') {
     return path;
   } else if (path.isRight() && this.implies()) {
     return new Path('main', path.rest);
+  } else if (this.implies()) {
+    // It is a leftward path into a conditional.
+    return path;
   } else {
     return new Path('main', path);
   }
