@@ -4575,20 +4575,15 @@ declare(
 
   // A simplifier that removes all lambda calls.
   {name: 'reduceAll',
-    // TODO: Consider supporting this, for interactive use only.
-    // TODO: Convert these to toOffer: properties or combine.
-    menuCheck: function(step, path) {
-      const result = rules._simplifyOnce(step, path,
-                                         [{apply: tryReduce, pure: true}]);
-      return result !== step;
+   toOffer: function(step, term) {
+     return term && term.search(x => x.isLambdaCall());
     },
     action: function(step, path) {
       return (rules.simplifySite(step, path, [{apply: tryReduce, pure: true}])
               .justify('reduceAll', arguments, [step]));
     },
     inputs: {site: 1},
-    menu: 'reduce functions throughout',
-    labels: 'advanced'
+   menu: 'reduce all function calls',
   },
 
   // Beta-reduce the lambda call at the given path.  If the argument
