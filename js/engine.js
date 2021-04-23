@@ -315,8 +315,11 @@ var rules = {};
 //
 //   To call the precheck directly, refer to rules.<rulename>.precheck.
 //   A call to rules.<rulename>.main will automatically receive the
-//   precheck's result information if called before any other rule or
-//   precheck.
+//   result of the most recent precheck.
+//
+//   TODO: Consider supporting generator functions for a similar
+//   purpose.  The first result is the result of the precheck, the
+//   second and final result is the result of using the full rule.
 //
 // onFail: if a rule's action function is called in the ordinary
 //   manner, and it has precheck, and the precheck fails, then its
@@ -367,8 +370,9 @@ var rules = {};
 //   step, or a string containing expression to return from such a
 //   function, with arguments "step", and "term".  The step and term
 //   in this case belong to the rendering of the step, and have type
-//   annotations.  If this returns a falsy value, the step editor will
-//   not offer it.
+//   annotations.  These are assigned the selected step and term, or
+//   null if not selected, and if the function returns a falsy value,
+//   the step editor will not offer it.
 //
 // form: HTML template for the rule's input form to be presented by
 //   the step editor, as a template allowing {term} for the selected

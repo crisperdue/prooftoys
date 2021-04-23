@@ -301,6 +301,8 @@ Expr.prototype.annotateWithTypes = function() {
  * Returns true iff the type of the term is Real.  Only ever returns
  * true if Expr is part of a WFF that has been annotated with type
  * information.
+ *
+ * TODO: This check is only approximate.  Reconsider all uses of it.
  */
 Expr.prototype.isReal = function() {
   return this.hasType() == realType;
