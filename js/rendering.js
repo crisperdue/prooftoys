@@ -227,8 +227,7 @@ function ProofDisplay(properties) {
   this.stepPrefix = properties.stepPrefix || '';
   this.parentStep = properties.parentStep || null;
   this.prevStep = properties.prevStep || null;
-
-  this.proofEditor = null;
+  this.proofEditor = properties.proofEditor || null;
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
   var $node = $('<div class=proofDisplay>' +
@@ -273,15 +272,6 @@ ProofDisplay.prototype.proofChanged = function() {
 ProofDisplay.prototype.selectionChanged = function() {
   const editor = this.proofEditor;
   if (editor) {
-    // If there is now a selected term, put a textual representation
-    // of it into $copyText and select it.
-    const step = this.selection;
-    const selection = step ? (step.selection || step.wff) : null;
-    if (selection) {
-      // TODO: Fix this string to avoid variables with ".".
-      editor.$copyText.val(selection.toString());
-      editor.$copyText.select();
-    }
     editor.ruleMenu.refresh();
   }
 };
@@ -658,6 +648,12 @@ ProofDisplay.prototype.handleStepClick = function(step) {
  * unless already selected.
  */
 ProofDisplay.prototype.handleExprClick = function(expr) {
+  const editor = this.proofEditor;
+  if (editor) {
+    // TODO: Fix this string to avoid variables with ".".
+    editor.$copyText.val(expr.toString());
+    editor.$copyText.select();
+  }
   if (this.isSelectAllowed()) {
     var step = getProofStep(expr);
     var selection = this.selection;
@@ -751,7 +747,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   // TODO: Consider using delegation more extensively.
 
   const selector = Toy.simplifiedSelections ? '.fullExpr' : '.expr';
-  function handleExprClick(event) {
+  function handleGeneralClick(event) {
     var $expr = $(event.target).closest(selector) || $(event.target);
     if ($expr.is('.fn') && !event.shiftKey) {
       $expr = $expr.parent().closest(selector);
@@ -766,7 +762,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
       event.stopPropagation();
     }
   }
-  $proofStep.on(TOUCHDOWN, selector, handleExprClick);
+  $proofStep.on(TOUCHDOWN, selector, handleGeneralClick);
 
   $proofStep.on('mouseenter mouseleave', '.stepSelector', function(event) {
       hoverStepSelector(step, event.type === 'mouseenter' ? 'in' : 'out');
@@ -1482,7 +1478,6 @@ function unrenderedDeps(step) {
  * subproof.
  */
 function renderSubproof(step) {
-  var controller = getProofDisplay(step);
   var $node = renderInference(step);
   $(step.stepNode).addClass('hasSubproof');
   step.subproofDisplay = $node.data('proofDisplay');
@@ -1830,7 +1825,7 @@ var stepFormatters = {
 };
 
 /**
- * Given a proof step, renders a header and the proof steps
+ * Given a rendered proof step, renders a header and the proof steps
  * of its as-yet-unrendered details within a container DIV with CSS
  * class inferenceDisplay.  Sets the 'proofDisplay' data property of
  * the node to refer to the new ProofDisplay.  If the step is
@@ -1857,8 +1852,10 @@ function renderInference(step) {
       prefix = match[1] + (match[2] - 1) + '.';
     }
   }
-  var controller =
-    new ProofDisplay({stepPrefix: prefix, parentStep: step});
+  const editor = getProofDisplay(step).proofEditor;
+  var controller = new ProofDisplay({stepPrefix: prefix,
+                                     parentStep: step,
+                                     proofEditor: editor});
   controller.setSteps(steps);
   var tooltip = Toy.escapeHtml(Toy.getRuleInfo(step).tooltip || '');
   var $subproof = $('<div class=inferenceDisplay></div>');

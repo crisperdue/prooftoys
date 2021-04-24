@@ -986,8 +986,6 @@ function isError(x) {
  * Intended for enforcing planned control flow even when unknown
  * problems may occur.  For recovery from specific problems consider
  * using dynamically bound recovery functions.
- *
- * Be aware that this suppresses debugging during its execution.
  */
 function normalReturn(fn, ...args) {
   let normalValue;
