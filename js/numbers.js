@@ -1461,9 +1461,12 @@ declare
     {name: 'factorToRightmost',
      precheck: function(step_arg, path_arg) {
        const wff = step_arg.wff;
-       const parentPath = wff.prettifyPath(path_arg).parent();
-       const parent = wff.get(parentPath);
-       return parent.isCall2('*');
+       const pretty = wff.prettifyPath(path_arg);
+       if (!pretty.isEnd()) {
+         const parentPath = pretty.parent();
+         const parent = wff.get(parentPath);
+         return parent.isCall2('*');
+       }
      },
      action: function(step_arg, path_arg) {
        const wff = step_arg.wff;
