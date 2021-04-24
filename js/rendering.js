@@ -2300,8 +2300,12 @@ function hoverAsRewriter(step, action) {
   // This is almost always a single path.
   Toy.stepPaths(step).forEach(function(target_path) {
     const tPath = twff.asPath(target_path);
+    // This site could use an actual "catch" to suppress errors,
+    // but at this time we are preferring to debug any that occur.
     Toy.catchAborts(() => {
-      if (targetIsCond && tPath.isLeft()) {
+      if (tPath.isEnd()) {
+        action(step.wff.node, 'site');
+      } else if (targetIsCond && tPath.isLeft()) {
         // Without special support we do not have a reasonable
         // way to find the replacement, but can get a good guess
         // when the replacement is (implicitly) T.
@@ -2318,6 +2322,8 @@ function hoverAsRewriter(step, action) {
         const found = step.getLeft()
               .eachConjunct(term => term.sameAs(tee) && term);
         found && action(found.node, 'site');;
+        // TODO: We also need to provide some degree of support for
+        //   normal equational rewrites applied to assumptions.
       } else {
         const path = shallower ? tPath.rest : tPath;
         const main = deeper ? step.wff.getRight() : step.wff;
