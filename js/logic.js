@@ -1368,7 +1368,8 @@ declare(
 
   // 5216: [T & A] = A
   // TODO: A theorem T & x == x would be adequate since it is an
-  //   equation.  Then apply instEqn as needed.
+  //   equation.  Then apply instEqn as needed.  It would be a
+  //   simplifier.  (Just change step10.)
   {name: 'andTBook',
     action: function(a) {
       var step1 = rules.axiom1();
@@ -1722,6 +1723,11 @@ declare(
 
   // Replaces an occurrence of T at the given path of the given step
   // with the entirety of another step.
+  //
+  // TODO: With the usual boolean connectives, the only case that
+  //   does not immediately simplify is conjunction, so perhaps this
+  //   should be replaced by a rule that inserts a conjunction with
+  //   a theorem instead of replacing T.
   {name: 'replaceT0',
     precheck: function(step, path, step2) {
       return step.get(path).isConst('T');
@@ -1744,6 +1750,8 @@ declare(
 
   // Replaces an occurrence of T at the given path of the given step
   // with the consequent of another step, which must be conditional.
+  //
+  // TODO: See the TODO for replaceT0.
   {name: 'replaceT',
     precheck: function(step, path, step2) {
       return step.get(path).isConst('T') && step2.isCall2('=>');
@@ -1904,7 +1912,7 @@ declare(
   {name: 'matchTerm',
     action: function(target, path, term) {
       const schema = target.get(path);
-      const map = term.matchSchema(schema);
+     const map = term.matchSchema(schema);
       if (map) {
         let funSites = new Map();
         for (const key in map) {
@@ -2004,6 +2012,9 @@ declare(
   // The variable v may be given as a string, which it converts
   // internally to a variable.  The step must be a conditional,
   // and v cannot be free in A.
+  //
+  // TODO: Consider whether all uses of this might be replaced
+  //   by rewrites using implyForall.
   {name: 'toForall1',
     precheck: function(step, v_arg) {
       var v = varify(v_arg);
@@ -2387,9 +2398,9 @@ declare(
         return new Error('Not a tautology: ' + wff_arg +
                          ' -- ' + result.message);
       } else {
-      const str = wff.toString();
-      const count = tautologyCounts.get(str);
-      tautologyCounts.set(str, (count || 0) + 1);
+        const str = wff.toString();
+        const count = tautologyCounts.get(str);
+        tautologyCounts.set(str, (count || 0) + 1);
       }
       return result;
     },
@@ -2482,8 +2493,8 @@ declare(
       if (Toy.isError(tautology)) {
         return tautology;
       } else {
-      const proved = rules.instMultiVars(tautology, info.subst);
-      return proved.justify('tautologous', [wff_arg]);
+        const proved = rules.instMultiVars(tautology, info.subst);
+        return proved.justify('tautologous', [wff_arg]);
       }
     },  
     inputs: {bool: 1},
@@ -3273,6 +3284,8 @@ declare(
       var schema2 = schema;
       // Variables first in unmapped are quantified first/outermost.
       while (unmapped.length) {
+        // Currently only applied in the facts that the add/mul
+        // identity elements are unique.
         schema2 = rules.toForall1(schema2, unmapped.pop());
       }
       // Schema2 may have some newly-quantified variables in its RHS.
@@ -3324,12 +3337,6 @@ declare(
     tooltip: ('[p => q] and [q => r] to [p => r]'),
     description: 'consequence;; of step {step} using {bool}'
   },
-
-  /*
-  {name: 'cases',
-
-  },
-  */
 
   // Instantiates the schema theorem so that the part at the given
   // path is identical to the given term.
@@ -4577,12 +4584,12 @@ declare(
   {name: 'reduceAll',
    toOffer: function(step, term) {
      return term && term.search(x => x.isLambdaCall());
-    },
-    action: function(step, path) {
-      return (rules.simplifySite(step, path, [{apply: tryReduce, pure: true}])
-              .justify('reduceAll', arguments, [step]));
-    },
-    inputs: {site: 1},
+   },
+   action: function(step, path) {
+     return (rules.simplifySite(step, path, [{apply: tryReduce, pure: true}])
+             .justify('reduceAll', arguments, [step]));
+   },
+   inputs: {site: 1},
    menu: 'reduce all function calls',
   },
 
