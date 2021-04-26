@@ -193,8 +193,9 @@ function getRightNeighbor(step, term) {
  *
  * stepsNode: DOM node of the proofSteps DIV.
  *
- * proofEditor: ProofEditor for this (top-level) ProofDisplay,
- *   or null if there is none.
+ * proofEditor: ProofEditor for this ProofDisplay, or null if there is
+ *   none.  Also works if this shows a subproof, as initialized by
+ *   subproof rendering (renderInference).
  *
  * stepPrefix: string prefixed to each step number, defaults to
  * an empty string.  Set only during initialization.
