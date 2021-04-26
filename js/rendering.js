@@ -821,6 +821,8 @@ ProofDisplay.prototype.renderStep1 = function(step) {
         clearSubproof(step);
       } else {
         fillDetails(step);
+        // Track these events in Matomo.
+        _paq.push(['trackEvent', 'App', 'ShowSubproof']);
         renderSubproof(step);
       }
     });
