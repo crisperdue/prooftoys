@@ -1187,7 +1187,7 @@ var regroupingFacts = [
  */
 function simplifyMulDivBoth(step, eqnPath) {
   // This and the next function avoid simplifying the entire
-  // equation because that is liable to simply undo an inentional
+  // equation because that is liable to simply undo an intentional
   // addition or multiplication "to both".
   const right = eqnPath.concat('/right');
   const left = eqnPath.concat('/left');
@@ -2958,23 +2958,6 @@ declare(
       return (rules.eqSelf('a - a')
               .andThen('apply', '/right')
               .rewrite('/main/right', 'a + neg a = 0'));
-    }
-  },
-
-   {statement: 'a + b - b = a',
-    proof: function() {
-      return (rules.consider('a + b - b')
-              .rewrite('/main/right', 'a + b - c = a + (b - c)')
-              .rewrite('/main/right/right', 'a - a = 0')
-              .rewrite('/main/right', 'a + 0 = a'));
-    }
-  },
-
-   {statement: 'a - b + b = a',
-    proof: function() {
-      return (rules.consider('a - b + b')
-              .rewrite('/main/right', 'a - b + c = a + c - b')
-              .rewrite('/main/right', 'a + b - b = a'));
     }
   },
 
