@@ -958,6 +958,9 @@ function sameAsPrevAsms(step) {
  * the LHS.  That would allow the target site to be highlighted.
  */
 function wantLeftElision(step) {
+  // So-called left elision is currently disabled by the following
+  // line of code. Comment it out to get previous behavior:
+  return false;
   if (step.ruleName == 'display') {
     return false;
   }
@@ -1034,9 +1037,31 @@ function renderWff(step) {
     $wff = step.wff.render(0);
     wff.node = dom($wff);
     return wff.node;
+  } else if (wff.isCall2('==')) {
+
+    // The WFF is a top-level equivalence.
+    const left = wff.getLeft();
+    const right = wff.getRight();
+    const power = Toy.getPrecedence(wff.getBinOp());
+    // Render the right part.
+    const node = dom(right.renderTopConj(power + 1));
+
+    const prev = prevRenderedStep(step);
+    if (prev && prev.isCall2('==') && step.getLeft().sameAs(prev.getLeft())) {
+      // Render the LHS as an ellipsis.
+      left.node = dom(exprJq()
+                      .append('<span class=ellipsis>&hellip;</span>'));
+    }
+    right.node = node;
+    // Now render the entire wff into a node.  The renderer will stop
+    // when it reaches the left and right parts, because they already
+    // have nodes.
+    $wff = step.wff.render(0);
+    wff.node = dom($wff);
+    return wff.node;
   } else {
 
-    // The step is not a conditional.
+    // The step is not a conditional or equivalence.
     return wff.node = (step.hasLeftElision
                        ? renderWithElision(wff)
                        : dom(wff.renderTopConj(0)));
