@@ -339,7 +339,7 @@ var identifierRegex = new RegExp('^' + identifierPattern + '([.:]|$)');
 // TODO: Make variable naming and subscripting consistent and
 // rational!  Currently variable names of a single alphabetic
 // character.
-var variableRegex = /^[a-zA-Z][0-9_]*([.:]|$)|^_/;
+var variableRegex = /^[a-zA-Z$][0-9_]*([.:]|$)|^_/;
 
 // Numeric literals.
 var numeralRegex = /^-?[0-9]+$/;
