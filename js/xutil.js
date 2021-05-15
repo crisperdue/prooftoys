@@ -1,7 +1,5 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
-'use strict';
-
 // Utilities for types, parsing, and definitions, building
 // on expressions.
 
