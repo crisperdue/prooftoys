@@ -2,6 +2,43 @@
 
 (function() {
 
+// First, a set of backward-compatibility hacks to enable
+// old-style synchronous tests to run with a new QUnit.  
+
+var qassert;
+
+function assertEqual(a, b, message) {
+  return qassert.equal(a, b, message)
+}
+
+function deepEqual(a, b, msg) {
+  return qassert.deepEqual(a, b);
+}
+
+function assert(a, msg) {
+  return qassert.ok(a, msg);
+}
+
+function expect(n) {
+  return qassert.expect(n);
+}
+
+function throws(fn) {
+  return qassert.throws(fn);
+}
+
+// Runs a shim that sets qassert and then runs the intended
+// test function.
+function runTest(name, fn) {
+  const shim = a => {
+    qassert = a;
+    fn();
+  }
+  QUnit.test(name, shim);
+}
+
+//// INITIALIZATIONS
+
 // True value during tests, to avoid undesired user interaction
 // such as window.alert.
 Toy.testing = true;
@@ -37,6 +74,9 @@ var T = constify('T');
 var F = constify('F');
 
 var parse = Toy.parse;
+
+
+//// UTILITY FUNCTIONS
 
 // Create a new proof editor with clean state.
 function newProofEditor() {
@@ -78,7 +118,7 @@ function assertFails(fn) {
 }
 
 // Make "assert" a synonym for QUnit's ok function.
-var assert = ok;
+// var assert = QUnit.assert;
 
 // For testing convenience automatically assert steps from wffs.
 // TODO: Eliminate the need for this.
@@ -158,17 +198,6 @@ function logDeeply(obj) {
   console.log(JSON.stringify(qUnitCopy(obj), null, 1));
 }
 
-/**
- * Runs a test, providing opportunity for logging or other extra
- * activity.
- */
-function runTest(name, fn) {
-  // Uncomment this to log the start of each test function.
-  // console.log('Running', name);
-  return test(name, fn);
-}
-
-
 // Set up some useful constants and functions.
 
 // Example equation: x + x = 2 * x
@@ -177,6 +206,9 @@ var times2 = call('=', call('+', x, x), call('*', '2', x));
 // Example WFF: x > 0 => x + x > x
 var bigger = call('=>', call('>', x, '0'),
                   call('>', call('+', x, x), x));
+
+
+//// TEST CASES
 
 // This is a bit different than standard QUnit style, but the content
 // is the same.  The code block just below interprets all of these as
@@ -2854,6 +2886,7 @@ $(function() {
         }
       });
   } else {
+    QUnit.module('Cases');
     for (var name in testCase) {
       doTestCase(name);
     }
@@ -2871,6 +2904,8 @@ $(function() {
   } else {
     ruleTests = rules;
   }
+
+  QUnit.module('Theorems');
   for (var name in ruleTests) {
     var prover = rules[name];
     // Prover is a function and its length is its number of args.
@@ -2924,10 +2959,13 @@ $(function() {
         }
       });
   } else {
+    QUnit.module('Facts');
     Toy.eachFact(testFact);
   }
   console.log('Queued', nFacts, 'facts to test.');
 
+// TODO: Get this running again with QUnit 2.x.
+/*
   // Set up one asynchronous test!
   asyncTest('testChangeHandlers', function(assert) {
       const changed = Toy.changed;
@@ -2970,6 +3008,22 @@ $(function() {
       ($('#qunit-testrunner-toolbar')
        .append('<br>End of test run at ' + new Date()));
     });
+*/
+
+// Set up reporting of the date and time of
+// completion of the test run.
+const qReport = details => {
+  const q = sel => document.querySelector(sel);
+  const create = nm => document.createElement(nm);
+  const br = create('br');
+  const el = q('#qunit-testresult-display');
+  if (el) {
+    el.append(br, 'At ', new Date());
+  }
+  console.log(details);
+};
+QUnit.done(qReport);
+
   // When the next lines run, the tests run with profiling.
   // console.log('Running tests with profiling');
   // console.profile('Tests');
