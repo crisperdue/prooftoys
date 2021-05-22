@@ -165,6 +165,24 @@ var boolean = new TypeConstant('o');
 // TODO: Change this to a proper type of its own.
 var realType = individual;
 
+// Returns a list of tokens as objects with properties 'name' and
+// 'index'.
+function tokenizeType(input) {
+  // Matches a token with possible whitespace before and/or after.
+  const tokenRE = /\s*([()]|[a-zA-Z0-9]+)\s*/g;
+  let match;
+  const tokens = [];
+  while (match = tokenRE.exec(input)) {
+    const t = {name: match[1], index: match.index};
+    tokens.push(t);
+  }
+  if (tokens.lastIndex != undefined && tokens.lastIndex !== input.length) {
+    console.log('In', input);
+    console.log(`lastIndex ${tokens.lastIndex} vs $(input.length)`);
+  }
+  return tokens;
+}
+  
 /**
  * Parse a type string, returning a TypeOperator (type expression).
  * Input can only be parenthesized sequences of "i", "o", a single
@@ -172,30 +190,16 @@ var realType = individual;
  * separater.
  */
 function parseType(input) {
-  var pattern = /[()io]/g;
-  // Tokens -- or whitespace -- or illegal stuff.
-  var tokens = /[()]|i|o|[A-Z]|t[0-9]+|( +)|([^ ()iotA-Z]+)/g;
-  var end = {name: '(end)', index: input.length};
-  // Returns a list of tokens as objects with properties 'name' and 'index'.
-  function tokenize(term) {
-    var match;
-    var result = [];
-    while (match = tokens.exec(input)) {
-      assert(!match[2], function() {
-          return 'Bad token in ' + input + ': ' + match[2];
-        });
-      if (match[1]) {
-        // Whitespace
-        continue;
-      }
-      var t = {name: match[0], index: match.index};
-      result.push(t);
-    }
-    return result;
-  }
-  var tokens = tokenize(input);
+  return parseTokens(tokenizeType(input));
+}
 
-  // Get next token, or "end" if no more, advancing past it.
+/**
+ * Parses an array of tokens; see above.
+ */
+function parseTokens(tokens) {
+  const end = {name: '(end)', index: -1};
+
+  // Get next token, advancing past it, or "end" if no more.
   function next() {
     return tokens.shift() || end;
   }
@@ -206,9 +210,8 @@ function parseType(input) {
     return tokens[0] || end;
   }
 
-  // Consume type expressions until EOF or close paren, returning
-  // a type or null if no input is consumed.
-  // Do not consume a final close paren.
+  // Consume one type expression, returning a type, or null if no
+  // input is consumed.
   function parse() {
     var left = null;
     for (var token = peek(); ; token = peek()) {
@@ -236,11 +239,11 @@ function parseType(input) {
         left = left ? new FunctionType(boolean, left) : boolean;
         break;
       default:
-        if (name.match(/^(t[0-9]+|[A-Z])$/)) {
+        if (name.match(/^(t[0-9]*)$/)) {
           var type = new TypeVariable(name);
           left = left ? new FunctionType(type, left) : type;
         } else {
-          assert(false, 'Unknown token in type term: "' + name + '"');
+          assert(false, 'Bad token in type term: "' + name + '"');
         }
       }
     }
@@ -249,8 +252,7 @@ function parseType(input) {
   }
 
   var result = parse();
-  assert(result, 'Empty input in type term: ' + input);
-  // assert(peek() != end, 'Excess input in type term: ' + input);
+  assert(result, 'Empty input in type term');
   return result;
 }
 
@@ -2012,6 +2014,8 @@ Toy.TypeVariable = TypeVariable;
 Toy.TypeConstant = TypeConstant;
 Toy.TypeOperator = TypeOperator;
 Toy.FunctionType = FunctionType;
+Toy.tokenizeType = tokenizeType;
+Toy.parseTokens = parseTokens;
 Toy.parseType = parseType;
 Toy.findType = findType;
 Toy.isBooleanBinOp = isBooleanBinOp;

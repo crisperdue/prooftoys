@@ -1671,11 +1671,9 @@ var testCase = {
     }
     check('i', 'i');
     check('o', 'o');
-    check('R', 'R');
     check('t12', 't12');
     check('(o i)', 'o i');
     check('i', '(i)');
-    check('((o R) R)', 'o R R');
     check('((o i) i)', '(o i i)');
     check('(o (o i))', 'o (o i)');
   },
