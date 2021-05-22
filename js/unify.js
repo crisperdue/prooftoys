@@ -1,10 +1,8 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
-var Toy = Toy || {};
+'use strict';
 
 (function() {
-
-'use strict';
 
 const TypeVar = Toy.TypeVariable;
 const TypeConst = Toy.TypeConstant;
@@ -27,12 +25,13 @@ function isTriv(bind, name, term) {
       return true;
     } else {
       const b = Toy.findBinding(n2, bind);
-      return !!b || isTriv(bind, name, b.to);
+      return !!b && isTriv(bind, name, b.to);
     }
   } else if (term instanceof FuncType) {
     return (isTriv(bind, name, term.types[0]) ||
-            isTriv(bind, name, term.types[1]) ||
-            Toy.abort('Foo'));
+            isTriv(bind, name, term.types[1])
+            ? Toy.abort('cyclic')
+            : false);
   } else {
     return false;
   }
@@ -50,16 +49,21 @@ function unify(bind, pairs) {
       } else {
         return unify(isTriv(bind, name, term)
                      ? bind
-                     : new Bindings(name, term, pairs.more));
+                     : new Bindings(name, term, bind),
+                     pairs.more);
       }
     }
     const x = pairs.from;
     const y = pairs.to;
-    if (x instanceof TypeVar) {
+    const xt = x.constructor;
+    const yt = y.constructor;
+    if (xt === TypeConst && yt === TypeConst && x === y) {
+      return unify(bind, pairs.more);
+    } else if (xt === TypeVar) {
       return unifVar(x, y);
-    } else if (y instanceof TypeVar) {
+    } else if (yt === TypeVar) {
       return unifVar(y, x);
-    } else if (x instanceof FuncType && y instanceof FuncType) {
+    } else if (xt === FuncType && yt === FuncType) {
       const newPairs =
             new Bindings(x.types[0], y.types[0],
                          new Bindings(x.types[1], y.types[1], pairs.more));
@@ -71,11 +75,31 @@ function unify(bind, pairs) {
 }
 
 function solve(bind) {
+  return;
+}
+
+function fullUnify(term1, term2) {
 
 }
 
-function fullunify(term1, term2) {
-
+// For debugging: parses a string representing
+// a type term.
+function pt(tterm) {
+  return Toy.parseType(tterm);
 }
+
+// For debugging and perhaps other purposes; returns a Map with the
+// bindings from unifying just term1 and term2.
+function unif1(term1, term2) {
+  const BB = Toy.Bindings;
+  return new Map(Toy.unify(null, new BB(term1, term2, null)));
+}
+
+Toy.isTriv = isTriv;
+Toy.unify = unify;
+Toy.solve = solve;
+Toy.fullUnify = fullUnify;
+Toy.pt = pt;
+Toy.unif1 = unif1;
 
 })();

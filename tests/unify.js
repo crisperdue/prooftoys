@@ -1,110 +1,64 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
-var Toy = Toy || {};
-
-(function() {
-
 'use strict';
 
-const TypeVar = Toy.TypeVariable;
-const TypeConst = Toy.TypeConstant;
-const FuncType = Toy.FunctionType;
-const Bindings = Toy.Bindings;
-const findBinding = Toy.findBinding;
++function() {
 
-// Given bindings of names to terms, a variable name, and a term,
-// returns true iff the variable matches the term, after applying (one
-// of) the bindings if necessary.  This result indicates that the
-// current bindings are sufficient to match the variable with the
-// term.  Otherwise false.
-//
-// Also detects if the new match would introduce circularity, and in
-// this case throws an Error.
-function isTriv(bind, name, term) {
-  if (term instanceof TypeVar) {
-    const n2 = term.name;
-    if (name === n2) {
-      return true;
-    } else {
-      const b = Toy.findBinding(n2, bind);
-      return !!b && isTriv(bind, name, b.to);
+  var tt = str => Toy.tokenizeType(str).map(x => x.name);
+
+  var pt = Toy.pt;
+  var unif1 = Toy.unif1;
+  var isTriv = Toy.isTriv;
+  var unify = Toy.unify;
+  var solve = Toy.solve;
+  var fullUnify = Toy.fullUnify;
+
+  var tests = {
+
+    hello: a => {
+      a.ok(1);
+      a.ok(true);
+    },
+
+    tokTypes: a => {
+      const deq = a.deepEqual.bind(a);
+      deq(tt('o'), ['o']);
+      deq(tt('i'), ['i']);
+      deq(tt('oi'), ['oi']);
+      deq(tt(' 10'), ['10']);
+      deq(tt(' asdf10'), ['asdf10']);
+      deq(tt('o i'), ['o', 'i']);
+      deq(tt('(o i)'), ['(', 'o', 'i', ')']);
+      deq(tt('(o i)(o i)'), ['(', 'o', 'i', ')', '(', 'o', 'i', ')']);
+      deq(tt('  o    i )(   ('), ['o', 'i', ')', '(', '(']);
+    },
+
+    testIsTriv: a => {
+      a.ok(isTriv(null, 't', pt('t')));
+      a.notOk(isTriv(null, 't', pt('o')));
+      a.notOk(isTriv(null, 't', pt('o i')));
+      a.throws(() => isTriv(null, 't', pt('(o t)')));
+      a.notOk(isTriv(null, 't', pt('o i')));
     }
-  } else if (term instanceof FuncType) {
-    return (isTriv(bind, name, term.types[0]) ||
-            isTriv(bind, name, term.types[1]) ||
-            Toy.abort('cyclic'));
-  } else {
-    return false;
-  }
-}
 
-function unify(bind, pairs) {
-  if (pairs == null) {
-    return bind;
-  } else {
-    const unifVar = (v, term) => {
-      const name = v.name;
-      const found = Toy.findBinding(name, bind);
-      if (found) {
-        return unify(bind, new Bindings(found.to, term, pairs.more));
+  };
+
+  // Run them:
+
+  QUnit.module('Unif');
+
+  const todos = new Set();
+  for (var name in tests) {
+    var fn = tests[name];
+    if (typeof fn === 'function') {
+      if (todos.has(name)) {
+        QUnit.todo(name, fn);
       } else {
-        return unify(isTriv(bind, name, term)
-                     ? bind
-                     : new Bindings(name, term, bind),
-                     pairs.more);
+        QUnit.test(name, fn);
       }
-    }
-    const x = pairs.from;
-    const y = pairs.to;
-    const xt = x.constructor;
-    const yt = y.constructor;
-    if (xt === TypeConst && yt === TypeConst && x === y) {
-      return unify(bind, pairs.more);
-    } else if (xt === TypeVar) {
-      return unifVar(x, y);
-    } else if (yt === TypeVar) {
-      return unifVar(y, x);
-    } else if (xt === FuncType && yt === FuncType) {
-      const newPairs =
-            new Bindings(x.types[0], y.types[0],
-                         new Bindings(x.types[1], y.types[1], pairs.more));
-      return unify(bind, newPairs);
     } else {
-      Toy.abort('No unifier');
+      console.log(name + ': not a function');
     }
   }
-}
 
-function solve(bind) {
-  return;
-}
-
-function fullUnify(term1, term2) {
-
-}
-
-Toy.isTriv = isTriv;
-Toy.unify = unify;
-Toy.solve = solve;
-Toy.fullUnify = fullUnify;
-
-})();
-
-function pt(tterm) {
-  return Toy.parseType(tterm);
-}
-
-function toMap$(bindings) {
-  const map = {};
-  while (bindings) {
-    map[bindings.from] = bindings.to.toString();
-    bindings = bindings.more;
-  }
-  return map;
-}
-
-function uni(term1, term2) {
-  const BB = Toy.Bindings;
-  return toMap$(Toy.unify(null, new BB(term1, term2, null)));
-}
-
+}();
