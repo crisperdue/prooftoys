@@ -34,6 +34,26 @@ function Bindings(from, to, more) {
 }
 
 /**
+ * Bindings are iterable, return pairs of "from" and "to".
+ * So for example it is easy to convert them to a Map.
+ */
+Bindings.prototype[Symbol.iterator] = function *() {
+  let bindings = this;
+  while (bindings) {
+    yield [bindings.from, bindings.to];
+    bindings = bindings.more;
+  }
+};
+
+Bindings.prototype.toString = function() {
+  const pairs = [];
+  for (const [k, v] of this) {
+    pairs.push(`\n ${k} = ${v}`);
+  }
+  return `Bindings: {${pairs.join(',')}\n}`;
+};
+
+/**
  * Returns the number of bindings represented by this object,
  * or you could say, the depth of nesting.
  */
