@@ -91,8 +91,7 @@ function pt(tterm) {
 // For debugging and perhaps other purposes; returns a Map with the
 // bindings from unifying just term1 and term2.
 function unif1(term1, term2) {
-  const BB = Toy.Bindings;
-  return new Map(Toy.unify(null, new BB(term1, term2, null)));
+  return Toy.unify(null, new Toy.Bindings(term1, term2, null));
 }
 
 Toy.isTriv = isTriv;
