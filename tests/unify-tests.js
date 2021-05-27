@@ -25,7 +25,7 @@
       for (const [k, v] of bb) {
         // The first binding encountered was added last, so put it at
         // the end of the array.
-        result.unshift([k, v && v.toString()]);
+        result.unshift([k, v.toString()]);
       }
     }
     return result;
