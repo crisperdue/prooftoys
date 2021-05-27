@@ -46,24 +46,26 @@ function coreUnify(map_arg, pairs_arg) {
     const map = map_arg;
     let pairs = pairs_arg;
     while (pairs) {
-      const unifVar = (v, term) => {
-        const name = v.name;
-        const found = map.get(name);
-        if (found) {
-          pairs = new Bindings(found, term, pairs.more);
-        } else {
-          if (!isTriv(map, name, term, exit)) {
-            map.set(name, term);
-          }
-          pairs = pairs.more;
-        }
-      };
       const x = pairs.from;
       const y = pairs.to;
       const xt = x.constructor;
       const yt = y.constructor;
+      // Consume the current pair.
+      pairs = pairs.more;
+      const unifVar = (v, term) => {
+        const name = v.name;
+        const found = map.get(name);
+        if (found) {
+          // The name already has a binding.  Match it with the term.
+          pairs = new Bindings(found, term, pairs);
+        } else {
+          if (!isTriv(map, name, term, exit)) {
+            map.set(name, term);
+          }
+        }
+      };
       if (xt === TypeConst && yt === TypeConst && x === y) {
-        pairs = pairs.more;
+        ;
       } else if (xt === TypeVar) {
         unifVar(x, y);
       } else if (yt === TypeVar) {
@@ -72,7 +74,7 @@ function coreUnify(map_arg, pairs_arg) {
         // Push two new pairs onto the work queue.
         pairs =
           new Bindings(x.types[1], y.types[1],
-                       new Bindings(x.types[0], y.types[0], pairs.more));
+                       new Bindings(x.types[0], y.types[0], pairs));
       } else {
         // Unification has failed.
         return false;
