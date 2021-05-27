@@ -1,0 +1,28 @@
+<!-- In current form this emits script tag per source file -->
+  {{ $si := resources.Get "/pt/js/site.js" }}
+  {{ $tc := resources.Get "/pt/js/jquery.tableofcontents.js" }}
+  {{ $ut := resources.Get "/pt/js/util.js" }}
+  {{ $pre := resources.Get "/pt/js/prelim.js" }}
+  {{ $ex := resources.Get "/pt/js/expr.js" }}
+  {{ $xu := resources.Get "/pt/js/xutil.js" }}
+  {{ $st := resources.Get "/pt/js/step-editor.js" }}
+  {{ $re := resources.Get "/pt/js/rendering.js" }}
+  {{ $so := resources.Get "/pt/js/solution-status.js" }}
+  {{ $en := resources.Get "/pt/js/engine.js" }}
+  {{ $un := resources.Get "/pt/js/unify.js" }}
+  {{ $lo := resources.Get "/pt/js/logic.js" }}
+  {{ $nu := resources.Get "/pt/js/numbers.js" }}
+  {{ $all := slice $si $tc $ut $pre $ex $xu $st $re $so $en $un $lo $nu }}
+<!-- This always creates all.js, which is used by test HTML files.
+     experiment shows it best to recreate the site in batch
+     mode to update it. -->
+  {{ $allJS := resources.Concat "/js/all.js" $all }}
+  <!-- <script src="{{ $allJS.RelPermalink }}"></script> -->
+  {{ range $all }}
+    {{ if $.Site.IsServer }}
+      <script type="text/javascript" src="{{ .RelPermalink }}"></script>
+    {{ else }}
+      <script type="text/javascript"
+       src="{{ ( minify . | fingerprint).RelPermalink }}"></script>
+    {{ end }}
+  {{ end }}
