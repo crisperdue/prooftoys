@@ -21,18 +21,18 @@ const findBinding = Toy.findBinding;
 // If the term is composite, this applies the bindings to its parts
 // recursively, and if it ever reaches the same variable, it fails by
 // invoking the exit with the false value.
-function isTriv(bind, name, term, exit) {
+function isTriv(map, name, term, exit) {
   if (term instanceof TypeVar) {
     const n2 = term.name;
     if (name === n2) {
       return true;
     } else {
-      const b = Toy.findBinding(n2, bind);
-      return !!b && isTriv(bind, name, b.to);
+      const to = map.get(n2)
+      return !!to && isTriv(map, name, to);
     }
   } else if (term instanceof FuncType) {
-    return (isTriv(bind, name, term.types[0], exit) ||
-            isTriv(bind, name, term.types[1], exit)
+    return (isTriv(map, name, term.types[0], exit) ||
+            isTriv(map, name, term.types[1], exit)
             ? exit(false)
             : false);
   } else {
@@ -40,24 +40,24 @@ function isTriv(bind, name, term, exit) {
   }
 }
 
-// Returns bindings if the pairs unify (possibly null if
-// no substitution is needed); or false if they do not unify.
-function coreUnify(bind_arg, pairs_arg) {
+// Returns a map if the pairs unify, or false if they do not unify.
+function coreUnify(map_arg, pairs_arg) {
   return Toy.withExit(exit => {
-    function unite(bind, pairs) {
+    const map = map_arg;
+    function unite(pairs) {
       if (pairs == null) {
-        return bind;
+        return map;
       } else {
         const unifVar = (v, term) => {
           const name = v.name;
-          const found = Toy.findBinding(name, bind);
+          const found = map.get(name);
           if (found) {
-            return unite(bind, new Bindings(found.to, term, pairs.more));
+            return unite(new Bindings(found, term, pairs.more));
           } else {
-            return unite(isTriv(bind, name, term, exit)
-                          ? bind
-                          : new Bindings(name, term, bind),
-                          pairs.more);
+            if (!isTriv(map, name, term, exit)) {
+              map.set(name, term);
+            }
+            return unite(pairs.more);
           }
         };
         const x = pairs.from;
@@ -65,7 +65,7 @@ function coreUnify(bind_arg, pairs_arg) {
         const xt = x.constructor;
         const yt = y.constructor;
         if (xt === TypeConst && yt === TypeConst && x === y) {
-          return unite(bind, pairs.more);
+          return unite(pairs.more);
         } else if (xt === TypeVar) {
           return unifVar(x, y);
         } else if (yt === TypeVar) {
@@ -74,58 +74,54 @@ function coreUnify(bind_arg, pairs_arg) {
           const newPairs =
                 new Bindings(x.types[1], y.types[1],
                              new Bindings(x.types[0], y.types[0], pairs.more));
-          return unite(bind, newPairs);
+          return unite(newPairs);
         } else {
           return false;
         }
       }
     }
-    return unite(bind_arg, pairs_arg);
+    return unite(pairs_arg);
   });
 }
 
 // This is substitution into a type term.
-function tsubst(bind, tm) {
+function tsubst(map, tm) {
   const type = tm.constructor;
   if (type === TypeVar) {
-    const found = Toy.findBinding(tm.name, bind);
-    if (found) {
-      return found.to;
-    }
+    return map.get(tm.name) || tm;
   } else if (type === FuncType) {
     const t1 = tm.types[1];
     const t0 = tm.types[0];
-    const newT1 = tsubst(bind, tm.types[1]);
-    const newT0 = tsubst(bind, tm.types[0]);
-    if (newT1 !== t1 || newT0 !== t0) {
-      return new FuncType(newT1, newT0);
-    }
+    const newT1 = tsubst(map, tm.types[1]);
+    const newT0 = tsubst(map, tm.types[0]);
+    return (newT1 === t1 && newT0 === t0
+            ? tm
+            : new FuncType(newT1, newT0));
+  } else {
+    return tm;
   }
-  return tm;
 }
 
 // Converts the result of "coreUnify" into a single substitution that does
 // the entire work.
-function resolve(bind) {
-  if (bind) {
-    let changed;
-    // Continue doing rounds of substitution until no term changes.
-    do {
-      changed = false;
-      let bind2 = null;
-      for (const [nm, term] of bind) {
-        const term2 = tsubst(bind, term);
+function resolve(map) {
+  let changed;
+  // Continue doing rounds of substitution until no term changes.
+  do {
+    changed = false;
+    let map2 = new Map();
+      for (const [nm, term] of map) {
+        const term2 = tsubst(map, term);
         // This test presumes that a no-op substitution
         // returns its input, not a copy.
         if (term2 !== term) {
           changed = true;
         }
-        bind2 = new Bindings(nm, term2, bind2);
+        map2.set(nm, term2);
       }
-      bind = bind2;
-    } while (changed);
-  }
-  return bind;
+      map = map2;
+  } while (changed);
+  return map;
 }
 
 function fullUnify(term1, term2) {
@@ -141,7 +137,7 @@ function pt(tterm) {
 // For debugging and perhaps other purposes; returns a Map with the
 // bindings from unifying just term1 and term2.
 function unif2(term1, term2) {
-  return coreUnify(null, new Toy.Bindings(term1, term2, null));
+  return coreUnify(new Map(), new Toy.Bindings(term1, term2, null));
 }
 
 // TODO: Define unif2Map, that takes string inputs and returns a Map

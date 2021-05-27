@@ -13,38 +13,24 @@
   const resolve = Toy.resolve;
   const fullUnify = Toy.fullUnify;
   
-  // This converts a Bindings result of unification into an array of
-  // strings; if null, i.e. no bindings, an empty array.  If false,
-  // then false.
-  function asArray(bb) {
-    if (bb === false) {
+  // This converts a Map result of unification into an array of pairs
+  // of strings representing it.  If given false, returns false.
+  function asArray(map) {
+    if (map === false) {
       return false;
-    }
-    const result = [];
-    if (bb) {
-      for (const [k, v] of bb) {
-        // The first binding encountered was added last, so put it at
-        // the end of the array.
-        result.unshift([k, v.toString()]);
+    } else {
+      const result = [];
+      for (const [k, v] of map) {
+        result.push([k, v.toString()]);
       }
+      return result;
     }
-    return result;
-  }
-
-  // Builds and returns bindings from the given array of from, to
-  // pairs, with both "from" and "to" given as strings.
-  function newB(pairs) {
-    let result = null;
-    for (const [from, to] of pairs) {
-      result = new Bindings(from, pt(to), result);
-    }
-    return result;
   }
 
   function unif2Array(a, b) {
-    const bind = unif2(pt(a), pt(b));
-    // console.log('' + bind);
-    return asArray(bind);
+    const map = unif2(pt(a), pt(b));
+    // console.log(map);
+    return asArray(map);
   }
 
   const bind1 = new Bindings('t1', pt('i'));
@@ -75,23 +61,13 @@
       a.ok(ts(1, 2));
     },
 
-    function testNewB(a) {
-      const a1 = [['t1', 'i'], ['t2', 't3']];
-      const b1 = newB(a1);
-      a.deepEqual(asArray(b1), a1);
-      const a2 = [];
-      const b2 = newB(a2);
-      a.equal(b2, null);
-      a.deepEqual(asArray(b2), a2);
-    },
-
     function testIsTriv(a) {
-      a.ok(isTriv(null, 't', pt('t')));
-      a.notOk(isTriv(null, 't', pt('o')));
-      a.notOk(isTriv(null, 't', pt('o i')));
-      a.throws(() => isTriv(null, 't', pt('(o t)')));
-      a.notOk(isTriv(null, 't', pt('o i')));
-      a.notOk(isTriv(null, 't', pt('o t2')));
+      a.ok(isTriv(new Map(), 't', pt('t')));
+      a.notOk(isTriv(new Map(), 't', pt('o')));
+      a.notOk(isTriv(new Map(), 't', pt('o i')));
+      a.throws(() => isTriv(new Map(), 't', pt('(o t)')));
+      a.notOk(isTriv(new Map(), 't', pt('o i')));
+      a.notOk(isTriv(new Map(), 't', pt('o t2')));
     },
 
     function testUnif2a(a) {
@@ -116,7 +92,6 @@
       equal(unif2Array('t', 'o t'), false);
       equal(unif2Array('t t', 't (o t)'), false);
       equal(unif2Array('t t', 't (t o)'), false);
-
 
       equal(unif2Array('(o i) t1 t2', '(o i) t2 t1'), [['t1', 't2']]);
       equal(unif2Array('i t1 (i t2)', 'i (i t2) t1'),
@@ -174,7 +149,6 @@
   // Support interactive testing (temporarily):
 
   window.aa = asArray;
-  window.newB = newB;
 
   window.bind1 = bind1;
   window.bind2 = bind2;
