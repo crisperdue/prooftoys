@@ -44,43 +44,41 @@ function isTriv(map, name, term, exit) {
 function coreUnify(map_arg, pairs_arg) {
   return Toy.withExit(exit => {
     const map = map_arg;
-    function unite(pairs) {
-      if (pairs == null) {
-        return map;
-      } else {
-        const unifVar = (v, term) => {
-          const name = v.name;
-          const found = map.get(name);
-          if (found) {
-            return unite(new Bindings(found, term, pairs.more));
-          } else {
-            if (!isTriv(map, name, term, exit)) {
-              map.set(name, term);
-            }
-            return unite(pairs.more);
-          }
-        };
-        const x = pairs.from;
-        const y = pairs.to;
-        const xt = x.constructor;
-        const yt = y.constructor;
-        if (xt === TypeConst && yt === TypeConst && x === y) {
-          return unite(pairs.more);
-        } else if (xt === TypeVar) {
-          return unifVar(x, y);
-        } else if (yt === TypeVar) {
-          return unifVar(y, x);
-        } else if (xt === FuncType && yt === FuncType) {
-          const newPairs =
-                new Bindings(x.types[1], y.types[1],
-                             new Bindings(x.types[0], y.types[0], pairs.more));
-          return unite(newPairs);
+    let pairs = pairs_arg;
+    while (pairs) {
+      const unifVar = (v, term) => {
+        const name = v.name;
+        const found = map.get(name);
+        if (found) {
+          pairs = new Bindings(found, term, pairs.more);
         } else {
-          return false;
+          if (!isTriv(map, name, term, exit)) {
+            map.set(name, term);
+          }
+          pairs = pairs.more;
         }
+      };
+      const x = pairs.from;
+      const y = pairs.to;
+      const xt = x.constructor;
+      const yt = y.constructor;
+      if (xt === TypeConst && yt === TypeConst && x === y) {
+        pairs = pairs.more;
+      } else if (xt === TypeVar) {
+        unifVar(x, y);
+      } else if (yt === TypeVar) {
+        unifVar(y, x);
+      } else if (xt === FuncType && yt === FuncType) {
+        // Push two new pairs onto the work queue.
+        pairs =
+          new Bindings(x.types[1], y.types[1],
+                       new Bindings(x.types[0], y.types[0], pairs.more));
+      } else {
+        // Unification has failed.
+        return false;
       }
     }
-    return unite(pairs_arg);
+    return map;
   });
 }
 
