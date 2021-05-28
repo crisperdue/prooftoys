@@ -2411,6 +2411,10 @@ declare(
   },
 
   {name: 'tautology0',
+    // This justifies its result as "tautology" rather than
+    // tautology0, so this should be more like a helper function
+    // than a rule on its own.  Also it builds a recursive tree
+    // of justified proofs, so the proof display is a bit artificial.
     action: function(wff) {
       // TODO: Right here check for patterns such as -
       //   p | T == T, p & F == F, p => T == T, and negations such as
@@ -2443,7 +2447,7 @@ declare(
             // Record before the final justification, so all occurrences
             // look the same when displayed.
             _tautologies[key] = step3;
-            var result = step3.justify('tautology0', arguments);
+            var result = step3.justify('tautology', arguments);
             return result;
           } else {
             var step1 = rules.tautology0(call('==', T, wff.subFree1(T, name)));
@@ -2451,7 +2455,7 @@ declare(
             var step3 = rules.equationCases(step1, step2, name);
             var step4 = rules.fromTIsA(step3);
             _tautologies[key] = step4;
-            var result = step4.justify('tautology0', arguments);
+            var result = step4.justify('tautology', arguments);
             return result;
           }
         }
@@ -2469,7 +2473,7 @@ declare(
         }
         var step12 = rules.rRight(rules.theorem('t'), '', step11);
         _tautologies[key] = step12;
-        var result = step12.justify('tautology0', arguments);
+        var result = step12.justify('tautology', arguments);
         return result;
       }
     },
