@@ -2390,14 +2390,22 @@ declare(
   {name: 'tautology',
     action: function(wff_arg) {
       const wff = termify(wff_arg);
-      const result = Toy.withExit(exit => {
+      const key = wff.dump();
+      const details = _tautologies[key];
+      let result;
+      if (details) {
+        result = details.justify('tautology', [wff]);
+      } else {
+        result = Toy.withExit(exit => {
         return Toy.rebind('tautExit', exit,
                           () => rules.tautology0(wff));
       });
+      }
       if (Toy.isError(result)) {
         return new Error('Not a tautology: ' + wff_arg +
                          ' -- ' + result.message);
       } else {
+        _tautologies[key] = result.details;
         const str = wff.toString();
         const count = tautologyCounts.get(str);
         tautologyCounts.set(str, (count || 0) + 1);
@@ -2426,8 +2434,7 @@ declare(
       // NOTE that saving proved tautologies as we already do has
       //   potential for accomplishing similar improvements, though it
       //   would work better if saved variable names were standardized.
-      var key = wff.dump();
-      var taut = _tautologies[key];
+      var taut = null;
       if (taut) {
         // Re-justify to create a new step.
         // Saved steps in _tautologies only keep details, for
@@ -2446,7 +2453,6 @@ declare(
             var step3 = rules.equationCases(step1, step2, name);
             // Record before the final justification, so all occurrences
             // look the same when displayed.
-            _tautologies[key] = step3;
             var result = step3.justify('tautology', arguments);
             return result;
           } else {
@@ -2454,7 +2460,6 @@ declare(
             var step2 = rules.tautology0(call('==', T, wff.subFree1(F, name)));
             var step3 = rules.equationCases(step1, step2, name);
             var step4 = rules.fromTIsA(step3);
-            _tautologies[key] = step4;
             var result = step4.justify('tautology', arguments);
             return result;
           }
@@ -2472,7 +2477,6 @@ declare(
           }
         }
         var step12 = rules.rRight(rules.theorem('t'), '', step11);
-        _tautologies[key] = step12;
         var result = step12.justify('tautology', arguments);
         return result;
       }
