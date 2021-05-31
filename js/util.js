@@ -970,7 +970,7 @@ function catchAborts(fn) {
   Toy.thrown = null;
   try {
     fn();
-    success = true
+    success = true;
   } finally {
     if (success) {
       return false;
