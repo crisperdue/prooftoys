@@ -1,6 +1,8 @@
 // Copyright Crispin Perdue.
 // All rights reserved.
 
+'use strict';
+
 ////
 //// GENERAL UTILITIES -- self-contained
 ////
@@ -8,12 +10,14 @@
 //// theorem-proving.
 ////
 
+window.Toy = window.Toy || {};
+
+// TODO: Consider removing dependencies here on jQuery.
+// They look questionnable anyway.
 
 // Set everything up immediately on load, avoiding changes to the
 // global environment except through namespace "Toy".
 (function() {
-
-'use strict';
 
 //// General use
 
