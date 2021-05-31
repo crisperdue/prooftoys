@@ -215,26 +215,6 @@ Toy.rawQueryParams = {};
   }
 })();
 
-var _HTML_MAP = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#x27;',
-        '/': '&#x2F;',
-        '`': '&#x60;'
-};
-
-/**
- * Escapes text to guarantee it is not interpreted as containing
- * HTML markup.
- *
- * TODO: Move to utils.js.
- */
-Toy.escapeHtml = function(str) {
-  return str.replace(/[&<>"'\/`]/g,  // help the emacs parser: "]
-                     function(match) { return _HTML_MAP[match]; });
-};
 
 //// For mobile site "hamburgers":
 
