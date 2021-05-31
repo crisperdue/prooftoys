@@ -1,10 +1,23 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
-var Toy = {};
+'use strict';
+
+window.Toy = window.Toy || {};
+
+// Prooftoys scripts should not depend on this, though it may do some
+// default configuration.  At present this does not appear to depend
+// on util.js.
 
 +function() {
 
-'use strict';
+// Alternative to jQuery $(fn); not currently in use.
+Toy.onReady = function(fn) {
+  if (document.readyState === 'loading') {  // Loading hasn't finished yet
+    document.addEventListener('DOMContentLoaded', fn);
+  } else {  // DOMContentLoaded has already fired
+    fn();
+  }
+};
 
 // At this point in time, specific to Mathtoys.
 Toy.insertNav = function() {
@@ -310,15 +323,20 @@ function footerOnResize() {
 }
 
 /**
- * If there is at least one footer element, this sets up
- * repositioning it any time the window resizes.
+ * Initializations on DOMContentLoaded.
  */
 $(function() {
-    if ($('div.pageFooter').length > 0) {
-      footerOnResize();
-      $(window).on('resize', footerOnResize);
-    }
-  });
+  if (Toy.TOC) {
+    $(Toy.TOC).tableofcontents({exclude: $('h1, h5, h6')});
+  }
+
+  // If there is at least one footer element, this sets up
+  // repositioning it any time the window resizes.
+  if ($('div.pageFooter').length > 0) {
+    footerOnResize();
+    $(window).on('resize', footerOnResize);
+  }
+});
 
 }();
 
