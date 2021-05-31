@@ -56,7 +56,7 @@ var F = constify('F');
 
 // Map from tautology string representation to tautology,
 // for proved tautologies.  Private to the tautology rule.
-var _tautologies = {};
+var _tautologies = new Map();
 
 
 //

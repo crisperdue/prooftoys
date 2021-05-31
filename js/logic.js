@@ -2390,8 +2390,8 @@ declare(
   {name: 'tautology',
     action: function(wff_arg) {
       const wff = termify(wff_arg);
-      const key = wff.dump();
-      const details = _tautologies[key];
+      const key = '' + wff.dump();
+      const details = _tautologies.get(key);
       let result;
       if (details) {
         result = details.justify('tautology', [wff]);
@@ -2405,7 +2405,7 @@ declare(
         return new Error('Not a tautology: ' + wff_arg +
                          ' -- ' + result.message);
       } else {
-        _tautologies[key] = result.details;
+        _tautologies.set(key, result.details);
         const str = wff.toString();
         const count = tautologyCounts.get(str);
         tautologyCounts.set(str, (count || 0) + 1);
