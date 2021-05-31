@@ -1,7 +1,7 @@
 <!-- In current form this emits script tag per source file -->
   {{ $si := resources.Get "/pt/js/site.js" }}
-  {{ $tc := resources.Get "/pt/js/jquery.tableofcontents.js" }}
   {{ $ut := resources.Get "/pt/js/util.js" }}
+  {{ $tc := resources.Get "/pt/js/jquery.tableofcontents.js" }}
   {{ $pre := resources.Get "/pt/js/prelim.js" }}
   {{ $ex := resources.Get "/pt/js/expr.js" }}
   {{ $xu := resources.Get "/pt/js/xutil.js" }}
@@ -20,9 +20,8 @@
   <!-- <script src="{{ $allJS.RelPermalink }}"></script> -->
   {{ range $all }}
     {{ if $.Site.IsServer }}
-      <script type="text/javascript" src="{{ .RelPermalink }}"></script>
+      <script defer src="{{ .RelPermalink }}"></script>
     {{ else }}
-      <script type="text/javascript"
-       src="{{ ( minify . | fingerprint).RelPermalink }}"></script>
+      <script defer src="{{ ( minify . ).RelPermalink }}"></script>
     {{ end }}
   {{ end }}
