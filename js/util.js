@@ -21,15 +21,16 @@ window.Toy = window.Toy || {};
 
 //// General use
 
-/**
- * Toy.incompatible - true iff browser is an old MSIE not compatible
- * with Prooftoys + jQuery 2 and similar JavaScript.
- */
-// See http://www.useragentstring.com/.
-// TODO: Support only "modern" browsers based on caniuse.com and
-//   similar.  In particular MSIE 11+, but other requirements TBD,
-//   perhaps all browsers shown in default views in caniuse.com.
+// TODO: Someday in the distant future, capture and analyze
+// exception reports from user's browsers, and use that as
+// a realistic basis for warning the user.  
+
+// These browsers are known to be incompatible with Prooftoys.
 Toy.incompatible = !!navigator.userAgent.match(/ MSIE /);
+
+// These browsers, if recent enough, should be compatiable
+// with Prooftoys.
+Toy.compatible = !!navigator.userAgent.match(/(Chrome|Firefox|Safari)[/]/);
 
 /**
  * The arguments are a child class constructor and parent class
