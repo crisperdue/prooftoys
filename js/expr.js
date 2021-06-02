@@ -2610,7 +2610,6 @@ function genVar(name, existingNames) {
   return new Atom(genName(name, existingNames));
 }
 
-
 /**
  * Generates a new bound variable with new name; private to
  * Expr.subFree, which guarantees that the variable will never
@@ -2637,7 +2636,6 @@ Atom.prototype.parseName = function() {
   var match = this.name.match(/^(.+?)([_.](.*?))?([:](.*))?$/);
   return {name: match[1], sub: match[3], type: match[5]};
 };
-
 
 
 //// Call -- application of a function to an argument

@@ -1350,7 +1350,11 @@ function benchmark(fn, count) {
 // loading.  Indicate module loaded using Toy.loaded.trigger('xutil'),
 // and notice loading with e.g. Toy.loaded.on('xutil', ... ).
 Toy.loaded = jQuery({});
-
+// The following is temporary code pushed to production for diagnosis.
+if (!Toy.loaded) {
+  Toy.alert('Not loaded');
+  debugger;
+}
 
 //// ToySet
 

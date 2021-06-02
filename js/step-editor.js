@@ -102,8 +102,8 @@ function ProofEditor(options_arg) {
                     '<span class=ruleTime></span> msec, ' +
                     '<span class=ruleSteps></span> steps</div>');
   // This element is for messages about status of solving the problem.
-  var $status = $('<div class="solutionStatus transFade"/>');
-  var $statusDisplay = $('<div class=solutionStatusDisplay/>');
+  var $status = $('<div class="solutionStatus transFade">');
+  var $statusDisplay = $('<div class=solutionStatusDisplay>');
   $status.append($statusDisplay);
   self.$status = $status;
   self.$statusDisplay = $statusDisplay;
@@ -284,7 +284,7 @@ function ProofEditor(options_arg) {
 function buildProofButtons(editor) {
   // Add the group of buttons.
   // The proofButtons class is used in some examples.
-  const $proofButtons = $('<div class=proofButtons/>');
+  const $proofButtons = $('<div class="proofButtons">');
 
   const $clearProof = $('<input type=button value="Clear work">');
   const css = {float: 'right',
@@ -951,7 +951,7 @@ function StepEditor(proofEditor) {
   self.ruleName = '';
 
   // Create a DIV with the step editor content.
-  var $div = $('<div class=stepEditor/>');
+  var $div = $('<div class=stepEditor>');
 
   // Button to clear rule input, visible when a form is active.
   self.clearer =
@@ -1517,12 +1517,12 @@ function RuleMenu(proofEditor) {
   // Top node of the rule menu display.
   self.$node = $node;
   // Container node for menu items.
-  self.$items = $('<div class=rulesItems/>');
+  self.$items = $('<div class=rulesItems>');
 
   // An intermediate DIV.  This one is set to have vertical scrolling,
   // and the rulesItems div can be inline-block to shrink-wrap itself
   // around the individual items.
-  var $scrollArea = $('<div class=scrollingMenu/>');
+  var $scrollArea = $('<div class=scrollingMenu>');
   $scrollArea.append(self.$items);
   $node.append($scrollArea);
 
@@ -1656,7 +1656,7 @@ RuleMenu.prototype._update = function() {
       return a.html.localeCompare(b.html);
     });
   var items = itemInfos.map(function(info) {
-      var $item = $('<div class="ruleItem noselect"/>');
+      var $item = $('<div class="ruleItem noselect">');
       $item.html(info.html);
       if (info.result) {
         $item.find('.menuResult').append(info.result.renderTerm());

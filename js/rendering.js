@@ -340,7 +340,7 @@ ProofDisplay.prototype.stepSuggestion = function(step) {
  * string or other suitable argument to jQuery.append.
  */
 ProofDisplay.prototype.suggestionMessage = function(message) {
-  var $div = $('<div class="proofStep stepSuggestion stepMessage"/>');
+  var $div = $('<div class="proofStep stepSuggestion stepMessage">');
   $div.append(message);
   return $div[0];
 };
