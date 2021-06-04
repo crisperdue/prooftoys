@@ -43,20 +43,17 @@ function isTriv(map, name, term) {
 // Returns a map if the pairs unify, or false if they do not unify.
 function coreUnify(map_arg, pairs_arg) {
   const map = map_arg;
-  let pairs = pairs_arg;
-  while (pairs) {
-    const x = pairs.from;
-    const y = pairs.to;
+  const pairs = pairs_arg;
+  while (pairs.length > 0) {
+    const [x, y] = pairs.pop();
     const xt = x.constructor;
     const yt = y.constructor;
-    // Consume the current pair.
-    pairs = pairs.more;
     const unifVar = (v, term) => {
       const name = v.name;
       const found = map.get(name);
       if (found) {
         // The name already has a binding.  Match it with the term.
-        pairs = new Bindings(found, term, pairs);
+        pairs.push([found, term]);
       } else {
         const triv = isTriv(map, name, term);
         if (triv == null) {
@@ -79,9 +76,8 @@ function coreUnify(map_arg, pairs_arg) {
       }
     } else if (xt === FuncType && yt === FuncType) {
       // Push two new pairs onto the work queue.
-      pairs =
-        new Bindings(x.types[1], y.types[1],
-                     new Bindings(x.types[0], y.types[0], pairs));
+      pairs.push([x.types[0], y.types[0]],
+                 [x.types[1], y.types[1]]);
     } else {
       // Unification has failed.
       return false;
@@ -141,9 +137,9 @@ function pt(tterm) {
 }
 
 // For debugging and perhaps other purposes; returns a Map with the
-// bindings from unifying just term1 and term2.
+// result of unifying just term1 and term2.
 function unif2(term1, term2) {
-  return coreUnify(new Map(), new Toy.Bindings(term1, term2, null));
+  return coreUnify(new Map(), [[term1, term2]]);
 }
 
 // TODO: Define unif2Map, that takes string inputs and returns a Map

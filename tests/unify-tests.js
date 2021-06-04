@@ -33,9 +33,6 @@
     return asArray(map);
   }
 
-  const bind1 = new Bindings('t1', pt('i'));
-  const bind2 = new Bindings('t2', pt('o i'));
-
   const tests = [
 
     function testTokenizing(a) {
@@ -145,12 +142,5 @@
       console.log(name + ': not a function');
     }
   }
-
-  // Support interactive testing (temporarily):
-
-  window.aa = asArray;
-
-  window.bind1 = bind1;
-  window.bind2 = bind2;
 
 }();
