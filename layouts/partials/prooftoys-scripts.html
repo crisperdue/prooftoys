@@ -18,7 +18,7 @@
     {{ range $all }}
       <!-- Experiment with "defer", though it does not function
            as advertised; see for example partials/jquery.html. -->
-      <script defer src="{{ .RelPermalink }}"></script>
+      <script src="{{ .RelPermalink }}"></script>
     {{ end }}
   {{ else }}   
     <script src="{{ $allJS.RelPermalink }}"></script>
