@@ -20,8 +20,8 @@ const findBinding = Toy.findBinding;
 //
 // If the term is composite, this applies the bindings to its parts
 // recursively, and if it ever reaches the same variable, it fails by
-// invoking the exit with the false value.
-function isTriv(map, name, term, exit) {
+// returning null.
+function isTriv(map, name, term) {
   if (term instanceof TypeVar) {
     const n2 = term.name;
     if (name === n2) {
@@ -31,9 +31,9 @@ function isTriv(map, name, term, exit) {
       return !!to && isTriv(map, name, to);
     }
   } else if (term instanceof FuncType) {
-    return (isTriv(map, name, term.types[0], exit) ||
-            isTriv(map, name, term.types[1], exit)
-            ? exit(false)
+    return (isTriv(map, name, term.types[0]) ||
+            isTriv(map, name, term.types[1])
+            ? null
             : false);
   } else {
     return false;
@@ -42,46 +42,52 @@ function isTriv(map, name, term, exit) {
 
 // Returns a map if the pairs unify, or false if they do not unify.
 function coreUnify(map_arg, pairs_arg) {
-  return Toy.withExit(exit => {
-    const map = map_arg;
-    let pairs = pairs_arg;
-    while (pairs) {
-      const x = pairs.from;
-      const y = pairs.to;
-      const xt = x.constructor;
-      const yt = y.constructor;
-      // Consume the current pair.
-      pairs = pairs.more;
-      const unifVar = (v, term) => {
-        const name = v.name;
-        const found = map.get(name);
-        if (found) {
-          // The name already has a binding.  Match it with the term.
-          pairs = new Bindings(found, term, pairs);
-        } else {
-          if (!isTriv(map, name, term, exit)) {
-            map.set(name, term);
-          }
-        }
-      };
-      if (xt === TypeConst && yt === TypeConst && x === y) {
-        ;
-      } else if (xt === TypeVar) {
-        unifVar(x, y);
-      } else if (yt === TypeVar) {
-        unifVar(y, x);
-      } else if (xt === FuncType && yt === FuncType) {
-        // Push two new pairs onto the work queue.
-        pairs =
-          new Bindings(x.types[1], y.types[1],
-                       new Bindings(x.types[0], y.types[0], pairs));
+  const map = map_arg;
+  let pairs = pairs_arg;
+  while (pairs) {
+    const x = pairs.from;
+    const y = pairs.to;
+    const xt = x.constructor;
+    const yt = y.constructor;
+    // Consume the current pair.
+    pairs = pairs.more;
+    const unifVar = (v, term) => {
+      const name = v.name;
+      const found = map.get(name);
+      if (found) {
+        // The name already has a binding.  Match it with the term.
+        pairs = new Bindings(found, term, pairs);
       } else {
-        // Unification has failed.
+        const triv = isTriv(map, name, term);
+        if (triv == null) {
+          return false;
+        } else if (!triv) {
+          map.set(name, term);
+        }
+      }
+      return true;
+    };
+    if (xt === TypeConst && yt === TypeConst && x === y) {
+      ;
+    } else if (xt === TypeVar) {
+      if (!unifVar(x, y)) {
         return false;
       }
+    } else if (yt === TypeVar) {
+      if (!unifVar(y, x)) {
+        return false;
+      }
+    } else if (xt === FuncType && yt === FuncType) {
+      // Push two new pairs onto the work queue.
+      pairs =
+        new Bindings(x.types[1], y.types[1],
+                     new Bindings(x.types[0], y.types[0], pairs));
+    } else {
+      // Unification has failed.
+      return false;
     }
-    return map;
-  });
+  }
+  return map;
 }
 
 // This is substitution into a type term.

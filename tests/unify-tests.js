@@ -65,7 +65,7 @@
       a.ok(isTriv(new Map(), 't', pt('t')));
       a.notOk(isTriv(new Map(), 't', pt('o')));
       a.notOk(isTriv(new Map(), 't', pt('o i')));
-      a.throws(() => isTriv(new Map(), 't', pt('(o t)')));
+      a.equal(isTriv(new Map(), 't', pt('(o t)')), null);
       a.notOk(isTriv(new Map(), 't', pt('o i')));
       a.notOk(isTriv(new Map(), 't', pt('o t2')));
     },
