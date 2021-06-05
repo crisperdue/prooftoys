@@ -69,15 +69,26 @@ TypeVariable.prototype.toString = function() {
  * When applying the "fresh" operation to a type expression, the
  * resulting expression has the same structure as the input, but all
  * occurrences of each "generic" type variable are replaced with
- * occurrences of a "fresh" type variable distinct from all others.
+ * occurrences of the same new "fresh" type variable distinct from all
+ * others.
  *
  * The mappings are from previous type variable names to new type
- * variable names.
+ * variable names (for generic types).
  *
- * Note: with only top-level definitions, generic type variables are
- * exactly those in the types of defined constants, but definitions
- * in inner scopes can have mixed generic and non-generic type
- * variables.
+ * Note: with only top-level definitions as in Prooftoys, generic type
+ * variables are exactly those in the types of some constant.
+ * Also I have read that definitions in "inner scopes" can have mixed
+ * generic and non-generic type variables.
+ */
+
+/**
+ * If this dereferences to anything but a TypeVariable, or if it
+ * occurs anywhere in nonGenerics, the result is just a dereference of
+ * this.
+ *
+ * If this does resolve to a TypeVariable this returns its mapping,
+ * creating a mapping to a brand new TypeVariable if no mapping
+ * already exists.
  */
 TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
   var type = dereference(this);
@@ -92,7 +103,7 @@ TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
       return mappings[name];
     }
   } else {
-    // This is not really a variable after being dereferenced.
+    // The dereferenced value is not a type variable.
     return type.fresh(mappings, nonGenerics);
   }
 };
@@ -365,9 +376,6 @@ function findType(expr, annotate) {
   // appear here when their variable is in scope, and in types of free
   // variables they are inserted upon the first occurrence of the free
   // variable, and remain thereafter.
-  // TODO: Consider removing nonGenerics, using just vars instead,
-  //   Q0 does not have truly generic functions, just families of
-  //   type-specific functions.
   var nonGenerics = [];
   //
   // Note: Generic type variables reflect the fact that different
