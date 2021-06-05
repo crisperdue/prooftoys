@@ -40,50 +40,70 @@ function isTriv(map, name, term) {
   }
 }
 
-// Returns a map if the pairs unify, or false if they do not unify.
+// Consider an additional pair to be unified in the context
+// of the given map of bindings and array of pairs still
+// to be unified.
+function unifyStep(x, y, map, pairs) {
+  const xt = x.constructor;
+  const yt = y.constructor;
+  const unifVar = (v, term) => {
+    const name = v.name;
+    const found = map.get(name);
+    if (found) {
+      // The name already has a binding.  Match it with the term.
+      pairs.push([found, term]);
+    } else {
+      const triv = isTriv(map, name, term);
+      if (triv == null) {
+        // Unification would be cyclic.
+        return false;
+      } else if (!triv) {
+        map.set(name, term);
+      }
+    }
+    // The variable unifies.
+    return true;
+  };
+  if (xt === TypeConst && yt === TypeConst && x === y) {
+    return true;
+  } else if (xt === TypeVar) {
+    return unifVar(x, y);
+  } else if (yt === TypeVar) {
+    return unifVar(y, x);
+  } else if (xt === FuncType && yt === FuncType) {
+    // Push two new pairs onto the work queue.
+    pairs.push([x.types[0], y.types[0]],
+               [x.types[1], y.types[1]]);
+    return true;
+  } else {
+    // Unification has failed, though not cyclic.
+    return false;
+  }
+}
+
+// Returns true if the pairs unify, with the map holding the
+// unification, or false if they do not.  The unification may still
+// need to be resolved.  Treats the pairs as a stack, so examines the
+// last pair first.
 function coreUnify(map_arg, pairs_arg) {
   const map = map_arg;
   const pairs = pairs_arg;
   while (pairs.length > 0) {
     const [x, y] = pairs.pop();
-    const xt = x.constructor;
-    const yt = y.constructor;
-    const unifVar = (v, term) => {
-      const name = v.name;
-      const found = map.get(name);
-      if (found) {
-        // The name already has a binding.  Match it with the term.
-        pairs.push([found, term]);
-      } else {
-        const triv = isTriv(map, name, term);
-        if (triv == null) {
-          return false;
-        } else if (!triv) {
-          map.set(name, term);
-        }
-      }
-      return true;
-    };
-    if (xt === TypeConst && yt === TypeConst && x === y) {
-      ;
-    } else if (xt === TypeVar) {
-      if (!unifVar(x, y)) {
-        return false;
-      }
-    } else if (yt === TypeVar) {
-      if (!unifVar(y, x)) {
-        return false;
-      }
-    } else if (xt === FuncType && yt === FuncType) {
-      // Push two new pairs onto the work queue.
-      pairs.push([x.types[0], y.types[0]],
-                 [x.types[1], y.types[1]]);
-    } else {
-      // Unification has failed.
+    if (!unifyStep(x, y, map, pairs)) {
       return false;
     }
   }
-  return map;
+  return true;
+}
+
+// Attempts to unify terms x and y in the context of an existing
+// unification given in the map.  Returns true with the map updated on
+// success; otherwise false.
+function andUnify(x, y, map) {
+  const pairs = [];
+  return (unifyStep(x, y, map, pairs) &&
+          coreUnify(map, pairs));
 }
 
 // This is substitution into a type term.
@@ -104,9 +124,14 @@ function tsubst(map, tm) {
   }
 }
 
-// Converts the result of "coreUnify" into a single substitution that does
-// the entire work.
+// Converts the successful result of "coreUnify" into a single
+// substitution that does the entire work, or passes along
+// a null result.
 function resolve(map) {
+  if (!map) {
+    return map;
+  }
+
   let changed;
   // Continue doing rounds of substitution until no term changes.
   do {
@@ -127,7 +152,7 @@ function resolve(map) {
 }
 
 function fullUnify(term1, term2) {
-  return resolve(unif2(term1, term2));
+  return unif2(term1, term2);
 }
 
 // For debugging: parses a string representing
@@ -137,9 +162,21 @@ function pt(tterm) {
 }
 
 // For debugging and perhaps other purposes; returns a Map with the
-// result of unifying just term1 and term2.
+// result of fully unifying just term1 and term2.
 function unif2(term1, term2) {
-  return coreUnify(new Map(), [[term1, term2]]);
+  const map = new Map();
+  return (andUnify(term1, term2, map)
+          ? resolve(map)
+          : null);
+}
+
+// Like unif2, but does not resolve.  Is this useful?
+// It might serve under a name like canUnify.
+function unif2a(term1, term2) {
+  const map = new Map();
+  return (andUnify(term1, term2, map)
+          ? map
+          : null);
 }
 
 // TODO: Define unif2Map, that takes string inputs and returns a Map
@@ -149,9 +186,11 @@ function unif2(term1, term2) {
 Toy.tsubst = tsubst;
 Toy.isTriv = isTriv;
 Toy.coreUnify = coreUnify;
+Toy.andUnify = andUnify;
 Toy.resolve = resolve;
 Toy.fullUnify = fullUnify;
 Toy.pt = pt;
 Toy.unif2 = unif2;
+Toy.unif2a = unif2a;
 
 })();

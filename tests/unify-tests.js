@@ -8,16 +8,17 @@
 
   const pt = Toy.parseType;
   const unif2 = Toy.unif2;
+  const unif2a = Toy.unif2a;
   const isTriv = Toy.isTriv;
   const coreUnify = Toy.coreUnify;
   const resolve = Toy.resolve;
   const fullUnify = Toy.fullUnify;
   
   // This converts a Map result of unification into an array of pairs
-  // of strings representing it.  If given false, returns false.
+  // of strings representing it.  If given a falsy value, returns it.
   function asArray(map) {
-    if (map === false) {
-      return false;
+    if (!map) {
+      return map;
     } else {
       const result = [];
       for (const [k, v] of map) {
@@ -29,6 +30,12 @@
 
   function unif2Array(a, b) {
     const map = unif2(pt(a), pt(b));
+    // console.log(map);
+    return asArray(map);
+  }
+
+  function unif2aArray(a, b) {
+    const map = unif2a(pt(a), pt(b));
     // console.log(map);
     return asArray(map);
   }
@@ -84,11 +91,11 @@
     function testUnif2b(a) {
       const equal = a.deepEqual.bind(a);
       // Constants mismatch
-      equal(unif2Array('((o i) t1 t2)', '(i t2 t1)'), false);
+      equal(unif2Array('((o i) t1 t2)', '(i t2 t1)'), null);
       // Cyclic
-      equal(unif2Array('t', 'o t'), false);
-      equal(unif2Array('t t', 't (o t)'), false);
-      equal(unif2Array('t t', 't (t o)'), false);
+      equal(unif2Array('t', 'o t'), null);
+      equal(unif2Array('t t', 't (o t)'), null);
+      equal(unif2Array('t t', 't (t o)'), null);
 
       equal(unif2Array('(o i) t1 t2', '(o i) t2 t1'), [['t1', 't2']]);
       equal(unif2Array('i t1 (i t2)', 'i (i t2) t1'),
@@ -100,7 +107,7 @@
     // These give results that are not resolved.
     function testUnif2c(a) {
       const check = (t1, t2, expected) =>
-            a.deepEqual(unif2Array(t1, t2), expected);
+            a.deepEqual(unif2aArray(t1, t2), expected);
 
       check('t1 t1', 't2 i', [['t1', 't2'], ['t2', 'i']]);
       check('t2 i', 't1 t1', [['t2', 't1'], ['t1', 'i']]);
@@ -113,7 +120,7 @@
     // Like testUnif2c, but with results resolved.
     function testUnif2d(a) {
       const check = (t1, t2, expected) =>
-            a.deepEqual(asArray(resolve (unif2(pt(t1), pt(t2)))),
+            a.deepEqual(asArray(unif2(pt(t1), pt(t2))),
                         expected);
 
       check('t1 t1', 't2 i', [['t1', 'i'], ['t2', 'i']]);
