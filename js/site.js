@@ -318,27 +318,14 @@ $(function() {
   }
 });
 
-}();
+//// The following puts a property on Object.prototype!
 
-//// The following are GLOBAL!
-
-// Global "str" function is useful for converting arbitrary objects
-// to strings.
-function str(x) {
-  if (x.toString == Object.prototype.toString &&
-      Toy.debugString) {
-    return Toy.debugString(x);
-  } else if (Toy.Expr && x instanceof Toy.Expr) {
-    const prefix = x.wff ? '|- ' : '';
-    return prefix + x.toString();
-  } else {
-    return x.toString();
-  }
-}
-// Make str function accessible as ".$$" for debugger interaction.
+// Make debugString accessible as ".$$" for debugger interaction.
 if (!Object.prototype.$$) {
-  Object.defineProperty(Object.prototype,
-                        '$$',
-                        {get: function() { return str(this); }});
+  function debstr() {
+    return Toy.debugString ? Toy.debugString(this) : '' + this;
+  }
+  Object.defineProperty(Object.prototype, '$$', {get: debstr});
 }
 
+}();

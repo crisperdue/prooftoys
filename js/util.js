@@ -612,6 +612,9 @@ function debugString(o, specials) {
   if (o === null) {
     return 'null';
   }
+  if (o === undefined) {
+    return 'undefined';
+  }
   if (Array.isArray(o)) {
     var result = [];
     for (var i = 0; i < o.length; i++) {
@@ -619,45 +622,52 @@ function debugString(o, specials) {
     }
     return '[' + result.join(', ') + ']';
   }
+  if ([Map, Set].some(typ => o instanceof typ)) {
+    try {
+      const aa = Array.from(o);
+      return '(' + o.constructor.name + ')' + debugString(aa);
+    } catch(e) {}
+  }
+  if (o.constructor !== Object &&
+      o.toString && typeof o.toString === "function") {
+    return o.toString();
+  }
   if (typeof o == 'object') {
     var result = '{';
-    var keys = [];
-    for (var key in o) { keys.push(key); }
+    var keys = Object.getOwnPropertyNames(o);
     keys.sort();
     for (var i = 0; i < keys.length; i++) {
       var key = keys[i];
-      if (hasOwn(o, key)) {
-        if (result.length > 1) {
-          result += ', ';
-        }
-        result += key + ': ';
-        var value = o[key];
-        // Now add display of the value for the key:
-        var f = specials && specials[key];
-        if (f) {
-          result += f(value);
-        } else if (typeof value == 'string') {
-          result += '"' + o[key] + '"';
-        } else if (Array.isArray(value)) {
-          // Array-like value.
-          vString = o[key].toString();
-          if (vString.length > 40) {
-            result += '[\n';
-            for (var i = 0; i < value.length; i++) {
-              result += value[i] + '\n';
-            }
-            result += ']\n';
-          } else {
-            result += '[' + o[key] + ']';
+      if (result.length > 1) {
+        result += ', ';
+      }
+      result += key + ': ';
+      var value = o[key];
+      // Now add display of the value for the key:
+      var f = specials && specials[key];
+      if (f) {
+        result += f(value);
+      } else if (typeof value == 'string') {
+        result += '"' + o[key] + '"';
+      } else if (Array.isArray(value)) {
+        // Array-like value.
+        vString = o[key].toString();
+        if (vString.length > 40) {
+          result += '[\n';
+          for (var i = 0; i < value.length; i++) {
+            result += value[i] + '\n';
           }
+          result += ']\n';
         } else {
-          result += '' + o[key];
+          result += '[' + o[key] + ']';
         }
+      } else {
+        result += '' + o[key];
       }
     }
     return result + '}';
   } else {
-    return o.toString();
+    return '' + o;
   }
 }
 
