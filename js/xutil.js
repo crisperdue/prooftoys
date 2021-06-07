@@ -47,11 +47,6 @@ var _typeVarCounter = 1;
  * expression it is applied to.
  */
 function TypeVariable(name) {
-  // Type variables are often unified with other type variables or
-  // resolved into more specific types.  When that happens, the
-  // instance is set to some other type.  At the end of such a chain
-  // is the actual resolved type.
-  this.instance = null;
   if (name) {
     this.name = name;
   } else {
@@ -62,7 +57,7 @@ function TypeVariable(name) {
 TypeVariable.prototype.toString = function() {
   // Returns the dereferenced value without modifying
   // the internals.
-  return this.instance ? this.instance.toString() : this.name;
+  return this.name;
 };
 
 /**
@@ -90,11 +85,11 @@ TypeVariable.prototype.toString = function() {
  * creating a mapping to a brand new TypeVariable if no mapping
  * already exists.
  */
-TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
-  var type = dereference(this);
+TypeVariable.prototype.fresh = function(mappings, nonGenerics, map) {
+  var type = dereference(this, map);
   if (type instanceof TypeVariable) {
     var name = type.name;
-    if (occursInList(name, nonGenerics)) {
+    if (occursInList(name, nonGenerics, map)) {
       return type;
     } else {
       if (!mappings.hasOwnProperty(name)) {
@@ -104,7 +99,7 @@ TypeVariable.prototype.fresh = function(mappings, nonGenerics) {
     }
   } else {
     // The dereferenced value is not a type variable.
-    return type.fresh(mappings, nonGenerics);
+    return type.fresh(mappings, nonGenerics, map);
   }
 };
 
@@ -147,11 +142,11 @@ TypeOperator.prototype.toString = function() {
     : '(' + this.name + ' ' + this.types.join(' ') + ')';
 };
 
-TypeOperator.prototype.fresh = function(mappings, nonGenerics) {
+TypeOperator.prototype.fresh = function(mappings, nonGenerics, map) {
   var ptypes = this.types;
   var freshTypes = [];
   for (var i = 0; i < ptypes.length; i++) {
-    freshTypes.push(ptypes[i].fresh(mappings, nonGenerics));
+    freshTypes.push(ptypes[i].fresh(mappings, nonGenerics, map));
   }
   return new TypeOperator(this.name, freshTypes);
 };
@@ -166,9 +161,9 @@ FunctionType.prototype.toString = function() {
   return '(' + this.types[1] + ' ' + this.types[0] + ')';
 };
 
-FunctionType.prototype.fresh = function(mappings, nonGenerics) {
-  return new FunctionType(this.types[0].fresh(mappings, nonGenerics),
-                          this.types[1].fresh(mappings, nonGenerics));
+FunctionType.prototype.fresh = function(mappings, nonGenerics, map) {
+  return new FunctionType(this.types[0].fresh(mappings, nonGenerics, map),
+                          this.types[1].fresh(mappings, nonGenerics, map));
 };
 
 var individual = new TypeConstant('i');
@@ -284,7 +279,7 @@ function parseTokens(tokens) {
  * an error.
  */
 Expr.prototype.getType = function() {
-  return dereference(this._type) || abort('Type not available: ' + this);
+  return this._type || abort('Type not available: ' + this);
 };
 
 /**
@@ -292,7 +287,7 @@ Expr.prototype.getType = function() {
  * annotation.
  */
 Expr.prototype.hasType = function() {
-  return dereference(this._type);
+  return this._type;
 };
 
 /**
@@ -359,7 +354,7 @@ Expr.prototype.isIndividual = function() {
  */
 function findType(expr, annotate) {
   if (expr._type) {
-    return dereference(expr._type);
+    return expr._type;
   }
   Toy.ft++;
 
@@ -369,20 +364,34 @@ function findType(expr, annotate) {
   // information is popped off the lists.  Type lookups search from
   // the end toward the beginning thus finding the type of the
   // variable visible in the current scope.
-  var vars = [];
-  var types = [];
+  const vars = [];
+  const types = [];
+
   // A list of TypeVariable objects that are not generic in the
   // current scope.  Type variables in the types of bound variables
   // appear here when their variable is in scope, and in types of free
   // variables they are inserted upon the first occurrence of the free
   // variable, and remain thereafter.
-  var nonGenerics = [];
   //
   // Note: Generic type variables reflect the fact that different
   // occurrences of the same defined or primitive constant can have
   // different types.
+  const nonGenerics = [];
 
-  var analyze =
+  // Mappings from type variables to other type expressions for
+  // use during type analysis.
+  const map = new Map();
+
+  // Returns the given type, removing indirections in the representation
+  // of type variables.
+  //
+  // Note that this is the identity function for objects that are not
+  // type variables, including null and undefined.
+  function deref(type) {
+    return dereference(type, map);
+  }
+
+  const analyze =
     (annotate
      ? function(expr) { return expr._type = analyze1(expr); }
      : analyze1);
@@ -395,7 +404,7 @@ function findType(expr, annotate) {
       var fnType = analyze(expr.fn);
       var argType = analyze(expr.arg);
       var resultType = new TypeVariable();
-      unifyTypes(new FunctionType(argType, resultType), fnType);
+      unifyTypes(new FunctionType(argType, resultType), fnType, map);
       return resultType;
     } else if (expr instanceof Lambda) {
       vars.push(expr.bound.name);
@@ -422,7 +431,7 @@ function findType(expr, annotate) {
       // If it is a constant -- primitive, defined, or even a constant
       // name that has appeared in a well-formed term but is not yet
       // defined, return its type.
-      return constantTypes[name].fresh({}, nonGenerics);
+      return constantTypes[name].fresh({}, nonGenerics, map);
     }
     if (atom.isLiteral()) {
       // I say integers are individuals.
@@ -434,7 +443,7 @@ function findType(expr, annotate) {
       if (vars[i] == name) {
         var type = types[i];
         // Return a fresh instance of the variable's type.
-        return type.fresh({}, nonGenerics);
+        return type.fresh({}, nonGenerics, map);
       }
     }
     // Free variable, or constant not yet defined.
@@ -448,7 +457,7 @@ function findType(expr, annotate) {
   }
 
   function isGeneric(v) {
-    return !occursInList(v, nonGenerics);
+    return !occursInList(v, nonGenerics, map);
   }
 
   /**
@@ -457,39 +466,36 @@ function findType(expr, annotate) {
    * same with its type arguments.
    */
   function tidy(type) {
-    var t = dereference(type);
-    if (t instanceof TypeOperator) {
-      var types = t.types;
-      for (var i = 0; i < types.length; i++) {
-        tidy(t.types[i]);
-      }
-    }
+    const t = deref(type);
+    return (t instanceof FunctionType
+            ? new FunctionType(tidy(t.types[0]), tidy(t.types[1]))
+            : t instanceof TypeOperator
+            ? new TypeOperator(t.name, t.types.map(tidy))
+            : t);
   }
 
   /**
    * Tidy up the type information for the given expression and all of
    * its subexpressions.
    */
-  function tidyAll(term) {
+  function annotateAll(term) {
     if (term instanceof Call) {
-      tidy(term.arg._type);
-      tidy(term.fn._type);
+      annotateAll(term.arg);
+      annotateAll(term.fn);
     } else if (term instanceof Lambda) {
-      tidy(term.body._type)
+      annotateAll(term.body)
     }
-    tidy(term._type);
+    term._type = tidy(term._type);
   }
 
   try {
     // The analysis can throw.
-    var result = analyze(expr);
+    var result = tidy(analyze(expr));
     // If successful do the rest of the work.
     if (annotate) {
       // If annotating, walk through all subexpressions of the expr,
       // tidying up their types, which are now all in final form.
-      tidyAll(expr);
-    } else {
-      tidy(result);
+      annotateAll(expr);
     }
     // Scan through "vars" for the names of any constants analyzed
     // here for the first time, and record the discovered type
@@ -501,8 +507,7 @@ function findType(expr, annotate) {
       if (Toy.isConstantName(nm)) {
         // If the name already had a recorded type in constantTypes,
         // it would not be in the vars list.
-        var type = types[i];
-        tidy(type);
+        var type = tidy(types[i]);
         // console.log('New constant', nm, 'assigned type', '' + type);
         // console.log('  in', '' + expr);
         // TODO: Consider adding the name and expr to a list of forms
@@ -510,7 +515,7 @@ function findType(expr, annotate) {
         //   whether all names in it have definitions, giving a warning
         //   if not.  For example one might check when the event loop
         //   returns to idle.
-        constantTypes[nm] = dereference(type);
+        constantTypes[nm] = type;
       }
     }
     return result;
@@ -545,9 +550,9 @@ function lookupType(name) {
 /**
  * Assumes "type" is dereferenced.
  */
-function occursInList(type, types) {
+function occursInList(type, types, map) {
   for (var i = 0; i < types.length; i++) {
-    if (occursInType(type, types[i])) {
+    if (occursInType(type, types[i], map)) {
       return true;
     }
   }
@@ -557,27 +562,27 @@ function occursInList(type, types) {
 /**
  * Assumes type1 is dereferenced.
  */
-function occursInType(type1, type2) {
-  var type2 = dereference(type2);
+function occursInType(type1, type2, map) {
+  var type2 = dereference(type2, map);
   if (type2 == type1) {
     return true;
   } else if (type2 instanceof TypeOperator) {
-    return occursInList(type1, type2.types);
+    return occursInList(type1, type2.types, map);
   }
 }
 
-function unifyTypes(t1, t2) {
-  var a = dereference(t1);
-  var b = dereference(t2);
+function unifyTypes(t1, t2, map) {
+  var a = dereference(t1, map);
+  var b = dereference(t2, map);
   if (a instanceof TypeVariable) {
     if (a != b) {
-      if (occursInType(a, b)) {
+      if (occursInType(a, b, map)) {
         throw new TypeCheckError('recursive unification');
       }
-      a.instance = b;
+      map.set(a, b);
     }
   } else if (b instanceof TypeVariable) {
-    unifyTypes(b, a);
+    unifyTypes(b, a, map);
   } else if (a instanceof TypeConstant) {
     if (a !== b) {
       // Note that this does not permit multiple copies of a constant.
@@ -588,7 +593,7 @@ function unifyTypes(t1, t2) {
       throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
     }
     for (var i = 0; i < a.types.length; i++) {
-      unifyTypes(a.types[i], b.types[i]);
+      unifyTypes(a.types[i], b.types[i], map);
     }
   } else {
     throw new TypeCheckError('Not unifiable');
@@ -602,14 +607,17 @@ function unifyTypes(t1, t2) {
  * Note that this is the identity function for objects that are not
  * type variables, including null and undefined.
  *
- * Also, unification mutates Type objects, so the result may mutate as
- * a result of any future unifications relevant to this type.
+ * Also, unification(in type inference) mutates Type objects, so the
+ * result may mutate as a result of any future unifications relevant
+ * to this type.
  */
-function dereference(type) {
+function dereference(type, map) {
   if (type instanceof TypeVariable) {
-    if (type.instance) {
-      type.instance = dereference(type.instance);
-      return type.instance;
+    const ref = map.get(type);
+    if (ref) {
+      const ref2 = dereference(ref, map);
+      map.set(type, ref2);
+      return ref2;
     }
   }
   return type;
