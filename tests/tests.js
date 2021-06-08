@@ -807,10 +807,10 @@ var testCase = {
     var source = '(x = x)';
     var target = Toy.parse(source);
     // Copy is equal to original
-    assertEqual(source, target.copyForRendering());
-    assert(target.matches(target.copyForRendering()));
+    assertEqual(source, target.deepCopy());
+    assert(target.matches(target.deepCopy()));
     // But not identical.
-    assert(target !== target.copyForRendering());
+    assert(target !== target.deepCopy());
   },
 
   testSubFree: function() {

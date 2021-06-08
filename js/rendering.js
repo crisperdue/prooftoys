@@ -397,7 +397,7 @@ ProofDisplay.prototype.suggest = function(node) {
 ProofDisplay.prototype.renderStep = function(step) {
   var self = this;
   assert(!step.rendering, 'Already rendered', step);
-  var copy = step.copyToRender();
+  var copy = step.stepFullCopy();
   copy.users = new Set();
   copy.ordinal = step.ordinal;
   step.rendering = copy;
@@ -1188,7 +1188,7 @@ function textNode(text) {
  *   renderings.
  */
 Expr.prototype.renderTerm = function() {
-  const copy = this.copyForRendering();
+  const copy = this.deepCopy();
   const jq = copy.render(0);
   return jq[0];
 };
@@ -1378,10 +1378,10 @@ Lambda.prototype.render = function(minPower) {
  *
  * TODO: Make this a factory for producing StepDisplay objects.
  */
-Step.prototype.copyToRender = function() {
+Step.prototype.stepFullCopy = function() {
   // Note: does not copy the "ordinal" property, for no
   // great reason.
-  const wff = this.wff.copyForRendering();
+  const wff = this.wff.deepCopy();
   // TODO: Make the step be a StepDisplay.
   var step = wff;
   // Flag it as a Step (actually StepDisplay)
@@ -1437,39 +1437,27 @@ Step.prototype.descendants = function() {
   return result;
 }
 
-// copyForRendering()
+// deepCopy()
 //
 // Makes and returns a deep copy of this Expr, copying all parts
-// including occurrences of Vars, so rendering can add distinct
-// annotations to each occurrence.  Currently copies only logical
-// structure.  Intended only for use in rendering.  Can operate on
-// either renderable or nonrenderable terms.
+// including occurrences of Vars, so each occurrence can have distinct
+// annotations, as needed for rendering and currently used by type
+// inference.  Currently copies only logical structure.  Can operate
+// on either renderable or nonrenderable terms.
 //
-// Call this with bindings that include all free variables, mapping
-// name in the original to name in the copy, so the renaming will be
-// able to avoid reusing any of these in-scope names as the new name
-// of a bound variable.
-//
-Atom.prototype.copyForRendering = function() {
+Atom.prototype.deepCopy = function() {
   // TODO: Consider whether it is best to use the pname here.
-  const result = new Atom(this.pname);
-  result.node = null;
-  return result;
+  return new Atom(this.pname);
 };
 
-Call.prototype.copyForRendering = function() {
-  const result = new Call(this.fn.copyForRendering(),
-                        this.arg.copyForRendering());
-  result.node = null;
-  return result;
+Call.prototype.deepCopy = function() {
+  return new Call(this.fn.deepCopy(),
+                  this.arg.deepCopy());
 };
 
-Lambda.prototype.copyForRendering = function() {
-  const result =
-        Toy.lambda(this.bound.copyForRendering(),
-                   this.body.copyForRendering());
-  result.node = null;
-  return result;
+Lambda.prototype.deepCopy = function() {
+  return Toy.lambda(this.bound.deepCopy(),
+                    this.body.deepCopy());
 };
 
 /**
@@ -2220,7 +2208,7 @@ function hoverStep(step, direction, event) {
 function fillHoverInfoBox(proofEditor, step) {
   var $box = $(step.stepNode).find('.hoverInfoBox');
   if ($box.children().length == 0) {
-    var copy = step.original.copyToRender();
+    var copy = step.original.stepFullCopy();
     copy.annotateWithTypes();
     var message = proofEditor ? proofEditor.progressMessage(step) : '';
     var $msgs = $('<div class=pre>').append(message);

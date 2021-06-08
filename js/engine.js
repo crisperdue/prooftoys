@@ -2191,7 +2191,7 @@ function addFact(info) {
   // copy that can be properly annotated with types.  Copying
   // makes it not proved.
   info.goal = ((info.goal || mathParse(info.statement))
-               .copyForRendering());
+               .deepCopy());
   for (var key in info) {
     if (!(key in factProperties)) {
       var id = info.goal ? info.goal.$$ : info.synopsis;

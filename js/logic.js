@@ -768,7 +768,7 @@ declare(
   {name: 'consider',
     action: function(term_arg) {
       const term = termify(term_arg);
-      const copy = term.copyForRendering();
+      const copy = term.deepCopy();
       copy.annotateWithTypes();
       if (copy.isBoolean()) {
         var step = rules.equivSelf(term);
