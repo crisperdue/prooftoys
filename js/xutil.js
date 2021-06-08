@@ -275,7 +275,7 @@ function parseTokens(tokens) {
 // TODO: More and better comments throughout the type analysis code.
 
 /**
- * Expr method that returns any annotated type, otherwise throws
+ * Expr method that returns any annotated type, otherwise aborts with
  * an error.
  */
 Expr.prototype.getType = function() {
@@ -341,7 +341,7 @@ Expr.prototype.isIndividual = function() {
 
 /**
  * Find and return the (dereferenced) type of an expression (Expr).
- * Throws an Error if type checking fails.  The error may have a
+ * Aborts with an error if type checking fails.  The error may have a
  * "cause" property with the original error (TypeCheckError).
  *
  * This uses established types of primitive and defined constants.  It
@@ -353,6 +353,8 @@ Expr.prototype.isIndividual = function() {
  * The second argument is private to annotateWithTypes.
  */
 function findType(expr, annotate) {
+  // TODO: Stop using findType this way.  Annotate "everything"
+  // we might want type informtion for instead.
   if (expr._type) {
     return expr._type;
   }
@@ -391,34 +393,39 @@ function findType(expr, annotate) {
     return dereference(type, map);
   }
 
-  const analyze =
-    (annotate
-     ? function(expr) { return expr._type = analyze1(expr); }
-     : analyze1);
-
   // This is the core of the type inference algorithm.
-  function analyze1(expr) {
+  function analyze(expr, exit) {
+    let result;
     if (expr instanceof Atom) {
-      return typeFromName(expr);
+      result = typeFromName(expr);
     } else if (expr instanceof Call) {
-      var fnType = analyze(expr.fn);
-      var argType = analyze(expr.arg);
+      var fnType = analyze(expr.fn, exit);
+      var argType = analyze(expr.arg, exit);
       var resultType = new TypeVariable();
-      unifyTypes(new FunctionType(argType, resultType), fnType, map);
-      return resultType;
+      const err = unifyTypes(new FunctionType(argType, resultType),
+                               fnType, map);
+      if (err instanceof Error) {
+        exit(err);
+      }
+      result = resultType;
     } else if (expr instanceof Lambda) {
       vars.push(expr.bound.name);
       // TODO: Handle explicit type info on the bound variable.
       var argType = new TypeVariable();
       types.push(argType);
       nonGenerics.push(argType);
-      var resultType = analyze(expr.body);
+      var resultType = analyze(expr.body, exit);
       vars.pop();
       types.pop();
       nonGenerics.pop();
-      return new FunctionType(argType, resultType);
+      result = new FunctionType(argType, resultType);
+    } else {
+      abort('Not an expression: {1}', expr);
     }
-    throw new TypeCheckError('Not an expression: ' + expr);
+    if (annotate) {
+      expr._type = result;
+    }
+    return result;
   }
 
   /**
@@ -478,58 +485,49 @@ function findType(expr, annotate) {
    * Tidy up the type information for the given expression and all of
    * its subexpressions.
    */
-  function annotateAll(term) {
+  function annotateAll(term, doClean) {
     if (term instanceof Call) {
       annotateAll(term.arg);
       annotateAll(term.fn);
     } else if (term instanceof Lambda) {
       annotateAll(term.body)
     }
-    term._type = tidy(term._type);
+    term._type = doClean ? undefined : tidy(term._type);
   }
 
-  try {
-    // The analysis can throw.
-    var result = tidy(analyze(expr));
-    // If successful do the rest of the work.
-    if (annotate) {
-      // If annotating, walk through all subexpressions of the expr,
-      // tidying up their types, which are now all in final form.
-      annotateAll(expr);
-    }
-    // Scan through "vars" for the names of any constants analyzed
-    // here for the first time, and record the discovered type
-    // information.  This preferably would only have effect when
-    // parsing the definition of a new constant, as real forward
-    // references might not record the exact type.
-    for (var i = 0; i < vars.length; i++) {
-      var nm = vars[i];
-      if (Toy.isConstantName(nm)) {
-        // If the name already had a recorded type in constantTypes,
-        // it would not be in the vars list.
-        var type = tidy(types[i]);
-        // console.log('New constant', nm, 'assigned type', '' + type);
-        // console.log('  in', '' + expr);
-        // TODO: Consider adding the name and expr to a list of forms
-        //   introducing new constants, and check at certain moments
-        //   whether all names in it have definitions, giving a warning
-        //   if not.  For example one might check when the event loop
-        //   returns to idle.
-        constantTypes[nm] = type;
-      }
-    }
-    return result;
-  } catch(e) {  // TODO: Convert findType to use exits, including error exits.
-    if (e instanceof TypeCheckError) {
-      var e2 = new TypeCheckError('Cannot find type for ' + expr.toUnicode());
-      e2.cause = e;
-      console.error(e);
-      // Place a breakpoint here to help diagnose the problem.
-      throw e2;
-    } else {
-      throw e;
+  var result = Toy.withExit(exit => tidy(analyze(expr, exit)));
+  // Clean up partial state or if successful, finish the job.
+  if (annotate) {
+    // If annotating, walk through all subexpressions of the expr,
+    // tidying up their types, which are now all in final form.
+    annotateAll(expr, result instanceof Error);
+  }
+  if (result instanceof Error) {
+    // TODO: Indicate failure, but don't abort here.
+    abort(result);
+  }
+  // Scan through "vars" for the names of any constants analyzed
+  // here for the first time, and record the discovered type
+  // information.  This preferably would only have effect when
+  // parsing the definition of a new constant, as real forward
+  // references might not record the exact type.
+  for (var i = 0; i < vars.length; i++) {
+    var nm = vars[i];
+    if (Toy.isConstantName(nm)) {
+      // If the name already had a recorded type in constantTypes,
+      // it would not be in the vars list.
+      var type = tidy(types[i]);
+      // console.log('New constant', nm, 'assigned type', '' + type);
+      // console.log('  in', '' + expr);
+      // TODO: Consider adding the name and expr to a list of forms
+      //   introducing new constants, and check at certain moments
+      //   whether all names in it have definitions, giving a warning
+      //   if not.  For example one might check when the event loop
+      //   returns to idle.
+      constantTypes[nm] = type;
     }
   }
+  return result;
 }
 
 /**
@@ -571,33 +569,49 @@ function occursInType(type1, type2, map) {
   }
 }
 
+/**
+ * This updates the map as needed to unify t1 and t2.
+ * The return value is only meaningful in case of failure,
+ * and then it is a TypeCheckError.
+ */
 function unifyTypes(t1, t2, map) {
-  var a = dereference(t1, map);
-  var b = dereference(t2, map);
-  if (a instanceof TypeVariable) {
-    if (a != b) {
-      if (occursInType(a, b, map)) {
-        throw new TypeCheckError('recursive unification');
+  // TODO: Consider whether withExit is expensive to use,
+  // perhaps because it contains a try block.
+  return Toy.withExit(exit => {
+    function failAs(msg) {
+      exit(new TypeCheckError(msg));
+    }
+
+    function unifT(t1, t2) {
+      var a = dereference(t1, map);
+      var b = dereference(t2, map);
+      if (a instanceof TypeVariable) {
+        if (a != b) {
+          if (occursInType(a, b, map)) {
+            failAs('recursive unification');
+          }
+          map.set(a, b);
+        }
+      } else if (b instanceof TypeVariable) {
+        unifT(b, a);
+      } else if (a instanceof TypeConstant) {
+        if (a !== b) {
+          // Note that this does not permit multiple copies of a constant.
+          failAs('Type mismatch: ' + a + ' != ' + b);
+        }
+      } else if (a instanceof TypeOperator && b instanceof TypeOperator) {
+        if (a.name != b.name || a.types.length != b.types.length) {
+          failAs('Type mismatch: ' + a + ' != ' + b);
+        }
+        for (var i = 0; i < a.types.length; i++) {
+          unifT(a.types[i], b.types[i]);
+        }
+      } else {
+        failAs('Not similar');
       }
-      map.set(a, b);
     }
-  } else if (b instanceof TypeVariable) {
-    unifyTypes(b, a, map);
-  } else if (a instanceof TypeConstant) {
-    if (a !== b) {
-      // Note that this does not permit multiple copies of a constant.
-      throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
-    }
-  } else if (a instanceof TypeOperator && b instanceof TypeOperator) {
-    if (a.name != b.name || a.types.length != b.types.length) {
-      throw new TypeCheckError('Type mismatch: ' + a + ' != ' + b);
-    }
-    for (var i = 0; i < a.types.length; i++) {
-      unifyTypes(a.types[i], b.types[i], map);
-    }
-  } else {
-    throw new TypeCheckError('Not unifiable');
-  }
+    unifT(t1, t2);
+  });
 }
 
 /**
@@ -758,8 +772,8 @@ var definitions = {
 };
 
 /**
- * Fetches a definition from the definitions database.  Throws an
- * exception if an appropriate definition is not found.
+ * Fetches a definition from the definitions database.  Aborts if an
+ * appropriate definition is not found.
  */
 function getDefinition(name) {
   var defn = findDefinition(name);
@@ -937,9 +951,9 @@ var _parsed = {};
 
 /**
  * Parses a string or array of token strings into an expression
- * (Expr).  Removes tokens parsed from the tokens list.  Throws an
- * Error if parsing fails or if findType cannot determine a type
- * for the expression.
+ * (Expr).  Removes tokens parsed from the tokens list.  Aborts if
+ * parsing fails or if findType cannot determine a type for the
+ * expression.
  */
 function parse(input) {
   if (typeof input == 'string' &&
