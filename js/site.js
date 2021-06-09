@@ -4,6 +4,13 @@
 
 window.Toy = window.Toy || {};
 
+// This ensures that all of our scripts can refer to _paq even in
+// strict mode.  If Matomo loads later, it will set up _paq when it
+// loads because it checks whether (typeof _paq != 'object').
+if (!window._paq) {
+  window._paq = undefined;
+}
+
 // Prooftoys scripts should not depend on this, though it may do some
 // default configuration.  At present this does not appear to depend
 // on util.js.
