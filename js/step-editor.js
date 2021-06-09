@@ -1697,7 +1697,7 @@ RuleMenu.prototype._update = function() {
  */
 function handleMouseClickItem(ruleMenu, node, event) {
   // Track these events in Matomo.
-  _paq.push(['trackEvent', 'App', 'MainMenu']);
+  _paq && _paq.push(['trackEvent', 'App', 'MainMenu']);
 
   // TODO: Consider generating an event here and moving
   //   much of this code elsewhere.
