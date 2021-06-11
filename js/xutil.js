@@ -108,7 +108,6 @@ TypeVariable.prototype.fresh = function(mappings, nonGenerics, map) {
  */
 function TypeConstant(name) {
   this.name = name;
-  this.types = [];
 }
 Toy.extends(TypeConstant, null);
 
@@ -123,47 +122,20 @@ var tcMethods = {
 };
 TypeConstant.addMethods(tcMethods);
 
-/**
- * TypeOperator constructor, types is an optional array of type
- * parameters, if not given, then an empty array.
- */
-function TypeOperator(name, types) {
-  this.name = name;
-  this.types = types || [];
-}
-Toy.extends(TypeOperator, null);
-
-TypeOperator.prototype.toString = function() {
-  var numTypes = this.types.length;
-  return numTypes == 0
-    ? this.name
-    : numTypes == 2
-    ? '(' + [this.types[0], this.name, this.types[1]].join(' ') + ')'
-    : '(' + this.name + ' ' + this.types.join(' ') + ')';
-};
-
-TypeOperator.prototype.fresh = function(mappings, nonGenerics, map) {
-  var ptypes = this.types;
-  var freshTypes = [];
-  for (var i = 0; i < ptypes.length; i++) {
-    freshTypes.push(ptypes[i].fresh(mappings, nonGenerics, map));
-  }
-  return new TypeOperator(this.name, freshTypes);
-};
-
 
 function FunctionType(fromType, toType) {
-  TypeOperator.call(this, '->', [fromType, toType]);
+  this.fromType = fromType;
+  this.toType = toType;
 }
-Toy.extends(FunctionType, TypeOperator);
+Toy.extends(FunctionType, null);
 
 FunctionType.prototype.toString = function() {
-  return '(' + this.types[1] + ' ' + this.types[0] + ')';
+  return '(' + this.toType + ' ' + this.fromType + ')';
 };
 
 FunctionType.prototype.fresh = function(mappings, nonGenerics, map) {
-  return new FunctionType(this.types[0].fresh(mappings, nonGenerics, map),
-                          this.types[1].fresh(mappings, nonGenerics, map));
+  return new FunctionType(this.fromType.fresh(mappings, nonGenerics, map),
+                          this.toType.fresh(mappings, nonGenerics, map));
 };
 
 var individual = new TypeConstant('i');
@@ -190,7 +162,7 @@ function tokenizeType(input) {
 }
   
 /**
- * Parse a type string, returning a TypeOperator (type expression).
+ * Parse a type string, returning a type expression.
  * Input can only be parenthesized sequences of "i", "o", a single
  * upper case letter, or "t" followed by digits, with space as the
  * separater.
@@ -291,16 +263,17 @@ Expr.prototype.hasType = function() {
 };
 
 /**
- * Returns the type of the expression like findType, but also
+ * Calculates the type of the expression like findType, but also
  * annotates the expression and all subexpressions with type
  * information as the _type property of each.  Every occurrence of any
  * shared structure must have the same type, so the definition must be
  * copied when replacing an occurrence of a defined constant.
  *
- * If this is already annotated, simply returns the annotation.
+ * Returns the annotated expression.
  */
 Expr.prototype.annotateWithTypes = function() {
-  return this._type || findType(this, true);
+  this._type || findType(this, true);
+  return this;
 };
 
 /**
@@ -475,9 +448,7 @@ function findType(expr, annotate) {
   function tidy(type) {
     const t = deref(type);
     return (t instanceof FunctionType
-            ? new FunctionType(tidy(t.types[0]), tidy(t.types[1]))
-            : t instanceof TypeOperator
-            ? new TypeOperator(t.name, t.types.map(tidy))
+            ? new FunctionType(tidy(t.fromType), tidy(t.toType))
             : t);
   }
 
@@ -564,8 +535,9 @@ function occursInType(type1, type2, map) {
   var type2 = dereference(type2, map);
   if (type2 == type1) {
     return true;
-  } else if (type2 instanceof TypeOperator) {
-    return occursInList(type1, type2.types, map);
+  } else if (type2 instanceof FunctionType) {
+    return (occursInType(type1, type2.fromType, map) ||
+            occursInType(type1, type2.toType, map));
   }
 }
 
@@ -599,13 +571,9 @@ function unifyTypes(t1, t2, map) {
           // Note that this does not permit multiple copies of a constant.
           failAs('Type mismatch: ' + a + ' != ' + b);
         }
-      } else if (a instanceof TypeOperator && b instanceof TypeOperator) {
-        if (a.name != b.name || a.types.length != b.types.length) {
-          failAs('Type mismatch: ' + a + ' != ' + b);
-        }
-        for (var i = 0; i < a.types.length; i++) {
-          unifT(a.types[i], b.types[i]);
-        }
+      } else if (a instanceof FunctionType && b instanceof FunctionType) {
+          unifT(a.fromType, b.fromType);
+          unifT(a.toType, b.toType);
       } else {
         failAs('Not similar');
       }
@@ -653,11 +621,11 @@ function booleanBinOpType() {
  */
 function isBooleanBinOp(term) {
   var type = term.hasType();
-  if ((type instanceof FunctionType) && dereference(type.types[0]) == boolean) {
-    var t1 = dereference(type.types[1]);
+  if ((type instanceof FunctionType) && dereference(type.fromType) == boolean) {
+    var t1 = dereference(type.toType);
     return ((t1 instanceof FunctionType) &&
-            dereference(t1.types[0]) == boolean &&
-            dereference(t1.types[1]) == boolean);
+            dereference(t1.fromType) == boolean &&
+            dereference(t1.toType) == boolean);
   } else {
     return false;
   }
@@ -2042,7 +2010,6 @@ Toy.realType = realType;
 Toy.TypeCheckError = TypeCheckError;
 Toy.TypeVariable = TypeVariable;
 Toy.TypeConstant = TypeConstant;
-Toy.TypeOperator = TypeOperator;
 Toy.FunctionType = FunctionType;
 Toy.tokenizeType = tokenizeType;
 Toy.parseTokens = parseTokens;

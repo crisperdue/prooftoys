@@ -31,8 +31,8 @@ function isTriv(map, name, term) {
       return !!to && isTriv(map, name, to);
     }
   } else if (term instanceof FuncType) {
-    return (isTriv(map, name, term.types[0]) ||
-            isTriv(map, name, term.types[1])
+    return (isTriv(map, name, term.fromType) ||
+            isTriv(map, name, term.toType)
             ? null
             : false);
   } else {
@@ -72,8 +72,8 @@ function unifyStep(x, y, map, pairs) {
     return unifVar(y, x);
   } else if (xt === FuncType && yt === FuncType) {
     // Push two new pairs onto the work queue.
-    pairs.push([x.types[0], y.types[0]],
-               [x.types[1], y.types[1]]);
+    pairs.push([x.fromType, y.fromType],
+               [x.toType, y.toType]);
     return true;
   } else {
     // Unification has failed, though not cyclic.
@@ -112,10 +112,10 @@ function tsubst(map, tm) {
   if (type === TypeVar) {
     return map.get(tm.name) || tm;
   } else if (type === FuncType) {
-    const t1 = tm.types[1];
-    const t0 = tm.types[0];
-    const newT1 = tsubst(map, tm.types[1]);
-    const newT0 = tsubst(map, tm.types[0]);
+    const t1 = tm.toType;
+    const t0 = tm.fromType;
+    const newT1 = tsubst(map, tm.toType);
+    const newT0 = tsubst(map, tm.fromType);
     return (newT1 === t1 && newT0 === t0
             ? tm
             : new FuncType(newT1, newT0));

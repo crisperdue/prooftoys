@@ -1690,8 +1690,8 @@ var testCase = {
     // The identity function, problematic for some algorithms.
     var type = Toy.findType(Toy.parse('{x. x}'));
     assert(type instanceof Toy.FunctionType, 'Not a FunctionType');
-    assert(type.types[0] instanceof Toy.TypeVariable, 'Not a TypeVariable');
-    assertEqual(type.types[0], type.types[1]);
+    assert(type.fromType instanceof Toy.TypeVariable, 'Not a TypeVariable');
+    assertEqual(type.fromType, type.toType);
     assertEqual('o', Toy.findType(rules.axiom1()).toString());
     assertEqual('o', Toy.findType(rules.axiom2()).toString());
     assertEqual('o', Toy.findType(rules.axiom3()).toString());
