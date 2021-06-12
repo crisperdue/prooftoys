@@ -6,9 +6,14 @@
 
 (function() {
 
-const TypeVar = Toy.TypeVariable;
-const TypeConst = Toy.TypeConstant;
-const FuncType = Toy.FunctionType;
+const Expr = Toy.Expr;
+const Atom = Toy.Atom;
+const Call = Toy.Call;
+const Lambda = Toy.Lambda;
+
+const TypeVariable = Toy.TypeVariable;
+const TypeConstant = Toy.TypeConstant;
+const FunctionType = Toy.FunctionType;
 const Bindings = Toy.Bindings;
 const findBinding = Toy.findBinding;
 
@@ -20,9 +25,9 @@ const findBinding = Toy.findBinding;
 //
 // If the term is composite, this applies the bindings to its parts
 // recursively, and if it ever reaches the same variable, it fails by
-// returning null.
+// returning null; else false as stated above.
 function isTriv(map, name, term) {
-  if (term instanceof TypeVar) {
+  if (term instanceof TypeVariable) {
     const n2 = term.name;
     if (name === n2) {
       return true;
@@ -30,7 +35,7 @@ function isTriv(map, name, term) {
       const to = map.get(n2)
       return !!to && isTriv(map, name, to);
     }
-  } else if (term instanceof FuncType) {
+  } else if (term instanceof FunctionType) {
     return (isTriv(map, name, term.fromType) ||
             isTriv(map, name, term.toType)
             ? null
@@ -40,12 +45,12 @@ function isTriv(map, name, term) {
   }
 }
 
-// Consider an additional pair to be unified in the context
-// of the given map of bindings and array of pairs still
-// to be unified.
-function unifyStep(x, y, map, pairs) {
-  const xt = x.constructor;
-  const yt = y.constructor;
+// Consider an additional pair to be unified in the context of the
+// given map of bindings and array of pairs still to be unified.
+// Returns falsy if unification fails, else truthy.
+function andUnifTypes(term1, term2, map, pairs) {
+  const c1 = term1.constructor;
+  const c2 = term2.constructor;
   const unifVar = (v, term) => {
     const name = v.name;
     const found = map.get(name);
@@ -64,16 +69,16 @@ function unifyStep(x, y, map, pairs) {
     // The variable unifies.
     return true;
   };
-  if (xt === TypeConst && yt === TypeConst && x === y) {
+  if (c1 === TypeConstant && c2 === TypeConstant && term1 === term2) {
     return true;
-  } else if (xt === TypeVar) {
-    return unifVar(x, y);
-  } else if (yt === TypeVar) {
-    return unifVar(y, x);
-  } else if (xt === FuncType && yt === FuncType) {
+  } else if (c1 === TypeVariable) {
+    return unifVar(term1, term2);
+  } else if (c2 === TypeVariable) {
+    return unifVar(term2, term1);
+  } else if (c1 === FunctionType && c2 === FunctionType) {
     // Push two new pairs onto the work queue.
-    pairs.push([x.fromType, y.fromType],
-               [x.toType, y.toType]);
+    pairs.push([term1.fromType, term2.fromType],
+               [term1.toType, term2.toType]);
     return true;
   } else {
     // Unification has failed, though not cyclic.
@@ -81,52 +86,26 @@ function unifyStep(x, y, map, pairs) {
   }
 }
 
-// Returns true if the pairs unify, with the map holding the
-// unification, or false if they do not.  The unification may still
-// need to be resolved.  Treats the pairs as a stack, so examines the
-// last pair first.
-function coreUnify(map_arg, pairs_arg) {
+// If the pairs unify given existing substitutions in the map, returns
+// the updated map holding the unification, or null if they do not.
+// The unification may still need to be resolved.  Treats the pairs as
+// a stack, so examines the last pair first.  May consume some of the
+// pairs, or all if successful.
+function unifTypesList(map_arg, pairs_arg) {
   const map = map_arg;
   const pairs = pairs_arg;
   while (pairs.length > 0) {
     const [x, y] = pairs.pop();
-    if (!unifyStep(x, y, map, pairs)) {
-      return false;
+    if (!andUnifTypes(x, y, map, pairs)) {
+      return null;
     }
   }
-  return true;
+  return map;
 }
 
-// Attempts to unify terms x and y in the context of an existing
-// unification given in the map.  Returns true with the map updated on
-// success; otherwise false.
-function andUnify(x, y, map) {
-  const pairs = [];
-  return (unifyStep(x, y, map, pairs) &&
-          coreUnify(map, pairs));
-}
-
-// This is substitution into a type term.
-function tsubst(map, tm) {
-  const type = tm.constructor;
-  if (type === TypeVar) {
-    return map.get(tm.name) || tm;
-  } else if (type === FuncType) {
-    const t1 = tm.toType;
-    const t0 = tm.fromType;
-    const newT1 = tsubst(map, tm.toType);
-    const newT0 = tsubst(map, tm.fromType);
-    return (newT1 === t1 && newT0 === t0
-            ? tm
-            : new FuncType(newT1, newT0));
-  } else {
-    return tm;
-  }
-}
-
-// Converts the successful result of "coreUnify" into a single
-// substitution that does the entire work, or passes along
-// a null result.
+// Converts a Map resulting from unification into a single
+// substitution that does the entire work, or returns null
+// if given null.
 function resolve(map) {
   if (!map) {
     return map;
@@ -138,7 +117,7 @@ function resolve(map) {
     changed = false;
     let map2 = new Map();
       for (const [nm, term] of map) {
-        const term2 = tsubst(map, term);
+        const term2 = term.tsubst(map);
         // This test presumes that a no-op substitution
         // returns its input, not a copy.
         if (term2 !== term) {
@@ -151,46 +130,124 @@ function resolve(map) {
   return map;
 }
 
-function fullUnify(term1, term2) {
-  return unif2(term1, term2);
+// Attempts to unify terms x and y in the context of an existing
+// unification given in the map.  Returns the unifying Map on
+// success; otherwise null.
+function coreUnifTypes(type1, type2) {
+  const pairs = [];
+  const map = new Map()
+  return (andUnifTypes(type1, type2, map, pairs) &&
+          unifTypesList(map, pairs));
 }
 
-// For debugging: parses a string representing
-// a type term.
-function pt(tterm) {
-  return Toy.parseType(tterm);
+// Returns a Map with the result of fully unifying just term1 and
+// term2, or null if the terms do not unify.
+function fullUnifTypes(type1, type2) {
+  const map = coreUnifTypes(type1, type2);
+  return map ? resolve(map) : null;
 }
 
-// For debugging and perhaps other purposes; returns a Map with the
-// result of fully unifying just term1 and term2.
-function unif2(term1, term2) {
-  const map = new Map();
-  return (andUnify(term1, term2, map)
-          ? resolve(map)
-          : null);
-}
 
-// Like unif2, but does not resolve.  Is this useful?
-// It might serve under a name like canUnify.
-function unif2a(term1, term2) {
-  const map = new Map();
-  return (andUnify(term1, term2, map)
-          ? map
-          : null);
-}
+//// TYPE SUBSTITUTION
 
-// TODO: Define unif2Map, that takes string inputs and returns a Map
-//   with the bindings in order of their creation; then interactively
-//   test it;
+/**
+ * Substitutes for the named type variables in this term, installing
+ * type information for atoms.  If it leaves a Call or Lambda
+ * unchanged, any type information remains, but it does not add type
+ * information to terms of these kinds.
+ */
+Expr.prototype.subsType = function(map) {
+  // For Calls and Lambdas, if the substitution is a no-op on their
+  // parts, the result is a no-op, so in these cases any existing type
+  // information is kept; but if this creates a new object, it will
+  // have no type information.
+  if (this instanceof Call) {
+    const fn = this.fn.subsType(map);
+    const arg = this.arg.subsType(map);
+    return (fn === this.fn && arg === this.arg
+            ? this
+            : new Call(fn, arg));
+  } else if (this instanceof Lambda) {
+    const body = this.body.subsType(map);
+    return (body === this.body
+            ? this
+            : new Lambda(this.bound, body));
+  } else if (this instanceof Atom) {
+    const type = this._type.tsubst(map);
+    if (type === this._type) {
+      return this;
+    } else {
+      // The pname is the one to use with the constructor.
+      const atom = new Atom(this.pname);
+      atom._type = type;
+      return atom;
+    }
+  } else {
+    abort('Bad input');
+  }
+};
 
-Toy.tsubst = tsubst;
-Toy.isTriv = isTriv;
-Toy.coreUnify = coreUnify;
-Toy.andUnify = andUnify;
+TypeVariable.prototype.tsubst = function(map) {
+  return map.get(this.name) || this;
+};
+
+TypeConstant.prototype.tsubst = function(map) {
+  return this;
+};
+
+FunctionType.prototype.tsubst = function(map) {
+  const from = this.fromType.tsubst(map);
+  const to = this.toType.tsubst(map);
+  return (from === this.fromType && to === this.toType
+          ? this
+          : new FunctionType(from, to));
+};
+
+Expr.prototype.typeVars = function() {
+  return this._addTVars(new Set());
+};
+
+Expr.prototype._addTVars = function(vars) {
+  if (this instanceof Call) {
+    this.fn._addTVars(vars);
+    this.arg._addTVars(vars);
+  } else if (this instanceof Lambda) {
+    this.body._addTVars(vars);
+  } else if (this instanceof Atom) {
+    this._type._addTVars(vars);
+  } else {
+    abort('Bad input');
+  }
+  return vars;
+};
+
+TypeVariable.prototype._addTVars = function(vars) {
+  vars.add(this.name);
+};
+
+TypeConstant.prototype._addTVars = function(vars) {
+};
+
+FunctionType.prototype._addTVars = function(vars) {
+  this.fromType._addTVars(vars);
+  this.toType._addTVars(vars);
+};
+
+//// XX TODO: before unifying type variables across
+//// steps, check for any type variables that occur in both
+//// and rename all of those in one of the steps.
+
+
+//// TESTING AND DEBUGGING
+
+
+//// EXPORTS
+
+Toy.andUnifTypes = andUnifTypes;
+Toy.unifTypesList = unifTypesList;
 Toy.resolve = resolve;
-Toy.fullUnify = fullUnify;
-Toy.pt = pt;
-Toy.unif2 = unif2;
-Toy.unif2a = unif2a;
+Toy.fullUnifTypes = fullUnifTypes;
+Toy.isTriv = isTriv;
+Toy.coreUnifTypes = coreUnifTypes;
 
 })();

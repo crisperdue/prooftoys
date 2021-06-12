@@ -55,8 +55,6 @@ function TypeVariable(name) {
 }
 
 TypeVariable.prototype.toString = function() {
-  // Returns the dereferenced value without modifying
-  // the internals.
   return this.name;
 };
 

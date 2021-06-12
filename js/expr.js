@@ -2274,6 +2274,7 @@ function Atom(name, position) {
     ? Toy.parseStringContent(name)
     // Named constants:
     : null;
+  this._type = null;
 };
 Toy.extends(Atom, Expr);
 
@@ -2284,7 +2285,7 @@ Toy.extends(Atom, Expr);
  */
 Atom.prototype._toString = function() {
   const output = (useUnicode ? this.toUnicode() : this.pname);
-  return (Toy.showTypes && this._type
+  return (Toy.showTypes && this._type && this.isVariable()
           ? output + ":" + this._type.toString()
           : output);
 };

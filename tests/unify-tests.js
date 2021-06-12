@@ -5,14 +5,14 @@
 +function() {
 
   const Bindings = Toy.Bindings;
+  const TypeVariable = Toy.TypeVariable;
 
   const pt = Toy.parseType;
-  const unif2 = Toy.unif2;
-  const unif2a = Toy.unif2a;
+  const fullUnifTypes = Toy.fullUnifTypes;
+  const coreUnifTypes = Toy.coreUnifTypes;
   const isTriv = Toy.isTriv;
-  const coreUnify = Toy.coreUnify;
+  const unifTypesList = Toy.unifTypesList;
   const resolve = Toy.resolve;
-  const fullUnify = Toy.fullUnify;
   
   // This converts a Map result of unification into an array of pairs
   // of strings representing it.  If given a falsy value, returns it.
@@ -29,13 +29,13 @@
   }
 
   function unif2Array(a, b) {
-    const map = unif2(pt(a), pt(b));
+    const map = fullUnifTypes(pt(a), pt(b));
     // console.log(map);
     return asArray(map);
   }
 
   function unif2aArray(a, b) {
-    const map = unif2a(pt(a), pt(b));
+    const map = coreUnifTypes(pt(a), pt(b));
     // console.log(map);
     return asArray(map);
   }
@@ -61,8 +61,20 @@
     },
 
     function testTsubst(a) {
-      const ts = (bind, termStr) => 'foo';
-      a.ok(ts(1, 2));
+      const check =
+            (inStr, map, out) => a.equal('' + pt(inStr).tsubst(map), out);
+
+      const map1 = new Map([['t1', pt('t2')]]);
+      check('(o (t1 t2))', map1, '(o (t2 t2))');
+
+      const map2 = new Map([['t1', pt('o t2')]]);
+      check('(o (t1 t2))', map2,
+            '(o ((o t2) t2))');
+
+      const map3 = new Map([['t1', pt('o t2')],
+                            ['t2', pt('i t3')]]);
+      check('(o (t1 t2))', map3,
+            '(o ((o t2) (i t3)))');
     },
 
     function testIsTriv(a) {
@@ -120,7 +132,7 @@
     // Like testUnif2c, but with results resolved.
     function testUnif2d(a) {
       const check = (t1, t2, expected) =>
-            a.deepEqual(asArray(unif2(pt(t1), pt(t2))),
+            a.deepEqual(asArray(fullUnifTypes(pt(t1), pt(t2))),
                         expected);
 
       check('t1 t1', 't2 i', [['t1', 'i'], ['t2', 'i']]);
@@ -129,6 +141,48 @@
             [['t', '(t2 t2)'], ['t1', '(t2 t2)']]);
       check('(t1 t2) (t2 t1)', 't3 t3',
             [['t3', '(t2 t2)'], ['t1', 't2']]);
+    },
+
+    function testAddTVars(a) {
+      const check = (str, expected) => {
+        var vars = new Set();
+        pt(str)._addTVars(vars);
+        return a.deepEqual(Array.from(vars).sort(), expected);
+      };
+
+      check('o i', []);
+      check('t1 t2 t3', ['t1', 't2', 't3']);
+      check('t3 t2', ['t2', 't3']);
+      check('(o t3) (t2 i) (t2 t2)', ['t2', 't3']);
+    },
+
+    function testTypeVars(a) {
+      const r = Toy.rules;
+
+      const the = r.definition('the').annotateWithTypes();
+      a.equal(the.typeVars().size, 1);
+
+      const all = r.definition('forall').annotateWithTypes();
+      a.equal(all.typeVars().size, 1);
+
+      const fun = r.axiom3().annotateWithTypes();
+      a.equal(fun.typeVars().size, 2);
+    },
+
+    function testSubsType(a) {
+      const r = Toy.rules;
+
+      const fun = r.axiom3().annotateWithTypes();
+      const vars = Array.from(fun.typeVars());
+      const pairs = [];
+      vars.forEach((v, i) => pairs.push([v, new TypeVariable('t' + i)]));
+      const textual =
+            fun.show().replaceAll(pairs[0][0], pairs[0][1])
+            .replaceAll(pairs[1][0], pairs[1][1]);
+
+      const map = new Map(pairs);
+      const result = fun.wff.subsType(map);
+      a.equal(result.show(), textual);
     },
 
   ];
