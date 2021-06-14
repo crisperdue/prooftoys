@@ -157,6 +157,10 @@ function fullUnifTypes(type1, type2) {
  * information to terms of these kinds.
  */
 Expr.prototype.subsType = function(map) {
+  if (!map.size) {
+    return this;
+  }
+
   // For Calls and Lambdas, if the substitution is a no-op on their
   // parts, the result is a no-op, so in these cases any existing type
   // information is kept; but if this creates a new object, it will
@@ -203,6 +207,9 @@ FunctionType.prototype.tsubst = function(map) {
           : new FunctionType(from, to));
 };
 
+
+//// Finding TypeVariable names.
+
 Expr.prototype.typeVars = function() {
   return this._addTVars(new Set());
 };
@@ -233,12 +240,12 @@ FunctionType.prototype._addTVars = function(vars) {
   this.toType._addTVars(vars);
 };
 
-//// XX TODO: before unifying type variables across
-//// steps, check for any type variables that occur in both
-//// and rename all of those in one of the steps.
+//// DISTINGUISHING TYPE VARIABLES
 
+// TODO: before unifying type variables across steps, check for any
+// type variables that occur in both and rename all of those in one of
+// the steps.
 
-//// TESTING AND DEBUGGING
 
 
 //// EXPORTS

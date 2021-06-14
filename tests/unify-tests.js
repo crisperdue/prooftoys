@@ -4,6 +4,8 @@
 
 +function() {
 
+  const rules = Toy.rules;
+
   const Bindings = Toy.Bindings;
   const TypeVariable = Toy.TypeVariable;
 
@@ -157,22 +159,18 @@
     },
 
     function testTypeVars(a) {
-      const r = Toy.rules;
-
-      const the = r.definition('the').annotateWithTypes();
+      const the = rules.definition('the').annotateWithTypes();
       a.equal(the.typeVars().size, 1);
 
-      const all = r.definition('forall').annotateWithTypes();
+      const all = rules.definition('forall').annotateWithTypes();
       a.equal(all.typeVars().size, 1);
 
-      const fun = r.axiom3().annotateWithTypes();
+      const fun = rules.axiom3().annotateWithTypes();
       a.equal(fun.typeVars().size, 2);
     },
 
     function testSubsType(a) {
-      const r = Toy.rules;
-
-      const fun = r.axiom3().annotateWithTypes();
+      const fun = rules.axiom3().annotateWithTypes();
       const vars = Array.from(fun.typeVars());
       const pairs = [];
       vars.forEach((v, i) => pairs.push([v, new TypeVariable('t' + i)]));
@@ -183,6 +181,39 @@
       const map = new Map(pairs);
       const result = fun.wff.subsType(map);
       a.equal(result.show(), textual);
+    },
+
+    function testDistinctifyTypes(a) {
+      const a3 = rules.axiom3().wff.annotateWithTypes();
+      {
+        const [x, t2] = a3.distinctifyTypes(a3);
+        a.ok(x !== a3, 'axiom3 changed');
+      }
+      const taut1 = rules.tautology('a => a').wff.annotateWithTypes();
+      {
+        const [t2, t1] = taut1.distinctifyTypes(taut1);
+        a.ok(t1 === t2, 'no type vars');
+      }
+      {
+        const [t1, t2] = a3.distinctifyTypes(taut1);
+        a.ok(t1 === a3 && t2 === taut1, 'no conflicts')
+      }
+      {
+        const xx = rules.eqSelf('x');
+        xx.wff.annotateWithTypes();
+        const x1 = rules.eqSelf('x + 1');
+        x1.wff.annotateWithTypes();
+        const [t1, t2] = xx.wff.distinctifyTypes(x1.wff);
+        a.ok(t1 === xx.wff && t2 === x1.wff, 'no conflicts');
+      }
+      {
+        const xx = rules.eqSelf('x');
+        xx.wff.annotateWithTypes();
+        const x1 = xx.andThen('instVar', 'x + 1', 'x');
+        x1.wff.annotateWithTypes();
+        const [t1, t2] = xx.wff.distinctifyTypes(x1.wff);
+        a.ok(t1 === xx.wff && t2 === x1.wff, 'no conflicts');
+      }
     },
 
   ];
