@@ -2646,6 +2646,7 @@ function Call(fn, arg) {
   this.memos = {};
   this.fn = fn;
   this.arg = arg;
+  this._type = null;
 }
 Toy.extends(Call, Expr);
 
@@ -3183,6 +3184,7 @@ function Lambda(bound, body) {
   this.memos = {};
   this.bound = bound;
   this.body = body;
+  this._type = null;
 }
 Toy.extends(Lambda, Expr);
 

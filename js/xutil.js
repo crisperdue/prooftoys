@@ -374,7 +374,7 @@ function findType(expr, annotate) {
       var argType = analyze(expr.arg, exit);
       var resultType = new TypeVariable();
       const err = unifyTypes(new FunctionType(argType, resultType),
-                               fnType, map);
+                             fnType, map);
       if (err instanceof Error) {
         exit(err);
       }
@@ -586,10 +586,6 @@ function unifyTypes(t1, t2, map) {
  *
  * Note that this is the identity function for objects that are not
  * type variables, including null and undefined.
- *
- * Also, unification(in type inference) mutates Type objects, so the
- * result may mutate as a result of any future unifications relevant
- * to this type.
  */
 function dereference(type, map) {
   if (type instanceof TypeVariable) {
@@ -619,11 +615,11 @@ function booleanBinOpType() {
  */
 function isBooleanBinOp(term) {
   var type = term.hasType();
-  if ((type instanceof FunctionType) && dereference(type.fromType) == boolean) {
-    var t1 = dereference(type.toType);
+  if ((type instanceof FunctionType) && type.fromType === boolean) {
+    var t1 = type.toType;
     return ((t1 instanceof FunctionType) &&
-            dereference(t1.fromType) == boolean &&
-            dereference(t1.toType) == boolean);
+            t1.fromType === boolean &&
+            t1.toType == boolean);
   } else {
     return false;
   }
