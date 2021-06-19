@@ -150,12 +150,10 @@ function fullUnifTypes(type1, type2) {
 
 //// TYPE SUBSTITUTION
 
-/**
- * Substitutes for the named type variables in this term, installing
- * type information for atoms.  If it leaves a Call or Lambda
- * unchanged, any type information remains, but it does not add type
- * information to terms of these kinds.
- */
+// Substitutes for the named type variables in this term, installing
+// type information for atoms.  If it leaves a Call or Lambda
+// unchanged, any type information remains, but it does not add type
+// information to terms of these kinds.
 Expr.prototype.subsType = function(map) {
   if (!map.size) {
     return this;
@@ -210,6 +208,8 @@ FunctionType.prototype.tsubst = function(map) {
 
 //// Finding TypeVariable names.
 
+// Computes and returns a Set of the names of
+// type variables apppearing within this expression.
 Expr.prototype.typeVars = function() {
   return this._addTVars(new Set());
 };
@@ -227,6 +227,9 @@ Expr.prototype._addTVars = function(vars) {
   }
   return vars;
 };
+
+// These add the names of all type variables appearing within their
+// type term to the given set of type variable names.
 
 TypeVariable.prototype._addTVars = function(vars) {
   vars.add(this.name);
