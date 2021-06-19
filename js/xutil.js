@@ -232,6 +232,10 @@ function parseTokens(tokens) {
   return result;
 }
 
+// TODO: Complete the transition from use of findType to
+// almost everywhere annotating with types, then using getType
+// or possible hasType.
+
 
 //// TYPE INFERENCE
 ////
@@ -249,15 +253,23 @@ function parseTokens(tokens) {
  * an error.
  */
 Expr.prototype.getType = function() {
-  return this._type || abort('Type not available: ' + this);
+  return this.hasType() || abort('Type not available: ' + this);
 };
 
 /**
- * Like getType, but returns a falsy value if there is no type
- * annotation.
+ * Like getType, but returns a falsy value if there are not sufficient
+ * type annotations.
  */
 Expr.prototype.hasType = function() {
-  return this._type;
+  const ctor = this.constructor;
+  if (ctor === Call) {
+    return this.fn.getType().toType;
+  } else if (ctor === Lambda) {
+    return new FunctionType(this.bound.getType(), this.body.getType());
+  } else {
+    // In this case it should be an Atom.
+    return this._type;
+  }
 };
 
 /**
@@ -912,10 +924,9 @@ function tokenize(str) {
 var _parsed = {};
 
 /**
- * Parses a string or array of token strings into an expression
- * (Expr).  Removes tokens parsed from the tokens list.  Aborts if
- * parsing fails or if findType cannot determine a type for the
- * expression.
+ * Parses a string or array of token strings into an expression (Expr)
+ * annotated with type information.  Removes tokens parsed from the
+ * tokens list.  Aborts if parsing or typing fails.
  */
 function parse(input) {
   if (typeof input == 'string' &&
@@ -923,7 +934,7 @@ function parse(input) {
     return _parsed[input];
   }
   var result = justParse(input);
-  findType(result);
+  result.annotateWithTypes();
   if (typeof input == 'string') {
     _parsed[input] = result;
   }
@@ -931,8 +942,8 @@ function parse(input) {
 }
 
 /**
- * Same as "parse", but does not try to find a type for the
- * expression and does not memoize in _parsed.
+ * Same as "parse", but does not annotate the result with types and
+ * does not memoize in _parsed.
  */ 
 function justParse(input) {
   try {
@@ -1218,7 +1229,7 @@ function mathParse(str) {
   }
   var expr = justParse(str);
   var result = expr.andMathVarConditions();
-  findType(result);
+  result.annotateWithTypes();
   _mathParsed.set(str, result);
   return result;
 }
