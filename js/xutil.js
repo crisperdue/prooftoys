@@ -58,30 +58,46 @@ TypeVariable.prototype.toString = function() {
   return this.name;
 };
 
-/**
- * When applying the "fresh" operation to a type expression, the
- * resulting expression has the same structure as the input, but all
- * occurrences of each "generic" type variable are replaced with
- * occurrences of the same new "fresh" type variable distinct from all
- * others.
- *
- * The mappings are from previous type variable names to new type
- * variable names (for generic types).
- *
- * Note: with only top-level definitions as in Prooftoys, generic type
- * variables are exactly those in the types of some constant.
- * Also I have read that definitions in "inner scopes" can have mixed
- * generic and non-generic type variables.
- */
+// When applying the "fresh" operation to a type expression, the
+// resulting expression has the same structure as the input, but all
+// occurrences of each "generic" type variable are replaced with
+// occurrences of the same new "fresh" type variable distinct from all
+// others.
+//
+// The mappings are from previous type variable names to new type
+// variable names (for generic types).
+//
+// Note: In Prooftoys generic type variables are those in the types of
+// constants, built-in or defined.  Luca Cardelli writes in his paper
+// "Basic Polymorphic Type Checking" that,
+//
+//   "A type variable occurring in the type of an expression e is
+//    generic (with respect to e) iff it does not occur in the type of
+//    the binder of any fun expression enclosing e." (p. 11)
+//
+// (His "fun" amounts to "lambda".)  In Prooftoys this includes
+// constructs such as:
+//
+//   if (ident true) (ident 3) 0
+// 
+// (In our logic it is important to free variables as if they are
+// within the scope of a binder.)
+//
+// The Wikipedia article at
+// /wiki/Hindley%E2%80%93Milner_type_system#Let-polymorphism comments
+// that "type inference in polymorphic lambda calculus is not
+// decidable", so it is not possible in general to support forms
+// such as [f. if (f true) (f 3) 0] [x. x].
 
 /**
- * If this dereferences to anything but a TypeVariable, or if it
- * occurs anywhere in nonGenerics, the result is just a dereference of
- * this.
+ * If this type variable is not generic in the current scope, this
+ * just returns its input.  For generics, this returns a type variable
+ * to replace it, though if a replacement has already been generate it
+ * uses that, as occurs for a FunctionType with multiple occurrences
+ * of the same type variable, such as the identity function.
  *
- * If this does resolve to a TypeVariable this returns its mapping,
- * creating a mapping to a brand new TypeVariable if no mapping
- * already exists.
+ * The "replacements" indicates replacement type variables already chosen
+ * for type variables in a generic type (generic FunctionType).
  */
 TypeVariable.prototype.fresh = function(mappings, nonGenerics, map) {
   var type = dereference(this, map);
