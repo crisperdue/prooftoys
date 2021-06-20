@@ -217,11 +217,12 @@ Expr.prototype.toString = function() {
 
 /**
  * Returns a string presenting this Expr or Step, including
- * type information for variables.
+ * type information for variables and potentially more.
+ * Level defaults to 'vars', but can be 'atoms'.
  */
-Expr.prototype.show = function () {
+Expr.prototype.show = function (level) {
   try {
-    Toy.showTypes = true;
+    Toy.showTypes = level || 'vars';
     return this.toString();
   } finally {
     Toy.showTypes = false;
@@ -2285,7 +2286,8 @@ Toy.extends(Atom, Expr);
  */
 Atom.prototype._toString = function() {
   const output = (useUnicode ? this.toUnicode() : this.pname);
-  return (Toy.showTypes && this._type && this.isVariable()
+  const level = Toy.showTypes;
+  return (level && this._type && (level === 'atoms' || this.isVariable())
           ? output + ":" + this._type.toString()
           : output);
 };
