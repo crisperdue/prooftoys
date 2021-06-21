@@ -440,7 +440,7 @@ function findType(expr, annotate) {
       return constantTypes[name].fresh({}, nonGenerics, map);
     }
     if (atom.isLiteral()) {
-      // I say integers are individuals.
+      // Numbers are individuals.
       return individual;
     }
     // Is it a bound or (already-seen) free variable, or constant seen
@@ -449,6 +449,11 @@ function findType(expr, annotate) {
       if (vars[i] == name) {
         var type = types[i];
         // Return a fresh instance of the variable's type.
+        //
+        // TODO: Consider dropping this call to "fresh" and the whole
+        //   nonGenerics concept as it only applies to constants, and
+        //   type variables in occurrences of constants are _always_
+        //   instantiated with fresh ones
         return type.fresh({}, nonGenerics, map);
       }
     }
@@ -609,8 +614,11 @@ function unifyTypes(t1, t2, map) {
 }
 
 /**
- * Returns the given type, removing indirections in the representation
- * of type variables.
+ * Returns the ultimate binding of the given type in the substitution
+ * map (a Map), removing indirections in the bindings of type
+ * variables.  If the given type is a TypeVar t1 that has a mapping to
+ * another TypeVar t2, this maps t1 directly to the ultimate binding,
+ * and does likewise to t2.
  *
  * Note that this is the identity function for objects that are not
  * type variables, including null and undefined.
