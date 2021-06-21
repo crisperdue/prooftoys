@@ -64,8 +64,8 @@ TypeVariable.prototype.toString = function() {
 // occurrences of the same new "fresh" type variable distinct from all
 // others.
 //
-// The mappings are from previous type variable names to new type
-// variable names (for generic types).
+// The mappings are from type variable names in the definition to
+// variable names in the instance (for generic types).
 //
 // Note: In Prooftoys generic type variables are those in the types of
 // constants, built-in or defined.  Luca Cardelli writes in his paper
@@ -99,21 +99,21 @@ TypeVariable.prototype.toString = function() {
  * The "replacements" indicates replacement type variables already chosen
  * for type variables in a generic type (generic FunctionType).
  */
-TypeVariable.prototype.fresh = function(mappings, nonGenerics, map) {
+TypeVariable.prototype.fresh = function(replacements, nonGenerics, map) {
   var type = dereference(this, map);
   if (type instanceof TypeVariable) {
     var name = type.name;
     if (occursInList(name, nonGenerics, map)) {
       return type;
     } else {
-      if (!mappings.hasOwnProperty(name)) {
-        mappings[name] = new TypeVariable();
+      if (!replacements.hasOwnProperty(name)) {
+        replacements[name] = new TypeVariable();
       }
-      return mappings[name];
+      return replacements[name];
     }
   } else {
     // The dereferenced value is not a type variable.
-    return type.fresh(mappings, nonGenerics, map);
+    return type.fresh(replacements, nonGenerics, map);
   }
 };
 
@@ -147,9 +147,9 @@ FunctionType.prototype.toString = function() {
   return '(' + this.toType + ' ' + this.fromType + ')';
 };
 
-FunctionType.prototype.fresh = function(mappings, nonGenerics, map) {
-  return new FunctionType(this.fromType.fresh(mappings, nonGenerics, map),
-                          this.toType.fresh(mappings, nonGenerics, map));
+FunctionType.prototype.fresh = function(replacements, nonGenerics, map) {
+  return new FunctionType(this.fromType.fresh(replacements, nonGenerics, map),
+                          this.toType.fresh(replacements, nonGenerics, map));
 };
 
 var individual = new TypeConstant('i');
