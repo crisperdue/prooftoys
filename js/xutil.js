@@ -248,10 +248,6 @@ function parseTokens(tokens) {
   return result;
 }
 
-// TODO: Complete the transition from use of findType to
-// almost everywhere annotating with types, then using getType
-// or possible hasType.
-
 
 //// TYPE INFERENCE
 ////
@@ -273,19 +269,11 @@ Expr.prototype.getType = function() {
 };
 
 /**
- * Like getType, but returns a falsy value if there are not sufficient
- * type annotations.
+ * Like getType, but returns a falsy value if the term is not
+ * annotated.
  */
 Expr.prototype.hasType = function() {
-  const ctor = this.constructor;
-  if (ctor === Call) {
-    return this.fn.getType().toType;
-  } else if (ctor === Lambda) {
-    return new FunctionType(this.bound.getType(), this.body.getType());
-  } else {
-    // In this case it should be an Atom.
-    return this._type;
-  }
+  return this._type;
 };
 
 /**
@@ -948,9 +936,10 @@ function tokenize(str) {
 var _parsed = {};
 
 /**
- * Parses a string or array of token strings into an expression (Expr)
- * annotated with type information.  Removes tokens parsed from the
- * tokens list.  Aborts if parsing or typing fails.
+ * Parses a string or array of token strings into an expression
+ * (Expr).  Removes tokens parsed from the tokens list.  Aborts if
+ * parsing or type checking fails.  If the input is a string, caches
+ * the result on success, and reuses a cached result if one exists.
  */
 function parse(input) {
   if (typeof input == 'string' &&
@@ -958,7 +947,7 @@ function parse(input) {
     return _parsed[input];
   }
   var result = justParse(input);
-  result.annotateWithTypes();
+  findType(result);
   if (typeof input == 'string') {
     _parsed[input] = result;
   }
@@ -1225,12 +1214,15 @@ function unparseString(content) {
 var _mathParsed = new Map();
 
 /**
- * If string begins with "@", simply parses the rest with "parse".
+ * If string begins with "@", simply parses the rest with "justParse".
  * Otherwise this also checks for any apparent math variables (as by
  * calling Expr.mathVars) and adds assumptions that all of those "math
  * variables" are real numbers.  If the main operator of the
  * expression is =>, concatenates any added assumptions at the end of
- * its LHS.  Given an Expr, simply returns it.
+ * its LHS and typechecks the result.
+ *
+ * With a string input, caches a sucessful result and uses any cached
+ * item.  Given an Expr, simply returns it.
  *
  * TODO: Eventually modify this to use type declarations for
  *   variables, such as "x is real".  It will then need an extra
@@ -1253,7 +1245,7 @@ function mathParse(str) {
   }
   var expr = justParse(str);
   var result = expr.andMathVarConditions();
-  result.annotateWithTypes();
+  findType(result);
   _mathParsed.set(str, result);
   return result;
 }
