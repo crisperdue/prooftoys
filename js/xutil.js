@@ -357,8 +357,12 @@ Expr.prototype.isIndividual = function() {
  */
 function findType(expr, annotate) {
   // TODO: Stop using findType this way.  Annotate "everything"
-  // we might want type informtion for instead.
+  // we might want type information for instead.
   if (expr._type) {
+    // This quick check can save time when subexpressions share
+    // structure.  (Not all sharing is permissible, but we will
+    // avoid identical terms that are in different scopes and so
+    // might cause problems.)
     return expr._type;
   }
   Toy.ft++;
