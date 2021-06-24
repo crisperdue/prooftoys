@@ -2021,7 +2021,9 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 //
 // The map argument is an object mapping variable names to replacement
 // expressions.  Substitutes the corresponding replacement expression
-// for each free occurrence of each name in this Expr.
+// for each free occurrence of each name in this Expr.  Also copies
+// type information to all newly-created terms as needed for the
+// operation of Axiom 4.
 //
 // newFreeVars must be given as an object / set of all names free in any
 // of the replacement expressions.
@@ -2364,7 +2366,6 @@ Atom.prototype.dump = function() {
 };
 
 Atom.prototype._subFree = function(map, freeVars, allNames) {
-  // Note that this assumes the map has no prototype.
   return map[this.name] || this;
 };
 
@@ -2737,7 +2738,13 @@ Call.prototype.dump = function() {
 Call.prototype._subFree = function(map, freeVars, allNames) {
   var fn = this.fn._subFree(map, freeVars, allNames);
   var arg = this.arg._subFree(map, freeVars, allNames);
-  return (fn == this.fn && arg == this.arg) ? this : new Call(fn, arg);
+  if (fn == this.fn && arg == this.arg) {
+    return this;
+  } else {
+    const result = new Call(fn, arg);
+    result._type = this._type;
+    return result;
+  }
 };
 
 Call.prototype.hasFreeName = function(name) {
@@ -3233,7 +3240,12 @@ Lambda.prototype._subFree = function(map, freeVars, allNames) {
   } else {
     const newBody = this.body._subFree(map, freeVars, allNames);
     // Don't copy anything if no substitution is actually done.
-    result = (newBody === this.body) ? this : new Lambda(this.bound, newBody);
+    if (newBody === this.body) {
+      result = this;
+    } else {
+      result = new Lambda(this.bound, newBody);
+      result._type = this._type;
+    }
   }
   if (savedRebinding) {
     map[boundName] = savedRebinding;
