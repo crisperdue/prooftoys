@@ -200,12 +200,24 @@ TypeConstant.prototype.tsubst = function(map) {
   return this;
 };
 
-FunctionType.prototype.tsubst = function(map) {
-  const from = this.fromType.tsubst(map);
-  const to = this.toType.tsubst(map);
-  return (from === this.fromType && to === this.toType
-          ? this
-          : new FunctionType(from, to));
+// Substitutes for type variables in this type.  The implementation
+// takes some care to share existing instances rather than creating new
+// ones, the main purpose being to avoid using unnecessary space.
+FunctionType.prototype.tsubst = function(map, seen = []) {
+  const from = this.fromType.tsubst(map, seen);
+  const to = this.toType.tsubst(map, seen);
+  if (from === this.fromType && to === this.toType) {
+    // This substitution is a no-op.
+    return this;
+  } else {
+    // The substitution affects this type, but
+    // avoid re-creating essentially the same type.
+    const found = (seen.find(x => x.equal(this)) ||
+                   Toy.commonTypes.find(x => x.equal(this)));
+    const result = found || new FunctionType(from, to);
+    seen.push(result);
+    return result;
+  }
 };
 
 

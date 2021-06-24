@@ -117,6 +117,11 @@ TypeVariable.prototype.fresh = function(replacements, nonGenerics, map) {
   }
 };
 
+TypeVariable.prototype.equal = function(other) {
+  return other === this;
+};
+
+
 /**
  * Type constant constructor.
  */
@@ -132,6 +137,10 @@ var tcMethods = {
 
   fresh: function(mapping, nonGenerics) {
     return this;
+  },
+
+  equal: function(other) {
+    return other === this;
   }
 };
 TypeConstant.addMethods(tcMethods);
@@ -151,6 +160,13 @@ FunctionType.prototype.fresh = function(replacements, nonGenerics, map) {
   return new FunctionType(this.fromType.fresh(replacements, nonGenerics, map),
                           this.toType.fresh(replacements, nonGenerics, map));
 };
+
+FunctionType.prototype.equal = function(other) {
+  return (other instanceof FunctionType &&
+          other.fromType.equal(this.fromType) &&
+          other.toType.equal(this.toType));
+};
+
 
 var individual = new TypeConstant('i');
 var boolean = new TypeConstant('o');
@@ -686,6 +702,15 @@ function ifType() {
   const v = new TypeVariable();
   return fn(boolean, fn(v, fn(v, v)));
 }
+
+// Common composite constant types.
+const commonTypes =
+  [
+   booleanBinOpType(),
+   funType(),
+   fun2Type(),
+   new FunctionType(Toy.boolean, Toy.boolean)
+   ];
 
 // Primitive constants.  Unlike textbook, these include T and F.
 var _primitives = {T: true, F: true, '=': true, the1: true};
@@ -2027,6 +2052,7 @@ Toy.definitions = definitions;
 
 Toy.boolean = boolean;
 Toy.individual = individual;
+Toy.commonTypes = commonTypes;
 Toy.realType = realType;
 Toy.TypeCheckError = TypeCheckError;
 Toy.TypeVariable = TypeVariable;
