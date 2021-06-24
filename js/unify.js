@@ -150,10 +150,12 @@ function fullUnifTypes(type1, type2) {
 
 //// TYPE SUBSTITUTION
 
-// Substitutes for the named type variables in this term, installing
-// type information for atoms.  If it leaves a Call or Lambda
-// unchanged, any type information remains, but it does not add type
-// information to terms of these kinds.
+// TODO: Consider whether the constructors for Call and Lambda
+// should install type information where possible.
+
+// Substitutes for the named type variables in this term, returning
+// a term with updated type information.  If the substitution is a
+// no-op, returns this term.
 //
 // The map preferably should not have any identity mappings; this
 // copies structure any time a mapping applies to a node's type.
@@ -162,21 +164,28 @@ Expr.prototype.subsType = function(map) {
     return this;
   }
 
-  // For Calls and Lambdas, if the substitution is a no-op on their
-  // parts, the result is a no-op, so in these cases any existing type
-  // information is kept; but if this creates a new object, it will
-  // have no type information.
+  // This may create new objects, and if so we need to install the new
+  // type information.
   if (this instanceof Call) {
     const fn = this.fn.subsType(map);
     const arg = this.arg.subsType(map);
-    return (fn === this.fn && arg === this.arg
-            ? this
-            : new Call(fn, arg));
+    if (fn === this.fn && arg === this.arg) {
+      return this;
+    } else {
+      const result = new Call(fn, arg);
+      result._type = fn._type.toType;
+      return result;
+    }
   } else if (this instanceof Lambda) {
     const body = this.body.subsType(map);
-    return (body === this.body
-            ? this
-            : new Lambda(this.bound, body));
+    const bound = this.bound.subsType(map);
+    if (body === this.body && bound === this.bound) {
+      return this;
+    } else {
+      const result = new Lambda(bound, body);
+      result._type = new FunctionType(bound._type, body._type);
+      return result;
+    }
   } else if (this instanceof Atom) {
     const type = this._type.tsubst(map);
     if (type === this._type) {
