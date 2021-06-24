@@ -154,6 +154,9 @@ function fullUnifTypes(type1, type2) {
 // type information for atoms.  If it leaves a Call or Lambda
 // unchanged, any type information remains, but it does not add type
 // information to terms of these kinds.
+//
+// The map preferably should not have any identity mappings; this
+// copies structure any time a mapping applies to a node's type.
 Expr.prototype.subsType = function(map) {
   if (!map.size) {
     return this;
@@ -249,6 +252,22 @@ FunctionType.prototype._addTVars = function(vars) {
 // type variables that occur in both and rename all of those in one of
 // the steps.
 
+// Returns this if none of its recorded type variable names
+// is the same as any in the other given term; otherwise
+// makes a copy with all names distinct from type names
+// in the argument term.
+Expr.prototype.distinctifyTypes = function(term2) {
+  const term1 = this;
+  const vars1 = term1.typeVars();
+  const vars2 = term2.typeVars();
+  const conflicts = Toy.intersection(vars1, vars2);
+  const map = new Map();
+  for (const name of conflicts) {
+    map.set(name, new TypeVariable());
+  }
+  const t1 = term1.subsType(map);
+  return [t1, term2];
+};
 
 
 //// EXPORTS
