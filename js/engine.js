@@ -115,12 +115,13 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   //   to it.
 
   // Allocate a new object to be the new Step.
-  var result = (step instanceof Call
-              ? new Call(step.fn, step.arg)
-              : step instanceof Atom
-              ? new Atom(step.pname)
-              // Impossible for a step!
-              : null);
+  const result = (step instanceof Call
+                  ? new Call(step.fn, step.arg)
+                  : step instanceof Atom
+                  ? new Atom(step.pname)
+                  // Impossible for a step!
+                  : null);
+  result._type = step._type;
 
   // The beginnings of a Step class.  Only steps will have the
   // following properties, with .wff accessing the top expression
