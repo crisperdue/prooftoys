@@ -671,10 +671,10 @@ function isBooleanBinOp(term) {
 
 /**
  * Function of any two things of the same type, with boolean result.
+ * The input type defaults to a new type variable.
  */
-function equalityType() {
-  var v = new TypeVariable();
-  return new FunctionType(v, new FunctionType(v, boolean));
+function equalityType(ofType = new TypeVariable()) {
+  return new FunctionType(ofType, new FunctionType(ofType, boolean));
 }
 
 /**
@@ -707,13 +707,16 @@ function ifType() {
   return fn(boolean, fn(v, fn(v, v)));
 }
 
-// Common composite constant types.
+// Common monomorphic composite constant types.
+// This list supports sharing of the instances.
 const commonTypes =
   [
    booleanBinOpType(),
    funType(),
    fun2Type(),
-   new FunctionType(Toy.boolean, Toy.boolean)
+   equalityType(individual),
+   new FunctionType(boolean, boolean),
+   new FunctionType(individual, boolean)
    ];
 
 // Primitive constants.  Unlike textbook, these include T and F.
@@ -969,12 +972,22 @@ var _parsed = {};
  * (Expr).  Removes tokens parsed from the tokens list.  Aborts if
  * parsing or type checking fails.  If the input is a string, caches
  * the result on success, and reuses a cached result if one exists.
+ *
+ * TODO: Consider whether the result should be typed, or whether there
+ *   should be a separate function for that.  Typed constants such as
+ *   T, and literals, deserve some special treatment.  We should make
+ *   fewer copies of monomorphic constants, and perhaps some variables
+ *   should also be typed (e.g. by their names); and fewer copies
+ *   made.
  */
 function parse(input) {
   if (typeof input == 'string' &&
       _parsed.hasOwnProperty(input)) {
     return _parsed[input];
   }
+  // TODO: This line works at a higher level than the rest of
+  //   the code for parsing.  Consider re-specifying "parse"
+  //   or adding something at higher level.
   var result = justParse(input);
   findType(result);
   if (typeof input == 'string') {
