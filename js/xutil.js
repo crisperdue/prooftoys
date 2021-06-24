@@ -277,6 +277,20 @@ function parseTokens(tokens) {
 // TODO: More and better comments throughout the type analysis code.
 
 /**
+ * Make a copy suitable for attaching type information destructively.
+ * This is internal to a few implementations such as Axiom 4 and
+ * Rule R.
+ *
+ * TODO: Refine this to copy less, sharing instances of monomorphic
+ * constants, plus instances of variables that are in the same scope.
+ * Variables with specific monomorphic types could be shared here if
+ * implemented.
+ */
+Expr.prototype.copyForTyping = function() {
+  return this.deepCopy();
+};
+
+/**
  * Expr method that returns any annotated type, otherwise aborts with
  * an error.
  */
