@@ -445,6 +445,9 @@ function findType(expr, annotate) {
     }
     if (annotate) {
       expr._type = result;
+      if (expr instanceof Lambda) {
+        expr.bound._type = result.fromType;
+      }
     }
     return result;
   }
@@ -514,7 +517,8 @@ function findType(expr, annotate) {
       annotateAll(term.arg);
       annotateAll(term.fn);
     } else if (term instanceof Lambda) {
-      annotateAll(term.body)
+      annotateAll(term.bound);
+      annotateAll(term.body);
     }
     term._type = doClean ? undefined : tidy(term._type);
   }
@@ -2083,6 +2087,7 @@ Toy.definitions = definitions;
 
 Toy.boolean = boolean;
 Toy.individual = individual;
+Toy.equalityType = equalityType;
 Toy.commonTypes = commonTypes;
 Toy.realType = realType;
 Toy.TypeCheckError = TypeCheckError;
@@ -2112,7 +2117,6 @@ Toy.mathParse = mathParse;
 Toy.parseStringContent = parseStringContent;
 
 // For testing:
-Toy._equalityType = equalityType;
 Toy.unparseString = unparseString;
 Toy._decodeArg = decodeArg;
 Toy._parsed = _parsed;
