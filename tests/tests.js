@@ -802,7 +802,7 @@ var testCase = {
     assertEqual('{x: true}', Toy.debugString(map));
   },
 
-  testCopyForRendering: function() {
+  testDeepCopy: function() {
     // TODO: Test the rendering-related aspects.
     var source = '(x = x)';
     var target = Toy.parse(source);
