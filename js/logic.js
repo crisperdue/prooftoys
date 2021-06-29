@@ -2914,7 +2914,10 @@ declare(
                      .andThen('instForall', '/right', 'y')
                      .andThen('toForall1', 'x')
                      .andThen('toForall1', 'y'));
-      return rules.p2(step1, step1, '(a => b) & (b => a) => (a == b)');
+      const step2 = (step1
+                     .andThen('instVar', '{x. {y. p y x}}', 'p')
+                     .andThen('reduceAll', ''));
+      return rules.p2(step1, step2, '(a => b) & (b => a) => (a == b)');
     }
   },
 
