@@ -2054,27 +2054,25 @@ declare(
     menu: 'substitute for a free variable',
     tooltip: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
-    description: 'substitute for {var};; {in step step}'
+    description: 'substitute for {var};; {in step step}',
+    labels: 'advanced'
   },
 
   // Same functionality as instVar, but with a site (step+path) and a
-  // term as the arguments.
+  // term as the arguments.  Inline, variant of instVar.
   {name: 'instantiateVar',
+    toOffer: 'return term.isVariable()',
     action: function(step, path, term) {
       const v = step.get(path);
       assert(v.isVariable(), 'Not a variable: {1}', v);
-      var map = {};
-      map[v.name] = term;
-      var result = rules.instMultiVars(step, map);
-      return result.justify('instantiateVar', arguments, [step]);
+      return rules.instVar(step, term, v);
     },
     inputs: {site: 1, term: 3},
-    toOffer: 'return term.isVariable()',
     form: ('Substitute <input name=term> for {term}'),
     menu: 'substitute for {term}',
     tooltip: ('In a theorem substitute an expression for'
               + ' all occurrences of a free variable.'),
-    description: 'substitute for {site};; {in step siteStep}',
+   // This rule is inline, so has no description.
     labels: 'basic'
   },
 
