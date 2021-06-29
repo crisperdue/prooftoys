@@ -1026,9 +1026,14 @@ declare(
    * In case the body of the lambda has any free occurrence of the
    * given new name, this uses a name with the same initial letter as
    * the given name, but distinct from all of its free variables.
+   *
+   * TODO: Make this work also with the bound variable as the site.
+   * In that case check the parent path (Path.parent).  Keep current
+   * behavior for compatibility.  Possibly classify as "advanced"
+   * again.
    */
   {name: 'renameBound',
-   action: function(step, path, name_arg, map) {
+   action: function(step, path, name_arg) {
       const newName = typeof name_arg === 'string' ? name_arg : name_arg.name;
       var target = step.get(path);
       // Report the step, but not in the message.
@@ -1045,7 +1050,7 @@ declare(
       var step2 = rules.r(step1, step, path);
       return step2.justify('renameBound', arguments, [step]);
     },
-   labels: 'advanced',
+   labels: 'basic',
    inputs: {bindingSite: 1, varName: 3},
    form: ('Rename to <input name=varName>'),
    menu: 'rename bound variable',
