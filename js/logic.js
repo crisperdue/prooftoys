@@ -212,19 +212,28 @@ declare(
    * in other words, a substitution.
    */
   {name: 'axiom4',
-    action: function(call) {
-      call = typeof call == 'string' ? Toy.parse(call) : call;
-      assert(call.isLambdaCall(),
-             'Axiom 4 needs ({v. B} A), got: {1}', call);
+    action: function(call_arg) {
+      const call1 = (typeof call_arg == 'string'
+                     ? Toy.parse(call_arg)
+                     : call_arg);
+      assert(call1.isLambdaCall(),
+             'Axiom 4 needs ({v. B} A), got: {1}', call_arg);
+      // TODO: Consider requiring type info to be present.
+      const call = (call1.hasType()
+                    ? call1
+                    : call1.copyForTyping().annotateWithTypes());
       var lambda = call.fn;
-      var result =
-        (call.arg.name === lambda.bound.name
-         // In this case the substitution will have no effect,
-         // though subFree might incidentally rename the bound variable.
-         ? equal(call, lambda.body)
-         : equal(call, lambda.body.subFree1(call.arg, lambda.bound.name)));
-      // Always make sure the call has a type.  It came from elsewhere.
-      Toy.findType(call);
+      const result =
+            equal(call, lambda.body.subFree1(call.arg, lambda.bound.name));
+      // All of this because the constructors don't install the
+      // type information when it is available.
+      //
+      // TODO: Consider having the constructors do this when the
+      //   type information is available.
+      result.arg._type = result.fn.arg._type = call._type;
+      result.fn._type = new Toy.FunctionType(call._type, Toy.boolean);
+      result.fn.fn._type = Toy.equalityType(call._type);
+      result._type = Toy.boolean;
       return result.justify('axiom4', [call]);
     },
     labels: 'primitive',
