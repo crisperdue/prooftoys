@@ -2420,11 +2420,6 @@ Atom.prototype.sameAs = function(expr) {
 };
 
 Atom.prototype.matches = function(expr, bindings) {
-  if (expr == this) {
-    // It turns out that this is true when expr is a string equal to
-    // this.toString().
-    return true;
-  }
   if (expr instanceof Atom) {
     var expectedName = getBinding(this.name, bindings) || this.name;
     return expr.name === expectedName;
@@ -2890,7 +2885,7 @@ Call.prototype.sameAs = function(expr) {
 };
 
 Call.prototype.matches = function(expr, bindings) {
-  if (expr == this) {
+  if (expr === this && bindings === undefined) {
     return true;
   }
   if (expr instanceof Call) {
@@ -3322,7 +3317,7 @@ Lambda.prototype.sameAs = function(expr) {
 };
 
 Lambda.prototype.matches = function(expr, bindings) {
-  if (expr == this) {
+  if (expr === this && bindings === undefined) {
     return true;
   }
   if (expr instanceof Lambda) {
