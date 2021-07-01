@@ -1923,7 +1923,7 @@ function encodeSteps(steps_arg) {
  * From the given input expression or string to be parsed, computes
  * and returns an array of steps, empty in case of failure.
  *
- * TODO: Consider possibly returning null for failure.
+ * Returns a (strict) Error in case of failure.
  */
 function decodeSteps(input) {
   const parsed = typeof input == 'string' ? justParse(input) : input;
@@ -1955,11 +1955,13 @@ function decodeSteps(input) {
       if (result) {
         outSteps.push(result);
       } else {
-        Toy.abort('No result from rule {1} with args {2}',
-                 ruleName, args);
+        return Toy.newError({with: {steps: outSteps}},
+                            'No result from rule {1} with args {2}',
+                            ruleName, args);
       }
     } else {
-      abort('No such rule: {1}', ruleName);
+      return Toy.newError({with: {steps: outSteps}},
+                          'No such rule: {1}', ruleName);
     }
   }
   return outSteps;
@@ -2032,11 +2034,15 @@ function dumpProof(proofEditor) {
  * Given an array of step descriptions, each in the serialized form as
  * from encodeSteps, builds a proof consisting of those steps, and
  * returns the proved result (last step).
+ *
+ * In case of an Error return from decodeSteps, returns that error.
  */
 function decodeProof(steps_arg) {
   const steps = ['(steps '].concat(steps_arg, ')');
-  const decoded = decodeSteps(steps.join('\n'));
-  return decoded[decoded.length - 1];
+  let decoded = decodeSteps(steps.join('\n'));
+  return (decoded instanceof Error
+          ? decoded
+          : decoded[decoded.length - 1]);
 }
 
 

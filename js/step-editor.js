@@ -114,9 +114,9 @@ function ProofEditor(options_arg) {
     ($('<div class=proofEditorHeader>')
      .append('<b>Worksheet "<span class=wksName></span>"</b>'));
   let $readOnly =
-    $('<p class=ifReadOnly><i><b style="color:red">Note:</b>' +
-      ' This display is read-only due to editing' +
-      ' in progress in another window or tab.</i></p>');
+    $('<p class=ifProofLoadError><i><b style="color:red">' +
+      'An error occurred executing the proof.</b><br>' +
+      'View the workspace as text to see steps not executed.<br></i></p>');
 
   // Top-level element of the proof editor display:
 
@@ -204,7 +204,7 @@ function ProofEditor(options_arg) {
     // Restore proof state if available.
     const proofData = Toy.readDoc(self._documentName);
     if (proofData) {
-      mainDisplay.setSteps(Toy.decodeSteps(proofData.proofState));
+      this.setSteps(Toy.decodeSteps(proofData.proofState));
       self.fromDoc = true;
     }
   }
@@ -699,6 +699,7 @@ ProofEditor.prototype.clear = function() {
   this.stepEditor.reset();
   const stepsInfo = this.initialSteps;
   const steps = (stepsInfo ? Toy.decodeSteps(stepsInfo) : []);
+  // TODO: Respond in some way to any error in decoding.
   this.proofDisplay.setSteps(steps);
 };
 
@@ -810,7 +811,14 @@ ProofEditor.prototype.setStateFromString = function(encoded) {
  * Sets the steps to the given array of non-renderable steps.
  */
 ProofEditor.prototype.setSteps = function(steps) {
-  this.proofDisplay.setSteps(steps);
+  if (steps instanceof Error) {
+    this.proofDisplay.setSteps(steps.steps);
+    this.setEditable(false);
+    this.toggleClass('proofLoadError', true);
+  } else {
+    this.proofDisplay.setSteps(steps);
+    this.toggleClass('proofLoadError', false);
+  }
 };
 
 /**
@@ -850,6 +858,13 @@ ProofEditor.prototype.setEditable = function(value) {
   // step editor.
   this.proofDisplay.setEditable(value);
   this.stepEditor.$node.toggle(value);
+};
+
+/**
+ * Toggles a CSS class on the main node of this proof editor.
+ */
+ProofEditor.prototype.toggleClass = function(className, truthy) {
+  this.containerNode.toggleClass(className, truthy);
 };
 
 /**

@@ -896,9 +896,10 @@ window.addEventListener('error', event => {
 });
 
 /**
- * Create and return an error using a template message and arguments.
- * If a plain object is passed instead of a template string, treat
- * that as options preceding the other arguments.
+ * Create and return a "strict" error using a template message and
+ * arguments.  If a plain object is passed instead of a template
+ * string, treat that as options preceding the other arguments.
+ * Enters the debugger if debugging is active.
  */
 function newError(template, ...args) {
   function err(options, msg, ...args) {
@@ -908,7 +909,10 @@ function newError(template, ...args) {
     if ('from' in options) {
       e.from = options.from;
     }
-    return e;
+    // In Chrome, flag this next line as "never pause" to
+    // suppress entry to the debugger.
+    debugger;
+    return strict(e);
   }
   return (typeof template === 'string'
           ? err({}, template, ...args)

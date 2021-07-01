@@ -274,8 +274,17 @@ $(function() {
         }
         const display = new Toy.ProofDisplay();
         window.proofDisplay = display;
-        display.setSteps(Toy.decodeSteps(stepsInfo));
-        $(this).append(display.node);
+        const decoded = Toy.decodeSteps(stepsInfo);
+        if (decoded instanceof Error) {
+          // TODO: Give the ordinary user at least a hint that
+          //   something went wrong.
+          console.error('Failed to decode steps:');
+          console.error(decoded);
+          display.setSteps([]);
+        } else {
+          display.setSteps(decoded);
+          $(this).append(display.node);
+        }
       });
       })});
 

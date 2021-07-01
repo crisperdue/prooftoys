@@ -539,7 +539,7 @@ ProofDisplay.prototype.isEditable = function() {
 /**
  * Makes the control editable or not by showing/hiding the
  * editor button and flagging its state.  Also updates event
- * handling accordingly.  Can turn on hoverHighling, but never
+ * handling accordingly.  Can turn on hoverHighlighting, but never
  * turns it off.
  */
 ProofDisplay.prototype.setEditable = function(state) {
