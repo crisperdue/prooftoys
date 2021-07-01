@@ -853,7 +853,7 @@ function sortMap(object, comparator) {
  * arguments to Toy.format.
  *
  * If the first argument is not an Error or string, it is treated as a
- * pure object with properties controlling details of the abort:
+ * plain object with properties controlling details of the abort:
  *
  *   with: value is a map of properties to attach to the Error object.
  *
@@ -861,6 +861,22 @@ function sortMap(object, comparator) {
  * options.
  */
 function abort(msg, ...args) {
+  function _abort(options, msg, ...args) {
+    const e = newError(options, msg, ...args);
+    let step;
+    // Find a step argument if there is one.
+    for (var i = 0; i < args.length; i++) {
+      var arg = args[i];
+      if (Toy.isProved(arg)) {
+        // TODO: Handle multiple "step" arguments.
+        step = arg;
+        break;
+      }
+    }
+    e.step = step;
+    Toy.thrown = e;
+    throw e;
+  }
   if (msg instanceof Error) {
     const error = msg;
     Toy.thrown = error;
@@ -872,36 +888,31 @@ function abort(msg, ...args) {
   }
 }
 
-// For uncaught exceptions, indicate that no abort is in progress.
-// This listener is pretty innocuous, so we install it early.  
+// In case of uncaught exceptions, reset state to indicate that no
+// abort is in progress.  This listener is pretty innocuous, so we
+// install it early.
 window.addEventListener('error', event => {
   Toy.exitTarget = Toy.exitValue = Toy.thrown = undefined;
 });
 
+/**
+ * Create and return an error using a template message and arguments.
+ * If a plain object is passed instead of a template string, treat
+ * that as options preceding the other arguments.
+ */
 function newError(template, ...args) {
-  return new Error(Toy.format(template, ...args));
-}
-
-function _abort(options, msg, ...args) {
-  const e = newError(msg, ...args);
-  let step;
-  // Find a step argument if there is one.
-  for (var i = 0; i < args.length; i++) {
-    var arg = args[i];
-    if (Toy.isProved(arg)) {
-      // TODO: Handle multiple "step" arguments.
-      step = arg;
-      break;
+  function err(options, msg, ...args) {
+    const e = new Error(Toy.format(msg, ...args));
+    const props = 'with' in options ? options.with : {};
+    Object.assign(e, props);
+    if ('from' in options) {
+      e.from = options.from;
     }
+    return e;
   }
-  e.step = step;
-  const props = 'with' in options ? options.with : {};
-  Object.assign(e, props);
-  if ('from' in options) {
-    e.from = options.from;
-  }
-  Toy.thrown = e;
-  throw e;
+  return (typeof template === 'string'
+          ? err({}, template, ...args)
+          : err( ...arguments));
 }
 
 // Calls the function with no arguments in a context where the given
