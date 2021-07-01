@@ -527,22 +527,25 @@ function addRule(info) {
     }
   }
   if (proof) {
-    // A proof was given, but no statement.
-    //
-    // TODO: Treat this as an error condition.  There is no good
-    //   reason for this scenario, and it prevents immediately
-    //   generating variants such as swapped facts.
-    // 
-    // Don't rerun the proof every time, but do re-justify on each
-    // call so each use will return a step with its own ordinal.
+    // Just execute the proof on first use, but re-justify on each
+    // use so the result will have its own ordinal.
     rule = function() { 
       if (rule.result === undefined) {
         rule.result = proof();
-        if (statement) {
-          assert(rule.result.matches(statement),
-                 'Failed to prove {1},\n  instead proved {2}',
-                 statement, rule.result);
-        }
+      }
+      if (rule.result instanceof Error) {
+        // Abort if there is no statement!
+        assert(statement, 'Failed to prove {1}');
+        console.error(Toy.format('Failed to prove {1}, asserting instead'));
+        // Assert it on every use.
+        return rules.assert(statement);
+      }
+      if (statement && !rule.result.matches(statement)) {
+        console.error(Toy.format(
+          'Failed to prove {1},\n  instead proved {2},\n  asserting instead',
+          statement, rule.result));
+        // Assert it on every use.
+        return rules.assert(statement);
       }
       return rule.result.justify(name, []);
     };
