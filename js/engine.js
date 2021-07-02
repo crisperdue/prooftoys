@@ -552,7 +552,7 @@ function addRule(info) {
     // Describe theorems as "theorem" by default.
     // The theorem name will be added as ruleName into the tooltip.
     if (!('description' in info)) {
-      info.description = 'theorem'
+      info.description = 'theorem ' + name
     }
   } else {
     // It is a rule of inference, not an axiom or theorem.
