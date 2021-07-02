@@ -339,16 +339,16 @@ definition('recip = {x. 1 / x}');
 
 declare(
    {statement: 'not (x < x)', axiom: true,
-    description: 'strict ordering axiom 1'
+    description: 'axiom 1 of "<"'
    },
    {statement: 'x < y => not (y < x)', axiom: true,
-    description: 'strict ordering axiom 2'
+    description: 'axiom 2 of "<"'
    },
    {statement: 'x < y | y < x | x = y', axiom: true,
-    description: 'strict ordering axiom 3'
+    description: 'axiom 3 of "<"'
    },
    {statement: 'x < y & y < z => x < z', axiom: true,
-    description: 'strict ordering transitivity'
+    description: 'transitivity of "<"'
    },
 
    // Completeness:
