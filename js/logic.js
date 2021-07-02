@@ -12,6 +12,7 @@
 const assert = Toy.assertTrue;
 const abort = Toy.abort;
 const assertEqn = Toy.assertEqn;
+const newError = Toy.newError;
 
 const varify = Toy.varify;
 const constify = Toy.constify;
@@ -600,9 +601,12 @@ declare(
    */
   {name: 'theorem',
     action: function(name) {
-      assert(rules[name], 'No theorem named {1}', name);
-      assert(rules[name].length == 0,
-             'Rule needs argument(s): {1}', name);
+      if (!rules[name]) {
+        return newError('No theorem named {1}', name);
+      }
+      if (!(rules[name].length == 0)) {
+        return newError('Rule needs argument(s): {1}', name);
+      }
       return rules[name]();
     },
     inputs: {string: 1},
