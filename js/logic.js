@@ -618,6 +618,36 @@ declare(
     labels: 'basic'
   },
 
+  // Add a new named theorem to the rules.
+  //
+  // TODO: This and a few other commands change system state, and
+  //   similarly changes to the set of supporing "theory" files.  So
+  //   in some cases a page reload may be needed to refresh the state.
+  //   We may want to annotate commands that change state, and track
+  //   changes that can desynchronize the state.
+  {name: 'addTheorem',
+   action: function(step, name) {
+     if (rules[name]) {
+       return newError('Theorem {1} already exists', name);
+     }
+     const info = {
+       name: name,
+       statement: '@' + step.wff.toString(),
+       proof: function() {
+         return step;
+       },
+       description: 'theorem ' + name
+     };
+     Toy.addRule(info);
+     return step.justify('addTheorem', arguments, [step], true);
+   },
+   inputs: {step: 1, string: 2},
+   form: ('Add theorem named <input name=string>'),
+   menu: 'as a named theorem (experimental)',
+   description: 'proved "{string}";; {in step step}',
+   labels: 'advanced'
+  },
+
   /**
    * Refer to a definition in the definitions database.  Returns null
    * if no definition is found.
