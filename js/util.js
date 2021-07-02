@@ -21,9 +21,10 @@ window.Toy = window.Toy || {};
 function $(x) {
   if (arguments.length > 1) {
     return jQuery.apply(null, arguments);
+  } else if (typeof x === 'function') {
+    return Toy.onReady(x);
   } else if (typeof x === 'string' ||
-             typeof x === 'function' ||
-             x.nodeType ||
+                          x.nodeType ||
              x === window ||
              x instanceof jQuery) {
     return jQuery(x);
@@ -36,7 +37,7 @@ jQuery.extend($, jQuery);
 
 (function() {
 
-// Alternative to jQuery $(fn); not currently in use.
+// Alternative to jQuery $(fn).  Used by our own "$" function above.
 Toy.onReady = function(fn) {
   if (document.readyState === 'loading') {  // Loading hasn't finished yet
     document.addEventListener('DOMContentLoaded', fn);

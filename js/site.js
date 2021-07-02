@@ -220,13 +220,15 @@ menuTrigger && (menuTrigger.onclick = function() {
   // body.classList.toggle('lock-scroll');
   });
 
-// Initializations on DOM ready.
+// Initializations on DOM ready.  When this file is loaded before
+// util.js, the "$" here refers to jQuery.  In other files it
+// will be our own "$".
 $(function() {
-    Promise.resolve().then
-      // Initializing after promise resolution takes this code
-      // out of the jQuery "ready" handler try-catch, so it is
-      // easier to debug.
-      (function() {
+  Promise.resolve().then
+  // Initializing after promise resolution takes this code
+  // out of the jQuery "ready" handler try-catch, so errors
+  // here become uncaught as we prefer them to be.
+  (function() {
     // Create a proof editor for each div.proof-editor node,
     // initializing its steps from a data-steps attribute if the
     // constructor does not load steps from a document.  Re-visiting a
@@ -269,8 +271,9 @@ $(function() {
           display.setSteps(decoded);
           $(this).append(display.node);
         }
-      });
-      })});
+    });
+  })
+});
 
 //// Managing the footer to account for (invisible) absolute DIVs
 
