@@ -963,8 +963,9 @@ function wantLeftElision(step) {
 function renderWff(step) {
   var wff = step.wff;
   var $wff;
-  if (step.ruleName === 'display') {
-    // Just render everything in case of a "display" step.
+  if (step.ruleName === 'display' ||
+      step.ruleName === 'addTheorem') {
+    // Just render everything in a couple of special cases.
     return dom(wff.renderTopConj(0));
 
   } else if (step.ruleName === 'assume' ||
@@ -1554,12 +1555,12 @@ function adjacentSteps(step1, step2) {
 }
 
 /**
- * Returns HTML text describing the step, displayed after the formula
- * on each proof line.  This is an HTML description of a proof step
- * followed by references to other steps this one depends on.  This
- * finds the description in the rule's 'description' property as a
- * template.  Expands paired braces using expandMarkup.  Any text
- * after a ";;" pair is formatted as arguments to the rule.  
+ * Returns HTML text describing the renderable step, displayed after
+ * the formula on each proof line.  This is an HTML description of a
+ * proof step followed by references to other steps this one depends
+ * on.  This finds the description in the rule's 'description'
+ * property as a template.  Expands paired braces using expandMarkup.
+ * Any text after a ";;" pair is formatted as arguments to the rule.
  *
  * Automatically formats site-type dependencies as "in step ... ".
  * If there is no markup that refers to steps, formats other step
@@ -1606,11 +1607,16 @@ function formattedStepInfo(step) {
   var classes = (step.ruleName == 'fact' ||
                  (step.details &&
                   step.details.ruleName !== 'assert' &&
+                  // If the details are already rendered, there is no
+                  // point in displaying in the link style.
+                  !step.details.rendering &&
                   Toy.modes.subproofs)
                  ? 'ruleName link'
                  : 'ruleName');
   // black up-pointing small triangle
-  var hider = '<span class=subproofIndicator>\u25b4</span>';
+  var hider = (classes === 'ruleName'
+               ? ''
+               : '<span class=subproofIndicator>\u25b4</span>');
   var $d1 = ($('<span>')
              .prop({className: classes, title: info.tooltip})
              .append(hider, ' ', d1, ' ', hider));
