@@ -406,8 +406,9 @@ declare(
       // Always make a new step, that is the point.
       return step.justify('copy', arguments, [step], true);
     },
-    inputs: {step: 1},
-    description: 'copy;; {of step step}'
+   inputs: {step: 1},
+   menu: 'copy step',
+   description: 'copy;; {of step step}'
   },
 
   /**
