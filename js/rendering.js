@@ -5,23 +5,6 @@
 
 //// Initialization and utilities
 
-/**
- * Version of the jQuery $ function that type checks its input.
- */
-function $(x) {
-  if (arguments.length > 1) {
-    return jQuery.apply(null, arguments);
-  } else if (typeof x === 'string' ||
-             typeof x === 'function' ||
-             x.nodeType ||
-             x === window ||
-             x instanceof jQuery) {
-    return jQuery(x);
-  } else {
-    throw new Error('Not a DOM node: ' + x);
-  }
-}
-jQuery.extend($, jQuery);
 
 // Set all of this up immediately on load, but avoiding changes
 // to the global environment except in namespace "Toy".

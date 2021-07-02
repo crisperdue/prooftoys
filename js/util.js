@@ -10,14 +10,51 @@
 //// theorem-proving.
 ////
 
+// We avoid changes to the global environment except through namespace
+// "Toy".
 window.Toy = window.Toy || {};
 
-// TODO: Consider removing dependencies here on jQuery.
-// They look questionnable anyway.
+/**
+ * Version of the jQuery $ function that type checks its input.
+ * Overrides the definition from jQuery.
+ */
+function $(x) {
+  if (arguments.length > 1) {
+    return jQuery.apply(null, arguments);
+  } else if (typeof x === 'string' ||
+             typeof x === 'function' ||
+             x.nodeType ||
+             x === window ||
+             x instanceof jQuery) {
+    return jQuery(x);
+  } else {
+    throw new Error('Not a DOM node: ' + x);
+  }
+}
+jQuery.extend($, jQuery);
 
-// Set everything up immediately on load, avoiding changes to the
-// global environment except through namespace "Toy".
+
 (function() {
+
+// Alternative to jQuery $(fn); not currently in use.
+Toy.onReady = function(fn) {
+  if (document.readyState === 'loading') {  // Loading hasn't finished yet
+    document.addEventListener('DOMContentLoaded', fn);
+  } else {  // DOMContentLoaded has already fired
+    fn();
+  }
+};
+
+// This ensures that all of our scripts can refer to _paq even in
+// strict mode.  If Matomo loads later, it will set up _paq when it
+// loads because it checks whether (typeof _paq != 'object').
+// The variable _paq is for Matomo.
+if (!window._paq) {
+  window._paq = undefined;
+}
+
+// TODO: Consider removing dependencies here on jQuery.
+// They look questionable anyway.
 
 //// General use
 
