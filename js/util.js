@@ -350,8 +350,9 @@ function unlock(obj) {
 }
 
 /*
- * Constructs and returns a proxy that throws a TypeError in case of
- * access to a nonexistent object property.
+ * Constructs and returns a proxy that aborts with a TypeError in case
+ * of access to a nonexistent object property; or if the object given
+ * is an Error, aborts with that Error.
  *
  * TODO: Probably doesn't work for methods in Safari, where method
  *   calls need additional support, returning a function with obj
@@ -364,7 +365,9 @@ function strict(obj) {
       if (prop in obj || typeof prop === 'symbol') {
         return obj[prop];
       } else {
-        Toy.abort(new TypeError('No property ' + prop));
+        Toy.abort(obj instanceof Error
+                  ? obj
+                  : new TypeError('No property ' + prop));
       }
     }
   };
