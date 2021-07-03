@@ -1269,7 +1269,8 @@ function getResInfo(stmt) {
   // association in _statementResInfos.
   function computeStatementInfo(stmt) {
     if (typeof stmt == 'string') {
-      console.warn('Deprecated: resInfo of string:', stmt);
+      // Uncomment this line to get the warnings back.
+      // console.warn('Deprecated: resInfo of string:', stmt);
     }
     // TODO: Fix higher-level code to do the parsing, so different
     //   type assumptions and such can be inserted at that level.
