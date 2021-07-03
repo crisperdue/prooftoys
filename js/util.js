@@ -14,6 +14,15 @@
 // "Toy".
 window.Toy = window.Toy || {};
 
+// Alternative to jQuery $(fn).  Used by our own "$" function above.
+Toy.onReady = function(fn) {
+  if (document.readyState === 'loading') {  // Loading hasn't finished yet
+    document.addEventListener('DOMContentLoaded', fn);
+  } else {  // DOMContentLoaded has already fired
+    fn();
+  }
+};
+
 /**
  * Version of the jQuery $ function that type checks its input.
  * Overrides the definition from jQuery.
@@ -36,15 +45,6 @@ jQuery.extend($, jQuery);
 
 
 (function() {
-
-// Alternative to jQuery $(fn).  Used by our own "$" function above.
-Toy.onReady = function(fn) {
-  if (document.readyState === 'loading') {  // Loading hasn't finished yet
-    document.addEventListener('DOMContentLoaded', fn);
-  } else {  // DOMContentLoaded has already fired
-    fn();
-  }
-};
 
 // This ensures that all of our scripts can refer to _paq even in
 // strict mode.  If Matomo loads later, it will set up _paq when it
