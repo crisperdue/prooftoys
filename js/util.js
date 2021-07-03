@@ -27,7 +27,9 @@ Toy.onReady = function(fn) {
  * Version of the jQuery $ function that type checks its input.
  * Overrides the definition from jQuery.
  */
-function $(x) {
+window.$ = function(x) {
+  // Assign to window.$ to ensure Toy.onReady is ready first. (!)
+  // I think it is a scoping issue.
   if (arguments.length > 1) {
     return jQuery.apply(null, arguments);
   } else if (typeof x === 'function') {
