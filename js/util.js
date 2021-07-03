@@ -354,15 +354,22 @@ function unlock(obj) {
  * of access to a nonexistent object property; or if the object given
  * is an Error, aborts with that Error.
  *
- * TODO: Probably doesn't work for methods in Safari, where method
- *   calls need additional support, returning a function with obj
- *   "baked in".  The magic for that is fairly black in Chrome.
+ * Provides a "self" property that returns the wrapped object.
+ * So you can use the idiom x.self || x to unwrap the thing
+ * if it is wrapped.
+ *
+ * TODO: Probably doesn't support calling methods in Safari, where
+ *   method calls need additional support, returning a function with
+ *   obj "baked in".  The magic for that is fairly black in Chrome.
+ *   Fortunately we use this for Error objects and it's fine for that.
  *   See "locked" above for code that should work in Safari.
  */ 
 function strict(obj) {
   let handler = {
     get: function(obj, prop) {
-      if (prop in obj || typeof prop === 'symbol') {
+      if (prop == 'self') {
+        return obj;
+      } else if (prop in obj || typeof prop === 'symbol') {
         return obj[prop];
       } else {
         Toy.abort(obj instanceof Error
