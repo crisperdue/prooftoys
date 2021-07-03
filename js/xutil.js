@@ -1944,24 +1944,42 @@ function decodeSteps(input) {
         args.push(decodeArg(info, outSteps));
       });
     const rule = Toy.rules[ruleName];
+    let result;
+    let err;
+    const errOut = () => {
+      const fmt = Toy.format;
+      const msg = (!rule
+                   ? fmt('No such rule: {1}', ruleName)
+                   : !result
+                   ? fmt('No result from rule {1} with args {2}',
+                         ruleName, args)
+                   : fmt('decodeSteps failed on rule {1} with args {2}',
+                         ruleName, args));
+      console.log('Proof failed on step', i+',', 'status:');
+      outSteps.forEach((s, i) => console.log((i+1)+':', s.toString()));
+      const e = Toy.newError({with: {steps: outSteps,
+                                   input: input,
+                                   cause: err}},
+                           '{1}', msg);
+      console.error(e.self || e);
+      // This can be a good point to stop and debug.
+      debugger;
+      return e;
+    };
     if (rule) {
-      let result;
       if (Toy.catchAborts(() => { result = rule.apply(Toy.rules, args); })) {
-        console.log('Proof failed on step', i+',', 'status:');
-        outSteps.forEach((s, i) => console.log((i+1)+':', s.toString()));
-        // This can be a good point to stop and debug.
-        Toy.abort(Toy.thrown);
+        err = Toy.thrown;
       }
-      if (result) {
+      if (result instanceof Error) {
+        err = result;
+      }
+      if (result && !err) {
         outSteps.push(result);
       } else {
-        return Toy.newError({with: {steps: outSteps}},
-                            'No result from rule {1} with args {2}',
-                            ruleName, args);
+        return errOut();
       }
     } else {
-      return Toy.newError({with: {steps: outSteps}},
-                          'No such rule: {1}', ruleName);
+      return errOut()
     }
   }
   return outSteps;
