@@ -114,9 +114,10 @@ function ProofEditor(options_arg) {
     ($('<div class=proofEditorHeader>')
      .append('<b>Worksheet "<span class=wksName></span>"</b>'));
   let $readOnly =
-    $('<p class=ifProofLoadError><i><b style="color:red">' +
-      'An error occurred executing the proof.</b><br>' +
-      'View the workspace as text to see steps not executed.<br></i></p>');
+    $(`<p class=ifProofLoadError><i><b style="color:red">
+      An error occurred executing the proof.</b><br>
+      View the workspace as text to see steps not executed.<br>
+      For safety this worksheet is read-only.</i></p>`);
 
   // Top-level element of the proof editor display:
 
