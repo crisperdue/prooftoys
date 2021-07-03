@@ -954,12 +954,10 @@ function newError(template, ...args) {
     const e = new Error(Toy.format(msg, ...args));
     const props = 'with' in options ? options.with : {};
     Object.assign(e, props);
+    // I think this is intended to support error chaining.
     if ('from' in options) {
       e.from = options.from;
     }
-    // In Chrome, flag this next line as "never pause" to
-    // suppress entry to the debugger.
-    debugger;
     return strict(e);
   }
   return (typeof template === 'string'
