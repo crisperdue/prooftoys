@@ -25,7 +25,7 @@
   }
 
   // Include jQuery in all cases.
-  getScript('../lib/jquery-3.1.1.js');
+  write('<script src="https://code.jquery.com/jquery-3.6.0.js"></script>');
 
   write('<link rel=stylesheet href=' +
         '"https://fonts.googleapis.com/css?family=Roboto' +
