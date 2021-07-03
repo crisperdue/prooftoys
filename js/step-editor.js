@@ -160,7 +160,9 @@ function ProofEditor(options_arg) {
   // whenever it changes.
   this._refresher = new Toy.Refresher(function() {
       self._updateGivens();
-      self.saveProofState();
+      if (self.isEditable()) {
+        self.saveProofState();
+      }
       // Set (or clear) the message in the $status box.
       var steps = mainDisplay.steps;
       var len = steps.length;
@@ -201,11 +203,26 @@ function ProofEditor(options_arg) {
     Toy.alert('Caution: editing may be in progress in another tab/window');
   }
   if (options.loadDoc) {
-    // Restore proof state if available.
-    const proofData = Toy.readDoc(self._documentName);
-    if (proofData) {
-      this.setSteps(Toy.decodeSteps(proofData.proofState));
-      self.fromDoc = true;
+    const docName = self._documentName;
+    let names = [docName];
+    if (nextProofEditorId <= 2) {
+      // In other words, this is the first proof editor on this page.
+      const theories = (Toy.lsDocs()
+                        .filter(nm => nm.startsWith('Theory '))
+                        .sort());
+      const index = theories.indexOf(docName);
+      if (index >= 0) {
+        // This removes everything starting at the index.
+        theories.splice(index);
+      }
+      names = theories.concat(docName);
+    }
+    for (const nm of names) {
+      if (self.openDoc(nm)) {
+        self.fromDoc = true;
+      } else {
+        break;
+      }
     }
   }
 
@@ -364,6 +381,12 @@ function buildProofButtons(editor) {
  * show(): Shows the controls.
  * getProofText(): Returns the text content of the proof state area.
  * setProofText(text): Sets the text content of the proof state area.
+ *
+ * Pressing the Worksheet button brings up the controls.
+ * They stay up until you leave the area.
+ * The Open and Delete buttons also leave their document lists
+ * up until you leave the area, so you can swiftly delete multiple
+ * files or browse from one to another in a minimal number of steps.
  */
 function buildWksControls(editor) {
   const $outermost = $('<div class="wksControlsOuter transFade hidden">');
@@ -445,7 +468,9 @@ function buildWksControls(editor) {
   // of areas with a text field.
   function toggleControl($area) {
     const wantHidden = !$area.hasClass('hidden');
-    resetDisplay();
+    if (!wantHidden) {
+      resetDisplay();
+    }
     $area.toggleClass('hidden', wantHidden);
     if (!$area.hasClass('hidden')) {
       // :visible is not needed here, but it would be enough, without
@@ -473,7 +498,11 @@ function buildWksControls(editor) {
     const $docList = $('<div class=docList>');
     $area.append($docList);
     // Then add back names of all documents.
-    Toy.lsDocs().sort().forEach(function(name) {
+    const docs = Toy.lsDocs();
+    const slash = docs.filter(nm => nm.startsWith('/')).sort();
+    const noslash = docs.filter(nm => !nm.startsWith('/')).sort();
+    // Display names not starting with "/" before the rest.
+    noslash.concat(slash).forEach(function(name) {
         if (name === editor.getDocumentName()) {
           return;
         }
@@ -506,6 +535,26 @@ function buildWksControls(editor) {
       $(this).toggleClass('hover');
     });
 
+  $outermost.on('mouseenter', function(event) {
+    $outermost.toggleClass('hidden', false);
+  });
+  $outermost.on('mouseleave', function(event) {
+    $outermost.toggleClass('hidden', true);
+  });
+  $openersArea.on('mouseenter', function(event) {
+    $openersArea.toggleClass('hidden', false);
+  });
+  $openersArea.on('mouseleave', function(event) {
+    $openersArea.toggleClass('hidden', true);
+  });
+
+  $deletersArea.on('mouseenter', function(event) {
+    $deletersArea.toggleClass('hidden', false);
+  });
+  $deletersArea.on('mouseleave', function(event) {
+    $deletersArea.toggleClass('hidden', true);
+  });
+
    
   // Handler for the "restore proof" button.  Restores proof state from
   // the text area.
@@ -527,7 +576,9 @@ function buildWksControls(editor) {
 
   // Buttons that open up the ultimate action UIs.
   $controls.find('.openButton').on('click', function() {
-      toggleDocs($openersArea);
+      resetDisplay();
+      showDocs($openersArea);
+      $openersArea.toggleClass('hidden', false);
     });
   $controls.find('.saveAsButton').on('click', function() {
       toggleControl($saveAs);
@@ -536,7 +587,9 @@ function buildWksControls(editor) {
       toggleControl($copyTo);
     });
   $controls.find('.deleteButton').on('click', function() {
-      toggleDocs($deletersArea);
+      resetDisplay();
+      showDocs($deletersArea);
+      $deletersArea.toggleClass('hidden', false);
     });
 
   // This opens up the proof state "preview".
@@ -569,9 +622,7 @@ function buildWksControls(editor) {
   $openersArea.on('click', '.docName', function() {
       const text = $(this).text();
       const success = editor.openDoc(text);
-      if (success) {
-        $openersArea.toggleClass('hidden', true);
-      } else {
+      if (!success) {
         Toy.alert('Could not open worksheet ' + text);
       }
     });
@@ -580,9 +631,11 @@ function buildWksControls(editor) {
       if (name === editor.getDocumentName()) {
         $message.text('Cannot delete the current document.');
       } else {
-        Toy.rmDoc(name);
-        $message.text('Deleted "' + name + '"');
-        toggleControl($message);
+        if (window.confirm('Do you really want to delete ' + name + '?')) {
+          Toy.rmDoc(name);
+          $message.text('Deleted "' + name + '"');
+          toggleControl($message);
+        }
       }
     });
 
@@ -617,11 +670,11 @@ function buildWksControls(editor) {
     node: dom($outermost),
     hide: function() {
       $outermost.toggleClass('hidden', true);
-      resetDisplay();
-    },
+     },
     show: function() {
+      resetDisplay();
       $outermost.toggleClass('hidden', false);
-    },
+   },
     toggle: function() {
       $outermost.hasClass('hidden') ? this.show() : this.hide();
     },
@@ -676,6 +729,7 @@ ProofEditor.prototype.openDoc = function(name) {
   const proofData = Toy.readDoc(name);
   // TODO: Check for possible active editing in another tab/window.
   if (proofData) {
+    this.setEditable(true);
     this.setDocumentName(name);
     this.setSteps(Toy.decodeSteps(proofData.proofState));
     return true;
@@ -1251,6 +1305,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // indicating failure, such as a rule that attempts to prove a
     // statement.  The work is done, show that the prover is not busy.
     this._setBusy(false);
+    // It is possible to display more information about thrown
+    // errors (aborts), but it may not be helpful to the user.
     const message = result ? result.message : 'Rule does not apply';
     this.report(message);
   } else if (result === true) {
