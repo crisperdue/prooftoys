@@ -10,14 +10,6 @@ window.Toy = window.Toy || {};
 
 +function() {
 
-// At this point in time, specific to Mathtoys.
-Toy.insertNav = function() {
-  var nav = document.getElementById('leftNav');
-  if (nav) {
-    nav.innerHTML = Toy.navText;
-  }
-};
-
 Toy.insertSlogans = function() {
   var slogan = 'Power tools for your math mind';
   var elt = document.getElementById('slogans');
