@@ -1241,9 +1241,9 @@ declare(
     },
     inputs: {site: 1},
     labels: 'basic',
-    menu: 'remove &forall;',
+    menu: '[&forall; {v. p v}] to [p v]',
     tooltip: ('In &forall;, instantiates the bound variable.'),
-    description: 'remove &forall;'
+    description: '[&forall; {v. p v}] to [p v]'
   },
 
   // Target is a step of the form forall {x. B}, expr is A, which will
@@ -2052,9 +2052,9 @@ declare(
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable '
            + '<input name=varName>'),
-    menu: '[A] to [\u2200{v. A}]',
+    menu: '[A] to [&forall; {v. A}]',
     tooltip: ('UGen for  a whole step'),
-    description: '[A] to [\u2200{v. A}];; {in step step}'
+    description: '[A] to [&forall; {v. A}];; {in step step}'
   },
 
   // 5220 variant, from [A => B] deduces [A => forall {v. B}].
@@ -2081,9 +2081,9 @@ declare(
     inputs: {step: 1, varName: 2},
     form: ('In step <input name=step> generalize on variable '
            + '<input name=varName>'),
-    menu: '[A => B] to [A => \u2200{v. B}]',
+    menu: '[A => B] to [A => &forall; {v. B}]',
     tooltip: ('UGen for [A => B]'),
-    description: '[A => B] to [A => \u2200{v. B}];; {in step step}',
+    description: '[A => B] to [A => &forall; {v. B}];; {in step step}',
   },
 
   // 5221 (one variable), in the given step substitute term A for free
