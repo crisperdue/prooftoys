@@ -1440,7 +1440,7 @@ Call.prototype.deepCopy = function() {
 };
 
 Lambda.prototype.deepCopy = function() {
-  return Toy.lambda(this.bound.deepCopy(),
+  return new Lambda(this.bound.deepCopy(),
                     this.body.deepCopy());
 };
 
