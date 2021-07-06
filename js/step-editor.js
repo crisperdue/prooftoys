@@ -121,7 +121,8 @@ function ProofEditor(options_arg) {
 
   // Top-level element of the proof editor display:
 
-  const $node = this.containerNode = $('<div class=proofEditor></div>');
+  const $node = this.containerNode =
+    $('<div class="proofEditor logicZone"></div>');
   this.containerNode
     .append($header)
     .append($readOnly)

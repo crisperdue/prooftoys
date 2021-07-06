@@ -214,7 +214,7 @@ function ProofDisplay(properties) {
   this.proofEditor = properties.proofEditor || null;
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
-  var $node = $('<div class=proofDisplay>' +
+  var $node = $('<div class="proofDisplay logicZone">' +
              '<div class=stepsParent><div class=proofSteps></div></div>' +
              '</div>');
   $node.data('proofDisplay', this);
