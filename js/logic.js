@@ -1211,6 +1211,8 @@ declare(
    * bound variable if necessary to keep it distinct from all (other)
    * free variables.  This is a useful special case of instForall that
    * does not need the user to enter data through a form.
+   *
+   * TODO: Consider obsoleting this in favor of unForall0.
    */
   {name: 'unForall',
     precheck: function(step, path) {
@@ -1243,6 +1245,27 @@ declare(
     labels: 'basic',
     menu: '[&forall; {v. p v}] to [p v]',
     tooltip: ('In &forall;, instantiates the bound variable.'),
+    description: '[&forall; {v. p v}] to [p v]'
+  },
+
+  // Like unforall, but takes just the step as input.
+  {name: 'unForall0',
+    precheck: function(step) {
+      const target = step.wff;
+      return target.isCall1('forall') && target.arg instanceof Toy.Lambda;
+    },
+    action: function(step) {
+      const wff = step.wff;
+      const bound = wff.arg.bound;
+      return (rules.instForall(step, '', bound.name)
+              .justify('unForall0', arguments, [step]));
+    },
+    toOffer: function(step) {
+      return rules.instForall.precheck(step, '');
+    },
+    inputs: {step: 1},
+    labels: 'basic',
+    menu: '[&forall; {v. p v}] to [p v]',
     description: '[&forall; {v. p v}] to [p v]'
   },
 
@@ -1291,6 +1314,8 @@ declare(
       var path = step.prettyPathTo(term);
       return rules.instForall.precheck(step, path, term);
     },
+    // "Unforall" followed by plain substitution serve well for this.
+    labels: 'obsolete',
     inputs: {site: 1, term: 3},
     form: ('Instantiate &forall; with term <input name=term>'),
     menu: 'instantiate &forall;',
