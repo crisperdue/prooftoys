@@ -186,33 +186,33 @@
     function testDistinctifyTypes(a) {
       const a3 = rules.axiom3().wff.annotateWithTypes();
       {
-        const [x, t2] = a3.distinctifyTypes(a3);
-        a.ok(x !== a3, 'axiom3 changed');
+        const map = a3.distinctifyTypes(a3);
+        a.ok(map.size, 'axiom3 changed');
       }
       const taut1 = rules.tautology('a => a').wff.annotateWithTypes();
       {
-        const [t2, t1] = taut1.distinctifyTypes(taut1);
-        a.ok(t1 === t2, 'no type vars');
+        const map = taut1.distinctifyTypes(taut1);
+        a.ok(map.size === 0, 'no type vars');
       }
       {
-        const [t1, t2] = a3.distinctifyTypes(taut1);
-        a.ok(t1 === a3 && t2 === taut1, 'no conflicts')
+        const map = a3.distinctifyTypes(taut1);
+        a.ok(map.size === 0, 'no conflicts')
       }
       {
         const xx = rules.eqSelf('x');
         xx.wff.annotateWithTypes();
         const x1 = rules.eqSelf('x + 1');
         x1.wff.annotateWithTypes();
-        const [t1, t2] = xx.wff.distinctifyTypes(x1.wff);
-        a.ok(t1 === xx.wff && t2 === x1.wff, 'no conflicts');
+        const map = xx.wff.distinctifyTypes(x1.wff);
+        a.ok(map.size === 0, 'no conflicts');
       }
       {
         const xx = rules.eqSelf('x');
         xx.wff.annotateWithTypes();
         const x1 = xx.andThen('instVar', 'x + 1', 'x');
         x1.wff.annotateWithTypes();
-        const [t1, t2] = xx.wff.distinctifyTypes(x1.wff);
-        a.ok(t1 === xx.wff && t2 === x1.wff, 'no conflicts');
+        const map = xx.wff.distinctifyTypes(x1.wff);
+        a.ok(map.size === 0, 'no conflicts');
       }
     },
 

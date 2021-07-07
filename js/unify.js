@@ -48,37 +48,37 @@ function isTriv(map, name, term) {
 // Consider an additional pair to be unified in the context of the
 // given map of bindings and array of pairs still to be unified.
 // Returns falsy if unification fails, else truthy.
-function andUnifTypes(term1, term2, map, pairs) {
-  const c1 = term1.constructor;
-  const c2 = term2.constructor;
-  const unifVar = (v, term) => {
+function andUnifTypes(type1, type2, map, pairs) {
+  const c1 = type1.constructor;
+  const c2 = type2.constructor;
+  const unifVar = (v, type) => {
     const name = v.name;
     const found = map.get(name);
     if (found) {
-      // The name already has a binding.  Match it with the term.
-      pairs.push([found, term]);
+      // The name already has a binding.  Match it with the type.
+      pairs.push([found, type]);
     } else {
-      const triv = isTriv(map, name, term);
+      const triv = isTriv(map, name, type);
       if (triv == null) {
         // Unification would be cyclic.
         return false;
       } else if (!triv) {
-        map.set(name, term);
+        map.set(name, type);
       }
     }
     // The variable unifies.
     return true;
   };
-  if (c1 === TypeConstant && c2 === TypeConstant && term1 === term2) {
+  if (c1 === TypeConstant && c2 === TypeConstant && type1 === type2) {
     return true;
   } else if (c1 === TypeVariable) {
-    return unifVar(term1, term2);
+    return unifVar(type1, type2);
   } else if (c2 === TypeVariable) {
-    return unifVar(term2, term1);
+    return unifVar(type2, type1);
   } else if (c1 === FunctionType && c2 === FunctionType) {
     // Push two new pairs onto the work queue.
-    pairs.push([term1.fromType, term2.fromType],
-               [term1.toType, term2.toType]);
+    pairs.push([type1.fromType, type2.fromType],
+               [type1.toType, type2.toType]);
     return true;
   } else {
     // Unification has failed, though not cyclic.
@@ -130,9 +130,10 @@ function resolve(map) {
   return map;
 }
 
-// Attempts to unify terms x and y in the context of an existing
-// unification given in the map.  Returns the unifying Map on
-// success; otherwise null.
+// Attempts to unify two type terms, returning the unifying Map on
+// success; otherwise null.  If successful there is a unifier,
+// but the unification is not "resolved".  See "resolve" or
+// fullUnifTypes for this.
 function coreUnifTypes(type1, type2) {
   const pairs = [];
   const map = new Map()
@@ -140,22 +141,22 @@ function coreUnifTypes(type1, type2) {
           unifTypesList(map, pairs));
 }
 
-// Returns a Map with the result of fully unifying just term1 and
-// term2, or null if the terms do not unify.
+// Returns a Map with the result of fully unifying just type1 and
+// type2, or null if the terms do not unify.
 function fullUnifTypes(type1, type2) {
   const map = coreUnifTypes(type1, type2);
   return map ? resolve(map) : null;
 }
 
-
-//// TYPE SUBSTITUTION
-
 // TODO: Consider whether the constructors for Call and Lambda
 // should install type information where possible.
 
+
+//// TYPE SUBSTITUTION
+
 // Substitutes for the named type variables in this term, returning
 // a term with updated type information.  If the substitution is a
-// no-op, returns this term.
+// no-op, just returns this term.
 //
 // The map preferably should not have any identity mappings; this
 // copies structure any time a mapping applies to a node's type.
@@ -267,16 +268,16 @@ FunctionType.prototype._addTVars = function(vars) {
   this.toType._addTVars(vars);
 };
 
+
 //// DISTINGUISHING TYPE VARIABLES
 
 // TODO: before unifying type variables across steps, check for any
 // type variables that occur in both and rename all of those in one of
 // the steps.
 
-// Returns this if none of its recorded type variable names
-// is the same as any in the other given term; otherwise
-// makes a copy with all names distinct from type names
-// in the argument term.
+// Returns a substitution Map that can make the type variables in this
+// all distinct from the type variables in the argument term, e.g.  by
+// calling Expr.subsType with the result.
 Expr.prototype.distinctifyTypes = function(term2) {
   const term1 = this;
   const vars1 = term1.typeVars();
@@ -286,8 +287,39 @@ Expr.prototype.distinctifyTypes = function(term2) {
   for (const name of conflicts) {
     map.set(name, new TypeVariable());
   }
-  const t1 = term1.subsType(map);
-  return [t1, term2];
+  return map;
+};
+
+// Returns a substitution Map that unifies the types in this with the
+// types in the Expr argument; or a falsy value in case unification
+// fails.  This Expr and the argument must be exactly the same other
+// than type assignments and names of bound variables.
+//
+// Call this.subsType and expr.subsType with the result of this call
+// to make their type assignments the same.
+Expr.prototype.unifyTypes = function(expr2) {
+  const distinctor = this.distinctifyTypes(expr2);
+  const self = this.subsType(distinctor);
+  const map = new Map();
+  const pairs = [];
+  const andUnif = (type1, type2) => andUnifTypes(type1, type2, map, pairs);
+  function unifTerm(t1, t2) {
+    const c = t1.constructor;
+    if (c === Atom) {
+      return andUnif(t1._type, t2._type);
+    } else if (c === Call) {
+      return (unifTerm(t1.fn, t2.fn) &&
+              unifTerm(t1.arg, t2.arg) &&
+              andUnif(t1._type, t2._type));
+    } else if (c === Lambda) {
+      return (unifTerm(t1.bound, t2.bound) &&
+              unifTerm(t1.body, t2.body) &&
+              andUnif(t1._type, t2._type));
+    } else {
+      abort('Bad expression: {1}', t1);
+    }
+  }
+  return (unifTerm(this, expr2) && unifTypesList(map, pairs));
 };
 
 

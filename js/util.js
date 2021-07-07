@@ -949,7 +949,6 @@ window.addEventListener('error', event => {
  * Create and return a "strict" error using a template message and
  * arguments.  If a plain object is passed instead of a template
  * string, treat that as options preceding the other arguments.
- * Enters the debugger if debugging is active.
  */
 function newError(template, ...args) {
   function err(options, msg, ...args) {
