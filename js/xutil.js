@@ -121,6 +121,10 @@ TypeVariable.prototype.equal = function(other) {
   return other === this;
 };
 
+TypeVariable.prototype.hasVariable = function() {
+  return true;
+};
+
 
 /**
  * Type constant constructor.
@@ -141,6 +145,10 @@ var tcMethods = {
 
   equal: function(other) {
     return other === this;
+  },
+
+  hasVariable: function() {
+    return false;
   }
 };
 TypeConstant.addMethods(tcMethods);
@@ -167,6 +175,12 @@ FunctionType.prototype.equal = function(other) {
           other.toType.equal(this.toType));
 };
 
+FunctionType.prototype.hasVariable = function() {
+  return this.fromType.hasVariable() || this.toType.hasVariable();
+};
+
+
+//// PARSING
 
 var individual = new TypeConstant('i');
 var boolean = new TypeConstant('o');
