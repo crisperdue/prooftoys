@@ -339,7 +339,7 @@ declare(
     },
     inputs: {equation: 1, site: 2},
     // Currently not offered in forms; use "replace".
-    // form: ('Replace selection with right side of step <input name=equation>'),
+    // form: ('Replace with right side of step <input name=equation>'),
     tooltip: ('Replace an occurrence of a term with an equal term.'),
     menu: 'replace {term} with something equal',
     description: 'replace term;; {in step siteStep} {using step equation}',
@@ -2388,9 +2388,9 @@ declare(
            ]}),
     // TODO: should be bool:.
     inputs: {term: 1},
-    menu: 'bool simp',  
+    menu: 'simplify booleans',  
     form: 'Boolean term to simplify: <input name=term>',
-    labels: 'basic',
+    labels: 'uncommon',
     tooltip: ('simplify boolean'),
     description: 'simplify boolean value'
   },
