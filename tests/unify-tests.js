@@ -216,6 +216,15 @@
       }
     },
 
+    function testTypesUnifier(a) {
+      const x1 = rules.eqSelf('x');
+      x1.wff.annotateWithTypes();
+      const x2 = rules.eqSelf('x');
+      x2.wff.annotateWithTypes();
+      const unifier = x1.wff.typesUnifier(x2.wff);
+      a.ok(unifier instanceof Map);
+      a.ok(unifier.size === 1);
+    }
   ];
 
   // Run them:

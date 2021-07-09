@@ -156,7 +156,7 @@ function fullUnifTypes(type1, type2) {
 
 // Substitutes for the named type variables in this term, returning
 // a term with updated type information.  If the substitution is a
-// no-op, just returns this term.
+// no-op, just returns this term, otherwise a copy as needed.
 //
 // The map preferably should not have any identity mappings; this
 // copies structure any time a mapping applies to a node's type.
@@ -164,7 +164,6 @@ Expr.prototype.subsType = function(map) {
   if (!map.size) {
     return this;
   }
-
   // This may create new objects, and if so we need to install the new
   // type information.
   if (this instanceof Call) {
@@ -279,6 +278,7 @@ FunctionType.prototype._addTVars = function(vars) {
 // all distinct from the type variables in the argument term, e.g.  by
 // calling Expr.subsType with the result.
 Expr.prototype.distinctifyTypes = function(term2) {
+  // TODO: Rename to typesDistinctifier.
   const term1 = this;
   const vars1 = term1.typeVars();
   const vars2 = term2.typeVars();
@@ -292,14 +292,12 @@ Expr.prototype.distinctifyTypes = function(term2) {
 
 // Returns a substitution Map that unifies the types in this with the
 // types in the Expr argument; or a falsy value in case unification
-// fails.  This Expr and the argument must be exactly the same other
-// than type assignments and names of bound variables.
+// fails.  Assumes that this Expr and the argument are exactly the
+// same other than type assignments and names of bound variables.
 //
 // Call this.subsType and expr.subsType with the result of this call
-// to make their type assignments the same.
-Expr.prototype.unifyTypes = function(expr2) {
-  const distinctor = this.distinctifyTypes(expr2);
-  const self = this.subsType(distinctor);
+// to make their type assignments the same.  The result is resolved.
+Expr.prototype.typesUnifier = function(expr2) {
   const map = new Map();
   const pairs = [];
   const andUnif = (type1, type2) => andUnifTypes(type1, type2, map, pairs);
@@ -319,7 +317,27 @@ Expr.prototype.unifyTypes = function(expr2) {
       abort('Bad expression: {1}', t1);
     }
   }
-  return (unifTerm(this, expr2) && unifTypesList(map, pairs));
+  const u = unifTerm(this, expr2) && unifTypesList(map, pairs);
+  return u && resolve(u);
+};
+
+// Returns this or if necessary a copy with type variables substituted
+// to be all distinct from type variables of the argument.
+Expr.prototype.distinctify = function(expr2) {
+  const distinctor = this.distinctifyTypes(expr2);
+  const result = this.subsType(distinctor);
+  return result;
+};
+
+// Attempts to unify the type variables of this and the argument,
+// returning a pair of terms.  Untested and unused.
+Expr.prototype.withTypesUnified = function(expr2) {
+  const distinct = this.distinctify(expr2);
+  const u = distinct.typesUnifier(expr2);
+  if (!u) {
+    return null;
+  }
+  return [distinct.subsType(u), expr2.subsType(u)];
 };
 
 
