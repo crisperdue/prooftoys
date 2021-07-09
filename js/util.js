@@ -911,8 +911,9 @@ function sortMap(object, comparator) {
  * options.
  */
 function abort(msg, ...args) {
+  // TODO: Interpret options??
   function _abort(options, msg, ...args) {
-    const e = newError(options, msg, ...args);
+    const e = new Error(Toy.format(msg, ...args));
     let step;
     // Find a step argument if there is one.
     for (var i = 0; i < args.length; i++) {
