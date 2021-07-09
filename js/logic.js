@@ -271,17 +271,6 @@ declare(
       }
       const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
-      if (equation.getLeft().sameAs(equation.getRight())) {
-        // The equation LHS must "match" the site, but can differ in
-        // bound variables, so the replacement can only be a no-op if
-        // these are identical too.  (This is a cheap but not
-        // complete check for a no-op.)
-        if (target.get(path).sameAs(equation.getLeft())) {
-          // Quick return if the replacement is a no-op.
-          return target.justify('r', [equation, target, path],
-                                [target, equation]);
-        }
-      }
       // Logs the location of the test where autoAssert is used.
       function logWhere(term) {
         var e = new Error();
