@@ -818,6 +818,7 @@ var testCase = {
     // Copy is equal to original
     assertEqual(source, target.deepCopy());
     assert(target.matches(target.deepCopy()));
+    assert(target.sameAs(target.deepCopy()));
     // But not identical.
     assert(target !== target.deepCopy());
   },
