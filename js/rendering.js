@@ -1426,8 +1426,8 @@ Step.prototype.descendants = function() {
 // Makes and returns a deep copy of this Expr, copying all parts
 // including occurrences of Vars, so each occurrence can have distinct
 // annotations, as needed for rendering and currently used by type
-// inference.  Currently copies only logical structure.  Can operate
-// on either renderable or nonrenderable terms.
+// inference.  Can operate on either renderable or nonrenderable
+// terms.  The copy has no type information.
 //
 Atom.prototype.deepCopy = function() {
   // TODO: Consider whether it is best to use the pname here.
