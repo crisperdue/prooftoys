@@ -291,6 +291,31 @@ Expr.prototype.copyForTyping = function() {
 };
 
 /**
+ * Returns a copy like deepCopy, also bringing over all type
+ * information from the original.  Unused.
+ */
+Expr.prototype.copyWithTypes = function() {
+  const c = this.constructor;
+  if (c === Atom) {
+    const result = new Atom(this.pname);
+    result._type = this._type;
+    return result;
+  } else if (c === Call) {
+    const result = new Call(this.fn.copyWithTypes(),
+                            this.arg.copyWithTypes());
+    result._type = this._type;
+    return result;
+  } else if (c === Lambda) {
+    const result = new Lambda(this.bound.copyWithTypes(),
+                              this.body.copyWithTypes());
+    result._type = this._type;
+    return result;
+  } else {
+    abort('Bad input: {1}', this);
+  }
+};
+
+/**
  * Expr method that returns any annotated type, otherwise aborts with
  * an error.
  */

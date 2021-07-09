@@ -822,6 +822,23 @@ var testCase = {
     assert(target !== target.deepCopy());
   },
 
+  testCopyWithTypes: function() {
+    const source = '(x = x)';
+    const target = Toy.parse(source);
+    target.annotateWithTypes();
+    const copy = target.copyWithTypes();
+    // Copy is equal to original
+    assertEqual(source, copy);
+    assert(target.matches(copy));
+    assert(target.sameAs(copy));
+    assert(target._type);
+    assert(copy._type === target._type);
+    assert(copy.getRight()._type === target.getRight()._type);
+    // But not identical.
+    assert(target !== copy);
+    assert(copy.getRight() !== target.getRight());
+  },
+
   testSubFree: function() {
     var map = Toy.object0;
     var v = varify('v');
