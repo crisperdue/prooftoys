@@ -366,7 +366,8 @@ declare(
    */
   {name: 'assert',
     action: function(assertion_arg) {
-      const assertion = termify(assertion_arg);
+      const assertion = termify(assertion_arg).copyForTyping();
+      assertion.annotateWithTypes();
       const newConsts = assertion.newConstants();
       if (newConsts.size > 0) {
         console.warn('In', assertion.toString(), 'introducing constants:',
