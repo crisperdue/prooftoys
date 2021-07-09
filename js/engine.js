@@ -780,6 +780,7 @@ function declare(_declarations) {
 function definition(defn_arg) {
   const definitions = Toy.definitions;
   const defn = termify(defn_arg);
+  defn.annotateWithTypes();
   if (defn.isCall2('=') && defn.getLeft().isConst()) {
     // Allow benign redefinition same as an existing one.
     const name = defn.getLeft().name;
