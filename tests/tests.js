@@ -799,7 +799,7 @@ var testCase = {
     var map = wff.boundNames('');
     assertEqual('{}', Toy.debugString(map));
     var map = wff.boundNames('/body/arg');
-    assertEqual('{x: true}', Toy.debugString(map));
+    assertEqual('{x: x}', Toy.debugString(map));
   },
 
   testDeepCopy: function() {

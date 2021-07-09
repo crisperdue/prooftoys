@@ -775,6 +775,9 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
  * in the target to ensure that they are all distinct from variables
  * in the replacement, possibly more than necessary, so don't count on
  * bound variables keeping their names after a substitution.
+ *
+ * Copies types from this and the terms to be substituted, so if they
+ * all have type information throughout, the result will, too.
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
@@ -984,16 +987,16 @@ Expr.prototype.mathVarConditions = function(expr) {
 };
 
 /**
- * Finds and returns a set of all the names bound in this expression
- * at the location given by the path, represented by an object/map
- * from names to true.
+ * Finds and returns an object/map of all the names bound in this
+ * expression at the location given by the path, represented by an
+ * object/map from names to the variable Atom actually bound.
  */
 Expr.prototype.boundNames = function(path) {
   path = this.asPath(path);
   var bindings = this._boundNames(path, null);
   var map = {};
   for (var more = bindings; more; more = more.more) {
-    map[more.from] = true;
+    map[more.from] = more.to;
   }
   return map;
 };
@@ -2077,7 +2080,7 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 //
 // Returns a Bindings object (or null if no bindings) representing the
 // set of bindings in effect at the given path within this Expr, plus
-// the given bindings.
+// the given bindings.  Binds name to variable Atom.
 //
 //
 // _addMathVars(bindings, set)
@@ -3281,7 +3284,7 @@ Lambda.prototype._boundNames = function(path, bindings) {
   if (path.isMatch()) {
     return bindings;
   } else {
-    var newBindings = new Bindings(this.bound.name, true, bindings);
+    var newBindings = new Bindings(this.bound.name, this.bound, bindings);
     var segment = path.segment;
     var rest = path.rest;
     if (segment === 'bound') {
