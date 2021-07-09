@@ -3227,12 +3227,14 @@ Lambda.prototype._subFree = function(map, freeVars, allNames) {
     // there will be no capturing. We do this without checking whether
     // capturing actually would occur.
     const newVar = genVar(boundName, allNames);
+    newVar._type = this.bound._type;
     allNames[newVar.name] = true;
     // TODO: Consider updating the map and doing one substitution
     //   rather than two.
     const newBody = this.body._subFree(Toy.object0(boundName, newVar),
                                        freeVars, allNames);
     const renamed = new Lambda(newVar, newBody);
+    renamed._type = this._type;
     // Substitute into the modified Lambda term.
     result = renamed._subFree(map, freeVars, allNames);
   } else {
