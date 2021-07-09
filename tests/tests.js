@@ -275,7 +275,16 @@ var testCase = {
     assertEqual(new Set(['a', 'b']), join({a: 1, b: true}));
   },
 
-  // Arithmetic
+  testIsSubset: function() {
+    const isSubset = Toy.isSubset;
+    assert(isSubset([1,2],[2,1]));
+    assert(!isSubset([1,2,3],[2,1]));
+    assert(!isSubset([1,2,3],[2,1,4]));
+    assert(isSubset([1,2,3],[2,1,4,3]));
+    assert(isSubset(new Set([1,2,3]),new Set([2,1,4,3])));
+  },
+
+// Arithmetic
 
   testGcd: function() {
     const gcd = Toy.gcd;

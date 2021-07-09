@@ -290,6 +290,24 @@ function setDiff(big_arg, small_arg) {
 }
 
 /**
+ * Returns true iff the second argument contains every element of the
+ * first argument, otherwise false, taking each as a Set.
+ */
+function isSubset(arg1, arg2) {
+  const small = asSet(arg1);
+  const big = asSet(arg2);
+  if (small.size > big.size) {
+    return false;
+  }
+  for (const v of small) {
+    if (!big.has(v)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * True if both arguments are sets and each "has"
  * the same elements.
  */
@@ -2540,6 +2558,7 @@ Toy.asSet = asSet;
 Toy.union = union;
 Toy.intersection = intersection;
 Toy.setDiff = setDiff;
+Toy.isSubset = isSubset;
 Toy.equalSets = equalSets;
 Toy.each = each;
 Toy.memo = memo;
