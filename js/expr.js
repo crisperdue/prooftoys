@@ -843,23 +843,6 @@ var _assertionCounter = 1;
 ////
 
 /**
- * Modifies the trace information of a proof step to treat it as an
- * assertion, with rule name, args, and deps to match, and no
- * details.  Adds a very small ordinal if there is none already.
- */
-Expr.prototype.assert = function() {
-  this.ruleName = 'assert';
-  this.ruleArgs = [];
-  this.ruleDeps = [];
-  this.details = null;
-  if (!this.ordinal) {
-    this.ordinal = _assertionCounter / 1e9;
-    _assertionCounter++;
-  }
-  return this;
-};
-
-/**
  * Computes the "base instance" of a proof step.  Each level of
  * justification has its own Expr, all equal, but each with its
  * own justification and details.  This accesses the bottom level

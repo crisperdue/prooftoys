@@ -274,7 +274,7 @@ declare(
       function logWhere(term) {
         var e = new Error();
         var lines = e.stack.split('\n');
-        // Note that the follwing regex may be Chrome-specific.
+        // Note that the following regex may be Chrome-specific.
         function test(line) { return line.match(/Object.test/); }
         var where = lines.find(test) || 'at unknown location';
         console.warn('Asserting', term.$$, where);
@@ -292,7 +292,7 @@ declare(
       if (!equation.isProved()) {
         if (Toy.autoAssert) {
           logWhere(equation);
-          equation.assert();
+          equation = rules.assert(equation);
         } else {
           assert(false, 'Rule R unproven equation: {1}', equation);
         }
@@ -300,7 +300,7 @@ declare(
       if (!target.isProved()) {
         if (Toy.autoAssert) {
           logWhere(target);
-          target.assert();
+          target = rules.assert(target);
         } else {
           assert(false, 'Rule R unproven target: {1}', target);
         }

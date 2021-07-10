@@ -1759,16 +1759,13 @@ var testCase = {
 
     // An example where the type check in Rule R catches improper
     // use of types.
-    var step1 = Toy.parse('p (f g) => p g').assert();
+    var step1 = rules.assert('p (f g) => p g');
     // This is pathological in that p and f each appear on just
     // one side of the equation, which means the value of the
     // expressions containing them are not affected by their
     // values.
-    var step2 = Toy.parse('p g = g f').assert();
-    try {
-      Toy.rules.r(step2, step1, '/right');
-      Y.Assert.fail('Rule R should prohibit this step');
-    } catch(e) {}
+    var step2 = rules.assert('p g = g f');
+    throws(() => Toy.rules.r(step2, step1, '/right'));
   },
 
 
