@@ -92,12 +92,12 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   var ruleDeps = Array.from(ruleDeps || []);
   if (!retain) {
     for (var i = 0; i < ruleDeps.length; i++) {
-      if (ruleDeps[i] == this) {
-        // If the step returns an input step, return it as-is.
-        // TODO: Consider eliminating this "optimization" and rely instead
-        //   on eliding no-op steps from display.  (There is already an
-        //   implementation.)
-        return this;
+      const dep = ruleDeps[i];
+      if (dep.sameAs(this)) {
+        // If the step returns an input step, return it as-is,
+        // obliterating the putative new step.  The resulting proof
+        // object may occasionally surprise the author of a proof.
+        return dep;
       }
     }
   }
