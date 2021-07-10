@@ -226,15 +226,14 @@ declare(
       var lambda = call.fn;
       const result =
             equal(call, lambda.body.subFree1(call.arg, lambda.bound.name));
-      // All of this because the constructors don't install the
-      // type information when it is available.
-      //
-      // TODO: Consider having the constructors do this when the
-      //   type information is available.
+      // Carefully install type information by hand.
       result.arg._type = result.fn.arg._type = call._type;
       result.fn._type = new Toy.FunctionType(call._type, Toy.boolean);
       result.fn.fn._type = Toy.equalityType(call._type);
       result._type = Toy.boolean;
+      const badex = result.search(x => !x._type);
+      assert(!badex,
+             'Axiom4 result on {1} has untyped {2}', call_arg, badex);
       return result.justify('axiom4', [call]);
     },
     labels: 'primitive',
