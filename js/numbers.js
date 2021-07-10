@@ -1867,8 +1867,8 @@ declare
     },
     inputs: {site: 1},
     toOffer: 'return term.isReal()',
-    menu: 'algebra: term to form a / b * x',
-    description: 'term to form a / b * x;; {in step siteStep}',
+    menu: 'algebra: to form k * x',
+    description: 'as k * x;; {in step siteStep}',
     labels: 'algebra'
   },
 
