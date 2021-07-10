@@ -341,6 +341,54 @@ Expr.prototype.withTypesUnified = function(expr2) {
 };
 
 
+//// SIMPLE TYPECHECKING
+
+// This checks that all subexpression types match each other.
+// types must be present throughout.
+// Returns the failing term or falsy for success.
+Expr.prototype.typeCheck = function() {
+  // Bound variable info is at the front of these,
+  // free variable info at the end.
+  const names = [];
+  const types = [];
+  // Returns true iff OK.
+  function checkAtom(v) {
+    if (v.isVariable()) {
+      const nm = v.name;
+      const i = names.indexOf(nm);
+      if (i < 0) {
+        names.push(nm);
+        types.push(v._type);
+        return true;
+      } else {
+        return types[i].equal(v._type);
+      }
+    } else {
+      return true;
+    }
+  }
+  function tCheck(x) {
+    const c = x.constructor;
+    if (c === Atom) {
+      return !checkAtom(x) && x;
+    } else if (c === Call) {
+      const failure = (tCheck(x.fn) || tCheck(x.arg) ||
+                       !x.fn._type.fromType.equal(x.arg._type) ||
+                       !x.fn._type.toType.equal(x._type));
+      return failure && x;
+    } else if (c === Lambda) {
+      names.unshift(x.bound.name);
+      types.unshift(x.bound._type);
+      const failure = tCheck(x.body);
+      names.shift();
+      types.shift();
+      return failure && x;
+    }
+  }
+  return tCheck(this);
+};
+
+
 //// EXPORTS
 
 Toy.andUnifTypes = andUnifTypes;
