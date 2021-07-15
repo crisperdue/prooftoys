@@ -233,7 +233,7 @@ function isIterable (value) {
   return Symbol.iterator in Object(value);
 }
 
-//// JavaScript Maps and Sets
+//// JavaScript Sets
 
 /**
  * Coerces the given plain object to a Set, or if it is a Set, just

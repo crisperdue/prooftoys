@@ -154,9 +154,9 @@ function fullUnifTypes(type1, type2) {
 
 //// TYPE SUBSTITUTION
 
-// Substitutes for the named type variables in this term, returning
-// a term with updated type information.  If the substitution is a
-// no-op, just returns this term, otherwise a copy as needed.
+// Substitutes for the named type variables in this term, returning a
+// term with updated type information.  If the substitution is empty,
+// just returns this term, otherwise a copy as needed.
 //
 // The map preferably should not have any identity mappings; this
 // copies structure any time a mapping applies to a node's type.
