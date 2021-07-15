@@ -319,6 +319,8 @@ declare(
           return x._type.hasVariable();
         });
       if (!targHas && !eqnHas) {
+        window.cCounter = (window.cCounter || 0) + 1;
+        // around 240,000 type checks with all constant types
         // Make a copy with the eqn RHS replacing the target term.
         // Carry over (constant) types of all terms being copied.
         const replace = (x, pth) => {
@@ -356,7 +358,24 @@ declare(
         }
         assert(!failure, 'Typecheck failure in {1} at {2}', result, failure);
       } else {
+        window.uCounter = (window.uCounter || 0) + 1;
+        // Around 78,000 situations where there is a type variable
+        // somewhere, so unification is needed.
+        /*
+        window.dEqns = window.dEqns || new Map();
+        const dEqns = window.dEqns;
+        const eq = dEqns.get(equation) || 0;
+        dEqns.set(equation, eq + 1);
+        window.dTargets = window.dTargets || new Map();
+        const dTargets = window.dTargets;
+        const targ = dTargets.get(target) || 0;
+        dTargets.set(target, targ + 1);
+        */
         const eq2 = equation.distinctify(target);
+        if (eq2 !== equation) {
+          window.dCounter = (window.dCounter || 0) + 1;
+          // Around 24,000 distinctifications that are not no-ops
+        }
         const unifier = eq2.getLeft().typesUnifier(targex);
         assert(unifier,
                'Rule R: subexpression {1}\n of {2}\n must match {3}',
