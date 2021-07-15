@@ -698,7 +698,11 @@ function debugString(o, specials) {
   }
   if (o.constructor !== Object &&
       o.toString && typeof o.toString === "function") {
-    return o.toString();
+    if (o instanceof Toy.Expr && o.isProved()) {
+      return '|- ' + o.toString();
+    } else {
+      return o.toString();
+    }
   }
   if (typeof o == 'object') {
     var result = '{';
