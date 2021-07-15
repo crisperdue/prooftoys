@@ -497,11 +497,11 @@ function findType(expr, annotate) {
    */
   function typeFromName(atom) {
     var name = atom.name;
-    if (constantTypes.hasOwnProperty(name)) {
+    if (constantTypes.has(name)) {
       // If it is a constant -- primitive, defined, or even a constant
       // name that has appeared in a well-formed term but is not yet
       // defined, return its type.
-      return constantTypes[name].fresh({}, nonGenerics, map);
+      return constantTypes.get(name).fresh({}, nonGenerics, map);
     }
     if (atom.isLiteral()) {
       // Numbers are individuals.
@@ -591,7 +591,7 @@ function findType(expr, annotate) {
       //   whether all names in it have definitions, giving a warning
       //   if not.  For example one might check when the event loop
       //   returns to idle.
-      constantTypes[nm] = type;
+      constantTypes.set(nm, type);
     }
   }
   return result;
@@ -602,8 +602,8 @@ function findType(expr, annotate) {
  * not fresh.  Returns null if preconditions are not met.
  */
 function lookupType(name) {
-  if (constantTypes.hasOwnProperty(name)) {
-    return constantTypes[name];
+  if (constantTypes.has(name)) {
+    return constantTypes.get(name);
   } else if (isDefinedSimply(name)) {
     console.warn(name, 'is defined but type is not recorded.');
     return findType(getDefinition(name).getRight());
@@ -788,7 +788,7 @@ Atom.prototype.isPrimitive = function() {
 // TODO: Trim this collection as more constants become properly
 //   defined.
 //
-var constantTypes = {
+var constantTypes = new Map(Object.entries({
   // Primitive constants
   T: boolean,
   F: boolean,
@@ -831,7 +831,7 @@ var constantTypes = {
   ee: individual,               // "e"
   ln: funType(),
   log10: funType()
-};
+  }));
 
 // Indexed by the name defined.  Value is an Expr (not a step).  The
 // "definition" rule justifies the defining WFF on each access.
