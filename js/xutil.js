@@ -36,6 +36,9 @@ function TypeCheckError(msg) {
 Toy.extends(TypeCheckError, Error);
 
 
+// Base class constructor for type expressions.
+function TypeEx() {}
+
 // Private to the TypeVariable constructor.
 var _typeVarCounter = 1;
 
@@ -53,6 +56,7 @@ function TypeVariable(name) {
     this.name = 't' + _typeVarCounter++;
   }
 }
+Toy.extends(TypeVariable, TypeEx);
 
 TypeVariable.prototype.toString = function() {
   return this.name;
@@ -132,7 +136,7 @@ TypeVariable.prototype.hasVariable = function() {
 function TypeConstant(name) {
   this.name = name;
 }
-Toy.extends(TypeConstant, null);
+Toy.extends(TypeConstant, TypeEx);
 
 var tcMethods = {
   toString: function() {
@@ -158,7 +162,7 @@ function FunctionType(fromType, toType) {
   this.fromType = fromType;
   this.toType = toType;
 }
-Toy.extends(FunctionType, null);
+Toy.extends(FunctionType, TypeEx);
 
 FunctionType.prototype.toString = function() {
   return '(' + this.toType + ' ' + this.fromType + ')';
@@ -287,6 +291,7 @@ function parseTokens(tokens) {
 //// Robert Smallshire's Python implementation at
 //// http://www.smallshire.org.uk/sufficientlysmall/2010/04/11/
 //// a-hindley-milner-type-inference-implementation-in-python/.
+//// https://github.com/rob-smallshire/hindley-milner-python
 
 // TODO: More and better comments throughout the type analysis code.
 
