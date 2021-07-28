@@ -193,6 +193,23 @@ function Expr() {
 Toy.extends(Expr, null);
 
 /**
+ * Sets the type of this term, returning this.
+ */
+Expr.prototype.withType = function(type) {
+  this._type = type;
+  return this;
+};
+  
+/**
+ * Sets the type of this from another term, returning this.
+ */
+Expr.prototype.typeFrom = function(expr) {
+  this._type = expr._type;
+  return this;
+};
+
+
+/**
  * TODO: Make Step into a whole new class.  For now, it is just an
  * alias.  There will be some convenience methods such as getMain and
  * asmPart, but access to Expr properties and most methods will be
