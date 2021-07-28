@@ -12,7 +12,7 @@
   const pt = Toy.parseType;
   const fullUnifTypes = Toy.fullUnifTypes;
   const coreUnifTypes = Toy.coreUnifTypes;
-  const isTriv = Toy.isTriv;
+  const checkTriv = Toy.checkTriv;
   const unifTypesList = Toy.unifTypesList;
   const resolve = Toy.resolve;
   
@@ -80,12 +80,12 @@
     },
 
     function testIsTriv(a) {
-      a.ok(isTriv(new Map(), 't', pt('t')));
-      a.notOk(isTriv(new Map(), 't', pt('o')));
-      a.notOk(isTriv(new Map(), 't', pt('o i')));
-      a.equal(isTriv(new Map(), 't', pt('(o t)')), null);
-      a.notOk(isTriv(new Map(), 't', pt('o i')));
-      a.notOk(isTriv(new Map(), 't', pt('o t2')));
+      a.ok(checkTriv(new Map(), 't', pt('t')));
+      a.notOk(checkTriv(new Map(), 't', pt('o')));
+      a.notOk(checkTriv(new Map(), 't', pt('o i')));
+      a.equal(checkTriv(new Map(), 't', pt('(o t)')), null);
+      a.notOk(checkTriv(new Map(), 't', pt('o i')));
+      a.notOk(checkTriv(new Map(), 't', pt('o t2')));
     },
 
     function testUnif2a(a) {
@@ -186,16 +186,16 @@
     function testDistinctifyTypes(a) {
       const a3 = rules.axiom3().wff.annotateWithTypes();
       {
-        const map = a3.distinctifyTypes(a3);
+        const map = a3.typesDistinctifier(a3);
         a.ok(map.size, 'axiom3 changed');
       }
       const taut1 = rules.tautology('a => a').wff.annotateWithTypes();
       {
-        const map = taut1.distinctifyTypes(taut1);
+        const map = taut1.typesDistinctifier(taut1);
         a.ok(map.size === 0, 'no type vars');
       }
       {
-        const map = a3.distinctifyTypes(taut1);
+        const map = a3.typesDistinctifier(taut1);
         a.ok(map.size === 0, 'no conflicts')
       }
       {
@@ -203,7 +203,7 @@
         xx.wff.annotateWithTypes();
         const x1 = rules.eqSelf('x + 1');
         x1.wff.annotateWithTypes();
-        const map = xx.wff.distinctifyTypes(x1.wff);
+        const map = xx.wff.typesDistinctifier(x1.wff);
         a.ok(map.size === 0, 'no conflicts');
       }
       {
@@ -211,7 +211,7 @@
         xx.wff.annotateWithTypes();
         const x1 = xx.andThen('instVar', 'x + 1', 'x');
         x1.wff.annotateWithTypes();
-        const map = xx.wff.distinctifyTypes(x1.wff);
+        const map = xx.wff.typesDistinctifier(x1.wff);
         a.ok(map.size === 0, 'no conflicts');
       }
     },

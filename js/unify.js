@@ -18,26 +18,30 @@ const Bindings = Toy.Bindings;
 const findBinding = Toy.findBinding;
 
 // Given bindings of names to terms, a variable name, and a term,
-// returns true iff the variable matches the term after applying the
-// bindings zero or more times.  This indicates that the current
-// bindings are sufficient to match the variable with the term.
-// Otherwise the result is false.
+// returns true iff the term is a type variable and the name matches
+// it after applying the bindings zero or more times.  This
+// indicates that the current bindings are sufficient to match the
+// variable with the term.  Otherwise the result is false.
 //
 // If the term is composite, this applies the bindings to its parts
 // recursively, and if it ever reaches the same variable, it fails by
-// returning null; else false as stated above.
-function isTriv(map, name, term) {
+// returning null (the "occurs" check); else false as stated above.
+//
+// In typical use, a value of true indicates a trivial match; false
+// indicates matching is not trivial; and null is a unification
+// failure (cycle).
+function checkTriv(map, name, term) {
   if (term instanceof TypeVariable) {
     const n2 = term.name;
     if (name === n2) {
       return true;
     } else {
       const to = map.get(n2)
-      return !!to && isTriv(map, name, to);
+      return !!to && checkTriv(map, name, to);
     }
   } else if (term instanceof FunctionType) {
-    return (isTriv(map, name, term.fromType) ||
-            isTriv(map, name, term.toType)
+    return (checkTriv(map, name, term.fromType) ||
+            checkTriv(map, name, term.toType)
             ? null
             : false);
   } else {
@@ -58,7 +62,7 @@ function andUnifTypes(type1, type2, map, pairs) {
       // The name already has a binding.  Match it with the type.
       pairs.push([found, type]);
     } else {
-      const triv = isTriv(map, name, type);
+      const triv = checkTriv(map, name, type);
       if (triv == null) {
         // Unification would be cyclic.
         return false;
@@ -277,8 +281,7 @@ FunctionType.prototype._addTVars = function(vars) {
 // Returns a substitution Map that can make the type variables in this
 // all distinct from the type variables in the argument term, e.g.  by
 // calling Expr.subsType with the result.
-Expr.prototype.distinctifyTypes = function(term2) {
-  // TODO: Rename to typesDistinctifier.
+Expr.prototype.typesDistinctifier = function(term2) {
   const term1 = this;
   const vars1 = term1.typeVars();
   const vars2 = term2.typeVars();
@@ -323,8 +326,10 @@ Expr.prototype.typesUnifier = function(expr2) {
 
 // Returns this or if necessary a copy with type variables substituted
 // to be all distinct from type variables of the argument.
+//
+// TODO: Consider a version that updates types in place, never copying.
 Expr.prototype.distinctify = function(expr2) {
-  const distinctor = this.distinctifyTypes(expr2);
+  const distinctor = this.typesDistinctifier(expr2);
   const result = this.subsType(distinctor);
   return result;
 };
@@ -338,6 +343,50 @@ Expr.prototype.withTypesUnified = function(expr2) {
     return null;
   }
   return [distinct.subsType(u), expr2.subsType(u)];
+};
+
+// Returns an array of pairs of types that need to be unified
+// to make the current preterm well-formed in its type assignments.
+// This is work in progress, unused, untested, and not full
+// type inference.
+Expr.prototype.annotate1 = function() {
+  const pairs = [];
+  // This returns a type expression for the term visited.  This type
+  // may still need to be unified with others.
+  const visit = (term) => {
+    const c = term.constructor;
+    if (c === Atom) {
+      if (term._type) {
+        // Only atoms should be pre-typed, which can occur
+        // from shared structure for variables.
+        return term._type;
+      }
+      const ctype = constantNames.get(c.pname);
+      if (ctype) {
+        return ctype.clone();
+      } else if (term.isLiteral()) {
+        // Literals so far are individuals.
+        term._type = individual;
+        return individual;
+      } else if (term.isVariable()) {
+        term._type = new TypeVariable();
+        return term._type;
+      } else {
+        abort('Unable to determine type for {1}', term);
+      }
+    } else if (c === Call) {
+      const fnType = visit(term.fn);
+      const inType = visit(term.arg);
+      const outType = new TypeVariable();
+      pairs.push([inType, fnType.fromType], [outType, fnType.toType]);
+      return outType;
+    } else if (c === Lambda) {
+      const inType = visit(term.bound);
+      const outType = visit(term.body);
+      return new FunctionType(inType, outType);
+    }
+  };
+  visit(this);
 };
 
 
@@ -395,7 +444,7 @@ Toy.andUnifTypes = andUnifTypes;
 Toy.unifTypesList = unifTypesList;
 Toy.resolve = resolve;
 Toy.fullUnifTypes = fullUnifTypes;
-Toy.isTriv = isTriv;
+Toy.checkTriv = checkTriv;
 Toy.coreUnifTypes = coreUnifTypes;
 
 })();
