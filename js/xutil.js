@@ -39,6 +39,35 @@ Toy.extends(TypeCheckError, Error);
 // Base class constructor for type expressions.
 function TypeEx() {}
 
+/**
+ * Make a copy of this type term, with the same constraints but
+ * all type variables renamed to fresh new ones.
+ */
+TypeEx.prototype.clone = function() {
+  const replacements = new Map();
+  const clohn = type => {
+    const c = type.constructor;
+    if (c === TypeVariable) {
+      const name = type.name;
+      const replica = replacements.get(name);
+      if (replica) {
+        return replica;
+      } else {
+        const replica = new TypeVariable();
+        replacements.set(name, replica);
+        return replica;
+      }
+    } else if (c === TypeConstant) {
+      return type;
+    } else if (c === FunctionType) {
+      return new FunctionType(clohn(type.fromType),
+                              clohn(type.toType));
+    }
+  }
+  return clohn(this);
+};
+      
+
 // Private to the TypeVariable constructor.
 var _typeVarCounter = 1;
 
