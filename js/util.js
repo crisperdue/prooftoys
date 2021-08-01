@@ -401,32 +401,11 @@ function strict(obj) {
   return new Proxy(obj, handler);
 }
 
-// Make a custom subclass of Error.
-class LogicError extends Error {
-
-  /**
-   * Chaining steps with "andThen" propagates LogicErrors.
-   */
-  andThen(..._) {
-    return this;
-  }
-}
-
-/**
- * Returns an Error with the given message, and attempts to access
- * nonexistent properties of it will throw.  The error supports
- * testing of its ruleName property, with value false.
- */
-function logicError(message) {
-  const e = new LogicError(message);
-  return strict(e);
-}
-
 /**
  * Returns a truthy value if any of the arguments is a LogicError.
  */
 function errant(...values) {
-  return values.some(x => x instanceof LogicError);
+  return values.some(x => x instanceof Error);
 }
 
 ////
@@ -2545,8 +2524,6 @@ Toy.debugString = debugString;
 Toy.locked = locked;
 Toy.unlock = unlock;
 Toy.strict = strict;
-Toy.LogicError = LogicError;
-Toy.logicError = logicError;
 Toy.errant = errant;
 
 Toy.isEmpty = isEmpty;

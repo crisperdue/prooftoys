@@ -265,7 +265,7 @@ declare(
     action: function(equation, target, path_arg) {
       if ((equation instanceof Error || target instanceof Error) &&
           !Toy.autoAssert) {
-        return Toy.logicError('Not proved');
+        return newError('Not proved');
       }
       const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
@@ -2731,7 +2731,7 @@ declare(
           const message = Toy.format('Not true: {1}',
                                      step11.getLeft(), step11);
           if (Toy.tautExit) {
-            Toy.tautExit(Toy.logicError(message));
+            Toy.tautExit(newError(message));
           } else {
             abort(message);
           }
