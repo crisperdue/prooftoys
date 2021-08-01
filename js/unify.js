@@ -204,6 +204,37 @@ Expr.prototype.subsType = function(map) {
   }
 };
 
+// Destructively applies the given type substitution to
+// all parts of this term.  Careful, this is destructive.
+Expr.prototype.replaceTypes = function(map) {
+  if (!map.size) {
+    return this;
+  }
+  const atomsSeen = new Set();
+  const treeWalk = term => {
+    const c = term.constructor;
+    if (c === Call) {
+      treeWalk(term.fn);
+      treeWalk(term.arg);
+    } else if (c === Lambda) {
+      treeWalk(term.bound);
+      treeWalk(term.body);
+    } else if (c === Atom) {
+      if (atomsSeen.has(term)) {
+        // Don't substitute if this Atom (variable) has already
+        // been visited.
+        return;
+      } else {
+        atomsSeen.add(term);
+      }
+    } else {
+      abort('Bad input');
+    }
+    term._type = term._type.tsubst(map);
+  }
+  treeWalk(this);
+};
+
 TypeVariable.prototype.tsubst = function(map) {
  return map.get(this.name) || this;
 };
