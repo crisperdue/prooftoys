@@ -40,10 +40,15 @@ function checkTriv(map, name, term) {
       return !!to && checkTriv(map, name, to);
     }
   } else if (term instanceof FunctionType) {
-    return (checkTriv(map, name, term.fromType) ||
-            checkTriv(map, name, term.toType)
-            ? null
-            : false);
+    const t1 = checkTriv(map, name, term.fromType);
+    if (t1 === null) {
+      return null;
+    } else {
+      const t2 = checkTriv(map, name, term.toType);
+      return (t2 === null || t1 || t2
+              ? null
+              : false);
+    }
   } else {
     return false;
   }
@@ -170,35 +175,29 @@ Expr.prototype.subsType = function(map) {
   }
   // This may create new objects, and if so we need to install the new
   // type information.
+  const type = this._type.tsubst(map);
   if (this instanceof Call) {
     const fn = this.fn.subsType(map);
     const arg = this.arg.subsType(map);
-    if (fn === this.fn && arg === this.arg) {
+    if (fn === this.fn && arg === this.arg && type == this._type) {
       return this;
     } else {
-      const result = new Call(fn, arg);
-      result._type = fn._type.toType;
-      return result;
+      return new Call(fn, arg).withType(type);
     }
   } else if (this instanceof Lambda) {
     const body = this.body.subsType(map);
     const bound = this.bound.subsType(map);
-    if (body === this.body && bound === this.bound) {
+    if (body === this.body && bound === this.bound && type === this._type) {
       return this;
     } else {
-      const result = new Lambda(bound, body);
-      result._type = new FunctionType(bound._type, body._type);
-      return result;
+      return new Lambda(bound, body).withType(type);
     }
   } else if (this instanceof Atom) {
-    const type = this._type.tsubst(map);
     if (type === this._type) {
       return this;
     } else {
       // The pname is the one to use with the constructor.
-      const atom = new Atom(this.pname);
-      atom._type = type;
-      return atom;
+      return new Atom(this.pname).withType(type);
     }
   } else {
     abort('Bad input');
@@ -206,7 +205,7 @@ Expr.prototype.subsType = function(map) {
 };
 
 TypeVariable.prototype.tsubst = function(map) {
-  return map.get(this.name) || this;
+ return map.get(this.name) || this;
 };
 
 TypeConstant.prototype.tsubst = function(map) {
@@ -332,17 +331,6 @@ Expr.prototype.distinctify = function(expr2) {
   const distinctor = this.typesDistinctifier(expr2);
   const result = this.subsType(distinctor);
   return result;
-};
-
-// Attempts to unify the type variables of this and the argument,
-// returning a pair of terms.  Untested and unused.
-Expr.prototype.withTypesUnified = function(expr2) {
-  const distinct = this.distinctify(expr2);
-  const u = distinct.typesUnifier(expr2);
-  if (!u) {
-    return null;
-  }
-  return [distinct.subsType(u), expr2.subsType(u)];
 };
 
 // Returns an array of pairs of types that need to be unified
