@@ -325,6 +325,26 @@ function parseTokens(tokens) {
 // TODO: More and better comments throughout the type analysis code.
 
 /**
+ * Seeks and returns any subexpression of this with no type
+ * information.  This is a debugging utility, not used in the rest of
+ * the codebase.
+ */
+Expr.prototype.findUntyped = function() {
+  const self = this;
+  if (!self._type) {
+    return self;
+  }
+  const c = self.constructor;
+  if (c === Call) {
+    return self.fn.findUntyped() || self.arg.findUntyped();
+  } else if (c === Lambda) {
+    return self.bound.findUntyped() || self.body.findUntyped();
+  } else {
+    return null;
+  }
+};
+
+/**
  * Make a copy suitable for attaching type information destructively.
  * This is internal to a few implementations such as Axiom 4 and
  * Rule R.
