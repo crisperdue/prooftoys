@@ -8,6 +8,7 @@
 
   const Bindings = Toy.Bindings;
   const TypeVariable = Toy.TypeVariable;
+  const FunctionType = Toy.FunctionType;
 
   const pt = Toy.parseType;
   const fullUnifTypes = Toy.fullUnifTypes;
@@ -86,6 +87,22 @@
       a.equal(checkTriv(new Map(), 't', pt('(o t)')), null);
       a.notOk(checkTriv(new Map(), 't', pt('o i')));
       a.notOk(checkTriv(new Map(), 't', pt('o t2')));
+    },
+
+    function testUnifTypesList(a) {
+      a.ok(true);
+      const v1 = new TypeVariable();
+      const v2 = new TypeVariable();
+      const v3 = new TypeVariable();
+      const pair0 = [v1, Toy.boolean];
+      const pair1 = [new FunctionType(v2, v1), v3];
+      const pair2 = [v2, new FunctionType(v3, v3)];
+      let pairs = [pair0, pair1, pair2];
+      console.log(pairs.$$);
+      // [[t1, o], [(t1 t2), t3], [t2, (t3 t3)]]
+      const subst = new Map();
+      const result = unifTypesList(subst, pairs);
+      a.equal(result, null);
     },
 
     function testUnif2a(a) {
