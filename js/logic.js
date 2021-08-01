@@ -6,7 +6,6 @@
 
 'use strict';
 
-
 //// Import names
 
 const assert = Toy.assertTrue;
@@ -355,52 +354,30 @@ declare(
           console.warn('typeCheck failure');
           debugger;
           result.typeCheck();
+          return newError('typeCheck failure');
         }
         assert(!failure, 'Typecheck failure in {1} at {2}', result, failure);
       } else {
         window.uCounter = (window.uCounter || 0) + 1;
         // Around 78,000 situations where there is a type variable
         // somewhere, so unification is needed.
-        /*
-        window.dEqns = window.dEqns || new Map();
-        const dEqns = window.dEqns;
-        const eq = dEqns.get(equation) || 0;
-        dEqns.set(equation, eq + 1);
-        window.dTargets = window.dTargets || new Map();
-        const dTargets = window.dTargets;
-        const targ = dTargets.get(target) || 0;
-        dTargets.set(target, targ + 1);
-        */
         const eq2 = equation.distinctify(target);
         if (eq2 !== equation) {
           window.dCounter = (window.dCounter || 0) + 1;
           // Around 24,000 distinctifications that are not no-ops
         }
-        const unifier = eq2.getLeft().typesUnifier(targex);
-        assert(unifier,
-               'Rule R: subexpression {1}\n of {2}\n must match {3}',
-               targex, target, equation.getLeft());
-        const eq2r = eq2.getRight().subsType(unifier);
-        const target2 = target.subsType(unifier);
-        // The unifier makes the targex and the LHS exactly the same,
-        // but we may need to unify types of free variables in the LHS
-        // that are "captured" in a way by like-named target variables
-        // that are in scope at the replacement site.
-        // We can find those with boundNames and I guess freeVarSet
-        // ("freeVarTypes"?).
-        // We extend the unification pairs with their types
-        // before doing any type substitutions.
-        //
-        // Can we check the assignments with a Hindley-Milner
-        // "dry run" over the formulas?
-        const result1 = target2.replaceAt(path, expr => eq2r);
-        // Does this always exist?
-        //
-        // This is guaranteed most general, but it ignores
-        // the type assignments done before!  We could check
-        // that the "real" computed result is a substitution
-        // instance of this.
-        result = result1.copyForTyping().annotateWithTypes();
+        const [copy, pairs] = target.wff.copy4R(path, eq2);
+        const subst1 = new Map();
+        if (!Toy.unifTypesList(subst1, pairs)) {
+          console.warn('Not unified');
+          return newError('Not unified for rule R:\n{1}\n{2}',
+                          target, equation);
+        }
+        const subst = Toy.resolve(subst1);
+        copy.replaceTypes(subst);
+        // CAUTION: This line may cause confusion.
+        result = copy;
+
       }
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation], true);
@@ -425,6 +402,128 @@ declare(
 
 );
 
+/**
+ * Copies this Expr, replacing the term at the given path with the RHS
+ * of the given (unconditional) equation term.  Returns a pair with
+ * the copy and a list of pairs of type terms to be unified due to
+ * occurrences of target step variables in the replacement term.
+ */
+Expr.prototype.copy4R = function(path_arg, eqn) {
+  // List of bound variable Atoms in scope at the location of the
+  // current term of the traversal, innermost first.
+  const boundVars = [];
+  // Map from name to free variable, eventually all free variables
+  // of the result.
+  const freeVars = new Map();
+  // A bound/free variable object for each
+  // (in-scope) variables of the target outside the target term.
+  // These are empty except when copying the target term.
+  const outerBound = new Set();
+  const outerFree = new Set();
+  // List of pairs of types to be unified.  These will come from
+  // variables of the replacement term that wind up in the scope of
+  // variables of the target step.
+  const pairs = [];
+  const rhs = eqn.getRight();
+  const path = this.asPath(path_arg).uglify();
+  // Make a copy.
+  // TODO: XXX
+  const copy = x => {
+    const c = x.constructor;
+    if (c === Atom) {
+      const xnm = x.pname;
+      if (x.isVariable()) {
+        const bound = boundVars.find(v => v.pname === xnm);
+        if (bound) {
+          if (outerBound.has(bound)) {
+            // Honor the constraint that the types must match.
+            pairs.push([x._type, bound._type]);
+            // No need to reiterate the constraint later.
+            outerBound.delete(bound);
+          }
+          return bound;
+        } else {
+          const foundFree = freeVars.get(xnm);
+          if (foundFree) {
+            if (outerFree.has(foundFree)) {
+              // Constrain it to match a free variable in the target.
+              pairs.push([x._type, foundFree._type]);
+              // No need to reiterate the constraint later.
+              outerFree.delete(foundFree);
+            }
+            return foundFree;
+          } else {
+            const v = new Atom(xnm).typeFrom(x);
+            freeVars.set(xnm, v);
+            return v;
+          }
+        }
+      } else {
+        // It is a non-variable Atom.
+        return new Atom(xnm).typeFrom(x);
+      }
+    } else if (c === Call) {
+      return new Call(copy(x.fn), copy(x.arg)).typeFrom(x);
+    } else if (c === Lambda) {
+      const v = new Atom(x.bound.pname).typeFrom(x.bound);
+      boundVars.unshift(v);
+      const body = copy(x.body);
+      boundVars.shift();
+      return new Lambda(v, body).typeFrom(x);
+    }
+  }
+  // This returns a copy of the given term, with a single object for
+  // each truly distinct variable in it.  As a side effect, adds to
+  // the pairs of types to be unified in the result of the
+  // replacement.
+  //
+  // This traverses the target expression last, after all other parts
+  // of this term so "copy" will find all free variables outside the
+  // target term before this code traverses it.
+  const dig = (term, path) => {
+    const c = term.constructor;
+    if (path.isMatch()) {
+      // Target term is reached, prepare to copy in its replacement.
+      // First note in-scope variables of the target that occur
+      // outside the target term.
+      for (const v of freeVars.values()) {
+        outerFree.add(v);
+      }
+      for (const v of boundVars.values()) {
+        outerBound.add(v);
+      }
+      // Honor the constraint that RHS type must match the
+      // type of the target term.
+      pairs.push([rhs._type, term._type]);
+      return copy(rhs);
+    } else if (c === Atom) {
+      // Atoms can occur only at the match location.
+      abort('Internal error in copy4R');
+    } else if (c === Call) {
+      const segment = path.segment;
+      if (segment === 'fn') {
+        const arg = copy(term.arg);
+        return new Call(dig(term.fn, path.rest), arg).typeFrom(term);
+      } else if (segment === 'arg') {
+        const fn = copy(term.fn);
+        return new Call(fn, dig(term.arg, path.rest)).typeFrom(term);
+      }
+    } else if (c === Lambda) {
+      if (path.segment === 'body') {
+        const bound = term.bound;
+        const newBound = new Atom(bound.pname).typeFrom(bound);
+        boundVars.unshift(newBound);
+        const result = (new Lambda(newBound, dig(term.body, path.rest))
+                        .typeFrom(term));
+        boundVars.shift();
+        return result;
+      }
+    }
+    // Catch all the cases where the segment and term mismatch.
+    term._checkSegment(path);
+  };
+  return [dig(this, path), pairs];
+};
 
 //// Preliminaries to logic
 

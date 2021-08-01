@@ -1765,7 +1765,7 @@ var testCase = {
     // expressions containing them are not affected by their
     // values.
     var step2 = rules.assert('p g = g f');
-    throws(() => Toy.rules.r(step2, step1, '/right'));
+    assert(Toy.rules.r(step2, step1, '/right') instanceof Error);
   },
 
 
