@@ -274,7 +274,7 @@ declare(
         var e = new Error();
         var lines = e.stack.split('\n');
         // Note that the following regex may be Chrome-specific.
-        function test(line) { return line.match(/Object.test/); }
+        function test(line) { return line.match(/^ *at test/); }
         var where = lines.find(test) || 'at unknown location';
         console.warn('Asserting', term.$$, where);
       }
@@ -528,7 +528,6 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   const copied = dig(this, path);
   const subst1 = new Map();
   if (!Toy.unifTypesList(subst1, pairs)) {
-    console.warn('Not unified');
     return newError('Not unified for rule R:\n{1}\n{2}', target, eqn);
   }
   const subst = Toy.resolve(subst1);
