@@ -366,18 +366,10 @@ declare(
           window.dCounter = (window.dCounter || 0) + 1;
           // Around 24,000 distinctifications that are not no-ops
         }
-        const [copy, pairs] = target.wff.copy4R(path, eq2);
-        const subst1 = new Map();
-        if (!Toy.unifTypesList(subst1, pairs)) {
-          console.warn('Not unified');
-          return newError('Not unified for rule R:\n{1}\n{2}',
-                          target, equation);
-        }
-        const subst = Toy.resolve(subst1);
-        copy.replaceTypes(subst);
-        // CAUTION: This line may cause confusion.
-        result = copy;
-
+        result = target.wff.ruleRCore(target, path, eq2);
+      }
+      if (result instanceof Error) {
+        return result;
       }
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation], true);
@@ -403,32 +395,42 @@ declare(
 );
 
 /**
- * Copies this Expr, replacing the term at the given path with the RHS
- * of the given (unconditional) equation term.  Returns a pair with
- * the copy and a list of pairs of type terms to be unified due to
- * occurrences of target step variables in the replacement term.
+ * This is the core functionality for the full Rule 4.  It returns a
+ * new wff with the term in target at the given path replaced by the
+ * RHS of the given (unconditional) equation term.  Does full
+ * unification of types given, with checking for valid typing.
+ * If there is a problem, returns an Error.
  */
-Expr.prototype.copy4R = function(path_arg, eqn) {
+Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   // List of bound variable Atoms in scope at the location of the
   // current term of the traversal, innermost first.
   const boundVars = [];
   // Map from name to free variable, eventually all free variables
   // of the result.
   const freeVars = new Map();
-  // A bound/free variable object for each
-  // (in-scope) variables of the target outside the target term.
-  // These are empty except when copying the target term.
+  // A variable object for each bound variable of the target term
+  // whose scope includes the target term, and whose binding is
+  // outside the target term.  Empty except when copying the target
+  // term.
   const outerBound = new Set();
+  // A variable object for each in-scope variable of the target term
+  // whose binding occurs outside the target term.  Empty except when
+  // copying the target term.
   const outerFree = new Set();
-  // List of pairs of types to be unified.  These will come from
-  // variables of the replacement term that wind up in the scope of
-  // variables of the target step.
+  // List of pairs of types to be unified.  These types will come from
+  // variables of the replacement term that wind up within the scope
+  // of variables of the target step.
   const pairs = [];
   const rhs = eqn.getRight();
   const path = this.asPath(path_arg).uglify();
-  // Make a copy.
-  // TODO: XXX
+  // Makes a copy of the given typed term, copying over type
+  // information from the given term.  For occurrences of variables
+  // within the target term, adds constraints that the type must
+  // also match the type of any variable it aliases, with occurrence
+  // or binding outside the target term.
   const copy = x => {
+    // Recall that outerBound and outerFree are empty except when
+    // copying the replacement for the target term.
     const c = x.constructor;
     if (c === Atom) {
       const xnm = x.pname;
@@ -478,8 +480,9 @@ Expr.prototype.copy4R = function(path_arg, eqn) {
   // replacement.
   //
   // This traverses the target expression last, after all other parts
-  // of this term so "copy" will find all free variables outside the
-  // target term before this code traverses it.
+  // of this term so "copy" will encounter all free variables outside
+  // the target term before copying the replacement for the target
+  // term.
   const dig = (term, path) => {
     const c = term.constructor;
     if (path.isMatch()) {
@@ -497,8 +500,8 @@ Expr.prototype.copy4R = function(path_arg, eqn) {
       pairs.push([rhs._type, term._type]);
       return copy(rhs);
     } else if (c === Atom) {
-      // Atoms can occur only at the match location.
-      abort('Internal error in copy4R');
+      // Atoms should occur only at the match location.
+      abort('Internal error in ruleRCore');
     } else if (c === Call) {
       const segment = path.segment;
       if (segment === 'fn') {
@@ -522,7 +525,16 @@ Expr.prototype.copy4R = function(path_arg, eqn) {
     // Catch all the cases where the segment and term mismatch.
     term._checkSegment(path);
   };
-  return [dig(this, path), pairs];
+  const copied = dig(this, path);
+  const subst1 = new Map();
+  if (!Toy.unifTypesList(subst1, pairs)) {
+    console.warn('Not unified');
+    return newError('Not unified for rule R:\n{1}\n{2}', target, eqn);
+  }
+  const subst = Toy.resolve(subst1);
+  // Remember, replaceTypes usually modifies types in copied.
+  copied.replaceTypes(subst);
+  return copied;
 };
 
 //// Preliminaries to logic
