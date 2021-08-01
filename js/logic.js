@@ -5090,8 +5090,8 @@ declare(
         // Relational operators can go here.
         var result = Toy.tryArithmetic(wff);
         // x = T is the expected result.
-        if (result && result.matchSchema('x = T')) {
-          return (rules.rewriteOnly(result, '', '(x = T) = x')
+        if (result && result.matchSchema('x == T')) {
+          return (rules.rewriteOnly(result, '', '(x == T) == x')
                   .justify('fact', arguments));
         }
       }

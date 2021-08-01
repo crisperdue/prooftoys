@@ -1076,7 +1076,7 @@ function withExit(fn) {
  * given fn.  This calls fn, passing no arguments, and returning the
  * thrown value iff the function throws, except if the thrown value is
  * falsy, e.g. undefined, returns true.  This catches aborts, but not
- * exits.
+ * exits.  If the function returns normally this returns false.
  *
  * This design has an advantage over passing a "catcher" function in
  * that the actions here can do local flow of control actions such as

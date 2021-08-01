@@ -1277,7 +1277,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
   var startTime = Date.now();
   var startSteps = Toy.getStepCounter();
 
-  Toy.catchAborts(() => {
+  const caught = Toy.catchAborts(() => {
     if (Toy.profileName) {
       // Collect CPU profiling information.
       console.profile(Toy.profileName);
