@@ -264,63 +264,18 @@ declare(
       const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
       const targex = target.get(path);
-      // TODO: Instead, check that they have identical term types,
-      //   with no type variables in them.
-      const targHas = target.wff.search(x => x._type.hasVariable());
-      const eqnHas = equation.wff.search(x => {
-          return x._type.hasVariable();
-        });
-      if (!targHas && !eqnHas) {
-        window.cCounter = (window.cCounter || 0) + 1;
-        // around 240,000 type checks with all constant types
-        //
-        // Make a copy with the eqn RHS replacing the target term.
-        // Carry over (constant) types of all terms being copied.
-        // This does not set up structure sharing among occurrences
-        // of the same variable.  XXX
-        const replace = (x, pth) => {
-          if (pth && pth.isMatch()) {
-            // Include the equation RHS as-is.
-            // This does not set up any structure sharing.
-            return equation.getRight();
-          }
-          const c = x.constructor;
-          const seg = pth && pth.segment;
-          const rest = pth && pth.rest;
-          if (c === Atom) {
-            const v = new Atom(x.pname);
-            v._type = x._type;
-            return v;
-          } else if (c === Call) {
-            const v = new Call(replace(x.fn, seg === 'fn' && rest),
-                               replace(x.arg, seg === 'arg' && rest));
-            v._type = x._type;
-            return v;
-          } else if (c === Lambda) {
-            const rest = pth.rest;
-            const v = new Lambda(replace(x.bound, null),
-                                 replace(x.body, seg === 'body' && rest));
-            v._type = x._type;
-            return v;
-          }
-        }
-        const ugPath = path.uglify(true);
-        result = replace(target.wff, ugPath);
-        const failure = result.typeCheck();
-        assert(!failure, 'Typecheck failure in {1} at {2}', result, failure);
-      } else {
-        window.uCounter = (window.uCounter || 0) + 1;
-        // Around 78,000 situations where there is a type variable
-        // somewhere, so unification is needed.
-        const eq2 = equation.distinctify(target);
-        if (eq2 !== equation) {
-          window.dCounter = (window.dCounter || 0) + 1;
-          // Around 24,000 distinctifications that are not no-ops
-        }
-        result = target.wff.ruleRCore(target, path, eq2);
-      }
+      window.rCounter = (window.rCounter || 0) + 1;
+      result = target.wff.ruleRCore(target, path, equation);
       if (result instanceof Error) {
-        return result;
+        // Distinctify and try again.
+        // Why does this path execute just once, on the one
+        // overall failure??
+        window.dCounter = (window.dCounter || 0) + 1;
+        const eq2 = equation.distinctify(target);
+        result = target.wff.ruleRCore(target, path, eq2);
+        if (result instanceof Error) {
+          return result;
+        }
       }
       var justified = result.justify('r', [equation, target, path],
                                      [target, equation], true);
