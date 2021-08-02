@@ -257,33 +257,13 @@ declare(
    * equation's RHS.  This is rule R.  The subexpression must match
    * the equation's LHS, meaning they are the same except possibly
    * in names of bound variables.
-   *
-   * If either the target or the equation are Error objects,
-   * returns a LogicError.
    */
   {name: 'r',
     action: function(equation, target, path_arg) {
-      if ((equation instanceof Error || target instanceof Error)) {
-        return newError('Not proved');
-      }
+      let result;
       const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
-      if (!target._type) {
-        console.warn(Toy.format('Target lacks type: {1}', target));
-        debugger;
-      }
-      if (!equation._type) {
-        console.warn(Toy.format('Equation lacks type: {1}', equation));
-        debugger;
-      }
-      let result;
       const targex = target.get(path);
-      const badTarg = target.wff.search(x => !x._type);
-      const badEqn = equation.wff.search(x => !x._type);
-      if (badTarg || badEqn) {
-        debugger;
-      }
-
       // TODO: Instead, check that they have identical term types,
       //   with no type variables in them.
       const targHas = target.wff.search(x => x._type.hasVariable());
@@ -293,11 +273,15 @@ declare(
       if (!targHas && !eqnHas) {
         window.cCounter = (window.cCounter || 0) + 1;
         // around 240,000 type checks with all constant types
+        //
         // Make a copy with the eqn RHS replacing the target term.
         // Carry over (constant) types of all terms being copied.
+        // This does not set up structure sharing among occurrences
+        // of the same variable.  XXX
         const replace = (x, pth) => {
           if (pth && pth.isMatch()) {
             // Include the equation RHS as-is.
+            // This does not set up any structure sharing.
             return equation.getRight();
           }
           const c = x.constructor;
@@ -323,12 +307,6 @@ declare(
         const ugPath = path.uglify(true);
         result = replace(target.wff, ugPath);
         const failure = result.typeCheck();
-        if (failure) {
-          console.warn('typeCheck failure');
-          debugger;
-          result.typeCheck();
-          return newError('typeCheck failure');
-        }
         assert(!failure, 'Typecheck failure in {1} at {2}', result, failure);
       } else {
         window.uCounter = (window.uCounter || 0) + 1;
