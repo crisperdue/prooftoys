@@ -54,6 +54,20 @@ function checkTriv(map, name, term) {
   }
 }
 
+// Straw man, just checks for trivial type variable unification.
+// Has no "occurs check", DO NOT USE.
+function justCheckTriv(map, name, term) {
+  while (term instanceof TypeVariable) {
+    const tnm = term.name;
+    if (name === tnm) {
+      return true;
+    } else {
+      term = map.get(tnm);
+    }
+  }
+  return false;
+}
+
 // Consider an additional pair to be unified in the context of the
 // given map of bindings and array of pairs still to be unified.
 // Returns falsy if unification fails, else truthy.
