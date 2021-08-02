@@ -122,7 +122,7 @@ function assertFails(fn) {
 
 // For testing convenience automatically assert steps from wffs.
 // TODO: Eliminate the need for this.
-Toy.autoAssert = true;
+Toy.autoAssert = false;
 
 /**
  * Check effect of a rewriter.  Null expected value means expected
@@ -1389,13 +1389,13 @@ var testCase = {
     function matchNeg(term) {
       const subst = term.matchSchema('neg a');
       return (subst && subst.a.isNumeral() &&
-              rules.arithmetic(term, ''));
+              rules.axiomArithmetic(term, ''));
     }
     var facts = (['a + b = b + a', {apply: matchNeg}]);
     var result = Toy.findMatchingFact(facts, undefined,
                                        Toy.parse('neg 1'));
     assertEqual('(neg 1)', result.term);
-    assertEqual('-1', result.stmt);
+    assertEqual('((neg 1) = -1)', result.stmt);
 
     result = Toy.findMatchingFact(facts, undefined,
                                    Toy.parse('x + y'));
@@ -1810,12 +1810,6 @@ var testCase = {
 
   // PROOFS
 
-  testRuleR: function() {
-    var path = Toy.asPath('/right/left');
-    var result = Toy.rules.r(times2, bigger, path);
-    assertEqual('((x > 0) => ((2 * x) > x))', result);
-  },
-
   testAxiom4: function() {
     var app = call(lambda(x, call(f, x)), y);
     var result = Toy.rules.axiom4(app);
@@ -1855,10 +1849,6 @@ var testCase = {
     check('((5 <= 4) = F)', '5 <= 4');
   },
 
-  testApplyBoth: function() {
-    assertEqual('((f x) = (g x))', Toy.rules.applyBoth(call('=', f, g), x));
-  },
-
   testApplyToBoth: function() {
     var inf = Toy.rules.applyToBoth(p, rules.assert(call('=', q, r)));
     assertEqual('((p q) = (p r))', inf);
@@ -1879,14 +1869,14 @@ var testCase = {
     assertEqual('(F == F)', Toy.rules.equivSelf(F));
   },
 
-  testR5201b: function() {
-    var inf = Toy.rules.eqnSwap(call('=', p, q));
-    assertEqual('(q = p)', inf);
+  testApplyBoth: function() {
+    const ff = rules.eqSelf('f');
+    assertEqual('((f x) = (f x))', rules.applyBoth(ff, x));
   },
 
-  testR5201e: function() {
-    var inf = Toy.rules.applyBoth(call('=', p, q), r);
-    assertEqual('((p r) = (q r))', inf);
+  testR5201b: function() {
+    const step = Toy.rules.eqnSwap(rules.axiom4('{x. x} y'))
+    assertEqual('(y = ({x. x} y))', step);
   },
 
   testApply: function() {
@@ -1906,17 +1896,16 @@ var testCase = {
   },
 
   testUseDefinition: function() {
+    const step = rules.equivSelf('not (p == (F == p))');
     var inf =
-      Toy.rules.useDefinition(call('not', equal(p, equal(F, p))), '/fn');
-    assertEqual('(F = (p = (F = p)))', inf);
+      Toy.rules.useDefinition(step, '/left/fn');
+    assertEqual('(F = (p == (F == p)))', inf.getLeft());
   },
 
   testInstEqn: function() {
-    var c = Toy.varify('c');
-    var inf = Toy.rules.instEqn(Toy.parse('g y = c'),
-                              Toy.parse('f x'),
-                              'y');
-    assertEqual('((g (f x)) = c)', inf);
+    const step = rules.axiom4('{x. x} y');
+    const inf = rules.instEqn(step, 'f z', 'y');
+    assertEqual('(({x. x} (f z)) = (f z))', inf);
 
     var ff = rules.instEqn(rules.axiom3(), 'f', 'g');
     assertEqual('((f = f) == (forall {x. ((f x) = (f x))}))', ff);
@@ -1949,25 +1938,25 @@ var testCase = {
   },
 
   testEqnIsTrue: function() {
-    var inf = Toy.rules.toTIsEquation(call('=', p, q));
-    assertEqual('(T = (p = q))', inf);
+    const inf = rules.toTIsEquation(rules.eqSelf('x'));
+    assertEqual('(T = (x = x))', inf);
   },
 
   testR5213: function() {
-    var inf = Toy.rules.r5213(call('=', p, q),
-                            call('=', q, r));
-    assertEqual('((p = q) & (q = r))', inf);
+    const inf = rules.r5213(rules.eqSelf('x'),
+                            rules.eqSelf('y'));
+    assertEqual('((x = x) & (y = y))', inf);
   },
 
   testRenameBound: function() {
-    var expr = equal(lambda(z, z), lambda(y, y));
-    var result = Toy.rules.renameBound(expr, '/left', x);
-    assertEqual('({x. x} = {y. y})', result);
+    const step = rules.axiom4('{x. x} y');
+    const result = rules.renameBound(step, '/left/fn', 'z');
+    assertEqual('(({z. z} y) = y)', result);
   },
 
   testBindEqn: function() {
-    var inf = Toy.rules.bindEqn(call('=', f, g), x);
-    assertEqual('({x. f} = {x. g})', inf);
+    const inf = rules.axiom4('{x. x} y').andThen('bindEqn', 'y');
+    assertEqual('({y. ({x. x} y)} = {y. y})', inf);
   },
 
   testInstForall: function() {
@@ -1991,8 +1980,10 @@ var testCase = {
   },
 
   testEquationCases: function() {
-    var inf = Toy.rules.equationCases(equal(T, T), equal(F, F), 'z');
-    assertEqual('(z = z)', inf);
+    const t = rules.equivSelf('T');
+    const f = rules.equivSelf('F');
+    var inf = Toy.rules.equationCases(t, f, 'z');
+    assertEqual('(z == z)', inf);
   },
 
   testR5218: function() {
