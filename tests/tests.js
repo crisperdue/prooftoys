@@ -117,13 +117,6 @@ function assertFails(fn) {
   }
 }
 
-// Make "assert" a synonym for QUnit's ok function.
-// var assert = QUnit.assert;
-
-// For testing convenience automatically assert steps from wffs.
-// TODO: Eliminate the need for this.
-Toy.autoAssert = false;
-
 /**
  * Check effect of a rewriter.  Null expected value means expected
  * null result.  Empty expected string means just log the result for

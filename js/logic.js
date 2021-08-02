@@ -263,38 +263,11 @@ declare(
    */
   {name: 'r',
     action: function(equation, target, path_arg) {
-      if ((equation instanceof Error || target instanceof Error) &&
-          !Toy.autoAssert) {
+      if ((equation instanceof Error || target instanceof Error)) {
         return newError('Not proved');
       }
       const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
-      // Logs the location of the test where autoAssert is used.
-      function logWhere(term) {
-        var e = new Error();
-        var lines = e.stack.split('\n');
-        // Note that the following regex may be Chrome-specific.
-        function test(line) { return line.match(/^ *at test/); }
-        var where = lines.find(test) || 'at unknown location';
-        console.warn('Asserting', term.$$, where);
-      }
-      // Auto-justify input steps if requested by the current configuration.
-      if (!equation.isProved()) {
-        if (Toy.autoAssert) {
-          logWhere(equation);
-          equation = rules.assert(equation);
-        } else {
-          assert(false, 'Rule R unproven equation: {1}', equation);
-        }
-      }
-      if (!target.isProved()) {
-        if (Toy.autoAssert) {
-          logWhere(target);
-          target = rules.assert(target);
-        } else {
-          assert(false, 'Rule R unproven target: {1}', target);
-        }
-      }
       if (!target._type) {
         console.warn(Toy.format('Target lacks type: {1}', target));
         debugger;

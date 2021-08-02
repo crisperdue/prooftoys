@@ -2400,7 +2400,6 @@ Toy.factsExtending = factsExtending;
 Toy.factExpansion = factExpansion;
 
 // Settable variables, export right here:
-Toy.autoAssert = false;
 Toy.assertFacts = true;
 
 Toy.getStepCounter = getStepCounter;
