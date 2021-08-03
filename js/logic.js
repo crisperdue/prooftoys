@@ -452,15 +452,14 @@ declare(
    */
   {name: 'assert',
     action: function(assertion_arg) {
-      const assertion = termify(assertion_arg).copyForTyping();
-      assertion.annotateWithTypes();
-      const newConsts = assertion.newConstants();
+      const wff = termify(assertion_arg).copyForTyping().annotateWithTypes();
+      const newConsts = wff.newConstants();
       if (newConsts.size > 0) {
-        console.warn('In', assertion.toString(), 'introducing constants:',
+        console.warn('In', wff.toString(), 'introducing constants:',
                      Array.from(newConsts).join(', '));
         Toy.addConstants(newConsts);
       }
-      return assertion.justify('assert', [assertion]);
+      return wff.justify('assert', [wff]);
     },
     inputs: {bool: 1},
     form: ('Assert <input name=bool>'),
