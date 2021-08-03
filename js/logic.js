@@ -763,36 +763,6 @@ declare(
     description: '=definition'
   },
 
-  /**
-   * Converts an equality of two functions / predicates into equality
-   * of the result of applying each to a variable, as for converting
-   * a function definition to the traditional form [f x = ... ].
-   *
-   * TODO: Consider obsoleting this rule when Axiom 3 becomes
-   *   available to use as a rewrite in the UI.  Further consider
-   *   obsoleting this if unForall or similar rule removes forall from
-   *   deeper subexpressions (that do not involve ==).
-   */
-  {name: 'reduceEqn',
-    action: function(equation) {
-      assertEqn(equation);
-      const inputs = [equation];
-      if (equation.isCall2('=>')) {
-        return (equation.andThen('rewriteOnly', '/right', rules.axiom3())
-                .andThen('unForall', '/right')
-                .justify('reduceEqn', inputs, inputs));
-      } else {
-        return (equation.andThen('rewriteOnly', '', rules.axiom3())
-                .andThen('unForall', '')
-                .justify('reduceEqn', inputs, inputs));
-      }
-    },
-    inputs: {step: 1},
-    labels: 'basic',
-    menu: '[f = {x. p x}] to [f x = p x]',
-    description: 'reduce equation'
-  },
-
   // Use the definition of the name at the given location in the given
   // step.  If the definition is by cases the location should be a
   // call to the named function, with T or F as the argument.
