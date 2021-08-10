@@ -795,11 +795,16 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
  *
  * Copies types from this and the terms to be substituted, so if they
  * all have type information throughout, the result will, too.
+ *
+ * CAUTION: Beware that this may not contribute to well-shaped output
+ * if used outside the context of Axiom 4.
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
   // Object / set of names of variables that are free in some
   // term of the substitution.
+  // TODO: This should probably include all variables that are free
+  // in this before the substitution!
   var freeVars = {};
   for (var name in map_arg) {
     if (name === '%expansions') {
@@ -830,11 +835,16 @@ Expr.prototype.subFree = function(map_arg) {
 
 /**
  * Substitutes the replacement for a single name, which can be a
- * string or Atom as done by Expr.subFree.  Used by Axiom 4 (lambda
- * conversion).
+ * string or Atom as done by Expr.subFree.  Used by Axiom 4 (axiom
+ * of substitution).
  *
- * TODO: Implement this independently of subFree, as this can be
- *   faster and cleaner.
+ * Axiom 4 calls this with inputs that are parts of a well-shaped
+ * term, and this must produce a well-shaped result from them, which
+ * is guaranteed by not copying the replacement as well as not
+ * gratuitously copying variable Atoms with this term.
+ *
+ * TODO: Consider implementing this independently of subFree, as this
+ *   can be faster and cleaner.
  */
 Expr.prototype.subFree1 = function(replacement, name) {
   return this.subFree(Toy.object0(name, replacement));

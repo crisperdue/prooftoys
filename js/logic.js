@@ -213,6 +213,11 @@ declare(
    */
   {name: 'axiom4',
     action: function(call_arg) {
+      // Implementation note: The only primitive theorem generators
+      // are Rule R and this.  Rule R assumes that its inputs are
+      // "well-shaped", and produces a well-shaped result if so.
+      // Consequently this rule must be sure to produce a well-shaped
+      // result.
       const call1 = (typeof call_arg == 'string'
                      ? Toy.parse(call_arg)
                      : call_arg);
@@ -223,9 +228,11 @@ declare(
                     ? call1
                     : call1.copyForTyping().annotateWithTypes());
       var lambda = call.fn;
+      // We require subFree1 to produce a well-shaped result when
+      // "call" is well-shaped.
       const result =
-            equal(call, lambda.body.subFree1(call.arg, lambda.bound.name));
-      // Carefully install type information by hand.
+        equal(call, lambda.body.subFree1(call.arg, lambda.bound.name));
+      // Carefully install a few bits of type information by hand.
       result.arg._type = result.fn.arg._type = call._type;
       result.fn._type = new Toy.FunctionType(call._type, Toy.boolean);
       result.fn.fn._type = Toy.equalityType(call._type);
@@ -253,10 +260,15 @@ declare(
   },
 
   /**
-   * Replace the subexpression of the target at the path with the
-   * equation's RHS.  This is rule R.  The subexpression must match
-   * the equation's LHS, meaning they are the same except possibly
-   * in names of bound variables.
+   * Replace the subexpression of the target at the path ("target
+   * term") with the equation's RHS.  This is Peter Andrews' Rule R.
+   * The target term must match the equation's LHS, meaning they are
+   * the same except possibly in names of bound variables.  This must
+   * also find a substitution for types in the equation and one for
+   * types in the target that, in principle, could be done before the
+   * replacement and give a result that is well-typed.
+   *
+   * If any of this fails, returns an Error.
    */
   {name: 'r',
     action: function(equation, target, path_arg) {
@@ -301,7 +313,7 @@ declare(
 );
 
 /**
- * This is the core functionality for the full Rule 4.  It returns a
+ * This is the core functionality for the full Rule R.  It returns a
  * new wff with the term in target at the given path replaced by the
  * RHS of the given (unconditional) equation term.  Does full
  * unification of types given, with checking for valid typing.

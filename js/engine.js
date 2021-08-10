@@ -1,21 +1,9 @@
 // Copyright Crispin Perdue.  All rights reserved.
 //
-// This file implements the logic, its axioms, basic theorems,
-// inference rules and other machinery that is relatively
-// independent of the problem domain.
+// Here be core facilities such as declaring rules, theorems, facts,
+// and definitons, matching and fact management that can be separated
+// from actual deduction.
 
-// This could be organized as something like:
-//
-// Subcore: rules and theorems needed to prove the various facts
-// about truth tables.
-//
-// Booleans: truth table facts and probably the tautology checker.
-//
-// Core: full replacement, cases, and other basics.
-//
-// Assumptions: management and simplification of assumptions.
-//
-// Facts: support for facts and rewriting.
 
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
@@ -860,9 +848,6 @@ function enableDefnFacts() {
  * multiple arguments.
  *
  * This is intended mainly for use from Toy.definition.
- *
- * End users may choose to look up such facts using rules.definition
- * and reduceEqn via the user interface.
  */
 function addDefnFacts(definition) {
   function addFacts() {

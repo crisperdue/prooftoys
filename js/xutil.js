@@ -346,13 +346,16 @@ Expr.prototype.findUntyped = function() {
 
 /**
  * Make a copy suitable for attaching type information destructively.
- * This is internal to a few implementations such as Axiom 4 and
- * Rule R.
+ * Treat this as internal to rules.axiom4 and rules.assert.
  *
  * TODO: Refine this to copy less, sharing instances of monomorphic
  * constants, plus instances of variables that are in the same scope.
  * Variables with specific monomorphic types could be shared here if
  * implemented.
+ *
+ * Sharing occurrences of a variable guarantees that all occurrences
+ * will have the same type assignment, avoiding some bookkeeping
+ * during the type assignment.
  */
 Expr.prototype.copyForTyping = function() {
   return this.deepCopy();
@@ -360,7 +363,9 @@ Expr.prototype.copyForTyping = function() {
 
 /**
  * Returns a copy like deepCopy, also bringing over all type
- * information from the original.  Unused.
+ * information from the original, suitable for rendering, but not for
+ * inference, because all occurrences of variables are represented by
+ * distinct structure in the result.
  */
 Expr.prototype.copyWithTypes = function() {
   const c = this.constructor;

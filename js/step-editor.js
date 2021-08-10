@@ -1702,6 +1702,8 @@ RuleMenu.prototype._update = function() {
         var selection = step && step.selection;
         if (selection) {
           var subst = selection.matchSchema(statement.getLeft());
+          // Be careful; subFree at present is only guaranteed to work
+          // correctly on untyped terms.
           if (subst) {
             resultTerm = statement.getRight().subFree(subst);
           }

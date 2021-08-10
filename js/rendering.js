@@ -1164,8 +1164,12 @@ function textNode(text) {
 
 /**
  * Copies this non-rendered term and renders the result, returning a
- * DOM node containing the rendering.  This is called by the step editor
- * to render terms and their replacements into the menu display.
+ * DOM node containing the rendering.  This is called by the step
+ * editor to render terms and their replacements into the menu
+ * display.  Often no type information is present, e.g. fact goals.
+ * Goals are not deduced, so it is not entirely clear whether pure
+ * type inference can be relied on to supply the correct type
+ * assignments.
  *
  * TODO: Consider trying to make the rendering of variable names here
  *   consistent with the the names presented in the actual step
