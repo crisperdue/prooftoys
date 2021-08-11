@@ -2300,43 +2300,39 @@ Toy.extends(Atom, Expr);
  * counterpart, otherwise just the pname.
  */
 Atom.prototype._toString = function() {
-  if (this.name === '=' && this._type && this._type.fromType === Toy.boolean) {
-    return '==';
-  }
-  const output = (useUnicode ? this.toUnicode() : this.pname);
-  const level = Toy.showTypes;
-  return (level && this._type && (level === 'atoms' || this.isVariable())
-          ? output + ":" + this._type.toString()
-          : output);
+  const text = (useUnicode
+                ? this.unicodeName()
+                : this.name === '=' && Toy.isBooleanBinOp(this)
+                ? '=='
+                : this.pname);
+  const show = Toy.showTypes;
+  return (show && this._type && (show === 'atoms' || this.isVariable())
+          ? text + ":" + this._type.toString()
+          : text);
 };
 
 /**
- * Implementation of toUnicode for Atoms.
+ * Unicode rendering of the name of this Atom.
  */
-Atom.prototype.toUnicode = function() {
-  var name = this.pname;
-  // This special handling of "=" is a forward reference to
-  // xutil.js.
-  var type = this.hasType && this.hasType();
-  if (type && this.pname == '=' && Toy.isBooleanBinOp(this)) {
-    name = '==';
-  }
+Atom.prototype.unicodeName = function() {
+  // Always show boolean equality as such.
+  // Using pname helps here in some obsolescent usage.
+  const name = (this.name == '=' && Toy.isBooleanBinOp(this)
+                ? '=='
+                : this.pname);
   var uname = unicodeNames[name];
   if (uname) {
     return uname;
   }
-
   var info = this.parseName();
   var result = info.name;
   if (info.sub) {
+    // Convert it to a Unicode subscript.
     var offset = 0x2080 - '0'.charCodeAt(0);
     var sub = info.sub;
     for (var i = 0; i < sub.length; i++) {
       result += String.fromCharCode(sub.charCodeAt(i) + offset);
     }
-  }
-  if (info.type) {
-    result += ':' + info.type;
   }
   return result;
 };
@@ -2676,7 +2672,7 @@ Call.prototype._toString = function() {
         // currently a misnomer.
         return this.getLeft() + '<sup>' + this.getRight() + '</sup>';
       } else {
-        const opStr = useUnicode ? op._toString() : op.pname;
+        const opStr = op._toString();
         return ('(' + this.getLeft() + ' ' + opStr +
                 ' ' + this.getRight() + ')');
       }
