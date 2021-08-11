@@ -1176,7 +1176,7 @@ function textNode(text) {
  *   renderings.
  */
 Expr.prototype.renderTerm = function() {
-  const copy = this.deepCopy();
+  const copy = this.copyWithTypes();
   const jq = copy.render(0);
   return jq[0];
 };
@@ -1369,7 +1369,7 @@ Lambda.prototype.render = function(minPower) {
 Step.prototype.stepFullCopy = function() {
   // Note: does not copy the "ordinal" property, for no
   // great reason.
-  const wff = this.wff.deepCopy();
+  const wff = this.wff.copyWithTypes();
   // TODO: Make the step be a StepDisplay.
   var step = wff;
   // Flag it as a Step (actually StepDisplay)
@@ -1380,7 +1380,6 @@ Step.prototype.stepFullCopy = function() {
   step.ruleArgs = this.ruleArgs;
   // ruleDeps refers to originals of other steps.
   step.ruleDeps = this.ruleDeps;
-  // If truthy, this term will render as an ellipsis.
   return step;
 };
 
