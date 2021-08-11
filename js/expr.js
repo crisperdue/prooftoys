@@ -2300,6 +2300,9 @@ Toy.extends(Atom, Expr);
  * counterpart, otherwise just the pname.
  */
 Atom.prototype._toString = function() {
+  if (this.name === '=' && this._type && this._type.fromType === Toy.boolean) {
+    return '==';
+  }
   const output = (useUnicode ? this.toUnicode() : this.pname);
   const level = Toy.showTypes;
   return (level && this._type && (level === 'atoms' || this.isVariable())

@@ -1836,10 +1836,10 @@ var testCase = {
     check('((5 * 4) = 20)', '5 * 4');
     check('((5 - 4) = 1)', '5 - 4');
     check('((neg 5) = -5)', 'neg 5');
-    check('((5 > 4) = T)', '5 > 4');
-    check('((5 >= 4) = T)', '5 >= 4');
-    check('((5 < 4) = F)', '5 < 4');
-    check('((5 <= 4) = F)', '5 <= 4');
+    check('((5 > 4) == T)', '5 > 4');
+    check('((5 >= 4) == T)', '5 >= 4');
+    check('((5 < 4) == F)', '5 < 4');
+    check('((5 <= 4) == F)', '5 <= 4');
   },
 
   testApplyToBoth: function() {
@@ -1892,7 +1892,7 @@ var testCase = {
     const step = rules.equivSelf('not (p == (F == p))');
     var inf =
       Toy.rules.useDefinition(step, '/left/fn');
-    assertEqual('(F = (p == (F == p)))', inf.getLeft());
+    assertEqual('(F == (p == (F == p)))', inf.getLeft());
   },
 
   testInstEqn: function() {
@@ -1905,9 +1905,9 @@ var testCase = {
   },
 
   testEqT: function() {
-    assertEqual('(T = (b = b))', Toy.rules.eqT('b'));
+    assertEqual('(T == (b = b))', Toy.rules.eqT('b'));
     var step = Toy.rules.eqT(call(f, x));
-    assertEqual('(T = ((f x) = (f x)))', step);
+    assertEqual('(T == ((f x) = (f x)))', step);
     var controller = new Toy.ProofDisplay();
     // or controller.setSteps(Toy.unrenderedDeps(step));
     controller.addStep(step);
@@ -1932,7 +1932,7 @@ var testCase = {
 
   testEqnIsTrue: function() {
     const inf = rules.toTIsEquation(rules.eqSelf('x'));
-    assertEqual('(T = (x = x))', inf);
+    assertEqual('(T == (x = x))', inf);
   },
 
   testR5213: function() {
@@ -1969,7 +1969,7 @@ var testCase = {
   },
 
   testR5217Book: function() {
-    assertEqual('((T = F) == F)', Toy.rules.r5217Book());
+    assertEqual('((T == F) == F)', Toy.rules.r5217Book());
   },
 
   testEquationCases: function() {
@@ -1981,16 +1981,16 @@ var testCase = {
 
   testR5218: function() {
     var inf = Toy.rules.r5218(p);
-    assertEqual('((T = p) = p)', inf);
+    assertEqual('((T == p) == p)', inf);
   },
 
   testToTIsA: function() {
     const step = rules.toTIsA(rules.eqSelf('F'));
-    assertEqual('(T = (F = F))', step);
+    assertEqual('(T == (F == F))', step);
     // Assumptions
     const step1 = Toy.rules.assume(p);
     const result = Toy.rules.toTIsA(step1);
-    assertEqual('(T = (p => p))', result);
+    assertEqual('(T == (p => p))', result);
   },
 
   testFromTIsA: function() {
@@ -2028,7 +2028,7 @@ var testCase = {
                y: Toy.parse('forall {x. b}')
     };
     var result = Toy.rules.instMultiVars(axiom2, map);
-    assertEqual('(((forall {x. (T | b)}) = (forall {x. b})) => ' +
+    assertEqual('(((forall {x. (T | b)}) == (forall {x. b})) => ' +
 		'((h (forall {x. (T | b)})) = (h (forall {x. b}))))',
                 result);
     var step = Toy.rules.axiom2();
@@ -2045,7 +2045,7 @@ var testCase = {
     var result = Toy.rules.casesTF(trueCase,
                                    falseCase,
                                    x);
-    assertEqual('(({x_1. x_1} x) = x)', result);
+    assertEqual('(({x_1. x_1} x) == x)', result);
   },
 
   testModusPonens: function() {
@@ -2056,34 +2056,34 @@ var testCase = {
   },
 
   testTIsXIsX: function() {
-    assertEqual('((T = x) = x)', rules.tIsXIsX());
+    assertEqual('((T == x) == x)', rules.tIsXIsX());
   },
 
   testR5230FT_alternate: function() {
-    assertEqual('((F = T) = F)', Toy.rules.r5230FT_alternate());
+    assertEqual('((F == T) == F)', Toy.rules.r5230FT_alternate());
   },
 
   testR5231T: function() {
-    assertEqual('((not T) = F)', Toy.rules.r5231T());
+    assertEqual('((not T) == F)', Toy.rules.r5231T());
   },
 
   testR5231F: function() {
-    assertEqual('((not F) = T)', Toy.rules.r5231F());
+    assertEqual('((not F) == T)', Toy.rules.r5231F());
   },
 
   testFalseEquals: function() {
-    assertEqual('(((=) F) = not)', Toy.rules.falseEquals());
+    assertEqual('(((==) F) = not)', Toy.rules.falseEquals());
   },
 
   testTrueEquals: function() {
-    assertEqual('(((=) T) = {x. x})', Toy.rules.trueEquals());
+    assertEqual('(((==) T) = {x. x})', Toy.rules.trueEquals());
   },
 
   testEvalBool: function() {
     var inf = Toy.rules.evalBool(call('not', T));
-    assertEqual('((not T) = F)', inf);
+    assertEqual('((not T) == F)', inf);
     inf = Toy.rules.evalBool(call('&', F, T));
-    assertEqual('((F & T) = F)', inf);
+    assertEqual('((F & T) == F)', inf);
     inf = Toy.rules.evalBool(Toy.parse('(p (F | T))'));
     assertEqual('((p (F | T)) = (p T))', inf);
     const taut = Toy.parse('(p => not p) => not p');
@@ -2208,7 +2208,7 @@ var testCase = {
     inf = Toy.rules.r5239(Toy.parse('{y. T}'), '/body',
                           Toy.parse('(T = (y > x))'));
     var expected =
-      '((forall {y. (T = (y > x))}) => ({y. T} == {y. (y > x)}))';
+      '((forall {y. (T == (y > x))}) => ({y. T} == {y. (y > x)}))';
     assertEqual(expected, inf);
   },
 
@@ -2298,7 +2298,7 @@ var testCase = {
     var result = bubble('a & b');
     assertEqual('(a & b)', result.getRight());
     var result = bubble('b & a');
-    assertEqual('((b & a) = (a & b))', result);
+    assertEqual('((b & a) == (a & b))', result);
 
     result = bubble('a & b & c');
     assertEqual('((a & b) & c)', result.getRight());
