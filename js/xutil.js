@@ -370,19 +370,13 @@ Expr.prototype.copyForTyping = function() {
 Expr.prototype.copyWithTypes = function() {
   const c = this.constructor;
   if (c === Atom) {
-    const result = new Atom(this.pname);
-    result._type = this._type;
-    return result;
+    return new Atom(this.pname).typeFrom(this);
   } else if (c === Call) {
-    const result = new Call(this.fn.copyWithTypes(),
-                            this.arg.copyWithTypes());
-    result._type = this._type;
-    return result;
+    return new Call(this.fn.copyWithTypes(),
+                    this.arg.copyWithTypes()).typeFrom(this);
   } else if (c === Lambda) {
-    const result = new Lambda(this.bound.copyWithTypes(),
-                              this.body.copyWithTypes());
-    result._type = this._type;
-    return result;
+    return new Lambda(this.bound.copyWithTypes(),
+                      this.body.copyWithTypes()).typeFrom(this);
   } else {
     abort('Bad input: {1}', this);
   }
@@ -412,6 +406,9 @@ Expr.prototype.hasType = function() {
  * copied when replacing an occurrence of a defined constant.
  *
  * Returns the annotated expression.
+ *
+ * TODO: Replace this with something using strategy and coding
+ * style more like the implementation of Rule R.
  */
 Expr.prototype.annotateWithTypes = function() {
   this._type || findType(this, true);
@@ -443,11 +440,6 @@ Expr.prototype.isIndividual = function() {
   return this.hasType() == individual;
 };
 
-// TODO: Consider implementing a "mating" function to use in rule R to
-// unify the type of the target site with the type of the term that
-// will replace it.  The function must unify the two types and
-// propagate the unification throughout the result.
-//
 // Note that if the type of the replacement term has no type variables
 // in it, it can be used as-is with its types intact.  If the mating
 // results in a replacement with no variables, the result might
