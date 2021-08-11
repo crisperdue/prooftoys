@@ -1273,10 +1273,9 @@ function getResInfo(stmt) {
     const asmSet = (hasAsms
                     ? Toy.makeConjunctionSet(standard.getRight())
                     : noTerms);
-    // Key generation currently uses toString, which is sensitive to
-    // aliases in particular "==" for "=", compared with "dump", which
-    // is not.
-    const key = (hasAsms ? standard.getLeft() : standard).toString();
+    // Uses toKey so that aliases, in particular "==" for "=", are
+    // treated the same.
+    const key = (hasAsms ? standard.getLeft() : standard).toKey();
     const info = {key: key, asmSet: asmSet,
                   standardVars: standard,
                   // _expansion will be initialized later.

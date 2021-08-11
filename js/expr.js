@@ -3477,6 +3477,39 @@ function neverWhenBound(rule) {
                        rule.getLeft().freeVars()).size === 0));
 };
 
+// Methods.
+
+// The result of this method is very similar to to toString, but this
+// uses the "name" property, so aliases are treated as the same thing.
+// Intended for use in identifying facts that match terms in steps.
+Expr.prototype.toKey = function() {
+  const key = x => {
+    const c = x.constructor;
+    if (c === Atom) {
+      const isInfix = Toy.isInfixDesired(x);
+      return isInfix ? '(' + x.name + ')' : x.name;
+    } else if (c === Call) {
+      if (x.isCall2()) {
+        const op = x.getBinOp();
+        if (isInfixDesired(op)) {
+          return ('(' + key(x.getLeft()) + ' ' + op.name +
+                  ' ' + key(x.getRight()) + ')');
+        } else {
+          return ('(' + key(op) + ' ' + key(x.getLeft()) +
+                  ' ' + key(x.getRight()) + ')');
+        }
+      } else {
+        return '(' + key(x.fn) + ' ' + key(x.arg) + ')';
+      }
+    } else if (c === Lambda) {
+      return '{' + key(x.bound) + '. ' + key(x.body) + '}';
+    } else {
+      abort('Bad input: {1}', x);
+    }
+  }
+  return key(this);
+};
+
 
 //// Export public names.
 
