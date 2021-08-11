@@ -4,13 +4,11 @@
 // and definitons, matching and fact management that can be separated
 // from actual deduction.
 
+'use strict';
 
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
 (function() {
-
-'use strict';
-
 
 //// THEOREMS AND RULES
 
