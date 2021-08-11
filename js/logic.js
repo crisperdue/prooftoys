@@ -280,13 +280,13 @@ declare(
       result = target.wff.ruleRCore(target, path, equation);
       if (result instanceof Error) {
         // Distinctify and try again.
-        // Why does this path execute just once, on the one
-        // overall failure??
+        // Why does this path execute in just one test case, where using
+        // distinctify does not resolve the problem?
         window.dCounter = (window.dCounter || 0) + 1;
         const eq2 = equation.distinctify(target);
-        result = target.wff.ruleRCore(target, path, eq2);
-        if (result instanceof Error) {
-          return result;
+        const result2 = target.wff.ruleRCore(target, path, eq2);
+        if (result2 instanceof Error) {
+          return result2;
         }
       }
       var justified = result.justify('r', [equation, target, path],
