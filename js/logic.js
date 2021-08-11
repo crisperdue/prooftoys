@@ -313,11 +313,12 @@ declare(
 );
 
 /**
- * This is the core functionality for the full Rule R.  It returns a
- * new wff with the term in target at the given path replaced by the
- * RHS of the given (unconditional) equation term.  Does full
- * unification of types given, with checking for valid typing.
- * If there is a problem, returns an Error.
+ * This is the core functionality for the full Rule R.  It expects a
+ * target step with path and a pure equation, returning a new wff with
+ * the term in target at the given path replaced by the RHS of the
+ * given (unconditional) equation term.  Does full unification of
+ * types given, with checking for valid typing.  If there is a
+ * problem, returns an Error.
  */
 Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   // List of bound variable Atoms in scope at the location of the
@@ -351,9 +352,9 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
     // copying the replacement for the target term.
     const c = x.constructor;
     if (c === Atom) {
-      const xnm = x.pname;
+      const xnm = x.name;
       if (x.isVariable()) {
-        const bound = boundVars.find(v => v.pname === xnm);
+        const bound = boundVars.find(v => v.name === xnm);
         if (bound) {
           if (outerBound.has(bound)) {
             // Honor the constraint that the types must match.
@@ -379,13 +380,17 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
           }
         }
       } else {
-        // It is a non-variable Atom.
-        return new Atom(xnm).typeFrom(x);
+        // It is a non-variable Atom.  Return it without copying
+        // if it has no type variables, so its structure will not
+        // mutate.
+        //
+        // TODO: This should properly use name rather than pname.
+        return x._type.hasVariable() ? new Atom(x.pname).typeFrom(x) : x;
       }
     } else if (c === Call) {
       return new Call(copy(x.fn), copy(x.arg)).typeFrom(x);
     } else if (c === Lambda) {
-      const v = new Atom(x.bound.pname).typeFrom(x.bound);
+      const v = new Atom(x.bound.name).typeFrom(x.bound);
       boundVars.unshift(v);
       const body = copy(x.body);
       boundVars.shift();
@@ -432,7 +437,7 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
     } else if (c === Lambda) {
       if (path.segment === 'body') {
         const bound = term.bound;
-        const newBound = new Atom(bound.pname).typeFrom(bound);
+        const newBound = new Atom(bound.name).typeFrom(bound);
         boundVars.unshift(newBound);
         const result = (new Lambda(newBound, dig(term.body, path.rest))
                         .typeFrom(term));
