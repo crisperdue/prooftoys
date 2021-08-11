@@ -92,8 +92,8 @@ function andUnifTypes(type1, type2, map, pairs) {
     // The variable unifies.
     return true;
   };
-  if (c1 === TypeConstant && c2 === TypeConstant && type1 === type2) {
-    return true;
+  if (c1 === TypeConstant && c2 === TypeConstant) {
+    return type1 === type2;
   } else if (c1 === TypeVariable) {
     return unifVar(type1, type2);
   } else if (c2 === TypeVariable) {
