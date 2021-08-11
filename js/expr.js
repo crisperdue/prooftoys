@@ -2386,6 +2386,8 @@ Atom.prototype.dump = function() {
 };
 
 Atom.prototype._subFree = function(map, freeVars, allNames) {
+  // Note that in some cases it is important not to copy this
+  // Atom if not necessary, e.g. when used within Axiom 4.
   return map[this.name] || this;
 };
 
@@ -2756,9 +2758,7 @@ Call.prototype._subFree = function(map, freeVars, allNames) {
   if (fn == this.fn && arg == this.arg) {
     return this;
   } else {
-    const result = new Call(fn, arg);
-    result._type = this._type;
-    return result;
+    return new Call(fn, arg).typeFrom(this);
   }
 };
 
@@ -3242,16 +3242,16 @@ Lambda.prototype._subFree = function(map, freeVars, allNames) {
     // The bound name here appears as a free variable in some
     // replacement expression.  Rename the bound variable to ensure
     // there will be no capturing. We do this without checking whether
-    // capturing actually would occur.
-    const newVar = genVar(boundName, allNames);
-    newVar._type = this.bound._type;
+    // capturing actually would occur.  This also renames it if there
+    // are free occurrences of a variable of the same name before the
+    // substitution.
+    const newVar = genVar(boundName, allNames).typeFrom(this.bound);
     allNames[newVar.name] = true;
     // TODO: Consider updating the map and doing one substitution
     //   rather than two.
     const newBody = this.body._subFree(Toy.object0(boundName, newVar),
                                        freeVars, allNames);
-    const renamed = new Lambda(newVar, newBody);
-    renamed._type = this._type;
+    const renamed = new Lambda(newVar, newBody).typeFrom(this);
     // Substitute into the modified Lambda term.
     result = renamed._subFree(map, freeVars, allNames);
   } else {
