@@ -223,12 +223,19 @@ var Step = Expr;
 // to Expr.toString and Expr.toUnicode.
 var useUnicode = false;
 
-Expr.prototype.toString = function() {
+/**
+ * Converts to a string.  If "simply", even operators
+ * are presented without parentheses.
+ */
+Expr.prototype.toString = function(simply) {
+  const str = this._toString();
+  if (simply) {
+    return str;
+  }
   // Parsing is generally strict about use of infix operators in other
   // contexts, so be sure to display them in parentheses by default.
   // Calls to functions that are infix operators can display as infix.
   const isInfix = Toy.isInfixDesired(this);
-  const str = this._toString();
   return isInfix ? '(' + str + ')' : str;
 };
 
@@ -248,17 +255,18 @@ Expr.prototype.show = function (level) {
 
 /**
  * Converts this Expr to a string of Unicode and/or HTML.  The display
- * is currently just the same as plain text display except
- * names (or pnames) that have Unicode counterparts are presented as
- * Unicode and some cases of exponentiation use HTML.
+ * is currently just the same as plain text display except names (or
+ * pnames) that have Unicode counterparts are presented as Unicode and
+ * some cases of exponentiation use HTML.  With the optional "simply"
+ * argument, this renders operators without parentheses.
  *
  * This is a bit of a misnomer right now.
  */
-Expr.prototype.toUnicode = function() {
+Expr.prototype.toUnicode = function(simply) {
   const saved = useUnicode;
   useUnicode = true;
   try {
-    return this.toString();
+    return this.toString(simply);
   } finally {
     useUnicode = saved;
   }

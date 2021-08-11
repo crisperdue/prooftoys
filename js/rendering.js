@@ -972,10 +972,9 @@ function renderWff(step) {
       step.ruleName === 'consider' ||
       step.ruleName === 'considerPart' ||
       step.ruleName === 'given') {
-
     // All of these omit some unnecessary part of the display for
     // readability.
-    var op = wff.getBinOp().toUnicode();
+    //
     // The right side renders on the left here so any changes to it appear
     // on the right side in following steps.
     //
@@ -1194,8 +1193,8 @@ Expr.prototype.renderTerm = function() {
  * if the operator's precedence is at least minPower.
  *
  * The optional second argument is used only by Atom rendering, and if
- * truthy indicates that the expression represents a function (or
- * syntactically an operator).
+ * truthy indicates that this Atom appears in "fn" position in the
+ * syntax tree.
  */
 Atom.prototype.render = function(minPower, isFn) {
   if (this.node) {
@@ -1207,12 +1206,12 @@ Atom.prototype.render = function(minPower, isFn) {
   var $expr = exprJq(true);
   this.node = dom($expr);
 
-  var name = this.toHtml();
-  if (!isFn && this.isOperator()) {
-    name = '(' + name + ')';
-  }
+  // This line says "render without parens if it occurs in function
+  // position or is not syntactically an operator".
+  var name = this.toHtml(isFn || !this.isOperator());
   specialClasses(this.pname).forEach(function(cl) { $expr.addClass(cl); });
   if (isFn) {
+    // TODO: Consider whether this class has any effect on anything.
     $expr.addClass('fn');
   }
   $expr.html(name);
