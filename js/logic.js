@@ -542,8 +542,8 @@ declare(
 
       Toy.fillDetails(rendered);
       const insertions = Toy.unrenderedDeps(step.details);
-      // Steps with an array (list of facts) where some entry is
-      // neither a term nor a string cannot currently be inlined.
+      // Steps with an array argument (list of facts) where some entry
+      // is neither a term nor a string cannot currently be inlined.
       const noEncode = insertions.some(function(step) {
           return step.ruleArgs.some(function(arg) {
               return (Array.isArray(arg) &&
@@ -554,7 +554,7 @@ declare(
             });
         });
       if (noEncode) {
-        throw new Error('Inlining not supported for ' + step.toString());
+        return newError('Inlining not supported for ' + step.toString());
       }
 
       const steps = display.steps;
