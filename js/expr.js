@@ -423,7 +423,7 @@ Expr.prototype.isNamedConst = function() {
   // and this is not a named constant.
   var v = this._value;
   return v === null || v === 0 || v === 1 || v === '';
-}
+};
 
 /**
  * True iff this is a var with the given name.
@@ -444,6 +444,8 @@ Expr.prototype.isConst = function(opt_name) {
 };
 
 // True iff the expression is a literal constant.
+// Currently includes 0 and 1, though that probably
+// should change.
 Expr.prototype.isLiteral = function() {
   // Value must be neither null nor undefined.
   return this instanceof Atom && this._value != null;
@@ -2278,7 +2280,6 @@ function Atom(name, position) {
   // Expr.call(this);
   this.memos = {};
   this.pname = this.name = name;
-  this._value = undefined;
   if (isConstantName(name))
     this.pos = position;
   if (aliases.hasOwnProperty(name)) {
