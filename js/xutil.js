@@ -88,7 +88,17 @@ function TypeVariable(name) {
 Toy.extends(TypeVariable, TypeEx);
 
 TypeVariable.prototype.toString = function() {
-  return this.name;
+  const map = Toy._typeNums;
+  if (Toy.showTypes === 'testing') {
+    let num = map.get(this);
+    if (!num) {
+      num = map.size + 1;
+      map.set(this, num);
+    }
+    return '' + num;
+  } else {
+    return this.name;
+  }
 };
 
 // When applying the "fresh" operation to a type expression, the

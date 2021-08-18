@@ -239,10 +239,15 @@ Expr.prototype.toString = function(simply) {
   return isInfix ? '(' + str + ')' : str;
 };
 
+// Used with Toy.showTypes level 'testing'.  The map keys are type
+// variables and the values are integers starting at 1 to enable a
+// canonical presentation for testing.
+Toy._typeNums = new Map();
+
 /**
  * Returns a string presenting this Expr or Step, including
  * type information for variables and potentially more.
- * Level defaults to 'vars', but can be 'atoms'.
+ * Level defaults to 'vars', but can be 'atoms' or 'testing'.
  */
 Expr.prototype.show = function (level) {
   try {
@@ -250,6 +255,7 @@ Expr.prototype.show = function (level) {
     return this.toString();
   } finally {
     Toy.showTypes = false;
+    Toy._typeNums.clear();
   }
 };
 
@@ -2315,7 +2321,8 @@ Atom.prototype._toString = function() {
                 ? '=='
                 : this.pname);
   const show = Toy.showTypes;
-  return (show && this._type && (show === 'atoms' || this.isVariable())
+  return (show && this._type &&
+          (show === 'atoms' || show === 'testing' || this.isVariable())
           ? text + ":" + this._type.toString()
           : text);
 };
