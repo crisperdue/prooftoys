@@ -226,7 +226,17 @@ declare(
       // TODO: Consider requiring type info to be present.
       const call = (call1.hasType()
                     ? call1
-                    : call1.copyForTyping().annotateWithTypes());
+                    // : call1.copyForTyping().annotateWithTypes());
+                    : call1.typedCopy());
+      if (!call1.hasType()) {
+        const types = call1.copyForTyping().annotateWithTypes().show('testing');
+        // TODO: Remove these temporary checks and warnings.
+        const alt = call.show('testing');
+        if (alt !== types) {
+          console.warn('types:', types);
+          console.warn('alt:  ', alt);
+        }
+      }
       var lambda = call.fn;
       // We require subFree1 to produce a well-shaped result when
       // "call" is well-shaped.
@@ -469,7 +479,7 @@ declare(
    */
   {name: 'assert',
     action: function(assertion_arg) {
-      const wff = termify(assertion_arg).copyForTyping().annotateWithTypes();
+      const wff = termify(assertion_arg).typedCopy();
       const newConsts = wff.newConstants();
       if (newConsts.size > 0) {
         console.warn('In', wff.toString(), 'introducing constants:',
@@ -885,8 +895,7 @@ declare(
   {name: 'consider',
     action: function(term_arg) {
       const term = termify(term_arg);
-      const copy = term.deepCopy();
-      copy.annotateWithTypes();
+      const copy = term.typedCopy();
       if (copy.isBoolean()) {
         var step = rules.equivSelf(term);
       } else {
@@ -1192,9 +1201,7 @@ declare(
       v = varify(v);
       var eqn = h_eqn.getMain();
       eqn.assertCall2('=');
-      const step1 = (eqn.isCall2('==')
-                     ? rules.equivSelf(lambda(v, eqn.getLeft()))
-                     : rules.eqSelf(lambda(v, eqn.getLeft())));
+      const step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
       const step2 = rules.r1(step1, '/right/body', h_eqn);
       return step2.justify('bindEqn', arguments, [h_eqn]);
     },
@@ -1538,7 +1545,7 @@ declare(
   {name: 'r5217Book',
     statement: '(T == F) == F',
     proof: function() {
-      var step1 = rules.instEqn(rules.axiom1(), '{x. T = x}', 'g');
+      var step1 = rules.instEqn(rules.axiom1(), '{x. T == x}', 'g');
       var step2a = rules.reduce(step1, '/left/left');
       var step2b = rules.reduce(step2a, '/left/right');
       var step2c = rules.reduce(step2b, '/right/arg/body');

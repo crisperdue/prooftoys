@@ -252,7 +252,7 @@
     const name = fn.name;
     if (typeof fn === 'function') {
       if (name.startsWith('TODO')) {
-        QUnit.todo(name, fn);
+        QUnit.test.todo(name, fn);
       } else {
         QUnit.test(name, fn);
       }

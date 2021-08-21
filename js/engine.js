@@ -765,8 +765,7 @@ function declare(_declarations) {
  */
 function definition(defn_arg) {
   const definitions = Toy.definitions;
-  const defn = termify(defn_arg);
-  defn.annotateWithTypes();
+  const defn = termify(defn_arg).typedCopy();
   if (defn.isCall2('=') && defn.getLeft().isConst()) {
     // Allow benign redefinition same as an existing one.
     const name = defn.getLeft().name;
@@ -2128,7 +2127,8 @@ var factProperties = {
  * prover.  Top-level code, as in files of theorems, definitions, and
  * inference rules, should use addRule (or addFactsMap) as they
  * support rules of inference,and do additional useful work such as
- * automatically add appropriate swapped facts.
+ * automatically add appropriate swapped facts.  The goal as stored in
+ * the database has type information.
  *
  * This does no inference, so it can be called before proving any
  * theorems.
@@ -2175,11 +2175,10 @@ function addFact(info) {
   // This will be the same as the goal if the goal is proved.
   info.proved = info.goal && info.goal.isProved() && info.goal;
 
-  // The goal is a rendered Expr just because that makes a complete
-  // copy that can be properly annotated with types.  Copying
-  // makes it not proved.
-  info.goal = ((info.goal || mathParse(info.statement))
-               .deepCopy());
+  // Ensure that the goal has types.
+  info.goal = (info.proved ||
+               ((info.goal || mathParse(info.statement))
+                .typedCopy()));
   for (var key in info) {
     if (!(key in factProperties)) {
       var id = info.goal ? info.goal.$$ : info.synopsis;
@@ -2211,12 +2210,6 @@ function addFact(info) {
     }
     Toy.addConstants(names);
   }
-  // Annotate the new goal with type info for type comparison
-  // with portions of steps in the UI.
-  //
-  // Careful: It is very doubtful whether annotated structures can be
-  // shared as part of any other steps or Exprs.
-  info.goal.annotateWithTypes();
   if (!info.proved) {
     if (!info.axiom && !info.definition && !info.proof) {
       console.warn('No proof for', info.goal.toUnicode());

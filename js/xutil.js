@@ -40,8 +40,8 @@ Toy.extends(TypeCheckError, Error);
 function TypeEx() {}
 
 /**
- * Make a copy of this type term, with the same constraints but
- * all type variables renamed to fresh new ones.
+ * Returns a copy of this type term, with the same constraints but all
+ * type variables renamed to fresh new ones.
  */
 TypeEx.prototype.clone = function() {
   const replacements = new Map();
@@ -66,7 +66,6 @@ TypeEx.prototype.clone = function() {
   }
   return clohn(this);
 };
-      
 
 // Private to the TypeVariable constructor.
 var _typeVarCounter = 1;
@@ -198,6 +197,9 @@ TypeConstant.addMethods(tcMethods);
 
 
 function FunctionType(fromType, toType) {
+  // Include these lines for debugging if needed.
+  // assert(fromType instanceof TypeEx, 'fromType');
+  // assert(toType instanceof TypeEx, 'toType');
   this.fromType = fromType;
   this.toType = toType;
 }
@@ -957,6 +959,7 @@ var constantTypes = new Map(Object.entries({
   F: boolean,
   'if': ifType(),
   '=': equalityType(),
+  '==': booleanBinOpType(),
   the1: theType(),
 
   // The real numbers.
