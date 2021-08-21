@@ -835,6 +835,25 @@ var testCase = {
     assert(copy.getRight() !== target.getRight());
   },
 
+  testTypedCopy: function() {
+    {
+      const term = Toy.parse('x');
+      const result = term.typedCopy();
+      assertEqual('x', '' + result);
+    }
+    {
+      const term = Toy.parse('x > y');
+      const result = term.typedCopy();
+      assertEqual('(x:1 >:((o 1) 1) y:1)', result.show('testing'));
+    }
+    {
+      const thm = rules.fact('minv 0 = none');
+      assertEqual('((minv:(i i) 0:i) =:((o i) i) none:i)',
+                  thm.show('testing'));
+      assert(thm.isProved());
+    }
+  },
+
   testSubFree: function() {
     var map = Toy.object0;
     var v = varify('v');

@@ -358,10 +358,7 @@ Expr.prototype.findUntyped = function() {
  * Make a copy suitable for attaching type information destructively.
  * Treat this as internal to rules.axiom4 and rules.assert.
  *
- * TODO: Refine this to copy less, sharing instances of monomorphic
- * constants, plus instances of variables that are in the same scope.
- * Variables with specific monomorphic types could be shared here if
- * implemented.
+ * TODO: Remove this entirely Real Soon, obsoleted by Expr.typedCopy.
  *
  * Sharing occurrences of a variable guarantees that all occurrences
  * will have the same type assignment, avoiding some bookkeeping
@@ -369,6 +366,111 @@ Expr.prototype.findUntyped = function() {
  */
 Expr.prototype.copyForTyping = function() {
   return this.deepCopy();
+};
+
+/**
+ * Makes a copy of this that is well-typed and well-shaped, also such
+ * that if full resolution of type information mutates types in the
+ * copy, this will be unaffected.
+ */
+Expr.prototype.typedCopy = function(dump) {
+  const self = this;
+  // This is a list of variables bound in the current scope,
+  // innermost first.
+  const boundVars = [];
+  // This is a Map of all free variables seen so far, keyed by
+  // variable name.
+  const freeVars = new Map();
+  // This is a Set of new constants seen so far, i.e. ones with
+  // no existing recorded type.
+  const newConsts = new Map();
+  // Array of type term pairs to unify (unification work queue)
+  const toUnify = [];
+  // Unifying substitution to make a consistent assignment of types:
+  const unifier = new Map();
+  // Recursive function that does all the work:
+  const copy = x => {
+    if (x.isVariable()) {
+      const xnm = x.name;
+      const bound = boundVars.find(y => y.name === xnm);
+      if (bound) {
+        return bound;
+      } else {
+        const free = freeVars.get(xnm);
+        if (free) {
+          return free;
+        } else {
+          const xcopy = new Atom(xnm).withType(new TypeVariable());
+          freeVars.set(xnm, xcopy);
+          return xcopy;
+        }
+      }
+    }
+    // X is not a variable.
+    const c = x.constructor;
+    if (c === Atom) {
+      // It is some kind of constant.
+      const xpnm = x.pname;
+      const constType = constantTypes.get(xpnm);
+      // This relies on constantTypes to include entries
+      // for aliases, currently just "==".
+      if (constType) {
+        // In this case it is a known named constant.
+        // TODO: Don't continually copy monomorphic named constants.
+        const clone = constType.clone();
+        return new Atom(x.name).withType(clone);
+      } else if (x.isLiteral()) {
+        // All literals are currently individuals.
+        return new Atom(x.name).withType(individual);
+      } else if (x.isConst()) {
+        // It is a named constant not seen before.
+        const existing = newConsts.get(x.name);
+        if (existing) {
+          return existing;
+        } else {
+          const newConst = new Atom(x.name).withType(new TypeVariable());
+          newConsts.set(newConst.name, newConst);
+          return newConst;
+        }
+      } else {
+        abort('Bad input: {1}', x);
+      }
+    } else if (c === Call) {
+      const fn = copy(x.fn);
+      const arg = copy(x.arg);
+      const resultType = new TypeVariable();
+      const ft = new FunctionType(arg._type, resultType);
+      if (!Toy.andUnifTypes(ft, fn._type, unifier, toUnify)) {
+        // abort('XXX');  // XXX
+        console.log('In', self.$$);
+        console.log('Failed to unify fn', fn, 'with arg', arg);
+        console.log('Types', fn._type.fromType, 'and', arg._type);
+        debugger;
+      }
+      return new Call(fn, arg).withType(resultType);
+    } else if (c === Lambda) {
+      const bound = new Atom(x.bound.name).withType(new TypeVariable());
+      boundVars.unshift(bound);
+      const body = copy(x.body);
+      const result = (new Lambda(bound, body)
+                      .withType(new FunctionType(bound._type, body._type)));
+      boundVars.shift();
+      return result;
+    } else {
+      abort('Bad input: {1}', x);
+    }
+  };
+  const annotated = copy(this);
+  if (dump) {
+    return {
+      annotated: annotated,
+        unifier: unifier,
+        toUnify: toUnify};
+  }
+  Toy.unifTypesList(unifier, toUnify);
+  const finalUnifier = Toy.resolve(unifier);
+  annotated.replaceTypes(finalUnifier);
+  return annotated;
 };
 
 /**
