@@ -661,7 +661,9 @@ Expr.prototype.pathToSchema = function() {
  * Matches the given "schematic" expression against this. Returns a
  * substitution that yields this expression when given the schema, or
  * null if there is none.  The substitution maps from names to
- * expressions.
+ * expressions.  The matching here is only first-order.  In the current
+ * system implementation, to guarantee correct typing it is best to
+ * attempt actual substitution with the result.
  *
  * This is a form of unification of expressions.  This and the schema
  * can be arbitrary terms.
@@ -814,6 +816,11 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
  *
  * CAUTION: Beware that this may not contribute to well-shaped output
  * if used outside the context of Axiom 4.
+ *
+ * This operation retains whatever type information may be already
+ * present in the map, and copies over any type information in this as
+ * it copies terms, but does nothing more to ensure or check for
+ * proper typing.
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);

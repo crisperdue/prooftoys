@@ -337,10 +337,9 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   // Map from name to free variable, eventually all free variables
   // of the result.
   const freeVars = new Map();
-  // A variable object for each bound variable of the target term
-  // whose scope includes the target term, and whose binding is
-  // outside the target term.  Empty except when copying the target
-  // term.
+  // A variable object for each bound variable of the target step
+  // whose scope includes the target term.  Empty except when copying
+  // the target term.
   const outerBound = new Set();
   // A variable object for each in-scope variable of the target term
   // whose binding occurs outside the target term.  Empty except when
@@ -862,6 +861,7 @@ declare(
   },
 
   // The two forms of "=" are interchangeable (other than precedence).
+  // TODO: remove
   {name: 'eqIsEquiv',
     statement: '(=) = (==)',
     proof: function() {
@@ -875,6 +875,7 @@ declare(
 
   // Given A, proves A == A.  This is intended for use only when
   // A is boolean.
+  // TODO: Prohibit in new proofs.
   {name: 'equivSelf',
     action: function(a) {
       var step1 = rules.eqSelf(a);
@@ -2372,8 +2373,13 @@ declare(
   // unForall.  To apply, match "forall p" with an existing
   // statement. Then "apply" p to user's choice of term.
   //
-  // TODO: Move this proof near to its one use.  (It's hard to see
-  //   how this fact is useful standing on its own given the way
+  // TODO: Consider superseding unforall with this, applying it
+  //   with narrowing (substitution into an occurrence of forall),
+  //   combined with smart reduction to make the bound variable
+  //   appear in place of the "x" here.
+  //
+  // TODO: Move this proof near to its one use (r5227).  (It's hard to
+  //   see how this fact is useful standing on its own given the way
   //   matching is done.)
   {name: 'r5225',
     statement: 'forall p => p x',
@@ -3516,6 +3522,8 @@ declare(
   // path is identical to the given term.
   //
   // TODO: Change "subgoal" to "expandRight"; create similar "expandLeft".
+  //
+  // TODO: Remove this, unused.
   {name: 'instantiate',
     action: function(schema, path, term) {
       var expr = schema.get(path);
