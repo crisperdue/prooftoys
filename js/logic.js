@@ -226,7 +226,6 @@ declare(
       // TODO: Consider requiring type info to be present.
       const call = (call1.hasType()
                     ? call1
-                    // : call1.copyForTyping().annotateWithTypes());
                     : call1.typedCopy());
       if (!call1.hasType()) {
         const types = call1.copyForTyping().annotateWithTypes().show('testing');
@@ -460,7 +459,12 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   const copied = dig(this, path);
   const subst1 = new Map();
   if (!Toy.unifTypesList(subst1, pairs)) {
-    return newError('Not unified for rule R:\n{1}\n{2}', target, eqn);
+    const pair = pairs[0];
+    const error =
+      Toy.error('Types cannot match:\n{1} in {2},\n{3} in {4}',
+                target.get(path), target, eqn.getLeft(), eqn);
+    error.reportToUser = true;
+    abort(error);
   }
   const subst = Toy.resolve(subst1);
   // Remember, replaceTypes usually modifies types in copied.

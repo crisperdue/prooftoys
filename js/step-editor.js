@@ -1284,8 +1284,13 @@ StepEditor.prototype._tryRule = function(rule, args) {
     }
     // Applies the rule here.
     result = rule.apply(null, args);
-    });
-  
+  });
+  if (caught instanceof Error && caught.reportToUser) {
+    // If a thrown error is reportable, treat it as the result,
+    // reporting it to the user.
+    result = caught;
+  }
+
   if (Toy.profileName) {
     console.profileEnd();
   }

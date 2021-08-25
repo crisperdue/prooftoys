@@ -948,12 +948,15 @@ window.addEventListener('error', event => {
 });
 
 /**
- * Create and return a "strict" error using a template message and
+ * Create and return an error using a template message and
  * arguments.  If a plain object is passed instead of a template
  * string, treat that as options preceding the other arguments.
+ * Also accepts an initial "options" argument, a plain object.
  */
-function newError(template, ...args) {
-  function err(options, msg, ...args) {
+function error(options, msg, ...args) {
+  if (typeof options === 'string') {
+    return error({}, options, msg, ...args);
+  } else {
     const e = new Error(Toy.format(msg, ...args));
     const props = 'with' in options ? options.with : {};
     Object.assign(e, props);
@@ -961,11 +964,20 @@ function newError(template, ...args) {
     if ('from' in options) {
       e.from = options.from;
     }
-    return strict(e);
+    return e;
   }
-  return (typeof template === 'string'
-          ? err({}, template, ...args)
-          : err( ...arguments));
+}
+
+
+/**
+ * Create and return a "strict" error using a template message and
+ * arguments.  If a plain object is passed instead of a template
+ * string, treat that as options preceding the other arguments.
+ *
+ * TODO: Rename as "strictError".
+ */
+function newError(...args) {
+  return strict(error(...args));
 }
 
 // Calls the function with no arguments in a context where the given
@@ -2551,6 +2563,7 @@ Toy.sortMap = sortMap;
 
 Toy.rebind = rebind;
 Toy.abort = abort;
+Toy.error = error;
 Toy.newError = newError;
 Toy.isError = isError;
 Toy.normalReturn = normalReturn;
