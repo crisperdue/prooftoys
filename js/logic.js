@@ -2069,14 +2069,13 @@ declare(
   // between the two terms, but names free relative to that context
   // must match exactly.
   //
-  // The schema and target 
+  // The schema and target blah blah blah.
   //
-  // TODO: Caution, this is poorly tested at present.  Test it better.
-  //
-  // TODO: Consider replacing with matchToRule and friends.
-  {name: 'matchTerm',
-    action: function(target, path, term) {
-      const schema = target.get(path);
+  // TODO: Work in progress, finish this.
+  {name: 'matchTo',
+   action: function(schemaStep, path1, target, path2) {
+     const schema = schemaStep.get(path1);
+     const term = target.get(path2);
      const map = term.matchSchema(schema);
       if (map) {
         let funSites = new Map();
