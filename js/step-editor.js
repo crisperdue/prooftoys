@@ -8,10 +8,12 @@
 
 // Make application assertions available through "assert".
 const assert = Toy.assertTrue;
+
 const abort = Toy.abort;
 const format = Toy.format;
 const dom = Toy.dom;
 const TermSet = Toy.TermSet;
+const rules = Toy.rules;
 
 
 //// PROOF EDITOR

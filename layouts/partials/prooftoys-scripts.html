@@ -5,14 +5,14 @@
   {{ $pre := resources.Get "/pt/js/prelim.js" }}
   {{ $ex := resources.Get "/pt/js/expr.js" }}
   {{ $xu := resources.Get "/pt/js/xutil.js" }}
-  {{ $st := resources.Get "/pt/js/step-editor.js" }}
-  {{ $re := resources.Get "/pt/js/rendering.js" }}
-  {{ $so := resources.Get "/pt/js/solution-status.js" }}
   {{ $en := resources.Get "/pt/js/engine.js" }}
   {{ $un := resources.Get "/pt/js/unify.js" }}
   {{ $lo := resources.Get "/pt/js/logic.js" }}
   {{ $nu := resources.Get "/pt/js/numbers.js" }}
-  {{ $all := slice $si $tc $ut $pre $ex $xu $st $re $so $en $un $lo $nu }}
+  {{ $st := resources.Get "/pt/js/step-editor.js" }}
+  {{ $re := resources.Get "/pt/js/rendering.js" }}
+  {{ $so := resources.Get "/pt/js/solution-status.js" }}
+  {{ $all := slice $si $tc $ut $pre $ex $xu $en $un $lo $nu $st $re $so }}
   {{ $allJS := resources.Concat "/js/all.js" $all }}
   {{ if $.Site.IsServer }}
     {{ range $all }}

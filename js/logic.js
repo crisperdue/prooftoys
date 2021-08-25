@@ -227,15 +227,6 @@ declare(
       const call = (call1.hasType()
                     ? call1
                     : call1.typedCopy());
-      if (!call1.hasType()) {
-        const types = call1.copyForTyping().annotateWithTypes().show('testing');
-        // TODO: Remove these temporary checks and warnings.
-        const alt = call.show('testing');
-        if (alt !== types) {
-          console.warn('types:', types);
-          console.warn('alt:  ', alt);
-        }
-      }
       var lambda = call.fn;
       // We require subFree1 to produce a well-shaped result when
       // "call" is well-shaped.
