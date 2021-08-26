@@ -169,7 +169,7 @@ declare(
     statement: 'x = y => (p x == p y)', axiom: true,
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
-      var step2 = rules.eqIsEquiv();
+      var step2 = rules.eqSelf('(==)');
       var result = rules.r1(step1, '/right/binop', step2);
       return result;
     },
@@ -193,7 +193,7 @@ declare(
     proof: function() {
       const map = {f: 'p', g: 'q'};
       const step1 = rules.instMultiVars(rules.axiom3(), map);
-      const step2 = rules.eqIsEquiv();
+      const step2 = rules.eqSelf('(==)');
       const result = rules.r1(step1, '/right/arg/body/binop', step2);
       return result.justify('axiom3a', []);
     },
@@ -853,19 +853,6 @@ declare(
     tooltip: 'Derives A = A.',
     description: 'A = A',
     labels: 'primitive'
-  },
-
-  // The two forms of "=" are interchangeable (other than precedence).
-  // TODO: remove
-  {name: 'eqIsEquiv',
-    statement: '(=) = (==)',
-    proof: function() {
-      var step1 = rules.eqSelf(Toy.constify('='));
-      var step2 = rules.eqSelf(Toy.constify('=='));
-      return rules.r(step2, step1, '/right');
-    },
-    tooltip: '= and \u21d4 are the same',
-    labels: 'uncommon'
   },
 
   // Obsolete rule, converts to eqSelf, kept for compatibility.
