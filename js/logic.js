@@ -868,19 +868,13 @@ declare(
     labels: 'uncommon'
   },
 
-  // Given A, proves A = A.  This is intended for use only when
-  // A is boolean.  Obsolete, inline synonym for eqSelf.
-  // TODO: Prohibit in new proofs.
+  // Obsolete rule, converts to eqSelf, kept for compatibility.
   {name: 'equivSelf',
     action: function(a) {
       return rules.eqSelf(a);
     },
-    inputs: {bool: 1},
-    form: 'Statement to prove equal to itself: <input name=bool>',
-    menu: 'A \u21d4 A',
     tooltip: 'Derives A \u21d4 A.',
-    description: 'A \u21d4 A',
-    labels: 'primitive'
+    description: 'A \u21d4 A'
   },
 
   // Consider a term that we may wish to rewrite.  Functionally
