@@ -1881,12 +1881,6 @@ var testCase = {
     assertEqual('(x = x)', Toy.rules.eqSelf(x));
   },
 
-  testEquivSelf: function() {
-    var result = rules.equivSelf(call(p, y));
-    assertEqual('((p y) == (p y))', result);
-    assertEqual('(F == F)', Toy.rules.equivSelf(F));
-  },
-
   testApplyBoth: function() {
     const ff = rules.eqSelf('f');
     assertEqual('((f x) = (f x))', rules.applyBoth(ff, x));
