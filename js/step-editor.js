@@ -1693,7 +1693,8 @@ RuleMenu.prototype._update = function() {
         itemInfos.push({ruleName: ruleName, html: info});
       }
     });
-  
+
+  // TODO: Rewrite this ugly block of code.
   self.offerableFacts().forEach(function(info) {
       let statement = info.goal;
       var text = statement.toString();
@@ -1709,10 +1710,19 @@ RuleMenu.prototype._update = function() {
         var selection = step && step.selection;
         if (selection) {
           var subst = selection.matchSchema(statement.getLeft());
-          // Be careful; subFree at present is only guaranteed to work
-          // correctly on untyped terms.
           if (subst) {
-            resultTerm = statement.getRight().subFree(subst);
+            // Ignore unification failure.
+            if (Toy.catchAborts(() => {
+              // CAUTION: temp and temp2 are not to be added to the
+              // current theory, as they are only hypothetically true.
+              const temp = rules.assert(info.goal);
+              // This inference can fail unification.
+              const temp2 = rules.instMultiVars(temp, subst);
+              resultTerm = temp2.getMain().getRight();
+            })) {
+              // There was a failure so don't offer the fact.
+              return;
+            }
           }
         }
       }
@@ -1726,7 +1736,7 @@ RuleMenu.prototype._update = function() {
                       : 'using ' + Toy.trimParens(statement.toHtml()));
         display += (' <span class=description>' + html + '</span>');
       }
-      // Value of the option; format of "fact <fact text>"
+      // Rule name format of "fact <fact text>"
       // indicates that the text defines a fact to use in
       // rules.rewrite.
       var info = {ruleName: 'fact ' + text,
