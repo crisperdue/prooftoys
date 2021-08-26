@@ -110,20 +110,7 @@ TypeVariable.prototype.toString = function() {
 // variable names in the instance (for generic types).
 //
 // Note: In Prooftoys generic type variables are those in the types of
-// constants, built-in or defined.  Luca Cardelli writes in his paper
-// "Basic Polymorphic Type Checking" that,
-//
-//   "A type variable occurring in the type of an expression e is
-//    generic (with respect to e) iff it does not occur in the type of
-//    the binder of any fun expression enclosing e." (p. 11)
-//
-// (His "fun" amounts to "lambda".)  In Prooftoys this includes
-// constructs such as:
-//
-//   if (ident true) (ident 3) 0
-// 
-// (In our logic it is important to free variables as if they are
-// within the scope of a binder.)
+// constants, built-in or defined.
 //
 // The Wikipedia article at
 // /wiki/Hindley%E2%80%93Milner_type_system#Let-polymorphism comments
