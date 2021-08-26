@@ -1380,6 +1380,10 @@ function schemaPart(fact) {
  * Otherwise it is the main part: the consequent if conditional,
  * otherwise the entire fact.
  *
+ * TODO: This and its users can now produce a substitution that fails
+ * on account of unification.  Implement an approach to deal with
+ * this issue.
+ *
  * The context argument is available to "where" arguments as "cxt",
  * and any "factLists" property of the context defines lists of named
  * patterns accessible by using the name in place of an explicit list.
