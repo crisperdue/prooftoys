@@ -219,6 +219,81 @@ Expr.prototype.typeFrom = function(expr) {
  */
 var Step = Expr;
 
+/**
+ * Make a Atom with the given name.  If a non-null integer position is given,
+ * use it to record the index in the input stream.  If the given name
+ * is in the "aliases" map, the given name becomes the Atom's pname,
+ * and the Atom's name becomes the value of the alias.  Pnames affect
+ * only parsing and display, not the logic itself.
+ *
+ * An Atom object can represent a variable (free or bound) or a
+ * constant, either literal or named (see isConstantName).
+ *
+ * CAUTION: This constructor is for internal use by code in this file
+ * and implementations of methods on Expr, Atom, Call, and Lambda
+ * classes only.  Use factory functions such as varify or constify as
+ * the public APIs.
+ *
+ * TODO: Further reduce use of this too-primitive constructor.
+ *
+ * TODO: Make a separate type for tokens.
+ */
+function Atom(name, position) {
+  // Expr.call(this);
+  this.memos = {};
+  this.pname = this.name = name;
+  if (isConstantName(name))
+    this.pos = position;
+  if (aliases.hasOwnProperty(name)) {
+    this.name = aliases[name];
+  }
+  // If the name represents an integer, sets the _value property to
+  // that integer, or if it represents a string, sets the _value
+  // property to the string.
+  //
+  // Variables have _value of "undefined" and named constants have
+  // _value of null.
+  this._value = isVariableName(name)
+    ? undefined
+    : isIntegerLiteral(name)
+    ? parseInt(name)
+    : name.charAt(0) === '"'
+    ? Toy.parseStringContent(name)
+    // Named constants:
+    : null;
+  this._type = null;
+};
+Toy.extends(Atom, Expr);
+
+/**
+ * Constructor for Call expressions.
+ */
+function Call(fn, arg) {
+  // Expr.call(this);
+  this.memos = {};
+  this.fn = fn;
+  this.arg = arg;
+  this._type = null;
+}
+Toy.extends(Call, Expr);
+
+/**
+ * Make a variable binding from a Atom and an Expr.  Any occurrences
+ * of the same variable in the body should already be represented
+ * by the same Atom.
+ */
+function Lambda(bound, body) {
+  // Expr.call(this);
+  this.memos = {};
+  this.bound = bound;
+  this.body = body;
+  this._type = null;
+}
+Toy.extends(Lambda, Expr);
+
+
+//// Methods for Expr-related objects
+
 // Controls generation of Unicode vs. ASCII strings, internal
 // to Expr.toString and Expr.toUnicode.
 var useUnicode = false;
@@ -2135,10 +2210,9 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // sameAs(expr)
 //
 // True iff all parts of this expression are identical to the
-// corresponding parts of the argument.  This compares atoms by their
-// "pname" properties, so constants that are aliases are not sameAs
-// each other.
-// 
+// corresponding parts of the argument.  If present anywhere, types
+// must also match.  Type variable names may differ (only renamings).
+//
 //
 // matches(e2, bindings)
 //
@@ -2270,52 +2344,6 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 */
 
 //// Atom -- variable bindings and references
-
-//// A Atom object can represent a variable (free or bound) or a
-//// constant (see isConstantName).
-
-/**
- * Make a Atom with the given name.  If a non-null integer position is given,
- * use it to record the index in the input stream.  If the given name
- * is in the "aliases" map, the given name becomes the Atom's pname,
- * and the Atom's name becomes the value of the alias.  Pnames affect
- * only parsing and display, not the logic itself.
- *
- * CAUTION: This constructor is for internal use by code in this file
- * and implementations of methods on Expr, Atom, Call, and Lambda
- * classes only.  Use factory functions such as varify or constify as
- * the public APIs.
- *
- * TODO: Further reduce use of this too-primitive constructor.
- *
- * TODO: Make a separate type for tokens.
- */
-function Atom(name, position) {
-  // Expr.call(this);
-  this.memos = {};
-  this.pname = this.name = name;
-  if (isConstantName(name))
-    this.pos = position;
-  if (aliases.hasOwnProperty(name)) {
-    this.name = aliases[name];
-  }
-  // If the name represents an integer, sets the _value property to
-  // that integer, or if it represents a string, sets the _value
-  // property to the string.
-  //
-  // Variables have _value of "undefined" and named constants have
-  // _value of null.
-  this._value = isVariableName(name)
-    ? undefined
-    : isIntegerLiteral(name)
-    ? parseInt(name)
-    : name.charAt(0) === '"'
-    ? Toy.parseStringContent(name)
-    // Named constants:
-    : null;
-  this._type = null;
-};
-Toy.extends(Atom, Expr);
 
 /**
  * If not producing Unicode, returns this Atom's pname.  If producing
@@ -2675,16 +2703,7 @@ Atom.prototype.parseName = function() {
 };
 
 
-//// Call -- application of a function to an argument
-
-function Call(fn, arg) {
-  // Expr.call(this);
-  this.memos = {};
-  this.fn = fn;
-  this.arg = arg;
-  this._type = null;
-}
-Toy.extends(Call, Expr);
+//// Methods for Call -- application of a function to an argument
 
 Call.prototype._toString = function() {
   if (this._string) {
@@ -3212,21 +3231,7 @@ Call.prototype.searchMost = function(fn, path, bindings) {
 };
 
 
-//// Lambda -- variable bindings
-
-/**
- * Make a variable binding from a Atom and an Expr.  Any occurrences
- * of the same variable in the body should already be represented
- * by the same Atom.
- */
-function Lambda(bound, body) {
-  // Expr.call(this);
-  this.memos = {};
-  this.bound = bound;
-  this.body = body;
-  this._type = null;
-}
-Toy.extends(Lambda, Expr);
+//// Methods for Lambda -- variable bindings
 
 Lambda.prototype._toString = function() {
   if (this._string) {
