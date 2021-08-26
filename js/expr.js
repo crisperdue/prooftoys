@@ -412,6 +412,42 @@ Expr.prototype._locateFree = function(name, path, paths) {
   }
 };
 
+/**
+ * Returns true iff this term is "exactly" the same as the given one,
+ * including use of the same names throughout.  If both are fully
+ * typed, this also checks that the types are the same.  Since the
+ * user has very little control over type variable names, these may
+ * differ provided that the types are equivalent.
+ */
+Expr.prototype.sameAs = function(other) {
+  // Based on the assumption that typed inputs are properly typed,
+  // this only checks types of Atoms, because the types of the Atoms
+  // determines all other types in the term.
+  const map = new Map();
+  const same = (a, b) => {
+    const c = a.constructor;
+    if (b.constructor !== c) {
+      return false;
+    } else if (c === Atom) {
+      if (a.pname !== b.pname) {
+        return false;
+      } else {
+        // If an Atom lacks type information, the type is deemed to
+        // match.  This satisfies the specification.
+        const t1 = a.hasType();
+        const t2 = b.hasType();
+        return !t1 || !t2 || t1.equiv(t2);
+      }
+    } else if (c === Call) {
+      return a.fn.sameAs(b.fn) && a.arg.sameAs(b.arg);
+    } else if (c === Lambda) {
+      return a.bound.sameAs(b.bound) && a.body.sameAs(b.body);
+    }
+  };
+  return same(this, other);
+};
+
+//// Atoms -- functions
 
 // Categorization of Atoms:
 //
@@ -2343,7 +2379,7 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // not given, this treats the path and bindings as empty.
 */
 
-//// Atom -- variable bindings and references
+//// Methods for Atom
 
 /**
  * If not producing Unicode, returns this Atom's pname.  If producing
@@ -2481,10 +2517,6 @@ Atom.prototype.replaceAt = function(path, xformer) {
   return path.isMatch() ? xformer(this) : this;
 };
 
-Atom.prototype.sameAs = function(expr) {
-  return expr instanceof Atom && this.pname === expr.pname;
-};
-
 Atom.prototype.matches = function(expr, bindings) {
   if (expr instanceof Atom) {
     var expectedName = getBinding(this.name, bindings) || this.name;
@@ -2607,7 +2639,7 @@ Atom.prototype.searchMost = function(fn, path, bindings) {
 
 
 
-//// Utilities on Atoms
+//// Utilities for Atoms
 
 /**
  * Return the Atom v, or if the argument is a string, create a new
@@ -2931,12 +2963,6 @@ Call.prototype.replaceAt = function(path, xformer) {
     }
     this._checkSegment(path);
   }
-};
-
-Call.prototype.sameAs = function(expr) {
-  return (expr instanceof Call &&
-          this.fn.sameAs(expr.fn) &&
-          this.arg.sameAs(expr.arg));
 };
 
 Call.prototype.matches = function(expr, bindings) {
@@ -3351,12 +3377,6 @@ Lambda.prototype.replaceAt = function(path, xformer) {
     return (body == this.body) ? this : new Lambda(this.bound, body);
   }
   this._checkSegment(path);
-};
-
-Lambda.prototype.sameAs = function(expr) {
-  return (expr instanceof Lambda &&
-          this.bound.sameAs(expr.bound) &&
-          this.body.sameAs(expr.body));
 };
 
 Lambda.prototype.matches = function(expr, bindings) {
