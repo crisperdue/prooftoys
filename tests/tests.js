@@ -1723,6 +1723,22 @@ var testCase = {
     check('(o (o i))', 'o (o i)');
   },
 
+  testTypeEquiv: function() {
+    const pt = Toy.parseType;
+    const ft = (from, to) => new Toy.FunctionType(from, to);
+    const tv = () => new Toy.TypeVariable();
+    assert(pt('i').equiv(pt('i')));
+    assert(!pt('i').equiv(pt('o')));
+    assert(!pt('i').equiv(pt('(i o)')));
+    assert(pt('(i o)').equiv(pt('(i o)')));
+    const t1 = pt('(i o)');
+    assert(t1.equiv(t1.clone()));
+    const t2 = ft(tv(), ft(tv(), tv()));
+    assert(t2.equiv(t2.clone()));
+    const t3 = ft(tv(), tv());
+    assert(!t2.equiv(t3));
+  },
+
   // TYPE INFERENCE
 
   testFindType: function() {

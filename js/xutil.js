@@ -67,6 +67,39 @@ TypeEx.prototype.clone = function() {
   return clohn(this);
 };
 
+/**
+ * Tests if this type expression is the same as the given
+ * other one, after possible renamings.  The second argument
+ * if given is a Map of additional renamings to be honored.
+ * Any name correspondences encountered here are added to
+ * that optional Map argument.
+ */
+TypeEx.prototype.equiv = function(other, map) {
+  const renames = map || new Map();
+  const equiv = (a, b) => {
+    const c = a.constructor;
+    if (c !== b.constructor) {
+      return false;
+    } else if (c === TypeConstant) {
+      return a === b;
+    } else if (c === TypeVariable) {
+      const anm = a.name;
+      const bnm = b.name;
+      const expected = renames.get(anm);
+      if (expected) {
+        return bnm === expected;
+      } else {
+        renames.set(anm, bnm);
+        return true;
+      }
+    } else if (c === FunctionType) {
+      return a.fromType.equiv(b.fromType) && a.toType.equiv(b.toType);
+    }
+  };
+  return equiv(this, other);
+};
+
+
 // Private to the TypeVariable constructor.
 var _typeVarCounter = 1;
 
