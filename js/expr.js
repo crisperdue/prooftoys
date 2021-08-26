@@ -793,6 +793,7 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
     return null;
   }
   var target = this.get(prefix);
+  // TODO: Consider what to do if the substitution may fail.
   var subst = target.matchSchema(schema);
   if (subst) {
     subst.path = prefix;

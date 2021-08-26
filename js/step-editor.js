@@ -1743,7 +1743,7 @@ RuleMenu.prototype._update = function() {
                   html: display,
                   result: resultTerm};
       itemInfos.push(info);
-    });
+  });
   itemInfos.sort(function(a, b) {
       return a.html.localeCompare(b.html);
     });
@@ -2174,6 +2174,7 @@ RuleMenu.prototype.offerableFacts = function() {
                   // a quick fix.
                   if (asms.scanConj
                       (x =>
+                       // These checks look OK.
                        !x.matchSchema('R x') &&
                        !x.matchSchema('not (x = y)') &&
                        !x.matchSchema('x != y'))) {

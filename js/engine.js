@@ -994,6 +994,7 @@ function factExpansion(stmt) {
   if (factInfo) {
     const asStated = factInfo.goal.getMain();
     const asRequested = resInfo.stmt.getMain();
+    // This check is OK as it is just a renaming.
     const map = asRequested.matchSchema(asStated);
     const expansion = factInfo.goal.subFree(map);
     resInfo._expansion = expansion;
@@ -1482,6 +1483,8 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
                         rules.fact(stmt));
         if (!(pureOnly && fullFact.isCall2('=>'))) {
           var schema = schemaPart(fullFact);
+          // This substitution might not work.
+          // TODO: Consider how to handle its potential failure.
           var subst = term.matchSchema(schema);
           if (subst) {
             var result = {stmt: fullFact,
@@ -1535,6 +1538,8 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
       }
       const expansion = factExpansion(stmt);
       const schema = schemaPart(expansion);
+      // This substitution might fail.
+      // TODO: consider how to handle its potential failure.
       const subst = term.matchSchema(schema);
       const where = factMatcher.where;
       if (subst && (!where || apply$(where, subst))) {
@@ -1561,6 +1566,8 @@ function _locateMatchingFact(expr, schema_arg, varsMap, context) {
   var schema = termify(schema_arg);
   var factLists = context.factLists;
   var subst;
+  // This substitution might fail.
+  // TODO: Consider how to handle its potential failure.
   if ((subst = expr.matchSchema(schema))) {
     return Toy.withExit(exit => {
         // Checks if the given term of the schema matches some fact in

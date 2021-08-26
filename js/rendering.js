@@ -850,6 +850,7 @@ function fillDetails(step) {
       var result0 = Toy.proveResult(copy);
       // Convert the variable names in the actual proof to the
       // ones mentioned in the usage of the fact.
+      // This map should be OK as it is just a renaming.
       var map = copy.matchSchema(result0);
       // If for some reason there is no mapping, proceed without it,
       // ignoring the issue.

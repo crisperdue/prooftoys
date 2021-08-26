@@ -1988,6 +1988,7 @@ function chainCall(operator, list, dfault) {
 function commuteEqn(eqn) {
   var infix = Toy.infixCall;
   var subst;
+  // OK because all types are OK here.
   if (subst = eqn.matchSchema('a = b')) {
     return infix(subst.b, eqn.getBinOp(), subst.a);
   } else if (subst = eqn.matchSchema('h => a = b')) {
