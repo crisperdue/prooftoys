@@ -868,15 +868,12 @@ declare(
     labels: 'uncommon'
   },
 
-  // Given A, proves A == A.  This is intended for use only when
-  // A is boolean.
+  // Given A, proves A = A.  This is intended for use only when
+  // A is boolean.  Obsolete, inline synonym for eqSelf.
   // TODO: Prohibit in new proofs.
   {name: 'equivSelf',
     action: function(a) {
-      var step1 = rules.eqSelf(a);
-      var eqn = rules.theorem('eqIsEquiv');
-      var result = rules.r(eqn, step1, '/binop');
-      return result.justify('equivSelf', arguments);
+      return rules.eqSelf(a);
     },
     inputs: {bool: 1},
     form: 'Statement to prove equal to itself: <input name=bool>',
