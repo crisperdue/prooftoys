@@ -60,7 +60,7 @@ var nextProofEditorId = 1;
  * standardSolution: Boolean.  If no explicit solutions given, but the
  *   result of a step solves for a variable (equal to a numeral or
  *   fraction), announce that the problem is solved.
- * showRuleType: Selects type of rules to show, as determined by offerApproved.
+ * showRuleType: Selects type of rules to show, as determined by labelApproved.
  *   Takes effect when this editor is reset.
  * showRules: List of individual rules to show.  Takes effect when this
  *   editor is reset.
@@ -1977,12 +1977,12 @@ RuleMenu.prototype.refresh = function() {
 
 /**
  * Returns a list of names of rules that are "offerable" in the
- * sense of "offerable" returning true and offerApproved returning true.
+ * sense of "offerable" returning true and labelApproved returning true.
  */
 RuleMenu.prototype.offerableRuleNames = function() {
   var matches = [];
   for (var name in Toy.rules) {
-    if (this.offerable(name) && this.offerApproved(name)) {
+    if (this.labelApproved(name) && this.offerable(name)) {
       matches.push(name);
     }
   }
@@ -1995,7 +1995,7 @@ RuleMenu.prototype.offerableRuleNames = function() {
  * and rule labels.  Returns a truthy value iff current policy is to
  * show the rule.
  */
-RuleMenu.prototype.offerApproved = function(name) {
+RuleMenu.prototype.labelApproved = function(name) {
   const editor = this.proofEditor;
   var labels = Toy.rules[name].info.labels;
   if (editor.showRules.indexOf(name) >= 0) {
@@ -2075,7 +2075,7 @@ RuleMenu.prototype.offerable = function(ruleName) {
       // test of offerability.
       //
       // TODO: Consider moving this to the "policy" section
-      //   (offerApproved).
+      //   (labelApproved).
       var offerTest = info.toOffer;
       if (info.toOffer) {
         return offerTest(step, step.selection);

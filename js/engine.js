@@ -392,7 +392,7 @@ var rules = {};
 // labels: space-separated list of words to categorize the rule,
 //   influencing the rules modes in which it will be offered.
 //   Defaults to "basic" if not given.  See processLabels and
-//   RuleMenu.offerApproved for more details.
+//   RuleMenu.labelApproved for more details.
 //
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
