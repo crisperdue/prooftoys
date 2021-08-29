@@ -315,7 +315,7 @@ function buildProofButtons(editor) {
   $clearProof.css(css);
 
   // Toggling the proof state display visibility with a button.
-  const $wksButton = $('<input type=button value="Worksheet... ">');
+  const $wksButton = $('<input type=button value="Worksheets... ">');
 
   const $options = $('<select class=rulesToShow>' +
                      '<option value=algebra>algebra' +
