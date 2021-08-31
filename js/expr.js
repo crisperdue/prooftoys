@@ -447,6 +447,47 @@ Expr.prototype.sameAs = function(other) {
   return same(this, other);
 };
 
+/**
+ * Returns a Map object with the names of all free variables as keys,
+ * and the value of each key being an Atom where that name occurs
+ * free.  Order is "left to right", actually each function in a Call
+ * before its arg, and the occurrence is the first in the order.
+ */
+Expr.prototype.freeVarsMap = function() {
+  const map = new Map();
+  const bindings = new Map();
+  const doit = term => {
+    const c = term.constructor;
+    if (term.isVariable()) {
+      const nm = term.name;
+      const count = bindings.get(nm);
+      if (!count) {
+        // Count is either 0 or undefined!
+        map.set(nm, term);
+      }
+    } else if (c === Atom) {
+      // Ignore
+    } else if (c === Call) {
+      doit(term.fn);
+      doit(term.arg);
+    } else if (c === Lambda) {
+      const nm = term.bound.name;
+      const v = bindings.get(nm);
+      if (v == undefined) {
+        bindings.set(nm, 0);
+      }
+      const count = v == undefined ? 0 : v;
+      bindings.set(nm, count + 1);
+      doit(term.body);
+      bindings.set(nm, count);
+    } else {
+      abort('bad input');
+    }
+  };
+  doit(this);
+  return map;
+};
+
 //// Atoms -- functions
 
 // Categorization of Atoms:

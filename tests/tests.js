@@ -802,6 +802,21 @@ var testCase = {
     assertEqual(undefined, map['x']);
   },
 
+  testFreeVarsMap: function() {
+    const check = (term_arg, expected) => {
+      const term = termify(term_arg);
+      const result = term.freeVarsMap();
+      const r1 = Array.from(result.keys());
+      for (const k of r1) {
+        assert(result.get(k).name === k);
+      }
+      deepEqual(r1, expected);
+    };
+    check('x + y + 2 = y + (x + 2)', ['x', 'y']);
+    check('{x. x + y + 2} = {x. y + (x + 2)}', ['y']);
+    check('{x. x + y + 2} x = {x. y + (x + 2)} x', ['y', 'x']);
+  },
+
   testBoundNames: function() {
     var wff = lambda(x, call(f, x));
     var map = wff.boundNames('');
