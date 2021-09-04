@@ -2161,7 +2161,7 @@ RuleMenu.prototype.offerableFacts = function() {
               // Otherwise don't show the fact in algebra mode.
             } else if (mode == 'general') {
               function okGeneral() {
-                if (info.labels.generalMode) {
+                if (info.labels.generalMode || info.labels.algebra) {
                   return true;
                 }
                 // Only show desimplifiers in "everything" mode.
@@ -2185,7 +2185,7 @@ RuleMenu.prototype.offerableFacts = function() {
                     return false;
                   }
                 }
-                return true;
+                return false;
               }
               if (okGeneral()) {
                 facts.push(info);
