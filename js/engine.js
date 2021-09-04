@@ -981,8 +981,9 @@ function factsExtending(resInfo) {
 /**
  * Returns the "expansion" of a statement, preferably given as a wff.
  * The result is a version of the full declared fact of the statement,
- * with free variables as in the given statement rather than the
- * declaration.  Returns null if there is no such declared fact.
+ * with types, and with free variables as in the given statement
+ * rather than the declaration.  Returns null if there is no such
+ * declared fact.
  */
 function factExpansion(stmt) {
   const factInfo = resolveToFactInfo(stmt);

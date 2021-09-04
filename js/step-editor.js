@@ -1714,9 +1714,13 @@ RuleMenu.prototype._update = function() {
             // Ignore unification failure.
             if (Toy.catchAborts(() => {
               // CAUTION: temp and temp2 are not to be added to the
-              // current theory, as they are only hypothetically true.
+              // current theory, as they are only hypothetically true
+              // to test the unification.
+              //
+              // TODO: Consider a mechanism to check without a
+              // deduction step.
               const temp = rules.assert(info.goal);
-              // This inference can fail unification.
+              // Unification can fail in this step.
               const temp2 = rules.instMultiVars(temp, subst);
               resultTerm = temp2.getMain().getRight();
             })) {

@@ -968,7 +968,8 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
  * all have type information throughout, the result will, too.
  *
  * CAUTION: Beware that this may not contribute to well-shaped output
- * if used outside the context of Axiom 4.
+ * if used outside the context of Axiom 4.  In other words, use it
+ * only for first-order substitution except there.
  *
  * This operation retains whatever type information may be already
  * present in the map, and copies over any type information in this as
