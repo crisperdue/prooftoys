@@ -224,9 +224,7 @@ declare(
       assert(call1.isLambdaCall(),
              'Axiom 4 needs ({v. B} A), got: {1}', call_arg);
       // TODO: Consider requiring type info to be present.
-      const call = (call1.hasType()
-                    ? call1
-                    : call1.typedCopy());
+      const call = call1.typedCopy();
       var lambda = call.fn;
       // We require subFree1 to produce a well-shaped result when
       // "call" is well-shaped.
@@ -246,7 +244,7 @@ declare(
     inputs: {term: 1},  // Specifically a Call to a Lambda.
     form: 'Enter {v. body} expr <input name=term>',
     menu: 'apply a lambda to its argument',
-    description: 'function call substitution axiom',
+    description: 'axiom of substitution',
     tooltip: ('')
   },
 
@@ -953,9 +951,7 @@ declare(
   //
   {name: 'applyBoth',
     action: function(eqn, a) {
-      const step1 = (eqn.isCall2('==')
-                     ? rules.equivSelf(call(eqn.eqnLeft(), a))
-                     : rules.eqSelf(call(eqn.eqnLeft(), a)));
+      const step1 = rules.eqSelf(call(eqn.eqnLeft(), a));
       // Plain replace is OK here, and becomes r1 if eqn is pure.
       const step2 = rules.replace(step1, '/right/fn', eqn);
       return step2.justify('applyBoth', arguments, [eqn]);

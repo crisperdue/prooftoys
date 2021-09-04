@@ -1278,7 +1278,7 @@ function getResInfo(stmt) {
     const info = {key: key, asmSet: asmSet,
                   standardVars: standard,
                   // _expansion will be initialized later.
-                  stmt: wff, _expansion: null};
+                  stmt: wff.typedCopy(), _expansion: null};
     _statementResInfos.set(stmt, info);
     return info;
   }

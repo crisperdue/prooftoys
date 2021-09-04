@@ -463,11 +463,10 @@ Expr.prototype.typedCopy = function(dump) {
       const resultType = new TypeVariable();
       const ft = new FunctionType(arg._type, resultType);
       if (!Toy.andUnifTypes(ft, fn._type, unifier, toUnify)) {
-        // abort('XXX');  // XXX
         console.log('In', self.$$);
         console.log('Failed to unify fn', fn, 'with arg', arg);
         console.log('Types', fn._type.fromType, 'and', arg._type);
-        debugger;
+        abort('Not unifiable');
       }
       return new Call(fn, arg).withType(resultType);
     } else if (c === Lambda) {
@@ -1111,6 +1110,7 @@ function definex(name_arg, fact) {
     assert(result.arg instanceof Toy.Lambda, 'Not a lambda:', result.arg);
     var free = result.freeVars();
     assert(Toy.isEmpty(free), 'Definition must be a closed statement', result);
+    constant.typeFrom(result.arg.bound);
     var definition = result.arg.body.subFree1(constant, result.arg.bound);
     // TODO: Check for free type variables as specified.
     definitions[name] = definition;
