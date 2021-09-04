@@ -481,6 +481,9 @@ Expr.prototype.typedCopy = function(dump) {
       abort('Bad input: {1}', x);
     }
   };
+  if (this._type) {
+    return this;
+  }
   const annotated = copy(this);
   if (dump) {
     return {
