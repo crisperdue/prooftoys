@@ -2854,7 +2854,8 @@ declare(
       .rewrite('/main/right/left', 'a * b / c = a / c * b')
       .andThen('arithmetic', '/main/right/left/left')
       .rewrite('/main/right/left', '1 * a = a');
-    }
+    },
+    simplifier: true
   }
 );
 
@@ -3227,7 +3228,8 @@ declare(
               .andThen('instVar', 'recip c', 'c')
               .rewrite('/right/right/left', 'a * recip b = a / b')
               .rewrite('/right/right/right', 'a * (recip b) = a / b'));
-    }
+    },
+   desimplifier: true,
   },
   {statement: 'c != 0 & d != 0 => (a * b) / (c * d) = (a / c) * (b / d)',
     proof: function() {
