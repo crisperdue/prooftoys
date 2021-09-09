@@ -391,9 +391,9 @@ Expr.prototype.copyForTyping = function() {
 };
 
 /**
- * Makes a copy of this that is well-typed and well-shaped, also such
- * that if full resolution of type information mutates types in the
- * copy, this will be unaffected.
+ * Makes a copy of this that is well-typed and well-shaped, with
+ * all-new nodes so that if full resolution of type information
+ * mutates types in the copy, no part of this will be affected.
  */
 Expr.prototype.typedCopy = function(dump) {
   const self = this;
