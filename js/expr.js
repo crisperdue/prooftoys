@@ -448,6 +448,34 @@ Expr.prototype.sameAs = function(other) {
 };
 
 /**
+ * Finds free occurrences of the given set of names in this Expr,
+ * returning a Set of Atoms within this structure that represent free
+ * occurrences of the names.
+ */
+Expr.prototype.occurrences = function(names) {
+  const result = new Set();
+  const search = term => {
+    const c = term.constructor;
+    if (c === Atom) {
+      if (names.has(term.name)) {
+        result.add(term.name);
+      }
+    } else if (c === Call) {
+      search(term.fn);
+      search(term.arg);
+    } else if (c === Lambda) {
+      if (!names.has(term.bound.name)) {
+        search(term.body);
+      }
+    } else {
+      abort('bad input');
+    }
+  };
+  search(this);
+  return result;
+};
+
+/**
  * Returns a Map object with the names of all free variables as keys,
  * and the value of each key being an Atom where that name occurs
  * free.  Order is "left to right", actually each function in a Call
@@ -3349,8 +3377,7 @@ Lambda.prototype._subFree = function(map, freeVars, allNames) {
     if (newBody === this.body) {
       result = this;
     } else {
-      result = new Lambda(this.bound, newBody);
-      result._type = this._type;
+      result = new Lambda(this.bound, newBody).typeFrom(this);
     }
   }
   if (savedRebinding) {
