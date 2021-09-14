@@ -223,7 +223,6 @@ declare(
                      : call_arg);
       assert(call1.isLambdaCall(),
              'Axiom 4 needs ({v. B} A), got: {1}', call_arg);
-      // TODO: Consider requiring type info to be present.
       const call = call1.typedCopy();
       var lambda = call.fn;
       // We require subFree1 to produce a well-shaped result when
@@ -264,7 +263,7 @@ declare(
    * the same except possibly in names of bound variables.  This must
    * also find a substitution for types in the equation and one for
    * types in the target that, in principle, could be done before the
-   * replacement and give a result that is well-typed.
+   * replacement, making types consistent both before and after.
    *
    * If any of this fails, returns an Error.
    */
@@ -312,31 +311,33 @@ declare(
 
 /**
  * This is the core functionality for the full Rule R.  It expects a
- * target step with path and a pure equation, returning a new wff with
- * the term in target at the given path replaced by the RHS of the
- * given (unconditional) equation term.  Does full unification of
- * types given, with checking for valid typing.  If there is a
- * problem, returns an Error.
+ * target WFF, a path to its target term, and a pure (unconditional)
+ * equation, returning a new wff with the target term replaced by the
+ * RHS of the given equation.  Does full unification of types.  If
+ * there is a problem of any kind, returns an Error.
+ *
+ * All structure in the returned WFF is freshly created, though there
+ * is often shared structure (variables!) within the result.  Unlike
+ * some previous editions of this function, the inputs can have as
+ * little or as much internal sharing as allowable by ordinary
+ * well-formedness.
  */
 Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   // List of bound variable Atoms in scope at the location of the
   // current term of the traversal, innermost first.
+  // TODO: Reset when copying the RHS.
   const boundVars = [];
+
   // Map from name to free variable, eventually all free variables
-  // of the result.
+  // of the result WFF.  As currently used, all occurrences of each
+  // free variable in the result share the same variable Atom.
   const freeVars = new Map();
-  // A variable object for each bound variable of the target step
-  // whose scope includes the target term.  Empty except when copying
-  // the target term.
-  const outerBound = new Set();
-  // A variable object for each in-scope variable of the target term
-  // whose binding occurs outside the target term.  Empty except when
-  // copying the target term.
-  const outerFree = new Set();
+
   // List of pairs of types to be unified.  These types will come from
   // variables of the replacement term that wind up within the scope
   // of variables of the target step.
   const pairs = [];
+
   const rhs = eqn.getRight();
   const path = this.asPath(path_arg).uglify();
   // Makes a copy of the given typed term, copying over type
@@ -345,29 +346,22 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   // also match the type of any variable it aliases, with occurrence
   // or binding outside the target term.
   const copy = x => {
-    // Recall that outerBound and outerFree are empty except when
-    // copying the replacement for the target term.
     const c = x.constructor;
     if (c === Atom) {
       const xnm = x.name;
       if (x.isVariable()) {
         const bound = boundVars.find(v => v.name === xnm);
         if (bound) {
-          if (outerBound.has(bound)) {
+          if (bound !== x) {
             // Honor the constraint that the types must match.
             pairs.push([x._type, bound._type]);
-            // No need to reiterate the constraint later.
-            outerBound.delete(bound);
           }
           return bound;
         } else {
           const foundFree = freeVars.get(xnm);
           if (foundFree) {
-            if (outerFree.has(foundFree)) {
-              // Constrain it to match a free variable in the target.
+            if (foundFree !== x) {
               pairs.push([x._type, foundFree._type]);
-              // No need to reiterate the constraint later.
-              outerFree.delete(foundFree);
             }
             return foundFree;
           } else {
@@ -394,30 +388,24 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
       return new Lambda(v, body).typeFrom(x);
     }
   }
-  // This returns a copy of the given term, with a single object for
-  // each truly distinct variable in it.  As a side effect, adds to
-  // the pairs of types to be unified in the result of the
+  // This returns a copy of the given term with the target term
+  // replaced by a copy of the equation RHS.  The result has a single
+  // Atom for each truly distinct variable in it.  As a side effect,
+  // adds to the pairs of types to be unified in the result of the
   // replacement.
   //
-  // This traverses the target expression last, after all other parts
-  // of this term so "copy" will encounter all free variables outside
-  // the target term before copying the replacement for the target
-  // term.
+  // This traverses all subterms of the given term, copying each with
+  // "copy", and visiting the target term last so "copy" will
+  // encounter all occurrences of free variables of the target step
+  // outside the target term before copying the replacement for the
+  // target term.  (This may no longer matter.)
   const dig = (term, path) => {
     const c = term.constructor;
     if (path.isMatch()) {
-      // Target term is reached, prepare to copy in its replacement.
-      // First note in-scope variables of the target that occur
-      // outside the target term.
-      for (const v of freeVars.values()) {
-        outerFree.add(v);
-      }
-      for (const v of boundVars.values()) {
-        outerBound.add(v);
-      }
-      // Honor the constraint that RHS type must match the
-      // type of the target term.
+      // Note the constraint that RHS type must match the type of the
+      // target term.
       pairs.push([rhs._type, term._type]);
+      // Copy the replacement term into the result.
       return copy(rhs);
     } else if (c === Atom) {
       // Atoms should occur only at the match location.
