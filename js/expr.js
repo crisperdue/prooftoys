@@ -995,10 +995,6 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
  * Copies types from this and the terms to be substituted, so if they
  * all have type information throughout, the result will, too.
  *
- * CAUTION: Beware that this may not contribute to well-shaped output
- * if used outside the context of Axiom 4.  In other words, use it
- * only for first-order substitution except there.
- *
  * This operation retains whatever type information may be already
  * present in the map, and copies over any type information in this as
  * it copies terms, but does nothing more to ensure or check for
@@ -1043,16 +1039,97 @@ Expr.prototype.subFree = function(map_arg) {
  * string or Atom as done by Expr.subFree.  Used by Axiom 4 (axiom
  * of substitution).
  *
- * Axiom 4 calls this with inputs that are parts of a well-shaped
- * term, and this must produce a well-shaped result from them, which
- * is guaranteed by not copying the replacement as well as not
- * gratuitously copying variable Atoms with this term.
- *
  * TODO: Consider implementing this independently of subFree, as this
  *   can be faster and cleaner.
  */
 Expr.prototype.subFree1 = function(replacement, name) {
   return this.subFree(Toy.object0(name, replacement));
+};
+
+/**
+ * Given this well-typed term consisting of an application of a Lambda
+ * to an arbitrary term, this returns the result of the substitution
+ * of the term for the Lambda's bound variable.
+ *
+ * TODO: Untested experimental code.  Test and use in axiom 4.
+ */
+Expr.prototype.axiom4Core = function(repl, vbl) {
+  const body = this;
+  const name = vbl.name;
+  if (repl instanceof Atom && repl.name == vbl.name) {
+    // The substitution replaces a variable with itself,
+    // so it is a no-op.
+    return body;
+  }
+  var freeInRepl = repl.freeVarSet();
+
+  // We rename bound variables whose names are free in any of the
+  // substitution terms, giving them names distinct from all names
+  // appearing anywhere in this Expr, distinct from all free names in
+  // the values of the substitution map, and also distinct from each
+  // other, eliminating potential for capturing.
+  //
+  // As the traversal encounters lambdas we update this map to reflect
+  // current bound variable renamings and revert the mappings on exit
+  // from the scope.
+  const renamings = new Map();
+
+  // We add new names to this object whenever a new
+  // name is generated.
+  const allNames = body.allNames();
+
+  const subst = term => {
+    const ct = term.constructor;
+    if (ct === Atom) {
+      if (term.name === name) {
+        return repl;
+      }
+    } else if (ct === Call) {
+      const fn = subst(fn);
+      const arg = subst(arg);
+      if (fn == term.fn && arg == term.arg) {
+        return term;
+      } else {
+        return new Call(fn, arg).typeFrom(term);
+      }
+    } else if (ct === Lambda) {
+      const boundName = term.bound.name;
+      if (boundName === name) {
+        return term;
+      }
+      if (freeInRepl.has(boundName)) {
+        // The bound name here appears as a free variable in some
+        // replacement expression.  Rename the bound variable to ensure
+        // there will be no capturing. We do this without checking whether
+        // capturing actually would occur.  This also renames it if there
+        // are free occurrences of a variable of the same name before the
+        // substitution.
+        const newVar = genVar(boundName, allNames).typeFrom(term.bound);
+        allNames[newVar.name] = true;
+        //
+        // Recursive call to the method!
+        //
+        // TODO: The extra traversal and copying of the term here
+        // could be avoided by substituting simultaneously for
+        // the bound name and the name of vbl, and similarly for
+        // any further nested bound variables that need renaming,
+        // using a Map to hold all active renamings.
+        //
+        const newBody = term.body.axiom4Core(newVar, term.bound);
+        const renamed = new Lambda(newVar, newBody).typeFrom(term);
+        // Substitute into the modified Lambda term.
+        return subst(renamed);
+      } else {
+        const newBody = subst(term.body);
+        // Don't copy anything if no substitution is actually done.
+        return (newBody === term.body
+                ? term : new Lambda(term.bound, newBody).typeFrom(term));
+      }
+    } else {
+      abort('Bad input');
+    }
+  }
+  return subst(body);
 };
 
 /**
