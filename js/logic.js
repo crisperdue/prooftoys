@@ -221,7 +221,7 @@ declare(
       const call = call1.typedCopy();
       var lambda = call.fn;
       const result =
-        equal(call, lambda.body.subFree1(call.arg, lambda.bound.name));
+        equal(call, lambda.body.axiom4Core(call.arg, lambda.bound));
       // Carefully install a few bits of type information by hand.
       result.arg._type = result.fn.arg._type = call._type;
       result.fn._type = new Toy.FunctionType(call._type, Toy.boolean);
@@ -254,15 +254,14 @@ declare(
  * Given this well-typed term consisting of an application of a Lambda
  * to an arbitrary term, this returns the result of the substitution
  * of the term for the Lambda's bound variable.
- *
- * TODO: Untested experimental code.  Test and use in axiom 4.
  */
 Expr.prototype.axiom4Core = function(repl, vbl) {
   const body = this;
   const name = vbl.name;
   if (repl instanceof Atom && repl.name == vbl.name) {
     // The substitution replaces a variable with itself,
-    // so it is a no-op.
+    // so it is a no-op.  In the context of axiom 4,
+    // repl and vbl will already have the same type.
     return body;
   }
   var freeInRepl = repl.freeVarSet();
@@ -285,12 +284,10 @@ Expr.prototype.axiom4Core = function(repl, vbl) {
   const subst = term => {
     const ct = term.constructor;
     if (ct === Atom) {
-      if (term.name === name) {
-        return repl;
-      }
+      return term.name === name ? repl : term;
     } else if (ct === Call) {
-      const fn = subst(fn);
-      const arg = subst(arg);
+      const fn = subst(term.fn);
+      const arg = subst(term.arg);
       if (fn == term.fn && arg == term.arg) {
         return term;
       } else {
@@ -299,6 +296,7 @@ Expr.prototype.axiom4Core = function(repl, vbl) {
     } else if (ct === Lambda) {
       const boundName = term.bound.name;
       if (boundName === name) {
+        // There can be no substitutions within this scope.
         return term;
       }
       if (freeInRepl.has(boundName)) {
@@ -308,7 +306,7 @@ Expr.prototype.axiom4Core = function(repl, vbl) {
         // capturing actually would occur.  This also renames it if there
         // are free occurrences of a variable of the same name before the
         // substitution.
-        const newVar = genVar(boundName, allNames).typeFrom(term.bound);
+        const newVar = Toy.genVar(boundName, allNames).typeFrom(term.bound);
         allNames[newVar.name] = true;
         //
         // Recursive call to the method!
@@ -527,6 +525,8 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   const subst = Toy.resolve(subst1);
   // Remember, replaceTypes usually modifies types in copied.
   copied.replaceTypes(subst);
+  const badex = copied.search(x => !x._type);
+  assert(!badex, 'Rule R result {1} has untyped {2}', copied, badex);
   return copied;
 };
 
