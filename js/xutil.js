@@ -391,11 +391,15 @@ Expr.prototype.copyForTyping = function() {
 };
 
 /**
- * Makes a copy of this that is well-typed and well-shaped, with
- * all-new nodes so that if full resolution of type information
- * mutates types in the copy, no part of this will be affected.
+ * Makes a well-typed copy of this with all-new nodes, so that if full
+ * resolution of type information mutates types in the copy, no part
+ * of this will be affected.  If this already has a type, return it
+ * without making a copy.
  */
 Expr.prototype.typedCopy = function(dump) {
+  if (this._type) {
+    return this;
+  }
   const self = this;
   // This is a list of variables bound in the current scope,
   // innermost first.
@@ -481,9 +485,6 @@ Expr.prototype.typedCopy = function(dump) {
       abort('Bad input: {1}', x);
     }
   };
-  if (this._type) {
-    return this;
-  }
   const annotated = copy(this);
   if (dump) {
     return {

@@ -213,11 +213,6 @@ declare(
    */
   {name: 'axiom4',
     action: function(call_arg) {
-      // Implementation note: The only primitive theorem generators
-      // are Rule R and this.  Rule R assumes that its inputs are
-      // "well-shaped", and produces a well-shaped result if so.
-      // Consequently this rule must be sure to produce a well-shaped
-      // result.
       const call1 = (typeof call_arg == 'string'
                      ? Toy.parse(call_arg)
                      : call_arg);
@@ -225,8 +220,6 @@ declare(
              'Axiom 4 needs ({v. B} A), got: {1}', call_arg);
       const call = call1.typedCopy();
       var lambda = call.fn;
-      // We require subFree1 to produce a well-shaped result when
-      // "call" is well-shaped.
       const result =
         equal(call, lambda.body.subFree1(call.arg, lambda.bound.name));
       // Carefully install a few bits of type information by hand.
