@@ -247,8 +247,96 @@ declare(
     inputs: {},
     tooltip: ('axiom of description'),
     description: 'axiom of description'
-  },
+  }
+);
 
+/**
+ * Given this well-typed term consisting of an application of a Lambda
+ * to an arbitrary term, this returns the result of the substitution
+ * of the term for the Lambda's bound variable.
+ *
+ * TODO: Untested experimental code.  Test and use in axiom 4.
+ */
+Expr.prototype.axiom4Core = function(repl, vbl) {
+  const body = this;
+  const name = vbl.name;
+  if (repl instanceof Atom && repl.name == vbl.name) {
+    // The substitution replaces a variable with itself,
+    // so it is a no-op.
+    return body;
+  }
+  var freeInRepl = repl.freeVarSet();
+
+  // We rename bound variables whose names are free in any of the
+  // substitution terms, giving them names distinct from all names
+  // appearing anywhere in this Expr, distinct from all free names in
+  // the values of the substitution map, and also distinct from each
+  // other, eliminating potential for capturing.
+  //
+  // As the traversal encounters lambdas we update this map to reflect
+  // current bound variable renamings and revert the mappings on exit
+  // from the scope.
+  const renamings = new Map();
+
+  // We add new names to this object whenever a new
+  // name is generated.
+  const allNames = body.allNames();
+
+  const subst = term => {
+    const ct = term.constructor;
+    if (ct === Atom) {
+      if (term.name === name) {
+        return repl;
+      }
+    } else if (ct === Call) {
+      const fn = subst(fn);
+      const arg = subst(arg);
+      if (fn == term.fn && arg == term.arg) {
+        return term;
+      } else {
+        return new Call(fn, arg).typeFrom(term);
+      }
+    } else if (ct === Lambda) {
+      const boundName = term.bound.name;
+      if (boundName === name) {
+        return term;
+      }
+      if (freeInRepl.has(boundName)) {
+        // The bound name here appears as a free variable in some
+        // replacement expression.  Rename the bound variable to ensure
+        // there will be no capturing. We do this without checking whether
+        // capturing actually would occur.  This also renames it if there
+        // are free occurrences of a variable of the same name before the
+        // substitution.
+        const newVar = genVar(boundName, allNames).typeFrom(term.bound);
+        allNames[newVar.name] = true;
+        //
+        // Recursive call to the method!
+        //
+        // TODO: The extra traversal and copying of the term here
+        // could be avoided by substituting simultaneously for
+        // the bound name and the name of vbl, and similarly for
+        // any further nested bound variables that need renaming,
+        // using a Map to hold all active renamings.
+        //
+        const newBody = term.body.axiom4Core(newVar, term.bound);
+        const renamed = new Lambda(newVar, newBody).typeFrom(term);
+        // Substitute into the modified Lambda term.
+        return subst(renamed);
+      } else {
+        const newBody = subst(term.body);
+        // Don't copy anything if no substitution is actually done.
+        return (newBody === term.body
+                ? term : new Lambda(term.bound, newBody).typeFrom(term));
+      }
+    } else {
+      abort('Bad input');
+    }
+  }
+  return subst(body);
+};
+
+declare(
   /**
    * Replace the subexpression of the target at the path ("target
    * term") with the equation's RHS.  This is Peter Andrews' Rule R.
