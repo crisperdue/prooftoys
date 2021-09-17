@@ -399,10 +399,10 @@ Expr.prototype.annotate1 = function() {
         return ctype.clone();
       } else if (term.isLiteral()) {
         // Literals so far are individuals.
-        term.__type = individual;
+        term._withType(individual);
         return individual;
       } else if (term.isVariable()) {
-        term.__type = new TypeVariable();
+        term._withType(new TypeVariable());
         return term.type;
       } else {
         abort('Unable to determine type for {1}', term);
