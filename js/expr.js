@@ -193,8 +193,8 @@ class Expr {
     //   stepNumber property with its rendered step number.
   }
   // Type accessor.  The _type property is set directly in very few
-  // cases for system performance.  If null, it can be set by withType
-  // or typeFrom.
+  // cases for system performance.  If null, it can be set by _withType
+  // or _typeFrom.
   get type() {
     return this._type;
   }
@@ -208,9 +208,10 @@ class Expr {
 
 /**
  * Sets the type of this term, returning this. Only valid if no type
- * has been previously set.
+ * has been previously set.  Use with caution (in type inference
+ * code).
  */
-Expr.prototype.withType = function(type) {
+Expr.prototype._withType = function(type) {
   assert(!this._type, 'Type of {1} is already set', this);
   this._type = type;
   return this;
@@ -218,9 +219,10 @@ Expr.prototype.withType = function(type) {
   
 /**
  * Sets the type of this from another term, returning this. Only valid
- * if no type has been previously set.
+ * if no type has been previously set.  Use with caution (in type
+ * inference code).
  */
-Expr.prototype.typeFrom = function(expr) {
+Expr.prototype._typeFrom = function(expr) {
   assert(!this._type, 'Type of {1} is already set', this);
   this._type = expr._type;
   return this;

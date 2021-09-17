@@ -196,7 +196,7 @@ Expr.prototype.subsType = function(map) {
     if (fn === this.fn && arg === this.arg && type == this._type) {
       return this;
     } else {
-      return new Call(fn, arg).withType(type);
+      return new Call(fn, arg)._withType(type);
     }
   } else if (this instanceof Lambda) {
     const body = this.body.subsType(map);
@@ -204,14 +204,14 @@ Expr.prototype.subsType = function(map) {
     if (body === this.body && bound === this.bound && type === this._type) {
       return this;
     } else {
-      return new Lambda(bound, body).withType(type);
+      return new Lambda(bound, body)._withType(type);
     }
   } else if (this instanceof Atom) {
     if (type === this._type) {
       return this;
     } else {
       // The pname is the one to use with the constructor.
-      return new Atom(this.pname).withType(type);
+      return new Atom(this.pname)._withType(type);
     }
   } else {
     abort('Bad input');

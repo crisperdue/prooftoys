@@ -426,7 +426,7 @@ Expr.prototype.typedCopy = function(dump) {
         if (free) {
           return free;
         } else {
-          const xcopy = new Atom(xnm).withType(new TypeVariable());
+          const xcopy = new Atom(xnm)._withType(new TypeVariable());
           freeVars.set(xnm, xcopy);
           return xcopy;
         }
@@ -444,17 +444,17 @@ Expr.prototype.typedCopy = function(dump) {
         // In this case it is a known named constant.
         // TODO: Don't continually copy monomorphic named constants.
         const clone = constType.clone();
-        return new Atom(x.name).withType(clone);
+        return new Atom(x.name)._withType(clone);
       } else if (x.isLiteral()) {
         // All literals are currently individuals.
-        return new Atom(x.name).withType(individual);
+        return new Atom(x.name)._withType(individual);
       } else if (x.isConst()) {
         // It is a named constant not seen before.
         const existing = newConsts.get(x.name);
         if (existing) {
           return existing;
         } else {
-          const newConst = new Atom(x.name).withType(new TypeVariable());
+          const newConst = new Atom(x.name)._withType(new TypeVariable());
           newConsts.set(newConst.name, newConst);
           return newConst;
         }
@@ -472,13 +472,13 @@ Expr.prototype.typedCopy = function(dump) {
         console.log('Types', fn._type.fromType, 'and', arg._type);
         abort('Not unifiable');
       }
-      return new Call(fn, arg).withType(resultType);
+      return new Call(fn, arg)._withType(resultType);
     } else if (c === Lambda) {
-      const bound = new Atom(x.bound.name).withType(new TypeVariable());
+      const bound = new Atom(x.bound.name)._withType(new TypeVariable());
       boundVars.unshift(bound);
       const body = copy(x.body);
       const result = (new Lambda(bound, body)
-                      .withType(new FunctionType(bound._type, body._type)));
+                      ._withType(new FunctionType(bound._type, body._type)));
       boundVars.shift();
       return result;
     } else {
@@ -507,13 +507,13 @@ Expr.prototype.typedCopy = function(dump) {
 Expr.prototype.copyWithTypes = function() {
   const c = this.constructor;
   if (c === Atom) {
-    return new Atom(this.pname).typeFrom(this);
+    return new Atom(this.pname)._typeFrom(this);
   } else if (c === Call) {
     return new Call(this.fn.copyWithTypes(),
-                    this.arg.copyWithTypes()).typeFrom(this);
+                    this.arg.copyWithTypes())._typeFrom(this);
   } else if (c === Lambda) {
     return new Lambda(this.bound.copyWithTypes(),
-                      this.body.copyWithTypes()).typeFrom(this);
+                      this.body.copyWithTypes())._typeFrom(this);
   } else {
     abort('Bad input: {1}', this);
   }
@@ -645,7 +645,7 @@ function findType(expr, annotate) {
   function analyze(expr, exit) {
     let result;
     if (expr instanceof Atom) {
-      result = typeFromName(expr);
+      result = _typeFromName(expr);
     } else if (expr instanceof Call) {
       var fnType = analyze(expr.fn, exit);
       var argType = analyze(expr.arg, exit);
@@ -683,7 +683,7 @@ function findType(expr, annotate) {
    * Returns the type of an Atom, based largely on its name.  May have
    * side effects on "vars", "types", and "nonGenerics".
    */
-  function typeFromName(atom) {
+  function _typeFromName(atom) {
     var name = atom.name;
     if (constantTypes.has(name)) {
       // If it is a constant -- primitive, defined, or even a constant
@@ -1114,7 +1114,7 @@ function definex(name_arg, fact) {
     assert(result.arg instanceof Toy.Lambda, 'Not a lambda:', result.arg);
     var free = result.freeVars();
     assert(Toy.isEmpty(free), 'Definition must be a closed statement', result);
-    constant.typeFrom(result.arg.bound);
+    constant._typeFrom(result.arg.bound);
     var definition = result.arg.body.subFree1(constant, result.arg.bound);
     // TODO: Check for free type variables as specified.
     definitions[name] = definition;

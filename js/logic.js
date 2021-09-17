@@ -291,7 +291,7 @@ Expr.prototype.axiom4Core = function(repl, vbl) {
       if (fn == term.fn && arg == term.arg) {
         return term;
       } else {
-        return new Call(fn, arg).typeFrom(term);
+        return new Call(fn, arg)._typeFrom(term);
       }
     } else if (ct === Lambda) {
       const boundName = term.bound.name;
@@ -306,7 +306,7 @@ Expr.prototype.axiom4Core = function(repl, vbl) {
         // capturing actually would occur.  This also renames it if there
         // are free occurrences of a variable of the same name before the
         // substitution.
-        const newVar = Toy.genVar(boundName, allNames).typeFrom(term.bound);
+        const newVar = Toy.genVar(boundName, allNames)._typeFrom(term.bound);
         allNames[newVar.name] = true;
         //
         // Recursive call to the method!
@@ -318,14 +318,14 @@ Expr.prototype.axiom4Core = function(repl, vbl) {
         // using a Map to hold all active renamings.
         //
         const newBody = term.body.axiom4Core(newVar, term.bound);
-        const renamed = new Lambda(newVar, newBody).typeFrom(term);
+        const renamed = new Lambda(newVar, newBody)._typeFrom(term);
         // Substitute into the modified Lambda term.
         return subst(renamed);
       } else {
         const newBody = subst(term.body);
         // Don't copy anything if no substitution is actually done.
         return (newBody === term.body
-                ? term : new Lambda(term.bound, newBody).typeFrom(term));
+                ? term : new Lambda(term.bound, newBody)._typeFrom(term));
       }
     } else {
       abort('Bad input');
@@ -444,7 +444,7 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
             }
             return foundFree;
           } else {
-            const v = new Atom(xnm).typeFrom(x);
+            const v = new Atom(xnm)._typeFrom(x);
             freeVars.set(xnm, v);
             return v;
           }
@@ -455,16 +455,16 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
         // mutate.
         //
         // TODO: This should properly use name rather than pname.
-        return x._type.hasVariable() ? new Atom(x.pname).typeFrom(x) : x;
+        return x._type.hasVariable() ? new Atom(x.pname)._typeFrom(x) : x;
       }
     } else if (c === Call) {
-      return new Call(copy(x.fn), copy(x.arg)).typeFrom(x);
+      return new Call(copy(x.fn), copy(x.arg))._typeFrom(x);
     } else if (c === Lambda) {
-      const v = new Atom(x.bound.name).typeFrom(x.bound);
+      const v = new Atom(x.bound.name)._typeFrom(x.bound);
       boundVars.unshift(v);
       const body = copy(x.body);
       boundVars.shift();
-      return new Lambda(v, body).typeFrom(x);
+      return new Lambda(v, body)._typeFrom(x);
     }
   }
   // This returns a copy of the given term with the target term
@@ -493,18 +493,18 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
       const segment = path.segment;
       if (segment === 'fn') {
         const arg = copy(term.arg);
-        return new Call(dig(term.fn, path.rest), arg).typeFrom(term);
+        return new Call(dig(term.fn, path.rest), arg)._typeFrom(term);
       } else if (segment === 'arg') {
         const fn = copy(term.fn);
-        return new Call(fn, dig(term.arg, path.rest)).typeFrom(term);
+        return new Call(fn, dig(term.arg, path.rest))._typeFrom(term);
       }
     } else if (c === Lambda) {
       if (path.segment === 'body') {
         const bound = term.bound;
-        const newBound = new Atom(bound.name).typeFrom(bound);
+        const newBound = new Atom(bound.name)._typeFrom(bound);
         boundVars.unshift(newBound);
         const result = (new Lambda(newBound, dig(term.body, path.rest))
-                        .typeFrom(term));
+                        ._typeFrom(term));
         boundVars.shift();
         return result;
       }
