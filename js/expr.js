@@ -173,6 +173,7 @@ TermMap.prototype.set = function(term, name) {
  */
 class Expr {
   constructor() {
+    this._type = null;
     // Extensible set of remembered information, especially useful
     // since the result is conceptually immutable.
     // Duplicated in subclass constructors for speed.
@@ -191,6 +192,12 @@ class Expr {
     //   ordinal property with its step number in the rendered proof.
     //   stepNumber property with its rendered step number.
   }
+  // Type accessor.  The _type property is set directly in very few
+  // cases for system performance.  If null, it can be set by withType
+  // or typeFrom.
+  get type() {
+    return this._type;
+  }
   get memos() {
     return this.__memos;
   }
@@ -200,7 +207,8 @@ class Expr {
 }
 
 /**
- * Sets the type of this term, returning this.
+ * Sets the type of this term, returning this. Only valid if no type
+ * has been previously set.
  */
 Expr.prototype.withType = function(type) {
   assert(!this._type, 'Type of {1} is already set', this);
@@ -209,7 +217,8 @@ Expr.prototype.withType = function(type) {
 };
   
 /**
- * Sets the type of this from another term, returning this.
+ * Sets the type of this from another term, returning this. Only valid
+ * if no type has been previously set.
  */
 Expr.prototype.typeFrom = function(expr) {
   assert(!this._type, 'Type of {1} is already set', this);
@@ -270,7 +279,6 @@ class Atom extends Expr {
       ? Toy.parseStringContent(name)
       // Named constants:
       : null;
-    this._type = null;
   }
   get name() {
     return this.__name;
@@ -295,7 +303,6 @@ class Call extends Expr {
     super();
     this._fn = fn;
     this._arg = arg;
-    this._type = null;
   }
   get fn() {
     return this._fn;
@@ -321,7 +328,6 @@ class Lambda extends Expr {
     super();
     this.__bound = bound;
     this.__body = body;
-    this._type = null;
   }
   get bound() {
     return this.__bound;
