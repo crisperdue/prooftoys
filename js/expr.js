@@ -10,6 +10,7 @@ var Path = Toy.Path;
 var Bindings = Toy.Bindings;
 var getBinding = Toy.getBinding;
 var assert = Toy.assertTrue;
+var abort = Toy.abort;
 var check = Toy.check;
 var ToySet = Toy.ToySet;
 var ToyMap = Toy.ToyMap;
