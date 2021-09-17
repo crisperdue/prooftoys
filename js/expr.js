@@ -171,27 +171,33 @@ TermMap.prototype.set = function(term, name) {
  * Superclass for terms of all kinds: Atom, Call, Lambda.
  * See internal comments for details.
  */
-function Expr() {
-  // Extensible set of remembered information, especially useful
-  // since the result is conceptually immutable.
-  // Duplicated in subclass constructors for speed.
-  //
-  // TODO: Consider whether rendered copies should share memos with
-  //   the originals.
-  // TODO: Make "memos" into a getter method.
-  this.memos = {};
-  // If part of a proof, has properties set by the "justify" method.
-  // If it has a rendered copy, has "rendering" property.
-  //
-  // If rendered, has a "node" property for an associated
-  // DOM node.
-  //
-  // If rendered as a proof step, has:
-  //   stepNode property with the DOM node of the entire step.
-  //   ordinal property with its step number in the rendered proof.
-  //   stepNumber property with its rendered step number.
+class Expr {
+  constructor() {
+    // Extensible set of remembered information, especially useful
+    // since the result is conceptually immutable.
+    // Duplicated in subclass constructors for speed.
+    //
+    // TODO: Consider whether rendered copies should share memos with
+    //   the originals.
+    this.__memos = {};
+    // If part of a proof, has properties set by the "justify" method.
+    // If it has a rendered copy, has "rendering" property.
+    //
+    // If rendered, has a "node" property for an associated
+    // DOM node.
+    //
+    // If rendered as a proof step, has:
+    //   stepNode property with the DOM node of the entire step.
+    //   ordinal property with its step number in the rendered proof.
+    //   stepNumber property with its rendered step number.
+  }
+  get memos() {
+    return this.__memos;
+  }
+  set memos(v) {
+    abort('Readonly: memos');
+  }
 }
-Toy.extends(Expr, null);
 
 /**
  * Sets the type of this term, returning this.
@@ -241,58 +247,95 @@ var Step = Expr;
  *
  * TODO: Make a separate type for tokens.
  */
-function Atom(name, position) {
-  // Expr.call(this);
-  this.memos = {};
-  this.pname = this.name = name;
-  if (isConstantName(name))
-    this.pos = position;
-  if (aliases.hasOwnProperty(name)) {
-    this.name = aliases[name];
+class Atom extends Expr {
+  constructor(name, position) {
+    super();
+    this.__pname = this.__name = name;
+    if (isConstantName(name))
+      this.pos = position;
+    if (aliases.hasOwnProperty(name)) {
+      this.__name = aliases[name];
+    }
+    // If the name represents an integer, sets the _value property to
+    // that integer, or if it represents a string, sets the _value
+    // property to the string.
+    //
+    // Variables have _value of "undefined" and named constants have
+    // _value of null.
+    this._value = isVariableName(name)
+      ? undefined
+      : isIntegerLiteral(name)
+      ? parseInt(name)
+      : name.charAt(0) === '"'
+      ? Toy.parseStringContent(name)
+      // Named constants:
+      : null;
+    this._type = null;
   }
-  // If the name represents an integer, sets the _value property to
-  // that integer, or if it represents a string, sets the _value
-  // property to the string.
-  //
-  // Variables have _value of "undefined" and named constants have
-  // _value of null.
-  this._value = isVariableName(name)
-    ? undefined
-    : isIntegerLiteral(name)
-    ? parseInt(name)
-    : name.charAt(0) === '"'
-    ? Toy.parseStringContent(name)
-    // Named constants:
-    : null;
-  this._type = null;
-};
-Toy.extends(Atom, Expr);
+  get name() {
+    return this.__name;
+  }
+  set name(nm) {
+    abort('Readonly: name');
+  }
+  get pname() {
+    return this.__pname;
+  }
+  set pname(pnm) {
+    abort('Readonly: pname');
+  }
+}
+
 
 /**
  * Constructor for Call expressions.
  */
-function Call(fn, arg) {
-  // Expr.call(this);
-  this.memos = {};
-  this.fn = fn;
-  this.arg = arg;
-  this._type = null;
+class Call extends Expr {
+  constructor(fn, arg) {
+    super();
+    this._fn = fn;
+    this._arg = arg;
+    this._type = null;
+  }
+  get fn() {
+    return this._fn;
+  }
+  set fn(v) {
+    abort('Readonly: fn');
+  }
+  get arg() {
+    return this._arg;
+  }
+  set arg(v) {
+    abort('Readonly: arg');
+  }
 }
-Toy.extends(Call, Expr);
 
 /**
  * Make a variable binding from a Atom and an Expr.  Any occurrences
  * of the same variable in the body should already be represented
  * by the same Atom.
  */
-function Lambda(bound, body) {
-  // Expr.call(this);
-  this.memos = {};
-  this.bound = bound;
-  this.body = body;
-  this._type = null;
+class Lambda extends Expr {
+  constructor(bound, body) {
+    super();
+    this.__bound = bound;
+    this.__body = body;
+    this._type = null;
+  }
+  get bound() {
+    return this.__bound;
+  }
+  set bound(v) {
+    abort('Readonly: bound');
+  }
+  get body() {
+    return this.__body;
+  }
+  set body(term) {
+    abort('Readonly: body');
+  }
 }
-Toy.extends(Lambda, Expr);
 
 
 //// Methods for Expr-related objects
