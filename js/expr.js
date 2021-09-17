@@ -1418,7 +1418,7 @@ var exprMethods = {
   }
 
 };
-Expr.addMethods(exprMethods);
+Toy.addMethods(Expr, exprMethods);
 
 /**
  * Throw an error with message if this is not a call to a function

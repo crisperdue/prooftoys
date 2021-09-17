@@ -87,6 +87,8 @@ Toy.compatible = !!navigator.userAgent.match(/(Chrome|Firefox|Safari)[/]/);
  * "methods".  This is semantically strange, but works well with the
  * Emacs indenter for Java mode, unlike the alternatives, and makes
  * calls on the methods look nice in Chrome debugger stack traces.
+ *
+ * Obsolete.
  */
 Toy.extends = function(constructor, parent) {
   if (typeof constructor === 'function' && typeof parent === 'function') {
@@ -104,6 +106,13 @@ Toy.extends = function(constructor, parent) {
     jQuery.extend(constructor.prototype, properties);
   };
 };
+
+/**
+ * Adds some methods / properties to a class given the constructor.
+ */
+function addMethods(constructor, properties) {
+  Object.assign(constructor.prototype, properties);
+}
 
 /**
  * Converts a singleton jQuery object to its DOM node,
@@ -2513,6 +2522,7 @@ Toy.dom = dom;
 
 Toy.hasOwn = hasOwn;
 Toy.getOwn = getOwn;
+Toy.addMethods = addMethods;
 // Done at point of definition because "extends" is a reserved word.
 // Toy.extends = extends;
 

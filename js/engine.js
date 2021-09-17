@@ -242,7 +242,7 @@ var ruleMethods = {
     return rules.rewrite(this, path, fact);
   }
 };
-Expr.addMethods(ruleMethods);
+Toy.addMethods(Expr, ruleMethods);
 
 
 //

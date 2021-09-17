@@ -213,7 +213,7 @@ var tcMethods = {
     return false;
   }
 };
-TypeConstant.addMethods(tcMethods);
+Toy.addMethods(TypeConstant, tcMethods);
 
 
 function FunctionType(fromType, toType) {
