@@ -196,6 +196,7 @@ Toy.extends(Expr, null);
  * Sets the type of this term, returning this.
  */
 Expr.prototype.withType = function(type) {
+  assert(!this._type, 'Type of {1} is already set', this);
   this._type = type;
   return this;
 };
@@ -204,6 +205,7 @@ Expr.prototype.withType = function(type) {
  * Sets the type of this from another term, returning this.
  */
 Expr.prototype.typeFrom = function(expr) {
+  assert(!this._type, 'Type of {1} is already set', this);
   this._type = expr._type;
   return this;
 };
