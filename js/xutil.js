@@ -363,7 +363,7 @@ function parseTokens(tokens) {
  */
 Expr.prototype.findUntyped = function() {
   const self = this;
-  if (!self._type) {
+  if (!self.type) {
     return self;
   }
   const c = self.constructor;
@@ -397,7 +397,7 @@ Expr.prototype.copyForTyping = function() {
  * without making a copy.
  */
 Expr.prototype.typedCopy = function(dump) {
-  if (this._type) {
+  if (this.type) {
     return this;
   }
   const self = this;
@@ -465,11 +465,11 @@ Expr.prototype.typedCopy = function(dump) {
       const fn = copy(x.fn);
       const arg = copy(x.arg);
       const resultType = new TypeVariable();
-      const ft = new FunctionType(arg._type, resultType);
-      if (!Toy.andUnifTypes(ft, fn._type, unifier, toUnify)) {
+      const ft = new FunctionType(arg.type, resultType);
+      if (!Toy.andUnifTypes(ft, fn.type, unifier, toUnify)) {
         console.log('In', self.$$);
         console.log('Failed to unify fn', fn, 'with arg', arg);
-        console.log('Types', fn._type.fromType, 'and', arg._type);
+        console.log('Types', fn.type.fromType, 'and', arg.type);
         abort('Not unifiable');
       }
       return new Call(fn, arg)._withType(resultType);
@@ -478,7 +478,7 @@ Expr.prototype.typedCopy = function(dump) {
       boundVars.unshift(bound);
       const body = copy(x.body);
       const result = (new Lambda(bound, body)
-                      ._withType(new FunctionType(bound._type, body._type)));
+                      ._withType(new FunctionType(bound.type, body.type)));
       boundVars.shift();
       return result;
     } else {
@@ -532,7 +532,7 @@ Expr.prototype.getType = function() {
  * annotated.
  */
 Expr.prototype.hasType = function() {
-  return this._type;
+  return this.type;
 };
 
 /**
@@ -548,7 +548,7 @@ Expr.prototype.hasType = function() {
  * style more like the implementation of Rule R.
  */
 Expr.prototype.annotateWithTypes = function() {
-  this._type || findType(this, true);
+  this.type || findType(this, true);
   return this;
 };
 
@@ -599,12 +599,12 @@ Expr.prototype.isIndividual = function() {
 function findType(expr, annotate) {
   // TODO: Stop using findType this way.  Annotate "everything"
   // we might want type information for instead.
-  if (expr._type) {
+  if (expr.type) {
     // This quick check can save time when subexpressions share
     // structure.  (Not all sharing is permissible, but we will
     // avoid identical terms that are in different scopes and so
     // might cause problems.)
-    return expr._type;
+    return expr.type;
   }
   Toy.ft++;
 
@@ -747,7 +747,7 @@ function findType(expr, annotate) {
       annotateAll(term.bound);
       annotateAll(term.body);
     }
-    term._type = doClean ? undefined : tidy(term._type);
+    term._type = doClean ? undefined : tidy(term.type);
   }
 
   var result = Toy.withExit(exit => tidy(analyze(expr, exit)));

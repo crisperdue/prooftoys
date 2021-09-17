@@ -847,8 +847,8 @@ var testCase = {
     assert(target.matches(copy));
     assert(target.sameAs(copy));
     assert(target._type);
-    assert(copy._type === target._type);
-    assert(copy.getRight()._type === target.getRight()._type);
+    assert(copy._type === target.type);
+    assert(copy.getRight().type === target.getRight().type);
     // But not identical.
     assert(target !== copy);
     assert(copy.getRight() !== target.getRight());
@@ -1848,7 +1848,7 @@ var testCase = {
     problems = [];
     // Confirm that fact goals have types.
     function checkGoal(info) {
-      if (!info.goal._type) {
+      if (!info.goal.type) {
         problems.push(info.goal);
       }
     }

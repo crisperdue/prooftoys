@@ -2504,9 +2504,9 @@ Atom.prototype._toString = function() {
                 ? '=='
                 : this.pname);
   const show = Toy.showTypes;
-  return (show && this._type &&
+  return (show && this.type &&
           (show === 'atoms' || show === 'testing' || this.isVariable())
-          ? text + ":" + this._type.toString()
+          ? text + ":" + this.type.toString()
           : text);
 };
 

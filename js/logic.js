@@ -223,11 +223,11 @@ declare(
       const result =
         equal(call, lambda.body.axiom4Core(call.arg, lambda.bound));
       // Carefully install a few bits of type information by hand.
-      result.arg._type = result.fn.arg._type = call._type;
-      result.fn._type = new Toy.FunctionType(call._type, Toy.boolean);
-      result.fn.fn._type = Toy.equalityType(call._type);
+      result.arg._type = result.fn.arg._type = call.type;
+      result.fn._type = new Toy.FunctionType(call.type, Toy.boolean);
+      result.fn.fn._type = Toy.equalityType(call.type);
       result._type = Toy.boolean;
-      const badex = result.search(x => !x._type);
+      const badex = result.search(x => !x.type);
       assert(!badex,
              'Axiom4 result on {1} has untyped {2}', call_arg, badex);
       return result.justify('axiom4', [call]);
@@ -433,14 +433,14 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
         if (bound) {
           if (bound !== x) {
             // Honor the constraint that the types must match.
-            pairs.push([x._type, bound._type]);
+            pairs.push([x.type, bound.type]);
           }
           return bound;
         } else {
           const foundFree = freeVars.get(xnm);
           if (foundFree) {
             if (foundFree !== x) {
-              pairs.push([x._type, foundFree._type]);
+              pairs.push([x.type, foundFree.type]);
             }
             return foundFree;
           } else {
@@ -455,7 +455,7 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
         // mutate.
         //
         // TODO: This should properly use name rather than pname.
-        return x._type.hasVariable() ? new Atom(x.pname)._typeFrom(x) : x;
+        return x.type.hasVariable() ? new Atom(x.pname)._typeFrom(x) : x;
       }
     } else if (c === Call) {
       return new Call(copy(x.fn), copy(x.arg))._typeFrom(x);
@@ -483,7 +483,7 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
     if (path.isMatch()) {
       // Note the constraint that RHS type must match the type of the
       // target term.
-      pairs.push([rhs._type, term._type]);
+      pairs.push([rhs.type, term.type]);
       // Copy the replacement term into the result.
       return copy(rhs);
     } else if (c === Atom) {
@@ -525,7 +525,7 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   const subst = Toy.resolve(subst1);
   // Remember, replaceTypes usually modifies types in copied.
   copied.replaceTypes(subst);
-  const badex = copied.search(x => !x._type);
+  const badex = copied.search(x => !x.type);
   assert(!badex, 'Rule R result {1} has untyped {2}', copied, badex);
   return copied;
 };

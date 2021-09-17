@@ -107,7 +107,7 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
                   ? new Atom(step.pname)
                   // Impossible for a step!
                   : null);
-  result._type = step._type;
+  result._type = step.type;
 
   // The beginnings of a Step class.  Only steps will have the
   // following properties, with .wff accessing the top expression

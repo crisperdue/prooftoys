@@ -189,11 +189,11 @@ Expr.prototype.subsType = function(map) {
   }
   // This may create new objects, and if so we need to install the new
   // type information.
-  const type = this._type.tsubst(map);
+  const type = this.type.tsubst(map);
   if (this instanceof Call) {
     const fn = this.fn.subsType(map);
     const arg = this.arg.subsType(map);
-    if (fn === this.fn && arg === this.arg && type == this._type) {
+    if (fn === this.fn && arg === this.arg && type == this.type) {
       return this;
     } else {
       return new Call(fn, arg)._withType(type);
@@ -201,13 +201,13 @@ Expr.prototype.subsType = function(map) {
   } else if (this instanceof Lambda) {
     const body = this.body.subsType(map);
     const bound = this.bound.subsType(map);
-    if (body === this.body && bound === this.bound && type === this._type) {
+    if (body === this.body && bound === this.bound && type === this.type) {
       return this;
     } else {
       return new Lambda(bound, body)._withType(type);
     }
   } else if (this instanceof Atom) {
-    if (type === this._type) {
+    if (type === this.type) {
       return this;
     } else {
       // The pname is the one to use with the constructor.
@@ -244,7 +244,7 @@ Expr.prototype.replaceTypes = function(map) {
     } else {
       abort('Bad input');
     }
-    term._type = term._type.tsubst(map);
+    term._type = term.type.tsubst(map);
   }
   treeWalk(this);
 };
@@ -293,7 +293,7 @@ Expr.prototype._addTVars = function(vars) {
   } else if (this instanceof Lambda) {
     this.body._addTVars(vars);
   } else if (this instanceof Atom) {
-    this._type._addTVars(vars);
+    this.type._addTVars(vars);
   } else {
     abort('Bad input');
   }
@@ -351,15 +351,15 @@ Expr.prototype.typesUnifier = function(expr2) {
   function unifTerm(t1, t2) {
     const c = t1.constructor;
     if (c === Atom) {
-      return andUnif(t1._type, t2._type);
+      return andUnif(t1.type, t2.type);
     } else if (c === Call) {
       return (unifTerm(t1.fn, t2.fn) &&
               unifTerm(t1.arg, t2.arg) &&
-              andUnif(t1._type, t2._type));
+              andUnif(t1.type, t2.type));
     } else if (c === Lambda) {
       return (unifTerm(t1.bound, t2.bound) &&
               unifTerm(t1.body, t2.body) &&
-              andUnif(t1._type, t2._type));
+              andUnif(t1.type, t2.type));
     } else {
       abort('Bad expression: {1}', t1);
     }
@@ -389,10 +389,10 @@ Expr.prototype.annotate1 = function() {
   const visit = (term) => {
     const c = term.constructor;
     if (c === Atom) {
-      if (term._type) {
+      if (term.type) {
         // Only atoms should be pre-typed, which can occur
         // from shared structure for variables.
-        return term._type;
+        return term.type;
       }
       const ctype = constantNames.get(c.pname);
       if (ctype) {
@@ -403,7 +403,7 @@ Expr.prototype.annotate1 = function() {
         return individual;
       } else if (term.isVariable()) {
         term._type = new TypeVariable();
-        return term._type;
+        return term.type;
       } else {
         abort('Unable to determine type for {1}', term);
       }
@@ -440,10 +440,10 @@ Expr.prototype.typeCheck = function() {
       const i = names.indexOf(nm);
       if (i < 0) {
         names.push(nm);
-        types.push(v._type);
+        types.push(v.type);
         return true;
       } else {
-        return types[i].equal(v._type);
+        return types[i].equal(v.type);
       }
     } else {
       return true;
@@ -455,12 +455,12 @@ Expr.prototype.typeCheck = function() {
       return !checkAtom(x) && x;
     } else if (c === Call) {
       const failure = (tCheck(x.fn) || tCheck(x.arg) ||
-                       !x.fn._type.fromType.equal(x.arg._type) ||
-                       !x.fn._type.toType.equal(x._type));
+                       !x.fn.type.fromType.equal(x.arg.type) ||
+                       !x.fn.type.toType.equal(x.type));
       return failure && x;
     } else if (c === Lambda) {
       names.unshift(x.bound.name);
-      types.unshift(x.bound._type);
+      types.unshift(x.bound.type);
       const failure = tCheck(x.body);
       names.shift();
       types.shift();
