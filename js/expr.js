@@ -992,13 +992,9 @@ Expr.prototype.matchSchemaPart = function(path_arg, schema_arg, schema_part) {
  * in the replacement, possibly more than necessary, so don't count on
  * bound variables keeping their names after a substitution.
  *
- * Copies types from this and the terms to be substituted, so if they
- * all have type information throughout, the result will, too.
- *
  * This operation retains whatever type information may be already
- * present in the map, and copies over any type information in this as
- * it copies terms, but does nothing more to ensure or check for
- * proper typing.
+ * present in the map, but does not check, update, or unify any
+ * type information.  It is essentially first-order.
  */
 Expr.prototype.subFree = function(map_arg) {
   var map = Object.create(null);
@@ -2886,7 +2882,7 @@ Call.prototype._subFree = function(map, freeVars, allNames) {
   if (fn == this.fn && arg == this.arg) {
     return this;
   } else {
-    return new Call(fn, arg).typeFrom(this);
+    return new Call(fn, arg);
   }
 };
 
@@ -3353,13 +3349,13 @@ Lambda.prototype._subFree = function(map, freeVars, allNames) {
     // capturing actually would occur.  This also renames it if there
     // are free occurrences of a variable of the same name before the
     // substitution.
-    const newVar = genVar(boundName, allNames).typeFrom(this.bound);
+    const newVar = genVar(boundName, allNames);
     allNames[newVar.name] = true;
     // TODO: Consider updating the map and doing one substitution
     //   rather than two.
     const newBody = this.body._subFree(Toy.object0(boundName, newVar),
                                        freeVars, allNames);
-    const renamed = new Lambda(newVar, newBody).typeFrom(this);
+    const renamed = new Lambda(newVar, newBody);
     // Substitute into the modified Lambda term.
     result = renamed._subFree(map, freeVars, allNames);
   } else {
@@ -3368,7 +3364,7 @@ Lambda.prototype._subFree = function(map, freeVars, allNames) {
     if (newBody === this.body) {
       result = this;
     } else {
-      result = new Lambda(this.bound, newBody).typeFrom(this);
+      result = new Lambda(this.bound, newBody);
     }
   }
   if (savedRebinding) {
