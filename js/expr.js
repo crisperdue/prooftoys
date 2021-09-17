@@ -173,7 +173,7 @@ TermMap.prototype.set = function(term, name) {
  */
 class Expr {
   constructor() {
-    this._type = null;
+    this.__type = null;
     // Extensible set of remembered information, especially useful
     // since the result is conceptually immutable.
     // Duplicated in subclass constructors for speed.
@@ -196,7 +196,7 @@ class Expr {
   // cases for system performance.  If null, it can be set by _withType
   // or _typeFrom.
   get type() {
-    return this._type;
+    return this.__type;
   }
   get memos() {
     return this.__memos;
@@ -212,8 +212,8 @@ class Expr {
  * code).
  */
 Expr.prototype._withType = function(type) {
-  assert(!this._type, 'Type of {1} is already set', this);
-  this._type = type;
+  assert(!this.type, 'Type of {1} is already set', this);
+  this.__type = type;
   return this;
 };
   
@@ -223,8 +223,8 @@ Expr.prototype._withType = function(type) {
  * inference code).
  */
 Expr.prototype._typeFrom = function(expr) {
-  assert(!this._type, 'Type of {1} is already set', this);
-  this._type = expr._type;
+  assert(!this.type, 'Type of {1} is already set', this);
+  this.__type = expr.type;
   return this;
 };
 

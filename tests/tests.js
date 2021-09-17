@@ -846,8 +846,8 @@ var testCase = {
     assertEqual(source, copy);
     assert(target.matches(copy));
     assert(target.sameAs(copy));
-    assert(target._type);
-    assert(copy._type === target.type);
+    assert(target.type);
+    assert(copy.type === target.type);
     assert(copy.getRight().type === target.getRight().type);
     // But not identical.
     assert(target !== copy);

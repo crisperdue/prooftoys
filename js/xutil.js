@@ -671,9 +671,9 @@ function findType(expr, annotate) {
       abort('Not an expression: {1}', expr);
     }
     if (annotate) {
-      expr._type = result;
+      expr.__type = result;
       if (expr instanceof Lambda) {
-        expr.bound._type = result.fromType;
+        expr.bound.__type = result.fromType;
       }
     }
     return result;
@@ -747,7 +747,7 @@ function findType(expr, annotate) {
       annotateAll(term.bound);
       annotateAll(term.body);
     }
-    term._type = doClean ? undefined : tidy(term.type);
+    term.__type = doClean ? undefined : tidy(term.type);
   }
 
   var result = Toy.withExit(exit => tidy(analyze(expr, exit)));

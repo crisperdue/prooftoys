@@ -244,7 +244,7 @@ Expr.prototype.replaceTypes = function(map) {
     } else {
       abort('Bad input');
     }
-    term._type = term.type.tsubst(map);
+    term.__type = term.type.tsubst(map);
   }
   treeWalk(this);
 };
@@ -399,10 +399,10 @@ Expr.prototype.annotate1 = function() {
         return ctype.clone();
       } else if (term.isLiteral()) {
         // Literals so far are individuals.
-        term._type = individual;
+        term.__type = individual;
         return individual;
       } else if (term.isVariable()) {
-        term._type = new TypeVariable();
+        term.__type = new TypeVariable();
         return term.type;
       } else {
         abort('Unable to determine type for {1}', term);

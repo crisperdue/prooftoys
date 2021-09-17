@@ -223,10 +223,10 @@ declare(
       const result =
         equal(call, lambda.body.axiom4Core(call.arg, lambda.bound));
       // Carefully install a few bits of type information by hand.
-      result.arg._type = result.fn.arg._type = call.type;
-      result.fn._type = new Toy.FunctionType(call.type, Toy.boolean);
-      result.fn.fn._type = Toy.equalityType(call.type);
-      result._type = Toy.boolean;
+      result.arg.__type = result.fn.arg.__type = call.type;
+      result.fn.__type = new Toy.FunctionType(call.type, Toy.boolean);
+      result.fn.fn.__type = Toy.equalityType(call.type);
+      result.__type = Toy.boolean;
       const badex = result.search(x => !x.type);
       assert(!badex,
              'Axiom4 result on {1} has untyped {2}', call_arg, badex);
