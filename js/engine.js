@@ -981,17 +981,16 @@ function factsExtending(resInfo) {
 /**
  * Returns the "expansion" of a statement, preferably given as a wff.
  * The result is a version of the full declared fact of the statement,
- * with types, and with free variables as in the given statement
- * rather than the declaration.  Returns null if there is no such
- * declared fact.
+ * with free variables as in the given statement rather than the
+ * declaration.  Returns null if there is no such declared fact.
  */
 function factExpansion(stmt) {
-  const factInfo = resolveToFactInfo(stmt);
   const resInfo = getResInfo(stmt);
   const expanded = resInfo._expansion;
   if (expanded) {
     return expanded;
   }
+  const factInfo = resolveToFactInfo(stmt);
   if (factInfo) {
     const asStated = factInfo.goal.getMain();
     const asRequested = resInfo.stmt.getMain();
@@ -1469,10 +1468,7 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
   if (typeof facts_arg == 'string' && Toy.isIdentifier(facts_arg)) {
     facts = cxt.factLists && cxt.factLists[facts_arg];
   }
-  let it = facts && facts[Symbol.iterator]();
-  assert(it, 'No facts: {1}', facts_arg);
-  for (let v = it.next(); !v.done; v = it.next()) {
-    var factMatcher = v.value;
+  for (const factMatcher of facts) {
     if (factMatcher.constructor !== Object) {
       // The factMatcher is a string or wff.
       // The stmt is a wff, so there will be no need for lower-level code
@@ -1483,9 +1479,11 @@ function findMatchingFact(facts_arg, cxt, term, pureOnly) {
         //   and warn when a match is rejected due to fact proof in
         //   progress.
         var fullFact = (factExpansion(stmt) ||
-                        // The "fact" might be a tautology.
-                        // Could it even be something else?  Not clear.
-                        rules.fact(stmt));
+                        rules.arithFact(stmt) ||
+                        rules.tautology(stmt));
+        if (Toy.isError(fullFact)) {
+          continue;
+        }
         if (!(pureOnly && fullFact.isCall2('=>'))) {
           var schema = schemaPart(fullFact);
           // This substitution might not work.

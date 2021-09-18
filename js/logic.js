@@ -2584,7 +2584,7 @@ declare(
   },
 
   // Proves that the wff is a tautology and returns the proved
-  // statement, else returns a LogicError.
+  // statement, else returns an Error.
   // (5233)
   //
   // Accepts a parseable string as the wff.
@@ -2597,14 +2597,17 @@ declare(
       if (details) {
         result = details.justify('tautology', [wff]);
       } else {
+        if (!Toy.looksBoolean(wff)) {
+          return Toy.newError('Not handled as tautology: {1}', wff_arg);
+        }
         result = Toy.withExit(exit => {
           return Toy.rebind('tautExit', exit,
                             () => rules.tautology0(wff));
         });
       }
       if (Toy.isError(result)) {
-        return new Error('Not a tautology: ' + wff_arg +
-                         ' -- ' + result.message);
+        return Toy.newError('Not a tautology: {1} -- {2}',
+                            wff_arg, result.message);
       } else {
         _tautologies.set(key, result.details);
         const str = wff.toString();
@@ -5046,29 +5049,14 @@ declare(
         return instance.justify('fact', arguments);
       }
       // Next try arithmetic facts.
-      if (wff.isEquation()) {
-        var result = Toy.tryArithmetic(wff.eqnLeft());
-        if (result && result.alphaMatch(wff)) {
-          return result.justify('fact', arguments);
-        }
-      } else {
-        // Relational operators can go here.
-        var result = Toy.tryArithmetic(wff);
-        // x = T is the expected result.
-        if (result && result.matchSchema('x == T')) {
-          return (rules.rewriteOnly(result, '', '(x == T) == x')
-                  .justify('fact', arguments));
-        }
+      const arith = rules.arithFact(wff);
+      if (arith) {
+        return arith;
       }
       // Try tautologies.
-      try {
-        // Inline for tautologies.  Call looksBoolean to avoid ugly
-        // and unnecessary errors from rules.tautology.
-        return (Toy.looksBoolean(wff)
-                ? rules.tautology(wff)
-                : abort(''));
-      } catch(err) {}  // TODO: Consider returning a strict error
-      //                    from rules.tautology.
+      if (Toy.looksBoolean(wff)) {
+        return rules.tautology(wff);
+      }
       return Toy.newError('No such fact: ' + wff + ' (as ' + synopsis + ')');
     },
     // The "fact" rule does not accept a selection, and converts its
@@ -5084,6 +5072,28 @@ declare(
       return d || 'fact';
     },
     labels: 'basic'
+  },
+
+  // A rule just for arithmetic facts, currently inline.
+  // Returns null if the input is not an arithmetic fact.
+  {name: 'arithFact',
+   action: function(wff) {
+     if (wff.isEquation()) {
+       var result = Toy.tryArithmetic(wff.eqnLeft());
+       if (result && result.alphaMatch(wff)) {
+         return result.justify('fact', arguments);
+       }
+     } else {
+       // Relational operators can go here.
+       var result = Toy.tryArithmetic(wff);
+       // x = T is the expected result.
+       if (result && result.matchSchema('x == T')) {
+         return (rules.rewriteOnly(result, '', '(x == T) == x')
+                 .justify('fact', arguments));
+       }
+     }
+     return null;
+   }
   },
 
   // Traditionally in lambda calculus (use of) this is referred to as
