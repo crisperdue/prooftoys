@@ -468,12 +468,13 @@ Expr.prototype._locateFree = function(name, path, paths) {
 
 /**
  * Returns true iff this term is "exactly" the same as the given one,
- * including use of the same names throughout.  If both are fully
- * typed, this also checks that the types are the same.  Since the
- * user has very little control over type variable names, these may
- * differ provided that the types are equivalent.
+ * including use of the same names throughout.  With a truthy value
+ * for the optional "andTypes" argument, if both are fully typed, this
+ * also checks that the types are the same.  Since the user has very
+ * little control over type variable names, these may differ provided
+ * that the types are equivalent.
  */
-Expr.prototype.sameAs = function(other) {
+Expr.prototype.sameAs = function(other, andTypes) {
   // Based on the assumption that typed inputs are properly typed,
   // this only checks types of Atoms, because the types of the Atoms
   // determines all other types in the term.
@@ -490,12 +491,12 @@ Expr.prototype.sameAs = function(other) {
         // match.  This satisfies the specification.
         const t1 = a.hasType();
         const t2 = b.hasType();
-        return !t1 || !t2 || t1.equiv(t2);
+        return !andTypes || !t1 || !t2 || t1.equiv(t2);
       }
     } else if (c === Call) {
-      return a.fn.sameAs(b.fn) && a.arg.sameAs(b.arg);
+      return same(a.fn, b.fn) && same(a.arg, b.arg);
     } else if (c === Lambda) {
-      return a.bound.sameAs(b.bound) && a.body.sameAs(b.body);
+      return same(a.bound, b.bound) && same(a.body, b.body);
     }
   };
   return same(this, other);
@@ -673,7 +674,7 @@ Expr.prototype.hasName = function(name) {
 };
 
 /**
- * True iff this is a Atom named as a constant.  If the optional name
+ * True iff this is a Atom that is a constant.  If the optional name
  * is given, this constant must have the given name.
  */
 Expr.prototype.isConst = function(opt_name) {
@@ -1590,7 +1591,7 @@ Expr.prototype.asPath = function(arg) {
       return term.sameAs(arg);
     }
     const result = this.pathTo(sameAs);
-    assert(result, 'No term found satisfying {1}', arg);
+    assert(result, 'No term found matching {1}', arg);
     return result;
   } else if (type === 'string' && arg.length && arg[0] !== '/') {
     const result = this.asPath(termify(arg));
@@ -2495,7 +2496,7 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 /**
  * If not producing Unicode, returns this Atom's pname.  If producing
  * Unicode, and if the pname has a Unicode counterpart, returns that
- * counterpart, otherwise just the pname.
+ * counterpart, otherwise just the pname.  Boolean equality is "==".
  */
 Atom.prototype._toString = function() {
   const text = (useUnicode
