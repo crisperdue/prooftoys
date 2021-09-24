@@ -1216,11 +1216,7 @@ function parse(input) {
       _parsed.hasOwnProperty(input)) {
     return _parsed[input];
   }
-  // TODO: This line works at a higher level than the rest of
-  //   the code for parsing.  Consider re-specifying "parse"
-  //   or adding something at higher level.
-  var result = justParse(input);
-  findType(result);
+  var result = justParse(input).typedCopy();
   if (typeof input == 'string') {
     _parsed[input] = result;
   }
@@ -1515,21 +1511,20 @@ var _mathParsed = new Map();
  *   will need to be able to include statements about default types of
  *   variables according to their names.
  */
-function mathParse(str) {
-  if (str instanceof Expr) {
-    return str;
+function mathParse(arg) {
+  if (arg instanceof Expr) {
+    return arg.typedCopy();
   }
-  if (str[0] === '@') {
-    return parse(str.slice(1));
+  if (arg[0] === '@') {
+    return parse(arg.slice(1));
   }
-  const parsed = _mathParsed.get(str);
+  const parsed = _mathParsed.get(arg);
   if (parsed) {
     return parsed;
   }
-  var expr = justParse(str);
-  var result = expr.andMathVarConditions();
-  findType(result);
-  _mathParsed.set(str, result);
+  const expr = justParse(arg);
+  const result = expr.andMathVarConditions().typedCopy();
+  _mathParsed.set(arg, result);
   return result;
 }
 
