@@ -1232,10 +1232,8 @@ function parse(input) {
 function justParse(input) {
   try {
     return justParse1(input);
-  } catch(e) {  // TODO: Consider converting to use exits.
-    const e2 = new Error('Could not parse "' + input + '": ' + e.message);
-    e2.cause = e;
-    throw e2;
+  } catch(e) {
+    abort({cause: e}, 'Could not parse "{1}": {2}', input, e.message);
   }
 }
 
@@ -1277,10 +1275,8 @@ function justParse1(input, aboveToken) {
   function expect(expected) {
     var token = next();
     if (token.name != expected) {
-      // Report somehow.
-      var error = new Error('Expected ' + expected + ', got ' + token.name);
-      error.position = token.pos;
-      throw error;
+      abort({position: token.pos},
+            'Expected ' + expected + ', got ' + token.name);
     }
   }
 
@@ -1392,7 +1388,7 @@ function justParse1(input, aboveToken) {
   function mustParseAbove(lastOp) {
     var left = parse1Above(lastOp);
     if (!left) {
-      throw new Error('Empty expression at ' + peek().pos);
+      abort('Empty expression at ' + peek().pos);
     }
     while (true) {
       var token = peek();
@@ -1425,7 +1421,7 @@ function justParse1(input, aboveToken) {
   var end = tokens.pop();
   if (tokens.length < 1) {
     // There should be at least one real token.
-    throw new Error('No parser input');
+    abort('No parser input');
   }
   // A token of precedence 0.
   var aboveWhat = aboveToken || new Atom('(end)');
@@ -1434,7 +1430,7 @@ function justParse1(input, aboveToken) {
   // closing paren.
   var result = mustParseAbove(aboveWhat);
   if (tokens.length) {
-    throw new Error('Extra input: "' + tokens[0] + '"');
+    abort('Extra input: "' + tokens[0] + '"');
   }
   return result;
 }
