@@ -783,21 +783,6 @@ function findType(expr, annotate) {
 }
 
 /**
- * Look up the type of a primitive or defined constant.  Result is
- * not fresh.  Returns null if preconditions are not met.
- */
-function lookupType(name) {
-  if (constantTypes.has(name)) {
-    return constantTypes.get(name);
-  } else if (isDefinedSimply(name)) {
-    console.warn(name, 'is defined but type is not recorded.');
-    return findType(getDefinition(name).getRight());
-  } else {
-    return null;
-  }
-}
-
-/**
  * Assumes "type" is dereferenced.
  */
 function occursInList(type, types, map) {
@@ -2350,7 +2335,6 @@ Toy.parseTokens = parseTokens;
 Toy.parseType = parseType;
 Toy.findType = findType;
 Toy.isBooleanBinOp = isBooleanBinOp;
-Toy.lookupType = lookupType;
 
 // Counter for the number of nontrivial calls to findType.
 Toy.ft = 0;
