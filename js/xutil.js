@@ -1731,7 +1731,8 @@ function boolSchemaInfo(term) {
     }
     if (term.isCall2()) {
       var op = term.getBinOp()
-      if (op.pname in boolOps) {
+      if (op.pname in boolOps ||
+          (op.name == '=' && Toy.isBooleanBinOp(op))) {
         return infix(makeSchema(term.getLeft()), op,
                      makeSchema(term.getRight()));
       }
