@@ -791,8 +791,8 @@ var testCase = {
     assert(e.sameAs(new Toy.Call(e.fn, e.arg)));
     assert(!e.sameAs(parse('a = b + ({y. y + 1} 4)')));
     assert(!e.sameAs(parse('a = b')));
-    assert(!(parse('x = x').sameAs(parse('x == x'))));
-    assert(!(parse('(=)').sameAs(parse('(==)'))));
+    assert(!(parse('x = x').sameAs(parse('x == x'), true)));
+    assert(parse('(=)').sameAs(parse('(==)')));
   },
 
   testFreeVars: function() {
@@ -1398,7 +1398,7 @@ var testCase = {
     var terms = [];
     function foo(term, pth) {
       if (term.fn instanceof Toy.Atom) {
-        names.push(term.fn.pname || term.fn.name);
+        names.push(term.fn.name);
         paths.push(pth.reverse().toString());
       }
       if (term.matchSchema('a + b')) {
@@ -1406,7 +1406,7 @@ var testCase = {
       }
     }
     Toy.parse('2 * x + neg y = 12 == T').searchMost(foo, Toy.Path.empty, false);
-    assertEqual(["==", "=", "neg", "+", "*"], names);
+    assertEqual(["=", "=", "neg", "+", "*"], names);
     assertEqual(["/fn",
                  "/fn/arg/fn",
                  "/fn/arg/fn/arg/arg",
@@ -1468,16 +1468,12 @@ var testCase = {
   },
 
   testGeneralizeTF: function() {
-    var gen = Toy.parse('p T = T').generalizeTF(Toy.parse('p F = F'), x);
-    assertEqual('((p x) = x)', gen + '');
-    try {
-      Toy.parse('p T = x').generalizeTF(Toy.parse('p F = F'), x);
-      Y.Assert.fail('generalizeTF should have failed');
-    } catch(e) {}
-    try {
-      Toy.parse('p T').generalizeTF(Toy.parse('p T F'), x);
-      Y.Assert.fail('generalizeTF should have failed');
-    } catch(e) {}
+    var gen = Toy.parse('p T == T').generalizeTF(Toy.parse('p F == F'), x);
+    assertEqual('((p x) == x)', gen + '');
+    throws(() =>
+           Toy.parse('p T == x').generalizeTF(Toy.parse('p F == F'), x));
+    throws(() =>
+           Toy.parse('p T').generalizeTF(Toy.parse('p T F'), x));
   },
 
   testHasArgs: function() {
