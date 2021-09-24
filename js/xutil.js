@@ -497,9 +497,9 @@ Expr.prototype.typedCopy = function(mustCopy) {
 
 /**
  * Returns a copy like deepCopy, also bringing over all type
- * information from the original, suitable for rendering, but not for
- * inference, because all occurrences of variables are represented by
- * distinct structure in the result.
+ * information from the original, suitable for rendering because all
+ * occurrences of variables are represented by distinct structure in
+ * the result.
  */
 Expr.prototype.copyWithTypes = function() {
   const c = this.constructor;
@@ -1822,7 +1822,7 @@ Expr.prototype.matchPart = function() {
 
 /**
  * Calls a function given as an Expr or name of a constant, passing
- * one or more arguments.
+ * one or more arguments, that may be passed as strings.
  */
 // TODO: Eliminate use of binops in favor of infixCall.  This will
 // be problematic for some infix operators.
