@@ -390,14 +390,16 @@ Expr.prototype.copyForTyping = function() {
   return this.deepCopy();
 };
 
+Toy._typed = new WeakMap();
+
 /**
  * Makes a well-typed copy of this with all-new nodes, so that if full
  * resolution of type information mutates types in the copy, no part
  * of this will be affected.  If this already has a type, return it
  * without making a copy.
  */
-Expr.prototype.typedCopy = function(dump) {
-  if (this.type) {
+Expr.prototype.typedCopy = function(mustCopy) {
+  if (!mustCopy && this.type) {
     return this;
   }
   const self = this;
@@ -486,15 +488,10 @@ Expr.prototype.typedCopy = function(dump) {
     }
   };
   const annotated = copy(this);
-  if (dump) {
-    return {
-      annotated: annotated,
-        unifier: unifier,
-        toUnify: toUnify};
-  }
   Toy.unifTypesList(unifier, toUnify);
   const finalUnifier = Toy.resolve(unifier);
   annotated.replaceTypes(finalUnifier);
+  Toy._typed.set(this, annotated);
   return annotated;
 };
 
