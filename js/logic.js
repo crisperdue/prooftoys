@@ -37,9 +37,6 @@ const definition = Toy.definition;
 // two extra axioms.
 const useFalseDefn = true;
 
-const identity = Toy.parse('{x. x}');
-const allT = Toy.parse('{x. T}');
-
 const rules = Toy.rules;
 const declare = Toy.declare;
 const buildHypSchema = Toy.buildHypSchema;

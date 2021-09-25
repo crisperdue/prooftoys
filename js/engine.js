@@ -33,9 +33,6 @@ var Lambda = Toy.Lambda;
 
 var memo = Toy.memo;
 
-var identity = Toy.parse('{x. x}');
-var allT = Toy.parse('{x. T}');
-
 // Predefine some common constants.
 var T = constify('T');
 var F = constify('F');
