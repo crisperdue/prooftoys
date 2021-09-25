@@ -215,6 +215,7 @@ declare(
                      : call_arg);
       assert(call1.isLambdaCall(),
              'Axiom 4 needs ({v. B} A), got: {1}', call_arg);
+      // TODO: XXX Copy if not already typed, else typecheck it.
       const call = call1.typedCopy();
       var lambda = call.fn;
       const result =
@@ -537,6 +538,7 @@ declare(
   {name: 'assert',
     action: function(assertion_arg) {
       const wff = termify(assertion_arg).typedCopy();
+      wff.registerConstants();
       const newConsts = wff.newConstants();
       if (newConsts.size > 0) {
         console.warn('In', wff.toString(), 'introducing constants:',
@@ -1291,7 +1293,8 @@ declare(
 
   // T == [B = B] (5210)
   {name: 'eqT',
-    action: function(b) {
+    action: function(arg) {
+      const b = termify(arg);
       var lemma = rules.theorem('xAlwaysX');
       var step0 = rules.useDefinition(lemma, '/fn')
       var step1 = rules.applyBoth(step0, b);
@@ -5166,13 +5169,12 @@ declare(
    {name: 'witnessExists',
     precheck: function(step, path) {
       var term = step.get(path);
-      var type = Toy.findType(term);
       // The current check merely excludes booleans.
       // TODO: Improve this when types are truly available.  Support
       //   predicates and functions of individuals, et cetera.
       // TODO: Also screen out terms with locally free occurrences
       //   of variables bound in an enclosing scope.
-      return type !== Toy.boolean;
+      return term.type !== Toy.boolean;
     },
     action: function(step, path_arg) {
       var path = step.asPath(path_arg);

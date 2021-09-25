@@ -1274,7 +1274,7 @@ function getResInfo(stmt) {
     const info = {key: key, asmSet: asmSet,
                   standardVars: standard,
                   // _expansion will be initialized later.
-                  stmt: wff.typedCopy(), _expansion: null};
+                  stmt: wff, _expansion: null};
     _statementResInfos.set(stmt, info);
     return info;
   }
@@ -2184,8 +2184,11 @@ function addFact(info) {
 
   // Ensure that the goal has types.
   info.goal = (info.proved ||
-               ((info.goal || mathParse(info.statement))
-                .typedCopy()));
+               // TODO: Consider how to possibly better ensure that
+               // types in the goal are identical with types in the
+               // proved fact.  (Always prove on first use?)
+               info.goal.typedCopy() ||
+               mathParse(info.statement));
   for (var key in info) {
     if (!(key in factProperties)) {
       var id = info.goal ? info.goal.$$ : info.synopsis;
@@ -2205,7 +2208,8 @@ function addFact(info) {
   // without registering a fact. (And Toy.define also adds the defined
   // constant as it bypasses this code.)
   // TODO: If there is no proof, assert the fact immediately and skip
-  //   this code.  That will require declaring axioms before uses.
+  //   this code.
+  info.goal.registerConstants();
   const names = info.goal.newConstants();
   if (names.size > 0) {
     if (info.definition) {

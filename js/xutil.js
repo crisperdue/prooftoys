@@ -1226,6 +1226,20 @@ function parse(input) {
 }
 
 /**
+ * Registers the types of all constants found in this term that have
+ * not already been registered.
+ */
+Expr.prototype.registerConstants = function() {
+  // Really just visiting all, not searching.
+  this.search(term => {
+      if (term.isNamedConst() &&
+          !constantTypes.has(term.name)) {
+        constantTypes.set(term.name, term.type);
+      }
+    });   
+};
+
+/**
  * Same as "parse", but does not annotate the result with types and
  * does not memoize in _parsed.
  */ 
