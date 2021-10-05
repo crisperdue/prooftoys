@@ -350,7 +350,7 @@ declare(
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
       const targex = target.get(path);
       window.rCounter = (window.rCounter || 0) + 1;
-      result = target.wff.ruleRCore(target, path, equation);
+      result = equation.wff.ruleRCore(target, path);
       if (result instanceof Error) {
         // Distinctify and try again.
         // Why does this path execute in just one test case, where using
@@ -386,19 +386,55 @@ declare(
 );
 
 /**
- * This is the core functionality for the full Rule R.  It expects a
- * target WFF, a path to its target term, and a pure (unconditional)
- * equation, returning a new wff with the target term replaced by the
- * RHS of the given equation.  Does full unification of types.  If
- * there is a problem of any kind, returns an Error.
+ * This is the core functionality for the full Rule R.  It takes
+ * "this" as an unconditional equation, with a target WFF and a path
+ * to its target term as arguments, returning a new wff with the
+ * target term replaced by the RHS of the given equation.  Does full
+ * unification of types.  If there is a problem of any kind, returns
+ * an Error.
  *
  * All structure in the returned WFF is freshly created, though there
  * is often shared structure (variables!) within the result.  Unlike
- * some previous editions of this function, the inputs can have as
- * little or as much internal sharing as allowable by ordinary
- * well-formedness.
+ * some previous editions of this function, the input wffs can have as
+ * little or as much internal sharing as allowable by well-formedness.
  */
-Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
+Expr.prototype.ruleRCore = function(target, path_arg) {
+  // Type substitutions in Rule R to both inputs must give results
+  // match in their types as well as their subexpressions.  As a
+  // consequence, all further substitutions into the results must also
+  // match in this way, for example substitutions with constant types.
+  // The result of the rule must also have self-consistent types.
+  //
+  // Consider that the target (step) input already has self-consistent
+  // types throughout, and the replacement term (eqn RHS) also has
+  // self-consistent types, but rule R may cause free variables of the
+  // RHS to become identified with bound and/or free variables in
+  // scope in the context of the target term, i.e. to become the same
+  // variable.
+  //
+  // TODO: Consider techniques to reduce copying.  For example, if
+  //   neither input contains type variables, unification becomes just
+  //   a check whether types match properly, with no type
+  //   substitutions and no need to copy or mutate the expression tree
+  //   to implement that substitution.
+  //
+  //   If the equation LHS matches its occurrence in the target step
+  //   without type substitution, and if all of the equation's RHS
+  //   free variables also occur in the LHS, there will be no need for
+  //   any unification or type checking.  Type constraints on those
+  //   variables are already met due to their occurrences in the
+  //   target term.
+  //
+  //   If the RHS has free variables not in the LHS, those can always
+  //   be renamed, e.g. before using Rule R, to be distinct from all
+  //   other free variables of the target step, and in that case their
+  //   types are unconstrained and do not necessitate any copying.
+  //   (This would change the effect of Rule R, but gaining rather
+  //   than losing generality.)
+  // 
+  //
+  const eqn = this;
+
   // List of bound variable Atoms in scope at the location of the
   // current term of the traversal, innermost first.
   // TODO: Reset when copying the RHS.
@@ -413,9 +449,48 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   // variables of the replacement term that wind up within the scope
   // of variables of the target step.
   const pairs = [];
+  // Substitution map for types, from x types to y types.
+  const typeMap = new Map();
 
+  const lhs = eqn.getLeft();
   const rhs = eqn.getRight();
   const path = this.asPath(path_arg).uglify();
+
+  // Maps vbl name to vbl name, x to y.
+  const renamings = new Map();
+  const namesMatch = (x, y) =>
+        (renamings.get(x.name) || x.name) === y.name;
+
+  // Checks if terms x and y are the same up to renamings of bound
+  // variables, returning a boolean value.  Types of corresponding
+  // terms may differ, but must be unifiable in the context of this
+  // application of Rule R.  This adds any such constraints to the
+  // pairs to be unified.
+  const match = (x, y) => {
+    const ct = x.constructor;
+    const yc = y.constructor;
+    if (ct !== yc) {
+      return false;
+    }
+    if (ct === Atom) {
+      return (namesMatch(x, y) &&
+              Toy.andUnifTypes(x.type, y.type, typeMap, pairs));
+    } else if (ct === Call) {
+      return match(x.fn, y.fn) && match(x.arg, y.arg);
+    } else if (ct === Lambda) {
+      const xnm = x.bound.name;
+      const outerx = renamings.get(xnm);
+      renamings.set(xnm, y.bound.name);
+      const result =
+            (Toy.andUnifTypes(x.bound.type, y.bound.type, typeMap, pairs) &&
+             match(x.body, y.body));
+      renamings.set(xnm, outerx);
+      return result;
+    } else {
+      abort('');
+    }
+  };
+
   // Makes a copy of the given typed term, copying over type
   // information from the given term.  For occurrences of variables
   // within the target term, adds constraints that the type must
@@ -471,11 +546,11 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
   // replacement.
   //
   // This traverses all subterms of the given term, copying each with
-  // "copy", and visiting the target term last so "copy" will
-  // encounter all occurrences of free variables of the target step
-  // outside the target term before copying the replacement for the
-  // target term.  (This may no longer matter.)
-  const dig = (term, path) => {
+  // "copy", and visiting the target term last so that all occurrences
+  // of free variables in the replacement term that are also free in
+  // the target will be noticed in "copy" and constrained to the same
+  // type as occurrences in the target.
+  const replaced = (term, path) => {
     const c = term.constructor;
     if (path.isMatch()) {
       // Note the constraint that RHS type must match the type of the
@@ -490,17 +565,17 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
       const segment = path.segment;
       if (segment === 'fn') {
         const arg = copy(term.arg);
-        return new Call(dig(term.fn, path.rest), arg)._typeFrom(term);
+        return new Call(replaced(term.fn, path.rest), arg)._typeFrom(term);
       } else if (segment === 'arg') {
         const fn = copy(term.fn);
-        return new Call(fn, dig(term.arg, path.rest))._typeFrom(term);
+        return new Call(fn, replaced(term.arg, path.rest))._typeFrom(term);
       }
     } else if (c === Lambda) {
       if (path.segment === 'body') {
         const bound = term.bound;
         const newBound = new Atom(bound.name)._typeFrom(bound);
         boundVars.unshift(newBound);
-        const result = (new Lambda(newBound, dig(term.body, path.rest))
+        const result = (new Lambda(newBound, replaced(term.body, path.rest))
                         ._typeFrom(term));
         boundVars.shift();
         return result;
@@ -509,7 +584,12 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
     // Catch all the cases where the segment and term mismatch.
     term._checkSegment(path);
   };
-  const copied = dig(this, path);
+  const targex = target.get(path);
+  if (!match(lhs, targex)) {
+    return newError('In Rule R subexpression {1} of {2} must match {3}',
+                    targex, target, lhs);
+  }
+  const result = replaced(target, path);
   const subst1 = new Map();
   if (!Toy.unifTypesList(subst1, pairs)) {
     const pair = pairs[0];
@@ -520,11 +600,11 @@ Expr.prototype.ruleRCore = function(target, path_arg, eqn) {
     abort(error);
   }
   const subst = Toy.resolve(subst1);
-  // Remember, replaceTypes usually modifies types in copied.
-  copied.replaceTypes(subst);
-  const badex = copied.search(x => !x.type);
-  assert(!badex, 'Rule R result {1} has untyped {2}', copied, badex);
-  return copied;
+  // Remember, replaceTypes usually modifies types in result.
+  result.replaceTypes(subst);
+  const badex = result.search(x => !x.type);
+  assert(!badex, 'Rule R result {1} has untyped {2}', result, badex);
+  return result;
 };
 
 //// Preliminaries to logic
