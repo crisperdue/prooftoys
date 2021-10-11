@@ -98,7 +98,6 @@
       const pair1 = [new FunctionType(v2, v1), v3];
       const pair2 = [v2, new FunctionType(v3, v3)];
       let pairs = [pair0, pair1, pair2];
-      console.log(pairs.$$);
       // [[t1, o], [(t1 t2), t3], [t2, (t3 t3)]]
       const subst = new Map();
       const result = unifTypesList(subst, pairs);
@@ -235,12 +234,10 @@
 
     function testTypesUnifier(a) {
       const x1 = rules.eqSelf('x');
-      x1.wff.annotateWithTypes();
-      const x2 = rules.eqSelf('x');
-      x2.wff.annotateWithTypes();
+      const x2 = rules.eqSelf('y');
       const unifier = x1.wff.typesUnifier(x2.wff);
       a.ok(unifier instanceof Map);
-      a.ok(unifier.size === 1);
+      a.equal(unifier.size, 1);
     }
   ];
 

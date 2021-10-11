@@ -488,7 +488,9 @@ Expr.prototype.typedCopy = function(mustCopy) {
     }
   };
   const annotated = copy(this);
-  Toy.unifTypesList(unifier, toUnify);
+  if (!Toy.unifTypesList(unifier, toUnify)) {
+    abort('Type assignment failed');
+  }
   const finalUnifier = Toy.resolve(unifier);
   annotated.replaceTypes(finalUnifier);
   Toy._typed.set(this, annotated);

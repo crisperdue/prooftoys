@@ -590,8 +590,8 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
                     targex, target, lhs);
   }
   const result = replaced(target, path);
-  const subst1 = new Map();
-  if (!Toy.unifTypesList(subst1, pairs)) {
+  // const subst1 = new Map();
+  if (!Toy.unifTypesList(typeMap, pairs)) {
     const pair = pairs[0];
     const error =
       Toy.error('Types cannot match:\n{1} in {2},\n{3} in {4}',
@@ -599,7 +599,7 @@ Expr.prototype.ruleRCore = function(target, path_arg) {
     error.reportToUser = true;
     abort(error);
   }
-  const subst = Toy.resolve(subst1);
+  const subst = Toy.resolve(typeMap);
   // Remember, replaceTypes usually modifies types in result.
   result.replaceTypes(subst);
   const badex = result.search(x => !x.type);
@@ -982,14 +982,25 @@ declare(
 // Definition rules need reduce and applyBoth to be available
 // at the occurrence of Toy.definition.
 
+/* TODO: Consider using these type-specific versions of the
+   identity function as appropriate below.
+let ident0, ident1;
+$(function() {
+  ident0 = Toy.parse('{x. x} T').fn;
+  ident1 = Toy.parse('{x. x} 0').fn;
+});
+*/
+
 declare(
   // Takes an arbitrary expression A, concluding that it is equal
   // to itself. (5200)
+  //
+  // This assigns types "by hand" so it is part of the inference kernel.
   {name: 'eqSelf',
-    action: function(a) {
-      a = termify(a);
+    action: function(arg) {
+      const a = termify(arg);
       var step1 = rules.axiom4(call(Toy.parse('{x. x}'), a));
-      var result = rules.r(step1, step1, '/left');
+      const result = rules.r(step1, step1, '/left');
       return result.justify('eqSelf', arguments);
     },
     inputs: {term: 1},
@@ -2543,7 +2554,7 @@ declare(
   // Helper for evalBool, not in book.
   // [[F =] = not].
   {name: 'falseEquals',
-    statement: '((==) F) == (not)',
+    statement: '((==) F) = (not)',
     proof: function() {
       return rules.eqnSwap(rules.definition('not'));
     }
@@ -2552,7 +2563,7 @@ declare(
   // Another helper for evalBool, not in book.
   // [[T =] = {x. x}].
   {name: 'trueEquals',
-    statement: '((==) T) == {x. x}',
+    statement: '((==) T) = {x. x}',
     proof: function() {
       var x = varify('x');
       var step1 = rules.r5218(x);
