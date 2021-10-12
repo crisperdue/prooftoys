@@ -1086,8 +1086,6 @@ function isFunDef(name) {
  *
  * TODO: Consider supporting definition of multiple constants with one
  *   defining fact (with multiple existentially quantified variables).
- *
- * TODO: Remove this.
  */
 function definex(name_arg, fact) {
   var constant = Toy.constify(name_arg);
@@ -1880,9 +1878,8 @@ function implies(lhs, rhs) {
 }
 
 /**
- * Builds a Lambda.  The "bound" argument may be a name, converted to
- * an Atom with varify.  If generating a bound variable
- * programmatically, call the Lambda constructor directly.
+ * Builds a Lambda.  The "bound" argument may be a string, converted
+ * to an Atom with varify.
  */
 function lambda(bound, body) {
   return new Lambda(Toy.varify(bound), body);
@@ -1903,8 +1900,7 @@ function isInfixDesired(vbl) {
 }
 
 /**
- * True iff the given Atom is a unary operator.  Method that applies
- * only to Vars.
+ * True iff this Atom is a unary operator.
  */
 Atom.prototype.isUnary = function() {
   return getPrecedence(this) === unaryPower;
