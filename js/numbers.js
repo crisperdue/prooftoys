@@ -333,7 +333,7 @@ definition('recip = {x. 1 / x}');
  * theorems such as probably 5307.
  *
  * definex('quotient',
- * 'exists {q. strict2 q & (R x & R y => q x y = x / y)');
+ * 'exists {q. strict2 q & (R x & R y => q x y = x / y');
  */
 
 

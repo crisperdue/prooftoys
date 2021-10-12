@@ -1086,6 +1086,8 @@ function isFunDef(name) {
  *
  * TODO: Consider supporting definition of multiple constants with one
  *   defining fact (with multiple existentially quantified variables).
+ *
+ * TODO: Remove this.
  */
 function definex(name_arg, fact) {
   var constant = Toy.constify(name_arg);
