@@ -1751,32 +1751,28 @@ var testCase = {
 
   // TYPE INFERENCE
 
-  testFindType: function() {
+  testTypes: function() {
     var rules = Toy.rules;
-    assertEqual('o', Toy.findType(T).toString());
-    assertEqual('o', Toy.findType(Toy.parse('x = x')).toString());
+    assertEqual('o', T.type.toString());
+    assertEqual('o', Toy.parse('x = x').type.toString());
     assertFails(function() {
-      Toy.findType(Toy.parse('f f'));
-      });
+      Toy.parse('f f');
+    });
     // The identity function, problematic for some algorithms.
-    var type = Toy.findType(Toy.parse('{x. x}'));
+    var type = Toy.parse('{x. x}').type;
     assert(type instanceof Toy.FunctionType, 'Not a FunctionType');
     assert(type.fromType instanceof Toy.TypeVariable, 'Not a TypeVariable');
     assertEqual(type.fromType, type.toType);
-    assertEqual('o', Toy.findType(rules.axiom1()).toString());
-    assertEqual('o', Toy.findType(rules.axiom2()).toString());
-    assertEqual('o', Toy.findType(rules.axiom3()).toString());
+    assertEqual('o', rules.axiom1().type.toString());
+    assertEqual('o', rules.axiom2().type.toString());
+    assertEqual('o', rules.axiom3().type.toString());
     assertEqual('o',
-                Toy.findType(rules.axiom4(Toy.parse('({x. x} y)'))).toString());
-    assertEqual('o', Toy.findType(rules.axiom5()).toString());
+                rules.axiom4(Toy.parse('({x. x} y)')).type.toString());
+    assertEqual('o', rules.axiom5().type.toString());
 
     function check(expected, expr) {
       expr = (typeof expr == 'string') ? Toy.parse(expr) : expr;
-      var type = Toy.findType(expr);
-      // for debugging:
-      // Y.log(expected + '/' + type);
-      // replace type variables with just "t".
-      assertEqual(expected, type.toString().replace(/t[0-9]*/, 't'));
+      assertEqual(expected, expr.type.toString().replace(/t[0-9]*/, 't'));
     }
     // Note that all the "> 0" conditions below force variables to
     // be individual variables.
