@@ -1766,12 +1766,12 @@ RuleMenu.prototype._update = function() {
     // If there is a selected term, render it and any right neighbor
     // term, and insert the renderings into all menu items that have
     // slots for them.
-    var $term = $(term.deepCopy().renderTerm());
+    var $term = $(term.renderTerm());
     $items.find('.menuSelected').append($term);
     var rightTerm = Toy.getRightNeighbor(step, term);
     var $right = '?';
     if (rightTerm) {
-      var $right = $(rightTerm.deepCopy().renderTerm());
+      var $right = $(rightTerm.renderTerm());
     }
     $items.find('.menuRightNeighbor').append($right);
   }
