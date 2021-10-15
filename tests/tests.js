@@ -840,7 +840,6 @@ var testCase = {
   testCopyWithTypes: function() {
     const source = '(x = x)';
     const target = Toy.parse(source);
-    target.annotateWithTypes();
     const copy = target.copyWithTypes();
     // Copy is equal to original
     assertEqual(source, copy);

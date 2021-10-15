@@ -405,7 +405,6 @@ ProofDisplay.prototype.addStep = function(step) {
   var self = this;
   var rendered = self.renderStep(step);
   $(self.stepsNode).append(rendered.stepNode);
-  rendered.annotateWithTypes();  // TODO: Annotate from the original step.
   this.steps.push(rendered);
   rendered.stepNumber =  (this.prevStep
                           ? '<span class=stepNumPlaceholder/>'
@@ -2201,7 +2200,6 @@ function fillHoverInfoBox(proofEditor, step) {
   var $box = $(step.stepNode).find('.hoverInfoBox');
   if ($box.children().length == 0) {
     var copy = step.original.stepFullCopy();
-    copy.annotateWithTypes();  // TODO: Copy types from the original step.
     var message = proofEditor ? proofEditor.progressMessage(step) : '';
     var $msgs = $('<div class=pre>').append(message);
     var $step = $('<div class=flex>');

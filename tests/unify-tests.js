@@ -175,18 +175,18 @@
     },
 
     function testTypeVars(a) {
-      const the = rules.definition('the').annotateWithTypes();
+      const the = rules.definition('the');
       a.equal(the.typeVars().size, 1);
 
-      const all = rules.definition('forall').annotateWithTypes();
+      const all = rules.definition('forall');
       a.equal(all.typeVars().size, 1);
 
-      const fun = rules.axiom3().annotateWithTypes();
+      const fun = rules.axiom3();
       a.equal(fun.typeVars().size, 2);
     },
 
     function testSubsType(a) {
-      const fun = rules.axiom3().annotateWithTypes();
+      const fun = rules.axiom3();
       const vars = Array.from(fun.typeVars());
       const pairs = [];
       vars.forEach((v, i) => pairs.push([v, new TypeVariable('t' + i)]));
@@ -200,12 +200,12 @@
     },
 
     function testDistinctifyTypes(a) {
-      const a3 = rules.axiom3().wff.annotateWithTypes();
+      const a3 = rules.axiom3().wff;
       {
         const map = a3.typesDistinctifier(a3);
         a.ok(map.size, 'axiom3 changed');
       }
-      const taut1 = rules.tautology('a => a').wff.annotateWithTypes();
+      const taut1 = rules.tautology('a => a').wff;
       {
         const map = taut1.typesDistinctifier(taut1);
         a.ok(map.size === 0, 'no type vars');
@@ -216,17 +216,13 @@
       }
       {
         const xx = rules.eqSelf('x');
-        xx.wff.annotateWithTypes();
         const x1 = rules.eqSelf('x + 1');
-        x1.wff.annotateWithTypes();
         const map = xx.wff.typesDistinctifier(x1.wff);
         a.ok(map.size === 0, 'no conflicts');
       }
       {
         const xx = rules.eqSelf('x');
-        xx.wff.annotateWithTypes();
         const x1 = xx.andThen('instVar', 'x + 1', 'x');
-        x1.wff.annotateWithTypes();
         const map = xx.wff.typesDistinctifier(x1.wff);
         a.ok(map.size === 0, 'no conflicts');
       }
