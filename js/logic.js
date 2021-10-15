@@ -994,8 +994,6 @@ $(function() {
 declare(
   // Takes an arbitrary expression A, concluding that it is equal
   // to itself. (5200)
-  //
-  // This assigns types "by hand" so it is part of the inference kernel.
   {name: 'eqSelf',
     action: function(arg) {
       const a = termify(arg);
