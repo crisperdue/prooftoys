@@ -1753,7 +1753,7 @@ var testCase = {
 
   testTypes: function() {
     var rules = Toy.rules;
-    assertEqual('o', T.type.toString());
+    assertEqual('o', Toy.parse('T').type.toString());
     assertEqual('o', Toy.parse('x = x').type.toString());
     assertFails(function() {
       Toy.parse('f f');
