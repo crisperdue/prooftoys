@@ -2461,10 +2461,11 @@ declare(
       return step7b.justify('casesTF', arguments, [caseT, caseF]);
     },
     inputs: {step: [1, 2], varName: 3},
+    labels: 'primitive',
     form: ('CasesTF: true case step <input name=step1>,'
            + ' false case <input name=step2>,'
            + ' use variable name <input name=varName>'),
-    menu: 'proof by true/false cases',
+    menu: '[p T] and [p F] to [p a]',
     tooltip: ('Prove a theorem by cases given two theorems that'
               + ' show it with T and F.'),
     description: 'cases: {var} true in step {step1}, false in step {step2}'
