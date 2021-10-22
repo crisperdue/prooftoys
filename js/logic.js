@@ -3283,7 +3283,7 @@ declare(
                      .andThen('rewriteOnly', '', 'not a == (a == F)'));
       var step1 = rules.forallOrEquiv().andThen('instVar', '{x. F}', 'q');
       var step2 = rules.reduce(step1, step1.find(term));
-      var step4 = rules.rewriteOnly(step2, '/right/right', falsity);
+      var step4 = rules.rewriteOnlyFrom(step2, '/right/right', falsity);
       var step5 = (step4.andThen('simplifySite', '/right')
                    .andThen('simplifySite', '/left/arg/body'));
       return step5;
