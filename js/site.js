@@ -6,7 +6,8 @@ window.Toy = window.Toy || {};
 
 // Prooftoys scripts should not depend on this file, though it may do
 // some default configuration.  At present this does not appear to
-// depend on util.js.
+// depend on any other Prooftoys script, so its functions can be used
+// before the other scripts are loaded.
 
 +function() {
 
@@ -60,7 +61,7 @@ Toy.insertSlogans = function() {
  * Replaces ASCII math symbols in the given HTML text with HTML
  * entities for math, and with alphanumeric names in italics.
  */
-Toy.mathMarkup0 = function(text) {
+Toy.mathMarkup0 = function(text, title) {
   // Substitutions for "forall" and "exists" consume a trailing blank,
   // helping to push them up next to following text.
   var rex =
@@ -80,9 +81,11 @@ Toy.mathMarkup0 = function(text) {
     } else {
       // It is a constant name.
       switch(s) {
-      case '=>': return '&rArr;';
+      case '=>': return title ? 'implies' : '&rArr;';
       case '==': return '&equiv;';
       case '!=': return '&ne;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
       case '>=': return '&ge;';
       case '<=': return '&le;';
       case '-': return '&minus;';
@@ -94,14 +97,16 @@ Toy.mathMarkup0 = function(text) {
       case 'exists ': return '&exist;';
       case 'exists1': return '&exist;!';
       case 'exists1 ': return '&exist;!';
+      case '&*':
+        // This will be useful for inserting HTML entities
+        // and also plain '&'.
+        return '&';             // &*amp; -> &amp;
       case '&':
-      case 'and':
-        return '&and;';
+        return title ? 'and' : '&and;';
       case '|':
-      case 'or':
-        return '&or;';
+        return title ? 'or' : '&or;';
       case 'not':
-        return '&not;';
+        return title ? 'not' : '&not;';
       case 'in':
         return '&in;';
       case 'inter':
@@ -112,6 +117,10 @@ Toy.mathMarkup0 = function(text) {
         return '&#x22C2;';
       case 'Union':
         return '&#x22C3;';
+      case 'subset':
+        return '&subset;';
+      case 'subseteq':
+        return '&subseteq;';
       case 'CC':
         return '&#x2102;';
       case 'NN':
@@ -140,8 +149,8 @@ Toy.mathMarkup0 = function(text) {
  * Postprocess basic results of mathMarkup to keep operands of
  * multiplication visually near the "center dot".
  */
-Toy.mathMarkup = function(text) {
-  const text0 = Toy.mathMarkup0(text);
+Toy.mathMarkup = function(text, title) {
+  const text0 = Toy.mathMarkup0(text, title);
   return text0.replace(/ &sdot; /g, '&sdot;');
 };
 
@@ -155,18 +164,36 @@ Toy.mathText = function(text) {
 };
 
 /**
- * Converts all <s> and <code> element contents into math-oriented
- * HTML.  Ignores all HTML markup within each element, though HTML
- * entities are OK.
- *
- * Also converts <del> within .preBlock because the Hugo
- * markdown engine ("Black Friday") over-protects <code>
- * within HTML tags.
+ * Converts <code> element contents into math-oriented HTML.  In
+ * Markdown, backticks convert to <code>, and furthermore it escapes
+ * all text within the Markdown code block to prevent interpretation
+ * as HTML.  If a fenced code block is labeled as "text", this does
+ * not transform it further at all.  Or if a normal code block content
+ * begins with "\", this strips the "\", but does not otherwise
+ * process the content.
  */
 Toy.mathifyAll = function() {
-  jQuery('s, .preBlock del').replaceWith(function() {
-      return '<code>' + Toy.mathMarkup($(this).text()) + '</code>';
-    });
+  jQuery('code').replaceWith(function() {
+    const content = $(this).text();
+    const lang = this.dataset.lang;
+    if (!lang && content.startsWith('\\')) {
+      const $element = $('<code>');
+      $element.text(content.slice(1));
+      return $element;
+    } else if (!lang || lang === 'fallback') {
+      const markup = Toy.mathMarkup(content);
+      const title = Toy.mathMarkup(content, true);
+      const $element = $('<code>',
+                         title === markup || title.includes('\n')
+                         ? {'class': 'language-logic'}
+                         : {'class': 'language-logic',
+                            'data-tippy-content':  title});
+      $element.html(markup);
+      return $element;
+    } else {
+      return this;
+    }
+  });
 };
 
 //// URL query parameters
@@ -201,16 +228,19 @@ Toy.rawQueryParams = {};
 
 //// For mobile site "hamburgers":
 
+// The element is a button inserted in partials/hamburger.html.
+// The button is styled "display: none" in wider page widths.
 const menuTrigger = document.querySelector('#toggle-main-menu-mobile');
 
-menuTrigger && (menuTrigger.onclick = function() {
-  // This code will err out if the elements do not exist.
-  const sidebar = document.querySelector('div.sidebar');
-  sidebar.classList.toggle('displayed');
-  menuTrigger.classList.toggle('is-active');
-  // const body = document.querySelector('body')
-  // body.classList.toggle('lock-scroll');
-  });
+if (menuTrigger) {
+  menuTrigger.onclick = function() {
+    const sidebar = document.querySelector('div.sidebar');
+    if (sidebar) {
+      sidebar.classList.toggle('displayed');
+      menuTrigger.classList.toggle('is-active');
+    }
+  };
+}
 
 // Initializations on DOM ready.  When this file is loaded before
 // util.js, the "$" here refers to jQuery.  In other files it
@@ -301,10 +331,6 @@ function footerOnResize() {
  * Initializations on DOMContentLoaded.
  */
 $(function() {
-  if (Toy.TOC) {
-    $(Toy.TOC).tableofcontents({exclude: $('h1, h5, h6')});
-  }
-
   // If there is at least one footer element, this sets up
   // repositioning it any time the window resizes.
   if ($('div.pageFooter').length > 0) {
