@@ -131,3 +131,13 @@ the formulation of the laws of physics is a wonderful gift which we
 neither understand nor deserve. We should be grateful for it and hope
 that it will remain valid in future research and that it will extend
 to ...  wide branches of learning. -- Eugene Wigner
+
+To those who do not know mathematics it is difficult to get across a
+real feeling as to the beauty, the deepest beauty, of nature ... If
+you want to learn about nature, to appreciate nature, it is necessary
+to understand the language that she speaks in.  -- Richard Feynman,
+"The Character of Physical Law"
+
+Mathematics is not just a language. Mathematics is a language plus
+reasoning. It's like a language plus logic. Mathematics is a tool for
+reasoning.  -- Richard Feynman, "The Character of Physical Law"
