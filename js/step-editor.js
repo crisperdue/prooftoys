@@ -32,6 +32,12 @@ var nextProofEditorId = 1;
  * a ProofDisplay.  User interaction may also create additional
  * subproof ProofDisplay objects within this.
  *
+ * If this is the first proof editor created on the page, loads all
+ * documents named "Theory *", in alphabetical order by name before
+ * any document specified by docName.  If the docName is one of those
+ * "theory" documents, only loads them up to that one.  The effect is
+ * to load the "theory" documents automatically into the page.
+ *
  * Optional argument "options", plain object with properties:
  * 
  * docName: if given, overrides the default document name.
