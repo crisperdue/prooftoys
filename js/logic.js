@@ -1892,10 +1892,16 @@ declare(
         return step;
       }
       let simpler = step;
-      // Uses rewriteOnly, avoiding recursive calls to simplifyAsms
-      // which could be problematic or simply result in unintuitive
-      // displays of the process.
-      const rw = rules.rewriteOnly;
+      // Uses rewriteOnly(From), avoiding recursive calls to
+      // simplifyAsms which could be problematic or simply result in
+      // unintuitive displays of the process.
+      const rw = (step, path, eqn) =>
+        Toy.isProved(eqn) && eqn.ruleName !== 'axiomArithmetic'
+        // If eqn is already proved, sometimes it has been proved
+        // just for this use, so we may want to be able to view its
+        // proof, so use rewriteOnlyFrom.
+        ? rules.rewriteOnlyFrom(step, path, eqn)
+        : rules.rewriteOnly(step, path, eqn);
       // Repeatedly apply simplifying facts, each time removing T from
       // the assumptions.  Note that rewriteOnly adds any new
       // assumptions, making them available on the next iteration.
