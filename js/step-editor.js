@@ -2180,8 +2180,8 @@ RuleMenu.prototype.offerableFacts = function() {
                   //   assumptions.
                   //
                   // In general mode, if a rule adds assumptions they
-                  // must be of just a couple of sorts.  This is just
-                  // a quick fix.
+                  // must be of just a few sorts, currently matching
+                  // these schemas.  This is just a quick fix.
                   if (asms.scanConj
                       (x =>
                        // These checks look OK.

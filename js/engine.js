@@ -2248,7 +2248,8 @@ function addFact(info) {
 /**
  * Add the "converse" of an equational fact if it is not already
  * recorded.  Determines the statement from the info's goal.  If it is
- * an equation, switches its LHS and RHS, otherwise does nothing.
+ * an equation, adds a fact with its LHS and RHS swapped, otherwise
+ * does nothing.
  *
  * If the fact to be swapped is a simplifier or desimplifier, the
  * newly-created fact will be appropriately labeled as the opposite.

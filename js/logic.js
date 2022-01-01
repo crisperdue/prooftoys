@@ -2064,6 +2064,7 @@ declare(
 
 // These trueBy rules are similar to rewriteOnlyFrom, but that one
 // creates an equation or conditional equation based on its policy.
+// TODO: In the future these will be based on matchToRule.
 
   // Replace part of a target step with T if it matches a proved step
   // (trueby0) or the consequent of a proved conditional (trueBy1),
