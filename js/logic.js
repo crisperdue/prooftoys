@@ -2166,17 +2166,21 @@ declare(
   // the target site and adding assumptions to the target step.
   //
   // The target term is the schema!
+  //
+  // TODO: Work in progress, keep going.  Note that the proof of
+  //   x * 0 = 0 could use this with abcPlus.
   {name: 'trueBy1',
     action: function(target, path, step) {
       if (step.isCall2('=>')) {
         const term = target.get(path);
-        const map = step.getRight().matchSchema(term);
+        const map = step.wff.getRight().matchSchema(term);
         if (map) {
           const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
           // TODO: Change this "replace" basically as described for
           //   trueBy0, with the additional possibility that variable
           //   bindings may prevent the substitution.
-          const result = rules.replace(target, path, step2);
+          const target2 = rules.instMultiVars(target, map);
+          const result = rules.replace(target2, path, step2);
           return result.justify('trueBy1', arguments, [target, step]);
         }
       }
