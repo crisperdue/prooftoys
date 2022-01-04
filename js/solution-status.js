@@ -223,9 +223,7 @@ var methods = {
     // solution(s).  Note that if there are givens in the tc section, any
     // "solutions" are actually candidates and need checking.
     var full = wff.matchSchema('t => (g == s)');
-    if (full && wff.getRight().getBinOp().pname === '==') {
-      // TODO: Remove the pname check when the terms all have type information
-      // built into them.
+    if (full) {
       tcInfo = analyzeConditions(full.t, givens);
       givensInfo = analyzeConditions(full.g, givens);
       solutionsInfo = analyzeSolutions(full.s, givenVars);
