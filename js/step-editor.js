@@ -406,8 +406,6 @@ function buildWksControls(editor) {
 
   const stateDisplayHtml =
     '<div class="proofPreview transFade hidden">\n' +
-    '<p style="text-align:center; margin-top:0">\n' +
-    '<b>Proof State</b>\n' +
     '<p>\n' +
     'The text area below contains the current state of the proof in textual\n' +
     'form.  You can save the state of your work by copying this text into a\n' +
@@ -416,7 +414,7 @@ function buildWksControls(editor) {
     '<p style="margin-bottom: 0">\n' +
     '<input class=restoreProof type=button value="Restore proof">\n' +
     '<input class=hideProofState type=button value="Close"><br>\n' +
-    '<textarea class=proofStateArea rows=20></textarea>\n' +
+    '<textarea class=proofStateArea rows=15></textarea>\n' +
     '</div>\n';
   const $proofPreview = $(stateDisplayHtml);
   $outermost.append($proofPreview);
