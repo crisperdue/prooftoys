@@ -93,7 +93,6 @@ function ProofEditor(options_arg) {
 
   const proofButtons = buildProofButtons(self);
   self.$copyText = proofButtons.$copyText;
-  self.$rulesMode = proofButtons.$rulesMode;
 
   self._wksControls = buildWksControls(self);
 
@@ -104,11 +103,6 @@ function ProofEditor(options_arg) {
   menu.onLeave(function() { self.requestStatusDisplay(true); });
   self.ruleMenu = menu;
 
-  // The ruleStats are visible except when a proof is brand new and
-  // there is nothing to show.
-  var ruleStats = $('<div class="ruleStats invisible">Last rule ' +
-                    '<span class=ruleTime></span> msec, ' +
-                    '<span class=ruleSteps></span> steps</div>');
   // This element is for messages about status of solving the problem.
   var $status = $('<div class="solutionStatus transFade">');
   var $statusDisplay = $('<div class=solutionStatusDisplay>');
@@ -126,9 +120,7 @@ function ProofEditor(options_arg) {
       An error occurred executing the proof.</b><br>
       View the workspace as text to see steps not executed.<br>
       For safety this worksheet is read-only.</i></p>`);
-
   // Top-level element of the proof editor display:
-
   const $node = this.containerNode =
     $('<div class="proofEditor logicZone"></div>');
   this.containerNode
@@ -139,21 +131,8 @@ function ProofEditor(options_arg) {
     .append(proofButtons.$node)
     .append(stepEditor.$node)
     .append(this._wksControls.node)
-    .append(menu.$node)
-    .append(ruleStats);
+    .append(menu.$node);
   this.setEditable(true);
-
-  // Also append controls from the step editor object to the
-  // container node, removing them from their initial site in the
-  // step editor.
-  //
-  // TODO: Remove this ugly hack by consolidating the controls here
-  //   and the step editor controls into a ProofControls object, all
-  //   constructed together.  The step editor now seems to be reduced
-  //   to the form for interactively supplying arguments to a rule.
-  this.$advice = ($('<div class="advice hidden">')
-                  .append('Select an expression or step.'));
-  this.containerNode.append(this.$advice);
 
   // Restore editor state.
   const state = Toy.getSavedState(self);
@@ -306,7 +285,6 @@ function ProofEditor(options_arg) {
  *
  * $node: jQuery node of the DIV
  * $copyText: jQuery of the copyText input field
- * $rulesMode: jQuery of the rules mode selector
  */
 function buildProofButtons(editor) {
   // Add the group of buttons.
@@ -323,12 +301,6 @@ function buildProofButtons(editor) {
   // Toggling the proof state display visibility with a button.
   const $wksButton = $('<input type=button value="Worksheets... ">');
 
-  const $options = $('<select class=rulesToShow>' +
-                     '<option value=algebra>algebra' +
-                     '<option value=general>general reasoning' +
-                     '<option value=all>all available' +
-                     '</select>');
-
   // This holds textual representation of the latest selected term.
   // It is writable so the user can scroll it horizontally (using the
   // text cursor).  Alternatively could be readonly.
@@ -338,15 +310,19 @@ function buildProofButtons(editor) {
   const $copyButton = $('<button class="fa fa-copy">');
   $copyButton.css({fontSize: '.8rem'});
 
-  $proofButtons.append($wksButton, $('<s class=em>'));
-  $proofButtons.append('Mode');
-  $proofButtons.append($options, $('<s class=em>'));
+  // The ruleStats are visible except when a proof is brand new and
+  // there is nothing to show.
+  const $ruleStats = $('<span class="ruleStats invisible">' +
+                       '<span class=ruleSteps></span> steps, ' +
+                       '<span class=ruleTime></span> msec</span>'
+                       );
+
   $proofButtons.append('Selection');
   $proofButtons.append($copyText);
   $proofButtons.append($copyButton);
+  $proofButtons.append($wksButton, $('<s class=em>'));
+  $proofButtons.append($ruleStats, $('<s class=em>'));
   $proofButtons.append($clearProof);
-
-  const $rulesMode = $proofButtons.find('.rulesToShow');
 
   // Main and worksheet controls event handlers
 
@@ -365,18 +341,9 @@ function buildProofButtons(editor) {
         editor.clear();
       }
     });
-  // Step editor has state controlling whether to show all rules.
-  $rulesMode.on('change', function(event) {
-      const stepEditor = editor.stepEditor;
-      editor.showRuleType = this.value;
-      editor.ruleMenu.refresh();
-      stepEditor.reset();
-    });
-  Toy.soonDo(function() { $rulesMode.trigger('change'); });
   const result = {
     $node: $proofButtons,
     $copyText: $copyText,
-    $rulesMode: $rulesMode
   };
   return result;
 }
@@ -836,11 +803,8 @@ ProofEditor.prototype._updateGivenVars = function() {
  * of this ProofEditor.
  */
 ProofEditor.prototype.setRulesMode = function(mode) {
-  this.$rulesMode.val(mode);
-  if (this.$rulesMode.val() != mode) {
-    abort('Bad rules mode setting: ' + mode);
-  }
-  this.$rulesMode.trigger('change');
+  // TODO: Reimplement this.
+  console.log('Unimplemented setRulesMode');
 };
 
 /**
@@ -1111,10 +1075,8 @@ StepEditor.prototype.report = function(error) {
 };
 
 /**
- * Puts the step editor back in the initial state from the user's
- * point of view: visible with empty input, no rule-specific form,
- * available rules visible.  Does not clear any selection, and does
- * not affect the rules offered.  See also StepEditor._setBusy.
+ * Puts the step editor back in its inactive, invisible state.
+ * See also StepEditor._setBusy.
  */
 StepEditor.prototype.reset = function() {
   this.clearer.addClass('hidden');
@@ -1597,10 +1559,17 @@ function RuleMenu(proofEditor) {
   // item at any given time, this will be it.
   self.hovering = null;
 
+  const $modeList = $('<div class=modeList>');
+  self.$modeList = $modeList;
+  $modeList.append('<div data-mode=algebra>Algebra</div>',
+                   '<div data-mode=general class=selected>General</div>',
+                   '<div data-mode=all>All</div>');
+
   // Rule chooser:
   var $node = ($('<div class="ruleMenu transFade">')
-               .append('<div class=ruleMenuTitle>Actions to try:</div>'));
-  // Top node of the rule menu display.
+               .append($modeList)
+               .append('<div class=ruleMenuTitle>Possible actions:</div>'));
+  // Top node of the actual rule menu display.
   self.$node = $node;
   // Container node for menu items.
   self.$items = $('<div class=rulesItems>');
@@ -1631,6 +1600,20 @@ function RuleMenu(proofEditor) {
 
   // Set up event handlers.
 
+  $modeList.on('click', 'div', function(event) {
+    const $selected = $modeList.find('[class~=selected]');
+    const mode = this.dataset.mode;
+    if (mode) {
+      $selected.removeClass('selected');
+      $(this).addClass('selected');
+      if (this !== dom($selected)) {
+        proofEditor.showRuleType = mode;
+        proofEditor.ruleMenu.refresh();
+        proofEditor.stepEditor.reset();
+      }
+    }
+  });
+  
   $node.on('click', '.ruleItem', function(event) {
       handleMouseClickItem(self, this, event);
       // Run the step editor's ruleChosen method with
@@ -1781,15 +1764,13 @@ RuleMenu.prototype._update = function() {
     }
     $items.find('.menuRightNeighbor').append($right);
   }
-  self.$node.toggleClass('hidden', items.length === 0);
+  self.$node.toggleClass('hidden', false);
   if (items.length === 0) {
     // The menu can be hidden by clicks within it, and that does not
     // trigger a mouse leave event.
     self._leavers.fire();
   }
 
-  // TODO: Consider updating the advice using Promises.
-  self.proofEditor.$advice.toggleClass('hidden', self.length != 0);
 };
 
 /**

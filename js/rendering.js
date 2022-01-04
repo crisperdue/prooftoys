@@ -287,7 +287,7 @@ ProofDisplay.prototype.hideSuggestion = function() {
   var node = this.suggesting;
   if (node) {
     // This does not remove event listeners and data.  To be safe,
-    // they wil be removed when the RuleMenu is updated.
+    // they will be removed when the RuleMenu is updated.
     $(node).detach();
     this.suggesting = null;
   }
