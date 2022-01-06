@@ -580,7 +580,7 @@ function nextPrimeFactor(x, last) {
  * square root of a billion).
  */
 function primeFactors(n) {
-  result = [];
+  const result = [];
   if (Number.isInteger(n) && n > 0) {
     var p = 0;
     while (p = nextPrimeFactor(n, p)) {
