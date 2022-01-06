@@ -1808,7 +1808,7 @@ function handleMouseClickItem(ruleMenu, node, event) {
     var term = step && step.selection;
     var formatArgs = {term: (term && term.toHtml()) || '{term}'};
     if (template) {
-      // Make this block of code into a step editor method.
+      // TODO: Make this block of code into a step editor method.
       // The template is not just an empty string.
       // Note that reset of the step editor will return the hidden
       // status back to normal.
@@ -1822,7 +1822,8 @@ function handleMouseClickItem(ruleMenu, node, event) {
 	stepEditor.addSelectionToForm(rule);
       }
       // Focus the first empty text field of the form.
-      stepEditor.form.find('input[type=text],input:not([type])').each(function() {
+      stepEditor.form.find('input[type=text],input:not([type])')
+        .each(function() {
           if (!this.value) {
             this.focus();
             // Abort the loop.
