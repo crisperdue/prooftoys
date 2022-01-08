@@ -658,6 +658,15 @@ var testCase = {
 
   // EXPRS
 
+  testIsEquivOp: function() {
+    const equiv = Toy.parse('(==)');
+    const eq = Toy.parse('(=)');
+    const three = Toy.parse('3');
+    assert(equiv.isEquivOp());
+    assert(!eq.isEquivOp());
+    assert(!three.isEquivOp());
+  },
+
   testNthArg: function() {
     var term = Toy.parse('(f x (p y))');
     assertEqual('f', term.nthArg(0));

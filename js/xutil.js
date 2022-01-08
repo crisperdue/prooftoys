@@ -681,6 +681,13 @@ function isBooleanBinOp(term) {
 }
 
 /**
+ * True iff the given Atom is the boolean equivalence operator.
+ */
+Atom.prototype.isEquivOp = function(op) {
+  return this.name === '=' && isBooleanBinOp(this);
+}
+
+/**
  * Function of any two things of the same type, with boolean result.
  * The input type defaults to a new type variable.
  */
