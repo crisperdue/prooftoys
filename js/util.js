@@ -874,15 +874,6 @@ function interpolate(fmt) {
 }
 
 /**
- * Call this to render an info-circle tooltip.  It will automatically
- * refer to the element with the given ID.
- */
-function infoTip(id) {
-  return ('<i class="fa fa-info-circle tooltip" data-tooltip-content="#' +
-          id + '"></i>');
-}
-
-/**
  * If text begins and ends with left and right parens, trims them off.
  */
 function trimParens(text) {
@@ -2520,6 +2511,14 @@ window.setInterval(function() { heartbeat(); removeOldPidData(); }, 10000);
 
 Toy.dom = dom;
 
+// This is a circled latin small letter i.
+// An "info" character without circle is available at &#x2139;
+// A "circled information source character" exists at &#x1f6c8;
+// but it is not supported in Chrome fonts.
+// In font-awesome 4.7.0 "fa fa-info-circle".  See also the "warning
+// sign", &#x26a0, and font-awesome 4.7.0 "fa fa-question-circle".
+Toy.infoChar = '<span style="color:blue">&#x24d8;</span>';
+
 Toy.hasOwn = hasOwn;
 Toy.getOwn = getOwn;
 Toy.addMethods = addMethods;
@@ -2567,7 +2566,6 @@ Toy.each = each;
 Toy.memo = memo;
 Toy.format = format;
 Toy.interpolate = interpolate;
-Toy.infoTip = infoTip;
 Toy.trimParens = trimParens;
 Toy.sortMap = sortMap;
 
