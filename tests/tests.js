@@ -1939,7 +1939,7 @@ var testCase = {
   },
 
   testUseDefinition: function() {
-    const step = rules.equivSelf('not (p == (F == p))');
+    const step = rules.eqSelf('not (p == (F == p))');
     var inf =
       Toy.rules.useDefinition(step, '/left/fn');
     assertEqual('(F == (p == (F == p)))', inf.getLeft());
@@ -2023,8 +2023,8 @@ var testCase = {
   },
 
   testEquationCases: function() {
-    const t = rules.equivSelf('T');
-    const f = rules.equivSelf('F');
+    const t = rules.eqSelf('T');
+    const f = rules.eqSelf('F');
     var inf = Toy.rules.equationCases(t, f, 'z');
     assertEqual('(z == z)', inf);
   },
@@ -2044,7 +2044,7 @@ var testCase = {
   },
 
   testFromTIsA: function() {
-    var inf = rules.fromTIsA(rules.equivSelf('T'));
+    var inf = rules.fromTIsA(rules.eqSelf('T'));
     assertEqual('T', inf);
     // Assumptions
     var step1 = Toy.rules.assume(p);
@@ -2835,11 +2835,10 @@ var testCase = {
     deepEqual(qUnitCopy(stats), expected);
 
     ed = newProofEditor();
-    ed.givens = ['x - 3 = 2'];
+    ed.givens = ['(x - 3) = 2'];
     step = rules.assert('x = 5 => x - 3 = 2');
     stats = ed.solutionStatus(step);
     expected = {
-      type: "confirmation",
       givens: ["((x - 3) = 2)"],
       solution: {
         x: {
@@ -2847,7 +2846,8 @@ var testCase = {
           swapped: false,
           using: {}
         }
-      }
+      },
+      type: "confirmation"
     };
     deepEqual(qUnitCopy(stats), expected);
   },
@@ -2862,7 +2862,7 @@ var testCase = {
     expected = {
       absentGivens: [],
       extras: [],
-      solutions: [{
+      solution: [{
           byVar: {
             y: {
               eqn: 'Expr (y = 2)',

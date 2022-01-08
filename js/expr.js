@@ -2370,7 +2370,7 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // may differ if the bindings map the name in this to the name in e2.
 // The bindings map from names of variables bound in expressions
 // containing this expression to corresponding variable names of the
-// expression containing e2.
+// expression containing e2.  Currently does not match types.
 //
 //
 // _traverse(fn, rpath)

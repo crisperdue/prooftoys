@@ -1009,7 +1009,8 @@ declare(
     labels: 'primitive'
   },
 
-  // Obsolete rule, converts to eqSelf, kept for compatibility.
+  // Obsolete rule, converts to eqSelf, kept for compatibility
+  // with old _recorded_ proofs only.
   {name: 'equivSelf',
     action: function(a) {
       return rules.eqSelf(a);
@@ -1022,14 +1023,8 @@ declare(
   // the same as eqSelf, but display is handled specially.
   {name: 'consider',
     action: function(term_arg) {
-      const term = termify(term_arg);
-      const copy = term.typedCopy();
-      if (copy.isBoolean()) {
-        var step = rules.equivSelf(term);
-      } else {
-        var step = rules.eqSelf(term);
-      }
-      return step.justify('consider', arguments);
+      return (rules.eqSelf(term_arg)
+              .justify('consider', arguments));
     },
     inputs: {term: 1},
     form: 'Term to consider: <input name=term>',
@@ -1045,9 +1040,7 @@ declare(
   // already in a proof.
   {name: 'given',
     action: function(term) {
-      term = termify(term);
-      var step = rules.equivSelf(term);
-      return step.justify('given', arguments);
+      return rules.eqSelf(term).justify('given', arguments);
     },
     inputs: {term: 1},
     form: 'Formula to take as given: <input name=term>',
@@ -1082,10 +1075,7 @@ declare(
   {name: 'eqnSwap',
     action: function(h_ab) {
       var ab = h_ab.getMain();
-      var op = ab.getBinOp().pname;
-      var aa = (op === '=='
-                ? rules.equivSelf(ab.getLeft())
-                : op === '='
+      var aa = (ab.isCall2('=')
                 ? rules.eqSelf(ab.getLeft())
                 : assert(false, 'Must be an equiv/equation: {1}', ab));
       // Plain replace is suitable here.  If h_ab is a pure equation
@@ -2598,7 +2588,7 @@ declare(
   // results and greater efficiency.
   {name: 'boolSimp',
     action: function(data, expr) {
-      const eqn = rules.equivSelf(expr);
+      const eqn = rules.eqSelf(expr);
       return (rules._simplifySite(eqn, '/right', data.simpFacts)
               .justify('boolSimp', [expr]));
     }.bind(null,
@@ -5069,7 +5059,7 @@ declare(
   {name: 'conjunctsSimplifier',
     action: function(term, facts) {
       // A pure equation. 
-      var step = rules.equivSelf(term);
+      var step = rules.eqSelf(term);
       var step1;
       if (term.isCall2('&')) {
         var stepLeft = rules.conjunctsSimplifier(term.getLeft(), facts);
@@ -5302,7 +5292,7 @@ declare(
    {name: 'exists1b',
     statement: 'exists1 p == exists {x. p = {y. y = x}}',
     proof: function() {
-       return (rules.equivSelf('exists1 p')
+       return (rules.eqSelf('exists1 p')
                .andThen('apply', '/right'));
      }
    },
@@ -5513,7 +5503,7 @@ declare(
 
    {statement: 'x != y == y != x',
     proof: function() {
-       return (rules.equivSelf('x != y')
+       return (rules.eqSelf('x != y')
                .andThen('rewrite', '/right', '(a != b) == not (a = b)')
                .andThen('rewrite', 'x = y', 'x = y == y = x')
                .andThen('rewrite', '/right', 'not (a = b) == a != b'));
