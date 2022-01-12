@@ -47,6 +47,7 @@ var nextProofEditorId = 1;
  *
  * proofDisplay: ProofDisplay for the proof being edited.
  * containerNode: jQuery object for outermost DOM node for the display.
+ * $proofButtons: jQuery object for the row of "proof buttons".
  * stepEditor: StepEditor for the proof being edited.
  * proofEditorId: identifies this editor for purposes of restoring its
  *   operating state from localstorage across visits / page loads.
@@ -88,23 +89,31 @@ function ProofEditor(options_arg) {
   self.proofDisplay = mainDisplay;
   self.steps = mainDisplay.steps;
 
+  // Top-level element of the proof editor display:
+  const $node = this.containerNode =
+    $('<div class="proofEditor logicZone"></div>');
+
   const stepEditor = new StepEditor(this);
   self.stepEditor = stepEditor;
+  // This provides a coordinate system for absolute positioning.
+  const $formParent = $('<div style="position: relative">');
+  $formParent.append(stepEditor.form);
 
   const proofButtons = buildProofButtons(self);
   self.$copyText = proofButtons.$copyText;
+  self.$proofButtons = proofButtons.$node;
 
   self._wksControls = buildWksControls(self);
 
-  var menu = new RuleMenu(self);
-  // Suppress solution status display when the mouse is within the
-  // menu, leaving more room for step suggestions.
-  menu.onEnter(function() { self.requestStatusDisplay(false); });
-  menu.onLeave(function() { self.requestStatusDisplay(true); });
-  self.ruleMenu = menu;
+  var menu = self.ruleMenu = new RuleMenu(self);
 
   // This element is for messages about status of solving the problem.
-  var $status = $('<div class="solutionStatus transFade">');
+  // It always occcupies space, but can be hidden by CSS rules.  It
+  // can have an "empty" class if the text is cleared, i.e. when there
+  // is no progress to report.  It is hidden when empty or when the
+  // mouse pointer is within the rule menu, to stay out of the way of
+  // step suggestions.
+  var $status = $('<div class="solutionStatus">');
   var $statusDisplay = $('<div class=solutionStatusDisplay>');
   $status.append($statusDisplay);
   self.$status = $status;
@@ -120,18 +129,15 @@ function ProofEditor(options_arg) {
       An error occurred executing the proof.</b><br>
       View the workspace as text to see steps not executed.<br>
       For safety this worksheet is read-only.</i></p>`);
-  // Top-level element of the proof editor display:
-  const $node = this.containerNode =
-    $('<div class="proofEditor logicZone"></div>');
   this.containerNode
     .append($header)
     .append($readOnly)
     .append(mainDisplay.node)
     .append($status)
+    .append($formParent)
     .append(proofButtons.$node)
-    .append(stepEditor.form)
-    .append(stepEditor.$proofErrors)
     .append(this._wksControls.node)
+    .append(stepEditor.$proofErrors)
     .append(menu.$node);
   this.setEditable(true);
 
@@ -160,10 +166,10 @@ function ProofEditor(options_arg) {
         var step = steps[len - 1];
         var message = self.progressMessage(step.original);
         $statusDisplay.empty();
-        $statusDisplay.append(message);
-        $status.toggleClass('invisible', !message);
+        $statusDisplay.append(message || '&nbsp;');
+        $status.toggleClass('empty', !message);
       } else {
-        $status.toggleClass('invisible', true);
+        $status.toggleClass('empty', true);
       }
     });
 
@@ -216,28 +222,7 @@ function ProofEditor(options_arg) {
     }
   }
 
-  // Event handlers
-
-  $node.on('mouseenter', function() {
-    // Stop overriding visibility of the rule menu.
-    self.ruleMenu.$node.toggleClass('ultraInvisible', false);
-  });
-/*
-  $node.on('mouseleave', function() {
-      // Temporarily override rule menu visibility.
-      self.ruleMenu.$node.toggleClass('ultraInvisible', true);
-      // Hide the worksheet controls.
-      self._wksControls.hide();
-    });
-*/
-
-  $node.on('mouseenter mouseleave', function(event) {
-    $node.toggleClass('proofEditorHovering', event.type === 'mouseenter');
-  });
-
-  $node.on('mouseenter mouseleave', 'ruleMenu', function(event) {
-    $node.toggleClass('ruleMenuHovering', event.type === 'mouseenter');
-  });
+  //// Event handlers
 
   // Document-level event handlers.
 
@@ -281,10 +266,9 @@ function ProofEditor(options_arg) {
       if (!within($target, '.wksControlsOuter, .proofButtons')) {
         self._wksControls.hide();
       }
-      if (!within($target, '.proofErrors, .stepEditor')) {
+      if (!within($target, '.proofErrors, .stepEditor, .ruleForm')) {
         // Similarly, most clicks hide the proof errors display.
-        // TODO: Toggle "hidden" rather than calling "hide".
-        self.stepEditor.$proofErrors.hide();
+        self.containerNode.removeClass('proofErrorsVisible');
       }
     });
 }
@@ -744,17 +728,6 @@ ProofEditor.prototype.clear = function() {
 };
 
 /**
- * Requests status display on or off.  Regardless of the request,
- * status is only ever displayed if it contains text.  (Status change
- * methods modify its visibility directly.)
- */
-ProofEditor.prototype.requestStatusDisplay = function(vis) {
-  var $display = this.$statusDisplay;
-  var text = $display.text()
-  // $display.toggleClass('hidden', !(text && vis));
-};
-
-/**
  * Define the "givens" property as a virtual property.  Setting it has
  * the side effect of modify the "givenVars" property as well, which
  * should be treated as readonly.  If not set explicitly through the
@@ -890,11 +863,10 @@ ProofEditor.prototype.isEditable = function() {
  * affecting only the UI.
  */
 ProofEditor.prototype.setEditable = function(value) {
-  this.containerNode.toggleClass('editable', value);
+  this.toggleClass('editable', value);
   // The following set the state of the display and hide or show the
   // step editor.
   this.proofDisplay.setEditable(value);
-  // this.stepEditor.$node.toggle(value);
 };
 
 /**
@@ -902,14 +874,6 @@ ProofEditor.prototype.setEditable = function(value) {
  */
 ProofEditor.prototype.toggleClass = function(className, truthy) {
   this.containerNode.toggleClass(className, truthy);
-};
-
-/**
- * Toggles display of the proof buttons on or off according to the
- * given value.
- */
-ProofEditor.prototype.showProofButtons = function(value) {
-  this.proofButtons.$node.toggle(value);
 };
 
 
@@ -979,11 +943,7 @@ var siteTypes = {
  * step, for steps that already exist.  Also rearranging proofs.
  *
  * Fields:
- * $node: DIV with the step editor's HTML, has class stepEditor.
- * ruleName: name of rule selected from the RuleMenu; used with form
- *   information in tryRuleFromForm.
- * form: jQuery SPAN to hold the argument input form.
- * proofDisplay: ProofDisplay to edit
+ * form: jQuery DIV containing the entire input form
  * lastRuleTime: Milliseconds consumed by last execution of tryRule.
  * lastRuleSteps: Steps used by last execution of tryRule.
  *
@@ -1000,18 +960,11 @@ function StepEditor(proofEditor) {
   self.proofDisplay = proofEditor.proofDisplay;
   self.lastRuleTime = 0;
   self.lastRuleSteps = 0;
-  self.ruleName = '';
-
-  // Create a DIV with the step editor content.
-  self.$stepEditor = $('<div class=stepEditor>');
 
   // Button to clear rule input, visible when a form is active.
   self.clearer =
     $('<button class="fa fa-times-circle-o sted-clear" title="Clear the input">');
-  // self.clearer.addClass('hidden');
-  const $form = self.form = $('<span class=ruleForm></span>');
-  // Proof errors display.
-  // self.$node = $div;
+  const $form = self.form = $('<div class="ruleForm hidden"></div>');
 
   $form.append(self.clearer, '<span class=customForm></span>');
   // Install event handlers.
@@ -1019,8 +972,8 @@ function StepEditor(proofEditor) {
     self.reset();
   });
 
-  $form.append(' <button>Go</button>');
-  self.form.on('click', 'button', function() { self.tryRuleFromForm(); });
+  $form.append(' <button class=go>Go</button>');
+  self.form.on('click', 'button.go', function() { self.tryRuleFromForm(); });
 
   // Keyboard events bubble to here from the inputs in the form.
   self.form.on('keydown', function(event) {
@@ -1033,8 +986,8 @@ function StepEditor(proofEditor) {
   self.$proofErrors = $('<div class="proofErrors hidden"></div>');
   // Always clear the errors when clicked.
   self.$proofErrors.on('click', '.clearer', function() {
-      self.$proofErrors.hide();
-    });
+    self.$proofErrors.hide();
+  });
 }
 
 /**
@@ -1043,26 +996,7 @@ function StepEditor(proofEditor) {
  */
 // TODO: Split this, with a "StepEditor.clear" method.
 StepEditor.prototype._setBusy = function(busy) {
-
   return;
-
-  const editor = this._proofEditor;
-  // TODO: Consider doing more of this work through CSS rules.
-  // this.$node.toggleClass('busy', busy);
-  if (busy) {
-    editor.ruleMenu.$node.toggleClass('hidden', true);
-  } else {
-    // TODO: Consider adding hide / unhide methods to RuleMenu
-    //   instead of this rather crude dependency on their
-    //   lengths.  The "unhide" would not necessarily remove the
-    //   "hidden" style class, just set its visibility to "normal".
-    editor.ruleMenu.$node.toggleClass('hidden', editor.ruleMenu.length === 0);
-  }
-  // Clear the form.
-  // TODO: Make these actions into a function/method, see "reset".
-  this.clearer.addClass('hidden');
-  this.form.html('');
-  editor.proofDisplay.setSelectLock(false);
 };
 
 /**
@@ -1078,10 +1012,9 @@ StepEditor.prototype.error = function(message) {
  * an HTML string.
  */
 StepEditor.prototype.report = function(error) {
-  this._proofEditor.containerNode.addClass('proofErrorsVisible');
   var $proofErrors = this.$proofErrors;
-  $proofErrors.show();
   $proofErrors.html('<button class=clearer>X</button>');
+  $proofErrors.show();
   if (error instanceof Error) {
     $proofErrors.append('<b>Error: ' + error.message + '</b>');
     if (error.step) {
@@ -1094,16 +1027,37 @@ StepEditor.prototype.report = function(error) {
 };
 
 /**
+ * Hides the error display.
+ */
+StepEditor.prototype.clearError = function() {
+  this.$proofErrors.hide();
+};
+
+/**
+ * Shows the form for entering info for the selected rule.
+ */
+StepEditor.prototype.showForm = function() {
+  this.form.show();
+  this.proofDisplay.setSelectLock(true);
+  this._proofEditor.containerNode.addClass('ruleFormVisible');
+};
+
+/**
+ * Hides the rule entry form.
+ */
+StepEditor.prototype.hideForm = function() {
+  this.form.hide();
+  this.proofDisplay.setSelectLock(false);
+  this._proofEditor.containerNode.removeClass('ruleFormVisible');
+};
+
+/**
  * Puts the step editor back in its inactive, invisible state.
  * See also StepEditor._setBusy.
  * TODO: Rename this to, like, "hide".
  */
 StepEditor.prototype.reset = function() {
-  this._proofEditor.containerNode.removeClass('ruleFormVisible');
-  // this.clearer.addClass('hidden');
-  // this.form.html('');
-  // this.proofDisplay.setSelectLock(false);
-  // this._setBusy(false);
+  this.hideForm();
 };
 
 /**
@@ -1231,7 +1185,7 @@ StepEditor.prototype.tryRuleFromForm = function() {
   var args = this.argsFromSelection(ruleName);
   if (this.fillFromForm(ruleName, args) &&
       this.checkArgs(args, minArgs, true)) {
-    this._proofEditor.containerNode.removeClass('ruleFormVisible');
+    this.hideForm();
     tryRuleSoon(this, rule, args);
   }
 };
@@ -1288,7 +1242,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
   // because the user doesn't see them until this method completes.
   const editor = this._proofEditor;
   editor.containerNode.removeClass('waitingForProver');
-  editor.containerNode.removeClass('ruleFormVisible');
+  this.hideForm();
   editor.proofDisplay.setSelectLock(false);
 
   if (Toy.profileName) {
@@ -1347,8 +1301,8 @@ StepEditor.prototype._tryRule = function(rule, args) {
     }
     // The new step is successfully rendered.
     this.proofDisplay.deselectStep();
-    // Make sure the proof errors field is cleared.
-    this.$proofErrors.hide();
+    // Make sure the proof errors field is hidden.
+    this.clearError();
     // After the browser repaints, try simplifying the step
     // and adding the result to the proof if simplification
     // has any effect.
@@ -1596,7 +1550,7 @@ function RuleMenu(proofEditor) {
                    '<div data-mode=all>All</div>');
 
   // Rule chooser:
-  var $node = ($('<div class="ruleMenu transFade">')
+  var $node = ($('<div class="ruleMenu">')
                .append($modeList)
                .append('<div class=ruleMenuTitle>Possible actions:</div>'));
   // Top node of the actual rule menu display.
@@ -1630,15 +1584,22 @@ function RuleMenu(proofEditor) {
 
   // Set up event handlers.
 
+  const $ed = proofEditor.containerNode;
+
   $node.on('mouseenter mouseleave', function(event) {
-    proofEditor.containerNode.toggleClass('ruleMenuHovering',
-                                  event.type === 'mouseenter');
+    $ed.toggleClass('ruleMenuHovered', event.type === 'mouseenter');
   });
 
-  // This should never occur:
-  // $node.on('mouseenter', function(event) {
-  //   proofEditor.containerNode.removeClass('ruleFormVisible');
-  // });
+  
+  // Entry or exit of the scrollArea clears any error display;
+  // or entry into any menu item.  These are all actions that
+  // might promptly lead to trying a new rule.
+  $scrollArea.on('mouseenter mouseleave', function(event) {
+    proofEditor.stepEditor.clearError();
+  });
+  $node.on('mouseenter', '.ruleItem', function(event) {
+    proofEditor.stepEditor.clearError();
+  });
 
   $modeList.on('click', 'div', function(event) {
     const $selected = $modeList.find('[class~=selected]');
@@ -1649,7 +1610,7 @@ function RuleMenu(proofEditor) {
       if (this !== dom($selected)) {
         proofEditor.showRuleType = mode;
         proofEditor.ruleMenu.refresh();
-        proofEditor.stepEditor.reset();
+        proofEditor.stepEditor.hideForm();
       }
     }
   });
@@ -1661,18 +1622,10 @@ function RuleMenu(proofEditor) {
       // self.stepEditor.ruleChosen($(this).data('ruleName'));
     });
 
-  // Here are handlers for "enter" and "leave".  This code avoids
-  // assuming that these events come in pairs.
-  $node.on('mouseenter', '.rulesItems', function(event) {
-      proofEditor.$status.toggleClass('invisible', true);
-    });
-  $node.on('mouseleave', '.rulesItems', function(event) {
-      const visible = proofEditor.$statusDisplay.text().length > 0;
-      proofEditor.$status.toggleClass('invisible', !visible);
-    });
+  // Actions for entering and leaving menu items.
   $node.on('mouseenter', '.ruleItem', function(event) {
-      handleMouseEnterItem(self, this, event);
-    });
+    handleMouseEnterItem(self, this, event);
+  });
   // When the mouse leaves an item, hide any suggested step.  If a
   // request has been issued for an appropriate suggestion, but is
   // still waiting in the queue, remove it from the queue and note
@@ -1694,7 +1647,8 @@ function RuleMenu(proofEditor) {
  */
 RuleMenu.prototype._update = function() {
   var self = this;
-  var stepEditor = self.proofEditor.stepEditor;
+  const proofEditor = self.proofEditor;
+  const stepEditor = proofEditor.stepEditor;
   var $items = self.$items;
   // Remove data and event handlers from suggestions.  They have
   // not been previously removed.
@@ -1703,14 +1657,13 @@ RuleMenu.prototype._update = function() {
       suggestion && $(suggestion).remove();
     });
   $items.empty();
-  var step = stepEditor.proofDisplay.selection;
+  var step = proofEditor.proofDisplay.selection;
   var term = step && step.selection;
   // Plain object describing each menu item.
   var itemInfos = [];
   self.offerableRuleNames().forEach(function(ruleName) {
       // Info is a string or array of strings.
-      var info = ruleMenuInfo(ruleName, step, term,
-                              stepEditor._proofEditor);
+      var info = ruleMenuInfo(ruleName, step, term, proofEditor);
       if (Array.isArray(info)) {
         // An array occurs when a rule may be used in multiple ways,
         // notably where there are multiple possible replacements of
@@ -1804,7 +1757,6 @@ RuleMenu.prototype._update = function() {
     }
     $items.find('.menuRightNeighbor').append($right);
   }
-  self.$node.toggleClass('hidden', false);
   if (items.length === 0) {
     // The menu can be hidden by clicks within it, and that does not
     // trigger a mouse leave event.
@@ -1846,7 +1798,7 @@ function handleMouseClickItem(ruleMenu, node, event) {
     // TODO: In the proof editor set up an event handler so the step editor
     //   can be aware of selections in the proof display (and also suppress
     //   selections instead of "selectLock").
-    var step = stepEditor.proofDisplay.selection;
+    var step = proofEditor.proofDisplay.selection;
     var term = step && step.selection;
     var formatArgs = {term: (term && term.toHtml()) || '{term}'};
     if (template) {
@@ -1854,15 +1806,11 @@ function handleMouseClickItem(ruleMenu, node, event) {
       // The template is not just an empty string.
       // Note that reset of the step editor will return the hidden
       // status back to normal.
-      proofEditor.containerNode.addClass('ruleFormVisible');
-      
-      // ruleMenu.$node.toggleClass('hidden', true);
-      // stepEditor.clearer.removeClass('hidden');
       stepEditor.form.find('.customForm').html(format(template, formatArgs));
-      stepEditor.proofDisplay.setSelectLock(true);
+      stepEditor.showForm();
       addClassInfo(stepEditor.form);
       if (!usesSite(rule)) {
-	stepEditor.addSelectionToForm(rule);
+        stepEditor.addSelectionToForm(rule);
       }
       // Focus the first empty text field of the form.
       stepEditor.form.find('input[type=text],input:not([type])')
