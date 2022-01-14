@@ -451,7 +451,7 @@ var methods = {
   /**
    * Solution progress message for the entire step as a single string.
    * It could be a combination of multiple messages separated in case
-   * of multiple solutions.
+   * of multiple solutions, or null if there is no notable progress.
    *
    * TODO: Consider how to handle underdetermined problems.
    */

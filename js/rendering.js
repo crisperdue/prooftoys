@@ -319,8 +319,8 @@ ProofDisplay.prototype.stepSuggestion = function(step) {
 };
 
 /**
- * Returns a DOM node with styling appropriate for a suggestion, a
- * string or other suitable argument to jQuery.append.
+ * Returns a DOM node with styling appropriate for a suggestion, given
+ * a string or other suitable argument to jQuery.append.
  */
 ProofDisplay.prototype.suggestionMessage = function(message) {
   var $div = $('<div class="proofStep stepSuggestion stepMessage">');
