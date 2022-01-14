@@ -720,7 +720,7 @@ ProofEditor.prototype.getDocumentName = function() {
  */
 ProofEditor.prototype.clear = function() {
   this.showRules = [];
-  this.stepEditor.reset();
+  this.stepEditor.hideForm();
   const stepsInfo = this.initialSteps;
   const steps = (stepsInfo ? Toy.decodeSteps(stepsInfo) : []);
   // TODO: Respond in some way to any error in decoding.
@@ -969,7 +969,7 @@ function StepEditor(proofEditor) {
   $form.append(self.clearer, '<span class=customForm></span>');
   // Install event handlers.
   self.clearer.on('click', function() {
-    self.reset();
+    self.hideForm();
   });
 
   $form.append(' <button class=go>Go</button>');
@@ -991,8 +991,7 @@ function StepEditor(proofEditor) {
 }
 
 /**
- * Marks this StepEditor as busy or not in the UI.  See also
- * StepEditor.reset.
+ * Marks this StepEditor as busy or not in the UI.
  */
 // TODO: Split this, with a "StepEditor.clear" method.
 StepEditor.prototype._setBusy = function(busy) {
@@ -1049,15 +1048,6 @@ StepEditor.prototype.hideForm = function() {
   this.form.hide();
   this.proofDisplay.setSelectLock(false);
   this._proofEditor.containerNode.removeClass('ruleFormVisible');
-};
-
-/**
- * Puts the step editor back in its inactive, invisible state.
- * See also StepEditor._setBusy.
- * TODO: Rename this to, like, "hide".
- */
-StepEditor.prototype.reset = function() {
-  this.hideForm();
 };
 
 /**
