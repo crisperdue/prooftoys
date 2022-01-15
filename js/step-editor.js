@@ -991,14 +991,6 @@ function StepEditor(proofEditor) {
 }
 
 /**
- * Marks this StepEditor as busy or not in the UI.
- */
-// TODO: Split this, with a "StepEditor.clear" method.
-StepEditor.prototype._setBusy = function(busy) {
-  return;
-};
-
-/**
  * Reports the HTML message as an error in the step editor.
  */
 StepEditor.prototype.error = function(message) {
@@ -1194,7 +1186,6 @@ function tryRuleSoon(stepEditor, rule, args) {
       }
     });
   stepEditor._proofEditor.containerNode.addClass('waitingForProver');
-  // stepEditor._setBusy(true);
   // Try running the rule once the UI shows it is working.
   Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
 }
@@ -1251,20 +1242,17 @@ StepEditor.prototype._tryRule = function(rule, args) {
   this._proofEditor.containerNode
     .find('.ruleStats').toggleClass('invisible', false);
 
+  // A rule may abort (throw), or certain rules may return null
+  // indicating failure, such as a rule that attempts to prove a
+  // statement.
   if (result instanceof Error || !result) {
-    // A rule may abort (throw), or certain rules may return null
-    // indicating failure, such as a rule that attempts to prove a
-    // statement.  The work is done, show that the prover is not busy.
-    this._setBusy(false);
     // It is possible to display more information about thrown
     // errors (aborts), but it may not be helpful to the user.
     const message = result ? result.message : 'Rule does not apply';
     this.report(message);
   } else if (result === true) {
-    this._setBusy(false);
+    // Do nothing.
   } else if (result.rendering) {
-      // The work is done, show that the prover is not busy.
-      this._setBusy(false);
       // If there is already a rendering, Expr.justify must have found
       // that the "new" step was identical to one of its dependencies,
       // so don't try to add it.  The implementation only currently
@@ -1281,7 +1269,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
       this.proofDisplay.addStep(result);
     });
     if (error) {
-      this._setBusy(false);
       if (error instanceof Error) {
         console.error(error);
         error.message = 'Error rendering step ' + result + ': ' + error.message;
@@ -1302,7 +1289,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
         var simplified = (trial.sameAs(result)
                           ? result
                           : trial);
-        self._setBusy(false);
         var steps = Toy.unrenderedDeps(simplified);
         var top2 = $(window).scrollTop();
         steps.forEach(function(step) {
