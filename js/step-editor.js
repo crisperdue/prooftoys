@@ -1186,7 +1186,7 @@ function tryRuleSoon(stepEditor, rule, args) {
       }
     });
   stepEditor._proofEditor.containerNode.addClass('waitingForProver');
-  // Try running the rule once the UI shows it is working.
+  // Try running the rule once the UI shows that the prover is working.
   Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
 }
 
@@ -1592,7 +1592,7 @@ function RuleMenu(proofEditor) {
   });
   
   $node.on('click', '.ruleItem', function(event) {
-      handleMouseClickItem(self, this, event);
+      self.handleMouseClickItem(this, event);
       // Run the step editor's ruleChosen method with
       // the ruleName of the menu item.
       // self.stepEditor.ruleChosen($(this).data('ruleName'));
@@ -1600,7 +1600,7 @@ function RuleMenu(proofEditor) {
 
   // Actions for entering and leaving menu items.
   $node.on('mouseenter', '.ruleItem', function(event) {
-    handleMouseEnterItem(self, this, event);
+    self.handleMouseEnterItem(this, event);
   });
   // When the mouse leaves an item, hide any suggested step.  If a
   // request has been issued for an appropriate suggestion, but is
@@ -1746,7 +1746,8 @@ RuleMenu.prototype._update = function() {
  * to run the rule from information already available, otherwise to
  * display the input form.
  */
-function handleMouseClickItem(ruleMenu, node, event) {
+RuleMenu.prototype.handleMouseClickItem = function(node, event) {
+  const ruleMenu = this;
   // Track these events in Matomo.
   _paq && _paq.push(['trackEvent', 'App', 'MainMenu']);
 
@@ -1822,7 +1823,8 @@ function handleMouseClickItem(ruleMenu, node, event) {
 /**
  * Event handler for mouseenter events on RuleMenu items.
  */
-function handleMouseEnterItem(ruleMenu, node, event) {
+RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
+  const ruleMenu = this;
   const $node = $(node);
   const proofEditor = ruleMenu.proofEditor;
   const stepEditor = proofEditor.stepEditor;
