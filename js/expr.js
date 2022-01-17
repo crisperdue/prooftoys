@@ -2501,7 +2501,7 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 Atom.prototype._toString = function() {
   const text = (useUnicode
                 ? this.unicodeName()
-                : this.name === '=' && Toy.isBooleanBinOp(this)
+                : this.isEquivOp()
                 ? '=='
                 : this.pname);
   const show = Toy.showTypes;
@@ -2517,9 +2517,7 @@ Atom.prototype._toString = function() {
 Atom.prototype.unicodeName = function() {
   // Always show boolean equality as such.
   // Using pname helps here in some obsolescent usage.
-  const name = (this.name == '=' && Toy.isBooleanBinOp(this)
-                ? '=='
-                : this.pname);
+  const name = this.isEquivOp() ? '==' : this.pname;
   var uname = unicodeNames[name];
   if (uname) {
     return uname;

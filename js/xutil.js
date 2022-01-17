@@ -986,10 +986,11 @@ function tokenize(str) {
 var _parsed = {};
 
 /**
- * Parses a string or array of token strings into an expression
- * (Expr).  Removes tokens parsed from the tokens list.  Aborts if
- * parsing or type checking fails.  If the input is a string, caches
- * the result on success, and reuses a cached result if one exists.
+ * Parses a string or array of token strings into a fully typed
+ * expression (Expr).  Removes tokens parsed from the tokens list.
+ * Aborts if parsing or type checking fails.  If the input is a
+ * string, caches the result on success, and reuses a cached result if
+ * one exists.
  *
  * TODO: Consider whether the result should be typed, or whether there
  *   should be a separate function for that.  Typed constants such as
@@ -1501,7 +1502,8 @@ function looksBoolean(term) {
   }
   if (term.isCall2()) {
     var op = term.getBinOp();
-    return (op.pname in looseBoolOps &&
+    // Caution: the term might not be typed.
+    return ((op.name in boolOps || op.isEquivOp())  &&
             looksBoolean(term.getLeft()) &&
             looksBoolean(term.getRight()));
   }
@@ -1512,12 +1514,14 @@ function looksBoolean(term) {
 }
 
 /**
- * Given a term, creates a new schema term that consists only of the
- * boolean operators (==, &, |, =>, and "not"), and variables, having
- * the original as a substitution instance.  Descends into all
+ * Given a typed term, creates a new schema term that consists only of
+ * the boolean operators (==, &, |, =>, and "not"), and variables,
+ * having the original as a substitution instance.  Descends into all
  * occurrences of the boolean operators and no others, replacing all
  * other terms with boolean variables.  The schema variables are the
  * TermMap variables, in textual order from left to right.
+ *
+ * TODO: Check that the term is typed.
  */
 function boolSchemaInfo(term) {
   var map = new Toy.TermMap();
@@ -1528,9 +1532,8 @@ function boolSchemaInfo(term) {
       return v;
     }
     if (term.isCall2()) {
-      var op = term.getBinOp()
-      if (op.pname in boolOps ||
-          (op.name == '=' && Toy.isBooleanBinOp(op))) {
+      var op = term.getBinOp();
+      if (op.pname in boolOps || op.isEquivOp()) {
         return infix(makeSchema(term.getLeft()), op,
                      makeSchema(term.getRight()));
       }
