@@ -1541,6 +1541,13 @@ function boolSchemaInfo(term) {
     if (term.isCall1('not')) {
       return new Toy.Call(term.fn, makeSchema(term.arg));
     }
+    if (term instanceof Atom) {
+      const name = term.name;
+      // Presumably these names will never be overloaded.
+      if (name === 'T' || name === 'F') {
+        return term;
+      }
+    }
     map.addTerm(term);
     return map.get(term);
   }
