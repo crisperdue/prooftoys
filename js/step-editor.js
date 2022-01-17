@@ -1031,6 +1031,7 @@ StepEditor.prototype.showForm = function() {
   this.form.show();
   this.proofDisplay.setSelectLock(true);
   this._proofEditor.containerNode.addClass('ruleFormVisible');
+  this._proofEditor.ruleMenu.suppressing = true;
 };
 
 /**
@@ -1040,6 +1041,7 @@ StepEditor.prototype.hideForm = function() {
   this.form.hide();
   this.proofDisplay.setSelectLock(false);
   this._proofEditor.containerNode.removeClass('ruleFormVisible');
+  this._proofEditor.ruleMenu.suppressing = false;
 };
 
 /**
@@ -1173,8 +1175,8 @@ StepEditor.prototype.tryRuleFromForm = function() {
 };
 
 /**
- * Turns on the editor's busy indicator and sets the rule up to run
- * with the given args as soon as the UI has opportunity to repaint.
+ * Requests running the rule with the given args as soon as the UI has
+ * opportunity to repaint, and indicates that the prover is working.
  */
 function tryRuleSoon(stepEditor, rule, args) {
   args.forEach(function(arg) {
@@ -1186,6 +1188,7 @@ function tryRuleSoon(stepEditor, rule, args) {
       }
     });
   stepEditor._proofEditor.containerNode.addClass('waitingForProver');
+  stepEditor._proofEditor.ruleMenu.suppressing = true;
   // Try running the rule once the UI shows that the prover is working.
   Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
 }
@@ -1518,6 +1521,9 @@ function RuleMenu(proofEditor) {
   // A rule menu item node or null.  If the mouse is hovering over an
   // item at any given time, this will be it.
   self.hovering = null;
+  // True iff we are suppressing actions from menu item events
+  // (enter and click).
+  self.suppressing = false;
 
   const $modeList = $('<div class=modeList>');
   self.$modeList = $modeList;
@@ -1565,15 +1571,14 @@ function RuleMenu(proofEditor) {
   $node.on('mouseenter mouseleave', function(event) {
     $ed.toggleClass('ruleMenuHovered', event.type === 'mouseenter');
   });
-
   
   // Entry or exit of the scrollArea clears any error display;
   // or entry into any menu item.  These are all actions that
   // might promptly lead to trying a new rule.
-  $scrollArea.on('mouseenter mouseleave', function(event) {
+   $scrollArea.on('mouseenter mouseleave', function(event) {
     proofEditor.stepEditor.clearError();
   });
-  $node.on('mouseenter', '.ruleItem', function(event) {
+   $node.on('mouseenter', '.ruleItem', function(event) {
     proofEditor.stepEditor.clearError();
   });
 
@@ -1583,7 +1588,7 @@ function RuleMenu(proofEditor) {
     if (mode) {
       $selected.removeClass('selected');
       $(this).addClass('selected');
-      if (this !== dom($selected)) {
+      if (!$selected.is(this)) {
         proofEditor.showRuleType = mode;
         proofEditor.ruleMenu.refresh();
         proofEditor.stepEditor.hideForm();
@@ -1592,11 +1597,8 @@ function RuleMenu(proofEditor) {
   });
   
   $node.on('click', '.ruleItem', function(event) {
-      self.handleMouseClickItem(this, event);
-      // Run the step editor's ruleChosen method with
-      // the ruleName of the menu item.
-      // self.stepEditor.ruleChosen($(this).data('ruleName'));
-    });
+    self.handleMouseClickItem(this, event);
+  });
 
   // Actions for entering and leaving menu items.
   $node.on('mouseenter', '.ruleItem', function(event) {
@@ -1747,6 +1749,10 @@ RuleMenu.prototype._update = function() {
  * display the input form.
  */
 RuleMenu.prototype.handleMouseClickItem = function(node, event) {
+  if (this.suppressing) {
+    return;
+  }
+
   const ruleMenu = this;
   // Track these events in Matomo.
   _paq && _paq.push(['trackEvent', 'App', 'MainMenu']);
@@ -1824,6 +1830,10 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
  * Event handler for mouseenter events on RuleMenu items.
  */
 RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
+  if (this.suppressing) {
+    return;
+  }
+
   const ruleMenu = this;
   const $node = $(node);
   const proofEditor = ruleMenu.proofEditor;
@@ -1855,7 +1865,6 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
     // step has been issued.
     var promise;
     if (ruleName.slice(0, 5) === 'fact ') {
-      // See StepEditor.ruleChosen for essentially the same code.
       // Values "fact etc" indicate use of rules.rewrite, and
       // the desired fact is indicated by the rest of the value.
       var siteStep = display.selection;
