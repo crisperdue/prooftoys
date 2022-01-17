@@ -1527,9 +1527,10 @@ function RuleMenu(proofEditor) {
 
   const $modeList = $('<div class=modeList>');
   self.$modeList = $modeList;
-  $modeList.append('<div data-mode=algebra>Algebra</div>',
-                   '<div data-mode=general class=selected>General</div>',
-                   '<div data-mode=all>All</div>');
+  $modeList.append('<div class=mode data-mode=algebra>Algebra</div>',
+                   '<div class="mode selected" data-mode=general>' +
+                   'General</div>',
+                   '<div class=mode data-mode=all>All</div>');
 
   // Rule chooser:
   var $node = ($('<div class="ruleMenu">')
