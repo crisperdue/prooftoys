@@ -2681,7 +2681,7 @@ declare(
   // Accepts a parseable string as the wff.
   {name: 'tautology',
     action: function(wff_arg) {
-      const wff = termify(wff_arg);
+      const wff = termify(wff_arg).typedCopy();
       const key = '' + wff.dump();
       const details = _tautologies.get(key);
       let result;
