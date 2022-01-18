@@ -1,0 +1,344 @@
+////
+//// Styles for the Prooftoys web site, including proofs,
+//// overriding the general site theme.
+////
+
+// Font
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,400,500,900|Lora:400,700|Roboto+Mono:300,400');
+
+// Icons
+@import "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css";
+
+/* To use Prooftoys styles throughout a document, give the HTML tag
+   the logicZone class.  Proof editors automatically apply it, too.
+   NOTE WELL that from here on, all styles are conditional on a parent
+   element having the "logicZone" class.
+
+   ALSO NOTE that this @import's proofs.css near the bottom, so its
+   styles are implicitly within "logicZone" as well, and can override
+   these.
+ */
+
+.logicZone {
+
+sub, sup {
+  /* Prevents these from making the overall line less tall. */
+  line-height: 0px;
+  /* Browsers tend to size these for fractions, which makes */
+  /* them a bit bigger than this. */
+  font-size: 70%;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Invisibly fills space */
+.invisible {
+  visibility: hidden;
+}
+
+.center {
+    text-align: center;
+}
+
+.emphasis {
+    font-family: Georgia;
+    font-style: italic;
+}
+
+.italic {
+  font-style: italic;
+}
+
+/* Text wrapping */
+.nowrap {
+  white-space: nowrap;
+}
+
+.wrap {
+  white-space: wrap;
+}
+
+.pre {
+  white-space: pre;
+}
+
+.float {
+    float: right;
+}
+
+button {
+    background-color: LightSkyBlue;
+}
+/**
+ * Basic hamburger stylings really should include this bit
+ * to override the usual button background.
+ */
+button.hamburger {
+  background-color: transparent;
+}
+
+/* For tables of contents, overriding top and bottom margins. */
+#TOC ul ul {
+    margin: 0;
+}
+
+/* For Talkyard */
+div.talkyard-comments {
+  background-color: white;
+  opacity: .9;
+}
+
+/* Make the utterances Q & A stuff full width and */
+/* make it lie above the sidebar, with a border. */
+p.utterances {
+    background-color: white;
+    max-width: none;
+    z-index: 1;
+    opacity: .9;
+    border-top: 1px solid gray;
+}
+
+/* Transitions */
+
+/* This class with "hidden" provides a cheap way to animate appearance */
+/* and disappearance. */
+/* Customize with a specific max-height. */
+.transHeight {
+    max-height: 1000px;
+    transition: max-height 0.25s ease-in;
+    overflow: hidden;
+}
+
+/* Transitioning "height" would only work with explicit height value. */
+.transHeight.hidden {
+    max-height: 0;
+    display: block;
+    transition: max-height 0.25s ease-out;
+}
+
+/* Transition by fading.  The element always occupies space. */
+/* Use jQuery.fadeToggle to get display: none. */
+.transFade {
+    visibility: visible;
+    opacity: 1;
+    /* Think of visibility ranging from 0 to 1, with all */
+    /* nonzero values being visible. */
+    transition: all .3s linear;
+}
+
+.transFade.hidden, .transFade.invisible, .transFade.ultraInvisible {
+    visibility: hidden;
+    opacity: 0;
+    transition: all .3s linear;
+    /* This overrides the meaning of hidden = display: none */
+    display: block;
+}
+
+
+/* Font-Awesome */
+
+/*
+ * For uses of Font-Awesome, do not inherit any text-indent values, working
+ * around a deficiency in its standard styles.  (Class fa displays as
+ * inline-block.)
+ */
+.fa {
+  text-indent: 0;
+}
+
+
+/* Overrides to the Whisper theme */
+
+
+/* Customize the styling of blockquotes. */
+
+.content blockquote {
+  margin-left: 1em;
+}
+
+/* Inline code blocks are for logic, so style accordingly. */
+/* This also keeps less padding. */
+/* TODO: This is somewhat delicate, find something better. */
+.content code.language-logic {
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-family: STIXGeneral;
+    font-size: 1rem;
+}
+
+/* From style.scss in the Whisper theme, so it can override
+   the preceding style. */
+.content pre code {
+    font-family: "Roboto Mono", monospace;
+    font-size: 0.9rem;
+}
+
+/* For sidebar, see style.css */
+
+/* Docs menu */
+
+/* Indent levels of lists in the sidebar. */
+/* Does not apply to the top-level UL. */
+.docs-menu ul ul li {
+    margin-left: 1em;
+}
+
+/* Page footer */
+
+.pageFooter {
+    /* The following let it work with an onresize action. */
+    position: absolute;
+    width: 100%;
+    top: 0;
+    visibility: hidden;
+}
+
+.pageFooterInner {
+   text-align: center;
+    background-color: #f5f3f1;
+}
+
+/* TOC */
+
+/* Make TOC lists be closely packed. */
+#TableOfContents ul {
+    margin: 0;
+}
+
+/* Only display two levels of headings */
+#TableOfContents ul ul ul {
+    display: none;
+}
+
+/* Darken the color of links a bit. */
+a {
+    color: #1dc996;
+}
+
+/* Math-oriented text */
+
+.math, .mathColor, s {
+  font-family: STIXGeneral, Times, serif;
+  /* Variable and constant names should be explicitly italicized
+     within math text. */
+  font-style: normal;
+  white-space: nowrap;
+}
+
+/* You can use <s class=em> to make an em space. */
+/* Character widths may vary by font. */
+s.em {
+    display: inline-block;
+    min-width: 1em;
+    min-height: 1em;
+    vertical-align: text-bottom;
+}
+
+/* You can use <s class=em> to make an en space. */
+/* Character widths may vary by font. */
+s.en {
+    display: inline-block;
+    min-width: .5em;
+    min-height: 1em;
+    vertical-align: text-bottom;
+}
+
+
+/**
+ * Truth tables for binary operators
+ */
+
+table.binaryTruthTable {
+  border-collapse: collapse;
+  margin-bottom: 1.5em;
+  width: auto;
+}
+
+table.binaryTruthTable td.truthy, table.binaryTruthTable td.falsy {
+  padding: 2px 10px;
+  border: 2px solid silver;
+}
+
+/* This needs to be less specific than a rule for class cellHighlight. */
+td.falsy {
+}
+
+table.binaryTruthTable th {
+  font-weight: normal;
+  text-align: center;
+  vertical-align: middle;
+  padding: 2px 10px;
+  border: none;
+}
+
+/* This needs to take precedency over backgrounds for "falsy" cells. */
+table.binaryTruthTable td.cellHighlight, .cellHighlight {
+  background-color: #fcc;
+}
+
+.thHighlight {
+  background-color: #fcc;
+}
+
+table.binaryTruthTable td.truthy:after {
+  content: "true";
+}
+
+table.binaryTruthTable td.falsy:after {
+  content: "false";
+}
+
+
+/* Blocks of text and logic formulas, used by shortcodes. */
+
+/* If needed add a "zone" shortcode and rely on its class(es). */
+
+.inset, .preBlock {
+  display: block;
+  background: #f5f5f5;
+  border-left: 10px solid #ccc;
+  margin: 1em 2em;
+  padding: 0.5em 1em;
+}
+
+.preBlock {
+  white-space: pre;
+  line-height: 1.8;
+}
+
+/* Fade/unfade (for "hiding" problem solutions) */
+
+div.canFade {
+  position: relative;
+}
+
+div.canFade button.unfade {
+  position: absolute;
+  visibility: hidden;
+  margin-top: 2em;
+  margin-left: 5em;
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-family: Georgia;
+}
+
+div.canFade.faded button.unfade {
+  visibility: visible;
+}
+
+div.canFade .fadeHere {
+  opacity: 1;
+  transition: opacity .5s ease;
+  pointer-events: auto;
+}
+
+div.canFade.faded .fadeHere {
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+@import "proofs.scss";
+
+}
