@@ -648,20 +648,20 @@ input.varName, input.step, input.equation, input.implication {
     border: 1px solid #bbf;
     border-bottom-width: 0;
     border-radius: 5px 5px 0 0;
-}
 
-.modeList .mode {
-    text-align: center;
-    padding: .2em 2em 0 2em;
-}
+    .mode {
+        text-align: center;
+        padding: .2em 2em 0 2em;
+    }
 
-.modeList .mode:hover {
-    background-color: hsl(120deg, 73%, 70%);
-    cursor: default;
-}
+    .mode:hover {
+        background-color: hsl(120deg, 73%, 70%);
+        cursor: default;
+    }
 
-.modeList > div.selected {
-    background-color: hsl(120deg, 73%, 85%);
+    .mode.selected {
+        background-color: hsl(120deg, 73%, 85%);
+    }
 }
 
 /* Rules menu */
