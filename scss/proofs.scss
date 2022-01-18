@@ -666,84 +666,6 @@ input.varName, input.step, input.equation, input.implication {
 
 /* Rules menu */
 
-/* Main node for the rule selector, contains the rulesContainer. */
-.ruleMenu {
-    position: absolute;
-    left: 1em;
-    right: 1em;
-    background: AliceBlue;
-    opacity: .9;
-    z-index: 2;
-}
-
-.ruleMenu.hidden {
-    display: block;
-    visibility: hidden;
-    /* Same height as when displayed */
-    height: 20em;
-    /* An element can have this class yet still be visible as it */
-    /* is fading out.  Generally it should not respond to pointer */
-    /* events, but that has occurred with the rule menu and */
-    /* mouse enter events. */
-    pointer-events: none;
-}
-
-.ruleMenuTitle {
-    font-family: StixGeneral, times, serif;
-    font-weight: bold;
-    padding: .2em .7em 0 .7em;
-    /* The rule menu title contributes left and right borders, */
-    border: 1px solid #bbf;
-    border-width: 0 1px;
-}
-
-.ruleMenu .scrollingMenu {
-    max-height: 20em;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    /* The scrolling part contributes bottom, left, and right borders. */
-    border: 1px solid #bbf;
-    border-top-width: 0;
-    border-radius: 0 0 5px 5px;
-    padding: 2px;
-}
-
-.proofPreview {
-    position: absolute;
-    left: .5em;
-    right: .2em;
-    padding: 1em;
-    border: 1px solid silver;
-    background-color: AliceBlue;
-}
-
-/* Rule selection items */
-
-.ruleItem:hover {
-  left: -1px;
-  top: -1px;
-  border: 1px solid #aaa;
-  box-shadow: 1px 1px 1px #aaa;
-  background-color: #fbfbf9;
-}
-
-.ruleItem, .ruleItem:active {
-  position: relative;
-  left: 0px;
-  top: 0px;
-  margin: 2px 1px;
-  padding: 2px 4px;
-  border: 1px solid #eee;
-  cursor: pointer;
-  box-shadow: none;
-  font-family: StixGeneral, times, serif;
-}
-
-.ruleItem:active {
-  background-color: #aaf;
-  border-color: gray;
-}
-
 /* Worksheet-related controls */
 
 /* Outermost of worksheet containers, without border or padding. */
@@ -813,6 +735,15 @@ input.varName, input.step, input.equation, input.implication {
     margin: .8em 0;
 }
 
+.proofPreview {
+    position: absolute;
+    left: .5em;
+    right: .2em;
+    padding: 1em;
+    border: 1px solid silver;
+    background-color: AliceBlue;
+}
+
 textarea.proofStateArea {
     width: 95%;
     margin-top: 1em;
@@ -829,12 +760,17 @@ input.copyText {
     text-overflow: ellipsis;
 }
 
-/** NEW **/
+/** Rule Menu **/
 
 .proofEditor {
 
     // The entire rules menu (hidden state)
     .ruleMenu {
+        position: absolute;
+        z-index: 2;
+        left: 1em;
+        right: 1em;
+        background: AliceBlue;
         visibility: hidden;
         opacity: 0;
         transition: all 1s linear;
@@ -847,19 +783,52 @@ input.copyText {
         transition: all .3s linear;
     }
 
-    .ruleMenu:hover {
-        visibility: visible;
+    .ruleMenuTitle {
+        font-family: StixGeneral, times, serif;
+        font-weight: bold;
+        padding: .2em .7em 0 .7em;
+        /* The rule menu title contributes left and right borders, */
+        border: 1px solid #bbf;
+        border-width: 0 1px;
+    }
 
-        .solutionStatus {
-            visibility: hidden;
-            opacity: 0;
-            transition: all .3s linear;
-        }
-        .proofButtons {
-            visibility: hidden;
-            opacity: 0;
-            transition: all .3s linear;
-        }
+    .ruleMenu .scrollingMenu {
+        max-height: 20em;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        /* The scrolling part contributes bottom, left, and right borders. */
+        border: 1px solid #bbf;
+        border-top-width: 0;
+        border-radius: 0 0 5px 5px;
+        padding: 2px;
+    }
+
+
+    /* Rule selection items */
+
+    .ruleItem:hover {
+      left: -1px;
+      top: -1px;
+      border: 1px solid #aaa;
+      box-shadow: 1px 1px 1px #aaa;
+      background-color: #fbfbf9;
+    }
+
+    .ruleItem, .ruleItem:active {
+      position: relative;
+      left: 0px;
+      top: 0px;
+      margin: 2px 1px;
+      padding: 2px 4px;
+      border: 1px solid #eee;
+      cursor: pointer;
+      box-shadow: none;
+      font-family: StixGeneral, times, serif;
+    }
+
+    .ruleItem:active {
+      background-color: #aaf;
+      border-color: gray;
     }
 
     // Waiting for the prover to complete also dims
