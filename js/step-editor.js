@@ -1530,7 +1530,9 @@ function RuleMenu(proofEditor) {
   $modeList.append('<div class=mode data-mode=algebra>Algebra</div>',
                    '<div class="mode selected" data-mode=general>' +
                    'General</div>',
-                   '<div class=mode data-mode=all>All</div>');
+                   '<div class=mode data-mode=other>Other</div>',
+                   '<div class=mode data-mode=misc>Misc</div>',
+                  );
 
   // Rule chooser:
   var $node = ($('<div class="ruleMenu">')
@@ -1972,15 +1974,18 @@ RuleMenu.prototype.labelApproved = function(name) {
   }
   const selStep = editor.proofDisplay.selection;
   switch (editor.showRuleType) {
+  case 'other':
   case 'all':
     return true;
+  case 'misc':
+    return labels.edit || labels.display;
   case 'algebra':
     var expr = selStep && selStep.selection;
     return (expr && !expr.isReal()
             ? false
-            : labels.algebra || labels.display);
+            : labels.algebra);
   case 'general':
-    return labels.general || labels.basic || labels.display || labels.algebra;
+    return labels.general || labels.basic || labels.algebra;
   default:
     throw new Error('Bad rule policy value: ' + editor.showRuleType);
   }
@@ -2112,7 +2117,7 @@ RuleMenu.prototype.offerableFacts = function() {
           if (typesMismatch(expr, matchTerm)) {
             return;
           }
-          if (info.labels.higherOrder && mode != 'all') {
+          if (info.labels.higherOrder && mode != 'other') {
             // TODO: Offer facts with higher-order variables when we
             // can match their types properly when generating the
             // menu.
@@ -2156,7 +2161,8 @@ RuleMenu.prototype.offerableFacts = function() {
                 facts.push(info);
               }
             } else {
-              assert(mode == 'all', 'Invalid mode {1}', mode);
+              assert(mode == 'other' || mode == 'misc',
+                     'Invalid mode {1}', mode);
               facts.push(info);
             }
           }
