@@ -630,7 +630,7 @@ declare(
     inputs: {bool: 1},
     form: ('Assert <input name=bool>'),
     menu: 'assert without proof',
-    labels: 'advanced',
+    labels: 'advanced edit',
     description: 'assert',
     tooltip: 'WFF to assert (possibly to prove later)'
   },
@@ -650,7 +650,8 @@ declare(
     // selection.
     toOffer: 'return step == null',
     description: 'definition',
-    tooltip: 'define a name'
+    tooltip: 'define a name',
+    labels: 'advanced edit'
   },
 
   {name: 'copy',
@@ -660,7 +661,8 @@ declare(
    },
    inputs: {step: 1},
    menu: 'copy step',
-   description: 'copy;; {of step step}'
+   description: 'copy;; {of step step}',
+   labels: 'basic edit'
   },
 
   /**
@@ -747,7 +749,7 @@ declare(
     // Rare property, indicates that this has side effects, so do
     // not run the rule to find a suggested step.
     noSuggest: true,
-    labels: 'display'
+    labels: 'edit'
   },
 
   // This is another high-level function that edits a proof.  This
@@ -817,7 +819,7 @@ declare(
     // Rare property, indicates that this has side effects, so do
     // not run the rule to find a suggested step.
     noSuggest: true,
-    labels: 'display'
+    labels: 'edit'
   },
 
   // Removes the selected step and any following steps from the proof.
@@ -843,7 +845,7 @@ declare(
     // Rare property, indicates that this has side effects, so do
     // not run the rule to find a suggested step.
     noSuggest: true,
-    labels: 'display'
+    labels: 'edit'
   },
 
   /**
