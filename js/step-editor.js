@@ -970,10 +970,13 @@ function StepEditor(proofEditor) {
   // Install event handlers.
   self.clearer.on('click', function() {
     self.hideForm();
+    self._proofEditor.ruleMenu.suppressing = false;
   });
 
   $form.append(' <button class=go>Go</button>');
-  self.form.on('click', 'button.go', function() { self.tryRuleFromForm(); });
+  self.form.on('click', 'button.go', function() {
+    self.tryRuleFromForm();
+  });
 
   // Keyboard events bubble to here from the inputs in the form.
   self.form.on('keydown', function(event) {
@@ -1041,7 +1044,6 @@ StepEditor.prototype.hideForm = function() {
   this.form.hide();
   this.proofDisplay.setSelectLock(false);
   this._proofEditor.containerNode.removeClass('ruleFormVisible');
-  this._proofEditor.ruleMenu.suppressing = false;
 };
 
 /**
@@ -1208,6 +1210,16 @@ StepEditor.prototype._tryRule = function(rule, args) {
   var result = null;
   var startTime = Date.now();
   var startSteps = Toy.getStepCounter();
+  const editor = this._proofEditor;
+
+  // Set to true in case of possible (deferred) autoSimplify.
+  let deferCleanup = false;
+  // Cleans up lockouts on interactivity.
+  const cleanup = () => {
+    editor.proofDisplay.setSelectLock(false);
+    editor.containerNode.removeClass('waitingForProver');
+    editor.ruleMenu.suppressing = false;
+  }
 
   const caught = Toy.catchAborts(() => {
     if (Toy.profileName) {
@@ -1224,10 +1236,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
   }
   // These UI actions could even be done before running the rule,
   // because the user doesn't see them until this method completes.
-  const editor = this._proofEditor;
-  editor.containerNode.removeClass('waitingForProver');
-  this.hideForm();
-  editor.proofDisplay.setSelectLock(false);
+  // this.hideForm();
 
   if (Toy.profileName) {
     console.profileEnd();
@@ -1248,19 +1257,19 @@ StepEditor.prototype._tryRule = function(rule, args) {
   // A rule may abort (throw), or certain rules may return null
   // indicating failure, such as a rule that attempts to prove a
   // statement.
-  if (result instanceof Error || !result) {
+  if (result === true) {
+    // Do nothing.
+  } else if (result instanceof Error || !(result instanceof Toy.Step)) {
     // It is possible to display more information about thrown
     // errors (aborts), but it may not be helpful to the user.
     const message = result ? result.message : 'Rule does not apply';
     this.report(message);
-  } else if (result === true) {
-    // Do nothing.
   } else if (result.rendering) {
       // If there is already a rendering, Expr.justify must have found
       // that the "new" step was identical to one of its dependencies,
       // so don't try to add it.  The implementation only currently
       // supports one render per step anyway.
-      this.report('nothing done');
+    this.report('nothing done');
   } else {
     // Success!
     var top = $(window).scrollTop();
@@ -1277,8 +1286,11 @@ StepEditor.prototype._tryRule = function(rule, args) {
         error.message = 'Error rendering step ' + result + ': ' + error.message;
         this.report(error);
       }
+      cleanup();
       return;
     }
+    // Clean up after any autosimplification.
+    deferCleanup = true;
     // The new step is successfully rendered.
     this.proofDisplay.deselectStep();
     // Make sure the proof errors field is hidden.
@@ -1287,6 +1299,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // and adding the result to the proof if simplification
     // has any effect.
     Toy.afterRepaint(function() {
+      cleanup();
         var trial = autoSimplify(result);
         // If autoSimplify is a no-op, do not display the result.
         var simplified = (trial.sameAs(result)
@@ -1299,6 +1312,9 @@ StepEditor.prototype._tryRule = function(rule, args) {
           });
         checkTop(top2);
       });
+  }
+  if (!deferCleanup) {
+    cleanup();
   }
   if (typeof top == 'number') {
     checkTop(top);
