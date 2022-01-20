@@ -838,7 +838,6 @@ declare(
       }
       return true;
     },
-    noSuggest: true,
     autoSimplify: noSimplify,
     inputs: {step: 1},
     menu: 'remove step and all following',
