@@ -2122,66 +2122,75 @@ RuleMenu.prototype.offerableFacts = function() {
               e1Type != e2Type);
     }
     if (expr) {
-      var mode = self.proofEditor.showRuleType;
+      const mode = self.proofEditor.showRuleType;
+      // Here are the policy functions to decide what facts
+      // are to be offered.
+
+      // Truthy if OK to show in algebra mode.
+      const okAlgebra = info => info.labels.algebra;
+
+      // Truthy if OK to show in "general" mode, ignoring
+      // the exclusion of facts shown in algebra mode.
+      const okGeneral = info => {
+        const goal = info.goal;
+        if (info.labels.generalMode || info.labels.algebra) {
+          return true;
+        }
+        if (info.desimplifier) {
+          return false;
+        }
+        if (info.labels.higherOrder) {
+          // TODO: Offer facts with higher-order variables when we
+          // can match their types properly when generating the
+          // menu.
+          return false;
+        }
+        if (goal.implies()) {
+          const asms = goal.getLeft();
+          // TODO: Systematize handling of facts that may add
+          //   assumptions.
+          //
+          // In general mode, if a rule adds assumptions they
+          // must be of just a few sorts, currently matching
+          // these schemas.  This is just a quick fix.
+          if (asms.scanConj
+              (x =>
+               // These checks look OK.
+               !x.matchSchema('R x') &&
+               !x.matchSchema('not (x = y)') &&
+               !x.matchSchema('x != y'))) {
+            return false;
+          }
+        }
+        return false;
+      };
+      
+      // Truthy if OK to show as "more" ignoring exclusivity of categories.
+      const okOther = info => !goal.matchPart().isVariable();
+        
       Toy.eachFact(function(info) {
-          const goal = info.goal;
-          const matchTerm = goal.matchPart()
-          if (matchTerm.isVariable()) {
-            // A variable matches way too many things, so give up.
-            return;
-          }
-          if (typesMismatch(expr, matchTerm)) {
-            return;
-          }
-          if (info.labels.higherOrder && mode != 'other') {
-            // TODO: Offer facts with higher-order variables when we
-            // can match their types properly when generating the
-            // menu.
-            return;
-          }
-          if (expr.matchSchema(matchTerm)) {
-            if (mode == 'algebra') {
-              if (info.labels.algebra) {
-                facts.push(info);
-              }
-              // Otherwise don't show the fact in algebra mode.
-            } else if (mode == 'general') {
-              function okGeneral() {
-                if (info.labels.generalMode || info.labels.algebra) {
-                  return true;
-                }
-                // Only show desimplifiers in "everything" mode.
-                if (info.desimplifier) {
-                  return false;
-                }
-                if (goal.implies()) {
-                  const asms = goal.getLeft();
-                  // TODO: Systematize handling of facts that may add
-                  //   assumptions.
-                  //
-                  // In general mode, if a rule adds assumptions they
-                  // must be of just a few sorts, currently matching
-                  // these schemas.  This is just a quick fix.
-                  if (asms.scanConj
-                      (x =>
-                       // These checks look OK.
-                       !x.matchSchema('R x') &&
-                       !x.matchSchema('not (x = y)') &&
-                       !x.matchSchema('x != y'))) {
-                    return false;
-                  }
-                }
-                return false;
-              }
-              if (okGeneral()) {
-                facts.push(info);
-              }
-            } else {
-              assert(mode == 'other' || mode == 'misc',
-                     'Invalid mode {1}', mode);
-              facts.push(info);
-            }
-          }
+        const goal = info.goal;
+        const matchTerm = goal.matchPart();
+        if (!expr.matchSchema(matchTerm)) {
+          return;
+        }
+        if (typesMismatch(expr, matchTerm)) {
+          return;
+        }
+        const ok =
+              (mode === 'misc'
+               ? info.labels.display || info.labels.edit
+               : mode === 'algebra'
+               ? okAlgebra(info)
+               : mode === 'general'
+               ? !okAlgebra(info) && okGeneral(info)
+               : mode === 'other'
+               ? !okAlgebra(info) && !okGeneral(info) && okOther(info)
+               : assert(false, 'Unknown mode: {1}', mode)
+              );
+        if (ok) {
+          facts.push(info);
+        }
       });
     }
   }
