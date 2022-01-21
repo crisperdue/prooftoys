@@ -1547,7 +1547,7 @@ function RuleMenu(proofEditor) {
                    '<div class="mode selected" data-mode=general>' +
                    'General</div>',
                    '<div class=mode data-mode=other>Other</div>',
-                   '<div class=mode data-mode=misc>Misc</div>',
+                   '<div class=mode data-mode=edit>Edit</div>',
                   );
 
   // Rule chooser:
@@ -1984,24 +1984,28 @@ RuleMenu.prototype.offerableRuleNames = function() {
  */
 RuleMenu.prototype.labelApproved = function(name) {
   const editor = this.proofEditor;
-  var labels = Toy.rules[name].info.labels;
+  const labels = Toy.rules[name].info.labels;
   if (editor.showRules.indexOf(name) >= 0) {
     return true;
   }
   const selStep = editor.proofDisplay.selection;
-  switch (editor.showRuleType) {
-  case 'other':
-  case 'all':
-    return true;
-  case 'misc':
-    return labels.edit || labels.display;
-  case 'algebra':
-    var expr = selStep && selStep.selection;
+  const okAlgebra = () => {
+    const expr = selStep && selStep.selection;
     return (expr && !expr.isReal()
             ? false
             : labels.algebra);
+  };
+  const okGeneral = () => labels.general || labels.basic || labels.algebra;
+  switch (editor.showRuleType) {
+  case 'edit':
+    return labels.edit || labels.display;
+  case 'algebra':
+    return okAlgebra();
   case 'general':
-    return labels.general || labels.basic || labels.algebra;
+    // Any rule specifically labeled "general" is OK here.
+    return labels.general || (okGeneral() && !okAlgebra());
+  case 'other':
+    return !okAlgebra() && !okGeneral();
   default:
     throw new Error('Bad rule policy value: ' + editor.showRuleType);
   }
@@ -2166,7 +2170,7 @@ RuleMenu.prototype.offerableFacts = function() {
       };
       
       // Truthy if OK to show as "more" ignoring exclusivity of categories.
-      const okOther = info => !goal.matchPart().isVariable();
+      const okOther = info => !info.goal.matchPart().isVariable();
         
       Toy.eachFact(function(info) {
         const goal = info.goal;
@@ -2178,7 +2182,7 @@ RuleMenu.prototype.offerableFacts = function() {
           return;
         }
         const ok =
-              (mode === 'misc'
+              (mode === 'edit'
                ? info.labels.display || info.labels.edit
                : mode === 'algebra'
                ? okAlgebra(info)

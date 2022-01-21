@@ -630,7 +630,7 @@ declare(
     inputs: {bool: 1},
     form: ('Assert <input name=bool>'),
     menu: 'assert without proof',
-    labels: 'advanced edit',
+    labels: 'advanced',
     description: 'assert',
     tooltip: 'WFF to assert (possibly to prove later)'
   },
@@ -651,7 +651,7 @@ declare(
     toOffer: 'return step == null',
     description: 'definition',
     tooltip: 'define a name',
-    labels: 'advanced edit'
+    labels: 'advanced'
   },
 
   {name: 'copy',
@@ -1804,9 +1804,9 @@ declare(
     },
     inputs: {site: 1},
     minArgs: 2,
-    menu: 'algebra: simplify {term}',
+    menu: 'simplify {term}',
     description: 'simplify;; {in step siteStep}',
-    labels: 'algebra'
+    labels: 'algebra general'
   },
 
   // Repeatedly apply the one fact as in simplifySite, to
