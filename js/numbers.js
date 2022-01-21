@@ -940,7 +940,7 @@ declare
     },
     toOffer: 'return term.isCall2("=");',
     form: ('Add <input name=term> to both sides of the equation'),
-    menu: 'algebra: add to both sides',
+    menu: 'add to both sides',
     tooltip: ('add to both sides'),
     description: 'add {term} to both sides;; {in step siteStep}',
     labels: 'algebra'
@@ -962,7 +962,7 @@ declare
     },
     toOffer: 'return term.isCall2("=");',
     form: ('Subtract <input name=term> from both sides of the equation'),
-    menu: 'algebra: subtract from both sides',
+    menu: 'subtract from both sides',
     tooltip: ('subtract from both sides'),
     description: 'subtract {term} from both sides;; {in step siteStep}',
     labels: 'algebra'
@@ -984,7 +984,7 @@ declare
     },
     toOffer: 'return term.isCall2("=");',
     form: ('Multiply both sides of the equation by <input name=term>'),
-    menu: 'algebra: multiply both sides',
+    menu: 'multiply both sides',
     tooltip: ('multiply both sides'),
     description: 'multiply both sides by {term};; {in step siteStep}',
     labels: 'algebra'
@@ -1006,7 +1006,7 @@ declare
     },
     toOffer: 'return term.isCall2("=");',
     form: ('Divide both sides of the equation by <input name=term>'),
-    menu: 'algebra: divide both sides',
+    menu: 'divide both sides',
     tooltip: ('divide both sides'),
     description: 'divide both sides by {term};; {in step equation}',
     labels: 'algebra'
@@ -1030,7 +1030,7 @@ declare
       return simplifyAddSubBoth(step, step.wff.parentEqn(path)); 
     },
     toOffer: 'return term.isReal();',
-    menu: ' algebra: add {term} to both sides',
+    menu: ' add {term} to both sides',
     description: 'add {site};; {in step siteStep}',
     labels: 'algebra'
   },
@@ -1051,7 +1051,7 @@ declare
       return simplifyAddSubBoth(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
-    menu: ' algebra: subtract {term} from both sides',
+    menu: ' subtract {term} from both sides',
     description: 'subtract {site};; {in step siteStep}',
     labels: 'algebra'
   },
@@ -1072,7 +1072,7 @@ declare
       return simplifyMulDivBoth(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
-    menu: ' algebra: multiply both sides by {term}',
+    menu: ' multiply both sides by {term}',
     description: 'multiply by {site};; {in step siteStep}',
     labels: 'algebra'
   },
@@ -1093,7 +1093,7 @@ declare
       return simplifyMulDivBoth(step, step.wff.parentEqn(path));
     },
     toOffer: 'return term.isReal();',
-    menu: ' algebra: divide both sides by {term}',
+    menu: ' divide both sides by {term}',
     description: 'divide by {site};; {in step siteStep}',
     labels: 'algebra'
   },
@@ -1109,7 +1109,7 @@ declare
     // toOffer: 'return step.getMain().getLeft().isReal()',
     form: ('To step <input name=equation1> add the sides' +
            ' of step <input name=equation2>'),
-    menu: 'algebra: add the sides of an equation to this',
+    menu: 'add the sides of an equation to this',
     description: 'add the sides of steps {equation1} and {equation2}',
     labels: 'algebra'
   },
@@ -1125,7 +1125,7 @@ declare
     // toOffer: 'return step.getMain().getLeft().isReal()',
     form: ('From step <input name=equation1> subtract the sides' +
            ' of step <input name=equation2>'),
-    menu: 'algebra: subtract an equation from this',
+    menu: 'subtract an equation from this',
     description: 'from step {equation1} subtract the sides of step {equation2}',
     labels: 'algebra'
   }
@@ -1230,7 +1230,7 @@ declare(
     },
     inputs: {step: 1},
     form: ('Simplify negations in <input name=step>'),
-    menu: 'algebra: simplify negations',
+    menu: 'simplify negations',
     description: 'simplify negations',
     labels: 'algebra'
   },
@@ -1247,7 +1247,7 @@ declare(
     },
     inputs: {step: 1},
     form: ('Convert - to + in step <input name=step>'),
-    menu: 'algebra: convert - to +',
+    menu: 'convert - to +',
     description: 'convert subtraction to addition',
     labels: 'algebra'
   },
@@ -1269,7 +1269,7 @@ declare(
     },
     inputs: {step: 1},
     form: ('Clean up the terms in step <input name=step>'),
-    menu: 'algebra: clean up terms',
+    menu: 'clean up terms',
     description: 'clean up each term',
     labels: 'algebra'
   }
@@ -1306,7 +1306,7 @@ declare
     toOffer: function(step, term) {
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
-    menu: 'algebra: flatten {term}',
+    menu: 'flatten {term}',
     description: 'flatten term;; {in step siteStep}',
     labels: 'algebra'
   },
@@ -1347,7 +1347,7 @@ declare
     toOffer: function(step, term) {
       return (term.matchSchema('a + b') || term.matchSchema('a - b'));
     },
-    menu: 'algebra: collect like terms in {term}',
+    menu: 'collect like terms in {term}',
     description: 'collect like terms;; {in step siteStep}',
     labels: 'algebra'
   },
@@ -1408,7 +1408,7 @@ declare
                parts: {a: 'flatteners'}}}
            ]}),
     inputs: {site: 1},
-    menu: 'algebra: flatten {term}',
+    menu: 'flatten {term}',
     description: 'flatten term;; {in step siteStep}',
     labels: 'algebra'
    },
@@ -1452,7 +1452,7 @@ declare
        return result.justify('makeRatio', arguments, [step_arg]);
      },
      inputs: {site: 1},
-     menu: 'algebra: put in ratio form',
+     menu: 'put in ratio form',
      description: 'to ratio form',
      labels: 'algebra'
     },
@@ -1495,7 +1495,7 @@ declare
                result.justify('factorToRightmost', arguments, [step_arg]));
      },
      inputs: {site: 1},
-     menu: 'algebra: make rightmost',
+     menu: 'make rightmost',
      description: 'make rightmost',
      labels: 'algebra'
     },
@@ -1651,7 +1651,7 @@ declare
        }
      },
      inputs: {site: 1},
-     menu: 'algebra: cancel by division',
+     menu: 'cancel by division',
      description: 'cancel by division',
      labels: 'algebra'
     },
@@ -1827,7 +1827,7 @@ declare
     },
     inputs: {site: 1},
     toOffer: 'return term.isReal()',
-    menu: 'algebra: term to form a / b',
+    menu: 'term to form a / b',
     description: 'ratio form for term;; {in step siteStep}',
     labels: 'obsolete'
   },
@@ -1867,7 +1867,7 @@ declare
     },
     inputs: {site: 1},
     toOffer: 'return term.isReal()',
-    menu: 'algebra: to form k * x',
+    menu: 'to form k * x',
     description: 'as k * x;; {in step siteStep}',
     labels: 'algebra'
   },
@@ -1931,7 +1931,7 @@ declare
     },
     inputs: {step: 1},
     form: 'Regroup additive terms in step <input name=step>',
-    menu: 'algebra: regroup additive terms',
+    menu: 'regroup additive terms',
     description: 'regroup additive terms',
     labels: '?'
   },
@@ -1950,7 +1950,7 @@ declare
     },
     inputs: {step: 1},
     form: 'Regroup terms in step <input name=step>',
-    menu: 'algebra: regroup terms',
+    menu: 'regroup terms',
     description: 'regroup terms',
     labels: 'algebra'
    }
@@ -2008,7 +2008,7 @@ declare(
       return result.justify('moveTermRight', arguments, [step]);
     },
     inputs: {site: 1},
-    menu: 'algebra: move {term} to the right',
+    menu: 'move {term} to the right',
     description: 'move term right',
     labels: 'algebra'
   },
@@ -2053,7 +2053,7 @@ declare(
       return (result || step).justify('moveTermLeft', arguments, [step]);
     },
     inputs: {site: 1},
-    menu: 'algebra: move {term} to the left',
+    menu: 'move {term} to the left',
     description: 'move term left',
     labels: 'algebra'
   },
@@ -2082,7 +2082,7 @@ declare(
         : step;
     },
     inputs: {site: 1},
-    menu: 'algebra: group {term} with {right}',
+    menu: 'group {term} with {right}',
     description: 'group to the right',
     labels: 'algebra'
   },
@@ -2107,7 +2107,7 @@ declare(
               .justify('ungroup', arguments, [step]));
     },
     inputs: {site: 1},
-    menu: 'algebra: ungroup {term}',
+    menu: 'ungroup {term}',
     description: 'ungroup',
     labels: 'algebra'
   },
@@ -2138,7 +2138,7 @@ declare(
       }
     },
     inputs: {site: 1},
-    menu: 'algebra: move term left as needed',
+    menu: 'move term left as needed',
     description: 'move term left as needed',
     // Could be algebra, but this rule seems better for more advanced
     // students.
@@ -2159,7 +2159,7 @@ declare(
     },
     inputs: {site: 1, varName: 3},
     form: 'Group terms with variable <input name=varName>',
-    menu: 'algebra: group terms',
+    menu: 'group terms',
     description: 'group terms with {varName}'
   },
   */

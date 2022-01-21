@@ -1709,7 +1709,7 @@ RuleMenu.prototype._update = function() {
           }
         }
       }
-      var display = '= <span class=menuResult></span>';
+      var display = ' = <span class=menuResult></span>';
       if (subst) {
         // TODO: Consider using the length of the unicode in deciding
         //   what message to generate here.
@@ -1728,8 +1728,10 @@ RuleMenu.prototype._update = function() {
       itemInfos.push(info);
   });
   itemInfos.sort(function(a, b) {
-      return a.html.localeCompare(b.html);
-    });
+    // We use leading spaces to influence sorting: items with
+    // more leading spaces come before ones with fewer.
+    return a.html.localeCompare(b.html);
+  });
   var items = itemInfos.map(function(info) {
       var $item = $('<div class="ruleItem noselect">');
       $item.html(info.html);

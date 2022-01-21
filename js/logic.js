@@ -1784,7 +1784,7 @@ declare(
     },
     inputs: {step: 1},
     form: ('Simplify step <input name=step>'),
-    menu: 'algebra: simplify',
+    menu: 'simplify',
     description: 'simplify;; {step step}',
     labels: 'algebra'
   },
@@ -1820,7 +1820,7 @@ declare(
       return result.justify('simplifySiteWith', arguments, [step]);
     },
     inputs: {site: 1, term: 3},
-    menu: 'algebra: simplify {term} with fact',
+    menu: 'simplify {term} with fact',
     form: 'Simplify using term <input name=term>',
     description: 'simplify using {term};; {in step siteStep}',
     labels: 'algebra'
