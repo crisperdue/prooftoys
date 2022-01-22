@@ -1971,7 +1971,7 @@ RuleMenu.prototype.refresh = function() {
 RuleMenu.prototype.offerableRuleNames = function() {
   var matches = [];
   for (var name in Toy.rules) {
-    if (this.labelApproved(name) && this.offerable(name)) {
+    if (this.labelApproved(name) && this.offerableRule(name)) {
       matches.push(name);
     }
   }
@@ -2031,7 +2031,7 @@ RuleMenu.prototype.labelApproved = function(name) {
  * Otherwise rules that take no step and no site and do have a form
  * are offerable.
  */
-RuleMenu.prototype.offerable = function(ruleName) {
+RuleMenu.prototype.offerableRule = function(ruleName) {
   const rule = Toy.rules[ruleName];
   const info = rule.info;
   const inputs = info.inputs;
