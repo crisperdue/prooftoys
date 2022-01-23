@@ -412,7 +412,7 @@ var rules = {};
 // Rule definitions that have statements (and are thus theorems)
 // support the same properties as facts, specifically: simplifier,
 // desimplifier, noSwap, labels, and converse (for properties of facts
-// that have a swapped version).
+// that have a swapped version).  For more information see addFact.
 
 /**
  * Process the given info into form for inclusion into Toy.rules and
