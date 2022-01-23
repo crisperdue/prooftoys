@@ -1090,54 +1090,6 @@ function isRecordedFact(stmt) {
   return false;
 }
 
-/**
- * Record the given fact information; private to addFact.  See
- * comments on _factsByKey and fact management functions for the
- * expectations on the argument.
- *
- * Returns truthy for success, falsy if the new fact statement is not
- * allowable: either already recorded or alters the meaning of a
- * statement already referring to a different fact.
- */
-function setFactInfo(info) {
-  if (isRecordedFact(info.goal)) {
-    console.log('Already recorded fact:', info.goal.toString());
-    return false;
-  }
-  const key = getResInfo(info.goal).key;
-  const facts = _factsByKey.get(key) || [];
-  // Ensure that the key has an array of facts.
-  facts.length > 0 || _factsByKey.set(key, facts);
-  // Tentatively add the fact to the list.
-  facts.push(info);
-  const resolutions = _resolutionsByKey.get(key);
-  // If foundRef becomes non-null, this will become an array of the
-  // facts that it could refer to.
-  var extFacts;
-  if (resolutions) {
-    // If found, this is a ref whose statement would refer to a
-    // different fact in the presence of the tentative new fact.
-    const foundRef = resolutions.find(function(rec) {
-        extFacts = factsExtending(rec.resInfo);
-        return (extFacts.length != 1 ||
-                extFacts[0].factInfo != rec.factInfo);
-      });
-    if (foundRef) {
-      // There was an issue.  Immediately remove the fact from the list.
-      facts.pop();
-      // Then complain and return false.
-      console.error('New fact', info.goal.toString());
-      // TODO: Make available info to improve the following message.
-      //   Reference to the stated fact reference would be helpful.
-      console.log('  would confound references to',
-                  foundRef.resInfo.stmt.toString(),
-                  'info:', foundRef.resInfo);
-      return false;
-    }
-  }
-  return true;
-}
-
 
 /**
  * Like getResult, below, but always proves the statement if it has
@@ -2243,6 +2195,54 @@ function addFact(info) {
     setFactInfo(info);
   }
   return info;
+}
+
+/**
+ * Record the given fact information; private to addFact.  See
+ * comments on _factsByKey and fact management functions for the
+ * expectations on the argument.
+ *
+ * Returns truthy for success, falsy if the new fact statement is not
+ * allowable: either already recorded or alters the meaning of a
+ * statement already referring to a different fact.
+ */
+function setFactInfo(info) {
+  if (isRecordedFact(info.goal)) {
+    console.log('Already recorded fact:', info.goal.toString());
+    return false;
+  }
+  const key = getResInfo(info.goal).key;
+  const facts = _factsByKey.get(key) || [];
+  // Ensure that the key has an array of facts.
+  facts.length > 0 || _factsByKey.set(key, facts);
+  // Tentatively add the fact to the list.
+  facts.push(info);
+  const resolutions = _resolutionsByKey.get(key);
+  // If foundRef becomes non-null, this will become an array of the
+  // facts that it could refer to.
+  var extFacts;
+  if (resolutions) {
+    // If found, this is a ref whose statement would refer to a
+    // different fact in the presence of the tentative new fact.
+    const foundRef = resolutions.find(function(rec) {
+        extFacts = factsExtending(rec.resInfo);
+        return (extFacts.length != 1 ||
+                extFacts[0].factInfo != rec.factInfo);
+      });
+    if (foundRef) {
+      // There was an issue.  Immediately remove the fact from the list.
+      facts.pop();
+      // Then complain and return false.
+      console.error('New fact', info.goal.toString());
+      // TODO: Make available info to improve the following message.
+      //   Reference to the stated fact reference would be helpful.
+      console.log('  would confound references to',
+                  foundRef.resInfo.stmt.toString(),
+                  'info:', foundRef.resInfo);
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
