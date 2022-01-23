@@ -2125,7 +2125,8 @@ var factProperties = {
  *   substitution, interactively or not, taking the resulting
  *   equation step as its argument.  This is currently disabled.
  * labels: Optional object/set of label names.  If given as a string,
- *   parses space-separated parts into a set.
+ *   parses space-separated parts into a set.  The result constains just
+ *   "default" if none are given.
  * converse.labels: Like labels, but applies to a "swapped" version
  *   of the fact, if any.
  */
@@ -2184,6 +2185,9 @@ function addFact(info) {
   // to false when the proof succeeds.
   info.inProgress = false;
   info.labels = processLabels(info.labels);
+  if (Toy.isEmpty(info.labels)) {
+    info.labels.default = true;
+  }
   if (isRecordedFact(info.goal)) {
     console.info('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
