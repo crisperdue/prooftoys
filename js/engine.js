@@ -418,8 +418,6 @@ var rules = {};
  * Process the given info into form for inclusion into Toy.rules and
  * add the resulting rule or rules.  This does not do inference, so it
  * can be called before any theorems are proved.
- *
- * TODO: Consider renaming this, perhaps to "prove".
  */
 function addRule(info) {
   var name = info.name;
@@ -508,10 +506,18 @@ function addRule(info) {
     if (!properties.noSwap) {
       addSwappedFact(properties);
     }
+    // There is a proof but no name, so we are done.
+    if (!name) {
+      return;
+    }
   }
   if (proof) {
     // Just execute the proof on first use, but re-justify on each
     // use so the result will have its own ordinal.
+    //
+    // TODO: Refactor so the proof function given to addFact runs the
+    //   proof just once using this function, making sure somehow that
+    //   it rejustifies on each call.
     rule = function() { 
       if (rule.result === undefined) {
         rule.result = proof();
@@ -538,7 +544,7 @@ function addRule(info) {
       info.description = 'theorem ' + name
     }
   } else {
-    // It is a rule of inference, not an axiom or theorem.
+    // It is a rule of inference, not an axiom, theorem, or fact.
     assert(name, 'Inference rule must have a name', info);
     // The action property is the user code to run it.
     main = info.action;
@@ -2086,8 +2092,10 @@ var factProperties = {
  * prover.  Top-level code, as in files of theorems, definitions, and
  * inference rules, should use addRule (or addFactsMap) as they
  * support rules of inference,and do additional useful work such as
- * automatically add appropriate swapped facts.  The goal as stored in
- * the database has type information.
+ * automatically adding appropriate swapped facts.  The goal as stored
+ * in the database has type information.
+ *
+ * Returns the fully-processed "info".
  *
  * This does no inference, so it can be called before proving any
  * theorems.
@@ -2116,17 +2124,10 @@ var factProperties = {
  * afterMatch: if given, a function that a rewrite runs after
  *   substitution, interactively or not, taking the resulting
  *   equation step as its argument.  This is currently disabled.
- * labels: Object/set of label names.  If given as a string, parses
- *   space-separated parts into a set.  Currently just "generalMode"
- *   for desimplifiers to be offered in "general" mode.
+ * labels: Optional object/set of label names.  If given as a string,
+ *   parses space-separated parts into a set.
  * converse.labels: Like labels, but applies to a "swapped" version
  *   of the fact, if any.
- *
- * The info object is stored in the database with an additional
- * "selfRef" property, in the form of a fact reference as used for
- * fact lookups, treating the fact as a reference to itself.
- *
- * For processing of additional metadata properties use addRule.
  */
 function addFact(info) {
   // This function adds to the info and supplies it to setFactInfo.
