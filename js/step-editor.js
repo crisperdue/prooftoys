@@ -1522,9 +1522,6 @@ StepEditor.prototype.parseValue = function(value, type) {
  * changed: true iff its refresh has been activated, but
  *   the update has not yet run.
  *
- * onEnter, method: pass a function to call when the mouse enters.
- * onLeave, method: pass a function to call when the mouse leaves.
- *
  * Internal-ish properties:
  * hovering: DOM node under mouse or null.
  */
@@ -1565,23 +1562,6 @@ function RuleMenu(proofEditor) {
   var $scrollArea = $('<div class=scrollingMenu>');
   $scrollArea.append(self.$items);
   $node.append($scrollArea);
-
-  // Concise code to set up pseudo-events for "enter" and "leave".
-  // Note that the methods are on the instance, not the prototype.
-  // Invoke via onEnter and onLeave methods.  Note: leavers are also
-  // called when the menu is hidden.
-  var enters = $.Callbacks();
-  self.onEnter = enters.add.bind(enters);
-  $scrollArea.on('mouseenter', function() {
-      enters.fire();
-    });
-  var leavers = $.Callbacks();
-  self.onLeave = leavers.add.bind(leavers);
-  $scrollArea.on('mouseleave', function() {
-      leavers.fire();
-    });
-  // Make the leavers available from methods.
-  self._leavers = leavers;
 
   // Set up event handlers.
 
@@ -1756,12 +1736,6 @@ RuleMenu.prototype._update = function() {
     }
     $items.find('.menuRightNeighbor').append($right);
   }
-  if (items.length === 0) {
-    // The menu can be hidden by clicks within it, and that does not
-    // trigger a mouse leave event.
-    self._leavers.fire();
-  }
-
 };
 
 /**
