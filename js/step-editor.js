@@ -1997,7 +1997,8 @@ RuleMenu.prototype.labelApproved = function(name) {
             ? false
             : labels.algebra);
   };
-  const okGeneral = () => labels.general || labels.basic || labels.algebra;
+  const okGeneral = () =>
+        labels.general || labels.basic || labels.algebra || labels.none;
   switch (editor.showRuleType) {
   case 'edit':
     return labels.edit || labels.display;
@@ -2007,7 +2008,7 @@ RuleMenu.prototype.labelApproved = function(name) {
     // Any rule specifically labeled "general" is OK here.
     return labels.general || (okGeneral() && !okAlgebra());
   case 'other':
-    return !okAlgebra() && !okGeneral();
+    return !okAlgebra() && !okGeneral() && !labels.primitive;
   default:
     throw new Error('Bad rule policy value: ' + editor.showRuleType);
   }
@@ -2135,21 +2136,38 @@ RuleMenu.prototype.offerableFacts = function() {
       // Truthy if OK to show in algebra mode.
       const okAlgebra = info => info.labels.algebra;
 
-      // Truthy if OK to show in "general" mode, ignoring
+      // Truthy if OK to offer in "general" mode, ignoring
       // the exclusion of facts shown in algebra mode.
       const okGeneral = info => {
         const goal = info.goal;
-        if (info.labels.generalMode || info.labels.algebra) {
+        if (info.labels.general || info.labels.algebra) {
           return true;
         }
         if (info.desimplifier) {
           return false;
         }
+        return false;
+      };
+      
+      // Truthy if OK to show as "more" ignoring potential exclusion
+      // due to being in other categories.
+      const okOther = info => (!info.labels.primitive &&
+                               !info.goal.matchPart().isVariable());
+        
+      Toy.eachFact(function(info) {
+        const goal = info.goal;
+        const matchTerm = goal.matchPart();
+        if (!expr.matchSchema(matchTerm)) {
+          return;
+        }
+        if (typesMismatch(expr, matchTerm)) {
+          return;
+        }
         if (info.labels.higherOrder) {
           // TODO: Offer facts with higher-order variables when we
           // can match their types properly when generating the
           // menu.
-          return false;
+          return;
         }
         if (goal.implies()) {
           const asms = goal.getLeft();
@@ -2165,23 +2183,8 @@ RuleMenu.prototype.offerableFacts = function() {
                !x.matchSchema('R x') &&
                !x.matchSchema('not (x = y)') &&
                !x.matchSchema('x != y'))) {
-            return false;
+            return;
           }
-        }
-        return false;
-      };
-      
-      // Truthy if OK to show as "more" ignoring exclusivity of categories.
-      const okOther = info => !info.goal.matchPart().isVariable();
-        
-      Toy.eachFact(function(info) {
-        const goal = info.goal;
-        const matchTerm = goal.matchPart();
-        if (!expr.matchSchema(matchTerm)) {
-          return;
-        }
-        if (typesMismatch(expr, matchTerm)) {
-          return;
         }
         const ok =
               (mode === 'edit'

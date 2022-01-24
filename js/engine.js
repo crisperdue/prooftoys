@@ -634,11 +634,6 @@ function addRule(info) {
   }
 
   info.labels = processLabels(info.labels);
-  if (Toy.isEmpty(info.labels)) {
-    // Anything conceivably offerable (with a form), default to
-    // "basic" if no other labels.
-    info.labels.basic = true;
-  }
 
   // Add all metadata as the function's "info" property.
   rule.info = info;
