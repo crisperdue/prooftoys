@@ -1581,7 +1581,7 @@ function RuleMenu(proofEditor) {
     proofEditor.stepEditor.clearError();
   });
 
-  $modeList.on('click', 'div', function(event) {
+  $modeList.on('mouseenter', '.mode', function(event) {
     const $selected = $modeList.find('[class~=selected]');
     const mode = this.dataset.mode;
     if (mode) {
