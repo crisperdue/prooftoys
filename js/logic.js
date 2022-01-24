@@ -90,9 +90,11 @@ definition('exists1 = {p. exists {x. p = {y. y = x}}}');
 // definition('if = {p. {x. {y. the1 {z. p & z = x | not p & z = y}}}}');
 
 declare(
-  {statement: 'if T x y = x', axiom: true,
+  {name: 'axiom6T',
+   statement: 'if T x y = x', axiom: true,
    simplifier: true},
-  {statement: 'if F x y = y', axiom: true,
+  {name: 'axiom6F',
+   statement: 'if F x y = y', axiom: true,
    simplifier: true}
 );
 
@@ -153,6 +155,7 @@ declare(
 
   {name: 'axiom2',
     statement: 'x = y => h x = h y', axiom: true,
+    labels: 'higherOrder',
     inputs: {},
     description: 'axiom of function application',
     tooltip: ('functions take equal values to equal values')
@@ -164,6 +167,7 @@ declare(
    */
   {name: 'axiom2a',
     statement: 'x = y => (p x == p y)', axiom: true,
+    labels: 'higherOrder',
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
       var step2 = rules.eqSelf('(==)');
@@ -215,7 +219,6 @@ declare(
                      : call_arg);
       assert(call1.isLambdaCall(),
              'Axiom 4 needs ({v. B} A), got: {1}', call_arg);
-      // TODO: XXX Copy if not already typed, else typecheck it.
       const call = call1.typedCopy();
       var lambda = call.fn;
       const result =
@@ -231,6 +234,7 @@ declare(
     },
     labels: 'primitive',
     inputs: {term: 1},  // Specifically a Call to a Lambda.
+    toOffer: (step, term) => term.isCall1() && term.fn instanceof Lambda,
     form: 'Enter {v. body} expr <input name=term>',
     menu: 'apply a lambda to its argument',
     description: 'axiom of substitution',
@@ -1066,7 +1070,7 @@ declare(
     menu: 'consider {term} in isolation',
     tooltip: ('prepare to transform term'),
     description: 'term equal to itself',
-    labels: 'display'
+    labels: 'general algebra'
   },
 
   // r5201a is not implemented.  It would be ambiguous in case the
@@ -1964,7 +1968,7 @@ declare(
     inputs: {bool: 1},
     form: ('Term to use in ((T = A) = A): <input name=bool>'),
     menu: '(T = A) = A',
-    labels: 'uncommon',
+    labels: 'primitive',
     tooltip: ('For any expression derives (T = A) = A.'),
     description: '(T = A) = A'
   },
@@ -5578,7 +5582,7 @@ declare(
                .rewrite('/right', 'x != y == not (x = y)')
                .andThen('rewriteOnlyFrom', '/right/arg', all));
      },
-    labels: 'generalMode',
+    labels: 'general',
     desimplifier: true
    },
 
