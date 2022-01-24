@@ -152,23 +152,27 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
 //
 
 /**
- * Process a value as a set of labels.  If it is a string, convert it
- * to an object/set by treating it as a space-separated list of words.
+ * Processes an object/set or string as a set of labels.  If it is a
+ * string, converts it to an object/set by treating it as a
+ * space-separated list of words.  If the object/set is empty
+ * returns one containing just "none", for convenience.
  */
 function processLabels(labels) {
   switch(typeof labels) {
   case 'string':
     var result = {};
-    labels.split(/\s+/)
-      .forEach(function(label) { result[label] = true; });
-    return result;
+    const array = labels.split(/\s+/);
+    if (array.length) {
+      array.forEach(function(label) { result[label] = true; });
+      return result;
+    } else {
+      return {none: true};
+    }
   case 'object':
     return labels;
   default:
-    if (labels) {
-      console.error('Bad labels', labels);
-    }
-    return {};
+    assert(!labels, 'Bad labels: {1}', labels);
+    return {none: true};
   }
 }
 
@@ -387,9 +391,9 @@ var rules = {};
 //   Either sort of function receives the step as argument.
 //
 // labels: space-separated list of words to categorize the rule,
-//   influencing the rules modes in which it will be offered.
-//   Defaults to "basic" if not given.  See processLabels and
-//   RuleMenu.labelApproved for more details.
+//   influencing the rules modes in which it will be offered.  If none
+//   are given, effectively a single label "none".  See processLabels
+//   for more details.
 //
 // isRewriter: true to highlight on hover like a rewrite rule.
 //   TODO: Consider removing this as unnecessary.
@@ -2126,7 +2130,7 @@ var factProperties = {
  *   equation step as its argument.  This is currently disabled.
  * labels: Optional object/set of label names.  If given as a string,
  *   parses space-separated parts into a set.  The result constains just
- *   "default" if none are given.
+ *   "none" if none are given.
  * converse.labels: Like labels, but applies to a "swapped" version
  *   of the fact, if any.
  */
@@ -2184,10 +2188,9 @@ function addFact(info) {
   // Set to true when starting to attempt a proof, then
   // to false when the proof succeeds.
   info.inProgress = false;
+
   info.labels = processLabels(info.labels);
-  if (Toy.isEmpty(info.labels)) {
-    info.labels.default = true;
-  }
+
   if (isRecordedFact(info.goal)) {
     console.info('Fact', info.goal.$$, 'already recorded, skipping.');
   } else {
