@@ -376,20 +376,6 @@ Expr.prototype.findUntyped = function() {
   }
 };
 
-/**
- * Make a copy suitable for attaching type information destructively.
- * Treat this as internal to rules.axiom4 and rules.assert.
- *
- * TODO: Remove this entirely Real Soon, obsoleted by Expr.typedCopy.
- *
- * Sharing occurrences of a variable guarantees that all occurrences
- * will have the same type assignment, avoiding some bookkeeping
- * during the type assignment.
- */
-Expr.prototype.copyForTyping = function() {
-  return this.deepCopy();
-};
-
 Toy._typed = new WeakMap();
 
 /**
