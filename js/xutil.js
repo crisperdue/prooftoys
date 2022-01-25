@@ -376,13 +376,16 @@ Expr.prototype.findUntyped = function() {
   }
 };
 
-Toy._typed = new WeakMap();
-
 /**
- * Makes a well-typed copy of this with all-new nodes, so that if full
- * resolution of type information mutates types in the copy, no part
- * of this will be affected.  If this already has a type, return it
- * without making a copy.
+ * If this already has a type, return it without making a copy.
+ * Otherwise makes and returns a well-typed copy of this, ignoring any
+ * type information already present.
+ *
+ * TODO: Document how and why this approach is (I think) adequate.
+ *   Consider for example that a subterm may contain type information
+ *   in its original context, that can become more general as part of
+ *   this operation.  The term "f = g" in axiom3 seems an interesting
+ *   case.
  */
 Expr.prototype.typedCopy = function(mustCopy) {
   if (!mustCopy && this.type) {
@@ -404,6 +407,9 @@ Expr.prototype.typedCopy = function(mustCopy) {
   const unifier = new Map();
   // Recursive function that does all the work:
   const copy = x => {
+    // Makes a copy with all-new nodes (except potentially monomorphic
+    // constants).  If full resolution of type information mutates
+    // types in the copy, no part of the input will be affected.
     if (x.isVariable()) {
       const xnm = x.name;
       const bound = boundVars.find(y => y.name === xnm);
@@ -479,7 +485,8 @@ Expr.prototype.typedCopy = function(mustCopy) {
   }
   const finalUnifier = Toy.resolve(unifier);
   annotated.replaceTypes(finalUnifier);
-  Toy._typed.set(this, annotated);
+  // Tried storing the association of original to typed copy in
+  // a WeakMap, but it did not seem to help performance.
   return annotated;
 };
 
