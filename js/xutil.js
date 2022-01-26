@@ -345,14 +345,6 @@ function parseTokens(tokens) {
 
 
 //// TYPE INFERENCE
-////
-//// The type inference code is derived from the description and code
-//// for Hindley-Milner style type inference at
-//// http://lucacardelli.name/Papers/BasicTypechecking.pdf and from
-//// Robert Smallshire's Python implementation at
-//// http://www.smallshire.org.uk/sufficientlysmall/2010/04/11/
-//// a-hindley-milner-type-inference-implementation-in-python/.
-//// https://github.com/rob-smallshire/hindley-milner-python
 
 // TODO: More and better comments throughout the type analysis code.
 
