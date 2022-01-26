@@ -684,7 +684,7 @@ declare(
     menu: 'display in full',
     tooltip: 'display fully',
     description: 'display fully;; {step step}',
-    labels: 'display basic'
+    labels: 'display'
   },
       
   // TODO: Consider making this a command rather than a rule,
@@ -2968,7 +2968,7 @@ declare(
     menu: 'assume {term}',
     tooltip: ('assume term'),
     description: 'assume',
-    labels: 'display'
+    labels: 'basic'
   },
 
   /**
