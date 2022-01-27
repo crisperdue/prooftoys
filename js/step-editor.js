@@ -1032,6 +1032,7 @@ StepEditor.prototype.clearError = function() {
  */
 StepEditor.prototype.showForm = function() {
   this.form.show();
+  this.formShowing = true;
   this.proofDisplay.setSelectLock(true);
   this._proofEditor.containerNode.addClass('ruleFormVisible');
   this._proofEditor.ruleMenu.suppressing = true;
@@ -1042,6 +1043,7 @@ StepEditor.prototype.showForm = function() {
  */
 StepEditor.prototype.hideForm = function() {
   this.form.hide();
+  this.formShowing = false;
   this.proofDisplay.setSelectLock(false);
   this._proofEditor.containerNode.removeClass('ruleFormVisible');
 };
@@ -1300,15 +1302,15 @@ StepEditor.prototype._tryRule = function(rule, args) {
     // has any effect.
     Toy.afterRepaint(function() {
       cleanup();
-        var trial = autoSimplify(result);
-        // If autoSimplify is a no-op, do not display the result.
-        var simplified = (trial.sameAs(result)
-                          ? result
-                          : trial);
-        var steps = Toy.unrenderedDeps(simplified);
-        var top2 = $(window).scrollTop();
-        steps.forEach(function(step) {
-            self.proofDisplay.addStep(step);
+      var trial = autoSimplify(result);
+      // If autoSimplify is a no-op, do not display the result.
+      var simplified = (trial.sameAs(result)
+                        ? result
+                        : trial);
+      var steps = Toy.unrenderedDeps(simplified);
+      var top2 = $(window).scrollTop();
+      steps.forEach(function(step) {
+        self.proofDisplay.addStep(step);
       });
       checkTop(top2);
       // Scroll the proof steps DIV all the way to the bottom
@@ -1585,6 +1587,10 @@ function RuleMenu(proofEditor) {
   });
 
   $modeList.on('mouseenter', '.mode', function(event) {
+    if (proofEditor.stepEditor.formShowing) {
+      // Do not change modes if the rule form is displayed.
+      return;
+    }
     const $selected = $modeList.find('[class~=selected]');
     const mode = this.dataset.mode;
     if (mode) {
