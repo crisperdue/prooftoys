@@ -1309,9 +1309,12 @@ StepEditor.prototype._tryRule = function(rule, args) {
         var top2 = $(window).scrollTop();
         steps.forEach(function(step) {
             self.proofDisplay.addStep(step);
-          });
-        checkTop(top2);
       });
+      checkTop(top2);
+      // Scroll the proof steps DIV all the way to the bottom
+      // so the new step(s) are visible.
+      editor.containerNode.find('.proofSteps').scrollTop(1e9)
+    });
   }
   if (!deferCleanup) {
     cleanup();

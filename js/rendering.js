@@ -334,7 +334,7 @@ ProofDisplay.prototype.suggestionMessage = function(message) {
  */
 ProofDisplay.prototype.suggest = function(node) {
   this.hideSuggestion();
-  $(this.stepsNode).append(node);
+  $(this.stepsNode).closest('.proofDisplay').append(node);
   this.suggesting = node;
 };
 

@@ -94,6 +94,8 @@
 }
 
 .proofDisplay.editable {
+    // The step suggestion is positioned from this.
+    position: relative;
     /* This allows room for display of a next-step suggestion. */
     margin-bottom: 1em;
     margin-top: 1em;
@@ -111,9 +113,14 @@
   margin-left: 1em;
 }
 
-.stepsParent {
-  /* Can support absolute positioning of children; currently unused. */
-  position: relative;
+.proofDisplay.editable .proofSteps {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-top: 3px;
+  padding-left: 3px;
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  box-shadow: inset lightgray 2px 2px 3px;
 }
 
 /*
