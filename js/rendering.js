@@ -144,7 +144,6 @@ function getRightNeighbor(step, term) {
 // DOM representation notes:
 //
 // <div class=proofDisplay>
-// <div class=stepsParent>  (TODO: remove this obsolete level of DIV)
 //   <div class=proofSteps>  (getStepsNode)
 //     // Proof steps and possible subproofs between them
 //     <div class=proofStep> (getStepNode)
@@ -215,7 +214,7 @@ function ProofDisplay(properties) {
 
   // Only official "proof nodes" are permitted to have class proofDisplay.
   var $node = $('<div class="proofDisplay logicZone">' +
-             '<div class=stepsParent><div class=proofSteps></div></div>' +
+             '<div class=proofSteps></div>' +
              '</div>');
   $node.data('proofDisplay', this);
   this.node = dom($node);
