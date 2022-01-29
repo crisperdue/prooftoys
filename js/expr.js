@@ -3235,29 +3235,30 @@ function multiReducer(term) {
 }
 
 /**
- * This attempts to confirm that a call to a function variable "self",
- * with one or more arguments, constitutes a higher-order match with
- * "expr" using an established substitution into self defined by the
- * map for the given function variable "fn".  If it does, returns a
- * proved equation from "self" to a term that "matches" expr in this
- * binding context, otherwise null.  Internal to _matchAsSchema.
+ * This attempts to confirm that the schema, a call to a function
+ * variable, with one or more arguments, constitutes a higher-order
+ * match with "expr", combined with an established substitution into
+ * the schema defined by the map for the given function variable "fn".
+ * If it does, returns a proved equation from the schema to a term
+ * that "matches" expr in this binding context, otherwise null.
+ * Internal to _matchAsSchema.
  *
- * As currently implemented, this does not beta reduce "expr" in
- * search of a match.
+ * As currently implemented, this does not actually beta reduce
+ * "expr".
  */
-function checkFnMatch(self, fn, expr, map, bindings) {
+function checkFnMatch(schema, fn, expr, map, bindings) {
   const name = fn.name;
   const lambdas = map[name];
 
   // The path will be built as a reverse path, but all /fn so
   // it will be the same as its reverse.
   let path = Path.empty;
-  for (let term = self;
+  for (let term = schema;
        term instanceof Call && term.fn instanceof Call;
        term = term.fn) {
     path = new Path('fn', path);
   }
-  let reduced = Toy.rules.consider(self).andThen('instVar', lambdas, name);
+  let reduced = Toy.rules.consider(schema).andThen('instVar', lambdas, name);
   while (path !== Path.empty) {
     const reducible = reduced.getRight();
     if (reducible.matches(expr, bindings)) {
@@ -3273,18 +3274,21 @@ function checkFnMatch(self, fn, expr, map, bindings) {
 }
 
 /**
- * In a function call term whose function is a variable, known to be
- * free in its context, this seeks a lambda term or nested lambda
- * terms to substitute for it, that will match the given expr
- * following beta reduction(s) of the generated lambda(s) with
- * arguments to this call, returning true and extending the map if
- * found, as for _matchAsSchema.  Internal to _matchAsSchema.
+ * Given a schema that is a function call whose function is a
+ * variable, this attempts to build a lambda term or nested lambda
+ * terms to substitute for the variable, resulting in the given expr
+ * after also beta reducing the calls to those lambda(s).  Returns
+ * true and extends the map on success, as for _matchAsSchema.  On
+ * success, this works in the context of the given bound variable
+ * renamings from the schema to the matched term.  Internal to
+ * _matchAsSchema.
  */
-function addFnMatch(self, fn, expr, map, bindings) {
-  // If all variables bound at this site, whose counterparts occur
-  // free in expr, appear as actual arguments to the function, we
-  // can still find a substitution.
-  var args = self.args();
+function addFnMatch(schema, fn, expr, map, renamings) {
+  // Key point: Suppose all variables bound in the context of the
+  // schema, whose counterparts of the same name occur free in expr,
+  // appear as actual arguments to the function, we can find a
+  // substitution.
+  var args = schema.args();
   // These are free in expr, but may be bound in expr's context.
   var exprVars = expr.freeVars();
   // If any variable occurring (free) in expr is bound in expr's
@@ -3293,7 +3297,7 @@ function addFnMatch(self, fn, expr, map, bindings) {
   // the substitution fails.
   var findBindingValue = Toy.findBindingValue;
   for (var name in exprVars) {
-    var b = findBindingValue(name, bindings);
+    var b = findBindingValue(name, renamings);
     if (b) {
       var argName = b.from;
       if (!args.find(function(arg) {
@@ -3303,26 +3307,25 @@ function addFnMatch(self, fn, expr, map, bindings) {
       }
     }
   }
-  // The function call has the arguments needed to enable the
-  // substitution.  Construct a lambda to substitute for the
-  // function variable.
+  // The function call arguments are suitable.  Construct a lambda to
+  // substitute for the function variable.
   var result = expr;
   var arg;
-  // Number of beta expansions applied to the substition for fn.
+  // This will be the number of beta reductions to apply after the
+  // substitution.
   var expansions = 0;
-
   while (args.length) {
-    // Actual argument.
+    // This is the next actual argument to the function variable.
     var arg = args.pop();
     if (arg.isVariable()) {
       // This is non-null iff bound here.  Iff bound here, it
       // corresponds to a variable bound in expr.
-      var otherName = getBinding(arg.name, bindings);
+      const exprName = getBinding(arg.name, renamings);
       // If it is a fresh variable, it will be substituted nowhere.
-      var toBind = (otherName
-                    ? new Atom(otherName)
+      var toBind = (exprName
+                    ? new Atom(exprName)
                     : expr.freshVar(arg.name));
-      result = new Toy.Lambda(toBind, result);
+      result = new Lambda(toBind, result);
       expansions++;
     } else {
       return false;
