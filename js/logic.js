@@ -3205,6 +3205,7 @@ declare(
   //   potential parts of resulting substitutions.
   {name: 'forallXY',
     statement: 'forall {x. forall {y. p x y}} == forall {y. forall {x. p x y}}',
+    noSwap: true,
     proof: function() {
       const step1 = (rules.assume('forall {x. forall {y. p x y}}')
                      .andThen('instForall', '/right', 'x')
@@ -3282,6 +3283,7 @@ declare(
   {name: 'equivForall',
     statement: 'forall {x. p} == p',
     labels: 'higherOrder',
+    simplifier: true,
     converse: {labels: 'higherOrder'},
     proof: function() {
       var term = '{x. F} x';
@@ -3300,6 +3302,7 @@ declare(
   {name: 'equivExists',
     statement: 'exists {x. a} == a',
     labels: 'higherOrder',
+    simplifier: true,
     converse: {labels: 'higherOrder'},
     proof: function() {
       var step1 = (rules.equivForall().andThen('instVar', 'not a', 'p'));
