@@ -2262,7 +2262,7 @@ declare(
       return (rules.fact('p x => exists p')
               .andThen('instVar', '{x. T}', 'p')
               .andThen('reduce', '/left')
-              .andThen('simplifySite', ''));
+              .andThen('rewrite', '', 'T => x == x'));
     }
   },
 
