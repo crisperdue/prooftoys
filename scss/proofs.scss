@@ -113,7 +113,9 @@
   margin-left: 1em;
 }
 
-.proofDisplay.editable .proofSteps {
+// Notice that this rule requires .proofSteps immediately under
+// .proofDisplay, i.e. top-level of proof steps.
+.proofDisplay.editable > .proofSteps {
   height: 300px;
   overflow-y: auto;
   padding-top: 3px;
@@ -121,6 +123,8 @@
   border: 1px solid #ddd;
   box-shadow: inset lightgray 2px 2px 3px;
 }
+
+
 
 /*
  * Container for all the proof steps.  Slightly darker background
