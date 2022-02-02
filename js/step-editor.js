@@ -804,7 +804,7 @@ ProofEditor.prototype.getLastStep = function() {
  * Gets the state of the proof, in string form.
  */
 ProofEditor.prototype.getStateString = function() {
-  return Toy.encodeSteps(this.proofDisplay.steps)
+  return Toy.encodeSteps(this.proofDisplay.steps);
 };
 
 /**
@@ -828,6 +828,7 @@ ProofEditor.prototype.setSteps = function(steps) {
   } else {
     this.proofDisplay.setSteps(steps);
     this.toggleClass('proofLoadError', false);
+    Toy.soonDo(() => this.containerNode.find('.proofSteps').scrollTop(1e9));
   }
 };
 
@@ -2091,100 +2092,81 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
  * fact has the "algebra" label.
  */
 RuleMenu.prototype.offerableFacts = function() {
-  var self = this;
-  var facts = [];
-  var step = self.proofEditor.proofDisplay.selection;
-  if (step) {
-    var expr = step.selection;
-    var TypeConstant = Toy.TypeConstant;
-    // Returns true (a mismatch) iff both Exprs have types that
-    // are type constants (in practice real or boolean), and the
-    // types are not the same.  This is a crude check, but covers
-    // the cases of usual interest.
-    // TODO: Properly unify the types, probably as part of schema
-    //   matching, and eliminate this hack function.
-    function typesMismatch(e1, e2) {
-      var e1Type = e1.hasType();
-      var e2Type = e2.hasType();
-      return (e1Type instanceof TypeConstant &&
-              e2Type instanceof TypeConstant &&
-              // Perhaps compare the names of the type constants?
-              e1Type != e2Type);
-    }
-    if (expr) {
-      const mode = self.proofEditor.showRuleType;
-      // Here are the policy functions to decide what facts
-      // are to be offered.
+  const self = this;
+  const facts = [];
+  const step = self.proofEditor.proofDisplay.selection;
+  const expr = step && step.selection;
+  if (expr) {
+    const mode = self.proofEditor.showRuleType;
+    // Here are the policy functions to decide what facts
+    // are to be offered.
 
-      // Truthy if OK to show in algebra mode.
-      const okAlgebra = info => info.labels.algebra;
+    // Truthy if OK to show in algebra mode.
+    const okAlgebra = info => info.labels.algebra;
 
-      // Truthy if OK to offer in "general" mode, ignoring
-      // the exclusion of facts shown in algebra mode.
-      const okGeneral = info => {
-        const goal = info.goal;
-        if (info.labels.general || info.labels.algebra) {
-          return true;
-        }
-        if (info.desimplifier) {
-          return false;
-        }
+    // Truthy if OK to offer in "general" mode, ignoring
+    // the exclusion of facts shown in algebra mode.
+    const okGeneral = info => {
+      const goal = info.goal;
+      if (info.labels.general || info.labels.algebra) {
+        return true;
+      }
+      if (info.desimplifier) {
         return false;
-      };
-      
-      // Truthy if OK to show as "more" ignoring potential exclusion
-      // due to being in other categories.
-      const okOther = info => (!info.labels.primitive &&
-                               !info.goal.matchPart().isVariable());
-        
-      Toy.eachFact(function(info) {
-        const goal = info.goal;
-        const matchTerm = goal.matchPart();
-        if (!expr.matchSchema(matchTerm)) {
+      }
+      if (info.labels.higherOrder) {
+        return true;
+      }
+      return false;
+    };
+
+    // Truthy if OK to show as "more" ignoring potential exclusion
+    // due to being in other categories.
+    const okOther = info => (!info.labels.primitive &&
+                             !info.goal.matchPart().isVariable());
+
+    Toy.eachFact(function(info) {
+      const goal = info.goal;
+      const matchTerm = goal.matchPart();
+      if (!Toy.coreUnifTypes(expr.type, matchTerm.type)) {
+        return;
+      }
+      const subn = expr.matchSchema(matchTerm);
+      if (!subn) {
+        return;
+      }
+      if (goal.implies()) {
+        const asms = goal.getLeft();
+        // TODO: Systematize handling of facts that may add
+        //   assumptions.
+        //
+        // In general mode, if a rule adds assumptions they
+        // must be of just a few sorts, currently matching
+        // these schemas.  This is just a quick fix.
+        if (asms.scanConj
+            (x =>
+             // These checks look OK.
+             !x.matchSchema('R x') &&
+             !x.matchSchema('not (x = y)') &&
+             !x.matchSchema('x != y'))) {
           return;
         }
-        if (typesMismatch(expr, matchTerm)) {
-          return;
-        }
-        if (info.labels.higherOrder) {
-          // TODO: Offer facts with higher-order variables when we
-          // can match their types properly when generating the
-          // menu.
-          return;
-        }
-        if (goal.implies()) {
-          const asms = goal.getLeft();
-          // TODO: Systematize handling of facts that may add
-          //   assumptions.
-          //
-          // In general mode, if a rule adds assumptions they
-          // must be of just a few sorts, currently matching
-          // these schemas.  This is just a quick fix.
-          if (asms.scanConj
-              (x =>
-               // These checks look OK.
-               !x.matchSchema('R x') &&
-               !x.matchSchema('not (x = y)') &&
-               !x.matchSchema('x != y'))) {
-            return;
-          }
-        }
-        const ok =
-              (mode === 'edit'
-               ? info.labels.display || info.labels.edit
-               : mode === 'algebra'
-               ? okAlgebra(info)
-               : mode === 'general'
-               ? !okAlgebra(info) && okGeneral(info)
-               : mode === 'other'
-               ? !okAlgebra(info) && !okGeneral(info) && okOther(info)
-               : assert(false, 'Unknown mode: {1}', mode)
-              );
-        if (ok) {
-          facts.push(info);
-        }
-      });
-    }
+      }
+      const ok =
+            (mode === 'edit'
+             ? info.labels.display || info.labels.edit
+             : mode === 'algebra'
+             ? okAlgebra(info)
+             : mode === 'general'
+             ? !okAlgebra(info) && okGeneral(info)
+             : mode === 'other'
+             ? !okAlgebra(info) && !okGeneral(info) && okOther(info)
+             : assert(false, 'Unknown mode: {1}', mode)
+            );
+      if (ok) {
+        facts.push(info);
+      }
+    });
   }
   return facts;
 };
