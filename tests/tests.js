@@ -1289,12 +1289,9 @@ var testCase = {
       schema = typeof schema == 'string' ? Toy.parse(schema) : schema;
       var subst = term.matchSchema(schema);
       if (expected) {
-        var expanded = (subst && subst['%expansions']) || '';
-        if (expanded) {
-          delete subst['%expansions'];
-        }
-        assertEqual(expectedExpansions || '',
-                    Toy.debugString(expanded));
+        var expanded = Toy.betaExpansions.get(subst);
+        assertEqual(expectedExpansions,
+                    expanded ? Toy.debugString(expanded) : undefined);
         assertEqual(expected, Toy.debugString(subst));
       } else {
         console.log(Toy.debugString(subst));

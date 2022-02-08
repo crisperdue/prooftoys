@@ -2380,9 +2380,6 @@ declare(
       var step = isEqn ? b : rules.rewriteOnly(b, '', 'a == (T == a)');
       var namesReversed = [];
       for (var name in map) {
-        if (name === '%expansions') {
-          continue;
-        }
         var value = termify(map[name]);
         if (value.isVariable() && value.name === name) {
           // If the variable maps to itself, do nothing.
