@@ -2213,18 +2213,6 @@ var testCase = {
     assertEqual('((R a) => ((neg a) = (0 - a)))', step4);
   },
 
-  testBackwardChain: function() {
-    expect(0);
-    // TODO: Implement me.
-  },
-
-  testSubgoal: function() {
-    var input = Toy.parse('a & b => c');
-    var theorem = rules.tautology('(p == q) => (p => q)');
-    var result = rules.subgoal(input, theorem);
-    assertEqual('(((a & b) == c) => ((a & b) => c))', result);
-  },
-
   testR5238a: function() {
     var inf = Toy.rules.r5238a(y, call(p, y), call(q, y));
     var wff =

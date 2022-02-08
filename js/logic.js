@@ -3654,40 +3654,6 @@ declare(
     description: 'consequence;; of step {step} using {bool}'
   },
 
-  // Instantiates the schema theorem so that the part at the given
-  // path is identical to the given term.
-  //
-  // TODO: Change "subgoal" to "expandRight"; create similar "expandLeft".
-  //
-  // TODO: Remove this, unused.
-  {name: 'instantiate',
-    action: function(schema, path, term) {
-      var expr = schema.get(path);
-      var subst = term.matchSchema(expr);
-      assert(subst, 'Schema {1} should match {2}', expr, term);
-      var result = rules.instMultiVars(schema, subst);
-      return result.justify('instantiate', arguments, [schema]);
-    }
-  },
-
-  // Finds a "subgoal" statement that implies the goal via the given
-  // theorem, which must be a schema of the form a => b.
-  // Instantiates the theorem by matching the goal against the theorem
-  // RHS, returning the instantiated theorem.  Returns null if the
-  // theorem does not match the goal.
-  {name: 'subgoal',
-    action: function(goal, theorem) {
-      theorem.assertCall2('=>');
-      var subst = goal.matchSchema(theorem.getRight());
-      if (subst) {
-        var result = rules.instMultiVars(theorem, subst);
-        return result.justify('subgoal', arguments);
-      } else {
-        return null;
-      }
-    }
-  },
-
   // Relates equal functions to equality at all input data points.
   {name: 'r5238',
     action: function(vars, a, b) {
