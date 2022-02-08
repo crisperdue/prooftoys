@@ -2187,17 +2187,16 @@ declare(
     labels: 'basic'
   },
 
-  // This finds a substitution into the schema to make it match the
-  // part of the target at the given path. The substitution may need
-  // to be followed by beta reduction(s) and/or renaming of bound
-  // variables.  Names of variables bound within the match may differ
-  // between the two terms, but names free relative to that context
-  // must match exactly.
-  //
-  // The schema and target blah blah blah.
+  // This takes two site arguments.  It finds a substitution into the
+  // first site/term to make it match the term at the second site.  If
+  // some of the substituted terms are lambdas, it follows the pure
+  // substitution by beta reduction using backReduce.  Names of
+  // variables bound within the match may differ between the two
+  // terms, but names free relative to that context must match
+  // exactly.
   //
   // TODO: Work in progress, finish this.
-  {name: 'matchTo',
+  {name: 'matchTerms',
    action: function(schemaStep, path1, target, path2) {
      const schema = schemaStep.get(path1);
      const term = target.get(path2);
@@ -2230,7 +2229,7 @@ declare(
         // const info = resolveToFactInfo(eqn_arg);
         // const after = (info && info.afterMatch) || function(x) { return x; };
         // simpler = after(simpler);
-        return (simpler.justify('matchTerm', arguments, [target]));
+        return (simpler.justify('matchTerms', arguments, [target]));
       } else {
         return null;
       }
@@ -4285,7 +4284,7 @@ declare(
                                         '/main', 'a == (a == T)'));
 
       // TODO: Consider moving much of this below here to
-      //   rules.matchTerm and using that here.
+      //   rules.matchTerms and using that here.
       let funSites = new Map();
       for (const key in map) {
         if (map[key] instanceof Lambda) {
