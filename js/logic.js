@@ -3637,7 +3637,6 @@ declare(
       assert(map1, 'Not a conditional: {1}', step);
       var map2 = fact.matchSchema('q1 => r');
       assert(map2, 'Not a conditional: {1}', fact);
-      // OK because substitution will be performed.
       var map3 = map1.q0.matchSchema(map2.q1);
       assert(map3, '{1} does not match {2}', map1.q0, map2.q1);
       var step1 = rules.instMultiVars(fact, map3);
@@ -3664,7 +3663,6 @@ declare(
   {name: 'instantiate',
     action: function(schema, path, term) {
       var expr = schema.get(path);
-      // OK because substitution will be performed.
       var subst = term.matchSchema(expr);
       assert(subst, 'Schema {1} should match {2}', expr, term);
       var result = rules.instMultiVars(schema, subst);
@@ -3680,7 +3678,6 @@ declare(
   {name: 'subgoal',
     action: function(goal, theorem) {
       theorem.assertCall2('=>');
-      // OK because substitution will be performed.
       var subst = goal.matchSchema(theorem.getRight());
       if (subst) {
         var result = rules.instMultiVars(theorem, subst);
@@ -3953,7 +3950,6 @@ declare(
       var schema1 = rules.tautology(infixCall(schema, '==', rhs));
       // Path from the base to the target.
       var fromBase = path.nth(j);
-      // OK because substitution will be performed.
       var map1 = conjunction.matchSchema(schema);
       // Prove the conjunction is equivalent to its transform.
       var equiv1 = rules.tautInst(schema1, map1);
@@ -5132,7 +5128,6 @@ declare(
         //   factoring out computation of the map from factExpansion.
         const expansion = Toy.factExpansion(synopsis);
         // Maps free variables of the fact into ones given here.
-        // OK because substitution will be performed.
         const map = expansion.getMain().matchSchema(fact.getMain());
         const instance = rules.instMultiVars(fact, map);
         // Remember the proof for future reference.
