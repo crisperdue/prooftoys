@@ -1738,7 +1738,7 @@ RuleMenu.prototype._update = function() {
     // term, and insert the renderings into all menu items that have
     // slots for them.
     var $term = $(term.renderTerm());
-    $items.find('.menuSelected').append($term);
+    $items.find('.menuSelected').append('&star;');
     var rightTerm = Toy.getRightNeighbor(step, term);
     var $right = '?';
     if (rightTerm) {

@@ -1808,7 +1808,7 @@ declare(
     },
     inputs: {site: 1},
     minArgs: 2,
-    menu: 'simplify {term}',
+    menu: 'simplify {term};',
     description: 'simplify;; {in step siteStep}',
     labels: 'algebra general'
   },
@@ -2061,11 +2061,7 @@ declare(
     labels: 'basic'
   },
 
-
-
-// These trueBy rules are similar to rewriteOnlyFrom, but that one
-// creates an equation or conditional equation based on its policy.
-// TODO: In the future these will be based on matchToRule.
+  // TODO: Base trueBy0 and trueBy1 on matchToRule.
 
   // Replace part of a target step with T if it matches a proved step
   // (trueby0) or the consequent of a proved conditional (trueBy1),
@@ -2243,7 +2239,7 @@ declare(
     form: ('Match with term <input name=term>'),
     menu: 'make {term} match term',
     description: ('substitute to match {term};; {in step siteStep}'),
-    labels: 'basic'
+    labels: 'unfinished'
   },
 
   // Lemma helper for toForall; a pure theorem.
@@ -2438,7 +2434,7 @@ declare(
     // An approximation, good enough until we can remove this whole rule.
     toOffer: 'return step.isCall2("=>");',
     form: ('Conjoin steps <input name=step1> and <input name=step2>'),
-    menu: '[h => p] and [h => q] to [h => p & q]',
+    menu: '[a1 => p] and [a2 => q] to [a1 & a2 => p & q]',
     tooltip: ('Given a and b, derive a & b'),
     description: 'p & q;; using steps {step1}, {step2}'
   },
@@ -3636,7 +3632,7 @@ declare(
 
   // The step and fact arguments must both be conditional.  This
   // applies transitivity of the conditional operator, treating the
-  // fact LHS as a schema to be matched with the step consequent.
+  // fact LHS as a schema to match with the step consequent.
   {name: 'forwardChain2',
     action: function(step, fact_arg) {
       var fact = rules.fact(fact_arg);
@@ -5499,6 +5495,12 @@ declare(
        return rules.tautology('(T => a) == a');
      }
    },
+
+  {statement: '(a => b) & (b => a) == (a == b)',
+   proof: function() {
+     return rules.tautology('(a => b) & (b => a) == (a == b)');
+   }
+  },
 
    {statement: '(a != b) == not (a = b)',
     proof: function() {
