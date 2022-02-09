@@ -907,7 +907,7 @@ Expr.prototype.pathToSchema = function() {
  * may return a substitution that yields a result that is
  * equivalent to the input only after some beta reductions.
  * Information about the number of expansions introduced per variable
- * is in the substition under the key "%expansions".
+ * is in the WeakMap Toy.betaExpansions.
  *
  * TODO: Consider how to ensure that higher-order matching is not done
  *   when not appropriate.  Perhaps review code that uses this.  The
@@ -918,7 +918,7 @@ Expr.prototype.pathToSchema = function() {
  *
  *   Perhaps a better option would be to include the reductions as
  *   part of the substitution operation, as indicated by the extended
- *   information (%expansions) in the computed substitution.
+ *   information associated with the computed substitution.
  */
 Expr.prototype.matchSchema = function(schema_arg) {
   const schema = schema_arg instanceof Expr ? schema_arg : parse(schema_arg);
@@ -1059,9 +1059,6 @@ Expr.prototype.subFree = function(map_arg) {
   // in this before the substitution!
   var freeVars = {};
   for (var name in map_arg) {
-    if (name === '%expansions') {
-      continue;
-    }
     var replacement = map_arg[name];
     if (!(replacement instanceof Atom && replacement.name == name)) {
       // Omit no-op substitutions.
@@ -3274,6 +3271,13 @@ function checkFnMatch(schema, fn, expr, map, bindings) {
 }
 
 /**
+ * For each substitution map that has expansions of terms into
+ * lambdas, a count of the number of expansions applied to
+ * each such term.  Maybe a good idea, but currently unused.
+ */
+Toy.betaExpansions = new WeakMap();
+
+/**
  * Given a schema that is a function call whose function is a
  * variable, this attempts to build a lambda term or nested lambda
  * terms to substitute for the variable, resulting in the given expr
@@ -3339,9 +3343,11 @@ function addFnMatch(schema, fn, expr, map, renamings) {
   }
 
   if (expansions > 0) {
-    var xpanded = map['%expansions'];
+    const bx = Toy.betaExpansions;
+    var xpanded = bx.get(map);
     if (!xpanded) {
-      xpanded = map['%expansions'] = {};
+      xpanded = {};
+      bx.set(map, xpanded);
     }
     xpanded[fn.name] = expansions;
   }
