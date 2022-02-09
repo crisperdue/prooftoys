@@ -2205,7 +2205,7 @@ declare(
         let funSites = new Map();
         for (const key in map) {
           if (map[key] instanceof Lambda) {
-            funSites.set(key, target.locateFree(key));
+            funSites.set(key, schemaStep.locateFree(key));
           }
         }
         let simpler = rules.instMultiVars(target, map);
@@ -2368,10 +2368,14 @@ declare(
   // substitutes the expression associated with it in the map, using
   // simultaneous substitution.  Parses string values in the map.
   //
+  // If reduceFns is truthy, attempts to reduce (i.e. remove)
+  // introduced lambdas using backReduce in support of higher-order
+  // matching.
+  //
   // Optimized to avoid substitutions that have no effect, returning
   // its input, justified as "instMultiVars".
   {name: 'instMultiVars',
-    action: function(b, map) {
+    action: function(b, map, reduceFns) {
       assert(map && map.constructor && map.constructor === Object,
              'Non-map argument to instMultiVars: {1}', map);
       var isEqn = b.isCall2('=');
@@ -2401,6 +2405,31 @@ declare(
       });
       if (!isEqn) {
         step = rules.fromTIsA(step);
+      }
+
+      if (reduceFns) {
+        // Eliminate introduced lambdas where feasible.
+        const funSites = new Map();
+        for (const key in map) {
+          if (map[key] instanceof Lambda) {
+            funSites.set(key, b.locateFree(key));
+          }
+        }
+        funSites.forEach(function(rPaths) {
+          rPaths.forEach(function (rPath) {
+            for (let r = rPath; r.segment === 'fn'; r = r.rest) {
+              // First time r refers to the lambda, then successive
+              // parents as this does more reductions.  Could be
+              // done more efficiently.
+              const path = r.rest.reverse();
+              const s = rules.backReduce(step, path);
+              if (!s) {
+                break;
+              }
+              step = s;
+            }
+          });
+        });
       }
       return step.justify('instMultiVars', arguments, [b]);
     },

@@ -1690,7 +1690,8 @@ RuleMenu.prototype._update = function() {
               // deduction step.
               const temp = rules.assert(info.goal);
               // Unification can fail in this step.
-              const temp2 = rules.instMultiVars(temp, subst);
+              // Attempt to eliminate introduced lambdas.
+              const temp2 = rules.instMultiVars(temp, subst, true);
               resultTerm = temp2.getMain().getRight();
             })) {
               // There was a failure so don't offer the fact.
