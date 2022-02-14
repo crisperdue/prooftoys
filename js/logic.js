@@ -155,7 +155,7 @@ declare(
 
   {name: 'axiom2',
     statement: 'x = y => h x = h y', axiom: true,
-    labels: 'higherOrder',
+    labels: 'higherOrder primitive',
     inputs: {},
     description: 'axiom of function application',
     tooltip: ('functions take equal values to equal values')
@@ -167,7 +167,7 @@ declare(
    */
   {name: 'axiom2a',
     statement: 'x = y => (p x == p y)', axiom: true,
-    labels: 'higherOrder',
+    labels: 'higherOrder primitive',
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
       var step2 = rules.eqSelf('(==)');
@@ -182,6 +182,7 @@ declare(
   {name: 'axiom3',
     statement: '(f = g) == forall {x. f x = g x}', axiom: true,
     labels: 'higherOrder',
+    desimplifier: true,
     converse: {labels: 'higherOrder'},
     inputs: {},
     tooltip: ('extensionality: functions are equal based on equal results'
@@ -199,6 +200,7 @@ declare(
       return result.justify('axiom3a', []);
     },
     labels: 'higherOrder',
+    desimplifier: true,
     converse: {labels: 'higherOrder'},
     inputs: {},
     tooltip: ('extensionality: predicates are equal ' +
@@ -377,7 +379,7 @@ declare(
     tooltip: ('Replace an occurrence of a term with an equal term.'),
     menu: 'replace {term} with something equal',
     description: 'replace term;; {in step siteStep} {using step equation}',
-    labels: 'uncommon'
+    labels: 'primitive'
   },
 
   /* Rule R with arguments in the standard order; currently inline. */
@@ -1688,6 +1690,7 @@ declare(
   // F => x; bookish
   {name: 'r5227',
     statement: 'F => x',
+    labels: 'primitive',
     proof: function() {
       var step1 = rules.theorem('r5225');
       var step2 = rules.instVar(step1, Toy.parse('{x. x}'), 'p');
@@ -1808,7 +1811,7 @@ declare(
     },
     inputs: {site: 1},
     minArgs: 2,
-    menu: 'simplify {term};',
+    menu: 'simplify {term}',
     description: 'simplify;; {in step siteStep}',
     labels: 'algebra general'
   },
@@ -1948,6 +1951,7 @@ declare(
   // might be taken as an axiom given r5230FT_alternate.
   {name: 'tIsXIsX',
     statement: '(T == x) == x',
+    simplifier: true,
     proof: function() {
       var step1 = rules.theorem('r5217Book');
       var step2 = rules.eqT(T);
@@ -3218,12 +3222,6 @@ declare(
   },
 
   // 2121
-  //
-  // NOTE: This and its converse both introduce specific bound variables.
-  //
-  // TODO: Consider extension of matching to associate actual ones
-  //   with matched ones, including renaming of bound variables as
-  //   potential parts of resulting substitutions.
   {name: 'forallXY',
     statement: 'forall {x. forall {y. p x y}} == forall {y. forall {x. p x y}}',
     noSwap: true,

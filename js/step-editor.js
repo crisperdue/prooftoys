@@ -2102,8 +2102,17 @@ RuleMenu.prototype.offerableFacts = function() {
     // Here are the policy functions to decide what facts
     // are to be offered.
 
+    const hasRealAsm = info => {
+      const asms = info.goal.getAsms();
+      return asms && asms.scanConjuncts(t => {
+        return !!t.matchSchema('R x');
+      });
+    };
+
     // Truthy if OK to show in algebra mode.
-    const okAlgebra = info => info.labels.algebra;
+    const okAlgebra = info =>
+          (!info.desimplifier && !info.simplifier && hasRealAsm(info) &&
+           (info.labels.algebra || info.labels.none));
 
     // Truthy if OK to offer in "general" mode, ignoring
     // the exclusion of facts shown in algebra mode.
@@ -2115,7 +2124,7 @@ RuleMenu.prototype.offerableFacts = function() {
       if (info.desimplifier) {
         return false;
       }
-      if (info.labels.higherOrder) {
+      if (info.labels.none || info.labels.higherOrder) {
         return true;
       }
       return false;
