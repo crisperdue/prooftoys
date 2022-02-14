@@ -2255,7 +2255,8 @@ function setFactInfo(info) {
  * does nothing.
  *
  * If the fact to be swapped is a simplifier or desimplifier, the
- * newly-created fact will be appropriately labeled as the opposite.
+ * newly-created fact will be appropriately labeled as the opposite,
+ * and converses of primitive facts are also labeled as primitive.
  */  
 function addSwappedFact(info) {
   var stmt = info.goal;
@@ -2266,6 +2267,9 @@ function addSwappedFact(info) {
         return rules.fact(stmt).andThen('eqnSwap');
       }
       var labels2 = processLabels(info.converse && info.converse.labels);
+      if (info.labels && info.labels.primitive) {
+        labels2.primitive = true;
+      }
       var after2 = info.converse && info.converse.afterMatch;
       var info2 = {proof: proveSwapped,
                    goal: swapped,
