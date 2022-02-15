@@ -1479,24 +1479,31 @@ function unrenderedDeps(step) {
  * subproof.
  */
 function renderSubproof(step) {
-  var $node = renderInference(step);
-  $(step.stepNode).addClass('hasSubproof');
-  step.subproofDisplay = $node.data('proofDisplay');
+  const $subproof = renderInference(step);
+  const $step = $(step.stepNode);
+  const $steps = $step.parent();
+  const editable = $step.is('.proofDisplay.editable .proofStep');
+  $step.addClass('hasSubproof');
+  step.subproofDisplay = $subproof.data('proofDisplay');
 
+  const contentHeight =
+        () => editable ? $steps.prop('scrollHeight') : $(document).height();
+  const scrollY =
+        () => editable ? $steps.scrollTop() : $(window).scrollTop();
   // Animate display of the subproof.  While sliding in the display,
   // also smoothly scroll the window to keep the given step at the
   // same place in the window.
-  var oldTop = $(window).scrollTop();
-  var oldHeight = $(document).height();
-  $node.insertBefore(step.stepNode);
-  var growth = $(document).height() - oldHeight;
-  $node.hide();
-  // Do the actual animations after computing the net change
-  // in document height.
-  $node.show({duration: 200});
-  // Really this line animates the window scrollTop, but this
+  const oldTop = scrollY();
+  const oldHeight = contentHeight();
+  $subproof.insertBefore(step.stepNode);
+  const growth = contentHeight() - oldHeight;
+  $subproof.hide();
+  // Animate after computing the change in content height.
+  $subproof.show({duration: 200});
+  // If not editable we animate the window scrollTop, but this
   // is the magic formula that does it across browsers.
-  $('html, body').animate({scrollTop: oldTop + growth}, 200);
+  const $port = editable ? $steps : $('html, body');
+  $port.animate({scrollTop: oldTop + growth}, 200);
 }
 
 /**
@@ -1506,8 +1513,9 @@ function renderSubproof(step) {
  * The second argument is true when no UI action is desired.
  */
 function clearSubproof(step, internal) {
-  // TODO: Consider ways to clean up this whole function.
-  var controller = step.subproofDisplay;
+  const $step = $(step.stepNode);
+  const editable = $step.is('.proofDisplay.editable .proofStep');
+  const controller = step.subproofDisplay;
   if (controller) {
     step.subproofDisplay = null;
     controller.steps.forEach(function(step) {
@@ -1517,23 +1525,31 @@ function clearSubproof(step, internal) {
         // Avoid scrolling any inner subproofs.
         clearSubproof(step, true);
       });
-    var container = $(controller.node).closest('.inferenceDisplay');
+    const $subproof = $(controller.node).closest('.inferenceDisplay');
     if (!internal) {
-      // Compute the net change in document height.
-      var oldTop = $(window).scrollTop();
-      var oldHeight = $(document).height();
-      container.toggle(false);
-      var growth = $(document).height() - oldHeight;
-      container.toggle(true);
+      const $steps = $step.parent();
+      const contentHeight =
+            () => (editable
+                   ? $steps.prop('scrollHeight')
+                   : $(document).height());
+      const scrollY =
+            () => editable ? $steps.scrollTop() : $(window).scrollTop();
+      // Compute the net change in content/document height.
+      const oldTop = scrollY();
+      const oldHeight = contentHeight();
+      $subproof.toggle(false);
+      const growth = contentHeight() - oldHeight;
+      $subproof.toggle(true);
       // Do the actual animations, similar to the ones in renderSubproof.
-      container.hide(
+      $subproof.hide(
                      {duration: 200,
                       complete: function() {
-                         $(step.stepNode).removeClass('hasSubproof');
+                         $step.removeClass('hasSubproof');
                          // Remove after hiding.
-                         container.remove();
+                         $subproof.remove();
                        }});
-      $('html, body').animate({scrollTop: oldTop + growth}, 200);
+      const $port = editable ? $steps : $('html, body');
+      $port.animate({scrollTop: oldTop + growth}, 200);
     }
   }
 }
