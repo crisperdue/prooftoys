@@ -795,8 +795,8 @@ function definition(defn_arg) {
       Toy.isEmpty(defn.getRight().newConstants())) {
     // It is a classic equational definition.
     // Add it to the facts andthe definitions database.
-    // TODO: Consider flagging it as a desimplifier.
-    addFact({goal: defn, definition: true});
+    addFact({goal: defn, definition: true,
+             desimplifier: !(defn.getRight() instanceof Atom)});
     definitions[name] = defn;
     // This could add the rest of the facts later.
     addDefnFacts(defn);
@@ -850,15 +850,15 @@ function enableDefnFacts() {
  */
 function addDefnFacts(definition) {
   function addFacts() {
-    var defined = definition.getLeft();
     // Add the converse as a simplifier.
-    addSwappedFact({goal: definition, desimplifier: true, definitional: true});
     const eqn0 = rules.fact(definition);
     let eqn = eqn0;
-    var lambda = eqn.getRight();
+    let lambda = eqn.getRight();
+    addSwappedFact({goal: definition,
+                    desimplifier: !(lambda instanceof Atom),
+                    definitional: true});
     while (lambda instanceof Lambda) {
-      var bound = lambda.bound;
-      eqn = (rules.applyBoth(eqn, bound)
+      eqn = (rules.applyBoth(eqn, lambda.bound)
              .andThen('reduce', '/right'));
       lambda = eqn.getRight();
     }

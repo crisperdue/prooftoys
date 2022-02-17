@@ -2124,6 +2124,12 @@ RuleMenu.prototype.offerableFacts = function() {
       if (info.desimplifier) {
         return false;
       }
+      const map = goal.matchSchema('a = (f b)');
+      if (map && (map.f.name === 'the' || map.f.name === 'the1')) {
+        // Rewriting to "the . . . " is advanced by default.
+        // Occurs often with inverse functions.
+        return false;
+      }
       if (info.labels.none || info.labels.higherOrder) {
         return true;
       }
