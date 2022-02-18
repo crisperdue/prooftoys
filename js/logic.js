@@ -4163,19 +4163,12 @@ declare(
     labels: 'uncommon'
   },
 
-
-  ////
-  //// Rewriting -- beyond Andrews' textbook
-  ////
-
-  // Inline helper for rewriteOnly*.
   // If the step has the form a => (b => c), moves all conjuncts
   // of a to the inner level, erasing one level of "=>".
   {name: 'flattenAsms',
     action: function(step) {
       let flatter = step;
       const once = Toy.applyMatchingFact;
-      const rw = rules.rewriteOnly;
       const mover = ['a1 & a2 => (b => c) == (a1 => (b & a2 => c))'];
       // This loop flattens out the assumptions.
       while (true) {
@@ -4309,43 +4302,12 @@ declare(
                       // Coerce to an equation.
                       : eqn_arg.andThen('rewriteOnly',
                                         '/main', 'a == (a == T)'));
-
-      // TODO: Consider moving much of this below here to
-      //   rules.matchTerms and using that here.
-      let funSites = new Map();
-      for (const key in map) {
-        if (map[key] instanceof Lambda) {
-          funSites.set(key, equation.locateFree(key));
-        }
-      }
-      let simpler = rules.instMultiVars(equation, map);
-      // Now (back)reduce applications of newly-substituted Lambda terms,
-      // normally to just a variable, simplifying the result.
-      //
-      // TODO: Generate fixups while generating the substitution they
-      //   are to follow; e.g. list of paths to backReduce, each with
-      //   a count.
-      funSites.forEach(function(rPaths) {
-          rPaths.forEach(function (rPath) {
-              for (let r = rPath; r.segment === 'fn'; r = r.rest) {
-                // First time r refers to the lambda, then successive
-                // parents as this does more reductions.  Could be
-                // done more efficiently.
-                const path = r.rest.reverse();
-                const s = rules.backReduce(simpler, path);
-                if (!s) {
-                  break;
-                }
-                simpler = s;
-              }
-            });
-        });
-
+      const result = rules.instMultiVars(equation, map, true);
       // Uncomment these lines to restore afterMatch functionality:
       // const info = resolveToFactInfo(eqn_arg);
       // const after = (info && info.afterMatch) || function(x) { return x; };
-      // simpler = after(simpler);
-      return simpler;
+      // const result2 = after(result);
+      return result;
     }
   },
 
