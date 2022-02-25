@@ -936,9 +936,7 @@ declare(
   },
 
   // Use the definition of the name at the given location in the given
-  // step.  If the definition is by cases the location should be a
-  // call to the named function, with T or F as the argument.
-  // For the benefit of the UI, if the path is to a call, uses
+  // step.  For the benefit of the UI, if the path is to a call, uses
   // the definition of the named function of the call, even if there
   // is more than one argument, by descending into fn parts.
   //
@@ -975,6 +973,7 @@ declare(
     },
     inputs: {site: 1},
     menu: 'replace name with its definition',
+    labels: 'obsolete',
     tooltip: (''),
     description: 'definition of {site}'
   }
@@ -1010,10 +1009,10 @@ declare(
     },
     inputs: {term: 1},
     form: 'Term to prove equal to itself: <input name=term>',
-    menu: 'A = A',
+    menu: '[A = A]',
     tooltip: 'Derives A = A.',
     description: 'A = A',
-    labels: 'primitive'
+    labels: 'general'
   },
 
   // Obsolete rule, converts to eqSelf, kept for compatibility
@@ -1095,7 +1094,7 @@ declare(
     menu: '[a = b] to [b = a]',
     tooltip: 'from a = b deduce b = a',
     description: '[a = b] to [b = a]',
-    labels: 'basic algebra'
+    labels: 'primitive'
   },
 
   // r5201c is unused.
@@ -1417,6 +1416,8 @@ declare(
    * does not need the user to enter data through a form.
    *
    * TODO: Consider obsoleting this in favor of unForall0.
+   *   Or hopefully just combine r5225 with forward reasoning to
+   *   replace this and unforall0 and instForall as practical rules.
    */
   {name: 'unForall',
     precheck: function(step, path) {
@@ -1559,7 +1560,7 @@ declare(
     menu: '[a = b] and [c = d] to [a = b & c = d]',
     tooltip: ('Given [a = b] and [c = d], derive [a = b & c = d]'),
     description: 'a = b & c = d;; from steps {step1}, {step2}',
-    labels: 'internal'
+    labels: 'primitive'
   },
 
   // Given two WFFs each of the form A = B that are the result of
@@ -1748,11 +1749,6 @@ declare(
 
 )};
 
-
-
-// These are not specific to book definitions, but currently may
-// use (non-book) definitions by cases.
-
 declare(
   // From theorems A = B and C = D, derives theorem
   // [A = B] & [C = D].  Used in andTBook.
@@ -1775,6 +1771,7 @@ declare(
   }
 
 );
+
 
 // This might be treated as the end of the subcore.
 // Managing numeric type assumptions
@@ -1830,7 +1827,7 @@ declare(
     menu: 'simplify {term} with fact',
     form: 'Simplify using term <input name=term>',
     description: 'simplify using {term};; {in step siteStep}',
-    labels: 'algebra'
+    labels: 'algebra general'
   },
 
   // TODO: Create a "rules.simplifier" that takes a term argument
@@ -2017,10 +2014,10 @@ declare(
   // Replaces an occurrence of T at the given path of the given step
   // with the entirety of another step.
   //
-  // TODO: With the usual boolean connectives, the only case that
-  //   does not immediately simplify is conjunction, so perhaps this
-  //   should be replaced by a rule that inserts a conjunction with
-  //   a theorem instead of replacing T.
+  // TODO: With the usual boolean connectives, the only case that does
+  //   not immediately simplify is conjunction, so perhaps this should
+  //   be replaced by a convenience rule that inserts a conjunction
+  //   with a theorem instead of replacing T.
   {name: 'replaceT0',
     precheck: function(step, path, step2) {
       return step.get(path).isConst('T');
@@ -2089,8 +2086,8 @@ declare(
         }
         const bound = target.wff.boundNames(path);
         // The following code seeks renamings of variables in the step
-        // that match them with free variables of the target term that
-        // are bound in context.
+        // that match them with variables that are free within the
+        // target term, but bound in context.
         //
         // This object will map from names in the step to names in the
         // target term that are bound in the term's context.  If the
@@ -3375,8 +3372,6 @@ declare(
 
   // 2132
   {name: 'forallOr',
-    // TODO: Modernize statement and probably also proof, removing
-    //   some {x. p x} and similar.
     statement: 'forall p | forall q => forall {x. p x | q x}',
     proof: function() {
       var step1 = rules.fact('forall p => p x');
@@ -3520,6 +3515,8 @@ declare(
   // Removes an irrelevant type assumption of the form (R v) at the
   // target site, where v is a variable.  Currently only for predicate
   // R, but should be extended as needed.
+  //
+  // TODO: Merge this into removeLet and rename as e.g. "removeIrrelevant".
   {name: 'removeTypeAsm',
     precheck: function(step, path_arg) {
       var path = Toy.asPath(path_arg);
