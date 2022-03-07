@@ -1415,8 +1415,8 @@ declare(
    * free variables.  This is a useful special case of instForall that
    * does not need the user to enter data through a form.
    *
-   * TODO: Consider obsoleting this in favor of unForall0.
-   *   Or hopefully just combine r5225 with forward reasoning to
+   * TODO: Consider obsoleting this in favor of unForall0,
+   *   or even better just combine r5225 with forward reasoning to
    *   replace this and unforall0 and instForall as practical rules.
    */
   {name: 'unForall',
@@ -1918,8 +1918,7 @@ declare(
           // Dedupe and normalize order of asms.
           simpler = rules.arrangeAsms(simpler);
           // If only T remains, remove it.
-          simpler = (Toy.applyMatchingFact(simpler, '', ['T => a == a'],
-                                           'rewriteOnly') ||
+          simpler = (Toy.applyMatchingFact(simpler, '', ['T => a == a']) ||
                      simpler);
           // And we are done.
           return simpler.justify('simplifyAsms', arguments, [step]);
@@ -3102,7 +3101,8 @@ declare(
           return (rules.trueBy1(step, path, step1)
                   // Crudely bludgeon out certain kinds of occurrences of T.
                   // Improve this with smart simplification.
-                  .andThen('simplifySite', '/right', ['T & a == a', 'a & T == a'])
+                  .andThen('simplifySite', '/right',
+                           ['T & a == a', 'a & T == a'])
                   .justify('assumed', arguments, [step]));
         }
       }
@@ -4327,7 +4327,7 @@ declare(
 
   // Minimal rewriter that does not simplify the assumptions resulting
   // from the substitution and replacement.  Only appends new
-  // assumptions to existing ones; does not deduplicate or arrange
+  // assumptions to any existing ones; does not deduplicate or arrange
   // them.
   {name: 'rewriteOnlyFrom',
     action: function(step, path_arg, eqn) {
@@ -4399,6 +4399,9 @@ declare(
   // this does not give access to the proof of the fact.)  This does
   // trivial simplification of assumptions including numeric type
   // assumptions after rewriting.
+  //
+  // TODO: Modify all of these rewrite* rules to return Error objects
+  //   in case preconditions are not met.
   {name: 'rewrite',
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
@@ -5393,7 +5396,7 @@ declare(
     proof: function() {
        var assumed = rules.assume('exists1 p');
        var step1 = rules.fact('the p = if (exists1 p) (the1 p) none');
-       var loc1 = step1.find('exists1 p');
+       var loc1 = step1.wff.find('exists1 p');
        return (step1.andThen('trueBy1', loc1, assumed)
                .rewrite('/right/right', 'if T x y = x')
                .andThen('eqnSwap'));
