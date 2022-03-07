@@ -2061,128 +2061,52 @@ declare(
     labels: 'basic'
   },
 
-  // TODO: Base trueBy0 and trueBy1 on matchToRule.
-
-  // Replace part of a target step with T if it matches a proved step
-  // (trueby0) or the consequent of a proved conditional (trueBy1),
-  // taking the proved step as a schema.  These do not simplify
-  // assumptions.
-  //
-  // Unlike the somewhat similar "rewrite" rules, this rule applies
-  // the substitution to the target term, not to the "step" argument.
+  // Replace part of a target step with T if it is an instance
+  // of a proved step.  This is the same as rewriting the proved
+  // step with [a == (a == T)], then rewriting the target term
+  // with [a == T].
   {name: 'trueBy0',
-    action: function(target, path, step) {
-      const term = target.get(path);
-      // Note that the keys of the map are precisely the names of the
-      // free variables of the term.
-      const map = step.wff.matchSchema(term);
-      // Returns a possibly empty object/map substitution to rename
-      // variables in the step to match target term variable names,
-      // or null if it cannot match the term to the step.
-      function precheck() {
-        if (map == null) {
-          return null;
-        }
-        const bound = target.wff.boundNames(path);
-        // The following code seeks renamings of variables in the step
-        // that match them with variables that are free within the
-        // target term, but bound in context.
-        //
-        // This object will map from names in the step to names in the
-        // target term that are bound in the term's context.  If the
-        // search her is successful, it defines a substitution that
-        // completes the matching done by matchSchema.
-        const renamings = {};
-        for (const name in bound) {
-          if (name in map) {
-            // This bound name is in the map, so it occurs free in the
-            // target term.  Check if a free variable in the step can
-            // be renamed to match it.
-            const stepTerm = map[name];
-            if (stepTerm.isVariable()) {
-              const n = stepTerm.name;
-              const renamed = renamings[n];
-              if (renamed) {
-                if (renamed !== name) {
-                  return null;
-                } else {
-                  continue;
-                }
-              } else {
-                // This can be an identity renaming, still needed
-                // as indication that the name must remain the same.
-                renamings[n] = name;
-              }
-            } else {
-              // stepTerm is not a variable, so fail.
-              return null;
-            }
-          }
-        }
-        const subst = {};
-        // We have found suitable renamings.
-        for (const name in renamings) {
-          const renamed = renamings[name];
-          if (renamed !== name) {
-            subst[name] = varify(renamed);
-          }
-        }
-        return subst;
-      }
-      const renames = precheck();
-      if (renames) {
-        // Now do the rest of the substitution.
-        const step2 = rules.rewriteOnly(step, '', 'p == (p == T)');
-        // console.log('Subst:', Toy.debugString(map));
-        // console.log('Renaming:', Toy.debugString(renames));
-        // TODO: Change this use of r1 to a new form of rewrite
-        //   that substitutes into "step", using something like
-        //   matchToRule / matchRuleTo in the process.
-        let result = rules.r1(target, path, step2);
-        return result.justify('trueBy0', arguments, [target, step]);
-      }
-      assert(false, 'Term {1} does not match {2}',
-             target.get(path), step);
-    },
+   action: function(target, path, step) {
+     const term = target.get(path);
+     const wff = step.wff;
+     const map = term.matchSchema(wff);
+     if (map) {
+       const step1 = step.rewrite('', 'a == (a == T)');
+       const step2 = rules.instMultiVars(step1, map, true);
+       const step3 = rules.replace(target, path, step2);
+       return step3;
+     } else {
+       return Toy.error('{1} not instance of {2}', term, step);
+     }
+   },
     inputs: {site: 1, step: 3},
     autoSimplify: simplifyStep,
     toOffer: 'return term.isBoolean()',
-    form: ('Match {term} with step <input name=step>'),
-    menu: 'replace with T, proved unconditionally',
-    description: ('term known true;; {in step siteStep} {by step step}'),
+    form: ('{term} instance of step <input name=step>'),
+    menu: 'instance of unconditional step',
+    description: ('instance of;; {step step}'),
+    // We call it "basic", but it does not get offered
+    // automatically for matching facts.
     labels: 'basic'
   },
 
-  // Requires a conditional step, matching its consequent with
-  // the target site and adding assumptions to the target step.
+  // Checks that the target site is an instance of the main part of
+  // the given step.  If so, converts the main part to [main == T] and
+  // uses it to rewrite the target site.
   //
-  // The target term is the schema!
-  //
-  // TODO: Work in progress, keep going.  Note that the proof of
-  //   x * 0 = 0 could use this with abcPlus.
+  // TODO: Decide on a version of rewriting to use here and in trueBy0.
   {name: 'trueBy1',
     action: function(target, path, step) {
-      if (step.isCall2('=>')) {
-        const term = target.get(path);
-        const map = step.wff.getRight().matchSchema(term);
-        if (map) {
-          const step2 = rules.rewriteOnly(step, '/right', 'p == (p == T)');
-          // TODO: Change this "replace" basically as described for
-          //   trueBy0, with the additional possibility that variable
-          //   bindings may prevent the substitution.
-          const target2 = rules.instMultiVars(target, map);
-          const result = rules.replace(target2, path, step2);
-          return result.justify('trueBy1', arguments, [target, step]);
-        }
-      }
-      assert(false, 'Term {1} does not match {2}',
-             target.get(path), step);
+      const term = target.get(path);
+      const step2 = rules.rewriteOnly(step, '/main', 'p == (p == T)');
+      const result = rules.rewrite(target, path, step2);
+      return result.justify('trueBy1', arguments, [target, step]);
     },
     inputs: {site: 1, step: 3},
     autoSimplify: simplifyStep,
     toOffer: 'return term.isBoolean()',
-    form: ('Match {term} with consequent of step <input name=step>'),
-    menu: 'replace with T, proved under assumptions',
+    form: ('Match {term} with (consequent of) step <input name=step>'),
+    menu: 'replace known true part with T',
     description: ('term known true;; {in step siteStep} {by step step}'),
     labels: 'basic'
   },
