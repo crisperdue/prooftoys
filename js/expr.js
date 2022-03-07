@@ -1688,9 +1688,9 @@ Expr.prototype.pathTo = function(arg) {
 };
 
 /**
- * Searches for the (first) subexpression of this that "matches"
- * the given term, an Expr or string parsed to one.  Returns a
- * path to the term if found, or null.
+ * Searches for the (first) subexpression of this that "matches" the
+ * given term, an Expr or string parsed to one.  Neither is taken as a
+ * schma.  Returns a path to the term if found, or null.
  */
 Expr.prototype.find = function(term_arg) {
   var term = termify(term_arg);
