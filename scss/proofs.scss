@@ -117,6 +117,7 @@
 // .proofDisplay, i.e. top-level of proof steps.
 .proofDisplay.editable > .proofSteps {
   height: 300px;
+  resize: vertical;
   overflow-y: auto;
   padding-top: 3px;
   padding-left: 3px;
