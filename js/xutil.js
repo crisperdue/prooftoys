@@ -1976,7 +1976,10 @@ function decodeSteps(input) {
       if (result && !err) {
         outSteps.push(result);
       } else {
-        return errOut();
+        var done = false;
+        console.warn('To truncate the proof, set done = true');
+        debugger;
+        return done ? outSteps : errOut();
       }
     } else {
       return errOut()
