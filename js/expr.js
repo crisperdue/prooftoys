@@ -1306,6 +1306,13 @@ Expr.prototype.getMain = function() {
 };
 
 /**
+ * Returns the assumptions of a conditional, if any, else falsy.
+ */
+Expr.prototype.getAsms = function() {
+  return this.isCall2('=>') && this.getLeft();
+};
+
+/**
  * Returns the nth "element" of this expression.  Recurs top down
  * through function parts of calls until finding a Atom, which is
  * consider element 0.  The arg part of that call is element 1,
