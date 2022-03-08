@@ -2074,7 +2074,7 @@ declare(
        const step1 = step.rewrite('', 'a == (a == T)');
        const step2 = rules.instMultiVars(step1, map, true);
        const step3 = rules.replace(target, path, step2);
-       return step3;
+       return step3.justify('trueBy0', arguments, [target, step]);
      } else {
        return Toy.error('{1} not instance of {2}', term, step);
      }
@@ -2084,10 +2084,8 @@ declare(
     toOffer: 'return term.isBoolean()',
     form: ('{term} instance of step <input name=step>'),
     menu: 'instance of unconditional step',
-    description: ('instance of;; {step step}'),
-    // We call it "basic", but it does not get offered
-    // automatically for matching facts.
-    labels: 'basic'
+    description: ('use step {step};; {in step siteStep}'),
+    labels: 'other'
   },
 
   // Checks that the target site is an instance of the main part of
@@ -2107,8 +2105,8 @@ declare(
     toOffer: 'return term.isBoolean()',
     form: ('Match {term} with (consequent of) step <input name=step>'),
     menu: 'replace known true part with T',
-    description: ('term known true;; {in step siteStep} {by step step}'),
-    labels: 'basic'
+    description: ('use step {step};; {in step siteStep}'),
+    labels: 'other'
   },
 
   // This takes two site arguments.  It finds a substitution into the
@@ -2366,7 +2364,6 @@ declare(
   // Given two theorems a1 => a and a2 => b, proves a1 & a2 => a & b.
   // If either theorem is unconditional, omits a1 or a2 or both
   // accordingly.
-  // TODO: Replace usage with trueBy1, and remove this.
   {name: 'makeConjunction',
     action: function(a, b) {
       var stepa = rules.rewriteOnly(a, '/main', 'a == (T == a)');
@@ -4307,7 +4304,7 @@ declare(
       const step2 = rules._replacementFor(step, path, equation);
       const step3 = rules.replace(step, path, step2);
       const simpler = rules.simplifyAsms(step3);
-      return simpler.justify('rewrite', arguments, [step, equation]);
+      return simpler.justify('rewriteFrom', arguments, [step, equation]);
     },
     inputs: {site: 1, equation: 3},
     form: ('Rewrite the site using step <input name=equation>'),
@@ -4863,6 +4860,12 @@ declare(
       // If not applicable just return the input step.
       return step;
     },
+    labels: 'advanced',
+    // Offer if it is reducible and the term arg is a variable.
+    toOffer: ((step, term) => (term instanceof Call &&
+                               term.fn instanceof Lambda &&
+                               term.arg.isVariable())),
+     
     inputs: {site: 1},
     menu: 'unbind',
     description: 'unbind'
