@@ -1644,8 +1644,9 @@ RuleMenu.prototype._update = function() {
       suggestion && $(suggestion).remove();
     });
   $items.empty();
-  var step = proofEditor.proofDisplay.selection;
-  var term = step && step.selection;
+  const step = proofEditor.proofDisplay.selection;
+  const term = step && step.selection;
+  const sitePath = term && step.prettyPathTo(term);
   // Plain object describing each menu item.
   var itemInfos = [];
   self.offerableRuleNames().forEach(function(ruleName) {
@@ -1661,7 +1662,46 @@ RuleMenu.prototype._update = function() {
       } else if (info) {
         itemInfos.push({ruleName: ruleName, html: info});
       }
-    });
+  });
+
+  // Search for proof steps that can serve as rewrites.
+  if (term) {
+    // A term is selected.
+    const mode = self.proofEditor.showRuleType;
+    if (mode === 'general') {
+      // For now, offer all rewriting using proof steps
+      // via "general" mode.
+      proofEditor.steps.forEach((proofStep, index) => {
+        const n = index + 1;
+        const schema = proofStep.matchPart();
+
+        // Omit the most prolific matchers.
+        if (schema.isVariable()) {
+          return;
+        }
+        if (!Toy.coreUnifTypes(term.type, schema.type)) {
+          return;
+        }
+        const map = term.matchSchema(schema);
+        if (!map) {
+          return;
+        }
+        // TODO: Consider setting this to real jQuery / DOM content,
+        //   also other "html" infos in itemInfos.
+        const html =
+              Toy.escapeHtml(
+                Toy.format(' use step {1} {2}', n,
+                           // Copy to make it not a step,
+                           // for neater presentation.
+                           // Can we improve on this?
+                           proofStep.wff.typedCopy(true)));
+        itemInfos.push({ruleName: 'rewriteFrom',
+                        ruleArgs: [step.original, sitePath, proofStep.original],
+                        html: html
+                       });
+      });
+    }
+  }
 
   // TODO: Rewrite this ugly block of code.
   self.offerableFacts().forEach(function(info) {
@@ -1730,6 +1770,7 @@ RuleMenu.prototype._update = function() {
         $item.find('.menuResult').append(info.result.renderTerm());
       }
       $item.data('ruleName', info.ruleName);
+      $item.data('ruleArgs', info.ruleArgs);
       return $item
     });
   self.length = items.length;
@@ -1766,6 +1807,7 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
   // TODO: Consider generating an event here and moving
   //   much of this code elsewhere.
   const ruleName = $(node).data('ruleName');
+  const ruleArgs = $(node).data('ruleArgs');
   const proofEditor = ruleMenu.proofEditor;
   const stepEditor = proofEditor.stepEditor;
   // This code runs from a click, so a suggestion may well
@@ -1774,7 +1816,7 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
   proofEditor.stepEditor.ruleName = ruleName;
   var rule = Toy.rules[ruleName];
   if (rule) {
-    var args = stepEditor.argsFromSelection(ruleName);
+    var args = ruleArgs || stepEditor.argsFromSelection(ruleName);
     if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
       tryRuleSoon(stepEditor, rule, args);
       return;
@@ -1845,6 +1887,7 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
   const proofEditor = ruleMenu.proofEditor;
   const stepEditor = proofEditor.stepEditor;
   const ruleName = $node.data('ruleName');
+  const ruleArgs = $node.data('ruleArgs');
   // The rule may be undefined if the ruleName describes a fact.
   const rule = Toy.rules[ruleName];
   var display = proofEditor.proofDisplay;
@@ -1885,7 +1928,7 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
                           Toy.parse(ruleName.slice(5))]);
     } else if (rule) {
       // It is a rule other than a rewrite with fact.
-      var args = stepEditor.argsFromSelection(ruleName);
+      var args = ruleArgs || stepEditor.argsFromSelection(ruleName);
       if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
         promise = sendRule(ruleName, args);
       } else {
@@ -2141,6 +2184,7 @@ RuleMenu.prototype.offerableFacts = function() {
     const okOther = info => (!info.labels.primitive &&
                              !info.goal.matchPart().isVariable());
 
+    // Consider each registered fact:
     Toy.eachFact(function(info) {
       const goal = info.goal;
       const matchTerm = goal.matchPart();
