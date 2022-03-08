@@ -4209,9 +4209,11 @@ declare(
   //   it was introduced and the formula (e.g. step) it came from.
   //
 
-  // Inline utility for all of the rewriters; proves an equation
-  // whose LHS is the same as the part of step at path.
-  {name: '_rewriterFor',
+  // Inline utility for all of the rewriters.  If the equation
+  // argument "A" is not an equation, rewrites it to A == T.
+  // Performs the needed substitution, with higher-order matching,
+  // and returns the result of that.
+  {name: '_replacementFor',
     action: function(step, path, eqn_arg) {
       const map = canRewrite(step, path, eqn_arg);
       if (!map) {
@@ -4232,13 +4234,13 @@ declare(
     }
   },
 
-  // Out of line version of _rewriterFor.
+  // Out of line version of _replacementFor.
   //
-  // TODO: Tentatively replace _rewriterFor with this, otherwise
+  // TODO: Tentatively replace _replacementFor with this, otherwise
   //   perhaps remove this.
   {name: 'substForRewrite',
     action: function(step, path, eqn) {
-      return (rules._rewriterFor(step, path, eqn)
+      return (rules._replacementFor(step, path, eqn)
               .justify('substForRewrite', arguments, [step, eqn]));
     },
     inputs: {site: 1, equation: 3},
@@ -4256,8 +4258,8 @@ declare(
   {name: 'rewriteOnlyFrom',
     action: function(step, path_arg, eqn) {
       const path = step.wff.asPath(path_arg);
-      const rewriter = rules._rewriterFor(step, path, eqn);
-      const rewritten = rules.r2(step, path, rewriter);
+      const replacement = rules._replacementFor(step, path, eqn);
+      const rewritten = rules.r2(step, path, replacement);
       let flatter = rewritten;
       if (step.implies() && eqn.implies() && !path.isEnd()) {
 	flatter = rules.flattenAsms(rewritten);
@@ -4277,8 +4279,8 @@ declare(
     action: function(step, path_arg, stmt_arg) {
       const path = step.wff.asPath(path_arg);
       const statement = rules.fact(stmt_arg);
-      const rewriter = rules._rewriterFor(step, path, statement);
-      const rewritten = rules.r2(step, path, rewriter);
+      const replacement = rules._replacementFor(step, path, statement);
+      const rewritten = rules.r2(step, path, replacement);
       let flatter = rewritten;
       if (step.implies() && statement.implies() && !path.isEnd()) {
 	flatter = rules.flattenAsms(rewritten);
@@ -4302,7 +4304,7 @@ declare(
   {name: 'rewriteFrom',
     action: function(step, path, equation) {
       // Can throw; tryRule will report any problem.
-      const step2 = rules._rewriterFor(step, path, equation);
+      const step2 = rules._replacementFor(step, path, equation);
       const step3 = rules.replace(step, path, step2);
       const simpler = rules.simplifyAsms(step3);
       return simpler.justify('rewrite', arguments, [step, equation]);
@@ -4330,9 +4332,9 @@ declare(
     action: function(step, path, statement) {
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
-      const rewriter0 = rules._rewriterFor(step, path, fact);
-      const rewriter = rules.simplifyAsms(rewriter0);
-      const step2 = rules.replace(step, path, rewriter);
+      const replacement0 = rules._replacementFor(step, path, fact);
+      const replacement = rules.simplifyAsms(replacement0);
+      const step2 = rules.replace(step, path, replacement);
       var simpler = rules.simplifyAsms(step2);
       // Does not include the fact as a dependency, so it will not
       // display as a separate step.
