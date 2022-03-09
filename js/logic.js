@@ -4314,7 +4314,7 @@ declare(
     //   say "replace" rather than "rewrite" when the substitution
     //   is empty, perhaps with a new {rewrite} directive.
     description: 'rewrite;; {in step siteStep} {using step equation}',
-    labels: 'basic'
+    labels: 'advanced'
   },
 
   // Version of the rewrite rule good for general use in code and for
