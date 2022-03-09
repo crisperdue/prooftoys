@@ -2026,7 +2026,7 @@ RuleMenu.prototype.labelApproved = function(name) {
             : labels.algebra);
   };
   const okGeneral = () =>
-        labels.general || labels.basic || labels.algebra || labels.none;
+        labels.general || labels.basic || labels.none;
   switch (editor.showRuleType) {
   case 'edit':
     return labels.edit || labels.display;
