@@ -109,6 +109,8 @@ Toy.mathMarkup0 = function(text, title) {
         return title ? 'not' : '&not;';
       case 'in':
         return '&in;';
+      case 'notin':
+        return '&notin;';
       case 'inter':
         return '&#x2229;';
       case 'union':

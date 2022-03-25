@@ -2551,6 +2551,8 @@ var unicodeNames = {
   '!=': '\u2260',     // &ne;
   '<=': '\u2264',     // &le;
   '>=': '\u2265',     // &ge;
+  'in': '\u2208',     // &in;
+  'notin': '\u2209',  // &notin;
   '**': '**',         // Dont change to sdots.
   '*': '\u22c5',      // &sdot;
   '-': '\u2212',      // &minus;
