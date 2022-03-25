@@ -3526,6 +3526,8 @@ declare(
   // because the substitution goes into the form A => B rather than
   // the theorem that A is to match.  Reimplement it when matchToRule
   // is available.
+  //
+  // TODO: Deal properly with schemas that are proved (steps).
   {name: 'forwardChain',
     action: function(step, schema_arg) {
       var schema = rules.fact(schema_arg);

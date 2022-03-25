@@ -953,8 +953,9 @@ function wantLeftElision(step) {
 
 
 /**
- * Renders the top-level expression of a step into a node, returning
- * the node.  Omits surrounding parens if the step is a Call.
+ * Renders the top-level expression of a renderable step into a node,
+ * returning the node.  Omits surrounding parens if the step is a
+ * Call, as it usually is.
  *
  * TODO: Consider fleshing out the concept of display with fewer
  * parentheses.
