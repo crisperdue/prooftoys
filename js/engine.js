@@ -309,9 +309,15 @@ var rules = {};
 //   purpose.  The first result is the result of the precheck, the
 //   second and final result is the result of using the full rule.
 //
+// main: If the rule has a precheck, this will have the main action as
+//   its value, and client code may call it after the precheck and
+//   before invoking any other rule.
+//
 // onFail: if a rule's action function is called in the ordinary
 //   manner, and it has precheck, and the precheck fails, then its
 //   onFail action will run with access to the rule object as "this".
+//   If no onFail action is given, a rule with a precheck will
+//   return a strict error on failure of the precheck.
 //
 // inputs: map from type to argument number(s), either a single number
 //   or an array if more than one such argument.  These currently

@@ -223,8 +223,8 @@ var methods = {
     // solution(s).  Note that if there are givens in the tc section, any
     // "solutions" are actually candidates and need checking.
     var full = wff.matchSchema('t => (g == s)');
-    // TODO: Fix matchSchema to require "==" in the wff; and
-    //   remove the excess isEquivOp test here.
+    // TODO: Consider modifying matchSchema to require "==" in the
+    //   wff; then remove the excess isEquivOp test here.
     if (full && wff.get('/right/binop').isEquivOp()) {
       tcInfo = analyzeConditions(full.t, givens);
       givensInfo = analyzeConditions(full.g, givens);

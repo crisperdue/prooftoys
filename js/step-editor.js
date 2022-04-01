@@ -57,9 +57,10 @@ var nextProofEditorId = 1;
  *   editor initialization immediately after creation.
  * fromDoc: boolean, true if state loaded from a document in constructor.
  * initialSteps: string with initial steps to reset to on "clear proof".
- * givens: array of boolean terms defining the problem, often
- *   equations (not steps).  Should only be set when the proof is
- *   empty.  Read it as a TermSet.
+ * givens: read-only TermSet of boolean terms defining the problem, often
+ *   equations (not steps).  Non-empty iff the first step is a "given"
+ *   step; then contains the conjuncts of the main part, as determined
+ *   by scanConjuncts.
  * givenVars: object/set keyed by names of variables free in the givens;
  *   read-only.
  * solutions: If any of these expressions (or strings) is an alphaMatch
@@ -75,6 +76,8 @@ var nextProofEditorId = 1;
 function ProofEditor(options_arg) {
   const self = this;
   const options = Object.assign({loadDoc: true}, options_arg);
+  // If the first step of the proof is a "givens" step, this will
+  // become a TermSet with all conjuncts of its main part.
   self._givens = new TermSet();
   self.givenVars = {};
   self.solutions = [];
@@ -735,6 +738,7 @@ ProofEditor.prototype.clear = function() {
  */
 Object.defineProperty(ProofEditor.prototype, "givens", {
     get: function() { return this._givens; },
+    // TODO: Check if the setter is ever used; clean up the semantics.
     set: function(g) {
       assert(this.proofDisplay.steps.length == 0, 'Proof is not empty');
       var wff;
@@ -751,8 +755,10 @@ Object.defineProperty(ProofEditor.prototype, "givens", {
   });
 
 /**
- * Recompute the problem givens from the first proof step
- * if its rule name is "given".
+ * Recompute the problem givens from the first proof step if its rule
+ * name is "given".  Sets them to be all conjuncts of the RHS of the
+ * main part of the first step, set up as an equivalence by
+ * rules.given.
  */
 ProofEditor.prototype._updateGivens = function() {
   var self = this;
