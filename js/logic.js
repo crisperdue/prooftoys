@@ -3386,10 +3386,10 @@ declare(
         return false;
       }
       var val = term.getRight();
+      var vName = vbl.name;
       if (vName in val.freeVars()) {
         return false;
       }
-      var vName = vbl.name;
       var step1 = rules.extractHypAt(step, path);
       // This check is adequate.
       var map = step1.matchSchema('a => (b => c)');
