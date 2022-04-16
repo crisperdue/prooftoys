@@ -1549,6 +1549,9 @@ function RuleMenu(proofEditor) {
   // True iff we are suppressing actions from menu item events
   // (enter and click).
   self.suppressing = false;
+  // Timer (from setTimeout) that will run an action unless cleared by
+  // mouse movement.  Helps detect "mouse still" conditions.
+  self.timer = null;
 
   const $modeList = $('<div class=modeList>');
   self.$modeList = $modeList;
@@ -1593,7 +1596,14 @@ function RuleMenu(proofEditor) {
     proofEditor.stepEditor.clearError();
   });
 
-  $modeList.on('mouseenter', '.mode', function(event) {
+  // This code triggers potential change of menu mode when
+  // the mouse stops within one of the .mode regions.
+  // It sets up the timer on movement and also cancels any
+  // timer that is currently set, so the action only occurs
+  // if the mouse does not move (or leave the region) during
+  // the interval.
+  $modeList.on('mousemove', '.mode', function(event) {
+    const target = this;
     if (proofEditor.stepEditor.formShowing) {
       // Do not change modes if the rule form is displayed.
       return;
@@ -1601,16 +1611,23 @@ function RuleMenu(proofEditor) {
     const $selected = $modeList.find('[class~=selected]');
     const mode = this.dataset.mode;
     if (mode) {
-      $selected.removeClass('selected');
-      $(this).addClass('selected');
       if (!$selected.is(this)) {
-        proofEditor.showRuleType = mode;
-        proofEditor.ruleMenu.refresh();
-        proofEditor.stepEditor.hideForm();
+        clearTimeout(self.timer);
+        self.timer = setTimeout(event => {
+          // This is the action that changes the menu mode.
+          $selected.removeClass('selected');
+          $(target).addClass('selected');
+          proofEditor.showRuleType = mode;
+          proofEditor.ruleMenu.refresh();
+          proofEditor.stepEditor.hideForm();
+        }, 50);  // We are using a 50msec interval.
       }
     }
   });
-  
+  $modeList.on('mouseleave', '.mode', function(event) {
+    clearTimeout(self.timer);
+  });
+
   $node.on('click', '.ruleItem', function(event) {
     self.handleMouseClickItem(this, event);
   });
