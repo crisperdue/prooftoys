@@ -155,7 +155,7 @@ declare(
 
   {name: 'axiom2',
     statement: 'x = y => h x = h y', axiom: true,
-    labels: 'higherOrder primitive',
+    labels: 'primitive',
     inputs: {},
     description: 'axiom of function application',
     tooltip: ('functions take equal values to equal values')
@@ -167,7 +167,7 @@ declare(
    */
   {name: 'axiom2a',
     statement: 'x = y => (p x == p y)', axiom: true,
-    labels: 'higherOrder primitive',
+    labels: 'primitive',
     proof: function() {
       var step1 = rules.instVar(rules.axiom2(), 'p', 'h');
       var step2 = rules.eqSelf('(==)');
@@ -4910,7 +4910,7 @@ declare(
     },
     inputs: {},
     description: 'symmetry of equality',
-    labels: 'algebra'
+    labels: 'algebra general'
   },
 
   {name: 'equalityTransitive',

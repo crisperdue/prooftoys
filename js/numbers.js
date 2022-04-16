@@ -1098,6 +1098,8 @@ declare
     labels: 'algebra'
   },
 
+   // TODO: Make something like this that actually works
+   //   with simultaneous equations.
    {name: 'addEquationToThis',
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
@@ -1114,6 +1116,8 @@ declare
     labels: 'algebra'
   },
 
+   // TODO: Make something like this that actually works
+   //   with simultaneous equations.
    {name: 'subtractEquationFromThis',
     action: function(eqn1, eqn2) {
       var lhs = eqn2.getMain().getLeft();
@@ -2331,6 +2335,7 @@ declare(
    },
   
    {statement: '@R a => a != none',
+    labels: 'backward',
     proof: function() {
        var asm = rules.assume('a = none');
        return (rules.fact('not (R none)')
@@ -2362,13 +2367,6 @@ declare(
        .rewrite('/main/right/right', 'a + b = b + a')
        .rewrite('/main/right', 'a + (b + c) = a + b + c');
        return step;
-     }
-   },
-   {statement: 'a + b + c = a + (c + b)',
-    proof: function() {
-       return rules.consider('a + b + c')
-       .rewrite('/main/right', 'a + b + c = a + c + b')
-       .rewrite('/main/right', 'a + b + c = a + (b + c)');
      }
    },
 
