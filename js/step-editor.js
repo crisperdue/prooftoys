@@ -2151,31 +2151,6 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
 };
 
 /**
- * Tests whether the given goal (wff) has a subgoal within its
- * assumptions, currently defined as anything other than a real number
- * assumption or an inequality condition.
- */
-function hasSubgoal(goal) {
-  const asms = goal.getAsms();
-  return asms &&
-    asms.scanConj(x =>
-                  !x.matchSchema('R x') &&
-                  !x.matchSchema('not (x = y)') &&
-                  !x.matchSchema('x != y'));
-}
-
-/**
- * Tests whether the given goal (wff) has a type (real number)
- * assumption.
- */
-function hasTypeAsm(goal) {
-  const asms = goal.getAsms();
-  return asms && asms.scanConj(t => {
-      return !!t.matchSchema('R x');
-    });
-}
-
-/**
  * Returns a list of fact info objects for facts that are offerable
  * in the UI, currently all equational facts whose LHS matches the
  * currently selected term.
@@ -2196,41 +2171,10 @@ RuleMenu.prototype.offerableFacts = function() {
     Toy.eachFact(function(info) {
       const goal = info.goal;
       
-      // Compute a set of categories based on the facts'
-      // metadata and goal.
-
-      const categories = new Set;
-      for (let label in info.labels) {
-        const category = categoryOfLabel[label];
-        assert(category, 'No category for label {1}', label);
-        if (category !== 'default') {
-          categories.add(category);
-        }
-      }
-
-      if (categories.size === 0) {
-        // If there is no explicit category, look for implicit ones
-        // based on the statement of the rule and metadata other than
-        // labels.  (Currently there is at most one.)
-        const category =
-              (info.desimplifier ? 'desimplifier'
-               : info.simplifier ? 'simplifier'
-               : (goal.matchSchema('a = the b') ||
-                  goal.matchSchema('a = the1 b')) ? 'advanced'
-               : hasSubgoal(goal) ? 'backward'
-               // If it adds no subgoal, but has a type ("real")
-               // assumption, show only if it has a label.
-               : hasTypeAsm(goal) ? null
-               : 'other'
-              );
-        if (category) {
-          categories.add(category);
-        }
-      }
       // TODO: Move computation of categories of each fact
       //   into initialization of fact metadata.
 
-      if (Toy.intersection(catsOfMenu.get(menu), categories).size > 0) {
+      if (Toy.intersection(catsOfMenu.get(menu), info.categories).size > 0) {
         const matchTerm = goal.matchPart();
         // We never offer facts with goals that match
         // everything of suitable type.  This check may be unnecessary
@@ -2244,27 +2188,6 @@ RuleMenu.prototype.offerableFacts = function() {
     });
   }
   return facts;
-};
-
-const categoryOfLabel = {
-  // The "none" label is assigned automatically when no labels
-  // are given.
-  none: 'default',
-  // The "none" category means "do not offer this fact".
-  primitive: 'none',
-  // The remaining labels occur in one or more facts today.
-  display: 'edit',
-  uncommon: 'other',
-  advanced: 'other',
-  algebra: 'algebra',
-  // The algebra2 name suggests "algebra, but not usually a good idea".
-  algebra2: 'other',
-  general: 'general',
-  basic: 'general',
-  higherOrder: 'general',
-  // The "backward" label is for facts useful for backward reasoning,
-  // though it usually can be inferred from the assumptions of the fact.
-  backward: 'backward',
 };
 
 // This maps from menu name to a set of category names to be

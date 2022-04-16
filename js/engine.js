@@ -176,6 +176,91 @@ function processLabels(labels) {
   }
 }
 
+// Computes a set of menu categories based on the facts' metadata and
+// goal, and stores them as info.categories.  The categories are like
+// menus, but can be more fine-grained.
+function computeMenuAssignments(info, isConverse) {
+  const goal = info.goal;
+  const categories = new Set;
+
+  for (let label in info.labels) {
+    const category = categoryOfLabel[label];
+    assert(category, 'No category for label {1}', label);
+    if (category !== 'default') {
+      categories.add(category);
+    }
+  }
+
+  if (categories.size === 0) {
+    // If there is no explicit category, look for implicit ones
+    // based on the statement of the rule and metadata other than
+    // labels.  (Currently there is at most one.)
+    const category =
+          (info.desimplifier ? 'desimplifier'
+           : info.simplifier ? 'simplifier'
+           : (goal.matchSchema('a = the b') ||
+              goal.matchSchema('a = the1 b')) ? 'advanced'
+           : hasSubgoal(goal) ? 'backward'
+           // If it adds no subgoal, but has a type ("real")
+           // assumption, show only if it has a label.
+           : hasTypeAsm(goal) ? null
+           : 'other'
+          );
+    if (category) {
+      categories.add(category);
+    }
+  }
+
+  info.categories = categories;
+}
+
+// Private to computeMenuAssignments.
+const categoryOfLabel = {
+  // The "none" label is assigned automatically when no labels
+  // are given.
+  none: 'default',
+  // The "none" category means "do not offer this fact".
+  primitive: 'none',
+  // The remaining labels occur in one or more facts today.
+  display: 'edit',
+  uncommon: 'other',
+  advanced: 'other',
+  algebra: 'algebra',
+  // The algebra2 name suggests "algebra, but not usually a good idea".
+  algebra2: 'other',
+  general: 'general',
+  basic: 'general',
+  higherOrder: 'general',
+  // The "backward" label is for facts useful for backward reasoning,
+  // though it usually can be inferred from the assumptions of the fact.
+  backward: 'backward',
+};
+
+/**
+ * Tests whether the given goal (wff) has a subgoal within its
+ * assumptions, currently defined as anything other than a real number
+ * assumption or an inequality condition.
+ */
+function hasSubgoal(goal) {
+  const asms = goal.getAsms();
+  return asms &&
+    asms.scanConj(x =>
+                  !x.matchSchema('R x') &&
+                  !x.matchSchema('not (x = y)') &&
+                  !x.matchSchema('x != y'));
+}
+
+/**
+ * Tests whether the given goal (wff) has a type (real number)
+ * assumption.
+ */
+function hasTypeAsm(goal) {
+  const asms = goal.getAsms();
+  return asms && asms.scanConj(t => {
+      return !!t.matchSchema('R x');
+    });
+}
+
 // Used to order execution of proof steps so they can display
 // in order of execution in an automatically-generated proof.
 // This increments on every call to "justify".
@@ -2191,6 +2276,7 @@ function addFact(info) {
   info.inProgress = false;
 
   info.labels = processLabels(info.labels);
+  computeMenuAssignments(info);
 
   if (isRecordedFact(info.goal)) {
     console.info('Fact', info.goal.$$, 'already recorded, skipping.');
@@ -2276,6 +2362,7 @@ function addSwappedFact(info) {
       if (info.labels && info.labels.primitive) {
         labels2.primitive = true;
       }
+      computeMenuAssignments(info, true);
       var after2 = info.converse && info.converse.afterMatch;
       var info2 = {proof: proveSwapped,
                    goal: swapped,
