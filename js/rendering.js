@@ -690,7 +690,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
                  .append('<span class="fa fa-fw"></span>',
                          // This is a place to display information (the full step)
                          // when the stepHoverMark is hovered.
-                         '<div class=hoverInfoBox></div>'));
+                         '<div class="hoverInfoBox invisible"></div>'));
   }
   // If editable, add checkbox.
   if (self.isEditable()) {
@@ -702,7 +702,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   // inside the stepNumArea and show it on hover when the shift key is
   // down, see below.
   if (!Toy.showStepHoverMark) {
-    $numArea.append('<div class=hoverInfoBox></div>');
+    $numArea.append('<div class="hoverInfoBox invisible"></div>');
   }
   const $stepAndNum = ($('<span class=stepAndNum>')
                        .append($numArea));
@@ -756,13 +756,13 @@ ProofDisplay.prototype.renderStep1 = function(step) {
       }
     });
   $proofStep.on('mouseleave', '.stepNumArea', function(event) {
-      $step.find('.hoverInfoBox').toggle(false);
+      $step.find('.hoverInfoBox').toggleClass('invisible', true);
     });
   $proofStep.on('mouseenter', '.ellipsis', function(event) {
       fillHoverInfoBox(self.proofEditor, step);
     });
   $proofStep.on('mouseleave', '.ellipsis', function(event) {
-      $step.find('.hoverInfoBox').toggle(false);
+      $step.find('.hoverInfoBox').toggleClass('invisible', true);
     });
 
   $proofStep.on('mouseenter', '.stepHoverMark', function(event) {
@@ -771,7 +771,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
       fillHoverInfoBox(self.proofEditor, step);
     });
   $proofStep.on('mouseleave', '.stepHoverMark', function(event) {
-      $step.find('.hoverInfoBox').toggle(false);
+      $step.find('.hoverInfoBox').toggleClass('invisible', true);
     });
   $proofStep.on(TOUCHDOWN, '.stepSelector', function(event) {
     self.handleStepClick(step);
@@ -2224,7 +2224,7 @@ function fillHoverInfoBox(proofEditor, step) {
     $step.append(hackOnRendering(copy.wff.render(0)));
     $box.append($step, $msgs);
   }
-  $box.toggle(true);
+  $box.toggleClass('invisible', false);
 }
 
 /**

@@ -1,4 +1,10 @@
 
+
+/* Invisibly fills space */
+.invisible {
+  visibility: hidden;
+}
+
 .ellipsis {
   color: #aaa;
   margin: 0px 5px;
@@ -357,7 +363,7 @@ span.ruleStats {
  */
 .hoverInfoBox {
     /* Initially none. */
-    display: none;
+    // display: none;
     position: absolute;
     z-index: 1;
     left: 1.7em;
