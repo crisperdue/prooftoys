@@ -2147,10 +2147,6 @@ declare(
               });
           });
 
-        // Uncomment these lines to restore afterMatch functionality:
-        // const info = resolveToFactInfo(eqn_arg);
-        // const after = (info && info.afterMatch) || function(x) { return x; };
-        // simpler = after(simpler);
         return (simpler.justify('matchTerms', arguments, [target]));
       } else {
         return null;
@@ -4225,10 +4221,6 @@ declare(
                       : eqn_arg.andThen('rewriteOnly',
                                         '/main', 'a == (a == T)'));
       const result = rules.instMultiVars(equation, map, true);
-      // Uncomment these lines to restore afterMatch functionality:
-      // const info = resolveToFactInfo(eqn_arg);
-      // const after = (info && info.afterMatch) || function(x) { return x; };
-      // const result2 = after(result);
       return result;
     }
   },

@@ -607,6 +607,9 @@ function addRule(info) {
     }
   }
   if (proof) {
+    // This should run for anything but a rule of inference that
+    // takes arguments.
+    //
     // Just execute the proof on first use, but re-justify on each
     // use so the result will have its own ordinal.
     //
@@ -2169,8 +2172,8 @@ var factProperties = {
   labels: true,
   description: true,
   definitional: true,
-  autoSimplify: true,
-  afterMatch: true,
+  // autoSimplify: true,
+  // afterMatch: true,
   converse: true
 };
 
@@ -2211,9 +2214,6 @@ var factProperties = {
  * autoSimplify: if given, a simplifier function that takes the
  *   result of a rewrite with this fact as its input and applies it
  *   as the interactive auto-simplifier.
- * afterMatch: if given, a function that a rewrite runs after
- *   substitution, interactively or not, taking the resulting
- *   equation step as its argument.  This is currently disabled.
  * labels: Optional object/set of label names.  If given as a string,
  *   parses space-separated parts into a set.  The result constains just
  *   "none" if none are given.
@@ -2363,13 +2363,11 @@ function addSwappedFact(info) {
         labels2.primitive = true;
       }
       computeMenuAssignments(info, true);
-      var after2 = info.converse && info.converse.afterMatch;
       var info2 = {proof: proveSwapped,
                    goal: swapped,
                    simplifier: !!info.desimplifier,
                    desimplifier: !!info.simplifier,
                    description: info.description,
-                   afterMatch: after2,
                    labels: labels2
       };
       addFact(info2);
