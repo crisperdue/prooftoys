@@ -1670,8 +1670,12 @@ RuleMenu.prototype._update = function() {
   const step = proofEditor.proofDisplay.selection;
   const term = step && step.selection;
   const sitePath = term && step.prettyPathTo(term);
-  // Plain object describing each menu item.
+
+  // Array of plain objects, on per menu item.
   var itemInfos = [];
+
+  // Find inference rules that appear relevant to the current
+  // selection and proof status.
   self.offerableRuleNames().forEach(function(ruleName) {
       // Info is a string or array of strings.
       var info = ruleMenuInfo(ruleName, step, term, proofEditor);
@@ -1687,9 +1691,9 @@ RuleMenu.prototype._update = function() {
       }
   });
 
-  // Search for proof steps that can serve as rewrites.
   if (term) {
-    // A term is selected.
+    // A term is selected.  Find proof steps that can serve as rewrite
+    // rules with the current situation / selection.
     const mode = self.proofEditor.showRuleType;
     if (mode === 'general') {
       // For now, offer all rewriting using proof steps
@@ -1709,62 +1713,45 @@ RuleMenu.prototype._update = function() {
         if (!map) {
           return;
         }
-        // TODO: Consider setting this to real jQuery / DOM content,
-        //   also other "html" infos in itemInfos.
+        // TODO: Render this info and rewrite _rule_ content
+        //   consistently in both visual style and code, see the code
+        //   block just below.
         const html =
               Toy.escapeHtml(
-                Toy.format(' use step {1} {2}', n,
-                           // Copy to make it not a step,
-                           // for neater presentation.
-                           // Can we improve on this?
-                           proofStep.wff.typedCopy(true)));
+                Toy.format(' = {1} using step {2}',
+                           proofStep.replacementTerm(),
+                           n));
         itemInfos.push({ruleName: 'rewriteFrom',
                         ruleArgs: [step.original, sitePath, proofStep.original],
                         html: html
                        });
       });
     }
-  }
 
-  // TODO: Rewrite this ugly block of code.
-  self.offerableFacts().forEach(function(info) {
-      let statement = info.goal;
-      var text = statement.toString();
-      var resultTerm = statement;
-      if (statement.isEquation()) {
-        if (statement.isCall2('=>')) {
-          // Make the statement be the fact's equation.
-          resultTerm = statement = statement.getRight();
-        }
-        // If as usual the LHS of the equation matches the selection,
-        // set resultTerm to the result of substituting into the RHS.
-        var step = self.proofEditor.proofDisplay.selection;
-        var selection = step && step.selection;
-        if (selection) {
-          var subst = selection.matchSchema(statement.getLeft());
-          if (subst) {
-            // Ignore unification failure.
-            if (Toy.catchAborts(() => {
-              // CAUTION: temp and temp2 are not to be added to the
-              // current theory, as they are only hypothetically true
-              // to test the unification.
-              //
-              // TODO: Consider a mechanism to check without a
-              // deduction step.
-              const temp = rules.assert(info.goal);
-              // Unification can fail in this step.
-              // Attempt to eliminate introduced lambdas.
-              const temp2 = rules.instMultiVars(temp, subst, true);
-              resultTerm = temp2.getMain().getRight();
-            })) {
-              // There was a failure so don't offer the fact.
-              return;
-            }
-          }
-        }
-      }
-      var display = ' = <span class=menuResult></span>';
+    // Find registered facts usable as rewrite rules.
+    self.offerableFacts().forEach(function(info) {
+      const statement = info.goal;
+      const subst = term.matchSchema(statement.matchPart());
       if (subst) {
+        let resultTerm;
+        // Ignore unification failure.
+        if (Toy.catchAborts(() => {
+          // CAUTION: temp and temp2 are not to be added to the
+          // current theory, as they are only hypothetically true
+          // to test the unification.
+          //
+          // TODO: Consider a mechanism to check without a
+          // deduction step.
+          const temp = rules.assert(statement);
+          // Unification can fail in this step.
+          // Substitute and eliminate introduced lambdas.
+          const temp2 = rules.instMultiVars(temp, subst, true);
+          resultTerm = temp2.replacementTerm();
+        })) {
+          // There was a failure so don't offer the fact.
+          return;
+        }
+        let display = ' = <span class=menuResult></span>';
         // TODO: Consider using the length of the unicode in deciding
         //   what message to generate here.
         // const unicode = statement.toUnicode();
@@ -1772,20 +1759,29 @@ RuleMenu.prototype._update = function() {
                       ? 'definition of ' + statement.getLeft().func().name
                       : 'using ' + Toy.trimParens(statement.toHtml()));
         display += (' <span class=description>' + html + '</span>');
+        // Rule name format of "fact <fact text>"
+        // indicates that the text defines a fact to use in
+        // rules.rewrite.
+        var info = {ruleName: 'fact ' + statement.toString(),
+                    html: display,
+                    result: resultTerm};
+        itemInfos.push(info);
       }
-      // Rule name format of "fact <fact text>"
-      // indicates that the text defines a fact to use in
-      // rules.rewrite.
-      var info = {ruleName: 'fact ' + text,
-                  html: display,
-                  result: resultTerm};
-      itemInfos.push(info);
-  });
+    });
+  }      // End if (term)
+
+  // Sort the itemInfos.
   itemInfos.sort(function(a, b) {
     // We use leading spaces to influence sorting: items with
     // more leading spaces come before ones with fewer.
+    //
+    // TODO: Provide less ad hoc means for ordering, such as
+    //   additional properties of the info objects, e.g. "priority".
+    //   Also provide fact information in a more structured way.
     return a.html.localeCompare(b.html);
   });
+
+  // Generate menu items from itemInfos.
   var items = itemInfos.map(function(info) {
       var $item = $('<div class="ruleItem noselect">');
       $item.html(info.html);
@@ -2151,7 +2147,7 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
 };
 
 /**
- * Returns a list of fact info objects for facts that are offerable
+ * Returns an array of fact info objects for facts that are offerable
  * in the UI, currently all equational facts whose LHS matches the
  * currently selected term.
  *
@@ -2170,14 +2166,10 @@ RuleMenu.prototype.offerableFacts = function() {
     // Consider each registered fact:
     Toy.eachFact(function(info) {
       const goal = info.goal;
-      
-      // TODO: Move computation of categories of each fact
-      //   into initialization of fact metadata.
-
       if (Toy.intersection(catsOfMenu.get(menu), info.categories).size > 0) {
         const matchTerm = goal.matchPart();
-        // We never offer facts with goals that match
-        // everything of suitable type.  This check may be unnecessary
+        // We never offer a fact if the goal matches _everything_ (of
+        // suitable type).  This check may be unnecessary.
         if (!matchTerm.isVariable() &&
             Toy.coreUnifTypes(expr.type, matchTerm.type) &&
             expr.matchSchema(matchTerm)) {

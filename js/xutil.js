@@ -1610,6 +1610,18 @@ Expr.prototype.matchPart = function() {
           ? self.getRight()
           : self);
 };
+
+/**
+ * Treating this term as the equation in a replacement,
+ * returns the replacement part.  To support rewrite rules
+ * that are implicitly equivalent to T, returns T in case
+ * this is not equational.
+ */
+Expr.prototype.replacementTerm = function() {
+  return (this.isEquation()
+          ? this.get('/main/right')
+          : Toy.parse('T'));
+};
   
 
 //// SIMPLE UTILITIES
