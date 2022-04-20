@@ -4568,15 +4568,16 @@ declare(
   //
   // If e is a, returns its input (or a copy?).
   //
-  // TODO: Disallow this as unreliable.  Refer to it by its content.
+  // TODO: Use this only from the UI.  Use of paths to assumptions
+  //   is unreliable.
   {name: 'extractHypAt',
     precheck: function(step, path_arg) {
       const path = Toy.asPath(path_arg);
       return step.wff.isCall2('=>') && path.isLeft();
     },
     action: function(step, path) {
-      var result = rules.extractHyp(step, step.get(path));
-      return result.justify('extractHypAt', arguments, [step]);
+      const hyp = step.get(path);
+      return rules.extractHyp(step, hyp);
     },
     inputs: {site: 1},
     menu: 'extract the assumption',
