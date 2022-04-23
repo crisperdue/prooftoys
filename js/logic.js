@@ -354,7 +354,6 @@ declare(
       let result;
       const path = target.asPath(path_arg);
       assert(equation.isCall2('='), 'Rule R requires equation: {1}', equation);
-      const targex = target.get(path);
       window.rCounter = (window.rCounter || 0) + 1;
       result = equation.wff.ruleRCore(target, path);
       if (result instanceof Error) {
@@ -363,7 +362,7 @@ declare(
         // distinctify does not resolve the problem?
         window.dCounter = (window.dCounter || 0) + 1;
         const eq2 = equation.distinctify(target);
-        const result2 = target.wff.ruleRCore(target, path, eq2);
+        const result2 = eq2.wff.ruleRCore(target, path, eq2);
         if (result2 instanceof Error) {
           return result2;
         }
