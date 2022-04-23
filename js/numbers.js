@@ -418,21 +418,16 @@ declare(
       simplifier: true,
       proof:
       [
-       '(1 consider (t (x * 0)))',
-       '(2 rewrite (s 1) (path "/main/right/right") (t (x = (x + 0))))',
-       '(3 rewrite (s 2) (path "/main/right") (t ((((R x) & (R y)) & (R z)) => ((x * (y + z)) = ((x * y) + (x * z))))))',
-       '(4 display (s 3))',
-       '(5 rewrite (s 4) (path "/right/left") (t (x = (0 + x))))',
-       '(6 abcPlus)',
-       '(7 instantiateVar (s 6) (path "/left/left/left/left/left/left") (t 0))',
-       '(8 instantiateVar (s 7) (path "/left/left/left/left/left/right") (t (x * 0)))',
-       '(9 instantiateVar (s 8) (path "/left/left/left/left/right/left") (t (x * 0)))',
-       // TODO: avoid dependence on order of assumptions.
-       '(10 extractHypAt (s 9) (path "/left/left/left/left"))',
-       '(11 simplifyAsms (s 10))',
-       '(12 p2 (s 5) (s 11) (t (((a => b) & (a => (b => c))) => (a => c))))',
-       '(13 rewrite (s 12) (path "/right") (t ((x = y) == (y = x))))'
-       ],
+        `(1 eqSelf (t (x * 0)))`,
+        `(2 rewrite (s 1) (path "/main/left/right")
+          (t ((R x) => (x = (x + 0)))))`,
+        `(3 rewrite (s 2) (path "/main/left")
+          (t ((((R x) & (R y)) & (R z)) =>
+              ((x * (y + z)) = ((x * y) + (x * z))))))`,
+        `(4 rewrite (s 3) (path "/right/right") (t ((R a) => (a = (0 + a)))))`,
+        `(5 rewrite (s 4) (path "/right")
+          (t ((((R a) & (R b)) & (R c)) => (((a + c) = (b + c)) == (a = b)))))`
+      ],
       description: 'multiplication by zero'
      },
 
