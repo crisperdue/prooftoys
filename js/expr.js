@@ -380,7 +380,7 @@ Toy._typeNums = new Map();
  */
 Expr.prototype.show = function (level) {
   try {
-    Toy.showTypes = level || 'vars';
+    Toy.showTypes = level || 'testing';
     return this.toString();
   } finally {
     Toy.showTypes = false;
