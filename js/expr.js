@@ -1675,12 +1675,12 @@ function isProved(x) {
 
 /**
  * Searches for a subexpression of this that passes the test, given as
- * a boolean function of one argument.  Returns a path from this to
- * the occurrence, or null if none found.  Tests this expression
- * first, followed by the rest in top-down right-to-left order.  Does
- * not search for variable bindings, use pathToBinding instead.
- * Alternatively accepts a term to be matched with sameAs, which may
- * be given as a string.
+ * a boolean function of one argument.  Returns a (non-pretty) path
+ * from this to the occurrence, or null if none found.  Tests this
+ * expression first, followed by the rest in top-down right-to-left
+ * order.  Does not search for variable bindings, use pathToBinding
+ * instead.  Alternatively accepts a term to be matched with sameAs,
+ * which may be given as a string.
  */
 Expr.prototype.pathTo = function(arg) {
   // TODO: Make a more efficient version that works directly with
