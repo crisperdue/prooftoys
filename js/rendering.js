@@ -1402,7 +1402,30 @@ Step.prototype.removeUser = function(user) {
   }
 };
 
-Step.prototype.isRendered = function() { return this == this.rendering; }
+/**
+ * Returns truthy value iff this Step object is rendered.
+ */
+Step.prototype.isRendered = function() { return this == this.rendering; };
+
+/**
+ * Removes "minor" conditions from the assumptions, returning an Expr.
+ * This is specific to real numbers.
+ */
+Step.prototype.shortForm = function() {
+  const infix = Toy.infixCall;
+  const asms = this.getAsms();
+  let shorts = null;
+  if (asms) {
+    asms.scanConj(asm => {
+      if (asm.likeSubgoal()) {
+        shorts = shorts ? infix(shorts, '&', asm) : asm;
+      }
+    });
+    return shorts ? infix(shorts, '=>', this.getRight()) : this.getRight();
+  } else {
+    return this;
+  }
+};
 
 /**
  * Given a rendered step, returns it and all rendered steps derived from
@@ -1728,7 +1751,7 @@ function expandMarkup(step, markup) {
     return terms.join(', ');
   case 'shortFact':
     var place = info.inputs.bool[0] || info.inputs.bool;
-    var bool = Toy.mathParse(step.ruleArgs[place - 1]).getMain();
+    var bool = Toy.mathParse(step.ruleArgs[place - 1]).shortForm();
     return termDisplay(bool);
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;

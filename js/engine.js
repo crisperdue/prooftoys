@@ -243,11 +243,7 @@ const categoryOfLabel = {
  */
 function hasSubgoal(goal) {
   const asms = goal.getAsms();
-  return asms &&
-    asms.scanConj(x =>
-                  !x.matchSchema('R x') &&
-                  !x.matchSchema('not (x = y)') &&
-                  !x.matchSchema('x != y'));
+  return asms && asms.scanConj(x => x.likeSubgoal());
 }
 
 /**
