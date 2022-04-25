@@ -176,10 +176,11 @@ function processLabels(labels) {
   }
 }
 
-// Computes a set of menu categories based on the facts' metadata and
-// goal, and stores them as info.categories.  The categories are like
-// menus, but can be more fine-grained.
-function computeMenuAssignments(info, isConverse) {
+// Computes the fact's set of menu categories based on its metadata
+// and goal, and stores them as info.categories.  The categories are
+// like menus, but can be more fine-grained, each menu displaying a
+// characteristic set of categories.
+function computeMenuCategories(info, isConverse) {
   const goal = info.goal;
   const categories = new Set;
 
@@ -214,7 +215,7 @@ function computeMenuAssignments(info, isConverse) {
   info.categories = categories;
 }
 
-// Private to computeMenuAssignments.
+// Private to computeMenuCategories.
 const categoryOfLabel = {
   // The "none" label is assigned automatically when no labels
   // are given.
@@ -2272,7 +2273,7 @@ function addFact(info) {
   info.inProgress = false;
 
   info.labels = processLabels(info.labels);
-  computeMenuAssignments(info);
+  computeMenuCategories(info);
 
   if (isRecordedFact(info.goal)) {
     console.info('Fact', info.goal.$$, 'already recorded, skipping.');
@@ -2358,7 +2359,7 @@ function addSwappedFact(info) {
       if (info.labels && info.labels.primitive) {
         labels2.primitive = true;
       }
-      computeMenuAssignments(info, true);
+      computeMenuCategories(info, true);
       var info2 = {proof: proveSwapped,
                    goal: swapped,
                    simplifier: !!info.desimplifier,
