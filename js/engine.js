@@ -204,7 +204,8 @@ function computeMenuCategories(info, isConverse) {
            : hasSubgoal(goal) ? 'backward'
            // If it adds no subgoal, but has a type ("real")
            // assumption, show only if it has a label.
-           : hasTypeAsm(goal) ? null
+           : hasTypeAsm(goal) ? 'realType'
+           : info.goal.matchPart().isVariable() ? 'varMatch'
            : 'other'
           );
     if (category) {
