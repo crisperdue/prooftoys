@@ -240,11 +240,11 @@ Expr.prototype._typeFrom = function(expr) {
 var Step = Expr;
 
 /**
- * Make a Atom with the given name.  If a non-null integer position is given,
- * use it to record the index in the input stream.  If the given name
- * is in the "aliases" map, the given name becomes the Atom's pname,
- * and the Atom's name becomes the value of the alias.  Pnames affect
- * only parsing and display, not the logic itself.
+ * Make an Atom with the given name.  If a non-null integer position
+ * is given, use it to record the index in the input stream.  If the
+ * given name is in the "aliases" map, the given name becomes the
+ * Atom's pname, and the Atom's name becomes the value of the alias.
+ * Pnames affect only parsing and display, not the logic itself.
  *
  * An Atom object can represent a variable (free or bound) or a
  * constant, either literal or named (see isConstantName).
