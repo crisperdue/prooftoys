@@ -3999,7 +3999,7 @@ declare(
     form: ('Replace site with right side of equation <input name=equation>'),
     menu: 'replace using a step like {term} = . . .',
     description: 'replace term;; {in step siteStep} {using step equation}',
-    labels: 'basic'
+    labels: 'basic algebra'
   },
 
   /**
