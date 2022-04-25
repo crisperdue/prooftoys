@@ -1331,7 +1331,10 @@ Expr.prototype.andMathVarConditions = function() {
  *   versus infix context.
  */
 function getPrecedence(token) {
-  var name = token.pname;
+  // TODO: Clean this up.  Without the special case, getPrecedence
+  //   only works for "==" during parsing.  After that it gets treated the
+  //   same as "=".
+  var name = token.isEquivOp() ? '==' : token.pname;
   if (precedence.hasOwnProperty(name)) {
     return precedence[name];
   } else {
