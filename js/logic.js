@@ -2921,7 +2921,7 @@ declare(
     },
     inputs: {bool: 1},
     form: ('Assume <input name=bool>'),
-    menu: 'assume temporarily',
+    menu: 'assume explicitly',
     tooltip: 'Statement to assume (show occurrences)',
     description: 'assume explicitly',
     labels: 'basic'
