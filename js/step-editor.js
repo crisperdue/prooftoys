@@ -1667,9 +1667,9 @@ RuleMenu.prototype._update = function() {
       suggestion && $(suggestion).remove();
     });
   $items.empty();
-  const step = proofEditor.proofDisplay.selection;
-  const term = step && step.selection;
-  const sitePath = term && step.prettyPathTo(term);
+  const selStep = proofEditor.proofDisplay.selection;
+  const selection = selStep && selStep.selection;
+  const sitePath = selection && selStep.prettyPathTo(selection);
 
   // Array of plain objects, on per menu item.
   var itemInfos = [];
@@ -1678,7 +1678,7 @@ RuleMenu.prototype._update = function() {
   // selection and proof status.
   self.offerableRuleNames().forEach(function(ruleName) {
       // Info is a string or array of strings.
-      var info = ruleMenuInfo(ruleName, step, term, proofEditor);
+      var info = ruleMenuInfo(ruleName, selStep, selection, proofEditor);
       if (Array.isArray(info)) {
         // An array occurs when a rule may be used in multiple ways,
         // notably where there are multiple possible replacements of
@@ -1691,13 +1691,16 @@ RuleMenu.prototype._update = function() {
       }
   });
 
-  if (term) {
+  if (selection) {
     // A term is selected.  Find proof steps that can serve as rewrite
     // rules with the current situation / selection.
     const mode = self.proofEditor.showRuleType;
+
+    // For now, offer proof steps as rewriters and narrowers only when
+    // in "general" mode.
     if (mode === 'general') {
-      // For now, offer all rewriting using proof steps
-      // via "general" mode.
+
+      // This searches for steps that can rewrite.
       proofEditor.steps.forEach((proofStep, index) => {
         const n = index + 1;
         const schema = proofStep.matchPart();
@@ -1706,10 +1709,10 @@ RuleMenu.prototype._update = function() {
         if (schema.isVariable()) {
           return;
         }
-        if (!Toy.coreUnifTypes(term.type, schema.type)) {
+        if (!Toy.coreUnifTypes(selection.type, schema.type)) {
           return;
         }
-        const map = term.matchSchema(schema);
+        const map = selection.matchSchema(schema);
         if (!map) {
           return;
         }
@@ -1722,16 +1725,50 @@ RuleMenu.prototype._update = function() {
                            proofStep.replacementTerm(),
                            n));
         itemInfos.push({ruleName: 'rewriteFrom',
-                        ruleArgs: [step.original, sitePath, proofStep.original],
+                        ruleArgs: [selStep.original, sitePath,
+                                   proofStep.original],
                         html: html
                        });
       });
+
+      // Find steps that can replace an instance of the term (narrow).
+      //
+      // Variables match too many things.
+      if (!selection.isVariable()) {
+        const bindings = selStep.pathBindings(sitePath.uglify());
+
+        // For now only substitute into targets not in scope of any
+        // bound variables.
+        if (bindings.size === 0) {
+          // This searches for steps that can replace an instance of
+          // the selection.
+          proofEditor.steps.forEach((proofStep, index) => {
+            const n = index + 1;
+            const schema = selection;
+            const instance = proofStep.matchPart();
+            if (Toy.coreUnifTypes(instance.type, schema.type)) {
+              const subn = instance.matchSchema(schema);
+              if (subn) {
+                const html =
+                      Toy.escapeHtml(
+                        Toy.format(' replace instance of {1} using step {2}',
+                                   selection, n));
+                itemInfos.push({ruleName: 'replaceInstanceFrom',
+                                ruleArgs: [selStep.original, sitePath,
+                                           proofStep.original, subn],
+                                html: html
+                               });
+              }
+            }
+          });
+        }
+      }
     }
 
-    // Find registered facts usable as rewrite rules.
+    // Find registered facts that could rewrite the selection.
     self.offerableFacts().forEach(function(info) {
       const statement = info.goal;
-      const subst = term.matchSchema(statement.matchPart());
+      const subst = selection.matchSchema(statement.matchPart());
       if (subst) {
         let resultTerm;
         // Ignore unification failure.
@@ -1768,7 +1805,40 @@ RuleMenu.prototype._update = function() {
         itemInfos.push(info);
       }
     });
-  }      // End if (term)
+
+    // Find facts that can replace an instance of the selection (narrow).
+    //
+    // Variables match too many things.
+    if (!selection.isVariable()) {
+      const bindings = selStep.pathBindings(sitePath.uglify());
+
+      // For now only substitute into targets not in scope of any
+      // bound variables.
+      if (bindings.size === 0) {
+        // This searches for steps that can replace an instance of
+        // the selection.
+        self.offerableFacts().forEach(info => {
+          const schema = selection;
+          const statement = info.goal;
+          const instance = statement.matchPart();
+          if (Toy.coreUnifTypes(instance.type, schema.type)) {
+            const subn = instance.matchSchema(schema);
+            if (subn) {
+              const html =
+                    Toy.escapeHtml(
+                      Toy.format(' replace instance of {1} using {2}',
+                                 selection, statement.getMain()));
+              itemInfos.push({ruleName: 'replaceInstance',
+                              ruleArgs: [selStep, sitePath, statement,
+                                         subn],
+                              html: html
+                             });
+            }
+          }
+        });
+      }
+    }
+  }      // End if (selection)
 
   // Sort the itemInfos.
   itemInfos.sort(function(a, b) {
@@ -1794,13 +1864,13 @@ RuleMenu.prototype._update = function() {
     });
   self.length = items.length;
   $items.append(items);
-  if (term) {
+  if (selection) {
     // If there is a selected term, render it and any right neighbor
     // term, and insert the renderings into all menu items that have
     // slots for them.
-    var $term = $(term.renderTerm());
+    var $term = $(selection.renderTerm());
     $items.find('.menuSelected').append('&star;');
-    var rightTerm = Toy.getRightNeighbor(step, term);
+    var rightTerm = Toy.getRightNeighbor(selStep, selection);
     var $right = '?';
     if (rightTerm) {
       var $right = $(rightTerm.renderTerm());
@@ -2148,11 +2218,8 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
 
 /**
  * Returns an array of fact info objects for facts that are offerable
- * in the UI, currently all equational facts whose LHS matches the
- * currently selected term.
- *
- * In algebra mode, if the LHS is atomic, does not offer unless the
- * fact has the "algebra" label.
+ * as rewrite rules in the UI menus based on the categories of the fact
+ * including at least one of the categories of the current menu.
  */
 RuleMenu.prototype.offerableFacts = function() {
   const self = this;
@@ -2170,7 +2237,7 @@ RuleMenu.prototype.offerableFacts = function() {
         const matchTerm = goal.matchPart();
         // We never offer a fact if the goal matches _everything_ (of
         // suitable type).  This check may be unnecessary.
-        if (!matchTerm.isVariable() &&
+        if (// !matchTerm.isVariable() && XXX
             Toy.coreUnifTypes(expr.type, matchTerm.type) &&
             expr.matchSchema(matchTerm)) {
           facts.push(info);
