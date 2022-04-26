@@ -1615,6 +1615,14 @@ Expr.prototype.matchPart = function() {
 };
 
 /**
+ * Returns a path to the part of a step to be matched when using it as
+ * a rewrite rule.
+ */
+Expr.prototype.matchPath = function() {
+  return this.asPath(this.isEquation() ? '/main/left' : '/main');
+};
+
+/**
  * Treating this term as the equation in a replacement,
  * returns the replacement part.  To support rewrite rules
  * that are implicitly equivalent to T, returns T in case

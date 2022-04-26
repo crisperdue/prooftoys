@@ -3097,7 +3097,7 @@ declare(
     form: ('Variable: <input name=varName> '
            + 'wff without it free: <input name=bool1> '
            + 'other wff: <input name=bool2>'),
-    menu: 'forall {v. A => B} => (A => forall {v. B}',
+    menu: 'forall {v. A => B} => (A => forall {v. B})',
     tooltip: ('Move "forall" inside an "or" when variable not free '
               + 'in the left argument of the "or".'),
     description: 'move forall',
@@ -4099,6 +4099,55 @@ declare(
       }
     }
   }
+);
+
+//// Replacing an instance of a target term
+
+declare(
+
+  // Replaces an instance of the target term using the given proved
+  // step or fact statement, which can implicitly be <term> == T if
+  // not in equational form.  The rule menu currently offers this
+  // rule for both facts and proof steps.
+  {name: 'replaceInstance',
+   action: function(step, path, eqn_arg, subn) {
+     const equation = termify(eqn_arg);
+     if (equation.isProved()) {
+       return rules.replaceInstanceFrom(step, path, equation, subn);
+     }
+     // The equation is a fact statement.
+     const eqn0 = rules.fact(equation);
+     const eqn =
+           (eqn0.isEquation() ? eqn0
+            : rules.rewriteOnly(eqn0, eqn0.matchPath(), 'A == (A == T)'));
+     const step1 = rules.instMultiVars(step, subn, true);
+     const step2 = rules.replace(step1, path, eqn);
+     return step2.justify('replaceInstance', arguments, [step]);
+   },
+   // Remember, this rule is inline if eqn_arg is a step.
+   inputs: {site: 1, bool: 3},
+   description: 'replace instance of {site} using {bool}',
+  },
+
+  // Replaces an instance of the target term using the given
+  // "equation" step, which can implicitly be <term> == T if not in
+  // equational form.  This rule is intended only for use via
+  // replaceInstance.
+  {name: 'replaceInstanceFrom',
+   action: function(step, path, eqn_arg, subn) {
+     const step1 = rules.instMultiVars(step, subn, true);
+     const eqn =
+           (eqn_arg.isEquation() ? eqn_arg
+            : rules.rewriteOnly(eqn_arg, eqn_arg.matchPath(),
+                                'A == (A == T)'));
+     const step2 = rules.replace(step1, path, eqn);
+     return step2.justify('replaceInstanceFrom',
+                          arguments, [step, eqn_arg]);
+   },
+   inputs: {site: 1, equation: 3},
+   description: 'replace instance of {site} using step {equation}',
+  },
+
 );
 
 //// Rewriting
