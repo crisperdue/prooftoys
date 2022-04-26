@@ -4126,7 +4126,7 @@ declare(
    },
    // Remember, this rule is inline if eqn_arg is a step.
    inputs: {site: 1, bool: 3},
-   description: 'replace instance of {site} using {shortFact}',
+   description: 'replace instance of {site} in step {siteStep} using {shortFact}',
   },
 
   // Replaces an instance of the target term using the given
@@ -4145,7 +4145,7 @@ declare(
                           arguments, [step, eqn_arg]);
    },
    inputs: {site: 1, equation: 3},
-   description: 'replace instance of {site} using step {equation}',
+   description: 'replace instance of {site} in step {siteStep} using step {equation}',
   },
 
 );
