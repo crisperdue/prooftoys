@@ -2873,6 +2873,19 @@ function factForCase0(trueCases, falseCases, op, tf) {
 }
 const factForCase = factForCase0.bind(null, new Map(), new Map());
 
+// A few useful tautologies registered as facts.
+declare(
+  
+  {name: 'isTrue',
+   statement: 'a == (a == T)',
+   proof: function() {
+     return rules.tautology('a == (a == T)');
+   },
+   labels: 'general',
+  }
+
+);
+
 declare(
   /**
    * Suppose the given statement to be true.  This is the standard way
