@@ -2882,7 +2882,8 @@ declare(
      return rules.tautology('a == (a == T)');
    },
    labels: 'general',
-  }
+   converse: {labels: 'general'},
+  },
 
 );
 
@@ -4139,7 +4140,7 @@ declare(
    },
    // Remember, this rule is inline if eqn_arg is a step.
    inputs: {site: 1, bool: 3},
-   description: 'replace instance of {site} in step {siteStep} using {shortFact}',
+   description: 'instantiate {site} in step {siteStep} and replace using {shortFact}',
   },
 
   // Replaces an instance of the target term using the given
@@ -4158,7 +4159,7 @@ declare(
                           arguments, [step, eqn_arg]);
    },
    inputs: {site: 1, equation: 3},
-   description: 'replace instance of {site} in step {siteStep} using step {equation}',
+   description: 'instantiate {site} in step {siteStep} and replace using step {equation}',
   },
 
 );
@@ -4974,7 +4975,7 @@ declare(
       var step2 = rules.instVar(step1, Toy.parse('{t. t = z}'), varify('h'));
       var step3 = rules.apply(step2, '/right/left');
       var step4 = rules.apply(step3, '/right/right');
-      var taut = rules.tautology('(a => (b = c)) => (a & c => b)');
+      var taut = rules.tautology('(a => (b == c)) => (a & c => b)');
       return rules.forwardChain(step4, taut);
     },
     inputs: {},

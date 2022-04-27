@@ -2401,8 +2401,9 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
                         right: '<span class=menuRightNeighbor></span>'};
       return Toy.format(info.menu, formatArgs);
     } else {
+      const tip = info.basicTooltip;
       // TODO: Reconcile use of math markup here vs. non-use in menus.
-      return Toy.mathMarkup(info.basicTooltip || 'menu?');
+      return tip && Toy.mathMarkup(info.basicTooltip);
     }
   }
 }
