@@ -873,7 +873,7 @@ declare(
     menu: 'look up a theorem by name',
     tooltip: (''),
     description: 'theorem',
-    labels: 'basic'
+    labels: 'advanced'
   },
 
   // Add a new named theorem to the rules.
@@ -1011,7 +1011,7 @@ declare(
     menu: '[A = A]',
     tooltip: 'Derives A = A.',
     description: 'A = A',
-    labels: 'general'
+    labels: 'primitive'
   },
 
   // Obsolete rule, converts to eqSelf, kept for compatibility
@@ -1033,10 +1033,10 @@ declare(
     },
     inputs: {term: 1},
     form: 'Term to consider: <input name=term>',
-    menu: 'consider a term to transform',
+    menu: 'consider a term to transform (A = A)',
     toOffer: 'return step == null',
     tooltip: ('consider a term to transform'),
-    description: 'consider',
+    description: 'consider;; (A = A)',
     labels: 'basic'
   },
 
@@ -1807,7 +1807,7 @@ declare(
     },
     inputs: {site: 1},
     minArgs: 2,
-    menu: 'simplify {term}',
+    menu: '  simplify {term}',
     description: 'simplify;; {in step siteStep}',
     labels: 'algebra general'
   },
@@ -2902,9 +2902,9 @@ declare(
     },
     inputs: {bool: 1},
     form: ('Assume <input name=bool>'),
-    menu: 'assume',
+    menu: 'assume (A &rArr; A)',
     tooltip: 'Statement to assume',
-    description: 'assumption',
+    description: 'assumption;; (A &rArr; A)',
     labels: 'basic'
   },
 
@@ -2935,9 +2935,9 @@ declare(
     },
     inputs: {bool: 1},
     form: ('Assume <input name=bool>'),
-    menu: 'assume explicitly',
+    menu: 'assume explicitly (A &rArr; A)',
     tooltip: 'Statement to assume (show occurrences)',
-    description: 'assume explicitly',
+    description: 'assume explicitly;; (A &rArr; A)',
     labels: 'basic'
   }
 
@@ -4980,7 +4980,7 @@ declare(
     },
     inputs: {},
     description: 'transitivity of equality',
-    labels: 'basic'
+    labels: 'forward'
   },
 
   // Proves an equation that can replace the given boolean term.

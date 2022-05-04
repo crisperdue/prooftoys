@@ -667,6 +667,7 @@ declare
 
   {statement: 'x ** y = x ** (y - 1) * x',
    name: 'prevPower',
+   desimplifier: true,
    proof: function() {
      return (rules.axiomNextPower()
              .andThen('instVar', 'y - 1', 'y')
@@ -841,7 +842,7 @@ declare
     tooltip: 'evaluate arithmetic expression',
     description: 'axiom of arithmetic',
     autoSimplify: noSimplify,
-    labels: 'basic'
+    labels: 'primitive'
   },
 
   //

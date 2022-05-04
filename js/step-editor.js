@@ -1565,7 +1565,7 @@ function RuleMenu(proofEditor) {
   // Rule chooser:
   var $node = ($('<div class="ruleMenu">')
                .append($modeList)
-               .append('<div class=ruleMenuTitle>Possible actions:</div>'));
+               .append('<div class=ruleMenuTitle>Actions:</div>'));
   // Top node of the actual rule menu display.
   self.$node = $node;
   // Container node for menu items.
@@ -1748,10 +1748,12 @@ RuleMenu.prototype._update = function() {
             const instance = proofStep.matchPart();
             if (Toy.coreUnifTypes(instance.type, schema.type)) {
               const subn = instance.matchSchema(schema);
-              if (subn) {
+              // If the substitution does nothing this is just
+              // replacement.
+              if (subn && !Toy.isEmpty(subn)) {
                 const html =
                       Toy.escapeHtml(
-                        Toy.format(' replace instance of {1} using step {2}',
+                        Toy.format(' replace instance using step {2}',
                                    selection, n));
                 itemInfos.push({ruleName: 'replaceInstanceFrom',
                                 ruleArgs: [selStep.original, sitePath,
@@ -1826,7 +1828,7 @@ RuleMenu.prototype._update = function() {
             if (subn) {
               const html =
                     Toy.escapeHtml(
-                      Toy.format(' replace instance of {1} using {2}',
+                      Toy.format(' replace instance using {2}',
                                  selection, statement.getMain()));
               itemInfos.push({ruleName: 'replaceInstance',
                               ruleArgs: [selStep, sitePath, statement,
@@ -2238,6 +2240,9 @@ RuleMenu.prototype.offerableFacts = function() {
         // We never offer a fact if the goal matches _everything_ (of
         // suitable type).  This check may be unnecessary.
         if (// !matchTerm.isVariable() && XXX
+            // Rewrites matching a variable should have low priority
+            // in the menu display.
+            // TODO: Implement priorities and sorting by priority.
             Toy.coreUnifTypes(expr.type, matchTerm.type) &&
             expr.matchSchema(matchTerm)) {
           facts.push(info);
@@ -2249,12 +2254,13 @@ RuleMenu.prototype.offerableFacts = function() {
   return facts;
 };
 
-// This maps from menu name to a set of category names to be
+// This maps from menu name to a set of fact category names to be
 // presented in that mode.
 const catsOfMenu =
       new Map([['none', new Set()],
                ['algebra', new Set(['algebra'])],
-               ['general', new Set(['general', 'simplifier'])],
+               ['general',
+                new Set(['general', 'simplifier', 'algebra', 'realType'])],
                ['edit', new Set(['edit'])],
                ['other', new Set(['advanced', 'other',
                                   'desimplifier', 'backward'])]]);
