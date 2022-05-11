@@ -676,7 +676,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   $proofStep.append($step);
   // If editable, add deleter.
   if (self.isEditable()) {
-    $step.append('<button class="fa fa-times-circle-o deleteStep"' +
+    $step.append('<button class="fa fa-120 fa-times-circle deleteStep"' +
                  ' title="Delete step">');
   }
   // If the UI is configured for it, include the node for "?" or circled a.
