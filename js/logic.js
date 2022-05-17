@@ -5151,6 +5151,13 @@ declare
 declare(
    // Derive exists {x. p x} from a witnessing term.  This only replaces the
    // selected occurrence, not substituting throughout. (5242)
+   //
+   // TODO: Supplant this with uses of "p x => exists p" as a rewrite
+   //   rule.  Typically one wants to prove existence, so exists p
+   //   trivially matches the goal.  Rewriting results in a new beta-
+   //   reducible goal.  Beta-reduce that, then substitute for x,
+   //   being careful to keep x distinct from other free variables
+   //   along the way.
    {name: 'witnessExists',
     precheck: function(step, path) {
       var term = step.get(path);
@@ -5211,6 +5218,8 @@ declare(
       const step2 = rules.rewrite(step1, '/right/arg/body/arg/body',
                                   '(a == b) == (a => b) & (b => a)');
       const step3 = rules.rewrite(step2, '/right/arg/body', 'forallAnd');
+      // More idiomatic would be to rewrite with
+      // (a => (b == c)) == (a => b == a => c)
       const step4 = (rules.axiom2a()
                      .andThen('forwardChain',
                               '(a => (b == c)) => (a => b == a => c)'));

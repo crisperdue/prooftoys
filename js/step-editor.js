@@ -1732,14 +1732,19 @@ RuleMenu.prototype._update = function() {
                        });
       });
 
-      // Find steps that can replace an instance of the term (narrow).
+      // Find steps that can replace an instance of the selected term
+      // (narrowing).
       //
-      // Variables match too many things.
+      // Variables match too many steps.
+      //
+      // TODO: Consider these restrictions more carefully.
       if (!selection.isVariable()) {
         const bindings = selStep.pathBindings(sitePath.uglify());
 
         // For now only substitute into targets not in scope of any
         // bound variables.
+        //
+        // TODO: Fix me to use a more precise check.
         if (bindings.size === 0) {
           // This searches for steps that can replace an instance of
           // the selection.
