@@ -236,6 +236,7 @@ const categoryOfLabel = {
   // The "backward" label is for facts useful for backward reasoning,
   // though it usually can be inferred from the assumptions of the fact.
   backward: 'backward',
+  forward: 'forward',
 };
 
 /**

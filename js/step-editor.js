@@ -2269,7 +2269,7 @@ const catsOfMenu =
                 new Set(['general', 'simplifier', 'algebra', 'realType'])],
                ['edit', new Set(['edit'])],
                ['other', new Set(['advanced', 'other',
-                                  'desimplifier', 'backward'])]]);
+                                  'desimplifier', 'backward', 'forward'])]]);
 
 /* TODO: Remove this temporary utility.
 function factCheck(... which_arg) {
