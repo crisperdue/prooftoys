@@ -3572,38 +3572,6 @@ declare(
     description: 'consequence;; of step {step} using {bool}'
   },
 
-  // TODO: Consider generalizing rule p2 and probably others to unify
-  //   their arguments, not just compare or match a schema.  If p2 did
-  //   unification, it could replace uses of this rule.  See for example
-  //   addDefnFacts.
-
-  // The step and fact arguments must both be conditional.  This
-  // applies transitivity of the conditional operator, treating the
-  // fact LHS as a schema to match with the step consequent.
-  {name: 'forwardChain2',
-    action: function(step, fact_arg) {
-      var fact = rules.fact(fact_arg);
-      var map1 = step.matchSchema('p => q0');
-      assert(map1, 'Not a conditional: {1}', step);
-      var map2 = fact.matchSchema('q1 => r');
-      assert(map2, 'Not a conditional: {1}', fact);
-      var map3 = map1.q0.matchSchema(map2.q1);
-      assert(map3, '{1} does not match {2}', map1.q0, map2.q1);
-      var step1 = rules.instMultiVars(fact, map3);
-      var step2 = rules.p2(step, step1,
-                           '(a => b) & (b => c) => (a => c)');
-      // Caution: These are unusual justification args.
-      return step2.justify('forwardChain2', [step, fact], [step]);
-    },
-    inputs: {step: 1, bool: 2},
-    labels: 'basic',
-    menu: "[p => q'] and fact [q => r] to [p => r']",
-    form: ('Match conclusion of step <input name=step> with left side of ' +
-           'fact [left => right] <input name=bool>'),
-    tooltip: ('[p => q] and [q => r] to [p => r]'),
-    description: 'consequence;; of step {step} using {bool}'
-  },
-
   // Relates equal functions to equality at all input data points.
   {name: 'r5238',
     action: function(vars, a, b) {
