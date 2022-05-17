@@ -3543,11 +3543,6 @@ declare(
       var mainOp = schema.getBinOp().pname;
       // This check is adequate.
       var substitution = step.matchSchema(schema.getLeft());
-      if (!substitution && (mainOp === '==' || mainOp === '=')) {
-        // Allow RHS match in case schema is an equivalence.
-        // This check is adequate.
-        substitution = step.matchSchema(schema.getRight());
-      }
       assert(substitution, 
              '{1} does not match LHS of schema\n{2}',
              step, schema);
