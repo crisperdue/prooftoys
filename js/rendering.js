@@ -1477,6 +1477,9 @@ Lambda.prototype.deepCopy = function() {
  * furthermore currently a step only remembers one rendering, and
  * removal of the rendering from the display deletes the association
  * with the underlying step.
+ *
+ * Dependencies are determined by the ruleDeps of steps encountered.
+ * If any alleged dependency is not proved, this ignores it.
  */
 function unrenderedDeps(step) {
   var result = [];
@@ -1484,6 +1487,9 @@ function unrenderedDeps(step) {
   // Traverses the dependency graph, recording a copy of every step
   // and building an array of all of the original steps.
   function visitWithDeps(step) {
+    if (!step.isProved()) {
+      return;
+    }
     if (!step.rendering && !visited.has(step)) {
       result.push(step);
       visited.add(step);
@@ -1669,6 +1675,9 @@ function formattedStepInfo(step) {
  * Computes replacement text for rule description markup.  Occurrences
  * of {step}, {step1}, {step2}, {equation}, {implication}, and
  * {siteStep} expand to the step number of the step argument.
+ * Occurrences of {fact} and {shortFact} expand to the first "bool"
+ * input, {shortFact} showing the "shortForm".  In the future these
+ * two might show the step number where appropriate.
  *
  * Appearances of {term} or {bool} as appropriate display as the term;
  * {var} as the variable name, {site} as the term at the site; {terms}
@@ -1683,8 +1692,10 @@ function expandMarkup(step, markup) {
   // Given an array of places, as stored in the value of an "inputs"
   // property of a rule (e.g. rule.inputs.step), and an index into
   // them, returns a step number or phrase ending in a step number,
-  // for the nth element.  Also accepts a plain number as if it were a
-  // 1-element array.
+  // for the nth array element -- except if the indicated step is
+  // adjacent to the described step, returns an empty string.  Also
+  // accepts a plain number as if it were a 1-element array.  If the
+  // index is out of range, returns "?".
   function stepNumber(places, index) {
     if (places === undefined) {
       return '?';
@@ -1749,10 +1760,11 @@ function expandMarkup(step, markup) {
         return termDisplay(term);
       });
     return terms.join(', ');
+  case 'fact':
   case 'shortFact':
     var place = info.inputs.bool[0] || info.inputs.bool;
-    var bool = Toy.mathParse(step.ruleArgs[place - 1]).shortForm();
-    return termDisplay(bool);
+    var bool = Toy.mathParse(step.ruleArgs[place - 1]);
+    return termDisplay(markupName === 'fact' ? bool : bool.shortForm());
   case 'var':
     var place = info.inputs.varName[0] || info.inputs.varName;
     return Toy.termify(step.ruleArgs[place - 1]).toHtml();
