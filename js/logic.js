@@ -3535,12 +3535,10 @@ declare(
   // because the substitution goes into the form A => B rather than
   // the theorem that A is to match.  Reimplement it when matchToRule
   // is available.
-  //
-  // TODO: Deal properly with schemas that are proved (steps).
   {name: 'forwardChain',
     action: function(step, schema_arg) {
       var schema = rules.fact(schema_arg);
-      var mainOp = schema.getBinOp().pname;
+      assert(schema.implies(), 'Schema {1} must match A => B', schema);
       // This check is adequate.
       var substitution = step.matchSchema(schema.getLeft());
       assert(substitution, 
@@ -3555,21 +3553,18 @@ declare(
         schema2 = rules.toForall1(schema2, unmapped.pop());
       }
       // Schema2 may have some newly-quantified variables in its RHS.
-      var step2 = rules.instMultiVars(schema2, substitution);
-      var step3 = (mainOp === '=>'
-                   ? rules.modusPonens(step, step2)
-                   : assert(false, 'Schema must be like A => B or A == B'));
-      // Schema is listed as a dependency here so it can be recognized
-      // as a dependency, e.g. when rendering a proof.
-      return step3.justify('forwardChain', [step, schema], [step]);
+      var step2 = rules.instMultiVars(schema2, substitution, true);
+      var step3 = rules.modusPonens(step, step2);
+      return step3.justify('forwardChain', [step, schema], [step, schema]);
     },
     inputs: {step: 1, bool: 2},
     labels: 'basic',
     menu: 'forward chain',
+    // TODO: Consider allowing step number input here.
     form: ('Match step <input name=step> with left side of ' +
            'fact [left => right] <input name=bool>'),
     tooltip: ('[p] and [p => q] to q'),
-    description: 'consequence;; of step {step} using {bool}'
+    description: 'consequence;; of step {step} using {fact}'
   },
 
   // Relates equal functions to equality at all input data points.
