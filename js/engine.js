@@ -617,7 +617,13 @@ function addRule(info) {
     //   it rejustifies on each call.
     rule = function() { 
       if (rule.result === undefined) {
-        rule.result = proof();
+        const info = resolveToFactInfo(statement);
+        try {
+          info.inProgress = true;
+          rule.result = proof();
+        } finally {
+          info.inProgress = false;
+        }
       }
       if (rule.result instanceof Error) {
         // Abort if there is no statement!
@@ -630,6 +636,7 @@ function addRule(info) {
         console.error(Toy.format(
           'Failed to prove {1},\n  instead proved {2},\n  asserting instead',
           statement, rule.result));
+        debugger;
         // Assert it on every use.
         return rules.assert(statement);
       }
@@ -1228,17 +1235,17 @@ function getResult(statement, mustProve) {
     var result = rules.assert(info.goal);
     return result;
   }
-  info.inProgress = true;
   try {
+    info.inProgress = true;
     // Get the proved result of the fact.
     info.proved = prover();
-    assert(info.proved instanceof Expr);
-    // Note that the fact remains in progress if its prover throws, which
-    // may or may not be good thing.
+    assert(info.proved.isProved(), 'Proof failed: {1}', statement);
     info.inProgress = false;
   } finally {
     if (info.inProgress) {
       console.error(new Error('Proof of fact failed' + statement));
+      // Ensure that the proof is not in progress upon completion.
+      info.inProgress = false;
     }
   }
   return info.proved;
@@ -2270,8 +2277,10 @@ function addFact(info) {
     }
     info.prover = asFactProver(info.proof, info.goal);
   }
-  // Set to true when starting to attempt a proof, then
-  // to false when the proof succeeds.
+  // This will be set to true when starting to attempt a proof and
+  // reset to false when the proof succeeds.  In findMatchingFact
+  // facts with proof currently in progress are not considered, e.g.
+  // affecting simplification.
   info.inProgress = false;
 
   info.labels = processLabels(info.labels);
