@@ -3402,19 +3402,13 @@ declare(
 
 declare(
 
-  // TODO: These are all simplifiers, and can be applied to
-  //   their own /right (consequent).  Consequently, . . .
-  //   the simplification must only be applied to /right/right.
-  //   Facts (such as these) need to be marked as inProgress
-  //   when their proof begins, but are currently not.
-    
   {statement: 'x ** 2 = 0 == x = 0',
    name: 'x2',
    proof: function() {
      return (rules.consider('x ** 2 = 0')
              .rewrite('x ** 2', 'x ** 2 = x * x')
              .rewrite('x * x = 0', 'x * y = 0 == x = 0 | y = 0')
-             .andThen('simplifySite', '/right/right')
+             .andThen('simplifySite', '/main/right')
             );
    },
    simplifier: true,
@@ -3434,7 +3428,7 @@ declare(
              .rewrite('x ** 3', rules.fact('prevPower'))
              .andThen('simplifySite', '3 - 1')
              .rewrite('x ** 2 * x = 0', 'zeroProduct')
-             .andThen('simplifySite', '/right/right')
+             .andThen('simplifySite', '/main/right')
             );
    },
    simplifier: true,
@@ -3454,7 +3448,7 @@ declare(
              .rewrite('x ** 4', rules.fact('prevPower'))
              .andThen('simplifySite', '4 - 1')
              .rewrite('x ** 3 * x = 0', 'zeroProduct')
-             .andThen('simplifySite', '/right/right')
+             .andThen('simplifySite', '/main/right')
             );
    },
    simplifier: true,
@@ -3474,7 +3468,7 @@ declare(
              .rewrite('x ** 5', rules.fact('prevPower'))
              .andThen('simplifySite', '5 - 1')
              .rewrite('x ** 4 * x = 0', 'zeroProduct')
-             .andThen('simplifySite', '/right/right')
+             .andThen('simplifySite', '/main/right')
             );
    },
    simplifier: true,
