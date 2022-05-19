@@ -1680,7 +1680,7 @@ Expr.prototype.isProved = function() {
  * Returns a truthy value iff the argument is a proof step.
  */
 function isProved(x) {
-  return x instanceof Step && !!x.wff;
+  return x instanceof Step && x.isProved();
 }
 
 /**
