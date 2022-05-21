@@ -1899,7 +1899,7 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
 
   const ruleMenu = this;
   // Track these events in Matomo.
-  _paq && _paq.push(['trackEvent', 'App', 'MainMenu']);
+  Toy.trackAppEvent('MainMenu');
 
   // TODO: Consider generating an event here and moving
   //   much of this code elsewhere.

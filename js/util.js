@@ -73,6 +73,16 @@ Toy.incompatible = !!navigator.userAgent.match(/ MSIE /);
 Toy.compatible = !!navigator.userAgent.match(/(Chrome|Firefox|Safari)[/]/);
 
 /**
+ * Track an event with Matomo.  Truthy return value iff _paq is
+ * initialized.  Needs an action possibly followed by a string
+ * and possibly a number.
+ */
+Toy.trackAppEvent = function(action, ...more) {
+  _paq && _paq.push(['trackEvent', 'App', action, ...more]);
+  return !!_paq;
+};
+
+/**
  * The arguments are a child class constructor and parent class
  * constructor (or null); both should be functions.  If the parent is
  * given, makes the child a subclass of the parent, making the

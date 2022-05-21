@@ -803,7 +803,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
       } else {
         fillDetails(step);
         // Track these events in Matomo.
-        _paq && _paq.push(['trackEvent', 'App', 'ShowSubproof']);
+        Toy.trackAppEvent('ShowSubproof');
         renderSubproof(step);
       }
     });

@@ -11,6 +11,17 @@ window.Toy = window.Toy || {};
 
 +function() {
 
+/**
+ * Track uncaught errors with Matomo.
+ */
+window.onerror = function(message, source, lineno, colno, error) {
+  const track = Toy.trackAppEvent;
+  if (track) {
+    // Error.stack might not exist.
+    track('Error', ''+(error.stack || error));
+  }
+};
+
 Toy.insertSlogans = function() {
   var slogan = 'Power tools for your math mind';
   var elt = document.getElementById('slogans');
