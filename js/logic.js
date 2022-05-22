@@ -1309,22 +1309,16 @@ declare(
   },
 
   /**
-   * From an equation, infers a similar equation with each
+   * From a pure equation, infers a similar equation with each
    * side wrapped in a binding of the given variable or variable name.
    */
   {name: 'bindEqn',
-    action: function(h_eqn, v) {
-      if (h_eqn.isCall2('=>')) {
-        debugger;
-      }
-      // TODO: Simplify the rest of the code based on it just being
-      //   an equation.
-      v = varify(v);
-      var eqn = h_eqn.getMain();
+    action: function(eqn, v_arg) {
       eqn.assertCall2('=');
+      const v = varify(v_arg);
       const step1 = rules.eqSelf(lambda(v, eqn.getLeft()));
-      const step2 = rules.r1(step1, '/right/body', h_eqn);
-      return step2.justify('bindEqn', arguments, [h_eqn]);
+      const step2 = rules.r1(step1, '/right/body', eqn);
+      return step2.justify('bindEqn', arguments, [eqn]);
     },
     inputs: {equation: 1, varName: 2},
     form: ('Bind variable <input name=varName> in step <input name=equation>'),
