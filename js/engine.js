@@ -578,6 +578,8 @@ function addRule(info) {
     }
     // Add it as a fact also, and potentially "swapped".
     // A fact needs a statement, so we rely here on having a statement given.
+    //
+    // TODO: Use factProperties and remove this.
     var factXferProps = {
       axiom: true,
       description: true,
@@ -606,18 +608,15 @@ function addRule(info) {
     }
   }
   if (proof) {
-    // This should run for anything but a rule of inference that
-    // takes arguments.
-    //
-    // Just execute the proof on first use, but re-justify on each
-    // use so the result will have its own ordinal.
-    //
-    // TODO: Refactor so the proof function given to addFact runs the
-    //   proof just once using this function, making sure somehow that
-    //   it rejustifies on each call.
+    // There is a proof _and_ a name.
+    // 
+    // TODO: Merge the proof code here with the similar code
+    //   in factProverWrapper.
     rule = function() { 
       if (rule.result === undefined) {
         const info = resolveToFactInfo(statement);
+        // Just execute the proof on first use, but re-justify on each
+        // use so the result will have its own ordinal.
         try {
           info.inProgress = true;
           rule.result = proof();
@@ -632,6 +631,7 @@ function addRule(info) {
         // Assert it on every use.
         return rules.assert(statement);
       }
+      // TODO: Handle mismatches here as in asFactProver.
       if (statement && !rule.result.matches(statement)) {
         console.error(Toy.format(
           'Failed to prove {1},\n  instead proved {2},\n  asserting instead',
@@ -2425,34 +2425,45 @@ function asFactProver(prover, goal) {
       var subst2 = result.getMain().alphaMatch(goal.getMain());
       if (subst2) {
         // The main parts match up to change of variables.
+        // Conceivably the assumptions could have other free variables
+        // that could still be reconciled, but we are not that
+        // ambitious at present.
         var proved = (rules.instMultiVars(result, subst2)
                        .andThen('arrangeAsms'));
         if (proved.matches(goal)) {
           return proved;
         }
+        let okAsms = true;
+        // Check if the proved can match the goal by rearranging
+        // assumptions.
         const goalAsms = goal.asmSet();
         const factAsms = proved.asmSet();
         if (!goalAsms.superset(factAsms)) {
-          console.group('Warning: Fact requires unintended assumptions.');
-          console.error('Some results may rely on the incorrect fact.');
-          console.error('Proved:', proved.toString());
-          console.error('Stated:', goal.toString());
-          console.groupEnd();
-          // This is a serious issue, so if the debugger is open,
-          // pause here.  This also allows work to continue, so the
-          // proof can be reviewed in the user interface.
-          debugger;
+          console.error('Fact requires unstated assumptions.',
+                        '\nProved:', proved.toString(),
+                        '\nStated:', goal.toString());
+          okAsms = false;
         }
         if (!factAsms.superset(goalAsms)) {
-          console.group('Note: Fact statement has unneeded assumptions.');
-          console.info('Proved:', proved.toString());
-          console.info('Stated:', goal.toString());
-          console.groupEnd();
+          console.error(
+            'Ignoring unneeded assumptions in the fact statement.',
+            '\nProved:', proved.toString(),
+            '\nStated:', goal.toString()
+          );
+          // This is a pretty innocuous issue so we let it pass.
+          // okAsms = false;
         }
-        return proved;
-      } else {
-        assert(false, 'Instead of {1} proved {2}', goal, result);
+        if (okAsms) {
+          // The assumptions can match if rearranged.
+          return proved;
+        }
       }
+    }
+    console.error(Toy.format('Instead of {1}\n proved {2}', goal, result));
+    if (Toy.assertOnMismatch) {
+      return rules.assert(goal);
+    } else {
+      abort('Proof mismatch');
     }
   }
   return factProverWrapper;
@@ -2460,7 +2471,6 @@ function asFactProver(prover, goal) {
 
 
 //// SOME DEFINITIONS
-
 
 /**
  * Dumps out fact resolutions as a debugging aid.
@@ -2493,7 +2503,16 @@ Toy.factsExtending = factsExtending;
 Toy.factExpansion = factExpansion;
 
 // Settable variables, export right here:
+
+// If true, facts are only proved when explicitly requested,
+// as when displaying the proof, but not when used in another
+// proof.  Matching never causes a fact to be proved.
 Toy.assertFacts = false;
+
+// Assert requested facts that don't match the result of the proof.  
+// This can be temporarily set to true to work around failures
+// of proofs that might obscure other bugs that need to be fixed.
+Toy.assertOnMismatch = false;
 
 Toy.getStepCounter = getStepCounter;
 Toy.noSimplify = noSimplify;
