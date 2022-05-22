@@ -1139,7 +1139,7 @@ declare(
     menu: '[a = b] to [f a = f b]',
     tooltip: 'given a = b deduce (f a) = (f b)',
     description: 'from a = b to (f a) = (f b)',
-    labels: 'primitive'
+    labels: 'other'
   },
 
   // Apply a function of 2 args to each side of the given equation,
@@ -4340,7 +4340,10 @@ declare(
   // TODO: Modify all of these rewrite* rules to return Error objects
   //   in case preconditions are not met.
   {name: 'rewrite',
-    action: function(step, path, statement) {
+    action: function(step, path_arg, statement) {
+      // Be careful to convert a possible search pattern into
+      // an ordinary path _before_ replacing the target term.
+      const path = step.asPath(path_arg);
       // Can throw; tryRule will report any problem.
       var fact = rules.fact(statement);
       const replacement0 = rules._replacementFor(step, path, fact);
@@ -5471,8 +5474,7 @@ declare(
    },
 
    // This is the classic definition of the existential quantifier,
-   // proved from a concise definition.  We could have based the
-   // definition directly off of this.
+   // proved from a concise definition.
    {name: 'existDef',
     statement: 'exists p == not (forall {x. not (p x)})',
     proof: function() {
