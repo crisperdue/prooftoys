@@ -1128,7 +1128,7 @@ function justParse1(input, aboveToken) {
         expect(')');
         return expr;
       }
-    } else if (name === '{' || name === '[') {
+    } else if (name === '{') {
       var id = next();
       assert(id.isVariable(), 'Expected identifier, got ' + id.name);
       expect('.');
