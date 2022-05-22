@@ -109,8 +109,8 @@ if (!Toy.deeperFieldAxioms) {
   definition('1 = the1 isMulIdentity');
 
   // These return a collection of inverses of a given value.
-  definition('addInverses = [x. {y. R x & R y & x + y = 0}]');
-  definition('mulInverses = [x. {y. R x & R y & x * y = 1}]');
+  definition('addInverses = {x. {y. R x & R y & x + y = 0}}');
+  definition('mulInverses = {x. {y. R x & R y & x * y = 1}}');
 
   declare(
      {statement: '@ R x => exists1 (addInverses x)', axiom: true,
