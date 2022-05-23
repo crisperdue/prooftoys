@@ -373,6 +373,11 @@ Expr.prototype.findUntyped = function() {
  * Otherwise makes and returns a well-typed copy of this, ignoring any
  * type information already present.
  *
+ * A side job of this method is to remove aliased constant names,
+ * keeping their stated types.  The new Atom has the plain name
+ * as its pname, but picks up the type stated for the pname.
+ * This is currently just "==".
+ *
  * TODO: Document how and why this approach is (I think) adequate.
  *   Consider for example that a subterm may contain type information
  *   in its original context, that can become more general as part of
@@ -1012,7 +1017,8 @@ Expr.prototype.registerConstants = function() {
 
 /**
  * Same as "parse", but does not annotate the result with types and
- * does not memoize in _parsed.
+ * does not memoize in _parsed.  We call these untyped terms
+ * "preterms".
  */ 
 function justParse(input) {
   try {
