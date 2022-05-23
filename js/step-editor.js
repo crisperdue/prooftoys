@@ -1706,8 +1706,12 @@ RuleMenu.prototype._update = function() {
         const n = index + 1;
         const schema = proofStep.matchPart();
 
-        // Omit the most prolific matchers.
-        if (schema.isVariable()) {
+        // Experimentally omit matching schemas that are just a "$"
+        // variable.  This occurs very often when solving an algebra
+        // problem.
+        if (schema.isVariable() &&
+            schema.name.startsWith('$') &&
+            !schema.match(selection)) {
           return;
         }
         if (!Toy.coreUnifTypes(selection.type, schema.type)) {
