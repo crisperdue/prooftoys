@@ -79,8 +79,8 @@ in the `css` directory of the site, e.g. `sass pt.scss pt.css`.
 
 I use the [Hugo](https://gohugo.io/) static site generator, which has an
 embedded implementation of `sass`.  Given a repository
-with `pt.scss` available in `assets/scss/`, this is typically
-done in Hugo with code like:
+with `pt.scss` and `proofs.scss` available in `assets/scss/`,
+this is typically done in Hugo with code like:
 
 ````
 {{ $pt := resources.Get "scss/pt.scss" |
