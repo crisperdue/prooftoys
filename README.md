@@ -45,11 +45,7 @@ a simple embedding of Prooftoys in a web page.
 <link rel="stylesheet"
  href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap-reboot.css"
  crossorigin="anonymous">
-<!--
-{{ $pt := resources.Get "scss/pt.scss" |
-   toCSS (dict "targetPath" "css/pt.css") }}
-<link rel="stylesheet" href="{{ $pt.RelPermalink }}">
- -->
+
 <link rel="stylesheet" href="/css/pt.css">
 <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 </head>
@@ -80,3 +76,14 @@ The file `/css/pt.css` is generated from `scss/pt.scss`
 (and implicitly `scss/proofs.scss`) using the 
 [sass](https://sass-lang.com/) transpiler and placed
 in the `css` directory of the site, e.g. `sass pt.scss pt.css`.
+
+I use the [Hugo](https://gohugo.io/) static site generator, which has an
+embedded implementation of `sass`.  Given a repository
+with `pt.scss` available in `assets/scss/`, this is typically
+done in Hugo with code like:
+
+````
+{{ $pt := resources.Get "scss/pt.scss" |
+   toCSS (dict "targetPath" "css/pt.css") }}
+<link rel="stylesheet" href="{{ $pt.RelPermalink }}">
+````
