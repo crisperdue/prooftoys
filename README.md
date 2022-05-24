@@ -34,6 +34,9 @@ be integrated with its web-based user interface.  The two together _are_
 intended for embedding in other websites.  Here is a sample page that shows
 a simple embedding of Prooftoys in a web page.
 
+The usage here is in the most straightforward form, suitable for development
+but entirely unoptimized.  For example the `.js` files are all unbundled.
+
 ````HTML
 <!doctype html>
 <html lang=en>
