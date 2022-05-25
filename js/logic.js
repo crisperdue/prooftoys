@@ -5357,10 +5357,6 @@ declare(
 
 //// LOGIC FACTS
 
-// The fact information is organized with the synopsis as
-// a map key to take advantage of debug printing of the functions
-// in the Chrome debugger.
-
 declare(
    {statement: '(T == a) == a',
     simplifier: true,
