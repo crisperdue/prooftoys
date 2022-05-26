@@ -1189,7 +1189,7 @@ declare(
 
 
 declare(
-  // "Reduces" a call identified by a path within a theorem. If the
+  // "Reduces" a call identified by a path within a step. If the
   // call is an application of a lambda expression to an argument,
   // beta-reduces it.  If the target expression is a call to a named
   // function supplying one or two arguments, expands the definition

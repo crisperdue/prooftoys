@@ -412,7 +412,7 @@ var rules = {};
 //   The supported types are:
 //     step: Matches any proof step.
 //     equation: Matches a proof step that is an equation.
-//     implication: Matches a proof step that is an implication.
+//     implication: Matches a proof step that is a conditional
 //     term: Matches any term.
 //     reducible: Matches a call to anonymous function (lambda)
 //     varName: Name suitable for a variable.

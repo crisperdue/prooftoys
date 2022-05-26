@@ -2316,7 +2316,8 @@ function factCheck(... which_arg) {
  * If something is selected, this accepts rules whose inputs descriptor
  * is compatible with the selection.  See the code for details.
  *
- * The rule can also require additional inputs.
+ * The rule can also require other inputs as well as ones the
+ * selection can supply
  */
 function acceptsSelection(step, ruleName) {
   var info = Toy.rules[ruleName].info;
