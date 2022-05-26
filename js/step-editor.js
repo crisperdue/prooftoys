@@ -2146,11 +2146,13 @@ RuleMenu.prototype.labelApproved = function(name) {
 /**
  * Returns true iff the rule name can be offered by the UI, based on
  * status of step and/or term selection, declared inputs, and
- * availability of a data entry form for it.
+ * availability of a data entry form for it.  This method does not
+ * screen out rules that lack a menu string.  The ruleMenuInfo
+ * function determines that.
  *
- * If there is a selection, and the rule has a precheck, and it has a
- * single "inputs" declaration that can be checked by a precheck,
- * returns false if the precheck fails.
+ * If there is a selection and the rule can get all of its arguments
+ * from the selection, this does not offer the rule if the
+ * precheck fails.
  *  
  * Unless the precheck runs and fails, if the proof has a current
  * selection, the rule is offerable if acceptsSelection returns true
@@ -2164,18 +2166,14 @@ RuleMenu.prototype.labelApproved = function(name) {
 RuleMenu.prototype.offerableRule = function(ruleName) {
   const rule = Toy.rules[ruleName];
   const info = rule.info;
-  const inputs = info.inputs;
-  if (!inputs || Toy.isEmpty(inputs)) {
-    return false;
-  }
   const editor = this.proofEditor;
-  var step = editor.proofDisplay.selection;
+  const step = editor.proofDisplay.selection;
+  const inputs = info.inputs;
   if (step) {
     // Something is selected.
     var precheck = rule.precheck;
     var term = step.selection;
     // See if the rule has a precheck that can "rule it out".
-    // Precheck only works on rules with a single input of a site or step type.
     if (precheck && Toy.mapSize(info.inputs) == 1 &&
         (term
          // This list needs to match siteTypes.
@@ -2183,12 +2181,11 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
             inputs.term)
          // This list needs to match stepTypes.
          : inputs.step || inputs.equation || inputs.implication)) {
-      // TODO: Consider if all of this is buggy??
-      //   Will the rule really always take these arguments?
       var ok = (inputs.term
                 ? precheck(term)
                 : term
-                // Uses prettyPathTo so behavior matches rule execution.
+                // Uses prettyPathTo to provide the same path
+                // provided by argsFromSelection.
                 ? precheck(step, step.wff.prettyPathTo(term))
                 : precheck(step));
       if (!ok) {
@@ -2324,10 +2321,6 @@ function factCheck(... which_arg) {
 function acceptsSelection(step, ruleName) {
   var info = Toy.rules[ruleName].info;
   var argInfo = info.inputs;
-  if (!argInfo) {
-    // If there is no information about arguments, fail.
-    return false;
-  }
   // Selected expression (within a step).
   var expr = step.selection;
   if (expr) {
