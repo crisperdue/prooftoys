@@ -1780,7 +1780,6 @@ declare(
       return result.justify('simplifyFocalPart', arguments, [step]);
     },
     inputs: {step: 1},
-    form: ('Simplify step <input name=step>'),
     menu: 'simplify',
     description: 'simplify;; {step step}',
     labels: 'algebra'
@@ -2542,8 +2541,7 @@ declare(
              '(|) = {x. {y. if x T y}}',
              '(=>) = {x. {y. if x y T}}'
            ]}),
-    // TODO: should be bool:.
-    inputs: {term: 1},
+    inputs: {bool: 1},
     menu: 'simplify booleans',  
     form: 'Boolean term to simplify: <input name=term>',
     labels: 'uncommon',
@@ -4565,7 +4563,8 @@ declare(
     },
     inputs: {bool: 1},
     // Too technical to expose for most users.
-    // form: ('Conjunctions to merge: <input name=bool>'),
+    labels: 'uncommon',
+    form: ('Conjunctions to merge: <input name=bool>'),
     menu: 'Derives an equation to merge chains of input conjunctions',
     description: 'merge conjunctions in {bool}'
   },    

@@ -2290,7 +2290,7 @@ declare
    */
    {name: 'primeFactors',
     toOffer: function(step, expr) {
-      return expr && expr.isNumeral();
+      return expr && expr.isNumeral() && expr.getNumValue() >= 2;
     },
     action: function(term_arg) {
       var term = termify(term_arg);
