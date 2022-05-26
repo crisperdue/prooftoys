@@ -2208,9 +2208,6 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
     } else {
       return false;
     }
-  } else if (!info.form) {
-    // There is no form, so arguments cannot come from the form.
-    return false;
   } else {
     // Only offer a rule that requires a step or site if there
     // is a selection.
@@ -2220,6 +2217,13 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
       if (type in stepTypes || type in siteTypes) {
         return false;
       }
+    }
+    if (!info.form) {
+      // TODO: Preferably issue some such warning in addRule so
+      //   this warning will be unnecessary.  The conditions for it
+      //   are somewhat complex though.
+      console.warn(Toy.format('Rule {1} lacks an input form', ruleName));
+      return false;
     }
     // All the above checks pass, so we can offer the rule.
     return true;
@@ -2380,9 +2384,9 @@ function acceptsSelection(step, ruleName) {
  * right-hand neighbor when there is one.
  */
 function ruleMenuInfo(ruleName, step, term, proofEditor) {
-  var info = Toy.rules[ruleName].info;
-  if (info.menuGen) {
-    var gen = info.menuGen;
+  const info = Toy.rules[ruleName].info;
+  const gen = info.menuGen;
+  if (gen) {
     return gen(ruleName, step, term, proofEditor);
   }
   if (Toy.isEmpty(info.inputs)) {
