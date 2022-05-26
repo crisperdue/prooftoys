@@ -1154,8 +1154,8 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
 	}
       } else {
 	if (fieldType == 'step'
-	    || (fieldType == 'equation' && step.getMain().isCall2('='))
-	    || (fieldType == 'implication' && step.getMain().isCall2('=>'))) {
+	    || (fieldType == 'equation' && step.isEquation())
+	    || (fieldType == 'implication' && step.implies())) {
 	  this.value = n;
           // Stop iteration.
 	  return false;
@@ -1476,7 +1476,7 @@ StepEditor.prototype.parseValue = function(value, type) {
     if (index < 0 || index >= this.proofDisplay.steps.length) {
       return new Error('No such step: ' + value);
     }
-    return this.proofDisplay.steps[Number(value) - 1].original;
+    return this.proofDisplay.steps[index].original;
   case 'bool':
     var expr = Toy.parse(value);
     var type = expr.type;
@@ -2145,23 +2145,24 @@ RuleMenu.prototype.labelApproved = function(name) {
 
 /**
  * Returns true iff the rule name can be offered by the UI, based on
- * status of step and/or term selection, declared inputs, and
- * availability of a data entry form for it.  This method does not
- * screen out rules that lack a menu string.  The ruleMenuInfo
- * function determines that.
+ * any current selection and declared inputs.  This method does not
+ * screen out rules that lack a way to present a menu string; use the
+ * ruleMenuInfo function for that.
  *
  * If there is a selection and the rule can get all of its arguments
- * from the selection, this does not offer the rule if the
- * precheck fails.
- *  
- * Unless the precheck runs and fails, if the proof has a current
- * selection, the rule is offerable if acceptsSelection returns true
- * given the selected step and rule name, and in case the rule has a
- * toOffer property, that check also passes.  This screens rules not
- * screened by a precheck.
+ * from the selection, this screens the rule with the precheck.  If
+ * the rule can use the current selection (acceptsSelection returns
+ * true), and the rule has a toOffer property, this screens the rule
+ * with the toOffer property, potentially in addition to the precheck.
  *
- * Otherwise rules that take no step and no site and do have a form
- * are offerable.
+ * A rule that accepts a site or step argument is only considered
+ * offerable here if there is a selection.
+ * 
+ * This incidentally avoids offering an otherwise offerable rule
+ * if it would need a form for user input, but has none.
+ *
+ * TODO: Consider adding a rule attribute to suppress offering
+ *   the rule in any menu.
  */
 RuleMenu.prototype.offerableRule = function(ruleName) {
   const rule = Toy.rules[ruleName];
@@ -2211,8 +2212,8 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
     // There is no form, so arguments cannot come from the form.
     return false;
   } else {
-    // There is no selection, so the rule must not require a step or
-    // site.
+    // Only offer a rule that requires a step or site if there
+    // is a selection.
     for (const type in info.inputs) {
       // It is OK to use "in", since the type will not be the name of
       // a method on Objects.
@@ -2358,8 +2359,8 @@ function acceptsSelection(step, ruleName) {
     // If the rule needs a site, do not accept just a step.
     return (!argInfo.site &&
             (argInfo.step
-             || (argInfo.equation && step.getMain().isCall2('='))
-             || (argInfo.implication && step.getMain().isCall2('=>'))));
+             || (argInfo.equation && step.isEquation())
+             || (argInfo.implication && step.implies())));
   }
 }
 
