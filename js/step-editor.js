@@ -2170,6 +2170,11 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
   const editor = this.proofEditor;
   const step = editor.proofDisplay.selection;
   const inputs = info.inputs;
+  if (Toy.isEmpty(inputs)) {
+    // A rule with no stated inputs is a fact or theorem, but
+    // we do not offer it as a rule.
+    return false;
+  }
   if (step) {
     // Something is selected.
     var precheck = rule.precheck;
