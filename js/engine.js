@@ -502,6 +502,8 @@ var rules = {};
 //   with value true, and the rule itself should return true.  This
 //   property prevents the rule from running to produce a suggestion.
 //
+// internal: write-only property, set to true for rules that have
+//   no inputs property given.
 
 // Rule definitions that have statements (and are thus theorems)
 // support the same properties as facts, specifically: simplifier,
@@ -712,6 +714,7 @@ function addRule(info) {
 
   // Give every info "inputs".
   if (!info.inputs) {
+    info.internal = true;
     info.inputs = {};
   }
 
