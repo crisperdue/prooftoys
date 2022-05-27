@@ -1697,8 +1697,7 @@ RuleMenu.prototype._update = function() {
     // rules with the current situation / selection.
     const mode = self.proofEditor.showRuleType;
 
-    // For now, offer proof steps as rewriters and narrowers only when
-    // in "general" mode.
+    // For now, offer facts and steps as rewriters in "general" mode.
     if (mode === 'general') {
 
       // This searches for steps that can rewrite.
@@ -1736,121 +1735,49 @@ RuleMenu.prototype._update = function() {
                        });
       });
 
-      // Find steps that can replace an instance of the selected term
-      // (narrowing).
-      //
-      // Variables match too many steps.
-      //
-      // TODO: Consider these restrictions more carefully.
-      if (!selection.isVariable()) {
-        const bindings = selStep.pathBindings(sitePath.uglify());
-
-        // For now only substitute into targets not in scope of any
-        // bound variables.
-        //
-        // TODO: Fix me to use a more precise check.
-        if (bindings.size === 0) {
-          // This searches for steps that can replace an instance of
-          // the selection.
-          proofEditor.steps.forEach((proofStep, index) => {
-            const n = index + 1;
-            const schema = selection;
-            const instance = proofStep.matchPart();
-            if (Toy.coreUnifTypes(instance.type, schema.type)) {
-              const subn = instance.matchSchema(schema);
-              // If the substitution does nothing this is just
-              // replacement.
-              if (subn && !Toy.isEmpty(subn)) {
-                const html =
-                      Toy.escapeHtml(
-                        Toy.format(' replace instance using step {2}',
-                                   selection, n));
-                itemInfos.push({ruleName: 'replaceInstanceFrom',
-                                ruleArgs: [selStep.original, sitePath,
-                                           proofStep.original, subn],
-                                html: html
-                               });
-              }
-            }
-          });
-        }
-      }
-    }
-
-    // Find registered facts that could rewrite the selection.
-    self.offerableFacts().forEach(function(info) {
-      const statement = info.goal;
-      const subst = selection.matchSchema(statement.matchPart());
-      if (subst) {
-        let resultTerm;
-        // Ignore unification failure.
-        if (Toy.catchAborts(() => {
-          // CAUTION: temp and temp2 are not to be added to the
-          // current theory, as they are only hypothetically true
-          // to test the unification.
-          //
-          // TODO: Consider a mechanism to check without a
-          // deduction step.
-          const temp = rules.assert(statement);
-          // Unification can fail in this step.
-          // Substitute and eliminate introduced lambdas.
-          const temp2 = rules.instMultiVars(temp, subst, true);
-          resultTerm = temp2.replacementTerm();
-        })) {
-          // There was a failure so don't offer the fact.
-          return;
-        }
-        let display = ' = <span class=menuResult></span>';
-        // TODO: Consider using the length of the unicode in deciding
-        //   what message to generate here.
-        // const unicode = statement.toUnicode();
-        const html = (info.definitional
-                      ? 'definition of ' + statement.getLeft().func().name
-                      : 'using ' + Toy.trimParens(statement.toHtml()));
-        display += (' <span class=description>' + html + '</span>');
-        // Rule name format of "fact <fact text>"
-        // indicates that the text defines a fact to use in
-        // rules.rewrite.
-        var info = {ruleName: 'fact ' + statement.toString(),
-                    html: display,
-                    result: resultTerm};
-        itemInfos.push(info);
-      }
-    });
-
-    // Find facts that can replace an instance of the selection (narrow).
-    //
-    // Variables match too many things.
-    if (!selection.isVariable()) {
-      const bindings = selStep.pathBindings(sitePath.uglify());
-
-      // For now only substitute into targets not in scope of any
-      // bound variables.
-      if (bindings.size === 0) {
-        // This searches for steps that can replace an instance of
-        // the selection.
-        self.offerableFacts().forEach(info => {
-          const schema = selection;
-          const statement = info.goal;
-          const instance = statement.matchPart();
-          if (Toy.coreUnifTypes(instance.type, schema.type)) {
-            const subn = instance.matchSchema(schema);
-            if (subn) {
-              const html =
-                    Toy.escapeHtml(
-                      Toy.format(' replace instance using {2}',
-                                 selection, statement.getMain()));
-              itemInfos.push({ruleName: 'replaceInstance',
-                              ruleArgs: [selStep, sitePath, statement,
-                                         subn],
-                              html: html
-                             });
-            }
+      // Find registered facts that could rewrite the selection.
+      self.offerableFacts().forEach(function(info) {
+        const statement = info.goal;
+        const subst = selection.matchSchema(statement.matchPart());
+        if (subst) {
+          let resultTerm;
+          // Ignore unification failure.
+          if (Toy.catchAborts(() => {
+            // CAUTION: temp and temp2 are not to be added to the
+            // current theory, as they are only hypothetically true
+            // to test the unification.
+            //
+            // TODO: Consider a mechanism to check without a
+            // deduction step.
+            const temp = rules.assert(statement);
+            // Unification can fail in this step.
+            // Substitute and eliminate introduced lambdas.
+            const temp2 = rules.instMultiVars(temp, subst, true);
+            resultTerm = temp2.replacementTerm();
+          })) {
+            // There was a failure so don't offer the fact.
+            return;
           }
-        });
-      }
-    }
-  }      // End if (selection)
+          let display = ' = <span class=menuResult></span>';
+          // TODO: Consider using the length of the unicode in deciding
+          //   what message to generate here.
+          // const unicode = statement.toUnicode();
+          const html = (info.definitional
+                        ? 'definition of ' + statement.getLeft().func().name
+                        : 'using ' + Toy.trimParens(statement.toHtml()));
+          display += (' <span class=description>' + html + '</span>');
+          // Rule name format of "fact <fact text>"
+          // indicates that the text defines a fact to use in
+          // rules.rewrite.
+          var info = {ruleName: 'fact ' + statement.toString(),
+                      html: display,
+                      result: resultTerm};
+          itemInfos.push(info);
+        }
+      });
+    }  // End "general" mode
+
+  }  // End if (selection)
 
   // Sort the itemInfos.
   itemInfos.sort(function(a, b) {
