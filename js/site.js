@@ -278,7 +278,6 @@ $(function() {
         if (!editor.fromDoc) {
           // Editor not loaded from a document, so load it
           // from any data-steps property.
-          editor.setRulesMode(data.rulesMode || 'general');
           if (stepsInfo) {
             editor.setSteps(Toy.decodeSteps(stepsInfo));
           }

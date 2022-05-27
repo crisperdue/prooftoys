@@ -787,15 +787,6 @@ ProofEditor.prototype._updateGivenVars = function() {
 };
 
 /**
- * Public interface to set the rule and fact offerability mode
- * of this ProofEditor.
- */
-ProofEditor.prototype.setRulesMode = function(mode) {
-  // TODO: Reimplement this.
-  console.log('Unimplemented setRulesMode');
-};
-
-/**
  * Add a step to the proof.
  */
 ProofEditor.prototype.addStep = function(step) {
