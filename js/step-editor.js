@@ -1683,10 +1683,11 @@ RuleMenu.prototype._update = function() {
       }
   });
 
+  const mode = self.proofEditor.showRuleType;
+
   if (selection) {
     // A term is selected.  Find proof steps that can serve as rewrite
     // rules with the current situation / selection.
-    const mode = self.proofEditor.showRuleType;
 
     // For now, offer facts and steps as rewriters in "general" mode.
     if (mode === 'general') {
@@ -1766,9 +1767,53 @@ RuleMenu.prototype._update = function() {
           itemInfos.push(info);
         }
       });
+
     }  // End "general" mode
 
-  }  // End if (selection)
+  } else {  // End if (selection)
+
+    if (selStep) {
+
+      if (mode === 'general') {
+
+        // Find registered facts for narrowing
+        Toy.eachFact(function(info) {
+          const statement = info.goal;
+          const step = selStep.original;
+          const wff = step.wff;
+          if (statement.implies()) {
+            const subst = wff.matchSchema(statement.getLeft());
+            if (subst) {
+              /*
+              const replacer = rules.rewriteOnly(step, '', 'a == (a == T)');
+              // Ignore unification failure.
+              if (Toy.catchAborts(() => {
+                const fact = rules.fact(statement);
+                // Unification can fail in this step.
+                // Substitute and eliminate introduced lambdas.
+                const step1 = rules.instMultiVars(fact, subst, true);
+                const step2 = rules.replace(step1, '/left', replacer);
+                const step3 = rules.rewrite(step2, '', 'T => c == c');
+              })) {
+                // There was a failure so don't offer the fact.
+                return;
+              }
+              */
+              const stmt = Toy.trimParens(statement.toHtml());
+              const info = {ruleName: 'forwardChain',
+                            ruleArgs: [selStep.original, statement],
+                            html: `consequence of ${stmt}`,
+                           };
+              itemInfos.push(info);
+            }
+          }
+        });
+
+      }  // end "general"
+
+    }  // end "selStep"
+
+  }
 
   // Sort the itemInfos.
   itemInfos.sort(function(a, b) {
