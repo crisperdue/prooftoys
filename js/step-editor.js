@@ -1794,6 +1794,25 @@ RuleMenu.prototype._update = function() {
           }
         });
 
+        // Find steps to use for narrowing
+        proofEditor.steps.forEach((proofStep, index) => {
+          const n = index + 1;
+          const statement = proofStep.original.wff;
+          const step = selStep.original;
+          const wff = step.wff;
+          if (statement.implies()) {
+            const subst = wff.matchSchema(statement.getLeft());
+            if (subst) {
+              const stmt = Toy.trimParens(statement.toHtml());
+              const info = {ruleName: 'forwardChain',
+                            ruleArgs: [selStep.original, proofStep.original],
+                            html: `consequence of step ${n}:\u00a0 ${stmt}`,
+                           };
+              itemInfos.push(info);
+            }
+          }
+        });
+
       }  // end "general"
 
     }  // end "selStep"
