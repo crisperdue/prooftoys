@@ -3547,6 +3547,7 @@ declare(
       // Schema2 may have some newly-quantified variables in its RHS.
       var step2 = rules.instMultiVars(schema2, substitution, true);
       var step3 = rules.modusPonens(step, step2);
+      // Experimentally allow the schema to count as a dependency.
       return step3.justify('forwardChain', [step, schema], [step, schema]);
     },
     inputs: {step: 1, bool: 2},
@@ -3556,7 +3557,7 @@ declare(
     form: ('Match step <input name=step> with left side of ' +
            'fact [left => right] <input name=bool>'),
     tooltip: ('[p] and [p => q] to q'),
-    description: 'consequence;; of step {step} using {fact}'
+    description: 'consequence;; of step {step} by {fact}'
   },
 
   // Relates equal functions to equality at all input data points.
@@ -4588,7 +4589,7 @@ declare(
       return rules.extractHyp(step, hyp);
     },
     inputs: {site: 1},
-    menu: 'extract the assumption',
+    menu: 'extract {term} from assumptions',
     description: 'extract assumption;; {in step siteStep}',
     labels: 'basic'
   },
@@ -4613,7 +4614,7 @@ declare(
       return result.justify('extractHyp', arguments, [step]);
     },
     inputs: {step: 1, bool: 2},
-    menu: 'extract an assumption',
+    menu: 'extract {term}',
     form: 'extract assumption <input name=bool> from step <input name=step>',
     description: 'extract assumption {bool};; {in step step}',
     labels: 'uncommon',
@@ -5387,29 +5388,55 @@ declare(
      }
    },
 
+  {statement: 'a => (b => a & b)',
+   proof: function() {
+     return rules.tautology('a => (b => a & b)');
+   }
+  },
+
+  {statement: 'a => b => (c => (a => b & c))',
+   proof: function() {
+     return rules.tautology('a => b => (c => (a => b & c))');
+   }
+  },
+
   {statement: '(a => b) & (b => a) == (a == b)',
    proof: function() {
      return rules.tautology('(a => b) & (b => a) == (a == b)');
    }
   },
 
-   {statement: '(a != b) == not (a = b)',
+  {statement: 'a => b => ((b => a) => (a == b))',
+   proof: function() {
+     return rules.tautology('(a => b) => ((b => a) => (a == b))');
+   }
+  },
+
+  {statement: 'a => (b => c) => (a => (c => b) => (a => (b == c)))',
+   proof: function() {
+     return rules.tautology(
+       'a => (b => c) => (a => (c => b) => (a => (b == c)))'
+     );
+   }
+  },
+
+  {statement: '(a != b) == not (a = b)',
     proof: function() {
        return (rules.eqSelf('a != b')
                .andThen('useDefinition', '/right')
                .andThen('apply', '/right/fn')
                .andThen('apply', '/right'));
      }
-   },
+  },
 
-   {statement: 'x != y == y != x',
-    proof: function() {
-       return (rules.eqSelf('x != y')
-               .andThen('rewrite', '/right', '(a != b) == not (a = b)')
-               .andThen('rewrite', 'x = y', 'x = y == y = x')
-               .andThen('rewrite', '/right', 'not (a = b) == a != b'));
-     }
-   },
+  {statement: 'x != y == y != x',
+   proof: function() {
+     return (rules.eqSelf('x != y')
+             .andThen('rewrite', '/right', '(a != b) == not (a = b)')
+             .andThen('rewrite', 'x = y', 'x = y == y = x')
+             .andThen('rewrite', '/right', 'not (a = b) == a != b'));
+   }
+  },
 
    {statement: 'not (a != b) == (a = b)',
     simplifier: true,
