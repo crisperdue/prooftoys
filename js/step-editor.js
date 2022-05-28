@@ -1784,21 +1784,6 @@ RuleMenu.prototype._update = function() {
           if (statement.implies()) {
             const subst = wff.matchSchema(statement.getLeft());
             if (subst) {
-              /*
-              const replacer = rules.rewriteOnly(step, '', 'a == (a == T)');
-              // Ignore unification failure.
-              if (Toy.catchAborts(() => {
-                const fact = rules.fact(statement);
-                // Unification can fail in this step.
-                // Substitute and eliminate introduced lambdas.
-                const step1 = rules.instMultiVars(fact, subst, true);
-                const step2 = rules.replace(step1, '/left', replacer);
-                const step3 = rules.rewrite(step2, '', 'T => c == c');
-              })) {
-                // There was a failure so don't offer the fact.
-                return;
-              }
-              */
               const stmt = Toy.trimParens(statement.toHtml());
               const info = {ruleName: 'forwardChain',
                             ruleArgs: [selStep.original, statement],
