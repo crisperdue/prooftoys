@@ -1333,8 +1333,8 @@ Call.prototype.render = function(minPower) {
                    this.arg.render(Toy.unaryPower));
     }
   } else {
-    // Normal function call: "f x" or " ... x".
-    $expr.append(this.fn.render(Toy.namePower + 1, true), ' ',
+    // Other function call, e.g. just one or more than 2 args.
+    $expr.append(this.fn.render(Toy.namePower, true), ' ',
                  this.arg.render(Toy.unaryPower));
   }
   if (parens) {
