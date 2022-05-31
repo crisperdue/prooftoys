@@ -667,8 +667,11 @@ function addRule(info) {
       //   this.precheck.
       rule = function(_args) {
         checker.apply(null, arguments);
-        return (Toy._actionInfo
+        const checks = Toy._actionInfo;
+        return (checks && !(checks instanceof Error)
                 ? main.apply(rule, arguments)
+                : checks instanceof Error
+                ? checks
                 : info.onFail
                 ? info.onFail.call(rule)
                 : Toy.newError('Rule {1} not applicable', name));
