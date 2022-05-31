@@ -3499,55 +3499,47 @@ declare(
   // This matches the step against A in the schema, and deduces the
   // appropriate instance of B.
   //
-  // This version extends Andrews' version in that it universally
-  // quantifies any (free) variables of B not also (free) in A, with
-  // the quantified variables in lexicographic order by name, so the
-  // instantiation always affects exactly the sites in the schema
-  // where the variable originally occurred, and any renaming can be
-  // recovered from the order of the quantifiers.
+  // When this is used in a derived rule of inference, it can be
+  // important to recognize that name clashes might result from the
+  // substitution if it introduces names that it does not substitute
+  // for.  The method Expr.unmappedVars can be a useful aid to resolving
+  // issues of this kind.
   //
   // Unlike Andrews' rule, there is no special handling here for
   // hypotheses.  Include them as antecedent of a conditional
   // in the schema.
   // 
   // For tautologies with a conjunction on the LHS as shown in the
-  // book, use rule P2.  If there are more than two conjuncts, combine
-  // combine them with rules.and before applying this rule to get
-  // the full generality of Rule P.
-  //
-  // TODO: Apply a similar quantification strategy to rewriting, since
-  // the same issues apply to rewrites.
-  //
-  // TODO: Remove support here for equivalences, and replace the
-  // relevant occurrences of this rule with uses of rewriting.
-  //
-  // TODO: Consider merging this functionality with rules.trueBy.
-  //
-  // TODO: This rule is a specific useful case of "matchToRule",
-  // because the substitution goes into the form A => B rather than
-  // the theorem that A is to match.  Reimplement it when matchToRule
-  // is available.
+  // book, you can use rule P2.  If there are more than two conjuncts,
+  // they can be combined with rules.and before applying this rule to
+  // get the full generality of Rule P, or rewrite [a & b => c]
+  // to [a => (b => c)].
   {name: 'forwardChain',
-    action: function(step, schema_arg) {
-      var schema = rules.fact(schema_arg);
-      assert(schema.implies(), 'Schema {1} must match A => B', schema);
-      // This check is adequate.
-      var substitution = step.matchSchema(schema.getLeft());
-      assert(substitution, 
-             '{1} does not match LHS of schema\n{2}',
-             step, schema);
-      var unmapped = schema.unmappedVars(substitution);
-      var schema2 = schema;
-      // Variables first in unmapped are quantified first/outermost.
-      while (unmapped.length) {
-        // Currently only applied in the facts that the add/mul
-        // identity elements are unique.
-        schema2 = rules.toForall1(schema2, unmapped.pop());
+    precheck: function(step, schema_arg) {
+      const schema = rules.fact(schema_arg);
+      if (!schema.implies()) {
+        return newError('Schema {1} must match A => B', schema);
       }
-      // Schema2 may have some newly-quantified variables in its RHS.
-      var step2 = rules.instMultiVars(schema2, substitution, true);
-      var step3 = rules.modusPonens(step, step2);
+      // This check is adequate.
+      const substitution = step.matchSchema(schema.getLeft());
+      if (!substitution) {
+        return newError('{1} does not match LHS of schema\n{2}',
+                        step, schema);
+      }
+      return [schema, substitution];
+    },
+    action: function(step, schema_arg) {
+      const [schema, substitution] = Toy._actionInfo;
+      const step2 = rules.instMultiVars(schema, substitution, true);
+      const step3 = rules.modusPonens(step, step2);
       // Experimentally allow the schema to count as a dependency.
+      // 
+      // TODO: If the "schema" is actually a proof step, it will
+      // display as if it were a recorded fact.  This issue can also
+      // occur with rewrites.  we should probably choose display style
+      // in such cases based on use of a recorded fact given as a
+      // statement versus using a proved step.  This would also let us
+      // eliminate some variants of rewrite rules.
       return step3.justify('forwardChain', [step, schema], [step, schema]);
     },
     inputs: {step: 1, bool: 2},

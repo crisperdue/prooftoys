@@ -169,20 +169,13 @@ declare(
    },
    
    {statement: 'isAddIdentity x == x = 0',
-    // TODO: Notice that using forwardChain here with step1 causes
-    //   step1 to be displayed as if it were a recorded fact.  This
-    //   issue can also occur with rewrites.  we should probably
-    //   choose display style in such cases based on use of a recorded
-    //   fact given as a statement versus using a proved step.  This
-    //   would also let us eliminate some variants of rewrite rules.
     proof: function() {
        const step1 = (rules.fact('exists1 p => (p x == x = the1 p)')
                       .andThen('instMultiVars', {p: 'isAddIdentity'})
                       .andThen('rewrite', '/right/right/right',
                                'the1 isAddIdentity = 0'));
        return (rules.fact('exists1 isAddIdentity')
-               .andThen('forwardChain', step1)
-               .andThen('instForall', '', 'x'));
+               .andThen('forwardChain', step1));
      }
    },
    {statement: 'isMulIdentity x == x = 1',
@@ -192,8 +185,7 @@ declare(
                       .andThen('rewrite', '/right/right/right',
                                'the1 isMulIdentity = 1'));
        return (rules.fact('exists1 isMulIdentity')
-               .andThen('forwardChain', step1)
-               .andThen('instForall', '', 'x'));
+               .andThen('forwardChain', step1));
      }
    }
 );
