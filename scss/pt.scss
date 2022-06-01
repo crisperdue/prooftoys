@@ -64,11 +64,20 @@ sub, sup {
     float: right;
 }
 
+// Font Awesome 120% size icon
 .fa-120 {
   font-size: 1.2em;
   line-height: 0.75em;
   vertical-align: -15%;
 }
+
+dt {
+  font-weight: normal;
+}
+dd {
+  margin-left: 1.5em;
+}
+
 button {
     background-color: LightSkyBlue;
 }
