@@ -1819,7 +1819,7 @@ declare(
     menu: 'simplify {term} with fact',
     form: 'Simplify using term <input name=term>',
     description: 'simplify using {term};; {in step siteStep}',
-    labels: 'algebra general'
+    labels: 'other'
   },
 
   // TODO: Create a "rules.simplifier" that takes a term argument
@@ -3956,7 +3956,7 @@ declare(
     form: ('Replace site with right side of equation <input name=equation>'),
     menu: 'replace using a step like {term} = . . .',
     description: 'replace term;; {in step siteStep} {using step equation}',
-    labels: 'basic algebra'
+    labels: 'other'
   },
 
   /**
@@ -4265,6 +4265,7 @@ declare(
     inputs: {site: 1, equation: 3},
     form: ('Rewrite using equation step <input name=equation>'),
     menu: 'minimal rewrite',
+    labels: 'other',
     isRewriter: true,
     description: 'rewrite;; {in step siteStep} {using step equation}'
   },
@@ -4366,6 +4367,7 @@ declare(
     inputs: {site: 1, bool: 3},
     form: ('Rewrite {term} using fact <input name=bool>'),
     menu: 'rewrite using a fact',
+    labels: 'other',
     isRewriter: true,
     description: 'use;; {shortFact} {&nbsp;in step siteStep}'
   },
