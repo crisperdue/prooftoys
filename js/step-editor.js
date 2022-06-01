@@ -1702,7 +1702,7 @@ RuleMenu.prototype._update = function() {
         // problem.
         if (schema.isVariable() &&
             schema.name.startsWith('$') &&
-            !schema.match(selection)) {
+            !schema.matches(selection)) {
           return;
         }
         if (!Toy.coreUnifTypes(selection.type, schema.type)) {
