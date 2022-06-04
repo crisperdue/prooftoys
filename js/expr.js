@@ -2558,6 +2558,7 @@ var unicodeNames = {
   '|': '\u2228',      // &or;
   'not': '\u00ac',    // &not;
   '=>': '\u21d2',     // &rArr; ("implies")
+  '=>>': '\u21db',    // rightwards triple arrow
   '!=': '\u2260',     // &ne;
   '<=': '\u2264',     // &le;
   '>=': '\u2265',     // &ge;
