@@ -3429,7 +3429,7 @@ declare(
     inputs: {site: 1},
     labels: 'basic',
     form: (''),
-    menu: 'remove irrelevant assumption',
+    menu: '   remove irrelevant assumption',
     tooltip: 'Remove irrelevant assumption',
     description: 'remove irrelevant assumption {site};; {in step siteStep}'
   },
@@ -3489,7 +3489,7 @@ declare(
     inputs: {site: 1},
     labels: 'basic',
     form: (''),
-    menu: 'remove irrelevant type assumption',
+    menu: '  remove irrelevant type assumption',
     tooltip: 'Remove irrelevant type assumption',
     description: 'remove irrelevant type assumption {site};; {in step siteStep}'
   },
