@@ -177,13 +177,15 @@ Toy.mathText = function(text) {
 };
 
 /**
- * Converts <code> element contents into math-oriented HTML.  In
- * Markdown, backticks convert to <code>, and furthermore it escapes
- * all text within the Markdown code block to prevent interpretation
- * as HTML.  If a fenced code block is labeled as "text", this does
- * not transform it further at all.  Or if a normal code block content
- * begins with "\", this strips the "\", but does not otherwise
- * process the content.
+ * Converts <code> element contents into math-oriented HTML if it has
+ * no language given, or given as "logic" (or "fallback"), except if
+ * the block has no language and its text begins with "\", this strips
+ * the "\", but does not otherwise process the content.
+ *
+ *(Recall that Markdown converts backticks to <code> and escapes all
+ * text within the Markdown code block to prevent interpretation as
+ * HTML.  Hugo's Goldmark processor emits a data-lang attribute and a
+ * language-xxx class if a language is given.)
  */
 Toy.mathifyAll = function() {
   jQuery('code').replaceWith(function() {
@@ -193,7 +195,7 @@ Toy.mathifyAll = function() {
       const $element = $('<code>');
       $element.text(content.slice(1));
       return $element;
-    } else if (!lang || lang === 'fallback') {
+    } else if (!lang || lang === 'fallback' || lang === 'logic') {
       const markup = Toy.mathMarkup(content);
       const title = Toy.mathMarkup(content, true);
       const $element = $('<code>',
