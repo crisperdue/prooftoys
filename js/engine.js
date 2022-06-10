@@ -232,7 +232,7 @@ const categoryOfLabel = {
   algebra2: 'other',
   general: 'general',
   basic: 'general',
-  higherOrder: 'general',
+  higherOrder: 'default',
   // The "backward" label is for facts useful for backward reasoning,
   // though it usually can be inferred from the assumptions of the fact.
   backward: 'backward',
