@@ -2873,8 +2873,10 @@ declare(
    proof: function() {
      return rules.tautology('a == (a == T)');
    },
+   desimplifier: true,
+   // TODO: At some point hopefully this will not be needed
+   //   in the "general" menu.
    labels: 'general',
-   converse: {labels: 'general'},
   },
 
 );
@@ -5414,7 +5416,35 @@ declare(
    }
   },
 
+  // Eliminate side condition "not a", e.g. x != 0
+  /* This is something of a prototype for specialized rules of this sort.
+     it needs more work and thought; possibly automatic introduction
+     of assumptions such as a1 here.
+  {statement: 'a1 => (not a => (p == b)) => ((a => p) => (a1 => (p == a | b)))',
+   proof: function() {
+     return rules.tautology(
+       'a1 => (not a => (p == b)) => ((a => p) => (a1 => (p == a | b)))'
+     );
+   }
+  },
+
+  TODO: Consider automatically using the tautology
+    b => c => (a => b => (a => c)) to relativize
+    conditionals to a consistent set of assumptions.
+  */
+
+  // Eliminate simpler side condition "not a", e.g. x != 0
+  {statement: 'not a => (p == b) => (a => p => (p == a | b))',
+   name: 'sideCond',
+   proof: function() {
+     return rules.tautology(
+       'not a => (p == b) => (a => p => (p == a | b))'
+     );
+   }
+  },
+
   {statement: '(a != b) == not (a = b)',
+    labels: 'general',
     proof: function() {
        return (rules.eqSelf('a != b')
                .andThen('useDefinition', '/right')
@@ -5424,6 +5454,7 @@ declare(
   },
 
   {statement: 'x != y == y != x',
+   labels: 'general',
    proof: function() {
      return (rules.eqSelf('x != y')
              .andThen('rewrite', '/right', '(a != b) == not (a = b)')
