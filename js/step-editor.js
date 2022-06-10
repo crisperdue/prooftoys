@@ -2203,6 +2203,9 @@ RuleMenu.prototype.offerableRule = function(ruleName) {
  * including at least one of the categories of the current menu.
  */
 RuleMenu.prototype.offerableFacts = function() {
+  // TODO: filter facts based on constants they may introduce
+  //   into a formula, compared with ones approved by the user
+  //   and/or appearing already in the proof.
   const self = this;
   const facts = [];
   const step = self.proofEditor.proofDisplay.selection;
