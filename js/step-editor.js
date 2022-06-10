@@ -1689,86 +1689,81 @@ RuleMenu.prototype._update = function() {
     // A term is selected.  Find proof steps that can serve as rewrite
     // rules with the current situation / selection.
 
-    // For now, offer facts and steps as rewriters in "general" mode.
-    if (mode === 'general') {
+    // This searches for steps that can rewrite.
+    proofEditor.steps.forEach((proofStep, index) => {
+      const n = index + 1;
+      const schema = proofStep.matchPart();
 
-      // This searches for steps that can rewrite.
-      proofEditor.steps.forEach((proofStep, index) => {
-        const n = index + 1;
-        const schema = proofStep.matchPart();
+      // Experimentally omit matching schemas that are just a "$"
+      // variable.  This occurs very often when solving an algebra
+      // problem.
+      if (schema.isVariable() &&
+          schema.name.startsWith('$') &&
+          !schema.matches(selection)) {
+        return;
+      }
+      if (!Toy.coreUnifTypes(selection.type, schema.type)) {
+        return;
+      }
+      const map = selection.matchSchema(schema);
+      if (!map) {
+        return;
+      }
+      // TODO: Render this info and rewrite _rule_ content
+      //   consistently in both visual style and code, see the code
+      //   block just below.
+      const html =
+            Toy.escapeHtml(
+              Toy.format(' = {1} using step {2}',
+                         proofStep.replacementTerm(),
+                         n));
+      itemInfos.push({ruleName: 'rewriteFrom',
+                      ruleArgs: [selStep.original, sitePath,
+                                 proofStep.original],
+                      html: html
+                     });
+    });
 
-        // Experimentally omit matching schemas that are just a "$"
-        // variable.  This occurs very often when solving an algebra
-        // problem.
-        if (schema.isVariable() &&
-            schema.name.startsWith('$') &&
-            !schema.matches(selection)) {
+    // Find registered facts that could rewrite the selection.
+    self.offerableFacts().forEach(function(info) {
+      const statement = info.goal;
+      const subst = selection.matchSchema(statement.matchPart());
+      if (subst) {
+        let resultTerm;
+        // Ignore unification failure.
+        if (Toy.catchAborts(() => {
+          // CAUTION: temp and temp2 are not to be added to the
+          // current theory, as they are only hypothetically true
+          // to test the unification.
+          //
+          // TODO: Consider a mechanism to check without a
+          // deduction step.
+          const temp = rules.assert(statement);
+          // Unification can fail in this step.
+          // Substitute and eliminate introduced lambdas.
+          const temp2 = rules.instMultiVars(temp, subst, true);
+          resultTerm = temp2.replacementTerm();
+        })) {
+          // There was a failure so don't offer the fact.
           return;
         }
-        if (!Toy.coreUnifTypes(selection.type, schema.type)) {
-          return;
-        }
-        const map = selection.matchSchema(schema);
-        if (!map) {
-          return;
-        }
-        // TODO: Render this info and rewrite _rule_ content
-        //   consistently in both visual style and code, see the code
-        //   block just below.
-        const html =
-              Toy.escapeHtml(
-                Toy.format(' = {1} using step {2}',
-                           proofStep.replacementTerm(),
-                           n));
-        itemInfos.push({ruleName: 'rewriteFrom',
-                        ruleArgs: [selStep.original, sitePath,
-                                   proofStep.original],
-                        html: html
-                       });
-      });
-
-      // Find registered facts that could rewrite the selection.
-      self.offerableFacts().forEach(function(info) {
-        const statement = info.goal;
-        const subst = selection.matchSchema(statement.matchPart());
-        if (subst) {
-          let resultTerm;
-          // Ignore unification failure.
-          if (Toy.catchAborts(() => {
-            // CAUTION: temp and temp2 are not to be added to the
-            // current theory, as they are only hypothetically true
-            // to test the unification.
-            //
-            // TODO: Consider a mechanism to check without a
-            // deduction step.
-            const temp = rules.assert(statement);
-            // Unification can fail in this step.
-            // Substitute and eliminate introduced lambdas.
-            const temp2 = rules.instMultiVars(temp, subst, true);
-            resultTerm = temp2.replacementTerm();
-          })) {
-            // There was a failure so don't offer the fact.
-            return;
-          }
-          let display = ' = <span class=menuResult></span>';
-          // TODO: Consider using the length of the unicode in deciding
-          //   what message to generate here.
-          // const unicode = statement.toUnicode();
-          const html = (info.definitional
-                        ? 'definition of ' + statement.getLeft().func().name
-                        : 'using ' + Toy.trimParens(statement.toHtml()));
-          display += (' <span class=description>' + html + '</span>');
-          // Rule name format of "fact <fact text>"
-          // indicates that the text defines a fact to use in
-          // rules.rewrite.
-          var info = {ruleName: 'fact ' + statement.toString(),
-                      html: display,
-                      result: resultTerm};
-          itemInfos.push(info);
-        }
-      });
-
-    }  // End "general" mode
+        let display = ' = <span class=menuResult></span>';
+        // TODO: Consider using the length of the unicode in deciding
+        //   what message to generate here.
+        // const unicode = statement.toUnicode();
+        const html = (info.definitional
+                      ? 'definition of ' + statement.getLeft().func().name
+                      : 'using ' + Toy.trimParens(statement.toHtml()));
+        display += (' <span class=description>' + html + '</span>');
+        // Rule name format of "fact <fact text>"
+        // indicates that the text defines a fact to use in
+        // rules.rewrite.
+        var info = {ruleName: 'fact ' + statement.toString(),
+                    html: display,
+                    result: resultTerm};
+        itemInfos.push(info);
+      }
+    });
 
   } else {  // End if (selection)
 
@@ -2213,13 +2208,13 @@ RuleMenu.prototype.offerableFacts = function() {
   const step = self.proofEditor.proofDisplay.selection;
   const expr = step && step.selection;
   if (expr) {
-    // This is the name of a menu.
-    const menu = self.proofEditor.showRuleType;
+    // Set of categories for the current menu
+    const menuCats = catsOfMenu.get(self.proofEditor.showRuleType);
 
     // Consider each registered fact:
     Toy.eachFact(function(info) {
       const goal = info.goal;
-      if (Toy.intersection(catsOfMenu.get(menu), info.categories).size > 0) {
+      if (Toy.intersection(menuCats, info.categories).size > 0) {
         const matchTerm = goal.matchPart();
         // We never offer a fact if the goal matches _everything_ (of
         // suitable type).  This check may be unnecessary.
