@@ -1640,7 +1640,10 @@ function RuleMenu(proofEditor) {
       if (promise && promise.dequeue()) {
         $this.removeData('promise');
       }
-    });
+  });
+
+  // Ensure that the selected menu is initialized.
+  this.refresh();
 }
 
 /**
@@ -1854,9 +1857,9 @@ RuleMenu.prototype._update = function() {
 };
 
 /**
- * Handler for ruleMenu selection of a rule name.  Overall purpose is
- * to run the rule from information already available, otherwise to
- * display the input form.
+ * Handler for selection of a menu item.  Overall purpose is to run
+ * the appropriate rule from information already available, otherwise
+ * to display an input form.
  */
 RuleMenu.prototype.handleMouseClickItem = function(node, event) {
   if (this.suppressing) {
