@@ -100,7 +100,7 @@ function ProofEditor(options_arg) {
   self.stepEditor = stepEditor;
   // This provides a coordinate system for absolute positioning.
   const $formParent = $('<div style="position: relative">');
-  $formParent.append(stepEditor.form);
+  $formParent.append(stepEditor.$form);
 
   const proofButtons = buildProofButtons(self);
   self.$copyText = proofButtons.$copyText;
@@ -920,37 +920,27 @@ var siteTypes = {
 };
 
 
-// TODO: Support rules that need multiple selectable inputs by
-//   using a selection and following steps as inputs.  If multiple
-//   selections are needed, the step editor can use "consider"
-//   to pick a term from a step, and if necessary, look back to
-//   the origin site of the term to use it as a selection.
-//   Probably only fill in rule arguments from steps at the end
-//   of the current proof, and remove steps added by copying
-//   or use of "consider"
+// TODO: If needed, support rules that need multiple selectable inputs
+//   by using a selection and following steps as inputs.  If multiple
+//   selections are needed, the step editor can use "consider" to pick
+//   a term from a step, and if necessary, look back to the origin
+//   site of the term to use it as a selection.  Probably only fill in
+//   rule arguments from steps at the end of the current proof, and
+//   remove steps added by copying or use of "consider"
 //
 //   Another way to collect multiple steps as inputs would be to
 //   (temporarily) create a conjunction of steps and use the
 //   conjunction as a single input.
-//
-//   Also, for rules that do matching, such as rewrite rules,
-//   the editor could scan the current proof for matching steps
-//   and offer the results as suggestions.
 
 /**
- * A ProofDisplay can have only one StepEditor.  It appears at the end
- * of an editable proof.
- *
- * TODO: Support essential step editing such as justification of an assumed
- * step, for steps that already exist.  Also rearranging proofs.
+ * A ProofEditor has exactly one StepEditor, which can be shown or hidden.
+ * It renders as a "somewhat modal" form display.
  *
  * Fields:
- * form: jQuery DIV containing the entire input form
- * lastRuleTime: Milliseconds consumed by last execution of tryRule.
- * lastRuleSteps: Steps used by last execution of tryRule.
+ * $form: jQuery DIV containing the entire input form
+ * $proofErrors: jQuery DIV with the error display
  *
- * TODO: Continue cleaning up this class, removing detritus and
- *   moving the proofErrors display into the ProofEditor.
+ * TODO: Move $proofErrors into the ProofEditor.
  */
 function StepEditor(proofEditor) {
   // Make this available to all inner functions.
@@ -960,14 +950,12 @@ function StepEditor(proofEditor) {
   // StepEditor and ProofEditor.
   self._proofEditor = proofEditor;
   self.proofDisplay = proofEditor.proofDisplay;
-  self.lastRuleTime = 0;
-  self.lastRuleSteps = 0;
 
   // Button to clear rule input, visible when a form is active.
   self.clearer =
     $('<button class="fa fa-120 fa-times-circle sted-clear" '+
       'title="Clear the input">');
-  const $form = self.form = $('<div class="ruleForm hidden"></div>');
+  const $form = self.$form = $('<div class="ruleForm hidden"></div>');
 
   $form.append(self.clearer, '<span class=customForm></span>');
   // Install event handlers.
@@ -977,12 +965,12 @@ function StepEditor(proofEditor) {
   });
 
   $form.append(' <button class=go>Go</button>');
-  self.form.on('click', 'button.go', function() {
+  self.$form.on('click', 'button.go', function() {
     self.tryRuleFromForm();
   });
 
   // Keyboard events bubble to here from the inputs in the form.
-  self.form.on('keydown', function(event) {
+  self.$form.on('keydown', function(event) {
     if (event.keyCode == 13) {
       // <enter> key was hit
       self.tryRuleFromForm();
@@ -1034,7 +1022,7 @@ StepEditor.prototype.clearError = function() {
  * Shows the form for entering info for the selected rule.
  */
 StepEditor.prototype.showForm = function() {
-  this.form.show();
+  this.$form.show();
   this.formShowing = true;
   this.proofDisplay.setSelectLock(true);
   this._proofEditor.$node.addClass('ruleFormVisible');
@@ -1045,7 +1033,7 @@ StepEditor.prototype.showForm = function() {
  * Hides the rule entry form.
  */
 StepEditor.prototype.hideForm = function() {
-  this.form.hide();
+  this.$form.hide();
   this.formShowing = false;
   this.proofDisplay.setSelectLock(false);
   this._proofEditor.$node.removeClass('ruleFormVisible');
@@ -1132,7 +1120,7 @@ StepEditor.prototype.addSelectionToForm = function(rule) {
   var step = proofDisplay.selection;
   if (step) {
     var expr = step.selection;
-    var form = this.form;
+    var form = this.$form;
     var n = step.stepNumber;
     // Search for the first input field that is compatible with the
     // selection and fill it in with selection information.
@@ -1418,7 +1406,7 @@ StepEditor.prototype.fillFromForm = function(ruleName, args) {
   var self = this;
   var rule = Toy.rules[ruleName];
   let success = true;
-  $(this.form).find('input').each(function() {
+  $(this.$form).find('input').each(function() {
     // The "name" attribute of the input element should be the name of
     // an input type, possibly followed by some digits indicating
     // which rule argument it will supply.
@@ -1907,14 +1895,14 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
       // The template is not just an empty string.
       // Note that reset of the step editor will return the hidden
       // status back to normal.
-      stepEditor.form.find('.customForm').html(format(template, formatArgs));
+      stepEditor.$form.find('.customForm').html(format(template, formatArgs));
       stepEditor.showForm();
-      addClassInfo(stepEditor.form);
+      addClassInfo(stepEditor.$form);
       if (!usesSite(rule)) {
         stepEditor.addSelectionToForm(rule);
       }
       // Focus the first empty text field of the form.
-      stepEditor.form.find('input[type=text],input:not([type])')
+      stepEditor.$form.find('input[type=text],input:not([type])')
         .each(function() {
           if (!this.value) {
             this.focus();
