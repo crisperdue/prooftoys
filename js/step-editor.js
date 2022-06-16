@@ -56,7 +56,7 @@ var nextProofEditorId = 1;
  *   principle an editor could also be assigned an ID explicitly during
  *   editor initialization immediately after creation.
  * fromDoc: boolean, true if state loaded from a document in constructor.
- * initialSteps: string with initial steps to reset to on "clear proof".
+ * initialSteps: string with initial steps to reset to on "clear work".
  * givens: read-only TermSet of boolean terms defining the problem, often
  *   equations (not steps).  Non-empty iff the first step is a "given"
  *   step; then contains the conjuncts of the main part, as determined
@@ -127,6 +127,17 @@ function ProofEditor(options_arg) {
   let $header =
     ($('<div class=proofEditorHeader>')
      .append('<b>Worksheet "<span class=wksName></span>"</b>'));
+  const $clearWork =
+        $('<input type=button class=clearWork value="Clear work">');
+  const css = {float: 'right',
+               border: '1px solid red',
+               color: '#d9534f',
+               fontWeight: 'bold',
+               backgroundColor: 'white'
+  };
+  $clearWork.css(css);
+  $header.append($clearWork);
+
   let $readOnly =
     $(`<p class=ifProofLoadError><i><b style="color:red">
       An error occurred executing the proof.</b><br>
@@ -227,6 +238,12 @@ function ProofEditor(options_arg) {
 
   //// Event handlers
 
+  self.$node.find('.clearWork').on('click', function() {
+    if (window.confirm('Do you really want to clear your work?')) {
+      self.clear();
+    }
+  });
+
   // Document-level event handlers.
 
   // Returns a boolean indicating whether the given jQuery node
@@ -289,13 +306,6 @@ function buildProofButtons(editor) {
   // The proofButtons class is used in some examples.
   const $proofButtons = $('<div class="proofButtons">');
 
-  const $clearProof = $('<input type=button value="Clear work">');
-  const css = {float: 'right',
-               backgroundColor: '#d9534f',
-               color: 'white'
-  };
-  $clearProof.css(css);
-
   // Toggling the proof state display visibility with a button.
   const $wksButton = $('<input type=button value="Worksheets... ">');
 
@@ -320,7 +330,6 @@ function buildProofButtons(editor) {
   $proofButtons.append($copyButton);
   $proofButtons.append($wksButton, $('<s class=em>'));
   $proofButtons.append($ruleStats, $('<s class=em>'));
-  $proofButtons.append($clearProof);
 
   // Main and worksheet controls event handlers
 
@@ -333,11 +342,6 @@ function buildProofButtons(editor) {
 
   $wksButton.on('click', function() {
       editor._wksControls.toggle();
-    });
-  $clearProof.on('click', function() {
-      if (window.confirm('Do you really want to clear your work?')) {
-        editor.clear();
-      }
     });
   const result = {
     $node: $proofButtons,
