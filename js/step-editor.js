@@ -46,7 +46,7 @@ var nextProofEditorId = 1;
  * Public properties:
  *
  * proofDisplay: ProofDisplay for the proof being edited.
- * containerNode: jQuery object for outermost DOM node for the display.
+ * $node: jQuery object for outermost DOM node for the display.
  * $proofButtons: jQuery object for the row of "proof buttons".
  * stepEditor: StepEditor for the proof being edited.
  * proofEditorId: identifies this editor for purposes of restoring its
@@ -93,7 +93,7 @@ function ProofEditor(options_arg) {
   self.steps = mainDisplay.steps;
 
   // Top-level element of the proof editor display:
-  const $node = this.containerNode =
+  const $node = this.$node =
     $('<div class="proofEditor logicZone"></div>');
 
   const stepEditor = new StepEditor(this);
@@ -132,7 +132,7 @@ function ProofEditor(options_arg) {
       An error occurred executing the proof.</b><br>
       View the workspace as text to see steps not executed.<br>
       For safety this worksheet is read-only.</i></p>`);
-  this.containerNode
+  this.$node
     .append($header)
     .append($readOnly)
     .append(mainDisplay.node)
@@ -271,7 +271,7 @@ function ProofEditor(options_arg) {
       }
       if (!within($target, '.proofErrors, .stepEditor, .ruleForm')) {
         // Similarly, most clicks hide the proof errors display.
-        self.containerNode.removeClass('proofErrorsVisible');
+        self.$node.removeClass('proofErrorsVisible');
       }
     });
 }
@@ -679,7 +679,7 @@ ProofEditor.prototype.setDocumentName = function(name) {
   const self = this;
   self._documentName = name;
   // Set the document name into all nodes of class wksName.
-  self.containerNode.find('.wksName').text(name);
+  self.$node.find('.wksName').text(name);
   // Remember the state of this editor.
   // TODO: Replace the following with some form of state observation.
   if (self.proofDisplay.isEditable()) {
@@ -825,7 +825,7 @@ ProofEditor.prototype.setSteps = function(steps) {
   } else {
     this.proofDisplay.setSteps(steps);
     this.toggleClass('proofLoadError', false);
-    Toy.soonDo(() => this.containerNode.find('.proofSteps').scrollTop(1e9));
+    Toy.soonDo(() => this.$node.find('.proofSteps').scrollTop(1e9));
   }
 };
 
@@ -871,7 +871,7 @@ ProofEditor.prototype.setEditable = function(value) {
  * Toggles a CSS class on the main node of this proof editor.
  */
 ProofEditor.prototype.toggleClass = function(className, truthy) {
-  this.containerNode.toggleClass(className, truthy);
+  this.$node.toggleClass(className, truthy);
 };
 
 
@@ -1033,7 +1033,7 @@ StepEditor.prototype.showForm = function() {
   this.form.show();
   this.formShowing = true;
   this.proofDisplay.setSelectLock(true);
-  this._proofEditor.containerNode.addClass('ruleFormVisible');
+  this._proofEditor.$node.addClass('ruleFormVisible');
   this._proofEditor.ruleMenu.suppressing = true;
 };
 
@@ -1044,7 +1044,7 @@ StepEditor.prototype.hideForm = function() {
   this.form.hide();
   this.formShowing = false;
   this.proofDisplay.setSelectLock(false);
-  this._proofEditor.containerNode.removeClass('ruleFormVisible');
+  this._proofEditor.$node.removeClass('ruleFormVisible');
 };
 
 /**
@@ -1190,7 +1190,7 @@ function tryRuleSoon(stepEditor, rule, args) {
         console.error('Argument step ' + arg.stepNumber + ' is renderable.');
       }
     });
-  stepEditor._proofEditor.containerNode.addClass('waitingForProver');
+  stepEditor._proofEditor.$node.addClass('waitingForProver');
   stepEditor._proofEditor.ruleMenu.suppressing = true;
   // Try running the rule once the UI shows that the prover is working.
   Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
@@ -1218,7 +1218,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
   // Cleans up lockouts on interactivity.
   const cleanup = () => {
     editor.proofDisplay.setSelectLock(false);
-    editor.containerNode.removeClass('waitingForProver');
+    editor.$node.removeClass('waitingForProver');
     editor.ruleMenu.suppressing = false;
   }
 
@@ -1247,12 +1247,12 @@ StepEditor.prototype._tryRule = function(rule, args) {
   this.lastRuleSteps = Toy.getStepCounter() - startSteps;
   // TODO: Consider providing an event with info the ProofEditor can
   //   use to display this info -- and move this code into handler.
-  this._proofEditor.containerNode
+  this._proofEditor.$node
     .find('.ruleTime').text(Math.ceil(this.lastRuleTime));
-  this._proofEditor.containerNode
+  this._proofEditor.$node
     .find('.ruleSteps').text(Math.ceil(this.lastRuleSteps));
   // Clear the initial invisible state.
-  this._proofEditor.containerNode
+  this._proofEditor.$node
     .find('.ruleStats').toggleClass('invisible', false);
 
   // A rule may abort (throw), or certain rules may return null
@@ -1314,7 +1314,7 @@ StepEditor.prototype._tryRule = function(rule, args) {
       checkTop(top2);
       // Scroll the proof steps DIV all the way to the bottom
       // so the new step(s) are visible.
-      editor.containerNode.find('.proofSteps').scrollTop(1e9)
+      editor.$node.find('.proofSteps').scrollTop(1e9)
     });
   }
   if (!deferCleanup) {
@@ -1572,7 +1572,7 @@ function RuleMenu(proofEditor) {
 
   // Set up event handlers.
 
-  const $ed = proofEditor.containerNode;
+  const $ed = proofEditor.$node;
 
   $node.on('mouseenter mouseleave', function(event) {
     $ed.toggleClass('ruleMenuHovered', event.type === 'mouseenter');

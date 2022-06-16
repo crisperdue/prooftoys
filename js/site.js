@@ -284,7 +284,7 @@ $(function() {
             editor.setSteps(Toy.decodeSteps(stepsInfo));
           }
         }
-        $(this).append(editor.containerNode);
+        $(this).append(editor.$node);
       });
     // Similarly create a proof display for each div.proof-display node.
     // These are read-only.
