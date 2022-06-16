@@ -940,7 +940,8 @@ var siteTypes = {
  * $form: jQuery DIV containing the entire input form
  * $proofErrors: jQuery DIV with the error display
  *
- * TODO: Move $proofErrors into the ProofEditor.
+ * TODO: Rename this to e.g., RuleForm.
+ *   Move $proofErrors into the ProofEditor.
  */
 function StepEditor(proofEditor) {
   // Make this available to all inner functions.
@@ -980,7 +981,7 @@ function StepEditor(proofEditor) {
   self.$proofErrors = $('<div class="proofErrors hidden"></div>');
   // Always clear the errors when clicked.
   self.$proofErrors.on('click', '.clearer', function() {
-    self.$proofErrors.hide();
+    self.clearError();
   });
 }
 
@@ -1026,6 +1027,10 @@ StepEditor.prototype.showForm = function() {
   this.formShowing = true;
   this.proofDisplay.setSelectLock(true);
   this._proofEditor.$node.addClass('ruleFormVisible');
+  // Suppresses response to mouse events in the menu;
+  // important especially to suppress clicks, also done
+  // by tryRuleSoon, so it can safely defer running
+  // its rule until after the next repaint.
   this._proofEditor.ruleMenu.suppressing = true;
 };
 
@@ -1183,6 +1188,7 @@ function tryRuleSoon(stepEditor, rule, args) {
       }
     });
   stepEditor._proofEditor.$node.addClass('waitingForProver');
+  // Do not respond to menu mouse events until the rule has actually run.
   stepEditor._proofEditor.ruleMenu.suppressing = true;
   // Try running the rule once the UI shows that the prover is working.
   Toy.afterRepaint(stepEditor._tryRule.bind(stepEditor, rule, args));
