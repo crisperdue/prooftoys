@@ -84,10 +84,12 @@ Toy.trackAppEvent = function(action, ...more) {
 
 /**
  * Enable/disable Matomo Heatmap sesssion recording.
+ * also stores the target state in Toy:uxOK.
  */
 Toy.setSessionRecording = function(on) {
+  localStorage.setItem('Toy:uxOK', on ? 'true' : 'false');
   _paq && _paq.push(['HeatmapSessionRecording::' +
-                     on ? 'enable' : 'disable']);
+                     (on ? 'enable' : 'disable')]);
 };
 
 /**
