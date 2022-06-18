@@ -282,15 +282,19 @@ function ProofEditor(options_arg) {
     });
   // Click in most areas of the document hides the workspace controls.
   $(document).on('click', function(event) {
-      const $target = $(event.target);
-      if (!within($target, '.wksControlsOuter, .proofButtons')) {
-        self._wksControls.hide();
-      }
-      if (!within($target, '.proofErrors, .stepEditor, .ruleForm')) {
-        // Similarly, most clicks hide the proof errors display.
-        self.$node.removeClass('proofErrorsVisible');
-      }
-    });
+    const $target = $(event.target);
+    if (!within($target, '.wksControlsOuter, .proofButtons')) {
+      self._wksControls.hide();
+    }
+    // Also hides the error report.  When the proof editor has a dialog
+    // box, most clicks within the editor do not hide the dialog.
+    if (!within($target,
+                '.proofEditor.hasDialog, .proofErrors, ' +
+                '.stepEditor, .ruleForm')) {
+      // TODO: Consider perhaps an editor reset() method.
+      self.stepEditor.clearError();
+    }
+  });
 }
 
 /**
@@ -330,6 +334,22 @@ function buildProofButtons(editor) {
   $proofButtons.append($copyButton);
   $proofButtons.append($wksButton, $('<s class=em>'));
   $proofButtons.append($ruleStats, $('<s class=em>'));
+  const $ux = $('<label>Enable usage tracing <input type=checkbox></label>');
+  $ux.css({
+    float: 'right'
+  });
+  $proofButtons.append($ux);
+  tippy(dom($ux), {
+    allowHTML: true,
+    delay: 400,
+    maxWidth: '500px',
+    content:
+    ('Understanding user experience is vital to the mission of Prooftoys.<br>' +
+     'Checking this box enables detailed tracing of your interactions<br>' +
+     'to help make the Prooftoys user experience better.<br>' +
+     'We are grateful for your participation.<br><br>' +
+     'For more information see the <i>privacy information</i> page.')
+  });
 
   // Main and worksheet controls event handlers
 
@@ -1001,6 +1021,7 @@ StepEditor.prototype.report = function(error) {
   var $proofErrors = this.$proofErrors;
   $proofErrors.html('<button class=clearer>X</button>');
   $proofErrors.show();
+  this._proofEditor.$node.addClass('hasDialog');
   if (error instanceof Error) {
     $proofErrors.append('<b>Error: ' + error.message + '</b>');
     if (error.step) {
@@ -1016,6 +1037,7 @@ StepEditor.prototype.report = function(error) {
  * Hides the error display.
  */
 StepEditor.prototype.clearError = function() {
+  this._proofEditor.$node.removeClass('hasDialog');
   this.$proofErrors.hide();
 };
 
@@ -1576,16 +1598,6 @@ function RuleMenu(proofEditor) {
     $ed.toggleClass('ruleMenuHovered', event.type === 'mouseenter');
   });
   
-  // Entry or exit of the scrollArea clears any error display;
-  // or entry into any menu item.  These are all actions that
-  // might promptly lead to trying a new rule.
-   $scrollArea.on('mouseenter mouseleave', function(event) {
-    proofEditor.stepEditor.clearError();
-  });
-   $node.on('mouseenter', '.ruleItem', function(event) {
-    proofEditor.stepEditor.clearError();
-  });
-
   // This code triggers potential change of menu mode when
   // the mouse stops within one of the .mode regions.
   // It sets up the timer on movement and also cancels any

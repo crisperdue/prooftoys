@@ -27,6 +27,13 @@
     background-color: honeydew;
 }
 
+// This causes all pointer events in the proof editor
+// to appear to come from the proof editor itself, which
+// makes it easy to identify and ignore them if needed.
+.proofEditor.hasDialog > * {
+  pointer-events: none;
+}
+
 /* If an error in loading the proof editor, then show. */
 .proofEditor .ifProofLoadError {
   display: none;
@@ -590,16 +597,52 @@ span.stepRef {
 }
 
 // Container for error displays
-.proofErrors {
-    position: absolute;
-    background-color: white;
-    left: 50%;
-    max-width: 80%;
-    z-index: 9;
-    transform: translateX(-50%);
+.proofEditor .proofErrors {
+  position: absolute;
+  background-color: white;
+  left: 50%;
+  max-width: 80%;
+  z-index: 9;
+  transform: translateX(-50%);
   padding: 4px;
   border: 2px solid DarkSeaGreen;
   border-radius: 5px;
+  pointer-events: auto;
+}
+
+// This is intended as a more general replacement
+// for proofErrors styling.  Uses flex to center.
+.dialogWrapper {
+  position:relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+// Supports flex items within the dialog.
+.dialogWrapper .dialog {
+  position: absolute;
+  display: flex;
+  background-color: white;
+  z-index: 8;
+  padding: 4px;
+  border: 2px solid DarkSeaGreen;
+  border-radius: 5px;
+  pointer-events: auto;
+}
+
+.buttonYes, .buttonNo {
+  font-weight: bold;
+  padding: 0 1em;
+  margin: 0 .3em;
+}
+
+.buttonYes {
+  color: green;
+}
+
+.buttonNo {
+  color: crimson;
 }
 
 /* Make inputs a bit smaller than regular text */
@@ -853,12 +896,6 @@ input.copyText {
     &.ruleFormVisible .ruleMenu, &.waitingForProver {
         opacity: .5;
         transition: all .3s linear;
-    }
-
-    &.proofErrorsVisible .proofErrors {
-        visibility: visible;
-        opacity: 1;
-        transition: all .2s linear;
     }
 
     // Hide the solution status (progress) display when it

@@ -83,6 +83,14 @@ Toy.trackAppEvent = function(action, ...more) {
 };
 
 /**
+ * Enable/disable Matomo Heatmap sesssion recording.
+ */
+Toy.setSessionRecording = function(on) {
+  _paq && _paq.push(['HeatmapSessionRecording::' +
+                     on ? 'enable' : 'disable']);
+};
+
+/**
  * The arguments are a child class constructor and parent class
  * constructor (or null); both should be functions.  If the parent is
  * given, makes the child a subclass of the parent, making the
