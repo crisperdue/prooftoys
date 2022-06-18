@@ -620,6 +620,7 @@ span.stepRef {
 }
 
 // Supports flex items within the dialog.
+// Also ensures that pointer-events work.
 .dialogWrapper .dialog {
   position: absolute;
   display: flex;
