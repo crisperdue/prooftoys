@@ -1032,7 +1032,7 @@ declare(
               .justify('consider', arguments));
     },
     inputs: {term: 1},
-    form: 'Term to consider: <input name=term>',
+    form: 'Term to consider: <input name=term> (value for A)',
     menu: 'consider a term to transform (A = A)',
     toOffer: 'return step == null',
     tooltip: ('consider a term to transform'),
@@ -2895,7 +2895,7 @@ declare(
       return result;
     },
     inputs: {bool: 1},
-    form: ('Assume <input name=bool>'),
+    form: ('Assume <input name=bool> (value for A)'),
     menu: 'assume (A &rArr; A)',
     tooltip: 'Statement to assume',
     description: 'assumption;; (A &rArr; A)',
@@ -2928,7 +2928,7 @@ declare(
       return step.justify('assumeExplicitly', arguments);
     },
     inputs: {bool: 1},
-    form: ('Assume <input name=bool>'),
+    form: ('Assume <input name=bool> (value for A)'),
     menu: 'assume explicitly (A &rArr; A)',
     tooltip: 'Statement to assume (show occurrences)',
     description: 'assume explicitly;; (A &rArr; A)',
