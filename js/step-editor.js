@@ -152,6 +152,7 @@ function ProofEditor(options_arg) {
     .append(proofButtons.$node)
     .append(this._wksControls.node)
     .append(stepEditor.$proofErrors)
+    .append(self.$uxDialog())
     .append(menu.$node);
   this.setEditable(true);
 
@@ -236,7 +237,36 @@ function ProofEditor(options_arg) {
     }
   }
 
+  // Initialize the uxBox state.
+  self.$node.find('.uxBox')
+    .prop('checked', localStorage.getItem('Toy:uxOK') === 'true');
+
+
   //// Event handlers
+
+  // When the user explicitly checks or unchecks the box,
+  // set the localStorage item and start or stop session recording.
+  self.$node.find('.uxBox').on('change', function() {
+    Toy.setSessionRecording(this.checked);
+    $(document).find('.proofEditor .uxBox').each((ix, elt) => {
+      elt.checked = this.checked;
+    });
+    Toy.trackAppEvent('UXTrace', this.checked ? 'on' : 'off');
+  });
+
+  // Respond to presses on the UX dialog buttons.
+  self.$node.find('.uxYes, .uxNo').on('click', function() {
+    const state = $(this).is('.uxYes');
+    Toy.setSessionRecording(state);
+    Toy.trackAppEvent('UXTrace', state ? 'on' : 'off');
+    $(document).find('.proofEditor .uxBox').each((ix, elt) => {
+      // This could result in a cascade of reporting the
+      // same event.
+      elt.checked = state;
+    });
+    self.$node.removeClass('hasDialog');
+    self.$node.find('.uxDialog').addClass('invisible');
+  });
 
   self.$node.find('.clearWork').on('click', function() {
     if (window.confirm('Do you really want to clear your work?')) {
@@ -334,22 +364,31 @@ function buildProofButtons(editor) {
   $proofButtons.append($copyButton);
   $proofButtons.append($wksButton, $('<s class=em>'));
   $proofButtons.append($ruleStats, $('<s class=em>'));
-  const $ux = $('<label>Enable usage tracing <input type=checkbox></label>');
+  // Read and write this control as ".uxBox".
+  const $ux = $('<label style="color: blue">Enable usage tracing ' +
+                '<input type=checkbox class=uxBox></label>');
   $ux.css({
     float: 'right'
   });
   $proofButtons.append($ux);
-  tippy(dom($ux), {
+  // Set up a fancy tooltip.
+  const tp = tippy(dom($ux), {
     allowHTML: true,
     delay: 400,
     maxWidth: '500px',
     content:
-    ('Understanding user experience is vital to the mission of Prooftoys.<br>' +
+    ('<i>User experience</i> is vital to the mission of Prooftoys.</i><br><br>' +
      'Checking this box enables detailed tracing of your interactions<br>' +
      'to help make the Prooftoys user experience better.<br>' +
      'We are grateful for your participation.<br><br>' +
      'For more information see the <i>privacy information</i> page.')
   });
+  $(tp.popper)
+    .find('.tippy-box')
+    .css({color: 'darkblue',
+          backgroundColor: 'white',
+          border: '2px solid black',
+          borderRadius: '5px'})
 
   // Main and worksheet controls event handlers
 
@@ -369,6 +408,30 @@ function buildProofButtons(editor) {
   };
   return result;
 }
+
+/**
+ * Build and return a UX trace control initializing dialog
+ * as a jQuery object.
+ */
+ProofEditor.prototype.$uxDialog = function() {
+  const raw = `
+    <div class="dialogWrapper uxDialog invisible">
+    <div class="dialog">
+    <span style="flex: auto; margin: 0 1em">
+    Will you kindly help advance Prooftoys usability
+    by enabling detailed tracing of your usage?
+    <i>You can opt out at any time.</i>
+    For more information, see the
+    <a href="/privacy/">privacy information</a> page.
+    </span>
+    <input type=button class=uxYes value=Yes>
+    <input type=button class=uxNo value=No>
+    </div>
+    </div>`;
+  const cooked = raw.replace(/^    /mg, '');
+  return $(cooked);
+};
+
 
 /**
  * This builds and returns an object containing the full content of
@@ -1876,7 +1939,18 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
     return;
   }
 
-  const ruleMenu = this;
+  const proofEditor = this.proofEditor;
+  let uxStatus = localStorage.getItem('Toy:uxOK');
+  if (uxStatus == null) {
+    // On first use of the menu, if uxOK is unset,
+    // get the user to set it explicitly, and ignore
+    // the usual menu action.
+    const $pnode = proofEditor.$node;
+    $pnode.find('.uxDialog').removeClass('invisible');
+    $pnode.addClass('hasDialog');
+    return;
+  }
+
   // Track these events in Matomo.
   Toy.trackAppEvent('MainMenu');
 
@@ -1884,7 +1958,6 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
   //   much of this code elsewhere.
   const ruleName = $(node).data('ruleName');
   const ruleArgs = $(node).data('ruleArgs');
-  const proofEditor = ruleMenu.proofEditor;
   const stepEditor = proofEditor.stepEditor;
   // This code runs from a click, so a suggestion may well
   // be active.  Make sure it is not displayed.
