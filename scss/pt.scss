@@ -4,10 +4,13 @@
 ////
 
 // Font
-@import url('https://fonts.googleapis.com/css?family=Roboto:300,400,500,900|Lora:400,700|Roboto+Mono:300,400');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400&family=Roboto:wght@300;400;500;700&display=swap');
 
 // Icons
 @import "https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css";
+
+// Tippy tooltip theme
+@import "https://unpkg.com/tippy.js@6.3.7/themes/light-border.css";
 
 /* To use Prooftoys styles throughout a document, give the HTML tag
    the logicZone class.  Proof editors automatically apply it, too.
@@ -167,7 +170,7 @@ p.utterances {
 
   h1 {
     font-size: 2.6rem;
-    font-weight: 300;
+    font-weight: 500;
   }
   h2 {
     font-size: 2.1rem;
