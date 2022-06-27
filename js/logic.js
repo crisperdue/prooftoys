@@ -107,6 +107,8 @@ definition('empty = {x. F}');
 definition('none = the1 empty');
 definition('(?) = {p. {x. if p x none}}');
 
+definition('(in) = {x. {Y. Y x == T}}');
+
 // The identity function
 definition('ident = {x. x}');
 
@@ -5488,6 +5490,13 @@ declare(
      }
    },
 
+   {statement: 'x in Y == Y x',
+    proof: function() {
+      return (rules.fact('x in Y == (Y x == T)')
+              .andThen('simplifySite', '/right'));
+    }
+   },
+             
    {statement: 'negate p = {x. not (p x)}',
     proof: function() {
        return (rules.consider('negate p').andThen('apply', '/right'));
