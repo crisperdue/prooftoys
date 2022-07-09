@@ -658,7 +658,8 @@ declare(
     toOffer: 'return step == null',
     description: 'definition',
     tooltip: 'define a name',
-    labels: 'advanced'
+    labels: 'advanced',
+    autoSimplify: noSimplify,
   },
 
   {name: 'copy',
