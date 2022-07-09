@@ -1785,13 +1785,14 @@ RuleMenu.prototype._update = function() {
       if (!map) {
         return;
       }
+      const temp = proofStep.andThen('instMultiVars', map, true);
       // TODO: Render this info and rewrite _rule_ content
       //   consistently in both visual style and code, see the code
       //   block just below.
       const html =
             Toy.escapeHtml(
               Toy.format(' = {1} using step {2}',
-                         proofStep.replacementTerm(),
+                         temp.replacementTerm(),
                          n));
       itemInfos.push({ruleName: 'rewriteFrom',
                       ruleArgs: [selStep.original, sitePath,
