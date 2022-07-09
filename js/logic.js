@@ -1199,6 +1199,9 @@ declare(
   // and applies the expansions to the argument(s).
   //
   // TODO: Consider making this functionality part of useDefinition.
+  //
+  // TODO: Consider using this only for calls to defined functions,
+  //   using rules.reduce for beta reduction in its place.
   {name: 'apply',
     precheck: function(step, path) {
       var term = step.get(path);
@@ -1257,10 +1260,13 @@ declare(
       if (!(term instanceof Call)) {
         return null;
       }
-      if (term.fn.isConst()) {
-        return format('apply definition of {1}', term.fn);
-      } else {
+      const f = term.funPart();
+      if (f.isConst()) {
+        return format('apply definition of {1}', f);
+      } else if (f instanceof Lambda) {
         return format('apply function of {1}', term.fn.bound);
+      } else {
+        return null;
       }
     },
     tooltip: ('Applies a function, named or not, to one or two arguments'),
@@ -3198,7 +3204,7 @@ declare(
     statement: 'exists {x. a & q x} == a & exists q',
     proof: function() {
       const facts = ['not (a | b) == not a & not b'];
-      return (rules.fact('forallOrEquiv')
+      return (rules.forallOrEquiv()
               .andThen('instMultiVars', {p: 'not a', q: 'negate q'})
               .andThen('rewrite', '', '(a == b) == (not a == not b)')
               .andThen('rewrite', '/left',
