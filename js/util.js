@@ -988,6 +988,18 @@ function error(options, msg, ...args) {
   }
 }
 
+/**
+ * Returns a string indicating the invocation point of
+ * the function calling this.
+ */
+function invoker(n = 0) {
+  const stack = new Error().stack.split('\n');
+  let place = stack[n + 2];
+  if (place.match(/andThen/)) {
+    place = stack[n + 3];
+  }
+  return place;
+}
 
 /**
  * Create and return a "strict" error using a template message and
@@ -2587,6 +2599,7 @@ Toy.sortMap = sortMap;
 
 Toy.rebind = rebind;
 Toy.abort = abort;
+Toy.invoker = invoker;
 Toy.error = error;
 Toy.newError = newError;
 Toy.isError = isError;
