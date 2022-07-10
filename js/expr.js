@@ -110,7 +110,7 @@ Toy.extends(TermMap, ToyMap);
  */
 TermMap.prototype.addTerm = function(term) {
   if (!this.has(term)) {
-    var name = 'a' + this.counter++
+    var name = 'a' + this.counter++;
     this._set(term, new Atom(name));
     this.subst[name] = term;
   }
