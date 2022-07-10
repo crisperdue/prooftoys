@@ -1201,11 +1201,18 @@ declare(
   // TODO: Consider making this functionality part of useDefinition.
   //
   // TODO: Consider using this only for calls to defined functions,
-  //   using rules.reduce for beta reduction in its place.
+  //   using rules.reduce or similar for beta reduction.
+  //   On the other hand it often is at least as intuitive to
+  //   use rewriting to get the same effect.
   {name: 'apply',
     precheck: function(step, path) {
       var term = step.get(path);
       var fn = term.funPart();
+      if (fn instanceof Atom) {
+        // Uncomment this line to identify invocations of this that
+        // expand a definition.
+        // console.log('apply', Toy.invoker(3));
+      }
       var n = term.argsPassed();
       // The fn could be a Lambda, which is not defined.
       // This returns falsy if the function is an "unused" constant.
@@ -1599,9 +1606,9 @@ declare(
     statement: 'T & T == T',
     proof: function() {
       var step1 = rules.instEqn(rules.axiom1(), '{y. T}', 'g');
-      var step2a = rules.apply(step1, '/right/arg/body');
-      var step2b = rules.apply(step2a, '/left/right');
-      var step2c = rules.apply(step2b, '/left/left');
+      var step2a = rules.reduce(step1, '/right/arg/body');
+      var step2b = rules.reduce(step2a, '/left/right');
+      var step2c = rules.reduce(step2b, '/left/left');
       var step3a = rules.eqT(Toy.parse('{x. T}'));
       var step3b = rules.rRight(step3a, '/right/fn',
                                 rules.definition('forall'));
