@@ -3376,6 +3376,99 @@ declare(
     }
   },
 
+  // Reduce the scope of a quantifier by extracting terms that
+  // have no free occurrences of the quantified variable.
+  // Applies to "and" within "exists" and "or" within "forall".
+  // Groups boolean terms in preparation.
+  {name: 'reduceQuant',
+   precheck: function(step, path_arg) {
+     const term = step.get(path_arg);
+     const map = term.matchSchema('q {x. p x}');
+     return map && map.q instanceof Atom &&
+       ['forall', 'exists'].includes(map.q.name);
+   },
+   action: function(step, path_arg) {
+     const term = step.get(path_arg);
+     const boundName = term.arg.bound.name;
+     const body = term.arg.body;
+     const quant = term.fn.name;
+     const opName = quant === 'exists' ? '&' : '|';
+     // This takes the body of the lambda to be a chain of
+     // "and" or "or", collecting all members of the chain into
+     // bodyTerms in left to right order.
+     const bodyTerms = [];
+     const collect = term => {
+       if (term.isCall2(opName)) {
+         collect(term.getLeft());
+         bodyTerms.push(term.getRight());
+       } else {
+         bodyTerms.push(term);
+       }
+     };
+     collect(body);
+     // Next partition the terms into ones with and without
+     // free occurrences of the quantified variable.
+     const boundTerms = [];
+     const unboundTerms = [];
+     for (const term of bodyTerms) {
+       if (term.freeVarSet().has(boundName)) {
+         boundTerms.push(term);
+       } else {
+         unboundTerms.push(term);
+       }
+     }
+     if (unboundTerms.length === 0) {
+       // If all terms contain the bound variable there is nothing to do.
+       return step;
+     }
+     if (boundTerms.length === 0) {
+       const fact = quant === 'exists'
+             ? 'exists {x. a} == a'
+             : 'forall {x. a} == a';
+       // If no terms contain the bound variable, eliminate
+       // the quantifier entirely.
+       return rules.rewriteOnly(step, path_arg, fact)
+         .justify('reduceQuant', arguments, [step]);
+     }
+     // Generate distinct con/dis-junctions, one for each
+     // variety of terms.
+     let boundPart = null;
+     for (const bt of boundTerms) {
+       if (boundPart) {
+         boundPart = Toy.infixCall(boundPart, opName, bt);
+       } else {
+         boundPart = bt;
+       }
+     }
+     let unboundPart = null;
+     for (const bt of unboundTerms) {
+       if (unboundPart) {
+         unboundPart = Toy.infixCall(unboundPart, opName, bt);
+       } else {
+         unboundPart = bt;
+       }
+     }
+     // Join the two "junctions" into a term equivalent to the
+     // original body, prove they are equivalent, and replace
+     // the original body with the new one.
+     const newBody = Toy.infixCall(unboundPart, opName, boundPart);
+     const eqn = rules.tautologous(Toy.infixCall(body, '==', newBody));
+     const split = step.andThen('r2',
+                                Toy.asPath(path_arg).concat('/arg/body'),
+                                eqn);
+     // Finally, use the basic quantifier rule to extract the
+     // terms not using the bound var.
+     const rw = (quant === 'exists' ? 'existsEquivAnd' : 'forallOrEquiv');
+     const result = rules.rewriteOnly(split, path_arg, rw);
+     return result.justify('reduceQuant', arguments, [step]);
+   },
+   inputs: {site: 1},
+   labels: 'basic',
+   menu: '   reduce quantifier scope',
+   tooltip: 'reduce quantifier scope',
+   description: 'reduce quantifier scope;; {in step siteStep}'
+  },
+
   // This removes an irrelevant assumption of the form <vbl> = <term>,
   // where the variable does not occur in the term nor elsewhere in
   // the step.  The arguments are a step and path to the assumption.
