@@ -621,6 +621,9 @@ declare(
    * The name "assertion" is used in displays to indicate that the
    * result of the inference is asserted without proof.  If given a
    * string, parses it and uses the result as its input.
+   *
+   * TODO: Consider accepting an arg that disables registration
+   *   of new constants here, e.g. for asserting definitions.
    */
   {name: 'assert',
     action: function(assertion_arg) {

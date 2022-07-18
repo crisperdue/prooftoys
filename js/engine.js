@@ -824,19 +824,28 @@ function declare(_declarations) {
 /**
  * Adds the given definition as a new fact provided it meets the
  * requirements for definitions.  It must define a named constant that
- * is not already defined or known as a constant.  The argument is a
- * wff that will become true as the definition of the new constant.
- * The new constant name must be the one and only free new name.  If
- * the wff is in string form, this parses with termify.
+ * is neither already defined nor otherwise known as a constant.  The
+ * argument is a wff to be asserted as true.  The new constant name
+ * must be the one and only free new name.  If the wff is in string
+ * form, this parses with termify.
  *
  * If it is of the form:
  *
  * <name> = <term>
  *
- * and <name> does not occur free in <term>, this accepts the
- * equational definition.  It also adds related facts using
- * addDefnFacts if the definition is a function or predicate defined
- * equal to a lambda.
+ * where <name> is a (new) constant name and <name> does not occur
+ * free in <term>, this accepts the equational definition.  It also
+ * adds related facts using addDefnFacts if the definition is a
+ * function or predicate defined equal to a lambda.
+ *
+ * If it is of the form:
+ *
+ * <name> <var> . . . = <term>
+ *
+ * where the <var>'s are variable names, this converts the equation to
+ * the equivalent first form and processes the result accordingly.
+ * (This is the idiomatic traditional form of function and predicate
+ * definitions.)
  *
  * If the definition has some other form, then there must be a
  * recorded fact of the form: exists {<var>. <condition2>}, where
@@ -873,58 +882,108 @@ function declare(_declarations) {
  */
 function definition(defn_arg) {
   const definitions = Toy.definitions;
-  const defn = termify(defn_arg).typedCopy();
-  if (defn.isCall2('=') && defn.getLeft().isConst()) {
-    // Allow benign redefinition same as an existing one.
-    const name = defn.getLeft().name;
-    const prev = definitions[name];
-    if (prev instanceof Expr && prev.matches(defn)) {
-      // If it does not match, later checks will flunk it.
-      console.log('Benign redefinition of', name);
-      return name;
-    }
-  }
+  const candidate = termify(defn_arg).typedCopy();
   // Free occurrences of names of constants that do not have
-  // definitions.
-  const news = defn.newConstants();
+  // definitions.  We check this before adding any facts that
+  // may reference the defined name.
+  const news = candidate.newConstants();
   // This has the values in the set, in insertion order.
   const newList = Array.from(news);
   assert(newList.length > 0,
-         'Definition of {1} needs a fresh constant name.', defn);
+         'Definition {1} needs a fresh constant name.', defn_arg);
   assert(newList.length === 1,
          'Definition {1} has multiple new constants {2}',
-         defn, newList.join(', '));
+         defn_arg, newList.join(', '));
+  // Register the single new name as a constant.
+  Toy.addConstants(newList);
+  // Register the type of the new constant.
+  candidate.registerConstants();
+  // Notice that all of this constant registration is done before the
+  // definition is potentially asserted as true in normalizeDefn.
   const name = newList[0];
-  const defined = new Atom(name);
-  if (defn.isCall2('=') &&
-      defn.getLeft().matches(defined) &&
-      Toy.isEmpty(defn.getRight().newConstants())) {
-    // It is a classic equational definition.
-    // Add it to the facts andthe definitions database.
-    addFact({goal: defn, definition: true,
-             desimplifier: !(defn.getRight() instanceof Atom)});
-    definitions[name] = defn;
-    // This could add the rest of the facts later.
-    addDefnFacts(defn);
-  } else {
-    // It is not a classic equational definition.
-    var x = Toy.genVar('x', defn.allNames());
-    // Substitute the fresh variable for the constant name.
-    var body = defn.subFree1(x, name);
-    var exists1 = Toy.call('exists1', Toy.lambda(x, body));
-    if (isRecordedFact(exists1)) {
-      // TODO: Add the fact that only one value has the property.
-      console.warn('Not using exists1 fact for {1}.', defn);
-    } else {
-      var exists = Toy.call('exists', Toy.lambda(x, body));
-      assert(isRecordedFact(exists),
-             'Definition {1} needs an existence fact.', defn);
+
+  // Normalizing does some deduction, so defer it until logic
+  // is loaded.
+  const addFacts = () => {
+    const defined = new Atom(name);
+    // The defn is the definition in standard form: <constant> = <term>.
+    const defn = normalizeDefn(candidate);
+    if (defn.isCall2('=') && defn.getLeft().isNamedConst()) {
+      // Allow benign redefinition same as an existing one.
+      const name = defn.getLeft().name;
+      const prev = definitions[name];
+      if (prev instanceof Expr && prev.matches(defn)) {
+        // If it does not match, later checks will flunk it.
+        console.log('Benign redefinition of', name);
+        return name;
+      }
     }
-    // Assert that the definition is true, and add to the definitions.
-    addFact({goal: defn, definition: true});
-    definitions[name] = defn;
+    if (defn.isCall2('=') &&
+        defn.getLeft().matches(defined) &&
+        Toy.isEmpty(defn.getRight().newConstants())) {
+      // It is a classic equational definition.
+      // Add it to the facts andthe definitions database.
+      addFact({goal: defn, definition: true,
+               desimplifier: !(defn.getRight() instanceof Atom)});
+      definitions[name] = defn;
+      addDefnFacts(defn);
+    } else {
+      // It is not a classic equational definition.
+      var x = Toy.genVar('x', defn.allNames());
+      // Substitute the fresh variable for the constant name.
+      var body = defn.subFree1(x, name);
+      var exists1 = Toy.call('exists1', Toy.lambda(x, body));
+      if (isRecordedFact(exists1)) {
+        // TODO: Add the fact that only one value has the property.
+        console.warn('Not using exists1 fact for {1}.', defn);
+      } else {
+        var exists = Toy.call('exists', Toy.lambda(x, body));
+        assert(isRecordedFact(exists),
+               'Definition {1} needs an existence fact.', defn);
+      }
+      // Assert that the definition is true, and add to the definitions.
+      addFact({goal: defn, definition: true});
+      definitions[name] = defn;
+    }
+  };
+  if (deferringDefnFacts) {
+    deferredDefnFacts.push(addFacts);
+  } else {
+    addFacts();
   }
   return name;
+}
+
+/**
+ * Converts an equational wff in the traditional idiomatic form for
+ * function and predicate definitions into the basic form accepted
+ * above.  Private to "definition" above.
+ *
+ * If the input is an equation, asserts it and (attempts to) return a
+ * proved statement based on that assertion.  If not in that form,
+ * just returns its argument.
+ *
+ * Happily this makes good use of equations with "==", as for "in" /
+ * "element of", defining a boolean-valued function (predicate).
+ */
+function normalizeDefn(defn_arg) {
+  const normed = defn => {
+    let left = defn.getLeft();
+    if (left instanceof Call) {
+      const arg = left.arg;
+      if (arg.isVariable()) {
+        const bound = rules.bindEqn(defn, arg);
+        const reduced = rules.rewriteOnly(bound, '/left', 'eta');
+        // The reduced has an extra layer of lambda on the right
+        // and one less variable on the left.
+        return normed(reduced);
+      }
+    }
+    // Some precondition is not met, so return undefined.
+  };
+  const converted = defn_arg.isCall2('=') &&
+    normed(rules.assert(defn_arg));
+  return converted || defn_arg;
 }
 
 // Set to false when defn facts can be proved immediately.
@@ -955,7 +1014,7 @@ function enableDefnFacts() {
  * This is intended mainly for use from Toy.definition.
  */
 function addDefnFacts(definition) {
-  function addFacts() {
+  if (definition.isCall2('=') && definition.getLeft().isNamedConst()) {
     // Add the converse as a simplifier.
     const eqn0 = rules.fact(definition);
     let eqn = eqn0;
@@ -975,13 +1034,6 @@ function addDefnFacts(definition) {
       // of the function or predicate.
       addFact({goal: eqn, definitional: true});
       addSwappedFact({goal: eqn, definitional: true});
-    }
-  }
-  if (definition.isCall2('=') && definition.getLeft() instanceof Atom) {
-    if (deferringDefnFacts) {
-      deferredDefnFacts.push(addFacts);
-    } else {
-      addFacts();
     }
   }
 }
@@ -2528,6 +2580,7 @@ Toy.addRule = addRule;
 Toy.addRulesMap = addRulesMap;
 Toy.addRules = addRules;
 Toy.definition = definition;
+Toy.deferredDefnFacts = deferredDefnFacts;
 Toy.enableDefnFacts = enableDefnFacts;
 Toy.addDefnFacts = addDefnFacts;
 Toy.resolveToFactInfo = resolveToFactInfo;
