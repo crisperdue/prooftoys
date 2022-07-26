@@ -5782,6 +5782,9 @@ declare(
    }
 );
 
+// Intersection of a set of sets -- "big intersection"
+definition('Intersect = {p. {x. forall {q. p q => q x}}}');
+
 //// Other initializations
 
 // Make defn facts available and stop deferring their proofs.
