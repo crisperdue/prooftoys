@@ -3756,6 +3756,49 @@ declare
    }
   );
 
+//// Integers and floor
+
+  // Note: Need "arithmetic" calculations for floor.
+  //
+  // Definition of floor could be something like:
+  // floor x = if (R x)
+  //             (if (x < 0)
+  //               (floor (x + 1)) - 1
+  //               (if (x < 1)
+  //                 0
+  //                 (floor (x - 1)) + 1))
+  //             none
+  //
+  // Some floor facts:
+  //
+  // 0 <= x & x < 1 == floor x = 0
+  // R x => floor (x + 1) = floor x + 1
+  // R x => floor (x - 1) = floor x - 1
+  // 0 <= x - floor x
+  // x - floor x < 1
+  //
+  // R x => R (floor x)
+  // not (R x) => floor x = none
+  //
+  // Definition of ZZ (integers):
+  // ZZ x == x = floor x
+  //
+  // Some ZZ facts:
+  //
+  // ZZ x & ZZ y => ZZ (x + y)
+  // ZZ x & ZZ y => ZZ (x * y)
+
+// Integers are a subset of R, closed under addition and multiplication.
+declare
+  (
+    {statement: 'ZZ x => R x', axiom: true,
+     description: 'ZZ is a subset of R'},
+    {statement: 'ZZ x & ZZ y => ZZ (x + y)', axiom: true,
+     description: 'ZZ is closed under addition'},
+    {statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
+     description: 'ZZ is closed under multiplication'},
+  );
+
 
 //// Misc utilities
 
