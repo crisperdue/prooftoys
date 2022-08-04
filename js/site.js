@@ -211,6 +211,26 @@ Toy.mathifyAll = function() {
   });
 };
 
+
+//// Fallback visit checking
+
+// Note a visit by the user, fetching a nonexistent page with URI path
+// of current local date and time zone, but avoiding repetitious
+// fetches.  Date is in local time, ISO format.
+Toy.checkVisit = function() {
+  // "sv" is Swedish (not Sweden), a locale using ISO format.
+  const date = new Date().toLocaleDateString("sv");
+  const tz0 = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const tz = tz0.replaceAll(/ |[/]/g,'-');
+  const path = `${date}-${tz}`;
+  const key = 'Toy.lastVisit';
+  const previous = localStorage.getItem(key);
+  if (path !== previous) {
+    localStorage.setItem(key, path);
+    jQuery.get(`/visits/${path}`);
+  }
+}
+
 //// URL query parameters
 
 // TODO: Move this code to utils.js.
@@ -266,6 +286,10 @@ $(function() {
   // out of the jQuery "ready" handler try-catch, so errors
   // here become uncaught as we prefer them to be.
   (function() {
+    // Potentially fetch a nonexistent page with date and TZ.
+    // The fetch writes into the server access log.
+    Toy.checkVisit();
+
     // Create a proof editor for each div.proof-editor node,
     // initializing its steps from a data-steps attribute if the
     // constructor does not load steps from a document.  Re-visiting a
