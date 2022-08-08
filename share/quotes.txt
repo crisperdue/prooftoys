@@ -71,8 +71,8 @@ It's tough to make predictions, especially about the future. -- Yogi Berra
 Nearly everything is really interesting if you go into it deeply
 enough. -- Richard Feynman
 
-People who like this sort of thing will find this the sort of thing they like.
--- Artemus Ward
+People who like this sort of thing will find this the sort of thing
+they like.  -- Artemus Ward
 
 Logic is justly considered the basis of all other sciences, even if only
 for the reason that in every argument we employ concepts taken from
@@ -82,11 +82,12 @@ in accordance with its laws. -- Alfred Tarski
 It is impossible to make anything truly foolproof because
 fools are so ingenious. -- Anonymous
 
-I shall try to correct errors when shown to be errors; and I shall adopt new views
-so fast as they shall appear to be true views. -- Abraham Lincoln
+I shall try to correct errors when shown to be errors; and I shall
+adopt new views so fast as they shall appear to be true views. --
+Abraham Lincoln
 
-The smallest natural number not definable by nine words is definable by nine words.
--- Jules Richard
+The smallest natural number not definable by nine words is definable
+by nine words.  -- Jules Richard
 
 The scientific man does not aim at an immediate result.  . . .
 His work is like that of the planter -- for the future.
