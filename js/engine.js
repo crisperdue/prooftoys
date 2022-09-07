@@ -979,7 +979,7 @@ function normalizeDefn(defn_arg) {
         return normed(reduced);
       }
     }
-    // Some precondition is not met, so return undefined.
+    return defn;
   };
   const converted = defn_arg.isCall2('=') &&
     normed(rules.assert(defn_arg));
