@@ -5686,6 +5686,14 @@ declare(
      }
    },
 
+   {statement: 'not (exists {x. not (p x)}) == forall p',
+    proof: function() {
+      return (rules.fact('exists {x. not (p x)} == not (forall p)')
+              .andThen('rewriteOnly', '', '(A == not B) == (not A == B)'));
+    },
+    simplifier: true,
+   },
+
    // This has the core reasoning for 5242, existential generalization
    // (EGen / witnessExists / 2126).
    //
