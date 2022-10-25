@@ -60,8 +60,8 @@ Proof:
 Assume the contrary. Then there is a least non-interesting positive integer.
 but, hey, that's pretty interesting! A contradiction. 
 
-Do not worry about your difficulties in Mathematics. I can assure you mine are still
-greater.  -- Albert Einstein
+Do not worry about your difficulties in Mathematics. I can assure you
+mine are still greater.  -- Albert Einstein
 
 You've got to be very careful if you don't know where you are going,
 because you might not get there. -- Yogi Berra
@@ -161,3 +161,6 @@ Love seems the swiftest, but it is the slowest of all growths. No man
 or woman really knows what perfect love is until they have been
 married a quarter of a century.  -- Mark Twain, "Mark Twain's
 Notebook"
+
+I only made this [letter] longer because I did not have time to
+make it shorter.  -- Blaise Pascal, "Lettres Provinciales"
