@@ -3731,6 +3731,23 @@ var ungroupingFacts = regroupingFacts.map(function(fact) {
 definition('(>) = {x. {y. y < x}}');
 definition('(<=) = {x. {y. x < y | x = y}}');
 definition('(>=) = {x. {y. x > y | x = y}}');
+declare
+  (
+    {statement: 'x <= y == not (x > y)',
+     proof:
+     [ `(1 fact "x<y|y<x|x=y")
+        (2 fact "x<y=>not(y<x)")
+        (3 fact "(((y = x) & (R y)) => (not (y < x)))")
+        (4 and (s 1) (s 3))
+        (5 and (s 4) (s 2))
+        (6 rewrite (s 5) (path "/main/left/right/left/left") (t ((x = y) == (y = x))))
+        (7 tautologous (t ((((((R x) & (R y)) => (((x < y) | (y < x)) | (x = y))) & (((x = y) & (R y)) => (not (y < x)))) & ((((x < y) & (R x)) & (R y)) => (not (y < x)))) => (((R x) & (R y)) => (((x < y) | (x = y)) == (not (y < x)))))))
+        (8 forwardChain (s 6) (s 7))
+        (9 rewrite (s 8) (path "/right/left") (t (((x < y) | (x = y)) == (x <= y))))
+        (10 rewrite (s 9) (path "/right/right/arg") (t ((y < x) == (x > y))))`
+     ]}
+   );
+
 
 declare
   (
