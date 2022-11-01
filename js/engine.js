@@ -2171,6 +2171,7 @@ var basicSimpFacts = [
                       'a | F == a',
                       'a & a == a',
                       'a | a == a',
+                      'a | not a == T',
                       'not T == F',
                       'not F == T',
                       '(a == T) == a',
