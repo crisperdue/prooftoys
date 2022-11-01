@@ -299,7 +299,7 @@ declare(
    }
 );
 
-definition('(-) = {x. {y. x + neg y}}');
+definition('x - y = x + neg y');
 
 
 //// Facts about fields
@@ -317,8 +317,8 @@ definition('(-) = {x. {y. x + neg y}}');
 
 // TODO: Replace these two definitions, with recip based on
 //   facts about fields and "/" based on recip.
-definition('(/) = {x. {y. the1 {z. R x & R y & R z & x = y * z}}}');
-definition('recip = {x. 1 / x}');
+definition('x / y = the1 {z. R x & R y & R z & x = y * z}');
+definition('recip x = 1 / x');
 
 /**
  * We desire something like this, but it needs some supporting
@@ -3728,9 +3728,11 @@ var ungroupingFacts = regroupingFacts.map(function(fact) {
 // TODO: At some point work out definitions that apply only
 //   to certain sorts.
 
-definition('(>) = {x. {y. y < x}}');
-definition('(<=) = {x. {y. x < y | x = y}}');
-definition('(>=) = {x. {y. x > y | x = y}}');
+definition('x > y == y < x');
+definition('x <= y == x < y | x = y');
+definition('x >= y == x > y | x = y');
+  
+
 declare
   (
     {statement: 'x <= y == not (x > y)',
@@ -3745,8 +3747,32 @@ declare
         (8 forwardChain (s 6) (s 7))
         (9 rewrite (s 8) (path "/right/left") (t (((x < y) | (x = y)) == (x <= y))))
         (10 rewrite (s 9) (path "/right/right/arg") (t ((y < x) == (x > y))))`
-     ]}
+     ]},
+
+    {statement: 'x >= y == y <= x',
+    },
    );
+
+declare
+  (
+   {statement: '0 < pi', axiom: true,
+    description: 'Pi is a positive number'},
+
+   {statement: '0 != pi',
+    proof: function() {
+       return (rules.fact('@R x & x < y => x != y')
+               .andThen('instMultiVars', {x: '0', y: 'pi'})
+               .andThen('rewrite', '0 < pi', '0 < pi'));
+     }
+   },
+
+   {statement: 'pi != 0',
+    proof: function() {
+       return (rules.fact('0 != pi')
+               .andThen('rewrite', '0 != pi', 'x != y == y != x'));
+     }
+   },
+  );
 
 
 declare
@@ -3775,37 +3801,83 @@ declare
 
 //// Integers and floor
 
-  // Note: Need "arithmetic" calculations for floor.
-  //
-  // Definition of floor could be something like:
-  // floor x = if (R x)
-  //             (if (x < 0)
-  //               (floor (x + 1)) - 1
-  //               (if (x < 1)
-  //                 0
-  //                 (floor (x - 1)) + 1))
-  //             none
-  //
-  // Some floor facts:
-  //
-  // 0 <= x & x < 1 == floor x = 0
-  // R x => floor (x + 1) = floor x + 1
-  // R x => floor (x - 1) = floor x - 1
-  // 0 <= x - floor x
-  // x - floor x < 1
-  //
-  // R x => R (floor x)
-  // not (R x) => floor x = none
-  //
-  // Definition of ZZ (integers):
-  // ZZ x == x = floor x
-  //
-  // Some ZZ facts:
-  //
-  // ZZ x & ZZ y => ZZ (x + y)
-  // ZZ x & ZZ y => ZZ (x * y)
 
-// Integers are a subset of R, closed under addition and multiplication.
+definition('ifReal x v = if (R x) v none');
+
+declare
+  // Axiom / definition of floor, and facts about it.
+  ({statement: `floor x = ifReal x
+                             (if (x < 0)
+                                 ((floor (x + 1)) - 1)
+                                 (if (x < 1)
+                                     0
+                                     (floor (x - 1)) + 1))`,
+    axiom: true,
+    description: 'recursive definition of floor'},
+/*
+   {statement: '',
+    description: ''},
+   {statement: '',
+    description: ''},
+   {statement: '',
+    description: ''},
+   {statement: '',
+    description: ''},
+*/
+  );
+
+
+
+// Note: Need "arithmetic" calculations for floor.
+//
+// Some floor facts:
+//
+// 0 <= x & x < 1 == floor x = 0
+// R x => floor (x + 1) = floor x + 1
+// R x => floor (x - 1) = floor x - 1
+// 0 <= x - floor x
+// x - floor x < 1
+//
+// R x => R (floor x)
+// not (R x) => floor x = none
+//
+
+definition('ceil x = neg (floor (neg x))');
+
+definition('sgn x = ifReal x (if (x < 0) (neg 1) (if (x = 0) 0 x))');
+
+definition('abs x = ifReal x (if (x < 0) (neg x) x)');
+
+definition('ZZ x == x = floor x');
+
+definition('NN x == ZZ x & x >= 0');
+
+// This is natural number division, defined only for naturals.
+// It is defined as the integer q whose product with the
+// divisor is not more than x, and greater than x - d.
+definition(`natdiv x d = if (NN x & NN d)
+                            (the {q. NN q &
+                                     x - d < q * d &
+                                     q * d <= x})
+                            none`);
+
+declare
+  (
+    {statement: 'NN x & NN d => exists! {q. NN q & x - d < q * d & q * d <= x}',
+     description: 'Condition needed by definition of natdiv'}
+  );
+
+definition('absdiv x d = natdiv (abs x) (abs d)');
+
+// definition('quo x d = sgn (the {r. idiv x d + r = d})');
+
+// definition('divides d x == ZZ d & ZZ x & rem x d = 0');
+
+// definition('even x == divides 2 x');
+
+// definition('odd x == ZZ x & not (even x)');
+
+// Some properties of the integers, without proof.
 declare
   (
     {statement: 'ZZ x => R x', axiom: true,
@@ -3814,7 +3886,27 @@ declare
      description: 'ZZ is closed under addition'},
     {statement: 'ZZ x & ZZ y => ZZ (x * y)', axiom: true,
      description: 'ZZ is closed under multiplication'},
+    {statement: 'R x & R y & x > 0 => exists {n. ZZ n & n * x > y}',
+     // https://www2.math.upenn.edu/~kazdan/508F14/Notes/archimedean.pdf
+     description: 'Archimedean property of the reals'},
   );
+
+// Proof that sqrt 2 is not rational:
+//
+// Suppose it is rational.  Then there exist positive integers m and n
+// such that sqrt 2 = m / n.  Then exists a and b such that
+// sqrt 2 = a / b and either not (divides 2 a) or not (divides 2 b).
+//
+// 2 = (a / b)**2
+// 2 = a**2 / b**2
+// a**2 = 2 * b**2
+//
+// odd (odd * odd)
+// even (even * int)
+// (even + 1) * (even + 1) = even*even + 2*even + 1 = even + 1
+//
+// Notes: we could define
+// odd = even + 1
 
 
 //// Misc utilities
