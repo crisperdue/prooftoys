@@ -2495,14 +2495,14 @@ Expr.prototype.walkPatterns = function(patternInfos, path_arg) {
 // searchMost(fn, opt_path, opt_bindings)
 //
 // Tree walks though this Expr and its subexpressions, recursively,
-// calling the function at each Call and each Lambda, passing it the
-// term and a reverse path from this term to that point until the
-// function returns a truthy value.  Descends first into the arg part
-// to make the search proceed right to left.  All subexpressions of
-// Lambda terms receive non-null bindings, mapping the name of the
-// bound variable to the lambda in which it is bound, innermost first.
-// Returns the first truthy value returned from "fn" at any level.  If
-// not given, this treats the path and bindings as empty.
+// calling the function to each one, passing it the term and a reverse
+// path from this term to that point until the function returns a
+// truthy value.  Descends first into the arg part to make the search
+// proceed right to left.  All subexpressions of Lambda terms receive
+// non-null bindings, mapping the name of the bound variable to the
+// lambda in which it is bound, innermost first.  Returns the first
+// truthy value returned from "fn" at any level.  If not given, this
+// treats the path and bindings as empty.
 */
 
 //// Methods for Atom
