@@ -2456,6 +2456,21 @@ function copyToClipboard(text) {
   }
 }
 
+/**
+ * Works with CSS in proofs.scss to run a node's oninsert
+ * property when the node is inserted into the DOM (except
+ * as display:none (?)).
+ */
+{
+  let handler = function(event) {
+    if (event.animationName == 'nodeInserted'
+        && typeof event.target.oninsert == 'function') {
+      event.target.oninsert();
+    }
+  }
+  document.addEventListener('animationstart', handler, false);
+}
+
 
 //// PID heartbeat
 

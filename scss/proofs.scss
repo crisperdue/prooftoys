@@ -16,6 +16,30 @@
   color: gray;
 }
 
+// This animation and the noticeInsert class work together
+// to fire an element's oninsert (function) property, a function
+// of no arguments that receives the element as this.
+// It fires on insertion of the element into the DOM, directly
+// or by insertion of any ancestor.  This apparently will
+// only fire when the element becomes "visible".  Associated
+// JS code is in util.js.  Reference:
+// http://www.backalleycoder.com/2012/04/25/i-want-a-damnodeinserted/
+
+// outline-color is just an arbitrary animatable property,
+// and this particular animation is claimed to do nothing.
+@keyframes nodeInserted {  
+  from {  
+    outline-color: initial; 
+  } to {
+    outline-color: initial;
+  } 
+}
+
+.noticeInsert {
+  animation-name: nodeInserted;
+  animation-duration: 0.01s;
+}
+
 /* Proof displays -- rendering.js */
 
 .proofEditor {
