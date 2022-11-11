@@ -17,7 +17,7 @@
 }
 
 .expr.hover, .inShadow {
-  box-shadow: inset #aaa 0px 0px 0px 1px;
+  background-color: hsl(200deg, 100%, 85%);
 }
 
 wffblock- {
@@ -57,10 +57,10 @@ wffblock- > * {
 .proofEditor {
     position: relative;
     line-height: 1.3;
-    border: 2px solid #ddd;
+    border: 1px solid #bbb;
     padding: 1em;
     border-radius: 8px;
-    background-color: honeydew;
+    background-color: hsl(200deg, 100%, 97%);
 }
 
 // This causes all pointer events in the proof editor
@@ -110,7 +110,7 @@ wffblock- > * {
 }
 
 .proofDisplay {
-    background-color: honeydew;
+    background-color: hsl(200deg, 100%, 97%);
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 1em;
@@ -165,13 +165,14 @@ wffblock- > * {
 // Notice that this rule requires .proofSteps immediately under
 // .proofDisplay, i.e. top-level of proof steps.
 .proofDisplay.editable > .proofSteps {
-  height: 300px;
+  height: 400px;
   position: relative; // This makes it an offsetParent.
-  resize: vertical;
+  resize: both;
   overflow-x: clip;
   overflow-y: auto;
   padding-top: 3px;
   padding-left: 3px;
+  background-color: white;
   border: 1px solid #ddd;
   box-shadow: inset lightgray 2px 2px 2px;
 }
@@ -577,7 +578,7 @@ span.stepRef {
 /* Highlight selected expressions; a bit over-specific
    to take precedence over the hover highlight. */
 .proofDisplay.editable .proofStep .expr.selected {
-  box-shadow: 2px 2px 2px #aaa, #aaa 0px 0px 1px 1px;
+  background-color: hsl(200deg, 100%, 75%);
 }
 
 /* Styling for special-case names */
