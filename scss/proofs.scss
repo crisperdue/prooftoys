@@ -16,6 +16,18 @@
   color: gray;
 }
 
+.expr.hover, .inShadow {
+  box-shadow: inset #aaa 0px 0px 0px 1px;
+}
+
+wffblock- {
+  display: inline-block;
+}
+
+wffblock- > * {
+  vertical-align: top;
+}
+
 // This animation and the noticeInsert class work together
 // to fire an element's oninsert (function) property, a function
 // of no arguments that receives the element as this.
@@ -154,21 +166,22 @@
 // .proofDisplay, i.e. top-level of proof steps.
 .proofDisplay.editable > .proofSteps {
   height: 300px;
+  position: relative; // This makes it an offsetParent.
   resize: vertical;
+  overflow-x: clip;
   overflow-y: auto;
   padding-top: 3px;
   padding-left: 3px;
   border: 1px solid #ddd;
-  box-shadow: inset lightgray 2px 2px 3px;
+  box-shadow: inset lightgray 2px 2px 2px;
 }
-
-
 
 /*
  * Container for all the proof steps.  Slightly darker background
  * than the individual steps.
  */
 .proofSteps {
+  position: relative;
   /* Touch screen tap highlighting is confusing, so prevent it. */
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   /* white-space: nowrap could go here to turn off text wrapping. */
@@ -180,8 +193,11 @@
 
 /* The outermost element of a step */
 .proofStep {
+  white-space: nowrap;
     display: flex;
-    align-items: center;
+    align-items: start;
+    // Allow the stepInfo to wrap down to another row.
+    // This is a rather trivial use of flex layout.
     flex-wrap: wrap;
     font-family: STIXGeneral, times, serif;
     /* Each proofStep has a 1px border, which is gray when
@@ -189,11 +205,11 @@
      */
     border: 1px solid transparent;
     margin-left: 4em;
-    margin-bottom: .3em;
+    margin-bottom: .4em;
 }
 
-/* Override the left margin just above to push the first child to the left. */
-/* Any subsequent rows will be indented more. */
+// Override the left margin just above to bring the stepAndNum back to the left.
+// If the stepInfo flows down to another row, it will be indented.
 .proofStep .stepAndControls {
     margin-left: -4em;
 }
@@ -296,22 +312,16 @@ span.ruleStats {
 
 /* Hovering or selecting this will override the border color. */
 .stepAndNum {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
+  display: inline-block;
     cursor: default;
     border: 1px solid transparent;
 }
 
-/* Make the .expr child of stepAndNum automatically a flexbox. */
-.stepAndNum > .expr {
-    display: flex;
-    align-items: center;
+.stepAndNum > * {
+  vertical-align: top;
 }
 
 .stepAndControls {
-    display: flex;
-    align-items: center;
     min-width: 40%;
 }
 
@@ -458,12 +468,8 @@ span.ruleStats {
 
 /* Rule name and information about rule arguments. */
 .proofStep .stepInfo {
-    /* The 1em left margin is a compromise.  We would really like
-     * to indent this whole display more when it flows down to a
-     * new line, but flex layout does not support that.
-     */
-    margin: 0 auto 0 1em;
-    white-space: nowrap;
+    white-space: normal;
+    padding-left: .3em;
     font-family: Roboto, sans-serif;
     font-size: 90%;
     color: #aaa;
@@ -483,6 +489,7 @@ span.ruleStats {
 }
 
 .proofStep .stepNumArea {
+  vertical-align: top;
     border: 1px solid transparent;
     margin-right: 5px;
     position: relative;
@@ -491,7 +498,7 @@ span.ruleStats {
 /* Expression in a proof step display, and step numbers */
 /* The .fullExpr here would be .expr if we wanted to highlight
    all expr nodes. */
-.proofStep .fullExpr, span.stepNumber, span.stepReference {
+span.stepNumber, span.stepReference {
   border-style: solid;
   border-width: 1px;
   border-color: transparent;
@@ -552,10 +559,6 @@ span.ruleName.link, .stepAndNum,
   user-select: none;
 }
 
-.expr {
-  position: relative;
-}
-
 span.assumptions {
   color: #aaa;
   margin-left: .3em;
@@ -571,18 +574,10 @@ span.stepRef {
   color: #aaa;
 }
 
-/* When hovering over an expression in an editable proof.
-   See also .stepAndNum .hover.
- */
-.expr.hover {
-  border-color: #88f;
-}
-
 /* Highlight selected expressions; a bit over-specific
    to take precedence over the hover highlight. */
 .proofDisplay.editable .proofStep .expr.selected {
-  border-color: DarkGray;
-  box-shadow: 2px 2px 2px #aaa;
+  box-shadow: 2px 2px 2px #aaa, #aaa 0px 0px 1px 1px;
 }
 
 /* Styling for special-case names */

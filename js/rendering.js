@@ -389,6 +389,11 @@ ProofDisplay.prototype.renderStep = function(step) {
   copy.proofDisplay = this;
   copy.subproofDisplay = null;
   var node = this.renderStep1(copy);
+  $(node).addClass('noticeInsert');
+  // Reindent when inserted into the DOM:
+  node.oninsert = function() {
+    copy.wff.reIndent();
+  }
   return $(node).data('proofStep');
 };
 
@@ -704,6 +709,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   if (!Toy.showStepHoverMark) {
     $numArea.append('<div class="hoverInfoBox invisible"></div>');
   }
+  // This span is highlighted when the whole step is hovered or selected.
   const $stepAndNum = ($('<span class=stepAndNum>')
                        .append($numArea));
   $step.append($stepAndNum);
@@ -718,7 +724,7 @@ ProofDisplay.prototype.renderStep1 = function(step) {
   step.hasLeftElision = elide;
   var $wff = $(renderWff(step));
   hackOnRendering($wff);
-  $stepAndNum.append($wff);
+  $stepAndNum.append($('<wffblock->').append($wff));
   $proofStep.find('.stepInfo').html(formattedStepInfo(step));
 
   // Event handling:
@@ -812,6 +818,169 @@ ProofDisplay.prototype.renderStep1 = function(step) {
 };
 
 /**
+ * Builds and returns a potentially nested array if given a Call,
+ * otherwise returns this.
+ *
+ * Terminology: a term may be "broken before" if a line break and suitable
+ * indentation may be inserted before its DOM node.  A term is
+ * splittable if breaks are allowed between its parts in case it has
+ * parts.  Representation:
+ *
+ * Atom: the term.
+ *
+ * Lambda: the term.
+ *
+ * Call: array of two or more elements for the function and
+ * potentially "extended" arguments, in textual order.  Thus an infix
+ * function is second in the array rather than first.  Extended
+ * arguments come from "uncurrying", and calls to infix functions can
+ * also be uncurried, e.g. function composition as infix, applied to
+ * some input value.  All of the elements are splittable, and all but
+ * the first may be broken before.
+ *
+ * "Chains" of infix calls to the same operator, or + and - or * and /
+ * are flattened to put all arguments and operator terms are at the
+ * same level in the tree, reducing nesting of terms to the left.
+ *
+ * Right operands of infix operators and the argument to an ordinary
+ * function may or may not be converted to arrays.
+ */
+Expr.prototype.formatTerm = function() {
+  const power = Toy.getPrecedence;
+  const term = this;
+  if (term instanceof Call) {
+    if (term.isInfixCall()) {
+      const op = term.getBinOp();
+      const left = term.getLeft();
+      const right = term.getRight();
+      // const rightTree = right.formatTerm();
+      const leftTree = left.formatTerm();
+      if (left.isInfixCall()) {
+        const leftOp = left.getBinOp();
+        if (power(leftOp) === power(op)) {
+          return leftTree.concat(op, right);
+        } else {
+          return [left, op, right];
+        }
+      } else {
+        return [left, op, right];
+      }
+    } else {
+      const fn = term.fn.formatTerm();
+      // This concat always appends one element to the array.
+      return (fn instanceof Array ? fn : [term.fn])
+        .concat([term.arg]);
+    }
+  } else {
+    return term;
+  }
+};
+
+/**
+ * This is for debugging.  It returns a string that indicates the
+ * levels of indenting for a term consisting of Calls and Atoms.
+ */
+Expr.prototype.indentTree = function() {
+  const cvt = a => {
+    if (a instanceof Call) {
+      return cvt(a.formatTerm());
+    } else if (a instanceof Array) {
+      return '[' + a.map(cvt).join(' ') + ']';
+    } else if (a instanceof Atom) {
+      return a.toUnicode(true);
+    } else {
+      return a;
+    }
+  };
+  return cvt(this);
+};
+
+/**
+ * Redoes the indentation of the given rendered term.
+ *
+ * Removes any previously-inserted line breaks, then recomputes
+ * and inserts line breaks to avoid horizontal overflow if possible.
+ * The relevant tree here is based on Expr.formatTerm, which determines
+ * depth of nesting of indentation of subterms of this.
+ *
+ * The first pass inserts breaks before top-level terms of that tree.
+ * Then if any top-level terms still overflow it descends into those
+ * to reindent them in turn.
+ *
+ * From outside, call this with no arguments.
+ */
+Expr.prototype.reIndent = function(depth, portWidth) {
+  depth = depth || 1;
+  // To log details, remove the "false" in the next line.
+  const log = (...args) => false && console.log('>'.repeat(depth), ...args);
+  const top = this;
+  const isInfix = term => term.node.classList.contains('infix');
+  const offset = term => term.node.offsetLeft + term.node.offsetWidth;
+  const breakBefore = term => {
+    // The "ch" unit approximates the width of an average character.
+    // The approximate padding calculation here could be replaced by
+    // insertion of invisible text that is the prefix needed before
+    // any additional indentation.
+    const $span = $('<span class=linebreak>').css({paddingRight: depth + 'ch'});
+    $(term.node).before('<br class=linebreak>', $span);
+  };
+  const pw = portWidth;
+  portWidth = portWidth || top.node.offsetParent.clientWidth - 10;
+
+  pw || log('Port:', portWidth);
+  log('Indenting', this.$$);
+  // Remove all linebreak elements (inserted by breakBefore).
+  depth === 1 && $(this.node).find('.linebreak').remove();
+
+  // Get indenting info and apply it to insert linebreaks.
+  const a = top.formatTerm();
+  if (a instanceof Array) {
+    // In other words, "this" is a Call.
+    for (let i = 1; i < a.length; i++) {
+      const term = a[i];
+      if (term.node) {
+        const right = offset(term);
+        // The term overflows the port width.
+        if (right > portWidth && !isInfix(term)) {
+          log('Right over:', right);
+          // Move the term or preceding infix operator to the left
+          // by inserting a linebreak before it.
+          const j =
+            (i > 0 && a[i - 1] instanceof Expr && isInfix(a[i - 1])
+             ? i - 1
+             : i);
+          if (j > 0) {
+            const prev = a[j - 1];
+            if (prev &&
+                !(prev instanceof Atom && prev.toUnicode().length < 4)) {
+              log('Break at:', a[j].$$);
+              // Things that overflow their space get moved to the
+              // left with a linebreak before them.  This is the first
+              // priority for fitting expressions into the horizontal
+              // space available.
+              breakBefore(a[j]);
+            }
+          }
+        }
+      }
+    }
+    a.forEach((e, i) => {
+      if (e.node) {
+        const right = offset(e);
+        log('e:', right, e.$$);
+        if (right > portWidth) {
+          log('Right:', right);
+          // If a term still overflows, try to re-indent it.
+          e.reIndent(depth + 1, portWidth);
+        }
+      }
+    });
+  } else if (top instanceof Lambda) {
+    top.body.reIndent(depth + 1, portWidth);
+  }
+};
+
+/**
  * Fills in the details of a renderable step.  A no-op unless the step
  * is a use of rules.fact in which the proof of the fact was deferred,
  * in which case this may set the details of the step and its
@@ -862,9 +1031,7 @@ function fillDetails(step) {
 /**
  * This is a postprocessing hack to simplify the DOM tree for a term
  * after it has been constructed by the normal rendering process.
- * This removes .expr nodes that have no other classes, primarily to
- * make flex layout work better, but it also reduces the (undesired)
- * extra horizontal whitespace embedded in every display.
+ * This removes .expr nodes that have no other classes,
  *
  * TODO: Make a more permanent fix, one that for example does not
  *   work by postprocessing or result in attachment of abandoned DOM
@@ -1000,6 +1167,7 @@ function renderWff(step) {
 
     // In this case we want one more level of flexbox to ensure the
     // mainPart is a flexbox.  Specify it with a class.
+    // TODO: Reconsider this.
     if (mainPart.isCall2('==')) {
       $(mainPart.node).addClass('flexBox');
     }
@@ -1092,7 +1260,6 @@ function renderWithElisionSpace(expr) {
 Expr.prototype.renderTopConj = function(minPower) {
   function annotateTopConj(expr) {
     if (expr.isCall2('&')) {
-      expr.getBinOp().breakAfter = true;
       annotateTopConj(expr.getLeft());
     }
   }
@@ -1211,7 +1378,8 @@ Atom.prototype.render = function(minPower, isFn) {
   var name = this.toHtml(isFn || !this.isOperator());
   specialClasses(this.pname).forEach(function(cl) { $expr.addClass(cl); });
   if (isFn) {
-    // TODO: Consider whether this class has any effect on anything.
+    // ".fn" nodes cause enclosing expression to highlight by default
+    // rather than themselves.
     $expr.addClass('fn');
   }
   $expr.html(name);
@@ -1279,10 +1447,12 @@ Call.prototype.render = function(minPower) {
       // Render as infix, e.g. "x + y"
       var left = this.getLeft();
       var right = this.getRight();
+      const $op = op.render(0, true);
+      // This next helps UI code find infix operators.
+      $op.addClass('infix');
       if (op.name in {'*': true, '/': true}) {
         // Render these without extra whitespace.
-        var $fn = exprJq().append(left.render(thisPower(left)),
-                                  op.render(0, true));
+        var $fn = exprJq().append(left.render(thisPower(left)), $op);
         this.fn.node = dom($fn);
         $expr.append($fn, right.render(thisPower(right) + 1));
       } else if (op.name == '**' && right.isNumeral()) {
@@ -1294,11 +1464,9 @@ Call.prototype.render = function(minPower) {
                      $('<sup>').append(right.getNumValue()));
       } else {
         // A typical binary operator invocation, e.g. x + y.
-        var $fn = exprJq().append(left.render(thisPower(left)), ' ',
-                                  op.render(0, true));
+        var $fn = exprJq().append(left.render(thisPower(left)), ' ', $op);
         this.fn.node = dom($fn);
-        var afterOp = op.breakAfter ? '<br>\n' : ' ';
-        $expr.append($fn, afterOp, right.render(thisPower(right) + 1));
+        $expr.append($fn, ' ', right.render(thisPower(right) + 1));
       }
     } else {
       // Anything else render like "f x y".
