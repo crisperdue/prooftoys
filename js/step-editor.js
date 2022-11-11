@@ -325,6 +325,16 @@ function ProofEditor(options_arg) {
       self.stepEditor.clearError();
     }
   });
+
+  // Saved width of the proofSteps DIV contentRect.
+  self.savedWidth = 0;
+  Toy.onResize(dom($node.find('.proofSteps')), entry => {
+    const width = entry.contentRect.width;
+    if (width !== self.savedWidth) {
+      self.steps.forEach(s => s.wff.rendering.reIndent());
+      self.savedWidth = width;
+    }
+  });
 }
 
 /**
