@@ -2549,8 +2549,42 @@ removeOldPidData();
 // Then repeat the routine every ten seconds.
 window.setInterval(function() { heartbeat(); removeOldPidData(); }, 10000);
 
+//// ELEMENT RESIZE HANDLERS
+
+/**
+ * This observer creation code is from an example in the
+ * csswg draft.
+ */
+Toy.sizeObserver = new ResizeObserver(entries => {
+  for (const entry of entries) {
+    let cs = window.getComputedStyle(entry.target);
+    /*
+    console.log('watching element:', entry.target);
+    console.log(entry.contentRect.top, ' is ', cs.paddingTop);
+    console.log(entry.contentRect.left, ' is ', cs.paddingLeft);
+    console.log(entry.borderBoxSize[0].inlineSize, ' is ', cs.width);
+    console.log(entry.borderBoxSize[0].blockSize, ' is ', cs.height);
+    */
+    if (entry.target.handleResize)
+        entry.target.handleResize(entry);
+  }
+});
+
+/**
+ * Simplistic access to the resize observer.
+ * Call this at most once per element to be observed.
+ * The handler will be called with an entry where
+ * the element is the target.
+ * 
+ */
+function onResize(element, handler) {
+  element.handleResize = handler;
+  Toy.sizeObserver.observe(element);
+};
 
 //// Export public names.
+
+Toy.onResize = onResize;
 
 Toy.dom = dom;
 
