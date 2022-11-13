@@ -914,7 +914,9 @@ Expr.prototype.reIndent = function(depth, portWidth) {
   // To log details, remove the "false" in the next line.
   const log = (...args) => false && console.log('>'.repeat(depth), ...args);
   const top = this;
-  const isInfix = term => term.node.classList.contains('infix');
+  const isInfix = term => {
+    return term.node && term.node.classList.contains('infix');
+  }
   const offset = term => term.node.offsetLeft + term.node.offsetWidth;
   const breakBefore = term => {
     // The "ch" unit approximates the width of an average character.
