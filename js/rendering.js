@@ -1681,15 +1681,19 @@ function unrenderedDeps(step) {
 function renderSubproof(step) {
   const $subproof = renderInference(step);
   const $step = $(step.stepNode);
-  const $steps = $step.parent();
-  const editable = $step.is('.proofDisplay.editable .proofStep');
   $step.addClass('hasSubproof');
+  const editable = $step.is('.proofDisplay.editable .proofStep');
+  // If not editable we animate the window scrollTop, but this
+  // is the magic formula that does it across browsers.
+  const $port = (editable
+                 ? $step.closest('.proofDisplay.editable > .proofSteps')
+                 : $('html, body'));
   step.subproofDisplay = $subproof.data('proofDisplay');
 
   const contentHeight =
-        () => editable ? $steps.prop('scrollHeight') : $(document).height();
+        () => editable ? $port.prop('scrollHeight') : $(document).height();
   const scrollY =
-        () => editable ? $steps.scrollTop() : $(window).scrollTop();
+        () => editable ? $port.scrollTop() : $(window).scrollTop();
   // Animate display of the subproof.  While sliding in the display,
   // also smoothly scroll the window to keep the given step at the
   // same place in the window.
@@ -1697,12 +1701,9 @@ function renderSubproof(step) {
   const oldHeight = contentHeight();
   $subproof.insertBefore(step.stepNode);
   const growth = contentHeight() - oldHeight;
-  $subproof.hide();
+  $subproof.slideUp(0);
   // Animate after computing the change in content height.
-  $subproof.show({duration: 200});
-  // If not editable we animate the window scrollTop, but this
-  // is the magic formula that does it across browsers.
-  const $port = editable ? $steps : $('html, body');
+  $subproof.slideDown({duration: 200});
   $port.animate({scrollTop: oldTop + growth}, 200);
 }
 
@@ -1713,11 +1714,14 @@ function renderSubproof(step) {
  * The second argument is true when no UI action is desired.
  */
 function clearSubproof(step, internal) {
-  const $step = $(step.stepNode);
-  const editable = $step.is('.proofDisplay.editable .proofStep');
   const controller = step.subproofDisplay;
   if (controller) {
     step.subproofDisplay = null;
+    const $step = $(step.stepNode);
+    const editable = $step.is('.proofDisplay.editable .proofStep');
+    const $port = (editable
+                   ? $step.closest('.proofDisplay.editable > .proofSteps')
+                   : $('html, body'));
     controller.steps.forEach(function(step) {
         // Record that the rendering is gone.
         step.original.rendering = null;
@@ -1727,13 +1731,13 @@ function clearSubproof(step, internal) {
       });
     const $subproof = $(controller.node).closest('.inferenceDisplay');
     if (!internal) {
-      const $steps = $step.parent();
+      const $port = $step.parent();
       const contentHeight =
             () => (editable
-                   ? $steps.prop('scrollHeight')
+                   ? $port.prop('scrollHeight')
                    : $(document).height());
       const scrollY =
-            () => editable ? $steps.scrollTop() : $(window).scrollTop();
+            () => editable ? $port.scrollTop() : $(window).scrollTop();
       // Compute the net change in content/document height.
       const oldTop = scrollY();
       const oldHeight = contentHeight();
@@ -1741,14 +1745,13 @@ function clearSubproof(step, internal) {
       const growth = contentHeight() - oldHeight;
       $subproof.toggle(true);
       // Do the actual animations, similar to the ones in renderSubproof.
-      $subproof.hide(
+      $subproof.slideUp(
                      {duration: 200,
                       complete: function() {
                          $step.removeClass('hasSubproof');
                          // Remove after hiding.
                          $subproof.remove();
                        }});
-      const $port = editable ? $steps : $('html, body');
       $port.animate({scrollTop: oldTop + growth}, 200);
     }
   }
