@@ -24,7 +24,7 @@ const rules = Toy.rules;
 //   translate step numbers to steps.  Perhaps ProofDisplay can notify
 //   when its list of steps changes.
 
-// Each instance has a numeric ID.
+// Each instance has a unique numeric ID.
 var nextProofEditorId = 1;
 
 /**
@@ -323,16 +323,6 @@ function ProofEditor(options_arg) {
                 '.stepEditor, .ruleForm')) {
       // TODO: Consider perhaps an editor reset() method.
       self.stepEditor.clearError();
-    }
-  });
-
-  // Saved width of the proofSteps DIV contentRect.
-  self.savedWidth = 0;
-  Toy.onResize(dom($node.find('.proofSteps')), entry => {
-    const width = entry.contentRect.width;
-    if (width !== self.savedWidth) {
-      self.steps.forEach(s => s.wff.rendering.reIndent());
-      self.savedWidth = width;
     }
   });
 }

@@ -197,6 +197,7 @@ function getRightNeighbor(step, term) {
  */
 function ProofDisplay(properties) {
   properties = properties || {};
+  const self = this;
   var controller = this;
   this.steps = [];
   // Set (array) of selected steps.
@@ -227,6 +228,22 @@ function ProofDisplay(properties) {
   this._selectLock = false;
   this.setEditable(false);
   this.setHoverHighlighting(Toy.highlightAllHovers);
+
+  // Saved width of the proofSteps DIV contentRect.
+  // Connection to the DOM will trigger resize events.
+  // The initial zero value will cause the steps to be
+  // reindented as soon as they are connected.
+  self.savedWidth = 0;
+  Toy.onResize(this.stepsNode, entry => {
+    const width = entry.contentRect.width;
+    if (width !== self.savedWidth) {
+      self.steps.forEach(s => {
+        const step = s.rendering;
+        step.wff.reIndent();
+      });
+      self.savedWidth = width;
+    }
+  });
 }
 
 /**
@@ -914,6 +931,11 @@ Expr.prototype.reIndent = function(depth, portWidth) {
   // To log details, remove the "false" in the next line.
   const log = (...args) => false && console.log('>'.repeat(depth), ...args);
   const top = this;
+  if (!top.node.offsetParent) {
+    log('No offset parent:', top.node, top.node.innerText);
+    return;
+  }
+
   const isInfix = term => {
     return term.node && term.node.classList.contains('infix');
   }
@@ -1700,10 +1722,17 @@ function renderSubproof(step) {
   const oldTop = scrollY();
   const oldHeight = contentHeight();
   $subproof.insertBefore(step.stepNode);
+  // reIndent here, synchronously, so the computed new height
+  // will be correct.
+  $subproof.data('proofDisplay').steps
+    .forEach(step => step.rendering.reIndent());
   const growth = contentHeight() - oldHeight;
+  // Immediately set the height to zero without changing
+  // the width.
   $subproof.slideUp(0);
-  // Animate after computing the change in content height.
+  // Then animate the insertion.
   $subproof.slideDown({duration: 200});
+  // Use jQuery, there is no CSS property for the scrollTop.
   $port.animate({scrollTop: oldTop + growth}, 200);
 }
 
@@ -1731,7 +1760,6 @@ function clearSubproof(step, internal) {
       });
     const $subproof = $(controller.node).closest('.inferenceDisplay');
     if (!internal) {
-      const $port = $step.parent();
       const contentHeight =
             () => (editable
                    ? $port.prop('scrollHeight')
@@ -1741,9 +1769,9 @@ function clearSubproof(step, internal) {
       // Compute the net change in content/document height.
       const oldTop = scrollY();
       const oldHeight = contentHeight();
-      $subproof.toggle(false);
+      $subproof.slideUp(0);
       const growth = contentHeight() - oldHeight;
-      $subproof.toggle(true);
+      $subproof.slideDown(0);
       // Do the actual animations, similar to the ones in renderSubproof.
       $subproof.slideUp(
                      {duration: 200,
