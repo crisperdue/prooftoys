@@ -1235,7 +1235,6 @@ function renderWff(step) {
     wff.node = dom($wff);
     return wff.node;
   } else {
-
     // The step is not a conditional or equivalence.
     return wff.node = (step.hasLeftElision
                        ? renderWithElision(wff)
@@ -1273,10 +1272,8 @@ function renderWithElisionSpace(expr) {
   expr.assertCall2();
   var $expr = exprJq();
   expr.node = dom($expr);
-  const $op = expr.getBinOp().render(0, true);
-  $op.addClass('invisible');
   $expr.append($('<span class=ellipsis>')
-               .append('<span class=invisible>&hellip;</span>'),
+               .append('<span>&hellip;</span>'),
                ' ', expr.getRight().renderTopConj(0));
   return dom($expr);
 }
