@@ -17,8 +17,12 @@ window.Toy = window.Toy || {};
 window.onerror = function(message, source, lineno, colno, error) {
   const track = Toy.trackAppEvent;
   if (track) {
-    // Error.stack might not exist.
-    track('Error', ''+(error.stack || error));
+    if (error) {
+      // Error and error.stack might not exist.
+      track('Error', ''+(error.stack || error));
+    } else {
+      track('Error', message);
+    }
   }
 };
 
