@@ -79,6 +79,7 @@ Toy.compatible = !!navigator.userAgent.match(/(Chrome|Firefox|Safari)[/]/);
  */
 Toy.trackAppEvent = function(action, ...more) {
   _paq && _paq.push(['trackEvent', 'App', action, ...more]);
+  console.log('App event:', action, ...more);
   return !!_paq;
 };
 
