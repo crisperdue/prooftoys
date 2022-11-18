@@ -723,6 +723,7 @@ input.varName, input.step, input.equation, input.implication {
 
 .modeList {
     display: flex;
+    flex-flow: wrap;  // Let the items wrap on very narrow displays.
     background-color: hsl(120deg, 73%, 50%);
     /* The mode list contributes top, left, and right borders. */
     border: 1px solid #bbf;
