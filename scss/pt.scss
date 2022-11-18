@@ -97,6 +97,28 @@ button.hamburger {
     margin: 0;
 }
 
+
+/**
+ * Set the proof editor below the sidebar, but moved to the left to
+ * give it a wider space to work in, for example in proofbuilder.md.
+ */
+.outdented {
+  margin-top: 3em;
+  margin-bottom: 5em;
+}
+
+/* On small displays there is no extra space to the left,
+ * so don't outdent.
+ */
+// @include media-breakpoint-up(md) {
+// This conditional is intended to select for "medium" width or greater.
+@media (min-width: 768px) {
+  .outdented {
+    margin-left: -12em;
+  }
+}
+
+
 /* For Talkyard */
 div.talkyard-comments {
   background-color: white;
