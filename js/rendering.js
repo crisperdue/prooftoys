@@ -575,7 +575,14 @@ ProofDisplay.prototype.isSelectAllowed = function() {
 };
 
 
-// STEP SELECTION
+//// STEP SELECTION
+
+// Whenever there is a selected step or term, the associated
+// ProofEditor's root node is flagged with the CSS class
+// "hasSelection", and the invariant is maintained by these functions.
+
+// TODO: Use this CSS class to control which rule menus are offered in
+// the UI.
 
 /**
  * Unconditionally flag the renderable step as selected within this
@@ -586,6 +593,7 @@ ProofDisplay.prototype.selectStep = function(step) {
   $node.addClass('selected');
   $node.find('.checkbox').prop('checked', true);
   this.selection = step;
+  this.proofEditor && this.proofEditor.$node.addClass('hasSelection');
   this.selectionChanged();
 };
 
@@ -601,6 +609,7 @@ ProofDisplay.prototype.deselectStep = function() {
     $node.find('.checkbox').prop('checked', false);
     this.selection = null;
     this.deselectExpr(step);
+    this.proofEditor && this.proofEditor.$node.removeClass('hasSelection');
     this.selectionChanged();
   }
 };
@@ -614,6 +623,7 @@ ProofDisplay.prototype.selectExpr = function(expr) {
   this.selection = step;
   $(expr.node).addClass('selected');
   step.selection = expr;
+  this.proofEditor && this.proofEditor.$node.addClass('hasSelection');
   this.selectionChanged();
 };
 
@@ -626,6 +636,7 @@ ProofDisplay.prototype.deselectExpr = function(step) {
   if (expr) {
     $(expr.node).removeClass('selected');
     step.selection = null;
+    this.proofEditor && this.proofEditor.$node.removeClass('hasSelection');
     this.selectionChanged();
   }
 };
