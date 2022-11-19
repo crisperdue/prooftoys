@@ -1638,20 +1638,20 @@ function RuleMenu(proofEditor) {
                   );
 
   // Rule chooser:
-  var $node = ($('<div class="ruleMenu">')
-               .append($modeList)
-               .append('<div class=ruleMenuTitle>Actions:</div>'));
+  const $node = $('<div class="ruleMenu">').append($modeList);
   // Top node of the actual rule menu display.
   self.$node = $node;
   // Container node for menu items.
   self.$items = $('<div class=rulesItems>');
+
+  self.$title = $('<div class=ruleMenuTitle>Actions:</div>');
 
   // An intermediate DIV.  This one is set to have vertical scrolling,
   // and the rulesItems div can be inline-block to shrink-wrap itself
   // around the individual items.
   var $scrollArea = $('<div class=scrollingMenu>');
   $scrollArea.append(self.$items);
-  $node.append($scrollArea);
+  $node.append(self.$title, $scrollArea);
 
   // Set up event handlers.
 
@@ -1727,6 +1727,18 @@ RuleMenu.prototype._update = function() {
   var self = this;
   const proofEditor = self.proofEditor;
   const stepEditor = proofEditor.stepEditor;
+
+  const blurbs = {
+    algebra: 'Actions for basic algebra:',
+    general: 'Rewrites (and such):',
+    other: 'Wild and crazy stuff:'
+  };
+  const mode = proofEditor.showRuleType;
+  const blurb = blurbs[mode] || 'Actions:';
+  if (blurb) {
+    self.$title.html(blurb);
+  }
+
   var $items = self.$items;
   // Remove data and event handlers from suggestions.  They have
   // not been previously removed.
@@ -1758,8 +1770,6 @@ RuleMenu.prototype._update = function() {
         itemInfos.push({ruleName: ruleName, html: info});
       }
   });
-
-  const mode = self.proofEditor.showRuleType;
 
   if (selection) {
     // A term is selected.  Find proof steps that can serve as rewrite
