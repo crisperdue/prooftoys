@@ -3402,7 +3402,19 @@ Lambda.prototype._toString = function() {
   if (this._string) {
     return this._string;
   }
-  return '{' + this.bound + '. ' + this.body + '}';
+  // TODO: Fix dependencies so we can display with arrows
+  // even when producing ASCII text.  That probably means fixing
+  // parsing to handle the arrows.
+  if (useUnicode) {
+    const type = this.type;
+    if (type && type.isSetType() && !type.fromType.equal(Toy.boolean)) {
+      return '{' + this.bound + '. ' + this.body + '}';
+    } else {
+      return '(' + this.bound + ' \u2192 ' + this.body + ')';
+    }
+  } else {
+    return '{' + this.bound + '. ' + this.body + '}';
+  }
 };
 
 Lambda.prototype.dump = function() {
