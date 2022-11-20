@@ -244,6 +244,14 @@ FunctionType.prototype.hasVariable = function() {
   return this.fromType.hasVariable() || this.toType.hasVariable();
 };
 
+/**
+ * Type of any function with boolean output.  This definition
+ * includes boolean -> boolean.
+ */
+TypeEx.prototype.isSetType = function() {
+  return this instanceof FunctionType && this.toType.equal(boolean);
+};
+
 
 //// PARSING
 

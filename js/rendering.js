@@ -1550,12 +1550,23 @@ Lambda.prototype.render = function(minPower) {
 
   var $expr = exprJq(true);
   this.node = dom($expr);
-  $expr.append('{');
-  $expr.append(this.bound.render(0));
-  $expr.append('. ');
-  var $body = this.body.render(0);
-  $expr.append($body);
-  $expr.append('}');
+  const type = this.type;
+  const $body = this.body.render(0);
+  const isSet = type.isSetType();
+  console.log('Type', ''+type, isSet);
+  if (isSet && !type.fromType.equal(Toy.boolean)) {
+    $expr.append('{');
+    $expr.append(this.bound.render(0));
+    $expr.append('. ');
+    $expr.append($body);
+    $expr.append('}');
+  } else {
+    $expr.append('(');
+    $expr.append(this.bound.render(0));
+    $expr.append(' &rarr; ');
+    $expr.append($body);
+    $expr.append(')');
+  }
   return $expr;
 };
 
