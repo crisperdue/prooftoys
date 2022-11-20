@@ -474,14 +474,14 @@ ProofDisplay.prototype.removeLastStep = function() {
   // Remove highlighting by pretending the mouse moved out.
   // Deleting the node will not trigger the mouse out event.
   hoverStepSelector(step, 'out');
-  $(step.stepNode).remove();
-  step.original.rendering = null;
   var display = getProofDisplay(step);
   step.ruleDeps.forEach(function(s) {
       if (getProofDisplay(s.rendering) == display) {
         s.rendering.removeUser(step);
       }
     });
+  $(step.stepNode).remove();
+  step.original.rendering = null;
   steps.length = index;
 };
 
@@ -1602,8 +1602,8 @@ Step.prototype.addUser = function(user) {
   // $(this.stepNode).find('.deleteStep').prop('disabled', true);
 };
 
+// Remove a user of the step.
 Step.prototype.removeUser = function(user) {
-  assert(this.users.has(user), 'Step {1} does not have user {2}', this, user);
   this.users.delete(user);
   if (this.users.size === 0) {
     $(this.stepNode).removeClass('hasUsers');
@@ -2592,12 +2592,14 @@ function hoverAsRewriter(step, action) {
         //   conjunctions within the rewriter code, and rendering
         //   the replaced term with a strikeout or similar to
         //   indicate that it is removed.
-        const tee = Toy.parse('T');
-        const found = step.getLeft()
-              .eachConjunct(term => term.sameAs(tee) && term);
-        found && action(found.node, 'site');;
-        // TODO: We also need to provide some degree of support for
-        //   normal equational rewrites applied to assumptions.
+        if (stepIsCond) {
+          const tee = Toy.parse('T');
+          const found = step.getLeft()
+                .eachConjunct(term => term.sameAs(tee) && term);
+          found && action(found.node, 'site');;
+          // TODO: We also need to provide some degree of support for
+          //   normal equational rewrites applied to assumptions.
+        }
       } else {
         const path = shallower ? tPath.rest : tPath;
         const main = deeper ? step.wff.getRight() : step.wff;
