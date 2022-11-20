@@ -1553,7 +1553,6 @@ Lambda.prototype.render = function(minPower) {
   const type = this.type;
   const $body = this.body.render(0);
   const isSet = type.isSetType();
-  console.log('Type', ''+type, isSet);
   if (isSet && !type.fromType.equal(Toy.boolean)) {
     $expr.append('{');
     $expr.append(this.bound.render(0));
