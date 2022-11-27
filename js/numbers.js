@@ -1,10 +1,10 @@
 // Copyright Crispin Perdue.  All rights reserved.
 
+'use strict';
+
 // Set all of this up immediately upon load, but avoiding changes
 // to the global environment (except through the "Toy" namespace).
-(function() {
-
-'use strict';
+Toy.useRealNumbers = function() {
 
 //// THEOREMS AND RULES
 
@@ -3934,4 +3934,4 @@ basicSimpFacts.push({apply: arithRight});
 // For testing (computed value).
 Toy._ungroupingFacts = ungroupingFacts;
 
-})();
+};
