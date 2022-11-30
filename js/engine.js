@@ -336,7 +336,6 @@ Toy.addMethods(Expr, ruleMethods);
 
 // Map from rule name to function used in all proofs.
 // This is a central global variable.
-// Generated from ruleInfo by addRulesMap, below.
 var rules = {};
 
 //// RULE PROPERTIES
@@ -759,27 +758,6 @@ function addRule(info) {
 
     // Finally install the rule into the rules.
     rules[name] = rule;
-  }
-}
-
-/**
- * Given a ruleInfo object, add its information to the "rules" object.
- * The "rules" object maps from rule name to function.  Each function
- * has an "info" property containing all the properties present in the
- * ruleInfo object entry for the name.
- */
-function addRulesMap(ruleInfo) {
-  for (var key in ruleInfo) {
-    var value = ruleInfo[key];
-    if (value.constructor != Object) {
-      console.warn('Old-style rule action', key);
-    }
-    var info = value.constructor == Object ? value : {action: value};
-    if (info.ruleName) {
-      console.warn('Property "ruleName" found for rule with key', key);
-    }
-    info.name = key;
-    addRule(info);
   }
 }
 
@@ -2567,7 +2545,6 @@ Toy.noSimplify = noSimplify;
 
 Toy.declare = declare;
 Toy.addRule = addRule;
-Toy.addRulesMap = addRulesMap;
 Toy.definition = definition;
 Toy.deferredDefnFacts = deferredDefnFacts;
 Toy.enableDefnFacts = enableDefnFacts;
