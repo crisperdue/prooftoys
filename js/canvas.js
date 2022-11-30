@@ -1,4 +1,4 @@
-// Copyright 2012, 2013 Crispin Perdue.  All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 //
 // Utilities for working with Canvases.
 

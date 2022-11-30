@@ -1,5 +1,4 @@
-// Copyright Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 // This file gives a bit of an alternative to static
 // site generation.  It generates standard page content

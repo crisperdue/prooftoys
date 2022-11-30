@@ -1,5 +1,4 @@
-// Copyright Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 'use strict';
 

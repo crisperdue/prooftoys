@@ -1,5 +1,4 @@
-// Copyright 2018 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 // Incomplete development of some of the facts about fields given in
 // numbers.js, starting from weaker premises.  Load this before

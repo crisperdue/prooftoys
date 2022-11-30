@@ -1,5 +1,4 @@
-// Copyright 2011 - 2017 Crispin Perdue.
-// All rights reserved.
+// Copyright Crispin Perdue.  All rights reserved.
 
 
 //// General setup for participation in RPC
