@@ -784,17 +784,6 @@ function addRulesMap(ruleInfo) {
 }
 
 /**
- * Adds an array of rules (axioms and theorems/facts, named or not),
- * each in the form of a plain object with properties.  If a fact has
- * a name, the name appears as a "name" property.
- *
- * TODO: Deprecated, remove.
- */
-function addRules(ruleList) {
-  ruleList.forEach(addRule);
-}
-
-/**
  * Takes an arbitrary number of arguments, each in the form
  * accepted by addRule, and performs addRule on each.
  *
@@ -2579,7 +2568,6 @@ Toy.noSimplify = noSimplify;
 Toy.declare = declare;
 Toy.addRule = addRule;
 Toy.addRulesMap = addRulesMap;
-Toy.addRules = addRules;
 Toy.definition = definition;
 Toy.deferredDefnFacts = deferredDefnFacts;
 Toy.enableDefnFacts = enableDefnFacts;
