@@ -1380,10 +1380,10 @@ Expr.prototype.renderTerm = function() {
 };
 
 /**
- * Render this expression into a new DOM node, returning a jQuery
- * object for the node.  Sets the expression's "node" property to
- * refer to the DOM node created to enclose this expression.  Should
- * be done only once to any given expression.
+ * Render this renderable term into a new DOM node, returning a
+ * jQuery object for the node.  Sets the expression's "node" property
+ * to refer to the DOM node created to enclose this expression.
+ * Should be done only once to any given expression.
  *
  * If the expr already has a node, just return a jQuery for the node,
  * to enable special rendering of certain exprs beforehand.

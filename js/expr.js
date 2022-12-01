@@ -2540,6 +2540,13 @@ Atom.prototype.unicodeName = function() {
   var result = info.name;
   if (info.sub) {
     // Convert it to a Unicode subscript.
+    //
+    // Caution: browsers (e.g. Chrome) do not correctly display
+    // Unicode subscript characters!  I see that the STIXGeneral font
+    // has been deprecated for years.  Google fonts includes STIX Two
+    // Text, and the STIX Two Text font as released by the STIX
+    // project seems to include proper rendering of subscript chars,
+    // but Google fonts omits those chars from its release.
     var offset = 0x2080 - '0'.charCodeAt(0);
     var sub = info.sub;
     for (var i = 0; i < sub.length; i++) {
@@ -2586,7 +2593,29 @@ var aliases = {
   '==': '=',
 };
 
-Atom.prototype.toHtml = Atom.prototype.toUnicode;
+// This is useful in itself, but Expr.toHtml does not invoke this
+// internally for Atoms.
+// TODO: Fix Expr.toHtml.  
+Atom.prototype.toHtml = function() {
+  // Always show boolean equality as such.
+  // Using pname helps here in some obsolescent usage.
+  const name = this.isEquivOp() ? '==' : this.pname;
+  var uname = unicodeNames[name];
+  if (uname) {
+    return uname;
+  }
+  var info = this.parseName();
+  var text = info.name;
+  if (info.sub) {
+    text += `<sub>${info.sub}</sub>`;
+  }
+  // The lines below are the same as in Atom._toString:
+  const show = Toy.showTypes;
+  return (show && this.type &&
+          (show === 'atoms' || show === 'testing' || this.isVariable())
+          ? text + ":" + this.type.toString()
+          : text);
+};
 
 Atom.prototype.dump = function() {
   return this.name;
