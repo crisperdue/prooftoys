@@ -1800,14 +1800,17 @@ RuleMenu.prototype._update = function() {
       //   consistently in both visual style and code, see the code
       //   block just below.
       const html =
-            Toy.escapeHtml(
-              Toy.format(' = {1} using step {2}',
-                         temp.replacementTerm(),
-                         n));
+            // \u27ad is a lower-right shadowed rightwards arrow.
+            ` \u27ad <br class=resultTerm> <span class=description> \
+               using step ${n}</span>`;
+      const $node = $('<span>').append(html);
+      $node.find('br.resultTerm')
+        .replaceWith(temp.replacementTerm().renderTerm());
       itemInfos.push({ruleName: 'rewriteFrom',
                       ruleArgs: [selStep.original, sitePath,
                                  proofStep.original],
-                      html: html
+                      html: html,
+                      $node: $node
                      });
     });
 
@@ -1834,20 +1837,24 @@ RuleMenu.prototype._update = function() {
           // There was a failure so don't offer the fact.
           return;
         }
-        let display = ' = <span class=menuResult></span>';
+        let html = ' \u27ad <br class=resultTerm>';
         // TODO: Consider using the length of the unicode in deciding
         //   what message to generate here.
         // const unicode = statement.toUnicode();
-        const html = (info.definitional
-                      ? 'definition of ' + statement.getLeft().func().name
-                      : 'using ' + Toy.trimParens(statement.toHtml()));
-        display += (' <span class=description>' + html + '</span>');
+        const blurb = (info.definitional
+                       ? 'definition of ' + statement.getLeft().func().name
+                       : 'using ' + Toy.trimParens(statement.toHtml()));
+        html += (' <span class=description>' + blurb + '</span>');
+        const $node = $('<span>').append(html);
+        $node.find('br.resultTerm').replaceWith(resultTerm.renderTerm());
         // Rule name format of "fact <fact text>"
         // indicates that the text defines a fact to use in
         // rules.rewrite.
+        // TODO: Replace this obsolete "fact <stmt>" syntax
+        //   with modern "rewrite" ruleName and ruleArgs.
         var info = {ruleName: 'fact ' + statement.toString(),
-                    html: display,
-                    result: resultTerm};
+                    html: html,
+                    $node: $node};
         itemInfos.push(info);
       }
     });
@@ -1908,21 +1915,19 @@ RuleMenu.prototype._update = function() {
     //
     // TODO: Provide less ad hoc means for ordering, such as
     //   additional properties of the info objects, e.g. "priority".
-    //   Also provide fact information in a more structured way.
     return a.html.localeCompare(b.html);
   });
 
   // Generate menu items from itemInfos.
+  // This can use item properties "$node" or "html",
+  // "ruleName", and "ruleArgs".
   var items = itemInfos.map(function(info) {
-      var $item = $('<div class="ruleItem noselect">');
-      $item.html(info.html);
-      if (info.result) {
-        $item.find('.menuResult').append(info.result.renderTerm());
-      }
-      $item.data('ruleName', info.ruleName);
-      $item.data('ruleArgs', info.ruleArgs);
-      return $item
-    });
+    var $item = $('<div class="ruleItem noselect">');
+    $item.append(info.$node || info.html);
+    $item.data('ruleName', info.ruleName);
+    $item.data('ruleArgs', info.ruleArgs);
+    return $item
+  });
   self.length = items.length;
   $items.append(items);
   if (selection) {
