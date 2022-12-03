@@ -147,6 +147,25 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
   return result;
 };
 
+/**
+ * Utility that takes arguments as for R2 and returns false
+ * if any variable bound at the target is in both the
+ * assumptions and RHS of the equation.
+ */
+function boundVarsOK(target, path, equation) {
+  if (equation.isCall2('=>')) {
+    const hypFreeNames = equation.getLeft().freeVars();
+    const eqFreeNames = equation.getRight().freeVars();
+    const boundNames = target.boundNames(path);
+    for (const name in boundNames) {
+      if (name in hypFreeNames && name in eqFreeNames) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 //
 // Utility functions
 //
@@ -2542,6 +2561,7 @@ Toy.assertOnMismatch = false;
 
 Toy.getStepCounter = getStepCounter;
 Toy.noSimplify = noSimplify;
+Toy.boundVarsOK = boundVarsOK;
 
 Toy.declare = declare;
 Toy.addRule = addRule;
