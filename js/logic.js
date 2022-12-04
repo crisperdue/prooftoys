@@ -4002,17 +4002,35 @@ declare(
   // The "replace" rule (below) also merges any assumptions of D with
   // the new assumptions A using arrangeAsms.
   {name: 'r2',
-    action: function(target, path, equation) {
+   // This precheck is commented out until proven useful.
+   // This precheck tests for conflicting bindings, where a bound
+   // variable occurs in both the hyps and the free names of
+   // the (conditional) equation.
+   // precheck: function(target, path, equation) {
+   //   if (equation.isCall2('=>')) {
+   //     const hypFreeNames = equation.getLeft().freeVars();
+   //     const eqFreeNames = equation.getRight().freeVars();
+   //     const boundNames = target.boundNames(path);
+   //     for (const name in boundNames) {
+   //       if (name in hypFreeNames && name in eqFreeNames) {
+   //         return false;
+   //       }
+   //     }
+   //   }
+   //   return true;
+   // },
+   action: function(target, path, equation) {
       assert(equation.isEquation(), 'Not an equation: {1}', equation);
       if (equation.isCall2('=')) {
         return rules.r(equation, target, path);
       }
+
       // The result of this has the form [h => (forall ... eq)],
       // same as LHS of step3; see below for h, eq and step3.
       function quantEquation() {
         var boundNames = target.boundNames(path);
         Toy.removeExcept(boundNames, equation.freeVars());
-        var hypFreeNames = h.freeVars();
+        const hypFreeNames = h.freeVars();
         const eqFreeNames = eq.freeVars();
         // Quantify over just the variables free in the equation and
         // bound at the target site.
