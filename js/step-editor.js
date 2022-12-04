@@ -1795,7 +1795,10 @@ RuleMenu.prototype._update = function() {
       if (!map) {
         return;
       }
-      const temp = proofStep.andThen('instMultiVars', map, true);
+      const eqn = proofStep.andThen('instMultiVars', map, true);
+      if (!Toy.boundVarsOK(selStep, sitePath, eqn)) {
+        return;
+      }
       // TODO: Render this info and rewrite _rule_ content
       //   consistently in both visual style and code, see the code
       //   block just below.
@@ -1805,7 +1808,7 @@ RuleMenu.prototype._update = function() {
                using step ${n}</span>`;
       const $node = $('<span>').append(html);
       $node.find('br.resultTerm')
-        .replaceWith(temp.replacementTerm().renderTerm());
+        .replaceWith(eqn.replacementTerm().renderTerm());
       itemInfos.push({ruleName: 'rewriteFrom',
                       ruleArgs: [selStep.original, sitePath,
                                  proofStep.original],
@@ -1816,47 +1819,52 @@ RuleMenu.prototype._update = function() {
 
     // Find registered facts that could rewrite the selection.
     self.offerableFacts().forEach(function(info) {
+      // TODO: Factor out all of this checking and replacement term
+      //   computation, then use it here and just above.
       const statement = info.goal;
-      const subst = selection.matchSchema(statement.matchPart());
-      if (subst) {
-        let resultTerm;
-        // Ignore unification failure.
-        if (Toy.catchAborts(() => {
-          // CAUTION: temp and temp2 are not to be added to the
-          // current theory, as they are only hypothetically true
-          // to test the unification.
-          //
-          // TODO: Consider a mechanism to check without a
-          // deduction step.
-          const temp = rules.assert(statement);
-          // Unification can fail in this step.
-          // Substitute and eliminate introduced lambdas.
-          const temp2 = rules.instMultiVars(temp, subst, true);
-          resultTerm = temp2.replacementTerm();
-        })) {
-          // There was a failure so don't offer the fact.
-          return;
-        }
-        let html = ' \u27ad <br class=resultTerm>';
-        // TODO: Consider using the length of the unicode in deciding
-        //   what message to generate here.
-        // const unicode = statement.toUnicode();
-        const blurb = (info.definitional
-                       ? 'definition of ' + statement.getLeft().func().name
-                       : 'using ' + Toy.trimParens(statement.toHtml()));
-        html += (' <span class=description>' + blurb + '</span>');
-        const $node = $('<span>').append(html);
-        $node.find('br.resultTerm').replaceWith(resultTerm.renderTerm());
-        // Rule name format of "fact <fact text>"
-        // indicates that the text defines a fact to use in
-        // rules.rewrite.
-        // TODO: Replace this obsolete "fact <stmt>" syntax
-        //   with modern "rewrite" ruleName and ruleArgs.
-        var info = {ruleName: 'fact ' + statement.toString(),
-                    html: html,
-                    $node: $node};
-        itemInfos.push(info);
+      const schema = statement.matchPart();
+      // Check that unification will go OK.
+      if (!Toy.coreUnifTypes(selection.type, schema.type)) {
+        return;
       }
+      const subst = selection.matchSchema(schema);
+      if (!subst) {
+        return;
+      }
+      // CAUTION: eqn1 and eqn2 are not to be added to the
+      // current theory, as they are only hypothetically true
+      // to test the unification.
+      //
+      // This code smells an awful lot like a rewriting precheck.
+      //
+      // TODO: Consider a mechanism to check without a
+      // deduction step, or invent a "suppose" rule that
+      // proves (forall)A => A for arbitrary A, and use that.
+      const eqn1 = rules.assert(statement);
+      const eqn2 = eqn1.andThen('instMultiVars', subst, true);
+      if (!Toy.boundVarsOK(selStep, sitePath, eqn2)) {
+        return;
+      }
+      const resultTerm = eqn2.replacementTerm();
+      let html = ' \u27ad <br class=resultTerm>';
+      // TODO: Consider using the length of the unicode in deciding
+      //   what message to generate here.
+      // const unicode = statement.toUnicode();
+      const blurb = (info.definitional
+                     ? 'definition of ' + statement.getLeft().func().name
+                     : 'using ' + Toy.trimParens(statement.toHtml()));
+      html += (' <span class=description>' + blurb + '</span>');
+      const $node = $('<span>').append(html);
+      $node.find('br.resultTerm').replaceWith(resultTerm.renderTerm());
+      // Rule name format of "fact <fact text>"
+      // indicates that the text defines a fact to use in
+      // rules.rewrite.
+      // TODO: Replace this obsolete "fact <stmt>" syntax
+      //   with modern "rewrite" ruleName and ruleArgs.
+      var info = {ruleName: 'fact ' + statement.toString(),
+                  html: html,
+                  $node: $node};
+      itemInfos.push(info);
     });
 
   } else {  // End if (selection)
