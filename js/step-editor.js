@@ -2136,7 +2136,7 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
         .catch(function(info) {
             // If the "then" throws an error, that becomes the info.
             $node.removeData('promise');
-            var messageNode = display.suggestionMessage('not applicable');
+            var messageNode = display.suggestionMessage('oops, not applicable');
             $node.data('suggestion', messageNode);
             display.suggest(messageNode);
             if (info.result) {
