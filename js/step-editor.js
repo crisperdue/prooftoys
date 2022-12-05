@@ -2029,6 +2029,9 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
       stepEditor.error(format('Rule needs a form: {1}', ruleName));
     }
   } else if (ruleName.slice(0, 5) === 'fact ') {
+    // TODO: Change over to using the usual ruleName and ruleArgs
+    //   approach rather than this hack.
+    // 
     // Values "fact etc" indicate use of rules.rewrite, and
     // the desired fact is indicated by the rest of the value.
     var siteStep = stepEditor.proofDisplay.selection;
@@ -2041,6 +2044,12 @@ RuleMenu.prototype.handleMouseClickItem = function(node, event) {
                   siteStep.prettyPathTo(siteStep.selection),
                   // Parsing here will cause the wff to be taken literally
                   // without potential addition of type assumptions.
+                  //
+                  // TODO: When applying a looked-up fact
+                  // interactively, automatically rename any of its
+                  // variables that do not participate in the
+                  // substitution so they will stay distinct from all
+                  // other free variables in the result.
                   Toy.parse(ruleName.slice(5))]);
   } else {
     assert(false, format('No such rule: {1}', ruleName));
