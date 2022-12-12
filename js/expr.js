@@ -74,6 +74,10 @@ function identifyTerm(term) {
   return ident;
 };
 
+/**
+ * A TermSet is simply a set of terms distinguished by their "dump"s
+ * as strings.  Variable scoping is not accounted for.
+ */
 function TermSet(term) {
   ToySet.call(this, identifyTerm);
   if (term) {
@@ -84,9 +88,16 @@ Toy.extends(TermSet, ToySet);
 
 
 /**
- * A map from terms to variables.  Use TermMap.addTerm to set up
+ * A map from terms to a set of variables with standard names.  The
+ * names are chosen so their lexical order matches the order in which
+ * their terms were added to the map.  Use TermMap.addTerm to set up
  * values, never TermMap.set.  The "subst" field maintains a
  * corresponding substitution from names of free variables to terms.
+ *
+ * A TermMap can be made to track different binding scopes by calling
+ * bindVar and unbind on entry and exit from each scope.  Probably
+ * only useful for helping to convert a wff to standard variable
+ * names.
  */
 function TermMap() {
   ToyMap.call(this, identifyTerm);
@@ -105,8 +116,8 @@ Toy.extends(TermMap, ToyMap);
 
 /**
  * Ensure the term is in this map.  If not already present, assign it
- * a new variable as its value.  In all cases return the map value.
- * Maintains the "subst" field as well.
+ * a new variable as its value.  In all cases return the Atom assigned
+ * to the term.  Maintains the "subst" field as well.
  */
 TermMap.prototype.addTerm = function(term) {
   if (!this.has(term)) {
@@ -2835,11 +2846,11 @@ function numify(num) {
 
 /**
  * Returns the string name given if it is not in existingNames, an
- * object/set with name strings as keys.  Otherwise returns a
+ * object or Set with name strings as keys.  Otherwise returns a
  * generated name with the same "base" as the one given, and not in
  * existingNames.  The base is the name with any trailing digits
  * removed.  The generated suffix will be the lowest-numbered one not
- * yet in use, starting with "10".
+ * yet in use, starting with "1".
  */
 function genName(name, existingNames) {
   var base = name[0];

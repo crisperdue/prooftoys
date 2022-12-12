@@ -1029,10 +1029,10 @@ function addDefnFacts(definition) {
 
 //// About fact info objects.  These are plain objects with properties:
 //
-// synopsis (optional): synopsis string
 // goal: Expr statement of the fact, with all assumptions.  All
 //   variables are exactly as declared, though functions such as
 //   mathParse may add assumptions before returning the Expr.
+// description: string with brief documentation
 // labels: object / set of labels like the ones for rules
 // simplifier: true if this is an equation that simplifies
 // desimplifier: true if this is an equation that "desimplifies"
@@ -1041,6 +1041,7 @@ function addDefnFacts(definition) {
 // prover: function intended to prove the fact
 // proved: proved statement or falsy if not yet proved
 // keyInfo: key and asmSet information as for factRecords.
+// inProgress: truthy iff a proof of this fact is in progress.
 
 //// About standard forms of statements, including fact declarations
 //
@@ -1078,18 +1079,17 @@ var _factsByKey = new Map();
 // of the reference, taken as a set, are a subset or equal to the set
 // of assumptions of the fact that is referred to.  The matching
 // allows for changes of variable names between the recorded fact and
-// the reference.
+// the reference, provided that all free variables in the assumptions
+// are also free in the consequent.
 
 /**
- * Map from string representing the body / "main" part of a statement
- * to array of records each describing the association from a
- * statement to the fact it references.  This contains a record for
- * each statement that has been resolved to a fact, where the
- * statements with different order of assumptions and/or changes of
- * variable names are considered to be the same statement.  Each
- * record is an Object with properties "resInfo" and "factInfo", where
- * "resInfo" is a "statement resolution information" object and
- * "factInfo" is the object with all the properties of the fact.
+ * Map from string identifying the main part of a statement to an
+ * array of the records of statements with the same key that have been
+ * resolved to a fact.  The key is insensitive to alphabetic changes
+ * of variable names.  Each record is an Object with properties
+ * "resInfo" and "factInfo", where "resInfo" is a "statement
+ * resolution information" object and "factInfo" is the object with
+ * all the properties of the fact.
  *
  * This could also be used to look up factInfo from a fact goal or
  * equivalent that may have different variable names or order of
@@ -1097,8 +1097,8 @@ var _factsByKey = new Map();
  * _factsByKey.
  * 
  * This supports fairly efficient resolution of actual or proposed
- * fact references to facts, and is used to ensure that no fact
- * reference ever becomes ambiguous.
+ * fact references to facts, and is used by the process that ensures
+ * that no fact reference ever becomes ambiguous.
  *
  * TODO: With _factsByKey giving access to factInfo and
  * _resolutionsByKey giving access to resInfo, possibly this could
@@ -1109,8 +1109,8 @@ const _resolutionsByKey = new Map();
 /**
  * This returns an array of fact information objects of recorded facts
  * that match the given resInfo.  The facts extend the resInfo in that
- * they have the same key ("main part") and possibly additional
- * assumptions.
+ * they have the same key ("main part") with the same assumptions and
+ * possibly more.
  *
  * TODO: See TODO for resolveToFactInfo.
  */
@@ -1127,7 +1127,7 @@ function factsExtending(resInfo) {
 /**
  * Returns the "expansion" of a statement, preferably given as a wff.
  * The result is a version of the full declared fact of the statement,
- * with free variables as in the given statement rather than the
+ * with free variable names as in the given statement rather than the
  * declaration.  Returns null if there is no such declared fact.
  */
 function factExpansion(stmt) {
@@ -1138,6 +1138,7 @@ function factExpansion(stmt) {
   }
   const factInfo = resolveToFactInfo(stmt);
   if (factInfo) {
+    // TODO: Catch renamings needed in the assumptions!
     const asStated = factInfo.goal.getMain();
     const asRequested = resInfo.stmt.getMain();
     // This check is OK as it is just a renaming.
@@ -1151,8 +1152,8 @@ function factExpansion(stmt) {
 }
 
 /**
- * This returns information about the recorded fact the given
- * statement is considered to refer to.
+ * This returns information about the recorded fact the given (full)
+ * statement wff is considered to refer to.
  *
  * A statement is considered to properly refer to a fact iff there is
  * exactly one fact such that the fact's main part exactly matches the
@@ -1191,7 +1192,7 @@ function resolveToFactInfo(stmt) {
   }
   const candidates = factsExtending(resInfo);
   if (candidates.length == 1) {
-    resolutions.length > 0 || _resolutionsByKey.set(resInfo.key, resolutions);
+    resolutions.length === 0 && _resolutionsByKey.set(resInfo.key, resolutions);
     resolutions.push({resInfo: resInfo, factInfo: candidates[0]});
     return candidates[0];
   }
@@ -1312,15 +1313,9 @@ function isInProgress(stmt) {
 /**
  * JS Map from statement in wff (or currently string) form to
  * information about the statement.  The information is a resInfo
- * object, for getResInfo.  This serves as a cache to accelerate these
- * calculations, especially given that the same statements tend to be
- * used over and over.  Private to getResInfo.
- *
- * The resInfo is a plain object with properties "key", "asmSet", and
- * "stmt", all related to a particular fact statement, plus one
- * property internal to factExpansion.  The asmSet is a TermSet of the
- * statement's assumptions, the key is its "fact key", the stmt is the
- * wff statement it comes from.
+ * object computed by getResInfo.  This serves as a cache to
+ * accelerate these calculations, especially given that the same
+ * statements tend to be used over and over.  Private to getResInfo.
  *
  * This can support string keys, but mathParse already accelerates
  * conversion of strings to wffs.
@@ -1333,12 +1328,21 @@ const noTerms = new Toy.TermSet();
  * Given a wff (or currently a string that parses to one using
  * mathParse), returns a "resInfo" or "fact resolution information"
  * object, which has information useful for resolving exactly which
- * fact the statement is intended to refer to.  The result is a
- * resInfo object as described just above.
- * 
- * The key is a string that represents the main/body of the wff, with
- * all variables of that part replaced with standard variables so the
- * key does not depend on the names of variables supplied as the
+ * fact the statement is intended to refer to.
+ *
+ * The resInfo is a plain object with properties "key", "asmSet", and
+ * "standardVars", all related to the given fact statement, also
+ * "stmt" with the exact given statement, and one more property
+ * internal to factExpansion.
+ *
+ * The standardVars is a wff with standardized variables, with the
+ * main part first if the input is a conditional.  The asmSet is a
+ * TermSet of the standardized wff's assumptions, the key is its "fact
+ * key", and the stmt is the wff statement it comes from.
+ *
+ * A fact key is a string that represents the main body of the wff,
+ * with all variables of that part replaced with standard variables so
+ * the key does not depend on the names of variables supplied as the
  * statement.  The asmSet is a TermSet of the assumptions, also using
  * standard variable names.
  *
@@ -1362,6 +1366,9 @@ function getResInfo(stmt) {
     // This makes a wff with main first, and also has
     // any assumptions, ordered after the main part.  We
     // do not expect this to be a theorem.
+    //
+    // TODO: Avoid the potential ambiguity in case of a similar
+    //   statement that is a conjunction with no assumptions.
     const wff2 = (hasAsms
                   ? Toy.infixCall(main, '&', wff.getLeft())
                   : wff);
@@ -1373,6 +1380,8 @@ function getResInfo(stmt) {
     // treated the same.
     const key = (hasAsms ? standard.getLeft() : standard).toKey();
     const info = {key: key, asmSet: asmSet,
+                  // TODO: Consider flipping this back to a conditional
+                  //   if it was so originally.
                   standardVars: standard,
                   // _expansion will be initialized later.
                   stmt: wff, _expansion: null};
@@ -2250,7 +2259,7 @@ var factProperties = {
  *   the proved result, and any proof function will be ignored,
  *   otherwise a WFF.
  * axiom: true if this is an axiom.
- * synopsis:  string for input to mathParse.  Must parse to a
+ * statement:  string for input to mathParse.  Must parse to a
  *   complete statement of the fact, to be used as the goal.
  * proof: function to return the proved fact, matching the goal.
  *   If not present, one will be generated to assert the goal.
@@ -2286,7 +2295,7 @@ function addFact(info) {
                mathParse(info.statement));
   for (var key in info) {
     if (!(key in factProperties)) {
-      var id = info.goal ? info.goal.$$ : info.synopsis;
+      var id = info.goal ? info.goal.$$ : 'goal?';
       console.warn('In fact', id, 'extra info key:', key);
     }
   }

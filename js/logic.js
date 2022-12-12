@@ -2568,6 +2568,11 @@ declare(
     description: 'simplify boolean value'
   },
 
+  // Attempts to evaluate a boolean expression.  The expression can
+  // be complex, with operators &, |, =>, ==, and "not", or lambdas
+  // in functional position.  Operands may be T or F.
+  // Simplifies and reduces all parts of the expression down to a
+  // true or false result.
   {name: 'evalBool',
     action: function(expr) {
       var boolOps = {'&': true, '|': true, '=>': true, '=': true, not: true};
@@ -2854,9 +2859,10 @@ declare(
 function factForCase0(trueCases, falseCases, op, tf) {
 
   /**
-   * This derives two facts for "&", "|", or "=>",
-   * one for the true case and one for the false case, reducing the
-   * outer lambda and simplifying any conditional within it.
+   * This derives two facts for "&", "|", or "=>", one for the true
+   * case and one for the false case, reducing the outer lambda and
+   * evaluating the if-else within it.  This relies on those
+   * definitions to be an if-else inside lambdas.
    */
   function deriveCases(op) {
     const eqn = rules.definition(op);
@@ -4364,7 +4370,7 @@ declare(
 
   // Out of line version of _replacementFor.
   //
-  // TODO: Tentatively replace _replacementFor with this, otherwise
+  // TODO: Tentatively use this in place of _replacementFor, otherwise
   //   perhaps remove this.
   {name: 'substForRewrite',
     action: function(step, path, eqn) {
@@ -5149,6 +5155,7 @@ declare(
         //   factoring out computation of the map from factExpansion.
         const expansion = Toy.factExpansion(synopsis);
         // Maps free variables of the fact into ones given here.
+        // Currently only maps variables in the main part.
         const map = expansion.getMain().matchSchema(fact.getMain());
         const instance = rules.instMultiVars(fact, map);
         // Remember the proof for future reference.
