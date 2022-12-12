@@ -1861,7 +1861,8 @@ RuleMenu.prototype._update = function() {
       // rules.rewrite.
       // TODO: Replace this obsolete "fact <stmt>" syntax
       //   with modern "rewrite" ruleName and ruleArgs.
-      var info = {ruleName: 'fact ' + statement.toString(),
+      var info = {ruleName: 'rewrite',
+                  ruleArgs: [selStep.original, sitePath, statement],
                   html: html,
                   $node: $node};
       itemInfos.push(info);
@@ -2095,20 +2096,7 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
     // The "promise" data property indicates that a request for a
     // step has been issued.
     var promise;
-    if (ruleName.slice(0, 5) === 'fact ') {
-      // Values "fact etc" indicate use of rules.rewrite, and
-      // the desired fact is indicated by the rest of the value.
-      var siteStep = display.selection;
-      if (!siteStep || !siteStep.selection) {
-        stepEditor.error('No selected site');
-      }
-      promise = sendRule('rewrite', 
-                         [siteStep.original,
-                          siteStep.prettyPathTo(siteStep.selection),
-                          // Parsing here prevents the goal from being
-                          // expanded during later parsing.
-                          Toy.parse(ruleName.slice(5))]);
-    } else if (rule) {
+    if (rule) {
       // It is a rule other than a rewrite with fact.
       var args = ruleArgs || stepEditor.argsFromSelection(ruleName);
       if (stepEditor.checkArgs(args, rule.info.minArgs, false)) {
@@ -2147,7 +2135,6 @@ RuleMenu.prototype.handleMouseEnterItem = function(node, event) {
                         : display.suggestionMessage('failed'));
             $node.data('suggestion', node);
             display.suggest(node);
-
           }
         })
         .catch(function(info) {
