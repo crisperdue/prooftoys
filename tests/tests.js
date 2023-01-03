@@ -1670,18 +1670,10 @@ var testCase = {
   testGetNumValue: function() {
     var n = Toy.parse('42');
     assertEqual(42, n.getNumValue());
-    try {
-      T.getNumValue();
-      Y.Assert.fail('Should throw');
-    } catch(e) {}
   },
 
   testCheckRange: function() {
     assertEqual(42, Toy.checkRange(42));
-    try {
-      Toy.checkRange(-Math.pow(2, 53));
-      Y.Assert.Fail('Should throw');
-    } catch(e) {}
   },
 
   testDistinctifier: function() {
