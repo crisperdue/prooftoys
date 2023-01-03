@@ -2390,6 +2390,16 @@ function addFact(info) {
                // proved fact.  (Always prove on first use?)
                info.goal.typedCopy() ||
                mathParse(info.statement));
+  const goal = info.goal;
+  if (goal.isCall2('=>')) {
+    const asmFrees = goal.getLeft().freeVarSet();
+    const mainFrees = goal.getMain().freeVarSet();
+    const asmExtras = Toy.setDiff(asmFrees, mainFrees);
+    if (asmExtras.size) {
+      console.warn(Toy.format('Excess free variables in assumptions: {1}', goal));
+    }
+  }
+
   for (var key in info) {
     if (!(key in factProperties)) {
       var id = info.goal ? info.goal.$$ : 'goal?';
