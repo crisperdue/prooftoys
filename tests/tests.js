@@ -15,6 +15,10 @@ function deepEqual(a, b, msg) {
   return qassert.deepEqual(a, b);
 }
 
+function propEqual(a, b, msg) {
+  return qassert.propEqual(a, b);
+}
+
 function assert(a, msg) {
   return qassert.ok(a, msg);
 }
@@ -62,6 +66,9 @@ var implies = Toy.implies;
 var lambda = Toy.lambda;
 
 var Atom = Toy.Atom;
+var Expr = Toy.Expr;
+var Lambda = Toy.Lambda;
+
 var a = varify('a');
 var b = varify('b');
 var c = varify('c');
@@ -1675,6 +1682,30 @@ var testCase = {
       Toy.checkRange(-Math.pow(2, 53));
       Y.Assert.Fail('Should throw');
     } catch(e) {}
+  },
+
+  testDistinctifier: function() {
+    d$ = term => Expr.prototype.distinctifier.bind(termify(term));
+    const stringVals = map => {
+      const result = Object.assign({}, map);
+      for (const v in result) {
+        result[v] = '' + result[v];
+      }
+      return result;
+    }
+    const check = (step_arg, path_arg, eqn_arg, map, desired) => {
+      const step = termify(step_arg);
+      const path = step.asPath(path_arg);
+      const eqn = termify(eqn_arg);
+      const v = stringVals(d$(eqn)(path, step, map));
+      propEqual(v, desired);
+    };
+    const eq = termify('R x & R y & R c => (x = y == x + c = y + c)');
+    console.log('BABY');
+    check('c = c', '', eq,
+          {x: null, y: null}, {c: 'c_10'});
+    check('{a. T} = {a. T}', '/left/body', 'T == T | a',
+          {}, {a: 'a_10'});
   },
 
 

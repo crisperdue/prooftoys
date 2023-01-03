@@ -1106,6 +1106,27 @@ Expr.prototype.subFree1 = function(replacement, name) {
 };
 
 /**
+ * Applies the given renaming to this term.  The renaming is an
+ * object/map from strings to Atoms, which this uses to rename free
+ * variables.  This assumes that the names of the Atoms in the map are
+ * distinct from all variable names in this, free or not, so the
+ * result will be equivalent to the input term.
+ */
+Expr.prototype.rename = function(map) {
+  const rename = term => {
+    const ct = term.constructor;
+    if (ct === Atom) {
+      return map[term.name] || term;
+    } else if (ct === Call) {
+      return new Call(rename(term.fn), rename(term.arg));
+    } else if (ct === Lambda) {
+      return new Lambda(rename(term.bound), rename(term.body));
+    }
+  };
+  return rename(this);
+};
+
+/**
  * Called with a non-rendered step; returns a path to the main
  * part of the step; or if the main is an equivalence or
  * equality, returns the RHS of that.

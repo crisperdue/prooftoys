@@ -148,6 +148,107 @@ Expr.prototype.justify = function(ruleName, ruleArgs, ruleDeps, retain) {
 };
 
 /**
+ * Calculates the effect of rewriting step2 at the given path, using
+ * the given substitution map with this as the fact, returning a
+ * renaming that keeps free variables distinct as much as possible.
+ * The renaming is an object/map from strings to Atoms that renames
+ * free variables of this step as necessary to keep them distinct from
+ * other variables in the result of the rewrite, thus preserving
+ * opportunities for further substitution.
+ *
+ * The map must include no-op mappings, as produced for example by
+ * matchSchema, from a name to the same name.
+ *
+ * TODO: It appears desirable in some cases to rename free variables
+ *   of this to be captured by bound variables at the target site.
+ *   Consider supporting that option in some way, not necessarily
+ *   here.
+ */
+Expr.prototype.distinctifier = function(path_arg, step2, map) {
+  const keys = new Set(Object.keys(map));
+  // The substitution into this followed by replacement adds only
+  // these retained variables as free in the result.  The substitution
+  // itself only results in free variables that are already free in
+  // step2, and eliminates ones only in the map keys.
+  const retained = Toy.setDiff(this.freeVarSet(), keys);
+  // The replacement will add only the retained variables to step2.
+  const free2 = step2.freeVarSet();
+  const boundNames =
+        new Set(step2.pathBindings(step2.asPath(path_arg)
+                                   .uglify(step2.implies()))
+                .keys());
+  const avoidNames = Toy.union(free2, retained, boundNames);
+  const result = {};
+  // The result of applying the substitution and then replacing
+  // some part of it with the RHS of 
+  for (const name of retained) {
+    // Remember: retained variables being renamed must stay distinct.
+    const v = (free2.has(name) || boundNames.has(name)
+               ? Toy.genVar(name, avoidNames)
+               : new Atom(name));
+    avoidNames.add(v);
+    result[name] = v;
+  }
+  return result;
+};
+
+/**
+ * The arguments are a step, path, and equation.  This method
+ * calculates renamings that would avoid unnecessary use of the
+ * same name for free variables of the step that are also free
+ * in the RHS of the equation or an assumption.
+ *
+ * The step and equation must match at the target site so that
+ * rule R2 could be applied there.
+ */
+Expr.prototype.distinctCheck = function(path, equation) {
+  const step = this;
+  // List of bound variable Atoms in scope at the location of the
+  // current term of the traversal, innermost last.
+  // TODO: Reset when copying the RHS.
+  const boundVars = [];
+  const freeNames = new Set();
+  const traverse = (term, path) => {
+    const c = term.constructor;
+    if (path.isMatch()) {
+      // Do nothing and do not traverse this term.
+    } else if (c === Atom && term.isVariable()) {
+      const nm = term.name;
+      !boundVars.includes(nm) && freeNames.add(nm);
+    } else if (c === Call) {
+      traverse(term.fn, path.rest);
+      traverse(term.arg, path.rest);
+    } else if (c === Lambda) {
+      if (path.segment === 'body') {
+        const bound = term.bound;
+        boundVars.push(bound.name);
+        traverse(term.body, path.rest);
+        boundVars.pop();
+      }
+    }
+    // Catch all the cases where the segment and term mismatch.
+    term._checkSegment(path);
+  };
+  // Calculate desirable renamings of equation free variables.
+  const stepFrees = step.freeVarSet();
+  const target = Toy.schemaPart(equation);
+  const targetFrees = target.freeVarSet();
+  const eqnFrees = equation.freeVarSet();
+  const additions = Toy.setDiff(eqnFrees, targetFrees);
+  const dupes = Toy.intersection(additions, stepFrees);
+  if (dupes.size) {
+    console.log('equation', equation.$$);
+    console.log('in', step.$$);
+    console.log('  target', step.get(path).$$);
+    console.log('additions', additions);
+    console.log('dupes', dupes);
+  }
+  for (const nm of dupes) {
+    console.log('Dupe', nm);
+  }
+};
+
+/**
  * Utility that takes arguments as for R2 and returns false
  * if any variable bound at the target is in both the
  * assumptions and RHS of the equation.
@@ -1222,10 +1323,6 @@ function resolveToFact(stmt) {
  * This would be due to different ordering of assumptions between the
  * given statement and the recorded fact, and thus different
  * assignments of variable names.
- *
- * Also note that any assumption with free variable(s) in the LHS can
- * be converted to an existential term where the variable is bound,
- * making this scenario particularly unlikely.
  */
 function isRecordedFact(stmt) {
   // First check that the statement resolves to a specific fact.
