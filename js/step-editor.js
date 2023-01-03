@@ -1821,8 +1821,8 @@ RuleMenu.prototype._update = function() {
     self.offerableFacts().forEach(function(info) {
       // TODO: Factor out all of this checking and replacement term
       //   computation, then use it here and just above.
-      const statement = info.goal;
-      const schema = statement.matchPart();
+      const fact = info.goal;
+      const schema = fact.matchPart();
       // Check that unification will go OK.
       if (!Toy.coreUnifTypes(selection.type, schema.type)) {
         return;
@@ -1831,6 +1831,8 @@ RuleMenu.prototype._update = function() {
       if (!subst) {
         return;
       }
+      const renamer = fact.distinctifier(sitePath, selStep, subst);
+      const statement = fact.rename(renamer);
       // CAUTION: eqn1 and eqn2 are not to be added to the
       // current theory, as they are only hypothetically true
       // to test the unification.
@@ -1846,6 +1848,7 @@ RuleMenu.prototype._update = function() {
         return;
       }
       const resultTerm = eqn2.replacementTerm();
+      // The special character is a form of white right arrow.
       let html = ' \u27ad <br class=resultTerm>';
       // TODO: Consider using the length of the unicode in deciding
       //   what message to generate here.
