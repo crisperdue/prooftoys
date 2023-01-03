@@ -193,62 +193,6 @@ Expr.prototype.distinctifier = function(path_arg, step2, map) {
 };
 
 /**
- * The arguments are a step, path, and equation.  This method
- * calculates renamings that would avoid unnecessary use of the
- * same name for free variables of the step that are also free
- * in the RHS of the equation or an assumption.
- *
- * The step and equation must match at the target site so that
- * rule R2 could be applied there.
- */
-Expr.prototype.distinctCheck = function(path, equation) {
-  const step = this;
-  // List of bound variable Atoms in scope at the location of the
-  // current term of the traversal, innermost last.
-  // TODO: Reset when copying the RHS.
-  const boundVars = [];
-  const freeNames = new Set();
-  const traverse = (term, path) => {
-    const c = term.constructor;
-    if (path.isMatch()) {
-      // Do nothing and do not traverse this term.
-    } else if (c === Atom && term.isVariable()) {
-      const nm = term.name;
-      !boundVars.includes(nm) && freeNames.add(nm);
-    } else if (c === Call) {
-      traverse(term.fn, path.rest);
-      traverse(term.arg, path.rest);
-    } else if (c === Lambda) {
-      if (path.segment === 'body') {
-        const bound = term.bound;
-        boundVars.push(bound.name);
-        traverse(term.body, path.rest);
-        boundVars.pop();
-      }
-    }
-    // Catch all the cases where the segment and term mismatch.
-    term._checkSegment(path);
-  };
-  // Calculate desirable renamings of equation free variables.
-  const stepFrees = step.freeVarSet();
-  const target = Toy.schemaPart(equation);
-  const targetFrees = target.freeVarSet();
-  const eqnFrees = equation.freeVarSet();
-  const additions = Toy.setDiff(eqnFrees, targetFrees);
-  const dupes = Toy.intersection(additions, stepFrees);
-  if (dupes.size) {
-    console.log('equation', equation.$$);
-    console.log('in', step.$$);
-    console.log('  target', step.get(path).$$);
-    console.log('additions', additions);
-    console.log('dupes', dupes);
-  }
-  for (const nm of dupes) {
-    console.log('Dupe', nm);
-  }
-};
-
-/**
  * Utility that takes arguments as for R2 and returns false
  * if any variable bound at the target is in both the
  * assumptions and RHS of the equation.
@@ -2654,6 +2598,19 @@ function dumpFactResolutions() {
         });
     });
 }
+
+//// Database management
+
+$(function() {
+  const db = window.Toy.db = new Dexie('Prooftoys');
+  db.version(1).stores({
+    prefs: '&key',
+    pages: '&page',
+    sheets: '&sheetName',
+  });
+  db.prefs.put({key: 'boo', value: 'far'});
+});
+
 
 //// Export public names.
 
