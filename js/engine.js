@@ -25,6 +25,7 @@ var call = Toy.call;
 var equal = Toy.equal;
 var implies = Toy.implies;
 var lambda = Toy.lambda;
+const check = Toy.check;
 
 var Expr = Toy.Expr;
 var Atom = Toy.Atom;
@@ -590,7 +591,6 @@ function addRule(info) {
     definition(info.definition);
     return;
   }
-  var proof = info.proof;
   var statement = info.statement || info.goal;
   if (info.statement && info.goal) {
     console.warn('Fact has both statement and goal', info.goal.toString());
@@ -598,9 +598,6 @@ function addRule(info) {
 
   // This will become the "rule object":
   var rule;
-  // This will become the "main function" -- the action or proof property
-  // with user-written code.
-  var main;
   // True iff the main function has access to the rule object as "this".
   var mainHasThis = false;
   // If the rule (theorem) has an explicit statement (which should be
@@ -609,38 +606,22 @@ function addRule(info) {
   if (typeof statement === 'string') {
     statement = info.statement = Toy.mathParse(statement);
   }
-  if (proof) {
-    // The proof should have no arguments, and should not do its
-    // own call to "justify".
-    //
-    // TODO: In the future, allow type parameters and memoize
-    //   as appropriate.
-    // TODO: Consider checking that "actions" _do_ have parameters.
-    if (typeof proof === 'function') {
-      assert(proof.length == 0, 'Proof of {1} requires parameters', name);
-      assert(!info.action, 'Both proof and action for {1}', name);
-      // User-supplied proof function is the main.
-      main = proof;
-    } else if (Array.isArray(proof)) {
-      const steps = proof;
-      proof = function() { return Toy.decodeProof(steps); }
-      main = proof;
-    } else {
-      assert(false,
-             'Proof of {1} should be a function or array of steps', name);
+  let proof;
+  if (info.proof) {
+    assert(!info.action, 'Both proof and action for {1}', name);
+    proof = check(Toy.asProof(info.proof));
     }
-  }
   if (statement) {
     if (!proof) {
       // If there is a statement but no proof, just assert the statement.
       proof = function() {
         return rules.assert(statement);
       }
-      main = proof;
       if (!info.axiom) {
         console.warn('No proof for', name || statement.toUnicode());
       }
     }
+    
     // Add it as a fact also, and potentially "swapped".
     // A fact needs a statement, so we rely here on having a statement given.
     //
@@ -672,6 +653,9 @@ function addRule(info) {
       return;
     }
   }
+  // This will become the "main function" -- the action or proof property
+  // with user-written code.
+  let main = proof;
   if (proof) {
     // There is a proof _and_ a name.
     // 
@@ -832,8 +816,8 @@ function addRule(info) {
  * Prefer this over addRule, addRules, addFact, or addFactsMap for
  * adding new facts, rules, and definitions.
  */
-function declare(_declarations) {
-  for (const decl of arguments) {
+function declare(...declarations) {
+  for (const decl of declarations) {
     addRule(decl);
   }
 }

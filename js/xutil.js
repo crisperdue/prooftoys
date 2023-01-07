@@ -2096,12 +2096,24 @@ function dumpProof(proofEditor) {
  *
  * In case of an Error return from decodeSteps, returns that error.
  */
-function decodeProof(steps_arg) {
-  const steps = ['(steps '].concat(steps_arg, ')');
-  let decoded = decodeSteps(steps.join('\n'));
-  return (decoded instanceof Error
-          ? decoded
-          : decoded[decoded.length - 1]);
+function asProof(info) {
+  const type = typeof info;
+  if (type === 'function') {
+    assert(info.length === 0,
+           'Alleged proof, but needs parameters: ${info}');
+    return info;
+  } else if (type === 'string') {
+    return () => {
+      const decoded = decodeSteps(info);
+      return (decoded instanceof Error
+              ? decoded
+              : decoded[decoded.length - 1]);
+    }
+  } else if (Array.isArray(info)) {
+    return asProof(['(steps '].concat(info, ')').join('\n'));
+  } else {
+    return new Error(`Not a proof: ${info}`);
+  }
 }
 
 
@@ -2125,7 +2137,7 @@ Toy.encodeSteps = encodeSteps;
 Toy.decodeSteps = decodeSteps;
 
 Toy.dumpProof = dumpProof;
-Toy.decodeProof = decodeProof;
+Toy.asProof = asProof;
 
 Toy.unicodify = unicodify;
 
