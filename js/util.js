@@ -630,12 +630,11 @@ function debug(value) {
 }
 
 /**
- * Checks for nullish values, which are assertion failures.
- * If non-null, returns its input.
+ * Checks for Error values.  Calls the function with the error
+ * if it is an Error, otherwise just returns the value.
  */
-function check(value) {
-  assert(value != null, 'Null value');
-  return value;
+function check(v, f = Toy.abort) {
+  return v instanceof Error ? f(v) : v;
 }
 
 /**
