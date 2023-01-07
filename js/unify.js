@@ -372,7 +372,7 @@ Expr.prototype.typesUnifier = function(expr2) {
 // to be all distinct from type variables of the argument.
 //
 // TODO: Consider a version that updates types in place, never copying.
-Expr.prototype.distinctify = function(expr2) {
+Expr.prototype.distinctifyTypes = function(expr2) {
   const distinctor = this.typesDistinctifier(expr2);
   const result = this.subsType(distinctor);
   return result;
