@@ -1356,7 +1356,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
     this.report('nothing done');
   } else {
     // Success!
-    var top = $(window).scrollTop();
     // TODO: Trigger an event and let the proofDisplay show the step,
     //   removing most of this code.  It may be desirable for the
     //   proof display to trigger another event after the step is
@@ -1390,11 +1389,9 @@ StepEditor.prototype._tryRule = function(rule, args) {
                         ? result
                         : trial);
       var steps = Toy.unrenderedDeps(simplified);
-      var top2 = $(window).scrollTop();
       steps.forEach(function(step) {
         self.proofDisplay.addStep(step);
       });
-      checkTop(top2);
       // Scroll the proof steps DIV all the way to the bottom
       // so the new step(s) are visible.
       editor.$node.find('.proofSteps').scrollTop(1e9)
@@ -1402,9 +1399,6 @@ StepEditor.prototype._tryRule = function(rule, args) {
   }
   if (!deferCleanup) {
     cleanup();
-  }
-  if (typeof top == 'number') {
-    checkTop(top);
   }
 };
 
@@ -2500,29 +2494,6 @@ function ruleMenuInfo(ruleName, step, term, proofEditor) {
       return tip && Toy.mathMarkup(info.basicTooltip);
     }
   }
-}
-
-/**
- * Ensures that the page's scrollTop (pageYOffset) remains at the
- * level given by its argument, recorded previously.  This helps work
- * around undesirable and weird scrolling induced by inserting or
- * deleting flexbox nodes in the DOM.  There is also one similar
- * workaround in rendering.js.
- */
-function checkTop(oldTop) {
-  function reset() {
-    var top = $(window).scrollTop();
-    if (top !== oldTop) {
-      /*
-      console.log(Toy.format('Resetting scrolltop from {1} to {2} at {3}.',
-                             top, oldTop, new Date().toISOString()));
-      */
-      $(window).scrollTop(oldTop);
-    }
-  }
-  reset();
-  // Uncomment this to reset again a little bit later.
-  // window.setTimeout(reset, 100);
 }
 
 /**
